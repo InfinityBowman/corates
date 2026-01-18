@@ -5,7 +5,7 @@ import { Portal } from 'solid-js/web';
 import { useBetterAuth } from '@api/better-auth-store.js';
 import localChecklistsStore from '@/stores/localChecklistsStore';
 import { useMyProjectsList } from '@primitives/useMyProjectsList.js';
-import { showToast } from '@corates/ui';
+import { showToast } from '@/components/ui/toast';
 // import useRecentsNav from './useRecentsNav.js';
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import {

@@ -29,7 +29,7 @@ import {
   isAdminChecked,
   isAdmin,
 } from '@/stores/adminStore.js';
-import { showToast } from '@corates/ui';
+import { showToast } from '@/components/ui/toast';
 import { UserAvatar } from '@/components/ui/avatar';
 import {
   Dialog,

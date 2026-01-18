@@ -15,7 +15,7 @@
 
 import { createSignal, createEffect, Show, createMemo, Index } from 'solid-js';
 import { FiAlertTriangle, FiCheck, FiLoader, FiUserPlus, FiMail, FiX } from 'solid-icons/fi';
-import { showToast } from '@corates/ui';
+import { showToast } from '@/components/ui/toast';
 import { PinInput, PinInputControl, PinInputField } from '@/components/ui/pin-input';
 import {
   Dialog,

@@ -1,7 +1,7 @@
 import { createEffect, Show } from 'solid-js';
 import { useNavigate } from '@solidjs/router';
 import { useBetterAuth } from '@api/better-auth-store.js';
-import { PageLoader } from '@corates/ui';
+import { PageLoader } from '@/components/ui/spinner';
 
 /**
  * ProtectedGuard - For authenticated pages (profile, settings, admin, etc.)

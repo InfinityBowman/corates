@@ -1,7 +1,8 @@
 import { createSignal, Show, onMount, For } from 'solid-js';
 import { FiShield, FiX, FiCopy, FiSmartphone, FiLock, FiInfo, FiHelpCircle } from 'solid-icons/fi';
 import { useBetterAuth } from '@api/better-auth-store.js';
-import { showToast, QRCode } from '@corates/ui';
+import { showToast } from '@/components/ui/toast';
+import { QRCode, QRCodeFrame, QRCodePattern } from '@/components/ui/qr-code';
 import {
   PasswordInput,
   PasswordInputLabel,
@@ -374,7 +375,11 @@ export default function TwoFactorSetup() {
               {/* QR Code - Generated client-side for security */}
               <div class='flex justify-center'>
                 <div class='rounded-lg border border-gray-200 bg-white p-4'>
-                  <QRCode data={totpUri()} size={192} alt='2FA QR Code' />
+                  <QRCode value={totpUri()} pixelSize={192} aria-label='2FA QR Code'>
+                    <QRCodeFrame>
+                      <QRCodePattern />
+                    </QRCodeFrame>
+                  </QRCode>
                 </div>
               </div>
 

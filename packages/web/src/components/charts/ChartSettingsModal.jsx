@@ -1,6 +1,6 @@
 import { Show, Index, createSignal } from 'solid-js';
 import { BiRegularX } from 'solid-icons/bi';
-import { Z_INDEX } from '@corates/ui';
+import { Z_INDEX } from '@/components/ui/z-index';
 
 /**
  * ChartSettingsModal - Modal for editing chart settings like labels

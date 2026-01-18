@@ -14,7 +14,7 @@ import { CHECKLIST_STATUS, isEditable } from '@/constants/checklist-status.js';
 import { getNextStatusForCompletion } from '@/lib/checklist-domain.js';
 import { downloadPdf, uploadPdf, deletePdf, getPdfUrl } from '@api/pdf-api.js';
 import { getCachedPdf, cachePdf } from '@primitives/pdfCache.js';
-import { showToast } from '@corates/ui';
+import { showToast } from '@/components/ui/toast';
 import {
   AlertDialog,
   AlertDialogBackdrop,

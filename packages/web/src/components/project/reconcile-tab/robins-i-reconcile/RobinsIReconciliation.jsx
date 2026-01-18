@@ -6,7 +6,7 @@
 import { createSignal, createMemo, createEffect, Show, Switch, Match } from 'solid-js';
 import { AiOutlineWarning } from 'solid-icons/ai';
 import { FiArrowLeft, FiArrowRight } from 'solid-icons/fi';
-import { showToast } from '@corates/ui';
+import { showToast } from '@/components/ui/toast';
 import {
   AlertDialog,
   AlertDialogBackdrop,

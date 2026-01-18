@@ -12,7 +12,7 @@ import projectStore from '@/stores/projectStore.js';
 import projectActionsStore from '@/stores/projectActionsStore';
 import { useBetterAuth } from '@api/better-auth-store.js';
 import { useProjectContext } from '../ProjectContext.jsx';
-import { showToast } from '@corates/ui';
+import { showToast } from '@/components/ui/toast';
 import {
   Progress,
   ProgressTrack,

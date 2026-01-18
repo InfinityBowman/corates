@@ -6,7 +6,7 @@
 import { createSignal, createResource, Show, For, Suspense } from 'solid-js';
 import { FiMonitor, FiSmartphone, FiGlobe, FiTrash2, FiLogOut, FiLoader } from 'solid-icons/fi';
 import { useBetterAuth } from '@api/better-auth-store.js';
-import { showToast } from '@corates/ui';
+import { showToast } from '@/components/ui/toast';
 import {
   Dialog,
   DialogBackdrop,

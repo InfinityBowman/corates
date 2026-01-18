@@ -3,7 +3,7 @@
  */
 
 import { createSignal } from 'solid-js';
-import { showToast } from '@corates/ui';
+import { showToast } from '@/components/ui/toast';
 import { fetchReferenceByIdentifier, parseIdentifiers } from '@/lib/referenceLookup.js';
 import { cloneArrayBuffer } from './serialization.js';
 

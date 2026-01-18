@@ -17,7 +17,7 @@ import {
 } from 'solid-icons/fi';
 import { deleteStorageDocuments } from '@/stores/adminStore.js';
 import { useStorageDocuments } from '@primitives/useAdminQueries.js';
-import { showToast } from '@corates/ui';
+import { showToast } from '@/components/ui/toast';
 import {
   Dialog,
   DialogBackdrop,

@@ -5,7 +5,7 @@
 
 import { createSignal, createMemo, createEffect, Show } from 'solid-js';
 import { FiArrowLeft, FiArrowRight } from 'solid-icons/fi';
-import { showToast } from '@corates/ui';
+import { showToast } from '@/components/ui/toast';
 import {
   AlertDialog,
   AlertDialogBackdrop,

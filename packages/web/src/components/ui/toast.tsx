@@ -23,7 +23,12 @@
  */
 import type { Component, JSX } from 'solid-js';
 import { splitProps } from 'solid-js';
-import { Toast as ToastPrimitive, Toaster, createToaster } from '@ark-ui/solid/toast';
+import {
+  Toast as ToastPrimitive,
+  Toaster,
+  createToaster,
+  type ToastPromiseOptions,
+} from '@ark-ui/solid/toast';
 import type {
   ToastRootProps as ArkToastRootProps,
   ToastTitleProps as ArkToastTitleProps,
@@ -38,7 +43,7 @@ import { Z_INDEX } from './z-index';
 
 export const toaster = createToaster({
   placement: 'top-end',
-  overlap: true,
+  overlap: false,
   gap: 12,
 });
 
@@ -164,23 +169,29 @@ interface ToastOptions {
 }
 
 const showToast = {
-  success: (title: string, description?: string, duration = 5000) => {
-    toaster.create({ title, description, type: 'success', duration });
+  success: (title: string, description?: string, duration = 3000) => {
+    return toaster.create({ title, description, type: 'success', duration });
   },
   error: (title: string, description?: string, duration = 5000) => {
-    toaster.create({ title, description, type: 'error', duration });
+    return toaster.create({ title, description, type: 'error', duration });
   },
   warning: (title: string, description?: string, duration = 5000) => {
-    toaster.create({ title, description, type: 'warning', duration });
+    return toaster.create({ title, description, type: 'warning', duration });
   },
-  info: (title: string, description?: string, duration = 5000) => {
-    toaster.create({ title, description, type: 'info', duration });
+  info: (title: string, description?: string, duration = 3000) => {
+    return toaster.create({ title, description, type: 'info', duration });
   },
   loading: (title: string, description?: string) => {
     return toaster.create({ title, description, type: 'loading', duration: Infinity });
   },
   dismiss: (id: string) => {
     toaster.dismiss(id);
+  },
+  update: (id: string, options: ToastOptions) => {
+    toaster.update(id, options);
+  },
+  promise: <T,>(promise: Promise<T>, options: ToastPromiseOptions<T>) => {
+    return toaster.promise(promise, options);
   },
 };
 
@@ -194,4 +205,4 @@ export {
   ToasterContainer,
   showToast,
 };
-export type { ToastOptions };
+export type { ToastOptions, ToastPromiseOptions };

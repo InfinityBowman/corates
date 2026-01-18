@@ -2,7 +2,7 @@ import { createSignal, For, Show, createEffect, onCleanup } from 'solid-js';
 import { debounce } from '@solid-primitives/scheduled';
 import { A } from '@solidjs/router';
 import { FiX, FiAlertTriangle } from 'solid-icons/fi';
-import { showToast } from '@corates/ui';
+import { showToast } from '@/components/ui/toast';
 import { SimpleSelect } from '@/components/ui/select';
 import { Avatar, AvatarImage, AvatarFallback, getInitials } from '@/components/ui/avatar';
 import { apiFetch } from '@lib/apiFetch.js';

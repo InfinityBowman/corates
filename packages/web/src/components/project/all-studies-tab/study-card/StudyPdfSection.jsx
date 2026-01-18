@@ -7,7 +7,7 @@
 
 import { createSignal, createMemo, Show, For } from 'solid-js';
 import { FaBrandsGoogleDrive, FaSolidPlus } from 'solid-icons/fa';
-import { showToast } from '@corates/ui';
+import { showToast } from '@/components/ui/toast';
 import { PdfListItem } from '@pdf';
 import EditPdfMetadataModal from '@/components/project/all-studies-tab/EditPdfMetadataModal.jsx';
 import projectActionsStore from '@/stores/projectActionsStore';

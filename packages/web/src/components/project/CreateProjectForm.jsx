@@ -1,6 +1,6 @@
 import { createSignal, Show, onMount, createMemo, createEffect } from 'solid-js';
 import AddStudiesForm from './add-studies/AddStudiesForm.jsx';
-import { showToast } from '@corates/ui';
+import { showToast } from '@/components/ui/toast';
 import { SimpleSelect } from '@/components/ui/select';
 import { AUTH_ERRORS } from '@corates/shared';
 import { isUnlimitedQuota } from '@corates/shared/plans';

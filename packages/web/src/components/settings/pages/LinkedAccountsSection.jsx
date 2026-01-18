@@ -15,7 +15,7 @@ import { FiLink, FiMail, FiInfo, FiAlertCircle, FiX } from 'solid-icons/fi';
 import { authClient } from '@api/auth-client.js';
 import { useBetterAuth } from '@api/better-auth-store.js';
 import { useLinkedAccounts } from '@/primitives/useLinkedAccounts.js';
-import { showToast } from '@corates/ui';
+import { showToast } from '@/components/ui/toast';
 import {
   Dialog,
   DialogBackdrop,

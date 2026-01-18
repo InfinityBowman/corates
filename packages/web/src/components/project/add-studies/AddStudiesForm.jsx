@@ -2,7 +2,7 @@ import { createSignal, createEffect, Show, onMount, onCleanup, For } from 'solid
 import { BiRegularPlus } from 'solid-icons/bi';
 import { AiOutlineCloudUpload } from 'solid-icons/ai';
 import { FiChevronUp } from 'solid-icons/fi';
-import { showToast } from '@corates/ui';
+import { showToast } from '@/components/ui/toast';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import projectStore from '@/stores/projectStore.js';
 

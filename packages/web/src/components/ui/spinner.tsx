@@ -75,7 +75,7 @@ type PageLoaderProps = ComponentProps<'div'> & {
 const PageLoader: Component<PageLoaderProps> = props => {
   const [local, others] = splitProps(props, ['class', 'label']);
   return (
-    <div class={cn('flex min-h-[200px] items-center justify-center', local.class)} {...others}>
+    <div class={cn('flex min-h-50 items-center justify-center', local.class)} {...others}>
       <Spinner size='lg' label={local.label} />
     </div>
   );

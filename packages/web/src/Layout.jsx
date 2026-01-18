@@ -2,7 +2,7 @@ import { createSignal, onMount, createMemo, Show, lazy, Suspense } from 'solid-j
 import { useLocation } from '@solidjs/router';
 import Navbar from './components/Navbar.jsx';
 import Sidebar from './components/sidebar/Sidebar.jsx';
-import { Toaster } from '@corates/ui';
+import { ToasterContainer } from '@/components/ui/toast';
 import { isImpersonating } from '@/stores/adminStore.js';
 
 // Lazy load admin components to avoid bundling admin code for non-admins
@@ -101,7 +101,7 @@ export default function Layout(props) {
         </Show>
         <main class='flex-1 overflow-auto text-gray-900'>{props.children}</main>
       </div>
-      <Toaster />
+      <ToasterContainer />
       {/* Dev Panel - global, context-aware */}
       <Show when={DEV_PANEL_ENABLED}>
         <DevPanel />

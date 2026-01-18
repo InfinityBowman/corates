@@ -12,7 +12,7 @@ import {
   AUTH_ERRORS,
   USER_ERRORS,
 } from '@corates/shared';
-import { showToast } from '@corates/ui';
+import { showToast } from '@/components/ui/toast';
 
 /**
  * User-friendly error messages for common error codes

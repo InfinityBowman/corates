@@ -2,7 +2,7 @@
  * Project-level operations for projectActionsStore
  */
 
-import { showToast } from '@corates/ui';
+import { showToast } from '@/components/ui/toast';
 import { API_BASE } from '@config/api.js';
 import { queryClient } from '@lib/queryClient.js';
 import { queryKeys } from '@lib/queryKeys.js';

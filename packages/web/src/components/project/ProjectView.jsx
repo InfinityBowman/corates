@@ -17,7 +17,7 @@ import { useBetterAuth } from '@api/better-auth-store.js';
 import { uploadPdf, deletePdf } from '@api/pdf-api.js';
 import { cachePdf } from '@primitives/pdfCache.js';
 import { importFromGoogleDrive } from '@api/google-drive.js';
-import { showToast } from '@corates/ui';
+import { showToast } from '@/components/ui/toast';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { BiRegularHome } from 'solid-icons/bi';
 import { BsListTask } from 'solid-icons/bs';

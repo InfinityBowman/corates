@@ -5,7 +5,7 @@
 
 import { createSignal, For, Show, onMount } from 'solid-js';
 import { FiCheck, FiStar, FiZap, FiAlertCircle, FiArrowDown } from 'solid-icons/fi';
-import { showToast } from '@corates/ui';
+import { showToast } from '@/components/ui/toast';
 import {
   Dialog,
   DialogBackdrop,

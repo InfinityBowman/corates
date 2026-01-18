@@ -16,7 +16,7 @@ import {
 } from '@/lib/checklist-domain.js';
 import { downloadPdf, getPdfUrl } from '@api/pdf-api.js';
 import { getCachedPdf, cachePdf } from '@primitives/pdfCache.js';
-import { showToast } from '@corates/ui';
+import { showToast } from '@/components/ui/toast';
 import ReconciliationWithPdf from './ReconciliationWithPdf.jsx';
 import { RobinsIReconciliationWithPdf } from './robins-i-reconcile/index.js';
 import { ROB2ReconciliationWithPdf } from './rob2-reconcile/index.js';

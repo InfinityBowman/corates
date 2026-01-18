@@ -9,7 +9,7 @@ import { A } from '@solidjs/router';
 import { FiLoader, FiAlertCircle, FiCopy, FiCheck, FiExternalLink, FiFilter } from 'solid-icons/fi';
 import { isAdmin, isAdminChecked } from '@/stores/adminStore.js';
 import { useAdminBillingLedger } from '@primitives/useAdminQueries.js';
-import { showToast } from '@corates/ui';
+import { showToast } from '@/components/ui/toast';
 import { DashboardHeader, AdminBox, AdminDataTable } from '../ui/index.js';
 import { input } from '../styles/admin-tokens.js';
 

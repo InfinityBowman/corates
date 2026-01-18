@@ -13,7 +13,7 @@ import {
   BiRegularUpload,
 } from 'solid-icons/bi';
 import { FiFile, FiFileText, FiAlertCircle, FiCheck, FiDownload } from 'solid-icons/fi';
-import { showToast } from '@corates/ui';
+import { showToast } from '@/components/ui/toast';
 import {
   Tooltip,
   TooltipTrigger,

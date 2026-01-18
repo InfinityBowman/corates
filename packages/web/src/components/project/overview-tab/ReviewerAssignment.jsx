@@ -5,7 +5,7 @@
 
 import { createSignal, createMemo, For, Show } from 'solid-js';
 import { createStore, produce } from 'solid-js/store';
-import { showToast } from '@corates/ui';
+import { showToast } from '@/components/ui/toast';
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/components/ui/collapsible';
 import {
   BiRegularShuffle,

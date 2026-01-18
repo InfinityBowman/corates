@@ -2,7 +2,7 @@
  * Checklist operations for projectActionsStore
  */
 
-import { showToast } from '@corates/ui';
+import { showToast } from '@/components/ui/toast';
 
 /**
  * Creates checklist operations

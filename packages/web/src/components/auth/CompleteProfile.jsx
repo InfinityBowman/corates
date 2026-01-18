@@ -31,7 +31,7 @@ import RoleSelector, { TITLE_OPTIONS } from './RoleSelector.jsx';
 import { FiCheck } from 'solid-icons/fi';
 import { handleError } from '@/lib/error-utils.js';
 import { apiFetch } from '@lib/apiFetch.js';
-import { showToast } from '@corates/ui';
+import { showToast } from '@/components/ui/toast';
 
 const STEPS = [
   { title: 'Your Name', description: 'Basic information' },
