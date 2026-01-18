@@ -39,7 +39,7 @@
  * </SelectPositioner>
  */
 import type { Component, JSX } from 'solid-js';
-import { For, Show, splitProps } from 'solid-js';
+import { Index, Show, splitProps, createMemo } from 'solid-js';
 import { Select as SelectPrimitive, createListCollection } from '@ark-ui/solid/select';
 import type {
   SelectRootProps as ArkSelectRootProps,
@@ -312,7 +312,8 @@ const SimpleSelect: Component<SimpleSelectProps> = props => {
 
   const disabledSet = () => new Set(local.disabledValues || []);
 
-  const collection = () =>
+  // Use createMemo for reactive collection updates (Ark UI best practice)
+  const collection = createMemo(() =>
     createListCollection({
       items: (local.items || []).map(item => ({
         ...item,
@@ -320,9 +321,11 @@ const SimpleSelect: Component<SimpleSelectProps> = props => {
       })),
       itemToString: item => item.label,
       itemToValue: item => item.value,
-    });
+    }),
+  );
 
-  const selectValue = () => (local.value != null ? [local.value] : []);
+  // Convert single value to array format for Ark UI
+  const selectValue = () => (local.value != null && local.value !== '' ? [local.value] : []);
 
   return (
     <Select
@@ -343,14 +346,14 @@ const SimpleSelect: Component<SimpleSelectProps> = props => {
       </SelectControl>
       <SelectPositioner inDialog={local.inDialog}>
         <SelectContent>
-          <For each={collection().items}>
+          <Index each={collection().items}>
             {item => (
-              <SelectItem item={item}>
-                <SelectItemText>{item.label}</SelectItemText>
+              <SelectItem item={item()}>
+                <SelectItemText>{item().label}</SelectItemText>
                 <SelectItemIndicator />
               </SelectItem>
             )}
-          </For>
+          </Index>
         </SelectContent>
       </SelectPositioner>
       <SelectHiddenSelect />

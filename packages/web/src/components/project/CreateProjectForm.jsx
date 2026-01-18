@@ -202,7 +202,7 @@ export default function CreateProjectForm(props) {
               items={orgs().map(org => ({ value: org.id, label: org.name }))}
               value={selectedOrgId()}
               onChange={value => setSimpleSelectedOrgId(value)}
-              placeholder='SimpleSelect an organization'
+              placeholder='Select an organization'
             />
           </div>
         </Show>
