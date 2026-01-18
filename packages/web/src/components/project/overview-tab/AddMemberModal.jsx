@@ -2,7 +2,8 @@ import { createSignal, For, Show, createEffect, onCleanup } from 'solid-js';
 import { debounce } from '@solid-primitives/scheduled';
 import { A } from '@solidjs/router';
 import { FiX, FiAlertTriangle } from 'solid-icons/fi';
-import { Select, Avatar, showToast } from '@corates/ui';
+import { Select, showToast } from '@corates/ui';
+import { Avatar, AvatarImage, AvatarFallback, getInitials } from '@/components/ui/avatar';
 import { apiFetch } from '@lib/apiFetch.js';
 import { isUnlimitedQuota } from '@corates/shared/plans';
 
@@ -220,12 +221,12 @@ export default function AddMemberModal(props) {
                         onClick={() => handleSelectUser(user)}
                         class='flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-blue-50'
                       >
-                        <Avatar
-                          src={user.image}
-                          name={user.displayName || user.name || user.email}
-                          class='h-8 w-8 shrink-0 rounded-full'
-                          fallbackClass='flex items-center justify-center w-full h-full bg-blue-600 text-white text-sm font-medium'
-                        />
+                        <Avatar class='h-8 w-8 shrink-0'>
+                          <AvatarImage src={user.image} alt={user.displayName || user.name || user.email} />
+                          <AvatarFallback class='bg-blue-600 text-white text-sm'>
+                            {getInitials(user.displayName || user.name || user.email)}
+                          </AvatarFallback>
+                        </Avatar>
                         <div class='min-w-0'>
                           <p class='truncate font-medium text-gray-900'>
                             {user.displayName || user.name || 'Unknown'}
@@ -273,12 +274,12 @@ export default function AddMemberModal(props) {
             <Show when={selectedUser()}>
               <div class='flex items-center justify-between rounded-lg border border-blue-200 bg-blue-50 p-3'>
                 <div class='flex items-center gap-3'>
-                  <Avatar
-                    src={selectedUser().image}
-                    name={selectedUser().displayName || selectedUser().name || selectedUser().email}
-                    class='h-10 w-10 rounded-full'
-                    fallbackClass='flex items-center justify-center w-full h-full bg-blue-600 text-white font-medium'
-                  />
+                  <Avatar class='h-10 w-10'>
+                    <AvatarImage src={selectedUser().image} alt={selectedUser().displayName || selectedUser().name || selectedUser().email} />
+                    <AvatarFallback class='bg-blue-600 text-white'>
+                      {getInitials(selectedUser().displayName || selectedUser().name || selectedUser().email)}
+                    </AvatarFallback>
+                  </Avatar>
                   <div>
                     <p class='font-medium text-gray-900'>
                       {selectedUser().displayName || selectedUser().name || 'Unknown'}

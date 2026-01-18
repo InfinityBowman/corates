@@ -29,7 +29,8 @@ import {
   isAdminChecked,
   isAdmin,
 } from '@/stores/adminStore.js';
-import { Avatar, showToast } from '@corates/ui';
+import { showToast } from '@corates/ui';
+import { UserAvatar } from '@/components/ui/avatar';
 import {
   Dialog,
   DialogBackdrop,
@@ -330,7 +331,7 @@ export default function ProjectDetail() {
                         <tr class={table.row}>
                           <td class={table.cellCompact}>
                             <div class='flex items-center space-x-3'>
-                              <Avatar
+                              <UserAvatar
                                 src={member.userAvatar}
                                 name={member.userDisplayName || member.userName}
                                 class='h-8 w-8'

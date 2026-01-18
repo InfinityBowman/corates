@@ -37,7 +37,8 @@ import {
   isAdminChecked,
   isAdmin,
 } from '@/stores/adminStore.js';
-import { Avatar, showToast } from '@corates/ui';
+import { showToast } from '@corates/ui';
+import { UserAvatar } from '@/components/ui/avatar';
 import {
   Dialog,
   DialogBackdrop,
@@ -266,10 +267,10 @@ export default function UserDetail() {
           {/* Header */}
           <div class='mb-8 flex items-start justify-between'>
             <div class='flex items-center space-x-4'>
-              <Avatar
+              <UserAvatar
                 src={userData().user.avatarUrl || userData().user.image}
                 name={userData().user.displayName || userData().user.name}
-                class='h-16 w-16'
+                class='h-16 w-16 text-xl'
               />
               <div>
                 <h1 class='text-2xl font-bold text-gray-900'>

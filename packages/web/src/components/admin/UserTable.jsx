@@ -6,7 +6,7 @@
 import { Show, For } from 'solid-js';
 import { A, useNavigate } from '@solidjs/router';
 import { FiCheckCircle, FiMail } from 'solid-icons/fi';
-import { Avatar } from '@corates/ui';
+import { UserAvatar } from '@/components/ui/avatar';
 import {
   Tooltip,
   TooltipTrigger,
@@ -52,7 +52,7 @@ export default function UserTable(props) {
         const user = info.row.original;
         return (
           <div class='flex items-center space-x-3'>
-            <Avatar
+            <UserAvatar
               src={user.avatarUrl || user.image}
               name={user.displayName || user.name}
               class='h-8 w-8'

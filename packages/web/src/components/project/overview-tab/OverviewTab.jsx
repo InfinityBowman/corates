@@ -12,7 +12,8 @@ import projectStore from '@/stores/projectStore.js';
 import projectActionsStore from '@/stores/projectActionsStore';
 import { useBetterAuth } from '@api/better-auth-store.js';
 import { useProjectContext } from '../ProjectContext.jsx';
-import { Avatar, showToast, Progress } from '@corates/ui';
+import { showToast, Progress } from '@corates/ui';
+import { Avatar, AvatarImage, AvatarFallback, getInitials } from '@/components/ui/avatar';
 import {
   Collapsible,
   CollapsibleTrigger,
@@ -341,18 +342,21 @@ export default function OverviewTab() {
                     <div class='p-4'>
                       <div class='flex items-center justify-between'>
                         <div class='flex items-center gap-3'>
-                          <Avatar
-                            src={
-                              member.image ?
-                                member.image.startsWith('/') ?
-                                  `${API_BASE}${member.image}`
-                                : member.image
-                              : `${API_BASE}/api/users/avatar/${member.userId}`
-                            }
-                            name={member.displayName || member.name || member.email}
-                            class='h-10 w-10 overflow-hidden rounded-full'
-                            fallbackClass='flex items-center justify-center w-full h-full bg-blue-600 text-white font-medium'
-                          />
+                          <Avatar class='h-10 w-10'>
+                            <AvatarImage
+                              src={
+                                member.image ?
+                                  member.image.startsWith('/') ?
+                                    `${API_BASE}${member.image}`
+                                  : member.image
+                                : `${API_BASE}/api/users/avatar/${member.userId}`
+                              }
+                              alt={member.displayName || member.name || member.email}
+                            />
+                            <AvatarFallback class='bg-blue-600 text-white'>
+                              {getInitials(member.displayName || member.name || member.email)}
+                            </AvatarFallback>
+                          </Avatar>
                           <div>
                             <p class='font-medium text-gray-900'>
                               {member.displayName || member.name || 'Unknown'}

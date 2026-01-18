@@ -81,4 +81,44 @@ const AvatarFallback: Component<AvatarFallbackProps> = props => {
   );
 };
 
-export { Avatar, AvatarImage, AvatarFallback };
+/**
+ * Helper to generate initials from a name
+ */
+function getInitials(name?: string): string {
+  if (!name) return '';
+  const parts = name.trim().split(' ');
+  if (parts.length === 1) return parts[0][0]?.toUpperCase() || '';
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+}
+
+type UserAvatarProps = {
+  /** Image source URL */
+  src?: string;
+  /** Name for generating initials fallback */
+  name?: string;
+  /** Alt text for image */
+  alt?: string;
+  /** Additional class for root element */
+  class?: string;
+};
+
+/**
+ * Convenience component for user avatars with auto-generated initials.
+ *
+ * @example
+ * <UserAvatar src="/user.jpg" name="John Doe" />
+ *
+ * @example
+ * // Custom size via class
+ * <UserAvatar name="John Doe" class="h-8 w-8 text-xs" />
+ */
+const UserAvatar: Component<UserAvatarProps> = props => {
+  return (
+    <Avatar class={props.class}>
+      <AvatarImage src={props.src} alt={props.alt || props.name || 'Avatar'} />
+      <AvatarFallback>{getInitials(props.name)}</AvatarFallback>
+    </Avatar>
+  );
+};
+
+export { Avatar, AvatarImage, AvatarFallback, UserAvatar, getInitials };
