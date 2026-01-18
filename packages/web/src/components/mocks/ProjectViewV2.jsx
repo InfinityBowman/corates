@@ -99,7 +99,8 @@ const mockMembers = [
 const mockStudies = [
   {
     id: '1',
-    title: 'Mindfulness-Based Stress Reduction for Chronic Low Back Pain: A Randomized Controlled Trial',
+    title:
+      'Mindfulness-Based Stress Reduction for Chronic Low Back Pain: A Randomized Controlled Trial',
     authors: 'Cherkin DC, Sherman KJ, Balderson BH, et al.',
     firstAuthor: 'Cherkin DC',
     journal: 'JAMA',
@@ -115,7 +116,8 @@ const mockStudies = [
   },
   {
     id: '2',
-    title: 'Effects of Mindfulness-Based Cognitive Therapy on Body Awareness in Patients with Chronic Pain',
+    title:
+      'Effects of Mindfulness-Based Cognitive Therapy on Body Awareness in Patients with Chronic Pain',
     authors: 'de Jong M, Lazar SW, Hug K, et al.',
     firstAuthor: 'de Jong M',
     journal: 'Frontiers in Psychology',
@@ -125,9 +127,7 @@ const mockStudies = [
     disagreements: 3,
     resolved: 1,
     checklistType: 'AMSTAR2',
-    pdfs: [
-      { id: 'pdf3', name: 'deJong_2016_FrontPsych.pdf', tag: 'primary', size: '890 KB' },
-    ],
+    pdfs: [{ id: 'pdf3', name: 'deJong_2016_FrontPsych.pdf', tag: 'primary', size: '890 KB' }],
   },
   {
     id: '3',
@@ -154,9 +154,7 @@ const mockStudies = [
     year: 2020,
     assignedTo: [],
     status: 'unassigned',
-    pdfs: [
-      { id: 'pdf6', name: 'Schmidt_2020_PainMed.pdf', tag: 'primary', size: '750 KB' },
-    ],
+    pdfs: [{ id: 'pdf6', name: 'Schmidt_2020_PainMed.pdf', tag: 'primary', size: '750 KB' }],
   },
   {
     id: '5',
@@ -459,13 +457,8 @@ function StudyRow(props) {
 
       {/* Expanded PDF section */}
       <Show when={props.expanded && hasPdfs()}>
-        <div
-          class='space-y-2 border-t px-4 py-3'
-          style={{ 'border-color': tokens.slate100 }}
-        >
-          <For each={study().pdfs}>
-            {pdf => <PdfListItem pdf={pdf} />}
-          </For>
+        <div class='space-y-2 border-t px-4 py-3' style={{ 'border-color': tokens.slate100 }}>
+          <For each={study().pdfs}>{pdf => <PdfListItem pdf={pdf} />}</For>
         </div>
       </Show>
     </div>
@@ -687,7 +680,10 @@ function GoogleDriveContent(props) {
       <Show
         when={isConnected()}
         fallback={
-          <div class='rounded-xl border p-6 text-center' style={{ 'border-color': tokens.slate200 }}>
+          <div
+            class='rounded-xl border p-6 text-center'
+            style={{ 'border-color': tokens.slate200 }}
+          >
             <div
               class='mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full'
               style={{ background: '#fef3c7', color: '#b45309' }}
@@ -800,7 +796,7 @@ function StagedStudyCard(props) {
       </div>
 
       <div class='min-w-0 flex-1'>
-        <p class='text-sm font-medium leading-snug' style={{ color: tokens.slate900 }}>
+        <p class='text-sm leading-snug font-medium' style={{ color: tokens.slate900 }}>
           {props.study.title}
         </p>
         <p class='mt-1 truncate text-xs' style={{ color: tokens.slate500 }}>
@@ -916,11 +912,7 @@ function AssignmentPreviewRow(props) {
       <td class='py-2.5 pr-4'>
         <Show when={props.assignment.reviewer1}>
           <div class='flex items-center gap-2'>
-            <Avatar
-              name={props.assignment.reviewer1.name}
-              size='22px'
-              fontSize='8px'
-            />
+            <Avatar name={props.assignment.reviewer1.name} size='22px' fontSize='8px' />
             <span class='text-sm' style={{ color: tokens.slate600 }}>
               {props.assignment.reviewer1.name}
             </span>
@@ -930,15 +922,8 @@ function AssignmentPreviewRow(props) {
       <td class='py-2.5 pr-4'>
         <Show when={props.assignment.reviewer2}>
           <div class='flex items-center gap-2'>
-            <Avatar
-              name={props.assignment.reviewer2.name}
-              size='22px'
-              fontSize='8px'
-            />
-            <span
-              class='text-sm'
-              style={{ color: hasConflict() ? '#dc2626' : tokens.slate600 }}
-            >
+            <Avatar name={props.assignment.reviewer2.name} size='22px' fontSize='8px' />
+            <span class='text-sm' style={{ color: hasConflict() ? '#dc2626' : tokens.slate600 }}>
               {props.assignment.reviewer2.name}
               {hasConflict() && ' (conflict)'}
             </span>
@@ -1075,9 +1060,7 @@ function OverviewTab() {
                     </p>
                   </div>
                 </div>
-                <Badge variant={member.role === 'Owner' ? 'info' : 'neutral'}>
-                  {member.role}
-                </Badge>
+                <Badge variant={member.role === 'Owner' ? 'info' : 'neutral'}>{member.role}</Badge>
               </div>
             )}
           </For>
@@ -1094,9 +1077,24 @@ function OverviewTab() {
       >
         <div class='space-y-4'>
           {[
-            { action: 'Completed review', study: 'MBSR for Chronic Low Back Pain', user: 'Dr. Sarah Chen', time: '2 hours ago' },
-            { action: 'Started review', study: 'Mindfulness Meditation for Pediatric Chronic Pain', user: 'Dr. Michael Torres', time: '5 hours ago' },
-            { action: 'Added study', study: 'Online Mindfulness Training for Chronic Pain', user: 'Dr. Emily Watson', time: '1 day ago' },
+            {
+              action: 'Completed review',
+              study: 'MBSR for Chronic Low Back Pain',
+              user: 'Dr. Sarah Chen',
+              time: '2 hours ago',
+            },
+            {
+              action: 'Started review',
+              study: 'Mindfulness Meditation for Pediatric Chronic Pain',
+              user: 'Dr. Michael Torres',
+              time: '5 hours ago',
+            },
+            {
+              action: 'Added study',
+              study: 'Online Mindfulness Training for Chronic Pain',
+              user: 'Dr. Emily Watson',
+              time: '1 day ago',
+            },
           ].map((item, index) => (
             <div
               class='flex items-center gap-4 rounded-lg p-3'
@@ -1351,7 +1349,8 @@ function StudiesTab() {
     let remaining1 = totalStudies;
     p1Members.forEach((m, i) => {
       const percent = p1Percents[m.id] || 0;
-      const count = i === p1Members.length - 1 ? remaining1 : Math.round((percent / 100) * totalStudies);
+      const count =
+        i === p1Members.length - 1 ? remaining1 : Math.round((percent / 100) * totalStudies);
       remaining1 -= count;
       for (let j = 0; j < count; j++) pool1Assignments.push(m);
     });
@@ -1359,7 +1358,8 @@ function StudiesTab() {
     let remaining2 = totalStudies;
     p2Members.forEach((m, i) => {
       const percent = p2Percents[m.id] || 0;
-      const count = i === p2Members.length - 1 ? remaining2 : Math.round((percent / 100) * totalStudies);
+      const count =
+        i === p2Members.length - 1 ? remaining2 : Math.round((percent / 100) * totalStudies);
       remaining2 -= count;
       for (let j = 0; j < count; j++) pool2Assignments.push(m);
     });
@@ -1398,17 +1398,17 @@ function StudiesTab() {
 
   const hasAssignments = () => previewAssignments().length > 0;
   const hasConflicts = createMemo(() =>
-    previewAssignments().some(a => a.reviewer1?.id === a.reviewer2?.id)
+    previewAssignments().some(a => a.reviewer1?.id === a.reviewer2?.id),
   );
-  const conflictCount = createMemo(() =>
-    previewAssignments().filter(a => a.reviewer1?.id === a.reviewer2?.id).length
+  const conflictCount = createMemo(
+    () => previewAssignments().filter(a => a.reviewer1?.id === a.reviewer2?.id).length,
   );
 
   const pool1MembersWithPercent = createMemo(() =>
-    mockMembers.map(m => ({ ...m, percent: getPool1Percents()[m.id] || 0 }))
+    mockMembers.map(m => ({ ...m, percent: getPool1Percents()[m.id] || 0 })),
   );
   const pool2MembersWithPercent = createMemo(() =>
-    mockMembers.map(m => ({ ...m, percent: getPool2Percents()[m.id] || 0 }))
+    mockMembers.map(m => ({ ...m, percent: getPool2Percents()[m.id] || 0 })),
   );
 
   return (
@@ -1464,7 +1464,10 @@ function StudiesTab() {
             style={{ background: tokens.slate50, 'border-color': tokens.slate200 }}
           >
             {/* Tabs */}
-            <div class='flex border-b' style={{ 'border-color': tokens.slate200, background: 'white' }}>
+            <div
+              class='flex border-b'
+              style={{ 'border-color': tokens.slate200, background: 'white' }}
+            >
               <ImportTab
                 label='PDF Upload'
                 icon={<FiUpload class='h-4 w-4' />}
@@ -1526,10 +1529,7 @@ function StudiesTab() {
               <div class='space-y-2'>
                 <For each={stagedStudies()}>
                   {study => (
-                    <StagedStudyCard
-                      study={study}
-                      onRemove={() => removeStudy(study.id)}
-                    />
+                    <StagedStudyCard study={study} onRemove={() => removeStudy(study.id)} />
                   )}
                 </For>
               </div>
@@ -1702,7 +1702,8 @@ function StudiesTab() {
                   disabled={showCustomize() && !isCustomValid()}
                   class='flex items-center justify-center gap-2 rounded-lg px-5 py-2.5 text-sm font-medium transition-all duration-200'
                   style={{
-                    background: showCustomize() && !isCustomValid() ? tokens.slate200 : tokens.blue600,
+                    background:
+                      showCustomize() && !isCustomValid() ? tokens.slate200 : tokens.blue600,
                     color: showCustomize() && !isCustomValid() ? tokens.slate400 : 'white',
                     cursor: showCustomize() && !isCustomValid() ? 'not-allowed' : 'pointer',
                   }}
@@ -1737,7 +1738,8 @@ function StudiesTab() {
                         </h4>
                         <Show when={hasConflicts()}>
                           <p class='text-xs' style={{ color: '#dc2626' }}>
-                            {conflictCount()} conflict{conflictCount() !== 1 && 's'} - click Reshuffle
+                            {conflictCount()} conflict{conflictCount() !== 1 && 's'} - click
+                            Reshuffle
                           </p>
                         </Show>
                       </div>
@@ -1750,13 +1752,22 @@ function StudiesTab() {
                       <table class='w-full text-left'>
                         <thead class='sticky top-0' style={{ background: tokens.slate50 }}>
                           <tr>
-                            <th class='py-2 pl-4 pr-4 text-xs font-medium' style={{ color: tokens.slate500 }}>
+                            <th
+                              class='py-2 pr-4 pl-4 text-xs font-medium'
+                              style={{ color: tokens.slate500 }}
+                            >
                               Study
                             </th>
-                            <th class='py-2 pr-4 text-xs font-medium' style={{ color: tokens.slate500 }}>
+                            <th
+                              class='py-2 pr-4 text-xs font-medium'
+                              style={{ color: tokens.slate500 }}
+                            >
                               1st Reviewer
                             </th>
-                            <th class='py-2 pr-4 text-xs font-medium' style={{ color: tokens.slate500 }}>
+                            <th
+                              class='py-2 pr-4 text-xs font-medium'
+                              style={{ color: tokens.slate500 }}
+                            >
                               2nd Reviewer
                             </th>
                           </tr>
@@ -1805,13 +1816,13 @@ function StudiesTab() {
           </h3>
           <div class='relative'>
             <FiSearch
-              class='absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2'
+              class='absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2'
               style={{ color: tokens.slate400 }}
             />
             <input
               type='text'
               placeholder='Search studies...'
-              class='w-64 rounded-lg border py-2 pl-9 pr-3 text-sm focus:outline-none'
+              class='w-64 rounded-lg border py-2 pr-3 pl-9 text-sm focus:outline-none'
               style={{ 'border-color': tokens.slate200, background: tokens.slate50 }}
             />
           </div>
@@ -1850,7 +1861,9 @@ function AllStudiesStudyRow(props) {
   const handleHeaderClick = e => {
     if (!hasPdfs()) return;
     const target = e.target;
-    const interactive = target.closest('button, [role="button"], [data-selectable], input, [data-menu]');
+    const interactive = target.closest(
+      'button, [role="button"], [data-selectable], input, [data-menu]',
+    );
     if (interactive) return;
     props.onToggle?.();
   };
@@ -1958,7 +1971,7 @@ function AllStudiesStudyRow(props) {
           </button>
           <Show when={showMenu()}>
             <div
-              class='absolute right-0 top-full z-10 mt-1 w-48 rounded-lg border bg-white py-1 shadow-lg'
+              class='absolute top-full right-0 z-10 mt-1 w-48 rounded-lg border bg-white py-1 shadow-lg'
               style={{ 'border-color': tokens.slate200 }}
             >
               <button
@@ -2001,10 +2014,7 @@ function AllStudiesStudyRow(props) {
 
       {/* Expanded PDF section */}
       <Show when={props.expanded && hasPdfs()}>
-        <div
-          class='space-y-2 border-t px-4 py-3'
-          style={{ 'border-color': tokens.slate100 }}
-        >
+        <div class='space-y-2 border-t px-4 py-3' style={{ 'border-color': tokens.slate100 }}>
           <For each={study().pdfs}>{pdf => <PdfListItem pdf={pdf} />}</For>
         </div>
       </Show>
@@ -2070,7 +2080,10 @@ function TodoTab() {
                   {/* Status badge */}
                   <span
                     class='rounded-full px-2.5 py-1 text-xs font-medium'
-                    style={{ background: getStatusStyle('in-progress').bg, color: getStatusStyle('in-progress').text }}
+                    style={{
+                      background: getStatusStyle('in-progress').bg,
+                      color: getStatusStyle('in-progress').text,
+                    }}
                   >
                     In Progress
                   </span>
@@ -2383,11 +2396,111 @@ function MiniRobvisCell(props) {
 function MiniRobvisChart(props) {
   // Mock data for 5 studies x 16 questions
   const mockRobvisData = [
-    { study: 'Cherkin 2016', responses: ['yes', 'yes', 'partial-yes', 'yes', 'no', 'yes', 'yes', 'partial-yes', 'yes', 'yes', 'no-ma', 'yes', 'yes', 'partial-yes', 'yes', 'yes'] },
-    { study: 'de Jong 2016', responses: ['yes', 'partial-yes', 'yes', 'yes', 'yes', 'no', 'yes', 'yes', 'partial-yes', 'yes', 'yes', 'no', 'yes', 'yes', 'yes', 'partial-yes'] },
-    { study: 'Jastrowski 2019', responses: ['partial-yes', 'yes', 'no', 'yes', 'yes', 'yes', 'partial-yes', 'yes', 'yes', 'no', 'yes', 'yes', 'no-ma', 'yes', 'partial-yes', 'yes'] },
-    { study: 'Schmidt 2020', responses: ['yes', 'yes', 'yes', 'partial-yes', 'yes', 'yes', 'yes', 'no', 'yes', 'yes', 'yes', 'partial-yes', 'yes', 'yes', 'yes', 'yes'] },
-    { study: 'Gardner-Nix 2021', responses: ['no', 'yes', 'yes', 'yes', 'partial-yes', 'yes', 'yes', 'yes', 'yes', 'yes', 'yes', 'yes', 'no', 'partial-yes', 'yes', 'yes'] },
+    {
+      study: 'Cherkin 2016',
+      responses: [
+        'yes',
+        'yes',
+        'partial-yes',
+        'yes',
+        'no',
+        'yes',
+        'yes',
+        'partial-yes',
+        'yes',
+        'yes',
+        'no-ma',
+        'yes',
+        'yes',
+        'partial-yes',
+        'yes',
+        'yes',
+      ],
+    },
+    {
+      study: 'de Jong 2016',
+      responses: [
+        'yes',
+        'partial-yes',
+        'yes',
+        'yes',
+        'yes',
+        'no',
+        'yes',
+        'yes',
+        'partial-yes',
+        'yes',
+        'yes',
+        'no',
+        'yes',
+        'yes',
+        'yes',
+        'partial-yes',
+      ],
+    },
+    {
+      study: 'Jastrowski 2019',
+      responses: [
+        'partial-yes',
+        'yes',
+        'no',
+        'yes',
+        'yes',
+        'yes',
+        'partial-yes',
+        'yes',
+        'yes',
+        'no',
+        'yes',
+        'yes',
+        'no-ma',
+        'yes',
+        'partial-yes',
+        'yes',
+      ],
+    },
+    {
+      study: 'Schmidt 2020',
+      responses: [
+        'yes',
+        'yes',
+        'yes',
+        'partial-yes',
+        'yes',
+        'yes',
+        'yes',
+        'no',
+        'yes',
+        'yes',
+        'yes',
+        'partial-yes',
+        'yes',
+        'yes',
+        'yes',
+        'yes',
+      ],
+    },
+    {
+      study: 'Gardner-Nix 2021',
+      responses: [
+        'no',
+        'yes',
+        'yes',
+        'yes',
+        'partial-yes',
+        'yes',
+        'yes',
+        'yes',
+        'yes',
+        'yes',
+        'yes',
+        'yes',
+        'no',
+        'partial-yes',
+        'yes',
+        'yes',
+      ],
+    },
   ];
 
   return (
@@ -2397,7 +2510,10 @@ function MiniRobvisChart(props) {
         <div class='w-28 shrink-0' /> {/* Spacer for study names */}
         <For each={Array.from({ length: 16 }, (_, i) => i + 1)}>
           {q => (
-            <div class='flex h-4 w-4 items-center justify-center text-[8px] font-medium' style={{ color: tokens.slate400 }}>
+            <div
+              class='flex h-4 w-4 items-center justify-center text-[8px] font-medium'
+              style={{ color: tokens.slate400 }}
+            >
               {q}
             </div>
           )}
@@ -2428,7 +2544,9 @@ function MiniRobvisChart(props) {
         ].map(item => (
           <div class='flex items-center gap-1.5'>
             <div class='h-3 w-3 rounded-sm' style={{ background: item.color }} />
-            <span class='text-xs' style={{ color: tokens.slate500 }}>{item.label}</span>
+            <span class='text-xs' style={{ color: tokens.slate500 }}>
+              {item.label}
+            </span>
           </div>
         ))}
       </div>
@@ -2455,7 +2573,9 @@ function MiniDistributionChart() {
       <For each={mockDistribution}>
         {item => (
           <div class='flex items-center gap-2'>
-            <span class='w-6 text-xs font-medium' style={{ color: tokens.slate500 }}>Q{item.q}</span>
+            <span class='w-6 text-xs font-medium' style={{ color: tokens.slate500 }}>
+              Q{item.q}
+            </span>
             <div class='flex h-5 flex-1 overflow-hidden rounded'>
               <div style={{ width: `${item.yes}%`, background: tokens.success }} />
               <div style={{ width: `${item.partialYes}%`, background: '#fbbf24' }} />
@@ -2481,7 +2601,11 @@ function FiguresTab() {
       <div class='grid grid-cols-4 gap-4'>
         {[
           { label: 'Total Studies', value: mockStudies.length, sub: 'All studies' },
-          { label: 'High Confidence', value: 1, sub: `${Math.round((1 / mockStudies.length) * 100)}%` },
+          {
+            label: 'High Confidence',
+            value: 1,
+            sub: `${Math.round((1 / mockStudies.length) * 100)}%`,
+          },
           { label: 'Moderate', value: 0, sub: '0%' },
           { label: 'Low/Critically Low', value: 0, sub: '0%' },
         ].map(stat => (
@@ -2602,11 +2726,31 @@ function FiguresTab() {
                 Domain {domain}
               </span>
               <div class='flex items-center gap-1'>
-                <span class='h-3 w-3 rounded-full' style={{ background: tokens.success }} title='Yes' />
-                <span class='h-3 w-3 rounded-full' style={{ background: tokens.success }} title='Yes' />
-                <span class='h-3 w-3 rounded-full' style={{ background: '#fbbf24' }} title='Partial Yes' />
-                <span class='h-3 w-3 rounded-full' style={{ background: tokens.slate300 }} title='No MA' />
-                <span class='h-3 w-3 rounded-full' style={{ background: tokens.danger }} title='No' />
+                <span
+                  class='h-3 w-3 rounded-full'
+                  style={{ background: tokens.success }}
+                  title='Yes'
+                />
+                <span
+                  class='h-3 w-3 rounded-full'
+                  style={{ background: tokens.success }}
+                  title='Yes'
+                />
+                <span
+                  class='h-3 w-3 rounded-full'
+                  style={{ background: '#fbbf24' }}
+                  title='Partial Yes'
+                />
+                <span
+                  class='h-3 w-3 rounded-full'
+                  style={{ background: tokens.slate300 }}
+                  title='No MA'
+                />
+                <span
+                  class='h-3 w-3 rounded-full'
+                  style={{ background: tokens.danger }}
+                  title='No'
+                />
               </div>
             </div>
           ))}
@@ -2623,9 +2767,24 @@ function FiguresTab() {
       >
         <div class='grid grid-cols-3 gap-4'>
           {[
-            { icon: FiDownload, label: 'Download CSV', desc: 'Full data export', color: tokens.success },
-            { icon: FiBarChart2, label: 'Export Charts', desc: 'PNG or SVG', color: tokens.blue600 },
-            { icon: FiExternalLink, label: 'Share Report', desc: 'Generate link', color: tokens.blue600 },
+            {
+              icon: FiDownload,
+              label: 'Download CSV',
+              desc: 'Full data export',
+              color: tokens.success,
+            },
+            {
+              icon: FiBarChart2,
+              label: 'Export Charts',
+              desc: 'PNG or SVG',
+              color: tokens.blue600,
+            },
+            {
+              icon: FiExternalLink,
+              label: 'Share Report',
+              desc: 'Generate link',
+              color: tokens.blue600,
+            },
           ].map(item => (
             <button
               class='flex items-center gap-3 rounded-lg border p-4 text-left transition-all hover:border-gray-300'

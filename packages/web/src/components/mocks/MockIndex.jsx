@@ -28,9 +28,7 @@ export default function MockIndex() {
             >
               <div class='flex items-start justify-between'>
                 <div>
-                  <h3 class='mb-2 text-lg font-semibold text-gray-900'>
-                    Project Creation Wizard
-                  </h3>
+                  <h3 class='mb-2 text-lg font-semibold text-gray-900'>Project Creation Wizard</h3>
                   <p class='mb-3 text-sm text-gray-600'>
                     Multi-step wizard for creating systematic review projects. Material + Apple HIG
                     blend with blue palette. Includes project basics, team, studies import, and
@@ -92,7 +90,8 @@ export default function MockIndex() {
                   </h3>
                   <p class='mb-3 text-sm text-gray-600'>
                     Refreshed design with blue palette, URL-persisted tabs, Overview dashboard,
-                    improved table styling, and consistent design tokens matching the Project Wizard.
+                    improved table styling, and consistent design tokens matching the Project
+                    Wizard.
                   </p>
                   <div class='flex flex-wrap gap-2'>
                     <span class='inline-block rounded-full bg-blue-100 px-3 py-1 text-xs font-medium text-blue-700'>

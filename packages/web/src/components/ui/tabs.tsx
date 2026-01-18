@@ -65,10 +65,7 @@ type TabsListProps = ArkTabsListProps & {
 const TabsList: Component<TabsListProps> = props => {
   const [local, others] = splitProps(props, ['class', 'children']);
   return (
-    <TabsPrimitive.List
-      class={cn('flex items-center', local.class)}
-      {...others}
-    >
+    <TabsPrimitive.List class={cn('flex items-center', local.class)} {...others}>
       {local.children}
     </TabsPrimitive.List>
   );
