@@ -100,7 +100,7 @@ export default function AcademicInfoSection() {
   };
 
   return (
-    <div class='flex items-start justify-between border-t border-slate-100 pt-5'>
+    <div class='flex items-start justify-between border-t border-slate-100 pt-4'>
       <div class='flex-1'>
         <label class='mb-1 block text-xs font-medium tracking-wide text-slate-400 uppercase'>
           Academic Information
@@ -108,22 +108,22 @@ export default function AcademicInfoSection() {
         <Show
           when={isEditingAcademic()}
           fallback={
-            <div class='mt-2 space-y-2'>
+            <div class='mt-1 space-y-1.5'>
               <div class='flex items-baseline gap-2'>
                 <span class='text-xs font-medium text-slate-500'>Title:</span>
-                <span class='text-slate-900'>
+                <span class='text-sm text-slate-900'>
                   {user()?.title || <span class='text-slate-400'>Not set</span>}
                 </span>
               </div>
               <div class='flex items-baseline gap-2'>
                 <span class='text-xs font-medium text-slate-500'>Institution:</span>
-                <span class='text-slate-900'>
+                <span class='text-sm text-slate-900'>
                   {user()?.institution || <span class='text-slate-400'>Not set</span>}
                 </span>
               </div>
               <div class='flex items-baseline gap-2'>
                 <span class='text-xs font-medium text-slate-500'>Department:</span>
-                <span class='text-slate-900'>
+                <span class='text-sm text-slate-900'>
                   {user()?.department || <span class='text-slate-400'>Not set</span>}
                 </span>
               </div>

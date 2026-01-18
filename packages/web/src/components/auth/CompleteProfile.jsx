@@ -266,18 +266,17 @@ export default function CompleteProfile() {
   const displayError = () => error();
 
   return (
-    <div class='flex h-full items-center justify-center bg-blue-50 px-4 py-6 sm:py-12'>
-      <Show
-        when={!authLoading()}
-        fallback={
-          <div
-            role='status'
-            aria-label='Loading profile'
-            class='h-8 w-8 animate-spin rounded-full border-4 border-blue-600 border-t-transparent'
-          />
-        }
-      >
-        <div class='relative w-full max-w-md rounded-xl border border-gray-100 bg-white p-5 shadow-2xl sm:max-w-xl sm:rounded-3xl sm:p-10'>
+    <Show
+      when={!authLoading()}
+      fallback={
+        <div
+          role='status'
+          aria-label='Loading profile'
+          class='h-8 w-8 animate-spin rounded-full border-4 border-blue-600 border-t-transparent'
+        />
+      }
+    >
+      <div class='relative w-full max-w-md rounded-xl border border-gray-100 bg-white p-5 shadow-2xl sm:max-w-xl sm:rounded-3xl sm:p-10'>
           {/* Logo */}
           <a href='/' class='absolute top-4 left-4 sm:top-5 sm:left-5'>
             <img src='/logo.svg' alt='CoRATES' class='h-6 w-auto sm:h-7' />
@@ -551,8 +550,7 @@ export default function CompleteProfile() {
               </div>
             </StepsCompletedContent>
           </Steps>
-        </div>
-      </Show>
-    </div>
+      </div>
+    </Show>
   );
 }

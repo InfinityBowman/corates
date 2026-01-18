@@ -149,8 +149,7 @@ export default function SignIn() {
   }
 
   return (
-    <div class='flex h-full items-center justify-center bg-blue-50 px-4 py-8 sm:py-12'>
-      <div class='relative w-full max-w-md space-y-4 rounded-xl border border-gray-100 bg-white p-6 shadow-2xl sm:max-w-xl sm:rounded-3xl sm:p-12'>
+    <div class='relative w-full max-w-md space-y-4 rounded-xl border border-gray-100 bg-white p-6 shadow-2xl sm:max-w-xl sm:rounded-3xl sm:p-12'>
         {/* Logo */}
         <a href='/' class='absolute top-4 left-4 sm:top-6 sm:left-6'>
           <img src='/logo.svg' alt='CoRATES' class='h-6 w-auto sm:h-7' />
@@ -303,7 +302,6 @@ export default function SignIn() {
             </AuthLink>
           </div>
         </Show>
-      </div>
     </div>
   );
 }
