@@ -13,9 +13,15 @@
  * 6. SUCCESS - Done
  */
 
-import { createSignal, createEffect, Show, createMemo } from 'solid-js';
+import { createSignal, createEffect, Show, createMemo, Index } from 'solid-js';
 import { FiAlertTriangle, FiCheck, FiLoader, FiUserPlus, FiMail, FiX } from 'solid-icons/fi';
-import { PinInput, showToast } from '@corates/ui';
+import { showToast } from '@corates/ui';
+import {
+  PinInput,
+  PinInputControl,
+  PinInputField,
+  PinInputHiddenInput,
+} from '@/components/ui/pin-input';
 import {
   Dialog,
   DialogBackdrop,
@@ -358,10 +364,18 @@ export default function MergeAccountsDialog(props) {
                     Verification Code
                   </label>
                   <PinInput
-                    onInput={value => setVerificationCode(value)}
-                    onComplete={handleVerifyCode}
-                    isError={!!error()}
-                  />
+                    otp
+                    onValueChange={details => setVerificationCode(details.valueAsString)}
+                    onValueComplete={details => handleVerifyCode(details.valueAsString)}
+                    invalid={!!error()}
+                  >
+                    <PinInputControl>
+                      <Index each={[0, 1, 2, 3, 4, 5]}>
+                        {index => <PinInputField index={index()} />}
+                      </Index>
+                    </PinInputControl>
+                    <PinInputHiddenInput />
+                  </PinInput>
                 </div>
 
                 <Show when={error()}>
