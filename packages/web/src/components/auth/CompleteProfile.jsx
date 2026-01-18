@@ -270,7 +270,11 @@ export default function CompleteProfile() {
       <Show
         when={!authLoading()}
         fallback={
-          <div class='h-8 w-8 animate-spin rounded-full border-4 border-blue-600 border-t-transparent' />
+          <div
+            role='status'
+            aria-label='Loading profile'
+            class='h-8 w-8 animate-spin rounded-full border-4 border-blue-600 border-t-transparent'
+          />
         }
       >
         <div class='relative w-full max-w-md rounded-xl border border-gray-100 bg-white p-5 shadow-2xl sm:max-w-xl sm:rounded-3xl sm:p-10'>
@@ -341,6 +345,7 @@ export default function CompleteProfile() {
                       required
                       id='first-name-input'
                       placeholder='First'
+                      aria-describedby={displayError() ? 'profile-step1-error' : undefined}
                     />
                   </div>
                   <div>
@@ -364,6 +369,7 @@ export default function CompleteProfile() {
                       required
                       id='last-name-input'
                       placeholder='Last'
+                      aria-describedby={displayError() ? 'profile-step1-error' : undefined}
                     />
                   </div>
                 </div>
@@ -409,7 +415,7 @@ export default function CompleteProfile() {
                   </Show>
                 </div>
 
-                <ErrorMessage displayError={displayError} />
+                <ErrorMessage displayError={displayError} id='profile-step1-error' />
 
                 <PrimaryButton loading={false}>Next</PrimaryButton>
               </form>
@@ -466,7 +472,7 @@ export default function CompleteProfile() {
                   />
                 </div>
 
-                <ErrorMessage displayError={displayError} />
+                <ErrorMessage displayError={displayError} id='profile-step2-error' />
 
                 <div class='flex gap-3'>
                   <StepsPrevTrigger
@@ -505,7 +511,7 @@ export default function CompleteProfile() {
               <form onSubmit={handleFinish} class='space-y-4'>
                 <RoleSelector selectedRole={persona()} onSelect={handleRoleSelect} />
 
-                <ErrorMessage displayError={displayError} />
+                <ErrorMessage displayError={displayError} id='profile-step3-error' />
 
                 <div class='flex gap-3'>
                   <StepsPrevTrigger

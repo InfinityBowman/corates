@@ -23,9 +23,13 @@ export function GoogleButton(props) {
         >
           <Show
             when={props.loading}
-            fallback={<img src='/logos/google.svg' alt='Google' class='h-5 w-5' />}
+            fallback={<img src='/logos/google.svg' alt='' class='h-5 w-5' aria-hidden='true' />}
           >
-            <div class='h-5 w-5 animate-spin rounded-full border-2 border-gray-300 border-t-gray-600' />
+            <div
+              role='status'
+              aria-label='Signing in with Google'
+              class='h-5 w-5 animate-spin rounded-full border-2 border-gray-300 border-t-gray-600'
+            />
           </Show>
           Continue with Google
         </button>
@@ -37,12 +41,19 @@ export function GoogleButton(props) {
         disabled={props.loading}
         class={`${baseClass} p-3 sm:p-3.5`}
         title='Continue with Google'
+        aria-label='Continue with Google'
       >
         <Show
           when={props.loading}
-          fallback={<img src='/logos/google.svg' alt='Google' class='h-5 w-5 sm:h-6 sm:w-6' />}
+          fallback={
+            <img src='/logos/google.svg' alt='' class='h-5 w-5 sm:h-6 sm:w-6' aria-hidden='true' />
+          }
         >
-          <div class='h-5 w-5 animate-spin rounded-full border-2 border-gray-300 border-t-gray-600 sm:h-6 sm:w-6' />
+          <div
+            role='status'
+            aria-label='Signing in with Google'
+            class='h-5 w-5 animate-spin rounded-full border-2 border-gray-300 border-t-gray-600 sm:h-6 sm:w-6'
+          />
         </Show>
       </button>
     </Show>
@@ -72,9 +83,13 @@ export function OrcidButton(props) {
         >
           <Show
             when={props.loading}
-            fallback={<img src='/logos/orcid.svg' alt='ORCID' class='h-5 w-5' />}
+            fallback={<img src='/logos/orcid.svg' alt='' class='h-5 w-5' aria-hidden='true' />}
           >
-            <div class='h-5 w-5 animate-spin rounded-full border-2 border-gray-300 border-t-gray-600' />
+            <div
+              role='status'
+              aria-label='Signing in with ORCID'
+              class='h-5 w-5 animate-spin rounded-full border-2 border-gray-300 border-t-gray-600'
+            />
           </Show>
           Continue with ORCID
         </button>
@@ -86,12 +101,19 @@ export function OrcidButton(props) {
         disabled={props.loading}
         class={`${baseClass} p-3 sm:p-3.5`}
         title='Continue with ORCID'
+        aria-label='Continue with ORCID'
       >
         <Show
           when={props.loading}
-          fallback={<img src='/logos/orcid.svg' alt='ORCID' class='h-5 w-5 sm:h-6 sm:w-6' />}
+          fallback={
+            <img src='/logos/orcid.svg' alt='' class='h-5 w-5 sm:h-6 sm:w-6' aria-hidden='true' />
+          }
         >
-          <div class='h-5 w-5 animate-spin rounded-full border-2 border-gray-300 border-t-gray-600 sm:h-6 sm:w-6' />
+          <div
+            role='status'
+            aria-label='Signing in with ORCID'
+            class='h-5 w-5 animate-spin rounded-full border-2 border-gray-300 border-t-gray-600 sm:h-6 sm:w-6'
+          />
         </Show>
       </button>
     </Show>

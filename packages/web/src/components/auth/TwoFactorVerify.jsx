@@ -92,10 +92,11 @@ export default function TwoFactorVerify(props) {
             disabled={loading()}
             id='2fa-code'
             autoFocus
+            aria-describedby={displayError() ? '2fa-error' : undefined}
           />
         </div>
 
-        <ErrorMessage displayError={displayError} />
+        <ErrorMessage displayError={displayError} id='2fa-error' />
 
         <PrimaryButton loading={loading()} loadingText='Verifying...'>
           Verify

@@ -131,7 +131,12 @@ export default function CheckEmail() {
         {loading() ?
           <>
             <div class='flex justify-center'>
-              <AiOutlineLoading3Quarters class='animate-spin text-blue-600' size={48} />
+              <AiOutlineLoading3Quarters
+                class='animate-spin text-blue-600'
+                size={48}
+                role='status'
+                aria-label='Verifying email'
+              />
             </div>
             <h2 class='text-xl font-bold text-gray-900 sm:text-2xl'>Email Verified!</h2>
             <p class='text-sm text-gray-600 sm:text-base'>Redirecting you to the dashboard...</p>

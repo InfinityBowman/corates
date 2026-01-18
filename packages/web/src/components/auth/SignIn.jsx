@@ -229,23 +229,32 @@ export default function SignIn() {
                     id='email-input'
                     placeholder='you@example.com'
                     disabled={loading()}
+                    aria-describedby={displayError() ? 'signin-error' : undefined}
                   />
                 </div>
 
                 <div>
+                  <label
+                    class='mb-1 block text-xs font-semibold text-gray-700 sm:mb-2 sm:text-sm'
+                    for='password-input'
+                  >
+                    Password
+                  </label>
                   <PasswordInput autoComplete='current-password' disabled={loading()} required>
                     <PasswordInputControl>
                       <PasswordInputField
+                        id='password-input'
                         value={password()}
                         onInput={e => setPassword(e.target.value)}
                         placeholder='Password'
+                        aria-describedby={displayError() ? 'signin-error' : undefined}
                       />
                       <PasswordInputVisibilityTrigger />
                     </PasswordInputControl>
                   </PasswordInput>
                 </div>
 
-                <ErrorMessage displayError={displayError} />
+                <ErrorMessage displayError={displayError} id='signin-error' />
 
                 <PrimaryButton loading={loading()} loadingText='Signing In...'>
                   Sign In
