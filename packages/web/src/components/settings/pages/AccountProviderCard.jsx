@@ -7,7 +7,12 @@
 
 import { Show, createMemo } from 'solid-js';
 import { FiMail, FiTrash2, FiCheck, FiExternalLink } from 'solid-icons/fi';
-import { Tooltip } from '@corates/ui';
+import {
+  Tooltip,
+  TooltipTrigger,
+  TooltipPositioner,
+  TooltipContent,
+} from '@/components/ui/tooltip';
 
 /**
  * Format ORCID ID for display (add hyphens if not present)
@@ -108,8 +113,15 @@ export default function AccountProviderCard(props) {
         when={props.canUnlink}
         fallback={
           <Show when={!isCredential()}>
-            <Tooltip content="Can't unlink your only sign-in method. Link another account first.">
-              <span class='cursor-help text-xs text-gray-400'>Only sign-in method</span>
+            <Tooltip>
+              <TooltipTrigger>
+                <span class='cursor-help text-xs text-gray-400'>Only sign-in method</span>
+              </TooltipTrigger>
+              <TooltipPositioner>
+                <TooltipContent>
+                  Can't unlink your only sign-in method. Link another account first.
+                </TooltipContent>
+              </TooltipPositioner>
             </Tooltip>
           </Show>
         }

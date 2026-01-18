@@ -6,7 +6,7 @@
  */
 
 import { createMemo, createEffect } from 'solid-js';
-import { showToast } from '@corates/ui';
+import { showToast } from '@/components/ui/toast';
 
 import { createPdfOperations } from './pdfs.js';
 import { createReferenceOperations } from './references.js';

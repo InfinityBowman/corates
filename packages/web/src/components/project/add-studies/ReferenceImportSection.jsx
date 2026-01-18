@@ -8,7 +8,9 @@ import { For, Show } from 'solid-js';
 import { AiOutlineFileText } from 'solid-icons/ai';
 import { CgFileDocument } from 'solid-icons/cg';
 import { BiRegularLinkAlt } from 'solid-icons/bi';
-import { FileUpload, Checkbox } from '@corates/ui';
+import { FiUploadCloud } from 'solid-icons/fi';
+import { FileUpload, FileUploadDropzone, FileUploadHiddenInput } from '@/components/ui/file-upload';
+import { CheckboxRoot, CheckboxControl, CheckboxLabel } from '@/components/ui/checkbox';
 import {
   getRefDisplayName,
   SUPPORTED_FORMATS,
@@ -79,15 +81,22 @@ export default function ReferenceImportSection(props) {
             </Show>
 
             <div class='flex items-center gap-2 border-b border-gray-200 pb-2'>
-              <Checkbox
-                checked={studies().selectedRefIds().size === studies().importedRefs().length}
-                indeterminate={
-                  studies().selectedRefIds().size > 0 &&
-                  studies().selectedRefIds().size < studies().importedRefs().length
+              <CheckboxRoot
+                checked={
+                  (
+                    studies().selectedRefIds().size > 0 &&
+                    studies().selectedRefIds().size < studies().importedRefs().length
+                  ) ?
+                    'indeterminate'
+                  : studies().selectedRefIds().size === studies().importedRefs().length
                 }
-                onChange={studies().toggleSelectAllRefs}
-                label={`Select all (${studies().selectedRefIds().size}/${studies().importedRefs().length})`}
-              />
+                onCheckedChange={studies().toggleSelectAllRefs}
+              >
+                <CheckboxControl />
+                <CheckboxLabel>
+                  Select all ({studies().selectedRefIds().size}/{studies().importedRefs().length})
+                </CheckboxLabel>
+              </CheckboxRoot>
             </div>
 
             <div class='max-h-48 space-y-1 overflow-y-auto pr-1'>
@@ -101,11 +110,13 @@ export default function ReferenceImportSection(props) {
                     }`}
                     onClick={() => studies().toggleRefSelection(ref._id)}
                   >
-                    <Checkbox
+                    <CheckboxRoot
                       checked={studies().selectedRefIds().has(ref._id)}
-                      onChange={() => studies().toggleRefSelection(ref._id)}
+                      onCheckedChange={() => studies().toggleRefSelection(ref._id)}
                       class='mt-0.5'
-                    />
+                    >
+                      <CheckboxControl />
+                    </CheckboxRoot>
                     <div class='min-w-0 flex-1'>
                       <div class='flex items-center gap-2'>
                         <p class='line-clamp-2 flex-1 text-sm font-medium text-gray-900'>
@@ -166,13 +177,19 @@ export default function ReferenceImportSection(props) {
         </p>
 
         <FileUpload
-          accept={MIXED_IMPORT_ACCEPT}
-          multiple={true}
-          onFilesChange={studies().handleRefFileSelect}
-          showFileList={false}
-          helpText='RIS, EndNote, BibTeX, or PDF files'
-          compact
-        />
+          accept={MIXED_IMPORT_ACCEPT.split(',').map(t => t.trim())}
+          maxFiles={Infinity}
+          onFileAccept={details => studies().handleRefFileSelect(details.files)}
+        >
+          <FileUploadDropzone class='min-h-24 p-4'>
+            <FiUploadCloud class='h-6 w-6 text-gray-400' />
+            <p class='mt-2 text-center text-xs text-gray-600'>
+              <span class='font-medium text-blue-600'>Click to upload</span> or drag and drop
+            </p>
+            <p class='mt-1 text-xs text-gray-400'>RIS, EndNote, BibTeX, or PDF files</p>
+          </FileUploadDropzone>
+          <FileUploadHiddenInput />
+        </FileUpload>
 
         <div class='text-xs text-gray-500'>
           <p class='mb-1 font-medium'>Supported formats:</p>

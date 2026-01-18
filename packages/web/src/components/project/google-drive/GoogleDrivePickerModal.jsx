@@ -3,7 +3,19 @@
  */
 
 import { createSignal } from 'solid-js';
-import { Dialog, showToast } from '@corates/ui';
+import { showToast } from '@/components/ui/toast';
+import {
+  Dialog,
+  DialogBackdrop,
+  DialogPositioner,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogBody,
+  DialogCloseTrigger,
+} from '@/components/ui/dialog';
+import { FiX } from 'solid-icons/fi';
 
 import { importFromGoogleDrive } from '@/api/google-drive.js';
 import GoogleDrivePickerLauncher from './GoogleDrivePickerLauncher.jsx';
@@ -45,35 +57,45 @@ export default function GoogleDrivePickerModal(props) {
   };
 
   return (
-    <Dialog
-      open={props.open}
-      onOpenChange={open => !open && props.onClose()}
-      title='Import from Google Drive'
-      description='Select a PDF from your Google Drive to import'
-      size='lg'
-    >
-      <div class='space-y-4'>
-        <GoogleDrivePickerLauncher
-          active={props.open}
-          multiselect={false}
-          disabled={!props.projectId || !props.studyId}
-          busy={importing()}
-          onBeforeOpenPicker={() => props.onClose()}
-          onPick={handlePicked}
-          studyId={props.studyId}
-        />
+    <Dialog open={props.open} onOpenChange={open => !open && props.onClose()}>
+      <DialogBackdrop />
+      <DialogPositioner>
+        <DialogContent class='max-w-lg'>
+          <DialogHeader>
+            <DialogTitle>Import from Google Drive</DialogTitle>
+            <DialogCloseTrigger>
+              <FiX class='h-5 w-5' />
+            </DialogCloseTrigger>
+          </DialogHeader>
+          <DialogBody>
+            <DialogDescription class='mb-4'>
+              Select a PDF from your Google Drive to import
+            </DialogDescription>
+            <div class='space-y-4'>
+              <GoogleDrivePickerLauncher
+                active={props.open}
+                multiselect={false}
+                disabled={!props.projectId || !props.studyId}
+                busy={importing()}
+                onBeforeOpenPicker={() => props.onClose()}
+                onPick={handlePicked}
+                studyId={props.studyId}
+              />
 
-        {/* Action buttons */}
-        <div class='flex justify-end'>
-          <button
-            type='button'
-            onClick={() => props.onClose()}
-            class='rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50'
-          >
-            Cancel
-          </button>
-        </div>
-      </div>
+              {/* Action buttons */}
+              <div class='flex justify-end'>
+                <button
+                  type='button'
+                  onClick={() => props.onClose()}
+                  class='rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50'
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </DialogBody>
+        </DialogContent>
+      </DialogPositioner>
     </Dialog>
   );
 }

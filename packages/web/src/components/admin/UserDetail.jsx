@@ -24,6 +24,7 @@ import {
   FiCheckCircle,
   FiCopy,
   FiExternalLink,
+  FiX,
 } from 'solid-icons/fi';
 import { useAdminUserDetails } from '@primitives/useAdminQueries.js';
 import {
@@ -36,7 +37,18 @@ import {
   isAdminChecked,
   isAdmin,
 } from '@/stores/adminStore.js';
-import { Dialog, Avatar, showToast } from '@corates/ui';
+import { showToast } from '@/components/ui/toast';
+import { UserAvatar } from '@/components/ui/avatar';
+import {
+  Dialog,
+  DialogBackdrop,
+  DialogPositioner,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogBody,
+  DialogCloseTrigger,
+} from '@/components/ui/dialog';
 import { handleError } from '@/lib/error-utils.js';
 import { AdminBox } from './ui/index.js';
 import { table } from './styles/admin-tokens.js';
@@ -255,10 +267,10 @@ export default function UserDetail() {
           {/* Header */}
           <div class='mb-8 flex items-start justify-between'>
             <div class='flex items-center space-x-4'>
-              <Avatar
+              <UserAvatar
                 src={userData().user.avatarUrl || userData().user.image}
                 name={userData().user.displayName || userData().user.name}
-                class='h-16 w-16'
+                class='h-16 w-16 text-xl'
               />
               <div>
                 <h1 class='text-2xl font-bold text-gray-900'>
@@ -631,77 +643,101 @@ export default function UserDetail() {
         </Show>
 
         {/* Ban Dialog */}
-        <Dialog open={banDialog()} onOpenChange={setBanDialog} title='Ban User'>
-          <div class='space-y-4'>
-            <p class='text-sm text-gray-600'>
-              This will ban the user and revoke all their sessions.
-            </p>
-            <div>
-              <label class='mb-1 block text-sm font-medium text-gray-700'>Ban Reason</label>
-              <textarea
-                value={banReason()}
-                onInput={e => setBanReason(e.target.value)}
-                placeholder='Enter reason for ban...'
-                class='w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-red-500 focus:outline-none'
-                rows={3}
-              />
-            </div>
-            <div class='flex justify-end space-x-3'>
-              <button
-                onClick={() => setBanDialog(false)}
-                class='rounded-lg bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200'
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleBan}
-                disabled={loading()}
-                class='rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50'
-              >
-                {loading() ? 'Banning...' : 'Ban User'}
-              </button>
-            </div>
-          </div>
+        <Dialog open={banDialog()} onOpenChange={setBanDialog}>
+          <DialogBackdrop />
+          <DialogPositioner>
+            <DialogContent class='max-w-md'>
+              <DialogHeader>
+                <DialogTitle>Ban User</DialogTitle>
+                <DialogCloseTrigger>
+                  <FiX class='h-5 w-5' />
+                </DialogCloseTrigger>
+              </DialogHeader>
+              <DialogBody>
+                <div class='space-y-4'>
+                  <p class='text-sm text-gray-600'>
+                    This will ban the user and revoke all their sessions.
+                  </p>
+                  <div>
+                    <label class='mb-1 block text-sm font-medium text-gray-700'>Ban Reason</label>
+                    <textarea
+                      value={banReason()}
+                      onInput={e => setBanReason(e.target.value)}
+                      placeholder='Enter reason for ban...'
+                      class='w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-red-500 focus:outline-none'
+                      rows={3}
+                    />
+                  </div>
+                  <div class='flex justify-end space-x-3'>
+                    <button
+                      onClick={() => setBanDialog(false)}
+                      class='rounded-lg bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200'
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={handleBan}
+                      disabled={loading()}
+                      class='rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50'
+                    >
+                      {loading() ? 'Banning...' : 'Ban User'}
+                    </button>
+                  </div>
+                </div>
+              </DialogBody>
+            </DialogContent>
+          </DialogPositioner>
         </Dialog>
 
         {/* Confirm Dialog */}
-        <Dialog
-          open={!!confirmDialog()}
-          onOpenChange={open => !open && setConfirmDialog(null)}
-          title={confirmDialog()?.type === 'delete' ? 'Delete User' : 'Revoke All Sessions'}
-          role='alertdialog'
-        >
-          <div class='space-y-4'>
-            <Show when={confirmDialog()?.type === 'delete'}>
-              <p class='text-sm text-gray-600'>
-                This will permanently delete the user and all their data. This action cannot be
-                undone.
-              </p>
-            </Show>
-            <Show when={confirmDialog()?.type === 'revoke-all'}>
-              <p class='text-sm text-gray-600'>
-                This will revoke all active sessions for this user. They will need to sign in again.
-              </p>
-            </Show>
-            <div class='flex justify-end space-x-3'>
-              <button
-                onClick={() => setConfirmDialog(null)}
-                class='rounded-lg bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200'
-              >
-                Cancel
-              </button>
-              <button
-                onClick={() => {
-                  if (confirmDialog()?.type === 'delete') handleDeleteUser();
-                  else if (confirmDialog()?.type === 'revoke-all') handleRevokeAllSessions();
-                }}
-                disabled={loading()}
-                class='rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50'
-              >
-                {loading() ? 'Processing...' : 'Confirm'}
-              </button>
-            </div>
-          </div>
+        <Dialog open={!!confirmDialog()} onOpenChange={open => !open && setConfirmDialog(null)}>
+          <DialogBackdrop />
+          <DialogPositioner>
+            <DialogContent class='max-w-md'>
+              <DialogHeader>
+                <DialogTitle>
+                  {confirmDialog()?.type === 'delete' ? 'Delete User' : 'Revoke All Sessions'}
+                </DialogTitle>
+                <DialogCloseTrigger>
+                  <FiX class='h-5 w-5' />
+                </DialogCloseTrigger>
+              </DialogHeader>
+              <DialogBody>
+                <div class='space-y-4'>
+                  <Show when={confirmDialog()?.type === 'delete'}>
+                    <p class='text-sm text-gray-600'>
+                      This will permanently delete the user and all their data. This action cannot
+                      be undone.
+                    </p>
+                  </Show>
+                  <Show when={confirmDialog()?.type === 'revoke-all'}>
+                    <p class='text-sm text-gray-600'>
+                      This will revoke all active sessions for this user. They will need to sign in
+                      again.
+                    </p>
+                  </Show>
+                  <div class='flex justify-end space-x-3'>
+                    <button
+                      onClick={() => setConfirmDialog(null)}
+                      class='rounded-lg bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200'
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={() => {
+                        if (confirmDialog()?.type === 'delete') handleDeleteUser();
+                        else if (confirmDialog()?.type === 'revoke-all') handleRevokeAllSessions();
+                      }}
+                      disabled={loading()}
+                      class='rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50'
+                    >
+                      {loading() ? 'Processing...' : 'Confirm'}
+                    </button>
+                  </div>
+                </div>
+              </DialogBody>
+            </DialogContent>
+          </DialogPositioner>
         </Dialog>
       </Show>
     </Show>

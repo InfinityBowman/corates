@@ -1,6 +1,11 @@
 import { Show, createMemo } from 'solid-js';
 import { FaSolidCircleInfo } from 'solid-icons/fa';
-import { Tooltip } from '@corates/ui';
+import {
+  Tooltip,
+  TooltipTrigger,
+  TooltipPositioner,
+  TooltipContent,
+} from '@/components/ui/tooltip';
 import { getChecklistMetadata, DEFAULT_CHECKLIST_TYPE } from '@/checklist-registry';
 
 /**
@@ -73,16 +78,21 @@ export function ScoreTooltip(props) {
   const tooltipContent = createMemo(() => getTooltipContent(props.checklistType));
 
   return (
-    <Tooltip content={tooltipContent()} placement='bottom' openDelay={200}>
-      <a
-        href={infoUrl()}
-        target='_blank'
-        rel='noreferrer'
-        class='mt-0.5 inline-flex items-center justify-center rounded-full p-0.5 opacity-70 hover:opacity-100 focus:opacity-100 focus:ring-2 focus:ring-blue-500 focus:outline-none'
-        aria-label={`Open ${getChecklistMetadata(props.checklistType).name} guidance in a new tab`}
-      >
-        <FaSolidCircleInfo size={12} />
-      </a>
+    <Tooltip openDelay={200} positioning={{ placement: 'bottom' }}>
+      <TooltipTrigger>
+        <a
+          href={infoUrl()}
+          target='_blank'
+          rel='noreferrer noopener'
+          class='mt-0.5 inline-flex items-center justify-center rounded-full p-0.5 opacity-70 hover:opacity-100 focus:opacity-100 focus:ring-2 focus:ring-blue-500 focus:outline-none'
+          aria-label={`Open ${getChecklistMetadata(props.checklistType).name} guidance in a new tab`}
+        >
+          <FaSolidCircleInfo size={12} />
+        </a>
+      </TooltipTrigger>
+      <TooltipPositioner>
+        <TooltipContent>{tooltipContent()}</TooltipContent>
+      </TooltipPositioner>
     </Tooltip>
   );
 }

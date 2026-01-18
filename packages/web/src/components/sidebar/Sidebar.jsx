@@ -5,8 +5,22 @@ import { Portal } from 'solid-js/web';
 import { useBetterAuth } from '@api/better-auth-store.js';
 import localChecklistsStore from '@/stores/localChecklistsStore';
 import { useMyProjectsList } from '@primitives/useMyProjectsList.js';
+import { showToast } from '@/components/ui/toast';
 // import useRecentsNav from './useRecentsNav.js';
-import { useConfirmDialog, Tooltip } from '@corates/ui';
+import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
+import {
+  AlertDialog,
+  AlertDialogBackdrop,
+  AlertDialogPositioner,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogIcon,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogCancel,
+  AlertDialogAction,
+} from '@/components/ui/alert-dialog';
 import { AiOutlineFolder, AiOutlineCloud, AiOutlineHome } from 'solid-icons/ai';
 import { HiOutlineDocumentCheck } from 'solid-icons/hi';
 import { FiChevronsLeft, FiChevronsRight, FiX, FiClock } from 'solid-icons/fi';
@@ -52,9 +66,9 @@ export default function Sidebar(props) {
   const cloudProjects = () => projectListQuery.projects();
   const isProjectsLoading = () => projectListQuery.isLoading();
 
-  // Confirm dialog for delete actions
-  const confirmDialog = useConfirmDialog();
-  const [_pendingDeleteId, setPendingDeleteId] = createSignal(null);
+  // Delete confirmation dialog state
+  const [deleteDialogOpen, setDeleteDialogOpen] = createSignal(false);
+  const [pendingDeleteId, setPendingDeleteId] = createSignal(null);
 
   const isExpanded = () => props.desktopMode === 'expanded';
 
@@ -131,19 +145,30 @@ export default function Sidebar(props) {
     }
   };
 
-  const handleDeleteLocalChecklist = async (e, checklistId) => {
+  // Opens delete confirmation dialog
+  const handleDeleteLocalChecklist = (e, checklistId) => {
     e.stopPropagation();
     setPendingDeleteId(checklistId);
-    const confirmed = await confirmDialog.open({
-      title: 'Delete Checklist',
-      description: 'Are you sure you want to delete this checklist? This cannot be undone.',
-      confirmText: 'Delete',
-      variant: 'danger',
-    });
-    if (confirmed) {
-      await deleteChecklist(checklistId);
+    setDeleteDialogOpen(true);
+  };
+
+  // Executes delete after confirmation
+  const confirmDeleteChecklist = async () => {
+    const checklistId = pendingDeleteId();
+    if (!checklistId) {
+      setDeleteDialogOpen(false);
+      setPendingDeleteId(null);
+      return;
     }
-    setPendingDeleteId(null);
+    try {
+      await deleteChecklist(checklistId);
+    } catch (err) {
+      console.error('Failed to delete checklist:', err);
+      showToast.error('Delete Failed', 'Could not delete the checklist. Please try again.');
+    } finally {
+      setDeleteDialogOpen(false);
+      setPendingDeleteId(null);
+    }
   };
 
   // Close mobile sidebar on escape key
@@ -192,14 +217,16 @@ export default function Sidebar(props) {
           <div class='flex shrink-0 items-center border-b border-gray-100 p-2'>
             {/* Desktop collapsed: just the expand button */}
             <Show when={!isExpanded()}>
-              <Tooltip content='Expand sidebar' positioning={{ placement: 'right' }}>
-                <button
+              <Tooltip positioning={{ placement: 'right' }}>
+                <TooltipTrigger
+                  as='button'
                   onClick={() => props.onToggleDesktop?.()}
                   class='hidden h-8 w-8 items-center justify-center rounded-md text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 md:flex'
                   aria-label='Expand sidebar'
                 >
                   <FiChevronsRight class='h-4 w-4' />
-                </button>
+                </TooltipTrigger>
+                <TooltipContent>Expand sidebar</TooltipContent>
               </Tooltip>
             </Show>
 
@@ -210,14 +237,16 @@ export default function Sidebar(props) {
 
             {/* Desktop expanded: collapse button */}
             <Show when={isExpanded()}>
-              <Tooltip content='Collapse sidebar' positioning={{ placement: 'right' }}>
-                <button
+              <Tooltip positioning={{ placement: 'right' }}>
+                <TooltipTrigger
+                  as='button'
                   onClick={() => props.onToggleDesktop?.()}
                   class='hidden h-7 w-7 items-center justify-center rounded-md text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 md:flex'
                   aria-label='Collapse sidebar'
                 >
                   <FiChevronsLeft class='h-4 w-4' />
-                </button>
+                </TooltipTrigger>
+                <TooltipContent>Collapse sidebar</TooltipContent>
               </Tooltip>
             </Show>
 
@@ -381,8 +410,9 @@ export default function Sidebar(props) {
           <Show when={!isExpanded()}>
             <div class='hidden flex-1 flex-col items-center gap-1 overflow-y-auto py-2 md:flex'>
               {/* Home/Projects icon */}
-              <Tooltip content='Projects' positioning={{ placement: 'right' }}>
-                <button
+              <Tooltip positioning={{ placement: 'right' }}>
+                <TooltipTrigger
+                  as='button'
                   onClick={() => navigate(getProjectsPath())}
                   class={`flex h-8 w-8 items-center justify-center rounded-md transition-colors ${
                     isCurrentPath(getProjectsPath()) || isCurrentPath('/dashboard') ?
@@ -392,13 +422,15 @@ export default function Sidebar(props) {
                   aria-label='Projects'
                 >
                   <AiOutlineHome class='h-4 w-4' />
-                </button>
+                </TooltipTrigger>
+                <TooltipContent>Projects</TooltipContent>
               </Tooltip>
 
               {/* Projects icon */}
               <Show when={isLoggedIn()}>
-                <Tooltip content='Projects' positioning={{ placement: 'right' }}>
-                  <button
+                <Tooltip positioning={{ placement: 'right' }}>
+                  <TooltipTrigger
+                    as='button'
                     onClick={() => {
                       props.onToggleDesktop?.();
                     }}
@@ -406,13 +438,15 @@ export default function Sidebar(props) {
                     aria-label='Projects'
                   >
                     <AiOutlineCloud class='h-4 w-4' />
-                  </button>
+                  </TooltipTrigger>
+                  <TooltipContent>Projects</TooltipContent>
                 </Tooltip>
               </Show>
 
               {/* Appraisals icon */}
-              <Tooltip content='Appraisals' positioning={{ placement: 'right' }}>
-                <button
+              <Tooltip positioning={{ placement: 'right' }}>
+                <TooltipTrigger
+                  as='button'
                   onClick={() => {
                     props.onToggleDesktop?.();
                   }}
@@ -420,13 +454,36 @@ export default function Sidebar(props) {
                   aria-label='Appraisals'
                 >
                   <HiOutlineDocumentCheck class='h-4 w-4' />
-                </button>
+                </TooltipTrigger>
+                <TooltipContent>Appraisals</TooltipContent>
               </Tooltip>
             </div>
           </Show>
         </div>
 
-        <confirmDialog.ConfirmDialogComponent />
+        {/* Delete confirmation dialog */}
+        <AlertDialog open={deleteDialogOpen()} onOpenChange={setDeleteDialogOpen}>
+          <AlertDialogBackdrop />
+          <AlertDialogPositioner>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogIcon variant='danger' />
+                <div>
+                  <AlertDialogTitle>Delete Checklist</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Are you sure you want to delete this checklist? This cannot be undone.
+                  </AlertDialogDescription>
+                </div>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction variant='danger' onClick={confirmDeleteChecklist}>
+                  Delete
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialogPositioner>
+        </AlertDialog>
 
         {/* Resize handle (desktop only, when expanded) */}
         <Show when={isExpanded()}>

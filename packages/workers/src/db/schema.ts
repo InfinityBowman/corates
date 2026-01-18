@@ -16,6 +16,17 @@ export const user = sqliteTable('user', {
   role: text('role'), // Better Auth admin/plugin role (e.g. 'user', 'admin')
   persona: text('persona'), // optional: researcher, student, librarian, other
   profileCompletedAt: integer('profileCompletedAt'), // unix timestamp (seconds)
+  // Academic/professional information
+  title: text('title'), // 'Dr.', 'Prof.', or custom
+  institution: text('institution'), // University or organization name
+  department: text('department'), // Department or faculty name
+  country: text('country'), // ISO 3166-1 alpha-2 code (e.g., 'US', 'GB')
+  bio: text('bio'), // Short biography
+  // User preferences and activity
+  timezone: text('timezone'), // IANA timezone (e.g., 'America/New_York')
+  locale: text('locale'), // BCP 47 language tag (e.g., 'en-US')
+  preferences: text('preferences'), // JSON: { theme, emailNotifications, etc. }
+  lastActiveAt: integer('lastActiveAt', { mode: 'timestamp' }),
   twoFactorEnabled: integer('twoFactorEnabled', { mode: 'boolean' }).default(false),
   // Admin plugin fields
   banned: integer('banned', { mode: 'boolean' }).default(false),

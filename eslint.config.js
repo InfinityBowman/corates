@@ -259,6 +259,21 @@ export default [
     },
   },
   {
+    // Web UI components can import from @ark-ui/solid directly (shadcn-style primitives)
+    files: ['packages/web/src/components/ui/**/*.{js,jsx,ts,tsx}'],
+    rules: {
+      'no-restricted-imports': 'off',
+      'corates/corates-ui-imports': 'off',
+    },
+  },
+  {
+    // Web lib/ui can import from @ark-ui/solid directly
+    files: ['packages/web/src/lib/ui/**/*.{js,jsx,ts,tsx}'],
+    rules: {
+      'no-restricted-imports': 'off',
+    },
+  },
+  {
     // Test file configuration
     files: [
       '**/__tests__/**/*.{js,jsx,ts,tsx}',

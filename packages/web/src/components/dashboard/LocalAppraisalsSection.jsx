@@ -9,9 +9,21 @@
  * - Sign-in prompt for logged-out users
  */
 
-import { Show, For, useContext } from 'solid-js';
+import { Show, For, useContext, createSignal } from 'solid-js';
 import { useNavigate } from '@solidjs/router';
-import { useConfirmDialog } from '@corates/ui';
+import {
+  AlertDialog,
+  AlertDialogBackdrop,
+  AlertDialogPositioner,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogIcon,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogCancel,
+  AlertDialogAction,
+} from '@/components/ui/alert-dialog';
 import { FiPlus, FiFileText, FiLogIn } from 'solid-icons/fi';
 
 import { AnimationContext } from './Dashboard.jsx';
@@ -78,24 +90,29 @@ function SignInPrompt(props) {
  */
 export function LocalAppraisalsSection(props) {
   const navigate = useNavigate();
-  const confirmDialog = useConfirmDialog();
 
   const { checklists, deleteChecklist, updateChecklist } = localChecklistsStore;
+
+  // Delete confirmation dialog state
+  const [deleteDialogOpen, setDeleteDialogOpen] = createSignal(false);
+  const [pendingDeleteId, setPendingDeleteId] = createSignal(null);
 
   const handleOpen = checklistId => {
     navigate(`/checklist/${checklistId}`);
   };
 
-  const handleDelete = async checklistId => {
-    const confirmed = await confirmDialog.open({
-      title: 'Delete Appraisal',
-      description: 'Are you sure you want to delete this appraisal? This cannot be undone.',
-      confirmText: 'Delete',
-      variant: 'danger',
-    });
-    if (confirmed) {
+  const handleDelete = checklistId => {
+    setPendingDeleteId(checklistId);
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    const checklistId = pendingDeleteId();
+    if (checklistId) {
       await deleteChecklist(checklistId);
     }
+    setDeleteDialogOpen(false);
+    setPendingDeleteId(null);
   };
 
   const handleRename = async (checklistId, newName) => {
@@ -163,7 +180,29 @@ export function LocalAppraisalsSection(props) {
         </For>
       </div>
 
-      <confirmDialog.ConfirmDialogComponent />
+      {/* Delete confirmation dialog */}
+      <AlertDialog open={deleteDialogOpen()} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogBackdrop />
+        <AlertDialogPositioner>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogIcon variant='danger' />
+              <div>
+                <AlertDialogTitle>Delete Appraisal</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Are you sure you want to delete this appraisal? This cannot be undone.
+                </AlertDialogDescription>
+              </div>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction variant='danger' onClick={confirmDelete}>
+                Delete
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialogPositioner>
+      </AlertDialog>
     </section>
   );
 }

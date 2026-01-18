@@ -14,7 +14,20 @@ import { CHECKLIST_STATUS, isEditable } from '@/constants/checklist-status.js';
 import { getNextStatusForCompletion } from '@/lib/checklist-domain.js';
 import { downloadPdf, uploadPdf, deletePdf, getPdfUrl } from '@api/pdf-api.js';
 import { getCachedPdf, cachePdf } from '@primitives/pdfCache.js';
-import { showToast, useConfirmDialog } from '@corates/ui';
+import { showToast } from '@/components/ui/toast';
+import {
+  AlertDialog,
+  AlertDialogBackdrop,
+  AlertDialogPositioner,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogIcon,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogCancel,
+  AlertDialogAction,
+} from '@/components/ui/alert-dialog';
 import { useBetterAuth } from '@api/better-auth-store.js';
 import { getChecklistTypeFromState, scoreChecklistOfType } from '@/checklist-registry';
 import { IoChevronBack } from 'solid-icons/io';
@@ -28,7 +41,9 @@ export default function ChecklistYjsWrapper() {
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = useBetterAuth();
-  const confirmDialog = useConfirmDialog();
+
+  // Complete confirmation dialog state
+  const [completeDialogOpen, setCompleteDialogOpen] = createSignal(false);
 
   // Get project context from parent ProjectView
   const { orgId, projectOps } = useProjectContext();
@@ -323,17 +338,12 @@ export default function ChecklistYjsWrapper() {
     }
 
     // Show confirmation dialog before marking complete
-    const confirmed = await confirmDialog.open({
-      title: 'Mark Appraisal as Complete?',
-      description:
-        'Once marked complete, this appraisal will be locked and cannot be edited. Are you sure you want to proceed?',
-      confirmText: 'Mark Complete',
-      cancelText: 'Cancel',
-      variant: 'warning',
-    });
+    setCompleteDialogOpen(true);
+  }
 
-    if (!confirmed) return;
-
+  // Executes completion after confirmation
+  const confirmMarkComplete = () => {
+    const study = currentStudy();
     // Determine the appropriate status based on reviewer count
     const nextStatus = getNextStatusForCompletion(study);
     updateChecklist(params.studyId, params.checklistId, { status: nextStatus });
@@ -344,7 +354,8 @@ export default function ChecklistYjsWrapper() {
       'Appraisal Completed',
       `This appraisal has been marked as ${statusLabel} and is now locked.`,
     );
-  }
+    setCompleteDialogOpen(false);
+  };
 
   // Get the checklist type from metadata or detect from state
   const checklistType = createMemo(() => {
@@ -408,7 +419,30 @@ export default function ChecklistYjsWrapper() {
   // Header content for the split screen toolbar (left side)
   const headerContent = (
     <>
-      <confirmDialog.ConfirmDialogComponent />
+      {/* Complete confirmation dialog */}
+      <AlertDialog open={completeDialogOpen()} onOpenChange={setCompleteDialogOpen}>
+        <AlertDialogBackdrop />
+        <AlertDialogPositioner>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogIcon variant='warning' />
+              <div>
+                <AlertDialogTitle>Mark Appraisal as Complete?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Once marked complete, this appraisal will be locked and cannot be edited. Are you
+                  sure you want to proceed?
+                </AlertDialogDescription>
+              </div>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction variant='warning' onClick={confirmMarkComplete}>
+                Mark Complete
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialogPositioner>
+      </AlertDialog>
       <button
         onClick={() => navigate(getBackPath())}
         class='text-gray-400 transition-colors hover:text-gray-700'

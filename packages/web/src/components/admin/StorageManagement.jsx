@@ -13,10 +13,21 @@ import {
   FiCheckSquare,
   FiSquare,
   FiLoader,
+  FiX,
 } from 'solid-icons/fi';
 import { deleteStorageDocuments } from '@/stores/adminStore.js';
 import { useStorageDocuments } from '@primitives/useAdminQueries.js';
-import { Dialog, showToast } from '@corates/ui';
+import { showToast } from '@/components/ui/toast';
+import {
+  Dialog,
+  DialogBackdrop,
+  DialogPositioner,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogBody,
+  DialogCloseTrigger,
+} from '@/components/ui/dialog';
 import { DashboardHeader, AdminSection, AdminBox } from './ui/index.js';
 import { input, table } from './styles/admin-tokens.js';
 
@@ -405,34 +416,42 @@ export default function StorageManagement() {
         </AdminBox>
       </AdminSection>
       {/* Delete Confirmation Dialog */}
-      <Dialog
-        open={!!deleteDialog()}
-        onOpenChange={open => !open && setDeleteDialog(null)}
-        title='Delete Documents'
-        role='alertdialog'
-      >
-        <div class='space-y-4'>
-          <p class='text-sm text-gray-600'>
-            Are you sure you want to delete {deleteDialog()?.length || 0} document
-            {deleteDialog()?.length === 1 ? '' : 's'}? This action cannot be undone.
-          </p>
-          <div class='flex justify-end space-x-3'>
-            <button
-              onClick={() => setDeleteDialog(null)}
-              disabled={loading()}
-              class='rounded-lg bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200 disabled:opacity-50'
-            >
-              Cancel
-            </button>
-            <button
-              onClick={handleDelete}
-              disabled={loading()}
-              class='rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:opacity-50'
-            >
-              {loading() ? 'Deleting...' : 'Delete'}
-            </button>
-          </div>
-        </div>
+      <Dialog open={!!deleteDialog()} onOpenChange={open => !open && setDeleteDialog(null)}>
+        <DialogBackdrop />
+        <DialogPositioner>
+          <DialogContent class='max-w-md'>
+            <DialogHeader>
+              <DialogTitle>Delete Documents</DialogTitle>
+              <DialogCloseTrigger aria-label='Close'>
+                <FiX class='h-5 w-5' />
+              </DialogCloseTrigger>
+            </DialogHeader>
+            <DialogBody>
+              <div class='space-y-4'>
+                <p class='text-sm text-gray-600'>
+                  Are you sure you want to delete {deleteDialog()?.length || 0} document
+                  {deleteDialog()?.length === 1 ? '' : 's'}? This action cannot be undone.
+                </p>
+                <div class='flex justify-end space-x-3'>
+                  <button
+                    onClick={() => setDeleteDialog(null)}
+                    disabled={loading()}
+                    class='rounded-lg bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200 disabled:opacity-50'
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleDelete}
+                    disabled={loading()}
+                    class='rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:opacity-50'
+                  >
+                    {loading() ? 'Deleting...' : 'Delete'}
+                  </button>
+                </div>
+              </div>
+            </DialogBody>
+          </DialogContent>
+        </DialogPositioner>
       </Dialog>
     </>
   );

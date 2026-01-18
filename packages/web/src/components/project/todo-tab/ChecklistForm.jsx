@@ -4,7 +4,7 @@
 
 import { createSignal } from 'solid-js';
 import { getChecklistTypeOptions, DEFAULT_CHECKLIST_TYPE } from '@/checklist-registry';
-import { Select } from '@corates/ui';
+import { SimpleSelect } from '@/components/ui/select';
 
 export default function ChecklistForm(props) {
   const [type, setType] = createSignal(DEFAULT_CHECKLIST_TYPE);
@@ -20,7 +20,7 @@ export default function ChecklistForm(props) {
     <div class='m-4 rounded-lg border border-blue-200 bg-blue-50 p-4'>
       <div class='space-y-3'>
         <div>
-          <Select
+          <SimpleSelect
             label='Checklist Type'
             value={type()}
             onChange={value => setType(value)}

@@ -1,7 +1,21 @@
 import { createSignal, Show, onMount, For } from 'solid-js';
 import { FiShield, FiX, FiCopy, FiSmartphone, FiLock, FiInfo, FiHelpCircle } from 'solid-icons/fi';
 import { useBetterAuth } from '@api/better-auth-store.js';
-import { Tooltip, PasswordInput, showToast, QRCode } from '@corates/ui';
+import { showToast } from '@/components/ui/toast';
+import { QRCode, QRCodeFrame, QRCodePattern } from '@/components/ui/qr-code';
+import {
+  PasswordInput,
+  PasswordInputLabel,
+  PasswordInputControl,
+  PasswordInputField,
+  PasswordInputVisibilityTrigger,
+} from '@/components/ui/password-input';
+import {
+  Tooltip,
+  TooltipTrigger,
+  TooltipPositioner,
+  TooltipContent,
+} from '@/components/ui/tooltip';
 
 export default function TwoFactorSetup() {
   const { user, enableTwoFactor, verifyTwoFactorSetup, disableTwoFactor, getTwoFactorStatus } =
@@ -213,8 +227,17 @@ export default function TwoFactorSetup() {
                 </span>
               </Show>
               <Show when={!isEnabled()}>
-                <Tooltip content="Requires a password. Add one above if you don't have one.">
-                  <FiHelpCircle class='h-4 w-4 cursor-help text-gray-400' />
+                <Tooltip>
+                  <TooltipTrigger>
+                    <span class='inline-flex cursor-help'>
+                      <FiHelpCircle class='h-4 w-4 text-gray-400' />
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipPositioner>
+                    <TooltipContent>
+                      Requires a password. Add one above if you don't have one.
+                    </TooltipContent>
+                  </TooltipPositioner>
                 </Tooltip>
               </Show>
             </div>
@@ -251,8 +274,17 @@ export default function TwoFactorSetup() {
           <div class='flex items-center justify-between'>
             <div class='flex items-center space-x-2'>
               <h3 class='font-medium text-gray-900'>Set Up Two-Factor Authentication</h3>
-              <Tooltip content="Requires a password. Add one above if you don't have one.">
-                <FiHelpCircle class='h-4 w-4 cursor-help text-gray-400' />
+              <Tooltip>
+                <TooltipTrigger>
+                  <span class='inline-flex cursor-help'>
+                    <FiHelpCircle class='h-4 w-4 text-gray-400' />
+                  </span>
+                </TooltipTrigger>
+                <TooltipPositioner>
+                  <TooltipContent>
+                    Requires a password. Add one above if you don't have one.
+                  </TooltipContent>
+                </TooltipPositioner>
               </Tooltip>
             </div>
             <button onClick={handleCancel} class='text-gray-400 hover:text-gray-600'>
@@ -296,13 +328,16 @@ export default function TwoFactorSetup() {
                 aria-hidden='true'
               />
 
-              <PasswordInput
-                label='Password'
-                password={password()}
-                onPasswordChange={setPassword}
-                autoComplete='current-password'
-                inputClass='w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500'
-              />
+              <PasswordInput autoComplete='current-password'>
+                <PasswordInputLabel>Password</PasswordInputLabel>
+                <PasswordInputControl>
+                  <PasswordInputField
+                    value={password()}
+                    onInput={e => setPassword(e.target.value)}
+                  />
+                  <PasswordInputVisibilityTrigger />
+                </PasswordInputControl>
+              </PasswordInput>
 
               <div class='flex space-x-3'>
                 <button
@@ -340,7 +375,11 @@ export default function TwoFactorSetup() {
               {/* QR Code - Generated client-side for security */}
               <div class='flex justify-center'>
                 <div class='rounded-lg border border-gray-200 bg-white p-4'>
-                  <QRCode data={totpUri()} size={192} alt='2FA QR Code' />
+                  <QRCode value={totpUri()} pixelSize={192} aria-label='2FA QR Code'>
+                    <QRCodeFrame>
+                      <QRCodePattern />
+                    </QRCodeFrame>
+                  </QRCode>
                 </div>
               </div>
 

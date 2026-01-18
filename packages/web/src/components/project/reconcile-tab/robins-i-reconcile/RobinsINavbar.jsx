@@ -1,7 +1,12 @@
 import { For, createMemo, Show } from 'solid-js';
 import { FaSolidArrowRotateLeft } from 'solid-icons/fa';
 import { FiAlertTriangle } from 'solid-icons/fi';
-import { Tooltip } from '@corates/ui';
+import {
+  Tooltip,
+  TooltipTrigger,
+  TooltipPositioner,
+  TooltipContent,
+} from '@/components/ui/tooltip';
 import NavbarDomainPill from './NavbarDomainPill.jsx';
 import {
   getDomainProgress,
@@ -80,11 +85,16 @@ export default function RobinsINavbar(props) {
     <nav class='flex items-center gap-1 px-1 py-1.5' aria-label='Question navigation'>
       {/* Critical Risk Warning */}
       <Show when={props.store.sectionBCritical}>
-        <Tooltip content='Section B indicates Critical Risk' placement='bottom' openDelay={200}>
-          <div class='mr-1 flex shrink-0 items-center gap-1 rounded-full bg-red-100 px-2 py-1 text-xs font-medium text-red-700'>
-            <FiAlertTriangle class='h-3 w-3' />
-            Critical
-          </div>
+        <Tooltip openDelay={200} positioning={{ placement: 'bottom' }}>
+          <TooltipTrigger>
+            <div class='mr-1 flex shrink-0 items-center gap-1 rounded-full bg-red-100 px-2 py-1 text-xs font-medium text-red-700'>
+              <FiAlertTriangle class='h-3 w-3' />
+              Critical
+            </div>
+          </TooltipTrigger>
+          <TooltipPositioner>
+            <TooltipContent>Section B indicates Critical Risk</TooltipContent>
+          </TooltipPositioner>
         </Tooltip>
       </Show>
 
@@ -138,16 +148,21 @@ function SummaryButton(props) {
   );
 
   return (
-    <Tooltip content='View summary of all items' placement='bottom' openDelay={200}>
-      <button
-        type='button'
-        onClick={() => props.store.setViewMode?.('summary')}
-        class={`h-7 rounded-full px-3 text-xs font-medium transition-all ${buttonStyle()}`}
-        aria-label='View summary'
-        aria-current={isActive() ? 'page' : undefined}
-      >
-        Summary
-      </button>
+    <Tooltip openDelay={200} positioning={{ placement: 'bottom' }}>
+      <TooltipTrigger>
+        <button
+          type='button'
+          onClick={() => props.store.setViewMode?.('summary')}
+          class={`h-7 rounded-full px-3 text-xs font-medium transition-all ${buttonStyle()}`}
+          aria-label='View summary'
+          aria-current={isActive() ? 'page' : undefined}
+        >
+          Summary
+        </button>
+      </TooltipTrigger>
+      <TooltipPositioner>
+        <TooltipContent>View summary of all items</TooltipContent>
+      </TooltipPositioner>
     </Tooltip>
   );
 }
@@ -157,16 +172,21 @@ function SummaryButton(props) {
  */
 function ResetButton(props) {
   return (
-    <Tooltip content='Reset all final answers' placement='bottom' openDelay={200}>
-      <button
-        type='button'
-        onClick={() => props.onClick?.()}
-        class='flex h-7 items-center gap-1 rounded-full bg-red-100 px-2 text-xs font-medium text-red-700 transition-all hover:bg-red-200'
-        aria-label='Reset reconciliation'
-      >
-        <FaSolidArrowRotateLeft size={10} />
-        Reset
-      </button>
+    <Tooltip openDelay={200} positioning={{ placement: 'bottom' }}>
+      <TooltipTrigger>
+        <button
+          type='button'
+          onClick={() => props.onClick?.()}
+          class='flex h-7 items-center gap-1 rounded-full bg-red-100 px-2 text-xs font-medium text-red-700 transition-all hover:bg-red-200'
+          aria-label='Reset reconciliation'
+        >
+          <FaSolidArrowRotateLeft size={10} />
+          Reset
+        </button>
+      </TooltipTrigger>
+      <TooltipPositioner>
+        <TooltipContent>Reset all final answers</TooltipContent>
+      </TooltipPositioner>
     </Tooltip>
   );
 }

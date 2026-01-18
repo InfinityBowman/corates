@@ -8,7 +8,7 @@
 import { For, Show, createMemo, createSignal } from 'solid-js';
 import { BiRegularChevronRight } from 'solid-icons/bi';
 import { BsFileDiff } from 'solid-icons/bs';
-import { Collapsible } from '@corates/ui';
+import { Collapsible, CollapsibleContent } from '@/components/ui/collapsible';
 import { CHECKLIST_STATUS } from '@/constants/checklist-status.js';
 import { isReconciledChecklist } from '@/lib/checklist-domain.js';
 import { PdfListItem } from '@pdf';
@@ -78,101 +78,103 @@ export default function ReconcileStudyRow(props) {
     return props.getAssigneeName?.(checklist.assignedTo) || 'Unknown';
   };
 
+  // Handle row click - toggle unless clicking on interactive elements or selectable text
+  const handleRowClick = e => {
+    if (!hasPdfs()) return;
+    const target = e.target;
+    const interactive = target.closest('button, [role="button"], [data-selectable]');
+    if (interactive) return;
+    setExpanded(!expanded());
+  };
+
   return (
     <div class='overflow-hidden rounded-lg border border-gray-200 bg-white transition-colors hover:border-gray-300'>
-      <Collapsible
-        open={expanded()}
-        onOpenChange={({ open }) => {
-          // Only toggle if there are PDFs to show
-          if (hasPdfs()) {
-            setExpanded(open);
-          }
-        }}
-        trigger={
-          <div
-            class={`flex items-center gap-3 px-4 py-3 select-none ${hasPdfs() ? 'cursor-pointer' : ''}`}
-          >
-            {/* Chevron indicator (only if has PDFs) */}
-            <Show when={hasPdfs()}>
-              <div class='-ml-1 shrink-0 p-1'>
-                <BiRegularChevronRight
-                  class={`h-5 w-5 text-gray-400 transition-transform duration-200 ${expanded() ? 'rotate-90' : ''}`}
-                />
-              </div>
-            </Show>
+      <Collapsible open={expanded()}>
+        <div
+          class={`flex items-center gap-3 px-4 py-3 select-none ${hasPdfs() ? 'cursor-pointer' : ''}`}
+          onClick={handleRowClick}
+        >
+          {/* Chevron indicator (only if has PDFs) */}
+          <Show when={hasPdfs()}>
+            <div class='-ml-1 shrink-0 p-1'>
+              <BiRegularChevronRight
+                class={`h-5 w-5 text-gray-400 transition-transform duration-200 ${expanded() ? 'rotate-90' : ''}`}
+              />
+            </div>
+          </Show>
 
-            {/* Study info */}
-            <div class='min-w-0 flex-1'>
-              <div class='flex items-center gap-2'>
-                <span class='truncate font-medium text-gray-900'>{study().name}</span>
-              </div>
-              {/* Citation line - selectable */}
-              <Show when={citationLine()}>
-                <p
-                  class='w-fit cursor-text truncate text-xs text-gray-500 select-text'
-                  data-selectable
-                >
-                  {citationLine()}
-                  <Show when={hasPdfs()}>
-                    <span class='text-gray-400'> · {pdfCount()} PDFs</span>
-                  </Show>
-                </p>
+          {/* Study info */}
+          <div class='min-w-0 flex-1'>
+            <div class='flex items-center gap-2'>
+              <span class='truncate font-medium text-gray-900'>{study().name}</span>
+            </div>
+            {/* Citation line - selectable */}
+            <Show when={citationLine()}>
+              <p
+                class='w-fit cursor-text truncate text-xs text-gray-500 select-text'
+                data-selectable
+              >
+                {citationLine()}
+                <Show when={hasPdfs()}>
+                  <span class='text-gray-400'> · {pdfCount()} PDFs</span>
+                </Show>
+              </p>
+            </Show>
+            <Show when={!citationLine() && hasPdfs()}>
+              <p class='text-xs text-gray-400'>{pdfCount()} PDFs</p>
+            </Show>
+          </div>
+
+          {/* Reconciliation status tag */}
+          <ReconcileStatusTag study={study()} getAssigneeName={props.getAssigneeName} />
+
+          {/* Reviewer info when ready */}
+          <Show when={isReady()}>
+            <div class='flex items-center gap-2 text-sm text-gray-700'>
+              <Show when={awaitingReconcileChecklists()[0]}>
+                {checklist => <span>{getReviewerName(checklist())}</span>}
               </Show>
-              <Show when={!citationLine() && hasPdfs()}>
-                <p class='text-xs text-gray-400'>{pdfCount()} PDFs</p>
+              <span class='text-gray-400'>vs</span>
+              <Show when={awaitingReconcileChecklists()[1]}>
+                {checklist => <span>{getReviewerName(checklist())}</span>}
               </Show>
             </div>
+          </Show>
 
-            {/* Reconciliation status tag */}
-            <ReconcileStatusTag study={study()} getAssigneeName={props.getAssigneeName} />
-
-            {/* Reviewer info when ready */}
-            <Show when={isReady()}>
-              <div class='flex items-center gap-2 text-sm text-gray-700'>
-                <Show when={awaitingReconcileChecklists()[0]}>
-                  {checklist => <span>{getReviewerName(checklist())}</span>}
-                </Show>
-                <span class='text-gray-400'>vs</span>
-                <Show when={awaitingReconcileChecklists()[1]}>
-                  {checklist => <span>{getReviewerName(checklist())}</span>}
-                </Show>
-              </div>
-            </Show>
-
-            {/* Reconcile button */}
-            <button
-              onClick={e => {
-                e.stopPropagation();
-                startReconciliation();
-              }}
-              disabled={!isReady()}
-              class={`flex shrink-0 items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
-                isReady() ?
-                  'bg-blue-600 text-white hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:outline-none'
-                : 'cursor-not-allowed bg-gray-200 text-gray-500'
-              }`}
-            >
-              <BsFileDiff class='h-4 w-4' />
-              Reconcile
-            </button>
-          </div>
-        }
-      >
-        {/* Expanded PDF Section */}
-        <Show when={hasPdfs()}>
-          <div class='space-y-2 border-t border-gray-100 px-4 py-3'>
-            <For each={sortedPdfs()}>
-              {pdf => (
-                <PdfListItem
-                  pdf={pdf}
-                  onView={() => props.onViewPdf?.(pdf)}
-                  onDownload={() => props.onDownloadPdf?.(pdf)}
-                  readOnly={true}
-                />
-              )}
-            </For>
-          </div>
-        </Show>
+          {/* Reconcile button */}
+          <button
+            onClick={e => {
+              e.stopPropagation();
+              startReconciliation();
+            }}
+            disabled={!isReady()}
+            class={`flex shrink-0 items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
+              isReady() ?
+                'bg-blue-600 text-white hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:outline-none'
+              : 'cursor-not-allowed bg-gray-200 text-gray-500'
+            }`}
+          >
+            <BsFileDiff class='h-4 w-4' />
+            Reconcile
+          </button>
+        </div>
+        <CollapsibleContent>
+          {/* Expanded PDF Section */}
+          <Show when={hasPdfs()}>
+            <div class='space-y-2 border-t border-gray-100 px-4 py-3'>
+              <For each={sortedPdfs()}>
+                {pdf => (
+                  <PdfListItem
+                    pdf={pdf}
+                    onView={() => props.onViewPdf?.(pdf)}
+                    onDownload={() => props.onDownloadPdf?.(pdf)}
+                    readOnly={true}
+                  />
+                )}
+              </For>
+            </div>
+          </Show>
+        </CollapsibleContent>
       </Collapsible>
     </div>
   );

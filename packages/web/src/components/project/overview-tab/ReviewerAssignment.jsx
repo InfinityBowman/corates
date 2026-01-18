@@ -5,7 +5,8 @@
 
 import { createSignal, createMemo, For, Show } from 'solid-js';
 import { createStore, produce } from 'solid-js/store';
-import { showToast, Collapsible } from '@corates/ui';
+import { showToast } from '@/components/ui/toast';
+import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/components/ui/collapsible';
 import {
   BiRegularShuffle,
   BiRegularCheck,
@@ -426,166 +427,165 @@ export default function ReviewerAssignment(props) {
 
   return (
     <div class='overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm'>
-      <Collapsible
-        open={isExpanded()}
-        onOpenChange={({ open }) => setIsExpanded(open)}
-        trigger={
-          <div class='flex w-full cursor-pointer items-center gap-3 px-4 py-3 select-none'>
-            {/* Chevron indicator */}
-            <div class='shrink-0'>
-              <BiRegularChevronRight
-                class={`h-5 w-5 text-gray-400 transition-transform duration-200 ${isExpanded() ? 'rotate-90' : ''}`}
-              />
-            </div>
-            <div class='flex items-center gap-2'>
-              <FiUsers class='h-4 w-4 text-blue-600' />
-              <span class='text-sm font-medium text-gray-900'>Assign Reviewers to Studies</span>
-            </div>
+      <Collapsible open={isExpanded()} onOpenChange={setIsExpanded}>
+        <CollapsibleTrigger class='flex w-full cursor-pointer items-center gap-3 px-4 py-3 select-none'>
+          {/* Chevron indicator */}
+          <div class='shrink-0'>
+            <BiRegularChevronRight
+              class={`h-5 w-5 text-gray-400 transition-transform duration-200 ${isExpanded() ? 'rotate-90' : ''}`}
+            />
           </div>
-        }
-      >
-        <div class='border-t border-gray-200 px-4 pb-4'>
-          <Show
-            when={members().length >= 2}
-            fallback={
-              <p class='mt-4 text-sm text-gray-500'>
-                At least 2 project members are required to assign reviewers.
-              </p>
-            }
-          >
+          <div class='flex items-center gap-2'>
+            <FiUsers class='h-4 w-4 text-blue-600' />
+            <span class='text-sm font-medium text-gray-900'>Assign Reviewers to Studies</span>
+          </div>
+        </CollapsibleTrigger>
+        <CollapsibleContent>
+          <div class='border-t border-gray-200 px-4 pb-4'>
             <Show
-              when={unassignedStudies().length > 0 || showPreview()}
+              when={members().length >= 2}
               fallback={
-                <div class='mt-4 flex items-center gap-2 text-green-600'>
-                  <BiRegularCheck class='h-5 w-5' />
-                  <p class='text-sm'>All studies have reviewers assigned.</p>
-                </div>
+                <p class='mt-4 text-sm text-gray-500'>
+                  At least 2 project members are required to assign reviewers.
+                </p>
               }
             >
-              <div class='space-y-4'>
-                <p class='mt-4 text-sm text-gray-600'>
-                  Add reviewers to each pool and set their percentage. Studies will be randomly
-                  assigned one reviewer from each pool based on the percentages.
-                </p>
-
-                {/* Reviewer Pools */}
-                <div class='grid grid-cols-1 gap-4 md:grid-cols-2'>
-                  <ReviewerPoolSection
-                    title='1st Reviewer Pool'
-                    pool={reviewer1Pool}
-                    available={availableForPool1()}
-                    total={pool1Total()}
-                    isValid={isPool1Valid()}
-                    onAdd={addToPool1}
-                    onRemove={removeFromPool1}
-                    onUpdatePercent={updatePool1Percent}
-                    onDistributeEvenly={distributeEvenly1}
-                  />
-                  <ReviewerPoolSection
-                    title='2nd Reviewer Pool'
-                    pool={reviewer2Pool}
-                    available={availableForPool2()}
-                    total={pool2Total()}
-                    isValid={isPool2Valid()}
-                    onAdd={addToPool2}
-                    onRemove={removeFromPool2}
-                    onUpdatePercent={updatePool2Percent}
-                    onDistributeEvenly={distributeEvenly2}
-                  />
-                </div>
-
-                <p class='text-xs text-gray-500'>
-                  {unassignedStudies().length}{' '}
-                  {unassignedStudies().length === 1 ? 'study' : 'studies'} without reviewers
-                </p>
-
-                {/* Preview Button */}
-                <Show when={!showPreview()}>
-                  <button
-                    onClick={handlePreview}
-                    disabled={!canGenerate() || unassignedStudies().length === 0}
-                    class='inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50'
-                  >
-                    <BiRegularShuffle class='h-4 w-4' />
-                    Generate Random Assignments
-                  </button>
-                </Show>
-
-                {/* Preview Section */}
-                <Show when={showPreview()}>
-                  <div class='overflow-hidden rounded-lg border border-blue-200'>
-                    <div class='flex items-center justify-between border-b border-blue-200 bg-blue-50 px-4 py-2'>
-                      <h4 class='text-sm font-semibold text-blue-900'>
-                        Preview Assignments ({previewAssignments().length} studies)
-                      </h4>
-                      <button
-                        onClick={handleReshuffle}
-                        class='inline-flex items-center gap-1 rounded px-2 py-1 text-xs font-medium text-blue-700 transition-colors hover:bg-blue-100'
-                      >
-                        <BiRegularShuffle class='h-3 w-3' />
-                        Reshuffle
-                      </button>
-                    </div>
-                    <div class='max-h-64 overflow-y-auto'>
-                      <table class='w-full text-sm'>
-                        <thead class='sticky top-0 bg-gray-50'>
-                          <tr>
-                            <th class='px-4 py-2 text-left font-medium text-gray-700'>Study</th>
-                            <th class='px-4 py-2 text-left font-medium text-gray-700'>
-                              1st Reviewer
-                            </th>
-                            <th class='px-4 py-2 text-left font-medium text-gray-700'>
-                              2nd Reviewer
-                            </th>
-                          </tr>
-                        </thead>
-                        <tbody class='divide-y divide-gray-200'>
-                          <For each={previewAssignments()}>
-                            {assignment => (
-                              <tr
-                                class={`hover:bg-gray-50 ${assignment.sameReviewer ? 'bg-red-50' : ''}`}
-                              >
-                                <td class='max-w-xs truncate px-4 py-2 text-gray-900'>
-                                  {assignment.studyName}
-                                </td>
-                                <td class='px-4 py-2 text-gray-600'>{assignment.reviewer1Name}</td>
-                                <td
-                                  class={`px-4 py-2 ${assignment.sameReviewer ? 'font-medium text-red-600' : 'text-gray-600'}`}
-                                >
-                                  {assignment.reviewer2Name}
-                                  {assignment.sameReviewer && ' (conflict)'}
-                                </td>
-                              </tr>
-                            )}
-                          </For>
-                        </tbody>
-                      </table>
-                    </div>
-                    <div class='flex gap-2 border-t border-gray-200 bg-gray-50 px-4 py-3'>
-                      <button
-                        onClick={() => {
-                          handleApply();
-                          handleCollapse();
-                        }}
-                        disabled={previewAssignments().some(a => a.sameReviewer)}
-                        class='inline-flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-green-700 focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50'
-                      >
-                        <BiRegularCheck class='h-4 w-4' />
-                        Apply Assignments
-                      </button>
-                      <button
-                        onClick={handleCancel}
-                        class='rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:border-gray-400'
-                      >
-                        Cancel
-                      </button>
-                    </div>
+              <Show
+                when={unassignedStudies().length > 0 || showPreview()}
+                fallback={
+                  <div class='mt-4 flex items-center gap-2 text-green-600'>
+                    <BiRegularCheck class='h-5 w-5' />
+                    <p class='text-sm'>All studies have reviewers assigned.</p>
                   </div>
-                </Show>
-              </div>
+                }
+              >
+                <div class='space-y-4'>
+                  <p class='mt-4 text-sm text-gray-600'>
+                    Add reviewers to each pool and set their percentage. Studies will be randomly
+                    assigned one reviewer from each pool based on the percentages.
+                  </p>
+
+                  {/* Reviewer Pools */}
+                  <div class='grid grid-cols-1 gap-4 md:grid-cols-2'>
+                    <ReviewerPoolSection
+                      title='1st Reviewer Pool'
+                      pool={reviewer1Pool}
+                      available={availableForPool1()}
+                      total={pool1Total()}
+                      isValid={isPool1Valid()}
+                      onAdd={addToPool1}
+                      onRemove={removeFromPool1}
+                      onUpdatePercent={updatePool1Percent}
+                      onDistributeEvenly={distributeEvenly1}
+                    />
+                    <ReviewerPoolSection
+                      title='2nd Reviewer Pool'
+                      pool={reviewer2Pool}
+                      available={availableForPool2()}
+                      total={pool2Total()}
+                      isValid={isPool2Valid()}
+                      onAdd={addToPool2}
+                      onRemove={removeFromPool2}
+                      onUpdatePercent={updatePool2Percent}
+                      onDistributeEvenly={distributeEvenly2}
+                    />
+                  </div>
+
+                  <p class='text-xs text-gray-500'>
+                    {unassignedStudies().length}{' '}
+                    {unassignedStudies().length === 1 ? 'study' : 'studies'} without reviewers
+                  </p>
+
+                  {/* Preview Button */}
+                  <Show when={!showPreview()}>
+                    <button
+                      onClick={handlePreview}
+                      disabled={!canGenerate() || unassignedStudies().length === 0}
+                      class='inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50'
+                    >
+                      <BiRegularShuffle class='h-4 w-4' />
+                      Generate Random Assignments
+                    </button>
+                  </Show>
+
+                  {/* Preview Section */}
+                  <Show when={showPreview()}>
+                    <div class='overflow-hidden rounded-lg border border-blue-200'>
+                      <div class='flex items-center justify-between border-b border-blue-200 bg-blue-50 px-4 py-2'>
+                        <h4 class='text-sm font-semibold text-blue-900'>
+                          Preview Assignments ({previewAssignments().length} studies)
+                        </h4>
+                        <button
+                          onClick={handleReshuffle}
+                          class='inline-flex items-center gap-1 rounded px-2 py-1 text-xs font-medium text-blue-700 transition-colors hover:bg-blue-100'
+                        >
+                          <BiRegularShuffle class='h-3 w-3' />
+                          Reshuffle
+                        </button>
+                      </div>
+                      <div class='max-h-64 overflow-y-auto'>
+                        <table class='w-full text-sm'>
+                          <thead class='sticky top-0 bg-gray-50'>
+                            <tr>
+                              <th class='px-4 py-2 text-left font-medium text-gray-700'>Study</th>
+                              <th class='px-4 py-2 text-left font-medium text-gray-700'>
+                                1st Reviewer
+                              </th>
+                              <th class='px-4 py-2 text-left font-medium text-gray-700'>
+                                2nd Reviewer
+                              </th>
+                            </tr>
+                          </thead>
+                          <tbody class='divide-y divide-gray-200'>
+                            <For each={previewAssignments()}>
+                              {assignment => (
+                                <tr
+                                  class={`hover:bg-gray-50 ${assignment.sameReviewer ? 'bg-red-50' : ''}`}
+                                >
+                                  <td class='max-w-xs truncate px-4 py-2 text-gray-900'>
+                                    {assignment.studyName}
+                                  </td>
+                                  <td class='px-4 py-2 text-gray-600'>
+                                    {assignment.reviewer1Name}
+                                  </td>
+                                  <td
+                                    class={`px-4 py-2 ${assignment.sameReviewer ? 'font-medium text-red-600' : 'text-gray-600'}`}
+                                  >
+                                    {assignment.reviewer2Name}
+                                    {assignment.sameReviewer && ' (conflict)'}
+                                  </td>
+                                </tr>
+                              )}
+                            </For>
+                          </tbody>
+                        </table>
+                      </div>
+                      <div class='flex gap-2 border-t border-gray-200 bg-gray-50 px-4 py-3'>
+                        <button
+                          onClick={() => {
+                            handleApply();
+                            handleCollapse();
+                          }}
+                          disabled={previewAssignments().some(a => a.sameReviewer)}
+                          class='inline-flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-green-700 focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50'
+                        >
+                          <BiRegularCheck class='h-4 w-4' />
+                          Apply Assignments
+                        </button>
+                        <button
+                          onClick={handleCancel}
+                          class='rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:border-gray-400'
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  </Show>
+                </div>
+              </Show>
             </Show>
-          </Show>
-        </div>
+          </div>
+        </CollapsibleContent>
       </Collapsible>
     </div>
   );

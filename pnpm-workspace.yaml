@@ -6,6 +6,7 @@ onlyBuiltDependencies:
   - agent-browser
   - better-sqlite3
   - esbuild
+  - protobufjs
   - puppeteer
   - sharp
   - workerd

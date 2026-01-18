@@ -6,7 +6,7 @@
 import { Show, For } from 'solid-js';
 import { FiLoader, FiTrash2, FiEdit, FiCopy, FiCheck } from 'solid-icons/fi';
 import { createSignal } from 'solid-js';
-import { showToast } from '@corates/ui';
+import { showToast } from '@/components/ui/toast';
 
 /**
  * Subscription List component for admin dashboard

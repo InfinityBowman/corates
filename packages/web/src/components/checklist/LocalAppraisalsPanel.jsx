@@ -7,13 +7,25 @@
  *  - showSignInPrompt: boolean - Show sign-in prompt (default: false when compact)
  */
 
-import { For, Show } from 'solid-js';
+import { For, Show, createSignal } from 'solid-js';
 import { useNavigate } from '@solidjs/router';
 import localChecklistsStore from '@/stores/localChecklistsStore';
-import { useConfirmDialog } from '@corates/ui';
 import { getChecklistMetadata } from '@/checklist-registry';
 import { FiTrash2 } from 'solid-icons/fi';
-import { Editable } from '@corates/ui';
+import { SimpleEditable } from '@/components/ui/editable';
+import {
+  AlertDialog,
+  AlertDialogBackdrop,
+  AlertDialogPositioner,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogIcon,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogCancel,
+  AlertDialogAction,
+} from '@/components/ui/alert-dialog';
 
 export default function LocalAppraisalsPanel(props) {
   const navigate = useNavigate();
@@ -23,24 +35,27 @@ export default function LocalAppraisalsPanel(props) {
 
   const { checklists, loading, deleteChecklist, updateChecklist } = localChecklistsStore;
 
-  // Confirm dialog for delete actions
-  const confirmDialog = useConfirmDialog();
+  // Delete confirmation dialog state
+  const [deleteDialogOpen, setDeleteDialogOpen] = createSignal(false);
+  const [pendingDeleteId, setPendingDeleteId] = createSignal(null);
 
   const openChecklist = checklistId => {
     navigate(`/checklist/${checklistId}`);
   };
 
-  const handleDelete = async (e, checklistId) => {
+  const handleDelete = (e, checklistId) => {
     e.stopPropagation();
-    const confirmed = await confirmDialog.open({
-      title: 'Delete Appraisal',
-      description: 'Are you sure you want to delete this appraisal? This cannot be undone.',
-      confirmText: 'Delete',
-      variant: 'danger',
-    });
-    if (confirmed) {
+    setPendingDeleteId(checklistId);
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    const checklistId = pendingDeleteId();
+    if (checklistId) {
       await deleteChecklist(checklistId);
     }
+    setDeleteDialogOpen(false);
+    setPendingDeleteId(null);
   };
 
   return (
@@ -109,7 +124,7 @@ export default function LocalAppraisalsPanel(props) {
                   </span>
                 </div>
                 <div class='mb-4'>
-                  <Editable
+                  <SimpleEditable
                     activationMode='click'
                     variant='heading'
                     class='text-lg font-semibold text-gray-900'
@@ -148,7 +163,29 @@ export default function LocalAppraisalsPanel(props) {
         </Show>
       </div>
 
-      <confirmDialog.ConfirmDialogComponent />
+      {/* Delete confirmation dialog */}
+      <AlertDialog open={deleteDialogOpen()} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogBackdrop />
+        <AlertDialogPositioner>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogIcon variant='danger' />
+              <div>
+                <AlertDialogTitle>Delete Appraisal</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Are you sure you want to delete this appraisal? This cannot be undone.
+                </AlertDialogDescription>
+              </div>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction variant='danger' onClick={confirmDelete}>
+                Delete
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialogPositioner>
+      </AlertDialog>
     </div>
   );
 }

@@ -1,7 +1,12 @@
 import { createSignal, onCleanup, onMount, Show } from 'solid-js';
 import { useNavigate } from '@solidjs/router';
 import { useBetterAuth } from '@api/better-auth-store.js';
-import { PasswordInput } from '@corates/ui';
+import {
+  PasswordInput,
+  PasswordInputControl,
+  PasswordInputField,
+  PasswordInputVisibilityTrigger,
+} from '@/components/ui/password-input';
 import ErrorMessage from './ErrorMessage.jsx';
 import { PrimaryButton, AuthLink } from './AuthButtons.jsx';
 import {
@@ -228,13 +233,16 @@ export default function SignIn() {
                 </div>
 
                 <div>
-                  <PasswordInput
-                    password={password()}
-                    onPasswordChange={setPassword}
-                    autoComplete='current-password'
-                    required
-                    disabled={loading()}
-                  />
+                  <PasswordInput autoComplete='current-password' disabled={loading()} required>
+                    <PasswordInputControl>
+                      <PasswordInputField
+                        value={password()}
+                        onInput={e => setPassword(e.target.value)}
+                        placeholder='Password'
+                      />
+                      <PasswordInputVisibilityTrigger />
+                    </PasswordInputControl>
+                  </PasswordInput>
                 </div>
 
                 <ErrorMessage displayError={displayError} />

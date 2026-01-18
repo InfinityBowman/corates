@@ -20,6 +20,7 @@ import {
   FiCopy,
   FiHardDrive,
   FiUserMinus,
+  FiX,
 } from 'solid-icons/fi';
 import { useAdminProjectDetails } from '@primitives/useAdminQueries.js';
 import {
@@ -28,7 +29,18 @@ import {
   isAdminChecked,
   isAdmin,
 } from '@/stores/adminStore.js';
-import { Dialog, Avatar, showToast } from '@corates/ui';
+import { showToast } from '@/components/ui/toast';
+import { UserAvatar } from '@/components/ui/avatar';
+import {
+  Dialog,
+  DialogBackdrop,
+  DialogPositioner,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogBody,
+  DialogCloseTrigger,
+} from '@/components/ui/dialog';
 import { handleError } from '@/lib/error-utils.js';
 import { AdminBox } from './ui/index.js';
 import { table } from './styles/admin-tokens.js';
@@ -319,7 +331,7 @@ export default function ProjectDetail() {
                         <tr class={table.row}>
                           <td class={table.cellCompact}>
                             <div class='flex items-center space-x-3'>
-                              <Avatar
+                              <UserAvatar
                                 src={member.userAvatar}
                                 name={member.userDisplayName || member.userName}
                                 class='h-8 w-8'
@@ -507,55 +519,64 @@ export default function ProjectDetail() {
         </Show>
 
         {/* Confirm Dialog */}
-        <Dialog
-          open={!!confirmDialog()}
-          onOpenChange={open => !open && setConfirmDialog(null)}
-          title={
-            confirmDialog()?.type === 'delete-project' ? 'Delete Project'
-            : confirmDialog()?.type === 'remove-member' ?
-              'Remove Member'
-            : 'Confirm'
-          }
-          role='alertdialog'
-        >
-          <div class='space-y-4'>
-            <Show when={confirmDialog()?.type === 'delete-project'}>
-              <p class='text-sm text-gray-600'>
-                This will permanently delete the project and all associated data including files,
-                members, and invitations. This action cannot be undone.
-              </p>
-            </Show>
-            <Show when={confirmDialog()?.type === 'remove-member'}>
-              <p class='text-sm text-gray-600'>
-                Are you sure you want to remove{' '}
-                <strong>
-                  {confirmDialog()?.member?.userDisplayName ||
-                    confirmDialog()?.member?.userName ||
-                    confirmDialog()?.member?.userEmail}
-                </strong>{' '}
-                from this project?
-              </p>
-            </Show>
-            <div class='flex justify-end space-x-3'>
-              <button
-                onClick={() => setConfirmDialog(null)}
-                class='rounded-lg bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200'
-              >
-                Cancel
-              </button>
-              <button
-                onClick={() => {
-                  if (confirmDialog()?.type === 'delete-project') handleDeleteProject();
-                  else if (confirmDialog()?.type === 'remove-member')
-                    handleRemoveMember(confirmDialog().member.id);
-                }}
-                disabled={loading()}
-                class='rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50'
-              >
-                {loading() ? 'Processing...' : 'Confirm'}
-              </button>
-            </div>
-          </div>
+        <Dialog open={!!confirmDialog()} onOpenChange={open => !open && setConfirmDialog(null)}>
+          <DialogBackdrop />
+          <DialogPositioner>
+            <DialogContent class='max-w-md'>
+              <DialogHeader>
+                <DialogTitle>
+                  {confirmDialog()?.type === 'delete-project' ?
+                    'Delete Project'
+                  : confirmDialog()?.type === 'remove-member' ?
+                    'Remove Member'
+                  : 'Confirm'}
+                </DialogTitle>
+                <DialogCloseTrigger>
+                  <FiX class='h-5 w-5' />
+                </DialogCloseTrigger>
+              </DialogHeader>
+              <DialogBody>
+                <div class='space-y-4'>
+                  <Show when={confirmDialog()?.type === 'delete-project'}>
+                    <p class='text-sm text-gray-600'>
+                      This will permanently delete the project and all associated data including
+                      files, members, and invitations. This action cannot be undone.
+                    </p>
+                  </Show>
+                  <Show when={confirmDialog()?.type === 'remove-member'}>
+                    <p class='text-sm text-gray-600'>
+                      Are you sure you want to remove{' '}
+                      <strong>
+                        {confirmDialog()?.member?.userDisplayName ||
+                          confirmDialog()?.member?.userName ||
+                          confirmDialog()?.member?.userEmail}
+                      </strong>{' '}
+                      from this project?
+                    </p>
+                  </Show>
+                  <div class='flex justify-end space-x-3'>
+                    <button
+                      onClick={() => setConfirmDialog(null)}
+                      class='rounded-lg bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200'
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={() => {
+                        if (confirmDialog()?.type === 'delete-project') handleDeleteProject();
+                        else if (confirmDialog()?.type === 'remove-member')
+                          handleRemoveMember(confirmDialog().member.id);
+                      }}
+                      disabled={loading()}
+                      class='rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50'
+                    >
+                      {loading() ? 'Processing...' : 'Confirm'}
+                    </button>
+                  </div>
+                </div>
+              </DialogBody>
+            </DialogContent>
+          </DialogPositioner>
         </Dialog>
       </Show>
     </Show>

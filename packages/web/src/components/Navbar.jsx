@@ -4,7 +4,7 @@ import { useBetterAuth } from '@api/better-auth-store.js';
 import { FiMenu, FiWifiOff, FiChevronDown, FiX } from 'solid-icons/fi';
 import { LANDING_URL } from '@config/api.js';
 import useOnlineStatus from '@primitives/useOnlineStatus.js';
-import { Avatar } from '@corates/ui';
+import { Avatar, AvatarImage, AvatarFallback, getInitials } from '@/components/ui/avatar';
 import { isAdmin, isAdminChecked, checkAdminStatus } from '@/stores/adminStore.js';
 
 export default function Navbar(props) {
@@ -135,12 +135,12 @@ export default function Navbar(props) {
               onClick={() => setShowUserMenu(!showUserMenu())}
               class='flex h-9 items-center space-x-2 rounded px-2 font-medium transition hover:bg-blue-600'
             >
-              <Avatar
-                src={user()?.image}
-                name={user()?.name || storedName}
-                class='h-6 w-6 overflow-hidden rounded-full'
-                fallbackClass='flex items-center justify-center w-full h-full bg-white/20 text-white text-xs font-medium'
-              />
+              <Avatar class='h-6 w-6'>
+                <AvatarImage src={user()?.image} alt={user()?.name || storedName || 'User'} />
+                <AvatarFallback class='bg-white/20 text-xs text-white'>
+                  {getInitials(user()?.name || storedName)}
+                </AvatarFallback>
+              </Avatar>
               <span class='hidden sm:block'>{user()?.name || storedName || 'Loading...'}</span>
               <FiChevronDown
                 class={`h-3 w-3 transition-transform ${showUserMenu() ? 'rotate-180' : ''}`}

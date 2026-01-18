@@ -31,6 +31,7 @@ import { avatarRoutes } from './routes/avatars';
 import { adminRoutes } from './routes/admin/index';
 import { accountMergeRoutes } from './routes/account-merge';
 import { contactRoutes } from './routes/contact';
+import { invitationRoutes } from './routes/invitations';
 
 // Export Durable Objects
 export { UserSession, ProjectDoc, EmailQueue };
@@ -151,6 +152,9 @@ app.route('/api/users/avatar', avatarRoutes);
 
 // Mount account merge routes
 app.route('/api/accounts/merge', accountMergeRoutes);
+
+// Mount invitation routes (for accepting project invitations)
+app.route('/api/invitations', invitationRoutes);
 
 // Mount organization routes (all project operations now live under /api/orgs/:orgId/projects/...)
 app.route('/api/orgs', orgRoutes);

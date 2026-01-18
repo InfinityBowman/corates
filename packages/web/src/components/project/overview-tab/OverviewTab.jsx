@@ -1,6 +1,6 @@
 import { For, Show, createSignal, createMemo } from 'solid-js';
 import { useNavigate } from '@solidjs/router';
-import { FiPlus, FiTrash2 } from 'solid-icons/fi';
+import { FiPlus, FiTrash2, FiChevronDown } from 'solid-icons/fi';
 import { AiOutlineBook } from 'solid-icons/ai';
 import { BiRegularCheckCircle } from 'solid-icons/bi';
 import { CgArrowsExchange } from 'solid-icons/cg';
@@ -12,7 +12,34 @@ import projectStore from '@/stores/projectStore.js';
 import projectActionsStore from '@/stores/projectActionsStore';
 import { useBetterAuth } from '@api/better-auth-store.js';
 import { useProjectContext } from '../ProjectContext.jsx';
-import { Avatar, useConfirmDialog, showToast, Progress, Collapsible } from '@corates/ui';
+import { showToast } from '@/components/ui/toast';
+import {
+  Progress,
+  ProgressTrack,
+  ProgressRange,
+  ProgressLabel,
+  ProgressValueText,
+} from '@/components/ui/progress';
+import { Avatar, AvatarImage, AvatarFallback, getInitials } from '@/components/ui/avatar';
+import {
+  Collapsible,
+  CollapsibleTrigger,
+  CollapsibleContent,
+  CollapsibleIndicator,
+} from '@/components/ui/collapsible';
+import {
+  AlertDialog,
+  AlertDialogBackdrop,
+  AlertDialogPositioner,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogIcon,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogCancel,
+  AlertDialogAction,
+} from '@/components/ui/alert-dialog';
 import { API_BASE } from '@config/api.js';
 import { CHECKLIST_STATUS } from '@/constants/checklist-status.js';
 import { shouldShowInTab, isReconciledChecklist } from '@/lib/checklist-domain.js';
@@ -35,8 +62,11 @@ export default function OverviewTab() {
 
   const { user } = useBetterAuth();
   const { projectId, orgId, isOwner } = useProjectContext();
-  const confirmDialog = useConfirmDialog();
   const navigate = useNavigate();
+
+  // Remove member confirmation dialog state
+  const [removeDialogOpen, setRemoveDialogOpen] = createSignal(false);
+  const [pendingRemoveMember, setPendingRemoveMember] = createSignal(null);
 
   // Subscription/quota checks for member addition
   const { hasQuota, quotas } = useSubscription();
@@ -140,29 +170,31 @@ export default function OverviewTab() {
     projectActionsStore.study.update(studyId, updates);
   };
 
-  const handleRemoveMember = async (memberId, memberName) => {
+  // Opens remove member confirmation dialog
+  const handleRemoveMember = (memberId, memberName) => {
     const currentUser = user();
     const isSelf = currentUser?.id === memberId;
+    setPendingRemoveMember({ memberId, memberName, isSelf });
+    setRemoveDialogOpen(true);
+  };
 
-    const confirmed = await confirmDialog.open({
-      title: isSelf ? 'Leave Project' : 'Remove Member',
-      description:
-        isSelf ?
-          'Are you sure you want to leave this project? You will need to be re-invited to rejoin.'
-        : `Are you sure you want to remove ${memberName} from this project?`,
-      confirmText: isSelf ? 'Leave Project' : 'Remove',
-      variant: 'danger',
-    });
-    if (!confirmed) return;
+  // Executes remove after confirmation
+  const confirmRemoveMember = async () => {
+    const pending = pendingRemoveMember();
+    if (!pending) return;
 
     try {
-      const result = await projectActionsStore.member.remove(memberId);
+      const result = await projectActionsStore.member.remove(pending.memberId);
       if (result.isSelf) {
         navigate('/dashboard', { replace: true });
         showToast.success('Left Project', 'You have left the project');
       } else {
-        showToast.success('Member Removed', `${memberName} has been removed from the project`);
+        showToast.success(
+          'Member Removed',
+          `${pending.memberName} has been removed from the project`,
+        );
       }
+      setRemoveDialogOpen(false);
     } catch (err) {
       const { handleError } = await import('@/lib/error-utils.js');
       await handleError(err, {
@@ -317,18 +349,21 @@ export default function OverviewTab() {
                     <div class='p-4'>
                       <div class='flex items-center justify-between'>
                         <div class='flex items-center gap-3'>
-                          <Avatar
-                            src={
-                              member.image ?
-                                member.image.startsWith('/') ?
-                                  `${API_BASE}${member.image}`
-                                : member.image
-                              : `${API_BASE}/api/users/avatar/${member.userId}`
-                            }
-                            name={member.displayName || member.name || member.email}
-                            class='h-10 w-10 overflow-hidden rounded-full'
-                            fallbackClass='flex items-center justify-center w-full h-full bg-blue-600 text-white font-medium'
-                          />
+                          <Avatar class='h-10 w-10'>
+                            <AvatarImage
+                              src={
+                                member.image ?
+                                  member.image.startsWith('/') ?
+                                    `${API_BASE}${member.image}`
+                                  : member.image
+                                : `${API_BASE}/api/users/avatar/${member.userId}`
+                              }
+                              alt={member.displayName || member.name || member.email}
+                            />
+                            <AvatarFallback class='bg-blue-600 text-white'>
+                              {getInitials(member.displayName || member.name || member.email)}
+                            </AvatarFallback>
+                          </Avatar>
                           <div>
                             <p class='font-medium text-gray-900'>
                               {member.displayName || member.name || 'Unknown'}
@@ -358,18 +393,25 @@ export default function OverviewTab() {
                       </div>
                       <Show when={userProgress().total > 0}>
                         <div class='mt-4'>
-                          <Progress
-                            value={userProgress().percentage}
-                            label={`${userProgress().completed} of ${userProgress().total} studies appraised`}
-                            showValue={true}
-                            size='sm'
-                            variant={
-                              userProgress().percentage === 100 ? 'success'
-                              : userProgress().percentage >= 50 ?
-                                'default'
-                              : 'warning'
-                            }
-                          />
+                          <Progress value={userProgress().percentage}>
+                            <div class='mb-1 flex items-center justify-between'>
+                              <ProgressLabel class='mb-0 text-xs'>
+                                {userProgress().completed} of {userProgress().total} studies
+                                appraised
+                              </ProgressLabel>
+                              <ProgressValueText class='text-xs' />
+                            </div>
+                            <ProgressTrack class='h-1.5'>
+                              <ProgressRange
+                                class={
+                                  userProgress().percentage === 100 ? 'bg-green-500'
+                                  : userProgress().percentage >= 50 ?
+                                    'bg-blue-600'
+                                  : 'bg-amber-500'
+                                }
+                              />
+                            </ProgressTrack>
+                          </Progress>
                         </div>
                       </Show>
                     </div>
@@ -396,40 +438,40 @@ export default function OverviewTab() {
 
         {/* Figures Section - Collapsible */}
         <div class='overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm'>
-          <Collapsible
-            open={chartsExpanded()}
-            onOpenChange={({ open }) => setChartsExpanded(open)}
-            trigger={
-              <div class='flex w-full cursor-pointer items-center justify-between px-6 py-4 transition-colors select-none hover:bg-gray-50'>
-                <h2 class='text-lg font-semibold text-gray-900'>Figures</h2>
-                <div class='text-sm text-gray-500'>
-                  {chartsExpanded() ? 'Click to collapse' : 'Click to expand charts'}
-                </div>
+          <Collapsible open={chartsExpanded()} onOpenChange={setChartsExpanded}>
+            <CollapsibleTrigger class='cursor-pointer px-6 py-4 transition-colors select-none hover:bg-gray-50'>
+              <h2 class='text-lg font-semibold text-gray-900'>Figures</h2>
+              <div class='flex items-center gap-2 text-sm text-gray-500'>
+                {chartsExpanded() ? 'Click to collapse' : 'Click to expand charts'}
+                <CollapsibleIndicator>
+                  <FiChevronDown class='h-5 w-5' />
+                </CollapsibleIndicator>
               </div>
-            }
-          >
-            <div class='border-t border-gray-200 px-6 py-6'>
-              <ChartSection studies={studies} members={members} />
-            </div>
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+              <div class='border-t border-gray-200 px-6 py-6'>
+                <ChartSection studies={studies} members={members} />
+              </div>
+            </CollapsibleContent>
           </Collapsible>
         </div>
         {/* Tables Section - Collapsible */}
         <div class='overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm'>
-          <Collapsible
-            open={tablesExpanded()}
-            onOpenChange={({ open }) => setTablesExpanded(open)}
-            trigger={
-              <div class='flex w-full cursor-pointer items-center justify-between px-6 py-4 transition-colors select-none hover:bg-gray-50'>
-                <h2 class='text-lg font-semibold text-gray-900'>Tables</h2>
-                <div class='text-sm text-gray-500'>
-                  {tablesExpanded() ? 'Click to collapse' : 'Click to expand tables'}
-                </div>
+          <Collapsible open={tablesExpanded()} onOpenChange={setTablesExpanded}>
+            <CollapsibleTrigger class='cursor-pointer px-6 py-4 transition-colors select-none hover:bg-gray-50'>
+              <h2 class='text-lg font-semibold text-gray-900'>Tables</h2>
+              <div class='flex items-center gap-2 text-sm text-gray-500'>
+                {tablesExpanded() ? 'Click to collapse' : 'Click to expand tables'}
+                <CollapsibleIndicator>
+                  <FiChevronDown class='h-5 w-5' />
+                </CollapsibleIndicator>
               </div>
-            }
-          >
-            <div class='border-t border-gray-200 px-6 py-6'>
-              <AMSTAR2ResultsTable studies={studies} />
-            </div>
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+              <div class='border-t border-gray-200 px-6 py-6'>
+                <AMSTAR2ResultsTable studies={studies} />
+              </div>
+            </CollapsibleContent>
           </Collapsible>
         </div>
       </div>
@@ -440,7 +482,34 @@ export default function OverviewTab() {
         orgId={orgId()}
         quotaInfo={collaboratorQuotaInfo()}
       />
-      <confirmDialog.ConfirmDialogComponent />
+      {/* Remove member confirmation dialog */}
+      <AlertDialog open={removeDialogOpen()} onOpenChange={setRemoveDialogOpen}>
+        <AlertDialogBackdrop />
+        <AlertDialogPositioner>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogIcon variant='danger' />
+              <div>
+                <AlertDialogTitle>
+                  {pendingRemoveMember()?.isSelf ? 'Leave Project' : 'Remove Member'}
+                </AlertDialogTitle>
+                <AlertDialogDescription>
+                  {pendingRemoveMember()?.isSelf ?
+                    'Are you sure you want to leave this project? You will need to be re-invited to rejoin.'
+                  : `Are you sure you want to remove ${pendingRemoveMember()?.memberName} from this project?`
+                  }
+                </AlertDialogDescription>
+              </div>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction variant='danger' onClick={confirmRemoveMember}>
+                {pendingRemoveMember()?.isSelf ? 'Leave Project' : 'Remove'}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialogPositioner>
+      </AlertDialog>
     </>
   );
 }

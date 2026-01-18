@@ -4,7 +4,7 @@
  */
 
 import { Show, For } from 'solid-js';
-import { Progress } from '@corates/ui';
+import { Progress, ProgressTrack, ProgressRange } from '@/components/ui/progress';
 import { FiUsers, FiFolder, FiTrendingUp } from 'solid-icons/fi';
 
 /**
@@ -46,7 +46,18 @@ function UsageMetric(props) {
         </span>
       </div>
       <Show when={!isUnlimited()}>
-        <Progress value={percentage()} variant={variant()} />
+        <Progress value={percentage()}>
+          <ProgressTrack>
+            <ProgressRange
+              class={
+                variant() === 'error' ? 'bg-red-500'
+                : variant() === 'warning' ?
+                  'bg-amber-500'
+                : 'bg-blue-600'
+              }
+            />
+          </ProgressTrack>
+        </Progress>
       </Show>
       <Show when={isUnlimited()}>
         <div class='h-2 w-full rounded-full bg-linear-to-r from-green-100 to-green-200' />

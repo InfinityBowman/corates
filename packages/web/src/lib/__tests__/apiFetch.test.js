@@ -10,7 +10,7 @@ vi.mock('@config/api.js', () => ({
   API_BASE: 'http://localhost:8787',
 }));
 
-vi.mock('@corates/ui', () => ({
+vi.mock('@/components/ui/toast', () => ({
   showToast: {
     error: vi.fn(),
   },
@@ -257,7 +257,7 @@ describe('apiFetch', () => {
 
     it('should pass custom toastMessage as toastTitle', async () => {
       // Import showToast mock to verify calls
-      const { showToast } = await import('@corates/ui');
+      const { showToast } = await import('@/components/ui/toast');
 
       mockFetch.mockResolvedValueOnce(
         new Response(
@@ -278,7 +278,7 @@ describe('apiFetch', () => {
     });
 
     it('should not show toast when showToast=false', async () => {
-      const { showToast } = await import('@corates/ui');
+      const { showToast } = await import('@/components/ui/toast');
 
       mockFetch.mockResolvedValueOnce(
         new Response(

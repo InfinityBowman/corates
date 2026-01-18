@@ -6,7 +6,13 @@
 import { Show, For } from 'solid-js';
 import { A, useNavigate } from '@solidjs/router';
 import { FiCheckCircle, FiMail } from 'solid-icons/fi';
-import { Avatar, Tooltip } from '@corates/ui';
+import { UserAvatar } from '@/components/ui/avatar';
+import {
+  Tooltip,
+  TooltipTrigger,
+  TooltipPositioner,
+  TooltipContent,
+} from '@/components/ui/tooltip';
 import { AdminDataTable } from './ui/index.js';
 import { getStatusBadgeClass } from './styles/admin-tokens.js';
 
@@ -46,7 +52,7 @@ export default function UserTable(props) {
         const user = info.row.original;
         return (
           <div class='flex items-center space-x-3'>
-            <Avatar
+            <UserAvatar
               src={user.avatarUrl || user.image}
               name={user.displayName || user.name}
               class='h-8 w-8'
@@ -93,20 +99,25 @@ export default function UserTable(props) {
               {provider => {
                 const providerInfo = PROVIDER_INFO[provider];
                 return (
-                  <Tooltip content={providerInfo?.name || provider}>
-                    <div class='flex h-5 w-5 items-center justify-center'>
-                      <Show
-                        when={providerInfo?.icon}
-                        fallback={<FiMail class='h-4 w-4 text-gray-500' />}
-                      >
-                        <img
-                          src={providerInfo?.icon}
-                          alt={providerInfo?.name || provider}
-                          title={providerInfo?.name || provider}
-                          class='h-4 w-4'
-                        />
-                      </Show>
-                    </div>
+                  <Tooltip>
+                    <TooltipTrigger>
+                      <div class='flex h-5 w-5 items-center justify-center'>
+                        <Show
+                          when={providerInfo?.icon}
+                          fallback={<FiMail class='h-4 w-4 text-gray-500' />}
+                        >
+                          <img
+                            src={providerInfo?.icon}
+                            alt={providerInfo?.name || provider}
+                            title={providerInfo?.name || provider}
+                            class='h-4 w-4'
+                          />
+                        </Show>
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipPositioner>
+                      <TooltipContent>{providerInfo?.name || provider}</TooltipContent>
+                    </TooltipPositioner>
                   </Tooltip>
                 );
               }}

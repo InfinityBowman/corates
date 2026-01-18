@@ -22,7 +22,13 @@ import {
   useAdminTableRows,
   useAdminTableSchema,
 } from '@primitives/useAdminQueries.js';
-import { Spinner, TooltipPrimitive as Tooltip } from '@corates/ui';
+import { Spinner } from '@/components/ui/spinner';
+import {
+  Tooltip,
+  TooltipTrigger,
+  TooltipPositioner,
+  TooltipContent,
+} from '@/components/ui/tooltip';
 import { DashboardHeader } from './ui/index.js';
 
 const LIMIT_OPTIONS = [25, 50, 100];
@@ -281,29 +287,31 @@ export default function DatabaseViewer() {
                                   >
                                     <span class='flex items-center gap-1'>
                                       <Show when={schema()?.primaryKey}>
-                                        <Tooltip.Root openDelay={100}>
-                                          <Tooltip.Trigger>
-                                            <FiKey class='h-3 w-3 text-amber-500' />
-                                          </Tooltip.Trigger>
-                                          <Tooltip.Positioner>
-                                            <Tooltip.Content class='rounded bg-gray-800 px-2 py-1 text-xs text-white'>
-                                              Primary Key
-                                            </Tooltip.Content>
-                                          </Tooltip.Positioner>
-                                        </Tooltip.Root>
+                                        <Tooltip openDelay={100}>
+                                          <TooltipTrigger>
+                                            <span class='inline-flex'>
+                                              <FiKey class='h-3 w-3 text-amber-500' />
+                                            </span>
+                                          </TooltipTrigger>
+                                          <TooltipPositioner>
+                                            <TooltipContent>Primary Key</TooltipContent>
+                                          </TooltipPositioner>
+                                        </Tooltip>
                                       </Show>
                                       <Show when={schema()?.foreignKey}>
-                                        <Tooltip.Root openDelay={100}>
-                                          <Tooltip.Trigger>
-                                            <FiLink class='h-3 w-3 text-blue-500' />
-                                          </Tooltip.Trigger>
-                                          <Tooltip.Positioner>
-                                            <Tooltip.Content class='rounded bg-gray-800 px-2 py-1 text-xs text-white'>
+                                        <Tooltip openDelay={100}>
+                                          <TooltipTrigger>
+                                            <span class='inline-flex'>
+                                              <FiLink class='h-3 w-3 text-blue-500' />
+                                            </span>
+                                          </TooltipTrigger>
+                                          <TooltipPositioner>
+                                            <TooltipContent>
                                               FK: {schema().foreignKey.table}.
                                               {schema().foreignKey.column}
-                                            </Tooltip.Content>
-                                          </Tooltip.Positioner>
-                                        </Tooltip.Root>
+                                            </TooltipContent>
+                                          </TooltipPositioner>
+                                        </Tooltip>
                                       </Show>
                                       {col}
                                       <Show when={schema()?.type}>

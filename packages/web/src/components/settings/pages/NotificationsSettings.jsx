@@ -4,7 +4,7 @@
 
 import { createSignal } from 'solid-js';
 import { FiBell, FiMoon } from 'solid-icons/fi';
-import { Switch } from '@corates/ui';
+import { SwitchRoot, SwitchControl, SwitchThumb, SwitchHiddenInput } from '@/components/ui/switch';
 
 export default function NotificationsSettings() {
   // Notification settings
@@ -33,7 +33,12 @@ export default function NotificationsSettings() {
                 <p class='font-medium text-gray-900'>Email Notifications</p>
                 <p class='text-sm text-gray-500'>Receive email notifications about your account.</p>
               </div>
-              <Switch checked={emailNotifications()} onChange={setEmailNotifications} />
+              <SwitchRoot checked={emailNotifications()} onCheckedChange={setEmailNotifications}>
+                <SwitchControl>
+                  <SwitchThumb />
+                </SwitchControl>
+                <SwitchHiddenInput />
+              </SwitchRoot>
             </div>
             <div class='flex items-center justify-between'>
               <div>
@@ -42,7 +47,12 @@ export default function NotificationsSettings() {
                   Get notified when collaborators make changes to your projects.
                 </p>
               </div>
-              <Switch checked={projectUpdates()} onChange={setProjectUpdates} />
+              <SwitchRoot checked={projectUpdates()} onCheckedChange={setProjectUpdates}>
+                <SwitchControl>
+                  <SwitchThumb />
+                </SwitchControl>
+                <SwitchHiddenInput />
+              </SwitchRoot>
             </div>
           </div>
         </div>
@@ -61,7 +71,12 @@ export default function NotificationsSettings() {
                 <p class='font-medium text-gray-900'>Dark Mode</p>
                 <p class='text-sm text-gray-500'>Use dark theme across the application.</p>
               </div>
-              <Switch checked={darkMode()} onChange={setDarkMode} disabled />
+              <SwitchRoot checked={darkMode()} onCheckedChange={setDarkMode} disabled>
+                <SwitchControl>
+                  <SwitchThumb />
+                </SwitchControl>
+                <SwitchHiddenInput />
+              </SwitchRoot>
             </div>
           </div>
         </div>

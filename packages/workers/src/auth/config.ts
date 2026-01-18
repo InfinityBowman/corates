@@ -502,6 +502,42 @@ export function createAuth(env: Env, ctx?: ExecutionContext) {
           type: 'boolean',
           required: false,
         },
+        title: {
+          type: 'string',
+          required: false,
+        },
+        institution: {
+          type: 'string',
+          required: false,
+        },
+        department: {
+          type: 'string',
+          required: false,
+        },
+        country: {
+          type: 'string',
+          required: false,
+        },
+        bio: {
+          type: 'string',
+          required: false,
+        },
+        timezone: {
+          type: 'string',
+          required: false,
+        },
+        locale: {
+          type: 'string',
+          required: false,
+        },
+        preferences: {
+          type: 'string',
+          required: false,
+        },
+        lastActiveAt: {
+          type: 'number',
+          required: false,
+        },
       },
     },
 

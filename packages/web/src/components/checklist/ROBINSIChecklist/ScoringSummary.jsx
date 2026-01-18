@@ -1,8 +1,14 @@
 import { For, Show, createMemo, createSignal } from 'solid-js';
-import { Portal } from 'solid-js/web';
 import { ROBINS_I_CHECKLIST, getActiveDomainKeys } from './checklist-map.js';
 import { getSmartScoring } from './checklist.js';
-import { DialogPrimitive as Dialog } from '@corates/ui';
+import {
+  Dialog,
+  DialogBackdrop,
+  DialogPositioner,
+  DialogContent,
+  DialogTitle,
+  DialogDescription,
+} from '@/components/ui/dialog';
 import { FiExternalLink, FiInfo } from 'solid-icons/fi';
 
 /**
@@ -187,62 +193,58 @@ export function ScoringSummary(props) {
  */
 function ResourcesDialog(props) {
   return (
-    <Dialog.Root open={props.open} onOpenChange={details => !details.open && props.onClose()}>
-      <Portal>
-        <Dialog.Backdrop class='fixed inset-0 z-40 bg-black/50' />
-        <Dialog.Positioner class='fixed inset-0 z-50 flex items-center justify-center p-4'>
-          <Dialog.Content class='max-h-[85vh] w-full max-w-md overflow-auto rounded-lg bg-white shadow-xl'>
-            <div class='border-b border-gray-200 px-6 py-4'>
-              <Dialog.Title class='text-lg font-semibold text-gray-900'>
-                ROBINS-I V2 Resources
-              </Dialog.Title>
-              <Dialog.Description class='mt-1 text-sm text-gray-500'>
-                Official guidance and documentation for the ROBINS-I assessment tool.
-              </Dialog.Description>
+    <Dialog open={props.open} onOpenChange={open => !open && props.onClose()}>
+      <DialogBackdrop />
+      <DialogPositioner>
+        <DialogContent class='max-h-[85vh] max-w-md overflow-auto'>
+          <div class='border-b border-gray-200 px-6 py-4'>
+            <DialogTitle>ROBINS-I V2 Resources</DialogTitle>
+            <DialogDescription class='mt-1'>
+              Official guidance and documentation for the ROBINS-I assessment tool.
+            </DialogDescription>
+          </div>
+
+          <div class='space-y-4 px-6 py-4'>
+            <ResourceLink
+              title='ROBINS-I Tool (Official)'
+              description='Risk Of Bias In Non-randomized Studies of Interventions'
+              url='https://www.riskofbias.info/welcome/robins-i-v2'
+            />
+
+            <ResourceLink
+              title='Detailed Guidance Document'
+              description='Comprehensive guidance for making judgements'
+              url='https://drive.google.com/file/d/1zs85KZKFdwGcYwahvldNY_lARNv7Nqsr/view'
+            />
+
+            <ResourceLink
+              title='Cochrane Handbook Chapter'
+              description='Chapter 25: Assessing risk of bias in non-randomized studies'
+              url='https://training.cochrane.org/handbook/current/chapter-25'
+            />
+
+            <div class='rounded-lg bg-gray-50 p-3'>
+              <h4 class='text-sm font-medium text-gray-700'>About Auto Scoring</h4>
+              <p class='mt-1 text-xs text-gray-600'>
+                This tool automatically calculates domain judgements based on your signalling
+                question responses, following the official ROBINS-I decision algorithms. You can
+                override any automatic judgement if needed.
+              </p>
             </div>
+          </div>
 
-            <div class='space-y-4 px-6 py-4'>
-              <ResourceLink
-                title='ROBINS-I Tool (Official)'
-                description='Risk Of Bias In Non-randomized Studies of Interventions'
-                url='https://www.riskofbias.info/welcome/robins-i-v2'
-              />
-
-              <ResourceLink
-                title='Detailed Guidance Document'
-                description='Comprehensive guidance for making judgements'
-                url='https://drive.google.com/file/d/1zs85KZKFdwGcYwahvldNY_lARNv7Nqsr/view'
-              />
-
-              <ResourceLink
-                title='Cochrane Handbook Chapter'
-                description='Chapter 25: Assessing risk of bias in non-randomized studies'
-                url='https://training.cochrane.org/handbook/current/chapter-25'
-              />
-
-              <div class='rounded-lg bg-gray-50 p-3'>
-                <h4 class='text-sm font-medium text-gray-700'>About Auto Scoring</h4>
-                <p class='mt-1 text-xs text-gray-600'>
-                  This tool automatically calculates domain judgements based on your signalling
-                  question responses, following the official ROBINS-I decision algorithms. You can
-                  override any automatic judgement if needed.
-                </p>
-              </div>
-            </div>
-
-            <div class='border-t border-gray-200 px-6 py-3'>
-              <button
-                type='button'
-                onClick={() => props.onClose()}
-                class='w-full rounded-lg bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-200'
-              >
-                Close
-              </button>
-            </div>
-          </Dialog.Content>
-        </Dialog.Positioner>
-      </Portal>
-    </Dialog.Root>
+          <div class='border-t border-gray-200 px-6 py-3'>
+            <button
+              type='button'
+              onClick={() => props.onClose()}
+              class='w-full rounded-lg bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-200'
+            >
+              Close
+            </button>
+          </div>
+        </DialogContent>
+      </DialogPositioner>
+    </Dialog>
   );
 }
 

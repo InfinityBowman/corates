@@ -20,7 +20,7 @@ import {
 } from 'solid-icons/fi';
 import { isAdminChecked, isAdmin } from '@/stores/adminStore.js';
 import { apiFetch } from '@/lib/apiFetch.js';
-import { showToast } from '@corates/ui';
+import { showToast } from '@/components/ui/toast';
 import { handleError } from '@/lib/error-utils.js';
 import { DashboardHeader, AdminBox } from '../ui/index.js';
 import { input } from '../styles/admin-tokens.js';

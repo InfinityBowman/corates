@@ -9,7 +9,7 @@ import { useNavigate } from '@solidjs/router';
 import { authClient } from '@api/auth-client.js';
 import { useQueryClient } from '@tanstack/solid-query';
 import { queryKeys } from '@lib/queryKeys.js';
-import { showToast } from '@corates/ui';
+import { showToast } from '@/components/ui/toast';
 import { setLastOrgSlug } from '@primitives/useOrgContext.js';
 
 export default function CreateOrgPage() {

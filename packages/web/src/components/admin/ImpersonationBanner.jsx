@@ -9,7 +9,7 @@ import {
   stopImpersonation,
   checkImpersonationStatus,
 } from '@/stores/adminStore.js';
-import { Z_INDEX } from '@corates/ui';
+import { Z_INDEX } from '@/components/ui/z-index';
 
 /**
  * Impersonation Banner component

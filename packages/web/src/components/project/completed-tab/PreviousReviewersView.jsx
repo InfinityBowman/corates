@@ -5,8 +5,20 @@
  * Displays checklists in readonly mode with tabs to switch between reviewers.
  */
 
-import { Show, createMemo, createSignal, createEffect } from 'solid-js';
-import { Dialog, Tabs } from '@corates/ui';
+import { Show, For, createMemo, createSignal, createEffect } from 'solid-js';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import {
+  Dialog,
+  DialogBackdrop,
+  DialogPositioner,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogBody,
+  DialogCloseTrigger,
+} from '@/components/ui/dialog';
+import { FiX } from 'solid-icons/fi';
 import { useProjectContext } from '@/components/project/ProjectContext.jsx';
 import useProject from '@/primitives/useProject/index.js';
 import { getOriginalReviewerChecklists } from '@/lib/checklist-domain.js';
@@ -145,56 +157,88 @@ export default function PreviousReviewersView(props) {
           props.onClose();
         }
       }}
-      title='Original Reviewer Appraisals'
-      description='The original appraisals from each reviewer that were reconciled to create the final version.'
-      size='2xl'
     >
-      <div class='flex flex-col' style={{ 'min-height': '600px', 'max-height': '80vh' }}>
-        <Show
-          when={hasData()}
-          fallback={
-            <div class='flex flex-1 items-center justify-center py-16'>
-              <div class='text-center text-gray-500'>
-                {loading() ? 'Loading appraisals...' : 'No previous reviewer appraisals found.'}
-              </div>
+      <DialogBackdrop />
+      <DialogPositioner>
+        <DialogContent class='max-w-4xl'>
+          <DialogHeader>
+            <div>
+              <DialogTitle>Original Reviewer Appraisals</DialogTitle>
+              <DialogDescription>
+                The original appraisals from each reviewer that were reconciled to create the final
+                version.
+              </DialogDescription>
             </div>
-          }
-        >
-          <Show when={reviewerTabs().length > 1}>
-            <div class='mb-4'>
-              <Tabs tabs={reviewerTabs()} value={activeTab()} onValueChange={setActiveTab} />
-            </div>
-          </Show>
+            <DialogCloseTrigger>
+              <FiX class='h-5 w-5' />
+            </DialogCloseTrigger>
+          </DialogHeader>
+          <DialogBody>
+            <div class='flex flex-col' style={{ 'min-height': '600px', 'max-height': '70vh' }}>
+              <Show
+                when={hasData()}
+                fallback={
+                  <div class='flex flex-1 items-center justify-center py-16'>
+                    <div class='text-center text-gray-500'>
+                      {loading() ?
+                        'Loading appraisals...'
+                      : 'No previous reviewer appraisals found.'}
+                    </div>
+                  </div>
+                }
+              >
+                <Show when={reviewerTabs().length > 1}>
+                  <div class='mb-4'>
+                    <Tabs value={activeTab()} onValueChange={setActiveTab}>
+                      <TabsList class='overflow-x-auto rounded-t-lg border border-gray-200 bg-white'>
+                        <For each={reviewerTabs()}>
+                          {tab => (
+                            <TabsTrigger
+                              value={tab.value}
+                              class='gap-2 border-b-2 border-transparent text-gray-600 hover:bg-gray-50 hover:text-gray-900 data-[selected]:border-blue-600 data-[selected]:text-gray-900'
+                            >
+                              {tab.label}
+                            </TabsTrigger>
+                          )}
+                        </For>
+                      </TabsList>
+                    </Tabs>
+                  </div>
+                </Show>
 
-          <div class='flex-1 overflow-y-auto rounded-lg border border-gray-200 bg-white p-6'>
-            <Show when={currentChecklistData()}>
-              <div class='mb-4 border-b border-gray-200 pb-3'>
-                <div class='flex items-center justify-between'>
-                  <h3 class='text-base font-semibold text-gray-900'>
-                    {currentChecklistData()?.reviewerName || 'Reviewer'}
-                  </h3>
-                  <span class='text-sm text-gray-500'>
-                    {currentChecklistType() ?
-                      getChecklistMetadata(currentChecklistType())?.name || currentChecklistType()
-                    : ''}
-                  </span>
+                <div class='flex-1 overflow-y-auto rounded-lg border border-gray-200 bg-white p-6'>
+                  <Show when={currentChecklistData()}>
+                    <div class='mb-4 border-b border-gray-200 pb-3'>
+                      <div class='flex items-center justify-between'>
+                        <h3 class='text-base font-semibold text-gray-900'>
+                          {currentChecklistData()?.reviewerName || 'Reviewer'}
+                        </h3>
+                        <span class='text-sm text-gray-500'>
+                          {currentChecklistType() ?
+                            getChecklistMetadata(currentChecklistType())?.name ||
+                            currentChecklistType()
+                          : ''}
+                        </span>
+                      </div>
+                    </div>
+                    <GenericChecklist
+                      checklist={currentChecklistData()}
+                      checklistType={currentChecklistType()}
+                      readOnly={true}
+                      onUpdate={() => {}}
+                      getQuestionNote={questionKey => {
+                        const checklistId = currentChecklistId();
+                        if (!checklistId) return null;
+                        return getQuestionNote(props.study.id, checklistId, questionKey);
+                      }}
+                    />
+                  </Show>
                 </div>
-              </div>
-              <GenericChecklist
-                checklist={currentChecklistData()}
-                checklistType={currentChecklistType()}
-                readOnly={true}
-                onUpdate={() => {}}
-                getQuestionNote={questionKey => {
-                  const checklistId = currentChecklistId();
-                  if (!checklistId) return null;
-                  return getQuestionNote(props.study.id, checklistId, questionKey);
-                }}
-              />
-            </Show>
-          </div>
-        </Show>
-      </div>
+              </Show>
+            </div>
+          </DialogBody>
+        </DialogContent>
+      </DialogPositioner>
     </Dialog>
   );
 }

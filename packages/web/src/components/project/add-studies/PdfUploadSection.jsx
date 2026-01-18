@@ -6,9 +6,9 @@
 import { For, Show } from 'solid-js';
 import { BiRegularTrash } from 'solid-icons/bi';
 import { CgFileDocument } from 'solid-icons/cg';
-import { FiLink, FiRefreshCw } from 'solid-icons/fi';
+import { FiLink, FiRefreshCw, FiUploadCloud } from 'solid-icons/fi';
 import { VsWarning } from 'solid-icons/vs';
-import { FileUpload } from '@corates/ui';
+import { FileUpload, FileUploadDropzone, FileUploadHiddenInput } from '@/components/ui/file-upload';
 
 export default function PdfUploadSection(props) {
   const studies = () => props.studies;
@@ -21,14 +21,19 @@ export default function PdfUploadSection(props) {
       </p>
 
       <FileUpload
-        accept='application/pdf,.pdf'
-        multiple
-        allowDirectories={false}
-        helpText='PDF files only'
-        showFileList={false}
-        onFilesChange={studies().handlePdfSelect}
-        compact
-      />
+        accept={['application/pdf', '.pdf']}
+        maxFiles={Infinity}
+        onFileAccept={details => studies().handlePdfSelect(details.files)}
+      >
+        <FileUploadDropzone class='min-h-24 p-4'>
+          <FiUploadCloud class='h-6 w-6 text-gray-400' />
+          <p class='mt-2 text-center text-xs text-gray-600'>
+            <span class='font-medium text-blue-600'>Click to upload</span> or drag and drop
+          </p>
+          <p class='mt-1 text-xs text-gray-400'>PDF files only</p>
+        </FileUploadDropzone>
+        <FileUploadHiddenInput />
+      </FileUpload>
 
       <Show when={studies().uploadedPdfs.length > 0}>
         <div class='space-y-2'>

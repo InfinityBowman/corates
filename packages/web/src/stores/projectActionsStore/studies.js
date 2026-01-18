@@ -4,7 +4,7 @@
 
 import { uploadPdf, fetchPdfViaProxy, downloadPdf, deletePdf } from '@api/pdf-api.js';
 import { cachePdf, clearStudyCache } from '@primitives/pdfCache.js';
-import { showToast } from '@corates/ui';
+import { showToast } from '@/components/ui/toast';
 import { importFromGoogleDrive } from '@api/google-drive.js';
 import { extractPdfDoi, extractPdfTitle } from '@/lib/pdfUtils.js';
 import { fetchFromDOI } from '@/lib/referenceLookup.js';
@@ -101,7 +101,7 @@ async function handleGoogleDrivePdf(ops, study, studyId, orgId, projectId, userI
   if (!study.googleDriveFileId) return false;
 
   try {
-    const result = await importFromGoogleDrive(study.googleDriveFileId, orgId, projectId, studyId);
+    const result = await importFromGoogleDrive(study.googleDriveFileId, projectId, studyId);
     const importedFile = result?.file;
     if (!importedFile?.fileName) return false;
 

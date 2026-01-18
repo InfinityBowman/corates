@@ -60,5 +60,5 @@ export async function getMergeStatus(mergeToken) {
  * @returns {Promise<{ success: boolean }>}
  */
 export async function cancelMerge(mergeToken) {
-  return apiFetch.delete('/api/accounts/merge/cancel', { mergeToken });
+  return apiFetch.delete('/api/accounts/merge/cancel', { body: { mergeToken } });
 }

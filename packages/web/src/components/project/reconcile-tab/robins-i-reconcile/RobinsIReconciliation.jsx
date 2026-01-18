@@ -6,7 +6,20 @@
 import { createSignal, createMemo, createEffect, Show, Switch, Match } from 'solid-js';
 import { AiOutlineWarning } from 'solid-icons/ai';
 import { FiArrowLeft, FiArrowRight } from 'solid-icons/fi';
-import { showToast, useConfirmDialog } from '@corates/ui';
+import { showToast } from '@/components/ui/toast';
+import {
+  AlertDialog,
+  AlertDialogBackdrop,
+  AlertDialogPositioner,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogIcon,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogCancel,
+  AlertDialogAction,
+} from '@/components/ui/alert-dialog';
 import {
   compareChecklists,
   getSectionBKeys,
@@ -45,7 +58,8 @@ import RobinsISummaryView from './RobinsISummaryView.jsx';
  */
 export default function RobinsIReconciliation(props) {
   const [saving, setSaving] = createSignal(false);
-  const confirmDialog = useConfirmDialog();
+  // Finish confirmation dialog state
+  const [finishDialogOpen, setFinishDialogOpen] = createSignal(false);
 
   // Navigation state (localStorage-backed)
   const getStorageKey = () => {
@@ -343,27 +357,21 @@ export default function RobinsIReconciliation(props) {
     };
   });
 
-  // Handle save
-  async function handleSave() {
+  // Handle save - opens confirmation dialog
+  function handleSave() {
     if (!allAnswered()) {
       showToast.error('Incomplete Review', 'Please review all items before saving.');
       return;
     }
+    setFinishDialogOpen(true);
+  }
 
-    const confirmed = await confirmDialog.open({
-      title: 'Finish reconciliation?',
-      description:
-        'This will mark the reconciled checklist as completed. You will no longer be able to edit these reconciliation answers afterwards.',
-      confirmText: 'Finish',
-      cancelText: 'Cancel',
-      variant: 'warning',
-    });
-
-    if (!confirmed) return;
-
+  // Execute save after confirmation
+  async function confirmSave() {
     setSaving(true);
     try {
       await props.onSaveReconciled?.();
+      setFinishDialogOpen(false);
     } catch (err) {
       console.error('Error saving reconciled checklist:', err);
       showToast.error('Save Failed', 'Failed to save reconciled checklist. Please try again.');
@@ -406,7 +414,30 @@ export default function RobinsIReconciliation(props) {
   return (
     <div class='bg-blue-50'>
       <div class='mx-auto max-w-7xl px-4 py-4'>
-        <confirmDialog.ConfirmDialogComponent />
+        {/* Finish confirmation dialog */}
+        <AlertDialog open={finishDialogOpen()} onOpenChange={setFinishDialogOpen}>
+          <AlertDialogBackdrop />
+          <AlertDialogPositioner>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogIcon variant='warning' />
+                <div>
+                  <AlertDialogTitle>Finish reconciliation?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This will mark the reconciled checklist as completed. You will no longer be able
+                    to edit these reconciliation answers afterwards.
+                  </AlertDialogDescription>
+                </div>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel disabled={saving()}>Cancel</AlertDialogCancel>
+                <AlertDialogAction variant='warning' disabled={saving()} onClick={confirmSave}>
+                  {saving() ? 'Saving...' : 'Finish'}
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialogPositioner>
+        </AlertDialog>
 
         {/* Critical Risk Warning Banner */}
         <Show when={sectionBCritical()}>

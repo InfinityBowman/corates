@@ -1,7 +1,5 @@
 /**
  * Google Drive API - Interact with user's connected Google Drive
- *
- * Import endpoint uses org-scoped route: /api/orgs/:orgId/google-drive/import
  */
 
 import { apiFetch } from '@/lib/apiFetch.js';
@@ -25,15 +23,12 @@ export async function disconnectGoogleDrive() {
 /**
  * Import a PDF from Google Drive to a project study
  * @param {string} fileId - The Google Drive file ID
- * @param {string} orgId - The organization ID
  * @param {string} projectId - The project to import into
  * @param {string} studyId - The study to import into
  * @returns {Promise<{success: boolean, file: Object}>}
  */
-export async function importFromGoogleDrive(fileId, orgId, projectId, studyId) {
-  const url = `/api/orgs/${orgId}/google-drive/import`;
-
-  return apiFetch.post(url, { fileId, projectId, studyId });
+export async function importFromGoogleDrive(fileId, projectId, studyId) {
+  return apiFetch.post('/api/google-drive/import', { fileId, projectId, studyId });
 }
 
 /**

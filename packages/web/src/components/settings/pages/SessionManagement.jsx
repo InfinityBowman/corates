@@ -6,7 +6,16 @@
 import { createSignal, createResource, Show, For, Suspense } from 'solid-js';
 import { FiMonitor, FiSmartphone, FiGlobe, FiTrash2, FiLogOut, FiLoader } from 'solid-icons/fi';
 import { useBetterAuth } from '@api/better-auth-store.js';
-import { showToast, DialogPrimitive as Dialog } from '@corates/ui';
+import { showToast } from '@/components/ui/toast';
+import {
+  Dialog,
+  DialogBackdrop,
+  DialogPositioner,
+  DialogContent,
+  DialogTitle,
+  DialogDescription,
+  DialogCloseTrigger,
+} from '@/components/ui/dialog';
 import { handleError } from '@/lib/error-utils.js';
 
 /**
@@ -349,25 +358,20 @@ export default function SessionManagement() {
       </Suspense>
 
       {/* Confirmation Dialog for Sign Out Everywhere */}
-      <Dialog.Root
-        open={showRevokeAllDialog()}
-        onOpenChange={({ open }) => setShowRevokeAllDialog(open)}
-      >
-        <Dialog.Backdrop class='fixed inset-0 z-50 bg-black/50' />
-        <Dialog.Positioner class='fixed inset-0 z-50 flex items-center justify-center p-4'>
-          <Dialog.Content class='w-full max-w-md rounded-lg bg-white p-6 shadow-xl'>
-            <Dialog.Title class='text-lg font-semibold text-gray-900'>
-              Sign out everywhere?
-            </Dialog.Title>
-            <Dialog.Description class='mt-2 text-sm text-gray-600'>
+      <Dialog open={showRevokeAllDialog()} onOpenChange={setShowRevokeAllDialog}>
+        <DialogBackdrop />
+        <DialogPositioner>
+          <DialogContent class='max-w-md p-6'>
+            <DialogTitle>Sign out everywhere?</DialogTitle>
+            <DialogDescription class='mt-2'>
               This will sign you out from all devices, including this one. You'll need to sign in
               again to continue.
-            </Dialog.Description>
+            </DialogDescription>
 
             <div class='mt-6 flex justify-end space-x-3'>
-              <Dialog.CloseTrigger class='rounded-md bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-200'>
+              <DialogCloseTrigger class='rounded-md bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-200'>
                 Cancel
-              </Dialog.CloseTrigger>
+              </DialogCloseTrigger>
               <button
                 onClick={handleRevokeAll}
                 disabled={revokingAll()}
@@ -376,9 +380,9 @@ export default function SessionManagement() {
                 {revokingAll() ? 'Signing out...' : 'Sign out everywhere'}
               </button>
             </div>
-          </Dialog.Content>
-        </Dialog.Positioner>
-      </Dialog.Root>
+          </DialogContent>
+        </DialogPositioner>
+      </Dialog>
     </div>
   );
 }

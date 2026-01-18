@@ -19,7 +19,7 @@ import {
 } from 'solid-icons/fi';
 import { useAdminProjects, useAdminOrgs } from '@primitives/useAdminQueries.js';
 import { isAdminChecked, isAdmin } from '@/stores/adminStore.js';
-import { Select } from '@corates/ui';
+import { SimpleSelect } from '@/components/ui/select';
 import { DashboardHeader, AdminSection, AdminDataTable } from './ui/index.js';
 import { input } from './styles/admin-tokens.js';
 
@@ -213,9 +213,9 @@ export default function ProjectList() {
 
           {/* Org Filter */}
           <div class='w-full sm:w-64'>
-            <Select
+            <SimpleSelect
               value={selectedOrgId()}
-              onValueChange={value => handleOrgFilter(value)}
+              onChange={value => handleOrgFilter(value)}
               placeholder='All Organizations'
               items={[
                 { value: '', label: 'All Organizations' },
