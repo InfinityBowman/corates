@@ -136,16 +136,20 @@ const SimpleEditable: Component<SimpleEditableProps> = props => {
   ]);
 
   const variantStyles = () => variants[local.variant] || variants.default;
-  const initialValue = () => local.value ?? local.defaultValue ?? '';
 
-  // Use controlled mode only when onChange is provided (parent manages state)
-  // Otherwise use uncontrolled mode with defaultValue (component manages state, calls onSubmit)
-  const isControlled = () => local.onChange !== undefined;
+  // Determine the value to display
+  // - If value prop is provided, use it (reactive to parent changes)
+  // - Otherwise fall back to defaultValue
+  const currentValue = () => local.value ?? local.defaultValue ?? '';
+
+  // Use controlled mode (value prop) when value is provided
+  // This ensures the component reacts to parent value changes
+  const hasValueProp = () => local.value !== undefined;
 
   return (
     <EditablePrimitive.Root
-      value={isControlled() ? local.value : undefined}
-      defaultValue={!isControlled() ? initialValue() : undefined}
+      value={hasValueProp() ? currentValue() : undefined}
+      defaultValue={!hasValueProp() ? currentValue() : undefined}
       placeholder={local.placeholder}
       disabled={local.disabled}
       readOnly={local.readOnly}

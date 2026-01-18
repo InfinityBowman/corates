@@ -59,7 +59,7 @@ const ToastRoot: Component<ToastRootProps> = props => {
   return (
     <ToastPrimitive.Root
       class={cn(
-        'toast-item pointer-events-auto w-full max-w-sm rounded-lg border border-gray-200 bg-white p-4 shadow-lg',
+        'toast-item pointer-events-auto relative w-full max-w-sm overflow-hidden rounded-lg border shadow-lg',
         local.class,
       )}
       {...others}
@@ -131,30 +131,55 @@ const ToastActionTrigger: Component<ToastActionTriggerProps> = props => {
   );
 };
 
+const getToastStyles = (type?: string) => {
+  switch (type) {
+    case 'success':
+      return 'border-green-200 bg-green-50';
+    case 'error':
+      return 'border-red-200 bg-red-50';
+    case 'warning':
+      return 'border-amber-200 bg-amber-50';
+    case 'loading':
+      return 'border-blue-200 bg-blue-50';
+    default:
+      return 'border-gray-200 bg-white';
+  }
+};
+
 const ToasterContainer: Component = () => {
   return (
     <Portal>
       <Toaster
         toaster={toaster}
-        class={cn('fixed top-4 right-4 flex flex-col gap-3', Z_INDEX.TOAST)}
+        class={cn(
+          'pointer-events-none fixed inset-0 flex flex-col items-end p-4 sm:p-6',
+          Z_INDEX.TOAST,
+        )}
       >
         {toast => (
-          <ToastRoot>
-            <div class='flex gap-3'>
-              {toast().type === 'success' && (
-                <FiCheckCircle class='h-5 w-5 shrink-0 text-green-500' />
-              )}
-              {toast().type === 'error' && <FiAlertCircle class='h-5 w-5 shrink-0 text-red-500' />}
-              {toast().type === 'warning' && (
-                <FiAlertTriangle class='h-5 w-5 shrink-0 text-amber-500' />
-              )}
-              {toast().type === 'info' && <FiInfo class='h-5 w-5 shrink-0 text-blue-500' />}
-              <div class='flex-1'>
-                <ToastTitle>{toast().title}</ToastTitle>
-                {toast().description && <ToastDescription>{toast().description}</ToastDescription>}
+          <ToastRoot class={getToastStyles(toast().type)}>
+            <div class='p-4'>
+              <div class='flex items-start'>
+                <div class='shrink-0'>
+                  {toast().type === 'success' && <FiCheckCircle class='h-5 w-5 text-green-500' />}
+                  {toast().type === 'error' && <FiAlertCircle class='h-5 w-5 text-red-500' />}
+                  {toast().type === 'warning' && <FiAlertTriangle class='h-5 w-5 text-amber-500' />}
+                  {toast().type === 'info' && <FiInfo class='h-5 w-5 text-blue-500' />}
+                  {toast().type === 'loading' && (
+                    <div class='h-5 w-5 animate-spin rounded-full border-2 border-blue-500 border-t-transparent' />
+                  )}
+                </div>
+                <div class='ml-3 w-0 flex-1'>
+                  {toast().title && <ToastTitle>{toast().title}</ToastTitle>}
+                  {toast().description && (
+                    <ToastDescription>{toast().description}</ToastDescription>
+                  )}
+                </div>
+                <div class='ml-4 flex shrink-0'>
+                  <ToastCloseTrigger class='relative top-0 right-0' />
+                </div>
               </div>
             </div>
-            <ToastCloseTrigger />
           </ToastRoot>
         )}
       </Toaster>
