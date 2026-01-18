@@ -222,8 +222,11 @@ export default function AddMemberModal(props) {
                         class='flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-blue-50'
                       >
                         <Avatar class='h-8 w-8 shrink-0'>
-                          <AvatarImage src={user.image} alt={user.displayName || user.name || user.email} />
-                          <AvatarFallback class='bg-blue-600 text-white text-sm'>
+                          <AvatarImage
+                            src={user.image}
+                            alt={user.displayName || user.name || user.email}
+                          />
+                          <AvatarFallback class='bg-blue-600 text-sm text-white'>
                             {getInitials(user.displayName || user.name || user.email)}
                           </AvatarFallback>
                         </Avatar>
@@ -275,9 +278,16 @@ export default function AddMemberModal(props) {
               <div class='flex items-center justify-between rounded-lg border border-blue-200 bg-blue-50 p-3'>
                 <div class='flex items-center gap-3'>
                   <Avatar class='h-10 w-10'>
-                    <AvatarImage src={selectedUser().image} alt={selectedUser().displayName || selectedUser().name || selectedUser().email} />
+                    <AvatarImage
+                      src={selectedUser().image}
+                      alt={
+                        selectedUser().displayName || selectedUser().name || selectedUser().email
+                      }
+                    />
                     <AvatarFallback class='bg-blue-600 text-white'>
-                      {getInitials(selectedUser().displayName || selectedUser().name || selectedUser().email)}
+                      {getInitials(
+                        selectedUser().displayName || selectedUser().name || selectedUser().email,
+                      )}
                     </AvatarFallback>
                   </Avatar>
                   <div>
