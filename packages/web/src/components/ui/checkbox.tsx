@@ -73,7 +73,7 @@ const CheckboxControl: Component<CheckboxControlProps> = props => {
         'flex h-4 w-4 shrink-0 items-center justify-center rounded border border-gray-300',
         'ring-offset-white transition-colors',
         'focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:outline-none',
-        'disabled:cursor-not-allowed disabled:opacity-50',
+        'data-disabled:cursor-not-allowed data-disabled:opacity-50',
         'data-[state=checked]:border-blue-600 data-[state=checked]:bg-blue-600 data-[state=checked]:text-white',
         'data-[state=indeterminate]:border-blue-600 data-[state=indeterminate]:bg-blue-600 data-[state=indeterminate]:text-white',
         local.class,

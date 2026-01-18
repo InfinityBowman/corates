@@ -22,7 +22,7 @@ import {
   useAdminTableRows,
   useAdminTableSchema,
 } from '@primitives/useAdminQueries.js';
-import { Spinner } from '@corates/ui';
+import { Spinner } from '@/components/ui/spinner';
 import {
   Tooltip,
   TooltipTrigger,
