@@ -790,7 +790,6 @@ export default function ProjectViewComplete() {
           </div>
         </div>
 
-
         {/* Tabs */}
         <div class='mx-auto max-w-7xl px-6'>
           <nav class='-mb-px flex gap-1'>

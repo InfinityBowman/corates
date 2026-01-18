@@ -127,7 +127,7 @@ function Stepper(props) {
     <nav class='relative'>
       {/* Connection line */}
       <div
-        class='absolute top-5 left-0 right-0 h-px'
+        class='absolute top-5 right-0 left-0 h-px'
         style={{ background: tokens.slate200, 'margin-left': '40px', 'margin-right': '40px' }}
       />
 
@@ -144,7 +144,8 @@ function Stepper(props) {
                 <div
                   class='relative z-10 flex h-10 w-10 items-center justify-center rounded-full text-sm font-medium transition-all duration-300'
                   style={{
-                    background: isComplete() ? tokens.blue600
+                    background:
+                      isComplete() ? tokens.blue600
                       : isCurrent() ? tokens.blue600
                       : tokens.slate100,
                     color: isComplete() || isCurrent() ? 'white' : tokens.slate400,
@@ -161,7 +162,8 @@ function Stepper(props) {
                   <p
                     class='text-sm font-medium transition-colors duration-200'
                     style={{
-                      color: isCurrent() ? tokens.slate900
+                      color:
+                        isCurrent() ? tokens.slate900
                         : isComplete() ? tokens.slate700
                         : tokens.slate400,
                     }}
@@ -199,9 +201,7 @@ function ChecklistCard(props) {
       style={{
         background: isSelected() ? tokens.blue50 : 'white',
         'border-color': isSelected() ? tokens.blue500 : tokens.slate200,
-        'box-shadow': isSelected()
-          ? `0 0 0 1px ${tokens.blue500}`
-          : '0 1px 2px rgba(0,0,0,0.05)',
+        'box-shadow': isSelected() ? `0 0 0 1px ${tokens.blue500}` : '0 1px 2px rgba(0,0,0,0.05)',
       }}
     >
       {/* Selection indicator */}
@@ -215,24 +215,15 @@ function ChecklistCard(props) {
         <FiCheck class='h-3 w-3' />
       </div>
 
-      <h4
-        class='text-base font-semibold'
-        style={{ color: tokens.slate900 }}
-      >
+      <h4 class='text-base font-semibold' style={{ color: tokens.slate900 }}>
         {props.checklist.name}
       </h4>
 
-      <p
-        class='mt-1 text-sm leading-relaxed'
-        style={{ color: tokens.slate600 }}
-      >
+      <p class='mt-1 text-sm leading-relaxed' style={{ color: tokens.slate600 }}>
         {props.checklist.description}
       </p>
 
-      <p
-        class='mt-2 text-xs'
-        style={{ color: tokens.slate400 }}
-      >
+      <p class='mt-2 text-xs' style={{ color: tokens.slate400 }}>
         {props.checklist.domains} domains
       </p>
     </button>
@@ -246,10 +237,7 @@ function ChecklistCard(props) {
 function FormField(props) {
   return (
     <div class={props.class}>
-      <label
-        class='mb-1.5 block text-sm font-medium'
-        style={{ color: tokens.slate700 }}
-      >
+      <label class='mb-1.5 block text-sm font-medium' style={{ color: tokens.slate700 }}>
         {props.label}
         <Show when={props.required}>
           <span style={{ color: tokens.blue600 }}> *</span>
@@ -400,16 +388,10 @@ function ProjectDetailsStep(props) {
     <div class='mx-auto max-w-3xl'>
       {/* Section: Basic Info */}
       <section>
-        <h2
-          class='text-lg font-semibold'
-          style={{ color: tokens.slate900 }}
-        >
+        <h2 class='text-lg font-semibold' style={{ color: tokens.slate900 }}>
           Basic Information
         </h2>
-        <p
-          class='mt-1 text-sm'
-          style={{ color: tokens.slate500 }}
-        >
+        <p class='mt-1 text-sm' style={{ color: tokens.slate500 }}>
           Give your project a name and optional description.
         </p>
 
@@ -437,23 +419,14 @@ function ProjectDetailsStep(props) {
       </section>
 
       {/* Divider */}
-      <div
-        class='my-8 h-px'
-        style={{ background: tokens.slate200 }}
-      />
+      <div class='my-8 h-px' style={{ background: tokens.slate200 }} />
 
       {/* Section: Checklist Selection */}
       <section>
-        <h2
-          class='text-lg font-semibold'
-          style={{ color: tokens.slate900 }}
-        >
+        <h2 class='text-lg font-semibold' style={{ color: tokens.slate900 }}>
           Quality Assessment Tools
         </h2>
-        <p
-          class='mt-1 text-sm'
-          style={{ color: tokens.slate500 }}
-        >
+        <p class='mt-1 text-sm' style={{ color: tokens.slate500 }}>
           Select one or more checklists for your reviewers to complete. You can add more later.
         </p>
 
@@ -474,10 +447,7 @@ function ProjectDetailsStep(props) {
           class='mt-4 flex items-start gap-3 rounded-lg p-3'
           style={{ background: tokens.blue50 }}
         >
-          <FiInfo
-            class='mt-0.5 h-4 w-4 shrink-0'
-            style={{ color: tokens.blue600 }}
-          />
+          <FiInfo class='mt-0.5 h-4 w-4 shrink-0' style={{ color: tokens.blue600 }} />
           <p class='text-sm' style={{ color: tokens.blue700 }}>
             Each study in your review can be assessed using any of the selected checklists.
             Reviewers will see only the tools relevant to their assigned studies.
@@ -490,14 +460,9 @@ function ProjectDetailsStep(props) {
         class='mt-10 flex items-center justify-between border-t pt-6'
         style={{ 'border-color': tokens.slate200 }}
       >
-        <SecondaryButton onClick={props.onCancel}>
-          Cancel
-        </SecondaryButton>
+        <SecondaryButton onClick={props.onCancel}>Cancel</SecondaryButton>
 
-        <PrimaryButton
-          onClick={() => props.onNext?.()}
-          disabled={!isValid()}
-        >
+        <PrimaryButton onClick={() => props.onNext?.()} disabled={!isValid()}>
           Create Project
           <FiChevronRight class='h-4 w-4' />
         </PrimaryButton>
@@ -726,7 +691,7 @@ function TeamStep(props) {
     return orgMembers.filter(
       m =>
         !existingEmails.includes(m.email.toLowerCase()) &&
-        (m.email.toLowerCase().includes(input) || m.name.toLowerCase().includes(input))
+        (m.email.toLowerCase().includes(input) || m.name.toLowerCase().includes(input)),
     );
   });
 
@@ -857,7 +822,7 @@ function TeamStep(props) {
           <select
             value={selectedRole()}
             onChange={e => setSelectedRole(e.target.value)}
-            class='rounded-lg border px-3 py-2.5 text-sm outline-none transition-all duration-200'
+            class='rounded-lg border px-3 py-2.5 text-sm transition-all duration-200 outline-none'
             style={{
               'border-color': tokens.slate200,
               background: 'white',
@@ -908,7 +873,8 @@ function TeamStep(props) {
         >
           <FiAlertCircle class='mt-0.5 h-4 w-4 shrink-0' style={{ color: '#b45309' }} />
           <p class='text-sm' style={{ color: '#92400e' }}>
-            Dual-review requires at least 2 team members. Add another member to enable independent review.
+            Dual-review requires at least 2 team members. Add another member to enable independent
+            review.
           </p>
         </div>
       </Show>
@@ -1035,7 +1001,7 @@ function StudyCard(props) {
 
       {/* Study info */}
       <div class='min-w-0 flex-1'>
-        <p class='text-sm font-medium leading-snug' style={{ color: tokens.slate900 }}>
+        <p class='text-sm leading-snug font-medium' style={{ color: tokens.slate900 }}>
           {props.study.title}
         </p>
         <p class='mt-1 truncate text-xs' style={{ color: tokens.slate500 }}>
@@ -1303,7 +1269,10 @@ function GoogleDriveTab(props) {
       <Show
         when={isConnected()}
         fallback={
-          <div class='rounded-xl border p-6 text-center' style={{ 'border-color': tokens.slate200 }}>
+          <div
+            class='rounded-xl border p-6 text-center'
+            style={{ 'border-color': tokens.slate200 }}
+          >
             <div
               class='mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full'
               style={{ background: '#fef3c7', color: '#b45309' }}
@@ -1361,7 +1330,7 @@ function GoogleDriveTab(props) {
               { name: 'Gardner_2021_JPainRes.pdf', selected: false },
             ].map(file => (
               <div
-                class='flex items-center gap-3 px-4 py-3 cursor-pointer transition-colors'
+                class='flex cursor-pointer items-center gap-3 px-4 py-3 transition-colors'
                 style={{ background: file.selected ? tokens.blue50 : 'white' }}
               >
                 <input
@@ -1411,7 +1380,8 @@ function StudiesStep(props) {
     const newStudies = [
       {
         id: Date.now().toString(),
-        title: 'Mindfulness-Based Stress Reduction for Chronic Low Back Pain: A Randomized Controlled Trial',
+        title:
+          'Mindfulness-Based Stress Reduction for Chronic Low Back Pain: A Randomized Controlled Trial',
         authors: 'Cherkin DC, Sherman KJ, Balderson BH, et al.',
         journal: 'JAMA',
         year: 2016,
@@ -1420,7 +1390,8 @@ function StudiesStep(props) {
       },
       {
         id: (Date.now() + 1).toString(),
-        title: 'Effects of Mindfulness-Based Cognitive Therapy on Body Awareness in Patients with Chronic Pain',
+        title:
+          'Effects of Mindfulness-Based Cognitive Therapy on Body Awareness in Patients with Chronic Pain',
         authors: 'de Jong M, Lazar SW, Hug K, et al.',
         journal: 'Frontiers in Psychology',
         year: 2016,
@@ -1455,7 +1426,7 @@ function StudiesStep(props) {
   const isDuplicate = study => {
     const otherStudies = studies().filter(s => s.id !== study.id);
     return otherStudies.some(s =>
-      s.title.toLowerCase().includes(study.title.split(':')[0].toLowerCase().trim())
+      s.title.toLowerCase().includes(study.title.split(':')[0].toLowerCase().trim()),
     );
   };
 
@@ -1473,10 +1444,7 @@ function StudiesStep(props) {
 
       {/* Import tabs */}
       <div class='mt-6'>
-        <div
-          class='flex border-b'
-          style={{ 'border-color': tokens.slate200 }}
-        >
+        <div class='flex border-b' style={{ 'border-color': tokens.slate200 }}>
           <ImportTab
             label='PDF Upload'
             icon={<FiUpload class='h-4 w-4' />}
@@ -1708,10 +1676,7 @@ function PreviewRow(props) {
               size='22px'
               fontSize='8px'
             />
-            <span
-              class='text-sm'
-              style={{ color: hasConflict() ? '#dc2626' : tokens.slate600 }}
-            >
+            <span class='text-sm' style={{ color: hasConflict() ? '#dc2626' : tokens.slate600 }}>
               {props.assignment.reviewer2.name}
               {hasConflict() && ' (conflict)'}
             </span>
@@ -1813,7 +1778,8 @@ function AssignmentStep(props) {
     let remaining1 = totalStudies;
     p1Members.forEach((m, i) => {
       const percent = p1Percents[m.id] || 0;
-      const count = i === p1Members.length - 1 ? remaining1 : Math.round((percent / 100) * totalStudies);
+      const count =
+        i === p1Members.length - 1 ? remaining1 : Math.round((percent / 100) * totalStudies);
       remaining1 -= count;
       for (let j = 0; j < count; j++) pool1Assignments.push(m);
     });
@@ -1821,7 +1787,8 @@ function AssignmentStep(props) {
     let remaining2 = totalStudies;
     p2Members.forEach((m, i) => {
       const percent = p2Percents[m.id] || 0;
-      const count = i === p2Members.length - 1 ? remaining2 : Math.round((percent / 100) * totalStudies);
+      const count =
+        i === p2Members.length - 1 ? remaining2 : Math.round((percent / 100) * totalStudies);
       remaining2 -= count;
       for (let j = 0; j < count; j++) pool2Assignments.push(m);
     });
@@ -1860,20 +1827,20 @@ function AssignmentStep(props) {
   };
 
   const hasConflicts = createMemo(() =>
-    previewAssignments().some(a => a.reviewer1?.id === a.reviewer2?.id)
+    previewAssignments().some(a => a.reviewer1?.id === a.reviewer2?.id),
   );
 
-  const conflictCount = createMemo(() =>
-    previewAssignments().filter(a => a.reviewer1?.id === a.reviewer2?.id).length
+  const conflictCount = createMemo(
+    () => previewAssignments().filter(a => a.reviewer1?.id === a.reviewer2?.id).length,
   );
 
   // Get member data with current percentages
   const pool1MembersWithPercent = createMemo(() =>
-    allMembers.map(m => ({ ...m, percent: getPool1Percents()[m.id] || 0 }))
+    allMembers.map(m => ({ ...m, percent: getPool1Percents()[m.id] || 0 })),
   );
 
   const pool2MembersWithPercent = createMemo(() =>
-    allMembers.map(m => ({ ...m, percent: getPool2Percents()[m.id] || 0 }))
+    allMembers.map(m => ({ ...m, percent: getPool2Percents()[m.id] || 0 })),
   );
 
   return (
@@ -1884,7 +1851,8 @@ function AssignmentStep(props) {
           Reviewer Assignment
         </h2>
         <p class='mt-1 text-sm' style={{ color: tokens.slate500 }}>
-          Randomly assign studies to reviewers. By default, work is split evenly among all team members.
+          Randomly assign studies to reviewers. By default, work is split evenly among all team
+          members.
         </p>
       </section>
 
@@ -1894,15 +1862,22 @@ function AssignmentStep(props) {
         style={{ background: tokens.slate100 }}
       >
         <p class='text-sm' style={{ color: tokens.slate600 }}>
-          <span class='font-semibold' style={{ color: tokens.slate900 }}>{studies.length}</span> studies
+          <span class='font-semibold' style={{ color: tokens.slate900 }}>
+            {studies.length}
+          </span>{' '}
+          studies
         </p>
         <p class='text-sm' style={{ color: tokens.slate600 }}>
-          <span class='font-semibold' style={{ color: tokens.slate900 }}>{allMembers.length}</span> reviewers
+          <span class='font-semibold' style={{ color: tokens.slate900 }}>
+            {allMembers.length}
+          </span>{' '}
+          reviewers
         </p>
         <p class='text-sm' style={{ color: tokens.slate600 }}>
           <span class='font-semibold' style={{ color: tokens.slate900 }}>
             {Math.round(100 / allMembers.length)}%
-          </span> each (even split)
+          </span>{' '}
+          each (even split)
         </p>
       </div>
 
@@ -2019,15 +1994,17 @@ function AssignmentStep(props) {
           disabled={showCustomize() && !isCustomValid()}
           class='flex items-center justify-center gap-2 rounded-lg px-5 py-2.5 text-sm font-medium transition-all duration-200'
           style={{
-            background: (showCustomize() && !isCustomValid()) ? tokens.slate200 : tokens.blue600,
-            color: (showCustomize() && !isCustomValid()) ? tokens.slate400 : 'white',
-            cursor: (showCustomize() && !isCustomValid()) ? 'not-allowed' : 'pointer',
+            background: showCustomize() && !isCustomValid() ? tokens.slate200 : tokens.blue600,
+            color: showCustomize() && !isCustomValid() ? tokens.slate400 : 'white',
+            cursor: showCustomize() && !isCustomValid() ? 'not-allowed' : 'pointer',
           }}
           onMouseEnter={e => {
-            if (!showCustomize() || isCustomValid()) e.currentTarget.style.background = tokens.blue700;
+            if (!showCustomize() || isCustomValid())
+              e.currentTarget.style.background = tokens.blue700;
           }}
           onMouseLeave={e => {
-            if (!showCustomize() || isCustomValid()) e.currentTarget.style.background = tokens.blue600;
+            if (!showCustomize() || isCustomValid())
+              e.currentTarget.style.background = tokens.blue600;
           }}
         >
           <Show when={hasAssignments()} fallback='Assign Randomly (Even Split)'>
@@ -2052,7 +2029,10 @@ function AssignmentStep(props) {
               }}
             >
               <div>
-                <h4 class='text-sm font-semibold' style={{ color: hasConflicts() ? '#991b1b' : tokens.blue900 }}>
+                <h4
+                  class='text-sm font-semibold'
+                  style={{ color: hasConflicts() ? '#991b1b' : tokens.blue900 }}
+                >
                   Assignment Preview
                 </h4>
                 <Show when={hasConflicts()}>
@@ -2070,9 +2050,18 @@ function AssignmentStep(props) {
               <table class='w-full text-left'>
                 <thead class='sticky top-0' style={{ background: tokens.slate50 }}>
                   <tr>
-                    <th class='py-2 pl-4 pr-4 text-xs font-medium' style={{ color: tokens.slate500 }}>Study</th>
-                    <th class='py-2 pr-4 text-xs font-medium' style={{ color: tokens.slate500 }}>1st Reviewer</th>
-                    <th class='py-2 pr-4 text-xs font-medium' style={{ color: tokens.slate500 }}>2nd Reviewer</th>
+                    <th
+                      class='py-2 pr-4 pl-4 text-xs font-medium'
+                      style={{ color: tokens.slate500 }}
+                    >
+                      Study
+                    </th>
+                    <th class='py-2 pr-4 text-xs font-medium' style={{ color: tokens.slate500 }}>
+                      1st Reviewer
+                    </th>
+                    <th class='py-2 pr-4 text-xs font-medium' style={{ color: tokens.slate500 }}>
+                      2nd Reviewer
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
@@ -2107,10 +2096,7 @@ function AssignmentStep(props) {
         <div class='flex items-center gap-3'>
           <SecondaryButton onClick={props.onSkip}>Skip for now</SecondaryButton>
 
-          <PrimaryButton
-            onClick={props.onFinish}
-            disabled={hasAssignments() && hasConflicts()}
-          >
+          <PrimaryButton onClick={props.onFinish} disabled={hasAssignments() && hasConflicts()}>
             <Show when={hasAssignments()} fallback='Finish Setup'>
               Apply & Finish
             </Show>
@@ -2138,7 +2124,7 @@ export default function ProjectWizardMock() {
   const [currentStep, setCurrentStep] = createSignal(getInitialStep());
 
   // Sync step changes to URL
-  const updateStep = (step) => {
+  const updateStep = step => {
     setCurrentStep(step);
     setSearchParams({ step: step.toString() });
   };
@@ -2172,10 +2158,7 @@ export default function ProjectWizardMock() {
                 C
               </div>
               <div>
-                <h1
-                  class='text-base font-semibold'
-                  style={{ color: tokens.slate900 }}
-                >
+                <h1 class='text-base font-semibold' style={{ color: tokens.slate900 }}>
                   New Project
                 </h1>
               </div>
@@ -2214,10 +2197,7 @@ export default function ProjectWizardMock() {
           }}
         >
           <Show when={currentStep() === 1}>
-            <ProjectDetailsStep
-              onNext={() => updateStep(2)}
-              onCancel={() => {}}
-            />
+            <ProjectDetailsStep onNext={() => updateStep(2)} onCancel={() => {}} />
           </Show>
 
           <Show when={currentStep() === 2}>

@@ -299,42 +299,59 @@ export default function ProjectView(props) {
 
           <Tabs value={tabFromUrl()} onValueChange={handleTabChange}>
             <TabsList class='overflow-x-auto rounded-t-lg border border-gray-200 bg-white'>
-              <For each={tabDefinitions}>{tab => (
-                <TabsTrigger
-                  value={tab.value}
-                  class='gap-2 border-b-2 border-transparent text-gray-600 hover:bg-gray-50 hover:text-gray-900 data-[selected]:border-blue-600 data-[selected]:text-gray-900'
-                >
-                  {tab.icon}
-                  {tab.label}
-                  <Show when={tab.getCount}>
-                    <span class='ml-1 rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-600'>
-                      {tab.getCount()}
-                    </span>
-                  </Show>
-                </TabsTrigger>
-              )}</For>
+              <For each={tabDefinitions}>
+                {tab => (
+                  <TabsTrigger
+                    value={tab.value}
+                    class='gap-2 border-b-2 border-transparent text-gray-600 hover:bg-gray-50 hover:text-gray-900 data-[selected]:border-blue-600 data-[selected]:text-gray-900'
+                  >
+                    {tab.icon}
+                    {tab.label}
+                    <Show when={tab.getCount}>
+                      <span class='ml-1 rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-600'>
+                        {tab.getCount()}
+                      </span>
+                    </Show>
+                  </TabsTrigger>
+                )}
+              </For>
             </TabsList>
-            <TabsContent value='overview' class='rounded-b-lg border border-t-0 border-gray-200 bg-white p-6'>
+            <TabsContent
+              value='overview'
+              class='rounded-b-lg border border-t-0 border-gray-200 bg-white p-6'
+            >
               <SectionErrorBoundary name='Overview'>
                 <OverviewTab />
               </SectionErrorBoundary>
             </TabsContent>
-            <TabsContent value='all-studies' class='rounded-b-lg border border-t-0 border-gray-200 bg-white p-6'>
+            <TabsContent
+              value='all-studies'
+              class='rounded-b-lg border border-t-0 border-gray-200 bg-white p-6'
+            >
               <SectionErrorBoundary name='All Studies'>
                 <AllStudiesTab />
               </SectionErrorBoundary>
             </TabsContent>
-            <TabsContent value='todo' class='rounded-b-lg border border-t-0 border-gray-200 bg-white p-6'>
+            <TabsContent
+              value='todo'
+              class='rounded-b-lg border border-t-0 border-gray-200 bg-white p-6'
+            >
               <SectionErrorBoundary name='To-Do'>
                 <ToDoTab />
               </SectionErrorBoundary>
             </TabsContent>
-            <TabsContent value='reconcile' class='rounded-b-lg border border-t-0 border-gray-200 bg-white p-6'>
+            <TabsContent
+              value='reconcile'
+              class='rounded-b-lg border border-t-0 border-gray-200 bg-white p-6'
+            >
               <SectionErrorBoundary name='Reconcile'>
                 <ReconcileTab />
               </SectionErrorBoundary>
             </TabsContent>
-            <TabsContent value='completed' class='rounded-b-lg border border-t-0 border-gray-200 bg-white p-6'>
+            <TabsContent
+              value='completed'
+              class='rounded-b-lg border border-t-0 border-gray-200 bg-white p-6'
+            >
               <SectionErrorBoundary name='Completed'>
                 <CompletedTab />
               </SectionErrorBoundary>

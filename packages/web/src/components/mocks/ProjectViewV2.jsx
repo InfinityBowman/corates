@@ -93,7 +93,8 @@ const mockMembers = [
 const mockStudies = [
   {
     id: '1',
-    title: 'Mindfulness-Based Stress Reduction for Chronic Low Back Pain: A Randomized Controlled Trial',
+    title:
+      'Mindfulness-Based Stress Reduction for Chronic Low Back Pain: A Randomized Controlled Trial',
     authors: 'Cherkin DC, Sherman KJ, Balderson BH, et al.',
     journal: 'JAMA',
     year: 2016,
@@ -104,7 +105,8 @@ const mockStudies = [
   },
   {
     id: '2',
-    title: 'Effects of Mindfulness-Based Cognitive Therapy on Body Awareness in Patients with Chronic Pain',
+    title:
+      'Effects of Mindfulness-Based Cognitive Therapy on Body Awareness in Patients with Chronic Pain',
     authors: 'de Jong M, Lazar SW, Hug K, et al.',
     journal: 'Frontiers in Psychology',
     year: 2016,
@@ -357,7 +359,11 @@ function OverviewTab() {
             { label: 'Total Studies', value: stats().total, color: tokens.slate600 },
             { label: 'Completed', value: stats().completed, color: tokens.success },
             { label: 'In Review', value: stats().inReview, color: tokens.blue600 },
-            { label: 'Needs Action', value: stats().needsReconcile + stats().unassigned, color: tokens.warning },
+            {
+              label: 'Needs Action',
+              value: stats().needsReconcile + stats().unassigned,
+              color: tokens.warning,
+            },
           ].map(stat => (
             <div class='text-center'>
               <p class='text-2xl font-bold' style={{ color: stat.color }}>
@@ -418,7 +424,8 @@ function OverviewTab() {
                 </p>
                 <div class='mt-3'>
                   <Badge variant='warning'>
-                    {mockReconcileItems[0].disagreements - mockReconcileItems[0].resolved} disagreements
+                    {mockReconcileItems[0].disagreements - mockReconcileItems[0].resolved}{' '}
+                    disagreements
                   </Badge>
                 </div>
               </div>
@@ -437,9 +444,24 @@ function OverviewTab() {
       >
         <div class='space-y-4'>
           {[
-            { action: 'Completed review', study: 'MBSR for Chronic Low Back Pain', user: 'Dr. Sarah Chen', time: '2 hours ago' },
-            { action: 'Started review', study: 'Mindfulness Meditation for Pediatric Chronic Pain', user: 'Dr. Michael Torres', time: '5 hours ago' },
-            { action: 'Added study', study: 'Online Mindfulness Training for Chronic Pain', user: 'Dr. Emily Watson', time: '1 day ago' },
+            {
+              action: 'Completed review',
+              study: 'MBSR for Chronic Low Back Pain',
+              user: 'Dr. Sarah Chen',
+              time: '2 hours ago',
+            },
+            {
+              action: 'Started review',
+              study: 'Mindfulness Meditation for Pediatric Chronic Pain',
+              user: 'Dr. Michael Torres',
+              time: '5 hours ago',
+            },
+            {
+              action: 'Added study',
+              study: 'Online Mindfulness Training for Chronic Pain',
+              user: 'Dr. Emily Watson',
+              time: '1 day ago',
+            },
           ].map((item, index) => (
             <div
               class='flex items-center gap-4 rounded-lg p-3'
@@ -609,7 +631,7 @@ function StudiesTab() {
       {/* Unassigned Warning */}
       <Show when={unassignedStudies().length > 0}>
         <Card borderColor='#fcd34d'>
-          <div class='flex items-center gap-3 mb-4'>
+          <div class='mb-4 flex items-center gap-3'>
             <FiAlertCircle class='h-5 w-5' style={{ color: tokens.warning }} />
             <h3 class='text-base font-semibold' style={{ color: tokens.slate900 }}>
               Needs Assignment ({unassignedStudies().length})
@@ -622,10 +644,13 @@ function StudiesTab() {
                   class='flex items-center justify-between rounded-lg p-3'
                   style={{ background: index() % 2 === 0 ? tokens.warningLight : 'transparent' }}
                 >
-                  <div class='flex items-center gap-3 min-w-0'>
+                  <div class='flex min-w-0 items-center gap-3'>
                     <div
                       class='flex h-9 w-9 shrink-0 items-center justify-center rounded-lg'
-                      style={{ background: tokens.slate100, color: study.hasPdf ? tokens.blue600 : tokens.slate400 }}
+                      style={{
+                        background: tokens.slate100,
+                        color: study.hasPdf ? tokens.blue600 : tokens.slate400,
+                      }}
                     >
                       <FiFile class='h-4 w-4' />
                     </div>
@@ -639,7 +664,7 @@ function StudiesTab() {
                     </div>
                   </div>
                   <button
-                    class='shrink-0 flex items-center gap-2 rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors'
+                    class='flex shrink-0 items-center gap-2 rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors'
                     style={{
                       'border-color': tokens.blue200,
                       background: tokens.blue50,
@@ -665,13 +690,13 @@ function StudiesTab() {
             </h3>
             <div class='relative'>
               <FiSearch
-                class='absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2'
+                class='absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2'
                 style={{ color: tokens.slate400 }}
               />
               <input
                 type='text'
                 placeholder='Search studies...'
-                class='w-64 rounded-lg border py-2 pl-9 pr-3 text-sm focus:outline-none'
+                class='w-64 rounded-lg border py-2 pr-3 pl-9 text-sm focus:outline-none'
                 style={{ 'border-color': tokens.slate200, background: tokens.slate50 }}
               />
             </div>
@@ -688,7 +713,10 @@ function StudiesTab() {
               >
                 <div
                   class='flex h-9 w-9 shrink-0 items-center justify-center rounded-lg'
-                  style={{ background: tokens.slate100, color: study.hasPdf ? tokens.blue600 : tokens.slate400 }}
+                  style={{
+                    background: tokens.slate100,
+                    color: study.hasPdf ? tokens.blue600 : tokens.slate400,
+                  }}
                 >
                   <FiFile class='h-4 w-4' />
                 </div>
@@ -728,9 +756,9 @@ function StudiesTab() {
                       <For each={study.assignedTo.slice(0, 3)}>
                         {memberId => {
                           const member = mockMembers.find(m => m.id === memberId);
-                          return member ? (
-                            <Avatar name={member.name} size='26px' fontSize='9px' />
-                          ) : null;
+                          return member ?
+                              <Avatar name={member.name} size='26px' fontSize='9px' />
+                            : null;
                         }}
                       </For>
                     </div>
@@ -1053,9 +1081,24 @@ function ChartsTab() {
       >
         <div class='grid grid-cols-3 gap-4'>
           {[
-            { icon: FiDownload, label: 'Download CSV', desc: 'Full data export', color: tokens.success },
-            { icon: FiBarChart2, label: 'Export Charts', desc: 'PNG or SVG', color: tokens.blue600 },
-            { icon: FiExternalLink, label: 'Share Report', desc: 'Generate link', color: tokens.blue600 },
+            {
+              icon: FiDownload,
+              label: 'Download CSV',
+              desc: 'Full data export',
+              color: tokens.success,
+            },
+            {
+              icon: FiBarChart2,
+              label: 'Export Charts',
+              desc: 'PNG or SVG',
+              color: tokens.blue600,
+            },
+            {
+              icon: FiExternalLink,
+              label: 'Share Report',
+              desc: 'Generate link',
+              color: tokens.blue600,
+            },
           ].map(item => (
             <button
               class='flex items-center gap-3 rounded-lg border p-4 text-left transition-all'
