@@ -22,7 +22,7 @@ import {
 } from '@lib/formStatePersistence.js';
 
 export default function AllStudiesTab() {
-  const { projectId, getAssigneeName } = useProjectContext();
+  const { projectId, getMember } = useProjectContext();
 
   // Local UI state
   const [showGoogleDriveModal, setShowGoogleDriveModal] = createSignal(false);
@@ -161,7 +161,7 @@ export default function AllStudiesTab() {
                 study={study}
                 expanded={isStudyExpanded(study.id)}
                 onToggleExpanded={() => toggleStudyExpanded(study.id)}
-                getAssigneeName={getAssigneeName}
+                getMember={getMember}
                 onAssignReviewers={handleOpenReviewersModal}
                 onOpenGoogleDrive={handleOpenGoogleDrive}
               />

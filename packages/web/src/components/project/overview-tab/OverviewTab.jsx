@@ -13,13 +13,6 @@ import projectActionsStore from '@/stores/projectActionsStore';
 import { useBetterAuth } from '@api/better-auth-store.js';
 import { useProjectContext } from '../ProjectContext.jsx';
 import { showToast } from '@/components/ui/toast';
-import {
-  Progress,
-  ProgressTrack,
-  ProgressRange,
-  ProgressLabel,
-  ProgressValueText,
-} from '@/components/ui/progress';
 import { Avatar, AvatarImage, AvatarFallback, getInitials } from '@/components/ui/avatar';
 import {
   Collapsible,
@@ -222,12 +215,12 @@ export default function OverviewTab() {
   return (
     <>
       {/* Section 1: Project Progress - Hero Section */}
-      <div class='mb-8 rounded-lg border border-gray-200 bg-white p-6 shadow-sm'>
-        <h2 class='mb-6 text-lg font-semibold text-gray-900'>Team Progress</h2>
+      <div class='mb-6 rounded-xl border border-slate-200 bg-white p-5'>
+        <h2 class='mb-5 text-base font-semibold text-slate-900'>Project Progress</h2>
 
-        <div class='mb-6 flex flex-col items-center md:flex-row md:items-start md:gap-8'>
+        <div class='mb-5 flex flex-col items-center md:flex-row md:items-start md:gap-8'>
           {/* Overall Progress - Circular */}
-          <div class='mb-6 md:mb-0'>
+          <div class='mb-5 md:mb-0'>
             <CircularProgress
               value={overallProgress()}
               showValue={true}
@@ -237,63 +230,63 @@ export default function OverviewTab() {
                   'default'
                 : 'warning'
               }
-              size={160}
+              size={140}
             />
-            <p class='mt-3 text-center text-sm text-gray-600'>
+            <p class='mt-3 text-center text-sm text-slate-500'>
               {completedStudies()} of {studies().length} studies completed
             </p>
           </div>
 
           {/* Enhanced Stats Grid */}
-          <div class='grid flex-1 grid-cols-2 gap-4 md:grid-cols-3'>
-            <div class='rounded-lg border border-gray-200 bg-gray-50 p-5 text-center'>
+          <div class='grid flex-1 grid-cols-2 gap-3 md:grid-cols-3'>
+            <div class='rounded-lg border border-slate-200 bg-slate-50 p-4 text-center'>
               <div class='mb-2 flex justify-center'>
-                <AiOutlineBook class='h-6 w-6 text-gray-600' />
+                <AiOutlineBook class='h-5 w-5 text-slate-500' />
               </div>
-              <p class='text-3xl font-bold text-gray-900'>{studies().length}</p>
-              <p class='mt-1 text-sm font-medium text-gray-600'>Total Studies</p>
+              <p class='text-2xl font-bold text-slate-900'>{studies().length}</p>
+              <p class='mt-1 text-xs font-medium text-slate-500'>Total Studies</p>
             </div>
-            <div class='rounded-lg border border-green-200 bg-green-50 p-5 text-center'>
+            <div class='rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-center'>
               <div class='mb-2 flex justify-center'>
-                <CgArrowsExchange class='h-6 w-6 text-green-700' />
+                <CgArrowsExchange class='h-5 w-5 text-emerald-600' />
               </div>
-              <p class='text-3xl font-bold text-green-900'>{readyToReconcile()}</p>
-              <p class='mt-1 text-sm font-medium text-green-700'>Ready to Reconcile</p>
+              <p class='text-2xl font-bold text-emerald-700'>{readyToReconcile()}</p>
+              <p class='mt-1 text-xs font-medium text-emerald-600'>Ready to Reconcile</p>
             </div>
-            <div class='rounded-lg border border-blue-200 bg-blue-50 p-5 text-center'>
+            <div class='rounded-lg border border-blue-200 bg-blue-50 p-4 text-center'>
               <div class='mb-2 flex justify-center'>
-                <BiRegularCheckCircle class='h-6 w-6 text-blue-700' />
+                <BiRegularCheckCircle class='h-5 w-5 text-blue-600' />
               </div>
-              <p class='text-3xl font-bold text-blue-900'>{completedStudies()}</p>
-              <p class='mt-1 text-sm font-medium text-blue-700'>Completed</p>
+              <p class='text-2xl font-bold text-blue-700'>{completedStudies()}</p>
+              <p class='mt-1 text-xs font-medium text-blue-600'>Completed</p>
             </div>
           </div>
         </div>
 
         {/* Inter-rater Reliability Section */}
         <Show when={interRaterMetrics().studyCount > 0}>
-          <div class='mt-6 rounded-lg border border-purple-200 bg-purple-50 p-5'>
-            <h3 class='mb-4 text-base font-semibold text-gray-900'>Inter-rater Reliability</h3>
+          <div class='mt-5 rounded-lg border border-slate-200 bg-slate-50 p-4'>
+            <h3 class='mb-4 text-sm font-semibold text-slate-900'>Inter-rater Reliability</h3>
             <div class='grid grid-cols-1 gap-4 md:grid-cols-3'>
               <div class='text-center'>
-                <p class='text-2xl font-bold text-gray-900'>{interRaterMetrics().studyCount}</p>
-                <p class='mt-1 text-sm text-gray-600'>Studies Included</p>
+                <p class='text-2xl font-bold text-slate-900'>{interRaterMetrics().studyCount}</p>
+                <p class='mt-1 text-xs text-slate-500'>Studies Included</p>
               </div>
               <div class='text-center'>
-                <p class='text-2xl font-bold text-gray-900'>
+                <p class='text-2xl font-bold text-emerald-600'>
                   {interRaterMetrics().percentAgreement != null ?
                     `${interRaterMetrics().percentAgreement.toFixed(1)}%`
                   : 'N/A'}
                 </p>
-                <p class='mt-1 text-sm text-gray-600'>Percent Agreement</p>
+                <p class='mt-1 text-xs text-slate-500'>Percent Agreement</p>
               </div>
               <div class='text-center'>
-                <p class='text-2xl font-bold text-gray-900'>
+                <p class='text-2xl font-bold text-blue-600'>
                   {interRaterMetrics().cohensKappa != null ?
                     interRaterMetrics().cohensKappa.toFixed(3)
                   : 'N/A'}
                 </p>
-                <p class='mt-1 text-xs text-gray-600'>
+                <p class='mt-1 text-xs text-slate-500'>
                   Cohen's Kappa ({getKappaInterpretation(interRaterMetrics().cohensKappa)})
                 </p>
               </div>
@@ -302,173 +295,150 @@ export default function OverviewTab() {
         </Show>
       </div>
 
-      {/* Section 2: Team & Collaboration */}
-      <div class='mb-8 space-y-6'>
-        <h2 class='text-lg font-semibold text-gray-900'>Team & Collaboration</h2>
-
-        {/* Members Section - Full Width */}
-        <div class='rounded-lg border border-gray-200 bg-white p-6 shadow-sm'>
-          <div class='mb-4 flex items-center justify-between'>
-            <h3 class='text-base font-semibold text-gray-900'>Project Members</h3>
-            <Show when={isOwner()}>
-              <Show
-                when={canAddMember()}
-                fallback={
-                  <span
-                    class='inline-flex cursor-not-allowed items-center gap-1.5 rounded-lg bg-gray-100 px-3 py-1.5 text-sm font-medium text-gray-500'
-                    title='Collaborator limit reached. Upgrade your plan to add more team members.'
-                  >
-                    <FiPlus class='h-4 w-4' />
-                    Add Member
-                  </span>
-                }
-              >
-                <button
-                  onClick={() => setShowAddMemberModal(true)}
-                  class='inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:outline-none'
+      {/* Section 2: Team Members */}
+      <div class='mb-6 rounded-xl border border-slate-200 bg-white p-5'>
+        <div class='mb-4 flex items-center justify-between'>
+          <h3 class='text-base font-semibold text-slate-900'>Team Members ({members().length})</h3>
+          <Show when={isOwner()}>
+            <Show
+              when={canAddMember()}
+              fallback={
+                <span
+                  class='inline-flex cursor-not-allowed items-center gap-1.5 rounded-lg bg-slate-100 px-3 py-1.5 text-sm font-medium text-slate-400'
+                  title='Collaborator limit reached. Upgrade your plan to add more team members.'
                 >
                   <FiPlus class='h-4 w-4' />
-                  Add Member
-                </button>
-              </Show>
+                  Invite
+                </span>
+              }
+            >
+              <button
+                onClick={() => setShowAddMemberModal(true)}
+                class='inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:outline-none'
+              >
+                <FiPlus class='h-4 w-4' />
+                Invite
+              </button>
             </Show>
-          </div>
-          <Show when={members().length > 0}>
-            <div class='divide-y divide-gray-200 rounded-lg bg-gray-50'>
-              <For each={members()}>
-                {member => {
-                  const isSelf = currentUserId() === member.userId;
-                  const canRemove = isOwner() || isSelf;
-                  const isLastOwner =
-                    member.role === 'owner' &&
-                    members().filter(m => m.role === 'owner').length <= 1;
-
-                  const userProgress = () => getUserProgress(member.userId);
-
-                  return (
-                    <div class='p-4'>
-                      <div class='flex items-center justify-between'>
-                        <div class='flex items-center gap-3'>
-                          <Avatar class='h-10 w-10'>
-                            <AvatarImage
-                              src={
-                                member.image ?
-                                  member.image.startsWith('/') ?
-                                    `${API_BASE}${member.image}`
-                                  : member.image
-                                : `${API_BASE}/api/users/avatar/${member.userId}`
-                              }
-                              alt={member.displayName || member.name || member.email}
-                            />
-                            <AvatarFallback class='bg-blue-600 text-white'>
-                              {getInitials(member.displayName || member.name || member.email)}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div>
-                            <p class='font-medium text-gray-900'>
-                              {member.displayName || member.name || 'Unknown'}
-                              {isSelf && <span class='ml-1 text-gray-400'>(you)</span>}
-                            </p>
-                          </div>
-                        </div>
-                        <div class='flex items-center gap-2'>
-                          <span class='inline-flex items-center rounded-full bg-blue-100 px-2 py-1 text-xs font-medium text-blue-800 capitalize'>
-                            {member.role}
-                          </span>
-                          <Show when={canRemove && !isLastOwner}>
-                            <button
-                              onClick={() =>
-                                handleRemoveMember(
-                                  member.userId,
-                                  member.displayName || member.name || member.email,
-                                )
-                              }
-                              class='rounded p-1.5 text-gray-400 transition-colors hover:bg-red-50 hover:text-red-600 focus:ring-2 focus:ring-blue-500 focus:outline-none'
-                              title={isSelf ? 'Leave project' : 'Remove member'}
-                            >
-                              <FiTrash2 class='h-4 w-4' />
-                            </button>
-                          </Show>
-                        </div>
-                      </div>
-                      <Show when={userProgress().total > 0}>
-                        <div class='mt-4'>
-                          <Progress value={userProgress().percentage}>
-                            <div class='mb-1 flex items-center justify-between'>
-                              <ProgressLabel class='mb-0 text-xs'>
-                                {userProgress().completed} of {userProgress().total} studies
-                                appraised
-                              </ProgressLabel>
-                              <ProgressValueText class='text-xs' />
-                            </div>
-                            <ProgressTrack class='h-1.5'>
-                              <ProgressRange
-                                class={
-                                  userProgress().percentage === 100 ? 'bg-green-500'
-                                  : userProgress().percentage >= 50 ?
-                                    'bg-blue-600'
-                                  : 'bg-amber-500'
-                                }
-                              />
-                            </ProgressTrack>
-                          </Progress>
-                        </div>
-                      </Show>
-                    </div>
-                  );
-                }}
-              </For>
-            </div>
           </Show>
         </div>
+        <Show when={members().length > 0}>
+          <div class='space-y-2'>
+            <For each={members()}>
+              {(member, index) => {
+                const isSelf = currentUserId() === member.userId;
+                const canRemove = isOwner() || isSelf;
+                const isLastOwner =
+                  member.role === 'owner' && members().filter(m => m.role === 'owner').length <= 1;
 
-        {/* Reviewer Assignment - Below Members, Collapsed by Default */}
-        <Show when={shouldShowReviewerAssignment()}>
+                const userProgress = () => getUserProgress(member.userId);
+
+                return (
+                  <div
+                    class='flex items-center justify-between rounded-lg p-3 transition-colors'
+                    style={{ background: index() % 2 === 0 ? '#f8fafc' : 'transparent' }}
+                  >
+                    <div class='flex items-center gap-3'>
+                      <Avatar class='h-9 w-9'>
+                        <AvatarImage
+                          src={
+                            member.image ?
+                              member.image.startsWith('/') ?
+                                `${API_BASE}${member.image}`
+                              : member.image
+                            : `${API_BASE}/api/users/avatar/${member.userId}`
+                          }
+                          alt={member.displayName || member.name || member.email}
+                        />
+                        <AvatarFallback class='bg-blue-600 text-white'>
+                          {getInitials(member.displayName || member.name || member.email)}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <p class='font-medium text-slate-900'>
+                          {member.displayName || member.name || 'Unknown'}
+                          {isSelf && <span class='ml-1 text-slate-400'>(you)</span>}
+                        </p>
+                        <Show when={userProgress().total > 0}>
+                          <p class='text-xs text-slate-500'>
+                            {userProgress().completed}/{userProgress().total} studies completed
+                          </p>
+                        </Show>
+                      </div>
+                    </div>
+                    <div class='flex items-center gap-2'>
+                      <span class='inline-flex items-center rounded-md border border-blue-200 bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-700 capitalize'>
+                        {member.role}
+                      </span>
+                      <Show when={canRemove && !isLastOwner}>
+                        <button
+                          onClick={() =>
+                            handleRemoveMember(
+                              member.userId,
+                              member.displayName || member.name || member.email,
+                            )
+                          }
+                          class='rounded p-1.5 text-slate-400 transition-colors hover:bg-red-50 hover:text-red-600 focus:ring-2 focus:ring-blue-500 focus:outline-none'
+                          title={isSelf ? 'Leave project' : 'Remove member'}
+                        >
+                          <FiTrash2 class='h-4 w-4' />
+                        </button>
+                      </Show>
+                    </div>
+                  </div>
+                );
+              }}
+            </For>
+          </div>
+        </Show>
+      </div>
+
+      {/* Reviewer Assignment - Below Members, Collapsed by Default */}
+      <Show when={shouldShowReviewerAssignment()}>
+        <div class='mb-6'>
           <ReviewerAssignment
             studies={studies}
             members={members}
             onAssignReviewers={handleUpdateStudy}
           />
-        </Show>
-      </div>
+        </div>
+      </Show>
 
       {/* Section 3: Results */}
-      <div class='mb-8 space-y-6'>
-        <h2 class='text-lg font-semibold text-gray-900'>Results</h2>
-
+      <div class='space-y-4'>
         {/* Figures Section - Collapsible */}
-        <div class='overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm'>
+        <div class='overflow-hidden rounded-xl border border-slate-200 bg-white'>
           <Collapsible open={chartsExpanded()} onOpenChange={setChartsExpanded}>
-            <CollapsibleTrigger class='cursor-pointer px-6 py-4 transition-colors select-none hover:bg-gray-50'>
-              <h2 class='text-lg font-semibold text-gray-900'>Figures</h2>
-              <div class='flex items-center gap-2 text-sm text-gray-500'>
-                {chartsExpanded() ? 'Click to collapse' : 'Click to expand charts'}
+            <CollapsibleTrigger class='w-full cursor-pointer justify-between px-5 py-4 transition-colors select-none hover:bg-slate-50'>
+              <h2 class='text-base font-semibold text-slate-900'>Figures</h2>
+              <div class='flex items-center gap-2 text-sm text-slate-500'>
+                {chartsExpanded() ? 'Click to collapse' : 'Click to expand'}
                 <CollapsibleIndicator>
-                  <FiChevronDown class='h-5 w-5' />
+                  <FiChevronDown class='h-4 w-4' />
                 </CollapsibleIndicator>
               </div>
             </CollapsibleTrigger>
             <CollapsibleContent>
-              <div class='border-t border-gray-200 px-6 py-6'>
+              <div class='border-t border-slate-100 px-5 py-5'>
                 <ChartSection studies={studies} members={members} />
               </div>
             </CollapsibleContent>
           </Collapsible>
         </div>
         {/* Tables Section - Collapsible */}
-        <div class='overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm'>
+        <div class='overflow-hidden rounded-xl border border-slate-200 bg-white'>
           <Collapsible open={tablesExpanded()} onOpenChange={setTablesExpanded}>
-            <CollapsibleTrigger class='cursor-pointer px-6 py-4 transition-colors select-none hover:bg-gray-50'>
-              <h2 class='text-lg font-semibold text-gray-900'>Tables</h2>
-              <div class='flex items-center gap-2 text-sm text-gray-500'>
-                {tablesExpanded() ? 'Click to collapse' : 'Click to expand tables'}
+            <CollapsibleTrigger class='w-full cursor-pointer justify-between px-5 py-4 transition-colors select-none hover:bg-slate-50'>
+              <h2 class='text-base font-semibold text-slate-900'>Tables</h2>
+              <div class='flex items-center gap-2 text-sm text-slate-500'>
+                {tablesExpanded() ? 'Click to collapse' : 'Click to expand'}
                 <CollapsibleIndicator>
-                  <FiChevronDown class='h-5 w-5' />
+                  <FiChevronDown class='h-4 w-4' />
                 </CollapsibleIndicator>
               </div>
             </CollapsibleTrigger>
             <CollapsibleContent>
-              <div class='border-t border-gray-200 px-6 py-6'>
+              <div class='border-t border-slate-100 px-5 py-5'>
                 <AMSTAR2ResultsTable studies={studies} />
               </div>
             </CollapsibleContent>

@@ -288,74 +288,71 @@ export default function ProjectView(props) {
 
       {/* Main project view with tabs */}
       <Show when={!isChildRoute()}>
-        <div class='mx-auto max-w-7xl p-6 pt-4'>
-          <ProjectHeader
-            name={() => meta()?.name}
-            description={() => meta()?.description}
-            onRename={newName => projectActionsStore.project.rename(newName)}
-            onUpdateDescription={desc => projectActionsStore.project.updateDescription(desc)}
-            onBack={() => navigate(backPath())}
-          />
-
+        <div class='min-h-screen bg-slate-50'>
           <Tabs value={tabFromUrl()} onValueChange={handleTabChange}>
-            <TabsList class='overflow-x-auto rounded-t-lg border border-gray-200 bg-white'>
-              <For each={tabDefinitions}>
-                {tab => (
-                  <TabsTrigger
-                    value={tab.value}
-                    class='gap-2 border-b-2 border-transparent text-gray-600 hover:bg-gray-50 hover:text-gray-900 data-[selected]:border-blue-600 data-[selected]:text-gray-900'
-                  >
-                    {tab.icon}
-                    {tab.label}
-                    <Show when={tab.getCount}>
-                      <span class='ml-1 rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-600'>
-                        {tab.getCount()}
-                      </span>
-                    </Show>
-                  </TabsTrigger>
-                )}
-              </For>
-            </TabsList>
-            <TabsContent
-              value='overview'
-              class='rounded-b-lg border border-t-0 border-gray-200 bg-white p-6'
-            >
-              <SectionErrorBoundary name='Overview'>
-                <OverviewTab />
-              </SectionErrorBoundary>
-            </TabsContent>
-            <TabsContent
-              value='all-studies'
-              class='rounded-b-lg border border-t-0 border-gray-200 bg-white p-6'
-            >
-              <SectionErrorBoundary name='All Studies'>
-                <AllStudiesTab />
-              </SectionErrorBoundary>
-            </TabsContent>
-            <TabsContent
-              value='todo'
-              class='rounded-b-lg border border-t-0 border-gray-200 bg-white p-6'
-            >
-              <SectionErrorBoundary name='To-Do'>
-                <ToDoTab />
-              </SectionErrorBoundary>
-            </TabsContent>
-            <TabsContent
-              value='reconcile'
-              class='rounded-b-lg border border-t-0 border-gray-200 bg-white p-6'
-            >
-              <SectionErrorBoundary name='Reconcile'>
-                <ReconcileTab />
-              </SectionErrorBoundary>
-            </TabsContent>
-            <TabsContent
-              value='completed'
-              class='rounded-b-lg border border-t-0 border-gray-200 bg-white p-6'
-            >
-              <SectionErrorBoundary name='Completed'>
-                <CompletedTab />
-              </SectionErrorBoundary>
-            </TabsContent>
+            {/* Sticky header */}
+            <header class='sticky top-0 z-20 border-b border-slate-200 bg-white'>
+              <div class='mx-auto max-w-7xl px-6'>
+                <ProjectHeader
+                  name={() => meta()?.name}
+                  description={() => meta()?.description}
+                  onRename={newName => projectActionsStore.project.rename(newName)}
+                  onUpdateDescription={desc => projectActionsStore.project.updateDescription(desc)}
+                  onBack={() => navigate(backPath())}
+                />
+              </div>
+
+              {/* Tabs navigation */}
+              <div class='mx-auto max-w-7xl px-6'>
+                <TabsList class='-mb-px flex gap-1 overflow-x-auto'>
+                  <For each={tabDefinitions}>
+                    {tab => (
+                      <TabsTrigger
+                        value={tab.value}
+                        class='gap-2 border-b-2 border-transparent text-slate-500 transition-colors hover:text-slate-700 data-[selected]:border-blue-600 data-[selected]:text-blue-700'
+                      >
+                        {tab.icon}
+                        {tab.label}
+                        <Show when={tab.getCount}>
+                          <span class='rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-500 data-[selected]:bg-blue-100 data-[selected]:text-blue-700'>
+                            {tab.getCount()}
+                          </span>
+                        </Show>
+                      </TabsTrigger>
+                    )}
+                  </For>
+                </TabsList>
+              </div>
+            </header>
+
+            {/* Main content area */}
+            <main class='mx-auto max-w-7xl px-6 py-6'>
+              <TabsContent value='overview' class='mt-0'>
+                <SectionErrorBoundary name='Overview'>
+                  <OverviewTab />
+                </SectionErrorBoundary>
+              </TabsContent>
+              <TabsContent value='all-studies' class='mt-0'>
+                <SectionErrorBoundary name='All Studies'>
+                  <AllStudiesTab />
+                </SectionErrorBoundary>
+              </TabsContent>
+              <TabsContent value='todo' class='mt-0'>
+                <SectionErrorBoundary name='To-Do'>
+                  <ToDoTab />
+                </SectionErrorBoundary>
+              </TabsContent>
+              <TabsContent value='reconcile' class='mt-0'>
+                <SectionErrorBoundary name='Reconcile'>
+                  <ReconcileTab />
+                </SectionErrorBoundary>
+              </TabsContent>
+              <TabsContent value='completed' class='mt-0'>
+                <SectionErrorBoundary name='Completed'>
+                  <CompletedTab />
+                </SectionErrorBoundary>
+              </TabsContent>
+            </main>
           </Tabs>
         </div>
 
