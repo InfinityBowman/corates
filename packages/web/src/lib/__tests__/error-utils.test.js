@@ -20,7 +20,7 @@ import {
 } from '@corates/shared';
 
 // Mock showToast
-vi.mock('@corates/ui', () => ({
+vi.mock('@/components/ui/toast', () => ({
   showToast: {
     error: vi.fn(),
   },

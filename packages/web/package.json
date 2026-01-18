@@ -19,7 +19,6 @@
   "dependencies": {
     "@ark-ui/solid": "^5.30.0",
     "@corates/shared": "workspace:*",
-    "@corates/ui": "workspace:*",
     "@embedpdf/core": "^2.2.0",
     "@embedpdf/engines": "^2.2.0",
     "@embedpdf/models": "^2.2.0",
