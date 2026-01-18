@@ -1,7 +1,14 @@
 import { createSignal, Show, onMount, For } from 'solid-js';
 import { FiShield, FiX, FiCopy, FiSmartphone, FiLock, FiInfo, FiHelpCircle } from 'solid-icons/fi';
 import { useBetterAuth } from '@api/better-auth-store.js';
-import { PasswordInput, showToast, QRCode } from '@corates/ui';
+import { showToast, QRCode } from '@corates/ui';
+import {
+  PasswordInput,
+  PasswordInputLabel,
+  PasswordInputControl,
+  PasswordInputField,
+  PasswordInputVisibilityTrigger,
+} from '@/components/ui/password-input';
 import {
   Tooltip,
   TooltipTrigger,
@@ -320,13 +327,16 @@ export default function TwoFactorSetup() {
                 aria-hidden='true'
               />
 
-              <PasswordInput
-                label='Password'
-                password={password()}
-                onPasswordChange={setPassword}
-                autoComplete='current-password'
-                inputClass='w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500'
-              />
+              <PasswordInput autoComplete='current-password'>
+                <PasswordInputLabel>Password</PasswordInputLabel>
+                <PasswordInputControl>
+                  <PasswordInputField
+                    value={password()}
+                    onInput={e => setPassword(e.target.value)}
+                  />
+                  <PasswordInputVisibilityTrigger />
+                </PasswordInputControl>
+              </PasswordInput>
 
               <div class='flex space-x-3'>
                 <button

@@ -5,6 +5,7 @@
 import * as Y from 'yjs';
 import { API_BASE } from '@config/api.js';
 import projectStore from '@/stores/projectStore.js';
+import projectActionsStore from '@/stores/projectActionsStore';
 import { queryClient } from '@lib/queryClient.js';
 import { queryKeys } from '@lib/queryKeys.js';
 
@@ -144,7 +145,12 @@ export function createStudyOperations(projectId, getYDoc, isSynced) {
       throw new Error('Project name is required');
     }
 
-    const response = await fetch(`${API_BASE}/api/projects/${projectId}`, {
+    const orgId = projectActionsStore.getActiveOrgId();
+    if (!orgId) {
+      throw new Error('No active organization');
+    }
+
+    const response = await fetch(`${API_BASE}/api/orgs/${orgId}/projects/${projectId}`, {
       method: 'PUT',
       credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
@@ -190,7 +196,12 @@ export function createStudyOperations(projectId, getYDoc, isSynced) {
   async function updateDescription(newDescription) {
     const trimmed = (newDescription || '').trim();
 
-    const response = await fetch(`${API_BASE}/api/projects/${projectId}`, {
+    const orgId = projectActionsStore.getActiveOrgId();
+    if (!orgId) {
+      throw new Error('No active organization');
+    }
+
+    const response = await fetch(`${API_BASE}/api/orgs/${orgId}/projects/${projectId}`, {
       method: 'PUT',
       credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
@@ -222,10 +233,8 @@ export function createStudyOperations(projectId, getYDoc, isSynced) {
     projectStore.setProjectData(projectId, {
       meta: { ...existingMeta, description: trimmed || null, updatedAt: now },
     });
-    projectStore.updateProjectInList(projectId, {
-      description: trimmed || null,
-      updatedAt: new Date(now),
-    });
+    // Invalidate project list query to refetch with updated description
+    queryClient.invalidateQueries({ queryKey: queryKeys.projects.all });
 
     return trimmed;
   }

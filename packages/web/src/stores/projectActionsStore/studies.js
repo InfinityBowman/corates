@@ -101,7 +101,7 @@ async function handleGoogleDrivePdf(ops, study, studyId, orgId, projectId, userI
   if (!study.googleDriveFileId) return false;
 
   try {
-    const result = await importFromGoogleDrive(study.googleDriveFileId, orgId, projectId, studyId);
+    const result = await importFromGoogleDrive(study.googleDriveFileId, projectId, studyId);
     const importedFile = result?.file;
     if (!importedFile?.fileName) return false;
 

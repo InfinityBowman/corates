@@ -12,7 +12,14 @@ import projectStore from '@/stores/projectStore.js';
 import projectActionsStore from '@/stores/projectActionsStore';
 import { useBetterAuth } from '@api/better-auth-store.js';
 import { useProjectContext } from '../ProjectContext.jsx';
-import { showToast, Progress } from '@corates/ui';
+import { showToast } from '@corates/ui';
+import {
+  Progress,
+  ProgressTrack,
+  ProgressRange,
+  ProgressLabel,
+  ProgressValueText,
+} from '@/components/ui/progress';
 import { Avatar, AvatarImage, AvatarFallback, getInitials } from '@/components/ui/avatar';
 import {
   Collapsible,
@@ -386,18 +393,24 @@ export default function OverviewTab() {
                       </div>
                       <Show when={userProgress().total > 0}>
                         <div class='mt-4'>
-                          <Progress
-                            value={userProgress().percentage}
-                            label={`${userProgress().completed} of ${userProgress().total} studies appraised`}
-                            showValue={true}
-                            size='sm'
-                            variant={
-                              userProgress().percentage === 100 ? 'success'
-                              : userProgress().percentage >= 50 ?
-                                'default'
-                              : 'warning'
-                            }
-                          />
+                          <Progress value={userProgress().percentage}>
+                            <div class='mb-1 flex items-center justify-between'>
+                              <ProgressLabel class='mb-0 text-xs'>
+                                {userProgress().completed} of {userProgress().total} studies
+                                appraised
+                              </ProgressLabel>
+                              <ProgressValueText class='text-xs' />
+                            </div>
+                            <ProgressTrack class='h-1.5'>
+                              <ProgressRange
+                                class={
+                                  userProgress().percentage === 100 ? 'bg-green-500'
+                                  : userProgress().percentage >= 50 ? 'bg-blue-600'
+                                  : 'bg-amber-500'
+                                }
+                              />
+                            </ProgressTrack>
+                          </Progress>
                         </div>
                       </Show>
                     </div>

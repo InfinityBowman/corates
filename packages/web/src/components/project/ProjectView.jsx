@@ -193,7 +193,7 @@ export default function ProjectView(props) {
       };
       const studyId = projectActionsStore.study.create(title, abstract, metadata);
       if (studyId && file.id) {
-        importFromGoogleDrive(file.id, oid, params.projectId, studyId)
+        importFromGoogleDrive(file.id, params.projectId, studyId)
           .then(result => {
             try {
               projectActionsStore.pdf.addToStudy(studyId, {
