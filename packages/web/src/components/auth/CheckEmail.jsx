@@ -122,70 +122,70 @@ export default function CheckEmail() {
 
   return (
     <div class='relative w-full max-w-md space-y-6 rounded-xl border border-gray-100 bg-white p-6 text-center shadow-2xl sm:max-w-xl sm:rounded-3xl sm:p-12'>
-        {/* Logo */}
-        <a href='/' class='absolute top-4 left-4 sm:top-6 sm:left-6'>
-          <img src='/logo.svg' alt='CoRATES' class='h-6 w-auto sm:h-7' />
-        </a>
+      {/* Logo */}
+      <a href='/' class='absolute top-4 left-4 sm:top-6 sm:left-6'>
+        <img src='/logo.svg' alt='CoRATES' class='h-6 w-auto sm:h-7' />
+      </a>
 
-        {loading() ?
-          <>
-            <div class='flex justify-center'>
-              <AiOutlineLoading3Quarters
-                class='animate-spin text-blue-600'
-                size={48}
-                role='status'
-                aria-label='Verifying email'
-              />
+      {loading() ?
+        <>
+          <div class='flex justify-center'>
+            <AiOutlineLoading3Quarters
+              class='animate-spin text-blue-600'
+              size={48}
+              role='status'
+              aria-label='Verifying email'
+            />
+          </div>
+          <h2 class='text-xl font-bold text-gray-900 sm:text-2xl'>Email Verified!</h2>
+          <p class='text-sm text-gray-600 sm:text-base'>Redirecting you to the dashboard...</p>
+        </>
+      : <>
+          <div class='flex justify-center'>
+            <div class='rounded-full bg-blue-100 p-4'>
+              <AiOutlineMail class='text-blue-600' size={48} />
             </div>
-            <h2 class='text-xl font-bold text-gray-900 sm:text-2xl'>Email Verified!</h2>
-            <p class='text-sm text-gray-600 sm:text-base'>Redirecting you to the dashboard...</p>
-          </>
-        : <>
-            <div class='flex justify-center'>
-              <div class='rounded-full bg-blue-100 p-4'>
-                <AiOutlineMail class='text-blue-600' size={48} />
+          </div>
+
+          <div>
+            <h2 class='mb-2 text-xl font-bold text-gray-900 sm:text-2xl'>Check Your Email</h2>
+            <p class='text-sm text-gray-600 sm:text-base'>We've sent a verification email to:</p>
+            <p class='mt-1 text-sm font-semibold text-blue-600 sm:text-base'>{email()}</p>
+          </div>
+
+          <div class='space-y-4'>
+            <p class='text-xs text-gray-500 sm:text-sm'>
+              Click the verification link in your email to activate your account. Once verified,
+              you'll automatically be redirected to the dashboard.
+            </p>
+
+            <ErrorMessage displayError={displayError} />
+
+            {resent() && (
+              <div class='rounded-lg border border-green-200 bg-green-50 p-3 text-xs text-green-600 sm:text-sm'>
+                Verification email sent successfully!
               </div>
-            </div>
+            )}
+          </div>
 
-            <div>
-              <h2 class='mb-2 text-xl font-bold text-gray-900 sm:text-2xl'>Check Your Email</h2>
-              <p class='text-sm text-gray-600 sm:text-base'>We've sent a verification email to:</p>
-              <p class='mt-1 text-sm font-semibold text-blue-600 sm:text-base'>{email()}</p>
-            </div>
+          <div class='space-y-3'>
+            <PrimaryButton
+              loading={resending()}
+              loadingText='Sending...'
+              type='button'
+              onClick={handleResendEmail}
+            >
+              Resend Email
+            </PrimaryButton>
 
-            <div class='space-y-4'>
-              <p class='text-xs text-gray-500 sm:text-sm'>
-                Click the verification link in your email to activate your account. Once verified,
-                you'll automatically be redirected to the dashboard.
-              </p>
+            <SecondaryButton onClick={handleBackToSignIn}>Back to Sign In</SecondaryButton>
+          </div>
 
-              <ErrorMessage displayError={displayError} />
-
-              {resent() && (
-                <div class='rounded-lg border border-green-200 bg-green-50 p-3 text-xs text-green-600 sm:text-sm'>
-                  Verification email sent successfully!
-                </div>
-              )}
-            </div>
-
-            <div class='space-y-3'>
-              <PrimaryButton
-                loading={resending()}
-                loadingText='Sending...'
-                type='button'
-                onClick={handleResendEmail}
-              >
-                Resend Email
-              </PrimaryButton>
-
-              <SecondaryButton onClick={handleBackToSignIn}>Back to Sign In</SecondaryButton>
-            </div>
-
-            <div class='text-xs text-gray-400 sm:text-sm'>
-              <p>Didn't receive the email? Check your spam folder or try resending.</p>
-            </div>
-          </>
-        }
+          <div class='text-xs text-gray-400 sm:text-sm'>
+            <p>Didn't receive the email? Check your spam folder or try resending.</p>
+          </div>
+        </>
+      }
     </div>
   );
 }
