@@ -32,7 +32,7 @@ import { handleCustomerUpdated, handleCustomerDeleted } from './handlers/custome
 interface WebhookContext {
   db: unknown;
   logger: {
-    stripe: (event: string, data: Record<string, unknown>) => void;
+    stripe: (_event: string, _data: Record<string, unknown>) => void;
   };
   env: unknown;
 }

@@ -12,7 +12,7 @@ import type { Database } from '@/db/client';
 interface ProcessCheckoutContext {
   db: Database;
   logger: {
-    stripe: (event: string, context: Record<string, unknown>) => void;
+    stripe: (_event: string, _context: Record<string, unknown>) => void;
   };
 }
 

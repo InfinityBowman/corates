@@ -30,24 +30,24 @@ interface EmailResult {
 }
 
 export interface EmailService {
-  sendEmail: (params: SendEmailParams) => Promise<EmailResult>;
+  sendEmail: (_params: SendEmailParams) => Promise<EmailResult>;
   sendEmailVerification: (
-    to: string,
-    verificationUrl: string,
-    userDisplayName?: string,
+    _to: string,
+    _verificationUrl: string,
+    _userDisplayName?: string,
   ) => Promise<EmailResult>;
   sendPasswordReset: (
-    to: string,
-    resetUrl: string,
-    userDisplayName?: string,
+    _to: string,
+    _resetUrl: string,
+    _userDisplayName?: string,
   ) => Promise<EmailResult>;
-  sendMagicLink: (to: string, magicLinkUrl: string) => Promise<EmailResult>;
+  sendMagicLink: (_to: string, _magicLinkUrl: string) => Promise<EmailResult>;
   sendProjectInvitation: (
-    to: string,
-    projectName: string,
-    inviterName: string,
-    invitationUrl: string,
-    role: string,
+    _to: string,
+    _projectName: string,
+    _inviterName: string,
+    _invitationUrl: string,
+    _role: string,
   ) => Promise<EmailResult>;
   isProduction: boolean;
 }

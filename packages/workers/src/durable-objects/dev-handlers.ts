@@ -8,7 +8,7 @@ import { getTemplate, getTemplateNames, getTemplateDescriptions } from '../lib/m
 interface DevContext {
   doc: Y.Doc;
   stateId: string;
-  yMapToPlain: (map: Y.Map<unknown>) => Record<string, unknown>;
+  yMapToPlain: (_map: Y.Map<unknown>) => Record<string, unknown>;
 }
 
 interface ExportData {

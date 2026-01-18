@@ -22,7 +22,8 @@ export function sanitizeEmailSubject(text: unknown, maxLength = 78): string {
   if (text == null) return '';
   return (
     String(text)
-      // Remove control characters (0x00-0x1F) and newlines
+      // Remove control characters (0x00-0x1F) and newlines - intentional for XSS prevention
+      // eslint-disable-next-line no-control-regex
       .replace(/[\x00-\x1F\x7F]/g, '')
       // Collapse whitespace
       .replace(/\s+/g, ' ')

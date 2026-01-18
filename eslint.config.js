@@ -379,6 +379,8 @@ export default [
       '**/.vitepress/cache/**',
       '**/.vitepress/dist/**',
       'reference/**',
+      '**/.localflare/**',
+      '.claude/skills/**/examples/**',
     ],
   },
 ];

@@ -86,7 +86,7 @@ billingPortalRoutes.openapi(createPortalRoute, async c => {
     const { createAuth } = await import('@/auth/config.js');
     const auth = createAuth(c.env, c.executionCtx);
     const billingApi = auth.api as unknown as {
-      createBillingPortal: (req: {
+      createBillingPortal: (_req: {
         headers: Headers;
         body: Record<string, unknown>;
       }) => Promise<unknown>;

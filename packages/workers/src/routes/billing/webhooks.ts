@@ -147,12 +147,15 @@ billingWebhookRoutes.post('/purchases/webhook', async c => {
     // Check for duplicate by payload hash
     const existingEntry = await getLedgerByPayloadHash(db, payloadHash);
     if (existingEntry) {
-      (logger.stripe as (event: string, data: Record<string, unknown>) => void)('webhook_dedupe', {
-        outcome: 'skipped_duplicate',
-        payloadHash,
-        existingLedgerId: existingEntry.id,
-        existingStatus: existingEntry.status,
-      });
+      (logger.stripe as (_event: string, _data: Record<string, unknown>) => void)(
+        'webhook_dedupe',
+        {
+          outcome: 'skipped_duplicate',
+          payloadHash,
+          existingLedgerId: existingEntry.id,
+          existingStatus: existingEntry.status,
+        },
+      );
 
       return c.json({ received: true, skipped: 'duplicate_payload' }, 200);
     }
@@ -168,11 +171,14 @@ billingWebhookRoutes.post('/purchases/webhook', async c => {
       status: LedgerStatus.RECEIVED,
     });
 
-    (logger.stripe as (event: string, data: Record<string, unknown>) => void)('webhook_received', {
-      payloadHash,
-      signaturePresent: true,
-      ledgerId,
-    });
+    (logger.stripe as (_event: string, _data: Record<string, unknown>) => void)(
+      'webhook_received',
+      {
+        payloadHash,
+        signaturePresent: true,
+        ledgerId,
+      },
+    );
 
     // Phase 2: Verify signature and process
     let event: Stripe.Event;
@@ -190,7 +196,7 @@ billingWebhookRoutes.post('/purchases/webhook', async c => {
         httpStatus: 403,
       });
 
-      (logger.stripe as (event: string, data: Record<string, unknown>) => void)(
+      (logger.stripe as (_event: string, _data: Record<string, unknown>) => void)(
         'webhook_rejected',
         {
           outcome: 'ignored_unverified',
@@ -222,7 +228,7 @@ billingWebhookRoutes.post('/purchases/webhook', async c => {
         httpStatus: 200,
       });
 
-      (logger.stripe as (event: string, data: Record<string, unknown>) => void)(
+      (logger.stripe as (_event: string, _data: Record<string, unknown>) => void)(
         'webhook_dedupe_event_id',
         {
           outcome: 'skipped_duplicate',
@@ -249,7 +255,7 @@ billingWebhookRoutes.post('/purchases/webhook', async c => {
         httpStatus: 200,
       });
 
-      (logger.stripe as (event: string, data: Record<string, unknown>) => void)(
+      (logger.stripe as (_event: string, _data: Record<string, unknown>) => void)(
         'webhook_rejected',
         {
           outcome: 'ignored_test_mode',
@@ -307,14 +313,17 @@ billingWebhookRoutes.post('/purchases/webhook', async c => {
       ...ledgerContext,
     });
 
-    (logger.stripe as (event: string, data: Record<string, unknown>) => void)('webhook_processed', {
-      outcome: handlerResult.handled ? 'processed' : 'unhandled',
-      stripeEventId,
-      stripeEventType: eventType,
-      result: handlerResult.result,
-      payloadHash,
-      ...((handlerResult.ledgerContext as Record<string, unknown>) || {}),
-    });
+    (logger.stripe as (_event: string, _data: Record<string, unknown>) => void)(
+      'webhook_processed',
+      {
+        outcome: handlerResult.handled ? 'processed' : 'unhandled',
+        stripeEventId,
+        stripeEventType: eventType,
+        result: handlerResult.result,
+        payloadHash,
+        ...((handlerResult.ledgerContext as Record<string, unknown>) || {}),
+      },
+    );
 
     // Return error response if handler indicated failure
     if (handlerResultWithError.error) {

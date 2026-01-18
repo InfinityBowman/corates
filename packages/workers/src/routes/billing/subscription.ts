@@ -290,7 +290,7 @@ billingSubscriptionRoutes.openapi(membersRoute, async c => {
     const { createAuth } = await import('@/auth/config.js');
     const auth = createAuth(c.env, c.executionCtx);
     const listMembersApi = auth.api as unknown as {
-      listMembers: (req: {
+      listMembers: (_req: {
         headers: Headers;
         query: { organizationId: string };
       }) => Promise<{ members?: Array<Record<string, unknown>> }>;
