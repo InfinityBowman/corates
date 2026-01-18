@@ -16,12 +16,7 @@
 import { createSignal, createEffect, Show, createMemo, Index } from 'solid-js';
 import { FiAlertTriangle, FiCheck, FiLoader, FiUserPlus, FiMail, FiX } from 'solid-icons/fi';
 import { showToast } from '@corates/ui';
-import {
-  PinInput,
-  PinInputControl,
-  PinInputField,
-  PinInputHiddenInput,
-} from '@/components/ui/pin-input';
+import { PinInput, PinInputControl, PinInputField } from '@/components/ui/pin-input';
 import {
   Dialog,
   DialogBackdrop,
@@ -193,9 +188,10 @@ export default function MergeAccountsDialog(props) {
   }
 
   async function handleCancel() {
-    if (mergeToken()) {
+    const token = mergeToken();
+    if (token && typeof token === 'string' && token.length > 0) {
       try {
-        await cancelMerge(mergeToken());
+        await cancelMerge(token);
       } catch (err) {
         console.warn('Failed to cancel merge:', err.message);
       }
@@ -233,7 +229,12 @@ export default function MergeAccountsDialog(props) {
       open={isOpen()}
       onOpenChange={open => {
         if (!open && step() !== STEPS.MERGING) {
-          handleCancel();
+          // Only call handleCancel if we have an active merge token to cancel
+          if (mergeToken()) {
+            handleCancel();
+          } else {
+            props.onOpenChange?.(false);
+          }
         }
       }}
     >
@@ -374,7 +375,6 @@ export default function MergeAccountsDialog(props) {
                         {index => <PinInputField index={index()} />}
                       </Index>
                     </PinInputControl>
-                    <PinInputHiddenInput />
                   </PinInput>
                 </div>
 
