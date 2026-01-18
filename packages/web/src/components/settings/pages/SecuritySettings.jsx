@@ -67,9 +67,12 @@ export default function SecuritySettings() {
   };
 
   return (
-    <div class='min-h-full bg-blue-50 py-6'>
+    <div class='min-h-full bg-gradient-to-br from-slate-50 to-slate-100/80 py-8'>
       <div class='mx-auto max-w-3xl px-4 sm:px-6'>
-        <h1 class='mb-6 text-2xl font-bold text-gray-900'>Security</h1>
+        <div class='mb-8'>
+          <h1 class='text-2xl font-semibold tracking-tight text-slate-900'>Security</h1>
+          <p class='mt-1 text-slate-500'>Manage your account security and authentication</p>
+        </div>
 
         {/* Linked Accounts Section */}
         <LinkedAccountsSection />
@@ -77,35 +80,40 @@ export default function SecuritySettings() {
         {/* Password & 2FA Section */}
         <div
           data-section='security'
-          class='mb-6 overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm'
+          class='mb-6 overflow-hidden rounded-xl border border-slate-200/60 bg-white shadow-sm transition-shadow duration-200 hover:shadow-md'
         >
-          <div class='border-b border-gray-200 bg-gray-50 px-6 py-4'>
-            <div class='flex items-center space-x-2'>
-              <FiShield class='h-5 w-5 text-gray-600' />
-              <h2 class='text-lg font-medium text-gray-900'>Password & Authentication</h2>
+          <div class='border-b border-slate-100 bg-gradient-to-r from-slate-50 to-white px-6 py-4'>
+            <div class='flex items-center space-x-2.5'>
+              <div class='flex h-8 w-8 items-center justify-center rounded-lg bg-blue-50'>
+                <FiShield class='h-4 w-4 text-blue-600' />
+              </div>
+              <h2 class='text-base font-semibold text-slate-900'>Password & Authentication</h2>
             </div>
           </div>
           <div class='space-y-6 p-6'>
             <Show when={passwordSuccess()}>
-              <div class='rounded-md border border-green-200 bg-green-50 p-3 text-sm text-green-700'>
+              <div class='rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-700'>
                 {passwordSuccess()}
               </div>
             </Show>
 
             {/* Add Password Option - for users who signed up via magic link or OAuth */}
             <Show when={addPasswordSent()}>
-              <div class='rounded-lg border border-blue-200 bg-blue-50 p-4'>
+              <div class='rounded-lg border border-blue-200/60 bg-blue-50/50 p-4'>
                 <div class='flex items-start space-x-3'>
-                  <FiMail class='mt-0.5 h-5 w-5 text-blue-600' />
+                  <div class='flex h-8 w-8 items-center justify-center rounded-lg bg-blue-100'>
+                    <FiMail class='h-4 w-4 text-blue-600' />
+                  </div>
                   <div>
-                    <p class='font-medium text-blue-900'>Check your email</p>
-                    <p class='mt-1 text-sm text-blue-700'>
-                      We sent a link to <strong>{user()?.email}</strong> to set your password.
+                    <p class='font-medium text-slate-900'>Check your email</p>
+                    <p class='mt-1 text-sm text-slate-600'>
+                      We sent a link to <strong class='text-slate-900'>{user()?.email}</strong> to
+                      set your password.
                     </p>
                     <button
                       type='button'
                       onClick={() => setAddPasswordSent(false)}
-                      class='mt-2 text-sm font-medium text-blue-600 hover:text-blue-800'
+                      class='mt-2 text-sm font-medium text-blue-600 transition-colors hover:text-blue-700'
                     >
                       Dismiss
                     </button>
@@ -117,11 +125,11 @@ export default function SecuritySettings() {
             <Show when={!addPasswordSent()}>
               <div class='flex items-center justify-between'>
                 <div>
-                  <p class='font-medium text-gray-900'>Add Password</p>
-                  <p class='text-sm text-gray-500'>
+                  <p class='font-medium text-slate-900'>Add Password</p>
+                  <p class='text-sm text-slate-500'>
                     Set a password to sign in without email links.
                   </p>
-                  <p class='text-sm text-gray-500'>
+                  <p class='text-sm text-slate-500'>
                     A password is required for Two-Factor Authentication.
                   </p>
                 </div>
@@ -140,7 +148,7 @@ export default function SecuritySettings() {
                     }
                   }}
                   disabled={addPasswordLoading()}
-                  class='flex items-center space-x-2 rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:opacity-50'
+                  class='flex items-center space-x-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition-all hover:bg-blue-700 hover:shadow focus:ring-2 focus:ring-blue-500/20 focus:outline-none disabled:opacity-50'
                 >
                   <FiMail class='h-4 w-4' />
                   <span>{addPasswordLoading() ? 'Sending...' : 'Send Setup Email'}</span>
@@ -149,7 +157,7 @@ export default function SecuritySettings() {
             </Show>
 
             {/* Divider */}
-            <div class='border-t border-gray-200' />
+            <div class='border-t border-slate-100' />
 
             {/* Change Password Option - for users who already have a password */}
             <Show
@@ -157,12 +165,12 @@ export default function SecuritySettings() {
               fallback={
                 <div class='flex items-center justify-between'>
                   <div>
-                    <p class='font-medium text-gray-900'>Change Password</p>
-                    <p class='text-sm text-gray-500'>Update your existing password.</p>
+                    <p class='font-medium text-slate-900'>Change Password</p>
+                    <p class='text-sm text-slate-500'>Update your existing password.</p>
                   </div>
                   <button
                     onClick={() => setShowPasswordForm(true)}
-                    class='flex items-center space-x-2 rounded-md bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-200'
+                    class='flex items-center space-x-2 rounded-lg bg-slate-100 px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-200'
                   >
                     <FiKey class='h-4 w-4' />
                     <span>Change Password</span>
@@ -172,13 +180,13 @@ export default function SecuritySettings() {
             >
               <form onSubmit={handlePasswordChange} class='space-y-4'>
                 <Show when={passwordError()}>
-                  <div class='rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700'>
+                  <div class='rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700'>
                     {passwordError()}
                   </div>
                 </Show>
 
                 <div>
-                  <label class='mb-1 block text-sm font-medium text-gray-700'>
+                  <label class='mb-1.5 block text-sm font-medium text-slate-700'>
                     Current Password
                   </label>
                   <div class='relative'>
@@ -186,13 +194,13 @@ export default function SecuritySettings() {
                       type={showCurrentPassword() ? 'text' : 'password'}
                       value={currentPassword()}
                       onInput={e => setCurrentPassword(e.target.value)}
-                      class='block w-full rounded-md border border-gray-300 px-3 py-2 pr-10 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500 focus:outline-none'
+                      class='block w-full rounded-lg border border-slate-200 bg-white px-3 py-2 pr-10 text-sm shadow-sm transition-colors focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none'
                       required
                     />
                     <button
                       type='button'
                       onClick={() => setShowCurrentPassword(!showCurrentPassword())}
-                      class='absolute inset-y-0 right-0 flex items-center px-3 text-gray-400 hover:text-gray-600'
+                      class='absolute inset-y-0 right-0 flex items-center px-3 text-slate-400 transition-colors hover:text-slate-600'
                     >
                       <Show when={showCurrentPassword()} fallback={<FiEye class='h-4 w-4' />}>
                         <FiEyeOff class='h-4 w-4' />
@@ -202,19 +210,21 @@ export default function SecuritySettings() {
                 </div>
 
                 <div>
-                  <label class='mb-1 block text-sm font-medium text-gray-700'>New Password</label>
+                  <label class='mb-1.5 block text-sm font-medium text-slate-700'>
+                    New Password
+                  </label>
                   <div class='relative'>
                     <input
                       type={showNewPassword() ? 'text' : 'password'}
                       value={newPassword()}
                       onInput={e => setNewPassword(e.target.value)}
-                      class='block w-full rounded-md border border-gray-300 px-3 py-2 pr-10 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500 focus:outline-none'
+                      class='block w-full rounded-lg border border-slate-200 bg-white px-3 py-2 pr-10 text-sm shadow-sm transition-colors focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none'
                       required
                     />
                     <button
                       type='button'
                       onClick={() => setShowNewPassword(!showNewPassword())}
-                      class='absolute inset-y-0 right-0 flex items-center px-3 text-gray-400 hover:text-gray-600'
+                      class='absolute inset-y-0 right-0 flex items-center px-3 text-slate-400 transition-colors hover:text-slate-600'
                     >
                       <Show when={showNewPassword()} fallback={<FiEye class='h-4 w-4' />}>
                         <FiEyeOff class='h-4 w-4' />
@@ -225,23 +235,23 @@ export default function SecuritySettings() {
                 </div>
 
                 <div>
-                  <label class='mb-1 block text-sm font-medium text-gray-700'>
+                  <label class='mb-1.5 block text-sm font-medium text-slate-700'>
                     Confirm New Password
                   </label>
                   <input
                     type='password'
                     value={confirmPassword()}
                     onInput={e => setConfirmPassword(e.target.value)}
-                    class='block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500 focus:outline-none'
+                    class='block w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm shadow-sm transition-colors focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none'
                     required
                   />
                 </div>
 
-                <div class='flex space-x-3'>
+                <div class='flex gap-2'>
                   <button
                     type='submit'
                     disabled={changingPassword()}
-                    class='rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:opacity-50'
+                    class='rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition-all hover:bg-blue-700 hover:shadow focus:ring-2 focus:ring-blue-500/20 focus:outline-none disabled:opacity-50'
                   >
                     {changingPassword() ? 'Changing...' : 'Update Password'}
                   </button>
@@ -254,7 +264,7 @@ export default function SecuritySettings() {
                       setNewPassword('');
                       setConfirmPassword('');
                     }}
-                    class='rounded-md bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-200'
+                    class='rounded-lg bg-slate-100 px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-200'
                   >
                     Cancel
                   </button>
@@ -263,7 +273,7 @@ export default function SecuritySettings() {
             </Show>
 
             {/* Divider */}
-            <div class='border-t border-gray-200' />
+            <div class='border-t border-slate-100' />
 
             {/* Two-Factor Authentication */}
             <TwoFactorSetup />
@@ -271,11 +281,13 @@ export default function SecuritySettings() {
         </div>
 
         {/* Active Sessions Section */}
-        <div class='mb-6 overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm'>
-          <div class='border-b border-gray-200 bg-gray-50 px-6 py-4'>
-            <div class='flex items-center space-x-2'>
-              <FiMonitor class='h-5 w-5 text-gray-600' />
-              <h2 class='text-lg font-medium text-gray-900'>Active Sessions</h2>
+        <div class='mb-6 overflow-hidden rounded-xl border border-slate-200/60 bg-white shadow-sm transition-shadow duration-200 hover:shadow-md'>
+          <div class='border-b border-slate-100 bg-gradient-to-r from-slate-50 to-white px-6 py-4'>
+            <div class='flex items-center space-x-2.5'>
+              <div class='flex h-8 w-8 items-center justify-center rounded-lg bg-slate-100'>
+                <FiMonitor class='h-4 w-4 text-slate-600' />
+              </div>
+              <h2 class='text-base font-semibold text-slate-900'>Active Sessions</h2>
             </div>
           </div>
           <div class='p-6'>

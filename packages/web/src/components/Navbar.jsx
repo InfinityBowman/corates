@@ -155,7 +155,7 @@ export default function Navbar(props) {
                   <div class='truncate text-xs text-gray-500'>{user()?.email}</div>
                 </div>
                 <A
-                  href='/profile'
+                  href='/settings/profile'
                   class='block px-4 py-2 text-sm hover:bg-gray-100'
                   onClick={() => setShowUserMenu(false)}
                 >

@@ -346,7 +346,7 @@ export default function OverviewTab() {
                               member.image.startsWith('/') ?
                                 `${API_BASE}${member.image}`
                               : member.image
-                            : `${API_BASE}/api/users/avatar/${member.userId}`
+                            : undefined
                           }
                           alt={member.displayName || member.name || member.email}
                         />

@@ -5,7 +5,7 @@
  */
 
 import { For, createSignal } from 'solid-js';
-import { FiShield, FiClock, FiHelpCircle, FiChevronDown } from 'solid-icons/fi';
+import { FiChevronDown } from 'solid-icons/fi';
 import { useSubscription } from '@/primitives/useSubscription.js';
 import PricingTable from '@/components/billing/PricingTable.jsx';
 import { LANDING_URL } from '@/config/api.js';
@@ -32,23 +32,6 @@ function FAQItem(props) {
         class={`overflow-hidden transition-all duration-200 ${isOpen() ? 'max-h-96 pb-5' : 'max-h-0'}`}
       >
         <p class='text-gray-600'>{props.answer}</p>
-      </div>
-    </div>
-  );
-}
-
-/**
- * Trust signal badge
- */
-function TrustBadge(props) {
-  return (
-    <div class='flex items-center gap-3 rounded-lg bg-gray-50 px-4 py-3'>
-      <div class='flex h-10 w-10 items-center justify-center rounded-full bg-white shadow-sm'>
-        {props.icon}
-      </div>
-      <div>
-        <p class='font-medium text-gray-900'>{props.title}</p>
-        <p class='text-sm text-gray-500'>{props.subtitle}</p>
       </div>
     </div>
   );
@@ -105,25 +88,6 @@ export default function PlansSettings() {
               our core features.
             </p>
           </div>
-        </div>
-
-        {/* Trust signals */}
-        <div class='mb-10 grid grid-cols-1 gap-4 sm:grid-cols-3'>
-          <TrustBadge
-            icon={<FiShield class='h-5 w-5 text-green-600' />}
-            title='Secure payments'
-            subtitle='Powered by Stripe'
-          />
-          <TrustBadge
-            icon={<FiClock class='h-5 w-5 text-blue-600' />}
-            title='14-day free trial'
-            subtitle='No credit card required'
-          />
-          <TrustBadge
-            icon={<FiHelpCircle class='h-5 w-5 text-gray-600' />}
-            title='Cancel anytime'
-            subtitle='No questions asked'
-          />
         </div>
 
         {/* Plan Comparison Table */}

@@ -82,12 +82,12 @@ export default function StudyCardHeader(props) {
   const getMemberDisplayName = member =>
     member?.displayName || member?.name || member?.email || 'Unknown';
 
-  // Get avatar image source (matching OverviewTab pattern)
+  // Get avatar image source - only return URL if image exists, otherwise undefined for fallback
   const getAvatarSrc = member => {
     if (member?.image) {
       return member.image.startsWith('/') ? `${API_BASE}${member.image}` : member.image;
     }
-    return `${API_BASE}/api/users/avatar/${member?.userId}`;
+    return undefined;
   };
 
   const hasReviewers = () => study().reviewer1 || study().reviewer2;

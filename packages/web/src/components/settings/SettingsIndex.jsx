@@ -1,9 +1,9 @@
 /**
- * SettingsIndex - Redirects to the default settings page (general)
+ * SettingsIndex - Redirects to the default settings page (profile)
  */
 
 import { Navigate } from '@solidjs/router';
 
 export default function SettingsIndex() {
-  return <Navigate href='/settings/general' />;
+  return <Navigate href='/settings/profile' />;
 }

@@ -18,7 +18,7 @@ import { uploadPdf, deletePdf } from '@api/pdf-api.js';
 import { cachePdf } from '@primitives/pdfCache.js';
 import { importFromGoogleDrive } from '@api/google-drive.js';
 import { showToast } from '@/components/ui/toast';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { Tabs, TabsList, TabsTrigger, TabsContent, TabsIndicator } from '@/components/ui/tabs';
 import { BiRegularHome } from 'solid-icons/bi';
 import { BsListTask } from 'solid-icons/bs';
 import { CgArrowsExchange } from 'solid-icons/cg';
@@ -304,23 +304,26 @@ export default function ProjectView(props) {
 
               {/* Tabs navigation */}
               <div class='mx-auto max-w-7xl px-6'>
-                <TabsList class='-mb-px flex gap-1 overflow-x-auto'>
+                <TabsList class='relative flex gap-1 overflow-x-auto pb-px'>
                   <For each={tabDefinitions}>
                     {tab => (
                       <TabsTrigger
                         value={tab.value}
-                        class='gap-2 border-b-2 border-transparent text-slate-500 transition-colors hover:text-slate-700 data-[selected]:border-blue-600 data-[selected]:text-blue-700'
+                        class='group relative gap-2 rounded-t-lg px-4 py-2.5 text-slate-500 transition-all hover:bg-slate-50 hover:text-slate-700 data-[selected]:text-slate-900'
                       >
-                        {tab.icon}
-                        {tab.label}
+                        <span class='opacity-60 transition-opacity group-data-[selected]:opacity-100'>
+                          {tab.icon}
+                        </span>
+                        <span class='font-medium'>{tab.label}</span>
                         <Show when={tab.getCount}>
-                          <span class='rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-500 data-[selected]:bg-blue-100 data-[selected]:text-blue-700'>
+                          <span class='min-w-[1.5rem] rounded-full bg-slate-100 px-1.5 py-0.5 text-center text-xs font-medium text-slate-600 tabular-nums transition-colors group-data-[selected]:bg-blue-50 group-data-[selected]:text-blue-700'>
                             {tab.getCount()}
                           </span>
                         </Show>
                       </TabsTrigger>
                     )}
                   </For>
+                  <TabsIndicator class='h-0.5 rounded-full bg-blue-600' />
                 </TabsList>
               </div>
             </header>
