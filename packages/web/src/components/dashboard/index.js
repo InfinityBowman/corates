@@ -8,7 +8,6 @@
 export { default } from './Dashboard.jsx';
 export { DashboardHeader } from './DashboardHeader.jsx';
 export { StatsRow, StatCard } from './StatsRow.jsx';
-export { ProgressCard } from './ProgressCard.jsx';
 export { QuickActions } from './QuickActions.jsx';
 export { ActivityFeed } from './ActivityFeed.jsx';
 export { ProjectCard } from './ProjectCard.jsx';

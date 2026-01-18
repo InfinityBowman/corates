@@ -17,7 +17,6 @@ import { LANDING_URL } from '@/config/api.js';
 
 import DashboardHeader from './DashboardHeader.jsx';
 // import { StatsRow } from './StatsRow.jsx';
-import ProgressCard from './ProgressCard.jsx';
 import QuickActions from './QuickActions.jsx';
 import ActivityFeed from './ActivityFeed.jsx';
 import { ProjectsSection } from './ProjectsSection.jsx';
@@ -114,15 +113,14 @@ export function Dashboard() {
     isOnline,
     isLoggedIn,
     canCreateProject,
-    stats,
+    // stats,
     activities,
     subscriptionFetchFailed,
   } = useDashboardData();
-  const [showCreateForm, setShowCreateForm] = createSignal(false);
+  const [createModalOpen, setCreateModalOpen] = createSignal(false);
 
   const handleCreateProject = () => {
-    document.getElementById('projects-section')?.scrollIntoView({ behavior: 'smooth' });
-    setShowCreateForm(true);
+    setCreateModalOpen(true);
   };
 
   const handleStartROBINSI = () => {
@@ -177,8 +175,8 @@ export function Dashboard() {
             <Show when={isLoggedIn()}>
               <SectionErrorBoundary name='Projects'>
                 <ProjectsSection
-                  showCreateForm={showCreateForm}
-                  setShowCreateForm={setShowCreateForm}
+                  createModalOpen={createModalOpen}
+                  setCreateModalOpen={setCreateModalOpen}
                 />
               </SectionErrorBoundary>
             </Show>
@@ -191,15 +189,6 @@ export function Dashboard() {
 
           {/* Right sidebar */}
           <div class='space-y-6'>
-            {/* Progress card - only for logged in users */}
-            <Show when={isLoggedIn()}>
-              <ProgressCard
-                completed={stats().completedStudies}
-                total={stats().totalStudies}
-                subtitle='Studies across all projects'
-              />
-            </Show>
-
             <QuickActions
               onStartROBINSI={handleStartROBINSI}
               onStartAMSTAR2={handleStartAMSTAR2}
