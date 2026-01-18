@@ -375,7 +375,7 @@ export default function LinkedAccountsSection() {
           <DialogContent class='max-w-md'>
             <DialogHeader>
               <DialogTitle>Unlink {unlinkProviderName()}?</DialogTitle>
-              <DialogCloseTrigger>
+              <DialogCloseTrigger aria-label="Close">
                 <FiX class='h-5 w-5' />
               </DialogCloseTrigger>
             </DialogHeader>
