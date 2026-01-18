@@ -376,7 +376,7 @@ export default function CompleteProfile() {
                   <Select
                     collection={titleCollection}
                     value={titleSelection()}
-                    onValueChange={details => setTitleSelection(details.value)}
+                    onValueChange={value => setTitleSelection(value || [])}
                   >
                     <SelectControl>
                       <SelectTrigger class='w-full'>
