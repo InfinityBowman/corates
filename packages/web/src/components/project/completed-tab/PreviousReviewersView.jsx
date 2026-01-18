@@ -190,12 +190,12 @@ export default function PreviousReviewersView(props) {
                 <Show when={reviewerTabs().length > 1}>
                   <div class='mb-4'>
                     <Tabs value={activeTab()} onValueChange={setActiveTab}>
-                      <TabsList class='flex overflow-x-auto rounded-t-lg border border-gray-200 bg-white'>
+                      <TabsList class='overflow-x-auto rounded-t-lg border border-gray-200 bg-white'>
                         <For each={reviewerTabs()}>
                           {tab => (
                             <TabsTrigger
                               value={tab.value}
-                              class='flex items-center gap-2 rounded-none border-b-2 border-transparent bg-transparent px-4 py-3 text-sm font-medium text-gray-600 shadow-none transition-colors hover:bg-gray-50 hover:text-gray-900 data-[selected]:border-blue-600 data-[selected]:bg-transparent data-[selected]:text-gray-900 data-[selected]:shadow-none'
+                              class='gap-2 border-b-2 border-transparent text-gray-600 hover:bg-gray-50 hover:text-gray-900 data-[selected]:border-blue-600 data-[selected]:text-gray-900'
                             >
                               {tab.label}
                             </TabsTrigger>

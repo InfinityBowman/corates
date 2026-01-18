@@ -1,8 +1,9 @@
-import { createSignal, createEffect, Show, onMount, onCleanup } from 'solid-js';
+import { createSignal, createEffect, Show, onMount, onCleanup, For } from 'solid-js';
 import { BiRegularPlus } from 'solid-icons/bi';
 import { AiOutlineCloudUpload } from 'solid-icons/ai';
 import { FiChevronUp } from 'solid-icons/fi';
-import { Tabs, showToast } from '@corates/ui';
+import { showToast } from '@corates/ui';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import projectStore from '@/stores/projectStore.js';
 
 import { useAddStudies } from '@primitives/useAddStudies.js';
@@ -215,37 +216,34 @@ export default function AddStudiesForm(props) {
             </div>
           </Show>
 
-          <Tabs
-            variant='underline'
-            value={activeTab()}
-            onValueChange={v => setActiveTab(v)}
-            tabs={tabs.map(t => ({
-              ...t,
-              label: (
-                <span class='flex items-center gap-2'>
-                  {t.label}
-                  <Show
-                    when={
-                      (t.value === 'pdfs' && studies.pdfCount() > 0) ||
-                      (t.value === 'references' && studies.refCount() > 0) ||
-                      (t.value === 'lookup' && studies.lookupCount() > 0) ||
-                      (t.value === 'drive' && studies.driveCount() > 0)
-                    }
-                  >
-                    <span class='inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-blue-100 px-1.5 text-xs font-medium text-blue-700'>
-                      {t.value === 'pdfs' ?
-                        studies.pdfCount()
-                      : t.value === 'references' ?
-                        studies.refCount()
-                      : t.value === 'lookup' ?
-                        studies.lookupCount()
-                      : studies.driveCount()}
-                    </span>
-                  </Show>
-                </span>
-              ),
-            }))}
-          />
+          <Tabs value={activeTab()} onValueChange={v => setActiveTab(v)}>
+            <TabsList class='border-b border-gray-200 bg-white'>
+              <For each={tabs}>
+                {tab => {
+                  const getCount = () => {
+                    if (tab.value === 'pdfs') return studies.pdfCount();
+                    if (tab.value === 'references') return studies.refCount();
+                    if (tab.value === 'lookup') return studies.lookupCount();
+                    if (tab.value === 'drive') return studies.driveCount();
+                    return 0;
+                  };
+                  return (
+                    <TabsTrigger
+                      value={tab.value}
+                      class='gap-2 border-b-2 border-transparent text-gray-600 hover:text-gray-900 data-[selected]:border-blue-600 data-[selected]:text-gray-900'
+                    >
+                      {tab.label}
+                      <Show when={getCount() > 0}>
+                        <span class='inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-blue-100 px-1.5 text-xs font-medium text-blue-700'>
+                          {getCount()}
+                        </span>
+                      </Show>
+                    </TabsTrigger>
+                  );
+                }}
+              </For>
+            </TabsList>
+          </Tabs>
 
           <div class='mt-4'>
             <Show when={activeTab() === 'pdfs'}>

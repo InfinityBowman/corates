@@ -17,6 +17,8 @@ const SettingsMockMinimal = lazy(() => import('./SettingsMockMinimal.jsx'));
 const SettingsMockCombined = lazy(() => import('./SettingsMockCombined.jsx'));
 const DashboardMock = lazy(() => import('./DashboardMock.jsx'));
 const ReactivePropsDemo = lazy(() => import('./ReactivePropsDemo.jsx'));
+const ProjectWizardMock = lazy(() => import('./ProjectWizardMock.jsx'));
+const ProjectViewV2 = lazy(() => import('./ProjectViewV2.jsx'));
 
 /**
  * Mock routes - returns Route elements for the /mocks/* path.
@@ -38,6 +40,8 @@ export default function MockRoutes() {
       <Route path='/settings-combined' component={SettingsMockCombined} />
       <Route path='/dashboard' component={DashboardMock} />
       <Route path='/reactivity-example' component={ReactivePropsDemo} />
+      <Route path='/project-wizard' component={ProjectWizardMock} />
+      <Route path='/project-view-v2' component={ProjectViewV2} />
     </Route>
   );
 }

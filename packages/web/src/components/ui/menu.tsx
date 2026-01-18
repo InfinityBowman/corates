@@ -143,10 +143,10 @@ const MenuItem: Component<MenuItemProps> = props => {
     <MenuPrimitive.Item
       class={cn(
         'mx-1 flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm transition-colors outline-none select-none',
-        'hover:bg-gray-100 data-[highlighted]:bg-gray-100',
-        'data-[disabled]:pointer-events-none data-[disabled]:cursor-not-allowed data-[disabled]:opacity-50',
+        'hover:bg-gray-100 data-highlighted:bg-gray-100',
+        'data-disabled:pointer-events-none data-disabled:cursor-not-allowed data-disabled:opacity-50',
         local.destructive ?
-          'text-red-600 hover:bg-red-50 data-[highlighted]:bg-red-50'
+          'text-red-600 hover:bg-red-50 data-highlighted:bg-red-50'
         : 'text-gray-700',
         local.class,
       )}

@@ -23,6 +23,37 @@ export default function MockIndex() {
           <h2 class='mb-3 text-lg font-semibold text-gray-700'>Featured</h2>
           <div class='grid gap-4'>
             <A
+              href='/mocks/project-wizard'
+              class='block rounded-lg border-2 border-blue-200 bg-gradient-to-br from-blue-50 to-white p-6 shadow-sm transition-all hover:border-blue-300 hover:shadow-md'
+            >
+              <div class='flex items-start justify-between'>
+                <div>
+                  <h3 class='mb-2 text-lg font-semibold text-gray-900'>
+                    Project Creation Wizard
+                  </h3>
+                  <p class='mb-3 text-sm text-gray-600'>
+                    Multi-step wizard for creating systematic review projects. Material + Apple HIG
+                    blend with blue palette. Includes project basics, team, studies import, and
+                    reviewer assignment steps.
+                  </p>
+                  <div class='flex flex-wrap gap-2'>
+                    <span class='inline-block rounded-full bg-blue-100 px-3 py-1 text-xs font-medium text-blue-700'>
+                      Light Theme
+                    </span>
+                    <span class='inline-block rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-700'>
+                      Material + Apple
+                    </span>
+                    <span class='inline-block rounded-full bg-emerald-100 px-3 py-1 text-xs font-medium text-emerald-700'>
+                      4 Steps
+                    </span>
+                  </div>
+                </div>
+                <span class='rounded-full bg-blue-600 px-3 py-1 text-xs font-medium text-white'>
+                  New
+                </span>
+              </div>
+            </A>
+            <A
               href='/mocks/dashboard'
               class='block rounded-lg border-2 border-teal-200 bg-gradient-to-br from-teal-50 to-white p-6 shadow-sm transition-all hover:border-teal-300 hover:shadow-md'
             >
@@ -48,7 +79,34 @@ export default function MockIndex() {
                     </span>
                   </div>
                 </div>
-                <span class='rounded-full bg-teal-600 px-3 py-1 text-xs font-medium text-white'>
+              </div>
+            </A>
+            <A
+              href='/mocks/project-view-v2'
+              class='block rounded-lg border-2 border-blue-200 bg-gradient-to-br from-blue-50 to-white p-6 shadow-sm transition-all hover:border-blue-300 hover:shadow-md'
+            >
+              <div class='flex items-start justify-between'>
+                <div>
+                  <h3 class='mb-2 text-lg font-semibold text-gray-900'>
+                    ProjectView V2 - Modern Dashboard
+                  </h3>
+                  <p class='mb-3 text-sm text-gray-600'>
+                    Refreshed design with blue palette, URL-persisted tabs, Overview dashboard,
+                    improved table styling, and consistent design tokens matching the Project Wizard.
+                  </p>
+                  <div class='flex flex-wrap gap-2'>
+                    <span class='inline-block rounded-full bg-blue-100 px-3 py-1 text-xs font-medium text-blue-700'>
+                      Blue Theme
+                    </span>
+                    <span class='inline-block rounded-full bg-emerald-100 px-3 py-1 text-xs font-medium text-emerald-700'>
+                      URL State
+                    </span>
+                    <span class='inline-block rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-700'>
+                      7 Tabs
+                    </span>
+                  </div>
+                </div>
+                <span class='rounded-full bg-blue-600 px-3 py-1 text-xs font-medium text-white'>
                   New
                 </span>
               </div>
@@ -79,9 +137,6 @@ export default function MockIndex() {
                     </span>
                   </div>
                 </div>
-                <span class='rounded-full bg-violet-600 px-3 py-1 text-xs font-medium text-white'>
-                  Recommended
-                </span>
               </div>
             </A>
           </div>

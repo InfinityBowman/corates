@@ -1,17 +1,21 @@
 /**
  * Tabs component for tabbed interfaces.
+ * Uses minimal default styles - add your own via class props.
  *
  * @example
+ * // Bordered tabs (common pattern)
  * <Tabs defaultValue="account">
- *   <TabsList>
- *     <TabsTrigger value="account">Account</TabsTrigger>
- *     <TabsTrigger value="password">Password</TabsTrigger>
+ *   <TabsList class="overflow-x-auto rounded-t-lg border border-gray-200 bg-white">
+ *     <TabsTrigger
+ *       value="account"
+ *       class="border-b-2 border-transparent text-gray-600 hover:bg-gray-50 data-[selected]:border-blue-600 data-[selected]:text-gray-900"
+ *     >
+ *       Account
+ *     </TabsTrigger>
+ *     <TabsTrigger value="password" class="...">Password</TabsTrigger>
  *   </TabsList>
- *   <TabsContent value="account">
+ *   <TabsContent value="account" class="rounded-b-lg border border-t-0 border-gray-200 bg-white p-6">
  *     Account settings here
- *   </TabsContent>
- *   <TabsContent value="password">
- *     Password settings here
  *   </TabsContent>
  * </Tabs>
  *
@@ -62,10 +66,7 @@ const TabsList: Component<TabsListProps> = props => {
   const [local, others] = splitProps(props, ['class', 'children']);
   return (
     <TabsPrimitive.List
-      class={cn(
-        'inline-flex h-10 items-center justify-center rounded-md bg-gray-100 p-1 text-gray-500',
-        local.class,
-      )}
+      class={cn('flex items-center', local.class)}
       {...others}
     >
       {local.children}
@@ -83,11 +84,10 @@ const TabsTrigger: Component<TabsTriggerProps> = props => {
   return (
     <TabsPrimitive.Trigger
       class={cn(
-        'inline-flex items-center justify-center rounded-sm px-3 py-1.5 text-sm font-medium whitespace-nowrap',
-        'ring-offset-white transition-all',
-        'focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:outline-none',
+        'inline-flex items-center px-4 py-3 text-sm font-medium whitespace-nowrap',
+        'transition-colors',
+        'focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none',
         'disabled:pointer-events-none disabled:opacity-50',
-        'data-[selected]:bg-white data-[selected]:text-gray-900 data-[selected]:shadow-sm',
         local.class,
       )}
       {...others}

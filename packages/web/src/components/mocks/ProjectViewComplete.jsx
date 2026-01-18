@@ -637,7 +637,7 @@ function CompletedTab() {
   );
 }
 
-function ChartsTab() {
+function FiguresTab() {
   return (
     <div class='space-y-6'>
       {/* Summary Stats */}
@@ -760,15 +760,8 @@ export default function ProjectViewComplete() {
     { id: 'todo', label: 'To Do', icon: FiClipboard, count: mockTodoItems.length },
     { id: 'reconcile', label: 'Reconcile', icon: FiGitMerge, count: mockReconcileItems.length },
     { id: 'completed', label: 'Completed', icon: FiCheckCircle, count: mockCompletedItems.length },
-    { id: 'charts', label: 'Charts', icon: FiBarChart2, count: null },
+    { id: 'figures', label: 'Figures', icon: FiBarChart2, count: null },
   ];
-
-  const stats = {
-    total: mockStudies.length,
-    completed: mockStudies.filter(s => s.status === 'completed').length,
-    inProgress: mockStudies.filter(s => s.status === 'in-review').length,
-    reconciling: mockStudies.filter(s => s.status === 'reconcile').length,
-  };
 
   return (
     <div class='min-h-screen bg-slate-50'>
@@ -786,17 +779,9 @@ export default function ProjectViewComplete() {
               </div>
             </div>
             <div class='flex items-center gap-3'>
-              {/* Team Avatars */}
+              {/* Online team members - powered by Yjs awareness, only shows users currently viewing this project */}
               <div class='flex -space-x-2'>
-                <For each={mockMembers}>
-                  {member => (
-                    <Avatar
-                      name={member.name}
-                      initials={member.avatar}
-                      class='h-8 w-8 border-2 border-white text-xs'
-                    />
-                  )}
-                </For>
+                {/* In production, this would filter by awareness state from useProject() */}
               </div>
               <button class='flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-slate-500 transition-colors hover:bg-slate-50 hover:text-slate-700'>
                 <FiSettings class='h-4 w-4' />
@@ -805,41 +790,6 @@ export default function ProjectViewComplete() {
           </div>
         </div>
 
-        {/* Progress Bar */}
-        <div class='mx-auto max-w-7xl px-6 pb-4'>
-          <div class='flex items-center gap-4'>
-            <div class='h-2 flex-1 overflow-hidden rounded-full bg-slate-100'>
-              <div class='flex h-full'>
-                <div
-                  class='bg-emerald-500 transition-all'
-                  style={`width: ${(stats.completed / stats.total) * 100}%`}
-                />
-                <div
-                  class='bg-blue-500 transition-all'
-                  style={`width: ${(stats.inProgress / stats.total) * 100}%`}
-                />
-                <div
-                  class='bg-amber-500 transition-all'
-                  style={`width: ${(stats.reconciling / stats.total) * 100}%`}
-                />
-              </div>
-            </div>
-            <div class='flex items-center gap-4 text-xs'>
-              <div class='flex items-center gap-1.5'>
-                <div class='h-2 w-2 rounded-full bg-emerald-500' />
-                <span class='text-slate-600'>{stats.completed} done</span>
-              </div>
-              <div class='flex items-center gap-1.5'>
-                <div class='h-2 w-2 rounded-full bg-blue-500' />
-                <span class='text-slate-600'>{stats.inProgress} reviewing</span>
-              </div>
-              <div class='flex items-center gap-1.5'>
-                <div class='h-2 w-2 rounded-full bg-amber-500' />
-                <span class='text-slate-600'>{stats.reconciling} reconciling</span>
-              </div>
-            </div>
-          </div>
-        </div>
 
         {/* Tabs */}
         <div class='mx-auto max-w-7xl px-6'>
@@ -893,8 +843,8 @@ export default function ProjectViewComplete() {
         <Show when={activeTab() === 'completed'}>
           <CompletedTab />
         </Show>
-        <Show when={activeTab() === 'charts'}>
-          <ChartsTab />
+        <Show when={activeTab() === 'figures'}>
+          <FiguresTab />
         </Show>
       </main>
 

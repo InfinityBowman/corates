@@ -38,7 +38,7 @@ import { Z_INDEX } from './z-index';
 
 type AlertDialogProps = Omit<ArkDialogRootProps, 'onOpenChange'> & {
   children?: JSX.Element;
-  onOpenChange?: (open: boolean) => void;
+  onOpenChange?: (_open: boolean) => void;
 };
 
 const AlertDialog: Component<AlertDialogProps> = props => {
@@ -229,7 +229,7 @@ const AlertDialogAction: Component<AlertDialogActionProps> = props => {
     <button
       type='button'
       disabled={props.disabled}
-      onClick={props.onClick}
+      onClick={() => props.onClick?.()}
       class={cn(
         'rounded-md px-4 py-2 text-sm font-medium text-white',
         'transition-colors focus:ring-2 focus:ring-offset-2 focus:outline-none',

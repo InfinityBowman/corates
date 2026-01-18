@@ -92,7 +92,7 @@ const CheckboxComponent: Component<CheckboxProps> = props => {
         disabled() ? 'cursor-not-allowed opacity-50' : ''
       } ${classValue() || ''}`}
     >
-      <ArkCheckbox.Control class='flex h-4 w-4 items-center justify-center rounded border-2 transition-colors data-[focus]:ring-2 data-[focus]:ring-blue-500 data-[focus]:ring-offset-1 data-[state=checked]:border-blue-600 data-[state=checked]:bg-blue-600 data-[state=indeterminate]:border-blue-600 data-[state=indeterminate]:bg-blue-600 data-[state=unchecked]:border-gray-300 data-[state=unchecked]:bg-white data-[state=unchecked]:hover:border-blue-400'>
+      <ArkCheckbox.Control class='flex h-4 w-4 items-center justify-center rounded border-2 transition-colors data-focus:ring-2 data-focus:ring-blue-500 data-focus:ring-offset-1 data-[state=checked]:border-blue-600 data-[state=checked]:bg-blue-600 data-[state=indeterminate]:border-blue-600 data-[state=indeterminate]:bg-blue-600 data-[state=unchecked]:border-gray-300 data-[state=unchecked]:bg-white data-[state=unchecked]:hover:border-blue-400'>
         <ArkCheckbox.Indicator indeterminate class='h-3 w-3 text-white'>
           <BiRegularMinus class='h-3 w-3 text-white' />
         </ArkCheckbox.Indicator>

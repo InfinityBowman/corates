@@ -15,18 +15,21 @@
  * </Tooltip>
  *
  * @example
+ * // Inside a Dialog (prevents z-index issues)
+ * <TooltipPositioner inDialog>
+ *   <TooltipContent>Tooltip inside dialog</TooltipContent>
+ * </TooltipPositioner>
+ *
+ * @example
  * // Without arrow
- * <Tooltip>
- *   <TooltipTrigger>Hover me</TooltipTrigger>
- *   <TooltipPositioner>
- *     <TooltipContent showArrow={false}>
- *       Tooltip without arrow
- *     </TooltipContent>
- *   </TooltipPositioner>
- * </Tooltip>
+ * <TooltipPositioner>
+ *   <TooltipContent showArrow={false}>
+ *     Tooltip without arrow
+ *   </TooltipContent>
+ * </TooltipPositioner>
  */
 import type { Component, JSX } from 'solid-js';
-import { splitProps } from 'solid-js';
+import { Show, splitProps } from 'solid-js';
 import { Tooltip as TooltipPrimitive } from '@ark-ui/solid/tooltip';
 import type {
   TooltipContentProps as ArkTooltipContentProps,
@@ -57,16 +60,23 @@ const TooltipTrigger: Component<TooltipTriggerProps> = props => {
 type TooltipPositionerProps = {
   class?: string;
   children?: JSX.Element;
+  /** Set to true when tooltip is inside a Dialog to prevent z-index issues */
+  inDialog?: boolean;
 };
 
 const TooltipPositioner: Component<TooltipPositionerProps> = props => {
-  const [local, others] = splitProps(props, ['class', 'children']);
+  const [local, others] = splitProps(props, ['class', 'children', 'inDialog']);
+
+  const positioner = (
+    <TooltipPrimitive.Positioner class={local.class} {...others}>
+      {local.children}
+    </TooltipPrimitive.Positioner>
+  );
+
   return (
-    <Portal>
-      <TooltipPrimitive.Positioner class={local.class} {...others}>
-        {local.children}
-      </TooltipPrimitive.Positioner>
-    </Portal>
+    <Show when={!local.inDialog} fallback={positioner}>
+      <Portal>{positioner}</Portal>
+    </Show>
   );
 };
 

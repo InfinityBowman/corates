@@ -6,7 +6,7 @@
  * This component uses org-scoped routes and APIs.
  */
 
-import { createSignal, createEffect, Show, onCleanup, batch, createMemo } from 'solid-js';
+import { createSignal, createEffect, Show, onCleanup, batch, createMemo, For } from 'solid-js';
 import { useParams, useNavigate, useLocation } from '@solidjs/router';
 import useProject from '@/primitives/useProject/index.js';
 import { useProjectOrgId } from '@primitives/useProjectOrgId.js';
@@ -17,7 +17,8 @@ import { useBetterAuth } from '@api/better-auth-store.js';
 import { uploadPdf, deletePdf } from '@api/pdf-api.js';
 import { cachePdf } from '@primitives/pdfCache.js';
 import { importFromGoogleDrive } from '@api/google-drive.js';
-import { Tabs, showToast } from '@corates/ui';
+import { showToast } from '@corates/ui';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { BiRegularHome } from 'solid-icons/bi';
 import { BsListTask } from 'solid-icons/bs';
 import { CgArrowsExchange } from 'solid-icons/cg';
@@ -296,40 +297,48 @@ export default function ProjectView(props) {
             onBack={() => navigate(backPath())}
           />
 
-          <Tabs tabs={tabDefinitions} value={tabFromUrl()} onValueChange={handleTabChange}>
-            {tabValue => (
-              <>
-                <Show when={tabValue === 'overview'}>
-                  <SectionErrorBoundary name='Overview'>
-                    <OverviewTab />
-                  </SectionErrorBoundary>
-                </Show>
-
-                <Show when={tabValue === 'all-studies'}>
-                  <SectionErrorBoundary name='All Studies'>
-                    <AllStudiesTab />
-                  </SectionErrorBoundary>
-                </Show>
-
-                <Show when={tabValue === 'todo'}>
-                  <SectionErrorBoundary name='To-Do'>
-                    <ToDoTab />
-                  </SectionErrorBoundary>
-                </Show>
-
-                <Show when={tabValue === 'reconcile'}>
-                  <SectionErrorBoundary name='Reconcile'>
-                    <ReconcileTab />
-                  </SectionErrorBoundary>
-                </Show>
-
-                <Show when={tabValue === 'completed'}>
-                  <SectionErrorBoundary name='Completed'>
-                    <CompletedTab />
-                  </SectionErrorBoundary>
-                </Show>
-              </>
-            )}
+          <Tabs value={tabFromUrl()} onValueChange={handleTabChange}>
+            <TabsList class='overflow-x-auto rounded-t-lg border border-gray-200 bg-white'>
+              <For each={tabDefinitions}>{tab => (
+                <TabsTrigger
+                  value={tab.value}
+                  class='gap-2 border-b-2 border-transparent text-gray-600 hover:bg-gray-50 hover:text-gray-900 data-[selected]:border-blue-600 data-[selected]:text-gray-900'
+                >
+                  {tab.icon}
+                  {tab.label}
+                  <Show when={tab.getCount}>
+                    <span class='ml-1 rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-600'>
+                      {tab.getCount()}
+                    </span>
+                  </Show>
+                </TabsTrigger>
+              )}</For>
+            </TabsList>
+            <TabsContent value='overview' class='rounded-b-lg border border-t-0 border-gray-200 bg-white p-6'>
+              <SectionErrorBoundary name='Overview'>
+                <OverviewTab />
+              </SectionErrorBoundary>
+            </TabsContent>
+            <TabsContent value='all-studies' class='rounded-b-lg border border-t-0 border-gray-200 bg-white p-6'>
+              <SectionErrorBoundary name='All Studies'>
+                <AllStudiesTab />
+              </SectionErrorBoundary>
+            </TabsContent>
+            <TabsContent value='todo' class='rounded-b-lg border border-t-0 border-gray-200 bg-white p-6'>
+              <SectionErrorBoundary name='To-Do'>
+                <ToDoTab />
+              </SectionErrorBoundary>
+            </TabsContent>
+            <TabsContent value='reconcile' class='rounded-b-lg border border-t-0 border-gray-200 bg-white p-6'>
+              <SectionErrorBoundary name='Reconcile'>
+                <ReconcileTab />
+              </SectionErrorBoundary>
+            </TabsContent>
+            <TabsContent value='completed' class='rounded-b-lg border border-t-0 border-gray-200 bg-white p-6'>
+              <SectionErrorBoundary name='Completed'>
+                <CompletedTab />
+              </SectionErrorBoundary>
+            </TabsContent>
           </Tabs>
         </div>
 
