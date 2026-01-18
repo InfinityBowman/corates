@@ -6,7 +6,7 @@ import { createSignal, Show, For } from 'solid-js';
 import { useBetterAuth } from '@api/better-auth-store.js';
 import { showToast } from '@/components/ui/toast';
 import { ROLES, getRoleLabel } from '@/components/auth/RoleSelector.jsx';
-import { API_BASE } from '@config/api.js';
+import { apiFetch } from '@lib/apiFetch.js';
 import {
   Select,
   SelectControl,
@@ -25,14 +25,7 @@ import {
  * Sync profile changes to all projects the user is a member of
  */
 async function syncProfileToProjects() {
-  try {
-    await fetch(`${API_BASE}/api/users/sync-profile`, {
-      method: 'POST',
-      credentials: 'include',
-    });
-  } catch (err) {
-    console.error('Failed to sync profile to projects:', err);
-  }
+  await apiFetch('/api/users/sync-profile', { method: 'POST' });
 }
 
 const personaCollection = createListCollection({

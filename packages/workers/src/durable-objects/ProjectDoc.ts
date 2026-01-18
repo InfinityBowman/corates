@@ -561,10 +561,10 @@ export class ProjectDoc implements DurableObject {
       memberYMap.set('image', (user.image as string) || null);
       membersMap.set(user.id, memberYMap);
     } else {
-      // Update image if user has one and it differs from stored (handles OAuth image sync)
+      // Update image if it differs from stored (handles OAuth image sync and avatar removal)
       const storedImage = existingMember.get('image') as string | null;
       const userImage = (user.image as string) || null;
-      if (userImage && userImage !== storedImage) {
+      if (userImage !== storedImage) {
         existingMember.set('image', userImage);
       }
       // Also update name/displayName if missing

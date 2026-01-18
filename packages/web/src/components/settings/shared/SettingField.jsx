@@ -28,7 +28,7 @@ export default function SettingField(props) {
         </label>
         <Show
           when={props.editing}
-          fallback={<div class='mt-1 text-gray-900'>{props.value || 'Not set'}</div>}
+          fallback={<div class='mt-1 text-gray-900'>{props.value ?? 'Not set'}</div>}
         >
           <div class='mt-2'>{props.editContent}</div>
         </Show>
@@ -37,6 +37,7 @@ export default function SettingField(props) {
         when={props.editing}
         fallback={
           <button
+            type='button'
             onClick={props.onEdit}
             class='ml-4 text-sm font-medium text-blue-600 hover:text-blue-700'
           >
@@ -46,6 +47,7 @@ export default function SettingField(props) {
       >
         <div class='ml-4 flex space-x-2'>
           <button
+            type='button'
             onClick={() => props.onSave?.()}
             disabled={props.saving}
             class='rounded-lg bg-blue-600 px-3 py-1 text-sm font-medium text-white hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:opacity-50'
@@ -53,6 +55,7 @@ export default function SettingField(props) {
             Save
           </button>
           <button
+            type='button'
             onClick={() => props.onCancel?.()}
             disabled={props.saving}
             class='px-3 py-1 text-sm font-medium text-gray-600 hover:text-gray-800 disabled:opacity-50'
