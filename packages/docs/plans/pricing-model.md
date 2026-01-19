@@ -170,7 +170,7 @@ This is your low-friction entry point.
 
 ### Starter Team
 
-**$9.99 / month** ($100 / year with annual discount)
+**$9 / month** ($90 / year with annual discount)
 
 Includes:
 
