@@ -5,16 +5,16 @@ import { PageLoader } from '@/components/ui/spinner';
 
 /**
  * ProtectedGuard - For authenticated pages (profile, settings, admin, etc.)
- * Redirects guests to dashboard
+ * Redirects guests to signin
  */
 export default function ProtectedGuard(props) {
   const { isLoggedIn, authLoading } = useBetterAuth();
   const navigate = useNavigate();
 
-  // Redirect non-logged-in users to dashboard
+  // Redirect non-logged-in users to signin
   createEffect(() => {
     if (!authLoading() && !isLoggedIn()) {
-      navigate('/dashboard', { replace: true });
+      navigate('/signin', { replace: true });
     }
   });
 

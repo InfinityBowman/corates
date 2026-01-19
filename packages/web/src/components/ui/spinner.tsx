@@ -42,7 +42,7 @@ const spinnerVariants = cva('inline-block animate-spin rounded-full border-trans
     variant: {
       default: 'border-t-blue-600 border-r-blue-600',
       white: 'border-t-white border-r-white',
-      gray: 'border-t-gray-600 border-r-gray-600',
+      gray: 'border-t-muted-foreground border-r-muted-foreground',
     },
   },
   defaultVariants: {
@@ -89,7 +89,10 @@ const LoadingPlaceholder: Component<LoadingPlaceholderProps> = props => {
   const [local, others] = splitProps(props, ['class', 'label']);
   return (
     <div
-      class={cn('flex flex-col items-center justify-center gap-3 py-12 text-gray-500', local.class)}
+      class={cn(
+        'text-muted-foreground flex flex-col items-center justify-center gap-3 py-12',
+        local.class,
+      )}
       {...others}
     >
       <Spinner size='lg' />

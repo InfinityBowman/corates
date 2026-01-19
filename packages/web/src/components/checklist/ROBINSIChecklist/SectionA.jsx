@@ -12,12 +12,12 @@ import NoteEditor from '@/components/checklist/common/NoteEditor.jsx';
  */
 export function SectionA(props) {
   return (
-    <div class='overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm'>
-      <div class='border-b border-gray-200 bg-gray-50 px-6 py-4'>
-        <h3 class='text-base font-semibold text-gray-900'>
+    <div class='border-border bg-card overflow-hidden rounded-lg border shadow-sm'>
+      <div class='border-border bg-muted border-b px-6 py-4'>
+        <h3 class='text-foreground text-base font-semibold'>
           Part A: Specify the Result Being Assessed
         </h3>
-        <p class='mt-1 text-xs text-gray-500'>
+        <p class='text-muted-foreground mt-1 text-xs'>
           Provide details about the specific result being assessed for risk of bias.
         </p>
       </div>
@@ -33,11 +33,11 @@ export function SectionA(props) {
             return (
               <div class='space-y-2'>
                 <label class='block'>
-                  <span class='text-sm text-gray-700'>
+                  <span class='text-secondary-foreground text-sm'>
                     <span class='font-medium'>{field.label}.</span>
                     <span class='ml-1'>{field.text}</span>
                     <Show when={field.optional}>
-                      <span class='ml-1 text-gray-400'>[optional]</span>
+                      <span class='text-muted-foreground/70 ml-1'>[optional]</span>
                     </Show>
                   </span>
                   <div class='mt-2'>

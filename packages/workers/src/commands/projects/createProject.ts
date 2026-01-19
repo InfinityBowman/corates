@@ -9,7 +9,7 @@
 import { createDb } from '@/db/client';
 import { projects, projectMembers, user } from '@/db/schema';
 import { eq } from 'drizzle-orm';
-import { insertWithQuotaCheck } from '@/lib/quotaTransaction';
+import { insertWithQuotaCheck, type InsertRollbackMeta } from '@/lib/quotaTransaction';
 import { syncProjectToDO } from '@/commands/lib/doSync';
 import { createValidationError, VALIDATION_ERRORS } from '@corates/shared';
 import type { Env } from '@/types';
@@ -74,12 +74,20 @@ export async function createProject(
     }),
   ];
 
+  // Rollback metadata for race condition handling
+  // Array is processed in reverse order: projectMembers deleted first, then projects (FK constraint)
+  const rollbackMeta: InsertRollbackMeta[] = [
+    { table: projects, idColumn: projects.id, id: projectId },
+    { table: projectMembers, idColumn: projectMembers.id, id: memberId },
+  ];
+
   const quotaResult = await insertWithQuotaCheck(db, {
     orgId,
     quotaKey: 'projects.max',
     countTable: projects,
     countColumn: projects.orgId,
     insertStatements,
+    rollbackMeta,
   });
 
   if (!quotaResult.success) {
@@ -91,7 +99,8 @@ export async function createProject(
       id: user.id,
       name: user.name,
       email: user.email,
-      displayName: user.displayName,
+      givenName: user.givenName,
+      familyName: user.familyName,
       image: user.image,
     })
     .from(user)
@@ -116,7 +125,8 @@ export async function createProject(
           joinedAt: now.getTime(),
           name: creator?.name || null,
           email: creator?.email || null,
-          displayName: creator?.displayName || null,
+          givenName: creator?.givenName || null,
+          familyName: creator?.familyName || null,
           image: creator?.image || null,
         },
       ],

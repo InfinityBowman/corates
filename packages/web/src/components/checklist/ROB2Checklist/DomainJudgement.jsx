@@ -14,7 +14,7 @@ export function JudgementBadge(props) {
       case 'High':
         return 'bg-red-100 text-red-800 border-red-300';
       default:
-        return 'bg-gray-100 text-gray-600 border-gray-300';
+        return 'bg-secondary text-muted-foreground border-border';
     }
   };
 
@@ -45,8 +45,8 @@ export function DomainJudgement(props) {
   const getJudgementColor = (judgement, isSelected) => {
     if (!isSelected) {
       return props.isAutoMode ?
-          'border-gray-200 bg-gray-50 text-gray-400 cursor-not-allowed'
-        : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300 cursor-pointer';
+          'border-border bg-muted text-muted-foreground/70 cursor-not-allowed'
+        : 'border-border bg-card text-muted-foreground hover:border-border cursor-pointer';
     }
 
     switch (judgement) {
@@ -57,7 +57,7 @@ export function DomainJudgement(props) {
       case 'High':
         return 'bg-red-100 border-red-400 text-red-800';
       default:
-        return 'bg-gray-50 border-gray-200 text-gray-600';
+        return 'bg-muted border-border text-muted-foreground';
     }
   };
 
@@ -65,7 +65,7 @@ export function DomainJudgement(props) {
     <div class='space-y-4'>
       {/* Judgement buttons */}
       <div>
-        <div class='mb-2 text-xs font-medium text-gray-600'>
+        <div class='text-muted-foreground mb-2 text-xs font-medium'>
           {props.isAutoMode ? 'Auto-calculated judgement' : 'Select judgement'}
         </div>
         <div class='flex flex-wrap gap-2'>
@@ -95,9 +95,9 @@ export function DomainJudgement(props) {
       {/* Direction of bias (optional) */}
       <Show when={props.showDirection}>
         <div>
-          <div class='mb-2 text-xs font-medium text-gray-600'>
+          <div class='text-muted-foreground mb-2 text-xs font-medium'>
             Predicted direction of bias
-            <span class='ml-1 font-normal text-gray-400'>(optional)</span>
+            <span class='text-muted-foreground/70 ml-1 font-normal'>(optional)</span>
           </div>
           <div class='flex flex-wrap gap-1.5'>
             <For each={BIAS_DIRECTIONS}>
@@ -116,7 +116,7 @@ export function DomainJudgement(props) {
                     } ${
                       isSelected() ?
                         'border-blue-400 bg-blue-100 text-blue-800'
-                      : 'border-gray-200 bg-gray-50 text-gray-500 hover:border-gray-300'
+                      : 'border-border bg-muted text-muted-foreground hover:border-border'
                     }`}
                   >
                     {direction}

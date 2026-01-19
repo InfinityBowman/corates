@@ -65,8 +65,8 @@ export default function TwoFactorVerify(props) {
         <div class='mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-blue-100'>
           <FiLock class='h-8 w-8 text-blue-600' />
         </div>
-        <h2 class='mb-1 text-xl font-bold text-gray-900'>Two-Factor Authentication</h2>
-        <p class='text-sm text-gray-500'>
+        <h2 class='text-foreground mb-1 text-xl font-bold'>Two-Factor Authentication</h2>
+        <p class='text-muted-foreground text-sm'>
           {useBackupCode() ?
             'Enter one of your backup codes'
           : 'Enter the code from your authenticator app'}
@@ -75,7 +75,7 @@ export default function TwoFactorVerify(props) {
 
       <form onSubmit={handleSubmit} class='space-y-4'>
         <div>
-          <label class='mb-2 block text-sm font-medium text-gray-700' for='2fa-code'>
+          <label class='text-secondary-foreground mb-2 block text-sm font-medium' for='2fa-code'>
             {useBackupCode() ? 'Backup Code' : 'Verification Code'}
           </label>
           <input
@@ -87,15 +87,16 @@ export default function TwoFactorVerify(props) {
             onInput={e =>
               setCode(useBackupCode() ? e.target.value : e.target.value.replace(/\D/g, ''))
             }
-            class='w-full rounded-lg border border-gray-300 px-4 py-3 text-center font-mono text-xl tracking-widest focus:border-transparent focus:ring-2 focus:ring-blue-500 focus:outline-none'
+            class='border-border focus:ring-primary w-full rounded-lg border px-4 py-3 text-center font-mono text-xl tracking-widest focus:border-transparent focus:ring-2 focus:outline-none'
             placeholder={useBackupCode() ? 'XXXX-XXXX-XXXX' : '000000'}
             disabled={loading()}
             id='2fa-code'
             autoFocus
+            aria-describedby={displayError() ? '2fa-error' : undefined}
           />
         </div>
 
-        <ErrorMessage displayError={displayError} />
+        <ErrorMessage displayError={displayError} id='2fa-error' />
 
         <PrimaryButton loading={loading()} loadingText='Verifying...'>
           Verify
@@ -118,7 +119,7 @@ export default function TwoFactorVerify(props) {
             <button
               type='button'
               onClick={handleCancel}
-              class='text-sm text-gray-500 hover:text-gray-700'
+              class='text-muted-foreground hover:text-secondary-foreground text-sm'
             >
               Cancel and try different sign-in method
             </button>

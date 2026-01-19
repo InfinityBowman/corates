@@ -31,7 +31,7 @@ export function DashboardHeader(props) {
     purple: 'bg-purple-100 text-purple-600',
     orange: 'bg-orange-100 text-orange-600',
     red: 'bg-red-100 text-red-600',
-    gray: 'bg-gray-100 text-gray-600',
+    gray: 'bg-secondary text-muted-foreground',
   };
 
   const iconBgClass = () => iconColorClasses[props.iconColor || 'blue'];
@@ -45,9 +45,9 @@ export function DashboardHeader(props) {
           </div>
         </Show>
         <div>
-          <h1 class='text-2xl font-bold text-gray-900'>{props.title}</h1>
+          <h1 class='text-foreground text-2xl font-bold'>{props.title}</h1>
           <Show when={props.description}>
-            <p class='text-sm text-gray-500'>{props.description}</p>
+            <p class='text-muted-foreground text-sm'>{props.description}</p>
           </Show>
         </div>
       </div>

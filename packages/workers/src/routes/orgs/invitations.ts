@@ -539,7 +539,7 @@ orgInvitationRoutes.openapi(createInvitationRoute, async c => {
       .get();
 
     const inviter = await db
-      .select({ name: user.name, displayName: user.displayName, email: user.email })
+      .select({ name: user.name, givenName: user.givenName, email: user.email })
       .from(user)
       .where(eq(user.id, authUser.id))
       .get();
@@ -622,7 +622,7 @@ orgInvitationRoutes.openapi(createInvitationRoute, async c => {
       const { escapeHtml } = await import('@/lib/escapeHtml.js');
 
       const projectName = project?.name || 'Unknown Project';
-      const inviterName = inviter?.displayName || inviter?.name || inviter?.email || 'Someone';
+      const inviterName = inviter?.givenName || inviter?.name || inviter?.email || 'Someone';
 
       const emailHtml = getProjectInvitationEmailHtml({
         projectName,
@@ -804,7 +804,8 @@ orgInvitationRoutes.openapi(acceptInvitationRoute, async c => {
       .select({
         email: user.email,
         name: user.name,
-        displayName: user.displayName,
+        givenName: user.givenName,
+        familyName: user.familyName,
         image: user.image,
       })
       .from(user)
@@ -996,7 +997,8 @@ orgInvitationRoutes.openapi(acceptInvitationRoute, async c => {
         joinedAt: nowDate.getTime(),
         name: currentUser.name,
         email: currentUser.email,
-        displayName: currentUser.displayName,
+        givenName: currentUser.givenName,
+        familyName: currentUser.familyName,
         image: currentUser.image,
       });
     } catch (err) {

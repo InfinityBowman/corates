@@ -15,7 +15,8 @@ import {
   FiZap,
   FiShield,
   FiBell,
-  FiSettings,
+  FiLink,
+  FiUser,
   FiArrowLeft,
 } from 'solid-icons/fi';
 
@@ -23,7 +24,8 @@ import {
  * Settings navigation items
  */
 const SETTINGS_NAV_ITEMS = [
-  { id: 'general', label: 'General', icon: FiSettings, path: '/settings/general' },
+  { id: 'profile', label: 'Profile', icon: FiUser, path: '/settings/profile' },
+  { id: 'integrations', label: 'Integrations', icon: FiLink, path: '/settings/integrations' },
   { id: 'billing', label: 'Billing', icon: FiCreditCard, path: '/settings/billing' },
   { id: 'plans', label: 'Plans', icon: FiZap, path: '/settings/plans' },
   { id: 'security', label: 'Security', icon: FiShield, path: '/settings/security' },
@@ -137,8 +139,8 @@ export default function SettingsSidebar(props) {
               onClick={() => navigate(item.path)}
               class={`flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
                 isCurrentPath(item.path) ?
-                  'bg-blue-100 text-blue-700'
-                : 'text-gray-700 hover:bg-gray-100'
+                  'bg-primary-subtle text-primary'
+                : 'text-secondary-foreground hover:bg-muted'
               }`}
             >
               <Icon class='h-4 w-4 shrink-0' />
@@ -163,8 +165,8 @@ export default function SettingsSidebar(props) {
                   onClick={() => navigate(item.path)}
                   class={`flex h-8 w-8 items-center justify-center rounded-md transition-colors ${
                     isCurrentPath(item.path) ?
-                      'bg-blue-100 text-blue-700'
-                    : 'text-gray-500 hover:bg-gray-100 hover:text-gray-700'
+                      'bg-primary-subtle text-primary'
+                    : 'text-muted-foreground hover:bg-muted hover:text-secondary-foreground'
                   }`}
                   aria-label={item.label}
                 >
@@ -185,20 +187,20 @@ export default function SettingsSidebar(props) {
     <>
       {/* Desktop sidebar */}
       <div
-        class={`sidebar-container relative hidden h-full shrink-0 border-r border-gray-200 bg-white md:block ${isResizing() ? '' : 'transition-all duration-200 ease-in-out'} ${isExpanded() ? '' : 'md:w-12'}`}
+        class={`sidebar-container border-border bg-card relative hidden h-full shrink-0 border-r md:block ${isResizing() ? '' : 'transition-all duration-200 ease-in-out'} ${isExpanded() ? '' : 'md:w-12'}`}
         style={{ 'max-width': '100vw', '--sidebar-expanded-width': `${props.width}px` }}
         data-expanded={isExpanded() ? 'true' : 'false'}
       >
         <div class='flex h-full flex-col'>
           {/* Sidebar Header */}
-          <div class='flex shrink-0 items-center border-b border-gray-100 p-2'>
+          <div class='border-border-subtle flex shrink-0 items-center border-b p-2'>
             {/* Collapsed: expand button */}
             <Show when={!isExpanded()}>
               <Tooltip positioning={{ placement: 'right' }}>
                 <TooltipTrigger>
                   <button
                     onClick={() => props.onToggleDesktop?.()}
-                    class='hidden h-8 w-8 items-center justify-center rounded-md text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 md:flex'
+                    class='text-muted-foreground hover:bg-muted hover:text-secondary-foreground hidden h-8 w-8 items-center justify-center rounded-md transition-colors md:flex'
                     aria-label='Expand sidebar'
                   >
                     <FiChevronsRight class='h-4 w-4' />
@@ -214,7 +216,7 @@ export default function SettingsSidebar(props) {
             <Show when={showExpandedContent()}>
               <button
                 onClick={() => navigate('/dashboard')}
-                class='flex items-center gap-2 rounded-md px-2 py-1 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-100'
+                class='text-secondary-foreground hover:bg-muted flex items-center gap-2 rounded-md px-2 py-1 text-sm font-semibold transition-colors'
               >
                 <FiArrowLeft class='h-4 w-4' />
                 <span>Back</span>
@@ -228,7 +230,7 @@ export default function SettingsSidebar(props) {
                 <TooltipTrigger>
                   <button
                     onClick={() => props.onToggleDesktop?.()}
-                    class='hidden h-7 w-7 items-center justify-center rounded-md text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 md:flex'
+                    class='text-muted-foreground hover:bg-muted hover:text-foreground hidden h-7 w-7 items-center justify-center rounded-md transition-colors md:flex'
                     aria-label='Collapse sidebar'
                   >
                     <FiChevronsLeft class='h-4 w-4' />
@@ -243,7 +245,7 @@ export default function SettingsSidebar(props) {
             {/* Mobile close button */}
             <button
               onClick={() => props.onCloseMobile?.()}
-              class='flex h-7 w-7 items-center justify-center rounded-md text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 md:hidden'
+              class='text-muted-foreground hover:bg-muted hover:text-foreground flex h-7 w-7 items-center justify-center rounded-md transition-colors md:hidden'
               aria-label='Close sidebar'
             >
               <FiX class='h-4 w-4' />
@@ -265,7 +267,7 @@ export default function SettingsSidebar(props) {
         {/* Resize handle */}
         <Show when={isExpanded()}>
           <div
-            class='absolute top-0 right-0 hidden h-full w-1 cursor-col-resize bg-transparent transition-colors hover:bg-blue-400 md:block'
+            class='hover:bg-primary absolute top-0 right-0 hidden h-full w-1 cursor-col-resize bg-transparent transition-colors md:block'
             onMouseDown={handleResizeStart}
             role='separator'
             aria-orientation='vertical'
@@ -287,7 +289,7 @@ export default function SettingsSidebar(props) {
 
           {/* Panel */}
           <div
-            class='sidebar-container fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-xl md:hidden'
+            class='sidebar-container bg-card fixed inset-y-0 left-0 z-50 w-64 shadow-xl md:hidden'
             style={{
               transform: mobileVisible() ? 'translateX(0)' : 'translateX(-100%)',
               transition: 'transform 200ms cubic-bezier(0.32, 0.72, 0, 1)',
@@ -296,10 +298,10 @@ export default function SettingsSidebar(props) {
           >
             <div class='flex h-full flex-col'>
               {/* Header */}
-              <div class='flex shrink-0 items-center border-b border-gray-100 bg-white p-2'>
+              <div class='border-border-subtle bg-card flex shrink-0 items-center border-b p-2'>
                 <button
                   onClick={() => navigate('/dashboard')}
-                  class='flex items-center gap-2 rounded-md px-2 py-1 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-100'
+                  class='text-secondary-foreground hover:bg-muted flex items-center gap-2 rounded-md px-2 py-1 text-sm font-semibold transition-colors'
                 >
                   <FiArrowLeft class='h-4 w-4' />
                   <span>Settings</span>
@@ -307,7 +309,7 @@ export default function SettingsSidebar(props) {
                 <div class='flex-1' />
                 <button
                   onClick={() => props.onCloseMobile?.()}
-                  class='flex h-7 w-7 items-center justify-center rounded-md text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600'
+                  class='text-muted-foreground hover:bg-muted hover:text-foreground flex h-7 w-7 items-center justify-center rounded-md transition-colors'
                   aria-label='Close sidebar'
                 >
                   <FiX class='h-4 w-4' />

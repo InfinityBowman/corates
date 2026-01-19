@@ -4,6 +4,7 @@
  */
 import type { DrizzleD1Database } from 'drizzle-orm/d1';
 import type * as schema from '@/db/schema.js';
+import { createDomainError, SYSTEM_ERRORS } from '@corates/shared';
 
 interface Session {
   activeOrganizationId?: string | null;
@@ -22,28 +23,45 @@ interface OrgIdWithRole {
 
 /**
  * Get orgId from session's activeOrganizationId or user's first org
+ * Verifies user is still a member of the org before returning
  */
 export async function resolveOrgId({
   db,
   session,
   userId,
 }: ResolveOrgParams): Promise<string | null> {
-  let orgId = session?.activeOrganizationId;
+  const { member } = await import('@/db/schema.js');
+  const { eq, and } = await import('drizzle-orm');
 
-  // If no active org in session, get user's first org
-  if (!orgId) {
-    const { member } = await import('@/db/schema.js');
-    const { eq } = await import('drizzle-orm');
+  const activeOrgId = session?.activeOrganizationId;
+
+  try {
+    if (activeOrgId) {
+      // Verify user is still a member of the active org
+      const membership = await db
+        .select({ organizationId: member.organizationId })
+        .from(member)
+        .where(and(eq(member.organizationId, activeOrgId), eq(member.userId, userId)))
+        .get();
+
+      if (membership) {
+        return activeOrgId;
+      }
+      // User is no longer a member of the active org, fall through to first membership
+    }
+
+    // Get user's first org membership
     const firstMembership = await db
       .select({ organizationId: member.organizationId })
       .from(member)
       .where(eq(member.userId, userId))
       .limit(1)
       .get();
-    orgId = firstMembership?.organizationId;
-  }
 
-  return orgId || null;
+    return firstMembership?.organizationId || null;
+  } catch (err) {
+    throw createDomainError(SYSTEM_ERRORS.DB_ERROR, { cause: err });
+  }
 }
 
 /**

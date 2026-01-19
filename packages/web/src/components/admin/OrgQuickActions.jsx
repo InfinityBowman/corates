@@ -20,8 +20,8 @@ export default function OrgQuickActions(props) {
   const loading = () => props.loading;
 
   return (
-    <div class='rounded-lg border border-gray-200 bg-white p-6 shadow-sm'>
-      <h2 class='mb-4 text-lg font-semibold text-gray-900'>Quick Actions</h2>
+    <div class='border-border bg-card rounded-lg border p-6 shadow-sm'>
+      <h2 class='text-foreground mb-4 text-lg font-semibold'>Quick Actions</h2>
       <div class='flex flex-wrap gap-3'>
         <button
           onClick={() => props.onGrantTrial?.()}
@@ -42,7 +42,7 @@ export default function OrgQuickActions(props) {
         <button
           onClick={() => props.onCreateSubscription?.()}
           disabled={loading()}
-          class='inline-flex items-center space-x-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50'
+          class='border-border bg-card text-secondary-foreground hover:bg-muted inline-flex items-center space-x-2 rounded-lg border px-4 py-2 text-sm font-medium disabled:opacity-50'
         >
           <FiPlus class='h-4 w-4' />
           <span>Create Subscription</span>
@@ -50,7 +50,7 @@ export default function OrgQuickActions(props) {
         <button
           onClick={() => props.onCreateGrant?.()}
           disabled={loading()}
-          class='inline-flex items-center space-x-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50'
+          class='border-border bg-card text-secondary-foreground hover:bg-muted inline-flex items-center space-x-2 rounded-lg border px-4 py-2 text-sm font-medium disabled:opacity-50'
         >
           <FiPlus class='h-4 w-4' />
           <span>Create Grant</span>

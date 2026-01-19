@@ -391,7 +391,7 @@ export default function ReconciliationWrapper() {
   function getReviewerName(userId) {
     if (!userId) return 'Unassigned';
     const member = members().find(m => m.userId === userId);
-    return member?.displayName || member?.name || member?.email || 'Unknown';
+    return member?.name || member?.email || 'Unknown';
   }
 
   // Build project path
@@ -431,12 +431,12 @@ export default function ReconciliationWrapper() {
       when={!error()}
       fallback={
         <div class='flex min-h-screen items-center justify-center bg-blue-50'>
-          <div class='max-w-md rounded-lg bg-white p-8 shadow-lg'>
+          <div class='bg-card max-w-md rounded-lg p-8 shadow-lg'>
             <h2 class='mb-2 text-xl font-bold text-red-600'>Error</h2>
-            <p class='text-gray-600'>{error()}</p>
+            <p class='text-secondary-foreground'>{error()}</p>
             <button
               onClick={handleCancel}
-              class='mt-4 rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:outline-none'
+              class='bg-primary hover:bg-primary/90 focus:ring-primary mt-4 rounded-lg px-4 py-2 text-white focus:ring-2 focus:outline-none'
             >
               Go Back
             </button>
@@ -455,7 +455,7 @@ export default function ReconciliationWrapper() {
           <div class='flex min-h-screen items-center justify-center bg-blue-50'>
             <div class='text-center'>
               <div class='mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-4 border-blue-600 border-t-transparent' />
-              <p class='text-gray-600'>
+              <p class='text-secondary-foreground'>
                 {reconciledChecklistLoading() ?
                   'Setting up reconciliation...'
                 : 'Loading checklists...'}

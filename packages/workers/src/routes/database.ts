@@ -28,7 +28,7 @@ const UserListSchema = z
     id: z.string(),
     username: z.string().nullable(),
     email: z.string(),
-    displayName: z.string().nullable(),
+    givenName: z.string().nullable(),
     emailVerified: z.boolean(),
     createdAt: z.string(),
   })
@@ -90,7 +90,7 @@ dbRoutes.openapi(listUsersRoute, async c => {
         id: user.id,
         username: user.username,
         email: user.email,
-        displayName: user.displayName,
+        givenName: user.givenName,
         emailVerified: user.emailVerified,
         createdAt: user.createdAt,
       })

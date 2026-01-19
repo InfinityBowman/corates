@@ -33,7 +33,7 @@ export default function Layout(props) {
   // Routes that should NOT show the sidebar
   const shouldHideSidebar = createMemo(() => {
     const path = location.pathname;
-    return path.startsWith('/admin') || path.startsWith('/settings') || path === '/profile';
+    return path.startsWith('/admin') || path.startsWith('/settings');
   });
 
   // Desktop sidebar mode: 'expanded' or 'collapsed' (rail)
@@ -77,7 +77,7 @@ export default function Layout(props) {
 
   return (
     <div
-      class={`flex h-screen flex-col overflow-hidden bg-blue-50 ${isImpersonating() ? 'pt-10' : ''}`}
+      class={`bg-primary-subtle flex h-screen flex-col overflow-hidden ${isImpersonating() ? 'pt-10' : ''}`}
     >
       <Show when={isImpersonating()}>
         <Suspense>
@@ -99,7 +99,7 @@ export default function Layout(props) {
             onWidthChange={handleWidthChange}
           />
         </Show>
-        <main class='flex-1 overflow-auto text-gray-900'>{props.children}</main>
+        <main class='text-foreground flex-1 overflow-auto'>{props.children}</main>
       </div>
       <ToasterContainer />
       {/* Dev Panel - global, context-aware */}

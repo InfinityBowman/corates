@@ -42,9 +42,9 @@ export default function PdfPreviewPanel() {
       <div class='flex h-full min-h-0 flex-col'>
         <Switch>
           <Match when={viewState() === 'loading'}>
-            <div class='flex h-full flex-1 flex-col bg-gray-100'>
+            <div class='bg-secondary flex h-full flex-1 flex-col'>
               <div class='flex flex-1 items-center justify-center'>
-                <div class='flex items-center gap-3 text-gray-500'>
+                <div class='text-muted-foreground flex items-center gap-3'>
                   <div class='h-6 w-6 animate-spin rounded-full border-b-2 border-blue-600' />
                   Loading PDF...
                 </div>
@@ -53,11 +53,11 @@ export default function PdfPreviewPanel() {
           </Match>
 
           <Match when={viewState() === 'error'}>
-            <div class='flex h-full flex-1 flex-col bg-gray-100'>
+            <div class='bg-secondary flex h-full flex-1 flex-col'>
               <div class='flex flex-1 items-center justify-center'>
                 <div class='text-center'>
                   <p class='mb-2 text-red-600'>Failed to load PDF</p>
-                  <p class='text-sm text-gray-500'>{pdfPreviewStore.error()}</p>
+                  <p class='text-muted-foreground text-sm'>{pdfPreviewStore.error()}</p>
                 </div>
               </div>
             </div>
@@ -80,9 +80,9 @@ export default function PdfPreviewPanel() {
           </Match>
 
           <Match when={viewState() === 'empty'}>
-            <div class='flex h-full flex-1 flex-col bg-gray-100'>
+            <div class='bg-secondary flex h-full flex-1 flex-col'>
               <div class='flex flex-1 items-center justify-center'>
-                <div class='text-center text-gray-500'>
+                <div class='text-muted-foreground text-center'>
                   <p>No PDF to display</p>
                 </div>
               </div>

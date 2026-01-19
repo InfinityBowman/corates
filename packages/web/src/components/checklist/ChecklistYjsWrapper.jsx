@@ -445,12 +445,12 @@ export default function ChecklistYjsWrapper() {
       </AlertDialog>
       <button
         onClick={() => navigate(getBackPath())}
-        class='text-gray-400 transition-colors hover:text-gray-700'
+        class='text-muted-foreground/70 hover:text-secondary-foreground transition-colors'
       >
         <IoChevronBack size={20} />
       </button>
-      <div class='truncate text-sm text-gray-600'>
-        <span class='font-medium text-gray-900'>
+      <div class='text-muted-foreground truncate text-sm'>
+        <span class='text-foreground font-medium'>
           {currentChecklist()?.type || 'AMSTAR2'} Checklist
         </span>
       </div>
@@ -463,7 +463,7 @@ export default function ChecklistYjsWrapper() {
               class={`rounded-lg px-3 py-1.5 text-sm font-medium ${
                 currentChecklist()?.status === CHECKLIST_STATUS.FINALIZED ?
                   'bg-green-100 text-green-700'
-                : 'bg-gray-100 text-gray-700'
+                : 'bg-secondary text-secondary-foreground'
               }`}
             >
               {currentChecklist()?.status === CHECKLIST_STATUS.FINALIZED ?
@@ -485,7 +485,7 @@ export default function ChecklistYjsWrapper() {
             class={`rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
               currentChecklist()?.status === CHECKLIST_STATUS.FINALIZED ?
                 'bg-green-100 text-green-700 hover:bg-green-200'
-              : !isChecklistValid() ? 'cursor-not-allowed bg-gray-300 text-gray-500 opacity-60'
+              : !isChecklistValid() ? 'bg-muted text-muted-foreground cursor-not-allowed opacity-60'
               : 'bg-blue-600 text-white hover:bg-blue-700'
             }`}
           >
@@ -504,7 +504,7 @@ export default function ChecklistYjsWrapper() {
         when={checklistForUI()}
         fallback={
           <div class='flex min-h-screen items-center justify-center bg-blue-50'>
-            <div class='text-gray-500'>
+            <div class='text-muted-foreground'>
               <Show
                 when={connectionState().connecting || pdfLoading()}
                 fallback='Checklist not found'

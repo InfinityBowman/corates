@@ -70,12 +70,12 @@ const CheckboxControl: Component<CheckboxControlProps> = props => {
   return (
     <CheckboxPrimitive.Control
       class={cn(
-        'flex h-4 w-4 shrink-0 items-center justify-center rounded border border-gray-300',
-        'ring-offset-white transition-colors',
-        'focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:outline-none',
+        'border-border flex h-4 w-4 shrink-0 items-center justify-center rounded border',
+        'ring-offset-background transition-colors',
+        'focus-visible:ring-ring focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none',
         'data-disabled:cursor-not-allowed data-disabled:opacity-50',
-        'data-[state=checked]:border-blue-600 data-[state=checked]:bg-blue-600 data-[state=checked]:text-white',
-        'data-[state=indeterminate]:border-blue-600 data-[state=indeterminate]:bg-blue-600 data-[state=indeterminate]:text-white',
+        'data-[state=checked]:border-primary data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground',
+        'data-[state=indeterminate]:border-primary data-[state=indeterminate]:bg-primary data-[state=indeterminate]:text-primary-foreground',
         local.class,
       )}
       {...others}
@@ -99,7 +99,7 @@ const CheckboxLabel: Component<CheckboxLabelProps> = props => {
   return (
     <CheckboxPrimitive.Label
       class={cn(
-        'text-sm leading-none font-medium text-gray-900',
+        'text-foreground text-sm leading-none font-medium',
         'data-disabled:cursor-not-allowed data-disabled:opacity-70',
         local.class,
       )}

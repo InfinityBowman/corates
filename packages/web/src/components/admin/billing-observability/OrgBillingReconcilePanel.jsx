@@ -60,21 +60,21 @@ export default function OrgBillingReconcilePanel(props) {
       case 'medium':
         return 'bg-yellow-100 text-yellow-800 border-yellow-300';
       default:
-        return 'bg-gray-100 text-gray-800 border-gray-300';
+        return 'bg-secondary text-foreground border-border';
     }
   };
 
   return (
-    <div class='rounded-lg border border-gray-200 bg-white'>
-      <div class='border-b border-gray-200 px-6 py-4'>
+    <div class='border-border bg-card rounded-lg border'>
+      <div class='border-border border-b px-6 py-4'>
         <div class='flex items-center justify-between'>
           <div class='flex items-center space-x-3'>
-            <FiRefreshCw class='h-5 w-5 text-gray-400' />
-            <h2 class='text-lg font-semibold text-gray-900'>Billing Reconciliation</h2>
+            <FiRefreshCw class='text-muted-foreground/70 h-5 w-5' />
+            <h2 class='text-foreground text-lg font-semibold'>Billing Reconciliation</h2>
           </div>
           <button
             onClick={() => reconcileQuery.refetch()}
-            class='rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50'
+            class='border-border bg-card text-secondary-foreground hover:bg-muted rounded-md border px-4 py-2 text-sm font-medium'
             disabled={reconcileQuery.isFetching}
           >
             {reconcileQuery.isFetching ?
@@ -95,10 +95,10 @@ export default function OrgBillingReconcilePanel(props) {
         >
           <Show when={reconcileData()}>
             {/* Controls */}
-            <div class='mb-6 rounded-lg border border-gray-200 bg-gray-50 p-4'>
+            <div class='border-border bg-muted mb-6 rounded-lg border p-4'>
               <div class='grid grid-cols-1 gap-4 md:grid-cols-4'>
                 <div>
-                  <label class='block text-sm font-medium text-gray-700'>
+                  <label class='text-secondary-foreground block text-sm font-medium'>
                     Incomplete Threshold (min)
                   </label>
                   <input
@@ -106,11 +106,11 @@ export default function OrgBillingReconcilePanel(props) {
                     value={incompleteThreshold()}
                     onInput={e => setIncompleteThreshold(parseInt(e.target.value, 10))}
                     min='1'
-                    class='mt-1 block w-full rounded-md border-gray-300 text-sm'
+                    class='border-border mt-1 block w-full rounded-md text-sm'
                   />
                 </div>
                 <div>
-                  <label class='block text-sm font-medium text-gray-700'>
+                  <label class='text-secondary-foreground block text-sm font-medium'>
                     Checkout No Sub Threshold (min)
                   </label>
                   <input
@@ -118,11 +118,11 @@ export default function OrgBillingReconcilePanel(props) {
                     value={checkoutNoSubThreshold()}
                     onInput={e => setCheckoutNoSubThreshold(parseInt(e.target.value, 10))}
                     min='1'
-                    class='mt-1 block w-full rounded-md border-gray-300 text-sm'
+                    class='border-border mt-1 block w-full rounded-md text-sm'
                   />
                 </div>
                 <div>
-                  <label class='block text-sm font-medium text-gray-700'>
+                  <label class='text-secondary-foreground block text-sm font-medium'>
                     Processing Lag Threshold (min)
                   </label>
                   <input
@@ -130,20 +130,20 @@ export default function OrgBillingReconcilePanel(props) {
                     value={processingLagThreshold()}
                     onInput={e => setProcessingLagThreshold(parseInt(e.target.value, 10))}
                     min='1'
-                    class='mt-1 block w-full rounded-md border-gray-300 text-sm'
+                    class='border-border mt-1 block w-full rounded-md text-sm'
                   />
                 </div>
                 <div>
-                  <label class='block text-sm font-medium text-gray-700'>Options</label>
+                  <label class='text-secondary-foreground block text-sm font-medium'>Options</label>
                   <div class='mt-2 flex items-center'>
                     <input
                       type='checkbox'
                       id='checkStripe'
                       checked={checkStripe()}
                       onInput={e => setCheckStripe(e.target.checked)}
-                      class='h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500'
+                      class='border-border h-4 w-4 rounded text-blue-600 focus:ring-blue-500'
                     />
-                    <label for='checkStripe' class='ml-2 text-sm text-gray-700'>
+                    <label for='checkStripe' class='text-secondary-foreground ml-2 text-sm'>
                       Check Stripe API
                     </label>
                   </div>
@@ -156,29 +156,29 @@ export default function OrgBillingReconcilePanel(props) {
 
             {/* Summary */}
             <div class='mb-6 grid grid-cols-2 gap-4 md:grid-cols-5'>
-              <div class='rounded-lg border border-gray-200 bg-white p-4'>
-                <p class='text-sm text-gray-500'>Total Stuck</p>
-                <p class='text-2xl font-bold text-gray-900'>{summary().stuckStateCount || 0}</p>
+              <div class='border-border bg-card rounded-lg border p-4'>
+                <p class='text-muted-foreground text-sm'>Total Stuck</p>
+                <p class='text-foreground text-2xl font-bold'>{summary().stuckStateCount || 0}</p>
               </div>
               <div class='rounded-lg border border-red-300 bg-red-50 p-4'>
-                <p class='text-sm text-gray-600'>Critical</p>
+                <p class='text-muted-foreground text-sm'>Critical</p>
                 <p class='text-2xl font-bold text-red-800'>
                   {stuckStates().filter(s => s.severity === 'critical').length}
                 </p>
               </div>
               <div class='rounded-lg border border-orange-300 bg-orange-50 p-4'>
-                <p class='text-sm text-gray-600'>High</p>
+                <p class='text-muted-foreground text-sm'>High</p>
                 <p class='text-2xl font-bold text-orange-800'>
                   {stuckStates().filter(s => s.severity === 'high').length}
                 </p>
               </div>
-              <div class='rounded-lg border border-gray-200 bg-white p-4'>
-                <p class='text-sm text-gray-500'>Failed Webhooks</p>
-                <p class='text-2xl font-bold text-gray-900'>{summary().failedWebhooks || 0}</p>
+              <div class='border-border bg-card rounded-lg border p-4'>
+                <p class='text-muted-foreground text-sm'>Failed Webhooks</p>
+                <p class='text-foreground text-2xl font-bold'>{summary().failedWebhooks || 0}</p>
               </div>
-              <div class='rounded-lg border border-gray-200 bg-white p-4'>
-                <p class='text-sm text-gray-500'>Ignored Webhooks</p>
-                <p class='text-2xl font-bold text-gray-900'>{summary().ignoredWebhooks || 0}</p>
+              <div class='border-border bg-card rounded-lg border p-4'>
+                <p class='text-muted-foreground text-sm'>Ignored Webhooks</p>
+                <p class='text-foreground text-2xl font-bold'>{summary().ignoredWebhooks || 0}</p>
               </div>
             </div>
 
@@ -256,7 +256,7 @@ export default function OrgBillingReconcilePanel(props) {
                               </p>
                             )}
                             {state.type === 'checkout_no_subscription' && (
-                              <div class='mt-4 rounded bg-white/50 p-3'>
+                              <div class='bg-card/50 mt-4 rounded p-3'>
                                 <p class='mb-2 text-xs font-semibold'>Recommended Checks:</p>
                                 <ul class='list-inside list-disc space-y-1 text-xs'>
                                   <li>Verify Better Auth Stripe plugin configuration</li>
@@ -282,12 +282,12 @@ export default function OrgBillingReconcilePanel(props) {
             {/* Stripe Comparison */}
             <Show when={reconcileData()?.stripeComparison}>
               {comparison => (
-                <div class='mt-6 rounded-lg border border-gray-200 bg-gray-50 p-4'>
-                  <h3 class='mb-3 font-semibold text-gray-900'>Stripe API Comparison</h3>
+                <div class='border-border bg-muted mt-6 rounded-lg border p-4'>
+                  <h3 class='text-foreground mb-3 font-semibold'>Stripe API Comparison</h3>
                   {comparison().error ?
                     <p class='text-sm text-red-600'>Error: {comparison().error}</p>
                   : comparison().noActiveSubscription ?
-                    <p class='text-sm text-gray-600'>No active subscription to compare</p>
+                    <p class='text-muted-foreground text-sm'>No active subscription to compare</p>
                   : <div class='space-y-2 text-sm'>
                       <div class='flex items-center space-x-2'>
                         <span class='font-medium'>Status Match:</span>

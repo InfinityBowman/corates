@@ -94,8 +94,8 @@ export default function AMSTAR2ResultsTable(props) {
     <Show
       when={studyScores().length > 0}
       fallback={
-        <div class='rounded-lg border border-gray-200 bg-white px-4 py-8 text-center'>
-          <p class='text-gray-500'>
+        <div class='border-border bg-card rounded-lg border px-4 py-8 text-center'>
+          <p class='text-muted-foreground'>
             Once appraisals are completed, this section will display tables summarizing the
             distribution of overall confidence ratings (critically low, low, moderate, high) and the
             overall confidence rating for each included review.
@@ -107,42 +107,42 @@ export default function AMSTAR2ResultsTable(props) {
         {/* Summary Section */}
         <Show when={summary()}>
           {summaryData => (
-            <div class='rounded-lg border border-gray-200 bg-gray-50 p-4'>
-              <h3 class='mb-3 text-sm font-semibold text-gray-900'>Summary</h3>
+            <div class='border-border bg-muted rounded-lg border p-4'>
+              <h3 class='text-foreground mb-3 text-sm font-semibold'>Summary</h3>
               <div class='grid grid-cols-2 gap-3 md:grid-cols-4'>
                 <div class='text-center'>
-                  <p class='text-lg font-semibold text-gray-900'>
+                  <p class='text-foreground text-lg font-semibold'>
                     {summaryData().percentages.High}%
                   </p>
-                  <p class='text-xs text-gray-600'>High</p>
-                  <p class='text-xs text-gray-500'>
+                  <p class='text-secondary-foreground text-xs'>High</p>
+                  <p class='text-muted-foreground text-xs'>
                     ({summaryData().counts.High} of {summaryData().total})
                   </p>
                 </div>
                 <div class='text-center'>
-                  <p class='text-lg font-semibold text-gray-900'>
+                  <p class='text-foreground text-lg font-semibold'>
                     {summaryData().percentages.Moderate}%
                   </p>
-                  <p class='text-xs text-gray-600'>Moderate</p>
-                  <p class='text-xs text-gray-500'>
+                  <p class='text-secondary-foreground text-xs'>Moderate</p>
+                  <p class='text-muted-foreground text-xs'>
                     ({summaryData().counts.Moderate} of {summaryData().total})
                   </p>
                 </div>
                 <div class='text-center'>
-                  <p class='text-lg font-semibold text-gray-900'>
+                  <p class='text-foreground text-lg font-semibold'>
                     {summaryData().percentages.Low}%
                   </p>
-                  <p class='text-xs text-gray-600'>Low</p>
-                  <p class='text-xs text-gray-500'>
+                  <p class='text-secondary-foreground text-xs'>Low</p>
+                  <p class='text-muted-foreground text-xs'>
                     ({summaryData().counts.Low} of {summaryData().total})
                   </p>
                 </div>
                 <div class='text-center'>
-                  <p class='text-lg font-semibold text-gray-900'>
+                  <p class='text-foreground text-lg font-semibold'>
                     {summaryData().percentages['Critically Low']}%
                   </p>
-                  <p class='text-xs text-gray-600'>Critically Low</p>
-                  <p class='text-xs text-gray-500'>
+                  <p class='text-secondary-foreground text-xs'>Critically Low</p>
+                  <p class='text-muted-foreground text-xs'>
                     ({summaryData().counts['Critically Low']} of {summaryData().total})
                   </p>
                 </div>
@@ -153,18 +153,18 @@ export default function AMSTAR2ResultsTable(props) {
 
         {/* Results Table */}
         <div class='overflow-x-auto'>
-          <table class='min-w-full divide-y divide-gray-200'>
-            <thead class='bg-gray-50'>
+          <table class='divide-border min-w-full divide-y'>
+            <thead class='bg-muted'>
               <tr>
                 <th
                   scope='col'
-                  class='px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase'
+                  class='text-muted-foreground px-6 py-3 text-left text-xs font-medium tracking-wider uppercase'
                 >
                   Study
                 </th>
                 <th
                   scope='col'
-                  class='px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase'
+                  class='text-muted-foreground px-6 py-3 text-left text-xs font-medium tracking-wider uppercase'
                 >
                   <div class='flex items-center gap-1'>
                     Rating <ScoreTooltip checklistType='AMSTAR2' />
@@ -172,14 +172,14 @@ export default function AMSTAR2ResultsTable(props) {
                 </th>
               </tr>
             </thead>
-            <tbody class='divide-y divide-gray-200 bg-white'>
+            <tbody class='divide-border bg-card divide-y'>
               <For each={studyScores()}>
                 {item => (
-                  <tr class='hover:bg-gray-50'>
-                    <td class='px-6 py-4 text-sm font-medium whitespace-nowrap text-gray-900'>
+                  <tr class='hover:bg-muted'>
+                    <td class='text-foreground px-6 py-4 text-sm font-medium whitespace-nowrap'>
                       {item.studyName}
                     </td>
-                    <td class='px-6 py-4 text-sm whitespace-nowrap text-gray-500'>
+                    <td class='text-muted-foreground px-6 py-4 text-sm whitespace-nowrap'>
                       <ScoreTag currentScore={item.score} checklistType='AMSTAR2' showRatingOnly />
                     </td>
                   </tr>

@@ -1,4 +1,4 @@
-import { createSignal, onCleanup, onMount, Show } from 'solid-js';
+import { createEffect, createSignal, onCleanup, onMount, Show } from 'solid-js';
 import { useNavigate } from '@solidjs/router';
 import { useBetterAuth } from '@api/better-auth-store.js';
 import {
@@ -29,6 +29,9 @@ export default function SignIn() {
   const [orcidLoading, setOrcidLoading] = createSignal(false);
   const [useMagicLink, setUseMagicLink] = createSignal(false);
   const [showTwoFactor, setShowTwoFactor] = createSignal(false);
+  const [formHeight, setFormHeight] = createSignal('auto');
+  let passwordFormRef;
+  let magicLinkFormRef;
   const navigate = useNavigate();
   const { signin, signinWithGoogle, signinWithOrcid, authError, clearAuthError } = useBetterAuth();
 
@@ -61,6 +64,28 @@ export default function SignIn() {
       window.removeEventListener('focus', handleReturn);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     });
+  });
+
+  // Update form height based on which form is active
+  const updateFormHeight = () => {
+    const activeRef = useMagicLink() ? magicLinkFormRef : passwordFormRef;
+    if (activeRef) {
+      setFormHeight(`${activeRef.offsetHeight}px`);
+    }
+  };
+
+  // Set initial height after mount when refs are ready
+  onMount(() => {
+    // Small delay to ensure refs are measured after initial render
+    requestAnimationFrame(updateFormHeight);
+  });
+
+  // Update height when switching forms
+  createEffect(() => {
+    // Track the signal
+    useMagicLink();
+    // Update after a frame to ensure layout is complete
+    requestAnimationFrame(updateFormHeight);
   });
 
   // Watch for auth errors from the store
@@ -149,152 +174,219 @@ export default function SignIn() {
   }
 
   return (
-    <div class='flex h-full items-center justify-center bg-blue-50 px-4 py-8 sm:py-12'>
-      <div class='relative w-full max-w-md space-y-4 rounded-xl border border-gray-100 bg-white p-6 shadow-2xl sm:max-w-xl sm:rounded-3xl sm:p-12'>
-        {/* Logo */}
-        <a href='/' class='absolute top-4 left-4 sm:top-6 sm:left-6'>
-          <img src='/logo.svg' alt='CoRATES' class='h-6 w-auto sm:h-7' />
-        </a>
+    <div class='border-border-subtle bg-card relative w-full max-w-md space-y-4 rounded-xl border p-6 shadow-2xl sm:max-w-xl sm:rounded-3xl sm:p-12'>
+      {/* Logo */}
+      <a href='/' class='absolute top-4 left-4 sm:top-6 sm:left-6'>
+        <img src='/logo.svg' alt='CoRATES' class='h-6 w-auto sm:h-7' />
+      </a>
 
-        {/* Two-Factor Verification */}
-        <Show when={showTwoFactor()}>
-          <TwoFactorVerify onCancel={handleTwoFactorCancel} />
-        </Show>
+      {/* Two-Factor Verification */}
+      <Show when={showTwoFactor()}>
+        <TwoFactorVerify onCancel={handleTwoFactorCancel} />
+      </Show>
 
-        {/* Normal Sign In */}
-        <Show when={!showTwoFactor()}>
-          <div class='mb-2 text-center sm:mb-4'>
-            <h2
-              class='mb-1 text-xl font-bold text-gray-900 sm:mb-2 sm:text-2xl'
-              id='signin-heading'
+      {/* Normal Sign In */}
+      <Show when={!showTwoFactor()}>
+        <div class='mb-2 text-center sm:mb-4'>
+          <h2
+            class='text-foreground mb-1 text-xl font-bold sm:mb-2 sm:text-2xl'
+            id='signin-heading'
+          >
+            Welcome Back
+          </h2>
+          <p class='text-muted-foreground text-xs sm:text-sm'>Sign in to your account.</p>
+        </div>
+
+        <LastLoginHint />
+
+        {/* Toggle between password and magic link */}
+        <div
+          class='bg-secondary relative flex rounded-lg p-1'
+          role='tablist'
+          aria-label='Sign in method'
+          onKeyDown={e => {
+            if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+              e.preventDefault();
+              const goToMagicLink = e.key === 'ArrowRight';
+              setUseMagicLink(goToMagicLink);
+              document.getElementById(goToMagicLink ? 'tab-magic-link' : 'tab-password')?.focus();
+            }
+          }}
+        >
+          {/* Sliding indicator */}
+          <div
+            aria-hidden='true'
+            class='bg-card absolute top-1 bottom-1 left-1 w-[calc(50%-4px)] rounded-md shadow-sm transition-transform duration-300'
+            style={{
+              transform: useMagicLink() ? 'translateX(100%)' : 'translateX(0)',
+              'transition-timing-function': 'cubic-bezier(0.22, 1, 0.36, 1)',
+            }}
+          />
+          <button
+            type='button'
+            role='tab'
+            id='tab-password'
+            tabIndex={useMagicLink() ? -1 : 0}
+            aria-selected={!useMagicLink()}
+            aria-controls='panel-password'
+            onClick={() => setUseMagicLink(false)}
+            class={`relative z-10 flex-1 rounded-md px-3 py-2 text-xs font-medium transition-colors duration-300 sm:text-sm ${
+              !useMagicLink() ? 'text-foreground' : 'text-muted-foreground hover:text-foreground'
+            }`}
+          >
+            Password
+          </button>
+          <button
+            type='button'
+            role='tab'
+            id='tab-magic-link'
+            tabIndex={useMagicLink() ? 0 : -1}
+            aria-selected={useMagicLink()}
+            aria-controls='panel-magic-link'
+            onClick={() => setUseMagicLink(true)}
+            class={`relative z-10 flex-1 rounded-md px-3 py-2 text-xs font-medium transition-colors duration-300 sm:text-sm ${
+              useMagicLink() ? 'text-foreground' : 'text-muted-foreground hover:text-foreground'
+            }`}
+          >
+            Email Link
+          </button>
+        </div>
+
+        {/* Sliding form container */}
+        <div
+          class='overflow-hidden rounded-lg transition-[height] duration-300'
+          style={{
+            height: formHeight(),
+            'transition-timing-function': 'cubic-bezier(0.22, 1, 0.36, 1)',
+          }}
+        >
+          <div
+            class='flex w-[200%] items-start transition-transform duration-300'
+            style={{
+              transform: useMagicLink() ? 'translateX(-50%)' : 'translateX(0)',
+              'transition-timing-function': 'cubic-bezier(0.22, 1, 0.36, 1)',
+            }}
+          >
+            {/* Password Form */}
+            <div
+              ref={passwordFormRef}
+              id='panel-password'
+              role='tabpanel'
+              aria-labelledby='tab-password'
+              aria-hidden={useMagicLink()}
+              inert={useMagicLink()}
+              class='bg-card w-1/2 shrink-0 pr-4'
             >
-              Welcome Back
-            </h2>
-            <p class='text-xs text-gray-500 sm:text-sm'>Sign in to your account.</p>
-          </div>
+              <form aria-labelledby='signin-heading' onSubmit={handleSubmit} autocomplete='off'>
+                <div class='space-y-4'>
+                  <div>
+                    <label
+                      class='text-secondary-foreground mb-1 block text-xs font-semibold sm:mb-2 sm:text-sm'
+                      for='email-input'
+                    >
+                      Email
+                    </label>
+                    <input
+                      type='email'
+                      autoComplete='email'
+                      autocapitalize='off'
+                      spellCheck='false'
+                      value={email()}
+                      onInput={e => setEmail(e.target.value)}
+                      class='border-border focus:ring-primary w-full rounded-lg border py-2 pr-3 pl-3 text-xs transition focus:border-transparent focus:ring-2 focus:outline-none sm:pr-4 sm:pl-4 sm:text-sm'
+                      required
+                      id='email-input'
+                      placeholder='you@example.com'
+                      disabled={loading()}
+                      aria-describedby={displayError() ? 'signin-error' : undefined}
+                    />
+                  </div>
 
-          <LastLoginHint />
+                  <div>
+                    <label
+                      class='text-secondary-foreground mb-1 block text-xs font-semibold sm:mb-2 sm:text-sm'
+                      for='password-input'
+                    >
+                      Password
+                    </label>
+                    <PasswordInput autoComplete='current-password' disabled={loading()} required>
+                      <PasswordInputControl>
+                        <PasswordInputField
+                          id='password-input'
+                          value={password()}
+                          onInput={e => setPassword(e.target.value)}
+                          placeholder='Password'
+                          aria-describedby={displayError() ? 'signin-error' : undefined}
+                        />
+                        <PasswordInputVisibilityTrigger />
+                      </PasswordInputControl>
+                    </PasswordInput>
+                  </div>
 
-          {/* Toggle between password and magic link */}
-          <div class='flex rounded-lg bg-gray-100 p-1'>
-            <button
-              type='button'
-              onClick={() => setUseMagicLink(false)}
-              class={`flex-1 rounded-md px-3 py-2 text-xs font-medium transition-colors sm:text-sm ${
-                !useMagicLink() ?
-                  'bg-white text-gray-900 shadow-sm'
-                : 'text-gray-600 hover:text-gray-900'
-              }`}
-            >
-              Password
-            </button>
-            <button
-              type='button'
-              onClick={() => setUseMagicLink(true)}
-              class={`flex-1 rounded-md px-3 py-2 text-xs font-medium transition-colors sm:text-sm ${
-                useMagicLink() ?
-                  'bg-white text-gray-900 shadow-sm'
-                : 'text-gray-600 hover:text-gray-900'
-              }`}
-            >
-              Email Link
-            </button>
-          </div>
+                  <ErrorMessage displayError={displayError} id='signin-error' />
 
-          {/* Magic Link Form */}
-          <Show when={useMagicLink()}>
-            <MagicLinkForm callbackPath='/complete-profile' />
-          </Show>
+                  <PrimaryButton loading={loading()} loadingText='Signing In...'>
+                    Sign In
+                  </PrimaryButton>
 
-          {/* Password Form */}
-          <Show when={!useMagicLink()}>
-            <form aria-labelledby='signin-heading' onSubmit={handleSubmit} autocomplete='off'>
-              <div class='space-y-4'>
-                <div>
-                  <label
-                    class='mb-1 block text-xs font-semibold text-gray-700 sm:mb-2 sm:text-sm'
-                    for='email-input'
-                  >
-                    Email
-                  </label>
-                  <input
-                    type='email'
-                    autoComplete='email'
-                    autocapitalize='off'
-                    spellCheck='false'
-                    value={email()}
-                    onInput={e => setEmail(e.target.value)}
-                    class='w-full rounded-lg border border-gray-300 py-2 pr-3 pl-3 text-xs transition focus:border-transparent focus:ring-2 focus:ring-blue-500 focus:outline-none sm:pr-4 sm:pl-4 sm:text-sm'
-                    required
-                    id='email-input'
-                    placeholder='you@example.com'
-                    disabled={loading()}
-                  />
+                  <div class='text-center'>
+                    <AuthLink
+                      href='/reset-password'
+                      onClick={e => {
+                        e.preventDefault();
+                        navigate('/reset-password');
+                      }}
+                    >
+                      <span class='text-xs sm:text-sm'>Forgot password?</span>
+                    </AuthLink>
+                  </div>
                 </div>
+              </form>
+            </div>
 
-                <div>
-                  <PasswordInput autoComplete='current-password' disabled={loading()} required>
-                    <PasswordInputControl>
-                      <PasswordInputField
-                        value={password()}
-                        onInput={e => setPassword(e.target.value)}
-                        placeholder='Password'
-                      />
-                      <PasswordInputVisibilityTrigger />
-                    </PasswordInputControl>
-                  </PasswordInput>
-                </div>
-
-                <ErrorMessage displayError={displayError} />
-
-                <PrimaryButton loading={loading()} loadingText='Signing In...'>
-                  Sign In
-                </PrimaryButton>
-
-                <div class='text-center'>
-                  <AuthLink
-                    href='/reset-password'
-                    onClick={e => {
-                      e.preventDefault();
-                      navigate('/reset-password');
-                    }}
-                  >
-                    <span class='text-xs sm:text-sm'>Forgot password?</span>
-                  </AuthLink>
-                </div>
-              </div>
-            </form>
-          </Show>
-
-          <AuthDivider />
-
-          <SocialAuthContainer buttonCount={socialProviderCount}>
-            <GoogleButton
-              loading={googleLoading()}
-              onClick={handleGoogleSignIn}
-              iconOnly={socialProviderCount > 1}
-            />
-            <OrcidButton
-              loading={orcidLoading()}
-              onClick={handleOrcidSignIn}
-              iconOnly={socialProviderCount > 1}
-            />
-          </SocialAuthContainer>
-
-          <div class='mt-2 text-center text-xs text-gray-500 sm:mt-4 sm:text-sm'>
-            Don&apos;t have an account?{' '}
-            <AuthLink
-              href='/signup'
-              onClick={e => {
-                e.preventDefault();
-                navigate('/signup');
-              }}
+            {/* Magic Link Form */}
+            <div
+              ref={magicLinkFormRef}
+              id='panel-magic-link'
+              role='tabpanel'
+              aria-labelledby='tab-magic-link'
+              aria-hidden={!useMagicLink()}
+              inert={!useMagicLink()}
+              class='bg-card w-1/2 shrink-0 pl-4'
             >
-              Sign Up
-            </AuthLink>
+              <MagicLinkForm callbackPath='/complete-profile' />
+            </div>
           </div>
-        </Show>
-      </div>
+        </div>
+
+        <AuthDivider />
+
+        <SocialAuthContainer buttonCount={socialProviderCount}>
+          <GoogleButton
+            loading={googleLoading()}
+            onClick={handleGoogleSignIn}
+            iconOnly={socialProviderCount > 1}
+          />
+          <OrcidButton
+            loading={orcidLoading()}
+            onClick={handleOrcidSignIn}
+            iconOnly={socialProviderCount > 1}
+          />
+        </SocialAuthContainer>
+
+        <div class='text-muted-foreground mt-2 text-center text-xs sm:mt-4 sm:text-sm'>
+          Don&apos;t have an account?{' '}
+          <AuthLink
+            href='/signup'
+            onClick={e => {
+              e.preventDefault();
+              navigate('/signup');
+            }}
+          >
+            Sign Up
+          </AuthLink>
+        </div>
+      </Show>
     </div>
   );
 }

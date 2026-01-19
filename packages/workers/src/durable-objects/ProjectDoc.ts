@@ -26,7 +26,8 @@ interface SyncRequestBody {
     joinedAt: string | number;
     name?: string | null;
     email?: string | null;
-    displayName?: string | null;
+    givenName?: string | null;
+    familyName?: string | null;
     image?: string | null;
   }>;
 }
@@ -39,7 +40,8 @@ interface SyncMemberRequestBody {
     joinedAt?: string | number;
     name?: string | null;
     email?: string | null;
-    displayName?: string | null;
+    givenName?: string | null;
+    familyName?: string | null;
     image?: string | null;
   };
 }
@@ -279,7 +281,8 @@ export class ProjectDoc implements DurableObject {
           memberYMap.set('joinedAt', member.joinedAt);
           memberYMap.set('name', member.name || null);
           memberYMap.set('email', member.email || null);
-          memberYMap.set('displayName', member.displayName || null);
+          memberYMap.set('givenName', member.givenName || null);
+          memberYMap.set('familyName', member.familyName || null);
           memberYMap.set('image', member.image || null);
           membersMap.set(member.userId, memberYMap);
         }
@@ -315,7 +318,8 @@ export class ProjectDoc implements DurableObject {
         memberYMap.set('joinedAt', member.joinedAt);
         memberYMap.set('name', member.name || null);
         memberYMap.set('email', member.email || null);
-        memberYMap.set('displayName', member.displayName || null);
+        memberYMap.set('givenName', member.givenName || null);
+        memberYMap.set('familyName', member.familyName || null);
         memberYMap.set('image', member.image || null);
         membersMap.set(member.userId, memberYMap);
       } else if (action === 'update') {
@@ -329,9 +333,13 @@ export class ProjectDoc implements DurableObject {
           if (member.image !== undefined) {
             existingMember.set('image', member.image);
           }
-          // Update display name if provided
-          if (member.displayName !== undefined) {
-            existingMember.set('displayName', member.displayName);
+          // Update givenName if provided
+          if (member.givenName !== undefined) {
+            existingMember.set('givenName', member.givenName);
+          }
+          // Update familyName if provided
+          if (member.familyName !== undefined) {
+            existingMember.set('familyName', member.familyName);
           }
           // Update name if provided
           if (member.name !== undefined) {
@@ -547,14 +555,37 @@ export class ProjectDoc implements DurableObject {
       });
     }
 
-    // Now that we've verified auth, sync member to Yjs if not present (for awareness)
+    // Now that we've verified auth, sync member to Yjs if not present or update missing fields
     await this.initializeDoc();
     const membersMap = this.doc!.getMap('members');
-    if (!membersMap.has(user.id)) {
+    const existingMember = membersMap.get(user.id) as Y.Map<unknown> | undefined;
+    if (!existingMember) {
       const memberYMap = new Y.Map<unknown>();
       memberYMap.set('role', projectMembership.role);
       memberYMap.set('joinedAt', Date.now());
+      memberYMap.set('name', (user.name as string) || null);
+      memberYMap.set('email', (user.email as string) || null);
+      memberYMap.set('givenName', (user.givenName as string) || null);
+      memberYMap.set('familyName', (user.familyName as string) || null);
+      memberYMap.set('image', (user.image as string) || null);
       membersMap.set(user.id, memberYMap);
+    } else {
+      // Update image if it differs from stored (handles OAuth image sync and avatar removal)
+      const storedImage = existingMember.get('image') as string | null;
+      const userImage = (user.image as string) || null;
+      if (userImage !== storedImage) {
+        existingMember.set('image', userImage);
+      }
+      // Also update name/givenName/familyName if missing
+      if (!existingMember.get('name') && user.name) {
+        existingMember.set('name', user.name as string);
+      }
+      if (!existingMember.get('givenName') && user.givenName) {
+        existingMember.set('givenName', user.givenName as string);
+      }
+      if (!existingMember.get('familyName') && user.familyName) {
+        existingMember.set('familyName', user.familyName as string);
+      }
     }
 
     const webSocketPair = new WebSocketPair();

@@ -29,23 +29,23 @@ interface OrgApiRequest {
 }
 
 interface OrgApiMethods {
-  listOrganizations: (req: OrgApiRequest) => Promise<unknown>;
-  createOrganization: (req: OrgApiRequest) => Promise<unknown>;
-  getFullOrganization: (req: OrgApiRequest) => Promise<unknown>;
-  updateOrganization: (req: OrgApiRequest) => Promise<unknown>;
-  deleteOrganization: (req: OrgApiRequest) => Promise<unknown>;
-  listMembers: (req: OrgApiRequest) => Promise<unknown>;
-  addMember: (req: OrgApiRequest) => Promise<unknown>;
-  updateMemberRole: (req: OrgApiRequest) => Promise<unknown>;
-  removeMember: (req: OrgApiRequest) => Promise<unknown>;
-  leaveOrganization: (req: OrgApiRequest) => Promise<unknown>;
-  setActiveOrganization: (req: OrgApiRequest) => Promise<unknown>;
+  listOrganizations: (_req: OrgApiRequest) => Promise<unknown>;
+  createOrganization: (_req: OrgApiRequest) => Promise<unknown>;
+  getFullOrganization: (_req: OrgApiRequest) => Promise<unknown>;
+  updateOrganization: (_req: OrgApiRequest) => Promise<unknown>;
+  deleteOrganization: (_req: OrgApiRequest) => Promise<unknown>;
+  listMembers: (_req: OrgApiRequest) => Promise<unknown>;
+  addMember: (_req: OrgApiRequest) => Promise<unknown>;
+  updateMemberRole: (_req: OrgApiRequest) => Promise<unknown>;
+  removeMember: (_req: OrgApiRequest) => Promise<unknown>;
+  leaveOrganization: (_req: OrgApiRequest) => Promise<unknown>;
+  setActiveOrganization: (_req: OrgApiRequest) => Promise<unknown>;
 }
 
 // Helper to get typed organization API
 function getOrgApi(
   env: Env,
-  ctx?: { waitUntil: (promise: Promise<unknown>) => void },
+  ctx?: { waitUntil: (_promise: Promise<unknown>) => void },
 ): OrgApiMethods {
   const auth = createAuth(env, ctx);
   return auth.api as unknown as OrgApiMethods;

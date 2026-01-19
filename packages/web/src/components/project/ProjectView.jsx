@@ -16,9 +16,10 @@ import projectActionsStore from '@/stores/projectActionsStore';
 import { useBetterAuth } from '@api/better-auth-store.js';
 import { uploadPdf, deletePdf } from '@api/pdf-api.js';
 import { cachePdf } from '@primitives/pdfCache.js';
+import { bestEffort } from '@lib/errorLogger.js';
 import { importFromGoogleDrive } from '@api/google-drive.js';
 import { showToast } from '@/components/ui/toast';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { Tabs, TabsList, TabsTrigger, TabsContent, TabsIndicator } from '@/components/ui/tabs';
 import { BiRegularHome } from 'solid-icons/bi';
 import { BsListTask } from 'solid-icons/bs';
 import { CgArrowsExchange } from 'solid-icons/cg';
@@ -122,7 +123,12 @@ export default function ProjectView(props) {
         const arrayBuffer = new Uint8Array(pdf.data).buffer;
         uploadPdf(oid, params.projectId, studyId, arrayBuffer, pdf.fileName)
           .then(result => {
-            cachePdf(params.projectId, studyId, result.fileName, arrayBuffer).catch(console.warn);
+            bestEffort(cachePdf(params.projectId, studyId, result.fileName, arrayBuffer), {
+              operation: 'cachePdf (pending upload)',
+              projectId: params.projectId,
+              studyId,
+              fileName: result.fileName,
+            });
             try {
               // Extract PDF metadata from pdf.metadata to pass to the PDF object
               const pdfMetadata = pdf.metadata || {};
@@ -142,7 +148,12 @@ export default function ProjectView(props) {
             } catch (metaErr) {
               console.error('Failed to add PDF metadata:', metaErr);
               // Clean up orphaned file
-              deletePdf(oid, params.projectId, studyId, result.fileName).catch(console.warn);
+              bestEffort(deletePdf(oid, params.projectId, studyId, result.fileName), {
+                operation: 'deletePdf (pending upload rollback)',
+                projectId: params.projectId,
+                studyId,
+                fileName: result.fileName,
+              });
             }
           })
           .catch(err => console.error('Error uploading PDF for new study:', err));
@@ -207,7 +218,12 @@ export default function ProjectView(props) {
             } catch (metaErr) {
               console.error('Failed to add PDF metadata:', metaErr);
               // Clean up orphaned file
-              deletePdf(oid, params.projectId, studyId, result.file.fileName).catch(console.warn);
+              bestEffort(deletePdf(oid, params.projectId, studyId, result.file.fileName), {
+                operation: 'deletePdf (Google Drive rollback)',
+                projectId: params.projectId,
+                studyId,
+                fileName: result.file.fileName,
+              });
             }
           })
           .catch(err => console.error('Error importing Google Drive file:', err));
@@ -288,74 +304,74 @@ export default function ProjectView(props) {
 
       {/* Main project view with tabs */}
       <Show when={!isChildRoute()}>
-        <div class='mx-auto max-w-7xl p-6 pt-4'>
-          <ProjectHeader
-            name={() => meta()?.name}
-            description={() => meta()?.description}
-            onRename={newName => projectActionsStore.project.rename(newName)}
-            onUpdateDescription={desc => projectActionsStore.project.updateDescription(desc)}
-            onBack={() => navigate(backPath())}
-          />
-
+        <div class='bg-background min-h-screen'>
           <Tabs value={tabFromUrl()} onValueChange={handleTabChange}>
-            <TabsList class='overflow-x-auto rounded-t-lg border border-gray-200 bg-white'>
-              <For each={tabDefinitions}>
-                {tab => (
-                  <TabsTrigger
-                    value={tab.value}
-                    class='gap-2 border-b-2 border-transparent text-gray-600 hover:bg-gray-50 hover:text-gray-900 data-[selected]:border-blue-600 data-[selected]:text-gray-900'
-                  >
-                    {tab.icon}
-                    {tab.label}
-                    <Show when={tab.getCount}>
-                      <span class='ml-1 rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-600'>
-                        {tab.getCount()}
-                      </span>
-                    </Show>
-                  </TabsTrigger>
-                )}
-              </For>
-            </TabsList>
-            <TabsContent
-              value='overview'
-              class='rounded-b-lg border border-t-0 border-gray-200 bg-white p-6'
-            >
-              <SectionErrorBoundary name='Overview'>
-                <OverviewTab />
-              </SectionErrorBoundary>
-            </TabsContent>
-            <TabsContent
-              value='all-studies'
-              class='rounded-b-lg border border-t-0 border-gray-200 bg-white p-6'
-            >
-              <SectionErrorBoundary name='All Studies'>
-                <AllStudiesTab />
-              </SectionErrorBoundary>
-            </TabsContent>
-            <TabsContent
-              value='todo'
-              class='rounded-b-lg border border-t-0 border-gray-200 bg-white p-6'
-            >
-              <SectionErrorBoundary name='To-Do'>
-                <ToDoTab />
-              </SectionErrorBoundary>
-            </TabsContent>
-            <TabsContent
-              value='reconcile'
-              class='rounded-b-lg border border-t-0 border-gray-200 bg-white p-6'
-            >
-              <SectionErrorBoundary name='Reconcile'>
-                <ReconcileTab />
-              </SectionErrorBoundary>
-            </TabsContent>
-            <TabsContent
-              value='completed'
-              class='rounded-b-lg border border-t-0 border-gray-200 bg-white p-6'
-            >
-              <SectionErrorBoundary name='Completed'>
-                <CompletedTab />
-              </SectionErrorBoundary>
-            </TabsContent>
+            {/* Sticky header */}
+            <header class='border-border bg-card sticky top-0 z-20 border-b'>
+              <div class='mx-auto max-w-7xl px-6'>
+                <ProjectHeader
+                  name={() => meta()?.name}
+                  description={() => meta()?.description}
+                  onRename={newName => projectActionsStore.project.rename(newName)}
+                  onUpdateDescription={desc => projectActionsStore.project.updateDescription(desc)}
+                  onBack={() => navigate(backPath())}
+                />
+              </div>
+
+              {/* Tabs navigation */}
+              <div class='mx-auto max-w-7xl px-6'>
+                <TabsList class='relative flex gap-1 overflow-x-auto pb-px'>
+                  <For each={tabDefinitions}>
+                    {tab => (
+                      <TabsTrigger
+                        value={tab.value}
+                        class='group text-muted-foreground hover:bg-muted hover:text-secondary-foreground data-selected:text-foreground relative gap-2 rounded-t-lg px-4 py-2.5 transition-all'
+                      >
+                        <span class='opacity-60 transition-opacity group-data-selected:opacity-100'>
+                          {tab.icon}
+                        </span>
+                        <span class='font-medium'>{tab.label}</span>
+                        <Show when={tab.getCount}>
+                          <span class='bg-secondary text-secondary-foreground group-data-selected:bg-primary-subtle group-data-selected:text-primary min-w-6 rounded-full px-1.5 py-0.5 text-center text-xs font-medium tabular-nums transition-colors'>
+                            {tab.getCount()}
+                          </span>
+                        </Show>
+                      </TabsTrigger>
+                    )}
+                  </For>
+                  <TabsIndicator class='bg-primary h-0.5 rounded-full' />
+                </TabsList>
+              </div>
+            </header>
+
+            {/* Main content area */}
+            <main class='mx-auto max-w-7xl px-6 py-6'>
+              <TabsContent value='overview' class='mt-0'>
+                <SectionErrorBoundary name='Overview'>
+                  <OverviewTab />
+                </SectionErrorBoundary>
+              </TabsContent>
+              <TabsContent value='all-studies' class='mt-0'>
+                <SectionErrorBoundary name='All Studies'>
+                  <AllStudiesTab />
+                </SectionErrorBoundary>
+              </TabsContent>
+              <TabsContent value='todo' class='mt-0'>
+                <SectionErrorBoundary name='To-Do'>
+                  <ToDoTab />
+                </SectionErrorBoundary>
+              </TabsContent>
+              <TabsContent value='reconcile' class='mt-0'>
+                <SectionErrorBoundary name='Reconcile'>
+                  <ReconcileTab />
+                </SectionErrorBoundary>
+              </TabsContent>
+              <TabsContent value='completed' class='mt-0'>
+                <SectionErrorBoundary name='Completed'>
+                  <CompletedTab />
+                </SectionErrorBoundary>
+              </TabsContent>
+            </main>
           </Tabs>
         </div>
 

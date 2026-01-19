@@ -18,11 +18,11 @@ function getAnswerBadgeStyle(answer) {
     case 'N':
       return 'bg-red-100 text-red-800 border-red-200';
     case 'NI':
-      return 'bg-gray-100 text-gray-600 border-gray-200';
+      return 'bg-secondary text-muted-foreground border-border';
     case 'NA':
       return 'bg-slate-100 text-slate-600 border-slate-200';
     default:
-      return 'bg-gray-100 text-gray-600 border-gray-200';
+      return 'bg-secondary text-muted-foreground border-border';
   }
 }
 
@@ -58,13 +58,13 @@ export default function ROB2AnswerPanel(props) {
     <div class='p-4'>
       {/* Panel Header */}
       <div class='mb-4 flex items-center justify-between'>
-        <h3 class='font-semibold text-gray-900'>{props.title}</h3>
+        <h3 class='text-foreground font-semibold'>{props.title}</h3>
         <Show when={!isFinal() && !props.hideUseThis}>
           <button
             onClick={() => props.onUseThis?.()}
             class={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
               props.isSelected ? 'bg-blue-600 text-white' : (
-                'bg-gray-100 text-gray-700 hover:bg-blue-100 hover:text-blue-700'
+                'bg-secondary text-secondary-foreground hover:bg-blue-100 hover:text-blue-700'
               )
             }`}
           >
@@ -88,7 +88,7 @@ export default function ROB2AnswerPanel(props) {
                   <div
                     class={`${baseClasses} ${
                       isSelected() ? getSelectedAnswerStyle() : (
-                        'border-gray-200 bg-white text-gray-700'
+                        'border-border bg-card text-secondary-foreground'
                       )
                     }`}
                   >
@@ -100,7 +100,7 @@ export default function ROB2AnswerPanel(props) {
                 <label
                   class={`${baseClasses} cursor-pointer focus-within:ring-2 focus-within:ring-blue-400 focus-within:ring-offset-1 focus-within:outline-none hover:border-blue-300 ${
                     isSelected() ? getSelectedAnswerStyle() : (
-                      'border-gray-200 bg-white text-gray-700 hover:bg-blue-50'
+                      'border-border bg-card text-secondary-foreground hover:bg-blue-50'
                     )
                   }`}
                 >
@@ -124,7 +124,7 @@ export default function ROB2AnswerPanel(props) {
       {/* Result Badge (for reviewer panels) */}
       <Show when={!isFinal() && props.answer}>
         <div class='mb-4 flex flex-wrap items-center gap-2'>
-          <span class='text-xs text-gray-500'>Selected:</span>
+          <span class='text-muted-foreground text-xs'>Selected:</span>
           <span
             class={`inline-flex items-center rounded-full border px-2 py-1 text-xs font-medium ${getAnswerBadgeStyle(props.answer)}`}
           >
@@ -135,15 +135,15 @@ export default function ROB2AnswerPanel(props) {
 
       {/* Comment Section */}
       <div class='mt-4'>
-        <label class='mb-1 block text-xs font-medium text-gray-700'>
+        <label class='text-secondary-foreground mb-1 block text-xs font-medium'>
           {isFinal() ? 'Final Comment' : 'Comment'}
         </label>
         <Show
           when={!props.readOnly}
           fallback={
-            <div class='rounded-lg border border-gray-200 bg-gray-50 p-3'>
-              <p class='text-sm whitespace-pre-wrap text-gray-700'>
-                {props.comment || <span class='text-gray-400 italic'>No comment</span>}
+            <div class='border-border bg-muted rounded-lg border p-3'>
+              <p class='text-secondary-foreground text-sm whitespace-pre-wrap'>
+                {props.comment || <span class='text-muted-foreground/70 italic'>No comment</span>}
               </p>
             </div>
           }

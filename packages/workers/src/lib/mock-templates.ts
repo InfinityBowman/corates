@@ -263,7 +263,7 @@ interface MockMember {
   joinedAt: string;
   name: string;
   email: string;
-  displayName: string;
+  givenName: string;
   image: string | null;
 }
 
@@ -360,7 +360,7 @@ export const MOCK_TEMPLATES: Record<string, TemplateFunction> = {
           joinedAt: now,
           name: 'Project Lead',
           email: 'lead@example.com',
-          displayName: 'Lead User',
+          givenName: 'Lead',
           image: null,
         },
       ],
@@ -435,7 +435,7 @@ export const MOCK_TEMPLATES: Record<string, TemplateFunction> = {
           joinedAt: now,
           name: 'Reviewer One',
           email: 'reviewer1@example.com',
-          displayName: 'Reviewer 1',
+          givenName: 'Reviewer',
           image: null,
         },
       ],
@@ -498,7 +498,7 @@ export const MOCK_TEMPLATES: Record<string, TemplateFunction> = {
           joinedAt: now,
           name: 'Reviewer One',
           email: 'reviewer1@example.com',
-          displayName: 'Reviewer 1',
+          givenName: 'Reviewer',
           image: null,
         },
       ],
@@ -562,7 +562,7 @@ export const MOCK_TEMPLATES: Record<string, TemplateFunction> = {
           joinedAt: now,
           name: 'Reviewer One',
           email: 'reviewer1@example.com',
-          displayName: 'Reviewer 1',
+          givenName: 'Reviewer',
           image: null,
         },
         {
@@ -571,7 +571,7 @@ export const MOCK_TEMPLATES: Record<string, TemplateFunction> = {
           joinedAt: now,
           name: 'Reviewer Two',
           email: 'reviewer2@example.com',
-          displayName: 'Reviewer 2',
+          givenName: 'Reviewer',
           image: null,
         },
       ],
@@ -644,7 +644,7 @@ export const MOCK_TEMPLATES: Record<string, TemplateFunction> = {
           joinedAt: now,
           name: 'Project Lead',
           email: 'lead@example.com',
-          displayName: 'Lead User',
+          givenName: 'Lead',
           image: null,
         },
         {
@@ -653,7 +653,7 @@ export const MOCK_TEMPLATES: Record<string, TemplateFunction> = {
           joinedAt: now,
           name: 'Reviewer One',
           email: 'reviewer1@example.com',
-          displayName: 'Reviewer 1',
+          givenName: 'Reviewer',
           image: null,
         },
         {
@@ -662,7 +662,7 @@ export const MOCK_TEMPLATES: Record<string, TemplateFunction> = {
           joinedAt: now,
           name: 'Reviewer Two',
           email: 'reviewer2@example.com',
-          displayName: 'Reviewer 2',
+          givenName: 'Reviewer',
           image: null,
         },
       ],

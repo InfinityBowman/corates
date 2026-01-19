@@ -4,6 +4,7 @@
 
 import { uploadPdf, downloadPdf, deletePdf } from '@api/pdf-api.js';
 import { cachePdf, removeCachedPdf, getCachedPdf } from '@primitives/pdfCache.js';
+import { bestEffort } from '@lib/errorLogger.js';
 import { extractPdfDoi, extractPdfTitle } from '@/lib/pdfUtils.js';
 import { fetchFromDOI } from '@/lib/referenceLookup.js';
 import projectStore from '../projectStore.js';
@@ -85,7 +86,12 @@ export function createPdfActions(
 
       if (!data) {
         data = await downloadPdf(orgId, projectId, studyId, pdf.fileName);
-        await cachePdf(projectId, studyId, pdf.fileName, data).catch(console.warn);
+        await bestEffort(cachePdf(projectId, studyId, pdf.fileName, data), {
+          operation: 'cachePdf (view)',
+          projectId,
+          studyId,
+          fileName: pdf.fileName,
+        });
       }
 
       pdfPreviewStore.setData(data);
@@ -164,9 +170,12 @@ export function createPdfActions(
       } catch (err) {
         console.warn('Failed to convert file to ArrayBuffer:', err.message);
       }
-      cachePdf(projectId, studyId, uploadResult.fileName, arrayBuffer).catch(err =>
-        console.warn('Failed to cache PDF:', err),
-      );
+      bestEffort(cachePdf(projectId, studyId, uploadResult.fileName, arrayBuffer), {
+        operation: 'cachePdf (upload)',
+        projectId,
+        studyId,
+        fileName: uploadResult.fileName,
+      });
 
       // Extract PDF metadata
       const pdfMetadata = await extractPdfMetadata(arrayBuffer);
@@ -193,9 +202,12 @@ export function createPdfActions(
     } catch (err) {
       console.error('Error uploading PDF:', err);
       if (uploadResult?.fileName) {
-        deletePdf(orgId, projectId, studyId, uploadResult.fileName).catch(cleanupErr =>
-          console.warn('Failed to clean up orphaned PDF:', cleanupErr),
-        );
+        bestEffort(deletePdf(orgId, projectId, studyId, uploadResult.fileName), {
+          operation: 'deletePdf (upload rollback)',
+          projectId,
+          studyId,
+          fileName: uploadResult.fileName,
+        });
       }
       throw err;
     }
@@ -299,9 +311,12 @@ export function createPdfActions(
       let arrayBuffer = null;
       try {
         arrayBuffer = await downloadPdf(orgId, projectId, studyId, file.fileName);
-        cachePdf(projectId, studyId, file.fileName, arrayBuffer).catch(err =>
-          console.warn('Failed to cache Google Drive PDF:', err),
-        );
+        bestEffort(cachePdf(projectId, studyId, file.fileName, arrayBuffer), {
+          operation: 'cachePdf (Google Drive import)',
+          projectId,
+          studyId,
+          fileName: file.fileName,
+        });
       } catch (downloadErr) {
         console.warn(
           'Failed to download/cache Google Drive PDF for metadata extraction:',
@@ -333,7 +348,12 @@ export function createPdfActions(
       );
     } catch (err) {
       console.error('Failed to add Google Drive PDF metadata:', err);
-      deletePdf(orgId, projectId, studyId, file.fileName).catch(console.warn);
+      bestEffort(deletePdf(orgId, projectId, studyId, file.fileName), {
+        operation: 'deletePdf (Google Drive rollback)',
+        projectId,
+        studyId,
+        fileName: file.fileName,
+      });
       throw err;
     }
   }

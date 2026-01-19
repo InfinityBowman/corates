@@ -25,7 +25,7 @@ function QuickActionCard(props) {
       type='button'
       onClick={() => props.onClick?.()}
       disabled={props.disabled}
-      class={`group flex items-center gap-4 rounded-xl border bg-white p-4 text-left transition-all duration-200 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-50 ${props.border}`}
+      class={`group bg-card flex items-center gap-4 rounded-xl border p-4 text-left transition-all duration-200 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-50 ${props.border}`}
     >
       <div
         class={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl ${props.iconBg} transition-transform duration-200 group-hover:scale-105`}
@@ -33,8 +33,8 @@ function QuickActionCard(props) {
         {props.icon}
       </div>
       <div>
-        <h4 class='font-medium text-stone-800'>{props.title}</h4>
-        <p class='text-sm text-stone-500'>{props.description}</p>
+        <h4 class='text-foreground font-medium'>{props.title}</h4>
+        <p class='text-muted-foreground text-sm'>{props.description}</p>
       </div>
     </button>
   );
@@ -82,7 +82,9 @@ export function QuickActions(props) {
 
   return (
     <section class='mb-6' style={animation.fadeUp(400)}>
-      <h3 class='mb-4 text-sm font-semibold tracking-wide text-stone-500 uppercase'>Quick Start</h3>
+      <h3 class='text-muted-foreground mb-4 text-sm font-semibold tracking-wide uppercase'>
+        Quick Start
+      </h3>
       <div class='grid gap-3'>
         <For each={actions()}>
           {action => (

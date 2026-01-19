@@ -205,12 +205,12 @@ export default function MultiPartQuestionPage(props) {
   };
 
   return (
-    <div class='overflow-hidden rounded-lg bg-white shadow-lg'>
+    <div class='bg-card overflow-hidden rounded-lg shadow-lg'>
       {/* Question Header */}
       <div
         class={`p-4 ${props.isAgreement ? 'border-b border-green-200 bg-green-50' : 'border-b border-amber-200 bg-amber-50'}`}
       >
-        <h2 class='text-lg font-semibold text-gray-900'>
+        <h2 class='text-foreground text-lg font-semibold'>
           {question()?.text}
           <Show when={isCritical()}>
             <span class='ml-2 text-sm font-medium text-red-600'>(Critical)</span>
@@ -226,18 +226,18 @@ export default function MultiPartQuestionPage(props) {
       </div>
 
       {/* Three Column Layout - matches SingleQuestionPage */}
-      <div class='grid grid-cols-3 divide-x divide-gray-200'>
+      <div class='divide-border grid grid-cols-3 divide-x'>
         {/* Reviewer 1 Panel */}
         <div class='p-4'>
           {/* Panel Header */}
           <div class='mb-4 flex items-center justify-between'>
-            <h3 class='font-semibold text-gray-900'>{props.reviewer1Name || 'Reviewer 1'}</h3>
+            <h3 class='text-foreground font-semibold'>{props.reviewer1Name || 'Reviewer 1'}</h3>
             <Show when={!reviewersAgree()}>
               <button
                 onClick={useReviewer1}
                 class={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
                   selectedSource() === 'reviewer1' ? 'bg-blue-600 text-white' : (
-                    'bg-gray-100 text-gray-700 hover:bg-blue-100 hover:text-blue-700'
+                    'bg-secondary text-secondary-foreground hover:bg-blue-100 hover:text-blue-700'
                   )
                 }`}
               >
@@ -251,11 +251,11 @@ export default function MultiPartQuestionPage(props) {
             {partKey => (
               <div class='mb-6 last:mb-0'>
                 <div class='mb-2 flex flex-wrap items-center gap-2'>
-                  <span class='text-xs font-semibold text-gray-700'>
+                  <span class='text-secondary-foreground text-xs font-semibold'>
                     {getSubtitleForPart(partKey)}
                   </span>
-                  <span class='text-xs text-gray-500'>Result:</span>
-                  <span class='inline-flex items-center rounded-full border border-gray-200 bg-gray-100 px-2 py-1 text-xs font-medium text-gray-600'>
+                  <span class='text-muted-foreground text-xs'>Result:</span>
+                  <span class='border-border bg-secondary text-muted-foreground inline-flex items-center rounded-full border px-2 py-1 text-xs font-medium'>
                     {getFinalAnswerForPart(props.reviewer1Answers, partKey) || 'Not selected'}
                   </span>
                 </div>
@@ -276,13 +276,13 @@ export default function MultiPartQuestionPage(props) {
         <div class='p-4'>
           {/* Panel Header */}
           <div class='mb-4 flex items-center justify-between'>
-            <h3 class='font-semibold text-gray-900'>{props.reviewer2Name || 'Reviewer 2'}</h3>
+            <h3 class='text-foreground font-semibold'>{props.reviewer2Name || 'Reviewer 2'}</h3>
             <Show when={!reviewersAgree()}>
               <button
                 onClick={useReviewer2}
                 class={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
                   selectedSource() === 'reviewer2' ? 'bg-blue-600 text-white' : (
-                    'bg-gray-100 text-gray-700 hover:bg-blue-100 hover:text-blue-700'
+                    'bg-secondary text-secondary-foreground hover:bg-blue-100 hover:text-blue-700'
                   )
                 }`}
               >
@@ -296,11 +296,11 @@ export default function MultiPartQuestionPage(props) {
             {partKey => (
               <div class='mb-6 last:mb-0'>
                 <div class='mb-2 flex flex-wrap items-center gap-2'>
-                  <span class='text-xs font-semibold text-gray-700'>
+                  <span class='text-secondary-foreground text-xs font-semibold'>
                     {getSubtitleForPart(partKey)}
                   </span>
-                  <span class='text-xs text-gray-500'>Result:</span>
-                  <span class='inline-flex items-center rounded-full border border-gray-200 bg-gray-100 px-2 py-1 text-xs font-medium text-gray-600'>
+                  <span class='text-muted-foreground text-xs'>Result:</span>
+                  <span class='border-border bg-secondary text-muted-foreground inline-flex items-center rounded-full border px-2 py-1 text-xs font-medium'>
                     {getFinalAnswerForPart(props.reviewer2Answers, partKey) || 'Not selected'}
                   </span>
                 </div>
@@ -322,9 +322,9 @@ export default function MultiPartQuestionPage(props) {
           {/* Panel Header */}
           <div class='mb-4 flex items-center justify-between'>
             <div>
-              <h3 class='font-semibold text-gray-900'>Final Answer</h3>
+              <h3 class='text-foreground font-semibold'>Final Answer</h3>
               <Show when={selectedSource()}>
-                <span class='text-xs text-gray-500'>
+                <span class='text-muted-foreground text-xs'>
                   {selectedSource() === 'custom' ?
                     'Custom selection'
                   : `Based on ${selectedSource() === 'reviewer1' ? 'Reviewer 1' : 'Reviewer 2'}`}
@@ -338,10 +338,10 @@ export default function MultiPartQuestionPage(props) {
             {partKey => (
               <div class='mb-6 last:mb-0'>
                 <div class='mb-2 flex flex-wrap items-center gap-2'>
-                  <span class='text-xs font-semibold text-gray-700'>
+                  <span class='text-secondary-foreground text-xs font-semibold'>
                     {getSubtitleForPart(partKey)}
                   </span>
-                  <span class='text-xs text-gray-500'>Result:</span>
+                  <span class='text-muted-foreground text-xs'>Result:</span>
                   <span class='inline-flex items-center rounded-full border border-green-200 bg-green-100 px-2 py-1 text-xs font-medium text-green-800'>
                     {getFinalAnswerForPart(localFinal(), partKey) || 'Not selected'}
                   </span>

@@ -61,21 +61,21 @@ export default function RobinsIReconciliationWithPdf(props) {
       {/* Back button */}
       <button
         onClick={() => props.onCancel?.()}
-        class='shrink-0 rounded-lg p-2 transition-colors hover:bg-gray-100'
+        class='hover:bg-secondary shrink-0 rounded-lg p-2 transition-colors'
         title='Go back'
       >
-        <FiArrowLeft class='h-5 w-5 text-gray-600' />
+        <FiArrowLeft class='text-muted-foreground h-5 w-5' />
       </button>
 
       {/* Title */}
       <div class='shrink-0'>
-        <h1 class='text-lg font-bold text-gray-900'>ROBINS-I Reconciliation</h1>
-        <p class='text-xs text-gray-500'>
+        <h1 class='text-foreground text-lg font-bold'>ROBINS-I Reconciliation</h1>
+        <p class='text-muted-foreground text-xs'>
           {props.reviewer1Name || 'Reviewer 1'} vs {props.reviewer2Name || 'Reviewer 2'}
         </p>
       </div>
 
-      <div class='h-8 w-px shrink-0 bg-gray-200' />
+      <div class='bg-border h-8 w-px shrink-0' />
 
       {/* Navbar - navigation pills */}
       <Show when={navbarStore.navItems?.length > 0}>
@@ -117,8 +117,8 @@ export default function RobinsIReconciliationWithPdf(props) {
           <Show
             when={!props.pdfLoading}
             fallback={
-              <div class='flex h-full items-center justify-center bg-gray-100'>
-                <div class='flex items-center gap-3 text-gray-500'>
+              <div class='bg-secondary flex h-full items-center justify-center'>
+                <div class='text-muted-foreground flex items-center gap-3'>
                   <div class='h-6 w-6 animate-spin rounded-full border-b-2 border-blue-600' />
                   Loading PDF...
                 </div>
@@ -127,7 +127,7 @@ export default function RobinsIReconciliationWithPdf(props) {
           >
             <Suspense
               fallback={
-                <div class='flex h-full items-center justify-center bg-gray-100'>
+                <div class='bg-secondary flex h-full items-center justify-center'>
                   <div class='h-6 w-6 animate-spin rounded-full border-b-2 border-blue-600' />
                 </div>
               }

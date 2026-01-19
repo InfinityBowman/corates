@@ -4,6 +4,7 @@
 
 import { uploadPdf, fetchPdfViaProxy, downloadPdf, deletePdf } from '@api/pdf-api.js';
 import { cachePdf, clearStudyCache } from '@primitives/pdfCache.js';
+import { bestEffort } from '@lib/errorLogger.js';
 import { showToast } from '@/components/ui/toast';
 import { importFromGoogleDrive } from '@api/google-drive.js';
 import { extractPdfDoi, extractPdfTitle } from '@/lib/pdfUtils.js';
@@ -88,7 +89,12 @@ async function addPdfMetadataToStudy(ops, studyId, pdfInfo, orgId, projectId, ta
   } catch (err) {
     console.error('Failed to add PDF metadata:', err);
     // Rollback: delete the uploaded PDF
-    deletePdf(orgId, projectId, studyId, pdfInfo.fileName).catch(console.warn);
+    bestEffort(deletePdf(orgId, projectId, studyId, pdfInfo.fileName), {
+      operation: 'deletePdf (rollback)',
+      projectId,
+      studyId,
+      fileName: pdfInfo.fileName,
+    });
     throw err;
   }
 }
@@ -123,9 +129,12 @@ async function handleGoogleDrivePdf(ops, study, studyId, orgId, projectId, userI
     // Extract and apply metadata from the PDF
     try {
       const arrayBuffer = await downloadPdf(orgId, projectId, studyId, importedFile.fileName);
-      cachePdf(projectId, studyId, importedFile.fileName, arrayBuffer).catch(err =>
-        console.warn('Failed to cache Google Drive PDF:', err),
-      );
+      bestEffort(cachePdf(projectId, studyId, importedFile.fileName, arrayBuffer), {
+        operation: 'cachePdf (Google Drive)',
+        projectId,
+        studyId,
+        fileName: importedFile.fileName,
+      });
 
       const metadataUpdates = await extractPdfMetadata(arrayBuffer, study.doi, study.title);
       if (importedFile.fileName) {
@@ -173,9 +182,12 @@ async function fetchPdfFromUrl(study) {
 async function uploadAndAttachPdf(ops, pdfData, pdfFileName, studyId, orgId, projectId, userId) {
   try {
     const result = await uploadPdf(orgId, projectId, studyId, pdfData, pdfFileName);
-    cachePdf(projectId, studyId, result.fileName, pdfData).catch(err =>
-      console.warn('Failed to cache PDF:', err),
-    );
+    bestEffort(cachePdf(projectId, studyId, result.fileName, pdfData), {
+      operation: 'cachePdf',
+      projectId,
+      studyId,
+      fileName: result.fileName,
+    });
 
     // Extract PDF metadata (title, DOI, and fetch DOI metadata if available)
     let pdfMetadata = {};
@@ -286,18 +298,21 @@ export function createStudyActions(
       if (pdfs.length > 0) {
         const deletePromises = pdfs.map(pdf => {
           if (!pdf?.fileName) return Promise.resolve();
-          return deletePdf(orgId, projectId, studyId, pdf.fileName).catch(err => {
-            // Log but don't block - continue with other PDFs
-            console.warn(`Failed to delete PDF ${pdf.fileName} from R2:`, err);
+          return bestEffort(deletePdf(orgId, projectId, studyId, pdf.fileName), {
+            operation: 'deletePdf (study cleanup)',
+            projectId,
+            studyId,
+            fileName: pdf.fileName,
           });
         });
         await Promise.all(deletePromises);
       }
 
       // Clear all PDFs for this study from IndexedDB
-      await clearStudyCache(projectId, studyId).catch(err => {
-        // Log but don't block - continue with Y.js deletion
-        console.warn('Failed to clear study PDF cache from IndexedDB:', err);
+      await bestEffort(clearStudyCache(projectId, studyId), {
+        operation: 'clearStudyCache',
+        projectId,
+        studyId,
       });
 
       // Finally, delete the study from Y.js

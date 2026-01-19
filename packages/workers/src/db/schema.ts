@@ -5,13 +5,14 @@ import { sql } from 'drizzle-orm';
 export const user = sqliteTable('user', {
   id: text('id').primaryKey(),
   name: text('name').notNull(),
+  givenName: text('givenName'), // First name / given name (from OAuth or user input)
+  familyName: text('familyName'), // Last name / family name (from OAuth or user input)
   email: text('email').notNull().unique(),
   emailVerified: integer('emailVerified', { mode: 'boolean' }).default(false),
   image: text('image'),
   createdAt: integer('createdAt', { mode: 'timestamp' }).default(sql`(unixepoch())`),
   updatedAt: integer('updatedAt', { mode: 'timestamp' }).default(sql`(unixepoch())`),
   username: text('username').unique(),
-  displayName: text('displayName'),
   avatarUrl: text('avatarUrl'),
   role: text('role'), // Better Auth admin/plugin role (e.g. 'user', 'admin')
   persona: text('persona'), // optional: researcher, student, librarian, other

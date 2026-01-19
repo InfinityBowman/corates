@@ -56,13 +56,11 @@ export default function AuthLayout(props) {
         <div class='flex w-full max-w-md items-center justify-center sm:max-w-xl'>
           <div class='text-center'>
             <div class='mx-auto h-12 w-12 animate-spin rounded-full border-b-2 border-blue-600' />
-            <p class='mt-4 text-gray-600'>Loading...</p>
+            <p class='text-muted-foreground mt-4'>Loading...</p>
           </div>
         </div>
       </Show>
-      <Show when={showContent()}>
-        <div class='w-full max-w-md sm:max-w-xl'>{props.children}</div>
-      </Show>
+      <Show when={showContent()}>{props.children}</Show>
     </div>
   );
 }

@@ -203,12 +203,12 @@ function SingleQuestionPage(props) {
   const isCritical = () => props.reviewer1Answers?.critical || props.reviewer2Answers?.critical;
 
   return (
-    <div class='overflow-hidden rounded-lg bg-white shadow-lg'>
+    <div class='bg-card overflow-hidden rounded-lg shadow-lg'>
       {/* Question Header */}
       <div
         class={`p-4 ${props.isAgreement ? 'border-b border-green-200 bg-green-50' : 'border-b border-amber-200 bg-amber-50'}`}
       >
-        <h2 class='text-md font-medium text-gray-900'>
+        <h2 class='text-md text-foreground font-medium'>
           {question()?.text}
           <Show when={isCritical()}>
             <span class='ml-2 text-sm font-medium text-red-600'>(Critical)</span>
@@ -221,13 +221,13 @@ function SingleQuestionPage(props) {
             {props.isAgreement ? 'Reviewers Agree' : 'Requires Reconciliation'}
           </span>
           <Show when={question()?.subtitle}>
-            <span class='text-sm text-gray-500'>({question().subtitle})</span>
+            <span class='text-muted-foreground text-sm'>({question().subtitle})</span>
           </Show>
         </div>
       </div>
 
       {/* Three Column Layout */}
-      <div class='grid grid-cols-3 divide-x divide-gray-200'>
+      <div class='divide-border grid grid-cols-3 divide-x'>
         {/* Reviewer 1 Panel */}
         <AnswerPanel
           title={props.reviewer1Name || 'Reviewer 1'}

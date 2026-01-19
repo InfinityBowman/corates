@@ -190,7 +190,8 @@ function buildMembersList(membersMap) {
       joinedAt: memberData.joinedAt,
       name: memberData.name,
       email: memberData.email,
-      displayName: memberData.displayName,
+      givenName: memberData.givenName,
+      familyName: memberData.familyName,
       image: memberData.image,
     });
   }

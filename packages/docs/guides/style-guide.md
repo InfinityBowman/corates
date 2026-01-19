@@ -9,100 +9,150 @@
 ### Logo/Brand Icon
 
 - Circular checkmark icon
-- Primary color: `blue-600`
+- Primary color: `primary`
 - White checkmark symbol inside
 
-## Color Palette
+## Design Tokens
 
-### Primary Colors
+The application uses a **shadcn-style semantic token system** for theming. Tokens are defined in `global.css` and support light/dark modes.
 
-- **Blue Primary**: `blue-600` (#2563eb)
-- **Blue Dark**: `blue-700` (#1d4ed8)
-- **Blue Light**: `blue-500` (#3b82f6)
-- **Blue Hover**: `blue-800` (#1e40af)
+### Token Reference
 
-### Accent Colors
+| Token                    | Light Value | Usage                     |
+| ------------------------ | ----------- | ------------------------- |
+| `background`             | slate-50    | Page backgrounds          |
+| `foreground`             | slate-900   | Primary text              |
+| `card`                   | white       | Card surfaces             |
+| `card-foreground`        | slate-900   | Card text                 |
+| `popover`                | white       | Dropdown/popover surfaces |
+| `popover-foreground`     | slate-900   | Popover text              |
+| `primary`                | blue-600    | Primary actions, links    |
+| `primary-foreground`     | white       | Text on primary           |
+| `secondary`              | slate-100   | Secondary buttons         |
+| `secondary-foreground`   | slate-700   | Secondary button text     |
+| `muted`                  | slate-100   | Subtle backgrounds        |
+| `muted-foreground`       | slate-500   | Muted/secondary text      |
+| `accent`                 | slate-100   | Hover highlights          |
+| `accent-foreground`      | slate-900   | Accent text               |
+| `destructive`            | red-600     | Danger/delete actions     |
+| `destructive-foreground` | white       | Text on destructive       |
+| `success`                | emerald-600 | Success states            |
+| `success-foreground`     | white       | Text on success           |
+| `warning`                | amber-500   | Warning states            |
+| `warning-foreground`     | white       | Text on warning           |
+| `border`                 | slate-200   | Default borders           |
+| `border-subtle`          | slate-100   | Subtle dividers           |
+| `input`                  | slate-200   | Input borders             |
+| `ring`                   | blue-600    | Focus rings               |
 
-- **Red**: `red-600` (#dc2626) for destructive actions
-- **Red Hover**: `red-700` (#b91c1c)
-- **Green**: For success states (implied from traffic light patterns)
+### Using Tokens
 
-### Neutral Colors
+```jsx
+// Backgrounds
+<div class="bg-background">        // Page background
+<div class="bg-card">              // Card surface
+<div class="bg-muted">             // Subtle background
+<div class="bg-primary">           // Primary action background
 
-- **Gray Scale**:
-  - `gray-50` (#f9fafb) - lightest backgrounds
-  - `gray-100` (#f3f4f6) - subtle backgrounds
-  - `gray-200` (#e5e7eb) - borders, dividers
-  - `gray-300` (#d1d5db) - disabled states
-  - `gray-400` (#9ca3af) - placeholder text, icons
-  - `gray-500` (#6b7280) - secondary text
-  - `gray-600` (#4b5563) - body text
-  - `gray-700` (#374151) - headings
-  - `gray-800` (#1f2937) - dark text
-  - `gray-900` (#111827) - darkest text
+// Text
+<p class="text-foreground">        // Primary text
+<p class="text-muted-foreground">  // Secondary/muted text
+<p class="text-primary">           // Link/accent text
 
-### Background Colors
+// Borders
+<div class="border-border">        // Default border
+<div class="border-border-subtle"> // Subtle divider
 
-- **Main Background**: `bg-blue-50`
-- **Card Background**: `bg-white`
-- **Feature Backgrounds**: `bg-blue-50`, `bg-blue-100`
-- **Sidebar Background**: Light gray tones
+// Buttons
+<button class="bg-primary text-primary-foreground">
+<button class="bg-secondary text-secondary-foreground">
+<button class="bg-destructive text-destructive-foreground">
+
+// Focus
+<input class="focus:ring-ring">
+```
+
+### Dark Mode
+
+Add the `dark` class to `<html>` or a parent element to enable dark mode. All tokens automatically adjust.
+
+```jsx
+// Toggle dark mode
+document.documentElement.classList.toggle('dark');
+```
+
+## Legacy Color Reference
+
+While migrating to tokens, you may still see these Tailwind colors:
+
+### Slate Scale (Neutrals)
+
+- `slate-50` (#f8fafc) - page backgrounds
+- `slate-100` (#f1f5f9) - subtle backgrounds
+- `slate-200` (#e2e8f0) - borders
+- `slate-400` (#94a3b8) - placeholder text
+- `slate-500` (#64748b) - secondary text
+- `slate-700` (#334155) - headings
+- `slate-900` (#0f172a) - primary text
+
+### Semantic Colors
+
+- `blue-600` (#2563eb) - primary actions
+- `red-600` (#dc2626) - destructive actions
+- `emerald-600` (#059669) - success states
+- `amber-500` (#f59e0b) - warnings
 
 ## Typography
 
 ### Font Family
 
-Primary: `-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`
+Primary: Inter (system fallback: `-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`)
 
 ### Font Sizes
 
-- **4XS**: `0.375rem` (6px)
-- **3XS**: `0.5rem` (8px)
-- **2XS**: `0.625rem` (10px)
-- **XS**: `text-xs` - 12px
-- **SM**: `text-sm` - 14px
-- **Base**: `text-base` - 16px
-- **LG**: `text-lg` - 18px
-- **XL**: `text-xl` - 20px
-- **2XL**: `text-2xl` - 24px
-- **3XL**: `text-3xl` - 30px
-- **4XL**: `text-4xl` - 36px
-- **6XL**: `text-6xl` - 60px
-- **7XL**: `text-7xl` - 72px
+- **XS**: `text-xs` - 12px (labels, badges, meta)
+- **SM**: `text-sm` - 14px (body text, descriptions)
+- **Base**: `text-base` - 16px (section headers)
+- **LG**: `text-lg` - 18px (card titles, names)
+- **XL**: `text-xl` - 20px (page subtitles)
+- **2XL**: `text-2xl` - 24px (page titles, large stats)
 
 ### Font Weights
 
-- **Medium**: `font-medium`
-- **Semibold**: `font-semibold`
-- **Bold**: `font-bold`
-- **Extrabold**: `font-extrabold` (for brand name)
+- **Medium**: `font-medium` (body text, buttons)
+- **Semibold**: `font-semibold` (section headers, labels)
+- **Bold**: `font-bold` (stats, emphasis)
 
 ### Text Colors
 
-- **Primary**: `text-gray-900`
-- **Secondary**: `text-gray-600`
-- **Muted**: `text-gray-500`
-- **Placeholder**: `text-gray-400`
-- **Brand**: `text-blue-600`
-- **Links**: `text-blue-600`
+- **Primary**: `text-slate-900`
+- **Secondary**: `text-slate-600` or `text-slate-500`
+- **Muted/Label**: `text-slate-400`
+- **Placeholder**: `text-slate-400`
+- **Brand/Links**: `text-blue-600`
+- **Link Hover**: `text-blue-700`
+
+### Label Pattern
+
+Section labels use uppercase tracking:
+
+```jsx
+<label class='mb-1 block text-xs font-medium tracking-wide text-slate-400 uppercase'>Label Text</label>
+```
 
 ## Layout & Spacing
 
 ### Container Patterns
 
-- **Max Width**: `max-w-4xl mx-auto` for main content
-- **Page Padding**: `p-6` for main content areas
-- **Card Padding**: `p-4` to `p-8` depending on component
+- **Max Width**: `max-w-7xl mx-auto` for main content, `max-w-3xl` for settings
+- **Page Padding**: `px-6 py-6` for main content areas
+- **Card Padding**: `p-5` or `p-6` for cards
 
 ### Spacing Scale
 
-- **Gap/Margin**: `gap-2`, `gap-4`, `gap-6`, `gap-8`
-- **Padding**: `p-2`, `p-4`, `p-6`, `p-8`, `p-12`
-
-### Breakpoints
-
-- **XS**: `30rem` (480px) - Custom breakpoint
-- **SM**: Standard Tailwind breakpoints apply
+- **Gap/Margin**: `gap-2`, `gap-3`, `gap-4`, `gap-6`
+- **Padding**: `p-3`, `p-4`, `p-5`, `p-6`
+- **Section Spacing**: `mb-6` between major sections
 
 ## Components
 
@@ -111,37 +161,48 @@ Primary: `-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`
 #### Primary Button
 
 ```jsx
-<button class="inline-flex items-center px-8 py-4 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transform hover:scale-105 transition-all duration-200 shadow-lg hover:shadow-xl">
+<button class='bg-primary text-primary-foreground hover:bg-primary/90 focus:ring-ring/20 rounded-lg px-4 py-2 text-sm font-medium shadow-sm transition-all hover:shadow focus:ring-2 focus:outline-none disabled:opacity-50'>
+  Primary Action
+</button>
 ```
 
 #### Secondary Button
 
 ```jsx
-<button class="inline-flex items-center px-8 py-4 bg-white text-gray-700 font-semibold rounded-xl border-2 border-gray-200 hover:border-blue-300 hover:text-blue-600 transform hover:scale-105 transition-all duration-200 shadow-lg hover:shadow-xl">
+<button class='bg-secondary text-secondary-foreground hover:bg-secondary/80 rounded-lg px-4 py-2 text-sm font-medium transition-colors disabled:opacity-50'>
+  Secondary Action
+</button>
 ```
 
-#### Small Action Button
+#### Text Button (Links)
 
 ```jsx
-<button class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium">
+<button class='text-primary hover:text-primary/80 text-sm font-medium transition-colors'>Edit</button>
 ```
 
 #### Destructive Button
 
 ```jsx
-<button class="px-3 py-1 bg-red-500 text-white rounded text-sm hover:bg-red-600 transition">
+<button class='bg-destructive text-destructive-foreground hover:bg-destructive/90 rounded-lg px-4 py-2 text-sm font-medium shadow-sm transition-all disabled:opacity-50'>
+  Delete
+</button>
 ```
 
 #### Icon Button
 
 ```jsx
-<button class="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors">
+<button class='text-muted-foreground hover:bg-destructive/10 hover:text-destructive focus:ring-ring rounded p-1.5 transition-colors focus:ring-2 focus:outline-none'>
+  <FiTrash2 class='h-4 w-4' />
+</button>
 ```
 
-#### Navbar Link Button
+#### Disabled State (Quota Limit)
 
 ```jsx
-<button class="hover:bg-blue-600 px-2 py-1.5 rounded transition font-medium">
+<span class='bg-muted text-muted-foreground inline-flex cursor-not-allowed items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium'>
+  <FiPlus class='h-4 w-4' />
+  Invite
+</span>
 ```
 
 ### Form Elements
@@ -149,254 +210,350 @@ Primary: `-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`
 #### Input Field
 
 ```jsx
-<input class="w-full pl-3 sm:pl-4 pr-3 sm:pr-4 py-2 text-xs sm:text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 transition">
+<input class='border-input bg-card focus:border-ring focus:ring-ring/20 block w-full rounded-lg border px-3 py-2 text-sm shadow-sm transition-colors focus:ring-2 focus:outline-none' />
 ```
 
-#### Large Input
+#### Select (Ark UI)
 
-```jsx
-<input class="flex-1 px-4 py-2 border border-blue-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none">
-```
+Uses the `@/components/ui/select` component with `createListCollection`.
 
 #### Label
 
 ```jsx
-<label class="block text-xs sm:text-sm font-semibold text-gray-700 mb-1 sm:mb-2">
+<label class='text-foreground mb-1.5 block text-sm font-medium'>Field Label</label>
+```
+
+#### Muted Label (Uppercase)
+
+```jsx
+<label class='text-muted-foreground mb-1 block text-xs font-medium tracking-wide uppercase'>Label Text</label>
 ```
 
 ### Cards & Containers
 
-#### Main Card
+#### Standard Card (Project View)
 
 ```jsx
-<div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+<div class='border-border bg-card rounded-xl border p-5'>
+  <h2 class='text-card-foreground mb-5 text-base font-semibold'>Section Title</h2>
+  {/* Content */}
+</div>
 ```
 
-#### Feature Card
+#### Settings Card (with Header)
 
 ```jsx
-<div class="text-center p-8 rounded-2xl bg-white shadow-lg hover:shadow-xl transition-shadow duration-300 border border-gray-100">
+<div class='border-border/60 bg-card overflow-hidden rounded-xl border shadow-sm transition-shadow duration-200 hover:shadow-md'>
+  {/* Header */}
+  <div class='border-border-subtle from-muted to-card border-b bg-linear-to-r px-6 py-4'>
+    <div class='flex items-center space-x-2.5'>
+      <div class='bg-primary/10 flex h-8 w-8 items-center justify-center rounded-lg'>
+        <FiIcon class='text-primary h-4 w-4' />
+      </div>
+      <div>
+        <h2 class='text-card-foreground text-base font-semibold'>Section Title</h2>
+        <p class='text-muted-foreground text-sm'>Description text</p>
+      </div>
+    </div>
+  </div>
+  {/* Content */}
+  <div class='p-6'>{/* ... */}</div>
+</div>
 ```
 
-#### Project Card
+#### Stat Card
 
 ```jsx
-<div class="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow duration-200">
+<div class='border-border bg-muted rounded-lg border p-4 text-center'>
+  <div class='mb-2 flex justify-center'>
+    <Icon class='text-muted-foreground h-5 w-5' />
+  </div>
+  <p class='text-foreground text-2xl font-bold'>42</p>
+  <p class='text-muted-foreground mt-1 text-xs font-medium'>Label</p>
+</div>
 ```
 
-#### Form Section
+#### Stat Card Variants
 
 ```jsx
-<div class="mb-8 p-4 bg-blue-50 rounded-lg border border-blue-200">
+// Success variant
+<div class='rounded-lg border border-success/30 bg-success/10 p-4 text-center'>
+  <p class='text-2xl font-bold text-success'>12</p>
+  <p class='mt-1 text-xs font-medium text-success'>Ready</p>
+</div>
+
+// Primary/Info variant
+<div class='rounded-lg border border-primary/30 bg-primary/10 p-4 text-center'>
+  <p class='text-2xl font-bold text-primary'>8</p>
+  <p class='mt-1 text-xs font-medium text-primary'>Completed</p>
+</div>
 ```
 
-#### Checklist Item
+#### Collapsible Section
 
 ```jsx
-<div class="group bg-white border border-gray-200 rounded hover:shadow-sm hover:border-blue-300 transition-all duration-200">
-```
-
-#### Empty State
-
-```jsx
-<div class="text-center py-8 bg-white rounded-lg border-2 border-dashed border-gray-300">
+<div class='border-border bg-card overflow-hidden rounded-xl border'>
+  <Collapsible>
+    <CollapsibleTrigger class='hover:bg-muted w-full cursor-pointer justify-between px-5 py-4 transition-colors select-none'>
+      <h2 class='text-foreground text-base font-semibold'>Section Title</h2>
+      <div class='text-muted-foreground flex items-center gap-2 text-sm'>
+        Click to expand
+        <CollapsibleIndicator>
+          <FiChevronDown class='h-4 w-4' />
+        </CollapsibleIndicator>
+      </div>
+    </CollapsibleTrigger>
+    <CollapsibleContent>
+      <div class='border-border-subtle border-t px-5 py-5'>{/* Content */}</div>
+    </CollapsibleContent>
+  </Collapsible>
+</div>
 ```
 
 ### Navigation
 
-#### Navbar
+#### Page Header (Sticky)
 
 ```jsx
-<nav class="flex items-center justify-between bg-linear-to-r from-blue-700 to-blue-500 text-white px-4 py-2 shadow-lg">
+<header class='border-border bg-card sticky top-0 z-20 border-b'>
+  <div class='mx-auto max-w-7xl px-6'>{/* Header content */}</div>
+</header>
 ```
 
-#### Sidebar Toggle
+#### Tab Navigation
+
+Uses `@/components/ui/tabs` components:
 
 ```jsx
-<button class="-ml-1.5 bg-white/80 text-blue-700 p-1.5 rounded-full shadow hover:bg-white transition-all duration-200 border border-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-400">
+<TabsTrigger
+  value='tab-value'
+  class='group relative gap-2 rounded-t-lg px-4 py-2.5 text-muted-foreground transition-all hover:bg-muted hover:text-foreground data-selected:text-foreground'
+>
+  <span class='opacity-60 transition-opacity group-data-selected:opacity-100'>{icon}</span>
+  <span class='font-medium'>Tab Label</span>
+</TabsTrigger>
+<TabsIndicator class='h-0.5 rounded-full bg-primary' />
 ```
 
-### Icons & Graphics
+#### Tab Badge
 
-#### Icon Containers
-
-- Feature icons: `w-16 h-16 bg-blue-100 rounded-xl flex items-center justify-center mx-auto mb-6`
-- Small icons: `w-4 h-4`, `w-5 h-5`
-- Avatar placeholders: `w-10 h-10 bg-blue-600 rounded-full`
-
-#### SVG Icon Standards
-
-- Stroke width: `stroke-width="2"`
-- Standard viewBox: `viewBox="0 0 24 24"`
-- Icon colors: `text-gray-400`, `text-blue-500`, etc.
+```jsx
+<span class='bg-muted text-muted-foreground group-data-selected:bg-primary/10 group-data-selected:text-primary min-w-6 rounded-full px-1.5 py-0.5 text-center text-xs font-medium tabular-nums transition-colors'>
+  {count}
+</span>
+```
 
 ### Badges & Tags
 
-#### Status Badge
+#### Role Badge
 
 ```jsx
-<span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+<span class='border-primary/30 bg-primary/10 text-primary inline-flex items-center rounded-md border px-2 py-0.5 text-xs font-medium capitalize'>
+  owner
+</span>
 ```
 
-#### Count Badge
+#### Status Badge (Verified)
 
 ```jsx
-<span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+<span class='bg-success/10 text-success ring-success/20 inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-xs font-medium ring-1'>
+  <FiCheck class='h-3 w-3' />
+  Verified
+</span>
+```
+
+#### Count Badge (Project Card)
+
+```jsx
+<span class='bg-primary/15 text-primary inline-flex items-center rounded-full px-2 py-1 font-medium capitalize'>
+  {role}
+</span>
+```
+
+### Avatars
+
+Uses `@/components/ui/avatar` component:
+
+```jsx
+<Avatar class='h-9 w-9'>
+  <AvatarImage src={imageUrl} alt={name} />
+  <AvatarFallback class='bg-primary text-primary-foreground'>{getInitials(name)}</AvatarFallback>
+</Avatar>
+```
+
+#### Avatar with Overlay (Profile Photo)
+
+```jsx
+<div class='group relative'>
+  <img src={url} class='ring-card h-20 w-20 rounded-full object-cover shadow-md ring-2' />
+  <button class='bg-foreground/60 absolute inset-0 flex cursor-pointer items-center justify-center rounded-full opacity-0 backdrop-blur-sm transition-all duration-200 group-hover:opacity-100'>
+    <FiCamera class='text-card h-5 w-5' />
+  </button>
+</div>
+```
+
+#### Avatar Fallback (Initials)
+
+```jsx
+<div class='from-primary to-primary/80 text-primary-foreground flex h-20 w-20 items-center justify-center rounded-full bg-linear-to-br text-xl font-semibold shadow-md'>
+  {initials}
+</div>
+```
+
+### Lists
+
+#### Alternating Row
+
+```jsx
+<div class='odd:bg-muted/50 flex items-center justify-between rounded-lg p-3 transition-colors'>
+  {/* Row content */}
+</div>
+```
+
+#### Divider Between Sections
+
+```jsx
+<div class='border-border-subtle border-t' />
 ```
 
 ### Modals & Overlays
 
-#### Dialog Backdrop
+Uses `@/components/ui/alert-dialog` for confirmations:
 
 ```jsx
-<div class="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+<AlertDialog open={open()} onOpenChange={setOpen}>
+  <AlertDialogBackdrop />
+  <AlertDialogPositioner>
+    <AlertDialogContent>
+      <AlertDialogHeader>
+        <AlertDialogIcon variant='danger' />
+        <div>
+          <AlertDialogTitle>Title</AlertDialogTitle>
+          <AlertDialogDescription>Description text</AlertDialogDescription>
+        </div>
+      </AlertDialogHeader>
+      <AlertDialogFooter>
+        <AlertDialogCancel>Cancel</AlertDialogCancel>
+        <AlertDialogAction variant='danger'>Confirm</AlertDialogAction>
+      </AlertDialogFooter>
+    </AlertDialogContent>
+  </AlertDialogPositioner>
+</AlertDialog>
 ```
 
-#### Dialog Content
+### Data Visualization
 
-```jsx
-<div class="bg-white rounded-xl shadow-2xl max-w-sm w-full p-6 mx-2 animate-fade-in">
-```
+#### Chart Containers
 
-### Lists & Tables
+See `ChartSection.jsx` for chart implementations.
 
-#### List Item
+#### Color Coding (AMSTAR Ratings)
 
-```jsx
-<div class="bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200">
-```
-
-#### Traffic Light Cell (Charts)
-
-- Colors: Green (`#22c55e`), Yellow (`#eab308`), Red (`#ef4444`), Gray (`#e5e7eb`)
-- Cell styling: `border-radius: 2px`, `stroke: white`, `stroke-width: 1`
+- **Yes**: `#22c55e` (Green / emerald-500)
+- **Partial Yes**: `#eab308` (Yellow / yellow-500)
+- **No**: `#ef4444` (Red / red-500)
+- **No MA/Not Applicable**: `#e5e7eb` (Gray / slate-200)
 
 ## Animation & Transitions
 
 ### Standard Transitions
 
-- **Duration**: `duration-200`, `duration-300` for hover states
+- **Duration**: `duration-200` for hover states
 - **Easing**: `transition-all`, `transition-colors`, `transition-shadow`
-- **Transform**: `transform hover:scale-105` for interactive elements
-
-### Custom Animations
-
-#### Fade In
-
-```css
-@keyframes fade-in {
-  from {
-    opacity: 0;
-    transform: translateY(16px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-.animate-fade-in {
-  animation: fade-in 0.18s cubic-bezier(0.4, 0, 0.2, 1);
-}
-```
+- **Opacity**: `transition-opacity`
 
 ### Hover Effects
 
-- **Scale**: `hover:scale-[1.02]` for buttons
-- **Shadow**: `hover:shadow-xl` for cards
-- **Background**: Color shifts with `hover:bg-` classes
-- **Border**: `hover:border-blue-300` for interactive elements
+- **Shadow**: `hover:shadow-md` for cards
+- **Background**: `hover:bg-muted` for interactive rows
+- **Text Color**: `hover:text-primary/80` for links
+
+### Focus States
+
+- **Ring**: `focus:ring-2 focus:ring-ring/20`
+- **Border**: `focus:border-ring`
+- **Outline**: `focus:outline-none`
+
+## Page Layouts
+
+### Settings Page
+
+```jsx
+<div class='from-background to-muted/80 min-h-full bg-linear-to-br py-8'>
+  <div class='mx-auto max-w-3xl px-4 sm:px-6'>
+    {/* Page header */}
+    <div class='mb-8'>
+      <h1 class='text-foreground text-2xl font-semibold tracking-tight'>Page Title</h1>
+      <p class='text-muted-foreground mt-1'>Page description</p>
+    </div>
+
+    {/* Cards */}
+    <div class='mb-6'>{/* Card content */}</div>
+  </div>
+</div>
+```
+
+### Project View
+
+```jsx
+<div class='bg-background min-h-screen'>
+  {/* Sticky header with tabs */}
+  <header class='border-border bg-card sticky top-0 z-20 border-b'>
+    <div class='mx-auto max-w-7xl px-6'>{/* Header + Tabs */}</div>
+  </header>
+
+  {/* Main content */}
+  <main class='mx-auto max-w-7xl px-6 py-6'>{/* Tab content */}</main>
+</div>
+```
 
 ## Accessibility
 
 ### Focus States
 
-- **Ring**: `focus:ring-2 focus:ring-blue-500`
-- **Border**: `focus:border-transparent`
-- **Outline**: `focus:outline-none` (when using custom ring)
+All interactive elements use:
+
+```
+focus:ring-2 focus:ring-ring/20 focus:outline-none
+```
 
 ### Color Contrast
 
-- Ensure sufficient contrast ratios between text and backgrounds
-- Use semantic colors (red for destructive, blue for primary actions)
+- `foreground` on `card` backgrounds: 15.4:1
+- `muted-foreground` on `card` backgrounds: 5.6:1
+- `primary` on `card` backgrounds: 4.5:1
 
 ### Interactive Elements
 
-- Minimum touch target of 44px for mobile
+- Minimum touch target: 44px for mobile
 - Clear visual feedback for all interactive states
-- Proper ARIA labels and semantic HTML
-
-## Content Patterns
-
-### Headings Hierarchy
-
-- **Page Title**: `text-6xl md:text-7xl font-bold` with gradient text
-- **Section Heading**: `text-3xl md:text-4xl font-bold`
-- **Subsection**: `text-xl font-bold`, `text-lg font-semibold`
-- **Component Title**: `text-base font-semibold`
-
-### Text Content
-
-- **Body**: `text-lg text-gray-500` for descriptions
-- **Label**: `text-xs sm:text-sm font-semibold text-gray-700`
-- **Meta**: `text-xs text-gray-500` for timestamps, secondary info
-
-### Empty States
-
-- Icon + heading + description pattern
-- Muted colors: `text-gray-400` for icons, `text-gray-500` for text
-- Call-to-action when appropriate
-
-## Data Visualization
-
-### Chart Containers
-
-```jsx
-<div style="background: #ffffff; border-radius: 8px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); padding: 16px; margin: 16px 0;">
-```
-
-### Color Coding (AMSTAR Ratings)
-
-- **Yes**: `#22c55e` (Green)
-- **Partial Yes**: `#eab308` (Yellow)
-- **No**: `#ef4444` (Red)
-- **No MA/Not Applicable**: `#e5e7eb` (Gray)
-
-## Custom Scrollbars
-
-### Sidebar Scrollbar
-
-```css
-.sidebar-scrollbar {
-  scrollbar-width: thin;
-  scrollbar-color: #d1d5db #f9fafb;
-}
-.sidebar-scrollbar::-webkit-scrollbar {
-  width: 6px;
-}
-.sidebar-scrollbar::-webkit-scrollbar-thumb {
-  background: #d1d5db;
-  border-radius: 4px;
-}
-```
+- Proper ARIA labels via Ark UI components
 
 ## Implementation Notes
 
 ### Framework
 
-- Built with **Solid.js** and **Tailwind CSS v4**
-- Uses **Vite** for building and **PWA** capabilities
-- State management via local stores and API integration
+- Built with **SolidJS** and **Tailwind CSS v4**
+- UI components from **Ark UI** (`@ark-ui/solid`)
+- Icons from **solid-icons** (fi, bi, ai, cg prefixes)
+
+### Component Library
+
+Use components from `@/components/ui/`:
+
+- `select` - Dropdown selects with collections
+- `tabs` - Tab navigation
+- `switch` - Toggle switches
+- `avatar` - User avatars with fallbacks
+- `collapsible` - Expandable sections
+- `alert-dialog` - Confirmation dialogs
+- `toast` - Notifications
+- `editable` - Inline editing
 
 ### Responsive Design
 
-- **Mobile-first** approach with `sm:` breakpoints
+- Mobile-first approach with `sm:` and `md:` breakpoints
 - Flexible layouts with `flex-col sm:flex-row` patterns
-- Scalable typography with responsive text sizes
+- Grid layouts: `grid-cols-2 md:grid-cols-3`
 
-### Code Patterns
-
-- Consistent use of SolidJS reactive patterns
-- Component composition with clear prop interfaces
-- Utility-first CSS with Tailwind classes
-
-This style guide provides the foundation for maintaining visual consistency and implementing new features in the CoRATES application.
+This style guide reflects the actual patterns used in the CoRATES application as of the current implementation.

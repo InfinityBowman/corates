@@ -4,6 +4,11 @@
   "compatibility_date": "2025-12-01",
   "compatibility_flags": ["nodejs_compat"],
 
+  // Version metadata for Sentry release tracking
+  "version_metadata": {
+    "binding": "CF_VERSION_METADATA"
+  },
+
   // Durable Objects Migrations
   "migrations": [
     {
@@ -56,7 +61,8 @@
     "ENVIRONMENT": "development",
     "DEV_MODE": true,
     "AUTH_BASE_URL": "http://localhost:8787",
-    "APP_URL": "http://localhost:5173"
+    "APP_URL": "http://localhost:5173",
+    "SENTRY_DSN": "https://3ddf61abb06680bffc1ebc7f540f05de@o4510738063818752.ingest.us.sentry.io/4510738126274560"
   },
 
   "observability": {
@@ -118,6 +124,7 @@
       // wrangler secret put EMAIL_FROM --env production
       // wrangler secret put GOOGLE_CLIENT_ID --env production
       // wrangler secret put GOOGLE_CLIENT_SECRET --env production
+      // wrangler secret put SENTRY_DSN --env production
       "d1_databases": [
         {
           "binding": "DB",

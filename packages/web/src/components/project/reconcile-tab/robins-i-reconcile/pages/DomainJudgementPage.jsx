@@ -37,18 +37,20 @@ export default function DomainJudgementPage(props) {
   return (
     <div class='space-y-4'>
       {/* Domain Header */}
-      <div class='overflow-hidden rounded-lg bg-white shadow-lg'>
-        <div class='border-b border-gray-200 bg-gray-100 px-4 py-3'>
-          <h2 class='text-lg font-semibold text-gray-900'>{domain()?.name}</h2>
+      <div class='bg-card overflow-hidden rounded-lg shadow-lg'>
+        <div class='border-border bg-secondary border-b px-4 py-3'>
+          <h2 class='text-foreground text-lg font-semibold'>{domain()?.name}</h2>
           <Show when={domain()?.subtitle}>
-            <p class='text-sm text-gray-600'>{domain().subtitle}</p>
+            <p class='text-muted-foreground text-sm'>{domain().subtitle}</p>
           </Show>
-          <p class='mt-1 text-sm font-medium text-gray-700'>Domain Judgement & Direction</p>
+          <p class='text-secondary-foreground mt-1 text-sm font-medium'>
+            Domain Judgement & Direction
+          </p>
         </div>
       </div>
 
       {/* Judgement Row */}
-      <div class='overflow-hidden rounded-lg bg-white shadow-lg'>
+      <div class='bg-card overflow-hidden rounded-lg shadow-lg'>
         <div
           class={`p-3 ${
             props.judgementMatch ?
@@ -56,7 +58,7 @@ export default function DomainJudgementPage(props) {
             : 'border-b border-amber-200 bg-amber-50'
           }`}
         >
-          <h3 class='font-medium text-gray-900'>Risk of Bias Judgement</h3>
+          <h3 class='text-foreground font-medium'>Risk of Bias Judgement</h3>
           <span
             class={`text-xs font-medium ${
               props.judgementMatch ? 'text-green-700' : 'text-amber-700'
@@ -66,7 +68,7 @@ export default function DomainJudgementPage(props) {
           </span>
         </div>
 
-        <div class='grid grid-cols-3 divide-x divide-gray-200'>
+        <div class='divide-border grid grid-cols-3 divide-x'>
           <JudgementPanel
             title={props.reviewer1Name || 'Reviewer 1'}
             panelType='reviewer1'
@@ -103,7 +105,7 @@ export default function DomainJudgementPage(props) {
 
       {/* Direction Row */}
       <Show when={domain()?.hasDirection}>
-        <div class='overflow-hidden rounded-lg bg-white shadow-lg'>
+        <div class='bg-card overflow-hidden rounded-lg shadow-lg'>
           <div
             class={`p-3 ${
               props.directionMatch ?
@@ -111,7 +113,7 @@ export default function DomainJudgementPage(props) {
               : 'border-b border-amber-200 bg-amber-50'
             }`}
           >
-            <h3 class='font-medium text-gray-900'>Predicted Direction of Bias</h3>
+            <h3 class='text-foreground font-medium'>Predicted Direction of Bias</h3>
             <span
               class={`text-xs font-medium ${
                 props.directionMatch ? 'text-green-700' : 'text-amber-700'
@@ -121,7 +123,7 @@ export default function DomainJudgementPage(props) {
             </span>
           </div>
 
-          <div class='grid grid-cols-3 divide-x divide-gray-200'>
+          <div class='divide-border grid grid-cols-3 divide-x'>
             <DirectionPanel
               title={props.reviewer1Name || 'Reviewer 1'}
               panelType='reviewer1'

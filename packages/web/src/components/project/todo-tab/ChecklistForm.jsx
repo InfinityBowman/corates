@@ -35,13 +35,13 @@ export default function ChecklistForm(props) {
         <button
           onClick={handleSubmit}
           disabled={props.loading}
-          class='rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50'
+          class='bg-primary hover:bg-primary/90 focus:ring-primary rounded-lg px-4 py-2 text-sm font-medium text-white transition-colors focus:ring-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50'
         >
           {props.loading ? 'Adding...' : 'Add Checklist'}
         </button>
         <button
           onClick={() => props.onCancel()}
-          class='rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:border-blue-300 hover:text-blue-600'
+          class='border-border bg-card text-secondary-foreground hover:border-primary/50 hover:text-primary rounded-lg border px-4 py-2 text-sm font-medium transition-colors'
         >
           Cancel
         </button>

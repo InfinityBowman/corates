@@ -7,6 +7,10 @@ import AppErrorBoundary from './components/ErrorBoundary.jsx';
 import { QueryClientProvider } from '@tanstack/solid-query';
 import { queryClient } from '@lib/queryClient.js';
 import { bestEffort } from '@lib/errorLogger.js';
+import { initSentry } from '@config/sentry.js';
+
+// Initialize Sentry early, before any other code runs
+initSentry();
 
 // Clean up any expired form state entries from IndexedDB on app load
 bestEffort(cleanupExpiredStates(), { operation: 'cleanupExpiredStates' });

@@ -9,7 +9,7 @@ import { createDb } from '@/db/client';
 import { projectMembers, projects, member } from '@/db/schema';
 import { eq, and } from 'drizzle-orm';
 import { createDomainError, PROJECT_ERRORS } from '@corates/shared';
-import { syncMemberToDO } from '@/commands/lib/doSync';
+import { syncMemberWithRetry } from '@/lib/syncWithRetry';
 import { notifyUser, NotificationTypes } from '@/commands/lib/notifications';
 import { checkCollaboratorQuota } from '@/lib/quotaTransaction';
 import type { Env } from '@/types';
@@ -24,7 +24,8 @@ export interface UserToAdd {
   name: string | null;
   email: string | null;
   username?: string | null;
-  displayName?: string | null;
+  givenName?: string | null;
+  familyName?: string | null;
   image?: string | null;
 }
 
@@ -41,7 +42,8 @@ export interface AddMemberResult {
     name: string | null;
     email: string | null;
     username?: string | null;
-    displayName?: string | null;
+    givenName?: string | null;
+    familyName?: string | null;
     image?: string | null;
     role: ProjectRole;
     joinedAt: Date;
@@ -135,20 +137,17 @@ export async function addMember(
     console.error('Failed to send project membership notification:', err);
   }
 
-  // Sync member to DO
-  try {
-    await syncMemberToDO(env, projectId, 'add', {
-      userId: userToAdd.id,
-      role,
-      joinedAt: now.getTime(),
-      name: userToAdd.name,
-      email: userToAdd.email,
-      displayName: userToAdd.displayName,
-      image: userToAdd.image,
-    });
-  } catch (err) {
-    console.error('Failed to sync member to DO:', err);
-  }
+  // Sync member to DO with automatic retry
+  await syncMemberWithRetry(env, projectId, 'add', {
+    userId: userToAdd.id,
+    role,
+    joinedAt: now.getTime(),
+    name: userToAdd.name,
+    email: userToAdd.email,
+    givenName: userToAdd.givenName,
+    familyName: userToAdd.familyName,
+    image: userToAdd.image,
+  });
 
   return {
     member: {
@@ -156,7 +155,8 @@ export async function addMember(
       name: userToAdd.name,
       email: userToAdd.email,
       username: userToAdd.username,
-      displayName: userToAdd.displayName,
+      givenName: userToAdd.givenName,
+      familyName: userToAdd.familyName,
       image: userToAdd.image,
       role,
       joinedAt: now,

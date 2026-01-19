@@ -159,15 +159,15 @@ export default function LocalChecklistView() {
     <>
       <button
         onClick={handleBack}
-        class='inline-flex items-center gap-2 text-gray-600 transition-colors hover:text-gray-900'
+        class='text-muted-foreground hover:text-foreground inline-flex items-center gap-2 transition-colors'
       >
         <IoChevronBack size={20} />
         Back
       </button>
 
-      <div class='h-4 w-px bg-gray-300' />
+      <div class='bg-border h-4 w-px' />
 
-      <span class='inline-flex items-center rounded bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600'>
+      <span class='bg-secondary text-muted-foreground inline-flex items-center rounded px-2 py-0.5 text-xs font-medium'>
         Local Only
       </span>
       <ScoreTag currentScore={currentScore()} checklistType={checklistType()} />
@@ -180,7 +180,7 @@ export default function LocalChecklistView() {
         when={!loading()}
         fallback={
           <div class='flex min-h-screen items-center justify-center bg-blue-50'>
-            <div class='text-gray-500'>Loading checklist...</div>
+            <div class='text-muted-foreground'>Loading checklist...</div>
           </div>
         }
       >

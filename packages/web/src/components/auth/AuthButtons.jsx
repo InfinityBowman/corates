@@ -1,5 +1,4 @@
 import { AnimatedShow } from '../AnimatedShow.jsx';
-import { AiOutlineLoading3Quarters } from 'solid-icons/ai';
 
 /**
  * Primary button for auth forms
@@ -18,11 +17,16 @@ export function PrimaryButton(props) {
       class='flex w-full items-center justify-center rounded-lg bg-blue-600 py-2 text-sm font-bold text-white shadow transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50 sm:rounded-xl sm:py-3 sm:text-base'
       disabled={props.disabled || props.loading}
       onClick={() => props.onClick?.()}
+      aria-busy={props.loading}
     >
       <AnimatedShow when={props.loading} fallback={props.children}>
         <div class='flex items-center'>
-          <AiOutlineLoading3Quarters class='mr-2 animate-spin' size={22} />
-          {props.loadingText || 'Loading...'}
+          <div
+            role='status'
+            aria-label={props.loadingText || 'Loading'}
+            class='mr-2 h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent'
+          />
+          <span aria-live='polite'>{props.loadingText || 'Loading...'}</span>
         </div>
       </AnimatedShow>
     </button>
@@ -41,7 +45,7 @@ export function SecondaryButton(props) {
   return (
     <button
       type={props.type || 'button'}
-      class='w-full rounded-lg border border-gray-300 py-2 text-sm font-semibold text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 sm:rounded-xl sm:py-3 sm:text-base'
+      class='border-border text-secondary-foreground hover:bg-muted w-full rounded-lg border py-2 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-50 sm:rounded-xl sm:py-3 sm:text-base'
       disabled={props.disabled}
       onClick={() => props.onClick?.()}
     >

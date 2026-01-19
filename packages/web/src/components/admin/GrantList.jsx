@@ -37,9 +37,9 @@ export default function GrantList(props) {
   };
 
   return (
-    <div class='rounded-lg border border-gray-200 bg-white'>
-      <div class='border-b border-gray-200 px-6 py-4'>
-        <h2 class='text-lg font-semibold text-gray-900'>Grants</h2>
+    <div class='border-border bg-card rounded-lg border'>
+      <div class='border-border border-b px-6 py-4'>
+        <h2 class='text-foreground text-lg font-semibold'>Grants</h2>
       </div>
       <Show
         when={!isLoading()}
@@ -52,16 +52,16 @@ export default function GrantList(props) {
         <div class='p-6'>
           <Show
             when={grants().length > 0}
-            fallback={<p class='text-sm text-gray-500'>No grants</p>}
+            fallback={<p class='text-muted-foreground text-sm'>No grants</p>}
           >
             <div class='space-y-4'>
               <For each={grants()}>
                 {grant => (
-                  <div class='rounded-lg border border-gray-200 p-4'>
+                  <div class='border-border rounded-lg border p-4'>
                     <div class='flex items-start justify-between'>
                       <div class='flex-1'>
                         <div class='flex items-center space-x-2'>
-                          <p class='font-medium text-gray-900 capitalize'>{grant.type}</p>
+                          <p class='text-foreground font-medium capitalize'>{grant.type}</p>
                           {grant.revokedAt ?
                             <span class='inline-flex items-center rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-800'>
                               Revoked
@@ -71,7 +71,7 @@ export default function GrantList(props) {
                             </span>
                           }
                         </div>
-                        <div class='mt-2 grid grid-cols-2 gap-4 text-sm text-gray-500'>
+                        <div class='text-muted-foreground mt-2 grid grid-cols-2 gap-4 text-sm'>
                           <div>
                             <p>Starts: {formatDate(grant.startsAt)}</p>
                             <p>Expires: {formatDate(grant.expiresAt)}</p>
@@ -87,7 +87,7 @@ export default function GrantList(props) {
                           <button
                             onClick={() => props.onRevoke?.(grant.id)}
                             disabled={loading()}
-                            class='rounded-lg border border-red-300 bg-white px-3 py-2 text-sm font-medium text-red-600 hover:bg-red-50 disabled:opacity-50'
+                            class='bg-card rounded-lg border border-red-300 px-3 py-2 text-sm font-medium text-red-600 hover:bg-red-50 disabled:opacity-50'
                           >
                             <FiTrash2 class='h-4 w-4' />
                           </button>

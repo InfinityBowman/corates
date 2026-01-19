@@ -46,27 +46,33 @@ export function getRoleLabel(roleId) {
 
 /**
  * Role selection grid for sign up flow
+ * Uses radiogroup pattern for single-select accessibility
  * @param {Object} props
  * @param {string} props.selectedRole - Currently selected role ID
  * @param {Function} props.onSelect - Callback when role is selected
  */
 export default function RoleSelector(props) {
   return (
-    <div class='grid grid-cols-2 gap-2 sm:gap-3'>
+    <div class='grid grid-cols-2 gap-2 sm:gap-3' role='radiogroup' aria-label='Select your role'>
       <For each={ROLES}>
         {roleOption => (
           <button
             type='button'
+            role='radio'
             onClick={() => props.onSelect(roleOption.id)}
-            class={`rounded-xl border-2 p-3 text-left transition-all hover:border-blue-400 hover:bg-blue-50 focus:ring-2 focus:ring-blue-500 focus:outline-none sm:p-4 ${
-              props.selectedRole === roleOption.id ?
-                'border-blue-600 bg-blue-50'
-              : 'border-gray-200'
+            aria-checked={props.selectedRole === roleOption.id}
+            class={`focus:ring-primary rounded-xl border-2 p-3 text-left transition-all hover:border-blue-400 hover:bg-blue-50 focus:ring-2 focus:outline-none sm:p-4 ${
+              props.selectedRole === roleOption.id ? 'border-blue-600 bg-blue-50' : 'border-border'
             }`}
           >
-            <roleOption.icon class='mb-1.5 h-5 w-5 text-blue-600 sm:h-6 sm:w-6' />
-            <div class='text-sm font-semibold text-gray-900'>{roleOption.label}</div>
-            <div class='mt-0.5 hidden text-xs text-gray-500 sm:block'>{roleOption.description}</div>
+            <roleOption.icon
+              class='mb-1.5 h-5 w-5 text-blue-600 sm:h-6 sm:w-6'
+              aria-hidden='true'
+            />
+            <div class='text-foreground text-sm font-semibold'>{roleOption.label}</div>
+            <div class='text-muted-foreground mt-0.5 hidden text-xs sm:block'>
+              {roleOption.description}
+            </div>
           </button>
         )}
       </For>

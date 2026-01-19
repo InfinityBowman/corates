@@ -40,7 +40,7 @@ export default function DoiLookupSection(props) {
   );
   return (
     <div class='space-y-3'>
-      <p class='text-sm text-gray-500'>
+      <p class='text-muted-foreground text-sm'>
         Paste DOIs or PubMed IDs to find references with open-access PDFs. Only references with
         available PDFs can be added.
       </p>
@@ -51,13 +51,13 @@ export default function DoiLookupSection(props) {
           value={studies().identifierInput()}
           onInput={e => studies().setIdentifierInput(e.target.value)}
           rows='4'
-          class='w-full rounded-lg border border-gray-300 px-3 py-2 font-mono text-sm text-gray-900 placeholder-gray-400 transition focus:border-transparent focus:ring-2 focus:ring-blue-500 focus:outline-none'
+          class='border-border text-foreground placeholder-muted-foreground/70 focus:ring-primary w-full rounded-lg border px-3 py-2 font-mono text-sm transition focus:border-transparent focus:ring-2 focus:outline-none'
         />
         <button
           type='button'
           onClick={() => studies().handleLookup()}
           disabled={studies().lookingUp() || !studies().identifierInput().trim()}
-          class='inline-flex items-center gap-2 rounded-lg bg-blue-600 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50'
+          class='bg-primary hover:bg-primary/90 focus:ring-primary inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-white transition-colors focus:ring-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50'
         >
           <Show
             when={!studies().lookingUp()}
@@ -92,11 +92,11 @@ export default function DoiLookupSection(props) {
       <Show when={studies().lookupRefs().length > 0}>
         <div class='space-y-2'>
           <div class='flex items-center justify-between'>
-            <span class='text-sm text-gray-600'>
+            <span class='text-secondary-foreground text-sm'>
               Found references:{' '}
               <span class='font-medium text-green-600'>{refsWithPdf().length} with PDF</span>
               <Show when={refsWithoutPdf().length > 0}>
-                <span class='mx-1 text-gray-400'>|</span>
+                <span class='text-muted-foreground/70 mx-1'>|</span>
                 <span class='text-amber-600'>{refsWithoutPdf().length} without PDF</span>
               </Show>
             </span>
@@ -110,7 +110,7 @@ export default function DoiLookupSection(props) {
           </div>
 
           <Show when={refsWithPdf().length > 0}>
-            <div class='flex items-center gap-2 border-b border-gray-200 pb-2'>
+            <div class='border-border flex items-center gap-2 border-b pb-2'>
               <CheckboxRoot
                 checked={
                   (
@@ -166,7 +166,7 @@ export default function DoiLookupSection(props) {
                     class={`flex cursor-pointer items-start gap-3 rounded-lg p-2 transition-colors ${
                       studies().selectedLookupIds().has(ref._id) ?
                         'border border-green-200 bg-green-50 hover:bg-green-100'
-                      : 'border border-transparent bg-gray-50 hover:bg-gray-100'
+                      : 'bg-muted hover:bg-secondary border border-transparent'
                     }`}
                     onClick={() => studies().toggleLookupSelection(ref._id)}
                   >
@@ -187,7 +187,7 @@ export default function DoiLookupSection(props) {
                     </CheckboxRoot>
                     <div class='min-w-0 flex-1'>
                       <div class='flex items-start gap-2'>
-                        <p class='line-clamp-2 flex-1 text-sm font-medium text-gray-900'>
+                        <p class='text-foreground line-clamp-2 flex-1 text-sm font-medium'>
                           {ref.title}
                         </p>
                         <div class='flex shrink-0 items-center gap-1'>
@@ -227,7 +227,7 @@ export default function DoiLookupSection(props) {
                                             target='_blank'
                                             rel='noopener noreferrer'
                                             onClick={e => e.stopPropagation()}
-                                            class='inline-flex h-6 w-6 items-center justify-center rounded text-blue-600 transition-colors hover:bg-blue-50 hover:text-blue-700'
+                                            class='text-primary hover:bg-primary-subtle inline-flex h-6 w-6 items-center justify-center rounded transition-colors'
                                           >
                                             <FiDownload class='h-4 w-4' />
                                           </a>
@@ -281,7 +281,7 @@ export default function DoiLookupSection(props) {
                                   target='_blank'
                                   rel='noopener noreferrer'
                                   onClick={e => e.stopPropagation()}
-                                  class='inline-flex h-6 w-6 items-center justify-center rounded text-blue-600 transition-colors hover:bg-blue-50 hover:text-blue-700'
+                                  class='text-primary hover:bg-primary-subtle inline-flex h-6 w-6 items-center justify-center rounded transition-colors'
                                 >
                                   <BiRegularLinkExternal class='h-4 w-4' />
                                 </a>
@@ -293,7 +293,7 @@ export default function DoiLookupSection(props) {
                           </Show>
                         </div>
                       </div>
-                      <p class='mt-0.5 text-xs text-gray-500'>
+                      <p class='text-muted-foreground mt-0.5 text-xs'>
                         {getRefDisplayName(ref)}
                         <Show when={ref.journal}>
                           <span class='mx-1'>-</span>
@@ -310,7 +310,7 @@ export default function DoiLookupSection(props) {
                         e.stopPropagation();
                         studies().removeLookupRef(ref._id);
                       }}
-                      class='rounded p-1 text-gray-400 transition-colors hover:bg-red-50 hover:text-red-600 focus:ring-2 focus:ring-blue-500 focus:outline-none'
+                      class='text-muted-foreground/70 focus:ring-primary rounded p-1 transition-colors hover:bg-red-50 hover:text-red-600 focus:ring-2 focus:outline-none'
                     >
                       <BiRegularTrash class='h-4 w-4' />
                     </button>
@@ -321,7 +321,7 @@ export default function DoiLookupSection(props) {
 
             {/* References without PDF - shown but not selectable */}
             <Show when={refsWithoutPdf().length > 0}>
-              <div class='mt-2 border-t border-gray-200 pt-2'>
+              <div class='border-border mt-2 border-t pt-2'>
                 <p class='mb-2 flex items-center gap-1 text-xs font-medium text-amber-600'>
                   <FiAlertCircle class='h-3.5 w-3.5' />
                   No open-access PDF available:
@@ -333,8 +333,10 @@ export default function DoiLookupSection(props) {
                         <FiFile class='h-4 w-4 text-amber-400' />
                       </div>
                       <div class='min-w-0 flex-1'>
-                        <p class='line-clamp-2 text-sm font-medium text-gray-700'>{ref.title}</p>
-                        <p class='mt-0.5 text-xs text-gray-500'>
+                        <p class='text-secondary-foreground line-clamp-2 text-sm font-medium'>
+                          {ref.title}
+                        </p>
+                        <p class='text-muted-foreground mt-0.5 text-xs'>
                           {getRefDisplayName(ref)}
                           <Show when={ref.journal}>
                             <span class='mx-1'>-</span>
@@ -343,13 +345,15 @@ export default function DoiLookupSection(props) {
                         </p>
                         <Show when={ref.doi}>
                           <div class='mt-1 flex items-center gap-2'>
-                            <span class='font-mono text-xs text-gray-400'>{ref.doi}</span>
+                            <span class='text-muted-foreground/70 font-mono text-xs'>
+                              {ref.doi}
+                            </span>
                             <a
                               href={`https://doi.org/${ref.doi}`}
                               target='_blank'
                               rel='noopener noreferrer'
                               onClick={e => e.stopPropagation()}
-                              class='inline-flex items-center gap-0.5 text-xs text-blue-500 hover:text-blue-600'
+                              class='hover:text-primary inline-flex items-center gap-0.5 text-xs text-blue-500'
                             >
                               View <BiRegularLinkExternal class='h-3 w-3' />
                             </a>
@@ -362,7 +366,7 @@ export default function DoiLookupSection(props) {
                           e.stopPropagation();
                           studies().removeLookupRef(ref._id);
                         }}
-                        class='rounded p-1 text-gray-400 transition-colors hover:bg-red-50 hover:text-red-600 focus:ring-2 focus:ring-blue-500 focus:outline-none'
+                        class='text-muted-foreground/70 focus:ring-primary rounded p-1 transition-colors hover:bg-red-50 hover:text-red-600 focus:ring-2 focus:outline-none'
                       >
                         <BiRegularTrash class='h-4 w-4' />
                       </button>

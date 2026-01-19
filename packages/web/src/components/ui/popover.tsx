@@ -111,7 +111,7 @@ const PopoverContent: Component<PopoverContentProps> = props => {
   return (
     <PopoverPrimitive.Content
       class={cn(
-        'w-72 rounded-md border border-gray-200 bg-white p-4 shadow-md outline-none',
+        'border-border bg-popover w-72 rounded-md border p-4 shadow-md outline-none',
         Z_INDEX.POPOVER,
         local.class,
       )}
@@ -130,7 +130,7 @@ const PopoverTitle: Component<PopoverTitleProps> = props => {
   const [local, others] = splitProps(props, ['class']);
   return (
     <PopoverPrimitive.Title
-      class={cn('text-sm font-medium text-gray-900', local.class)}
+      class={cn('text-popover-foreground text-sm font-medium', local.class)}
       {...others}
     />
   );
@@ -144,7 +144,7 @@ const PopoverDescription: Component<PopoverDescriptionProps> = props => {
   const [local, others] = splitProps(props, ['class']);
   return (
     <PopoverPrimitive.Description
-      class={cn('mt-1 text-sm text-gray-500', local.class)}
+      class={cn('text-muted-foreground mt-1 text-sm', local.class)}
       {...others}
     />
   );
@@ -160,7 +160,7 @@ const PopoverCloseTrigger: Component<PopoverCloseTriggerProps> = props => {
   return (
     <PopoverPrimitive.CloseTrigger
       class={cn(
-        'absolute top-2 right-2 rounded-md p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-500',
+        'text-muted-foreground hover:bg-muted hover:text-foreground absolute top-2 right-2 rounded-md p-1',
         local.class,
       )}
       {...others}
@@ -187,7 +187,7 @@ const PopoverArrowTip: Component<PopoverArrowTipProps> = props => {
   const [local, others] = splitProps(props, ['class']);
   return (
     <PopoverPrimitive.ArrowTip
-      class={cn('border-t border-l border-gray-200 bg-white', local.class)}
+      class={cn('border-border bg-popover border-t border-l', local.class)}
       {...others}
     />
   );

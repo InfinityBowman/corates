@@ -1,5 +1,5 @@
 import { Show, createMemo, createSignal } from 'solid-js';
-import { FiChevronLeft, FiEdit2, FiCheck, FiX } from 'solid-icons/fi';
+import { FiArrowLeft, FiEdit2, FiCheck, FiX } from 'solid-icons/fi';
 import { useProjectContext } from './ProjectContext.jsx';
 import { SimpleEditable } from '@/components/ui/editable';
 import { handleError } from '@/lib/error-utils.js';
@@ -63,81 +63,81 @@ export default function ProjectHeader(props) {
   };
 
   return (
-    <div class='mb-6'>
-      <div class='mb-2 flex items-center gap-4'>
+    <div class='flex items-center justify-between py-4'>
+      <div class='flex items-center gap-4'>
         <button
           onClick={() => props.onBack()}
-          class='text-gray-400 transition-colors hover:text-gray-700'
+          class='border-border text-muted-foreground hover:border-border-strong hover:text-secondary-foreground flex h-9 w-9 items-center justify-center rounded-lg border transition-colors'
         >
-          <FiChevronLeft class='h-6 w-6' />
+          <FiArrowLeft class='h-4 w-4' />
         </button>
-        <div class='flex min-w-0 flex-1 items-center gap-2'>
-          <SimpleEditable
-            activationMode='click'
-            value={name()}
-            onSubmit={handleNameChange}
-            showEditIcon={canEdit()}
-            readOnly={!canEdit()}
-            class='-ml-2 text-2xl font-bold text-gray-900'
-          />
-        </div>
-        <Show when={userRole()}>
-          <span class='inline-flex items-center rounded-full bg-blue-100 px-2 py-1 text-xs font-medium text-blue-800 capitalize'>
-            {userRole()}
-          </span>
-        </Show>
-      </div>
-
-      {/* Description section */}
-      <div class='ml-10'>
-        <Show
-          when={isEditingDescription()}
-          fallback={
-            <div class='group flex items-start gap-2'>
-              <p class='flex-1 text-gray-500'>
-                {description() || <span class='text-gray-400 italic'>No description</span>}
-              </p>
-              <Show when={canEdit()}>
-                <button
-                  onClick={startEditingDescription}
-                  class='text-gray-400 opacity-0 transition-opacity group-hover:opacity-100 hover:text-gray-600'
-                  title='Edit description'
-                >
-                  <FiEdit2 class='h-4 w-4' />
-                </button>
-              </Show>
-            </div>
-          }
-        >
-          <div class='flex flex-col gap-2'>
-            <textarea
-              value={descriptionDraft()}
-              onInput={e => setDescriptionDraft(e.target.value)}
-              class='w-full resize-none rounded-md border border-gray-300 px-3 py-2 text-gray-700 focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:cursor-not-allowed disabled:bg-gray-100'
-              rows={3}
-              placeholder='Add a project description...'
-              disabled={isSaving()}
+        <div class='min-w-0'>
+          <div class='flex items-center gap-2'>
+            <SimpleEditable
+              activationMode='click'
+              value={name()}
+              onSubmit={handleNameChange}
+              showEditIcon={canEdit()}
+              readOnly={!canEdit()}
+              class='text-foreground text-lg font-semibold'
             />
-            <div class='flex gap-2'>
-              <button
-                onClick={saveDescription}
-                disabled={isSaving()}
-                class='inline-flex items-center gap-1 rounded-md bg-blue-600 px-3 py-1 text-sm text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50'
-              >
-                <FiCheck class='h-4 w-4' />
-                {isSaving() ? 'Saving...' : 'Save'}
-              </button>
-              <button
-                onClick={cancelEditingDescription}
-                disabled={isSaving()}
-                class='inline-flex items-center gap-1 rounded-md bg-gray-200 px-3 py-1 text-sm text-gray-700 hover:bg-gray-300 disabled:cursor-not-allowed disabled:opacity-50'
-              >
-                <FiX class='h-4 w-4' />
-                Cancel
-              </button>
-            </div>
+            <Show when={userRole()}>
+              <span class='inline-flex items-center rounded-md border border-blue-200 bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-700 capitalize'>
+                {userRole()}
+              </span>
+            </Show>
           </div>
-        </Show>
+          <Show
+            when={isEditingDescription()}
+            fallback={
+              <div class='group flex items-center gap-2'>
+                <p class='text-muted-foreground text-sm'>
+                  {description() || (
+                    <span class='text-muted-foreground/70 italic'>No description</span>
+                  )}
+                </p>
+                <Show when={canEdit()}>
+                  <button
+                    onClick={startEditingDescription}
+                    class='text-muted-foreground/70 hover:text-secondary-foreground opacity-0 transition-opacity group-hover:opacity-100'
+                    title='Edit description'
+                  >
+                    <FiEdit2 class='h-3.5 w-3.5' />
+                  </button>
+                </Show>
+              </div>
+            }
+          >
+            <div class='mt-2 flex flex-col gap-2'>
+              <textarea
+                value={descriptionDraft()}
+                onInput={e => setDescriptionDraft(e.target.value)}
+                class='border-border bg-card text-secondary-foreground focus:border-primary focus:ring-primary/20 disabled:bg-secondary w-full max-w-lg resize-none rounded-lg border px-3 py-2 text-sm transition-colors outline-none focus:ring-2 disabled:cursor-not-allowed'
+                rows={2}
+                placeholder='Add a project description...'
+                disabled={isSaving()}
+              />
+              <div class='flex gap-2'>
+                <button
+                  onClick={saveDescription}
+                  disabled={isSaving()}
+                  class='bg-primary hover:bg-primary/90 inline-flex items-center gap-1 rounded-lg px-3 py-1.5 text-sm font-medium text-white transition-colors disabled:cursor-not-allowed disabled:opacity-50'
+                >
+                  <FiCheck class='h-4 w-4' />
+                  {isSaving() ? 'Saving...' : 'Save'}
+                </button>
+                <button
+                  onClick={cancelEditingDescription}
+                  disabled={isSaving()}
+                  class='bg-secondary text-secondary-foreground hover:bg-secondary/80 inline-flex items-center gap-1 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50'
+                >
+                  <FiX class='h-4 w-4' />
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </Show>
+        </div>
       </div>
     </div>
   );

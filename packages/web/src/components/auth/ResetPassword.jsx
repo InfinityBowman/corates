@@ -5,6 +5,12 @@ import { AnimatedShow } from '../AnimatedShow.jsx';
 import ErrorMessage from './ErrorMessage.jsx';
 import { PrimaryButton, AuthLink } from './AuthButtons.jsx';
 import StrengthIndicator from './StrengthIndicator.jsx';
+import {
+  PasswordInput,
+  PasswordInputControl,
+  PasswordInputField,
+  PasswordInputVisibilityTrigger,
+} from '@/components/ui/password-input';
 import { handleError } from '@/lib/error-utils.js';
 
 const REDIRECT_DELAY_MS = 3000;
@@ -14,17 +20,15 @@ export default function ResetPassword() {
   const token = () => searchParams.token;
 
   return (
-    <div class='flex h-full items-center justify-center bg-blue-50 px-4 py-8 sm:py-12'>
-      <div class='relative w-full max-w-md space-y-4 rounded-xl border border-gray-100 bg-white p-6 shadow-2xl sm:max-w-xl sm:rounded-3xl sm:p-12'>
-        {/* Logo */}
-        <a href='/' class='absolute top-4 left-4 sm:top-6 sm:left-6'>
-          <img src='/logo.svg' alt='CoRATES' class='h-6 w-auto sm:h-7' />
-        </a>
+    <div class='border-border-subtle bg-card relative w-full max-w-md space-y-4 rounded-xl border p-6 shadow-2xl sm:max-w-xl sm:rounded-3xl sm:p-12'>
+      {/* Logo */}
+      <a href='/' class='absolute top-4 left-4 sm:top-6 sm:left-6'>
+        <img src='/logo.svg' alt='CoRATES' class='h-6 w-auto sm:h-7' />
+      </a>
 
-        <Show when={token()} fallback={<RequestResetForm />}>
-          <SetNewPasswordForm token={token()} />
-        </Show>
-      </div>
+      <Show when={token()} fallback={<RequestResetForm />}>
+        <SetNewPasswordForm token={token()} />
+      </Show>
     </div>
   );
 }
@@ -74,8 +78,8 @@ function RequestResetForm() {
   return (
     <>
       <div class='mb-2 text-center sm:mb-4'>
-        <h2 class='mb-1 text-xl font-bold text-gray-900 sm:mb-2 sm:text-2xl'>Reset Password</h2>
-        <p class='text-xs text-gray-500 sm:text-sm'>
+        <h2 class='text-foreground mb-1 text-xl font-bold sm:mb-2 sm:text-2xl'>Reset Password</h2>
+        <p class='text-muted-foreground text-xs sm:text-sm'>
           Enter your email address and we'll send you a link to reset your password.
         </p>
       </div>
@@ -93,7 +97,7 @@ function RequestResetForm() {
         <form onSubmit={handleSubmit} class='space-y-4'>
           <div>
             <label
-              class='mb-1 block text-xs font-semibold text-gray-700 sm:mb-2 sm:text-sm'
+              class='text-secondary-foreground mb-1 block text-xs font-semibold sm:mb-2 sm:text-sm'
               for='email-input'
             >
               Email Address
@@ -105,7 +109,7 @@ function RequestResetForm() {
               spellCheck='false'
               value={email()}
               onInput={e => setEmail(e.target.value)}
-              class='w-full rounded-lg border border-gray-300 py-2 pr-3 pl-3 text-xs transition focus:border-transparent focus:ring-2 focus:ring-blue-500 focus:outline-none sm:pr-4 sm:pl-4 sm:text-sm'
+              class='border-border focus:ring-primary w-full rounded-lg border py-2 pr-3 pl-3 text-xs transition focus:border-transparent focus:ring-2 focus:outline-none sm:pr-4 sm:pl-4 sm:text-sm'
               required
               id='email-input'
               placeholder='you@example.com'
@@ -119,7 +123,7 @@ function RequestResetForm() {
             Send Reset Email
           </PrimaryButton>
 
-          <div class='mt-2 text-center text-xs text-gray-500 sm:mt-4 sm:text-sm'>
+          <div class='text-muted-foreground mt-2 text-center text-xs sm:mt-4 sm:text-sm'>
             Remember your password? <AuthLink href='/signin'>Sign In</AuthLink>
           </div>
         </form>
@@ -185,8 +189,8 @@ function SetNewPasswordForm(props) {
   return (
     <>
       <div class='mb-2 text-center sm:mb-4'>
-        <h2 class='mb-1 text-xl font-bold text-gray-900 sm:mb-2 sm:text-2xl'>Set New Password</h2>
-        <p class='text-xs text-gray-500 sm:text-sm'>Enter your new password below.</p>
+        <h2 class='text-foreground mb-1 text-xl font-bold sm:mb-2 sm:text-2xl'>Set New Password</h2>
+        <p class='text-muted-foreground text-xs sm:text-sm'>Enter your new password below.</p>
       </div>
 
       <AnimatedShow when={success()}>
@@ -202,52 +206,54 @@ function SetNewPasswordForm(props) {
         <form onSubmit={handleSubmit} class='space-y-4'>
           <div>
             <label
-              class='mb-1 block text-xs font-semibold text-gray-700 sm:mb-2 sm:text-sm'
-              for='password-input'
+              class='text-secondary-foreground mb-1 block text-xs font-semibold sm:mb-2 sm:text-sm'
+              for='new-password-input'
             >
               New Password
             </label>
-            <input
-              type='password'
-              autoComplete='new-password'
-              value={password()}
-              onInput={e => setPassword(e.target.value)}
-              class='w-full rounded-lg border border-gray-300 py-2 pr-3 pl-3 text-xs transition focus:border-transparent focus:ring-2 focus:ring-blue-500 focus:outline-none sm:pr-4 sm:pl-4 sm:text-sm'
-              required
-              id='password-input'
-              placeholder='Enter new password'
-              disabled={loading()}
-            />
+            <PasswordInput autoComplete='new-password' disabled={loading()} required>
+              <PasswordInputControl>
+                <PasswordInputField
+                  id='new-password-input'
+                  value={password()}
+                  onInput={e => setPassword(e.target.value)}
+                  placeholder='Enter new password'
+                  aria-describedby={displayError() ? 'reset-password-error' : undefined}
+                />
+                <PasswordInputVisibilityTrigger />
+              </PasswordInputControl>
+            </PasswordInput>
             <StrengthIndicator password={password()} onUnmet={setUnmetRequirements} />
           </div>
 
           <div>
             <label
-              class='mb-1 block text-xs font-semibold text-gray-700 sm:mb-2 sm:text-sm'
+              class='text-secondary-foreground mb-1 block text-xs font-semibold sm:mb-2 sm:text-sm'
               for='confirm-password-input'
             >
               Confirm Password
             </label>
-            <input
-              type='password'
-              autoComplete='new-password'
-              value={confirmPassword()}
-              onInput={e => setConfirmPassword(e.target.value)}
-              class='w-full rounded-lg border border-gray-300 py-2 pr-3 pl-3 text-xs transition focus:border-transparent focus:ring-2 focus:ring-blue-500 focus:outline-none sm:pr-4 sm:pl-4 sm:text-sm'
-              required
-              id='confirm-password-input'
-              placeholder='Confirm new password'
-              disabled={loading()}
-            />
+            <PasswordInput autoComplete='new-password' disabled={loading()} required>
+              <PasswordInputControl>
+                <PasswordInputField
+                  id='confirm-password-input'
+                  value={confirmPassword()}
+                  onInput={e => setConfirmPassword(e.target.value)}
+                  placeholder='Confirm new password'
+                  aria-describedby={displayError() ? 'reset-password-error' : undefined}
+                />
+                <PasswordInputVisibilityTrigger />
+              </PasswordInputControl>
+            </PasswordInput>
           </div>
 
-          <ErrorMessage displayError={displayError} />
+          <ErrorMessage displayError={displayError} id='reset-password-error' />
 
           <PrimaryButton loading={loading()} loadingText='Setting Password...'>
             Set Password
           </PrimaryButton>
 
-          <div class='mt-2 text-center text-xs text-gray-500 sm:mt-4 sm:text-sm'>
+          <div class='text-muted-foreground mt-2 text-center text-xs sm:mt-4 sm:text-sm'>
             <AuthLink href='/reset-password'>Request a new reset link</AuthLink>
           </div>
         </form>

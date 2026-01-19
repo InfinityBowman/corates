@@ -34,9 +34,9 @@ function TextField(props) {
     <Show
       when={!props.readOnly}
       fallback={
-        <div class='rounded-lg border border-gray-200 bg-gray-50 p-3'>
-          <p class='text-sm whitespace-pre-wrap text-gray-700'>
-            {props.value || <span class='text-gray-400 italic'>Not specified</span>}
+        <div class='border-border bg-muted rounded-lg border p-3'>
+          <p class='text-secondary-foreground text-sm whitespace-pre-wrap'>
+            {props.value || <span class='text-muted-foreground/70 italic'>Not specified</span>}
           </p>
         </div>
       }
@@ -46,7 +46,7 @@ function TextField(props) {
         onInput={e => props.onChange?.(e.target.value)}
         placeholder={props.placeholder}
         rows={3}
-        class='w-full rounded-lg border border-gray-300 p-3 text-sm focus:border-green-400 focus:ring-1 focus:ring-green-400 focus:outline-none'
+        class='border-border w-full rounded-lg border p-3 text-sm focus:border-green-400 focus:ring-1 focus:ring-green-400 focus:outline-none'
       />
     </Show>
   );
@@ -60,9 +60,9 @@ function SelectField(props) {
     <Show
       when={!props.readOnly}
       fallback={
-        <div class='rounded-lg border border-gray-200 bg-gray-50 p-3'>
-          <p class='text-sm text-gray-700'>
-            {props.value || <span class='text-gray-400 italic'>Not selected</span>}
+        <div class='border-border bg-muted rounded-lg border p-3'>
+          <p class='text-secondary-foreground text-sm'>
+            {props.value || <span class='text-muted-foreground/70 italic'>Not selected</span>}
           </p>
         </div>
       }
@@ -70,7 +70,7 @@ function SelectField(props) {
       <select
         value={props.value || ''}
         onChange={e => props.onChange?.(e.target.value || null)}
-        class='w-full rounded-lg border border-gray-300 p-3 text-sm focus:border-green-400 focus:ring-1 focus:ring-green-400 focus:outline-none'
+        class='border-border w-full rounded-lg border p-3 text-sm focus:border-green-400 focus:ring-1 focus:ring-green-400 focus:outline-none'
       >
         <option value=''>Select...</option>
         <For each={props.options}>{option => <option value={option}>{option}</option>}</For>
@@ -97,7 +97,7 @@ function AimField(props) {
                   class={`rounded-lg border-2 p-3 text-sm ${
                     isSelected() ?
                       'border-blue-400 bg-blue-50 text-blue-800'
-                    : 'border-gray-200 bg-gray-50 text-gray-500'
+                    : 'border-border bg-muted text-muted-foreground'
                   }`}
                 >
                   <div class='flex items-center gap-2'>
@@ -113,7 +113,7 @@ function AimField(props) {
                 class={`cursor-pointer rounded-lg border-2 p-3 text-sm transition-all hover:border-green-300 ${
                   isSelected() ?
                     'border-green-400 bg-green-50 text-green-800'
-                  : 'border-gray-200 bg-white text-gray-700'
+                  : 'border-border bg-card text-secondary-foreground'
                 }`}
               >
                 <input
@@ -183,7 +183,7 @@ function MultiSelectField(props) {
                 class={`rounded border px-2 py-1.5 text-xs ${
                   isSelected(option) ?
                     'border-blue-200 bg-blue-50 text-blue-700'
-                  : 'border-gray-100 bg-gray-50 text-gray-400'
+                  : 'border-border-subtle bg-muted text-muted-foreground/70'
                 }`}
               >
                 <div class='flex items-center gap-1.5'>
@@ -199,7 +199,7 @@ function MultiSelectField(props) {
               class={`cursor-pointer rounded border px-2 py-1.5 text-xs transition-all hover:border-green-300 ${
                 isSelected(option) ?
                   'border-green-300 bg-green-50 text-green-700'
-                : 'border-gray-200 bg-white text-gray-700'
+                : 'border-border bg-card text-secondary-foreground'
               }`}
             >
               <input
@@ -305,7 +305,7 @@ export default function PreliminaryPage(props) {
   };
 
   return (
-    <div class='rounded-xl bg-white shadow-lg'>
+    <div class='bg-card rounded-xl shadow-lg'>
       {/* Header */}
       <div
         class={`rounded-t-xl border-b p-4 ${
@@ -326,8 +326,8 @@ export default function PreliminaryPage(props) {
             </div>
           </Show>
           <div>
-            <h2 class='font-semibold text-gray-900'>{fieldLabel()}</h2>
-            <p class='text-sm text-gray-600'>Preliminary Considerations</p>
+            <h2 class='text-foreground font-semibold'>{fieldLabel()}</h2>
+            <p class='text-muted-foreground text-sm'>Preliminary Considerations</p>
           </div>
         </div>
       </div>
@@ -354,10 +354,10 @@ export default function PreliminaryPage(props) {
         {/* Reviewer 1 */}
         <div class={`p-4 ${getPanelBackground('reviewer1')}`}>
           <div class='mb-4 flex items-center justify-between'>
-            <h3 class='font-semibold text-gray-900'>{props.reviewer1Name || 'Reviewer 1'}</h3>
+            <h3 class='text-foreground font-semibold'>{props.reviewer1Name || 'Reviewer 1'}</h3>
             <button
               onClick={() => props.onUseReviewer1?.()}
-              class='rounded-lg bg-gray-100 px-3 py-1.5 text-xs font-medium text-gray-700 transition-colors hover:bg-blue-100 hover:text-blue-700'
+              class='bg-secondary text-secondary-foreground rounded-lg px-3 py-1.5 text-xs font-medium transition-colors hover:bg-blue-100 hover:text-blue-700'
             >
               Use This
             </button>
@@ -368,10 +368,10 @@ export default function PreliminaryPage(props) {
         {/* Reviewer 2 */}
         <div class={`p-4 ${getPanelBackground('reviewer2')}`}>
           <div class='mb-4 flex items-center justify-between'>
-            <h3 class='font-semibold text-gray-900'>{props.reviewer2Name || 'Reviewer 2'}</h3>
+            <h3 class='text-foreground font-semibold'>{props.reviewer2Name || 'Reviewer 2'}</h3>
             <button
               onClick={() => props.onUseReviewer2?.()}
-              class='rounded-lg bg-gray-100 px-3 py-1.5 text-xs font-medium text-gray-700 transition-colors hover:bg-blue-100 hover:text-blue-700'
+              class='bg-secondary text-secondary-foreground rounded-lg px-3 py-1.5 text-xs font-medium transition-colors hover:bg-blue-100 hover:text-blue-700'
             >
               Use This
             </button>
@@ -382,7 +382,7 @@ export default function PreliminaryPage(props) {
         {/* Final */}
         <div class={`p-4 ${getPanelBackground('final')}`}>
           <div class='mb-4'>
-            <h3 class='font-semibold text-gray-900'>Final Answer</h3>
+            <h3 class='text-foreground font-semibold'>Final Answer</h3>
           </div>
           {renderField(props.finalValue, false, props.onFinalChange, 'final')}
         </div>

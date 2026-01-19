@@ -114,11 +114,11 @@ export default function NoteEditor(props) {
         onInput={handleInput}
         placeholder={props.placeholder || 'Add a note for this question...'}
         disabled={props.readOnly || !props.yText}
-        class={`w-full resize-none overflow-hidden rounded-lg border px-3 py-2 text-sm focus:border-transparent focus:ring-2 focus:outline-none ${getFocusRingClass()} ${props.readOnly ? 'cursor-not-allowed bg-gray-50 text-gray-600' : 'bg-white text-gray-900'} ${!props.yText ? 'cursor-not-allowed bg-gray-100' : ''}`}
+        class={`w-full resize-none overflow-hidden rounded-lg border px-3 py-2 text-sm focus:border-transparent focus:ring-2 focus:outline-none ${getFocusRingClass()} ${props.readOnly ? 'bg-muted text-muted-foreground cursor-not-allowed' : 'bg-card text-foreground'} ${!props.yText ? 'bg-secondary cursor-not-allowed' : ''}`}
         style={{ 'min-height': '60px' }}
         maxLength={maxLength()}
       />
-      <div class='text-2xs mt-1 flex items-center justify-between text-gray-400'>
+      <div class='text-2xs text-muted-foreground/70 mt-1 flex items-center justify-between'>
         <span>{props.readOnly ? 'Read-only' : ''}</span>
         <span class={charCount() > maxLength() * 0.9 ? 'text-amber-500' : ''}>
           {charCount()} / {maxLength()}
@@ -131,10 +131,10 @@ export default function NoteEditor(props) {
     <Show
       when={props.inline}
       fallback={
-        <div class='mt-3 border-t border-gray-100 pt-2'>
+        <div class='border-border-subtle mt-3 border-t pt-2'>
           <Collapsible open={expanded()} onOpenChange={setExpanded}>
             <CollapsibleTrigger
-              class={`flex cursor-pointer items-center gap-1.5 py-1 text-xs select-none ${hasContent() ? 'text-blue-600 hover:text-blue-700' : 'text-gray-500 hover:text-gray-700'} `}
+              class={`flex cursor-pointer items-center gap-1.5 py-1 text-xs select-none ${hasContent() ? 'text-blue-600 hover:text-blue-700' : 'text-muted-foreground hover:text-secondary-foreground'} `}
             >
               <BiRegularChevronRight
                 class={`h-4 w-4 shrink-0 transition-transform duration-200 ${expanded() ? 'rotate-90' : ''}`}
@@ -163,12 +163,12 @@ export function NoteDisplay(props) {
 
   return (
     <Show when={hasContent()}>
-      <div class='mt-2 rounded-lg border border-gray-100 bg-gray-50 p-2'>
-        <div class='mb-1 flex items-center gap-1.5 text-xs text-gray-500'>
+      <div class='border-border-subtle bg-muted mt-2 rounded-lg border p-2'>
+        <div class='text-muted-foreground mb-1 flex items-center gap-1.5 text-xs'>
           <BsJournalText class='h-3 w-3' />
           <span>Notes</span>
         </div>
-        <p class='text-sm whitespace-pre-wrap text-gray-700'>{props.content}</p>
+        <p class='text-secondary-foreground text-sm whitespace-pre-wrap'>{props.content}</p>
       </div>
     </Show>
   );

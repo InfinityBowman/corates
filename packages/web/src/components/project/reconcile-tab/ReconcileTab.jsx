@@ -45,9 +45,9 @@ export default function ReconcileTab() {
         when={studiesInReconciliation().length > 0}
         fallback={
           <div class='py-16 text-center'>
-            <CgArrowsExchange class='mx-auto mb-4 h-12 w-12 text-gray-300' />
-            <h3 class='mb-2 text-lg font-medium text-gray-900'>Reconciliation</h3>
-            <p class='mx-auto max-w-md text-gray-500'>
+            <CgArrowsExchange class='text-muted-foreground/50 mx-auto mb-4 h-12 w-12' />
+            <h3 class='text-foreground mb-2 text-lg font-medium'>Reconciliation</h3>
+            <p class='text-muted-foreground mx-auto max-w-md'>
               Studies where reviewers have completed their checklists will appear here for
               reconciliation.
             </p>

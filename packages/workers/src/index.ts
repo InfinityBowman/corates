@@ -7,6 +7,7 @@
 import { OpenAPIHono } from '@hono/zod-openapi';
 import type { Context } from 'hono';
 import type { ContentfulStatusCode } from 'hono/utils/http-status';
+import * as Sentry from '@sentry/cloudflare';
 import { UserSession } from './durable-objects/UserSession';
 import { ProjectDoc } from './durable-objects/ProjectDoc';
 import { EmailQueue } from './durable-objects/EmailQueue';
@@ -367,4 +368,18 @@ app.notFound(c => {
 // Global error handler - catches all uncaught errors in routes
 app.onError(errorHandler);
 
-export default app;
+// Wrap with Sentry for error monitoring (only if DSN is configured)
+export default Sentry.withSentry(
+  (env: Env) => ({
+    dsn: env.SENTRY_DSN || '',
+    release: env.CF_VERSION_METADATA?.id,
+    environment: env.ENVIRONMENT,
+    // Only enable if DSN is set
+    enabled: !!env.SENTRY_DSN,
+    // Capture 100% of errors
+    tracesSampleRate: env.ENVIRONMENT === 'production' ? 0.1 : 1.0,
+    // Add request data to error reports
+    sendDefaultPii: true,
+  }),
+  app,
+);

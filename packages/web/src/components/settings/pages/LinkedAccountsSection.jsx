@@ -227,28 +227,28 @@ export default function LinkedAccountsSection() {
   });
 
   return (
-    <div class='mb-6 overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm'>
+    <div class='border-border bg-card mb-6 overflow-hidden rounded-lg border shadow-sm'>
       {/* Header */}
-      <div class='border-b border-gray-200 bg-gray-50 px-6 py-4'>
+      <div class='border-border border-b bg-gradient-to-r from-slate-50 to-white px-6 py-4'>
         <div class='flex items-center space-x-2'>
-          <FiLink class='h-5 w-5 text-gray-600' />
-          <h2 class='text-lg font-medium text-gray-900'>Linked Accounts</h2>
+          <FiLink class='text-secondary-foreground h-5 w-5' />
+          <h2 class='text-foreground text-lg font-medium'>Linked Accounts</h2>
         </div>
-        <p class='mt-1 text-sm text-gray-500'>Manage how you sign in to CoRATES</p>
+        <p class='text-muted-foreground mt-1 text-sm'>Manage how you sign in to CoRATES</p>
       </div>
 
       <div class='space-y-4 p-6'>
         {/* Error state */}
         <Show when={error()}>
-          <div class='rounded-lg border border-red-200 bg-red-50 p-4'>
+          <div class='border-destructive/30 bg-destructive-subtle rounded-lg border p-4'>
             <div class='flex items-start gap-3'>
-              <FiAlertCircle class='mt-0.5 h-5 w-5 text-red-600' />
+              <FiAlertCircle class='text-destructive mt-0.5 h-5 w-5' />
               <div>
-                <p class='font-medium text-red-800'>Failed to load linked accounts</p>
-                <p class='mt-1 text-sm text-red-600'>{error()?.message}</p>
+                <p class='text-destructive font-medium'>Failed to load linked accounts</p>
+                <p class='text-destructive mt-1 text-sm'>{error()?.message}</p>
                 <button
                   onClick={() => refetch()}
-                  class='mt-2 text-sm font-medium text-red-700 underline hover:text-red-800'
+                  class='text-destructive hover:text-destructive mt-2 text-sm font-medium underline'
                 >
                   Try again
                 </button>
@@ -264,15 +264,15 @@ export default function LinkedAccountsSection() {
             <Show when={isLoading()}>
               {/* Loading skeleton */}
               <div class='space-y-3'>
-                <div class='flex animate-pulse items-center justify-between rounded-lg border border-gray-200 p-4'>
+                <div class='border-border flex animate-pulse items-center justify-between rounded-lg border p-4'>
                   <div class='flex items-center gap-3'>
-                    <div class='h-10 w-10 rounded-lg bg-gray-200' />
+                    <div class='bg-secondary h-10 w-10 rounded-lg' />
                     <div class='space-y-2'>
-                      <div class='h-4 w-24 rounded bg-gray-200' />
-                      <div class='h-3 w-32 rounded bg-gray-200' />
+                      <div class='bg-secondary h-4 w-24 rounded' />
+                      <div class='bg-secondary h-3 w-32 rounded' />
                     </div>
                   </div>
-                  <div class='h-8 w-16 rounded bg-gray-200' />
+                  <div class='bg-secondary h-8 w-16 rounded' />
                 </div>
               </div>
             </Show>
@@ -295,8 +295,8 @@ export default function LinkedAccountsSection() {
 
         {/* Available providers to link */}
         <Show when={availableProviders().length > 0}>
-          <div class={accounts()?.length > 0 ? 'mt-4 border-t border-gray-200 pt-4' : ''}>
-            <p class='mb-3 text-sm font-medium text-gray-700'>
+          <div class={accounts()?.length > 0 ? 'border-border mt-4 border-t pt-4' : ''}>
+            <p class='text-secondary-foreground mb-3 text-sm font-medium'>
               {accounts()?.length > 0 ? 'Link another account:' : 'Link an account:'}
             </p>
             <div class='flex flex-wrap gap-2'>
@@ -305,7 +305,7 @@ export default function LinkedAccountsSection() {
                   <button
                     onClick={() => handleLinkProvider(provider.id)}
                     disabled={linkingProvider() === provider.id}
-                    class='inline-flex items-center gap-2 rounded-lg bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-200 disabled:cursor-not-allowed disabled:opacity-50'
+                    class='bg-muted text-secondary-foreground hover:bg-secondary inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50'
                     aria-label={`Link ${provider.name} account`}
                   >
                     <Show when={provider.icon} fallback={<FiMail class='h-4 w-4' />}>
@@ -320,10 +320,10 @@ export default function LinkedAccountsSection() {
         </Show>
 
         {/* Info box */}
-        <div class='mt-4 rounded-lg border border-blue-200 bg-blue-50 p-4'>
+        <div class='border-primary/30 bg-primary-subtle mt-4 rounded-lg border p-4'>
           <div class='flex items-start gap-3'>
-            <FiInfo class='mt-0.5 h-5 w-5 shrink-0 text-blue-600' />
-            <p class='text-sm text-blue-800'>
+            <FiInfo class='text-primary mt-0.5 h-5 w-5 shrink-0' />
+            <p class='text-primary text-sm'>
               <strong>Why link accounts?</strong> Linking multiple sign-in methods gives you backup
               options if you lose access to one. Your projects and data are shared across all linked
               accounts.
@@ -333,15 +333,15 @@ export default function LinkedAccountsSection() {
 
         {/* Dev mode: Test merge dialog */}
         {import.meta.env.DEV && (
-          <div class='mt-4 rounded-lg border border-amber-200 bg-amber-50 p-4'>
-            <p class='mb-2 text-xs font-semibold text-amber-800'>Dev Mode: Test Merge Flow</p>
+          <div class='border-warning/30 bg-warning-subtle mt-4 rounded-lg border p-4'>
+            <p class='text-warning mb-2 text-xs font-semibold'>Dev Mode: Test Merge Flow</p>
             <div class='flex gap-2'>
               <button
                 onClick={() => {
                   setMergeConflictProvider('orcid');
                   setShowMergeDialog(true);
                 }}
-                class='rounded bg-amber-600 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-amber-700'
+                class='bg-warning hover:bg-warning/90 rounded px-3 py-1.5 text-xs font-medium text-white transition-colors'
               >
                 Test ORCID Merge
               </button>
@@ -350,7 +350,7 @@ export default function LinkedAccountsSection() {
                   setMergeConflictProvider('google');
                   setShowMergeDialog(true);
                 }}
-                class='rounded bg-amber-600 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-amber-700'
+                class='bg-warning hover:bg-warning/90 rounded px-3 py-1.5 text-xs font-medium text-white transition-colors'
               >
                 Test Google Merge
               </button>
@@ -381,34 +381,34 @@ export default function LinkedAccountsSection() {
             </DialogHeader>
             <DialogBody>
               <div class='space-y-4'>
-                <p class='text-gray-600'>
+                <p class='text-secondary-foreground'>
                   You won't be able to sign in with <strong>{unlinkProviderName()}</strong> anymore.
                   Your CoRATES data will not be affected.
                 </p>
 
-                <p class='text-sm text-gray-500'>
+                <p class='text-muted-foreground text-sm'>
                   <strong>Note:</strong> If you sign in with {unlinkProviderName()} later without
                   linking first, a new separate account will be created.
                 </p>
 
                 {/* Error message */}
                 <Show when={unlinkError()}>
-                  <div class='rounded-md border border-red-200 bg-red-50 p-3'>
-                    <p class='text-sm text-red-700'>{unlinkError()}</p>
+                  <div class='border-destructive/30 bg-destructive-subtle rounded-md border p-3'>
+                    <p class='text-destructive text-sm'>{unlinkError()}</p>
                   </div>
                 </Show>
 
                 <div class='flex justify-end gap-3 pt-2'>
                   <button
                     onClick={() => setShowUnlinkConfirm(false)}
-                    class='rounded-lg bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-200'
+                    class='bg-muted text-secondary-foreground hover:bg-secondary rounded-lg px-4 py-2 text-sm font-medium transition-colors'
                   >
                     Cancel
                   </button>
                   <button
                     onClick={confirmUnlink}
                     disabled={unlinkingId() !== null}
-                    class='rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-red-700 focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:opacity-50'
+                    class='bg-destructive hover:bg-destructive/90 focus:ring-ring rounded-lg px-4 py-2 text-sm font-medium text-white transition-colors focus:ring-2 focus:outline-none disabled:opacity-50'
                   >
                     {unlinkingId() ? 'Unlinking...' : 'Unlink'}
                   </button>

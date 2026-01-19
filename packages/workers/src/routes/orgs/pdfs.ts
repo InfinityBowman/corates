@@ -48,7 +48,7 @@ const PdfUploaderSchema = z
     id: z.string(),
     name: z.string().nullable(),
     email: z.string().nullable(),
-    displayName: z.string().nullable(),
+    givenName: z.string().nullable(),
   })
   .openapi('PdfUploader');
 
@@ -473,7 +473,7 @@ orgPdfRoutes.openapi(listPdfsRoute, async c => {
         uploadedBy: mediaFiles.uploadedBy,
         uploadedByName: user.name,
         uploadedByEmail: user.email,
-        uploadedByDisplayName: user.displayName,
+        uploadedByGivenName: user.givenName,
       })
       .from(mediaFiles)
       .leftJoin(user, eq(mediaFiles.uploadedBy, user.id))
@@ -494,7 +494,7 @@ orgPdfRoutes.openapi(listPdfsRoute, async c => {
             id: row.uploadedBy,
             name: row.uploadedByName,
             email: row.uploadedByEmail,
-            displayName: row.uploadedByDisplayName,
+            givenName: row.uploadedByGivenName,
           }
         : null,
     }));

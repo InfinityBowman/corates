@@ -35,17 +35,17 @@ export default function ProjectCard(props) {
   const project = () => props.project;
 
   return (
-    <div class='group flex h-full flex-col rounded-lg border border-gray-200 bg-white p-6 shadow-sm transition-all duration-200 hover:border-gray-300 hover:shadow-md'>
+    <div class='group border-border bg-card hover:border-border-strong flex h-full flex-col rounded-lg border p-6 shadow-sm transition-all duration-200 hover:shadow-md'>
       {/* Header section with fixed structure */}
       <div class='min-h-0 flex-1'>
-        <h3 class='mb-1 line-clamp-2 text-lg font-semibold text-gray-900'>{project().name}</h3>
-        <p class='line-clamp-2 min-h-10 text-sm text-gray-500'>
+        <h3 class='text-foreground mb-1 line-clamp-2 text-lg font-semibold'>{project().name}</h3>
+        <p class='text-muted-foreground line-clamp-2 min-h-10 text-sm'>
           {project().description || 'No description'}
         </p>
       </div>
 
       {/* Metadata row */}
-      <div class='mt-3 mb-3 flex items-center justify-between text-xs text-gray-500'>
+      <div class='text-muted-foreground mt-3 mb-3 flex items-center justify-between text-xs'>
         <span class='inline-flex items-center rounded-full bg-blue-100 px-2 py-1 font-medium text-blue-800 capitalize'>
           {project().role}
         </span>
@@ -56,7 +56,7 @@ export default function ProjectCard(props) {
       <div class='flex gap-2'>
         <button
           onClick={() => props.onOpen?.(project().id)}
-          class='flex-1 rounded-lg bg-blue-600 px-4 py-2 font-medium text-white transition-colors hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:outline-none'
+          class='bg-primary hover:bg-primary/90 focus:ring-primary flex-1 rounded-lg px-4 py-2 font-medium text-white transition-colors focus:ring-2 focus:outline-none'
         >
           Open Project
         </button>
@@ -66,7 +66,7 @@ export default function ProjectCard(props) {
               e.stopPropagation();
               props.onDelete?.(project().id);
             }}
-            class='rounded-lg p-2 text-gray-400 transition-colors hover:bg-red-50 hover:text-red-600 focus:ring-2 focus:ring-blue-500 focus:outline-none'
+            class='text-muted-foreground/70 focus:ring-primary rounded-lg p-2 transition-colors hover:bg-red-50 hover:text-red-600 focus:ring-2 focus:outline-none'
             title='Delete Project'
           >
             <FiTrash2 class='h-5 w-5' />

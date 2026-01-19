@@ -50,8 +50,7 @@ export default function AssignReviewersModal(props) {
 
   // Convert members to SimpleSelect items format
   const memberItems = createMemo(() => {
-    const getMemberName = member =>
-      member?.displayName || member?.name || member?.email || 'Unknown';
+    const getMemberName = member => member?.name || member?.email || 'Unknown';
 
     return [
       { label: 'Unassigned', value: '' },
@@ -124,14 +123,14 @@ export default function AssignReviewersModal(props) {
           </DialogHeader>
           <DialogBody>
             <div class='space-y-4'>
-              <p class='text-sm text-gray-600'>
+              <p class='text-secondary-foreground text-sm'>
                 Assign two reviewers to this study. Each reviewer will independently complete their
                 assessments.
               </p>
 
               {/* Reviewer Assignments */}
               <div class='space-y-4'>
-                <div class='flex items-center gap-2 text-sm font-medium text-gray-900'>
+                <div class='text-foreground flex items-center gap-2 text-sm font-medium'>
                   <BiRegularUser class='h-4 w-4' />
                   <span>Reviewer Assignments</span>
                 </div>
@@ -160,19 +159,19 @@ export default function AssignReviewersModal(props) {
                 </Show>
 
                 <Show when={members().length === 0}>
-                  <p class='text-sm text-gray-500'>
+                  <p class='text-muted-foreground text-sm'>
                     No team members available. Add members to the project first.
                   </p>
                 </Show>
               </div>
 
               {/* Actions */}
-              <div class='flex justify-end gap-3 border-t border-gray-200 pt-4'>
+              <div class='border-border flex justify-end gap-3 border-t pt-4'>
                 <button
                   type='button'
                   onClick={() => props.onOpenChange(false)}
                   disabled={saving()}
-                  class='rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none disabled:opacity-50'
+                  class='border-border bg-card text-secondary-foreground hover:bg-muted focus:ring-primary rounded-md border px-4 py-2 text-sm font-medium focus:ring-2 focus:ring-offset-2 focus:outline-none disabled:opacity-50'
                 >
                   Cancel
                 </button>
@@ -180,7 +179,7 @@ export default function AssignReviewersModal(props) {
                   type='button'
                   onClick={handleSave}
                   disabled={saving()}
-                  class='rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none disabled:opacity-50'
+                  class='bg-primary hover:bg-primary/90 focus:ring-primary rounded-md border border-transparent px-4 py-2 text-sm font-medium text-white focus:ring-2 focus:ring-offset-2 focus:outline-none disabled:opacity-50'
                 >
                   {saving() ? 'Saving...' : 'Save'}
                 </button>

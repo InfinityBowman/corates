@@ -65,7 +65,7 @@ const ProgressTrack: Component<ProgressTrackProps> = props => {
   const [local, others] = splitProps(props, ['class', 'children']);
   return (
     <ProgressPrimitive.Track
-      class={cn('h-2 w-full overflow-hidden rounded-full bg-gray-200', local.class)}
+      class={cn('bg-secondary h-2 w-full overflow-hidden rounded-full', local.class)}
       {...others}
     >
       {local.children}
@@ -81,7 +81,7 @@ const ProgressRange: Component<ProgressRangeProps> = props => {
   const [local, others] = splitProps(props, ['class']);
   return (
     <ProgressPrimitive.Range
-      class={cn('h-full bg-blue-600 transition-[width] duration-300 ease-in-out', local.class)}
+      class={cn('bg-primary h-full transition-[width] duration-300 ease-in-out', local.class)}
       {...others}
     />
   );
@@ -96,7 +96,7 @@ const ProgressLabel: Component<ProgressLabelProps> = props => {
   const [local, others] = splitProps(props, ['class', 'children']);
   return (
     <ProgressPrimitive.Label
-      class={cn('mb-1 block text-sm font-medium text-gray-700', local.class)}
+      class={cn('text-secondary-foreground mb-1 block text-sm font-medium', local.class)}
       {...others}
     >
       {local.children}
@@ -112,7 +112,7 @@ const ProgressValueText: Component<ProgressValueTextProps> = props => {
   const [local, others] = splitProps(props, ['class']);
   return (
     <ProgressPrimitive.ValueText
-      class={cn('text-sm font-medium text-gray-600', local.class)}
+      class={cn('text-muted-foreground text-sm font-medium', local.class)}
       {...others}
     />
   );

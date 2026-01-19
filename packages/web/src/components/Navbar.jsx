@@ -135,12 +135,27 @@ export default function Navbar(props) {
               onClick={() => setShowUserMenu(!showUserMenu())}
               class='flex h-9 items-center space-x-2 rounded px-2 font-medium transition hover:bg-blue-600'
             >
-              <Avatar class='h-6 w-6'>
-                <AvatarImage src={user()?.image} alt={user()?.name || storedName || 'User'} />
-                <AvatarFallback class='bg-white/20 text-xs text-white'>
-                  {getInitials(user()?.name || storedName)}
-                </AvatarFallback>
-              </Avatar>
+              {/* Key avatar on image URL to force remount when user data loads */}
+              <Show
+                when={user()?.image}
+                keyed
+                fallback={
+                  <Avatar class='h-6 w-6'>
+                    <AvatarFallback class='bg-white/20 text-xs text-white'>
+                      {getInitials(user()?.name || storedName)}
+                    </AvatarFallback>
+                  </Avatar>
+                }
+              >
+                {imageSrc => (
+                  <Avatar class='h-6 w-6'>
+                    <AvatarImage src={imageSrc} alt={user()?.name || storedName || 'User'} />
+                    <AvatarFallback class='bg-white/20 text-xs text-white'>
+                      {getInitials(user()?.name || storedName)}
+                    </AvatarFallback>
+                  </Avatar>
+                )}
+              </Show>
               <span class='hidden sm:block'>{user()?.name || storedName || 'Loading...'}</span>
               <FiChevronDown
                 class={`h-3 w-3 transition-transform ${showUserMenu() ? 'rotate-180' : ''}`}
@@ -149,21 +164,21 @@ export default function Navbar(props) {
             </button>
 
             <Show when={showUserMenu()}>
-              <div class='absolute right-0 z-50 mt-2 w-48 rounded-md border border-gray-200 bg-white py-1 text-gray-700 shadow-lg'>
-                <div class='border-b border-gray-200 px-4 py-2 text-sm'>
-                  <div class='font-medium text-gray-900'>{user()?.name || 'User'}</div>
-                  <div class='truncate text-xs text-gray-500'>{user()?.email}</div>
+              <div class='border-border bg-popover text-popover-foreground absolute right-0 z-50 mt-2 w-48 rounded-md border py-1 shadow-lg'>
+                <div class='border-border border-b px-4 py-2 text-sm'>
+                  <div class='text-foreground font-medium'>{user()?.name || 'User'}</div>
+                  <div class='text-muted-foreground truncate text-xs'>{user()?.email}</div>
                 </div>
                 <A
-                  href='/profile'
-                  class='block px-4 py-2 text-sm hover:bg-gray-100'
+                  href='/settings/profile'
+                  class='hover:bg-muted block px-4 py-2 text-sm'
                   onClick={() => setShowUserMenu(false)}
                 >
                   Profile
                 </A>
                 <A
                   href='/settings'
-                  class='block px-4 py-2 text-sm hover:bg-gray-100'
+                  class='hover:bg-muted block px-4 py-2 text-sm'
                   onClick={() => setShowUserMenu(false)}
                 >
                   Settings
@@ -173,7 +188,7 @@ export default function Navbar(props) {
                     setShowUserMenu(false);
                     handleSignOut();
                   }}
-                  class='block w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-gray-100'
+                  class='text-destructive hover:bg-muted block w-full px-4 py-2 text-left text-sm'
                 >
                   Sign Out
                 </button>
