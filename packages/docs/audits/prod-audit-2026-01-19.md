@@ -209,13 +209,13 @@ No critical or high security vulnerabilities that would allow exploitation were 
 
 ## Data Safety Summary
 
-| Aspect             | Status         | Risk                            |
-| ------------------ | -------------- | ------------------------------- |
-| Backups            | EXISTS (D1)    | Procedure not documented        |
-| Soft Deletes       | MISSING        | Accidental deletion permanent   |
-| Cascade Deletes    | PRESENT        | Org delete removes all projects |
-| Migration Rollback | UNDOCUMENTED   | D1 Time Travel available        |
-| R2 File Cleanup    | PARTIAL        | Orphans possible                |
+| Aspect             | Status       | Risk                            |
+| ------------------ | ------------ | ------------------------------- |
+| Backups            | EXISTS (D1)  | Procedure not documented        |
+| Soft Deletes       | MISSING      | Accidental deletion permanent   |
+| Cascade Deletes    | PRESENT      | Org delete removes all projects |
+| Migration Rollback | UNDOCUMENTED | D1 Time Travel available        |
+| R2 File Cleanup    | PARTIAL      | Orphans possible                |
 
 ---
 
@@ -238,13 +238,13 @@ No critical or high security vulnerabilities that would allow exploitation were 
 
 ### Before Launch (Stop-Ship Fixes)
 
-| Priority | Issue                                        | Effort    | Owner |
-| -------- | -------------------------------------------- | --------- | ----- |
-| 1        | SS-4: Enable error monitoring (Sentry)       | 2-4 hours | -     |
+| Priority | Issue                                            | Effort    | Owner |
+| -------- | ------------------------------------------------ | --------- | ----- |
+| 1        | SS-4: Enable error monitoring (Sentry)           | 2-4 hours | -     |
 | 2        | SS-1: Document D1 Time Travel rollback procedure | 1-2 hours | -     |
-| 3        | SS-2: Add soft delete to projects/mediaFiles | 4-8 hours | -     |
-| 4        | SS-3: Add retry/compensation for DO sync     | 4-8 hours | -     |
-| 5        | SS-5: Fix quota race condition               | 4-8 hours | -     |
+| 3        | SS-2: Add soft delete to projects/mediaFiles     | 4-8 hours | -     |
+| 4        | SS-3: Add retry/compensation for DO sync         | 4-8 hours | -     |
+| 5        | SS-5: Fix quota race condition                   | 4-8 hours | -     |
 
 ### Week 1 After Launch
 
