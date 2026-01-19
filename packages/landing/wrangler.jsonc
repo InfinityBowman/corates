@@ -19,6 +19,7 @@
   "vars": {
     "VITE_BASEPATH": "/",
     "VITE_PUBLIC_APP_URL": "https://corates.org",
-    "VITE_API_URL": "https://corates.org"
+    "VITE_API_URL": "https://corates.org",
+    "VITE_SENTRY_DSN": "https://8ff0e3ce7f93715c9971b2c6518cf285@o4510738063818752.ingest.us.sentry.io/4510738383110144"
   }
 }

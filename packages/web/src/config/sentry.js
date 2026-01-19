@@ -1,9 +1,11 @@
 /**
  * Sentry Configuration
- * Frontend error monitoring setup
+ * Frontend error monitoring setup with SolidJS integration
  */
 
-import * as Sentry from '@sentry/browser';
+import * as Sentry from '@sentry/solid';
+import { solidRouterBrowserTracingIntegration } from '@sentry/solid/solidrouter';
+import { useBeforeLeave, useLocation } from '@solidjs/router';
 
 const SENTRY_DSN = import.meta.env.VITE_SENTRY_DSN || '';
 const ENVIRONMENT = import.meta.env.MODE || 'development';
@@ -24,6 +26,11 @@ export function initSentry() {
   Sentry.init({
     dsn: SENTRY_DSN,
     environment: ENVIRONMENT,
+
+    integrations: [
+      // Solid router integration for automatic route tracking
+      solidRouterBrowserTracingIntegration({ useBeforeLeave, useLocation }),
+    ],
 
     // Capture 100% of errors
     // Adjust in production if volume is high

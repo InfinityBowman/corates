@@ -251,9 +251,9 @@ importers:
       '@embedpdf/plugin-zoom':
         specifier: ^2.2.0
         version: 2.2.0(6bd7b58b8c00f9d90d9b5543c10d606a)
-      '@sentry/browser':
+      '@sentry/solid':
         specifier: ^10.35.0
-        version: 10.35.0
+        version: 10.35.0(@solidjs/router@0.15.4(solid-js@1.9.10))(solid-js@1.9.10)
       '@solid-primitives/scheduled':
         specifier: ^1.5.2
         version: 1.5.2(solid-js@1.9.10)
@@ -2875,6 +2875,19 @@ packages:
   '@sentry/core@10.35.0':
     resolution: {integrity: sha512-lEK1WFqt6oHtMq5dDLVE/FDzHDGs1PlYT5cZH4aBirYtJVyUiTf0NknKFob4a2zTywczlq7SbLv6Ba8UMU9dYg==}
     engines: {node: '>=18'}
+
+  '@sentry/solid@10.35.0':
+    resolution: {integrity: sha512-v/rtrlXCma+D0CymSgV8bI4uMhn9wD6sPIJMm71jk6Mi7tH22+It5pEAlDCdGOEuuUe560YVT+8riwbTnaNhcQ==}
+    engines: {node: '>=18'}
+    peerDependencies:
+      '@solidjs/router': ^0.13.4 || ^0.14.0 || ^0.15.0
+      '@tanstack/solid-router': ^1.132.27
+      solid-js: ^1.8.4
+    peerDependenciesMeta:
+      '@solidjs/router':
+        optional: true
+      '@tanstack/solid-router':
+        optional: true
 
   '@shikijs/core@1.29.2':
     resolution: {integrity: sha512-vju0lY9r27jJfOY4Z7+Rt/nIOjzJpZ3y+nYpqtUZInVoXQ/TJZcfGnNOGnKjFdVZb8qexiCuSlZRKcGfhhTTZQ==}
@@ -10081,6 +10094,14 @@ snapshots:
       '@cloudflare/workers-types': 4.20260118.0
 
   '@sentry/core@10.35.0': {}
+
+  '@sentry/solid@10.35.0(@solidjs/router@0.15.4(solid-js@1.9.10))(solid-js@1.9.10)':
+    dependencies:
+      '@sentry/browser': 10.35.0
+      '@sentry/core': 10.35.0
+      solid-js: 1.9.10
+    optionalDependencies:
+      '@solidjs/router': 0.15.4(solid-js@1.9.10)
 
   '@shikijs/core@1.29.2':
     dependencies:
