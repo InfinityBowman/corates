@@ -97,7 +97,7 @@ type AlertDialogContentProps = {
 const AlertDialogContent: Component<AlertDialogContentProps> = props => {
   return (
     <DialogPrimitive.Content
-      class={cn('w-full max-w-md overflow-hidden rounded-lg bg-white shadow-xl', props.class)}
+      class={cn('bg-card w-full max-w-md overflow-hidden rounded-lg shadow-xl', props.class)}
     >
       {props.children}
     </DialogPrimitive.Content>
@@ -124,11 +124,11 @@ const AlertDialogIcon: Component<AlertDialogIconProps> = props => {
   const variantStyles = () => {
     switch (variant()) {
       case 'warning':
-        return 'bg-amber-100 text-amber-500';
+        return 'bg-warning-subtle text-warning';
       case 'info':
-        return 'bg-blue-100 text-blue-500';
+        return 'bg-primary-subtle text-primary';
       default:
-        return 'bg-red-100 text-red-500';
+        return 'bg-destructive-subtle text-destructive';
     }
   };
 
@@ -146,7 +146,7 @@ type AlertDialogTitleProps = {
 
 const AlertDialogTitle: Component<AlertDialogTitleProps> = props => {
   return (
-    <DialogPrimitive.Title class={cn('text-lg font-semibold text-gray-900', props.class)}>
+    <DialogPrimitive.Title class={cn('text-foreground text-lg font-semibold', props.class)}>
       {props.children}
     </DialogPrimitive.Title>
   );
@@ -159,7 +159,7 @@ type AlertDialogDescriptionProps = {
 
 const AlertDialogDescription: Component<AlertDialogDescriptionProps> = props => {
   return (
-    <DialogPrimitive.Description class={cn('mt-2 text-sm text-gray-600', props.class)}>
+    <DialogPrimitive.Description class={cn('text-muted-foreground mt-2 text-sm', props.class)}>
       {props.children}
     </DialogPrimitive.Description>
   );
@@ -172,9 +172,7 @@ type AlertDialogFooterProps = {
 
 const AlertDialogFooter: Component<AlertDialogFooterProps> = props => {
   return (
-    <div class={cn('flex justify-end gap-3 bg-gray-50 px-6 py-4', props.class)}>
-      {props.children}
-    </div>
+    <div class={cn('bg-muted flex justify-end gap-3 px-6 py-4', props.class)}>{props.children}</div>
   );
 };
 
@@ -191,9 +189,9 @@ const AlertDialogCancel: Component<AlertDialogCancelProps> = props => {
       disabled={props.disabled}
       onClick={props.onClick}
       class={cn(
-        'rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700',
-        'transition-colors hover:bg-gray-50',
-        'focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none',
+        'border-border bg-card text-secondary-foreground rounded-md border px-4 py-2 text-sm font-medium',
+        'hover:bg-muted transition-colors',
+        'focus:ring-ring focus:ring-2 focus:ring-offset-2 focus:outline-none',
         'disabled:opacity-50',
         props.class,
       )}
@@ -217,11 +215,11 @@ const AlertDialogAction: Component<AlertDialogActionProps> = props => {
   const variantStyles = () => {
     switch (variant()) {
       case 'warning':
-        return 'bg-amber-600 hover:bg-amber-700 focus:ring-amber-500';
+        return 'bg-warning hover:bg-warning/90 focus:ring-warning';
       case 'info':
-        return 'bg-blue-600 hover:bg-blue-700 focus:ring-blue-500';
+        return 'bg-primary hover:bg-primary/90 focus:ring-ring';
       default:
-        return 'bg-red-600 hover:bg-red-700 focus:ring-red-500';
+        return 'bg-destructive hover:bg-destructive/90 focus:ring-destructive';
     }
   };
 
@@ -255,8 +253,8 @@ const AlertDialogCloseTrigger: Component<AlertDialogCloseTriggerProps> = props =
       disabled={props.disabled}
       aria-label={props.ariaLabel ?? 'Close'}
       class={cn(
-        'shrink-0 rounded-md p-1 text-gray-400',
-        'transition-colors hover:bg-gray-100 hover:text-gray-500',
+        'text-muted-foreground shrink-0 rounded-md p-1',
+        'hover:bg-muted hover:text-foreground transition-colors',
         'disabled:opacity-50',
         props.class,
       )}

@@ -89,7 +89,7 @@ const SelectLabel: Component<SelectLabelProps> = props => {
   const [local, others] = splitProps(props, ['class']);
   return (
     <SelectPrimitive.Label
-      class={cn('mb-1.5 block text-sm leading-none font-medium text-gray-900', local.class)}
+      class={cn('text-foreground mb-1.5 block text-sm leading-none font-medium', local.class)}
       {...others}
     />
   );
@@ -105,11 +105,11 @@ const SelectTrigger: Component<SelectTriggerProps> = props => {
   return (
     <SelectPrimitive.Trigger
       class={cn(
-        'flex h-10 w-full items-center justify-between rounded-md border border-gray-300 bg-white px-3 py-2 text-sm',
-        'text-gray-900 ring-offset-white placeholder:text-gray-500',
-        'hover:bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none',
+        'border-border bg-card flex h-10 w-full items-center justify-between rounded-md border px-3 py-2 text-sm',
+        'text-foreground ring-offset-background placeholder:text-muted-foreground',
+        'hover:bg-muted focus:ring-ring focus:ring-2 focus:ring-offset-2 focus:outline-none',
         'disabled:cursor-not-allowed disabled:opacity-50',
-        'data-invalid:border-red-500 data-invalid:focus:ring-red-500',
+        'data-invalid:border-destructive data-invalid:focus:ring-destructive',
         local.class,
       )}
       {...others}
@@ -133,7 +133,7 @@ const SelectIndicator: Component<SelectIndicatorProps> = props => {
     >
       <Show
         when={local.children}
-        fallback={<BiRegularChevronDown class='h-4 w-4 text-gray-500 opacity-50' />}
+        fallback={<BiRegularChevronDown class='text-muted-foreground h-4 w-4 opacity-50' />}
       >
         {local.children}
       </Show>
@@ -150,7 +150,7 @@ const SelectClearTrigger: Component<SelectClearTriggerProps> = props => {
   const [local, others] = splitProps(props, ['class', 'children']);
   return (
     <SelectPrimitive.ClearTrigger
-      class={cn('text-gray-500 hover:text-gray-700', local.class)}
+      class={cn('text-muted-foreground hover:text-foreground', local.class)}
       {...others}
     >
       {local.children}
@@ -191,7 +191,7 @@ const SelectContent: Component<SelectContentProps> = props => {
   return (
     <SelectPrimitive.Content
       class={cn(
-        'max-h-96 min-w-32 overflow-hidden rounded-md border border-gray-200 bg-white p-1 shadow-md',
+        'border-border bg-popover max-h-96 min-w-32 overflow-hidden rounded-md border p-1 shadow-md',
         Z_INDEX.SELECT,
         'focus:outline-none',
         local.class,
@@ -220,7 +220,7 @@ const SelectItemGroupLabel: Component<SelectItemGroupLabelProps> = props => {
   const [local, others] = splitProps(props, ['class']);
   return (
     <SelectPrimitive.ItemGroupLabel
-      class={cn('px-2 py-1.5 text-sm font-semibold text-gray-900', local.class)}
+      class={cn('text-foreground px-2 py-1.5 text-sm font-semibold', local.class)}
       {...others}
     />
   );
@@ -237,10 +237,10 @@ const SelectItem: Component<SelectItemProps> = props => {
     <SelectPrimitive.Item
       class={cn(
         'relative flex w-full cursor-default items-center rounded-sm px-2 py-1.5 pr-8 text-sm',
-        'text-gray-900 outline-none select-none',
-        'hover:bg-gray-100 focus:bg-gray-100',
+        'text-popover-foreground outline-none select-none',
+        'hover:bg-muted focus:bg-muted',
         'data-disabled:pointer-events-none data-disabled:opacity-50',
-        'data-highlighted:bg-gray-100',
+        'data-highlighted:bg-muted',
         local.class,
       )}
       {...others}
@@ -262,7 +262,7 @@ const SelectItemIndicator: Component<SelectItemIndicatorProps> = props => {
       class={cn('absolute right-2 flex h-3.5 w-3.5 items-center justify-center', local.class)}
       {...others}
     >
-      <Show when={local.children} fallback={<BiRegularCheck class='h-4 w-4 text-blue-600' />}>
+      <Show when={local.children} fallback={<BiRegularCheck class='text-primary h-4 w-4' />}>
         {local.children}
       </Show>
     </SelectPrimitive.ItemIndicator>

@@ -70,7 +70,8 @@ interface ImportData {
     joinedAt?: string;
     name?: string | null;
     email?: string | null;
-    displayName?: string | null;
+    givenName?: string | null;
+    familyName?: string | null;
     image?: string | null;
   }>;
   studies?: Array<{
@@ -328,7 +329,8 @@ export async function handleDevImport(ctx: DevContext, request: ImportRequest): 
           memberYMap.set('joinedAt', member.joinedAt);
           memberYMap.set('name', member.name || null);
           memberYMap.set('email', member.email || null);
-          memberYMap.set('displayName', member.displayName || null);
+          memberYMap.set('givenName', member.givenName || null);
+          memberYMap.set('familyName', member.familyName || null);
           memberYMap.set('image', member.image || null);
           membersMap.set(member.userId, memberYMap);
         }
@@ -341,7 +343,8 @@ export async function handleDevImport(ctx: DevContext, request: ImportRequest): 
         importerYMap.set('joinedAt', new Date().toISOString());
         importerYMap.set('name', importer.name || null);
         importerYMap.set('email', importer.email || null);
-        importerYMap.set('displayName', importer.name || null);
+        importerYMap.set('givenName', null);
+        importerYMap.set('familyName', null);
         importerYMap.set('image', importer.image || null);
         membersMap.set(importer.userId, importerYMap);
       }

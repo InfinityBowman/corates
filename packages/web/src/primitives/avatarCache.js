@@ -4,6 +4,10 @@
  * This provides offline access to avatar images by storing them in Dexie.
  * When online, avatars are fetched from the API and cached locally.
  * When offline, the cached version is used.
+ *
+ * All avatars are now served from our R2 storage via the API, so external URL
+ * handling has been removed. OAuth provider avatars (Google, etc.) are copied
+ * to R2 on user signup.
  */
 
 import { API_BASE } from '@config/api.js';
@@ -15,12 +19,6 @@ const CACHE_EXPIRY_MS = 30 * 24 * 60 * 60 * 1000;
 
 // Maximum avatar size before compression (500KB)
 const MAX_AVATAR_SIZE = 500 * 1024;
-
-// Rate limiting for external avatar fetches (e.g., Google avatars)
-// Track failed fetches to avoid hammering external servers
-const externalFetchFailures = new Map(); // url -> { failedAt, retryAfter }
-const EXTERNAL_RETRY_DELAY_MS = 60 * 1000; // Wait 1 minute before retrying failed external fetches
-const MAX_RETRY_DELAY_MS = 5 * 60 * 1000; // Max 5 minutes between retries
 
 /**
  * Convert a blob to a base64 data URL
@@ -85,95 +83,26 @@ export async function removeCachedAvatar(userId) {
 }
 
 /**
- * Check if we should skip fetching an external URL due to recent failures
- * @param {string} url - The URL to check
- * @returns {boolean} - True if we should skip this fetch
- */
-function shouldSkipExternalFetch(url) {
-  const failure = externalFetchFailures.get(url);
-  if (!failure) return false;
-
-  const elapsed = Date.now() - failure.failedAt;
-  if (elapsed >= failure.retryAfter) {
-    // Enough time has passed, allow retry
-    return false;
-  }
-  return true;
-}
-
-/**
- * Record a failed external fetch for rate limiting
- * @param {string} url - The URL that failed
- * @param {number} [retryAfterHeader] - Retry-After header value in seconds (if provided)
- */
-function recordExternalFetchFailure(url, retryAfterHeader) {
-  const existing = externalFetchFailures.get(url);
-  // Exponential backoff: double the delay each time, up to max
-  const baseDelay = existing?.retryAfter || EXTERNAL_RETRY_DELAY_MS;
-  const newDelay = Math.min(baseDelay * 2, MAX_RETRY_DELAY_MS);
-
-  // If server provided Retry-After header, use that instead
-  const retryAfter = retryAfterHeader ? retryAfterHeader * 1000 : newDelay;
-
-  externalFetchFailures.set(url, {
-    failedAt: Date.now(),
-    retryAfter,
-  });
-}
-
-/**
- * Clear failure record for a URL (on successful fetch)
- * @param {string} url - The URL to clear
- */
-function clearExternalFetchFailure(url) {
-  externalFetchFailures.delete(url);
-}
-
-/**
  * Fetch an avatar from the API and cache it
+ * All avatars are now served from our API (R2 storage), so we always use
+ * credentials and don't need external URL handling.
+ *
  * @param {string} userId - The user ID
- * @param {string} imageUrl - The avatar URL (can be relative or absolute)
+ * @param {string} imageUrl - The avatar URL (relative path like /api/users/avatar/{userId})
  * @returns {Promise<string|null>} - Data URL of the avatar or null if failed
  */
 export async function fetchAndCacheAvatar(userId, imageUrl) {
   if (!userId || !imageUrl) return null;
 
   try {
-    // Build the full URL - handle both relative and absolute URLs
-    let fullUrl = imageUrl;
-    const isRelativeUrl = imageUrl.startsWith('/');
-    if (isRelativeUrl) {
-      fullUrl = `${API_BASE}${imageUrl}`;
-    }
+    // Build the full URL from relative path
+    const fullUrl = imageUrl.startsWith('/') ? `${API_BASE}${imageUrl}` : imageUrl;
 
-    // For external URLs, check if we should skip due to rate limiting
-    if (!isRelativeUrl && shouldSkipExternalFetch(fullUrl)) {
-      // Return cached version if available, otherwise null
-      return getCachedAvatar(userId);
-    }
-
-    // Only include credentials for our API (relative URLs), not for external URLs (e.g., Google avatars)
-    // External URLs like lh3.googleusercontent.com don't allow credentials with CORS
-    const fetchOptions = isRelativeUrl ? { credentials: 'include' } : {};
-
-    const response = await fetch(fullUrl, fetchOptions);
+    const response = await fetch(fullUrl, { credentials: 'include' });
 
     if (!response.ok) {
-      // Handle rate limiting (429) and other errors for external URLs
-      if (!isRelativeUrl) {
-        const retryAfter = response.headers.get('Retry-After');
-        recordExternalFetchFailure(fullUrl, retryAfter ? parseInt(retryAfter, 10) : null);
-      }
-      // Only warn for non-429 errors or first 429 occurrence
-      if (response.status !== 429) {
-        console.warn('Failed to fetch avatar:', response.status);
-      }
+      console.warn('Failed to fetch avatar:', response.status);
       return null;
-    }
-
-    // Clear any failure record on success
-    if (!isRelativeUrl) {
-      clearExternalFetchFailure(fullUrl);
     }
 
     let blob = await response.blob();

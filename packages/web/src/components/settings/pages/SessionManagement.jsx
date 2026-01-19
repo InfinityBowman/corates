@@ -106,23 +106,23 @@ function SessionCard(props) {
   return (
     <div
       class={`rounded-lg border p-4 ${
-        props.isCurrent ? 'border-blue-200 bg-blue-50' : 'border-gray-200 bg-gray-50'
+        props.isCurrent ? 'border-primary/30 bg-primary-subtle' : 'border-border bg-muted'
       }`}
     >
       <div class='flex items-start justify-between'>
         <div class='flex items-start space-x-3'>
           {/* Device Icon */}
-          <div class={`rounded-full p-2 ${props.isCurrent ? 'bg-blue-100' : 'bg-gray-200'}`}>
+          <div class={`rounded-full p-2 ${props.isCurrent ? 'bg-primary/10' : 'bg-secondary'}`}>
             <Show
               when={deviceInfo().device === 'mobile'}
               fallback={
                 <FiMonitor
-                  class={`h-5 w-5 ${props.isCurrent ? 'text-blue-600' : 'text-gray-600'}`}
+                  class={`h-5 w-5 ${props.isCurrent ? 'text-primary' : 'text-secondary-foreground'}`}
                 />
               }
             >
               <FiSmartphone
-                class={`h-5 w-5 ${props.isCurrent ? 'text-blue-600' : 'text-gray-600'}`}
+                class={`h-5 w-5 ${props.isCurrent ? 'text-primary' : 'text-secondary-foreground'}`}
               />
             </Show>
           </div>
@@ -130,16 +130,16 @@ function SessionCard(props) {
           {/* Session Info */}
           <div>
             <div class='flex items-center space-x-2'>
-              <p class='font-medium text-gray-900'>
+              <p class='text-foreground font-medium'>
                 {deviceInfo().browser} on {deviceInfo().os}
               </p>
               <Show when={props.isCurrent}>
-                <span class='rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700'>
+                <span class='bg-primary/10 text-primary rounded-full px-2 py-0.5 text-xs font-medium'>
                   Current
                 </span>
               </Show>
             </div>
-            <div class='mt-1 flex items-center space-x-3 text-sm text-gray-500'>
+            <div class='text-muted-foreground mt-1 flex items-center space-x-3 text-sm'>
               <span class='flex items-center'>
                 <FiGlobe class='mr-1 h-3.5 w-3.5' />
                 {maskIp(props.session.ipAddress)}
@@ -158,7 +158,7 @@ function SessionCard(props) {
           <button
             onClick={() => props.onRevoke(props.session.token)}
             disabled={props.revoking}
-            class='flex items-center space-x-1 rounded-md px-3 py-1.5 text-sm font-medium text-red-600 transition hover:bg-red-50 disabled:opacity-50'
+            class='text-destructive hover:bg-destructive-subtle flex items-center space-x-1 rounded-md px-3 py-1.5 text-sm font-medium transition disabled:opacity-50'
           >
             <Show when={!props.revoking} fallback={<FiLoader class='h-4 w-4 animate-spin' />}>
               <FiTrash2 class='h-4 w-4' />
@@ -292,15 +292,17 @@ export default function SessionManagement() {
     <div class='space-y-4'>
       <div class='flex items-center justify-between'>
         <div>
-          <p class='font-medium text-gray-900'>Active Sessions</p>
-          <p class='text-sm text-gray-500'>Manage devices where you're currently signed in.</p>
+          <p class='text-foreground font-medium'>Active Sessions</p>
+          <p class='text-muted-foreground text-sm'>
+            Manage devices where you're currently signed in.
+          </p>
         </div>
       </div>
 
       {/* Sessions List */}
       <Suspense
         fallback={
-          <div class='flex items-center justify-center py-8 text-gray-500'>
+          <div class='text-muted-foreground flex items-center justify-center py-8'>
             <FiLoader class='mr-2 h-5 w-5 animate-spin' />
             <span>Loading sessions...</span>
           </div>
@@ -309,7 +311,7 @@ export default function SessionManagement() {
         <Show
           when={!sessions.error}
           fallback={
-            <div class='rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700'>
+            <div class='border-destructive/30 bg-destructive-subtle text-destructive rounded-lg border p-4 text-sm'>
               Failed to load sessions. Please try again.
             </div>
           }
@@ -329,11 +331,11 @@ export default function SessionManagement() {
 
           {/* Action Buttons */}
           <Show when={dedupedSessions().length > 1}>
-            <div class='mt-4 flex flex-wrap gap-3 border-t border-gray-200 pt-4'>
+            <div class='border-border mt-4 flex flex-wrap gap-3 border-t pt-4'>
               <button
                 onClick={handleRevokeOther}
                 disabled={revokingAll()}
-                class='flex items-center space-x-2 rounded-md bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-200 disabled:opacity-50'
+                class='bg-muted text-secondary-foreground hover:bg-secondary flex items-center space-x-2 rounded-md px-4 py-2 text-sm font-medium transition disabled:opacity-50'
               >
                 <FiLogOut class='h-4 w-4' />
                 <span>{revokingAll() ? 'Revoking...' : 'Sign out other sessions'}</span>
@@ -342,7 +344,7 @@ export default function SessionManagement() {
               <button
                 onClick={() => setShowRevokeAllDialog(true)}
                 disabled={revokingAll()}
-                class='flex items-center space-x-2 rounded-md bg-red-50 px-4 py-2 text-sm font-medium text-red-600 transition hover:bg-red-100 disabled:opacity-50'
+                class='bg-destructive-subtle text-destructive hover:bg-destructive/10 flex items-center space-x-2 rounded-md px-4 py-2 text-sm font-medium transition disabled:opacity-50'
               >
                 <FiTrash2 class='h-4 w-4' />
                 <span>Sign out everywhere</span>
@@ -352,7 +354,7 @@ export default function SessionManagement() {
 
           {/* Single session message */}
           <Show when={dedupedSessions().length === 1}>
-            <p class='mt-2 text-sm text-gray-500'>This is your only active session.</p>
+            <p class='text-muted-foreground mt-2 text-sm'>This is your only active session.</p>
           </Show>
         </Show>
       </Suspense>
@@ -369,13 +371,13 @@ export default function SessionManagement() {
             </DialogDescription>
 
             <div class='mt-6 flex justify-end space-x-3'>
-              <DialogCloseTrigger class='rounded-md bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-200'>
+              <DialogCloseTrigger class='bg-muted text-secondary-foreground hover:bg-secondary rounded-md px-4 py-2 text-sm font-medium transition'>
                 Cancel
               </DialogCloseTrigger>
               <button
                 onClick={handleRevokeAll}
                 disabled={revokingAll()}
-                class='rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-red-700 disabled:opacity-50'
+                class='bg-destructive hover:bg-destructive/90 rounded-md px-4 py-2 text-sm font-medium text-white transition disabled:opacity-50'
               >
                 {revokingAll() ? 'Signing out...' : 'Sign out everywhere'}
               </button>

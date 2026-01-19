@@ -44,7 +44,7 @@ export default function ReviewerAssignment(props) {
   const getMemberName = userId => {
     if (!userId) return 'Unknown';
     const member = members().find(m => m.userId === userId);
-    return member?.displayName || member?.name || member?.email || 'Unknown';
+    return member?.name || member?.email || 'Unknown';
   };
 
   // Get members not in a specific pool
@@ -400,9 +400,7 @@ export default function ReviewerAssignment(props) {
               <option value=''>Add reviewer...</option>
               <For each={available()}>
                 {member => (
-                  <option value={member.userId}>
-                    {member.displayName || member.name || member.email || 'Unknown'}
-                  </option>
+                  <option value={member.userId}>{member.name || member.email || 'Unknown'}</option>
                 )}
               </For>
             </select>

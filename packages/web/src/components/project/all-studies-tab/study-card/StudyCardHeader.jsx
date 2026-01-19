@@ -79,8 +79,7 @@ export default function StudyCardHeader(props) {
   };
 
   // Get member display name
-  const getMemberDisplayName = member =>
-    member?.displayName || member?.name || member?.email || 'Unknown';
+  const getMemberDisplayName = member => member?.name || member?.email || 'Unknown';
 
   // Get avatar image source - only return URL if image exists, otherwise undefined for fallback
   const getAvatarSrc = member => {

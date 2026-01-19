@@ -50,8 +50,7 @@ export default function AssignReviewersModal(props) {
 
   // Convert members to SimpleSelect items format
   const memberItems = createMemo(() => {
-    const getMemberName = member =>
-      member?.displayName || member?.name || member?.email || 'Unknown';
+    const getMemberName = member => member?.name || member?.email || 'Unknown';
 
     return [
       { label: 'Unassigned', value: '' },

@@ -141,7 +141,7 @@ export default function ChartSection(props) {
   const getAssigneeName = (userId, membersList) => {
     if (!userId) return 'Unassigned';
     const member = membersList.find(m => m.userId === userId);
-    return member?.displayName || member?.name || member?.email || 'Unknown';
+    return member?.name || member?.email || 'Unknown';
   };
 
   // Build raw chart data from studies and their checklists

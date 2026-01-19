@@ -115,17 +115,23 @@ export default function CompleteProfile() {
       return;
     }
 
-    if (!firstName().trim() && !lastName().trim() && currentUser?.name) {
-      const nameParts = String(currentUser.name).trim().split(/\s+/).filter(Boolean);
-      if (nameParts.length >= 2) {
-        setFirstName(nameParts[0]);
-        setLastName(nameParts.slice(1).join(' '));
-      } else if (nameParts.length === 1) {
-        // If magic link created a placeholder name (e.g. the email), keep last name empty so user must provide it.
-        setFirstName(nameParts[0]);
+    // Use structured givenName/familyName from OAuth if available
+    if (!firstName().trim() && !lastName().trim()) {
+      if (currentUser?.givenName || currentUser?.familyName) {
+        setFirstName(currentUser.givenName || '');
+        setLastName(currentUser.familyName || '');
+        setHasAutofilledName(true);
+      } else if (currentUser?.name) {
+        // Fallback: split the name field
+        const nameParts = String(currentUser.name).trim().split(/\s+/).filter(Boolean);
+        if (nameParts.length >= 2) {
+          setFirstName(nameParts[0]);
+          setLastName(nameParts.slice(1).join(' '));
+        } else if (nameParts.length === 1) {
+          setFirstName(nameParts[0]);
+        }
+        setHasAutofilledName(true);
       }
-
-      setHasAutofilledName(true);
     }
   });
 
@@ -148,8 +154,8 @@ export default function CompleteProfile() {
   // Validate step 1 and proceed to step 2
   function validateStep1() {
     setError('');
-    if (!firstName().trim() || !lastName().trim()) {
-      setError('Please enter your first and last name');
+    if (!firstName().trim()) {
+      setError('Please enter your first name');
       return false;
     }
     return true;
@@ -188,10 +194,14 @@ export default function CompleteProfile() {
     const urlParams = new URLSearchParams(window.location.search);
 
     try {
-      const fullName = `${firstName().trim()} ${lastName().trim()}`;
+      const givenName = firstName().trim();
+      const familyName = lastName().trim();
+      const fullName = [givenName, familyName].filter(Boolean).join(' ');
 
       await updateProfile({
         name: fullName,
+        givenName: givenName || null,
+        familyName: familyName || null,
         persona: selectedPersona || 'other',
         profileCompletedAt: Math.floor(Date.now() / 1000),
         title: title() || null,
@@ -348,7 +358,7 @@ export default function CompleteProfile() {
                     class='mb-1 block text-xs font-semibold text-gray-700 sm:text-sm'
                     for='last-name-input'
                   >
-                    Last Name
+                    Last Name <span class='font-normal text-gray-400'>(optional)</span>
                   </label>
                   <input
                     type='text'
@@ -361,7 +371,6 @@ export default function CompleteProfile() {
                       setLastName(e.target.value);
                     }}
                     class='w-full rounded-lg border border-gray-300 px-3 py-2 text-sm transition focus:border-transparent focus:ring-2 focus:ring-blue-500 focus:outline-none'
-                    required
                     id='last-name-input'
                     placeholder='Last'
                     aria-describedby={displayError() ? 'profile-step1-error' : undefined}

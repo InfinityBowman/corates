@@ -83,7 +83,7 @@ const TabsTrigger: Component<TabsTriggerProps> = props => {
       class={cn(
         'inline-flex items-center px-4 py-3 text-sm font-medium whitespace-nowrap',
         'transition-colors',
-        'focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none',
+        'focus-visible:ring-ring focus-visible:ring-2 focus-visible:outline-none',
         'disabled:pointer-events-none disabled:opacity-50',
         local.class,
       )}
@@ -104,8 +104,8 @@ const TabsContent: Component<TabsContentProps> = props => {
   return (
     <TabsPrimitive.Content
       class={cn(
-        'mt-2 ring-offset-white',
-        'focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:outline-none',
+        'ring-offset-background mt-2',
+        'focus-visible:ring-ring focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none',
         local.class,
       )}
       {...others}
@@ -123,7 +123,7 @@ const TabsIndicator: Component<TabsIndicatorProps> = props => {
   const [local, others] = splitProps(props, ['class', 'style']);
   return (
     <TabsPrimitive.Indicator
-      class={cn('absolute bottom-0 bg-blue-600', local.class)}
+      class={cn('bg-primary absolute bottom-0', local.class)}
       style={{
         width: 'var(--width)',
         left: 'var(--left)',

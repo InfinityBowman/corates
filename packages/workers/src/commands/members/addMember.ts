@@ -24,7 +24,8 @@ export interface UserToAdd {
   name: string | null;
   email: string | null;
   username?: string | null;
-  displayName?: string | null;
+  givenName?: string | null;
+  familyName?: string | null;
   image?: string | null;
 }
 
@@ -41,7 +42,8 @@ export interface AddMemberResult {
     name: string | null;
     email: string | null;
     username?: string | null;
-    displayName?: string | null;
+    givenName?: string | null;
+    familyName?: string | null;
     image?: string | null;
     role: ProjectRole;
     joinedAt: Date;
@@ -143,7 +145,8 @@ export async function addMember(
       joinedAt: now.getTime(),
       name: userToAdd.name,
       email: userToAdd.email,
-      displayName: userToAdd.displayName,
+      givenName: userToAdd.givenName,
+      familyName: userToAdd.familyName,
       image: userToAdd.image,
     });
   } catch (err) {
@@ -156,7 +159,8 @@ export async function addMember(
       name: userToAdd.name,
       email: userToAdd.email,
       username: userToAdd.username,
-      displayName: userToAdd.displayName,
+      givenName: userToAdd.givenName,
+      familyName: userToAdd.familyName,
       image: userToAdd.image,
       role,
       joinedAt: now,

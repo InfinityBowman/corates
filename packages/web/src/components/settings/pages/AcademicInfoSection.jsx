@@ -100,9 +100,9 @@ export default function AcademicInfoSection() {
   };
 
   return (
-    <div class='flex items-start justify-between border-t border-slate-100 pt-4'>
+    <div class='border-border-subtle flex items-start justify-between border-t pt-4'>
       <div class='flex-1'>
-        <label class='mb-1 block text-xs font-medium tracking-wide text-slate-400 uppercase'>
+        <label class='text-muted-foreground mb-1 block text-xs font-medium tracking-wide uppercase'>
           Academic Information
         </label>
         <Show
@@ -110,21 +110,21 @@ export default function AcademicInfoSection() {
           fallback={
             <div class='mt-1 space-y-1.5'>
               <div class='flex items-baseline gap-2'>
-                <span class='text-xs font-medium text-slate-500'>Title:</span>
-                <span class='text-sm text-slate-900'>
-                  {user()?.title || <span class='text-slate-400'>Not set</span>}
+                <span class='text-muted-foreground text-xs font-medium'>Title:</span>
+                <span class='text-foreground text-sm'>
+                  {user()?.title || <span class='text-muted-foreground'>Not set</span>}
                 </span>
               </div>
               <div class='flex items-baseline gap-2'>
-                <span class='text-xs font-medium text-slate-500'>Institution:</span>
-                <span class='text-sm text-slate-900'>
-                  {user()?.institution || <span class='text-slate-400'>Not set</span>}
+                <span class='text-muted-foreground text-xs font-medium'>Institution:</span>
+                <span class='text-foreground text-sm'>
+                  {user()?.institution || <span class='text-muted-foreground'>Not set</span>}
                 </span>
               </div>
               <div class='flex items-baseline gap-2'>
-                <span class='text-xs font-medium text-slate-500'>Department:</span>
-                <span class='text-sm text-slate-900'>
-                  {user()?.department || <span class='text-slate-400'>Not set</span>}
+                <span class='text-muted-foreground text-xs font-medium'>Department:</span>
+                <span class='text-foreground text-sm'>
+                  {user()?.department || <span class='text-muted-foreground'>Not set</span>}
                 </span>
               </div>
             </div>
@@ -132,7 +132,7 @@ export default function AcademicInfoSection() {
         >
           <div class='mt-3 space-y-4'>
             <div>
-              <label class='mb-1.5 block text-xs font-medium tracking-wide text-slate-500 uppercase'>
+              <label class='text-muted-foreground mb-1.5 block text-xs font-medium tracking-wide uppercase'>
                 Title
               </label>
               <Select
@@ -165,34 +165,34 @@ export default function AcademicInfoSection() {
                   type='text'
                   value={editCustomTitle()}
                   onInput={e => setEditCustomTitle(e.target.value)}
-                  class='mt-2 block w-full max-w-xs rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm shadow-sm transition-colors focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none'
+                  class='border-border bg-card focus:border-primary focus:ring-ring/20 mt-2 block w-full max-w-xs rounded-lg border px-3 py-2 text-sm shadow-sm transition-colors focus:ring-2 focus:outline-none'
                   placeholder='Enter your title'
                   maxLength={50}
                 />
               </Show>
             </div>
             <div>
-              <label class='mb-1.5 block text-xs font-medium tracking-wide text-slate-500 uppercase'>
+              <label class='text-muted-foreground mb-1.5 block text-xs font-medium tracking-wide uppercase'>
                 Institution
               </label>
               <input
                 type='text'
                 value={editInstitution()}
                 onInput={e => setEditInstitution(e.target.value)}
-                class='block w-full max-w-md rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm shadow-sm transition-colors focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none'
+                class='border-border bg-card focus:border-primary focus:ring-ring/20 block w-full max-w-md rounded-lg border px-3 py-2 text-sm shadow-sm transition-colors focus:ring-2 focus:outline-none'
                 placeholder='University or organization'
                 maxLength={200}
               />
             </div>
             <div>
-              <label class='mb-1.5 block text-xs font-medium tracking-wide text-slate-500 uppercase'>
+              <label class='text-muted-foreground mb-1.5 block text-xs font-medium tracking-wide uppercase'>
                 Department
               </label>
               <input
                 type='text'
                 value={editDepartment()}
                 onInput={e => setEditDepartment(e.target.value)}
-                class='block w-full max-w-md rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm shadow-sm transition-colors focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none'
+                class='border-border bg-card focus:border-primary focus:ring-ring/20 block w-full max-w-md rounded-lg border px-3 py-2 text-sm shadow-sm transition-colors focus:ring-2 focus:outline-none'
                 placeholder='Department or faculty'
                 maxLength={200}
               />
@@ -201,14 +201,14 @@ export default function AcademicInfoSection() {
               <button
                 onClick={saveAcademic}
                 disabled={saving()}
-                class='rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition-all hover:bg-blue-700 hover:shadow disabled:opacity-50'
+                class='bg-primary hover:bg-primary/90 rounded-lg px-4 py-2 text-sm font-medium text-white shadow-sm transition-all hover:shadow disabled:opacity-50'
               >
                 Save
               </button>
               <button
                 onClick={cancelEditingAcademic}
                 disabled={saving()}
-                class='rounded-lg bg-slate-100 px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-200 disabled:opacity-50'
+                class='bg-secondary text-secondary-foreground hover:bg-secondary/80 rounded-lg px-4 py-2 text-sm font-medium transition-colors disabled:opacity-50'
               >
                 Cancel
               </button>
@@ -219,7 +219,7 @@ export default function AcademicInfoSection() {
       <Show when={!isEditingAcademic()}>
         <button
           onClick={startEditingAcademic}
-          class='text-sm font-medium text-blue-600 transition-colors hover:text-blue-700'
+          class='text-primary hover:text-primary/80 text-sm font-medium transition-colors'
         >
           Edit
         </button>

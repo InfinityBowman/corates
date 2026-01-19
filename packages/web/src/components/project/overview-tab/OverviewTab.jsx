@@ -348,15 +348,15 @@ export default function OverviewTab() {
                               : member.image
                             : undefined
                           }
-                          alt={member.displayName || member.name || member.email}
+                          alt={member.name || member.email}
                         />
                         <AvatarFallback class='bg-blue-600 text-white'>
-                          {getInitials(member.displayName || member.name || member.email)}
+                          {getInitials(member.name || member.email)}
                         </AvatarFallback>
                       </Avatar>
                       <div>
                         <p class='font-medium text-slate-900'>
-                          {member.displayName || member.name || 'Unknown'}
+                          {member.name || 'Unknown'}
                           {isSelf && <span class='ml-1 text-slate-400'>(you)</span>}
                         </p>
                         <Show when={userProgress().total > 0}>
@@ -373,10 +373,7 @@ export default function OverviewTab() {
                       <Show when={canRemove && !isLastOwner}>
                         <button
                           onClick={() =>
-                            handleRemoveMember(
-                              member.userId,
-                              member.displayName || member.name || member.email,
-                            )
+                            handleRemoveMember(member.userId, member.name || member.email)
                           }
                           class='rounded p-1.5 text-slate-400 transition-colors hover:bg-red-50 hover:text-red-600 focus:ring-2 focus:ring-blue-500 focus:outline-none'
                           title={isSelf ? 'Leave project' : 'Remove member'}

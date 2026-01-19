@@ -40,7 +40,8 @@ const UserSearchResultSchema = z
   .object({
     id: z.string(),
     name: z.string().nullable(),
-    displayName: z.string().nullable(),
+    givenName: z.string().nullable(),
+    familyName: z.string().nullable(),
     username: z.string().nullable(),
     image: z.string().nullable(),
     email: z.string().nullable(),
@@ -149,7 +150,8 @@ userRoutes.openapi(searchUsersRoute, async c => {
         name: user.name,
         email: user.email,
         username: user.username,
-        displayName: user.displayName,
+        givenName: user.givenName,
+        familyName: user.familyName,
         image: user.image,
       })
       .from(user)
@@ -157,7 +159,8 @@ userRoutes.openapi(searchUsersRoute, async c => {
         or(
           like(sql`lower(${user.email})`, searchPattern),
           like(sql`lower(${user.name})`, searchPattern),
-          like(sql`lower(${user.displayName})`, searchPattern),
+          like(sql`lower(${user.givenName})`, searchPattern),
+          like(sql`lower(${user.familyName})`, searchPattern),
           like(sql`lower(${user.username})`, searchPattern),
         ),
       )
@@ -178,7 +181,8 @@ userRoutes.openapi(searchUsersRoute, async c => {
     const sanitizedResults = results.map(u => ({
       id: u.id,
       name: u.name,
-      displayName: u.displayName,
+      givenName: u.givenName,
+      familyName: u.familyName,
       username: u.username,
       image: u.image,
       email: query.includes('@') ? u.email : maskEmail(u.email),
@@ -438,7 +442,8 @@ userRoutes.openapi(syncProfileRoute, async c => {
     const [userData] = await db
       .select({
         name: user.name,
-        displayName: user.displayName,
+        givenName: user.givenName,
+        familyName: user.familyName,
         image: user.image,
       })
       .from(user)
@@ -475,7 +480,8 @@ userRoutes.openapi(syncProfileRoute, async c => {
               member: {
                 userId: currentUser.id,
                 name: userData.name,
-                displayName: userData.displayName,
+                givenName: userData.givenName,
+                familyName: userData.familyName,
                 image: userData.image,
               },
             }),

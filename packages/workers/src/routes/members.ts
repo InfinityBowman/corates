@@ -111,7 +111,8 @@ const MemberSchema = z
     name: z.string().nullable(),
     email: z.string(),
     username: z.string().nullable(),
-    displayName: z.string().nullable(),
+    givenName: z.string().nullable(),
+    familyName: z.string().nullable(),
     image: z.string().nullable(),
   })
   .openapi('Member');
@@ -124,7 +125,8 @@ const AddMemberSuccessSchema = z
     name: z.string().nullable(),
     email: z.string(),
     username: z.string().nullable(),
-    displayName: z.string().nullable(),
+    givenName: z.string().nullable(),
+    familyName: z.string().nullable(),
     image: z.string().nullable(),
     role: z.string(),
     joinedAt: z.string().or(z.date()),
@@ -312,7 +314,8 @@ memberRoutes.openapi(listMembersRoute, async c => {
         name: user.name,
         email: user.email,
         username: user.username,
-        displayName: user.displayName,
+        givenName: user.givenName,
+        familyName: user.familyName,
         image: user.image,
       })
       .from(projectMembers)
@@ -360,7 +363,8 @@ memberRoutes.openapi(addMemberRoute, async c => {
           name: string | null;
           email: string;
           username: string | null;
-          displayName: string | null;
+          givenName: string | null;
+          familyName: string | null;
           image: string | null;
         }
       | undefined;
@@ -372,7 +376,8 @@ memberRoutes.openapi(addMemberRoute, async c => {
           name: user.name,
           email: user.email,
           username: user.username,
-          displayName: user.displayName,
+          givenName: user.givenName,
+          familyName: user.familyName,
           image: user.image,
         })
         .from(user)
@@ -385,7 +390,8 @@ memberRoutes.openapi(addMemberRoute, async c => {
           name: user.name,
           email: user.email,
           username: user.username,
-          displayName: user.displayName,
+          givenName: user.givenName,
+          familyName: user.familyName,
           image: user.image,
         })
         .from(user)
@@ -466,7 +472,7 @@ memberRoutes.openapi(addMemberRoute, async c => {
         .get();
 
       const inviter = await db
-        .select({ name: user.name, displayName: user.displayName, email: user.email })
+        .select({ name: user.name, givenName: user.givenName, email: user.email })
         .from(user)
         .where(eq(user.id, authUser.id))
         .get();
@@ -550,7 +556,7 @@ memberRoutes.openapi(addMemberRoute, async c => {
         const { escapeHtml } = await import('../lib/escapeHtml');
 
         const projectName = project?.name || 'Unknown Project';
-        const inviterName = inviter?.displayName || inviter?.name || inviter?.email || 'Someone';
+        const inviterName = inviter?.givenName || inviter?.name || inviter?.email || 'Someone';
 
         const emailHtml = getProjectInvitationEmailHtml({
           projectName,
@@ -657,7 +663,8 @@ memberRoutes.openapi(addMemberRoute, async c => {
         joinedAt: now.getTime(),
         name: userToAdd.name,
         email: userToAdd.email,
-        displayName: userToAdd.displayName,
+        givenName: userToAdd.givenName,
+        familyName: userToAdd.familyName,
         image: userToAdd.image,
       });
     } catch (err) {
@@ -670,7 +677,8 @@ memberRoutes.openapi(addMemberRoute, async c => {
         name: userToAdd.name,
         email: userToAdd.email,
         username: userToAdd.username,
-        displayName: userToAdd.displayName,
+        givenName: userToAdd.givenName,
+        familyName: userToAdd.familyName,
         image: userToAdd.image,
         role,
         joinedAt: now,

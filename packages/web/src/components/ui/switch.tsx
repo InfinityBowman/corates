@@ -68,9 +68,9 @@ const SwitchControl: Component<SwitchControlProps> = props => {
       class={cn(
         'inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent',
         'transition-colors',
-        'focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:outline-none',
+        'focus-visible:ring-ring focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none',
         'data-disabled:cursor-not-allowed data-disabled:opacity-50',
-        'bg-gray-200 data-[state=checked]:bg-blue-600',
+        'bg-input data-[state=checked]:bg-primary',
         local.class,
       )}
       {...others}
@@ -106,7 +106,7 @@ const SwitchLabel: Component<SwitchLabelProps> = props => {
   const [local, others] = splitProps(props, ['class']);
   return (
     <SwitchPrimitive.Label
-      class={cn('text-sm leading-none font-medium text-gray-900', local.class)}
+      class={cn('text-foreground text-sm leading-none font-medium', local.class)}
       {...others}
     />
   );

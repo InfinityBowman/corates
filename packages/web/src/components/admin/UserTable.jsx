@@ -52,18 +52,14 @@ export default function UserTable(props) {
         const user = info.row.original;
         return (
           <div class='flex items-center space-x-3'>
-            <UserAvatar
-              src={user.avatarUrl || user.image}
-              name={user.displayName || user.name}
-              class='h-8 w-8'
-            />
+            <UserAvatar src={user.avatarUrl || user.image} name={user.name} class='h-8 w-8' />
             <div>
               <A
                 href={`/admin/users/${user.id}`}
                 class='font-medium text-blue-600 hover:text-blue-700 hover:underline'
                 onClick={e => e.stopPropagation()}
               >
-                {user.displayName || user.name || 'Unknown'}
+                {user.name || 'Unknown'}
               </A>
               <Show when={user.username}>
                 <p class='text-sm text-gray-500'>@{user.username}</p>

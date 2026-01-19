@@ -381,9 +381,7 @@ export default function StripeToolsPage() {
                     class='inline-flex items-center text-sm text-blue-600 hover:text-blue-700'
                   >
                     <FiUser class='mr-1 h-4 w-4' />
-                    {customerData().linkedUser.displayName ||
-                      customerData().linkedUser.name ||
-                      customerData().linkedUser.email}
+                    {customerData().linkedUser.name || customerData().linkedUser.email}
                   </A>
                 </Show>
                 <Show

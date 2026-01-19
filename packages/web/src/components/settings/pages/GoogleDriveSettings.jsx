@@ -77,12 +77,12 @@ export default function GoogleDriveSettings() {
   return (
     <div class='flex items-center justify-between'>
       <div class='flex items-center gap-3'>
-        <div class='rounded-lg bg-gray-100 p-2'>
+        <div class='bg-secondary rounded-lg p-2'>
           <img src='/logos/drive.svg' alt='Google Drive' class='h-5 w-5' />
         </div>
         <div>
-          <p class='font-medium text-gray-900'>Google Drive</p>
-          <p class='text-sm text-gray-500'>
+          <p class='text-foreground font-medium'>Google Drive</p>
+          <p class='text-muted-foreground text-sm'>
             {loading() ?
               'Checking connection...'
             : connected() ?
@@ -100,7 +100,7 @@ export default function GoogleDriveSettings() {
               type='button'
               onClick={handleConnect}
               disabled={connecting()}
-              class='inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 disabled:opacity-50'
+              class='bg-primary text-primary-foreground hover:bg-primary/90 inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors disabled:opacity-50'
             >
               <img src='/logos/drive.svg' alt='Google Drive' class='h-4 w-4' />
               {connecting() ? 'Connecting...' : 'Connect'}
@@ -112,7 +112,7 @@ export default function GoogleDriveSettings() {
               type='button'
               onClick={handleDisconnect}
               disabled={disconnecting()}
-              class='inline-flex items-center gap-1 rounded-lg bg-red-50 px-3 py-1.5 text-sm font-medium text-red-600 transition-colors hover:bg-red-100 disabled:opacity-50'
+              class='bg-destructive-subtle text-destructive hover:bg-destructive/10 inline-flex items-center gap-1 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors disabled:opacity-50'
             >
               <FiX class='h-4 w-4' />
               {disconnecting() ? 'Disconnecting...' : 'Disconnect'}

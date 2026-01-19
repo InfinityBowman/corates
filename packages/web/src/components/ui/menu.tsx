@@ -120,7 +120,7 @@ const MenuContent: Component<MenuContentProps> = props => {
   return (
     <MenuPrimitive.Content
       class={cn(
-        'min-w-40 rounded-lg border border-gray-200 bg-white py-1 shadow-lg outline-none',
+        'border-border bg-popover min-w-40 rounded-lg border py-1 shadow-lg outline-none',
         Z_INDEX.MENU,
         local.class,
       )}
@@ -143,11 +143,11 @@ const MenuItem: Component<MenuItemProps> = props => {
     <MenuPrimitive.Item
       class={cn(
         'mx-1 flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm transition-colors outline-none select-none',
-        'hover:bg-gray-100 data-highlighted:bg-gray-100',
+        'hover:bg-muted data-highlighted:bg-muted',
         'data-disabled:pointer-events-none data-disabled:cursor-not-allowed data-disabled:opacity-50',
         local.destructive ?
-          'text-red-600 hover:bg-red-50 data-highlighted:bg-red-50'
-        : 'text-gray-700',
+          'text-destructive hover:bg-destructive-subtle data-highlighted:bg-destructive-subtle'
+        : 'text-popover-foreground',
         local.class,
       )}
       {...others}
@@ -174,7 +174,7 @@ const MenuItemGroupLabel: Component<MenuItemGroupLabelProps> = props => {
   const [local, others] = splitProps(props, ['class']);
   return (
     <MenuPrimitive.ItemGroupLabel
-      class={cn('px-2 py-1.5 text-xs font-semibold text-gray-500', local.class)}
+      class={cn('text-muted-foreground px-2 py-1.5 text-xs font-semibold', local.class)}
       {...others}
     />
   );
@@ -187,7 +187,10 @@ type MenuSeparatorProps = ArkMenuSeparatorProps & {
 const MenuSeparator: Component<MenuSeparatorProps> = props => {
   const [local, others] = splitProps(props, ['class']);
   return (
-    <MenuPrimitive.Separator class={cn('my-1 border-t border-gray-100', local.class)} {...others} />
+    <MenuPrimitive.Separator
+      class={cn('border-border-subtle my-1 border-t', local.class)}
+      {...others}
+    />
   );
 };
 

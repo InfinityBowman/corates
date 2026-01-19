@@ -269,13 +269,11 @@ export default function UserDetail() {
             <div class='flex items-center space-x-4'>
               <UserAvatar
                 src={userData().user.avatarUrl || userData().user.image}
-                name={userData().user.displayName || userData().user.name}
+                name={userData().user.name}
                 class='h-16 w-16 text-xl'
               />
               <div>
-                <h1 class='text-2xl font-bold text-gray-900'>
-                  {userData().user.displayName || userData().user.name}
-                </h1>
+                <h1 class='text-2xl font-bold text-gray-900'>{userData().user.name}</h1>
                 <p class='text-gray-500'>{userData().user.email}</p>
                 <div class='mt-1 flex items-center space-x-2'>
                   <Show when={userData().user.role === 'admin'}>

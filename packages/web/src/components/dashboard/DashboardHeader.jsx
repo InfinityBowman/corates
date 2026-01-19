@@ -18,8 +18,9 @@ import { AnimationContext } from './Dashboard.jsx';
 export function DashboardHeader(props) {
   const animation = useContext(AnimationContext);
   const firstName = () => {
-    const name = props.user?.name || '';
-    return name.split(' ')[0] || '';
+    // Use structured givenName if available, fallback to name
+    if (props.user?.givenName) return props.user.givenName;
+    return props.user?.name || '';
   };
 
   return (

@@ -86,9 +86,9 @@ const FileUploadDropzone: Component<FileUploadDropzoneProps> = props => {
   return (
     <FileUploadPrimitive.Dropzone
       class={cn(
-        'flex min-h-32 cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-gray-300 bg-gray-50 p-6 transition-colors',
-        'hover:border-blue-400 hover:bg-blue-50',
-        'data-dragging:border-blue-500 data-dragging:bg-blue-50',
+        'border-border bg-muted flex min-h-32 cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed p-6 transition-colors',
+        'hover:border-primary hover:bg-primary-subtle',
+        'data-dragging:border-primary data-dragging:bg-primary-subtle',
         local.class,
       )}
       {...others}
@@ -108,8 +108,8 @@ const FileUploadTrigger: Component<FileUploadTriggerProps> = props => {
   return (
     <FileUploadPrimitive.Trigger
       class={cn(
-        'inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors',
-        'hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none',
+        'bg-primary text-primary-foreground inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors',
+        'hover:bg-primary/90 focus:ring-ring focus:ring-2 focus:ring-offset-2 focus:outline-none',
         'disabled:cursor-not-allowed disabled:opacity-50',
         local.class,
       )}
@@ -129,7 +129,7 @@ const FileUploadLabel: Component<FileUploadLabelProps> = props => {
   const [local, others] = splitProps(props, ['class', 'children']);
   return (
     <FileUploadPrimitive.Label
-      class={cn('mb-2 block text-sm font-medium text-gray-700', local.class)}
+      class={cn('text-secondary-foreground mb-2 block text-sm font-medium', local.class)}
       {...others}
     >
       {local.children}
@@ -160,10 +160,7 @@ const FileUploadItem: Component<FileUploadItemProps> = props => {
   const [local, others] = splitProps(props, ['class', 'children']);
   return (
     <FileUploadPrimitive.Item
-      class={cn(
-        'flex items-center gap-3 rounded-lg border border-gray-200 bg-white p-3',
-        local.class,
-      )}
+      class={cn('border-border bg-card flex items-center gap-3 rounded-lg border p-3', local.class)}
       {...others}
     >
       {local.children}
@@ -179,7 +176,7 @@ const FileUploadItemName: Component<FileUploadItemNameProps> = props => {
   const [local, others] = splitProps(props, ['class']);
   return (
     <FileUploadPrimitive.ItemName
-      class={cn('min-w-0 flex-1 truncate text-sm font-medium text-gray-900', local.class)}
+      class={cn('text-foreground min-w-0 flex-1 truncate text-sm font-medium', local.class)}
       {...others}
     />
   );
@@ -193,7 +190,7 @@ const FileUploadItemSizeText: Component<FileUploadItemSizeTextProps> = props => 
   const [local, others] = splitProps(props, ['class']);
   return (
     <FileUploadPrimitive.ItemSizeText
-      class={cn('text-xs text-gray-500', local.class)}
+      class={cn('text-muted-foreground text-xs', local.class)}
       {...others}
     />
   );
@@ -209,7 +206,7 @@ const FileUploadItemDeleteTrigger: Component<FileUploadItemDeleteTriggerProps> =
   return (
     <FileUploadPrimitive.ItemDeleteTrigger
       class={cn(
-        'rounded p-1 text-gray-400 transition-colors hover:bg-red-50 hover:text-red-600',
+        'text-muted-foreground hover:bg-destructive-subtle hover:text-destructive rounded p-1 transition-colors',
         local.class,
       )}
       {...others}
@@ -228,7 +225,7 @@ const FileUploadItemPreview: Component<FileUploadItemPreviewProps> = props => {
   const [local, others] = splitProps(props, ['class', 'children']);
   return (
     <FileUploadPrimitive.ItemPreview
-      class={cn('flex h-10 w-10 items-center justify-center rounded bg-gray-100', local.class)}
+      class={cn('bg-muted flex h-10 w-10 items-center justify-center rounded', local.class)}
       {...others}
     >
       {local.children}

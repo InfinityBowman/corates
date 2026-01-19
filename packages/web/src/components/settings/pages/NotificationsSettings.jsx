@@ -15,28 +15,28 @@ export default function NotificationsSettings() {
   const [darkMode, setDarkMode] = createSignal(false);
 
   return (
-    <div class='min-h-full bg-gradient-to-br from-slate-50 to-slate-100/80 py-8'>
+    <div class='bg-background min-h-full py-8'>
       <div class='mx-auto max-w-3xl px-4 sm:px-6'>
         <div class='mb-8'>
-          <h1 class='text-2xl font-semibold tracking-tight text-slate-900'>Notifications</h1>
-          <p class='mt-1 text-slate-500'>Configure how you want to receive updates</p>
+          <h1 class='text-foreground text-2xl font-semibold tracking-tight'>Notifications</h1>
+          <p class='text-muted-foreground mt-1'>Configure how you want to receive updates</p>
         </div>
 
         {/* Notifications Section */}
-        <div class='mb-6 overflow-hidden rounded-xl border border-slate-200/60 bg-white shadow-sm transition-shadow duration-200 hover:shadow-md'>
-          <div class='border-b border-slate-100 bg-gradient-to-r from-slate-50 to-white px-6 py-4'>
+        <div class='border-border bg-card mb-6 overflow-hidden rounded-xl border shadow-sm transition-shadow duration-200 hover:shadow-md'>
+          <div class='border-border-subtle border-b bg-gradient-to-r from-slate-50 to-white px-6 py-4'>
             <div class='flex items-center space-x-2.5'>
-              <div class='flex h-8 w-8 items-center justify-center rounded-lg bg-blue-50'>
-                <FiBell class='h-4 w-4 text-blue-600' />
+              <div class='bg-primary-subtle flex h-8 w-8 items-center justify-center rounded-lg'>
+                <FiBell class='text-primary h-4 w-4' />
               </div>
-              <h2 class='text-base font-semibold text-slate-900'>Email Notifications</h2>
+              <h2 class='text-foreground text-base font-semibold'>Email Notifications</h2>
             </div>
           </div>
-          <div class='divide-y divide-slate-100 p-6'>
+          <div class='divide-border-subtle divide-y p-6'>
             <div class='flex items-center justify-between pb-4'>
               <div>
-                <p class='font-medium text-slate-900'>Email Notifications</p>
-                <p class='text-sm text-slate-500'>
+                <p class='text-foreground font-medium'>Email Notifications</p>
+                <p class='text-muted-foreground text-sm'>
                   Receive email notifications about your account.
                 </p>
               </div>
@@ -49,8 +49,8 @@ export default function NotificationsSettings() {
             </div>
             <div class='flex items-center justify-between pt-4'>
               <div>
-                <p class='font-medium text-slate-900'>Project Updates</p>
-                <p class='text-sm text-slate-500'>
+                <p class='text-foreground font-medium'>Project Updates</p>
+                <p class='text-muted-foreground text-sm'>
                   Get notified when collaborators make changes to your projects.
                 </p>
               </div>
@@ -65,20 +65,20 @@ export default function NotificationsSettings() {
         </div>
 
         {/* Appearance Section */}
-        <div class='mb-6 overflow-hidden rounded-xl border border-slate-200/60 bg-white shadow-sm transition-shadow duration-200 hover:shadow-md'>
-          <div class='border-b border-slate-100 bg-gradient-to-r from-slate-50 to-white px-6 py-4'>
+        <div class='border-border bg-card mb-6 overflow-hidden rounded-xl border shadow-sm transition-shadow duration-200 hover:shadow-md'>
+          <div class='border-border-subtle border-b bg-gradient-to-r from-slate-50 to-white px-6 py-4'>
             <div class='flex items-center space-x-2.5'>
-              <div class='flex h-8 w-8 items-center justify-center rounded-lg bg-slate-100'>
-                <FiMoon class='h-4 w-4 text-slate-600' />
+              <div class='bg-secondary flex h-8 w-8 items-center justify-center rounded-lg'>
+                <FiMoon class='text-secondary-foreground h-4 w-4' />
               </div>
-              <h2 class='text-base font-semibold text-slate-900'>Appearance</h2>
+              <h2 class='text-foreground text-base font-semibold'>Appearance</h2>
             </div>
           </div>
           <div class='p-6'>
             <div class='flex items-center justify-between'>
               <div>
-                <p class='font-medium text-slate-900'>Dark Mode</p>
-                <p class='text-sm text-slate-500'>Use dark theme across the application.</p>
+                <p class='text-foreground font-medium'>Dark Mode</p>
+                <p class='text-muted-foreground text-sm'>Use dark theme across the application.</p>
               </div>
               <SwitchRoot checked={darkMode()} onCheckedChange={setDarkMode} disabled>
                 <SwitchControl>

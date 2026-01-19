@@ -83,7 +83,7 @@ export default function AddMemberModal(props) {
 
   const handleSimpleSelectUser = user => {
     setSimpleSelectedUser(user);
-    setSearchQuery(user.displayName || user.name || user.email);
+    setSearchQuery(user.name || user.email);
     setSearchResults([]);
   };
 
@@ -223,18 +223,13 @@ export default function AddMemberModal(props) {
                         class='flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-blue-50'
                       >
                         <Avatar class='h-8 w-8 shrink-0'>
-                          <AvatarImage
-                            src={user.image}
-                            alt={user.displayName || user.name || user.email}
-                          />
+                          <AvatarImage src={user.image} alt={user.name || user.email} />
                           <AvatarFallback class='bg-blue-600 text-sm text-white'>
-                            {getInitials(user.displayName || user.name || user.email)}
+                            {getInitials(user.name || user.email)}
                           </AvatarFallback>
                         </Avatar>
                         <div class='min-w-0'>
-                          <p class='truncate font-medium text-gray-900'>
-                            {user.displayName || user.name || 'Unknown'}
-                          </p>
+                          <p class='truncate font-medium text-gray-900'>{user.name || 'Unknown'}</p>
                           <p class='truncate text-sm text-gray-500'>{user.email}</p>
                         </div>
                       </button>
@@ -281,20 +276,14 @@ export default function AddMemberModal(props) {
                   <Avatar class='h-10 w-10'>
                     <AvatarImage
                       src={selectedUser().image}
-                      alt={
-                        selectedUser().displayName || selectedUser().name || selectedUser().email
-                      }
+                      alt={selectedUser().name || selectedUser().email}
                     />
                     <AvatarFallback class='bg-blue-600 text-white'>
-                      {getInitials(
-                        selectedUser().displayName || selectedUser().name || selectedUser().email,
-                      )}
+                      {getInitials(selectedUser().name || selectedUser().email)}
                     </AvatarFallback>
                   </Avatar>
                   <div>
-                    <p class='font-medium text-gray-900'>
-                      {selectedUser().displayName || selectedUser().name || 'Unknown'}
-                    </p>
+                    <p class='font-medium text-gray-900'>{selectedUser().name || 'Unknown'}</p>
                     <p class='text-sm text-gray-500'>{selectedUser().email}</p>
                   </div>
                 </div>

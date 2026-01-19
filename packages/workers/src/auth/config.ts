@@ -12,6 +12,7 @@ import { getAllowedOrigins } from '../config/origins';
 import { isAdminUser } from './admin';
 import { MAGIC_LINK_EXPIRY_MINUTES } from './emailTemplates';
 import { notifyOrgMembers, EventTypes } from '../lib/notify';
+import { copyAvatarToR2, isExternalAvatarUrl, isInternalAvatarUrl } from '../lib/avatar-copy';
 import { createDomainError, SYSTEM_ERRORS } from '@corates/shared';
 import type { Env } from '../types';
 
@@ -23,7 +24,9 @@ interface BetterAuthUser {
   id: string;
   email: string;
   name?: string;
-  displayName?: string;
+  givenName?: string;
+  familyName?: string;
+  image?: string | null;
   username?: string;
   role?: string;
   [key: string]: unknown;
@@ -82,6 +85,16 @@ export function createAuth(env: Env, ctx?: ExecutionContext) {
       accessType: 'offline',
       // Request Drive read-only access for PDF import
       scope: ['openid', 'email', 'profile', 'https://www.googleapis.com/auth/drive.readonly'],
+      // Map Google's given_name/family_name to our schema
+      mapProfileToUser: (profile: {
+        given_name?: string;
+        family_name?: string;
+        name?: string;
+        [key: string]: unknown;
+      }) => ({
+        givenName: profile.given_name || null,
+        familyName: profile.family_name || null,
+      }),
     };
   } else {
     console.error(
@@ -114,12 +127,17 @@ export function createAuth(env: Env, ctx?: ExecutionContext) {
                 },
               });
               const profile = (await response.json()) as OrcidProfile;
+              const givenName = profile.given_name || null;
+              const familyName = profile.family_name || null;
+              const name =
+                profile.name ||
+                [givenName, familyName].filter(Boolean).join(' ') ||
+                profile.sub;
               return {
                 id: profile.sub,
-                name:
-                  profile.name ||
-                  `${profile.given_name || ''} ${profile.family_name || ''}`.trim() ||
-                  profile.sub,
+                name,
+                givenName,
+                familyName,
                 email: profile.email || `${profile.sub}@orcid.org`,
                 emailVerified: !!profile.email,
                 image: undefined,
@@ -417,7 +435,7 @@ export function createAuth(env: Env, ctx?: ExecutionContext) {
                 await emailService.sendPasswordReset(
                   user.email,
                   url,
-                  user.displayName || user.username || user.name,
+                  user.givenName || user.name || user.username,
                 );
               } catch (err) {
                 console.error('Background email error:', err);
@@ -450,7 +468,7 @@ export function createAuth(env: Env, ctx?: ExecutionContext) {
                 await emailService.sendEmailVerification(
                   user.email,
                   url,
-                  user.displayName || user.username || user.name,
+                  user.givenName || user.name || user.username,
                 );
               } catch (err) {
                 console.error('[Auth:waitUntil] Background email error:', err);
@@ -474,11 +492,15 @@ export function createAuth(env: Env, ctx?: ExecutionContext) {
 
     user: {
       additionalFields: {
-        username: {
+        givenName: {
           type: 'string',
           required: false,
         },
-        displayName: {
+        familyName: {
+          type: 'string',
+          required: false,
+        },
+        username: {
           type: 'string',
           required: false,
         },
@@ -550,13 +572,46 @@ export function createAuth(env: Env, ctx?: ExecutionContext) {
 
     // Hooks for custom auth behavior
     hooks: {
-      // After hook: bootstrap personal org on first successful authentication
+      // After hook: bootstrap personal org and copy OAuth avatar on first successful authentication
       after: createAuthMiddleware(async (authCtx: { context: { newSession?: NewSessionData } }) => {
         const newSession = authCtx.context.newSession;
         if (!newSession) return;
 
         const userId = newSession.user.id;
-        const userName = newSession.user.name || newSession.user.email?.split('@')[0] || 'User';
+        const userImage = newSession.user.image;
+        const userName =
+          newSession.user.givenName ||
+          newSession.user.name ||
+          newSession.user.email?.split('@')[0] ||
+          'User';
+
+        // Copy external OAuth avatar to R2 in the background
+        // This ensures all avatars are served from our storage, avoiding external URL issues
+        if (ctx && ctx.waitUntil && isExternalAvatarUrl(userImage) && !isInternalAvatarUrl(userImage)) {
+          console.log(`[Auth] Queuing avatar copy for user ${userId} from ${userImage}`);
+          ctx.waitUntil(
+            (async () => {
+              try {
+                const result = await copyAvatarToR2(env, userId, userImage);
+                if (result.success && result.url) {
+                  // Update user's image field with the R2 URL
+                  await db
+                    .update(schema.user)
+                    .set({ image: result.url })
+                    .where(eq(schema.user.id, userId));
+                  console.log(`[Auth:waitUntil] Avatar copied for user ${userId}: ${result.url}`);
+                } else {
+                  console.error(`[Auth:waitUntil] Avatar copy failed for user ${userId}:`, {
+                    error: result.error,
+                    errorCode: result.errorCode,
+                  });
+                }
+              } catch (err) {
+                console.error('[Auth:waitUntil] Avatar copy error:', err);
+              }
+            })(),
+          );
+        }
 
         try {
           // Check if user has any org memberships
