@@ -9,7 +9,8 @@ import { createDb } from '@/db/client.js';
 import { user, organization, subscription } from '@/db/schema.js';
 import { eq } from 'drizzle-orm';
 import { createDomainError, SYSTEM_ERRORS, VALIDATION_ERRORS } from '@corates/shared';
-import Stripe from 'stripe';
+import type Stripe from 'stripe';
+import { createStripeClient } from '@/lib/stripe.js';
 import { validationHook } from '@/lib/honoValidationHook.js';
 import type { Env } from '../../types';
 
@@ -417,9 +418,7 @@ stripeToolsRoutes.openapi(customerLookupRoute, async c => {
     return c.json(error, error.statusCode as ContentfulStatusCode);
   }
 
-  const stripe = new Stripe(c.env.STRIPE_SECRET_KEY, {
-    apiVersion: '2025-12-15.clover',
-  });
+  const stripe = createStripeClient(c.env);
 
   try {
     let customer: Stripe.Customer | null = null;
@@ -578,9 +577,7 @@ stripeToolsRoutes.openapi(portalLinkRoute, async c => {
     return c.json(error, error.statusCode as ContentfulStatusCode);
   }
 
-  const stripe = new Stripe(c.env.STRIPE_SECRET_KEY, {
-    apiVersion: '2025-12-15.clover',
-  });
+  const stripe = createStripeClient(c.env);
 
   try {
     const session = await stripe.billingPortal.sessions.create({
@@ -622,9 +619,7 @@ stripeToolsRoutes.openapi(invoicesRoute, async c => {
     return c.json(error, error.statusCode as ContentfulStatusCode);
   }
 
-  const stripe = new Stripe(c.env.STRIPE_SECRET_KEY, {
-    apiVersion: '2025-12-15.clover',
-  });
+  const stripe = createStripeClient(c.env);
 
   try {
     const invoices = await stripe.invoices.list({
@@ -687,9 +682,7 @@ stripeToolsRoutes.openapi(paymentMethodsRoute, async c => {
     return c.json(error, error.statusCode as ContentfulStatusCode);
   }
 
-  const stripe = new Stripe(c.env.STRIPE_SECRET_KEY, {
-    apiVersion: '2025-12-15.clover',
-  });
+  const stripe = createStripeClient(c.env);
 
   try {
     const paymentMethods = await stripe.paymentMethods.list({
@@ -742,9 +735,7 @@ stripeToolsRoutes.openapi(subscriptionsRoute, async c => {
     return c.json(error, error.statusCode as ContentfulStatusCode);
   }
 
-  const stripe = new Stripe(c.env.STRIPE_SECRET_KEY, {
-    apiVersion: '2025-12-15.clover',
-  });
+  const stripe = createStripeClient(c.env);
 
   try {
     const subscriptions = await stripe.subscriptions.list({

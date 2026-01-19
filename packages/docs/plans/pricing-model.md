@@ -1,7 +1,7 @@
 # CoRATES pricing model (proposal)
 
 Status: draft
-Last updated: 2026-01-03
+Last updated: 2026-01-19
 
 This document proposes a pricing model for CoRATES that is:
 
@@ -170,11 +170,11 @@ This is your low-friction entry point.
 
 ### Starter Team
 
-**$9 / month** ($90 / year with annual discount)
+**$8 / month** ($80 / year with annual discount)
 
 Includes:
 
-- 2-3 projects
+- Up to 3 projects
 - Up to 5 collaborators
 - All automation features
 - Consensus & disagreement views
@@ -223,7 +223,7 @@ Includes:
 
 ### Unlimited Team
 
-**$49 / month** ($490 / year with annual discount)
+**$59 / month** ($590 / year with annual discount)
 
 Includes:
 
@@ -250,8 +250,8 @@ Includes:
 
 | Feature                     | Free       | Single Project             | Starter Team               | Team                       | Unlimited Team             |
 | --------------------------- | ---------- | -------------------------- | -------------------------- | -------------------------- | -------------------------- |
-| Project creation            | ❌         | ✅ (1 project)             | ✅ (2-3 projects)          | ✅ (up to 10)              | ✅ (unlimited)             |
-| Projects                    | N/A        | 1 (6 months)               | 2-3                        | Up to 10                   | Unlimited                  |
+| Project creation            | -          | Yes (1 project)            | Yes (up to 3)              | Yes (up to 10)             | Yes (unlimited)            |
+| Projects                    | N/A        | 1 (6 months)               | Up to 3                    | Up to 10                   | Unlimited                  |
 | Collaborators               | N/A        | Up to 3                    | Up to 5                    | Up to 15                   | Unlimited                  |
 | Automation (AMSTAR-2, etc.) | ❌         | ✅                         | ✅                         | ✅                         | ✅                         |
 | Consensus workflows         | ❌         | ✅                         | ✅                         | ✅                         | ✅                         |
@@ -306,9 +306,9 @@ Without changing pricing architecture.
 **Annual discount: 2 months free** (pay 10 months)
 
 - Single Project: Not applicable (one-time payment)
-- Starter Team: $100/year (vs $120/monthly)
+- Starter Team: $80/year (vs $96/monthly)
 - Team: $290/year (vs $348/monthly)
-- Unlimited Team: $490/year (vs $588/monthly)
+- Unlimited Team: $590/year (vs $708/monthly)
 
 This matches industry standard and improves cash flow.
 

@@ -28,7 +28,8 @@ import { Hono } from 'hono';
 import type { ContentfulStatusCode } from 'hono/utils/http-status';
 import { createDb } from '@/db/client.js';
 import { createDomainError, SYSTEM_ERRORS, AUTH_ERRORS, VALIDATION_ERRORS } from '@corates/shared';
-import Stripe from 'stripe';
+import type Stripe from 'stripe';
+import { createStripeClient, isStripeConfigured } from '@/lib/stripe.js';
 import { createLogger, sha256, truncateError } from '@/lib/observability/logger.js';
 import {
   insertLedgerEntry,
@@ -68,16 +69,14 @@ billingWebhookRoutes.post('/purchases/webhook', async c => {
   let payloadHash: string | undefined;
 
   try {
-    if (!c.env.STRIPE_SECRET_KEY || !c.env.STRIPE_WEBHOOK_SECRET_PURCHASES) {
+    if (!isStripeConfigured(c.env) || !c.env.STRIPE_WEBHOOK_SECRET_PURCHASES) {
       const error = createDomainError(SYSTEM_ERRORS.INTERNAL_ERROR, {
         operation: 'stripe_not_configured',
       });
       return c.json(error, error.statusCode as ContentfulStatusCode);
     }
 
-    const stripe = new Stripe(c.env.STRIPE_SECRET_KEY, {
-      apiVersion: '2025-12-15.clover',
-    });
+    const stripe = createStripeClient(c.env);
 
     // Phase 1: Read request and store trust-minimal fields
     const signature = c.req.header('stripe-signature');

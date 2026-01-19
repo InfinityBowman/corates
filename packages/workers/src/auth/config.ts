@@ -206,9 +206,9 @@ export function createAuth(env: Env, ctx?: ExecutionContext) {
 
   // Stripe plugin for org-scoped subscriptions
   // IMPORTANT: Stripe price amounts must match prices defined in @corates/shared/plans/pricing.ts
-  // - starter_team: $9/month, $90/year
+  // - starter_team: $8/month, $80/year
   // - team: $29/month, $290/year
-  // - unlimited_team: $49/month, $490/year
+  // - unlimited_team: $59/month, $590/year
   if (env.STRIPE_SECRET_KEY && env.STRIPE_WEBHOOK_SECRET_AUTH) {
     const stripeClient = new Stripe(env.STRIPE_SECRET_KEY, {
       apiVersion: '2025-12-15.clover',

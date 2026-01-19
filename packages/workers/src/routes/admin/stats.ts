@@ -9,7 +9,7 @@ import { createDb } from '@/db/client.js';
 import { user, organization, stripeEventLedger, projects } from '@/db/schema.js';
 import { sql, count, gte } from 'drizzle-orm';
 import { createDomainError, SYSTEM_ERRORS } from '@corates/shared';
-import Stripe from 'stripe';
+import { createStripeClient } from '@/lib/stripe.js';
 import { validationHook } from '@/lib/honoValidationHook.js';
 import type { Env } from '../../types';
 
@@ -562,9 +562,7 @@ statsRoutes.openapi(webhooksRoute, async c => {
 // @ts-expect-error OpenAPIHono strict return types don't account for error responses
 statsRoutes.openapi(subscriptionsRoute, async c => {
   try {
-    const stripe = new Stripe(c.env.STRIPE_SECRET_KEY, {
-      apiVersion: '2025-12-15.clover',
-    });
+    const stripe = createStripeClient(c.env);
 
     // Use search to get actual counts
     const statusCounts = await Promise.all([
@@ -602,9 +600,7 @@ statsRoutes.openapi(revenueRoute, async c => {
   const months = Math.min(parseInt(query.months || '6', 10) || 6, 12);
 
   try {
-    const stripe = new Stripe(c.env.STRIPE_SECRET_KEY, {
-      apiVersion: '2025-12-15.clover',
-    });
+    const stripe = createStripeClient(c.env);
 
     // Calculate date range
     const startDate = new Date();
