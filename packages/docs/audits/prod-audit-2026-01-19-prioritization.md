@@ -6,12 +6,12 @@ Based on the audit findings, here's a prioritized approach balancing **ease of i
 
 ## Priority Matrix
 
-| Priority | Criteria |
-|----------|----------|
-| P0 - Do First | High impact, low effort (quick wins) |
-| P1 - Do Next | High impact, moderate effort |
-| P2 - Schedule | Moderate impact, higher effort |
-| P3 - Backlog | Lower urgency, can wait for post-launch |
+| Priority      | Criteria                                |
+| ------------- | --------------------------------------- |
+| P0 - Do First | High impact, low effort (quick wins)    |
+| P1 - Do Next  | High impact, moderate effort            |
+| P2 - Schedule | Moderate impact, higher effort          |
+| P3 - Backlog  | Lower urgency, can wait for post-launch |
 
 ---
 
@@ -26,6 +26,7 @@ These provide significant risk reduction with minimal time investment. Complete 
 **Why first:** Zero code changes required. You already have the capability - you just need to document it. Reduces operational risk immediately.
 
 **What to do:**
+
 - Create a runbook in `packages/docs/guides/` documenting:
   - How to use `wrangler d1 time-travel` commands
   - When to use restore vs export
@@ -33,16 +34,20 @@ These provide significant risk reduction with minimal time investment. Complete 
 - Test the procedure once in development to verify it works
 
 **Example runbook outline:**
+
 ```markdown
 # D1 Database Recovery
 
 ## Point-in-Time Recovery
+
 wrangler d1 time-travel restore <database-name> --timestamp <ISO-timestamp>
 
 ## Export Before Risky Operations
+
 wrangler d1 export <database-name> --output backup.sql
 
 ## Common Scenarios
+
 - Accidental project deletion: [steps]
 - Bad migration rollback: [steps]
 ```
@@ -56,12 +61,14 @@ wrangler d1 export <database-name> --output backup.sql
 **Why early:** Without this, you're flying blind. Production errors go undetected. This is the single most important observability fix.
 
 **What to do:**
+
 - Sign up for Sentry (free tier is sufficient for beta)
 - Uncomment and configure the Sentry integration in `packages/web/src/lib/errorLogger.js`
 - Add Sentry DSN to environment variables
 - Test that errors are captured
 
 **The code structure already exists** - you just need to enable it:
+
 ```javascript
 // packages/web/src/lib/errorLogger.js:72-94
 // Uncomment and configure this block
@@ -77,6 +84,7 @@ wrangler d1 export <database-name> --output backup.sql
 
 **What to do:**
 Add one line to `packages/workers/src/auth/routes.ts`:
+
 ```typescript
 auth.use('/magic-link/*', authRateLimit);
 ```
@@ -90,6 +98,7 @@ auth.use('/magic-link/*', authRateLimit);
 **Why now:** Simple find-and-remove. Prevents token leakage in logs.
 
 **What to do:**
+
 - Search for `console.log` in `packages/workers/src/auth/`
 - Remove or mask URLs containing tokens
 - Files: `config.ts`, `email.ts`, `routes.ts`
@@ -104,6 +113,7 @@ auth.use('/magic-link/*', authRateLimit);
 
 **What to do:**
 In `packages/workers/src/auth/config.ts:485-488`, change:
+
 ```typescript
 cookieCache: {
   enabled: true,
@@ -126,6 +136,7 @@ These require more effort but address significant risks. Complete within the fir
 **What to do:**
 
 1. Add `deletedAt` column to schema:
+
 ```typescript
 // packages/workers/src/db/schema.ts
 deletedAt: integer('deletedAt', { mode: 'timestamp' }),
@@ -134,6 +145,7 @@ deletedAt: integer('deletedAt', { mode: 'timestamp' }),
 2. Generate migration with DrizzleKit
 
 3. Update delete operations to set `deletedAt` instead of hard delete:
+
 ```typescript
 // Instead of: await db.delete(projects).where(...)
 await db.update(projects).set({ deletedAt: new Date() }).where(...)
@@ -156,6 +168,7 @@ await db.update(projects).set({ deletedAt: new Date() }).where(...)
 **What to do:**
 
 Option A (Simpler - Retry with logging):
+
 ```typescript
 // packages/workers/src/commands/members/addMember.ts
 const MAX_RETRIES = 3;
@@ -176,6 +189,7 @@ for (let i = 0; i < MAX_RETRIES && !syncSuccess; i++) {
 ```
 
 Option B (More robust - Compensation):
+
 - If DO sync fails, roll back the D1 insert
 - Return error to user asking them to retry
 
@@ -191,6 +205,7 @@ Option B (More robust - Compensation):
 
 **What to do:**
 Add middleware to `packages/workers/src/routes/billing/subscription.ts`:
+
 ```typescript
 import { requireOrgMembership } from '@/middleware/requireOrg';
 
@@ -210,6 +225,7 @@ These are important but can wait until after initial beta feedback.
 **Why can wait:** At <100 MAU, the race window is tiny. The risk of concurrent quota-exceeding requests is low.
 
 **What to do (when ready):**
+
 ```typescript
 // Use unique constraint + INSERT OR IGNORE pattern
 // Or implement optimistic locking with version field
@@ -226,6 +242,7 @@ These are important but can wait until after initial beta feedback.
 **Why can wait:** In-memory rate limiting works fine at low traffic. Attackers would need to know about the bypass.
 
 **What to do (when ready):**
+
 - Use Cloudflare KV or Durable Objects for rate limit state
 - Or use Cloudflare's native Rate Limiting product
 
@@ -238,6 +255,7 @@ These are important but can wait until after initial beta feedback.
 **Why can wait:** Performance issue only matters under heavy collaboration load. With <100 MAU, unlikely to be a problem.
 
 **What to do (when ready):**
+
 ```typescript
 // Debounce the persistence call
 let persistTimeout: number | null = null;
@@ -260,6 +278,7 @@ this.doc.on('update', () => {
 **Why can wait:** Storage costs are minimal. Orphaned files don't affect functionality.
 
 **What to do (when ready):**
+
 - Create scheduled job that:
   1. Lists all R2 keys
   2. Queries mediaFiles for matching bucketKeys
@@ -287,33 +306,33 @@ this.doc.on('update', () => {
 
 ### Day 1 (4-6 hours)
 
-| Order | Task | Time |
-|-------|------|------|
-| 1 | Document D1 rollback procedure | 1-2 hrs |
-| 2 | Enable Sentry | 2-3 hrs |
-| 3 | Rate limit magic link | 30 min |
-| 4 | Remove sensitive URL logging | 1 hr |
-| 5 | Reduce session cache TTL | 15 min |
+| Order | Task                           | Time    |
+| ----- | ------------------------------ | ------- |
+| 1     | Document D1 rollback procedure | 1-2 hrs |
+| 2     | Enable Sentry                  | 2-3 hrs |
+| 3     | Rate limit magic link          | 30 min  |
+| 4     | Remove sensitive URL logging   | 1 hr    |
+| 5     | Reduce session cache TTL       | 15 min  |
 
 **Outcome:** Major observability and operational gaps closed. Ready for careful beta launch.
 
 ### Days 2-3 (8-12 hours)
 
-| Order | Task | Time |
-|-------|------|------|
-| 6 | Soft delete for projects | 4-6 hrs |
-| 7 | D1/DO sync retry logic | 3-4 hrs |
-| 8 | Billing org membership check | 2 hrs |
+| Order | Task                         | Time    |
+| ----- | ---------------------------- | ------- |
+| 6     | Soft delete for projects     | 4-6 hrs |
+| 7     | D1/DO sync retry logic       | 3-4 hrs |
+| 8     | Billing org membership check | 2 hrs   |
 
 **Outcome:** Data protection improved. Core stop-ship issues resolved.
 
 ### Week 1 Post-Launch
 
-| Task | Time |
-|------|------|
+| Task                       | Time    |
+| -------------------------- | ------- |
 | Soft delete for mediaFiles | 2-3 hrs |
-| Monitor for quota issues | Ongoing |
-| Gather user feedback | Ongoing |
+| Monitor for quota issues   | Ongoing |
+| Gather user feedback       | Ongoing |
 
 ### Week 2+ (As Needed)
 
@@ -333,6 +352,7 @@ this.doc.on('update', () => {
 The quota race condition (SS-5) is technically a stop-ship issue, but at your traffic level the practical risk is very low. You can ship with it and fix it in the first week if you're comfortable with that tradeoff.
 
 **Minimum viable launch checklist:**
+
 - [ ] D1 rollback procedure documented
 - [ ] Sentry enabled and tested
 - [ ] Magic link rate limited
