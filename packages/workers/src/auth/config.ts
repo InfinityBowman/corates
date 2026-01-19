@@ -130,9 +130,7 @@ export function createAuth(env: Env, ctx?: ExecutionContext) {
               const givenName = profile.given_name || null;
               const familyName = profile.family_name || null;
               const name =
-                profile.name ||
-                [givenName, familyName].filter(Boolean).join(' ') ||
-                profile.sub;
+                profile.name || [givenName, familyName].filter(Boolean).join(' ') || profile.sub;
               return {
                 id: profile.sub,
                 name,
@@ -587,7 +585,12 @@ export function createAuth(env: Env, ctx?: ExecutionContext) {
 
         // Copy external OAuth avatar to R2 in the background
         // This ensures all avatars are served from our storage, avoiding external URL issues
-        if (ctx && ctx.waitUntil && isExternalAvatarUrl(userImage) && !isInternalAvatarUrl(userImage)) {
+        if (
+          ctx &&
+          ctx.waitUntil &&
+          isExternalAvatarUrl(userImage) &&
+          !isInternalAvatarUrl(userImage)
+        ) {
           console.log(`[Auth] Queuing avatar copy for user ${userId} from ${userImage}`);
           ctx.waitUntil(
             (async () => {
