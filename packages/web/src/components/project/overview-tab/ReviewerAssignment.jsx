@@ -1,19 +1,13 @@
 /**
- * ReviewerAssignment component - Allows assigning reviewers to studies based on percentages
- * Supports multiple reviewers in each role with customizable distribution percentages
+ * ReviewerAssignment component - Allows assigning reviewers to studies
+ * By default does an even split across all members. Users can customize percentages.
  */
 
 import { createSignal, createMemo, For, Show } from 'solid-js';
-import { createStore, produce } from 'solid-js/store';
 import { showToast } from '@/components/ui/toast';
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/components/ui/collapsible';
-import {
-  BiRegularShuffle,
-  BiRegularCheck,
-  BiRegularX,
-  BiRegularChevronRight,
-} from 'solid-icons/bi';
-import { FiUsers } from 'solid-icons/fi';
+import { BiRegularShuffle, BiRegularCheck, BiRegularChevronRight } from 'solid-icons/bi';
+import { FiUsers, FiSliders } from 'solid-icons/fi';
 
 /**
  * @param {Object} props
@@ -22,17 +16,16 @@ import { FiUsers } from 'solid-icons/fi';
  * @param {Function} props.onAssignReviewers - Callback to update study with reviewer assignments
  */
 export default function ReviewerAssignment(props) {
-  // Expanded state
-  const [isExpanded, setIsExpanded] = createSignal(false);
-
-  // Reviewer pools with percentages
-  // Each pool item: { userId: string, percent: number }
-  const [reviewer1Pool, setReviewer1Pool] = createStore([]);
-  const [reviewer2Pool, setReviewer2Pool] = createStore([]);
-
-  // Preview state
+  // Panel states
+  const [isOpen, setIsOpen] = createSignal(false);
+  const [showCustomize, setShowCustomize] = createSignal(false);
   const [showPreview, setShowPreview] = createSignal(false);
   const [previewAssignments, setPreviewAssignments] = createSignal([]);
+
+  // Custom percentages (only used when customizing)
+  // Maps userId -> percent for each pool
+  const [pool1Percents, setPool1Percents] = createSignal({});
+  const [pool2Percents, setPool2Percents] = createSignal({});
 
   const members = () => props.members() || [];
   const studies = () => props.studies() || [];
@@ -47,117 +40,58 @@ export default function ReviewerAssignment(props) {
     return member?.name || member?.email || 'Unknown';
   };
 
-  // Get members not in a specific pool
-  const availableForPool1 = createMemo(() => {
-    const usedIds = new Set(reviewer1Pool.map(r => r.userId));
-    return members().filter(m => !usedIds.has(m.userId));
+  // Even split percentage
+  const evenPercent = createMemo(() => {
+    const count = members().length;
+    return count > 0 ? Math.round(100 / count) : 0;
   });
 
-  const availableForPool2 = createMemo(() => {
-    const usedIds = new Set(reviewer2Pool.map(r => r.userId));
-    return members().filter(m => !usedIds.has(m.userId));
+  // Members with their percentages for display
+  const pool1MembersWithPercent = createMemo(() => {
+    const percents = pool1Percents();
+    return members().map(m => ({
+      ...m,
+      percent: percents[m.userId] ?? evenPercent(),
+    }));
   });
 
-  // Calculate total percentages
-  const pool1Total = createMemo(() => reviewer1Pool.reduce((sum, r) => sum + r.percent, 0));
-  const pool2Total = createMemo(() => reviewer2Pool.reduce((sum, r) => sum + r.percent, 0));
+  const pool2MembersWithPercent = createMemo(() => {
+    const percents = pool2Percents();
+    return members().map(m => ({
+      ...m,
+      percent: percents[m.userId] ?? evenPercent(),
+    }));
+  });
 
-  // Check if pools are valid (total = 100% and at least one reviewer in each)
-  const isPool1Valid = createMemo(() => reviewer1Pool.length > 0 && pool1Total() === 100);
-  const isPool2Valid = createMemo(() => reviewer2Pool.length > 0 && pool2Total() === 100);
-  const canGenerate = createMemo(() => isPool1Valid() && isPool2Valid());
+  // Calculate totals
+  const pool1Total = createMemo(() =>
+    pool1MembersWithPercent().reduce((sum, m) => sum + m.percent, 0),
+  );
+  const pool2Total = createMemo(() =>
+    pool2MembersWithPercent().reduce((sum, m) => sum + m.percent, 0),
+  );
 
-  // Add reviewer to pool
-  const addToPool1 = userId => {
-    if (!userId) return;
-    setReviewer1Pool(
-      produce(pool => {
-        pool.push({ userId, percent: 0 });
-      }),
-    );
+  // Validate pools (99-100% is OK due to rounding)
+  const isPoolValid = total => total >= 99 && total <= 101;
+  const isCustomValid = createMemo(() => isPoolValid(pool1Total()) && isPoolValid(pool2Total()));
+
+  // Update percentage for a member
+  const updatePool1Percent = (userId, value) => {
+    const val = Math.max(0, Math.min(100, parseInt(value) || 0));
+    setPool1Percents(prev => ({ ...prev, [userId]: val }));
     setShowPreview(false);
   };
 
-  const addToPool2 = userId => {
-    if (!userId) return;
-    setReviewer2Pool(
-      produce(pool => {
-        pool.push({ userId, percent: 0 });
-      }),
-    );
+  const updatePool2Percent = (userId, value) => {
+    const val = Math.max(0, Math.min(100, parseInt(value) || 0));
+    setPool2Percents(prev => ({ ...prev, [userId]: val }));
     setShowPreview(false);
   };
 
-  // Remove reviewer from pool
-  const removeFromPool1 = userId => {
-    setReviewer1Pool(
-      produce(pool => {
-        const idx = pool.findIndex(r => r.userId === userId);
-        if (idx !== -1) pool.splice(idx, 1);
-      }),
-    );
-    setShowPreview(false);
-  };
-
-  const removeFromPool2 = userId => {
-    setReviewer2Pool(
-      produce(pool => {
-        const idx = pool.findIndex(r => r.userId === userId);
-        if (idx !== -1) pool.splice(idx, 1);
-      }),
-    );
-    setShowPreview(false);
-  };
-
-  // Update percentage for a reviewer in pool
-  const updatePool1Percent = (userId, percent) => {
-    const val = Math.max(0, Math.min(100, parseInt(percent) || 0));
-    setReviewer1Pool(
-      produce(pool => {
-        const item = pool.find(r => r.userId === userId);
-        if (item) item.percent = val;
-      }),
-    );
-    setShowPreview(false);
-  };
-
-  const updatePool2Percent = (userId, percent) => {
-    const val = Math.max(0, Math.min(100, parseInt(percent) || 0));
-    setReviewer2Pool(
-      produce(pool => {
-        const item = pool.find(r => r.userId === userId);
-        if (item) item.percent = val;
-      }),
-    );
-    setShowPreview(false);
-  };
-
-  // Auto-distribute percentages evenly
-  const distributeEvenly1 = () => {
-    if (reviewer1Pool.length === 0) return;
-    const each = Math.floor(100 / reviewer1Pool.length);
-    const remainder = 100 - each * reviewer1Pool.length;
-    setReviewer1Pool(
-      produce(pool => {
-        pool.forEach((r, i) => {
-          r.percent = each + (i < remainder ? 1 : 0);
-        });
-      }),
-    );
-    setShowPreview(false);
-  };
-
-  const distributeEvenly2 = () => {
-    if (reviewer2Pool.length === 0) return;
-    const each = Math.floor(100 / reviewer2Pool.length);
-    const remainder = 100 - each * reviewer2Pool.length;
-    setReviewer2Pool(
-      produce(pool => {
-        pool.forEach((r, i) => {
-          r.percent = each + (i < remainder ? 1 : 0);
-        });
-      }),
-    );
+  // Reset to even distribution
+  const resetToEven = () => {
+    setPool1Percents({});
+    setPool2Percents({});
     setShowPreview(false);
   };
 
@@ -171,66 +105,56 @@ export default function ReviewerAssignment(props) {
     return shuffled;
   };
 
-  // Generate random assignments based on percentages
+  // Generate assignments based on percentages
   const generateAssignments = () => {
-    if (!canGenerate()) {
-      if (!isPool1Valid()) {
-        showToast.warning('Invalid 1st Reviewer Pool', 'Percentages must add up to 100%.');
-      } else if (!isPool2Valid()) {
-        showToast.warning('Invalid 2nd Reviewer Pool', 'Percentages must add up to 100%.');
-      }
-      return null;
-    }
-
     const studiesToAssign = unassignedStudies();
     if (studiesToAssign.length === 0) {
       showToast.info('No Studies', 'All studies already have reviewers assigned.');
       return null;
     }
 
-    // Calculate how many studies each reviewer should get based on percentages
+    if (showCustomize() && !isCustomValid()) {
+      showToast.warning('Invalid Distribution', 'Each pool must total 99-100%.');
+      return null;
+    }
+
     const totalStudies = studiesToAssign.length;
+    const pool1Members = pool1MembersWithPercent();
+    const pool2Members = pool2MembersWithPercent();
 
     // Build assignment arrays based on percentages
     const pool1Assignments = [];
     const pool2Assignments = [];
 
-    // For pool 1, calculate study counts
     let remaining1 = totalStudies;
-    reviewer1Pool.forEach((r, i) => {
+    pool1Members.forEach((m, i) => {
       const count =
-        i === reviewer1Pool.length - 1 ?
-          remaining1 // Last one gets remainder to ensure exact total
-        : Math.round((r.percent / 100) * totalStudies);
+        i === pool1Members.length - 1 ? remaining1 : Math.round((m.percent / 100) * totalStudies);
       remaining1 -= count;
-      for (let j = 0; j < count; j++) {
-        pool1Assignments.push(r.userId);
+      for (let j = 0; j < Math.max(0, count); j++) {
+        pool1Assignments.push(m.userId);
       }
     });
 
-    // For pool 2, calculate study counts
     let remaining2 = totalStudies;
-    reviewer2Pool.forEach((r, i) => {
+    pool2Members.forEach((m, i) => {
       const count =
-        i === reviewer2Pool.length - 1 ? remaining2 : Math.round((r.percent / 100) * totalStudies);
+        i === pool2Members.length - 1 ? remaining2 : Math.round((m.percent / 100) * totalStudies);
       remaining2 -= count;
-      for (let j = 0; j < count; j++) {
-        pool2Assignments.push(r.userId);
+      for (let j = 0; j < Math.max(0, count); j++) {
+        pool2Assignments.push(m.userId);
       }
     });
 
-    // Shuffle both pools
+    // Shuffle both pools and studies
     const shuffled1 = shuffleArray(pool1Assignments);
     const shuffled2 = shuffleArray(pool2Assignments);
-
-    // Shuffle studies too
     const shuffledStudies = shuffleArray(studiesToAssign);
 
-    // Create assignments, avoiding same reviewer for both roles where possible
+    // Create assignments
     const assignments = shuffledStudies.map((study, index) => {
-      let r1 = shuffled1[index];
-      let r2 = shuffled2[index];
-
+      const r1 = shuffled1[index];
+      const r2 = shuffled2[index];
       return {
         studyId: study.id,
         studyName: study.name,
@@ -245,21 +169,17 @@ export default function ReviewerAssignment(props) {
     // Try to resolve conflicts by swapping
     for (let i = 0; i < assignments.length; i++) {
       if (assignments[i].sameReviewer) {
-        // Find another assignment to swap reviewer2 with
         for (let j = 0; j < assignments.length; j++) {
           if (i !== j && !assignments[j].sameReviewer) {
             const canSwap =
               assignments[j].reviewer2 !== assignments[i].reviewer1 &&
               assignments[i].reviewer2 !== assignments[j].reviewer1;
-
             if (canSwap) {
-              // Swap reviewer2
               const temp = assignments[i].reviewer2;
               assignments[i].reviewer2 = assignments[j].reviewer2;
               assignments[i].reviewer2Name = assignments[j].reviewer2Name;
               assignments[j].reviewer2 = temp;
               assignments[j].reviewer2Name = getMemberName(temp);
-
               assignments[i].sameReviewer = assignments[i].reviewer1 === assignments[i].reviewer2;
               assignments[j].sameReviewer = assignments[j].reviewer1 === assignments[j].reviewer2;
               break;
@@ -272,8 +192,8 @@ export default function ReviewerAssignment(props) {
     return assignments;
   };
 
-  // Preview the assignments
-  const handlePreview = () => {
+  // Generate and show preview
+  const handleGenerate = () => {
     const assignments = generateAssignments();
     if (assignments) {
       setPreviewAssignments(assignments);
@@ -281,25 +201,16 @@ export default function ReviewerAssignment(props) {
     }
   };
 
-  // Re-shuffle the preview
-  const handleReshuffle = () => {
-    const assignments = generateAssignments();
-    if (assignments) {
-      setPreviewAssignments(assignments);
-    }
-  };
-
-  // Apply the assignments
+  // Apply assignments
   const handleApply = () => {
     const assignments = previewAssignments();
     if (assignments.length === 0) return;
 
-    // Check for conflicts
     const conflicts = assignments.filter(a => a.sameReviewer);
     if (conflicts.length > 0) {
       showToast.warning(
         'Conflicts Detected',
-        `${conflicts.length} ${conflicts.length === 1 ? 'study has' : 'studies have'} the same reviewer for both roles. Try reshuffling or adjusting pools.`,
+        `${conflicts.length} ${conflicts.length === 1 ? 'study has' : 'studies have'} the same reviewer for both roles. Try reshuffling.`,
       );
       return;
     }
@@ -313,7 +224,7 @@ export default function ReviewerAssignment(props) {
         });
         successCount++;
       } catch (err) {
-        console.error('Error assigning reviewers to study:', assignment.studyId, err);
+        console.error('Error assigning reviewers:', assignment.studyId, err);
       }
     }
 
@@ -326,6 +237,7 @@ export default function ReviewerAssignment(props) {
 
     setShowPreview(false);
     setPreviewAssignments([]);
+    setIsOpen(false);
   };
 
   // Cancel preview
@@ -334,116 +246,115 @@ export default function ReviewerAssignment(props) {
     setPreviewAssignments([]);
   };
 
-  // Render a reviewer pool section
-  const ReviewerPoolSection = poolProps => {
-    const pool = () => poolProps.pool;
-    const available = () => poolProps.available;
-    const total = () => poolProps.total;
-    const isValid = () => poolProps.isValid;
+  // Preset percentage options
+  const presets = [0, 25, 33, 50, 100];
+
+  // Member percentage row component with preset buttons
+  const MemberPercentRow = rowProps => {
+    const [showCustom, setShowCustom] = createSignal(false);
+    const isPreset = () => presets.includes(rowProps.percent);
 
     return (
-      <div class='bg-muted rounded-lg p-4'>
-        <div class='mb-3 flex items-center justify-between'>
-          <h4 class='text-secondary-foreground text-sm font-semibold'>{poolProps.title}</h4>
-          <Show when={pool().length > 1}>
-            <button
-              type='button'
-              onClick={() => poolProps.onDistributeEvenly()}
-              class='text-primary hover:text-primary/90 text-xs font-medium'
-            >
-              Distribute evenly
-            </button>
-          </Show>
+      <div class='border-border bg-card flex items-center gap-3 rounded-lg border p-2.5'>
+        <div class='text-foreground min-w-0 flex-1 truncate text-sm font-medium'>
+          {rowProps.member.name || rowProps.member.email || 'Unknown'}
         </div>
-
-        {/* Current reviewers in pool */}
-        <div class='mb-3 space-y-2'>
-          <For each={pool()}>
-            {reviewer => (
-              <div class='border-border bg-card flex items-center gap-2 rounded-lg border p-2'>
-                <div class='text-foreground flex-1 truncate text-sm'>
-                  {getMemberName(reviewer.userId)}
-                </div>
-                <div class='flex items-center gap-1'>
-                  <input
-                    type='number'
-                    min='0'
-                    max='100'
-                    value={reviewer.percent}
-                    onInput={e => poolProps.onUpdatePercent(reviewer.userId, e.target.value)}
-                    class='border-border focus:ring-primary w-16 rounded border px-2 py-1 text-center text-sm focus:border-transparent focus:ring-2 focus:outline-none'
-                  />
-                  <span class='text-muted-foreground text-sm'>%</span>
-                </div>
-                <button
-                  type='button'
-                  onClick={() => poolProps.onRemove(reviewer.userId)}
-                  class='text-muted-foreground/70 focus:ring-primary rounded p-1 transition-colors hover:bg-red-50 hover:text-red-600 focus:ring-2 focus:outline-none'
-                >
-                  <BiRegularX class='h-4 w-4' />
-                </button>
-              </div>
+        <div class='flex items-center gap-1'>
+          {/* Preset buttons */}
+          <For each={presets}>
+            {preset => (
+              <button
+                type='button'
+                onClick={() => {
+                  rowProps.onChange(preset);
+                  setShowCustom(false);
+                }}
+                class='rounded px-2 py-1 text-xs font-medium transition-colors'
+                classList={{
+                  'bg-primary text-white': rowProps.percent === preset && !showCustom(),
+                  'bg-secondary text-secondary-foreground hover:bg-secondary/80':
+                    rowProps.percent !== preset || showCustom(),
+                }}
+              >
+                {preset}%
+              </button>
             )}
           </For>
-        </div>
 
-        {/* Add reviewer dropdown */}
-        <Show when={available().length > 0}>
-          <div class='flex items-center gap-2'>
-            <select
-              onChange={e => {
-                poolProps.onAdd(e.target.value);
-                e.target.value = '';
+          {/* Custom input toggle/field */}
+          <Show
+            when={showCustom() || !isPreset()}
+            fallback={
+              <button
+                type='button'
+                onClick={() => setShowCustom(true)}
+                class='bg-secondary text-secondary-foreground hover:bg-secondary/80 rounded px-2 py-1 text-xs font-medium transition-colors'
+                title='Enter custom percentage'
+              >
+                ...
+              </button>
+            }
+          >
+            <input
+              type='number'
+              min='0'
+              max='100'
+              value={rowProps.percent}
+              onInput={e => rowProps.onChange(e.target.value)}
+              onBlur={() => {
+                if (isPreset()) setShowCustom(false);
               }}
-              class='border-border bg-card text-foreground focus:ring-primary flex-1 rounded-lg border px-3 py-1.5 text-sm transition focus:border-transparent focus:ring-2 focus:outline-none'
-            >
-              <option value=''>Add reviewer...</option>
-              <For each={available()}>
-                {member => (
-                  <option value={member.userId}>{member.name || member.email || 'Unknown'}</option>
-                )}
-              </For>
-            </select>
-          </div>
-        </Show>
-
-        {/* Total percentage indicator */}
-        <div class={`mt-3 text-xs font-medium ${isValid() ? 'text-green-600' : 'text-amber-600'}`}>
-          Total: {total()}%{!isValid() && pool().length > 0 && ' (must equal 100%)'}
-          {pool().length === 0 && ' (add at least one reviewer)'}
+              class='border-border focus:ring-primary w-14 rounded border px-1.5 py-1 text-center text-xs focus:border-transparent focus:ring-2 focus:outline-none'
+              autofocus={showCustom()}
+            />
+          </Show>
         </div>
       </div>
     );
   };
 
-  // Collapse and reset state
-  const handleCollapse = () => {
-    setIsExpanded(false);
-    setShowPreview(false);
-    setPreviewAssignments([]);
-  };
+  const hasConflicts = createMemo(() => previewAssignments().some(a => a.sameReviewer));
+  const conflictCount = createMemo(() => previewAssignments().filter(a => a.sameReviewer).length);
 
   return (
-    <div class='border-border bg-card overflow-hidden rounded-lg border shadow-sm'>
-      <Collapsible open={isExpanded()} onOpenChange={setIsExpanded}>
-        <CollapsibleTrigger class='flex w-full cursor-pointer items-center gap-3 px-4 py-3 select-none'>
-          {/* Chevron indicator */}
-          <div class='shrink-0'>
-            <BiRegularChevronRight
-              class={`text-muted-foreground/70 h-5 w-5 transition-transform duration-200 ${isExpanded() ? 'rotate-90' : ''}`}
-            />
+    <div class='border-primary-subtle bg-card overflow-hidden rounded-lg border shadow-sm'>
+      {/* Header - always visible */}
+      <div class='flex items-center justify-between px-4 py-4'>
+        <div class='flex items-center gap-3'>
+          <div class='bg-primary-subtle text-primary flex h-10 w-10 items-center justify-center rounded-lg'>
+            <FiUsers class='h-5 w-5' />
           </div>
-          <div class='flex items-center gap-2'>
-            <FiUsers class='text-primary h-4 w-4' />
-            <span class='text-foreground text-sm font-medium'>Assign Reviewers to Studies</span>
+          <div>
+            <h3 class='text-foreground text-base font-semibold'>Assign Reviewers</h3>
+            <p class='text-muted-foreground text-sm'>
+              {unassignedStudies().length} studies need assignment
+            </p>
           </div>
-        </CollapsibleTrigger>
+        </div>
+        <button
+          onClick={() => setIsOpen(!isOpen())}
+          class='flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors'
+          classList={{
+            'bg-primary text-white': isOpen(),
+            'bg-primary-subtle text-primary hover:bg-primary/20': !isOpen(),
+          }}
+        >
+          <BiRegularChevronRight
+            class='h-4 w-4 transition-transform duration-200'
+            classList={{ 'rotate-90': isOpen() }}
+          />
+          {isOpen() ? 'Hide' : 'Show'}
+        </button>
+      </div>
+
+      {/* Collapsible content */}
+      <Collapsible open={isOpen()} onOpenChange={setIsOpen}>
         <CollapsibleContent>
-          <div class='border-border border-t px-4 pb-4'>
+          <div class='border-border border-t px-4 pt-4 pb-4'>
             <Show
               when={members().length >= 2}
               fallback={
-                <p class='text-muted-foreground mt-4 text-sm'>
+                <p class='text-muted-foreground text-sm'>
                   At least 2 project members are required to assign reviewers.
                 </p>
               }
@@ -451,87 +362,190 @@ export default function ReviewerAssignment(props) {
               <Show
                 when={unassignedStudies().length > 0 || showPreview()}
                 fallback={
-                  <div class='mt-4 flex items-center gap-2 text-green-600'>
+                  <div class='flex items-center gap-2 text-green-600'>
                     <BiRegularCheck class='h-5 w-5' />
                     <p class='text-sm'>All studies have reviewers assigned.</p>
                   </div>
                 }
               >
                 <div class='space-y-4'>
-                  <p class='text-secondary-foreground mt-4 text-sm'>
-                    Add reviewers to each pool and set their percentage. Studies will be randomly
-                    assigned one reviewer from each pool based on the percentages.
-                  </p>
-
-                  {/* Reviewer Pools */}
-                  <div class='grid grid-cols-1 gap-4 md:grid-cols-2'>
-                    <ReviewerPoolSection
-                      title='1st Reviewer Pool'
-                      pool={reviewer1Pool}
-                      available={availableForPool1()}
-                      total={pool1Total()}
-                      isValid={isPool1Valid()}
-                      onAdd={addToPool1}
-                      onRemove={removeFromPool1}
-                      onUpdatePercent={updatePool1Percent}
-                      onDistributeEvenly={distributeEvenly1}
-                    />
-                    <ReviewerPoolSection
-                      title='2nd Reviewer Pool'
-                      pool={reviewer2Pool}
-                      available={availableForPool2()}
-                      total={pool2Total()}
-                      isValid={isPool2Valid()}
-                      onAdd={addToPool2}
-                      onRemove={removeFromPool2}
-                      onUpdatePercent={updatePool2Percent}
-                      onDistributeEvenly={distributeEvenly2}
-                    />
+                  {/* Summary stats row */}
+                  <div class='bg-muted flex items-center justify-between rounded-lg px-4 py-3'>
+                    <p class='text-muted-foreground text-sm'>
+                      <span class='text-foreground font-semibold'>
+                        {unassignedStudies().length}
+                      </span>{' '}
+                      unassigned
+                    </p>
+                    <p class='text-muted-foreground text-sm'>
+                      <span class='text-foreground font-semibold'>{members().length}</span>{' '}
+                      reviewers
+                    </p>
+                    <p class='text-muted-foreground text-sm'>
+                      <span class='text-foreground font-semibold'>{evenPercent()}%</span> each
+                      (even)
+                    </p>
                   </div>
 
-                  <p class='text-muted-foreground text-xs'>
-                    {unassignedStudies().length}{' '}
-                    {unassignedStudies().length === 1 ? 'study' : 'studies'} without reviewers
-                  </p>
+                  {/* Customize toggle with collapsible */}
+                  <Collapsible open={showCustomize()} onOpenChange={setShowCustomize}>
+                    <CollapsibleTrigger class='border-border bg-card hover:bg-muted data-[state=open]:border-primary data-[state=open]:bg-primary-subtle flex w-full items-center justify-between rounded-lg border px-4 py-3 text-sm font-medium transition-all'>
+                      <div class='flex items-center gap-2'>
+                        <FiSliders class='h-4 w-4' />
+                        <span>Customize distribution</span>
+                      </div>
+                      <div class='flex items-center gap-2'>
+                        <span class='text-muted-foreground text-xs'>
+                          {showCustomize() ? 'Using custom' : 'Adjust percentages'}
+                        </span>
+                        <BiRegularChevronRight
+                          class='h-4 w-4 transition-transform duration-200 data-[state=open]:rotate-90'
+                          classList={{ 'rotate-90': showCustomize() }}
+                        />
+                      </div>
+                    </CollapsibleTrigger>
 
-                  {/* Preview Button */}
-                  <Show when={!showPreview()}>
-                    <button
-                      onClick={handlePreview}
-                      disabled={!canGenerate() || unassignedStudies().length === 0}
-                      class='bg-primary hover:bg-primary/90 focus:ring-primary inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-white transition-colors focus:ring-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50'
-                    >
-                      <BiRegularShuffle class='h-4 w-4' />
-                      Generate Random Assignments
-                    </button>
-                  </Show>
+                    <CollapsibleContent>
+                      <div class='mt-4 space-y-4'>
+                        {/* Pool 1 */}
+                        <div class='border-border bg-muted rounded-xl border p-4'>
+                          <div class='mb-3 flex items-center justify-between'>
+                            <h4 class='text-secondary-foreground text-sm font-semibold'>
+                              1st Reviewer Pool
+                            </h4>
+                            <span
+                              class='text-xs font-medium'
+                              classList={{
+                                'text-green-600': isPoolValid(pool1Total()),
+                                'text-amber-600': !isPoolValid(pool1Total()),
+                              }}
+                            >
+                              Total: {pool1Total()}%
+                            </span>
+                          </div>
+                          <div class='space-y-2'>
+                            <For each={pool1MembersWithPercent()}>
+                              {member => (
+                                <MemberPercentRow
+                                  member={member}
+                                  percent={member.percent}
+                                  onChange={val => updatePool1Percent(member.userId, val)}
+                                />
+                              )}
+                            </For>
+                          </div>
+                        </div>
+
+                        {/* Pool 2 */}
+                        <div class='border-border bg-muted rounded-xl border p-4'>
+                          <div class='mb-3 flex items-center justify-between'>
+                            <h4 class='text-secondary-foreground text-sm font-semibold'>
+                              2nd Reviewer Pool
+                            </h4>
+                            <span
+                              class='text-xs font-medium'
+                              classList={{
+                                'text-green-600': isPoolValid(pool2Total()),
+                                'text-amber-600': !isPoolValid(pool2Total()),
+                              }}
+                            >
+                              Total: {pool2Total()}%
+                            </span>
+                          </div>
+                          <div class='space-y-2'>
+                            <For each={pool2MembersWithPercent()}>
+                              {member => (
+                                <MemberPercentRow
+                                  member={member}
+                                  percent={member.percent}
+                                  onChange={val => updatePool2Percent(member.userId, val)}
+                                />
+                              )}
+                            </For>
+                          </div>
+                        </div>
+
+                        <div class='flex items-center justify-between'>
+                          <Show when={!isCustomValid()}>
+                            <p class='text-xs text-amber-600'>
+                              Each pool must total 99-100% to generate
+                            </p>
+                          </Show>
+                          <button
+                            type='button'
+                            onClick={resetToEven}
+                            class='text-primary hover:text-primary/80 ml-auto text-xs font-medium'
+                          >
+                            Reset to even split
+                          </button>
+                        </div>
+                      </div>
+                    </CollapsibleContent>
+                  </Collapsible>
+
+                  {/* Action button */}
+                  <button
+                    onClick={handleGenerate}
+                    disabled={showCustomize() && !isCustomValid()}
+                    class='bg-primary hover:bg-primary/90 focus:ring-primary inline-flex items-center gap-2 rounded-lg px-5 py-2.5 text-sm font-medium text-white transition-colors focus:ring-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50'
+                  >
+                    <BiRegularShuffle class='h-4 w-4' />
+                    {showPreview() ?
+                      'Reshuffle'
+                    : showCustomize() ?
+                      'Generate with Custom Split'
+                    : 'Assign Randomly (Even Split)'}
+                  </button>
 
                   {/* Preview Section */}
                   <Show when={showPreview()}>
-                    <div class='overflow-hidden rounded-lg border border-blue-200'>
-                      <div class='flex items-center justify-between border-b border-blue-200 bg-blue-50 px-4 py-2'>
-                        <h4 class='text-sm font-semibold text-blue-900'>
-                          Preview Assignments ({previewAssignments().length} studies)
-                        </h4>
-                        <button
-                          onClick={handleReshuffle}
-                          class='inline-flex items-center gap-1 rounded px-2 py-1 text-xs font-medium text-blue-700 transition-colors hover:bg-blue-100'
-                        >
-                          <BiRegularShuffle class='h-3 w-3' />
-                          Reshuffle
-                        </button>
+                    <div
+                      class='overflow-hidden rounded-xl border'
+                      classList={{
+                        'border-red-200': hasConflicts(),
+                        'border-primary': !hasConflicts(),
+                      }}
+                    >
+                      <div
+                        class='flex items-center justify-between border-b px-4 py-3'
+                        classList={{
+                          'border-red-200 bg-red-50': hasConflicts(),
+                          'border-primary bg-primary-subtle': !hasConflicts(),
+                        }}
+                      >
+                        <div>
+                          <h4
+                            class='text-sm font-semibold'
+                            classList={{
+                              'text-red-900': hasConflicts(),
+                              'text-primary-strong': !hasConflicts(),
+                            }}
+                          >
+                            Assignment Preview
+                          </h4>
+                          <Show when={hasConflicts()}>
+                            <p class='text-xs text-red-600'>
+                              {conflictCount()} conflict{conflictCount() !== 1 && 's'} - click
+                              Reshuffle
+                            </p>
+                          </Show>
+                        </div>
+                        <span class='text-muted-foreground text-xs'>
+                          {previewAssignments().length} studies
+                        </span>
                       </div>
+
                       <div class='max-h-64 overflow-y-auto'>
-                        <table class='w-full text-sm'>
+                        <table class='w-full text-left text-sm'>
                           <thead class='bg-muted sticky top-0'>
                             <tr>
-                              <th class='text-secondary-foreground px-4 py-2 text-left font-medium'>
+                              <th class='text-muted-foreground py-2 pr-4 pl-4 text-xs font-medium'>
                                 Study
                               </th>
-                              <th class='text-secondary-foreground px-4 py-2 text-left font-medium'>
+                              <th class='text-muted-foreground py-2 pr-4 text-xs font-medium'>
                                 1st Reviewer
                               </th>
-                              <th class='text-secondary-foreground px-4 py-2 text-left font-medium'>
+                              <th class='text-muted-foreground py-2 pr-4 text-xs font-medium'>
                                 2nd Reviewer
                               </th>
                             </tr>
@@ -540,16 +554,21 @@ export default function ReviewerAssignment(props) {
                             <For each={previewAssignments()}>
                               {assignment => (
                                 <tr
-                                  class={`hover:bg-muted ${assignment.sameReviewer ? 'bg-red-50' : ''}`}
+                                  class='hover:bg-muted'
+                                  classList={{ 'bg-red-50': assignment.sameReviewer }}
                                 >
-                                  <td class='text-foreground max-w-xs truncate px-4 py-2'>
+                                  <td class='text-foreground max-w-xs truncate py-2 pr-4 pl-4'>
                                     {assignment.studyName}
                                   </td>
-                                  <td class='text-secondary-foreground px-4 py-2'>
+                                  <td class='text-secondary-foreground py-2 pr-4'>
                                     {assignment.reviewer1Name}
                                   </td>
                                   <td
-                                    class={`px-4 py-2 ${assignment.sameReviewer ? 'font-medium text-red-600' : 'text-secondary-foreground'}`}
+                                    class='py-2 pr-4'
+                                    classList={{
+                                      'font-medium text-red-600': assignment.sameReviewer,
+                                      'text-secondary-foreground': !assignment.sameReviewer,
+                                    }}
                                   >
                                     {assignment.reviewer2Name}
                                     {assignment.sameReviewer && ' (conflict)'}
@@ -560,13 +579,11 @@ export default function ReviewerAssignment(props) {
                           </tbody>
                         </table>
                       </div>
+
                       <div class='border-border bg-muted flex gap-2 border-t px-4 py-3'>
                         <button
-                          onClick={() => {
-                            handleApply();
-                            handleCollapse();
-                          }}
-                          disabled={previewAssignments().some(a => a.sameReviewer)}
+                          onClick={handleApply}
+                          disabled={hasConflicts()}
                           class='focus:ring-primary inline-flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-green-700 focus:ring-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50'
                         >
                           <BiRegularCheck class='h-4 w-4' />
@@ -574,7 +591,7 @@ export default function ReviewerAssignment(props) {
                         </button>
                         <button
                           onClick={handleCancel}
-                          class='border-border bg-card text-secondary-foreground hover:border-border-strong rounded-lg border px-4 py-2 text-sm font-medium transition-colors'
+                          class='border-border bg-card text-secondary-foreground hover:bg-secondary rounded-lg border px-4 py-2 text-sm font-medium transition-colors'
                         >
                           Cancel
                         </button>

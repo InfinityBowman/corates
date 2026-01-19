@@ -30,13 +30,13 @@ export default function DirectionPanel(props) {
     <div class='p-4'>
       {/* Panel Header */}
       <div class='mb-4 flex items-center justify-between'>
-        <h3 class='font-semibold text-gray-900'>{props.title}</h3>
+        <h3 class='text-foreground font-semibold'>{props.title}</h3>
         <Show when={!isFinal() && !props.hideUseThis}>
           <button
             onClick={() => props.onUseThis?.()}
             class={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
               props.isSelected ? 'bg-blue-600 text-white' : (
-                'bg-gray-100 text-gray-700 hover:bg-blue-100 hover:text-blue-700'
+                'bg-secondary text-secondary-foreground hover:bg-blue-100 hover:text-blue-700'
               )
             }`}
           >
@@ -59,7 +59,9 @@ export default function DirectionPanel(props) {
                 fallback={
                   <div
                     class={`${baseClasses} ${
-                      isSelected() ? getSelectedStyle() : 'border-gray-200 bg-white text-gray-700'
+                      isSelected() ? getSelectedStyle() : (
+                        'border-border bg-card text-secondary-foreground'
+                      )
                     }`}
                   >
                     <span>{option}</span>
@@ -69,7 +71,7 @@ export default function DirectionPanel(props) {
                 <label
                   class={`${baseClasses} cursor-pointer focus-within:ring-2 focus-within:ring-blue-400 focus-within:ring-offset-1 focus-within:outline-none hover:border-blue-300 ${
                     isSelected() ? getSelectedStyle() : (
-                      'border-gray-200 bg-white text-gray-700 hover:bg-blue-50'
+                      'border-border bg-card text-secondary-foreground hover:bg-blue-50'
                     )
                   }`}
                 >
@@ -92,7 +94,7 @@ export default function DirectionPanel(props) {
       {/* Selected Badge (for reviewer panels) */}
       <Show when={!isFinal() && props.direction}>
         <div class='mt-4 flex items-center gap-2'>
-          <span class='text-xs text-gray-500'>Selected:</span>
+          <span class='text-muted-foreground text-xs'>Selected:</span>
           <span
             class={`inline-flex items-center rounded-full border px-2 py-1 text-xs font-medium ${getSelectedStyle()}`}
           >

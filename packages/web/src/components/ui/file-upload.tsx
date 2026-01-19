@@ -9,9 +9,9 @@
  *   onFileAccept={details => handleFiles(details.files)}
  * >
  *   <FileUploadDropzone>
- *     <FiUploadCloud class="h-8 w-8 text-gray-400" />
+ *     <FiUploadCloud class="h-8 w-8 text-muted-foreground/70" />
  *     <p>Click to upload or drag and drop</p>
- *     <p class="text-xs text-gray-400">PDF files only</p>
+ *     <p class="text-xs text-muted-foreground/70">PDF files only</p>
  *   </FileUploadDropzone>
  *   <FileUploadHiddenInput />
  * </FileUpload>

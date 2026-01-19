@@ -18,7 +18,7 @@ function getJudgementBadgeStyle(judgement) {
     case 'High':
       return 'bg-red-100 text-red-800 border-red-300';
     default:
-      return 'bg-gray-100 text-gray-600 border-gray-300';
+      return 'bg-secondary text-muted-foreground border-border';
   }
 }
 
@@ -40,7 +40,7 @@ export default function JudgementPanel(props) {
     <div class='p-4'>
       {/* Panel Header */}
       <div class='mb-4'>
-        <h3 class='font-semibold text-gray-900'>{props.title}</h3>
+        <h3 class='text-foreground font-semibold'>{props.title}</h3>
       </div>
 
       {/* Judgement Badge */}
@@ -49,8 +49,8 @@ export default function JudgementPanel(props) {
           when={props.judgement}
           fallback={
             <div class='flex items-center gap-2'>
-              <div class='h-4 w-4 animate-pulse rounded-full bg-gray-200' />
-              <span class='text-sm text-gray-500 italic'>
+              <div class='bg-border h-4 w-4 animate-pulse rounded-full' />
+              <span class='text-muted-foreground text-sm italic'>
                 {props.isComplete === false ? 'Not yet calculated' : 'Not available'}
               </span>
             </div>
@@ -65,11 +65,11 @@ export default function JudgementPanel(props) {
 
         {/* Rule ID (for debugging/transparency) */}
         <Show when={props.showRuleId && props.ruleId}>
-          <div class='text-xs text-gray-400'>Rule: {props.ruleId}</div>
+          <div class='text-muted-foreground/70 text-xs'>Rule: {props.ruleId}</div>
         </Show>
 
         {/* Auto-calculated indicator */}
-        <div class='flex items-center gap-1.5 text-xs text-gray-500'>
+        <div class='text-muted-foreground flex items-center gap-1.5 text-xs'>
           <svg class='h-3.5 w-3.5' fill='none' viewBox='0 0 24 24' stroke='currentColor'>
             <path
               stroke-linecap='round'

@@ -78,23 +78,23 @@ export function DomainSection(props) {
   };
 
   return (
-    <div class='overflow-hidden rounded-lg bg-white shadow-md'>
+    <div class='bg-card overflow-hidden rounded-lg shadow-md'>
       {/* Domain header */}
       <button
         type='button'
         onClick={() => props.onToggleCollapse?.()}
-        class='flex w-full items-center justify-between bg-gray-50 px-6 py-4 transition-colors hover:bg-gray-100'
+        class='bg-muted hover:bg-secondary flex w-full items-center justify-between px-6 py-4 transition-colors'
       >
         <div class='flex flex-col items-start'>
-          <h3 class='text-left font-semibold text-gray-900'>{domain()?.name}</h3>
+          <h3 class='text-foreground text-left font-semibold'>{domain()?.name}</h3>
           <Show when={domain()?.subtitle}>
-            <span class='mt-0.5 text-xs text-gray-500'>{domain().subtitle}</span>
+            <span class='text-muted-foreground mt-0.5 text-xs'>{domain().subtitle}</span>
           </Show>
         </div>
 
         <div class='flex items-center gap-3'>
           {/* Completion indicator */}
-          <span class='text-xs text-gray-400'>
+          <span class='text-muted-foreground/70 text-xs'>
             {completionStatus().answered}/{completionStatus().total}
           </span>
 
@@ -103,12 +103,12 @@ export function DomainSection(props) {
             <JudgementBadge judgement={effectiveJudgement()} />
           </Show>
           <Show when={!effectiveJudgement() && !autoScore().isComplete}>
-            <span class='text-xs text-gray-400'>Incomplete</span>
+            <span class='text-muted-foreground/70 text-xs'>Incomplete</span>
           </Show>
 
           {/* Collapse indicator */}
           <svg
-            class={`h-5 w-5 text-gray-400 transition-transform ${props.collapsed ? '' : 'rotate-180'}`}
+            class={`text-muted-foreground/70 h-5 w-5 transition-transform ${props.collapsed ? '' : 'rotate-180'}`}
             fill='none'
             stroke='currentColor'
             viewBox='0 0 24 24'
@@ -146,18 +146,20 @@ export function DomainSection(props) {
           </div>
 
           {/* Auto judgement section */}
-          <div class='mt-4 rounded-lg bg-gray-50 p-4'>
+          <div class='bg-muted mt-4 rounded-lg p-4'>
             {/* Calculated judgement display */}
             <div class='mb-3 flex items-center gap-3'>
-              <span class='text-sm font-medium text-gray-700'>Risk of bias judgement</span>
+              <span class='text-secondary-foreground text-sm font-medium'>
+                Risk of bias judgement
+              </span>
               <Show when={autoScore().judgement}>
-                <div class='flex items-center gap-2 rounded-md bg-white px-2.5 py-1 text-xs shadow-sm'>
-                  <span class='text-gray-500'>Calculated:</span>
+                <div class='bg-card flex items-center gap-2 rounded-md px-2.5 py-1 text-xs shadow-sm'>
+                  <span class='text-muted-foreground'>Calculated:</span>
                   <JudgementBadge judgement={autoScore().judgement} />
                 </div>
               </Show>
               <Show when={!autoScore().judgement && !autoScore().isComplete}>
-                <span class='text-xs text-gray-400'>(answer more questions)</span>
+                <span class='text-muted-foreground/70 text-xs'>(answer more questions)</span>
               </Show>
             </div>
 

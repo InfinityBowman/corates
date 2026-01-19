@@ -1,17 +1,19 @@
 /**
  * PdfUploadSection - PDF upload section for AddStudiesForm
- * Handles PDF file selection, title extraction, and management
+ * Handles PDF file selection - staged items shown in unified StagedStudiesSection
  */
 
-import { For, Show } from 'solid-js';
-import { BiRegularTrash } from 'solid-icons/bi';
-import { CgFileDocument } from 'solid-icons/cg';
-import { FiLink, FiRefreshCw, FiUploadCloud } from 'solid-icons/fi';
+import { Show, For } from 'solid-js';
+import { FiUploadCloud, FiRefreshCw } from 'solid-icons/fi';
 import { VsWarning } from 'solid-icons/vs';
+import { CgFileDocument } from 'solid-icons/cg';
 import { FileUpload, FileUploadDropzone, FileUploadHiddenInput } from '@/components/ui/file-upload';
 
 export default function PdfUploadSection(props) {
   const studies = () => props.studies;
+
+  // Show PDFs that are still extracting or have errors (need user attention)
+  const pendingPdfs = () => studies().uploadedPdfs.filter(pdf => pdf.extracting || pdf.error);
 
   return (
     <div class='space-y-3'>
@@ -35,9 +37,10 @@ export default function PdfUploadSection(props) {
         <FileUploadHiddenInput />
       </FileUpload>
 
-      <Show when={studies().uploadedPdfs.length > 0}>
+      {/* Show PDFs that are extracting or have errors */}
+      <Show when={pendingPdfs().length > 0}>
         <div class='space-y-2'>
-          <For each={studies().uploadedPdfs}>
+          <For each={pendingPdfs()}>
             {pdf => (
               <div
                 class='flex items-center gap-3 rounded-lg border p-3'
@@ -54,7 +57,6 @@ export default function PdfUploadSection(props) {
                   }}
                 />
                 <div class='min-w-0 flex-1'>
-                  {/* Error state */}
                   <Show when={pdf.error}>
                     <div class='flex items-center gap-2'>
                       <VsWarning class='h-4 w-4 shrink-0 text-red-600' />
@@ -71,7 +73,6 @@ export default function PdfUploadSection(props) {
                     <p class='mt-1 truncate text-xs text-red-600'>{pdf.file.name}</p>
                   </Show>
 
-                  {/* Extracting state */}
                   <Show when={!pdf.error && pdf.extracting}>
                     <div class='flex items-center gap-2'>
                       <div class='h-4 w-4 animate-spin rounded-full border-2 border-blue-500 border-t-transparent' />
@@ -79,65 +80,7 @@ export default function PdfUploadSection(props) {
                     </div>
                     <p class='text-muted-foreground/70 mt-1 truncate text-xs'>{pdf.file.name}</p>
                   </Show>
-
-                  {/* Success state */}
-                  <Show when={!pdf.error && !pdf.extracting}>
-                    <div class='flex items-center gap-2'>
-                      <input
-                        type='text'
-                        value={pdf.title || ''}
-                        onInput={e => studies().updatePdfTitle(pdf.id, e.target.value)}
-                        class='text-foreground flex-1 border-none bg-transparent p-0 text-sm font-medium focus:ring-0 focus:outline-none'
-                        placeholder='Study title'
-                      />
-                      <Show when={pdf.matchedToRef}>
-                        <span
-                          class='inline-flex shrink-0 items-center gap-1 rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700'
-                          title={`Matched to: ${pdf.matchedToRef}`}
-                        >
-                          <FiLink class='h-3 w-3' />
-                          Matched
-                        </span>
-                      </Show>
-                    </div>
-                    <div class='flex items-center gap-2'>
-                      <p class='text-muted-foreground truncate text-xs'>{pdf.file.name}</p>
-                      {/* Loading metadata indicator */}
-                      <Show when={pdf.metadataLoading}>
-                        <span class='text-muted-foreground/70 text-xs'>|</span>
-                        <span class='text-primary inline-flex items-center gap-1 text-xs'>
-                          <div class='h-3 w-3 animate-spin rounded-full border border-blue-500 border-t-transparent' />
-                          Loading citation...
-                        </span>
-                      </Show>
-                      {/* Metadata display */}
-                      <Show
-                        when={
-                          !pdf.metadataLoading &&
-                          (pdf.metadata?.firstAuthor || pdf.metadata?.publicationYear)
-                        }
-                      >
-                        <span class='text-muted-foreground/70 text-xs'>|</span>
-                        <span class='text-secondary-foreground shrink-0 text-xs'>
-                          <Show when={pdf.metadata.firstAuthor}>
-                            {pdf.metadata.firstAuthor}
-                            <Show when={pdf.metadata.publicationYear}>, </Show>
-                          </Show>
-                          <Show when={pdf.metadata.publicationYear}>
-                            {pdf.metadata.publicationYear}
-                          </Show>
-                        </span>
-                      </Show>
-                    </div>
-                  </Show>
                 </div>
-                <button
-                  type='button'
-                  onClick={() => studies().removePdf(pdf.id)}
-                  class='text-muted-foreground/70 focus:ring-primary rounded p-1.5 transition-colors hover:bg-red-50 hover:text-red-600 focus:ring-2 focus:outline-none'
-                >
-                  <BiRegularTrash class='h-4 w-4' />
-                </button>
               </div>
             )}
           </For>

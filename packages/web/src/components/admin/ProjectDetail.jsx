@@ -156,7 +156,7 @@ export default function ProjectDetail() {
       <Show
         when={isAdmin()}
         fallback={
-          <div class='flex min-h-100 flex-col items-center justify-center text-gray-500'>
+          <div class='text-muted-foreground flex min-h-100 flex-col items-center justify-center'>
             <FiAlertCircle class='mb-4 h-12 w-12' />
             <p class='text-lg font-medium'>Access Denied</p>
             <p class='text-sm'>You do not have admin privileges.</p>
@@ -166,7 +166,7 @@ export default function ProjectDetail() {
         {/* Back link */}
         <A
           href='/admin/projects'
-          class='mb-6 inline-flex items-center text-sm text-gray-500 hover:text-gray-700'
+          class='text-muted-foreground hover:text-secondary-foreground mb-6 inline-flex items-center text-sm'
         >
           <FiArrowLeft class='mr-2 h-4 w-4' />
           Back to Projects
@@ -202,11 +202,11 @@ export default function ProjectDetail() {
                 <FiFolder class='h-8 w-8 text-blue-600' />
               </div>
               <div>
-                <h1 class='text-2xl font-bold text-gray-900'>{projectData().project.name}</h1>
+                <h1 class='text-foreground text-2xl font-bold'>{projectData().project.name}</h1>
                 <Show when={projectData().project.description}>
-                  <p class='mt-1 text-gray-500'>{projectData().project.description}</p>
+                  <p class='text-muted-foreground mt-1'>{projectData().project.description}</p>
                 </Show>
-                <div class='mt-2 flex items-center space-x-4 text-sm text-gray-500'>
+                <div class='text-muted-foreground mt-2 flex items-center space-x-4 text-sm'>
                   <A
                     href={`/admin/orgs/${projectData().project.orgId}`}
                     class='flex items-center hover:text-blue-600'
@@ -239,15 +239,15 @@ export default function ProjectDetail() {
 
           {/* Project Info Section */}
           <AdminBox class='mb-6'>
-            <h2 class='mb-4 text-lg font-semibold text-gray-900'>Project Information</h2>
+            <h2 class='text-foreground mb-4 text-lg font-semibold'>Project Information</h2>
             <dl class='grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3'>
               <div>
-                <dt class='text-sm font-medium text-gray-500'>Project ID</dt>
-                <dd class='mt-1 flex items-center text-sm text-gray-900'>
+                <dt class='text-muted-foreground text-sm font-medium'>Project ID</dt>
+                <dd class='text-foreground mt-1 flex items-center text-sm'>
                   <span class='font-mono'>{projectData().project.id}</span>
                   <button
                     onClick={() => handleCopy(projectData().project.id, 'Project ID')}
-                    class='ml-2 text-gray-400 hover:text-gray-600'
+                    class='text-muted-foreground/70 hover:text-muted-foreground ml-2'
                   >
                     <Show
                       when={copiedId() === `Project ID-${projectData().project.id}`}
@@ -259,7 +259,7 @@ export default function ProjectDetail() {
                 </dd>
               </div>
               <div>
-                <dt class='text-sm font-medium text-gray-500'>Organization</dt>
+                <dt class='text-muted-foreground text-sm font-medium'>Organization</dt>
                 <dd class='mt-1 text-sm'>
                   <A
                     href={`/admin/orgs/${projectData().project.orgId}`}
@@ -267,11 +267,11 @@ export default function ProjectDetail() {
                   >
                     {projectData().project.orgName}
                   </A>
-                  <span class='ml-1 text-gray-500'>@{projectData().project.orgSlug}</span>
+                  <span class='text-muted-foreground ml-1'>@{projectData().project.orgSlug}</span>
                 </dd>
               </div>
               <div>
-                <dt class='text-sm font-medium text-gray-500'>Created By</dt>
+                <dt class='text-muted-foreground text-sm font-medium'>Created By</dt>
                 <dd class='mt-1 text-sm'>
                   <A
                     href={`/admin/users/${projectData().project.createdBy}`}
@@ -284,21 +284,21 @@ export default function ProjectDetail() {
                 </dd>
               </div>
               <div>
-                <dt class='text-sm font-medium text-gray-500'>Created</dt>
-                <dd class='mt-1 text-sm text-gray-900'>
+                <dt class='text-muted-foreground text-sm font-medium'>Created</dt>
+                <dd class='text-foreground mt-1 text-sm'>
                   {formatDate(projectData().project.createdAt)}
                 </dd>
               </div>
               <div>
-                <dt class='text-sm font-medium text-gray-500'>Updated</dt>
-                <dd class='mt-1 text-sm text-gray-900'>
+                <dt class='text-muted-foreground text-sm font-medium'>Updated</dt>
+                <dd class='text-foreground mt-1 text-sm'>
                   {formatDate(projectData().project.updatedAt)}
                 </dd>
               </div>
               <div>
-                <dt class='text-sm font-medium text-gray-500'>Storage Used</dt>
-                <dd class='mt-1 flex items-center text-sm text-gray-900'>
-                  <FiHardDrive class='mr-1 h-4 w-4 text-gray-400' />
+                <dt class='text-muted-foreground text-sm font-medium'>Storage Used</dt>
+                <dd class='text-foreground mt-1 flex items-center text-sm'>
+                  <FiHardDrive class='text-muted-foreground/70 mr-1 h-4 w-4' />
                   {formatBytes(projectData().stats.totalStorageBytes)}
                 </dd>
               </div>
@@ -307,13 +307,13 @@ export default function ProjectDetail() {
 
           {/* Members Section */}
           <AdminBox class='mb-6'>
-            <h2 class='mb-4 flex items-center text-lg font-semibold text-gray-900'>
+            <h2 class='text-foreground mb-4 flex items-center text-lg font-semibold'>
               <FiUsers class='mr-2 h-5 w-5' />
               Members ({projectData().members?.length || 0})
             </h2>
             <Show
               when={projectData().members?.length > 0}
-              fallback={<p class='text-sm text-gray-500'>No members</p>}
+              fallback={<p class='text-muted-foreground text-sm'>No members</p>}
             >
               <div class='overflow-x-auto'>
                 <table class={table.base}>
@@ -343,7 +343,7 @@ export default function ProjectDetail() {
                                 >
                                   {member.userDisplayName || member.userName}
                                 </A>
-                                <p class='text-xs text-gray-500'>{member.userEmail}</p>
+                                <p class='text-muted-foreground text-xs'>{member.userEmail}</p>
                               </div>
                             </div>
                           </td>
@@ -352,13 +352,13 @@ export default function ProjectDetail() {
                               class={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
                                 member.role === 'owner' ?
                                   'bg-purple-100 text-purple-800'
-                                : 'bg-gray-100 text-gray-800'
+                                : 'bg-secondary text-foreground'
                               }`}
                             >
                               {member.role}
                             </span>
                           </td>
-                          <td class={`${table.cellCompact} text-gray-500`}>
+                          <td class={`${table.cellCompact} text-muted-foreground`}>
                             {formatShortDate(member.joinedAt)}
                           </td>
                           <td class={`${table.cellCompact} text-right`}>
@@ -382,13 +382,13 @@ export default function ProjectDetail() {
 
           {/* Files Section */}
           <AdminBox class='mb-6'>
-            <h2 class='mb-4 flex items-center text-lg font-semibold text-gray-900'>
+            <h2 class='text-foreground mb-4 flex items-center text-lg font-semibold'>
               <FiFile class='mr-2 h-5 w-5' />
               Files ({projectData().files?.length || 0})
             </h2>
             <Show
               when={projectData().files?.length > 0}
-              fallback={<p class='text-sm text-gray-500'>No files uploaded</p>}
+              fallback={<p class='text-muted-foreground text-sm'>No files uploaded</p>}
             >
               <div class='overflow-x-auto'>
                 <table class={table.base}>
@@ -407,22 +407,22 @@ export default function ProjectDetail() {
                         <tr class={table.row}>
                           <td class={table.cellCompact}>
                             <div class='flex items-center space-x-2'>
-                              <FiFile class='h-4 w-4 text-gray-400' />
-                              <span class='font-medium text-gray-900'>
+                              <FiFile class='text-muted-foreground/70 h-4 w-4' />
+                              <span class='text-foreground font-medium'>
                                 {file.originalName || file.filename}
                               </span>
                             </div>
                           </td>
-                          <td class={`${table.cellCompact} text-gray-500`}>
+                          <td class={`${table.cellCompact} text-muted-foreground`}>
                             {file.fileType || '-'}
                           </td>
-                          <td class={`${table.cellCompact} text-gray-500`}>
+                          <td class={`${table.cellCompact} text-muted-foreground`}>
                             {formatBytes(file.fileSize)}
                           </td>
                           <td class={table.cellCompact}>
                             <Show
                               when={file.uploadedBy}
-                              fallback={<span class='text-gray-400'>-</span>}
+                              fallback={<span class='text-muted-foreground/70'>-</span>}
                             >
                               <A
                                 href={`/admin/users/${file.uploadedBy}`}
@@ -432,7 +432,7 @@ export default function ProjectDetail() {
                               </A>
                             </Show>
                           </td>
-                          <td class={`${table.cellCompact} text-gray-500`}>
+                          <td class={`${table.cellCompact} text-muted-foreground`}>
                             {formatShortDate(file.createdAt)}
                           </td>
                         </tr>
@@ -446,13 +446,13 @@ export default function ProjectDetail() {
 
           {/* Invitations Section */}
           <AdminBox class='mb-6'>
-            <h2 class='mb-4 flex items-center text-lg font-semibold text-gray-900'>
+            <h2 class='text-foreground mb-4 flex items-center text-lg font-semibold'>
               <FiMail class='mr-2 h-5 w-5' />
               Invitations ({projectData().invitations?.length || 0})
             </h2>
             <Show
               when={projectData().invitations?.length > 0}
-              fallback={<p class='text-sm text-gray-500'>No invitations</p>}
+              fallback={<p class='text-muted-foreground text-sm'>No invitations</p>}
             >
               <div class='overflow-x-auto'>
                 <table class={table.base}>
@@ -471,11 +471,11 @@ export default function ProjectDetail() {
                         <tr class={table.row}>
                           <td class={table.cellCompact}>{invitation.email}</td>
                           <td class={table.cellCompact}>
-                            <span class='inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-800'>
+                            <span class='bg-secondary text-foreground inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium'>
                               {invitation.role}
                             </span>
                             <Show when={invitation.grantOrgMembership}>
-                              <span class='ml-1 text-xs text-gray-500'>+ org</span>
+                              <span class='text-muted-foreground ml-1 text-xs'>+ org</span>
                             </Show>
                           </td>
                           <td class={table.cellCompact}>
@@ -505,7 +505,7 @@ export default function ProjectDetail() {
                               {invitation.inviterDisplayName || invitation.inviterName}
                             </A>
                           </td>
-                          <td class={`${table.cellCompact} text-gray-500`}>
+                          <td class={`${table.cellCompact} text-muted-foreground`}>
                             {formatShortDate(invitation.createdAt)}
                           </td>
                         </tr>
@@ -538,13 +538,13 @@ export default function ProjectDetail() {
               <DialogBody>
                 <div class='space-y-4'>
                   <Show when={confirmDialog()?.type === 'delete-project'}>
-                    <p class='text-sm text-gray-600'>
+                    <p class='text-muted-foreground text-sm'>
                       This will permanently delete the project and all associated data including
                       files, members, and invitations. This action cannot be undone.
                     </p>
                   </Show>
                   <Show when={confirmDialog()?.type === 'remove-member'}>
-                    <p class='text-sm text-gray-600'>
+                    <p class='text-muted-foreground text-sm'>
                       Are you sure you want to remove{' '}
                       <strong>
                         {confirmDialog()?.member?.userDisplayName ||
@@ -557,7 +557,7 @@ export default function ProjectDetail() {
                   <div class='flex justify-end space-x-3'>
                     <button
                       onClick={() => setConfirmDialog(null)}
-                      class='rounded-lg bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200'
+                      class='bg-secondary text-secondary-foreground hover:bg-secondary rounded-lg px-4 py-2 text-sm font-medium'
                     >
                       Cancel
                     </button>

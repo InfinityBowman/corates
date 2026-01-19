@@ -71,7 +71,7 @@ const AvatarFallback: Component<AvatarFallbackProps> = props => {
   return (
     <AvatarPrimitive.Fallback
       class={cn(
-        'flex h-full w-full items-center justify-center rounded-full bg-gray-100 text-sm font-medium text-gray-600',
+        'bg-secondary text-muted-foreground flex h-full w-full items-center justify-center rounded-full text-sm font-medium',
         local.class,
       )}
       {...others}

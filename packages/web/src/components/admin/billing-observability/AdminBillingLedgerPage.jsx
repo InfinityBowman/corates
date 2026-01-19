@@ -49,11 +49,11 @@ const getStatusColor = status => {
     case 'ignored_unverified':
       return 'bg-yellow-100 text-yellow-800';
     case 'skipped_duplicate':
-      return 'bg-gray-100 text-gray-800';
+      return 'bg-gray-100 text-foreground';
     case 'received':
       return 'bg-blue-100 text-blue-800';
     default:
-      return 'bg-gray-100 text-gray-800';
+      return 'bg-gray-100 text-foreground';
   }
 };
 
@@ -110,10 +110,12 @@ export default function AdminBillingLedgerPage() {
       cell: info => {
         const entry = info.row.original;
         return (
-          <div class='whitespace-nowrap text-gray-500'>
+          <div class='text-muted-foreground whitespace-nowrap'>
             <div>{formatDate(entry.receivedAt)}</div>
             {entry.processedAt && (
-              <div class='text-xs text-gray-400'>Processed: {formatDate(entry.processedAt)}</div>
+              <div class='text-muted-foreground/70 text-xs'>
+                Processed: {formatDate(entry.processedAt)}
+              </div>
             )}
           </div>
         );
@@ -144,14 +146,17 @@ export default function AdminBillingLedgerPage() {
       cell: info => {
         const entry = info.row.original;
         return (
-          <Show when={entry.stripeEventId} fallback={<span class='text-gray-400'>-</span>}>
+          <Show
+            when={entry.stripeEventId}
+            fallback={<span class='text-muted-foreground/70'>-</span>}
+          >
             <div class='flex items-center space-x-1 whitespace-nowrap'>
-              <code class='font-mono text-xs text-gray-800'>
+              <code class='text-foreground font-mono text-xs'>
                 {entry.stripeEventId.slice(0, 12)}...
               </code>
               <button
                 onClick={() => handleCopy(entry.stripeEventId, 'Event ID')}
-                class='text-gray-400 hover:text-gray-600'
+                class='text-muted-foreground/70 hover:text-muted-foreground'
                 title='Copy event ID'
               >
                 {copiedId() === `Event ID-${entry.stripeEventId}` ?
@@ -162,7 +167,7 @@ export default function AdminBillingLedgerPage() {
                 href={getStripeUrl('event', entry.stripeEventId)}
                 target='_blank'
                 rel='noopener noreferrer'
-                class='text-gray-400 hover:text-gray-600'
+                class='text-muted-foreground/70 hover:text-muted-foreground'
                 title='Open in Stripe'
               >
                 <FiExternalLink class='h-3 w-3' />
@@ -178,14 +183,14 @@ export default function AdminBillingLedgerPage() {
       cell: info => {
         const entry = info.row.original;
         return (
-          <Show when={entry.orgId} fallback={<span class='text-gray-400'>-</span>}>
+          <Show when={entry.orgId} fallback={<span class='text-muted-foreground/70'>-</span>}>
             <div class='flex items-center space-x-1 whitespace-nowrap'>
               <A href={`/admin/orgs/${entry.orgId}`} class='text-blue-600 hover:text-blue-800'>
                 <code class='font-mono text-xs'>{entry.orgId.slice(0, 8)}...</code>
               </A>
               <button
                 onClick={() => handleCopy(entry.orgId, 'Org ID')}
-                class='text-gray-400 hover:text-gray-600'
+                class='text-muted-foreground/70 hover:text-muted-foreground'
                 title='Copy org ID'
               >
                 {copiedId() === `Org ID-${entry.orgId}` ?
@@ -206,13 +211,13 @@ export default function AdminBillingLedgerPage() {
           <div class='space-y-1'>
             {entry.stripeCustomerId && (
               <div class='flex items-center space-x-1'>
-                <span class='text-xs text-gray-500'>C:</span>
-                <code class='font-mono text-xs text-gray-800'>
+                <span class='text-muted-foreground text-xs'>C:</span>
+                <code class='text-foreground font-mono text-xs'>
                   {entry.stripeCustomerId.slice(0, 12)}...
                 </code>
                 <button
                   onClick={() => handleCopy(entry.stripeCustomerId, 'Customer ID')}
-                  class='text-gray-400 hover:text-gray-600'
+                  class='text-muted-foreground/70 hover:text-muted-foreground'
                   title='Copy customer ID'
                 >
                   {copiedId() === `Customer ID-${entry.stripeCustomerId}` ?
@@ -223,7 +228,7 @@ export default function AdminBillingLedgerPage() {
                   href={getStripeUrl('customer', entry.stripeCustomerId)}
                   target='_blank'
                   rel='noopener noreferrer'
-                  class='text-gray-400 hover:text-gray-600'
+                  class='text-muted-foreground/70 hover:text-muted-foreground'
                   title='Open in Stripe'
                 >
                   <FiExternalLink class='h-3 w-3' />
@@ -232,13 +237,13 @@ export default function AdminBillingLedgerPage() {
             )}
             {entry.stripeSubscriptionId && (
               <div class='flex items-center space-x-1'>
-                <span class='text-xs text-gray-500'>S:</span>
-                <code class='font-mono text-xs text-gray-800'>
+                <span class='text-muted-foreground text-xs'>S:</span>
+                <code class='text-foreground font-mono text-xs'>
                   {entry.stripeSubscriptionId.slice(0, 12)}...
                 </code>
                 <button
                   onClick={() => handleCopy(entry.stripeSubscriptionId, 'Subscription ID')}
-                  class='text-gray-400 hover:text-gray-600'
+                  class='text-muted-foreground/70 hover:text-muted-foreground'
                   title='Copy subscription ID'
                 >
                   {copiedId() === `Subscription ID-${entry.stripeSubscriptionId}` ?
@@ -249,7 +254,7 @@ export default function AdminBillingLedgerPage() {
                   href={getStripeUrl('subscription', entry.stripeSubscriptionId)}
                   target='_blank'
                   rel='noopener noreferrer'
-                  class='text-gray-400 hover:text-gray-600'
+                  class='text-muted-foreground/70 hover:text-muted-foreground'
                   title='Open in Stripe'
                 >
                   <FiExternalLink class='h-3 w-3' />
@@ -258,13 +263,13 @@ export default function AdminBillingLedgerPage() {
             )}
             {entry.stripeCheckoutSessionId && (
               <div class='flex items-center space-x-1'>
-                <span class='text-xs text-gray-500'>CS:</span>
-                <code class='font-mono text-xs text-gray-800'>
+                <span class='text-muted-foreground text-xs'>CS:</span>
+                <code class='text-foreground font-mono text-xs'>
                   {entry.stripeCheckoutSessionId.slice(0, 12)}...
                 </code>
                 <button
                   onClick={() => handleCopy(entry.stripeCheckoutSessionId, 'Checkout Session ID')}
-                  class='text-gray-400 hover:text-gray-600'
+                  class='text-muted-foreground/70 hover:text-muted-foreground'
                   title='Copy checkout session ID'
                 >
                   {copiedId() === `Checkout Session ID-${entry.stripeCheckoutSessionId}` ?
@@ -283,12 +288,14 @@ export default function AdminBillingLedgerPage() {
       cell: info => {
         const entry = info.row.original;
         return (
-          <Show when={entry.requestId} fallback={<span class='text-gray-400'>-</span>}>
+          <Show when={entry.requestId} fallback={<span class='text-muted-foreground/70'>-</span>}>
             <div class='flex items-center space-x-1 whitespace-nowrap'>
-              <code class='font-mono text-xs text-gray-800'>{entry.requestId.slice(0, 8)}...</code>
+              <code class='text-foreground font-mono text-xs'>
+                {entry.requestId.slice(0, 8)}...
+              </code>
               <button
                 onClick={() => handleCopy(entry.requestId, 'Request ID')}
-                class='text-gray-400 hover:text-gray-600'
+                class='text-muted-foreground/70 hover:text-muted-foreground'
                 title='Copy request ID'
               >
                 {copiedId() === `Request ID-${entry.requestId}` ?
@@ -306,14 +313,14 @@ export default function AdminBillingLedgerPage() {
       cell: info => {
         const entry = info.row.original;
         return (
-          <Switch fallback={<span class='text-gray-400'>-</span>}>
+          <Switch fallback={<span class='text-muted-foreground/70'>-</span>}>
             <Match when={entry.error}>
               <span class='text-xs text-red-600' title={entry.error}>
                 {entry.error.length > 50 ? `${entry.error.slice(0, 50)}...` : entry.error}
               </span>
             </Match>
             <Match when={entry.httpStatus}>
-              <span class='text-xs text-gray-500'>{entry.httpStatus}</span>
+              <span class='text-muted-foreground text-xs'>{entry.httpStatus}</span>
             </Match>
           </Switch>
         );
@@ -333,7 +340,7 @@ export default function AdminBillingLedgerPage() {
       <Show
         when={isAdmin()}
         fallback={
-          <div class='flex min-h-100 flex-col items-center justify-center text-gray-500'>
+          <div class='text-muted-foreground flex min-h-100 flex-col items-center justify-center'>
             <FiAlertCircle class='mb-4 h-12 w-12' />
             <p class='text-lg font-medium'>Access Denied</p>
             <p class='text-sm'>You do not have admin privileges.</p>
@@ -347,7 +354,7 @@ export default function AdminBillingLedgerPage() {
           actions={
             <button
               onClick={() => ledgerQuery.refetch()}
-              class='inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-xs hover:bg-gray-50 focus:ring-[3px] focus:ring-blue-100 focus:outline-none'
+              class='border-border bg-card text-secondary-foreground hover:bg-muted inline-flex items-center gap-2 rounded-xl border px-4 py-2 text-sm font-medium shadow-xs focus:ring-[3px] focus:ring-blue-100 focus:outline-none'
               disabled={ledgerQuery.isFetching}
             >
               {ledgerQuery.isFetching ?
@@ -360,15 +367,17 @@ export default function AdminBillingLedgerPage() {
         {/* Stats Summary */}
         <Show when={stats()}>
           <div class='mb-6 grid grid-cols-2 gap-4 md:grid-cols-5'>
-            <div class='rounded-xl border border-gray-200 bg-white p-4 shadow-xs'>
-              <p class='text-sm text-gray-500'>Total</p>
-              <p class='text-2xl font-bold text-gray-900'>{stats().total || 0}</p>
+            <div class='border-border bg-card rounded-xl border p-4 shadow-xs'>
+              <p class='text-muted-foreground text-sm'>Total</p>
+              <p class='text-foreground text-2xl font-bold'>{stats().total || 0}</p>
             </div>
             <For each={Object.entries(stats().byStatus || {})}>
               {([status, count]) => (
-                <div class='rounded-xl border border-gray-200 bg-white p-4 shadow-xs'>
-                  <p class='text-sm text-gray-500 capitalize'>{status.replace(/_/g, ' ')}</p>
-                  <p class='text-2xl font-bold text-gray-900'>{count}</p>
+                <div class='border-border bg-card rounded-xl border p-4 shadow-xs'>
+                  <p class='text-muted-foreground text-sm capitalize'>
+                    {status.replace(/_/g, ' ')}
+                  </p>
+                  <p class='text-foreground text-2xl font-bold'>{count}</p>
                 </div>
               )}
             </For>
@@ -379,7 +388,7 @@ export default function AdminBillingLedgerPage() {
         <AdminBox class='mb-6'>
           <div class='grid grid-cols-1 gap-4 md:grid-cols-3'>
             <div>
-              <label class='block text-sm font-medium text-gray-700'>Status</label>
+              <label class='text-secondary-foreground block text-sm font-medium'>Status</label>
               <select
                 value={statusFilter()}
                 onInput={e => setStatusFilter(e.target.value)}
@@ -391,7 +400,7 @@ export default function AdminBillingLedgerPage() {
               </select>
             </div>
             <div>
-              <label class='block text-sm font-medium text-gray-700'>Event Type</label>
+              <label class='text-secondary-foreground block text-sm font-medium'>Event Type</label>
               <input
                 type='text'
                 value={typeFilter()}
@@ -401,7 +410,7 @@ export default function AdminBillingLedgerPage() {
               />
             </div>
             <div>
-              <label class='block text-sm font-medium text-gray-700'>Limit</label>
+              <label class='text-secondary-foreground block text-sm font-medium'>Limit</label>
               <select
                 value={limit()}
                 onInput={e => setLimit(parseInt(e.target.value, 10))}

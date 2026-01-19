@@ -63,7 +63,7 @@ export default function OrgList() {
               <FiHome class='h-5 w-5 text-blue-600' />
             </div>
             <div>
-              <p class='font-medium text-gray-900'>{org.name}</p>
+              <p class='text-foreground font-medium'>{org.name}</p>
             </div>
           </div>
         );
@@ -73,7 +73,9 @@ export default function OrgList() {
       accessorKey: 'slug',
       header: 'Slug',
       cell: info => (
-        <code class='rounded bg-gray-100 px-2 py-1 text-sm text-gray-700'>{info.getValue()}</code>
+        <code class='bg-secondary text-secondary-foreground rounded px-2 py-1 text-sm'>
+          {info.getValue()}
+        </code>
       ),
     },
     {
@@ -82,8 +84,8 @@ export default function OrgList() {
       cell: info => {
         const org = info.row.original;
         return (
-          <div class='flex items-center space-x-1 text-gray-500'>
-            <FiUsers class='h-4 w-4 text-gray-400' />
+          <div class='text-muted-foreground flex items-center space-x-1'>
+            <FiUsers class='text-muted-foreground/70 h-4 w-4' />
             <span>{org.stats?.memberCount ?? '-'}</span>
           </div>
         );
@@ -95,8 +97,8 @@ export default function OrgList() {
       cell: info => {
         const org = info.row.original;
         return (
-          <div class='flex items-center space-x-1 text-gray-500'>
-            <FiFolder class='h-4 w-4 text-gray-400' />
+          <div class='text-muted-foreground flex items-center space-x-1'>
+            <FiFolder class='text-muted-foreground/70 h-4 w-4' />
             <span>{org.stats?.projectCount ?? '-'}</span>
           </div>
         );
@@ -105,7 +107,7 @@ export default function OrgList() {
     {
       accessorKey: 'createdAt',
       header: 'Created',
-      cell: info => <span class='text-gray-500'>{formatDate(info.getValue())}</span>,
+      cell: info => <span class='text-muted-foreground'>{formatDate(info.getValue())}</span>,
     },
     {
       id: 'actions',
@@ -137,7 +139,7 @@ export default function OrgList() {
       <Show
         when={isAdmin()}
         fallback={
-          <div class='flex min-h-100 flex-col items-center justify-center text-gray-500'>
+          <div class='text-muted-foreground flex min-h-100 flex-col items-center justify-center'>
             <FiShield class='mb-4 h-12 w-12' />
             <p class='text-lg font-medium'>Access Denied</p>
             <p class='text-sm'>You do not have admin privileges.</p>
@@ -155,7 +157,7 @@ export default function OrgList() {
           title='Organizations'
           cta={
             <div class='relative'>
-              <FiSearch class='absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-gray-400' />
+              <FiSearch class='text-muted-foreground/70 absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2' />
               <input
                 type='text'
                 placeholder='Search by name or slug...'
@@ -178,7 +180,7 @@ export default function OrgList() {
           {/* Server-side Pagination */}
           <Show when={orgsData()?.pagination}>
             <div class='mt-4 flex items-center justify-between'>
-              <p class='text-sm text-gray-500'>
+              <p class='text-muted-foreground text-sm'>
                 Showing {(page() - 1) * (orgsData()?.pagination?.limit || 20) + 1} to{' '}
                 {Math.min(
                   page() * (orgsData()?.pagination?.limit || 20),
@@ -190,11 +192,11 @@ export default function OrgList() {
                 <button
                   onClick={() => setPage(p => Math.max(1, p - 1))}
                   disabled={page() === 1}
-                  class='rounded-xl border border-gray-200 bg-white p-2 text-gray-600 shadow-xs hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50'
+                  class='border-border bg-card text-muted-foreground hover:bg-muted rounded-xl border p-2 shadow-xs disabled:cursor-not-allowed disabled:opacity-50'
                 >
                   <FiChevronLeft class='h-4 w-4' />
                 </button>
-                <span class='text-sm text-gray-500'>
+                <span class='text-muted-foreground text-sm'>
                   Page {page()} of {orgsData()?.pagination?.totalPages || 1}
                 </span>
                 <button
@@ -202,7 +204,7 @@ export default function OrgList() {
                     setPage(p => Math.min(orgsData()?.pagination?.totalPages || 1, p + 1))
                   }
                   disabled={page() >= (orgsData()?.pagination?.totalPages || 1)}
-                  class='rounded-xl border border-gray-200 bg-white p-2 text-gray-600 shadow-xs hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50'
+                  class='border-border bg-card text-muted-foreground hover:bg-muted rounded-xl border p-2 shadow-xs disabled:cursor-not-allowed disabled:opacity-50'
                 >
                   <FiChevronRight class='h-4 w-4' />
                 </button>

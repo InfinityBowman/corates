@@ -110,7 +110,7 @@ export default function AdminBillingStuckStatesPage() {
         actions={
           <div class='flex items-center gap-2'>
             <div class='flex items-center space-x-2'>
-              <label class='text-sm text-gray-600'>Threshold (min):</label>
+              <label class='text-muted-foreground text-sm'>Threshold (min):</label>
               <input
                 type='number'
                 value={incompleteThreshold()}
@@ -121,7 +121,7 @@ export default function AdminBillingStuckStatesPage() {
             </div>
             <button
               onClick={() => stuckStatesQuery.refetch()}
-              class='inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-xs hover:bg-gray-50 focus:ring-[3px] focus:ring-blue-100 focus:outline-none'
+              class='border-border bg-card text-secondary-foreground hover:bg-muted inline-flex items-center gap-2 rounded-xl border px-4 py-2 text-sm font-medium shadow-xs focus:ring-[3px] focus:ring-blue-100 focus:outline-none'
               disabled={stuckStatesQuery.isFetching}
             >
               {stuckStatesQuery.isFetching ?
@@ -136,18 +136,18 @@ export default function AdminBillingStuckStatesPage() {
       />
 
       {checkedAt() && (
-        <p class='mb-6 text-sm text-gray-500'>Last checked: {formatDate(checkedAt())}</p>
+        <p class='text-muted-foreground mb-6 text-sm'>Last checked: {formatDate(checkedAt())}</p>
       )}
 
       {/* Summary */}
       <AdminBox class='mb-6'>
         <div class='flex items-center justify-between'>
           <div>
-            <p class='text-lg font-semibold text-gray-900'>
+            <p class='text-foreground text-lg font-semibold'>
               {stuckOrgs().length} Organization{stuckOrgs().length !== 1 ? 's' : ''} with Stuck
               States
             </p>
-            <p class='text-sm text-gray-500'>
+            <p class='text-muted-foreground text-sm'>
               Click on an org to view details and run reconciliation
             </p>
           </div>
@@ -168,8 +168,10 @@ export default function AdminBillingStuckStatesPage() {
           fallback={
             <AdminBox class='p-12 text-center'>
               <FiCheckCircle class='mx-auto mb-4 h-12 w-12 text-green-500' />
-              <p class='text-lg font-medium text-gray-900'>No stuck states found</p>
-              <p class='text-sm text-gray-500'>All organizations have healthy billing states</p>
+              <p class='text-foreground text-lg font-medium'>No stuck states found</p>
+              <p class='text-muted-foreground text-sm'>
+                All organizations have healthy billing states
+              </p>
             </AdminBox>
           }
         >
@@ -180,10 +182,10 @@ export default function AdminBillingStuckStatesPage() {
                 const steps = getInvestigationSteps(type);
                 return (
                   <AdminBox padding='compact' class='overflow-hidden p-0'>
-                    <div class='border-b border-gray-200 px-6 py-4'>
+                    <div class='border-border border-b px-6 py-4'>
                       <div class='flex items-center space-x-3'>
                         <Icon class='h-5 w-5 text-orange-600' />
-                        <h2 class='text-lg font-semibold text-gray-900'>
+                        <h2 class='text-foreground text-lg font-semibold'>
                           {getStuckStateTypeLabel(type)}
                         </h2>
                         <span class='rounded-full bg-orange-100 px-2.5 py-0.5 text-xs font-medium text-orange-800'>
@@ -195,7 +197,7 @@ export default function AdminBillingStuckStatesPage() {
                       <div class='space-y-4'>
                         <For each={orgs}>
                           {org => (
-                            <div class='rounded-lg border border-gray-200 p-4'>
+                            <div class='border-border rounded-lg border p-4'>
                               <div class='flex items-start justify-between'>
                                 <div class='flex-1'>
                                   <div class='flex items-center space-x-2'>
@@ -206,26 +208,28 @@ export default function AdminBillingStuckStatesPage() {
                                       Org: {org.orgId.slice(0, 8)}...
                                     </A>
                                     {org.ageMinutes && (
-                                      <span class='text-sm text-gray-500'>
+                                      <span class='text-muted-foreground text-sm'>
                                         ({org.ageMinutes} minutes)
                                       </span>
                                     )}
                                   </div>
                                   {org.description && (
-                                    <p class='mt-2 text-sm text-gray-600'>{org.description}</p>
+                                    <p class='text-muted-foreground mt-2 text-sm'>
+                                      {org.description}
+                                    </p>
                                   )}
                                   {org.subscriptionId && (
-                                    <p class='mt-1 text-xs text-gray-500'>
+                                    <p class='text-muted-foreground mt-1 text-xs'>
                                       Subscription: {org.subscriptionId}
                                     </p>
                                   )}
                                   {org.stripeSubscriptionId && (
-                                    <p class='mt-1 text-xs text-gray-500'>
+                                    <p class='text-muted-foreground mt-1 text-xs'>
                                       Stripe: {org.stripeSubscriptionId}
                                     </p>
                                   )}
                                   {org.stripeEventId && (
-                                    <p class='mt-1 text-xs text-gray-500'>
+                                    <p class='text-muted-foreground mt-1 text-xs'>
                                       Event: {org.stripeEventId}
                                     </p>
                                   )}
@@ -237,16 +241,16 @@ export default function AdminBillingStuckStatesPage() {
                                 </div>
                                 <A
                                   href={`/admin/orgs/${org.orgId}`}
-                                  class='ml-4 rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50'
+                                  class='border-border bg-card text-secondary-foreground hover:bg-muted ml-4 rounded-md border px-4 py-2 text-sm font-medium'
                                 >
                                   View Details
                                 </A>
                               </div>
-                              <div class='mt-4 rounded bg-gray-50 p-3'>
-                                <p class='mb-2 text-xs font-medium text-gray-700'>
+                              <div class='bg-muted mt-4 rounded p-3'>
+                                <p class='text-secondary-foreground mb-2 text-xs font-medium'>
                                   Investigation Steps:
                                 </p>
-                                <ul class='list-inside list-disc space-y-1 text-xs text-gray-600'>
+                                <ul class='text-muted-foreground list-inside list-disc space-y-1 text-xs'>
                                   <For each={steps}>{step => <li>{step}</li>}</For>
                                 </ul>
                               </div>

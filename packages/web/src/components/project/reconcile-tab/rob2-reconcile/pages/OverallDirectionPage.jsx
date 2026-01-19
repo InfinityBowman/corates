@@ -34,7 +34,7 @@ export default function OverallDirectionPage(props) {
   );
 
   return (
-    <div class='rounded-xl bg-white shadow-lg'>
+    <div class='bg-card rounded-xl shadow-lg'>
       {/* Header */}
       <div
         class={`rounded-t-xl border-b p-4 ${
@@ -57,10 +57,10 @@ export default function OverallDirectionPage(props) {
             </div>
           </Show>
           <div>
-            <h2 class='font-semibold text-gray-900'>
+            <h2 class='text-foreground font-semibold'>
               Overall Risk of Bias - Judgement &amp; Direction
             </h2>
-            <p class='mt-1 text-sm text-gray-600'>
+            <p class='text-muted-foreground mt-1 text-sm'>
               Review the overall calculated judgement and select the overall bias direction
             </p>
           </div>
@@ -91,7 +91,9 @@ export default function OverallDirectionPage(props) {
           </div>
         </div>
 
-        <h3 class='mb-3 text-sm font-semibold text-gray-700'>Auto-calculated Overall Judgement</h3>
+        <h3 class='text-secondary-foreground mb-3 text-sm font-semibold'>
+          Auto-calculated Overall Judgement
+        </h3>
 
         <div class='grid grid-cols-3 divide-x rounded-lg border'>
           <JudgementPanel
@@ -118,7 +120,9 @@ export default function OverallDirectionPage(props) {
       {/* Direction Section */}
       <div class='p-4'>
         <div class='mb-3 flex items-center gap-2'>
-          <h3 class='text-sm font-semibold text-gray-700'>Predicted Overall Direction of Bias</h3>
+          <h3 class='text-secondary-foreground text-sm font-semibold'>
+            Predicted Overall Direction of Bias
+          </h3>
           <Show
             when={props.directionMatch}
             fallback={

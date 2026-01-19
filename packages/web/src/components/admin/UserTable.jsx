@@ -62,7 +62,7 @@ export default function UserTable(props) {
                 {user.name || 'Unknown'}
               </A>
               <Show when={user.username}>
-                <p class='text-sm text-gray-500'>@{user.username}</p>
+                <p class='text-muted-foreground text-sm'>@{user.username}</p>
               </Show>
             </div>
           </div>
@@ -76,7 +76,7 @@ export default function UserTable(props) {
         const user = info.row.original;
         return (
           <div class='flex items-center space-x-2'>
-            <span class='text-sm text-gray-500'>{user.email}</span>
+            <span class='text-muted-foreground text-sm'>{user.email}</span>
             <Show when={user.emailVerified}>
               <FiCheckCircle class='h-4 w-4 text-green-500' title='Email verified' />
             </Show>
@@ -100,7 +100,7 @@ export default function UserTable(props) {
                       <div class='flex h-5 w-5 items-center justify-center'>
                         <Show
                           when={providerInfo?.icon}
-                          fallback={<FiMail class='h-4 w-4 text-gray-500' />}
+                          fallback={<FiMail class='text-muted-foreground h-4 w-4' />}
                         >
                           <img
                             src={providerInfo?.icon}
@@ -119,7 +119,7 @@ export default function UserTable(props) {
               }}
             </For>
             <Show when={!user.providers || user.providers.length === 0}>
-              <span class='text-xs text-gray-400'>None</span>
+              <span class='text-muted-foreground/70 text-xs'>None</span>
             </Show>
           </div>
         );
@@ -146,8 +146,10 @@ export default function UserTable(props) {
       cell: info => {
         const value = info.getValue();
         return (
-          <Show when={value} fallback={<span class='text-sm text-gray-400'>-</span>}>
-            <code class='rounded bg-gray-100 px-2 py-1 text-xs text-gray-700'>{value}</code>
+          <Show when={value} fallback={<span class='text-muted-foreground/70 text-sm'>-</span>}>
+            <code class='bg-secondary text-secondary-foreground rounded px-2 py-1 text-xs'>
+              {value}
+            </code>
           </Show>
         );
       },
@@ -155,7 +157,7 @@ export default function UserTable(props) {
     {
       accessorKey: 'createdAt',
       header: 'Joined',
-      cell: info => <span class='text-gray-500'>{formatDate(info.getValue())}</span>,
+      cell: info => <span class='text-muted-foreground'>{formatDate(info.getValue())}</span>,
     },
   ];
 

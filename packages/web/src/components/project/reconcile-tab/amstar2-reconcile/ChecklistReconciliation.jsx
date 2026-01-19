@@ -451,15 +451,15 @@ export default function ChecklistReconciliation(props) {
                 disabled={currentPage() === 0}
                 class={`flex items-center gap-2 rounded-lg px-4 py-2 font-medium transition-colors ${
                   currentPage() === 0 ?
-                    'cursor-not-allowed bg-gray-100 text-gray-400'
-                  : 'bg-white text-gray-700 shadow hover:bg-gray-100'
+                    'bg-secondary text-muted-foreground/70 cursor-not-allowed'
+                  : 'bg-card text-secondary-foreground hover:bg-secondary shadow'
                 } `}
               >
                 <FiArrowLeft class='h-4 w-4' />
                 Previous
               </button>
 
-              <div class='text-sm text-gray-600'>
+              <div class='text-muted-foreground text-sm'>
                 Question {currentPage() + 1} of {totalPages}
               </div>
 

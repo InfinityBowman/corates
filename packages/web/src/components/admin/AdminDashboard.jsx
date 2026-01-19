@@ -68,7 +68,7 @@ export default function AdminDashboard() {
       <Show
         when={isAdmin()}
         fallback={
-          <div class='flex min-h-100 flex-col items-center justify-center text-gray-500'>
+          <div class='text-muted-foreground flex min-h-100 flex-col items-center justify-center'>
             <FiAlertCircle class='mb-4 h-12 w-12' />
             <p class='text-lg font-medium'>Access Denied</p>
             <p class='text-sm'>You do not have admin privileges.</p>
@@ -130,7 +130,7 @@ export default function AdminDashboard() {
           description='Manage system users and their access'
           cta={
             <div class='relative'>
-              <FiSearch class='absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-gray-400' />
+              <FiSearch class='text-muted-foreground/70 absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2' />
               <input
                 type='text'
                 placeholder='Search by name or email...'
@@ -156,8 +156,8 @@ export default function AdminDashboard() {
 
             {/* Pagination */}
             <Show when={usersData()?.pagination}>
-              <div class='flex items-center justify-between border-t border-gray-200 px-6 py-4'>
-                <p class='text-sm text-gray-500'>
+              <div class='border-border flex items-center justify-between border-t px-6 py-4'>
+                <p class='text-muted-foreground text-sm'>
                   Showing {(page() - 1) * (usersData()?.pagination?.limit || 20) + 1} to{' '}
                   {Math.min(
                     page() * (usersData()?.pagination?.limit || 20),
@@ -169,11 +169,11 @@ export default function AdminDashboard() {
                   <button
                     onClick={() => setPage(p => Math.max(1, p - 1))}
                     disabled={page() === 1}
-                    class='rounded-lg border border-gray-200 p-2 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50'
+                    class='border-border hover:bg-muted rounded-lg border p-2 transition-colors disabled:cursor-not-allowed disabled:opacity-50'
                   >
                     <FiChevronLeft class='h-4 w-4' />
                   </button>
-                  <span class='text-sm text-gray-500'>
+                  <span class='text-muted-foreground text-sm'>
                     Page {page()} of {usersData()?.pagination?.totalPages || 1}
                   </span>
                   <button
@@ -181,7 +181,7 @@ export default function AdminDashboard() {
                       setPage(p => Math.min(usersData()?.pagination?.totalPages || 1, p + 1))
                     }
                     disabled={page() >= (usersData()?.pagination?.totalPages || 1)}
-                    class='rounded-lg border border-gray-200 p-2 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50'
+                    class='border-border hover:bg-muted rounded-lg border p-2 transition-colors disabled:cursor-not-allowed disabled:opacity-50'
                   >
                     <FiChevronRight class='h-4 w-4' />
                   </button>

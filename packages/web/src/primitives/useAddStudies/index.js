@@ -36,6 +36,21 @@ export function useAddStudies(options = {}) {
     return pdfOps.pdfCount() + refOps.refCount() + lookupOps.lookupCount() + driveOps.driveCount();
   });
 
+  // Preview of merged/deduplicated studies for unified display
+  const stagedStudiesPreview = createMemo(() => {
+    const selectedRefs = refOps.importedRefs().filter(r => refOps.selectedRefIds().has(r._id));
+    const selectedLookups = lookupOps
+      .lookupRefs()
+      .filter(r => lookupOps.selectedLookupIds().has(r._id) && r.pdfAvailable);
+
+    return buildDeduplicatedStudies({
+      uploadedPdfs: pdfOps.uploadedPdfs,
+      selectedRefs,
+      selectedLookups,
+      driveFiles: driveOps.selectedDriveFiles(),
+    });
+  });
+
   const hasAnyStudies = () => {
     return (
       pdfOps.uploadedPdfs.length > 0 ||
@@ -213,6 +228,28 @@ export function useAddStudies(options = {}) {
     driveOps.clearDriveFiles();
   };
 
+  // Remove a staged study by removing all its contributing sources
+  const removeStagedStudy = study => {
+    if (!study.sources || !Array.isArray(study.sources)) return;
+
+    for (const source of study.sources) {
+      switch (source.type) {
+        case 'pdf':
+          pdfOps.removePdf(source.sourceId);
+          break;
+        case 'ref':
+          refOps.toggleRefSelection(source.sourceId); // Deselects if selected
+          break;
+        case 'lookup':
+          lookupOps.removeLookupRef(source.sourceId);
+          break;
+        case 'drive':
+          driveOps.removeDriveFile(source.sourceId);
+          break;
+      }
+    }
+  };
+
   // State serialization for OAuth redirect recovery
   const getSerializableState = () => ({
     uploadedPdfs: pdfOps.getSerializableState(),
@@ -279,10 +316,12 @@ export function useAddStudies(options = {}) {
     driveCount: driveOps.driveCount,
     totalStudyCount,
     hasAnyStudies,
+    stagedStudiesPreview,
 
     // Submit helpers
     getStudiesToSubmit,
     clearAll,
+    removeStagedStudy,
 
     // State persistence
     getSerializableState,

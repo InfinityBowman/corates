@@ -28,22 +28,22 @@ import { cn } from './cn';
 // Variant style presets
 const variants = {
   default: {
-    area: 'px-2 py-1 rounded transition-colors hover:bg-gray-100 focus-within:ring-1 focus-within:ring-blue-500 focus-within:border-blue-500 border border-transparent',
+    area: 'px-2 py-1 rounded transition-colors hover:bg-secondary focus-within:ring-1 focus-within:ring-primary focus-within:border-primary border border-transparent',
     input: 'outline-none bg-transparent',
     preview: 'cursor-pointer',
   },
   inline: {
-    area: 'border-b border-transparent focus-within:border-blue-500 transition-colors',
+    area: 'border-b border-transparent focus-within:border-primary transition-colors',
     input: 'outline-none bg-transparent',
-    preview: 'cursor-pointer hover:text-blue-600 transition-colors',
+    preview: 'cursor-pointer hover:text-primary transition-colors',
   },
   heading: {
-    area: 'rounded transition-colors hover:bg-gray-50 focus-within:bg-gray-50',
+    area: 'rounded transition-colors hover:bg-muted focus-within:bg-muted',
     input: 'outline-none bg-transparent',
     preview: 'cursor-pointer',
   },
   field: {
-    area: 'px-3 py-2 border border-gray-300 rounded-md transition-colors hover:border-gray-400 focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500',
+    area: 'px-3 py-2 border border-border rounded-md transition-colors hover:border-border/80 focus-within:border-primary focus-within:ring-1 focus-within:ring-primary',
     input: 'outline-none bg-transparent',
     preview: 'cursor-pointer',
   },
@@ -167,7 +167,7 @@ const SimpleEditable: Component<SimpleEditableProps> = props => {
         {api => (
           <>
             <Show when={local.label}>
-              <EditablePrimitive.Label class='mb-1 block text-sm font-medium text-gray-700'>
+              <EditablePrimitive.Label class='text-secondary-foreground mb-1 block text-sm font-medium'>
                 {local.label}
               </EditablePrimitive.Label>
             </Show>
@@ -184,7 +184,7 @@ const SimpleEditable: Component<SimpleEditableProps> = props => {
                 <EditablePrimitive.Preview
                   class={cn(
                     variantStyles().preview,
-                    !api().value && 'text-gray-400',
+                    !api().value && 'text-muted-foreground/70',
                     local.previewClass,
                   )}
                 >
@@ -197,7 +197,7 @@ const SimpleEditable: Component<SimpleEditableProps> = props => {
                   <Show
                     when={api().editing}
                     fallback={
-                      <EditablePrimitive.EditTrigger class='rounded p-1 text-gray-400 opacity-0 transition-colors group-hover:opacity-100 hover:bg-gray-100 hover:text-gray-600'>
+                      <EditablePrimitive.EditTrigger class='text-muted-foreground/70 hover:bg-secondary hover:text-muted-foreground rounded p-1 opacity-0 transition-colors group-hover:opacity-100'>
                         <FiEdit2 class='h-4 w-4' />
                       </EditablePrimitive.EditTrigger>
                     }
@@ -205,7 +205,7 @@ const SimpleEditable: Component<SimpleEditableProps> = props => {
                     <EditablePrimitive.SubmitTrigger class='rounded p-1 text-green-500 transition-colors hover:bg-green-50 hover:text-green-600'>
                       <FiCheck class='h-4 w-4' />
                     </EditablePrimitive.SubmitTrigger>
-                    <EditablePrimitive.CancelTrigger class='rounded p-1 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600'>
+                    <EditablePrimitive.CancelTrigger class='text-muted-foreground/70 hover:bg-secondary hover:text-muted-foreground rounded p-1 transition-colors'>
                       <FiX class='h-4 w-4' />
                     </EditablePrimitive.CancelTrigger>
                   </Show>
@@ -213,7 +213,7 @@ const SimpleEditable: Component<SimpleEditableProps> = props => {
               </Show>
 
               <Show when={local.showEditIcon && !local.showControls && !api().editing}>
-                <EditablePrimitive.EditTrigger class='rounded p-1 text-gray-400 opacity-0 transition-colors group-hover:opacity-100 hover:bg-gray-100 hover:text-gray-600'>
+                <EditablePrimitive.EditTrigger class='text-muted-foreground/70 hover:bg-secondary hover:text-muted-foreground rounded p-1 opacity-0 transition-colors group-hover:opacity-100'>
                   <FiEdit2 class='h-4 w-4' />
                 </EditablePrimitive.EditTrigger>
               </Show>

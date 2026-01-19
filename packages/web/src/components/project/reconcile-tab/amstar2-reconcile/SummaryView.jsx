@@ -26,17 +26,19 @@ import {
  */
 export default function SummaryView(props) {
   return (
-    <div class='overflow-hidden rounded-lg bg-white shadow-lg'>
+    <div class='bg-card overflow-hidden rounded-lg shadow-lg'>
       {/* Summary Header */}
-      <div class='border-b border-gray-200 bg-gray-50 p-6'>
-        <h2 class='mb-4 text-xl font-bold text-gray-900'>Review Summary</h2>
+      <div class='border-border bg-muted border-b p-6'>
+        <h2 class='text-foreground mb-4 text-xl font-bold'>Review Summary</h2>
 
         {/* Stats */}
         <Show when={props.summary}>
           <div class='mb-6 grid grid-cols-4 gap-4'>
-            <div class='rounded-lg border border-gray-200 bg-white p-3 text-center'>
-              <div class='text-2xl font-bold text-gray-700'>{props.summary.totalQuestions}</div>
-              <div class='text-xs text-gray-500'>Total Questions</div>
+            <div class='border-border bg-card rounded-lg border p-3 text-center'>
+              <div class='text-secondary-foreground text-2xl font-bold'>
+                {props.summary.totalQuestions}
+              </div>
+              <div class='text-muted-foreground text-xs'>Total Questions</div>
             </div>
             <div class='rounded-lg border border-green-200 bg-green-50 p-3 text-center'>
               <div class='text-2xl font-bold text-green-700'>{props.summary.agreementCount}</div>
@@ -57,7 +59,7 @@ export default function SummaryView(props) {
       </div>
 
       {/* Questions List */}
-      <div class='divide-y divide-gray-200'>
+      <div class='divide-border divide-y'>
         <For each={props.questionKeys}>
           {(key, index) => {
             const comp = () => props.comparisonByQuestion[key];
@@ -100,7 +102,7 @@ export default function SummaryView(props) {
 
             return (
               <div
-                class='flex cursor-pointer items-center justify-between p-4 hover:bg-gray-50'
+                class='hover:bg-muted flex cursor-pointer items-center justify-between p-4'
                 onClick={() => props.onGoToQuestion(index())}
               >
                 <div class='flex items-center gap-3'>
@@ -110,8 +112,8 @@ export default function SummaryView(props) {
                     {index() + 1}
                   </span>
                   <div>
-                    <div class='text-sm font-medium text-gray-900'>Question {index() + 1}</div>
-                    <div class='text-xs text-gray-500'>
+                    <div class='text-foreground text-sm font-medium'>Question {index() + 1}</div>
+                    <div class='text-muted-foreground text-xs'>
                       {isAgreement() ? 'Reviewers agreed' : 'Reviewers differed'}
                     </div>
                   </div>
@@ -122,7 +124,7 @@ export default function SummaryView(props) {
                       getFinalAnswer() === 'Yes' ? 'bg-green-100 text-green-700'
                       : getFinalAnswer() === 'Partial Yes' ? 'bg-yellow-100 text-yellow-700'
                       : getFinalAnswer() === 'No' ? 'bg-red-100 text-red-700'
-                      : 'bg-gray-100 text-gray-600'
+                      : 'bg-secondary text-muted-foreground'
                     } `}
                   >
                     {getFinalAnswer()}
@@ -132,7 +134,7 @@ export default function SummaryView(props) {
                       Critical
                     </span>
                   </Show>
-                  <AiOutlineArrowRight class='h-4 w-4 text-gray-400' />
+                  <AiOutlineArrowRight class='text-muted-foreground/70 h-4 w-4' />
                 </div>
               </div>
             );

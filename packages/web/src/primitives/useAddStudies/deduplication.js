@@ -29,6 +29,7 @@ export function buildDeduplicatedStudies({
     if (pdf.title?.trim() && !pdf.extracting) {
       candidates.push({
         type: 'pdf',
+        sourceId: pdf.id,
         title: pdf.title.trim(),
         doi: pdf.doi || null,
         pdfData: pdf.data,
@@ -42,6 +43,7 @@ export function buildDeduplicatedStudies({
   for (const ref of selectedRefs) {
     candidates.push({
       type: 'ref',
+      sourceId: ref._id,
       title: ref.title,
       doi: ref.doi || null,
       pdfData: ref.pdfData || null,
@@ -70,6 +72,7 @@ export function buildDeduplicatedStudies({
   for (const ref of selectedLookups) {
     candidates.push({
       type: 'lookup',
+      sourceId: ref._id,
       title: ref.title,
       doi: ref.doi || null,
       pdfData: ref.manualPdfData || null,
@@ -98,6 +101,7 @@ export function buildDeduplicatedStudies({
   for (const file of driveFiles) {
     candidates.push({
       type: 'drive',
+      sourceId: file.id,
       title: file.name.replace(/\.pdf$/i, ''),
       doi: null,
       googleDriveFileId: file.id,
@@ -154,6 +158,9 @@ export function buildDeduplicatedStudies({
  * Create a merged study from multiple matching entries
  */
 function createMergedStudy(base, matches) {
+  // Track all sources that contributed to this merged study
+  const sources = matches.map(m => ({ type: m.type, sourceId: m.sourceId }));
+
   const mergedStudy = {
     title: base.title,
     doi: null,
@@ -174,6 +181,7 @@ function createMergedStudy(base, matches) {
       : base.type === 'drive' ? 'google-drive'
       : base.type === 'ref' ? 'reference-file'
       : 'identifier-lookup',
+    sources, // Track contributing sources for removal
   };
 
   for (const match of matches) {

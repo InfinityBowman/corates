@@ -18,16 +18,16 @@ export function PlanningSection(props) {
   };
 
   return (
-    <div class='overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm'>
+    <div class='border-border bg-card overflow-hidden rounded-lg border shadow-sm'>
       <div class='border-b border-amber-200 bg-amber-50 px-6 py-4'>
-        <h2 class='text-lg font-bold text-gray-900'>{PLANNING_SECTION.title}</h2>
+        <h2 class='text-foreground text-lg font-bold'>{PLANNING_SECTION.title}</h2>
         <p class='mt-1 text-sm font-medium text-amber-800'>{PLANNING_SECTION.subtitle}</p>
       </div>
 
       <div class='px-6 py-4'>
         <div class='space-y-2'>
           <label class='block'>
-            <span class='text-sm text-gray-700'>
+            <span class='text-secondary-foreground text-sm'>
               <span class='font-medium'>{p1Field.label}.</span>
               <span class='ml-1'>{p1Field.text}</span>
             </span>

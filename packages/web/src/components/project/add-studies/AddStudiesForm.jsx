@@ -1,9 +1,10 @@
 import { createSignal, createEffect, Show, onMount, onCleanup, For } from 'solid-js';
 import { BiRegularPlus } from 'solid-icons/bi';
 import { AiOutlineCloudUpload } from 'solid-icons/ai';
-import { FiChevronUp, FiUpload, FiLink, FiFileText, FiFolder } from 'solid-icons/fi';
+import { FiUpload, FiLink, FiFileText, FiFolder, FiX } from 'solid-icons/fi';
 import { showToast } from '@/components/ui/toast';
 import { Tabs, TabsList, TabsTrigger, TabsIndicator } from '@/components/ui/tabs';
+import { Collapsible, CollapsibleContent } from '@/components/ui/collapsible';
 import projectStore from '@/stores/projectStore.js';
 
 import { useAddStudies } from '@primitives/useAddStudies.js';
@@ -11,6 +12,7 @@ import PdfUploadSection from './PdfUploadSection.jsx';
 import ReferenceImportSection from './ReferenceImportSection.jsx';
 import DoiLookupSection from './DoiLookupSection.jsx';
 import GoogleDriveSection from './GoogleDriveSection.jsx';
+import StagedStudiesSection from './StagedStudiesSection.jsx';
 
 /**
  * AddStudiesForm - Unified component for adding studies to a project
@@ -85,7 +87,6 @@ export default function AddStudiesForm(props) {
   };
 
   const handleExpand = () => setExpanded(true);
-  const handleCollapse = () => setExpanded(false);
 
   // Global drag-and-drop for collapsed state
   onMount(() => {
@@ -184,38 +185,148 @@ export default function AddStudiesForm(props) {
         </div>
       </Show>
 
-      {/* Collapsed button */}
-      <Show when={!isExpanded() && hasExistingStudies()}>
-        <div class='flex justify-end'>
-          <button
-            type='button'
-            onClick={handleExpand}
-            class='bg-primary hover:bg-primary/90 inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-white shadow-sm transition-colors'
-          >
-            <BiRegularPlus class='h-4 w-4' />
-            Add Studies
-          </button>
+      {/* Card container when has existing studies */}
+      <Show when={hasExistingStudies() && !props.alwaysExpanded}>
+        <div class='border-border bg-card overflow-hidden rounded-lg border shadow-sm'>
+          {/* Header */}
+          <div class='flex items-center justify-between px-4 py-3'>
+            <div class='flex items-center gap-3'>
+              <div class='bg-primary-subtle text-primary flex h-9 w-9 items-center justify-center rounded-lg'>
+                <BiRegularPlus class='h-5 w-5' />
+              </div>
+              <div>
+                <h3 class='text-foreground text-sm font-semibold'>Add Studies</h3>
+                <p class='text-muted-foreground text-xs'>
+                  {studies.totalStudyCount() > 0 ?
+                    `${studies.totalStudyCount()} staged`
+                  : 'Upload PDFs, import references, or look up by DOI'}
+                </p>
+              </div>
+            </div>
+            <button
+              type='button'
+              onClick={() => setExpanded(!expanded())}
+              class='flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors'
+              classList={{
+                'bg-primary text-white': isExpanded(),
+                'bg-primary-subtle text-primary hover:bg-primary/20': !isExpanded(),
+              }}
+            >
+              <Show when={isExpanded()} fallback={<BiRegularPlus class='h-4 w-4' />}>
+                <FiX class='h-4 w-4' />
+              </Show>
+              {isExpanded() ? 'Close' : 'Add'}
+            </button>
+          </div>
+
+          {/* Collapsible content */}
+          <Collapsible open={isExpanded()} onOpenChange={setExpanded}>
+            <CollapsibleContent>
+              <div class='border-border border-t px-6 pt-4 pb-6'>
+                <Tabs value={activeTab()} onValueChange={v => setActiveTab(v)}>
+                  <TabsList class='relative flex gap-1 overflow-x-auto pb-px'>
+                    <For each={tabs}>
+                      {tab => {
+                        const getCount = () => {
+                          if (tab.value === 'pdfs') return studies.pdfCount();
+                          if (tab.value === 'references') return studies.refCount();
+                          if (tab.value === 'lookup') return studies.lookupCount();
+                          if (tab.value === 'drive') return studies.driveCount();
+                          return 0;
+                        };
+                        return (
+                          <TabsTrigger
+                            value={tab.value}
+                            class='group text-muted-foreground hover:bg-muted hover:text-secondary-foreground data-selected:text-foreground relative gap-2 rounded-t-lg px-4 py-2.5 transition-all'
+                          >
+                            <span class='opacity-60 transition-opacity group-data-selected:opacity-100'>
+                              {tab.icon}
+                            </span>
+                            <span class='font-medium'>{tab.label}</span>
+                            <Show when={getCount() > 0}>
+                              <span class='bg-secondary text-secondary-foreground group-data-selected:bg-primary-subtle group-data-selected:text-primary min-w-6 rounded-full px-1.5 py-0.5 text-center text-xs font-medium tabular-nums transition-colors'>
+                                {getCount()}
+                              </span>
+                            </Show>
+                          </TabsTrigger>
+                        );
+                      }}
+                    </For>
+                    <TabsIndicator class='bg-primary h-0.5 rounded-full' />
+                  </TabsList>
+                </Tabs>
+
+                <div class='mt-4'>
+                  <Show when={activeTab() === 'pdfs'}>
+                    <PdfUploadSection studies={studies} />
+                  </Show>
+
+                  <Show when={activeTab() === 'references'}>
+                    <ReferenceImportSection
+                      studies={studies}
+                      onSaveFormState={handleSaveFormState}
+                    />
+                  </Show>
+
+                  <Show when={activeTab() === 'lookup'}>
+                    <DoiLookupSection studies={studies} onSaveFormState={handleSaveFormState} />
+                  </Show>
+
+                  <Show when={activeTab() === 'drive'}>
+                    <GoogleDriveSection
+                      studies={studies}
+                      formType={props.formType}
+                      projectId={props.projectId}
+                      onSaveFormState={handleSaveFormState}
+                    />
+                  </Show>
+                </div>
+
+                {/* Unified Staged Studies Section */}
+                <StagedStudiesSection studies={studies} />
+
+                {/* Actions - hidden in collect mode since parent handles submission */}
+                <Show when={studies.totalStudyCount() > 0 && !props.collectMode}>
+                  <div class='border-border mt-4 flex items-center justify-end gap-2 border-t pt-4'>
+                    <button
+                      type='button'
+                      onClick={handleCancel}
+                      class='text-secondary-foreground hover:bg-secondary hover:text-foreground rounded-lg px-3 py-1.5 text-sm transition-colors'
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type='button'
+                      onClick={handleSubmit}
+                      disabled={isSubmitting() || studies.totalStudyCount() === 0}
+                      class='bg-primary hover:bg-primary/90 focus:ring-primary inline-flex items-center gap-2 rounded-lg px-4 py-1.5 text-sm font-medium text-white transition-colors focus:ring-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50'
+                    >
+                      <Show
+                        when={!isSubmitting()}
+                        fallback={
+                          <>
+                            <div class='h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent' />
+                            Adding...
+                          </>
+                        }
+                      >
+                        Add {studies.totalStudyCount()}{' '}
+                        {studies.totalStudyCount() === 1 ? 'Study' : 'Studies'}
+                      </Show>
+                    </button>
+                  </div>
+                </Show>
+              </div>
+            </CollapsibleContent>
+          </Collapsible>
         </div>
       </Show>
 
-      {/* Expanded form */}
-      <Show when={isExpanded()}>
+      {/* Always expanded mode - standalone card */}
+      <Show when={props.alwaysExpanded}>
         <div
-          class={`${props.collectMode ? '' : 'border-border bg-card rounded-lg border p-6 shadow-sm'}`}
+          class={props.collectMode ? '' : 'border-border bg-card rounded-lg border p-6 shadow-sm'}
         >
-          <Show when={!props.alwaysExpanded && !props.collectMode}>
-            <div class='mb-4 flex items-center justify-between'>
-              <h3 class='text-foreground text-lg font-semibold'>Add Studies</h3>
-              <button
-                type='button'
-                onClick={handleCollapse}
-                class='text-muted-foreground/70 hover:bg-secondary hover:text-secondary-foreground rounded p-1 transition-colors'
-              >
-                <FiChevronUp class='h-5 w-5' />
-              </button>
-            </div>
-          </Show>
-
           <Tabs value={activeTab()} onValueChange={v => setActiveTab(v)}>
             <TabsList class='relative flex gap-1 overflow-x-auto pb-px'>
               <For each={tabs}>
@@ -253,15 +364,12 @@ export default function AddStudiesForm(props) {
             <Show when={activeTab() === 'pdfs'}>
               <PdfUploadSection studies={studies} />
             </Show>
-
             <Show when={activeTab() === 'references'}>
               <ReferenceImportSection studies={studies} onSaveFormState={handleSaveFormState} />
             </Show>
-
             <Show when={activeTab() === 'lookup'}>
               <DoiLookupSection studies={studies} onSaveFormState={handleSaveFormState} />
             </Show>
-
             <Show when={activeTab() === 'drive'}>
               <GoogleDriveSection
                 studies={studies}
@@ -272,30 +380,101 @@ export default function AddStudiesForm(props) {
             </Show>
           </div>
 
-          {/* Summary and Actions - hidden in collect mode since parent handles submission */}
+          <StagedStudiesSection studies={studies} />
+
           <Show when={studies.totalStudyCount() > 0 && !props.collectMode}>
-            <div class='border-border mt-4 border-t pt-4'>
-              <div class='flex items-center justify-between'>
-                <div class='text-secondary-foreground text-sm'>
-                  <span class='font-medium'>{studies.totalStudyCount()}</span>{' '}
-                  {studies.totalStudyCount() === 1 ? 'study' : 'studies'} ready to add
-                  <span class='text-muted-foreground/70 ml-2'>
-                    (
-                    {[
-                      studies.pdfCount() > 0 ?
-                        `${studies.pdfCount()} PDF${studies.pdfCount() > 1 ? 's' : ''}`
-                      : null,
-                      studies.refCount() > 0 ? `${studies.refCount()} imported` : null,
-                      studies.lookupCount() > 0 ? `${studies.lookupCount()} from lookup` : null,
-                      studies.driveCount() > 0 ? `${studies.driveCount()} from Drive` : null,
-                    ]
-                      .filter(Boolean)
-                      .join(', ')}
-                    )
-                  </span>
+            <div class='border-border mt-4 flex items-center justify-end gap-2 border-t pt-4'>
+              <button
+                type='button'
+                onClick={handleSubmit}
+                disabled={isSubmitting() || studies.totalStudyCount() === 0}
+                class='bg-primary hover:bg-primary/90 focus:ring-primary inline-flex items-center gap-2 rounded-lg px-4 py-1.5 text-sm font-medium text-white transition-colors focus:ring-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50'
+              >
+                <Show
+                  when={!isSubmitting()}
+                  fallback={
+                    <>
+                      <div class='h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent' />
+                      Adding...
+                    </>
+                  }
+                >
+                  Add {studies.totalStudyCount()}{' '}
+                  {studies.totalStudyCount() === 1 ? 'Study' : 'Studies'}
+                </Show>
+              </button>
+            </div>
+          </Show>
+        </div>
+      </Show>
+
+      {/* Empty project - drop zone or expanded form */}
+      <Show when={!hasExistingStudies() && !props.alwaysExpanded}>
+        <Show
+          when={!isExpanded()}
+          fallback={
+            <div class='border-border bg-card overflow-hidden rounded-lg border shadow-sm'>
+              <div class='p-6'>
+                <Tabs value={activeTab()} onValueChange={v => setActiveTab(v)}>
+                  <TabsList class='relative flex gap-1 overflow-x-auto pb-px'>
+                    <For each={tabs}>
+                      {tab => {
+                        const getCount = () => {
+                          if (tab.value === 'pdfs') return studies.pdfCount();
+                          if (tab.value === 'references') return studies.refCount();
+                          if (tab.value === 'lookup') return studies.lookupCount();
+                          if (tab.value === 'drive') return studies.driveCount();
+                          return 0;
+                        };
+                        return (
+                          <TabsTrigger
+                            value={tab.value}
+                            class='group text-muted-foreground hover:bg-muted hover:text-secondary-foreground data-selected:text-foreground relative gap-2 rounded-t-lg px-4 py-2.5 transition-all'
+                          >
+                            <span class='opacity-60 transition-opacity group-data-selected:opacity-100'>
+                              {tab.icon}
+                            </span>
+                            <span class='font-medium'>{tab.label}</span>
+                            <Show when={getCount() > 0}>
+                              <span class='bg-secondary text-secondary-foreground group-data-selected:bg-primary-subtle group-data-selected:text-primary min-w-6 rounded-full px-1.5 py-0.5 text-center text-xs font-medium tabular-nums transition-colors'>
+                                {getCount()}
+                              </span>
+                            </Show>
+                          </TabsTrigger>
+                        );
+                      }}
+                    </For>
+                    <TabsIndicator class='bg-primary h-0.5 rounded-full' />
+                  </TabsList>
+                </Tabs>
+
+                <div class='mt-4'>
+                  <Show when={activeTab() === 'pdfs'}>
+                    <PdfUploadSection studies={studies} />
+                  </Show>
+                  <Show when={activeTab() === 'references'}>
+                    <ReferenceImportSection
+                      studies={studies}
+                      onSaveFormState={handleSaveFormState}
+                    />
+                  </Show>
+                  <Show when={activeTab() === 'lookup'}>
+                    <DoiLookupSection studies={studies} onSaveFormState={handleSaveFormState} />
+                  </Show>
+                  <Show when={activeTab() === 'drive'}>
+                    <GoogleDriveSection
+                      studies={studies}
+                      formType={props.formType}
+                      projectId={props.projectId}
+                      onSaveFormState={handleSaveFormState}
+                    />
+                  </Show>
                 </div>
-                <div class='flex items-center gap-2'>
-                  <Show when={!props.alwaysExpanded}>
+
+                <StagedStudiesSection studies={studies} />
+
+                <Show when={studies.totalStudyCount() > 0 && !props.collectMode}>
+                  <div class='border-border mt-4 flex items-center justify-end gap-2 border-t pt-4'>
                     <button
                       type='button'
                       onClick={handleCancel}
@@ -303,45 +482,42 @@ export default function AddStudiesForm(props) {
                     >
                       Cancel
                     </button>
-                  </Show>
-                  <button
-                    type='button'
-                    onClick={handleSubmit}
-                    disabled={isSubmitting() || studies.totalStudyCount() === 0}
-                    class='bg-primary hover:bg-primary/90 focus:ring-primary inline-flex items-center gap-2 rounded-lg px-4 py-1.5 text-sm font-medium text-white transition-colors focus:ring-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50'
-                  >
-                    <Show
-                      when={!isSubmitting()}
-                      fallback={
-                        <>
-                          <div class='h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent' />
-                          Adding...
-                        </>
-                      }
+                    <button
+                      type='button'
+                      onClick={handleSubmit}
+                      disabled={isSubmitting() || studies.totalStudyCount() === 0}
+                      class='bg-primary hover:bg-primary/90 focus:ring-primary inline-flex items-center gap-2 rounded-lg px-4 py-1.5 text-sm font-medium text-white transition-colors focus:ring-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50'
                     >
-                      Add {studies.totalStudyCount()}{' '}
-                      {studies.totalStudyCount() === 1 ? 'Study' : 'Studies'}
-                    </Show>
-                  </button>
-                </div>
+                      <Show
+                        when={!isSubmitting()}
+                        fallback={
+                          <>
+                            <div class='h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent' />
+                            Adding...
+                          </>
+                        }
+                      >
+                        Add {studies.totalStudyCount()}{' '}
+                        {studies.totalStudyCount() === 1 ? 'Study' : 'Studies'}
+                      </Show>
+                    </button>
+                  </div>
+                </Show>
               </div>
             </div>
-          </Show>
-        </div>
-      </Show>
-
-      {/* Initial drop zone for empty projects */}
-      <Show when={!isExpanded() && !hasExistingStudies()}>
-        <div
-          class='border-border cursor-pointer rounded-lg border-2 border-dashed p-8 text-center transition-colors hover:border-blue-500 hover:bg-blue-50/50'
-          onClick={handleExpand}
+          }
         >
-          <AiOutlineCloudUpload class='text-muted-foreground/70 mx-auto mb-3 h-12 w-12' />
-          <p class='text-secondary-foreground font-medium'>Add Studies to Your Project</p>
-          <p class='text-muted-foreground mt-1 text-sm'>
-            Upload PDFs, import from reference managers, or look up by DOI/PMID
-          </p>
-        </div>
+          <div
+            class='border-border cursor-pointer rounded-lg border-2 border-dashed p-8 text-center transition-colors hover:border-blue-500 hover:bg-blue-50/50'
+            onClick={handleExpand}
+          >
+            <AiOutlineCloudUpload class='text-muted-foreground/70 mx-auto mb-3 h-12 w-12' />
+            <p class='text-secondary-foreground font-medium'>Add Studies to Your Project</p>
+            <p class='text-muted-foreground mt-1 text-sm'>
+              Upload PDFs, import from reference managers, or look up by DOI/PMID
+            </p>
+          </div>
+        </Show>
       </Show>
     </div>
   );

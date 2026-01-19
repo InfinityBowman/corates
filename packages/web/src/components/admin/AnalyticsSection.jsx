@@ -127,7 +127,7 @@ export default function AnalyticsSection() {
           <div class='rounded-xl bg-purple-100 p-2'>
             <FiTrendingUp class='h-5 w-5 text-purple-600' />
           </div>
-          <h2 class='text-lg font-semibold text-gray-900'>Analytics</h2>
+          <h2 class='text-foreground text-lg font-semibold'>Analytics</h2>
         </div>
       </div>
 
@@ -138,7 +138,7 @@ export default function AnalyticsSection() {
           <div class='mb-4 flex items-center justify-between'>
             <div class='flex items-center space-x-2'>
               <FiUsers class='h-5 w-5 text-blue-500' />
-              <h3 class='font-medium text-gray-900'>User Signups</h3>
+              <h3 class='text-foreground font-medium'>User Signups</h3>
             </div>
             <div class='flex items-center space-x-2'>
               <select
@@ -152,7 +152,7 @@ export default function AnalyticsSection() {
               </select>
               <button
                 onClick={() => refetchSignups()}
-                class='rounded-lg p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600'
+                class='text-muted-foreground/70 hover:bg-secondary hover:text-muted-foreground rounded-lg p-1'
               >
                 <FiRefreshCw class='h-4 w-4' />
               </button>
@@ -168,13 +168,14 @@ export default function AnalyticsSection() {
             <Show
               when={signupData() && signupData().data}
               fallback={
-                <div class='flex h-64 items-center justify-center text-gray-400'>
+                <div class='text-muted-foreground/70 flex h-64 items-center justify-center'>
                   <span>No data available</span>
                 </div>
               }
             >
-              <div class='mb-2 text-2xl font-bold text-gray-900'>
-                {signupData().total} <span class='text-sm font-normal text-gray-500'>total</span>
+              <div class='text-foreground mb-2 text-2xl font-bold'>
+                {signupData().total}{' '}
+                <span class='text-muted-foreground text-sm font-normal'>total</span>
               </div>
               <LineChart
                 labels={signupData().data.map(d => formatDate(d.date))}
@@ -192,7 +193,7 @@ export default function AnalyticsSection() {
           <div class='mb-4 flex items-center justify-between'>
             <div class='flex items-center space-x-2'>
               <FiHome class='h-5 w-5 text-green-500' />
-              <h3 class='font-medium text-gray-900'>Orgs & Projects</h3>
+              <h3 class='text-foreground font-medium'>Orgs & Projects</h3>
             </div>
           </div>
           <Suspense
@@ -205,7 +206,7 @@ export default function AnalyticsSection() {
             <Show
               when={orgData() && projectData()}
               fallback={
-                <div class='flex h-64 items-center justify-center text-gray-400'>
+                <div class='text-muted-foreground/70 flex h-64 items-center justify-center'>
                   <span>No data available</span>
                 </div>
               }
@@ -213,13 +214,13 @@ export default function AnalyticsSection() {
               <div class='mb-2 flex space-x-4'>
                 <div>
                   <span class='text-2xl font-bold text-green-600'>{orgData()?.total || 0}</span>
-                  <span class='ml-1 text-sm text-gray-500'>orgs</span>
+                  <span class='text-muted-foreground ml-1 text-sm'>orgs</span>
                 </div>
                 <div>
                   <span class='text-2xl font-bold text-purple-600'>
                     {projectData()?.total || 0}
                   </span>
-                  <span class='ml-1 text-sm text-gray-500'>projects</span>
+                  <span class='text-muted-foreground ml-1 text-sm'>projects</span>
                 </div>
               </div>
               <LineChart
@@ -254,10 +255,10 @@ export default function AnalyticsSection() {
         {/* Subscriptions Breakdown */}
         <AdminBox>
           <div class='mb-4 flex items-center justify-between'>
-            <h3 class='font-medium text-gray-900'>Subscriptions</h3>
+            <h3 class='text-foreground font-medium'>Subscriptions</h3>
             <button
               onClick={() => refetchSubs()}
-              class='rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600'
+              class='text-muted-foreground/70 hover:bg-secondary hover:text-muted-foreground rounded p-1'
             >
               <FiRefreshCw class='h-4 w-4' />
             </button>
@@ -272,7 +273,7 @@ export default function AnalyticsSection() {
             <Show
               when={subscriptionData()}
               fallback={
-                <div class='flex h-48 items-center justify-center text-gray-400'>
+                <div class='text-muted-foreground/70 flex h-48 items-center justify-center'>
                   <span>No data</span>
                 </div>
               }
@@ -309,11 +310,11 @@ export default function AnalyticsSection() {
           <div class='mb-4 flex items-center justify-between'>
             <div class='flex items-center space-x-2'>
               <FiDollarSign class='h-5 w-5 text-green-500' />
-              <h3 class='font-medium text-gray-900'>Revenue (6 months)</h3>
+              <h3 class='text-foreground font-medium'>Revenue (6 months)</h3>
             </div>
             <button
               onClick={() => refetchRevenue()}
-              class='rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600'
+              class='text-muted-foreground/70 hover:bg-secondary hover:text-muted-foreground rounded p-1'
             >
               <FiRefreshCw class='h-4 w-4' />
             </button>
@@ -328,7 +329,7 @@ export default function AnalyticsSection() {
             <Show
               when={revenueData() && revenueData().data?.length > 0}
               fallback={
-                <div class='flex h-48 flex-col items-center justify-center text-gray-400'>
+                <div class='text-muted-foreground/70 flex h-48 flex-col items-center justify-center'>
                   <Show when={revenueData()?.error}>
                     <FiAlertTriangle class='mb-2 h-6 w-6 text-yellow-500' />
                   </Show>
@@ -336,9 +337,9 @@ export default function AnalyticsSection() {
                 </div>
               }
             >
-              <div class='mb-2 text-2xl font-bold text-gray-900'>
+              <div class='text-foreground mb-2 text-2xl font-bold'>
                 {formatCurrency(revenueData().total)}{' '}
-                <span class='text-sm font-normal text-gray-500'>total</span>
+                <span class='text-muted-foreground text-sm font-normal'>total</span>
               </div>
               <BarChart
                 class='h-48'
@@ -357,7 +358,7 @@ export default function AnalyticsSection() {
         <div class='mb-4 flex items-center justify-between'>
           <div class='flex items-center space-x-2'>
             <FiAlertTriangle class='h-5 w-5 text-orange-500' />
-            <h3 class='font-medium text-gray-900'>Webhook Health</h3>
+            <h3 class='text-foreground font-medium'>Webhook Health</h3>
           </div>
           <div class='flex items-center space-x-2'>
             <select
@@ -371,7 +372,7 @@ export default function AnalyticsSection() {
             </select>
             <button
               onClick={() => refetchWebhooks()}
-              class='rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600'
+              class='text-muted-foreground/70 hover:bg-secondary hover:text-muted-foreground rounded p-1'
             >
               <FiRefreshCw class='h-4 w-4' />
             </button>
@@ -387,7 +388,7 @@ export default function AnalyticsSection() {
           <Show
             when={webhookData() && webhookData().data}
             fallback={
-              <div class='flex h-48 items-center justify-center text-gray-400'>
+              <div class='text-muted-foreground/70 flex h-48 items-center justify-center'>
                 <span>No webhook data</span>
               </div>
             }
@@ -397,19 +398,19 @@ export default function AnalyticsSection() {
                 <span class='text-2xl font-bold text-green-600'>
                   {webhookData().totals?.success || 0}
                 </span>
-                <span class='ml-1 text-sm text-gray-500'>success</span>
+                <span class='text-muted-foreground ml-1 text-sm'>success</span>
               </div>
               <div>
                 <span class='text-2xl font-bold text-red-600'>
                   {webhookData().totals?.failed || 0}
                 </span>
-                <span class='ml-1 text-sm text-gray-500'>failed</span>
+                <span class='text-muted-foreground ml-1 text-sm'>failed</span>
               </div>
               <div>
                 <span class='text-2xl font-bold text-yellow-600'>
                   {webhookData().totals?.pending || 0}
                 </span>
-                <span class='ml-1 text-sm text-gray-500'>pending</span>
+                <span class='text-muted-foreground ml-1 text-sm'>pending</span>
               </div>
             </div>
             <LineChart
