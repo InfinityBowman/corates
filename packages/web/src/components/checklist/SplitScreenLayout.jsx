@@ -79,7 +79,7 @@ export default function SplitScreenLayout(props) {
   return (
     <div class='flex h-full flex-col'>
       {/* Combined header and layout controls */}
-      <div class='flex shrink-0 items-center justify-between border-b border-gray-200 bg-white px-4 py-2'>
+      <div class='border-border bg-card flex shrink-0 items-center justify-between border-b px-4 py-2'>
         {/* Left side: header content from parent */}
         <div class='flex min-w-0 items-center gap-3'>{props.headerContent}</div>
 
@@ -133,7 +133,7 @@ export default function SplitScreenLayout(props) {
         <Show when={secondPanel()}>
           <div
             onMouseDown={handleMouseDown}
-            class={`${layout() === 'vertical' ? 'w-1 cursor-col-resize' : 'h-1 cursor-row-resize'} shrink-0 bg-gray-200 hover:bg-blue-400 active:bg-blue-500 ${
+            class={`${layout() === 'vertical' ? 'w-1 cursor-col-resize' : 'h-1 cursor-row-resize'} bg-border shrink-0 hover:bg-blue-400 active:bg-blue-500 ${
               isDragging() ? 'bg-blue-500' : ''
             } ${showSecondPanel() ? 'opacity-100' : 'pointer-events-none opacity-0'}`}
             style={{

@@ -58,9 +58,9 @@ export default function SubscriptionList(props) {
   };
 
   return (
-    <div class='rounded-lg border border-gray-200 bg-white'>
-      <div class='border-b border-gray-200 px-6 py-4'>
-        <h2 class='text-lg font-semibold text-gray-900'>Subscriptions</h2>
+    <div class='border-border bg-card rounded-lg border'>
+      <div class='border-border border-b px-6 py-4'>
+        <h2 class='text-foreground text-lg font-semibold'>Subscriptions</h2>
       </div>
       <Show
         when={!isLoading()}
@@ -73,7 +73,7 @@ export default function SubscriptionList(props) {
         <div class='p-6'>
           <Show
             when={subscriptions().length > 0}
-            fallback={<p class='text-sm text-gray-500'>No subscriptions</p>}
+            fallback={<p class='text-muted-foreground text-sm'>No subscriptions</p>}
           >
             <div class='space-y-4'>
               <For each={subscriptions()}>
@@ -82,13 +82,13 @@ export default function SubscriptionList(props) {
                     class={`rounded-lg border p-4 ${
                       isEffective(subscription) ?
                         'border-blue-300 bg-blue-50'
-                      : 'border-gray-200 bg-white'
+                      : 'border-border bg-card'
                     }`}
                   >
                     <div class='flex items-start justify-between'>
                       <div class='flex-1'>
                         <div class='flex items-center space-x-2'>
-                          <p class='font-medium text-gray-900'>{subscription.plan}</p>
+                          <p class='text-foreground font-medium'>{subscription.plan}</p>
                           <span
                             class={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
                               (
@@ -96,7 +96,7 @@ export default function SubscriptionList(props) {
                                 subscription.status === 'trialing'
                               ) ?
                                 'bg-green-100 text-green-800'
-                              : 'bg-gray-100 text-gray-800'
+                              : 'bg-secondary text-foreground'
                             }`}
                           >
                             {subscription.status}
@@ -107,7 +107,7 @@ export default function SubscriptionList(props) {
                             </span>
                           )}
                         </div>
-                        <div class='mt-2 grid grid-cols-1 gap-3 text-sm text-gray-500 md:grid-cols-2'>
+                        <div class='text-muted-foreground mt-2 grid grid-cols-1 gap-3 text-sm md:grid-cols-2'>
                           <div class='space-y-1'>
                             <p>Period Start: {formatDate(subscription.periodStart)}</p>
                             <p>Period End: {formatDate(subscription.periodEnd)}</p>
@@ -134,16 +134,18 @@ export default function SubscriptionList(props) {
                         {(subscription.stripeCustomerId || subscription.stripeSubscriptionId) && (
                           <div class='mt-3 flex flex-wrap gap-2'>
                             {subscription.stripeCustomerId && (
-                              <div class='flex items-center space-x-1 rounded bg-gray-100 px-2 py-1'>
-                                <span class='text-xs font-medium text-gray-600'>Customer:</span>
-                                <code class='font-mono text-xs text-gray-800'>
+                              <div class='bg-secondary flex items-center space-x-1 rounded px-2 py-1'>
+                                <span class='text-muted-foreground text-xs font-medium'>
+                                  Customer:
+                                </span>
+                                <code class='text-foreground font-mono text-xs'>
                                   {subscription.stripeCustomerId.slice(0, 12)}...
                                 </code>
                                 <button
                                   onClick={() =>
                                     handleCopyId(subscription.stripeCustomerId, 'customer')
                                   }
-                                  class='ml-1 text-gray-500 hover:text-gray-700'
+                                  class='text-muted-foreground hover:text-secondary-foreground ml-1'
                                   title='Copy customer ID'
                                 >
                                   {copiedId() === `customer-${subscription.stripeCustomerId}` ?
@@ -153,16 +155,18 @@ export default function SubscriptionList(props) {
                               </div>
                             )}
                             {subscription.stripeSubscriptionId && (
-                              <div class='flex items-center space-x-1 rounded bg-gray-100 px-2 py-1'>
-                                <span class='text-xs font-medium text-gray-600'>Subscription:</span>
-                                <code class='font-mono text-xs text-gray-800'>
+                              <div class='bg-secondary flex items-center space-x-1 rounded px-2 py-1'>
+                                <span class='text-muted-foreground text-xs font-medium'>
+                                  Subscription:
+                                </span>
+                                <code class='text-foreground font-mono text-xs'>
                                   {subscription.stripeSubscriptionId.slice(0, 12)}...
                                 </code>
                                 <button
                                   onClick={() =>
                                     handleCopyId(subscription.stripeSubscriptionId, 'subscription')
                                   }
-                                  class='ml-1 text-gray-500 hover:text-gray-700'
+                                  class='text-muted-foreground hover:text-secondary-foreground ml-1'
                                   title='Copy subscription ID'
                                 >
                                   {(
@@ -181,7 +185,7 @@ export default function SubscriptionList(props) {
                         <button
                           onClick={() => props.onEdit?.(subscription)}
                           disabled={loading()}
-                          class='rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50'
+                          class='border-border bg-card text-secondary-foreground hover:bg-muted rounded-lg border px-3 py-2 text-sm font-medium disabled:opacity-50'
                           title='Edit subscription'
                         >
                           <FiEdit class='h-4 w-4' />
@@ -189,7 +193,7 @@ export default function SubscriptionList(props) {
                         <button
                           onClick={() => props.onCancel?.(subscription.id)}
                           disabled={loading()}
-                          class='rounded-lg border border-red-300 bg-white px-3 py-2 text-sm font-medium text-red-600 hover:bg-red-50 disabled:opacity-50'
+                          class='bg-card rounded-lg border border-red-300 px-3 py-2 text-sm font-medium text-red-600 hover:bg-red-50 disabled:opacity-50'
                           title='Cancel subscription'
                         >
                           <FiTrash2 class='h-4 w-4' />

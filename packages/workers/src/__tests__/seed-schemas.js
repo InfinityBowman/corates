@@ -26,7 +26,8 @@ export const seedUserSchema = z.object({
   createdAt: dateOrTimestampToNumber,
   updatedAt: dateOrTimestampToNumber,
   role: z.string().optional().default('researcher'),
-  displayName: z.string().nullable().optional().default(null),
+  givenName: z.string().nullable().optional().default(null),
+  familyName: z.string().nullable().optional().default(null),
   username: z.string().nullable().optional().default(null),
   banned: z
     .union([z.boolean(), z.number()])

@@ -91,7 +91,8 @@ export async function createProject(
       id: user.id,
       name: user.name,
       email: user.email,
-      displayName: user.displayName,
+      givenName: user.givenName,
+      familyName: user.familyName,
       image: user.image,
     })
     .from(user)
@@ -116,7 +117,8 @@ export async function createProject(
           joinedAt: now.getTime(),
           name: creator?.name || null,
           email: creator?.email || null,
-          displayName: creator?.displayName || null,
+          givenName: creator?.givenName || null,
+          familyName: creator?.familyName || null,
           image: creator?.image || null,
         },
       ],

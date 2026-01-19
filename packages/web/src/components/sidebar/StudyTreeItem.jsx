@@ -32,24 +32,24 @@ export default function StudyTreeItem(props) {
         }
       }}
     >
-      <CollapsibleTrigger class='group flex items-center rounded text-gray-600 transition-colors hover:bg-gray-50'>
+      <CollapsibleTrigger class='group text-muted-foreground hover:bg-muted flex items-center rounded transition-colors'>
         <div class='pointer-events-none rounded p-1.5'>
           <FiChevronRight
-            class={`h-2.5 w-2.5 text-gray-400 transition-transform ${isExpanded() ? 'rotate-90' : ''}`}
+            class={`text-muted-foreground/70 h-2.5 w-2.5 transition-transform ${isExpanded() ? 'rotate-90' : ''}`}
           />
         </div>
         <div class='flex flex-1 items-center gap-1.5 py-1.5 pr-2 text-left'>
-          <VsBook class='h-3.5 w-3.5 text-gray-400' />
+          <VsBook class='text-muted-foreground/70 h-3.5 w-3.5' />
           <span class='truncate text-xs font-medium'>{props.study.name}</span>
         </div>
       </CollapsibleTrigger>
       <CollapsibleContent>
         {/* Checklists list */}
-        <div class='mt-0.5 ml-4 space-y-0.5 border-l border-gray-100 pl-2'>
+        <div class='border-border-subtle mt-0.5 ml-4 space-y-0.5 border-l pl-2'>
           <Show
             when={assignedChecklists()?.length > 0}
             fallback={
-              <div class='text-2xs px-2 py-1 text-gray-400'>
+              <div class='text-2xs text-muted-foreground/70 px-2 py-1'>
                 {props.userId ? 'No checklists assigned to you' : 'No checklists'}
               </div>
             }

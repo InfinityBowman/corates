@@ -38,7 +38,7 @@ export default function SignallingQuestionPage(props) {
   });
 
   return (
-    <div class='rounded-xl bg-white shadow-lg'>
+    <div class='bg-card rounded-xl shadow-lg'>
       {/* Header */}
       <div
         class={`rounded-t-xl border-b p-4 ${
@@ -59,13 +59,13 @@ export default function SignallingQuestionPage(props) {
             </div>
           </Show>
           <div class='flex-1'>
-            <h2 class='font-semibold text-gray-900'>
+            <h2 class='text-foreground font-semibold'>
               <Show when={question()?.number}>
                 <span class='mr-2'>{question().number}:</span>
               </Show>
               {question()?.text || props.questionKey}
             </h2>
-            <p class='mt-1 text-sm text-gray-600'>{domain()?.name}</p>
+            <p class='text-muted-foreground mt-1 text-sm'>{domain()?.name}</p>
           </div>
         </div>
 

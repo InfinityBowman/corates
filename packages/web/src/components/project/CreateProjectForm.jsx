@@ -179,25 +179,29 @@ export default function CreateProjectForm(props) {
   };
 
   return (
-    <div class='rounded-lg border border-gray-200 bg-white p-6 shadow-sm'>
-      <h3 class='mb-4 text-lg font-semibold text-gray-900'>Create New Project</h3>
+    <div class='border-border bg-card rounded-lg border p-6 shadow-sm'>
+      <h3 class='text-foreground mb-4 text-lg font-semibold'>Create New Project</h3>
 
       <div class='space-y-4'>
         <div>
-          <label class='mb-2 block text-sm font-semibold text-gray-700'>Project Name</label>
+          <label class='text-secondary-foreground mb-2 block text-sm font-semibold'>
+            Project Name
+          </label>
           <input
             type='text'
             placeholder='e.g., Sleep Study Meta-Analysis'
             value={projectName()}
             onInput={e => setProjectName(e.target.value)}
-            class='w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-400 transition focus:border-transparent focus:ring-2 focus:ring-blue-500 focus:outline-none'
+            class='border-border text-foreground placeholder-muted-foreground/70 focus:ring-primary w-full rounded-lg border px-3 py-2 transition focus:border-transparent focus:ring-2 focus:outline-none'
           />
         </div>
 
         {/* Organization selection - only show if user has multiple orgs */}
         <Show when={!orgsLoading() && orgs().length > 1}>
           <div>
-            <label class='mb-2 block text-sm font-semibold text-gray-700'>Organization</label>
+            <label class='text-secondary-foreground mb-2 block text-sm font-semibold'>
+              Organization
+            </label>
             <SimpleSelect
               items={orgs().map(org => ({ value: org.id, label: org.name }))}
               value={selectedOrgId()}
@@ -208,7 +212,7 @@ export default function CreateProjectForm(props) {
         </Show>
 
         <div>
-          <label class='mb-2 block text-sm font-semibold text-gray-700'>
+          <label class='text-secondary-foreground mb-2 block text-sm font-semibold'>
             Description (Optional)
           </label>
           <textarea
@@ -216,13 +220,13 @@ export default function CreateProjectForm(props) {
             value={projectDescription()}
             onInput={e => setProjectDescription(e.target.value)}
             rows='3'
-            class='w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-400 transition focus:border-transparent focus:ring-2 focus:ring-blue-500 focus:outline-none'
+            class='border-border text-foreground placeholder-muted-foreground/70 focus:ring-primary w-full rounded-lg border px-3 py-2 transition focus:border-transparent focus:ring-2 focus:outline-none'
           />
         </div>
 
         {/* Add Studies Section */}
         <div>
-          <label class='mb-2 block text-sm font-semibold text-gray-700'>
+          <label class='text-secondary-foreground mb-2 block text-sm font-semibold'>
             Add Studies (Optional)
           </label>
           <AddStudiesForm
@@ -250,13 +254,13 @@ export default function CreateProjectForm(props) {
         <button
           onClick={handleSubmit}
           disabled={isCreating() || !projectName().trim()}
-          class='inline-flex items-center rounded-lg bg-blue-600 px-4 py-2 font-medium text-white shadow-md transition-all duration-200 hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50'
+          class='bg-primary hover:bg-primary/90 focus:ring-primary inline-flex items-center rounded-lg px-4 py-2 font-medium text-white shadow-md transition-all duration-200 focus:ring-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50'
         >
           {isCreating() ? 'Creating...' : 'Create Project'}
         </button>
         <button
           onClick={handleCancel}
-          class='rounded-lg border border-gray-300 bg-white px-4 py-2 font-medium text-gray-700 transition-colors hover:border-blue-300 hover:text-blue-600 focus:ring-2 focus:ring-blue-500 focus:outline-none'
+          class='border-border bg-card text-secondary-foreground hover:border-primary/50 hover:text-primary focus:ring-primary rounded-lg border px-4 py-2 font-medium transition-colors focus:ring-2 focus:outline-none'
         >
           Cancel
         </button>

@@ -64,11 +64,14 @@ export default function AccountProviderCard(props) {
   });
 
   return (
-    <div class='flex items-center justify-between rounded-lg border border-gray-200 bg-gray-50 p-4'>
+    <div class='border-border bg-muted flex items-center justify-between rounded-lg border p-4'>
       <div class='flex items-center gap-3'>
         {/* Provider icon */}
-        <div class='rounded-lg border border-gray-200 bg-white p-2'>
-          <Show when={props.provider?.icon} fallback={<FiMail class='h-5 w-5 text-gray-600' />}>
+        <div class='border-border bg-card rounded-lg border p-2'>
+          <Show
+            when={props.provider?.icon}
+            fallback={<FiMail class='text-secondary-foreground h-5 w-5' />}
+          >
             <img src={props.provider.icon} alt={props.provider?.name} class='h-5 w-5' />
           </Show>
         </div>
@@ -76,11 +79,11 @@ export default function AccountProviderCard(props) {
         {/* Provider info */}
         <div>
           <div class='flex items-center gap-2'>
-            <p class='font-medium text-gray-900'>
+            <p class='text-foreground font-medium'>
               {props.provider?.name || props.account.providerId}
             </p>
             <Show when={isCredential()}>
-              <span class='inline-flex items-center gap-1 rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700'>
+              <span class='bg-success-subtle text-success inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium'>
                 <FiCheck class='h-3 w-3' />
                 Primary
               </span>
@@ -88,13 +91,13 @@ export default function AccountProviderCard(props) {
           </div>
 
           <div class='flex items-center gap-1'>
-            <p class='text-sm text-gray-500'>{displayId()}</p>
+            <p class='text-muted-foreground text-sm'>{displayId()}</p>
             <Show when={isOrcid() && orcidProfileUrl()}>
               <a
                 href={orcidProfileUrl()}
                 target='_blank'
                 rel='noopener noreferrer'
-                class='text-gray-400 transition-colors hover:text-gray-600'
+                class='text-muted-foreground/70 hover:text-secondary-foreground transition-colors'
                 aria-label='View ORCID profile'
               >
                 <FiExternalLink class='h-3.5 w-3.5' />
@@ -103,7 +106,7 @@ export default function AccountProviderCard(props) {
           </div>
 
           <Show when={linkedDate()}>
-            <p class='mt-0.5 text-xs text-gray-400'>Linked on {linkedDate()}</p>
+            <p class='text-muted-foreground/70 mt-0.5 text-xs'>Linked on {linkedDate()}</p>
           </Show>
         </div>
       </div>
@@ -115,7 +118,9 @@ export default function AccountProviderCard(props) {
           <Show when={!isCredential()}>
             <Tooltip>
               <TooltipTrigger>
-                <span class='cursor-help text-xs text-gray-400'>Only sign-in method</span>
+                <span class='text-muted-foreground/70 cursor-help text-xs'>
+                  Only sign-in method
+                </span>
               </TooltipTrigger>
               <TooltipPositioner>
                 <TooltipContent>
@@ -130,7 +135,7 @@ export default function AccountProviderCard(props) {
           <button
             onClick={() => props.onUnlink?.()}
             disabled={props.unlinking}
-            class='inline-flex items-center gap-1 rounded-lg bg-red-50 px-3 py-1.5 text-sm font-medium text-red-600 transition-colors hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-50'
+            class='bg-destructive-subtle text-destructive hover:bg-destructive/10 inline-flex items-center gap-1 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50'
             aria-label={`Unlink ${props.provider?.name} account`}
           >
             <FiTrash2 class='h-4 w-4' />

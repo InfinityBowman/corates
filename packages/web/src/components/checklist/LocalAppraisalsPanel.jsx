@@ -64,9 +64,11 @@ export default function LocalAppraisalsPanel(props) {
       <Show when={showHeader()}>
         <div class='flex items-center justify-between'>
           <div>
-            <h2 class='text-2xl font-bold text-gray-900'>Local Appraisals</h2>
+            <h2 class='text-foreground text-2xl font-bold'>Local Appraisals</h2>
 
-            <p class='mt-1 text-gray-500'>Create and manage appraisals locally on this device</p>
+            <p class='text-muted-foreground mt-1'>
+              Create and manage appraisals locally on this device
+            </p>
           </div>
           <button
             class='inline-flex transform items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 font-medium text-white shadow-md transition-all duration-200 hover:scale-[1.02] hover:bg-blue-700 hover:shadow-lg'
@@ -102,8 +104,8 @@ export default function LocalAppraisalsPanel(props) {
           when={checklists().length > 0}
           fallback={
             <Show when={!loading()}>
-              <div class='col-span-full rounded-lg border-2 border-dashed border-gray-300 bg-white py-12 text-center'>
-                <div class='mb-2 text-sm text-gray-500'>No local appraisals</div>
+              <div class='border-border bg-card col-span-full rounded-lg border-2 border-dashed py-12 text-center'>
+                <div class='text-muted-foreground mb-2 text-sm'>No local appraisals</div>
                 <button
                   onClick={() => navigate('/checklist')}
                   class='text-sm font-medium text-blue-600 hover:text-blue-700'
@@ -116,10 +118,10 @@ export default function LocalAppraisalsPanel(props) {
         >
           <For each={checklists()}>
             {checklist => (
-              <div class='group relative rounded-lg border border-gray-200 bg-white p-6 shadow-sm transition-all duration-200 hover:border-gray-300 hover:shadow-md'>
+              <div class='group border-border bg-card hover:border-border relative rounded-lg border p-6 shadow-sm transition-all duration-200 hover:shadow-md'>
                 {/* Local badge */}
                 <div class='absolute top-2 right-2'>
-                  <span class='inline-flex items-center rounded bg-gray-100 px-1.5 py-0.5 text-xs font-medium text-gray-600'>
+                  <span class='bg-secondary text-muted-foreground inline-flex items-center rounded px-1.5 py-0.5 text-xs font-medium'>
                     Local
                   </span>
                 </div>
@@ -127,15 +129,17 @@ export default function LocalAppraisalsPanel(props) {
                   <SimpleEditable
                     activationMode='click'
                     variant='heading'
-                    class='text-lg font-semibold text-gray-900'
+                    class='text-foreground text-lg font-semibold'
                     value={checklist.name}
                     showEditIcon={true}
                     onSubmit={newName => updateChecklist(checklist.id, { name: newName })}
                   />
-                  <p class='text-xs text-gray-500'>{getChecklistMetadata(checklist.type).name}</p>
+                  <p class='text-muted-foreground text-xs'>
+                    {getChecklistMetadata(checklist.type).name}
+                  </p>
                 </div>
 
-                <div class='mb-4 flex items-center justify-between text-xs text-gray-500'>
+                <div class='text-muted-foreground mb-4 flex items-center justify-between text-xs'>
                   <span>
                     Updated{' '}
                     {new Date(checklist.updatedAt || checklist.createdAt).toLocaleDateString()}
@@ -151,7 +155,7 @@ export default function LocalAppraisalsPanel(props) {
                   </button>
                   <button
                     onClick={e => handleDelete(e, checklist.id)}
-                    class='rounded-lg p-1.5 text-gray-400 transition-colors hover:bg-red-50 hover:text-red-600 focus:ring-2 focus:ring-blue-500 focus:outline-none'
+                    class='text-muted-foreground/70 focus:ring-primary rounded-lg p-1.5 transition-colors hover:bg-red-50 hover:text-red-600 focus:ring-2 focus:outline-none'
                     title='Delete appraisal'
                   >
                     <FiTrash2 class='h-5 w-5' />

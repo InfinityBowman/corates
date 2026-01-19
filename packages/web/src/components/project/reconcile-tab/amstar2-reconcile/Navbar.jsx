@@ -94,7 +94,7 @@ function SummaryButton(props) {
   const buttonStyle = createMemo(() =>
     isActive() ?
       'bg-blue-600 text-white ring-2 ring-blue-300'
-    : 'bg-gray-100 text-gray-600 hover:bg-gray-200',
+    : 'bg-secondary text-muted-foreground hover:bg-border',
   );
 
   return (

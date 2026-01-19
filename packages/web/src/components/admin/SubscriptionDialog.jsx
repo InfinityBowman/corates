@@ -86,11 +86,11 @@ export default function SubscriptionDialog(props) {
           <DialogBody>
             <div class='space-y-4'>
               <div>
-                <label class='mb-1 block text-sm font-medium text-gray-700'>Plan</label>
+                <label class='text-secondary-foreground mb-1 block text-sm font-medium'>Plan</label>
                 <select
                   value={plan()}
                   onInput={e => props.onPlanChange?.(e.target.value)}
-                  class='w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none'
+                  class='border-border w-full rounded-lg border px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none'
                 >
                   <option value='starter_team'>Starter Team</option>
                   <option value='team'>Team</option>
@@ -98,11 +98,13 @@ export default function SubscriptionDialog(props) {
                 </select>
               </div>
               <div>
-                <label class='mb-1 block text-sm font-medium text-gray-700'>Status</label>
+                <label class='text-secondary-foreground mb-1 block text-sm font-medium'>
+                  Status
+                </label>
                 <select
                   value={status()}
                   onInput={e => props.onStatusChange?.(e.target.value)}
-                  class='w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none'
+                  class='border-border w-full rounded-lg border px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none'
                 >
                   <option value='active'>Active</option>
                   <option value='trialing'>Trialing</option>
@@ -114,25 +116,25 @@ export default function SubscriptionDialog(props) {
                 </select>
               </div>
               <div>
-                <label class='mb-1 block text-sm font-medium text-gray-700'>
+                <label class='text-secondary-foreground mb-1 block text-sm font-medium'>
                   Period Start (optional)
                 </label>
                 <input
                   type='datetime-local'
                   value={periodStart()}
                   onInput={e => props.onPeriodStartChange?.(e.target.value)}
-                  class='w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none'
+                  class='border-border w-full rounded-lg border px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none'
                 />
               </div>
               <div>
-                <label class='mb-1 block text-sm font-medium text-gray-700'>
+                <label class='text-secondary-foreground mb-1 block text-sm font-medium'>
                   Period End (optional)
                 </label>
                 <input
                   type='datetime-local'
                   value={periodEnd()}
                   onInput={e => props.onPeriodEndChange?.(e.target.value)}
-                  class='w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none'
+                  class='border-border w-full rounded-lg border px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none'
                 />
               </div>
               <div class='flex items-center space-x-2'>
@@ -141,14 +143,17 @@ export default function SubscriptionDialog(props) {
                   id='cancelAtPeriodEnd'
                   checked={cancelAtPeriodEnd()}
                   onInput={e => props.onCancelAtPeriodEndChange?.(e.target.checked)}
-                  class='h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-2 focus:ring-blue-500'
+                  class='border-border h-4 w-4 rounded text-blue-600 focus:ring-2 focus:ring-blue-500'
                 />
-                <label for='cancelAtPeriodEnd' class='text-sm font-medium text-gray-700'>
+                <label
+                  for='cancelAtPeriodEnd'
+                  class='text-secondary-foreground text-sm font-medium'
+                >
                   Cancel at period end
                 </label>
               </div>
               <div>
-                <label class='mb-1 block text-sm font-medium text-gray-700'>
+                <label class='text-secondary-foreground mb-1 block text-sm font-medium'>
                   Canceled At (optional)
                 </label>
                 <input
@@ -157,11 +162,11 @@ export default function SubscriptionDialog(props) {
                   onInput={e =>
                     props.onCanceledAtChange?.(e.target.value ? new Date(e.target.value) : null)
                   }
-                  class='w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none'
+                  class='border-border w-full rounded-lg border px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none'
                 />
               </div>
               <div>
-                <label class='mb-1 block text-sm font-medium text-gray-700'>
+                <label class='text-secondary-foreground mb-1 block text-sm font-medium'>
                   Ended At (optional)
                 </label>
                 <input
@@ -170,11 +175,11 @@ export default function SubscriptionDialog(props) {
                   onInput={e =>
                     props.onEndedAtChange?.(e.target.value ? new Date(e.target.value) : null)
                   }
-                  class='w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none'
+                  class='border-border w-full rounded-lg border px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none'
                 />
               </div>
               <div>
-                <label class='mb-1 block text-sm font-medium text-gray-700'>
+                <label class='text-secondary-foreground mb-1 block text-sm font-medium'>
                   Stripe Customer ID (optional)
                 </label>
                 <input
@@ -182,11 +187,11 @@ export default function SubscriptionDialog(props) {
                   value={stripeCustomerId()}
                   onInput={e => props.onStripeCustomerIdChange?.(e.target.value)}
                   placeholder='cus_...'
-                  class='w-full rounded-lg border border-gray-300 px-3 py-2 font-mono text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none'
+                  class='border-border w-full rounded-lg border px-3 py-2 font-mono text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none'
                 />
               </div>
               <div>
-                <label class='mb-1 block text-sm font-medium text-gray-700'>
+                <label class='text-secondary-foreground mb-1 block text-sm font-medium'>
                   Stripe Subscription ID (optional)
                 </label>
                 <input
@@ -194,13 +199,13 @@ export default function SubscriptionDialog(props) {
                   value={stripeSubscriptionId()}
                   onInput={e => props.onStripeSubscriptionIdChange?.(e.target.value)}
                   placeholder='sub_...'
-                  class='w-full rounded-lg border border-gray-300 px-3 py-2 font-mono text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none'
+                  class='border-border w-full rounded-lg border px-3 py-2 font-mono text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none'
                 />
               </div>
-              <div class='flex justify-end space-x-3 border-t border-gray-200 pt-4'>
+              <div class='border-border flex justify-end space-x-3 border-t pt-4'>
                 <button
                   onClick={() => props.onOpenChange?.(false)}
-                  class='rounded-lg bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200'
+                  class='bg-secondary text-secondary-foreground hover:bg-secondary rounded-lg px-4 py-2 text-sm font-medium'
                 >
                   Cancel
                 </button>

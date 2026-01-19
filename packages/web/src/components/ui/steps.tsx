@@ -134,7 +134,7 @@ const StepsSeparator: Component<StepsSeparatorProps> = props => {
   const [local, others] = splitProps(props, ['class']);
   return (
     <StepsPrimitive.Separator
-      class={cn('h-0.5 flex-1 bg-gray-200', 'data-[complete]:bg-blue-600', local.class)}
+      class={cn('bg-secondary h-0.5 flex-1', 'data-[complete]:bg-primary', local.class)}
       {...others}
     />
   );

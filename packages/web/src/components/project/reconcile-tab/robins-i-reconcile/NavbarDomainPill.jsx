@@ -38,7 +38,7 @@ export default function NavbarDomainPill(props) {
 
   // Container style - wraps everything in one connected pill
   const containerStyle = createMemo(() => {
-    let base = 'flex items-center rounded-md transition-all bg-gray-100 overflow-visible ';
+    let base = 'flex items-center rounded-md transition-all bg-secondary overflow-visible ';
 
     // Subtle ring for current domain only (when collapsed)
     if (!props.isExpanded && props.isCurrentDomain) {
@@ -51,13 +51,13 @@ export default function NavbarDomainPill(props) {
   // Label button style
   const labelStyle = createMemo(() => {
     let base =
-      'flex items-center gap-1 rounded-md px-2 py-2 text-xs font-medium cursor-pointer select-none transition-all text-gray-700 ';
+      'flex items-center gap-1 rounded-md px-2 py-2 text-xs font-medium cursor-pointer select-none transition-all text-secondary-foreground ';
 
     if (props.isExpanded) {
       // When expanded, label is slightly darker to stand out
-      base += 'bg-gray-200 hover:bg-gray-300 ';
+      base += 'bg-border hover:bg-border ';
     } else {
-      base += 'hover:bg-gray-200 ';
+      base += 'hover:bg-border ';
     }
 
     return base;
@@ -187,7 +187,7 @@ function QuestionPill(props) {
           {displayLabel()}
           <Show when={hasAnswer()}>
             <span
-              class='absolute -top-0.5 -right-0.5 flex h-2.5 w-2.5 items-center justify-center rounded-full border-[0.5px] bg-white shadow-sm'
+              class='bg-card absolute -top-0.5 -right-0.5 flex h-2.5 w-2.5 items-center justify-center rounded-full border-[0.5px] shadow-sm'
               aria-hidden='true'
             >
               <FiCheck class='h-1.5 w-1.5 text-green-600' />

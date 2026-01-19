@@ -53,14 +53,14 @@ export function ScoringSummary(props) {
       case 'High':
         return 'bg-red-500';
       default:
-        return 'bg-gray-400';
+        return 'bg-muted-foreground/70';
     }
   };
 
   const getDomainChipColor = domainKey => {
     const domainInfo = smartScoring().domains[domainKey];
     if (!domainInfo?.effective) {
-      return 'bg-gray-100 text-gray-500 border-gray-200';
+      return 'bg-secondary text-muted-foreground border-border';
     }
 
     const judgement = domainInfo.effective;
@@ -73,7 +73,7 @@ export function ScoringSummary(props) {
       case 'High':
         return 'bg-red-100 text-red-800 border-red-300';
       default:
-        return 'bg-gray-100 text-gray-600 border-gray-300';
+        return 'bg-secondary text-muted-foreground border-border';
     }
   };
 
@@ -105,19 +105,19 @@ export function ScoringSummary(props) {
   };
 
   return (
-    <div class='rounded-lg border border-gray-200 bg-white p-4 shadow-sm'>
+    <div class='border-border bg-card rounded-lg border p-4 shadow-sm'>
       <div class='flex flex-wrap items-center justify-between gap-4'>
         {/* Overall score section */}
         <div class='flex items-center gap-3'>
           <div class='flex items-center gap-2'>
             <div class={`h-3 w-3 rounded-full ${getOverallColor()}`} />
-            <span class='text-sm font-medium text-gray-700'>Overall:</span>
-            <span class='text-sm font-semibold text-gray-900'>
+            <span class='text-secondary-foreground text-sm font-medium'>Overall:</span>
+            <span class='text-foreground text-sm font-semibold'>
               {smartScoring().overall || 'Incomplete'}
             </span>
           </div>
-          <span class='text-xs text-gray-400'>|</span>
-          <span class='text-xs text-gray-500'>
+          <span class='text-muted-foreground/70 text-xs'>|</span>
+          <span class='text-muted-foreground text-xs'>
             {domainStats().complete}/{domainStats().total} domains
           </span>
         </div>
@@ -164,7 +164,7 @@ function ResourcesDialog(props) {
       <DialogBackdrop />
       <DialogPositioner>
         <DialogContent class='max-h-[85vh] max-w-md overflow-auto'>
-          <div class='border-b border-gray-200 px-6 py-4'>
+          <div class='border-border border-b px-6 py-4'>
             <DialogTitle>ROB-2 Resources</DialogTitle>
             <DialogDescription class='mt-1'>
               Official guidance and documentation for the RoB 2 assessment tool.
@@ -190,20 +190,20 @@ function ResourcesDialog(props) {
               url='https://training.cochrane.org/handbook/current/chapter-08'
             />
 
-            <div class='rounded-lg bg-gray-50 p-3'>
-              <h4 class='text-sm font-medium text-gray-700'>About Auto Scoring</h4>
-              <p class='mt-1 text-xs text-gray-600'>
+            <div class='bg-muted rounded-lg p-3'>
+              <h4 class='text-secondary-foreground text-sm font-medium'>About Auto Scoring</h4>
+              <p class='text-muted-foreground mt-1 text-xs'>
                 This tool automatically calculates domain judgements based on your signalling
                 question responses, following the official RoB 2 decision algorithms.
               </p>
             </div>
           </div>
 
-          <div class='border-t border-gray-200 px-6 py-3'>
+          <div class='border-border border-t px-6 py-3'>
             <button
               type='button'
               onClick={() => props.onClose()}
-              class='w-full rounded-lg bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-200'
+              class='text-secondary-foreground bg-secondary hover:bg-muted w-full rounded-lg px-4 py-2 text-sm font-medium transition-colors'
             >
               Close
             </button>
@@ -220,14 +220,14 @@ function ResourceLink(props) {
       href={props.url}
       target='_blank'
       rel='noopener noreferrer'
-      class='block rounded-lg border border-gray-200 p-3 transition-colors hover:border-blue-300 hover:bg-blue-50'
+      class='border-border block rounded-lg border p-3 transition-colors hover:border-blue-300 hover:bg-blue-50'
     >
       <div class='flex items-start justify-between gap-2'>
         <div>
-          <h4 class='text-sm font-medium text-gray-900'>{props.title}</h4>
-          <p class='mt-0.5 text-xs text-gray-500'>{props.description}</p>
+          <h4 class='text-foreground text-sm font-medium'>{props.title}</h4>
+          <p class='text-muted-foreground mt-0.5 text-xs'>{props.description}</p>
         </div>
-        <FiExternalLink class='mt-0.5 shrink-0 text-gray-400' size={14} />
+        <FiExternalLink class='text-muted-foreground/70 mt-0.5 shrink-0' size={14} />
       </div>
     </a>
   );

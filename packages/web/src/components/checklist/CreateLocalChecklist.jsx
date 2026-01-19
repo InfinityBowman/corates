@@ -92,23 +92,26 @@ export default function CreateLocalChecklist() {
   return (
     <div class='flex min-h-full items-center justify-center p-6'>
       <div class='w-full max-w-lg'>
-        <div class='rounded-xl border border-gray-200 bg-white p-8 shadow-sm'>
-          <h1 class='mb-2 text-2xl font-bold text-gray-900'>Start an Appraisal</h1>
-          <p class='mb-6 text-gray-600'>
+        <div class='border-border bg-card rounded-xl border p-8 shadow-sm'>
+          <h1 class='text-foreground mb-2 text-2xl font-bold'>Start an Appraisal</h1>
+          <p class='text-muted-foreground mb-6'>
             Start a new quality assessment. Your progress will be saved locally on this device.
           </p>
 
           <form onSubmit={handleSubmit} class='space-y-6'>
             {/* Checklist Type */}
             <div>
-              <label for='checklist-type' class='mb-2 block text-sm font-medium text-gray-700'>
+              <label
+                for='checklist-type'
+                class='text-secondary-foreground mb-2 block text-sm font-medium'
+              >
                 Assessment Type
               </label>
               <select
                 id='checklist-type'
                 value={checklistType()}
                 onChange={e => setChecklistType(e.target.value)}
-                class='w-full rounded-lg border border-gray-300 bg-white px-4 py-3 transition-colors outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500'
+                class='border-border bg-card focus:border-primary focus:ring-primary w-full rounded-lg border px-4 py-3 transition-colors outline-none focus:ring-2'
               >
                 <For each={typeOptions}>
                   {option => (
@@ -122,7 +125,10 @@ export default function CreateLocalChecklist() {
 
             {/* Checklist Name */}
             <div>
-              <label for='checklist-name' class='mb-2 block text-sm font-medium text-gray-700'>
+              <label
+                for='checklist-name'
+                class='text-secondary-foreground mb-2 block text-sm font-medium'
+              >
                 Study Name
               </label>
               <input
@@ -131,14 +137,14 @@ export default function CreateLocalChecklist() {
                 value={name()}
                 onInput={e => setName(e.target.value)}
                 placeholder='e.g., Study by Smith et al. 2024'
-                class='w-full rounded-lg border border-gray-300 px-4 py-3 transition-colors outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500'
+                class='border-border focus:border-primary focus:ring-primary w-full rounded-lg border px-4 py-3 transition-colors outline-none focus:ring-2'
               />
             </div>
 
             {/* PDF Upload */}
             <div>
-              <label class='mb-2 block text-sm font-medium text-gray-700'>
-                PDF Document <span class='text-gray-400'>(optional)</span>
+              <label class='text-secondary-foreground mb-2 block text-sm font-medium'>
+                PDF Document <span class='text-muted-foreground/70'>(optional)</span>
               </label>
 
               <Show
@@ -150,12 +156,12 @@ export default function CreateLocalChecklist() {
                     onFileAccept={details => handleFilesChange(details.files)}
                   >
                     <FileUploadDropzone>
-                      <FiUploadCloud class='h-8 w-8 text-gray-400' />
-                      <p class='mt-2 text-center text-sm text-gray-600'>
+                      <FiUploadCloud class='text-muted-foreground/70 h-8 w-8' />
+                      <p class='text-muted-foreground mt-2 text-center text-sm'>
                         <span class='font-medium text-blue-600'>Click to upload</span> or drag and
                         drop
                       </p>
-                      <p class='mt-1 text-xs text-gray-400'>PDF files only</p>
+                      <p class='text-muted-foreground/70 mt-1 text-xs'>PDF files only</p>
                     </FileUploadDropzone>
                     <FileUploadHiddenInput />
                   </FileUpload>
@@ -164,15 +170,15 @@ export default function CreateLocalChecklist() {
                 <div class='flex items-center gap-3 rounded-lg border border-blue-200 bg-blue-50 p-4'>
                   <FiFileText class='h-8 w-8 shrink-0 text-blue-600' />
                   <div class='min-w-0 flex-1'>
-                    <p class='truncate text-sm font-medium text-gray-900'>{pdfFile().name}</p>
-                    <p class='text-xs text-gray-500'>
+                    <p class='text-foreground truncate text-sm font-medium'>{pdfFile().name}</p>
+                    <p class='text-muted-foreground text-xs'>
                       {(pdfFile().size / 1024 / 1024).toFixed(2)} MB
                     </p>
                   </div>
                   <button
                     type='button'
                     onClick={clearPdf}
-                    class='p-1 text-gray-400 transition-colors hover:text-gray-600'
+                    class='text-muted-foreground/70 hover:text-muted-foreground p-1 transition-colors'
                   >
                     <FiX class='h-5 w-5' />
                   </button>
@@ -192,7 +198,7 @@ export default function CreateLocalChecklist() {
               <button
                 type='button'
                 onClick={handleCancel}
-                class='flex-1 rounded-lg border border-gray-300 px-4 py-3 font-medium text-gray-700 transition-colors hover:bg-gray-50'
+                class='border-border text-secondary-foreground hover:bg-muted flex-1 rounded-lg border px-4 py-3 font-medium transition-colors'
               >
                 Cancel
               </button>
@@ -207,8 +213,8 @@ export default function CreateLocalChecklist() {
           </form>
 
           {/* Info box */}
-          <div class='mt-6 rounded-lg bg-gray-50 p-4'>
-            <p class='text-xs text-gray-500'>
+          <div class='bg-muted mt-6 rounded-lg p-4'>
+            <p class='text-muted-foreground text-xs'>
               Local studies are stored only on this device and don't require an account. To
               collaborate with others or access your studies from multiple devices,{' '}
               <a href='/signup' class='text-blue-600 hover:underline'>

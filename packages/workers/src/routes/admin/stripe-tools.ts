@@ -50,7 +50,7 @@ const LinkedUserSchema = z
     id: z.string(),
     email: z.string(),
     name: z.string(),
-    displayName: z.string().nullable(),
+    givenName: z.string().nullable(),
     stripeCustomerId: z.string().optional(),
   })
   .nullable()
@@ -383,7 +383,7 @@ interface LinkedUser {
   id: string;
   email: string;
   name: string;
-  displayName: string | null;
+  givenName: string | null;
   stripeCustomerId?: string | null;
 }
 
@@ -484,7 +484,7 @@ stripeToolsRoutes.openapi(customerLookupRoute, async c => {
         id: user.id,
         email: user.email,
         name: user.name,
-        displayName: user.displayName,
+        givenName: user.givenName,
       })
       .from(user)
       .where(eq(user.stripeCustomerId, customer.id))
@@ -499,7 +499,7 @@ stripeToolsRoutes.openapi(customerLookupRoute, async c => {
           id: user.id,
           email: user.email,
           name: user.name,
-          displayName: user.displayName,
+          givenName: user.givenName,
           stripeCustomerId: user.stripeCustomerId,
         })
         .from(user)

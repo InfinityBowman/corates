@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "3d5a6f8d-1f85-439c-9d29-1b8dc48a314b",
+  "id": "bba036c5-c40c-41d6-8324-15e3d9afd375",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "account": {
@@ -1299,6 +1299,20 @@
           "notNull": true,
           "autoincrement": false
         },
+        "givenName": {
+          "name": "givenName",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "familyName": {
+          "name": "familyName",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
         "email": {
           "name": "email",
           "type": "text",
@@ -1339,13 +1353,6 @@
         },
         "username": {
           "name": "username",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "displayName": {
-          "name": "displayName",
           "type": "text",
           "primaryKey": false,
           "notNull": false,

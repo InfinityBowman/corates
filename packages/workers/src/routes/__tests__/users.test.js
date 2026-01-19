@@ -30,7 +30,8 @@ vi.mock('@/middleware/auth.js', () => {
         id: userId,
         email,
         name: 'Test User',
-        displayName: 'Test User',
+        givenName: 'Test',
+        familyName: 'User',
         image: null,
       });
       c.set('session', { id: 'test-session' });
@@ -189,9 +190,9 @@ describe('User Routes - GET /api/users/search', () => {
     expect(body[0].name).toBe(john.name);
   });
 
-  it('should search by displayName', async () => {
+  it('should search by givenName', async () => {
     const currentUser = await buildUser({ email: 'current@example.com' });
-    const johnny = await buildUser({ displayName: 'Johnny', email: 'user2@example.com' });
+    const johnny = await buildUser({ givenName: 'Johnny', email: 'user2@example.com' });
 
     const res = await fetchUsers('/api/users/search?q=johnny', {
       headers: { 'x-test-user-id': currentUser.id, 'x-test-user-email': currentUser.email },
@@ -200,7 +201,7 @@ describe('User Routes - GET /api/users/search', () => {
 
     const body = await json(res);
     expect(body).toHaveLength(1);
-    expect(body[0].displayName).toBe(johnny.displayName);
+    expect(body[0].givenName).toBe(johnny.givenName);
   });
 
   it('should search by username', async () => {

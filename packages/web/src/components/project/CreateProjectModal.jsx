@@ -141,7 +141,7 @@ export default function CreateProjectModal(props) {
               </div>
               <div>
                 <DialogTitle class='text-lg'>Create a new project</DialogTitle>
-                <p class='text-sm text-gray-500'>
+                <p class='text-muted-foreground text-sm'>
                   You can add studies and invite collaborators later.
                 </p>
               </div>
@@ -155,7 +155,10 @@ export default function CreateProjectModal(props) {
             <DialogBody class='space-y-4 px-6 pt-5'>
               {/* Project Name */}
               <div>
-                <label for='project-name' class='mb-1.5 block text-sm font-medium text-gray-700'>
+                <label
+                  for='project-name'
+                  class='text-secondary-foreground mb-1.5 block text-sm font-medium'
+                >
                   What should we call this project?
                 </label>
                 <input
@@ -165,14 +168,14 @@ export default function CreateProjectModal(props) {
                   value={projectName()}
                   onInput={e => setProjectName(e.target.value)}
                   autofocus
-                  class='w-full rounded-lg border border-gray-200 bg-white px-3.5 py-2.5 text-sm text-gray-900 placeholder-gray-400 shadow-sm transition-all duration-150 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none'
+                  class='border-border bg-card text-foreground placeholder-muted-foreground/70 focus:border-primary focus:ring-primary/20 w-full rounded-lg border px-3.5 py-2.5 text-sm shadow-sm transition-all duration-150 focus:ring-2 focus:outline-none'
                 />
               </div>
 
               {/* Organization - only show if multiple */}
               <Show when={!orgsLoading() && orgs().length > 1}>
                 <div>
-                  <label class='mb-1.5 block text-sm font-medium text-gray-700'>
+                  <label class='text-secondary-foreground mb-1.5 block text-sm font-medium'>
                     Which team is this for?
                   </label>
                   <SimpleSelect
@@ -189,9 +192,10 @@ export default function CreateProjectModal(props) {
               <div>
                 <label
                   for='project-description'
-                  class='mb-1.5 block text-sm font-medium text-gray-700'
+                  class='text-secondary-foreground mb-1.5 block text-sm font-medium'
                 >
-                  Add a description <span class='font-normal text-gray-400'>(optional)</span>
+                  Add a description{' '}
+                  <span class='text-muted-foreground/70 font-normal'>(optional)</span>
                 </label>
                 <textarea
                   id='project-description'
@@ -199,7 +203,7 @@ export default function CreateProjectModal(props) {
                   value={projectDescription()}
                   onInput={e => setProjectDescription(e.target.value)}
                   rows='2'
-                  class='w-full resize-none rounded-lg border border-gray-200 bg-white px-3.5 py-2.5 text-sm text-gray-900 placeholder-gray-400 shadow-sm transition-all duration-150 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none'
+                  class='border-border bg-card text-foreground placeholder-muted-foreground/70 focus:border-primary focus:ring-primary/20 w-full resize-none rounded-lg border px-3.5 py-2.5 text-sm shadow-sm transition-all duration-150 focus:ring-2 focus:outline-none'
                 />
               </div>
             </DialogBody>

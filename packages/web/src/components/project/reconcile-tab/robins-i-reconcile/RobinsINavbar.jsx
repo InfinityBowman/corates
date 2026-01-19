@@ -125,7 +125,7 @@ export default function RobinsINavbar(props) {
       </For>
 
       {/* Separator before summary/reset */}
-      <span class='mx-1 shrink-0 text-gray-300'>|</span>
+      <span class='text-border mx-1 shrink-0'>|</span>
 
       <div class='flex shrink-0 items-center gap-1'>
         <SummaryButton store={props.store} />
@@ -144,7 +144,7 @@ function SummaryButton(props) {
   const buttonStyle = createMemo(() =>
     isActive() ?
       'bg-blue-600 text-white ring-2 ring-blue-300'
-    : 'bg-gray-100 text-gray-600 hover:bg-gray-200',
+    : 'bg-secondary text-muted-foreground hover:bg-border',
   );
 
   return (

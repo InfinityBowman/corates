@@ -34,7 +34,7 @@ export default function ContactPrompt(props) {
   };
 
   return (
-    <div class='flex items-center justify-between rounded-lg border border-blue-200 bg-white p-4'>
+    <div class='bg-card flex items-center justify-between rounded-lg border border-blue-200 p-4'>
       <div>
         <p class='font-medium text-blue-800'>{getTitle()}</p>
         <p class='text-sm text-blue-600'>{getMessage()}</p>

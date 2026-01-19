@@ -191,18 +191,18 @@ export default function StripeToolsPage() {
       active: 'bg-green-100 text-green-800',
       trialing: 'bg-blue-100 text-blue-800',
       past_due: 'bg-yellow-100 text-yellow-800',
-      canceled: 'bg-gray-100 text-gray-800',
+      canceled: 'bg-secondary text-foreground',
       unpaid: 'bg-red-100 text-red-800',
       incomplete: 'bg-orange-100 text-orange-800',
       incomplete_expired: 'bg-red-100 text-red-800',
-      paused: 'bg-gray-100 text-gray-800',
+      paused: 'bg-secondary text-foreground',
       paid: 'bg-green-100 text-green-800',
       open: 'bg-blue-100 text-blue-800',
-      draft: 'bg-gray-100 text-gray-800',
-      void: 'bg-gray-100 text-gray-800',
+      draft: 'bg-secondary text-foreground',
+      void: 'bg-secondary text-foreground',
       uncollectible: 'bg-red-100 text-red-800',
     };
-    return colors[status] || 'bg-gray-100 text-gray-800';
+    return colors[status] || 'bg-secondary text-foreground';
   };
 
   return (
@@ -217,7 +217,7 @@ export default function StripeToolsPage() {
       <Show
         when={isAdmin()}
         fallback={
-          <div class='flex min-h-100 flex-col items-center justify-center text-gray-500'>
+          <div class='text-muted-foreground flex min-h-100 flex-col items-center justify-center'>
             <FiAlertCircle class='mb-4 h-12 w-12' />
             <p class='text-lg font-medium'>Access Denied</p>
             <p class='text-sm'>You do not have admin privileges.</p>
@@ -233,7 +233,7 @@ export default function StripeToolsPage() {
 
         {/* Search Section */}
         <AdminBox class='mb-6'>
-          <h2 class='mb-4 text-lg font-semibold text-gray-900'>Customer Lookup</h2>
+          <h2 class='text-foreground mb-4 text-lg font-semibold'>Customer Lookup</h2>
           <form onSubmit={handleSearch} class='flex flex-col gap-4 sm:flex-row'>
             <select
               value={searchType()}
@@ -244,7 +244,7 @@ export default function StripeToolsPage() {
               <option value='customerId'>Search by Customer ID</option>
             </select>
             <div class='relative flex-1'>
-              <FiSearch class='pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-gray-400' />
+              <FiSearch class='text-muted-foreground/70 pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2' />
               <input
                 type='text'
                 value={searchInput()}
@@ -280,7 +280,7 @@ export default function StripeToolsPage() {
           {/* Customer Info Card */}
           <AdminBox class='mb-6'>
             <div class='mb-4 flex items-start justify-between'>
-              <h2 class='text-lg font-semibold text-gray-900'>Customer Details</h2>
+              <h2 class='text-foreground text-lg font-semibold'>Customer Details</h2>
               <a
                 href={customerData().stripeDashboardUrl}
                 target='_blank'
@@ -294,12 +294,12 @@ export default function StripeToolsPage() {
 
             <dl class='grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3'>
               <div>
-                <dt class='text-sm font-medium text-gray-500'>Customer ID</dt>
-                <dd class='mt-1 flex items-center text-sm text-gray-900'>
+                <dt class='text-muted-foreground text-sm font-medium'>Customer ID</dt>
+                <dd class='text-foreground mt-1 flex items-center text-sm'>
                   <span class='font-mono'>{customerData().customer.id}</span>
                   <button
                     onClick={() => handleCopy(customerData().customer.id, 'Customer ID')}
-                    class='ml-2 text-gray-400 hover:text-gray-600'
+                    class='text-muted-foreground/70 hover:text-muted-foreground ml-2'
                   >
                     <Show
                       when={copiedId() === `Customer ID-${customerData().customer.id}`}
@@ -311,22 +311,22 @@ export default function StripeToolsPage() {
                 </dd>
               </div>
               <div>
-                <dt class='text-sm font-medium text-gray-500'>Email</dt>
-                <dd class='mt-1 text-sm text-gray-900'>{customerData().customer.email || '-'}</dd>
+                <dt class='text-muted-foreground text-sm font-medium'>Email</dt>
+                <dd class='text-foreground mt-1 text-sm'>{customerData().customer.email || '-'}</dd>
               </div>
               <div>
-                <dt class='text-sm font-medium text-gray-500'>Name</dt>
-                <dd class='mt-1 text-sm text-gray-900'>{customerData().customer.name || '-'}</dd>
+                <dt class='text-muted-foreground text-sm font-medium'>Name</dt>
+                <dd class='text-foreground mt-1 text-sm'>{customerData().customer.name || '-'}</dd>
               </div>
               <div>
-                <dt class='text-sm font-medium text-gray-500'>Created</dt>
-                <dd class='mt-1 text-sm text-gray-900'>
+                <dt class='text-muted-foreground text-sm font-medium'>Created</dt>
+                <dd class='text-foreground mt-1 text-sm'>
                   {formatDate(customerData().customer.created)}
                 </dd>
               </div>
               <div>
-                <dt class='text-sm font-medium text-gray-500'>Balance</dt>
-                <dd class='mt-1 text-sm text-gray-900'>
+                <dt class='text-muted-foreground text-sm font-medium'>Balance</dt>
+                <dd class='text-foreground mt-1 text-sm'>
                   {formatCurrency(
                     customerData().customer.balance,
                     customerData().customer.currency,
@@ -334,7 +334,7 @@ export default function StripeToolsPage() {
                 </dd>
               </div>
               <div>
-                <dt class='text-sm font-medium text-gray-500'>Delinquent</dt>
+                <dt class='text-muted-foreground text-sm font-medium'>Delinquent</dt>
                 <dd class='mt-1'>
                   <span
                     class={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
@@ -348,7 +348,7 @@ export default function StripeToolsPage() {
                 </dd>
               </div>
               <div>
-                <dt class='text-sm font-medium text-gray-500'>Mode</dt>
+                <dt class='text-muted-foreground text-sm font-medium'>Mode</dt>
                 <dd class='mt-1'>
                   <span
                     class={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
@@ -364,13 +364,13 @@ export default function StripeToolsPage() {
             </dl>
 
             {/* Linked Resources */}
-            <div class='mt-6 border-t border-gray-200 pt-4'>
-              <h3 class='mb-3 text-sm font-medium text-gray-900'>Linked Resources</h3>
+            <div class='border-border mt-6 border-t pt-4'>
+              <h3 class='text-foreground mb-3 text-sm font-medium'>Linked Resources</h3>
               <div class='flex flex-wrap gap-4'>
                 <Show
                   when={customerData().linkedUser}
                   fallback={
-                    <span class='inline-flex items-center text-sm text-gray-500'>
+                    <span class='text-muted-foreground inline-flex items-center text-sm'>
                       <FiUser class='mr-1 h-4 w-4' />
                       No linked user
                     </span>
@@ -381,15 +381,13 @@ export default function StripeToolsPage() {
                     class='inline-flex items-center text-sm text-blue-600 hover:text-blue-700'
                   >
                     <FiUser class='mr-1 h-4 w-4' />
-                    {customerData().linkedUser.displayName ||
-                      customerData().linkedUser.name ||
-                      customerData().linkedUser.email}
+                    {customerData().linkedUser.name || customerData().linkedUser.email}
                   </A>
                 </Show>
                 <Show
                   when={customerData().linkedOrg}
                   fallback={
-                    <span class='inline-flex items-center text-sm text-gray-500'>
+                    <span class='text-muted-foreground inline-flex items-center text-sm'>
                       <FiHome class='mr-1 h-4 w-4' />
                       No linked organization
                     </span>
@@ -409,12 +407,12 @@ export default function StripeToolsPage() {
 
           {/* Quick Actions */}
           <AdminBox class='mb-6'>
-            <h2 class='mb-4 text-lg font-semibold text-gray-900'>Quick Actions</h2>
+            <h2 class='text-foreground mb-4 text-lg font-semibold'>Quick Actions</h2>
             <div class='flex flex-wrap gap-3'>
               <button
                 onClick={generatePortalLink}
                 disabled={generatingPortal()}
-                class='inline-flex items-center rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50'
+                class='border-border bg-card text-secondary-foreground hover:bg-muted inline-flex items-center rounded-lg border px-4 py-2 text-sm font-medium disabled:opacity-50'
               >
                 {generatingPortal() ?
                   <FiLoader class='mr-2 h-4 w-4 animate-spin' />
@@ -424,7 +422,7 @@ export default function StripeToolsPage() {
               <button
                 onClick={loadInvoices}
                 disabled={loadingInvoices()}
-                class='inline-flex items-center rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50'
+                class='border-border bg-card text-secondary-foreground hover:bg-muted inline-flex items-center rounded-lg border px-4 py-2 text-sm font-medium disabled:opacity-50'
               >
                 {loadingInvoices() ?
                   <FiLoader class='mr-2 h-4 w-4 animate-spin' />
@@ -434,7 +432,7 @@ export default function StripeToolsPage() {
               <button
                 onClick={loadPaymentMethods}
                 disabled={loadingPaymentMethods()}
-                class='inline-flex items-center rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50'
+                class='border-border bg-card text-secondary-foreground hover:bg-muted inline-flex items-center rounded-lg border px-4 py-2 text-sm font-medium disabled:opacity-50'
               >
                 {loadingPaymentMethods() ?
                   <FiLoader class='mr-2 h-4 w-4 animate-spin' />
@@ -444,7 +442,7 @@ export default function StripeToolsPage() {
               <button
                 onClick={loadSubscriptions}
                 disabled={loadingSubscriptions()}
-                class='inline-flex items-center rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50'
+                class='border-border bg-card text-secondary-foreground hover:bg-muted inline-flex items-center rounded-lg border px-4 py-2 text-sm font-medium disabled:opacity-50'
               >
                 {loadingSubscriptions() ?
                   <FiLoader class='mr-2 h-4 w-4 animate-spin' />
@@ -462,7 +460,7 @@ export default function StripeToolsPage() {
                     type='text'
                     value={portalUrl()}
                     readOnly
-                    class='flex-1 rounded border border-green-300 bg-white px-3 py-1 text-sm'
+                    class='bg-card flex-1 rounded border border-green-300 px-3 py-1 text-sm'
                   />
                   <button
                     onClick={() => handleCopy(portalUrl(), 'Portal URL')}
@@ -487,21 +485,21 @@ export default function StripeToolsPage() {
           {/* Subscriptions Section */}
           <Show when={subscriptions()}>
             <AdminBox class='mb-6'>
-              <h2 class='mb-4 flex items-center text-lg font-semibold text-gray-900'>
+              <h2 class='text-foreground mb-4 flex items-center text-lg font-semibold'>
                 <FiDollarSign class='mr-2 h-5 w-5' />
                 Subscriptions ({subscriptions().length})
               </h2>
               <Show
                 when={subscriptions().length > 0}
-                fallback={<p class='text-sm text-gray-500'>No subscriptions found</p>}
+                fallback={<p class='text-muted-foreground text-sm'>No subscriptions found</p>}
               >
                 <div class='space-y-4'>
                   <For each={subscriptions()}>
                     {sub => (
-                      <div class='rounded-lg border border-gray-100 bg-gray-50 p-4'>
+                      <div class='border-border-subtle bg-muted rounded-lg border p-4'>
                         <div class='flex items-start justify-between'>
                           <div>
-                            <p class='font-mono text-sm text-gray-900'>{sub.id}</p>
+                            <p class='text-foreground font-mono text-sm'>{sub.id}</p>
                             <span
                               class={`mt-1 inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${getStatusColor(sub.status)}`}
                             >
@@ -519,7 +517,7 @@ export default function StripeToolsPage() {
                         </div>
                         <div class='mt-3 grid grid-cols-2 gap-2 text-sm'>
                           <div>
-                            <span class='text-gray-500'>Period:</span>{' '}
+                            <span class='text-muted-foreground'>Period:</span>{' '}
                             {formatDate(sub.currentPeriodStart)} -{' '}
                             {formatDate(sub.currentPeriodEnd)}
                           </div>
@@ -528,13 +526,13 @@ export default function StripeToolsPage() {
                           </Show>
                           <Show when={sub.trialEnd && sub.status === 'trialing'}>
                             <div>
-                              <span class='text-gray-500'>Trial ends:</span>{' '}
+                              <span class='text-muted-foreground'>Trial ends:</span>{' '}
                               {formatDate(sub.trialEnd)}
                             </div>
                           </Show>
                         </div>
                         <Show when={sub.items?.length > 0}>
-                          <div class='mt-2 text-sm text-gray-600'>
+                          <div class='text-muted-foreground mt-2 text-sm'>
                             <For each={sub.items}>
                               {item => (
                                 <span class='mr-2'>
@@ -555,39 +553,39 @@ export default function StripeToolsPage() {
           {/* Invoices Section */}
           <Show when={invoices()}>
             <AdminBox class='mb-6'>
-              <h2 class='mb-4 flex items-center text-lg font-semibold text-gray-900'>
+              <h2 class='text-foreground mb-4 flex items-center text-lg font-semibold'>
                 <FiFileText class='mr-2 h-5 w-5' />
                 Recent Invoices ({invoices().length})
               </h2>
               <Show
                 when={invoices().length > 0}
-                fallback={<p class='text-sm text-gray-500'>No invoices found</p>}
+                fallback={<p class='text-muted-foreground text-sm'>No invoices found</p>}
               >
                 <div class='overflow-x-auto'>
                   <table class='w-full'>
                     <thead>
-                      <tr class='border-b border-gray-200 bg-gray-50'>
-                        <th class='px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase'>
+                      <tr class='border-border bg-muted border-b'>
+                        <th class='text-muted-foreground px-4 py-2 text-left text-xs font-medium uppercase'>
                           Invoice
                         </th>
-                        <th class='px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase'>
+                        <th class='text-muted-foreground px-4 py-2 text-left text-xs font-medium uppercase'>
                           Status
                         </th>
-                        <th class='px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase'>
+                        <th class='text-muted-foreground px-4 py-2 text-right text-xs font-medium uppercase'>
                           Amount
                         </th>
-                        <th class='px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase'>
+                        <th class='text-muted-foreground px-4 py-2 text-left text-xs font-medium uppercase'>
                           Created
                         </th>
-                        <th class='px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase'>
+                        <th class='text-muted-foreground px-4 py-2 text-right text-xs font-medium uppercase'>
                           Actions
                         </th>
                       </tr>
                     </thead>
-                    <tbody class='divide-y divide-gray-200'>
+                    <tbody class='divide-border divide-y'>
                       <For each={invoices()}>
                         {invoice => (
-                          <tr class='hover:bg-gray-50'>
+                          <tr class='hover:bg-muted'>
                             <td class='px-4 py-3'>
                               <span class='font-mono text-sm'>{invoice.number || invoice.id}</span>
                             </td>
@@ -601,7 +599,7 @@ export default function StripeToolsPage() {
                             <td class='px-4 py-3 text-right text-sm'>
                               {formatCurrency(invoice.total, invoice.currency)}
                             </td>
-                            <td class='px-4 py-3 text-sm text-gray-500'>
+                            <td class='text-muted-foreground px-4 py-3 text-sm'>
                               {formatDate(invoice.created)}
                             </td>
                             <td class='px-4 py-3 text-right'>
@@ -622,7 +620,7 @@ export default function StripeToolsPage() {
                                     href={invoice.invoicePdf}
                                     target='_blank'
                                     rel='noopener noreferrer'
-                                    class='text-gray-600 hover:text-gray-700'
+                                    class='text-muted-foreground hover:text-secondary-foreground'
                                     title='Download PDF'
                                   >
                                     <FiFileText class='h-4 w-4' />
@@ -643,30 +641,32 @@ export default function StripeToolsPage() {
           {/* Payment Methods Section */}
           <Show when={paymentMethods()}>
             <AdminBox class='mb-6'>
-              <h2 class='mb-4 flex items-center text-lg font-semibold text-gray-900'>
+              <h2 class='text-foreground mb-4 flex items-center text-lg font-semibold'>
                 <FiCreditCard class='mr-2 h-5 w-5' />
                 Payment Methods ({paymentMethods().length})
               </h2>
               <Show
                 when={paymentMethods().length > 0}
-                fallback={<p class='text-sm text-gray-500'>No payment methods found</p>}
+                fallback={<p class='text-muted-foreground text-sm'>No payment methods found</p>}
               >
                 <div class='space-y-3'>
                   <For each={paymentMethods()}>
                     {pm => (
-                      <div class='flex items-center justify-between rounded-lg border border-gray-100 bg-gray-50 p-4'>
+                      <div class='border-border-subtle bg-muted flex items-center justify-between rounded-lg border p-4'>
                         <div class='flex items-center space-x-3'>
-                          <FiCreditCard class='h-6 w-6 text-gray-400' />
+                          <FiCreditCard class='text-muted-foreground/70 h-6 w-6' />
                           <div>
-                            <p class='text-sm font-medium text-gray-900 capitalize'>
+                            <p class='text-foreground text-sm font-medium capitalize'>
                               {pm.card?.brand} **** {pm.card?.last4}
                             </p>
-                            <p class='text-xs text-gray-500'>
+                            <p class='text-muted-foreground text-xs'>
                               Expires {pm.card?.expMonth}/{pm.card?.expYear}
                             </p>
                           </div>
                         </div>
-                        <span class='text-xs text-gray-500 capitalize'>{pm.card?.funding}</span>
+                        <span class='text-muted-foreground text-xs capitalize'>
+                          {pm.card?.funding}
+                        </span>
                       </div>
                     )}
                   </For>

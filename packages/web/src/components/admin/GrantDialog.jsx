@@ -52,38 +52,42 @@ export default function GrantDialog(props) {
           <DialogBody>
             <div class='space-y-4'>
               <div>
-                <label class='mb-1 block text-sm font-medium text-gray-700'>Type</label>
+                <label class='text-secondary-foreground mb-1 block text-sm font-medium'>Type</label>
                 <select
                   value={type()}
                   onInput={e => props.onTypeChange?.(e.target.value)}
-                  class='w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none'
+                  class='border-border w-full rounded-lg border px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none'
                 >
                   <option value='trial'>Trial</option>
                   <option value='single_project'>Single Project</option>
                 </select>
               </div>
               <div>
-                <label class='mb-1 block text-sm font-medium text-gray-700'>Starts At</label>
+                <label class='text-secondary-foreground mb-1 block text-sm font-medium'>
+                  Starts At
+                </label>
                 <input
                   type='datetime-local'
                   value={startsAt()}
                   onInput={e => props.onStartsAtChange?.(e.target.value)}
-                  class='w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none'
+                  class='border-border w-full rounded-lg border px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none'
                 />
               </div>
               <div>
-                <label class='mb-1 block text-sm font-medium text-gray-700'>Expires At</label>
+                <label class='text-secondary-foreground mb-1 block text-sm font-medium'>
+                  Expires At
+                </label>
                 <input
                   type='datetime-local'
                   value={expiresAt()}
                   onInput={e => props.onExpiresAtChange?.(e.target.value)}
-                  class='w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none'
+                  class='border-border w-full rounded-lg border px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none'
                 />
               </div>
               <div class='flex justify-end space-x-3'>
                 <DialogCloseTrigger
                   as='button'
-                  class='rounded-lg bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200'
+                  class='bg-secondary text-secondary-foreground hover:bg-secondary rounded-lg px-4 py-2 text-sm font-medium'
                 >
                   Cancel
                 </DialogCloseTrigger>

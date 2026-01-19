@@ -92,7 +92,7 @@ const TooltipContent: Component<TooltipContentProps> = props => {
   return (
     <TooltipPrimitive.Content
       class={cn(
-        'max-w-xs rounded-md bg-gray-900 px-3 py-1.5 text-sm text-white shadow-md',
+        'bg-foreground text-background max-w-xs rounded-md px-3 py-1.5 text-sm shadow-md',
         Z_INDEX.TOOLTIP,
         local.class,
       )}
@@ -101,7 +101,7 @@ const TooltipContent: Component<TooltipContentProps> = props => {
     >
       {showArrow() && (
         <TooltipPrimitive.Arrow>
-          <TooltipPrimitive.ArrowTip class='bg-gray-900' />
+          <TooltipPrimitive.ArrowTip class='bg-foreground' />
         </TooltipPrimitive.Arrow>
       )}
       {local.children}
@@ -126,7 +126,7 @@ const TooltipArrowTip: Component<TooltipArrowTipProps> = props => {
   const [local, others] = splitProps(props, ['class']);
   return (
     <TooltipPrimitive.ArrowTip
-      class={cn('border-t border-l border-gray-900', local.class)}
+      class={cn('border-foreground border-t border-l', local.class)}
       {...others}
     />
   );

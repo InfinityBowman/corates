@@ -40,12 +40,12 @@ import ContactPrompt from '@/components/project/ContactPrompt.jsx';
  */
 function EmptyProjectsState(props) {
   return (
-    <div class='col-span-full flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-stone-200 bg-stone-50/50 px-6 py-16'>
-      <div class='mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-stone-100'>
-        <FiFolder class='h-8 w-8 text-stone-400' />
+    <div class='border-border bg-muted/50 col-span-full flex flex-col items-center justify-center rounded-2xl border-2 border-dashed px-6 py-16'>
+      <div class='bg-secondary mb-4 flex h-16 w-16 items-center justify-center rounded-2xl'>
+        <FiFolder class='text-muted-foreground/70 h-8 w-8' />
       </div>
-      <h3 class='mb-2 text-lg font-semibold text-stone-700'>No projects yet</h3>
-      <p class='mb-6 max-w-sm text-center text-sm text-stone-500'>
+      <h3 class='text-secondary-foreground mb-2 text-lg font-semibold'>No projects yet</h3>
+      <p class='text-muted-foreground mb-6 max-w-sm text-center text-sm'>
         Create your first project to start collaborating on evidence synthesis with your team.
       </p>
       <Show when={props.canCreate}>
@@ -53,7 +53,7 @@ function EmptyProjectsState(props) {
           type='button'
           onClick={() => props.onCreateClick?.()}
           disabled={!props.isOnline}
-          class='flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-medium text-white shadow-lg shadow-blue-500/25 transition-all hover:bg-blue-700 hover:shadow-xl disabled:cursor-not-allowed disabled:opacity-50'
+          class='bg-primary hover:bg-primary/90 flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-medium text-white shadow-lg shadow-blue-500/25 transition-all hover:shadow-xl disabled:cursor-not-allowed disabled:opacity-50'
         >
           <FiPlus class='h-4 w-4' />
           Create First Project
@@ -174,7 +174,7 @@ export function ProjectsSection(props) {
       {/* Header */}
       <Show when={props.showHeader !== false}>
         <div class='mb-4 flex items-center justify-between'>
-          <h2 class='text-sm font-semibold tracking-wide text-stone-500 uppercase'>
+          <h2 class='text-muted-foreground text-sm font-semibold tracking-wide uppercase'>
             Your Projects
           </h2>
           <Show when={canCreateProject() && hasProjects()}>
@@ -182,7 +182,7 @@ export function ProjectsSection(props) {
               type='button'
               onClick={handleCreateClick}
               disabled={!isOnline()}
-              class='flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium text-blue-600 transition-all hover:scale-105 hover:bg-blue-50 hover:shadow-sm active:scale-100 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:scale-100'
+              class='text-primary hover:bg-primary-subtle flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition-all hover:scale-105 hover:shadow-sm active:scale-100 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:scale-100'
             >
               <FiPlus class='h-4 w-4' />
               New Project

@@ -46,7 +46,8 @@ const ProjectMemberSchema = z
     name: z.string(),
     email: z.string(),
     username: z.string().nullable(),
-    displayName: z.string().nullable(),
+    givenName: z.string().nullable(),
+    familyName: z.string().nullable(),
     image: z.string().nullable(),
   })
   .openapi('ProjectMember');
@@ -94,7 +95,8 @@ const MemberAddedSchema = z
     name: z.string(),
     email: z.string(),
     username: z.string().nullable(),
-    displayName: z.string().nullable(),
+    givenName: z.string().nullable(),
+    familyName: z.string().nullable(),
     image: z.string().nullable(),
     role: z.string(),
     joinedAt: z.union([z.string(), z.date()]),
@@ -424,7 +426,8 @@ orgProjectMemberRoutes.openapi(listMembersRoute, async c => {
         name: user.name,
         email: user.email,
         username: user.username,
-        displayName: user.displayName,
+        givenName: user.givenName,
+        familyName: user.familyName,
         image: user.image,
       })
       .from(projectMembers)
@@ -483,7 +486,8 @@ orgProjectMemberRoutes.openapi(addMemberRoute, async c => {
           name: user.name,
           email: user.email,
           username: user.username,
-          displayName: user.displayName,
+          givenName: user.givenName,
+          familyName: user.familyName,
           image: user.image,
         })
         .from(user)
@@ -496,7 +500,8 @@ orgProjectMemberRoutes.openapi(addMemberRoute, async c => {
           name: user.name,
           email: user.email,
           username: user.username,
-          displayName: user.displayName,
+          givenName: user.givenName,
+          familyName: user.familyName,
           image: user.image,
         })
         .from(user)
@@ -756,7 +761,7 @@ async function handleInvitation(
     .get();
 
   const inviter = await db
-    .select({ name: user.name, displayName: user.displayName, email: user.email })
+    .select({ name: user.name, givenName: user.givenName, email: user.email })
     .from(user)
     .where(eq(user.id, authUser.id))
     .get();
@@ -839,7 +844,7 @@ async function handleInvitation(
     const { escapeHtml } = await import('@/lib/escapeHtml.js');
 
     const projectName = project?.name || 'Unknown Project';
-    const inviterName = inviter?.displayName || inviter?.name || inviter?.email || 'Someone';
+    const inviterName = inviter?.givenName || inviter?.name || inviter?.email || 'Someone';
 
     const emailHtml = getProjectInvitationEmailHtml({
       projectName,

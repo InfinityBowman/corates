@@ -23,7 +23,7 @@ export default function StudyCard(props) {
   // props.readOnly: boolean
 
   return (
-    <div class='rounded-lg border border-slate-200 bg-white transition-colors hover:border-slate-300'>
+    <div class='border-border bg-card hover:border-border-strong rounded-lg border transition-colors'>
       <Collapsible open={props.expanded}>
         <StudyCardHeader
           study={props.study}
@@ -33,7 +33,7 @@ export default function StudyCard(props) {
           getMember={props.getMember}
         />
         <CollapsibleContent>
-          <div class='border-t border-gray-100'>
+          <div class='border-border-subtle border-t'>
             <StudyPdfSection
               study={props.study}
               onOpenGoogleDrive={props.onOpenGoogleDrive}

@@ -57,11 +57,11 @@ export function LocalAppraisalCard(props) {
 
   return (
     <div
-      class='group flex items-center gap-4 rounded-xl border border-stone-200/60 bg-white p-4 transition-all duration-200 hover:border-stone-300 hover:shadow-md'
+      class='group border-border/60 bg-card hover:border-border flex items-center gap-4 rounded-xl border p-4 transition-all duration-200 hover:shadow-md'
       style={props.style}
     >
       {/* Icon */}
-      <div class='flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-stone-100 text-stone-500 transition-colors group-hover:bg-blue-50 group-hover:text-blue-600'>
+      <div class='bg-secondary text-muted-foreground group-hover:bg-primary-subtle group-hover:text-primary flex h-10 w-10 shrink-0 items-center justify-center rounded-lg transition-colors'>
         <FiFileText class='h-5 w-5' />
       </div>
 
@@ -70,20 +70,20 @@ export function LocalAppraisalCard(props) {
         <Show
           when={props.onRename}
           fallback={
-            <h4 class='truncate text-sm font-medium text-stone-800'>{props.checklist?.name}</h4>
+            <h4 class='text-foreground truncate text-sm font-medium'>{props.checklist?.name}</h4>
           }
         >
           <SimpleEditable
             activationMode='click'
             variant='inline'
-            class='truncate text-sm font-medium text-stone-800'
+            class='text-foreground truncate text-sm font-medium'
             value={props.checklist?.name || 'Untitled'}
             showEditIcon={true}
             onSubmit={newName => props.onRename?.(newName)}
           />
         </Show>
-        <div class='mt-0.5 flex items-center gap-2 text-xs text-stone-400'>
-          <span class='rounded bg-stone-100 px-1.5 py-0.5 font-medium text-stone-500'>
+        <div class='text-muted-foreground/70 mt-0.5 flex items-center gap-2 text-xs'>
+          <span class='bg-secondary text-muted-foreground rounded px-1.5 py-0.5 font-medium'>
             {typeLabel()}
           </span>
           <span>{relativeTime()}</span>
@@ -99,7 +99,7 @@ export function LocalAppraisalCard(props) {
               e.stopPropagation();
               props.onDelete?.(props.checklist?.id);
             }}
-            class='rounded-lg p-2 text-stone-300 opacity-0 transition-all group-hover:opacity-100 hover:bg-red-50 hover:text-red-500'
+            class='text-muted-foreground/50 rounded-lg p-2 opacity-0 transition-all group-hover:opacity-100 hover:bg-red-50 hover:text-red-500'
             title='Delete appraisal'
           >
             <FiTrash2 class='h-4 w-4' />
@@ -108,7 +108,7 @@ export function LocalAppraisalCard(props) {
         <button
           type='button'
           onClick={() => props.onOpen?.(props.checklist?.id)}
-          class='flex items-center gap-1 rounded-lg px-3 py-1.5 text-sm font-medium text-blue-600 transition-all hover:bg-blue-50 hover:text-blue-700'
+          class='text-primary hover:bg-primary-subtle hover:text-primary/80 flex items-center gap-1 rounded-lg px-3 py-1.5 text-sm font-medium transition-all'
           title='Open appraisal'
         >
           Open

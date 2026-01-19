@@ -84,7 +84,7 @@ export function ROB2Checklist(props) {
   return (
     <div class='bg-blue-50'>
       <div class='container mx-auto max-w-5xl space-y-4 px-4 py-6'>
-        <div class='mb-6 text-left text-lg font-semibold text-gray-900 sm:text-center'>
+        <div class='text-foreground mb-6 text-left text-lg font-semibold sm:text-center'>
           {props.checklistState?.name || 'RoB 2 Checklist'}
         </div>
 

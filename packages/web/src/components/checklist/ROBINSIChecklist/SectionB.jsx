@@ -32,12 +32,12 @@ export function SectionB(props) {
   const responseOptions = ['Y', 'PY', 'PN', 'N'];
 
   return (
-    <div class='overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm'>
-      <div class='border-b border-gray-200 bg-gray-50 px-6 py-4'>
-        <h3 class='text-base font-semibold text-gray-900'>
+    <div class='border-border bg-card overflow-hidden rounded-lg border shadow-sm'>
+      <div class='border-border bg-muted border-b px-6 py-4'>
+        <h3 class='text-foreground text-base font-semibold'>
           Section B: Decide Whether to Proceed With Risk-of-Bias Assessment
         </h3>
-        <p class='mt-1 text-xs text-gray-500'>
+        <p class='text-muted-foreground mt-1 text-xs'>
           If B2 or B3 is Yes/Probably Yes, the result is classified as Critical risk of bias.
         </p>
       </div>
@@ -45,10 +45,10 @@ export function SectionB(props) {
       <div class='px-6 py-4'>
         <For each={Object.entries(SECTION_B)}>
           {([key, question]) => (
-            <div class='border-b border-gray-200 py-4 last:border-b-0'>
+            <div class='border-border border-b py-4 last:border-b-0'>
               <div class='flex flex-col gap-2'>
                 {/* Question text */}
-                <div class='text-sm text-gray-700'>
+                <div class='text-secondary-foreground text-sm'>
                   <span class='font-medium'>{key.toUpperCase()}.</span>
                   <span class='ml-1'>{question.text}</span>
                 </div>
@@ -68,7 +68,7 @@ export function SectionB(props) {
                         class={`inline-flex cursor-pointer items-center justify-center rounded-lg border-2 px-4 py-2 text-sm font-medium transition-all duration-200 ${props.disabled ? 'cursor-not-allowed opacity-60' : 'hover:border-blue-300'} focus-within:ring-2 focus-within:ring-blue-400 focus-within:ring-offset-1 focus-within:outline-none ${
                           props.sectionBState?.[key]?.answer === option ?
                             'border-blue-400 bg-blue-50 text-blue-800'
-                          : 'border-gray-200 bg-white text-gray-700 hover:bg-blue-50'
+                          : 'border-border bg-card text-secondary-foreground hover:bg-blue-50'
                         } `}
                       >
                         <input

@@ -36,12 +36,12 @@ export default function ProjectTreeItem(props) {
         return (
           <Collapsible open={props.isExpanded}>
             <div
-              class={`group flex cursor-pointer items-center rounded-lg transition-colors ${isSelected() ? 'bg-blue-100 text-blue-700' : 'text-gray-700 hover:bg-gray-50'} `}
+              class={`group flex cursor-pointer items-center rounded-lg transition-colors ${isSelected() ? 'bg-blue-100 text-blue-700' : 'text-secondary-foreground hover:bg-muted'} `}
               onClick={handleRowClick}
             >
-              <div class='rounded-l-lg p-2 hover:bg-gray-100'>
+              <div class='hover:bg-secondary rounded-l-lg p-2'>
                 <FiChevronRight
-                  class={`h-3 w-3 text-gray-500 transition-transform ${props.isExpanded ? 'rotate-90' : ''}`}
+                  class={`text-muted-foreground h-3 w-3 transition-transform ${props.isExpanded ? 'rotate-90' : ''}`}
                 />
               </div>
               <button
@@ -53,7 +53,7 @@ export default function ProjectTreeItem(props) {
               >
                 <Show
                   when={props.isExpanded}
-                  fallback={<AiOutlineFolder class='h-4 w-4 text-gray-500' />}
+                  fallback={<AiOutlineFolder class='text-muted-foreground h-4 w-4' />}
                 >
                   <AiOutlineFolderOpen class='h-4 w-4 text-blue-500' />
                 </Show>
@@ -62,15 +62,17 @@ export default function ProjectTreeItem(props) {
             </div>
             <CollapsibleContent>
               {/* Studies list */}
-              <div class='mt-0.5 ml-6 space-y-0.5 border-l border-gray-200 pl-2'>
+              <div class='border-border mt-0.5 ml-6 space-y-0.5 border-l pl-2'>
                 <Show
                   when={projectData.studies()?.length > 0}
                   fallback={
                     <Show
                       when={projectData.connecting() || !projectData.synced()}
-                      fallback={<div class='px-2 py-2 text-xs text-gray-500'>No studies yet</div>}
+                      fallback={
+                        <div class='text-muted-foreground px-2 py-2 text-xs'>No studies yet</div>
+                      }
                     >
-                      <div class='px-2 py-2 text-xs text-gray-400'>Loading...</div>
+                      <div class='text-muted-foreground/70 px-2 py-2 text-xs'>Loading...</div>
                     </Show>
                   }
                 >

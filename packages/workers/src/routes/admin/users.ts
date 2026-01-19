@@ -53,7 +53,8 @@ const UserSchema = z
     id: z.string(),
     name: z.string(),
     email: z.string(),
-    displayName: z.string().nullable(),
+    givenName: z.string().nullable(),
+    familyName: z.string().nullable(),
     username: z.string().nullable(),
     image: z.string().nullable(),
     avatarUrl: z.string().nullable(),
@@ -212,7 +213,7 @@ const listUsersRoute = createRoute({
       search: z
         .string()
         .optional()
-        .openapi({ description: 'Search by email, name, displayName, or username' }),
+        .openapi({ description: 'Search by email, name, givenName, familyName, or username' }),
     }),
   },
   responses: {
@@ -587,7 +588,8 @@ userRoutes.openapi(listUsersRoute, async c => {
         or(
           like(sql`lower(${user.email})`, `%${search.toLowerCase()}%`),
           like(sql`lower(${user.name})`, `%${search.toLowerCase()}%`),
-          like(sql`lower(${user.displayName})`, `%${search.toLowerCase()}%`),
+          like(sql`lower(${user.givenName})`, `%${search.toLowerCase()}%`),
+          like(sql`lower(${user.familyName})`, `%${search.toLowerCase()}%`),
           like(sql`lower(${user.username})`, `%${search.toLowerCase()}%`),
         )
       : undefined;
@@ -600,7 +602,8 @@ userRoutes.openapi(listUsersRoute, async c => {
       id: user.id,
       name: user.name,
       email: user.email,
-      displayName: user.displayName,
+      givenName: user.givenName,
+      familyName: user.familyName,
       username: user.username,
       image: user.image,
       avatarUrl: user.avatarUrl,

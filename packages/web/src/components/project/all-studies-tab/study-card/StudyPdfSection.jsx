@@ -109,21 +109,21 @@ export default function StudyPdfSection(props) {
       {/* PDF List with custom upload area */}
       <div class='space-y-3'>
         <div class='flex items-center justify-between'>
-          <h4 class='text-sm font-medium text-gray-700'>PDFs ({pdfs().length})</h4>
+          <h4 class='text-secondary-foreground text-sm font-medium'>PDFs ({pdfs().length})</h4>
           <Show when={!props.readOnly}>
             <div class='mt-1 flex items-center gap-2'>
               <button
                 type='button'
                 onClick={triggerFileInput}
                 disabled={uploading()}
-                class='inline-flex items-center gap-1 rounded-md bg-blue-50 px-2 py-1.5 text-sm font-medium text-blue-600 transition-colors hover:bg-blue-100 disabled:cursor-not-allowed disabled:opacity-50'
+                class='text-primary inline-flex items-center gap-1 rounded-md bg-blue-50 px-2 py-1.5 text-sm font-medium transition-colors hover:bg-blue-100 disabled:cursor-not-allowed disabled:opacity-50'
               >
                 {uploading() ? 'Uploading...' : <FaSolidPlus />}
               </button>
               <button
                 type='button'
                 onClick={() => props.onOpenGoogleDrive?.(study().id)}
-                class='rounded-md px-2 py-1.5 text-sm font-medium text-gray-500 transition-colors hover:bg-blue-50 hover:text-blue-600'
+                class='text-muted-foreground hover:text-primary rounded-md px-2 py-1.5 text-sm font-medium transition-colors hover:bg-blue-50'
                 title='Import from Google Drive'
               >
                 <FaBrandsGoogleDrive />
@@ -136,23 +136,23 @@ export default function StudyPdfSection(props) {
         <Show
           when={pdfs().length > 0}
           fallback={
-            <div class='rounded-lg border-2 border-dashed border-gray-200 p-6 text-center'>
-              <p class='text-sm text-gray-500'>No PDFs uploaded yet</p>
+            <div class='border-border rounded-lg border-2 border-dashed p-6 text-center'>
+              <p class='text-muted-foreground text-sm'>No PDFs uploaded yet</p>
               <Show when={!props.readOnly}>
                 <div class='mt-2 flex items-center justify-center gap-2'>
                   <button
                     type='button'
                     onClick={triggerFileInput}
                     disabled={uploading()}
-                    class='text-sm text-blue-600 hover:text-blue-700'
+                    class='text-primary hover:text-primary/80 text-sm'
                   >
                     Upload a PDF
                   </button>
-                  <span class='text-gray-400'>or</span>
+                  <span class='text-muted-foreground/70'>or</span>
                   <button
                     type='button'
                     onClick={() => props.onOpenGoogleDrive?.(study().id)}
-                    class='text-sm text-blue-600 hover:text-blue-700'
+                    class='text-primary hover:text-primary/80 text-sm'
                   >
                     Import from Google Drive
                   </button>

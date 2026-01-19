@@ -77,7 +77,7 @@ const ToastTitle: Component<ToastTitleProps> = props => {
   const [local, others] = splitProps(props, ['class']);
   return (
     <ToastPrimitive.Title
-      class={cn('text-sm font-semibold text-gray-900', local.class)}
+      class={cn('text-foreground text-sm font-semibold', local.class)}
       {...others}
     />
   );
@@ -90,7 +90,10 @@ type ToastDescriptionProps = ArkToastDescriptionProps & {
 const ToastDescription: Component<ToastDescriptionProps> = props => {
   const [local, others] = splitProps(props, ['class']);
   return (
-    <ToastPrimitive.Description class={cn('mt-1 text-sm text-gray-600', local.class)} {...others} />
+    <ToastPrimitive.Description
+      class={cn('text-muted-foreground mt-1 text-sm', local.class)}
+      {...others}
+    />
   );
 };
 
@@ -104,7 +107,7 @@ const ToastCloseTrigger: Component<ToastCloseTriggerProps> = props => {
   return (
     <ToastPrimitive.CloseTrigger
       class={cn(
-        'absolute top-2 right-2 rounded-md p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-500',
+        'text-muted-foreground/70 hover:bg-secondary hover:text-muted-foreground absolute top-2 right-2 rounded-md p-1',
         local.class,
       )}
       {...others}
@@ -142,7 +145,7 @@ const getToastStyles = (type?: string) => {
     case 'loading':
       return 'border-blue-200 bg-blue-50';
     default:
-      return 'border-gray-200 bg-white';
+      return 'border-border bg-card';
   }
 };
 

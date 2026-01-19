@@ -90,7 +90,7 @@ export default function ProjectList() {
             <div>
               <p class='font-medium text-blue-600 hover:text-blue-700'>{project.name}</p>
               <Show when={project.description}>
-                <p class='max-w-xs truncate text-sm text-gray-500'>{project.description}</p>
+                <p class='text-muted-foreground max-w-xs truncate text-sm'>{project.description}</p>
               </Show>
             </div>
           </A>
@@ -106,13 +106,13 @@ export default function ProjectList() {
           <div>
             <A
               href={`/admin/orgs/${project.orgId}`}
-              class='flex items-center space-x-2 text-gray-700 hover:text-blue-600'
+              class='text-secondary-foreground flex items-center space-x-2 hover:text-blue-600'
               onClick={e => e.stopPropagation()}
             >
               <FiHome class='h-4 w-4' />
               <span>{project.orgName}</span>
             </A>
-            <p class='text-xs text-gray-500'>@{project.orgSlug}</p>
+            <p class='text-muted-foreground text-xs'>@{project.orgSlug}</p>
           </div>
         );
       },
@@ -125,7 +125,7 @@ export default function ProjectList() {
         return (
           <A
             href={`/admin/users/${project.createdBy}`}
-            class='text-gray-700 hover:text-blue-600'
+            class='text-secondary-foreground hover:text-blue-600'
             onClick={e => e.stopPropagation()}
           >
             {project.creatorDisplayName || project.creatorName || project.creatorEmail}
@@ -137,7 +137,7 @@ export default function ProjectList() {
       accessorKey: 'memberCount',
       header: 'Members',
       cell: info => (
-        <span class='inline-flex items-center rounded-full bg-gray-100 px-2.5 py-0.5 text-sm font-medium text-gray-700'>
+        <span class='bg-secondary text-secondary-foreground inline-flex items-center rounded-full px-2.5 py-0.5 text-sm font-medium'>
           <FiUsers class='mr-1 h-3 w-3' />
           {info.getValue()}
         </span>
@@ -147,7 +147,7 @@ export default function ProjectList() {
       accessorKey: 'fileCount',
       header: 'Files',
       cell: info => (
-        <span class='inline-flex items-center rounded-full bg-gray-100 px-2.5 py-0.5 text-sm font-medium text-gray-700'>
+        <span class='bg-secondary text-secondary-foreground inline-flex items-center rounded-full px-2.5 py-0.5 text-sm font-medium'>
           <FiFile class='mr-1 h-3 w-3' />
           {info.getValue()}
         </span>
@@ -156,7 +156,7 @@ export default function ProjectList() {
     {
       accessorKey: 'createdAt',
       header: 'Created',
-      cell: info => <span class='text-gray-500'>{formatDate(info.getValue())}</span>,
+      cell: info => <span class='text-muted-foreground'>{formatDate(info.getValue())}</span>,
     },
   ];
 
@@ -172,7 +172,7 @@ export default function ProjectList() {
       <Show
         when={isAdmin()}
         fallback={
-          <div class='flex min-h-100 flex-col items-center justify-center text-gray-500'>
+          <div class='text-muted-foreground flex min-h-100 flex-col items-center justify-center'>
             <FiAlertCircle class='mb-4 h-12 w-12' />
             <p class='text-lg font-medium'>Access Denied</p>
             <p class='text-sm'>You do not have admin privileges.</p>
@@ -191,7 +191,7 @@ export default function ProjectList() {
           {/* Search */}
           <form onSubmit={handleSearch} class='flex-1'>
             <div class='relative'>
-              <FiSearch class='pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-gray-400' />
+              <FiSearch class='text-muted-foreground/70 pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2' />
               <input
                 type='text'
                 value={searchInput()}
@@ -203,7 +203,7 @@ export default function ProjectList() {
                 <button
                   type='button'
                   onClick={clearSearch}
-                  class='absolute top-1/2 right-3 -translate-y-1/2 text-gray-400 hover:text-gray-600'
+                  class='text-muted-foreground/70 hover:text-muted-foreground absolute top-1/2 right-3 -translate-y-1/2'
                 >
                   <FiX class='h-4 w-4' />
                 </button>
@@ -248,8 +248,8 @@ export default function ProjectList() {
               loading={projectsQuery.isLoading}
               emptyState={
                 <div class='flex flex-col items-center gap-2'>
-                  <FiFolder class='h-8 w-8 text-gray-300' />
-                  <span class='text-gray-500'>No projects found</span>
+                  <FiFolder class='text-muted-foreground/50 h-8 w-8' />
+                  <span class='text-muted-foreground'>No projects found</span>
                   <Show when={search() || selectedOrgId()}>
                     <button
                       onClick={() => {
@@ -270,7 +270,7 @@ export default function ProjectList() {
             {/* Server-side Pagination */}
             <Show when={pagination().totalPages > 1}>
               <div class='mt-4 flex items-center justify-between'>
-                <div class='text-sm text-gray-500'>
+                <div class='text-muted-foreground text-sm'>
                   Showing {(pagination().page - 1) * limit + 1} to{' '}
                   {Math.min(pagination().page * limit, pagination().total)} of {pagination().total}{' '}
                   projects
@@ -279,17 +279,17 @@ export default function ProjectList() {
                   <button
                     onClick={() => setPage(p => Math.max(1, p - 1))}
                     disabled={page() === 1}
-                    class='rounded-xl border border-gray-200 bg-white p-2 text-gray-600 shadow-xs hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50'
+                    class='border-border bg-card text-muted-foreground hover:bg-muted rounded-xl border p-2 shadow-xs disabled:cursor-not-allowed disabled:opacity-50'
                   >
                     <FiChevronLeft class='h-4 w-4' />
                   </button>
-                  <span class='text-sm text-gray-500'>
+                  <span class='text-muted-foreground text-sm'>
                     Page {pagination().page} of {pagination().totalPages}
                   </span>
                   <button
                     onClick={() => setPage(p => Math.min(pagination().totalPages, p + 1))}
                     disabled={page() === pagination().totalPages}
-                    class='rounded-xl border border-gray-200 bg-white p-2 text-gray-600 shadow-xs hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50'
+                    class='border-border bg-card text-muted-foreground hover:bg-muted rounded-xl border p-2 shadow-xs disabled:cursor-not-allowed disabled:opacity-50'
                   >
                     <FiChevronRight class='h-4 w-4' />
                   </button>

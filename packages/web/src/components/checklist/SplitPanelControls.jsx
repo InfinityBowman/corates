@@ -83,7 +83,9 @@ export default function SplitPanelControls(props) {
       <button
         onClick={() => props.onToggleSecondPanel?.()}
         class={`rounded p-1.5 transition-colors ${
-          props.showSecondPanel ? 'bg-blue-100 text-blue-700' : 'text-gray-600 hover:bg-gray-100'
+          props.showSecondPanel ?
+            'bg-blue-100 text-blue-700'
+          : 'text-muted-foreground hover:bg-secondary'
         }`}
         title={props.showSecondPanel ? `Hide ${panelLabel()}` : `Show ${panelLabel()}`}
       >
@@ -91,7 +93,7 @@ export default function SplitPanelControls(props) {
       </button>
 
       <Show when={props.showSecondPanel}>
-        <div class='mx-1 h-4 w-px bg-gray-300' />
+        <div class='bg-border mx-1 h-4 w-px' />
 
         {/* Vertical split (side by side) */}
         <button
@@ -99,7 +101,7 @@ export default function SplitPanelControls(props) {
           class={`rounded p-1.5 transition-colors ${
             props.layout === 'vertical' ?
               'bg-blue-100 text-blue-700'
-            : 'text-gray-600 hover:bg-gray-100'
+            : 'text-muted-foreground hover:bg-secondary'
           }`}
           title='Side by side'
         >
@@ -112,7 +114,7 @@ export default function SplitPanelControls(props) {
           class={`rounded p-1.5 transition-colors ${
             props.layout === 'horizontal' ?
               'bg-blue-100 text-blue-700'
-            : 'text-gray-600 hover:bg-gray-100'
+            : 'text-muted-foreground hover:bg-secondary'
           }`}
           title='Stacked'
         >
@@ -122,7 +124,7 @@ export default function SplitPanelControls(props) {
         {/* Reset ratio */}
         <button
           onClick={() => props.onResetRatio?.()}
-          class='rounded p-1.5 text-gray-600 transition-colors hover:bg-gray-100'
+          class='text-muted-foreground hover:bg-secondary rounded p-1.5 transition-colors'
           title={`Reset split (${ratioLabel()})`}
         >
           <VsRefresh class='h-5 w-5' />
@@ -130,7 +132,7 @@ export default function SplitPanelControls(props) {
 
         {/* Open PDF in new tab */}
         <Show when={hasPdf()}>
-          <div class='mx-1 h-4 w-px bg-gray-300' />
+          <div class='bg-border mx-1 h-4 w-px' />
           <button
             onClick={() => {
               const url = pdfUrl();
@@ -138,7 +140,7 @@ export default function SplitPanelControls(props) {
                 window.open(url, '_blank');
               }
             }}
-            class='rounded p-1.5 text-gray-600 transition-colors hover:bg-gray-100'
+            class='text-muted-foreground hover:bg-secondary rounded p-1.5 transition-colors'
             title='Open PDF in new tab'
           >
             <BiRegularLinkExternal class='h-5 w-5' />

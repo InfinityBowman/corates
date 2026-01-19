@@ -58,7 +58,7 @@ export function PreliminarySection(props) {
   const numericalResultYText = () => props.getRob2Text?.('preliminary', 'numericalResult');
 
   return (
-    <div class='overflow-hidden rounded-lg bg-white shadow-md'>
+    <div class='bg-card overflow-hidden rounded-lg shadow-md'>
       <div class='bg-blue-600 px-6 py-4 text-white'>
         <h2 class='text-lg font-semibold'>Preliminary Considerations</h2>
         <p class='mt-1 text-sm text-blue-100'>
@@ -69,7 +69,7 @@ export function PreliminarySection(props) {
       <div class='space-y-6 px-6 py-5'>
         {/* Study Design */}
         <div>
-          <label class='mb-2 block text-sm font-medium text-gray-700'>
+          <label class='text-secondary-foreground mb-2 block text-sm font-medium'>
             {PRELIMINARY_SECTION.studyDesign.label}
           </label>
           <div class='flex flex-wrap gap-2'>
@@ -84,7 +84,7 @@ export function PreliminarySection(props) {
                   } ${
                     props.preliminaryState?.studyDesign === design ?
                       'border-blue-400 bg-blue-50 text-blue-800'
-                    : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'
+                    : 'border-border bg-card text-muted-foreground hover:border-border'
                   }`}
                 >
                   {design}
@@ -97,7 +97,7 @@ export function PreliminarySection(props) {
         {/* Interventions */}
         <div class='grid gap-4 md:grid-cols-2'>
           <div>
-            <label class='mb-2 block text-sm font-medium text-gray-700'>
+            <label class='text-secondary-foreground mb-2 block text-sm font-medium'>
               {PRELIMINARY_SECTION.experimental.label}
             </label>
             <NoteEditor
@@ -108,7 +108,7 @@ export function PreliminarySection(props) {
             />
           </div>
           <div>
-            <label class='mb-2 block text-sm font-medium text-gray-700'>
+            <label class='text-secondary-foreground mb-2 block text-sm font-medium'>
               {PRELIMINARY_SECTION.comparator.label}
             </label>
             <NoteEditor
@@ -122,7 +122,7 @@ export function PreliminarySection(props) {
 
         {/* Numerical Result */}
         <div>
-          <label class='mb-2 block text-sm font-medium text-gray-700'>
+          <label class='text-secondary-foreground mb-2 block text-sm font-medium'>
             {PRELIMINARY_SECTION.numericalResult.label}
           </label>
           <NoteEditor
@@ -135,7 +135,7 @@ export function PreliminarySection(props) {
 
         {/* Aim Selection */}
         <div>
-          <label class='mb-2 block text-sm font-medium text-gray-700'>
+          <label class='text-secondary-foreground mb-2 block text-sm font-medium'>
             {PRELIMINARY_SECTION.aim.label}
           </label>
           <div class='space-y-2'>
@@ -148,7 +148,7 @@ export function PreliminarySection(props) {
               } ${
                 props.preliminaryState?.aim === 'ASSIGNMENT' ?
                   'border-blue-400 bg-blue-50'
-                : 'border-gray-200 bg-white hover:border-gray-300'
+                : 'border-border bg-card hover:border-border'
               }`}
             >
               <div class='mt-0.5 mr-3'>
@@ -156,7 +156,7 @@ export function PreliminarySection(props) {
                   class={`flex h-4 w-4 items-center justify-center rounded-full border-2 ${
                     props.preliminaryState?.aim === 'ASSIGNMENT' ?
                       'border-blue-500 bg-blue-500'
-                    : 'border-gray-300'
+                    : 'border-border'
                   }`}
                 >
                   <Show when={props.preliminaryState?.aim === 'ASSIGNMENT'}>
@@ -164,7 +164,7 @@ export function PreliminarySection(props) {
                   </Show>
                 </div>
               </div>
-              <span class='text-gray-700'>{AIM_OPTIONS.ASSIGNMENT}</span>
+              <span class='text-secondary-foreground'>{AIM_OPTIONS.ASSIGNMENT}</span>
             </button>
 
             <button
@@ -176,7 +176,7 @@ export function PreliminarySection(props) {
               } ${
                 props.preliminaryState?.aim === 'ADHERING' ?
                   'border-blue-400 bg-blue-50'
-                : 'border-gray-200 bg-white hover:border-gray-300'
+                : 'border-border bg-card hover:border-border'
               }`}
             >
               <div class='mt-0.5 mr-3'>
@@ -184,7 +184,7 @@ export function PreliminarySection(props) {
                   class={`flex h-4 w-4 items-center justify-center rounded-full border-2 ${
                     props.preliminaryState?.aim === 'ADHERING' ?
                       'border-blue-500 bg-blue-500'
-                    : 'border-gray-300'
+                    : 'border-border'
                   }`}
                 >
                   <Show when={props.preliminaryState?.aim === 'ADHERING'}>
@@ -192,7 +192,7 @@ export function PreliminarySection(props) {
                   </Show>
                 </div>
               </div>
-              <span class='text-gray-700'>{AIM_OPTIONS.ADHERING}</span>
+              <span class='text-secondary-foreground'>{AIM_OPTIONS.ADHERING}</span>
             </button>
           </div>
         </div>
@@ -200,10 +200,12 @@ export function PreliminarySection(props) {
         {/* Deviations to Address (only for ADHERING) */}
         <Show when={props.preliminaryState?.aim === 'ADHERING'}>
           <div>
-            <label class='mb-2 block text-sm font-medium text-gray-700'>
+            <label class='text-secondary-foreground mb-2 block text-sm font-medium'>
               {PRELIMINARY_SECTION.deviationsToAddress.label}
             </label>
-            <p class='mb-3 text-xs text-gray-500'>{PRELIMINARY_SECTION.deviationsToAddress.info}</p>
+            <p class='text-muted-foreground mb-3 text-xs'>
+              {PRELIMINARY_SECTION.deviationsToAddress.info}
+            </p>
             <div class='space-y-2'>
               <For each={DEVIATION_OPTIONS}>
                 {deviation => {
@@ -219,12 +221,12 @@ export function PreliminarySection(props) {
                       } ${
                         isChecked() ?
                           'border-blue-300 bg-blue-50'
-                        : 'border-gray-200 bg-white hover:border-gray-300'
+                        : 'border-border bg-card hover:border-border'
                       }`}
                     >
                       <div
                         class={`mr-3 flex h-4 w-4 items-center justify-center rounded border ${
-                          isChecked() ? 'border-blue-500 bg-blue-500' : 'border-gray-300'
+                          isChecked() ? 'border-blue-500 bg-blue-500' : 'border-border'
                         }`}
                       >
                         <Show when={isChecked()}>
@@ -237,7 +239,7 @@ export function PreliminarySection(props) {
                           </svg>
                         </Show>
                       </div>
-                      <span class='text-gray-700'>{deviation}</span>
+                      <span class='text-secondary-foreground'>{deviation}</span>
                     </button>
                   );
                 }}
@@ -248,7 +250,7 @@ export function PreliminarySection(props) {
 
         {/* Information Sources */}
         <div>
-          <label class='mb-2 block text-sm font-medium text-gray-700'>
+          <label class='text-secondary-foreground mb-2 block text-sm font-medium'>
             {PRELIMINARY_SECTION.sources.label}
           </label>
           <div class='grid gap-2 sm:grid-cols-2'>
@@ -265,12 +267,12 @@ export function PreliminarySection(props) {
                     } ${
                       isChecked() ?
                         'border-blue-300 bg-blue-50'
-                      : 'border-gray-200 bg-white hover:border-gray-300'
+                      : 'border-border bg-card hover:border-border'
                     }`}
                   >
                     <div
                       class={`mr-2 flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded border ${
-                        isChecked() ? 'border-blue-500 bg-blue-500' : 'border-gray-300'
+                        isChecked() ? 'border-blue-500 bg-blue-500' : 'border-border'
                       }`}
                     >
                       <Show when={isChecked()}>
@@ -283,7 +285,7 @@ export function PreliminarySection(props) {
                         </svg>
                       </Show>
                     </div>
-                    <span class='text-gray-600'>{source}</span>
+                    <span class='text-muted-foreground'>{source}</span>
                   </button>
                 );
               }}

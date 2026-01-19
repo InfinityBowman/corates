@@ -56,6 +56,7 @@ import yDexie from 'y-dexie';
  * @typedef {Object} AvatarRow
  * @property {string} userId - User ID (primary key)
  * @property {string} dataUrl - Base64 data URL of avatar image
+ * @property {string} [sourceUrl] - Original URL used to fetch avatar (for change detection)
  * @property {number} cachedAt - Cache timestamp
  */
 

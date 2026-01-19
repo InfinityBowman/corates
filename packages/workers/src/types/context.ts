@@ -7,7 +7,8 @@ export interface AuthUser {
   email: string;
   name: string;
   username?: string | null;
-  displayName?: string | null;
+  givenName?: string | null;
+  familyName?: string | null;
   image?: string | null;
   avatarUrl?: string | null;
   role?: string | null;

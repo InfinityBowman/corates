@@ -274,7 +274,7 @@ export default function MergeAccountsDialog(props) {
                   </div>
                 </Show>
 
-                <p class='text-sm text-gray-600'>
+                <p class='text-secondary-foreground text-sm'>
                   Merging will combine all your projects, data, and sign-in methods into this
                   account. The other account will be deleted.
                 </p>
@@ -282,13 +282,13 @@ export default function MergeAccountsDialog(props) {
                 <div class='flex justify-end gap-3 pt-2'>
                   <button
                     onClick={() => props.onOpenChange?.(false)}
-                    class='rounded-lg bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-200'
+                    class='bg-secondary text-secondary-foreground hover:bg-secondary/80 rounded-lg px-4 py-2 text-sm font-medium transition-colors'
                   >
                     Cancel
                   </button>
                   <button
                     onClick={() => setStep(STEPS.ENTER_EMAIL)}
-                    class='inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700'
+                    class='bg-primary hover:bg-primary/90 inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-white transition-colors'
                   >
                     <FiUserPlus class='h-4 w-4' />
                     Merge Accounts
@@ -298,7 +298,7 @@ export default function MergeAccountsDialog(props) {
 
               {/* Step: Enter Email */}
               <Show when={step() === STEPS.ENTER_EMAIL}>
-                <p class='text-sm text-gray-600'>
+                <p class='text-secondary-foreground text-sm'>
                   {isOrcidConflict() ?
                     `Enter the email address or ORCID ID (e.g., 0000-0001-2345-6789) of the other CoRATES account. We'll send a verification code to prove you own it.`
                   : `Enter the email address of the other CoRATES account. We'll send a verification code to prove you own it.`
@@ -315,18 +315,18 @@ export default function MergeAccountsDialog(props) {
                       'Email or ORCID ID (e.g., 0000-0001-2345-6789)'
                     : 'other@example.com'
                   }
-                  class='w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-500 focus:ring-2 focus:ring-blue-500'
+                  class='border-border focus:border-primary focus:ring-ring w-full rounded-lg border px-3 py-2 focus:ring-2'
                   disabled={loading()}
                 />
 
                 <Show when={error()}>
-                  <p class='text-sm text-red-600'>{error()}</p>
+                  <p class='text-destructive text-sm'>{error()}</p>
                 </Show>
 
                 <div class='flex justify-end gap-3 pt-2'>
                   <button
                     onClick={() => setStep(STEPS.PROMPT)}
-                    class='rounded-lg bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-200'
+                    class='bg-secondary text-secondary-foreground hover:bg-secondary/80 rounded-lg px-4 py-2 text-sm font-medium transition-colors'
                     disabled={loading()}
                   >
                     Back
@@ -334,7 +334,7 @@ export default function MergeAccountsDialog(props) {
                   <button
                     onClick={handleSendCode}
                     disabled={loading() || !targetEmail().trim()}
-                    class='inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 disabled:opacity-50'
+                    class='bg-primary hover:bg-primary/90 inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-white transition-colors disabled:opacity-50'
                   >
                     {loading() ?
                       <FiLoader class='h-4 w-4 animate-spin' />
@@ -347,7 +347,7 @@ export default function MergeAccountsDialog(props) {
               {/* Step: Enter Code */}
               <Show when={step() === STEPS.ENTER_CODE}>
                 <div class='flex items-start gap-3 rounded-lg border border-blue-200 bg-blue-50 p-3'>
-                  <FiMail class='mt-0.5 h-5 w-5 shrink-0 text-blue-600' />
+                  <FiMail class='text-primary mt-0.5 h-5 w-5 shrink-0' />
                   <div class='text-sm text-blue-800'>
                     <p class='font-medium'>Verification code sent</p>
                     <p class='mt-1'>
@@ -361,7 +361,7 @@ export default function MergeAccountsDialog(props) {
                 </div>
 
                 <div>
-                  <label class='mb-1 block text-center text-sm font-medium text-gray-700'>
+                  <label class='text-secondary-foreground mb-1 block text-center text-sm font-medium'>
                     Verification Code
                   </label>
                   <PinInput
@@ -379,12 +379,12 @@ export default function MergeAccountsDialog(props) {
                 </div>
 
                 <Show when={error()}>
-                  <p class='text-sm text-red-600'>{error()}</p>
+                  <p class='text-destructive text-sm'>{error()}</p>
                 </Show>
 
-                <p class='text-xs text-gray-500'>
+                <p class='text-muted-foreground text-xs'>
                   Didn't receive the code?{' '}
-                  <button onClick={handleResendCode} class='text-blue-600 hover:underline'>
+                  <button onClick={handleResendCode} class='text-primary hover:underline'>
                     Send again
                   </button>
                 </p>
@@ -392,7 +392,7 @@ export default function MergeAccountsDialog(props) {
                 <div class='flex justify-end gap-3 pt-2'>
                   <button
                     onClick={handleCancel}
-                    class='rounded-lg bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-200'
+                    class='bg-secondary text-secondary-foreground hover:bg-secondary/80 rounded-lg px-4 py-2 text-sm font-medium transition-colors'
                     disabled={loading()}
                   >
                     Cancel
@@ -400,7 +400,7 @@ export default function MergeAccountsDialog(props) {
                   <button
                     onClick={handleVerifyCode}
                     disabled={loading() || verificationCode().length !== 6}
-                    class='inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 disabled:opacity-50'
+                    class='bg-primary hover:bg-primary/90 inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-white transition-colors disabled:opacity-50'
                   >
                     {loading() ?
                       <FiLoader class='h-4 w-4 animate-spin' />
@@ -424,9 +424,11 @@ export default function MergeAccountsDialog(props) {
                 </div>
 
                 <Show when={mergePreview()}>
-                  <div class='rounded-lg border border-gray-200 bg-gray-50 p-3 text-sm'>
-                    <p class='mb-2 font-medium text-gray-700'>After merging, you'll have:</p>
-                    <ul class='list-inside list-disc space-y-1 text-gray-600'>
+                  <div class='border-border bg-muted rounded-lg border p-3 text-sm'>
+                    <p class='text-secondary-foreground mb-2 font-medium'>
+                      After merging, you'll have:
+                    </p>
+                    <ul class='text-secondary-foreground list-inside list-disc space-y-1'>
                       <li>
                         Sign-in methods:{' '}
                         {[
@@ -450,13 +452,13 @@ export default function MergeAccountsDialog(props) {
                 </div>
 
                 <Show when={error()}>
-                  <p class='text-sm text-red-600'>{error()}</p>
+                  <p class='text-destructive text-sm'>{error()}</p>
                 </Show>
 
                 <div class='flex justify-end gap-3 pt-2'>
                   <button
                     onClick={handleCancel}
-                    class='rounded-lg bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-200'
+                    class='bg-secondary text-secondary-foreground hover:bg-secondary/80 rounded-lg px-4 py-2 text-sm font-medium transition-colors'
                     disabled={loading()}
                   >
                     Cancel
@@ -464,7 +466,7 @@ export default function MergeAccountsDialog(props) {
                   <button
                     onClick={handleCompleteMerge}
                     disabled={loading()}
-                    class='inline-flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-red-700 focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:opacity-50'
+                    class='focus:ring-ring inline-flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-red-700 focus:ring-2 focus:outline-none disabled:opacity-50'
                   >
                     {loading() ?
                       <FiLoader class='h-4 w-4 animate-spin' />
@@ -477,9 +479,9 @@ export default function MergeAccountsDialog(props) {
               {/* Step: Merging */}
               <Show when={step() === STEPS.MERGING}>
                 <div class='flex flex-col items-center py-6'>
-                  <FiLoader class='h-8 w-8 animate-spin text-blue-600' />
-                  <p class='mt-3 text-gray-600'>Merging accounts...</p>
-                  <p class='mt-1 text-sm text-gray-500'>This may take a moment.</p>
+                  <FiLoader class='text-primary h-8 w-8 animate-spin' />
+                  <p class='text-secondary-foreground mt-3'>Merging accounts...</p>
+                  <p class='text-muted-foreground mt-1 text-sm'>This may take a moment.</p>
                 </div>
               </Show>
 
@@ -489,8 +491,8 @@ export default function MergeAccountsDialog(props) {
                   <div class='flex h-12 w-12 items-center justify-center rounded-full bg-green-100'>
                     <FiCheck class='h-6 w-6 text-green-600' />
                   </div>
-                  <p class='mt-3 font-medium text-gray-900'>Accounts Merged Successfully!</p>
-                  <p class='mt-1 text-sm text-gray-600'>
+                  <p class='text-foreground mt-3 font-medium'>Accounts Merged Successfully!</p>
+                  <p class='text-secondary-foreground mt-1 text-sm'>
                     All data has been combined into your account.
                   </p>
                 </div>
@@ -498,7 +500,7 @@ export default function MergeAccountsDialog(props) {
                 <div class='flex justify-center pt-2'>
                   <button
                     onClick={() => props.onOpenChange?.(false)}
-                    class='rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700'
+                    class='bg-primary hover:bg-primary/90 rounded-lg px-4 py-2 text-sm font-medium text-white transition-colors'
                   >
                     Done
                   </button>

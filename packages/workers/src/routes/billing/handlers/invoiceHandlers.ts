@@ -193,7 +193,7 @@ export async function handleInvoicePaymentFailed(
 
   if (stripeCustomerId && env?.EMAIL_QUEUE) {
     const billingUser = await db
-      .select({ id: user.id, email: user.email, name: user.name, displayName: user.displayName })
+      .select({ id: user.id, email: user.email, name: user.name, givenName: user.givenName })
       .from(user)
       .where(eq(user.stripeCustomerId, stripeCustomerId))
       .get();
@@ -205,7 +205,7 @@ export async function handleInvoicePaymentFailed(
           subscriptionId: existing.id,
           orgId: existing.referenceId,
           userEmail: billingUser.email,
-          userName: billingUser.displayName || billingUser.name || null,
+          userName: billingUser.givenName || billingUser.name || null,
           invoiceUrl: invoice.hosted_invoice_url ?? null,
           amountDue: invoice.amount_due,
           currency: invoice.currency,

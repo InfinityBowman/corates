@@ -17,7 +17,9 @@ export default function StepIndicator(props) {
             <>
               <div
                 class={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-semibold transition-colors sm:h-8 sm:w-8 sm:text-sm ${
-                  props.currentStep >= step ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-500'
+                  props.currentStep >= step ?
+                    'bg-blue-600 text-white'
+                  : 'bg-secondary text-muted-foreground'
                 }`}
               >
                 {step}
@@ -25,7 +27,7 @@ export default function StepIndicator(props) {
               <Show when={index() < props.totalSteps - 1}>
                 <div
                   class={`h-0.5 w-8 transition-colors sm:w-10 ${
-                    props.currentStep > step ? 'bg-blue-600' : 'bg-gray-200'
+                    props.currentStep > step ? 'bg-blue-600' : 'bg-secondary'
                   }`}
                 />
               </Show>

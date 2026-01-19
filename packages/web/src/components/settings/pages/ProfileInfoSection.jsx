@@ -40,16 +40,19 @@ export default function ProfileInfoSection() {
 
   const avatarUrl = () => optimisticImage() || user()?.image || null;
 
+  // Use structured givenName/familyName if available, fallback to splitting name
   const firstName = () => {
-    const name = user()?.name || '';
-    const parts = name.split(' ');
-    return parts[0] || '';
+    const u = user();
+    if (u?.givenName) return u.givenName;
+    const name = u?.name || '';
+    return name.split(' ')[0] || '';
   };
 
   const lastName = () => {
-    const name = user()?.name || '';
-    const parts = name.split(' ');
-    return parts.slice(1).join(' ') || '';
+    const u = user();
+    if (u?.familyName) return u.familyName;
+    const name = u?.name || '';
+    return name.split(' ').slice(1).join(' ') || '';
   };
 
   const userInitials = () => {
@@ -71,12 +74,17 @@ export default function ProfileInfoSection() {
   };
 
   const handleFirstNameChange = async newFirstName => {
-    const trimmed = newFirstName?.trim() || '';
-    if (trimmed === firstName()) return;
+    const givenName = newFirstName?.trim() || '';
+    if (givenName === firstName()) return;
 
-    const fullName = `${trimmed} ${lastName()}`.trim();
+    const familyName = lastName();
+    const fullName = [givenName, familyName].filter(Boolean).join(' ');
     try {
-      await auth.updateProfile({ name: fullName });
+      await auth.updateProfile({
+        name: fullName,
+        givenName: givenName || null,
+        familyName: familyName || null,
+      });
       syncProfileToProjects();
     } catch (err) {
       console.warn('Failed to update first name:', err.message);
@@ -85,12 +93,17 @@ export default function ProfileInfoSection() {
   };
 
   const handleLastNameChange = async newLastName => {
-    const trimmed = newLastName?.trim() || '';
-    if (trimmed === lastName()) return;
+    const familyName = newLastName?.trim() || '';
+    if (familyName === lastName()) return;
 
-    const fullName = `${firstName()} ${trimmed}`.trim();
+    const givenName = firstName();
+    const fullName = [givenName, familyName].filter(Boolean).join(' ');
     try {
-      await auth.updateProfile({ name: fullName });
+      await auth.updateProfile({
+        name: fullName,
+        givenName: givenName || null,
+        familyName: familyName || null,
+      });
       syncProfileToProjects();
     } catch (err) {
       console.warn('Failed to update last name:', err.message);
@@ -171,7 +184,7 @@ export default function ProfileInfoSection() {
           <Show
             when={avatarUrl()}
             fallback={
-              <div class='flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-blue-600 text-xl font-semibold text-white shadow-md'>
+              <div class='from-primary to-primary/80 text-primary-foreground flex h-20 w-20 items-center justify-center rounded-full bg-linear-to-br text-xl font-semibold shadow-md'>
                 {userInitials()}
               </div>
             }
@@ -179,14 +192,14 @@ export default function ProfileInfoSection() {
             <img
               src={avatarUrl()}
               alt={user()?.name || 'Profile'}
-              class='h-20 w-20 rounded-full object-cover shadow-md ring-2 ring-white'
+              class='ring-background h-20 w-20 rounded-full object-cover shadow-md ring-2'
               referrerPolicy='no-referrer'
             />
           </Show>
           <button
             onClick={triggerFileSelect}
             disabled={uploadingImage()}
-            class='absolute inset-0 flex cursor-pointer items-center justify-center rounded-full bg-slate-900/60 opacity-0 backdrop-blur-sm transition-all duration-200 group-hover:opacity-100 disabled:cursor-wait'
+            class='bg-foreground/60 absolute inset-0 flex cursor-pointer items-center justify-center rounded-full opacity-0 backdrop-blur-sm transition-all duration-200 group-hover:opacity-100 disabled:cursor-wait'
             title='Change profile photo'
           >
             <Show
@@ -211,7 +224,7 @@ export default function ProfileInfoSection() {
         <div class='min-w-0 flex-1'>
           <div class='grid grid-cols-2 gap-4'>
             <div>
-              <label class='mb-1 block text-xs font-medium tracking-wide text-slate-400 uppercase'>
+              <label class='text-muted-foreground mb-1 block text-xs font-medium tracking-wide uppercase'>
                 First Name
               </label>
               <SimpleEditable
@@ -220,11 +233,11 @@ export default function ProfileInfoSection() {
                 onSubmit={handleFirstNameChange}
                 showEditIcon={true}
                 placeholder='First name'
-                class='text-lg font-medium text-slate-900'
+                class='text-foreground text-lg font-medium'
               />
             </div>
             <div>
-              <label class='mb-1 block text-xs font-medium tracking-wide text-slate-400 uppercase'>
+              <label class='text-muted-foreground mb-1 block text-xs font-medium tracking-wide uppercase'>
                 Last Name
               </label>
               <SimpleEditable
@@ -233,14 +246,14 @@ export default function ProfileInfoSection() {
                 onSubmit={handleLastNameChange}
                 showEditIcon={true}
                 placeholder='Last name'
-                class='text-lg font-medium text-slate-900'
+                class='text-foreground text-lg font-medium'
               />
             </div>
           </div>
           <div class='mt-3 flex items-center gap-2'>
-            <p class='text-sm text-slate-500'>{user()?.email}</p>
+            <p class='text-muted-foreground text-sm'>{user()?.email}</p>
             <Show when={user()?.emailVerified}>
-              <span class='inline-flex items-center gap-1 rounded-full bg-emerald-50 px-1.5 py-0.5 text-xs font-medium text-emerald-700 ring-1 ring-emerald-600/10'>
+              <span class='bg-success-subtle text-success ring-success/10 inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-xs font-medium ring-1'>
                 <FiCheck class='h-3 w-3' />
                 Verified
               </span>
@@ -250,11 +263,11 @@ export default function ProfileInfoSection() {
       </div>
 
       {/* Member Since */}
-      <div class='border-t border-slate-100 pt-5'>
-        <label class='mb-1 block text-xs font-medium tracking-wide text-slate-400 uppercase'>
+      <div class='border-border-subtle border-t pt-5'>
+        <label class='text-muted-foreground mb-1 block text-xs font-medium tracking-wide uppercase'>
           Member Since
         </label>
-        <p class='text-slate-900'>{formatDate(user()?.createdAt)}</p>
+        <p class='text-foreground'>{formatDate(user()?.createdAt)}</p>
       </div>
     </div>
   );

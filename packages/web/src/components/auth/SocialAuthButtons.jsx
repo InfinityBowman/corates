@@ -9,7 +9,7 @@ import { Show } from 'solid-js';
  */
 export function GoogleButton(props) {
   const baseClass =
-    'border border-gray-300 hover:bg-gray-50 text-gray-700 font-semibold rounded-lg sm:rounded-xl transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center';
+    'border border-border hover:bg-muted text-secondary-foreground font-semibold rounded-lg sm:rounded-xl transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center';
 
   return (
     <Show
@@ -28,7 +28,7 @@ export function GoogleButton(props) {
             <div
               role='status'
               aria-label='Signing in with Google'
-              class='h-5 w-5 animate-spin rounded-full border-2 border-gray-300 border-t-gray-600'
+              class='border-border border-t-secondary-foreground h-5 w-5 animate-spin rounded-full border-2'
             />
           </Show>
           Continue with Google
@@ -52,7 +52,7 @@ export function GoogleButton(props) {
           <div
             role='status'
             aria-label='Signing in with Google'
-            class='h-5 w-5 animate-spin rounded-full border-2 border-gray-300 border-t-gray-600 sm:h-6 sm:w-6'
+            class='border-border border-t-secondary-foreground h-5 w-5 animate-spin rounded-full border-2 sm:h-6 sm:w-6'
           />
         </Show>
       </button>
@@ -69,7 +69,7 @@ export function GoogleButton(props) {
  */
 export function OrcidButton(props) {
   const baseClass =
-    'border border-gray-300 hover:bg-gray-50 text-gray-700 font-semibold rounded-lg sm:rounded-xl transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center';
+    'border border-border hover:bg-muted text-secondary-foreground font-semibold rounded-lg sm:rounded-xl transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center';
 
   return (
     <Show
@@ -88,7 +88,7 @@ export function OrcidButton(props) {
             <div
               role='status'
               aria-label='Signing in with ORCID'
-              class='h-5 w-5 animate-spin rounded-full border-2 border-gray-300 border-t-gray-600'
+              class='border-border border-t-secondary-foreground h-5 w-5 animate-spin rounded-full border-2'
             />
           </Show>
           Continue with ORCID
@@ -112,7 +112,7 @@ export function OrcidButton(props) {
           <div
             role='status'
             aria-label='Signing in with ORCID'
-            class='h-5 w-5 animate-spin rounded-full border-2 border-gray-300 border-t-gray-600 sm:h-6 sm:w-6'
+            class='border-border border-t-secondary-foreground h-5 w-5 animate-spin rounded-full border-2 sm:h-6 sm:w-6'
           />
         </Show>
       </button>
@@ -141,10 +141,10 @@ export function AuthDivider() {
   return (
     <div class='relative my-4 sm:my-5'>
       <div class='absolute inset-0 flex items-center'>
-        <div class='w-full border-t border-gray-200' />
+        <div class='border-border w-full border-t' />
       </div>
       <div class='relative flex justify-center text-xs sm:text-sm'>
-        <span class='bg-white px-3 text-gray-500'>or</span>
+        <span class='bg-card text-muted-foreground px-3'>or</span>
       </div>
     </div>
   );

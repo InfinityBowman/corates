@@ -39,7 +39,7 @@ export function OverallSection(props) {
 
   const getJudgementColor = (judgement, isSelected) => {
     if (!isSelected) {
-      return 'border-gray-200 bg-gray-50 text-gray-400';
+      return 'border-border bg-muted text-muted-foreground/70';
     }
 
     switch (judgement) {
@@ -52,7 +52,7 @@ export function OverallSection(props) {
       case 'High risk of bias':
         return 'bg-red-100 border-red-400 text-red-800';
       default:
-        return 'bg-gray-50 border-gray-200 text-gray-600';
+        return 'bg-muted border-border text-muted-foreground';
     }
   };
 
@@ -65,21 +65,19 @@ export function OverallSection(props) {
       case 'High':
         return 'bg-red-100 text-red-800';
       default:
-        return 'bg-gray-100 text-gray-600';
+        return 'bg-secondary text-muted-foreground';
     }
   };
 
   const judgementOptions = ['Low risk of bias', 'Some concerns', 'High risk of bias'];
 
   return (
-    <div class='overflow-hidden rounded-lg bg-white shadow-md'>
-      <div class='bg-gray-800 px-6 py-4 text-white'>
+    <div class='bg-card overflow-hidden rounded-lg shadow-md'>
+      <div class='bg-foreground text-background px-6 py-4'>
         <div class='flex items-center justify-between'>
           <div>
             <h3 class='text-lg font-semibold'>Overall Risk of Bias</h3>
-            <p class='mt-1 text-sm text-gray-300'>
-              Final assessment based on all domain judgements
-            </p>
+            <p class='text-muted mt-1 text-sm'>Final assessment based on all domain judgements</p>
           </div>
 
           {/* Overall calculated badge in header */}
@@ -91,19 +89,21 @@ export function OverallSection(props) {
             </span>
           </Show>
           <Show when={calculatedScore() === null || smartScoring().isComplete === false}>
-            <span class='rounded-md bg-gray-600 px-3 py-1 text-sm text-gray-300'>Incomplete</span>
+            <span class='bg-muted-foreground/50 text-muted rounded-md px-3 py-1 text-sm'>
+              Incomplete
+            </span>
           </Show>
         </div>
       </div>
 
       <div class='px-6 py-5'>
         {/* Calculated score display */}
-        <div class='mb-5 rounded-lg bg-gray-50 p-4'>
+        <div class='bg-muted mb-5 rounded-lg p-4'>
           <div class='flex items-center gap-3'>
-            <span class='text-sm font-medium text-gray-700'>Calculated judgement:</span>
+            <span class='text-secondary-foreground text-sm font-medium'>Calculated judgement:</span>
             <Show
               when={effectiveJudgement()}
-              fallback={<span class='text-sm text-gray-400'>Complete all domains</span>}
+              fallback={<span class='text-muted-foreground/70 text-sm'>Complete all domains</span>}
             >
               <span
                 class={`rounded-md px-2.5 py-1 text-sm font-medium ${getScoreBadgeColor(calculatedScore())}`}
@@ -116,7 +116,9 @@ export function OverallSection(props) {
 
         {/* Overall risk of bias judgement display (read-only) */}
         <div class='mb-5'>
-          <div class='mb-3 text-sm font-medium text-gray-700'>Overall risk of bias judgement</div>
+          <div class='text-secondary-foreground mb-3 text-sm font-medium'>
+            Overall risk of bias judgement
+          </div>
           <div class='flex flex-wrap gap-2'>
             <For each={judgementOptions}>
               {judgement => {
@@ -135,9 +137,9 @@ export function OverallSection(props) {
 
         {/* Direction of bias */}
         <div>
-          <div class='mb-3 text-sm font-medium text-gray-700'>
+          <div class='text-secondary-foreground mb-3 text-sm font-medium'>
             Predicted direction of bias
-            <span class='ml-1 font-normal text-gray-400'>(optional)</span>
+            <span class='text-muted-foreground/70 ml-1 font-normal'>(optional)</span>
           </div>
           <div class='flex flex-wrap gap-2'>
             <For each={BIAS_DIRECTIONS}>
@@ -154,7 +156,7 @@ export function OverallSection(props) {
                     class={`inline-flex items-center justify-center rounded border px-3 py-1.5 text-sm font-medium transition-colors ${props.disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'} ${
                       isSelected() ?
                         'border-blue-400 bg-blue-100 text-blue-800'
-                      : 'border-gray-200 bg-gray-50 text-gray-500 hover:border-gray-300'
+                      : 'border-border bg-muted text-muted-foreground hover:border-border'
                     }`}
                   >
                     {direction}

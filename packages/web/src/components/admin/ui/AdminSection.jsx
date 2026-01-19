@@ -34,11 +34,11 @@ export function AdminSection(props) {
     <div class={`flex flex-col ${props.compact ? 'gap-4' : 'gap-6'} ${props.class || ''}`}>
       <div class='flex flex-col gap-1'>
         <div class='flex items-center justify-between'>
-          <h2 class='text-lg font-medium text-gray-900'>{props.title}</h2>
+          <h2 class='text-foreground text-lg font-medium'>{props.title}</h2>
           <Show when={props.cta}>{props.cta}</Show>
         </div>
         <Show when={props.description}>
-          <p class='text-sm text-gray-500'>{props.description}</p>
+          <p class='text-muted-foreground text-sm'>{props.description}</p>
         </Show>
       </div>
       {props.children}

@@ -87,10 +87,10 @@ export default function NotesCompareSection(props) {
   }
 
   return (
-    <div class='mt-4 border-t border-gray-200 pt-3'>
+    <div class='border-border mt-4 border-t pt-3'>
       <Collapsible open={expanded()} onOpenChange={setExpanded}>
         <CollapsibleTrigger
-          class={`flex cursor-pointer items-center gap-1.5 py-1 text-sm select-none ${hasAnyNote() ? 'text-blue-600 hover:text-blue-700' : 'text-gray-500 hover:text-gray-700'} `}
+          class={`flex cursor-pointer items-center gap-1.5 py-1 text-sm select-none ${hasAnyNote() ? 'text-blue-600 hover:text-blue-700' : 'text-muted-foreground hover:text-secondary-foreground'} `}
         >
           <BiRegularChevronRight
             class={`h-4 w-4 shrink-0 transition-transform duration-200 ${expanded() ? 'rotate-90' : ''}`}
@@ -98,7 +98,7 @@ export default function NotesCompareSection(props) {
           <BsJournalText class='h-4 w-4 shrink-0' />
           <span class='font-medium'>Question Notes</span>
           <Show when={hasAnyNote()}>
-            <span class='ml-1 text-xs text-gray-400'>
+            <span class='text-muted-foreground/70 ml-1 text-xs'>
               (
               {[hasReviewer1Note() && 'R1', hasReviewer2Note() && 'R2', hasFinalNote() && 'Final']
                 .filter(Boolean)
@@ -112,9 +112,9 @@ export default function NotesCompareSection(props) {
             {/* Three column layout for notes */}
             <div class='grid grid-cols-3 gap-4'>
               {/* Reviewer 1 Note (read-only) */}
-              <div class='rounded-lg bg-gray-50 p-3'>
+              <div class='bg-muted rounded-lg p-3'>
                 <div class='mb-2 flex items-center justify-between'>
-                  <h4 class='text-xs font-semibold text-gray-700'>
+                  <h4 class='text-secondary-foreground text-xs font-semibold'>
                     {props.reviewer1Name || 'Reviewer 1'}
                   </h4>
                   <Show when={hasReviewer1Note()}>
@@ -130,18 +130,18 @@ export default function NotesCompareSection(props) {
                 </div>
                 <Show
                   when={hasReviewer1Note()}
-                  fallback={<p class='text-xs text-gray-400 italic'>No note added</p>}
+                  fallback={<p class='text-muted-foreground/70 text-xs italic'>No note added</p>}
                 >
-                  <p class='wrap-break-words text-sm whitespace-pre-wrap text-gray-700'>
+                  <p class='wrap-break-words text-secondary-foreground text-sm whitespace-pre-wrap'>
                     {props.reviewer1Note}
                   </p>
                 </Show>
               </div>
 
               {/* Reviewer 2 Note (read-only) */}
-              <div class='rounded-lg bg-gray-50 p-3'>
+              <div class='bg-muted rounded-lg p-3'>
                 <div class='mb-2 flex items-center justify-between'>
-                  <h4 class='text-xs font-semibold text-gray-700'>
+                  <h4 class='text-secondary-foreground text-xs font-semibold'>
                     {props.reviewer2Name || 'Reviewer 2'}
                   </h4>
                   <Show when={hasReviewer2Note()}>
@@ -157,9 +157,9 @@ export default function NotesCompareSection(props) {
                 </div>
                 <Show
                   when={hasReviewer2Note()}
-                  fallback={<p class='text-xs text-gray-400 italic'>No note added</p>}
+                  fallback={<p class='text-muted-foreground/70 text-xs italic'>No note added</p>}
                 >
-                  <p class='wrap-break-words text-sm whitespace-pre-wrap text-gray-700'>
+                  <p class='wrap-break-words text-secondary-foreground text-sm whitespace-pre-wrap'>
                     {props.reviewer2Note}
                   </p>
                 </Show>
@@ -168,7 +168,7 @@ export default function NotesCompareSection(props) {
               {/* Final Note (editable) */}
               <div class='rounded-lg bg-green-50/50 p-3'>
                 <div class='mb-2 flex items-center justify-between'>
-                  <h4 class='text-xs font-semibold text-gray-700'>Final Note</h4>
+                  <h4 class='text-secondary-foreground text-xs font-semibold'>Final Note</h4>
                   <Show when={hasReviewer1Note() && hasReviewer2Note()}>
                     <button
                       onClick={mergeToFinal}
@@ -181,7 +181,7 @@ export default function NotesCompareSection(props) {
                 </div>
                 <Show
                   when={props.finalNoteYText}
-                  fallback={<p class='text-xs text-gray-400 italic'>Loading...</p>}
+                  fallback={<p class='text-muted-foreground/70 text-xs italic'>Loading...</p>}
                 >
                   <NoteEditor
                     yText={props.finalNoteYText}

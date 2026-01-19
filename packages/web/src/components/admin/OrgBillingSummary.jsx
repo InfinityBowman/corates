@@ -48,19 +48,19 @@ export default function OrgBillingSummary(props) {
 
   return (
     <Show when={billing()}>
-      <div class='rounded-lg border border-gray-200 bg-white p-6 shadow-sm'>
+      <div class='border-border bg-card rounded-lg border p-6 shadow-sm'>
         <div class='mb-4 flex items-center justify-between'>
-          <h2 class='text-lg font-semibold text-gray-900'>Billing Summary</h2>
+          <h2 class='text-foreground text-lg font-semibold'>Billing Summary</h2>
         </div>
         <div class='grid grid-cols-1 gap-4 md:grid-cols-3'>
           <div>
-            <p class='text-sm text-gray-500'>Effective Plan</p>
-            <p class='mt-1 text-lg font-medium text-gray-900'>{currentPlan()}</p>
-            <p class='mt-1 font-mono text-xs text-gray-400'>{effectivePlanId()}</p>
+            <p class='text-muted-foreground text-sm'>Effective Plan</p>
+            <p class='text-foreground mt-1 text-lg font-medium'>{currentPlan()}</p>
+            <p class='text-muted-foreground/70 mt-1 font-mono text-xs'>{effectivePlanId()}</p>
           </div>
           <div>
-            <p class='text-sm text-gray-500'>Access Mode</p>
-            <p class='mt-1 text-lg font-medium text-gray-900'>
+            <p class='text-muted-foreground text-sm'>Access Mode</p>
+            <p class='text-foreground mt-1 text-lg font-medium'>
               {accessMode() === 'full' ?
                 <span class='inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800'>
                   Full Access
@@ -72,33 +72,35 @@ export default function OrgBillingSummary(props) {
             </p>
           </div>
           <div>
-            <p class='text-sm text-gray-500'>Source</p>
-            <p class='mt-1 text-lg font-medium text-gray-900 capitalize'>{billingSource()}</p>
+            <p class='text-muted-foreground text-sm'>Source</p>
+            <p class='text-foreground mt-1 text-lg font-medium capitalize'>{billingSource()}</p>
           </div>
         </div>
 
         {/* Reason */}
-        <div class='mt-4 rounded-lg bg-gray-50 p-3'>
-          <p class='text-xs font-medium tracking-wide text-gray-500 uppercase'>Effective Because</p>
-          <p class='mt-1 text-sm text-gray-700'>{getSourceReason()}</p>
+        <div class='bg-muted mt-4 rounded-lg p-3'>
+          <p class='text-muted-foreground text-xs font-medium tracking-wide uppercase'>
+            Effective Because
+          </p>
+          <p class='text-secondary-foreground mt-1 text-sm'>{getSourceReason()}</p>
         </div>
 
         {/* Entitlements and Quotas */}
         <div class='mt-6 grid grid-cols-1 gap-6 md:grid-cols-2'>
           <div>
-            <h3 class='mb-3 text-sm font-semibold text-gray-900'>Entitlements</h3>
+            <h3 class='text-foreground mb-3 text-sm font-semibold'>Entitlements</h3>
             <dl class='space-y-2'>
               <Show
                 when={Object.keys(entitlements()).length > 0}
-                fallback={<p class='text-sm text-gray-500'>No entitlements</p>}
+                fallback={<p class='text-muted-foreground text-sm'>No entitlements</p>}
               >
                 <For each={Object.entries(entitlements())}>
                   {([key, value]) => (
-                    <div class='flex justify-between border-b border-gray-100 pb-2'>
-                      <dt class='text-sm text-gray-600 capitalize'>
+                    <div class='border-border-subtle flex justify-between border-b pb-2'>
+                      <dt class='text-muted-foreground text-sm capitalize'>
                         {key.replace(/([A-Z])/g, ' $1').trim()}
                       </dt>
-                      <dd class='text-sm font-medium text-gray-900'>
+                      <dd class='text-foreground text-sm font-medium'>
                         {typeof value === 'boolean' ?
                           value ?
                             'Yes'
@@ -112,19 +114,19 @@ export default function OrgBillingSummary(props) {
             </dl>
           </div>
           <div>
-            <h3 class='mb-3 text-sm font-semibold text-gray-900'>Quotas</h3>
+            <h3 class='text-foreground mb-3 text-sm font-semibold'>Quotas</h3>
             <dl class='space-y-2'>
               <Show
                 when={Object.keys(quotas()).length > 0}
-                fallback={<p class='text-sm text-gray-500'>No quotas</p>}
+                fallback={<p class='text-muted-foreground text-sm'>No quotas</p>}
               >
                 <For each={Object.entries(quotas())}>
                   {([key, value]) => (
-                    <div class='flex justify-between border-b border-gray-100 pb-2'>
-                      <dt class='text-sm text-gray-600 capitalize'>
+                    <div class='border-border-subtle flex justify-between border-b pb-2'>
+                      <dt class='text-muted-foreground text-sm capitalize'>
                         {key.replace(/([A-Z])/g, ' $1').trim()}
                       </dt>
-                      <dd class='text-sm font-medium text-gray-900'>
+                      <dd class='text-foreground text-sm font-medium'>
                         {value === null || value === undefined ? 'Unlimited' : String(value)}
                       </dd>
                     </div>

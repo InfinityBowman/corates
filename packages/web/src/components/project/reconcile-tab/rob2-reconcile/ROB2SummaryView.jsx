@@ -88,20 +88,20 @@ export default function ROB2SummaryView(props) {
   };
 
   return (
-    <div class='rounded-xl bg-white shadow-lg'>
+    <div class='bg-card rounded-xl shadow-lg'>
       {/* Header */}
-      <div class='border-b bg-gray-50 p-6'>
-        <h2 class='text-xl font-bold text-gray-900'>Reconciliation Summary</h2>
-        <p class='mt-1 text-sm text-gray-600'>
+      <div class='bg-muted border-b p-6'>
+        <h2 class='text-foreground text-xl font-bold'>Reconciliation Summary</h2>
+        <p class='text-muted-foreground mt-1 text-sm'>
           Review all reconciled items before saving. Click any item to edit.
         </p>
       </div>
 
       {/* Stats Grid */}
       <div class='grid grid-cols-4 gap-4 border-b p-6'>
-        <div class='rounded-lg bg-gray-50 p-4 text-center'>
-          <div class='text-2xl font-bold text-gray-900'>{props.summary?.total || 0}</div>
-          <div class='text-sm text-gray-600'>Total Items</div>
+        <div class='bg-muted rounded-lg p-4 text-center'>
+          <div class='text-foreground text-2xl font-bold'>{props.summary?.total || 0}</div>
+          <div class='text-muted-foreground text-sm'>Total Items</div>
         </div>
         <div class='rounded-lg bg-green-50 p-4 text-center'>
           <div class='text-2xl font-bold text-green-700'>{props.summary?.agreed || 0}</div>
@@ -125,12 +125,12 @@ export default function ROB2SummaryView(props) {
           {group => (
             <div>
               {/* Section Header */}
-              <div class='bg-gray-50 px-6 py-3'>
-                <h3 class='text-sm font-semibold text-gray-700'>{group.section}</h3>
+              <div class='bg-muted px-6 py-3'>
+                <h3 class='text-secondary-foreground text-sm font-semibold'>{group.section}</h3>
               </div>
 
               {/* Section Items */}
-              <div class='divide-y divide-gray-100'>
+              <div class='divide-border-subtle divide-y'>
                 <For each={group.items}>
                   {item => {
                     const hasAnswer = () => hasNavItemAnswer(item, props.finalAnswers);
@@ -139,8 +139,9 @@ export default function ROB2SummaryView(props) {
 
                     return (
                       <button
+                        type='button'
                         onClick={() => props.onGoToPage?.(getItemIndex(item))}
-                        class='flex w-full items-center gap-4 px-6 py-3 text-left transition-colors hover:bg-gray-50'
+                        class='hover:bg-muted flex w-full items-center gap-4 px-6 py-3 text-left transition-colors'
                       >
                         {/* Status Icon */}
                         <div
@@ -158,7 +159,7 @@ export default function ROB2SummaryView(props) {
                         {/* Item Label */}
                         <div class='min-w-0 flex-1'>
                           <div class='flex items-center gap-2'>
-                            <span class='text-sm font-medium text-gray-900'>{item.label}</span>
+                            <span class='text-foreground text-sm font-medium'>{item.label}</span>
                             <Show when={item.isDirection}>
                               <span class='rounded bg-blue-100 px-1.5 py-0.5 text-xs text-blue-700'>
                                 Direction
@@ -170,7 +171,7 @@ export default function ROB2SummaryView(props) {
                               item.type === NAV_ITEM_TYPES.DOMAIN_QUESTION && item.questionDef?.text
                             }
                           >
-                            <p class='mt-0.5 truncate text-xs text-gray-500'>
+                            <p class='text-muted-foreground mt-0.5 truncate text-xs'>
                               {item.questionDef.text}
                             </p>
                           </Show>
@@ -181,7 +182,7 @@ export default function ROB2SummaryView(props) {
                           <Show
                             when={hasAnswer()}
                             fallback={
-                              <span class='rounded-full bg-gray-100 px-2 py-1 text-xs text-gray-500'>
+                              <span class='bg-secondary text-muted-foreground rounded-full px-2 py-1 text-xs'>
                                 Not set
                               </span>
                             }
@@ -193,7 +194,7 @@ export default function ROB2SummaryView(props) {
                                   : displayValue() === 'PY' ? 'bg-lime-100 text-lime-700'
                                   : displayValue() === 'PN' ? 'bg-amber-100 text-amber-700'
                                   : displayValue() === 'N' ? 'bg-red-100 text-red-700'
-                                  : 'bg-gray-100 text-gray-700'
+                                  : 'bg-secondary text-secondary-foreground'
                                 : 'bg-blue-100 text-blue-700'
                               }`}
                             >
@@ -208,7 +209,7 @@ export default function ROB2SummaryView(props) {
                         </div>
 
                         {/* Chevron */}
-                        <FiChevronRight class='h-4 w-4 shrink-0 text-gray-400' />
+                        <FiChevronRight class='text-muted-foreground/70 h-4 w-4 shrink-0' />
                       </button>
                     );
                   }}
@@ -222,25 +223,27 @@ export default function ROB2SummaryView(props) {
       {/* Action Buttons */}
       <div class='flex items-center justify-between border-t p-6'>
         <button
+          type='button'
           onClick={() => props.onBack?.()}
-          class='flex items-center gap-2 rounded-lg bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-200'
+          class='bg-secondary text-secondary-foreground hover:bg-border flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors'
         >
           <FiArrowLeft class='h-4 w-4' />
           Back to Questions
         </button>
 
         <div class='flex items-center gap-4'>
-          <div class='text-sm text-gray-600'>
+          <div class='text-muted-foreground text-sm'>
             {props.summary?.answered || 0} of {props.summary?.total || 0} items reconciled
           </div>
 
           <button
+            type='button'
             onClick={() => props.onSave?.()}
             disabled={!props.allAnswered || props.saving}
             class={`flex items-center gap-2 rounded-lg px-5 py-2.5 text-sm font-semibold transition-colors ${
               props.allAnswered && !props.saving ?
                 'bg-green-600 text-white shadow hover:bg-green-700'
-              : 'cursor-not-allowed bg-gray-200 text-gray-400'
+              : 'bg-border text-muted-foreground/70 cursor-not-allowed'
             }`}
           >
             <FiSave class='h-4 w-4' />

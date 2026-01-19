@@ -150,7 +150,7 @@ const RecentUploadSchema = z
         id: z.string(),
         name: z.string().nullable(),
         email: z.string().nullable(),
-        displayName: z.string().nullable(),
+        givenName: z.string().nullable(),
       })
       .nullable(),
   })
@@ -749,7 +749,7 @@ async function handleMediaFilesQuery(
         uploadedBy: mediaFiles.uploadedBy,
         uploadedByName: user.name,
         uploadedByEmail: user.email,
-        uploadedByDisplayName: user.displayName,
+        uploadedByGivenName: user.givenName,
       })
       .from(mediaFiles)
       .leftJoin(organization, eq(mediaFiles.orgId, organization.id))
@@ -841,13 +841,13 @@ databaseRoutes.openapi(pdfsByUserRoute, async c => {
         userId: mediaFiles.uploadedBy,
         userName: user.name,
         userEmail: user.email,
-        userDisplayName: user.displayName,
+        userGivenName: user.givenName,
         pdfCount: count(mediaFiles.id),
         totalStorage: sum(mediaFiles.fileSize),
       })
       .from(mediaFiles)
       .leftJoin(user, eq(mediaFiles.uploadedBy, user.id))
-      .groupBy(mediaFiles.uploadedBy, user.name, user.email, user.displayName)
+      .groupBy(mediaFiles.uploadedBy, user.name, user.email, user.givenName)
       .orderBy(desc(count(mediaFiles.id)));
 
     const analytics = results
@@ -856,7 +856,7 @@ databaseRoutes.openapi(pdfsByUserRoute, async c => {
         userId: row.userId as string,
         userName: row.userName,
         userEmail: row.userEmail,
-        userDisplayName: row.userDisplayName,
+        userGivenName: row.userGivenName,
         pdfCount: Number(row.pdfCount || 0),
         totalStorage: Number(row.totalStorage || 0),
       }));
@@ -952,7 +952,7 @@ databaseRoutes.openapi(recentUploadsRoute, async c => {
         uploadedBy: mediaFiles.uploadedBy,
         uploadedByName: user.name,
         uploadedByEmail: user.email,
-        uploadedByDisplayName: user.displayName,
+        uploadedByGivenName: user.givenName,
       })
       .from(mediaFiles)
       .leftJoin(organization, eq(mediaFiles.orgId, organization.id))
@@ -982,7 +982,7 @@ databaseRoutes.openapi(recentUploadsRoute, async c => {
             id: row.uploadedBy,
             name: row.uploadedByName,
             email: row.uploadedByEmail,
-            displayName: row.uploadedByDisplayName,
+            givenName: row.uploadedByGivenName,
           }
         : null,
     }));

@@ -63,7 +63,7 @@ const PasswordInputLabel: Component<PasswordInputLabelProps> = props => {
   const [local, others] = splitProps(props, ['class', 'children']);
   return (
     <PasswordInputPrimitive.Label
-      class={cn('mb-1 block text-sm font-medium text-gray-700', local.class)}
+      class={cn('text-secondary-foreground mb-1 block text-sm font-medium', local.class)}
       {...others}
     >
       {local.children}
@@ -97,9 +97,9 @@ const PasswordInputField: Component<PasswordInputFieldProps> = props => {
   return (
     <PasswordInputPrimitive.Input
       class={cn(
-        'w-full rounded-lg border border-gray-300 px-3 py-2 pr-10 text-sm transition',
-        'focus:border-transparent focus:ring-2 focus:ring-blue-500 focus:outline-none',
-        'disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500',
+        'border-border w-full rounded-lg border px-3 py-2 pr-10 text-sm transition',
+        'focus:ring-primary focus:border-transparent focus:ring-2 focus:outline-none',
+        'disabled:bg-muted disabled:text-muted-foreground disabled:cursor-not-allowed',
         local.class,
       )}
       {...others}
@@ -117,8 +117,8 @@ const PasswordInputVisibilityTrigger: Component<PasswordInputVisibilityTriggerPr
   return (
     <PasswordInputPrimitive.VisibilityTrigger
       class={cn(
-        'absolute right-3 flex items-center text-gray-400 transition-colors',
-        'hover:text-gray-600 focus:outline-none',
+        'text-muted-foreground/70 absolute right-3 flex items-center transition-colors',
+        'hover:text-muted-foreground focus:outline-none',
         'disabled:cursor-not-allowed disabled:opacity-50',
         local.class,
       )}

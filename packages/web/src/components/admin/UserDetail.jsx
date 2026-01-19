@@ -225,7 +225,7 @@ export default function UserDetail() {
       <Show
         when={isAdmin()}
         fallback={
-          <div class='flex min-h-100 flex-col items-center justify-center text-gray-500'>
+          <div class='text-muted-foreground flex min-h-100 flex-col items-center justify-center'>
             <FiAlertCircle class='mb-4 h-12 w-12' />
             <p class='text-lg font-medium'>Access Denied</p>
             <p class='text-sm'>You do not have admin privileges.</p>
@@ -235,7 +235,7 @@ export default function UserDetail() {
         {/* Back link */}
         <A
           href='/admin'
-          class='mb-6 inline-flex items-center text-sm text-gray-500 hover:text-gray-700'
+          class='text-muted-foreground hover:text-secondary-foreground mb-6 inline-flex items-center text-sm'
         >
           <FiArrowLeft class='mr-2 h-4 w-4' />
           Back to Admin Dashboard
@@ -269,14 +269,12 @@ export default function UserDetail() {
             <div class='flex items-center space-x-4'>
               <UserAvatar
                 src={userData().user.avatarUrl || userData().user.image}
-                name={userData().user.displayName || userData().user.name}
+                name={userData().user.name}
                 class='h-16 w-16 text-xl'
               />
               <div>
-                <h1 class='text-2xl font-bold text-gray-900'>
-                  {userData().user.displayName || userData().user.name}
-                </h1>
-                <p class='text-gray-500'>{userData().user.email}</p>
+                <h1 class='text-foreground text-2xl font-bold'>{userData().user.name}</h1>
+                <p class='text-muted-foreground'>{userData().user.email}</p>
                 <div class='mt-1 flex items-center space-x-2'>
                   <Show when={userData().user.role === 'admin'}>
                     <span class='inline-flex items-center rounded-full bg-purple-100 px-2 py-0.5 text-xs font-medium text-purple-800'>
@@ -311,7 +309,7 @@ export default function UserDetail() {
               <button
                 onClick={handleImpersonate}
                 disabled={loading()}
-                class='inline-flex items-center rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50'
+                class='border-border bg-card text-secondary-foreground hover:bg-muted inline-flex items-center rounded-lg border px-3 py-2 text-sm font-medium disabled:opacity-50'
               >
                 <FiLogIn class='mr-2 h-4 w-4' />
                 Impersonate
@@ -322,7 +320,7 @@ export default function UserDetail() {
                   <button
                     onClick={() => setBanDialog(true)}
                     disabled={loading()}
-                    class='inline-flex items-center rounded-lg border border-red-300 bg-white px-3 py-2 text-sm font-medium text-red-700 hover:bg-red-50 disabled:opacity-50'
+                    class='bg-card inline-flex items-center rounded-lg border border-red-300 px-3 py-2 text-sm font-medium text-red-700 hover:bg-red-50 disabled:opacity-50'
                   >
                     <FiUserX class='mr-2 h-4 w-4' />
                     Ban
@@ -332,7 +330,7 @@ export default function UserDetail() {
                 <button
                   onClick={handleUnban}
                   disabled={loading()}
-                  class='inline-flex items-center rounded-lg border border-green-300 bg-white px-3 py-2 text-sm font-medium text-green-700 hover:bg-green-50 disabled:opacity-50'
+                  class='bg-card inline-flex items-center rounded-lg border border-green-300 px-3 py-2 text-sm font-medium text-green-700 hover:bg-green-50 disabled:opacity-50'
                 >
                   <FiUserCheck class='mr-2 h-4 w-4' />
                   Unban
@@ -351,15 +349,15 @@ export default function UserDetail() {
 
           {/* Profile Info Section */}
           <AdminBox class='mb-6'>
-            <h2 class='mb-4 text-lg font-semibold text-gray-900'>Profile Information</h2>
+            <h2 class='text-foreground mb-4 text-lg font-semibold'>Profile Information</h2>
             <dl class='grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3'>
               <div>
-                <dt class='text-sm font-medium text-gray-500'>User ID</dt>
-                <dd class='mt-1 flex items-center text-sm text-gray-900'>
+                <dt class='text-muted-foreground text-sm font-medium'>User ID</dt>
+                <dd class='text-foreground mt-1 flex items-center text-sm'>
                   <span class='font-mono'>{userData().user.id}</span>
                   <button
                     onClick={() => handleCopy(userData().user.id, 'User ID')}
-                    class='ml-2 text-gray-400 hover:text-gray-600'
+                    class='text-muted-foreground/70 hover:text-muted-foreground ml-2'
                   >
                     <Show
                       when={copiedId() === `User ID-${userData().user.id}`}
@@ -371,24 +369,28 @@ export default function UserDetail() {
                 </dd>
               </div>
               <div>
-                <dt class='text-sm font-medium text-gray-500'>Username</dt>
-                <dd class='mt-1 text-sm text-gray-900'>{userData().user.username || '-'}</dd>
+                <dt class='text-muted-foreground text-sm font-medium'>Username</dt>
+                <dd class='text-foreground mt-1 text-sm'>{userData().user.username || '-'}</dd>
               </div>
               <div>
-                <dt class='text-sm font-medium text-gray-500'>Persona</dt>
-                <dd class='mt-1 text-sm text-gray-900'>{userData().user.persona || '-'}</dd>
+                <dt class='text-muted-foreground text-sm font-medium'>Persona</dt>
+                <dd class='text-foreground mt-1 text-sm'>{userData().user.persona || '-'}</dd>
               </div>
               <div>
-                <dt class='text-sm font-medium text-gray-500'>Created</dt>
-                <dd class='mt-1 text-sm text-gray-900'>{formatDate(userData().user.createdAt)}</dd>
+                <dt class='text-muted-foreground text-sm font-medium'>Created</dt>
+                <dd class='text-foreground mt-1 text-sm'>
+                  {formatDate(userData().user.createdAt)}
+                </dd>
               </div>
               <div>
-                <dt class='text-sm font-medium text-gray-500'>Updated</dt>
-                <dd class='mt-1 text-sm text-gray-900'>{formatDate(userData().user.updatedAt)}</dd>
+                <dt class='text-muted-foreground text-sm font-medium'>Updated</dt>
+                <dd class='text-foreground mt-1 text-sm'>
+                  {formatDate(userData().user.updatedAt)}
+                </dd>
               </div>
               <div>
-                <dt class='text-sm font-medium text-gray-500'>Stripe Customer</dt>
-                <dd class='mt-1 text-sm text-gray-900'>
+                <dt class='text-muted-foreground text-sm font-medium'>Stripe Customer</dt>
+                <dd class='text-foreground mt-1 text-sm'>
                   <Show when={userData().user.stripeCustomerId} fallback='-'>
                     <a
                       href={getStripeCustomerUrl(userData().user.stripeCustomerId)}
@@ -404,12 +406,12 @@ export default function UserDetail() {
               </div>
               <Show when={userData().user.banned}>
                 <div>
-                  <dt class='text-sm font-medium text-gray-500'>Ban Reason</dt>
+                  <dt class='text-muted-foreground text-sm font-medium'>Ban Reason</dt>
                   <dd class='mt-1 text-sm text-red-600'>{userData().user.banReason || '-'}</dd>
                 </div>
                 <div>
-                  <dt class='text-sm font-medium text-gray-500'>Ban Expires</dt>
-                  <dd class='mt-1 text-sm text-gray-900'>
+                  <dt class='text-muted-foreground text-sm font-medium'>Ban Expires</dt>
+                  <dd class='text-foreground mt-1 text-sm'>
                     {userData().user.banExpires ? formatDate(userData().user.banExpires) : 'Never'}
                   </dd>
                 </div>
@@ -419,17 +421,17 @@ export default function UserDetail() {
 
           {/* Linked Accounts */}
           <AdminBox class='mb-6'>
-            <h2 class='mb-4 text-lg font-semibold text-gray-900'>Linked Accounts</h2>
+            <h2 class='text-foreground mb-4 text-lg font-semibold'>Linked Accounts</h2>
             <Show
               when={userData().accounts?.length > 0}
-              fallback={<p class='text-sm text-gray-500'>No linked accounts</p>}
+              fallback={<p class='text-muted-foreground text-sm'>No linked accounts</p>}
             >
               <div class='space-y-2'>
                 <For each={userData().accounts}>
                   {account => (
-                    <div class='flex items-center justify-between rounded-lg border border-gray-100 bg-gray-50 p-3'>
+                    <div class='border-border-subtle bg-muted flex items-center justify-between rounded-lg border p-3'>
                       <div class='flex items-center space-x-3'>
-                        <span class='inline-flex h-8 w-8 items-center justify-center rounded-full bg-white'>
+                        <span class='bg-card inline-flex h-8 w-8 items-center justify-center rounded-full'>
                           <Show when={account.providerId === 'google'}>
                             <img src='/logos/google.svg' alt='Google' class='h-5 w-5' />
                           </Show>
@@ -437,16 +439,16 @@ export default function UserDetail() {
                             <img src='/logos/orcid.svg' alt='ORCID' class='h-5 w-5' />
                           </Show>
                           <Show when={account.providerId === 'credential'}>
-                            <FiMail class='h-5 w-5 text-gray-600' />
+                            <FiMail class='text-muted-foreground h-5 w-5' />
                           </Show>
                         </span>
                         <div>
-                          <p class='text-sm font-medium text-gray-900 capitalize'>
+                          <p class='text-foreground text-sm font-medium capitalize'>
                             {account.providerId === 'credential' ?
                               'Email/Password'
                             : account.providerId}
                           </p>
-                          <p class='text-xs text-gray-500'>
+                          <p class='text-muted-foreground text-xs'>
                             Connected {formatShortDate(account.createdAt)}
                           </p>
                         </div>
@@ -460,13 +462,15 @@ export default function UserDetail() {
 
           {/* Organizations */}
           <AdminBox class='mb-6'>
-            <h2 class='mb-4 flex items-center text-lg font-semibold text-gray-900'>
+            <h2 class='text-foreground mb-4 flex items-center text-lg font-semibold'>
               <FiHome class='mr-2 h-5 w-5' />
               Organizations ({userData().orgs?.length || 0})
             </h2>
             <Show
               when={userData().orgs?.length > 0}
-              fallback={<p class='text-sm text-gray-500'>Not a member of any organizations</p>}
+              fallback={
+                <p class='text-muted-foreground text-sm'>Not a member of any organizations</p>
+              }
             >
               <div class='overflow-x-auto'>
                 <table class={table.base}>
@@ -490,14 +494,14 @@ export default function UserDetail() {
                             >
                               {org.orgName}
                             </A>
-                            <p class='text-xs text-gray-500'>@{org.orgSlug}</p>
+                            <p class='text-muted-foreground text-xs'>@{org.orgSlug}</p>
                           </td>
                           <td class={table.cellCompact}>
                             <span
                               class={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
                                 org.role === 'owner' ? 'bg-purple-100 text-purple-800'
                                 : org.role === 'admin' ? 'bg-blue-100 text-blue-800'
-                                : 'bg-gray-100 text-gray-800'
+                                : 'bg-secondary text-foreground'
                               }`}
                             >
                               {org.role}
@@ -516,7 +520,7 @@ export default function UserDetail() {
                               {org.billing.accessMode}
                             </span>
                           </td>
-                          <td class={`${table.cellCompact} text-gray-500`}>
+                          <td class={`${table.cellCompact} text-muted-foreground`}>
                             {formatShortDate(org.membershipCreatedAt)}
                           </td>
                         </tr>
@@ -530,13 +534,13 @@ export default function UserDetail() {
 
           {/* Projects */}
           <AdminBox class='mb-6'>
-            <h2 class='mb-4 flex items-center text-lg font-semibold text-gray-900'>
+            <h2 class='text-foreground mb-4 flex items-center text-lg font-semibold'>
               <FiFolder class='mr-2 h-5 w-5' />
               Projects ({userData().projects?.length || 0})
             </h2>
             <Show
               when={userData().projects?.length > 0}
-              fallback={<p class='text-sm text-gray-500'>Not a member of any projects</p>}
+              fallback={<p class='text-muted-foreground text-sm'>Not a member of any projects</p>}
             >
               <div class='overflow-x-auto'>
                 <table class={table.base}>
@@ -557,13 +561,13 @@ export default function UserDetail() {
                               class={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
                                 project.role === 'owner' ?
                                   'bg-purple-100 text-purple-800'
-                                : 'bg-gray-100 text-gray-800'
+                                : 'bg-secondary text-foreground'
                               }`}
                             >
                               {project.role}
                             </span>
                           </td>
-                          <td class={`${table.cellCompact} text-gray-500`}>
+                          <td class={`${table.cellCompact} text-muted-foreground`}>
                             {formatShortDate(project.joinedAt)}
                           </td>
                         </tr>
@@ -578,7 +582,7 @@ export default function UserDetail() {
           {/* Sessions */}
           <AdminBox class='mb-6'>
             <div class='mb-4 flex items-center justify-between'>
-              <h2 class='flex items-center text-lg font-semibold text-gray-900'>
+              <h2 class='text-foreground flex items-center text-lg font-semibold'>
                 <FiMonitor class='mr-2 h-5 w-5' />
                 Active Sessions ({userData().sessions?.length || 0})
               </h2>
@@ -595,23 +599,23 @@ export default function UserDetail() {
             </div>
             <Show
               when={userData().sessions?.length > 0}
-              fallback={<p class='text-sm text-gray-500'>No active sessions</p>}
+              fallback={<p class='text-muted-foreground text-sm'>No active sessions</p>}
             >
               <div class='space-y-3'>
                 <For each={userData().sessions}>
                   {session => {
                     const { browser, os } = parseUserAgent(session.userAgent);
                     return (
-                      <div class='flex items-center justify-between rounded-lg border border-gray-100 bg-gray-50 p-4'>
+                      <div class='border-border-subtle bg-muted flex items-center justify-between rounded-lg border p-4'>
                         <div class='flex items-center space-x-4'>
-                          <div class='flex h-10 w-10 items-center justify-center rounded-full bg-white'>
-                            <FiMonitor class='h-5 w-5 text-gray-600' />
+                          <div class='bg-card flex h-10 w-10 items-center justify-center rounded-full'>
+                            <FiMonitor class='text-muted-foreground h-5 w-5' />
                           </div>
                           <div>
-                            <p class='text-sm font-medium text-gray-900'>
+                            <p class='text-foreground text-sm font-medium'>
                               {browser} on {os}
                             </p>
-                            <div class='flex items-center space-x-3 text-xs text-gray-500'>
+                            <div class='text-muted-foreground flex items-center space-x-3 text-xs'>
                               <span class='flex items-center'>
                                 <FiClock class='mr-1 h-3 w-3' />
                                 {formatDate(session.createdAt)}
@@ -620,7 +624,7 @@ export default function UserDetail() {
                                 <span>IP: {session.ipAddress}</span>
                               </Show>
                             </div>
-                            <p class='mt-1 text-xs text-gray-400'>
+                            <p class='text-muted-foreground/70 mt-1 text-xs'>
                               Expires: {formatDate(session.expiresAt)}
                             </p>
                           </div>
@@ -628,7 +632,7 @@ export default function UserDetail() {
                         <button
                           onClick={() => handleRevokeSession(session.id)}
                           disabled={loading()}
-                          class='inline-flex items-center rounded-lg border border-red-200 bg-white px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50 disabled:opacity-50'
+                          class='bg-card inline-flex items-center rounded-lg border border-red-200 px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50 disabled:opacity-50'
                         >
                           <FiLogOut class='mr-1 h-3 w-3' />
                           Revoke
@@ -655,23 +659,25 @@ export default function UserDetail() {
               </DialogHeader>
               <DialogBody>
                 <div class='space-y-4'>
-                  <p class='text-sm text-gray-600'>
+                  <p class='text-muted-foreground text-sm'>
                     This will ban the user and revoke all their sessions.
                   </p>
                   <div>
-                    <label class='mb-1 block text-sm font-medium text-gray-700'>Ban Reason</label>
+                    <label class='text-secondary-foreground mb-1 block text-sm font-medium'>
+                      Ban Reason
+                    </label>
                     <textarea
                       value={banReason()}
                       onInput={e => setBanReason(e.target.value)}
                       placeholder='Enter reason for ban...'
-                      class='w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-red-500 focus:outline-none'
+                      class='border-border w-full rounded-lg border px-3 py-2 text-sm focus:ring-2 focus:ring-red-500 focus:outline-none'
                       rows={3}
                     />
                   </div>
                   <div class='flex justify-end space-x-3'>
                     <button
                       onClick={() => setBanDialog(false)}
-                      class='rounded-lg bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200'
+                      class='bg-secondary text-secondary-foreground hover:bg-secondary rounded-lg px-4 py-2 text-sm font-medium'
                     >
                       Cancel
                     </button>
@@ -705,13 +711,13 @@ export default function UserDetail() {
               <DialogBody>
                 <div class='space-y-4'>
                   <Show when={confirmDialog()?.type === 'delete'}>
-                    <p class='text-sm text-gray-600'>
+                    <p class='text-muted-foreground text-sm'>
                       This will permanently delete the user and all their data. This action cannot
                       be undone.
                     </p>
                   </Show>
                   <Show when={confirmDialog()?.type === 'revoke-all'}>
-                    <p class='text-sm text-gray-600'>
+                    <p class='text-muted-foreground text-sm'>
                       This will revoke all active sessions for this user. They will need to sign in
                       again.
                     </p>
@@ -719,7 +725,7 @@ export default function UserDetail() {
                   <div class='flex justify-end space-x-3'>
                     <button
                       onClick={() => setConfirmDialog(null)}
-                      class='rounded-lg bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200'
+                      class='bg-secondary text-secondary-foreground hover:bg-secondary rounded-lg px-4 py-2 text-sm font-medium'
                     >
                       Cancel
                     </button>

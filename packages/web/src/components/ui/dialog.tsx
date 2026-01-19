@@ -115,7 +115,7 @@ const DialogContent: Component<DialogContentProps> = props => {
   return (
     <DialogPrimitive.Content
       class={cn(
-        'my-auto w-full max-w-lg rounded-lg border border-gray-200 bg-white shadow-xl',
+        'border-border bg-card my-auto w-full max-w-lg rounded-lg border shadow-xl',
         local.class,
       )}
       {...others}
@@ -133,7 +133,7 @@ const DialogTitle: Component<DialogTitleProps> = props => {
   const [local, others] = splitProps(props, ['class']);
   return (
     <DialogPrimitive.Title
-      class={cn('text-lg font-semibold text-gray-900', local.class)}
+      class={cn('text-foreground text-lg font-semibold', local.class)}
       {...others}
     />
   );
@@ -147,7 +147,7 @@ const DialogDescription: Component<DialogDescriptionProps> = props => {
   const [local, others] = splitProps(props, ['class']);
   return (
     <DialogPrimitive.Description
-      class={cn('mt-1 text-sm text-gray-500', local.class)}
+      class={cn('text-muted-foreground mt-1 text-sm', local.class)}
       {...others}
     />
   );
@@ -163,8 +163,8 @@ const DialogCloseTrigger: Component<DialogCloseTriggerProps> = props => {
   return (
     <DialogPrimitive.CloseTrigger
       class={cn(
-        'rounded-md p-1 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-500',
-        'focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none',
+        'text-muted-foreground hover:bg-muted hover:text-foreground rounded-md p-1 transition-colors',
+        'focus:ring-ring focus:ring-2 focus:ring-offset-2 focus:outline-none',
         local.class,
       )}
       {...others}
@@ -178,7 +178,7 @@ const DialogHeader: Component<ComponentProps<'div'>> = props => {
   const [local, others] = splitProps(props, ['class']);
   return (
     <div
-      class={cn('flex items-center justify-between border-b border-gray-200 p-4', local.class)}
+      class={cn('border-border flex items-center justify-between border-b p-4', local.class)}
       {...others}
     />
   );
@@ -191,7 +191,7 @@ const DialogBody: Component<ComponentProps<'div'>> = props => {
 
 const DialogFooter: Component<ComponentProps<'div'>> = props => {
   const [local, others] = splitProps(props, ['class']);
-  return <div class={cn('flex justify-end gap-3 bg-gray-50 px-4 py-3', local.class)} {...others} />;
+  return <div class={cn('bg-muted flex justify-end gap-3 px-4 py-3', local.class)} {...others} />;
 };
 
 export {

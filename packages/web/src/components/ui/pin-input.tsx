@@ -61,7 +61,7 @@ const PinInputLabel: Component<PinInputLabelProps> = props => {
   const [local, others] = splitProps(props, ['class', 'children']);
   return (
     <PinInputPrimitive.Label
-      class={cn('mb-2 block text-sm font-medium text-gray-700', local.class)}
+      class={cn('text-secondary-foreground mb-2 block text-sm font-medium', local.class)}
       {...others}
     >
       {local.children}
@@ -95,9 +95,9 @@ const PinInputField: Component<PinInputFieldProps> = props => {
   return (
     <PinInputPrimitive.Input
       class={cn(
-        'h-12 w-12 rounded-lg border border-gray-300 text-center text-lg font-semibold transition',
-        'focus:border-transparent focus:ring-2 focus:ring-blue-500 focus:outline-none',
-        'disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500',
+        'border-border h-12 w-12 rounded-lg border text-center text-lg font-semibold transition',
+        'focus:ring-primary focus:border-transparent focus:ring-2 focus:outline-none',
+        'disabled:bg-muted disabled:text-muted-foreground disabled:cursor-not-allowed',
         'data-invalid:border-red-500 data-invalid:focus:ring-red-500',
         local.class,
       )}

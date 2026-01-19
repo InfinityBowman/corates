@@ -160,7 +160,8 @@ invitationRoutes.openapi(acceptInvitationRoute, async c => {
       .select({
         email: user.email,
         name: user.name,
-        displayName: user.displayName,
+        givenName: user.givenName,
+        familyName: user.familyName,
         image: user.image,
       })
       .from(user)
@@ -310,7 +311,8 @@ invitationRoutes.openapi(acceptInvitationRoute, async c => {
         joinedAt: nowDate.getTime(),
         name: currentUser.name,
         email: currentUser.email,
-        displayName: currentUser.displayName,
+        givenName: currentUser.givenName,
+        familyName: currentUser.familyName,
         image: currentUser.image,
       });
     } catch (err) {

@@ -288,10 +288,10 @@ export default function ProjectView(props) {
 
       {/* Main project view with tabs */}
       <Show when={!isChildRoute()}>
-        <div class='min-h-screen bg-slate-50'>
+        <div class='bg-background min-h-screen'>
           <Tabs value={tabFromUrl()} onValueChange={handleTabChange}>
             {/* Sticky header */}
-            <header class='sticky top-0 z-20 border-b border-slate-200 bg-white'>
+            <header class='border-border bg-card sticky top-0 z-20 border-b'>
               <div class='mx-auto max-w-7xl px-6'>
                 <ProjectHeader
                   name={() => meta()?.name}
@@ -309,21 +309,21 @@ export default function ProjectView(props) {
                     {tab => (
                       <TabsTrigger
                         value={tab.value}
-                        class='group relative gap-2 rounded-t-lg px-4 py-2.5 text-slate-500 transition-all hover:bg-slate-50 hover:text-slate-700 data-[selected]:text-slate-900'
+                        class='group text-muted-foreground hover:bg-muted hover:text-secondary-foreground data-selected:text-foreground relative gap-2 rounded-t-lg px-4 py-2.5 transition-all'
                       >
-                        <span class='opacity-60 transition-opacity group-data-[selected]:opacity-100'>
+                        <span class='opacity-60 transition-opacity group-data-selected:opacity-100'>
                           {tab.icon}
                         </span>
                         <span class='font-medium'>{tab.label}</span>
                         <Show when={tab.getCount}>
-                          <span class='min-w-[1.5rem] rounded-full bg-slate-100 px-1.5 py-0.5 text-center text-xs font-medium text-slate-600 tabular-nums transition-colors group-data-[selected]:bg-blue-50 group-data-[selected]:text-blue-700'>
+                          <span class='bg-secondary text-secondary-foreground group-data-selected:bg-primary-subtle group-data-selected:text-primary min-w-6 rounded-full px-1.5 py-0.5 text-center text-xs font-medium tabular-nums transition-colors'>
                             {tab.getCount()}
                           </span>
                         </Show>
                       </TabsTrigger>
                     )}
                   </For>
-                  <TabsIndicator class='h-0.5 rounded-full bg-blue-600' />
+                  <TabsIndicator class='bg-primary h-0.5 rounded-full' />
                 </TabsList>
               </div>
             </header>

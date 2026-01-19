@@ -216,7 +216,7 @@ export default function StorageManagement() {
       {/* Filters and Search */}
       <div class='mb-6 flex flex-col gap-4 sm:flex-row'>
         <div class='relative flex-1'>
-          <FiSearch class='absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-gray-400' />
+          <FiSearch class='text-muted-foreground/70 absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2' />
           <input
             type='text'
             placeholder='Search by file name...'
@@ -245,7 +245,7 @@ export default function StorageManagement() {
           <div class='flex items-center gap-3'>
             <button
               onClick={() => setSelectedKeys(new Set())}
-              class='rounded-lg bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50'
+              class='text-secondary-foreground hover:bg-muted bg-card rounded-lg px-4 py-2 text-sm font-medium'
             >
               Clear Selection
             </button>
@@ -265,11 +265,11 @@ export default function StorageManagement() {
           <div class='overflow-x-auto'>
             <table class={table.base}>
               <thead class={table.header}>
-                <tr class='border-b border-gray-200'>
+                <tr class='border-border border-b'>
                   <th class='px-6 py-3 text-left'>
                     <button
                       onClick={toggleSelectAll}
-                      class='flex items-center text-gray-400 hover:text-gray-600'
+                      class='text-muted-foreground/70 hover:text-muted-foreground flex items-center'
                       title='Select all'
                     >
                       <Show
@@ -309,7 +309,7 @@ export default function StorageManagement() {
                     each={documentsData()?.documents || []}
                     fallback={
                       <tr>
-                        <td colspan='7' class='px-6 py-12 text-center text-gray-500'>
+                        <td colspan='7' class='text-muted-foreground px-6 py-12 text-center'>
                           No documents found
                         </td>
                       </tr>
@@ -326,7 +326,7 @@ export default function StorageManagement() {
                               e.stopPropagation();
                               toggleSelect(doc.key);
                             }}
-                            class='text-gray-400 hover:text-gray-600'
+                            class='text-muted-foreground/70 hover:text-muted-foreground'
                           >
                             <Show
                               when={selectedKeys().has(doc.key)}
@@ -338,7 +338,7 @@ export default function StorageManagement() {
                         </td>
                         <td class={table.cell}>
                           <div class='flex items-center gap-2'>
-                            <span class='font-mono text-sm text-gray-900'>{doc.fileName}</span>
+                            <span class='text-foreground font-mono text-sm'>{doc.fileName}</span>
                             <Show when={doc.orphaned}>
                               <span
                                 class='inline-flex items-center rounded-full bg-orange-100 px-2 py-0.5 text-xs font-medium text-orange-800'
@@ -349,14 +349,20 @@ export default function StorageManagement() {
                             </Show>
                           </div>
                         </td>
-                        <td class={`${table.cell} text-gray-500`}>{formatFileSize(doc.size)}</td>
-                        <td class={table.cell}>
-                          <span class='font-mono text-xs text-gray-600'>{doc.projectId}</span>
+                        <td class={`${table.cell} text-muted-foreground`}>
+                          {formatFileSize(doc.size)}
                         </td>
                         <td class={table.cell}>
-                          <span class='font-mono text-xs text-gray-600'>{doc.studyId}</span>
+                          <span class='text-muted-foreground font-mono text-xs'>
+                            {doc.projectId}
+                          </span>
                         </td>
-                        <td class={`${table.cell} text-gray-500`}>{formatDate(doc.uploaded)}</td>
+                        <td class={table.cell}>
+                          <span class='text-muted-foreground font-mono text-xs'>{doc.studyId}</span>
+                        </td>
+                        <td class={`${table.cell} text-muted-foreground`}>
+                          {formatDate(doc.uploaded)}
+                        </td>
                         <td class={`${table.cell} text-right`}>
                           <button
                             onClick={e => {
@@ -379,9 +385,9 @@ export default function StorageManagement() {
 
           {/* Pagination */}
           <Show when={documentsData()}>
-            <div class='flex items-center justify-between border-t border-gray-200 px-6 py-4'>
+            <div class='border-border flex items-center justify-between border-t px-6 py-4'>
               <div class='flex flex-col gap-1'>
-                <p class='text-sm text-gray-500'>
+                <p class='text-muted-foreground text-sm'>
                   Showing {documentsData()?.documents?.length || 0} document
                   {documentsData()?.documents?.length === 1 ? '' : 's'}
                 </p>
@@ -395,18 +401,18 @@ export default function StorageManagement() {
                 <button
                   onClick={handlePrevPage}
                   disabled={cursorHistory().length === 0}
-                  class='rounded-xl border border-gray-200 bg-white p-2 shadow-xs hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50'
+                  class='hover:bg-muted border-border bg-card rounded-xl border p-2 shadow-xs disabled:cursor-not-allowed disabled:opacity-50'
                 >
                   <FiChevronLeft class='h-4 w-4' />
                 </button>
-                <span class='text-sm text-gray-500'>
+                <span class='text-muted-foreground text-sm'>
                   {cursorHistory().length + 1}
                   {documentsData()?.nextCursor ? ' ->' : ''}
                 </span>
                 <button
                   onClick={handleNextPage}
                   disabled={!documentsData()?.nextCursor}
-                  class='rounded-xl border border-gray-200 bg-white p-2 shadow-xs hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50'
+                  class='hover:bg-muted border-border bg-card rounded-xl border p-2 shadow-xs disabled:cursor-not-allowed disabled:opacity-50'
                 >
                   <FiChevronRight class='h-4 w-4' />
                 </button>
@@ -428,7 +434,7 @@ export default function StorageManagement() {
             </DialogHeader>
             <DialogBody>
               <div class='space-y-4'>
-                <p class='text-sm text-gray-600'>
+                <p class='text-muted-foreground text-sm'>
                   Are you sure you want to delete {deleteDialog()?.length || 0} document
                   {deleteDialog()?.length === 1 ? '' : 's'}? This action cannot be undone.
                 </p>
@@ -436,7 +442,7 @@ export default function StorageManagement() {
                   <button
                     onClick={() => setDeleteDialog(null)}
                     disabled={loading()}
-                    class='rounded-lg bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200 disabled:opacity-50'
+                    class='text-secondary-foreground bg-secondary hover:bg-secondary/80 rounded-lg px-4 py-2 text-sm font-medium disabled:opacity-50'
                   >
                     Cancel
                   </button>

@@ -33,12 +33,12 @@ export default function DomainQuestionPage(props) {
   const responseOptions = () => RESPONSE_TYPES[question()?.responseType] || RESPONSE_TYPES.WITH_NI;
 
   return (
-    <div class='overflow-hidden rounded-lg bg-white shadow-lg'>
+    <div class='bg-card overflow-hidden rounded-lg shadow-lg'>
       {/* Domain Header */}
-      <div class='border-b border-gray-200 bg-gray-50 px-4 py-2'>
-        <h3 class='text-sm font-medium text-gray-700'>{domain()?.name}</h3>
+      <div class='border-border bg-muted border-b px-4 py-2'>
+        <h3 class='text-secondary-foreground text-sm font-medium'>{domain()?.name}</h3>
         <Show when={domain()?.subtitle}>
-          <p class='text-xs text-gray-500'>{domain().subtitle}</p>
+          <p class='text-muted-foreground text-xs'>{domain().subtitle}</p>
         </Show>
       </div>
 
@@ -50,11 +50,11 @@ export default function DomainQuestionPage(props) {
           : 'border-b border-amber-200 bg-amber-50'
         }`}
       >
-        <h2 class='text-md font-medium text-gray-900'>
+        <h2 class='text-md text-foreground font-medium'>
           <span class='font-semibold'>{question()?.number}.</span> {question()?.text}
         </h2>
         <Show when={question()?.note}>
-          <p class='mt-2 text-sm text-gray-600'>{question().note}</p>
+          <p class='text-muted-foreground mt-2 text-sm'>{question().note}</p>
         </Show>
         <div class='mt-2 flex items-center gap-3'>
           <span
@@ -66,7 +66,7 @@ export default function DomainQuestionPage(props) {
       </div>
 
       {/* Three Column Layout */}
-      <div class='grid grid-cols-3 divide-x divide-gray-200'>
+      <div class='divide-border grid grid-cols-3 divide-x'>
         {/* Reviewer 1 Panel */}
         <RobinsAnswerPanel
           title={props.reviewer1Name || 'Reviewer 1'}

@@ -39,7 +39,8 @@ vi.mock('@/middleware/auth.js', () => {
         id: userId,
         email,
         name: 'Test User',
-        displayName: 'Test User',
+        givenName: 'Test',
+        familyName: 'User',
         image: null,
       });
       c.set('session', { id: 'test-session' });

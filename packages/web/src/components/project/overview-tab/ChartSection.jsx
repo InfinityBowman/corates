@@ -141,7 +141,7 @@ export default function ChartSection(props) {
   const getAssigneeName = (userId, membersList) => {
     if (!userId) return 'Unassigned';
     const member = membersList.find(m => m.userId === userId);
-    return member?.displayName || member?.name || member?.email || 'Unknown';
+    return member?.name || member?.email || 'Unknown';
   };
 
   // Build raw chart data from studies and their checklists
@@ -228,8 +228,8 @@ export default function ChartSection(props) {
     <Show
       when={checklistData().length > 0}
       fallback={
-        <div class='rounded-lg border border-gray-200 bg-white px-4 py-8 text-center'>
-          <p class='text-gray-500'>
+        <div class='border-border bg-card rounded-lg border px-4 py-8 text-center'>
+          <p class='text-muted-foreground'>
             Once appraisals are completed, this section will display domain-level judgments by
             review and across reviews, along with a figure summarizing the ratings of overall
             confidence in the results of the included reviews.
@@ -241,7 +241,7 @@ export default function ChartSection(props) {
         {/* Section Header with Description and Settings */}
         <div class='flex items-start justify-between gap-4'>
           <div class='flex-1'>
-            <p class='text-sm text-gray-600'>
+            <p class='text-secondary-foreground text-sm'>
               Visual representation of AMSTAR-2 quality assessment ratings across completed
               checklists. Use the settings to customize chart appearance, labels, and export
               options.
@@ -249,7 +249,7 @@ export default function ChartSection(props) {
           </div>
           <button
             onClick={() => setShowSettingsModal(true)}
-            class='inline-flex shrink-0 items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-100 hover:text-gray-900'
+            class='text-secondary-foreground hover:bg-secondary hover:text-foreground inline-flex shrink-0 items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors'
             title='Chart Settings'
           >
             <BiRegularCog class='h-4 w-4' />

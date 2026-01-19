@@ -18,8 +18,9 @@ import { AnimationContext } from './Dashboard.jsx';
 export function DashboardHeader(props) {
   const animation = useContext(AnimationContext);
   const firstName = () => {
-    const name = props.user?.name || '';
-    return name.split(' ')[0] || '';
+    // Use structured givenName if available, fallback to name
+    if (props.user?.givenName) return props.user.givenName;
+    return props.user?.name || '';
   };
 
   return (
@@ -28,15 +29,15 @@ export function DashboardHeader(props) {
         <div>
           <Show
             when={firstName()}
-            fallback={<p class='mb-1 text-sm font-medium text-blue-600'>Welcome to CoRATES!</p>}
+            fallback={<p class='text-primary mb-1 text-sm font-medium'>Welcome to CoRATES!</p>}
           >
-            <p class='mb-1 text-sm font-medium text-blue-600'>Welcome back,</p>
-            <h1 class='text-3xl font-semibold tracking-tight text-stone-900 sm:text-4xl'>
+            <p class='text-primary mb-1 text-sm font-medium'>Welcome back,</p>
+            <h1 class='text-foreground text-3xl font-semibold tracking-tight sm:text-4xl'>
               {firstName()}
             </h1>
           </Show>
           <Show when={props.user?.persona || props.user?.email}>
-            <p class='mt-2 text-stone-500'>
+            <p class='text-muted-foreground mt-2'>
               {props.user?.persona ? getRoleLabel(props.user.persona) : props.user.email}
             </p>
           </Show>
@@ -45,11 +46,11 @@ export function DashboardHeader(props) {
           <Show when={props.onSearch}>
             <button
               onClick={() => props.onSearch?.()}
-              class='hidden items-center gap-2 rounded-xl border border-stone-200 bg-white px-4 py-2.5 text-sm font-medium text-stone-600 shadow-sm transition-all hover:border-stone-300 hover:shadow sm:flex'
+              class='border-border text-secondary-foreground hover:border-border hidden items-center gap-2 rounded-xl border bg-white px-4 py-2.5 text-sm font-medium shadow-sm transition-all hover:shadow sm:flex'
             >
               <FiSearch class='h-4 w-4' />
               <span>Search</span>
-              <kbd class='ml-2 hidden rounded bg-stone-100 px-1.5 py-0.5 text-xs text-stone-400 lg:inline'>
+              <kbd class='bg-secondary text-muted-foreground/70 ml-2 hidden rounded px-1.5 py-0.5 text-xs lg:inline'>
                 /
               </kbd>
             </button>
@@ -59,7 +60,7 @@ export function DashboardHeader(props) {
               onClick={() => props.onCreateProject?.()}
               disabled={!props.isOnline}
               title={!props.isOnline ? 'Cannot create projects while offline' : ''}
-              class='flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-medium text-white shadow-lg shadow-blue-500/25 transition-all hover:bg-blue-700 hover:shadow-xl hover:shadow-blue-500/30 disabled:cursor-not-allowed disabled:opacity-50'
+              class='bg-primary hover:bg-primary/90 flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium text-white shadow-lg shadow-blue-500/25 transition-all hover:shadow-xl hover:shadow-blue-500/30 disabled:cursor-not-allowed disabled:opacity-50'
             >
               <FiPlus class='h-4 w-4' />
               New Project

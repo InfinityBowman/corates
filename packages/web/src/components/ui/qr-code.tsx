@@ -110,8 +110,8 @@ const QRCodeDownloadTrigger: Component<QRCodeDownloadTriggerProps> = props => {
   return (
     <QrCodePrimitive.DownloadTrigger
       class={cn(
-        'mt-2 rounded-lg bg-gray-100 px-3 py-1.5 text-sm font-medium text-gray-700 transition-colors',
-        'hover:bg-gray-200 focus:ring-2 focus:ring-blue-500 focus:outline-none',
+        'bg-secondary text-secondary-foreground mt-2 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors',
+        'hover:bg-secondary/80 focus:ring-primary focus:ring-2 focus:outline-none',
         local.class,
       )}
       {...others}

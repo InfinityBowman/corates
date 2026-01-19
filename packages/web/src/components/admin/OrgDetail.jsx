@@ -298,7 +298,7 @@ export default function OrgDetail() {
       <Show
         when={isAdmin()}
         fallback={
-          <div class='flex min-h-100 flex-col items-center justify-center text-gray-500'>
+          <div class='text-muted-foreground flex min-h-100 flex-col items-center justify-center'>
             <FiShield class='mb-4 h-12 w-12' />
             <p class='text-lg font-medium'>Access Denied</p>
             <p class='text-sm'>You do not have admin privileges.</p>
@@ -309,7 +309,7 @@ export default function OrgDetail() {
         <div class='mb-6'>
           <A
             href='/admin/orgs'
-            class='mb-4 inline-flex items-center text-sm text-gray-500 hover:text-gray-700'
+            class='text-muted-foreground hover:text-secondary-foreground mb-4 inline-flex items-center text-sm'
           >
             <FiArrowLeft class='mr-1 h-4 w-4' />
             Back to Organizations
@@ -319,10 +319,10 @@ export default function OrgDetail() {
               <FiHome class='h-6 w-6 text-blue-600' />
             </div>
             <div>
-              <h1 class='text-2xl font-bold text-gray-900'>
+              <h1 class='text-foreground text-2xl font-bold'>
                 {orgDetails()?.org?.name || 'Organization'}
               </h1>
-              <p class='text-sm text-gray-500'>
+              <p class='text-muted-foreground text-sm'>
                 <code>{orgDetails()?.org?.slug || ''}</code>
               </p>
             </div>
@@ -334,10 +334,10 @@ export default function OrgDetail() {
           <div class='mb-6 grid grid-cols-1 gap-4 md:grid-cols-3'>
             <AdminBox padding='sm'>
               <div class='flex items-center space-x-2'>
-                <FiUsers class='h-5 w-5 text-gray-400' />
+                <FiUsers class='text-muted-foreground/70 h-5 w-5' />
                 <div>
-                  <p class='text-sm text-gray-500'>Members</p>
-                  <p class='text-2xl font-bold text-gray-900'>
+                  <p class='text-muted-foreground text-sm'>Members</p>
+                  <p class='text-foreground text-2xl font-bold'>
                     {orgDetails()?.stats?.memberCount ?? 0}
                   </p>
                 </div>
@@ -345,10 +345,10 @@ export default function OrgDetail() {
             </AdminBox>
             <AdminBox padding='sm'>
               <div class='flex items-center space-x-2'>
-                <FiFolder class='h-5 w-5 text-gray-400' />
+                <FiFolder class='text-muted-foreground/70 h-5 w-5' />
                 <div>
-                  <p class='text-sm text-gray-500'>Projects</p>
-                  <p class='text-2xl font-bold text-gray-900'>
+                  <p class='text-muted-foreground text-sm'>Projects</p>
+                  <p class='text-foreground text-2xl font-bold'>
                     {orgDetails()?.stats?.projectCount ?? 0}
                   </p>
                 </div>
@@ -473,7 +473,7 @@ export default function OrgDetail() {
               </DialogHeader>
               <DialogBody>
                 <div class='space-y-4'>
-                  <p class='text-sm text-gray-600'>
+                  <p class='text-muted-foreground text-sm'>
                     {confirmDialog()?.type === 'cancel-subscription' ?
                       'Are you sure you want to cancel this subscription?'
                     : 'Are you sure you want to revoke this grant?'}
@@ -481,7 +481,7 @@ export default function OrgDetail() {
                   <div class='flex justify-end space-x-3'>
                     <button
                       onClick={() => setConfirmDialog(null)}
-                      class='rounded-lg bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200'
+                      class='bg-secondary text-secondary-foreground hover:bg-secondary rounded-lg px-4 py-2 text-sm font-medium'
                     >
                       Cancel
                     </button>

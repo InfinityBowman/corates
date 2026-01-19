@@ -17,21 +17,21 @@ function FAQItem(props) {
   const [isOpen, setIsOpen] = createSignal(false);
 
   return (
-    <div class='border-b border-gray-200 last:border-b-0'>
+    <div class='border-b border-slate-200 last:border-b-0'>
       <button
         type='button'
         class='flex w-full items-center justify-between py-5 text-left'
         onClick={() => setIsOpen(!isOpen())}
       >
-        <span class='text-base font-medium text-gray-900'>{props.question}</span>
+        <span class='text-base font-medium text-slate-900'>{props.question}</span>
         <FiChevronDown
-          class={`h-5 w-5 shrink-0 text-gray-500 transition-transform duration-200 ${isOpen() ? 'rotate-180' : ''}`}
+          class={`h-5 w-5 shrink-0 text-slate-500 transition-transform duration-200 ${isOpen() ? 'rotate-180' : ''}`}
         />
       </button>
       <div
         class={`overflow-hidden transition-all duration-200 ${isOpen() ? 'max-h-96 pb-5' : 'max-h-0'}`}
       >
-        <p class='text-gray-600'>{props.answer}</p>
+        <p class='text-slate-600'>{props.answer}</p>
       </div>
     </div>
   );
@@ -77,13 +77,13 @@ export default function PlansSettings() {
   const { tier } = useSubscription();
 
   return (
-    <div class='min-h-full bg-gray-50 py-6'>
+    <div class='min-h-full bg-slate-50 py-6'>
       <div class='mx-auto max-w-6xl px-4 sm:px-6 lg:px-8'>
         {/* Header */}
         <div class='mb-8'>
           <div class='text-center'>
-            <h1 class='text-4xl font-bold text-gray-900'>Choose the right plan for your team</h1>
-            <p class='mx-auto mt-4 max-w-2xl text-lg text-gray-500'>
+            <h1 class='text-4xl font-bold text-slate-900'>Choose the right plan for your team</h1>
+            <p class='mx-auto mt-4 max-w-2xl text-lg text-slate-500'>
               Start with a free trial, then pick the plan that fits your workflow. All plans include
               our core features.
             </p>
@@ -96,12 +96,12 @@ export default function PlansSettings() {
         {/* FAQ Section */}
         <div class='mt-16'>
           <div class='mb-8 text-center'>
-            <h2 class='text-2xl font-bold text-gray-900'>Frequently asked questions</h2>
-            <p class='mt-2 text-gray-500'>
+            <h2 class='text-2xl font-bold text-slate-900'>Frequently asked questions</h2>
+            <p class='mt-2 text-slate-500'>
               Everything you need to know about our plans and billing.
             </p>
           </div>
-          <div class='mx-auto max-w-3xl rounded-2xl border border-gray-200 bg-white px-6'>
+          <div class='mx-auto max-w-3xl rounded-2xl border border-slate-200 bg-white px-6'>
             <For each={FAQ_ITEMS}>
               {faq => <FAQItem question={faq.question} answer={faq.answer} />}
             </For>

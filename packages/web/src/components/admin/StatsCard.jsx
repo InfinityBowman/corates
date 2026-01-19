@@ -45,13 +45,13 @@ export default function StatsCard(props) {
   const colors = () => colorMap[props.color] || colorMap.blue;
 
   return (
-    <div class={`rounded-lg border border-gray-200 p-5 ${colors().bg}`}>
+    <div class={`border-border rounded-lg border p-5 ${colors().bg}`}>
       <div class='flex items-center justify-between'>
         <div>
-          <p class='text-sm font-medium text-gray-600'>{title()}</p>
+          <p class='text-muted-foreground text-sm font-medium'>{title()}</p>
           <Show
             when={!loading()}
-            fallback={<div class='mt-1 h-8 w-16 animate-pulse rounded bg-gray-200' />}
+            fallback={<div class='bg-secondary mt-1 h-8 w-16 animate-pulse rounded' />}
           >
             <p class={`mt-1 text-2xl font-bold ${colors().text}`}>{value()}</p>
           </Show>

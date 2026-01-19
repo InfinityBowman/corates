@@ -70,19 +70,19 @@ export default function PersonaSection() {
   };
 
   return (
-    <div class='flex items-start justify-between border-t border-slate-100 py-4'>
+    <div class='border-border-subtle flex items-start justify-between border-t py-4'>
       <div class='flex-1'>
-        <label class='mb-1 block text-xs font-medium tracking-wide text-slate-400 uppercase'>
+        <label class='text-muted-foreground mb-1 block text-xs font-medium tracking-wide uppercase'>
           Persona
         </label>
         <Show
           when={isEditingRole()}
           fallback={
             <div class='mt-1'>
-              <span class='text-sm text-slate-900'>
+              <span class='text-foreground text-sm'>
                 {user()?.persona ?
                   getRoleLabel(user()?.persona)
-                : <span class='text-slate-400'>Not set</span>}
+                : <span class='text-muted-foreground'>Not set</span>}
               </span>
             </div>
           }
@@ -117,14 +117,14 @@ export default function PersonaSection() {
               <button
                 onClick={saveRole}
                 disabled={saving()}
-                class='rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition-all hover:bg-blue-700 hover:shadow disabled:opacity-50'
+                class='bg-primary hover:bg-primary/90 rounded-lg px-4 py-2 text-sm font-medium text-white shadow-sm transition-all hover:shadow disabled:opacity-50'
               >
                 Save
               </button>
               <button
                 onClick={cancelEditingRole}
                 disabled={saving()}
-                class='rounded-lg bg-slate-100 px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-200 disabled:opacity-50'
+                class='bg-secondary text-secondary-foreground hover:bg-secondary/80 rounded-lg px-4 py-2 text-sm font-medium transition-colors disabled:opacity-50'
               >
                 Cancel
               </button>
@@ -135,7 +135,7 @@ export default function PersonaSection() {
       <Show when={!isEditingRole()}>
         <button
           onClick={startEditingRole}
-          class='text-sm font-medium text-blue-600 transition-colors hover:text-blue-700'
+          class='text-primary hover:text-primary/80 text-sm font-medium transition-colors'
         >
           Edit
         </button>

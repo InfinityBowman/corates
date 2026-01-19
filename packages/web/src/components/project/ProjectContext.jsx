@@ -43,7 +43,7 @@ export function ProjectProvider(props) {
   const getAssigneeName = userId => {
     if (!userId) return 'Unassigned';
     const member = members().find(m => m.userId === userId);
-    return member?.displayName || member?.name || member?.email || 'Unknown';
+    return member?.name || member?.email || 'Unknown';
   };
 
   const getMember = userId => {
