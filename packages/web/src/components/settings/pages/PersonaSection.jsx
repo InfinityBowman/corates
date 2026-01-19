@@ -70,7 +70,7 @@ export default function PersonaSection() {
   };
 
   return (
-    <div class='flex items-start justify-between border-t border-slate-100 py-5'>
+    <div class='flex items-start justify-between border-t border-slate-100 py-4'>
       <div class='flex-1'>
         <label class='mb-1 block text-xs font-medium tracking-wide text-slate-400 uppercase'>
           Persona
@@ -78,8 +78,8 @@ export default function PersonaSection() {
         <Show
           when={isEditingRole()}
           fallback={
-            <div class='mt-2 flex items-baseline gap-2'>
-              <span class='text-slate-900'>
+            <div class='mt-1'>
+              <span class='text-sm text-slate-900'>
                 {user()?.persona ?
                   getRoleLabel(user()?.persona)
                 : <span class='text-slate-400'>Not set</span>}

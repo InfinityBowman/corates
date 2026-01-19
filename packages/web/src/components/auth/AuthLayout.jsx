@@ -60,9 +60,7 @@ export default function AuthLayout(props) {
           </div>
         </div>
       </Show>
-      <Show when={showContent()}>
-        <div class='w-full max-w-md sm:max-w-xl'>{props.children}</div>
-      </Show>
+      <Show when={showContent()}>{props.children}</Show>
     </div>
   );
 }

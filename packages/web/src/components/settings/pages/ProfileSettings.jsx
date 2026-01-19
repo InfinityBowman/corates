@@ -11,23 +11,23 @@ import DeleteAccountSection from '@/components/settings/pages/DeleteAccountSecti
 
 export default function ProfileSettings() {
   return (
-    <div class='min-h-full bg-gradient-to-br from-slate-50 to-slate-100/80 py-8'>
+    <div class='from-background to-muted/80 min-h-full bg-linear-to-br py-8'>
       <div class='mx-auto max-w-3xl px-4 sm:px-6'>
         <div class='mb-8'>
-          <h1 class='text-2xl font-semibold tracking-tight text-slate-900'>Profile</h1>
-          <p class='mt-1 text-slate-500'>Manage your personal information</p>
+          <h1 class='text-foreground text-2xl font-semibold tracking-tight'>Profile</h1>
+          <p class='text-muted-foreground mt-1'>Manage your personal information</p>
         </div>
 
         {/* Profile Information Card */}
-        <div class='mb-6 overflow-hidden rounded-xl border border-slate-200/60 bg-white shadow-sm transition-shadow duration-200 hover:shadow-md'>
-          <div class='border-b border-slate-100 bg-gradient-to-r from-slate-50 to-white px-6 py-4'>
+        <div class='border-border/60 bg-card mb-6 overflow-hidden rounded-xl border shadow-sm transition-shadow duration-200 hover:shadow-md'>
+          <div class='border-border-subtle bg-primary/5 border-b px-6 py-4'>
             <div class='flex items-center space-x-2.5'>
-              <div class='flex h-8 w-8 items-center justify-center rounded-lg bg-blue-50'>
-                <FiUser class='h-4 w-4 text-blue-600' />
+              <div class='bg-primary/15 flex h-8 w-8 items-center justify-center rounded-lg'>
+                <FiUser class='text-primary h-4 w-4' />
               </div>
               <div>
-                <h2 class='text-base font-semibold text-slate-900'>Personal Information</h2>
-                <p class='text-sm text-slate-500'>
+                <h2 class='text-card-foreground text-base font-semibold'>Personal Information</h2>
+                <p class='text-muted-foreground text-sm'>
                   Your profile information visible to project collaborators
                 </p>
               </div>
@@ -41,13 +41,13 @@ export default function ProfileSettings() {
         </div>
 
         {/* Danger Zone Card */}
-        <div class='overflow-hidden rounded-xl border border-red-200/60 bg-white shadow-sm'>
-          <div class='border-b border-red-100 bg-gradient-to-r from-red-50/50 to-white px-6 py-4'>
+        <div class='border-border/60 bg-card overflow-hidden rounded-xl border shadow-sm'>
+          <div class='border-border-subtle bg-destructive/5 border-b px-6 py-4'>
             <div class='flex items-center space-x-2.5'>
-              <div class='flex h-8 w-8 items-center justify-center rounded-lg bg-red-50'>
-                <FiAlertTriangle class='h-4 w-4 text-red-600' />
+              <div class='bg-destructive/15 flex h-8 w-8 items-center justify-center rounded-lg'>
+                <FiAlertTriangle class='text-destructive h-4 w-4' />
               </div>
-              <h2 class='text-base font-semibold text-slate-900'>Danger Zone</h2>
+              <h2 class='text-card-foreground text-base font-semibold'>Danger Zone</h2>
             </div>
           </div>
           <div class='p-6'>
