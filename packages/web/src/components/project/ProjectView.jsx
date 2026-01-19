@@ -16,6 +16,7 @@ import projectActionsStore from '@/stores/projectActionsStore';
 import { useBetterAuth } from '@api/better-auth-store.js';
 import { uploadPdf, deletePdf } from '@api/pdf-api.js';
 import { cachePdf } from '@primitives/pdfCache.js';
+import { bestEffort } from '@lib/errorLogger.js';
 import { importFromGoogleDrive } from '@api/google-drive.js';
 import { showToast } from '@/components/ui/toast';
 import { Tabs, TabsList, TabsTrigger, TabsContent, TabsIndicator } from '@/components/ui/tabs';
@@ -122,7 +123,12 @@ export default function ProjectView(props) {
         const arrayBuffer = new Uint8Array(pdf.data).buffer;
         uploadPdf(oid, params.projectId, studyId, arrayBuffer, pdf.fileName)
           .then(result => {
-            cachePdf(params.projectId, studyId, result.fileName, arrayBuffer).catch(console.warn);
+            bestEffort(cachePdf(params.projectId, studyId, result.fileName, arrayBuffer), {
+              operation: 'cachePdf (pending upload)',
+              projectId: params.projectId,
+              studyId,
+              fileName: result.fileName,
+            });
             try {
               // Extract PDF metadata from pdf.metadata to pass to the PDF object
               const pdfMetadata = pdf.metadata || {};
@@ -142,7 +148,12 @@ export default function ProjectView(props) {
             } catch (metaErr) {
               console.error('Failed to add PDF metadata:', metaErr);
               // Clean up orphaned file
-              deletePdf(oid, params.projectId, studyId, result.fileName).catch(console.warn);
+              bestEffort(deletePdf(oid, params.projectId, studyId, result.fileName), {
+                operation: 'deletePdf (pending upload rollback)',
+                projectId: params.projectId,
+                studyId,
+                fileName: result.fileName,
+              });
             }
           })
           .catch(err => console.error('Error uploading PDF for new study:', err));
@@ -207,7 +218,12 @@ export default function ProjectView(props) {
             } catch (metaErr) {
               console.error('Failed to add PDF metadata:', metaErr);
               // Clean up orphaned file
-              deletePdf(oid, params.projectId, studyId, result.file.fileName).catch(console.warn);
+              bestEffort(deletePdf(oid, params.projectId, studyId, result.file.fileName), {
+                operation: 'deletePdf (Google Drive rollback)',
+                projectId: params.projectId,
+                studyId,
+                fileName: result.file.fileName,
+              });
             }
           })
           .catch(err => console.error('Error importing Google Drive file:', err));
