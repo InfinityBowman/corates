@@ -227,7 +227,7 @@ export default function DoiLookupSection(props) {
                                             target='_blank'
                                             rel='noopener noreferrer'
                                             onClick={e => e.stopPropagation()}
-                                            class='text-primary hover:text-primary inline-flex h-6 w-6 items-center justify-center rounded transition-colors hover:bg-blue-50'
+                                            class='text-primary hover:bg-primary-subtle inline-flex h-6 w-6 items-center justify-center rounded transition-colors'
                                           >
                                             <FiDownload class='h-4 w-4' />
                                           </a>
@@ -281,7 +281,7 @@ export default function DoiLookupSection(props) {
                                   target='_blank'
                                   rel='noopener noreferrer'
                                   onClick={e => e.stopPropagation()}
-                                  class='text-primary hover:text-primary inline-flex h-6 w-6 items-center justify-center rounded transition-colors hover:bg-blue-50'
+                                  class='text-primary hover:bg-primary-subtle inline-flex h-6 w-6 items-center justify-center rounded transition-colors'
                                 >
                                   <BiRegularLinkExternal class='h-4 w-4' />
                                 </a>

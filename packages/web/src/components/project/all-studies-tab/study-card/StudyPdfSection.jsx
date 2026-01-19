@@ -144,7 +144,7 @@ export default function StudyPdfSection(props) {
                     type='button'
                     onClick={triggerFileInput}
                     disabled={uploading()}
-                    class='text-primary hover:text-primary text-sm'
+                    class='text-primary hover:text-primary/80 text-sm'
                   >
                     Upload a PDF
                   </button>
@@ -152,7 +152,7 @@ export default function StudyPdfSection(props) {
                   <button
                     type='button'
                     onClick={() => props.onOpenGoogleDrive?.(study().id)}
-                    class='text-primary hover:text-primary text-sm'
+                    class='text-primary hover:text-primary/80 text-sm'
                   >
                     Import from Google Drive
                   </button>

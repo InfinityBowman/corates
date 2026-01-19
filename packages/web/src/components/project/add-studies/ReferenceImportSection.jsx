@@ -37,7 +37,7 @@ export default function ReferenceImportSection(props) {
               <button
                 type='button'
                 onClick={studies().clearImportedRefs}
-                class='text-primary hover:text-primary text-xs font-medium'
+                class='text-primary hover:text-primary/80 text-xs font-medium'
               >
                 Change file
               </button>

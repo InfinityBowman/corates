@@ -442,7 +442,7 @@ export default function StorageManagement() {
                   <button
                     onClick={() => setDeleteDialog(null)}
                     disabled={loading()}
-                    class='text-secondary-foreground bg-secondary hover:bg-secondary rounded-lg px-4 py-2 text-sm font-medium disabled:opacity-50'
+                    class='text-secondary-foreground bg-secondary hover:bg-secondary/80 rounded-lg px-4 py-2 text-sm font-medium disabled:opacity-50'
                   >
                     Cancel
                   </button>

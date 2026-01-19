@@ -245,7 +245,7 @@ export default function DatabaseViewer() {
                     </select>
                     <button
                       onClick={() => rowsQuery.refetch()}
-                      class='bg-secondary hover:bg-secondary flex items-center gap-1 rounded px-3 py-1 text-sm disabled:opacity-50'
+                      class='bg-secondary hover:bg-secondary/80 flex items-center gap-1 rounded px-3 py-1 text-sm disabled:opacity-50'
                       disabled={rowsQuery.isFetching}
                     >
                       <FiRefreshCw

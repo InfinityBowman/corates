@@ -195,7 +195,7 @@ export default function ProjectsPanel() {
                   <div class='flex justify-center'>
                     <button
                       onClick={() => setCreateModalOpen(true)}
-                      class='text-primary hover:text-primary mt-4 font-medium'
+                      class='text-primary hover:text-primary/80 mt-4 font-medium'
                     >
                       Create your first project
                     </button>
