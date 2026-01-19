@@ -139,6 +139,7 @@ export default function ROB2SummaryView(props) {
 
                     return (
                       <button
+                        type='button'
                         onClick={() => props.onGoToPage?.(getItemIndex(item))}
                         class='hover:bg-muted flex w-full items-center gap-4 px-6 py-3 text-left transition-colors'
                       >
@@ -222,6 +223,7 @@ export default function ROB2SummaryView(props) {
       {/* Action Buttons */}
       <div class='flex items-center justify-between border-t p-6'>
         <button
+          type='button'
           onClick={() => props.onBack?.()}
           class='bg-secondary text-secondary-foreground hover:bg-border flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors'
         >
@@ -235,6 +237,7 @@ export default function ROB2SummaryView(props) {
           </div>
 
           <button
+            type='button'
             onClick={() => props.onSave?.()}
             disabled={!props.allAnswered || props.saving}
             class={`flex items-center gap-2 rounded-lg px-5 py-2.5 text-sm font-semibold transition-colors ${
