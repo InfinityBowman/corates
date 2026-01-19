@@ -100,7 +100,7 @@ export default function MagicLinkForm(props) {
             Click the link in the email to sign in. The link expires in 10 minutes.
           </p>
 
-          <ErrorMessage displayError={displayError} />
+          <ErrorMessage displayError={displayError} id='magic-link-resend-error' />
 
           <Show when={resent()}>
             <div class='mb-4 rounded-lg border border-green-200 bg-green-50 p-3 text-xs text-green-600 sm:text-sm'>
@@ -159,10 +159,11 @@ export default function MagicLinkForm(props) {
                 id='magic-link-email'
                 placeholder='you@example.com'
                 disabled={loading()}
+                aria-describedby={displayError() ? 'magic-link-error' : undefined}
               />
             </div>
 
-            <ErrorMessage displayError={displayError} />
+            <ErrorMessage displayError={displayError} id='magic-link-error' />
 
             <PrimaryButton loading={loading()} loadingText='Sending Link...'>
               {props.buttonText || 'Send Sign-In Link'}
