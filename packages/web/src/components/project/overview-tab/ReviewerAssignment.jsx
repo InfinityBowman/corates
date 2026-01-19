@@ -9,6 +9,81 @@ import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/component
 import { BiRegularShuffle, BiRegularCheck, BiRegularChevronRight } from 'solid-icons/bi';
 import { FiUsers, FiSliders } from 'solid-icons/fi';
 
+// Preset percentage options for reviewer distribution
+const PRESETS = [0, 25, 33, 50, 100];
+
+/**
+ * MemberPercentRow - Row component for setting a member's percentage allocation
+ * Extracted to top-level to preserve signal state across parent re-renders.
+ *
+ * @param {Object} props
+ * @param {Object} props.member - Member object with userId, name, email
+ * @param {number} props.percent - Current percentage value
+ * @param {Function} props.onChange - Callback when percentage changes
+ */
+function MemberPercentRow(props) {
+  const [showCustom, setShowCustom] = createSignal(false);
+  const isPreset = () => PRESETS.includes(props.percent);
+
+  return (
+    <div class='border-border bg-card flex items-center gap-3 rounded-lg border p-2.5'>
+      <div class='text-foreground min-w-0 flex-1 truncate text-sm font-medium'>
+        {props.member.name || props.member.email || 'Unknown'}
+      </div>
+      <div class='flex items-center gap-1'>
+        {/* Preset buttons */}
+        <For each={PRESETS}>
+          {preset => (
+            <button
+              type='button'
+              onClick={() => {
+                props.onChange(preset);
+                setShowCustom(false);
+              }}
+              class='rounded px-2 py-1 text-xs font-medium transition-colors'
+              classList={{
+                'bg-primary text-white': props.percent === preset && !showCustom(),
+                'bg-secondary text-secondary-foreground hover:bg-secondary/80':
+                  props.percent !== preset || showCustom(),
+              }}
+            >
+              {preset}%
+            </button>
+          )}
+        </For>
+
+        {/* Custom input toggle/field */}
+        <Show
+          when={showCustom() || !isPreset()}
+          fallback={
+            <button
+              type='button'
+              onClick={() => setShowCustom(true)}
+              class='bg-secondary text-secondary-foreground hover:bg-secondary/80 rounded px-2 py-1 text-xs font-medium transition-colors'
+              title='Enter custom percentage'
+            >
+              ...
+            </button>
+          }
+        >
+          <input
+            type='number'
+            min='0'
+            max='100'
+            value={props.percent}
+            onInput={e => props.onChange(e.target.value)}
+            onBlur={() => {
+              if (isPreset()) setShowCustom(false);
+            }}
+            class='border-border focus:ring-primary w-14 rounded border px-1.5 py-1 text-center text-xs focus:border-transparent focus:ring-2 focus:outline-none'
+            autofocus={showCustom()}
+          />
+        </Show>
+      </div>
+    </div>
+  );
+}
+
 /**
  * @param {Object} props
  * @param {Function} props.studies - Signal returning array of studies
@@ -244,73 +319,6 @@ export default function ReviewerAssignment(props) {
   const handleCancel = () => {
     setShowPreview(false);
     setPreviewAssignments([]);
-  };
-
-  // Preset percentage options
-  const presets = [0, 25, 33, 50, 100];
-
-  // Member percentage row component with preset buttons
-  const MemberPercentRow = rowProps => {
-    const [showCustom, setShowCustom] = createSignal(false);
-    const isPreset = () => presets.includes(rowProps.percent);
-
-    return (
-      <div class='border-border bg-card flex items-center gap-3 rounded-lg border p-2.5'>
-        <div class='text-foreground min-w-0 flex-1 truncate text-sm font-medium'>
-          {rowProps.member.name || rowProps.member.email || 'Unknown'}
-        </div>
-        <div class='flex items-center gap-1'>
-          {/* Preset buttons */}
-          <For each={presets}>
-            {preset => (
-              <button
-                type='button'
-                onClick={() => {
-                  rowProps.onChange(preset);
-                  setShowCustom(false);
-                }}
-                class='rounded px-2 py-1 text-xs font-medium transition-colors'
-                classList={{
-                  'bg-primary text-white': rowProps.percent === preset && !showCustom(),
-                  'bg-secondary text-secondary-foreground hover:bg-secondary/80':
-                    rowProps.percent !== preset || showCustom(),
-                }}
-              >
-                {preset}%
-              </button>
-            )}
-          </For>
-
-          {/* Custom input toggle/field */}
-          <Show
-            when={showCustom() || !isPreset()}
-            fallback={
-              <button
-                type='button'
-                onClick={() => setShowCustom(true)}
-                class='bg-secondary text-secondary-foreground hover:bg-secondary/80 rounded px-2 py-1 text-xs font-medium transition-colors'
-                title='Enter custom percentage'
-              >
-                ...
-              </button>
-            }
-          >
-            <input
-              type='number'
-              min='0'
-              max='100'
-              value={rowProps.percent}
-              onInput={e => rowProps.onChange(e.target.value)}
-              onBlur={() => {
-                if (isPreset()) setShowCustom(false);
-              }}
-              class='border-border focus:ring-primary w-14 rounded border px-1.5 py-1 text-center text-xs focus:border-transparent focus:ring-2 focus:outline-none'
-              autofocus={showCustom()}
-            />
-          </Show>
-        </div>
-      </div>
-    );
   };
 
   const hasConflicts = createMemo(() => previewAssignments().some(a => a.sameReviewer));
