@@ -54,6 +54,7 @@ auth.use('/sign-in/*', authRateLimit);
 auth.use('/sign-up/*', authRateLimit);
 auth.use('/forget-password/*', authRateLimit);
 auth.use('/reset-password/*', authRateLimit);
+auth.use('/magic-link/*', authRateLimit);
 
 /**
  * GET /api/auth/session

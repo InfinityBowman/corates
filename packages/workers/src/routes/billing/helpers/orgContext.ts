@@ -22,28 +22,41 @@ interface OrgIdWithRole {
 
 /**
  * Get orgId from session's activeOrganizationId or user's first org
+ * Verifies user is still a member of the org before returning
  */
 export async function resolveOrgId({
   db,
   session,
   userId,
 }: ResolveOrgParams): Promise<string | null> {
-  let orgId = session?.activeOrganizationId;
+  const { member } = await import('@/db/schema.js');
+  const { eq, and } = await import('drizzle-orm');
 
-  // If no active org in session, get user's first org
-  if (!orgId) {
-    const { member } = await import('@/db/schema.js');
-    const { eq } = await import('drizzle-orm');
-    const firstMembership = await db
+  const activeOrgId = session?.activeOrganizationId;
+
+  if (activeOrgId) {
+    // Verify user is still a member of the active org
+    const membership = await db
       .select({ organizationId: member.organizationId })
       .from(member)
-      .where(eq(member.userId, userId))
-      .limit(1)
+      .where(and(eq(member.organizationId, activeOrgId), eq(member.userId, userId)))
       .get();
-    orgId = firstMembership?.organizationId;
+
+    if (membership) {
+      return activeOrgId;
+    }
+    // User is no longer a member of the active org, fall through to first membership
   }
 
-  return orgId || null;
+  // Get user's first org membership
+  const firstMembership = await db
+    .select({ organizationId: member.organizationId })
+    .from(member)
+    .where(eq(member.userId, userId))
+    .limit(1)
+    .get();
+
+  return firstMembership?.organizationId || null;
 }
 
 /**
