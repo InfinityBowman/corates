@@ -271,6 +271,7 @@ export default function SignIn() {
               role='tabpanel'
               aria-labelledby='tab-password'
               aria-hidden={useMagicLink()}
+              inert={useMagicLink()}
               class='w-1/2 shrink-0 bg-white pr-4'
             >
               <form aria-labelledby='signin-heading' onSubmit={handleSubmit} autocomplete='off'>
@@ -347,6 +348,7 @@ export default function SignIn() {
               role='tabpanel'
               aria-labelledby='tab-magic-link'
               aria-hidden={!useMagicLink()}
+              inert={!useMagicLink()}
               class='w-1/2 shrink-0 bg-white pl-4'
             >
               <MagicLinkForm callbackPath='/complete-profile' />
