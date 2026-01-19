@@ -19,6 +19,7 @@
  */
 
 import { normalizeError } from '@corates/shared';
+import { captureException, captureMessage, isSentryEnabled } from '@config/sentry.js';
 
 /**
  * Log levels for categorizing messages
@@ -46,7 +47,7 @@ function formatErrorData(error) {
 
 /**
  * Core logging function
- * Handles both console output and future monitoring service integration
+ * Handles both console output and Sentry error monitoring
  */
 function log(level, message, context = {}) {
   const timestamp = new Date().toISOString();
@@ -69,29 +70,18 @@ function log(level, message, context = {}) {
       console.info(`[Info] ${message}`, logData);
   }
 
-  // Future Sentry integration point
-  // When Sentry is configured, add integration here:
-  //
-  // if (typeof window !== 'undefined' && window.Sentry) {
-  //   if (level === LogLevel.ERROR && context.error) {
-  //     window.Sentry.captureException(context.error, {
-  //       tags: {
-  //         component: context.component,
-  //         action: context.action,
-  //       },
-  //       extra: context,
-  //     });
-  //   } else {
-  //     window.Sentry.captureMessage(message, {
-  //       level: level === LogLevel.ERROR ? 'error' : level,
-  //       tags: {
-  //         component: context.component,
-  //         action: context.action,
-  //       },
-  //       extra: context,
-  //     });
-  //   }
-  // }
+  // Send to Sentry if enabled
+  if (isSentryEnabled()) {
+    if (level === LogLevel.ERROR && context.error) {
+      // For errors, capture the original error object if available
+      const originalError = context.originalError || new Error(message);
+      captureException(originalError, context);
+    } else if (level === LogLevel.ERROR || level === LogLevel.WARNING) {
+      // For warnings and errors without an error object, capture as message
+      captureMessage(message, level, context);
+    }
+    // INFO level messages are not sent to Sentry to reduce noise
+  }
 }
 
 /**
@@ -111,6 +101,8 @@ export function logError(error, context = {}) {
   log(LogLevel.ERROR, message, {
     ...context,
     error: errorData,
+    // Pass original error for Sentry stack trace
+    originalError: error instanceof Error ? error : new Error(errorData.message),
   });
 }
 

@@ -92,12 +92,29 @@ export async function checkQuotaForInsert(
   return { allowed: true, used, limit };
 }
 
+/**
+ * Metadata for rollback in case of race condition
+ * Each entry represents one inserted record that can be rolled back
+ */
+export interface InsertRollbackMeta {
+  table: SQLiteTable;
+  idColumn: SQLiteColumn;
+  id: string;
+}
+
 interface InsertWithQuotaOptions {
   orgId: string;
   quotaKey: string;
   countTable: SQLiteTable;
   countColumn: SQLiteColumn;
   insertStatements: unknown[];
+  /**
+   * Optional rollback metadata for race condition handling.
+   * If provided and a race condition is detected (post-insert count exceeds limit),
+   * these records will be deleted and an error returned.
+   * Order matters: records are deleted in reverse order to respect FK constraints.
+   */
+  rollbackMeta?: InsertRollbackMeta[];
 }
 
 interface InsertWithQuotaResult {
@@ -109,7 +126,7 @@ export async function insertWithQuotaCheck(
   db: Database,
   options: InsertWithQuotaOptions,
 ): Promise<InsertWithQuotaResult> {
-  const { orgId, quotaKey, countTable, countColumn, insertStatements } = options;
+  const { orgId, quotaKey, countTable, countColumn, insertStatements, rollbackMeta } = options;
 
   let orgBilling;
   try {
@@ -217,9 +234,50 @@ export async function insertWithQuotaCheck(
   const newCount = verifyResult?.count || 0;
 
   if (newCount > limit) {
-    console.warn(
+    // Race condition detected - quota exceeded after insert
+    console.error(
       `[QuotaTransaction] Race condition detected: ${quotaKey} exceeded for org ${orgId}. ` +
-        `Count: ${newCount}, Limit: ${limit}. Consider rollback or manual intervention.`,
+        `Count: ${newCount}, Limit: ${limit}. Attempting rollback.`,
+    );
+
+    // If rollback metadata provided, delete the inserted records
+    if (rollbackMeta && rollbackMeta.length > 0) {
+      // Delete in reverse order to respect FK constraints (e.g., projectMembers before projects)
+      for (let i = rollbackMeta.length - 1; i >= 0; i--) {
+        const { table, idColumn, id } = rollbackMeta[i];
+        try {
+          await db.delete(table).where(eq(idColumn, id));
+        } catch (deleteErr) {
+          // Log but continue - best effort rollback
+          console.error(
+            `[QuotaTransaction] Failed to rollback record during race condition cleanup:`,
+            { table: table._.name, id, error: deleteErr },
+          );
+        }
+      }
+
+      return {
+        success: false,
+        error: createDomainError(
+          AUTH_ERRORS.FORBIDDEN,
+          {
+            reason: 'quota_exceeded_race',
+            quotaKey,
+            used: newCount,
+            limit,
+            requested: 1,
+            retryable: true,
+          },
+          `Quota exceeded due to concurrent request: ${quotaKey}. ` +
+            `Current usage: ${newCount}, Limit: ${limit}. Please retry your request.`,
+        ),
+      };
+    }
+
+    // No rollback metadata - log warning but allow (legacy behavior for backward compatibility)
+    console.warn(
+      `[QuotaTransaction] No rollback metadata provided. ` +
+        `Over-quota records will remain. Consider providing rollbackMeta.`,
     );
   }
 

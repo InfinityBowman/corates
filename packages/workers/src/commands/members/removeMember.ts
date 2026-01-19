@@ -9,7 +9,7 @@ import { createDb } from '@/db/client';
 import { projectMembers, projects } from '@/db/schema';
 import { eq, and } from 'drizzle-orm';
 import { createDomainError, PROJECT_ERRORS } from '@corates/shared';
-import { syncMemberToDO } from '@/commands/lib/doSync';
+import { syncMemberWithRetry } from '@/lib/syncWithRetry';
 import { notifyUser, NotificationTypes } from '@/commands/lib/notifications';
 import { getProjectMembership, requireSafeRemoval } from '@/policies';
 import type { Env } from '@/types';
@@ -52,14 +52,8 @@ export async function removeMember(
     .delete(projectMembers)
     .where(and(eq(projectMembers.projectId, projectId), eq(projectMembers.userId, userId)));
 
-  // Sync member removal to DO
-  try {
-    await syncMemberToDO(env, projectId, 'remove', {
-      userId,
-    });
-  } catch (err) {
-    console.error('Failed to sync member removal to DO:', err);
-  }
+  // Sync member removal to DO with automatic retry
+  await syncMemberWithRetry(env, projectId, 'remove', { userId });
 
   // Send notification to removed user (if not self-removal)
   if (!isSelfRemoval) {

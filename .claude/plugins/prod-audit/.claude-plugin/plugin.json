@@ -1,0 +1,17 @@
+{
+  "name": "prod-audit",
+  "version": "1.0.0",
+  "description": "Comprehensive production readiness audit with specialized agents for correctness, security, performance, reliability, and operational readiness",
+  "author": {
+    "name": "CoRATES Team"
+  },
+  "keywords": [
+    "production",
+    "audit",
+    "security",
+    "reliability",
+    "performance",
+    "operations",
+    "launch"
+  ]
+}

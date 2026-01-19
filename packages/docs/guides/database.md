@@ -811,6 +811,143 @@ Check the Zod schema in `src/__tests__/seed-schemas.js`:
 - `scripts/generate-test-sql.mjs` - Script to generate test SQL constant
 - `drizzle.config.ts` - DrizzleKit configuration
 
+## Database Recovery
+
+Cloudflare D1 provides automatic point-in-time recovery through Time Travel. This section documents recovery procedures for common scenarios.
+
+### Time Travel Overview
+
+D1 automatically maintains a history of your database, allowing you to:
+
+- Restore the entire database to a previous point in time
+- Export data from a specific point in time
+- Query historical data without restoring
+
+**Retention:** 30 days on paid plans, 7 days on free tier.
+
+### Recovery Commands
+
+#### List Available Restore Points
+
+```bash
+# View recent bookmarks (automatic snapshots)
+wrangler d1 time-travel info corates-db-prod --env production
+```
+
+#### Restore to a Point in Time
+
+```bash
+# Restore to a specific timestamp (ISO 8601 format)
+wrangler d1 time-travel restore corates-db-prod \
+  --timestamp "2026-01-19T10:30:00Z" \
+  --env production
+
+# Restore to a specific bookmark
+wrangler d1 time-travel restore corates-db-prod \
+  --bookmark <bookmark-id> \
+  --env production
+```
+
+#### Export Data from a Point in Time
+
+```bash
+# Export SQL from a specific timestamp (for inspection before restore)
+wrangler d1 time-travel export corates-db-prod \
+  --timestamp "2026-01-19T10:30:00Z" \
+  --output backup.sql \
+  --env production
+```
+
+### Common Recovery Scenarios
+
+#### Scenario 1: Accidental Project Deletion
+
+A user accidentally deletes an important project.
+
+**Steps:**
+
+1. Identify when the deletion occurred (check logs, ask user)
+2. Export data from just before the deletion:
+   ```bash
+   wrangler d1 time-travel export corates-db-prod \
+     --timestamp "2026-01-19T14:25:00Z" \
+     --output pre-deletion.sql \
+     --env production
+   ```
+3. Review the export to find the project data
+4. Either restore the entire database or selectively re-insert the project
+
+**Note:** If the project had associated R2 files (PDFs), those may not be recoverable as R2 does not have Time Travel.
+
+#### Scenario 2: Bad Migration Rollback
+
+A migration causes data corruption or unexpected behavior.
+
+**Steps:**
+
+1. Identify the timestamp just before the migration was applied
+2. Restore to that point:
+   ```bash
+   wrangler d1 time-travel restore corates-db-prod \
+     --timestamp "2026-01-19T09:00:00Z" \
+     --env production
+   ```
+3. Fix the migration in code
+4. Redeploy with the corrected migration
+
+**Important:** After restoring, you may need to redeploy the workers to ensure schema compatibility.
+
+#### Scenario 3: Data Corruption Investigation
+
+You suspect data was corrupted but need to investigate before restoring.
+
+**Steps:**
+
+1. Export data from multiple points in time:
+
+   ```bash
+   # Export from yesterday
+   wrangler d1 time-travel export corates-db-prod \
+     --timestamp "2026-01-18T00:00:00Z" \
+     --output yesterday.sql \
+     --env production
+
+   # Export from current
+   wrangler d1 export corates-db-prod \
+     --output current.sql \
+     --env production
+   ```
+
+2. Compare the exports to identify what changed
+3. Decide whether to restore or manually fix
+
+### Pre-Deployment Backup Procedure
+
+Before risky deployments (migrations, major updates), create a manual bookmark:
+
+```bash
+# Create a bookmark before deployment
+wrangler d1 time-travel bookmark corates-db-prod \
+  --description "Pre-deployment backup 2026-01-19" \
+  --env production
+```
+
+This creates a named restore point you can easily reference later.
+
+### Limitations
+
+- **R2 files are not covered:** Time Travel only applies to D1. PDFs and avatars in R2 cannot be restored.
+- **Durable Objects are not covered:** Y.js state in ProjectDoc Durable Objects has no Time Travel.
+- **Restore is database-wide:** You cannot restore individual tables or rows; the entire database is restored.
+- **Workers must be compatible:** After restoring to an older schema, ensure your deployed workers are compatible.
+
+### Emergency Contacts
+
+For D1 issues beyond Time Travel capabilities:
+
+- Cloudflare Support (if on paid plan)
+- Cloudflare Discord community
+
 ## Related Guides
 
 - [Organizations Guide](/guides/organizations) - For org model and membership patterns

@@ -7,7 +7,7 @@
 import { createDb } from '@/db/client';
 import { projectMembers } from '@/db/schema';
 import { eq, and } from 'drizzle-orm';
-import { syncMemberToDO } from '@/commands/lib/doSync';
+import { syncMemberWithRetry } from '@/lib/syncWithRetry';
 import { notifyUser, NotificationTypes } from '@/commands/lib/notifications';
 import { requireSafeRoleChange } from '@/policies';
 import { createDomainError, SYSTEM_ERRORS } from '@corates/shared';
@@ -52,15 +52,8 @@ export async function updateMemberRole(
     });
   }
 
-  // Sync role update to DO
-  try {
-    await syncMemberToDO(env, projectId, 'update', {
-      userId,
-      role,
-    });
-  } catch (err) {
-    console.error('Failed to sync member update to DO:', err);
-  }
+  // Sync role update to DO with automatic retry
+  await syncMemberWithRetry(env, projectId, 'update', { userId, role });
 
   // Send notification to the user whose role was updated
   try {
