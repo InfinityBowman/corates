@@ -92,11 +92,11 @@ export default function MagicLinkForm(props) {
           <div class='mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-green-100'>
             <FiMail class='h-7 w-7 text-green-600' />
           </div>
-          <h3 class='mb-1 text-base font-semibold text-gray-900'>Check your email</h3>
-          <p class='mb-3 text-sm text-gray-600'>
-            We sent a sign-in link to <strong class='text-gray-900'>{email()}</strong>
+          <h3 class='text-foreground mb-1 text-base font-semibold'>Check your email</h3>
+          <p class='text-muted-foreground mb-3 text-sm'>
+            We sent a sign-in link to <strong class='text-foreground'>{email()}</strong>
           </p>
-          <p class='mb-4 text-xs text-gray-500'>
+          <p class='text-muted-foreground mb-4 text-xs'>
             Click the link in the email to sign in. The link expires in 10 minutes.
           </p>
 
@@ -116,7 +116,7 @@ export default function MagicLinkForm(props) {
               class={`text-sm font-medium transition ${
                 canResend() && !resending() ?
                   'cursor-pointer text-blue-600 hover:text-blue-700'
-                : 'cursor-not-allowed text-gray-400'
+                : 'text-muted-foreground/70 cursor-not-allowed'
               }`}
             >
               {resending() ?
@@ -128,7 +128,7 @@ export default function MagicLinkForm(props) {
             <button
               type='button'
               onClick={handleReset}
-              class='text-sm font-medium text-gray-500 hover:text-gray-700'
+              class='text-muted-foreground hover:text-secondary-foreground text-sm font-medium'
             >
               Use a different email
             </button>
@@ -142,7 +142,7 @@ export default function MagicLinkForm(props) {
           <div class='space-y-4'>
             <div>
               <label
-                class='mb-1 block text-xs font-semibold text-gray-700 sm:mb-2 sm:text-sm'
+                class='text-secondary-foreground mb-1 block text-xs font-semibold sm:mb-2 sm:text-sm'
                 for='magic-link-email'
               >
                 Email
@@ -154,7 +154,7 @@ export default function MagicLinkForm(props) {
                 spellCheck='false'
                 value={email()}
                 onInput={e => setEmail(e.target.value)}
-                class='w-full rounded-lg border border-gray-300 py-2 pr-3 pl-3 text-xs transition focus:border-transparent focus:ring-2 focus:ring-blue-500 focus:outline-none sm:pr-4 sm:pl-4 sm:text-sm'
+                class='border-border focus:ring-primary w-full rounded-lg border py-2 pr-3 pl-3 text-xs transition focus:border-transparent focus:ring-2 focus:outline-none sm:pr-4 sm:pl-4 sm:text-sm'
                 required
                 id='magic-link-email'
                 placeholder='you@example.com'
@@ -169,7 +169,7 @@ export default function MagicLinkForm(props) {
               {props.buttonText || 'Send Sign-In Link'}
             </PrimaryButton>
 
-            <p class='text-center text-xs text-gray-500'>
+            <p class='text-muted-foreground text-center text-xs'>
               {props.description || "We'll email you a magic link for password-free sign in."}
             </p>
           </div>

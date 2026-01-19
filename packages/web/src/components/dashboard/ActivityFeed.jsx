@@ -40,11 +40,11 @@ function ActivityIcon(props) {
   };
 
   const bgMap = {
-    study: 'bg-blue-100 text-blue-600',
+    study: 'bg-blue-100 text-primary',
     project: 'bg-amber-100 text-amber-600',
     complete: 'bg-emerald-100 text-emerald-600',
     user: 'bg-violet-100 text-violet-600',
-    default: 'bg-stone-100 text-stone-600',
+    default: 'bg-secondary text-secondary-foreground',
   };
 
   return (
@@ -64,13 +64,15 @@ function ActivityItem(props) {
     <div class='flex items-start gap-3 py-3'>
       <ActivityIcon type={props.activity.type} />
       <div class='min-w-0 flex-1'>
-        <p class='text-sm text-stone-700'>
+        <p class='text-secondary-foreground text-sm'>
           <span class='font-medium'>{props.activity.title}</span>
           <Show when={props.activity.subtitle}>
-            <span class='text-stone-500'> {props.activity.subtitle}</span>
+            <span class='text-muted-foreground'> {props.activity.subtitle}</span>
           </Show>
         </p>
-        <p class='mt-0.5 text-xs text-stone-400'>{formatRelativeTime(props.activity.timestamp)}</p>
+        <p class='text-muted-foreground/70 mt-0.5 text-xs'>
+          {formatRelativeTime(props.activity.timestamp)}
+        </p>
       </div>
     </div>
   );
@@ -82,11 +84,13 @@ function ActivityItem(props) {
 function EmptyActivity() {
   return (
     <div class='py-8 text-center'>
-      <div class='mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-stone-100'>
-        <FiClock class='h-5 w-5 text-stone-400' />
+      <div class='bg-secondary mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full'>
+        <FiClock class='text-muted-foreground/70 h-5 w-5' />
       </div>
-      <p class='text-sm text-stone-500'>No recent activity</p>
-      <p class='mt-1 text-xs text-stone-400'>Your activity will appear here as you work</p>
+      <p class='text-muted-foreground text-sm'>No recent activity</p>
+      <p class='text-muted-foreground/70 mt-1 text-xs'>
+        Your activity will appear here as you work
+      </p>
     </div>
   );
 }
@@ -108,16 +112,16 @@ export function ActivityFeed(props) {
   });
 
   return (
-    <div class='rounded-xl border border-stone-200/60 bg-white p-5' style={animation.fadeUp(500)}>
+    <div class='border-border/60 bg-card rounded-xl border p-5' style={animation.fadeUp(500)}>
       <div class='mb-2 flex items-center justify-between'>
-        <h3 class='text-sm font-semibold tracking-wide text-stone-500 uppercase'>
+        <h3 class='text-muted-foreground text-sm font-semibold tracking-wide uppercase'>
           Recent Activity
         </h3>
         <Show when={props.onViewAll && props.activities?.length > (props.limit || 5)}>
           <button
             type='button'
             onClick={() => props.onViewAll?.()}
-            class='text-xs font-medium text-blue-600 hover:text-blue-700'
+            class='text-primary hover:text-primary/80 text-xs font-medium'
           >
             View all
           </button>
@@ -125,7 +129,7 @@ export function ActivityFeed(props) {
       </div>
 
       <Show when={displayActivities().length > 0} fallback={<EmptyActivity />}>
-        <div class='divide-y divide-stone-100'>
+        <div class='divide-border-subtle divide-y'>
           <For each={displayActivities()}>{activity => <ActivityItem activity={activity} />}</For>
         </div>
       </Show>

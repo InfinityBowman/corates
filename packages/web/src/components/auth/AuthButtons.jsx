@@ -45,7 +45,7 @@ export function SecondaryButton(props) {
   return (
     <button
       type={props.type || 'button'}
-      class='w-full rounded-lg border border-gray-300 py-2 text-sm font-semibold text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 sm:rounded-xl sm:py-3 sm:text-base'
+      class='border-border text-secondary-foreground hover:bg-muted w-full rounded-lg border py-2 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-50 sm:rounded-xl sm:py-3 sm:text-base'
       disabled={props.disabled}
       onClick={() => props.onClick?.()}
     >

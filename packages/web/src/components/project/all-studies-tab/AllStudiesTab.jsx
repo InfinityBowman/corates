@@ -4,12 +4,13 @@
  * Uses projectActionsStore for mutations - leaf components call store directly.
  */
 
-import { For, Show, createSignal, onMount } from 'solid-js';
+import { For, Show, createSignal, createMemo, onMount } from 'solid-js';
 import { AiOutlineBook } from 'solid-icons/ai';
 import AddStudiesForm from '../add-studies/AddStudiesForm.jsx';
 import GoogleDrivePickerModal from '../google-drive/GoogleDrivePickerModal.jsx';
 import { StudyCard } from './study-card/index.js';
 import AssignReviewersModal from './AssignReviewersModal.jsx';
+import ReviewerAssignment from '../overview-tab/ReviewerAssignment.jsx';
 import projectStore from '@/stores/projectStore.js';
 import projectActionsStore from '@/stores/projectActionsStore';
 import { useProjectContext } from '../ProjectContext.jsx';
@@ -22,7 +23,7 @@ import {
 } from '@lib/formStatePersistence.js';
 
 export default function AllStudiesTab() {
-  const { projectId, getMember } = useProjectContext();
+  const { projectId, getMember, isOwner } = useProjectContext();
 
   // Local UI state
   const [showGoogleDriveModal, setShowGoogleDriveModal] = createSignal(false);
@@ -60,8 +61,21 @@ export default function AllStudiesTab() {
 
   // Read from store directly
   const studies = () => projectStore.getStudies(projectId);
+  const members = () => projectStore.getMembers(projectId);
   const connectionState = () => projectStore.getConnectionState(projectId);
   const hasData = () => connectionState().synced || studies().length > 0;
+
+  // Calculate unassigned studies for Reviewer Assignment visibility
+  const unassignedStudies = createMemo(() => studies().filter(s => !s.reviewer1 && !s.reviewer2));
+
+  // Determine if Reviewer Assignment should be shown
+  const shouldShowReviewerAssignment = () =>
+    isOwner() && studies().length > 0 && unassignedStudies().length > 0;
+
+  // Handler for reviewer assignment (called per-study by ReviewerAssignment)
+  const handleAssignReviewers = (studyId, updates) => {
+    projectActionsStore.study.update(studyId, updates);
+  };
 
   // Handler for adding studies (uses active project internally)
   const handleAddStudies = async studiesToAdd => {
@@ -129,15 +143,26 @@ export default function AllStudiesTab() {
         />
       </Show>
 
+      {/* Reviewer Assignment - Shown for owners with unassigned studies */}
+      <Show when={shouldShowReviewerAssignment()}>
+        <div class='mt-4'>
+          <ReviewerAssignment
+            studies={studies}
+            members={members}
+            onAssignReviewers={handleAssignReviewers}
+          />
+        </div>
+      </Show>
+
       <Show when={!hasData()} fallback={null}>
-        <div class='rounded-lg bg-gray-50 py-12 text-center'>
-          <p class='text-gray-400'>Loading studies...</p>
+        <div class='bg-muted rounded-lg py-12 text-center'>
+          <p class='text-muted-foreground/70'>Loading studies...</p>
         </div>
       </Show>
 
       {/* Study count */}
       <div class='mb-2 flex items-center justify-between'>
-        <p class='text-sm text-gray-500'>
+        <p class='text-muted-foreground text-sm'>
           {studies().length} {studies().length === 1 ? 'study' : 'studies'} in this project
         </p>
       </div>
@@ -147,9 +172,9 @@ export default function AllStudiesTab() {
         when={studies().length > 0}
         fallback={
           <Show when={hasData()}>
-            <div class='rounded-lg bg-gray-50 py-12 text-center'>
-              <AiOutlineBook class='mx-auto mb-4 h-12 w-12 text-gray-300' />
-              <p class='text-gray-500'>No studies added yet. Add your first study above.</p>
+            <div class='bg-muted rounded-lg py-12 text-center'>
+              <AiOutlineBook class='text-muted-foreground/50 mx-auto mb-4 h-12 w-12' />
+              <p class='text-muted-foreground'>No studies added yet. Add your first study above.</p>
             </div>
           </Show>
         }

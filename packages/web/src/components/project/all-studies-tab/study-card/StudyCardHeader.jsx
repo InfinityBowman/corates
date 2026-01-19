@@ -151,7 +151,7 @@ export default function StudyCardHeader(props) {
       {/* Expand/collapse chevron */}
       <div class='-ml-1 shrink-0 p-1'>
         <BiRegularChevronRight
-          class={`h-5 w-5 text-slate-400 transition-transform duration-200 ${props.expanded ? 'rotate-90' : ''}`}
+          class={`text-muted-foreground/70 h-5 w-5 transition-transform duration-200 ${props.expanded ? 'rotate-90' : ''}`}
         />
       </div>
 
@@ -162,10 +162,13 @@ export default function StudyCardHeader(props) {
           value={studyName()}
           onSubmit={handleNameChange}
           showEditIcon={true}
-          class='-ml-2 font-medium text-slate-900'
+          class='text-foreground -ml-2 font-medium'
         />
         <Show when={citationLine()}>
-          <p class='w-fit cursor-text truncate text-xs text-slate-500 select-text' data-selectable>
+          <p
+            class='text-muted-foreground w-fit cursor-text truncate text-xs select-text'
+            data-selectable
+          >
             {citationLine()}
           </p>
         </Show>
@@ -197,12 +200,12 @@ export default function StudyCardHeader(props) {
         </div>
       </Show>
       <Show when={!hasReviewers()}>
-        <span class='shrink-0 text-xs text-slate-400 italic'>No reviewers</span>
+        <span class='text-muted-foreground/70 shrink-0 text-xs italic'>No reviewers</span>
       </Show>
 
       {/* Actions menu */}
       <Menu onSelect={handleMenuSelect} positioning={{ placement: 'bottom-end' }}>
-        <MenuTrigger class='rounded-md p-1.5 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600'>
+        <MenuTrigger class='text-muted-foreground/70 hover:bg-secondary hover:text-secondary-foreground rounded-md p-1.5 transition-colors'>
           <FiMoreVertical class='h-4 w-4' />
         </MenuTrigger>
         <MenuPositioner>

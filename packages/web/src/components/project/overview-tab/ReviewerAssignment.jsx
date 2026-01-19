@@ -342,14 +342,14 @@ export default function ReviewerAssignment(props) {
     const isValid = () => poolProps.isValid;
 
     return (
-      <div class='rounded-lg bg-gray-50 p-4'>
+      <div class='bg-muted rounded-lg p-4'>
         <div class='mb-3 flex items-center justify-between'>
-          <h4 class='text-sm font-semibold text-gray-700'>{poolProps.title}</h4>
+          <h4 class='text-secondary-foreground text-sm font-semibold'>{poolProps.title}</h4>
           <Show when={pool().length > 1}>
             <button
               type='button'
               onClick={() => poolProps.onDistributeEvenly()}
-              class='text-xs font-medium text-blue-600 hover:text-blue-800'
+              class='text-primary hover:text-primary/90 text-xs font-medium'
             >
               Distribute evenly
             </button>
@@ -360,8 +360,8 @@ export default function ReviewerAssignment(props) {
         <div class='mb-3 space-y-2'>
           <For each={pool()}>
             {reviewer => (
-              <div class='flex items-center gap-2 rounded-lg border border-gray-200 bg-white p-2'>
-                <div class='flex-1 truncate text-sm text-gray-900'>
+              <div class='border-border bg-card flex items-center gap-2 rounded-lg border p-2'>
+                <div class='text-foreground flex-1 truncate text-sm'>
                   {getMemberName(reviewer.userId)}
                 </div>
                 <div class='flex items-center gap-1'>
@@ -371,14 +371,14 @@ export default function ReviewerAssignment(props) {
                     max='100'
                     value={reviewer.percent}
                     onInput={e => poolProps.onUpdatePercent(reviewer.userId, e.target.value)}
-                    class='w-16 rounded border border-gray-300 px-2 py-1 text-center text-sm focus:border-transparent focus:ring-2 focus:ring-blue-500 focus:outline-none'
+                    class='border-border focus:ring-primary w-16 rounded border px-2 py-1 text-center text-sm focus:border-transparent focus:ring-2 focus:outline-none'
                   />
-                  <span class='text-sm text-gray-500'>%</span>
+                  <span class='text-muted-foreground text-sm'>%</span>
                 </div>
                 <button
                   type='button'
                   onClick={() => poolProps.onRemove(reviewer.userId)}
-                  class='rounded p-1 text-gray-400 transition-colors hover:bg-red-50 hover:text-red-600 focus:ring-2 focus:ring-blue-500 focus:outline-none'
+                  class='text-muted-foreground/70 focus:ring-primary rounded p-1 transition-colors hover:bg-red-50 hover:text-red-600 focus:ring-2 focus:outline-none'
                 >
                   <BiRegularX class='h-4 w-4' />
                 </button>
@@ -395,7 +395,7 @@ export default function ReviewerAssignment(props) {
                 poolProps.onAdd(e.target.value);
                 e.target.value = '';
               }}
-              class='flex-1 rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-900 transition focus:border-transparent focus:ring-2 focus:ring-blue-500 focus:outline-none'
+              class='border-border bg-card text-foreground focus:ring-primary flex-1 rounded-lg border px-3 py-1.5 text-sm transition focus:border-transparent focus:ring-2 focus:outline-none'
             >
               <option value=''>Add reviewer...</option>
               <For each={available()}>
@@ -424,26 +424,26 @@ export default function ReviewerAssignment(props) {
   };
 
   return (
-    <div class='overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm'>
+    <div class='border-border bg-card overflow-hidden rounded-lg border shadow-sm'>
       <Collapsible open={isExpanded()} onOpenChange={setIsExpanded}>
         <CollapsibleTrigger class='flex w-full cursor-pointer items-center gap-3 px-4 py-3 select-none'>
           {/* Chevron indicator */}
           <div class='shrink-0'>
             <BiRegularChevronRight
-              class={`h-5 w-5 text-gray-400 transition-transform duration-200 ${isExpanded() ? 'rotate-90' : ''}`}
+              class={`text-muted-foreground/70 h-5 w-5 transition-transform duration-200 ${isExpanded() ? 'rotate-90' : ''}`}
             />
           </div>
           <div class='flex items-center gap-2'>
-            <FiUsers class='h-4 w-4 text-blue-600' />
-            <span class='text-sm font-medium text-gray-900'>Assign Reviewers to Studies</span>
+            <FiUsers class='text-primary h-4 w-4' />
+            <span class='text-foreground text-sm font-medium'>Assign Reviewers to Studies</span>
           </div>
         </CollapsibleTrigger>
         <CollapsibleContent>
-          <div class='border-t border-gray-200 px-4 pb-4'>
+          <div class='border-border border-t px-4 pb-4'>
             <Show
               when={members().length >= 2}
               fallback={
-                <p class='mt-4 text-sm text-gray-500'>
+                <p class='text-muted-foreground mt-4 text-sm'>
                   At least 2 project members are required to assign reviewers.
                 </p>
               }
@@ -458,7 +458,7 @@ export default function ReviewerAssignment(props) {
                 }
               >
                 <div class='space-y-4'>
-                  <p class='mt-4 text-sm text-gray-600'>
+                  <p class='text-secondary-foreground mt-4 text-sm'>
                     Add reviewers to each pool and set their percentage. Studies will be randomly
                     assigned one reviewer from each pool based on the percentages.
                   </p>
@@ -489,7 +489,7 @@ export default function ReviewerAssignment(props) {
                     />
                   </div>
 
-                  <p class='text-xs text-gray-500'>
+                  <p class='text-muted-foreground text-xs'>
                     {unassignedStudies().length}{' '}
                     {unassignedStudies().length === 1 ? 'study' : 'studies'} without reviewers
                   </p>
@@ -499,7 +499,7 @@ export default function ReviewerAssignment(props) {
                     <button
                       onClick={handlePreview}
                       disabled={!canGenerate() || unassignedStudies().length === 0}
-                      class='inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50'
+                      class='bg-primary hover:bg-primary/90 focus:ring-primary inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-white transition-colors focus:ring-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50'
                     >
                       <BiRegularShuffle class='h-4 w-4' />
                       Generate Random Assignments
@@ -523,31 +523,33 @@ export default function ReviewerAssignment(props) {
                       </div>
                       <div class='max-h-64 overflow-y-auto'>
                         <table class='w-full text-sm'>
-                          <thead class='sticky top-0 bg-gray-50'>
+                          <thead class='bg-muted sticky top-0'>
                             <tr>
-                              <th class='px-4 py-2 text-left font-medium text-gray-700'>Study</th>
-                              <th class='px-4 py-2 text-left font-medium text-gray-700'>
+                              <th class='text-secondary-foreground px-4 py-2 text-left font-medium'>
+                                Study
+                              </th>
+                              <th class='text-secondary-foreground px-4 py-2 text-left font-medium'>
                                 1st Reviewer
                               </th>
-                              <th class='px-4 py-2 text-left font-medium text-gray-700'>
+                              <th class='text-secondary-foreground px-4 py-2 text-left font-medium'>
                                 2nd Reviewer
                               </th>
                             </tr>
                           </thead>
-                          <tbody class='divide-y divide-gray-200'>
+                          <tbody class='divide-border divide-y'>
                             <For each={previewAssignments()}>
                               {assignment => (
                                 <tr
-                                  class={`hover:bg-gray-50 ${assignment.sameReviewer ? 'bg-red-50' : ''}`}
+                                  class={`hover:bg-muted ${assignment.sameReviewer ? 'bg-red-50' : ''}`}
                                 >
-                                  <td class='max-w-xs truncate px-4 py-2 text-gray-900'>
+                                  <td class='text-foreground max-w-xs truncate px-4 py-2'>
                                     {assignment.studyName}
                                   </td>
-                                  <td class='px-4 py-2 text-gray-600'>
+                                  <td class='text-secondary-foreground px-4 py-2'>
                                     {assignment.reviewer1Name}
                                   </td>
                                   <td
-                                    class={`px-4 py-2 ${assignment.sameReviewer ? 'font-medium text-red-600' : 'text-gray-600'}`}
+                                    class={`px-4 py-2 ${assignment.sameReviewer ? 'font-medium text-red-600' : 'text-secondary-foreground'}`}
                                   >
                                     {assignment.reviewer2Name}
                                     {assignment.sameReviewer && ' (conflict)'}
@@ -558,21 +560,21 @@ export default function ReviewerAssignment(props) {
                           </tbody>
                         </table>
                       </div>
-                      <div class='flex gap-2 border-t border-gray-200 bg-gray-50 px-4 py-3'>
+                      <div class='border-border bg-muted flex gap-2 border-t px-4 py-3'>
                         <button
                           onClick={() => {
                             handleApply();
                             handleCollapse();
                           }}
                           disabled={previewAssignments().some(a => a.sameReviewer)}
-                          class='inline-flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-green-700 focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50'
+                          class='focus:ring-primary inline-flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-green-700 focus:ring-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50'
                         >
                           <BiRegularCheck class='h-4 w-4' />
                           Apply Assignments
                         </button>
                         <button
                           onClick={handleCancel}
-                          class='rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:border-gray-400'
+                          class='border-border bg-card text-secondary-foreground hover:border-border-strong rounded-lg border px-4 py-2 text-sm font-medium transition-colors'
                         >
                           Cancel
                         </button>

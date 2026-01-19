@@ -1,9 +1,9 @@
 import { createSignal, createEffect, Show, onMount, onCleanup, For } from 'solid-js';
 import { BiRegularPlus } from 'solid-icons/bi';
 import { AiOutlineCloudUpload } from 'solid-icons/ai';
-import { FiChevronUp } from 'solid-icons/fi';
+import { FiChevronUp, FiUpload, FiLink, FiFileText, FiFolder } from 'solid-icons/fi';
 import { showToast } from '@/components/ui/toast';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsList, TabsTrigger, TabsIndicator } from '@/components/ui/tabs';
 import projectStore from '@/stores/projectStore.js';
 
 import { useAddStudies } from '@primitives/useAddStudies.js';
@@ -167,10 +167,10 @@ export default function AddStudiesForm(props) {
   };
 
   const tabs = [
-    { value: 'pdfs', label: 'Upload PDFs' },
-    { value: 'references', label: 'Import References' },
-    { value: 'lookup', label: 'DOI / PMID' },
-    { value: 'drive', label: 'Google Drive' },
+    { value: 'pdfs', label: 'Upload PDFs', icon: <FiUpload class='h-4 w-4' /> },
+    { value: 'references', label: 'Import References', icon: <FiFileText class='h-4 w-4' /> },
+    { value: 'lookup', label: 'DOI / PMID', icon: <FiLink class='h-4 w-4' /> },
+    { value: 'drive', label: 'Google Drive', icon: <FiFolder class='h-4 w-4' /> },
   ];
 
   return (
@@ -178,7 +178,7 @@ export default function AddStudiesForm(props) {
       {/* Drag overlay */}
       <Show when={isDraggingOver() && hasExistingStudies() && !isExpanded()}>
         <div class='pointer-events-none fixed inset-0 z-50 flex items-center justify-center bg-blue-500/10'>
-          <div class='rounded-xl border-2 border-dashed border-blue-500 bg-white p-8 shadow-lg'>
+          <div class='bg-card rounded-xl border-2 border-dashed border-blue-500 p-8 shadow-lg'>
             <p class='text-lg font-medium text-blue-600'>Drop PDFs to add studies</p>
           </div>
         </div>
@@ -190,7 +190,7 @@ export default function AddStudiesForm(props) {
           <button
             type='button'
             onClick={handleExpand}
-            class='inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-blue-700'
+            class='bg-primary hover:bg-primary/90 inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-white shadow-sm transition-colors'
           >
             <BiRegularPlus class='h-4 w-4' />
             Add Studies
@@ -201,15 +201,15 @@ export default function AddStudiesForm(props) {
       {/* Expanded form */}
       <Show when={isExpanded()}>
         <div
-          class={`${props.collectMode ? '' : 'rounded-lg border border-gray-200 bg-white p-6 shadow-sm'}`}
+          class={`${props.collectMode ? '' : 'border-border bg-card rounded-lg border p-6 shadow-sm'}`}
         >
           <Show when={!props.alwaysExpanded && !props.collectMode}>
             <div class='mb-4 flex items-center justify-between'>
-              <h3 class='text-lg font-semibold text-gray-900'>Add Studies</h3>
+              <h3 class='text-foreground text-lg font-semibold'>Add Studies</h3>
               <button
                 type='button'
                 onClick={handleCollapse}
-                class='rounded p-1 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600'
+                class='text-muted-foreground/70 hover:bg-secondary hover:text-secondary-foreground rounded p-1 transition-colors'
               >
                 <FiChevronUp class='h-5 w-5' />
               </button>
@@ -217,7 +217,7 @@ export default function AddStudiesForm(props) {
           </Show>
 
           <Tabs value={activeTab()} onValueChange={v => setActiveTab(v)}>
-            <TabsList class='border-b border-gray-200 bg-white'>
+            <TabsList class='relative flex gap-1 overflow-x-auto pb-px'>
               <For each={tabs}>
                 {tab => {
                   const getCount = () => {
@@ -230,11 +230,14 @@ export default function AddStudiesForm(props) {
                   return (
                     <TabsTrigger
                       value={tab.value}
-                      class='gap-2 border-b-2 border-transparent text-gray-600 hover:text-gray-900 data-[selected]:border-blue-600 data-[selected]:text-gray-900'
+                      class='group text-muted-foreground hover:bg-muted hover:text-secondary-foreground data-selected:text-foreground relative gap-2 rounded-t-lg px-4 py-2.5 transition-all'
                     >
-                      {tab.label}
+                      <span class='opacity-60 transition-opacity group-data-selected:opacity-100'>
+                        {tab.icon}
+                      </span>
+                      <span class='font-medium'>{tab.label}</span>
                       <Show when={getCount() > 0}>
-                        <span class='inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-blue-100 px-1.5 text-xs font-medium text-blue-700'>
+                        <span class='bg-secondary text-secondary-foreground group-data-selected:bg-primary-subtle group-data-selected:text-primary min-w-6 rounded-full px-1.5 py-0.5 text-center text-xs font-medium tabular-nums transition-colors'>
                           {getCount()}
                         </span>
                       </Show>
@@ -242,6 +245,7 @@ export default function AddStudiesForm(props) {
                   );
                 }}
               </For>
+              <TabsIndicator class='bg-primary h-0.5 rounded-full' />
             </TabsList>
           </Tabs>
 
@@ -270,12 +274,12 @@ export default function AddStudiesForm(props) {
 
           {/* Summary and Actions - hidden in collect mode since parent handles submission */}
           <Show when={studies.totalStudyCount() > 0 && !props.collectMode}>
-            <div class='mt-4 border-t border-gray-200 pt-4'>
+            <div class='border-border mt-4 border-t pt-4'>
               <div class='flex items-center justify-between'>
-                <div class='text-sm text-gray-600'>
+                <div class='text-secondary-foreground text-sm'>
                   <span class='font-medium'>{studies.totalStudyCount()}</span>{' '}
                   {studies.totalStudyCount() === 1 ? 'study' : 'studies'} ready to add
-                  <span class='ml-2 text-gray-400'>
+                  <span class='text-muted-foreground/70 ml-2'>
                     (
                     {[
                       studies.pdfCount() > 0 ?
@@ -295,7 +299,7 @@ export default function AddStudiesForm(props) {
                     <button
                       type='button'
                       onClick={handleCancel}
-                      class='rounded-lg px-3 py-1.5 text-sm text-gray-600 transition-colors hover:bg-gray-100 hover:text-gray-800'
+                      class='text-secondary-foreground hover:bg-secondary hover:text-foreground rounded-lg px-3 py-1.5 text-sm transition-colors'
                     >
                       Cancel
                     </button>
@@ -304,7 +308,7 @@ export default function AddStudiesForm(props) {
                     type='button'
                     onClick={handleSubmit}
                     disabled={isSubmitting() || studies.totalStudyCount() === 0}
-                    class='inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-1.5 text-sm font-medium text-white transition-colors hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50'
+                    class='bg-primary hover:bg-primary/90 focus:ring-primary inline-flex items-center gap-2 rounded-lg px-4 py-1.5 text-sm font-medium text-white transition-colors focus:ring-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50'
                   >
                     <Show
                       when={!isSubmitting()}
@@ -329,12 +333,12 @@ export default function AddStudiesForm(props) {
       {/* Initial drop zone for empty projects */}
       <Show when={!isExpanded() && !hasExistingStudies()}>
         <div
-          class='cursor-pointer rounded-lg border-2 border-dashed border-gray-300 p-8 text-center transition-colors hover:border-blue-500 hover:bg-blue-50/50'
+          class='border-border cursor-pointer rounded-lg border-2 border-dashed p-8 text-center transition-colors hover:border-blue-500 hover:bg-blue-50/50'
           onClick={handleExpand}
         >
-          <AiOutlineCloudUpload class='mx-auto mb-3 h-12 w-12 text-gray-400' />
-          <p class='font-medium text-gray-600'>Add Studies to Your Project</p>
-          <p class='mt-1 text-sm text-gray-500'>
+          <AiOutlineCloudUpload class='text-muted-foreground/70 mx-auto mb-3 h-12 w-12' />
+          <p class='text-secondary-foreground font-medium'>Add Studies to Your Project</p>
+          <p class='text-muted-foreground mt-1 text-sm'>
             Upload PDFs, import from reference managers, or look up by DOI/PMID
           </p>
         </div>

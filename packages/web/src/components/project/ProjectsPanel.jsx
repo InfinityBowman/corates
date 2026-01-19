@@ -136,14 +136,14 @@ export default function ProjectsPanel() {
       {/* Header */}
       <div class='flex flex-wrap items-center justify-between gap-4'>
         <div>
-          <h1 class='text-2xl font-bold text-gray-900'>Projects</h1>
-          <p class='mt-1 text-gray-500'>Manage your research projects</p>
+          <h1 class='text-foreground text-2xl font-bold'>Projects</h1>
+          <p class='text-muted-foreground mt-1'>Manage your research projects</p>
         </div>
 
         {/* Create button */}
         <Show when={canCreateProject()}>
           <button
-            class='inline-flex transform items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 font-medium text-white shadow-md transition-all duration-200 hover:scale-[1.02] hover:bg-blue-700 hover:shadow-lg focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:scale-100'
+            class='bg-primary hover:bg-primary/90 focus:ring-primary inline-flex transform items-center gap-2 rounded-lg px-4 py-2 font-medium text-white shadow-md transition-all duration-200 hover:scale-[1.02] hover:shadow-lg focus:ring-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:scale-100'
             onClick={() => setCreateModalOpen(true)}
             disabled={!isOnline()}
             title={!isOnline() ? 'Cannot create projects while offline' : ''}
@@ -189,13 +189,13 @@ export default function ProjectsPanel() {
           when={hasData()}
           fallback={
             <Show when={!isLoading()}>
-              <div class='col-span-full rounded-lg border-2 border-dashed border-gray-300 bg-white px-6 py-12'>
-                <div class='text-center text-gray-500'>No projects yet</div>
+              <div class='border-border bg-card col-span-full rounded-lg border-2 border-dashed px-6 py-12'>
+                <div class='text-muted-foreground text-center'>No projects yet</div>
                 <Show when={canCreateProject()}>
                   <div class='flex justify-center'>
                     <button
                       onClick={() => setCreateModalOpen(true)}
-                      class='mt-4 font-medium text-blue-600 hover:text-blue-700'
+                      class='text-primary hover:text-primary mt-4 font-medium'
                     >
                       Create your first project
                     </button>
@@ -215,7 +215,7 @@ export default function ProjectsPanel() {
         {/* Loading state - only show when there's no existing data */}
         <Show when={isLoading() && !hasData()}>
           <div class='col-span-full py-12 text-center'>
-            <div class='text-gray-400'>Loading projects...</div>
+            <div class='text-muted-foreground/70'>Loading projects...</div>
           </div>
         </Show>
       </div>

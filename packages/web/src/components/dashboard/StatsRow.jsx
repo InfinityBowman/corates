@@ -20,22 +20,24 @@ import { AnimationContext } from './Dashboard.jsx';
 export function StatCard(props) {
   return (
     <div
-      class='relative overflow-hidden rounded-xl border border-stone-200/60 bg-white p-5 transition-all duration-200 hover:shadow-md'
+      class='border-border/60 bg-card relative overflow-hidden rounded-xl border p-5 transition-all duration-200 hover:shadow-md'
       style={props.style}
     >
       <div class='flex items-start justify-between'>
         <div>
-          <p class='text-xs font-medium tracking-wide text-stone-400 uppercase'>{props.label}</p>
-          <p class='mt-1 text-3xl font-semibold text-stone-800 tabular-nums'>{props.value}</p>
+          <p class='text-muted-foreground/70 text-xs font-medium tracking-wide uppercase'>
+            {props.label}
+          </p>
+          <p class='text-foreground mt-1 text-3xl font-semibold tabular-nums'>{props.value}</p>
         </div>
         <div
-          class={`flex h-10 w-10 items-center justify-center rounded-xl ${props.iconBg || 'bg-stone-100'}`}
+          class={`flex h-10 w-10 items-center justify-center rounded-xl ${props.iconBg || 'bg-secondary'}`}
         >
           {props.icon}
         </div>
       </div>
       <Show when={props.subtext}>
-        <p class='mt-2 text-xs text-stone-500'>{props.subtext}</p>
+        <p class='text-muted-foreground mt-2 text-xs'>{props.subtext}</p>
       </Show>
     </div>
   );

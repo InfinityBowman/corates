@@ -121,7 +121,7 @@ export default function CheckEmail() {
   };
 
   return (
-    <div class='relative w-full max-w-md space-y-6 rounded-xl border border-gray-100 bg-white p-6 text-center shadow-2xl sm:max-w-xl sm:rounded-3xl sm:p-12'>
+    <div class='border-border-subtle bg-card relative w-full max-w-md space-y-6 rounded-xl border p-6 text-center shadow-2xl sm:max-w-xl sm:rounded-3xl sm:p-12'>
       {/* Logo */}
       <a href='/' class='absolute top-4 left-4 sm:top-6 sm:left-6'>
         <img src='/logo.svg' alt='CoRATES' class='h-6 w-auto sm:h-7' />
@@ -137,8 +137,10 @@ export default function CheckEmail() {
               aria-label='Verifying email'
             />
           </div>
-          <h2 class='text-xl font-bold text-gray-900 sm:text-2xl'>Email Verified!</h2>
-          <p class='text-sm text-gray-600 sm:text-base'>Redirecting you to the dashboard...</p>
+          <h2 class='text-foreground text-xl font-bold sm:text-2xl'>Email Verified!</h2>
+          <p class='text-muted-foreground text-sm sm:text-base'>
+            Redirecting you to the dashboard...
+          </p>
         </>
       : <>
           <div class='flex justify-center'>
@@ -148,13 +150,15 @@ export default function CheckEmail() {
           </div>
 
           <div>
-            <h2 class='mb-2 text-xl font-bold text-gray-900 sm:text-2xl'>Check Your Email</h2>
-            <p class='text-sm text-gray-600 sm:text-base'>We've sent a verification email to:</p>
+            <h2 class='text-foreground mb-2 text-xl font-bold sm:text-2xl'>Check Your Email</h2>
+            <p class='text-muted-foreground text-sm sm:text-base'>
+              We've sent a verification email to:
+            </p>
             <p class='mt-1 text-sm font-semibold text-blue-600 sm:text-base'>{email()}</p>
           </div>
 
           <div class='space-y-4'>
-            <p class='text-xs text-gray-500 sm:text-sm'>
+            <p class='text-muted-foreground text-xs sm:text-sm'>
               Click the verification link in your email to activate your account. Once verified,
               you'll automatically be redirected to the dashboard.
             </p>
@@ -181,7 +185,7 @@ export default function CheckEmail() {
             <SecondaryButton onClick={handleBackToSignIn}>Back to Sign In</SecondaryButton>
           </div>
 
-          <div class='text-xs text-gray-400 sm:text-sm'>
+          <div class='text-muted-foreground/70 text-xs sm:text-sm'>
             <p>Didn't receive the email? Check your spam folder or try resending.</p>
           </div>
         </>

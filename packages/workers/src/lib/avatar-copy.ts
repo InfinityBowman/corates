@@ -37,13 +37,16 @@ export interface AvatarCopyResult {
 }
 
 /**
- * Check if a URL is an external avatar URL that should be copied
+ * Check if a URL is an external avatar URL that should be copied.
+ * Only accepts HTTPS URLs from allowed domains.
  */
 export function isExternalAvatarUrl(url: string | null | undefined): url is string {
   if (!url) return false;
 
   try {
     const parsed = new URL(url);
+    // Only allow HTTPS URLs
+    if (parsed.protocol !== 'https:') return false;
     return ALLOWED_AVATAR_DOMAINS.some(
       domain => parsed.hostname === domain || parsed.hostname.endsWith('.' + domain),
     );

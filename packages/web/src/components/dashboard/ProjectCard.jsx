@@ -132,7 +132,7 @@ export function ProjectCard(props) {
 
   return (
     <div
-      class='group relative overflow-hidden rounded-2xl border border-stone-200/60 bg-white p-6 shadow-sm transition-all duration-300 hover:border-stone-300 hover:shadow-lg hover:shadow-stone-200/50'
+      class='group border-border/60 bg-card hover:border-border relative overflow-hidden rounded-2xl border p-6 shadow-sm transition-all duration-300 hover:shadow-lg hover:shadow-stone-200/50'
       style={props.style}
     >
       {/* Decorative corner accent */}
@@ -149,9 +149,9 @@ export function ProjectCard(props) {
             >
               {isOwner() ? 'Lead' : 'Reviewer'}
             </span>
-            <span class='text-xs text-stone-400'>{relativeTime()}</span>
+            <span class='text-muted-foreground/70 text-xs'>{relativeTime()}</span>
           </div>
-          <h3 class='line-clamp-2 text-lg leading-snug font-semibold text-stone-800 transition-colors group-hover:text-blue-600'>
+          <h3 class='text-foreground line-clamp-2 text-lg leading-snug font-semibold transition-colors group-hover:text-blue-600'>
             {props.project?.name}
           </h3>
         </div>
@@ -164,7 +164,7 @@ export function ProjectCard(props) {
               e.stopPropagation();
               props.onDelete?.(props.project?.id);
             }}
-            class='z-10 shrink-0 rounded-lg p-2 text-stone-300 opacity-0 transition-all group-hover:opacity-100 hover:bg-red-50 hover:text-red-500'
+            class='text-muted-foreground/50 z-10 shrink-0 rounded-lg p-2 opacity-0 transition-all group-hover:opacity-100 hover:bg-red-50 hover:text-red-500'
             title='Delete Project'
           >
             <FiTrash2 class='h-4 w-4' />
@@ -173,19 +173,19 @@ export function ProjectCard(props) {
       </div>
 
       {/* Description */}
-      <p class='mb-5 line-clamp-2 text-sm leading-relaxed text-stone-500'>
+      <p class='text-muted-foreground mb-5 line-clamp-2 text-sm leading-relaxed'>
         {props.project?.description || 'No description'}
       </p>
 
       {/* Progress bar */}
       <div class='mb-4'>
         <div class='mb-1.5 flex items-center justify-between text-xs'>
-          <span class='font-medium text-stone-600'>Progress</span>
-          <span class='text-stone-500 tabular-nums'>
+          <span class='text-secondary-foreground font-medium'>Progress</span>
+          <span class='text-muted-foreground tabular-nums'>
             {progress().completed}/{progress().total} studies
           </span>
         </div>
-        <div class='h-1.5 overflow-hidden rounded-full bg-stone-100'>
+        <div class='bg-secondary h-1.5 overflow-hidden rounded-full'>
           <div
             class={`h-full rounded-full bg-linear-to-r ${colors().gradient} transition-all duration-500`}
             style={{ width: `${progress().percentage}%` }}
@@ -195,7 +195,7 @@ export function ProjectCard(props) {
 
       {/* Footer */}
       <div class='flex items-center justify-between'>
-        <div class='flex items-center gap-1.5 text-xs text-stone-500'>
+        <div class='text-muted-foreground flex items-center gap-1.5 text-xs'>
           <FiUsers class='h-3.5 w-3.5' />
           <span>
             {memberCount()} member{memberCount() !== 1 ? 's' : ''}

@@ -142,7 +142,7 @@ export function Dashboard() {
         {/* Subscription error banner - only for logged in users */}
         <Show when={isLoggedIn() && subscriptionFetchFailed()}>
           <div
-            class='mb-6 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800'
+            class='border-warning/30 bg-warning-subtle text-warning mb-6 rounded-lg border p-4 text-sm'
             role='alert'
           >
             Could not load subscription details. Some features may be limited.

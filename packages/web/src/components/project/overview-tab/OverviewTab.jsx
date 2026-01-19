@@ -215,8 +215,8 @@ export default function OverviewTab() {
   return (
     <>
       {/* Section 1: Project Progress - Hero Section */}
-      <div class='mb-6 rounded-xl border border-slate-200 bg-white p-5'>
-        <h2 class='mb-5 text-base font-semibold text-slate-900'>Project Progress</h2>
+      <div class='border-border bg-card mb-6 rounded-xl border p-5'>
+        <h2 class='text-foreground mb-5 text-base font-semibold'>Project Progress</h2>
 
         <div class='mb-5 flex flex-col items-center md:flex-row md:items-start md:gap-8'>
           {/* Overall Progress - Circular */}
@@ -232,19 +232,19 @@ export default function OverviewTab() {
               }
               size={140}
             />
-            <p class='mt-3 text-center text-sm text-slate-500'>
+            <p class='text-muted-foreground mt-3 text-center text-sm'>
               {completedStudies()} of {studies().length} studies completed
             </p>
           </div>
 
           {/* Enhanced Stats Grid */}
           <div class='grid flex-1 grid-cols-2 gap-3 md:grid-cols-3'>
-            <div class='rounded-lg border border-slate-200 bg-slate-50 p-4 text-center'>
+            <div class='border-border bg-muted rounded-lg border p-4 text-center'>
               <div class='mb-2 flex justify-center'>
-                <AiOutlineBook class='h-5 w-5 text-slate-500' />
+                <AiOutlineBook class='text-muted-foreground h-5 w-5' />
               </div>
-              <p class='text-2xl font-bold text-slate-900'>{studies().length}</p>
-              <p class='mt-1 text-xs font-medium text-slate-500'>Total Studies</p>
+              <p class='text-foreground text-2xl font-bold'>{studies().length}</p>
+              <p class='text-muted-foreground mt-1 text-xs font-medium'>Total Studies</p>
             </div>
             <div class='rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-center'>
               <div class='mb-2 flex justify-center'>
@@ -265,12 +265,12 @@ export default function OverviewTab() {
 
         {/* Inter-rater Reliability Section */}
         <Show when={interRaterMetrics().studyCount > 0}>
-          <div class='mt-5 rounded-lg border border-slate-200 bg-slate-50 p-4'>
-            <h3 class='mb-4 text-sm font-semibold text-slate-900'>Inter-rater Reliability</h3>
+          <div class='border-border bg-muted mt-5 rounded-lg border p-4'>
+            <h3 class='text-foreground mb-4 text-sm font-semibold'>Inter-rater Reliability</h3>
             <div class='grid grid-cols-1 gap-4 md:grid-cols-3'>
               <div class='text-center'>
-                <p class='text-2xl font-bold text-slate-900'>{interRaterMetrics().studyCount}</p>
-                <p class='mt-1 text-xs text-slate-500'>Studies Included</p>
+                <p class='text-foreground text-2xl font-bold'>{interRaterMetrics().studyCount}</p>
+                <p class='text-muted-foreground mt-1 text-xs'>Studies Included</p>
               </div>
               <div class='text-center'>
                 <p class='text-2xl font-bold text-emerald-600'>
@@ -278,7 +278,7 @@ export default function OverviewTab() {
                     `${interRaterMetrics().percentAgreement.toFixed(1)}%`
                   : 'N/A'}
                 </p>
-                <p class='mt-1 text-xs text-slate-500'>Percent Agreement</p>
+                <p class='text-muted-foreground mt-1 text-xs'>Percent Agreement</p>
               </div>
               <div class='text-center'>
                 <p class='text-2xl font-bold text-blue-600'>
@@ -286,7 +286,7 @@ export default function OverviewTab() {
                     interRaterMetrics().cohensKappa.toFixed(3)
                   : 'N/A'}
                 </p>
-                <p class='mt-1 text-xs text-slate-500'>
+                <p class='text-muted-foreground mt-1 text-xs'>
                   Cohen's Kappa ({getKappaInterpretation(interRaterMetrics().cohensKappa)})
                 </p>
               </div>
@@ -296,15 +296,15 @@ export default function OverviewTab() {
       </div>
 
       {/* Section 2: Team Members */}
-      <div class='mb-6 rounded-xl border border-slate-200 bg-white p-5'>
+      <div class='border-border bg-card mb-6 rounded-xl border p-5'>
         <div class='mb-4 flex items-center justify-between'>
-          <h3 class='text-base font-semibold text-slate-900'>Team Members ({members().length})</h3>
+          <h3 class='text-foreground text-base font-semibold'>Team Members ({members().length})</h3>
           <Show when={isOwner()}>
             <Show
               when={canAddMember()}
               fallback={
                 <span
-                  class='inline-flex cursor-not-allowed items-center gap-1.5 rounded-lg bg-slate-100 px-3 py-1.5 text-sm font-medium text-slate-400'
+                  class='bg-secondary text-muted-foreground/70 inline-flex cursor-not-allowed items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium'
                   title='Collaborator limit reached. Upgrade your plan to add more team members.'
                 >
                   <FiPlus class='h-4 w-4' />
@@ -314,7 +314,7 @@ export default function OverviewTab() {
             >
               <button
                 onClick={() => setShowAddMemberModal(true)}
-                class='inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:outline-none'
+                class='bg-primary hover:bg-primary/90 focus:ring-primary inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium text-white transition-colors focus:ring-2 focus:outline-none'
               >
                 <FiPlus class='h-4 w-4' />
                 Invite
@@ -350,17 +350,17 @@ export default function OverviewTab() {
                           }
                           alt={member.name || member.email}
                         />
-                        <AvatarFallback class='bg-blue-600 text-white'>
+                        <AvatarFallback class='bg-primary text-white'>
                           {getInitials(member.name || member.email)}
                         </AvatarFallback>
                       </Avatar>
                       <div>
-                        <p class='font-medium text-slate-900'>
+                        <p class='text-foreground font-medium'>
                           {member.name || 'Unknown'}
-                          {isSelf && <span class='ml-1 text-slate-400'>(you)</span>}
+                          {isSelf && <span class='text-muted-foreground/70 ml-1'>(you)</span>}
                         </p>
                         <Show when={userProgress().total > 0}>
-                          <p class='text-xs text-slate-500'>
+                          <p class='text-muted-foreground text-xs'>
                             {userProgress().completed}/{userProgress().total} studies completed
                           </p>
                         </Show>
@@ -375,7 +375,7 @@ export default function OverviewTab() {
                           onClick={() =>
                             handleRemoveMember(member.userId, member.name || member.email)
                           }
-                          class='rounded p-1.5 text-slate-400 transition-colors hover:bg-red-50 hover:text-red-600 focus:ring-2 focus:ring-blue-500 focus:outline-none'
+                          class='text-muted-foreground/70 focus:ring-primary rounded p-1.5 transition-colors hover:bg-red-50 hover:text-red-600 focus:ring-2 focus:outline-none'
                           title={isSelf ? 'Leave project' : 'Remove member'}
                         >
                           <FiTrash2 class='h-4 w-4' />
@@ -404,11 +404,11 @@ export default function OverviewTab() {
       {/* Section 3: Results */}
       <div class='space-y-4'>
         {/* Figures Section - Collapsible */}
-        <div class='overflow-hidden rounded-xl border border-slate-200 bg-white'>
+        <div class='border-border bg-card overflow-hidden rounded-xl border'>
           <Collapsible open={chartsExpanded()} onOpenChange={setChartsExpanded}>
-            <CollapsibleTrigger class='w-full cursor-pointer justify-between px-5 py-4 transition-colors select-none hover:bg-slate-50'>
-              <h2 class='text-base font-semibold text-slate-900'>Figures</h2>
-              <div class='flex items-center gap-2 text-sm text-slate-500'>
+            <CollapsibleTrigger class='hover:bg-muted w-full cursor-pointer justify-between px-5 py-4 transition-colors select-none'>
+              <h2 class='text-foreground text-base font-semibold'>Figures</h2>
+              <div class='text-muted-foreground flex items-center gap-2 text-sm'>
                 {chartsExpanded() ? 'Click to collapse' : 'Click to expand'}
                 <CollapsibleIndicator>
                   <FiChevronDown class='h-4 w-4' />
@@ -416,18 +416,18 @@ export default function OverviewTab() {
               </div>
             </CollapsibleTrigger>
             <CollapsibleContent>
-              <div class='border-t border-slate-100 px-5 py-5'>
+              <div class='border-border-subtle border-t px-5 py-5'>
                 <ChartSection studies={studies} members={members} />
               </div>
             </CollapsibleContent>
           </Collapsible>
         </div>
         {/* Tables Section - Collapsible */}
-        <div class='overflow-hidden rounded-xl border border-slate-200 bg-white'>
+        <div class='border-border bg-card overflow-hidden rounded-xl border'>
           <Collapsible open={tablesExpanded()} onOpenChange={setTablesExpanded}>
-            <CollapsibleTrigger class='w-full cursor-pointer justify-between px-5 py-4 transition-colors select-none hover:bg-slate-50'>
-              <h2 class='text-base font-semibold text-slate-900'>Tables</h2>
-              <div class='flex items-center gap-2 text-sm text-slate-500'>
+            <CollapsibleTrigger class='hover:bg-muted w-full cursor-pointer justify-between px-5 py-4 transition-colors select-none'>
+              <h2 class='text-foreground text-base font-semibold'>Tables</h2>
+              <div class='text-muted-foreground flex items-center gap-2 text-sm'>
                 {tablesExpanded() ? 'Click to collapse' : 'Click to expand'}
                 <CollapsibleIndicator>
                   <FiChevronDown class='h-4 w-4' />
@@ -435,7 +435,7 @@ export default function OverviewTab() {
               </div>
             </CollapsibleTrigger>
             <CollapsibleContent>
-              <div class='border-t border-slate-100 px-5 py-5'>
+              <div class='border-border-subtle border-t px-5 py-5'>
                 <AMSTAR2ResultsTable studies={studies} />
               </div>
             </CollapsibleContent>

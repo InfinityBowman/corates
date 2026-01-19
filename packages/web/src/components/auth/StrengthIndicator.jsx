@@ -43,7 +43,7 @@ export default function StrengthIndicator(props) {
   return (
     <div class='mt-2 w-full'>
       {/* Requirements */}
-      <div class='text-xs text-gray-700' id='password-requirements' aria-live='polite'>
+      <div class='text-secondary-foreground text-xs' id='password-requirements' aria-live='polite'>
         <ul class='pace-y-0.5 sm:space-y-1'>
           <For each={requirementsList}>
             {req => {

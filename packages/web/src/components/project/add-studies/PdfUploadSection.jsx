@@ -15,7 +15,7 @@ export default function PdfUploadSection(props) {
 
   return (
     <div class='space-y-3'>
-      <p class='text-sm text-gray-500'>
+      <p class='text-muted-foreground text-sm'>
         Upload research papers to automatically create studies. Titles will be extracted from each
         PDF.
       </p>
@@ -26,11 +26,11 @@ export default function PdfUploadSection(props) {
         onFileAccept={details => studies().handlePdfSelect(details.files)}
       >
         <FileUploadDropzone class='min-h-24 p-4'>
-          <FiUploadCloud class='h-6 w-6 text-gray-400' />
-          <p class='mt-2 text-center text-xs text-gray-600'>
-            <span class='font-medium text-blue-600'>Click to upload</span> or drag and drop
+          <FiUploadCloud class='text-muted-foreground/70 h-6 w-6' />
+          <p class='text-secondary-foreground mt-2 text-center text-xs'>
+            <span class='text-primary font-medium'>Click to upload</span> or drag and drop
           </p>
-          <p class='mt-1 text-xs text-gray-400'>PDF files only</p>
+          <p class='text-muted-foreground/70 mt-1 text-xs'>PDF files only</p>
         </FileUploadDropzone>
         <FileUploadHiddenInput />
       </FileUpload>
@@ -43,13 +43,13 @@ export default function PdfUploadSection(props) {
                 class='flex items-center gap-3 rounded-lg border p-3'
                 classList={{
                   'bg-red-50 border-red-200': pdf.error,
-                  'bg-gray-50 border-gray-200': !pdf.error,
+                  'bg-muted border-border': !pdf.error,
                 }}
               >
                 <CgFileDocument
                   class='h-5 w-5 shrink-0'
                   classList={{
-                    'text-gray-500': !pdf.error,
+                    'text-muted-foreground': !pdf.error,
                     'text-red-600': pdf.error,
                   }}
                 />
@@ -75,9 +75,9 @@ export default function PdfUploadSection(props) {
                   <Show when={!pdf.error && pdf.extracting}>
                     <div class='flex items-center gap-2'>
                       <div class='h-4 w-4 animate-spin rounded-full border-2 border-blue-500 border-t-transparent' />
-                      <span class='text-sm text-gray-500'>Extracting metadata...</span>
+                      <span class='text-muted-foreground text-sm'>Extracting metadata...</span>
                     </div>
-                    <p class='mt-1 truncate text-xs text-gray-400'>{pdf.file.name}</p>
+                    <p class='text-muted-foreground/70 mt-1 truncate text-xs'>{pdf.file.name}</p>
                   </Show>
 
                   {/* Success state */}
@@ -87,7 +87,7 @@ export default function PdfUploadSection(props) {
                         type='text'
                         value={pdf.title || ''}
                         onInput={e => studies().updatePdfTitle(pdf.id, e.target.value)}
-                        class='flex-1 border-none bg-transparent p-0 text-sm font-medium text-gray-900 focus:ring-0 focus:outline-none'
+                        class='text-foreground flex-1 border-none bg-transparent p-0 text-sm font-medium focus:ring-0 focus:outline-none'
                         placeholder='Study title'
                       />
                       <Show when={pdf.matchedToRef}>
@@ -101,11 +101,11 @@ export default function PdfUploadSection(props) {
                       </Show>
                     </div>
                     <div class='flex items-center gap-2'>
-                      <p class='truncate text-xs text-gray-500'>{pdf.file.name}</p>
+                      <p class='text-muted-foreground truncate text-xs'>{pdf.file.name}</p>
                       {/* Loading metadata indicator */}
                       <Show when={pdf.metadataLoading}>
-                        <span class='text-xs text-gray-400'>|</span>
-                        <span class='inline-flex items-center gap-1 text-xs text-blue-600'>
+                        <span class='text-muted-foreground/70 text-xs'>|</span>
+                        <span class='text-primary inline-flex items-center gap-1 text-xs'>
                           <div class='h-3 w-3 animate-spin rounded-full border border-blue-500 border-t-transparent' />
                           Loading citation...
                         </span>
@@ -117,8 +117,8 @@ export default function PdfUploadSection(props) {
                           (pdf.metadata?.firstAuthor || pdf.metadata?.publicationYear)
                         }
                       >
-                        <span class='text-xs text-gray-400'>|</span>
-                        <span class='shrink-0 text-xs text-gray-600'>
+                        <span class='text-muted-foreground/70 text-xs'>|</span>
+                        <span class='text-secondary-foreground shrink-0 text-xs'>
                           <Show when={pdf.metadata.firstAuthor}>
                             {pdf.metadata.firstAuthor}
                             <Show when={pdf.metadata.publicationYear}>, </Show>
@@ -134,7 +134,7 @@ export default function PdfUploadSection(props) {
                 <button
                   type='button'
                   onClick={() => studies().removePdf(pdf.id)}
-                  class='rounded p-1.5 text-gray-400 transition-colors hover:bg-red-50 hover:text-red-600 focus:ring-2 focus:ring-blue-500 focus:outline-none'
+                  class='text-muted-foreground/70 focus:ring-primary rounded p-1.5 transition-colors hover:bg-red-50 hover:text-red-600 focus:ring-2 focus:outline-none'
                 >
                   <BiRegularTrash class='h-4 w-4' />
                 </button>

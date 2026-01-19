@@ -165,13 +165,13 @@ export default function AddMemberModal(props) {
         }}
         onKeyDown={handleKeyDown}
       >
-        <div class='mx-4 w-full max-w-md rounded-lg bg-white shadow-xl'>
+        <div class='bg-card mx-4 w-full max-w-md rounded-lg shadow-xl'>
           {/* Header */}
-          <div class='flex items-center justify-between border-b border-gray-200 p-4'>
-            <h2 class='text-lg font-semibold text-gray-900'>Add Member</h2>
+          <div class='border-border flex items-center justify-between border-b p-4'>
+            <h2 class='text-foreground text-lg font-semibold'>Add Member</h2>
             <button
               onClick={handleClose}
-              class='text-gray-400 transition-colors hover:text-gray-600'
+              class='text-muted-foreground/70 hover:text-secondary-foreground transition-colors'
             >
               <FiX class='h-5 w-5' />
             </button>
@@ -198,7 +198,7 @@ export default function AddMemberModal(props) {
 
             {/* Search Input */}
             <div class='relative'>
-              <label class='mb-1 block text-sm font-medium text-gray-700'>
+              <label class='text-secondary-foreground mb-1 block text-sm font-medium'>
                 Search by name or email
               </label>
               <input
@@ -208,13 +208,13 @@ export default function AddMemberModal(props) {
                 value={searchQuery()}
                 onInput={e => handleSearchInput(e.target.value)}
                 placeholder='Type at least 2 characters...'
-                class='w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-400 focus:border-transparent focus:ring-2 focus:ring-blue-500 focus:outline-none'
+                class='border-border text-foreground placeholder-muted-foreground/70 focus:ring-primary w-full rounded-lg border px-3 py-2 focus:border-transparent focus:ring-2 focus:outline-none'
                 disabled={isAtQuotaLimit()}
               />
 
               {/* Search Results Dropdown */}
               <Show when={searchResults().length > 0 && !selectedUser()}>
-                <div class='absolute z-10 mt-1 max-h-48 w-full overflow-y-auto rounded-lg border border-gray-200 bg-white shadow-lg'>
+                <div class='border-border bg-card absolute z-10 mt-1 max-h-48 w-full overflow-y-auto rounded-lg border shadow-lg'>
                   <For each={searchResults()}>
                     {user => (
                       <button
@@ -224,13 +224,15 @@ export default function AddMemberModal(props) {
                       >
                         <Avatar class='h-8 w-8 shrink-0'>
                           <AvatarImage src={user.image} alt={user.name || user.email} />
-                          <AvatarFallback class='bg-blue-600 text-sm text-white'>
+                          <AvatarFallback class='bg-primary text-sm text-white'>
                             {getInitials(user.name || user.email)}
                           </AvatarFallback>
                         </Avatar>
                         <div class='min-w-0'>
-                          <p class='truncate font-medium text-gray-900'>{user.name || 'Unknown'}</p>
-                          <p class='truncate text-sm text-gray-500'>{user.email}</p>
+                          <p class='text-foreground truncate font-medium'>
+                            {user.name || 'Unknown'}
+                          </p>
+                          <p class='text-muted-foreground truncate text-sm'>{user.email}</p>
                         </div>
                       </button>
                     )}
@@ -256,13 +258,13 @@ export default function AddMemberModal(props) {
                 !canAddByEmail()
               }
             >
-              <p class='text-sm text-gray-500'>No users found matching "{searchQuery()}"</p>
+              <p class='text-muted-foreground text-sm'>No users found matching "{searchQuery()}"</p>
             </Show>
 
             {/* Email invitation prompt */}
             <Show when={canAddByEmail()}>
               <div class='rounded-lg border border-blue-200 bg-blue-50 p-3'>
-                <p class='text-sm text-gray-700'>
+                <p class='text-secondary-foreground text-sm'>
                   No user found with this email. You can send an invitation to{' '}
                   <span class='font-medium'>{searchQuery().trim()}</span> to join the project.
                 </p>
@@ -278,13 +280,13 @@ export default function AddMemberModal(props) {
                       src={selectedUser().image}
                       alt={selectedUser().name || selectedUser().email}
                     />
-                    <AvatarFallback class='bg-blue-600 text-white'>
+                    <AvatarFallback class='bg-primary text-white'>
                       {getInitials(selectedUser().name || selectedUser().email)}
                     </AvatarFallback>
                   </Avatar>
                   <div>
-                    <p class='font-medium text-gray-900'>{selectedUser().name || 'Unknown'}</p>
-                    <p class='text-sm text-gray-500'>{selectedUser().email}</p>
+                    <p class='text-foreground font-medium'>{selectedUser().name || 'Unknown'}</p>
+                    <p class='text-muted-foreground text-sm'>{selectedUser().email}</p>
                   </div>
                 </div>
                 <button
@@ -292,7 +294,7 @@ export default function AddMemberModal(props) {
                     setSimpleSelectedUser(null);
                     setSearchQuery('');
                   }}
-                  class='text-gray-400 hover:text-gray-600'
+                  class='text-muted-foreground/70 hover:text-secondary-foreground'
                 >
                   <FiX class='h-5 w-5' />
                 </button>
@@ -323,17 +325,17 @@ export default function AddMemberModal(props) {
           </div>
 
           {/* Footer */}
-          <div class='flex justify-end gap-3 border-t border-gray-200 p-4'>
+          <div class='border-border flex justify-end gap-3 border-t p-4'>
             <button
               onClick={handleClose}
-              class='rounded-lg border border-gray-300 px-4 py-2 font-medium text-gray-700 transition-colors hover:border-gray-400'
+              class='border-border text-secondary-foreground hover:border-border-strong rounded-lg border px-4 py-2 font-medium transition-colors'
             >
               Cancel
             </button>
             <button
               onClick={handleAddMember}
               disabled={(!selectedUser() && !canAddByEmail()) || adding() || isAtQuotaLimit()}
-              class='rounded-lg bg-blue-600 px-4 py-2 font-medium text-white transition-colors hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50'
+              class='bg-primary hover:bg-primary/90 focus:ring-primary rounded-lg px-4 py-2 font-medium text-white transition-colors focus:ring-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50'
             >
               {adding() ?
                 canAddByEmail() ?

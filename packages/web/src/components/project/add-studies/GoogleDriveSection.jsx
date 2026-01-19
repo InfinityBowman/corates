@@ -23,7 +23,7 @@ export default function GoogleDriveSection(props) {
 
   return (
     <div class='space-y-3'>
-      <p class='text-sm text-gray-500'>
+      <p class='text-muted-foreground text-sm'>
         Import PDFs from your Google Drive. Each selected file will create a new study.
       </p>
 
@@ -31,13 +31,13 @@ export default function GoogleDriveSection(props) {
       <Show when={selectedCount() > 0}>
         <div class='space-y-2'>
           <div class='flex items-center justify-between'>
-            <span class='text-sm font-medium text-gray-700'>
+            <span class='text-secondary-foreground text-sm font-medium'>
               {selectedCount()} {selectedCount() === 1 ? 'file' : 'files'} selected
             </span>
             <button
               type='button'
               onClick={() => studies().clearDriveFiles()}
-              class='text-xs text-gray-500 transition-colors hover:text-red-600'
+              class='text-muted-foreground text-xs transition-colors hover:text-red-600'
             >
               Clear all
             </button>
@@ -48,13 +48,13 @@ export default function GoogleDriveSection(props) {
                 <div class='flex items-center gap-3 rounded-lg border border-blue-200 bg-blue-50 p-2'>
                   <FiFile class='h-4 w-4 shrink-0 text-red-600' />
                   <div class='min-w-0 flex-1'>
-                    <p class='truncate text-sm font-medium text-gray-900'>{file.name}</p>
-                    <p class='text-xs text-gray-500'>{formatFileSize(file.size)}</p>
+                    <p class='text-foreground truncate text-sm font-medium'>{file.name}</p>
+                    <p class='text-muted-foreground text-xs'>{formatFileSize(file.size)}</p>
                   </div>
                   <button
                     type='button'
                     onClick={() => studies().removeDriveFile(file.id)}
-                    class='rounded p-1 text-gray-400 transition-colors hover:bg-red-50 hover:text-red-600 focus:ring-2 focus:ring-blue-500 focus:outline-none'
+                    class='text-muted-foreground/70 focus:ring-primary rounded p-1 transition-colors hover:bg-red-50 hover:text-red-600 focus:ring-2 focus:outline-none'
                   >
                     <BiRegularTrash class='h-4 w-4' />
                   </button>

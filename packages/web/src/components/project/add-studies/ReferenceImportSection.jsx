@@ -26,16 +26,18 @@ export default function ReferenceImportSection(props) {
         when={studies().importedRefs().length === 0}
         fallback={
           <div class='space-y-3'>
-            <div class='flex items-center justify-between rounded-lg bg-gray-50 px-3 py-2'>
-              <div class='flex items-center gap-2 text-sm text-gray-600'>
+            <div class='bg-muted flex items-center justify-between rounded-lg px-3 py-2'>
+              <div class='text-secondary-foreground flex items-center gap-2 text-sm'>
                 <AiOutlineFileText class='h-4 w-4' />
                 <span class='max-w-48 truncate'>{studies().refFileName()}</span>
-                <span class='text-gray-400'>({studies().importedRefs().length} references)</span>
+                <span class='text-muted-foreground/70'>
+                  ({studies().importedRefs().length} references)
+                </span>
               </div>
               <button
                 type='button'
                 onClick={studies().clearImportedRefs}
-                class='text-xs font-medium text-blue-600 hover:text-blue-700'
+                class='text-primary hover:text-primary text-xs font-medium'
               >
                 Change file
               </button>
@@ -80,7 +82,7 @@ export default function ReferenceImportSection(props) {
               </div>
             </Show>
 
-            <div class='flex items-center gap-2 border-b border-gray-200 pb-2'>
+            <div class='border-border flex items-center gap-2 border-b pb-2'>
               <CheckboxRoot
                 checked={
                   (
@@ -106,7 +108,7 @@ export default function ReferenceImportSection(props) {
                     class={`flex cursor-pointer items-start gap-3 rounded-lg p-2 transition-colors ${
                       studies().selectedRefIds().has(ref._id) ?
                         'bg-blue-50 hover:bg-blue-100'
-                      : 'bg-gray-50 hover:bg-gray-100'
+                      : 'bg-muted hover:bg-secondary'
                     }`}
                     onClick={() => studies().toggleRefSelection(ref._id)}
                   >
@@ -119,7 +121,7 @@ export default function ReferenceImportSection(props) {
                     </CheckboxRoot>
                     <div class='min-w-0 flex-1'>
                       <div class='flex items-center gap-2'>
-                        <p class='line-clamp-2 flex-1 text-sm font-medium text-gray-900'>
+                        <p class='text-foreground line-clamp-2 flex-1 text-sm font-medium'>
                           {ref.title}
                         </p>
                         <Show when={ref.pdfData}>
@@ -146,7 +148,7 @@ export default function ReferenceImportSection(props) {
                           </span>
                         </Show>
                       </div>
-                      <p class='mt-0.5 text-xs text-gray-500'>
+                      <p class='text-muted-foreground mt-0.5 text-xs'>
                         {getRefDisplayName(ref)}
                         <Show when={ref.journal}>
                           <span class='mx-1'>-</span>
@@ -171,7 +173,7 @@ export default function ReferenceImportSection(props) {
           </div>
         }
       >
-        <p class='text-sm text-gray-500'>
+        <p class='text-muted-foreground text-sm'>
           Import references from Zotero, EndNote, Mendeley, or other reference managers. You can
           also drop PDFs alongside your reference file to automatically match them.
         </p>
@@ -182,16 +184,16 @@ export default function ReferenceImportSection(props) {
           onFileAccept={details => studies().handleRefFileSelect(details.files)}
         >
           <FileUploadDropzone class='min-h-24 p-4'>
-            <FiUploadCloud class='h-6 w-6 text-gray-400' />
-            <p class='mt-2 text-center text-xs text-gray-600'>
-              <span class='font-medium text-blue-600'>Click to upload</span> or drag and drop
+            <FiUploadCloud class='text-muted-foreground/70 h-6 w-6' />
+            <p class='text-secondary-foreground mt-2 text-center text-xs'>
+              <span class='text-primary font-medium'>Click to upload</span> or drag and drop
             </p>
-            <p class='mt-1 text-xs text-gray-400'>RIS, EndNote, BibTeX, or PDF files</p>
+            <p class='text-muted-foreground/70 mt-1 text-xs'>RIS, EndNote, BibTeX, or PDF files</p>
           </FileUploadDropzone>
           <FileUploadHiddenInput />
         </FileUpload>
 
-        <div class='text-xs text-gray-500'>
+        <div class='text-muted-foreground text-xs'>
           <p class='mb-1 font-medium'>Supported formats:</p>
           <ul class='list-inside list-disc space-y-0.5'>
             <For each={SUPPORTED_FORMATS}>
@@ -202,13 +204,13 @@ export default function ReferenceImportSection(props) {
               )}
             </For>
           </ul>
-          <p class='mt-2 text-gray-400'>
+          <p class='text-muted-foreground/70 mt-2'>
             Tip: Drop a folder from your reference manager to import references and PDFs together.
           </p>
         </div>
 
         <Show when={studies().parsingRefs()}>
-          <div class='flex items-center justify-center gap-2 py-4 text-gray-500'>
+          <div class='text-muted-foreground flex items-center justify-center gap-2 py-4'>
             <div class='h-4 w-4 animate-spin rounded-full border-2 border-blue-500 border-t-transparent' />
             <span>Parsing references...</span>
           </div>

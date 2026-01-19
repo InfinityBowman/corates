@@ -169,14 +169,16 @@ export default function GoogleDrivePickerLauncher(props) {
       </Show>
 
       <Show when={connected() === false}>
-        <div class='rounded-lg border border-gray-200 px-4 py-4 text-center'>
+        <div class='border-border rounded-lg border px-4 py-4 text-center'>
           <img src='/logos/drive.svg' alt='Google Drive' class='mx-auto mb-3 h-10 w-10' />
-          <h4 class='mb-1 text-sm font-medium text-gray-900'>Connect Google Drive</h4>
-          <p class='mb-4 text-xs text-gray-500'>Connect your Google account to select PDFs.</p>
+          <h4 class='text-foreground mb-1 text-sm font-medium'>Connect Google Drive</h4>
+          <p class='text-muted-foreground mb-4 text-xs'>
+            Connect your Google account to select PDFs.
+          </p>
           <button
             type='button'
             onClick={handleConnectGoogle}
-            class='inline-flex items-center gap-2 rounded-lg bg-blue-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-blue-700'
+            class='bg-primary hover:bg-primary/90 inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-medium text-white transition-colors'
           >
             <img src='/logos/drive.svg' alt='' class='h-4 w-4' />
             Connect Google Account
@@ -189,7 +191,7 @@ export default function GoogleDrivePickerLauncher(props) {
           type='button'
           onClick={handleOpenPicker}
           disabled={loading() || !!props.disabled || !!props.busy || !pickerConfigured()}
-          class='mx-auto flex w-full max-w-xl items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-3 text-white transition-colors hover:bg-blue-700 disabled:opacity-50'
+          class='bg-primary hover:bg-primary/90 mx-auto flex w-full max-w-xl items-center justify-center gap-2 rounded-lg px-4 py-3 text-white transition-colors disabled:opacity-50'
         >
           <Show
             when={!loading() && !props.busy}

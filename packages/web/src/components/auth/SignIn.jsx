@@ -174,7 +174,7 @@ export default function SignIn() {
   }
 
   return (
-    <div class='relative w-full max-w-md space-y-4 rounded-xl border border-gray-100 bg-white p-6 shadow-2xl sm:max-w-xl sm:rounded-3xl sm:p-12'>
+    <div class='border-border-subtle bg-card relative w-full max-w-md space-y-4 rounded-xl border p-6 shadow-2xl sm:max-w-xl sm:rounded-3xl sm:p-12'>
       {/* Logo */}
       <a href='/' class='absolute top-4 left-4 sm:top-6 sm:left-6'>
         <img src='/logo.svg' alt='CoRATES' class='h-6 w-auto sm:h-7' />
@@ -188,17 +188,20 @@ export default function SignIn() {
       {/* Normal Sign In */}
       <Show when={!showTwoFactor()}>
         <div class='mb-2 text-center sm:mb-4'>
-          <h2 class='mb-1 text-xl font-bold text-gray-900 sm:mb-2 sm:text-2xl' id='signin-heading'>
+          <h2
+            class='text-foreground mb-1 text-xl font-bold sm:mb-2 sm:text-2xl'
+            id='signin-heading'
+          >
             Welcome Back
           </h2>
-          <p class='text-xs text-gray-500 sm:text-sm'>Sign in to your account.</p>
+          <p class='text-muted-foreground text-xs sm:text-sm'>Sign in to your account.</p>
         </div>
 
         <LastLoginHint />
 
         {/* Toggle between password and magic link */}
         <div
-          class='relative flex rounded-lg bg-gray-100 p-1'
+          class='bg-secondary relative flex rounded-lg p-1'
           role='tablist'
           aria-label='Sign in method'
           onKeyDown={e => {
@@ -213,7 +216,7 @@ export default function SignIn() {
           {/* Sliding indicator */}
           <div
             aria-hidden='true'
-            class='absolute top-1 bottom-1 left-1 w-[calc(50%-4px)] rounded-md bg-white shadow-sm transition-transform duration-300'
+            class='bg-card absolute top-1 bottom-1 left-1 w-[calc(50%-4px)] rounded-md shadow-sm transition-transform duration-300'
             style={{
               transform: useMagicLink() ? 'translateX(100%)' : 'translateX(0)',
               'transition-timing-function': 'cubic-bezier(0.22, 1, 0.36, 1)',
@@ -228,7 +231,7 @@ export default function SignIn() {
             aria-controls='panel-password'
             onClick={() => setUseMagicLink(false)}
             class={`relative z-10 flex-1 rounded-md px-3 py-2 text-xs font-medium transition-colors duration-300 sm:text-sm ${
-              !useMagicLink() ? 'text-gray-900' : 'text-gray-600 hover:text-gray-900'
+              !useMagicLink() ? 'text-foreground' : 'text-muted-foreground hover:text-foreground'
             }`}
           >
             Password
@@ -242,7 +245,7 @@ export default function SignIn() {
             aria-controls='panel-magic-link'
             onClick={() => setUseMagicLink(true)}
             class={`relative z-10 flex-1 rounded-md px-3 py-2 text-xs font-medium transition-colors duration-300 sm:text-sm ${
-              useMagicLink() ? 'text-gray-900' : 'text-gray-600 hover:text-gray-900'
+              useMagicLink() ? 'text-foreground' : 'text-muted-foreground hover:text-foreground'
             }`}
           >
             Email Link
@@ -272,13 +275,13 @@ export default function SignIn() {
               aria-labelledby='tab-password'
               aria-hidden={useMagicLink()}
               inert={useMagicLink()}
-              class='w-1/2 shrink-0 bg-white pr-4'
+              class='bg-card w-1/2 shrink-0 pr-4'
             >
               <form aria-labelledby='signin-heading' onSubmit={handleSubmit} autocomplete='off'>
                 <div class='space-y-4'>
                   <div>
                     <label
-                      class='mb-1 block text-xs font-semibold text-gray-700 sm:mb-2 sm:text-sm'
+                      class='text-secondary-foreground mb-1 block text-xs font-semibold sm:mb-2 sm:text-sm'
                       for='email-input'
                     >
                       Email
@@ -290,7 +293,7 @@ export default function SignIn() {
                       spellCheck='false'
                       value={email()}
                       onInput={e => setEmail(e.target.value)}
-                      class='w-full rounded-lg border border-gray-300 py-2 pr-3 pl-3 text-xs transition focus:border-transparent focus:ring-2 focus:ring-blue-500 focus:outline-none sm:pr-4 sm:pl-4 sm:text-sm'
+                      class='border-border focus:ring-primary w-full rounded-lg border py-2 pr-3 pl-3 text-xs transition focus:border-transparent focus:ring-2 focus:outline-none sm:pr-4 sm:pl-4 sm:text-sm'
                       required
                       id='email-input'
                       placeholder='you@example.com'
@@ -301,7 +304,7 @@ export default function SignIn() {
 
                   <div>
                     <label
-                      class='mb-1 block text-xs font-semibold text-gray-700 sm:mb-2 sm:text-sm'
+                      class='text-secondary-foreground mb-1 block text-xs font-semibold sm:mb-2 sm:text-sm'
                       for='password-input'
                     >
                       Password
@@ -349,7 +352,7 @@ export default function SignIn() {
               aria-labelledby='tab-magic-link'
               aria-hidden={!useMagicLink()}
               inert={!useMagicLink()}
-              class='w-1/2 shrink-0 bg-white pl-4'
+              class='bg-card w-1/2 shrink-0 pl-4'
             >
               <MagicLinkForm callbackPath='/complete-profile' />
             </div>
@@ -371,7 +374,7 @@ export default function SignIn() {
           />
         </SocialAuthContainer>
 
-        <div class='mt-2 text-center text-xs text-gray-500 sm:mt-4 sm:text-sm'>
+        <div class='text-muted-foreground mt-2 text-center text-xs sm:mt-4 sm:text-sm'>
           Don&apos;t have an account?{' '}
           <AuthLink
             href='/signup'

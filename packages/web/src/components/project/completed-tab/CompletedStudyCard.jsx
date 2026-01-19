@@ -19,18 +19,18 @@ export default function CompletedStudyCard(props) {
   });
 
   return (
-    <div class='overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm transition-shadow duration-200 hover:shadow-md'>
-      <div class='border-b border-gray-200 bg-gray-50 p-4'>
+    <div class='border-border bg-card overflow-hidden rounded-lg border shadow-sm transition-shadow duration-200 hover:shadow-md'>
+      <div class='border-border bg-muted border-b p-4'>
         <div class='flex items-center justify-between gap-3'>
           <div class='min-w-0 flex-1'>
-            <h3 class='truncate text-lg font-semibold text-gray-900'>{props.study?.name}</h3>
+            <h3 class='text-foreground truncate text-lg font-semibold'>{props.study?.name}</h3>
             <Show when={props.study?.firstAuthor || props.study?.publicationYear}>
-              <p class='mt-0.5 text-sm text-gray-600'>
+              <p class='text-secondary-foreground mt-0.5 text-sm'>
                 <span class='font-medium'>{props.study?.firstAuthor || 'Unknown'}</span>
                 {props.study?.publicationYear && ` (${props.study.publicationYear})`}
                 <Show when={props.study?.journal}>
                   <span class='mx-1'>-</span>
-                  <span class='text-gray-500 italic'>{props.study.journal}</span>
+                  <span class='text-muted-foreground italic'>{props.study.journal}</span>
                 </Show>
               </p>
             </Show>
@@ -40,7 +40,7 @@ export default function CompletedStudyCard(props) {
             <Show when={hasPdfs()}>
               <button
                 onClick={() => props.onViewPdf?.(firstPdf())}
-                class='inline-flex items-center gap-1.5 rounded-lg bg-gray-100 px-3 py-1.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-200'
+                class='bg-secondary text-secondary-foreground hover:bg-secondary/80 inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors'
                 title='View PDF'
               >
                 <CgFileDocument class='h-4 w-4' />
@@ -53,9 +53,13 @@ export default function CompletedStudyCard(props) {
 
       <Show
         when={displayChecklists().length > 0}
-        fallback={<div class='p-4 text-center text-sm text-gray-400'>No completed checklists</div>}
+        fallback={
+          <div class='text-muted-foreground/70 p-4 text-center text-sm'>
+            No completed checklists
+          </div>
+        }
       >
-        <div class='divide-y divide-gray-200'>
+        <div class='divide-border divide-y'>
           <For each={displayChecklists()}>
             {checklist => (
               <CompletedChecklistRow

@@ -107,7 +107,7 @@ export default function SlidingPanel(props) {
       {/* Panel container - fixed position, no portal needed */}
       <div
         ref={panelRef}
-        class={`fixed inset-y-0 right-0 z-50 ${getSizeClass()} flex flex-col bg-white shadow-2xl`}
+        class={`fixed inset-y-0 right-0 z-50 ${getSizeClass()} bg-card flex flex-col shadow-2xl`}
         style={{
           transform: visible() ? 'translateX(0) translateZ(0)' : 'translateX(100%) translateZ(0)',
           transition: 'transform 250ms cubic-bezier(0.32, 0.72, 0, 1)',
@@ -119,14 +119,14 @@ export default function SlidingPanel(props) {
         aria-label={props.title || 'Side panel'}
       >
         {/* Header */}
-        <div class='flex shrink-0 items-center justify-between border-b border-gray-200 px-4 py-3'>
+        <div class='border-border flex shrink-0 items-center justify-between border-b px-4 py-3'>
           <Show when={props.title}>
-            <h2 class='truncate pr-4 text-lg font-semibold text-gray-900'>{props.title}</h2>
+            <h2 class='text-foreground truncate pr-4 text-lg font-semibold'>{props.title}</h2>
           </Show>
           <button
             type='button'
             onClick={() => props.onClose?.(false)}
-            class='ml-auto rounded-md p-1.5 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600'
+            class='text-muted-foreground/70 hover:bg-secondary hover:text-secondary-foreground ml-auto rounded-md p-1.5 transition-colors'
             aria-label='Close panel'
           >
             <FiX class='h-5 w-5' />

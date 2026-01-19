@@ -33,8 +33,8 @@ export default function LastLoginHint() {
 
   return (
     <Show when={lastMethod()}>
-      <div class='flex items-center justify-center gap-2 rounded-lg bg-gray-50 px-3 py-2 text-xs text-gray-500'>
-        <span class='text-gray-400'>{getIcon()}</span>
+      <div class='bg-muted text-muted-foreground flex items-center justify-center gap-2 rounded-lg px-3 py-2 text-xs'>
+        <span class='text-muted-foreground/70'>{getIcon()}</span>
         <span>You last signed in with {LOGIN_METHOD_LABELS[lastMethod()]}</span>
       </div>
     </Show>

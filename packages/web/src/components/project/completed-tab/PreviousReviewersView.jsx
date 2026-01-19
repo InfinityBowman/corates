@@ -179,7 +179,7 @@ export default function PreviousReviewersView(props) {
                 when={hasData()}
                 fallback={
                   <div class='flex flex-1 items-center justify-center py-16'>
-                    <div class='text-center text-gray-500'>
+                    <div class='text-muted-foreground text-center'>
                       {loading() ?
                         'Loading appraisals...'
                       : 'No previous reviewer appraisals found.'}
@@ -190,12 +190,12 @@ export default function PreviousReviewersView(props) {
                 <Show when={reviewerTabs().length > 1}>
                   <div class='mb-4'>
                     <Tabs value={activeTab()} onValueChange={setActiveTab}>
-                      <TabsList class='overflow-x-auto rounded-t-lg border border-gray-200 bg-white'>
+                      <TabsList class='border-border bg-card overflow-x-auto rounded-t-lg border'>
                         <For each={reviewerTabs()}>
                           {tab => (
                             <TabsTrigger
                               value={tab.value}
-                              class='gap-2 border-b-2 border-transparent text-gray-600 hover:bg-gray-50 hover:text-gray-900 data-[selected]:border-blue-600 data-[selected]:text-gray-900'
+                              class='text-secondary-foreground hover:bg-muted hover:text-foreground data-[selected]:text-foreground gap-2 border-b-2 border-transparent data-[selected]:border-blue-600'
                             >
                               {tab.label}
                             </TabsTrigger>
@@ -206,14 +206,14 @@ export default function PreviousReviewersView(props) {
                   </div>
                 </Show>
 
-                <div class='flex-1 overflow-y-auto rounded-lg border border-gray-200 bg-white p-6'>
+                <div class='border-border bg-card flex-1 overflow-y-auto rounded-lg border p-6'>
                   <Show when={currentChecklistData()}>
-                    <div class='mb-4 border-b border-gray-200 pb-3'>
+                    <div class='border-border mb-4 border-b pb-3'>
                       <div class='flex items-center justify-between'>
-                        <h3 class='text-base font-semibold text-gray-900'>
+                        <h3 class='text-foreground text-base font-semibold'>
                           {currentChecklistData()?.reviewerName || 'Reviewer'}
                         </h3>
-                        <span class='text-sm text-gray-500'>
+                        <span class='text-muted-foreground text-sm'>
                           {currentChecklistType() ?
                             getChecklistMetadata(currentChecklistType())?.name ||
                             currentChecklistType()
