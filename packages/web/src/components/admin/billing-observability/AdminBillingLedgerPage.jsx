@@ -49,11 +49,11 @@ const getStatusColor = status => {
     case 'ignored_unverified':
       return 'bg-yellow-100 text-yellow-800';
     case 'skipped_duplicate':
-      return 'bg-gray-100 text-foreground';
+      return 'bg-secondary text-foreground';
     case 'received':
       return 'bg-blue-100 text-blue-800';
     default:
-      return 'bg-gray-100 text-foreground';
+      return 'bg-secondary text-foreground';
   }
 };
 

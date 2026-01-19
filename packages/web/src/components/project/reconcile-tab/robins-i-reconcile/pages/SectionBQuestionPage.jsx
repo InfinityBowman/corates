@@ -29,7 +29,7 @@ export default function SectionBQuestionPage(props) {
   const responseOptions = () => RESPONSE_TYPES[question()?.responseType] || RESPONSE_TYPES.STANDARD;
 
   return (
-    <div class='overflow-hidden rounded-lg bg-white shadow-lg'>
+    <div class='bg-card overflow-hidden rounded-lg shadow-lg'>
       {/* Question Header */}
       <div
         class={`p-4 ${
@@ -38,11 +38,11 @@ export default function SectionBQuestionPage(props) {
           : 'border-b border-amber-200 bg-amber-50'
         }`}
       >
-        <h2 class='text-md font-medium text-gray-900'>
+        <h2 class='text-md text-foreground font-medium'>
           <span class='font-semibold'>{props.questionKey.toUpperCase()}.</span> {question()?.text}
         </h2>
         <Show when={question()?.info}>
-          <p class='mt-2 text-sm text-gray-600'>{question().info}</p>
+          <p class='text-muted-foreground mt-2 text-sm'>{question().info}</p>
         </Show>
         <div class='mt-2 flex items-center gap-3'>
           <span
@@ -54,7 +54,7 @@ export default function SectionBQuestionPage(props) {
       </div>
 
       {/* Three Column Layout */}
-      <div class='grid grid-cols-3 divide-x divide-gray-200'>
+      <div class='divide-border grid grid-cols-3 divide-x'>
         {/* Reviewer 1 Panel */}
         <RobinsAnswerPanel
           title={props.reviewer1Name || 'Reviewer 1'}

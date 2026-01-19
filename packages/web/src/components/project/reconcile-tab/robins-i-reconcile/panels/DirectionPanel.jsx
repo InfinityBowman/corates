@@ -8,7 +8,7 @@ import { BIAS_DIRECTIONS } from '@/components/checklist/ROBINSIChecklist/checkli
  */
 function getDirectionButtonStyle(isSelected) {
   if (!isSelected) {
-    return 'border-gray-200 bg-white text-gray-700 hover:bg-gray-50';
+    return 'border-border bg-card text-secondary-foreground hover:bg-muted';
   }
   return 'border-blue-400 bg-blue-50 text-blue-800';
 }
@@ -36,13 +36,13 @@ export default function DirectionPanel(props) {
     <div class='p-4'>
       {/* Panel Header */}
       <div class='mb-4 flex items-center justify-between'>
-        <h3 class='font-semibold text-gray-900'>{props.title}</h3>
+        <h3 class='text-foreground font-semibold'>{props.title}</h3>
         <Show when={!isFinal() && !props.hideUseThis}>
           <button
             onClick={() => props.onUseThis?.()}
             class={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
               props.isSelected ? 'bg-blue-600 text-white' : (
-                'bg-gray-100 text-gray-700 hover:bg-blue-100 hover:text-blue-700'
+                'bg-secondary text-secondary-foreground hover:bg-blue-100 hover:text-blue-700'
               )
             }`}
           >
@@ -54,8 +54,8 @@ export default function DirectionPanel(props) {
       {/* Direction Badge (for reviewer panels) */}
       <Show when={!isFinal()}>
         <div class='mb-4 flex flex-wrap items-center gap-2'>
-          <span class='text-xs text-gray-500'>Direction:</span>
-          <span class='inline-flex items-center rounded-full border border-gray-200 bg-gray-100 px-2 py-1 text-xs font-medium text-gray-700'>
+          <span class='text-muted-foreground text-xs'>Direction:</span>
+          <span class='border-border bg-secondary text-secondary-foreground inline-flex items-center rounded-full border px-2 py-1 text-xs font-medium'>
             {props.direction || 'Not set'}
           </span>
         </div>
@@ -63,7 +63,7 @@ export default function DirectionPanel(props) {
 
       {/* Direction Options */}
       <div class='space-y-2'>
-        <label class='mb-1 block text-xs font-medium text-gray-700'>
+        <label class='text-secondary-foreground mb-1 block text-xs font-medium'>
           Predicted Direction of Bias
         </label>
         <For each={options()}>

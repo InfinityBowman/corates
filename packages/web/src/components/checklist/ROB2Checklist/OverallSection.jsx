@@ -73,13 +73,11 @@ export function OverallSection(props) {
 
   return (
     <div class='bg-card overflow-hidden rounded-lg shadow-md'>
-      <div class='bg-gray-800 px-6 py-4 text-white'>
+      <div class='bg-foreground text-background px-6 py-4'>
         <div class='flex items-center justify-between'>
           <div>
             <h3 class='text-lg font-semibold'>Overall Risk of Bias</h3>
-            <p class='mt-1 text-sm text-gray-300'>
-              Final assessment based on all domain judgements
-            </p>
+            <p class='text-muted mt-1 text-sm'>Final assessment based on all domain judgements</p>
           </div>
 
           {/* Overall calculated badge in header */}
@@ -91,7 +89,9 @@ export function OverallSection(props) {
             </span>
           </Show>
           <Show when={calculatedScore() === null || smartScoring().isComplete === false}>
-            <span class='rounded-md bg-gray-600 px-3 py-1 text-sm text-gray-300'>Incomplete</span>
+            <span class='bg-muted-foreground/50 text-muted rounded-md px-3 py-1 text-sm'>
+              Incomplete
+            </span>
           </Show>
         </div>
       </div>

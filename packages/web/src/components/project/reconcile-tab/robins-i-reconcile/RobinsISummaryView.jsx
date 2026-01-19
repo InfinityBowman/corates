@@ -13,7 +13,7 @@ import {
  * Get badge style for answer value
  */
 function getAnswerBadgeStyle(answer) {
-  if (!answer) return 'bg-gray-100 text-gray-600';
+  if (!answer) return 'bg-secondary text-muted-foreground';
   switch (answer) {
     case 'Y':
     case 'SY':
@@ -28,9 +28,9 @@ function getAnswerBadgeStyle(answer) {
     case 'SN':
       return 'bg-red-100 text-red-700';
     case 'NI':
-      return 'bg-gray-100 text-gray-600';
+      return 'bg-secondary text-muted-foreground';
     default:
-      return 'bg-gray-100 text-gray-600';
+      return 'bg-secondary text-muted-foreground';
   }
 }
 
@@ -38,12 +38,12 @@ function getAnswerBadgeStyle(answer) {
  * Get badge style for judgement value
  */
 function getJudgementBadgeStyle(judgement) {
-  if (!judgement) return 'bg-gray-100 text-gray-600';
+  if (!judgement) return 'bg-secondary text-muted-foreground';
   if (judgement.toLowerCase().includes('low')) return 'bg-green-100 text-green-700';
   if (judgement.toLowerCase().includes('moderate')) return 'bg-yellow-100 text-yellow-700';
   if (judgement.toLowerCase().includes('serious')) return 'bg-orange-100 text-orange-700';
   if (judgement.toLowerCase().includes('critical')) return 'bg-red-100 text-red-700';
-  return 'bg-gray-100 text-gray-600';
+  return 'bg-secondary text-muted-foreground';
 }
 
 /**
@@ -65,17 +65,17 @@ export default function RobinsISummaryView(props) {
   const groupedItems = createMemo(() => getGroupedNavigationItems(props.navItems || []));
 
   return (
-    <div class='overflow-hidden rounded-lg bg-white shadow-lg'>
+    <div class='bg-card overflow-hidden rounded-lg shadow-lg'>
       {/* Summary Header */}
-      <div class='border-b border-gray-200 bg-gray-50 p-6'>
-        <h2 class='mb-4 text-xl font-bold text-gray-900'>Review Summary</h2>
+      <div class='border-border bg-muted border-b p-6'>
+        <h2 class='text-foreground mb-4 text-xl font-bold'>Review Summary</h2>
 
         {/* Stats */}
         <Show when={props.summary}>
           <div class='mb-6 grid grid-cols-4 gap-4'>
-            <div class='rounded-lg border border-gray-200 bg-white p-3 text-center'>
-              <div class='text-2xl font-bold text-gray-700'>{props.summary.total}</div>
-              <div class='text-xs text-gray-500'>Total Items</div>
+            <div class='border-border bg-card rounded-lg border p-3 text-center'>
+              <div class='text-secondary-foreground text-2xl font-bold'>{props.summary.total}</div>
+              <div class='text-muted-foreground text-xs'>Total Items</div>
             </div>
             <div class='rounded-lg border border-green-200 bg-green-50 p-3 text-center'>
               <div class='text-2xl font-bold text-green-700'>{props.summary.agreed}</div>
@@ -96,17 +96,17 @@ export default function RobinsISummaryView(props) {
       </div>
 
       {/* Grouped Items List */}
-      <div class='divide-y divide-gray-200'>
+      <div class='divide-border divide-y'>
         <For each={groupedItems()}>
           {group => (
             <div>
               {/* Group Header */}
-              <div class='bg-gray-100 px-4 py-2'>
-                <h3 class='text-sm font-semibold text-gray-700'>{group.section}</h3>
+              <div class='bg-secondary px-4 py-2'>
+                <h3 class='text-secondary-foreground text-sm font-semibold'>{group.section}</h3>
               </div>
 
               {/* Group Items */}
-              <div class='divide-y divide-gray-100'>
+              <div class='divide-border-subtle divide-y'>
                 <For each={group.items}>
                   {item => {
                     const itemIndex = () => props.navItems?.indexOf(item) ?? -1;
@@ -115,7 +115,7 @@ export default function RobinsISummaryView(props) {
 
                     return (
                       <div
-                        class='flex cursor-pointer items-center justify-between p-4 hover:bg-gray-50'
+                        class='hover:bg-muted flex cursor-pointer items-center justify-between p-4'
                         onClick={() => props.onGoToPage(itemIndex())}
                       >
                         <div class='flex items-center gap-3'>
@@ -129,10 +129,10 @@ export default function RobinsISummaryView(props) {
                             {getItemDisplayNumber(item)}
                           </span>
                           <div>
-                            <div class='text-sm font-medium text-gray-900'>
+                            <div class='text-foreground text-sm font-medium'>
                               {getItemLabel(item)}
                             </div>
-                            <div class='text-xs text-gray-500'>
+                            <div class='text-muted-foreground text-xs'>
                               {isAgreement() ? 'Reviewers agreed' : 'Reviewers differed'}
                             </div>
                           </div>
@@ -148,7 +148,7 @@ export default function RobinsISummaryView(props) {
                               <AiOutlineCheck class='h-3 w-3 text-green-600' />
                             </span>
                           </Show>
-                          <FiArrowRight class='h-4 w-4 text-gray-400' />
+                          <FiArrowRight class='text-muted-foreground/70 h-4 w-4' />
                         </div>
                       </div>
                     );
@@ -161,10 +161,10 @@ export default function RobinsISummaryView(props) {
       </div>
 
       {/* Footer Actions */}
-      <div class='flex items-center justify-between border-t border-gray-200 bg-gray-50 p-6'>
+      <div class='border-border bg-muted flex items-center justify-between border-t p-6'>
         <button
           onClick={() => props.onBack()}
-          class='flex items-center gap-2 rounded-lg bg-white px-4 py-2 font-medium text-gray-700 shadow transition-colors hover:bg-gray-100 focus:ring-2 focus:ring-blue-500 focus:outline-none'
+          class='bg-card text-secondary-foreground hover:bg-secondary flex items-center gap-2 rounded-lg px-4 py-2 font-medium shadow transition-colors focus:ring-2 focus:ring-blue-500 focus:outline-none'
         >
           <FiArrowLeft class='h-4 w-4' />
           Back to Questions
@@ -176,7 +176,7 @@ export default function RobinsISummaryView(props) {
           class={`flex items-center gap-2 rounded-lg px-6 py-2 font-medium transition-colors focus:outline-none ${
             props.allAnswered && !props.saving ?
               'bg-blue-600 text-white shadow hover:bg-blue-700 focus:ring-2 focus:ring-blue-500'
-            : 'cursor-not-allowed bg-gray-300 text-gray-500'
+            : 'bg-border text-muted-foreground cursor-not-allowed'
           }`}
         >
           <Show when={!props.saving} fallback='Saving...'>
@@ -265,7 +265,7 @@ function ItemValueBadge(props) {
   const value = () => getValue();
 
   return (
-    <Show when={value()} fallback={<span class='text-xs text-gray-400'>Not set</span>}>
+    <Show when={value()} fallback={<span class='text-muted-foreground/70 text-xs'>Not set</span>}>
       {v => (
         <span
           class={`rounded-full px-3 py-1 text-sm font-medium ${

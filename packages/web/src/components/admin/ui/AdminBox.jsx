@@ -25,7 +25,7 @@ export function AdminBox(props) {
 
   return (
     <div
-      class={`rounded-xl border border-gray-200 bg-white shadow-xs ${paddingClasses[props.padding || 'default']} ${props.class || ''}`}
+      class={`border-border bg-card rounded-xl border shadow-xs ${paddingClasses[props.padding || 'default']} ${props.class || ''}`}
     >
       {props.children}
     </div>

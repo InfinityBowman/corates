@@ -85,18 +85,18 @@ export function AdminDataTable(props) {
 
   return (
     <div class={`flex flex-col gap-4 ${props.class || ''}`}>
-      <div class='overflow-x-auto rounded-xl border border-gray-200'>
+      <div class='border-border overflow-x-auto rounded-xl border'>
         <table class='w-full min-w-max'>
-          <thead class='border-b border-gray-200 bg-gray-50'>
+          <thead class='border-border bg-muted border-b'>
             <For each={table.getHeaderGroups()}>
               {headerGroup => (
                 <tr>
                   <For each={headerGroup.headers}>
                     {header => (
                       <th
-                        class='px-4 py-2 text-left text-xs font-medium tracking-wider whitespace-nowrap text-gray-500 uppercase'
+                        class='text-muted-foreground px-4 py-2 text-left text-xs font-medium tracking-wider whitespace-nowrap uppercase'
                         classList={{
-                          'cursor-pointer select-none hover:bg-gray-100':
+                          'cursor-pointer select-none hover:bg-secondary':
                             header.column.getCanSort() && props.enableSorting,
                         }}
                         onClick={
@@ -114,7 +114,7 @@ export function AdminDataTable(props) {
                             flexRender(header.column.columnDef.header, header.getContext())
                           )}
                           <Show when={props.enableSorting && header.column.getCanSort()}>
-                            <span class='ml-1 text-gray-400'>
+                            <span class='text-muted-foreground/70 ml-1'>
                               {header.column.getIsSorted() === 'asc' ?
                                 <FiChevronUp class='h-4 w-4' />
                               : header.column.getIsSorted() === 'desc' ?
@@ -130,7 +130,7 @@ export function AdminDataTable(props) {
               )}
             </For>
           </thead>
-          <tbody class='divide-y divide-gray-200 bg-white'>
+          <tbody class='divide-border bg-card divide-y'>
             {/* Loading State */}
             <Show when={props.loading}>
               <For each={skeletonRows()}>
@@ -139,7 +139,7 @@ export function AdminDataTable(props) {
                     <For each={props.columns}>
                       {() => (
                         <td class='px-4 py-2'>
-                          <div class='h-4 w-3/4 animate-pulse rounded bg-gray-200' />
+                          <div class='bg-secondary h-4 w-3/4 animate-pulse rounded' />
                         </td>
                       )}
                     </For>
@@ -154,7 +154,9 @@ export function AdminDataTable(props) {
                 <td colspan={props.columns?.length || 1} class='px-4 py-8 text-center'>
                   {props.emptyState || (
                     <div class='flex flex-col items-center gap-2'>
-                      <span class='text-gray-400'>{props.emptyMessage || 'No data available'}</span>
+                      <span class='text-muted-foreground/70'>
+                        {props.emptyMessage || 'No data available'}
+                      </span>
                     </div>
                   )}
                 </td>
@@ -166,13 +168,13 @@ export function AdminDataTable(props) {
               <For each={table.getRowModel().rows}>
                 {row => (
                   <tr
-                    class='transition-colors hover:bg-gray-50'
+                    class='hover:bg-muted transition-colors'
                     classList={{ 'cursor-pointer': !!props.onRowClick }}
                     onClick={() => props.onRowClick?.(row.original)}
                   >
                     <For each={row.getVisibleCells()}>
                       {cell => (
-                        <td class='px-4 py-2 text-sm whitespace-nowrap text-gray-900'>
+                        <td class='text-foreground px-4 py-2 text-sm whitespace-nowrap'>
                           {flexRender(cell.column.columnDef.cell, cell.getContext())}
                         </td>
                       )}
@@ -188,7 +190,7 @@ export function AdminDataTable(props) {
       {/* Pagination */}
       <Show when={props.enablePagination && table.getPageCount() > 1}>
         <div class='flex items-center justify-between px-2'>
-          <span class='text-sm text-gray-500'>
+          <span class='text-muted-foreground text-sm'>
             Showing{' '}
             {table.getState().pagination.pageIndex * table.getState().pagination.pageSize + 1} to{' '}
             {Math.min(
@@ -200,7 +202,7 @@ export function AdminDataTable(props) {
           <div class='flex gap-2'>
             <button
               type='button'
-              class='rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50'
+              class='border-border bg-card text-secondary-foreground hover:bg-muted rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50'
               disabled={!table.getCanPreviousPage()}
               onClick={() => table.previousPage()}
             >
@@ -208,7 +210,7 @@ export function AdminDataTable(props) {
             </button>
             <button
               type='button'
-              class='rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50'
+              class='border-border bg-card text-secondary-foreground hover:bg-muted rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50'
               disabled={!table.getCanNextPage()}
               onClick={() => table.nextPage()}
             >

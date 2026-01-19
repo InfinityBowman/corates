@@ -5,6 +5,15 @@
  */
 
 import type { Env } from '@/types/env';
+import {
+  createDomainError,
+  FILE_ERRORS,
+  VALIDATION_ERRORS,
+  SYSTEM_ERRORS,
+  type DomainError,
+  type FileErrorDetails,
+  type SystemErrorDetails,
+} from '@corates/shared';
 
 const ALLOWED_AVATAR_DOMAINS = [
   'lh3.googleusercontent.com',
@@ -17,23 +26,11 @@ const ALLOWED_CONTENT_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/we
 
 const MAX_AVATAR_SIZE = 5 * 1024 * 1024; // 5MB
 
-// Error codes for categorization (mirrors FILE_ERRORS from @corates/shared)
-export const AVATAR_COPY_ERRORS = {
-  DOMAIN_NOT_ALLOWED: 'AVATAR_DOMAIN_NOT_ALLOWED',
-  FETCH_FAILED: 'AVATAR_FETCH_FAILED',
-  INVALID_TYPE: 'AVATAR_INVALID_TYPE',
-  TOO_LARGE: 'AVATAR_TOO_LARGE',
-  UPLOAD_FAILED: 'AVATAR_UPLOAD_FAILED',
-} as const;
-
-export type AvatarCopyErrorCode = (typeof AVATAR_COPY_ERRORS)[keyof typeof AVATAR_COPY_ERRORS];
-
 export interface AvatarCopyResult {
   success: boolean;
   url?: string;
   key?: string;
-  error?: string;
-  errorCode?: AvatarCopyErrorCode;
+  error?: DomainError;
 }
 
 /**
@@ -77,8 +74,11 @@ export async function copyAvatarToR2(
   if (!isExternalAvatarUrl(externalUrl)) {
     return {
       success: false,
-      error: `URL domain not allowed for avatar copy: ${externalUrl}`,
-      errorCode: AVATAR_COPY_ERRORS.DOMAIN_NOT_ALLOWED,
+      error: createDomainError(
+        VALIDATION_ERRORS.INVALID_INPUT,
+        { field: 'avatarUrl', value: externalUrl } as FileErrorDetails,
+        `URL domain not allowed for avatar copy: ${externalUrl}`,
+      ),
     };
   }
 
@@ -94,8 +94,11 @@ export async function copyAvatarToR2(
     if (!response.ok) {
       return {
         success: false,
-        error: `Failed to fetch avatar: ${response.status} ${response.statusText}`,
-        errorCode: AVATAR_COPY_ERRORS.FETCH_FAILED,
+        error: createDomainError(
+          SYSTEM_ERRORS.SERVICE_UNAVAILABLE,
+          { operation: 'avatar_fetch', statusCode: response.status } as SystemErrorDetails,
+          `Failed to fetch avatar: ${response.status} ${response.statusText}`,
+        ),
       };
     }
 
@@ -104,8 +107,11 @@ export async function copyAvatarToR2(
     if (!ALLOWED_CONTENT_TYPES.includes(contentType)) {
       return {
         success: false,
-        error: `Invalid content type: ${contentType}`,
-        errorCode: AVATAR_COPY_ERRORS.INVALID_TYPE,
+        error: createDomainError(
+          FILE_ERRORS.INVALID_TYPE,
+          { fileType: contentType } as FileErrorDetails,
+          `Invalid content type: ${contentType}`,
+        ),
       };
     }
 
@@ -114,8 +120,11 @@ export async function copyAvatarToR2(
     if (contentLength > MAX_AVATAR_SIZE) {
       return {
         success: false,
-        error: `Avatar too large: ${contentLength} bytes (max: ${MAX_AVATAR_SIZE})`,
-        errorCode: AVATAR_COPY_ERRORS.TOO_LARGE,
+        error: createDomainError(
+          FILE_ERRORS.TOO_LARGE,
+          { fileSize: contentLength } as FileErrorDetails,
+          `Avatar too large: ${contentLength} bytes (max: ${MAX_AVATAR_SIZE})`,
+        ),
       };
     }
 
@@ -126,8 +135,11 @@ export async function copyAvatarToR2(
     if (arrayBuffer.byteLength > MAX_AVATAR_SIZE) {
       return {
         success: false,
-        error: `Avatar too large: ${arrayBuffer.byteLength} bytes (max: ${MAX_AVATAR_SIZE})`,
-        errorCode: AVATAR_COPY_ERRORS.TOO_LARGE,
+        error: createDomainError(
+          FILE_ERRORS.TOO_LARGE,
+          { fileSize: arrayBuffer.byteLength } as FileErrorDetails,
+          `Avatar too large: ${arrayBuffer.byteLength} bytes (max: ${MAX_AVATAR_SIZE})`,
+        ),
       };
     }
 
@@ -175,8 +187,11 @@ export async function copyAvatarToR2(
     console.error('[AvatarCopy] Error copying avatar:', err);
     return {
       success: false,
-      error: err.message,
-      errorCode: AVATAR_COPY_ERRORS.UPLOAD_FAILED,
+      error: createDomainError(
+        FILE_ERRORS.UPLOAD_FAILED,
+        { operation: 'avatar_upload', originalError: err.message } as SystemErrorDetails,
+        err.message,
+      ),
     };
   }
 }

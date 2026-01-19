@@ -64,16 +64,16 @@ export default function AdminLayout(props) {
       <Show
         when={isAdmin()}
         fallback={
-          <div class='flex min-h-100 flex-col items-center justify-center text-gray-500'>
+          <div class='text-muted-foreground flex min-h-100 flex-col items-center justify-center'>
             <FiAlertCircle class='mb-4 h-12 w-12' />
             <p class='text-lg font-medium'>Access Denied</p>
             <p class='text-sm'>You do not have admin privileges.</p>
           </div>
         }
       >
-        <div class='mx-auto min-h-full bg-gray-50'>
+        <div class='bg-muted mx-auto min-h-full'>
           {/* Navbar */}
-          <div class='border-b border-gray-200 bg-white'>
+          <div class='border-border bg-card border-b'>
             <div class='px-6'>
               <nav class='flex space-x-1' role='navigation' aria-label='Admin navigation'>
                 <For each={navItems}>
@@ -86,7 +86,7 @@ export default function AdminLayout(props) {
                         class={`flex items-center space-x-2 rounded-t-lg border-b-2 px-4 py-3 text-sm font-medium transition-colors ${
                           active() ?
                             'border-blue-600 bg-blue-50 text-blue-700'
-                          : 'border-transparent text-gray-600 hover:border-gray-300 hover:bg-gray-50 hover:text-gray-900'
+                          : 'text-muted-foreground hover:border-border hover:bg-muted hover:text-foreground border-transparent'
                         }`}
                       >
                         <Icon class='h-4 w-4' />

@@ -603,10 +603,11 @@ export function createAuth(env: Env, ctx?: ExecutionContext) {
                     .set({ image: result.url })
                     .where(eq(schema.user.id, userId));
                   console.log(`[Auth:waitUntil] Avatar copied for user ${userId}: ${result.url}`);
-                } else {
+                } else if (result.error) {
                   console.error(`[Auth:waitUntil] Avatar copy failed for user ${userId}:`, {
-                    error: result.error,
-                    errorCode: result.errorCode,
+                    code: result.error.code,
+                    message: result.error.message,
+                    details: result.error.details,
                   });
                 }
               } catch (err) {
