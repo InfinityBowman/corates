@@ -145,7 +145,7 @@ export default function AllStudiesTab() {
 
       {/* Reviewer Assignment - Shown for owners with unassigned studies */}
       <Show when={shouldShowReviewerAssignment()}>
-        <div class='mt-4'>
+        <div class='mt-5'>
           <ReviewerAssignment
             studies={studies}
             members={members}
@@ -161,7 +161,7 @@ export default function AllStudiesTab() {
       </Show>
 
       {/* Study count */}
-      <div class='mb-2 flex items-center justify-between'>
+      <div class='mt-6 mb-3 flex items-center justify-between'>
         <p class='text-muted-foreground text-sm'>
           {studies().length} {studies().length === 1 ? 'study' : 'studies'} in this project
         </p>

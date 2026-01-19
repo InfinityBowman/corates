@@ -189,14 +189,14 @@ export default function AddStudiesForm(props) {
       <Show when={hasExistingStudies() && !props.alwaysExpanded}>
         <div class='border-border bg-card overflow-hidden rounded-lg border shadow-sm'>
           {/* Header */}
-          <div class='flex items-center justify-between px-4 py-3'>
+          <div class='flex items-center justify-between px-4 py-4'>
             <div class='flex items-center gap-3'>
-              <div class='bg-primary-subtle text-primary flex h-9 w-9 items-center justify-center rounded-lg'>
+              <div class='bg-primary-subtle text-primary flex h-10 w-10 items-center justify-center rounded-lg'>
                 <BiRegularPlus class='h-5 w-5' />
               </div>
               <div>
-                <h3 class='text-foreground text-sm font-semibold'>Add Studies</h3>
-                <p class='text-muted-foreground text-xs'>
+                <h3 class='text-foreground text-base font-semibold'>Add Studies</h3>
+                <p class='text-muted-foreground text-sm'>
                   {studies.totalStudyCount() > 0 ?
                     `${studies.totalStudyCount()} staged`
                   : 'Upload PDFs, import references, or look up by DOI'}
@@ -206,7 +206,7 @@ export default function AddStudiesForm(props) {
             <button
               type='button'
               onClick={() => setExpanded(!expanded())}
-              class='flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors'
+              class='flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors'
               classList={{
                 'bg-primary text-white': isExpanded(),
                 'bg-primary-subtle text-primary hover:bg-primary/20': !isExpanded(),
