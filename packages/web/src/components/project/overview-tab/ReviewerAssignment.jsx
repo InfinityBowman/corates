@@ -163,10 +163,27 @@ export default function ReviewerAssignment(props) {
     setShowPreview(false);
   };
 
-  // Reset to even distribution
+  // Reset to even distribution that sums exactly to 100
   const resetToEven = () => {
-    setPool1Percents({});
-    setPool2Percents({});
+    const memberIds = members().map(m => m.userId);
+    const count = memberIds.length;
+    if (count === 0) {
+      setPool1Percents({});
+      setPool2Percents({});
+      setShowPreview(false);
+      return;
+    }
+
+    const base = Math.floor(100 / count);
+    const remainder = 100 - base * count;
+
+    const percents = {};
+    memberIds.forEach((id, i) => {
+      percents[id] = i < remainder ? base + 1 : base;
+    });
+
+    setPool1Percents({ ...percents });
+    setPool2Percents({ ...percents });
     setShowPreview(false);
   };
 
@@ -189,7 +206,7 @@ export default function ReviewerAssignment(props) {
     }
 
     if (showCustomize() && !isCustomValid()) {
-      showToast.warning('Invalid Distribution', 'Each pool must total 99-100%.');
+      showToast.warning('Invalid Distribution', 'Each pool must total 99-101%.');
       return null;
     }
 
@@ -476,7 +493,7 @@ export default function ReviewerAssignment(props) {
                         <div class='flex items-center justify-between'>
                           <Show when={!isCustomValid()}>
                             <p class='text-xs text-amber-600'>
-                              Each pool must total 99-100% to generate
+                              Each pool must total 99-101% to generate
                             </p>
                           </Show>
                           <button
