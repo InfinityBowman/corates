@@ -5,6 +5,16 @@
 
 import { vi } from 'vitest';
 
+// Mock sentry module to avoid @solidjs/router import issues in tests
+vi.mock('@config/sentry.js', () => ({
+  initSentry: vi.fn(),
+  captureException: vi.fn(),
+  captureMessage: vi.fn(),
+  setUser: vi.fn(),
+  isSentryEnabled: vi.fn(() => false),
+  Sentry: {},
+}));
+
 // Mock import.meta.env for tests
 vi.stubGlobal('import.meta', {
   env: {
