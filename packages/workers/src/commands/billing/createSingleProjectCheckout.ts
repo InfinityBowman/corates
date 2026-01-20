@@ -9,8 +9,8 @@
  * @throws DomainError INTERNAL_ERROR if user has no Stripe customer ID
  */
 
-import Stripe from 'stripe';
 import { createDomainError, SYSTEM_ERRORS } from '@corates/shared';
+import { createStripeClient } from '@/lib/stripe.js';
 import type { Env } from '@/types';
 
 export interface CreateSingleProjectCheckoutParams {
@@ -59,9 +59,7 @@ export async function createSingleProjectCheckout(
     );
   }
 
-  const stripe = new Stripe(env.STRIPE_SECRET_KEY, {
-    apiVersion: '2025-12-15.clover',
-  });
+  const stripe = createStripeClient(env);
 
   const baseUrl = env.APP_URL || 'https://corates.org';
 

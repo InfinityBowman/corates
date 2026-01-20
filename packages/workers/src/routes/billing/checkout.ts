@@ -11,7 +11,8 @@ import { eq } from 'drizzle-orm';
 import { validatePlanChange } from '@/lib/billingResolver';
 import { DEFAULT_PLAN } from '@corates/shared/plans';
 import { createDomainError, SYSTEM_ERRORS, VALIDATION_ERRORS } from '@corates/shared';
-import Stripe from 'stripe';
+import type Stripe from 'stripe';
+import { createStripeClient, isStripeConfigured } from '@/lib/stripe.js';
 import { createLogger, truncateError, withTiming } from '@/lib/observability/logger';
 import { billingCheckoutRateLimit } from '@/middleware/rateLimit';
 import { resolveOrgIdWithRole } from './helpers/orgContext';
@@ -193,14 +194,12 @@ billingCheckoutRoutes.openapi(validateCouponRoute, async c => {
   try {
     const { code } = c.req.valid('json');
 
-    if (!c.env.STRIPE_SECRET_KEY) {
+    if (!isStripeConfigured(c.env)) {
       logger.error('validate_coupon_failed', { error: 'Stripe not configured' });
       return c.json({ valid: false as const, error: 'Payment system not available' });
     }
 
-    const stripe = new Stripe(c.env.STRIPE_SECRET_KEY, {
-      apiVersion: '2025-12-15.clover',
-    });
+    const stripe = createStripeClient(c.env);
 
     // Look up promotion code (user-facing codes)
     const promoCodes = await stripe.promotionCodes.list({

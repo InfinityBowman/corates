@@ -21,8 +21,8 @@ export const PLAN_PRICING: Record<PlanId, PlanPricing> = {
     yearly: 0,
   },
   starter_team: {
-    monthly: 9,
-    yearly: 90, // 9 * 10 months (2 months free)
+    monthly: 8,
+    yearly: 80, // 8 * 10 months (2 months free)
   },
   team: {
     monthly: 29,

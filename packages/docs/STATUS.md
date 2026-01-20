@@ -135,15 +135,13 @@ Future planned: ROBINS-E, GRADE
 
 ## Plans Status
 
-| Plan                          | Status      | Location                                                             |
-| ----------------------------- | ----------- | -------------------------------------------------------------------- |
-| Backend TypeScript Conversion | Complete    | [backend-typescript.md](plans/backend-typescript.md)                 |
-| Frontend Testing              | In Progress | [frontend-testing-plan.md](plans/frontend-testing-plan.md)           |
-| Org Billing                   | Complete    | [org-billing-implementation.md](plans/org-billing-implementation.md) |
-| Presence/Awareness            | Complete    | [presence.md](plans/presence.md)                                     |
-| Yjs Awareness                 | Complete    | [yjs-awareness.md](plans/yjs-awareness.md)                           |
-| Pricing Model                 | Draft       | [pricing-model.md](plans/pricing-model.md)                           |
-| Study Counts Architecture     | Complete    | [study-counts-architecture.md](plans/study-counts-architecture.md)   |
+| Plan               | Status      | Location                                                             |
+| ------------------ | ----------- | -------------------------------------------------------------------- |
+| Frontend Testing   | In Progress | [frontend-testing-plan.md](plans/frontend-testing-plan.md)           |
+| Org Billing        | Complete    | [org-billing-implementation.md](plans/org-billing-implementation.md) |
+| Presence/Awareness | Complete    | [presence.md](plans/presence.md)                                     |
+| Yjs Awareness      | Complete    | [yjs-awareness.md](plans/yjs-awareness.md)                           |
+| Pricing Model      | Draft       | [pricing-model.md](plans/pricing-model.md)                           |
 
 ---
 

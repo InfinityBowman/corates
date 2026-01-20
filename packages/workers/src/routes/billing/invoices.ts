@@ -10,7 +10,7 @@ import { subscription } from '@/db/schema.js';
 import { createDomainError, SYSTEM_ERRORS, AUTH_ERRORS } from '@corates/shared';
 import { resolveOrgId } from './helpers/orgContext.js';
 import { eq, desc, and, or } from 'drizzle-orm';
-import Stripe from 'stripe';
+import { createStripeClient } from '@/lib/stripe.js';
 import { validationHook } from '@/lib/honoValidationHook.js';
 import type { Env } from '../../types';
 
@@ -118,9 +118,7 @@ billingInvoicesRoutes.openapi(getInvoicesRoute, async c => {
     }
 
     // Initialize Stripe client
-    const stripe = new Stripe(c.env.STRIPE_SECRET_KEY, {
-      apiVersion: '2025-12-15.clover',
-    });
+    const stripe = createStripeClient(c.env);
 
     // Fetch invoices from Stripe
     const stripeInvoices = await stripe.invoices.list({

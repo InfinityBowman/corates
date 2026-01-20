@@ -10,7 +10,7 @@ import { subscription, organization, stripeEventLedger } from '@/db/schema.js';
 import { eq, and, desc } from 'drizzle-orm';
 import { createDomainError, SYSTEM_ERRORS, VALIDATION_ERRORS } from '@corates/shared';
 import { getLedgerEntriesByOrgId, LedgerStatus } from '@/db/stripeEventLedger.js';
-import Stripe from 'stripe';
+import { createStripeClient } from '@/lib/stripe.js';
 import { validationHook } from '@/lib/honoValidationHook.js';
 import type { Env } from '../../types';
 
@@ -471,9 +471,7 @@ billingObservabilityRoutes.openapi(reconcileRoute, async c => {
     let stripeComparison: Record<string, unknown> | null = null;
     if (checkStripe && c.env.STRIPE_SECRET_KEY) {
       try {
-        const stripe = new Stripe(c.env.STRIPE_SECRET_KEY, {
-          apiVersion: '2025-12-15.clover',
-        });
+        const stripe = createStripeClient(c.env);
 
         // Get all active subscriptions for this org's customers
         const activeSubscription = allSubscriptions.find(

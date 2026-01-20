@@ -43,9 +43,41 @@ import { Z_INDEX } from './z-index';
 
 export const toaster = createToaster({
   placement: 'top-end',
-  overlap: false,
+  overlap: true,
   gap: 12,
+  max: 3,
 });
+
+// Deduplication: Track recent toasts to prevent spam
+const recentToasts = new Map<string, number>();
+const DEDUP_WINDOW_MS = 2000;
+
+function getToastKey(title: string, description?: string, type?: string): string {
+  return `${type || 'info'}:${title}:${description || ''}`;
+}
+
+function shouldShowToast(title: string, description?: string, type?: string): boolean {
+  const key = getToastKey(title, description, type);
+  const now = Date.now();
+  const lastShown = recentToasts.get(key);
+
+  if (lastShown && now - lastShown < DEDUP_WINDOW_MS) {
+    return false;
+  }
+
+  recentToasts.set(key, now);
+
+  // Clean up old entries periodically
+  if (recentToasts.size > 50) {
+    for (const [k, timestamp] of recentToasts) {
+      if (now - timestamp > DEDUP_WINDOW_MS) {
+        recentToasts.delete(k);
+      }
+    }
+  }
+
+  return true;
+}
 
 const Toast = ToastPrimitive.Root;
 
@@ -198,18 +230,23 @@ interface ToastOptions {
 
 const showToast = {
   success: (title: string, description?: string, duration = 3000) => {
+    if (!shouldShowToast(title, description, 'success')) return undefined;
     return toaster.create({ title, description, type: 'success', duration });
   },
   error: (title: string, description?: string, duration = 5000) => {
+    if (!shouldShowToast(title, description, 'error')) return undefined;
     return toaster.create({ title, description, type: 'error', duration });
   },
   warning: (title: string, description?: string, duration = 5000) => {
+    if (!shouldShowToast(title, description, 'warning')) return undefined;
     return toaster.create({ title, description, type: 'warning', duration });
   },
   info: (title: string, description?: string, duration = 3000) => {
+    if (!shouldShowToast(title, description, 'info')) return undefined;
     return toaster.create({ title, description, type: 'info', duration });
   },
   loading: (title: string, description?: string) => {
+    // Loading toasts are not deduplicated - they represent ongoing operations
     return toaster.create({ title, description, type: 'loading', duration: Infinity });
   },
   dismiss: (id: string) => {
