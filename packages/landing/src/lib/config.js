@@ -7,7 +7,10 @@ export const config = {
 // Helper functions for common URLs
 export const urls = {
   signIn: () => `${config.appUrl}/signin`,
-  signUp: () => `${config.appUrl}/signup`,
+  signUp: plan => {
+    const base = `${config.appUrl}/signup`;
+    return plan ? `${base}?plan=${plan}` : base;
+  },
   checklist: () => `${config.appUrl}/checklist?from=landing`,
   dashboard: () => `${config.appUrl}/dashboard`,
 };

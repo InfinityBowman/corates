@@ -14,9 +14,11 @@
     "lint": "eslint ."
   },
   "dependencies": {
+    "@corates/shared": "workspace:*",
     "@solidjs/meta": "^0.29.4",
     "@solidjs/router": "^0.15.4",
     "@solidjs/start": "^1.2.1",
+    "countup.js": "^2.9.0",
     "solid-icons": "^1.1.0",
     "solid-js": "^1.9.10",
     "vinxi": "^0.5.10"
