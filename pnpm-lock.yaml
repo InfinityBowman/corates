@@ -278,6 +278,9 @@ importers:
       clsx:
         specifier: ^2.1.1
         version: 2.1.1
+      countup.js:
+        specifier: ^2.9.0
+        version: 2.9.0
       d3:
         specifier: ^7.9.0
         version: 7.9.0
@@ -4434,6 +4437,9 @@ packages:
     peerDependenciesMeta:
       typescript:
         optional: true
+
+  countup.js@2.9.0:
+    resolution: {integrity: sha512-llqrvyXztRFPp6+i8jx25phHWcVWhrHO4Nlt0uAOSKHB8778zzQswa4MU3qKBvkXfJKftRYFJuVHez67lyKdHg==}
 
   crc-32@1.2.2:
     resolution: {integrity: sha512-ROmzCKrTnOwybPcJApAA6WBWij23HVfGVNKqqrZpuyZOHqK2CwHSvpGuyt/UNNvaIjEd8X5IFGp4Mh+Ie1IHJQ==}
@@ -12155,6 +12161,8 @@ snapshots:
       parse-json: 5.2.0
     optionalDependencies:
       typescript: 5.9.3
+
+  countup.js@2.9.0: {}
 
   crc-32@1.2.2: {}
 

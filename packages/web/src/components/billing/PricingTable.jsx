@@ -6,6 +6,7 @@
 import { createSignal, For, Show, onMount } from 'solid-js';
 import { FiCheck, FiStar, FiZap, FiAlertCircle, FiArrowDown } from 'solid-icons/fi';
 import { showToast } from '@/components/ui/toast';
+import FlipNumber from '@/components/ui/flip-number.jsx';
 import {
   Dialog,
   DialogBackdrop,
@@ -33,7 +34,11 @@ import { getBillingPlanCatalog } from '@corates/shared/plans';
  */
 export default function PricingTable(props) {
   const catalog = getBillingPlanCatalog();
-  const plans = catalog.plans;
+
+  // Separate plans by type
+  const trialPlan = () => catalog.plans.find(p => p.tier === 'trial');
+  const singleProjectPlan = () => catalog.plans.find(p => p.tier === 'single_project');
+  const subscriptionPlans = () => catalog.plans.filter(p => p.cta === 'subscribe');
 
   const [billingInterval, setBillingInterval] = createSignal('monthly');
   const [loadingTier, setLoadingTier] = createSignal(null);
@@ -167,8 +172,82 @@ export default function PricingTable(props) {
     return false;
   };
 
+  // Check if user can start a trial (only free tier users)
+  const canStartTrial = () => currentTier() === 'free';
+
+  // Handle trial start
+  const handleStartTrial = async () => {
+    setLoadingTier('trial');
+    try {
+      await startTrial();
+      showToast.success('Trial started', 'Your 14-day trial is now active.');
+      await subscription.refetch();
+    } catch (error) {
+      const { handleError } = await import('@/lib/error-utils.js');
+      await handleError(error, { toastTitle: 'Trial Error' });
+    } finally {
+      setLoadingTier(null);
+    }
+  };
+
+  // Handle single project purchase
+  const handleBuySingleProject = async () => {
+    setLoadingTier('single_project');
+    try {
+      await redirectToSingleProjectCheckout();
+    } catch (error) {
+      const { handleError } = await import('@/lib/error-utils.js');
+      await handleError(error, { toastTitle: 'Checkout Error' });
+      setLoadingTier(null);
+    }
+  };
+
   return (
     <div class='pb-6'>
+      {/* Trial CTA Banner - show for free tier users */}
+      <Show when={canStartTrial() && trialPlan()}>
+        <div class='mb-10 rounded-2xl border-2 border-blue-200 bg-linear-to-r from-blue-50 to-indigo-50 p-6'>
+          <div class='flex flex-col items-center gap-4 text-center sm:flex-row sm:text-left'>
+            <div class='flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-blue-100'>
+              <FiZap class='h-6 w-6 text-blue-600' />
+            </div>
+            <div class='flex-1'>
+              <h3 class='text-lg font-bold text-gray-900'>Start your 14-day free trial</h3>
+              <p class='mt-1 text-sm text-gray-600'>
+                {trialPlan().features[0]}. {trialPlan().features[1]}. No credit card required.
+              </p>
+            </div>
+            <button
+              type='button'
+              class='shrink-0 rounded-xl bg-blue-600 px-6 py-3 text-sm font-semibold text-white transition-all hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50'
+              onClick={handleStartTrial}
+              disabled={loadingTier() !== null}
+            >
+              <Show when={loadingTier() === 'trial'} fallback='Start Free Trial'>
+                <span class='flex items-center gap-2'>
+                  <svg class='h-4 w-4 animate-spin' fill='none' viewBox='0 0 24 24'>
+                    <circle
+                      class='opacity-25'
+                      cx='12'
+                      cy='12'
+                      r='10'
+                      stroke='currentColor'
+                      stroke-width='4'
+                    />
+                    <path
+                      class='opacity-75'
+                      fill='currentColor'
+                      d='M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z'
+                    />
+                  </svg>
+                  Starting...
+                </span>
+              </Show>
+            </button>
+          </div>
+        </div>
+      </Show>
+
       {/* Billing interval toggle */}
       <div class='mb-10 flex flex-col items-center gap-4'>
         <div class='flex items-center gap-2 rounded-full bg-green-50 px-4 py-2 text-sm font-medium text-green-700'>
@@ -206,7 +285,7 @@ export default function PricingTable(props) {
         </div>
       </div>
 
-      {/* Plans grid */}
+      {/* Trial users upgrade prompt */}
       <Show when={isTrialing()}>
         <div class='mb-6 flex items-center gap-3 rounded-xl border border-blue-200 bg-blue-50 p-4'>
           <FiZap class='h-5 w-5 shrink-0 text-blue-600' />
@@ -218,8 +297,10 @@ export default function PricingTable(props) {
           </div>
         </div>
       </Show>
-      <div class='grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3'>
-        <For each={plans}>
+
+      {/* Subscription plans grid */}
+      <div class='grid grid-cols-1 gap-6 md:grid-cols-3'>
+        <For each={subscriptionPlans()}>
           {plan => {
             const isPopular = () => plan.isPopular;
             const isCurrent = () => plan.tier === currentTier();
@@ -274,23 +355,38 @@ export default function PricingTable(props) {
                           fallback={<div class='text-3xl font-bold text-gray-900'>Custom</div>}
                         >
                           <div class='flex items-baseline gap-1'>
-                            <span class='text-4xl font-bold text-gray-900'>
-                              {billingInterval() === 'monthly' ?
-                                formatUsd(plan.price.monthly)
-                              : formatUsd(plan.price.yearly / 12)}
-                            </span>
+                            <FlipNumber
+                              value={
+                                billingInterval() === 'monthly' ?
+                                  plan.price.monthly
+                                : plan.price.yearly / 12
+                              }
+                              prefix='$'
+                              decimals={billingInterval() === 'yearly' ? 2 : 0}
+                              class='text-4xl font-bold text-gray-900'
+                            />
                             <span class='text-gray-500'>/month</span>
                           </div>
-                          <Show when={billingInterval() === 'yearly' && plan.price.yearly > 0}>
-                            <p class='mt-1 text-sm text-gray-500'>
-                              {formatUsd(plan.price.yearly)} billed annually
-                            </p>
-                          </Show>
-                          <Show when={billingInterval() === 'yearly' && savings()}>
-                            <p class='mt-1 text-sm font-medium text-green-600'>
-                              Save {formatUsd(savings())} per year
-                            </p>
-                          </Show>
+                          {/* Annual billing details - grid row animation for smooth height */}
+                          <div
+                            class='mt-1 grid transition-[grid-template-rows] duration-300 ease-out'
+                            style={{
+                              'grid-template-rows': billingInterval() === 'yearly' ? '1fr' : '0fr',
+                            }}
+                          >
+                            <div class='overflow-hidden'>
+                              <Show when={plan.price.yearly > 0}>
+                                <p class='text-sm text-gray-500'>
+                                  {formatUsd(plan.price.yearly)} billed annually
+                                </p>
+                              </Show>
+                              <Show when={savings()}>
+                                <p class='text-sm font-medium text-green-600'>
+                                  Save {formatUsd(savings())} per year
+                                </p>
+                              </Show>
+                            </div>
+                          </div>
                         </Show>
                       </Show>
                     }
@@ -313,8 +409,7 @@ export default function PricingTable(props) {
                     type='button'
                     class={`mb-6 w-full rounded-xl px-4 py-3 text-sm font-semibold transition-all focus:ring-2 focus:ring-offset-2 focus:outline-none ${
                       isCurrent() ? 'cursor-not-allowed bg-gray-100 text-gray-400'
-                      : isPopular() ?
-                        'bg-blue-600 text-white shadow-lg shadow-blue-200 hover:bg-blue-700 hover:shadow-xl hover:shadow-blue-300 focus:ring-blue-500'
+                      : isPopular() ? 'bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500'
                       : 'bg-gray-900 text-white hover:bg-gray-800 focus:ring-gray-500'
                     }`}
                     onClick={() => handleAction(plan)}
@@ -366,6 +461,73 @@ export default function PricingTable(props) {
           }}
         </For>
       </div>
+
+      {/* Single Project - One-time alternative */}
+      <Show when={singleProjectPlan()}>
+        <div class='mt-12 rounded-2xl border-2 border-gray-200 bg-white p-6'>
+          <div class='flex flex-col gap-6 md:flex-row md:items-center md:justify-between'>
+            <div class='flex-1'>
+              <div class='mb-2 flex items-center gap-2'>
+                <h3 class='text-lg font-bold text-gray-900'>{singleProjectPlan().name}</h3>
+                <span class='rounded-full bg-gray-200 px-2.5 py-0.5 text-xs font-medium text-gray-600'>
+                  One-time purchase
+                </span>
+              </div>
+              <p class='text-sm text-gray-600'>{singleProjectPlan().description}</p>
+              <ul class='mt-3 flex flex-wrap gap-x-4 gap-y-1'>
+                <For each={singleProjectPlan().features}>
+                  {feature => (
+                    <li class='flex items-center gap-1.5 text-sm text-gray-600'>
+                      <FiCheck class='h-3.5 w-3.5 text-green-600' />
+                      {feature}
+                    </li>
+                  )}
+                </For>
+              </ul>
+            </div>
+            <div class='flex shrink-0 items-center gap-4'>
+              <div class='text-right'>
+                <div class='text-2xl font-bold text-gray-900'>
+                  {formatUsd(singleProjectPlan().oneTime.amount)}
+                </div>
+                <p class='text-xs text-gray-500'>
+                  {singleProjectPlan().oneTime.durationMonths} months access
+                </p>
+              </div>
+              <button
+                type='button'
+                class='rounded-xl bg-gray-900 px-5 py-2.5 text-sm font-semibold text-white transition-all hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-50'
+                onClick={handleBuySingleProject}
+                disabled={loadingTier() !== null || currentTier() === 'single_project'}
+              >
+                <Show
+                  when={loadingTier() === 'single_project'}
+                  fallback={currentTier() === 'single_project' ? 'Current Plan' : 'Buy Now'}
+                >
+                  <span class='flex items-center gap-2'>
+                    <svg class='h-4 w-4 animate-spin' fill='none' viewBox='0 0 24 24'>
+                      <circle
+                        class='opacity-25'
+                        cx='12'
+                        cy='12'
+                        r='10'
+                        stroke='currentColor'
+                        stroke-width='4'
+                      />
+                      <path
+                        class='opacity-75'
+                        fill='currentColor'
+                        d='M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z'
+                      />
+                    </svg>
+                    Processing...
+                  </span>
+                </Show>
+              </button>
+            </div>
+          </div>
+        </div>
+      </Show>
 
       {/* Validation Error Dialog */}
       <Dialog
