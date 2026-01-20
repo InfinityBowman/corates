@@ -5,7 +5,7 @@
  * handles create form, empty states, and loading states.
  */
 
-import { Show, For, useContext, createSignal } from 'solid-js';
+import { Show, Index, useContext, createSignal } from 'solid-js';
 import { useNavigate } from '@solidjs/router';
 import { useQueryClient } from '@tanstack/solid-query';
 import { showToast } from '@/components/ui/toast';
@@ -206,16 +206,16 @@ export function ProjectsSection(props) {
         </Show>
 
         {/* Project cards */}
-        <For each={projects()}>
+        <Index each={projects()}>
           {(project, index) => (
             <ProjectCard
-              project={project}
+              project={project()}
               onOpen={openProject}
               onDelete={handleDeleteProject}
-              style={animation.statRise(index() * 50)}
+              style={animation.statRise(index * 50)}
             />
           )}
-        </For>
+        </Index>
       </div>
 
       {/* Delete confirmation dialog */}
