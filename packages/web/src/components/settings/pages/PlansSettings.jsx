@@ -168,54 +168,54 @@ export default function PlansSettings() {
         </Show>
       }
     >
-    <div class='min-h-full bg-slate-50 py-6'>
-      <div class='mx-auto max-w-6xl px-4 sm:px-6 lg:px-8'>
-        {/* Header */}
-        <div class='mb-8'>
-          <div class='text-center'>
-            <h1 class='text-4xl font-bold text-slate-900'>Choose the right plan for your team</h1>
-            <p class='mx-auto mt-4 max-w-2xl text-lg text-slate-500'>
-              Start with a free trial, then pick the plan that fits your workflow. All plans include
-              our core features.
+      <div class='min-h-full bg-slate-50 py-6'>
+        <div class='mx-auto max-w-6xl px-4 sm:px-6 lg:px-8'>
+          {/* Header */}
+          <div class='mb-8'>
+            <div class='text-center'>
+              <h1 class='text-4xl font-bold text-slate-900'>Choose the right plan for your team</h1>
+              <p class='mx-auto mt-4 max-w-2xl text-lg text-slate-500'>
+                Start with a free trial, then pick the plan that fits your workflow. All plans
+                include our core features.
+              </p>
+            </div>
+          </div>
+
+          {/* Plan Comparison Table */}
+          <PricingTable currentTier={tier()} />
+
+          {/* FAQ Section */}
+          <div class='mt-16'>
+            <div class='mb-8 text-center'>
+              <h2 class='text-2xl font-bold text-slate-900'>Frequently asked questions</h2>
+              <p class='mt-2 text-slate-500'>
+                Everything you need to know about our plans and billing.
+              </p>
+            </div>
+            <div class='mx-auto max-w-3xl rounded-2xl border border-slate-200 bg-white px-6'>
+              <For each={FAQ_ITEMS}>
+                {faq => <FAQItem question={faq.question} answer={faq.answer} />}
+              </For>
+            </div>
+          </div>
+
+          {/* Bottom CTA */}
+          <div class='mt-16 rounded-2xl bg-linear-to-r from-blue-600 to-blue-500 px-8 py-12 text-center'>
+            <h2 class='text-2xl font-bold text-white'>Still have questions?</h2>
+            <p class='mx-auto mt-2 max-w-xl text-blue-100'>
+              Our team is here to help. Reach out and we'll get back to you within 24 hours.
             </p>
+            <a
+              href={`${LANDING_URL}/contact`}
+              target='_blank'
+              rel='noopener noreferrer'
+              class='mt-6 inline-flex items-center rounded-xl bg-white px-6 py-3 font-semibold text-blue-600 shadow-lg transition-all hover:bg-blue-50 hover:shadow-xl'
+            >
+              Contact Support
+            </a>
           </div>
-        </div>
-
-        {/* Plan Comparison Table */}
-        <PricingTable currentTier={tier()} />
-
-        {/* FAQ Section */}
-        <div class='mt-16'>
-          <div class='mb-8 text-center'>
-            <h2 class='text-2xl font-bold text-slate-900'>Frequently asked questions</h2>
-            <p class='mt-2 text-slate-500'>
-              Everything you need to know about our plans and billing.
-            </p>
-          </div>
-          <div class='mx-auto max-w-3xl rounded-2xl border border-slate-200 bg-white px-6'>
-            <For each={FAQ_ITEMS}>
-              {faq => <FAQItem question={faq.question} answer={faq.answer} />}
-            </For>
-          </div>
-        </div>
-
-        {/* Bottom CTA */}
-        <div class='mt-16 rounded-2xl bg-linear-to-r from-blue-600 to-blue-500 px-8 py-12 text-center'>
-          <h2 class='text-2xl font-bold text-white'>Still have questions?</h2>
-          <p class='mx-auto mt-2 max-w-xl text-blue-100'>
-            Our team is here to help. Reach out and we'll get back to you within 24 hours.
-          </p>
-          <a
-            href={`${LANDING_URL}/contact`}
-            target='_blank'
-            rel='noopener noreferrer'
-            class='mt-6 inline-flex items-center rounded-xl bg-white px-6 py-3 font-semibold text-blue-600 shadow-lg transition-all hover:bg-blue-50 hover:shadow-xl'
-          >
-            Contact Support
-          </a>
         </div>
       </div>
-    </div>
     </Show>
   );
 }
