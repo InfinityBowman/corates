@@ -17,9 +17,18 @@
  *   showEditIcon
  *   class="text-2xl font-bold"
  * />
+ *
+ * @example
+ * // Composable multi-line editable
+ * <Editable defaultValue={description()} onValueCommit={handleSave}>
+ *   <EditableArea>
+ *     <EditableTextarea rows={2} />
+ *     <EditablePreview />
+ *   </EditableArea>
+ * </Editable>
  */
 
-import type { Component } from 'solid-js';
+import type { Component, ComponentProps } from 'solid-js';
 import { Show, splitProps, mergeProps } from 'solid-js';
 import { Editable as EditablePrimitive } from '@ark-ui/solid/editable';
 import { FiCheck, FiX, FiEdit2 } from 'solid-icons/fi';
@@ -137,19 +146,14 @@ const SimpleEditable: Component<SimpleEditableProps> = props => {
 
   const variantStyles = () => variants[local.variant] || variants.default;
 
-  // Determine the value to display
-  // - If value prop is provided, use it (reactive to parent changes)
-  // - Otherwise fall back to defaultValue
-  const currentValue = () => local.value ?? local.defaultValue ?? '';
-
-  // Use controlled mode (value prop) when value is provided
-  // This ensures the component reacts to parent value changes
-  const hasValueProp = () => local.value !== undefined;
+  // Always use uncontrolled mode (defaultValue) so the component manages its own
+  // editing state. The value/defaultValue prop just initializes it.
+  // onSubmit is called when the user commits (blur/Enter).
+  const initialValue = () => local.value ?? local.defaultValue ?? '';
 
   return (
     <EditablePrimitive.Root
-      value={hasValueProp() ? currentValue() : undefined}
-      defaultValue={!hasValueProp() ? currentValue() : undefined}
+      defaultValue={initialValue()}
       placeholder={local.placeholder}
       disabled={local.disabled}
       readOnly={local.readOnly}
@@ -225,6 +229,46 @@ const SimpleEditable: Component<SimpleEditableProps> = props => {
   );
 };
 
+// ============================================================================
+// EditableTextarea - Multi-line text input for composable usage
+// ============================================================================
+
+type EditableTextareaProps = ComponentProps<'textarea'> & {
+  class?: string;
+};
+
+/**
+ * Multi-line textarea variant for Editable.
+ * Use with the composable Editable primitives.
+ *
+ * @example
+ * <Editable defaultValue={description()} onValueCommit={handleSave}>
+ *   <EditableArea>
+ *     <EditableTextarea rows={2} class="text-sm" />
+ *     <EditablePreview />
+ *   </EditableArea>
+ * </Editable>
+ */
+const EditableTextarea: Component<EditableTextareaProps> = props => {
+  const [local, others] = splitProps(props, ['class']);
+
+  return (
+    <EditablePrimitive.Input
+      asChild={inputProps => (
+        <textarea
+          {...inputProps()}
+          class={cn(
+            'w-full resize-none bg-transparent outline-none',
+            'placeholder:text-muted-foreground/60',
+            local.class,
+          )}
+          {...others}
+        />
+      )}
+    />
+  );
+};
+
 // Re-export Ark UI primitives for composable usage
 const Editable = EditablePrimitive.Root;
 const EditableArea = EditablePrimitive.Area;
@@ -242,6 +286,7 @@ export {
   Editable,
   EditableArea,
   EditableInput,
+  EditableTextarea,
   EditablePreview,
   EditableLabel,
   EditableControl,
