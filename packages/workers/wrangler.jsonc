@@ -114,7 +114,14 @@
       "vars": {
         "ENVIRONMENT": "production",
         "AUTH_BASE_URL": "https://corates.org",
-        "APP_URL": "https://corates.org"
+        "APP_URL": "https://corates.org",
+        "STRIPE_PRICE_ID_STARTER_TEAM_MONTHLY": "price_1SrN4wCoCKvs2wg8L8usPLOD",
+        "STRIPE_PRICE_ID_STARTER_TEAM_YEARLY": "price_1SrNAOCoCKvs2wg8yyI9bTHZ",
+        "STRIPE_PRICE_ID_TEAM_MONTHLY": "price_1SrN5xCoCKvs2wg8TCjEhd68",
+        "STRIPE_PRICE_ID_TEAM_YEARLY": "price_1SrNAvCoCKvs2wg8LHicVUk4",
+        "STRIPE_PRICE_ID_UNLIMITED_TEAM_MONTHLY": "price_1SrN6OCoCKvs2wg82SJYMrVF",
+        "STRIPE_PRICE_ID_UNLIMITED_TEAM_YEARLY": "price_1SrNB6CoCKvs2wg8g6yzbhE2",
+        "STRIPE_PRICE_ID_SINGLE_PROJECT": "price_1SrN8tCoCKvs2wg803ccxJFP"
       },
       // Production secrets are managed via `wrangler secret put` command
       // Run these commands to set production secrets:
@@ -125,6 +132,9 @@
       // wrangler secret put GOOGLE_CLIENT_ID --env production
       // wrangler secret put GOOGLE_CLIENT_SECRET --env production
       // wrangler secret put SENTRY_DSN --env production
+      // wrangler secret put STRIPE_SECRET_KEY --env production
+      // wrangler secret put STRIPE_WEBHOOK_SECRET_AUTH --env production
+      // wrangler secret put STRIPE_WEBHOOK_SECRET_PURCHASES --env production
       "d1_databases": [
         {
           "binding": "DB",
