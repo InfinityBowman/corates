@@ -12,6 +12,7 @@ import PricingTable from '@/components/billing/PricingTable.jsx';
 import { LANDING_URL } from '@/config/api.js';
 import {
   hasPendingPlan,
+  clearPendingPlan,
   handlePendingPlanRedirect,
   BILLING_MESSAGES,
 } from '@/lib/plan-redirect-utils.js';
@@ -119,6 +120,7 @@ export default function PlansSettings() {
 
   // Dismiss error and show pricing table
   function handleDismissError() {
+    clearPendingPlan();
     setPageState('ready');
   }
 

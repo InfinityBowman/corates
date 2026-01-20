@@ -276,16 +276,18 @@ billingCheckoutRoutes.openapi(checkoutRoute, async c => {
       return c.json(error, error.statusCode as ContentfulStatusCode);
     }
 
-    // Check if user is already on this plan
+    // Check if user already has an active subscription with the same plan
+    // Allow grant/trial/free users to checkout (they're upgrading to paid)
+    // For interval changes on existing subscriptions, users should use the billing portal
     const currentBilling = await resolveOrgAccess(db, orgId!);
-    if (currentBilling.effectivePlanId === tier) {
+    if (currentBilling.source === 'subscription' && currentBilling.effectivePlanId === tier) {
       const error = createDomainError(
         VALIDATION_ERRORS.INVALID_INPUT,
         {
           reason: 'already_on_plan',
           currentPlan: tier,
         },
-        `You are already subscribed to the ${tier} plan.`,
+        `You are already subscribed to the ${tier} plan. To change your billing interval, use the billing portal.`,
       );
       return c.json(error, error.statusCode as ContentfulStatusCode);
     }
