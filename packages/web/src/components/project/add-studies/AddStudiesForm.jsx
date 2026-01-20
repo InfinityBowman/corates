@@ -179,7 +179,7 @@ export default function AddStudiesForm(props) {
       {/* Drag overlay */}
       <Show when={isDraggingOver() && hasExistingStudies() && !isExpanded()}>
         <div class='pointer-events-none fixed inset-0 z-50 flex items-center justify-center bg-blue-500/10'>
-          <div class='bg-card rounded-xl border-2 border-dashed border-blue-500 p-8 shadow-lg'>
+          <div class='bg-card rounded-xl border-2 border-dashed border-blue-500 p-8'>
             <p class='text-lg font-medium text-blue-600'>Drop PDFs to add studies</p>
           </div>
         </div>
@@ -187,7 +187,7 @@ export default function AddStudiesForm(props) {
 
       {/* Card container when has existing studies */}
       <Show when={hasExistingStudies() && !props.alwaysExpanded}>
-        <div class='border-border bg-card overflow-hidden rounded-lg border shadow-sm'>
+        <div class='border-border bg-card overflow-hidden rounded-lg border'>
           {/* Header */}
           <div class='flex items-center justify-between px-4 py-4'>
             <div class='flex items-center gap-3'>

@@ -96,6 +96,7 @@ export default function Pricing() {
                 </div>
                 <a
                   href={getButtonUrl(trialPlan())}
+                  rel='external'
                   class='shrink-0 rounded-xl bg-blue-600 px-6 py-3 text-sm font-semibold text-white transition-all hover:bg-blue-700'
                 >
                   Start Free Trial
@@ -224,6 +225,7 @@ export default function Pricing() {
                     {/* CTA Button */}
                     <a
                       href={getButtonUrl(plan)}
+                      rel='external'
                       class={`mb-6 block w-full rounded-xl px-4 py-3 text-center text-sm font-semibold transition-all focus:ring-2 focus:ring-offset-2 focus:outline-none ${
                         isPopular() ?
                           'bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500'
@@ -291,6 +293,7 @@ export default function Pricing() {
                   </div>
                   <a
                     href={getButtonUrl(singleProjectPlan())}
+                    rel='external'
                     class='rounded-xl bg-gray-900 px-5 py-2.5 text-sm font-semibold text-white transition-all hover:bg-gray-800'
                   >
                     Buy Now

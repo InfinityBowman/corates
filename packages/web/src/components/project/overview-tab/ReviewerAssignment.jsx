@@ -342,7 +342,7 @@ export default function ReviewerAssignment(props) {
   const conflictCount = createMemo(() => previewAssignments().filter(a => a.sameReviewer).length);
 
   return (
-    <div class='border-border bg-card overflow-hidden rounded-lg border shadow-sm'>
+    <div class='border-border bg-card overflow-hidden rounded-lg border'>
       {/* Header - always visible */}
       <div class='flex items-center justify-between px-4 py-4'>
         <div class='flex items-center gap-3'>
