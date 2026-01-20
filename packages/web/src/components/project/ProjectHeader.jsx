@@ -1,10 +1,10 @@
-import { Show, createMemo } from 'solid-js';
+import { Show, createMemo, createSignal, createEffect, on } from 'solid-js';
 import { FiArrowLeft, FiEdit2 } from 'solid-icons/fi';
 import { useProjectContext } from './ProjectContext.jsx';
 import {
-  SimpleEditable,
   Editable,
   EditableArea,
+  EditableInput,
   EditableTextarea,
   EditablePreview,
   EditableEditTrigger,
@@ -24,19 +24,41 @@ export default function ProjectHeader(props) {
     return role === 'owner' || role === 'collaborator';
   });
 
-  const handleNameChange = async newName => {
-    if (newName && newName.trim() && newName !== name()) {
+  // Local signals that sync with external props for controlled editables
+  const [localName, setLocalName] = createSignal(name() || '');
+  const [localDescription, setLocalDescription] = createSignal(description() || '');
+
+  // Sync local state when external data loads/changes (but not during editing)
+  createEffect(
+    on(name, newName => {
+      if (newName) setLocalName(newName);
+    }),
+  );
+  createEffect(
+    on(description, newDesc => {
+      setLocalDescription(newDesc || '');
+    }),
+  );
+
+  const handleNameCommit = async details => {
+    const newName = details.value.trim();
+    if (newName && newName !== name()) {
       try {
-        await props.onRename?.(newName.trim());
+        await props.onRename?.(newName);
       } catch (error) {
         await handleError(error, {
           toastTitle: 'Failed to rename project',
         });
+        // Revert local state on error
+        setLocalName(name() || '');
       }
+    } else {
+      // Revert if empty or unchanged
+      setLocalName(name() || '');
     }
   };
 
-  const handleDescriptionChange = async details => {
+  const handleDescriptionCommit = async details => {
     const newDesc = details.value.trim();
     const currentDesc = description() || '';
     if (newDesc !== currentDesc) {
@@ -46,6 +68,8 @@ export default function ProjectHeader(props) {
         await handleError(error, {
           toastTitle: 'Failed to update description',
         });
+        // Revert local state on error
+        setLocalDescription(description() || '');
       }
     }
   };
@@ -60,17 +84,36 @@ export default function ProjectHeader(props) {
           <FiArrowLeft class='h-4 w-4' />
         </button>
         <div class='min-w-0'>
-          {/* Project Name - SimpleEditable */}
+          {/* Project Name */}
           <div class='flex items-center gap-2'>
-            <SimpleEditable
+            <Editable
+              value={localName()}
+              onValueChange={details => setLocalName(details.value)}
+              onValueCommit={handleNameCommit}
               activationMode='click'
-              value={name()}
-              onSubmit={handleNameChange}
-              showEditIcon={canEdit()}
-              readOnly={!canEdit()}
-              class='text-foreground text-lg font-semibold'
-              variant='heading'
-            />
+              submitMode='both'
+              disabled={!canEdit()}
+              placeholder='Project name...'
+              class='group'
+            >
+              <div class='flex items-center gap-1'>
+                <EditableArea class='hover:bg-muted rounded px-1 transition-colors'>
+                  <EditableInput class='text-foreground bg-transparent text-lg font-semibold outline-none' />
+                  <EditablePreview class='text-foreground cursor-text text-lg font-semibold' />
+                </EditableArea>
+                <Show when={canEdit()}>
+                  <EditableContext>
+                    {api => (
+                      <Show when={!api().editing}>
+                        <EditableEditTrigger class='text-muted-foreground/60 hover:text-muted-foreground rounded p-1 opacity-0 transition-colors group-hover:opacity-100'>
+                          <FiEdit2 class='h-3.5 w-3.5' />
+                        </EditableEditTrigger>
+                      </Show>
+                    )}
+                  </EditableContext>
+                </Show>
+              </div>
+            </Editable>
             <Show when={userRole()}>
               <span class='inline-flex items-center rounded-md border border-blue-200 bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-700 capitalize'>
                 {userRole()}
@@ -78,10 +121,11 @@ export default function ProjectHeader(props) {
             </Show>
           </div>
 
-          {/* Project Description - Composable Editable with textarea */}
+          {/* Project Description */}
           <Editable
-            defaultValue={description() || ''}
-            onValueCommit={handleDescriptionChange}
+            value={localDescription()}
+            onValueChange={details => setLocalDescription(details.value)}
+            onValueCommit={handleDescriptionCommit}
             activationMode='click'
             submitMode='both'
             autoResize
