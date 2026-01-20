@@ -341,12 +341,16 @@ function createBetterAuthStore() {
       const base = (BASEPATH || '').replace(/\/$/, ''); // Remove trailing slash from basepath
       const callbackURL = `${window.location.origin}${base}${path}`;
 
+      // Build error URL to redirect to /signin with error param on OAuth failure
+      const errorURL = `${window.location.origin}${base}/signin`;
+
       // Save login method before redirect
       saveLastLoginMethod(LOGIN_METHODS.GOOGLE);
 
       const { data, error } = await authClient.signIn.social({
         provider: 'google',
         callbackURL,
+        errorCallbackURL: errorURL,
       });
 
       if (error) {
@@ -369,6 +373,9 @@ function createBetterAuthStore() {
       const base = (BASEPATH || '').replace(/\/$/, ''); // Remove trailing slash from basepath
       const callbackURL = `${window.location.origin}${base}${path}`;
 
+      // Build error URL to redirect to /signin with error param on OAuth failure
+      const errorURL = `${window.location.origin}${base}/signin`;
+
       // Save login method before redirect
       saveLastLoginMethod(LOGIN_METHODS.ORCID);
 
@@ -376,6 +383,7 @@ function createBetterAuthStore() {
       const { data, error } = await authClient.signIn.oauth2({
         providerId: 'orcid',
         callbackURL,
+        errorCallbackURL: errorURL,
       });
 
       if (error) {

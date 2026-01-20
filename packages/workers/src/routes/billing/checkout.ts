@@ -8,7 +8,7 @@ import { requireAuth, getAuth } from '@/middleware/auth';
 import { createDb } from '@/db/client';
 import { user as userTable } from '@/db/schema';
 import { eq } from 'drizzle-orm';
-import { validatePlanChange } from '@/lib/billingResolver';
+import { validatePlanChange, resolveOrgAccess } from '@/lib/billingResolver';
 import { DEFAULT_PLAN } from '@corates/shared/plans';
 import { createDomainError, SYSTEM_ERRORS, VALIDATION_ERRORS } from '@corates/shared';
 import type Stripe from 'stripe';
@@ -273,6 +273,22 @@ billingCheckoutRoutes.openapi(checkoutRoute, async c => {
         field: 'tier',
         value: tier,
       });
+      return c.json(error, error.statusCode as ContentfulStatusCode);
+    }
+
+    // Check if user already has an active subscription with the same plan
+    // Allow grant/trial/free users to checkout (they're upgrading to paid)
+    // For interval changes on existing subscriptions, users should use the billing portal
+    const currentBilling = await resolveOrgAccess(db, orgId!);
+    if (currentBilling.source === 'subscription' && currentBilling.effectivePlanId === tier) {
+      const error = createDomainError(
+        VALIDATION_ERRORS.INVALID_INPUT,
+        {
+          reason: 'already_on_plan',
+          currentPlan: tier,
+        },
+        `You are already subscribed to the ${tier} plan. To change your billing interval, use the billing portal.`,
+      );
       return c.json(error, error.statusCode as ContentfulStatusCode);
     }
 

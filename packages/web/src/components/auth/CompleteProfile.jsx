@@ -32,6 +32,12 @@ import { FiCheck } from 'solid-icons/fi';
 import { handleError } from '@/lib/error-utils.js';
 import { apiFetch } from '@lib/apiFetch.js';
 import { showToast } from '@/components/ui/toast';
+import {
+  hasPendingPlan,
+  clearPendingPlan,
+  handlePendingPlanRedirect,
+  BILLING_MESSAGES,
+} from '@/lib/plan-redirect-utils.js';
 
 const STEPS = [
   { title: 'Your Name', description: 'Basic information' },
@@ -83,9 +89,13 @@ export default function CompleteProfile() {
   createEffect(() => {
     const currentUser = user();
 
-    // If already completed onboarding, go to dashboard.
+    // If already completed onboarding, check for pending plan or go to dashboard.
     if (currentUser?.profileCompletedAt) {
-      navigate('/dashboard', { replace: true });
+      if (hasPendingPlan()) {
+        navigate('/settings/plans', { replace: true });
+      } else {
+        navigate('/dashboard', { replace: true });
+      }
       return;
     }
 
@@ -240,10 +250,28 @@ export default function CompleteProfile() {
           // Log error but don't block profile completion
           console.error('Failed to accept invitation:', inviteErr);
           localStorage.removeItem('pendingInvitationToken');
-          // Continue to dashboard
+          // Continue to dashboard or plan redirect
         }
       }
 
+      // Handle plan redirect from landing pricing page
+      const { handled, error: planError } = await handlePendingPlanRedirect({ navigate });
+
+      if (handled) {
+        if (planError) {
+          // Redirect failed - send to /settings/plans which has error recovery UI with retry
+          showToast.error(
+            BILLING_MESSAGES.CHECKOUT_ERROR.title,
+            BILLING_MESSAGES.CHECKOUT_ERROR.message,
+          );
+          navigate('/settings/plans', { replace: true });
+        }
+        // Success cases: handlePendingPlanRedirect already navigated
+        return;
+      }
+
+      // Default: no pending plan, clear any stale data and go to dashboard
+      clearPendingPlan();
       await new Promise(resolve => setTimeout(resolve, 200));
       navigate('/dashboard', { replace: true });
     } catch (err) {
