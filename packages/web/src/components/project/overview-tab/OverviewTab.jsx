@@ -6,7 +6,6 @@ import { BiRegularCheckCircle } from 'solid-icons/bi';
 import { CgArrowsExchange } from 'solid-icons/cg';
 import ChartSection from './ChartSection.jsx';
 import AddMemberModal from './AddMemberModal.jsx';
-import ReviewerAssignment from './ReviewerAssignment.jsx';
 import AMSTAR2ResultsTable from './AMSTAR2ResultsTable.jsx';
 import projectStore from '@/stores/projectStore.js';
 import projectActionsStore from '@/stores/projectActionsStore';
@@ -158,11 +157,6 @@ export default function OverviewTab() {
     return userProgressMap().get(userId) || { percentage: 0, completed: 0, total: 0 };
   };
 
-  // Handlers (use active project - no projectId needed)
-  const handleUpdateStudy = (studyId, updates) => {
-    projectActionsStore.study.update(studyId, updates);
-  };
-
   // Opens remove member confirmation dialog
   const handleRemoveMember = (memberId, memberName) => {
     const currentUser = user();
@@ -204,13 +198,6 @@ export default function OverviewTab() {
   const interRaterMetrics = createMemo(() => {
     return calculateInterRaterReliability(studies(), getChecklistData);
   });
-
-  // Calculate unassigned studies for Reviewer Assignment visibility
-  const unassignedStudies = createMemo(() => studies().filter(s => !s.reviewer1 && !s.reviewer2));
-
-  // Determine if Reviewer Assignment should be shown
-  const shouldShowReviewerAssignment = () =>
-    isOwner() && studies().length > 0 && unassignedStudies().length > 0;
 
   return (
     <>
@@ -389,17 +376,6 @@ export default function OverviewTab() {
           </div>
         </Show>
       </div>
-
-      {/* Reviewer Assignment - Below Members, Collapsed by Default */}
-      <Show when={shouldShowReviewerAssignment()}>
-        <div class='mb-6'>
-          <ReviewerAssignment
-            studies={studies}
-            members={members}
-            onAssignReviewers={handleUpdateStudy}
-          />
-        </div>
-      </Show>
 
       {/* Section 3: Results */}
       <div class='space-y-4'>
