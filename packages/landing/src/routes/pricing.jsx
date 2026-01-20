@@ -1,12 +1,72 @@
 import { Title, Meta, Link } from '@solidjs/meta';
-import { For, Show, createSignal } from 'solid-js';
-import { FiCheck, FiStar, FiZap } from 'solid-icons/fi';
+import { createSignal, For, Show } from 'solid-js';
+import { FiCheck, FiChevronDown, FiStar, FiZap } from 'solid-icons/fi';
 import { getBillingPlanCatalog } from '@corates/shared/plans';
 
 import Navbar from '~/components/Navbar';
 import Footer from '~/components/Footer';
 import FlipNumber from '~/components/FlipNumber';
 import { config, urls } from '~/lib/config';
+
+const FAQ_ITEMS = [
+  {
+    question: 'Can I switch plans at any time?',
+    answer:
+      "Yes! You can upgrade or downgrade your plan at any time. When you upgrade, you'll be charged a prorated amount for the remainder of your billing cycle. When you downgrade, your new plan will take effect at the start of your next billing cycle.",
+  },
+  {
+    question: 'What happens when my trial ends?',
+    answer:
+      "When your 14-day trial ends, you'll need to subscribe to a paid plan to continue using collaborative features. Don't worry - your data will be saved, and you can subscribe at any time to regain access.",
+  },
+  {
+    question: 'Can I cancel my subscription?',
+    answer:
+      "Absolutely. You can cancel your subscription at any time from your billing settings. Your access will continue until the end of your current billing period, and you won't be charged again.",
+  },
+  {
+    question: 'What payment methods do you accept?',
+    answer:
+      'We accept all major credit cards (Visa, Mastercard, American Express) through our secure payment processor, Stripe. All payments are encrypted and secure.',
+  },
+  {
+    question: 'Is there a discount for annual billing?',
+    answer:
+      "Yes! When you choose annual billing, you get 2 months free compared to monthly billing. That's a savings of up to 17% depending on your plan.",
+  },
+  {
+    question: "What's the Single Project option?",
+    answer:
+      "The Single Project option is perfect if you have a one-time systematic review. It's a one-time payment that gives you 6 months of access for a single project with up to 3 collaborators. No recurring charges.",
+  },
+];
+
+function FAQItem(props) {
+  const [isOpen, setIsOpen] = createSignal(false);
+
+  return (
+    <div class='border-b border-gray-200 last:border-b-0'>
+      <button
+        type='button'
+        class='flex w-full items-center justify-between py-5 text-left'
+        onClick={() => setIsOpen(!isOpen())}
+      >
+        <span class='text-base font-medium text-gray-900'>{props.question}</span>
+        <FiChevronDown
+          class={`h-5 w-5 shrink-0 text-gray-500 transition-transform duration-300 ease-out ${isOpen() ? 'rotate-180' : ''}`}
+        />
+      </button>
+      <div
+        class='grid transition-[grid-template-rows] duration-300 ease-out'
+        style={{ 'grid-template-rows': isOpen() ? '1fr' : '0fr' }}
+      >
+        <div class='overflow-hidden'>
+          <p class='pb-5 text-gray-600'>{props.answer}</p>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function Pricing() {
   const pageUrl = `${config.appUrl}/pricing`;
@@ -302,6 +362,21 @@ export default function Pricing() {
               </div>
             </div>
           </Show>
+
+          {/* FAQ Section */}
+          <div class='mt-16'>
+            <div class='mb-8 text-center'>
+              <h2 class='text-2xl font-bold text-gray-900'>Frequently asked questions</h2>
+              <p class='mt-2 text-gray-500'>
+                Everything you need to know about our plans and billing.
+              </p>
+            </div>
+            <div class='mx-auto max-w-3xl rounded-2xl border border-gray-200 bg-white px-6'>
+              <For each={FAQ_ITEMS}>
+                {faq => <FAQItem question={faq.question} answer={faq.answer} />}
+              </For>
+            </div>
+          </div>
 
           {/* Contact section */}
           <div class='mt-12 text-center'>

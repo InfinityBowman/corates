@@ -32,13 +32,16 @@ function FAQItem(props) {
       >
         <span class='text-base font-medium text-slate-900'>{props.question}</span>
         <FiChevronDown
-          class={`h-5 w-5 shrink-0 text-slate-500 transition-transform duration-200 ${isOpen() ? 'rotate-180' : ''}`}
+          class={`h-5 w-5 shrink-0 text-slate-500 transition-transform duration-300 ease-out ${isOpen() ? 'rotate-180' : ''}`}
         />
       </button>
       <div
-        class={`overflow-hidden transition-all duration-200 ${isOpen() ? 'max-h-96 pb-5' : 'max-h-0'}`}
+        class='grid transition-[grid-template-rows] duration-300 ease-out'
+        style={{ 'grid-template-rows': isOpen() ? '1fr' : '0fr' }}
       >
-        <p class='text-slate-600'>{props.answer}</p>
+        <div class='overflow-hidden'>
+          <p class='pb-5 text-slate-600'>{props.answer}</p>
+        </div>
       </div>
     </div>
   );
