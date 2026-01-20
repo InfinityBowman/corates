@@ -168,22 +168,27 @@ export default function PricingTable(props) {
   };
 
   return (
-    <div class='py-6'>
+    <div class='pb-6'>
       {/* Billing interval toggle */}
       <div class='mb-10 flex flex-col items-center gap-4'>
-        <Show when={billingInterval() === 'yearly'}>
-          <div class='-mt-13 flex items-center gap-2 rounded-full bg-green-50 px-4 py-2 text-sm font-medium text-green-700'>
-            <FiStar class='h-4 w-4' />
-            Save 2 months with annual billing
-          </div>
-        </Show>
-        <div class='inline-flex rounded-xl bg-gray-100 p-1.5'>
+        <div class='flex items-center gap-2 rounded-full bg-green-50 px-4 py-2 text-sm font-medium text-green-700'>
+          <FiStar class='h-4 w-4' />
+          Save 2 months with annual billing
+        </div>
+        <div class='relative inline-flex rounded-xl bg-gray-100 p-1.5'>
+          {/* Sliding background pill */}
+          <div
+            class='absolute top-1.5 h-[calc(100%-12px)] w-[calc(50%-6px)] rounded-lg bg-white shadow-sm transition-transform duration-200 ease-out'
+            style={{
+              transform: billingInterval() === 'yearly' ? 'translateX(100%)' : 'translateX(0)',
+            }}
+          />
           <button
             type='button'
-            class={`rounded-lg px-5 py-2.5 text-sm font-semibold transition-all ${
-              billingInterval() === 'monthly' ?
-                'bg-white text-gray-900 shadow-sm'
-              : 'text-gray-500 hover:text-gray-700'
+            class={`relative z-10 rounded-lg px-5 py-2.5 text-sm font-semibold transition-colors duration-200 ${
+              billingInterval() === 'monthly' ? 'text-gray-900' : (
+                'text-gray-500 hover:text-gray-700'
+              )
             }`}
             onClick={() => setBillingInterval('monthly')}
           >
@@ -191,10 +196,8 @@ export default function PricingTable(props) {
           </button>
           <button
             type='button'
-            class={`rounded-lg px-5 py-2.5 text-sm font-semibold transition-all ${
-              billingInterval() === 'yearly' ?
-                'bg-white text-gray-900 shadow-sm'
-              : 'text-gray-500 hover:text-gray-700'
+            class={`relative z-10 rounded-lg px-5 py-2.5 text-sm font-semibold transition-colors duration-200 ${
+              billingInterval() === 'yearly' ? 'text-gray-900' : 'text-gray-500 hover:text-gray-700'
             }`}
             onClick={() => setBillingInterval('yearly')}
           >

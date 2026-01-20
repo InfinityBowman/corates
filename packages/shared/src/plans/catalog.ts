@@ -61,21 +61,6 @@ export function getBillingPlanCatalog(): BillingCatalogResponse {
   return {
     plans: [
       {
-        tier: 'free',
-        name: 'Free',
-        description: 'Single-study appraisals, no account required',
-        price: getPlanPricing('free'),
-        isPopular: false,
-        cta: 'none',
-        trialDays: 14,
-        features: [
-          'Single-study appraisals (anonymous)',
-          'Local PDF upload and markup',
-          'Local automated scoring',
-          'No projects (projects require trial or paid)',
-        ],
-      },
-      {
         tier: 'trial',
         name: 'Trial',
         description: 'Full access for 14 days (1 project)',
