@@ -21,8 +21,6 @@ CoRATES is positioned as an **affordable, accessible alternative** to premium sy
 - **Value proposition**: Simpler, more focused tool at a lower price point
 - **Target market**: Individual researchers, small teams, and labs who need core functionality without enterprise features
 
-We acknowledge that CoRATES is less feature-full than competitors, and our pricing reflects that while still providing clear value.
-
 ## Goals
 
 - Keep pricing accessible and competitive with Rayyan
