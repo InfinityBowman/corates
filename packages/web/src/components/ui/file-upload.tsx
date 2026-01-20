@@ -86,7 +86,7 @@ const FileUploadDropzone: Component<FileUploadDropzoneProps> = props => {
   return (
     <FileUploadPrimitive.Dropzone
       class={cn(
-        'border-border bg-muted flex min-h-32 cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed p-6 transition-colors',
+        'border-border bg-muted/50 flex min-h-32 cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed p-6 transition-colors',
         'hover:border-primary hover:bg-primary-subtle',
         'data-dragging:border-primary data-dragging:bg-primary-subtle',
         local.class,

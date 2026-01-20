@@ -24,7 +24,7 @@ export default function MockIndex() {
           <div class='grid gap-4'>
             <A
               href='/mocks/project-wizard'
-              class='block rounded-lg border-2 border-blue-200 bg-gradient-to-br from-blue-50 to-white p-6 shadow-sm transition-all hover:border-blue-300 hover:shadow-md'
+              class='block rounded-lg border-2 border-blue-200 bg-linear-to-br from-blue-50 to-white p-6 shadow-sm transition-all hover:border-blue-300 hover:shadow-md'
             >
               <div class='flex items-start justify-between'>
                 <div>
@@ -53,7 +53,7 @@ export default function MockIndex() {
             </A>
             <A
               href='/mocks/dashboard'
-              class='block rounded-lg border-2 border-teal-200 bg-gradient-to-br from-teal-50 to-white p-6 shadow-sm transition-all hover:border-teal-300 hover:shadow-md'
+              class='block rounded-lg border-2 border-teal-200 bg-linear-to-br from-teal-50 to-white p-6 shadow-sm transition-all hover:border-teal-300 hover:shadow-md'
             >
               <div class='flex items-start justify-between'>
                 <div>
@@ -81,7 +81,7 @@ export default function MockIndex() {
             </A>
             <A
               href='/mocks/project-view-v2'
-              class='block rounded-lg border-2 border-blue-200 bg-gradient-to-br from-blue-50 to-white p-6 shadow-sm transition-all hover:border-blue-300 hover:shadow-md'
+              class='block rounded-lg border-2 border-blue-200 bg-linear-to-br from-blue-50 to-white p-6 shadow-sm transition-all hover:border-blue-300 hover:shadow-md'
             >
               <div class='flex items-start justify-between'>
                 <div>
@@ -276,7 +276,7 @@ export default function MockIndex() {
           <div class='grid gap-4'>
             <A
               href='/mocks/settings-combined'
-              class='block rounded-lg border-2 border-blue-200 bg-gradient-to-br from-blue-50 to-white p-6 shadow-sm transition-all hover:border-blue-300 hover:shadow-md'
+              class='block rounded-lg border-2 border-blue-200 bg-linear-to-br from-blue-50 to-white p-6 shadow-sm transition-all hover:border-blue-300 hover:shadow-md'
             >
               <div class='flex items-start justify-between'>
                 <div>
