@@ -146,3 +146,11 @@ export function getBillingPlanCatalog(): BillingCatalogResponse {
     ],
   };
 }
+
+/**
+ * Tiers that have a checkout/redirect flow (derived from catalog)
+ * Used for validating plan params from landing page URLs
+ */
+export const CHECKOUT_ELIGIBLE_TIERS: BillingCatalogTier[] = getBillingPlanCatalog()
+  .plans.filter(p => p.cta !== 'none')
+  .map(p => p.tier);

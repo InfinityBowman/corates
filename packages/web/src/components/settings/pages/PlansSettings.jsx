@@ -4,11 +4,17 @@
  * Adapted from BillingPlansPage for the settings sidebar layout
  */
 
-import { For, createSignal } from 'solid-js';
-import { FiChevronDown } from 'solid-icons/fi';
+import { For, Show, createSignal, onMount } from 'solid-js';
+import { FiChevronDown, FiLoader, FiAlertCircle, FiRefreshCw } from 'solid-icons/fi';
+import { useNavigate } from '@solidjs/router';
 import { useSubscription } from '@/primitives/useSubscription.js';
 import PricingTable from '@/components/billing/PricingTable.jsx';
 import { LANDING_URL } from '@/config/api.js';
+import {
+  hasPendingPlan,
+  handlePendingPlanRedirect,
+  BILLING_MESSAGES,
+} from '@/lib/plan-redirect-utils.js';
 
 /**
  * FAQ Accordion item
@@ -74,9 +80,94 @@ const FAQ_ITEMS = [
  * Plans Settings component
  */
 export default function PlansSettings() {
-  const { tier } = useSubscription();
+  const { tier, refetch } = useSubscription();
+  const navigate = useNavigate();
+
+  // State: 'checking' (initial), 'redirecting' (processing plan), 'error' (failed), 'ready' (show pricing)
+  const [pageState, setPageState] = createSignal(hasPendingPlan() ? 'checking' : 'ready');
+
+  // Process pending plan redirect
+  async function processPendingPlan() {
+    setPageState('redirecting');
+
+    const { handled, error } = await handlePendingPlanRedirect({ navigate, refetch });
+
+    if (!handled) {
+      // No pending plan - show pricing
+      setPageState('ready');
+      return;
+    }
+
+    if (error) {
+      // Redirect failed - show error state with retry option
+      setPageState('error');
+    }
+    // If handled without error, the page will navigate/unload
+  }
+
+  // Handle pending plan params from landing page (for logged-in users)
+  onMount(() => {
+    if (hasPendingPlan()) {
+      processPendingPlan();
+    }
+  });
+
+  // Retry handler for error state
+  function handleRetry() {
+    processPendingPlan();
+  }
+
+  // Dismiss error and show pricing table
+  function handleDismissError() {
+    setPageState('ready');
+  }
 
   return (
+    <Show
+      when={pageState() === 'ready'}
+      fallback={
+        <Show
+          when={pageState() === 'error'}
+          fallback={
+            <div class='flex min-h-[60vh] flex-col items-center justify-center'>
+              <FiLoader class='h-8 w-8 animate-spin text-blue-600' />
+              <p class='mt-4 text-lg font-medium text-slate-700'>Redirecting to checkout...</p>
+              <p class='mt-1 text-sm text-slate-500'>Please wait while we prepare your order.</p>
+            </div>
+          }
+        >
+          {/* Error state with retry */}
+          <div class='flex min-h-[60vh] flex-col items-center justify-center px-4'>
+            <div class='flex h-16 w-16 items-center justify-center rounded-full bg-red-100'>
+              <FiAlertCircle class='h-8 w-8 text-red-600' />
+            </div>
+            <h2 class='mt-4 text-xl font-semibold text-slate-900'>
+              {BILLING_MESSAGES.CHECKOUT_ERROR.title}
+            </h2>
+            <p class='mt-2 max-w-md text-center text-slate-600'>
+              {BILLING_MESSAGES.CHECKOUT_ERROR.message}
+            </p>
+            <div class='mt-6 flex gap-3'>
+              <button
+                type='button'
+                onClick={handleRetry}
+                class='inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700'
+              >
+                <FiRefreshCw class='h-4 w-4' />
+                Try Again
+              </button>
+              <button
+                type='button'
+                onClick={handleDismissError}
+                class='rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50'
+              >
+                Choose a Plan
+              </button>
+            </div>
+          </div>
+        </Show>
+      }
+    >
     <div class='min-h-full bg-slate-50 py-6'>
       <div class='mx-auto max-w-6xl px-4 sm:px-6 lg:px-8'>
         {/* Header */}
@@ -125,5 +216,6 @@ export default function PlansSettings() {
         </div>
       </div>
     </div>
+    </Show>
   );
 }

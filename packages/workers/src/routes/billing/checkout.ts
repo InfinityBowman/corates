@@ -8,7 +8,7 @@ import { requireAuth, getAuth } from '@/middleware/auth';
 import { createDb } from '@/db/client';
 import { user as userTable } from '@/db/schema';
 import { eq } from 'drizzle-orm';
-import { validatePlanChange } from '@/lib/billingResolver';
+import { validatePlanChange, resolveOrgAccess } from '@/lib/billingResolver';
 import { DEFAULT_PLAN } from '@corates/shared/plans';
 import { createDomainError, SYSTEM_ERRORS, VALIDATION_ERRORS } from '@corates/shared';
 import type Stripe from 'stripe';
@@ -273,6 +273,20 @@ billingCheckoutRoutes.openapi(checkoutRoute, async c => {
         field: 'tier',
         value: tier,
       });
+      return c.json(error, error.statusCode as ContentfulStatusCode);
+    }
+
+    // Check if user is already on this plan
+    const currentBilling = await resolveOrgAccess(db, orgId!);
+    if (currentBilling.effectivePlanId === tier) {
+      const error = createDomainError(
+        VALIDATION_ERRORS.INVALID_INPUT,
+        {
+          reason: 'already_on_plan',
+          currentPlan: tier,
+        },
+        `You are already subscribed to the ${tier} plan.`,
+      );
       return c.json(error, error.statusCode as ContentfulStatusCode);
     }
 

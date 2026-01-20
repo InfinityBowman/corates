@@ -1,6 +1,7 @@
 import { createEffect, Show, createSignal } from 'solid-js';
 import { useNavigate, useLocation } from '@solidjs/router';
 import { useBetterAuth } from '@api/better-auth-store.js';
+import { capturePlanParams, hasPendingPlan } from '@/lib/plan-redirect-utils.js';
 
 /**
  * AuthLayout - Layout for auth pages (signin, signup, etc.)
@@ -30,12 +31,23 @@ export default function AuthLayout(props) {
         return;
       }
 
+      // Capture plan params from signup page before redirecting (for logged-in users clicking from landing)
+      if (currentPath === '/signup') {
+        const urlParams = new URLSearchParams(window.location.search);
+        capturePlanParams(urlParams);
+      }
+
       // If user hasn't completed profile setup, send to complete-profile
-      // Otherwise send to dashboard
+      // Otherwise send to dashboard (plan redirect will be handled there or in settings)
       if (!currentUser?.profileCompletedAt) {
         navigate('/complete-profile', { replace: true });
       } else {
-        navigate('/dashboard', { replace: true });
+        // If there's a pending plan, go to settings/plans to handle it
+        if (hasPendingPlan()) {
+          navigate('/settings/plans', { replace: true });
+        } else {
+          navigate('/dashboard', { replace: true });
+        }
       }
     }
   });

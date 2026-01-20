@@ -12,6 +12,7 @@ import {
 import MagicLinkForm from './MagicLinkForm.jsx';
 import { LANDING_URL } from '@config/api.js';
 import { handleError } from '@/lib/error-utils.js';
+import { capturePlanParams } from '@/lib/plan-redirect-utils.js';
 
 /**
  * Sign Up page - minimal friction with magic link or social providers
@@ -48,6 +49,9 @@ export default function SignUp() {
     if (invitationToken) {
       localStorage.setItem('pendingInvitationToken', invitationToken);
     }
+
+    // Capture plan selection from landing pricing page (e.g., /signup?plan=starter_team&interval=yearly)
+    capturePlanParams(urlParams);
 
     // If the user clicks OAuth and then uses browser Back,
     // the page can be restored from bfcache with stale state.

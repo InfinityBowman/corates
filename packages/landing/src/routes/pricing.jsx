@@ -49,6 +49,11 @@ export default function Pricing() {
 
   // Get button URL with appropriate plan parameter
   const getButtonUrl = plan => {
+    // For subscription plans, include billing interval
+    if (plan.cta === 'subscribe') {
+      return urls.signUp(plan.tier, billingInterval());
+    }
+    // For trial and single_project, no interval needed
     return urls.signUp(plan.tier);
   };
 
