@@ -12,6 +12,7 @@ import {
 import { fetchFromDOI } from '@/lib/referenceLookup.js';
 import { cloneArrayBuffer } from './serialization.js';
 import { validatePdfFile } from '@/lib/pdfValidation.js';
+import { showToast } from '@/components/ui/toast';
 
 const DOI_FETCH_TIMEOUT = 10000;
 
@@ -27,12 +28,27 @@ export function createPdfOperations() {
   const handlePdfSelect = async files => {
     // Validate each file before processing
     const validFiles = [];
+    const invalidFiles = [];
     for (const file of files) {
       const validation = await validatePdfFile(file);
       if (validation.valid) {
         validFiles.push(file);
       } else {
-        console.warn('Invalid PDF file:', file.name, validation.details.message);
+        invalidFiles.push({ file, message: validation.details.message });
+      }
+    }
+
+    // Show toast for invalid files
+    if (invalidFiles.length > 0) {
+      if (invalidFiles.length === 1) {
+        const fileName = invalidFiles[0].file.name;
+        const truncatedName = fileName.length > 50 ? fileName.slice(0, 47) + '...' : fileName;
+        showToast.warning('Invalid PDF', `"${truncatedName}" - ${invalidFiles[0].message}`);
+      } else {
+        showToast.warning(
+          'Invalid PDFs',
+          `${invalidFiles.length} files have invalid filenames. Avoid special characters and keep under 200 characters.`,
+        );
       }
     }
 

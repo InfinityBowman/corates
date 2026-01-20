@@ -142,7 +142,7 @@ export default function DevPanel() {
       {/* Floating toggle button */}
       <Show when={!isOpen()}>
         <button
-          class='fixed right-5 bottom-5 z-9999 flex h-12 w-12 items-center justify-center rounded-full bg-purple-600 text-white shadow-lg transition-transform hover:scale-110 hover:bg-purple-700'
+          class='fixed bottom-5 left-5 z-9999 flex h-12 w-12 items-center justify-center rounded-full bg-purple-600 text-white shadow-lg transition-transform hover:scale-110 hover:bg-purple-700'
           onClick={() => setIsOpen(true)}
           title='Open Dev Panel'
         >

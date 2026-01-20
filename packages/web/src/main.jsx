@@ -5,6 +5,7 @@ import { cleanupExpiredStates } from '@lib/formStatePersistence.js';
 import { initBfcacheHandler } from '@lib/bfcache-handler.js';
 import AppErrorBoundary from './components/ErrorBoundary.jsx';
 import { QueryClientProvider } from '@tanstack/solid-query';
+import { SolidQueryDevtools } from '@tanstack/solid-query-devtools';
 import { queryClient } from '@lib/queryClient.js';
 import { bestEffort } from '@lib/errorLogger.js';
 import { initSentry } from '@config/sentry.js';
@@ -26,6 +27,7 @@ function Root() {
       <AppErrorBoundary>
         <Routes />
       </AppErrorBoundary>
+      {import.meta.env.DEV && <SolidQueryDevtools initialIsOpen={false} />}
     </QueryClientProvider>
   );
 }
