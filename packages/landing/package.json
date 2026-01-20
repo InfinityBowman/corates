@@ -8,7 +8,7 @@
     "dev": "vinxi dev --port 3010",
     "dev:prod": "pnpm run build:prod && wrangler dev --port 3010",
     "build": "vinxi build --mode production && node scripts/version-sw.js",
-    "build:prod": "pnpm run build && pnpm --filter @corates/shared build && pnpm --filter @corates/web build",
+    "build:prod": "pnpm --filter @corates/shared build && pnpm run build && pnpm --filter @corates/web build",
     "preview": "npx serve .output/public",
     "deploy": "pnpm run build:prod && wrangler deploy",
     "lint": "eslint ."
