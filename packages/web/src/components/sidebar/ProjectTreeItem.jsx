@@ -36,20 +36,18 @@ export default function ProjectTreeItem(props) {
         return (
           <Collapsible open={props.isExpanded}>
             <div
-              class={`group flex cursor-pointer items-center rounded-lg transition-colors ${isSelected() ? 'bg-blue-100 text-blue-700' : 'text-secondary-foreground hover:bg-muted'} `}
+              class={`group flex cursor-pointer items-center rounded-lg px-2 py-1.5 transition-colors ${isSelected() ? 'bg-blue-100 text-blue-700' : 'text-secondary-foreground hover:bg-muted'} `}
               onClick={handleRowClick}
             >
-              <div class='hover:bg-secondary rounded-l-lg p-2'>
-                <FiChevronRight
-                  class={`text-muted-foreground h-3 w-3 transition-transform ${props.isExpanded ? 'rotate-90' : ''}`}
-                />
-              </div>
+              <FiChevronRight
+                class={`text-muted-foreground mr-1 h-3 w-3 shrink-0 transition-transform ${props.isExpanded ? 'rotate-90' : ''}`}
+              />
               <button
                 onClick={e => {
                   e.stopPropagation();
                   navigate(projectPath());
                 }}
-                class='flex flex-1 items-center gap-2 py-2 pr-2 text-left'
+                class='flex flex-1 items-center gap-2 text-left'
               >
                 <Show
                   when={props.isExpanded}

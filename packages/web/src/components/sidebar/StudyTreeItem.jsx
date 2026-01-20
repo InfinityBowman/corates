@@ -32,13 +32,11 @@ export default function StudyTreeItem(props) {
         }
       }}
     >
-      <CollapsibleTrigger class='group text-muted-foreground hover:bg-muted flex items-center rounded transition-colors'>
-        <div class='pointer-events-none rounded p-1.5'>
-          <FiChevronRight
-            class={`text-muted-foreground/70 h-2.5 w-2.5 transition-transform ${isExpanded() ? 'rotate-90' : ''}`}
-          />
-        </div>
-        <div class='flex flex-1 items-center gap-1.5 py-1.5 pr-2 text-left'>
+      <CollapsibleTrigger class='group text-muted-foreground hover:bg-muted flex w-full items-center rounded px-2 py-1.5 transition-colors'>
+        <FiChevronRight
+          class={`text-muted-foreground/70 mr-1 h-2.5 w-2.5 shrink-0 transition-transform ${isExpanded() ? 'rotate-90' : ''}`}
+        />
+        <div class='flex flex-1 items-center gap-1.5 text-left'>
           <VsBook class='text-muted-foreground/70 h-3.5 w-3.5' />
           <span class='truncate text-xs font-medium'>{props.study.name}</span>
         </div>

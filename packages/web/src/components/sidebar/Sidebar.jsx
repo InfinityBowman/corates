@@ -7,7 +7,12 @@ import localChecklistsStore from '@/stores/localChecklistsStore';
 import { useMyProjectsList } from '@primitives/useMyProjectsList.js';
 import { showToast } from '@/components/ui/toast';
 // import useRecentsNav from './useRecentsNav.js';
-import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
+import {
+  Tooltip,
+  TooltipTrigger,
+  TooltipPositioner,
+  TooltipContent,
+} from '@/components/ui/tooltip';
 import {
   AlertDialog,
   AlertDialogBackdrop,
@@ -226,7 +231,9 @@ export default function Sidebar(props) {
                 >
                   <FiChevronsRight class='h-4 w-4' />
                 </TooltipTrigger>
-                <TooltipContent>Expand sidebar</TooltipContent>
+                <TooltipPositioner>
+                  <TooltipContent>Expand sidebar</TooltipContent>
+                </TooltipPositioner>
               </Tooltip>
             </Show>
 
@@ -248,7 +255,9 @@ export default function Sidebar(props) {
                 >
                   <FiChevronsLeft class='h-4 w-4' />
                 </TooltipTrigger>
-                <TooltipContent>Collapse sidebar</TooltipContent>
+                <TooltipPositioner>
+                  <TooltipContent>Collapse sidebar</TooltipContent>
+                </TooltipPositioner>
               </Tooltip>
             </Show>
 
@@ -425,7 +434,9 @@ export default function Sidebar(props) {
                 >
                   <AiOutlineHome class='h-4 w-4' />
                 </TooltipTrigger>
-                <TooltipContent>Projects</TooltipContent>
+                <TooltipPositioner>
+                  <TooltipContent>Projects</TooltipContent>
+                </TooltipPositioner>
               </Tooltip>
 
               {/* Projects icon */}
@@ -441,7 +452,9 @@ export default function Sidebar(props) {
                   >
                     <AiOutlineCloud class='h-4 w-4' />
                   </TooltipTrigger>
-                  <TooltipContent>Projects</TooltipContent>
+                  <TooltipPositioner>
+                    <TooltipContent>Projects</TooltipContent>
+                  </TooltipPositioner>
                 </Tooltip>
               </Show>
 
@@ -457,7 +470,9 @@ export default function Sidebar(props) {
                 >
                   <HiOutlineDocumentCheck class='h-4 w-4' />
                 </TooltipTrigger>
-                <TooltipContent>Appraisals</TooltipContent>
+                <TooltipPositioner>
+                  <TooltipContent>Appraisals</TooltipContent>
+                </TooltipPositioner>
               </Tooltip>
             </div>
           </Show>
