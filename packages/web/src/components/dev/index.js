@@ -7,3 +7,4 @@ export { default as DevStateTree } from './DevStateTree.jsx';
 export { default as DevTemplateSelector } from './DevTemplateSelector.jsx';
 export { default as DevQuickActions } from './DevQuickActions.jsx';
 export { default as DevJsonEditor } from './DevJsonEditor.jsx';
+export { default as DevToastTester } from './DevToastTester.jsx';

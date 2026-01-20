@@ -19,6 +19,7 @@ import DevTemplateSelector from './DevTemplateSelector.jsx';
 import DevQuickActions from './DevQuickActions.jsx';
 import DevJsonEditor from './DevJsonEditor.jsx';
 import DevImportProject from './DevImportProject.jsx';
+import DevToastTester from './DevToastTester.jsx';
 
 export default function DevPanel() {
   const params = useParams();
@@ -219,12 +220,18 @@ export default function DevPanel() {
           <Show when={!isMinimized()}>
             {/* Tabs */}
             <div class='flex border-b border-gray-200 bg-gray-50'>
-              {/* Import tab - always available */}
+              {/* Always available tabs */}
               <button
                 class={tabClass(activeTab() === 'import')}
                 onClick={() => setActiveTab('import')}
               >
                 Import
+              </button>
+              <button
+                class={tabClass(activeTab() === 'toasts')}
+                onClick={() => setActiveTab('toasts')}
+              >
+                Toasts
               </button>
               {/* Project-specific tabs */}
               <Show when={isProjectContext()}>
@@ -254,6 +261,10 @@ export default function DevPanel() {
             <div class='flex-1 overflow-auto'>
               <Show when={activeTab() === 'import'}>
                 <DevImportProject />
+              </Show>
+
+              <Show when={activeTab() === 'toasts'}>
+                <DevToastTester />
               </Show>
 
               <Show when={activeTab() === 'tree' && isProjectContext()}>
