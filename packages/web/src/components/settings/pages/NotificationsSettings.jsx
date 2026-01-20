@@ -24,7 +24,7 @@ export default function NotificationsSettings() {
 
         {/* Notifications Section */}
         <div class='border-border bg-card mb-6 overflow-hidden rounded-xl border shadow-sm transition-shadow duration-200 hover:shadow-md'>
-          <div class='border-border-subtle border-b bg-gradient-to-r from-slate-50 to-white px-6 py-4'>
+          <div class='border-border-subtle border-b bg-linear-to-r from-slate-50 to-white px-6 py-4'>
             <div class='flex items-center space-x-2.5'>
               <div class='bg-primary-subtle flex h-8 w-8 items-center justify-center rounded-lg'>
                 <FiBell class='text-primary h-4 w-4' />
@@ -66,7 +66,7 @@ export default function NotificationsSettings() {
 
         {/* Appearance Section */}
         <div class='border-border bg-card mb-6 overflow-hidden rounded-xl border shadow-sm transition-shadow duration-200 hover:shadow-md'>
-          <div class='border-border-subtle border-b bg-gradient-to-r from-slate-50 to-white px-6 py-4'>
+          <div class='border-border-subtle border-b bg-linear-to-r from-slate-50 to-white px-6 py-4'>
             <div class='flex items-center space-x-2.5'>
               <div class='bg-secondary flex h-8 w-8 items-center justify-center rounded-lg'>
                 <FiMoon class='text-secondary-foreground h-4 w-4' />
