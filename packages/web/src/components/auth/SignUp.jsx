@@ -12,12 +12,17 @@ import {
 import MagicLinkForm from './MagicLinkForm.jsx';
 import { LANDING_URL } from '@config/api.js';
 import { handleError } from '@/lib/error-utils.js';
+import { capturePlanParams } from '@/lib/plan-redirect-utils.js';
+import { useOAuthError } from '@/primitives/useOAuthError.js';
 
 /**
  * Sign Up page - minimal friction with magic link or social providers
  * After signup: users go to complete-profile to set name and role
  */
 export default function SignUp() {
+  // Handle OAuth errors from URL params (e.g., ?error=state_mismatch)
+  useOAuthError();
+
   const [error, setError] = createSignal('');
   const [googleLoading, setGoogleLoading] = createSignal(false);
   const [orcidLoading, setOrcidLoading] = createSignal(false);
@@ -49,6 +54,9 @@ export default function SignUp() {
       localStorage.setItem('pendingInvitationToken', invitationToken);
     }
 
+    // Capture plan selection from landing pricing page (e.g., /signup?plan=starter_team&interval=yearly)
+    capturePlanParams(urlParams);
+
     // If the user clicks OAuth and then uses browser Back,
     // the page can be restored from bfcache with stale state.
     const handleReturn = () => resetSocialLoading();
@@ -75,8 +83,10 @@ export default function SignUp() {
       // Mark this as an OAuth signup so complete-profile knows not to ask for password
       localStorage.setItem('oauthSignup', 'true');
       // OAuth users will be redirected to complete-profile after auth
+      // OAuth provider errors are handled by useOAuthError hook via errorCallbackURL redirect
       await signinWithGoogle('/complete-profile');
     } catch (err) {
+      // This catches immediate errors (network failure before redirect), not OAuth provider errors
       console.error('Google sign-up error:', err);
       await handleError(err, {
         setError,
@@ -95,8 +105,10 @@ export default function SignUp() {
       // Mark this as an OAuth signup so complete-profile knows not to ask for password
       localStorage.setItem('oauthSignup', 'true');
       // OAuth users will be redirected to complete-profile after auth
+      // OAuth provider errors are handled by useOAuthError hook via errorCallbackURL redirect
       await signinWithOrcid('/complete-profile');
     } catch (err) {
+      // This catches immediate errors (network failure before redirect), not OAuth provider errors
       console.error('ORCID sign-up error:', err);
       await handleError(err, {
         setError,

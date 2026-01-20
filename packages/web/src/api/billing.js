@@ -17,10 +17,12 @@ export async function getSubscription() {
  * Create a Stripe Checkout session
  * @param {string} tier - The subscription tier to checkout
  * @param {'monthly' | 'yearly'} interval - Billing interval
+ * @param {Object} [options] - Additional options
+ * @param {boolean} [options.showToast=true] - Whether to show toast on error
  * @returns {Promise<{ url: string, sessionId: string }>}
  */
-export async function createCheckoutSession(tier, interval = 'monthly') {
-  return apiFetch.post('/api/billing/checkout', { tier, interval });
+export async function createCheckoutSession(tier, interval = 'monthly', options = {}) {
+  return apiFetch.post('/api/billing/checkout', { tier, interval }, options);
 }
 
 /**
@@ -35,9 +37,12 @@ export async function createPortalSession() {
  * Redirect to Stripe Checkout
  * @param {string} tier - The subscription tier
  * @param {'monthly' | 'yearly'} interval - Billing interval
+ * @param {Object} [options] - Additional options
+ * @param {boolean} [options.showToast=false] - Whether to show toast on error (default false for redirect flows)
  */
-export async function redirectToCheckout(tier, interval = 'monthly') {
-  const { url } = await createCheckoutSession(tier, interval);
+export async function redirectToCheckout(tier, interval = 'monthly', options = {}) {
+  // Default showToast to false for redirect flows - caller handles errors
+  const { url } = await createCheckoutSession(tier, interval, { showToast: false, ...options });
   window.location.href = url;
 }
 
@@ -51,17 +56,22 @@ export async function redirectToPortal() {
 
 /**
  * Create a Stripe Checkout session for one-time Single Project purchase
+ * @param {Object} [options] - Additional options
+ * @param {boolean} [options.showToast=true] - Whether to show toast on error
  * @returns {Promise<{ url: string, sessionId: string }>}
  */
-export async function createSingleProjectCheckout() {
-  return apiFetch.post('/api/billing/single-project/checkout');
+export async function createSingleProjectCheckout(options = {}) {
+  return apiFetch.post('/api/billing/single-project/checkout', {}, options);
 }
 
 /**
  * Redirect to Stripe Checkout for Single Project purchase
+ * @param {Object} [options] - Additional options
+ * @param {boolean} [options.showToast=false] - Whether to show toast on error (default false for redirect flows)
  */
-export async function redirectToSingleProjectCheckout() {
-  const { url } = await createSingleProjectCheckout();
+export async function redirectToSingleProjectCheckout(options = {}) {
+  // Default showToast to false for redirect flows - caller handles errors
+  const { url } = await createSingleProjectCheckout({ showToast: false, ...options });
   window.location.href = url;
 }
 
@@ -75,10 +85,13 @@ export async function getMembers() {
 
 /**
  * Start a 14-day trial grant for the current org (owner-only)
+ * @param {Object} [options] - Additional options
+ * @param {boolean} [options.showToast=false] - Whether to show toast on error (default false - caller handles)
  * @returns {Promise<{ success: boolean, grantId: string, expiresAt: number }>}
  */
-export async function startTrial() {
-  return apiFetch.post('/api/billing/trial/start');
+export async function startTrial(options = {}) {
+  // Default showToast to false - caller handles errors with specific messages
+  return apiFetch.post('/api/billing/trial/start', {}, { showToast: false, ...options });
 }
 
 /**

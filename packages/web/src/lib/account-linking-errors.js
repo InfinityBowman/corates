@@ -20,9 +20,12 @@ export const LINK_ERROR_MESSAGES = {
   EMAIL_NOT_VERIFIED: 'Please verify your email with this provider before linking.',
   EMAIL_DOESNT_MATCH:
     'The email from this account does not match. Contact support if you need to link accounts with different emails.',
+  EMAIL_NOT_FOUND:
+    'No email was provided by the authentication provider. Please ensure your account has a verified email.',
   // Session/auth errors
   SESSION_EXPIRED: 'Your session expired. Please sign in again.',
   INVALID_SESSION: 'Your session is invalid. Please sign in again.',
+  PLEASE_RESTART_THE_PROCESS: 'Authentication session expired. Please try signing in again.',
   // Network/connection errors
   NETWORK_ERROR: 'Connection error. Please check your internet and try again.',
   // Provider configuration errors
@@ -35,6 +38,10 @@ export const LINK_ERROR_MESSAGES = {
   STATE_MISMATCH: 'Authentication session expired. Please try again.',
   STATE_NOT_FOUND: 'Authentication session not found. Please try again.',
   INVALID_CALLBACK_REQUEST: 'Invalid authentication callback. Please try again.',
+  NO_CALLBACK_URL: 'Authentication configuration error. Please try again.',
+  NO_CODE: 'Authentication was not completed. Please try again.',
+  UNABLE_TO_GET_USER_INFO: 'Could not retrieve your account information. Please try again.',
+  SIGNUP_DISABLED: 'New account registration is currently disabled.',
   // General
   UNABLE_TO_LINK_ACCOUNT: 'Unable to link this account. Please try again or contact support.',
   UNKNOWN: 'An unexpected error occurred. Please try again.',
@@ -76,11 +83,17 @@ export function parseOAuthError(params) {
     ACCOUNT_EXISTS: 'ACCOUNT_ALREADY_LINKED',
     ACCOUNT_ALREADY_LINKED_TO_DIFFERENT_USER: 'ACCOUNT_ALREADY_LINKED_TO_DIFFERENT_USER',
     EMAIL_DOESNT_MATCH: 'EMAIL_DOESNT_MATCH',
+    EMAIL_NOT_FOUND: 'EMAIL_NOT_FOUND',
     STATE_MISMATCH: 'STATE_MISMATCH',
     STATE_NOT_FOUND: 'STATE_NOT_FOUND',
     INVALID_CALLBACK_REQUEST: 'INVALID_CALLBACK_REQUEST',
     OAUTH_PROVIDER_NOT_FOUND: 'OAUTH_PROVIDER_NOT_FOUND',
     UNABLE_TO_LINK_ACCOUNT: 'UNABLE_TO_LINK_ACCOUNT',
+    PLEASE_RESTART_THE_PROCESS: 'PLEASE_RESTART_THE_PROCESS',
+    NO_CALLBACK_URL: 'NO_CALLBACK_URL',
+    NO_CODE: 'NO_CODE',
+    UNABLE_TO_GET_USER_INFO: 'UNABLE_TO_GET_USER_INFO',
+    SIGNUP_DISABLED: 'SIGNUP_DISABLED',
   };
 
   // Apply mapping if exists
