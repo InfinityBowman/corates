@@ -19,8 +19,12 @@ import MagicLinkForm from './MagicLinkForm.jsx';
 import TwoFactorVerify from './TwoFactorVerify.jsx';
 import LastLoginHint from './LastLoginHint.jsx';
 import { handleError } from '@/lib/error-utils.js';
+import { useOAuthError } from '@/primitives/useOAuthError.js';
 
 export default function SignIn() {
+  // Handle OAuth errors from URL params (e.g., ?error=state_mismatch)
+  useOAuthError();
+
   const [email, setEmail] = createSignal('');
   const [password, setPassword] = createSignal('');
   const [error, setError] = createSignal('');
@@ -100,8 +104,10 @@ export default function SignIn() {
       localStorage.setItem('oauthSignup', 'true');
       // Redirect to complete-profile which will check if profile is complete
       // and redirect to dashboard if so
+      // OAuth provider errors are handled by useOAuthError hook via errorCallbackURL redirect
       await signinWithGoogle('/complete-profile');
     } catch (err) {
+      // This catches immediate errors (network failure before redirect), not OAuth provider errors
       console.error('Google sign-in error:', err);
       setError('Failed to sign in with Google. Please try again.');
       localStorage.removeItem('oauthSignup');
@@ -117,8 +123,10 @@ export default function SignIn() {
       // Mark as OAuth signup in case this is a new user who needs to complete profile
       localStorage.setItem('oauthSignup', 'true');
       // Redirect to complete-profile which will check if profile is complete
+      // OAuth provider errors are handled by useOAuthError hook via errorCallbackURL redirect
       await signinWithOrcid('/complete-profile');
     } catch (err) {
+      // This catches immediate errors (network failure before redirect), not OAuth provider errors
       console.error('ORCID sign-in error:', err);
       setError('Failed to sign in with ORCID. Please try again.');
       localStorage.removeItem('oauthSignup');
