@@ -34,5 +34,10 @@
     "types": ["vite/client"]
   },
   "include": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.js", "src/**/*.jsx"],
-  "exclude": ["node_modules", "dist", "**/preact/**", "**/preact-2/**"]
+  "exclude": [
+    "node_modules",
+    "dist",
+    "src/components/pdf/embedpdf/preact",
+    "src/components/pdf/embedpdf/preact-2"
+  ]
 }

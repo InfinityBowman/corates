@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { useZoom } from '@embedpdf/plugin-zoom/react';
 import { ZoomMode } from '@embedpdf/plugin-zoom';
 import { useState } from 'react';

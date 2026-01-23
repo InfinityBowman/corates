@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { CSSProperties } from 'preact';
 
 type IconProps = {

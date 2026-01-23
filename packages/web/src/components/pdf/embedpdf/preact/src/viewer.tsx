@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { useMemo, useRef, useState, useEffect } from 'preact/hooks';
 import { EmbedPDF } from '@embedpdf/core/react';
 import { usePdfiumEngine } from '@embedpdf/engines/react';

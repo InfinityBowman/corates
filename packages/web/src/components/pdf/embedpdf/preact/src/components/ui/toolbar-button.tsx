@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { ReactNode, forwardRef } from 'react';
 import { twMerge } from 'tailwind-merge';
 

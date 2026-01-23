@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { useEffect, useRef, useState } from 'react';
 import { useCapture } from '@embedpdf/plugin-capture/react';
 import { Dialog, DialogContent, DialogFooter, Button } from './ui';

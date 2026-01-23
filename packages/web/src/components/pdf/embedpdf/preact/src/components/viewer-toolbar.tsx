@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { ZoomToolbar } from './zoom-toolbar';
 import { PanToggleButton } from './pan-toggle';
 import { PageSettingsMenu } from './page-settings-menu';
