@@ -1,7 +1,14 @@
 import { betterAuth } from 'better-auth';
 import { createAuthMiddleware } from 'better-auth/api';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
-import { genericOAuth, magicLink, twoFactor, admin, organization } from 'better-auth/plugins';
+import {
+  genericOAuth,
+  magicLink,
+  twoFactor,
+  admin,
+  organization,
+  oAuthProxy,
+} from 'better-auth/plugins';
 import { stripe } from '@better-auth/stripe';
 import Stripe from 'stripe';
 import { drizzle } from 'drizzle-orm/d1';
@@ -81,6 +88,8 @@ export function createAuth(env: Env, ctx?: ExecutionContext) {
     socialProviders.google = {
       clientId: env.GOOGLE_CLIENT_ID,
       clientSecret: env.GOOGLE_CLIENT_SECRET,
+      // Production redirect URI for OAuth proxy (allows localhost dev without registering redirect URIs)
+      redirectURI: 'https://corates.org/api/auth/callback/google',
       // Required so Google issues a refresh token (needed for Drive access when access tokens expire)
       accessType: 'offline',
       // Request Drive read-only access for PDF import
@@ -105,6 +114,14 @@ export function createAuth(env: Env, ctx?: ExecutionContext) {
   // Build plugins array
   const plugins: any[] = [];
 
+  // OAuth Proxy plugin for local development
+  // Proxies OAuth callbacks through production server so localhost works without registering redirect URIs
+  plugins.push(
+    oAuthProxy({
+      productionURL: 'https://corates.org',
+    }),
+  );
+
   // ORCID OAuth provider for researcher authentication (using genericOAuth plugin)
   if (env.ORCID_CLIENT_ID && env.ORCID_CLIENT_SECRET) {
     plugins.push(
@@ -114,6 +131,7 @@ export function createAuth(env: Env, ctx?: ExecutionContext) {
             providerId: 'orcid',
             clientId: env.ORCID_CLIENT_ID,
             clientSecret: env.ORCID_CLIENT_SECRET,
+            redirectURI: 'https://corates.org/api/auth/callback/orcid',
             authorizationUrl: 'https://orcid.org/oauth/authorize',
             tokenUrl: 'https://orcid.org/oauth/token',
             userInfoUrl: 'https://orcid.org/oauth/userinfo',
