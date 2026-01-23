@@ -60,7 +60,7 @@ export function DashboardHeader(props) {
               onClick={() => props.onCreateProject?.()}
               disabled={!props.isOnline}
               title={!props.isOnline ? 'Cannot create projects while offline' : ''}
-              class='bg-primary hover:bg-primary/90 flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium text-white shadow-lg shadow-blue-500/25 transition-all hover:shadow-xl hover:shadow-blue-500/30 disabled:cursor-not-allowed disabled:opacity-50'
+              class='bg-primary hover:bg-primary/90 flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium text-white transition-all disabled:cursor-not-allowed disabled:opacity-50'
             >
               <FiPlus class='h-4 w-4' />
               New Project
