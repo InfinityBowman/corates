@@ -16,8 +16,9 @@ import { For, Show } from 'solid-js';
  * @param {string} [props.size='md'] - Ring size: 'sm', 'md', 'lg'
  */
 export default function QuestionPresenceIndicator(props) {
+  const users = () => props.users ?? [];
   const maxRings = () => props.maxRings ?? 2;
-  const visibleUsers = () => props.users.slice(0, maxRings());
+  const visibleUsers = () => users().slice(0, maxRings());
 
   // Ring offsets for stacking effect
   const getOffset = index => {
@@ -41,7 +42,7 @@ export default function QuestionPresenceIndicator(props) {
   };
 
   return (
-    <Show when={props.users.length > 0}>
+    <Show when={users().length > 0}>
       <div class='pointer-events-none absolute inset-0'>
         <For each={visibleUsers()}>
           {(user, index) => (
