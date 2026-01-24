@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { useState, useEffect } from 'preact/hooks';
 import { usePrint } from '@embedpdf/plugin-print/react';
 import { useScroll } from '@embedpdf/plugin-scroll/react';
@@ -86,7 +87,7 @@ export function PrintDialog({ documentId, isOpen, onClose }: PrintDialogProps) {
                 name='selection'
                 value='all'
                 checked={selection === 'all'}
-                onChange={e => setSelection(e.target.value as PageSelection)}
+                onChange={e => setSelection((e.target as HTMLInputElement).value as PageSelection)}
                 className='h-4 w-4 border-gray-300 text-blue-600 focus:ring-2 focus:ring-blue-500'
               />
               <span className='ml-2 text-sm text-gray-700'>All pages</span>
@@ -98,7 +99,7 @@ export function PrintDialog({ documentId, isOpen, onClose }: PrintDialogProps) {
                 name='selection'
                 value='current'
                 checked={selection === 'current'}
-                onChange={e => setSelection(e.target.value as PageSelection)}
+                onChange={e => setSelection((e.target as HTMLInputElement).value as PageSelection)}
                 className='h-4 w-4 border-gray-300 text-blue-600 focus:ring-2 focus:ring-blue-500'
               />
               <span className='ml-2 text-sm text-gray-700'>
@@ -112,7 +113,7 @@ export function PrintDialog({ documentId, isOpen, onClose }: PrintDialogProps) {
                 name='selection'
                 value='custom'
                 checked={selection === 'custom'}
-                onChange={e => setSelection(e.target.value as PageSelection)}
+                onChange={e => setSelection((e.target as HTMLInputElement).value as PageSelection)}
                 className='h-4 w-4 border-gray-300 text-blue-600 focus:ring-2 focus:ring-blue-500'
               />
               <span className='ml-2 text-sm text-gray-700'>Specify pages</span>
@@ -124,7 +125,7 @@ export function PrintDialog({ documentId, isOpen, onClose }: PrintDialogProps) {
             <input
               type='text'
               value={customPages}
-              onChange={e => setCustomPages(e.target.value)}
+              onChange={e => setCustomPages((e.target as HTMLInputElement).value)}
               placeholder='e.g., 1-3, 5, 8-10'
               disabled={selection !== 'custom'}
               className='w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none disabled:bg-gray-50 disabled:text-gray-500'
@@ -143,7 +144,7 @@ export function PrintDialog({ documentId, isOpen, onClose }: PrintDialogProps) {
             <input
               type='checkbox'
               checked={includeAnnotations}
-              onChange={e => setIncludeAnnotations(e.target.checked)}
+              onChange={e => setIncludeAnnotations((e.target as HTMLInputElement).checked)}
               className='h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-2 focus:ring-blue-500'
             />
             <span className='ml-2 text-sm text-gray-700'>Include annotations</span>

@@ -949,23 +949,23 @@ describe('Subscription Downgrade Flow', () => {
 
 ## File Change Summary
 
-| File                                                           | Change Type | Description                                             |
-| -------------------------------------------------------------- | ----------- | ------------------------------------------------------- |
-| `packages/workers/src/db/schema.ts`                            | Modify      | Add `isArchived`, `archivedAt`, `archivedBy` columns    |
-| `packages/workers/src/middleware/requireActiveProject.ts`      | New         | Middleware to block mutations on archived projects      |
-| `packages/workers/src/middleware/requireOrg.ts`                | Modify      | Include `isArchived` in project select                  |
-| `packages/workers/src/routes/orgs/projects.ts`                 | Modify      | Add archive/unarchive endpoints, apply middleware       |
-| `packages/workers/src/routes/billing/subscription.ts`          | Modify      | Extend response with `quotas` and `requiresArchiving`   |
-| `packages/workers/src/durable-objects/ProjectDoc.ts`           | Modify      | Track archived status, block updates                    |
-| `packages/web/src/stores/projectStore.js`                      | Modify      | Add `isProjectArchived` helper                          |
-| `packages/web/src/components/project/ProjectContext.jsx`       | Modify      | Add `isArchived` to context                             |
-| `packages/web/src/components/project/ArchivedBanner.jsx`       | New         | Banner component for archived projects                  |
-| `packages/web/src/components/project/ProjectView.jsx`          | Modify      | Include ArchivedBanner                                  |
-| `packages/web/src/components/project/ProjectHeader.jsx`        | Modify      | Check archived in canEdit                               |
-| `packages/web/src/components/project/ProjectCard.jsx`          | Modify      | Show archived badge                                     |
-| `packages/web/src/components/billing/ArchiveProjectsModal.jsx` | New         | Modal for selecting projects to archive                 |
-| `packages/web/src/primitives/useProject/index.js`              | Modify      | Handle archived status, disable mutations               |
-| `packages/web/src/components/layout/AppLayout.jsx`             | Modify      | Add quota check using existing subscription query       |
+| File                                                           | Change Type | Description                                           |
+| -------------------------------------------------------------- | ----------- | ----------------------------------------------------- |
+| `packages/workers/src/db/schema.ts`                            | Modify      | Add `isArchived`, `archivedAt`, `archivedBy` columns  |
+| `packages/workers/src/middleware/requireActiveProject.ts`      | New         | Middleware to block mutations on archived projects    |
+| `packages/workers/src/middleware/requireOrg.ts`                | Modify      | Include `isArchived` in project select                |
+| `packages/workers/src/routes/orgs/projects.ts`                 | Modify      | Add archive/unarchive endpoints, apply middleware     |
+| `packages/workers/src/routes/billing/subscription.ts`          | Modify      | Extend response with `quotas` and `requiresArchiving` |
+| `packages/workers/src/durable-objects/ProjectDoc.ts`           | Modify      | Track archived status, block updates                  |
+| `packages/web/src/stores/projectStore.js`                      | Modify      | Add `isProjectArchived` helper                        |
+| `packages/web/src/components/project/ProjectContext.jsx`       | Modify      | Add `isArchived` to context                           |
+| `packages/web/src/components/project/ArchivedBanner.jsx`       | New         | Banner component for archived projects                |
+| `packages/web/src/components/project/ProjectView.jsx`          | Modify      | Include ArchivedBanner                                |
+| `packages/web/src/components/project/ProjectHeader.jsx`        | Modify      | Check archived in canEdit                             |
+| `packages/web/src/components/project/ProjectCard.jsx`          | Modify      | Show archived badge                                   |
+| `packages/web/src/components/billing/ArchiveProjectsModal.jsx` | New         | Modal for selecting projects to archive               |
+| `packages/web/src/primitives/useProject/index.js`              | Modify      | Handle archived status, disable mutations             |
+| `packages/web/src/components/layout/AppLayout.jsx`             | Modify      | Add quota check using existing subscription query     |
 
 ---
 

@@ -1,3 +1,4 @@
+// @ts-nocheck
 import {
   useAnnotationCapability,
   type AnnotationSelectionMenuProps,

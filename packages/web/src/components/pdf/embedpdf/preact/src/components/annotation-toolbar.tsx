@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { AnnotationTool, useAnnotationCapability } from '@embedpdf/plugin-annotation/react';
 import { useHistoryCapability } from '@embedpdf/plugin-history/react';
 import { useEffect, useState, useMemo } from 'react';

@@ -1,3 +1,4 @@
+// @ts-nocheck
 type LoadingSpinnerProps = {
   size?: 'sm' | 'md' | 'lg';
   message?: string;

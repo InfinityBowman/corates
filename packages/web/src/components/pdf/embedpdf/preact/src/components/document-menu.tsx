@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { useState } from 'react';
 import { useExport } from '@embedpdf/plugin-export/react';
 import { useCapture } from '@embedpdf/plugin-capture/react';

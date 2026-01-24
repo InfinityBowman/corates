@@ -29,6 +29,8 @@ export default [
 
       globals: {
         // Browser globals
+        SVGGElement: 'readonly',
+        SVGElement: 'readonly',
         DOMException: 'readonly',
         requestIdleCallback: 'readonly',
         cancelIdleCallback: 'readonly',

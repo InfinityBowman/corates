@@ -114,7 +114,7 @@ export default function MockIndex() {
 
         {/* Other Mocks */}
         <div>
-          <h2 class='mb-3 text-lg font-semibold text-gray-700'>Other Mocks</h2>
+          <h2 class='mb-3 text-lg font-semibold text-gray-700'>Components</h2>
           <div class='grid gap-4'></div>
         </div>
       </div>
