@@ -115,37 +115,7 @@ export default function MockIndex() {
         {/* Other Mocks */}
         <div>
           <h2 class='mb-3 text-lg font-semibold text-gray-700'>Components</h2>
-          <div class='grid gap-4'>
-            <A
-              href='/mocks/animated-icons'
-              class='block rounded-lg border-2 border-orange-200 bg-linear-to-br from-orange-50 to-white p-6 shadow-sm transition-all hover:border-orange-300 hover:shadow-md'
-            >
-              <div class='flex items-start justify-between'>
-                <div>
-                  <h3 class='mb-2 text-lg font-semibold text-gray-900'>Animated Icons</h3>
-                  <p class='mb-3 text-sm text-gray-600'>
-                    SVG icons with hover and auto-play animations using the motion library. Includes
-                    arrows with bounce and path-drawing effects, plus loaders with spin and pulse
-                    animations.
-                  </p>
-                  <div class='flex flex-wrap gap-2'>
-                    <span class='inline-block rounded-full bg-orange-100 px-3 py-1 text-xs font-medium text-orange-700'>
-                      Motion
-                    </span>
-                    <span class='inline-block rounded-full bg-blue-100 px-3 py-1 text-xs font-medium text-blue-700'>
-                      Hover Effects
-                    </span>
-                    <span class='inline-block rounded-full bg-purple-100 px-3 py-1 text-xs font-medium text-purple-700'>
-                      Path Drawing
-                    </span>
-                  </div>
-                </div>
-                <span class='rounded-full bg-orange-600 px-3 py-1 text-xs font-medium text-white'>
-                  New
-                </span>
-              </div>
-            </A>
-          </div>
+          <div class='grid gap-4'></div>
         </div>
       </div>
     </div>

@@ -9,7 +9,6 @@ const ProjectViewComplete = lazy(() => import('./ProjectViewComplete.jsx'));
 const DashboardMock = lazy(() => import('./DashboardMock.jsx'));
 const ReactivePropsDemo = lazy(() => import('./ReactivePropsDemo.jsx'));
 const ProjectViewV2 = lazy(() => import('./ProjectViewV2.jsx'));
-const AnimatedIconsDemo = lazy(() => import('./AnimatedIconsDemo.tsx'));
 
 /**
  * Mock routes - returns Route elements for the /mocks/* path.
@@ -23,7 +22,6 @@ export default function MockRoutes() {
       <Route path='/dashboard' component={DashboardMock} />
       <Route path='/reactivity-example' component={ReactivePropsDemo} />
       <Route path='/project-view-v2' component={ProjectViewV2} />
-      <Route path='/animated-icons' component={AnimatedIconsDemo} />
     </Route>
   );
 }
