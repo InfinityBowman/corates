@@ -296,9 +296,9 @@ export function createAnnotationOperations(projectId, getYDoc, _isSynced) {
           // Update embedPdfData id to match newAnnotationId (mirrors addAnnotation behavior)
           if (data.embedPdfData) {
             const parsed =
-              typeof data.embedPdfData === 'string'
-                ? JSON.parse(data.embedPdfData)
-                : data.embedPdfData;
+              typeof data.embedPdfData === 'string' ?
+                JSON.parse(data.embedPdfData)
+              : data.embedPdfData;
             const updatedEmbed = { ...parsed, id: newAnnotationId };
             newAnnotationYMap.set('embedPdfData', JSON.stringify(updatedEmbed));
           } else {
