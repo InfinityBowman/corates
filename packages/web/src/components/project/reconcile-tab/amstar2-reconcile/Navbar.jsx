@@ -8,6 +8,7 @@ import {
   TooltipContent,
 } from '@/components/ui/tooltip';
 import { hasQuestionAnswer, getQuestionPillStyle, getQuestionTooltip } from './navbar-utils.js';
+import QuestionPresenceIndicator from '../QuestionPresenceIndicator.jsx';
 
 /**
  * Navigation bar for checklist reconciliation
@@ -24,12 +25,20 @@ import { hasQuestionAnswer, getQuestionPillStyle, getQuestionTooltip } from './n
  *   - setViewMode: function to change view mode
  *   - goToQuestion: function to go to a specific question
  *   - onReset: function to reset all reconciliation answers
+ * - usersByPage: Map of page index to array of users viewing that page (for presence indicators)
  */
 export default function Navbar(props) {
   return (
     <nav class='flex flex-wrap gap-1 py-1 pl-1' aria-label='Question navigation'>
       <For each={props.store.questionKeys}>
-        {(key, index) => <QuestionPill key={key} questionIndex={index()} store={props.store} />}
+        {(key, index) => (
+          <QuestionPill
+            key={key}
+            questionIndex={index()}
+            store={props.store}
+            usersOnPage={props.usersByPage?.get(index()) || []}
+          />
+        )}
       </For>
       <SummaryButton store={props.store} />
       <ResetButton onClick={() => props.store.onReset?.()} />
@@ -38,7 +47,7 @@ export default function Navbar(props) {
 }
 
 /**
- * Individual question pill button
+ * Individual question pill button with optional presence indicator
  */
 function QuestionPill(props) {
   const key = () => props.store.questionKeys[props.questionIndex];
@@ -54,9 +63,15 @@ function QuestionPill(props) {
     getQuestionPillStyle(isCurrentPage(), hasAnswer(), isAgreement()),
   );
 
-  const tooltip = createMemo(() =>
-    getQuestionTooltip(props.questionIndex + 1, hasAnswer(), isAgreement()),
-  );
+  const tooltip = createMemo(() => {
+    const baseTooltip = getQuestionTooltip(props.questionIndex + 1, hasAnswer(), isAgreement());
+    const users = props.usersOnPage || [];
+    if (users.length === 0) return baseTooltip;
+
+    // Add viewing users to tooltip
+    const viewerNames = users.map(u => u.name).join(', ');
+    return `${baseTooltip} | Viewing: ${viewerNames}`;
+  });
 
   return (
     <Tooltip openDelay={200} positioning={{ placement: 'bottom' }}>
@@ -67,7 +82,13 @@ function QuestionPill(props) {
           aria-label={tooltip()}
           aria-current={isCurrentPage() ? 'page' : undefined}
         >
+          {/* Presence indicator - colored rings for users viewing this question */}
+          <Show when={!isCurrentPage()}>
+            <QuestionPresenceIndicator users={props.usersOnPage || []} size='sm' />
+          </Show>
+
           {props.questionIndex + 1}
+
           <Show when={hasAnswer()}>
             <span
               class='absolute -top-0.5 -right-0.5 flex h-3.5 w-3.5 items-center justify-center rounded-full border-[0.5px] bg-white shadow-sm'

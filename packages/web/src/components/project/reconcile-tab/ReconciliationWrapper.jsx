@@ -7,6 +7,7 @@ import { createSignal, createMemo, createEffect, Show } from 'solid-js';
 import { useParams, useNavigate } from '@solidjs/router';
 import { useProjectContext } from '@/components/project/ProjectContext.jsx';
 import projectStore from '@/stores/projectStore.js';
+import { useBetterAuth } from '@api/better-auth-store.js';
 import projectActionsStore from '@/stores/projectActionsStore';
 import { ACCESS_DENIED_ERRORS } from '@/constants/errors.js';
 import { CHECKLIST_STATUS } from '@/constants/checklist-status.js';
@@ -39,6 +40,9 @@ export default function ReconciliationWrapper() {
 
   const [error, setError] = createSignal(null);
 
+  // Get current user for presence
+  const { user } = useBetterAuth();
+
   // Destructure Y.js operations from parent ProjectView's connection
   const {
     createChecklist: createProjectChecklist,
@@ -50,7 +54,19 @@ export default function ReconciliationWrapper() {
     getRobinsText,
     getRob2Text,
     saveReconciliationProgress,
+    getAwareness,
   } = projectOps || {};
+
+  // Current user for presence features
+  const currentUser = createMemo(() => {
+    const u = user();
+    if (!u) return null;
+    return {
+      id: u.id,
+      name: u.name || u.email || 'Unknown',
+      image: u.image,
+    };
+  });
 
   // Set active project for action store
   createEffect(() => {
@@ -494,6 +510,9 @@ export default function ReconciliationWrapper() {
                     if (!id) return;
                     updateChecklistAnswer(params.studyId, id, questionKey, questionData);
                   }}
+                  getAwareness={getAwareness}
+                  currentUser={currentUser}
+                  checklistType='AMSTAR2'
                 />
               }
             >
@@ -527,6 +546,9 @@ export default function ReconciliationWrapper() {
                     questionKey,
                   )
                 }
+                getAwareness={getAwareness}
+                currentUser={currentUser}
+                checklistType='ROB2'
               />
             </Show>
           }
@@ -561,6 +583,9 @@ export default function ReconciliationWrapper() {
                 questionKey,
               )
             }
+            getAwareness={getAwareness}
+            currentUser={currentUser}
+            checklistType='ROBINS_I'
           />
         </Show>
       </Show>

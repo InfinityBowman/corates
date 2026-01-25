@@ -368,6 +368,9 @@ export function useProject(projectId) {
     // Connection management
     connect,
     disconnect,
+
+    // Awareness (for presence features)
+    getAwareness: () => connectionEntry?.connectionManager?.getAwareness() || null,
   };
 }
 
