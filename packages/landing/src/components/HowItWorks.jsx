@@ -13,13 +13,13 @@ export default function HowItWorks() {
       number: 2,
       icon: <AiOutlineFileAdd class='h-6 w-6' />,
       title: 'Add Studies',
-      description: 'Upload PDFs and create appraisal checklists for each study.',
+      description: 'Upload PDFs and easily assign reviewers.',
     },
     {
       number: 3,
       icon: <AiOutlineTeam class='h-6 w-6' />,
       title: 'Appraise Together',
-      description: 'Complete assessments collaboratively with automatic scoring and summaries.',
+      description: 'Complete appraisals collaboratively with automatic scoring and summaries.',
     },
   ];
 

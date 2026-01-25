@@ -434,7 +434,7 @@ export default function FeatureShowcase() {
       illustration: <CollaborationIllustration />,
       bullets: [
         'Independent ratings with blinded mode',
-        'Automatic inter-rater reliability calculation (coming soon)',
+        'Automatic inter-rater reliability calculation',
         'Live, real-time collaboration with instant updates',
       ],
     },
@@ -461,14 +461,14 @@ export default function FeatureShowcase() {
       ],
     },
     {
-      title: 'PDF Annotation (coming soon)',
+      title: 'PDF Annotation',
       description:
-        'Annotate study PDFs directly alongside your appraisals. Keep all evidence linked and organized.',
+        'Annotate study PDFs directly alongside your appraisals. Collaboratively create highlights, text notes, and drawings in real time.',
       illustration: <PDFAnnotationIllustration />,
       bullets: [
-        'Highlight and comment on PDFs',
-        'Link annotations to appraisal items',
-        'Import from reference managers, Google Drive, a DOI, upload files directly, or let CoRATES find them for you',
+        'Highlight, underline, draw, and add text notes directly on PDFs',
+        'Annotations sync in real time and persist across sessions',
+        'Import PDFs from reference managers, Google Drive, DOI, upload directly, or let CoRATES find them for you',
       ],
     },
     {
