@@ -63,7 +63,7 @@ export function createAnnotationOperations(projectId, getYDoc, _isSynced) {
    * @param {string} pdfId - The PDF ID this annotation belongs to
    * @param {string} checklistId - The checklist ID (determines ownership)
    * @param {Object} annotationData - Annotation data from EmbedPDF
-   * @param {string} userId - The user creating the annotation
+   * @param {string} [userId] - The user creating the annotation (defaults to 'unknown')
    * @returns {string|null} The annotation ID or null if failed
    */
   function addAnnotation(studyId, pdfId, checklistId, annotationData, userId) {
@@ -110,7 +110,7 @@ export function createAnnotationOperations(projectId, getYDoc, _isSynced) {
    * @param {string} pdfId - The PDF ID
    * @param {string} checklistId - The checklist ID
    * @param {Array} annotations - Array of annotation data objects
-   * @param {string} userId - The user creating the annotations
+   * @param {string} [userId] - The user creating the annotations (defaults to 'unknown')
    * @returns {Array<string>} Array of created annotation IDs
    */
   function addAnnotations(studyId, pdfId, checklistId, annotations, userId) {
@@ -293,7 +293,17 @@ export function createAnnotationOperations(projectId, getYDoc, _isSynced) {
           newAnnotationYMap.set('pdfId', data.pdfId);
           newAnnotationYMap.set('type', data.type);
           newAnnotationYMap.set('pageIndex', data.pageIndex);
-          newAnnotationYMap.set('embedPdfData', data.embedPdfData);
+          // Update embedPdfData id to match newAnnotationId (mirrors addAnnotation behavior)
+          if (data.embedPdfData) {
+            const parsed =
+              typeof data.embedPdfData === 'string'
+                ? JSON.parse(data.embedPdfData)
+                : data.embedPdfData;
+            const updatedEmbed = { ...parsed, id: newAnnotationId };
+            newAnnotationYMap.set('embedPdfData', JSON.stringify(updatedEmbed));
+          } else {
+            newAnnotationYMap.set('embedPdfData', data.embedPdfData);
+          }
           newAnnotationYMap.set('createdBy', data.createdBy);
           newAnnotationYMap.set('createdAt', data.createdAt);
           newAnnotationYMap.set('updatedAt', Date.now());

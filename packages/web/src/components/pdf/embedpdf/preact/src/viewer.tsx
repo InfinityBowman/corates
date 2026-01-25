@@ -131,6 +131,7 @@ function AnnotationSyncManager({
     if (!annotationsToLoad.length) return;
 
     isApplyingRef.current = true;
+    let cancelled = false;
 
     // Build import items for importAnnotations API
     const importItems = annotationsToLoad.map(annotation => {
@@ -151,16 +152,25 @@ function AnnotationSyncManager({
       };
     });
 
-    // Use importAnnotations for loading persisted annotations
-    try {
-      console.log('[AnnotationSync] Calling importAnnotations with', importItems.length, 'items');
-      annotationScope.importAnnotations(importItems);
-      console.log('[AnnotationSync] importAnnotations completed');
-    } catch (err) {
-      console.error('[AnnotationSync] Failed to import annotations:', err);
-    }
+    // Wrap in async to properly guard isApplyingRef if importAnnotations is async
+    (async () => {
+      try {
+        console.log('[AnnotationSync] Calling importAnnotations with', importItems.length, 'items');
+        await annotationScope.importAnnotations(importItems);
+        console.log('[AnnotationSync] importAnnotations completed');
+      } catch (err) {
+        console.error('[AnnotationSync] Failed to import annotations:', err);
+      } finally {
+        if (!cancelled) {
+          isApplyingRef.current = false;
+        }
+      }
+    })();
 
-    isApplyingRef.current = false;
+    return () => {
+      cancelled = true;
+      isApplyingRef.current = false;
+    };
   }, [annotationScope, initialAnnotations]);
 
   // Subscribe to annotation changes using the unified onAnnotationEvent hook
