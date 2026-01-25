@@ -35,7 +35,11 @@ import { ThumbnailPluginPackage } from '@embedpdf/plugin-thumbnail/react';
 import { CapturePluginPackage, MarqueeCapture } from '@embedpdf/plugin-capture/react';
 import { FullscreenPluginPackage } from '@embedpdf/plugin-fullscreen/react';
 import { HistoryPluginPackage } from '@embedpdf/plugin-history/react';
-import { AnnotationPluginPackage, AnnotationLayer } from '@embedpdf/plugin-annotation/react';
+import {
+  AnnotationPluginPackage,
+  AnnotationLayer,
+  useAnnotationCapability,
+} from '@embedpdf/plugin-annotation/react';
 import { ViewerToolbar, ViewMode } from './components/viewer-toolbar';
 import { LoadingSpinner } from './components/loading-spinner';
 import { DocumentPasswordPrompt } from './components/document-password-prompt';
@@ -58,10 +62,201 @@ import {
 
 // const logger = new ConsoleLogger();
 
+/**
+ * AnnotationSyncManager - Invisible component that handles annotation persistence
+ * Must be rendered inside EmbedPDF context to access annotation plugin
+ */
+function AnnotationSyncManager({
+  documentId,
+  pdfId,
+  readOnly,
+  onAnnotationAdd,
+  onAnnotationUpdate,
+  onAnnotationDelete,
+  initialAnnotations,
+}: {
+  documentId: string;
+  pdfId?: string | null;
+  readOnly: boolean;
+  onAnnotationAdd?: (_annotation: any) => void;
+  onAnnotationUpdate?: (_annotation: any) => void;
+  onAnnotationDelete?: (_annotationId: string) => void;
+  initialAnnotations?: AnnotationData[];
+}) {
+  const { provides: annotationCapability } = useAnnotationCapability();
+  const isApplyingRef = useRef(false);
+  // Track loaded annotation IDs to prevent duplicates
+  const loadedAnnotationIdsRef = useRef<Set<string>>(new Set());
+  // Track all known annotations (both loaded and user-created)
+  const annotationMapRef = useRef<Map<string, any>>(new Map());
+
+  // Get document-scoped annotation API
+  const annotationScope = useMemo(
+    () => (annotationCapability ? annotationCapability.forDocument(documentId) : null),
+    [annotationCapability, documentId],
+  );
+
+  // Reset state when documentId or pdfId changes
+  useEffect(() => {
+    loadedAnnotationIdsRef.current.clear();
+    annotationMapRef.current.clear();
+  }, [documentId, pdfId]);
+
+  // Load initial annotations using importAnnotations (for persisted data)
+  useEffect(() => {
+    console.log('[AnnotationSync] Load effect triggered:', {
+      hasAnnotationScope: !!annotationScope,
+      initialAnnotationsCount: initialAnnotations?.length || 0,
+      initialAnnotations,
+    });
+
+    if (!annotationScope || !initialAnnotations?.length) {
+      return;
+    }
+
+    // Filter to only annotations we haven't loaded yet
+    const annotationsToLoad = initialAnnotations.filter(annotation => {
+      if (!annotation.embedPdfData) {
+        console.log('[AnnotationSync] Skipping annotation without embedPdfData:', annotation);
+        return false;
+      }
+      const annotationId = annotation.id || annotation.embedPdfData.id;
+      const alreadyLoaded = loadedAnnotationIdsRef.current.has(annotationId);
+      console.log('[AnnotationSync] Annotation:', annotationId, 'alreadyLoaded:', alreadyLoaded);
+      return annotationId && !alreadyLoaded;
+    });
+
+    console.log('[AnnotationSync] Annotations to load:', annotationsToLoad.length);
+
+    if (!annotationsToLoad.length) return;
+
+    isApplyingRef.current = true;
+
+    // Build import items for importAnnotations API
+    const importItems = annotationsToLoad.map(annotation => {
+      const embedData = annotation.embedPdfData;
+      const annotationId = annotation.id || embedData.id;
+
+      // Mark as loaded before importing to prevent duplicates
+      loadedAnnotationIdsRef.current.add(annotationId);
+      annotationMapRef.current.set(annotationId, annotation);
+
+      console.log('[AnnotationSync] Preparing import for:', annotationId, 'embedData:', embedData);
+
+      return {
+        annotation: {
+          ...embedData,
+          id: annotationId,
+        },
+      };
+    });
+
+    // Use importAnnotations for loading persisted annotations
+    try {
+      console.log('[AnnotationSync] Calling importAnnotations with', importItems.length, 'items');
+      annotationScope.importAnnotations(importItems);
+      console.log('[AnnotationSync] importAnnotations completed');
+    } catch (err) {
+      console.error('[AnnotationSync] Failed to import annotations:', err);
+    }
+
+    isApplyingRef.current = false;
+  }, [annotationScope, initialAnnotations]);
+
+  // Subscribe to annotation changes using the unified onAnnotationEvent hook
+  useEffect(() => {
+    if (!annotationScope || readOnly) return;
+
+    console.log('[AnnotationSync] Setting up subscription to onAnnotationEvent');
+
+    // Subscribe to all annotation events via the single event hook
+    const unsub = annotationScope.onAnnotationEvent?.((event: any) => {
+      console.log('[AnnotationSync] onAnnotationEvent fired:', event);
+
+      // Skip events while we're applying loaded annotations
+      if (isApplyingRef.current) {
+        console.log('[AnnotationSync] Skipping - isApplyingRef is true');
+        return;
+      }
+
+      const annotation = event.annotation;
+      const annotationId = annotation?.id;
+
+      switch (event.type) {
+        case 'create': {
+          // Skip if this annotation was loaded from storage (already tracked)
+          if (annotationMapRef.current.has(annotationId)) {
+            console.log('[AnnotationSync] Skipping create - already tracked:', annotationId);
+            return;
+          }
+
+          annotationMapRef.current.set(annotationId, annotation);
+          console.log('[AnnotationSync] Calling onAnnotationAdd for:', annotationId);
+
+          if (onAnnotationAdd) {
+            onAnnotationAdd({
+              id: annotationId,
+              type: annotation.type,
+              pageIndex: event.pageIndex,
+              ...annotation,
+            });
+          }
+          break;
+        }
+        case 'update': {
+          annotationMapRef.current.set(annotationId, annotation);
+          console.log('[AnnotationSync] Calling onAnnotationUpdate for:', annotationId);
+
+          if (onAnnotationUpdate) {
+            onAnnotationUpdate({
+              id: annotationId,
+              type: annotation.type,
+              pageIndex: event.pageIndex,
+              ...annotation,
+            });
+          }
+          break;
+        }
+        case 'delete': {
+          annotationMapRef.current.delete(annotationId);
+          console.log('[AnnotationSync] Calling onAnnotationDelete for:', annotationId);
+
+          if (onAnnotationDelete) {
+            onAnnotationDelete(annotationId);
+          }
+          break;
+        }
+        case 'loaded': {
+          // Initial load event - we handle this separately
+          console.log('[AnnotationSync] Annotations loaded event, total:', event.total);
+          break;
+        }
+      }
+    });
+
+    return () => {
+      unsub?.();
+    };
+  }, [annotationScope, readOnly, onAnnotationAdd, onAnnotationUpdate, onAnnotationDelete]);
+
+  // This component doesn't render anything
+  return null;
+}
+
 // Type for tracking sidebar state per document
 type SidebarState = {
   search: boolean;
   thumbnails: boolean;
+};
+
+type AnnotationData = {
+  id: string;
+  type: string;
+  pageIndex: number;
+  embedPdfData: any;
+  createdBy?: string;
+  createdAt?: number;
+  updatedAt?: number;
 };
 
 type ViewerPageProps = {
@@ -71,6 +266,11 @@ type ViewerPageProps = {
   selectedPdfId?: string | null;
   onPdfSelect?: (_pdfId: string) => void;
   readOnly?: boolean;
+  // Annotation persistence props
+  onAnnotationAdd?: (_annotation: any) => void;
+  onAnnotationUpdate?: (_annotation: any) => void;
+  onAnnotationDelete?: (_annotationId: string) => void;
+  initialAnnotations?: AnnotationData[];
 };
 
 export function ViewerPage({
@@ -80,6 +280,10 @@ export function ViewerPage({
   selectedPdfId,
   onPdfSelect,
   readOnly = false,
+  onAnnotationAdd,
+  onAnnotationUpdate,
+  onAnnotationDelete,
+  initialAnnotations,
 }: ViewerPageProps = {}) {
   const containerRef = useRef<HTMLDivElement>(null);
   const { engine, isLoading, error } = usePdfiumEngine({
@@ -132,7 +336,10 @@ export function ViewerPage({
       createPluginRegistration(RedactionPluginPackage),
       createPluginRegistration(CapturePluginPackage),
       createPluginRegistration(HistoryPluginPackage),
-      createPluginRegistration(AnnotationPluginPackage),
+      createPluginRegistration(AnnotationPluginPackage, {
+        // Disable auto-commit since we persist annotations to Y.js, not the PDF file
+        autoCommit: false,
+      }),
       createPluginRegistration(FullscreenPluginPackage, {
         targetElement: '#document-content',
       }),
@@ -318,6 +525,22 @@ export function ViewerPage({
 
             return (
               <>
+                {/* Annotation sync manager - handles persistence */}
+                {activeDocumentId &&
+                  (onAnnotationAdd ||
+                    onAnnotationUpdate ||
+                    onAnnotationDelete ||
+                    initialAnnotations) && (
+                    <AnnotationSyncManager
+                      documentId={activeDocumentId}
+                      pdfId={selectedPdfId}
+                      readOnly={readOnly}
+                      onAnnotationAdd={onAnnotationAdd}
+                      onAnnotationUpdate={onAnnotationUpdate}
+                      onAnnotationDelete={onAnnotationDelete}
+                      initialAnnotations={initialAnnotations}
+                    />
+                  )}
                 {pluginsReady ?
                   <div className='flex h-full flex-col'>
                     {activeDocumentId && (

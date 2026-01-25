@@ -3,7 +3,7 @@
  * Manages Preact component lifecycle and converts SolidJS props to plain values
  */
 
-import { createEffect, onCleanup } from 'solid-js';
+import { createEffect, onCleanup, untrack } from 'solid-js';
 import { render, h } from 'preact';
 import EmbedPdfViewerPreact from './preact/src/main';
 
@@ -16,6 +16,10 @@ import EmbedPdfViewerPreact from './preact/src/main';
  * @param {Array} props.pdfs - Array of PDFs for multi-PDF selection
  * @param {string} props.selectedPdfId - Currently selected PDF ID
  * @param {Function} props.onPdfSelect - Handler for PDF selection change
+ * @param {Function} props.onAnnotationAdd - Handler for annotation creation
+ * @param {Function} props.onAnnotationUpdate - Handler for annotation update
+ * @param {Function} props.onAnnotationDelete - Handler for annotation deletion
+ * @param {Array} props.initialAnnotations - Initial annotations to load
  */
 export default function EmbedPdfViewer(props) {
   let containerRef;
@@ -24,23 +28,31 @@ export default function EmbedPdfViewer(props) {
     const container = containerRef;
     if (!container) return;
 
-    // Access props directly in effect to track reactivity
+    // Only track props that truly require a full document reload:
+    // - pdfData: new PDF content to display
+    // - selectedPdfId: switching between PDFs
     const pdfData = props.pdfData;
-    const pdfFileName = props.pdfFileName;
-    const pdfs = props.pdfs;
     const selectedPdfId = props.selectedPdfId;
-    const onPdfSelect = props.onPdfSelect;
-    const readOnly = props.readOnly;
+
+    // Use untrack for everything else - they don't require document reload
+    // The Preact component handles updates internally
+    const otherProps = untrack(() => ({
+      pdfFileName: props.pdfFileName,
+      pdfs: props.pdfs,
+      onPdfSelect: props.onPdfSelect,
+      readOnly: props.readOnly,
+      onAnnotationAdd: props.onAnnotationAdd,
+      onAnnotationUpdate: props.onAnnotationUpdate,
+      onAnnotationDelete: props.onAnnotationDelete,
+      initialAnnotations: props.initialAnnotations,
+    }));
 
     // Render Preact component into the container
     render(
       h(EmbedPdfViewerPreact, {
         pdfData,
-        pdfFileName,
-        pdfs,
         selectedPdfId,
-        onPdfSelect,
-        readOnly,
+        ...otherProps,
       }),
       container,
     );
