@@ -54,6 +54,15 @@ export default function SupportedTools() {
           }}
         </For>
       </div>
+
+      <p class='mt-6 text-center text-xs text-gray-500'>
+        These appraisal frameworks are the intellectual property of their original authors. CoRATES
+        provides workflow and collaboration features to support their use. See each tool's{' '}
+        <a href='/resources' class='text-blue-600 underline hover:text-blue-700'>
+          resource page
+        </a>{' '}
+        for official references.
+      </p>
     </section>
   );
 }
