@@ -286,51 +286,118 @@ function PDFAnnotationIllustration() {
 // Speed & Productivity Illustration
 function SpeedIllustration() {
   return (
-    <IllustrationWrapper gradient='from-amber-50 to-orange-50' border='border-amber-200'>
-      {/* Central speedometer */}
-      <div class='absolute inset-0 flex items-center justify-center'>
-        <div class='relative'>
+    <>
+      <style>
+        {`
+          @keyframes spinSlow {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+          }
+          @keyframes spinReverse {
+            from { transform: rotate(360deg); }
+            to { transform: rotate(0deg); }
+          }
+          @keyframes pingRing {
+            0% { transform: scale(0.4); opacity: 0.5; }
+            60% { opacity: 0.3; }
+            100% { transform: scale(1.8); opacity: 0; }
+          }
+          @keyframes boltGlow {
+            0%, 100% { filter: drop-shadow(0 0 2px rgba(245, 158, 11, 0.3)); }
+            50% { filter: drop-shadow(0 0 12px rgba(245, 158, 11, 0.6)); }
+          }
+        `}
+      </style>
+      <IllustrationWrapper gradient='from-amber-50 to-orange-50' border='border-amber-200'>
+        {/* Animation layer - behind everything */}
+        <div class='pointer-events-none absolute inset-0 z-0 flex items-center justify-center'>
+          <div class='relative h-36 w-36'>
+            {/* Expanding ping rings */}
+            <div
+              class='absolute -inset-4 rounded-full border border-amber-300'
+              style={{ animation: 'pingRing 3.5s ease-out infinite' }}
+            />
+            <div
+              class='absolute -inset-4 rounded-full border border-amber-300'
+              style={{ animation: 'pingRing 3.5s ease-out infinite 1.75s' }}
+            />
+
+            {/* Spinning dashed outer ring */}
+            <div
+              class='absolute -inset-5 rounded-full border-2 border-dashed border-amber-300/50'
+              style={{ animation: 'spinSlow 20s linear infinite' }}
+            />
+
+            {/* Counter-spinning arc */}
+            <svg
+              class='absolute -inset-3'
+              viewBox='0 0 100 100'
+              style={{ animation: 'spinReverse 8s linear infinite' }}
+            >
+              <circle
+                cx='50'
+                cy='50'
+                r='46'
+                fill='none'
+                stroke='url(#speedGradient)'
+                stroke-width='2.5'
+                stroke-dasharray='72 217'
+                stroke-linecap='round'
+              />
+              <defs>
+                <linearGradient id='speedGradient' x1='0%' y1='0%' x2='100%' y2='100%'>
+                  <stop offset='0%' stop-color='#f59e0b' />
+                  <stop offset='100%' stop-color='#f59e0b' stop-opacity='0' />
+                </linearGradient>
+              </defs>
+            </svg>
+          </div>
+        </div>
+
+        {/* Content layer - above animations */}
+        <div class='absolute inset-0 z-10 flex items-center justify-center'>
           <div class='flex h-36 w-36 items-center justify-center rounded-full border-4 border-amber-200 bg-white shadow-lg'>
             <div class='text-center'>
-              <BsLightningChargeFill class='mx-auto h-12 w-12 text-amber-500' />
+              <div style={{ animation: 'boltGlow 2.5s ease-in-out infinite' }}>
+                <BsLightningChargeFill class='mx-auto h-12 w-12 text-amber-500' />
+              </div>
               <div class='mt-1 text-xs font-semibold text-gray-500'>Streamlined</div>
             </div>
           </div>
-          <div class='absolute -inset-2 animate-pulse rounded-full border-2 border-amber-300 opacity-40' />
         </div>
-      </div>
 
-      {/* Time saved badges */}
-      <FloatingBadge position='-top-2 -left-2' border='border-green-200'>
-        <IoTimerOutline class='h-4 w-4 text-green-600' />
-        <span class='text-xs font-medium text-gray-700'>Save hours</span>
-      </FloatingBadge>
+        {/* Time saved badges */}
+        <FloatingBadge position='-top-2 -left-2 z-10' border='border-green-200'>
+          <IoTimerOutline class='h-4 w-4 text-green-600' />
+          <span class='text-xs font-medium text-gray-700'>Save hours</span>
+        </FloatingBadge>
 
-      <FloatingBadge position='-top-2 -right-2' border='border-amber-200'>
-        <AiOutlineCheck class='h-4 w-4 text-amber-600' />
-        <span class='text-xs font-medium text-gray-700'>Automated</span>
-      </FloatingBadge>
+        <FloatingBadge position='-top-2 -right-2 z-10' border='border-amber-200'>
+          <AiOutlineCheck class='h-4 w-4 text-amber-600' />
+          <span class='text-xs font-medium text-gray-700'>Automated</span>
+        </FloatingBadge>
 
-      <FloatingBadge position='top-[40%] -right-2' border='border-blue-200'>
-        <RiDeviceWifiOffLine class='h-4 w-4 text-blue-600' />
-        <span class='text-xs font-medium text-gray-700'>Works offline</span>
-      </FloatingBadge>
+        <FloatingBadge position='top-[40%] -right-2 z-10' border='border-blue-200'>
+          <RiDeviceWifiOffLine class='h-4 w-4 text-blue-600' />
+          <span class='text-xs font-medium text-gray-700'>Works offline</span>
+        </FloatingBadge>
 
-      {/* Productivity metrics */}
-      <div class='absolute -bottom-2 left-1/2 -translate-x-1/2'>
-        <div class='flex items-center gap-3 rounded-lg border border-amber-200 bg-white px-4 py-2 shadow-md'>
-          <div class='text-center'>
-            <div class='text-lg font-bold text-amber-600'>Fewer</div>
-            <div class='text-xs text-gray-500'>Emails</div>
-          </div>
-          <div class='h-8 w-px bg-gray-200' />
-          <div class='text-center'>
-            <div class='text-lg font-bold text-green-600'>0</div>
-            <div class='text-xs text-gray-500'>Spreadsheets</div>
+        {/* Productivity metrics */}
+        <div class='absolute -bottom-2 left-1/2 z-10 -translate-x-1/2'>
+          <div class='flex items-center gap-3 rounded-lg border border-amber-200 bg-white px-4 py-2 shadow-md'>
+            <div class='text-center'>
+              <div class='text-lg font-bold text-amber-600'>Fewer</div>
+              <div class='text-xs text-gray-500'>Emails</div>
+            </div>
+            <div class='h-8 w-px bg-gray-200' />
+            <div class='text-center'>
+              <div class='text-lg font-bold text-green-600'>0</div>
+              <div class='text-xs text-gray-500'>Spreadsheets</div>
+            </div>
           </div>
         </div>
-      </div>
-    </IllustrationWrapper>
+      </IllustrationWrapper>
+    </>
   );
 }
 
