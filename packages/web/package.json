@@ -30,7 +30,7 @@
     "@embedpdf/plugin-export": "^2.2.0",
     "@embedpdf/plugin-fullscreen": "^2.2.0",
     "@embedpdf/plugin-history": "^2.2.0",
-    "@embedpdf/plugin-i18n": "^2.2.0",
+    "@embedpdf/plugin-i18n": "^2.3.0",
     "@embedpdf/plugin-interaction-manager": "^2.2.0",
     "@embedpdf/plugin-pan": "^2.2.0",
     "@embedpdf/plugin-print": "^2.2.0",
