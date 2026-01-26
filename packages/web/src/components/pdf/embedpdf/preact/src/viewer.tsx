@@ -192,6 +192,11 @@ function AnnotationSyncManager({
       const annotation = event.annotation;
       const annotationId = annotation?.id;
 
+      if (!annotation || !annotationId) {
+        console.warn('[AnnotationSync] Event missing annotation or id, skipping:', event.type);
+        return;
+      }
+
       switch (event.type) {
         case 'create': {
           // Skip if this annotation was loaded from storage (already tracked)
