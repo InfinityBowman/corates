@@ -26,6 +26,11 @@ export default function ChecklistWithPdf(props) {
   // props.getRobinsText - function to get Y.Text for a ROBINS-I free-text field
   // props.getRob2Text - function to get Y.Text for a ROB-2 free-text field
   // props.pdfUrl - optional PDF URL (for server-hosted PDFs)
+  // Annotation persistence props:
+  // props.onAnnotationAdd - callback when annotation is created
+  // props.onAnnotationUpdate - callback when annotation is updated
+  // props.onAnnotationDelete - callback when annotation is deleted
+  // props.initialAnnotations - array of annotations to load
 
   return (
     <div class='flex h-full flex-col bg-blue-50'>
@@ -65,6 +70,10 @@ export default function ChecklistWithPdf(props) {
               pdfs={props.pdfs}
               selectedPdfId={props.selectedPdfId}
               onPdfSelect={props.onPdfSelect}
+              onAnnotationAdd={props.onAnnotationAdd}
+              onAnnotationUpdate={props.onAnnotationUpdate}
+              onAnnotationDelete={props.onAnnotationDelete}
+              initialAnnotations={props.initialAnnotations}
             />
           </Suspense>
         </Show>

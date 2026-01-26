@@ -18,6 +18,7 @@ import { createStudyOperations } from './studies.js';
 import { createChecklistOperations } from './checklists/index.js';
 import { createPdfOperations } from './pdfs.js';
 import { createReconciliationOperations } from './reconciliation.js';
+import { createAnnotationOperations } from './annotations.js';
 import { db, deleteProjectData } from '../db.js';
 
 /**
@@ -50,6 +51,7 @@ function getOrCreateConnection(projectId) {
     checklistOps: null,
     pdfOps: null,
     reconciliationOps: null,
+    annotationOps: null,
     refCount: 1,
     initialized: false,
   };
@@ -180,6 +182,7 @@ export function useProject(projectId) {
     connectionEntry.checklistOps = createChecklistOperations(projectId, getYDoc, synced);
     connectionEntry.pdfOps = createPdfOperations(projectId, getYDoc, synced);
     connectionEntry.reconciliationOps = createReconciliationOperations(projectId, getYDoc, synced);
+    connectionEntry.annotationOps = createAnnotationOperations(projectId, getYDoc, synced);
 
     // Register operations with the global action store
     projectActionsStore._setConnection(projectId, {
@@ -215,6 +218,15 @@ export function useProject(projectId) {
       clearReconciliationProgress: connectionEntry.reconciliationOps.clearReconciliationProgress,
       applyReconciliationToChecklists:
         connectionEntry.reconciliationOps.applyReconciliationToChecklists,
+      // Annotation operations
+      addAnnotation: connectionEntry.annotationOps.addAnnotation,
+      addAnnotations: connectionEntry.annotationOps.addAnnotations,
+      updateAnnotation: connectionEntry.annotationOps.updateAnnotation,
+      deleteAnnotation: connectionEntry.annotationOps.deleteAnnotation,
+      getAnnotations: connectionEntry.annotationOps.getAnnotations,
+      getAllAnnotationsForPdf: connectionEntry.annotationOps.getAllAnnotationsForPdf,
+      clearAnnotationsForChecklist: connectionEntry.annotationOps.clearAnnotationsForChecklist,
+      mergeAnnotations: connectionEntry.annotationOps.mergeAnnotations,
     });
 
     // Listen for Y.Doc changes BEFORE setting up providers
@@ -364,6 +376,18 @@ export function useProject(projectId) {
       connectionEntry?.reconciliationOps?.getReconciliationProgress(...args),
     clearReconciliationProgress: (...args) =>
       connectionEntry?.reconciliationOps?.clearReconciliationProgress(...args),
+
+    // Annotation operations
+    addAnnotation: (...args) => connectionEntry?.annotationOps?.addAnnotation(...args),
+    addAnnotations: (...args) => connectionEntry?.annotationOps?.addAnnotations(...args),
+    updateAnnotation: (...args) => connectionEntry?.annotationOps?.updateAnnotation(...args),
+    deleteAnnotation: (...args) => connectionEntry?.annotationOps?.deleteAnnotation(...args),
+    getAnnotations: (...args) => connectionEntry?.annotationOps?.getAnnotations(...args),
+    getAllAnnotationsForPdf: (...args) =>
+      connectionEntry?.annotationOps?.getAllAnnotationsForPdf(...args),
+    clearAnnotationsForChecklist: (...args) =>
+      connectionEntry?.annotationOps?.clearAnnotationsForChecklist(...args),
+    mergeAnnotations: (...args) => connectionEntry?.annotationOps?.mergeAnnotations(...args),
 
     // Connection management
     connect,

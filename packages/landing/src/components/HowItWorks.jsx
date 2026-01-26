@@ -1,5 +1,5 @@
 import { For } from 'solid-js';
-import { AiOutlineFolderAdd, AiOutlineFileAdd, AiOutlineTeam } from 'solid-icons/ai';
+import { AiOutlineFolderAdd, AiOutlineFileAdd, AiOutlineEdit, AiOutlineTeam } from 'solid-icons/ai';
 
 export default function HowItWorks() {
   const steps = [
@@ -13,13 +13,19 @@ export default function HowItWorks() {
       number: 2,
       icon: <AiOutlineFileAdd class='h-6 w-6' />,
       title: 'Add Studies',
-      description: 'Upload PDFs and create appraisal checklists for each study.',
+      description: 'Upload PDFs and easily assign reviewers.',
     },
     {
       number: 3,
+      icon: <AiOutlineEdit class='h-6 w-6' />,
+      title: 'Appraise Independently',
+      description: 'Complete assessments independently with guided checklists and PDF annotations.',
+    },
+    {
+      number: 4,
       icon: <AiOutlineTeam class='h-6 w-6' />,
-      title: 'Appraise Together',
-      description: 'Complete assessments collaboratively with automatic scoring and summaries.',
+      title: 'Resolve Collaboratively',
+      description: 'Resolve discrepancies together with automatic scoring and summaries.',
     },
   ];
 
@@ -32,7 +38,7 @@ export default function HowItWorks() {
         <p class='text-lg text-gray-600'>Get started in minutes, not hours.</p>
       </div>
 
-      <div class='grid gap-8 md:grid-cols-3'>
+      <div class='grid gap-8 md:grid-cols-4'>
         <For each={steps}>
           {(step, index) => (
             <div class='relative text-center'>

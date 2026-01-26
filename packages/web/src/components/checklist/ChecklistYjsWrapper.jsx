@@ -69,6 +69,9 @@ export default function ChecklistYjsWrapper() {
     getQuestionNote,
     getRobinsText,
     getRob2Text,
+    addAnnotation,
+    updateAnnotation,
+    deleteAnnotation,
   } = projectOps || {};
 
   // Set active project for action store
@@ -404,6 +407,63 @@ export default function ChecklistYjsWrapper() {
     return getPdfUrl(oid, params.projectId, params.studyId, fileName);
   });
 
+  // Get initial annotations for the current checklist and PDF
+  const initialAnnotations = createMemo(() => {
+    const study = currentStudy();
+    const pdfId = selectedPdfId();
+    const checklistId = params.checklistId;
+    console.log('[ChecklistYjsWrapper] initialAnnotations memo:', {
+      hasStudy: !!study,
+      studyAnnotations: study?.annotations,
+      pdfId,
+      checklistId,
+    });
+    if (!study?.annotations || !pdfId || !checklistId) return [];
+
+    // Get annotations for this checklist
+    const checklistAnnotations = study.annotations[checklistId] || [];
+    // Filter to only annotations for the current PDF
+    const filtered = checklistAnnotations.filter(a => a.pdfId === pdfId);
+    console.log('[ChecklistYjsWrapper] Filtered annotations:', filtered);
+    return filtered;
+  });
+
+  // Handle annotation creation
+  const handleAnnotationAdd = annotation => {
+    console.log('[ChecklistYjsWrapper] handleAnnotationAdd called:', annotation);
+    if (isReadOnly()) {
+      console.log('[ChecklistYjsWrapper] Read-only mode, skipping');
+      return;
+    }
+    const pdfId = selectedPdfId();
+    if (!pdfId) {
+      console.log('[ChecklistYjsWrapper] No pdfId, skipping');
+      return;
+    }
+
+    console.log('[ChecklistYjsWrapper] Calling addAnnotation with:', {
+      studyId: params.studyId,
+      pdfId,
+      checklistId: params.checklistId,
+      annotation,
+      userId: user()?.id,
+    });
+    const result = addAnnotation(params.studyId, pdfId, params.checklistId, annotation, user()?.id);
+    console.log('[ChecklistYjsWrapper] addAnnotation result:', result);
+  };
+
+  // Handle annotation update
+  const handleAnnotationUpdate = annotation => {
+    if (isReadOnly()) return;
+    updateAnnotation(params.studyId, params.checklistId, annotation.id, annotation);
+  };
+
+  // Handle annotation deletion
+  const handleAnnotationDelete = annotationId => {
+    if (isReadOnly()) return;
+    deleteAnnotation(params.studyId, params.checklistId, annotationId);
+  };
+
   // Determine back button navigation from tab query param
   const getBackTab = () => {
     const tabFromUrl = new URLSearchParams(location.search).get('tab');
@@ -538,6 +598,10 @@ export default function ChecklistYjsWrapper() {
           getRob2Text={(sectionKey, fieldKey, questionKey) =>
             getRob2Text(params.studyId, params.checklistId, sectionKey, fieldKey, questionKey)
           }
+          onAnnotationAdd={handleAnnotationAdd}
+          onAnnotationUpdate={handleAnnotationUpdate}
+          onAnnotationDelete={handleAnnotationDelete}
+          initialAnnotations={initialAnnotations()}
         />
       </Show>
     </>

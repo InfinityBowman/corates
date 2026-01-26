@@ -174,7 +174,61 @@ function buildStudyFromYMap(studyId, studyData, studyYMap) {
     }
   }
 
+  // Get annotations from nested Y.Map
+  const annotationsMap = studyYMap.get ? studyYMap.get('annotations') : null;
+  if (annotationsMap && typeof annotationsMap.entries === 'function') {
+    study.annotations = buildAnnotationsFromYMap(annotationsMap);
+  } else {
+    study.annotations = {};
+  }
+
   return study;
+}
+
+/**
+ * Build annotations map from Y.Map
+ * Returns an object: { checklistId: [annotations] }
+ */
+function buildAnnotationsFromYMap(annotationsMap) {
+  const annotations = {};
+  for (const [checklistId, checklistAnnotationsMap] of annotationsMap.entries()) {
+    if (!checklistAnnotationsMap || typeof checklistAnnotationsMap.entries !== 'function') {
+      continue;
+    }
+
+    const checklistAnnotations = [];
+    for (const [annotationId, annotationYMap] of checklistAnnotationsMap.entries()) {
+      // Skip null/undefined entries
+      if (!annotationYMap) continue;
+
+      const annotationData = annotationYMap.toJSON ? annotationYMap.toJSON() : annotationYMap;
+
+      // Parse embedPdfData from JSON string
+      let embedPdfData = {};
+      try {
+        embedPdfData = JSON.parse(annotationData.embedPdfData || '{}');
+      } catch (err) {
+        console.warn('Failed to parse annotation embedPdfData:', annotationId, err);
+      }
+
+      checklistAnnotations.push({
+        id: annotationData.id || annotationId,
+        pdfId: annotationData.pdfId,
+        type: annotationData.type,
+        pageIndex: annotationData.pageIndex,
+        embedPdfData,
+        createdBy: annotationData.createdBy,
+        createdAt: annotationData.createdAt,
+        updatedAt: annotationData.updatedAt,
+        mergedFrom: annotationData.mergedFrom || null,
+      });
+    }
+
+    if (checklistAnnotations.length > 0) {
+      annotations[checklistId] = checklistAnnotations;
+    }
+  }
+  return annotations;
 }
 
 /**

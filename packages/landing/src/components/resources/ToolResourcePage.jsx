@@ -173,6 +173,19 @@ function ToolContent(props) {
                 </div>
               </div>
 
+              <div class='rounded-lg border border-gray-200 bg-gray-50 p-6'>
+                <p class='text-sm leading-relaxed text-gray-600'>
+                  CoRATES supports the structured use of this appraisal framework by providing
+                  workflow, documentation, and collaboration features. CoRATES does not reproduce,
+                  modify, or replace the instrument.
+                </p>
+                <p class='mt-2 text-sm leading-relaxed text-gray-600'>
+                  This framework is the intellectual property of its original authors. Users should
+                  consult the official publications and guidance linked above when applying the
+                  tool.
+                </p>
+              </div>
+
               <div class='border-t border-gray-200 pt-8'>
                 <h2 class='mb-4 text-xl font-semibold text-gray-900'>Scoring</h2>
                 <p class='mb-6 text-gray-600'>{props.tool.scoringDescription}</p>
