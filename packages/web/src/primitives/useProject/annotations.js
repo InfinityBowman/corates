@@ -297,13 +297,16 @@ export function createAnnotationOperations(projectId, getYDoc, _isSynced) {
           if (data.embedPdfData) {
             try {
               const parsed =
-                typeof data.embedPdfData === 'string'
-                  ? JSON.parse(data.embedPdfData)
-                  : data.embedPdfData;
+                typeof data.embedPdfData === 'string' ?
+                  JSON.parse(data.embedPdfData)
+                : data.embedPdfData;
               const updatedEmbed = { ...parsed, id: newAnnotationId };
               newAnnotationYMap.set('embedPdfData', JSON.stringify(updatedEmbed));
             } catch (parseErr) {
-              console.warn('[annotations.js] Failed to parse embedPdfData during merge, using as-is:', parseErr);
+              console.warn(
+                '[annotations.js] Failed to parse embedPdfData during merge, using as-is:',
+                parseErr,
+              );
               newAnnotationYMap.set('embedPdfData', data.embedPdfData);
             }
           } else {
