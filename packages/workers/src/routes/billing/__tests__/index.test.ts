@@ -3,7 +3,7 @@
  */
 
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
-import { Hono } from 'hono';
+import { Hono, type Context } from 'hono';
 import { env, createExecutionContext, waitOnExecutionContext } from 'cloudflare:test';
 import {
   resetTestDatabase,
@@ -50,7 +50,12 @@ vi.mock('postmark', () => {
 });
 
 // Mock Stripe
-const mockStripeCheckoutSessionsCreate = vi.fn(async () => ({
+interface MockCheckoutCreateParams {
+  mode: string;
+  metadata: Record<string, string>;
+}
+
+const mockStripeCheckoutSessionsCreate = vi.fn(async (_params: MockCheckoutCreateParams) => ({
   id: 'cs_test_123',
   url: 'https://checkout.stripe.com/test',
 }));
@@ -79,7 +84,7 @@ vi.mock('stripe', () => {
 // Mock auth middleware
 vi.mock('@/middleware/auth.js', () => {
   return {
-    requireAuth: async (c, next) => {
+    requireAuth: async (c: Context, next: () => Promise<void>) => {
       const userId = c.req.raw.headers.get('x-test-user-id') || 'user-1';
       const email = c.req.raw.headers.get('x-test-user-email') || 'user1@example.com';
       c.set('user', {
@@ -90,14 +95,14 @@ vi.mock('@/middleware/auth.js', () => {
       c.set('session', { id: 'test-session' });
       await next();
     },
-    getAuth: c => ({
+    getAuth: (c: Context) => ({
       user: c.get('user'),
       session: c.get('session'),
     }),
   };
 });
 
-let app;
+let app: InstanceType<typeof Hono>;
 
 beforeAll(async () => {
   const { billingRoutes } = await import('../index.js');
@@ -110,7 +115,11 @@ beforeEach(async () => {
   vi.clearAllMocks();
 });
 
-async function fetchBilling(path, init = {}) {
+interface FetchInit extends RequestInit {
+  headers?: Record<string, string>;
+}
+
+async function fetchBilling(path: string, init: FetchInit = {}): Promise<Response> {
   const testEnv = {
     ...env,
     STRIPE_SECRET_KEY: 'sk_test_123',

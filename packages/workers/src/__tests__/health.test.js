@@ -43,7 +43,10 @@ describe('Health Check Endpoints', () => {
     expect(body.services).toBeDefined();
     expect(body.services.database).toMatchObject({ status: 'healthy', type: 'D1' });
     expect(body.services.storage).toMatchObject({ status: 'healthy', type: 'R2' });
-    expect(body.services.durableObjects).toMatchObject({ status: 'healthy', type: 'Durable Objects' });
+    expect(body.services.durableObjects).toMatchObject({
+      status: 'healthy',
+      type: 'Durable Objects',
+    });
   });
 
   it('GET /health checks database connectivity', async () => {

@@ -4,7 +4,7 @@
  */
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { Hono } from 'hono';
+import { Hono, type Context } from 'hono';
 import { env, createExecutionContext, waitOnExecutionContext } from 'cloudflare:test';
 import {
   resetTestDatabase,
@@ -13,6 +13,7 @@ import {
   seedOrgMember,
   seedProject,
   seedProjectMember,
+  json,
 } from '@/__tests__/helpers.js';
 import { requireOrgMembership, requireProjectAccess } from '../requireOrg.js';
 import { requireAuth } from '../auth.js';
@@ -32,7 +33,7 @@ vi.mock('postmark', () => {
 // Mock auth middleware
 vi.mock('../auth.js', () => {
   return {
-    requireAuth: async (c, next) => {
+    requireAuth: async (c: Context, next: () => Promise<void>) => {
       const userId = c.req.raw.headers.get('x-test-user-id');
       if (userId) {
         c.set('user', {
@@ -44,23 +45,22 @@ vi.mock('../auth.js', () => {
       }
       await next();
     },
-    getAuth: c => ({
+    getAuth: (c: Context) => ({
       user: c.get('user') || null,
       session: c.get('session') || null,
     }),
   };
 });
 
-async function json(res) {
-  const text = await res.text();
-  try {
-    return JSON.parse(text);
-  } catch {
-    return { _raw: text };
-  }
+interface FetchInit extends RequestInit {
+  headers?: Record<string, string>;
 }
 
-async function fetchApp(app, path, init = {}) {
+async function fetchApp(
+  app: InstanceType<typeof Hono>,
+  path: string,
+  init: FetchInit = {},
+): Promise<Response> {
   const ctx = createExecutionContext();
   const req = new Request(`http://localhost${path}`, {
     ...init,
@@ -155,7 +155,7 @@ describe('requireOrgMembership middleware', () => {
       });
 
       const app = new Hono();
-      app.get('/orgs/:orgId/test', requireAuth, requireOrgMembership(), c => {
+      app.get('/orgs/:orgId/test', requireAuth, requireOrgMembership(), (c: Context) => {
         const orgId = c.get('orgId');
         const orgRole = c.get('orgRole');
         return c.json({ success: true, orgId, orgRole });
@@ -202,7 +202,7 @@ describe('requireOrgMembership middleware', () => {
       });
 
       const app = new Hono();
-      app.get('/orgs/:orgId/test', requireAuth, requireOrgMembership(), c => {
+      app.get('/orgs/:orgId/test', requireAuth, requireOrgMembership(), (c: Context) => {
         const org = c.get('org');
         return c.json({ org });
       });
@@ -457,14 +457,17 @@ describe('requireProjectAccess middleware', () => {
         '/orgs/:orgId/projects/:projectId/test',
         requireAuth,
         requireOrgMembership(),
-        async (c, next) => {
+        async (c: Context, next: () => Promise<void>) => {
           // Manually set projectId param to empty string to test middleware behavior
           // This simulates what would happen if the router produced an empty projectId
           const originalParam = c.req.param.bind(c.req);
-          c.req.param = key => {
-            if (key === 'projectId') return '';
-            return originalParam(key);
-          };
+          Object.defineProperty(c.req, 'param', {
+            value: (key: string) => {
+              if (key === 'projectId') return '';
+              return originalParam(key);
+            },
+            configurable: true,
+          });
           await next();
         },
         requireProjectAccess(),
@@ -719,7 +722,7 @@ describe('requireProjectAccess middleware', () => {
         requireAuth,
         requireOrgMembership(),
         requireProjectAccess(),
-        c => {
+        (c: Context) => {
           const projectId = c.get('projectId');
           const projectRole = c.get('projectRole');
           return c.json({ success: true, projectId, projectRole });
@@ -1004,7 +1007,7 @@ describe('requireProjectAccess middleware', () => {
         requireAuth,
         requireOrgMembership(),
         requireProjectAccess('owner'),
-        c => {
+        (c: Context) => {
           const orgRole = c.get('orgRole');
           const projectRole = c.get('projectRole');
           return c.json({ success: true, orgRole, projectRole });
@@ -1085,7 +1088,7 @@ describe('requireProjectAccess middleware', () => {
         requireAuth,
         requireOrgMembership(),
         requireProjectAccess('member'),
-        c => {
+        (c: Context) => {
           const orgRole = c.get('orgRole');
           const projectRole = c.get('projectRole');
           return c.json({ success: true, orgRole, projectRole });

@@ -51,7 +51,6 @@ describe('Main App - Route Mounting', () => {
     const text = await res.text();
     expect(text).toContain('Corates Workers API');
   });
-
 });
 
 describe('Main App - Middleware Chain', () => {
@@ -99,7 +98,6 @@ describe('Main App - Error Handling', () => {
     expect(body.code).toBe('SYSTEM_ROUTE_NOT_FOUND');
     expect(body.message).toBe('Route not found');
   });
-
 });
 
 describe('Main App - PDF Proxy Endpoint', () => {

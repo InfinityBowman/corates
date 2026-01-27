@@ -300,7 +300,10 @@ describe('Org-Scoped Project Routes - PUT /api/orgs/:orgId/projects/:id', () => 
 
     // Verify update persisted in DB
     const db = createDb(env.DB);
-    const [dbProject] = await db.select().from(projectsTable).where(eq(projectsTable.id, project.id));
+    const [dbProject] = await db
+      .select()
+      .from(projectsTable)
+      .where(eq(projectsTable.id, project.id));
     expect(dbProject.name).toBe('Updated by Member');
   });
 

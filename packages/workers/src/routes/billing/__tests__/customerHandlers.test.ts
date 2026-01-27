@@ -4,27 +4,28 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { env } from 'cloudflare:test';
+import type Stripe from 'stripe';
 import { resetTestDatabase, seedUser } from '@/__tests__/helpers.js';
 import { createDb } from '@/db/client.js';
+import type { Database } from '@/db/client.js';
 import { handleCustomerUpdated, handleCustomerDeleted } from '../handlers/customerHandlers.js';
 import { user } from '@/db/schema.js';
 import { eq } from 'drizzle-orm';
+import type { WebhookContext } from '../handlers/types.js';
 
-// Create a test context with db and logger
-function createTestContext(db) {
+function createTestContext(db: Database): WebhookContext {
   return {
     db,
     logger: {
       stripe: vi.fn(),
-      info: vi.fn(),
-      warn: vi.fn(),
       error: vi.fn(),
     },
+    env: undefined,
   };
 }
 
 describe('Customer Handlers', () => {
-  let db;
+  let db: Database;
 
   beforeEach(async () => {
     await resetTestDatabase();
@@ -37,14 +38,14 @@ describe('Customer Handlers', () => {
         id: 'cus_nonexistent',
         email: 'unknown@example.com',
         name: 'Unknown User',
-      };
+      } as unknown as Stripe.Customer;
 
       const ctx = createTestContext(db);
       const result = await handleCustomerUpdated(customer, ctx);
 
       expect(result.handled).toBe(true);
       expect(result.result).toBe('user_not_found');
-      expect(result.ledgerContext.reason).toBe('no_matching_user');
+      expect(result.ledgerContext!.reason).toBe('no_matching_user');
       expect(ctx.logger.stripe).toHaveBeenCalledWith('customer_updated_user_not_found', {
         stripeCustomerId: 'cus_nonexistent',
         customerEmail: 'unknown@example.com',
@@ -67,7 +68,7 @@ describe('Customer Handlers', () => {
         id: 'cus_123',
         email: 'new@example.com',
         name: 'Test User',
-      };
+      } as unknown as Stripe.Customer;
 
       const ctx = createTestContext(db);
       const result = await handleCustomerUpdated(customer, ctx);
@@ -100,14 +101,14 @@ describe('Customer Handlers', () => {
         id: 'cus_123',
         email: 'test@example.com',
         name: 'New Name',
-      };
+      } as unknown as Stripe.Customer;
 
       const ctx = createTestContext(db);
       const result = await handleCustomerUpdated(customer, ctx);
 
       expect(result.handled).toBe(true);
       expect(result.result).toBe('user_updated');
-      expect(result.ledgerContext.fieldsUpdated).toContain('name');
+      expect(result.ledgerContext!.fieldsUpdated).toContain('name');
       expect(ctx.logger.stripe).toHaveBeenCalledWith('customer_updated_synced', {
         userId: 'user-1',
         stripeCustomerId: 'cus_123',
@@ -135,14 +136,14 @@ describe('Customer Handlers', () => {
         id: 'cus_123',
         email: 'test@example.com',
         name: 'Same Name',
-      };
+      } as unknown as Stripe.Customer;
 
       const ctx = createTestContext(db);
       const result = await handleCustomerUpdated(customer, ctx);
 
       expect(result.handled).toBe(true);
       expect(result.result).toBe('no_changes');
-      expect(result.ledgerContext.fieldsUpdated).toEqual([]);
+      expect(result.ledgerContext!.fieldsUpdated).toEqual([]);
     });
 
     it('handles customer with no name gracefully', async () => {
@@ -161,7 +162,7 @@ describe('Customer Handlers', () => {
         id: 'cus_123',
         email: 'test@example.com',
         name: null,
-      };
+      } as unknown as Stripe.Customer;
 
       const ctx = createTestContext(db);
       const result = await handleCustomerUpdated(customer, ctx);
@@ -179,14 +180,14 @@ describe('Customer Handlers', () => {
     it('returns user_not_found when no matching user exists', async () => {
       const customer = {
         id: 'cus_nonexistent',
-      };
+      } as unknown as Stripe.Customer;
 
       const ctx = createTestContext(db);
       const result = await handleCustomerDeleted(customer, ctx);
 
       expect(result.handled).toBe(true);
       expect(result.result).toBe('user_not_found');
-      expect(result.ledgerContext.reason).toBe('no_matching_user');
+      expect(result.ledgerContext!.reason).toBe('no_matching_user');
       expect(ctx.logger.stripe).toHaveBeenCalledWith('customer_deleted_user_not_found', {
         stripeCustomerId: 'cus_nonexistent',
       });
@@ -210,7 +211,7 @@ describe('Customer Handlers', () => {
 
       const customer = {
         id: 'cus_123',
-      };
+      } as unknown as Stripe.Customer;
 
       const ctx = createTestContext(db);
       const result = await handleCustomerDeleted(customer, ctx);
@@ -246,7 +247,7 @@ describe('Customer Handlers', () => {
 
       const customer = {
         id: 'cus_123',
-      };
+      } as unknown as Stripe.Customer;
 
       const ctx = createTestContext(db);
       await handleCustomerDeleted(customer, ctx);
@@ -273,7 +274,7 @@ describe('Customer Handlers', () => {
 
       const customer = {
         id: 'cus_123',
-      };
+      } as unknown as Stripe.Customer;
 
       const ctx = createTestContext(db);
       await handleCustomerDeleted(customer, ctx);
@@ -282,7 +283,7 @@ describe('Customer Handlers', () => {
       const [updatedUser] = await db.select().from(user).where(eq(user.id, 'user-1'));
 
       // updatedAt should be more recent than the past timestamp
-      const updatedAtTimestamp = Math.floor(updatedUser.updatedAt.getTime() / 1000);
+      const updatedAtTimestamp = Math.floor(updatedUser.updatedAt!.getTime() / 1000);
       expect(updatedAtTimestamp).toBeGreaterThan(pastTimestamp);
     });
   });

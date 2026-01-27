@@ -82,7 +82,9 @@ interface BuildOrgMemberResult {
   membership: BuiltOrgMembership;
 }
 
-export async function buildOrgMember(options: BuildOrgMemberOptions): Promise<BuildOrgMemberResult> {
+export async function buildOrgMember(
+  options: BuildOrgMemberOptions,
+): Promise<BuildOrgMemberResult> {
   const { orgId, role = 'member' } = options;
   const ts = nowSec();
 

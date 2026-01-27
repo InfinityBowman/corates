@@ -14,6 +14,7 @@ import {
   seedProject,
 } from '@/__tests__/helpers.js';
 import { createDb } from '@/db/client.js';
+import type { Database } from '@/db/client.js';
 import { createGrant } from '@/db/orgAccessGrants.js';
 import {
   resolveOrgAccess,
@@ -21,6 +22,7 @@ import {
   getOrgResourceUsage,
 } from '@/lib/billingResolver.js';
 import { isSubscriptionActive } from '@/lib/subscriptionStatus';
+import type { SubscriptionStatusInput, IsActiveOptions } from '@/lib/subscriptionStatus';
 
 beforeEach(async () => {
   await resetTestDatabase();
@@ -58,7 +60,7 @@ async function createTestOrg(orgId = 'org-1', userId = 'user-1') {
   return { nowSec, orgId, userId };
 }
 
-const billingOptions = { includeTrial: true, includePastDue: true };
+const billingOptions: IsActiveOptions = { includeTrial: true, includePastDue: true };
 
 describe('isSubscriptionActive', () => {
   it('should return false for null subscription', () => {
@@ -66,18 +68,18 @@ describe('isSubscriptionActive', () => {
   });
 
   it('should return true for trialing subscription', () => {
-    const sub = { status: 'trialing' };
+    const sub: SubscriptionStatusInput = { status: 'trialing' };
     expect(isSubscriptionActive(sub, Date.now(), billingOptions)).toBe(true);
   });
 
   it('should return true for active subscription', () => {
-    const sub = { status: 'active', cancelAtPeriodEnd: false };
+    const sub: SubscriptionStatusInput = { status: 'active', cancelAtPeriodEnd: false };
     expect(isSubscriptionActive(sub, Date.now(), billingOptions)).toBe(true);
   });
 
   it('should return true for active subscription with scheduled cancel before period end', () => {
     const nowSec = Math.floor(Date.now() / 1000);
-    const sub = {
+    const sub: SubscriptionStatusInput = {
       status: 'active',
       cancelAtPeriodEnd: true,
       periodEnd: new Date((nowSec + 86400) * 1000), // Tomorrow
@@ -87,7 +89,7 @@ describe('isSubscriptionActive', () => {
 
   it('should return false for active subscription with scheduled cancel after period end', () => {
     const nowSec = Math.floor(Date.now() / 1000);
-    const sub = {
+    const sub: SubscriptionStatusInput = {
       status: 'active',
       cancelAtPeriodEnd: true,
       periodEnd: new Date((nowSec - 86400) * 1000), // Yesterday
@@ -97,7 +99,7 @@ describe('isSubscriptionActive', () => {
 
   it('should return true for past_due within grace period', () => {
     const nowSec = Math.floor(Date.now() / 1000);
-    const sub = {
+    const sub: SubscriptionStatusInput = {
       status: 'past_due',
       periodEnd: new Date((nowSec + 86400) * 1000), // Tomorrow
     };
@@ -106,7 +108,7 @@ describe('isSubscriptionActive', () => {
 
   it('should return false for past_due after grace period', () => {
     const nowSec = Math.floor(Date.now() / 1000);
-    const sub = {
+    const sub: SubscriptionStatusInput = {
       status: 'past_due',
       periodEnd: new Date((nowSec - 86400) * 1000), // Yesterday
     };
@@ -114,27 +116,27 @@ describe('isSubscriptionActive', () => {
   });
 
   it('should return false for canceled subscription', () => {
-    const sub = { status: 'canceled' };
+    const sub: SubscriptionStatusInput = { status: 'canceled' };
     expect(isSubscriptionActive(sub, Date.now(), billingOptions)).toBe(false);
   });
 
   it('should return false for paused subscription', () => {
-    const sub = { status: 'paused' };
+    const sub: SubscriptionStatusInput = { status: 'paused' };
     expect(isSubscriptionActive(sub, Date.now(), billingOptions)).toBe(false);
   });
 
   it('should return false for unpaid subscription', () => {
-    const sub = { status: 'unpaid' };
+    const sub: SubscriptionStatusInput = { status: 'unpaid' };
     expect(isSubscriptionActive(sub, Date.now(), billingOptions)).toBe(false);
   });
 
   it('should return false for incomplete subscription', () => {
-    const sub = { status: 'incomplete' };
+    const sub: SubscriptionStatusInput = { status: 'incomplete' };
     expect(isSubscriptionActive(sub, Date.now(), billingOptions)).toBe(false);
   });
 
   it('should return false for incomplete_expired subscription', () => {
-    const sub = { status: 'incomplete_expired' };
+    const sub: SubscriptionStatusInput = { status: 'incomplete_expired' };
     expect(isSubscriptionActive(sub, Date.now(), billingOptions)).toBe(false);
   });
 });
@@ -224,7 +226,7 @@ describe('resolveOrgAccess', () => {
       // Should pick the one with latest periodEnd
       expect(result.effectivePlanId).toBe('team');
       expect(result.source).toBe('subscription');
-      expect(result.subscription.id).toBe('sub-2');
+      expect(result.subscription!.id).toBe('sub-2');
     });
 
     it('should use ended subscription for historical data, fall back to free', async () => {
@@ -268,7 +270,7 @@ describe('resolveOrgAccess', () => {
       expect(result.effectivePlanId).toBe('trial');
       expect(result.source).toBe('grant');
       expect(result.accessMode).toBe('full');
-      expect(result.grant.type).toBe('trial');
+      expect(result.grant!.type).toBe('trial');
     });
 
     it('should prefer trial over single_project grant', async () => {
@@ -298,7 +300,7 @@ describe('resolveOrgAccess', () => {
       // Trial takes precedence over single_project
       expect(result.effectivePlanId).toBe('trial');
       expect(result.source).toBe('grant');
-      expect(result.grant.type).toBe('trial');
+      expect(result.grant!.type).toBe('trial');
     });
 
     it('should pick latest expiresAt when multiple grants of same type exist', async () => {
@@ -324,7 +326,7 @@ describe('resolveOrgAccess', () => {
 
       const result = await resolveOrgAccess(db, orgId);
 
-      expect(result.grant.id).toBe('grant-2');
+      expect(result.grant!.id).toBe('grant-2');
     });
 
     it('should ignore grants not yet started', async () => {
@@ -394,7 +396,7 @@ describe('resolveOrgAccess', () => {
       expect(result.effectivePlanId).toBe('trial');
       expect(result.source).toBe('grant');
       expect(result.accessMode).toBe('readOnly');
-      expect(result.grant.type).toBe('trial');
+      expect(result.grant!.type).toBe('trial');
     });
 
     it('should use latest expired grant when multiple exist', async () => {
@@ -421,7 +423,7 @@ describe('resolveOrgAccess', () => {
       const result = await resolveOrgAccess(db, orgId);
 
       // Should use the most recently expired grant
-      expect(result.grant.id).toBe('grant-2');
+      expect(result.grant!.id).toBe('grant-2');
       expect(result.accessMode).toBe('readOnly');
     });
   });
@@ -595,7 +597,7 @@ describe('validatePlanChange', () => {
     expect(result.valid).toBe(false);
     expect(result.violations.some(v => v.quotaKey === 'collaborators.org.max')).toBe(true);
 
-    const collabViolation = result.violations.find(v => v.quotaKey === 'collaborators.org.max');
+    const collabViolation = result.violations.find(v => v.quotaKey === 'collaborators.org.max')!;
     expect(collabViolation.used).toBe(6);
     expect(collabViolation.limit).toBe(5);
   });

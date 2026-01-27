@@ -149,5 +149,4 @@ describe('Email Routes - POST /api/email/queue', () => {
     expect(body.code).toMatch(/SYSTEM_EMAIL_SEND_FAILED/);
     expect(body.message || body.error).toBeDefined();
   });
-
 });

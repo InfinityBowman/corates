@@ -3,20 +3,22 @@
  */
 
 import { describe, it, expect, vi } from 'vitest';
+import type Stripe from 'stripe';
+import type { WebhookContext } from '../handlers/types.js';
 import {
   handlePaymentIntentProcessing,
   handlePaymentIntentSucceeded,
   handlePaymentIntentFailed,
 } from '../handlers/paymentIntentHandlers.js';
 
-function createTestContext() {
+function createTestContext(): WebhookContext {
   return {
+    db: undefined,
     logger: {
       stripe: vi.fn(),
-      info: vi.fn(),
-      warn: vi.fn(),
       error: vi.fn(),
     },
+    env: undefined,
   };
 }
 
@@ -30,15 +32,15 @@ describe('Payment Intent Handlers', () => {
         payment_method_types: ['card'],
         customer: 'cus_123',
         metadata: { orderId: 'order-1' },
-      };
+      } as unknown as Stripe.PaymentIntent;
 
       const ctx = createTestContext();
       const result = await handlePaymentIntentProcessing(paymentIntent, ctx);
 
       expect(result.handled).toBe(true);
       expect(result.result).toBe('processing_logged');
-      expect(result.ledgerContext.stripePaymentIntentId).toBe('pi_123');
-      expect(result.ledgerContext.stripeCustomerId).toBe('cus_123');
+      expect(result.ledgerContext!.stripePaymentIntentId).toBe('pi_123');
+      expect(result.ledgerContext!.stripeCustomerId).toBe('cus_123');
       expect(ctx.logger.stripe).toHaveBeenCalledWith('payment_intent_processing', {
         stripePaymentIntentId: 'pi_123',
         amount: 2999,
@@ -57,7 +59,7 @@ describe('Payment Intent Handlers', () => {
         payment_method_types: ['us_bank_account'],
         customer: 'cus_456',
         metadata: {},
-      };
+      } as unknown as Stripe.PaymentIntent;
 
       const ctx = createTestContext();
       const result = await handlePaymentIntentProcessing(paymentIntent, ctx);
@@ -80,12 +82,12 @@ describe('Payment Intent Handlers', () => {
         payment_method_types: ['card'],
         customer: { id: 'cus_obj_123' },
         metadata: {},
-      };
+      } as unknown as Stripe.PaymentIntent;
 
       const ctx = createTestContext();
       const result = await handlePaymentIntentProcessing(paymentIntent, ctx);
 
-      expect(result.ledgerContext.stripeCustomerId).toBe('cus_obj_123');
+      expect(result.ledgerContext!.stripeCustomerId).toBe('cus_obj_123');
     });
 
     it('handles null customer gracefully', async () => {
@@ -96,13 +98,13 @@ describe('Payment Intent Handlers', () => {
         payment_method_types: ['card'],
         customer: null,
         metadata: {},
-      };
+      } as unknown as Stripe.PaymentIntent;
 
       const ctx = createTestContext();
       const result = await handlePaymentIntentProcessing(paymentIntent, ctx);
 
       expect(result.handled).toBe(true);
-      expect(result.ledgerContext.stripeCustomerId).toBeUndefined();
+      expect(result.ledgerContext!.stripeCustomerId).toBeUndefined();
     });
   });
 
@@ -116,14 +118,14 @@ describe('Payment Intent Handlers', () => {
         customer: 'cus_123',
         metadata: { productId: 'prod-1' },
         invoice: 'in_123',
-      };
+      } as unknown as Stripe.PaymentIntent;
 
       const ctx = createTestContext();
       const result = await handlePaymentIntentSucceeded(paymentIntent, ctx);
 
       expect(result.handled).toBe(true);
       expect(result.result).toBe('succeeded_logged');
-      expect(result.ledgerContext.stripePaymentIntentId).toBe('pi_success_123');
+      expect(result.ledgerContext!.stripePaymentIntentId).toBe('pi_success_123');
       expect(ctx.logger.stripe).toHaveBeenCalledWith('payment_intent_succeeded', {
         stripePaymentIntentId: 'pi_success_123',
         amount: 4999,
@@ -142,7 +144,7 @@ describe('Payment Intent Handlers', () => {
         payment_method_types: ['card'],
         customer: 'cus_123',
         metadata: {},
-      };
+      } as unknown as Stripe.PaymentIntent;
 
       const ctx = createTestContext();
       const result = await handlePaymentIntentSucceeded(paymentIntent, ctx);
@@ -172,14 +174,14 @@ describe('Payment Intent Handlers', () => {
           type: 'card_error',
           decline_code: 'insufficient_funds',
         },
-      };
+      } as unknown as Stripe.PaymentIntent;
 
       const ctx = createTestContext();
       const result = await handlePaymentIntentFailed(paymentIntent, ctx);
 
       expect(result.handled).toBe(true);
       expect(result.result).toBe('failure_logged');
-      expect(result.ledgerContext.stripePaymentIntentId).toBe('pi_failed_123');
+      expect(result.ledgerContext!.stripePaymentIntentId).toBe('pi_failed_123');
       expect(ctx.logger.stripe).toHaveBeenCalledWith('payment_intent_failed', {
         stripePaymentIntentId: 'pi_failed_123',
         amount: 2999,
@@ -202,7 +204,7 @@ describe('Payment Intent Handlers', () => {
         customer: 'cus_123',
         metadata: {},
         last_payment_error: null,
-      };
+      } as unknown as Stripe.PaymentIntent;
 
       const ctx = createTestContext();
       const result = await handlePaymentIntentFailed(paymentIntent, ctx);
@@ -232,13 +234,13 @@ describe('Payment Intent Handlers', () => {
           message: 'This payment requires authentication.',
           type: 'card_error',
         },
-      };
+      } as unknown as Stripe.PaymentIntent;
 
       const ctx = createTestContext();
       const result = await handlePaymentIntentFailed(paymentIntent, ctx);
 
       expect(result.handled).toBe(true);
-      expect(result.ledgerContext.stripeCustomerId).toBe('cus_eu_123');
+      expect(result.ledgerContext!.stripeCustomerId).toBe('cus_eu_123');
       expect(ctx.logger.stripe).toHaveBeenCalledWith(
         'payment_intent_failed',
         expect.objectContaining({

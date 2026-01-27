@@ -3,14 +3,15 @@
  * Tests entitlement gating, context attachment, and error handling
  */
 
-import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { Hono } from 'hono';
+import { beforeEach, describe, expect, it, vi, type Mock } from 'vitest';
+import { Hono, type Context } from 'hono';
 import { env, createExecutionContext, waitOnExecutionContext } from 'cloudflare:test';
 import {
   resetTestDatabase,
   seedUser,
   seedOrganization,
   seedOrgMember,
+  json,
 } from '@/__tests__/helpers.js';
 import { requireEntitlement } from '../requireEntitlement.js';
 import { requireOrgMembership } from '../requireOrg.js';
@@ -31,7 +32,7 @@ vi.mock('postmark', () => {
 // Mock auth middleware
 vi.mock('../auth.js', () => {
   return {
-    requireAuth: async (c, next) => {
+    requireAuth: async (c: Context, next: () => Promise<void>) => {
       const userId = c.req.raw.headers.get('x-test-user-id');
       if (userId) {
         c.set('user', {
@@ -43,7 +44,7 @@ vi.mock('../auth.js', () => {
       }
       await next();
     },
-    getAuth: c => ({
+    getAuth: (c: Context) => ({
       user: c.get('user') || null,
       session: c.get('session') || null,
     }),
@@ -57,16 +58,15 @@ vi.mock('@/lib/billingResolver.js', () => {
   };
 });
 
-async function json(res) {
-  const text = await res.text();
-  try {
-    return JSON.parse(text);
-  } catch {
-    return { _raw: text };
-  }
+interface FetchInit extends RequestInit {
+  headers?: Record<string, string>;
 }
 
-async function fetchApp(app, path, init = {}) {
+async function fetchApp(
+  app: InstanceType<typeof Hono>,
+  path: string,
+  init: FetchInit = {},
+): Promise<Response> {
   const ctx = createExecutionContext();
   const req = new Request(`http://localhost${path}`, {
     ...init,
@@ -79,12 +79,12 @@ async function fetchApp(app, path, init = {}) {
   return res;
 }
 
-let mockResolveOrgAccess;
+let mockResolveOrgAccess: Mock;
 
 beforeEach(async () => {
   await resetTestDatabase();
   const billingResolver = await import('@/lib/billingResolver.js');
-  mockResolveOrgAccess = billingResolver.resolveOrgAccess;
+  mockResolveOrgAccess = billingResolver.resolveOrgAccess as Mock;
   mockResolveOrgAccess.mockClear();
 });
 
@@ -242,7 +242,7 @@ describe('requireEntitlement middleware', () => {
         requireAuth,
         requireOrgMembership(),
         requireEntitlement('project.create'),
-        c => {
+        (c: Context) => {
           const orgBilling = c.get('orgBilling');
           const entitlements = c.get('entitlements');
           return c.json({ success: true, orgBilling, entitlements });
@@ -319,7 +319,7 @@ describe('requireEntitlement middleware', () => {
         requireAuth,
         requireOrgMembership(),
         requireEntitlement('project.create'),
-        c => {
+        (c: Context) => {
           const orgBilling = c.get('orgBilling');
           const entitlements = c.get('entitlements');
           return c.json({

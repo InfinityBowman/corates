@@ -20,7 +20,7 @@ import { getGrantByStripeCheckoutSessionId, getGrantByOrgIdAndType } from '@/db/
 // Stripe itself is globally mocked in test setup; here we just control the returned event.
 const mockStripeWebhooksConstructEvent = vi.fn();
 
-let app;
+let app: InstanceType<typeof Hono>;
 
 beforeEach(async () => {
   await resetTestDatabase();
@@ -31,7 +31,19 @@ beforeEach(async () => {
   app.route('/api/billing', billingRoutes);
 });
 
-async function createWebhookRequest(eventType, eventData, signature = 'valid-signature') {
+interface CheckoutSessionData {
+  id: string;
+  mode?: string;
+  payment_status?: string;
+  payment_intent?: string;
+  metadata?: Record<string, string>;
+}
+
+async function createWebhookRequest(
+  eventType: string,
+  eventData: CheckoutSessionData,
+  signature = 'valid-signature',
+) {
   const testEnv = {
     ...env,
     STRIPE_SECRET_KEY: 'sk_test_123',
@@ -48,7 +60,7 @@ async function createWebhookRequest(eventType, eventData, signature = 'valid-sig
 
   // Ensure the Stripe constructor returns an object that uses our controllable mock.
   // This must be set per request because other tests may configure Stripe differently.
-  Stripe.mockImplementation(() => {
+  (Stripe as unknown as ReturnType<typeof vi.fn>).mockImplementation(() => {
     return {
       webhooks: {
         constructEventAsync: mockStripeWebhooksConstructEvent,
@@ -81,7 +93,7 @@ describe('Purchase Webhook Handler', () => {
 
     const { res } = await createWebhookRequest(
       'checkout.session.completed',
-      {},
+      {} as CheckoutSessionData,
       'invalid-signature',
     );
 
@@ -120,7 +132,7 @@ describe('Purchase Webhook Handler', () => {
       createdAt: nowSec,
     });
 
-    const sessionData = {
+    const sessionData: CheckoutSessionData = {
       id: 'cs_test_123',
       mode: 'payment',
       payment_status: 'paid',
@@ -144,10 +156,10 @@ describe('Purchase Webhook Handler', () => {
     const db = createDb(env.DB);
     const grant = await getGrantByStripeCheckoutSessionId(db, 'cs_test_123');
     expect(grant).toBeDefined();
-    expect(grant.type).toBe('single_project');
-    expect(grant.orgId).toBe(orgId);
-    expect(grant.stripeCheckoutSessionId).toBe('cs_test_123');
-    expect(grant.revokedAt).toBeNull();
+    expect(grant!.type).toBe('single_project');
+    expect(grant!.orgId).toBe(orgId);
+    expect(grant!.stripeCheckoutSessionId).toBe('cs_test_123');
+    expect(grant!.revokedAt).toBeNull();
   });
 
   it('should extend existing single_project grant on repeat purchase', async () => {
@@ -194,7 +206,7 @@ describe('Purchase Webhook Handler', () => {
       expiresAt: existingExpiresAt,
     });
 
-    const sessionData = {
+    const sessionData: CheckoutSessionData = {
       id: 'cs_test_456',
       mode: 'payment',
       payment_status: 'paid',
@@ -218,9 +230,9 @@ describe('Purchase Webhook Handler', () => {
     const extendedGrant = await getGrantByOrgIdAndType(db, orgId, 'single_project');
     expect(extendedGrant).toBeDefined();
     const newExpiresAt =
-      extendedGrant.expiresAt instanceof Date ?
-        Math.floor(extendedGrant.expiresAt.getTime() / 1000)
-      : extendedGrant.expiresAt;
+      extendedGrant!.expiresAt instanceof Date ?
+        Math.floor(extendedGrant!.expiresAt.getTime() / 1000)
+      : extendedGrant!.expiresAt;
     const originalExpiresAt =
       existingExpiresAt instanceof Date ?
         Math.floor(existingExpiresAt.getTime() / 1000)
@@ -233,7 +245,7 @@ describe('Purchase Webhook Handler', () => {
     const expectedExpiresAt = Math.floor(expectedDate.getTime() / 1000);
     // Allow some tolerance for test execution time
     expect(newExpiresAt).toBeGreaterThan(originalExpiresAt);
-    expect(Math.abs(newExpiresAt - expectedExpiresAt)).toBeLessThan(60); // Within 60 seconds
+    expect(Math.abs(newExpiresAt! - expectedExpiresAt)).toBeLessThan(60); // Within 60 seconds
   });
 
   it('should be idempotent (skip if grant already exists for session)', async () => {
@@ -277,7 +289,7 @@ describe('Purchase Webhook Handler', () => {
       stripeCheckoutSessionId: 'cs_test_123',
     });
 
-    const sessionData = {
+    const sessionData: CheckoutSessionData = {
       id: 'cs_test_123',
       mode: 'payment',
       payment_status: 'paid',
@@ -298,7 +310,7 @@ describe('Purchase Webhook Handler', () => {
   });
 
   it('should skip non-payment mode checkout sessions', async () => {
-    const sessionData = {
+    const sessionData: CheckoutSessionData = {
       id: 'cs_test_123',
       mode: 'subscription',
       payment_status: 'paid',
@@ -320,7 +332,7 @@ describe('Purchase Webhook Handler', () => {
     // Ensure mock is set up for this test
     mockStripeWebhooksConstructEvent.mockClear();
 
-    const sessionData = {
+    const sessionData: CheckoutSessionData = {
       id: 'cs_test_123',
       mode: 'payment',
       payment_status: 'paid',
@@ -343,7 +355,7 @@ describe('Purchase Webhook Handler', () => {
       mode: 'payment',
       payment_status: 'paid',
       // No metadata field at all
-    };
+    } as CheckoutSessionData;
 
     const { res } = await createWebhookRequest('checkout.session.completed', sessionData);
 
@@ -354,7 +366,7 @@ describe('Purchase Webhook Handler', () => {
   });
 
   it('should reject unpaid sessions', async () => {
-    const sessionData = {
+    const sessionData: CheckoutSessionData = {
       id: 'cs_test_123',
       mode: 'payment',
       payment_status: 'unpaid',

@@ -4,8 +4,10 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { env } from 'cloudflare:test';
+import type Stripe from 'stripe';
 import { resetTestDatabase, seedUser, seedSubscription } from '@/__tests__/helpers.js';
 import { createDb } from '@/db/client.js';
+import type { Database } from '@/db/client.js';
 import {
   handleInvoicePaymentSucceeded,
   handleInvoicePaymentFailed,
@@ -13,14 +15,16 @@ import {
 } from '../handlers/invoiceHandlers.js';
 import { subscription } from '@/db/schema.js';
 import { eq } from 'drizzle-orm';
+import type { WebhookContext } from '../handlers/types.js';
 
-function createTestContext(db, options = {}) {
+function createTestContext(
+  db: Database,
+  options: { env?: Record<string, unknown> } = {},
+): WebhookContext {
   return {
     db,
     logger: {
       stripe: vi.fn(),
-      info: vi.fn(),
-      warn: vi.fn(),
       error: vi.fn(),
     },
     env: options.env || {},
@@ -28,7 +32,7 @@ function createTestContext(db, options = {}) {
 }
 
 describe('Invoice Handlers', () => {
-  let db;
+  let db: Database;
 
   beforeEach(async () => {
     await resetTestDatabase();
@@ -42,7 +46,7 @@ describe('Invoice Handlers', () => {
         subscription: null,
         billing_reason: 'manual',
         customer: 'cus_123',
-      };
+      } as unknown as Stripe.Invoice;
 
       const ctx = createTestContext(db);
       const result = await handleInvoicePaymentSucceeded(invoice, ctx);
@@ -60,7 +64,7 @@ describe('Invoice Handlers', () => {
         id: 'in_123',
         subscription: 'sub_nonexistent',
         customer: 'cus_123',
-      };
+      } as unknown as Stripe.Invoice;
 
       const ctx = createTestContext(db);
       const result = await handleInvoicePaymentSucceeded(invoice, ctx);
@@ -89,7 +93,7 @@ describe('Invoice Handlers', () => {
         amount_paid: 2999,
         currency: 'usd',
         period_end: Math.floor(Date.now() / 1000) + 86400 * 30,
-      };
+      } as unknown as Stripe.Invoice;
 
       const ctx = createTestContext(db);
       const result = await handleInvoicePaymentSucceeded(invoice, ctx);
@@ -125,7 +129,7 @@ describe('Invoice Handlers', () => {
         customer: { id: 'cus_123' },
         amount_paid: 2999,
         currency: 'usd',
-      };
+      } as unknown as Stripe.Invoice;
 
       const ctx = createTestContext(db);
       const result = await handleInvoicePaymentSucceeded(invoice, ctx);
@@ -141,7 +145,7 @@ describe('Invoice Handlers', () => {
         id: 'in_123',
         subscription: null,
         customer: 'cus_123',
-      };
+      } as unknown as Stripe.Invoice;
 
       const ctx = createTestContext(db);
       const result = await handleInvoicePaymentFailed(invoice, ctx);
@@ -155,7 +159,7 @@ describe('Invoice Handlers', () => {
         id: 'in_123',
         subscription: 'sub_nonexistent',
         customer: 'cus_123',
-      };
+      } as unknown as Stripe.Invoice;
 
       const ctx = createTestContext(db);
       const result = await handleInvoicePaymentFailed(invoice, ctx);
@@ -185,7 +189,7 @@ describe('Invoice Handlers', () => {
         currency: 'usd',
         attempt_count: 1,
         hosted_invoice_url: 'https://invoice.stripe.com/test',
-      };
+      } as unknown as Stripe.Invoice;
 
       const ctx = createTestContext(db);
       const result = await handleInvoicePaymentFailed(invoice, ctx);
@@ -239,7 +243,7 @@ describe('Invoice Handlers', () => {
         currency: 'usd',
         attempt_count: 1,
         hosted_invoice_url: 'https://invoice.stripe.com/test',
-      };
+      } as unknown as Stripe.Invoice;
 
       const ctx = createTestContext(db, { env: { EMAIL_QUEUE: mockEmailQueue } });
       const result = await handleInvoicePaymentFailed(invoice, ctx);
@@ -274,7 +278,7 @@ describe('Invoice Handlers', () => {
         amount_due: 2999,
         currency: 'usd',
         attempt_count: 1,
-      };
+      } as unknown as Stripe.Invoice;
 
       const ctx = createTestContext(db, { env: { EMAIL_QUEUE: mockEmailQueue } });
       const result = await handleInvoicePaymentFailed(invoice, ctx);
@@ -297,7 +301,7 @@ describe('Invoice Handlers', () => {
         currency: 'usd',
         billing_reason: 'subscription_cycle',
         hosted_invoice_url: 'https://invoice.stripe.com/test',
-      };
+      } as unknown as Stripe.Invoice;
 
       const ctx = createTestContext(db);
       const result = await handleInvoiceFinalized(invoice, ctx);
@@ -323,14 +327,14 @@ describe('Invoice Handlers', () => {
         amount_due: 2999,
         currency: 'usd',
         billing_reason: 'manual',
-      };
+      } as unknown as Stripe.Invoice;
 
       const ctx = createTestContext(db);
       const result = await handleInvoiceFinalized(invoice, ctx);
 
       expect(result.handled).toBe(true);
-      expect(result.ledgerContext.stripeSubscriptionId).toBe('sub_123');
-      expect(result.ledgerContext.stripeCustomerId).toBe('cus_123');
+      expect(result.ledgerContext!.stripeSubscriptionId).toBe('sub_123');
+      expect(result.ledgerContext!.stripeCustomerId).toBe('cus_123');
     });
   });
 });

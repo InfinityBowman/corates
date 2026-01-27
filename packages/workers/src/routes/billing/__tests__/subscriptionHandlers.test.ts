@@ -4,8 +4,10 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { env } from 'cloudflare:test';
+import type Stripe from 'stripe';
 import { resetTestDatabase } from '@/__tests__/helpers.js';
 import { createDb } from '@/db/client.js';
+import type { Database } from '@/db/client.js';
 import {
   handleSubscriptionCreated,
   handleSubscriptionUpdated,
@@ -15,21 +17,32 @@ import {
 } from '../handlers/subscriptionHandlers.js';
 import { subscription } from '@/db/schema.js';
 import { eq } from 'drizzle-orm';
+import type { WebhookContext } from '../handlers/types.js';
 
-function createTestContext(db) {
+function createTestContext(db: Database): WebhookContext {
   return {
     db,
     logger: {
       stripe: vi.fn(),
-      info: vi.fn(),
-      warn: vi.fn(),
       error: vi.fn(),
     },
+    env: undefined,
   };
 }
 
-// Helper to seed a subscription
-async function seedSubscription(db, data) {
+interface SeedSubscriptionData {
+  id: string;
+  plan?: string;
+  referenceId?: string;
+  stripeCustomerId?: string;
+  stripeSubscriptionId: string;
+  status?: string;
+  periodStart?: Date;
+  periodEnd?: Date;
+  cancelAtPeriodEnd?: boolean;
+}
+
+async function seedSubscription(db: Database, data: SeedSubscriptionData): Promise<void> {
   await db.insert(subscription).values({
     id: data.id,
     plan: data.plan || 'team',
@@ -46,7 +59,7 @@ async function seedSubscription(db, data) {
 }
 
 describe('Subscription Handlers', () => {
-  let db;
+  let db: Database;
 
   beforeEach(async () => {
     await resetTestDatabase();
@@ -68,7 +81,7 @@ describe('Subscription Handlers', () => {
         items: { data: [{ price: { lookup_key: 'team' } }] },
         current_period_start: Math.floor(Date.now() / 1000),
         current_period_end: Math.floor(Date.now() / 1000) + 86400 * 30,
-      };
+      } as unknown as Stripe.Subscription;
 
       const ctx = createTestContext(db);
       const result = await handleSubscriptionCreated(stripeSub, ctx);
@@ -91,7 +104,7 @@ describe('Subscription Handlers', () => {
         customer: 'cus_123',
         metadata: {},
         items: { data: [{ price: { lookup_key: 'team' } }] },
-      };
+      } as unknown as Stripe.Subscription;
 
       const ctx = createTestContext(db);
       const result = await handleSubscriptionCreated(stripeSub, ctx);
@@ -118,14 +131,14 @@ describe('Subscription Handlers', () => {
         cancel_at_period_end: false,
         trial_start: Math.floor(Date.now() / 1000),
         trial_end: Math.floor(Date.now() / 1000) + 86400 * 14,
-      };
+      } as unknown as Stripe.Subscription;
 
       const ctx = createTestContext(db);
       const result = await handleSubscriptionCreated(stripeSub, ctx);
 
       expect(result.handled).toBe(true);
       expect(result.result).toBe('created');
-      expect(result.ledgerContext.orgId).toBe('org-new');
+      expect(result.ledgerContext!.orgId).toBe('org-new');
       expect(ctx.logger.stripe).toHaveBeenCalledWith(
         'subscription_created',
         expect.objectContaining({
@@ -155,7 +168,7 @@ describe('Subscription Handlers', () => {
         status: 'active',
         customer: 'cus_123',
         items: { data: [{ price: { lookup_key: 'team' } }] },
-      };
+      } as unknown as Stripe.Subscription;
 
       const ctx = createTestContext(db);
       const result = await handleSubscriptionUpdated(stripeSub, ctx);
@@ -179,7 +192,7 @@ describe('Subscription Handlers', () => {
         current_period_start: Math.floor(Date.now() / 1000),
         current_period_end: Math.floor(Date.now() / 1000) + 86400 * 30,
         cancel_at_period_end: false,
-      };
+      } as unknown as Stripe.Subscription;
 
       const ctx = createTestContext(db);
       const result = await handleSubscriptionUpdated(stripeSub, ctx);
@@ -211,7 +224,7 @@ describe('Subscription Handlers', () => {
         current_period_start: Math.floor(Date.now() / 1000),
         current_period_end: Math.floor(Date.now() / 1000) + 86400 * 30,
         cancel_at_period_end: true,
-      };
+      } as unknown as Stripe.Subscription;
 
       const ctx = createTestContext(db);
       const result = await handleSubscriptionUpdated(stripeSub, ctx);
@@ -229,7 +242,7 @@ describe('Subscription Handlers', () => {
 
   describe('handleSubscriptionDeleted', () => {
     it('returns subscription_not_found when subscription does not exist', async () => {
-      const stripeSub = { id: 'sub_nonexistent' };
+      const stripeSub = { id: 'sub_nonexistent' } as unknown as Stripe.Subscription;
 
       const ctx = createTestContext(db);
       const result = await handleSubscriptionDeleted(stripeSub, ctx);
@@ -250,7 +263,7 @@ describe('Subscription Handlers', () => {
         customer: 'cus_123',
         canceled_at: Math.floor(Date.now() / 1000),
         ended_at: Math.floor(Date.now() / 1000),
-      };
+      } as unknown as Stripe.Subscription;
 
       const ctx = createTestContext(db);
       const result = await handleSubscriptionDeleted(stripeSub, ctx);
@@ -271,7 +284,7 @@ describe('Subscription Handlers', () => {
 
   describe('handleSubscriptionPaused', () => {
     it('returns subscription_not_found when subscription does not exist', async () => {
-      const stripeSub = { id: 'sub_nonexistent' };
+      const stripeSub = { id: 'sub_nonexistent' } as unknown as Stripe.Subscription;
 
       const ctx = createTestContext(db);
       const result = await handleSubscriptionPaused(stripeSub, ctx);
@@ -287,7 +300,7 @@ describe('Subscription Handlers', () => {
         status: 'active',
       });
 
-      const stripeSub = { id: 'sub_123' };
+      const stripeSub = { id: 'sub_123' } as unknown as Stripe.Subscription;
 
       const ctx = createTestContext(db);
       const result = await handleSubscriptionPaused(stripeSub, ctx);
@@ -306,7 +319,7 @@ describe('Subscription Handlers', () => {
 
   describe('handleSubscriptionResumed', () => {
     it('returns subscription_not_found when subscription does not exist', async () => {
-      const stripeSub = { id: 'sub_nonexistent' };
+      const stripeSub = { id: 'sub_nonexistent' } as unknown as Stripe.Subscription;
 
       const ctx = createTestContext(db);
       const result = await handleSubscriptionResumed(stripeSub, ctx);
@@ -327,7 +340,7 @@ describe('Subscription Handlers', () => {
         status: 'active',
         current_period_start: Math.floor(Date.now() / 1000),
         current_period_end: Math.floor(Date.now() / 1000) + 86400 * 30,
-      };
+      } as unknown as Stripe.Subscription;
 
       const ctx = createTestContext(db);
       const result = await handleSubscriptionResumed(stripeSub, ctx);
