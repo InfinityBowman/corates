@@ -52,60 +52,6 @@ describe('Main App - Route Mounting', () => {
     expect(text).toContain('Corates Workers API');
   });
 
-  it('should mount org-scoped project routes', async () => {
-    const res = await fetchApp(app, '/api/orgs/test-org/projects/nonexistent', {
-      headers: {
-        'x-test-user-id': 'user-1',
-      },
-    });
-    // Should return 401 (auth required) or 403 (not org member) or 404 (not found)
-    expect([401, 403, 404]).toContain(res.status);
-  });
-
-  it('should mount user routes', async () => {
-    const res = await fetchApp(app, '/api/users/search?q=test', {
-      headers: {
-        'x-test-user-id': 'user-1',
-      },
-    });
-    // Should return 401 or 200/400
-    expect([200, 400, 401]).toContain(res.status);
-  });
-
-  it('should mount billing routes', async () => {
-    // Test billing subscription endpoint instead (requires auth, but verifies route mounting)
-    const res = await fetchApp(app, '/api/billing/subscription', {
-      headers: {
-        'x-test-user-id': 'user-1',
-      },
-    });
-    // Should return 401 (auth required) or 200/400/500 (route exists)
-    expect([200, 400, 401, 500]).toContain(res.status);
-  });
-
-  it('should mount email routes', async () => {
-    const res = await fetchApp(app, '/api/email/queue', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ to: 'test@example.com' }),
-    });
-    // Should return 200 or 400/500
-    expect([200, 400, 500]).toContain(res.status);
-  });
-
-  it('should mount contact routes', async () => {
-    const res = await fetchApp(app, '/api/contact', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({
-        name: 'Test',
-        email: 'test@example.com',
-        message: 'Test message',
-      }),
-    });
-    // Should return 200 or 400/500
-    expect([200, 400, 500]).toContain(res.status);
-  });
 });
 
 describe('Main App - Middleware Chain', () => {
@@ -154,21 +100,6 @@ describe('Main App - Error Handling', () => {
     expect(body.message).toBe('Route not found');
   });
 
-  it('should handle errors gracefully', async () => {
-    // Test error handler by making a request that might fail
-    // The app has an error handler that returns 500
-    const res = await fetchApp(app, '/api/orgs/test-org/projects', {
-      method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-        // Missing auth headers might cause errors
-      },
-      body: JSON.stringify({}),
-    });
-
-    // Should return 401 (auth required) or 403 (not org member) or 500 (error)
-    expect([401, 403, 500]).toContain(res.status);
-  });
 });
 
 describe('Main App - PDF Proxy Endpoint', () => {

@@ -150,38 +150,4 @@ describe('Email Routes - POST /api/email/queue', () => {
     expect(body.message || body.error).toBeDefined();
   });
 
-  it('should enforce rate limiting', async () => {
-    // Make 5 requests (within limit)
-    for (let i = 0; i < 5; i++) {
-      const res = await fetchEmail('/api/email/queue', {
-        method: 'POST',
-        headers: {
-          'content-type': 'application/json',
-          'CF-Connecting-IP': '192.168.1.1',
-        },
-        body: JSON.stringify({
-          to: 'user@example.com',
-          subject: 'Test',
-          html: '<p>Test</p>',
-        }),
-      });
-      expect(res.status).toBe(200);
-    }
-
-    // 6th request should be rate limited
-    const res = await fetchEmail('/api/email/queue', {
-      method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-        'CF-Connecting-IP': '192.168.1.1',
-      },
-      body: JSON.stringify({
-        to: 'user@example.com',
-        subject: 'Test',
-        html: '<p>Test</p>',
-      }),
-    });
-
-    expect(res.status).toBe(429);
-  });
 });

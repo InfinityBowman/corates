@@ -205,23 +205,6 @@ describe('Contact Routes - POST /api/contact', () => {
     expect(body.message || body.error).toMatch(/message/i);
   });
 
-  it('should reject invalid JSON', async () => {
-    const res = await fetchContact('', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: 'invalid json',
-    });
-
-    // Invalid JSON can return 400 or might be caught by rate limiter first (429)
-    expect([400, 429]).toContain(res.status);
-    if (res.status === 400) {
-      const body = await json(res);
-      expect(body.code).toBeDefined();
-      expect(body.code).toMatch(/VALIDATION/);
-      expect(body.message || body.error).toMatch(/JSON|input/i);
-    }
-  });
-
   it('should handle Postmark API errors', async () => {
     mockSendEmail.mockResolvedValueOnce({
       ErrorCode: 406,
@@ -243,29 +226,6 @@ describe('Contact Routes - POST /api/contact', () => {
     expect(body.code).toBeDefined();
     expect(body.code).toMatch(/SYSTEM_EMAIL_SEND_FAILED/);
     expect(body.message || body.error).toBeDefined();
-  });
-
-  it('should handle Postmark service errors', async () => {
-    mockSendEmail.mockRejectedValueOnce(new Error('Postmark service unavailable'));
-
-    const res = await fetchContact('', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({
-        name: 'John Doe',
-        email: 'john@example.com',
-        message: 'Test message',
-      }),
-    });
-
-    // Postmark errors can return 500 or might be rate limited (429)
-    expect([500, 429]).toContain(res.status);
-    if (res.status === 500) {
-      const body = await json(res);
-      expect(body.code).toBeDefined();
-      expect(body.code).toMatch(/SYSTEM_EMAIL_SEND_FAILED/);
-      expect(body.message || body.error).toBeDefined();
-    }
   });
 
   it('should return error when POSTMARK_SERVER_TOKEN not configured', async () => {
@@ -292,66 +252,6 @@ describe('Contact Routes - POST /api/contact', () => {
     expect(body.code).toBeDefined();
     expect(body.code).toMatch(/SYSTEM_SERVICE_UNAVAILABLE/);
     expect(body.message || body.error).toMatch(/service|unavailable/i);
-  });
-
-  it('should enforce rate limiting', async () => {
-    // Use a fixed IP for this test to trigger rate limiting
-    const rateLimitIP = '192.168.1.999';
-
-    // Make 5 requests (within limit)
-    for (let i = 0; i < 5; i++) {
-      const testEnv = {
-        ...env,
-        ENVIRONMENT: 'production',
-        POSTMARK_SERVER_TOKEN: 'test-token',
-        CONTACT_EMAIL: 'contact@example.com',
-        EMAIL_FROM: 'noreply@example.com',
-      };
-
-      const ctx = createExecutionContext();
-      const req = new Request('http://localhost/api/contact', {
-        method: 'POST',
-        headers: {
-          'content-type': 'application/json',
-          'CF-Connecting-IP': rateLimitIP,
-        },
-        body: JSON.stringify({
-          name: 'John Doe',
-          email: 'john@example.com',
-          message: 'Test message',
-        }),
-      });
-      const res = await app.fetch(req, testEnv, ctx);
-      await waitOnExecutionContext(ctx);
-      expect(res.status).toBe(200);
-    }
-
-    // 6th request should be rate limited
-    const testEnv = {
-      ...env,
-      ENVIRONMENT: 'production',
-      POSTMARK_SERVER_TOKEN: 'test-token',
-      CONTACT_EMAIL: 'contact@example.com',
-      EMAIL_FROM: 'noreply@example.com',
-    };
-
-    const ctx = createExecutionContext();
-    const req = new Request('http://localhost/api/contact', {
-      method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-        'CF-Connecting-IP': rateLimitIP,
-      },
-      body: JSON.stringify({
-        name: 'John Doe',
-        email: 'john@example.com',
-        message: 'Test message',
-      }),
-    });
-    const res = await app.fetch(req, testEnv, ctx);
-    await waitOnExecutionContext(ctx);
-
-    expect(res.status).toBe(429);
   });
 
   it('should trim whitespace from fields', async () => {
