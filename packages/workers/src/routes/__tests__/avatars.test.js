@@ -257,9 +257,14 @@ describe('Avatar Routes - POST /api/users/avatar', () => {
     });
     expect(res2.status).toBe(200);
 
-    // Check old avatar is deleted
+    // Check old avatar is deleted from R2
     const oldAvatar = await mockR2Bucket.get(firstKey);
     expect(oldAvatar).toBeNull();
+
+    // Verify new avatar exists in R2
+    const body2 = await json(res2);
+    const newAvatar = await mockR2Bucket.get(body2.key);
+    expect(newAvatar).not.toBeNull();
   });
 
   it('should sync avatar to project memberships', async () => {
@@ -358,7 +363,7 @@ describe('Avatar Routes - DELETE /api/users/avatar', () => {
     const body = await json(res);
     expect(body.success).toBe(true);
 
-    // Verify avatar is deleted
+    // Verify avatar is deleted from R2
     const listed = await mockR2Bucket.list({ prefix: `avatars/${user.id}/` });
     expect(listed.objects.length).toBe(0);
   });

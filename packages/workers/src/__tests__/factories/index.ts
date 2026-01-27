@@ -1,21 +1,13 @@
-/**
- * Test factories index
- *
- * Usage:
- *   import { buildUser, buildProject, buildMemberRemovalScenario } from '@/__tests__/factories';
- *
- * Or import specific modules:
- *   import { buildUser, buildAdminUser } from '@/__tests__/factories/user';
- */
-
 // Utilities
 export { generateId, nowSec, nowDate, resetCounter } from './utils.js';
 
 // User factories
 export { buildUser, buildAdminUser, buildBannedUser } from './user.js';
+export type { BuiltUser } from './user.js';
 
 // Organization factories
 export { buildOrg, buildOrgMember, buildOrgWithMembers } from './org.js';
+export type { BuiltOrg, BuiltOrgMembership } from './org.js';
 
 // Project factories
 export {
@@ -25,6 +17,7 @@ export {
   buildProjectWithMembers,
   buildProjectInvitation,
 } from './project.js';
+export type { BuiltProject, BuiltProjectMembership, BuiltProjectInvitation } from './project.js';
 
 // Scenario factories
 export {

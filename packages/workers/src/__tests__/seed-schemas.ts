@@ -1,24 +1,13 @@
-/**
- * Zod validation schemas for seed functions
- * Ensures type safety and validation for test data seeding
- */
-
 import { z } from 'zod';
 import { PROJECT_ROLES } from '@/config/constants.js';
 
-/**
- * Helper to convert Date or number (timestamp) to number (Unix timestamp in seconds)
- */
 const dateOrTimestampToNumber = z.union([z.date(), z.number().int()]).transform(val => {
   if (val instanceof Date) {
-    return Math.floor(val.getTime() / 1000); // Convert Date to Unix timestamp (seconds)
+    return Math.floor(val.getTime() / 1000);
   }
   return val;
 });
 
-/**
- * Schema for seeding a user
- */
 export const seedUserSchema = z.object({
   id: z.string().min(1, 'User ID is required'),
   name: z.string().min(1, 'Name is required'),
@@ -47,13 +36,9 @@ export const seedUserSchema = z.object({
     .union([z.boolean(), z.number()])
     .transform(val => (val === true || val === 1 ? 1 : 0))
     .default(0),
-  // All accounts should have a Stripe customer ID (Better Auth creates one on signup)
   stripeCustomerId: z.string().nullable().optional().default('cus_test_default'),
 });
 
-/**
- * Schema for seeding an organization
- */
 export const seedOrganizationSchema = z.object({
   id: z.string().min(1, 'Organization ID is required'),
   name: z.string().min(1, 'Organization name is required'),
@@ -63,9 +48,6 @@ export const seedOrganizationSchema = z.object({
   createdAt: dateOrTimestampToNumber,
 });
 
-/**
- * Schema for seeding an organization member
- */
 export const seedOrgMemberSchema = z.object({
   id: z.string().min(1, 'Member ID is required'),
   userId: z.string().min(1, 'User ID is required'),
@@ -74,9 +56,6 @@ export const seedOrgMemberSchema = z.object({
   createdAt: dateOrTimestampToNumber,
 });
 
-/**
- * Schema for seeding a project
- */
 export const seedProjectSchema = z.object({
   id: z.string().min(1, 'Project ID is required'),
   name: z.string().min(1, 'Project name is required'),
@@ -87,9 +66,6 @@ export const seedProjectSchema = z.object({
   updatedAt: dateOrTimestampToNumber,
 });
 
-/**
- * Schema for seeding a project member
- */
 export const seedProjectMemberSchema = z.object({
   id: z.string().min(1, 'Member ID is required'),
   projectId: z.string().min(1, 'Project ID is required'),
@@ -102,9 +78,6 @@ export const seedProjectMemberSchema = z.object({
   joinedAt: dateOrTimestampToNumber,
 });
 
-/**
- * Schema for seeding a session
- */
 export const seedSessionSchema = z.object({
   id: z.string().min(1, 'Session ID is required'),
   token: z.string().min(1, 'Token is required'),
@@ -114,12 +87,8 @@ export const seedSessionSchema = z.object({
   updatedAt: dateOrTimestampToNumber,
 });
 
-/**
- * Schema for seeding a subscription
- */
 export const seedSubscriptionSchema = z.object({
   id: z.string().min(1, 'Subscription ID is required'),
-  // Better Auth Stripe table fields (org-scoped via referenceId = orgId)
   plan: z.string().min(1, 'Plan is required'),
   referenceId: z.string().min(1, 'Reference ID is required'),
   status: z.string().optional().default('active'),
@@ -197,9 +166,6 @@ export const seedSubscriptionSchema = z.object({
   updatedAt: dateOrTimestampToNumber,
 });
 
-/**
- * Schema for seeding a media file
- */
 export const seedMediaFileSchema = z.object({
   id: z.string().min(1, 'Media file ID is required'),
   filename: z.string().min(1, 'Filename is required'),
@@ -214,9 +180,6 @@ export const seedMediaFileSchema = z.object({
   createdAt: dateOrTimestampToNumber,
 });
 
-/**
- * Schema for seeding a project invitation
- */
 export const seedProjectInvitationSchema = z.object({
   id: z.string().min(1, 'Invitation ID is required'),
   orgId: z.string().min(1, 'Organization ID is required'),
@@ -247,9 +210,6 @@ export const seedProjectInvitationSchema = z.object({
   createdAt: dateOrTimestampToNumber,
 });
 
-/**
- * Schema for seeding a Stripe event ledger entry
- */
 export const seedStripeEventLedgerSchema = z.object({
   id: z.string().min(1, 'Ledger entry ID is required'),
   payloadHash: z.string().min(1, 'Payload hash is required'),
@@ -299,3 +259,15 @@ export const seedStripeEventLedgerSchema = z.object({
   stripeSubscriptionId: z.string().nullable().optional().default(null),
   stripeCheckoutSessionId: z.string().nullable().optional().default(null),
 });
+
+// Zod input types for seed function parameters
+export type SeedUserInput = z.input<typeof seedUserSchema>;
+export type SeedOrganizationInput = z.input<typeof seedOrganizationSchema>;
+export type SeedOrgMemberInput = z.input<typeof seedOrgMemberSchema>;
+export type SeedProjectInput = z.input<typeof seedProjectSchema>;
+export type SeedProjectMemberInput = z.input<typeof seedProjectMemberSchema>;
+export type SeedSessionInput = z.input<typeof seedSessionSchema>;
+export type SeedSubscriptionInput = z.input<typeof seedSubscriptionSchema>;
+export type SeedMediaFileInput = z.input<typeof seedMediaFileSchema>;
+export type SeedProjectInvitationInput = z.input<typeof seedProjectInvitationSchema>;
+export type SeedStripeEventLedgerInput = z.input<typeof seedStripeEventLedgerSchema>;

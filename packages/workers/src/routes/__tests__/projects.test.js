@@ -15,6 +15,9 @@ import {
   buildUser,
   resetCounter,
 } from '@/__tests__/factories';
+import { createDb } from '@/db/client.js';
+import { projects as projectsTable } from '@/db/schema.js';
+import { eq } from 'drizzle-orm';
 
 // Mock postmark
 vi.mock('postmark', () => {
@@ -201,6 +204,12 @@ describe('Org-Scoped Project Routes - POST /api/orgs/:orgId/projects', () => {
     const body = await json(res);
     expect(body.name).toBe('Trimmed Project');
     expect(body.description).toBe('Trimmed description');
+
+    // Verify trimmed values persisted in DB
+    const db = createDb(env.DB);
+    const [dbProject] = await db.select().from(projectsTable).where(eq(projectsTable.id, body.id));
+    expect(dbProject.name).toBe('Trimmed Project');
+    expect(dbProject.description).toBe('Trimmed description');
   });
 
   it('should handle null description', async () => {
@@ -224,6 +233,12 @@ describe('Org-Scoped Project Routes - POST /api/orgs/:orgId/projects', () => {
     const body = await json(res);
     expect(body.name).toBe('Project Without Description');
     expect(body.description).toBeNull();
+
+    // Verify null description persisted in DB
+    const db = createDb(env.DB);
+    const [dbProject] = await db.select().from(projectsTable).where(eq(projectsTable.id, body.id));
+    expect(dbProject.name).toBe('Project Without Description');
+    expect(dbProject.description).toBeNull();
   });
 
   it('should reject empty name', async () => {
@@ -282,6 +297,11 @@ describe('Org-Scoped Project Routes - PUT /api/orgs/:orgId/projects/:id', () => 
     });
 
     expect(res.status).toBe(200);
+
+    // Verify update persisted in DB
+    const db = createDb(env.DB);
+    const [dbProject] = await db.select().from(projectsTable).where(eq(projectsTable.id, project.id));
+    expect(dbProject.name).toBe('Updated by Member');
   });
 
   it('should return 403 for non-project-members in same org', async () => {

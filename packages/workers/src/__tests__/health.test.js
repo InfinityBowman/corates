@@ -38,13 +38,12 @@ describe('Health Check Endpoints', () => {
     expect(res.status).toBe(200);
 
     const body = await json(res);
-    expect(body).toHaveProperty('status');
-    expect(body).toHaveProperty('timestamp');
-    expect(body).toHaveProperty('services');
     expect(body.status).toBe('healthy');
-    expect(body.services).toHaveProperty('database');
-    expect(body.services).toHaveProperty('storage');
-    expect(body.services).toHaveProperty('durableObjects');
+    expect(typeof body.timestamp).toBe('string');
+    expect(body.services).toBeDefined();
+    expect(body.services.database).toMatchObject({ status: 'healthy', type: 'D1' });
+    expect(body.services.storage).toMatchObject({ status: 'healthy', type: 'R2' });
+    expect(body.services.durableObjects).toMatchObject({ status: 'healthy', type: 'Durable Objects' });
   });
 
   it('GET /health checks database connectivity', async () => {

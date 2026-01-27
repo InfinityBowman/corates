@@ -1,7 +1,3 @@
-/**
- * Shared test utilities for workers tests
- */
-
 import {
   env,
   createExecutionContext,
@@ -33,25 +29,31 @@ import {
   seedProjectInvitationSchema,
   seedStripeEventLedgerSchema,
 } from './seed-schemas.js';
+import type {
+  SeedUserInput,
+  SeedOrganizationInput,
+  SeedOrgMemberInput,
+  SeedProjectInput,
+  SeedProjectMemberInput,
+  SeedSessionInput,
+  SeedSubscriptionInput,
+  SeedMediaFileInput,
+  SeedProjectInvitationInput,
+  SeedStripeEventLedgerInput,
+} from './seed-schemas.js';
 import { MIGRATION_SQL } from './migration-sql.js';
 
-/**
- * Parse SQL file into individual statements, handling comments and multi-line statements
- */
-function parseSqlStatements(sqlContent) {
-  // Remove single-line comments (-- ...)
+function parseSqlStatements(sqlContent: string): string[] {
   const withoutComments = sqlContent.replace(/--.*$/gm, '');
 
-  // Split by semicolons, but keep statements that span multiple lines
-  const statements = [];
+  const statements: string[] = [];
   let currentStatement = '';
   let inString = false;
-  let stringChar = null;
+  let stringChar: string | null = null;
 
   for (let i = 0; i < withoutComments.length; i++) {
     const char = withoutComments[i];
 
-    // Track string boundaries
     if ((char === "'" || char === '"') && (i === 0 || withoutComments[i - 1] !== '\\')) {
       if (!inString) {
         inString = true;
@@ -64,7 +66,6 @@ function parseSqlStatements(sqlContent) {
 
     currentStatement += char;
 
-    // If we hit a semicolon outside of a string, we have a complete statement
     if (char === ';' && !inString) {
       const trimmed = currentStatement.trim();
       if (trimmed && trimmed !== ';') {
@@ -74,7 +75,6 @@ function parseSqlStatements(sqlContent) {
     }
   }
 
-  // Add any remaining statement (though migration file should end with semicolon)
   const trimmed = currentStatement.trim();
   if (trimmed) {
     statements.push(trimmed);
@@ -83,22 +83,11 @@ function parseSqlStatements(sqlContent) {
   return statements.filter(stmt => stmt.length > 0);
 }
 
-/**
- * Get the project-scoped DO name for a project
- * @param {string} projectId - Project ID
- * @returns {string} The DO instance name in format "project:${projectId}"
- */
-export function getProjectDocName(projectId) {
+export function getProjectDocName(projectId: string): string {
   return `project:${projectId}`;
 }
 
-/**
- * Clear ProjectDoc Durable Objects for test projects
- * This prevents DO invalidation errors between tests
- * @param {Array<string>} projectIds - Array of project IDs
- */
-export async function clearProjectDOs(projectIds = []) {
-  // Common test project IDs that might have DOs
+export async function clearProjectDOs(projectIds: string[] = []): Promise<void> {
   const defaultProjectIds = ['project-1', 'project-2', 'p1', 'p2'];
   const allProjectIds = [...defaultProjectIds, ...projectIds];
 
@@ -107,42 +96,32 @@ export async function clearProjectDOs(projectIds = []) {
       const doName = getProjectDocName(projectId);
       const doId = env.PROJECT_DOC.idFromName(doName);
       const stub = env.PROJECT_DOC.get(doId);
-      await runInDurableObject(stub, async (instance, state) => {
-        // Clear all storage
+      await runInDurableObject(stub, async (_instance, state) => {
         const keys = await state.storage.list();
         for (const [key] of keys) {
           await state.storage.delete(key);
         }
       });
-    } catch (error) {
-      // Ignore errors - DO might not exist or be invalid
-      // This is expected when DOs are invalidated between test runs
+    } catch (err: unknown) {
+      // Ignore DO invalidation errors between test runs
+      const error = err as { message?: string; remote?: boolean; durableObjectReset?: boolean };
       const isInvalidationError =
         error?.message?.includes('invalidating this Durable Object') ||
         error?.message?.includes('inputGateBroken') ||
         error?.remote === true ||
         error?.durableObjectReset === true;
       if (!isInvalidationError) {
-        // Only log non-invalidation errors for debugging
-        console.warn(`Failed to clear ProjectDoc DO for ${projectId}:`, error.message);
+        console.warn(`Failed to clear ProjectDoc DO for ${projectId}:`, error?.message);
       }
     }
   }
 }
 
-/**
- * Reset database schema for tests using Drizzle migrations
- * This function safely drops all tables and recreates the schema from migrations
- */
-export async function resetTestDatabase() {
-  const run = sql => env.DB.prepare(sql).run();
+export async function resetTestDatabase(): Promise<void> {
+  const run = (sql: string) => env.DB.prepare(sql).run();
 
-  // Disable foreign keys before dropping to avoid constraint errors
   await run('PRAGMA foreign_keys = OFF');
 
-  // Drop tables in reverse dependency order (child tables first, then parent tables)
-  // This order matches the reverse of table creation order in migrations
-  // Wrap each drop in try-catch to handle cases where tables don't exist
   const tablesToDrop = [
     'project_invitations',
     'org_access_grants',
@@ -164,43 +143,32 @@ export async function resetTestDatabase() {
   for (const table of tablesToDrop) {
     try {
       await run(`DROP TABLE IF EXISTS \`${table}\``);
-    } catch (error) {
-      // Ignore "no such table" errors - table might not exist
-      // Re-throw other errors as they indicate real problems
-      if (!error.message?.includes('no such table')) {
-        throw error;
+    } catch (err: unknown) {
+      if (!(err instanceof Error) || !err.message?.includes('no such table')) {
+        throw err;
       }
     }
   }
 
-  // Re-enable foreign keys after dropping tables
   await run('PRAGMA foreign_keys = ON');
 
-  // Parse and execute the migration SQL
   const statements = parseSqlStatements(MIGRATION_SQL);
 
-  // Execute each migration statement
   for (const statement of statements) {
     if (statement.trim()) {
       try {
         await run(statement);
-      } catch (error) {
-        // Ignore "table already exists" errors during creation
-        // This can happen if a previous test run didn't clean up properly
-        if (error.message?.includes('already exists')) {
-          // Table exists, skip creation
+      } catch (err: unknown) {
+        if (err instanceof Error && err.message?.includes('already exists')) {
           continue;
         }
-        throw error;
+        throw err;
       }
     }
   }
 }
 
-/**
- * Seed a user into the test database
- */
-export async function seedUser(params) {
+export async function seedUser(params: SeedUserInput): Promise<void> {
   const validated = seedUserSchema.parse(params);
   const db = createDb(env.DB);
 
@@ -222,10 +190,7 @@ export async function seedUser(params) {
   });
 }
 
-/**
- * Seed an organization into the test database
- */
-export async function seedOrganization(params) {
+export async function seedOrganization(params: SeedOrganizationInput): Promise<void> {
   const validated = seedOrganizationSchema.parse(params);
   const db = createDb(env.DB);
 
@@ -239,10 +204,7 @@ export async function seedOrganization(params) {
   });
 }
 
-/**
- * Seed an organization member into the test database
- */
-export async function seedOrgMember(params) {
+export async function seedOrgMember(params: SeedOrgMemberInput): Promise<void> {
   const validated = seedOrgMemberSchema.parse(params);
   const db = createDb(env.DB);
 
@@ -255,10 +217,7 @@ export async function seedOrgMember(params) {
   });
 }
 
-/**
- * Seed a project into the test database
- */
-export async function seedProject(params) {
+export async function seedProject(params: SeedProjectInput): Promise<void> {
   const validated = seedProjectSchema.parse(params);
   const db = createDb(env.DB);
 
@@ -266,17 +225,14 @@ export async function seedProject(params) {
     id: validated.id,
     name: validated.name,
     description: validated.description,
-    orgId: validated.orgId,
+    orgId: validated.orgId!,
     createdBy: validated.createdBy,
     createdAt: new Date(validated.createdAt * 1000),
     updatedAt: new Date(validated.updatedAt * 1000),
   });
 }
 
-/**
- * Seed a project member into the test database
- */
-export async function seedProjectMember(params) {
+export async function seedProjectMember(params: SeedProjectMemberInput): Promise<void> {
   const validated = seedProjectMemberSchema.parse(params);
   const db = createDb(env.DB);
 
@@ -289,10 +245,7 @@ export async function seedProjectMember(params) {
   });
 }
 
-/**
- * Seed a session into the test database
- */
-export async function seedSession(params) {
+export async function seedSession(params: SeedSessionInput): Promise<void> {
   const validated = seedSessionSchema.parse(params);
   const db = createDb(env.DB);
 
@@ -306,10 +259,7 @@ export async function seedSession(params) {
   });
 }
 
-/**
- * Seed a subscription into the test database
- */
-export async function seedSubscription(params) {
+export async function seedSubscription(params: SeedSubscriptionInput): Promise<void> {
   const validated = seedSubscriptionSchema.parse(params);
   const db = createDb(env.DB);
 
@@ -334,10 +284,7 @@ export async function seedSubscription(params) {
   });
 }
 
-/**
- * Seed a media file into the test database
- */
-export async function seedMediaFile(params) {
+export async function seedMediaFile(params: SeedMediaFileInput): Promise<void> {
   const validated = seedMediaFileSchema.parse(params);
   const db = createDb(env.DB);
 
@@ -356,10 +303,7 @@ export async function seedMediaFile(params) {
   });
 }
 
-/**
- * Seed a project invitation into the test database
- */
-export async function seedProjectInvitation(params) {
+export async function seedProjectInvitation(params: SeedProjectInvitationInput): Promise<void> {
   const validated = seedProjectInvitationSchema.parse(params);
   const db = createDb(env.DB);
 
@@ -379,10 +323,7 @@ export async function seedProjectInvitation(params) {
   });
 }
 
-/**
- * Seed a Stripe event ledger entry into the test database
- */
-export async function seedStripeEventLedger(params) {
+export async function seedStripeEventLedger(params: SeedStripeEventLedgerInput): Promise<void> {
   const validated = seedStripeEventLedgerSchema.parse(params);
   const db = createDb(env.DB);
 
@@ -412,10 +353,7 @@ export async function seedStripeEventLedger(params) {
   });
 }
 
-/**
- * Create a test environment with mocked bindings
- */
-export function createTestEnv(overrides = {}) {
+export function createTestEnv(overrides: Record<string, unknown> = {}): Record<string, unknown> {
   const mockR2 = {
     list: async () => ({ objects: [], truncated: false }),
     get: async () => null,
@@ -424,8 +362,8 @@ export function createTestEnv(overrides = {}) {
   };
 
   const mockDO = {
-    idFromName: name => ({ toString: () => `do-${name}` }),
-    get: _id => ({
+    idFromName: (name: string) => ({ toString: () => `do-${name}` }),
+    get: (_id: unknown) => ({
       fetch: async () => new Response(JSON.stringify({ ok: true }), { status: 200 }),
     }),
   };
@@ -446,10 +384,7 @@ export function createTestEnv(overrides = {}) {
   };
 }
 
-/**
- * Parse JSON response or return raw text
- */
-export async function json(res) {
+export async function json(res: Response): Promise<any> {
   const text = await res.text();
   try {
     return JSON.parse(text);
@@ -458,10 +393,16 @@ export async function json(res) {
   }
 }
 
-/**
- * Make a request to a Hono app with test environment
- */
-export async function fetchApp(app, path, init = {}, envOverrides = {}) {
+interface FetchableApp {
+  fetch(_req: Request, _env: Record<string, unknown>, _ctx: ExecutionContext): Promise<Response>;
+}
+
+export async function fetchApp(
+  app: FetchableApp,
+  path: string,
+  init: Record<string, unknown> = {},
+  envOverrides: Record<string, unknown> = {},
+): Promise<Response> {
   const testEnv = createTestEnv(envOverrides);
   const ctx = createExecutionContext();
   const req = new Request(`http://localhost${path}`, init);
@@ -470,12 +411,10 @@ export async function fetchApp(app, path, init = {}, envOverrides = {}) {
   return res;
 }
 
-/**
- * Create auth headers for testing
- */
-export function createAuthHeaders(userId = 'test-user', email = 'test@example.com') {
-  // In real tests, we'd use Better Auth's session creation
-  // For now, we'll mock the auth middleware
+export function createAuthHeaders(
+  userId = 'test-user',
+  email = 'test@example.com',
+): Record<string, string> {
   return {
     'x-test-user-id': userId,
     'x-test-user-email': email,
