@@ -1,5 +1,7 @@
 """Study metadata extraction from research paper text using LangExtract."""
 
+import os
+
 import langextract as lx
 
 
@@ -66,20 +68,26 @@ STUDY_EXTRACTION_EXAMPLES = [
 def extract_study_metadata(
     text: str,
     model_id: str = "gemini-2.5-flash",
+    api_key: str | None = None,
 ) -> lx.data.AnnotatedDocument:
     """Extract structured study metadata from research paper text.
 
     Args:
         text: The research paper text to extract from.
         model_id: The LLM model to use for extraction.
+        api_key: Google AI API key. Falls back to GOOGLE_API_KEY env var.
 
     Returns:
         An AnnotatedDocument containing the extracted study metadata.
     """
+    if api_key is None:
+        api_key = os.environ.get("GOOGLE_API_KEY")
+
     result = lx.extract(
         text_or_documents=text,
         prompt_description=STUDY_EXTRACTION_PROMPT,
         examples=STUDY_EXTRACTION_EXAMPLES,
         model_id=model_id,
+        api_key=api_key,
     )
     return result
