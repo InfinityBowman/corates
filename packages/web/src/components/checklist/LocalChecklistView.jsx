@@ -15,6 +15,7 @@ import localChecklistsStore from '@/stores/localChecklistsStore';
 import { getChecklistTypeFromState, scoreChecklistOfType } from '@/checklist-registry';
 import { IoChevronBack } from 'solid-icons/io';
 import ScoreTag from '@/components/checklist/ScoreTag.jsx';
+import { createLocalAdapterFactories } from '@/components/checklist/common/LocalTextAdapter.js';
 
 export default function LocalChecklistView() {
   const params = useParams();
@@ -27,6 +28,22 @@ export default function LocalChecklistView() {
   const [pdfFileName, setPdfFileName] = createSignal(null);
   const [loading, setLoading] = createSignal(true);
   const [error, setError] = createSignal(null);
+
+  // Debounced save function (defined before adapters since they use it)
+  const debouncedSave = debounce(async updates => {
+    try {
+      await updateChecklist(params.checklistId, updates);
+    } catch (err) {
+      console.error('Error saving checklist:', err);
+    }
+  }, 500);
+
+  // Create adapter factories for text fields
+  const { getRob2Text, getQuestionNote, getRobinsText, clearCache } = createLocalAdapterFactories(
+    () => checklist(),
+    setChecklist,
+    debouncedSave
+  );
 
   // Load the checklist and PDF on mount
   createEffect(() => {
@@ -55,6 +72,8 @@ export default function LocalChecklistView() {
           return;
         }
 
+        // Clear adapter cache when loading new data to prevent stale values
+        clearCache();
         setChecklist(loaded);
 
         // Load saved PDF if exists
@@ -75,30 +94,23 @@ export default function LocalChecklistView() {
     })();
   });
 
-  // Debounced save function
-  const debouncedSave = debounce(async (checklistId, updates) => {
-    try {
-      await updateChecklist(checklistId, updates);
-    } catch (err) {
-      console.error('Error saving checklist:', err);
-    }
-  }, 500);
-
   // Cleanup on unmount
   onCleanup(() => {
     debouncedSave.clear();
+    clearCache();
   });
 
-  // Handle updates from the AMSTAR2Checklist component
+  // Handle updates from checklist components (answers, judgements, etc.)
   const handleUpdate = updates => {
-    // Optimistically update local state
     setChecklist(prev => {
       if (!prev) return prev;
       return { ...prev, ...updates };
     });
 
-    // Debounce the save to IndexedDB
-    debouncedSave(params.checklistId, updates);
+    // Clear adapter cache to ensure text fields sync with new state
+    clearCache();
+
+    debouncedSave(updates);
   };
 
   // Handle PDF change
@@ -209,6 +221,9 @@ export default function LocalChecklistView() {
               onPdfChange={handlePdfChange}
               onPdfClear={handlePdfClear}
               allowDelete={true}
+              getQuestionNote={getQuestionNote}
+              getRob2Text={getRob2Text}
+              getRobinsText={getRobinsText}
             />
           </Show>
         </Show>
