@@ -239,11 +239,22 @@ export const oAuthRelay = (opts: OAuthRelayOptions) => {
               );
             }
 
-            // Get the provider ID from the URL path
-            const pathMatch = ctx.path?.match(/\/callback\/([^/]+)/);
-            const providerId = pathMatch?.[1] || ctx.params?.id;
+            // Get the provider ID from the request URL (not ctx.path which is the route pattern)
+            // URL format: https://corates.org/api/auth/callback/google?...
+            const requestUrl = ctx.request?.url;
+            let providerId: string | undefined;
+            if (requestUrl) {
+              const url = new URL(requestUrl);
+              const pathParts = url.pathname.split('/');
+              // Find the part after "callback"
+              const callbackIndex = pathParts.indexOf('callback');
+              if (callbackIndex !== -1 && pathParts[callbackIndex + 1]) {
+                providerId = pathParts[callbackIndex + 1];
+              }
+            }
 
             if (!providerId) {
+              ctx.context.logger.error('Could not extract provider ID from URL:', requestUrl);
               throw ctx.redirect(
                 `${relayPackage.relayOrigin}/api/auth/error?error=no_provider`
               );
