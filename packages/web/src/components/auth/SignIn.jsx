@@ -283,7 +283,7 @@ export default function SignIn() {
               aria-labelledby='tab-password'
               aria-hidden={useMagicLink()}
               inert={useMagicLink()}
-              class='bg-card w-1/2 shrink-0 pr-4'
+              class='bg-card w-1/2 shrink-0 px-1'
             >
               <form aria-labelledby='signin-heading' onSubmit={handleSubmit} autocomplete='off'>
                 <div class='space-y-4'>
@@ -360,7 +360,7 @@ export default function SignIn() {
               aria-labelledby='tab-magic-link'
               aria-hidden={!useMagicLink()}
               inert={!useMagicLink()}
-              class='bg-card w-1/2 shrink-0 pl-4'
+              class='bg-card w-1/2 shrink-0 px-1'
             >
               <MagicLinkForm callbackPath='/complete-profile' />
             </div>
