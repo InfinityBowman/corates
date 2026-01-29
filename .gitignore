@@ -60,5 +60,12 @@ secrets.txt
 openapi.json
 packages/workers/src/__tests__/migration-sql.js
 
+# Python
+__pycache__/
+*.pyc
+.venv/
+packages/ai/pdfs/
+packages/ai/output/
+
 # Temp files
 /docs/audits*
