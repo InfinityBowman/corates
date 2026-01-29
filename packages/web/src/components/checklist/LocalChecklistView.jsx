@@ -43,7 +43,7 @@ export default function LocalChecklistView() {
     // eslint-disable-next-line solid/reactivity
     () => checklist(),
     setChecklist,
-    debouncedSave
+    debouncedSave,
   );
 
   // Load the checklist and PDF on mount
