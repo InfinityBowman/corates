@@ -7,8 +7,8 @@ import {
   twoFactor,
   admin,
   organization,
-  oAuthProxy,
 } from 'better-auth/plugins';
+import { oAuthRelay } from './oauth-relay';
 import { stripe } from '@better-auth/stripe';
 import Stripe from 'stripe';
 import { drizzle } from 'drizzle-orm/d1';
@@ -114,14 +114,12 @@ export function createAuth(env: Env, ctx?: ExecutionContext) {
   // Build plugins array
   const plugins: any[] = [];
 
-  // OAuth Proxy plugin for local development
-  // Proxies OAuth callbacks through production server so localhost works without registering redirect URIs
-  // currentURL must be explicitly set so the plugin knows where to redirect back to
-  const isProduction = env.AUTH_BASE_URL === 'https://corates.org';
+  // OAuth Relay plugin for local development
+  // Relays OAuth tokens through production so localhost can create its own sessions
+  // Unlike oAuthProxy, this works with separate databases (no session sharing needed)
   plugins.push(
-    oAuthProxy({
+    oAuthRelay({
       productionURL: 'https://corates.org',
-      currentURL: isProduction ? undefined : (env.AUTH_BASE_URL || 'http://localhost:8787'),
     }),
   );
 
