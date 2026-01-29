@@ -438,6 +438,9 @@ export function createAuth(env: Env, ctx?: ExecutionContext) {
         // Allow unlinking all OAuth accounts (user can still sign in with magic link if email is verified)
         allowUnlinkingAll: true,
       },
+      // Use cookie-based state storage for OAuth flows
+      // Required for oAuthProxy to work - database mode stores state locally which breaks cross-origin proxy
+      storeStateStrategy: 'cookie',
     },
 
     emailAndPassword: {
