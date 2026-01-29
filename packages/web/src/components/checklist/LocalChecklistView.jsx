@@ -42,7 +42,7 @@ export default function LocalChecklistView() {
   const { getRob2Text, getQuestionNote, getRobinsText, clearCache } = createLocalAdapterFactories(
     () => checklist(),
     setChecklist,
-    debouncedSave
+    debouncedSave,
   );
 
   // Load the checklist and PDF on mount
