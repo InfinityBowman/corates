@@ -116,9 +116,12 @@ export function createAuth(env: Env, ctx?: ExecutionContext) {
 
   // OAuth Proxy plugin for local development
   // Proxies OAuth callbacks through production server so localhost works without registering redirect URIs
+  // currentURL must be explicitly set so the plugin knows where to redirect back to
+  const isProduction = env.AUTH_BASE_URL === 'https://corates.org';
   plugins.push(
     oAuthProxy({
       productionURL: 'https://corates.org',
+      currentURL: isProduction ? undefined : (env.AUTH_BASE_URL || 'http://localhost:8787'),
     }),
   );
 
