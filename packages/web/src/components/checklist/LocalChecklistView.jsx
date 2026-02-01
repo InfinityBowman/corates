@@ -29,10 +29,16 @@ export default function LocalChecklistView() {
   const [loading, setLoading] = createSignal(true);
   const [error, setError] = createSignal(null);
 
-  // Debounced save function (defined before adapters since they use it)
-  const debouncedSave = debounce(async updates => {
+  // Debounced save function always saves the full current checklist state
+  // to avoid race conditions where rapid partial updates could overwrite each other.
+  // Ignores arguments and reads checklist() when it fires to get the latest merged state.
+  // eslint-disable-next-line solid/reactivity
+  const debouncedSave = debounce(async () => {
     try {
-      await updateChecklist(params.checklistId, updates);
+      const current = checklist();
+      if (current) {
+        await updateChecklist(params.checklistId, current);
+      }
     } catch (err) {
       console.error('Error saving checklist:', err);
     }
@@ -111,7 +117,8 @@ export default function LocalChecklistView() {
     // Clear adapter cache to ensure text fields sync with new state
     clearCache();
 
-    debouncedSave(updates);
+    // Trigger debounced save - it will read checklist() when it fires
+    debouncedSave();
   };
 
   // Handle PDF change

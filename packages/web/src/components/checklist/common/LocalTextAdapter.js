@@ -11,7 +11,7 @@
  *
  * @param {Function} getChecklist - Getter for current checklist state
  * @param {Function} updateState - Function to update checklist state: (updater: (prev) => next) => void
- * @param {Function} save - Function to persist changes: (updates) => void
+ * @param {Function} save - Function to trigger debounced persistence (reads current state when it fires)
  * @returns {Object} Factory functions and cache control
  */
 export function createLocalAdapterFactories(getChecklist, updateState, save) {
@@ -28,7 +28,8 @@ export function createLocalAdapterFactories(getChecklist, updateState, save) {
       updateState(prev => {
         if (!prev) return prev;
         const updated = getUpdatedState(prev, newValue);
-        save(updated);
+        // Trigger save after state is updated - save() reads current state when it fires
+        save();
         return updated;
       });
     });
