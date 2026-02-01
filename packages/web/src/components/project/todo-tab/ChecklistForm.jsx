@@ -4,7 +4,11 @@
  */
 
 import { createSignal, createMemo, Show } from 'solid-js';
-import { getChecklistTypeOptions, DEFAULT_CHECKLIST_TYPE, CHECKLIST_TYPES } from '@/checklist-registry';
+import {
+  getChecklistTypeOptions,
+  DEFAULT_CHECKLIST_TYPE,
+  CHECKLIST_TYPES,
+} from '@/checklist-registry';
 import { SimpleSelect } from '@/components/ui/select';
 import projectStore from '@/stores/projectStore.js';
 import { useProjectContext } from '../ProjectContext.jsx';
@@ -33,7 +37,11 @@ export default function ChecklistForm(props) {
 
     const used = new Set();
     for (const checklist of props.studyChecklists) {
-      if (checklist.type === type() && checklist.assignedTo === props.currentUserId && checklist.outcomeId) {
+      if (
+        checklist.type === type() &&
+        checklist.assignedTo === props.currentUserId &&
+        checklist.outcomeId
+      ) {
         used.add(checklist.outcomeId);
       }
     }

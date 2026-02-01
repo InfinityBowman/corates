@@ -75,7 +75,10 @@ export default function OutcomeManager() {
       if (result?.success) {
         showToast.success('Outcome deleted');
       } else {
-        showToast.error('Cannot delete outcome', result?.error || 'Outcome is in use by checklists');
+        showToast.error(
+          'Cannot delete outcome',
+          result?.error || 'Outcome is in use by checklists',
+        );
       }
     } catch (err) {
       showToast.error('Failed to delete outcome', err.message);
@@ -192,7 +195,7 @@ export default function OutcomeManager() {
                       </button>
                       <button
                         onClick={() => handleDelete(outcome.id)}
-                        class='text-muted-foreground hover:text-red-600 p-1.5 transition-colors'
+                        class='text-muted-foreground p-1.5 transition-colors hover:text-red-600'
                         title='Delete outcome'
                       >
                         <FiTrash2 class='h-4 w-4' />
