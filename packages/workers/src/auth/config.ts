@@ -1,13 +1,7 @@
 import { betterAuth } from 'better-auth';
 import { createAuthMiddleware } from 'better-auth/api';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
-import {
-  genericOAuth,
-  magicLink,
-  twoFactor,
-  admin,
-  organization,
-} from 'better-auth/plugins';
+import { genericOAuth, magicLink, twoFactor, admin, organization } from 'better-auth/plugins';
 import { oAuthRelay } from './oauth-relay';
 import { stripe } from '@better-auth/stripe';
 import Stripe from 'stripe';

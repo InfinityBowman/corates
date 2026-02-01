@@ -101,7 +101,7 @@ export const oAuthRelay = (opts: OAuthRelayOptions) => {
           method: 'GET',
           query: relayQuerySchema,
         },
-        async (ctx) => {
+        async ctx => {
           const { payload: encryptedPayload } = ctx.query;
 
           // Decrypt the payload
@@ -113,9 +113,7 @@ export const oAuthRelay = (opts: OAuthRelayOptions) => {
             });
           } catch (e) {
             ctx.context.logger.error('Failed to decrypt OAuth relay payload:', e);
-            throw ctx.redirect(
-              `${ctx.context.baseURL}/error?error=oauth_relay_decrypt_failed`
-            );
+            throw ctx.redirect(`${ctx.context.baseURL}/error?error=oauth_relay_decrypt_failed`);
           }
 
           // Parse the payload
@@ -124,20 +122,16 @@ export const oAuthRelay = (opts: OAuthRelayOptions) => {
             payload = JSON.parse(decrypted);
           } catch (e) {
             ctx.context.logger.error('Failed to parse OAuth relay payload:', e);
-            throw ctx.redirect(
-              `${ctx.context.baseURL}/error?error=oauth_relay_invalid_payload`
-            );
+            throw ctx.redirect(`${ctx.context.baseURL}/error?error=oauth_relay_invalid_payload`);
           }
 
           // Check timestamp
           const age = (Date.now() - payload.timestamp) / 1000;
           if (age > maxAge || age < -10) {
             ctx.context.logger.error(
-              `OAuth relay payload expired (age: ${age}s, maxAge: ${maxAge}s)`
+              `OAuth relay payload expired (age: ${age}s, maxAge: ${maxAge}s)`,
             );
-            throw ctx.redirect(
-              `${ctx.context.baseURL}/error?error=oauth_relay_expired`
-            );
+            throw ctx.redirect(`${ctx.context.baseURL}/error?error=oauth_relay_expired`);
           }
 
           // Create user and session locally using Better Auth's internal handler
@@ -156,7 +150,7 @@ export const oAuthRelay = (opts: OAuthRelayOptions) => {
           if (result.error) {
             ctx.context.logger.error('OAuth relay user creation failed:', result.error);
             throw ctx.redirect(
-              `${ctx.context.baseURL}/error?error=${encodeURIComponent(result.error)}`
+              `${ctx.context.baseURL}/error?error=${encodeURIComponent(result.error)}`,
             );
           }
 
@@ -167,7 +161,7 @@ export const oAuthRelay = (opts: OAuthRelayOptions) => {
 
           // Redirect to the original callback URL
           throw ctx.redirect(payload.callbackURL);
-        }
+        },
       ),
     },
     hooks: {
@@ -182,7 +176,7 @@ export const oAuthRelay = (opts: OAuthRelayOptions) => {
               context.path?.startsWith('/sign-in/oauth2')
             );
           },
-          handler: createAuthMiddleware(async (ctx) => {
+          handler: createAuthMiddleware(async ctx => {
             const currentOrigin = getOrigin(ctx.context.baseURL);
 
             // Skip if we're on production (no relay needed)
@@ -205,11 +199,10 @@ export const oAuthRelay = (opts: OAuthRelayOptions) => {
            */
           matcher(context) {
             return !!(
-              context.path?.startsWith('/callback') ||
-              context.path?.startsWith('/oauth2/callback')
+              context.path?.startsWith('/callback') || context.path?.startsWith('/oauth2/callback')
             );
           },
-          handler: createAuthMiddleware(async (ctx) => {
+          handler: createAuthMiddleware(async ctx => {
             const state = ctx.query?.state || ctx.body?.state;
             if (!state || typeof state !== 'string') return;
 
@@ -234,9 +227,7 @@ export const oAuthRelay = (opts: OAuthRelayOptions) => {
             // This is a relay request - handle it ourselves
             const code = ctx.query?.code || ctx.body?.code;
             if (!code) {
-              throw ctx.redirect(
-                `${relayPackage.relayOrigin}/api/auth/error?error=no_code`
-              );
+              throw ctx.redirect(`${relayPackage.relayOrigin}/api/auth/error?error=no_code`);
             }
 
             // Get the provider ID from the request URL (not ctx.path which is the route pattern)
@@ -255,20 +246,16 @@ export const oAuthRelay = (opts: OAuthRelayOptions) => {
 
             if (!providerId) {
               ctx.context.logger.error('Could not extract provider ID from URL:', requestUrl);
-              throw ctx.redirect(
-                `${relayPackage.relayOrigin}/api/auth/error?error=no_provider`
-              );
+              throw ctx.redirect(`${relayPackage.relayOrigin}/api/auth/error?error=no_provider`);
             }
 
             // Find the OAuth provider
-            const provider = ctx.context.socialProviders.find(
-              (p) => p.id === providerId
-            );
+            const provider = ctx.context.socialProviders.find(p => p.id === providerId);
 
             if (!provider) {
               ctx.context.logger.error('Provider not found:', providerId);
               throw ctx.redirect(
-                `${relayPackage.relayOrigin}/api/auth/error?error=provider_not_found`
+                `${relayPackage.relayOrigin}/api/auth/error?error=provider_not_found`,
               );
             }
 
@@ -283,7 +270,7 @@ export const oAuthRelay = (opts: OAuthRelayOptions) => {
             } catch (e) {
               ctx.context.logger.error('Failed to decrypt state cookie:', e);
               throw ctx.redirect(
-                `${relayPackage.relayOrigin}/api/auth/error?error=invalid_state_cookie`
+                `${relayPackage.relayOrigin}/api/auth/error?error=invalid_state_cookie`,
               );
             }
 
@@ -298,14 +285,12 @@ export const oAuthRelay = (opts: OAuthRelayOptions) => {
             } catch (e) {
               ctx.context.logger.error('Token exchange failed:', e);
               throw ctx.redirect(
-                `${relayPackage.relayOrigin}/api/auth/error?error=token_exchange_failed`
+                `${relayPackage.relayOrigin}/api/auth/error?error=token_exchange_failed`,
               );
             }
 
             if (!tokens) {
-              throw ctx.redirect(
-                `${relayPackage.relayOrigin}/api/auth/error?error=no_tokens`
-              );
+              throw ctx.redirect(`${relayPackage.relayOrigin}/api/auth/error?error=no_tokens`);
             }
 
             // Get user info from provider
@@ -314,9 +299,7 @@ export const oAuthRelay = (opts: OAuthRelayOptions) => {
 
             if (!userInfo || !userInfo.email) {
               ctx.context.logger.error('Failed to get user info');
-              throw ctx.redirect(
-                `${relayPackage.relayOrigin}/api/auth/error?error=no_user_info`
-              );
+              throw ctx.redirect(`${relayPackage.relayOrigin}/api/auth/error?error=no_user_info`);
             }
 
             // Build relay payload
@@ -370,7 +353,7 @@ export const oAuthRelay = (opts: OAuthRelayOptions) => {
               context.path?.startsWith('/sign-in/oauth2')
             );
           },
-          handler: createAuthMiddleware(async (ctx) => {
+          handler: createAuthMiddleware(async ctx => {
             const relayOrigin = (ctx.context as any)._relayOrigin;
             if (!relayOrigin) return;
 
@@ -378,7 +361,7 @@ export const oAuthRelay = (opts: OAuthRelayOptions) => {
             if (ctx.context.oauthConfig.storeStateStrategy !== 'cookie') {
               ctx.context.logger.warn(
                 'OAuth relay requires storeStateStrategy: "cookie". Current:',
-                ctx.context.oauthConfig.storeStateStrategy
+                ctx.context.oauthConfig.storeStateStrategy,
               );
               return;
             }
@@ -410,10 +393,7 @@ export const oAuthRelay = (opts: OAuthRelayOptions) => {
             const stateCookie = ctx.context.createAuthCookie('oauth_state');
             // Cookie header can have multiple cookies, need to find the right one
             // Format: "name=value; attributes, name2=value2; attributes"
-            const cookieRegex = new RegExp(
-              `(?:^|,\\s*)${stateCookie.name}=([^;]+)`,
-              'i'
-            );
+            const cookieRegex = new RegExp(`(?:^|,\\s*)${stateCookie.name}=([^;]+)`, 'i');
             const match = setCookieHeader.match(cookieRegex);
             const stateCookieValue = match?.[1];
 
