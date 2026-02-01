@@ -82,6 +82,10 @@ export default function OutcomeManager() {
           'Cannot delete outcome',
           result?.error || 'Outcome is in use by checklists',
         );
+        showToast.error(
+          'Cannot delete outcome',
+          result?.error || 'Outcome is in use by checklists',
+        );
       }
     } catch (err) {
       showToast.error('Failed to delete outcome', err.message);
