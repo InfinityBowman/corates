@@ -20,6 +20,20 @@ export default function ToDoTab() {
   // Local UI state
   const [showChecklistForm, setShowChecklistForm] = createSignal(null);
   const [creatingChecklist, setCreatingChecklist] = createSignal(false);
+  const [expandedStudies, setExpandedStudies] = createSignal(new Set());
+
+  // Toggle expanded state for a study
+  const toggleExpanded = studyId => {
+    setExpandedStudies(prev => {
+      const next = new Set(prev);
+      if (next.has(studyId)) {
+        next.delete(studyId);
+      } else {
+        next.add(studyId);
+      }
+      return next;
+    });
+  };
 
   // Read from store directly
   const studies = () => projectStore.getStudies(projectId);
@@ -59,6 +73,10 @@ export default function ToDoTab() {
     projectActionsStore.pdf.download(studyId, pdf);
   };
 
+  const handleDeleteChecklist = (studyId, checklistId) => {
+    projectActionsStore.checklist.delete(studyId, checklistId);
+  };
+
   return (
     <div class='space-y-2'>
       {/* Studies List */}
@@ -83,6 +101,8 @@ export default function ToDoTab() {
               study={study}
               members={members()}
               currentUserId={currentUserId()}
+              expanded={expandedStudies().has(study.id)}
+              onToggleExpanded={() => toggleExpanded(study.id)}
               showChecklistForm={showChecklistForm() === study.id}
               onToggleChecklistForm={() =>
                 setShowChecklistForm(prev => (prev === study.id ? null : study.id))
@@ -91,6 +111,7 @@ export default function ToDoTab() {
                 handleCreateChecklist(study.id, type, assigneeId, outcomeId)
               }
               onOpenChecklist={checklistId => openChecklist(study.id, checklistId)}
+              onDeleteChecklist={checklistId => handleDeleteChecklist(study.id, checklistId)}
               onViewPdf={pdf => handleViewPdf(study.id, pdf)}
               onDownloadPdf={pdf => handleDownloadPdf(study.id, pdf)}
               creatingChecklist={creatingChecklist()}

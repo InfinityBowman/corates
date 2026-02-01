@@ -124,7 +124,11 @@ export function shouldShowInTab(study, tab, userId) {
       for (const checklist of awaitingReconcile) {
         const groupKey = checklist.outcomeId || `type:${checklist.type}`;
         if (!groups.has(groupKey)) {
-          groups.set(groupKey, { checklists: [], outcomeId: checklist.outcomeId, type: checklist.type });
+          groups.set(groupKey, {
+            checklists: [],
+            outcomeId: checklist.outcomeId,
+            type: checklist.type,
+          });
         }
         groups.get(groupKey).checklists.push(checklist);
       }

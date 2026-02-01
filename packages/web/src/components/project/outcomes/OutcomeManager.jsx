@@ -1,10 +1,12 @@
 /**
  * OutcomeManager - Manages project-level outcomes
- * Displays list of outcomes with add/edit/delete functionality
+ * Compact collapsible panel for managing outcomes used by ROB-2 and ROBINS-I checklists
  */
 
 import { For, Show, createSignal, createMemo } from 'solid-js';
+import { BiRegularChevronRight } from 'solid-icons/bi';
 import { FiPlus, FiEdit2, FiTrash2, FiCheck, FiX } from 'solid-icons/fi';
+import { Collapsible, CollapsibleContent } from '@/components/ui/collapsible';
 import projectStore from '@/stores/projectStore.js';
 import projectActionsStore from '@/stores/projectActionsStore';
 import { useProjectContext } from '../ProjectContext.jsx';
@@ -13,6 +15,7 @@ import { showToast } from '@/components/ui/toast';
 export default function OutcomeManager() {
   const { projectId, isOwner } = useProjectContext();
 
+  const [expanded, setExpanded] = createSignal(false);
   const [isAdding, setIsAdding] = createSignal(false);
   const [editingId, setEditingId] = createSignal(null);
   const [newName, setNewName] = createSignal('');
@@ -75,7 +78,10 @@ export default function OutcomeManager() {
       if (result?.success) {
         showToast.success('Outcome deleted');
       } else {
-        showToast.error('Cannot delete outcome', result?.error || 'Outcome is in use by checklists');
+        showToast.error(
+          'Cannot delete outcome',
+          result?.error || 'Outcome is in use by checklists',
+        );
       }
     } catch (err) {
       showToast.error('Failed to delete outcome', err.message);
@@ -94,6 +100,7 @@ export default function OutcomeManager() {
 
   const startAdd = () => {
     setIsAdding(true);
+    setExpanded(true);
     setNewName('');
   };
 
@@ -112,129 +119,150 @@ export default function OutcomeManager() {
     }
   };
 
-  return (
-    <div class='bg-card border-border rounded-lg border p-4'>
-      <div class='mb-3 flex items-center justify-between'>
-        <div>
-          <h3 class='text-foreground text-base font-semibold'>Outcomes</h3>
-          <p class='text-muted-foreground text-xs'>
-            Define outcomes for ROB-2 and ROBINS-I assessments
-          </p>
-        </div>
-        <Show when={canEdit() && !isAdding()}>
-          <button
-            onClick={startAdd}
-            class='bg-primary hover:bg-primary/90 flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium text-white transition-colors'
-          >
-            <FiPlus class='h-4 w-4' />
-            Add Outcome
-          </button>
-        </Show>
-      </div>
+  const handleHeaderClick = e => {
+    const target = e.target;
+    if (target.closest('button')) return;
+    setExpanded(!expanded());
+  };
 
-      {/* Add form */}
-      <Show when={isAdding()}>
-        <div class='mb-3 rounded-lg border border-blue-200 bg-blue-50 p-3'>
-          <input
-            type='text'
-            value={newName()}
-            onInput={e => setNewName(e.target.value)}
-            onKeyDown={e => handleKeyDown(e, handleAdd, cancelAdd)}
-            placeholder='Outcome name (e.g., Overall mortality, Quality of life)'
-            class='border-border focus:border-primary w-full rounded border px-3 py-2 text-sm focus:ring-1 focus:ring-blue-200 focus:outline-none'
-            autofocus
-          />
-          <div class='mt-2 flex gap-2'>
+  return (
+    <div class='border-border bg-card overflow-hidden rounded-lg border'>
+      <Collapsible open={expanded()}>
+        <div
+          class='flex cursor-pointer items-center gap-3 px-4 py-3 select-none'
+          onClick={handleHeaderClick}
+        >
+          <div class='-ml-1 shrink-0 p-1'>
+            <BiRegularChevronRight
+              class={`text-muted-foreground/70 h-5 w-5 transition-transform duration-200 ${expanded() ? 'rotate-90' : ''}`}
+            />
+          </div>
+
+          <div class='min-w-0 flex-1'>
+            <span class='text-foreground font-medium'>Outcomes</span>
+            <span class='text-muted-foreground ml-2 text-sm'>
+              {outcomes().length === 0 ?
+                'None defined'
+              : outcomes().length === 1 ?
+                '1 outcome'
+              : `${outcomes().length} outcomes`}
+            </span>
+          </div>
+
+          <Show when={canEdit()}>
             <button
-              onClick={handleAdd}
-              disabled={!newName().trim() || isSaving()}
-              class='bg-primary hover:bg-primary/90 flex items-center gap-1 rounded px-3 py-1.5 text-sm font-medium text-white transition-colors disabled:opacity-50'
+              onClick={e => {
+                e.stopPropagation();
+                startAdd();
+              }}
+              class='text-muted-foreground hover:text-primary flex items-center gap-1 text-sm transition-colors'
             >
-              <FiCheck class='h-4 w-4' />
+              <FiPlus class='h-4 w-4' />
               Add
             </button>
-            <button
-              onClick={cancelAdd}
-              class='border-border bg-card text-secondary-foreground hover:bg-muted flex items-center gap-1 rounded border px-3 py-1.5 text-sm transition-colors'
-            >
-              <FiX class='h-4 w-4' />
-              Cancel
-            </button>
-          </div>
+          </Show>
         </div>
-      </Show>
 
-      {/* Outcomes list */}
-      <div class='space-y-2'>
-        <Show when={outcomes().length === 0 && !isAdding()}>
-          <p class='text-muted-foreground text-sm'>
-            No outcomes defined. Add outcomes to enable ROB-2 and ROBINS-I checklists.
-          </p>
-        </Show>
-
-        <For each={outcomes()}>
-          {outcome => (
-            <Show
-              when={editingId() === outcome.id}
-              fallback={
-                <div class='border-border hover:border-border-strong flex items-center justify-between rounded-lg border bg-white p-3 transition-colors'>
-                  <div class='min-w-0 flex-1'>
-                    <p class='text-foreground font-medium'>{outcome.name}</p>
-                  </div>
-                  <Show when={canEdit()}>
-                    <div class='flex gap-1'>
-                      <button
-                        onClick={() => startEdit(outcome)}
-                        class='text-muted-foreground hover:text-foreground p-1.5 transition-colors'
-                        title='Edit outcome'
-                      >
-                        <FiEdit2 class='h-4 w-4' />
-                      </button>
-                      <button
-                        onClick={() => handleDelete(outcome.id)}
-                        class='text-muted-foreground hover:text-red-600 p-1.5 transition-colors'
-                        title='Delete outcome'
-                      >
-                        <FiTrash2 class='h-4 w-4' />
-                      </button>
-                    </div>
-                  </Show>
-                </div>
-              }
-            >
-              <div class='rounded-lg border border-blue-200 bg-blue-50 p-3'>
+        <CollapsibleContent>
+          <div class='border-border-subtle space-y-2 border-t px-4 py-3'>
+            {/* Add form */}
+            <Show when={isAdding()}>
+              <div class='flex items-center gap-2'>
                 <input
                   type='text'
                   value={newName()}
                   onInput={e => setNewName(e.target.value)}
-                  // eslint-disable-next-line solid/reactivity -- Event handler is a tracked context
-                  onKeyDown={e => handleKeyDown(e, () => handleUpdate(outcome.id), cancelEdit)}
-                  placeholder='Outcome name'
-                  class='border-border focus:border-primary w-full rounded border px-3 py-2 text-sm focus:ring-1 focus:ring-blue-200 focus:outline-none'
+                  onKeyDown={e => handleKeyDown(e, handleAdd, cancelAdd)}
+                  placeholder='Outcome name (e.g., Overall mortality)'
+                  class='border-border focus:border-primary flex-1 rounded border px-3 py-1.5 text-sm focus:ring-1 focus:ring-blue-200 focus:outline-none'
                   autofocus
                 />
-                <div class='mt-2 flex gap-2'>
-                  <button
-                    onClick={() => handleUpdate(outcome.id)}
-                    disabled={!newName().trim() || isSaving()}
-                    class='bg-primary hover:bg-primary/90 flex items-center gap-1 rounded px-3 py-1.5 text-sm font-medium text-white transition-colors disabled:opacity-50'
-                  >
-                    <FiCheck class='h-4 w-4' />
-                    Save
-                  </button>
-                  <button
-                    onClick={cancelEdit}
-                    class='border-border bg-card text-secondary-foreground hover:bg-muted flex items-center gap-1 rounded border px-3 py-1.5 text-sm transition-colors'
-                  >
-                    <FiX class='h-4 w-4' />
-                    Cancel
-                  </button>
-                </div>
+                <button
+                  onClick={handleAdd}
+                  disabled={!newName().trim() || isSaving()}
+                  class='text-primary hover:text-primary/80 p-1.5 transition-colors disabled:opacity-50'
+                  title='Add'
+                >
+                  <FiCheck class='h-4 w-4' />
+                </button>
+                <button
+                  onClick={cancelAdd}
+                  class='text-muted-foreground hover:text-foreground p-1.5 transition-colors'
+                  title='Cancel'
+                >
+                  <FiX class='h-4 w-4' />
+                </button>
               </div>
             </Show>
-          )}
-        </For>
-      </div>
+
+            {/* Outcomes list */}
+            <Show when={outcomes().length === 0 && !isAdding()}>
+              <p class='text-muted-foreground text-sm'>
+                No outcomes defined. Add outcomes to enable ROB-2 and ROBINS-I checklists.
+              </p>
+            </Show>
+
+            <For each={outcomes()}>
+              {outcome => (
+                <Show
+                  when={editingId() === outcome.id}
+                  fallback={
+                    <div class='flex items-center gap-2'>
+                      <span class='text-foreground min-w-0 flex-1 truncate text-sm'>
+                        {outcome.name}
+                      </span>
+                      <Show when={canEdit()}>
+                        <button
+                          onClick={() => startEdit(outcome)}
+                          class='text-muted-foreground hover:text-foreground p-1 transition-colors'
+                          title='Edit'
+                        >
+                          <FiEdit2 class='h-3.5 w-3.5' />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(outcome.id)}
+                          class='text-muted-foreground p-1 transition-colors hover:text-red-600'
+                          title='Delete'
+                        >
+                          <FiTrash2 class='h-3.5 w-3.5' />
+                        </button>
+                      </Show>
+                    </div>
+                  }
+                >
+                  <div class='flex items-center gap-2'>
+                    <input
+                      type='text'
+                      value={newName()}
+                      onInput={e => setNewName(e.target.value)}
+                      // eslint-disable-next-line solid/reactivity -- Event handler is a tracked context
+                      onKeyDown={e => handleKeyDown(e, () => handleUpdate(outcome.id), cancelEdit)}
+                      placeholder='Outcome name'
+                      class='border-border focus:border-primary flex-1 rounded border px-3 py-1.5 text-sm focus:ring-1 focus:ring-blue-200 focus:outline-none'
+                      autofocus
+                    />
+                    <button
+                      onClick={() => handleUpdate(outcome.id)}
+                      disabled={!newName().trim() || isSaving()}
+                      class='text-primary hover:text-primary/80 p-1.5 transition-colors disabled:opacity-50'
+                      title='Save'
+                    >
+                      <FiCheck class='h-4 w-4' />
+                    </button>
+                    <button
+                      onClick={cancelEdit}
+                      class='text-muted-foreground hover:text-foreground p-1.5 transition-colors'
+                      title='Cancel'
+                    >
+                      <FiX class='h-4 w-4' />
+                    </button>
+                  </div>
+                </Show>
+              )}
+            </For>
+          </div>
+        </CollapsibleContent>
+      </Collapsible>
     </div>
   );
 }
