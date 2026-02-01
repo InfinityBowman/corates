@@ -172,7 +172,10 @@ export default function TodoStudyRow(props) {
           <ChecklistForm
             members={props.members}
             currentUserId={props.currentUserId}
-            onSubmit={(type, assigneeId) => props.onAddChecklist?.(type, assigneeId)}
+            studyChecklists={study().checklists}
+            onSubmit={(type, assigneeId, outcomeId) =>
+              props.onAddChecklist?.(type, assigneeId, outcomeId)
+            }
             onCancel={() => props.onToggleChecklistForm?.()}
             loading={props.creatingChecklist}
           />

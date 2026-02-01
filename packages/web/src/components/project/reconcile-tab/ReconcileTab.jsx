@@ -20,6 +20,15 @@ export default function ReconcileTab() {
 
   // Read from store directly
   const studies = () => projectStore.getStudies(projectId);
+  const meta = () => projectStore.getMeta(projectId);
+
+  // Helper to get outcome name by ID
+  const getOutcomeName = outcomeId => {
+    if (!outcomeId) return null;
+    const outcomes = meta()?.outcomes || [];
+    const outcome = outcomes.find(o => o.id === outcomeId);
+    return outcome?.name || null;
+  };
 
   // Filter studies that are in reconciliation workflow
   const studiesInReconciliation = createMemo(() => {
@@ -65,6 +74,7 @@ export default function ReconcileTab() {
                 onViewPdf={pdf => handleViewPdf(study.id, pdf)}
                 onDownloadPdf={pdf => handleDownloadPdf(study.id, pdf)}
                 getAssigneeName={getAssigneeName}
+                getOutcomeName={getOutcomeName}
               />
             )}
           </For>

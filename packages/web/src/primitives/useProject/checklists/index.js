@@ -44,17 +44,33 @@ export function createChecklistOperations(_projectId, getYDoc, _isSynced) {
   }
 
   /**
+   * Check if a checklist type requires an outcome
+   * @param {string} type - The checklist type
+   * @returns {boolean} True if the type requires an outcome
+   */
+  function requiresOutcome(type) {
+    return type === CHECKLIST_TYPES.ROB2 || type === CHECKLIST_TYPES.ROBINS_I;
+  }
+
+  /**
    * Create a checklist in a study
    * @param {string} studyId - The study ID
    * @param {string} type - Checklist type (default: 'AMSTAR2')
    * @param {string|null} assignedTo - User ID to assign to
+   * @param {string|null} outcomeId - Outcome ID (required for ROB2/ROBINS_I)
    * @returns {string|null} The checklist ID or null if failed
    */
-  function createChecklist(studyId, type = 'AMSTAR2', assignedTo = null) {
+  function createChecklist(studyId, type = 'AMSTAR2', assignedTo = null, outcomeId = null) {
     try {
       const ydoc = getYDoc();
       if (!ydoc) {
         console.error('[createChecklist] No YDoc available');
+        return null;
+      }
+
+      // Validate outcome requirement for ROB2 and ROBINS_I
+      if (requiresOutcome(type) && !outcomeId) {
+        console.error(`[createChecklist] ${type} requires an outcomeId`);
         return null;
       }
 
@@ -74,6 +90,26 @@ export function createChecklistOperations(_projectId, getYDoc, _isSynced) {
       if (!checklistsMap) {
         checklistsMap = new Y.Map();
         studyYMap.set('checklists', checklistsMap);
+      }
+
+      // Check for duplicate: same type + outcome + assignedTo
+      if (requiresOutcome(type) && outcomeId) {
+        for (const [, existingChecklistYMap] of checklistsMap.entries()) {
+          const existingType = existingChecklistYMap.get('type');
+          const existingOutcomeId = existingChecklistYMap.get('outcomeId');
+          const existingAssignedTo = existingChecklistYMap.get('assignedTo');
+
+          if (
+            existingType === type &&
+            existingOutcomeId === outcomeId &&
+            existingAssignedTo === assignedTo
+          ) {
+            console.error(
+              `[createChecklist] User already has a ${type} checklist for this outcome`,
+            );
+            return null;
+          }
+        }
       }
 
       const checklistId = crypto.randomUUID();
@@ -98,6 +134,9 @@ export function createChecklistOperations(_projectId, getYDoc, _isSynced) {
         checklistYMap.set('status', CHECKLIST_STATUS.PENDING);
         checklistYMap.set('createdAt', now);
         checklistYMap.set('updatedAt', now);
+        if (outcomeId) {
+          checklistYMap.set('outcomeId', outcomeId);
+        }
 
         const answersYMap = new Y.Map();
         Object.entries(checklistTemplate).forEach(([key, value]) => {
@@ -121,9 +160,35 @@ export function createChecklistOperations(_projectId, getYDoc, _isSynced) {
       checklistYMap.set('createdAt', now);
       checklistYMap.set('updatedAt', now);
 
+      // Set outcomeId if provided
+      if (outcomeId) {
+        checklistYMap.set('outcomeId', outcomeId);
+      }
+
       // Create answers Y.Map using handler
       const answersYMap = handler.createAnswersYMap(answersData);
       checklistYMap.set('answers', answersYMap);
+
+      // For ROBINS-I, auto-fill sectionA.outcome with the outcome name
+      if (type === CHECKLIST_TYPES.ROBINS_I && outcomeId) {
+        const metaMap = ydoc.getMap('meta');
+        const outcomesMap = metaMap.get('outcomes');
+        if (outcomesMap) {
+          const outcomeYMap = outcomesMap.get(outcomeId);
+          if (outcomeYMap) {
+            const outcomeName = outcomeYMap.get('name');
+            if (outcomeName) {
+              const sectionAYMap = answersYMap.get('sectionA');
+              if (sectionAYMap) {
+                const outcomeYText = sectionAYMap.get('outcome');
+                if (outcomeYText && typeof outcomeYText.insert === 'function') {
+                  outcomeYText.insert(0, outcomeName);
+                }
+              }
+            }
+          }
+        }
+      }
 
       checklistsMap.set(checklistId, checklistYMap);
 

@@ -37,10 +37,10 @@ export default function ToDoTab() {
   });
 
   // Handlers
-  const handleCreateChecklist = async (studyId, type, assigneeId) => {
+  const handleCreateChecklist = async (studyId, type, assigneeId, outcomeId) => {
     setCreatingChecklist(true);
     try {
-      const success = projectActionsStore.checklist.create(studyId, type, assigneeId);
+      const success = projectActionsStore.checklist.create(studyId, type, assigneeId, outcomeId);
       if (success) setShowChecklistForm(null);
     } finally {
       setCreatingChecklist(false);
@@ -87,8 +87,8 @@ export default function ToDoTab() {
               onToggleChecklistForm={() =>
                 setShowChecklistForm(prev => (prev === study.id ? null : study.id))
               }
-              onAddChecklist={(type, assigneeId) =>
-                handleCreateChecklist(study.id, type, assigneeId)
+              onAddChecklist={(type, assigneeId, outcomeId) =>
+                handleCreateChecklist(study.id, type, assigneeId, outcomeId)
               }
               onOpenChecklist={checklistId => openChecklist(study.id, checklistId)}
               onViewPdf={pdf => handleViewPdf(study.id, pdf)}
