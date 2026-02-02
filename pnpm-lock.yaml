@@ -385,8 +385,8 @@ importers:
         specifier: workspace:*
         version: link:../shared
       '@hono/zod-openapi':
-        specifier: ^1.2.0
-        version: 1.2.0(hono@4.11.7)(zod@4.3.6)
+        specifier: ^1.2.1
+        version: 1.2.1(hono@4.11.7)(zod@4.3.6)
       '@sentry/cloudflare':
         specifier: ^10.38.0
         version: 10.38.0(@cloudflare/workers-types@4.20260131.0)
@@ -1983,8 +1983,8 @@ packages:
     resolution: {integrity: sha512-43/qtrDUokr7LJqoF2c3+RInu/t4zfrpYdoSDfYyhg52rwLV6TnOvdG4fXm7IkSB3wErkcmJS9iEhjVtOSEjjA==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
 
-  '@exodus/bytes@1.10.0':
-    resolution: {integrity: sha512-tf8YdcbirXdPnJ+Nd4UN1EXnz+IP2DI45YVEr3vvzcVTOyrApkmIB4zvOQVd3XPr7RXnfBtAx+PXImXOIU0Ajg==}
+  '@exodus/bytes@1.11.0':
+    resolution: {integrity: sha512-wO3vd8nsEHdumsXrjGO/v4p6irbg7hy9kvIeR6i2AwylZSk4HJdWgL0FNaVquW1+AweJcdvU1IEpuIWk/WaPnA==}
     engines: {node: ^20.19.0 || ^22.12.0 || >=24.0.0}
     peerDependencies:
       '@noble/hashes': ^1.8.0 || ^2.0.0
@@ -2007,8 +2007,8 @@ packages:
     peerDependencies:
       hono: ^4
 
-  '@hono/zod-openapi@1.2.0':
-    resolution: {integrity: sha512-KDfHqv/Wy4elVseZXgokbHxeWuqBL+AZfqsOMpEihBMUsk/fJ+bLIi3Sf70JFVpt1Ihui8RasYrInozt7ZBDIA==}
+  '@hono/zod-openapi@1.2.1':
+    resolution: {integrity: sha512-aZza4V8wkqpdHBWFNPiCeWd0cGOXbYuQW9AyezHs/jwQm5p67GkUyXwfthAooAwnG7thTpvOJkThZpCoY6us8w==}
     engines: {node: '>=16.0.0'}
     peerDependencies:
       hono: '>=4.3.6'
@@ -4191,8 +4191,8 @@ packages:
     resolution: {integrity: sha512-8WB3Jcas3swSvjIeA2yvCJ+Miyz5l1ZmB6HFb9R1317dt9LCQoswg/BGrmAmkWVEszSrrg4RwmO46qIm2OEnSA==}
     engines: {node: '>=16'}
 
-  caniuse-lite@1.0.30001766:
-    resolution: {integrity: sha512-4C0lfJ0/YPjJQHagaE9x2Elb69CIqEPZeG0anQt9SIvIoOH4a4uaRl73IavyO+0qZh6MDLH//DrXThEYKHkmYA==}
+  caniuse-lite@1.0.30001767:
+    resolution: {integrity: sha512-34+zUAMhSH+r+9eKmYG+k2Rpt8XttfE4yXAjoZvkAPs15xcYQhyBYdalJ65BzivAvGRMViEjy6oKr/S91loekQ==}
 
   ccount@2.0.1:
     resolution: {integrity: sha512-eyrF0jiFpY+3drT6383f1qhkbGsLSifNAjA61IUjZjmLCWjItY6LB9ft9YhoDgwfmclB2zhu51Lc7+95b8NRAg==}
@@ -9353,7 +9353,7 @@ snapshots:
       '@eslint/core': 0.17.0
       levn: 0.4.1
 
-  '@exodus/bytes@1.10.0(@noble/hashes@2.0.1)':
+  '@exodus/bytes@1.11.0(@noble/hashes@2.0.1)':
     optionalDependencies:
       '@noble/hashes': 2.0.1
 
@@ -9372,7 +9372,7 @@ snapshots:
     dependencies:
       hono: 4.11.7
 
-  '@hono/zod-openapi@1.2.0(hono@4.11.7)(zod@4.3.6)':
+  '@hono/zod-openapi@1.2.1(hono@4.11.7)(zod@4.3.6)':
     dependencies:
       '@asteasolutions/zod-to-openapi': 8.4.0(zod@4.3.6)
       '@hono/zod-validator': 0.7.6(hono@4.11.7)(zod@4.3.6)
@@ -11863,7 +11863,7 @@ snapshots:
   browserslist@4.28.1:
     dependencies:
       baseline-browser-mapping: 2.9.19
-      caniuse-lite: 1.0.30001766
+      caniuse-lite: 1.0.30001767
       electron-to-chromium: 1.5.283
       node-releases: 2.0.27
       update-browserslist-db: 1.2.3(browserslist@4.28.1)
@@ -11929,7 +11929,7 @@ snapshots:
 
   camelcase@8.0.0: {}
 
-  caniuse-lite@1.0.30001766: {}
+  caniuse-lite@1.0.30001767: {}
 
   ccount@2.0.1: {}
 
@@ -13302,7 +13302,7 @@ snapshots:
 
   html-encoding-sniffer@6.0.0(@noble/hashes@2.0.1):
     dependencies:
-      '@exodus/bytes': 1.10.0(@noble/hashes@2.0.1)
+      '@exodus/bytes': 1.11.0(@noble/hashes@2.0.1)
     transitivePeerDependencies:
       - '@noble/hashes'
 
@@ -13560,7 +13560,7 @@ snapshots:
     dependencies:
       '@acemir/cssom': 0.9.31
       '@asamuzakjp/dom-selector': 6.7.7
-      '@exodus/bytes': 1.10.0(@noble/hashes@2.0.1)
+      '@exodus/bytes': 1.11.0(@noble/hashes@2.0.1)
       cssstyle: 5.3.7
       data-urls: 6.0.1
       decimal.js: 10.6.0
