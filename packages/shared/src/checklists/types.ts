@@ -5,6 +5,16 @@
 import type { ChecklistStatus } from './status.js';
 
 /**
+ * Outcome entity - represents a specific outcome being assessed in a study
+ */
+export interface Outcome {
+  id: string;
+  name: string;
+  createdAt: number;
+  createdBy: string;
+}
+
+/**
  * Base checklist metadata shared by all checklist types
  */
 export interface ChecklistMetadata {
@@ -15,6 +25,16 @@ export interface ChecklistMetadata {
   assignedTo?: string | null;
   status?: ChecklistStatus;
   type: 'AMSTAR2' | 'ROBINS_I' | 'ROB2';
+  outcomeId?: string | null;
+}
+
+/**
+ * Check if a checklist type requires an outcome selection
+ * @param type - The checklist type
+ * @returns True if the type requires an outcome
+ */
+export function requiresOutcome(type: string): boolean {
+  return type === 'ROB2' || type === 'ROBINS_I';
 }
 
 /**

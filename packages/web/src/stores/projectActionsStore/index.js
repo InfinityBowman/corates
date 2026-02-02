@@ -22,6 +22,7 @@ import { createPdfActions } from './pdfs.js';
 import { createProjectActions } from './project.js';
 import { createMemberActions } from './members.js';
 import { createReconciliationActions } from './reconciliation.js';
+import { createOutcomeActions } from './outcomes.js';
 
 function createProjectActionsStore() {
   /**
@@ -152,6 +153,7 @@ function createProjectActionsStore() {
   const project = createProjectActions(getActiveConnection, getActiveProjectId, getActiveOrgId);
   const member = createMemberActions(getActiveProjectId, getActiveOrgId, getCurrentUserId);
   const reconciliation = createReconciliationActions(getActiveConnection);
+  const outcome = createOutcomeActions(getActiveConnection);
 
   // ============================================================================
   // Public API
@@ -176,6 +178,7 @@ function createProjectActionsStore() {
     project,
     member,
     reconciliation,
+    outcome,
   };
 }
 

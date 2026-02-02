@@ -12,17 +12,36 @@ import { showToast } from '@/components/ui/toast';
 export function createChecklistActions(getActiveConnection) {
   /**
    * Create a new checklist (uses active project)
+   * @param {string} studyId - The study ID
+   * @param {string} type - Checklist type (AMSTAR2, ROB2, ROBINS_I)
+   * @param {string} assigneeId - User ID to assign the checklist to
+   * @param {string|null} outcomeId - Outcome ID (required for ROB2/ROBINS_I)
    * @returns {boolean} Success
    */
-  function create(studyId, type, assigneeId) {
+  function create(studyId, type, assigneeId, outcomeId = null) {
     const ops = getActiveConnection();
     if (!ops?.createChecklist) {
       showToast.error('Addition Failed', 'Not connected to project');
       return false;
     }
     try {
-      const checklistId = ops.createChecklist(studyId, type, assigneeId);
-      return !!checklistId;
+      const checklistId = ops.createChecklist(studyId, type, assigneeId, outcomeId);
+      if (!checklistId) {
+        // Could be duplicate or missing outcome
+        const requiresOutcome = type === 'ROB2' || type === 'ROBINS_I';
+        if (requiresOutcome && !outcomeId) {
+          showToast.error('Addition Failed', `${type} requires an outcome to be selected`);
+        } else if (requiresOutcome) {
+          showToast.error(
+            'Addition Failed',
+            'You already have a checklist for this outcome. Select a different outcome.',
+          );
+        } else {
+          showToast.error('Addition Failed', 'Failed to add checklist');
+        }
+        return false;
+      }
+      return true;
     } catch (err) {
       console.error('Error adding checklist:', err);
       showToast.error('Addition Failed', 'Failed to add checklist');

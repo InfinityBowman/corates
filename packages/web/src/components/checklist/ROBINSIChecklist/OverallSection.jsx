@@ -1,4 +1,4 @@
-import { For, Show, createMemo } from 'solid-js';
+import { For, Show, createMemo, createEffect, on } from 'solid-js';
 import { OVERALL_ROB_JUDGEMENTS, BIAS_DIRECTIONS } from './checklist-map.js';
 import { getSmartScoring, mapOverallJudgementToDisplay } from './checklist.js';
 
@@ -35,6 +35,29 @@ export function OverallSection(props) {
     }
     return calculatedDisplayJudgement();
   });
+
+  // Auto-persist calculated judgement when in auto mode and all domains are complete
+  // This ensures isROBINSIComplete() passes when the calculated judgement is valid
+  createEffect(
+    on(
+      () => [calculatedDisplayJudgement(), isManualMode(), props.overallState?.judgement],
+      ([calculated, manual, stored]) => {
+        // Only auto-persist if:
+        // 1. Not in manual mode
+        // 2. A valid calculated judgement exists (not null/undefined)
+        // 3. The stored judgement differs from calculated (or is null)
+        // 4. Not disabled
+        if (!manual && calculated && calculated !== stored && !props.disabled) {
+          const currentState = props.overallState || {};
+          props.onUpdate({
+            ...currentState,
+            judgement: calculated,
+            judgementSource: 'auto',
+          });
+        }
+      },
+    ),
+  );
 
   function handleJudgementChange(judgement) {
     // Clicking a judgement button switches to manual mode

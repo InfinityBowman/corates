@@ -1,4 +1,4 @@
-import { For, Show, createMemo } from 'solid-js';
+import { For, Show, createMemo, createEffect, on } from 'solid-js';
 import { BIAS_DIRECTIONS } from './checklist-map.js';
 import { getSmartScoring, mapOverallJudgementToDisplay } from './checklist.js';
 
@@ -29,6 +29,27 @@ export function OverallSection(props) {
   const effectiveJudgement = createMemo(() => {
     return calculatedDisplayJudgement();
   });
+
+  // Auto-persist calculated judgement when all domains are complete
+  // This ensures the overall judgement is stored for reconciliation and export
+  createEffect(
+    on(
+      () => [calculatedDisplayJudgement(), props.overallState?.judgement],
+      ([calculated, stored]) => {
+        // Only auto-persist if:
+        // 1. A valid calculated judgement exists (not null/undefined)
+        // 2. The stored judgement differs from calculated (or is null)
+        // 3. Not disabled
+        if (calculated && calculated !== stored && !props.disabled) {
+          const currentState = props.overallState || {};
+          props.onUpdate({
+            ...currentState,
+            judgement: calculated,
+          });
+        }
+      },
+    ),
+  );
 
   function handleDirectionChange(direction) {
     props.onUpdate({

@@ -11,6 +11,7 @@ import GoogleDrivePickerModal from '../google-drive/GoogleDrivePickerModal.jsx';
 import { StudyCard } from './study-card/index.js';
 import AssignReviewersModal from './AssignReviewersModal.jsx';
 import ReviewerAssignment from '../overview-tab/ReviewerAssignment.jsx';
+import { OutcomeManager } from '../outcomes/index.js';
 import projectStore from '@/stores/projectStore.js';
 import projectActionsStore from '@/stores/projectActionsStore';
 import { useProjectContext } from '../ProjectContext.jsx';
@@ -141,6 +142,13 @@ export default function AllStudiesTab() {
           onSaveState={handleSaveState}
           onAddStudies={handleAddStudies}
         />
+      </Show>
+
+      {/* Outcome Management - Always visible for owners */}
+      <Show when={hasData()}>
+        <div class='mt-5'>
+          <OutcomeManager />
+        </div>
       </Show>
 
       {/* Reviewer Assignment - Shown for owners with unassigned studies */}

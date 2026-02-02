@@ -12,7 +12,7 @@ import projectActionsStore from '@/stores/projectActionsStore';
 import { ACCESS_DENIED_ERRORS } from '@/constants/errors.js';
 import { CHECKLIST_STATUS } from '@/constants/checklist-status.js';
 import {
-  findReconciledChecklist,
+  findReconciledChecklistForOutcome,
   getInProgressReconciledChecklists,
 } from '@/lib/checklist-domain.js';
 import { downloadPdf, getPdfUrl } from '@api/pdf-api.js';
@@ -253,28 +253,39 @@ export default function ReconciliationWrapper() {
   const [reconciledChecklistLoading, setReconciledChecklistLoading] = createSignal(false);
   const [hasCheckedForReconciled, setHasCheckedForReconciled] = createSignal(false);
 
+  // Extract outcomeId and type from checklist1 metadata (both checklists in a pair have same outcome)
+  const outcomeId = () => checklist1Meta()?.outcomeId || null;
+  const checklistType = createMemo(() => checklist1Meta()?.type || 'AMSTAR2');
+
   // Get or create reconciled checklist (with race condition prevention)
   // Must wait for YDoc to be synced before creating checklists
   createEffect(() => {
     const study = currentStudy();
     const state = connectionState();
+    const type = checklistType();
+    const outcome = outcomeId();
+
     // Wait for both study data AND YDoc sync before creating checklist
     if (!study || !state.synced || reconciledChecklistId() || hasCheckedForReconciled()) return;
 
     setHasCheckedForReconciled(true);
     setReconciledChecklistLoading(true);
 
-    // First, check if one already exists in reconciliation progress
-    const progress = getReconciliationProgress(params.studyId);
+    // First, check if one already exists in reconciliation progress for this outcome
+    const progress = getReconciliationProgress(params.studyId, outcome, type);
     if (
       progress &&
       progress.checklist1Id === params.checklist1Id &&
       progress.checklist2Id === params.checklist2Id &&
       progress.reconciledChecklistId
     ) {
-      // Verify it still exists and is not finalized
+      // Verify it still exists, matches outcome, and is not finalized
       const existingChecklist = study.checklists?.find(
-        c => c.id === progress.reconciledChecklistId && c.status !== CHECKLIST_STATUS.FINALIZED,
+        c =>
+          c.id === progress.reconciledChecklistId &&
+          c.status !== CHECKLIST_STATUS.FINALIZED &&
+          c.outcomeId === outcome &&
+          c.type === type,
       );
       if (existingChecklist) {
         setReconciledChecklistId(progress.reconciledChecklistId);
@@ -283,11 +294,11 @@ export default function ReconciliationWrapper() {
       }
     }
 
-    // Check if a reconciled checklist already exists (another client may have created it)
-    const existingReconciled = findReconciledChecklist(study);
+    // Check if a reconciled checklist already exists for this outcome
+    const existingReconciled = findReconciledChecklistForOutcome(study, outcome, type);
     if (existingReconciled && existingReconciled.status !== CHECKLIST_STATUS.FINALIZED) {
       // Found existing - save reference in progress and use it
-      saveReconciliationProgress(params.studyId, {
+      saveReconciliationProgress(params.studyId, outcome, type, {
         checklist1Id: params.checklist1Id,
         checklist2Id: params.checklist2Id,
         reconciledChecklistId: existingReconciled.id,
@@ -297,12 +308,8 @@ export default function ReconciliationWrapper() {
       return;
     }
 
-    // Need to create one - detect checklist type from checklist1
-    const checklist1 = checklist1Meta();
-    const checklistType = checklist1?.type || 'AMSTAR2';
-
-    // Create the reconciled checklist
-    const newChecklistId = createProjectChecklist(params.studyId, checklistType, null);
+    // Need to create one - create reconciled checklist with outcomeId
+    const newChecklistId = createProjectChecklist(params.studyId, type, null, outcome);
     if (!newChecklistId) {
       setError('Failed to create reconciled checklist');
       setReconciledChecklistLoading(false);
@@ -315,8 +322,8 @@ export default function ReconciliationWrapper() {
       title: 'Reconciled Checklist',
     });
 
-    // Save reference in reconciliation progress
-    saveReconciliationProgress(params.studyId, {
+    // Save reference in reconciliation progress for this outcome
+    saveReconciliationProgress(params.studyId, outcome, type, {
       checklist1Id: params.checklist1Id,
       checklist2Id: params.checklist2Id,
       reconciledChecklistId: newChecklistId,
@@ -335,19 +342,23 @@ export default function ReconciliationWrapper() {
 
     const study = currentStudy();
     const currentId = reconciledChecklistId();
+    const outcome = outcomeId();
+    const type = checklistType();
     if (!study || !currentId) return;
 
-    // Get all in-progress reconciled checklists
-    const allReconciled = getInProgressReconciledChecklists(study);
+    // Get all in-progress reconciled checklists for this specific outcome
+    const allReconciled = getInProgressReconciledChecklists(study).filter(
+      c => c.outcomeId === outcome && c.type === type,
+    );
 
     if (allReconciled.length > 1) {
-      // Multiple reconciled checklists exist - use the one created first
+      // Multiple reconciled checklists exist for this outcome - use the one created first
       allReconciled.sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));
       const firstCreated = allReconciled[0];
 
       if (firstCreated.id !== currentId) {
         // Another one was created first - use it instead
-        saveReconciliationProgress(params.studyId, {
+        saveReconciliationProgress(params.studyId, outcome, type, {
           checklist1Id: params.checklist1Id,
           checklist2Id: params.checklist2Id,
           reconciledChecklistId: firstCreated.id,
@@ -383,12 +394,6 @@ export default function ReconciliationWrapper() {
     };
 
     return result;
-  });
-
-  // Detect checklist type for routing to appropriate reconciliation component
-  const checklistType = createMemo(() => {
-    const meta = checklist1Meta();
-    return meta?.type || 'AMSTAR2';
   });
 
   // Check if this is a ROBINS-I checklist

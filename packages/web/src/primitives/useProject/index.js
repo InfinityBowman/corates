@@ -19,6 +19,7 @@ import { createChecklistOperations } from './checklists/index.js';
 import { createPdfOperations } from './pdfs.js';
 import { createReconciliationOperations } from './reconciliation.js';
 import { createAnnotationOperations } from './annotations.js';
+import { createOutcomeOperations } from './outcomes.js';
 import { db, deleteProjectData } from '../db.js';
 
 /**
@@ -52,6 +53,7 @@ function getOrCreateConnection(projectId) {
     pdfOps: null,
     reconciliationOps: null,
     annotationOps: null,
+    outcomeOps: null,
     refCount: 1,
     initialized: false,
   };
@@ -183,6 +185,7 @@ export function useProject(projectId) {
     connectionEntry.pdfOps = createPdfOperations(projectId, getYDoc, synced);
     connectionEntry.reconciliationOps = createReconciliationOperations(projectId, getYDoc, synced);
     connectionEntry.annotationOps = createAnnotationOperations(projectId, getYDoc, synced);
+    connectionEntry.outcomeOps = createOutcomeOperations(projectId, getYDoc, synced);
 
     // Register operations with the global action store
     projectActionsStore._setConnection(projectId, {
@@ -214,10 +217,8 @@ export function useProject(projectId) {
       // Reconciliation operations
       saveReconciliationProgress: connectionEntry.reconciliationOps.saveReconciliationProgress,
       getReconciliationProgress: connectionEntry.reconciliationOps.getReconciliationProgress,
-      getReconciliationNote: connectionEntry.reconciliationOps.getReconciliationNote,
+      getAllReconciliationProgress: connectionEntry.reconciliationOps.getAllReconciliationProgress,
       clearReconciliationProgress: connectionEntry.reconciliationOps.clearReconciliationProgress,
-      applyReconciliationToChecklists:
-        connectionEntry.reconciliationOps.applyReconciliationToChecklists,
       // Annotation operations
       addAnnotation: connectionEntry.annotationOps.addAnnotation,
       addAnnotations: connectionEntry.annotationOps.addAnnotations,
@@ -227,6 +228,13 @@ export function useProject(projectId) {
       getAllAnnotationsForPdf: connectionEntry.annotationOps.getAllAnnotationsForPdf,
       clearAnnotationsForChecklist: connectionEntry.annotationOps.clearAnnotationsForChecklist,
       mergeAnnotations: connectionEntry.annotationOps.mergeAnnotations,
+      // Outcome operations
+      getOutcomes: connectionEntry.outcomeOps.getOutcomes,
+      getOutcome: connectionEntry.outcomeOps.getOutcome,
+      createOutcome: connectionEntry.outcomeOps.createOutcome,
+      updateOutcome: connectionEntry.outcomeOps.updateOutcome,
+      deleteOutcome: connectionEntry.outcomeOps.deleteOutcome,
+      isOutcomeInUse: connectionEntry.outcomeOps.isOutcomeInUse,
     });
 
     // Listen for Y.Doc changes BEFORE setting up providers
@@ -374,6 +382,8 @@ export function useProject(projectId) {
       connectionEntry?.reconciliationOps?.saveReconciliationProgress(...args),
     getReconciliationProgress: (...args) =>
       connectionEntry?.reconciliationOps?.getReconciliationProgress(...args),
+    getAllReconciliationProgress: (...args) =>
+      connectionEntry?.reconciliationOps?.getAllReconciliationProgress(...args),
     clearReconciliationProgress: (...args) =>
       connectionEntry?.reconciliationOps?.clearReconciliationProgress(...args),
 
@@ -388,6 +398,14 @@ export function useProject(projectId) {
     clearAnnotationsForChecklist: (...args) =>
       connectionEntry?.annotationOps?.clearAnnotationsForChecklist(...args),
     mergeAnnotations: (...args) => connectionEntry?.annotationOps?.mergeAnnotations(...args),
+
+    // Outcome operations
+    getOutcomes: () => connectionEntry?.outcomeOps?.getOutcomes() || [],
+    getOutcome: (...args) => connectionEntry?.outcomeOps?.getOutcome(...args),
+    createOutcome: (...args) => connectionEntry?.outcomeOps?.createOutcome(...args),
+    updateOutcome: (...args) => connectionEntry?.outcomeOps?.updateOutcome(...args),
+    deleteOutcome: (...args) => connectionEntry?.outcomeOps?.deleteOutcome(...args),
+    isOutcomeInUse: (...args) => connectionEntry?.outcomeOps?.isOutcomeInUse(...args),
 
     // Connection management
     connect,

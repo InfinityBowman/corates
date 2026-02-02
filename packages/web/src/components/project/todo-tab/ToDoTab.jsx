@@ -20,6 +20,20 @@ export default function ToDoTab() {
   // Local UI state
   const [showChecklistForm, setShowChecklistForm] = createSignal(null);
   const [creatingChecklist, setCreatingChecklist] = createSignal(false);
+  const [expandedStudies, setExpandedStudies] = createSignal(new Set());
+
+  // Toggle expanded state for a study
+  const toggleExpanded = studyId => {
+    setExpandedStudies(prev => {
+      const next = new Set(prev);
+      if (next.has(studyId)) {
+        next.delete(studyId);
+      } else {
+        next.add(studyId);
+      }
+      return next;
+    });
+  };
 
   // Read from store directly
   const studies = () => projectStore.getStudies(projectId);
@@ -37,10 +51,10 @@ export default function ToDoTab() {
   });
 
   // Handlers
-  const handleCreateChecklist = async (studyId, type, assigneeId) => {
+  const handleCreateChecklist = async (studyId, type, assigneeId, outcomeId) => {
     setCreatingChecklist(true);
     try {
-      const success = projectActionsStore.checklist.create(studyId, type, assigneeId);
+      const success = projectActionsStore.checklist.create(studyId, type, assigneeId, outcomeId);
       if (success) setShowChecklistForm(null);
     } finally {
       setCreatingChecklist(false);
@@ -57,6 +71,10 @@ export default function ToDoTab() {
 
   const handleDownloadPdf = (studyId, pdf) => {
     projectActionsStore.pdf.download(studyId, pdf);
+  };
+
+  const handleDeleteChecklist = (studyId, checklistId) => {
+    projectActionsStore.checklist.delete(studyId, checklistId);
   };
 
   return (
@@ -83,14 +101,17 @@ export default function ToDoTab() {
               study={study}
               members={members()}
               currentUserId={currentUserId()}
+              expanded={expandedStudies().has(study.id)}
+              onToggleExpanded={() => toggleExpanded(study.id)}
               showChecklistForm={showChecklistForm() === study.id}
               onToggleChecklistForm={() =>
                 setShowChecklistForm(prev => (prev === study.id ? null : study.id))
               }
-              onAddChecklist={(type, assigneeId) =>
-                handleCreateChecklist(study.id, type, assigneeId)
+              onAddChecklist={(type, assigneeId, outcomeId) =>
+                handleCreateChecklist(study.id, type, assigneeId, outcomeId)
               }
               onOpenChecklist={checklistId => openChecklist(study.id, checklistId)}
+              onDeleteChecklist={checklistId => handleDeleteChecklist(study.id, checklistId)}
               onViewPdf={pdf => handleViewPdf(study.id, pdf)}
               onDownloadPdf={pdf => handleDownloadPdf(study.id, pdf)}
               creatingChecklist={creatingChecklist()}

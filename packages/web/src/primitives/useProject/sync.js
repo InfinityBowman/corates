@@ -38,6 +38,23 @@ export function createSyncManager(projectId, getYDoc) {
     const metaMap = ydoc.getMap('meta');
     const metaData = metaMap.toJSON ? metaMap.toJSON() : {};
 
+    // Extract outcomes from meta and convert to sorted array
+    const outcomesMap = metaMap.get('outcomes');
+    if (outcomesMap && typeof outcomesMap.entries === 'function') {
+      const outcomesList = [];
+      for (const [outcomeId, outcomeYMap] of outcomesMap.entries()) {
+        const outcomeData = outcomeYMap.toJSON ? outcomeYMap.toJSON() : outcomeYMap;
+        outcomesList.push({
+          id: outcomeId,
+          ...outcomeData,
+        });
+      }
+      outcomesList.sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));
+      metaData.outcomes = outcomesList;
+    } else {
+      metaData.outcomes = [];
+    }
+
     // Sync members
     const membersMap = ydoc.getMap('members');
     const membersList = buildMembersList(membersMap);
@@ -103,6 +120,7 @@ function buildStudyFromYMap(studyId, studyData, studyYMap) {
         type: checklistType,
         title: checklistData.title || null,
         assignedTo: checklistData.assignedTo || null,
+        outcomeId: checklistData.outcomeId || null,
         status: status,
         createdAt: checklistData.createdAt,
         updatedAt: checklistData.updatedAt,
