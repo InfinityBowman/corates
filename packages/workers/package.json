@@ -30,17 +30,17 @@
     "localflare": "localflare"
   },
   "dependencies": {
-    "@better-auth/stripe": "^1.4.17",
-    "@cloudflare/workers-types": "^4.20260127.0",
+    "@better-auth/stripe": "^1.4.18",
+    "@cloudflare/workers-types": "^4.20260131.0",
     "@corates/shared": "workspace:*",
-    "@hono/zod-openapi": "^1.2.0",
-    "@sentry/cloudflare": "^10.37.0",
-    "better-auth": "^1.4.17",
+    "@hono/zod-openapi": "^1.2.1",
+    "@sentry/cloudflare": "^10.38.0",
+    "better-auth": "^1.4.18",
     "drizzle-orm": "^0.45.1",
     "hono": "^4.11.7",
     "lib0": "^0.2.117",
     "postmark": "^4.0.5",
-    "stripe": "^20.2.0",
+    "stripe": "^20.3.0",
     "y-protocols": "^1.0.7",
     "yjs": "^13.6.29",
     "zod": "^4.3.6"
