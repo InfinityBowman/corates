@@ -31,7 +31,7 @@
   },
   "dependencies": {
     "@better-auth/stripe": "^1.4.17",
-    "@cloudflare/workers-types": "^4.20260127.0",
+    "@cloudflare/workers-types": "^4.20260131.0",
     "@corates/shared": "workspace:*",
     "@hono/zod-openapi": "^1.2.0",
     "@sentry/cloudflare": "^10.37.0",
