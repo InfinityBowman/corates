@@ -362,3 +362,45 @@ export function findReconciledChecklistForOutcome(study, outcomeId, type, exclud
     }) || null
   );
 }
+
+/**
+ * Derives a consistent key for outcome-based grouping
+ * @param {string|null} outcomeId - The outcome ID
+ * @param {string} type - The checklist type
+ * @returns {string} The outcome key
+ */
+export function getOutcomeKey(outcomeId, type) {
+  return outcomeId || `type:${type}`;
+}
+
+/**
+ * Groups completed checklists by outcome
+ * @param {Object} study - The study object
+ * @returns {Array<{outcomeId: string|null, type: string, checklists: Array}>} Groups of completed checklists
+ */
+export function getCompletedChecklistsByOutcome(study) {
+  if (!study) return [];
+
+  const checklists = study.checklists || [];
+  const completed = checklists.filter(c => c.status === CHECKLIST_STATUS.FINALIZED);
+
+  if (completed.length === 0) return [];
+
+  const groups = new Map();
+
+  for (const checklist of completed) {
+    const groupKey = getOutcomeKey(checklist.outcomeId, checklist.type);
+
+    if (!groups.has(groupKey)) {
+      groups.set(groupKey, {
+        outcomeId: checklist.outcomeId || null,
+        type: checklist.type,
+        checklists: [],
+      });
+    }
+
+    groups.get(groupKey).checklists.push(checklist);
+  }
+
+  return Array.from(groups.values());
+}

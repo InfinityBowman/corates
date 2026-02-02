@@ -217,10 +217,8 @@ export function useProject(projectId) {
       // Reconciliation operations
       saveReconciliationProgress: connectionEntry.reconciliationOps.saveReconciliationProgress,
       getReconciliationProgress: connectionEntry.reconciliationOps.getReconciliationProgress,
-      getReconciliationNote: connectionEntry.reconciliationOps.getReconciliationNote,
+      getAllReconciliationProgress: connectionEntry.reconciliationOps.getAllReconciliationProgress,
       clearReconciliationProgress: connectionEntry.reconciliationOps.clearReconciliationProgress,
-      applyReconciliationToChecklists:
-        connectionEntry.reconciliationOps.applyReconciliationToChecklists,
       // Annotation operations
       addAnnotation: connectionEntry.annotationOps.addAnnotation,
       addAnnotations: connectionEntry.annotationOps.addAnnotations,
@@ -384,6 +382,8 @@ export function useProject(projectId) {
       connectionEntry?.reconciliationOps?.saveReconciliationProgress(...args),
     getReconciliationProgress: (...args) =>
       connectionEntry?.reconciliationOps?.getReconciliationProgress(...args),
+    getAllReconciliationProgress: (...args) =>
+      connectionEntry?.reconciliationOps?.getAllReconciliationProgress(...args),
     clearReconciliationProgress: (...args) =>
       connectionEntry?.reconciliationOps?.clearReconciliationProgress(...args),
 
