@@ -388,8 +388,8 @@ importers:
         specifier: ^1.2.0
         version: 1.2.0(hono@4.11.7)(zod@4.3.6)
       '@sentry/cloudflare':
-        specifier: ^10.37.0
-        version: 10.37.0(@cloudflare/workers-types@4.20260127.0)
+        specifier: ^10.38.0
+        version: 10.38.0(@cloudflare/workers-types@4.20260127.0)
       better-auth:
         specifier: ^1.4.17
         version: 1.4.17(better-sqlite3@12.6.2)(drizzle-kit@0.31.8)(drizzle-orm@0.45.1(@cloudflare/workers-types@4.20260127.0)(@opentelemetry/api@1.9.0)(@types/better-sqlite3@7.6.13)(better-sqlite3@12.6.2)(gel@2.2.0)(kysely@0.28.10))(react-dom@19.2.3(react@19.2.4))(react@19.2.4)(solid-js@1.9.11)(svelte@5.46.1)(vitest@3.2.0(@types/node@25.0.10)(jiti@2.6.1)(jsdom@27.4.0(@noble/hashes@2.0.1))(lightningcss@1.30.2)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.2))(vue@3.5.27(typescript@5.9.3))
@@ -2870,8 +2870,8 @@ packages:
     resolution: {integrity: sha512-kheqJNqGZP5TSBCPv4Vienv1sfZwXKHQDYR+xrdHHYdZqwWuZMJJW/cLO9XjYAe+B9NnJ4UwJOoY4fPvU+HQ1Q==}
     engines: {node: '>=18'}
 
-  '@sentry/cloudflare@10.37.0':
-    resolution: {integrity: sha512-js7HYsTGsYK/+uJyLc3yMruQ1tiprMXBQGjUs/m/a4H5V68GqQcus/XbQF0YJS/RqeFuAHAoVSS5D49AUGT12g==}
+  '@sentry/cloudflare@10.38.0':
+    resolution: {integrity: sha512-g008TNjxPbS5csEem3u6jBO40qNY4Vky5q1hJXlUjoNnCDt+5vMLPMzVqJVVbAzWWU+dwjdiMzGeNjwn0RYwcQ==}
     engines: {node: '>=18'}
     peerDependencies:
       '@cloudflare/workers-types': ^4.x
@@ -2881,6 +2881,10 @@ packages:
 
   '@sentry/core@10.37.0':
     resolution: {integrity: sha512-hkRz7S4gkKLgPf+p3XgVjVm7tAfvcEPZxeACCC6jmoeKhGkzN44nXwLiqqshJ25RMcSrhfFvJa/FlBg6zupz7g==}
+    engines: {node: '>=18'}
+
+  '@sentry/core@10.38.0':
+    resolution: {integrity: sha512-1pubWDZE5y5HZEPMAZERP4fVl2NH3Ihp1A+vMoVkb3Qc66Diqj1WierAnStlZP7tCx0TBa0dK85GTW/ZFYyB9g==}
     engines: {node: '>=18'}
 
   '@sentry/solid@10.37.0':
@@ -10100,14 +10104,16 @@ snapshots:
       '@sentry-internal/replay-canvas': 10.37.0
       '@sentry/core': 10.37.0
 
-  '@sentry/cloudflare@10.37.0(@cloudflare/workers-types@4.20260127.0)':
+  '@sentry/cloudflare@10.38.0(@cloudflare/workers-types@4.20260127.0)':
     dependencies:
       '@opentelemetry/api': 1.9.0
-      '@sentry/core': 10.37.0
+      '@sentry/core': 10.38.0
     optionalDependencies:
       '@cloudflare/workers-types': 4.20260127.0
 
   '@sentry/core@10.37.0': {}
+
+  '@sentry/core@10.38.0': {}
 
   '@sentry/solid@10.37.0(@solidjs/router@0.15.4(solid-js@1.9.11))(solid-js@1.9.11)':
     dependencies:
