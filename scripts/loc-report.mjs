@@ -15,9 +15,12 @@
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
+import { existsSync } from 'fs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..');
+// Check if packages directory exists
+const hasPackages = existsSync(join(ROOT, 'packages'));
 
 // ANSI color codes
 const colors = {
@@ -262,9 +265,16 @@ function main() {
   const filter = args.find(arg => !arg.startsWith('--'));
 
   // Determine target path
-  let targetPath = 'packages';
+  let targetPath;
   if (filter && filter !== 'packages') {
-    targetPath = `packages/${filter}`;
+    // Specific package requested
+    targetPath = hasPackages ? `packages/${filter}` : filter;
+  } else if (hasPackages) {
+    // Default to packages directory
+    targetPath = 'packages';
+  } else {
+    // No packages directory - count from root
+    targetPath = '.';
   }
 
   // Run tokei
@@ -277,15 +287,15 @@ function main() {
 
   // Print header
   console.log('');
-  console.log(c('bold', c('cyan', '  CoRATES Lines of Code Report')));
+  console.log(c('bold', c('cyan', '  Lines of Code Report')));
   console.log(c('gray', `  Target: ${targetPath}${excludeTests ? ' (excluding tests)' : ''}`));
 
   // Quick stats
   printQuickStats(data);
 
-  // Per-package breakdown
-  if (!filter || filter === 'packages') {
-    const packageDirs = ['docs', 'landing', 'mcp', 'shared', 'ui', 'web', 'workers'];
+  // Per-package breakdown (only if packages directory exists)
+  if (hasPackages && (!filter || filter === 'packages')) {
+    const packageDirs = ['docs', 'landing', 'mcp', 'mcp-memory', 'shared', 'ui', 'web', 'workers'];
     const packageStats = [];
 
     for (const pkg of packageDirs) {
