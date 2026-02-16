@@ -24,7 +24,7 @@
     "@embedpdf/models": "^2.5.0",
     "@embedpdf/pdfium": "^2.5.0",
     "@embedpdf/plugin-annotation": "^2.5.0",
-    "@embedpdf/plugin-capture": "^2.5.0",
+    "@embedpdf/plugin-capture": "^2.6.0",
     "@embedpdf/plugin-commands": "^2.5.0",
     "@embedpdf/plugin-document-manager": "^2.5.0",
     "@embedpdf/plugin-export": "^2.5.0",
