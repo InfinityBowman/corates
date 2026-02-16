@@ -22,7 +22,7 @@
     "@embedpdf/core": "^2.5.0",
     "@embedpdf/engines": "^2.5.0",
     "@embedpdf/models": "^2.5.0",
-    "@embedpdf/pdfium": "^2.5.0",
+    "@embedpdf/pdfium": "^2.6.0",
     "@embedpdf/plugin-annotation": "^2.5.0",
     "@embedpdf/plugin-capture": "^2.5.0",
     "@embedpdf/plugin-commands": "^2.5.0",
