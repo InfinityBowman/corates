@@ -186,15 +186,14 @@ export default function PrivacyPolicy() {
                 </div>
 
                 <div class='border-l-2 border-gray-200 pl-4'>
-                  <h4 class='font-medium text-gray-900'>Web Analytics</h4>
+                  <h4 class='font-medium text-gray-900'>Error and Diagnostic Data</h4>
                   <p class='mt-1 text-sm text-gray-600'>
-                    <strong>Examples:</strong> Web page interactions, referring webpage/source,
-                    statistics associated with the interaction between device or browser and the
-                    Services
+                    <strong>Examples:</strong> Technical error reports, browser type and version,
+                    stack traces when an error occurs
                   </p>
                   <p class='text-sm text-gray-600'>
-                    <strong>Third Parties We Share With:</strong> Service Providers, Parties You
-                    Authorize
+                    <strong>Third Parties We Share With:</strong> Service Providers (Sentry for
+                    error monitoring)
                   </p>
                 </div>
 
@@ -252,8 +251,8 @@ export default function PrivacyPolicy() {
                   <strong>Third Parties</strong>
                   <ul class='mt-1 ml-6 list-outside list-disc text-gray-600'>
                     <li>
-                      Vendors (we may use analytics providers to analyze how you interact with the
-                      Services)
+                      Vendors (we use Sentry for error monitoring to identify and fix technical
+                      issues with the Services)
                     </li>
                     <li>
                       Authentication providers (ORCID, Google) when you choose to connect your
@@ -342,7 +341,7 @@ export default function PrivacyPolicy() {
                     <li>Payment processors (Stripe, Inc.)</li>
                     <li>Email service providers (Postmark / ActiveCampaign, LLC)</li>
                     <li>Security and fraud prevention consultants</li>
-                    <li>Analytics providers</li>
+                    <li>Error monitoring providers (Sentry)</li>
                     <li>Support and customer service vendors</li>
                   </ul>
                 </li>
@@ -503,10 +502,12 @@ export default function PrivacyPolicy() {
               </h2>
 
               <p>
-                The Services use cookies and similar technologies such as pixel tags, web beacons,
-                clear GIFs and JavaScript (collectively, "Cookies") to enable our servers to
-                recognize your web browser, tell us how and when you visit and use our Services,
-                analyze trends, learn about our user base and operate and improve our Services.
+                The Services use cookies and similar technologies (collectively, "Cookies") to
+                enable our servers to recognize your web browser and operate and improve our
+                Services. We also use Sentry, a third-party error monitoring service, to collect
+                technical error reports (such as stack traces and browser metadata) when something
+                goes wrong. Sentry does not track your browsing behavior or collect personally
+                identifiable information.
               </p>
 
               <p>We use the following types of Cookies:</p>
@@ -522,12 +523,6 @@ export default function PrivacyPolicy() {
                   <strong>Functional Cookies.</strong> Functional Cookies are used to record your
                   choices and settings regarding our Services, maintain your preferences over time
                   and recognize you when you return to our Services.
-                </li>
-                <li>
-                  <strong>Performance/Analytical Cookies.</strong> Performance/Analytical Cookies
-                  allow us to understand how visitors use our Services by collecting information
-                  about the number of visitors, what pages visitors view, and how long visitors are
-                  viewing pages.
                 </li>
               </ul>
 

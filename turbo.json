@@ -16,9 +16,12 @@
       "persistent": true
     },
     "dev": {
-      "dependsOn": ["^build"],
+      "dependsOn": ["^build", "//#kill-ports"],
       "cache": false,
       "persistent": true
+    },
+    "//#kill-ports": {
+      "cache": false
     },
     "deploy": {
       "dependsOn": ["build"],
