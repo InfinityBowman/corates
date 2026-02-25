@@ -54,8 +54,8 @@ export default function CompletedOutcomeRow(props) {
             </span>
           </Show>
 
-          {/* Checklist type */}
-          <span class='text-foreground text-sm font-medium'>
+          {/* Checklist type badge */}
+          <span class='bg-secondary text-secondary-foreground rounded-full px-2 py-0.5 text-xs font-medium'>
             {getChecklistMetadata(outcomeGroup().type)?.name || outcomeGroup().type}
           </span>
 

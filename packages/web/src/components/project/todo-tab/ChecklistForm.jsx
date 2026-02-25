@@ -6,6 +6,7 @@
 import { createSignal, createMemo, Show } from 'solid-js';
 import {
   getChecklistTypeOptions,
+  getChecklistMetadata,
   DEFAULT_CHECKLIST_TYPE,
   CHECKLIST_TYPES,
 } from '@/checklist-registry';
@@ -124,25 +125,25 @@ export default function ChecklistForm(props) {
         </button>
       </div>
 
-      {/* Warning messages for outcome issues */}
-      <Show when={requiresOutcome() && hasOutcomeIssue()}>
+      {/* Warning: no outcomes defined (blocking) */}
+      <Show when={requiresOutcome() && hasOutcomeIssue() && outcomes().length === 0}>
         <div class='mt-2 rounded-lg border border-amber-300 bg-amber-50 p-3'>
-          <Show
-            when={outcomes().length === 0}
-            fallback={
-              <>
-                <p class='text-sm font-medium text-amber-800'>All outcomes already used</p>
-                <p class='mt-1 text-xs text-amber-700'>
-                  You already have a {type()} checklist for each available outcome.
-                </p>
-              </>
-            }
-          >
-            <p class='text-sm font-medium text-amber-800'>No outcomes defined</p>
-            <p class='mt-1 text-xs text-amber-700'>
-              {type()} requires an outcome. Add outcomes in the All Studies tab first.
-            </p>
-          </Show>
+          <p class='text-sm font-medium text-amber-800'>No outcomes defined</p>
+          <p class='mt-1 text-xs text-amber-700'>
+            {getChecklistMetadata(type())?.name || type()} requires an outcome. Add outcomes in the
+            All Studies tab first.
+          </p>
+        </div>
+      </Show>
+
+      {/* Info: all outcomes covered (non-blocking) */}
+      <Show when={requiresOutcome() && hasOutcomeIssue() && outcomes().length > 0}>
+        <div class='mt-2 rounded-lg border border-blue-300 bg-blue-50 p-3'>
+          <p class='text-sm font-medium text-blue-800'>All outcomes covered</p>
+          <p class='mt-1 text-xs text-blue-700'>
+            You already have a {getChecklistMetadata(type())?.name || type()} checklist for each
+            available outcome.
+          </p>
         </div>
       </Show>
     </div>
