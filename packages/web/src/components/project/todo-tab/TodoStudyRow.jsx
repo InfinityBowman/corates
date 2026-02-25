@@ -1,8 +1,9 @@
 /**
- * TodoStudyRow - Compact study card for the todo tab
+ * TodoStudyRow - Study card for the todo tab
  *
  * Displays study info, checklist status, and collapsible PDF section.
- * Supports multiple checklists per study (one per outcome for ROB-2/ROBINS-I).
+ * Multiple checklists are shown as stacked sub-rows (always visible).
+ * Single checklists are shown inline in the header row.
  */
 
 import { For, Show, createMemo, createSignal } from 'solid-js';
@@ -33,7 +34,7 @@ export default function TodoStudyRow(props) {
   // props.study: Study object with pdfs and checklists arrays
   // props.members: Array of project members
   // props.currentUserId: Current user's ID
-  // props.expanded: boolean - controlled expanded state
+  // props.expanded: boolean - controlled expanded state (for PDFs)
   // props.onToggleExpanded: () => void
   // props.onOpenChecklist: (checklistId) => void
   // props.onDeleteChecklist: (checklistId) => void
@@ -129,27 +130,51 @@ export default function TodoStudyRow(props) {
     return `${author || 'Unknown'}${year ? ` (${year})` : ''}`;
   };
 
-  // Determine if row should be expandable (has PDFs or multiple checklists)
-  const isExpandable = () => hasPdfs() || checklists().length > 1;
+  // PDFs are expandable via chevron
+  const isPdfExpandable = () => hasPdfs();
 
-  // Handle row click - toggle unless clicking on interactive elements or selectable text
+  // Handle row click for PDF expansion only
   const handleRowClick = e => {
-    if (!isExpandable()) return;
+    if (!isPdfExpandable()) return;
     const target = e.target;
     const interactive = target.closest('button, [role="button"], [data-selectable]');
     if (interactive) return;
     props.onToggleExpanded?.();
   };
 
+  // Add/Cancel button shared between single and multi modes
+  const AddCancelButton = () => (
+    <Show when={(hasChecklists() && canAddMore()) || props.showChecklistForm}>
+      <button
+        onClick={e => {
+          e.stopPropagation();
+          props.onToggleChecklistForm?.();
+        }}
+        class={`flex shrink-0 items-center gap-1 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors focus:outline-none ${
+          props.showChecklistForm ?
+            'text-red-500 hover:bg-red-50 hover:text-red-600 focus:ring-2 focus:ring-red-200'
+          : 'bg-primary hover:bg-primary/90 focus:ring-primary text-white focus:ring-2'
+        }`}
+        title={props.showChecklistForm ? 'Cancel' : 'Add another checklist'}
+      >
+        <Show when={props.showChecklistForm} fallback={<FiPlus class='h-4 w-4' />}>
+          <FiX class='h-4 w-4' />
+        </Show>
+        {props.showChecklistForm ? 'Cancel' : 'Add'}
+      </button>
+    </Show>
+  );
+
   return (
     <div class='border-border bg-card hover:border-border-strong overflow-hidden rounded-lg border transition-colors'>
       <Collapsible open={props.expanded}>
+        {/* Study header row */}
         <div
-          class={`flex items-center gap-3 px-4 py-3 select-none ${isExpandable() ? 'cursor-pointer' : ''}`}
+          class={`flex flex-wrap items-center gap-3 px-4 py-3 select-none ${isPdfExpandable() ? 'cursor-pointer' : ''}`}
           onClick={handleRowClick}
         >
-          {/* Chevron indicator */}
-          <Show when={isExpandable()}>
+          {/* Chevron for PDFs */}
+          <Show when={isPdfExpandable()}>
             <div class='-ml-1 shrink-0 p-1'>
               <BiRegularChevronRight
                 class={`text-muted-foreground/70 h-5 w-5 transition-transform duration-200 ${props.expanded ? 'rotate-90' : ''}`}
@@ -162,7 +187,6 @@ export default function TodoStudyRow(props) {
             <div class='flex items-center gap-2'>
               <span class='text-foreground truncate font-medium'>{study().name}</span>
             </div>
-            {/* Citation line - selectable */}
             <Show when={citationLine()}>
               <p
                 class='text-muted-foreground w-fit cursor-text truncate text-xs select-text'
@@ -172,17 +196,10 @@ export default function TodoStudyRow(props) {
                 <Show when={hasPdfs()}>
                   <span class='text-muted-foreground/70'> · {pdfCount()} PDFs</span>
                 </Show>
-                <Show when={checklists().length > 1}>
-                  <span class='text-muted-foreground/70'> · {checklists().length} checklists</span>
-                </Show>
               </p>
             </Show>
-            <Show when={!citationLine() && (hasPdfs() || checklists().length > 1)}>
-              <p class='text-muted-foreground/70 text-xs'>
-                <Show when={hasPdfs()}>{pdfCount()} PDFs</Show>
-                <Show when={hasPdfs() && checklists().length > 1}> · </Show>
-                <Show when={checklists().length > 1}>{checklists().length} checklists</Show>
-              </p>
+            <Show when={!citationLine() && hasPdfs()}>
+              <p class='text-muted-foreground/70 text-xs'>{pdfCount()} PDFs</p>
             </Show>
           </div>
 
@@ -192,25 +209,22 @@ export default function TodoStudyRow(props) {
               const checklist = checklists()[0];
               return (
                 <>
-                  {/* Checklist type badge */}
                   <span
-                    class='bg-secondary text-secondary-foreground inline-flex shrink-0 cursor-text items-center rounded-full px-2 py-1 text-xs font-medium select-text'
+                    class='bg-secondary text-secondary-foreground inline-flex shrink-0 cursor-text items-center rounded-full px-2 py-0.5 text-xs font-medium select-text'
                     data-selectable
                   >
                     {getChecklistMetadata(checklist.type)?.name || 'Checklist'}
                   </span>
 
-                  {/* Outcome badge if applicable */}
                   <Show when={checklist.outcomeId}>
                     <span
-                      class='bg-secondary text-secondary-foreground inline-flex shrink-0 cursor-text items-center rounded-full px-2 py-1 text-xs font-medium select-text'
+                      class='bg-secondary text-secondary-foreground inline-flex shrink-0 cursor-text items-center rounded-full px-2 py-0.5 text-xs font-medium select-text'
                       data-selectable
                     >
                       {getOutcomeName(checklist.outcomeId)}
                     </span>
                   </Show>
 
-                  {/* Status badge */}
                   <span
                     class={`inline-flex shrink-0 cursor-text items-center rounded-full px-2.5 py-1 text-xs font-medium select-text ${getStatusStyle(checklist.status)}`}
                     data-selectable
@@ -218,7 +232,6 @@ export default function TodoStudyRow(props) {
                     {getStatusLabel(checklist.status)}
                   </span>
 
-                  {/* Open button */}
                   <button
                     onClick={e => {
                       e.stopPropagation();
@@ -229,7 +242,6 @@ export default function TodoStudyRow(props) {
                     Open
                   </button>
 
-                  {/* Delete button */}
                   <button
                     onClick={e => {
                       e.stopPropagation();
@@ -245,11 +257,6 @@ export default function TodoStudyRow(props) {
             })()}
           </Show>
 
-          {/* Multiple checklists: show count, details in expanded */}
-          <Show when={checklists().length > 1}>
-            <span class='text-muted-foreground text-sm'>{checklists().length} checklists</span>
-          </Show>
-
           {/* No checklists: show Select Checklist button */}
           <Show when={!hasChecklists()}>
             <button
@@ -263,72 +270,59 @@ export default function TodoStudyRow(props) {
             </button>
           </Show>
 
-          {/* Add/Cancel toggle button (when has checklists and can add more, or form is open) */}
-          <Show when={(hasChecklists() && canAddMore()) || props.showChecklistForm}>
-            <button
-              onClick={e => {
-                e.stopPropagation();
-                props.onToggleChecklistForm?.();
-              }}
-              class={`flex shrink-0 items-center gap-1 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors focus:outline-none ${
-                props.showChecklistForm ?
-                  'text-red-500 hover:bg-red-50 hover:text-red-600 focus:ring-2 focus:ring-red-200'
-                : 'bg-primary hover:bg-primary/90 focus:ring-primary text-white focus:ring-2'
-              }`}
-              title={props.showChecklistForm ? 'Cancel' : 'Add another checklist'}
-            >
-              <Show when={props.showChecklistForm} fallback={<FiPlus class='h-4 w-4' />}>
-                <FiX class='h-4 w-4' />
-              </Show>
-              {props.showChecklistForm ? 'Cancel' : 'Add'}
-            </button>
+          {/* Add/Cancel button for single checklist mode */}
+          <Show when={checklists().length <= 1}>
+            <AddCancelButton />
+          </Show>
+
+          {/* Multi-checklist: show Add button in header */}
+          <Show when={checklists().length > 1}>
+            <AddCancelButton />
           </Show>
         </div>
 
-        <CollapsibleContent>
-          {/* Multiple checklists list */}
-          <Show when={checklists().length > 1}>
-            <div class='border-border-subtle space-y-1 border-t px-4 py-3'>
-              <For each={checklists()}>
-                {checklist => (
-                  <div class='bg-muted/50 flex items-center justify-between rounded-lg p-3'>
-                    <div class='flex items-center gap-2'>
+        {/* Stacked sub-rows for multiple checklists (always visible, no dropdown) */}
+        <Show when={checklists().length > 1}>
+          <div class='divide-border-subtle divide-y'>
+            <For each={checklists()}>
+              {checklist => (
+                <div class='flex items-center gap-3 px-4 py-2.5'>
+                  <div class='flex flex-1 flex-wrap items-center gap-1.5'>
+                    <span class='bg-secondary text-secondary-foreground rounded-full px-2 py-0.5 text-xs font-medium'>
+                      {getChecklistMetadata(checklist.type)?.name || 'Checklist'}
+                    </span>
+                    <Show when={checklist.outcomeId}>
                       <span class='bg-secondary text-secondary-foreground rounded-full px-2 py-0.5 text-xs font-medium'>
-                        {getChecklistMetadata(checklist.type)?.name || 'Checklist'}
+                        {getOutcomeName(checklist.outcomeId)}
                       </span>
-                      <Show when={checklist.outcomeId}>
-                        <span class='text-muted-foreground text-sm'>
-                          {getOutcomeName(checklist.outcomeId)}
-                        </span>
-                      </Show>
-                      <span
-                        class={`rounded-full px-2 py-0.5 text-xs font-medium ${getStatusStyle(checklist.status)}`}
-                      >
-                        {getStatusLabel(checklist.status)}
-                      </span>
-                    </div>
-                    <div class='flex items-center gap-2'>
-                      <button
-                        onClick={() => props.onOpenChecklist?.(checklist.id)}
-                        class='bg-primary hover:bg-primary/90 focus:ring-primary rounded-lg px-3 py-1.5 text-sm font-medium text-white transition-colors focus:ring-2 focus:outline-none'
-                      >
-                        Open
-                      </button>
-                      <button
-                        onClick={() => setDeleteChecklistId(checklist.id)}
-                        class='text-muted-foreground p-1.5 transition-colors hover:text-red-600'
-                        title='Delete checklist'
-                      >
-                        <FiTrash2 class='h-4 w-4' />
-                      </button>
-                    </div>
+                    </Show>
+                    <span
+                      class={`rounded-full px-2 py-0.5 text-xs font-medium ${getStatusStyle(checklist.status)}`}
+                    >
+                      {getStatusLabel(checklist.status)}
+                    </span>
                   </div>
-                )}
-              </For>
-            </div>
-          </Show>
+                  <button
+                    onClick={() => props.onOpenChecklist?.(checklist.id)}
+                    class='bg-primary hover:bg-primary/90 focus:ring-primary shrink-0 rounded-lg px-3 py-1.5 text-sm font-medium text-white transition-colors focus:ring-2 focus:outline-none'
+                  >
+                    Open
+                  </button>
+                  <button
+                    onClick={() => setDeleteChecklistId(checklist.id)}
+                    class='text-muted-foreground shrink-0 p-1.5 transition-colors hover:text-red-600'
+                    title='Delete checklist'
+                  >
+                    <FiTrash2 class='h-4 w-4' />
+                  </button>
+                </div>
+              )}
+            </For>
+          </div>
+        </Show>
 
-          {/* Expanded PDF Section */}
+        {/* Expandable PDF Section */}
+        <CollapsibleContent>
           <Show when={hasPdfs()}>
             <div class='border-border-subtle space-y-2 border-t px-4 py-3'>
               <For each={sortedPdfs()}>
