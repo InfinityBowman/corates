@@ -170,23 +170,12 @@ billingSubscriptionRoutes.openapi(usageRoute, async c => {
       return c.json(error, error.statusCode as ContentfulStatusCode);
     }
 
-    const { projects, projectMembers } = await import('@/db/schema.js');
-    const { eq, count, countDistinct } = await import('drizzle-orm');
-
-    const [projectCountResult] = await db
-      .select({ count: count() })
-      .from(projects)
-      .where(eq(projects.orgId, orgId));
-
-    const [collaboratorCountResult] = await db
-      .select({ count: countDistinct(projectMembers.userId) })
-      .from(projectMembers)
-      .innerJoin(projects, eq(projectMembers.projectId, projects.id))
-      .where(eq(projects.orgId, orgId));
+    const { getOrgResourceUsage } = await import('@/lib/billingResolver.js');
+    const usage = await getOrgResourceUsage(db, orgId);
 
     return c.json({
-      projects: Number(projectCountResult?.count ?? 0),
-      collaborators: Number(collaboratorCountResult?.count ?? 0),
+      projects: usage.projects,
+      collaborators: usage.collaborators,
     });
   } catch (err) {
     const error = err as Error;

@@ -23,13 +23,18 @@ function resolvePlan(planId) {
 }
 
 /**
+ * Statuses that grant full access to plan features
+ */
+const ACTIVE_STATUSES = ['active', 'trialing', 'past_due'];
+
+/**
  * Check if subscription is active
  * @param {Object|null} subscription - Subscription object from API
  * @returns {boolean} True if subscription is active
  */
 export function isSubscriptionActive(subscription) {
   if (!subscription) return false;
-  if (subscription.status !== 'active') return false;
+  if (!ACTIVE_STATUSES.includes(subscription.status)) return false;
   if (!subscription.currentPeriodEnd) return true;
   const now = Math.floor(Date.now() / 1000);
 

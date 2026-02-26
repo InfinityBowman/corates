@@ -14,6 +14,12 @@ import { useProjectContext } from '../ProjectContext.jsx';
 import { showToast } from '@/components/ui/toast';
 import { Avatar, AvatarImage, AvatarFallback, getInitials } from '@/components/ui/avatar';
 import {
+  Tooltip,
+  TooltipTrigger,
+  TooltipPositioner,
+  TooltipContent,
+} from '@/components/ui/tooltip';
+import {
   Collapsible,
   CollapsibleTrigger,
   CollapsibleContent,
@@ -62,23 +68,27 @@ export default function OverviewTab() {
 
   // Subscription/quota checks for member addition
   const { hasQuota, quotas } = useSubscription();
-  const { memberCount: orgMemberCount } = useMembers();
+  const { members: orgMembers } = useMembers();
 
   // Read from store directly
   const studies = () => projectStore.getStudies(projectId);
   const members = () => projectStore.getMembers(projectId);
   const currentUserId = () => user()?.id;
 
+  // Count non-owner org members (matches backend checkCollaboratorQuota)
+  const nonOwnerOrgMemberCount = () =>
+    orgMembers().filter(m => m.role !== 'owner').length;
+
   // Check if can add more collaborators (quota check)
   const collaboratorQuotaInfo = createMemo(() => {
     const max = quotas()?.['collaborators.org.max'] ?? 0;
-    const used = orgMemberCount();
+    const used = nonOwnerOrgMemberCount();
     return { used, max };
   });
 
   const canAddMember = createMemo(() => {
     if (!isOwner()) return false;
-    return hasQuota('collaborators.org.max', { used: orgMemberCount(), requested: 1 });
+    return hasQuota('collaborators.org.max', { used: nonOwnerOrgMemberCount(), requested: 1 });
   });
 
   // Calculate additional stats
@@ -290,13 +300,22 @@ export default function OverviewTab() {
             <Show
               when={canAddMember()}
               fallback={
-                <span
-                  class='bg-secondary text-muted-foreground/70 inline-flex cursor-not-allowed items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium'
-                  title='Collaborator limit reached. Upgrade your plan to add more team members.'
-                >
-                  <FiPlus class='h-4 w-4' />
-                  Invite
-                </span>
+                <Tooltip openDelay={200} closeDelay={0}>
+                  <TooltipTrigger asChild={item => (
+                    <span
+                      {...item}
+                      class='bg-secondary text-muted-foreground/70 inline-flex cursor-not-allowed items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium'
+                    >
+                      <FiPlus class='h-4 w-4' />
+                      Invite
+                    </span>
+                  )} />
+                  <TooltipPositioner>
+                    <TooltipContent>
+                      Collaborator limit reached. Upgrade your plan to add more team members.
+                    </TooltipContent>
+                  </TooltipPositioner>
+                </Tooltip>
               }
             >
               <button
