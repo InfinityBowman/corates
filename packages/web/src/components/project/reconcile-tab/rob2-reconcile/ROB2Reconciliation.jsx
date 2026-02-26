@@ -23,6 +23,7 @@ import {
   compareChecklists,
   hasAimMismatch,
   getActiveDomainKeys,
+  scoreRob2Domain,
 } from '@corates/shared/checklists/rob2';
 import {
   buildNavigationItems,
@@ -165,6 +166,77 @@ export default function ROB2Reconciliation(props) {
     return props.reconciledChecklist || {};
   });
 
+  // Detect which domains have "early completion" - scoring determined before all questions answered
+  const earlyCompleteDomains = createMemo(() => {
+    const finals = finalAnswers();
+    const activeDomains = getActiveDomainKeys(isAdhering());
+    const result = new Set();
+
+    for (const domainKey of activeDomains) {
+      const domainAnswers = finals[domainKey]?.answers;
+      if (!domainAnswers) continue;
+
+      const scoring = scoreRob2Domain(domainKey, domainAnswers);
+      if (scoring.isComplete && scoring.judgement !== null) {
+        // Check if there are any unanswered questions or NA-only questions
+        // indicating the flow diagram didn't need all questions
+        const items = navItems().filter(
+          item => item.type === NAV_ITEM_TYPES.DOMAIN_QUESTION && item.domainKey === domainKey,
+        );
+        const hasSkippedQuestion = items.some(item => {
+          const answer = domainAnswers[item.key]?.answer;
+          return !answer || answer === 'NA';
+        });
+        if (hasSkippedQuestion) {
+          result.add(domainKey);
+        }
+      }
+    }
+
+    return result;
+  });
+
+  // Questions that are skippable: in an early-complete domain AND unanswered or set to NA
+  const skippableQuestions = createMemo(() => {
+    const finals = finalAnswers();
+    const earlyDomains = earlyCompleteDomains();
+    const skippable = new Set();
+
+    for (const domainKey of earlyDomains) {
+      const domainAnswers = finals[domainKey]?.answers || {};
+      const items = navItems().filter(
+        item => item.type === NAV_ITEM_TYPES.DOMAIN_QUESTION && item.domainKey === domainKey,
+      );
+      for (const item of items) {
+        const answer = domainAnswers[item.key]?.answer;
+        if (!answer || answer === 'NA') {
+          skippable.add(item.key);
+        }
+      }
+    }
+
+    return skippable;
+  });
+
+  // Auto-set NA for skippable questions that are currently unanswered
+  createEffect(() => {
+    const skippable = skippableQuestions();
+    if (skippable.size === 0) return;
+
+    const finals = finalAnswers();
+    for (const qKey of skippable) {
+      const item = navItems().find(
+        i => i.type === NAV_ITEM_TYPES.DOMAIN_QUESTION && i.key === qKey,
+      );
+      if (!item) continue;
+
+      const currentAnswer = finals[item.domainKey]?.answers?.[qKey]?.answer;
+      if (currentAnswer == null) {
+        updateDomainQuestionAnswer(item.domainKey, qKey, 'NA');
+      }
+    }
+  });
+
   // Expose navbar props for external rendering via store
   createEffect(() => {
     if (props.setNavbarStore) {
@@ -176,6 +248,7 @@ export default function ROB2Reconciliation(props) {
         finalAnswers: finalAnswers(),
         aimMismatch: aimMismatch(),
         expandedDomain: expandedDomain(),
+        skippableQuestions: skippableQuestions(),
         setViewMode,
         goToPage,
         setExpandedDomain,
@@ -246,6 +319,7 @@ export default function ROB2Reconciliation(props) {
       const value = props.checklist1?.preliminary?.[item.key];
       if (value !== undefined) {
         updatePreliminaryField(item.key, value);
+        copyPreliminaryTextToYText(item.key, value);
       }
     } else if (item.type === NAV_ITEM_TYPES.DOMAIN_QUESTION) {
       const answer = props.checklist1?.[item.domainKey]?.answers?.[item.key];
@@ -272,6 +346,20 @@ export default function ROB2Reconciliation(props) {
     const yText = props.getRob2Text(sectionKey, fieldKey, questionKey);
     if (!yText) return;
     const text = (commentText || '').slice(0, 2000);
+    yText.doc.transact(() => {
+      yText.delete(0, yText.length);
+      yText.insert(0, text);
+    });
+  }
+
+  // Helper to copy preliminary text field value to Y.Text when using "Use This"
+  const PRELIMINARY_TEXT_FIELDS = ['experimental', 'comparator', 'numericalResult'];
+  function copyPreliminaryTextToYText(fieldKey, value) {
+    if (!PRELIMINARY_TEXT_FIELDS.includes(fieldKey)) return;
+    if (!props.getRob2Text) return;
+    const yText = props.getRob2Text('preliminary', fieldKey);
+    if (!yText) return;
+    const text = (typeof value === 'string' ? value : '').slice(0, 2000);
     yText.doc.transact(() => {
       yText.delete(0, yText.length);
       yText.insert(0, text);
@@ -476,16 +564,21 @@ export default function ROB2Reconciliation(props) {
                   isAgreement={isNavItemAgreement(currentNavItem(), comparison())}
                   isAimMismatch={currentNavItem().key === 'aim' && aimMismatch()}
                   onFinalChange={value => updatePreliminaryField(currentNavItem().key, value)}
+                  getRob2Text={props.getRob2Text}
                   onUseReviewer1={() => {
-                    const value = props.checklist1?.preliminary?.[currentNavItem().key];
+                    const key = currentNavItem().key;
+                    const value = props.checklist1?.preliminary?.[key];
                     if (value !== undefined) {
-                      updatePreliminaryField(currentNavItem().key, value);
+                      updatePreliminaryField(key, value);
+                      copyPreliminaryTextToYText(key, value);
                     }
                   }}
                   onUseReviewer2={() => {
-                    const value = props.checklist2?.preliminary?.[currentNavItem().key];
+                    const key = currentNavItem().key;
+                    const value = props.checklist2?.preliminary?.[key];
                     if (value !== undefined) {
-                      updatePreliminaryField(currentNavItem().key, value);
+                      updatePreliminaryField(key, value);
+                      copyPreliminaryTextToYText(key, value);
                     }
                   }}
                 />
@@ -513,6 +606,7 @@ export default function ROB2Reconciliation(props) {
                   reviewer1Name={props.reviewer1Name || 'Reviewer 1'}
                   reviewer2Name={props.reviewer2Name || 'Reviewer 2'}
                   isAgreement={isNavItemAgreement(currentNavItem(), comparison())}
+                  isSkipped={skippableQuestions().has(currentNavItem().key)}
                   onFinalAnswerChange={answer =>
                     updateDomainQuestionAnswer(
                       currentNavItem().domainKey,

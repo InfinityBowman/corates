@@ -127,6 +127,7 @@ export default function ROB2Navbar(props) {
                 goToPage={handleGoToPage}
                 comparison={props.store.comparison}
                 finalAnswers={props.store.finalAnswers}
+                skippableQuestions={props.store.skippableQuestions}
               />
             </div>
           );

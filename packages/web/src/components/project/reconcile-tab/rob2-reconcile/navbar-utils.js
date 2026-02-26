@@ -39,8 +39,10 @@ const PRELIMINARY_FIELD_KEYS = [
 export function buildNavigationItems(isAdhering) {
   const items = [];
 
-  // Preliminary section fields
+  // Preliminary section fields - deviationsToAddress only applies to ADHERING aim
   for (const key of PRELIMINARY_FIELD_KEYS) {
+    if (key === 'deviationsToAddress' && !isAdhering) continue;
+
     const fieldDef = PRELIMINARY_SECTION[key];
     items.push({
       type: NAV_ITEM_TYPES.PRELIMINARY,

@@ -31,6 +31,7 @@ import {
  * @param {Function} props.goToPage - Navigate to page function
  * @param {Object} props.comparison - Comparison results
  * @param {Object} props.finalAnswers - Reconciled checklist data
+ * @param {Set} props.skippableQuestions - Set of question keys that are auto-skipped
  */
 export default function NavbarDomainPill(props) {
   const label = () => getSectionLabel(props.sectionKey);
@@ -116,6 +117,7 @@ export default function NavbarDomainPill(props) {
                 finalAnswers={props.finalAnswers}
                 isFirst={isFirst()}
                 isLast={isLast()}
+                isSkipped={props.skippableQuestions?.has(item.key)}
               />
             );
           }}
@@ -133,9 +135,12 @@ function QuestionPill(props) {
   const isAgreement = () => isNavItemAgreement(props.item, props.comparison);
   const hasAnswer = () => hasNavItemAnswer(props.item, props.finalAnswers);
 
-  const pillStyle = createMemo(() =>
-    getNavItemPillStyle(isCurrentPage(), hasAnswer(), isAgreement()),
-  );
+  const pillStyle = createMemo(() => {
+    if (props.isSkipped && !isCurrentPage()) {
+      return 'bg-slate-100 text-slate-400';
+    }
+    return getNavItemPillStyle(isCurrentPage(), hasAnswer(), isAgreement());
+  });
 
   const tooltip = createMemo(() => {
     const item = props.item;
@@ -143,7 +148,9 @@ function QuestionPill(props) {
     const agreement = isAgreement();
 
     let status = '';
-    if (answered) {
+    if (props.isSkipped) {
+      status = 'Skipped (auto-set to NA)';
+    } else if (answered) {
       status = 'Reconciled';
     } else if (agreement) {
       status = 'Agreement (not yet confirmed)';

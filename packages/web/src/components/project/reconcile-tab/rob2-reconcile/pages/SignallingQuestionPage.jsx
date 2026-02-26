@@ -20,6 +20,7 @@ import ROB2AnswerPanel from '../panels/ROB2AnswerPanel.jsx';
  * @param {string} props.reviewer1Name - Display name for reviewer 1
  * @param {string} props.reviewer2Name - Display name for reviewer 2
  * @param {boolean} props.isAgreement - Whether reviewers agree
+ * @param {boolean} props.isSkipped - Whether this question was auto-skipped (NA) by flow diagram
  * @param {Function} props.onFinalAnswerChange - Callback when final answer changes
  * @param {Function} props.onUseReviewer1 - Callback to use reviewer 1's answer
  * @param {Function} props.onUseReviewer2 - Callback to use reviewer 2's answer
@@ -78,8 +79,21 @@ export default function SignallingQuestionPage(props) {
         </Show>
       </div>
 
+      {/* Skipped banner */}
+      <Show when={props.isSkipped}>
+        <div class='border-b border-slate-200 bg-slate-50 px-4 py-3'>
+          <div class='flex items-center gap-2'>
+            <FiInfo class='h-4 w-4 shrink-0 text-slate-500' />
+            <p class='text-sm text-slate-600'>
+              This question was auto-set to NA because the domain judgement is already determined by
+              earlier answers. You can still change it if needed.
+            </p>
+          </div>
+        </div>
+      </Show>
+
       {/* Three-column comparison */}
-      <div class='grid grid-cols-3 divide-x'>
+      <div class={`grid grid-cols-3 divide-x ${props.isSkipped ? 'opacity-60' : ''}`}>
         {/* Reviewer 1 */}
         <ROB2AnswerPanel
           title={props.reviewer1Name || 'Reviewer 1'}

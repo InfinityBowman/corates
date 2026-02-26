@@ -1,4 +1,4 @@
-import { Show, For, createMemo } from 'solid-js';
+import { Show, For, createMemo, createEffect, onCleanup } from 'solid-js';
 import { FiCheck, FiX, FiAlertTriangle } from 'solid-icons/fi';
 import {
   PRELIMINARY_SECTION,
@@ -7,12 +7,10 @@ import {
   DEVIATION_OPTIONS,
   INFORMATION_SOURCES,
 } from '@corates/shared/checklists/rob2';
+import NoteEditor from '@/components/checklist/common/NoteEditor.jsx';
 
-/**
- * Get panel background based on type
- * @param {string} panelType - 'reviewer1', 'reviewer2', or 'final'
- * @returns {string} Tailwind CSS classes
- */
+const PRELIMINARY_TEXT_FIELDS = ['experimental', 'comparator', 'numericalResult'];
+
 function getPanelBackground(panelType) {
   switch (panelType) {
     case 'reviewer1':
@@ -27,35 +25,22 @@ function getPanelBackground(panelType) {
 }
 
 /**
- * Render a text field (display or edit)
+ * Read-only text display for reviewer panels
  */
-function TextField(props) {
+function ReadOnlyTextField(props) {
   return (
-    <Show
-      when={!props.readOnly}
-      fallback={
-        <div class='border-border bg-muted rounded-lg border p-3'>
-          <p class='text-secondary-foreground text-sm whitespace-pre-wrap'>
-            {props.value || <span class='text-muted-foreground/70 italic'>Not specified</span>}
-          </p>
-        </div>
-      }
-    >
-      <textarea
-        value={props.value || ''}
-        onInput={e => props.onChange?.(e.target.value)}
-        placeholder={props.placeholder}
-        rows={3}
-        class='border-border w-full rounded-lg border p-3 text-sm focus:border-green-400 focus:ring-1 focus:ring-green-400 focus:outline-none'
-      />
-    </Show>
+    <div class='border-border bg-muted rounded-lg border p-3'>
+      <p class='text-secondary-foreground text-sm whitespace-pre-wrap'>
+        {props.value || <span class='text-muted-foreground/70 italic'>Not specified</span>}
+      </p>
+    </div>
   );
 }
 
 /**
- * Render a dropdown field
+ * Pill-style selection buttons (replaces native <select>)
  */
-function SelectField(props) {
+function PillSelectField(props) {
   return (
     <Show
       when={!props.readOnly}
@@ -67,20 +52,32 @@ function SelectField(props) {
         </div>
       }
     >
-      <select
-        value={props.value || ''}
-        onChange={e => props.onChange?.(e.target.value || null)}
-        class='border-border w-full rounded-lg border p-3 text-sm focus:border-green-400 focus:ring-1 focus:ring-green-400 focus:outline-none'
-      >
-        <option value=''>Select...</option>
-        <For each={props.options}>{option => <option value={option}>{option}</option>}</For>
-      </select>
+      <div class='flex flex-wrap gap-2'>
+        <For each={props.options}>
+          {option => {
+            const isSelected = () => props.value === option;
+            return (
+              <button
+                type='button'
+                onClick={() => props.onChange?.(isSelected() ? null : option)}
+                class={`rounded-lg border-2 px-3 py-2 text-sm transition-colors ${
+                  isSelected() ?
+                    'border-green-400 bg-green-50 text-green-800'
+                  : 'border-border bg-card text-secondary-foreground hover:border-green-300'
+                }`}
+              >
+                {option}
+              </button>
+            );
+          }}
+        </For>
+      </div>
     </Show>
   );
 }
 
 /**
- * Render aim selection (radio buttons)
+ * Aim selection (radio buttons)
  */
 function AimField(props) {
   return (
@@ -140,7 +137,7 @@ function AimField(props) {
 }
 
 /**
- * Render multi-select checkboxes (deviations, sources)
+ * Multi-select checkboxes (deviations, sources)
  */
 function MultiSelectField(props) {
   const selected = createMemo(() => {
@@ -159,12 +156,10 @@ function MultiSelectField(props) {
     if (props.readOnly) return;
 
     if (props.isObject) {
-      // For sources (object with boolean values)
       const newValue = { ...(props.value || {}) };
       newValue[option] = !newValue[option];
       props.onChange?.(newValue);
     } else {
-      // For deviations (array)
       const current = selected();
       const newValue =
         isSelected(option) ? current.filter(v => v !== option) : [...current, option];
@@ -237,13 +232,30 @@ function MultiSelectField(props) {
  * @param {Function} props.onUseReviewer1 - Callback to use reviewer 1's value
  * @param {Function} props.onUseReviewer2 - Callback to use reviewer 2's value
  * @param {boolean} props.isAimMismatch - Special flag for aim mismatch blocking
+ * @param {Function} props.getRob2Text - Function to get Y.Text for preliminary text fields
  * @returns {JSX.Element}
  */
 export default function PreliminaryPage(props) {
   const fieldDef = () => PRELIMINARY_SECTION[props.fieldKey];
   const fieldLabel = () => fieldDef()?.label || props.fieldKey;
 
-  // Determine field type and options
+  const isTextField = () => PRELIMINARY_TEXT_FIELDS.includes(props.fieldKey);
+
+  // Sync Y.Text changes back to finalAnswers so hasNavItemAnswer detects the field as answered
+  createEffect(() => {
+    if (!isTextField() || !props.getRob2Text) return;
+    const yText = props.getRob2Text('preliminary', props.fieldKey);
+    if (!yText) return;
+
+    const observer = () => {
+      const text = yText.toString();
+      props.onFinalChange?.(text);
+    };
+
+    yText.observe(observer);
+    onCleanup(() => yText.unobserve(observer));
+  });
+
   const getFieldType = () => {
     const key = props.fieldKey;
     if (key === 'studyDesign') return 'select';
@@ -261,45 +273,72 @@ export default function PreliminaryPage(props) {
     return [];
   };
 
-  const renderField = (value, readOnly, onChange, name) => {
+  // Render read-only field for reviewer panels
+  const renderReadOnlyField = (value, name) => {
+    const type = getFieldType();
+    const options = getOptions();
+
+    switch (type) {
+      case 'select':
+        return <PillSelectField value={value} options={options} readOnly={true} />;
+      case 'aim':
+        return <AimField value={value} readOnly={true} name={name} />;
+      case 'multiselect':
+        return (
+          <MultiSelectField value={value} options={options} readOnly={true} isObject={false} />
+        );
+      case 'multiselect-object':
+        return <MultiSelectField value={value} options={options} readOnly={true} isObject={true} />;
+      default:
+        return <ReadOnlyTextField value={value} />;
+    }
+  };
+
+  // Render editable field for final panel
+  const renderFinalField = () => {
     const type = getFieldType();
     const options = getOptions();
 
     switch (type) {
       case 'select':
         return (
-          <SelectField value={value} options={options} readOnly={readOnly} onChange={onChange} />
+          <PillSelectField value={props.finalValue} options={options} onChange={props.onFinalChange} />
         );
       case 'aim':
-        return <AimField value={value} readOnly={readOnly} onChange={onChange} name={name} />;
+        return <AimField value={props.finalValue} onChange={props.onFinalChange} name='final' />;
       case 'multiselect':
         return (
           <MultiSelectField
-            value={value}
+            value={props.finalValue}
             options={options}
-            readOnly={readOnly}
-            onChange={onChange}
+            onChange={props.onFinalChange}
             isObject={false}
           />
         );
       case 'multiselect-object':
         return (
           <MultiSelectField
-            value={value}
+            value={props.finalValue}
             options={options}
-            readOnly={readOnly}
-            onChange={onChange}
+            onChange={props.onFinalChange}
             isObject={true}
           />
         );
       default:
+        // Text fields use NoteEditor with Y.Text
         return (
-          <TextField
-            value={value}
-            readOnly={readOnly}
-            onChange={onChange}
-            placeholder={fieldDef()?.placeholder}
-          />
+          <Show
+            when={isTextField() && props.getRob2Text}
+            fallback={<ReadOnlyTextField value={props.finalValue} />}
+          >
+            <NoteEditor
+              yText={props.getRob2Text?.('preliminary', props.fieldKey)}
+              placeholder={fieldDef()?.placeholder}
+              readOnly={false}
+              inline={true}
+              focusRingColor='green-500'
+            />
+          </Show>
         );
     }
   };
@@ -362,7 +401,7 @@ export default function PreliminaryPage(props) {
               Use This
             </button>
           </div>
-          {renderField(props.reviewer1Value, true, null, 'reviewer1')}
+          {renderReadOnlyField(props.reviewer1Value, 'reviewer1')}
         </div>
 
         {/* Reviewer 2 */}
@@ -376,7 +415,7 @@ export default function PreliminaryPage(props) {
               Use This
             </button>
           </div>
-          {renderField(props.reviewer2Value, true, null, 'reviewer2')}
+          {renderReadOnlyField(props.reviewer2Value, 'reviewer2')}
         </div>
 
         {/* Final */}
@@ -384,7 +423,7 @@ export default function PreliminaryPage(props) {
           <div class='mb-4'>
             <h3 class='text-foreground font-semibold'>Final Answer</h3>
           </div>
-          {renderField(props.finalValue, false, props.onFinalChange, 'final')}
+          {renderFinalField()}
         </div>
       </div>
     </div>

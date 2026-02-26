@@ -60,6 +60,7 @@ export default function ROB2ReconciliationWithPdf(props) {
     finalAnswers: {},
     aimMismatch: false,
     expandedDomain: null,
+    skippableQuestions: new Set(),
     setViewMode: null,
     goToPage: null,
     setExpandedDomain: null,
