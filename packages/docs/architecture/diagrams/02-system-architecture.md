@@ -17,9 +17,9 @@ flowchart TB
 
         subgraph DurableObjects["Durable Objects"]
             ProjectDoc[ProjectDoc<br/>One per project<br/>Yjs sync & content]
-            EmailQueue[EmailQueue]
             UserSession[UserSession<br/>One per user<br/>Notifications]
         end
+        EmailQueue[Cloudflare Queue<br/>Email delivery]
     end
 
     subgraph Storage["Cloudflare Storage"]
@@ -56,7 +56,7 @@ flowchart TB
 - **Durable Objects**:
   - **ProjectDoc**: One per project, holds Yjs document for real-time collaboration and content storage
   - **UserSession**: One per user, manages WebSocket connections for real-time notifications (e.g., project invites)
-  - **EmailQueue**: Background email processing
+- **Cloudflare Queue**: Async email delivery with retries and dead letter queue, consumed by Postmark
 
 ### Storage
 

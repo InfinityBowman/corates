@@ -302,7 +302,11 @@ export default function PreliminaryPage(props) {
     switch (type) {
       case 'select':
         return (
-          <PillSelectField value={props.finalValue} options={options} onChange={props.onFinalChange} />
+          <PillSelectField
+            value={props.finalValue}
+            options={options}
+            onChange={props.onFinalChange}
+          />
         );
       case 'aim':
         return <AimField value={props.finalValue} onChange={props.onFinalChange} name='final' />;

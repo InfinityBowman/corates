@@ -545,117 +545,33 @@ orgInvitationRoutes.openapi(createInvitationRoute, async c => {
       .get();
 
     // Send invitation email
+    const projectName = project?.name || 'Unknown Project';
+    const inviterName = inviter?.givenName || inviter?.name || inviter?.email || 'Someone';
+
+    let emailQueued = false;
     try {
-      const envRecord = c.env as unknown as Record<string, unknown>;
-      const appUrl = (c.env.APP_URL || 'https://corates.org') as string;
-      const basepath = (envRecord.BASEPATH as string | undefined) || '';
-      const basepathNormalized = basepath ? basepath.replace(/\/$/, '') : '';
-      const callbackPath = `${basepathNormalized}/complete-profile?invitation=${token}`;
-      const callbackURL = `${appUrl}${callbackPath}`;
-
-      const authBaseUrl = (c.env.AUTH_BASE_URL || c.env.APP_URL || 'https://corates.org') as string;
-      let capturedMagicLinkUrl: string | null = null;
-
-      const { betterAuth } = await import('better-auth');
-      const { magicLink } = await import('better-auth/plugins');
-      const { drizzleAdapter } = await import('better-auth/adapters/drizzle');
-      const { drizzle } = await import('drizzle-orm/d1');
-      const schema = await import('@/db/schema.js');
-      const { MAGIC_LINK_EXPIRY_MINUTES } = await import('@/auth/emailTemplates.js');
-
-      const authSecret = c.env.AUTH_SECRET || (envRecord.SECRET as string | undefined);
-      if (!authSecret) {
-        throw createDomainError(
-          SYSTEM_ERRORS.INTERNAL_ERROR,
-          { key: 'AUTH_SECRET' },
-          'AUTH_SECRET must be configured',
-        );
-      }
-
-      const tempDb = drizzle(c.env.DB, { schema });
-      const tempAuth = betterAuth({
-        database: drizzleAdapter(tempDb, {
-          provider: 'sqlite',
-          schema: {
-            user: schema.user,
-            session: schema.session,
-            account: schema.account,
-            verification: schema.verification,
-            twoFactor: schema.twoFactor,
-          },
-        }),
-        baseURL: authBaseUrl,
-        secret: authSecret,
-        plugins: [
-          magicLink({
-            sendMagicLink: async ({ url }) => {
-              capturedMagicLinkUrl = url;
-            },
-            expiresIn: 60 * MAGIC_LINK_EXPIRY_MINUTES,
-          }),
-        ],
-      });
-
-      await tempAuth.api.signInMagicLink({
-        body: {
-          email: email.toLowerCase(),
-          callbackURL: callbackURL,
-          newUserCallbackURL: callbackURL,
-        },
-        headers: new Headers(),
-      });
-
-      if (!capturedMagicLinkUrl) {
-        throw createDomainError(
-          SYSTEM_ERRORS.INTERNAL_ERROR,
-          { service: 'magic-link' },
-          'Failed to generate magic link URL',
-        );
-      }
-
-      if (c.env.ENVIRONMENT !== 'production') {
-        console.log('[Email] Project invitation magic link URL:', capturedMagicLinkUrl);
-      }
-
-      const { getProjectInvitationEmailHtml, getProjectInvitationEmailText } =
-        await import('@/auth/emailTemplates.js');
-      const { escapeHtml } = await import('@/lib/escapeHtml.js');
-
-      const projectName = project?.name || 'Unknown Project';
-      const inviterName = inviter?.givenName || inviter?.name || inviter?.email || 'Someone';
-
-      const emailHtml = getProjectInvitationEmailHtml({
+      const { sendInvitationEmail } = await import('@/lib/send-invitation-email.js');
+      const result = await sendInvitationEmail({
+        env: c.env,
+        email,
+        token,
         projectName,
         inviterName,
-        invitationUrl: capturedMagicLinkUrl,
         role,
       });
-      const emailText = getProjectInvitationEmailText({
-        projectName,
-        inviterName,
-        invitationUrl: capturedMagicLinkUrl,
-        role,
-      });
-
-      const safeProjectName = escapeHtml(projectName);
-
-      const queueId = c.env.EMAIL_QUEUE.idFromName('default');
-      const queue = c.env.EMAIL_QUEUE.get(queueId);
-      await queue.queueEmail({
-        to: email,
-        subject: `You're Invited to "${safeProjectName}" - CoRATES`,
-        html: emailHtml,
-        text: emailText,
-      });
+      emailQueued = result.emailQueued;
     } catch (err) {
-      console.error('Failed to queue invitation email:', err);
+      console.error('[Invitation] Magic link generation failed:', err);
     }
 
     return c.json(
       {
         success: true,
         invitationId,
-        message: 'Invitation sent successfully',
+        message:
+          emailQueued ?
+            'Invitation sent successfully'
+          : 'Invitation created but email delivery may be delayed',
         email,
       },
       201,

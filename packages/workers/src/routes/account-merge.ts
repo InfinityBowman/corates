@@ -20,8 +20,8 @@ import { user, account, projects, projectMembers, mediaFiles, verification } fro
 import { eq, sql, like, and } from 'drizzle-orm';
 import { requireAuth, getAuth } from '@/middleware/auth.js';
 import { rateLimit } from '@/middleware/rateLimit.js';
-import { createEmailService } from '@/auth/email.js';
 import { getAccountMergeEmailHtml, getAccountMergeEmailText } from '@/auth/emailTemplates.js';
+import { queueEmail } from '@/lib/email-queue.js';
 import {
   createDomainError,
   createValidationError,
@@ -461,16 +461,15 @@ accountMergeRoutes.openapi(initiateRoute, async c => {
     updatedAt: new Date(),
   });
 
-  const emailService = createEmailService(c.env);
-  const emailResult = await emailService.sendEmail({
-    to: targetUser.email,
-    subject: 'CoRATES Account Merge Verification Code',
-    html: getAccountMergeEmailHtml({ code: verificationCode }),
-    text: getAccountMergeEmailText({ code: verificationCode }),
-  });
-
-  if (!emailResult.success) {
-    console.error('[AccountMerge] Failed to send verification email:', emailResult.error);
+  try {
+    await queueEmail(c.env, {
+      to: targetUser.email,
+      subject: 'CoRATES Account Merge Verification Code',
+      html: getAccountMergeEmailHtml({ code: verificationCode }),
+      text: getAccountMergeEmailText({ code: verificationCode }),
+    });
+  } catch (err) {
+    console.error('[AccountMerge] Failed to queue verification email:', err);
 
     await db
       .delete(verification)
@@ -478,7 +477,7 @@ accountMergeRoutes.openapi(initiateRoute, async c => {
 
     const error = createDomainError(SYSTEM_ERRORS.EMAIL_SEND_FAILED, {
       operation: 'send_merge_verification',
-      originalError: String(emailResult.error ?? 'Unknown email error'),
+      originalError: String(err instanceof Error ? err.message : 'Unknown email error'),
     });
     return c.json(error, error.statusCode as ContentfulStatusCode);
   }

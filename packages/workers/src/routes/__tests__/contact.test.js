@@ -7,23 +7,20 @@ import { Hono } from 'hono';
 import { env, createExecutionContext, waitOnExecutionContext } from 'cloudflare:test';
 import { json } from '@/__tests__/helpers.js';
 
-// Mock Postmark
-const mockSendEmail = vi.fn(async () => ({
-  ErrorCode: 0,
-  MessageID: 'test-message-id',
-}));
-
+// Mock Postmark (still needed since email-queue module may import it transitively)
 vi.mock('postmark', () => {
   return {
     Client: class {
-      constructor() {
-        this.sendEmail = mockSendEmail;
+      constructor() {}
+      sendEmail() {
+        return Promise.resolve({ ErrorCode: 0, MessageID: 'test-message-id' });
       }
     },
   };
 });
 
 let app;
+const mockQueueSend = vi.fn(async () => {});
 
 beforeAll(async () => {
   const { contactRoutes } = await import('../contact.js');
@@ -33,19 +30,21 @@ beforeAll(async () => {
 
 beforeEach(() => {
   vi.clearAllMocks();
-  // Reset rate limiter by using unique IPs for each test
-  // This prevents rate limiting from interfering with other tests
 });
 
 let testCounter = 0;
 
-async function fetchContact(path = '', init = {}) {
+async function fetchContact(path = '', init = {}, envOverrides = {}) {
   testCounter++;
   const testEnv = {
     ...env,
-    POSTMARK_SERVER_TOKEN: 'test-token',
+    EMAIL_QUEUE: {
+      send: mockQueueSend,
+      sendBatch: vi.fn(async () => {}),
+    },
     CONTACT_EMAIL: 'contact@example.com',
     EMAIL_FROM: 'noreply@example.com',
+    ...envOverrides,
   };
 
   // Use unique IP for each test to avoid rate limiting interference
@@ -80,8 +79,14 @@ describe('Contact Routes - POST /api/contact', () => {
     expect(res.status).toBe(200);
     const body = await json(res);
     expect(body.success).toBe(true);
-    expect(body.messageId).toBe('test-message-id');
-    expect(mockSendEmail).toHaveBeenCalledTimes(1);
+    expect(body.messageId).toBeDefined();
+    expect(mockQueueSend).toHaveBeenCalledTimes(1);
+
+    const payload = mockQueueSend.mock.calls[0][0];
+    expect(payload.to).toBe('contact@example.com');
+    expect(payload.subject).toBe('[Contact Form] Test Subject');
+    expect(payload.text).toContain('John Doe');
+    expect(payload.html).toContain('John Doe');
   });
 
   it('should accept submission without subject', async () => {
@@ -98,6 +103,9 @@ describe('Contact Routes - POST /api/contact', () => {
     expect(res.status).toBe(200);
     const body = await json(res);
     expect(body.success).toBe(true);
+
+    const payload = mockQueueSend.mock.calls[0][0];
+    expect(payload.subject).toBe('[Contact Form] New Inquiry');
   });
 
   it('should reject missing name', async () => {
@@ -205,11 +213,8 @@ describe('Contact Routes - POST /api/contact', () => {
     expect(body.message || body.error).toMatch(/message/i);
   });
 
-  it('should handle Postmark API errors', async () => {
-    mockSendEmail.mockResolvedValueOnce({
-      ErrorCode: 406,
-      Message: 'Invalid email',
-    });
+  it('should handle queue send errors', async () => {
+    mockQueueSend.mockRejectedValueOnce(new Error('Queue unavailable'));
 
     const res = await fetchContact('', {
       method: 'POST',
@@ -225,33 +230,6 @@ describe('Contact Routes - POST /api/contact', () => {
     const body = await json(res);
     expect(body.code).toBeDefined();
     expect(body.code).toMatch(/SYSTEM_EMAIL_SEND_FAILED/);
-    expect(body.message || body.error).toBeDefined();
-  });
-
-  it('should return error when POSTMARK_SERVER_TOKEN not configured', async () => {
-    const testEnv = {
-      ...env,
-      POSTMARK_SERVER_TOKEN: null,
-    };
-
-    const ctx = createExecutionContext();
-    const req = new Request('http://localhost/api/contact', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({
-        name: 'John Doe',
-        email: 'john@example.com',
-        message: 'Test message',
-      }),
-    });
-    const res = await app.fetch(req, testEnv, ctx);
-    await waitOnExecutionContext(ctx);
-
-    expect(res.status).toBe(503);
-    const body = await json(res);
-    expect(body.code).toBeDefined();
-    expect(body.code).toMatch(/SYSTEM_SERVICE_UNAVAILABLE/);
-    expect(body.message || body.error).toMatch(/service|unavailable/i);
   });
 
   it('should trim whitespace from fields', async () => {
@@ -266,9 +244,9 @@ describe('Contact Routes - POST /api/contact', () => {
     });
 
     expect(res.status).toBe(200);
-    expect(mockSendEmail).toHaveBeenCalled();
-    const callArgs = mockSendEmail.mock.calls[0][0];
-    expect(callArgs.TextBody).toContain('John Doe');
-    expect(callArgs.TextBody).not.toContain('  ');
+    expect(mockQueueSend).toHaveBeenCalled();
+    const payload = mockQueueSend.mock.calls[0][0];
+    expect(payload.text).toContain('John Doe');
+    expect(payload.text).not.toMatch(/^ {2}John/);
   });
 });

@@ -8,10 +8,18 @@ import Stripe from 'stripe';
 import { drizzle } from 'drizzle-orm/d1';
 import { eq, and } from 'drizzle-orm';
 import * as schema from '../db/schema';
-import { createEmailService } from './email';
 import { getAllowedOrigins } from '../config/origins';
 import { isAdminUser } from './admin';
-import { MAGIC_LINK_EXPIRY_MINUTES } from './emailTemplates';
+import {
+  MAGIC_LINK_EXPIRY_MINUTES,
+  getVerificationEmailHtml,
+  getVerificationEmailText,
+  getPasswordResetEmailHtml,
+  getPasswordResetEmailText,
+  getMagicLinkEmailHtml,
+  getMagicLinkEmailText,
+} from './emailTemplates';
+import { queueEmail } from '../lib/email-queue';
 import { notifyOrgMembers, EventTypes } from '../lib/notify';
 import { copyAvatarToR2, isExternalAvatarUrl, isInternalAvatarUrl } from '../lib/avatar-copy';
 import { createDomainError, SYSTEM_ERRORS } from '@corates/shared';
@@ -71,9 +79,6 @@ interface OrcidProfile {
 export function createAuth(env: Env, ctx?: ExecutionContext) {
   // Initialize Drizzle with D1
   const db = drizzle(env.DB, { schema });
-
-  // Create email service
-  const emailService = createEmailService(env);
 
   // Build social providers config if credentials are present
   const socialProviders: Record<string, unknown> = {};
@@ -169,17 +174,14 @@ export function createAuth(env: Env, ctx?: ExecutionContext) {
     magicLink({
       sendMagicLink: async ({ email, url }: { email: string; url: string }) => {
         console.log('[Auth] Queuing magic link email to:', email, 'URL:', url);
-        if (ctx && ctx.waitUntil) {
-          ctx.waitUntil(
-            (async () => {
-              try {
-                await emailService.sendMagicLink(email, url);
-              } catch (err) {
-                console.error('[Auth:waitUntil] Magic link email error:', err);
-              }
-            })(),
-          );
-        }
+        const subject = 'Sign in to CoRATES';
+        const html = getMagicLinkEmailHtml({ subject, magicLinkUrl: url });
+        const text = getMagicLinkEmailText({ magicLinkUrl: url });
+
+        // Queue send is a direct binding call, no need for waitUntil keepalive
+        queueEmail(env, { to: email, subject, html, text }).catch(err =>
+          console.error('[Auth] Magic link email queue error:', err),
+        );
       },
       expiresIn: 60 * MAGIC_LINK_EXPIRY_MINUTES,
     }),
@@ -442,21 +444,14 @@ export function createAuth(env: Env, ctx?: ExecutionContext) {
       // Password reset - sendResetPassword is required for requestPasswordReset to work
       sendResetPassword: async ({ user, url }: { user: BetterAuthUser; url: string }) => {
         console.log('[Auth] Queuing reset email to:', user.email, 'URL:', url);
-        if (ctx && ctx.waitUntil) {
-          ctx.waitUntil(
-            (async () => {
-              try {
-                await emailService.sendPasswordReset(
-                  user.email,
-                  url,
-                  user.givenName || user.name || user.username,
-                );
-              } catch (err) {
-                console.error('Background email error:', err);
-              }
-            })(),
-          );
-        }
+        const name = user.givenName || user.name || user.username || 'there';
+        const subject = 'Reset Your Password - CoRATES';
+        const html = getPasswordResetEmailHtml({ name, subject, resetUrl: url });
+        const text = getPasswordResetEmailText({ name, resetUrl: url });
+
+        queueEmail(env, { to: user.email, subject, html, text }).catch(err =>
+          console.error('[Auth] Password reset email queue error:', err),
+        );
       },
     },
 
@@ -471,27 +466,16 @@ export function createAuth(env: Env, ctx?: ExecutionContext) {
       sendOnSignUp: true,
       sendOnSignIn: true,
       autoSignInAfterVerification: true,
-      // CRITICAL: Wrap the email sending in a function passed to waitUntil
-      // This ensures NO email work happens during the request - it all runs after response
       sendVerificationEmail: async ({ user, url }: { user: BetterAuthUser; url: string }) => {
         console.log('[Auth] Queuing verification email to:', user.email, 'URL:', url);
-        if (ctx && ctx.waitUntil) {
-          ctx.waitUntil(
-            (async () => {
-              try {
-                await emailService.sendEmailVerification(
-                  user.email,
-                  url,
-                  user.givenName || user.name || user.username,
-                );
-              } catch (err) {
-                console.error('[Auth:waitUntil] Background email error:', err);
-              }
-            })(),
-          );
-        } else {
-          console.log('[Auth] No ctx.waitUntil available, email will not be sent');
-        }
+        const name = user.givenName || user.name || user.username || 'there';
+        const subject = 'Verify Your Email Address - CoRATES';
+        const html = getVerificationEmailHtml({ name, subject, verificationUrl: url });
+        const text = getVerificationEmailText({ name, verificationUrl: url });
+
+        queueEmail(env, { to: user.email, subject, html, text }).catch(err =>
+          console.error('[Auth] Verification email queue error:', err),
+        );
       },
     },
 

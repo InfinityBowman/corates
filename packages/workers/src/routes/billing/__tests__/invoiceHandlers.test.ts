@@ -230,9 +230,7 @@ describe('Invoice Handlers', () => {
       });
 
       const mockEmailQueue = {
-        get: vi.fn().mockReturnValue({
-          queueEmail: vi.fn().mockResolvedValue({ success: true }),
-        }),
+        send: vi.fn().mockResolvedValue(undefined),
       };
 
       const invoice = {
@@ -266,9 +264,7 @@ describe('Invoice Handlers', () => {
       });
 
       const mockEmailQueue = {
-        get: vi.fn().mockReturnValue({
-          queueEmail: vi.fn(),
-        }),
+        send: vi.fn().mockResolvedValue(undefined),
       };
 
       const invoice = {
