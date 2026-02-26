@@ -5,7 +5,6 @@
 
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
 import type { ContentfulStatusCode } from 'hono/utils/http-status';
-import { Client as PostmarkClient } from 'postmark';
 import { contactRateLimit } from '@/middleware/rateLimit';
 import {
   createDomainError,
@@ -15,6 +14,7 @@ import {
 } from '@corates/shared';
 import type { ValidationErrorCode } from '@corates/shared';
 import { escapeHtml } from '@/lib/escapeHtml';
+import { queueEmail } from '@/lib/email-queue';
 import type { Env } from '../types';
 
 const contact = new OpenAPIHono<{ Bindings: Env }>({
@@ -172,27 +172,15 @@ contact.openapi(submitContactRoute, async c => {
   const env = c.env;
   const { name, email, subject, message } = c.req.valid('json');
 
-  // Check for Postmark token
-  if (!env.POSTMARK_SERVER_TOKEN) {
-    console.error('[Contact] No POSTMARK_SERVER_TOKEN configured');
-    const error = createDomainError(SYSTEM_ERRORS.SERVICE_UNAVAILABLE, {
-      service: 'email',
-    });
-    return c.json(error, error.statusCode as ContentfulStatusCode);
-  }
-
-  const postmark = new PostmarkClient(env.POSTMARK_SERVER_TOKEN);
   const contactEmail =
     (env as unknown as Record<string, string | undefined>).CONTACT_EMAIL ?? 'contact@corates.org';
 
   try {
-    const response = await postmark.sendEmail({
-      From: `CoRATES Contact Form <${env.EMAIL_FROM || 'contact@corates.org'}>`,
-      To: contactEmail,
-      ReplyTo: email,
-      Subject: `[Contact Form] ${subject || 'New Inquiry'}`,
-      TextBody: `New contact form submission:\n\nName: ${name}\nEmail: ${email}\nSubject: ${subject || 'Not specified'}\n\nMessage:\n${message}`,
-      HtmlBody: `
+    await queueEmail(env, {
+      to: contactEmail,
+      subject: `[Contact Form] ${subject || 'New Inquiry'}`,
+      text: `New contact form submission:\n\nName: ${name}\nEmail: ${email}\nSubject: ${subject || 'Not specified'}\n\nMessage:\n${message}\n\nReply-To: ${email}`,
+      html: `
         <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
           <h2 style="color: #1e40af;">New Contact Form Submission</h2>
           <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
@@ -216,24 +204,14 @@ contact.openapi(submitContactRoute, async c => {
           </p>
         </div>
       `,
-      MessageStream: 'outbound',
     });
 
-    if (response.ErrorCode !== 0) {
-      console.error('[Contact] Postmark API error:', JSON.stringify(response));
-      const error = createDomainError(SYSTEM_ERRORS.EMAIL_SEND_FAILED, {
-        service: 'postmark',
-        errorCode: response.ErrorCode,
-      });
-      return c.json(error, error.statusCode as ContentfulStatusCode);
-    }
-
-    return c.json({ success: true as const, messageId: response.MessageID });
+    return c.json({ success: true as const, messageId: crypto.randomUUID() });
   } catch (err) {
     const error = err as Error;
-    console.error('[Contact] Exception during send:', error.message, error.stack);
+    console.error('[Contact] Failed to queue email:', error.message);
     const domainError = createDomainError(SYSTEM_ERRORS.EMAIL_SEND_FAILED, {
-      service: 'postmark',
+      service: 'email',
       originalError: error.message,
     });
     return c.json(domainError, domainError.statusCode as ContentfulStatusCode);

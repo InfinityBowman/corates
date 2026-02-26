@@ -18,7 +18,6 @@ const ServiceStatusSchema = z
       .object({
         USER_SESSION: z.boolean().optional(),
         PROJECT_DOC: z.boolean().optional(),
-        EMAIL_QUEUE: z.boolean().optional(),
       })
       .optional(),
   })
@@ -122,12 +121,11 @@ health.openapi(healthRoute, async c => {
   try {
     checks.services.durableObjects = {
       status:
-        c.env.USER_SESSION && c.env.PROJECT_DOC && c.env.EMAIL_QUEUE ? 'healthy' : 'unhealthy',
+        c.env.USER_SESSION && c.env.PROJECT_DOC ? 'healthy' : 'unhealthy',
       type: 'Durable Objects',
       bindings: {
         USER_SESSION: !!c.env.USER_SESSION,
         PROJECT_DOC: !!c.env.PROJECT_DOC,
-        EMAIL_QUEUE: !!c.env.EMAIL_QUEUE,
       },
     };
   } catch (error) {

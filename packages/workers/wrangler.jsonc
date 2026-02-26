@@ -18,6 +18,10 @@
     {
       "tag": "v2",
       "new_sqlite_classes": ["EmailQueue"]
+    },
+    {
+      "tag": "v3",
+      "deleted_classes": ["EmailQueue"]
     }
   ],
 
@@ -31,10 +35,24 @@
       {
         "name": "PROJECT_DOC",
         "class_name": "ProjectDoc"
-      },
+      }
+    ]
+  },
+
+  // Cloudflare Queues for email delivery
+  "queues": {
+    "producers": [
       {
-        "name": "EMAIL_QUEUE",
-        "class_name": "EmailQueue"
+        "queue": "corates-emails",
+        "binding": "EMAIL_QUEUE"
+      }
+    ],
+    "consumers": [
+      {
+        "queue": "corates-emails",
+        "max_batch_size": 10,
+        "max_retries": 3,
+        "dead_letter_queue": "corates-emails-dlq"
       }
     ]
   },
@@ -158,10 +176,6 @@
           {
             "name": "PROJECT_DOC",
             "class_name": "ProjectDoc"
-          },
-          {
-            "name": "EMAIL_QUEUE",
-            "class_name": "EmailQueue"
           }
         ]
       },
@@ -173,8 +187,29 @@
         {
           "tag": "v2",
           "new_sqlite_classes": ["EmailQueue"]
+        },
+        {
+          "tag": "v3",
+          "deleted_classes": ["EmailQueue"]
         }
-      ]
+      ],
+      // Production email queue
+      "queues": {
+        "producers": [
+          {
+            "queue": "corates-emails-prod",
+            "binding": "EMAIL_QUEUE"
+          }
+        ],
+        "consumers": [
+          {
+            "queue": "corates-emails-prod",
+            "max_batch_size": 10,
+            "max_retries": 3,
+            "dead_letter_queue": "corates-emails-prod-dlq"
+          }
+        ]
+      }
     }
   }
 }

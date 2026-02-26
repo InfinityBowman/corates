@@ -10,13 +10,14 @@ import type { ContentfulStatusCode } from 'hono/utils/http-status';
 import * as Sentry from '@sentry/cloudflare';
 import { UserSession } from './durable-objects/UserSession';
 import { ProjectDoc } from './durable-objects/ProjectDoc';
-import { EmailQueue } from './durable-objects/EmailQueue';
 import { createCorsMiddleware } from './middleware/cors';
 import { securityHeaders } from './middleware/securityHeaders';
 import { requireAuth } from './middleware/auth';
 import { requireTrustedOrigin } from './middleware/csrf';
 import { errorHandler } from './middleware/errorHandler';
 import { createDomainError, SYSTEM_ERRORS } from '@corates/shared';
+import { createEmailService } from './auth/email';
+import type { EmailPayload } from './lib/email-queue';
 import type { Env } from './types';
 
 // Route imports
@@ -25,7 +26,6 @@ import { healthRoutes } from './routes/health';
 import { orgRoutes } from './routes/orgs/index';
 import { userRoutes } from './routes/users';
 import { dbRoutes } from './routes/database';
-import { emailRoutes } from './routes/email';
 import { billingRoutes } from './routes/billing/index';
 import { googleDriveRoutes } from './routes/google-drive';
 import { avatarRoutes } from './routes/avatars';
@@ -35,7 +35,7 @@ import { contactRoutes } from './routes/contact';
 import { invitationRoutes } from './routes/invitations';
 
 // Export Durable Objects
-export { UserSession, ProjectDoc, EmailQueue };
+export { UserSession, ProjectDoc };
 
 // Create main Hono app with OpenAPI support
 const app = new OpenAPIHono<{ Bindings: Env }>();
@@ -132,9 +132,6 @@ app.post('/api/admin/stop-impersonation', async c => {
 
 // Mount admin routes
 app.route('/api/admin', adminRoutes);
-
-// Mount email routes
-app.route('/api/email', emailRoutes);
 
 // Mount contact form route (public)
 app.route('/api/contact', contactRoutes);
@@ -381,5 +378,32 @@ export default Sentry.withSentry(
     // Add request data to error reports
     sendDefaultPii: true,
   }),
-  app,
+  {
+    fetch: app.fetch,
+
+    // eslint-disable-next-line no-undef
+    async queue(batch: MessageBatch<EmailPayload>, env: Env): Promise<void> {
+      const emailService = createEmailService(env);
+
+      for (const msg of batch.messages) {
+        try {
+          const result = await emailService.sendEmail(
+            msg.body as Parameters<typeof emailService.sendEmail>[0],
+          );
+
+          if (result.success) {
+            msg.ack();
+          } else {
+            console.error(`[EmailQueue] Send returned error for ${msg.body.to}:`, result.error);
+            const delay = Math.min(30 * 2 ** msg.attempts, 1800);
+            msg.retry({ delaySeconds: delay });
+          }
+        } catch (error) {
+          console.error(`[EmailQueue] Exception sending to ${msg.body.to}:`, error);
+          const delay = Math.min(30 * 2 ** msg.attempts, 1800);
+          msg.retry({ delaySeconds: delay });
+        }
+      }
+    },
+  },
 );

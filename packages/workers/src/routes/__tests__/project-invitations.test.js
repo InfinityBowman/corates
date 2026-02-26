@@ -75,7 +75,6 @@ vi.mock('@/lib/project-sync.js', () => {
 // For now, we'll let it fail silently (it's in a try-catch)
 
 let app;
-let mockEmailQueueFetch;
 let mockUserSessionFetch;
 let mockSyncMemberToDO;
 
@@ -111,9 +110,6 @@ beforeEach(async () => {
   });
 
   // Setup default DO mocks
-  mockEmailQueueFetch = vi.fn(
-    async () => new Response(JSON.stringify({ ok: true }), { status: 200 }),
-  );
   mockUserSessionFetch = vi.fn(
     async () => new Response(JSON.stringify({ ok: true }), { status: 200 }),
   );
@@ -129,11 +125,8 @@ async function fetchInvitations(orgId, projectId, path = '', init = {}) {
     AUTH_SECRET: 'test-secret',
     SECRET: 'test-secret',
     EMAIL_QUEUE: {
-      idFromName: () => ({ toString: () => 'default-queue' }),
-      get: () => ({
-        fetch: mockEmailQueueFetch,
-        queueEmail: vi.fn(async () => {}),
-      }),
+      send: vi.fn(async () => {}),
+      sendBatch: vi.fn(async () => {}),
     },
     USER_SESSION: {
       idFromName: userId => ({ toString: () => `user-session-${userId}` }),

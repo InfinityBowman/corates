@@ -77,7 +77,6 @@ describe('Health Check Endpoints', () => {
     expect(body.services.durableObjects.bindings).toBeDefined();
     expect(body.services.durableObjects.bindings.USER_SESSION).toBe(true);
     expect(body.services.durableObjects.bindings.PROJECT_DOC).toBe(true);
-    expect(body.services.durableObjects.bindings.EMAIL_QUEUE).toBe(true);
   });
 
   it('GET /health returns degraded status when database fails', async () => {

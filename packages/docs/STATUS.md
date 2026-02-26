@@ -59,11 +59,11 @@ This document tracks the current implementation status of CoRATES features and s
 | PDF Routes           | Complete | R2 storage, Google Drive proxy          |
 | Billing Routes       | Complete | Stripe subscriptions, webhooks, portal  |
 | Admin Routes         | Complete | User/org management, impersonation      |
-| Contact Routes       | Complete | Rate-limited contact form with Postmark |
+| Contact Routes       | Complete | Rate-limited contact form               |
 | Account Merge Routes | Complete | OAuth account linking                   |
 | ProjectDoc DO        | Complete | Yjs sync with WebSocket connections     |
 | UserSession DO       | Complete | Session management                      |
-| EmailQueue DO        | Complete | Email delivery queue                    |
+| Email Queue          | Complete | Cloudflare Queue with Postmark delivery |
 
 ### Database Schema
 
@@ -102,8 +102,8 @@ This document tracks the current implementation status of CoRATES features and s
 | Cloudflare Workers | Complete | Hono with OpenAPI support           |
 | Cloudflare D1      | Complete | SQLite database with Drizzle ORM    |
 | Cloudflare R2      | Complete | PDF storage                         |
-| Durable Objects    | Complete | ProjectDoc, UserSession, EmailQueue |
-| Email (Postmark)   | Complete | Transactional emails                |
+| Durable Objects    | Complete | ProjectDoc, UserSession             |
+| Email Queue        | Complete | Cloudflare Queue + Postmark         |
 | GitHub Actions     | Partial  | Prettier check only                 |
 
 ---

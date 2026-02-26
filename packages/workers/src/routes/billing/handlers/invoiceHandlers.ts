@@ -199,7 +199,7 @@ export async function handleInvoicePaymentFailed(
       .get();
 
     if (billingUser?.email) {
-      // Queue dunning email via EmailQueue DO
+      // Queue dunning email
       await queueDunningEmail(
         {
           subscriptionId: existing.id,

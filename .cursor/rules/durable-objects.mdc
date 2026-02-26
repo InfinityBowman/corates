@@ -16,7 +16,6 @@ Durable Objects provide stateful, single-instance objects for each project. They
 
 - **ProjectDoc**: Manages project Y.Doc and WebSocket connections
 - **UserSession**: Manages user session state
-- **EmailQueue**: Manages email sending queue
 
 ## ProjectDoc Pattern
 
@@ -211,4 +210,3 @@ this.doc.on('update', async (update) => {
 
 - `packages/workers/src/durable-objects/ProjectDoc.js` - Main ProjectDoc implementation
 - `packages/workers/src/durable-objects/UserSession.js` - User session management
-- `packages/workers/src/durable-objects/EmailQueue.js` - Email queue management
