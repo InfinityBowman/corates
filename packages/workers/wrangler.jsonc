@@ -25,7 +25,6 @@
     }
   ],
 
-  // Durable Objects
   "durable_objects": {
     "bindings": [
       {

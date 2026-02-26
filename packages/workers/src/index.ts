@@ -381,11 +381,12 @@ export default Sentry.withSentry(
   {
     fetch: app.fetch,
 
-    // eslint-disable-next-line no-undef
-    async queue(batch: MessageBatch<EmailPayload>, env: Env): Promise<void> {
+    async queue(batch, env: Env): Promise<void> {
       const emailService = createEmailService(env);
+      // eslint-disable-next-line no-undef -- Cloudflare Workers global type
+      const messages = batch.messages as Message<EmailPayload>[];
 
-      for (const msg of batch.messages) {
+      for (const msg of messages) {
         try {
           const result = await emailService.sendEmail(
             msg.body as Parameters<typeof emailService.sendEmail>[0],
