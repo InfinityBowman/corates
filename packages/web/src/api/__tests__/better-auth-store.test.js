@@ -248,6 +248,7 @@ describe('better-auth-store - Social Auth', () => {
     expect(authClient.signIn.social).toHaveBeenCalledWith({
       provider: 'google',
       callbackURL: 'http://localhost:5173/dashboard',
+      errorCallbackURL: 'http://localhost:5173/signin',
     });
   });
 
@@ -263,6 +264,7 @@ describe('better-auth-store - Social Auth', () => {
     expect(authClient.signIn.oauth2).toHaveBeenCalledWith({
       providerId: 'orcid',
       callbackURL: 'http://localhost:5173/projects',
+      errorCallbackURL: 'http://localhost:5173/signin',
     });
   });
 

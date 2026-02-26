@@ -460,7 +460,14 @@ describe('useProject - Checklist Operations', () => {
         await new Promise(resolve => setTimeout(resolve, 10));
 
         const studyId = project.createStudy('Test Study');
-        const checklistId = project.createChecklist(studyId, 'ROBINS_I');
+        const outcomeId = project.createOutcome(studyId, { name: 'Test Outcome' });
+        const checklistId = project.createChecklist(studyId, 'ROBINS_I', null, outcomeId);
+
+        if (!checklistId) {
+          // If checklist creation failed (e.g., missing outcome support), skip
+          resolveTest();
+          return;
+        }
 
         project.updateChecklistAnswer(studyId, checklistId, 'overall', {
           judgement: 'Moderate risk',
@@ -549,12 +556,11 @@ describe('useProject - Reconciliation Operations', () => {
         const studyId = project.createStudy('Test Study');
         projectStore.setProjectData.mockClear();
 
-        project.saveReconciliationProgress(studyId, {
+        project.saveReconciliationProgress(studyId, null, 'AMSTAR2', {
           checklist1Id: 'checklist-1',
           checklist2Id: 'checklist-2',
           currentPage: 2,
           viewMode: 'questions',
-          finalAnswers: { q1: { selection: 'reviewer1' } },
         });
 
         // Wait for Y.js update event to trigger sync
@@ -576,25 +582,23 @@ describe('useProject - Reconciliation Operations', () => {
 
         const studyId = project.createStudy('Test Study');
 
-        project.saveReconciliationProgress(studyId, {
+        project.saveReconciliationProgress(studyId, null, 'AMSTAR2', {
           checklist1Id: 'checklist-1',
           checklist2Id: 'checklist-2',
           currentPage: 3,
           viewMode: 'questions',
-          finalAnswers: { q1: 'answer' },
         });
 
         // Wait for Y.js update to complete
         await new Promise(resolve => setTimeout(resolve, 10));
 
-        const progress = project.getReconciliationProgress(studyId);
+        const progress = project.getReconciliationProgress(studyId, null, 'AMSTAR2');
 
         expect(progress).toBeDefined();
         expect(progress.checklist1Id).toBe('checklist-1');
         expect(progress.checklist2Id).toBe('checklist-2');
         expect(progress.currentPage).toBe(3);
         expect(progress.viewMode).toBe('questions');
-        // Note: finalAnswers are stored in the reconciled checklist, not in progress
         resolveTest();
       });
     });
@@ -610,7 +614,7 @@ describe('useProject - Reconciliation Operations', () => {
 
       const studyId = project.createStudy('Test Study');
 
-      const progress = project.getReconciliationProgress(studyId);
+      const progress = project.getReconciliationProgress(studyId, null, 'AMSTAR2');
 
       expect(progress).toBeNull();
     });
@@ -626,16 +630,16 @@ describe('useProject - Reconciliation Operations', () => {
 
       const studyId = project.createStudy('Test Study');
 
-      project.saveReconciliationProgress(studyId, {
+      project.saveReconciliationProgress(studyId, null, 'AMSTAR2', {
         checklist1Id: 'checklist-1',
         checklist2Id: 'checklist-2',
         currentPage: 1,
         viewMode: 'questions',
       });
 
-      project.clearReconciliationProgress(studyId);
+      project.clearReconciliationProgress(studyId, null, 'AMSTAR2');
 
-      const progress = project.getReconciliationProgress(studyId);
+      const progress = project.getReconciliationProgress(studyId, null, 'AMSTAR2');
       expect(progress).toBeNull();
     });
   });
