@@ -89,12 +89,12 @@ packages/
 
 ### Persistence Layer
 
-| Store           | Type             | Purpose                                                    |
-| --------------- | ---------------- | ---------------------------------------------------------- |
-| D1 (SQLite)     | Primary database | Users, sessions, orgs, projects, subscriptions             |
-| R2              | Object storage   | PDF files, avatars                                         |
-| Durable Objects | Stateful workers | ProjectDoc (Y.js), UserSession (notifications)             |
-| Cloudflare Queue| Email delivery   | Async email processing with retries and DLQ                |
+| Store            | Type             | Purpose                                        |
+| ---------------- | ---------------- | ---------------------------------------------- |
+| D1 (SQLite)      | Primary database | Users, sessions, orgs, projects, subscriptions |
+| R2               | Object storage   | PDF files, avatars                             |
+| Durable Objects  | Stateful workers | ProjectDoc (Y.js), UserSession (notifications) |
+| Cloudflare Queue | Email delivery   | Async email processing with retries and DLQ    |
 
 ### External Services
 

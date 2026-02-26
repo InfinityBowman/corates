@@ -790,7 +790,10 @@ async function handleInvitation(
     {
       success: true,
       invitation: true,
-      message: emailQueued ? 'Invitation sent successfully' : 'Invitation created but email delivery may be delayed',
+      message:
+        emailQueued ?
+          'Invitation sent successfully'
+        : 'Invitation created but email delivery may be delayed',
       email,
     },
     201,

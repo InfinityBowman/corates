@@ -730,11 +730,7 @@ export class ProjectDoc extends DurableObject<Env> {
     await this.initializeDoc();
     const attachment = ws.deserializeAttachment() as WebSocketAttachment | null;
     if (attachment && attachment.awarenessClientId != null && this.awareness) {
-      awarenessProtocol.removeAwarenessStates(
-        this.awareness,
-        [attachment.awarenessClientId],
-        ws,
-      );
+      awarenessProtocol.removeAwarenessStates(this.awareness, [attachment.awarenessClientId], ws);
     }
 
     // Flush persistence if this was the last connection
@@ -751,11 +747,7 @@ export class ProjectDoc extends DurableObject<Env> {
     await this.initializeDoc();
     const attachment = ws.deserializeAttachment() as WebSocketAttachment | null;
     if (attachment && attachment.awarenessClientId != null && this.awareness) {
-      awarenessProtocol.removeAwarenessStates(
-        this.awareness,
-        [attachment.awarenessClientId],
-        ws,
-      );
+      awarenessProtocol.removeAwarenessStates(this.awareness, [attachment.awarenessClientId], ws);
     }
     try {
       ws.close(1011, 'Internal error');
@@ -793,11 +785,7 @@ export class ProjectDoc extends DurableObject<Env> {
     for (const ws of userSockets) {
       const attachment = ws.deserializeAttachment() as WebSocketAttachment | null;
       if (attachment && attachment.awarenessClientId != null && this.awareness) {
-        awarenessProtocol.removeAwarenessStates(
-          this.awareness,
-          [attachment.awarenessClientId],
-          ws,
-        );
+        awarenessProtocol.removeAwarenessStates(this.awareness, [attachment.awarenessClientId], ws);
       }
       if (ws.readyState === WebSocket.OPEN) {
         ws.close(closeCode, reason);

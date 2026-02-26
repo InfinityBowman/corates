@@ -500,7 +500,10 @@ memberRoutes.openapi(addMemberRoute, async c => {
         {
           success: true as const,
           invitation: true as const,
-          message: emailQueued ? 'Invitation sent successfully' : 'Invitation created but email delivery may be delayed',
+          message:
+            emailQueued ?
+              'Invitation sent successfully'
+            : 'Invitation created but email delivery may be delayed',
           email,
         },
         201,

@@ -120,8 +120,7 @@ health.openapi(healthRoute, async c => {
   // Check Durable Objects are available
   try {
     checks.services.durableObjects = {
-      status:
-        c.env.USER_SESSION && c.env.PROJECT_DOC ? 'healthy' : 'unhealthy',
+      status: c.env.USER_SESSION && c.env.PROJECT_DOC ? 'healthy' : 'unhealthy',
       type: 'Durable Objects',
       bindings: {
         USER_SESSION: !!c.env.USER_SESSION,

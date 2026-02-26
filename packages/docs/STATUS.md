@@ -97,14 +97,14 @@ This document tracks the current implementation status of CoRATES features and s
 
 ## Infrastructure
 
-| System             | Status   | Notes                               |
-| ------------------ | -------- | ----------------------------------- |
-| Cloudflare Workers | Complete | Hono with OpenAPI support           |
-| Cloudflare D1      | Complete | SQLite database with Drizzle ORM    |
-| Cloudflare R2      | Complete | PDF storage                         |
-| Durable Objects    | Complete | ProjectDoc, UserSession             |
-| Email Queue        | Complete | Cloudflare Queue + Postmark         |
-| GitHub Actions     | Partial  | Prettier check only                 |
+| System             | Status   | Notes                            |
+| ------------------ | -------- | -------------------------------- |
+| Cloudflare Workers | Complete | Hono with OpenAPI support        |
+| Cloudflare D1      | Complete | SQLite database with Drizzle ORM |
+| Cloudflare R2      | Complete | PDF storage                      |
+| Durable Objects    | Complete | ProjectDoc, UserSession          |
+| Email Queue        | Complete | Cloudflare Queue + Postmark      |
+| GitHub Actions     | Partial  | Prettier check only              |
 
 ---
 

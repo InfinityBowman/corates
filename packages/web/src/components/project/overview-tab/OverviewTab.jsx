@@ -76,8 +76,7 @@ export default function OverviewTab() {
   const currentUserId = () => user()?.id;
 
   // Count non-owner org members (matches backend checkCollaboratorQuota)
-  const nonOwnerOrgMemberCount = () =>
-    orgMembers().filter(m => m.role !== 'owner').length;
+  const nonOwnerOrgMemberCount = () => orgMembers().filter(m => m.role !== 'owner').length;
 
   // Check if can add more collaborators (quota check)
   const collaboratorQuotaInfo = createMemo(() => {
@@ -301,15 +300,17 @@ export default function OverviewTab() {
               when={canAddMember()}
               fallback={
                 <Tooltip openDelay={200} closeDelay={0}>
-                  <TooltipTrigger asChild={item => (
-                    <span
-                      {...item}
-                      class='bg-secondary text-muted-foreground/70 inline-flex cursor-not-allowed items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium'
-                    >
-                      <FiPlus class='h-4 w-4' />
-                      Invite
-                    </span>
-                  )} />
+                  <TooltipTrigger
+                    asChild={item => (
+                      <span
+                        {...item}
+                        class='bg-secondary text-muted-foreground/70 inline-flex cursor-not-allowed items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium'
+                      >
+                        <FiPlus class='h-4 w-4' />
+                        Invite
+                      </span>
+                    )}
+                  />
                   <TooltipPositioner>
                     <TooltipContent>
                       Collaborator limit reached. Upgrade your plan to add more team members.

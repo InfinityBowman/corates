@@ -568,7 +568,10 @@ orgInvitationRoutes.openapi(createInvitationRoute, async c => {
       {
         success: true,
         invitationId,
-        message: emailQueued ? 'Invitation sent successfully' : 'Invitation created but email delivery may be delayed',
+        message:
+          emailQueued ?
+            'Invitation sent successfully'
+          : 'Invitation created but email delivery may be delayed',
         email,
       },
       201,
