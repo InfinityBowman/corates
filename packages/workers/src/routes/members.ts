@@ -575,18 +575,12 @@ memberRoutes.openapi(addMemberRoute, async c => {
 
         const queueId = c.env.EMAIL_QUEUE.idFromName('default');
         const queue = c.env.EMAIL_QUEUE.get(queueId);
-        await queue.fetch(
-          new Request('https://internal/enqueue', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              to: email,
-              subject: `You're Invited to "${safeProjectName}" - CoRATES`,
-              html: emailHtml,
-              text: emailText,
-            }),
-          }),
-        );
+        await queue.queueEmail({
+          to: email,
+          subject: `You're Invited to "${safeProjectName}" - CoRATES`,
+          html: emailHtml,
+          text: emailText,
+        });
       } catch (err) {
         console.error('Failed to queue invitation email:', err);
       }
@@ -639,19 +633,13 @@ memberRoutes.openapi(addMemberRoute, async c => {
     try {
       const userSessionId = c.env.USER_SESSION.idFromName(userToAdd.id);
       const userSession = c.env.USER_SESSION.get(userSessionId);
-      await userSession.fetch(
-        new Request('https://internal/notify', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            type: 'project-invite',
-            projectId,
-            projectName: project?.name || 'Unknown Project',
-            role,
-            timestamp: Date.now(),
-          }),
-        }),
-      );
+      await userSession.notify({
+        type: 'project-invite',
+        projectId,
+        projectName: project?.name || 'Unknown Project',
+        role,
+        timestamp: Date.now(),
+      });
     } catch (err) {
       console.error('Failed to send project invite notification:', err);
     }
@@ -804,19 +792,13 @@ memberRoutes.openapi(removeMemberRoute, async c => {
 
         const userSessionId = c.env.USER_SESSION.idFromName(memberId!);
         const userSession = c.env.USER_SESSION.get(userSessionId);
-        await userSession.fetch(
-          new Request('https://internal/notify', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              type: 'removed-from-project',
-              projectId,
-              projectName: project?.name || 'Unknown Project',
-              removedBy: authUser.name || authUser.email,
-              timestamp: Date.now(),
-            }),
-          }),
-        );
+        await userSession.notify({
+          type: 'removed-from-project',
+          projectId,
+          projectName: project?.name || 'Unknown Project',
+          removedBy: authUser.name || authUser.email,
+          timestamp: Date.now(),
+        });
       } catch (err) {
         console.error('Failed to send removal notification:', err);
       }

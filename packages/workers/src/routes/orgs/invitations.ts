@@ -641,18 +641,12 @@ orgInvitationRoutes.openapi(createInvitationRoute, async c => {
 
       const queueId = c.env.EMAIL_QUEUE.idFromName('default');
       const queue = c.env.EMAIL_QUEUE.get(queueId);
-      await queue.fetch(
-        new Request('https://internal/enqueue', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            to: email,
-            subject: `You're Invited to "${safeProjectName}" - CoRATES`,
-            html: emailHtml,
-            text: emailText,
-          }),
-        }),
-      );
+      await queue.queueEmail({
+        to: email,
+        subject: `You're Invited to "${safeProjectName}" - CoRATES`,
+        html: emailHtml,
+        text: emailText,
+      });
     } catch (err) {
       console.error('Failed to queue invitation email:', err);
     }
@@ -972,19 +966,13 @@ orgInvitationRoutes.openapi(acceptInvitationRoute, async c => {
     try {
       const userSessionId = c.env.USER_SESSION.idFromName(authUser.id);
       const userSession = c.env.USER_SESSION.get(userSessionId);
-      await userSession.fetch(
-        new Request('https://internal/notify', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            type: 'project-invite',
-            projectId: invitation.projectId,
-            projectName: project?.name || 'Unknown Project',
-            role: invitation.role,
-            timestamp: Date.now(),
-          }),
-        }),
-      );
+      await userSession.notify({
+        type: 'project-invite',
+        projectId: invitation.projectId,
+        projectName: project?.name || 'Unknown Project',
+        role: invitation.role,
+        timestamp: Date.now(),
+      });
     } catch (err) {
       console.error('Failed to send project invite notification:', err);
     }

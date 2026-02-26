@@ -1,3 +1,4 @@
+import { DurableObject } from 'cloudflare:workers';
 import * as Y from 'yjs';
 import * as syncProtocol from 'y-protocols/sync';
 import * as awarenessProtocol from 'y-protocols/awareness';
@@ -13,17 +14,20 @@ import type { Env } from '../types';
 const messageSync = 0;
 const messageAwareness = 1;
 
-interface SessionData {
+// Debounce interval for persistence (ms)
+const PERSIST_DEBOUNCE_MS = 500;
+
+interface WebSocketAttachment {
   user: { id: string; [key: string]: unknown };
   awarenessClientId: number | null;
 }
 
-interface SyncRequestBody {
+export interface SyncRequestBody {
   meta?: Record<string, unknown>;
   members?: Array<{
     userId: string;
     role: string;
-    joinedAt: string | number;
+    joinedAt?: string | number;
     name?: string | null;
     email?: string | null;
     givenName?: string | null;
@@ -32,21 +36,18 @@ interface SyncRequestBody {
   }>;
 }
 
-interface SyncMemberRequestBody {
-  action: 'add' | 'update' | 'remove';
-  member: {
-    userId: string;
-    role?: string;
-    joinedAt?: string | number;
-    name?: string | null;
-    email?: string | null;
-    givenName?: string | null;
-    familyName?: string | null;
-    image?: string | null;
-  };
+export interface SyncMemberBody {
+  userId: string;
+  role?: string;
+  joinedAt?: string | number;
+  name?: string | null;
+  email?: string | null;
+  givenName?: string | null;
+  familyName?: string | null;
+  image?: string | null;
 }
 
-interface SyncPdfRequestBody {
+export interface SyncPdfBody {
   action: 'add' | 'remove';
   studyId: string;
   studyName?: string;
@@ -58,6 +59,28 @@ interface SyncPdfRequestBody {
     uploadedAt: string;
   };
   fileName?: string;
+}
+
+export interface MemberYMapFields {
+  role?: string | null;
+  joinedAt?: string | number;
+  name?: string | null;
+  email?: string | null;
+  givenName?: string | null;
+  familyName?: string | null;
+  image?: string | null;
+}
+
+export function buildMemberYMap(fields: MemberYMapFields): Y.Map<unknown> {
+  const yMap = new Y.Map<unknown>();
+  yMap.set('role', fields.role);
+  yMap.set('joinedAt', fields.joinedAt);
+  yMap.set('name', fields.name || null);
+  yMap.set('email', fields.email || null);
+  yMap.set('givenName', fields.givenName || null);
+  yMap.set('familyName', fields.familyName || null);
+  yMap.set('image', fields.image || null);
+  return yMap;
 }
 
 interface ProjectInfo {
@@ -95,10 +118,6 @@ interface Pdf {
   uploadedAt?: unknown;
 }
 
-interface RequestWithUser extends Request {
-  user?: { id: string; [key: string]: unknown };
-}
-
 /**
  * ProjectDoc Durable Object
  *
@@ -134,88 +153,25 @@ interface RequestWithUser extends Request {
  *       })
  *     })
  */
-export class ProjectDoc implements DurableObject {
-  private state: DurableObjectState;
-  private env: Env;
-  // Map<WebSocket, { user, awarenessClientId }>
-  private sessions: Map<WebSocket, SessionData>;
-  private doc: Y.Doc | null;
-  private awareness: awarenessProtocol.Awareness | null;
+export class ProjectDoc extends DurableObject<Env> {
+  private doc: Y.Doc | null = null;
+  private awareness: awarenessProtocol.Awareness | null = null;
+  private persistTimer: ReturnType<typeof setTimeout> | null = null;
+  private persistPending = false;
 
-  constructor(state: DurableObjectState, env: Env) {
-    this.state = state;
-    this.env = env;
-    this.sessions = new Map();
-    this.doc = null;
-    this.awareness = null;
-  }
-
+  /**
+   * fetch() is kept only for WebSocket upgrade and the GET / project info path
+   */
   async fetch(request: Request): Promise<Response> {
-    const url = new URL(request.url);
-
-    // Note: CORS headers are added by the main worker (index.js) when wrapping responses
-    // Do NOT add them here to avoid duplicate headers
-
     const upgradeHeader = request.headers.get('Upgrade');
 
-    // Check for internal requests (from worker routes)
-    const isInternalRequest = request.headers.get('X-Internal-Request') === 'true';
-
     try {
-      // Internal sync endpoints (from D1 routes) - no auth required
-      if (isInternalRequest) {
-        if (url.pathname === '/sync') {
-          return await this.handleSync(request);
-        }
-        if (url.pathname === '/sync-member') {
-          return await this.handleSyncMember(request);
-        }
-        if (url.pathname === '/sync-pdf') {
-          return await this.handleSyncPdf(request);
-        }
-        if (url.pathname === '/disconnect-all') {
-          return await this.handleDisconnectAll();
-        }
-
-        // Dev-only endpoints for Yjs state inspection (dynamically imported)
-        if (this.env.DEV_MODE) {
-          if (url.pathname.startsWith('/dev/')) {
-            const devHandlers = await import('./dev-handlers');
-            await this.initializeDoc();
-            const ctx = {
-              doc: this.doc!,
-              stateId: this.state.id.toString(),
-              yMapToPlain: this.yMapToPlain.bind(this),
-            };
-
-            if (url.pathname === '/dev/export') {
-              return await devHandlers.handleDevExport(ctx);
-            }
-            if (url.pathname === '/dev/import') {
-              return await devHandlers.handleDevImport(ctx, request);
-            }
-            if (url.pathname === '/dev/patch') {
-              return await devHandlers.handleDevPatch(ctx, request);
-            }
-            if (url.pathname === '/dev/reset') {
-              return await devHandlers.handleDevReset(ctx);
-            }
-            if (url.pathname === '/dev/raw') {
-              return await devHandlers.handleDevRaw(ctx);
-            }
-            if (url.pathname === '/dev/templates') {
-              return await devHandlers.handleDevTemplates();
-            }
-            if (url.pathname === '/dev/apply-template') {
-              return await devHandlers.handleDevApplyTemplate(ctx, request);
-            }
-          }
-        }
+      if (upgradeHeader === 'websocket') {
+        return await this.handleWebSocket(request);
       }
 
-      // For HTTP requests verify auth (unless it's an upgrade to websocket)
-      const reqWithUser = request as RequestWithUser;
-      if (upgradeHeader !== 'websocket') {
+      // GET returns project-level info (authenticated HTTP)
+      if (request.method === 'GET') {
         const { user } = await verifyAuth(request, this.env);
         if (!user) {
           return new Response(JSON.stringify({ error: 'Authentication required' }), {
@@ -223,17 +179,10 @@ export class ProjectDoc implements DurableObject {
             headers: { 'Content-Type': 'application/json' },
           });
         }
-        reqWithUser.user = user as { id: string; [key: string]: unknown };
-      }
-
-      // WebSocket upgrade / real-time sync
-      if (upgradeHeader === 'websocket') {
-        return await this.handleWebSocket(request);
-      }
-
-      // GET returns project-level info (list of checklist ids & metadata)
-      if (request.method === 'GET') {
-        return await this.getProjectInfo();
+        const info = await this.getProjectInfo();
+        return new Response(JSON.stringify(info), {
+          headers: { 'Content-Type': 'application/json' },
+        });
       }
 
       return new Response(JSON.stringify({ error: 'Method not allowed' }), {
@@ -249,219 +198,301 @@ export class ProjectDoc implements DurableObject {
     }
   }
 
+  // --- RPC Methods (replace fetch-based internal calls) ---
+
   /**
-   * Handle sync request from D1 routes (project metadata and initial members)
+   * RPC: Sync project metadata and initial members from D1
    */
-  async handleSync(request: Request): Promise<Response> {
+  async syncProject(data: SyncRequestBody): Promise<void> {
     await this.initializeDoc();
 
-    try {
-      const { meta, members } = (await request.json()) as SyncRequestBody;
-
-      // Update meta if provided
-      if (meta) {
-        const metaMap = this.doc!.getMap('meta');
-        for (const [key, value] of Object.entries(meta)) {
-          if (value !== undefined) {
-            metaMap.set(key, value);
-          }
+    if (data.meta) {
+      const metaMap = this.doc!.getMap('meta');
+      for (const [key, value] of Object.entries(data.meta)) {
+        if (value !== undefined) {
+          metaMap.set(key, value);
         }
       }
-
-      // Update members if provided (full replacement for initial sync)
-      if (members && Array.isArray(members)) {
-        const membersMap = this.doc!.getMap('members');
-        // Clear existing members and set new ones
-        for (const [userId] of membersMap.entries()) {
-          membersMap.delete(userId);
-        }
-        for (const member of members) {
-          const memberYMap = new Y.Map<unknown>();
-          memberYMap.set('role', member.role);
-          memberYMap.set('joinedAt', member.joinedAt);
-          memberYMap.set('name', member.name || null);
-          memberYMap.set('email', member.email || null);
-          memberYMap.set('givenName', member.givenName || null);
-          memberYMap.set('familyName', member.familyName || null);
-          memberYMap.set('image', member.image || null);
-          membersMap.set(member.userId, memberYMap);
-        }
-      }
-
-      // Updates are automatically broadcast via Y.doc update listener
-
-      return new Response(JSON.stringify({ success: true }), {
-        headers: { 'Content-Type': 'application/json' },
-      });
-    } catch (error) {
-      console.error('handleSync error:', error);
-      return new Response(JSON.stringify({ error: 'Sync failed' }), {
-        status: 500,
-        headers: { 'Content-Type': 'application/json' },
-      });
     }
-  }
 
-  /**
-   * Handle member sync request from D1 routes (add/update/remove single member)
-   */
-  async handleSyncMember(request: Request): Promise<Response> {
-    await this.initializeDoc();
-
-    try {
-      const { action, member } = (await request.json()) as SyncMemberRequestBody;
+    if (data.members && Array.isArray(data.members)) {
       const membersMap = this.doc!.getMap('members');
-
-      if (action === 'add') {
-        const memberYMap = new Y.Map<unknown>();
-        memberYMap.set('role', member.role);
-        memberYMap.set('joinedAt', member.joinedAt);
-        memberYMap.set('name', member.name || null);
-        memberYMap.set('email', member.email || null);
-        memberYMap.set('givenName', member.givenName || null);
-        memberYMap.set('familyName', member.familyName || null);
-        memberYMap.set('image', member.image || null);
-        membersMap.set(member.userId, memberYMap);
-      } else if (action === 'update') {
-        const existingMember = membersMap.get(member.userId) as Y.Map<unknown> | undefined;
-        if (existingMember) {
-          // Update role if provided
-          if (member.role !== undefined) {
-            existingMember.set('role', member.role);
-          }
-          // Update image if provided
-          if (member.image !== undefined) {
-            existingMember.set('image', member.image);
-          }
-          // Update givenName if provided
-          if (member.givenName !== undefined) {
-            existingMember.set('givenName', member.givenName);
-          }
-          // Update familyName if provided
-          if (member.familyName !== undefined) {
-            existingMember.set('familyName', member.familyName);
-          }
-          // Update name if provided
-          if (member.name !== undefined) {
-            existingMember.set('name', member.name);
-          }
+      const newMembers = data.members;
+      this.doc!.transact(() => {
+        const existingKeys = Array.from(membersMap.keys());
+        for (const key of existingKeys) {
+          membersMap.delete(key);
         }
-      } else if (action === 'remove') {
-        membersMap.delete(member.userId);
-        // Force disconnect the removed user from WebSocket
-        this.disconnectUser(member.userId, 'membership-revoked');
-      }
-
-      // Updates are automatically broadcast via Y.doc update listener
-
-      return new Response(JSON.stringify({ success: true }), {
-        headers: { 'Content-Type': 'application/json' },
-      });
-    } catch (error) {
-      console.error('handleSyncMember error:', error);
-      return new Response(JSON.stringify({ error: 'Sync failed' }), {
-        status: 500,
-        headers: { 'Content-Type': 'application/json' },
+        for (const member of newMembers) {
+          membersMap.set(member.userId, buildMemberYMap(member));
+        }
       });
     }
+
+    await this.schedulePersistenceIfNoConnections();
   }
 
   /**
-   * Handle disconnect-all request (called when project is deleted)
+   * RPC: Sync a single member add/update/remove
    */
-  async handleDisconnectAll(): Promise<Response> {
-    this.disconnectAll('project-deleted');
-    return new Response(JSON.stringify({ success: true }), {
-      headers: { 'Content-Type': 'application/json' },
-    });
-  }
-
-  /**
-   * Handle PDF sync request from routes (add/remove PDF metadata for a study)
-   * Note: Y.js map key remains 'reviews' for backward compatibility
-   */
-  async handleSyncPdf(request: Request): Promise<Response> {
+  async syncMember(action: 'add' | 'update' | 'remove', member: SyncMemberBody): Promise<void> {
     await this.initializeDoc();
 
-    try {
-      const { action, studyId, studyName, pdf, fileName } =
-        (await request.json()) as SyncPdfRequestBody;
+    const membersMap = this.doc!.getMap('members');
 
-      // Note: Y.js map key remains 'reviews' for backward compatibility
-      const studiesMap = this.doc!.getMap('reviews');
-      let studyYMap = studiesMap.get(studyId) as Y.Map<unknown> | undefined;
-
-      // Create the study if it doesn't exist (handles race condition where
-      // PDF upload arrives before Y.js sync creates the study)
-      if (!studyYMap) {
-        studyYMap = new Y.Map<unknown>();
-        studyYMap.set('name', studyName || 'Untitled Study');
-        studyYMap.set('createdAt', Date.now());
-        studyYMap.set('updatedAt', Date.now());
-        studyYMap.set('checklists', new Y.Map<unknown>());
-        studiesMap.set(studyId, studyYMap);
+    if (action === 'add') {
+      membersMap.set(member.userId, buildMemberYMap(member));
+    } else if (action === 'update') {
+      const existingMember = membersMap.get(member.userId) as Y.Map<unknown> | undefined;
+      if (existingMember) {
+        if (member.role !== undefined) {
+          existingMember.set('role', member.role);
+        }
+        if (member.image !== undefined) {
+          existingMember.set('image', member.image);
+        }
+        if (member.givenName !== undefined) {
+          existingMember.set('givenName', member.givenName);
+        }
+        if (member.familyName !== undefined) {
+          existingMember.set('familyName', member.familyName);
+        }
+        if (member.name !== undefined) {
+          existingMember.set('name', member.name);
+        }
       }
+    } else if (action === 'remove') {
+      membersMap.delete(member.userId);
+      this.disconnectUser(member.userId, 'membership-revoked');
+    }
 
-      // Get or create the pdfs Y.Map for this study
-      let pdfsMap = studyYMap.get('pdfs') as Y.Map<unknown> | undefined;
-      if (!pdfsMap) {
-        pdfsMap = new Y.Map<unknown>();
-        studyYMap.set('pdfs', pdfsMap);
-      }
+    await this.schedulePersistenceIfNoConnections();
+  }
 
-      if (action === 'add' && pdf) {
-        const pdfYMap = new Y.Map<unknown>();
-        pdfYMap.set('key', pdf.key);
-        pdfYMap.set('fileName', pdf.fileName);
-        pdfYMap.set('size', pdf.size);
-        pdfYMap.set('uploadedBy', pdf.uploadedBy);
-        pdfYMap.set('uploadedAt', pdf.uploadedAt);
-        pdfsMap.set(pdf.fileName, pdfYMap);
-      } else if (action === 'remove' && fileName) {
-        pdfsMap.delete(fileName);
-      }
+  /**
+   * RPC: Sync PDF metadata for a study
+   */
+  async syncPdf(data: SyncPdfBody): Promise<void> {
+    await this.initializeDoc();
 
-      // Update study's updatedAt
+    const { action, studyId, studyName, pdf, fileName } = data;
+    const studiesMap = this.doc!.getMap('reviews');
+    let studyYMap = studiesMap.get(studyId) as Y.Map<unknown> | undefined;
+
+    if (!studyYMap) {
+      studyYMap = new Y.Map<unknown>();
+      studyYMap.set('name', studyName || 'Untitled Study');
+      studyYMap.set('createdAt', Date.now());
       studyYMap.set('updatedAt', Date.now());
+      studyYMap.set('checklists', new Y.Map<unknown>());
+      studiesMap.set(studyId, studyYMap);
+    }
 
-      // Updates are automatically broadcast via Y.doc update listener
+    let pdfsMap = studyYMap.get('pdfs') as Y.Map<unknown> | undefined;
+    if (!pdfsMap) {
+      pdfsMap = new Y.Map<unknown>();
+      studyYMap.set('pdfs', pdfsMap);
+    }
 
-      return new Response(JSON.stringify({ success: true }), {
-        headers: { 'Content-Type': 'application/json' },
-      });
-    } catch (error) {
-      console.error('handleSyncPdf error:', error);
-      return new Response(JSON.stringify({ error: 'Sync failed' }), {
-        status: 500,
-        headers: { 'Content-Type': 'application/json' },
-      });
+    if (action === 'add' && pdf) {
+      const pdfYMap = new Y.Map<unknown>();
+      pdfYMap.set('key', pdf.key);
+      pdfYMap.set('fileName', pdf.fileName);
+      pdfYMap.set('size', pdf.size);
+      pdfYMap.set('uploadedBy', pdf.uploadedBy);
+      pdfYMap.set('uploadedAt', pdf.uploadedAt);
+      pdfsMap.set(pdf.fileName, pdfYMap);
+    } else if (action === 'remove' && fileName) {
+      pdfsMap.delete(fileName);
+    }
+
+    studyYMap.set('updatedAt', Date.now());
+    await this.schedulePersistenceIfNoConnections();
+  }
+
+  /**
+   * RPC: Disconnect all WebSocket connections (e.g., project deleted)
+   */
+  async disconnectAllConnections(reason: string = 'project-deleted'): Promise<void> {
+    const closeCode = 1000;
+    for (const ws of this.ctx.getWebSockets()) {
+      if (ws.readyState === WebSocket.OPEN) {
+        ws.close(closeCode, reason);
+      }
     }
   }
+
+  /**
+   * RPC: Get project info (replaces GET /)
+   */
+  async getProjectInfo(): Promise<ProjectInfo> {
+    await this.initializeDoc();
+
+    const result: ProjectInfo = {
+      id: this.ctx.id.toString(),
+      meta: this.yMapToPlain(this.doc!.getMap('meta')) as Record<string, unknown>,
+      members: [],
+      reviews: [],
+    };
+
+    const membersMap = this.doc!.getMap('members');
+    for (const [userId, value] of membersMap.entries()) {
+      result.members.push({
+        userId,
+        ...(this.yMapToPlain(value as Y.Map<unknown>) as Record<string, unknown>),
+      });
+    }
+
+    const reviewsMap = this.doc!.getMap('reviews');
+    for (const [reviewId, reviewValue] of reviewsMap.entries()) {
+      const reviewYMap = reviewValue as Y.Map<unknown>;
+      const reviewData = this.yMapToPlain(reviewYMap) as Record<string, unknown>;
+      const review: Review = {
+        id: reviewId,
+        name: reviewData.name,
+        description: reviewData.description,
+        createdAt: reviewData.createdAt,
+        updatedAt: reviewData.updatedAt,
+        checklists: [],
+        pdfs: [],
+      };
+
+      const checklistsMap = reviewYMap.get('checklists') as Y.Map<unknown> | undefined;
+      if (checklistsMap && checklistsMap.entries) {
+        for (const [checklistId, checklistValue] of checklistsMap.entries()) {
+          const checklistData = this.yMapToPlain(checklistValue as Y.Map<unknown>) as Record<
+            string,
+            unknown
+          >;
+          review.checklists.push({
+            id: checklistId,
+            title: checklistData.title,
+            assignedTo: checklistData.assignedTo,
+            status: (checklistData.status as string) || 'pending',
+            createdAt: checklistData.createdAt,
+            updatedAt: checklistData.updatedAt,
+            answers: (checklistData.answers as Record<string, unknown>) || {},
+          });
+        }
+      }
+
+      const pdfsMap = reviewYMap.get('pdfs') as Y.Map<unknown> | undefined;
+      if (pdfsMap && pdfsMap.entries) {
+        for (const [fName, pdfValue] of pdfsMap.entries()) {
+          const pdfData = this.yMapToPlain(pdfValue as Y.Map<unknown>) as Record<string, unknown>;
+          review.pdfs.push({
+            fileName: fName,
+            key: pdfData.key,
+            size: pdfData.size,
+            uploadedBy: pdfData.uploadedBy,
+            uploadedAt: pdfData.uploadedAt,
+          });
+        }
+      }
+
+      result.reviews.push(review);
+    }
+
+    return result;
+  }
+
+  // --- Dev RPC methods (only callable when DEV_MODE is enabled) ---
+
+  private get devCtx() {
+    return {
+      doc: this.doc!,
+      stateId: this.ctx.id.toString(),
+      yMapToPlain: this.yMapToPlain.bind(this),
+    };
+  }
+
+  async devExport(): Promise<unknown> {
+    await this.initializeDoc();
+    const devHandlers = await import('./dev-handlers');
+    const response = await devHandlers.handleDevExport(this.devCtx);
+    return response.json();
+  }
+
+  async devImport(data: unknown): Promise<unknown> {
+    await this.initializeDoc();
+    const devHandlers = await import('./dev-handlers');
+    const fakeRequest = {
+      json: async () => data,
+    };
+    const response = await devHandlers.handleDevImport(this.devCtx, fakeRequest as Request);
+    await this.schedulePersistenceIfNoConnections();
+    return response.json();
+  }
+
+  async devPatch(operations: unknown): Promise<unknown> {
+    await this.initializeDoc();
+    const devHandlers = await import('./dev-handlers');
+    const fakeRequest = new Request('https://internal/dev/patch', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(operations),
+    });
+    const response = await devHandlers.handleDevPatch(this.devCtx, fakeRequest);
+    await this.schedulePersistenceIfNoConnections();
+    return response.json();
+  }
+
+  async devReset(): Promise<unknown> {
+    await this.initializeDoc();
+    const devHandlers = await import('./dev-handlers');
+    const response = await devHandlers.handleDevReset(this.devCtx);
+    await this.schedulePersistenceIfNoConnections();
+    return response.json();
+  }
+
+  async devRaw(): Promise<unknown> {
+    await this.initializeDoc();
+    const devHandlers = await import('./dev-handlers');
+    const response = await devHandlers.handleDevRaw(this.devCtx);
+    return response.json();
+  }
+
+  async devTemplates(): Promise<unknown> {
+    const devHandlers = await import('./dev-handlers');
+    const response = await devHandlers.handleDevTemplates();
+    return response.json();
+  }
+
+  async devApplyTemplate(template: string, mode: string = 'replace'): Promise<unknown> {
+    await this.initializeDoc();
+    const devHandlers = await import('./dev-handlers');
+    const fakeRequest = new Request(
+      `https://internal/dev/apply-template?template=${template}&mode=${mode}`,
+      {
+        method: 'POST',
+      },
+    );
+    const response = await devHandlers.handleDevApplyTemplate(this.devCtx, fakeRequest);
+    await this.schedulePersistenceIfNoConnections();
+    return response.json();
+  }
+
+  // --- Y.Doc initialization and persistence ---
 
   async initializeDoc(): Promise<void> {
     if (!this.doc) {
       this.doc = new Y.Doc();
       this.awareness = new awarenessProtocol.Awareness(this.doc);
 
-      // Load persisted state if exists
-      const persistedState = await this.state.storage.get<number[]>('yjs-state');
+      const persistedState = await this.ctx.storage.get<number[]>('yjs-state');
       if (persistedState) {
         Y.applyUpdate(this.doc, new Uint8Array(persistedState));
       }
 
-      // Persist the FULL document state on every update
-      // This ensures we don't lose data when the DO restarts
-      this.doc.on('update', async (update: Uint8Array, origin: unknown) => {
-        // Encode the full document state, not just the incremental update
-        const fullState = Y.encodeStateAsUpdate(this.doc!);
-        await this.state.storage.put('yjs-state', Array.from(fullState));
-
-        // Broadcast update to all connected clients (except origin)
+      // On doc update: broadcast immediately, debounce persistence
+      this.doc.on('update', (update: Uint8Array, origin: unknown) => {
         const encoder = encoding.createEncoder();
         encoding.writeVarUint(encoder, messageSync);
         syncProtocol.writeUpdate(encoder, update);
         const message = encoding.toUint8Array(encoder);
         this.broadcastBinary(message, origin as WebSocket | null);
+
+        this.schedulePersistence();
       });
 
       // Broadcast awareness updates to all clients
@@ -487,10 +518,49 @@ export class ProjectDoc implements DurableObject {
     }
   }
 
+  /**
+   * Schedule debounced persistence. While WebSockets are active, the DO stays awake,
+   * so setTimeout is safe to use for debouncing.
+   */
+  private schedulePersistence(): void {
+    this.persistPending = true;
+    if (this.persistTimer) {
+      clearTimeout(this.persistTimer);
+    }
+    this.persistTimer = setTimeout(() => {
+      this.flushPersistence();
+    }, PERSIST_DEBOUNCE_MS);
+  }
+
+  /**
+   * Flush persistence if changes are pending (RPC methods with no connections).
+   * Must be awaited -- if the DO evicts before flush completes, mutations are lost.
+   */
+  private async schedulePersistenceIfNoConnections(): Promise<void> {
+    if (this.ctx.getWebSockets().length === 0) {
+      await this.flushPersistence();
+    }
+  }
+
+  /**
+   * Write full Y.Doc state to storage
+   */
+  private async flushPersistence(): Promise<void> {
+    if (this.persistTimer) {
+      clearTimeout(this.persistTimer);
+      this.persistTimer = null;
+    }
+    if (!this.doc) return;
+    this.persistPending = false;
+    const fullState = Y.encodeStateAsUpdate(this.doc);
+    await this.ctx.storage.put('yjs-state', Array.from(fullState));
+  }
+
+  // --- WebSocket handling (Hibernatable API) ---
+
   async handleWebSocket(request: Request): Promise<Response> {
     let user: { id: string; [key: string]: unknown } | null = null;
 
-    // Authenticate via cookies (standard HTTP cookie auth)
     try {
       const authResult = await verifyAuth(request, this.env);
       user = authResult.user as { id: string; [key: string]: unknown } | null;
@@ -498,16 +568,12 @@ export class ProjectDoc implements DurableObject {
       console.error('WebSocket auth error:', err);
     }
 
-    // Require authentication
     if (!user) {
       return new Response('Authentication required', { status: 401 });
     }
 
-    // Extract projectId from URL: /api/project-doc/:projectId
-    // y-websocket appends the room name as the last path segment
     const url = new URL(request.url);
     const pathParts = url.pathname.split('/');
-    // pathParts: ["", "api", "project-doc", projectId] or ["", "api", "project-doc", projectId, ...]
     const projectId = pathParts[3];
 
     if (!projectId) {
@@ -517,8 +583,6 @@ export class ProjectDoc implements DurableObject {
       });
     }
 
-    // ALWAYS verify project membership against D1
-    // Do NOT trust Yjs members map for authorization (it can be stale)
     if (!this.env.DB) {
       console.error('No DB binding available for WebSocket auth check');
       return new Response('Server configuration error', { status: 500 });
@@ -526,7 +590,6 @@ export class ProjectDoc implements DurableObject {
 
     const db = createDb(this.env.DB);
 
-    // Verify project exists
     const project = await db
       .select({ id: projects.id })
       .from(projects)
@@ -540,8 +603,6 @@ export class ProjectDoc implements DurableObject {
       });
     }
 
-    // ALWAYS verify project membership on connect/reconnect (fresh D1 check)
-    // Projects are invite-only: org membership does not grant project access
     const projectMembership = await db
       .select({ role: projectMembers.role })
       .from(projectMembers)
@@ -555,28 +616,29 @@ export class ProjectDoc implements DurableObject {
       });
     }
 
-    // Now that we've verified auth, sync member to Yjs if not present or update missing fields
+    // Sync member to Yjs if not present
     await this.initializeDoc();
     const membersMap = this.doc!.getMap('members');
     const existingMember = membersMap.get(user.id) as Y.Map<unknown> | undefined;
     if (!existingMember) {
-      const memberYMap = new Y.Map<unknown>();
-      memberYMap.set('role', projectMembership.role);
-      memberYMap.set('joinedAt', Date.now());
-      memberYMap.set('name', (user.name as string) || null);
-      memberYMap.set('email', (user.email as string) || null);
-      memberYMap.set('givenName', (user.givenName as string) || null);
-      memberYMap.set('familyName', (user.familyName as string) || null);
-      memberYMap.set('image', (user.image as string) || null);
-      membersMap.set(user.id, memberYMap);
+      membersMap.set(
+        user.id,
+        buildMemberYMap({
+          role: projectMembership.role,
+          joinedAt: Date.now(),
+          name: (user.name as string) || null,
+          email: (user.email as string) || null,
+          givenName: (user.givenName as string) || null,
+          familyName: (user.familyName as string) || null,
+          image: (user.image as string) || null,
+        }),
+      );
     } else {
-      // Update image if it differs from stored (handles OAuth image sync and avatar removal)
       const storedImage = existingMember.get('image') as string | null;
       const userImage = (user.image as string) || null;
       if (userImage !== storedImage) {
         existingMember.set('image', userImage);
       }
-      // Also update name/givenName/familyName if missing
       if (!existingMember.get('name') && user.name) {
         existingMember.set('name', user.name as string);
       }
@@ -591,86 +653,119 @@ export class ProjectDoc implements DurableObject {
     const webSocketPair = new WebSocketPair();
     const [client, server] = Object.values(webSocketPair);
 
-    server.accept();
-    // Store session with user info, awarenessClientId will be set when client sends awareness
-    this.sessions.set(server, { user, awarenessClientId: null });
-
-    // Note: We do NOT proactively send sync step 1 here.
-    // The y-websocket client will send sync step 1 on connect,
-    // and we respond via the message handler below.
-
-    server.addEventListener('message', async (event: MessageEvent) => {
-      try {
-        // Handle binary messages (y-websocket protocol)
-        let data: Uint8Array;
-        if (event.data instanceof ArrayBuffer) {
-          data = new Uint8Array(event.data);
-        } else if (event.data instanceof Blob) {
-          data = new Uint8Array(await event.data.arrayBuffer());
-        } else {
-          // String data - shouldn't happen with y-websocket binary protocol
-          console.warn('Received unexpected string WebSocket message');
-          return;
-        }
-
-        const decoder = decoding.createDecoder(data);
-        const messageType = decoding.readVarUint(decoder);
-
-        switch (messageType) {
-          case messageSync: {
-            const encoder = encoding.createEncoder();
-            encoding.writeVarUint(encoder, messageSync);
-            syncProtocol.readSyncMessage(decoder, encoder, this.doc!, server);
-            // If there's a response to send (sync step 2 or update acknowledgment)
-            if (encoding.length(encoder) > 1) {
-              server.send(encoding.toUint8Array(encoder));
-            }
-            break;
-          }
-          case messageAwareness: {
-            const awarenessUpdate = decoding.readVarUint8Array(decoder);
-            awarenessProtocol.applyAwarenessUpdate(this.awareness!, awarenessUpdate, server);
-
-            // Extract and store the client's awareness ID from the update
-            // The first client ID in the update is typically the sender's ID
-            const awarenessDecoder = decoding.createDecoder(awarenessUpdate);
-            const len = decoding.readVarUint(awarenessDecoder);
-            if (len > 0) {
-              const clientId = decoding.readVarUint(awarenessDecoder);
-              const session = this.sessions.get(server);
-              if (session && session.awarenessClientId === null) {
-                session.awarenessClientId = clientId;
-              }
-            }
-            break;
-          }
-          default:
-            console.warn('Unknown message type:', messageType);
-        }
-      } catch (error) {
-        console.error('WebSocket message error (ProjectDoc):', error);
-      }
-    });
-
-    server.addEventListener('close', () => {
-      // Remove awareness state for this client using their stored clientID
-      const session = this.sessions.get(server);
-      if (session && session.awarenessClientId != null) {
-        awarenessProtocol.removeAwarenessStates(
-          this.awareness!,
-          [session.awarenessClientId],
-          server,
-        );
-      }
-      this.sessions.delete(server);
-    });
+    // Accept with hibernation support and tag with user ID
+    this.ctx.acceptWebSocket(server, ['user:' + user.id]);
+    server.serializeAttachment({
+      user,
+      awarenessClientId: null,
+    } satisfies WebSocketAttachment);
 
     return new Response(null, { status: 101, webSocket: client });
   }
 
   /**
-   * Helper to convert Y.Map to plain object recursively
+   * Hibernatable WebSocket API: handle incoming messages
    */
+  async webSocketMessage(ws: WebSocket, message: string | ArrayBuffer): Promise<void> {
+    // Doc may not exist after hibernation wake
+    await this.initializeDoc();
+
+    try {
+      let data: Uint8Array;
+      if (message instanceof ArrayBuffer) {
+        data = new Uint8Array(message);
+      } else {
+        console.warn('Received unexpected string WebSocket message');
+        return;
+      }
+
+      const decoder = decoding.createDecoder(data);
+      const messageType = decoding.readVarUint(decoder);
+
+      switch (messageType) {
+        case messageSync: {
+          const encoder = encoding.createEncoder();
+          encoding.writeVarUint(encoder, messageSync);
+          syncProtocol.readSyncMessage(decoder, encoder, this.doc!, ws);
+          if (encoding.length(encoder) > 1) {
+            ws.send(encoding.toUint8Array(encoder));
+          }
+          break;
+        }
+        case messageAwareness: {
+          const awarenessUpdate = decoding.readVarUint8Array(decoder);
+          awarenessProtocol.applyAwarenessUpdate(this.awareness!, awarenessUpdate, ws);
+
+          // Store the client's awareness ID in the attachment
+          const awarenessDecoder = decoding.createDecoder(awarenessUpdate);
+          const len = decoding.readVarUint(awarenessDecoder);
+          if (len > 0) {
+            const clientId = decoding.readVarUint(awarenessDecoder);
+            const attachment = ws.deserializeAttachment() as WebSocketAttachment;
+            if (attachment && attachment.awarenessClientId === null) {
+              attachment.awarenessClientId = clientId;
+              ws.serializeAttachment(attachment);
+            }
+          }
+          break;
+        }
+        default:
+          console.warn('Unknown message type:', messageType);
+      }
+    } catch (error) {
+      console.error('WebSocket message error (ProjectDoc):', error);
+    }
+  }
+
+  /**
+   * Hibernatable WebSocket API: handle close
+   */
+  async webSocketClose(
+    ws: WebSocket,
+    _code: number,
+    _reason: string,
+    _wasClean: boolean,
+  ): Promise<void> {
+    // Remove awareness state for this client
+    await this.initializeDoc();
+    const attachment = ws.deserializeAttachment() as WebSocketAttachment | null;
+    if (attachment && attachment.awarenessClientId != null && this.awareness) {
+      awarenessProtocol.removeAwarenessStates(
+        this.awareness,
+        [attachment.awarenessClientId],
+        ws,
+      );
+    }
+
+    // Flush persistence if this was the last connection
+    if (this.ctx.getWebSockets().length === 0 && this.persistPending) {
+      await this.flushPersistence();
+    }
+  }
+
+  /**
+   * Hibernatable WebSocket API: handle errors
+   */
+  async webSocketError(ws: WebSocket, error: unknown): Promise<void> {
+    console.error('WebSocket error in ProjectDoc:', error);
+    await this.initializeDoc();
+    const attachment = ws.deserializeAttachment() as WebSocketAttachment | null;
+    if (attachment && attachment.awarenessClientId != null && this.awareness) {
+      awarenessProtocol.removeAwarenessStates(
+        this.awareness,
+        [attachment.awarenessClientId],
+        ws,
+      );
+    }
+    try {
+      ws.close(1011, 'Internal error');
+    } catch {
+      // Socket may already be closed
+    }
+  }
+
+  // --- Internal helpers ---
+
   yMapToPlain(yMap: Y.Map<unknown>): Record<string, unknown> {
     if (!yMap || typeof yMap.toJSON !== 'function') {
       return {};
@@ -679,135 +774,34 @@ export class ProjectDoc implements DurableObject {
   }
 
   /**
-   * Get comprehensive project info with hierarchical structure:
-   * Project -> Reviews -> Checklists -> Answers
-   */
-  async getProjectInfo(): Promise<Response> {
-    await this.initializeDoc();
-
-    const result: ProjectInfo = {
-      id: this.state.id.toString(),
-      meta: this.yMapToPlain(this.doc!.getMap('meta')) as Record<string, unknown>,
-      members: [],
-      reviews: [],
-    };
-
-    // Get members
-    const membersMap = this.doc!.getMap('members');
-    for (const [userId, value] of membersMap.entries()) {
-      result.members.push({
-        userId,
-        ...(this.yMapToPlain(value as Y.Map<unknown>) as Record<string, unknown>),
-      });
-    }
-
-    // Get reviews with nested checklists and pdfs
-    const reviewsMap = this.doc!.getMap('reviews');
-    for (const [reviewId, reviewValue] of reviewsMap.entries()) {
-      const reviewYMap = reviewValue as Y.Map<unknown>;
-      const reviewData = this.yMapToPlain(reviewYMap) as Record<string, unknown>;
-      const review: Review = {
-        id: reviewId,
-        name: reviewData.name,
-        description: reviewData.description,
-        createdAt: reviewData.createdAt,
-        updatedAt: reviewData.updatedAt,
-        checklists: [],
-        pdfs: [],
-      };
-
-      // Get checklists within this review
-      const checklistsMap = reviewYMap.get('checklists') as Y.Map<unknown> | undefined;
-      if (checklistsMap && checklistsMap.entries) {
-        for (const [checklistId, checklistValue] of checklistsMap.entries()) {
-          const checklistData = this.yMapToPlain(checklistValue as Y.Map<unknown>) as Record<
-            string,
-            unknown
-          >;
-          review.checklists.push({
-            id: checklistId,
-            title: checklistData.title,
-            assignedTo: checklistData.assignedTo,
-            status: (checklistData.status as string) || 'pending',
-            createdAt: checklistData.createdAt,
-            updatedAt: checklistData.updatedAt,
-            answers: (checklistData.answers as Record<string, unknown>) || {},
-          });
-        }
-      }
-
-      // Get PDFs within this review
-      const pdfsMap = reviewYMap.get('pdfs') as Y.Map<unknown> | undefined;
-      if (pdfsMap && pdfsMap.entries) {
-        for (const [fileName, pdfValue] of pdfsMap.entries()) {
-          const pdfData = this.yMapToPlain(pdfValue as Y.Map<unknown>) as Record<string, unknown>;
-          review.pdfs.push({
-            fileName,
-            key: pdfData.key,
-            size: pdfData.size,
-            uploadedBy: pdfData.uploadedBy,
-            uploadedAt: pdfData.uploadedAt,
-          });
-        }
-      }
-
-      result.reviews.push(review);
-    }
-
-    return new Response(JSON.stringify(result), {
-      headers: { 'Content-Type': 'application/json' },
-    });
-  }
-
-  /**
    * Broadcast binary message to all connected clients
    */
   broadcastBinary(message: Uint8Array, exclude: WebSocket | null = null): void {
-    this.sessions.forEach((_sessionData, ws) => {
+    for (const ws of this.ctx.getWebSockets()) {
       if (ws !== exclude && ws.readyState === WebSocket.OPEN) {
         ws.send(message);
       }
-    });
-  }
-
-  /**
-   * Disconnect a specific user from the WebSocket
-   */
-  disconnectUser(userId: string, reason: string = 'membership-revoked'): void {
-    const closeCode = 1008; // Policy Violation
-    const sessionsToClose: Array<{ ws: WebSocket; sessionData: SessionData }> = [];
-    this.sessions.forEach((sessionData, ws) => {
-      if (sessionData.user?.id === userId && ws.readyState === WebSocket.OPEN) {
-        sessionsToClose.push({ ws, sessionData });
-      }
-    });
-    // Close websockets and remove sessions immediately
-    // (don't wait for close event handler, which may not fire synchronously in tests)
-    for (const { ws, sessionData } of sessionsToClose) {
-      // Remove awareness state if present and awareness is initialized
-      if (this.awareness && sessionData.awarenessClientId != null) {
-        awarenessProtocol.removeAwarenessStates(
-          this.awareness,
-          [sessionData.awarenessClientId],
-          ws,
-        );
-      }
-      // Remove session immediately
-      this.sessions.delete(ws);
-      // Close the websocket
-      ws.close(closeCode, reason);
     }
   }
 
   /**
-   * Disconnect all users from the WebSocket (e.g., when project is deleted)
+   * Disconnect a specific user from WebSocket
    */
-  disconnectAll(reason: string = 'project-deleted'): void {
-    const closeCode = 1000; // Normal closure
-    this.sessions.forEach((_sessionData, ws) => {
+  disconnectUser(userId: string, reason: string = 'membership-revoked'): void {
+    const closeCode = 1008; // Policy Violation
+    const userSockets = this.ctx.getWebSockets('user:' + userId);
+    for (const ws of userSockets) {
+      const attachment = ws.deserializeAttachment() as WebSocketAttachment | null;
+      if (attachment && attachment.awarenessClientId != null && this.awareness) {
+        awarenessProtocol.removeAwarenessStates(
+          this.awareness,
+          [attachment.awarenessClientId],
+          ws,
+        );
+      }
       if (ws.readyState === WebSocket.OPEN) {
         ws.close(closeCode, reason);
       }
-    });
+    }
   }
 }

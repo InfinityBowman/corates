@@ -40,23 +40,11 @@ export async function notifyUser(
     const id = env.USER_SESSION.idFromName(userId);
     const stub = env.USER_SESSION.get(id);
 
-    const response = await stub.fetch(
-      new Request('https://internal/notify', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...event,
-          timestamp: event.timestamp || Date.now(),
-        }),
-      }),
-    );
+    const result = await stub.notify({
+      ...event,
+      timestamp: event.timestamp || Date.now(),
+    });
 
-    if (!response.ok) {
-      console.error('[notify] Failed to send notification:', response.status);
-      return { success: false, delivered: false };
-    }
-
-    const result = (await response.json()) as NotifyResult;
     return result;
   } catch (error) {
     console.error('[notify] Error sending notification:', error);

@@ -1,8 +1,9 @@
+import { DurableObject } from 'cloudflare:workers';
 import { EMAIL_RETRY_CONFIG } from '../config/constants';
 import { createDomainError, SYSTEM_ERRORS } from '@corates/shared';
 import type { Env } from '../types';
 
-interface EmailPayload {
+export interface EmailPayload {
   to: string;
   subject: string;
   html?: string;
@@ -21,49 +22,15 @@ interface EmailRecord {
   error?: string;
 }
 
-export class EmailQueue implements DurableObject {
-  private state: DurableObjectState;
-  private env: Env;
-
-  constructor(state: DurableObjectState, env: Env) {
-    this.state = state;
-    this.env = env;
-  }
-
-  async fetch(request: Request): Promise<Response> {
-    const url = new URL(request.url);
-
-    // Handle alarm-triggered retry processing
-    if (url.pathname === '/process-retry') {
-      return await this.processRetryQueue();
-    }
-
-    // Accept POST with email payload {to, subject, html, text}
-    if (request.method !== 'POST') {
-      return new Response('Method not allowed', { status: 405 });
-    }
-
-    try {
-      const payload = (await request.json()) as EmailPayload | null;
-      // Minimally validate
-      if (!payload?.to || !payload?.subject || (!payload?.html && !payload?.text)) {
-        return new Response(JSON.stringify({ error: 'Invalid payload' }), { status: 400 });
-      }
-
-      // Add to queue and process
-      await this.queueEmail(payload);
-
-      return new Response(JSON.stringify({ success: true }), { status: 202 });
-    } catch (err) {
-      console.error('EmailQueue error parsing request:', err);
-      return new Response(JSON.stringify({ error: 'Bad request' }), { status: 400 });
-    }
-  }
-
+export class EmailQueue extends DurableObject<Env> {
   /**
-   * Queue an email for sending with retry support
+   * Queue an email for sending with retry support (RPC method)
    */
   async queueEmail(payload: EmailPayload): Promise<void> {
+    if (!payload?.to || !payload?.subject || (!payload?.html && !payload?.text)) {
+      throw new Error('Invalid email payload: to, subject, and html or text are required');
+    }
+
     const emailId = crypto.randomUUID();
     const emailRecord: EmailRecord = {
       id: emailId,
@@ -74,10 +41,7 @@ export class EmailQueue implements DurableObject {
       status: 'pending',
     };
 
-    // Store in queue
-    await this.state.storage.put(`email:${emailId}`, emailRecord);
-
-    // Attempt immediate send
+    await this.ctx.storage.put(`email:${emailId}`, emailRecord);
     await this.attemptSend(emailRecord);
   }
 
@@ -100,12 +64,8 @@ export class EmailQueue implements DurableObject {
         console.log(
           `EmailQueue: email sent to ${emailRecord.payload.to} (attempt ${emailRecord.attempts})`,
         );
-        emailRecord.status = 'sent';
-        emailRecord.sentAt = Date.now();
-        // Keep record for a short time for debugging, then delete
-        await this.state.storage.put(`email:${emailRecord.id}`, emailRecord);
-        // Schedule cleanup
-        setTimeout(() => this.cleanupSentEmail(emailRecord.id), 60000);
+        // Delete immediately after successful send instead of using setTimeout
+        await this.ctx.storage.delete(`email:${emailRecord.id}`);
         return true;
       } else {
         throw createDomainError(
@@ -122,11 +82,10 @@ export class EmailQueue implements DurableObject {
       );
 
       if (emailRecord.attempts >= EMAIL_RETRY_CONFIG.MAX_RETRIES) {
-        // Move to dead letter queue
         emailRecord.status = 'failed';
         emailRecord.error = error.message;
-        await this.state.storage.put(`dead-letter:${emailRecord.id}`, emailRecord);
-        await this.state.storage.delete(`email:${emailRecord.id}`);
+        await this.ctx.storage.put(`dead-letter:${emailRecord.id}`, emailRecord);
+        await this.ctx.storage.delete(`email:${emailRecord.id}`);
         console.error(`EmailQueue: moved to dead letter queue: ${emailRecord.payload.to}`);
         return false;
       }
@@ -140,9 +99,8 @@ export class EmailQueue implements DurableObject {
       emailRecord.nextRetryAt = Date.now() + delay;
       emailRecord.status = 'retry-pending';
 
-      await this.state.storage.put(`email:${emailRecord.id}`, emailRecord);
+      await this.ctx.storage.put(`email:${emailRecord.id}`, emailRecord);
 
-      // Schedule retry via alarm
       await this.scheduleRetryAlarm();
 
       console.log(`EmailQueue: scheduled retry for ${emailRecord.payload.to} in ${delay}ms`);
@@ -154,19 +112,18 @@ export class EmailQueue implements DurableObject {
    * Schedule an alarm to process retry queue
    */
   async scheduleRetryAlarm(): Promise<void> {
-    const currentAlarm = await this.state.storage.getAlarm();
+    const currentAlarm = await this.ctx.storage.getAlarm();
     if (!currentAlarm) {
-      // Schedule alarm for 1 second from now to batch process
-      await this.state.storage.setAlarm(Date.now() + 1000);
+      await this.ctx.storage.setAlarm(Date.now() + 1000);
     }
   }
 
   /**
    * Process retry queue (called by alarm)
    */
-  async processRetryQueue(): Promise<Response> {
+  async processRetryQueue(): Promise<void> {
     const now = Date.now();
-    const emails = await this.state.storage.list<EmailRecord>({ prefix: 'email:' });
+    const emails = await this.ctx.storage.list<EmailRecord>({ prefix: 'email:' });
 
     let nextRetryTime: number | null = null;
 
@@ -174,19 +131,15 @@ export class EmailQueue implements DurableObject {
       if (emailRecord.status === 'retry-pending' && emailRecord.nextRetryAt <= now) {
         await this.attemptSend(emailRecord);
       } else if (emailRecord.status === 'retry-pending' && emailRecord.nextRetryAt > now) {
-        // Track earliest next retry
         if (!nextRetryTime || emailRecord.nextRetryAt < nextRetryTime) {
           nextRetryTime = emailRecord.nextRetryAt;
         }
       }
     }
 
-    // Schedule next alarm if there are pending retries
     if (nextRetryTime) {
-      await this.state.storage.setAlarm(nextRetryTime);
+      await this.ctx.storage.setAlarm(nextRetryTime);
     }
-
-    return new Response(JSON.stringify({ success: true }), { status: 200 });
   }
 
   /**
@@ -197,23 +150,10 @@ export class EmailQueue implements DurableObject {
   }
 
   /**
-   * Clean up successfully sent email record
-   */
-  async cleanupSentEmail(emailId: string): Promise<void> {
-    try {
-      await this.state.storage.delete(`email:${emailId}`);
-    } catch (err) {
-      const error = err as Error;
-      // Log but don't throw - cleanup is non-critical
-      console.debug('Email cleanup failed:', emailId, error.message);
-    }
-  }
-
-  /**
-   * Get dead letter queue for debugging/monitoring
+   * Get dead letter queue for debugging/monitoring (RPC method)
    */
   async getDeadLetterQueue(): Promise<EmailRecord[]> {
-    const deadLetters = await this.state.storage.list<EmailRecord>({ prefix: 'dead-letter:' });
+    const deadLetters = await this.ctx.storage.list<EmailRecord>({ prefix: 'dead-letter:' });
     return Array.from(deadLetters.values());
   }
 }

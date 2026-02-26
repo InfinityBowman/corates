@@ -28,24 +28,7 @@ export async function syncMemberToDO(
   memberData: MemberData,
 ): Promise<void> {
   const projectDoc = getProjectDocStub(env, projectId);
-
-  const response = await projectDoc.fetch(
-    new Request('https://internal/sync-member', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Internal-Request': 'true',
-      },
-      body: JSON.stringify({ action, member: memberData }),
-    }),
-  );
-
-  if (!response.ok) {
-    const text = await response.text();
-    throw new Error(
-      `[ProjectSync] sync-member failed for project ${projectId}: ${response.status} ${text}`,
-    );
-  }
+  await projectDoc.syncMember(action, memberData);
 }
 
 export async function syncProjectToDO(
@@ -55,22 +38,5 @@ export async function syncProjectToDO(
   members: ProjectMember[] | null,
 ): Promise<void> {
   const projectDoc = getProjectDocStub(env, projectId);
-
-  const response = await projectDoc.fetch(
-    new Request('https://internal/sync', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Internal-Request': 'true',
-      },
-      body: JSON.stringify({ meta, members }),
-    }),
-  );
-
-  if (!response.ok) {
-    const text = await response.text();
-    throw new Error(
-      `[ProjectSync] sync failed for project ${projectId}: ${response.status} ${text}`,
-    );
-  }
+  await projectDoc.syncProject({ meta: meta ?? undefined, members: members ?? undefined });
 }

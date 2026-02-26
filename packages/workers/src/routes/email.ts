@@ -129,16 +129,9 @@ emailRoutes.openapi(queueEmailRoute, async c => {
     const id = c.env.EMAIL_QUEUE.idFromName('default');
     const queue = c.env.EMAIL_QUEUE.get(id);
 
-    const resp = await queue.fetch(
-      new Request('https://internal/enqueue', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      }),
-    );
+    await queue.queueEmail(payload as import('../durable-objects/EmailQueue').EmailPayload);
 
-    const data = (await resp.json()) as { success: boolean };
-    return c.json({ success: true as const, queued: data.success });
+    return c.json({ success: true as const, queued: true });
   } catch (err) {
     const error = err as Error;
     console.error('Email queue handler error:', error);

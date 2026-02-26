@@ -54,6 +54,7 @@ async function fetchEmail(path, init = {}) {
       idFromName: vi.fn(() => ({ toString: () => 'do-id' })),
       get: vi.fn(() => ({
         fetch: mockFetch,
+        queueEmail: vi.fn(async () => {}),
       })),
     },
   };
@@ -124,6 +125,9 @@ describe('Email Routes - POST /api/email/queue', () => {
         idFromName: vi.fn(() => ({ toString: () => 'do-id' })),
         get: vi.fn(() => ({
           fetch: vi.fn(async _request => {
+            throw new Error('DO fetch failed');
+          }),
+          queueEmail: vi.fn(async () => {
             throw new Error('DO fetch failed');
           }),
         })),

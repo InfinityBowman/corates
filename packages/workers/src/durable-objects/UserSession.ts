@@ -1,33 +1,20 @@
+import { DurableObject } from 'cloudflare:workers';
 import { verifyAuth } from '../auth/config';
 import { getAccessControlOrigin } from '../config/origins';
 import type { Env } from '../types';
 
-interface Notification {
+export interface Notification {
   type: string;
   timestamp?: number;
   [key: string]: unknown;
 }
 
-interface WebSocketWithUser extends WebSocket {
-  user?: { id: string; [key: string]: unknown };
+interface WebSocketAttachment {
+  user: { id: string; [key: string]: unknown };
 }
 
-export class UserSession implements DurableObject {
-  private state: DurableObjectState;
-  private env: Env;
-  private connections: Set<WebSocketWithUser>;
-
-  constructor(state: DurableObjectState, env: Env) {
-    this.state = state;
-    this.env = env;
-    this.connections = new Set();
-  }
-
+export class UserSession extends DurableObject<Env> {
   async fetch(request: Request): Promise<Response> {
-    const url = new URL(request.url);
-    const path = url.pathname;
-
-    // Dynamic CORS headers for credentialed requests using centralized config
     const requestOrigin = request.headers.get('Origin');
     const corsHeaders: Record<string, string> = {
       'Access-Control-Allow-Origin': getAccessControlOrigin(requestOrigin, this.env),
@@ -40,17 +27,11 @@ export class UserSession implements DurableObject {
       return new Response(null, { headers: corsHeaders });
     }
 
-    // Handle internal notification requests (from other workers/DOs)
-    if (path.endsWith('/notify') && request.method === 'POST') {
-      return await this.handleNotification(request, corsHeaders);
-    }
-
-    // Handle WebSocket upgrade for real-time notifications
+    // WebSocket upgrade is the only fetch-based path remaining
     if (request.headers.get('Upgrade') === 'websocket') {
       return await this.handleWebSocket(request);
     }
 
-    // All other requests are not supported (only WebSocket and /notify are used)
     return new Response(JSON.stringify({ error: 'Method not allowed' }), {
       status: 405,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -58,10 +39,9 @@ export class UserSession implements DurableObject {
   }
 
   /**
-   * Handle WebSocket connections for real-time notifications
+   * Handle WebSocket connections for real-time notifications (Hibernatable API)
    */
   async handleWebSocket(request: Request): Promise<Response> {
-    // Try to authenticate via cookies
     let user: { id: string; [key: string]: unknown } | null = null;
     try {
       const authResult = await verifyAuth(request, this.env);
@@ -70,12 +50,10 @@ export class UserSession implements DurableObject {
       console.error('WebSocket auth error:', err);
     }
 
-    // Require authentication
     if (!user) {
       return new Response('Authentication required', { status: 401 });
     }
 
-    // Extract userId from URL path and verify it matches authenticated user
     const url = new URL(request.url);
     const sessionUserId = this.extractUserIdFromPath(url.pathname);
 
@@ -85,90 +63,90 @@ export class UserSession implements DurableObject {
 
     const webSocketPair = new WebSocketPair();
     const client = webSocketPair[0];
-    const server = webSocketPair[1] as WebSocketWithUser;
+    const server = webSocketPair[1];
 
-    server.accept();
-    server.user = user;
-    this.connections.add(server);
+    // Accept with hibernation support and tag with user ID for targeted lookups
+    this.ctx.acceptWebSocket(server, ['user:' + user.id]);
+    server.serializeAttachment({ user } satisfies WebSocketAttachment);
 
     // Send any pending notifications
-    const pending = (await this.state.storage.get<Notification[]>('pendingNotifications')) || [];
+    const pending = (await this.ctx.storage.get<Notification[]>('pendingNotifications')) || [];
     if (pending.length > 0) {
       for (const notification of pending) {
         server.send(JSON.stringify(notification));
       }
-      await this.state.storage.put('pendingNotifications', []);
+      await this.ctx.storage.put('pendingNotifications', []);
     }
-
-    server.addEventListener('message', async (event: MessageEvent) => {
-      try {
-        const data = JSON.parse(event.data as string) as { type?: string };
-        // Handle ping/pong for keepalive
-        if (data.type === 'ping') {
-          server.send(JSON.stringify({ type: 'pong' }));
-        }
-      } catch (err) {
-        console.error('WebSocket message error:', err);
-      }
-    });
-
-    server.addEventListener('close', () => {
-      this.connections.delete(server);
-    });
-
-    server.addEventListener('error', () => {
-      this.connections.delete(server);
-    });
 
     return new Response(null, { status: 101, webSocket: client });
   }
 
   /**
-   * Handle notification requests from other workers/DOs
-   * This is called internally when a user is added to a project
+   * RPC method: send a notification to connected clients or queue for later
    */
-  async handleNotification(
-    request: Request,
-    corsHeaders: Record<string, string>,
-  ): Promise<Response> {
+  async notify(notification: Notification): Promise<{ success: boolean; delivered: boolean }> {
+    if (!notification.timestamp) {
+      notification.timestamp = Date.now();
+    }
+
+    const sockets = this.ctx.getWebSockets();
+    let delivered = false;
+
+    for (const ws of sockets) {
+      if (ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify(notification));
+        delivered = true;
+      }
+    }
+
+    if (!delivered) {
+      const pending =
+        (await this.ctx.storage.get<Notification[]>('pendingNotifications')) || [];
+      pending.push(notification);
+      if (pending.length > 50) {
+        pending.shift();
+      }
+      await this.ctx.storage.put('pendingNotifications', pending);
+    }
+
+    return { success: true, delivered };
+  }
+
+  /**
+   * Hibernatable WebSocket API: handle incoming messages
+   */
+  async webSocketMessage(ws: WebSocket, message: string | ArrayBuffer): Promise<void> {
     try {
-      const notification = (await request.json()) as Notification;
-
-      // Add timestamp if not present
-      if (!notification.timestamp) {
-        notification.timestamp = Date.now();
+      const data = JSON.parse(message as string) as { type?: string };
+      if (data.type === 'ping') {
+        ws.send(JSON.stringify({ type: 'pong' }));
       }
+    } catch (err) {
+      console.error('WebSocket message error:', err);
+    }
+  }
 
-      // Broadcast to all connected clients
-      let delivered = false;
-      for (const conn of this.connections) {
-        if (conn.readyState === WebSocket.OPEN) {
-          conn.send(JSON.stringify(notification));
-          delivered = true;
-        }
-      }
+  /**
+   * Hibernatable WebSocket API: handle close
+   */
+  async webSocketClose(
+    _ws: WebSocket,
+    _code: number,
+    _reason: string,
+    _wasClean: boolean,
+  ): Promise<void> {
+    // No cleanup needed -- the runtime removes closed sockets from getWebSockets()
+  }
 
-      // If no active connections, store for later delivery
-      if (!delivered) {
-        const pending =
-          (await this.state.storage.get<Notification[]>('pendingNotifications')) || [];
-        pending.push(notification);
-        // Keep only last 50 notifications
-        if (pending.length > 50) {
-          pending.shift();
-        }
-        await this.state.storage.put('pendingNotifications', pending);
-      }
-
-      return new Response(JSON.stringify({ success: true, delivered }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    } catch (error) {
-      console.error('Notification error:', error);
-      return new Response(JSON.stringify({ error: 'Failed to send notification' }), {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+  /**
+   * Hibernatable WebSocket API: handle errors
+   */
+  async webSocketError(ws: WebSocket, error: unknown): Promise<void> {
+    console.error('WebSocket error in UserSession:', error);
+    try {
+      ws.close(1011, 'Internal error');
+    } catch {
+      // Socket may already be closed
     }
   }
 

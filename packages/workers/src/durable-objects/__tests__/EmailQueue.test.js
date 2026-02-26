@@ -59,6 +59,9 @@ describe('EmailQueue Durable Object', () => {
 
   beforeEach(async () => {
     vi.clearAllMocks();
+    // Reset mock implementation (clearAllMocks doesn't clear implementations
+    // set by mockRejectedValue, so previous tests' permanent mocks leak through)
+    mockSendEmail.mockResolvedValue({ success: true, id: 'test-message-id' });
     // Clear storage between tests
     // Use try-catch to handle DO invalidation gracefully
     try {
@@ -94,14 +97,7 @@ describe('EmailQueue Durable Object', () => {
 
   async function queueEmail(payload) {
     const stub = await getEmailQueueStub();
-    const res = await stub.fetch(
-      new Request('https://internal/enqueue', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      }),
-    );
-    return res;
+    await stub.queueEmail(payload);
   }
 
   describe('Email Queueing', () => {
@@ -113,11 +109,7 @@ describe('EmailQueue Durable Object', () => {
         text: 'Test',
       };
 
-      const res = await queueEmail(payload);
-
-      expect(res.status).toBe(202);
-      const body = await res.json();
-      expect(body.success).toBe(true);
+      await queueEmail(payload);
 
       // Verify email was sent
       expect(mockSendEmail).toHaveBeenCalledTimes(1);
@@ -130,11 +122,7 @@ describe('EmailQueue Durable Object', () => {
         html: '<p>Test</p>',
       };
 
-      const res = await queueEmail(payload);
-
-      expect(res.status).toBe(400);
-      const body = await res.json();
-      expect(body.error).toMatch(/Invalid payload/i);
+      await expect(queueEmail(payload)).rejects.toThrow(/Invalid email payload/);
       expect(mockSendEmail).not.toHaveBeenCalled();
     });
 
@@ -144,11 +132,7 @@ describe('EmailQueue Durable Object', () => {
         html: '<p>Test</p>',
       };
 
-      const res = await queueEmail(payload);
-
-      expect(res.status).toBe(400);
-      const body = await res.json();
-      expect(body.error).toMatch(/Invalid payload/i);
+      await expect(queueEmail(payload)).rejects.toThrow(/Invalid email payload/);
     });
 
     it('should reject invalid payload - missing html and text', async () => {
@@ -157,11 +141,7 @@ describe('EmailQueue Durable Object', () => {
         subject: 'Test Email',
       };
 
-      const res = await queueEmail(payload);
-
-      expect(res.status).toBe(400);
-      const body = await res.json();
-      expect(body.error).toMatch(/Invalid payload/i);
+      await expect(queueEmail(payload)).rejects.toThrow(/Invalid email payload/);
     });
 
     it('should accept email with only html', async () => {
@@ -171,9 +151,8 @@ describe('EmailQueue Durable Object', () => {
         html: '<p>Test</p>',
       };
 
-      const res = await queueEmail(payload);
+      await queueEmail(payload);
 
-      expect(res.status).toBe(202);
       expect(mockSendEmail).toHaveBeenCalledTimes(1);
     });
 
@@ -184,21 +163,9 @@ describe('EmailQueue Durable Object', () => {
         text: 'Test',
       };
 
-      const res = await queueEmail(payload);
+      await queueEmail(payload);
 
-      expect(res.status).toBe(202);
       expect(mockSendEmail).toHaveBeenCalledTimes(1);
-    });
-
-    it('should reject non-POST requests', async () => {
-      const stub = await getEmailQueueStub();
-      const res = await stub.fetch(
-        new Request('https://internal/enqueue', {
-          method: 'GET',
-        }),
-      );
-
-      expect(res.status).toBe(405);
     });
   });
 
@@ -213,8 +180,7 @@ describe('EmailQueue Durable Object', () => {
         html: '<p>Test</p>',
       };
 
-      const res = await queueEmail(payload);
-      expect(res.status).toBe(202);
+      await queueEmail(payload);
 
       // Verify email was stored for retry
       const stub = await getEmailQueueStub();
@@ -307,7 +273,7 @@ describe('EmailQueue Durable Object', () => {
   });
 
   describe('Email Storage', () => {
-    it('should store email record in storage', async () => {
+    it('should clean up sent emails immediately', async () => {
       const payload = {
         to: 'test@example.com',
         subject: 'Test Email',
@@ -316,55 +282,11 @@ describe('EmailQueue Durable Object', () => {
 
       await queueEmail(payload);
 
+      // After successful send, email record should be deleted immediately
       const stub = await getEmailQueueStub();
       await runInDurableObjectWithRetry(stub, async (instance, state) => {
         const emails = await state.storage.list({ prefix: 'email:' });
-        expect(emails.size).toBeGreaterThan(0);
-
-        const emailEntries = Array.from(emails.entries());
-        // Find the email we just queued
-        const emailRecord = emailEntries.find(
-          ([_, record]) =>
-            record.payload?.to === payload.to && record.payload?.subject === payload.subject,
-        )?.[1];
-
-        expect(emailRecord).toBeDefined();
-        expect(emailRecord.id).toBeDefined();
-        expect(emailRecord.payload).toEqual(payload);
-        // In dev mode, email service returns success immediately, so status will be 'sent'
-        // Attempts will be 1 for successful send
-        expect(emailRecord.attempts).toBeGreaterThanOrEqual(1);
-        // Status could be 'sent' (if mock worked) or 'retry-pending' (if real service was called)
-        expect(['sent', 'retry-pending']).toContain(emailRecord.status);
-      });
-    });
-
-    it('should clean up sent emails after delay', async () => {
-      const payload = {
-        to: 'test@example.com',
-        subject: 'Test Email',
-        html: '<p>Test</p>',
-      };
-
-      await queueEmail(payload);
-
-      const stub = await getEmailQueueStub();
-      await runInDurableObjectWithRetry(stub, async (instance, state) => {
-        const emails = await state.storage.list({ prefix: 'email:' });
-        if (emails.size > 0) {
-          const emailEntries = Array.from(emails.entries());
-          const emailRecord = emailEntries[0][1];
-
-          // Manually trigger cleanup
-          await instance.cleanupSentEmail(emailRecord.id);
-
-          // Verify email was deleted
-          const afterCleanup = await state.storage.list({ prefix: 'email:' });
-          const found = Array.from(afterCleanup.entries()).find(
-            ([key]) => key === `email:${emailRecord.id}`,
-          );
-          expect(found).toBeUndefined();
-        }
+        expect(emails.size).toBe(0);
       });
     });
   });
@@ -399,6 +321,48 @@ describe('EmailQueue Durable Object', () => {
           expect(deadLetters[0].status).toBe('failed');
           expect(deadLetters[0].error).toBeDefined();
         }
+      });
+    });
+  });
+
+  describe('C3: Dead-letter write atomicity', () => {
+    it('should have dead-letter record AND no email record after max retries', async () => {
+      mockSendEmail.mockRejectedValue(new Error('Permanent failure'));
+
+      const payload = {
+        to: 'deadletter@example.com',
+        subject: 'Atomicity Test',
+        html: '<p>Test</p>',
+      };
+
+      await queueEmail(payload);
+
+      const stub = await getEmailQueueStub();
+      await runInDurableObjectWithRetry(stub, async (instance, state) => {
+        const emails = await state.storage.list({ prefix: 'email:' });
+        if (emails.size === 0) return; // Already moved on first attempt at max retries
+
+        const emailEntries = Array.from(emails.entries());
+        const emailRecord = emailEntries[0][1];
+        const emailId = emailRecord.id;
+
+        // Set to max retries so next attempt triggers dead-letter
+        emailRecord.attempts = 3;
+        await state.storage.put(`email:${emailId}`, emailRecord);
+
+        await instance.attemptSend(emailRecord);
+
+        // Both conditions must hold simultaneously
+        const deadLetters = await state.storage.list({ prefix: 'dead-letter:' });
+        const remainingEmails = await state.storage.list({ prefix: 'email:' });
+
+        expect(deadLetters.size).toBe(1);
+        expect(remainingEmails.size).toBe(0);
+
+        const deadLetter = Array.from(deadLetters.values())[0];
+        expect(deadLetter.id).toBe(emailId);
+        expect(deadLetter.status).toBe('failed');
+        expect(deadLetter.error).toBe('Permanent failure');
       });
     });
   });

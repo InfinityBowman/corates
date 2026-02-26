@@ -863,18 +863,12 @@ async function handleInvitation(
 
     const queueId = c.env.EMAIL_QUEUE.idFromName('default');
     const queue = c.env.EMAIL_QUEUE.get(queueId);
-    await queue.fetch(
-      new Request('https://internal/enqueue', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          to: email,
-          subject: `You're Invited to "${safeProjectName}" - CoRATES`,
-          html: emailHtml,
-          text: emailText,
-        }),
-      }),
-    );
+    await queue.queueEmail({
+      to: email,
+      subject: `You're Invited to "${safeProjectName}" - CoRATES`,
+      html: emailHtml,
+      text: emailText,
+    });
   } catch (err) {
     console.error('Failed to queue invitation email:', err);
   }

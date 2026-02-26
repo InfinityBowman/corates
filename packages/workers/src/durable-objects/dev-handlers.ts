@@ -4,6 +4,7 @@
  */
 import * as Y from 'yjs';
 import { getTemplate, getTemplateNames, getTemplateDescriptions } from '../lib/mock-templates';
+import { buildMemberYMap } from './ProjectDoc';
 
 interface DevContext {
   doc: Y.Doc;
@@ -324,29 +325,22 @@ export async function handleDevImport(ctx: DevContext, request: ImportRequest): 
       // Import members
       if (data.members) {
         for (const member of data.members) {
-          const memberYMap = new Y.Map<unknown>();
-          memberYMap.set('role', member.role);
-          memberYMap.set('joinedAt', member.joinedAt);
-          memberYMap.set('name', member.name || null);
-          memberYMap.set('email', member.email || null);
-          memberYMap.set('givenName', member.givenName || null);
-          memberYMap.set('familyName', member.familyName || null);
-          memberYMap.set('image', member.image || null);
-          membersMap.set(member.userId, memberYMap);
+          membersMap.set(member.userId, buildMemberYMap(member));
         }
       }
 
       // Add importer as member if not already present
       if (importer?.userId && !membersMap.has(importer.userId)) {
-        const importerYMap = new Y.Map<unknown>();
-        importerYMap.set('role', 'owner');
-        importerYMap.set('joinedAt', new Date().toISOString());
-        importerYMap.set('name', importer.name || null);
-        importerYMap.set('email', importer.email || null);
-        importerYMap.set('givenName', null);
-        importerYMap.set('familyName', null);
-        importerYMap.set('image', importer.image || null);
-        membersMap.set(importer.userId, importerYMap);
+        membersMap.set(
+          importer.userId,
+          buildMemberYMap({
+            role: 'owner',
+            joinedAt: new Date().toISOString(),
+            name: importer.name || null,
+            email: importer.email || null,
+            image: importer.image || null,
+          }),
+        );
       }
 
       // Import studies

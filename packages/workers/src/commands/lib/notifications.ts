@@ -34,16 +34,10 @@ export async function notifyUser(
   const userSessionId = env.USER_SESSION.idFromName(userId);
   const userSession = env.USER_SESSION.get(userSessionId);
 
-  await userSession.fetch(
-    new Request('https://internal/notify', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        ...notification,
-        timestamp: Date.now(),
-      }),
-    }),
-  );
+  await userSession.notify({
+    ...notification,
+    timestamp: Date.now(),
+  });
 }
 
 /**

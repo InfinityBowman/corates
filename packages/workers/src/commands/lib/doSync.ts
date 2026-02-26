@@ -16,16 +16,7 @@ export { syncProjectToDO, syncMemberToDO } from '@/lib/project-sync';
  */
 export async function disconnectAllFromProject(env: Env, projectId: string): Promise<void> {
   const projectDoc = getProjectDocStub(env, projectId);
-
-  await projectDoc.fetch(
-    new Request('https://internal/disconnect-all', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Internal-Request': 'true',
-      },
-    }),
-  );
+  await projectDoc.disconnectAllConnections('project-deleted');
 }
 
 /**

@@ -132,12 +132,14 @@ async function fetchInvitations(orgId, projectId, path = '', init = {}) {
       idFromName: () => ({ toString: () => 'default-queue' }),
       get: () => ({
         fetch: mockEmailQueueFetch,
+        queueEmail: vi.fn(async () => {}),
       }),
     },
     USER_SESSION: {
       idFromName: userId => ({ toString: () => `user-session-${userId}` }),
       get: () => ({
         fetch: mockUserSessionFetch,
+        notify: mockUserSessionFetch,
       }),
     },
   };

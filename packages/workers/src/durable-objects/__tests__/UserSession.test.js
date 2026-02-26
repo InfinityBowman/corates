@@ -35,23 +35,6 @@ describe('UserSession Durable Object', () => {
     return env.USER_SESSION.get(id);
   }
 
-  function createAuthRequest(path, method = 'GET', body = null) {
-    const headers = {
-      Cookie: 'better-auth.session_token=test-token',
-      Origin: 'http://localhost:5173',
-    };
-
-    if (body) {
-      headers['Content-Type'] = 'application/json';
-    }
-
-    return new Request(`https://internal/api/sessions/${path}`, {
-      method,
-      headers,
-      body: body ? JSON.stringify(body) : null,
-    });
-  }
-
   describe('HTTP Method Handling', () => {
     it('should return 405 for non-WebSocket, non-notify requests', async () => {
       mockVerifyAuth.mockResolvedValueOnce({
@@ -59,7 +42,13 @@ describe('UserSession Durable Object', () => {
       });
 
       const stub = await getUserSessionStub('test-user-1');
-      const req = createAuthRequest('test-user-1', 'GET');
+      const req = new Request('https://internal/api/sessions/test-user-1', {
+        method: 'GET',
+        headers: {
+          Cookie: 'better-auth.session_token=test-token',
+          Origin: 'http://localhost:5173',
+        },
+      });
 
       const res = await stub.fetch(req);
       expect(res.status).toBe(405);
@@ -70,7 +59,13 @@ describe('UserSession Durable Object', () => {
 
     it('should handle OPTIONS preflight requests', async () => {
       const stub = await getUserSessionStub('test-user-1');
-      const req = createAuthRequest('test-user-1', 'OPTIONS');
+      const req = new Request('https://internal/api/sessions/test-user-1', {
+        method: 'OPTIONS',
+        headers: {
+          Cookie: 'better-auth.session_token=test-token',
+          Origin: 'http://localhost:5173',
+        },
+      });
 
       const res = await stub.fetch(req);
       expect(res.status).toBe(200);
@@ -78,7 +73,7 @@ describe('UserSession Durable Object', () => {
     });
   });
 
-  describe('Notifications', () => {
+  describe('Notifications via RPC', () => {
     it('should handle notification requests', async () => {
       const stub = await getUserSessionStub('test-user-1');
       const notification = {
@@ -87,18 +82,9 @@ describe('UserSession Durable Object', () => {
         message: 'You were added to a project',
       };
 
-      const req = new Request('https://internal/api/sessions/test-user-1/notify', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(notification),
-      });
-
-      const res = await stub.fetch(req);
-      expect(res.status).toBe(200);
-
-      const body = await res.json();
-      expect(body.success).toBe(true);
-      expect(body.delivered).toBe(false); // No active connections
+      const result = await stub.notify(notification);
+      expect(result.success).toBe(true);
+      expect(result.delivered).toBe(false); // No active connections
     });
 
     it('should store notifications when no active connections', async () => {
@@ -108,13 +94,7 @@ describe('UserSession Durable Object', () => {
         projectId: 'project-123',
       };
 
-      const req = new Request('https://internal/api/sessions/test-user-1/notify', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(notification),
-      });
-
-      await stub.fetch(req);
+      await stub.notify(notification);
 
       await runInDurableObject(stub, async (instance, state) => {
         const pending = await state.storage.get('pendingNotifications');
@@ -130,16 +110,10 @@ describe('UserSession Durable Object', () => {
 
       // Send 55 notifications
       for (let i = 0; i < 55; i++) {
-        const notification = {
+        await stub.notify({
           type: 'test',
           index: i,
-        };
-        const req = new Request('https://internal/api/sessions/test-user-1/notify', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(notification),
         });
-        await stub.fetch(req);
       }
 
       await runInDurableObject(stub, async (instance, state) => {

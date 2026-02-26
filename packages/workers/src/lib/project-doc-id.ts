@@ -12,7 +12,7 @@ export function getProjectDocName(projectId: string): string {
   return `project:${projectId}`;
 }
 
-export function getProjectDocStub(env: Env, projectId: string): DurableObjectStub {
+export function getProjectDocStub(env: Env, projectId: string) {
   const name = getProjectDocName(projectId);
   const id = env.PROJECT_DOC.idFromName(name);
   return env.PROJECT_DOC.get(id);

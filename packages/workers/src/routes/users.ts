@@ -468,25 +468,13 @@ userRoutes.openapi(syncProfileRoute, async c => {
       try {
         const projectDoc = getProjectDocStub(c.env, projectId);
 
-        await projectDoc.fetch(
-          new Request('https://internal/sync-member', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'X-Internal-Request': 'true',
-            },
-            body: JSON.stringify({
-              action: 'update',
-              member: {
-                userId: currentUser.id,
-                name: userData.name,
-                givenName: userData.givenName,
-                familyName: userData.familyName,
-                image: userData.image,
-              },
-            }),
-          }),
-        );
+        await projectDoc.syncMember('update', {
+          userId: currentUser.id,
+          name: userData.name,
+          givenName: userData.givenName,
+          familyName: userData.familyName,
+          image: userData.image,
+        });
         return { projectId, success: true };
       } catch (err) {
         const error = err as Error;

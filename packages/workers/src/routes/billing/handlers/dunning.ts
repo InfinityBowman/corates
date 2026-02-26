@@ -100,25 +100,17 @@ export async function queueDunningEmail(
     const queueId = env.EMAIL_QUEUE.idFromName('default');
     const queue = env.EMAIL_QUEUE.get(queueId);
 
-    const response = await queue.fetch(
-      new Request('https://internal/enqueue', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(emailPayload),
-      }),
-    );
-
-    const result = (await response.json()) as { success: boolean };
+    await queue.queueEmail(emailPayload);
 
     logger.stripe('dunning_email_queued', {
       subscriptionId,
       orgId,
       attemptCount,
       urgency: template.urgency,
-      queued: result.success,
+      queued: true,
     });
 
-    return result.success;
+    return true;
   } catch (error) {
     const err = error as Error;
     // Use stripe logger if error logger is not available

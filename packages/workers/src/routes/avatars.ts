@@ -72,19 +72,10 @@ async function syncAvatarToProjects(env: Env, userId: string, avatarUrl: string)
       try {
         const projectDoc = getProjectDocStub(env, projectId);
 
-        await projectDoc.fetch(
-          new Request('https://internal/sync-member', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'X-Internal-Request': 'true',
-            },
-            body: JSON.stringify({
-              action: 'update',
-              member: { userId, image: avatarUrl },
-            }),
-          }),
-        );
+        await projectDoc.syncMember('update', {
+          userId,
+          image: avatarUrl,
+        });
       } catch (err) {
         console.error(`Failed to sync avatar to project ${projectId}:`, err);
       }

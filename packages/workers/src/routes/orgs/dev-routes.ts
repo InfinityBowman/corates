@@ -7,7 +7,6 @@
  */
 
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
-import type { ContentfulStatusCode } from 'hono/utils/http-status';
 import {
   requireOrgMembership,
   requireProjectAccess,
@@ -146,6 +145,14 @@ const applyTemplateRoute = createRoute({
         },
       },
     },
+    400: {
+      description: 'Missing required template parameter',
+      content: {
+        'application/json': {
+          schema: DevErrorSchema,
+        },
+      },
+    },
     403: {
       description: 'Dev mode disabled or no access',
       content: {
@@ -268,7 +275,6 @@ const resetRoute = createRoute({
 });
 
 // GET /dev/templates
-// @ts-expect-error OpenAPIHono strict return types don't account for error responses
 devRoutes.openapi(getTemplatesRoute, async c => {
   const { projectId } = getProjectContext(c);
   if (!projectId) {
@@ -277,13 +283,8 @@ devRoutes.openapi(getTemplatesRoute, async c => {
 
   try {
     const projectDoc = getProjectDocStub(c.env, projectId);
-    const response = await projectDoc.fetch(
-      new Request('https://internal/dev/templates', {
-        headers: { 'X-Internal-Request': 'true' },
-      }),
-    );
-    const data = await response.json();
-    return c.json(data, response.status as ContentfulStatusCode);
+    const data = await projectDoc.devTemplates();
+    return c.json(data);
   } catch (err) {
     const error = err as Error;
     console.error('[Dev] Failed to fetch templates:', error);
@@ -292,7 +293,6 @@ devRoutes.openapi(getTemplatesRoute, async c => {
 });
 
 // POST /dev/apply-template
-// @ts-expect-error OpenAPIHono strict return types don't account for error responses
 devRoutes.openapi(applyTemplateRoute, async c => {
   const { projectId } = getProjectContext(c);
   if (!projectId) {
@@ -302,16 +302,14 @@ devRoutes.openapi(applyTemplateRoute, async c => {
   const template = query.template;
   const mode = query.mode || 'replace';
 
+  if (!template) {
+    return c.json({ error: 'template query parameter is required' }, 400);
+  }
+
   try {
     const projectDoc = getProjectDocStub(c.env, projectId);
-    const response = await projectDoc.fetch(
-      new Request(`https://internal/dev/apply-template?template=${template}&mode=${mode}`, {
-        method: 'POST',
-        headers: { 'X-Internal-Request': 'true' },
-      }),
-    );
-    const data = await response.json();
-    return c.json(data, response.status as ContentfulStatusCode);
+    const data = await projectDoc.devApplyTemplate(template, mode);
+    return c.json(data);
   } catch (err) {
     const error = err as Error;
     console.error('[Dev] Failed to apply template:', error);
@@ -320,7 +318,6 @@ devRoutes.openapi(applyTemplateRoute, async c => {
 });
 
 // GET /dev/export
-// @ts-expect-error OpenAPIHono strict return types don't account for error responses
 devRoutes.openapi(exportRoute, async c => {
   const { projectId } = getProjectContext(c);
   if (!projectId) {
@@ -329,13 +326,8 @@ devRoutes.openapi(exportRoute, async c => {
 
   try {
     const projectDoc = getProjectDocStub(c.env, projectId);
-    const response = await projectDoc.fetch(
-      new Request('https://internal/dev/export', {
-        headers: { 'X-Internal-Request': 'true' },
-      }),
-    );
-    const data = await response.json();
-    return c.json(data, response.status as ContentfulStatusCode);
+    const data = await projectDoc.devExport();
+    return c.json(data);
   } catch (err) {
     const error = err as Error;
     console.error('[Dev] Failed to export state:', error);
@@ -344,7 +336,6 @@ devRoutes.openapi(exportRoute, async c => {
 });
 
 // POST /dev/import
-// @ts-expect-error OpenAPIHono strict return types don't account for error responses
 devRoutes.openapi(importRoute, async c => {
   const { projectId } = getProjectContext(c);
   const { orgId } = getOrgContext(c);
@@ -357,28 +348,17 @@ devRoutes.openapi(importRoute, async c => {
   try {
     const body = await c.req.json();
     const projectDoc = getProjectDocStub(c.env, projectId);
-    const response = await projectDoc.fetch(
-      new Request('https://internal/dev/import', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Internal-Request': 'true',
-        },
-        // Pass correct orgId and importer info to ensure they're added as member
-        body: JSON.stringify({
-          ...body,
-          targetOrgId: orgId,
-          importer: {
-            userId: user?.id,
-            email: user?.email,
-            name: user?.name,
-            image: user?.image,
-          },
-        }),
-      }),
-    );
-    const data = await response.json();
-    return c.json(data, response.status as ContentfulStatusCode);
+    const data = await projectDoc.devImport({
+      ...body,
+      targetOrgId: orgId,
+      importer: {
+        userId: user?.id,
+        email: user?.email,
+        name: user?.name,
+        image: user?.image,
+      },
+    });
+    return c.json(data);
   } catch (err) {
     const error = err as Error;
     console.error('[Dev] Failed to import state:', error);
@@ -387,7 +367,6 @@ devRoutes.openapi(importRoute, async c => {
 });
 
 // POST /dev/reset
-// @ts-expect-error OpenAPIHono strict return types don't account for error responses
 devRoutes.openapi(resetRoute, async c => {
   const { projectId } = getProjectContext(c);
   if (!projectId) {
@@ -396,14 +375,8 @@ devRoutes.openapi(resetRoute, async c => {
 
   try {
     const projectDoc = getProjectDocStub(c.env, projectId);
-    const response = await projectDoc.fetch(
-      new Request('https://internal/dev/reset', {
-        method: 'POST',
-        headers: { 'X-Internal-Request': 'true' },
-      }),
-    );
-    const data = await response.json();
-    return c.json(data, response.status as ContentfulStatusCode);
+    const data = await projectDoc.devReset();
+    return c.json(data);
   } catch (err) {
     const error = err as Error;
     console.error('[Dev] Failed to reset state:', error);

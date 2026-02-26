@@ -286,19 +286,13 @@ invitationRoutes.openapi(acceptInvitationRoute, async c => {
     try {
       const userSessionId = c.env.USER_SESSION.idFromName(authUser.id);
       const userSession = c.env.USER_SESSION.get(userSessionId);
-      await userSession.fetch(
-        new Request('https://internal/notify', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            type: 'project-invite',
-            projectId: invitation.projectId,
-            projectName: project?.name || 'Unknown Project',
-            role: invitation.role,
-            timestamp: Date.now(),
-          }),
-        }),
-      );
+      await userSession.notify({
+        type: 'project-invite',
+        projectId: invitation.projectId,
+        projectName: project?.name || 'Unknown Project',
+        role: invitation.role,
+        timestamp: Date.now(),
+      });
     } catch (err) {
       console.error('Failed to send project invite notification:', err);
     }
