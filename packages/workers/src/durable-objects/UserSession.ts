@@ -100,8 +100,7 @@ export class UserSession extends DurableObject<Env> {
     }
 
     if (!delivered) {
-      const pending =
-        (await this.ctx.storage.get<Notification[]>('pendingNotifications')) || [];
+      const pending = (await this.ctx.storage.get<Notification[]>('pendingNotifications')) || [];
       pending.push(notification);
       if (pending.length > 50) {
         pending.shift();
