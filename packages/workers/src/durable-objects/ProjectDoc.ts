@@ -701,15 +701,9 @@ export class ProjectDoc extends DurableObject<Env> {
           const needsClientId = attachment && attachment.awarenessClientId === null;
 
           let capturedClientId: number | null = null;
-          const onUpdate = needsClientId
-            ? ({
-                added,
-                updated,
-              }: {
-                added: number[];
-                updated: number[];
-                removed: number[];
-              }) => {
+          const onUpdate =
+            needsClientId ?
+              ({ added, updated }: { added: number[]; updated: number[]; removed: number[] }) => {
                 const ids = [...added, ...updated];
                 if (ids.length > 0) capturedClientId = ids[0];
               }
