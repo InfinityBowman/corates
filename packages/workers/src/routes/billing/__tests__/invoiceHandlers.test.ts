@@ -281,6 +281,7 @@ describe('Invoice Handlers', () => {
       const result = await handleInvoicePaymentFailed(invoice, ctx);
 
       expect(result.handled).toBe(true);
+      expect(mockEmailQueue.send).not.toHaveBeenCalled();
       expect(ctx.logger.stripe).toHaveBeenCalledWith('dunning_email_skipped_no_user', {
         subscriptionId: 'sub-local-1',
         stripeCustomerId: 'cus_orphan',

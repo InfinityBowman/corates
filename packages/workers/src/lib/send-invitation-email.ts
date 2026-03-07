@@ -104,7 +104,8 @@ export async function sendInvitationEmail(
   }
 
   if (env.ENVIRONMENT !== 'production') {
-    console.log('[Email] Project invitation magic link URL:', capturedMagicLinkUrl);
+    const redacted = capturedMagicLinkUrl.replace(/token=[^&]+/, 'token=REDACTED');
+    console.log('[Email] Project invitation magic link URL:', redacted);
   }
 
   const { getProjectInvitationEmailHtml, getProjectInvitationEmailText } =

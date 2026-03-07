@@ -381,12 +381,14 @@ const workerHandler = {
         if (result.success) {
           msg.ack();
         } else {
-          console.error(`[EmailQueue] Send returned error for ${msg.body.to}:`, result.error);
+          const masked = msg.body.to?.replace(/^(..).*@/, '$1***@');
+          console.error(`[EmailQueue] Send returned error for ${masked}:`, result.error);
           const delay = Math.min(30 * 2 ** msg.attempts, 1800);
           msg.retry({ delaySeconds: delay });
         }
       } catch (error) {
-        console.error(`[EmailQueue] Exception sending to ${msg.body.to}:`, error);
+        const masked = msg.body.to?.replace(/^(..).*@/, '$1***@');
+        console.error(`[EmailQueue] Exception sending to ${masked}:`, error);
         const delay = Math.min(30 * 2 ** msg.attempts, 1800);
         msg.retry({ delaySeconds: delay });
       }

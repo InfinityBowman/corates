@@ -303,7 +303,7 @@ export default function OverviewTab() {
                   <TooltipTrigger
                     asChild={item => (
                       <span
-                        {...item}
+                        {...item()}
                         class='bg-secondary text-muted-foreground/70 inline-flex cursor-not-allowed items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium'
                       >
                         <FiPlus class='h-4 w-4' />

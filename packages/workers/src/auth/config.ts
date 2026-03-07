@@ -174,14 +174,11 @@ export function createAuth(env: Env, ctx?: ExecutionContext) {
   plugins.push(
     magicLink({
       sendMagicLink: async ({ email, url }: { email: string; url: string }) => {
-        console.log('[Auth] Queuing magic link email to:', email, 'URL:', url);
         const subject = 'Sign in to CoRATES';
         const html = getMagicLinkEmailHtml({ subject, magicLinkUrl: url });
         const text = getMagicLinkEmailText({ magicLinkUrl: url });
 
-        await queueEmail(env, { to: email, subject, html, text }).catch(err =>
-          console.error('[Auth] Magic link email queue error:', err),
-        );
+        await queueEmail(env, { to: email, subject, html, text });
       },
       expiresIn: 60 * MAGIC_LINK_EXPIRY_MINUTES,
     }),
@@ -443,15 +440,12 @@ export function createAuth(env: Env, ctx?: ExecutionContext) {
       minPasswordLength: 8,
       // Password reset - sendResetPassword is required for requestPasswordReset to work
       sendResetPassword: async ({ user, url }: { user: BetterAuthUser; url: string }) => {
-        console.log('[Auth] Queuing reset email to:', user.email, 'URL:', url);
         const name = user.givenName || user.name || user.username || 'there';
         const subject = 'Reset Your Password - CoRATES';
         const html = getPasswordResetEmailHtml({ name, subject, resetUrl: url });
         const text = getPasswordResetEmailText({ name, resetUrl: url });
 
-        await queueEmail(env, { to: user.email, subject, html, text }).catch(err =>
-          console.error('[Auth] Password reset email queue error:', err),
-        );
+        await queueEmail(env, { to: user.email, subject, html, text });
       },
     },
 
@@ -467,15 +461,12 @@ export function createAuth(env: Env, ctx?: ExecutionContext) {
       sendOnSignIn: true,
       autoSignInAfterVerification: true,
       sendVerificationEmail: async ({ user, url }: { user: BetterAuthUser; url: string }) => {
-        console.log('[Auth] Queuing verification email to:', user.email, 'URL:', url);
         const name = user.givenName || user.name || user.username || 'there';
         const subject = 'Verify Your Email Address - CoRATES';
         const html = getVerificationEmailHtml({ name, subject, verificationUrl: url });
         const text = getVerificationEmailText({ name, verificationUrl: url });
 
-        await queueEmail(env, { to: user.email, subject, html, text }).catch(err =>
-          console.error('[Auth] Verification email queue error:', err),
-        );
+        await queueEmail(env, { to: user.email, subject, html, text });
       },
     },
 
