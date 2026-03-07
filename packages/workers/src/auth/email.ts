@@ -19,6 +19,7 @@ interface SendEmailParams {
   subject: string;
   html: string;
   text: string;
+  replyTo?: string;
 }
 
 interface EmailResult {
@@ -55,7 +56,7 @@ export function createEmailService(env: Env): EmailService {
   /**
    * Send email using Postmark
    */
-  async function sendEmail({ to, subject, html, text }: SendEmailParams): Promise<EmailResult> {
+  async function sendEmail({ to, subject, html, text, replyTo }: SendEmailParams): Promise<EmailResult> {
     if (env.SEND_EMAILS_IN_DEV !== 'true' && !isProduction) {
       console.log('[Email] Development environment - email sending is DISABLED');
       return { success: true, id: 'dev-id' };
@@ -73,6 +74,7 @@ export function createEmailService(env: Env): EmailService {
         Subject: subject,
         HtmlBody: html,
         TextBody: text,
+        ...(replyTo ? { ReplyTo: replyTo } : {}),
         MessageStream: 'outbound',
       });
 

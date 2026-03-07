@@ -237,10 +237,15 @@ export function useProject(projectId) {
       isOutcomeInUse: connectionEntry.outcomeOps.isOutcomeInUse,
     });
 
-    // Listen for Y.Doc changes BEFORE setting up providers
-    // This ensures we catch all updates including initial sync
+    // Listen for Y.Doc changes to sync to the store.
+    // Suppressed during Dexie state load to prevent the sync handler from
+    // firing while the Y.Doc's internal struct store is being populated,
+    // which can cause corruption and GC errors.
+    let isLoadingPersistedState = false;
     ydoc.on('update', () => {
-      connectionEntry.syncManager?.syncFromYDoc();
+      if (!isLoadingPersistedState) {
+        connectionEntry.syncManager?.syncFromYDoc();
+      }
     });
 
     // Set up Dexie persistence for offline support using y-dexie
@@ -258,9 +263,18 @@ export function useProject(projectId) {
       connectionEntry.dexieProvider = DexieYProvider.load(project.ydoc);
 
       connectionEntry.dexieProvider.whenLoaded.then(() => {
-        // Apply persisted state from Dexie Y.Doc to our Y.Doc
-        const persistedState = Y.encodeStateAsUpdate(project.ydoc);
-        Y.applyUpdate(ydoc, persistedState);
+        // Suppress the sync handler while applying persisted state to avoid
+        // racing with the Dexie persistence handler below
+        isLoadingPersistedState = true;
+        try {
+          const persistedState = Y.encodeStateAsUpdate(project.ydoc);
+          Y.applyUpdate(ydoc, persistedState);
+        } catch (err) {
+          console.error('Corrupted persisted state, clearing local data:', err);
+          deleteProjectData(projectId).catch(() => {});
+        } finally {
+          isLoadingPersistedState = false;
+        }
 
         // Subscribe to our ydoc updates to persist them to Dexie
         const updateHandler = (update, origin) => {

@@ -109,7 +109,7 @@ export async function sendInvitationEmail(
 
   const { getProjectInvitationEmailHtml, getProjectInvitationEmailText } =
     await import('@/auth/emailTemplates.js');
-  const { escapeHtml } = await import('@/lib/escapeHtml.js');
+  const { sanitizeEmailSubject } = await import('@/lib/escapeHtml.js');
 
   const emailHtml = getProjectInvitationEmailHtml({
     projectName,
@@ -124,7 +124,7 @@ export async function sendInvitationEmail(
     role,
   });
 
-  const safeProjectName = escapeHtml(projectName);
+  const safeProjectName = sanitizeEmailSubject(projectName);
 
   try {
     await queueEmail(env, {

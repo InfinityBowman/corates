@@ -248,6 +248,7 @@ describe('Invoice Handlers', () => {
 
       expect(result.handled).toBe(true);
       expect(result.result).toBe('payment_failed_processed');
+      expect(mockEmailQueue.send).toHaveBeenCalledTimes(1);
     });
 
     it('logs when dunning email skipped due to no user', async () => {

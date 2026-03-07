@@ -3,23 +3,30 @@
     "corates": {
       "type": "stdio",
       "command": "node",
-      "args": ["${workspaceFolder}/packages/mcp/dist/server.js"]
+      "args": [
+        "${workspaceFolder}/packages/mcp/dist/server.js"
+      ]
     },
     "corates-memory": {
       "type": "stdio",
       "command": "node",
-      "args": ["${workspaceFolder}/packages/mcp-memory/dist/server.js"],
+      "args": [
+        "${workspaceFolder}/packages/mcp-memory/dist/server.js"
+      ],
       "env": {
         "MCP_MEMORY_REPO_ROOT": "${workspaceFolder}"
       }
     },
     "ark-ui": {
       "command": "npx",
-      "args": ["-y", "@ark-ui/mcp"]
+      "args": [
+        "-y",
+        "@ark-ui/mcp"
+      ]
+    },
+    "sentry": {
+      "type": "http",
+      "url": "https://mcp.sentry.dev/mcp"
     }
-    // "stripe": {
-    //   "type": "http",
-    //   "url": "https://mcp.stripe.com"
-    // }
   }
 }

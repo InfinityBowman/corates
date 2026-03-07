@@ -5,6 +5,7 @@ import { genericOAuth, magicLink, twoFactor, admin, organization } from 'better-
 import { oAuthRelay } from './oauth-relay';
 import { stripe } from '@better-auth/stripe';
 import Stripe from 'stripe';
+import { STRIPE_API_VERSION } from '@/lib/stripe.js';
 import { drizzle } from 'drizzle-orm/d1';
 import { eq, and } from 'drizzle-orm';
 import * as schema from '../db/schema';
@@ -178,8 +179,7 @@ export function createAuth(env: Env, ctx?: ExecutionContext) {
         const html = getMagicLinkEmailHtml({ subject, magicLinkUrl: url });
         const text = getMagicLinkEmailText({ magicLinkUrl: url });
 
-        // Queue send is a direct binding call, no need for waitUntil keepalive
-        queueEmail(env, { to: email, subject, html, text }).catch(err =>
+        await queueEmail(env, { to: email, subject, html, text }).catch(err =>
           console.error('[Auth] Magic link email queue error:', err),
         );
       },
@@ -226,7 +226,7 @@ export function createAuth(env: Env, ctx?: ExecutionContext) {
   // - unlimited_team: $59/month, $590/year
   if (env.STRIPE_SECRET_KEY && env.STRIPE_WEBHOOK_SECRET_AUTH) {
     const stripeClient = new Stripe(env.STRIPE_SECRET_KEY, {
-      apiVersion: '2025-12-15.clover',
+      apiVersion: STRIPE_API_VERSION,
     });
 
     plugins.push(
@@ -449,7 +449,7 @@ export function createAuth(env: Env, ctx?: ExecutionContext) {
         const html = getPasswordResetEmailHtml({ name, subject, resetUrl: url });
         const text = getPasswordResetEmailText({ name, resetUrl: url });
 
-        queueEmail(env, { to: user.email, subject, html, text }).catch(err =>
+        await queueEmail(env, { to: user.email, subject, html, text }).catch(err =>
           console.error('[Auth] Password reset email queue error:', err),
         );
       },
@@ -473,7 +473,7 @@ export function createAuth(env: Env, ctx?: ExecutionContext) {
         const html = getVerificationEmailHtml({ name, subject, verificationUrl: url });
         const text = getVerificationEmailText({ name, verificationUrl: url });
 
-        queueEmail(env, { to: user.email, subject, html, text }).catch(err =>
+        await queueEmail(env, { to: user.email, subject, html, text }).catch(err =>
           console.error('[Auth] Verification email queue error:', err),
         );
       },

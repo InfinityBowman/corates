@@ -179,7 +179,8 @@ contact.openapi(submitContactRoute, async c => {
     await queueEmail(env, {
       to: contactEmail,
       subject: `[Contact Form] ${subject || 'New Inquiry'}`,
-      text: `New contact form submission:\n\nName: ${name}\nEmail: ${email}\nSubject: ${subject || 'Not specified'}\n\nMessage:\n${message}\n\nReply-To: ${email}`,
+      replyTo: email,
+      text: `New contact form submission:\n\nName: ${name}\nEmail: ${email}\nSubject: ${subject || 'Not specified'}\n\nMessage:\n${message}`,
       html: `
         <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
           <h2 style="color: #1e40af;">New Contact Form Submission</h2>

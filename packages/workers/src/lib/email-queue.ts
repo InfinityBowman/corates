@@ -12,6 +12,7 @@ export interface EmailPayload {
   subject: string;
   html?: string;
   text?: string;
+  replyTo?: string;
 }
 
 export async function queueEmail(env: Env, payload: EmailPayload): Promise<void> {

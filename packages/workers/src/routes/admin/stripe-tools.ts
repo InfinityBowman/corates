@@ -18,12 +18,6 @@ const stripeToolsRoutes = new OpenAPIHono<{ Bindings: Env }>({
   defaultHook: validationHook,
 });
 
-// Extended types for Stripe API version properties
-interface SubscriptionWithPeriods extends Stripe.Subscription {
-  current_period_start?: number;
-  current_period_end?: number;
-}
-
 interface InvoiceWithSubscription extends Stripe.Invoice {
   subscription?: string | Stripe.Subscription | null;
 }
@@ -153,6 +147,8 @@ const SubscriptionItemSchema = z
     unitAmount: z.number().nullable(),
     interval: z.string().nullable(),
     quantity: z.number().nullable(),
+    currentPeriodStart: z.number(),
+    currentPeriodEnd: z.number(),
   })
   .openapi('SubscriptionItem');
 
@@ -161,8 +157,6 @@ const StripeSubscriptionSchema = z
     id: z.string(),
     status: z.string(),
     currency: z.string(),
-    currentPeriodStart: z.number(),
-    currentPeriodEnd: z.number(),
     cancelAtPeriodEnd: z.boolean(),
     cancelAt: z.number().nullable(),
     canceledAt: z.number().nullable(),
@@ -747,13 +741,10 @@ stripeToolsRoutes.openapi(subscriptionsRoute, async c => {
     return c.json({
       customerId,
       subscriptions: subscriptions.data.map(sub => {
-        const subWithPeriods = sub as SubscriptionWithPeriods;
         return {
           id: sub.id,
           status: sub.status,
           currency: sub.currency,
-          currentPeriodStart: subWithPeriods.current_period_start ?? 0,
-          currentPeriodEnd: subWithPeriods.current_period_end ?? 0,
           cancelAtPeriodEnd: sub.cancel_at_period_end,
           cancelAt: sub.cancel_at,
           canceledAt: sub.canceled_at,
@@ -767,6 +758,8 @@ stripeToolsRoutes.openapi(subscriptionsRoute, async c => {
             productId: item.price.product,
             unitAmount: item.price.unit_amount,
             interval: item.price.recurring?.interval ?? null,
+            currentPeriodStart: item.current_period_start,
+            currentPeriodEnd: item.current_period_end,
             quantity: item.quantity,
           })),
           defaultPaymentMethod:

@@ -694,18 +694,34 @@ export class ProjectDoc extends DurableObject<Env> {
         }
         case messageAwareness: {
           const awarenessUpdate = decoding.readVarUint8Array(decoder);
-          awarenessProtocol.applyAwarenessUpdate(this.awareness!, awarenessUpdate, ws);
 
-          // Store the client's awareness ID in the attachment
-          const awarenessDecoder = decoding.createDecoder(awarenessUpdate);
-          const len = decoding.readVarUint(awarenessDecoder);
-          if (len > 0) {
-            const clientId = decoding.readVarUint(awarenessDecoder);
-            const attachment = ws.deserializeAttachment() as WebSocketAttachment;
-            if (attachment && attachment.awarenessClientId === null) {
-              attachment.awarenessClientId = clientId;
-              ws.serializeAttachment(attachment);
-            }
+          // Capture clientId from the awareness update event instead of
+          // manually re-decoding the binary message format
+          const attachment = ws.deserializeAttachment() as WebSocketAttachment;
+          const needsClientId = attachment && attachment.awarenessClientId === null;
+
+          let capturedClientId: number | null = null;
+          const onUpdate = needsClientId
+            ? ({
+                added,
+                updated,
+              }: {
+                added: number[];
+                updated: number[];
+                removed: number[];
+              }) => {
+                const ids = [...added, ...updated];
+                if (ids.length > 0) capturedClientId = ids[0];
+              }
+            : null;
+
+          if (onUpdate) this.awareness!.on('update', onUpdate);
+          awarenessProtocol.applyAwarenessUpdate(this.awareness!, awarenessUpdate, ws);
+          if (onUpdate) this.awareness!.off('update', onUpdate);
+
+          if (capturedClientId !== null && needsClientId) {
+            attachment.awarenessClientId = capturedClientId;
+            ws.serializeAttachment(attachment);
           }
           break;
         }

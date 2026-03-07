@@ -1,4 +1,4 @@
-import { Show, For, createMemo, createEffect, onCleanup } from 'solid-js';
+import { Show, For, createMemo } from 'solid-js';
 import { FiCheck, FiX, FiAlertTriangle } from 'solid-icons/fi';
 import {
   PRELIMINARY_SECTION,
@@ -240,21 +240,6 @@ export default function PreliminaryPage(props) {
   const fieldLabel = () => fieldDef()?.label || props.fieldKey;
 
   const isTextField = () => PRELIMINARY_TEXT_FIELDS.includes(props.fieldKey);
-
-  // Sync Y.Text changes back to finalAnswers so hasNavItemAnswer detects the field as answered
-  createEffect(() => {
-    if (!isTextField() || !props.getRob2Text) return;
-    const yText = props.getRob2Text('preliminary', props.fieldKey);
-    if (!yText) return;
-
-    const observer = () => {
-      const text = yText.toString();
-      props.onFinalChange?.(text);
-    };
-
-    yText.observe(observer);
-    onCleanup(() => yText.unobserve(observer));
-  });
 
   const getFieldType = () => {
     const key = props.fieldKey;
