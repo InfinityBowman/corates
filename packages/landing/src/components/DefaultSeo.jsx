@@ -51,6 +51,7 @@ export default function DefaultSeo() {
       <Meta property='og:image:alt' content='CoRATES product screenshot' />
       <Meta property='og:image:width' content='2524' />
       <Meta property='og:image:height' content='1770' />
+      <Meta property='og:locale' content='en_US' />
 
       <Meta name='twitter:card' content='summary_large_image' />
       <Meta name='twitter:image' content={imageUrl} />

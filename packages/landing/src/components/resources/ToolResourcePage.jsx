@@ -108,6 +108,32 @@ function ToolContent(props) {
   const description = () =>
     `Learn about ${props.tool.name}, including scoring guidance and links to official documentation.`;
 
+  const breadcrumbSchema = () =>
+    JSON.stringify({
+      '@context': 'https://schema.org',
+      '@type': 'BreadcrumbList',
+      itemListElement: [
+        {
+          '@type': 'ListItem',
+          position: 1,
+          name: 'Home',
+          item: config.appUrl,
+        },
+        {
+          '@type': 'ListItem',
+          position: 2,
+          name: 'Resources',
+          item: `${config.appUrl}/resources`,
+        },
+        {
+          '@type': 'ListItem',
+          position: 3,
+          name: props.tool.name,
+          item: pageUrl(),
+        },
+      ],
+    });
+
   return (
     <>
       <Title>{title()}</Title>
@@ -118,6 +144,9 @@ function ToolContent(props) {
       <Meta property='og:url' content={pageUrl()} />
       <Meta name='twitter:title' content={title()} />
       <Meta name='twitter:description' content={description()} />
+
+      {/* eslint-disable-next-line solid/no-innerhtml */}
+      <script type='application/ld+json' innerHTML={breadcrumbSchema()} />
 
       <div class='flex min-h-screen flex-col'>
         <Navbar />

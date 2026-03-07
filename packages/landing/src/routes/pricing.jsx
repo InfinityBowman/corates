@@ -41,6 +41,19 @@ const FAQ_ITEMS = [
   },
 ];
 
+const faqSchema = JSON.stringify({
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: FAQ_ITEMS.map(item => ({
+    '@type': 'Question',
+    name: item.question,
+    acceptedAnswer: {
+      '@type': 'Answer',
+      text: item.answer,
+    },
+  })),
+});
+
 function FAQItem(props) {
   const [isOpen, setIsOpen] = createSignal(false);
 
@@ -127,6 +140,9 @@ export default function Pricing() {
       <Meta property='og:url' content={pageUrl} />
       <Meta name='twitter:title' content={title} />
       <Meta name='twitter:description' content={description} />
+
+      {/* eslint-disable-next-line solid/no-innerhtml */}
+      <script type='application/ld+json' innerHTML={faqSchema} />
 
       <div class='min-h-screen bg-linear-to-b from-blue-50 to-white'>
         <Navbar />
