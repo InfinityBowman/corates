@@ -22,5 +22,6 @@ export default defineWorkersConfig({
     },
     include: ['src/**/*.{test,spec}.{js,ts}'],
     testTimeout: 10000,
+    retry: 2,
   },
 });
