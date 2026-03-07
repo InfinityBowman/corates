@@ -10,13 +10,14 @@ import type { ContentfulStatusCode } from 'hono/utils/http-status';
 import * as Sentry from '@sentry/cloudflare';
 import { UserSession } from './durable-objects/UserSession';
 import { ProjectDoc } from './durable-objects/ProjectDoc';
-import { EmailQueue } from './durable-objects/EmailQueue';
 import { createCorsMiddleware } from './middleware/cors';
 import { securityHeaders } from './middleware/securityHeaders';
 import { requireAuth } from './middleware/auth';
 import { requireTrustedOrigin } from './middleware/csrf';
 import { errorHandler } from './middleware/errorHandler';
 import { createDomainError, SYSTEM_ERRORS } from '@corates/shared';
+import { createEmailService } from './auth/email';
+import type { EmailPayload } from './lib/email-queue';
 import type { Env } from './types';
 
 // Route imports
@@ -25,7 +26,6 @@ import { healthRoutes } from './routes/health';
 import { orgRoutes } from './routes/orgs/index';
 import { userRoutes } from './routes/users';
 import { dbRoutes } from './routes/database';
-import { emailRoutes } from './routes/email';
 import { billingRoutes } from './routes/billing/index';
 import { googleDriveRoutes } from './routes/google-drive';
 import { avatarRoutes } from './routes/avatars';
@@ -35,7 +35,7 @@ import { contactRoutes } from './routes/contact';
 import { invitationRoutes } from './routes/invitations';
 
 // Export Durable Objects
-export { UserSession, ProjectDoc, EmailQueue };
+export { UserSession, ProjectDoc };
 
 // Create main Hono app with OpenAPI support
 const app = new OpenAPIHono<{ Bindings: Env }>();
@@ -132,9 +132,6 @@ app.post('/api/admin/stop-impersonation', async c => {
 
 // Mount admin routes
 app.route('/api/admin', adminRoutes);
-
-// Mount email routes
-app.route('/api/email', emailRoutes);
 
 // Mount contact form route (public)
 app.route('/api/contact', contactRoutes);
@@ -368,18 +365,53 @@ app.notFound(c => {
 // Global error handler - catches all uncaught errors in routes
 app.onError(errorHandler);
 
-// Wrap with Sentry for error monitoring (only if DSN is configured)
-export default Sentry.withSentry(
-  (env: Env) => ({
-    dsn: env.SENTRY_DSN || '',
-    release: env.CF_VERSION_METADATA?.id,
-    environment: env.ENVIRONMENT,
-    // Only enable if DSN is set
-    enabled: !!env.SENTRY_DSN,
-    // Capture 100% of errors
-    tracesSampleRate: env.ENVIRONMENT === 'production' ? 0.1 : 1.0,
-    // Add request data to error reports
-    sendDefaultPii: true,
-  }),
-  app,
+const workerHandler = {
+  fetch: app.fetch,
+
+  async queue(batch: MessageBatch<any>, env: Env): Promise<void> {
+    const emailService = createEmailService(env);
+    const messages = batch.messages as Message<EmailPayload>[];
+
+    for (const msg of messages) {
+      try {
+        const result = await emailService.sendEmail(
+          msg.body as Parameters<typeof emailService.sendEmail>[0],
+        );
+
+        if (result.success) {
+          msg.ack();
+        } else {
+          const masked = msg.body.to?.replace(/^(..).*@/, '$1***@');
+          console.error(`[EmailQueue] Send returned error for ${masked}:`, result.error);
+          const delay = Math.min(30 * 2 ** msg.attempts, 1800);
+          msg.retry({ delaySeconds: delay });
+        }
+      } catch (error) {
+        const masked = msg.body.to?.replace(/^(..).*@/, '$1***@');
+        console.error(`[EmailQueue] Exception sending to ${masked}:`, error);
+        const delay = Math.min(30 * 2 ** msg.attempts, 1800);
+        msg.retry({ delaySeconds: delay });
+      }
+    }
+  },
+};
+
+// Wrap with Sentry for error monitoring in non-test environments.
+// Sentry.withSentry proxies the fetch handler and its transport uses ctx.waitUntil,
+// which is unavailable in the vitest-pool-workers test runtime.
+// @ts-expect-error import.meta.env is set by vitest but not typed in workers
+const isTest = typeof import.meta !== 'undefined' && import.meta.env?.MODE === 'test';
+
+export default isTest ? workerHandler : (
+  Sentry.withSentry(
+    (env: Env) => ({
+      dsn: env.SENTRY_DSN || '',
+      release: env.CF_VERSION_METADATA?.id,
+      environment: env.ENVIRONMENT,
+      enabled: !!env.SENTRY_DSN,
+      tracesSampleRate: env.ENVIRONMENT === 'production' ? 0.1 : 1.0,
+      sendDefaultPii: true,
+    }),
+    workerHandler,
+  )
 );

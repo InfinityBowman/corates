@@ -78,9 +78,15 @@ describe('Subscription Handlers', () => {
         status: 'active',
         customer: 'cus_123',
         metadata: { orgId: 'org-1' },
-        items: { data: [{ price: { lookup_key: 'team' } }] },
-        current_period_start: Math.floor(Date.now() / 1000),
-        current_period_end: Math.floor(Date.now() / 1000) + 86400 * 30,
+        items: {
+          data: [
+            {
+              price: { lookup_key: 'team' },
+              current_period_start: Math.floor(Date.now() / 1000),
+              current_period_end: Math.floor(Date.now() / 1000) + 86400 * 30,
+            },
+          ],
+        },
       } as unknown as Stripe.Subscription;
 
       const ctx = createTestContext(db);
@@ -125,9 +131,15 @@ describe('Subscription Handlers', () => {
         status: 'trialing',
         customer: 'cus_456',
         metadata: { orgId: 'org-new' },
-        items: { data: [{ price: { lookup_key: 'enterprise' } }] },
-        current_period_start: Math.floor(Date.now() / 1000),
-        current_period_end: Math.floor(Date.now() / 1000) + 86400 * 30,
+        items: {
+          data: [
+            {
+              price: { lookup_key: 'enterprise' },
+              current_period_start: Math.floor(Date.now() / 1000),
+              current_period_end: Math.floor(Date.now() / 1000) + 86400 * 30,
+            },
+          ],
+        },
         cancel_at_period_end: false,
         trial_start: Math.floor(Date.now() / 1000),
         trial_end: Math.floor(Date.now() / 1000) + 86400 * 14,
@@ -188,9 +200,15 @@ describe('Subscription Handlers', () => {
         id: 'sub_123',
         status: 'past_due',
         customer: 'cus_123',
-        items: { data: [{ price: { lookup_key: 'team' } }] },
-        current_period_start: Math.floor(Date.now() / 1000),
-        current_period_end: Math.floor(Date.now() / 1000) + 86400 * 30,
+        items: {
+          data: [
+            {
+              price: { lookup_key: 'team' },
+              current_period_start: Math.floor(Date.now() / 1000),
+              current_period_end: Math.floor(Date.now() / 1000) + 86400 * 30,
+            },
+          ],
+        },
         cancel_at_period_end: false,
       } as unknown as Stripe.Subscription;
 
@@ -220,9 +238,15 @@ describe('Subscription Handlers', () => {
         id: 'sub_123',
         status: 'active',
         customer: 'cus_123',
-        items: { data: [{ price: { lookup_key: 'team' } }] },
-        current_period_start: Math.floor(Date.now() / 1000),
-        current_period_end: Math.floor(Date.now() / 1000) + 86400 * 30,
+        items: {
+          data: [
+            {
+              price: { lookup_key: 'team' },
+              current_period_start: Math.floor(Date.now() / 1000),
+              current_period_end: Math.floor(Date.now() / 1000) + 86400 * 30,
+            },
+          ],
+        },
         cancel_at_period_end: true,
       } as unknown as Stripe.Subscription;
 
@@ -338,8 +362,14 @@ describe('Subscription Handlers', () => {
       const stripeSub = {
         id: 'sub_123',
         status: 'active',
-        current_period_start: Math.floor(Date.now() / 1000),
-        current_period_end: Math.floor(Date.now() / 1000) + 86400 * 30,
+        items: {
+          data: [
+            {
+              current_period_start: Math.floor(Date.now() / 1000),
+              current_period_end: Math.floor(Date.now() / 1000) + 86400 * 30,
+            },
+          ],
+        },
       } as unknown as Stripe.Subscription;
 
       const ctx = createTestContext(db);

@@ -17,8 +17,8 @@
     "@corates/shared": "workspace:*",
     "@solidjs/meta": "^0.29.4",
     "@solidjs/router": "^0.15.4",
-    "@solidjs/start": "^1.3.0",
-    "countup.js": "^2.9.0",
+    "@solidjs/start": "^1.3.2",
+    "countup.js": "^2.10.0",
     "solid-icons": "^1.2.0",
     "solid-js": "^1.9.11",
     "vinxi": "^0.5.11"

@@ -11,8 +11,6 @@ import {
   getPasswordResetEmailText,
   getMagicLinkEmailHtml,
   getMagicLinkEmailText,
-  getProjectInvitationEmailHtml,
-  getProjectInvitationEmailText,
 } from './emailTemplates';
 import type { Env } from '../types';
 
@@ -21,6 +19,7 @@ interface SendEmailParams {
   subject: string;
   html: string;
   text: string;
+  replyTo?: string;
 }
 
 interface EmailResult {
@@ -42,13 +41,6 @@ export interface EmailService {
     _userDisplayName?: string,
   ) => Promise<EmailResult>;
   sendMagicLink: (_to: string, _magicLinkUrl: string) => Promise<EmailResult>;
-  sendProjectInvitation: (
-    _to: string,
-    _projectName: string,
-    _inviterName: string,
-    _invitationUrl: string,
-    _role: string,
-  ) => Promise<EmailResult>;
   isProduction: boolean;
 }
 
@@ -64,7 +56,13 @@ export function createEmailService(env: Env): EmailService {
   /**
    * Send email using Postmark
    */
-  async function sendEmail({ to, subject, html, text }: SendEmailParams): Promise<EmailResult> {
+  async function sendEmail({
+    to,
+    subject,
+    html,
+    text,
+    replyTo,
+  }: SendEmailParams): Promise<EmailResult> {
     if (env.SEND_EMAILS_IN_DEV !== 'true' && !isProduction) {
       console.log('[Email] Development environment - email sending is DISABLED');
       return { success: true, id: 'dev-id' };
@@ -82,6 +80,7 @@ export function createEmailService(env: Env): EmailService {
         Subject: subject,
         HtmlBody: html,
         TextBody: text,
+        ...(replyTo ? { ReplyTo: replyTo } : {}),
         MessageStream: 'outbound',
       });
 
@@ -147,36 +146,11 @@ export function createEmailService(env: Env): EmailService {
     return sendEmail({ to, subject, html, text });
   }
 
-  /**
-   * Send project invitation email
-   */
-  async function sendProjectInvitation(
-    to: string,
-    projectName: string,
-    inviterName: string,
-    invitationUrl: string,
-    role: string,
-  ): Promise<EmailResult> {
-    if (env.SEND_EMAILS_IN_DEV !== 'true' && !isProduction) {
-      console.log('[Email] Development environment - email sending is DISABLED');
-      console.log('[Email] Project invitation URL:', invitationUrl);
-      return { success: true, id: 'dev-id' };
-    }
-    // Sanitize project name for email subject (strip control chars, collapse whitespace, truncate)
-    const { sanitizeEmailSubject } = await import('../lib/escapeHtml');
-    const safeProjectName = sanitizeEmailSubject(projectName, 50);
-    const subject = `You're Invited to "${safeProjectName}" - CoRATES`;
-    const html = getProjectInvitationEmailHtml({ projectName, inviterName, invitationUrl, role });
-    const text = getProjectInvitationEmailText({ projectName, inviterName, invitationUrl, role });
-    return sendEmail({ to, subject, html, text });
-  }
-
   return {
     sendEmail,
     sendEmailVerification,
     sendPasswordReset,
     sendMagicLink,
-    sendProjectInvitation,
     isProduction,
   };
 }

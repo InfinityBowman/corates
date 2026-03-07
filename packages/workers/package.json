@@ -30,17 +30,17 @@
     "localflare": "localflare"
   },
   "dependencies": {
-    "@better-auth/stripe": "^1.4.19",
-    "@cloudflare/workers-types": "^4.20260302.0",
+    "@better-auth/stripe": "^1.5.4",
+    "@cloudflare/workers-types": "^4.20260307.1",
     "@corates/shared": "workspace:*",
     "@hono/zod-openapi": "^1.2.2",
-    "@sentry/cloudflare": "^10.39.0",
-    "better-auth": "^1.4.19",
+    "@sentry/cloudflare": "^10.42.0",
+    "better-auth": "^1.5.4",
     "drizzle-orm": "^0.45.1",
-    "hono": "^4.12.2",
+    "hono": "^4.12.5",
     "lib0": "^0.2.117",
     "postmark": "^4.0.7",
-    "stripe": "^20.3.1",
+    "stripe": "^20.4.1",
     "y-protocols": "^1.0.7",
     "yjs": "^13.6.29",
     "zod": "^4.3.6"
@@ -53,6 +53,6 @@
     "localflare": "^0.3.1",
     "typescript": "^5.9.3",
     "vitest": "3.2.0",
-    "wrangler": "^4.67.1"
+    "wrangler": "^4.71.0"
   }
 }

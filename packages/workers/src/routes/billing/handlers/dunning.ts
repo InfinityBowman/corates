@@ -1,7 +1,7 @@
 /**
  * Dunning email handlers
  *
- * Sends payment failure notifications to users via the EmailQueue DO.
+ * Sends payment failure notifications to users via the email queue.
  * Uses escalating urgency based on payment attempt count.
  */
 import type { WebhookContext } from './types.js';
@@ -24,7 +24,7 @@ interface EmailTemplate {
 }
 
 /**
- * Queue dunning email using existing EmailQueue DO
+ * Queue dunning email for delivery
  */
 export async function queueDunningEmail(
   params: DunningParams,
@@ -96,11 +96,8 @@ export async function queueDunningEmail(
   };
 
   try {
-    // Queue via EmailQueue DO
-    const queueId = env.EMAIL_QUEUE.idFromName('default');
-    const queue = env.EMAIL_QUEUE.get(queueId);
-
-    await queue.queueEmail(emailPayload);
+    const { queueEmail } = await import('../../../lib/email-queue');
+    await queueEmail(env, emailPayload);
 
     logger.stripe('dunning_email_queued', {
       subscriptionId,

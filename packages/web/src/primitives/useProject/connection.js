@@ -83,6 +83,28 @@ export function createConnectionManager(projectId, ydoc, options) {
       // WebsocketProvider handles reconnection automatically with exponential backoff
     });
 
+    // Wrap the awareness message handler with error protection.
+    // Awareness data is ephemeral (cursor positions, presence) so a dropped
+    // update is invisible to users and corrected by the next update.
+    const AWARENESS_MSG_TYPE = 1;
+    const originalAwarenessHandler = provider.messageHandlers[AWARENESS_MSG_TYPE];
+    if (originalAwarenessHandler) {
+      provider.messageHandlers = [...provider.messageHandlers];
+      provider.messageHandlers[AWARENESS_MSG_TYPE] = (
+        encoder,
+        decoder,
+        prov,
+        emitSynced,
+        msgType,
+      ) => {
+        try {
+          return originalAwarenessHandler(encoder, decoder, prov, emitSynced, msgType);
+        } catch (err) {
+          console.warn('Awareness update skipped:', err.message);
+        }
+      };
+    }
+
     provider.on('status', ({ status }) => {
       projectStore.setConnectionState(projectId, {
         connected: status === 'connected',

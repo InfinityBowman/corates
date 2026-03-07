@@ -241,15 +241,24 @@ export default function PreliminaryPage(props) {
 
   const isTextField = () => PRELIMINARY_TEXT_FIELDS.includes(props.fieldKey);
 
-  // Sync Y.Text changes back to finalAnswers so hasNavItemAnswer detects the field as answered
+  // Sync Y.Text changes back to finalAnswers so hasNavItemAnswer detects the field as answered.
+  // Uses a re-entrancy guard to prevent a cycle: observe -> onFinalChange ->
+  // updateChecklistAnswer -> setYTextField modifies same Y.Text -> observe fires again.
+  let isSyncingText = false;
   createEffect(() => {
     if (!isTextField() || !props.getRob2Text) return;
     const yText = props.getRob2Text('preliminary', props.fieldKey);
     if (!yText) return;
 
     const observer = () => {
-      const text = yText.toString();
-      props.onFinalChange?.(text);
+      if (isSyncingText) return;
+      isSyncingText = true;
+      try {
+        const text = yText.toString();
+        props.onFinalChange?.(text);
+      } finally {
+        isSyncingText = false;
+      }
     };
 
     yText.observe(observer);
@@ -302,7 +311,11 @@ export default function PreliminaryPage(props) {
     switch (type) {
       case 'select':
         return (
-          <PillSelectField value={props.finalValue} options={options} onChange={props.onFinalChange} />
+          <PillSelectField
+            value={props.finalValue}
+            options={options}
+            onChange={props.onFinalChange}
+          />
         );
       case 'aim':
         return <AimField value={props.finalValue} onChange={props.onFinalChange} name='final' />;

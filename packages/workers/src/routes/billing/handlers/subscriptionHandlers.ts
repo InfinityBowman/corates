@@ -14,13 +14,6 @@ function getDb(ctx: WebhookContext) {
   return ctx.db as ReturnType<typeof createDb>;
 }
 
-// The Stripe API version used (2025-12-15.clover) uses different field names
-// These interfaces extend the Stripe types with the fields we need
-interface SubscriptionWithPeriods extends Stripe.Subscription {
-  current_period_start?: number;
-  current_period_end?: number;
-}
-
 /**
  * Handle customer.subscription.created
  * Note: Better Auth Stripe plugin typically handles initial creation
@@ -71,21 +64,17 @@ export async function handleSubscriptionCreated(
   // Create subscription record
   // Note: This is a fallback - Better Auth should handle most creations
   const subscriptionId = crypto.randomUUID();
+  const firstItem = sub.items.data[0];
   await db.insert(subscription).values({
     id: subscriptionId,
-    plan: sub.items.data[0]?.price?.lookup_key || 'unknown',
+    plan: firstItem?.price?.lookup_key || 'unknown',
     referenceId: orgId,
     stripeCustomerId: typeof sub.customer === 'string' ? sub.customer : sub.customer?.id,
     stripeSubscriptionId: sub.id,
     status: sub.status,
     periodStart:
-      (sub as SubscriptionWithPeriods).current_period_start ?
-        new Date((sub as SubscriptionWithPeriods).current_period_start! * 1000)
-      : null,
-    periodEnd:
-      (sub as SubscriptionWithPeriods).current_period_end ?
-        new Date((sub as SubscriptionWithPeriods).current_period_end! * 1000)
-      : null,
+      firstItem?.current_period_start ? new Date(firstItem.current_period_start * 1000) : null,
+    periodEnd: firstItem?.current_period_end ? new Date(firstItem.current_period_end * 1000) : null,
     cancelAtPeriodEnd: sub.cancel_at_period_end,
     cancelAt: sub.cancel_at ? new Date(sub.cancel_at * 1000) : null,
     trialStart: sub.trial_start ? new Date(sub.trial_start * 1000) : null,
@@ -152,18 +141,15 @@ export async function handleSubscriptionUpdated(
   }
 
   // Update subscription state
+  const firstItem = sub.items.data[0];
   await db
     .update(subscription)
     .set({
       status: sub.status,
       periodStart:
-        (sub as SubscriptionWithPeriods).current_period_start ?
-          new Date((sub as SubscriptionWithPeriods).current_period_start! * 1000)
-        : null,
+        firstItem?.current_period_start ? new Date(firstItem.current_period_start * 1000) : null,
       periodEnd:
-        (sub as SubscriptionWithPeriods).current_period_end ?
-          new Date((sub as SubscriptionWithPeriods).current_period_end! * 1000)
-        : null,
+        firstItem?.current_period_end ? new Date(firstItem.current_period_end * 1000) : null,
       cancelAtPeriodEnd: sub.cancel_at_period_end,
       cancelAt: sub.cancel_at ? new Date(sub.cancel_at * 1000) : null,
       canceledAt: sub.canceled_at ? new Date(sub.canceled_at * 1000) : null,
@@ -323,18 +309,15 @@ export async function handleSubscriptionResumed(
     };
   }
 
+  const firstItem = sub.items.data[0];
   await db
     .update(subscription)
     .set({
       status: sub.status || 'active',
       periodStart:
-        (sub as SubscriptionWithPeriods).current_period_start ?
-          new Date((sub as SubscriptionWithPeriods).current_period_start! * 1000)
-        : null,
+        firstItem?.current_period_start ? new Date(firstItem.current_period_start * 1000) : null,
       periodEnd:
-        (sub as SubscriptionWithPeriods).current_period_end ?
-          new Date((sub as SubscriptionWithPeriods).current_period_end! * 1000)
-        : null,
+        firstItem?.current_period_end ? new Date(firstItem.current_period_end * 1000) : null,
       updatedAt: new Date(),
     })
     .where(eq(subscription.id, existing.id));

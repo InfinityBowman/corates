@@ -12,7 +12,7 @@ import type { Env } from '@/types';
  * Stripe API version used across the application
  * Update this single constant when upgrading Stripe API version
  */
-export const STRIPE_API_VERSION = '2025-12-15.clover' as const;
+export const STRIPE_API_VERSION = '2026-02-25.clover' as const;
 
 /**
  * Create a configured Stripe client instance

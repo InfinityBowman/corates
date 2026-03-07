@@ -16,10 +16,10 @@
     "ark-ui": {
       "command": "npx",
       "args": ["-y", "@ark-ui/mcp"]
+    },
+    "sentry": {
+      "type": "http",
+      "url": "https://mcp.sentry.dev/mcp"
     }
-    // "stripe": {
-    //   "type": "http",
-    //   "url": "https://mcp.stripe.com"
-    // }
   }
 }

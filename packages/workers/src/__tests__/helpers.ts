@@ -365,8 +365,6 @@ export function createTestEnv(overrides: Record<string, unknown> = {}): Record<s
     idFromName: (name: string) => ({ toString: () => `do-${name}` }),
     get: (_id: unknown) => ({
       fetch: async () => new Response(JSON.stringify({ ok: true }), { status: 200 }),
-      queueEmail: async () => {},
-      getDeadLetterQueue: async () => [],
       notify: async () => {},
       syncProject: async () => {},
       syncMember: async () => {},
@@ -383,12 +381,17 @@ export function createTestEnv(overrides: Record<string, unknown> = {}): Record<s
     }),
   };
 
+  const mockQueue = {
+    send: async () => {},
+    sendBatch: async () => {},
+  };
+
   return {
     DB: env.DB,
     PDF_BUCKET: mockR2,
     PROJECT_DOC: mockDO,
     USER_SESSION: mockDO,
-    EMAIL_QUEUE: mockDO,
+    EMAIL_QUEUE: mockQueue,
     RATE_LIMIT_KV: {
       get: async () => null,
       put: async () => {},

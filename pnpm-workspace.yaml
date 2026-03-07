@@ -3,9 +3,11 @@ packages:
 
 onlyBuiltDependencies:
   - '@parcel/watcher'
+  - '@prisma/engines'
   - agent-browser
   - better-sqlite3
   - esbuild
+  - prisma
   - protobufjs
   - puppeteer
   - sharp

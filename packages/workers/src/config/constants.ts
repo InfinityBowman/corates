@@ -59,13 +59,6 @@ export const SESSION_CONFIG = {
   ALARM_INTERVAL_MS: 60 * 60 * 1000,
 } as const;
 
-export const EMAIL_RETRY_CONFIG = {
-  MAX_RETRIES: 3,
-  BASE_DELAY_MS: 1000,
-  MAX_DELAY_MS: 30000,
-  BACKOFF_MULTIPLIER: 2,
-} as const;
-
 export const TIME_DURATIONS = {
   INVITATION_EXPIRY_MS: 7 * 24 * 60 * 60 * 1000,
   INVITATION_EXPIRY_SEC: 7 * 24 * 60 * 60,

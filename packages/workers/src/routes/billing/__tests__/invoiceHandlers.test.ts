@@ -230,9 +230,7 @@ describe('Invoice Handlers', () => {
       });
 
       const mockEmailQueue = {
-        get: vi.fn().mockReturnValue({
-          queueEmail: vi.fn().mockResolvedValue({ success: true }),
-        }),
+        send: vi.fn().mockResolvedValue(undefined),
       };
 
       const invoice = {
@@ -250,6 +248,7 @@ describe('Invoice Handlers', () => {
 
       expect(result.handled).toBe(true);
       expect(result.result).toBe('payment_failed_processed');
+      expect(mockEmailQueue.send).toHaveBeenCalledTimes(1);
     });
 
     it('logs when dunning email skipped due to no user', async () => {
@@ -266,9 +265,7 @@ describe('Invoice Handlers', () => {
       });
 
       const mockEmailQueue = {
-        get: vi.fn().mockReturnValue({
-          queueEmail: vi.fn(),
-        }),
+        send: vi.fn().mockResolvedValue(undefined),
       };
 
       const invoice = {
@@ -284,6 +281,7 @@ describe('Invoice Handlers', () => {
       const result = await handleInvoicePaymentFailed(invoice, ctx);
 
       expect(result.handled).toBe(true);
+      expect(mockEmailQueue.send).not.toHaveBeenCalled();
       expect(ctx.logger.stripe).toHaveBeenCalledWith('dunning_email_skipped_no_user', {
         subscriptionId: 'sub-local-1',
         stripeCustomerId: 'cus_orphan',

@@ -16,8 +16,8 @@ function getDb(ctx: WebhookContext) {
   return ctx.db as ReturnType<typeof createDb>;
 }
 
-// The Stripe API version used (2025-12-15.clover) has (invoice as InvoiceWithSubscription).subscription
-// that might not be in the standard types
+// The subscription field moved to invoice.parent.subscription_details.subscription in newer
+// API versions, but webhook payloads may still include it at the top level
 interface InvoiceWithSubscription extends Stripe.Invoice {
   subscription?: string | Stripe.Subscription | null;
 }
@@ -199,7 +199,7 @@ export async function handleInvoicePaymentFailed(
       .get();
 
     if (billingUser?.email) {
-      // Queue dunning email via EmailQueue DO
+      // Queue dunning email
       await queueDunningEmail(
         {
           subscriptionId: existing.id,

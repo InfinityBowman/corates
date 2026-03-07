@@ -438,7 +438,8 @@ async function main() {
     console.log('⚠️  DRY RUN MODE: Using placeholder key for preview');
   }
 
-  const stripe = stripeKey ? new Stripe(stripeKey, { apiVersion: '2025-12-15.clover' }) : null;
+  // Keep in sync with STRIPE_API_VERSION in src/lib/stripe.ts
+  const stripe = stripeKey ? new Stripe(stripeKey, { apiVersion: '2026-02-25.clover' }) : null;
 
   console.log('🚀 Setting up Stripe test products and prices...\n');
 

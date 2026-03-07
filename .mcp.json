@@ -12,11 +12,6 @@
       "env": {
         "MCP_MEMORY_REPO_ROOT": "."
       }
-    },
-    "ark-ui": {
-      "type": "stdio",
-      "command": "npx",
-      "args": ["-y", "@ark-ui/mcp"]
     }
   }
 }
