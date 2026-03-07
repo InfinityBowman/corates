@@ -9,7 +9,7 @@
     "build": "vite build",
     "build:prod": "pnpm --filter @corates/shared build && pnpm run build && pnpm --filter @corates/web build",
     "preview": "vite preview",
-    "deploy": "pnpm run build:prod && wrangler deploy",
+    "deploy": "wrangler deploy",
     "lint": "eslint",
     "format": "prettier",
     "check": "prettier --write . && eslint --fix",
