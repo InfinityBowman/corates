@@ -365,46 +365,51 @@ app.notFound(c => {
 // Global error handler - catches all uncaught errors in routes
 app.onError(errorHandler);
 
-// Wrap with Sentry for error monitoring (only if DSN is configured)
-export default Sentry.withSentry(
-  (env: Env) => ({
-    dsn: env.SENTRY_DSN || '',
-    release: env.CF_VERSION_METADATA?.id,
-    environment: env.ENVIRONMENT,
-    // Only enable if DSN is set
-    enabled: !!env.SENTRY_DSN,
-    // Capture 100% of errors
-    tracesSampleRate: env.ENVIRONMENT === 'production' ? 0.1 : 1.0,
-    // Add request data to error reports
-    sendDefaultPii: true,
-  }),
-  {
-    fetch: app.fetch,
+const workerHandler = {
+  fetch: app.fetch,
 
-    async queue(batch, env: Env): Promise<void> {
-      const emailService = createEmailService(env);
-      // eslint-disable-next-line no-undef -- Cloudflare Workers global type
-      const messages = batch.messages as Message<EmailPayload>[];
+  async queue(batch: MessageBatch<any>, env: Env): Promise<void> {
+    const emailService = createEmailService(env);
+    const messages = batch.messages as Message<EmailPayload>[];
 
-      for (const msg of messages) {
-        try {
-          const result = await emailService.sendEmail(
-            msg.body as Parameters<typeof emailService.sendEmail>[0],
-          );
+    for (const msg of messages) {
+      try {
+        const result = await emailService.sendEmail(
+          msg.body as Parameters<typeof emailService.sendEmail>[0],
+        );
 
-          if (result.success) {
-            msg.ack();
-          } else {
-            console.error(`[EmailQueue] Send returned error for ${msg.body.to}:`, result.error);
-            const delay = Math.min(30 * 2 ** msg.attempts, 1800);
-            msg.retry({ delaySeconds: delay });
-          }
-        } catch (error) {
-          console.error(`[EmailQueue] Exception sending to ${msg.body.to}:`, error);
+        if (result.success) {
+          msg.ack();
+        } else {
+          console.error(`[EmailQueue] Send returned error for ${msg.body.to}:`, result.error);
           const delay = Math.min(30 * 2 ** msg.attempts, 1800);
           msg.retry({ delaySeconds: delay });
         }
+      } catch (error) {
+        console.error(`[EmailQueue] Exception sending to ${msg.body.to}:`, error);
+        const delay = Math.min(30 * 2 ** msg.attempts, 1800);
+        msg.retry({ delaySeconds: delay });
       }
-    },
+    }
   },
-);
+};
+
+// Wrap with Sentry for error monitoring in non-test environments.
+// Sentry.withSentry proxies the fetch handler and its transport uses ctx.waitUntil,
+// which is unavailable in the vitest-pool-workers test runtime.
+// @ts-expect-error import.meta.env is set by vitest but not typed in workers
+const isTest = typeof import.meta !== 'undefined' && import.meta.env?.MODE === 'test';
+
+export default isTest
+  ? workerHandler
+  : Sentry.withSentry(
+      (env: Env) => ({
+        dsn: env.SENTRY_DSN || '',
+        release: env.CF_VERSION_METADATA?.id,
+        environment: env.ENVIRONMENT,
+        enabled: !!env.SENTRY_DSN,
+        tracesSampleRate: env.ENVIRONMENT === 'production' ? 0.1 : 1.0,
+        sendDefaultPii: true,
+      }),
+      workerHandler,
+    );

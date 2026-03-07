@@ -328,6 +328,8 @@ export default [
       globals: {
         // Cloudflare Workers globals
         MessageEvent: 'readonly',
+        Message: 'readonly',
+        MessageBatch: 'readonly',
         Cloudflare: 'readonly',
         D1Database: 'readonly',
         DurableObject: 'readonly',
