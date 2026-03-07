@@ -400,16 +400,16 @@ const workerHandler = {
 // @ts-expect-error import.meta.env is set by vitest but not typed in workers
 const isTest = typeof import.meta !== 'undefined' && import.meta.env?.MODE === 'test';
 
-export default isTest
-  ? workerHandler
-  : Sentry.withSentry(
-      (env: Env) => ({
-        dsn: env.SENTRY_DSN || '',
-        release: env.CF_VERSION_METADATA?.id,
-        environment: env.ENVIRONMENT,
-        enabled: !!env.SENTRY_DSN,
-        tracesSampleRate: env.ENVIRONMENT === 'production' ? 0.1 : 1.0,
-        sendDefaultPii: true,
-      }),
-      workerHandler,
-    );
+export default isTest ? workerHandler : (
+  Sentry.withSentry(
+    (env: Env) => ({
+      dsn: env.SENTRY_DSN || '',
+      release: env.CF_VERSION_METADATA?.id,
+      environment: env.ENVIRONMENT,
+      enabled: !!env.SENTRY_DSN,
+      tracesSampleRate: env.ENVIRONMENT === 'production' ? 0.1 : 1.0,
+      sendDefaultPii: true,
+    }),
+    workerHandler,
+  )
+);
