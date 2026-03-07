@@ -23,6 +23,7 @@ import {
   compareChecklists,
   hasAimMismatch,
   getActiveDomainKeys,
+  getDomainQuestions,
   scoreRob2Domain,
 } from '@corates/shared/checklists/rob2';
 import {
@@ -155,10 +156,11 @@ export default function ROB2Reconciliation(props) {
     }
   });
 
-  // Compare the two checklists
+  // Compare the two checklists using reconciled aim so domain selection matches navigation
   const comparison = createMemo(() => {
     if (!props.checklist1 || !props.checklist2) return null;
-    return compareChecklists(props.checklist1, props.checklist2);
+    const reconciledAim = props.reconciledChecklist?.preliminary?.aim;
+    return compareChecklists(props.checklist1, props.checklist2, reconciledAim);
   });
 
   // Get final answers from reconciled checklist (reactive)
@@ -367,64 +369,65 @@ export default function ROB2Reconciliation(props) {
   }
 
   // Update functions for different item types
+  // Only pass the specific field being changed; the handler merges into the Y.Map
+  // without touching other fields. Spreading serialized state would overwrite Y.Text objects.
   function updatePreliminaryField(key, value) {
     if (!props.updateChecklistAnswer) return;
-    const currentPrelim = finalAnswers().preliminary || {};
-    props.updateChecklistAnswer('preliminary', {
-      ...currentPrelim,
-      [key]: value,
-    });
+    props.updateChecklistAnswer('preliminary', { [key]: value });
   }
 
   function updateDomainQuestionAnswer(domainKey, questionKey, answer) {
     if (!props.updateChecklistAnswer) return;
-    const currentDomain = finalAnswers()[domainKey] || { answers: {} };
     props.updateChecklistAnswer(domainKey, {
-      ...currentDomain,
-      answers: {
-        ...currentDomain.answers,
-        [questionKey]: { answer },
-      },
+      answers: { [questionKey]: { answer } },
     });
   }
 
   function updateDomainDirection(domainKey, direction) {
     if (!props.updateChecklistAnswer) return;
-    const currentDomain = finalAnswers()[domainKey] || { answers: {} };
-    props.updateChecklistAnswer(domainKey, {
-      ...currentDomain,
-      direction,
-    });
+    props.updateChecklistAnswer(domainKey, { direction });
   }
 
   function updateOverallDirection(direction) {
     if (!props.updateChecklistAnswer) return;
-    const currentOverall = finalAnswers().overall || {};
-    props.updateChecklistAnswer('overall', {
-      ...currentOverall,
-      direction,
-    });
+    props.updateChecklistAnswer('overall', { direction });
   }
 
   // Reset all reconciliation answers
   async function handleReset() {
     if (!props.updateChecklistAnswer) return;
 
-    // Reset preliminary
-    props.updateChecklistAnswer('preliminary', {});
+    // Reset preliminary with explicit null/empty values so the handler actually clears them
+    props.updateChecklistAnswer('preliminary', {
+      studyDesign: null,
+      aim: null,
+      deviationsToAddress: [],
+      sources: {},
+      experimental: '',
+      comparator: '',
+      numericalResult: '',
+    });
 
-    // Reset domains
-    const activeDomains = getActiveDomainKeys(isAdhering());
-    for (const domainKey of activeDomains) {
+    // Reset ALL domains (both 2a and 2b) so switching aim doesn't leave stale data
+    const allDomains = ['domain1', 'domain2a', 'domain2b', 'domain3', 'domain4', 'domain5'];
+    for (const domainKey of allDomains) {
+      const questionKeys = Object.keys(getDomainQuestions(domainKey));
+      const answers = {};
+      for (const qKey of questionKeys) {
+        answers[qKey] = { answer: null, comment: '' };
+      }
+
       props.updateChecklistAnswer(domainKey, {
-        answers: {},
+        answers,
         direction: null,
+        judgement: null,
       });
     }
 
     // Reset overall
     props.updateChecklistAnswer('overall', {
       direction: null,
+      judgement: null,
     });
 
     setCurrentPage(0);

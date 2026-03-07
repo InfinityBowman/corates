@@ -288,6 +288,7 @@ function compareOverall(
 export function compareChecklists(
   checklist1: PartialROB2Checklist | null | undefined,
   checklist2: PartialROB2Checklist | null | undefined,
+  aimOverride?: string | null,
 ): ComparisonResult {
   if (!checklist1 || !checklist2) {
     return {
@@ -313,8 +314,9 @@ export function compareChecklists(
   // Compare preliminary section
   const preliminary = comparePreliminary(checklist1.preliminary, checklist2.preliminary);
 
-  // Determine active domains based on reconciled aim (use checklist1's aim as reference)
-  const isAdhering = checklist1.preliminary?.aim === 'ADHERING';
+  // Determine active domains: prefer explicit aim override (reconciled aim), fall back to checklist1
+  const isAdhering =
+    aimOverride != null ? aimOverride === 'ADHERING' : checklist1.preliminary?.aim === 'ADHERING';
   const activeDomains = getActiveDomainKeys(isAdhering);
 
   // Compare each active domain

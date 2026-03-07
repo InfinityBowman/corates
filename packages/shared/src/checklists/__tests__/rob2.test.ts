@@ -155,12 +155,13 @@ describe('ROB-2', () => {
         expect(result.ruleId).toBe('D1.R6');
       });
 
-      it('should treat NA as NI for scoring', () => {
+      it('should return incomplete for invalid NA answer on non-WITH_NA question', () => {
+        // Domain 1 questions are STANDARD only (no NA option).
+        // If NA somehow appears, the scoring falls through as an unrecognized value.
         const answers = makeAnswers({ d1_1: 'NA', d1_2: 'Y', d1_3: 'N' });
         const result = scoreRob2Domain('domain1', answers);
-        // NA normalized to NI, so d1_1=NI, d1_2=Y -> goes to 1.3 which is N -> Low
-        expect(result.judgement).toBe(JUDGEMENTS.LOW);
-        expect(result.isComplete).toBe(true);
+        expect(result.judgement).toBe(null);
+        expect(result.isComplete).toBe(false);
       });
     });
 

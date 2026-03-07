@@ -11,10 +11,6 @@ import { JUDGEMENTS, type Judgement, type DomainKey } from './schema.js';
 const inSet = (answer: string | null | undefined, ...values: string[]): boolean =>
   values.includes(answer as string);
 
-// Normalization: treat NA as NI for scoring to avoid "stuck" branches
-const normalizeAnswer = (answer: string | null | undefined): string | null =>
-  answer === 'NA' ? 'NI' : (answer ?? null);
-
 // Helper: check if answer is Yes or Probably Yes
 const isYesPY = (answer: string | null): boolean => inSet(answer, 'Y', 'PY');
 
@@ -47,9 +43,9 @@ export interface DomainAnswers {
  * - NI -> 1.3 -> outcomes
  */
 function scoreDomain1(answers: DomainAnswers): ScoringResult {
-  const q1 = normalizeAnswer(answers.d1_1?.answer); // random sequence
-  const q2 = normalizeAnswer(answers.d1_2?.answer); // concealment
-  const q3 = normalizeAnswer(answers.d1_3?.answer); // baseline imbalances
+  const q1 = answers.d1_1?.answer ?? null; // random sequence
+  const q2 = answers.d1_2?.answer ?? null; // concealment
+  const q3 = answers.d1_3?.answer ?? null; // baseline imbalances
 
   // Start at 1.2 (concealment)
   if (q2 === null) {
@@ -114,11 +110,11 @@ function scoreDomain1(answers: DomainAnswers): ScoringResult {
  * Score Domain 2a Part 1 (Questions 2.1-2.5)
  */
 function scoreDomain2aPart1(answers: DomainAnswers): ScoringResult {
-  const q1 = normalizeAnswer(answers.d2a_1?.answer); // participants aware
-  const q2 = normalizeAnswer(answers.d2a_2?.answer); // personnel aware
-  const q3 = normalizeAnswer(answers.d2a_3?.answer); // deviations from trial context
-  const q4 = normalizeAnswer(answers.d2a_4?.answer); // affect outcome
-  const q5 = normalizeAnswer(answers.d2a_5?.answer); // balanced
+  const q1 = answers.d2a_1?.answer ?? null; // participants aware
+  const q2 = answers.d2a_2?.answer ?? null; // personnel aware
+  const q3 = answers.d2a_3?.answer ?? null; // deviations from trial context (WITH_NA)
+  const q4 = answers.d2a_4?.answer ?? null; // affect outcome (WITH_NA)
+  const q5 = answers.d2a_5?.answer ?? null; // balanced (WITH_NA)
 
   // Need both 2.1 and 2.2 answered
   if (q1 === null || q2 === null) {
@@ -136,8 +132,8 @@ function scoreDomain2aPart1(answers: DomainAnswers): ScoringResult {
       return { judgement: null, isComplete: false, ruleId: null };
     }
 
-    // 2.3 N/PN -> Low
-    if (isNoPPN(q3)) {
+    // 2.3 N/PN/NA -> Low
+    if (isNoPPN(q3) || q3 === 'NA') {
       return { judgement: JUDGEMENTS.LOW, isComplete: true, ruleId: 'D2A.P1.R2' };
     }
 
@@ -152,8 +148,8 @@ function scoreDomain2aPart1(answers: DomainAnswers): ScoringResult {
         return { judgement: null, isComplete: false, ruleId: null };
       }
 
-      // 2.4 N/PN -> Some concerns
-      if (isNoPPN(q4)) {
+      // 2.4 N/PN/NA -> Some concerns
+      if (isNoPPN(q4) || q4 === 'NA') {
         return { judgement: JUDGEMENTS.SOME_CONCERNS, isComplete: true, ruleId: 'D2A.P1.R4' };
       }
 
@@ -163,8 +159,8 @@ function scoreDomain2aPart1(answers: DomainAnswers): ScoringResult {
           return { judgement: null, isComplete: false, ruleId: null };
         }
 
-        // 2.5 Y/PY -> Some concerns
-        if (isYesPY(q5)) {
+        // 2.5 Y/PY/NA -> Some concerns
+        if (isYesPY(q5) || q5 === 'NA') {
           return { judgement: JUDGEMENTS.SOME_CONCERNS, isComplete: true, ruleId: 'D2A.P1.R5' };
         }
 
@@ -183,8 +179,8 @@ function scoreDomain2aPart1(answers: DomainAnswers): ScoringResult {
  * Score Domain 2a Part 2 (Questions 2.6-2.7)
  */
 function scoreDomain2aPart2(answers: DomainAnswers): ScoringResult {
-  const q6 = normalizeAnswer(answers.d2a_6?.answer); // appropriate analysis
-  const q7 = normalizeAnswer(answers.d2a_7?.answer); // substantial impact
+  const q6 = answers.d2a_6?.answer ?? null; // appropriate analysis
+  const q7 = answers.d2a_7?.answer ?? null; // substantial impact (WITH_NA)
 
   if (q6 === null) {
     return { judgement: null, isComplete: false, ruleId: null };
@@ -201,8 +197,8 @@ function scoreDomain2aPart2(answers: DomainAnswers): ScoringResult {
       return { judgement: null, isComplete: false, ruleId: null };
     }
 
-    // 2.7 N/PN -> Some concerns
-    if (isNoPPN(q7)) {
+    // 2.7 N/PN/NA -> Some concerns
+    if (isNoPPN(q7) || q7 === 'NA') {
       return { judgement: JUDGEMENTS.SOME_CONCERNS, isComplete: true, ruleId: 'D2A.P2.R2' };
     }
 
@@ -255,12 +251,12 @@ function scoreDomain2a(answers: DomainAnswers): ScoringResult {
  * Score Domain 2b (Effect of adhering to intervention)
  */
 function scoreDomain2b(answers: DomainAnswers): ScoringResult {
-  const q1 = normalizeAnswer(answers.d2b_1?.answer); // participants aware
-  const q2 = normalizeAnswer(answers.d2b_2?.answer); // personnel aware
-  const q3 = normalizeAnswer(answers.d2b_3?.answer); // balanced non-protocol
-  const q4 = normalizeAnswer(answers.d2b_4?.answer); // failures in implementation
-  const q5 = normalizeAnswer(answers.d2b_5?.answer); // non-adherence
-  const q6 = normalizeAnswer(answers.d2b_6?.answer); // appropriate analysis
+  const q1 = answers.d2b_1?.answer ?? null; // participants aware
+  const q2 = answers.d2b_2?.answer ?? null; // personnel aware
+  const q3 = answers.d2b_3?.answer ?? null; // balanced non-protocol (WITH_NA)
+  const q4 = answers.d2b_4?.answer ?? null; // failures in implementation (WITH_NA)
+  const q5 = answers.d2b_5?.answer ?? null; // non-adherence (WITH_NA)
+  const q6 = answers.d2b_6?.answer ?? null; // appropriate analysis (WITH_NA)
 
   // Need both 2.1 and 2.2 answered
   if (q1 === null || q2 === null) {
@@ -285,8 +281,8 @@ function scoreDomain2b(answers: DomainAnswers): ScoringResult {
         return { judgement: null, isComplete: false, ruleId: null };
       }
 
-      // 2.6 Y/PY -> Some concerns
-      if (isYesPY(q6)) {
+      // 2.6 Y/PY/NA -> Some concerns
+      if (isYesPY(q6) || q6 === 'NA') {
         return { judgement: JUDGEMENTS.SOME_CONCERNS, isComplete: true, ruleId: 'D2B.R2' };
       }
 
@@ -320,8 +316,8 @@ function scoreDomain2b(answers: DomainAnswers): ScoringResult {
           return { judgement: null, isComplete: false, ruleId: null };
         }
 
-        // 2.6 Y/PY -> Some concerns
-        if (isYesPY(q6)) {
+        // 2.6 Y/PY/NA -> Some concerns
+        if (isYesPY(q6) || q6 === 'NA') {
           return { judgement: JUDGEMENTS.SOME_CONCERNS, isComplete: true, ruleId: 'D2B.R5' };
         }
 
@@ -338,8 +334,8 @@ function scoreDomain2b(answers: DomainAnswers): ScoringResult {
         return { judgement: null, isComplete: false, ruleId: null };
       }
 
-      // 2.6 Y/PY -> Some concerns
-      if (isYesPY(q6)) {
+      // 2.6 Y/PY/NA -> Some concerns
+      if (isYesPY(q6) || q6 === 'NA') {
         return { judgement: JUDGEMENTS.SOME_CONCERNS, isComplete: true, ruleId: 'D2B.R7' };
       }
 
@@ -357,10 +353,10 @@ function scoreDomain2b(answers: DomainAnswers): ScoringResult {
  * Score Domain 3 (Missing outcome data)
  */
 function scoreDomain3(answers: DomainAnswers): ScoringResult {
-  const q1 = normalizeAnswer(answers.d3_1?.answer); // data available
-  const q2 = normalizeAnswer(answers.d3_2?.answer); // evidence not biased
-  const q3 = normalizeAnswer(answers.d3_3?.answer); // could depend on true value
-  const q4 = normalizeAnswer(answers.d3_4?.answer); // likely depended on true value
+  const q1 = answers.d3_1?.answer ?? null; // data available
+  const q2 = answers.d3_2?.answer ?? null; // evidence not biased (WITH_NA)
+  const q3 = answers.d3_3?.answer ?? null; // could depend on true value (WITH_NA)
+  const q4 = answers.d3_4?.answer ?? null; // likely depended on true value (WITH_NA)
 
   if (q1 === null) {
     return { judgement: null, isComplete: false, ruleId: null };
@@ -382,14 +378,14 @@ function scoreDomain3(answers: DomainAnswers): ScoringResult {
       return { judgement: JUDGEMENTS.LOW, isComplete: true, ruleId: 'D3.R2' };
     }
 
-    // 3.2 N/PN -> 3.3
-    if (isNoPPN(q2)) {
+    // 3.2 N/PN/NI/NA -> 3.3
+    if (isNoPPN(q2) || q2 === 'NI' || q2 === 'NA') {
       if (q3 === null) {
         return { judgement: null, isComplete: false, ruleId: null };
       }
 
-      // 3.3 N/PN -> Low
-      if (isNoPPN(q3)) {
+      // 3.3 N/PN/NA -> Low
+      if (isNoPPN(q3) || q3 === 'NA') {
         return { judgement: JUDGEMENTS.LOW, isComplete: true, ruleId: 'D3.R3' };
       }
 
@@ -399,8 +395,8 @@ function scoreDomain3(answers: DomainAnswers): ScoringResult {
           return { judgement: null, isComplete: false, ruleId: null };
         }
 
-        // 3.4 N/PN -> Some concerns
-        if (isNoPPN(q4)) {
+        // 3.4 N/PN/NA -> Some concerns
+        if (isNoPPN(q4) || q4 === 'NA') {
           return { judgement: JUDGEMENTS.SOME_CONCERNS, isComplete: true, ruleId: 'D3.R4' };
         }
 
@@ -419,11 +415,11 @@ function scoreDomain3(answers: DomainAnswers): ScoringResult {
  * Score Domain 4 (Measurement of the outcome)
  */
 function scoreDomain4(answers: DomainAnswers): ScoringResult {
-  const q1 = normalizeAnswer(answers.d4_1?.answer); // inappropriate method
-  const q2 = normalizeAnswer(answers.d4_2?.answer); // differ between groups
-  const q3 = normalizeAnswer(answers.d4_3?.answer); // assessors aware
-  const q4 = normalizeAnswer(answers.d4_4?.answer); // could be influenced
-  const q5 = normalizeAnswer(answers.d4_5?.answer); // likely influenced
+  const q1 = answers.d4_1?.answer ?? null; // inappropriate method
+  const q2 = answers.d4_2?.answer ?? null; // differ between groups
+  const q3 = answers.d4_3?.answer ?? null; // assessors aware (WITH_NA)
+  const q4 = answers.d4_4?.answer ?? null; // could be influenced (WITH_NA)
+  const q5 = answers.d4_5?.answer ?? null; // likely influenced (WITH_NA)
 
   if (q1 === null) {
     return { judgement: null, isComplete: false, ruleId: null };
@@ -451,8 +447,8 @@ function scoreDomain4(answers: DomainAnswers): ScoringResult {
         return { judgement: null, isComplete: false, ruleId: null };
       }
 
-      // 4.3 N/PN -> Low
-      if (isNoPPN(q3)) {
+      // 4.3 N/PN/NA -> Low
+      if (isNoPPN(q3) || q3 === 'NA') {
         return { judgement: JUDGEMENTS.LOW, isComplete: true, ruleId: 'D4.R3' };
       }
 
@@ -462,8 +458,8 @@ function scoreDomain4(answers: DomainAnswers): ScoringResult {
           return { judgement: null, isComplete: false, ruleId: null };
         }
 
-        // 4.4 N/PN -> Low
-        if (isNoPPN(q4)) {
+        // 4.4 N/PN/NA -> Low
+        if (isNoPPN(q4) || q4 === 'NA') {
           return { judgement: JUDGEMENTS.LOW, isComplete: true, ruleId: 'D4.R4' };
         }
 
@@ -473,8 +469,8 @@ function scoreDomain4(answers: DomainAnswers): ScoringResult {
             return { judgement: null, isComplete: false, ruleId: null };
           }
 
-          // 4.5 N/PN -> Some concerns
-          if (isNoPPN(q5)) {
+          // 4.5 N/PN/NA -> Some concerns
+          if (isNoPPN(q5) || q5 === 'NA') {
             return { judgement: JUDGEMENTS.SOME_CONCERNS, isComplete: true, ruleId: 'D4.R5' };
           }
 
@@ -492,8 +488,8 @@ function scoreDomain4(answers: DomainAnswers): ScoringResult {
         return { judgement: null, isComplete: false, ruleId: null };
       }
 
-      // 4.3 N/PN -> Some concerns
-      if (isNoPPN(q3)) {
+      // 4.3 N/PN/NA -> Some concerns
+      if (isNoPPN(q3) || q3 === 'NA') {
         return { judgement: JUDGEMENTS.SOME_CONCERNS, isComplete: true, ruleId: 'D4.R7' };
       }
 
@@ -503,8 +499,8 @@ function scoreDomain4(answers: DomainAnswers): ScoringResult {
           return { judgement: null, isComplete: false, ruleId: null };
         }
 
-        // 4.4 N/PN -> Some concerns
-        if (isNoPPN(q4)) {
+        // 4.4 N/PN/NA -> Some concerns
+        if (isNoPPN(q4) || q4 === 'NA') {
           return { judgement: JUDGEMENTS.SOME_CONCERNS, isComplete: true, ruleId: 'D4.R8' };
         }
 
@@ -514,8 +510,8 @@ function scoreDomain4(answers: DomainAnswers): ScoringResult {
             return { judgement: null, isComplete: false, ruleId: null };
           }
 
-          // 4.5 N/PN -> Some concerns
-          if (isNoPPN(q5)) {
+          // 4.5 N/PN/NA -> Some concerns
+          if (isNoPPN(q5) || q5 === 'NA') {
             return { judgement: JUDGEMENTS.SOME_CONCERNS, isComplete: true, ruleId: 'D4.R9' };
           }
 
@@ -535,9 +531,9 @@ function scoreDomain4(answers: DomainAnswers): ScoringResult {
  * Score Domain 5 (Selection of the reported result)
  */
 function scoreDomain5(answers: DomainAnswers): ScoringResult {
-  const q1 = normalizeAnswer(answers.d5_1?.answer); // pre-specified plan
-  const q2 = normalizeAnswer(answers.d5_2?.answer); // selected from measurements
-  const q3 = normalizeAnswer(answers.d5_3?.answer); // selected from analyses
+  const q1 = answers.d5_1?.answer ?? null; // pre-specified plan
+  const q2 = answers.d5_2?.answer ?? null; // selected from measurements
+  const q3 = answers.d5_3?.answer ?? null; // selected from analyses
 
   // Need 5.2 and 5.3 first
   if (q2 === null || q3 === null) {
