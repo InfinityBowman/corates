@@ -5,26 +5,37 @@
   "license": "PolyForm-Noncommercial-1.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vinxi dev --port 3010",
-    "dev:prod": "pnpm run build:prod && wrangler dev --port 3010",
-    "build": "vinxi build --mode production && node scripts/version-sw.js",
+    "dev": "vite dev --port 3010",
+    "build": "vite build",
     "build:prod": "pnpm --filter @corates/shared build && pnpm run build && pnpm --filter @corates/web build",
-    "preview": "npx serve .output/public",
+    "preview": "vite preview",
     "deploy": "pnpm run build:prod && wrangler deploy",
-    "lint": "eslint ."
+    "lint": "eslint",
+    "format": "prettier",
+    "check": "prettier --write . && eslint --fix",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@corates/shared": "workspace:*",
-    "@solidjs/meta": "^0.29.4",
-    "@solidjs/router": "^0.15.4",
-    "@solidjs/start": "^1.3.2",
+    "@tanstack/react-router": "^1.132.0",
+    "@tanstack/react-start": "^1.132.0",
     "countup.js": "^2.10.0",
-    "solid-icons": "^1.2.0",
-    "solid-js": "^1.9.11",
-    "vinxi": "^0.5.11"
+    "react": "19.2.4",
+    "react-dom": "19.2.4",
+    "react-icons": "^5.6.0"
   },
   "devDependencies": {
+    "@cloudflare/vite-plugin": "^1.25.2",
     "@tailwindcss/vite": "^4.2.1",
-    "tailwindcss": "^4.2.1"
+    "@tanstack/eslint-config": "^0.4.0",
+    "@tanstack/router-plugin": "^1.132.0",
+    "@types/react": "19.2.14",
+    "@types/react-dom": "19.2.3",
+    "@vitejs/plugin-react": "^5.0.4",
+    "tailwindcss": "^4.2.1",
+    "typescript": "^5.9.3",
+    "vite": "^7.3.1",
+    "vite-tsconfig-paths": "^5.1.4",
+    "wrangler": "^4.71.0"
   }
 }

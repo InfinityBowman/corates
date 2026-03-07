@@ -14,7 +14,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 const webDist = join(__dirname, '../dist');
-const landingPublic = join(__dirname, '../../landing/.output/public');
+const landingPublic = join(__dirname, '../../landing/dist/client');
 
 // Check if landing build exists
 if (!existsSync(landingPublic)) {

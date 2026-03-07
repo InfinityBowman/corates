@@ -1,13 +1,10 @@
 {
+  "$schema": "node_modules/wrangler/config-schema.json",
   "name": "corates",
   "compatibility_date": "2025-12-01",
-  "workers_dev": true,
+  "compatibility_flags": ["nodejs_compat"],
+  "main": "@tanstack/react-start/server-entry",
   "routes": [{ "pattern": "corates.org/*", "zone_name": "corates.org" }],
-  "assets": {
-    "directory": "./.output/public",
-    "binding": "ASSETS"
-  },
-  "main": "./worker.js",
   "observability": {
     "logs": {
       "enabled": true,
@@ -17,9 +14,7 @@
     }
   },
   "vars": {
-    "VITE_BASEPATH": "/",
     "VITE_PUBLIC_APP_URL": "https://corates.org",
-    "VITE_API_URL": "https://corates.org",
-    "VITE_SENTRY_DSN": "https://8ff0e3ce7f93715c9971b2c6518cf285@o4510738063818752.ingest.us.sentry.io/4510738383110144"
+    "VITE_API_URL": "https://corates.org"
   }
 }
