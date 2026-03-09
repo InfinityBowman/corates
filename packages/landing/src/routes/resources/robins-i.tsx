@@ -1,18 +1,17 @@
-import { createFileRoute } from '@tanstack/react-router'
-import ToolResourcePage from '../../components/resources/ToolResourcePage'
-import Navbar from '../../components/Navbar'
-import Footer from '../../components/Footer'
-import { getToolBySlug } from '../../lib/tool-content'
-import { config } from '../../lib/config'
+import { createFileRoute } from '@tanstack/react-router';
+import ToolResourcePage from '../../components/resources/ToolResourcePage';
+import Navbar from '../../components/Navbar';
+import Footer from '../../components/Footer';
+import { getToolBySlug } from '../../lib/tool-content';
+import { config } from '../../lib/config';
 
-const tool = getToolBySlug('robins-i')
-const pageUrl = `${config.appUrl}/resources/robins-i`
-const title = tool
-  ? `${tool.name} Resources - CoRATES`
-  : 'ROBINS-I - CoRATES'
-const description = tool
-  ? `Learn about ${tool.name}, including scoring guidance and links to official documentation.`
-  : 'ROBINS-I appraisal tool resources.'
+const tool = getToolBySlug('robins-i');
+const pageUrl = `${config.appUrl}/resources/robins-i`;
+const title = tool ? `${tool.name} Resources - CoRATES` : 'ROBINS-I - CoRATES';
+const description =
+  tool ?
+    `Learn about ${tool.name}, including scoring guidance and links to official documentation.`
+  : 'ROBINS-I appraisal tool resources.';
 
 export const Route = createFileRoute('/resources/robins-i')({
   head: () => ({
@@ -28,14 +27,14 @@ export const Route = createFileRoute('/resources/robins-i')({
     links: [{ rel: 'canonical', href: pageUrl }],
   }),
   component: RobinsIPage,
-})
+});
 
 function RobinsIPage() {
   return (
-    <div className="flex min-h-screen flex-col">
+    <div className='flex min-h-screen flex-col'>
       <Navbar />
       <ToolResourcePage tool={tool} />
       <Footer />
     </div>
-  )
+  );
 }
