@@ -46,7 +46,11 @@ vi.mock('@/middleware/auth.js', () => {
 });
 
 interface MockR2Bucket {
-  put: (key: string, body: ReadableStream | ArrayBuffer | ArrayBufferView | string | null | Blob, options?: R2PutOptions) => Promise<{ key: string }>;
+  put: (
+    key: string,
+    body: ReadableStream | ArrayBuffer | ArrayBufferView | string | null | Blob,
+    options?: R2PutOptions,
+  ) => Promise<{ key: string }>;
 }
 
 let app: Hono;
@@ -66,7 +70,11 @@ beforeEach(async () => {
   // Reset R2 mocks
   const storedObjects = new Map();
   mockR2Bucket = {
-    put: async (key: string, body: ReadableStream | ArrayBuffer | ArrayBufferView | string | null | Blob, options?: R2PutOptions) => {
+    put: async (
+      key: string,
+      body: ReadableStream | ArrayBuffer | ArrayBufferView | string | null | Blob,
+      options?: R2PutOptions,
+    ) => {
       let arrayBuffer: ArrayBuffer;
       if (body instanceof ArrayBuffer) {
         arrayBuffer = body;
@@ -78,7 +86,10 @@ beforeEach(async () => {
           if (done) break;
           chunks.push(value);
         }
-        const totalLength = chunks.reduce((acc: number, chunk: Uint8Array) => acc + chunk.length, 0);
+        const totalLength = chunks.reduce(
+          (acc: number, chunk: Uint8Array) => acc + chunk.length,
+          0,
+        );
         const merged = new Uint8Array(totalLength);
         let offset = 0;
         for (const chunk of chunks) {
@@ -89,7 +100,10 @@ beforeEach(async () => {
       } else if (body instanceof Blob) {
         arrayBuffer = await body.arrayBuffer();
       } else if (ArrayBuffer.isView(body)) {
-        arrayBuffer = (body.buffer as ArrayBuffer).slice(body.byteOffset, body.byteOffset + body.byteLength);
+        arrayBuffer = (body.buffer as ArrayBuffer).slice(
+          body.byteOffset,
+          body.byteOffset + body.byteLength,
+        );
       } else {
         arrayBuffer = new TextEncoder().encode(String(body ?? '')).buffer as ArrayBuffer;
       }
@@ -132,7 +146,11 @@ async function fetchGoogleDrive(path: string, init: FetchInit = {}) {
   return res;
 }
 
-async function seedGoogleAccount(userId: string, accessToken = 'token-123', refreshToken = 'refresh-123') {
+async function seedGoogleAccount(
+  userId: string,
+  accessToken = 'token-123',
+  refreshToken = 'refresh-123',
+) {
   const nowSec = Math.floor(Date.now() / 1000);
   const expiresAt = new Date(Date.now() + 3600 * 1000); // 1 hour from now
 

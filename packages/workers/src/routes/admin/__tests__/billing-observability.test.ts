@@ -96,7 +96,9 @@ describe('Admin billing observability - GET /api/admin/orgs/:orgId/billing/recon
     expect(body.stuckStates).toBeDefined();
     expect(body.stuckStates.length).toBeGreaterThan(0);
 
-    const incompleteState = body.stuckStates.find((s: Record<string, unknown>) => s.type === 'incomplete_subscription');
+    const incompleteState = body.stuckStates.find(
+      (s: Record<string, unknown>) => s.type === 'incomplete_subscription',
+    );
     expect(incompleteState).toBeDefined();
     expect(incompleteState.subscriptionId).toBe('sub-1');
     expect(incompleteState.status).toBe('incomplete');
@@ -139,7 +141,9 @@ describe('Admin billing observability - GET /api/admin/orgs/:orgId/billing/recon
     expect(res.status).toBe(200);
 
     const body = await json(res);
-    const checkoutState = body.stuckStates.find((s: Record<string, unknown>) => s.type === 'checkout_no_subscription');
+    const checkoutState = body.stuckStates.find(
+      (s: Record<string, unknown>) => s.type === 'checkout_no_subscription',
+    );
     expect(checkoutState).toBeDefined();
     expect(checkoutState.severity).toBe('critical');
     expect(checkoutState.ledgerId).toBe('ledger-1');
@@ -177,7 +181,9 @@ describe('Admin billing observability - GET /api/admin/orgs/:orgId/billing/recon
     expect(res.status).toBe(200);
 
     const body = await json(res);
-    const failureState = body.stuckStates.find((s: Record<string, unknown>) => s.type === 'repeated_webhook_failures');
+    const failureState = body.stuckStates.find(
+      (s: Record<string, unknown>) => s.type === 'repeated_webhook_failures',
+    );
     expect(failureState).toBeDefined();
     expect(failureState.severity).toBe('medium');
     expect(failureState.failedCount).toBeGreaterThanOrEqual(3);
@@ -217,7 +223,9 @@ describe('Admin billing observability - GET /api/admin/orgs/:orgId/billing/recon
     expect(res.status).toBe(200);
 
     const body = await json(res);
-    const lagState = body.stuckStates.find((s: Record<string, unknown>) => s.type === 'processing_lag');
+    const lagState = body.stuckStates.find(
+      (s: Record<string, unknown>) => s.type === 'processing_lag',
+    );
     expect(lagState).toBeDefined();
     expect(lagState.severity).toBe('medium');
     expect(lagState.ledgerId).toBe('ledger-lag-1');
@@ -391,7 +399,9 @@ describe('Admin billing observability - GET /api/admin/billing/ledger', () => {
 
     const body = await json(res);
     expect(body.entries).toBeDefined();
-    const failedEntries = body.entries.filter((e: Record<string, unknown>) => e.status === 'failed');
+    const failedEntries = body.entries.filter(
+      (e: Record<string, unknown>) => e.status === 'failed',
+    );
     expect(failedEntries.length).toBeGreaterThan(0);
     failedEntries.forEach((entry: Record<string, unknown>) => {
       expect(entry.status).toBe('failed');
@@ -419,7 +429,9 @@ describe('Admin billing observability - GET /api/admin/billing/ledger', () => {
 
     const body = await json(res);
     expect(body.entries).toBeDefined();
-    const checkoutEntries = body.entries.filter((e: Record<string, unknown>) => e.type === 'checkout.session.completed');
+    const checkoutEntries = body.entries.filter(
+      (e: Record<string, unknown>) => e.type === 'checkout.session.completed',
+    );
     expect(checkoutEntries.length).toBeGreaterThan(0);
   });
 });
