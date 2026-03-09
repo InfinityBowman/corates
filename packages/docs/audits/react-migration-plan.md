@@ -1,8 +1,8 @@
 # Web Package Migration: SolidJS to React (Unified Package)
 
-## Strategy: Build into landing2, one package for everything
+## Strategy: Build into packages/landing, one package for everything
 
-landing2 already has React 19, TanStack Start, TanStack Router (file-based), Tailwind v4, and Cloudflare Workers. Instead of creating a separate web2 package, migrate the SolidJS web app directly into landing2. One router handles landing pages AND the app.
+packages/landing has React 19, TanStack Start, TanStack Router (file-based), Tailwind v4, and Cloudflare Workers. The old SolidStart landing app was replaced with TanStack Start + React. Instead of creating a separate package, migrate the SolidJS web app directly into packages/landing. One router handles landing pages AND the app.
 
 Benefits:
 - No separate build/deploy for landing vs app
@@ -48,7 +48,7 @@ The SolidJS `packages/web` stays untouched as reference until migration is compl
 - Singleton module pattern maps cleanly to Zustand's `create()` outside components
 - adminStore is 90% API wrappers -- those become TanStack Query mutations, leaving only 4 signals for a tiny Zustand slice
 
-### Routing: TanStack Router (file-based, already in landing2)
+### Routing: TanStack Router (file-based, already in landing)
 
 Already set up. App routes become new files under `src/routes/`.
 
@@ -66,14 +66,16 @@ Already set up. App routes become new files under `src/routes/`.
 | `solid-icons` | `react-icons` | Same icons, different imports |
 | `solid-chartjs` | `react-chartjs-2` | Same Chart.js underneath |
 | `@sentry/solid` | `@sentry/react` | Direct swap |
-| `@solidjs/router` | `@tanstack/react-router` | Already in landing2 |
+| `@solid-primitives/scheduled` | Custom hook or `usehooks-ts` | Used in 7 files for debounce/throttle |
+| `better-auth/solid` | `better-auth/react` | `createAuthClient` + `useSession` swap |
+| `@solidjs/router` | `@tanstack/react-router` | Already in landing |
 
 ---
 
 ## Route Structure
 
 ```
-landing2/src/routes/
+packages/landing/src/routes/
   __root.tsx                   # HTML shell, global meta (existing)
   index.tsx                    # Landing home (existing)
   about.tsx                    # Landing (existing)
@@ -92,95 +94,112 @@ landing2/src/routes/
     complete-profile.tsx
     reset-password.tsx
 
-  _app.tsx                     # App layout (navbar + sidebar + QueryProvider + auth guard)
+  _app.tsx                     # App shell layout (navbar + sidebar + QueryProvider, NO auth guard)
   _app/
-    dashboard.tsx              # Also handles / for logged-in users
-    checklist.tsx              # Local checklist (no project)
-    checklist.$checklistId.tsx
-    orgs.new.tsx
-    settings.tsx               # Settings layout
-    settings/
-      index.tsx
-      profile.tsx
-      integrations.tsx
-      billing.tsx
-      plans.tsx
-      security.tsx
-      notifications.tsx
-    projects.$projectId.tsx    # Project layout (Yjs connection)
-    projects.$projectId/
-      index.tsx                # Project overview/tabs
-      studies.$studyId.checklists.$checklistId.tsx
-      studies.$studyId.reconcile.$checklist1Id.$checklist2Id.tsx
-    admin.tsx                  # Admin layout (lazy)
-    admin/
-      index.tsx
-      users.tsx
-      users.$userId.tsx
-      orgs.tsx
-      orgs.$orgId.tsx
-      projects.tsx
-      projects.$projectId.tsx
-      storage.tsx
-      billing.tsx
+    dashboard.tsx              # Public -- accessible without login
+    checklist.tsx              # Public -- local checklists work offline
+    checklist.$checklistId.tsx # Public
+
+    _protected.tsx             # Auth guard layout -- all children require login
+    _protected/
+      orgs.new.tsx
+      settings.tsx             # Settings layout
+      settings/
+        index.tsx
+        profile.tsx
+        integrations.tsx
+        billing.tsx
+        plans.tsx
+        security.tsx
+        notifications.tsx
+      projects.$projectId.tsx  # Project layout (Yjs connection)
+      projects.$projectId/
+        index.tsx              # Project overview/tabs
+        studies.$studyId.checklists.$checklistId.tsx
+        studies.$studyId.reconcile.$checklist1Id.$checklist2Id.tsx
+      admin.tsx                # Admin layout (lazy)
+      admin/
+        index.tsx
+        users.tsx
+        users.$userId.tsx
+        orgs.tsx
+        orgs.$orgId.tsx
+        projects.tsx
+        projects.$projectId.tsx
+        storage.tsx
+        billing.tsx
 ```
 
 Key points:
-- `_auth.tsx` is a pathless layout route -- auth pages render without sidebar/navbar
-- `_app.tsx` is a pathless layout route -- wraps all app routes with sidebar, navbar, QueryClientProvider, auth guard
+- `_auth.tsx` is a pathless layout route -- auth pages render without sidebar/navbar, includes guest guard (redirects logged-in users to /dashboard)
+- `_app.tsx` is a pathless layout route -- wraps all app routes with sidebar, navbar, QueryClientProvider. Does NOT include auth guard (dashboard and local checklists are public)
+- `_app/_protected.tsx` is a nested pathless layout with AuthGuard -- all children (settings, projects, admin, orgs) require login
 - Landing pages stay at the top level -- no layout wrapper, SSR-friendly, minimal JS
 - `projects.$projectId.tsx` is a layout route that establishes the Yjs WebSocket connection, child routes share it
-- Admin routes under `_app/admin.tsx` can use `lazy()` for code splitting
+- Admin routes under `_protected/admin.tsx` can use `lazy()` for code splitting
+
+This matches the SolidJS app where `/dashboard` and `/checklist` are outside ProtectedGuard, while settings, projects, admin, and orgs are inside it.
 
 ### How _app.tsx layout works
 
 ```tsx
-// routes/_app.tsx
+// routes/_app.tsx -- app shell, NO auth guard
 import { createFileRoute, Outlet } from '@tanstack/react-router'
 import { QueryClientProvider } from '@tanstack/react-query'
-import { queryClient } from '~/lib/queryClient'
-import { AppLayout } from '~/components/layout/AppLayout'
-import { AuthGuard } from '~/components/auth/AuthGuard'
+import { queryClient } from '@/lib/queryClient'
+import { AppLayout } from '@/components/layout/AppLayout'
+import { AuthProvider } from '@/components/auth/AuthProvider'
 
 export const Route = createFileRoute('/_app')({
+  // Disable SSR for all app routes -- they require browser APIs
+  // (IndexedDB, WebSocket, localStorage, etc.)
+  ssr: false,
   component: AppLayoutWrapper,
 })
 
 function AppLayoutWrapper() {
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthGuard>
+      <AuthProvider>
         <AppLayout>
           <Outlet />
         </AppLayout>
-      </AuthGuard>
+      </AuthProvider>
     </QueryClientProvider>
   )
 }
 ```
 
-### Landing vs App: SSR boundary
-
-TanStack Start gives you SSR by default. For app routes, you likely want client-only rendering (they need auth, IndexedDB, WebSocket, etc.). Use `ssr: false` on the `_app` layout:
-
 ```tsx
-export const Route = createFileRoute('/_app')({
-  // Disable SSR for all app routes -- they require browser APIs
-  ssr: false,
-  component: AppLayoutWrapper,
+// routes/_app/_protected.tsx -- auth guard for protected routes
+import { createFileRoute, Outlet, redirect } from '@tanstack/react-router'
+
+export const Route = createFileRoute('/_app/_protected')({
+  beforeLoad: ({ context }) => {
+    if (!context.auth?.isLoggedIn) {
+      throw redirect({ to: '/signin' })
+    }
+  },
+  component: () => <Outlet />,
 })
 ```
 
-Landing pages keep SSR for SEO. This gives you the best of both worlds in one router.
+### Landing vs App: SSR boundary
+
+TanStack Start gives you SSR by default. The `ssr: false` on `_app` means all app routes are client-only (they need browser APIs). Landing pages keep SSR for SEO. This gives you the best of both worlds in one router.
 
 ---
 
 ## Phase 0: Preparation
 
-### 0.1 Add dependencies to landing2
+### 0.1 Add dependencies to landing
+
+Already in landing: `react`, `react-dom`, `react-icons`, `@tanstack/react-router`, `@tanstack/react-start`, `countup.js`, `@corates/shared`, `tailwindcss`.
+
+Still need to add:
 
 ```bash
-pnpm --filter @corates/landing2 add \
+pnpm --filter landing add \
   zustand immer \
   @tanstack/react-query \
   @tanstack/react-table \
@@ -191,38 +210,26 @@ pnpm --filter @corates/landing2 add \
   class-variance-authority clsx tailwind-merge \
   dexie \
   yjs y-websocket y-dexie \
-  d3 \
-  countup.js
+  d3
 ```
 
-Plus EmbedPDF packages (the full list from web/package.json). And Preact for the PDF viewer island.
+Plus EmbedPDF packages (the full list from web/package.json). And Preact + `@preact/preset-vite` for the PDF viewer island (devDep).
 
-### 0.2 Set up path aliases
+### 0.2 Verify path aliases
 
-Add aliases to landing2's tsconfig.json matching web's jsconfig.json:
+Landing already has `@/*` -> `./src/*` in tsconfig.json (matching web's jsconfig.json). The web app uses more specific aliases (`@components`, `@primitives`, `@api`, `@config`, `@lib`). Two options:
 
-```json
-{
-  "compilerOptions": {
-    "paths": {
-      "~/*": ["./src/*"],
-      "~/components/*": ["./src/components/*"],
-      "~/stores/*": ["./src/stores/*"],
-      "~/primitives/*": ["./src/primitives/*"],
-      "~/lib/*": ["./src/lib/*"],
-      "~/api/*": ["./src/api/*"],
-      "~/config/*": ["./src/config/*"]
-    }
-  }
-}
-```
+1. **Use `@/` prefix for everything** (simpler): `@/components/...`, `@/lib/...`, `@/stores/...`. This already works with the existing `@/*` alias.
+2. **Add specific aliases** if you want shorter imports: add `@components/*`, `@lib/*`, etc. to both tsconfig.json and vite-tsconfig-paths will pick them up.
 
-### 0.3 Copy framework-agnostic code into landing2
+Option 1 is recommended -- less config, and `@/` is already set up. The web code already uses `@/` for most imports anyway. Also ensure `vite-tsconfig-paths` (already in landing devDeps) resolves these correctly.
 
-Create these directories in landing2/src and copy from web/src:
+### 0.3 Copy framework-agnostic code into landing
+
+Create these directories in landing/src and copy from web/src:
 
 ```
-landing2/src/
+packages/landing/src/
   lib/           <- copy all from web/src/lib/ (24 of 25 files are framework-agnostic)
   constants/     <- copy from web/src/constants/
   config/        <- copy from web/src/config/ (update sentry to @sentry/react)
@@ -239,9 +246,9 @@ Verify they compile -- no `solid-js` imports should remain.
 
 ### 0.4 Set up vitest
 
-Add vitest + @testing-library/react to landing2 devDependencies. Copy test setup from web, adapting for React.
+Add vitest + @testing-library/react to landing devDependencies. Copy test setup from web, adapting for React.
 
-**Checkpoint: landing2 still builds and runs, new lib/config/constants files import cleanly, no solid-js in copied code.**
+**Checkpoint: landing still builds and runs, new lib/config/constants files import cleanly, no solid-js in copied code.**
 
 ---
 
@@ -251,7 +258,7 @@ Everything else depends on this layer. Build it first, test it standalone.
 
 ### 1.1 Migrate stores to Zustand
 
-Create `landing2/src/stores/`:
+Create `packages/landing/src/stores/`:
 
 **projectStore.ts** (most critical):
 ```ts
@@ -311,9 +318,9 @@ export const projectStoreApi = useProjectStore
 
 ### 1.2 Migrate auth
 
-Create `landing2/src/api/`:
+Create `packages/landing/src/api/`:
 
-**auth-client.ts** -- Better Auth client setup. The existing `auth-client.js` creates the client instance -- this is framework-agnostic, just copy and adjust if needed.
+**auth-client.ts** -- Better Auth client setup. The existing `auth-client.js` imports `createAuthClient` from `better-auth/solid` -- this must change to `better-auth/react`. The `useSession` hook exported from the client is framework-specific. The rest of the client config (plugins, fetchOptions) is framework-agnostic.
 
 **better-auth-store.ts** -- this is the big one (935 LOC). Split into:
 
@@ -365,13 +372,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
 BroadcastChannel, visibility change listeners, cross-tab sync -- these are vanilla JS and transfer directly. The auth API methods (signin, signup, etc.) are async functions calling `authClient` -- framework-agnostic, just update state setters to use Zustand.
 
-### 1.3 Set up app layout route
+### 1.3 Set up app layout routes
 
 Create `routes/_app.tsx`:
 - QueryClientProvider
-- AuthProvider
-- AuthGuard (redirect to /signin if not logged in)
+- AuthProvider (session sync, online/offline, BroadcastChannel)
 - AppLayout (navbar + sidebar + Outlet)
+- `ssr: false` (app routes need browser APIs)
+- No auth guard here -- dashboard and local checklists are public
+
+Create `routes/_app/_protected.tsx`:
+- AuthGuard via `beforeLoad` -- redirect to /signin if not logged in
+- All children (settings, projects, admin, orgs) require login
 
 Create `routes/_auth.tsx`:
 - Minimal layout for auth pages (no sidebar)
@@ -380,6 +392,7 @@ Create `routes/_auth.tsx`:
 Create placeholder routes:
 - `_app/dashboard.tsx` -- renders "Dashboard placeholder"
 - `_auth/signin.tsx` -- renders "Sign in placeholder"
+- `_app/_protected/settings.tsx` -- renders "Settings placeholder"
 - etc.
 
 **Checkpoint: landing pages still work, navigating to /dashboard shows app layout with placeholder, auth flow works (login redirects, session persists).**
@@ -388,7 +401,7 @@ Create placeholder routes:
 
 ## Phase 2: UI Component Library
 
-Create `landing2/src/components/ui/`:
+Create `packages/landing/src/components/ui/`:
 
 ### 2.1 Migrate Ark UI wrappers (25 files, ~3,800 LOC)
 
@@ -434,7 +447,7 @@ Changes per file:
 
 ## Phase 3: Primitives (Hooks)
 
-Create `landing2/src/primitives/` (or `landing2/src/hooks/`):
+Create `packages/landing/src/primitives/` (or `packages/landing/src/hooks/`):
 
 ### 3.1 TanStack Query hooks (near-1:1 swap)
 
@@ -498,7 +511,7 @@ function useProject(projectId: string) {
 }
 ```
 
-5. Mount in `routes/_app/projects.$projectId.tsx` layout route -- child routes get the live Yjs connection
+5. Mount in `routes/_app/_protected/projects.$projectId.tsx` layout route -- child routes get the live Yjs connection
 
 **This is the riskiest phase.** Test with two browser tabs editing the same checklist.
 
@@ -508,7 +521,7 @@ function useProject(projectId: string) {
 
 ## Phase 4: Pages (migrate route by route)
 
-Start simple, build confidence, tackle complex last. Each route becomes a file in `landing2/src/routes/`.
+Start simple, build confidence, tackle complex last. Each route becomes a file in `packages/landing/src/routes/`.
 
 ### 4.1 Auth pages (simplest)
 - `_auth/signin.tsx`, `signup.tsx`, `check-email.tsx`, `complete-profile.tsx`, `reset-password.tsx`
@@ -527,28 +540,28 @@ Start simple, build confidence, tackle complex last. Each route becomes a file i
 - Read-only views, straightforward
 
 ### 4.4 Settings
-- `_app/settings.tsx` (layout) + `_app/settings/*.tsx` (pages)
+- `_app/_protected/settings.tsx` (layout) + `_app/_protected/settings/*.tsx` (pages)
 - Profile, billing, integrations, security, notifications
 - Self-contained form pages
 
 ### 4.5 Organization + billing
-- `_app/orgs.new.tsx`
+- `_app/_protected/orgs.new.tsx`
 - Billing components
 
 ### 4.6 Project view (complex)
-- `_app/projects.$projectId.tsx` (layout -- Yjs connection)
-- `_app/projects.$projectId/index.tsx` (overview, tab system)
+- `_app/_protected/projects.$projectId.tsx` (layout -- Yjs connection)
+- `_app/_protected/projects.$projectId/index.tsx` (overview, tab system)
 - Study cards, add-studies flow, all-studies tab, completed tab, todo tab
 - Heavy Yjs data consumption from projectStore via Zustand selectors
 
 ### 4.7 Checklists (most complex UI)
-- `_app/projects.$projectId/studies.$studyId.checklists.$checklistId.tsx`
+- `_app/_protected/projects.$projectId/studies.$studyId.checklists.$checklistId.tsx`
 - AMSTAR2, ROB2, ROBINS-I checklist forms
 - Complex conditional fields, scoring visualization, decision diagrams
 - PDF viewer integration
 
 ### 4.8 Reconciliation (complex)
-- `_app/projects.$projectId/studies.$studyId.reconcile.$c1Id.$c2Id.tsx`
+- `_app/_protected/projects.$projectId/studies.$studyId.reconcile.$c1Id.$c2Id.tsx`
 - Multi-reviewer comparison, conflict resolution
 
 ### 4.9 Local checklists
@@ -556,7 +569,7 @@ Start simple, build confidence, tackle complex last. Each route becomes a file i
 - Uses localChecklistsStore (Zustand) + Dexie
 
 ### 4.10 Admin (last, isolated)
-- `_app/admin.tsx` (layout, lazy loaded) + `_app/admin/*.tsx`
+- `_app/_protected/admin.tsx` (layout, lazy loaded) + `_app/_protected/admin/*.tsx`
 - Charts: `solid-chartjs` -> `react-chartjs-2`
 - Admin queries already migrated in Phase 3
 
@@ -564,6 +577,7 @@ Start simple, build confidence, tackle complex last. Each route becomes a file i
 - The EmbedPDF Preact viewer is isolated -- keep as-is
 - Create a React wrapper that mounts the Preact island (same pattern as current SolidJS wrapper)
 - PDF preview panel uses pdfPreviewStore (Zustand)
+- **Vite config note:** The web package uses `@preact/preset-vite` scoped to `**/preact/**` files alongside the SolidJS plugin. In landing, you'll need to add the Preact plugin similarly scoped, alongside `@vitejs/plugin-react`. Test that TanStack Start's Vite plugin doesn't conflict with dual React/Preact setup. If it does, consider converting the PDF viewer to React (it's small) or embedding it via iframe
 
 ---
 
@@ -584,20 +598,18 @@ Start simple, build confidence, tackle complex last. Each route becomes a file i
 ## Phase 6: Cleanup and Cutover
 
 ### 6.1 Remove packages/web
-- Verify all functionality works in landing2
+- Verify all functionality works in landing
 - Delete packages/web from workspace
 - Update pnpm-workspace.yaml
 
-### 6.2 Rename landing2 -> the main package
-- Or keep the name, doesn't matter functionally
-
-### 6.3 Update build/deploy
-- Single `pnpm --filter @corates/landing2 build` builds everything
+### 6.2 Update build/deploy
+- Single `pnpm --filter landing build` builds everything
 - Single Cloudflare Workers deploy
 - No more `copy-to-landing.js` script
 - No more separate web build step
+- Update landing's `build:prod` script (currently references `@corates/web`): remove the `pnpm --filter @corates/web build` step
 
-### 6.4 Update documentation
+### 6.3 Update documentation
 - CLAUDE.md, AGENTS.md, STATUS.md
 - Remove references to packages/web
 - Update build commands
@@ -665,7 +677,7 @@ Start simple, build confidence, tackle complex last. Each route becomes a file i
 | Phase 6: Cleanup | 0.5 days | -- |
 | **Total** | **~2-3 weeks** | |
 
-Phase 0 is shorter since landing2 already exists. Claude Code can handle the mechanical parts (UI components, query hooks, icon swaps, simple page conversions) to significantly speed up Phases 2 and 4.
+Phase 0 is shorter since landing already exists. Claude Code can handle the mechanical parts (UI components, query hooks, icon swaps, simple page conversions) to significantly speed up Phases 2 and 4.
 
 ---
 
