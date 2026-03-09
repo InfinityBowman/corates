@@ -5,6 +5,7 @@
 packages/landing has React 19, TanStack Start, TanStack Router (file-based), Tailwind v4, and Cloudflare Workers. The old SolidStart landing app was replaced with TanStack Start + React. Instead of creating a separate package, migrate the SolidJS web app directly into packages/landing. One router handles landing pages AND the app.
 
 Benefits:
+
 - No separate build/deploy for landing vs app
 - Shared layout primitives, auth, and navigation
 - SSR for landing pages (SEO), client-side for app routes
@@ -17,24 +18,24 @@ The SolidJS `packages/web` stays untouched as reference until migration is compl
 
 ## Scope (what's being migrated from packages/web)
 
-| Metric | Count |
-|--------|-------|
-| Source files (.ts/.tsx/.js/.jsx) | 445 |
-| Lines of code | ~89,000 |
-| Component files | 274 |
-| UI library components (Ark UI wrappers) | 25 files, ~3,800 LOC |
-| Stores | 5 (projectStore, adminStore, localChecklistsStore, pdfPreviewStore, projectActionsStore/) |
-| Primitives (hooks) | 24 files |
-| useProject (Yjs integration) | 14 files, ~3,770 LOC |
-| projectActionsStore (Yjs actions) | 8 files, ~1,494 LOC |
-| Lib utilities | 25 files (only 1 uses SolidJS primitives) |
-| Test files | 27 |
-| Files using `splitProps` | 21 |
-| Files importing `solid-js` | 275 |
-| Files importing `@solidjs/router` | 62 |
-| Files using `@ark-ui/solid` | 19 |
-| Files using `solid-icons` | 7 |
-| Files using `createRoot` (reactive ownership) | 6 |
+| Metric                                        | Count                                                                                     |
+| --------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| Source files (.ts/.tsx/.js/.jsx)              | 445                                                                                       |
+| Lines of code                                 | ~89,000                                                                                   |
+| Component files                               | 274                                                                                       |
+| UI library components (Ark UI wrappers)       | 25 files, ~3,800 LOC                                                                      |
+| Stores                                        | 5 (projectStore, adminStore, localChecklistsStore, pdfPreviewStore, projectActionsStore/) |
+| Primitives (hooks)                            | 24 files                                                                                  |
+| useProject (Yjs integration)                  | 14 files, ~3,770 LOC                                                                      |
+| projectActionsStore (Yjs actions)             | 8 files, ~1,494 LOC                                                                       |
+| Lib utilities                                 | 25 files (only 1 uses SolidJS primitives)                                                 |
+| Test files                                    | 27                                                                                        |
+| Files using `splitProps`                      | 21                                                                                        |
+| Files importing `solid-js`                    | 275                                                                                       |
+| Files importing `@solidjs/router`             | 62                                                                                        |
+| Files using `@ark-ui/solid`                   | 19                                                                                        |
+| Files using `solid-icons`                     | 7                                                                                         |
+| Files using `createRoot` (reactive ownership) | 6                                                                                         |
 
 **~30% of codebase is framework-agnostic** (lib/, constants/, config/, checklist-registry, Dexie setup) and can be copied with zero or trivial changes.
 
@@ -58,17 +59,17 @@ Already set up. App routes become new files under `src/routes/`.
 
 ### Library Swaps
 
-| SolidJS | React | API similarity |
-|---------|-------|---------------|
-| `@tanstack/solid-query` | `@tanstack/react-query` | Near-identical |
-| `@tanstack/solid-table` | `@tanstack/react-table` | Near-identical |
-| `@ark-ui/solid` | `@ark-ui/react` | Near-identical |
-| `solid-icons` | `react-icons` | Same icons, different imports |
-| `solid-chartjs` | `react-chartjs-2` | Same Chart.js underneath |
-| `@sentry/solid` | `@sentry/react` | Direct swap |
-| `@solid-primitives/scheduled` | Custom hook or `usehooks-ts` | Used in 7 files for debounce/throttle |
-| `better-auth/solid` | `better-auth/react` | `createAuthClient` + `useSession` swap |
-| `@solidjs/router` | `@tanstack/react-router` | Already in landing |
+| SolidJS                       | React                        | API similarity                         |
+| ----------------------------- | ---------------------------- | -------------------------------------- |
+| `@tanstack/solid-query`       | `@tanstack/react-query`      | Near-identical                         |
+| `@tanstack/solid-table`       | `@tanstack/react-table`      | Near-identical                         |
+| `@ark-ui/solid`               | `@ark-ui/react`              | Near-identical                         |
+| `solid-icons`                 | `react-icons`                | Same icons, different imports          |
+| `solid-chartjs`               | `react-chartjs-2`            | Same Chart.js underneath               |
+| `@sentry/solid`               | `@sentry/react`              | Direct swap                            |
+| `@solid-primitives/scheduled` | Custom hook or `usehooks-ts` | Used in 7 files for debounce/throttle  |
+| `better-auth/solid`           | `better-auth/react`          | `createAuthClient` + `useSession` swap |
+| `@solidjs/router`             | `@tanstack/react-router`     | Already in landing                     |
 
 ---
 
@@ -131,6 +132,7 @@ packages/landing/src/routes/
 ```
 
 Key points:
+
 - `_auth.tsx` is a pathless layout route -- auth pages render without sidebar/navbar, includes guest guard (redirects logged-in users to /dashboard)
 - `_app.tsx` is a pathless layout route -- wraps all app routes with sidebar, navbar, QueryClientProvider. Does NOT include auth guard (dashboard and local checklists are public)
 - `_app/_protected.tsx` is a nested pathless layout with AuthGuard -- all children (settings, projects, admin, orgs) require login
@@ -140,22 +142,22 @@ Key points:
 
 This matches the SolidJS app where `/dashboard` and `/checklist` are outside ProtectedGuard, while settings, projects, admin, and orgs are inside it.
 
-### How _app.tsx layout works
+### How \_app.tsx layout works
 
 ```tsx
 // routes/_app.tsx -- app shell, NO auth guard
-import { createFileRoute, Outlet } from '@tanstack/react-router'
-import { QueryClientProvider } from '@tanstack/react-query'
-import { queryClient } from '@/lib/queryClient'
-import { AppLayout } from '@/components/layout/AppLayout'
-import { AuthProvider } from '@/components/auth/AuthProvider'
+import { createFileRoute, Outlet } from '@tanstack/react-router';
+import { QueryClientProvider } from '@tanstack/react-query';
+import { queryClient } from '@/lib/queryClient';
+import { AppLayout } from '@/components/layout/AppLayout';
+import { AuthProvider } from '@/components/auth/AuthProvider';
 
 export const Route = createFileRoute('/_app')({
   // Disable SSR for all app routes -- they require browser APIs
   // (IndexedDB, WebSocket, localStorage, etc.)
   ssr: false,
   component: AppLayoutWrapper,
-})
+});
 
 function AppLayoutWrapper() {
   return (
@@ -166,22 +168,22 @@ function AppLayoutWrapper() {
         </AppLayout>
       </AuthProvider>
     </QueryClientProvider>
-  )
+  );
 }
 ```
 
 ```tsx
 // routes/_app/_protected.tsx -- auth guard for protected routes
-import { createFileRoute, Outlet, redirect } from '@tanstack/react-router'
+import { createFileRoute, Outlet, redirect } from '@tanstack/react-router';
 
 export const Route = createFileRoute('/_app/_protected')({
   beforeLoad: ({ context }) => {
     if (!context.auth?.isLoggedIn) {
-      throw redirect({ to: '/signin' })
+      throw redirect({ to: '/signin' });
     }
   },
   component: () => <Outlet />,
-})
+});
 ```
 
 ### Landing vs App: SSR boundary
@@ -238,6 +240,7 @@ packages/landing/src/
 ```
 
 Also copy framework-agnostic primitives:
+
 - `primitives/db.js` (Dexie setup)
 - `primitives/avatarCache.js`
 - `primitives/pdfCache.js`
@@ -261,15 +264,16 @@ Everything else depends on this layer. Build it first, test it standalone.
 Create `packages/landing/src/stores/`:
 
 **projectStore.ts** (most critical):
+
 ```ts
-import { create } from 'zustand'
-import { immer } from 'zustand/middleware/immer'
+import { create } from 'zustand';
+import { immer } from 'zustand/middleware/immer';
 
 interface ProjectStoreState {
-  projects: Record<string, ProjectData>
-  activeProjectId: string | null
-  connections: Record<string, ConnectionState>
-  projectStats: Record<string, ProjectStats>
+  projects: Record<string, ProjectData>;
+  activeProjectId: string | null;
+  connections: Record<string, ConnectionState>;
+  projectStats: Record<string, ProjectStats>;
   // ... actions
 }
 
@@ -280,38 +284,41 @@ export const useProjectStore = create<ProjectStoreState>()(
     connections: {},
     projectStats: loadPersistedStats(),
 
-    setProjectData: (projectId, data) => set(state => {
-      if (!state.projects[projectId]) {
-        state.projects[projectId] = { meta: {}, members: [], studies: [] }
-      }
-      if (data.meta !== undefined) state.projects[projectId].meta = data.meta
-      if (data.members !== undefined) state.projects[projectId].members = data.members
-      if (data.studies !== undefined) {
-        state.projects[projectId].studies = data.studies
-        state.projectStats[projectId] = {
-          ...computeProjectStats(data.studies),
-          lastUpdated: Date.now(),
+    setProjectData: (projectId, data) =>
+      set(state => {
+        if (!state.projects[projectId]) {
+          state.projects[projectId] = { meta: {}, members: [], studies: [] };
         }
-        persistStats(state.projectStats)
-      }
-    }),
+        if (data.meta !== undefined) state.projects[projectId].meta = data.meta;
+        if (data.members !== undefined) state.projects[projectId].members = data.members;
+        if (data.studies !== undefined) {
+          state.projects[projectId].studies = data.studies;
+          state.projectStats[projectId] = {
+            ...computeProjectStats(data.studies),
+            lastUpdated: Date.now(),
+          };
+          persistStats(state.projectStats);
+        }
+      }),
 
     // ... rest of actions, same logic, same produce-style mutations
-  }))
-)
+  })),
+);
 
 // For non-React code (Yjs callbacks, etc.) that needs to read/write store
 // without hooks -- use getState()/setState() directly
-export const projectStoreApi = useProjectStore
+export const projectStoreApi = useProjectStore;
 ```
 
 **pdfPreviewStore.ts**, **localChecklistsStore.ts** -- straightforward, same pattern.
 
 **adminStore.ts** -- split into:
+
 - `stores/adminStore.ts`: tiny Zustand store for `isAdmin`, `isAdminChecked`, `isImpersonating`, `impersonatedBy`
 - Admin API functions stay as plain async functions (or become TanStack Query mutations later)
 
 **projectActionsStore/** (1,494 LOC):
+
 - These are Yjs mutation functions that call `ydoc.getMap().set()` etc.
 - They currently import `projectStore` -- update imports to use `useProjectStore.getState()`
 - Otherwise nearly framework-agnostic, mostly just store reference updates
@@ -325,6 +332,7 @@ Create `packages/landing/src/api/`:
 **better-auth-store.ts** -- this is the big one (935 LOC). Split into:
 
 1. **Zustand store for auth state:**
+
 ```ts
 export const useAuthStore = create<AuthState>()((set, get) => ({
   isOnline: navigator.onLine,
@@ -332,39 +340,40 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
   cachedAvatarUrl: null,
   authError: null,
   // ... auth action methods (signin, signup, signout, etc.)
-}))
+}));
 ```
 
 2. **AuthProvider component** (replaces `createRoot` + `createEffect`):
+
 ```tsx
 // components/auth/AuthProvider.tsx
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Better Auth's React useSession() hook
-  const session = useSession()
+  const session = useSession();
 
   // Sync session -> Zustand store + localStorage cache
   useEffect(() => {
     if (session.data?.user) {
-      useAuthStore.getState().setCachedUser(session.data.user)
-      saveCachedAuth(session.data.user)
+      useAuthStore.getState().setCachedUser(session.data.user);
+      saveCachedAuth(session.data.user);
     }
-  }, [session.data])
+  }, [session.data]);
 
   // Online/offline listeners
   useEffect(() => {
-    const onOnline = () => useAuthStore.setState({ isOnline: true })
-    const onOffline = () => useAuthStore.setState({ isOnline: false })
-    window.addEventListener('online', onOnline)
-    window.addEventListener('offline', onOffline)
+    const onOnline = () => useAuthStore.setState({ isOnline: true });
+    const onOffline = () => useAuthStore.setState({ isOnline: false });
+    window.addEventListener('online', onOnline);
+    window.addEventListener('offline', onOffline);
     return () => {
-      window.removeEventListener('online', onOnline)
-      window.removeEventListener('offline', onOffline)
-    }
-  }, [])
+      window.removeEventListener('online', onOnline);
+      window.removeEventListener('offline', onOffline);
+    };
+  }, []);
 
   // BroadcastChannel, visibility change listeners -- same vanilla JS logic
 
-  return <>{children}</>
+  return <>{children}</>;
 }
 ```
 
@@ -375,6 +384,7 @@ BroadcastChannel, visibility change listeners, cross-tab sync -- these are vanil
 ### 1.3 Set up app layout routes
 
 Create `routes/_app.tsx`:
+
 - QueryClientProvider
 - AuthProvider (session sync, online/offline, BroadcastChannel)
 - AppLayout (navbar + sidebar + Outlet)
@@ -382,14 +392,17 @@ Create `routes/_app.tsx`:
 - No auth guard here -- dashboard and local checklists are public
 
 Create `routes/_app/_protected.tsx`:
+
 - AuthGuard via `beforeLoad` -- redirect to /signin if not logged in
 - All children (settings, projects, admin, orgs) require login
 
 Create `routes/_auth.tsx`:
+
 - Minimal layout for auth pages (no sidebar)
 - Guest guard (redirect to /dashboard if already logged in)
 
 Create placeholder routes:
+
 - `_app/dashboard.tsx` -- renders "Dashboard placeholder"
 - `_auth/signin.tsx` -- renders "Sign in placeholder"
 - `_app/_protected/settings.tsx` -- renders "Settings placeholder"
@@ -427,6 +440,7 @@ function Button({ variant, size, className, ...rest }: ButtonProps) {
 ```
 
 Changes per file:
+
 - `splitProps(props, [...])` -> destructure `const { a, b, ...rest } = props`
 - `class=` -> `className=`
 - `<Show when={x}>` -> `{x && ...}`
@@ -452,6 +466,7 @@ Create `packages/landing/src/primitives/` (or `packages/landing/src/hooks/`):
 ### 3.1 TanStack Query hooks (near-1:1 swap)
 
 These are the easiest -- `createQuery` -> `useQuery`, `createMutation` -> `useMutation`:
+
 - useAdminQueries
 - useMyProjectsList
 - useProjectList
@@ -478,11 +493,13 @@ These are the easiest -- `createQuery` -> `useQuery`, `createMutation` -> `useMu
 `useProject/` manages WebSocket connection, Yjs doc observation, and store updates.
 
 **Key insight:** most of the Yjs code is vanilla JS callbacks. The SolidJS parts are:
+
 - `createSignal` for connection state -> Zustand actions on projectStore
 - `createRoot` wrapping -> not needed in React
 - `onCleanup` -> useEffect cleanup return
 
 Migration approach:
+
 1. Copy the handler files (AMSTAR2, ROB2, ROBINS-I scoring) -- they're pure logic, framework-agnostic
 2. Copy sync.js, studies.js, pdfs.js, etc. -- update `projectStore.setProjectData()` calls to `useProjectStore.getState().setProjectData()`
 3. Convert `connection.js` -- createSignal for connection state -> Zustand actions
@@ -490,24 +507,24 @@ Migration approach:
 
 ```tsx
 function useProject(projectId: string) {
-  const ydocRef = useRef<Y.Doc | null>(null)
+  const ydocRef = useRef<Y.Doc | null>(null);
 
   useEffect(() => {
-    if (!projectId) return
-    const ydoc = new Y.Doc()
-    ydocRef.current = ydoc
+    if (!projectId) return;
+    const ydoc = new Y.Doc();
+    ydocRef.current = ydoc;
 
     // Set up WebSocket provider, observers, etc.
     // All the existing vanilla JS callback logic
-    const cleanup = setupProjectSync(ydoc, projectId)
+    const cleanup = setupProjectSync(ydoc, projectId);
 
     return () => {
-      cleanup()
-      ydoc.destroy()
-    }
-  }, [projectId])
+      cleanup();
+      ydoc.destroy();
+    };
+  }, [projectId]);
 
-  return ydocRef
+  return ydocRef;
 }
 ```
 
@@ -524,56 +541,67 @@ function useProject(projectId: string) {
 Start simple, build confidence, tackle complex last. Each route becomes a file in `packages/landing/src/routes/`.
 
 ### 4.1 Auth pages (simplest)
+
 - `_auth/signin.tsx`, `signup.tsx`, `check-email.tsx`, `complete-profile.tsx`, `reset-password.tsx`
 - Form state, auth store calls, simple UI
 - Replace each placeholder from Phase 1
 
 ### 4.2 App shell (needed for everything else)
+
 - `components/layout/AppLayout.tsx` -- navbar + sidebar + main content area
 - `components/layout/Navbar.tsx`
 - `components/layout/Sidebar.tsx`
 - These use route location, auth state, project list -- all available from previous phases
 
 ### 4.3 Dashboard
+
 - `_app/dashboard.tsx` -- project list, stats cards
 - Uses useMyProjectsList, projectStore.getProjectStats()
 - Read-only views, straightforward
 
 ### 4.4 Settings
+
 - `_app/_protected/settings.tsx` (layout) + `_app/_protected/settings/*.tsx` (pages)
 - Profile, billing, integrations, security, notifications
 - Self-contained form pages
 
 ### 4.5 Organization + billing
+
 - `_app/_protected/orgs.new.tsx`
 - Billing components
 
 ### 4.6 Project view (complex)
+
 - `_app/_protected/projects.$projectId.tsx` (layout -- Yjs connection)
 - `_app/_protected/projects.$projectId/index.tsx` (overview, tab system)
 - Study cards, add-studies flow, all-studies tab, completed tab, todo tab
 - Heavy Yjs data consumption from projectStore via Zustand selectors
 
 ### 4.7 Checklists (most complex UI)
+
 - `_app/_protected/projects.$projectId/studies.$studyId.checklists.$checklistId.tsx`
 - AMSTAR2, ROB2, ROBINS-I checklist forms
 - Complex conditional fields, scoring visualization, decision diagrams
 - PDF viewer integration
 
 ### 4.8 Reconciliation (complex)
+
 - `_app/_protected/projects.$projectId/studies.$studyId.reconcile.$c1Id.$c2Id.tsx`
 - Multi-reviewer comparison, conflict resolution
 
 ### 4.9 Local checklists
+
 - `_app/checklist.tsx`, `_app/checklist.$checklistId.tsx`
 - Uses localChecklistsStore (Zustand) + Dexie
 
 ### 4.10 Admin (last, isolated)
+
 - `_app/_protected/admin.tsx` (layout, lazy loaded) + `_app/_protected/admin/*.tsx`
 - Charts: `solid-chartjs` -> `react-chartjs-2`
 - Admin queries already migrated in Phase 3
 
 ### 4.11 PDF components
+
 - The EmbedPDF Preact viewer is isolated -- keep as-is
 - Create a React wrapper that mounts the Preact island (same pattern as current SolidJS wrapper)
 - PDF preview panel uses pdfPreviewStore (Zustand)
@@ -584,11 +612,13 @@ Start simple, build confidence, tackle complex last. Each route becomes a file i
 ## Phase 5: Tests
 
 ### 5.1 Set up test infrastructure
+
 - `@testing-library/react` (replaces `@solidjs/testing-library`)
 - Same `render()`, `screen`, `fireEvent`, `waitFor` patterns
 - Test setup file with Zustand store resets between tests
 
 ### 5.2 Migrate test files (27 files)
+
 - Import swaps, provider wrappers
 - Framework-agnostic tests (lib/, checklist-registry/) may need no changes
 - Component tests need React render wrappers
@@ -598,11 +628,13 @@ Start simple, build confidence, tackle complex last. Each route becomes a file i
 ## Phase 6: Cleanup and Cutover
 
 ### 6.1 Remove packages/web
+
 - Verify all functionality works in landing
 - Delete packages/web from workspace
 - Update pnpm-workspace.yaml
 
 ### 6.2 Update build/deploy
+
 - Single `pnpm --filter landing build` builds everything
 - Single Cloudflare Workers deploy
 - No more `copy-to-landing.js` script
@@ -610,6 +642,7 @@ Start simple, build confidence, tackle complex last. Each route becomes a file i
 - Update landing's `build:prod` script (currently references `@corates/web`): remove the `pnpm --filter @corates/web build` step
 
 ### 6.3 Update documentation
+
 - CLAUDE.md, AGENTS.md, STATUS.md
 - Remove references to packages/web
 - Update build commands
@@ -618,26 +651,26 @@ Start simple, build confidence, tackle complex last. Each route becomes a file i
 
 ## Conversion Patterns Cheat Sheet
 
-| SolidJS | React |
-|---------|-------|
-| `createSignal(x)` | `useState(x)` |
-| `createEffect(() => { ... })` | `useEffect(() => { ... }, [deps])` -- must add deps |
-| `createMemo(() => expr)` | `useMemo(() => expr, [deps])` -- must add deps |
-| `onMount(() => { ... })` | `useEffect(() => { ... }, [])` |
-| `onCleanup(() => { ... })` | return cleanup from `useEffect` |
-| `<Show when={x}>` | `{x && ...}` or `{x ? a : b}` |
-| `<For each={items}>{(item) => ...}</For>` | `{items.map(item => ...)}` + `key` prop |
-| `<Switch><Match when={a}>` | Ternary chain or if/else |
-| `<Index each={items}>` | `{items.map((item, i) => ...)}` |
-| `<Dynamic component={C}>` | `<C {...props} />` |
-| `<Portal>` | `createPortal(children, document.body)` |
-| `splitProps(props, ['a', 'b'])` | `const { a, b, ...rest } = props` |
-| `props.field` (no destructure) | Destructure freely |
-| `class=` | `className=` |
-| `classList={{ active: x() }}` | `className={clsx({ active: x })}` |
-| `ref={el => ...}` | `useRef()` or callback ref |
-| `createRoot(() => { ... })` | Not needed |
-| `signal()` (call to read) | Just `value` (variable reference) |
+| SolidJS                                   | React                                               |
+| ----------------------------------------- | --------------------------------------------------- |
+| `createSignal(x)`                         | `useState(x)`                                       |
+| `createEffect(() => { ... })`             | `useEffect(() => { ... }, [deps])` -- must add deps |
+| `createMemo(() => expr)`                  | `useMemo(() => expr, [deps])` -- must add deps      |
+| `onMount(() => { ... })`                  | `useEffect(() => { ... }, [])`                      |
+| `onCleanup(() => { ... })`                | return cleanup from `useEffect`                     |
+| `<Show when={x}>`                         | `{x && ...}` or `{x ? a : b}`                       |
+| `<For each={items}>{(item) => ...}</For>` | `{items.map(item => ...)}` + `key` prop             |
+| `<Switch><Match when={a}>`                | Ternary chain or if/else                            |
+| `<Index each={items}>`                    | `{items.map((item, i) => ...)}`                     |
+| `<Dynamic component={C}>`                 | `<C {...props} />`                                  |
+| `<Portal>`                                | `createPortal(children, document.body)`             |
+| `splitProps(props, ['a', 'b'])`           | `const { a, b, ...rest } = props`                   |
+| `props.field` (no destructure)            | Destructure freely                                  |
+| `class=`                                  | `className=`                                        |
+| `classList={{ active: x() }}`             | `className={clsx({ active: x })}`                   |
+| `ref={el => ...}`                         | `useRef()` or callback ref                          |
+| `createRoot(() => { ... })`               | Not needed                                          |
+| `signal()` (call to read)                 | Just `value` (variable reference)                   |
 
 **Critical: dependency arrays.** SolidJS auto-tracks deps. React requires explicit `[deps]` in useEffect/useMemo/useCallback. Use `eslint-plugin-react-hooks` with `exhaustive-deps` rule from day one.
 
@@ -646,16 +679,19 @@ Start simple, build confidence, tackle complex last. Each route becomes a file i
 ## Risk Assessment
 
 ### High Risk
+
 - **Yjs integration** (useProject/, projectActionsStore/) -- real-time collaboration, subtle timing bugs
 - **Auth store** (better-auth-store.js) -- offline caching, cross-tab sync, many edge cases
 - **Dependency arrays** -- #1 source of bugs in Solid-to-React migrations
 
 ### Medium Risk
+
 - **Store migration** -- projectStore nested proxy updates via produce
 - **Router** -- 62 files, auth guards, lazy loading, nested routes
 - **Reconciliation UI** -- complex derived state from Yjs
 
 ### Low Risk
+
 - **UI components** -- mechanical Ark UI swap
 - **TanStack Query hooks** -- near-identical API
 - **Lib utilities** -- almost all framework-agnostic
@@ -666,16 +702,16 @@ Start simple, build confidence, tackle complex last. Each route becomes a file i
 
 ## Estimated Effort
 
-| Phase | Effort | Can parallelize? |
-|-------|--------|------------------|
-| Phase 0: Preparation | 0.5 days | -- |
-| Phase 1: Foundation | 3-4 days | -- |
-| Phase 2: UI Library | 2 days | Yes (with Phase 3) |
-| Phase 3: Primitives | 3-4 days | Yes (with Phase 2) |
-| Phase 4: Pages | 5-7 days | Partially (independent routes) |
-| Phase 5: Tests | 2 days | Yes (with Phase 4) |
-| Phase 6: Cleanup | 0.5 days | -- |
-| **Total** | **~2-3 weeks** | |
+| Phase                | Effort         | Can parallelize?               |
+| -------------------- | -------------- | ------------------------------ |
+| Phase 0: Preparation | 0.5 days       | --                             |
+| Phase 1: Foundation  | 3-4 days       | --                             |
+| Phase 2: UI Library  | 2 days         | Yes (with Phase 3)             |
+| Phase 3: Primitives  | 3-4 days       | Yes (with Phase 2)             |
+| Phase 4: Pages       | 5-7 days       | Partially (independent routes) |
+| Phase 5: Tests       | 2 days         | Yes (with Phase 4)             |
+| Phase 6: Cleanup     | 0.5 days       | --                             |
+| **Total**            | **~2-3 weeks** |                                |
 
 Phase 0 is shorter since landing already exists. Claude Code can handle the mechanical parts (UI components, query hooks, icon swaps, simple page conversions) to significantly speed up Phases 2 and 4.
 

@@ -1,6 +1,7 @@
 import js from '@eslint/js';
 import solid from 'eslint-plugin-solid/configs/recommended';
 import * as tsParser from '@typescript-eslint/parser';
+import reactHooks from 'eslint-plugin-react-hooks';
 import coratesRules from './eslint-rules/index.js';
 
 export default [
@@ -341,11 +342,42 @@ export default [
         ExecutionContext: 'readonly',
         ScheduledController: 'readonly',
         Env: 'readonly',
+        RequestInit: 'readonly',
+        R2PutOptions: 'readonly',
       },
     },
     rules: {
       // Use createDomainError(), createTransportError(), or createValidationError()
       'corates/corates-error-helpers': 'warn',
+    },
+  },
+  {
+    // Landing package - React (not SolidJS), disable SolidJS rules and enable React hooks
+    files: ['packages/landing/**/*.{js,jsx,ts,tsx}'],
+    plugins: {
+      'react-hooks': reactHooks,
+    },
+    languageOptions: {
+      globals: {
+        React: 'readonly',
+        HTMLSpanElement: 'readonly',
+        HTMLFormElement: 'readonly',
+      },
+    },
+    rules: {
+      ...reactHooks.configs.recommended.rules,
+      'solid/reactivity': 'off',
+      'solid/no-destructure': 'off',
+      'solid/prefer-for': 'off',
+      'solid/components-return-once': 'off',
+      'solid/no-react-specific-props': 'off',
+      'solid/style-prop': 'off',
+      'solid/event-handlers': 'off',
+      'solid/no-innerhtml': 'off',
+      'solid/jsx-no-undef': 'off',
+      'corates/corates-ui-imports': 'off',
+      'corates/no-outlet': 'off',
+      'no-restricted-imports': 'off',
     },
   },
   {
