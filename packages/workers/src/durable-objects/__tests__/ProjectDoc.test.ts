@@ -413,9 +413,15 @@ describe('Production Scenario: New User Joins Project', () => {
     // User B should see all 3 studies
     const userBStudies = userBClientDoc.getMap('reviews');
     expect(userBStudies.size).toBe(3);
-    expect((userBStudies.get('study-1') as Y.Map<unknown>).get('name')).toBe('Study 1 - Added Yesterday');
-    expect((userBStudies.get('study-2') as Y.Map<unknown>).get('name')).toBe('Study 2 - Added This Morning');
-    expect((userBStudies.get('study-3') as Y.Map<unknown>).get('name')).toBe('Study 3 - Added Recently');
+    expect((userBStudies.get('study-1') as Y.Map<unknown>).get('name')).toBe(
+      'Study 1 - Added Yesterday',
+    );
+    expect((userBStudies.get('study-2') as Y.Map<unknown>).get('name')).toBe(
+      'Study 2 - Added This Morning',
+    );
+    expect((userBStudies.get('study-3') as Y.Map<unknown>).get('name')).toBe(
+      'Study 3 - Added Recently',
+    );
 
     // User B should see both members
     const userBMembers = userBClientDoc.getMap('members');

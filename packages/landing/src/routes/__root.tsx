@@ -1,15 +1,9 @@
-import {
-  HeadContent,
-  Link,
-  Outlet,
-  Scripts,
-  createRootRoute,
-} from '@tanstack/react-router'
-import appCss from '../styles.css?url'
-import type { ErrorComponentProps } from '@tanstack/react-router'
+import { HeadContent, Link, Outlet, Scripts, createRootRoute } from '@tanstack/react-router';
+import appCss from '../styles.css?url';
+import type { ErrorComponentProps } from '@tanstack/react-router';
 
-const SITE_URL = 'https://corates.org'
-const IMAGE_URL = `${SITE_URL}/landing_preview.png`
+const SITE_URL = 'https://corates.org';
+const IMAGE_URL = `${SITE_URL}/landing_preview.png`;
 
 const structuredData = JSON.stringify({
   '@context': 'https://schema.org',
@@ -48,7 +42,7 @@ const structuredData = JSON.stringify({
       },
     },
   ],
-})
+});
 
 export const Route = createRootRoute({
   headers: () => ({
@@ -62,8 +56,7 @@ export const Route = createRootRoute({
       { charSet: 'utf-8' },
       { name: 'viewport', content: 'width=device-width, initial-scale=1' },
       {
-        title:
-          'CoRATES - Collaborative Research Appraisal Tool for Evidence Synthesis',
+        title: 'CoRATES - Collaborative Research Appraisal Tool for Evidence Synthesis',
       },
       {
         name: 'description',
@@ -75,8 +68,7 @@ export const Route = createRootRoute({
       { property: 'og:site_name', content: 'CoRATES' },
       {
         property: 'og:title',
-        content:
-          'CoRATES - Collaborative Research Appraisal Tool for Evidence Synthesis',
+        content: 'CoRATES - Collaborative Research Appraisal Tool for Evidence Synthesis',
       },
       {
         property: 'og:description',
@@ -118,56 +110,55 @@ export const Route = createRootRoute({
   shellComponent: RootDocument,
   notFoundComponent: NotFound,
   errorComponent: RootError,
-})
+});
 
 function NotFound() {
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center gap-4 text-center">
-      <h1 className="text-6xl font-bold tracking-tight text-blue-600">404</h1>
-      <p className="text-gray-600">This page could not be found.</p>
+    <div className='flex min-h-screen flex-col items-center justify-center gap-4 text-center'>
+      <h1 className='text-6xl font-bold tracking-tight text-blue-600'>404</h1>
+      <p className='text-gray-600'>This page could not be found.</p>
       <Link
-        to="/"
-        className="mt-4 rounded-lg bg-blue-600 px-6 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700"
+        to='/'
+        className='mt-4 rounded-lg bg-blue-600 px-6 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700'
       >
         Back to home
       </Link>
     </div>
-  )
+  );
 }
 
 function RootDocument({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang='en'>
       <head>
         <HeadContent />
       </head>
-      <body className="min-h-screen bg-white text-gray-900 antialiased">
+      <body className='min-h-screen bg-white text-gray-900 antialiased'>
         {children}
         <Scripts />
       </body>
     </html>
-  )
+  );
 }
 
 function RootError({ error, reset }: ErrorComponentProps) {
-  const message = import.meta.env.DEV
-    ? error.message
-    : 'An unexpected error occurred. Please try refreshing.'
+  const message =
+    import.meta.env.DEV ? error.message : 'An unexpected error occurred. Please try refreshing.';
 
   return (
-    <div className="flex flex-col items-center justify-center gap-4 py-32 text-center">
-      <h1 className="text-4xl font-bold">Something went wrong</h1>
-      <p className="max-w-md text-gray-600">{message}</p>
+    <div className='flex flex-col items-center justify-center gap-4 py-32 text-center'>
+      <h1 className='text-4xl font-bold'>Something went wrong</h1>
+      <p className='max-w-md text-gray-600'>{message}</p>
       <button
         onClick={reset}
-        className="text-sm text-blue-600 underline underline-offset-4 hover:text-blue-700"
+        className='text-sm text-blue-600 underline underline-offset-4 hover:text-blue-700'
       >
         Try again
       </button>
     </div>
-  )
+  );
 }
 
 function RootLayout() {
-  return <Outlet />
+  return <Outlet />;
 }

@@ -121,8 +121,9 @@ describe('UserSession Durable Object', () => {
       }
 
       await runInDurableObject(stub, async (_instance: UserSession, state: DurableObjectState) => {
-        const pending = (await state.storage.get('pendingNotifications')) as
-          Array<Record<string, unknown>>;
+        const pending = (await state.storage.get('pendingNotifications')) as Array<
+          Record<string, unknown>
+        >;
         expect(pending.length).toBe(50);
         // First 5 should be removed
         expect(pending[0].index).toBe(5);

@@ -1,86 +1,86 @@
-import { AiOutlineCheckCircle } from 'react-icons/ai'
-import { HiOutlineDocumentText } from 'react-icons/hi2'
-import { BsGraphUp } from 'react-icons/bs'
-import { FiUsers } from 'react-icons/fi'
+import { AiOutlineCheckCircle } from 'react-icons/ai';
+import { HiOutlineDocumentText } from 'react-icons/hi2';
+import { BsGraphUp } from 'react-icons/bs';
+import { FiUsers } from 'react-icons/fi';
 
 function EcosystemIllustration() {
   return (
-    <div className="rounded-2xl border border-blue-200 bg-linear-to-br from-blue-50 to-indigo-50 p-6 md:p-8">
-      <div className="relative">
+    <div className='rounded-2xl border border-blue-200 bg-linear-to-br from-blue-50 to-indigo-50 p-6 md:p-8'>
+      <div className='relative'>
         {/* Central hub */}
-        <div className="flex items-center justify-center">
-          <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-linear-to-br from-blue-500 to-blue-700 shadow-lg">
-            <span className="text-lg font-bold text-white">Co</span>
+        <div className='flex items-center justify-center'>
+          <div className='flex h-20 w-20 items-center justify-center rounded-2xl bg-linear-to-br from-blue-500 to-blue-700 shadow-lg'>
+            <span className='text-lg font-bold text-white'>Co</span>
           </div>
         </div>
 
         {/* Orbiting elements */}
-        <div className="absolute top-0 left-1/4 -translate-x-1/2 -translate-y-2">
-          <div className="rounded-lg border border-gray-200 bg-white p-2.5 shadow-md">
-            <HiOutlineDocumentText className="h-5 w-5 text-rose-500" />
+        <div className='absolute top-0 left-1/4 -translate-x-1/2 -translate-y-2'>
+          <div className='rounded-lg border border-gray-200 bg-white p-2.5 shadow-md'>
+            <HiOutlineDocumentText className='h-5 w-5 text-rose-500' />
           </div>
         </div>
 
-        <div className="absolute top-0 right-1/4 translate-x-1/2 -translate-y-2">
-          <div className="rounded-lg border border-gray-200 bg-white p-2.5 shadow-md">
-            <BsGraphUp className="h-5 w-5 text-violet-500" />
+        <div className='absolute top-0 right-1/4 translate-x-1/2 -translate-y-2'>
+          <div className='rounded-lg border border-gray-200 bg-white p-2.5 shadow-md'>
+            <BsGraphUp className='h-5 w-5 text-violet-500' />
           </div>
         </div>
 
-        <div className="absolute bottom-0 left-1/4 -translate-x-1/2 translate-y-2">
-          <div className="rounded-lg border border-gray-200 bg-white p-2.5 shadow-md">
-            <FiUsers className="h-5 w-5 text-emerald-500" />
+        <div className='absolute bottom-0 left-1/4 -translate-x-1/2 translate-y-2'>
+          <div className='rounded-lg border border-gray-200 bg-white p-2.5 shadow-md'>
+            <FiUsers className='h-5 w-5 text-emerald-500' />
           </div>
         </div>
 
-        <div className="absolute right-1/4 bottom-0 translate-x-1/2 translate-y-2">
-          <div className="rounded-lg border border-gray-200 bg-white p-2.5 shadow-md">
-            <AiOutlineCheckCircle className="h-5 w-5 text-amber-500" />
+        <div className='absolute right-1/4 bottom-0 translate-x-1/2 translate-y-2'>
+          <div className='rounded-lg border border-gray-200 bg-white p-2.5 shadow-md'>
+            <AiOutlineCheckCircle className='h-5 w-5 text-amber-500' />
           </div>
         </div>
 
         {/* Connection lines (decorative) */}
-        <svg className="pointer-events-none absolute inset-0 h-full w-full" style={{ zIndex: -1 }}>
+        <svg className='pointer-events-none absolute inset-0 h-full w-full' style={{ zIndex: -1 }}>
           <circle
-            cx="50%"
-            cy="50%"
-            r="45"
-            fill="none"
-            stroke="#93c5fd"
-            strokeWidth="1"
-            strokeDasharray="4 4"
+            cx='50%'
+            cy='50%'
+            r='45'
+            fill='none'
+            stroke='#93c5fd'
+            strokeWidth='1'
+            strokeDasharray='4 4'
           />
         </svg>
       </div>
 
       {/* Labels */}
-      <div className="mt-8 flex flex-wrap justify-center gap-2">
-        <span className="rounded-full border border-gray-200 bg-white px-2.5 py-1 text-xs text-gray-600">
+      <div className='mt-8 flex flex-wrap justify-center gap-2'>
+        <span className='rounded-full border border-gray-200 bg-white px-2.5 py-1 text-xs text-gray-600'>
           Checklists
         </span>
-        <span className="rounded-full border border-gray-200 bg-white px-2.5 py-1 text-xs text-gray-600">
+        <span className='rounded-full border border-gray-200 bg-white px-2.5 py-1 text-xs text-gray-600'>
           PDFs
         </span>
-        <span className="rounded-full border border-gray-200 bg-white px-2.5 py-1 text-xs text-gray-600">
+        <span className='rounded-full border border-gray-200 bg-white px-2.5 py-1 text-xs text-gray-600'>
           Scoring
         </span>
-        <span className="rounded-full border border-gray-200 bg-white px-2.5 py-1 text-xs text-gray-600">
+        <span className='rounded-full border border-gray-200 bg-white px-2.5 py-1 text-xs text-gray-600'>
           Collaboration
         </span>
       </div>
     </div>
-  )
+  );
 }
 
 export default function WhatIsCoRATES() {
   return (
-    <section className="border-y border-gray-100 bg-linear-to-b from-gray-50 to-white">
-      <div className="mx-auto max-w-5xl px-6 py-20">
-        <div className="grid items-start gap-10 md:grid-cols-5">
+    <section className='border-y border-gray-100 bg-linear-to-b from-gray-50 to-white'>
+      <div className='mx-auto max-w-5xl px-6 py-20'>
+        <div className='grid items-start gap-10 md:grid-cols-5'>
           {/* Content */}
-          <div className="md:col-span-3">
-            <h2 className="mb-8 text-2xl font-bold text-gray-900 md:text-3xl">What is CoRATES?</h2>
-            <div className="space-y-5 leading-relaxed text-gray-600">
+          <div className='md:col-span-3'>
+            <h2 className='mb-8 text-2xl font-bold text-gray-900 md:text-3xl'>What is CoRATES?</h2>
+            <div className='space-y-5 leading-relaxed text-gray-600'>
               <p>
                 CoRATES is more than a checklist platform. It is an ecosystem built to support
                 high-quality and efficient study appraisal by bringing every part of the process
@@ -99,17 +99,17 @@ export default function WhatIsCoRATES() {
           </div>
 
           {/* Illustration */}
-          <div className="md:col-span-2">
+          <div className='md:col-span-2'>
             <EcosystemIllustration />
           </div>
         </div>
 
-        <p className="mt-8 max-w-3xl leading-relaxed text-gray-600">
+        <p className='mt-8 max-w-3xl leading-relaxed text-gray-600'>
           CoRATES was not built to replace established appraisal tools; but to provide the
           infrastructure that supports the rigorous processes involved in applying those tools and
           synthesizing results across studies, ultimately improving the rigor of research synthesis.
         </p>
       </div>
     </section>
-  )
+  );
 }

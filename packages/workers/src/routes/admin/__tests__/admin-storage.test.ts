@@ -38,7 +38,11 @@ interface FetchInit extends RequestInit {
   headers?: Record<string, string>;
 }
 
-async function fetchApp(path: string, init: FetchInit = {}, envOverrides: Record<string, unknown> = {}) {
+async function fetchApp(
+  path: string,
+  init: FetchInit = {},
+  envOverrides: Record<string, unknown> = {},
+) {
   const testEnv = {
     ...env,
     ...envOverrides,

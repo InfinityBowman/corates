@@ -99,7 +99,10 @@ beforeEach(async () => {
           if (done) break;
           chunks.push(value);
         }
-        const totalLength = chunks.reduce((acc: number, chunk: Uint8Array) => acc + chunk.length, 0);
+        const totalLength = chunks.reduce(
+          (acc: number, chunk: Uint8Array) => acc + chunk.length,
+          0,
+        );
         const combined = new Uint8Array(totalLength);
         let offset = 0;
         for (const chunk of chunks) {

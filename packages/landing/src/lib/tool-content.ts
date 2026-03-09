@@ -6,26 +6,26 @@
  */
 
 export interface ReferenceLink {
-  href: string
-  text: string
+  href: string;
+  text: string;
 }
 
 export interface ScoreLevel {
-  name: string
-  description: string
-  note?: string
-  color: 'green' | 'yellow' | 'orange' | 'red' | 'gray'
+  name: string;
+  description: string;
+  note?: string;
+  color: 'green' | 'yellow' | 'orange' | 'red' | 'gray';
 }
 
 export interface ToolContent {
-  id: string
-  name: string
-  slug: string
-  description: string
-  bestUsedFor: string
-  referenceLinks: ReferenceLink[]
-  scoringDescription: string
-  scoreLevels: ScoreLevel[]
+  id: string;
+  name: string;
+  slug: string;
+  description: string;
+  bestUsedFor: string;
+  referenceLinks: ReferenceLink[];
+  scoringDescription: string;
+  scoreLevels: ScoreLevel[];
 }
 
 export const TOOL_CONTENT: Record<string, ToolContent> = {
@@ -83,8 +83,7 @@ export const TOOL_CONTENT: Record<string, ToolContent> = {
     slug: 'robins-i',
     description:
       'ROBINS-I V2 (Risk Of Bias In Non-randomized Studies - of Interventions, Version 2) is a tool for assessing risk of bias in the results of non-randomized studies that compare the health effects of two or more interventions. It covers seven domains through which bias might be introduced: confounding, selection of participants, classification of interventions, deviations from intended interventions, missing data, measurement of outcomes, and selection of reported results.',
-    bestUsedFor:
-      'Assessing risk of bias in non-randomized studies of interventions (NRSI).',
+    bestUsedFor: 'Assessing risk of bias in non-randomized studies of interventions (NRSI).',
     referenceLinks: [
       {
         href: 'https://www.riskofbias.info/welcome/robins-i-v2',
@@ -137,8 +136,7 @@ export const TOOL_CONTENT: Record<string, ToolContent> = {
     slug: 'rob2',
     description:
       'RoB 2 (Risk of Bias 2) is the revised Cochrane tool for assessing risk of bias in randomized trials. It addresses five domains through which bias might be introduced into the trial result: the randomization process, deviations from intended interventions, missing outcome data, measurement of the outcome, and selection of the reported result. RoB 2 is structured as a series of signalling questions that lead to domain-level and overall judgements.',
-    bestUsedFor:
-      'Assessing risk of bias in randomized controlled trials (RCTs).',
+    bestUsedFor: 'Assessing risk of bias in randomized controlled trials (RCTs).',
     referenceLinks: [
       {
         href: 'https://www.riskofbias.info/welcome/rob-2-0-tool/current-version-of-rob-2',
@@ -178,12 +176,12 @@ export const TOOL_CONTENT: Record<string, ToolContent> = {
       },
     ],
   },
-}
+};
 
 export function getToolBySlug(slug: string): ToolContent | null {
-  return getAllTools().find((tool) => tool.slug === slug) || null
+  return getAllTools().find(tool => tool.slug === slug) || null;
 }
 
 export function getAllTools(): ToolContent[] {
-  return Object.values(TOOL_CONTENT)
+  return Object.values(TOOL_CONTENT);
 }
