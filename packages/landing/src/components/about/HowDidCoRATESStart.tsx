@@ -1,13 +1,13 @@
 export default function HowDidCoRATESStart() {
   return (
-    <section className="border-y border-gray-100 bg-linear-to-b from-white to-gray-50">
-      <div className="mx-auto max-w-4xl px-6 py-20">
-        <h2 className="mb-8 text-2xl font-bold text-gray-900 md:text-3xl">
+    <section className='border-y border-gray-100 bg-linear-to-b from-white to-gray-50'>
+      <div className='mx-auto max-w-4xl px-6 py-20'>
+        <h2 className='mb-8 text-2xl font-bold text-gray-900 md:text-3xl'>
           How Did CoRATES Get Started?
         </h2>
 
-        <div className="rounded-2xl border border-gray-100 bg-white p-8 shadow-sm md:p-10">
-          <div className="space-y-6 leading-relaxed text-gray-600">
+        <div className='rounded-2xl border border-gray-100 bg-white p-8 shadow-sm md:p-10'>
+          <div className='space-y-6 leading-relaxed text-gray-600'>
             <p>
               CoRATES began with a problem familiar to anyone involved in evidence synthesis: the
               study appraisal process was far more cumbersome than it needed to be. Managing PDF or
@@ -35,5 +35,5 @@ export default function HowDidCoRATESStart() {
         </div>
       </div>
     </section>
-  )
+  );
 }

@@ -58,9 +58,20 @@ interface MockR2Object {
 }
 
 interface MockR2Bucket {
-  list: (opts: { prefix: string }) => Promise<{ objects: { key: string; size: number; uploaded?: number }[]; truncated: boolean }>;
-  get: (key: string) => Promise<{ body: ReadableStream | null; httpMetadata: Record<string, string> } | null>;
-  put: (key: string, body: ReadableStream | ArrayBuffer | ArrayBufferView | string | null | Blob, options?: R2PutOptions) => Promise<{ key: string }>;
+  list: (opts: {
+    prefix: string;
+  }) => Promise<{
+    objects: { key: string; size: number; uploaded?: number }[];
+    truncated: boolean;
+  }>;
+  get: (
+    key: string,
+  ) => Promise<{ body: ReadableStream | null; httpMetadata: Record<string, string> } | null>;
+  put: (
+    key: string,
+    body: ReadableStream | ArrayBuffer | ArrayBufferView | string | null | Blob,
+    options?: R2PutOptions,
+  ) => Promise<{ key: string }>;
   delete: (key: string) => Promise<void>;
   head: (key: string) => Promise<{ key: string } | null>;
 }
@@ -99,7 +110,11 @@ beforeEach(async () => {
         httpMetadata: obj.httpMetadata,
       };
     },
-    put: async (key: string, body: ReadableStream | ArrayBuffer | ArrayBufferView | string | null | Blob, options?: R2PutOptions) => {
+    put: async (
+      key: string,
+      body: ReadableStream | ArrayBuffer | ArrayBufferView | string | null | Blob,
+      options?: R2PutOptions,
+    ) => {
       let arrayBuffer: ArrayBuffer;
       if (body instanceof ArrayBuffer) {
         arrayBuffer = body;
@@ -111,7 +126,10 @@ beforeEach(async () => {
           if (done) break;
           chunks.push(value);
         }
-        const totalLength = chunks.reduce((acc: number, chunk: Uint8Array) => acc + chunk.length, 0);
+        const totalLength = chunks.reduce(
+          (acc: number, chunk: Uint8Array) => acc + chunk.length,
+          0,
+        );
         const merged = new Uint8Array(totalLength);
         let offset = 0;
         for (const chunk of chunks) {
@@ -122,7 +140,10 @@ beforeEach(async () => {
       } else if (body instanceof Blob) {
         arrayBuffer = await body.arrayBuffer();
       } else if (ArrayBuffer.isView(body)) {
-        arrayBuffer = (body.buffer as ArrayBuffer).slice(body.byteOffset, body.byteOffset + body.byteLength);
+        arrayBuffer = (body.buffer as ArrayBuffer).slice(
+          body.byteOffset,
+          body.byteOffset + body.byteLength,
+        );
       } else {
         arrayBuffer = new TextEncoder().encode(String(body ?? '')).buffer as ArrayBuffer;
       }
@@ -151,7 +172,13 @@ interface FetchInit extends RequestInit {
   headers?: Record<string, string>;
 }
 
-async function fetchPdf(orgId: string, projectId: string, studyId: string, path = '', init: FetchInit = {}) {
+async function fetchPdf(
+  orgId: string,
+  projectId: string,
+  studyId: string,
+  path = '',
+  init: FetchInit = {},
+) {
   const ctx = createExecutionContext();
   // Route is mounted at /api/orgs/:orgId/projects/:projectId/studies/:studyId/pdfs
   // For list endpoint, path should be empty or '/'
