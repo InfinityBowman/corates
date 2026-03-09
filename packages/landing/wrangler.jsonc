@@ -5,6 +5,9 @@
   "compatibility_flags": ["nodejs_compat"],
   "main": "./server-entry.ts",
   "routes": [{ "pattern": "corates.org/*", "zone_name": "corates.org" }],
+  "assets": {
+    "binding": "ASSETS"
+  },
   "observability": {
     "logs": {
       "enabled": true,
