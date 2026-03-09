@@ -3,22 +3,22 @@
  * Checks if the user is logged in via the API session endpoint
  */
 
-import { useState, useEffect } from 'react'
-import { config } from './config'
+import { useState, useEffect } from 'react';
+import { config } from './config';
 
 interface AuthState {
-  isLoggedIn: boolean
-  user: { name?: string } | null
-  isLoading: boolean
+  isLoggedIn: boolean;
+  user: { name?: string } | null;
+  isLoading: boolean;
 }
 
-let cachedAuth: AuthState | null = null
-let checkPromise: Promise<AuthState> | null = null
+let cachedAuth: AuthState | null = null;
+let checkPromise: Promise<AuthState> | null = null;
 
 async function checkSession(): Promise<AuthState> {
-  if (cachedAuth) return cachedAuth
+  if (cachedAuth) return cachedAuth;
 
-  if (checkPromise) return checkPromise
+  if (checkPromise) return checkPromise;
 
   checkPromise = (async () => {
     try {
@@ -26,28 +26,28 @@ async function checkSession(): Promise<AuthState> {
         method: 'GET',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
-      })
+      });
 
       if (!response.ok) {
-        cachedAuth = { isLoggedIn: false, user: null, isLoading: false }
-        return cachedAuth
+        cachedAuth = { isLoggedIn: false, user: null, isLoading: false };
+        return cachedAuth;
       }
 
-      const data = await response.json()
-      const loggedIn = !!data.user
+      const data = await response.json();
+      const loggedIn = !!data.user;
       cachedAuth = {
         isLoggedIn: loggedIn,
         user: data.user || null,
         isLoading: false,
-      }
-      return cachedAuth
+      };
+      return cachedAuth;
     } catch {
-      cachedAuth = { isLoggedIn: false, user: null, isLoading: false }
-      return cachedAuth
+      cachedAuth = { isLoggedIn: false, user: null, isLoading: false };
+      return cachedAuth;
     }
-  })()
+  })();
 
-  return checkPromise
+  return checkPromise;
 }
 
 export function useAuth() {
@@ -55,11 +55,11 @@ export function useAuth() {
     isLoggedIn: cachedAuth?.isLoggedIn ?? false,
     user: cachedAuth?.user ?? null,
     isLoading: !cachedAuth,
-  })
+  });
 
   useEffect(() => {
-    checkSession().then(setAuth)
-  }, [])
+    checkSession().then(setAuth);
+  }, []);
 
-  return auth
+  return auth;
 }

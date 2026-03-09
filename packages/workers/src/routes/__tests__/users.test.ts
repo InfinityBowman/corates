@@ -167,7 +167,11 @@ describe('User Routes - GET /api/users/search', () => {
 
   it('should exclude users already in project when projectId provided', async () => {
     const { project, owner, org } = await buildProject();
-    const projectMember = await buildProjectMember({ projectId: project.id, orgId: org.id, role: 'member' });
+    const projectMember = await buildProjectMember({
+      projectId: project.id,
+      orgId: org.id,
+      role: 'member',
+    });
     const nonProjectUser = await buildUser({ email: 'user3@example.com' });
 
     const res = await fetchUsers(`/api/users/search?q=user&projectId=${project.id}`, {
@@ -176,7 +180,9 @@ describe('User Routes - GET /api/users/search', () => {
     expect(res.status).toBe(200);
 
     const body = await json(res);
-    expect(body.find((u: Record<string, unknown>) => u.id === projectMember.user.id)).toBeUndefined();
+    expect(
+      body.find((u: Record<string, unknown>) => u.id === projectMember.user.id),
+    ).toBeUndefined();
     expect(body.find((u: Record<string, unknown>) => u.id === nonProjectUser.id)).toBeDefined();
   });
 
