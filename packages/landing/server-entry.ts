@@ -35,9 +35,21 @@ export default {
     const url = new URL(request.url)
 
     if (isSpaRoute(url.pathname)) {
-      // Serve the SolidJS SPA shell from static assets
-      const appRequest = new Request(new URL('/app.html', request.url))
-      return env.ASSETS.fetch(appRequest)
+      try {
+        const appRequest = new Request(new URL('/app.html', request.url))
+        return env.ASSETS.fetch(appRequest)
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : String(e)
+        return new Response(
+          JSON.stringify({
+            error: msg,
+            hasEnv: !!env,
+            hasAssets: !!(env && env.ASSETS),
+            envKeys: env ? Object.keys(env) : [],
+          }),
+          { status: 500, headers: { 'content-type': 'application/json' } },
+        )
+      }
     }
 
     // Let TanStack Start handle everything else (landing pages, etc.)
