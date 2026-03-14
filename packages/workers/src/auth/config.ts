@@ -174,6 +174,10 @@ export function createAuth(env: Env, ctx?: ExecutionContext) {
   plugins.push(
     magicLink({
       sendMagicLink: async ({ email, url }: { email: string; url: string }) => {
+        if (env.ENVIRONMENT !== 'production') {
+          console.log('[Auth] Magic link URL:', url);
+        }
+
         const subject = 'Sign in to CoRATES';
         const html = getMagicLinkEmailHtml({ subject, magicLinkUrl: url });
         const text = getMagicLinkEmailText({ magicLinkUrl: url });

@@ -4,14 +4,15 @@ export const config = {
 };
 
 export const urls = {
-  signIn: () => `${config.appUrl}/signin`,
+  signIn: () => '/signin',
   signUp: (plan?: string, interval?: string) => {
-    const base = `${config.appUrl}/signup`;
+    const base = '/signup';
     if (!plan) return base;
     const params = new URLSearchParams({ plan });
     if (interval) params.set('interval', interval);
     return `${base}?${params.toString()}`;
   },
+  // These still live in the SolidJS app
   checklist: () => `${config.appUrl}/checklist?from=landing`,
   dashboard: () => `${config.appUrl}/dashboard`,
 };

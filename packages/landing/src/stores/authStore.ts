@@ -519,31 +519,29 @@ export function selectIsAuthLoading(state: AuthState): boolean {
   return state.sessionLoading;
 }
 
+/**
+ * Select the raw user object from the store.
+ * Returns the sessionUser, cachedUser, or null depending on online/loading state.
+ * Does NOT merge avatar URL -- use selectUserAvatarUrl separately to avoid
+ * creating new object references on every render (which breaks useSyncExternalStore).
+ */
 export function selectUser(state: AuthState): AuthUser | null {
   if (state.isOnline) {
     const currentUser = state.sessionUser;
-    if (currentUser && state.cachedAvatarUrl) {
-      return { ...currentUser, image: state.cachedAvatarUrl };
-    }
-    if (!currentUser && state.sessionLoading) {
-      const cached = state.cachedUser;
-      if (cached && state.cachedAvatarUrl) {
-        return { ...cached, image: state.cachedAvatarUrl };
-      }
-      return cached;
-    }
-    return currentUser;
+    if (currentUser) return currentUser;
+    if (state.sessionLoading) return state.cachedUser;
+    return null;
   }
-  const cached = state.cachedUser;
-  if (cached && state.cachedAvatarUrl) {
-    return { ...cached, image: state.cachedAvatarUrl };
-  }
-  return cached;
+  return state.cachedUser;
 }
 
-export function selectTwoFactorStatus(state: AuthState): { enabled: boolean } {
+export function selectUserAvatarUrl(state: AuthState): string | null {
+  return state.cachedAvatarUrl;
+}
+
+export function selectTwoFactorEnabled(state: AuthState): boolean {
   const user = selectUser(state);
-  return { enabled: user?.twoFactorEnabled ?? false };
+  return user?.twoFactorEnabled ?? false;
 }
 
 // Utility functions

@@ -183,11 +183,11 @@ export async function handleDomainError(error, options = {}) {
   // Handle navigation-required errors (no toast needed, user will be redirected)
   if (navigate) {
     if (error.code === AUTH_ERRORS.REQUIRED.code || error.code === AUTH_ERRORS.EXPIRED.code) {
-      navigate('/signin', { replace: true });
+      navigate({ to: '/signin', replace: true });
       return;
     }
     if (error.code === USER_ERRORS.EMAIL_NOT_VERIFIED.code) {
-      navigate('/verify-email', { replace: true });
+      navigate({ to: '/check-email', replace: true });
       return;
     }
   }

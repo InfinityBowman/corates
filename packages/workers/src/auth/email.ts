@@ -1,17 +1,13 @@
 /**
  * Email service for BetterAuth
  * Uses Postmark for Cloudflare Workers
+ *
+ * Note: Email composition (templates, subjects) is handled by better-auth plugin
+ * callbacks in config.ts, which queue pre-rendered emails via email-queue.ts.
+ * This service only handles the generic send operation for the queue consumer.
  */
 
 import { Client as PostmarkClient } from 'postmark';
-import {
-  getVerificationEmailHtml,
-  getVerificationEmailText,
-  getPasswordResetEmailHtml,
-  getPasswordResetEmailText,
-  getMagicLinkEmailHtml,
-  getMagicLinkEmailText,
-} from './emailTemplates';
 import type { Env } from '../types';
 
 interface SendEmailParams {
@@ -30,17 +26,6 @@ interface EmailResult {
 
 export interface EmailService {
   sendEmail: (_params: SendEmailParams) => Promise<EmailResult>;
-  sendEmailVerification: (
-    _to: string,
-    _verificationUrl: string,
-    _userDisplayName?: string,
-  ) => Promise<EmailResult>;
-  sendPasswordReset: (
-    _to: string,
-    _resetUrl: string,
-    _userDisplayName?: string,
-  ) => Promise<EmailResult>;
-  sendMagicLink: (_to: string, _magicLinkUrl: string) => Promise<EmailResult>;
   isProduction: boolean;
 }
 
@@ -97,60 +82,8 @@ export function createEmailService(env: Env): EmailService {
     }
   }
 
-  /**
-   * Send email verification email
-   */
-  async function sendEmailVerification(
-    to: string,
-    verificationUrl: string,
-    userDisplayName: string = '',
-  ): Promise<EmailResult> {
-    if (env.SEND_EMAILS_IN_DEV !== 'true' && !isProduction) {
-      console.log('[Email] Development environment - email sending is DISABLED');
-      return { success: true, id: 'dev-id' };
-    }
-    const subject = 'Verify Your Email Address - CoRATES';
-    const name = userDisplayName || 'there';
-    const html = getVerificationEmailHtml({ name, subject, verificationUrl });
-    const text = getVerificationEmailText({ name, verificationUrl });
-    return sendEmail({ to, subject, html, text });
-  }
-
-  /**
-   * Send password reset email
-   */
-  async function sendPasswordReset(
-    to: string,
-    resetUrl: string,
-    userDisplayName: string = '',
-  ): Promise<EmailResult> {
-    const subject = 'Reset Your Password - CoRATES';
-    const name = userDisplayName || 'there';
-    const html = getPasswordResetEmailHtml({ name, subject, resetUrl });
-    const text = getPasswordResetEmailText({ name, resetUrl });
-    return sendEmail({ to, subject, html, text });
-  }
-
-  /**
-   * Send magic link email for passwordless sign-in
-   */
-  async function sendMagicLink(to: string, magicLinkUrl: string): Promise<EmailResult> {
-    if (env.SEND_EMAILS_IN_DEV !== 'true' && !isProduction) {
-      console.log('[Email] Development environment - email sending is DISABLED');
-      console.log('[Email] Magic link URL:', magicLinkUrl);
-      return { success: true, id: 'dev-id' };
-    }
-    const subject = 'Sign in to CoRATES';
-    const html = getMagicLinkEmailHtml({ subject, magicLinkUrl });
-    const text = getMagicLinkEmailText({ magicLinkUrl });
-    return sendEmail({ to, subject, html, text });
-  }
-
   return {
     sendEmail,
-    sendEmailVerification,
-    sendPasswordReset,
-    sendMagicLink,
     isProduction,
   };
 }

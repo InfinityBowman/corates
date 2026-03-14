@@ -3,6 +3,7 @@ import { createStartHandler, defaultStreamHandler } from '@tanstack/react-start/
 const handler = createStartHandler(defaultStreamHandler);
 
 // Routes owned by the SolidJS SPA (served via app.html)
+// Auth routes migrated to React: /signin, /signup, /check-email, /reset-password, /complete-profile
 const SPA_ROUTE_PREFIXES = [
   '/dashboard',
   '/checklist',
@@ -11,11 +12,6 @@ const SPA_ROUTE_PREFIXES = [
   '/projects',
   '/orgs',
   '/mocks',
-  '/signin',
-  '/signup',
-  '/check-email',
-  '/complete-profile',
-  '/reset-password',
 ];
 
 function isSpaRoute(pathname: string): boolean {

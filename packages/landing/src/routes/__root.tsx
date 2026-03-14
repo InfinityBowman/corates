@@ -1,4 +1,8 @@
 import { HeadContent, Link, Outlet, Scripts, createRootRoute } from '@tanstack/react-router';
+import { QueryClientProvider } from '@tanstack/react-query';
+import { queryClient } from '@/lib/queryClient.js';
+import { AuthProvider } from '@/components/auth/AuthProvider';
+import { Toaster } from '@/components/ui/sonner';
 import appCss from '../styles.css?url';
 import type { ErrorComponentProps } from '@tanstack/react-router';
 
@@ -160,5 +164,12 @@ function RootError({ error, reset }: ErrorComponentProps) {
 }
 
 function RootLayout() {
-  return <Outlet />;
+  return (
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <Outlet />
+        <Toaster />
+      </AuthProvider>
+    </QueryClientProvider>
+  );
 }

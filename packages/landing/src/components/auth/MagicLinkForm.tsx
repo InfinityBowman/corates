@@ -1,0 +1,186 @@
+/**
+ * Magic link email form - shared between SignIn and SignUp pages
+ * Handles send, resend with cooldown, and success state
+ */
+
+import { useState, useCallback } from 'react';
+import { FiMail } from 'react-icons/fi';
+import { useAuthStore } from '@/stores/authStore';
+import { handleError } from '@/lib/error-utils.js';
+import { ErrorMessage } from './ErrorMessage';
+import { PrimaryButton } from './AuthButtons';
+
+const RESEND_COOLDOWN_MS = 30000;
+
+interface MagicLinkFormProps {
+  initialEmail?: string;
+  callbackPath?: string;
+  buttonText?: string;
+  description?: string;
+}
+
+export function MagicLinkForm({
+  initialEmail = '',
+  callbackPath = '/complete-profile',
+  buttonText = 'Send Sign-In Link',
+  description = "We'll email you a magic link for password-free sign in.",
+}: MagicLinkFormProps) {
+  const [email, setEmail] = useState(initialEmail);
+  const [loading, setLoading] = useState(false);
+  const [sent, setSent] = useState(false);
+  const [resending, setResending] = useState(false);
+  const [resent, setResent] = useState(false);
+  const [canResend, setCanResend] = useState(false);
+  const [error, setError] = useState('');
+  const signinWithMagicLink = useAuthStore(s => s.signinWithMagicLink);
+  const authError = useAuthStore(s => s.authError);
+
+  const displayError = error || authError;
+
+  const handleSubmit = useCallback(async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+
+    if (!email) {
+      setError('Please enter your email address');
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      localStorage.setItem('magicLinkSignup', 'true');
+      localStorage.setItem('pendingName', email);
+      await signinWithMagicLink(email, callbackPath);
+      setSent(true);
+      setCanResend(false);
+      setTimeout(() => setCanResend(true), RESEND_COOLDOWN_MS);
+    } catch (err) {
+      await handleError(err, { setError, showToast: false });
+    } finally {
+      setLoading(false);
+    }
+  }, [email, callbackPath, signinWithMagicLink]);
+
+  function handleReset() {
+    setSent(false);
+    setEmail('');
+    setError('');
+    setResent(false);
+    setCanResend(false);
+  }
+
+  async function handleResend() {
+    if (!canResend || resending) return;
+
+    setResending(true);
+    setError('');
+
+    try {
+      await signinWithMagicLink(email, callbackPath);
+      setResent(true);
+      setCanResend(false);
+      setTimeout(() => {
+        setCanResend(true);
+        setResent(false);
+      }, RESEND_COOLDOWN_MS);
+    } catch (err) {
+      await handleError(err, { setError, showToast: false });
+      setCanResend(true);
+    } finally {
+      setResending(false);
+    }
+  }
+
+  if (sent) {
+    return (
+      <div className="space-y-4">
+        <div className="py-4 text-center">
+          <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-green-100">
+            <FiMail className="h-7 w-7 text-green-600" />
+          </div>
+          <h3 className="mb-1 text-base font-semibold text-foreground">Check your email</h3>
+          <p className="mb-3 text-sm text-muted-foreground">
+            We sent a sign-in link to <strong className="text-foreground">{email}</strong>
+          </p>
+          <p className="mb-4 text-xs text-muted-foreground">
+            Click the link in the email to sign in. The link expires in 10 minutes.
+          </p>
+
+          <ErrorMessage error={displayError} id="magic-link-resend-error" />
+
+          {resent && (
+            <div className="mb-4 rounded-lg border border-green-200 bg-green-50 p-3 text-xs text-green-600 sm:text-sm">
+              Email sent successfully!
+            </div>
+          )}
+
+          <div className="flex flex-col gap-2">
+            <button
+              type="button"
+              onClick={handleResend}
+              disabled={!canResend || resending}
+              className={`text-sm font-medium transition ${
+                canResend && !resending
+                  ? 'cursor-pointer text-primary hover:text-primary/80'
+                  : 'cursor-not-allowed text-muted-foreground/70'
+              }`}
+            >
+              {resending
+                ? 'Sending...'
+                : canResend
+                  ? "Didn't receive it? Try again"
+                  : 'Try again in 30s'}
+            </button>
+            <button
+              type="button"
+              onClick={handleReset}
+              className="text-sm font-medium text-muted-foreground hover:text-secondary-foreground"
+            >
+              Use a different email
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      <form onSubmit={handleSubmit} autoComplete="off">
+        <div className="space-y-4">
+          <div>
+            <label
+              className="mb-1 block text-xs font-semibold text-secondary-foreground sm:mb-2 sm:text-sm"
+              htmlFor="magic-link-email"
+            >
+              Email
+            </label>
+            <input
+              type="email"
+              autoComplete="email"
+              autoCapitalize="off"
+              spellCheck="false"
+              value={email}
+              onChange={e => setEmail(e.target.value)}
+              className="w-full rounded-lg border border-border py-2 pl-3 pr-3 text-xs transition focus:border-transparent focus:outline-none focus:ring-2 focus:ring-primary sm:pl-4 sm:pr-4 sm:text-sm"
+              required
+              id="magic-link-email"
+              placeholder="you@example.com"
+              disabled={loading}
+              aria-describedby={displayError ? 'magic-link-error' : undefined}
+            />
+          </div>
+
+          <ErrorMessage error={displayError} id="magic-link-error" />
+
+          <PrimaryButton loading={loading} loadingText="Sending Link...">
+            {buttonText}
+          </PrimaryButton>
+
+          <p className="text-center text-xs text-muted-foreground">{description}</p>
+        </div>
+      </form>
+    </div>
+  );
+}

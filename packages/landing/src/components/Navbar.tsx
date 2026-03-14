@@ -57,20 +57,18 @@ function MobileMenu({ isOpen, onClose }: { isOpen: boolean; onClose: () => void 
                 My Dashboard
               </a>
             : <>
-                <a
-                  href={urls.signIn()}
-                  rel='external'
+                <Link
+                  to='/signin'
                   className='block w-full rounded-lg border border-gray-200 bg-white px-4 py-3 text-center font-medium text-gray-700 transition-colors hover:bg-gray-50'
                 >
                   Sign In
-                </a>
-                <a
-                  href={urls.signUp()}
-                  rel='external'
-                  className='block w-full rounded-lg border border-transparent bg-blue-600 px-4 py-3 text-center font-medium text-white shadow-sm transition-colors hover:bg-blue-700'
+                </Link>
+                <Link
+                  to='/signup'
+                  className='block w-full rounded-lg border border-transparent bg-primary px-4 py-3 text-center font-medium text-primary-foreground shadow-sm transition-colors hover:bg-primary/90'
                 >
                   Sign Up
-                </a>
+                </Link>
               </>
             }
           </div>
@@ -133,20 +131,18 @@ export default function Navbar() {
                 </a>
               </>
             : <>
-                <a
-                  href={urls.signIn()}
-                  rel='external'
-                  className='hidden items-center rounded-lg border border-gray-200 bg-white px-4 py-1.5 text-gray-700 transition-colors hover:bg-gray-50 focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2 focus-visible:outline-none sm:inline-flex'
+                <Link
+                  to='/signin'
+                  className='hidden items-center rounded-lg border border-gray-200 bg-white px-4 py-1.5 text-gray-700 transition-colors hover:bg-gray-50 focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:outline-none sm:inline-flex'
                 >
                   Sign In
-                </a>
-                <a
-                  href={urls.signUp()}
-                  rel='external'
-                  className='hidden items-center gap-2 rounded-lg border border-transparent bg-blue-600 px-4 py-1.5 text-white shadow-sm transition-colors hover:bg-blue-700 focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2 focus-visible:outline-none sm:inline-flex'
+                </Link>
+                <Link
+                  to='/signup'
+                  className='hidden items-center gap-2 rounded-lg border border-transparent bg-primary px-4 py-1.5 text-primary-foreground shadow-sm transition-colors hover:bg-primary/90 focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:outline-none sm:inline-flex'
                 >
                   Sign Up
-                </a>
+                </Link>
               </>
             }
 
