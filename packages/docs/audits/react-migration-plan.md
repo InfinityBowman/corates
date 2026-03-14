@@ -53,9 +53,15 @@ The SolidJS `packages/web` stays untouched as reference until migration is compl
 
 Already set up. App routes become new files under `src/routes/`.
 
-### UI Components: Ark UI for React
+### UI Components: shadcn/ui (Radix) + Ark UI for React
 
-`@ark-ui/solid` -> `@ark-ui/react` -- nearly identical API, mechanical swap.
+Primary UI library is **shadcn/ui** (built on Radix UI primitives, Tailwind CSS, CVA). This replaces most `@ark-ui/solid` components. `@ark-ui/react` is kept as a fallback for components shadcn doesn't cover.
+
+**shadcn/ui covers (use these):** button, dialog, alert-dialog, select, tabs, dropdown-menu, context-menu, tooltip, popover, checkbox, switch, collapsible, progress, avatar, toast (sonner), input-otp (pin-input equivalent), sheet (drawer)
+
+**No shadcn equivalent (use @ark-ui/react):** editable, file-upload, steps, qr-code
+
+**Custom components (no library needed):** spinner (simple Tailwind animation), password-input (input + toggle), flip-number (already custom)
 
 ### Library Swaps
 
@@ -63,7 +69,7 @@ Already set up. App routes become new files under `src/routes/`.
 | ----------------------------- | ---------------------------- | -------------------------------------- |
 | `@tanstack/solid-query`       | `@tanstack/react-query`      | Near-identical                         |
 | `@tanstack/solid-table`       | `@tanstack/react-table`      | Near-identical                         |
-| `@ark-ui/solid`               | `@ark-ui/react`              | Near-identical                         |
+| `@ark-ui/solid`               | `shadcn/ui` + `@ark-ui/react`| shadcn for most; Ark for editable, file-upload, steps, qr-code |
 | `solid-icons`                 | `react-icons`                | Same icons, different imports          |
 | `solid-chartjs`               | `react-chartjs-2`            | Same Chart.js underneath               |
 | `@sentry/solid`               | `@sentry/react`              | Direct swap                            |
@@ -192,72 +198,63 @@ TanStack Start gives you SSR by default. The `ssr: false` on `_app` means all ap
 
 ---
 
-## Phase 0: Preparation
+## Phase 0: Preparation -- COMPLETED (2026-03-14)
 
-### 0.1 Add dependencies to landing
+### 0.1 Add dependencies to landing -- DONE
 
-Already in landing: `react`, `react-dom`, `react-icons`, `@tanstack/react-router`, `@tanstack/react-start`, `countup.js`, `@corates/shared`, `tailwindcss`.
+All dependencies installed including all 28 @embedpdf packages, Preact + @preact/preset-vite (devDep).
 
-Still need to add:
+### 0.2 Verify path aliases -- DONE
 
-```bash
-pnpm --filter landing add \
-  zustand immer \
-  @tanstack/react-query \
-  @tanstack/react-table \
-  @ark-ui/react \
-  better-auth \
-  chart.js react-chartjs-2 \
-  @sentry/react \
-  class-variance-authority clsx tailwind-merge \
-  dexie \
-  yjs y-websocket y-dexie \
-  d3
-```
+Using `@/` prefix for everything (Option 1). Added explicit `resolve.alias` in `vite.config.ts` for SSR build compatibility with the Cloudflare plugin (vite-tsconfig-paths alone did not resolve aliases in the SSR environment). Also added `allowJs: true` to tsconfig.json for importing copied JS files from TS code.
 
-Plus EmbedPDF packages (the full list from web/package.json). And Preact + `@preact/preset-vite` for the PDF viewer island (devDep).
+### 0.3 Copy framework-agnostic code into landing -- DONE
 
-### 0.2 Verify path aliases
+Copied 37+ files:
+- `lib/` -- 24 utility files + 11 test files (all import aliases updated to `@/` prefix)
+- `constants/` -- 2 files (errors.js, checklist-status.js)
+- `config/` -- api.js, google.js copied; sentry.js rewritten for @sentry/react
+- `checklist-registry/` -- 2 files (index.js, types.js)
+- `primitives/` -- db.js, avatarCache.js, pdfCache.js
+- `styles/ark-ui.css`
 
-Landing already has `@/*` -> `./src/*` in tsconfig.json (matching web's jsconfig.json). The web app uses more specific aliases (`@components`, `@primitives`, `@api`, `@config`, `@lib`). Two options:
+`queryClient.js` was rewritten: `@tanstack/solid-query` -> `@tanstack/react-query`, `@solid-primitives/scheduled` debounce replaced with inline implementation.
 
-1. **Use `@/` prefix for everything** (simpler): `@/components/...`, `@/lib/...`, `@/stores/...`. This already works with the existing `@/*` alias.
-2. **Add specific aliases** if you want shorter imports: add `@components/*`, `@lib/*`, etc. to both tsconfig.json and vite-tsconfig-paths will pick them up.
-
-Option 1 is recommended -- less config, and `@/` is already set up. The web code already uses `@/` for most imports anyway. Also ensure `vite-tsconfig-paths` (already in landing devDeps) resolves these correctly.
-
-### 0.3 Copy framework-agnostic code into landing
-
-Create these directories in landing/src and copy from web/src:
-
-```
-packages/landing/src/
-  lib/           <- copy all from web/src/lib/ (24 of 25 files are framework-agnostic)
-  constants/     <- copy from web/src/constants/
-  config/        <- copy from web/src/config/ (update sentry to @sentry/react)
-  checklist-registry/  <- copy from web/src/checklist-registry/
-  styles/        <- copy from web/src/styles/
-```
-
-Also copy framework-agnostic primitives:
-
-- `primitives/db.js` (Dexie setup)
-- `primitives/avatarCache.js`
-- `primitives/pdfCache.js`
-
-Verify they compile -- no `solid-js` imports should remain.
+`bfcache-handler.js` was copied but still references old SolidJS `useBetterAuth` -- needs rewrite when wired up.
 
 ### 0.4 Set up vitest
 
-Add vitest + @testing-library/react to landing devDependencies. Copy test setup from web, adapting for React.
+Not yet done -- test infrastructure setup deferred to Phase 5.
 
-**Checkpoint: landing still builds and runs, new lib/config/constants files import cleanly, no solid-js in copied code.**
+**Checkpoint: landing builds and runs, all copied code compiles, no solid-js imports in active code paths.**
 
 ---
 
-## Phase 1: Foundation (stores + auth)
+## Phase 1: Foundation (stores + auth) -- COMPLETED (2026-03-14)
 
 Everything else depends on this layer. Build it first, test it standalone.
+
+> **Implementation notes (2026-03-14):**
+> All stores, auth, and layout routes are implemented and verified (build + typecheck + lint all pass).
+> Key files created:
+> - `stores/projectStore.ts` -- Zustand + immer, with exported selector functions
+> - `stores/pdfPreviewStore.ts` -- simple Zustand store
+> - `stores/localChecklistsStore.ts` -- Zustand + Dexie, auto-initializes on module load
+> - `stores/adminStore.ts` -- tiny Zustand store + exported plain async API functions
+> - `stores/authStore.ts` -- full auth Zustand store with all methods (signin, signup, 2FA, session management, offline fallback, cross-tab BroadcastChannel)
+> - `api/auth-client.ts` -- `better-auth/react` client with all plugins
+> - `components/auth/AuthProvider.tsx` -- syncs useSession() into Zustand, handles avatar caching, visibility refresh
+> - `components/ui/toast.tsx` -- minimal stub providing showToast API (console-based, replace in Phase 2)
+> - `routes/_app.tsx` -- QueryClientProvider + AuthProvider, ssr:false
+> - `routes/_auth.tsx` -- auth layout with guest guard, ssr:false
+> - `routes/_app/_protected.tsx` -- auth guard via beforeLoad
+> - `routes/_app/dashboard.tsx`, `routes/_auth/signin.tsx`, `routes/_app/_protected/settings.tsx` -- placeholders
+>
+> **Discovered during implementation:**
+> - `vite-tsconfig-paths` does not resolve `@/` aliases in the Cloudflare SSR build environment. Fixed with explicit `resolve.alias` in vite.config.ts.
+> - `apiFetch.delete()` only accepts 2 args `(path, options)` not 3. The original SolidJS adminStore had 3-arg calls that silently dropped the body. Fixed in the React version.
+> - ESLint `no-unused-vars` rule does not understand TypeScript interface method parameters. Suppressed with eslint-disable blocks around interface definitions.
+> - `server-entry.ts` is unchanged -- all SPA routes still serve the SolidJS app.html. New TanStack Start routes are defined but unreachable until entries are removed from `SPA_ROUTE_PREFIXES`.
 
 ### 1.1 Migrate stores to Zustand
 
@@ -414,48 +411,64 @@ Create placeholder routes:
 
 ## Phase 2: UI Component Library
 
-Create `packages/landing/src/components/ui/`:
+Create `packages/landing/src/components/ui/` using shadcn/ui + @ark-ui/react for gaps.
 
-### 2.1 Migrate Ark UI wrappers (25 files, ~3,800 LOC)
+### 2.0 Set up shadcn/ui
 
-Conversion pattern for each file:
+Initialize shadcn/ui in the landing package. This adds Radix UI primitives as dependencies and creates the `components.json` config. shadcn components are copied into `src/components/ui/` and fully owned -- they can be customized freely.
 
-```tsx
-// Before (SolidJS)
-import type { Component, ComponentProps } from 'solid-js'
-import { splitProps } from 'solid-js'
-import { Dialog as ArkDialog } from '@ark-ui/solid'
+Ensure `cn()` utility (`clsx` + `tailwind-merge`) matches the existing one already copied from web.
 
-const Button: Component<ButtonProps> = (props) => {
-  const [local, others] = splitProps(props, ['variant', 'size', 'class'])
-  return <button class={cn(...)} {...others} />
-}
+### 2.1 Install shadcn components (replaces most Ark UI wrappers)
 
-// After (React)
-import { Dialog as ArkDialog } from '@ark-ui/react'
+Use `npx shadcn@latest add <component>` for each. These replace the corresponding `@ark-ui/solid` wrappers:
 
-function Button({ variant, size, className, ...rest }: ButtonProps) {
-  return <button className={cn(...)} {...rest} />
-}
-```
+| SolidJS (Ark UI)       | React (shadcn/ui)        | Notes                                          |
+| ---------------------- | ------------------------ | ---------------------------------------------- |
+| button.tsx             | `shadcn button`          | Preserve existing CVA variants                 |
+| dialog.tsx             | `shadcn dialog`          | Direct replacement                             |
+| alert-dialog.tsx       | `shadcn alert-dialog`    | Direct replacement                             |
+| select.tsx             | `shadcn select`          | Direct replacement                             |
+| tabs.tsx               | `shadcn tabs`            | Direct replacement                             |
+| menu.tsx               | `shadcn dropdown-menu`   | Ark Menu -> Radix DropdownMenu                 |
+| tooltip.tsx            | `shadcn tooltip`         | Direct replacement                             |
+| popover.tsx            | `shadcn popover`         | Direct replacement                             |
+| checkbox.tsx           | `shadcn checkbox`        | Direct replacement                             |
+| switch.tsx             | `shadcn switch`          | Direct replacement                             |
+| collapsible.tsx        | `shadcn collapsible`     | Direct replacement                             |
+| progress.tsx           | `shadcn progress`        | Direct replacement                             |
+| avatar.tsx             | `shadcn avatar`          | Direct replacement                             |
+| toast.tsx              | `shadcn sonner`          | Replace current stub + Ark toast with Sonner    |
+| pin-input.tsx          | `shadcn input-otp`       | Similar API, different component name           |
 
-Changes per file:
+### 2.2 Ark UI components (no shadcn equivalent)
 
-- `splitProps(props, [...])` -> destructure `const { a, b, ...rest } = props`
-- `class=` -> `className=`
-- `<Show when={x}>` -> `{x && ...}`
-- `<For each={items}>{(item) => ...}</For>` -> `{items.map(item => ...)}` with `key` prop
-- `Component<Props>` -> function component with typed props
-- `props.children` -> destructured `children`
-- `@ark-ui/solid` -> `@ark-ui/react`
+These stay on `@ark-ui/react` with custom styled wrappers (same pattern as the SolidJS versions, just React syntax):
 
-**Order (most-used first):** button, spinner, toast, dialog, alert-dialog, select, tabs, menu, tooltip, popover, checkbox, switch, editable, collapsible, file-upload, steps, pin-input, password-input, progress, qr-code, avatar, flip-number
+| Component        | Notes                                                   |
+| ---------------- | ------------------------------------------------------- |
+| editable.tsx     | Inline text editing -- no Radix/shadcn equivalent       |
+| file-upload.tsx  | Drag-and-drop file upload with progress                 |
+| steps.tsx        | Multi-step wizard UI                                    |
+| qr-code.tsx      | QR code generation for 2FA setup                        |
 
-### 2.2 Icon migration
+### 2.3 Custom components (no library needed)
 
-7 files: `solid-icons/bi` -> `react-icons/bi`, `solid-icons/fi` -> `react-icons/fi`, etc. Same icon names.
+| Component          | Approach                                                  |
+| ------------------ | --------------------------------------------------------- |
+| spinner.tsx         | Simple Tailwind `animate-spin` SVG or div                |
+| password-input.tsx  | shadcn `input` + visibility toggle button                |
+| flip-number.tsx     | Already custom (uses countup.js), port directly          |
 
-**Checkpoint: all UI components render, can be imported from routes.**
+### 2.4 Icon migration
+
+7 files: `solid-icons/bi` -> `react-icons/bi`, `solid-icons/fi` -> `react-icons/fi`, etc. Same icon names, different import paths.
+
+### 2.5 Customize shadcn variants
+
+After installing shadcn components, review and port the existing CVA variant definitions from the SolidJS Ark UI wrappers. The existing button variants, dialog sizes, etc. should be preserved to maintain visual consistency.
+
+**Checkpoint: all UI components render, can be imported from routes, visual parity with SolidJS app.**
 
 ---
 
@@ -702,16 +715,16 @@ Start simple, build confidence, tackle complex last. Each route becomes a file i
 
 ## Estimated Effort
 
-| Phase                | Effort         | Can parallelize?               |
-| -------------------- | -------------- | ------------------------------ |
-| Phase 0: Preparation | 0.5 days       | --                             |
-| Phase 1: Foundation  | 3-4 days       | --                             |
-| Phase 2: UI Library  | 2 days         | Yes (with Phase 3)             |
-| Phase 3: Primitives  | 3-4 days       | Yes (with Phase 2)             |
-| Phase 4: Pages       | 5-7 days       | Partially (independent routes) |
-| Phase 5: Tests       | 2 days         | Yes (with Phase 4)             |
-| Phase 6: Cleanup     | 0.5 days       | --                             |
-| **Total**            | **~2-3 weeks** |                                |
+| Phase                | Effort         | Can parallelize?               | Status                |
+| -------------------- | -------------- | ------------------------------ | --------------------- |
+| Phase 0: Preparation | 0.5 days       | --                             | DONE (2026-03-14)     |
+| Phase 1: Foundation  | 3-4 days       | --                             | DONE (2026-03-14)     |
+| Phase 2: UI Library  | 2 days         | Yes (with Phase 3)             | Not started           |
+| Phase 3: Primitives  | 3-4 days       | Yes (with Phase 2)             | Not started           |
+| Phase 4: Pages       | 5-7 days       | Partially (independent routes) | Not started           |
+| Phase 5: Tests       | 2 days         | Yes (with Phase 4)             | Not started           |
+| Phase 6: Cleanup     | 0.5 days       | --                             | Not started           |
+| **Total**            | **~2-3 weeks** |                                | **Phases 0-1 done**   |
 
 Phase 0 is shorter since landing already exists. Claude Code can handle the mechanical parts (UI components, query hooks, icon swaps, simple page conversions) to significantly speed up Phases 2 and 4.
 
