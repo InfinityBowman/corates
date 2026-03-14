@@ -761,7 +761,7 @@ Key changes:
 | Phase 0: Preparation | 0.5 days       | --                             | DONE (2026-03-14)     |
 | Phase 1: Foundation  | 3-4 days       | --                             | DONE (2026-03-14)     |
 | Phase 2: UI Library  | 2 days         | Yes (with Phase 3)             | DONE (2026-03-14)     |
-| Phase 3: Primitives  | 3-4 days       | Yes (with Phase 2)             | Not started           |
+| Phase 3: Primitives  | 3-4 days       | Yes (with Phase 2)             | DONE (2026-03-14)     |
 | Phase 4: Pages       | 5-7 days       | Partially (independent routes) | 4.1 auth DONE         |
 | Phase 5: Tests       | 2 days         | Yes (with Phase 4)             | Not started           |
 | Phase 6: Cleanup     | 0.5 days       | --                             | Not started           |
