@@ -26,9 +26,6 @@ export const authClient = createAuthClient({
       const parsedError = parseError(error);
       console.error('Auth error:', parsedError.code, parsedError.message);
     },
-    onSuccess() {
-      // Auth action successful
-    },
   },
 });
 

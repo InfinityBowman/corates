@@ -409,41 +409,52 @@ Create placeholder routes:
 
 ---
 
-## Phase 2: UI Component Library
+## Phase 2: UI Component Library -- COMPLETED (2026-03-14)
 
 Create `packages/landing/src/components/ui/` using shadcn/ui + @ark-ui/react for gaps.
 
+### Design Decisions (2026-03-14)
+
+- **Use shadcn design tokens**, not the custom semantic tokens from the SolidJS app. This means adopting shadcn's CSS variable system and default styling. Components will be visually consistent with the shadcn ecosystem and get theming support for free.
+- **Use shadcn CLI** (`npx shadcn@latest add`) to install all shadcn components properly. Do not hand-write shadcn components.
+- **Standard shadcn component APIs** -- no compatibility wrappers mapping old Ark UI sub-component names to shadcn equivalents. Page components in Phase 4 will use shadcn patterns directly.
+- **Custom extensions** for app-specific patterns: `AlertDialogIcon` (danger/warning/info variants), `AlertDialogAction` (variant-based button colors), `UserAvatar` (convenience wrapper with initials), `showToast` API adapter over Sonner.
+- **Password input** stays on `@ark-ui/react` (headless primitive handles visibility state and accessibility).
+- **Icon migration** scoped to files created/modified in this phase only. Page-level icon migration happens in Phase 4.
+
 ### 2.0 Set up shadcn/ui
 
-Initialize shadcn/ui in the landing package. This adds Radix UI primitives as dependencies and creates the `components.json` config. shadcn components are copied into `src/components/ui/` and fully owned -- they can be customized freely.
+Initialize shadcn/ui in the landing package via `npx shadcn@latest init`. This creates `components.json`, installs Radix UI primitives, and sets up the `cn()` utility + CSS variables.
 
-Ensure `cn()` utility (`clsx` + `tailwind-merge`) matches the existing one already copied from web.
+The existing `cn.ts` (copied from web in Phase 0) will be replaced by shadcn's version. The existing `z-index.ts` constants file is kept for app-level overlay stacking.
 
-### 2.1 Install shadcn components (replaces most Ark UI wrappers)
+### 2.1 Install shadcn components via CLI
 
 Use `npx shadcn@latest add <component>` for each. These replace the corresponding `@ark-ui/solid` wrappers:
 
-| SolidJS (Ark UI)       | React (shadcn/ui)        | Notes                                          |
+| SolidJS (Ark UI)       | shadcn component         | Notes                                          |
 | ---------------------- | ------------------------ | ---------------------------------------------- |
-| button.tsx             | `shadcn button`          | Preserve existing CVA variants                 |
-| dialog.tsx             | `shadcn dialog`          | Direct replacement                             |
-| alert-dialog.tsx       | `shadcn alert-dialog`    | Direct replacement                             |
-| select.tsx             | `shadcn select`          | Direct replacement                             |
-| tabs.tsx               | `shadcn tabs`            | Direct replacement                             |
-| menu.tsx               | `shadcn dropdown-menu`   | Ark Menu -> Radix DropdownMenu                 |
-| tooltip.tsx            | `shadcn tooltip`         | Direct replacement                             |
-| popover.tsx            | `shadcn popover`         | Direct replacement                             |
-| checkbox.tsx           | `shadcn checkbox`        | Direct replacement                             |
-| switch.tsx             | `shadcn switch`          | Direct replacement                             |
-| collapsible.tsx        | `shadcn collapsible`     | Direct replacement                             |
-| progress.tsx           | `shadcn progress`        | Direct replacement                             |
-| avatar.tsx             | `shadcn avatar`          | Direct replacement                             |
-| toast.tsx              | `shadcn sonner`          | Replace current stub + Ark toast with Sonner    |
-| pin-input.tsx          | `shadcn input-otp`       | Similar API, different component name           |
+| button.tsx             | `button`                 | Use shadcn default variants and design tokens  |
+| dialog.tsx             | `dialog`                 | Different composition API (no Positioner/Backdrop) |
+| alert-dialog.tsx       | `alert-dialog`           | Add custom AlertDialogIcon + AlertDialogAction extensions |
+| select.tsx             | `select`                 | Different API; SimpleSelect convenience wrapper deferred to Phase 4 |
+| tabs.tsx               | `tabs`                   | No animated TabsIndicator (simpler approach)   |
+| menu.tsx               | `dropdown-menu`          | Ark Menu -> Radix DropdownMenu                 |
+| tooltip.tsx            | `tooltip`                | Direct replacement                             |
+| popover.tsx            | `popover`                | Direct replacement                             |
+| checkbox.tsx           | `checkbox`               | Direct replacement                             |
+| switch.tsx             | `switch`                 | Direct replacement                             |
+| collapsible.tsx        | `collapsible`            | Direct replacement                             |
+| progress.tsx           | `progress`               | Direct replacement                             |
+| avatar.tsx             | `avatar`                 | Add UserAvatar + getInitials convenience wrapper |
+| toast.tsx              | `sonner`                 | Replace console stub with Sonner; add showToast adapter |
+| pin-input.tsx          | `input-otp`              | Similar API, different component name           |
+| (new)                  | `input`                  | Base input component (needed by password-input and forms) |
+| (new)                  | `label`                  | Form labels                                    |
 
 ### 2.2 Ark UI components (no shadcn equivalent)
 
-These stay on `@ark-ui/react` with custom styled wrappers (same pattern as the SolidJS versions, just React syntax):
+These stay on `@ark-ui/react` with custom styled wrappers:
 
 | Component        | Notes                                                   |
 | ---------------- | ------------------------------------------------------- |
@@ -451,24 +462,35 @@ These stay on `@ark-ui/react` with custom styled wrappers (same pattern as the S
 | file-upload.tsx  | Drag-and-drop file upload with progress                 |
 | steps.tsx        | Multi-step wizard UI                                    |
 | qr-code.tsx      | QR code generation for 2FA setup                        |
+| password-input.tsx | Visibility toggle with full a11y -- @ark-ui/react/password-input |
 
 ### 2.3 Custom components (no library needed)
 
 | Component          | Approach                                                  |
 | ------------------ | --------------------------------------------------------- |
-| spinner.tsx         | Simple Tailwind `animate-spin` SVG or div                |
-| password-input.tsx  | shadcn `input` + visibility toggle button                |
-| flip-number.tsx     | Already custom (uses countup.js), port directly          |
+| spinner.tsx         | Pure Tailwind `animate-spin` div with CVA variants (sm/md/lg/xl, default/white/gray) |
+| flip-number.tsx     | Already ported to React in landing package (uses countup.js). Move to components/ui/ |
 
-### 2.4 Icon migration
+### 2.4 Icon migration (this phase only)
 
-7 files: `solid-icons/bi` -> `react-icons/bi`, `solid-icons/fi` -> `react-icons/fi`, etc. Same icon names, different import paths.
+Only update icon imports in files created/modified during Phase 2 (`packages/landing/src/components/ui/`). Page-level icon migration (80+ files) happens in Phase 4.
 
-### 2.5 Customize shadcn variants
+Key mapping: `solid-icons/fi` -> `react-icons/fi` (same names). `solid-icons/bi` -> `react-icons/bi` (drop `Regular`/`Solid` infix). `solid-icons/vs` -> `react-icons/vsc` (VS Code icons).
 
-After installing shadcn components, review and port the existing CVA variant definitions from the SolidJS Ark UI wrappers. The existing button variants, dialog sizes, etc. should be preserved to maintain visual consistency.
+**Checkpoint: all UI components installed, build + typecheck + lint pass, shadcn design tokens active.**
 
-**Checkpoint: all UI components render, can be imported from routes, visual parity with SolidJS app.**
+> **Implementation notes (2026-03-14):**
+> - shadcn/ui initialized with `radix-nova` style, neutral base color, CSS variables enabled
+> - 18 shadcn components installed via CLI: button, dialog, alert-dialog, select, tabs, dropdown-menu, tooltip, popover, checkbox, switch, collapsible, progress, avatar, sonner, input-otp, input, label
+> - shadcn's `cn()` utility at `src/lib/utils.ts` replaces the old copied `cn.ts`
+> - shadcn added Geist font -- overridden back to Inter in `@theme inline` block
+> - `sonner.tsx` fixed: removed `next-themes` dependency (not used), hardcoded `theme="light"`
+> - `toast.tsx` replaced: old console stub replaced with Sonner-backed adapter preserving `showToast.success/error/warning/info/loading/dismiss/update` API with 2-second deduplication
+> - Custom extensions added: `AlertDialogIcon` (danger/warning/info variant coloring), `UserAvatar` + `getInitials` (convenience wrapper)
+> - 5 Ark UI components ported to `@ark-ui/react`: editable (with SimpleEditable), file-upload, steps, qr-code, password-input
+> - Custom components: `spinner.tsx` (CVA variants: sm/md/lg/xl, default/white/gray + PageLoader/LoadingPlaceholder/ButtonSpinner composites), `flip-number.tsx` (copied from existing React landing component)
+> - `z-index.ts` copied from web for overlay stacking constants
+> - All components use `lucide-react` icons (shadcn default) or `react-icons` -- zero `solid-icons` imports
 
 ---
 
@@ -719,7 +741,7 @@ Start simple, build confidence, tackle complex last. Each route becomes a file i
 | -------------------- | -------------- | ------------------------------ | --------------------- |
 | Phase 0: Preparation | 0.5 days       | --                             | DONE (2026-03-14)     |
 | Phase 1: Foundation  | 3-4 days       | --                             | DONE (2026-03-14)     |
-| Phase 2: UI Library  | 2 days         | Yes (with Phase 3)             | Not started           |
+| Phase 2: UI Library  | 2 days         | Yes (with Phase 3)             | DONE (2026-03-14)     |
 | Phase 3: Primitives  | 3-4 days       | Yes (with Phase 2)             | Not started           |
 | Phase 4: Pages       | 5-7 days       | Partially (independent routes) | Not started           |
 | Phase 5: Tests       | 2 days         | Yes (with Phase 4)             | Not started           |

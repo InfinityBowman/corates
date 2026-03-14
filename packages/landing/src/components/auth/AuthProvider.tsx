@@ -25,12 +25,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const session = useSession();
   const prevUserIdRef = useRef<string | null>(null);
 
-  const {
-    isOnline,
-    setSessionData,
-    setCachedUser,
-    setCachedAvatarUrl,
-  } = useAuthStore();
+  const isOnline = useAuthStore(state => state.isOnline);
+  const setSessionData = useAuthStore(state => state.setSessionData);
+  const setCachedUser = useAuthStore(state => state.setCachedUser);
+  const setCachedAvatarUrl = useAuthStore(state => state.setCachedAvatarUrl);
 
   // Sync Better Auth session into Zustand store
   useEffect(() => {
