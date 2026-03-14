@@ -24,6 +24,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { useAnimation } from './useInitialAnimation';
 import { ProjectCard } from './ProjectCard';
+import { ContactPrompt } from './ContactPrompt';
 
 /* eslint-disable no-unused-vars */
 interface ProjectsSectionProps {
@@ -50,7 +51,7 @@ export function ProjectsSection({
   const [deleteLoading, setDeleteLoading] = useState(false);
 
   const { projects } = useMyProjectsList();
-  const { hasEntitlement, hasQuota, loading: subscriptionLoading } = useSubscription();
+  const { hasEntitlement, hasQuota, quotas, loading: subscriptionLoading } = useSubscription();
 
   const projectCount = projects?.length || 0;
 
@@ -60,6 +61,11 @@ export function ProjectsSection({
       hasEntitlement('project.create') &&
       hasQuota('projects.max', { used: projectCount, requested: 1 })
     );
+
+  const restrictionType: 'entitlement' | 'quota' | null =
+    subscriptionLoading ? null
+    : !hasEntitlement('project.create') ? 'entitlement'
+    : 'quota';
 
   const handleCreateClick = useCallback(() => {
     if (onCreateClick) {
@@ -118,6 +124,17 @@ export function ProjectsSection({
 
   return (
     <section style={animation.fadeUp(200)}>
+      {/* Contact prompt for users who can't create projects */}
+      {!subscriptionLoading && !canCreateProject && (
+        <div className="mb-4">
+          <ContactPrompt
+            restrictionType={restrictionType}
+            projectCount={projectCount}
+            quotaLimit={(quotas as any)?.['projects.max']}
+          />
+        </div>
+      )}
+
       {/* Header */}
       {showHeader && (
         <div className='mb-4 flex items-center justify-between'>
