@@ -48,16 +48,16 @@ export function PersonaSection() {
   }, [editSelection, updateProfile]);
 
   return (
-    <div className="border-border flex items-start justify-between border-t py-4">
-      <div className="flex-1">
-        <label className="text-muted-foreground mb-1 block text-xs font-medium uppercase tracking-wide">
+    <div className='border-border flex items-start justify-between border-t py-4'>
+      <div className='flex-1'>
+        <label className='text-muted-foreground mb-1 block text-xs font-medium tracking-wide uppercase'>
           Persona
         </label>
-        {isEditing ? (
-          <div className="mt-3 space-y-4">
+        {isEditing ?
+          <div className='mt-3 space-y-4'>
             <Select value={editSelection} onValueChange={setEditSelection}>
-              <SelectTrigger className="max-w-xs">
-                <SelectValue placeholder="Select a persona" />
+              <SelectTrigger className='max-w-xs'>
+                <SelectValue placeholder='Select a persona' />
               </SelectTrigger>
               <SelectContent>
                 {ROLES.map(role => (
@@ -67,39 +67,36 @@ export function PersonaSection() {
                 ))}
               </SelectContent>
             </Select>
-            <div className="flex gap-2 pt-1">
+            <div className='flex gap-2 pt-1'>
               <button
                 onClick={saveRole}
                 disabled={saving}
-                className="bg-primary hover:bg-primary/90 rounded-lg px-4 py-2 text-sm font-medium text-white shadow-sm transition-all hover:shadow disabled:opacity-50"
+                className='bg-primary hover:bg-primary/90 rounded-lg px-4 py-2 text-sm font-medium text-white shadow-sm transition-all hover:shadow disabled:opacity-50'
               >
                 Save
               </button>
               <button
                 onClick={cancelEditing}
                 disabled={saving}
-                className="bg-secondary text-secondary-foreground hover:bg-secondary/80 rounded-lg px-4 py-2 text-sm font-medium transition-colors disabled:opacity-50"
+                className='bg-secondary text-secondary-foreground hover:bg-secondary/80 rounded-lg px-4 py-2 text-sm font-medium transition-colors disabled:opacity-50'
               >
                 Cancel
               </button>
             </div>
           </div>
-        ) : (
-          <div className="mt-1">
-            <span className="text-foreground text-sm">
-              {user?.persona ? (
+        : <div className='mt-1'>
+            <span className='text-foreground text-sm'>
+              {user?.persona ?
                 getRoleLabel(user.persona as string)
-              ) : (
-                <span className="text-muted-foreground">Not set</span>
-              )}
+              : <span className='text-muted-foreground'>Not set</span>}
             </span>
           </div>
-        )}
+        }
       </div>
       {!isEditing && (
         <button
           onClick={startEditing}
-          className="text-primary hover:text-primary/80 text-sm font-medium transition-colors"
+          className='text-primary hover:text-primary/80 text-sm font-medium transition-colors'
         >
           Edit
         </button>

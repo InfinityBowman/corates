@@ -93,33 +93,33 @@ function SessionCard({ session, isCurrent, revoking, onRevoke }: SessionCardProp
         isCurrent ? 'border-primary/30 bg-primary/5' : 'border-border bg-muted'
       }`}
     >
-      <div className="flex items-start justify-between">
-        <div className="flex items-start space-x-3">
+      <div className='flex items-start justify-between'>
+        <div className='flex items-start space-x-3'>
           <div className={`rounded-full p-2 ${isCurrent ? 'bg-primary/10' : 'bg-secondary'}`}>
             <DeviceIcon
               className={`h-5 w-5 ${isCurrent ? 'text-primary' : 'text-secondary-foreground'}`}
             />
           </div>
           <div>
-            <div className="flex items-center space-x-2">
-              <p className="text-foreground font-medium">
+            <div className='flex items-center space-x-2'>
+              <p className='text-foreground font-medium'>
                 {deviceInfo.browser} on {deviceInfo.os}
               </p>
               {isCurrent && (
-                <span className="bg-primary/10 text-primary rounded-full px-2 py-0.5 text-xs font-medium">
+                <span className='bg-primary/10 text-primary rounded-full px-2 py-0.5 text-xs font-medium'>
                   Current
                 </span>
               )}
             </div>
-            <div className="text-muted-foreground mt-1 flex items-center space-x-3 text-sm">
-              <span className="flex items-center">
-                <GlobeIcon className="mr-1 h-3.5 w-3.5" />
+            <div className='text-muted-foreground mt-1 flex items-center space-x-3 text-sm'>
+              <span className='flex items-center'>
+                <GlobeIcon className='mr-1 h-3.5 w-3.5' />
                 {maskIp(session.ipAddress)}
               </span>
               <span>
-                {isCurrent
-                  ? 'Active now'
-                  : formatRelativeTime(session.updatedAt || session.createdAt)}
+                {isCurrent ?
+                  'Active now'
+                : formatRelativeTime(session.updatedAt || session.createdAt)}
               </span>
             </div>
           </div>
@@ -128,13 +128,11 @@ function SessionCard({ session, isCurrent, revoking, onRevoke }: SessionCardProp
           <button
             onClick={() => onRevoke(session.token)}
             disabled={revoking}
-            className="text-destructive hover:bg-destructive/5 flex items-center space-x-1 rounded-md px-3 py-1.5 text-sm font-medium transition disabled:opacity-50"
+            className='text-destructive hover:bg-destructive/5 flex items-center space-x-1 rounded-md px-3 py-1.5 text-sm font-medium transition disabled:opacity-50'
           >
-            {revoking ? (
-              <LoaderIcon className="h-4 w-4 animate-spin" />
-            ) : (
-              <Trash2Icon className="h-4 w-4" />
-            )}
+            {revoking ?
+              <LoaderIcon className='h-4 w-4 animate-spin' />
+            : <Trash2Icon className='h-4 w-4' />}
             <span>Revoke</span>
           </button>
         )}
@@ -170,9 +168,7 @@ export function SessionManagement() {
   const currentToken = useMemo(() => {
     if (!sessions?.length) return null;
     const ua = navigator.userAgent;
-    const matching = (sessions as any[]).filter(
-      (s: any) => s.userAgent === ua,
-    );
+    const matching = (sessions as any[]).filter((s: any) => s.userAgent === ua);
     if (matching.length === 0) return (sessions as any[])[0]?.token;
     matching.sort(
       (a: any, b: any) =>
@@ -258,32 +254,32 @@ export function SessionManagement() {
   }, [revokeAllSessions]);
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
+    <div className='space-y-4'>
+      <div className='flex items-center justify-between'>
         <div>
-          <p className="text-foreground font-medium">Active Sessions</p>
-          <p className="text-muted-foreground text-sm">
+          <p className='text-foreground font-medium'>Active Sessions</p>
+          <p className='text-muted-foreground text-sm'>
             Manage devices where you&apos;re currently signed in.
           </p>
         </div>
       </div>
 
       {isLoading && (
-        <div className="text-muted-foreground flex items-center justify-center py-8">
-          <LoaderIcon className="mr-2 h-5 w-5 animate-spin" />
+        <div className='text-muted-foreground flex items-center justify-center py-8'>
+          <LoaderIcon className='mr-2 h-5 w-5 animate-spin' />
           <span>Loading sessions...</span>
         </div>
       )}
 
       {sessionsError && (
-        <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-600">
+        <div className='rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-600'>
           Failed to load sessions. Please try again.
         </div>
       )}
 
       {!isLoading && !sessionsError && (
         <>
-          <div className="space-y-3">
+          <div className='space-y-3'>
             {dedupedSessions.map((sessionItem: any) => (
               <SessionCard
                 key={sessionItem.token}
@@ -296,31 +292,29 @@ export function SessionManagement() {
           </div>
 
           {dedupedSessions.length > 1 && (
-            <div className="border-border mt-4 flex flex-wrap gap-3 border-t pt-4">
+            <div className='border-border mt-4 flex flex-wrap gap-3 border-t pt-4'>
               <button
                 onClick={handleRevokeOther}
                 disabled={revokingAll}
-                className="bg-secondary text-secondary-foreground hover:bg-secondary/80 flex items-center space-x-2 rounded-md px-4 py-2 text-sm font-medium transition disabled:opacity-50"
+                className='bg-secondary text-secondary-foreground hover:bg-secondary/80 flex items-center space-x-2 rounded-md px-4 py-2 text-sm font-medium transition disabled:opacity-50'
               >
-                <LogOutIcon className="h-4 w-4" />
+                <LogOutIcon className='h-4 w-4' />
                 <span>{revokingAll ? 'Revoking...' : 'Sign out other sessions'}</span>
               </button>
 
               <button
                 onClick={() => setShowRevokeAllDialog(true)}
                 disabled={revokingAll}
-                className="text-destructive hover:bg-destructive/10 flex items-center space-x-2 rounded-md bg-red-50 px-4 py-2 text-sm font-medium transition disabled:opacity-50"
+                className='text-destructive hover:bg-destructive/10 flex items-center space-x-2 rounded-md bg-red-50 px-4 py-2 text-sm font-medium transition disabled:opacity-50'
               >
-                <Trash2Icon className="h-4 w-4" />
+                <Trash2Icon className='h-4 w-4' />
                 <span>Sign out everywhere</span>
               </button>
             </div>
           )}
 
           {dedupedSessions.length === 1 && (
-            <p className="text-muted-foreground mt-2 text-sm">
-              This is your only active session.
-            </p>
+            <p className='text-muted-foreground mt-2 text-sm'>This is your only active session.</p>
           )}
         </>
       )}
@@ -330,14 +324,14 @@ export function SessionManagement() {
           <AlertDialogHeader>
             <AlertDialogTitle>Sign out everywhere?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will sign you out from all devices, including this one. You&apos;ll need to
-              sign in again to continue.
+              This will sign you out from all devices, including this one. You&apos;ll need to sign
+              in again to continue.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={revokingAll}>Cancel</AlertDialogCancel>
             <AlertDialogAction
-              variant="destructive"
+              variant='destructive'
               disabled={revokingAll}
               onClick={handleRevokeAll}
             >

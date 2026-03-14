@@ -170,11 +170,11 @@ export function TwoFactorSetup() {
   }, []);
 
   return (
-    <div className="space-y-4">
+    <div className='space-y-4'>
       {/* Loading state */}
       {loading && !setupMode && !disableMode && (
-        <div className="flex items-center justify-center py-4">
-          <div className="border-primary h-6 w-6 animate-spin rounded-full border-2 border-t-transparent" />
+        <div className='flex items-center justify-center py-4'>
+          <div className='border-primary h-6 w-6 animate-spin rounded-full border-2 border-t-transparent' />
         </div>
       )}
 
@@ -182,11 +182,11 @@ export function TwoFactorSetup() {
       {!loading && !setupMode && !disableMode && (
         <>
           {needsPassword && (
-            <div className="mb-4 flex items-start space-x-3 rounded-lg border border-amber-200 bg-amber-50 p-3">
-              <InfoIcon className="mt-0.5 h-5 w-5 shrink-0 text-amber-600" />
-              <div className="text-sm text-amber-700">
-                <p className="font-medium">Password required</p>
-                <p className="mt-1">
+            <div className='mb-4 flex items-start space-x-3 rounded-lg border border-amber-200 bg-amber-50 p-3'>
+              <InfoIcon className='mt-0.5 h-5 w-5 shrink-0 text-amber-600' />
+              <div className='text-sm text-amber-700'>
+                <p className='font-medium'>Password required</p>
+                <p className='mt-1'>
                   Two-factor authentication requires a password. Use the &quot;Add Password&quot;
                   option above to set one up first.
                 </p>
@@ -194,23 +194,23 @@ export function TwoFactorSetup() {
             </div>
           )}
 
-          <div className="flex items-center justify-between">
+          <div className='flex items-center justify-between'>
             <div>
-              <div className="flex items-center space-x-2">
+              <div className='flex items-center space-x-2'>
                 <ShieldIcon
                   className={`h-5 w-5 ${isEnabled ? 'text-emerald-500' : 'text-muted-foreground'}`}
                 />
-                <p className="text-foreground font-medium">Two-Factor Authentication</p>
+                <p className='text-foreground font-medium'>Two-Factor Authentication</p>
                 {isEnabled && (
-                  <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-600">
+                  <span className='rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-600'>
                     Enabled
                   </span>
                 )}
                 {!isEnabled && (
                   <Tooltip>
                     <TooltipTrigger>
-                      <span className="inline-flex cursor-help">
-                        <CircleHelpIcon className="text-muted-foreground h-4 w-4" />
+                      <span className='inline-flex cursor-help'>
+                        <CircleHelpIcon className='text-muted-foreground h-4 w-4' />
                       </span>
                     </TooltipTrigger>
                     <TooltipContent>
@@ -219,41 +219,40 @@ export function TwoFactorSetup() {
                   </Tooltip>
                 )}
               </div>
-              <p className="text-muted-foreground mt-1 text-sm">
-                {isEnabled
-                  ? 'Your account is protected with an authenticator app.'
-                  : 'Add an extra layer of security to your account.'}
+              <p className='text-muted-foreground mt-1 text-sm'>
+                {isEnabled ?
+                  'Your account is protected with an authenticator app.'
+                : 'Add an extra layer of security to your account.'}
               </p>
             </div>
-            {isEnabled ? (
+            {isEnabled ?
               <button
                 onClick={handleStartDisable}
-                className="bg-secondary text-secondary-foreground hover:bg-secondary/80 rounded-md px-4 py-2 text-sm font-medium transition"
+                className='bg-secondary text-secondary-foreground hover:bg-secondary/80 rounded-md px-4 py-2 text-sm font-medium transition'
               >
                 Disable 2FA
               </button>
-            ) : (
-              <button
+            : <button
                 onClick={handleStartSetup}
-                className="bg-primary hover:bg-primary/90 rounded-md px-4 py-2 text-sm font-medium text-white transition"
+                className='bg-primary hover:bg-primary/90 rounded-md px-4 py-2 text-sm font-medium text-white transition'
               >
                 Enable 2FA
               </button>
-            )}
+            }
           </div>
         </>
       )}
 
       {/* Setup Mode */}
       {setupMode && (
-        <div className="border-border space-y-4 rounded-lg border p-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              <h3 className="text-foreground font-medium">Set Up Two-Factor Authentication</h3>
+        <div className='border-border space-y-4 rounded-lg border p-4'>
+          <div className='flex items-center justify-between'>
+            <div className='flex items-center space-x-2'>
+              <h3 className='text-foreground font-medium'>Set Up Two-Factor Authentication</h3>
               <Tooltip>
                 <TooltipTrigger>
-                  <span className="inline-flex cursor-help">
-                    <CircleHelpIcon className="text-muted-foreground h-4 w-4" />
+                  <span className='inline-flex cursor-help'>
+                    <CircleHelpIcon className='text-muted-foreground h-4 w-4' />
                   </span>
                 </TooltipTrigger>
                 <TooltipContent>
@@ -263,57 +262,55 @@ export function TwoFactorSetup() {
             </div>
             <button
               onClick={handleCancel}
-              className="text-muted-foreground hover:text-secondary-foreground"
+              className='text-muted-foreground hover:text-secondary-foreground'
             >
-              <XIcon className="h-5 w-5" />
+              <XIcon className='h-5 w-5' />
             </button>
           </div>
 
           {/* Step 0: Password */}
           {setupStep === 0 && (
-            <form onSubmit={handlePasswordSubmit} className="space-y-4">
-              <div className="bg-primary/5 flex items-start space-x-3 rounded-lg p-3">
-                <LockIcon className="text-primary mt-0.5 h-5 w-5" />
-                <div className="text-primary text-sm">
-                  <p className="font-medium">Verify your identity</p>
-                  <p className="mt-1">
-                    Enter your password to enable two-factor authentication.
-                  </p>
+            <form onSubmit={handlePasswordSubmit} className='space-y-4'>
+              <div className='bg-primary/5 flex items-start space-x-3 rounded-lg p-3'>
+                <LockIcon className='text-primary mt-0.5 h-5 w-5' />
+                <div className='text-primary text-sm'>
+                  <p className='font-medium'>Verify your identity</p>
+                  <p className='mt-1'>Enter your password to enable two-factor authentication.</p>
                 </div>
               </div>
               <input
-                type="text"
-                autoComplete="username"
+                type='text'
+                autoComplete='username'
                 value={user?.email || ''}
                 readOnly
-                className="sr-only"
+                className='sr-only'
                 tabIndex={-1}
-                aria-hidden="true"
+                aria-hidden='true'
               />
               <div>
-                <label className="text-secondary-foreground mb-1 block text-sm font-medium">
+                <label className='text-secondary-foreground mb-1 block text-sm font-medium'>
                   Password
                 </label>
                 <input
-                  type="password"
-                  autoComplete="current-password"
+                  type='password'
+                  autoComplete='current-password'
                   value={password}
                   onChange={e => setPassword(e.target.value)}
-                  className="border-border bg-card focus:border-primary focus:ring-ring/20 block w-full rounded-lg border px-3 py-2 text-sm shadow-sm transition-colors focus:ring-2 focus:outline-none"
+                  className='border-border bg-card focus:border-primary focus:ring-ring/20 block w-full rounded-lg border px-3 py-2 text-sm shadow-sm transition-colors focus:ring-2 focus:outline-none'
                 />
               </div>
-              <div className="flex space-x-3">
+              <div className='flex space-x-3'>
                 <button
-                  type="button"
+                  type='button'
                   onClick={handleCancel}
-                  className="bg-secondary text-secondary-foreground hover:bg-secondary/80 flex-1 rounded-md px-4 py-2 text-sm font-medium transition"
+                  className='bg-secondary text-secondary-foreground hover:bg-secondary/80 flex-1 rounded-md px-4 py-2 text-sm font-medium transition'
                 >
                   Cancel
                 </button>
                 <button
-                  type="submit"
+                  type='submit'
                   disabled={loading || !password}
-                  className="bg-primary hover:bg-primary/90 flex-1 rounded-md px-4 py-2 text-sm font-medium text-white transition disabled:opacity-50"
+                  className='bg-primary hover:bg-primary/90 flex-1 rounded-md px-4 py-2 text-sm font-medium text-white transition disabled:opacity-50'
                 >
                   {loading ? 'Verifying...' : 'Continue'}
                 </button>
@@ -323,45 +320,45 @@ export function TwoFactorSetup() {
 
           {/* Step 1: QR Code */}
           {setupStep === 1 && (
-            <div className="space-y-4">
-              <div className="bg-primary/5 flex items-start space-x-3 rounded-lg p-3">
-                <SmartphoneIcon className="text-primary mt-0.5 h-5 w-5" />
-                <div className="text-primary text-sm">
-                  <p className="font-medium">Step 1: Scan QR Code</p>
-                  <p className="mt-1">
+            <div className='space-y-4'>
+              <div className='bg-primary/5 flex items-start space-x-3 rounded-lg p-3'>
+                <SmartphoneIcon className='text-primary mt-0.5 h-5 w-5' />
+                <div className='text-primary text-sm'>
+                  <p className='font-medium'>Step 1: Scan QR Code</p>
+                  <p className='mt-1'>
                     Open your authenticator app (Google Authenticator, Authy, etc.) and scan the QR
                     code below.
                   </p>
                 </div>
               </div>
-              <div className="flex justify-center">
-                <div className="border-border bg-card rounded-lg border p-4">
-                  <QRCode value={totpUri} pixelSize={192} aria-label="2FA QR Code">
+              <div className='flex justify-center'>
+                <div className='border-border bg-card rounded-lg border p-4'>
+                  <QRCode value={totpUri} pixelSize={192} aria-label='2FA QR Code'>
                     <QRCodeFrame>
                       <QRCodePattern />
                     </QRCodeFrame>
                   </QRCode>
                 </div>
               </div>
-              <div className="text-center">
-                <p className="text-muted-foreground mb-2 text-sm">Or enter this code manually:</p>
-                <div className="flex items-center justify-center space-x-2">
-                  <code className="bg-muted text-foreground rounded px-3 py-1.5 font-mono text-sm">
+              <div className='text-center'>
+                <p className='text-muted-foreground mb-2 text-sm'>Or enter this code manually:</p>
+                <div className='flex items-center justify-center space-x-2'>
+                  <code className='bg-muted text-foreground rounded px-3 py-1.5 font-mono text-sm'>
                     {secret}
                   </code>
                   <button
                     onClick={copySecret}
-                    className="text-muted-foreground hover:bg-muted hover:text-secondary-foreground rounded p-1.5"
-                    title="Copy to clipboard"
+                    className='text-muted-foreground hover:bg-muted hover:text-secondary-foreground rounded p-1.5'
+                    title='Copy to clipboard'
                   >
-                    <CopyIcon className="h-4 w-4" />
+                    <CopyIcon className='h-4 w-4' />
                   </button>
                 </div>
-                {copied && <p className="mt-1 text-xs text-emerald-500">Copied!</p>}
+                {copied && <p className='mt-1 text-xs text-emerald-500'>Copied!</p>}
               </div>
               <button
                 onClick={() => setSetupStep(2)}
-                className="bg-primary hover:bg-primary/90 w-full rounded-md px-4 py-2 text-sm font-medium text-white transition"
+                className='bg-primary hover:bg-primary/90 w-full rounded-md px-4 py-2 text-sm font-medium text-white transition'
               >
                 Continue
               </button>
@@ -370,44 +367,44 @@ export function TwoFactorSetup() {
 
           {/* Step 2: Verify */}
           {setupStep === 2 && (
-            <form onSubmit={handleVerifySetup} className="space-y-4">
-              <div className="bg-primary/5 flex items-start space-x-3 rounded-lg p-3">
-                <ShieldIcon className="text-primary mt-0.5 h-5 w-5" />
-                <div className="text-primary text-sm">
-                  <p className="font-medium">Step 2: Verify Setup</p>
-                  <p className="mt-1">
+            <form onSubmit={handleVerifySetup} className='space-y-4'>
+              <div className='bg-primary/5 flex items-start space-x-3 rounded-lg p-3'>
+                <ShieldIcon className='text-primary mt-0.5 h-5 w-5' />
+                <div className='text-primary text-sm'>
+                  <p className='font-medium'>Step 2: Verify Setup</p>
+                  <p className='mt-1'>
                     Enter the 6-digit code from your authenticator app to verify.
                   </p>
                 </div>
               </div>
               <div>
-                <label className="text-secondary-foreground mb-1 block text-sm font-medium">
+                <label className='text-secondary-foreground mb-1 block text-sm font-medium'>
                   Verification Code
                 </label>
                 <input
-                  type="text"
-                  inputMode="numeric"
-                  pattern="[0-9]*"
+                  type='text'
+                  inputMode='numeric'
+                  pattern='[0-9]*'
                   maxLength={6}
                   value={verificationCode}
                   onChange={e => setVerificationCode(e.target.value.replace(/\D/g, ''))}
-                  className="border-border focus:border-primary focus:ring-ring w-full rounded-md border px-3 py-2 text-center font-mono text-lg tracking-widest shadow-sm focus:outline-none"
-                  placeholder="000000"
+                  className='border-border focus:border-primary focus:ring-ring w-full rounded-md border px-3 py-2 text-center font-mono text-lg tracking-widest shadow-sm focus:outline-none'
+                  placeholder='000000'
                   disabled={loading}
                 />
               </div>
-              <div className="flex space-x-3">
+              <div className='flex space-x-3'>
                 <button
-                  type="button"
+                  type='button'
                   onClick={() => setSetupStep(1)}
-                  className="bg-secondary text-secondary-foreground hover:bg-secondary/80 flex-1 rounded-md px-4 py-2 text-sm font-medium transition"
+                  className='bg-secondary text-secondary-foreground hover:bg-secondary/80 flex-1 rounded-md px-4 py-2 text-sm font-medium transition'
                 >
                   Back
                 </button>
                 <button
-                  type="submit"
+                  type='submit'
                   disabled={loading || verificationCode.length !== 6}
-                  className="bg-primary hover:bg-primary/90 flex-1 rounded-md px-4 py-2 text-sm font-medium text-white transition disabled:opacity-50"
+                  className='bg-primary hover:bg-primary/90 flex-1 rounded-md px-4 py-2 text-sm font-medium text-white transition disabled:opacity-50'
                 >
                   {loading ? 'Verifying...' : 'Verify'}
                 </button>
@@ -417,23 +414,23 @@ export function TwoFactorSetup() {
 
           {/* Step 3: Backup Codes */}
           {setupStep === 3 && (
-            <div className="space-y-4">
-              <div className="flex items-start space-x-3 rounded-lg border border-amber-200 bg-amber-50 p-3">
-                <ShieldIcon className="mt-0.5 h-5 w-5 text-amber-600" />
-                <div className="text-sm text-amber-700">
-                  <p className="font-medium">Save Your Backup Codes</p>
-                  <p className="mt-1">
+            <div className='space-y-4'>
+              <div className='flex items-start space-x-3 rounded-lg border border-amber-200 bg-amber-50 p-3'>
+                <ShieldIcon className='mt-0.5 h-5 w-5 text-amber-600' />
+                <div className='text-sm text-amber-700'>
+                  <p className='font-medium'>Save Your Backup Codes</p>
+                  <p className='mt-1'>
                     Store these codes in a safe place. You can use them to access your account if
                     you lose your authenticator device.
                   </p>
                 </div>
               </div>
-              <div className="bg-muted rounded-lg p-4">
-                <div className="grid grid-cols-2 gap-2">
+              <div className='bg-muted rounded-lg p-4'>
+                <div className='grid grid-cols-2 gap-2'>
                   {backupCodes.map((code, i) => (
                     <code
                       key={`backup-${i}`}
-                      className="border-border bg-card rounded border px-2 py-1 text-center font-mono text-sm"
+                      className='border-border bg-card rounded border px-2 py-1 text-center font-mono text-sm'
                     >
                       {code}
                     </code>
@@ -441,15 +438,15 @@ export function TwoFactorSetup() {
                 </div>
                 <button
                   onClick={copyBackupCodes}
-                  className="text-secondary-foreground hover:bg-secondary mt-3 flex w-full items-center justify-center space-x-2 rounded-md px-3 py-2 text-sm transition"
+                  className='text-secondary-foreground hover:bg-secondary mt-3 flex w-full items-center justify-center space-x-2 rounded-md px-3 py-2 text-sm transition'
                 >
-                  <CopyIcon className="h-4 w-4" />
+                  <CopyIcon className='h-4 w-4' />
                   <span>{copied ? 'Copied!' : 'Copy all codes'}</span>
                 </button>
               </div>
               <button
                 onClick={handleCompleteSetup}
-                className="w-full rounded-md bg-emerald-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-emerald-700"
+                className='w-full rounded-md bg-emerald-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-emerald-700'
               >
                 I&apos;ve Saved My Backup Codes
               </button>
@@ -460,51 +457,51 @@ export function TwoFactorSetup() {
 
       {/* Disable Mode */}
       {disableMode && (
-        <div className="border-border space-y-4 rounded-lg border p-4">
-          <div className="flex items-center justify-between">
-            <h3 className="text-foreground font-medium">Disable Two-Factor Authentication</h3>
+        <div className='border-border space-y-4 rounded-lg border p-4'>
+          <div className='flex items-center justify-between'>
+            <h3 className='text-foreground font-medium'>Disable Two-Factor Authentication</h3>
             <button
               onClick={handleCancel}
-              className="text-muted-foreground hover:text-secondary-foreground"
+              className='text-muted-foreground hover:text-secondary-foreground'
             >
-              <XIcon className="h-5 w-5" />
+              <XIcon className='h-5 w-5' />
             </button>
           </div>
-          <div className="flex items-start space-x-3 rounded-lg border border-amber-200 bg-amber-50 p-3">
-            <ShieldIcon className="mt-0.5 h-5 w-5 text-amber-600" />
-            <div className="text-sm text-amber-700">
-              <p className="font-medium">Are you sure?</p>
-              <p className="mt-1">
+          <div className='flex items-start space-x-3 rounded-lg border border-amber-200 bg-amber-50 p-3'>
+            <ShieldIcon className='mt-0.5 h-5 w-5 text-amber-600' />
+            <div className='text-sm text-amber-700'>
+              <p className='font-medium'>Are you sure?</p>
+              <p className='mt-1'>
                 Disabling 2FA will make your account less secure. Enter your password to confirm.
               </p>
             </div>
           </div>
-          <form onSubmit={handleDisable} className="space-y-4">
+          <form onSubmit={handleDisable} className='space-y-4'>
             <div>
-              <label className="text-secondary-foreground mb-1 block text-sm font-medium">
+              <label className='text-secondary-foreground mb-1 block text-sm font-medium'>
                 Password
               </label>
               <input
-                type="password"
+                type='password'
                 value={password}
                 onChange={e => setPassword(e.target.value)}
-                className="border-border focus:border-primary focus:ring-ring w-full rounded-md border px-3 py-2 shadow-sm focus:outline-none"
-                placeholder="Enter your password"
+                className='border-border focus:border-primary focus:ring-ring w-full rounded-md border px-3 py-2 shadow-sm focus:outline-none'
+                placeholder='Enter your password'
                 disabled={loading}
               />
             </div>
-            <div className="flex space-x-3">
+            <div className='flex space-x-3'>
               <button
-                type="button"
+                type='button'
                 onClick={handleCancel}
-                className="bg-secondary text-secondary-foreground hover:bg-secondary/80 flex-1 rounded-md px-4 py-2 text-sm font-medium transition"
+                className='bg-secondary text-secondary-foreground hover:bg-secondary/80 flex-1 rounded-md px-4 py-2 text-sm font-medium transition'
               >
                 Cancel
               </button>
               <button
-                type="submit"
+                type='submit'
                 disabled={loading || !password}
-                className="bg-destructive hover:bg-destructive/90 focus:ring-ring flex-1 rounded-md px-4 py-2 text-sm font-medium text-white transition focus:ring-2 focus:outline-none disabled:opacity-50"
+                className='bg-destructive hover:bg-destructive/90 focus:ring-ring flex-1 rounded-md px-4 py-2 text-sm font-medium text-white transition focus:ring-2 focus:outline-none disabled:opacity-50'
               >
                 {loading ? 'Disabling...' : 'Disable 2FA'}
               </button>

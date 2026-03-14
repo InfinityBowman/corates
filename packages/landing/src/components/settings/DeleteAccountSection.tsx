@@ -35,14 +35,14 @@ export function DeleteAccountSection() {
   if (!user) return null;
 
   return (
-    <div className="rounded-xl border border-red-200/60 bg-red-50/30 p-5">
-      {showConfirm ? (
-        <div className="space-y-4">
-          <div className="rounded-lg border border-red-200 bg-red-100/80 p-4">
-            <p className="mb-2 text-sm font-medium text-red-800">
+    <div className='rounded-xl border border-red-200/60 bg-red-50/30 p-5'>
+      {showConfirm ?
+        <div className='space-y-4'>
+          <div className='rounded-lg border border-red-200 bg-red-100/80 p-4'>
+            <p className='mb-2 text-sm font-medium text-red-800'>
               Are you sure you want to delete your account?
             </p>
-            <ul className="list-inside list-disc space-y-1 text-sm text-red-700">
+            <ul className='list-inside list-disc space-y-1 text-sm text-red-700'>
               <li>All your projects will be permanently deleted</li>
               <li>All your checklists and reviews will be lost</li>
               <li>You will be removed from all shared projects</li>
@@ -51,54 +51,53 @@ export function DeleteAccountSection() {
           </div>
 
           <div>
-            <label className="text-secondary-foreground mb-1.5 block text-sm font-medium">
-              Type <span className="font-mono font-semibold text-red-600">DELETE</span> to confirm
+            <label className='text-secondary-foreground mb-1.5 block text-sm font-medium'>
+              Type <span className='font-mono font-semibold text-red-600'>DELETE</span> to confirm
             </label>
             <input
-              type="text"
+              type='text'
               value={confirmText}
               onChange={e => setConfirmText(e.target.value)}
-              className="border-border bg-card block w-full max-w-xs rounded-lg border px-3 py-2 text-sm shadow-sm transition-colors focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none"
-              placeholder="DELETE"
+              className='border-border bg-card block w-full max-w-xs rounded-lg border px-3 py-2 text-sm shadow-sm transition-colors focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none'
+              placeholder='DELETE'
             />
           </div>
 
-          <div className="flex gap-2">
+          <div className='flex gap-2'>
             <button
               onClick={handleDelete}
               disabled={deleting || confirmText !== 'DELETE'}
-              className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition-all hover:bg-red-700 hover:shadow disabled:cursor-not-allowed disabled:opacity-50"
+              className='rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition-all hover:bg-red-700 hover:shadow disabled:cursor-not-allowed disabled:opacity-50'
             >
               {deleting ? 'Deleting...' : 'Permanently Delete Account'}
             </button>
             <button
-              type="button"
+              type='button'
               onClick={() => {
                 setShowConfirm(false);
                 setConfirmText('');
               }}
-              className="bg-secondary text-secondary-foreground hover:bg-secondary/80 rounded-lg px-4 py-2 text-sm font-medium transition-colors"
+              className='bg-secondary text-secondary-foreground hover:bg-secondary/80 rounded-lg px-4 py-2 text-sm font-medium transition-colors'
             >
               Cancel
             </button>
           </div>
         </div>
-      ) : (
-        <div className="flex items-center justify-between">
+      : <div className='flex items-center justify-between'>
           <div>
-            <h3 className="text-foreground font-medium">Delete Account</h3>
-            <p className="text-muted-foreground mt-0.5 text-sm">
+            <h3 className='text-foreground font-medium'>Delete Account</h3>
+            <p className='text-muted-foreground mt-0.5 text-sm'>
               Permanently delete your account and all associated data
             </p>
           </div>
           <button
             onClick={() => setShowConfirm(true)}
-            className="rounded-lg border border-red-200 bg-white px-4 py-2 text-sm font-medium text-red-600 shadow-sm transition-all hover:bg-red-50 hover:shadow"
+            className='rounded-lg border border-red-200 bg-white px-4 py-2 text-sm font-medium text-red-600 shadow-sm transition-all hover:bg-red-50 hover:shadow'
           >
             Delete Account
           </button>
         </div>
-      )}
+      }
     </div>
   );
 }

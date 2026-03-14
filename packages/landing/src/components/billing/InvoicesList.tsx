@@ -58,54 +58,54 @@ export function InvoicesList() {
   const invoices = data?.invoices ?? [];
 
   return (
-    <div className="border-border bg-card overflow-hidden rounded-xl border shadow-sm">
-      <div className="border-border border-b bg-muted/50 px-6 py-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <FileTextIcon className="text-muted-foreground h-5 w-5" />
-            <h2 className="text-foreground text-base font-semibold">Invoices</h2>
+    <div className='border-border bg-card overflow-hidden rounded-xl border shadow-sm'>
+      <div className='border-border bg-muted/50 border-b px-6 py-4'>
+        <div className='flex items-center justify-between'>
+          <div className='flex items-center gap-2'>
+            <FileTextIcon className='text-muted-foreground h-5 w-5' />
+            <h2 className='text-foreground text-base font-semibold'>Invoices</h2>
           </div>
         </div>
       </div>
 
-      {isFetching ? (
-        <div className="divide-border divide-y">
+      {isFetching ?
+        <div className='divide-border divide-y'>
           {[1, 2, 3].map(i => (
-            <div key={i} className="flex animate-pulse items-center justify-between px-6 py-4">
-              <div className="flex items-center gap-4">
-                <div className="bg-secondary h-10 w-10 rounded-lg" />
-                <div className="space-y-2">
-                  <div className="bg-secondary h-4 w-32 rounded" />
-                  <div className="bg-secondary h-3 w-24 rounded" />
+            <div key={i} className='flex animate-pulse items-center justify-between px-6 py-4'>
+              <div className='flex items-center gap-4'>
+                <div className='bg-secondary h-10 w-10 rounded-lg' />
+                <div className='space-y-2'>
+                  <div className='bg-secondary h-4 w-32 rounded' />
+                  <div className='bg-secondary h-3 w-24 rounded' />
                 </div>
               </div>
-              <div className="flex items-center gap-4">
-                <div className="bg-secondary h-4 w-16 rounded" />
-                <div className="bg-secondary h-6 w-14 rounded-full" />
+              <div className='flex items-center gap-4'>
+                <div className='bg-secondary h-4 w-16 rounded' />
+                <div className='bg-secondary h-6 w-14 rounded-full' />
               </div>
             </div>
           ))}
         </div>
-      ) : invoices.length > 0 ? (
-        <div className="divide-border divide-y">
+      : invoices.length > 0 ?
+        <div className='divide-border divide-y'>
           {invoices.map((invoice: any) => (
             <div
               key={invoice.id}
-              className="hover:bg-muted/50 flex items-center justify-between px-6 py-4 transition-colors"
+              className='hover:bg-muted/50 flex items-center justify-between px-6 py-4 transition-colors'
             >
-              <div className="flex items-center gap-4">
-                <div className="bg-muted flex h-10 w-10 items-center justify-center rounded-lg">
-                  <FileTextIcon className="text-muted-foreground h-5 w-5" />
+              <div className='flex items-center gap-4'>
+                <div className='bg-muted flex h-10 w-10 items-center justify-center rounded-lg'>
+                  <FileTextIcon className='text-muted-foreground h-5 w-5' />
                 </div>
                 <div>
-                  <p className="text-foreground font-medium">
+                  <p className='text-foreground font-medium'>
                     {invoice.description || `Invoice #${invoice.number || invoice.id}`}
                   </p>
-                  <p className="text-muted-foreground text-sm">{formatDate(invoice.date)}</p>
+                  <p className='text-muted-foreground text-sm'>{formatDate(invoice.date)}</p>
                 </div>
               </div>
-              <div className="flex items-center gap-4">
-                <span className="text-foreground text-sm font-semibold">
+              <div className='flex items-center gap-4'>
+                <span className='text-foreground text-sm font-semibold'>
                   {formatAmount(invoice.amount)}
                 </span>
                 <span
@@ -115,40 +115,39 @@ export function InvoicesList() {
                 </span>
                 {invoice.pdfUrl && (
                   <button
-                    type="button"
-                    className="text-muted-foreground hover:bg-muted hover:text-foreground rounded-lg p-2 transition-colors"
+                    type='button'
+                    className='text-muted-foreground hover:bg-muted hover:text-foreground rounded-lg p-2 transition-colors'
                     onClick={() => window.open(invoice.pdfUrl, '_blank')}
-                    title="Download invoice"
+                    title='Download invoice'
                   >
-                    <DownloadIcon className="h-4 w-4" />
+                    <DownloadIcon className='h-4 w-4' />
                   </button>
                 )}
                 {invoice.hostedInvoiceUrl && (
                   <a
                     href={invoice.hostedInvoiceUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-muted-foreground hover:bg-muted hover:text-foreground rounded-lg p-2 transition-colors"
-                    title="View invoice"
+                    target='_blank'
+                    rel='noopener noreferrer'
+                    className='text-muted-foreground hover:bg-muted hover:text-foreground rounded-lg p-2 transition-colors'
+                    title='View invoice'
                   >
-                    <ExternalLinkIcon className="h-4 w-4" />
+                    <ExternalLinkIcon className='h-4 w-4' />
                   </a>
                 )}
               </div>
             </div>
           ))}
         </div>
-      ) : (
-        <div className="px-6 py-12 text-center">
-          <div className="bg-muted mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full">
-            <FileTextIcon className="text-muted-foreground h-7 w-7" />
+      : <div className='px-6 py-12 text-center'>
+          <div className='bg-muted mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full'>
+            <FileTextIcon className='text-muted-foreground h-7 w-7' />
           </div>
-          <h3 className="text-foreground text-sm font-medium">No invoices yet</h3>
-          <p className="text-muted-foreground mt-1 text-sm">
+          <h3 className='text-foreground text-sm font-medium'>No invoices yet</h3>
+          <p className='text-muted-foreground mt-1 text-sm'>
             Invoices will appear here once you have an active subscription.
           </p>
         </div>
-      )}
+      }
     </div>
   );
 }
