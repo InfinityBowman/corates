@@ -607,24 +607,40 @@ Key changes:
 - All auth components use shadcn design tokens (no hardcoded blue)
 - `selectUser` selector fixed to avoid object spread (was causing infinite re-render loop)
 
-### 4.2 App shell (needed for everything else)
+### 4.2 App shell -- COMPLETED (2026-03-14)
 
-- `components/layout/AppLayout.tsx` -- navbar + sidebar + main content area
-- `components/layout/Navbar.tsx`
-- `components/layout/Sidebar.tsx`
-- These use route location, auth state, project list -- all available from previous phases
+- `components/layout/AppLayout.tsx`, `AppNavbar.tsx`, `Sidebar.tsx`, `SettingsSidebar.tsx`
+- Cross-fade sidebar animation, mobile portal overlay
+- `/dashboard` removed from SPA_ROUTE_PREFIXES
 
-### 4.3 Dashboard
+### 4.3 Dashboard -- COMPLETED (2026-03-14)
 
-- `_app/dashboard.tsx` -- project list, stats cards
-- Uses useMyProjectsList, projectStore.getProjectStats()
-- Read-only views, straightforward
+- 10 component files: Dashboard, DashboardHeader, ProjectsSection, ProjectCard, LocalAppraisalsSection, LocalAppraisalCard, ActivityFeed, QuickActions, useInitialAnimation, utils
+- `/dashboard` served by React in production
 
-### 4.4 Settings
+### 4.4 Settings -- COMPLETED (2026-03-14)
 
-- `_app/_protected/settings.tsx` (layout) + `_app/_protected/settings/*.tsx` (pages)
-- Profile, billing, integrations, security, notifications
-- Self-contained form pages
+All 6 settings pages migrated to React:
+- `settings/profile.tsx` -- avatar upload, inline name editing (SimpleEditable), persona selector, academic info, account deletion
+- `settings/integrations.tsx` -- Google Drive connect/disconnect with AlertDialog confirmation
+- `settings/billing.tsx` -- subscription card, usage card, invoices list, payment issue banner, checkout redirect handling
+- `settings/plans.tsx` -- pricing table with billing interval toggle, trial CTA, FAQ accordion, pending plan redirect
+- `settings/security.tsx` -- password add/change, 2FA 4-step setup/disable, linked accounts with OAuth error handling and merge flow, session management with revocation
+- `settings/notifications.tsx` -- toggle stubs (no backend persistence yet)
+
+Supporting components created:
+- `components/settings/` -- ProfileInfoSection, PersonaSection, AcademicInfoSection, DeleteAccountSection, GoogleDriveSettings, SecuritySettings, TwoFactorSetup, LinkedAccountsSection, AccountProviderCard, MergeAccountsDialog, SessionManagement
+- `components/billing/` -- SubscriptionCard, UsageCard, InvoicesList, PaymentIssueBanner, PricingTable
+- `api/account-merge.js` -- account merge API (copied from web, framework-agnostic)
+- `lib/syncUtils.ts` -- shared profile sync utility
+
+Key changes:
+- `server-entry.ts` -- `/settings` removed from SPA_ROUTE_PREFIXES (React serves them)
+- SolidJS `createResource` for sessions replaced with `useQuery`
+- Ark UI Select/Dialog replaced with shadcn equivalents
+- `window.confirm()` replaced with `AlertDialog`
+- `TwoFactorSetup` derives `isEnabled` from store instead of local state
+- All billing components use shadcn design tokens instead of hardcoded colors
 
 ### 4.5 Organization + billing
 
@@ -769,10 +785,10 @@ Key changes:
 | Phase 1: Foundation  | 3-4 days       | --                             | DONE (2026-03-14)         |
 | Phase 2: UI Library  | 2 days         | Yes (with Phase 3)             | DONE (2026-03-14)         |
 | Phase 3: Primitives  | 3-4 days       | Yes (with Phase 2)             | DONE (2026-03-14)         |
-| Phase 4: Pages       | 5-7 days       | Partially (independent routes) | 4.1 auth DONE             |
+| Phase 4: Pages       | 5-7 days       | Partially (independent routes) | 4.1-4.4 DONE              |
 | Phase 5: Tests       | 2 days         | Yes (with Phase 4)             | Not started               |
 | Phase 6: Cleanup     | 0.5 days       | --                             | Not started               |
-| **Total**            | **~2-3 weeks** |                                | **Phases 0-2 + 4.1 done** |
+| **Total**            | **~2-3 weeks** |                                | **Phases 0-4.4 done** |
 
 Phase 0 is shorter since landing already exists. Claude Code can handle the mechanical parts (UI components, query hooks, icon swaps, simple page conversions) to significantly speed up Phases 2 and 4.
 

@@ -7,7 +7,7 @@ const handler = createStartHandler(defaultStreamHandler);
 const SPA_ROUTE_PREFIXES = [
   // '/dashboard', // migrated to React
   '/checklist',
-  '/settings',
+  // '/settings', // migrated to React
   '/admin',
   '/projects',
   '/orgs',
