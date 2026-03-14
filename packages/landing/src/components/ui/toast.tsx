@@ -68,7 +68,14 @@ export const showToast = {
       toast.dismiss();
     }
   },
-  update: (id: string | number, options: { title?: string; description?: string; type?: 'success' | 'error' | 'warning' | 'info' }) => {
+  update: (
+    id: string | number,
+    options: {
+      title?: string;
+      description?: string;
+      type?: 'success' | 'error' | 'warning' | 'info';
+    },
+  ) => {
     if (options.type === 'success') {
       toast.success(options.title ?? '', { id, description: options.description });
     } else if (options.type === 'error') {

@@ -128,16 +128,22 @@ export function useNotifications(
       wsRef.current = ws;
 
       ws.onopen = () => {
-        if (!shouldConnectRef.current) { ws.close(); return; }
+        if (!shouldConnectRef.current) {
+          ws.close();
+          return;
+        }
         setConnected(true);
         reconnectAttemptsRef.current = 0;
         startPingPong();
       };
 
-      ws.onmessage = (event) => {
+      ws.onmessage = event => {
         try {
           const data = JSON.parse(event.data);
-          if (data.type === 'pong') { clearPongTimeout(); return; }
+          if (data.type === 'pong') {
+            clearPongTimeout();
+            return;
+          }
           setNotifications(prev => [data, ...prev]);
           onNotificationRef.current?.(data);
         } catch (err) {
@@ -145,7 +151,7 @@ export function useNotifications(
         }
       };
 
-      ws.onclose = (event) => {
+      ws.onclose = event => {
         setConnected(false);
         cleanupTimers();
         wsRef.current = null;
@@ -160,7 +166,9 @@ export function useNotifications(
         }
         try {
           if (ws.readyState !== WebSocket.CLOSED) ws.close();
-        } catch (_) { /* ignore */ }
+        } catch (_) {
+          /* ignore */
+        }
       };
     }
 

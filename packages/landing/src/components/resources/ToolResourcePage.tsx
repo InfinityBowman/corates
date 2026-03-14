@@ -39,7 +39,6 @@ const COLOR_CONFIG = {
   },
 };
 
-
 const SCORE_ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
   green: AiOutlineCheckCircle,
   yellow: FiAlertCircle,

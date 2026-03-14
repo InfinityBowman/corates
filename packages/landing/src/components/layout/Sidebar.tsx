@@ -23,12 +23,7 @@ import { useAuthStore, selectUser, selectIsLoggedIn } from '@/stores/authStore';
 import { useLocalChecklistsStore } from '@/stores/localChecklistsStore';
 import { useMyProjectsList } from '@/hooks/useMyProjectsList';
 import { showToast } from '@/components/ui/toast';
-import {
-  Tooltip,
-  TooltipTrigger,
-  TooltipContent,
-  TooltipProvider,
-} from '@/components/ui/tooltip';
+import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/components/ui/tooltip';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -76,7 +71,6 @@ export function Sidebar({
   const [expandedStudies, setExpandedStudies] = useState<Record<string, boolean>>({});
   const [isResizing, setIsResizing] = useState(false);
 
-
   // Delete confirmation
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
@@ -96,35 +90,41 @@ export function Sidebar({
     setExpandedStudies(prev => ({ ...prev, [studyId]: !prev[studyId] }));
   }, []);
 
-  const isStudyExpanded = useCallback((studyId: string) => expandedStudies[studyId] || false, [expandedStudies]);
+  const isStudyExpanded = useCallback(
+    (studyId: string) => expandedStudies[studyId] || false,
+    [expandedStudies],
+  );
 
   const isCurrentPath = useCallback((path: string) => currentPath === path, [currentPath]);
 
   // Resize drag handler
-  const handleResizeStart = useCallback((e: React.MouseEvent) => {
-    e.preventDefault();
-    setIsResizing(true);
+  const handleResizeStart = useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault();
+      setIsResizing(true);
 
-    const startX = e.clientX;
-    const startWidth = width;
+      const startX = e.clientX;
+      const startWidth = width;
 
-    const handleMouseMove = (moveEvent: MouseEvent) => {
-      onWidthChange(startWidth + (moveEvent.clientX - startX));
-    };
+      const handleMouseMove = (moveEvent: MouseEvent) => {
+        onWidthChange(startWidth + (moveEvent.clientX - startX));
+      };
 
-    const handleMouseUp = () => {
-      setIsResizing(false);
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
-      document.body.style.cursor = '';
-      document.body.style.userSelect = '';
-    };
+      const handleMouseUp = () => {
+        setIsResizing(false);
+        document.removeEventListener('mousemove', handleMouseMove);
+        document.removeEventListener('mouseup', handleMouseUp);
+        document.body.style.cursor = '';
+        document.body.style.userSelect = '';
+      };
 
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleMouseUp);
-    document.body.style.cursor = 'col-resize';
-    document.body.style.userSelect = 'none';
-  }, [width, onWidthChange]);
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+      document.body.style.cursor = 'col-resize';
+      document.body.style.userSelect = 'none';
+    },
+    [width, onWidthChange],
+  );
 
   // Delete local checklist
   const handleDeleteLocalChecklist = useCallback((e: React.MouseEvent, checklistId: string) => {
@@ -134,7 +134,10 @@ export function Sidebar({
   }, []);
 
   const confirmDeleteChecklist = useCallback(async () => {
-    if (!pendingDeleteId) { setDeleteDialogOpen(false); return; }
+    if (!pendingDeleteId) {
+      setDeleteDialogOpen(false);
+      return;
+    }
     try {
       await deleteChecklist(pendingDeleteId);
     } catch (err) {
@@ -164,33 +167,33 @@ export function Sidebar({
   // --- Shared sidebar content (lowercase to avoid lint "component during render" error) ---
   function renderSidebarContent() {
     return (
-      <div className="sidebar-scrollbar flex-1 overflow-x-hidden overflow-y-auto">
+      <div className='sidebar-scrollbar flex-1 overflow-x-hidden overflow-y-auto'>
         {/* Projects home link */}
-        <div className="p-2">
+        <div className='p-2'>
           <button
             onClick={() => navigate({ to: '/dashboard' })}
             className={`flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-              isCurrentPath('/') || isCurrentPath('/dashboard')
-                ? 'bg-primary/10 text-primary'
-                : 'text-secondary-foreground hover:bg-secondary'
+              isCurrentPath('/') || isCurrentPath('/dashboard') ?
+                'bg-primary/10 text-primary'
+              : 'text-secondary-foreground hover:bg-secondary'
             }`}
           >
-            <HomeIcon className="h-4 w-4 shrink-0" />
-            <span className="truncate">Projects</span>
+            <HomeIcon className='h-4 w-4 shrink-0' />
+            <span className='truncate'>Projects</span>
           </button>
         </div>
 
         {/* Cloud Projects */}
         {isLoggedIn && (
           <>
-            <div className="px-3 pb-2 pt-4">
-              <h3 className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                <CloudIcon className="h-3 w-3" />
+            <div className='px-3 pt-4 pb-2'>
+              <h3 className='text-muted-foreground flex items-center gap-1.5 text-xs font-semibold tracking-wider uppercase'>
+                <CloudIcon className='h-3 w-3' />
                 Projects
               </h3>
             </div>
-            <div className="space-y-0.5 px-2">
-              {cloudProjects?.length > 0 ? (
+            <div className='space-y-0.5 px-2'>
+              {cloudProjects?.length > 0 ?
                 cloudProjects.map((project: { id: string; name: string }) => (
                   <ProjectTreeItem
                     key={project.id}
@@ -203,58 +206,66 @@ export function Sidebar({
                     onToggleStudy={toggleStudy}
                   />
                 ))
-              ) : !isProjectsLoading ? (
-                <div className="px-2 py-4 text-center">
-                  <div className="mx-auto mb-2 flex h-8 w-8 items-center justify-center rounded-lg bg-secondary">
-                    <FolderIcon className="h-4 w-4 text-muted-foreground/70" />
+              : !isProjectsLoading ?
+                <div className='px-2 py-4 text-center'>
+                  <div className='bg-secondary mx-auto mb-2 flex h-8 w-8 items-center justify-center rounded-lg'>
+                    <FolderIcon className='text-muted-foreground/70 h-4 w-4' />
                   </div>
-                  <p className="text-xs font-medium text-muted-foreground">No projects yet</p>
+                  <p className='text-muted-foreground text-xs font-medium'>No projects yet</p>
                   <button
                     onClick={() => navigate({ to: '/dashboard' })}
-                    className="mt-1 text-xs text-primary hover:text-primary/80"
+                    className='text-primary hover:text-primary/80 mt-1 text-xs'
                   >
                     Create a project
                   </button>
                 </div>
-              ) : null}
+              : null}
             </div>
           </>
         )}
 
         {/* Local Checklists */}
-        <div className="px-3 pb-2 pt-6">
-          <h3 className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-            <FileCheck2Icon className="h-3 w-3" />
+        <div className='px-3 pt-6 pb-2'>
+          <h3 className='text-muted-foreground flex items-center gap-1.5 text-xs font-semibold tracking-wider uppercase'>
+            <FileCheck2Icon className='h-3 w-3' />
             Appraisals
           </h3>
         </div>
-        <div className="space-y-0.5 px-2">
-          {checklists?.length > 0 ? (
-            checklists.filter((c: { id?: string }) => c?.id).map((checklist: { id: string; name?: string; updatedAt?: number; createdAt?: number }) => (
-              <LocalChecklistItem
-                key={checklist.id}
-                checklist={checklist}
-                isSelected={currentPath === `/checklist/${checklist.id}`}
-                onDelete={handleDeleteLocalChecklist}
-              />
-            ))
-          ) : (
-            <div className="px-2 py-4 text-center">
-              <div className="mx-auto mb-2 flex h-8 w-8 items-center justify-center rounded-lg bg-secondary">
-                <FileCheck2Icon className="h-4 w-4 text-muted-foreground/70" />
+        <div className='space-y-0.5 px-2'>
+          {checklists?.length > 0 ?
+            checklists
+              .filter((c: { id?: string }) => c?.id)
+              .map(
+                (checklist: {
+                  id: string;
+                  name?: string;
+                  updatedAt?: number;
+                  createdAt?: number;
+                }) => (
+                  <LocalChecklistItem
+                    key={checklist.id}
+                    checklist={checklist}
+                    isSelected={currentPath === `/checklist/${checklist.id}`}
+                    onDelete={handleDeleteLocalChecklist}
+                  />
+                ),
+              )
+          : <div className='px-2 py-4 text-center'>
+              <div className='bg-secondary mx-auto mb-2 flex h-8 w-8 items-center justify-center rounded-lg'>
+                <FileCheck2Icon className='text-muted-foreground/70 h-4 w-4' />
               </div>
-              <p className="text-xs font-medium text-muted-foreground">No appraisals</p>
+              <p className='text-muted-foreground text-xs font-medium'>No appraisals</p>
               <button
                 onClick={() => navigate({ to: '/checklist' as string })}
-                className="mt-1 text-xs text-primary hover:text-primary/80"
+                className='text-primary hover:text-primary/80 mt-1 text-xs'
               >
                 Create one
               </button>
             </div>
-          )}
+          }
         </div>
 
-        <div className="h-8" />
+        <div className='h-8' />
       </div>
     );
   }
@@ -263,7 +274,7 @@ export function Sidebar({
     <TooltipProvider delayDuration={500}>
       {/* Desktop sidebar */}
       <div
-        className={`sidebar-container relative hidden h-full shrink-0 border-r border-border bg-card md:block ${
+        className={`sidebar-container border-border bg-card relative hidden h-full shrink-0 border-r md:block ${
           isResizing ? '' : 'transition-all duration-200 ease-in-out'
         } ${isExpanded ? '' : 'md:w-12'}`}
         style={{
@@ -271,9 +282,9 @@ export function Sidebar({
           width: isExpanded ? `${width}px` : undefined,
         }}
       >
-        <div className="flex h-full flex-col">
+        <div className='flex h-full flex-col'>
           {/* Header -- both states always rendered, cross-fade */}
-          <div className="relative shrink-0 border-b border-border">
+          <div className='border-border relative shrink-0 border-b'>
             {/* Collapsed header (bottom layer) */}
             <div
               className={`flex items-center justify-center p-2 transition-opacity duration-200 ${
@@ -285,13 +296,13 @@ export function Sidebar({
                 <TooltipTrigger asChild>
                   <button
                     onClick={onToggleDesktop}
-                    className="hidden h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-secondary hover:text-secondary-foreground md:flex"
-                    aria-label="Expand sidebar"
+                    className='text-muted-foreground hover:bg-secondary hover:text-secondary-foreground hidden h-8 w-8 items-center justify-center rounded-md transition-colors md:flex'
+                    aria-label='Expand sidebar'
                   >
-                    <ChevronsRightIcon className="h-4 w-4" />
+                    <ChevronsRightIcon className='h-4 w-4' />
                   </button>
                 </TooltipTrigger>
-                <TooltipContent side="right">Expand sidebar</TooltipContent>
+                <TooltipContent side='right'>Expand sidebar</TooltipContent>
               </Tooltip>
             </div>
 
@@ -302,26 +313,26 @@ export function Sidebar({
               }`}
               aria-hidden={!isExpanded}
             >
-              <span className="flex-1 truncate px-2 text-sm font-semibold text-secondary-foreground">
+              <span className='text-secondary-foreground flex-1 truncate px-2 text-sm font-semibold'>
                 CoRATES
               </span>
               <Tooltip>
                 <TooltipTrigger asChild>
                   <button
                     onClick={onToggleDesktop}
-                    className="hidden h-8 w-8 items-center justify-center rounded-md text-muted-foreground/70 transition-colors hover:bg-secondary hover:text-muted-foreground md:flex"
-                    aria-label="Collapse sidebar"
+                    className='text-muted-foreground/70 hover:bg-secondary hover:text-muted-foreground hidden h-8 w-8 items-center justify-center rounded-md transition-colors md:flex'
+                    aria-label='Collapse sidebar'
                   >
-                    <ChevronsLeftIcon className="h-4 w-4" />
+                    <ChevronsLeftIcon className='h-4 w-4' />
                   </button>
                 </TooltipTrigger>
-                <TooltipContent side="right">Collapse sidebar</TooltipContent>
+                <TooltipContent side='right'>Collapse sidebar</TooltipContent>
               </Tooltip>
             </div>
           </div>
 
           {/* Content area -- both layers always rendered, cross-fade with opacity */}
-          <div className="relative flex-1 overflow-hidden">
+          <div className='relative flex-1 overflow-hidden'>
             {/* Collapsed rail icons (bottom layer) -- always rendered, fixed w-12 */}
             <div
               className={`absolute inset-y-0 left-0 hidden w-12 flex-col items-center gap-1 overflow-y-auto py-2 transition-opacity duration-200 md:flex ${
@@ -335,16 +346,16 @@ export function Sidebar({
                   <button
                     onClick={() => navigate({ to: '/dashboard' })}
                     className={`flex h-8 w-8 items-center justify-center rounded-md transition-colors ${
-                      isCurrentPath('/dashboard') || isCurrentPath('/')
-                        ? 'bg-primary/10 text-primary'
-                        : 'text-muted-foreground hover:bg-secondary hover:text-secondary-foreground'
+                      isCurrentPath('/dashboard') || isCurrentPath('/') ?
+                        'bg-primary/10 text-primary'
+                      : 'text-muted-foreground hover:bg-secondary hover:text-secondary-foreground'
                     }`}
-                    aria-label="Projects"
+                    aria-label='Projects'
                   >
-                    <HomeIcon className="h-4 w-4" />
+                    <HomeIcon className='h-4 w-4' />
                   </button>
                 </TooltipTrigger>
-                <TooltipContent side="right">Projects</TooltipContent>
+                <TooltipContent side='right'>Projects</TooltipContent>
               </Tooltip>
 
               {isLoggedIn && (
@@ -352,13 +363,13 @@ export function Sidebar({
                   <TooltipTrigger asChild>
                     <button
                       onClick={onToggleDesktop}
-                      className="flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-secondary hover:text-secondary-foreground"
-                      aria-label="Projects"
+                      className='text-muted-foreground hover:bg-secondary hover:text-secondary-foreground flex h-8 w-8 items-center justify-center rounded-md transition-colors'
+                      aria-label='Projects'
                     >
-                      <CloudIcon className="h-4 w-4" />
+                      <CloudIcon className='h-4 w-4' />
                     </button>
                   </TooltipTrigger>
-                  <TooltipContent side="right">Projects</TooltipContent>
+                  <TooltipContent side='right'>Projects</TooltipContent>
                 </Tooltip>
               )}
 
@@ -366,13 +377,13 @@ export function Sidebar({
                 <TooltipTrigger asChild>
                   <button
                     onClick={onToggleDesktop}
-                    className="flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-secondary hover:text-secondary-foreground"
-                    aria-label="Appraisals"
+                    className='text-muted-foreground hover:bg-secondary hover:text-secondary-foreground flex h-8 w-8 items-center justify-center rounded-md transition-colors'
+                    aria-label='Appraisals'
                   >
-                    <FileCheck2Icon className="h-4 w-4" />
+                    <FileCheck2Icon className='h-4 w-4' />
                   </button>
                 </TooltipTrigger>
-                <TooltipContent side="right">Appraisals</TooltipContent>
+                <TooltipContent side='right'>Appraisals</TooltipContent>
               </Tooltip>
             </div>
 
@@ -392,11 +403,11 @@ export function Sidebar({
         {/* Resize handle */}
         {isExpanded && (
           <div
-            className="absolute right-0 top-0 hidden h-full w-1 cursor-col-resize bg-transparent transition-colors hover:bg-primary md:block"
+            className='hover:bg-primary absolute top-0 right-0 hidden h-full w-1 cursor-col-resize bg-transparent transition-colors md:block'
             onMouseDown={handleResizeStart}
-            role="separator"
-            aria-orientation="vertical"
-            aria-label="Resize sidebar"
+            role='separator'
+            aria-orientation='vertical'
+            aria-label='Resize sidebar'
           />
         )}
       </div>
@@ -405,7 +416,7 @@ export function Sidebar({
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogIcon variant="danger">
+            <AlertDialogIcon variant='danger'>
               <TriangleAlertIcon />
             </AlertDialogIcon>
             <div>
@@ -417,7 +428,7 @@ export function Sidebar({
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction variant="destructive" onClick={confirmDeleteChecklist}>
+            <AlertDialogAction variant='destructive' onClick={confirmDeleteChecklist}>
               Delete
             </AlertDialogAction>
           </AlertDialogFooter>
@@ -426,11 +437,7 @@ export function Sidebar({
 
       {/* Mobile overlay -- always mounted, CSS-only transitions */}
       {createPortal(
-        <div
-          className="md:hidden"
-          aria-hidden={!mobileOpen}
-          inert={!mobileOpen ? true : undefined}
-        >
+        <div className='md:hidden' aria-hidden={!mobileOpen} inert={!mobileOpen ? true : undefined}>
           {/* Backdrop */}
           <div
             className={`fixed inset-0 z-40 bg-black/30 transition-opacity duration-200 ${
@@ -440,22 +447,22 @@ export function Sidebar({
           />
           {/* Panel */}
           <div
-            className={`fixed inset-y-0 left-0 z-50 w-64 bg-card pt-9 shadow-xl transition-transform duration-200 ${
+            className={`bg-card fixed inset-y-0 left-0 z-50 w-64 pt-9 shadow-xl transition-transform duration-200 ${
               mobileOpen ? 'translate-x-0' : '-translate-x-full'
             }`}
             style={{ transitionTimingFunction: 'cubic-bezier(0.32, 0.72, 0, 1)' }}
           >
-            <div className="flex h-full flex-col">
-              <div className="flex shrink-0 items-center border-b border-border bg-card p-2">
-                <span className="flex-1 truncate px-2 text-sm font-semibold text-secondary-foreground">
+            <div className='flex h-full flex-col'>
+              <div className='border-border bg-card flex shrink-0 items-center border-b p-2'>
+                <span className='text-secondary-foreground flex-1 truncate px-2 text-sm font-semibold'>
                   CoRATES
                 </span>
                 <button
                   onClick={onCloseMobile}
-                  className="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground/70 transition-colors hover:bg-secondary hover:text-muted-foreground"
-                  aria-label="Close sidebar"
+                  className='text-muted-foreground/70 hover:bg-secondary hover:text-muted-foreground flex h-7 w-7 items-center justify-center rounded-md transition-colors'
+                  aria-label='Close sidebar'
                 >
-                  <XIcon className="h-4 w-4" />
+                  <XIcon className='h-4 w-4' />
                 </button>
               </div>
               {renderSidebarContent()}

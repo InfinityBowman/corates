@@ -11,7 +11,10 @@ async function fetchOrgProjects(orgId: string) {
   return apiFetch.get(`/api/orgs/${orgId}/projects`, { toastMessage: false });
 }
 
-export function useOrgProjectList(orgId: string | null | undefined, options: { enabled?: boolean } = {}) {
+export function useOrgProjectList(
+  orgId: string | null | undefined,
+  options: { enabled?: boolean } = {},
+) {
   const query = useQuery({
     queryKey: queryKeys.projects.byOrg(orgId),
     queryFn: () => fetchOrgProjects(orgId!),

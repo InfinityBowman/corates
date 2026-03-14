@@ -37,9 +37,16 @@ interface LocalChecklistsActions {
   refetch: () => Promise<LocalChecklist[]>;
   createChecklist: (name?: string, type?: string) => Promise<LocalChecklist>;
   getChecklist: (checklistId: string) => Promise<LocalChecklist | null>;
-  updateChecklist: (checklistId: string, updates: Partial<LocalChecklist>) => Promise<LocalChecklist | null>;
+  updateChecklist: (
+    checklistId: string,
+    updates: Partial<LocalChecklist>,
+  ) => Promise<LocalChecklist | null>;
   deleteChecklist: (checklistId: string) => Promise<boolean>;
-  savePdf: (checklistId: string, pdfData: ArrayBuffer, fileName?: string) => Promise<LocalChecklistPdf>;
+  savePdf: (
+    checklistId: string,
+    pdfData: ArrayBuffer,
+    fileName?: string,
+  ) => Promise<LocalChecklistPdf>;
   getPdf: (checklistId: string) => Promise<LocalChecklistPdf | null>;
   deletePdf: (checklistId: string) => Promise<boolean>;
 }
@@ -52,7 +59,10 @@ export const useLocalChecklistsStore = create<LocalChecklistsState & LocalCheckl
     error: null,
 
     refetch: async () => {
-      const checklistsList = (await db.localChecklists.orderBy('updatedAt').reverse().toArray()) as unknown as LocalChecklist[];
+      const checklistsList = (await db.localChecklists
+        .orderBy('updatedAt')
+        .reverse()
+        .toArray()) as unknown as LocalChecklist[];
       set({ checklists: checklistsList });
       return checklistsList;
     },
@@ -95,7 +105,7 @@ export const useLocalChecklistsStore = create<LocalChecklistsState & LocalCheckl
       return checklist;
     },
 
-    getChecklist: async (checklistId) => {
+    getChecklist: async checklistId => {
       return ((await db.localChecklists.get(checklistId)) as unknown as LocalChecklist) || null;
     },
 
@@ -111,7 +121,7 @@ export const useLocalChecklistsStore = create<LocalChecklistsState & LocalCheckl
       return updatedChecklist;
     },
 
-    deleteChecklist: async (checklistId) => {
+    deleteChecklist: async checklistId => {
       await db.transaction('rw', [db.localChecklists, db.localChecklistPdfs], async () => {
         await db.localChecklists.delete(checklistId);
         await db.localChecklistPdfs.delete(checklistId);
@@ -133,11 +143,11 @@ export const useLocalChecklistsStore = create<LocalChecklistsState & LocalCheckl
       return pdfRecord;
     },
 
-    getPdf: async (checklistId) => {
+    getPdf: async checklistId => {
       return ((await db.localChecklistPdfs.get(checklistId)) as LocalChecklistPdf) || null;
     },
 
-    deletePdf: async (checklistId) => {
+    deletePdf: async checklistId => {
       await db.localChecklistPdfs.delete(checklistId);
       return true;
     },

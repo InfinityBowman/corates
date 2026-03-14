@@ -107,13 +107,13 @@ function computeProjectStats(studies: StudyInfo[]): { studyCount: number; comple
 }
 
 export const useProjectStore = create<ProjectStoreState & ProjectStoreActions>()(
-  immer((set) => ({
+  immer(set => ({
     projects: {},
     activeProjectId: null,
     connections: {},
     projectStats: loadPersistedStats(),
 
-    setActiveProject: (projectId) =>
+    setActiveProject: projectId =>
       set(state => {
         state.activeProjectId = projectId;
       }),
@@ -149,7 +149,7 @@ export const useProjectStore = create<ProjectStoreState & ProjectStoreActions>()
         Object.assign(state.connections[projectId], connectionState);
       }),
 
-    clearProject: (projectId) =>
+    clearProject: projectId =>
       set(state => {
         delete state.projects[projectId];
         delete state.connections[projectId];
@@ -162,7 +162,10 @@ export const useProjectStore = create<ProjectStoreState & ProjectStoreActions>()
 
 // Selectors (pure functions, not hooks -- can be used with useProjectStore(selector))
 
-export function selectProject(state: ProjectStoreState, projectId: string): ProjectData | undefined {
+export function selectProject(
+  state: ProjectStoreState,
+  projectId: string,
+): ProjectData | undefined {
   return state.projects[projectId];
 }
 
@@ -171,16 +174,24 @@ export function selectActiveProject(state: ProjectStoreState): ProjectData | nul
   return state.projects[state.activeProjectId] || null;
 }
 
-export function selectConnectionState(state: ProjectStoreState, projectId: string): ConnectionState {
-  return state.connections[projectId] || {
-    connected: false,
-    connecting: false,
-    synced: false,
-    error: null,
-  };
+export function selectConnectionState(
+  state: ProjectStoreState,
+  projectId: string,
+): ConnectionState {
+  return (
+    state.connections[projectId] || {
+      connected: false,
+      connecting: false,
+      synced: false,
+      error: null,
+    }
+  );
 }
 
-export function selectProjectStats(state: ProjectStoreState, projectId: string): ProjectStats | null {
+export function selectProjectStats(
+  state: ProjectStoreState,
+  projectId: string,
+): ProjectStats | null {
   return state.projectStats[projectId] || null;
 }
 
@@ -196,7 +207,11 @@ export function selectMeta(state: ProjectStoreState, projectId: string): Record<
   return state.projects[projectId]?.meta || {};
 }
 
-export function selectStudy(state: ProjectStoreState, projectId: string, studyId: string): StudyInfo | null {
+export function selectStudy(
+  state: ProjectStoreState,
+  projectId: string,
+  studyId: string,
+): StudyInfo | null {
   const studies = state.projects[projectId]?.studies;
   if (!studies) return null;
   return studies.find(s => s.id === studyId) || null;
@@ -213,12 +228,20 @@ export function selectChecklist(
   return study.checklists.find(c => c.id === checklistId) || null;
 }
 
-export function selectStudyPdfs(state: ProjectStoreState, projectId: string, studyId: string): PdfInfo[] {
+export function selectStudyPdfs(
+  state: ProjectStoreState,
+  projectId: string,
+  studyId: string,
+): PdfInfo[] {
   const study = selectStudy(state, projectId, studyId);
   return study?.pdfs || [];
 }
 
-export function selectPrimaryPdf(state: ProjectStoreState, projectId: string, studyId: string): PdfInfo | null {
+export function selectPrimaryPdf(
+  state: ProjectStoreState,
+  projectId: string,
+  studyId: string,
+): PdfInfo | null {
   const pdfs = selectStudyPdfs(state, projectId, studyId);
   return pdfs.find(pdf => pdf.tag === 'primary') || null;
 }

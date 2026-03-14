@@ -65,17 +65,17 @@ Primary UI library is **shadcn/ui** (built on Radix UI primitives, Tailwind CSS,
 
 ### Library Swaps
 
-| SolidJS                       | React                        | API similarity                         |
-| ----------------------------- | ---------------------------- | -------------------------------------- |
-| `@tanstack/solid-query`       | `@tanstack/react-query`      | Near-identical                         |
-| `@tanstack/solid-table`       | `@tanstack/react-table`      | Near-identical                         |
-| `@ark-ui/solid`               | `shadcn/ui` + `@ark-ui/react`| shadcn for most; Ark for editable, file-upload, steps, qr-code |
-| `solid-icons`                 | `react-icons`                | Same icons, different imports          |
-| `solid-chartjs`               | `react-chartjs-2`            | Same Chart.js underneath               |
-| `@sentry/solid`               | `@sentry/react`              | Direct swap                            |
-| `@solid-primitives/scheduled` | Custom hook or `usehooks-ts` | Used in 7 files for debounce/throttle  |
-| `better-auth/solid`           | `better-auth/react`          | `createAuthClient` + `useSession` swap |
-| `@solidjs/router`             | `@tanstack/react-router`     | Already in landing                     |
+| SolidJS                       | React                         | API similarity                                                 |
+| ----------------------------- | ----------------------------- | -------------------------------------------------------------- |
+| `@tanstack/solid-query`       | `@tanstack/react-query`       | Near-identical                                                 |
+| `@tanstack/solid-table`       | `@tanstack/react-table`       | Near-identical                                                 |
+| `@ark-ui/solid`               | `shadcn/ui` + `@ark-ui/react` | shadcn for most; Ark for editable, file-upload, steps, qr-code |
+| `solid-icons`                 | `react-icons`                 | Same icons, different imports                                  |
+| `solid-chartjs`               | `react-chartjs-2`             | Same Chart.js underneath                                       |
+| `@sentry/solid`               | `@sentry/react`               | Direct swap                                                    |
+| `@solid-primitives/scheduled` | Custom hook or `usehooks-ts`  | Used in 7 files for debounce/throttle                          |
+| `better-auth/solid`           | `better-auth/react`           | `createAuthClient` + `useSession` swap                         |
+| `@solidjs/router`             | `@tanstack/react-router`      | Already in landing                                             |
 
 ---
 
@@ -211,6 +211,7 @@ Using `@/` prefix for everything (Option 1). Added explicit `resolve.alias` in `
 ### 0.3 Copy framework-agnostic code into landing -- DONE
 
 Copied 37+ files:
+
 - `lib/` -- 24 utility files + 11 test files (all import aliases updated to `@/` prefix)
 - `constants/` -- 2 files (errors.js, checklist-status.js)
 - `config/` -- api.js, google.js copied; sentry.js rewritten for @sentry/react
@@ -237,6 +238,7 @@ Everything else depends on this layer. Build it first, test it standalone.
 > **Implementation notes (2026-03-14):**
 > All stores, auth, and layout routes are implemented and verified (build + typecheck + lint all pass).
 > Key files created:
+>
 > - `stores/projectStore.ts` -- Zustand + immer, with exported selector functions
 > - `stores/pdfPreviewStore.ts` -- simple Zustand store
 > - `stores/localChecklistsStore.ts` -- Zustand + Dexie, auto-initializes on module load
@@ -251,6 +253,7 @@ Everything else depends on this layer. Build it first, test it standalone.
 > - `routes/_app/dashboard.tsx`, `routes/_auth/signin.tsx`, `routes/_app/_protected/settings.tsx` -- placeholders
 >
 > **Discovered during implementation:**
+>
 > - `vite-tsconfig-paths` does not resolve `@/` aliases in the Cloudflare SSR build environment. Fixed with explicit `resolve.alias` in vite.config.ts.
 > - `apiFetch.delete()` only accepts 2 args `(path, options)` not 3. The original SolidJS adminStore had 3-arg calls that silently dropped the body. Fixed in the React version.
 > - ESLint `no-unused-vars` rule does not understand TypeScript interface method parameters. Suppressed with eslint-disable blocks around interface definitions.
@@ -432,44 +435,44 @@ The existing `cn.ts` (copied from web in Phase 0) will be replaced by shadcn's v
 
 Use `npx shadcn@latest add <component>` for each. These replace the corresponding `@ark-ui/solid` wrappers:
 
-| SolidJS (Ark UI)       | shadcn component         | Notes                                          |
-| ---------------------- | ------------------------ | ---------------------------------------------- |
-| button.tsx             | `button`                 | Use shadcn default variants and design tokens  |
-| dialog.tsx             | `dialog`                 | Different composition API (no Positioner/Backdrop) |
-| alert-dialog.tsx       | `alert-dialog`           | Add custom AlertDialogIcon + AlertDialogAction extensions |
-| select.tsx             | `select`                 | Different API; SimpleSelect convenience wrapper deferred to Phase 4 |
-| tabs.tsx               | `tabs`                   | No animated TabsIndicator (simpler approach)   |
-| menu.tsx               | `dropdown-menu`          | Ark Menu -> Radix DropdownMenu                 |
-| tooltip.tsx            | `tooltip`                | Direct replacement                             |
-| popover.tsx            | `popover`                | Direct replacement                             |
-| checkbox.tsx           | `checkbox`               | Direct replacement                             |
-| switch.tsx             | `switch`                 | Direct replacement                             |
-| collapsible.tsx        | `collapsible`            | Direct replacement                             |
-| progress.tsx           | `progress`               | Direct replacement                             |
-| avatar.tsx             | `avatar`                 | Add UserAvatar + getInitials convenience wrapper |
-| toast.tsx              | `sonner`                 | Replace console stub with Sonner; add showToast adapter |
-| pin-input.tsx          | `input-otp`              | Similar API, different component name           |
-| (new)                  | `input`                  | Base input component (needed by password-input and forms) |
-| (new)                  | `label`                  | Form labels                                    |
+| SolidJS (Ark UI) | shadcn component | Notes                                                               |
+| ---------------- | ---------------- | ------------------------------------------------------------------- |
+| button.tsx       | `button`         | Use shadcn default variants and design tokens                       |
+| dialog.tsx       | `dialog`         | Different composition API (no Positioner/Backdrop)                  |
+| alert-dialog.tsx | `alert-dialog`   | Add custom AlertDialogIcon + AlertDialogAction extensions           |
+| select.tsx       | `select`         | Different API; SimpleSelect convenience wrapper deferred to Phase 4 |
+| tabs.tsx         | `tabs`           | No animated TabsIndicator (simpler approach)                        |
+| menu.tsx         | `dropdown-menu`  | Ark Menu -> Radix DropdownMenu                                      |
+| tooltip.tsx      | `tooltip`        | Direct replacement                                                  |
+| popover.tsx      | `popover`        | Direct replacement                                                  |
+| checkbox.tsx     | `checkbox`       | Direct replacement                                                  |
+| switch.tsx       | `switch`         | Direct replacement                                                  |
+| collapsible.tsx  | `collapsible`    | Direct replacement                                                  |
+| progress.tsx     | `progress`       | Direct replacement                                                  |
+| avatar.tsx       | `avatar`         | Add UserAvatar + getInitials convenience wrapper                    |
+| toast.tsx        | `sonner`         | Replace console stub with Sonner; add showToast adapter             |
+| pin-input.tsx    | `input-otp`      | Similar API, different component name                               |
+| (new)            | `input`          | Base input component (needed by password-input and forms)           |
+| (new)            | `label`          | Form labels                                                         |
 
 ### 2.2 Ark UI components (no shadcn equivalent)
 
 These stay on `@ark-ui/react` with custom styled wrappers:
 
-| Component        | Notes                                                   |
-| ---------------- | ------------------------------------------------------- |
-| editable.tsx     | Inline text editing -- no Radix/shadcn equivalent       |
-| file-upload.tsx  | Drag-and-drop file upload with progress                 |
-| steps.tsx        | Multi-step wizard UI                                    |
-| qr-code.tsx      | QR code generation for 2FA setup                        |
+| Component          | Notes                                                            |
+| ------------------ | ---------------------------------------------------------------- |
+| editable.tsx       | Inline text editing -- no Radix/shadcn equivalent                |
+| file-upload.tsx    | Drag-and-drop file upload with progress                          |
+| steps.tsx          | Multi-step wizard UI                                             |
+| qr-code.tsx        | QR code generation for 2FA setup                                 |
 | password-input.tsx | Visibility toggle with full a11y -- @ark-ui/react/password-input |
 
 ### 2.3 Custom components (no library needed)
 
-| Component          | Approach                                                  |
-| ------------------ | --------------------------------------------------------- |
-| spinner.tsx         | Pure Tailwind `animate-spin` div with CVA variants (sm/md/lg/xl, default/white/gray) |
-| flip-number.tsx     | Already ported to React in landing package (uses countup.js). Move to components/ui/ |
+| Component       | Approach                                                                             |
+| --------------- | ------------------------------------------------------------------------------------ |
+| spinner.tsx     | Pure Tailwind `animate-spin` div with CVA variants (sm/md/lg/xl, default/white/gray) |
+| flip-number.tsx | Already ported to React in landing package (uses countup.js). Move to components/ui/ |
 
 ### 2.4 Icon migration (this phase only)
 
@@ -480,6 +483,7 @@ Key mapping: `solid-icons/fi` -> `react-icons/fi` (same names). `solid-icons/bi`
 **Checkpoint: all UI components installed, build + typecheck + lint pass, shadcn design tokens active.**
 
 > **Implementation notes (2026-03-14):**
+>
 > - shadcn/ui initialized with `radix-nova` style, neutral base color, CSS variables enabled
 > - 18 shadcn components installed via CLI: button, dialog, alert-dialog, select, tabs, dropdown-menu, tooltip, popover, checkbox, switch, collapsible, progress, avatar, sonner, input-otp, input, label
 > - shadcn's `cn()` utility at `src/lib/utils.ts` replaces the old copied `cn.ts`
@@ -578,6 +582,7 @@ Start simple, build confidence, tackle complex last. Each route becomes a file i
 ### 4.1 Auth pages -- COMPLETED (2026-03-14)
 
 All 5 auth pages migrated to React and serving in production:
+
 - `_auth/signin.tsx` -- password/magic-link tab animation, 2FA inline, OAuth (Google/ORCID)
 - `_auth/signup.tsx` -- OAuth + magic link, invitation/plan capture from URL
 - `_auth/check-email.tsx` -- email verification polling, visibility change detection
@@ -585,12 +590,14 @@ All 5 auth pages migrated to React and serving in production:
 - `_auth/complete-profile.tsx` -- 3-step wizard (name/title, institution, persona), OAuth name autofill, invitation acceptance, plan redirect
 
 Supporting components created:
+
 - `components/auth/` -- ErrorMessage, AuthButtons, SocialAuthButtons, LastLoginHint, StrengthIndicator, TwoFactorVerify, MagicLinkForm, RoleSelector
 - `hooks/useOAuthError.ts` -- OAuth error URL cleanup
 - `hooks/useBfcacheReset.ts` -- shared bfcache loading state reset
 - `api/billing.js` -- billing API (copied, framework-agnostic)
 
 Key changes:
+
 - `server-entry.ts` -- auth routes removed from SPA_ROUTE_PREFIXES (React serves them)
 - `_auth.tsx` layout -- guest guard with exemptions for /reset-password, /complete-profile, /check-email
 - `__root.tsx` -- providers (QueryClientProvider, AuthProvider, Toaster) hoisted here
@@ -756,15 +763,15 @@ Key changes:
 
 ## Estimated Effort
 
-| Phase                | Effort         | Can parallelize?               | Status                |
-| -------------------- | -------------- | ------------------------------ | --------------------- |
-| Phase 0: Preparation | 0.5 days       | --                             | DONE (2026-03-14)     |
-| Phase 1: Foundation  | 3-4 days       | --                             | DONE (2026-03-14)     |
-| Phase 2: UI Library  | 2 days         | Yes (with Phase 3)             | DONE (2026-03-14)     |
-| Phase 3: Primitives  | 3-4 days       | Yes (with Phase 2)             | DONE (2026-03-14)     |
-| Phase 4: Pages       | 5-7 days       | Partially (independent routes) | 4.1 auth DONE         |
-| Phase 5: Tests       | 2 days         | Yes (with Phase 4)             | Not started           |
-| Phase 6: Cleanup     | 0.5 days       | --                             | Not started           |
+| Phase                | Effort         | Can parallelize?               | Status                    |
+| -------------------- | -------------- | ------------------------------ | ------------------------- |
+| Phase 0: Preparation | 0.5 days       | --                             | DONE (2026-03-14)         |
+| Phase 1: Foundation  | 3-4 days       | --                             | DONE (2026-03-14)         |
+| Phase 2: UI Library  | 2 days         | Yes (with Phase 3)             | DONE (2026-03-14)         |
+| Phase 3: Primitives  | 3-4 days       | Yes (with Phase 2)             | DONE (2026-03-14)         |
+| Phase 4: Pages       | 5-7 days       | Partially (independent routes) | 4.1 auth DONE             |
+| Phase 5: Tests       | 2 days         | Yes (with Phase 4)             | Not started               |
+| Phase 6: Cleanup     | 0.5 days       | --                             | Not started               |
 | **Total**            | **~2-3 weeks** |                                | **Phases 0-2 + 4.1 done** |
 
 Phase 0 is shorter since landing already exists. Claude Code can handle the mechanical parts (UI components, query hooks, icon swaps, simple page conversions) to significantly speed up Phases 2 and 4.

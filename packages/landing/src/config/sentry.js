@@ -24,9 +24,7 @@ export function initSentry() {
     dsn: SENTRY_DSN,
     environment: ENVIRONMENT,
 
-    integrations: [
-      Sentry.browserTracingIntegration(),
-    ],
+    integrations: [Sentry.browserTracingIntegration()],
 
     // Capture 100% of errors in dev, sample in production
     tracesSampleRate: ENVIRONMENT === 'production' ? 0.1 : 1.0,

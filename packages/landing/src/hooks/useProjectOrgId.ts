@@ -9,7 +9,7 @@ import { queryKeys } from '@/lib/queryKeys.js';
 
 export function useProjectOrgId(projectId: string | null | undefined): string | null {
   const queryClient = useQueryClient();
-  const project = useProjectStore(state => projectId ? state.projects[projectId] : undefined);
+  const project = useProjectStore(state => (projectId ? state.projects[projectId] : undefined));
 
   return useMemo(() => {
     if (!projectId) return null;
@@ -20,7 +20,9 @@ export function useProjectOrgId(projectId: string | null | undefined): string | 
     }
 
     // Try project list query cache
-    const projectsList = queryClient.getQueryData<Array<{ id: string; orgId?: string }>>(queryKeys.projects.all);
+    const projectsList = queryClient.getQueryData<Array<{ id: string; orgId?: string }>>(
+      queryKeys.projects.all,
+    );
     if (Array.isArray(projectsList)) {
       const found = projectsList.find(p => p.id === projectId);
       if (found?.orgId) return found.orgId;

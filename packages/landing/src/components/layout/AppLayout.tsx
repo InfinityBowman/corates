@@ -31,7 +31,8 @@ export function AppLayout() {
   const isImpersonating = useAdminStore(s => s.isImpersonating);
 
   // Routes that should NOT show the main sidebar
-  const shouldHideSidebar = location.pathname.startsWith('/admin') || location.pathname.startsWith('/settings');
+  const shouldHideSidebar =
+    location.pathname.startsWith('/admin') || location.pathname.startsWith('/settings');
 
   // Desktop sidebar mode with localStorage persistence
   const [desktopSidebarMode, setDesktopSidebarMode] = useState<'expanded' | 'collapsed'>(() => {
@@ -72,7 +73,9 @@ export function AppLayout() {
   const closeMobileSidebar = useCallback(() => setMobileSidebarOpen(false), []);
 
   return (
-    <div className={`flex h-screen flex-col overflow-hidden bg-background ${isImpersonating ? 'pt-10' : ''}`}>
+    <div
+      className={`bg-background flex h-screen flex-col overflow-hidden ${isImpersonating ? 'pt-10' : ''}`}
+    >
       {isImpersonating && (
         <Suspense>
           <ImpersonationBanner />
@@ -84,7 +87,7 @@ export function AppLayout() {
         toggleMobileSidebar={shouldHideSidebar ? undefined : toggleMobileSidebar}
       />
 
-      <div className="flex flex-1 overflow-hidden">
+      <div className='flex flex-1 overflow-hidden'>
         {!shouldHideSidebar && (
           <Sidebar
             desktopMode={desktopSidebarMode}
@@ -96,7 +99,7 @@ export function AppLayout() {
           />
         )}
 
-        <main className="flex-1 overflow-auto text-foreground">
+        <main className='text-foreground flex-1 overflow-auto'>
           <Outlet />
         </main>
       </div>

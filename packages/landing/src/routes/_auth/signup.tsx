@@ -82,49 +82,57 @@ function SignUpPage() {
   }
 
   return (
-    <div className="relative w-full max-w-md rounded-xl border border-border bg-card p-6 shadow-2xl sm:max-w-xl sm:rounded-3xl sm:p-12">
-      <a href="/" className="absolute left-4 top-4 sm:left-6 sm:top-6">
-        <img src="/logo.svg" alt="CoRATES" className="h-6 w-auto sm:h-7" />
+    <div className='border-border bg-card relative w-full max-w-md rounded-xl border p-6 shadow-2xl sm:max-w-xl sm:rounded-3xl sm:p-12'>
+      <a href='/' className='absolute top-4 left-4 sm:top-6 sm:left-6'>
+        <img src='/logo.svg' alt='CoRATES' className='h-6 w-auto sm:h-7' />
       </a>
 
-      <div className="mb-4 text-center sm:mb-6">
-        <h2 className="mb-1 text-xl font-bold text-foreground sm:mb-2 sm:text-2xl">
+      <div className='mb-4 text-center sm:mb-6'>
+        <h2 className='text-foreground mb-1 text-xl font-bold sm:mb-2 sm:text-2xl'>
           Create an Account
         </h2>
-        <p className="text-xs text-muted-foreground sm:text-sm">Get started with CoRATES</p>
+        <p className='text-muted-foreground text-xs sm:text-sm'>Get started with CoRATES</p>
       </div>
 
       <SocialAuthContainer buttonCount={socialProviderCount}>
-        <GoogleButton loading={googleLoading} onClick={handleGoogleSignUp} iconOnly={socialProviderCount > 1} />
-        <OrcidButton loading={orcidLoading} onClick={handleOrcidSignUp} iconOnly={socialProviderCount > 1} />
+        <GoogleButton
+          loading={googleLoading}
+          onClick={handleGoogleSignUp}
+          iconOnly={socialProviderCount > 1}
+        />
+        <OrcidButton
+          loading={orcidLoading}
+          onClick={handleOrcidSignUp}
+          iconOnly={socialProviderCount > 1}
+        />
       </SocialAuthContainer>
 
       <AuthDivider />
 
-      <ErrorMessage error={displayError} id="signup-error" />
+      <ErrorMessage error={displayError} id='signup-error' />
 
       <MagicLinkForm
-        callbackPath="/complete-profile"
-        buttonText="Continue with Email"
+        callbackPath='/complete-profile'
+        buttonText='Continue with Email'
         description="We'll send you a link to create your account - no password needed."
       />
 
-      <p className="mt-6 text-center text-xs text-muted-foreground/70">
+      <p className='text-muted-foreground/70 mt-6 text-center text-xs'>
         By continuing, you agree to our{' '}
-        <a href="/terms" className="text-primary hover:underline">
+        <a href='/terms' className='text-primary hover:underline'>
           Terms of Service
         </a>{' '}
         and{' '}
-        <a href="/privacy" className="text-primary hover:underline">
+        <a href='/privacy' className='text-primary hover:underline'>
           Privacy Policy
         </a>
         .
       </p>
 
-      <div className="mt-4 border-t border-border pt-4 text-center text-xs text-muted-foreground sm:text-sm">
+      <div className='border-border text-muted-foreground mt-4 border-t pt-4 text-center text-xs sm:text-sm'>
         Already have an account?{' '}
         <AuthLink
-          href="/signin"
+          href='/signin'
           onClick={e => {
             e.preventDefault();
             navigate({ to: '/signin' });

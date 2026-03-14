@@ -14,7 +14,12 @@ interface ChecklistTreeItemProps {
   currentPath: string;
 }
 
-export function ChecklistTreeItem({ checklist, projectId, studyId, currentPath }: ChecklistTreeItemProps) {
+export function ChecklistTreeItem({
+  checklist,
+  projectId,
+  studyId,
+  currentPath,
+}: ChecklistTreeItemProps) {
   const navigate = useNavigate();
   const checklistPath = `/projects/${projectId}/studies/${studyId}/checklists/${checklist.id}`;
   const isSelected = currentPath === checklistPath;
@@ -26,12 +31,12 @@ export function ChecklistTreeItem({ checklist, projectId, studyId, currentPath }
         isSelected ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted'
       }`}
     >
-      <FileCheck2Icon className="h-3 w-3 shrink-0" />
-      <span className="truncate text-2xs font-medium">
+      <FileCheck2Icon className='h-3 w-3 shrink-0' />
+      <span className='text-2xs truncate font-medium'>
         {(getChecklistMetadata(checklist.type) as { name: string }).name}
       </span>
       {checklist.status && (
-        <span className={`rounded px-1 py-0.5 text-3xs ${getStatusStyle(checklist.status)}`}>
+        <span className={`text-3xs rounded px-1 py-0.5 ${getStatusStyle(checklist.status)}`}>
           {getStatusLabel(checklist.status)}
         </span>
       )}

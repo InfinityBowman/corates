@@ -29,24 +29,24 @@ export function LocalChecklistItem({ checklist, isSelected, onDelete }: LocalChe
     >
       <button
         onClick={() => navigate({ to: `/checklist/${checklist.id}` as string })}
-        className="flex min-w-0 flex-1 items-center gap-2 px-3 py-2 text-left focus:outline-none"
+        className='flex min-w-0 flex-1 items-center gap-2 px-3 py-2 text-left focus:outline-none'
       >
-        <FileCheck2Icon className="h-4 w-4 shrink-0 text-muted-foreground" />
-        <div className="min-w-0 flex-1">
-          <div className="truncate text-sm font-medium">
+        <FileCheck2Icon className='text-muted-foreground h-4 w-4 shrink-0' />
+        <div className='min-w-0 flex-1'>
+          <div className='truncate text-sm font-medium'>
             {checklist.name || 'Untitled Checklist'}
           </div>
-          <div className="mt-0.5 text-2xs text-muted-foreground">
+          <div className='text-2xs text-muted-foreground mt-0.5'>
             {formatDate(checklist.updatedAt || checklist.createdAt)}
           </div>
         </div>
       </button>
       <button
         onClick={e => onDelete(e, checklist.id)}
-        className="mr-1 rounded p-1.5 text-muted-foreground/70 opacity-0 transition-colors hover:bg-red-50 hover:text-red-600 focus:opacity-100 focus:outline-none focus:ring-2 focus:ring-primary group-hover:opacity-100"
-        aria-label="Delete checklist"
+        className='text-muted-foreground/70 focus:ring-primary mr-1 rounded p-1.5 opacity-0 transition-colors group-hover:opacity-100 hover:bg-red-50 hover:text-red-600 focus:opacity-100 focus:ring-2 focus:outline-none'
+        aria-label='Delete checklist'
       >
-        <TrashIcon className="h-4 w-4" />
+        <TrashIcon className='h-4 w-4' />
       </button>
     </div>
   );

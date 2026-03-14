@@ -19,51 +19,53 @@ export function useMembershipSync() {
   const user = useAuthStore(selectUser);
   const isLoggedIn = useAuthStore(selectIsLoggedIn);
 
-  const handleNotification = useCallback((notification: NotificationData) => {
-    const notificationType = notification.type;
-    const userId = user?.id;
+  const handleNotification = useCallback(
+    (notification: NotificationData) => {
+      const notificationType = notification.type;
+      const userId = user?.id;
 
-    // Project membership changes
-    if (
-      notificationType === 'project-membership-added' ||
-      notificationType === 'project-membership-removed' ||
-      notificationType === 'project-membership-updated'
-    ) {
-      queryClient.invalidateQueries({ queryKey: queryKeys.projects.all });
-      if (userId) {
-        queryClient.invalidateQueries({ queryKey: queryKeys.projects.list(userId) });
+      // Project membership changes
+      if (
+        notificationType === 'project-membership-added' ||
+        notificationType === 'project-membership-removed' ||
+        notificationType === 'project-membership-updated'
+      ) {
+        queryClient.invalidateQueries({ queryKey: queryKeys.projects.all });
+        if (userId) {
+          queryClient.invalidateQueries({ queryKey: queryKeys.projects.list(userId) });
+        }
+        if (notification.orgId) {
+          queryClient.invalidateQueries({ queryKey: queryKeys.projects.byOrg(notification.orgId) });
+        }
       }
-      if (notification.orgId) {
-        queryClient.invalidateQueries({ queryKey: queryKeys.projects.byOrg(notification.orgId) });
+
+      // Subscription changes (from Stripe webhooks)
+      if (
+        notificationType === 'subscription:updated' ||
+        notificationType === 'subscription:canceled'
+      ) {
+        queryClient.invalidateQueries({ queryKey: queryKeys.subscription.current });
+        queryClient.invalidateQueries({ queryKey: queryKeys.billing.invoices });
       }
-    }
 
-    // Subscription changes (from Stripe webhooks)
-    if (
-      notificationType === 'subscription:updated' ||
-      notificationType === 'subscription:canceled'
-    ) {
-      queryClient.invalidateQueries({ queryKey: queryKeys.subscription.current });
-      queryClient.invalidateQueries({ queryKey: queryKeys.billing.invoices });
-    }
-
-    // Org membership events
-    if (
-      notificationType === 'org:member-added' ||
-      notificationType === 'org:member-removed' ||
-      notificationType === 'org:role-changed'
-    ) {
-      if (notification.orgId) {
-        queryClient.invalidateQueries({ queryKey: queryKeys.orgs.detail(notification.orgId) });
+      // Org membership events
+      if (
+        notificationType === 'org:member-added' ||
+        notificationType === 'org:member-removed' ||
+        notificationType === 'org:role-changed'
+      ) {
+        if (notification.orgId) {
+          queryClient.invalidateQueries({ queryKey: queryKeys.orgs.detail(notification.orgId) });
+        }
+        queryClient.invalidateQueries({ queryKey: queryKeys.orgs.list });
       }
-      queryClient.invalidateQueries({ queryKey: queryKeys.orgs.list });
-    }
-  }, [user?.id]);
-
-  const { connected } = useNotifications(
-    isLoggedIn ? user?.id : null,
-    { onNotification: handleNotification },
+    },
+    [user?.id],
   );
+
+  const { connected } = useNotifications(isLoggedIn ? user?.id : null, {
+    onNotification: handleNotification,
+  });
 
   return { connected };
 }

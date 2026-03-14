@@ -33,7 +33,7 @@ interface PdfPreviewActions {
 }
 /* eslint-enable no-unused-vars */
 
-export const usePdfPreviewStore = create<PdfPreviewState & PdfPreviewActions>()((set) => ({
+export const usePdfPreviewStore = create<PdfPreviewState & PdfPreviewActions>()(set => ({
   isOpen: false,
   projectId: null,
   studyId: null,
@@ -68,9 +68,7 @@ export const usePdfPreviewStore = create<PdfPreviewState & PdfPreviewActions>()(
     }, 300);
   },
 
-  setData: (data) =>
-    set({ pdfData: data, loading: false }),
+  setData: data => set({ pdfData: data, loading: false }),
 
-  setError: (errorMsg) =>
-    set({ error: errorMsg, loading: false }),
+  setError: errorMsg => set({ error: errorMsg, loading: false }),
 }));

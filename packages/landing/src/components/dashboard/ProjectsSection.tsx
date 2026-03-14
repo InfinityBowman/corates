@@ -55,9 +55,11 @@ export function ProjectsSection({
   const projectCount = projects?.length || 0;
 
   // Local-first: assume user can create unless we know they can't
-  const canCreateProject = subscriptionLoading
-    ? true
-    : hasEntitlement('project.create') && hasQuota('projects.max', { used: projectCount, requested: 1 });
+  const canCreateProject =
+    subscriptionLoading ? true : (
+      hasEntitlement('project.create') &&
+      hasQuota('projects.max', { used: projectCount, requested: 1 })
+    );
 
   const handleCreateClick = useCallback(() => {
     if (onCreateClick) {
@@ -68,9 +70,12 @@ export function ProjectsSection({
     }
   }, [onCreateClick]);
 
-  const openProject = useCallback((projectId: string) => {
-    navigate({ to: `/projects/${projectId}` as string });
-  }, [navigate]);
+  const openProject = useCallback(
+    (projectId: string) => {
+      navigate({ to: `/projects/${projectId}` as string });
+    },
+    [navigate],
+  );
 
   const handleDeleteProject = useCallback((targetProjectId: string) => {
     setPendingDeleteId(targetProjectId);
@@ -78,7 +83,10 @@ export function ProjectsSection({
   }, []);
 
   const confirmDeleteProject = useCallback(async () => {
-    if (!pendingDeleteId) { setDeleteDialogOpen(false); return; }
+    if (!pendingDeleteId) {
+      setDeleteDialogOpen(false);
+      return;
+    }
 
     const project = projects?.find((p: { id: string }) => p.id === pendingDeleteId);
     if (!project?.orgId) {
@@ -112,18 +120,18 @@ export function ProjectsSection({
     <section style={animation.fadeUp(200)}>
       {/* Header */}
       {showHeader && (
-        <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+        <div className='mb-4 flex items-center justify-between'>
+          <h2 className='text-muted-foreground text-sm font-semibold tracking-wide uppercase'>
             Your Projects
           </h2>
           {canCreateProject && hasProjects && (
             <button
-              type="button"
+              type='button'
               onClick={handleCreateClick}
               disabled={!isOnline}
-              className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium text-primary transition-all hover:bg-primary/5 hover:scale-105 hover:shadow-sm active:scale-100 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:scale-100"
+              className='text-primary hover:bg-primary/5 flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition-all hover:scale-105 hover:shadow-sm active:scale-100 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:scale-100'
             >
-              <PlusIcon className="h-4 w-4" />
+              <PlusIcon className='h-4 w-4' />
               New Project
             </button>
           )}
@@ -131,46 +139,50 @@ export function ProjectsSection({
       )}
 
       {/* Projects grid */}
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+      <div className='grid gap-4 sm:grid-cols-2 xl:grid-cols-3'>
         {!hasProjects && (
-          <div className="col-span-full flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-border bg-muted/50 px-6 py-16">
-            <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-secondary">
-              <FolderIcon className="h-8 w-8 text-muted-foreground/70" />
+          <div className='border-border bg-muted/50 col-span-full flex flex-col items-center justify-center rounded-2xl border-2 border-dashed px-6 py-16'>
+            <div className='bg-secondary mb-4 flex h-16 w-16 items-center justify-center rounded-2xl'>
+              <FolderIcon className='text-muted-foreground/70 h-8 w-8' />
             </div>
-            <h3 className="mb-2 text-lg font-semibold text-secondary-foreground">No projects yet</h3>
-            <p className="mb-6 max-w-sm text-center text-sm text-muted-foreground">
+            <h3 className='text-secondary-foreground mb-2 text-lg font-semibold'>
+              No projects yet
+            </h3>
+            <p className='text-muted-foreground mb-6 max-w-sm text-center text-sm'>
               Create your first project to start collaborating on evidence synthesis with your team.
             </p>
             {canCreateProject && (
               <button
-                type="button"
+                type='button'
                 onClick={handleCreateClick}
                 disabled={!isOnline}
-                className="flex items-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground shadow-lg transition-all hover:bg-primary/90 hover:shadow-xl disabled:cursor-not-allowed disabled:opacity-50"
+                className='bg-primary text-primary-foreground hover:bg-primary/90 flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-medium shadow-lg transition-all hover:shadow-xl disabled:cursor-not-allowed disabled:opacity-50'
               >
-                <PlusIcon className="h-4 w-4" />
+                <PlusIcon className='h-4 w-4' />
                 Create First Project
               </button>
             )}
           </div>
         )}
 
-        {(projects as Array<{ id: string; name: string; [key: string]: unknown }>)?.map((project, index) => (
-          <ProjectCard
-            key={project.id}
-            project={project as any}
-            onOpen={openProject}
-            onDelete={handleDeleteProject}
-            style={animation.statRise(index * 50)}
-          />
-        ))}
+        {(projects as Array<{ id: string; name: string; [key: string]: unknown }>)?.map(
+          (project, index) => (
+            <ProjectCard
+              key={project.id}
+              project={project as any}
+              onOpen={openProject}
+              onDelete={handleDeleteProject}
+              style={animation.statRise(index * 50)}
+            />
+          ),
+        )}
       </div>
 
       {/* Delete confirmation dialog */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogIcon variant="danger">
+            <AlertDialogIcon variant='danger'>
               <TriangleAlertIcon />
             </AlertDialogIcon>
             <div>
@@ -182,7 +194,11 @@ export function ProjectsSection({
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={deleteLoading}>Cancel</AlertDialogCancel>
-            <AlertDialogAction variant="destructive" disabled={deleteLoading} onClick={confirmDeleteProject}>
+            <AlertDialogAction
+              variant='destructive'
+              disabled={deleteLoading}
+              onClick={confirmDeleteProject}
+            >
               {deleteLoading ? 'Deleting...' : 'Delete Project'}
             </AlertDialogAction>
           </AlertDialogFooter>

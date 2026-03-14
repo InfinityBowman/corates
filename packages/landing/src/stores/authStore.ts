@@ -56,7 +56,11 @@ interface AuthActions {
   setCachedUser: (user: AuthUser | null) => void;
   setCachedAvatarUrl: (url: string | null) => void;
   setAuthError: (error: string | null) => void;
-  setSessionData: (user: AuthUser | null, loading: boolean, refetch: (() => Promise<void>) | null) => void;
+  setSessionData: (
+    user: AuthUser | null,
+    loading: boolean,
+    refetch: (() => Promise<void>) | null,
+  ) => void;
 
   // Auth API methods
   signup: (email: string, password: string, name: string, role?: string | null) => Promise<unknown>;
@@ -157,10 +161,10 @@ export const useAuthStore = create<AuthState & AuthActions>()((set, get) => ({
   sessionLoading: true,
   sessionRefetch: null,
 
-  setOnline: (online) => set({ isOnline: online }),
-  setCachedUser: (user) => set({ cachedUser: user }),
-  setCachedAvatarUrl: (url) => set({ cachedAvatarUrl: url }),
-  setAuthError: (error) => set({ authError: error }),
+  setOnline: online => set({ isOnline: online }),
+  setCachedUser: user => set({ cachedUser: user }),
+  setCachedAvatarUrl: url => set({ cachedAvatarUrl: url }),
+  setAuthError: error => set({ authError: error }),
   setSessionData: (user, loading, refetch) =>
     set({ sessionUser: user, sessionLoading: loading, sessionRefetch: refetch }),
 
@@ -203,7 +207,7 @@ export const useAuthStore = create<AuthState & AuthActions>()((set, get) => ({
     }
   },
 
-  signinWithGoogle: async (callbackPath) => {
+  signinWithGoogle: async callbackPath => {
     try {
       set({ authError: null });
       const path = callbackPath || '/dashboard';
@@ -226,7 +230,7 @@ export const useAuthStore = create<AuthState & AuthActions>()((set, get) => ({
     }
   },
 
-  signinWithOrcid: async (callbackPath) => {
+  signinWithOrcid: async callbackPath => {
     try {
       set({ authError: null });
       const path = callbackPath || '/dashboard';
@@ -281,7 +285,7 @@ export const useAuthStore = create<AuthState & AuthActions>()((set, get) => ({
     }
   },
 
-  updateProfile: async (data) => {
+  updateProfile: async data => {
     try {
       set({ authError: null });
       const { data: updated, error } = await authClient.updateUser(data);
@@ -305,7 +309,7 @@ export const useAuthStore = create<AuthState & AuthActions>()((set, get) => ({
     }
   },
 
-  resetPassword: async (email) => {
+  resetPassword: async email => {
     try {
       set({ authError: null });
       const base = (BASEPATH || '').replace(/\/$/, '');
@@ -331,13 +335,16 @@ export const useAuthStore = create<AuthState & AuthActions>()((set, get) => ({
     }
   },
 
-  resendVerificationEmail: async (email) => {
+  resendVerificationEmail: async email => {
     try {
       set({ authError: null });
       const result = await (authClient as any).sendVerificationEmail?.({ email });
       if (result?.error) throw new Error(result.error.message);
     } catch (authClientErr) {
-      console.warn('Better Auth sendVerificationEmail failed, trying backend:', (authClientErr as Error).message);
+      console.warn(
+        'Better Auth sendVerificationEmail failed, trying backend:',
+        (authClientErr as Error).message,
+      );
       try {
         const response = await fetch('/api/auth/send-verification-email', {
           method: 'POST',
@@ -378,7 +385,7 @@ export const useAuthStore = create<AuthState & AuthActions>()((set, get) => ({
 
   // 2FA
 
-  enableTwoFactor: async (password) => {
+  enableTwoFactor: async password => {
     try {
       set({ authError: null });
       const { data, error } = await authClient.twoFactor.enable({ password });
@@ -390,7 +397,7 @@ export const useAuthStore = create<AuthState & AuthActions>()((set, get) => ({
     }
   },
 
-  verifyTwoFactorSetup: async (code) => {
+  verifyTwoFactorSetup: async code => {
     try {
       set({ authError: null });
       const { data, error } = await authClient.twoFactor.verifyTotp({ code });
@@ -403,7 +410,7 @@ export const useAuthStore = create<AuthState & AuthActions>()((set, get) => ({
     }
   },
 
-  disableTwoFactor: async (password) => {
+  disableTwoFactor: async password => {
     try {
       set({ authError: null });
       const { data, error } = await authClient.twoFactor.disable({ password });
@@ -416,7 +423,7 @@ export const useAuthStore = create<AuthState & AuthActions>()((set, get) => ({
     }
   },
 
-  verifyTwoFactor: async (code) => {
+  verifyTwoFactor: async code => {
     try {
       set({ authError: null });
       const { data, error } = await authClient.twoFactor.verifyTotp({ code });
@@ -441,7 +448,7 @@ export const useAuthStore = create<AuthState & AuthActions>()((set, get) => ({
     }
   },
 
-  revokeSessionByToken: async (token) => {
+  revokeSessionByToken: async token => {
     try {
       await _revokeSession({ token });
     } catch (err) {
@@ -495,7 +502,7 @@ if (typeof window !== 'undefined') {
 
   // Listen for auth changes from other tabs
   if (authChannel) {
-    authChannel.addEventListener('message', (event) => {
+    authChannel.addEventListener('message', event => {
       if (event.data?.type === 'auth-changed') {
         useAuthStore.getState().sessionRefetch?.();
       }

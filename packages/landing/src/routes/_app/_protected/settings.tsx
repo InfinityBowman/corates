@@ -29,7 +29,8 @@ function SettingsLayout() {
     const stored = localStorage.getItem(SIDEBAR_WIDTH_KEY);
     if (stored) {
       const parsed = parseInt(stored, 10);
-      if (!isNaN(parsed) && parsed >= MIN_SIDEBAR_WIDTH && parsed <= MAX_SIDEBAR_WIDTH) return parsed;
+      if (!isNaN(parsed) && parsed >= MIN_SIDEBAR_WIDTH && parsed <= MAX_SIDEBAR_WIDTH)
+        return parsed;
     }
     return DEFAULT_SIDEBAR_WIDTH;
   });
@@ -49,7 +50,7 @@ function SettingsLayout() {
   }, []);
 
   return (
-    <div className="flex h-full">
+    <div className='flex h-full'>
       <SettingsSidebar
         desktopMode={desktopMode}
         mobileOpen={mobileOpen}
@@ -58,7 +59,7 @@ function SettingsLayout() {
         width={width}
         onWidthChange={handleWidthChange}
       />
-      <main className="flex-1 overflow-auto">
+      <main className='flex-1 overflow-auto'>
         <Outlet />
       </main>
     </div>

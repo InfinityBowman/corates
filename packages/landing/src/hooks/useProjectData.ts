@@ -8,7 +8,13 @@
  * when it's mounted (typically in the projects.$projectId layout route).
  */
 
-import { useProjectStore, selectConnectionState, selectStudies, selectMembers, selectMeta } from '@/stores/projectStore';
+import {
+  useProjectStore,
+  selectConnectionState,
+  selectStudies,
+  selectMembers,
+  selectMeta,
+} from '@/stores/projectStore';
 
 export function useProjectData(projectId: string) {
   const studies = useProjectStore(state => selectStudies(state, projectId));

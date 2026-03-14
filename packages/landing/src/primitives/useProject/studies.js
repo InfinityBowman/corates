@@ -178,7 +178,7 @@ export function createStudyOperations(projectId, getYDoc, isSynced) {
       metaMap.set('updatedAt', now);
     }
 
-    const existingMeta = (useProjectStore.getState().projects[projectId]?.meta) || {};
+    const existingMeta = useProjectStore.getState().projects[projectId]?.meta || {};
     useProjectStore.getState().setProjectData(projectId, {
       meta: { ...existingMeta, name: trimmed, updatedAt: now },
     });
@@ -229,7 +229,7 @@ export function createStudyOperations(projectId, getYDoc, isSynced) {
       metaMap.set('updatedAt', now);
     }
 
-    const existingMeta = (useProjectStore.getState().projects[projectId]?.meta) || {};
+    const existingMeta = useProjectStore.getState().projects[projectId]?.meta || {};
     useProjectStore.getState().setProjectData(projectId, {
       meta: { ...existingMeta, description: trimmed || null, updatedAt: now },
     });

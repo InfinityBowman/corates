@@ -25,7 +25,12 @@ import { createAnnotationOperations } from './annotations.js';
 import { createOutcomeOperations } from './outcomes.js';
 import { db, deleteProjectData } from '../db.js';
 
-const DEFAULT_CONNECTION_STATE = { connected: false, connecting: false, synced: false, error: null };
+const DEFAULT_CONNECTION_STATE = {
+  connected: false,
+  connecting: false,
+  synced: false,
+  error: null,
+};
 const EMPTY_ARRAY = [];
 const EMPTY_OBJECT = {};
 
@@ -73,7 +78,11 @@ function releaseConnection(projectId) {
   if (entry.refCount <= 0) {
     // Run any registered cleanup handlers (Dexie update listeners, etc.)
     for (const cleanup of entry._cleanupHandlers) {
-      try { cleanup(); } catch (_) { /* ignore cleanup errors */ }
+      try {
+        cleanup();
+      } catch (_) {
+        /* ignore cleanup errors */
+      }
     }
     entry._cleanupHandlers = [];
 
@@ -95,7 +104,11 @@ export async function cleanupProjectLocalData(projectId) {
   if (connectionRegistry.has(projectId)) {
     const entry = connectionRegistry.get(projectId);
     for (const cleanup of entry._cleanupHandlers) {
-      try { cleanup(); } catch (_) { /* ignore */ }
+      try {
+        cleanup();
+      } catch (_) {
+        /* ignore */
+      }
     }
     entry._cleanupHandlers = [];
     if (entry.connectionManager) entry.connectionManager.destroy();
@@ -170,7 +183,11 @@ export function useProject(projectId) {
     connectionEntry.studyOps = createStudyOperations(projectId, getYDoc, isSynced);
     connectionEntry.checklistOps = createChecklistOperations(projectId, getYDoc, isSynced);
     connectionEntry.pdfOps = createPdfOperations(projectId, getYDoc, isSynced);
-    connectionEntry.reconciliationOps = createReconciliationOperations(projectId, getYDoc, isSynced);
+    connectionEntry.reconciliationOps = createReconciliationOperations(
+      projectId,
+      getYDoc,
+      isSynced,
+    );
     connectionEntry.annotationOps = createAnnotationOperations(projectId, getYDoc, isSynced);
     connectionEntry.outcomeOps = createOutcomeOperations(projectId, getYDoc, isSynced);
 
@@ -304,7 +321,12 @@ export function useProject(projectId) {
   // Reconnect when coming back online
   useEffect(() => {
     const cm = connectionEntryRef.current?.connectionManager;
-    if (isOnline && cm?.getShouldReconnect() && !connectionState.connected && !connectionState.connecting) {
+    if (
+      isOnline &&
+      cm?.getShouldReconnect() &&
+      !connectionState.connected &&
+      !connectionState.connecting
+    ) {
       cm.setShouldReconnect(false);
       cm.reconnect();
     }
@@ -353,10 +375,14 @@ export function useProject(projectId) {
     setPdfAsProtocol: (...args) => getEntry()?.pdfOps?.setPdfAsProtocol(...args),
 
     // Reconciliation operations
-    saveReconciliationProgress: (...args) => getEntry()?.reconciliationOps?.saveReconciliationProgress(...args),
-    getReconciliationProgress: (...args) => getEntry()?.reconciliationOps?.getReconciliationProgress(...args),
-    getAllReconciliationProgress: (...args) => getEntry()?.reconciliationOps?.getAllReconciliationProgress(...args),
-    clearReconciliationProgress: (...args) => getEntry()?.reconciliationOps?.clearReconciliationProgress(...args),
+    saveReconciliationProgress: (...args) =>
+      getEntry()?.reconciliationOps?.saveReconciliationProgress(...args),
+    getReconciliationProgress: (...args) =>
+      getEntry()?.reconciliationOps?.getReconciliationProgress(...args),
+    getAllReconciliationProgress: (...args) =>
+      getEntry()?.reconciliationOps?.getAllReconciliationProgress(...args),
+    clearReconciliationProgress: (...args) =>
+      getEntry()?.reconciliationOps?.clearReconciliationProgress(...args),
 
     // Annotation operations
     addAnnotation: (...args) => getEntry()?.annotationOps?.addAnnotation(...args),
@@ -364,8 +390,10 @@ export function useProject(projectId) {
     updateAnnotation: (...args) => getEntry()?.annotationOps?.updateAnnotation(...args),
     deleteAnnotation: (...args) => getEntry()?.annotationOps?.deleteAnnotation(...args),
     getAnnotations: (...args) => getEntry()?.annotationOps?.getAnnotations(...args),
-    getAllAnnotationsForPdf: (...args) => getEntry()?.annotationOps?.getAllAnnotationsForPdf(...args),
-    clearAnnotationsForChecklist: (...args) => getEntry()?.annotationOps?.clearAnnotationsForChecklist(...args),
+    getAllAnnotationsForPdf: (...args) =>
+      getEntry()?.annotationOps?.getAllAnnotationsForPdf(...args),
+    clearAnnotationsForChecklist: (...args) =>
+      getEntry()?.annotationOps?.clearAnnotationsForChecklist(...args),
     mergeAnnotations: (...args) => getEntry()?.annotationOps?.mergeAnnotations(...args),
 
     // Outcome operations

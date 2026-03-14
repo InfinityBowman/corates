@@ -41,11 +41,11 @@ function ProtectedLayout() {
   }, [isLoading, isLoggedIn, navigate]);
 
   if (isLoading) {
-    return <PageLoader label="Checking authentication..." />;
+    return <PageLoader label='Checking authentication...' />;
   }
 
   if (!isLoggedIn) {
-    return <PageLoader label="Redirecting..." />;
+    return <PageLoader label='Redirecting...' />;
   }
 
   return <Outlet />;

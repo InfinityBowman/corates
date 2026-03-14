@@ -64,7 +64,10 @@ async function fetchProjects(userId: string) {
   return projects;
 }
 
-export function useProjectList(userId: string | null | undefined, options: { enabled?: boolean } = {}) {
+export function useProjectList(
+  userId: string | null | undefined,
+  options: { enabled?: boolean } = {},
+) {
   const query = useQuery({
     queryKey: queryKeys.projects.list(userId),
     queryFn: () => fetchProjects(userId!),

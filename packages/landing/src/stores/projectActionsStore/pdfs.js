@@ -149,7 +149,8 @@ export function createPdfActions(
     }
 
     // Check for duplicate filename before uploading
-    const study = useProjectStore.getState().projects[projectId]?.studies?.find(s => s.id === studyId) || null;
+    const study =
+      useProjectStore.getState().projects[projectId]?.studies?.find(s => s.id === studyId) || null;
     const existingPdf = study?.pdfs?.find(pdf => pdf.fileName === file.name);
     if (existingPdf) {
       throw new Error(`File "${file.name}" already exists. Rename or remove the existing copy.`);
@@ -302,7 +303,8 @@ export function createPdfActions(
 
     if (!studyId || !file || !ops?.addPdfToStudy) return;
 
-    const study = useProjectStore.getState().projects[projectId]?.studies?.find(s => s.id === studyId) || null;
+    const study =
+      useProjectStore.getState().projects[projectId]?.studies?.find(s => s.id === studyId) || null;
     const hasPdfs = study?.pdfs?.length > 0;
     const effectiveTag = !hasPdfs ? 'primary' : tag;
 

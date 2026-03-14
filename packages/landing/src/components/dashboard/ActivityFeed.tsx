@@ -15,10 +15,10 @@ interface Activity {
 }
 
 const ICON_MAP: Record<string, React.ReactNode> = {
-  study: <FileTextIcon className="h-4 w-4" />,
-  project: <FolderIcon className="h-4 w-4" />,
-  complete: <CheckIcon className="h-4 w-4" />,
-  user: <UserIcon className="h-4 w-4" />,
+  study: <FileTextIcon className='h-4 w-4' />,
+  project: <FolderIcon className='h-4 w-4' />,
+  complete: <CheckIcon className='h-4 w-4' />,
+  user: <UserIcon className='h-4 w-4' />,
 };
 
 const BG_MAP: Record<string, string> = {
@@ -30,8 +30,10 @@ const BG_MAP: Record<string, string> = {
 
 function ActivityIcon({ type }: { type: string }) {
   return (
-    <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${BG_MAP[type] || 'bg-secondary text-secondary-foreground'}`}>
-      {ICON_MAP[type] || <ClockIcon className="h-4 w-4" />}
+    <div
+      className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${BG_MAP[type] || 'bg-secondary text-secondary-foreground'}`}
+    >
+      {ICON_MAP[type] || <ClockIcon className='h-4 w-4' />}
     </div>
   );
 }
@@ -48,52 +50,54 @@ export function ActivityFeed({ activities = [], limit = 5, onViewAll }: Activity
   const displayActivities = useMemo(() => activities.slice(0, limit), [activities, limit]);
 
   return (
-    <div className="rounded-xl border border-border/60 bg-card p-5" style={animation.fadeUp(500)}>
-      <div className="mb-2 flex items-center justify-between">
-        <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+    <div className='border-border/60 bg-card rounded-xl border p-5' style={animation.fadeUp(500)}>
+      <div className='mb-2 flex items-center justify-between'>
+        <h3 className='text-muted-foreground text-sm font-semibold tracking-wide uppercase'>
           Recent Activity
         </h3>
         {onViewAll && activities.length > limit && (
           <button
-            type="button"
+            type='button'
             onClick={onViewAll}
-            className="text-xs font-medium text-primary hover:text-primary/80"
+            className='text-primary hover:text-primary/80 text-xs font-medium'
           >
             View all
           </button>
         )}
       </div>
 
-      {displayActivities.length > 0 ? (
-        <div className="divide-y divide-border">
-          {displayActivities.map((activity) => (
-            <div key={`${activity.title}-${activity.timestamp}`} className="flex items-start gap-3 py-3">
+      {displayActivities.length > 0 ?
+        <div className='divide-border divide-y'>
+          {displayActivities.map(activity => (
+            <div
+              key={`${activity.title}-${activity.timestamp}`}
+              className='flex items-start gap-3 py-3'
+            >
               <ActivityIcon type={activity.type} />
-              <div className="min-w-0 flex-1">
-                <p className="text-sm text-secondary-foreground">
-                  <span className="font-medium">{activity.title}</span>
+              <div className='min-w-0 flex-1'>
+                <p className='text-secondary-foreground text-sm'>
+                  <span className='font-medium'>{activity.title}</span>
                   {activity.subtitle && (
-                    <span className="text-muted-foreground"> {activity.subtitle}</span>
+                    <span className='text-muted-foreground'> {activity.subtitle}</span>
                   )}
                 </p>
-                <p className="mt-0.5 text-xs text-muted-foreground/70">
+                <p className='text-muted-foreground/70 mt-0.5 text-xs'>
                   {formatRelativeTime(activity.timestamp)}
                 </p>
               </div>
             </div>
           ))}
         </div>
-      ) : (
-        <div className="py-8 text-center">
-          <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-secondary">
-            <ClockIcon className="h-5 w-5 text-muted-foreground/70" />
+      : <div className='py-8 text-center'>
+          <div className='bg-secondary mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full'>
+            <ClockIcon className='text-muted-foreground/70 h-5 w-5' />
           </div>
-          <p className="text-sm text-muted-foreground">No recent activity</p>
-          <p className="mt-1 text-xs text-muted-foreground/70">
+          <p className='text-muted-foreground text-sm'>No recent activity</p>
+          <p className='text-muted-foreground/70 mt-1 text-xs'>
             Your activity will appear here as you work
           </p>
         </div>
-      )}
+      }
     </div>
   );
 }

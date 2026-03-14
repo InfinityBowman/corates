@@ -26,7 +26,7 @@ interface AdminActions {
 }
 /* eslint-enable no-unused-vars */
 
-export const useAdminStore = create<AdminState & AdminActions>()((set) => ({
+export const useAdminStore = create<AdminState & AdminActions>()(set => ({
   isAdminChecked: false,
   isAdmin: false,
   isImpersonating: false,
@@ -61,7 +61,7 @@ export const useAdminStore = create<AdminState & AdminActions>()((set) => ({
     }
   },
 
-  impersonateUser: async (userId) => {
+  impersonateUser: async userId => {
     await apiFetch.post(`/api/admin/users/${userId}/impersonate`, null, { toastMessage: false });
     set({ isImpersonating: true });
     window.location.href = '/';
@@ -91,7 +91,11 @@ export async function fetchUserDetails(userId: string) {
 }
 
 export async function banUser(userId: string, reason: string, expiresAt: string | null = null) {
-  return apiFetch.post(`/api/admin/users/${userId}/ban`, { reason, expiresAt }, { toastMessage: false });
+  return apiFetch.post(
+    `/api/admin/users/${userId}/ban`,
+    { reason, expiresAt },
+    { toastMessage: false },
+  );
 }
 
 export async function unbanUser(userId: string) {
@@ -103,14 +107,23 @@ export async function revokeUserSessions(userId: string) {
 }
 
 export async function revokeUserSession(userId: string, sessionId: string) {
-  return apiFetch.delete(`/api/admin/users/${userId}/sessions/${sessionId}`, { toastMessage: false });
+  return apiFetch.delete(`/api/admin/users/${userId}/sessions/${sessionId}`, {
+    toastMessage: false,
+  });
 }
 
 export async function deleteUser(userId: string) {
   return apiFetch.delete(`/api/admin/users/${userId}`, { toastMessage: false });
 }
 
-export async function fetchStorageDocuments({ cursor, limit = 50, prefix = '', search = '' } = {} as { cursor?: string; limit?: number; prefix?: string; search?: string }) {
+export async function fetchStorageDocuments(
+  { cursor, limit = 50, prefix = '', search = '' } = {} as {
+    cursor?: string;
+    limit?: number;
+    prefix?: string;
+    search?: string;
+  },
+) {
   const params = new URLSearchParams({ limit: limit.toString() });
   if (cursor) params.set('cursor', cursor);
   if (prefix) params.set('prefix', prefix);
@@ -122,7 +135,11 @@ export async function deleteStorageDocuments(keys: string[]) {
   if (!Array.isArray(keys) || keys.length === 0) {
     throw new Error('Keys array is required');
   }
-  return apiFetch('/api/admin/storage/documents', { method: 'DELETE', body: { keys }, toastMessage: false });
+  return apiFetch('/api/admin/storage/documents', {
+    method: 'DELETE',
+    body: { keys },
+    toastMessage: false,
+  });
 }
 
 export async function fetchStorageStats() {
@@ -144,62 +161,86 @@ export async function fetchOrgBilling(orgId: string) {
 }
 
 export async function createOrgSubscription(orgId: string, subscriptionData: unknown) {
-  const result = await apiFetch.post(`/api/admin/orgs/${orgId}/subscriptions`, subscriptionData, { toastMessage: false });
+  const result = await apiFetch.post(`/api/admin/orgs/${orgId}/subscriptions`, subscriptionData, {
+    toastMessage: false,
+  });
   queryClient.invalidateQueries({ queryKey: queryKeys.admin.orgDetails(orgId) });
   queryClient.invalidateQueries({ queryKey: queryKeys.admin.orgBilling(orgId) });
   return result;
 }
 
-export async function updateOrgSubscription(orgId: string, subscriptionId: string, updateData: unknown) {
-  const result = await apiFetch.put(`/api/admin/orgs/${orgId}/subscriptions/${subscriptionId}`, updateData, { toastMessage: false });
+export async function updateOrgSubscription(
+  orgId: string,
+  subscriptionId: string,
+  updateData: unknown,
+) {
+  const result = await apiFetch.put(
+    `/api/admin/orgs/${orgId}/subscriptions/${subscriptionId}`,
+    updateData,
+    { toastMessage: false },
+  );
   queryClient.invalidateQueries({ queryKey: queryKeys.admin.orgDetails(orgId) });
   queryClient.invalidateQueries({ queryKey: queryKeys.admin.orgBilling(orgId) });
   return result;
 }
 
 export async function cancelOrgSubscription(orgId: string, subscriptionId: string) {
-  const result = await apiFetch.delete(`/api/admin/orgs/${orgId}/subscriptions/${subscriptionId}`, { toastMessage: false });
+  const result = await apiFetch.delete(`/api/admin/orgs/${orgId}/subscriptions/${subscriptionId}`, {
+    toastMessage: false,
+  });
   queryClient.invalidateQueries({ queryKey: queryKeys.admin.orgDetails(orgId) });
   queryClient.invalidateQueries({ queryKey: queryKeys.admin.orgBilling(orgId) });
   return result;
 }
 
 export async function createOrgGrant(orgId: string, grantData: unknown) {
-  const result = await apiFetch.post(`/api/admin/orgs/${orgId}/grants`, grantData, { toastMessage: false });
+  const result = await apiFetch.post(`/api/admin/orgs/${orgId}/grants`, grantData, {
+    toastMessage: false,
+  });
   queryClient.invalidateQueries({ queryKey: queryKeys.admin.orgDetails(orgId) });
   queryClient.invalidateQueries({ queryKey: queryKeys.admin.orgBilling(orgId) });
   return result;
 }
 
 export async function updateOrgGrant(orgId: string, grantId: string, updateData: unknown) {
-  const result = await apiFetch.put(`/api/admin/orgs/${orgId}/grants/${grantId}`, updateData, { toastMessage: false });
+  const result = await apiFetch.put(`/api/admin/orgs/${orgId}/grants/${grantId}`, updateData, {
+    toastMessage: false,
+  });
   queryClient.invalidateQueries({ queryKey: queryKeys.admin.orgDetails(orgId) });
   queryClient.invalidateQueries({ queryKey: queryKeys.admin.orgBilling(orgId) });
   return result;
 }
 
 export async function revokeOrgGrant(orgId: string, grantId: string) {
-  const result = await apiFetch.delete(`/api/admin/orgs/${orgId}/grants/${grantId}`, { toastMessage: false });
+  const result = await apiFetch.delete(`/api/admin/orgs/${orgId}/grants/${grantId}`, {
+    toastMessage: false,
+  });
   queryClient.invalidateQueries({ queryKey: queryKeys.admin.orgDetails(orgId) });
   queryClient.invalidateQueries({ queryKey: queryKeys.admin.orgBilling(orgId) });
   return result;
 }
 
 export async function grantOrgTrial(orgId: string) {
-  const result = await apiFetch.post(`/api/admin/orgs/${orgId}/grant-trial`, null, { toastMessage: false });
+  const result = await apiFetch.post(`/api/admin/orgs/${orgId}/grant-trial`, null, {
+    toastMessage: false,
+  });
   queryClient.invalidateQueries({ queryKey: queryKeys.admin.orgDetails(orgId) });
   queryClient.invalidateQueries({ queryKey: queryKeys.admin.orgBilling(orgId) });
   return result;
 }
 
 export async function grantOrgSingleProject(orgId: string) {
-  const result = await apiFetch.post(`/api/admin/orgs/${orgId}/grant-single-project`, null, { toastMessage: false });
+  const result = await apiFetch.post(`/api/admin/orgs/${orgId}/grant-single-project`, null, {
+    toastMessage: false,
+  });
   queryClient.invalidateQueries({ queryKey: queryKeys.admin.orgDetails(orgId) });
   queryClient.invalidateQueries({ queryKey: queryKeys.admin.orgBilling(orgId) });
   return result;
 }
 
-export async function fetchBillingLedger({ limit = 50, status, type } = {} as { limit?: number; status?: string; type?: string }) {
+export async function fetchBillingLedger(
+  { limit = 50, status, type } = {} as { limit?: number; status?: string; type?: string },
+) {
   const params = new URLSearchParams({ limit: limit.toString() });
   if (status) params.set('status', status);
   if (type) params.set('type', type);
@@ -207,13 +248,21 @@ export async function fetchBillingLedger({ limit = 50, status, type } = {} as { 
 }
 
 export async function fetchBillingStuckStates({ incompleteThreshold = 30, limit = 50 } = {}) {
-  const params = new URLSearchParams({ incompleteThreshold: incompleteThreshold.toString(), limit: limit.toString() });
+  const params = new URLSearchParams({
+    incompleteThreshold: incompleteThreshold.toString(),
+    limit: limit.toString(),
+  });
   return apiFetch.get(`/api/admin/billing/stuck-states?${params}`, { toastMessage: false });
 }
 
 export async function fetchOrgBillingReconcile(
   orgId: string,
-  { checkStripe = false, incompleteThreshold = 30, checkoutNoSubThreshold = 15, processingLagThreshold = 5 } = {},
+  {
+    checkStripe = false,
+    incompleteThreshold = 30,
+    checkoutNoSubThreshold = 15,
+    processingLagThreshold = 5,
+  } = {},
 ) {
   const params = new URLSearchParams({
     incompleteThreshold: incompleteThreshold.toString(),
@@ -221,7 +270,9 @@ export async function fetchOrgBillingReconcile(
     processingLagThreshold: processingLagThreshold.toString(),
   });
   if (checkStripe) params.set('checkStripe', 'true');
-  return apiFetch.get(`/api/admin/orgs/${orgId}/billing/reconcile?${params}`, { toastMessage: false });
+  return apiFetch.get(`/api/admin/orgs/${orgId}/billing/reconcile?${params}`, {
+    toastMessage: false,
+  });
 }
 
 export async function fetchProjects({ page = 1, limit = 20, search = '', orgId = '' } = {}) {
@@ -236,7 +287,9 @@ export async function fetchProjectDetails(projectId: string) {
 }
 
 export async function removeProjectMember(projectId: string, memberId: string) {
-  await apiFetch.delete(`/api/admin/projects/${projectId}/members/${memberId}`, { toastMessage: false });
+  await apiFetch.delete(`/api/admin/projects/${projectId}/members/${memberId}`, {
+    toastMessage: false,
+  });
   queryClient.invalidateQueries({ queryKey: queryKeys.admin.projectDetails(projectId) });
   queryClient.invalidateQueries({ queryKey: ['adminProjects'], exact: false });
 }

@@ -19,12 +19,7 @@ import {
   XIcon,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
-import {
-  Tooltip,
-  TooltipTrigger,
-  TooltipContent,
-  TooltipProvider,
-} from '@/components/ui/tooltip';
+import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/components/ui/tooltip';
 
 const SETTINGS_NAV_ITEMS: Array<{ id: string; label: string; icon: LucideIcon; path: string }> = [
   { id: 'profile', label: 'Profile', icon: UserIcon, path: '/settings/profile' },
@@ -61,29 +56,35 @@ export function SettingsSidebar({
   const currentPath = location.pathname;
 
   // Resize drag
-  const handleResizeStart = useCallback((e: React.MouseEvent) => {
-    e.preventDefault();
-    setIsResizing(true);
-    const startX = e.clientX;
-    const startWidth = width;
-    const handleMouseMove = (moveEvent: MouseEvent) => onWidthChange(startWidth + (moveEvent.clientX - startX));
-    const handleMouseUp = () => {
-      setIsResizing(false);
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
-      document.body.style.cursor = '';
-      document.body.style.userSelect = '';
-    };
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleMouseUp);
-    document.body.style.cursor = 'col-resize';
-    document.body.style.userSelect = 'none';
-  }, [width, onWidthChange]);
+  const handleResizeStart = useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault();
+      setIsResizing(true);
+      const startX = e.clientX;
+      const startWidth = width;
+      const handleMouseMove = (moveEvent: MouseEvent) =>
+        onWidthChange(startWidth + (moveEvent.clientX - startX));
+      const handleMouseUp = () => {
+        setIsResizing(false);
+        document.removeEventListener('mousemove', handleMouseMove);
+        document.removeEventListener('mouseup', handleMouseUp);
+        document.body.style.cursor = '';
+        document.body.style.userSelect = '';
+      };
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+      document.body.style.cursor = 'col-resize';
+      document.body.style.userSelect = 'none';
+    },
+    [width, onWidthChange],
+  );
 
   // Close mobile on escape
   useEffect(() => {
     if (!mobileOpen) return;
-    const handleKeyDown = (e: KeyboardEvent) => { if (e.key === 'Escape') onCloseMobile(); };
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onCloseMobile();
+    };
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [mobileOpen, onCloseMobile]);
@@ -95,38 +96,41 @@ export function SettingsSidebar({
 
   function renderNavContent() {
     return (
-      <div className="sidebar-scrollbar flex-1 overflow-x-hidden overflow-y-auto">
+      <div className='sidebar-scrollbar flex-1 overflow-x-hidden overflow-y-auto'>
         {/* Back to app */}
-        <div className="p-2">
+        <div className='p-2'>
           <button
             onClick={() => navigate({ to: '/dashboard' })}
-            className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-secondary hover:text-secondary-foreground"
+            className='text-muted-foreground hover:bg-secondary hover:text-secondary-foreground flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors'
           >
-            <ArrowLeftIcon className="h-4 w-4 shrink-0" />
-            <span className="truncate">Back to App</span>
+            <ArrowLeftIcon className='h-4 w-4 shrink-0' />
+            <span className='truncate'>Back to App</span>
           </button>
         </div>
 
-        <div className="px-3 pb-2 pt-4">
-          <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+        <div className='px-3 pt-4 pb-2'>
+          <h3 className='text-muted-foreground text-xs font-semibold tracking-wider uppercase'>
             Settings
           </h3>
         </div>
 
-        <div className="space-y-0.5 px-2">
+        <div className='space-y-0.5 px-2'>
           {SETTINGS_NAV_ITEMS.map(item => {
             const Icon = item.icon;
-            const isActive = currentPath === item.path || (item.id === 'profile' && currentPath === '/settings');
+            const isActive =
+              currentPath === item.path || (item.id === 'profile' && currentPath === '/settings');
             return (
               <button
                 key={item.id}
                 onClick={() => navigate({ to: item.path as string })}
                 className={`flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-                  isActive ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-secondary hover:text-secondary-foreground'
+                  isActive ?
+                    'bg-primary/10 text-primary'
+                  : 'text-muted-foreground hover:bg-secondary hover:text-secondary-foreground'
                 }`}
               >
-                <Icon className="h-4 w-4 shrink-0" />
-                <span className="truncate">{item.label}</span>
+                <Icon className='h-4 w-4 shrink-0' />
+                <span className='truncate'>{item.label}</span>
               </button>
             );
           })}
@@ -139,39 +143,55 @@ export function SettingsSidebar({
     <TooltipProvider delayDuration={500}>
       {/* Desktop sidebar */}
       <div
-        className={`sidebar-container relative hidden h-full shrink-0 border-r border-border bg-card md:block ${
+        className={`sidebar-container border-border bg-card relative hidden h-full shrink-0 border-r md:block ${
           isResizing ? '' : 'transition-all duration-200 ease-in-out'
         } ${isExpanded ? '' : 'md:w-12'}`}
         style={{ maxWidth: '100vw', width: isExpanded ? `${width}px` : undefined }}
       >
-        <div className="flex h-full flex-col">
+        <div className='flex h-full flex-col'>
           {/* Header -- cross-fade between states */}
-          <div className="relative shrink-0 border-b border-border">
-            <div className={`flex items-center justify-center p-2 transition-opacity duration-200 ${isExpanded ? 'pointer-events-none opacity-0' : 'opacity-100'}`} aria-hidden={isExpanded}>
+          <div className='border-border relative shrink-0 border-b'>
+            <div
+              className={`flex items-center justify-center p-2 transition-opacity duration-200 ${isExpanded ? 'pointer-events-none opacity-0' : 'opacity-100'}`}
+              aria-hidden={isExpanded}
+            >
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <button onClick={onToggleDesktop} className="hidden h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-secondary hover:text-secondary-foreground md:flex" aria-label="Expand sidebar">
-                    <ChevronsRightIcon className="h-4 w-4" />
+                  <button
+                    onClick={onToggleDesktop}
+                    className='text-muted-foreground hover:bg-secondary hover:text-secondary-foreground hidden h-8 w-8 items-center justify-center rounded-md transition-colors md:flex'
+                    aria-label='Expand sidebar'
+                  >
+                    <ChevronsRightIcon className='h-4 w-4' />
                   </button>
                 </TooltipTrigger>
-                <TooltipContent side="right">Expand sidebar</TooltipContent>
+                <TooltipContent side='right'>Expand sidebar</TooltipContent>
               </Tooltip>
             </div>
-            <div className={`absolute inset-0 flex items-center p-2 transition-opacity duration-200 ${isExpanded ? 'opacity-100' : 'pointer-events-none opacity-0'}`} aria-hidden={!isExpanded}>
-              <span className="flex-1 truncate px-2 text-sm font-semibold text-secondary-foreground">Settings</span>
+            <div
+              className={`absolute inset-0 flex items-center p-2 transition-opacity duration-200 ${isExpanded ? 'opacity-100' : 'pointer-events-none opacity-0'}`}
+              aria-hidden={!isExpanded}
+            >
+              <span className='text-secondary-foreground flex-1 truncate px-2 text-sm font-semibold'>
+                Settings
+              </span>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <button onClick={onToggleDesktop} className="hidden h-8 w-8 items-center justify-center rounded-md text-muted-foreground/70 transition-colors hover:bg-secondary hover:text-muted-foreground md:flex" aria-label="Collapse sidebar">
-                    <ChevronsLeftIcon className="h-4 w-4" />
+                  <button
+                    onClick={onToggleDesktop}
+                    className='text-muted-foreground/70 hover:bg-secondary hover:text-muted-foreground hidden h-8 w-8 items-center justify-center rounded-md transition-colors md:flex'
+                    aria-label='Collapse sidebar'
+                  >
+                    <ChevronsLeftIcon className='h-4 w-4' />
                   </button>
                 </TooltipTrigger>
-                <TooltipContent side="right">Collapse sidebar</TooltipContent>
+                <TooltipContent side='right'>Collapse sidebar</TooltipContent>
               </Tooltip>
             </div>
           </div>
 
           {/* Content area -- both layers always rendered, cross-fade */}
-          <div className="relative flex-1 overflow-hidden">
+          <div className='relative flex-1 overflow-hidden'>
             {/* Collapsed rail icons (bottom layer) */}
             <div
               className={`absolute inset-y-0 left-0 hidden w-12 flex-col items-center gap-1 overflow-y-auto py-2 transition-opacity duration-200 md:flex ${isExpanded ? 'pointer-events-none opacity-0' : 'opacity-100'}`}
@@ -180,11 +200,15 @@ export function SettingsSidebar({
             >
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <button onClick={() => navigate({ to: '/dashboard' })} className="flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-secondary hover:text-secondary-foreground" aria-label="Back to App">
-                    <ArrowLeftIcon className="h-4 w-4" />
+                  <button
+                    onClick={() => navigate({ to: '/dashboard' })}
+                    className='text-muted-foreground hover:bg-secondary hover:text-secondary-foreground flex h-8 w-8 items-center justify-center rounded-md transition-colors'
+                    aria-label='Back to App'
+                  >
+                    <ArrowLeftIcon className='h-4 w-4' />
                   </button>
                 </TooltipTrigger>
-                <TooltipContent side="right">Back to App</TooltipContent>
+                <TooltipContent side='right'>Back to App</TooltipContent>
               </Tooltip>
               {SETTINGS_NAV_ITEMS.map(item => {
                 const Icon = item.icon;
@@ -197,10 +221,10 @@ export function SettingsSidebar({
                         className={`flex h-8 w-8 items-center justify-center rounded-md transition-colors ${isActive ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-secondary hover:text-secondary-foreground'}`}
                         aria-label={item.label}
                       >
-                        <Icon className="h-4 w-4" />
+                        <Icon className='h-4 w-4' />
                       </button>
                     </TooltipTrigger>
-                    <TooltipContent side="right">{item.label}</TooltipContent>
+                    <TooltipContent side='right'>{item.label}</TooltipContent>
                   </Tooltip>
                 );
               })}
@@ -218,17 +242,19 @@ export function SettingsSidebar({
         </div>
 
         {isExpanded && (
-          <div className="absolute right-0 top-0 hidden h-full w-1 cursor-col-resize bg-transparent transition-colors hover:bg-primary md:block" onMouseDown={handleResizeStart} role="separator" aria-orientation="vertical" aria-label="Resize sidebar" />
+          <div
+            className='hover:bg-primary absolute top-0 right-0 hidden h-full w-1 cursor-col-resize bg-transparent transition-colors md:block'
+            onMouseDown={handleResizeStart}
+            role='separator'
+            aria-orientation='vertical'
+            aria-label='Resize sidebar'
+          />
         )}
       </div>
 
       {/* Mobile overlay -- always mounted, CSS-only transitions */}
       {createPortal(
-        <div
-          className="md:hidden"
-          aria-hidden={!mobileOpen}
-          inert={!mobileOpen ? true : undefined}
-        >
+        <div className='md:hidden' aria-hidden={!mobileOpen} inert={!mobileOpen ? true : undefined}>
           <div
             className={`fixed inset-0 z-40 bg-black/30 transition-opacity duration-200 ${
               mobileOpen ? 'opacity-100' : 'pointer-events-none opacity-0'
@@ -236,16 +262,22 @@ export function SettingsSidebar({
             onClick={onCloseMobile}
           />
           <div
-            className={`fixed inset-y-0 left-0 z-50 w-64 bg-card pt-9 shadow-xl transition-transform duration-200 ${
+            className={`bg-card fixed inset-y-0 left-0 z-50 w-64 pt-9 shadow-xl transition-transform duration-200 ${
               mobileOpen ? 'translate-x-0' : '-translate-x-full'
             }`}
             style={{ transitionTimingFunction: 'cubic-bezier(0.32, 0.72, 0, 1)' }}
           >
-            <div className="flex h-full flex-col">
-              <div className="flex shrink-0 items-center border-b border-border bg-card p-2">
-                <span className="flex-1 truncate px-2 text-sm font-semibold text-secondary-foreground">Settings</span>
-                <button onClick={onCloseMobile} className="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground/70 transition-colors hover:bg-secondary hover:text-muted-foreground" aria-label="Close sidebar">
-                  <XIcon className="h-4 w-4" />
+            <div className='flex h-full flex-col'>
+              <div className='border-border bg-card flex shrink-0 items-center border-b p-2'>
+                <span className='text-secondary-foreground flex-1 truncate px-2 text-sm font-semibold'>
+                  Settings
+                </span>
+                <button
+                  onClick={onCloseMobile}
+                  className='text-muted-foreground/70 hover:bg-secondary hover:text-muted-foreground flex h-7 w-7 items-center justify-center rounded-md transition-colors'
+                  aria-label='Close sidebar'
+                >
+                  <XIcon className='h-4 w-4' />
                 </button>
               </div>
               {renderNavContent()}

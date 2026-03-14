@@ -21,13 +21,24 @@ export function buildStudyPath(orgSlug: string, projectId: string, studyId: stri
   return `${basePath}/studies/${studyId}`;
 }
 
-export function buildChecklistPath(orgSlug: string, projectId: string, studyId: string, checklistId: string): string {
+export function buildChecklistPath(
+  orgSlug: string,
+  projectId: string,
+  studyId: string,
+  checklistId: string,
+): string {
   const studyPath = buildStudyPath(orgSlug, projectId, studyId);
   if (!studyPath || !checklistId) return '';
   return `${studyPath}/checklists/${checklistId}`;
 }
 
-export function buildReconcilePath(orgSlug: string, projectId: string, studyId: string, checklist1Id: string, checklist2Id: string): string {
+export function buildReconcilePath(
+  orgSlug: string,
+  projectId: string,
+  studyId: string,
+  checklist1Id: string,
+  checklist2Id: string,
+): string {
   const studyPath = buildStudyPath(orgSlug, projectId, studyId);
   if (!studyPath || !checklist1Id || !checklist2Id) return '';
   return `${studyPath}/reconcile/${checklist1Id}/${checklist2Id}`;
@@ -49,17 +60,32 @@ export function useOrgProjectContext(orgSlug?: string | null, projectId?: string
 
   const isReady = !orgContext.isLoading && !orgContext.orgNotFound && !projectIdMissing;
 
-  const getStudyPath = useCallback((studyId: string) => {
-    return buildStudyPath(orgSlug || '', projectId || '', studyId);
-  }, [orgSlug, projectId]);
+  const getStudyPath = useCallback(
+    (studyId: string) => {
+      return buildStudyPath(orgSlug || '', projectId || '', studyId);
+    },
+    [orgSlug, projectId],
+  );
 
-  const getChecklistPath = useCallback((studyId: string, checklistId: string) => {
-    return buildChecklistPath(orgSlug || '', projectId || '', studyId, checklistId);
-  }, [orgSlug, projectId]);
+  const getChecklistPath = useCallback(
+    (studyId: string, checklistId: string) => {
+      return buildChecklistPath(orgSlug || '', projectId || '', studyId, checklistId);
+    },
+    [orgSlug, projectId],
+  );
 
-  const getReconcilePath = useCallback((studyId: string, checklist1Id: string, checklist2Id: string) => {
-    return buildReconcilePath(orgSlug || '', projectId || '', studyId, checklist1Id, checklist2Id);
-  }, [orgSlug, projectId]);
+  const getReconcilePath = useCallback(
+    (studyId: string, checklist1Id: string, checklist2Id: string) => {
+      return buildReconcilePath(
+        orgSlug || '',
+        projectId || '',
+        studyId,
+        checklist1Id,
+        checklist2Id,
+      );
+    },
+    [orgSlug, projectId],
+  );
 
   return {
     ...orgContext,

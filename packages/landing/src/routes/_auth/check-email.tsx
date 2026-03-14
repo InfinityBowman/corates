@@ -33,30 +33,33 @@ function CheckEmailPage() {
 
   const email = searchEmail || user?.email || '';
 
-  const checkVerificationStatus = useCallback(async (forceRefresh = false) => {
-    try {
-      if (forceRefresh) {
-        await forceRefreshSession();
-      }
-
-      const currentUser = useAuthStore.getState();
-      const storeUser = selectUser(currentUser);
-
-      if (storeUser?.emailVerified) {
-        if (intervalRef.current) {
-          clearInterval(intervalRef.current);
-          intervalRef.current = null;
+  const checkVerificationStatus = useCallback(
+    async (forceRefresh = false) => {
+      try {
+        if (forceRefresh) {
+          await forceRefreshSession();
         }
-        setProfileComplete(!!storeUser.profileCompletedAt);
-        setVerified(true);
-        return true;
+
+        const currentUser = useAuthStore.getState();
+        const storeUser = selectUser(currentUser);
+
+        if (storeUser?.emailVerified) {
+          if (intervalRef.current) {
+            clearInterval(intervalRef.current);
+            intervalRef.current = null;
+          }
+          setProfileComplete(!!storeUser.profileCompletedAt);
+          setVerified(true);
+          return true;
+        }
+        return false;
+      } catch (err) {
+        console.error('Error checking verification status:', err);
+        return false;
       }
-      return false;
-    } catch (err) {
-      console.error('Error checking verification status:', err);
-      return false;
-    }
-  }, [forceRefreshSession, navigate]);
+    },
+    [forceRefreshSession, navigate],
+  );
 
   // Set up polling and visibility change listener
   useEffect(() => {
@@ -111,41 +114,40 @@ function CheckEmailPage() {
   }
 
   return (
-    <div className="relative w-full max-w-md space-y-6 rounded-xl border border-border bg-card p-6 text-center shadow-2xl sm:max-w-xl sm:rounded-3xl sm:p-12">
-      <a href="/" className="absolute left-4 top-4 sm:left-6 sm:top-6">
-        <img src="/logo.svg" alt="CoRATES" className="h-6 w-auto sm:h-7" />
+    <div className='border-border bg-card relative w-full max-w-md space-y-6 rounded-xl border p-6 text-center shadow-2xl sm:max-w-xl sm:rounded-3xl sm:p-12'>
+      <a href='/' className='absolute top-4 left-4 sm:top-6 sm:left-6'>
+        <img src='/logo.svg' alt='CoRATES' className='h-6 w-auto sm:h-7' />
       </a>
 
-      {verified ? (
+      {verified ?
         <>
-          <div className="flex justify-center">
-            <Loader2Icon className="h-12 w-12 animate-spin text-primary" />
+          <div className='flex justify-center'>
+            <Loader2Icon className='text-primary h-12 w-12 animate-spin' />
           </div>
-          <h2 className="text-xl font-bold text-foreground sm:text-2xl">Email Verified!</h2>
-          <p className="text-sm text-muted-foreground sm:text-base">
-            {profileComplete
-              ? 'Redirecting you to the dashboard...'
-              : 'Redirecting you to complete your profile...'}
+          <h2 className='text-foreground text-xl font-bold sm:text-2xl'>Email Verified!</h2>
+          <p className='text-muted-foreground text-sm sm:text-base'>
+            {profileComplete ?
+              'Redirecting you to the dashboard...'
+            : 'Redirecting you to complete your profile...'}
           </p>
         </>
-      ) : (
-        <>
-          <div className="flex justify-center">
-            <div className="rounded-full bg-primary/10 p-4">
-              <MailIcon className="h-12 w-12 text-primary" />
+      : <>
+          <div className='flex justify-center'>
+            <div className='bg-primary/10 rounded-full p-4'>
+              <MailIcon className='text-primary h-12 w-12' />
             </div>
           </div>
 
           <div>
-            <h2 className="mb-2 text-xl font-bold text-foreground sm:text-2xl">Check Your Email</h2>
-            <p className="text-sm text-muted-foreground sm:text-base">
+            <h2 className='text-foreground mb-2 text-xl font-bold sm:text-2xl'>Check Your Email</h2>
+            <p className='text-muted-foreground text-sm sm:text-base'>
               We&apos;ve sent a verification email to:
             </p>
-            <p className="mt-1 text-sm font-semibold text-primary sm:text-base">{email}</p>
+            <p className='text-primary mt-1 text-sm font-semibold sm:text-base'>{email}</p>
           </div>
 
-          <div className="space-y-4">
-            <p className="text-xs text-muted-foreground sm:text-sm">
+          <div className='space-y-4'>
+            <p className='text-muted-foreground text-xs sm:text-sm'>
               Click the verification link in your email to activate your account. Once verified,
               you&apos;ll automatically be redirected to the dashboard.
             </p>
@@ -153,35 +155,37 @@ function CheckEmailPage() {
             <ErrorMessage error={error} />
 
             {resent && (
-              <div className="rounded-lg border border-green-200 bg-green-50 p-3 text-xs text-green-600 sm:text-sm">
+              <div className='rounded-lg border border-green-200 bg-green-50 p-3 text-xs text-green-600 sm:text-sm'>
                 Verification email sent successfully!
               </div>
             )}
           </div>
 
-          <div className="space-y-3">
+          <div className='space-y-3'>
             <PrimaryButton
               loading={resending}
-              loadingText="Sending..."
-              type="button"
+              loadingText='Sending...'
+              type='button'
               onClick={handleResendEmail}
             >
               Resend Email
             </PrimaryButton>
 
-            <SecondaryButton onClick={async () => {
-              await signout();
-              navigate({ to: '/signin', replace: true });
-            }}>
+            <SecondaryButton
+              onClick={async () => {
+                await signout();
+                navigate({ to: '/signin', replace: true });
+              }}
+            >
               Back to Sign In
             </SecondaryButton>
           </div>
 
-          <div className="text-xs text-muted-foreground/70 sm:text-sm">
+          <div className='text-muted-foreground/70 text-xs sm:text-sm'>
             <p>Didn&apos;t receive the email? Check your spam folder or try resending.</p>
           </div>
         </>
-      )}
+      }
     </div>
   );
 }

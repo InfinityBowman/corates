@@ -58,7 +58,9 @@ function SignInPage() {
   }, []);
 
   // Clear stale auth errors on mount
-  useEffect(() => { setAuthError(null); }, [setAuthError]);
+  useEffect(() => {
+    setAuthError(null);
+  }, [setAuthError]);
 
   // Reset social loading states when page is restored from bfcache
   useBfcacheReset(resetSocialLoading);
@@ -139,29 +141,31 @@ function SignInPage() {
   }
 
   return (
-    <div className="relative w-full max-w-md space-y-4 rounded-xl border border-border bg-card p-6 shadow-2xl sm:max-w-xl sm:rounded-3xl sm:p-12">
-      <a href="/" className="absolute left-4 top-4 sm:left-6 sm:top-6">
-        <img src="/logo.svg" alt="CoRATES" className="h-6 w-auto sm:h-7" />
+    <div className='border-border bg-card relative w-full max-w-md space-y-4 rounded-xl border p-6 shadow-2xl sm:max-w-xl sm:rounded-3xl sm:p-12'>
+      <a href='/' className='absolute top-4 left-4 sm:top-6 sm:left-6'>
+        <img src='/logo.svg' alt='CoRATES' className='h-6 w-auto sm:h-7' />
       </a>
 
-      {showTwoFactor ? (
+      {showTwoFactor ?
         <TwoFactorVerify onCancel={handleTwoFactorCancel} />
-      ) : (
-        <>
-          <div className="mb-2 text-center sm:mb-4">
-            <h2 className="mb-1 text-xl font-bold text-foreground sm:mb-2 sm:text-2xl" id="signin-heading">
+      : <>
+          <div className='mb-2 text-center sm:mb-4'>
+            <h2
+              className='text-foreground mb-1 text-xl font-bold sm:mb-2 sm:text-2xl'
+              id='signin-heading'
+            >
               Welcome Back
             </h2>
-            <p className="text-xs text-muted-foreground sm:text-sm">Sign in to your account.</p>
+            <p className='text-muted-foreground text-xs sm:text-sm'>Sign in to your account.</p>
           </div>
 
           <LastLoginHint />
 
           {/* Tab switcher */}
           <div
-            className="relative flex rounded-lg bg-secondary p-1"
-            role="tablist"
-            aria-label="Sign in method"
+            className='bg-secondary relative flex rounded-lg p-1'
+            role='tablist'
+            aria-label='Sign in method'
             onKeyDown={e => {
               if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
                 e.preventDefault();
@@ -173,20 +177,20 @@ function SignInPage() {
           >
             {/* Sliding indicator */}
             <div
-              aria-hidden="true"
-              className="absolute bottom-1 left-1 top-1 w-[calc(50%-4px)] rounded-md bg-card shadow-sm transition-transform duration-300"
+              aria-hidden='true'
+              className='bg-card absolute top-1 bottom-1 left-1 w-[calc(50%-4px)] rounded-md shadow-sm transition-transform duration-300'
               style={{
                 transform: useMagicLink ? 'translateX(100%)' : 'translateX(0)',
                 transitionTimingFunction: 'cubic-bezier(0.22, 1, 0.36, 1)',
               }}
             />
             <button
-              type="button"
-              role="tab"
-              id="tab-password"
+              type='button'
+              role='tab'
+              id='tab-password'
               tabIndex={useMagicLink ? -1 : 0}
               aria-selected={!useMagicLink}
-              aria-controls="panel-password"
+              aria-controls='panel-password'
               onClick={() => setUseMagicLink(false)}
               className={`relative z-10 flex-1 rounded-md px-3 py-2 text-xs font-medium transition-colors duration-300 sm:text-sm ${
                 !useMagicLink ? 'text-foreground' : 'text-muted-foreground hover:text-foreground'
@@ -195,12 +199,12 @@ function SignInPage() {
               Password
             </button>
             <button
-              type="button"
-              role="tab"
-              id="tab-magic-link"
+              type='button'
+              role='tab'
+              id='tab-magic-link'
               tabIndex={useMagicLink ? 0 : -1}
               aria-selected={useMagicLink}
-              aria-controls="panel-magic-link"
+              aria-controls='panel-magic-link'
               onClick={() => setUseMagicLink(true)}
               className={`relative z-10 flex-1 rounded-md px-3 py-2 text-xs font-medium transition-colors duration-300 sm:text-sm ${
                 useMagicLink ? 'text-foreground' : 'text-muted-foreground hover:text-foreground'
@@ -212,14 +216,14 @@ function SignInPage() {
 
           {/* Sliding form container */}
           <div
-            className="overflow-hidden rounded-lg transition-[height] duration-300"
+            className='overflow-hidden rounded-lg transition-[height] duration-300'
             style={{
               height: formHeight,
               transitionTimingFunction: 'cubic-bezier(0.22, 1, 0.36, 1)',
             }}
           >
             <div
-              className="flex w-[200%] items-start transition-transform duration-300"
+              className='flex w-[200%] items-start transition-transform duration-300'
               style={{
                 transform: useMagicLink ? 'translateX(-50%)' : 'translateX(0)',
                 transitionTimingFunction: 'cubic-bezier(0.22, 1, 0.36, 1)',
@@ -228,33 +232,33 @@ function SignInPage() {
               {/* Password Form */}
               <div
                 ref={passwordFormRef}
-                id="panel-password"
-                role="tabpanel"
-                aria-labelledby="tab-password"
+                id='panel-password'
+                role='tabpanel'
+                aria-labelledby='tab-password'
                 aria-hidden={useMagicLink}
                 inert={useMagicLink ? true : undefined}
-                className="w-1/2 shrink-0 bg-card px-1"
+                className='bg-card w-1/2 shrink-0 px-1'
               >
-                <form aria-labelledby="signin-heading" onSubmit={handleSubmit} autoComplete="off">
-                  <div className="space-y-4">
+                <form aria-labelledby='signin-heading' onSubmit={handleSubmit} autoComplete='off'>
+                  <div className='space-y-4'>
                     <div>
                       <label
-                        className="mb-1 block text-xs font-semibold text-secondary-foreground sm:mb-2 sm:text-sm"
-                        htmlFor="email-input"
+                        className='text-secondary-foreground mb-1 block text-xs font-semibold sm:mb-2 sm:text-sm'
+                        htmlFor='email-input'
                       >
                         Email
                       </label>
                       <input
-                        type="email"
-                        autoComplete="email"
-                        autoCapitalize="off"
-                        spellCheck="false"
+                        type='email'
+                        autoComplete='email'
+                        autoCapitalize='off'
+                        spellCheck='false'
                         value={email}
                         onChange={e => setEmail(e.target.value)}
-                        className="w-full rounded-lg border border-border py-2 pl-3 pr-3 text-xs transition focus:border-transparent focus:outline-none focus:ring-2 focus:ring-primary sm:pl-4 sm:pr-4 sm:text-sm"
+                        className='border-border focus:ring-primary w-full rounded-lg border py-2 pr-3 pl-3 text-xs transition focus:border-transparent focus:ring-2 focus:outline-none sm:pr-4 sm:pl-4 sm:text-sm'
                         required
-                        id="email-input"
-                        placeholder="you@example.com"
+                        id='email-input'
+                        placeholder='you@example.com'
                         disabled={loading}
                         aria-describedby={displayError ? 'signin-error' : undefined}
                       />
@@ -262,18 +266,20 @@ function SignInPage() {
 
                     <div>
                       <label
-                        className="mb-1 block text-xs font-semibold text-secondary-foreground sm:mb-2 sm:text-sm"
-                        htmlFor="password-input"
+                        className='text-secondary-foreground mb-1 block text-xs font-semibold sm:mb-2 sm:text-sm'
+                        htmlFor='password-input'
                       >
                         Password
                       </label>
-                      <PasswordInput autoComplete="current-password" disabled={loading} required>
+                      <PasswordInput autoComplete='current-password' disabled={loading} required>
                         <PasswordInputControl>
                           <PasswordInputField
-                            id="password-input"
+                            id='password-input'
                             value={password}
-                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
-                            placeholder="Password"
+                            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                              setPassword(e.target.value)
+                            }
+                            placeholder='Password'
                             aria-describedby={displayError ? 'signin-error' : undefined}
                           />
                           <PasswordInputVisibilityTrigger />
@@ -281,21 +287,21 @@ function SignInPage() {
                       </PasswordInput>
                     </div>
 
-                    <ErrorMessage error={displayError} id="signin-error" />
+                    <ErrorMessage error={displayError} id='signin-error' />
 
-                    <PrimaryButton loading={loading} loadingText="Signing In...">
+                    <PrimaryButton loading={loading} loadingText='Signing In...'>
                       Sign In
                     </PrimaryButton>
 
-                    <div className="text-center">
+                    <div className='text-center'>
                       <AuthLink
-                        href="/reset-password"
+                        href='/reset-password'
                         onClick={e => {
                           e.preventDefault();
                           navigate({ to: '/reset-password', search: { token: '' } });
                         }}
                       >
-                        <span className="text-xs sm:text-sm">Forgot password?</span>
+                        <span className='text-xs sm:text-sm'>Forgot password?</span>
                       </AuthLink>
                     </div>
                   </div>
@@ -305,14 +311,14 @@ function SignInPage() {
               {/* Magic Link Form */}
               <div
                 ref={magicLinkFormRef}
-                id="panel-magic-link"
-                role="tabpanel"
-                aria-labelledby="tab-magic-link"
+                id='panel-magic-link'
+                role='tabpanel'
+                aria-labelledby='tab-magic-link'
                 aria-hidden={!useMagicLink}
                 inert={!useMagicLink ? true : undefined}
-                className="w-1/2 shrink-0 bg-card px-1"
+                className='bg-card w-1/2 shrink-0 px-1'
               >
-                <MagicLinkForm callbackPath="/complete-profile" />
+                <MagicLinkForm callbackPath='/complete-profile' />
               </div>
             </div>
           </div>
@@ -320,14 +326,22 @@ function SignInPage() {
           <AuthDivider />
 
           <SocialAuthContainer buttonCount={socialProviderCount}>
-            <GoogleButton loading={googleLoading} onClick={handleGoogleSignIn} iconOnly={socialProviderCount > 1} />
-            <OrcidButton loading={orcidLoading} onClick={handleOrcidSignIn} iconOnly={socialProviderCount > 1} />
+            <GoogleButton
+              loading={googleLoading}
+              onClick={handleGoogleSignIn}
+              iconOnly={socialProviderCount > 1}
+            />
+            <OrcidButton
+              loading={orcidLoading}
+              onClick={handleOrcidSignIn}
+              iconOnly={socialProviderCount > 1}
+            />
           </SocialAuthContainer>
 
-          <div className="mt-2 text-center text-xs text-muted-foreground sm:mt-4 sm:text-sm">
+          <div className='text-muted-foreground mt-2 text-center text-xs sm:mt-4 sm:text-sm'>
             Don&apos;t have an account?{' '}
             <AuthLink
-              href="/signup"
+              href='/signup'
               onClick={e => {
                 e.preventDefault();
                 navigate({ to: '/signup' });
@@ -337,7 +351,7 @@ function SignInPage() {
             </AuthLink>
           </div>
         </>
-      )}
+      }
     </div>
   );
 }

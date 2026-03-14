@@ -23,21 +23,19 @@ export function PrimaryButton({
     <button
       type={type}
       className={cn(
-        'flex w-full items-center justify-center rounded-lg bg-primary py-2 text-sm font-bold text-primary-foreground shadow transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50 sm:rounded-xl sm:py-3 sm:text-base',
+        'bg-primary text-primary-foreground hover:bg-primary/90 flex w-full items-center justify-center rounded-lg py-2 text-sm font-bold shadow transition disabled:cursor-not-allowed disabled:opacity-50 sm:rounded-xl sm:py-3 sm:text-base',
         className,
       )}
       disabled={disabled || loading}
       aria-busy={loading}
       {...props}
     >
-      {loading ? (
-        <span className="flex items-center">
-          <Loader2Icon className="mr-2 h-5 w-5 animate-spin" />
-          <span aria-live="polite">{loadingText || 'Loading...'}</span>
+      {loading ?
+        <span className='flex items-center'>
+          <Loader2Icon className='mr-2 h-5 w-5 animate-spin' />
+          <span aria-live='polite'>{loadingText || 'Loading...'}</span>
         </span>
-      ) : (
-        children
-      )}
+      : children}
     </button>
   );
 }
@@ -56,7 +54,7 @@ export function SecondaryButton({
     <button
       type={type}
       className={cn(
-        'w-full rounded-lg border border-border py-2 text-sm font-semibold text-secondary-foreground transition hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50 sm:rounded-xl sm:py-3 sm:text-base',
+        'border-border text-secondary-foreground hover:bg-muted w-full rounded-lg border py-2 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-50 sm:rounded-xl sm:py-3 sm:text-base',
         className,
       )}
       {...props}
@@ -72,10 +70,7 @@ interface AuthLinkProps extends React.AnchorHTMLAttributes<globalThis.HTMLAnchor
 
 export function AuthLink({ children, className, ...props }: AuthLinkProps) {
   return (
-    <a
-      className={cn('font-semibold text-primary hover:underline', className)}
-      {...props}
-    >
+    <a className={cn('text-primary font-semibold hover:underline', className)} {...props}>
       {children}
     </a>
   );

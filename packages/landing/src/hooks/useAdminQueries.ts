@@ -57,7 +57,9 @@ export function useAdminUserDetails(userId: string | null | undefined) {
   });
 }
 
-export function useAdminProjects(params: { page?: number; limit?: number; search?: string; orgId?: string } = {}) {
+export function useAdminProjects(
+  params: { page?: number; limit?: number; search?: string; orgId?: string } = {},
+) {
   const page = params.page ?? 1;
   const limit = params.limit ?? 20;
   const search = params.search ?? '';
@@ -83,7 +85,9 @@ export function useAdminProjectDetails(projectId: string | null | undefined) {
   });
 }
 
-export function useStorageDocuments(params: { cursor?: string | null; limit?: number; prefix?: string; search?: string } = {}) {
+export function useStorageDocuments(
+  params: { cursor?: string | null; limit?: number; prefix?: string; search?: string } = {},
+) {
   const cursor = params.cursor ?? null;
   const limit = params.limit ?? 50;
   const prefix = params.prefix ?? '';
@@ -138,7 +142,9 @@ export function useAdminOrgBilling(orgId: string | null | undefined) {
   });
 }
 
-export function useAdminBillingLedger(params: { limit?: number; status?: string; type?: string } = {}) {
+export function useAdminBillingLedger(
+  params: { limit?: number; status?: string; type?: string } = {},
+) {
   const queryParams = {
     limit: params.limit ?? 50,
     status: params.status,
@@ -151,7 +157,9 @@ export function useAdminBillingLedger(params: { limit?: number; status?: string;
   });
 }
 
-export function useAdminBillingStuckStates(params: { incompleteThreshold?: number; limit?: number } = {}) {
+export function useAdminBillingStuckStates(
+  params: { incompleteThreshold?: number; limit?: number } = {},
+) {
   const queryParams = {
     incompleteThreshold: params.incompleteThreshold ?? 30,
     limit: params.limit ?? 50,
@@ -165,7 +173,12 @@ export function useAdminBillingStuckStates(params: { incompleteThreshold?: numbe
 
 export function useAdminOrgBillingReconcile(
   orgId: string | null | undefined,
-  params: { checkStripe?: boolean; incompleteThreshold?: number; checkoutNoSubThreshold?: number; processingLagThreshold?: number } = {},
+  params: {
+    checkStripe?: boolean;
+    incompleteThreshold?: number;
+    checkoutNoSubThreshold?: number;
+    processingLagThreshold?: number;
+  } = {},
 ) {
   const queryParams = {
     checkStripe: params.checkStripe ?? false,
@@ -199,15 +212,17 @@ export function useAdminTableSchema(tableName: string | null | undefined) {
   });
 }
 
-export function useAdminTableRows(params: {
-  tableName?: string;
-  page?: number;
-  limit?: number;
-  orderBy?: string;
-  order?: string;
-  filterBy?: string | null;
-  filterValue?: string | null;
-} = {}) {
+export function useAdminTableRows(
+  params: {
+    tableName?: string;
+    page?: number;
+    limit?: number;
+    orderBy?: string;
+    order?: string;
+    filterBy?: string | null;
+    filterValue?: string | null;
+  } = {},
+) {
   const tableName = params.tableName;
   const page = params.page ?? 1;
   const limit = params.limit ?? 50;
@@ -217,9 +232,22 @@ export function useAdminTableRows(params: {
   const filterValue = params.filterValue ?? null;
 
   return useQuery({
-    queryKey: queryKeys.admin.tableRows(tableName, page, limit, orderBy, order, filterBy, filterValue),
+    queryKey: queryKeys.admin.tableRows(
+      tableName,
+      page,
+      limit,
+      orderBy,
+      order,
+      filterBy,
+      filterValue,
+    ),
     queryFn: () => {
-      const searchParams = new URLSearchParams({ page: page.toString(), limit: limit.toString(), orderBy, order });
+      const searchParams = new URLSearchParams({
+        page: page.toString(),
+        limit: limit.toString(),
+        orderBy,
+        order,
+      });
       if (filterBy && filterValue) {
         searchParams.set('filterBy', filterBy);
         searchParams.set('filterValue', filterValue);

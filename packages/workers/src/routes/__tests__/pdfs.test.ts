@@ -58,9 +58,7 @@ interface MockR2Object {
 }
 
 interface MockR2Bucket {
-  list: (opts: {
-    prefix: string;
-  }) => Promise<{
+  list: (opts: { prefix: string }) => Promise<{
     objects: { key: string; size: number; uploaded?: number }[];
     truncated: boolean;
   }>;

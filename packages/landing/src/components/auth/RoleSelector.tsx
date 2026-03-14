@@ -22,7 +22,12 @@ interface RoleOption {
 }
 
 export const ROLES: RoleOption[] = [
-  { id: 'researcher', label: 'Researcher', description: 'Academic or professional', icon: FiBookOpen },
+  {
+    id: 'researcher',
+    label: 'Researcher',
+    description: 'Academic or professional',
+    icon: FiBookOpen,
+  },
   { id: 'student', label: 'Student', description: 'Graduate or undergraduate', icon: FiBook },
   { id: 'librarian', label: 'Librarian', description: 'Information specialist', icon: FiUsers },
   { id: 'other', label: 'Other', description: 'Clinician, policy maker, etc.', icon: FiUser },
@@ -41,25 +46,29 @@ interface RoleSelectorProps {
 
 export function RoleSelector({ selectedRole, onSelect }: RoleSelectorProps) {
   return (
-    <div className="grid grid-cols-2 gap-2 sm:gap-3" role="radiogroup" aria-label="Select your role">
+    <div
+      className='grid grid-cols-2 gap-2 sm:gap-3'
+      role='radiogroup'
+      aria-label='Select your role'
+    >
       {ROLES.map(roleOption => {
         const Icon = roleOption.icon;
         const isSelected = selectedRole === roleOption.id;
         return (
           <button
             key={roleOption.id}
-            type="button"
-            role="radio"
+            type='button'
+            role='radio'
             onClick={() => onSelect(roleOption.id)}
             aria-checked={isSelected}
             className={cn(
-              'rounded-xl border-2 p-3 text-left transition-all hover:border-primary/60 hover:bg-primary/5 focus:outline-none focus:ring-2 focus:ring-primary sm:p-4',
+              'hover:border-primary/60 hover:bg-primary/5 focus:ring-primary rounded-xl border-2 p-3 text-left transition-all focus:ring-2 focus:outline-none sm:p-4',
               isSelected ? 'border-primary bg-primary/5' : 'border-border',
             )}
           >
-            <Icon className="mb-1.5 h-5 w-5 text-primary sm:h-6 sm:w-6" aria-hidden="true" />
-            <div className="text-sm font-semibold text-foreground">{roleOption.label}</div>
-            <div className="mt-0.5 hidden text-xs text-muted-foreground sm:block">
+            <Icon className='text-primary mb-1.5 h-5 w-5 sm:h-6 sm:w-6' aria-hidden='true' />
+            <div className='text-foreground text-sm font-semibold'>{roleOption.label}</div>
+            <div className='text-muted-foreground mt-0.5 hidden text-xs sm:block'>
               {roleOption.description}
             </div>
           </button>

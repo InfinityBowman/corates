@@ -65,7 +65,7 @@ function MobileMenu({ isOpen, onClose }: { isOpen: boolean; onClose: () => void 
                 </Link>
                 <Link
                   to='/signup'
-                  className='block w-full rounded-lg border border-transparent bg-primary px-4 py-3 text-center font-medium text-primary-foreground shadow-sm transition-colors hover:bg-primary/90'
+                  className='bg-primary text-primary-foreground hover:bg-primary/90 block w-full rounded-lg border border-transparent px-4 py-3 text-center font-medium shadow-sm transition-colors'
                 >
                   Sign Up
                 </Link>
@@ -133,13 +133,13 @@ export default function Navbar() {
             : <>
                 <Link
                   to='/signin'
-                  className='hidden items-center rounded-lg border border-gray-200 bg-white px-4 py-1.5 text-gray-700 transition-colors hover:bg-gray-50 focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:outline-none sm:inline-flex'
+                  className='focus-visible:ring-primary hidden items-center rounded-lg border border-gray-200 bg-white px-4 py-1.5 text-gray-700 transition-colors hover:bg-gray-50 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none sm:inline-flex'
                 >
                   Sign In
                 </Link>
                 <Link
                   to='/signup'
-                  className='hidden items-center gap-2 rounded-lg border border-transparent bg-primary px-4 py-1.5 text-primary-foreground shadow-sm transition-colors hover:bg-primary/90 focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:outline-none sm:inline-flex'
+                  className='bg-primary text-primary-foreground hover:bg-primary/90 focus-visible:ring-primary hidden items-center gap-2 rounded-lg border border-transparent px-4 py-1.5 shadow-sm transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none sm:inline-flex'
                 >
                   Sign Up
                 </Link>

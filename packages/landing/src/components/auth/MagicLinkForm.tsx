@@ -37,30 +37,33 @@ export function MagicLinkForm({
 
   const displayError = error || authError;
 
-  const handleSubmit = useCallback(async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
+  const handleSubmit = useCallback(
+    async (e: React.FormEvent) => {
+      e.preventDefault();
+      setError('');
 
-    if (!email) {
-      setError('Please enter your email address');
-      return;
-    }
+      if (!email) {
+        setError('Please enter your email address');
+        return;
+      }
 
-    setLoading(true);
+      setLoading(true);
 
-    try {
-      localStorage.setItem('magicLinkSignup', 'true');
-      localStorage.setItem('pendingName', email);
-      await signinWithMagicLink(email, callbackPath);
-      setSent(true);
-      setCanResend(false);
-      setTimeout(() => setCanResend(true), RESEND_COOLDOWN_MS);
-    } catch (err) {
-      await handleError(err, { setError, showToast: false });
-    } finally {
-      setLoading(false);
-    }
-  }, [email, callbackPath, signinWithMagicLink]);
+      try {
+        localStorage.setItem('magicLinkSignup', 'true');
+        localStorage.setItem('pendingName', email);
+        await signinWithMagicLink(email, callbackPath);
+        setSent(true);
+        setCanResend(false);
+        setTimeout(() => setCanResend(true), RESEND_COOLDOWN_MS);
+      } catch (err) {
+        await handleError(err, { setError, showToast: false });
+      } finally {
+        setLoading(false);
+      }
+    },
+    [email, callbackPath, signinWithMagicLink],
+  );
 
   function handleReset() {
     setSent(false);
@@ -94,48 +97,48 @@ export function MagicLinkForm({
 
   if (sent) {
     return (
-      <div className="space-y-4">
-        <div className="py-4 text-center">
-          <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-green-100">
-            <FiMail className="h-7 w-7 text-green-600" />
+      <div className='space-y-4'>
+        <div className='py-4 text-center'>
+          <div className='mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-green-100'>
+            <FiMail className='h-7 w-7 text-green-600' />
           </div>
-          <h3 className="mb-1 text-base font-semibold text-foreground">Check your email</h3>
-          <p className="mb-3 text-sm text-muted-foreground">
-            We sent a sign-in link to <strong className="text-foreground">{email}</strong>
+          <h3 className='text-foreground mb-1 text-base font-semibold'>Check your email</h3>
+          <p className='text-muted-foreground mb-3 text-sm'>
+            We sent a sign-in link to <strong className='text-foreground'>{email}</strong>
           </p>
-          <p className="mb-4 text-xs text-muted-foreground">
+          <p className='text-muted-foreground mb-4 text-xs'>
             Click the link in the email to sign in. The link expires in 10 minutes.
           </p>
 
-          <ErrorMessage error={displayError} id="magic-link-resend-error" />
+          <ErrorMessage error={displayError} id='magic-link-resend-error' />
 
           {resent && (
-            <div className="mb-4 rounded-lg border border-green-200 bg-green-50 p-3 text-xs text-green-600 sm:text-sm">
+            <div className='mb-4 rounded-lg border border-green-200 bg-green-50 p-3 text-xs text-green-600 sm:text-sm'>
               Email sent successfully!
             </div>
           )}
 
-          <div className="flex flex-col gap-2">
+          <div className='flex flex-col gap-2'>
             <button
-              type="button"
+              type='button'
               onClick={handleResend}
               disabled={!canResend || resending}
               className={`text-sm font-medium transition ${
-                canResend && !resending
-                  ? 'cursor-pointer text-primary hover:text-primary/80'
-                  : 'cursor-not-allowed text-muted-foreground/70'
+                canResend && !resending ?
+                  'text-primary hover:text-primary/80 cursor-pointer'
+                : 'text-muted-foreground/70 cursor-not-allowed'
               }`}
             >
-              {resending
-                ? 'Sending...'
-                : canResend
-                  ? "Didn't receive it? Try again"
-                  : 'Try again in 30s'}
+              {resending ?
+                'Sending...'
+              : canResend ?
+                "Didn't receive it? Try again"
+              : 'Try again in 30s'}
             </button>
             <button
-              type="button"
+              type='button'
               onClick={handleReset}
-              className="text-sm font-medium text-muted-foreground hover:text-secondary-foreground"
+              className='text-muted-foreground hover:text-secondary-foreground text-sm font-medium'
             >
               Use a different email
             </button>
@@ -146,39 +149,39 @@ export function MagicLinkForm({
   }
 
   return (
-    <div className="space-y-4">
-      <form onSubmit={handleSubmit} autoComplete="off">
-        <div className="space-y-4">
+    <div className='space-y-4'>
+      <form onSubmit={handleSubmit} autoComplete='off'>
+        <div className='space-y-4'>
           <div>
             <label
-              className="mb-1 block text-xs font-semibold text-secondary-foreground sm:mb-2 sm:text-sm"
-              htmlFor="magic-link-email"
+              className='text-secondary-foreground mb-1 block text-xs font-semibold sm:mb-2 sm:text-sm'
+              htmlFor='magic-link-email'
             >
               Email
             </label>
             <input
-              type="email"
-              autoComplete="email"
-              autoCapitalize="off"
-              spellCheck="false"
+              type='email'
+              autoComplete='email'
+              autoCapitalize='off'
+              spellCheck='false'
               value={email}
               onChange={e => setEmail(e.target.value)}
-              className="w-full rounded-lg border border-border py-2 pl-3 pr-3 text-xs transition focus:border-transparent focus:outline-none focus:ring-2 focus:ring-primary sm:pl-4 sm:pr-4 sm:text-sm"
+              className='border-border focus:ring-primary w-full rounded-lg border py-2 pr-3 pl-3 text-xs transition focus:border-transparent focus:ring-2 focus:outline-none sm:pr-4 sm:pl-4 sm:text-sm'
               required
-              id="magic-link-email"
-              placeholder="you@example.com"
+              id='magic-link-email'
+              placeholder='you@example.com'
               disabled={loading}
               aria-describedby={displayError ? 'magic-link-error' : undefined}
             />
           </div>
 
-          <ErrorMessage error={displayError} id="magic-link-error" />
+          <ErrorMessage error={displayError} id='magic-link-error' />
 
-          <PrimaryButton loading={loading} loadingText="Sending Link...">
+          <PrimaryButton loading={loading} loadingText='Sending Link...'>
             {buttonText}
           </PrimaryButton>
 
-          <p className="text-center text-xs text-muted-foreground">{description}</p>
+          <p className='text-muted-foreground text-center text-xs'>{description}</p>
         </div>
       </form>
     </div>

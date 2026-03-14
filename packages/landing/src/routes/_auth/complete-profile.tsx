@@ -458,7 +458,7 @@ function CompleteProfilePage() {
             <button
               type='button'
               onClick={() => setCurrentStep(2)}
-              className='mx-auto block py-2 text-sm text-muted-foreground underline-offset-4 transition hover:text-secondary-foreground hover:underline'
+              className='text-muted-foreground hover:text-secondary-foreground mx-auto block py-2 text-sm underline-offset-4 transition hover:underline'
             >
               Skip for now
             </button>
@@ -503,7 +503,7 @@ function CompleteProfilePage() {
               type='button'
               onClick={() => handleSubmit('other')}
               disabled={loading}
-              className='mx-auto block py-2 text-sm text-muted-foreground underline-offset-4 transition hover:text-secondary-foreground hover:underline disabled:opacity-50'
+              className='text-muted-foreground hover:text-secondary-foreground mx-auto block py-2 text-sm underline-offset-4 transition hover:underline disabled:opacity-50'
             >
               Skip for now
             </button>

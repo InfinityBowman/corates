@@ -55,26 +55,29 @@ export function TwoFactorVerify({ onCancel }: TwoFactorVerifyProps) {
   }
 
   return (
-    <div className="space-y-4">
-      <div className="mb-4 text-center">
-        <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
-          <FiLock className="h-8 w-8 text-primary" />
+    <div className='space-y-4'>
+      <div className='mb-4 text-center'>
+        <div className='bg-primary/10 mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full'>
+          <FiLock className='text-primary h-8 w-8' />
         </div>
-        <h2 className="mb-1 text-xl font-bold text-foreground">Two-Factor Authentication</h2>
-        <p className="text-sm text-muted-foreground">
-          {useBackupCode
-            ? 'Enter one of your backup codes'
-            : 'Enter the code from your authenticator app'}
+        <h2 className='text-foreground mb-1 text-xl font-bold'>Two-Factor Authentication</h2>
+        <p className='text-muted-foreground text-sm'>
+          {useBackupCode ?
+            'Enter one of your backup codes'
+          : 'Enter the code from your authenticator app'}
         </p>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className='space-y-4'>
         <div>
-          <label className="mb-2 block text-sm font-medium text-secondary-foreground" htmlFor="2fa-code">
+          <label
+            className='text-secondary-foreground mb-2 block text-sm font-medium'
+            htmlFor='2fa-code'
+          >
             {useBackupCode ? 'Backup Code' : 'Verification Code'}
           </label>
           <input
-            type="text"
+            type='text'
             inputMode={useBackupCode ? 'text' : 'numeric'}
             pattern={useBackupCode ? undefined : '[0-9]*'}
             maxLength={useBackupCode ? 20 : 6}
@@ -82,39 +85,39 @@ export function TwoFactorVerify({ onCancel }: TwoFactorVerifyProps) {
             onChange={e =>
               setCode(useBackupCode ? e.target.value : e.target.value.replace(/\D/g, ''))
             }
-            className="w-full rounded-lg border border-border px-4 py-3 text-center font-mono text-xl tracking-widest focus:border-transparent focus:outline-none focus:ring-2 focus:ring-primary"
+            className='border-border focus:ring-primary w-full rounded-lg border px-4 py-3 text-center font-mono text-xl tracking-widest focus:border-transparent focus:ring-2 focus:outline-none'
             placeholder={useBackupCode ? 'XXXX-XXXX-XXXX' : '000000'}
             disabled={loading}
-            id="2fa-code"
+            id='2fa-code'
             autoFocus
             aria-describedby={displayError ? '2fa-error' : undefined}
           />
         </div>
 
-        <ErrorMessage error={displayError} id="2fa-error" />
+        <ErrorMessage error={displayError} id='2fa-error' />
 
-        <PrimaryButton loading={loading} loadingText="Verifying...">
+        <PrimaryButton loading={loading} loadingText='Verifying...'>
           Verify
         </PrimaryButton>
 
-        <div className="space-y-2 text-center">
+        <div className='space-y-2 text-center'>
           <button
-            type="button"
+            type='button'
             onClick={() => {
               setUseBackupCode(!useBackupCode);
               setCode('');
               setError('');
             }}
-            className="text-sm font-medium text-primary hover:text-primary/80"
+            className='text-primary hover:text-primary/80 text-sm font-medium'
           >
             {useBackupCode ? 'Use authenticator app instead' : 'Use a backup code'}
           </button>
 
           <div>
             <button
-              type="button"
+              type='button'
               onClick={onCancel}
-              className="text-sm text-muted-foreground hover:text-secondary-foreground"
+              className='text-muted-foreground hover:text-secondary-foreground text-sm'
             >
               Cancel and try different sign-in method
             </button>

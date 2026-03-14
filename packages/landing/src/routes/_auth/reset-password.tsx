@@ -25,12 +25,14 @@ function ResetPasswordPage() {
   const { token } = useSearch({ from: '/_auth/reset-password' });
 
   return (
-    <div className="relative w-full max-w-md space-y-4 rounded-xl border border-border bg-card p-6 shadow-2xl sm:max-w-xl sm:rounded-3xl sm:p-12">
-      <a href="/" className="absolute left-4 top-4 sm:left-6 sm:top-6">
-        <img src="/logo.svg" alt="CoRATES" className="h-6 w-auto sm:h-7" />
+    <div className='border-border bg-card relative w-full max-w-md space-y-4 rounded-xl border p-6 shadow-2xl sm:max-w-xl sm:rounded-3xl sm:p-12'>
+      <a href='/' className='absolute top-4 left-4 sm:top-6 sm:left-6'>
+        <img src='/logo.svg' alt='CoRATES' className='h-6 w-auto sm:h-7' />
       </a>
 
-      {token ? <SetNewPasswordForm token={token} /> : <RequestResetForm />}
+      {token ?
+        <SetNewPasswordForm token={token} />
+      : <RequestResetForm />}
     </div>
   );
 }
@@ -45,7 +47,9 @@ function RequestResetForm() {
   const setAuthError = useAuthStore(s => s.setAuthError);
   const authError = useAuthStore(s => s.authError);
 
-  useEffect(() => { setAuthError(null); }, [setAuthError]);
+  useEffect(() => {
+    setAuthError(null);
+  }, [setAuthError]);
 
   // Redirect to signin after success with cleanup
   useEffect(() => {
@@ -80,56 +84,58 @@ function RequestResetForm() {
 
   return (
     <>
-      <div className="mb-2 text-center sm:mb-4">
-        <h2 className="mb-1 text-xl font-bold text-foreground sm:mb-2 sm:text-2xl">Reset Password</h2>
-        <p className="text-xs text-muted-foreground sm:text-sm">
+      <div className='mb-2 text-center sm:mb-4'>
+        <h2 className='text-foreground mb-1 text-xl font-bold sm:mb-2 sm:text-2xl'>
+          Reset Password
+        </h2>
+        <p className='text-muted-foreground text-xs sm:text-sm'>
           Enter your email address and we&apos;ll send you a link to reset your password.
         </p>
       </div>
 
       {success && (
-        <div className="rounded-lg border border-green-200 bg-green-50 p-4 text-center animate-in fade-in duration-200">
-          <p className="mb-1 text-sm font-medium text-green-700">Reset Email Sent!</p>
-          <p className="text-xs text-green-600">
+        <div className='animate-in fade-in rounded-lg border border-green-200 bg-green-50 p-4 text-center duration-200'>
+          <p className='mb-1 text-sm font-medium text-green-700'>Reset Email Sent!</p>
+          <p className='text-xs text-green-600'>
             Check your email for instructions to reset your password. Redirecting you to sign in...
           </p>
         </div>
       )}
 
       {!success && (
-        <form onSubmit={handleSubmit} className="space-y-4 animate-in fade-in duration-200">
+        <form onSubmit={handleSubmit} className='animate-in fade-in space-y-4 duration-200'>
           <div>
             <label
-              className="mb-1 block text-xs font-semibold text-secondary-foreground sm:mb-2 sm:text-sm"
-              htmlFor="email-input"
+              className='text-secondary-foreground mb-1 block text-xs font-semibold sm:mb-2 sm:text-sm'
+              htmlFor='email-input'
             >
               Email Address
             </label>
             <input
-              type="email"
-              autoComplete="email"
-              autoCapitalize="off"
-              spellCheck="false"
+              type='email'
+              autoComplete='email'
+              autoCapitalize='off'
+              spellCheck='false'
               value={email}
               onChange={e => setEmail(e.target.value)}
-              className="w-full rounded-lg border border-border py-2 pl-3 pr-3 text-xs transition focus:border-transparent focus:outline-none focus:ring-2 focus:ring-primary sm:pl-4 sm:pr-4 sm:text-sm"
+              className='border-border focus:ring-primary w-full rounded-lg border py-2 pr-3 pl-3 text-xs transition focus:border-transparent focus:ring-2 focus:outline-none sm:pr-4 sm:pl-4 sm:text-sm'
               required
-              id="email-input"
-              placeholder="you@example.com"
+              id='email-input'
+              placeholder='you@example.com'
               disabled={loading}
             />
           </div>
 
           <ErrorMessage error={displayError} />
 
-          <PrimaryButton loading={loading} loadingText="Sending Email...">
+          <PrimaryButton loading={loading} loadingText='Sending Email...'>
             Send Reset Email
           </PrimaryButton>
 
-          <div className="mt-2 text-center text-xs text-muted-foreground sm:mt-4 sm:text-sm">
+          <div className='text-muted-foreground mt-2 text-center text-xs sm:mt-4 sm:text-sm'>
             Remember your password?{' '}
             <AuthLink
-              href="/signin"
+              href='/signin'
               onClick={e => {
                 e.preventDefault();
                 navigate({ to: '/signin' });
@@ -156,7 +162,9 @@ function SetNewPasswordForm({ token }: { token: string }) {
   const setAuthError = useAuthStore(s => s.setAuthError);
   const authError = useAuthStore(s => s.authError);
 
-  useEffect(() => { setAuthError(null); }, [setAuthError]);
+  useEffect(() => {
+    setAuthError(null);
+  }, [setAuthError]);
 
   // Redirect to signin after success with cleanup
   useEffect(() => {
@@ -204,36 +212,38 @@ function SetNewPasswordForm({ token }: { token: string }) {
 
   return (
     <>
-      <div className="mb-2 text-center sm:mb-4">
-        <h2 className="mb-1 text-xl font-bold text-foreground sm:mb-2 sm:text-2xl">Set New Password</h2>
-        <p className="text-xs text-muted-foreground sm:text-sm">Enter your new password below.</p>
+      <div className='mb-2 text-center sm:mb-4'>
+        <h2 className='text-foreground mb-1 text-xl font-bold sm:mb-2 sm:text-2xl'>
+          Set New Password
+        </h2>
+        <p className='text-muted-foreground text-xs sm:text-sm'>Enter your new password below.</p>
       </div>
 
       {success && (
-        <div className="rounded-lg border border-green-200 bg-green-50 p-4 text-center animate-in fade-in duration-200">
-          <p className="mb-1 text-sm font-medium text-green-700">Password Reset Successfully!</p>
-          <p className="text-xs text-green-600">
+        <div className='animate-in fade-in rounded-lg border border-green-200 bg-green-50 p-4 text-center duration-200'>
+          <p className='mb-1 text-sm font-medium text-green-700'>Password Reset Successfully!</p>
+          <p className='text-xs text-green-600'>
             Your password has been updated. Redirecting you to sign in...
           </p>
         </div>
       )}
 
       {!success && (
-        <form onSubmit={handleSubmit} className="space-y-4 animate-in fade-in duration-200">
+        <form onSubmit={handleSubmit} className='animate-in fade-in space-y-4 duration-200'>
           <div>
             <label
-              className="mb-1 block text-xs font-semibold text-secondary-foreground sm:mb-2 sm:text-sm"
-              htmlFor="new-password-input"
+              className='text-secondary-foreground mb-1 block text-xs font-semibold sm:mb-2 sm:text-sm'
+              htmlFor='new-password-input'
             >
               New Password
             </label>
-            <PasswordInput autoComplete="new-password" disabled={loading} required>
+            <PasswordInput autoComplete='new-password' disabled={loading} required>
               <PasswordInputControl>
                 <PasswordInputField
-                  id="new-password-input"
+                  id='new-password-input'
                   value={password}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
-                  placeholder="Enter new password"
+                  placeholder='Enter new password'
                   aria-describedby={displayError ? 'reset-password-error' : undefined}
                 />
                 <PasswordInputVisibilityTrigger />
@@ -244,18 +254,20 @@ function SetNewPasswordForm({ token }: { token: string }) {
 
           <div>
             <label
-              className="mb-1 block text-xs font-semibold text-secondary-foreground sm:mb-2 sm:text-sm"
-              htmlFor="confirm-password-input"
+              className='text-secondary-foreground mb-1 block text-xs font-semibold sm:mb-2 sm:text-sm'
+              htmlFor='confirm-password-input'
             >
               Confirm Password
             </label>
-            <PasswordInput autoComplete="new-password" disabled={loading} required>
+            <PasswordInput autoComplete='new-password' disabled={loading} required>
               <PasswordInputControl>
                 <PasswordInputField
-                  id="confirm-password-input"
+                  id='confirm-password-input'
                   value={confirmPassword}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setConfirmPassword(e.target.value)}
-                  placeholder="Confirm new password"
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                    setConfirmPassword(e.target.value)
+                  }
+                  placeholder='Confirm new password'
                   aria-describedby={displayError ? 'reset-password-error' : undefined}
                 />
                 <PasswordInputVisibilityTrigger />
@@ -263,15 +275,15 @@ function SetNewPasswordForm({ token }: { token: string }) {
             </PasswordInput>
           </div>
 
-          <ErrorMessage error={displayError} id="reset-password-error" />
+          <ErrorMessage error={displayError} id='reset-password-error' />
 
-          <PrimaryButton loading={loading} loadingText="Setting Password...">
+          <PrimaryButton loading={loading} loadingText='Setting Password...'>
             Set Password
           </PrimaryButton>
 
-          <div className="mt-2 text-center text-xs text-muted-foreground sm:mt-4 sm:text-sm">
+          <div className='text-muted-foreground mt-2 text-center text-xs sm:mt-4 sm:text-sm'>
             <AuthLink
-              href="/reset-password"
+              href='/reset-password'
               onClick={e => {
                 e.preventDefault();
                 navigate({ to: '/reset-password', search: { token: '' } });

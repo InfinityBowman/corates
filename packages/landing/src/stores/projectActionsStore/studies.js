@@ -291,7 +291,9 @@ export function createStudyActions(
 
     try {
       // Get study data to access PDFs before deletion
-      const study = useProjectStore.getState().projects[projectId]?.studies?.find(s => s.id === studyId) || null;
+      const study =
+        useProjectStore.getState().projects[projectId]?.studies?.find(s => s.id === studyId) ||
+        null;
       const pdfs = study?.pdfs || [];
 
       // Delete each PDF from R2 storage

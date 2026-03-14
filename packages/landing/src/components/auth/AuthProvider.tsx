@@ -35,7 +35,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
     const rawUser = session.data?.user;
     const user = rawUser ? { ...rawUser, image: rawUser.image ?? undefined } : null;
     const loading = session.isPending;
-    const refetch = session.refetch ? async () => { await session.refetch(); } : null;
+    const refetch =
+      session.refetch ?
+        async () => {
+          await session.refetch();
+        }
+      : null;
 
     setSessionData(user, loading, refetch);
   }, [session.data, session.isPending, session.refetch, setSessionData]);
@@ -47,7 +52,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
     if (!isOnline) return;
 
     const cacheRawUser = session.data?.user;
-    const cacheUser = cacheRawUser ? { ...cacheRawUser, image: cacheRawUser.image ?? undefined } : null;
+    const cacheUser =
+      cacheRawUser ? { ...cacheRawUser, image: cacheRawUser.image ?? undefined } : null;
 
     if (cacheUser) {
       saveCachedAuth(cacheUser);
