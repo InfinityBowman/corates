@@ -5,7 +5,7 @@ const handler = createStartHandler(defaultStreamHandler);
 // Routes owned by the SolidJS SPA (served via app.html)
 // Auth routes migrated to React: /signin, /signup, /check-email, /reset-password, /complete-profile
 const SPA_ROUTE_PREFIXES = [
-  // '/dashboard', // temporarily removed to test React shell
+  // '/dashboard', // migrated to React
   '/checklist',
   '/settings',
   '/admin',
