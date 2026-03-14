@@ -10,7 +10,7 @@ const SPA_ROUTE_PREFIXES = [
   // '/settings', // migrated to React
   '/admin',
   '/projects',
-  '/orgs',
+  // '/orgs', // migrated to React
   '/mocks',
 ];
 
