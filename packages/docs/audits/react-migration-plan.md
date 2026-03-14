@@ -575,11 +575,30 @@ function useProject(projectId: string) {
 
 Start simple, build confidence, tackle complex last. Each route becomes a file in `packages/landing/src/routes/`.
 
-### 4.1 Auth pages (simplest)
+### 4.1 Auth pages -- COMPLETED (2026-03-14)
 
-- `_auth/signin.tsx`, `signup.tsx`, `check-email.tsx`, `complete-profile.tsx`, `reset-password.tsx`
-- Form state, auth store calls, simple UI
-- Replace each placeholder from Phase 1
+All 5 auth pages migrated to React and serving in production:
+- `_auth/signin.tsx` -- password/magic-link tab animation, 2FA inline, OAuth (Google/ORCID)
+- `_auth/signup.tsx` -- OAuth + magic link, invitation/plan capture from URL
+- `_auth/check-email.tsx` -- email verification polling, visibility change detection
+- `_auth/reset-password.tsx` -- dual-form (request reset / set new password with strength indicator)
+- `_auth/complete-profile.tsx` -- 3-step wizard (name/title, institution, persona), OAuth name autofill, invitation acceptance, plan redirect
+
+Supporting components created:
+- `components/auth/` -- ErrorMessage, AuthButtons, SocialAuthButtons, LastLoginHint, StrengthIndicator, TwoFactorVerify, MagicLinkForm, RoleSelector
+- `hooks/useOAuthError.ts` -- OAuth error URL cleanup
+- `hooks/useBfcacheReset.ts` -- shared bfcache loading state reset
+- `api/billing.js` -- billing API (copied, framework-agnostic)
+
+Key changes:
+- `server-entry.ts` -- auth routes removed from SPA_ROUTE_PREFIXES (React serves them)
+- `_auth.tsx` layout -- guest guard with exemptions for /reset-password, /complete-profile, /check-email
+- `__root.tsx` -- providers (QueryClientProvider, AuthProvider, Toaster) hoisted here
+- `lib/config.ts` -- signIn/signUp URLs changed to relative paths (same-origin navigation)
+- `lib/error-utils.js` -- navigate calls updated to TanStack Router object form
+- Navbar -- Sign In/Sign Up links use TanStack `<Link>` for client-side navigation
+- All auth components use shadcn design tokens (no hardcoded blue)
+- `selectUser` selector fixed to avoid object spread (was causing infinite re-render loop)
 
 ### 4.2 App shell (needed for everything else)
 
@@ -743,10 +762,10 @@ Start simple, build confidence, tackle complex last. Each route becomes a file i
 | Phase 1: Foundation  | 3-4 days       | --                             | DONE (2026-03-14)     |
 | Phase 2: UI Library  | 2 days         | Yes (with Phase 3)             | DONE (2026-03-14)     |
 | Phase 3: Primitives  | 3-4 days       | Yes (with Phase 2)             | Not started           |
-| Phase 4: Pages       | 5-7 days       | Partially (independent routes) | Not started           |
+| Phase 4: Pages       | 5-7 days       | Partially (independent routes) | 4.1 auth DONE         |
 | Phase 5: Tests       | 2 days         | Yes (with Phase 4)             | Not started           |
 | Phase 6: Cleanup     | 0.5 days       | --                             | Not started           |
-| **Total**            | **~2-3 weeks** |                                | **Phases 0-1 done**   |
+| **Total**            | **~2-3 weeks** |                                | **Phases 0-2 + 4.1 done** |
 
 Phase 0 is shorter since landing already exists. Claude Code can handle the mechanical parts (UI components, query hooks, icon swaps, simple page conversions) to significantly speed up Phases 2 and 4.
 

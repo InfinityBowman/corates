@@ -12,21 +12,19 @@
  */
 
 import { CHECKLIST_TYPES, DEFAULT_CHECKLIST_TYPE } from './types.js';
-import {
-  createChecklist as createAMSTAR2,
-  scoreChecklist as scoreAMSTAR2,
-  getAnswers as getAMSTAR2Answers,
-} from '@/components/checklist/AMSTAR2Checklist/checklist.js';
-import {
-  createChecklist as createROBINSI,
-  scoreChecklist as scoreROBINSI,
-  getAnswers as getROBINSIAnswers,
-} from '@/components/checklist/ROBINSIChecklist/checklist.js';
-import {
-  createChecklist as createROB2,
-  scoreChecklist as scoreROB2,
-  getAnswers as getROB2Answers,
-} from '@/components/checklist/ROB2Checklist/checklist.js';
+import { amstar2, robinsI, rob2 } from '@corates/shared';
+
+const createAMSTAR2 = amstar2.createAMSTAR2Checklist;
+const scoreAMSTAR2 = amstar2.scoreAMSTAR2Checklist;
+const getAMSTAR2Answers = amstar2.getAnswers;
+
+const createROBINSI = robinsI.createROBINSIChecklist;
+const scoreROBINSI = robinsI.scoreROBINSIChecklist;
+const getROBINSIAnswers = robinsI.getAnswers;
+
+const createROB2 = rob2.createROB2Checklist;
+const scoreROB2 = rob2.scoreROB2Checklist;
+const getROB2Answers = rob2.getAnswers;
 
 /**
  * Registry mapping checklist types to their implementations
