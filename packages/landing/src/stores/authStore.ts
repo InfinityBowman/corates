@@ -338,25 +338,14 @@ export const useAuthStore = create<AuthState & AuthActions>()((set, get) => ({
   resendVerificationEmail: async email => {
     try {
       set({ authError: null });
-      const result = await (authClient as any).sendVerificationEmail?.({ email });
-      if (result?.error) throw new Error(result.error.message);
-    } catch (authClientErr) {
-      console.warn(
-        'Better Auth sendVerificationEmail failed, trying backend:',
-        (authClientErr as Error).message,
-      );
-      try {
-        const response = await fetch('/api/auth/send-verification-email', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email }),
-          credentials: 'include',
-        });
-        if (!response.ok) throw new Error('Failed to resend verification email');
-      } catch (fetchErr) {
-        set({ authError: (fetchErr as Error).message || 'Failed to resend verification email' });
-        throw fetchErr;
-      }
+      const { error } = await authClient.$fetch('/send-verification-email', {
+        method: 'POST',
+        body: { email },
+      });
+      if (error) throw new Error(error.message || 'Failed to resend verification email');
+    } catch (err) {
+      set({ authError: (err as Error).message || 'Failed to resend verification email' });
+      throw err;
     }
   },
 

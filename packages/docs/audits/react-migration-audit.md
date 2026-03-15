@@ -37,15 +37,9 @@ The effect body references `disconnect`, `cleanupTimers`, and `clearPongTimeout`
 
 Additionally, notifications are accumulated in state (`setNotifications(prev => [...])`) with no cap -- a memory leak for long-lived sessions.
 
-### 4. `authClient as any` for optional method call
+### ~~4. `authClient as any` for optional method call~~ FIXED
 
-**File**: `packages/landing/src/stores/authStore.ts` line 341
-
-```ts
-const result = await (authClient as any).sendVerificationEmail?.({ email });
-```
-
-If the `as any` cast throws for a reason other than "method not found", the catch block swallows the real error and falls through to a raw `fetch` call. The method should be typed via Better Auth plugin types or narrowed to a known interface.
+Fixed: Replaced `(authClient as any).sendVerificationEmail?.()` with `authClient.$fetch('/send-verification-email', ...)`. The `$fetch` method is typed on the client and hits the same endpoint. Also removed the double try/catch fallback since both paths were hitting the same API route.
 
 ### ~~5. `session: any` prop on `SessionCard`~~ FIXED
 
@@ -168,7 +162,7 @@ These represent the majority of business logic surface area.
 
 ### Remaining `as any` locations
 
-`authStore.ts:341`, `localChecklistsStore.ts:103,117`, `LinkedAccountsSection.tsx:138,177,179`, `ProjectView.tsx:84,87-89`.
+`localChecklistsStore.ts:103,117`, `LinkedAccountsSection.tsx:138,177,179`, `ProjectView.tsx:84,87-89`.
 
 ### `eslint-disable` comments suppress real warnings
 
@@ -220,6 +214,6 @@ Fixed: Extracted `sortStudyPdfs()` and `getCitationLine()` to `components/projec
 | Priority                               | Count  | Action                                                                    |
 | -------------------------------------- | ------ | ------------------------------------------------------------------------- |
 | Fix immediately (runtime breakage)     | 1      | SolidJS form-errors test                                                  |
-| Fix before merge (type safety + React) | 4      | `as any` casts, stale closure risk                                        |
+| Fix before merge (type safety + React) | 3      | `as any` casts, stale closure risk                                        |
 | Fix soon (consistency + a11y)          | 10     | Untyped JS files, missing guards, render functions, redirect, a11y (#24-25), unused props (#26) |
-| **Total**                              | **15** |                                                                           |
+| **Total**                              | **14** |                                                                           |
