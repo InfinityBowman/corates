@@ -136,6 +136,7 @@ result = await initiateMerge(input, null as any);
 ### 15. `project as any` and `study as any` prop casts
 
 **Files**:
+
 - `packages/landing/src/components/dashboard/ProjectsSection.tsx` line 189: `project={project as any}`
 - `packages/landing/src/components/layout/sidebar/ProjectTreeItem.tsx` line 76: `study={study as any}`
 
@@ -172,6 +173,7 @@ const canCreateProject = useMemo(() => {
 ### 18. Suppressed deps on route-change close effect
 
 **Files**:
+
 - `packages/landing/src/components/layout/Sidebar.tsx` lines 163-165
 - `packages/landing/src/components/layout/SettingsSidebar.tsx` lines 93-95
 
@@ -225,12 +227,6 @@ The entire subdirectory has no TypeScript types while the rest of the stores are
 
 `useAdminStats`, `useAdminUsers`, and `useAdminProjects` have no `enabled` guard for authentication or admin status. Other hooks like `useOrgs` and `useMembers` gate on `isLoggedIn`. If any admin hook is used outside a protected route context, it will fire unauthenticated requests.
 
-### 23. Mixed icon libraries (`react-icons` + `lucide-react`)
-
-**Files**: 30+ files use `react-icons`, shadcn/ui components use `lucide-react`
-
-The migration plan chose `react-icons` as the replacement for `solid-icons`, but shadcn/ui components default to `lucide-react`. Both libraries are now bundled. Either standardize on one or document the intended split.
-
 ### 24. Index as key on dynamic violations list
 
 **File**: `packages/landing/src/components/billing/PricingTable.tsx` line 473
@@ -255,6 +251,7 @@ The target route (`_auth/check-email.tsx`) validates search params for `email`. 
 ### 26. Render functions called twice instead of extracted components
 
 **Files**:
+
 - `packages/landing/src/components/layout/Sidebar.tsx` line 168 (`renderSidebarContent`)
 - `packages/landing/src/components/layout/SettingsSidebar.tsx` line 97 (`renderNavContent`)
 
@@ -271,6 +268,7 @@ Fixed: `apiFetch` has been converted to TypeScript (`apiFetch.ts`). The `delete`
 ### ~~`as any` from `apiFetch`~~ FIXED
 
 `apiFetch` has been converted to TypeScript with full generic support (`apiFetch.get<T>()`). All 16 call-site type errors have been resolved by adding proper types:
+
 - `useMyProjectsList`: exports `Project` interface, fetches as `Project[]`
 - `useSubscription`: exports `Subscription` interface, removed all 6 `Record<string, unknown>` casts
 - `InvoicesList`: typed `InvoicesResponse` with `Invoice` interface
@@ -286,6 +284,7 @@ At least 4 locations suppress `react-hooks/exhaustive-deps` with blanket disable
 ### Large surface area of untyped JS files
 
 The following directories are still `.js` with no TypeScript safety:
+
 - `stores/projectActionsStore/` (8 files)
 - `primitives/` (13 files)
 - Most of `lib/` (20+ files, though `apiFetch`, `bfcache-handler`, `plan-redirect-utils` are now TS)
@@ -297,9 +296,9 @@ These represent the majority of business logic surface area.
 
 ## Summary
 
-| Priority | Count | Action |
-|----------|-------|--------|
-| ~~Fix immediately (runtime breakage)~~ | ~~4~~ 1 remaining | ~~SolidJS navigate signatures~~, ~~SolidJS bfcache imports~~, SolidJS form-errors test, ~~wrong route destination~~ |
-| Fix before merge (type safety + React bugs) | ~~16~~ 15 remaining | `as any` casts, stale closures, suppressed lint rules, race conditions (~~useSubscription casts fixed~~) |
-| ~~Fix soon (consistency)~~ | ~~7~~ 6 remaining | Untyped JS files, mixed icon libs, missing guards, module singletons, ~~apiFetch inconsistency~~ |
-| **Total** | **22 remaining** (5 fixed + `apiFetch` typed with all call sites) | |
+| Priority                                    | Count                                                             | Action                                                                                                              |
+| ------------------------------------------- | ----------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| ~~Fix immediately (runtime breakage)~~      | ~~4~~ 1 remaining                                                 | ~~SolidJS navigate signatures~~, ~~SolidJS bfcache imports~~, SolidJS form-errors test, ~~wrong route destination~~ |
+| Fix before merge (type safety + React bugs) | ~~16~~ 15 remaining                                               | `as any` casts, stale closures, suppressed lint rules, race conditions (~~useSubscription casts fixed~~)            |
+| ~~Fix soon (consistency)~~                  | ~~7~~ 5 remaining                                                 | Untyped JS files, missing guards, module singletons, ~~apiFetch inconsistency~~, ~~mixed icon libs (accepted)~~     |
+| **Total**                                   | **21 remaining** (5 fixed + `apiFetch` typed with all call sites, 1 accepted) |                                                                                                          |
