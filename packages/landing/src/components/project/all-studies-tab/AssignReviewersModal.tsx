@@ -86,7 +86,7 @@ export function AssignReviewersModal({
       });
       onOpenChange(false);
     } catch (err) {
-      const { handleError } = await import('@/lib/error-utils.js');
+      const { handleError } = await import('@/lib/error-utils');
       await handleError(err, { toastTitle: 'Update Failed' });
     } finally {
       setSaving(false);

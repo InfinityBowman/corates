@@ -53,7 +53,7 @@ export function SecuritySettings() {
         setNewPassword('');
         setConfirmPassword('');
       } catch (err) {
-        const { handleError } = await import('@/lib/error-utils.js');
+        const { handleError } = await import('@/lib/error-utils');
         await handleError(err, { setError: setPasswordError, showToast: false });
       } finally {
         setChangingPassword(false);

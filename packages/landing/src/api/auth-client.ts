@@ -7,7 +7,7 @@ import {
   organizationClient,
 } from 'better-auth/client/plugins';
 import { API_BASE } from '@/config/api.js';
-import { parseError } from '@/lib/error-utils.js';
+import { parseError } from '@/lib/error-utils';
 
 export const authClient = createAuthClient({
   baseURL: API_BASE,

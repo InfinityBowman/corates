@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { useAuthStore } from '@/stores/authStore';
-import { handleError } from '@/lib/error-utils.js';
+import { handleError } from '@/lib/error-utils';
 import { useOAuthError } from '@/hooks/useOAuthError';
 import { useBfcacheReset } from '@/hooks/useBfcacheReset';
 import { capturePlanParams } from '@/lib/plan-redirect-utils';

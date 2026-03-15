@@ -23,13 +23,7 @@ The test passes SolidJS primitives to `createFormErrorSignals`, which itself use
 
 ## Priority 2 -- Fix Before Merge (Type Safety and React Bugs)
 
-### 2. Duplicate `fetchOrgs` functions share a query key
-
-**Files**: `packages/landing/src/hooks/useOrgs.ts` lines 10-13, `packages/landing/src/hooks/useOrgContext.ts` lines 29-33
-
-Both hooks define a private `fetchOrgs` function with identical implementations, both using query key `queryKeys.orgs.list` (value: `['orgs']`). TanStack Query deduplicates them into a single cache entry. If either implementation diverges in the future, the cache will silently serve stale data from whichever ran first.
-
-**Fix**: Extract `fetchOrgs` to a shared module (e.g., `lib/api/orgs.ts`) and import in both hooks.
+### ~~2. Duplicate `fetchOrgs` functions share a query key~~ FIXED
 
 ### 3. Blanket `eslint-disable` hides stale closure risk in `useNotifications`
 
@@ -105,17 +99,9 @@ The `accounts` data from `useLinkedAccounts` is untyped, forcing every usage to 
 
 **Fix**: Type the linked accounts response from the hook.
 
-### 10. `null as any` arguments in `MergeAccountsDialog`
+### ~~10. `null as any` arguments in `MergeAccountsDialog`~~ FIXED
 
-**File**: `packages/landing/src/components/settings/MergeAccountsDialog.tsx` lines 120, 123, 126
-
-```ts
-let result: any;
-result = await initiateMerge(null as any, normalizedOrcidId);
-result = await initiateMerge(input, null as any);
-```
-
-`initiateMerge` should accept `null` natively in its signature instead of requiring `null as any`.
+Fixed: `account-merge.ts` now accepts `string | null` for both params. `MergeAccountsDialog` no longer uses `null as any` or `result: any`.
 
 ### 11. Module-level mutable singletons in `useProjectList`
 
@@ -128,37 +114,21 @@ let cleanupProjectLocalData: ((_id: string) => Promise<void>) | null = null;
 
 These persist across React renders, component unmounts, and test runs. A project ID that permanently fails cleanup will be retried on every `fetchProjects` call for the tab's lifetime. In tests, state leaks between test runs.
 
-### 12. `restrictionType` is always `'quota'` when user has no restriction
+### ~~12. `restrictionType` is always `'quota'` when user has no restriction~~ FIXED
 
-**File**: `packages/landing/src/components/dashboard/ProjectsSection.tsx` lines 65-68
+### ~~13. Pervasive `any` in `ProjectContext` and project components~~ FIXED
 
-```ts
-const restrictionType: 'entitlement' | 'quota' | null =
-  subscriptionLoading ? null
-  : !hasEntitlement('project.create') ? 'entitlement'
-  : 'quota';   // always 'quota' for all non-loading, entitled users
-```
-
-Falls through to `'quota'` even when the user has available quota. Currently safe because `ContactPrompt` is guarded by `!canCreateProject`, but any future consumer of `restrictionType` will get `'quota'` when there is no restriction.
-
-**Fix**: Add the quota check: `: !hasQuota(...) ? 'quota' : null`.
-
-### 13. Pervasive `any` in `ProjectContext` and project components
-
-**Files**:
-- `packages/landing/src/components/project/ProjectContext.tsx` lines 19, 22, 30, 37, 41
-- `packages/landing/src/components/project/ProjectView.tsx` lines 84, 87-89
-
-`projectOps: any`, `getMember` returns `any`, `members: any[]`, and `pendingState` uses `as any` on the store. A shared `ProjectMember` interface and typed `projectOps` would make all consumers type-safe.
+Fixed: Defined `ProjectMember` interface in `ProjectContext.tsx` and exported it. Typed `members`, `getMember`, `projectOps` (as `Record<string, unknown>`). Updated `OverviewTab`, `StudyCard`, and `StudyCardHeader` to use `ProjectMember` instead of `any`. Remaining `any`: `ProjectView.tsx:84` (`getPendingProjectData` on store) and `projectOps` consumers (none currently).
 
 ### 14. `null as any` to satisfy typed parameters
 
 **Files**:
+
 - `packages/landing/src/components/project/ProjectView.tsx` lines 198, 200
 - `packages/landing/src/components/project/overview-tab/OverviewTab.tsx` line 107
 
 ```ts
-getChecklistCount(studies, 'reconcile', null as any)
+getChecklistCount(studies, 'reconcile', null as any);
 ```
 
 `getChecklistCount` requires a `userId` param it only uses for the `'todo'` tab. The function signature should accept `string | null` for these tabs instead of requiring `null as any`.
@@ -203,24 +173,22 @@ The target route (`_auth/check-email.tsx`) validates search params for `email`. 
 ### 19. Render functions called twice instead of extracted components
 
 **Files**:
+
 - `packages/landing/src/components/layout/Sidebar.tsx` line 168 (`renderSidebarContent`)
 - `packages/landing/src/components/layout/SettingsSidebar.tsx` line 97 (`renderNavContent`)
 
 Both define inner functions that return JSX and call them twice (desktop + mobile portal). The two outputs share no component identity between re-renders, meaning state inside the sub-trees (scroll position, input values) is not shared. Extract as proper named components for DevTools inspectability and correct reconciliation.
 
-### 20. Unused `members` prop in `ChartSection`
-
-**File**: `packages/landing/src/components/project/overview-tab/ChartSection.tsx` lines 6-11
-
-`members` is declared in the interface but never destructured or used in the function body.
+### ~~20. Unused `members` prop in `ChartSection`~~ FIXED
 
 ### 21. Large surface area of untyped JS files
 
 The following directories are still `.js` with no TypeScript safety:
+
 - `stores/projectActionsStore/` (8 files)
 - `primitives/` (13 files)
-- Most of `lib/` (20+ files, though `apiFetch`, `bfcache-handler`, `plan-redirect-utils` are now TS)
-- `api/` (3 of 4 files)
+- Most of `lib/` (20+ files, though `apiFetch`, `bfcache-handler`, `plan-redirect-utils`, `error-utils` are now TS)
+- `api/` (1 of 4 files -- `billing`, `account-merge`, `auth-client` are now TS)
 
 These represent the majority of business logic surface area.
 
@@ -230,7 +198,7 @@ These represent the majority of business logic surface area.
 
 ### Remaining `as any` locations
 
-`authStore.ts:341`, `localChecklistsStore.ts:103,117`, `SessionManagement.tsx:79`, `signin.tsx:122`, `MergeAccountsDialog.tsx:120,123,126`, `LinkedAccountsSection.tsx:138,177,179`, `ProjectContext.tsx:19,22,30,37,41`, `ProjectView.tsx:84,87-89,198,200`, `OverviewTab.tsx:107`.
+`authStore.ts:341`, `localChecklistsStore.ts:103,117`, `SessionManagement.tsx:79`, `signin.tsx:122`, `LinkedAccountsSection.tsx:138,177,179`, `ProjectView.tsx:84,87-89,198,200`, `OverviewTab.tsx:83,107`.
 
 ### `eslint-disable` comments suppress real warnings
 
@@ -240,9 +208,9 @@ At least 2 remaining locations suppress `react-hooks/exhaustive-deps` with blank
 
 ## Summary
 
-| Priority                               | Count | Action                                                                    |
-| -------------------------------------- | ----- | ------------------------------------------------------------------------- |
-| Fix immediately (runtime breakage)     | 1     | SolidJS form-errors test                                                  |
-| Fix before merge (type safety + React) | 13    | `as any` casts, duplicate fetchOrgs, stale closure risk, logic bug        |
-| Fix soon (consistency)                 | 7     | Untyped JS files, missing guards, unused prop, render functions, redirect |
-| **Total**                              | **21** |                                                                           |
+| Priority                               | Count  | Action                                                                    |
+| -------------------------------------- | ------ | ------------------------------------------------------------------------- |
+| Fix immediately (runtime breakage)     | 1      | SolidJS form-errors test                                                  |
+| Fix before merge (type safety + React) | 8      | `as any` casts, stale closure risk                                        |
+| Fix soon (consistency)                 | 7      | Untyped JS files, missing guards, render functions, redirect              |
+| **Total**                              | **16** |                                                                           |

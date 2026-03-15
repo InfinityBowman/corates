@@ -14,7 +14,7 @@
  */
 
 import { API_BASE } from '@/config/api.js';
-import { handleFetchError } from '@/lib/error-utils.js';
+import { handleFetchError } from '@/lib/error-utils';
 
 interface ApiError {
   message?: string;

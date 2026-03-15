@@ -25,7 +25,7 @@ import {
   redirectToSingleProjectCheckout,
   startTrial,
   validatePlanChange,
-} from '@/api/billing.js';
+} from '@/api/billing';
 import { useSubscription } from '@/hooks/useSubscription';
 import { getBillingPlanCatalog } from '@corates/shared/plans';
 
@@ -94,7 +94,7 @@ export function PricingTable({ currentTier: currentTierProp }: PricingTableProps
         }
         await redirectToCheckout(plan.tier, billingInterval);
       } catch (error) {
-        const { handleError } = await import('@/lib/error-utils.js');
+        const { handleError } = await import('@/lib/error-utils');
         await handleError(error, { toastTitle: 'Checkout Error' });
         setLoadingTier(null);
       }
@@ -128,7 +128,7 @@ export function PricingTable({ currentTier: currentTierProp }: PricingTableProps
           return;
         }
       } catch (error) {
-        const { handleError } = await import('@/lib/error-utils.js');
+        const { handleError } = await import('@/lib/error-utils');
         await handleError(error, { toastTitle: 'Checkout Error' });
         setLoadingTier(null);
       }
@@ -165,7 +165,7 @@ export function PricingTable({ currentTier: currentTierProp }: PricingTableProps
       showToast.success('Trial started', 'Your 14-day trial is now active.');
       await refetch();
     } catch (error) {
-      const { handleError } = await import('@/lib/error-utils.js');
+      const { handleError } = await import('@/lib/error-utils');
       await handleError(error, { toastTitle: 'Trial Error' });
     } finally {
       setLoadingTier(null);
@@ -177,7 +177,7 @@ export function PricingTable({ currentTier: currentTierProp }: PricingTableProps
     try {
       await redirectToSingleProjectCheckout();
     } catch (error) {
-      const { handleError } = await import('@/lib/error-utils.js');
+      const { handleError } = await import('@/lib/error-utils');
       await handleError(error, { toastTitle: 'Checkout Error' });
       setLoadingTier(null);
     }

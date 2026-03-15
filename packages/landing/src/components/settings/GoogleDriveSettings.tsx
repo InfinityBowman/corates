@@ -60,7 +60,7 @@ export function GoogleDriveSettings() {
           'This Google account is already connected to a different user. Please use a different Google account or contact support.',
         );
       } else {
-        const { handleError } = await import('@/lib/error-utils.js');
+        const { handleError } = await import('@/lib/error-utils');
         await handleError(err, { toastTitle: 'Connection Failed' });
       }
       setConnecting(false);
@@ -74,7 +74,7 @@ export function GoogleDriveSettings() {
       setConnected(false);
       showToast.success('Disconnected', 'Google account has been disconnected.');
     } catch (err) {
-      const { handleError } = await import('@/lib/error-utils.js');
+      const { handleError } = await import('@/lib/error-utils');
       await handleError(err, { toastTitle: 'Error' });
     } finally {
       setDisconnecting(false);

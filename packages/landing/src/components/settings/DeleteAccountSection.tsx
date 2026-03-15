@@ -26,7 +26,7 @@ export function DeleteAccountSection() {
       showToast.success('Account Deleted', 'Your account has been deleted.');
       window.location.href = '/';
     } catch (err) {
-      const { handleError } = await import('@/lib/error-utils.js');
+      const { handleError } = await import('@/lib/error-utils');
       await handleError(err, { toastTitle: 'Delete Failed' });
       setDeleting(false);
     }

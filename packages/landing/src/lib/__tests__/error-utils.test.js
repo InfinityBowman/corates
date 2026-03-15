@@ -11,7 +11,7 @@ import {
   handleError,
   parseError,
   isErrorCode,
-} from '../error-utils.js';
+} from '../error-utils';
 import {
   createDomainError,
   createTransportError,

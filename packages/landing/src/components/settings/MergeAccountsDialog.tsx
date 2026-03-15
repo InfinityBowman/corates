@@ -9,7 +9,7 @@ import { TriangleAlertIcon, CheckIcon, LoaderIcon, UserPlusIcon, MailIcon } from
 import { showToast } from '@/components/ui/toast';
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { initiateMerge, verifyMergeCode, completeMerge, cancelMerge } from '@/api/account-merge.js';
+import { initiateMerge, verifyMergeCode, completeMerge, cancelMerge } from '@/api/account-merge';
 
 const STEPS = {
   PROMPT: 'prompt',
@@ -102,13 +102,15 @@ export function MergeAccountsDialog({
     setError(null);
     try {
       const isOrcid = isOrcidId(input);
-      let result: any;
-      if (isOrcid) {
-        const normalizedOrcidId = normalizeOrcidInput(input);
-        result = await initiateMerge(null as any, normalizedOrcidId);
+      const isOrcidInput = isOrcid;
+      const normalizedOrcidId = isOrcidInput ? normalizeOrcidInput(input) : null;
+      const result = await initiateMerge(
+        isOrcidInput ? null : input,
+        isOrcidInput ? normalizedOrcidId : null,
+      );
+      if (isOrcidInput) {
         setTargetOrcidId(normalizedOrcidId);
       } else {
-        result = await initiateMerge(input, null as any);
         setTargetOrcidId(null);
       }
       setMergeToken(result.mergeToken);
@@ -117,7 +119,7 @@ export function MergeAccountsDialog({
         isOrcid && result.targetOrcidId ? result.targetOrcidId : result.targetEmail;
       showToast.success('Code Sent', `A verification code has been sent to ${displayValue}`);
     } catch (err) {
-      const { handleError } = await import('@/lib/error-utils.js');
+      const { handleError } = await import('@/lib/error-utils');
       await handleError(err, { setError, showToast: false });
     } finally {
       setLoading(false);
@@ -139,7 +141,7 @@ export function MergeAccountsDialog({
         if (result.preview) setMergePreview(result.preview);
         setStep(STEPS.CONFIRM);
       } catch (err) {
-        const { handleError } = await import('@/lib/error-utils.js');
+        const { handleError } = await import('@/lib/error-utils');
         await handleError(err, { setError, showToast: false });
       } finally {
         setLoading(false);

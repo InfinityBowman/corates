@@ -5,7 +5,7 @@
  */
 
 import { CHECKOUT_ELIGIBLE_TIERS } from '@corates/shared/plans';
-import { startTrial, redirectToCheckout, redirectToSingleProjectCheckout } from '@/api/billing.js';
+import { startTrial, redirectToCheckout, redirectToSingleProjectCheckout } from '@/api/billing';
 import { showToast } from '@/components/ui/toast';
 
 type BillingInterval = 'monthly' | 'yearly';

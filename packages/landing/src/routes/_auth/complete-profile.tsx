@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo, useCallback } from 'react';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { CheckIcon } from 'lucide-react';
 import { useAuthStore, selectUser, selectIsAuthLoading } from '@/stores/authStore';
-import { handleError } from '@/lib/error-utils.js';
+import { handleError } from '@/lib/error-utils';
 import { apiFetch } from '@/lib/apiFetch';
 import { showToast } from '@/components/ui/toast';
 import {

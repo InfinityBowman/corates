@@ -140,7 +140,7 @@ export function ProfileInfoSection() {
         showToast.success('Photo Updated', 'Your profile photo has been updated.');
       } catch (err) {
         setOptimisticImage(null);
-        const { handleError } = await import('@/lib/error-utils.js');
+        const { handleError } = await import('@/lib/error-utils');
         await handleError(err, { toastTitle: 'Upload Failed' });
       } finally {
         setUploadingImage(false);

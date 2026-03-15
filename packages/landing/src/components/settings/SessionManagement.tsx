@@ -217,7 +217,7 @@ export function SessionManagement() {
         showToast.success('Session revoked successfully');
         refetch();
       } catch (err) {
-        const { handleError } = await import('@/lib/error-utils.js');
+        const { handleError } = await import('@/lib/error-utils');
         await handleError(err, { showToast: true, toastTitle: 'Failed to revoke session' });
       } finally {
         setRevokingToken(null);
@@ -233,7 +233,7 @@ export function SessionManagement() {
       showToast.success('All other sessions revoked');
       refetch();
     } catch (err) {
-      const { handleError } = await import('@/lib/error-utils.js');
+      const { handleError } = await import('@/lib/error-utils');
       await handleError(err, { showToast: true, toastTitle: 'Failed to revoke sessions' });
     } finally {
       setRevokingAll(false);
@@ -246,7 +246,7 @@ export function SessionManagement() {
       await revokeAllSessions();
       showToast.success('Logged out from all devices');
     } catch (err) {
-      const { handleError } = await import('@/lib/error-utils.js');
+      const { handleError } = await import('@/lib/error-utils');
       await handleError(err, { showToast: true, toastTitle: 'Failed to logout from all devices' });
       setRevokingAll(false);
     }

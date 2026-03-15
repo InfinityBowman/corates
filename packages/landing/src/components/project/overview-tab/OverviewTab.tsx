@@ -179,7 +179,7 @@ export function OverviewTab() {
       }
       setRemoveDialogOpen(false);
     } catch (err) {
-      const { handleError } = await import('@/lib/error-utils.js');
+      const { handleError } = await import('@/lib/error-utils');
       await handleError(err, { toastTitle: 'Remove Failed' });
     }
   }, [pendingRemoveMember, navigate]);

@@ -8,7 +8,7 @@ import { useQuery } from '@tanstack/react-query';
 import { CheckCircleIcon, ArrowRightIcon, XCircleIcon } from 'lucide-react';
 import { useSubscription } from '@/hooks/useSubscription';
 import { useMembers } from '@/hooks/useMembers';
-import { redirectToPortal } from '@/api/billing.js';
+import { redirectToPortal } from '@/api/billing';
 import { apiFetch } from '@/lib/apiFetch';
 import { queryKeys } from '@/lib/queryKeys.js';
 import { SubscriptionCard } from '@/components/billing/SubscriptionCard';
@@ -89,7 +89,7 @@ export function BillingSettings() {
     try {
       await redirectToPortal();
     } catch (error) {
-      const { handleError } = await import('@/lib/error-utils.js');
+      const { handleError } = await import('@/lib/error-utils');
       await handleError(error, { toastTitle: 'Portal Error' });
       setPortalLoading(false);
     }

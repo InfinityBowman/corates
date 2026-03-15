@@ -11,14 +11,15 @@ import {
   isTransportError,
   AUTH_ERRORS,
   USER_ERRORS,
+  type DomainError,
+  type TransportError,
 } from '@corates/shared';
 import { showToast } from '@/components/ui/toast';
 
 /**
  * User-friendly error messages for common error codes
- * These replace technical messages with helpful guidance
  */
-const USER_FRIENDLY_MESSAGES = {
+const USER_FRIENDLY_MESSAGES: Record<string, string> = {
   // Auth errors
   AUTH_REQUIRED: 'Please sign in to continue',
   AUTH_INVALID: 'Invalid email or password',
@@ -54,7 +55,7 @@ const USER_FRIENDLY_MESSAGES = {
   USER_NOT_FOUND: 'User not found',
   USER_EMAIL_NOT_VERIFIED: 'Please verify your email address to continue',
 
-  // System errors - keep these generic for users
+  // System errors
   SYSTEM_DB_ERROR: 'Something went wrong. Please try again.',
   SYSTEM_DB_TRANSACTION_FAILED: 'Something went wrong. Please try again.',
   SYSTEM_EMAIL_SEND_FAILED: 'Unable to send email. Please try again later.',
@@ -73,18 +74,21 @@ const USER_FRIENDLY_MESSAGES = {
   UNKNOWN_INVALID_RESPONSE: 'Something went wrong. Please try again.',
 };
 
-/**
- * Get user-friendly message for an error code
- * Falls back to the error's message if no mapping exists
- */
-function getUserFriendlyMessage(error) {
-  // Check if we have a friendly message for this code
+type AppError = DomainError | TransportError;
+
+interface ErrorHandlingOptions {
+  setError?: (_message: string) => void;
+  showToast?: boolean;
+  toastTitle?: string;
+  onError?: (_error: AppError) => void;
+  navigate?: (_opts: { to: string; replace?: boolean }) => void;
+}
+
+function getUserFriendlyMessage(error: AppError): string {
   if (error.code && USER_FRIENDLY_MESSAGES[error.code]) {
     return USER_FRIENDLY_MESSAGES[error.code];
   }
-  // Fall back to the error message, but clean it up
   if (error.message) {
-    // If message looks like a code (ALL_CAPS_WITH_UNDERSCORES), use generic
     if (/^[A-Z][A-Z0-9_]+$/.test(error.message)) {
       return 'Something went wrong. Please try again.';
     }
@@ -93,45 +97,28 @@ function getUserFriendlyMessage(error) {
   return 'Something went wrong. Please try again.';
 }
 
-/**
- * Parse API error response - only returns DomainError
- * API responses only return domain errors, never transport errors
- * @param {Response} response - Fetch response object
- * @returns {Promise<DomainError>}
- */
-export async function parseApiError(response) {
+export async function parseApiError(response: Response): Promise<DomainError> {
   try {
     const data = await response.json();
-    // Validate the error response matches DomainError shape
     return validateErrorResponse(data);
-  } catch (_err) {
-    // If response body can't be parsed, create unknown error
+  } catch {
     return {
       code: 'UNKNOWN_INVALID_RESPONSE',
       message: 'Invalid error response format',
       statusCode: response.status || 500,
       timestamp: new Date().toISOString(),
-    };
+    } as DomainError;
   }
 }
 
-/**
- * Handle fetch errors - separates transport from domain
- * @param {Promise<Response>} fetchPromise - Promise from fetch call
- * @param {Object} options - Error handling options
- * @param {Function} [options.setError] - State setter function for inline errors
- * @param {boolean} [options.showToast=true] - Whether to show toast notification
- * @param {string} [options.toastTitle] - Custom toast title
- * @param {Function} [options.onError] - Callback function with parsed error
- * @param {Function} [options.navigate] - Navigation function for redirects
- * @returns {Promise<Response>} Response if successful, throws parsed error otherwise
- */
-export async function handleFetchError(fetchPromise, options = {}) {
+export async function handleFetchError(
+  fetchPromise: Promise<Response>,
+  options: ErrorHandlingOptions = {},
+): Promise<Response> {
   try {
     const response = await fetchPromise;
 
     if (!response.ok) {
-      // Parse domain error from API response
       const domainError = await parseApiError(response);
       await handleDomainError(domainError, options);
       throw domainError;
@@ -139,15 +126,12 @@ export async function handleFetchError(fetchPromise, options = {}) {
 
     return response;
   } catch (error) {
-    // If already a domain error, re-throw
     if (isDomainError(error)) {
       throw error;
     }
 
-    // Normalize the error once
     const normalizedError = normalizeError(error);
 
-    // Branch based on error type
     if (isTransportError(normalizedError)) {
       await handleTransportError(normalizedError, options);
       throw normalizedError;
@@ -155,32 +139,22 @@ export async function handleFetchError(fetchPromise, options = {}) {
       await handleDomainError(normalizedError, options);
       throw normalizedError;
     } else {
-      // Fallback: treat as transport error
-      await handleTransportError(normalizedError, options);
+      await handleTransportError(normalizedError as TransportError, options);
       throw normalizedError;
     }
   }
 }
 
-/**
- * Handle domain errors (from API)
- * @param {DomainError} error - Domain error from API
- * @param {Object} options - Handling options
- * @param {Function} [options.setError] - State setter function
- * @param {boolean} [options.showToast=true] - Whether to show toast
- * @param {string} [options.toastTitle] - Custom toast title
- * @param {Function} [options.onError] - Callback function
- * @param {Function} [options.navigate] - Navigation function
- */
-export async function handleDomainError(error, options = {}) {
+export async function handleDomainError(
+  error: DomainError,
+  options: ErrorHandlingOptions = {},
+): Promise<void> {
   const { setError, showToast: showToastOption = true, toastTitle, onError, navigate } = options;
 
-  // Call custom error handler if provided
   if (onError) {
     onError(error);
   }
 
-  // Handle navigation-required errors (no toast needed, user will be redirected)
   if (navigate) {
     if (error.code === AUTH_ERRORS.REQUIRED.code || error.code === AUTH_ERRORS.EXPIRED.code) {
       navigate({ to: '/signin', replace: true });
@@ -192,109 +166,75 @@ export async function handleDomainError(error, options = {}) {
     }
   }
 
-  // Get user-friendly message
   const friendlyMessage = getUserFriendlyMessage(error);
 
-  // Update error state if setter provided
   if (setError) {
     setError(friendlyMessage);
   }
 
-  // Show toast for user-facing errors
   if (showToastOption) {
-    // Use custom title if provided, otherwise use friendly message
     const title = toastTitle || friendlyMessage;
-    // Only show details if they're user-meaningful (not technical)
     const details = error.details && typeof error.details === 'string' ? error.details : '';
     showToast.error(title, details);
   }
 }
 
-/**
- * Handle transport errors (network issues)
- * @param {TransportError} error - Transport error (network, timeout, etc.)
- * @param {Object} options - Handling options
- * @param {Function} [options.setError] - State setter function
- * @param {boolean} [options.showToast=true] - Whether to show toast
- * @param {string} [options.toastTitle] - Custom toast title
- * @param {Function} [options.onError] - Callback function
- */
-export async function handleTransportError(error, options = {}) {
+export async function handleTransportError(
+  error: TransportError,
+  options: ErrorHandlingOptions = {},
+): Promise<void> {
   const { setError, showToast: showToastOption = true, toastTitle, onError } = options;
 
-  // Call custom error handler if provided
   if (onError) {
     onError(error);
   }
 
-  // Get user-friendly message
   const friendlyMessage = getUserFriendlyMessage(error);
 
-  // Update error state if setter provided
   if (setError) {
     setError(friendlyMessage);
   }
 
-  // Show toast for transport errors
   if (showToastOption) {
     const title = toastTitle || 'Connection Error';
     showToast.error(title, friendlyMessage);
   }
 }
 
-/**
- * Unified error handling (backward compatibility)
- * Automatically detects domain vs transport errors
- * @param {Error|Response|DomainError|TransportError|any} error - Error to handle
- * @param {Object} options - Handling options (same as handleDomainError/handleTransportError)
- * @returns {Promise<DomainError|TransportError>} Parsed error object
- */
-export async function handleError(error, options = {}) {
-  // If already a domain error, handle as domain error
+export async function handleError(
+  error: unknown,
+  options: ErrorHandlingOptions = {},
+): Promise<AppError> {
   if (isDomainError(error)) {
     await handleDomainError(error, options);
     return error;
   }
 
-  // If already a transport error, handle as transport error
   if (isTransportError(error)) {
     await handleTransportError(error, options);
     return error;
   }
 
-  // If Response object, parse as domain error
   if (error instanceof Response) {
     const domainError = await parseApiError(error);
     await handleDomainError(domainError, options);
     return domainError;
   }
 
-  // Otherwise, normalize and handle
   const normalizedError = normalizeError(error);
   if (isTransportError(normalizedError)) {
     await handleTransportError(normalizedError, options);
   } else {
-    await handleDomainError(normalizedError, options);
+    await handleDomainError(normalizedError as DomainError, options);
   }
 
   return normalizedError;
 }
 
-/**
- * Parse error from an Error object or string (backward compatibility)
- * @param {Error|string|any} error - Error object, string, or other error format
- * @returns {DomainError|TransportError} Normalized error
- */
-export function parseError(error) {
+export function parseError(error: unknown): AppError {
   return normalizeError(error);
 }
 
-/**
- * Check if error code matches (utility function)
- * @param {DomainError|TransportError} error - Error object
- * @param {string} code - Error code to check
- * @returns {boolean}
- */
-export function isErrorCode(error, code) {
+export function isErrorCode(error: AppError | null | undefined, code: string): boolean {
   return error?.code === code;
 }

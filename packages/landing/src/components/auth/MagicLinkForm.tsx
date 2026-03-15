@@ -6,7 +6,7 @@
 import { useState, useCallback } from 'react';
 import { FiMail } from 'react-icons/fi';
 import { useAuthStore } from '@/stores/authStore';
-import { handleError } from '@/lib/error-utils.js';
+import { handleError } from '@/lib/error-utils';
 import { ErrorMessage } from './ErrorMessage';
 import { PrimaryButton } from './AuthButtons';
 

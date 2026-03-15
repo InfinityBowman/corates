@@ -58,7 +58,7 @@ export function ProjectHeader({
         try {
           await onRename?.(newName);
         } catch (error) {
-          const { handleError } = await import('@/lib/error-utils.js');
+          const { handleError } = await import('@/lib/error-utils');
           await handleError(error, { toastTitle: 'Failed to rename project' });
           setLocalName(name || '');
         }
@@ -77,7 +77,7 @@ export function ProjectHeader({
         try {
           await onUpdateDescription?.(newDesc);
         } catch (error) {
-          const { handleError } = await import('@/lib/error-utils.js');
+          const { handleError } = await import('@/lib/error-utils');
           await handleError(error, { toastTitle: 'Failed to update description' });
           setLocalDescription(description || '');
         }

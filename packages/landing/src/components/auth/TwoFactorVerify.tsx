@@ -7,7 +7,7 @@ import { useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { FiLock } from 'react-icons/fi';
 import { useAuthStore } from '@/stores/authStore';
-import { handleError } from '@/lib/error-utils.js';
+import { handleError } from '@/lib/error-utils';
 import { ErrorMessage } from './ErrorMessage';
 import { PrimaryButton } from './AuthButtons';
 

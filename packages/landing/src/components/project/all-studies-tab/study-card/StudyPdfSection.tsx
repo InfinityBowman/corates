@@ -57,7 +57,7 @@ export function StudyPdfSection({ study, onOpenGoogleDrive, readOnly }: StudyPdf
       try {
         await projectActionsStore.pdf.upload(study.id, file);
       } catch (err) {
-        const { handleError } = await import('@/lib/error-utils.js');
+        const { handleError } = await import('@/lib/error-utils');
         await handleError(err, { toastTitle: 'Upload Failed' });
       } finally {
         setUploading(false);

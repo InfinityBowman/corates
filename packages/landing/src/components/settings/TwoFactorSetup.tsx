@@ -63,7 +63,7 @@ export function TwoFactorSetup() {
         setSetupStep(1);
         setPassword('');
       } catch (err: any) {
-        const { handleError } = await import('@/lib/error-utils.js');
+        const { handleError } = await import('@/lib/error-utils');
         const parsedError = await handleError(err, {
           showToast: true,
           toastTitle: '2FA Setup Failed',
@@ -93,7 +93,7 @@ export function TwoFactorSetup() {
         await verifyTwoFactorSetup(verificationCode);
         setSetupStep(3);
       } catch (err) {
-        const { handleError } = await import('@/lib/error-utils.js');
+        const { handleError } = await import('@/lib/error-utils');
         await handleError(err, { showToast: true, toastTitle: 'Verification Failed' });
       } finally {
         setLoading(false);
@@ -130,7 +130,7 @@ export function TwoFactorSetup() {
         setPassword('');
         showToast.success('Two-factor authentication has been disabled');
       } catch (err: any) {
-        const { handleError } = await import('@/lib/error-utils.js');
+        const { handleError } = await import('@/lib/error-utils');
         const parsedError = await handleError(err, {
           showToast: true,
           toastTitle: 'Disable Failed',
