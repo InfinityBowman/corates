@@ -213,9 +213,9 @@ Fixed: Extracted `sortStudyPdfs()` and `getCitationLine()` to `components/projec
 
 ## Summary
 
-| Priority                               | Count  | Action                                                                    |
-| -------------------------------------- | ------ | ------------------------------------------------------------------------- |
-| Fix immediately (runtime breakage)     | 1      | SolidJS form-errors test                                                  |
-| Fix before merge (type safety + React) | 4      | `as any` casts, stale closure risk                                        |
+| Priority                               | Count  | Action                                                                                          |
+| -------------------------------------- | ------ | ----------------------------------------------------------------------------------------------- |
+| Fix immediately (runtime breakage)     | 1      | SolidJS form-errors test                                                                        |
+| Fix before merge (type safety + React) | 4      | `as any` casts, stale closure risk                                                              |
 | Fix soon (consistency + a11y)          | 10     | Untyped JS files, missing guards, render functions, redirect, a11y (#24-25), unused props (#26) |
-| **Total**                              | **15** |                                                                           |
+| **Total**                              | **15** |                                                                                                 |

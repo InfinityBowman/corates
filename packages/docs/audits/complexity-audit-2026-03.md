@@ -23,8 +23,9 @@ The codebase has solid architectural foundations -- clean store patterns, good p
 **File:** `packages/workers/src/routes/users.ts:368-405`
 
 The `DELETE /api/users/me` handler runs:
+
 ```typescript
-db.delete(projects).where(eq(projects.createdBy, userId))
+db.delete(projects).where(eq(projects.createdBy, userId));
 ```
 
 This deletes every project the user originally created, even if other users are now owners or active members. A user who created a shared project and then deletes their account would destroy everyone else's work.
@@ -34,6 +35,7 @@ This deletes every project the user originally created, even if other users are 
 ### S2. Missing CSRF protection on critical endpoints
 
 `requireTrustedOrigin` is applied to admin routes and stop-impersonation, but not to:
+
 - `DELETE /api/users/me` (account deletion)
 - `POST /api/accounts/merge/*` (account merging)
 - `DELETE /api/google-drive/disconnect`
@@ -73,14 +75,14 @@ Every `DB_ERROR` construction passes `originalError: error.message` unconditiona
 
 The React migration has created 15+ utility files that are byte-for-byte identical or near-identical across both packages:
 
-| Category | Files |
-|----------|-------|
+| Category           | Files                                                                                                                                             |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Pure utilities** | `referenceParser.js`, `checklist-domain.js`, `pdfValidation.js`, `pdfUtils.js`, `errorLogger.js`, `formStatePersistence.js`, `error-utils.js/.ts` |
-| **Primitives** | `db.js`, `pdfCache.js`, `avatarCache.js` |
-| **Registries** | `checklist-registry/index.js`, `checklist-registry/types.js` |
-| **API clients** | `google-drive.js`, `pdf-api.js`, `account-merge.js/.ts` |
-| **Project sync** | `useProject/sync.js`, `useProject/outcomes.js`, `useProject/studies.js`, `useProject/reconciliation.js`, `useProject/annotations.js` |
-| **Tests** | All `lib/__tests__/` files are copies |
+| **Primitives**     | `db.js`, `pdfCache.js`, `avatarCache.js`                                                                                                          |
+| **Registries**     | `checklist-registry/index.js`, `checklist-registry/types.js`                                                                                      |
+| **API clients**    | `google-drive.js`, `pdf-api.js`, `account-merge.js/.ts`                                                                                           |
+| **Project sync**   | `useProject/sync.js`, `useProject/outcomes.js`, `useProject/studies.js`, `useProject/reconciliation.js`, `useProject/annotations.js`              |
+| **Tests**          | All `lib/__tests__/` files are copies                                                                                                             |
 
 **Why this matters:** A bug fix to `referenceParser.js` must be applied to both packages. The `.js` (web) and `.ts` (landing) versions have already started diverging (e.g., `error-utils` is 266 lines in web vs 204 in landing).
 
@@ -89,6 +91,7 @@ The React migration has created 15+ utility files that are byte-for-byte identic
 ### A2. Three identical ReconciliationWithPdf components
 
 These three files are ~95% identical (182-183 lines each):
+
 - `reconcile-tab/ReconciliationWithPdf.jsx` (AMSTAR2)
 - `reconcile-tab/rob2-reconcile/ROB2ReconciliationWithPdf.jsx`
 - `reconcile-tab/robins-i-reconcile/RobinsIReconciliationWithPdf.jsx`
@@ -100,6 +103,7 @@ They share identical: store creation, presence initialization, header layout, sp
 ### A3. PDF loading logic duplicated between two wrappers
 
 The cache-check -> cloud-download -> store-in-cache pattern (5 signals, 3 memos, 2 effects, 1 handler -- ~60 lines) is copy-pasted between:
+
 - `components/checklist/ChecklistYjsWrapper.jsx:150-196`
 - `components/project/reconcile-tab/ReconciliationWrapper.jsx:142-183`
 
@@ -120,6 +124,7 @@ Every route file defines its own Zod error schema (`OrgErrorSchema`, `ProjectErr
 ### A6. Duplicate invitation acceptance logic
 
 Invitation acceptance is implemented twice with largely the same logic:
+
 - `routes/invitations.ts` (standalone `/api/invitations/accept`)
 - `routes/orgs/invitations.ts` (org-scoped `POST /accept`)
 
@@ -139,21 +144,21 @@ Both do token lookup, email verification, org membership check, batch insert, DO
 
 Production files over 500 lines that should be split:
 
-| Lines | File | Recommended split |
-|-------|------|-------------------|
-| 804 | `web/api/better-auth-store.js` | Core auth state / social auth / 2FA / profile methods / session management |
-| 829 | `web/components/checklist/AMSTAR2Checklist.jsx` | Data-driven approach: 16 Question components share ~80% structure, extract per-question handlers to config |
-| 697 | `web/components/project/reconcile-tab/rob2-reconcile/ROB2Reconciliation.jsx` | After extracting shared ReconciliationWithPdf (A2) |
-| 658 | `web/components/project/reconcile-tab/robins-i-reconcile/RobinsIReconciliation.jsx` | Same as above |
-| 654 | `web/components/sidebar/Sidebar.jsx` | Extract resize behavior (A7), project tree, and local checklists into sub-components |
-| 619 | `web/components/billing/PricingTable.jsx` | Plan card component, feature comparison, billing toggle |
-| 584 | `web/components/project/overview-tab/ReviewerAssignment.jsx` | Percentage slider, preset selector, allocation logic as utilities |
-| 551 | `web/components/checklist/ChecklistYjsWrapper.jsx` | Extract usePdfLoader (A3), completion logic, annotation handling |
-| 938 | `workers/routes/orgs/index.ts` | Split by resource: org CRUD, org settings, org membership |
-| 931 | `workers/routes/orgs/invitations.ts` | After extracting shared invitation logic (A6) |
-| 808 | `workers/routes/orgs/pdfs.ts` | PDF upload, download, metadata as separate route files |
-| 554 | `workers/routes/google-drive.ts` | Extract token management/refresh into a service module |
-| 715 | `workers/durable-objects/ProjectDoc.ts` | Extract RPC handlers, member sync logic into separate modules |
+| Lines | File                                                                                | Recommended split                                                                                          |
+| ----- | ----------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| 804   | `web/api/better-auth-store.js`                                                      | Core auth state / social auth / 2FA / profile methods / session management                                 |
+| 829   | `web/components/checklist/AMSTAR2Checklist.jsx`                                     | Data-driven approach: 16 Question components share ~80% structure, extract per-question handlers to config |
+| 697   | `web/components/project/reconcile-tab/rob2-reconcile/ROB2Reconciliation.jsx`        | After extracting shared ReconciliationWithPdf (A2)                                                         |
+| 658   | `web/components/project/reconcile-tab/robins-i-reconcile/RobinsIReconciliation.jsx` | Same as above                                                                                              |
+| 654   | `web/components/sidebar/Sidebar.jsx`                                                | Extract resize behavior (A7), project tree, and local checklists into sub-components                       |
+| 619   | `web/components/billing/PricingTable.jsx`                                           | Plan card component, feature comparison, billing toggle                                                    |
+| 584   | `web/components/project/overview-tab/ReviewerAssignment.jsx`                        | Percentage slider, preset selector, allocation logic as utilities                                          |
+| 551   | `web/components/checklist/ChecklistYjsWrapper.jsx`                                  | Extract usePdfLoader (A3), completion logic, annotation handling                                           |
+| 938   | `workers/routes/orgs/index.ts`                                                      | Split by resource: org CRUD, org settings, org membership                                                  |
+| 931   | `workers/routes/orgs/invitations.ts`                                                | After extracting shared invitation logic (A6)                                                              |
+| 808   | `workers/routes/orgs/pdfs.ts`                                                       | PDF upload, download, metadata as separate route files                                                     |
+| 554   | `workers/routes/google-drive.ts`                                                    | Extract token management/refresh into a service module                                                     |
+| 715   | `workers/durable-objects/ProjectDoc.ts`                                             | Extract RPC handlers, member sync logic into separate modules                                              |
 
 ---
 
@@ -251,24 +256,13 @@ Workers uses `vitest@3.2.0` (pinned for `@cloudflare/vitest-pool-workers` compat
 ## Recommended Priority Order
 
 **Immediate (security):**
+
 1. S1 -- Fix user deletion to not destroy shared projects
 2. S2 -- Add CSRF protection to state-changing endpoints
 3. S3 -- Add org-level auth to Google Drive import
 
-**Short-term (stop the bleeding):**
-4. A1 -- Extract shared utilities to prevent web/landing divergence from getting worse
-5. Q1 -- Remove console.log statements
-6. S4 -- Gate error detail leaking
+**Short-term (stop the bleeding):** 4. A1 -- Extract shared utilities to prevent web/landing divergence from getting worse 5. Q1 -- Remove console.log statements 6. S4 -- Gate error detail leaking
 
-**Medium-term (reduce complexity):**
-7. A2 -- Unify ReconciliationWithPdf components
-8. A3 -- Extract usePdfLoader primitive
-9. A4/A5 -- Extract runMiddleware and error schemas
-10. Split the largest files (better-auth-store, sidebar, AMSTAR2Checklist)
+**Medium-term (reduce complexity):** 7. A2 -- Unify ReconciliationWithPdf components 8. A3 -- Extract usePdfLoader primitive 9. A4/A5 -- Extract runMiddleware and error schemas 10. Split the largest files (better-auth-store, sidebar, AMSTAR2Checklist)
 
-**Longer-term (structural improvements):**
-11. T1 -- Incrementally enable type checking in web package
-12. T2 -- Generate API types from OpenAPI schema
-13. B1 -- Cache orgBilling resolution across middleware
-14. B4 -- Move rate limiting to Cloudflare's native solution
-15. T4 -- Unify subscription tier naming
+**Longer-term (structural improvements):** 11. T1 -- Incrementally enable type checking in web package 12. T2 -- Generate API types from OpenAPI schema 13. B1 -- Cache orgBilling resolution across middleware 14. B4 -- Move rate limiting to Cloudflare's native solution 15. T4 -- Unify subscription tier naming
