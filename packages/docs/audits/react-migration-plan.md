@@ -709,7 +709,7 @@ Full project view migrated across 4 phases (A-D) with code reviews after each:
 **Remaining stubs (not yet filled):**
 
 - `ChartSection` -- D3 chart visualizations (AMSTARRobvis, AMSTARDistribution, ChartSettingsModal). Cosmetic, not blocking.
-- `PreviousReviewersView` -- blocked on GenericChecklist migration (Phase 4.7)
+- `PreviousReviewersView` -- GenericChecklist now migrated, can be filled in
 - `EmbedPdfViewer` -- Preact PDF viewer island migration
 
 Key decisions:
@@ -723,14 +723,45 @@ Key decisions:
 - OAuth state restoration expands form unconditionally (restoreState enqueues React state updates that haven't committed)
 - Checkbox inside clickable rows uses onClick stopPropagation to prevent double-fire
 
-### 4.7 Checklists (most complex UI)
+### 4.7 Checklists -- COMPLETED (2026-03-15)
 
-- `_app/_protected/projects.$projectId/studies.$studyId.checklists.$checklistId.tsx`
-- AMSTAR2, ROB2, ROBINS-I checklist forms (~3000+ LOC combined)
-- Complex conditional fields, scoring visualization, decision diagrams
-- PDF viewer integration (EmbedPdfViewer)
-- Shared with local checklists (Phase 4.9) -- must be migrated together
-- NoteEditor with LocalTextAdapter (Y.Text-compatible interface for local mode)
+All three checklist types migrated across 5 sub-phases (A-E) with code reviews after each:
+
+**Phase A -- Infrastructure:**
+- `common/LocalTextAdapter.js` -- Y.Text shim for offline mode (copied, framework-agnostic)
+- `common/NoteEditor.tsx` -- Y.Text-bound textarea, collapsible + inline modes
+- `SplitScreenLayout.tsx` + `SplitPanelControls.tsx` -- resizable split panel with PDF viewer toggle
+- `GenericChecklist.tsx` -- type dispatcher (AMSTAR2/ROB2/ROBINS-I)
+- `ChecklistWithPdf.tsx` -- layout wrapper combining checklist + PDF viewer
+
+**Phase B -- AMSTAR2 (958 LOC original):**
+- `AMSTAR2Checklist.tsx` -- all 16 questions with extracted helper functions for column/radio logic
+- Q1 (3-column special case) uses inline handler; Q9/Q11 (split questions) are dedicated components
+- `checklist-map.js` copied, `checklist.js` updated with missing exports (isAMSTAR2Complete)
+
+**Phase C -- ROB2 (7 sub-components, ~1,340 LOC):**
+- `ROB2Checklist.tsx`, `DomainSection.tsx`, `DomainJudgement.tsx`, `PreliminarySection.tsx`, `OverallSection.tsx`, `ScoringSummary.tsx`, `SignallingQuestion.tsx`
+- Auto-scoring only (no manual override), aim-based domain selection (assignment vs. adhering)
+
+**Phase D -- ROBINS-I (12 sub-components, ~1,545 LOC):**
+- `ROBINSIChecklist.tsx`, `DomainSection.tsx`, `DomainJudgement.tsx`, `OverallSection.tsx`, `ScoringSummary.tsx`, `SignallingQuestion.tsx`, `PlanningSection.tsx`, `SectionA.tsx`, `SectionB.tsx`, `SectionC.tsx`, `SectionD.tsx`
+- Auto/Manual mode toggle, stop-assessment gating from Section B, isPerProtocol domain selection, subsection support (Domain 3)
+
+**Phase E -- Wrappers + Routes:**
+- `ChecklistYjsWrapper.tsx` -- project-mode Yjs bridge with PDF loading, completion flow, annotation support
+- `LocalChecklistView.tsx` -- offline mode with debounced IndexedDB save and LocalTextAdapter
+- `CreateLocalChecklist.tsx` -- local checklist creation form with PDF upload
+- `routes/_app/checklist.tsx` + `routes/_app/checklist.$checklistId.tsx` -- local checklist routes
+- `routes/_app/_protected/projects.$projectId/studies.$studyId.checklists.$checklistId.tsx` -- project checklist route
+
+Key decisions:
+- OverallSection auto-persist uses narrowed deps (overallState?.judgement not full object) to avoid re-triggering on direction changes
+- SignallingQuestion NA-to-NI coercion uses narrowed deps (answer?.answer not full answer object)
+- DomainSection completionStatus uses `!= null` to correctly exclude undefined answers
+- SectionC radio names use `useId()` to prevent collision across instances
+- Store methods accessed via `getStoreActions()` at call sites, not destructured at render time
+- ChecklistWithPdf shows PDF panel when pdfData is available (`showSecondPanel={!!pdfData}`)
+- AMSTAR2 QUESTION_CONFIGS excludes Q1 (3-column special case handled inline)
 
 ### 4.8 Reconciliation child routes (complex)
 
@@ -740,11 +771,13 @@ Key decisions:
 - Presence tracking (remote cursors, question presence indicators)
 - Reconcile tab listing already migrated in Phase D above
 
-### 4.9 Local checklists
+### 4.9 Local checklists -- COMPLETED (2026-03-15)
 
-- `_app/checklist.tsx`, `_app/checklist.$checklistId.tsx`
-- Uses localChecklistsStore (Zustand) + Dexie
-- Shares checklist form components with Phase 4.7 -- cannot be migrated independently
+Migrated together with Phase 4.7 since they share checklist form components:
+- `routes/_app/checklist.tsx` and `routes/_app/checklist.$checklistId.tsx` route files
+- `LocalChecklistView.tsx` wrapper with debounced IndexedDB persistence
+- `CreateLocalChecklist.tsx` creation form
+- `localChecklistsStore` (Zustand + Dexie) was already migrated in Phase 1
 
 ### 4.10 Admin (last, isolated)
 
@@ -860,10 +893,10 @@ Key decisions:
 | Phase 1: Foundation  | 3-4 days       | --                             | DONE (2026-03-14)                    |
 | Phase 2: UI Library  | 2 days         | Yes (with Phase 3)             | DONE (2026-03-14)                    |
 | Phase 3: Primitives  | 3-4 days       | Yes (with Phase 2)             | DONE (2026-03-14)                    |
-| Phase 4: Pages       | 5-7 days       | Partially (independent routes) | 4.1-4.6 DONE (stubs filled)          |
+| Phase 4: Pages       | 5-7 days       | Partially (independent routes) | 4.1-4.7, 4.9 DONE                    |
 | Phase 5: Tests       | 2 days         | Yes (with Phase 4)             | Not started                          |
 | Phase 6: Cleanup     | 0.5 days       | --                             | Not started                          |
-| **Total**            | **~2-3 weeks** |                                | **Phases 0-4.6 done + stubs filled** |
+| **Total**            | **~2-3 weeks** |                                | **Phases 0-4.7, 4.9 done**           |
 
 Phase 0 is shorter since landing already exists. Claude Code can handle the mechanical parts (UI components, query hooks, icon swaps, simple page conversions) to significantly speed up Phases 2 and 4.
 

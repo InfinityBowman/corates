@@ -211,11 +211,61 @@ Fixed: Extracted `sortStudyPdfs()` and `getCitationLine()` to `components/projec
 
 ---
 
+## New Findings (staged -- checklist components migration)
+
+### 28. ROB2 `OverallSection` useEffect may re-fire unnecessarily
+
+**File**: `components/checklist/ROB2Checklist/OverallSection.tsx` lines 33-37
+
+`overallState` is in the dependency array of an effect that calls `onUpdate({ ...overallState, ... })`. When `onUpdate` causes the parent to update `overallState`, the effect re-runs. The guard prevents infinite loops but fires unnecessarily on unrelated `overallState` changes (e.g. `direction`). The ROBINS-I version avoids this correctly with a ref.
+
+**Fix**: Use `overallState?.judgement` as the narrow dep and a ref for spreading the latest state.
+
+### 29. `PlanningSection` and `SectionA` accept `onUpdate` but never call it
+
+**Files**:
+- `components/checklist/ROBINSIChecklist/PlanningSection.tsx` line 16
+- `components/checklist/ROBINSIChecklist/SectionA.tsx` line 15
+
+Both declare `onUpdate` in their prop interfaces but destructure it away. Any caller relying on `onUpdate` to persist state to a non-Yjs store will be silently broken.
+
+### 30. `SplitScreenLayout` effect syncs `showSecondPanel` with inconsistent default
+
+**File**: `components/checklist/SplitScreenLayout.tsx` lines 34-40
+
+`useState` initializes from prop (default `false`), but the sync effect uses `?? true`. On initial render when prop is `undefined`, state is `false` then immediately set to `true`, causing a flicker.
+
+### 31. ROB2 and ROBINS-I `SignallingQuestion` are near-identical duplicates
+
+**Files**: `ROB2Checklist/SignallingQuestion.tsx`, `ROBINSIChecklist/SignallingQuestion.tsx`
+
+The only differences are prop name (`getRob2Text` vs `getRobinsText`) and ROBINS-I renders `question.note`. Extract a shared `BaseSignallingQuestion` in `checklist/common/`.
+
+### 32. ROB2 and ROBINS-I `ScoringSummary` duplicate `ResourceLink` component
+
+**Files**: `ROB2Checklist/ScoringSummary.tsx` lines 170-187, `ROBINSIChecklist/ScoringSummary.tsx` lines 196-213
+
+Byte-for-byte identical `ResourceLink` component. Move to `checklist/common/ResourceLink.tsx`.
+
+### 33. `SplitPanelControls` toolbar buttons missing `aria-label`
+
+**File**: `components/checklist/SplitPanelControls.tsx` lines 81-145
+
+Five icon-only buttons rely solely on `title`. Add `aria-label` matching each `title` text.
+
+### 34. `DomainSection` has `<h3>` inside `<button>` (invalid HTML)
+
+**Files**: `ROB2Checklist/DomainSection.tsx` lines 75-109, `ROBINSIChecklist/DomainSection.tsx` lines 125-162
+
+Interactive elements must not contain heading elements per the HTML content model spec.
+
+---
+
 ## Summary
 
 | Priority                               | Count  | Action                                                                                          |
 | -------------------------------------- | ------ | ----------------------------------------------------------------------------------------------- |
 | Fix immediately (runtime breakage)     | 1      | SolidJS form-errors test                                                                        |
-| Fix before merge (type safety + React) | 4      | `as any` casts, stale closure risk                                                              |
-| Fix soon (consistency + a11y)          | 10     | Untyped JS files, missing guards, render functions, redirect, a11y (#24-25), unused props (#26) |
-| **Total**                              | **15** |                                                                                                 |
+| Fix before merge (type safety + React) | 7      | `as any` casts, stale closure risk, effect re-fire (#28), dead props (#29), flicker (#30)       |
+| Fix soon (consistency + a11y)          | 14     | Untyped JS, missing guards, render fns, redirect, a11y (#24-25,33), unused props (#26), duplicate components (#31-32), invalid HTML (#34) |
+| **Total**                              | **22** |                                                                                                 |

@@ -6,6 +6,7 @@
 import { useState, useCallback } from 'react';
 import { createFileRoute, Outlet } from '@tanstack/react-router';
 import { SettingsSidebar } from '@/components/layout/SettingsSidebar';
+import { TooltipProvider } from '@/components/ui/tooltip';
 
 const SIDEBAR_MODE_KEY = 'corates-sidebar-mode';
 const SIDEBAR_WIDTH_KEY = 'corates-sidebar-width';
@@ -50,18 +51,20 @@ function SettingsLayout() {
   }, []);
 
   return (
-    <div className='flex h-full'>
-      <SettingsSidebar
-        desktopMode={desktopMode}
-        mobileOpen={mobileOpen}
-        onToggleDesktop={toggleDesktop}
-        onCloseMobile={() => setMobileOpen(false)}
-        width={width}
-        onWidthChange={handleWidthChange}
-      />
-      <main className='flex-1 overflow-auto'>
-        <Outlet />
-      </main>
-    </div>
+    <TooltipProvider delayDuration={300}>
+      <div className='flex h-full'>
+        <SettingsSidebar
+          desktopMode={desktopMode}
+          mobileOpen={mobileOpen}
+          onToggleDesktop={toggleDesktop}
+          onCloseMobile={() => setMobileOpen(false)}
+          width={width}
+          onWidthChange={handleWidthChange}
+        />
+        <main className='flex-1 overflow-auto'>
+          <Outlet />
+        </main>
+      </div>
+    </TooltipProvider>
   );
 }

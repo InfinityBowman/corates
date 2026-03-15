@@ -4,10 +4,20 @@
  * The real implementation uses @embedpdf packages with a Preact island.
  */
 
-interface EmbedPdfViewerProps {
+export interface EmbedPdfViewerProps {
   pdfData?: ArrayBuffer | null;
   pdfFileName?: string;
   readOnly?: boolean;
+  pdfs?: any[];
+  selectedPdfId?: string | null;
+  onPdfSelect?: (_pdfId: string) => void;
+  onAnnotationAdd?: (..._args: any[]) => void;
+  onAnnotationUpdate?: (..._args: any[]) => void;
+  onAnnotationDelete?: (..._args: any[]) => void;
+  initialAnnotations?: any[];
+  onPdfChange?: (..._args: any[]) => void;
+  onPdfClear?: () => void;
+  allowDelete?: boolean;
 }
 
 export default function EmbedPdfViewer({ pdfFileName }: EmbedPdfViewerProps) {
