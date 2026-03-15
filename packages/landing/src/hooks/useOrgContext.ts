@@ -6,9 +6,9 @@
 
 import { useMemo, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { authClient } from '@/api/auth-client';
 import { useAuthStore, selectIsLoggedIn, selectIsAuthLoading } from '@/stores/authStore';
 import { queryKeys } from '@/lib/queryKeys.js';
+import { fetchOrgs } from '@/hooks/useOrgs';
 
 const LAST_ORG_KEY = 'corates-last-org-slug';
 
@@ -24,12 +24,6 @@ export function setLastOrgSlug(slug: string | null) {
   } else {
     localStorage.removeItem(LAST_ORG_KEY);
   }
-}
-
-async function fetchOrgs() {
-  const { data, error } = await authClient.organization.list();
-  if (error) throw new Error(error.message || 'Failed to fetch organizations');
-  return data || [];
 }
 
 /**

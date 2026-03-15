@@ -16,7 +16,7 @@ import { useProjectStore } from '@/stores/projectStore';
 import _projectActionsStore from '@/stores/projectActionsStore/index.js';
 const projectActionsStore = _projectActionsStore as any;
 import { useAuthStore, selectUser } from '@/stores/authStore';
-import { useProjectContext } from '../ProjectContext';
+import { useProjectContext, type ProjectMember } from '../ProjectContext';
 import { showToast } from '@/components/ui/toast';
 import { Avatar, AvatarImage, AvatarFallback, getInitials } from '@/components/ui/avatar';
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
@@ -70,7 +70,7 @@ export function OverviewTab() {
   const { members: orgMembers } = useMembers();
 
   const studies = useProjectStore(s => s.projects[projectId]?.studies || []);
-  const members = useProjectStore(s => s.projects[projectId]?.members || []);
+  const members = useProjectStore(s => s.projects[projectId]?.members || []) as ProjectMember[];
 
   const nonOwnerOrgMemberCount = useMemo(
     () => orgMembers.filter((m: any) => m.role !== 'owner').length,
@@ -299,12 +299,12 @@ export function OverviewTab() {
         </div>
         {members.length > 0 && (
           <div className="space-y-2">
-            {members.map((member: any, index: number) => {
+            {members.map((member: ProjectMember, index: number) => {
               const isSelf = user?.id === member.userId;
               const canRemove = isOwner || isSelf;
               const isLastOwner =
                 member.role === 'owner' &&
-                members.filter((m: any) => m.role === 'owner').length <= 1;
+                members.filter(m => m.role === 'owner').length <= 1;
               const progress = getUserProgress(member.userId);
 
               return (
@@ -350,7 +350,7 @@ export function OverviewTab() {
                     {canRemove && !isLastOwner && (
                       <button
                         onClick={() =>
-                          handleRemoveMember(member.userId, member.name || member.email)
+                          handleRemoveMember(member.userId, member.name || member.email || 'Unknown')
                         }
                         className="text-muted-foreground/70 focus:ring-primary rounded p-1.5 transition-colors hover:bg-red-50 hover:text-red-600 focus:ring-2 focus:outline-none"
                         title={isSelf ? 'Leave project' : 'Remove member'}
@@ -381,7 +381,7 @@ export function OverviewTab() {
             </CollapsibleTrigger>
             <CollapsibleContent>
               <div className="border-border border-t px-5 py-5">
-                <ChartSection studies={studies} members={members} />
+                <ChartSection studies={studies} />
               </div>
             </CollapsibleContent>
           </Collapsible>

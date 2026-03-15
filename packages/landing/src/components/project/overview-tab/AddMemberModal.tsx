@@ -4,10 +4,18 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Link } from '@tanstack/react-router';
-import { XIcon, TriangleAlertIcon } from 'lucide-react';
+import { TriangleAlertIcon } from 'lucide-react';
 import { showToast } from '@/components/ui/toast';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { getInitials } from '@/components/ui/avatar';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
 import {
   Select,
   SelectContent,
@@ -15,7 +23,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { apiFetch } from '@/lib/apiFetch.js';
+import { apiFetch } from '@/lib/apiFetch';
 import { isUnlimitedQuota } from '@corates/shared/plans';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 
@@ -88,6 +96,15 @@ export function AddMemberModal({
     setSearchResults([]);
   }, []);
 
+  const handleClose = useCallback(() => {
+    setSearchQuery('');
+    setSearchResults([]);
+    setSelectedUser(null);
+    setSelectedRole('member');
+    setError(null);
+    onClose();
+  }, [onClose]);
+
   const handleAddMember = useCallback(async () => {
     if (!selectedUser && !canAddByEmail) return;
     if (!orgId) { setError('No organization context'); return; }
@@ -111,34 +128,16 @@ export function AddMemberModal({
     } finally {
       setAdding(false);
     }
-  }, [selectedUser, canAddByEmail, orgId, projectId, selectedRole, searchQuery]);
-
-  const handleClose = useCallback(() => {
-    setSearchQuery('');
-    setSearchResults([]);
-    setSelectedUser(null);
-    setSelectedRole('member');
-    setError(null);
-    onClose();
-  }, [onClose]);
-
-  if (!isOpen) return null;
+  }, [selectedUser, canAddByEmail, orgId, projectId, selectedRole, searchQuery, handleClose]);
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
-      onClick={e => { if (e.target === e.currentTarget) handleClose(); }}
-      onKeyDown={e => { if (e.key === 'Escape') handleClose(); }}
-    >
-      <div className="bg-card mx-4 w-full max-w-md rounded-lg shadow-xl">
-        <div className="border-border flex items-center justify-between border-b p-4">
-          <h2 className="text-foreground text-lg font-semibold">Add Member</h2>
-          <button onClick={handleClose} className="text-muted-foreground/70 hover:text-secondary-foreground transition-colors">
-            <XIcon className="h-5 w-5" />
-          </button>
-        </div>
+    <Dialog open={isOpen} onOpenChange={open => { if (!open) handleClose(); }}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Add Member</DialogTitle>
+        </DialogHeader>
 
-        <div className="space-y-4 p-4">
+        <div className="space-y-4">
           {isAtQuotaLimit && (
             <div className="flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 p-3">
               <TriangleAlertIcon className="mt-0.5 h-5 w-5 shrink-0 text-amber-600" />
@@ -226,9 +225,13 @@ export function AddMemberModal({
                   <p className="text-muted-foreground text-sm">{selectedUser.email}</p>
                 </div>
               </div>
-              <button onClick={() => { setSelectedUser(null); setSearchQuery(''); }} className="text-muted-foreground/70 hover:text-secondary-foreground">
-                <XIcon className="h-5 w-5" />
-              </button>
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                onClick={() => { setSelectedUser(null); setSearchQuery(''); }}
+              >
+                <span className="sr-only">Remove selection</span>
+              </Button>
             </div>
           )}
 
@@ -252,22 +255,18 @@ export function AddMemberModal({
           )}
         </div>
 
-        <div className="border-border flex justify-end gap-3 border-t p-4">
-          <button
-            onClick={handleClose}
-            className="border-border text-secondary-foreground rounded-lg border px-4 py-2 font-medium transition-colors hover:border-border"
-          >
+        <DialogFooter>
+          <Button variant="outline" onClick={handleClose}>
             Cancel
-          </button>
-          <button
+          </Button>
+          <Button
             onClick={handleAddMember}
             disabled={(!selectedUser && !canAddByEmail) || adding || !!isAtQuotaLimit}
-            className="bg-primary hover:bg-primary/90 focus:ring-primary rounded-lg px-4 py-2 font-medium text-white transition-colors focus:ring-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
           >
             {adding ? (canAddByEmail ? 'Sending Invitation...' : 'Adding...') : canAddByEmail ? 'Send Invitation' : 'Add Member'}
-          </button>
-        </div>
-      </div>
-    </div>
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }

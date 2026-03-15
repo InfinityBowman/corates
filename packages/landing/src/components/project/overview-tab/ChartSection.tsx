@@ -5,7 +5,6 @@
 
 interface ChartSectionProps {
   studies: any[];
-  members: any[];
 }
 
 export function ChartSection({ studies }: ChartSectionProps) {

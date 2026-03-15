@@ -65,7 +65,8 @@ export function ProjectsSection({
   const restrictionType: 'entitlement' | 'quota' | null =
     subscriptionLoading ? null
     : !hasEntitlement('project.create') ? 'entitlement'
-    : 'quota';
+    : !hasQuota('projects.max', { used: projectCount, requested: 1 }) ? 'quota'
+    : null;
 
   const handleCreateClick = useCallback(() => {
     if (onCreateClick) {

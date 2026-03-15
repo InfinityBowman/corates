@@ -228,7 +228,7 @@ export function ProjectView({ projectId }: ProjectViewProps) {
   );
 
   return (
-    <ProjectProvider projectId={projectId} projectOps={projectConnection}>
+    <ProjectProvider projectId={projectId} projectOps={projectConnection as Record<string, unknown>}>
       {/* Child routes */}
       {isChildRoute && <Outlet />}
 

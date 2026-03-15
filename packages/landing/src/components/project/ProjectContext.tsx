@@ -9,6 +9,15 @@ import { useProjectStore } from '@/stores/projectStore';
 import { useAuthStore, selectUser } from '@/stores/authStore';
 import { useProjectOrgId } from '@/hooks/useProjectOrgId';
 
+export interface ProjectMember {
+  userId: string;
+  memberId?: string;
+  name?: string;
+  email?: string;
+  role?: string;
+  image?: string | null;
+}
+
 /* eslint-disable no-unused-vars */
 interface ProjectContextValue {
   projectId: string;
@@ -16,10 +25,10 @@ interface ProjectContextValue {
   userRole: string | null;
   isOwner: boolean;
   getAssigneeName: (userId: string | null) => string;
-  getMember: (userId: string | null) => any | null;
+  getMember: (userId: string | null) => ProjectMember | null;
   getChecklistPath: (studyId: string, checklistId: string, tab?: string) => string;
   getReconcilePath: (studyId: string, checklist1Id: string, checklist2Id: string) => string;
-  projectOps: any;
+  projectOps: Record<string, unknown> | null;
 }
 /* eslint-enable no-unused-vars */
 
@@ -27,18 +36,18 @@ const ProjectCtx = createContext<ProjectContextValue | null>(null);
 
 interface ProjectProviderProps {
   projectId: string;
-  projectOps?: any;
+  projectOps?: Record<string, unknown>;
   children: React.ReactNode;
 }
 
 export function ProjectProvider({ projectId, projectOps, children }: ProjectProviderProps) {
   const user = useAuthStore(selectUser);
   const orgId = useProjectOrgId(projectId);
-  const members: any[] = useProjectStore(s => s.projects[projectId]?.members || []);
+  const members = useProjectStore(s => s.projects[projectId]?.members || []) as ProjectMember[];
 
   const userRole = useMemo(() => {
     if (!user) return null;
-    const member = members.find((m: any) => m.userId === user.id);
+    const member = members.find(m => m.userId === user.id);
     return member?.role || null;
   }, [user, members]);
 
@@ -60,15 +69,15 @@ export function ProjectProvider({ projectId, projectOps, children }: ProjectProv
   const getAssigneeName = useCallback(
     (userId: string | null) => {
       if (!userId) return 'Unassigned';
-      const member = members.find((m: any) => m.userId === userId);
+      const member = members.find(m => m.userId === userId);
       return member?.name || member?.email || 'Unknown';
     },
     [members],
   );
   const getMember = useCallback(
-    (userId: string | null) => {
+    (userId: string | null): ProjectMember | null => {
       if (!userId) return null;
-      return members.find((m: any) => m.userId === userId) || null;
+      return members.find(m => m.userId === userId) || null;
     },
     [members],
   );
