@@ -140,7 +140,6 @@ const UpdateMemberRoleRequestSchema = z
   })
   .openapi('UpdateMemberRoleRequest');
 
-
 // Route definitions
 const listOrgsRoute = createRoute({
   method: 'get',

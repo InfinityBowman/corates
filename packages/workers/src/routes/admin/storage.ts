@@ -90,7 +90,6 @@ const StorageStatsResponseSchema = z
   })
   .openapi('StorageStatsResponse');
 
-
 const R2_KEY_PATTERN = /^projects\/[^/]+\/studies\/[^/]+\/.+$/;
 
 const DeleteDocumentsRequestSchema = z

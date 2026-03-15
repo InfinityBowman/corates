@@ -44,7 +44,6 @@ const AvatarDeleteSuccessSchema = z
   })
   .openapi('AvatarDeleteSuccess');
 
-
 /**
  * Sync avatar URL to all project memberships for a user
  */

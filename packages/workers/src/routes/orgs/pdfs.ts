@@ -90,7 +90,6 @@ const PdfDeleteResponseSchema = z
   })
   .openapi('PdfDeleteResponse');
 
-
 // Route definitions
 const listPdfsRoute = createRoute({
   method: 'get',

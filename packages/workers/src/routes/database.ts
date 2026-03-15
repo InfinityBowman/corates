@@ -48,7 +48,6 @@ const MigrationResponseSchema = z
   })
   .openapi('MigrationResponse');
 
-
 // List users route
 const listUsersRoute = createRoute({
   method: 'get',

@@ -98,7 +98,6 @@ const RevenueResponseSchema = z
   })
   .openapi('RevenueResponse');
 
-
 // Route definitions
 const signupsRoute = createRoute({
   method: 'get',

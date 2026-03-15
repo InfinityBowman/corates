@@ -68,7 +68,6 @@ const MembersResponseSchema = z
   })
   .openapi('MembersResponse');
 
-
 // Route definitions
 const usageRoute = createRoute({
   method: 'get',

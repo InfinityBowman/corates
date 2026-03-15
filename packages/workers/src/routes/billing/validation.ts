@@ -47,7 +47,6 @@ const PlanValidationResponseSchema = z
   })
   .openapi('PlanValidationResponse');
 
-
 // Route definitions
 const validatePlanChangeRoute = createRoute({
   method: 'get',

@@ -82,7 +82,6 @@ const UpdateMemberRoleRequestSchema = z
   })
   .openapi('UpdateMemberRoleRequest');
 
-
 const MemberAddedSchema = z
   .object({
     userId: z.string(),

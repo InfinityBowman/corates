@@ -162,7 +162,6 @@ const SuccessResponseSchema = z
   })
   .openapi('SuccessResponse');
 
-
 // Route definitions
 const getStatsRoute = createRoute({
   method: 'get',

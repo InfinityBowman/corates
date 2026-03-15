@@ -158,7 +158,6 @@ const RemoveMemberSuccessSchema = z
   })
   .openapi('RemoveMemberSuccess');
 
-
 // Route definitions
 const listMembersRoute = createRoute({
   method: 'get',

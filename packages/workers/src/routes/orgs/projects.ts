@@ -76,7 +76,6 @@ const UpdateProjectRequestSchema = z
   })
   .openapi('UpdateProjectRequest');
 
-
 // Route definitions
 const listProjectsRoute = createRoute({
   method: 'get',

@@ -27,7 +27,6 @@ const TrialStartSuccessSchema = z
   })
   .openapi('TrialStartSuccess');
 
-
 // Route definitions
 const startTrialRoute = createRoute({
   method: 'post',

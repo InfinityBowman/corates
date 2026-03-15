@@ -127,7 +127,6 @@ const LedgerResponseSchema = z
   })
   .openapi('LedgerResponse');
 
-
 // Route definitions
 const reconcileRoute = createRoute({
   method: 'get',

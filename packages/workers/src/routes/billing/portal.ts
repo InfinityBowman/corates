@@ -25,7 +25,6 @@ const PortalResponseSchema = z
   })
   .openapi('PortalResponse');
 
-
 // Route definitions
 const createPortalRoute = createRoute({
   method: 'post',

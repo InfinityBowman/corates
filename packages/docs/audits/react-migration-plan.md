@@ -854,15 +854,15 @@ Key decisions:
 
 ## Estimated Effort
 
-| Phase                | Effort         | Can parallelize?               | Status                              |
-| -------------------- | -------------- | ------------------------------ | ----------------------------------- |
-| Phase 0: Preparation | 0.5 days       | --                             | DONE (2026-03-14)                   |
-| Phase 1: Foundation  | 3-4 days       | --                             | DONE (2026-03-14)                   |
-| Phase 2: UI Library  | 2 days         | Yes (with Phase 3)             | DONE (2026-03-14)                   |
-| Phase 3: Primitives  | 3-4 days       | Yes (with Phase 2)             | DONE (2026-03-14)                   |
-| Phase 4: Pages       | 5-7 days       | Partially (independent routes) | 4.1-4.6 DONE (stubs filled)        |
-| Phase 5: Tests       | 2 days         | Yes (with Phase 4)             | Not started                         |
-| Phase 6: Cleanup     | 0.5 days       | --                             | Not started                         |
+| Phase                | Effort         | Can parallelize?               | Status                               |
+| -------------------- | -------------- | ------------------------------ | ------------------------------------ |
+| Phase 0: Preparation | 0.5 days       | --                             | DONE (2026-03-14)                    |
+| Phase 1: Foundation  | 3-4 days       | --                             | DONE (2026-03-14)                    |
+| Phase 2: UI Library  | 2 days         | Yes (with Phase 3)             | DONE (2026-03-14)                    |
+| Phase 3: Primitives  | 3-4 days       | Yes (with Phase 2)             | DONE (2026-03-14)                    |
+| Phase 4: Pages       | 5-7 days       | Partially (independent routes) | 4.1-4.6 DONE (stubs filled)          |
+| Phase 5: Tests       | 2 days         | Yes (with Phase 4)             | Not started                          |
+| Phase 6: Cleanup     | 0.5 days       | --                             | Not started                          |
 | **Total**            | **~2-3 weeks** |                                | **Phases 0-4.6 done + stubs filled** |
 
 Phase 0 is shorter since landing already exists. Claude Code can handle the mechanical parts (UI components, query hooks, icon swaps, simple page conversions) to significantly speed up Phases 2 and 4.

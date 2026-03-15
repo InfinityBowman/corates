@@ -75,7 +75,6 @@ const SingleProjectCheckoutResponseSchema = z
   })
   .openapi('SingleProjectCheckoutResponse');
 
-
 // Route definitions
 const validateCouponRoute = createRoute({
   method: 'post',

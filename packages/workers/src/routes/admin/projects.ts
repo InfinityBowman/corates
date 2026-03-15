@@ -141,7 +141,6 @@ const SuccessResponseSchema = z
   })
   .openapi('AdminProjectSuccessResponse');
 
-
 // Route definitions
 const listProjectsRoute = createRoute({
   method: 'get',

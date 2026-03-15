@@ -89,7 +89,6 @@ const OrgDetailsResponseSchema = z
   })
   .openapi('AdminOrgDetailsResponse');
 
-
 // Route definitions
 const listOrgsRoute = createRoute({
   method: 'get',

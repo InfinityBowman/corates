@@ -157,7 +157,6 @@ const RecentUploadSchema = z
   })
   .openapi('RecentUpload');
 
-
 // Route definitions
 const listTablesRoute = createRoute({
   method: 'get',

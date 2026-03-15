@@ -105,7 +105,6 @@ const ContactSuccessSchema = z
   })
   .openapi('ContactSuccess');
 
-
 // Route definition
 const submitContactRoute = createRoute({
   method: 'post',

@@ -163,7 +163,6 @@ const SuccessMessageResponseSchema = z
   })
   .openapi('AdminBillingSuccessMessage');
 
-
 // Request schemas
 const CreateSubscriptionBodySchema = z.object({
   plan: z

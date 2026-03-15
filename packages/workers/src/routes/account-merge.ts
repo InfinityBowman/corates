@@ -148,7 +148,6 @@ const CancelSuccessSchema = z
   })
   .openapi('MergeCancelSuccess');
 
-
 // Route definitions
 const initiateRoute = createRoute({
   method: 'post',

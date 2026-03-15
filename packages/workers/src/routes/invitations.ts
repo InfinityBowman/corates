@@ -55,7 +55,6 @@ const AcceptInvitationSuccessSchema = z
   })
   .openapi('AcceptInvitationSuccess');
 
-
 // Accept invitation route
 const acceptInvitationRoute = createRoute({
   method: 'post',

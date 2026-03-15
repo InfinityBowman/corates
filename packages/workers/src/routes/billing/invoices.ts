@@ -39,7 +39,6 @@ const InvoicesResponseSchema = z
   })
   .openapi('InvoicesResponse');
 
-
 // Route definitions
 const getInvoicesRoute = createRoute({
   method: 'get',

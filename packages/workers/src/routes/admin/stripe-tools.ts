@@ -180,7 +180,6 @@ const SubscriptionsResponseSchema = z
   })
   .openapi('SubscriptionsResponse');
 
-
 // Route definitions
 const customerLookupRoute = createRoute({
   method: 'get',

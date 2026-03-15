@@ -61,7 +61,6 @@ const UserProjectSchema = z
   })
   .openapi('UserProject');
 
-
 const SuccessSchema = z
   .object({
     success: z.literal(true),
