@@ -1,7 +1,15 @@
-import { defineWorkersConfig } from '@cloudflare/vitest-pool-workers/config';
+import { cloudflareTest } from '@cloudflare/vitest-pool-workers';
+import { defineConfig } from 'vitest/config';
 import { resolve } from 'path';
 
-export default defineWorkersConfig({
+export default defineConfig({
+  plugins: [
+    cloudflareTest({
+      wrangler: {
+        configPath: './wrangler.jsonc',
+      },
+    }),
+  ],
   resolve: {
     alias: {
       '@': resolve(__dirname, 'src'),
@@ -9,17 +17,7 @@ export default defineWorkersConfig({
   },
   test: {
     globals: true,
-    pool: '@cloudflare/vitest-pool-workers',
     setupFiles: ['./src/__tests__/setup.js'],
-    poolOptions: {
-      workers: {
-        wrangler: {
-          configPath: './wrangler.jsonc',
-        },
-        singleWorker: true,
-        isolatedStorage: false,
-      },
-    },
     include: ['src/**/*.{test,spec}.{js,ts}'],
     testTimeout: 10000,
     retry: 2,

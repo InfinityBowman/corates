@@ -103,13 +103,11 @@ The same function is copy-pasted into 5 files under `routes/orgs/`. This exists 
 
 **Recommendation:** Extract to `lib/runMiddleware.ts`.
 
-### A3. Error schema boilerplate duplicated in 10+ route files
+### ~~A3. Error schema boilerplate duplicated in 10+ route files~~ RESOLVED
 
-Every route file defines its own Zod error schema (`OrgErrorSchema`, `ProjectErrorSchema`, `PdfErrorSchema`, etc.) with identical structure. A `schemas/common.ts` file exists but is not used for this.
+All 29 route files now import `ErrorResponseSchema` from `schemas/common.ts`. No local error schema definitions remain.
 
-**Recommendation:** Define one `ErrorResponseSchema` in `schemas/common.ts` and import everywhere.
-
-### A4. Duplicate invitation acceptance logic
+### A3. Duplicate invitation acceptance logic
 
 Invitation acceptance is implemented twice with largely the same logic:
 
@@ -213,9 +211,9 @@ Every OpenAPIHono route handler is preceded by `// @ts-expect-error OpenAPIHono 
 - `asyncHandler` in `middleware/errorHandler.ts` is a no-op function that does nothing
 - `routes/members.ts` at the root level appears unused (not imported in `index.ts`)
 
-### Q2. Vitest version mismatch prevents shared test infrastructure
+### Q2. Vitest version mismatch prevents shared test infrastructure -- NOW UNBLOCKED
 
-Workers uses `vitest@3.2.0` (pinned for `@cloudflare/vitest-pool-workers` compatibility). Everything else uses `vitest@^4.0.18`. Test utilities cannot be shared across packages.
+Workers pins `vitest@3.2.0` for `@cloudflare/vitest-pool-workers` compatibility. Everything else uses `vitest@^4.0.18`. However, `@cloudflare/vitest-pool-workers@0.13.0` (released March 10, 2026) now requires `vitest ^4.1.0`. Upgrading the workers package to vitest 4 + pool-workers 0.13.0 would unify versions across the monorepo and unblock shared test infrastructure.
 
 ---
 
@@ -229,6 +227,15 @@ Workers uses `vitest@3.2.0` (pinned for `@cloudflare/vitest-pool-workers` compat
 
 **Short-term (before web package deletion):** 4. A1 -- Extract framework-agnostic utilities to `@corates/shared` before the web package is deleted and the landing copies become orphaned 5. S4 -- Gate error detail leaking in production
 
-**Medium-term (reduce backend complexity):** 6. A2/A3 -- Extract runMiddleware and error schemas 7. A4 -- Unify invitation acceptance logic 8. Split the largest backend route files (orgs/index.ts, orgs/invitations.ts, orgs/pdfs.ts) 9. B1 -- Cache orgBilling resolution across middleware
+**Medium-term (reduce backend complexity):**
+6. A2 -- Extract runMiddleware helper
+7. A3 -- Unify invitation acceptance logic
+8. Split the largest backend route files (orgs/index.ts, orgs/invitations.ts, orgs/pdfs.ts)
+9. B1 -- Cache orgBilling resolution across middleware
+10. Q2 -- Upgrade workers to vitest 4 + pool-workers 0.13.0 to unify test infrastructure
 
-**Longer-term (structural improvements):** 10. T1 -- Generate API types from OpenAPI schema for landing package 11. T3 -- Unify subscription tier naming 12. B4 -- Move rate limiting to Cloudflare's native solution 13. B5 -- Address the 106 `@ts-expect-error` comments with a route factory pattern
+**Longer-term (structural improvements):**
+11. T1 -- Generate API types from OpenAPI schema for landing package
+12. T3 -- Unify subscription tier naming
+13. B4 -- Move rate limiting to Cloudflare's native solution
+14. B5 -- Address the 106 `@ts-expect-error` comments with a route factory pattern
