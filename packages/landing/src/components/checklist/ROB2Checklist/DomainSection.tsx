@@ -70,48 +70,47 @@ export function DomainSection({
   }, [questions, domainState?.answers]);
 
   return (
-    <div className="bg-card overflow-hidden rounded-lg shadow-md">
+    <div className='bg-card overflow-hidden rounded-lg shadow-md'>
       {/* Domain header */}
       <button
-        type="button"
+        type='button'
         onClick={() => onToggleCollapse?.()}
-        className="bg-muted hover:bg-secondary flex w-full items-center justify-between px-6 py-4 transition-colors"
+        className='bg-muted hover:bg-secondary flex w-full items-center justify-between px-6 py-4 transition-colors'
       >
-        <div className="flex flex-col items-start">
-          <h3 className="text-foreground text-left font-semibold">{domain?.name}</h3>
+        <div className='flex flex-col items-start'>
+          <h3 className='text-foreground text-left font-semibold'>{domain?.name}</h3>
           {domain?.subtitle && (
-            <span className="text-muted-foreground mt-0.5 text-xs">{domain.subtitle}</span>
+            <span className='text-muted-foreground mt-0.5 text-xs'>{domain.subtitle}</span>
           )}
         </div>
 
-        <div className="flex items-center gap-3">
-          <span className="text-muted-foreground/70 text-xs">
+        <div className='flex items-center gap-3'>
+          <span className='text-muted-foreground/70 text-xs'>
             {completionStatus.answered}/{completionStatus.total}
           </span>
 
-          {effectiveJudgement ? (
+          {effectiveJudgement ?
             <JudgementBadge judgement={effectiveJudgement} />
-          ) : (
-            !autoScore.isComplete && (
-              <span className="text-muted-foreground/70 text-xs">Incomplete</span>
+          : !autoScore.isComplete && (
+              <span className='text-muted-foreground/70 text-xs'>Incomplete</span>
             )
-          )}
+          }
 
           <svg
             className={`text-muted-foreground/70 h-5 w-5 transition-transform ${collapsed ? '' : 'rotate-180'}`}
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
+            fill='none'
+            stroke='currentColor'
+            viewBox='0 0 24 24'
           >
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+            <path strokeLinecap='round' strokeLinejoin='round' strokeWidth='2' d='M19 9l-7 7-7-7' />
           </svg>
         </div>
       </button>
 
       {/* Domain content */}
       {!collapsed && (
-        <div className="px-6 py-4">
-          <div className="space-y-1">
+        <div className='px-6 py-4'>
+          <div className='space-y-1'>
             {Object.entries(questions).map(([qKey, qDef]: [string, any]) => (
               <SignallingQuestion
                 key={qKey}
@@ -129,21 +128,20 @@ export function DomainSection({
           </div>
 
           {/* Auto judgement section */}
-          <div className="bg-muted mt-4 rounded-lg p-4">
-            <div className="mb-3 flex items-center gap-3">
-              <span className="text-secondary-foreground text-sm font-medium">
+          <div className='bg-muted mt-4 rounded-lg p-4'>
+            <div className='mb-3 flex items-center gap-3'>
+              <span className='text-secondary-foreground text-sm font-medium'>
                 Risk of bias judgement
               </span>
-              {autoScore.judgement ? (
-                <div className="bg-card flex items-center gap-2 rounded-md px-2.5 py-1 text-xs shadow-sm">
-                  <span className="text-muted-foreground">Calculated:</span>
+              {autoScore.judgement ?
+                <div className='bg-card flex items-center gap-2 rounded-md px-2.5 py-1 text-xs shadow-sm'>
+                  <span className='text-muted-foreground'>Calculated:</span>
                   <JudgementBadge judgement={autoScore.judgement} />
                 </div>
-              ) : (
-                !autoScore.isComplete && (
-                  <span className="text-muted-foreground/70 text-xs">(answer more questions)</span>
+              : !autoScore.isComplete && (
+                  <span className='text-muted-foreground/70 text-xs'>(answer more questions)</span>
                 )
-              )}
+              }
             </div>
 
             {domain?.hasDirection && (

@@ -31,7 +31,11 @@ export function OverallSection({
   // Auto-persist calculated judgement when it differs from stored.
   // The condition `!== overallState?.judgement` prevents re-entrancy.
   useEffect(() => {
-    if (calculatedDisplayJudgement && calculatedDisplayJudgement !== overallState?.judgement && !disabled) {
+    if (
+      calculatedDisplayJudgement &&
+      calculatedDisplayJudgement !== overallState?.judgement &&
+      !disabled
+    ) {
       onUpdate({ ...overallState, judgement: calculatedDisplayJudgement });
     }
   }, [calculatedDisplayJudgement, overallState, onUpdate, disabled]);
@@ -75,48 +79,53 @@ export function OverallSection({
   const judgementOptions = ['Low risk of bias', 'Some concerns', 'High risk of bias'];
 
   return (
-    <div className="bg-card overflow-hidden rounded-lg shadow-md">
-      <div className="bg-foreground text-background px-6 py-4">
-        <div className="flex items-center justify-between">
+    <div className='bg-card overflow-hidden rounded-lg shadow-md'>
+      <div className='bg-foreground text-background px-6 py-4'>
+        <div className='flex items-center justify-between'>
           <div>
-            <h3 className="text-lg font-semibold">Overall Risk of Bias</h3>
-            <p className="text-muted mt-1 text-sm">Final assessment based on all domain judgements</p>
+            <h3 className='text-lg font-semibold'>Overall Risk of Bias</h3>
+            <p className='text-muted mt-1 text-sm'>
+              Final assessment based on all domain judgements
+            </p>
           </div>
-          {calculatedScore && (calculatedScore as string) !== 'Incomplete' ? (
-            <span className={`rounded-md px-3 py-1 text-sm font-semibold ${getScoreBadgeColor(calculatedScore)}`}>
+          {calculatedScore && (calculatedScore as string) !== 'Incomplete' ?
+            <span
+              className={`rounded-md px-3 py-1 text-sm font-semibold ${getScoreBadgeColor(calculatedScore)}`}
+            >
               {calculatedScore}
             </span>
-          ) : (
-            (calculatedScore === null || !smartScoring.isComplete) && (
-              <span className="bg-muted-foreground/50 text-muted rounded-md px-3 py-1 text-sm">
+          : (calculatedScore === null || !smartScoring.isComplete) && (
+              <span className='bg-muted-foreground/50 text-muted rounded-md px-3 py-1 text-sm'>
                 Incomplete
               </span>
             )
-          )}
+          }
         </div>
       </div>
 
-      <div className="px-6 py-5">
+      <div className='px-6 py-5'>
         {/* Calculated score display */}
-        <div className="bg-muted mb-5 rounded-lg p-4">
-          <div className="flex items-center gap-3">
-            <span className="text-secondary-foreground text-sm font-medium">Calculated judgement:</span>
-            {effectiveJudgement ? (
-              <span className={`rounded-md px-2.5 py-1 text-sm font-medium ${getScoreBadgeColor(calculatedScore)}`}>
+        <div className='bg-muted mb-5 rounded-lg p-4'>
+          <div className='flex items-center gap-3'>
+            <span className='text-secondary-foreground text-sm font-medium'>
+              Calculated judgement:
+            </span>
+            {effectiveJudgement ?
+              <span
+                className={`rounded-md px-2.5 py-1 text-sm font-medium ${getScoreBadgeColor(calculatedScore)}`}
+              >
                 {effectiveJudgement}
               </span>
-            ) : (
-              <span className="text-muted-foreground/70 text-sm">Complete all domains</span>
-            )}
+            : <span className='text-muted-foreground/70 text-sm'>Complete all domains</span>}
           </div>
         </div>
 
         {/* Overall judgement display (read-only) */}
-        <div className="mb-5">
-          <div className="text-secondary-foreground mb-3 text-sm font-medium">
+        <div className='mb-5'>
+          <div className='text-secondary-foreground mb-3 text-sm font-medium'>
             Overall risk of bias judgement
           </div>
-          <div className="flex flex-wrap gap-2">
+          <div className='flex flex-wrap gap-2'>
             {judgementOptions.map(j => {
               const isSelected = effectiveJudgement === j;
               return (
@@ -133,17 +142,17 @@ export function OverallSection({
 
         {/* Direction of bias */}
         <div>
-          <div className="text-secondary-foreground mb-3 text-sm font-medium">
+          <div className='text-secondary-foreground mb-3 text-sm font-medium'>
             Predicted direction of bias
-            <span className="text-muted-foreground/70 ml-1 font-normal">(optional)</span>
+            <span className='text-muted-foreground/70 ml-1 font-normal'>(optional)</span>
           </div>
-          <div className="flex flex-wrap gap-2">
+          <div className='flex flex-wrap gap-2'>
             {BIAS_DIRECTIONS.map(d => {
               const isSelected = overallState?.direction === d;
               return (
                 <button
                   key={d}
-                  type="button"
+                  type='button'
                   onClick={() => {
                     if (disabled) return;
                     handleDirectionChange(isSelected ? null : d);
@@ -152,9 +161,9 @@ export function OverallSection({
                   className={`inline-flex items-center justify-center rounded border px-3 py-1.5 text-sm font-medium transition-colors ${
                     disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'
                   } ${
-                    isSelected
-                      ? 'border-blue-400 bg-blue-100 text-blue-800'
-                      : 'border-border bg-muted text-muted-foreground hover:border-border'
+                    isSelected ?
+                      'border-blue-400 bg-blue-100 text-blue-800'
+                    : 'border-border bg-muted text-muted-foreground hover:border-border'
                   }`}
                 >
                   {d}

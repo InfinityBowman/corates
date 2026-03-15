@@ -18,7 +18,9 @@ export function CreateLocalChecklist({ type: typeParam }: { type?: string }) {
   const getStoreActions = () => useLocalChecklistsStore.getState() as any;
 
   const [name, setName] = useState('');
-  const [checklistType, setChecklistType] = useState(typeParam || (DEFAULT_CHECKLIST_TYPE as string));
+  const [checklistType, setChecklistType] = useState(
+    typeParam || (DEFAULT_CHECKLIST_TYPE as string),
+  );
   const [pdfFile, setPdfFile] = useState<File | null>(null);
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -80,28 +82,28 @@ export function CreateLocalChecklist({ type: typeParam }: { type?: string }) {
   }, [search, navigate]);
 
   return (
-    <div className="flex min-h-full items-center justify-center p-6">
-      <div className="w-full max-w-lg">
-        <div className="border-border bg-card rounded-xl border p-8 shadow-sm">
-          <h1 className="text-foreground mb-2 text-2xl font-bold">Start an Appraisal</h1>
-          <p className="text-muted-foreground mb-6">
+    <div className='flex min-h-full items-center justify-center p-6'>
+      <div className='w-full max-w-lg'>
+        <div className='border-border bg-card rounded-xl border p-8 shadow-sm'>
+          <h1 className='text-foreground mb-2 text-2xl font-bold'>Start an Appraisal</h1>
+          <p className='text-muted-foreground mb-6'>
             Start a new quality assessment. Your progress will be saved locally on this device.
           </p>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} className='space-y-6'>
             {/* Checklist Type */}
             <div>
               <label
-                htmlFor="checklist-type"
-                className="text-secondary-foreground mb-2 block text-sm font-medium"
+                htmlFor='checklist-type'
+                className='text-secondary-foreground mb-2 block text-sm font-medium'
               >
                 Assessment Type
               </label>
               <select
-                id="checklist-type"
+                id='checklist-type'
                 value={checklistType}
                 onChange={e => setChecklistType(e.target.value)}
-                className="border-border bg-card focus:border-primary focus:ring-primary w-full rounded-lg border px-4 py-3 transition-colors outline-none focus:ring-2"
+                className='border-border bg-card focus:border-primary focus:ring-primary w-full rounded-lg border px-4 py-3 transition-colors outline-none focus:ring-2'
               >
                 {typeOptions.map(option => (
                   <option key={option.value} value={option.value}>
@@ -114,94 +116,93 @@ export function CreateLocalChecklist({ type: typeParam }: { type?: string }) {
             {/* Checklist Name */}
             <div>
               <label
-                htmlFor="checklist-name"
-                className="text-secondary-foreground mb-2 block text-sm font-medium"
+                htmlFor='checklist-name'
+                className='text-secondary-foreground mb-2 block text-sm font-medium'
               >
                 Study Name
               </label>
               <input
-                id="checklist-name"
-                type="text"
+                id='checklist-name'
+                type='text'
                 value={name}
                 onChange={e => setName(e.target.value)}
-                placeholder="e.g., Study by Smith et al. 2024"
-                className="border-border focus:border-primary focus:ring-primary w-full rounded-lg border px-4 py-3 transition-colors outline-none focus:ring-2"
+                placeholder='e.g., Study by Smith et al. 2024'
+                className='border-border focus:border-primary focus:ring-primary w-full rounded-lg border px-4 py-3 transition-colors outline-none focus:ring-2'
               />
             </div>
 
             {/* PDF Upload */}
             <div>
-              <label className="text-secondary-foreground mb-2 block text-sm font-medium">
-                PDF Document <span className="text-muted-foreground/70">(optional)</span>
+              <label className='text-secondary-foreground mb-2 block text-sm font-medium'>
+                PDF Document <span className='text-muted-foreground/70'>(optional)</span>
               </label>
 
-              {pdfFile ? (
-                <div className="flex items-center gap-3 rounded-lg border border-blue-200 bg-blue-50 p-4">
-                  <FileTextIcon className="h-8 w-8 shrink-0 text-blue-600" />
-                  <div className="min-w-0 flex-1">
-                    <p className="text-foreground truncate text-sm font-medium">{pdfFile.name}</p>
-                    <p className="text-muted-foreground text-xs">
+              {pdfFile ?
+                <div className='flex items-center gap-3 rounded-lg border border-blue-200 bg-blue-50 p-4'>
+                  <FileTextIcon className='h-8 w-8 shrink-0 text-blue-600' />
+                  <div className='min-w-0 flex-1'>
+                    <p className='text-foreground truncate text-sm font-medium'>{pdfFile.name}</p>
+                    <p className='text-muted-foreground text-xs'>
                       {(pdfFile.size / 1024 / 1024).toFixed(2)} MB
                     </p>
                   </div>
                   <button
-                    type="button"
+                    type='button'
                     onClick={() => setPdfFile(null)}
-                    className="text-muted-foreground/70 hover:text-muted-foreground p-1 transition-colors"
+                    className='text-muted-foreground/70 hover:text-muted-foreground p-1 transition-colors'
                   >
-                    <XIcon className="h-5 w-5" />
+                    <XIcon className='h-5 w-5' />
                   </button>
                 </div>
-              ) : (
-                <FileUpload
+              : <FileUpload
                   accept={['application/pdf', '.pdf']}
                   maxFiles={1}
                   onFileAccept={(details: any) => handleFilesChange(details.files)}
                 >
                   <FileUploadDropzone>
-                    <CloudUploadIcon className="text-muted-foreground/70 h-8 w-8" />
-                    <p className="text-muted-foreground mt-2 text-center text-sm">
-                      <span className="font-medium text-blue-600">Click to upload</span> or drag
-                      and drop
+                    <CloudUploadIcon className='text-muted-foreground/70 h-8 w-8' />
+                    <p className='text-muted-foreground mt-2 text-center text-sm'>
+                      <span className='font-medium text-blue-600'>Click to upload</span> or drag and
+                      drop
                     </p>
-                    <p className="text-muted-foreground/70 mt-1 text-xs">PDF files only</p>
+                    <p className='text-muted-foreground/70 mt-1 text-xs'>PDF files only</p>
                   </FileUploadDropzone>
                   <FileUploadHiddenInput />
                 </FileUpload>
-              )}
+              }
             </div>
 
             {/* Error */}
             {error && (
-              <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-600">
+              <div className='rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-600'>
                 {error}
               </div>
             )}
 
             {/* Buttons */}
-            <div className="flex gap-3">
+            <div className='flex gap-3'>
               <button
-                type="button"
+                type='button'
                 onClick={handleCancel}
-                className="border-border text-secondary-foreground hover:bg-muted flex-1 rounded-lg border px-4 py-3 font-medium transition-colors"
+                className='border-border text-secondary-foreground hover:bg-muted flex-1 rounded-lg border px-4 py-3 font-medium transition-colors'
               >
                 Cancel
               </button>
               <button
-                type="submit"
+                type='submit'
                 disabled={creating}
-                className="flex-1 rounded-lg bg-blue-600 px-4 py-3 font-medium text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+                className='flex-1 rounded-lg bg-blue-600 px-4 py-3 font-medium text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50'
               >
                 {creating ? 'Adding...' : 'Start'}
               </button>
             </div>
           </form>
 
-          <div className="bg-muted mt-6 rounded-lg p-4">
-            <p className="text-muted-foreground text-xs">
+          <div className='bg-muted mt-6 rounded-lg p-4'>
+            <p className='text-muted-foreground text-xs'>
               Local studies are stored only on this device and don't require an account. To
               collaborate with others or access your studies from multiple devices,{' '}
-              <a href="/signup" className="text-blue-600 hover:underline">
+              <a href='/signup' className='text-blue-600 hover:underline'>
                 create an account
               </a>
               .

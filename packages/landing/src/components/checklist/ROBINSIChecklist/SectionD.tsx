@@ -31,42 +31,44 @@ export function SectionD({ sectionDState, onUpdate, disabled, getRobinsText }: S
   );
 
   return (
-    <div className="border-border bg-card overflow-hidden rounded-lg border shadow-sm">
-      <div className="border-border bg-muted border-b px-6 py-4">
-        <h3 className="text-foreground text-base font-semibold">{(SECTION_D as any).title}</h3>
-        <p className="text-muted-foreground mt-1 text-xs">{(SECTION_D as any).description}</p>
+    <div className='border-border bg-card overflow-hidden rounded-lg border shadow-sm'>
+      <div className='border-border bg-muted border-b px-6 py-4'>
+        <h3 className='text-foreground text-base font-semibold'>{(SECTION_D as any).title}</h3>
+        <p className='text-muted-foreground mt-1 text-xs'>{(SECTION_D as any).description}</p>
       </div>
 
-      <div className="space-y-3 px-6 py-4">
-        <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
+      <div className='space-y-3 px-6 py-4'>
+        <div className='grid grid-cols-1 gap-2 md:grid-cols-2'>
           {INFORMATION_SOURCES.map(source => {
             const isChecked = sectionDState?.sources?.[source] || false;
             return (
               <label
                 key={source}
                 className={`flex items-start gap-3 rounded-lg border p-3 transition-all duration-200 ${
-                  isChecked ? 'border-blue-500 bg-blue-50' : 'border-border bg-card hover:border-border'
+                  isChecked ?
+                    'border-blue-500 bg-blue-50'
+                  : 'border-border bg-card hover:border-border'
                 } ${disabled ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'}`}
               >
                 <input
-                  type="checkbox"
+                  type='checkbox'
                   checked={isChecked}
                   disabled={disabled}
                   onChange={() => !disabled && handleSourceToggle(source)}
-                  className="border-border focus:ring-primary mt-0.5 h-4 w-4 rounded text-blue-600"
+                  className='border-border focus:ring-primary mt-0.5 h-4 w-4 rounded text-blue-600'
                 />
-                <span className="text-secondary-foreground text-sm">{source}</span>
+                <span className='text-secondary-foreground text-sm'>{source}</span>
               </label>
             );
           })}
         </div>
 
-        <div className="border-border border-t pt-3">
-          <label className="block">
-            <span className="text-secondary-foreground text-sm font-medium">
+        <div className='border-border border-t pt-3'>
+          <label className='block'>
+            <span className='text-secondary-foreground text-sm font-medium'>
               {(SECTION_D as any).otherField.label}
             </span>
-            <div className="mt-2">
+            <div className='mt-2'>
               <NoteEditor
                 yText={otherSpecifyYText}
                 placeholder={(SECTION_D as any).otherField.placeholder}

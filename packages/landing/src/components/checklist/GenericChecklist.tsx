@@ -15,7 +15,6 @@ import { AMSTAR2Checklist } from '@/components/checklist/AMSTAR2Checklist/AMSTAR
 import { ROBINSIChecklist } from '@/components/checklist/ROBINSIChecklist/ROBINSIChecklist';
 import { ROB2Checklist } from '@/components/checklist/ROB2Checklist/ROB2Checklist';
 
- 
 interface GenericChecklistProps {
   checklistType?: string;
   checklist: any;
@@ -25,7 +24,6 @@ interface GenericChecklistProps {
   getRobinsText?: (_sectionKey: string, _fieldKey: string, _questionKey?: string) => any;
   getRob2Text?: (_sectionKey: string, _fieldKey: string, _questionKey?: string) => any;
 }
- 
 
 export function GenericChecklist({
   checklistType: checklistTypeProp,
@@ -43,7 +41,7 @@ export function GenericChecklist({
   }, [checklistTypeProp, checklist]);
 
   return (
-    <div className="h-full">
+    <div className='h-full'>
       {checklistType === CHECKLIST_TYPES.AMSTAR2 && (
         <AMSTAR2Checklist
           externalChecklist={checklist}

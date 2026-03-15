@@ -14,11 +14,5 @@ export const Route = createFileRoute(
 
 function ProjectChecklistPage() {
   const { projectId, studyId, checklistId } = Route.useParams();
-  return (
-    <ChecklistYjsWrapper
-      projectId={projectId}
-      studyId={studyId}
-      checklistId={checklistId}
-    />
-  );
+  return <ChecklistYjsWrapper projectId={projectId} studyId={studyId} checklistId={checklistId} />;
 }

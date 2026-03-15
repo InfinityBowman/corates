@@ -728,6 +728,7 @@ Key decisions:
 All three checklist types migrated across 5 sub-phases (A-E) with code reviews after each:
 
 **Phase A -- Infrastructure:**
+
 - `common/LocalTextAdapter.js` -- Y.Text shim for offline mode (copied, framework-agnostic)
 - `common/NoteEditor.tsx` -- Y.Text-bound textarea, collapsible + inline modes
 - `SplitScreenLayout.tsx` + `SplitPanelControls.tsx` -- resizable split panel with PDF viewer toggle
@@ -735,19 +736,23 @@ All three checklist types migrated across 5 sub-phases (A-E) with code reviews a
 - `ChecklistWithPdf.tsx` -- layout wrapper combining checklist + PDF viewer
 
 **Phase B -- AMSTAR2 (958 LOC original):**
+
 - `AMSTAR2Checklist.tsx` -- all 16 questions with extracted helper functions for column/radio logic
 - Q1 (3-column special case) uses inline handler; Q9/Q11 (split questions) are dedicated components
 - `checklist-map.js` copied, `checklist.js` updated with missing exports (isAMSTAR2Complete)
 
 **Phase C -- ROB2 (7 sub-components, ~1,340 LOC):**
+
 - `ROB2Checklist.tsx`, `DomainSection.tsx`, `DomainJudgement.tsx`, `PreliminarySection.tsx`, `OverallSection.tsx`, `ScoringSummary.tsx`, `SignallingQuestion.tsx`
 - Auto-scoring only (no manual override), aim-based domain selection (assignment vs. adhering)
 
 **Phase D -- ROBINS-I (12 sub-components, ~1,545 LOC):**
+
 - `ROBINSIChecklist.tsx`, `DomainSection.tsx`, `DomainJudgement.tsx`, `OverallSection.tsx`, `ScoringSummary.tsx`, `SignallingQuestion.tsx`, `PlanningSection.tsx`, `SectionA.tsx`, `SectionB.tsx`, `SectionC.tsx`, `SectionD.tsx`
 - Auto/Manual mode toggle, stop-assessment gating from Section B, isPerProtocol domain selection, subsection support (Domain 3)
 
 **Phase E -- Wrappers + Routes:**
+
 - `ChecklistYjsWrapper.tsx` -- project-mode Yjs bridge with PDF loading, completion flow, annotation support
 - `LocalChecklistView.tsx` -- offline mode with debounced IndexedDB save and LocalTextAdapter
 - `CreateLocalChecklist.tsx` -- local checklist creation form with PDF upload
@@ -755,6 +760,7 @@ All three checklist types migrated across 5 sub-phases (A-E) with code reviews a
 - `routes/_app/_protected/projects.$projectId/studies.$studyId.checklists.$checklistId.tsx` -- project checklist route
 
 Key decisions:
+
 - OverallSection auto-persist uses narrowed deps (overallState?.judgement not full object) to avoid re-triggering on direction changes
 - SignallingQuestion NA-to-NI coercion uses narrowed deps (answer?.answer not full answer object)
 - DomainSection completionStatus uses `!= null` to correctly exclude undefined answers
@@ -774,6 +780,7 @@ Key decisions:
 ### 4.9 Local checklists -- COMPLETED (2026-03-15)
 
 Migrated together with Phase 4.7 since they share checklist form components:
+
 - `routes/_app/checklist.tsx` and `routes/_app/checklist.$checklistId.tsx` route files
 - `LocalChecklistView.tsx` wrapper with debounced IndexedDB persistence
 - `CreateLocalChecklist.tsx` creation form
@@ -887,16 +894,16 @@ Migrated together with Phase 4.7 since they share checklist form components:
 
 ## Estimated Effort
 
-| Phase                | Effort         | Can parallelize?               | Status                               |
-| -------------------- | -------------- | ------------------------------ | ------------------------------------ |
-| Phase 0: Preparation | 0.5 days       | --                             | DONE (2026-03-14)                    |
-| Phase 1: Foundation  | 3-4 days       | --                             | DONE (2026-03-14)                    |
-| Phase 2: UI Library  | 2 days         | Yes (with Phase 3)             | DONE (2026-03-14)                    |
-| Phase 3: Primitives  | 3-4 days       | Yes (with Phase 2)             | DONE (2026-03-14)                    |
-| Phase 4: Pages       | 5-7 days       | Partially (independent routes) | 4.1-4.7, 4.9 DONE                    |
-| Phase 5: Tests       | 2 days         | Yes (with Phase 4)             | Not started                          |
-| Phase 6: Cleanup     | 0.5 days       | --                             | Not started                          |
-| **Total**            | **~2-3 weeks** |                                | **Phases 0-4.7, 4.9 done**           |
+| Phase                | Effort         | Can parallelize?               | Status                     |
+| -------------------- | -------------- | ------------------------------ | -------------------------- |
+| Phase 0: Preparation | 0.5 days       | --                             | DONE (2026-03-14)          |
+| Phase 1: Foundation  | 3-4 days       | --                             | DONE (2026-03-14)          |
+| Phase 2: UI Library  | 2 days         | Yes (with Phase 3)             | DONE (2026-03-14)          |
+| Phase 3: Primitives  | 3-4 days       | Yes (with Phase 2)             | DONE (2026-03-14)          |
+| Phase 4: Pages       | 5-7 days       | Partially (independent routes) | 4.1-4.7, 4.9 DONE          |
+| Phase 5: Tests       | 2 days         | Yes (with Phase 4)             | Not started                |
+| Phase 6: Cleanup     | 0.5 days       | --                             | Not started                |
+| **Total**            | **~2-3 weeks** |                                | **Phases 0-4.7, 4.9 done** |
 
 Phase 0 is shorter since landing already exists. Claude Code can handle the mechanical parts (UI components, query hooks, icon swaps, simple page conversions) to significantly speed up Phases 2 and 4.
 

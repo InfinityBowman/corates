@@ -11,7 +11,6 @@ import { SplitScreenLayout } from '@/components/checklist/SplitScreenLayout';
 
 const EmbedPdfViewer = lazy(() => import('@/components/pdf/EmbedPdfViewer'));
 
- 
 interface ChecklistWithPdfProps {
   checklistType?: string;
   checklist: any;
@@ -35,7 +34,6 @@ interface ChecklistWithPdfProps {
   onPdfClear?: () => void;
   allowDelete?: boolean;
 }
- 
 
 export function ChecklistWithPdf({
   checklistType,
@@ -61,9 +59,9 @@ export function ChecklistWithPdf({
   allowDelete,
 }: ChecklistWithPdfProps) {
   return (
-    <div className="flex h-full flex-col bg-blue-50">
+    <div className='flex h-full flex-col bg-blue-50'>
       <SplitScreenLayout
-        defaultLayout="vertical"
+        defaultLayout='vertical'
         defaultRatio={50}
         showSecondPanel={!!pdfData}
         headerContent={headerContent}
@@ -82,11 +80,11 @@ export function ChecklistWithPdf({
         />
 
         {/* Second panel: PDF Viewer */}
-        {pdfData ? (
+        {pdfData ?
           <Suspense
             fallback={
-              <div className="flex h-full items-center justify-center">
-                <div className="h-6 w-6 animate-spin rounded-full border-b-2 border-blue-600" />
+              <div className='flex h-full items-center justify-center'>
+                <div className='h-6 w-6 animate-spin rounded-full border-b-2 border-blue-600' />
               </div>
             }
           >
@@ -106,7 +104,7 @@ export function ChecklistWithPdf({
               allowDelete={allowDelete}
             />
           </Suspense>
-        ) : null}
+        : null}
       </SplitScreenLayout>
     </div>
   );

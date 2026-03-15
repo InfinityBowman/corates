@@ -28,17 +28,25 @@ export function OverallSection({
   );
 
   const isManualMode = overallState?.judgementSource === 'manual';
-  const effectiveJudgement = isManualMode && overallState?.judgement
-    ? overallState.judgement
-    : calculatedDisplayJudgement;
+  const effectiveJudgement =
+    isManualMode && overallState?.judgement ? overallState.judgement : calculatedDisplayJudgement;
 
   // Auto-persist calculated judgement in auto mode.
   // Deps track only the specific fields the SolidJS createEffect(on(...)) tracked.
   // overallState is read inside the effect but only overallState?.judgement is in deps
   // to avoid re-triggering on direction changes.
   useEffect(() => {
-    if (!isManualMode && calculatedDisplayJudgement && calculatedDisplayJudgement !== overallState?.judgement && !disabled) {
-      onUpdate({ ...(overallState || {}), judgement: calculatedDisplayJudgement, judgementSource: 'auto' });
+    if (
+      !isManualMode &&
+      calculatedDisplayJudgement &&
+      calculatedDisplayJudgement !== overallState?.judgement &&
+      !disabled
+    ) {
+      onUpdate({
+        ...(overallState || {}),
+        judgement: calculatedDisplayJudgement,
+        judgementSource: 'auto',
+      });
     }
   }, [calculatedDisplayJudgement, isManualMode, overallState?.judgement, disabled]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -57,7 +65,11 @@ export function OverallSection({
   );
 
   const handleRevertToAuto = useCallback(() => {
-    onUpdate({ ...(overallState || {}), judgement: calculatedDisplayJudgement, judgementSource: 'auto' });
+    onUpdate({
+      ...(overallState || {}),
+      judgement: calculatedDisplayJudgement,
+      judgementSource: 'auto',
+    });
   }, [overallState, calculatedDisplayJudgement, onUpdate]);
 
   const handleSwitchToManual = useCallback(() => {
@@ -71,8 +83,8 @@ export function OverallSection({
 
   const getJudgementColor = (j: string, isSelected: boolean) => {
     if (!isSelected) {
-      return isManualMode
-        ? 'border-border bg-card text-muted-foreground hover:border-border'
+      return isManualMode ?
+          'border-border bg-card text-muted-foreground hover:border-border'
         : 'border-border bg-muted text-muted-foreground hover:border-border hover:bg-card';
     }
     switch (j) {
@@ -106,61 +118,71 @@ export function OverallSection({
   };
 
   return (
-    <div className="bg-card overflow-hidden rounded-lg shadow-md">
-      <div className="bg-foreground text-background px-6 py-4">
-        <div className="flex items-center justify-between">
+    <div className='bg-card overflow-hidden rounded-lg shadow-md'>
+      <div className='bg-foreground text-background px-6 py-4'>
+        <div className='flex items-center justify-between'>
           <div>
-            <h3 className="text-lg font-semibold">Overall Risk of Bias</h3>
-            <p className="text-muted mt-1 text-sm">Final assessment based on all domain judgements</p>
+            <h3 className='text-lg font-semibold'>Overall Risk of Bias</h3>
+            <p className='text-muted mt-1 text-sm'>
+              Final assessment based on all domain judgements
+            </p>
           </div>
 
-          {calculatedScore && (calculatedScore as string) !== 'Incomplete' ? (
-            <div className="flex flex-col items-end gap-1">
-              <span className={`rounded-md px-3 py-1 text-sm font-semibold ${getScoreBadgeColor(calculatedScore)}`}>
+          {calculatedScore && (calculatedScore as string) !== 'Incomplete' ?
+            <div className='flex flex-col items-end gap-1'>
+              <span
+                className={`rounded-md px-3 py-1 text-sm font-semibold ${getScoreBadgeColor(calculatedScore)}`}
+              >
                 {calculatedScore}
               </span>
-              {isManualMode && <span className="text-xs text-amber-300">Manual override</span>}
+              {isManualMode && <span className='text-xs text-amber-300'>Manual override</span>}
             </div>
-          ) : (calculatedScore as string) === 'Incomplete' ? (
-            <span className="bg-muted-foreground/50 text-muted rounded-md px-3 py-1 text-sm">
+          : (calculatedScore as string) === 'Incomplete' ?
+            <span className='bg-muted-foreground/50 text-muted rounded-md px-3 py-1 text-sm'>
               Incomplete
             </span>
-          ) : null}
+          : null}
         </div>
       </div>
 
-      <div className="px-6 py-5">
+      <div className='px-6 py-5'>
         {/* Calculated score with mode toggle */}
-        <div className="bg-muted mb-5 flex items-center justify-between rounded-lg p-4">
-          <div className="flex items-center gap-3">
-            <span className="text-secondary-foreground text-sm font-medium">Calculated judgement:</span>
-            {calculatedDisplayJudgement ? (
-              <span className={`rounded-md px-2.5 py-1 text-sm font-medium ${getScoreBadgeColor(calculatedScore)}`}>
+        <div className='bg-muted mb-5 flex items-center justify-between rounded-lg p-4'>
+          <div className='flex items-center gap-3'>
+            <span className='text-secondary-foreground text-sm font-medium'>
+              Calculated judgement:
+            </span>
+            {calculatedDisplayJudgement ?
+              <span
+                className={`rounded-md px-2.5 py-1 text-sm font-medium ${getScoreBadgeColor(calculatedScore)}`}
+              >
                 {calculatedDisplayJudgement}
               </span>
-            ) : (
-              <span className="text-muted-foreground/70 text-sm">Complete all domains</span>
-            )}
+            : <span className='text-muted-foreground/70 text-sm'>Complete all domains</span>}
           </div>
 
-          <div className="flex items-center gap-2">
-            <div className="border-border bg-card flex rounded-md border text-xs">
+          <div className='flex items-center gap-2'>
+            <div className='border-border bg-card flex rounded-md border text-xs'>
               <button
-                type="button"
+                type='button'
                 onClick={handleRevertToAuto}
                 disabled={disabled}
                 className={`rounded-l-md px-2.5 py-1 transition-colors ${
-                  !isManualMode ? 'bg-blue-100 text-blue-800' : 'text-muted-foreground hover:bg-muted'
+                  !isManualMode ?
+                    'bg-blue-100 text-blue-800'
+                  : 'text-muted-foreground hover:bg-muted'
                 } ${disabled ? 'cursor-not-allowed opacity-50' : ''}`}
               >
                 Auto
               </button>
               <button
-                type="button"
+                type='button'
                 onClick={handleSwitchToManual}
                 disabled={disabled}
                 className={`border-border rounded-r-md border-l px-2.5 py-1 transition-colors ${
-                  isManualMode ? 'bg-amber-100 text-amber-800' : 'text-muted-foreground hover:bg-muted'
+                  isManualMode ?
+                    'bg-amber-100 text-amber-800'
+                  : 'text-muted-foreground hover:bg-muted'
                 } ${disabled ? 'cursor-not-allowed opacity-50' : ''}`}
               >
                 Manual
@@ -170,17 +192,17 @@ export function OverallSection({
         </div>
 
         {/* Judgement buttons */}
-        <div className="mb-5">
-          <div className="text-secondary-foreground mb-3 text-sm font-medium">
+        <div className='mb-5'>
+          <div className='text-secondary-foreground mb-3 text-sm font-medium'>
             Overall risk of bias judgement
           </div>
-          <div className="flex flex-wrap gap-2">
+          <div className='flex flex-wrap gap-2'>
             {OVERALL_ROB_JUDGEMENTS.map(j => {
               const isSelected = effectiveJudgement === j;
               return (
                 <button
                   key={j}
-                  type="button"
+                  type='button'
                   onClick={() => {
                     if (disabled) return;
                     handleJudgementChange(isSelected ? null : j);
@@ -199,17 +221,17 @@ export function OverallSection({
 
         {/* Direction */}
         <div>
-          <div className="text-secondary-foreground mb-3 text-sm font-medium">
+          <div className='text-secondary-foreground mb-3 text-sm font-medium'>
             Predicted direction of bias
-            <span className="text-muted-foreground/70 ml-1 font-normal">(optional)</span>
+            <span className='text-muted-foreground/70 ml-1 font-normal'>(optional)</span>
           </div>
-          <div className="flex flex-wrap gap-2">
+          <div className='flex flex-wrap gap-2'>
             {BIAS_DIRECTIONS.map(d => {
               const isSelected = overallState?.direction === d;
               return (
                 <button
                   key={d}
-                  type="button"
+                  type='button'
                   onClick={() => {
                     if (disabled) return;
                     handleDirectionChange(isSelected ? null : d);
@@ -218,9 +240,9 @@ export function OverallSection({
                   className={`inline-flex items-center justify-center rounded border px-3 py-1.5 text-sm font-medium transition-colors ${
                     disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'
                   } ${
-                    isSelected
-                      ? 'border-blue-400 bg-blue-100 text-blue-800'
-                      : 'text-muted-foreground border-border bg-muted hover:border-border'
+                    isSelected ?
+                      'border-blue-400 bg-blue-100 text-blue-800'
+                    : 'text-muted-foreground border-border bg-muted hover:border-border'
                   }`}
                 >
                   {d}

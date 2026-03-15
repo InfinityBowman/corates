@@ -37,11 +37,30 @@ const projectActionsStore = _projectActionsStore as any;
 // Valid answer keys for each checklist type (module-level for stable references)
 const AMSTAR2_KEY_PATTERN = /^q\d+[a-z]*$/i;
 const ROBINS_I_KEYS = new Set([
-  'planning', 'sectionA', 'sectionB', 'sectionC', 'sectionD', 'confoundingEvaluation',
-  'domain1a', 'domain1b', 'domain2', 'domain3', 'domain4', 'domain5', 'domain6', 'overall',
+  'planning',
+  'sectionA',
+  'sectionB',
+  'sectionC',
+  'sectionD',
+  'confoundingEvaluation',
+  'domain1a',
+  'domain1b',
+  'domain2',
+  'domain3',
+  'domain4',
+  'domain5',
+  'domain6',
+  'overall',
 ]);
 const ROB2_KEYS = new Set([
-  'preliminary', 'domain1', 'domain2a', 'domain2b', 'domain3', 'domain4', 'domain5', 'overall',
+  'preliminary',
+  'domain1',
+  'domain2a',
+  'domain2b',
+  'domain3',
+  'domain4',
+  'domain5',
+  'overall',
 ]);
 
 interface ChecklistYjsWrapperProps {
@@ -123,7 +142,7 @@ export function ChecklistYjsWrapper({ projectId, studyId, checklistId }: Checkli
   // Auto-select primary PDF
   useEffect(() => {
     if (defaultPdf && !selectedPdfId) {
-      setSelectedPdfId(defaultPdf.id);  
+      setSelectedPdfId(defaultPdf.id);
     }
   }, [defaultPdf, selectedPdfId]);
 
@@ -132,9 +151,9 @@ export function ChecklistYjsWrapper({ projectId, studyId, checklistId }: Checkli
     const fileName = currentPdf?.fileName;
     if (!fileName || !orgId || attemptedPdfFile === fileName || pdfLoading) return;
 
-    setAttemptedPdfFile(fileName);  
-    setPdfLoading(true);  
-    setPdfData(null);  
+    setAttemptedPdfFile(fileName);
+    setPdfLoading(true);
+    setPdfData(null);
 
     getCachedPdf(projectId, studyId, fileName)
       .then((cachedData: any) => {
@@ -155,7 +174,15 @@ export function ChecklistYjsWrapper({ projectId, studyId, checklistId }: Checkli
       })
       .catch((err: any) => console.error('Failed to load PDF:', err))
       .finally(() => setPdfLoading(false));
-  }, [currentPdf?.fileName, orgId, attemptedPdfFile, pdfLoading, projectId, studyId, selectedPdfId]);
+  }, [
+    currentPdf?.fileName,
+    orgId,
+    attemptedPdfFile,
+    pdfLoading,
+    projectId,
+    studyId,
+    selectedPdfId,
+  ]);
 
   const handlePdfSelect = useCallback((pdfId: string) => {
     setSelectedPdfId(pdfId);
@@ -173,13 +200,17 @@ export function ChecklistYjsWrapper({ projectId, studyId, checklistId }: Checkli
       try {
         const tag = studyPdfs.length > 0 ? 'secondary' : 'primary';
         uploadResult = await uploadPdf(orgId, projectId, studyId, data, fileName);
-        const pdfId = addPdfToStudy(studyId, {
-          key: uploadResult.key,
-          fileName: uploadResult.fileName,
-          size: uploadResult.size,
-          uploadedBy: user?.id,
-          uploadedAt: Date.now(),
-        }, tag);
+        const pdfId = addPdfToStudy(
+          studyId,
+          {
+            key: uploadResult.key,
+            fileName: uploadResult.fileName,
+            size: uploadResult.size,
+            uploadedBy: user?.id,
+            uploadedAt: Date.now(),
+          },
+          tag,
+        );
 
         setPdfData(data);
         setPdfFileName(fileName);
@@ -212,7 +243,6 @@ export function ChecklistYjsWrapper({ projectId, studyId, checklistId }: Checkli
       ...data.answers,
     };
   }, [currentChecklist, currentStudy, getChecklistData, studyId, checklistId]);
-
 
   const checklistType = useMemo(() => {
     if (currentChecklist?.type) return currentChecklist.type;
@@ -257,9 +287,9 @@ export function ChecklistYjsWrapper({ projectId, studyId, checklistId }: Checkli
     }
     if (!isChecklistValid) {
       const message =
-        checklistType === 'ROBINS_I' || checklistType === 'ROB2'
-          ? 'All domains must be scored before marking the checklist as complete.'
-          : 'All questions must have a final answer before marking the checklist as complete.';
+        checklistType === 'ROBINS_I' || checklistType === 'ROB2' ?
+          'All domains must be scored before marking the checklist as complete.'
+        : 'All questions must have a final answer before marking the checklist as complete.';
       showToast.error('Incomplete Checklist', message);
       return;
     }
@@ -269,8 +299,12 @@ export function ChecklistYjsWrapper({ projectId, studyId, checklistId }: Checkli
   const confirmMarkComplete = useCallback(() => {
     const nextStatus = getNextStatusForCompletion(currentStudy as any);
     updateChecklist?.(studyId, checklistId, { status: nextStatus });
-    const statusLabel = nextStatus === CHECKLIST_STATUS.FINALIZED ? 'completed' : 'awaiting reconciliation';
-    showToast.success('Appraisal Completed', `This appraisal has been marked as ${statusLabel} and is now locked.`);
+    const statusLabel =
+      nextStatus === CHECKLIST_STATUS.FINALIZED ? 'completed' : 'awaiting reconciliation';
+    showToast.success(
+      'Appraisal Completed',
+      `This appraisal has been marked as ${statusLabel} and is now locked.`,
+    );
     setCompleteDialogOpen(false);
   }, [currentStudy, updateChecklist, studyId, checklistId]);
 
@@ -281,7 +315,8 @@ export function ChecklistYjsWrapper({ projectId, studyId, checklistId }: Checkli
 
   const initialAnnotations = useMemo(() => {
     if (!currentStudy?.annotations || !selectedPdfId || !checklistId) return [];
-    const checklistAnnotations = (currentStudy.annotations as Record<string, any[]>)?.[checklistId] || [];
+    const checklistAnnotations =
+      (currentStudy.annotations as Record<string, any[]>)?.[checklistId] || [];
     return checklistAnnotations.filter((a: any) => a.pdfId === selectedPdfId);
   }, [currentStudy, selectedPdfId, checklistId]);
 
@@ -327,15 +362,15 @@ export function ChecklistYjsWrapper({ projectId, studyId, checklistId }: Checkli
           <AlertDialogHeader>
             <AlertDialogTitle>Mark Appraisal as Complete?</AlertDialogTitle>
             <AlertDialogDescription>
-              Once marked complete, this appraisal will be locked and cannot be edited. Are you
-              sure you want to proceed?
+              Once marked complete, this appraisal will be locked and cannot be edited. Are you sure
+              you want to proceed?
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <button
-              type="button"
+              type='button'
               onClick={() => setCompleteDialogOpen(false)}
-              className="border-border text-secondary-foreground hover:bg-muted rounded-lg border px-4 py-2 text-sm font-medium"
+              className='border-border text-secondary-foreground hover:bg-muted rounded-lg border px-4 py-2 text-sm font-medium'
             >
               Cancel
             </button>
@@ -346,57 +381,57 @@ export function ChecklistYjsWrapper({ projectId, studyId, checklistId }: Checkli
 
       <button
         onClick={() => navigate({ to: getBackPath() as string })}
-        className="text-muted-foreground/70 hover:text-secondary-foreground transition-colors"
+        className='text-muted-foreground/70 hover:text-secondary-foreground transition-colors'
       >
-        <ChevronLeftIcon className="h-5 w-5" />
+        <ChevronLeftIcon className='h-5 w-5' />
       </button>
-      <div className="text-muted-foreground truncate text-sm">
-        <span className="text-foreground font-medium">
+      <div className='text-muted-foreground truncate text-sm'>
+        <span className='text-foreground font-medium'>
           {currentChecklist?.type || 'AMSTAR2'} Checklist
         </span>
       </div>
-      <div className="ml-auto flex items-center gap-3">
+      <div className='ml-auto flex items-center gap-3'>
         <ScoreTag currentScore={currentScore} checklistType={checklistType} />
-        {!isReadOnly ? (
+        {!isReadOnly ?
           <button
             onClick={handleToggleComplete}
             disabled={!isChecklistValid}
             title={
-              !isChecklistValid
-                ? checklistType === 'ROBINS_I'
-                  ? 'Overall risk of bias must be set before marking complete'
-                  : 'All questions must have a final answer before marking complete'
-                : undefined
+              !isChecklistValid ?
+                checklistType === 'ROBINS_I' ?
+                  'Overall risk of bias must be set before marking complete'
+                : 'All questions must have a final answer before marking complete'
+              : undefined
             }
             className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
-              currentChecklist?.status === CHECKLIST_STATUS.FINALIZED
-                ? 'bg-green-100 text-green-700 hover:bg-green-200'
-                : !isChecklistValid
-                  ? 'bg-muted text-muted-foreground cursor-not-allowed opacity-60'
-                  : 'bg-blue-600 text-white hover:bg-blue-700'
+              currentChecklist?.status === CHECKLIST_STATUS.FINALIZED ?
+                'bg-green-100 text-green-700 hover:bg-green-200'
+              : !isChecklistValid ? 'bg-muted text-muted-foreground cursor-not-allowed opacity-60'
+              : 'bg-blue-600 text-white hover:bg-blue-700'
             }`}
           >
-            {currentChecklist?.status === CHECKLIST_STATUS.FINALIZED ? 'Completed' : 'Mark Complete'}
+            {currentChecklist?.status === CHECKLIST_STATUS.FINALIZED ?
+              'Completed'
+            : 'Mark Complete'}
           </button>
-        ) : (
-          <span
+        : <span
             className={`rounded-lg px-3 py-1.5 text-sm font-medium ${
-              currentChecklist?.status === CHECKLIST_STATUS.FINALIZED
-                ? 'bg-green-100 text-green-700'
-                : 'bg-secondary text-secondary-foreground'
+              currentChecklist?.status === CHECKLIST_STATUS.FINALIZED ?
+                'bg-green-100 text-green-700'
+              : 'bg-secondary text-secondary-foreground'
             }`}
           >
             {currentChecklist?.status === CHECKLIST_STATUS.FINALIZED ? 'Completed' : 'Read-only'}
           </span>
-        )}
+        }
       </div>
     </>
   );
 
   if (!checklistForUI) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-blue-50">
-        <div className="text-muted-foreground">
+      <div className='flex min-h-screen items-center justify-center bg-blue-50'>
+        <div className='text-muted-foreground'>
           {connectionState.connecting || pdfLoading ? 'Loading...' : 'Checklist not found'}
         </div>
       </div>
@@ -418,7 +453,9 @@ export function ChecklistYjsWrapper({ projectId, studyId, checklistId }: Checkli
       pdfs={studyPdfs}
       selectedPdfId={selectedPdfId}
       onPdfSelect={handlePdfSelect}
-      getQuestionNote={(questionKey: string) => getQuestionNote?.(studyId, checklistId, questionKey)}
+      getQuestionNote={(questionKey: string) =>
+        getQuestionNote?.(studyId, checklistId, questionKey)
+      }
       getRobinsText={(sectionKey: string, fieldKey: string, questionKey?: string) =>
         getRobinsText?.(studyId, checklistId, sectionKey, fieldKey, questionKey)
       }

@@ -46,7 +46,7 @@ export function NoteEditor({
       return;
     }
 
-    setLocalValue(yText.toString());  
+    setLocalValue(yText.toString());
 
     const observer = () => {
       setLocalValue(yText.toString());
@@ -109,7 +109,7 @@ export function NoteEditor({
         style={{ minHeight: '60px' }}
         maxLength={maxLength}
       />
-      <div className="text-2xs text-muted-foreground/70 mt-1 flex items-center justify-between">
+      <div className='text-2xs text-muted-foreground/70 mt-1 flex items-center justify-between'>
         <span>{readOnly ? 'Read-only' : ''}</span>
         <span className={charCount > maxLength * 0.9 ? 'text-amber-500' : ''}>
           {charCount} / {maxLength}
@@ -123,7 +123,7 @@ export function NoteEditor({
   }
 
   return (
-    <div className="border-border/50 mt-3 border-t pt-2">
+    <div className='border-border/50 mt-3 border-t pt-2'>
       <Collapsible open={expanded} onOpenChange={setExpanded}>
         <CollapsibleTrigger
           className={`flex cursor-pointer items-center gap-1.5 py-1 text-xs select-none ${hasContent ? 'text-blue-600 hover:text-blue-700' : 'text-muted-foreground hover:text-secondary-foreground'}`}
@@ -131,11 +131,11 @@ export function NoteEditor({
           <ChevronRightIcon
             className={`h-4 w-4 shrink-0 transition-transform duration-200 ${expanded ? 'rotate-90' : ''}`}
           />
-          <BookOpenIcon className="h-3 w-3 shrink-0" />
-          <span className="font-medium">{label || 'Notes'}</span>
+          <BookOpenIcon className='h-3 w-3 shrink-0' />
+          <span className='font-medium'>{label || 'Notes'}</span>
         </CollapsibleTrigger>
         <CollapsibleContent>
-          <div className="px-0.5 pt-2 pb-0.5">{textareaContent}</div>
+          <div className='px-0.5 pt-2 pb-0.5'>{textareaContent}</div>
         </CollapsibleContent>
       </Collapsible>
     </div>
@@ -151,12 +151,12 @@ export function NoteDisplay({ content }: { content?: string }) {
   if (!hasContent) return null;
 
   return (
-    <div className="border-border/50 bg-muted mt-2 rounded-lg border p-2">
-      <div className="text-muted-foreground mb-1 flex items-center gap-1.5 text-xs">
-        <BookOpenIcon className="h-3 w-3" />
+    <div className='border-border/50 bg-muted mt-2 rounded-lg border p-2'>
+      <div className='text-muted-foreground mb-1 flex items-center gap-1.5 text-xs'>
+        <BookOpenIcon className='h-3 w-3' />
         <span>Notes</span>
       </div>
-      <p className="text-secondary-foreground text-sm whitespace-pre-wrap">{content}</p>
+      <p className='text-secondary-foreground text-sm whitespace-pre-wrap'>{content}</p>
     </div>
   );
 }

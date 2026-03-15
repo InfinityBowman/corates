@@ -30,14 +30,14 @@ export function DomainJudgement({
   isAutoMode,
 }: DomainJudgementProps) {
   const directionOptions = useMemo(
-    () => isDomain1 ? DOMAIN1_DIRECTIONS : BIAS_DIRECTIONS,
+    () => (isDomain1 ? DOMAIN1_DIRECTIONS : BIAS_DIRECTIONS),
     [isDomain1],
   );
 
   const getJudgementColor = (j: string, isSelected: boolean) => {
     if (!isSelected) {
-      return isAutoMode
-        ? 'border-border bg-muted text-muted-foreground hover:border-border hover:bg-card'
+      return isAutoMode ?
+          'border-border bg-muted text-muted-foreground hover:border-border hover:bg-card'
         : 'border-border bg-card text-muted-foreground hover:border-border';
     }
     switch (j) {
@@ -64,13 +64,13 @@ export function DomainJudgement({
 
   return (
     <div>
-      <div className="flex flex-wrap gap-2">
+      <div className='flex flex-wrap gap-2'>
         {ROB_JUDGEMENTS.map(j => {
           const isSelected = judgement === j;
           return (
             <button
               key={j}
-              type="button"
+              type='button'
               onClick={() => {
                 if (disabled) return;
                 onJudgementChange(isSelected ? null : j);
@@ -87,18 +87,18 @@ export function DomainJudgement({
       </div>
 
       {showDirection && (
-        <div className="mt-3">
-          <div className="text-secondary-foreground mb-2 text-sm font-medium">
+        <div className='mt-3'>
+          <div className='text-secondary-foreground mb-2 text-sm font-medium'>
             Predicted direction of bias
-            <span className="text-muted-foreground/70 ml-1 font-normal">(optional)</span>
+            <span className='text-muted-foreground/70 ml-1 font-normal'>(optional)</span>
           </div>
-          <div className="flex flex-wrap gap-2">
+          <div className='flex flex-wrap gap-2'>
             {directionOptions.map(d => {
               const isSelected = direction === d;
               return (
                 <button
                   key={d}
-                  type="button"
+                  type='button'
                   onClick={() => {
                     if (disabled) return;
                     onDirectionChange?.(isSelected ? null : d);
@@ -107,9 +107,9 @@ export function DomainJudgement({
                   className={`inline-flex items-center justify-center rounded border px-2 py-1 text-xs font-medium transition-colors ${
                     disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'
                   } ${
-                    isSelected
-                      ? 'border-blue-400 bg-blue-100 text-blue-800'
-                      : 'border-border bg-card text-muted-foreground hover:border-border'
+                    isSelected ?
+                      'border-blue-400 bg-blue-100 text-blue-800'
+                    : 'border-border bg-card text-muted-foreground hover:border-border'
                   }`}
                 >
                   {d}

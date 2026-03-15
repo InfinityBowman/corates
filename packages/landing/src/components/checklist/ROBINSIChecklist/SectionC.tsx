@@ -17,7 +17,10 @@ interface SectionCProps {
 export function SectionC({ sectionCState, onUpdate, disabled, getRobinsText }: SectionCProps) {
   const uniqueId = useId();
   const textFields = useMemo(
-    () => Object.entries(SECTION_C as Record<string, any>).filter(([, field]) => field.type === 'textarea'),
+    () =>
+      Object.entries(SECTION_C as Record<string, any>).filter(
+        ([, field]) => field.type === 'textarea',
+      ),
     [],
   );
 
@@ -31,24 +34,24 @@ export function SectionC({ sectionCState, onUpdate, disabled, getRobinsText }: S
   );
 
   return (
-    <div className="border-border bg-card overflow-hidden rounded-lg border shadow-sm">
-      <div className="border-border bg-muted border-b px-6 py-4">
-        <h3 className="text-foreground text-base font-semibold">
+    <div className='border-border bg-card overflow-hidden rounded-lg border shadow-sm'>
+      <div className='border-border bg-muted border-b px-6 py-4'>
+        <h3 className='text-foreground text-base font-semibold'>
           Part C: Specify the (Hypothetical) Target Randomized Trial
         </h3>
-        <p className="text-muted-foreground mt-1 text-xs">{(SECTION_C as any).description}</p>
+        <p className='text-muted-foreground mt-1 text-xs'>{(SECTION_C as any).description}</p>
       </div>
 
-      <div className="space-y-4 px-6 py-4">
+      <div className='space-y-4 px-6 py-4'>
         {/* Text fields: C1, C2, C3 */}
         {textFields.map(([key, field]) => (
-          <div key={key} className="space-y-2">
-            <label className="block">
-              <span className="text-secondary-foreground text-sm">
-                <span className="font-medium">{field.label}.</span>
-                <span className="ml-1">{field.text}</span>
+          <div key={key} className='space-y-2'>
+            <label className='block'>
+              <span className='text-secondary-foreground text-sm'>
+                <span className='font-medium'>{field.label}.</span>
+                <span className='ml-1'>{field.text}</span>
               </span>
-              <div className="mt-2">
+              <div className='mt-2'>
                 <NoteEditor
                   yText={getRobinsText ? getRobinsText('sectionC', field.stateKey) : null}
                   placeholder={field.placeholder}
@@ -61,30 +64,30 @@ export function SectionC({ sectionCState, onUpdate, disabled, getRobinsText }: S
         ))}
 
         {/* C4: Protocol type radio */}
-        <div className="border-border space-y-2 border-t pt-2">
-          <div className="text-secondary-foreground text-sm">
-            <span className="font-medium">{c4Field.label}.</span>
-            <span className="ml-1">{c4Field.text}</span>
+        <div className='border-border space-y-2 border-t pt-2'>
+          <div className='text-secondary-foreground text-sm'>
+            <span className='font-medium'>{c4Field.label}.</span>
+            <span className='ml-1'>{c4Field.text}</span>
           </div>
-          <div className="mt-2 flex flex-col gap-2">
+          <div className='mt-2 flex flex-col gap-2'>
             {(c4Field.options as any[]).map((option: any) => (
               <label
                 key={option.label}
                 className={`flex items-center gap-3 rounded-lg border-2 p-3 transition-all duration-200 ${
-                  sectionCState?.isPerProtocol === option.value
-                    ? 'border-blue-500 bg-blue-50'
-                    : 'border-border bg-card hover:border-border'
+                  sectionCState?.isPerProtocol === option.value ?
+                    'border-blue-500 bg-blue-50'
+                  : 'border-border bg-card hover:border-border'
                 } ${disabled ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'}`}
               >
                 <input
-                  type="radio"
+                  type='radio'
                   name={`protocol-type-c4-${uniqueId}`}
                   checked={sectionCState?.isPerProtocol === option.value}
                   disabled={disabled}
                   onChange={() => !disabled && handleProtocolToggle(option.value)}
-                  className="h-4 w-4 text-blue-600"
+                  className='h-4 w-4 text-blue-600'
                 />
-                <span className="text-secondary-foreground text-sm">{option.label}</span>
+                <span className='text-secondary-foreground text-sm'>{option.label}</span>
               </label>
             ))}
           </div>

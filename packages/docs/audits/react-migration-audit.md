@@ -224,6 +224,7 @@ Fixed: Extracted `sortStudyPdfs()` and `getCitationLine()` to `components/projec
 ### 29. `PlanningSection` and `SectionA` accept `onUpdate` but never call it
 
 **Files**:
+
 - `components/checklist/ROBINSIChecklist/PlanningSection.tsx` line 16
 - `components/checklist/ROBINSIChecklist/SectionA.tsx` line 15
 
@@ -263,9 +264,9 @@ Interactive elements must not contain heading elements per the HTML content mode
 
 ## Summary
 
-| Priority                               | Count  | Action                                                                                          |
-| -------------------------------------- | ------ | ----------------------------------------------------------------------------------------------- |
-| Fix immediately (runtime breakage)     | 1      | SolidJS form-errors test                                                                        |
-| Fix before merge (type safety + React) | 7      | `as any` casts, stale closure risk, effect re-fire (#28), dead props (#29), flicker (#30)       |
+| Priority                               | Count  | Action                                                                                                                                    |
+| -------------------------------------- | ------ | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| Fix immediately (runtime breakage)     | 1      | SolidJS form-errors test                                                                                                                  |
+| Fix before merge (type safety + React) | 7      | `as any` casts, stale closure risk, effect re-fire (#28), dead props (#29), flicker (#30)                                                 |
 | Fix soon (consistency + a11y)          | 14     | Untyped JS, missing guards, render fns, redirect, a11y (#24-25,33), unused props (#26), duplicate components (#31-32), invalid HTML (#34) |
-| **Total**                              | **22** |                                                                                                 |
+| **Total**                              | **22** |                                                                                                                                           |

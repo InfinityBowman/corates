@@ -20,37 +20,31 @@ import { NoteEditor } from '@/components/checklist/common/NoteEditor';
 
 function QuestionInfo({ question }: { question: any }) {
   return (
-    <div className="absolute top-1.5 right-1.5">
+    <div className='absolute top-1.5 right-1.5'>
       <Tooltip>
         <TooltipTrigger asChild>
           <button
-            type="button"
-            className="focus:ring-primary inline-flex items-center justify-center rounded-full p-1.5 opacity-70 hover:opacity-100 focus:opacity-100 focus:ring-2 focus:outline-none"
+            type='button'
+            className='focus:ring-primary inline-flex items-center justify-center rounded-full p-1.5 opacity-70 hover:opacity-100 focus:opacity-100 focus:ring-2 focus:outline-none'
           >
-            <InfoIcon className="h-3 w-3" />
+            <InfoIcon className='h-3 w-3' />
           </button>
         </TooltipTrigger>
-        <TooltipContent className="max-w-xs">{question.info}</TooltipContent>
+        <TooltipContent className='max-w-xs'>{question.info}</TooltipContent>
       </Tooltip>
     </div>
   );
 }
 
-function CriticalButton({
-  state,
-  onUpdate,
-}: {
-  state: any;
-  onUpdate: (_newState: any) => void;
-}) {
+function CriticalButton({ state, onUpdate }: { state: any; onUpdate: (_newState: any) => void }) {
   return (
-    <div className="ml-auto">
+    <div className='ml-auto'>
       <button
-        type="button"
+        type='button'
         className={`ml-2 h-6 rounded-full px-3 text-xs font-medium text-nowrap transition-colors ${
-          state.critical
-            ? 'border border-red-300 bg-red-100 text-red-700 hover:bg-red-200'
-            : 'border-border bg-secondary text-secondary-foreground hover:bg-muted border'
+          state.critical ?
+            'border border-red-300 bg-red-100 text-red-700 hover:bg-red-200'
+          : 'border-border bg-secondary text-secondary-foreground hover:bg-muted border'
         }`}
         onClick={() => onUpdate({ ...state, critical: !state.critical })}
         aria-pressed={state.critical}
@@ -75,56 +69,55 @@ function StandardQuestionInternal({
   width?: string;
 }) {
   return (
-    <div className="flex flex-col gap-4 sm:flex-row sm:gap-6">
+    <div className='flex flex-col gap-4 sm:flex-row sm:gap-6'>
       {(columns || []).map((col: any, colIdx: number) => {
         const isLastCol = colIdx === (columns || []).length - 1;
         return (
           <div
             key={colIdx}
             className={
-              isLastCol
-                ? `${width ?? 'w-32'} flex min-w-0 flex-col`
-                : 'flex min-w-0 flex-1 flex-col'
+              isLastCol ?
+                `${width ?? 'w-32'} flex min-w-0 flex-col`
+              : 'flex min-w-0 flex-1 flex-col'
             }
           >
-            <div className="wrap-break-words text-foreground flex min-h-8 w-full min-w-0 items-center text-xs font-semibold whitespace-normal">
+            <div className='wrap-break-words text-foreground flex min-h-8 w-full min-w-0 items-center text-xs font-semibold whitespace-normal'>
               {col.label}
             </div>
             {col.description && (
-              <div className="wrap-break-words text-foreground -mt-1 mb-2 flex items-center text-xs">
+              <div className='wrap-break-words text-foreground -mt-1 mb-2 flex items-center text-xs'>
                 {col.description}
               </div>
             )}
-            {isLastCol ? (
-              <div className="mt-1 flex flex-col gap-2">
+            {isLastCol ?
+              <div className='mt-1 flex flex-col gap-2'>
                 {col.options.map((option: string, optIdx: number) => (
-                  <label key={optIdx} className="flex items-center space-x-2 text-xs">
+                  <label key={optIdx} className='flex items-center space-x-2 text-xs'>
                     <input
-                      type="radio"
+                      type='radio'
                       name={`col-${colIdx}-${question?.text ?? ''}`}
                       checked={state.answers[colIdx]?.[optIdx] ?? false}
                       onChange={() => handleChange(colIdx, optIdx)}
-                      className="border-border focus:ring-primary h-3.5 w-3.5 cursor-pointer text-blue-600"
+                      className='border-border focus:ring-primary h-3.5 w-3.5 cursor-pointer text-blue-600'
                     />
-                    <span className="wrap-break-words text-secondary-foreground">{option}</span>
+                    <span className='wrap-break-words text-secondary-foreground'>{option}</span>
                   </label>
                 ))}
               </div>
-            ) : (
-              <div className="flex flex-col gap-2">
+            : <div className='flex flex-col gap-2'>
                 {col.options.map((option: string, optIdx: number) => (
-                  <label key={optIdx} className="flex items-center space-x-2 text-xs">
+                  <label key={optIdx} className='flex items-center space-x-2 text-xs'>
                     <input
-                      type="checkbox"
+                      type='checkbox'
                       checked={state.answers[colIdx]?.[optIdx] ?? false}
                       onChange={() => handleChange(colIdx, optIdx)}
-                      className="border-border focus:ring-primary h-3 w-3 shrink-0 text-blue-600"
+                      className='border-border focus:ring-primary h-3 w-3 shrink-0 text-blue-600'
                     />
-                    <span className="wrap-break-words text-secondary-foreground">{option}</span>
+                    <span className='wrap-break-words text-secondary-foreground'>{option}</span>
                   </label>
                 ))}
               </div>
-            )}
+            }
           </div>
         );
       })}
@@ -161,10 +154,10 @@ function StandardQuestion({
   }, [questionKey, getQuestionNote]);
 
   return (
-    <div className="bg-card relative rounded-lg p-7 pb-3 shadow-md">
+    <div className='bg-card relative rounded-lg p-7 pb-3 shadow-md'>
       <QuestionInfo question={question} />
-      <div className="flex">
-        <h3 className="text-foreground mb-1 text-sm font-semibold">{question.text}</h3>
+      <div className='flex'>
+        <h3 className='text-foreground mb-1 text-sm font-semibold'>{question.text}</h3>
         <CriticalButton state={state} onUpdate={onUpdate} />
       </div>
       <StandardQuestionInternal
@@ -174,9 +167,7 @@ function StandardQuestion({
         handleChange={handleChange}
         width={width}
       />
-      {getQuestionNote && (
-        <NoteEditor yText={noteYText} readOnly={readOnly} collapsed={true} />
-      )}
+      {getQuestionNote && <NoteEditor yText={noteYText} readOnly={readOnly} collapsed={true} />}
     </div>
   );
 }
@@ -202,9 +193,7 @@ function handleTwoColChange(
   newAnswers[colIdx][optIdx] = !state.answers[colIdx][optIdx];
 
   if (colIdx === 0) {
-    const check = deriveFn === 'all'
-      ? newAnswers[0].every(Boolean)
-      : newAnswers[0].some(Boolean);
+    const check = deriveFn === 'all' ? newAnswers[0].every(Boolean) : newAnswers[0].some(Boolean);
     newAnswers[1][0] = check;
     newAnswers[1][1] = !check;
   }
@@ -251,9 +240,7 @@ function handleTwoColThreeRadioChange(
   newAnswers[colIdx][optIdx] = !state.answers[colIdx][optIdx];
 
   if (colIdx === 0) {
-    const check = deriveFn === 'all'
-      ? newAnswers[0].every(Boolean)
-      : newAnswers[0].some(Boolean);
+    const check = deriveFn === 'all' ? newAnswers[0].every(Boolean) : newAnswers[0].some(Boolean);
     newAnswers[1][0] = check;
     newAnswers[1][1] = !check;
     newAnswers[1][2] = false;
@@ -282,21 +269,75 @@ interface QuestionConfig {
 // dedicated components. All other questions use these configs.
 const QUESTION_CONFIGS: QuestionConfig[] = [
   // Q2-Q8 (indices 0-6)
-  { qKey: 'q2', schema: AMSTAR_CHECKLIST.q2, handler: (cl, c, o) => handleThreeColChange(cl, 'q2', c, o) },
-  { qKey: 'q3', schema: AMSTAR_CHECKLIST.q3, handler: (cl, c, o) => handleTwoColChange(cl, 'q3', c, o, 'any') },
-  { qKey: 'q4', schema: AMSTAR_CHECKLIST.q4, handler: (cl, c, o) => handleThreeColChange(cl, 'q4', c, o) },
-  { qKey: 'q5', schema: AMSTAR_CHECKLIST.q5, handler: (cl, c, o) => handleTwoColChange(cl, 'q5', c, o, 'any') },
-  { qKey: 'q6', schema: AMSTAR_CHECKLIST.q6, handler: (cl, c, o) => handleTwoColChange(cl, 'q6', c, o, 'any') },
-  { qKey: 'q7', schema: AMSTAR_CHECKLIST.q7, handler: (cl, c, o) => handleThreeColChange(cl, 'q7', c, o) },
-  { qKey: 'q8', schema: AMSTAR_CHECKLIST.q8, handler: (cl, c, o) => handleThreeColChange(cl, 'q8', c, o) },
+  {
+    qKey: 'q2',
+    schema: AMSTAR_CHECKLIST.q2,
+    handler: (cl, c, o) => handleThreeColChange(cl, 'q2', c, o),
+  },
+  {
+    qKey: 'q3',
+    schema: AMSTAR_CHECKLIST.q3,
+    handler: (cl, c, o) => handleTwoColChange(cl, 'q3', c, o, 'any'),
+  },
+  {
+    qKey: 'q4',
+    schema: AMSTAR_CHECKLIST.q4,
+    handler: (cl, c, o) => handleThreeColChange(cl, 'q4', c, o),
+  },
+  {
+    qKey: 'q5',
+    schema: AMSTAR_CHECKLIST.q5,
+    handler: (cl, c, o) => handleTwoColChange(cl, 'q5', c, o, 'any'),
+  },
+  {
+    qKey: 'q6',
+    schema: AMSTAR_CHECKLIST.q6,
+    handler: (cl, c, o) => handleTwoColChange(cl, 'q6', c, o, 'any'),
+  },
+  {
+    qKey: 'q7',
+    schema: AMSTAR_CHECKLIST.q7,
+    handler: (cl, c, o) => handleThreeColChange(cl, 'q7', c, o),
+  },
+  {
+    qKey: 'q8',
+    schema: AMSTAR_CHECKLIST.q8,
+    handler: (cl, c, o) => handleThreeColChange(cl, 'q8', c, o),
+  },
   // Q10 (index 7)
-  { qKey: 'q10', schema: AMSTAR_CHECKLIST.q10, handler: (cl, c, o) => handleTwoColChange(cl, 'q10', c, o, 'any') },
+  {
+    qKey: 'q10',
+    schema: AMSTAR_CHECKLIST.q10,
+    handler: (cl, c, o) => handleTwoColChange(cl, 'q10', c, o, 'any'),
+  },
   // Q12-Q16 (indices 8-12)
-  { qKey: 'q12', schema: AMSTAR_CHECKLIST.q12, handler: (cl, c, o) => handleTwoColThreeRadioChange(cl, 'q12', c, o, 'any'), width: 'w-48' },
-  { qKey: 'q13', schema: AMSTAR_CHECKLIST.q13, handler: (cl, c, o) => handleTwoColChange(cl, 'q13', c, o, 'any') },
-  { qKey: 'q14', schema: AMSTAR_CHECKLIST.q14, handler: (cl, c, o) => handleTwoColChange(cl, 'q14', c, o, 'any') },
-  { qKey: 'q15', schema: AMSTAR_CHECKLIST.q15, handler: (cl, c, o) => handleTwoColThreeRadioChange(cl, 'q15', c, o, 'any'), width: 'w-48' },
-  { qKey: 'q16', schema: AMSTAR_CHECKLIST.q16, handler: (cl, c, o) => handleTwoColChange(cl, 'q16', c, o, 'any') },
+  {
+    qKey: 'q12',
+    schema: AMSTAR_CHECKLIST.q12,
+    handler: (cl, c, o) => handleTwoColThreeRadioChange(cl, 'q12', c, o, 'any'),
+    width: 'w-48',
+  },
+  {
+    qKey: 'q13',
+    schema: AMSTAR_CHECKLIST.q13,
+    handler: (cl, c, o) => handleTwoColChange(cl, 'q13', c, o, 'any'),
+  },
+  {
+    qKey: 'q14',
+    schema: AMSTAR_CHECKLIST.q14,
+    handler: (cl, c, o) => handleTwoColChange(cl, 'q14', c, o, 'any'),
+  },
+  {
+    qKey: 'q15',
+    schema: AMSTAR_CHECKLIST.q15,
+    handler: (cl, c, o) => handleTwoColThreeRadioChange(cl, 'q15', c, o, 'any'),
+    width: 'w-48',
+  },
+  {
+    qKey: 'q16',
+    schema: AMSTAR_CHECKLIST.q16,
+    handler: (cl, c, o) => handleTwoColChange(cl, 'q16', c, o, 'any'),
+  },
 ];
 
 /** Q9 split question - custom rendering */
@@ -381,29 +422,27 @@ function Question9({
   );
 
   return (
-    <div className="bg-card relative rounded-lg p-7 pb-3 text-sm shadow-md">
+    <div className='bg-card relative rounded-lg p-7 pb-3 text-sm shadow-md'>
       <QuestionInfo question={question} />
-      <div className="flex">
-        <h3 className="text-foreground font-semibold">{question.text}</h3>
+      <div className='flex'>
+        <h3 className='text-foreground font-semibold'>{question.text}</h3>
         <CriticalButton state={stateA} onUpdate={handleCriticalUpdate} />
       </div>
-      <div className="text-foreground mt-2 mb-1 h-4 font-semibold">{question.subtitle}</div>
+      <div className='text-foreground mt-2 mb-1 h-4 font-semibold'>{question.subtitle}</div>
       <StandardQuestionInternal
         state={stateA}
         question={{ text: 'q9a' }}
         columns={question.columns}
         handleChange={handleChangeA}
       />
-      <div className="text-foreground mt-2 h-4 font-semibold">{question.subtitle2}</div>
+      <div className='text-foreground mt-2 h-4 font-semibold'>{question.subtitle2}</div>
       <StandardQuestionInternal
         state={stateB}
         question={{ text: 'q9b' }}
         columns={question.columns2}
         handleChange={handleChangeB}
       />
-      {getQuestionNote && (
-        <NoteEditor yText={noteYText} readOnly={readOnly} collapsed={true} />
-      )}
+      {getQuestionNote && <NoteEditor yText={noteYText} readOnly={readOnly} collapsed={true} />}
     </div>
   );
 }
@@ -485,45 +524,41 @@ function Question11({
   );
 
   return (
-    <div className="bg-card relative rounded-lg p-7 pb-3 text-sm shadow-md">
+    <div className='bg-card relative rounded-lg p-7 pb-3 text-sm shadow-md'>
       <QuestionInfo question={question} />
-      <div className="flex">
-        <h3 className="text-foreground font-semibold">{question.text}</h3>
+      <div className='flex'>
+        <h3 className='text-foreground font-semibold'>{question.text}</h3>
         <CriticalButton state={stateA} onUpdate={handleCriticalUpdate} />
       </div>
-      <div className="text-foreground mt-2 h-4 font-semibold">{question.subtitle}</div>
+      <div className='text-foreground mt-2 h-4 font-semibold'>{question.subtitle}</div>
       <StandardQuestionInternal
         state={stateA}
         question={{ text: 'q11a' }}
         columns={question.columns}
         handleChange={handleChangeA}
-        width="w-48"
+        width='w-48'
       />
-      <div className="text-foreground mt-4 h-4 font-semibold">{question.subtitle2}</div>
+      <div className='text-foreground mt-4 h-4 font-semibold'>{question.subtitle2}</div>
       <StandardQuestionInternal
         state={stateB}
         question={{ text: 'q11b' }}
         columns={question.columns2}
         handleChange={handleChangeB}
-        width="w-48"
+        width='w-48'
       />
-      {getQuestionNote && (
-        <NoteEditor yText={noteYText} readOnly={readOnly} collapsed={true} />
-      )}
+      {getQuestionNote && <NoteEditor yText={noteYText} readOnly={readOnly} collapsed={true} />}
     </div>
   );
 }
 
 // -- Main component --
 
- 
 interface AMSTAR2ChecklistProps {
   externalChecklist?: any;
   onExternalUpdate?: (_patch: Record<string, any>) => void;
   readOnly?: boolean;
   getQuestionNote?: (_questionKey: string) => any;
 }
- 
 
 export function AMSTAR2Checklist({
   externalChecklist,
@@ -560,13 +595,13 @@ export function AMSTAR2Checklist({
 
   return (
     <TooltipProvider delayDuration={200}>
-      <div className="bg-blue-50">
-        <div className="container mx-auto max-w-5xl px-4 py-6">
-          <div className="text-foreground mb-6 text-left text-lg font-semibold sm:text-center">
+      <div className='bg-blue-50'>
+        <div className='container mx-auto max-w-5xl px-4 py-6'>
+          <div className='text-foreground mb-6 text-left text-lg font-semibold sm:text-center'>
             {checklist.name || 'AMSTAR 2 Checklist'}
           </div>
           <fieldset disabled={!!readOnly} className={readOnly ? 'opacity-90' : ''}>
-            <div className="space-y-6">
+            <div className='space-y-6'>
               {/* Q1: special 3-col handler (col0 all -> col2) */}
               <StandardQuestion
                 state={checklist.q1}

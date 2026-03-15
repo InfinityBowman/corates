@@ -47,9 +47,14 @@ export function SplitPanelControls({
   useEffect(() => {
     // If server URL exists or no data, no blob needed
     if (pdfUrl || !pdfData) {
-      setBlobUrl(prev => { // eslint-disable-line react-hooks/set-state-in-effect -- syncing blob URL with external PDF data
+      setBlobUrl(prev => {
+        // eslint-disable-line react-hooks/set-state-in-effect -- syncing blob URL with external PDF data
         if (prev) {
-          try { URL.revokeObjectURL(prev); } catch (_e) { /* ignore */ }
+          try {
+            URL.revokeObjectURL(prev);
+          } catch (_e) {
+            /* ignore */
+          }
         }
         return null;
       });
@@ -60,14 +65,18 @@ export function SplitPanelControls({
     try {
       const blob = new Blob([pdfData], { type: 'application/pdf' });
       url = URL.createObjectURL(blob);
-      setBlobUrl(url);  
+      setBlobUrl(url);
     } catch (_e) {
       console.warn('Failed to create blob URL from PDF data:', _e);
     }
 
     return () => {
       if (url) {
-        try { URL.revokeObjectURL(url); } catch (_e) { /* ignore */ }
+        try {
+          URL.revokeObjectURL(url);
+        } catch (_e) {
+          /* ignore */
+        }
       }
     };
   }, [pdfUrl, pdfData]);
@@ -76,71 +85,69 @@ export function SplitPanelControls({
   const hasPdf = !!effectivePdfUrl;
 
   return (
-    <div className="flex shrink-0 items-center gap-2">
+    <div className='flex shrink-0 items-center gap-2'>
       {/* Toggle second panel */}
       <button
         onClick={() => onToggleSecondPanel?.()}
         className={`rounded p-1.5 transition-colors ${
-          showSecondPanel
-            ? 'bg-blue-100 text-blue-700'
-            : 'text-muted-foreground hover:bg-secondary'
+          showSecondPanel ? 'bg-blue-100 text-blue-700' : 'text-muted-foreground hover:bg-secondary'
         }`}
         title={showSecondPanel ? `Hide ${panelLabel}` : `Show ${panelLabel}`}
       >
-        <FileTextIcon className="h-5 w-5" />
+        <FileTextIcon className='h-5 w-5' />
       </button>
 
       {showSecondPanel && (
         <>
-          <div className="bg-border mx-1 h-4 w-px" />
+          <div className='bg-border mx-1 h-4 w-px' />
 
           {/* Vertical split (side by side) */}
           <button
             onClick={() => onSetLayout?.('vertical')}
             className={`rounded p-1.5 transition-colors ${
-              layout === 'vertical'
-                ? 'bg-blue-100 text-blue-700'
-                : 'text-muted-foreground hover:bg-secondary'
+              layout === 'vertical' ?
+                'bg-blue-100 text-blue-700'
+              : 'text-muted-foreground hover:bg-secondary'
             }`}
-            title="Side by side"
+            title='Side by side'
           >
-            <Columns2Icon className="h-5 w-5" />
+            <Columns2Icon className='h-5 w-5' />
           </button>
 
           {/* Horizontal split (stacked) */}
           <button
             onClick={() => onSetLayout?.('horizontal')}
             className={`rounded p-1.5 transition-colors ${
-              layout === 'horizontal'
-                ? 'bg-blue-100 text-blue-700'
-                : 'text-muted-foreground hover:bg-secondary'
+              layout === 'horizontal' ?
+                'bg-blue-100 text-blue-700'
+              : 'text-muted-foreground hover:bg-secondary'
             }`}
-            title="Stacked"
+            title='Stacked'
           >
-            <RowsIcon className="h-5 w-5" />
+            <RowsIcon className='h-5 w-5' />
           </button>
 
           {/* Reset ratio */}
           <button
             onClick={() => onResetRatio?.()}
-            className="text-muted-foreground hover:bg-secondary rounded p-1.5 transition-colors"
+            className='text-muted-foreground hover:bg-secondary rounded p-1.5 transition-colors'
             title={`Reset split (${ratioLabel})`}
           >
-            <RefreshCwIcon className="h-5 w-5" />
+            <RefreshCwIcon className='h-5 w-5' />
           </button>
 
           {/* Open PDF in new tab */}
           {hasPdf && (
             <>
-              <div className="bg-border mx-1 h-4 w-px" />
+              <div className='bg-border mx-1 h-4 w-px' />
               <button
                 onClick={() => {
                   if (effectivePdfUrl) window.open(effectivePdfUrl, '_blank');
                 }}
-                className="text-muted-foreground hover:bg-secondary rounded p-1.5 transition-colors"
-                title="Open PDF in new tab"
+                className='text-muted-foreground hover:bg-secondary rounded p-1.5 transition-colors'
+                title='Open PDF in new tab'
               >
-                <ExternalLinkIcon className="h-5 w-5" />
+                <ExternalLinkIcon className='h-5 w-5' />
               </button>
             </>
           )}

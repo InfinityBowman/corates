@@ -52,11 +52,7 @@ export function LocalChecklistView({ checklistId, searchType }: LocalChecklistVi
   // Create adapter factories for text fields (local mode Y.Text shim)
   const { getRob2Text, getQuestionNote, getRobinsText, clearCache } = useMemo(
     () =>
-      (createLocalAdapterFactories as any)(
-        () => checklistRef.current,
-        setChecklist,
-        debouncedSave,
-      ),
+      (createLocalAdapterFactories as any)(() => checklistRef.current, setChecklist, debouncedSave),
     [debouncedSave],
   );
 
@@ -168,13 +164,13 @@ export function LocalChecklistView({ checklistId, searchType }: LocalChecklistVi
     <>
       <button
         onClick={handleBack}
-        className="text-muted-foreground hover:text-foreground inline-flex items-center gap-2 transition-colors"
+        className='text-muted-foreground hover:text-foreground inline-flex items-center gap-2 transition-colors'
       >
-        <ChevronLeftIcon className="h-5 w-5" />
+        <ChevronLeftIcon className='h-5 w-5' />
         Back
       </button>
-      <div className="bg-border h-4 w-px" />
-      <span className="bg-secondary text-muted-foreground inline-flex items-center rounded px-2 py-0.5 text-xs font-medium">
+      <div className='bg-border h-4 w-px' />
+      <span className='bg-secondary text-muted-foreground inline-flex items-center rounded px-2 py-0.5 text-xs font-medium'>
         Local Only
       </span>
       <ScoreTag currentScore={currentScore} checklistType={checklistType || undefined} />
@@ -188,19 +184,19 @@ export function LocalChecklistView({ checklistId, searchType }: LocalChecklistVi
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-blue-50">
-        <div className="text-muted-foreground">Loading checklist...</div>
+      <div className='flex min-h-screen items-center justify-center bg-blue-50'>
+        <div className='text-muted-foreground'>Loading checklist...</div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-blue-50">
-        <div className="text-red-600">{error}</div>
+      <div className='flex min-h-screen flex-col items-center justify-center gap-4 bg-blue-50'>
+        <div className='text-red-600'>{error}</div>
         <button
           onClick={handleBack}
-          className="rounded-lg bg-blue-600 px-4 py-2 text-white transition-colors hover:bg-blue-700"
+          className='rounded-lg bg-blue-600 px-4 py-2 text-white transition-colors hover:bg-blue-700'
         >
           Go Back
         </button>

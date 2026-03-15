@@ -22,7 +22,10 @@ interface ScoreTagProps {
 
 export function ScoreTag({ currentScore, checklistType, showRatingOnly }: ScoreTagProps) {
   const type = checklistType || DEFAULT_CHECKLIST_TYPE;
-  const styleClass = useMemo(() => currentScore ? getScoreStyle(currentScore, type) : '', [currentScore, type]);
+  const styleClass = useMemo(
+    () => (currentScore ? getScoreStyle(currentScore, type) : ''),
+    [currentScore, type],
+  );
 
   if (!currentScore) return null;
 

@@ -19,7 +19,9 @@ export function JudgementBadge({ judgement }: { judgement: string }) {
   };
 
   return (
-    <span className={`inline-flex items-center rounded border px-2 py-0.5 text-xs font-medium ${getColor()}`}>
+    <span
+      className={`inline-flex items-center rounded border px-2 py-0.5 text-xs font-medium ${getColor()}`}
+    >
       {judgement}
     </span>
   );
@@ -49,8 +51,8 @@ export function DomainJudgement({
 
   const getJudgementColor = (j: string, isSelected: boolean) => {
     if (!isSelected) {
-      return isAutoMode
-        ? 'border-border bg-muted text-muted-foreground/70 cursor-not-allowed'
+      return isAutoMode ?
+          'border-border bg-muted text-muted-foreground/70 cursor-not-allowed'
         : 'border-border bg-card text-muted-foreground hover:border-border cursor-pointer';
     }
     switch (j) {
@@ -66,18 +68,18 @@ export function DomainJudgement({
   };
 
   return (
-    <div className="space-y-4">
+    <div className='space-y-4'>
       <div>
-        <div className="text-muted-foreground mb-2 text-xs font-medium">
+        <div className='text-muted-foreground mb-2 text-xs font-medium'>
           {isAutoMode ? 'Auto-calculated judgement' : 'Select judgement'}
         </div>
-        <div className="flex flex-wrap gap-2">
+        <div className='flex flex-wrap gap-2'>
           {judgementOptions.map(j => {
             const isSelected = judgement === j;
             return (
               <button
                 key={j}
-                type="button"
+                type='button'
                 onClick={() => {
                   if (disabled || isAutoMode) return;
                   onJudgementChange(isSelected ? null : j);
@@ -96,17 +98,17 @@ export function DomainJudgement({
 
       {showDirection && (
         <div>
-          <div className="text-muted-foreground mb-2 text-xs font-medium">
+          <div className='text-muted-foreground mb-2 text-xs font-medium'>
             Predicted direction of bias
-            <span className="text-muted-foreground/70 ml-1 font-normal">(optional)</span>
+            <span className='text-muted-foreground/70 ml-1 font-normal'>(optional)</span>
           </div>
-          <div className="flex flex-wrap gap-1.5">
+          <div className='flex flex-wrap gap-1.5'>
             {BIAS_DIRECTIONS.map(d => {
               const isSelected = direction === d;
               return (
                 <button
                   key={d}
-                  type="button"
+                  type='button'
                   onClick={() => {
                     if (disabled) return;
                     onDirectionChange(isSelected ? null : d);
@@ -115,9 +117,9 @@ export function DomainJudgement({
                   className={`inline-flex items-center justify-center rounded border px-2 py-1 text-xs font-medium transition-colors ${
                     disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'
                   } ${
-                    isSelected
-                      ? 'border-blue-400 bg-blue-100 text-blue-800'
-                      : 'border-border bg-muted text-muted-foreground hover:border-border'
+                    isSelected ?
+                      'border-blue-400 bg-blue-100 text-blue-800'
+                    : 'border-border bg-muted text-muted-foreground hover:border-border'
                   }`}
                 >
                   {d}

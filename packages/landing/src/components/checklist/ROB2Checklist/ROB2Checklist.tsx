@@ -83,19 +83,16 @@ export function ROB2Checklist({
   }, []);
 
   return (
-    <div className="bg-blue-50">
-      <div className="container mx-auto max-w-5xl space-y-4 px-4 py-6">
-        <div className="text-foreground mb-6 text-left text-lg font-semibold sm:text-center">
+    <div className='bg-blue-50'>
+      <div className='container mx-auto max-w-5xl space-y-4 px-4 py-6'>
+        <div className='text-foreground mb-6 text-left text-lg font-semibold sm:text-center'>
           {checklistState?.name || 'RoB 2 Checklist'}
         </div>
 
         {/* Scoring Summary Strip */}
         {hasAimSelected && (
-          <div className="sticky z-40" style={{ top: '8px' }}>
-            <ScoringSummary
-              checklistState={checklistState}
-              onDomainClick={handleDomainClick}
-            />
+          <div className='sticky z-40' style={{ top: '8px' }}>
+            <ScoringSummary checklistState={checklistState} onDomainClick={handleDomainClick} />
           </div>
         )}
 
@@ -112,9 +109,9 @@ export function ROB2Checklist({
 
         {/* Message when aim not selected */}
         {!hasAimSelected && (
-          <div className="rounded-lg border-2 border-blue-200 bg-blue-50 p-6 text-center">
-            <div className="mb-2 text-lg font-semibold text-blue-800">Select Assessment Aim</div>
-            <p className="text-sm text-blue-600">
+          <div className='rounded-lg border-2 border-blue-200 bg-blue-50 p-6 text-center'>
+            <div className='mb-2 text-lg font-semibold text-blue-800'>Select Assessment Aim</div>
+            <p className='text-sm text-blue-600'>
               Please select the review team's aim in the Preliminary Considerations section above to
               proceed with the domain assessment.
             </p>
@@ -124,7 +121,7 @@ export function ROB2Checklist({
         {/* Domain sections */}
         {hasAimSelected && (
           <>
-            <div className="space-y-4">
+            <div className='space-y-4'>
               {activeDomains.map((domainKey: string) => (
                 <div
                   key={domainKey}

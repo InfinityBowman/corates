@@ -81,11 +81,11 @@ export function SplitScreenLayout({
   }, []);
 
   return (
-    <div className="flex h-full flex-col">
+    <div className='flex h-full flex-col'>
       {/* Combined header and layout controls */}
-      <div className="border-border bg-card flex shrink-0 items-center justify-between border-b px-4 py-2">
+      <div className='border-border bg-card flex shrink-0 items-center justify-between border-b px-4 py-2'>
         {/* Left side: header content from parent */}
-        <div className="flex min-w-0 items-center gap-3">{headerContent}</div>
+        <div className='flex min-w-0 items-center gap-3'>{headerContent}</div>
 
         {/* Right side: layout controls */}
         <SplitPanelControls
@@ -95,9 +95,7 @@ export function SplitScreenLayout({
           onSetLayout={setLayout}
           onResetRatio={() => setSplitRatio(defaultRatio)}
           secondPanelLabel={secondPanelLabel}
-          defaultRatioLabel={
-            defaultRatio ? `${defaultRatio}/${100 - defaultRatio}` : '50/50'
-          }
+          defaultRatioLabel={defaultRatio ? `${defaultRatio}/${100 - defaultRatio}` : '50/50'}
           pdfUrl={pdfUrl}
           pdfData={pdfData}
         />
@@ -112,16 +110,18 @@ export function SplitScreenLayout({
       >
         {/* First panel */}
         <div
-          className="overflow-auto"
+          className='overflow-auto'
           style={{
             [layout === 'vertical' ? 'width' : 'height']:
               showSecondPanel ? `${splitRatio}%` : '100%',
-            transition: isDragging
-              ? 'none'
-              : `${layout === 'vertical' ? 'width' : 'height'} 200ms ease-in-out`,
-            willChange: isDragging
-              ? layout === 'vertical'
-                ? 'width'
+            transition:
+              isDragging ? 'none' : (
+                `${layout === 'vertical' ? 'width' : 'height'} 200ms ease-in-out`
+              ),
+            willChange:
+              isDragging ?
+                layout === 'vertical' ?
+                  'width'
                 : 'height'
               : 'auto',
             transform: 'translateZ(0)',
@@ -139,12 +139,11 @@ export function SplitScreenLayout({
               isDragging ? 'bg-blue-500' : ''
             } ${showSecondPanel ? 'opacity-100' : 'pointer-events-none opacity-0'}`}
             style={{
-              [layout === 'vertical' ? 'width' : 'height']: showSecondPanel
-                ? undefined
-                : '0',
-              transition: isDragging
-                ? 'none'
-                : `opacity 300ms ease-in-out, ${layout === 'vertical' ? 'width' : 'height'} 200ms ease-in-out`,
+              [layout === 'vertical' ? 'width' : 'height']: showSecondPanel ? undefined : '0',
+              transition:
+                isDragging ? 'none' : (
+                  `opacity 300ms ease-in-out, ${layout === 'vertical' ? 'width' : 'height'} 200ms ease-in-out`
+                ),
             }}
           />
         )}
@@ -152,29 +151,29 @@ export function SplitScreenLayout({
         {/* Second panel with slide animation */}
         {secondPanel && (
           <div
-            className="overflow-hidden"
+            className='overflow-hidden'
             style={{
-              [layout === 'vertical' ? 'width' : 'height']: showSecondPanel
-                ? `${100 - splitRatio}%`
-                : '0%',
+              [layout === 'vertical' ? 'width' : 'height']:
+                showSecondPanel ? `${100 - splitRatio}%` : '0%',
               opacity: showSecondPanel ? 1 : 0,
-              transform: showSecondPanel
-                ? 'none'
-                : layout === 'vertical'
-                  ? 'translateX(20px)'
-                  : 'translateY(20px)',
-              transition: isDragging
-                ? 'none'
-                : `${layout === 'vertical' ? 'width' : 'height'} 200ms ease-in-out, opacity 200ms ease-in-out, transform 200ms ease-in-out`,
-              willChange: isDragging
-                ? layout === 'vertical'
-                  ? 'width'
+              transform:
+                showSecondPanel ? 'none'
+                : layout === 'vertical' ? 'translateX(20px)'
+                : 'translateY(20px)',
+              transition:
+                isDragging ? 'none' : (
+                  `${layout === 'vertical' ? 'width' : 'height'} 200ms ease-in-out, opacity 200ms ease-in-out, transform 200ms ease-in-out`
+                ),
+              willChange:
+                isDragging ?
+                  layout === 'vertical' ?
+                    'width'
                   : 'height'
                 : 'auto',
               contain: 'style',
             }}
           >
-            <div className="h-full w-full overflow-auto">{secondPanel}</div>
+            <div className='h-full w-full overflow-auto'>{secondPanel}</div>
           </div>
         )}
       </div>

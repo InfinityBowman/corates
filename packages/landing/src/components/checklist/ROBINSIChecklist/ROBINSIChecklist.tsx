@@ -60,34 +60,16 @@ export function ROBINSIChecklist({
 
   const activeDomains = useMemo(() => getActiveDomainKeys(isPerProtocol), [isPerProtocol]);
 
-  const handlePlanningUpdate = useCallback(
-    (v: any) => onUpdate({ planning: v }),
-    [onUpdate],
-  );
-  const handleSectionAUpdate = useCallback(
-    (v: any) => onUpdate({ sectionA: v }),
-    [onUpdate],
-  );
-  const handleSectionBUpdate = useCallback(
-    (v: any) => onUpdate({ sectionB: v }),
-    [onUpdate],
-  );
-  const handleSectionCUpdate = useCallback(
-    (v: any) => onUpdate({ sectionC: v }),
-    [onUpdate],
-  );
-  const handleSectionDUpdate = useCallback(
-    (v: any) => onUpdate({ sectionD: v }),
-    [onUpdate],
-  );
+  const handlePlanningUpdate = useCallback((v: any) => onUpdate({ planning: v }), [onUpdate]);
+  const handleSectionAUpdate = useCallback((v: any) => onUpdate({ sectionA: v }), [onUpdate]);
+  const handleSectionBUpdate = useCallback((v: any) => onUpdate({ sectionB: v }), [onUpdate]);
+  const handleSectionCUpdate = useCallback((v: any) => onUpdate({ sectionC: v }), [onUpdate]);
+  const handleSectionDUpdate = useCallback((v: any) => onUpdate({ sectionD: v }), [onUpdate]);
   const handleDomainUpdate = useCallback(
     (domainKey: string, newState: any) => onUpdate({ [domainKey]: newState }),
     [onUpdate],
   );
-  const handleOverallUpdate = useCallback(
-    (v: any) => onUpdate({ overall: v }),
-    [onUpdate],
-  );
+  const handleOverallUpdate = useCallback((v: any) => onUpdate({ overall: v }), [onUpdate]);
 
   const toggleDomainCollapse = useCallback((domainKey: string) => {
     setCollapsedDomains(prev => ({ ...prev, [domainKey]: !prev[domainKey] }));
@@ -107,19 +89,16 @@ export function ROBINSIChecklist({
   }, []);
 
   return (
-    <div className="bg-blue-50">
-      <div className="container mx-auto max-w-5xl space-y-4 px-4 py-6">
-        <div className="text-foreground mb-6 text-left text-lg font-semibold sm:text-center">
+    <div className='bg-blue-50'>
+      <div className='container mx-auto max-w-5xl space-y-4 px-4 py-6'>
+        <div className='text-foreground mb-6 text-left text-lg font-semibold sm:text-center'>
           {checklistState?.name || 'ROBINS-I Checklist'}
         </div>
 
         {/* Scoring Summary Strip */}
         {!stopAssessment && (
-          <div className="sticky z-40" style={{ top: '8px' }}>
-            <ScoringSummary
-              checklistState={checklistState}
-              onDomainClick={handleDomainClick}
-            />
+          <div className='sticky z-40' style={{ top: '8px' }}>
+            <ScoringSummary checklistState={checklistState} onDomainClick={handleDomainClick} />
           </div>
         )}
 
@@ -135,8 +114,8 @@ export function ROBINSIChecklist({
         />
 
         {/* Preliminary Considerations Header */}
-        <div className="rounded-lg border border-blue-200 bg-blue-100 px-6 py-4">
-          <h2 className="text-lg font-semibold text-blue-900">
+        <div className='rounded-lg border border-blue-200 bg-blue-100 px-6 py-4'>
+          <h2 className='text-lg font-semibold text-blue-900'>
             For Each Study Result: Preliminary Considerations (Parts A to D)
           </h2>
         </div>
@@ -172,7 +151,7 @@ export function ROBINSIChecklist({
         {/* Domain sections - hidden if assessment stopped */}
         {!stopAssessment && (
           <>
-            <div className="space-y-4">
+            <div className='space-y-4'>
               {activeDomains.map((domainKey: string) => (
                 <div
                   key={domainKey}
@@ -207,9 +186,9 @@ export function ROBINSIChecklist({
 
         {/* Critical risk message when stopped */}
         {stopAssessment && (
-          <div className="rounded-lg border-2 border-red-200 bg-red-50 p-6 text-center">
-            <div className="mb-2 text-lg font-semibold text-red-800">Critical Risk of Bias</div>
-            <p className="text-sm text-red-600">
+          <div className='rounded-lg border-2 border-red-200 bg-red-50 p-6 text-center'>
+            <div className='mb-2 text-lg font-semibold text-red-800'>Critical Risk of Bias</div>
+            <p className='text-sm text-red-600'>
               Based on Section B responses, this result has been classified as Critical risk of
               bias. Domain assessment is not required.
             </p>
