@@ -5,13 +5,14 @@
  */
 
 import type { ROB2Checklist } from './create.js';
+import type { ROB2Score } from '../types.js';
 import { getActiveDomainKeys, getDomainQuestions } from './schema.js';
 import { scoreAllDomains } from './scoring.js';
 
 /**
  * Score the overall checklist based on domain judgements
  */
-export function scoreROB2Checklist(state: ROB2Checklist): string {
+export function scoreROB2Checklist(state: ROB2Checklist): ROB2Score {
   if (!state || typeof state !== 'object') return 'Error';
 
   const { overall, isComplete } = scoreAllDomains(

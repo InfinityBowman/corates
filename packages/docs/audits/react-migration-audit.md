@@ -1,5 +1,7 @@
 # React Migration Audit
 
+how do large codebases manage complexity? i feel like making changes or tracking down bugs has become fairly difficult..maybe just look around an make write up an audit or something with recommendations and reasoning, if you use subagents use opus
+
 **Date**: 2026-03-14
 **Branch**: `react-migration`
 **Scope**: 212+ changed files across components, hooks, stores, routes, and library code

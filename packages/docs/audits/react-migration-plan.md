@@ -769,13 +769,46 @@ Key decisions:
 - ChecklistWithPdf shows PDF panel when pdfData is available (`showSecondPanel={!!pdfData}`)
 - AMSTAR2 QUESTION_CONFIGS excludes Q1 (3-column special case handled inline)
 
-### 4.8 Reconciliation child routes (complex)
+### 4.8 Reconciliation child routes -- COMPLETED (2026-03-15)
 
-- `_app/_protected/projects.$projectId/studies.$studyId.reconcile.$c1Id.$c2Id.tsx`
-- Multi-reviewer comparison, conflict resolution
-- ~30+ files across AMSTAR2, ROB2, ROBINS-I reconciliation UIs
-- Presence tracking (remote cursors, question presence indicators)
-- Reconcile tab listing already migrated in Phase D above
+44 files migrated across 6 sub-phases:
+
+**4.8A - Presence system + shared components (5 files):**
+- `useReconciliationPresence.ts` hook (Yjs awareness protocol, cursor tracking, user-by-page grouping)
+- `userColors.js` (already existed from earlier phase)
+- `PresenceAvatars.tsx`, `RemoteCursors.tsx`, `QuestionPresenceIndicator.tsx`
+
+**4.8B - Route + ReconciliationWrapper (2 files):**
+- Route: `studies.$studyId.reconcile.$checklist1Id.$checklist2Id.tsx`
+- `ReconciliationWrapper.tsx` (Yjs lifecycle, PDF loading, reconciled checklist creation with race condition handling, type dispatch to AMSTAR2/ROB2/ROBINS-I)
+
+**4.8C - AMSTAR2 reconciliation (10 files):**
+- `ReconciliationWithPdf.tsx` (split-screen wrapper with presence)
+- `ChecklistReconciliation.tsx` (main question-page navigation, answer writing to Yjs, auto-fill, navbar store bridge)
+- `ReconciliationQuestionPage.tsx` + `MultiPartQuestionPage.tsx` (q9/q11 multi-part)
+- `AnswerPanel.tsx`, `NotesCompareSection.tsx`, `SummaryView.tsx`, `Footer.tsx`
+- `Navbar.tsx`, `navbar-utils.js`
+
+**4.8D - ROB2 reconciliation (14 files):**
+- `ROB2ReconciliationWithPdf.tsx`, `ROB2Reconciliation.tsx`
+- `ROB2Navbar.tsx`, `NavbarDomainPill.tsx`, `ROB2SummaryView.tsx`
+- `navbar-utils.js`, `index.ts`
+- pages: `PreliminaryPage.tsx`, `SignallingQuestionPage.tsx`, `DomainDirectionPage.tsx`, `OverallDirectionPage.tsx`
+- panels: `ROB2AnswerPanel.tsx`, `DirectionPanel.tsx`, `JudgementPanel.tsx`
+
+**4.8E - ROBINS-I reconciliation (14 files):**
+- `RobinsIReconciliationWithPdf.tsx`, `RobinsIReconciliation.tsx`
+- `RobinsINavbar.tsx`, `NavbarDomainPill.tsx`, `RobinsISummaryView.tsx`
+- `navbar-utils.js`, `index.ts`
+- pages: `SectionBQuestionPage.tsx`, `DomainQuestionPage.tsx`, `DomainJudgementPage.tsx`, `OverallJudgementPage.tsx`
+- panels: `RobinsAnswerPanel.tsx`, `DirectionPanel.tsx`, `JudgementPanel.tsx`
+
+**Key patterns and fixes:**
+- Navbar store bridge: SolidJS `createStore` replaced with React `useState` + setter callback
+- Presence hook: custom throttle replacing `@solid-primitives/scheduled`, `getAwareness` stabilized with `useMemo` to prevent effect churn
+- Module-level helper functions to avoid React TDZ issues (`answersEqual`, `multiPartEqual`, `singleAnswerEqual`)
+- ROBINS-I update functions refactored to send only changed fields (avoid spreading state over Y.Text objects)
+- `handleReset` positioned before `useEffect` that references it to prevent TDZ crash
 
 ### 4.9 Local checklists -- COMPLETED (2026-03-15)
 
