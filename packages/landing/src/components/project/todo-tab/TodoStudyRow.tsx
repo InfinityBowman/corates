@@ -7,6 +7,7 @@
 import { useState, useMemo, useCallback } from 'react';
 import { ChevronRightIcon, PlusIcon, Trash2Icon, XIcon } from 'lucide-react';
 import { Collapsible, CollapsibleContent } from '@/components/ui/collapsible';
+import { sortStudyPdfs, getCitationLine } from '../study-utils';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -21,7 +22,7 @@ import {
 import { getChecklistMetadata, CHECKLIST_TYPES } from '@/checklist-registry';
 import { PdfListItem } from '@/components/pdf/PdfListItem';
 import { ChecklistForm } from './ChecklistForm';
-import { getStatusLabel, getStatusStyle } from '@/constants/checklist-status.js';
+import { getStatusLabel, getStatusStyle } from '@/constants/checklist-status';
 import { useProjectStore } from '@/stores/projectStore';
 import { useProjectContext } from '../ProjectContext';
 
@@ -61,11 +62,11 @@ export function TodoStudyRow({
   const { projectId } = useProjectContext();
   const [deleteChecklistId, setDeleteChecklistId] = useState<string | null>(null);
 
-  const checklists = study.checklists || [];
+  const checklists = useMemo(() => study.checklists || [], [study.checklists]);
   const hasChecklists = checklists.length > 0;
 
   const meta = useProjectStore(s => s.projects[projectId]?.meta) as any;
-  const outcomes: any[] = meta?.outcomes || [];
+  const outcomes: any[] = useMemo(() => meta?.outcomes || [], [meta?.outcomes]);
 
   const canAddMore = useMemo(() => {
     const hasAmstar2 = checklists.some((c: any) => c.type === CHECKLIST_TYPES.AMSTAR2);
@@ -92,24 +93,9 @@ export function TodoStudyRow({
     [outcomes],
   );
 
-  const sortedPdfs = useMemo(() => {
-    const pdfs = study.pdfs || [];
-    return [...pdfs].sort((a: any, b: any) => {
-      const tagOrder: Record<string, number> = { primary: 0, protocol: 1, secondary: 2 };
-      if ((tagOrder[a.tag] ?? 2) !== (tagOrder[b.tag] ?? 2)) return (tagOrder[a.tag] ?? 2) - (tagOrder[b.tag] ?? 2);
-      return (b.uploadedAt || 0) - (a.uploadedAt || 0);
-    });
-  }, [study.pdfs]);
-
+  const sortedPdfs = useMemo(() => sortStudyPdfs(study.pdfs || []), [study.pdfs]);
   const hasPdfs = sortedPdfs.length > 0;
-
-  const citationLine = useMemo(() => {
-    const primaryPdf = sortedPdfs.find((p: any) => p.tag === 'primary') || sortedPdfs[0];
-    const author = primaryPdf?.firstAuthor || study.firstAuthor;
-    const year = primaryPdf?.publicationYear || study.publicationYear;
-    if (!author && !year) return null;
-    return `${author || 'Unknown'}${year ? ` (${year})` : ''}`;
-  }, [sortedPdfs, study]);
+  const citationLine = useMemo(() => getCitationLine(sortedPdfs, study), [sortedPdfs, study]);
 
   const handleRowClick = useCallback(
     (e: React.MouseEvent) => {

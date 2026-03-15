@@ -6,7 +6,7 @@ import {
   adminClient,
   organizationClient,
 } from 'better-auth/client/plugins';
-import { API_BASE } from '@/config/api.js';
+import { API_BASE } from '@/config/api';
 import { parseError } from '@/lib/error-utils';
 
 export const authClient = createAuthClient({

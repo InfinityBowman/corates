@@ -74,9 +74,17 @@ function maskIp(ip?: string) {
   return ip;
 }
 
+interface Session {
+  token: string;
+  userAgent?: string;
+  ipAddress?: string;
+  updatedAt?: string;
+  createdAt?: string;
+}
+
 /* eslint-disable no-unused-vars */
 interface SessionCardProps {
-  session: any;
+  session: Session;
   isCurrent: boolean;
   revoking: boolean;
   onRevoke: (token: string) => void;
@@ -168,19 +176,20 @@ export function SessionManagement() {
   const currentToken = useMemo(() => {
     if (!sessions?.length) return null;
     const ua = navigator.userAgent;
-    const matching = (sessions as any[]).filter((s: any) => s.userAgent === ua);
-    if (matching.length === 0) return (sessions as any[])[0]?.token;
+    const allSessions = (sessions || []) as Session[];
+    const matching = allSessions.filter(s => s.userAgent === ua);
+    if (matching.length === 0) return allSessions[0]?.token;
     matching.sort(
-      (a: any, b: any) =>
-        new Date(b.updatedAt || b.createdAt).getTime() -
-        new Date(a.updatedAt || a.createdAt).getTime(),
+      (a, b) =>
+        new Date(b.updatedAt || b.createdAt || 0).getTime() -
+        new Date(a.updatedAt || a.createdAt || 0).getTime(),
     );
     return matching[0]?.token;
   }, [sessions]);
 
   const dedupedSessions = useMemo(() => {
-    const rawSessions = (sessions as any[]) || [];
-    const byDevice = new Map<string, any>();
+    const rawSessions = ((sessions || []) as Session[]);
+    const byDevice = new Map<string, Session>();
 
     for (const s of rawSessions) {
       const key = `${s.userAgent || 'unknown'}|${s.ipAddress || 'unknown'}`;
@@ -193,8 +202,8 @@ export function SessionManagement() {
       if (!existing) {
         byDevice.set(key, s);
       } else {
-        const existingTime = new Date(existing.updatedAt || existing.createdAt).getTime();
-        const newTime = new Date(s.updatedAt || s.createdAt).getTime();
+        const existingTime = new Date(existing.updatedAt || existing.createdAt || 0).getTime();
+        const newTime = new Date(s.updatedAt || s.createdAt || 0).getTime();
         if (newTime > existingTime) byDevice.set(key, s);
       }
     }
@@ -203,8 +212,8 @@ export function SessionManagement() {
       if (a.token === currentToken) return -1;
       if (b.token === currentToken) return 1;
       return (
-        new Date(b.updatedAt || b.createdAt).getTime() -
-        new Date(a.updatedAt || a.createdAt).getTime()
+        new Date(b.updatedAt || b.createdAt || 0).getTime() -
+        new Date(a.updatedAt || a.createdAt || 0).getTime()
       );
     });
   }, [sessions, currentToken]);

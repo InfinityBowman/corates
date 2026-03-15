@@ -40,12 +40,12 @@ export function ChecklistForm({
   const { projectId } = useProjectContext();
 
   const [type, setType] = useState(DEFAULT_CHECKLIST_TYPE);
-  const [outcomeId, setOutcomeId] = useState<string | null>(null);
+  const [selectedOutcomeId, setSelectedOutcomeId] = useState<string | null>(null);
 
   const typeOptions = useMemo(() => getChecklistTypeOptions(), []);
 
   const meta = useProjectStore(s => s.projects[projectId]?.meta) as any;
-  const outcomes: any[] = meta?.outcomes || [];
+  const outcomes: any[] = useMemo(() => meta?.outcomes || [], [meta?.outcomes]);
 
   const requiresOutcome = type === CHECKLIST_TYPES.ROB2 || type === CHECKLIST_TYPES.ROBINS_I;
 
@@ -65,10 +65,8 @@ export function ChecklistForm({
     [outcomes, usedOutcomeIds],
   );
 
-  // Clear stale outcomeId if it's no longer available
-  if (outcomeId && usedOutcomeIds.has(outcomeId)) {
-    setOutcomeId(null);
-  }
+  // Derive effective outcomeId -- clear if the selected one is no longer available
+  const outcomeId = selectedOutcomeId && !usedOutcomeIds.has(selectedOutcomeId) ? selectedOutcomeId : null;
 
   const canSubmit = requiresOutcome ? outcomeId !== null && availableOutcomes.length > 0 : true;
 
@@ -76,14 +74,14 @@ export function ChecklistForm({
 
   const handleTypeChange = useCallback((value: string) => {
     setType(value);
-    setOutcomeId(null);
+    setSelectedOutcomeId(null);
   }, []);
 
   const handleSubmit = useCallback(() => {
     if (!canSubmit) return;
     onSubmit(type, currentUserId, requiresOutcome ? outcomeId : null);
     setType(DEFAULT_CHECKLIST_TYPE);
-    setOutcomeId(null);
+    setSelectedOutcomeId(null);
   }, [canSubmit, type, currentUserId, requiresOutcome, outcomeId, onSubmit]);
 
   return (
@@ -106,7 +104,7 @@ export function ChecklistForm({
 
         {requiresOutcome && !hasOutcomeIssue && (
           <div className="min-w-[180px] flex-1">
-            <Select value={outcomeId || ''} onValueChange={v => setOutcomeId(v || null)}>
+            <Select value={outcomeId || ''} onValueChange={v => setSelectedOutcomeId(v || null)}>
               <SelectTrigger>
                 <SelectValue placeholder="Select outcome..." />
               </SelectTrigger>

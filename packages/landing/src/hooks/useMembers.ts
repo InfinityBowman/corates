@@ -3,7 +3,7 @@
  */
 
 import { useQuery } from '@tanstack/react-query';
-import { queryKeys } from '@/lib/queryKeys.js';
+import { queryKeys } from '@/lib/queryKeys';
 import { getMembers } from '@/api/billing';
 import { useAuthStore, selectIsLoggedIn } from '@/stores/authStore';
 

@@ -31,7 +31,7 @@ export function CompletedTab() {
   );
 
   const completedStudies = useMemo(
-    () => getStudiesForTab(studies, 'completed', null as any),
+    () => getStudiesForTab(studies, 'completed', null),
     [studies],
   );
 
@@ -42,16 +42,14 @@ export function CompletedTab() {
     [navigate, getChecklistPath],
   );
 
-  const createReconciliationProgressGetter = useCallback(
-    (studyId: string) => {
+  const getReconciliationProgress = useCallback(
+    (studyId: string, outcomeId: string | null, type: string) => {
       const study = studies.find((s: any) => s.id === studyId);
-      if (!study || !isDualReviewerStudy(study)) return () => null;
+      if (!study || !isDualReviewerStudy(study)) return null;
 
-      return (outcomeId: string | null, type: string) => {
-        const allProgress = getAllReconciliationProgress(studyId) || [];
-        const outcomeKey = getOutcomeKey(outcomeId, type);
-        return (allProgress as any[]).find((p: any) => p.outcomeKey === outcomeKey) || null;
-      };
+      const allProgress = getAllReconciliationProgress(studyId) || [];
+      const outcomeKey = getOutcomeKey(outcomeId, type);
+      return (allProgress as any[]).find((p: any) => p.outcomeKey === outcomeKey) || null;
     },
     [studies, getAllReconciliationProgress],
   );
@@ -66,7 +64,7 @@ export function CompletedTab() {
             onOpenChecklist={checklistId => openChecklist(study.id, checklistId)}
             onViewPdf={pdf => projectActionsStore.pdf.view(study.id, pdf)}
             onDownloadPdf={pdf => projectActionsStore.pdf.download(study.id, pdf)}
-            getReconciliationProgress={createReconciliationProgressGetter(study.id)}
+            getReconciliationProgress={(outcomeId, type) => getReconciliationProgress(study.id, outcomeId, type)}
             getAssigneeName={getAssigneeName}
             getOutcomeName={getOutcomeName}
           />

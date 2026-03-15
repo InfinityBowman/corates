@@ -7,7 +7,7 @@
 import { useMemo, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useAuthStore, selectIsLoggedIn, selectIsAuthLoading } from '@/stores/authStore';
-import { queryKeys } from '@/lib/queryKeys.js';
+import { queryKeys } from '@/lib/queryKeys';
 import { fetchOrgs } from '@/hooks/useOrgs';
 
 const LAST_ORG_KEY = 'corates-last-org-slug';

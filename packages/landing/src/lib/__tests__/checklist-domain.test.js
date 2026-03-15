@@ -19,7 +19,7 @@ import {
   findReconciledChecklist,
   isDualReviewerStudy,
 } from '../checklist-domain.js';
-import { CHECKLIST_STATUS } from '@/constants/checklist-status.js';
+import { CHECKLIST_STATUS } from '@/constants/checklist-status';
 
 // Test fixtures
 const createChecklist = (overrides = {}) => ({

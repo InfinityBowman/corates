@@ -6,21 +6,15 @@
 
 import { getErrorMessage as getSharedErrorMessage, PROJECT_ERRORS } from '@corates/shared';
 
-/**
- * Re-export getErrorMessage from shared package for backward compatibility
- * @param {string} errorCode - Error code
- * @returns {string} User-friendly error message
- */
-export function getErrorMessage(errorCode) {
+export function getErrorMessage(errorCode: string): string {
   return getSharedErrorMessage(errorCode);
 }
 
 /**
  * Error messages that indicate access to a project has been denied.
  * Used to detect when a user should be redirected away from a project view.
- * These are derived from project-related error codes and connection errors.
  */
-export const ACCESS_DENIED_ERRORS = [
+export const ACCESS_DENIED_ERRORS: string[] = [
   'This project has been deleted',
   'You have been removed from this project',
   'You are not a member of this project',

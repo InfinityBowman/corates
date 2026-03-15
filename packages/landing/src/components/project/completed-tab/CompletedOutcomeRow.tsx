@@ -4,7 +4,7 @@
 
 import { useState, useMemo } from 'react';
 import { getChecklistMetadata } from '@/checklist-registry';
-import { getStatusLabel, getStatusStyle } from '@/constants/checklist-status.js';
+import { getStatusLabel, getStatusStyle } from '@/constants/checklist-status';
 import { PreviousReviewersView } from './PreviousReviewersView';
 
 /* eslint-disable no-unused-vars */

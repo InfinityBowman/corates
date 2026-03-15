@@ -3,11 +3,11 @@
  */
 
 import * as Y from 'yjs';
-import { API_BASE } from '@/config/api.js';
+import { API_BASE } from '@/config/api';
 import { useProjectStore } from '@/stores/projectStore';
 import projectActionsStore from '@/stores/projectActionsStore';
-import { queryClient } from '@/lib/queryClient.js';
-import { queryKeys } from '@/lib/queryKeys.js';
+import { queryClient } from '@/lib/queryClient';
+import { queryKeys } from '@/lib/queryKeys';
 
 /**
  * Creates study operations

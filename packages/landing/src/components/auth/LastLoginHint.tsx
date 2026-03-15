@@ -6,7 +6,7 @@ import { useState } from 'react';
 import { FiLock, FiMail } from 'react-icons/fi';
 import { AiOutlineGoogle } from 'react-icons/ai';
 import { FaOrcid } from 'react-icons/fa6';
-import { getLastLoginMethod, LOGIN_METHOD_LABELS, LOGIN_METHODS } from '@/lib/lastLoginMethod.js';
+import { getLastLoginMethod, LOGIN_METHOD_LABELS, LOGIN_METHODS } from '@/lib/lastLoginMethod';
 
 function getIcon(method: string) {
   switch (method) {

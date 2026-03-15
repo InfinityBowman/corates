@@ -5,7 +5,7 @@
 import { useMemo } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useProjectStore } from '@/stores/projectStore';
-import { queryKeys } from '@/lib/queryKeys.js';
+import { queryKeys } from '@/lib/queryKeys';
 
 export function useProjectOrgId(projectId: string | null | undefined): string | null {
   const queryClient = useQueryClient();

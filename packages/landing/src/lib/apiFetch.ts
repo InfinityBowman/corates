@@ -13,7 +13,7 @@
  * Do NOT use for: WebSocket upgrades, streaming, presigned uploads.
  */
 
-import { API_BASE } from '@/config/api.js';
+import { API_BASE } from '@/config/api';
 import { handleFetchError } from '@/lib/error-utils';
 
 interface ApiError {

@@ -2,9 +2,9 @@
  * Member operations for projectActionsStore
  */
 
-import { API_BASE } from '@/config/api.js';
-import { queryClient } from '@/lib/queryClient.js';
-import { queryKeys } from '@/lib/queryKeys.js';
+import { API_BASE } from '@/config/api';
+import { queryClient } from '@/lib/queryClient';
+import { queryKeys } from '@/lib/queryKeys';
 
 /**
  * Creates member operations

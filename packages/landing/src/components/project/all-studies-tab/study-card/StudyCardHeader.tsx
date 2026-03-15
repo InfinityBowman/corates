@@ -16,7 +16,7 @@ import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip
 import { Avatar, AvatarImage, AvatarFallback, getInitials } from '@/components/ui/avatar';
 import { type ProjectMember } from '@/components/project/ProjectContext';
 import _projectActionsStore from '@/stores/projectActionsStore/index.js';
-import { API_BASE } from '@/config/api.js';
+import { API_BASE } from '@/config/api';
 
 const projectActionsStore = _projectActionsStore as any;
 

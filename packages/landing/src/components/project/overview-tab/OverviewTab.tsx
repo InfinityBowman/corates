@@ -36,8 +36,8 @@ import {
   AlertDialogIcon,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { API_BASE } from '@/config/api.js';
-import { CHECKLIST_STATUS } from '@/constants/checklist-status.js';
+import { API_BASE } from '@/config/api';
+import { CHECKLIST_STATUS } from '@/constants/checklist-status';
 import { shouldShowInTab, isReconciledChecklist } from '@/lib/checklist-domain.js';
 import {
   calculateInterRaterReliability,
@@ -80,7 +80,7 @@ export function OverviewTab() {
   const collaboratorQuotaInfo = useMemo(
     () => ({
       used: nonOwnerOrgMemberCount,
-      max: (quotas as any)?.['collaborators.org.max'] ?? 0,
+      max: quotas?.['collaborators.org.max'] ?? 0,
     }),
     [nonOwnerOrgMemberCount, quotas],
   );
@@ -104,7 +104,7 @@ export function OverviewTab() {
   );
 
   const completedStudies = useMemo(
-    () => studies.filter((s: any) => shouldShowInTab(s, 'completed', null as any)).length,
+    () => studies.filter((s: any) => shouldShowInTab(s, 'completed', null)).length,
     [studies],
   );
 

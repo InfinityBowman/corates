@@ -4,7 +4,7 @@
  */
 
 import { WebsocketProvider } from 'y-websocket';
-import { getWsBaseUrl } from '@/config/api.js';
+import { getWsBaseUrl } from '@/config/api';
 import { useProjectStore } from '@/stores/projectStore';
 
 /**

@@ -10,7 +10,7 @@ import { useProject } from '@/primitives/useProject';
 import { useProjectOrgId } from '@/hooks/useProjectOrgId';
 import { useProjectStore } from '@/stores/projectStore';
 import { useAuthStore, selectUser } from '@/stores/authStore';
-import { ACCESS_DENIED_ERRORS } from '@/constants/errors.js';
+import { ACCESS_DENIED_ERRORS } from '@/constants/errors';
 import _projectActionsStore from '@/stores/projectActionsStore/index.js';
 const projectActionsStore = _projectActionsStore as any;
 import { uploadPdf, deletePdf } from '@/api/pdf-api.js';
@@ -195,9 +195,15 @@ export function ProjectView({ projectId }: ProjectViewProps) {
     return getChecklistCount(studies, 'todo', userId);
   }, [studies, userId]);
 
-  const getReconcileCount = useCallback(() => getChecklistCount(studies, 'reconcile', null as any), [studies]);
+  const getReconcileCount = useCallback(
+    () => getChecklistCount(studies, 'reconcile', null),
+    [studies],
+  );
   const getAllStudiesCount = useCallback(() => studies.length, [studies]);
-  const getCompletedCount = useCallback(() => getChecklistCount(studies, 'completed', null as any), [studies]);
+  const getCompletedCount = useCallback(
+    () => getChecklistCount(studies, 'completed', null),
+    [studies],
+  );
 
   const tabFromUrl = useMemo(() => {
     const tab = new URLSearchParams(location.search).get('tab');

@@ -17,9 +17,9 @@ import {
   revokeOtherSessions as _revokeOtherSessions,
   revokeSessions as _revokeSessions,
 } from '@/api/auth-client';
-import { queryClient, clearPersistedQueryCache } from '@/lib/queryClient.js';
-import { API_BASE, BASEPATH } from '@/config/api.js';
-import { saveLastLoginMethod, LOGIN_METHODS } from '@/lib/lastLoginMethod.js';
+import { queryClient, clearPersistedQueryCache } from '@/lib/queryClient';
+import { API_BASE, BASEPATH } from '@/config/api';
+import { saveLastLoginMethod, LOGIN_METHODS } from '@/lib/lastLoginMethod';
 import { getCachedAvatar, pruneExpiredAvatars } from '@/primitives/avatarCache.js';
 import { clearAllData } from '@/primitives/db.js';
 
@@ -64,7 +64,7 @@ interface AuthActions {
 
   // Auth API methods
   signup: (email: string, password: string, name: string, role?: string | null) => Promise<unknown>;
-  signin: (email: string, password: string) => Promise<unknown>;
+  signin: (email: string, password: string) => Promise<{ twoFactorRequired: true } | unknown>;
   signinWithGoogle: (callbackPath?: string) => Promise<unknown>;
   signinWithOrcid: (callbackPath?: string) => Promise<unknown>;
   signinWithMagicLink: (email: string, callbackPath?: string) => Promise<unknown>;

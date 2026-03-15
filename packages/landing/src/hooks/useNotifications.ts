@@ -5,7 +5,7 @@
  */
 
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { API_BASE } from '@/config/api.js';
+import { API_BASE } from '@/config/api';
 
 const MAX_RECONNECT_DELAY = 60000;
 const PING_INTERVAL = 30000;

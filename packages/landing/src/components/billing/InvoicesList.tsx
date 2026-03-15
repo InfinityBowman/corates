@@ -5,7 +5,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { DownloadIcon, FileTextIcon, ExternalLinkIcon } from 'lucide-react';
 import { apiFetch } from '@/lib/apiFetch';
-import { queryKeys } from '@/lib/queryKeys.js';
+import { queryKeys } from '@/lib/queryKeys';
 
 interface Invoice {
   id: string;

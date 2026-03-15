@@ -14,8 +14,8 @@ import { useEffect, useRef } from 'react';
 import { useSession } from '@/api/auth-client';
 import { useAuthStore, saveCachedAuth } from '@/stores/authStore';
 import { fetchAndCacheAvatar } from '@/primitives/avatarCache.js';
-import { queryClient } from '@/lib/queryClient.js';
-import { queryKeys } from '@/lib/queryKeys.js';
+import { queryClient } from '@/lib/queryClient';
+import { queryKeys } from '@/lib/queryKeys';
 
 interface AuthProviderProps {
   children: React.ReactNode;

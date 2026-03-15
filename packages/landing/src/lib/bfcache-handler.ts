@@ -6,8 +6,8 @@
  */
 
 import { useAuthStore, selectIsAuthLoading, selectUser } from '@/stores/authStore';
-import { queryClient } from '@/lib/queryClient.js';
-import { queryKeys } from '@/lib/queryKeys.js';
+import { queryClient } from '@/lib/queryClient';
+import { queryKeys } from '@/lib/queryKeys';
 
 /**
  * Initialize bfcache restoration handler.

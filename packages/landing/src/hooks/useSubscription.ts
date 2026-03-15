@@ -4,15 +4,15 @@
 
 import { useMemo } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { queryKeys } from '@/lib/queryKeys.js';
+import { queryKeys } from '@/lib/queryKeys';
 import { apiFetch } from '@/lib/apiFetch';
-import { hasActiveAccess as checkActiveAccess } from '@/lib/access.js';
+import { hasActiveAccess as checkActiveAccess } from '@/lib/access';
 import {
   hasEntitlement as checkEntitlement,
   getEffectiveEntitlements,
   getEffectiveQuotas,
   hasQuota as checkQuota,
-} from '@/lib/entitlements.js';
+} from '@/lib/entitlements';
 import { useAuthStore, selectIsLoggedIn } from '@/stores/authStore';
 
 export interface Subscription {

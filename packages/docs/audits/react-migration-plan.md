@@ -645,34 +645,85 @@ Key changes:
 - `TwoFactorSetup` derives `isEnabled` from store instead of local state
 - All billing components use shadcn design tokens instead of hardcoded colors
 
-### 4.5 Organization + billing
+### 4.5 Organization -- COMPLETED (2026-03-14)
 
-- `_app/_protected/orgs.new.tsx`
-- Billing components
+- `_app/_protected/orgs.new.tsx` -- CreateOrgPage (name, slug, auto-generate)
+- `/orgs` removed from SPA_ROUTE_PREFIXES
+- Post-create navigates to /dashboard (org detail page not yet migrated)
 
-### 4.6 Project view (complex)
+### 4.6 Project view -- COMPLETED (2026-03-14)
 
-- `_app/_protected/projects.$projectId.tsx` (layout -- Yjs connection)
-- `_app/_protected/projects.$projectId/index.tsx` (overview, tab system)
-- Study cards, add-studies flow, all-studies tab, completed tab, todo tab
-- Heavy Yjs data consumption from projectStore via Zustand selectors
+Full project view migrated across 4 phases (A-D) with code reviews after each:
+
+**Phase A -- Project shell + Overview Tab:**
+- `ProjectView.tsx` -- layout shell, Yjs boot (via useProject), pending data processing (PDFs, refs, Google Drive files), 5-tab interface with URL-based tab state
+- `ProjectContext.tsx` -- React context providing projectId, orgId, userRole, path builders, member helpers (stable useCallback separation)
+- `ProjectHeader.tsx` -- inline-editable name/description via Ark UI Editable
+- `PdfPreviewPanel.tsx` + `SlidingPanel.tsx` -- GPU-accelerated slide-in PDF viewer
+- `SectionErrorBoundary.tsx` -- React class error boundary
+- `OverviewTab.tsx` -- project progress (CircularProgress SVG), stats grid, inter-rater reliability, team members with add/remove, collapsible charts/tables sections
+- `CircularProgress.tsx` -- pure SVG (replaced D3 dependency), uses CSS custom properties
+- `AddMemberModal.tsx` -- user search with debounce, email invitation, role selection
+
+**Phase B -- All Studies Tab:**
+- `AllStudiesTab.tsx` -- expandable study cards, form state restoration after OAuth redirect
+- `StudyCard.tsx` + `StudyCardHeader.tsx` -- editable name, reviewer avatars with tooltips, actions dropdown menu
+- `StudyPdfSection.tsx` -- PDF upload with validation, tag management, Google Drive import
+- `PdfListItem.tsx` + `PdfTagBadge.tsx` -- shared PDF row components with view/download/delete/tag actions
+- `AssignReviewersModal.tsx` -- reviewer 1/2 selection with duplicate prevention
+- `EditPdfMetadataModal.tsx` -- citation metadata editing with year validation
+
+**Phase C -- Todo + Completed Tabs:**
+- `ToDoTab.tsx` -- studies assigned to current user, checklist creation flow
+- `TodoStudyRow.tsx` -- single/multi checklist modes, inline create form, delete confirmation
+- `ChecklistForm.tsx` -- type/outcome selection with availability filtering
+- `CompletedTab.tsx` -- reconciliation progress-aware display
+- `CompletedStudyRow.tsx` -- single/multi outcome modes with "View Previous" button
+- `CompletedOutcomeRow.tsx` -- per-outcome status and reconciliation actions
+
+**Phase D -- Reconcile Tab listing:**
+- `ReconcileTab.tsx` -- studies in reconciliation workflow
+- `ReconcileStudyRow.tsx` -- READY/WAITING sections for multi-outcome, inline controls for single-outcome
+- `ReconcileStatusTag.tsx` -- "Ready" or "Waiting for {reviewer}" badge
+
+**Stubs (to be filled in later):**
+- `AddStudiesForm` -- PDF upload, DOI lookup, reference import, Google Drive picker sections
+- `ReviewerAssignment` -- bulk reviewer assignment (634 lines)
+- `OutcomeManager` -- outcome definition management
+- `GoogleDrivePickerModal` -- Google Drive file picker SDK integration
+- `ChartSection` + `AMSTAR2ResultsTable` -- D3 chart visualizations
+- `PreviousReviewersView` -- original reviewer checklist comparison (needs GenericChecklist)
+- `EmbedPdfViewer` -- Preact PDF viewer island
+
+Key decisions:
+- `/projects` NOT yet removed from SPA_ROUTE_PREFIXES -- stubs would degrade UX for existing users
+- `projectActionsStore` accessed via `as any` cast due to JS module without type declarations
+- `CircularProgress` rewritten as pure SVG instead of porting the D3 imperative version
+- Pending data read via `useState` lazy initializer to prevent StrictMode data loss
+- Manual `connect()`/`disconnect()` removed from ProjectView -- `useProject` manages its own lifecycle
 
 ### 4.7 Checklists (most complex UI)
 
 - `_app/_protected/projects.$projectId/studies.$studyId.checklists.$checklistId.tsx`
-- AMSTAR2, ROB2, ROBINS-I checklist forms
+- AMSTAR2, ROB2, ROBINS-I checklist forms (~3000+ LOC combined)
 - Complex conditional fields, scoring visualization, decision diagrams
-- PDF viewer integration
+- PDF viewer integration (EmbedPdfViewer)
+- Shared with local checklists (Phase 4.9) -- must be migrated together
+- NoteEditor with LocalTextAdapter (Y.Text-compatible interface for local mode)
 
-### 4.8 Reconciliation (complex)
+### 4.8 Reconciliation child routes (complex)
 
 - `_app/_protected/projects.$projectId/studies.$studyId.reconcile.$c1Id.$c2Id.tsx`
 - Multi-reviewer comparison, conflict resolution
+- ~30+ files across AMSTAR2, ROB2, ROBINS-I reconciliation UIs
+- Presence tracking (remote cursors, question presence indicators)
+- Reconcile tab listing already migrated in Phase D above
 
 ### 4.9 Local checklists
 
 - `_app/checklist.tsx`, `_app/checklist.$checklistId.tsx`
 - Uses localChecklistsStore (Zustand) + Dexie
+- Shares checklist form components with Phase 4.7 -- cannot be migrated independently
 
 ### 4.10 Admin (last, isolated)
 
@@ -788,10 +839,10 @@ Key changes:
 | Phase 1: Foundation  | 3-4 days       | --                             | DONE (2026-03-14)     |
 | Phase 2: UI Library  | 2 days         | Yes (with Phase 3)             | DONE (2026-03-14)     |
 | Phase 3: Primitives  | 3-4 days       | Yes (with Phase 2)             | DONE (2026-03-14)     |
-| Phase 4: Pages       | 5-7 days       | Partially (independent routes) | 4.1-4.4 DONE          |
+| Phase 4: Pages       | 5-7 days       | Partially (independent routes) | 4.1-4.6 DONE          |
 | Phase 5: Tests       | 2 days         | Yes (with Phase 4)             | Not started           |
 | Phase 6: Cleanup     | 0.5 days       | --                             | Not started           |
-| **Total**            | **~2-3 weeks** |                                | **Phases 0-4.4 done** |
+| **Total**            | **~2-3 weeks** |                                | **Phases 0-4.6 done** |
 
 Phase 0 is shorter since landing already exists. Claude Code can handle the mechanical parts (UI components, query hooks, icon swaps, simple page conversions) to significantly speed up Phases 2 and 4.
 

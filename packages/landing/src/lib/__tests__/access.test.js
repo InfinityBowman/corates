@@ -6,7 +6,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { hasActiveAccess, isAccessExpired } from '../access.js';
+import { hasActiveAccess, isAccessExpired } from '../access';
 
 describe('access', () => {
   beforeEach(() => {

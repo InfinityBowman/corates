@@ -4,9 +4,9 @@
  */
 
 import { QueryClient } from '@tanstack/react-query';
-import { createIDBPersister } from './queryPersister.js';
+import { createIDBPersister } from './queryPersister';
 
-let queryClientInstance = null;
+let queryClientInstance: QueryClient | null = null;
 
 // Maximum age for persisted cache data (24 hours)
 const MAX_CACHE_AGE_MS = 24 * 60 * 60 * 1000;
@@ -14,15 +14,14 @@ const MAX_CACHE_AGE_MS = 24 * 60 * 60 * 1000;
 // LocalStorage key for critical cache state (fallback for beforeunload)
 const CACHE_SNAPSHOT_KEY = 'corates-query-cache-snapshot';
 
-/**
- * Simple debounce utility (replaces @solid-primitives/scheduled)
- * @param {Function} fn
- * @param {number} ms
- * @returns {Function & { clear: () => void }}
- */
-function debounce(fn, ms) {
-  let timer;
-  const debounced = (...args) => {
+interface DebouncedFn {
+  (..._args: unknown[]): void;
+  clear: () => void;
+}
+
+function debounce(fn: (..._args: unknown[]) => void, ms: number): DebouncedFn {
+  let timer: ReturnType<typeof setTimeout>;
+  const debounced = (...args: unknown[]) => {
     clearTimeout(timer);
     timer = setTimeout(() => fn(...args), ms);
   };
@@ -30,44 +29,55 @@ function debounce(fn, ms) {
   return debounced;
 }
 
-/**
- * Initialize persistence for the query client
- * Sets up automatic persistence of the query cache to IndexedDB
- * @param {QueryClient} queryClient - The QueryClient instance to persist
- * @returns {Function} Cleanup function (intentionally not called since client is singleton)
- */
-async function setupPersistence(queryClient) {
+interface PersistedQueryState {
+  data: unknown;
+  dataUpdatedAt: number;
+  error: unknown;
+  errorUpdatedAt: number;
+  status: string;
+  fetchStatus: string;
+}
+
+interface PersistedQuery {
+  queryKey: readonly unknown[];
+  queryHash: string;
+  state: PersistedQueryState;
+}
+
+interface PersistedClient {
+  clientState: {
+    queries: PersistedQuery[];
+    mutations: unknown[];
+  };
+  timestamp: number;
+}
+
+async function setupPersistence(client: QueryClient): Promise<() => void> {
   const persister = createIDBPersister();
 
   // Restore cache on initialization
   try {
-    const persistedClient = await persister.restoreClient();
+    const persistedClient = (await persister.restoreClient()) as PersistedClient | null;
     if (persistedClient) {
       const now = Date.now();
       const cacheTimestamp = persistedClient.timestamp || 0;
 
-      // Validate cache age - skip if older than 24 hours
       if (now - cacheTimestamp > MAX_CACHE_AGE_MS) {
         console.info('[queryClient] Persisted cache expired, skipping restoration');
         await persister.removeClient();
       } else if (persistedClient.clientState?.queries) {
-        // Restore queries, validating each query's data age
-        const restoredQueryKeys = [];
+        const restoredQueryKeys: (readonly unknown[])[] = [];
         for (const query of persistedClient.clientState.queries) {
           const queryAge = now - (query.state?.dataUpdatedAt || 0);
 
-          // Skip queries older than max age or with error status
           if (queryAge > MAX_CACHE_AGE_MS || query.state?.status === 'error') {
             continue;
           }
 
-          // Only restore if query doesn't already have fresher data
-          const existingQuery = queryClient.getQueryData(query.queryKey);
+          const existingQuery = client.getQueryData(query.queryKey);
           if (!existingQuery) {
-            // Preserve the original dataUpdatedAt timestamp to prevent falsely marking data as fresh
-            // This ensures queries will be considered stale and refetch if needed
             const originalUpdatedAt = query.state?.dataUpdatedAt || now;
-            queryClient.setQueryData(query.queryKey, query.state.data, {
+            client.setQueryData(query.queryKey, query.state.data, {
               updatedAt: originalUpdatedAt,
             });
             restoredQueryKeys.push(query.queryKey);
@@ -78,11 +88,9 @@ async function setupPersistence(queryClient) {
           new Date(cacheTimestamp).toISOString(),
         );
 
-        // If online, invalidate restored queries so they refetch fresh data
-        // This gives instant UI from cache while fetching updates in the background
         if (navigator.onLine && restoredQueryKeys.length > 0) {
           setTimeout(() => {
-            queryClient.invalidateQueries();
+            client.invalidateQueries();
           }, 100);
         }
       }
@@ -94,11 +102,10 @@ async function setupPersistence(queryClient) {
   // Set up periodic persistence (debounced)
   const persistCache = debounce(async () => {
     try {
-      const queryCache = queryClient.getQueryCache();
-      const mutationCache = queryClient.getMutationCache();
+      const queryCache = client.getQueryCache();
+      const mutationCache = client.getMutationCache();
 
-      // Build persisted client state
-      const persistedClient = {
+      const persistedClientData: PersistedClient = {
         clientState: {
           queries: Array.from(queryCache.getAll()).map(query => ({
             queryKey: query.queryKey,
@@ -124,33 +131,28 @@ async function setupPersistence(queryClient) {
         timestamp: Date.now(),
       };
 
-      await persister.persistClient(persistedClient);
+      await persister.persistClient(persistedClientData);
     } catch (error) {
       console.error('Failed to persist query cache:', error);
     }
-  }, 1000); // Debounce by 1 second
+  }, 1000);
 
-  // Persist on cache updates
-  const unsubscribeQueries = queryClient.getQueryCache().subscribe(() => {
+  const unsubscribeQueries = client.getQueryCache().subscribe(() => {
     persistCache();
   });
 
-  const unsubscribeMutations = queryClient.getMutationCache().subscribe(() => {
+  const unsubscribeMutations = client.getMutationCache().subscribe(() => {
     persistCache();
   });
 
-  // Persist on window unload
-  // Use synchronous localStorage as fallback since async IndexedDB may not complete
   const handleBeforeUnload = () => {
     persistCache.clear();
 
-    // Synchronous localStorage write as fallback for critical data
-    // IndexedDB async write may not complete before page unload
     try {
-      const queryCache = queryClient.getQueryCache();
+      const queryCache = client.getQueryCache();
       const criticalQueries = Array.from(queryCache.getAll())
         .filter(q => q.state.status === 'success' && q.state.data)
-        .slice(0, 10) // Limit to avoid localStorage quota issues
+        .slice(0, 10)
         .map(q => ({
           queryKey: q.queryKey,
           data: q.state.data,
@@ -162,17 +164,15 @@ async function setupPersistence(queryClient) {
         JSON.stringify({ queries: criticalQueries, timestamp: Date.now() }),
       );
     } catch (err) {
-      console.warn('Failed to save query cache snapshot to localStorage:', err.message);
+      console.warn('Failed to save query cache snapshot to localStorage:', (err as Error).message);
     }
 
-    // Still try async persist (may complete if unload is slow)
     persistCache();
   };
 
   if (typeof window !== 'undefined') {
     window.addEventListener('beforeunload', handleBeforeUnload);
 
-    // Try to restore from localStorage snapshot on init (covers cases where IndexedDB didn't persist)
     try {
       const snapshot = localStorage.getItem(CACHE_SNAPSHOT_KEY);
       if (snapshot) {
@@ -180,27 +180,21 @@ async function setupPersistence(queryClient) {
         const now = Date.now();
         if (now - timestamp < MAX_CACHE_AGE_MS) {
           for (const q of queries) {
-            if (!queryClient.getQueryData(q.queryKey)) {
-              // Preserve the original dataUpdatedAt timestamp
+            if (!client.getQueryData(q.queryKey)) {
               const originalUpdatedAt = q.dataUpdatedAt || now;
-              queryClient.setQueryData(q.queryKey, q.data, {
+              client.setQueryData(q.queryKey, q.data, {
                 updatedAt: originalUpdatedAt,
               });
             }
           }
         }
-        // Clear snapshot after restoration
         localStorage.removeItem(CACHE_SNAPSHOT_KEY);
       }
     } catch (err) {
-      console.warn('Failed to restore query cache from localStorage:', err.message);
+      console.warn('Failed to restore query cache from localStorage:', (err as Error).message);
     }
   }
 
-  // Return cleanup function
-  // Note: This cleanup is intentionally not called since queryClient is a singleton
-  // that lives for the entire app lifecycle. The subscriptions and event listeners
-  // are only cleaned up when the browser tab/window is closed.
   return () => {
     unsubscribeQueries();
     unsubscribeMutations();
@@ -211,48 +205,31 @@ async function setupPersistence(queryClient) {
   };
 }
 
-/**
- * Create and configure QueryClient instance (singleton)
- * @returns {QueryClient} Configured QueryClient
- */
-export function getQueryClient() {
+export function getQueryClient(): QueryClient {
   if (queryClientInstance) {
     return queryClientInstance;
   }
 
-  // Disable caching in development
   const isDevelopment = import.meta.env.DEV || import.meta.env.MODE === 'development';
 
   queryClientInstance = new QueryClient({
     defaultOptions: {
       queries: {
-        // Offline-first: try cache first, then network
         networkMode: 'offlineFirst',
-        // In development: no caching (always fetch fresh data)
-        // In production: data is considered fresh for 5 minutes
         staleTime: isDevelopment ? 0 : 1000 * 60 * 5,
-        // In development: immediately garbage collect unused data
-        // In production: unused data is kept in cache for 10 minutes
         gcTime: isDevelopment ? 0 : 1000 * 60 * 10,
-        // Retry failed requests up to 3 times
         retry: 3,
-        // Retry delay with exponential backoff
-        retryDelay: attemptIndex => Math.min(1000 * 2 ** attemptIndex, 30000),
-        // Refetch on reconnect (important for offline support)
+        retryDelay: (attemptIndex: number) => Math.min(1000 * 2 ** attemptIndex, 30000),
         refetchOnReconnect: true,
-        // Refetch on mount if data is stale (always true in dev with staleTime: 0)
         refetchOnMount: true,
       },
       mutations: {
-        // Retry mutations once
         retry: 1,
-        // Network mode for mutations: always try network
         networkMode: 'online',
       },
     },
   });
 
-  // Set up persistence (async, but don't block)
   if (typeof window !== 'undefined') {
     setupPersistence(queryClientInstance).catch(err => {
       console.warn('Failed to set up query persistence:', err);
@@ -262,16 +239,9 @@ export function getQueryClient() {
   return queryClientInstance;
 }
 
-/**
- * Export the singleton queryClient instance
- */
 export const queryClient = getQueryClient();
 
-/**
- * Clear all persisted query cache (IndexedDB and localStorage)
- * Should be called on sign out to prevent stale data from being restored
- */
-export async function clearPersistedQueryCache() {
+export async function clearPersistedQueryCache(): Promise<void> {
   try {
     const persister = createIDBPersister();
     await persister.removeClient();

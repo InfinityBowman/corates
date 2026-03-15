@@ -8,7 +8,7 @@ import { CameraIcon, CheckIcon } from 'lucide-react';
 import { useAuthStore, selectUser, selectUserAvatarUrl } from '@/stores/authStore';
 import { showToast } from '@/components/ui/toast';
 import { SimpleEditable } from '@/components/ui/editable';
-import { API_BASE } from '@/config/api.js';
+import { API_BASE } from '@/config/api';
 import { compressImageFile } from '@/lib/imageUtils.js';
 import { syncProfileToProjects } from '@/lib/syncUtils';
 

@@ -4,7 +4,7 @@
  * All endpoints use org-scoped routes: /api/orgs/:orgId/projects/:projectId/studies/:studyId/pdfs
  */
 
-import { API_BASE } from '@/config/api.js';
+import { API_BASE } from '@/config/api';
 import { apiFetch } from '@/lib/apiFetch';
 
 /**

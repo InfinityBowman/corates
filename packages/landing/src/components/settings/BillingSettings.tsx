@@ -10,7 +10,7 @@ import { useSubscription } from '@/hooks/useSubscription';
 import { useMembers } from '@/hooks/useMembers';
 import { redirectToPortal } from '@/api/billing';
 import { apiFetch } from '@/lib/apiFetch';
-import { queryKeys } from '@/lib/queryKeys.js';
+import { queryKeys } from '@/lib/queryKeys';
 import { SubscriptionCard } from '@/components/billing/SubscriptionCard';
 import { UsageCard } from '@/components/billing/UsageCard';
 import { InvoicesList } from '@/components/billing/InvoicesList';

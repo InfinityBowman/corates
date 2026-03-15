@@ -6,7 +6,7 @@ import { useState, useCallback } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { useQueryClient } from '@tanstack/react-query';
 import { authClient } from '@/api/auth-client';
-import { queryKeys } from '@/lib/queryKeys.js';
+import { queryKeys } from '@/lib/queryKeys';
 import { showToast } from '@/components/ui/toast';
 import { setLastOrgSlug } from '@/hooks/useOrgContext';
 

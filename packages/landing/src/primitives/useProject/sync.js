@@ -6,7 +6,7 @@
 import { useProjectStore } from '@/stores/projectStore';
 import { scoreChecklistOfType } from '@/checklist-registry/index.js';
 import { amstar2 } from '@corates/shared';
-import { CHECKLIST_STATUS } from '@/constants/checklist-status.js';
+import { CHECKLIST_STATUS } from '@/constants/checklist-status';
 
 const getAMSTAR2Answers = amstar2.getAnswers;
 

@@ -11,7 +11,7 @@ import {
   getEffectiveQuotas,
   hasEntitlement,
   hasQuota,
-} from '../entitlements.js';
+} from '../entitlements';
 
 describe('entitlements', () => {
   beforeEach(() => {

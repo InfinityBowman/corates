@@ -11,14 +11,11 @@ export const CHECKLIST_STATUS = {
   REVIEWER_COMPLETED: 'reviewer-completed',
   RECONCILING: 'reconciling',
   FINALIZED: 'finalized',
-};
+} as const;
 
-/**
- * Determines if a checklist can be edited based on its status
- * @param {string} status - The checklist status
- * @returns {boolean} True if the checklist can be edited
- */
-export function isEditable(status) {
+export type ChecklistStatus = (typeof CHECKLIST_STATUS)[keyof typeof CHECKLIST_STATUS];
+
+export function isEditable(status: string): boolean {
   return (
     status !== CHECKLIST_STATUS.FINALIZED &&
     status !== CHECKLIST_STATUS.REVIEWER_COMPLETED &&
@@ -26,12 +23,7 @@ export function isEditable(status) {
   );
 }
 
-/**
- * Gets a human-readable label for a status
- * @param {string} status - The checklist status
- * @returns {string} Human-readable label
- */
-export function getStatusLabel(status) {
+export function getStatusLabel(status: string): string {
   switch (status) {
     case CHECKLIST_STATUS.PENDING:
       return 'Pending';
@@ -48,12 +40,7 @@ export function getStatusLabel(status) {
   }
 }
 
-/**
- * Gets Tailwind CSS classes for status badge styling
- * @param {string} status - The checklist status
- * @returns {string} Tailwind classes for badge
- */
-export function getStatusStyle(status) {
+export function getStatusStyle(status: string): string {
   switch (status) {
     case CHECKLIST_STATUS.FINALIZED:
       return 'bg-green-100 text-green-800';
@@ -69,34 +56,23 @@ export function getStatusStyle(status) {
   }
 }
 
-/**
- * Validates if a status transition is allowed
- * @param {string} currentStatus - The current status
- * @param {string} newStatus - The desired new status
- * @returns {boolean} True if the transition is valid
- */
-export function canTransitionTo(currentStatus, newStatus) {
-  // Can always stay in the same state
+export function canTransitionTo(currentStatus: string, newStatus: string): boolean {
   if (currentStatus === newStatus) return true;
 
-  // Can transition from pending to in-progress (automatic on first edit)
   if (currentStatus === CHECKLIST_STATUS.PENDING && newStatus === CHECKLIST_STATUS.IN_PROGRESS) {
     return true;
   }
 
-  // Can transition from in-progress to reviewer-completed or finalized
   if (currentStatus === CHECKLIST_STATUS.IN_PROGRESS) {
     return (
       newStatus === CHECKLIST_STATUS.REVIEWER_COMPLETED || newStatus === CHECKLIST_STATUS.FINALIZED
     );
   }
 
-  // Can transition from reconciling to finalized (after reconciliation is complete)
   if (currentStatus === CHECKLIST_STATUS.RECONCILING && newStatus === CHECKLIST_STATUS.FINALIZED) {
     return true;
   }
 
-  // Cannot transition from finalized or reviewer-completed to anything else (locked)
   if (
     currentStatus === CHECKLIST_STATUS.FINALIZED ||
     currentStatus === CHECKLIST_STATUS.REVIEWER_COMPLETED
@@ -104,6 +80,5 @@ export function canTransitionTo(currentStatus, newStatus) {
     return false;
   }
 
-  // Default: disallow unknown transitions
   return false;
 }

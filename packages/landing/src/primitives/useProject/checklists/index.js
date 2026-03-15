@@ -5,7 +5,7 @@
 
 import * as Y from 'yjs';
 import { createChecklistOfType, CHECKLIST_TYPES } from '@/checklist-registry';
-import { CHECKLIST_STATUS } from '@/constants/checklist-status.js';
+import { CHECKLIST_STATUS } from '@/constants/checklist-status';
 import { createCommonOperations } from './common.js';
 import { AMSTAR2Handler } from './handlers/amstar2.js';
 import { ROBINSIHandler } from './handlers/robins-i.js';

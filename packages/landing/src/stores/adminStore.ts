@@ -7,8 +7,8 @@
 
 import { create } from 'zustand';
 import { apiFetch } from '@/lib/apiFetch';
-import { queryClient } from '@/lib/queryClient.js';
-import { queryKeys } from '@/lib/queryKeys.js';
+import { queryClient } from '@/lib/queryClient';
+import { queryKeys } from '@/lib/queryKeys';
 
 interface SessionResponse {
   user?: { role?: string; [key: string]: unknown };

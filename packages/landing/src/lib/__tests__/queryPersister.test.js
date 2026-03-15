@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import 'fake-indexeddb/auto';
 import { db } from '@/primitives/db.js';
-import { createIDBPersister } from '../queryPersister.js';
+import { createIDBPersister } from '../queryPersister';
 
 describe('queryPersister', () => {
   beforeEach(async () => {

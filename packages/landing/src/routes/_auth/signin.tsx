@@ -119,7 +119,7 @@ function SignInPage() {
     try {
       const result = await signin(email, password);
 
-      if ((result as any)?.twoFactorRequired) {
+      if (result && typeof result === 'object' && 'twoFactorRequired' in result) {
         setShowTwoFactor(true);
         setLoading(false);
         return;

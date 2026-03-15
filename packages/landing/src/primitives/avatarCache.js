@@ -10,7 +10,7 @@
  * to R2 on user signup.
  */
 
-import { API_BASE } from '@/config/api.js';
+import { API_BASE } from '@/config/api';
 import { compressImageBlob } from '@/lib/imageUtils.js';
 import { db } from './db.js';
 

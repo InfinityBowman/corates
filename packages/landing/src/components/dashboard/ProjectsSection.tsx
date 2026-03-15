@@ -10,7 +10,7 @@ import { useMyProjectsList } from '@/hooks/useMyProjectsList';
 import { useSubscription } from '@/hooks/useSubscription';
 import { useOnlineStatus } from '@/hooks/useOnlineStatus';
 import { showToast } from '@/components/ui/toast';
-import { queryKeys } from '@/lib/queryKeys.js';
+import { queryKeys } from '@/lib/queryKeys';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -131,7 +131,7 @@ export function ProjectsSection({
           <ContactPrompt
             restrictionType={restrictionType}
             projectCount={projectCount}
-            quotaLimit={(quotas as any)?.['projects.max']}
+            quotaLimit={quotas?.['projects.max']}
           />
         </div>
       )}

@@ -6,8 +6,8 @@
 import { useCallback } from 'react';
 import { useAuthStore, selectUser, selectIsLoggedIn } from '@/stores/authStore';
 import { useNotifications } from './useNotifications';
-import { queryClient } from '@/lib/queryClient.js';
-import { queryKeys } from '@/lib/queryKeys.js';
+import { queryClient } from '@/lib/queryClient';
+import { queryKeys } from '@/lib/queryKeys';
 
 interface NotificationData {
   type: string;

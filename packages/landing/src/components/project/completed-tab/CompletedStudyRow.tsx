@@ -6,10 +6,11 @@
 import { useState, useMemo, useCallback } from 'react';
 import { ChevronRightIcon } from 'lucide-react';
 import { Collapsible, CollapsibleContent } from '@/components/ui/collapsible';
+import { sortStudyPdfs, getCitationLine } from '../study-utils';
 import { getChecklistMetadata } from '@/checklist-registry';
 import { PdfListItem } from '@/components/pdf/PdfListItem';
 import { getCompletedChecklistsByOutcome } from '@/lib/checklist-domain.js';
-import { getStatusLabel, getStatusStyle } from '@/constants/checklist-status.js';
+import { getStatusLabel, getStatusStyle } from '@/constants/checklist-status';
 import { PreviousReviewersView } from './PreviousReviewersView';
 import { CompletedOutcomeRow } from './CompletedOutcomeRow';
 
@@ -37,24 +38,9 @@ export function CompletedStudyRow({
   const [expanded, setExpanded] = useState(false);
   const [showPreviousReviewers, setShowPreviousReviewers] = useState(false);
 
-  const sortedPdfs = useMemo(() => {
-    const pdfs = study.pdfs || [];
-    return [...pdfs].sort((a: any, b: any) => {
-      const tagOrder: Record<string, number> = { primary: 0, protocol: 1, secondary: 2 };
-      if ((tagOrder[a.tag] ?? 2) !== (tagOrder[b.tag] ?? 2)) return (tagOrder[a.tag] ?? 2) - (tagOrder[b.tag] ?? 2);
-      return (b.uploadedAt || 0) - (a.uploadedAt || 0);
-    });
-  }, [study.pdfs]);
-
+  const sortedPdfs = useMemo(() => sortStudyPdfs(study.pdfs || []), [study.pdfs]);
   const hasPdfs = sortedPdfs.length > 0;
-
-  const citationLine = useMemo(() => {
-    const primaryPdf = sortedPdfs.find((p: any) => p.tag === 'primary') || sortedPdfs[0];
-    const author = primaryPdf?.firstAuthor || study.firstAuthor;
-    const year = primaryPdf?.publicationYear || study.publicationYear;
-    if (!author && !year) return null;
-    return `${author || 'Unknown'}${year ? ` (${year})` : ''}`;
-  }, [sortedPdfs, study]);
+  const citationLine = useMemo(() => getCitationLine(sortedPdfs, study), [sortedPdfs, study]);
 
   const completedOutcomeGroups = useMemo(() => getCompletedChecklistsByOutcome(study), [study]);
   const hasMultipleOutcomes = completedOutcomeGroups.length > 1;

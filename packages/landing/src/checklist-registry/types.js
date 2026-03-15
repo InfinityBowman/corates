@@ -1,4 +1,4 @@
-import { LANDING_URL } from '@/config/api.js';
+import { LANDING_URL } from '@/config/api';
 
 /**
  * Checklist Type Constants and Metadata

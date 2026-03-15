@@ -47,38 +47,17 @@ const result = await (authClient as any).sendVerificationEmail?.({ email });
 
 If the `as any` cast throws for a reason other than "method not found", the catch block swallows the real error and falls through to a raw `fetch` call. The method should be typed via Better Auth plugin types or narrowed to a known interface.
 
-### 5. `session: any` prop on `SessionCard`
+### ~~5. `session: any` prop on `SessionCard`~~ FIXED
 
-**File**: `packages/landing/src/components/settings/SessionManagement.tsx` line 79
+Fixed: Defined `Session` interface with `token`, `userAgent`, `ipAddress`, `updatedAt`, `createdAt`. Removed all `(sessions as any[])` casts and `(a: any, b: any)` sort callbacks.
 
-```tsx
-interface SessionCardProps {
-  session: any;
-  // ...
-}
-```
+### ~~6. `quotas as any` in `ProjectsSection`~~ FIXED
 
-All field accesses (`.userAgent`, `.ipAddress`, `.token`, `.updatedAt`, `.createdAt`) are unverified. Lines 173, 176, 186 also cast `sessions` to `any[]`. Use Better Auth's session type.
+Fixed: Typed `quotas` as `Quotas` (from `@corates/shared/plans`) in `useSubscription`. Removed `as any` cast in both `ProjectsSection` and `OverviewTab`.
 
-### 6. `quotas as any` in `ProjectsSection`
+### ~~7. `(result as any)?.twoFactorRequired` in signin~~ FIXED
 
-**File**: `packages/landing/src/components/dashboard/ProjectsSection.tsx` line 133
-
-```tsx
-quotaLimit={(quotas as any)?.['projects.max']}
-```
-
-If `quotas['projects.max']` is ever an object rather than a number, `ContactPrompt` will render `[object Object]` in its message string.
-
-### 7. `(result as any)?.twoFactorRequired` in signin
-
-**File**: `packages/landing/src/routes/_auth/signin.tsx` line 122
-
-```tsx
-if ((result as any)?.twoFactorRequired) {
-```
-
-The return type of `authStore.signin` doesn't include `twoFactorRequired`. The property should be part of the store action's declared return type.
+Fixed: Updated `authStore.signin` return type to `Promise<{ twoFactorRequired: true } | unknown>`. Call site uses type narrowing (`'twoFactorRequired' in result`) instead of `as any`.
 
 ### 8. `as any` bypasses Dexie type checking
 
@@ -120,18 +99,9 @@ These persist across React renders, component unmounts, and test runs. A project
 
 Fixed: Defined `ProjectMember` interface in `ProjectContext.tsx` and exported it. Typed `members`, `getMember`, `projectOps` (as `Record<string, unknown>`). Updated `OverviewTab`, `StudyCard`, and `StudyCardHeader` to use `ProjectMember` instead of `any`. Remaining `any`: `ProjectView.tsx:84` (`getPendingProjectData` on store) and `projectOps` consumers (none currently).
 
-### 14. `null as any` to satisfy typed parameters
+### ~~14. `null as any` to satisfy typed parameters~~ FIXED
 
-**Files**:
-
-- `packages/landing/src/components/project/ProjectView.tsx` lines 198, 200
-- `packages/landing/src/components/project/overview-tab/OverviewTab.tsx` line 107
-
-```ts
-getChecklistCount(studies, 'reconcile', null as any);
-```
-
-`getChecklistCount` requires a `userId` param it only uses for the `'todo'` tab. The function signature should accept `string | null` for these tabs instead of requiring `null as any`.
+Fixed: Updated JSDoc types in `checklist-domain.js` for `shouldShowInTab`, `getStudiesForTab`, and `getChecklistCount` to accept `string | null` for userId. Removed all `null as any` casts in `ProjectView` and `OverviewTab`.
 
 ---
 
@@ -198,11 +168,50 @@ These represent the majority of business logic surface area.
 
 ### Remaining `as any` locations
 
-`authStore.ts:341`, `localChecklistsStore.ts:103,117`, `SessionManagement.tsx:79`, `signin.tsx:122`, `LinkedAccountsSection.tsx:138,177,179`, `ProjectView.tsx:84,87-89,198,200`, `OverviewTab.tsx:83,107`.
+`authStore.ts:341`, `localChecklistsStore.ts:103,117`, `LinkedAccountsSection.tsx:138,177,179`, `ProjectView.tsx:84,87-89`.
 
 ### `eslint-disable` comments suppress real warnings
 
 At least 2 remaining locations suppress `react-hooks/exhaustive-deps` with blanket disables. Each should either fix the deps or use a targeted comment explaining exactly why each omitted dep is safe.
+
+---
+
+## New Findings (commits `427502d7`, `c7e770e6` + staged -- project tabs migration)
+
+### ~~22. `setState` called during render body in `ChecklistForm`~~ FIXED
+
+Fixed: Replaced state + effect pattern with derived value. `outcomeId` is now computed from `selectedOutcomeId` -- if the selected outcome is no longer available, it resolves to `null` without triggering a re-render.
+
+### ~~23. Unstable function factory in `CompletedTab` invalidates all child memos~~ FIXED
+
+Fixed: Replaced `createReconciliationProgressGetter` factory with a single stable `getReconciliationProgress(studyId, outcomeId, type)` callback. The parent passes an inline arrow in JSX (still a new ref per render), but the core computation is stable via `useCallback`.
+
+### 24. `<label>` elements not associated with inputs
+
+**Files**:
+- `components/project/add-studies/AddStudiesForm.tsx` line 96
+- `components/project/all-studies-tab/EditPdfMetadataModal.tsx` lines 112, 125, 138, 155, 167
+- `components/project/outcomes/OutcomeManager.tsx` lines 178, 229
+
+Labels lack `htmlFor` and inputs lack `id`. Screen readers cannot associate labels with inputs, and clicking the label text does not focus the input.
+
+### 25. Icon-only buttons lack `aria-label`
+
+**Files**:
+- `components/project/todo-tab/TodoStudyRow.tsx` lines 202-209, 251-256
+- `components/project/outcomes/OutcomeManager.tsx` lines 269-274
+
+Delete/edit/save buttons use only `title` (not reliably announced by screen readers) with no `aria-label`.
+
+### 26. Unused props in `PreviousReviewersView`
+
+**File**: `packages/landing/src/components/project/completed-tab/PreviousReviewersView.tsx` lines 15-23
+
+`study`, `reconciliationProgress`, and `getAssigneeName` are declared in the interface and passed by callers but destructured away and never used.
+
+### ~~27. Duplicate `sortedPdfs`/`citationLine` logic across three components~~ FIXED
+
+Fixed: Extracted `sortStudyPdfs()` and `getCitationLine()` to `components/project/study-utils.ts`. All three study row components now import from the shared module.
 
 ---
 
@@ -211,6 +220,6 @@ At least 2 remaining locations suppress `react-hooks/exhaustive-deps` with blank
 | Priority                               | Count  | Action                                                                    |
 | -------------------------------------- | ------ | ------------------------------------------------------------------------- |
 | Fix immediately (runtime breakage)     | 1      | SolidJS form-errors test                                                  |
-| Fix before merge (type safety + React) | 8      | `as any` casts, stale closure risk                                        |
-| Fix soon (consistency)                 | 7      | Untyped JS files, missing guards, render functions, redirect              |
-| **Total**                              | **16** |                                                                           |
+| Fix before merge (type safety + React) | 4      | `as any` casts, stale closure risk                                        |
+| Fix soon (consistency + a11y)          | 10     | Untyped JS files, missing guards, render functions, redirect, a11y (#24-25), unused props (#26) |
+| **Total**                              | **15** |                                                                           |

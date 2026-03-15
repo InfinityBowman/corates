@@ -4,8 +4,8 @@
  */
 
 import { useQuery } from '@tanstack/react-query';
-import { API_BASE } from '@/config/api.js';
-import { queryKeys } from '@/lib/queryKeys.js';
+import { API_BASE } from '@/config/api';
+import { queryKeys } from '@/lib/queryKeys';
 import { useProjectStore } from '@/stores/projectStore';
 
 const failedCleanupQueue = new Set<string>();

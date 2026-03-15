@@ -5,7 +5,7 @@
  * across dual-reviewer studies.
  */
 
-import { CHECKLIST_STATUS } from '@/constants/checklist-status.js';
+import { CHECKLIST_STATUS } from '@/constants/checklist-status';
 import { getAnswers } from '@/components/checklist/AMSTAR2Checklist/checklist.js';
 import { getQuestionKeys } from '@/components/checklist/AMSTAR2Checklist/checklist-compare.js';
 

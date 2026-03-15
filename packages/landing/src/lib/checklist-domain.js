@@ -5,7 +5,7 @@
  * UI components should use these functions instead of implementing filtering logic inline.
  */
 
-import { CHECKLIST_STATUS } from '@/constants/checklist-status.js';
+import { CHECKLIST_STATUS } from '@/constants/checklist-status';
 
 /**
  * Checks if a checklist is a reconciled checklist
@@ -82,7 +82,7 @@ export function getReconciliationChecklists(study) {
  * Determines if a study should appear in a specific tab
  * @param {Object} study - The study object
  * @param {string} tab - The tab name ('todo', 'reconcile', 'completed')
- * @param {string} userId - The current user ID (required for 'todo' tab)
+ * @param {string | null} userId - The current user ID (required for 'todo' tab)
  * @returns {boolean} True if study should appear in the tab
  */
 export function shouldShowInTab(study, tab, userId) {
@@ -173,7 +173,7 @@ export function shouldShowInTab(study, tab, userId) {
  * Gets filtered studies for a specific tab
  * @param {Array} studies - Array of study objects
  * @param {string} tab - The tab name ('todo', 'reconcile', 'completed')
- * @param {string} userId - The current user ID (required for 'todo' tab)
+ * @param {string | null} userId - The current user ID (required for 'todo' tab)
  * @returns {Array} Filtered array of studies
  */
 export function getStudiesForTab(studies, tab, userId) {
@@ -204,7 +204,7 @@ export function getStudiesForTab(studies, tab, userId) {
  * Gets the count of studies/checklists for a tab badge
  * @param {Array} studies - Array of study objects
  * @param {string} tab - The tab name ('todo', 'reconcile', 'completed')
- * @param {string} userId - The current user ID (required for 'todo' tab)
+ * @param {string | null} userId - The current user ID (required for 'todo' tab)
  * @returns {number} Count for the tab badge
  */
 export function getChecklistCount(studies, tab, userId) {
