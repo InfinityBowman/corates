@@ -11,6 +11,7 @@ import { createDomainError, SYSTEM_ERRORS, AUTH_ERRORS } from '@corates/shared';
 import { resolveOrgId } from './helpers/orgContext.js';
 import { validationHook } from '@/lib/honoValidationHook.js';
 import type { Env } from '../../types';
+import { ErrorResponseSchema } from '@/schemas/common.js';
 
 const billingValidationRoutes = new OpenAPIHono<{ Bindings: Env }>({
   defaultHook: validationHook,
@@ -46,14 +47,6 @@ const PlanValidationResponseSchema = z
   })
   .openapi('PlanValidationResponse');
 
-const ValidationErrorSchema = z
-  .object({
-    code: z.string(),
-    message: z.string(),
-    statusCode: z.number(),
-    details: z.record(z.string(), z.unknown()).optional(),
-  })
-  .openapi('ValidationError');
 
 // Route definitions
 const validatePlanChangeRoute = createRoute({
@@ -75,15 +68,15 @@ const validatePlanChangeRoute = createRoute({
       description: 'Validation result',
     },
     400: {
-      content: { 'application/json': { schema: ValidationErrorSchema } },
+      content: { 'application/json': { schema: ErrorResponseSchema } },
       description: 'Missing targetPlan parameter',
     },
     403: {
-      content: { 'application/json': { schema: ValidationErrorSchema } },
+      content: { 'application/json': { schema: ErrorResponseSchema } },
       description: 'No org found',
     },
     500: {
-      content: { 'application/json': { schema: ValidationErrorSchema } },
+      content: { 'application/json': { schema: ErrorResponseSchema } },
       description: 'Database error',
     },
   },

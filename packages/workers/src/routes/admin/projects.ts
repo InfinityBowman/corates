@@ -18,6 +18,7 @@ import { eq, count, desc, like, sql, and } from 'drizzle-orm';
 import { createDomainError, SYSTEM_ERRORS, PROJECT_ERRORS } from '@corates/shared';
 import { validationHook } from '@/lib/honoValidationHook.js';
 import type { Env } from '../../types';
+import { ErrorResponseSchema } from '@/schemas/common.js';
 
 const projectRoutes = new OpenAPIHono<{ Bindings: Env }>({
   defaultHook: validationHook,
@@ -140,14 +141,6 @@ const SuccessResponseSchema = z
   })
   .openapi('AdminProjectSuccessResponse');
 
-const AdminErrorSchema = z
-  .object({
-    code: z.string(),
-    message: z.string(),
-    statusCode: z.number(),
-    details: z.record(z.string(), z.unknown()).optional(),
-  })
-  .openapi('AdminProjectError');
 
 // Route definitions
 const listProjectsRoute = createRoute({
@@ -186,7 +179,7 @@ const listProjectsRoute = createRoute({
       description: 'Unauthorized - not logged in',
       content: {
         'application/json': {
-          schema: AdminErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },
@@ -194,7 +187,7 @@ const listProjectsRoute = createRoute({
       description: 'Forbidden - not an admin',
       content: {
         'application/json': {
-          schema: AdminErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },
@@ -202,7 +195,7 @@ const listProjectsRoute = createRoute({
       description: 'Database error',
       content: {
         'application/json': {
-          schema: AdminErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },
@@ -233,7 +226,7 @@ const getProjectDetailsRoute = createRoute({
       description: 'Project not found',
       content: {
         'application/json': {
-          schema: AdminErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },
@@ -241,7 +234,7 @@ const getProjectDetailsRoute = createRoute({
       description: 'Database error',
       content: {
         'application/json': {
-          schema: AdminErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },
@@ -273,7 +266,7 @@ const removeProjectMemberRoute = createRoute({
       description: 'Member not found',
       content: {
         'application/json': {
-          schema: AdminErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },
@@ -281,7 +274,7 @@ const removeProjectMemberRoute = createRoute({
       description: 'Database error',
       content: {
         'application/json': {
-          schema: AdminErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },
@@ -312,7 +305,7 @@ const deleteProjectRoute = createRoute({
       description: 'Project not found',
       content: {
         'application/json': {
-          schema: AdminErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },
@@ -320,7 +313,7 @@ const deleteProjectRoute = createRoute({
       description: 'Database error',
       content: {
         'application/json': {
-          schema: AdminErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },

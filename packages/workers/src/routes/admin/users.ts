@@ -33,6 +33,7 @@ import { TIME_DURATIONS } from '@/config/constants.js';
 import { syncMemberToDO } from '@/lib/project-sync.js';
 import { validationHook } from '@/lib/honoValidationHook.js';
 import type { Env, AuthUser, AppVariables } from '../../types';
+import { ErrorResponseSchema } from '@/schemas/common.js';
 
 const userRoutes = new OpenAPIHono<{ Bindings: Env; Variables: AppVariables }>({
   defaultHook: validationHook,
@@ -161,14 +162,6 @@ const SuccessResponseSchema = z
   })
   .openapi('SuccessResponse');
 
-const AdminErrorSchema = z
-  .object({
-    code: z.string(),
-    message: z.string(),
-    statusCode: z.number(),
-    details: z.record(z.string(), z.unknown()).optional(),
-  })
-  .openapi('AdminUserError');
 
 // Route definitions
 const getStatsRoute = createRoute({
@@ -190,7 +183,7 @@ const getStatsRoute = createRoute({
       description: 'Database error',
       content: {
         'application/json': {
-          schema: AdminErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },
@@ -229,7 +222,7 @@ const listUsersRoute = createRoute({
       description: 'Database error',
       content: {
         'application/json': {
-          schema: AdminErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },
@@ -261,7 +254,7 @@ const getUserDetailsRoute = createRoute({
       description: 'User not found',
       content: {
         'application/json': {
-          schema: AdminErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },
@@ -269,7 +262,7 @@ const getUserDetailsRoute = createRoute({
       description: 'Database error',
       content: {
         'application/json': {
-          schema: AdminErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },
@@ -308,7 +301,7 @@ const banUserRoute = createRoute({
       description: 'Cannot ban yourself',
       content: {
         'application/json': {
-          schema: AdminErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },
@@ -316,7 +309,7 @@ const banUserRoute = createRoute({
       description: 'Database error',
       content: {
         'application/json': {
-          schema: AdminErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },
@@ -347,7 +340,7 @@ const unbanUserRoute = createRoute({
       description: 'Database error',
       content: {
         'application/json': {
-          schema: AdminErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },
@@ -386,7 +379,7 @@ const impersonateUserRoute = createRoute({
       description: 'Cannot impersonate yourself',
       content: {
         'application/json': {
-          schema: AdminErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },
@@ -394,7 +387,7 @@ const impersonateUserRoute = createRoute({
       description: 'Forbidden',
       content: {
         'application/json': {
-          schema: AdminErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },
@@ -402,7 +395,7 @@ const impersonateUserRoute = createRoute({
       description: 'Database error',
       content: {
         'application/json': {
-          schema: AdminErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },
@@ -433,7 +426,7 @@ const revokeAllSessionsRoute = createRoute({
       description: 'Database error',
       content: {
         'application/json': {
-          schema: AdminErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },
@@ -465,7 +458,7 @@ const revokeSessionRoute = createRoute({
       description: 'Session not found',
       content: {
         'application/json': {
-          schema: AdminErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },
@@ -473,7 +466,7 @@ const revokeSessionRoute = createRoute({
       description: 'Database error',
       content: {
         'application/json': {
-          schema: AdminErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },
@@ -504,7 +497,7 @@ const deleteUserRoute = createRoute({
       description: 'Cannot delete yourself',
       content: {
         'application/json': {
-          schema: AdminErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },
@@ -512,7 +505,7 @@ const deleteUserRoute = createRoute({
       description: 'User not found',
       content: {
         'application/json': {
-          schema: AdminErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },
@@ -520,7 +513,7 @@ const deleteUserRoute = createRoute({
       description: 'Database error',
       content: {
         'application/json': {
-          schema: AdminErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },

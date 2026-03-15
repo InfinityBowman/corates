@@ -5,7 +5,8 @@
 
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
 import type { ContentfulStatusCode } from 'hono/utils/http-status';
-import type { Context, MiddlewareHandler } from 'hono';
+import type { Context } from 'hono';
+import { runMiddleware } from '@/lib/runMiddleware.js';
 import { createDb } from '@/db/client.js';
 import { projects } from '@/db/schema.js';
 import { eq, count } from 'drizzle-orm';
@@ -18,6 +19,7 @@ import { orgProjectRoutes } from './projects.js';
 import { requireOrgMemberRemoval } from '@/policies';
 import { validationHook } from '@/lib/honoValidationHook.js';
 import type { Env } from '../../types';
+import { ErrorResponseSchema } from '@/schemas/common.js';
 
 // Type definitions for Better Auth organization plugin API methods
 // These are provided by the organization plugin but TypeScript can't infer them
@@ -138,14 +140,6 @@ const UpdateMemberRoleRequestSchema = z
   })
   .openapi('UpdateMemberRoleRequest');
 
-const OrgErrorSchema = z
-  .object({
-    code: z.string(),
-    message: z.string(),
-    statusCode: z.number(),
-    details: z.record(z.string(), z.unknown()).optional(),
-  })
-  .openapi('OrgError');
 
 // Route definitions
 const listOrgsRoute = createRoute({
@@ -161,7 +155,7 @@ const listOrgsRoute = createRoute({
       description: 'List of organizations',
     },
     500: {
-      content: { 'application/json': { schema: OrgErrorSchema } },
+      content: { 'application/json': { schema: ErrorResponseSchema } },
       description: 'Database error',
     },
   },
@@ -190,11 +184,11 @@ const createOrgRoute = createRoute({
       description: 'Organization created',
     },
     403: {
-      content: { 'application/json': { schema: OrgErrorSchema } },
+      content: { 'application/json': { schema: ErrorResponseSchema } },
       description: 'Name required or slug taken',
     },
     500: {
-      content: { 'application/json': { schema: OrgErrorSchema } },
+      content: { 'application/json': { schema: ErrorResponseSchema } },
       description: 'Database error',
     },
   },
@@ -218,11 +212,11 @@ const getOrgRoute = createRoute({
       description: 'Organization details',
     },
     403: {
-      content: { 'application/json': { schema: OrgErrorSchema } },
+      content: { 'application/json': { schema: ErrorResponseSchema } },
       description: 'Not a member or org not found',
     },
     500: {
-      content: { 'application/json': { schema: OrgErrorSchema } },
+      content: { 'application/json': { schema: ErrorResponseSchema } },
       description: 'Database error',
     },
   },
@@ -263,11 +257,11 @@ const updateOrgRoute = createRoute({
       description: 'Organization updated',
     },
     403: {
-      content: { 'application/json': { schema: OrgErrorSchema } },
+      content: { 'application/json': { schema: ErrorResponseSchema } },
       description: 'Not authorized or slug taken',
     },
     500: {
-      content: { 'application/json': { schema: OrgErrorSchema } },
+      content: { 'application/json': { schema: ErrorResponseSchema } },
       description: 'Database error',
     },
   },
@@ -300,11 +294,11 @@ const deleteOrgRoute = createRoute({
       description: 'Organization deleted',
     },
     403: {
-      content: { 'application/json': { schema: OrgErrorSchema } },
+      content: { 'application/json': { schema: ErrorResponseSchema } },
       description: 'Not authorized',
     },
     500: {
-      content: { 'application/json': { schema: OrgErrorSchema } },
+      content: { 'application/json': { schema: ErrorResponseSchema } },
       description: 'Database error',
     },
   },
@@ -328,11 +322,11 @@ const listMembersRoute = createRoute({
       description: 'Members list',
     },
     403: {
-      content: { 'application/json': { schema: OrgErrorSchema } },
+      content: { 'application/json': { schema: ErrorResponseSchema } },
       description: 'Not a member',
     },
     500: {
-      content: { 'application/json': { schema: OrgErrorSchema } },
+      content: { 'application/json': { schema: ErrorResponseSchema } },
       description: 'Database error',
     },
   },
@@ -373,11 +367,11 @@ const addMemberRoute = createRoute({
       description: 'Member added',
     },
     403: {
-      content: { 'application/json': { schema: OrgErrorSchema } },
+      content: { 'application/json': { schema: ErrorResponseSchema } },
       description: 'Not authorized or already a member',
     },
     500: {
-      content: { 'application/json': { schema: OrgErrorSchema } },
+      content: { 'application/json': { schema: ErrorResponseSchema } },
       description: 'Database error',
     },
   },
@@ -420,11 +414,11 @@ const updateMemberRoleRoute = createRoute({
       description: 'Role updated',
     },
     403: {
-      content: { 'application/json': { schema: OrgErrorSchema } },
+      content: { 'application/json': { schema: ErrorResponseSchema } },
       description: 'Not authorized',
     },
     500: {
-      content: { 'application/json': { schema: OrgErrorSchema } },
+      content: { 'application/json': { schema: ErrorResponseSchema } },
       description: 'Database error',
     },
   },
@@ -459,11 +453,11 @@ const removeMemberRoute = createRoute({
       description: 'Member removed',
     },
     403: {
-      content: { 'application/json': { schema: OrgErrorSchema } },
+      content: { 'application/json': { schema: ErrorResponseSchema } },
       description: 'Not authorized or cannot remove last owner',
     },
     500: {
-      content: { 'application/json': { schema: OrgErrorSchema } },
+      content: { 'application/json': { schema: ErrorResponseSchema } },
       description: 'Database error',
     },
   },
@@ -496,38 +490,15 @@ const setActiveOrgRoute = createRoute({
       description: 'Active organization set',
     },
     403: {
-      content: { 'application/json': { schema: OrgErrorSchema } },
+      content: { 'application/json': { schema: ErrorResponseSchema } },
       description: 'Not a member',
     },
     500: {
-      content: { 'application/json': { schema: OrgErrorSchema } },
+      content: { 'application/json': { schema: ErrorResponseSchema } },
       description: 'Database error',
     },
   },
 });
-
-/**
- * Helper to run middleware manually and check for early response
- */
-async function runMiddleware(middleware: MiddlewareHandler, c: Context): Promise<Response | null> {
-  let nextCalled = false;
-
-  const result = await middleware(c, async () => {
-    nextCalled = true;
-  });
-
-  // If middleware returned a Response (early return), return it
-  if (result instanceof Response) {
-    return result;
-  }
-
-  // If next() wasn't called, the middleware returned early via c.json()
-  if (!nextCalled && c.res) {
-    return c.res;
-  }
-
-  return null;
-}
 
 // Apply auth middleware to all routes
 orgRoutes.use('*', requireAuth);

@@ -7,7 +7,7 @@
 
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
 import type { ContentfulStatusCode } from 'hono/utils/http-status';
-import type { Context, MiddlewareHandler } from 'hono';
+import { runMiddleware } from '@/lib/runMiddleware.js';
 import { createDb } from '@/db/client.js';
 import {
   projectInvitations,
@@ -38,6 +38,7 @@ import { requireOrgWriteAccess } from '@/middleware/requireOrgWriteAccess.js';
 import { checkCollaboratorQuota } from '@/lib/quotaTransaction.js';
 import { validationHook } from '@/lib/honoValidationHook.js';
 import type { Env } from '../../types';
+import { ErrorResponseSchema } from '@/schemas/common.js';
 
 const orgInvitationRoutes = new OpenAPIHono<{ Bindings: Env }>({
   defaultHook: validationHook,
@@ -106,15 +107,6 @@ const InvitationAcceptedSchema = z
   })
   .openapi('InvitationAccepted');
 
-const InvitationErrorSchema = z
-  .object({
-    code: z.string(),
-    message: z.string(),
-    statusCode: z.number(),
-    details: z.record(z.string(), z.unknown()).optional(),
-  })
-  .openapi('InvitationError');
-
 // Route definitions
 const listInvitationsRoute = createRoute({
   method: 'get',
@@ -135,7 +127,7 @@ const listInvitationsRoute = createRoute({
       description: 'Unauthorized',
       content: {
         'application/json': {
-          schema: InvitationErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },
@@ -143,7 +135,7 @@ const listInvitationsRoute = createRoute({
       description: 'Forbidden - not a project member',
       content: {
         'application/json': {
-          schema: InvitationErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },
@@ -151,7 +143,7 @@ const listInvitationsRoute = createRoute({
       description: 'Database error',
       content: {
         'application/json': {
-          schema: InvitationErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },
@@ -187,7 +179,7 @@ const createInvitationRoute = createRoute({
       description: 'Validation error',
       content: {
         'application/json': {
-          schema: InvitationErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },
@@ -195,7 +187,7 @@ const createInvitationRoute = createRoute({
       description: 'Unauthorized',
       content: {
         'application/json': {
-          schema: InvitationErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },
@@ -203,7 +195,7 @@ const createInvitationRoute = createRoute({
       description: 'Forbidden - not a project owner',
       content: {
         'application/json': {
-          schema: InvitationErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },
@@ -211,7 +203,7 @@ const createInvitationRoute = createRoute({
       description: 'Invitation already accepted',
       content: {
         'application/json': {
-          schema: InvitationErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },
@@ -219,7 +211,7 @@ const createInvitationRoute = createRoute({
       description: 'Database error',
       content: {
         'application/json': {
-          schema: InvitationErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },
@@ -250,7 +242,7 @@ const cancelInvitationRoute = createRoute({
       description: 'Invalid invitation ID',
       content: {
         'application/json': {
-          schema: InvitationErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },
@@ -258,7 +250,7 @@ const cancelInvitationRoute = createRoute({
       description: 'Unauthorized',
       content: {
         'application/json': {
-          schema: InvitationErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },
@@ -266,7 +258,7 @@ const cancelInvitationRoute = createRoute({
       description: 'Forbidden - not a project owner',
       content: {
         'application/json': {
-          schema: InvitationErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },
@@ -274,7 +266,7 @@ const cancelInvitationRoute = createRoute({
       description: 'Invitation already accepted',
       content: {
         'application/json': {
-          schema: InvitationErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },
@@ -282,7 +274,7 @@ const cancelInvitationRoute = createRoute({
       description: 'Database error',
       content: {
         'application/json': {
-          schema: InvitationErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },
@@ -319,7 +311,7 @@ const acceptInvitationRoute = createRoute({
       description: 'Invalid or expired token',
       content: {
         'application/json': {
-          schema: InvitationErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },
@@ -327,7 +319,7 @@ const acceptInvitationRoute = createRoute({
       description: 'Unauthorized',
       content: {
         'application/json': {
-          schema: InvitationErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },
@@ -335,7 +327,7 @@ const acceptInvitationRoute = createRoute({
       description: 'Forbidden - email mismatch',
       content: {
         'application/json': {
-          schema: InvitationErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },
@@ -343,7 +335,7 @@ const acceptInvitationRoute = createRoute({
       description: 'Already a project member',
       content: {
         'application/json': {
-          schema: InvitationErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },
@@ -351,33 +343,12 @@ const acceptInvitationRoute = createRoute({
       description: 'Database error',
       content: {
         'application/json': {
-          schema: InvitationErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },
   },
 });
-
-/**
- * Helper to run middleware manually and check for early response
- */
-async function runMiddleware(middleware: MiddlewareHandler, c: Context): Promise<Response | null> {
-  let nextCalled = false;
-
-  const result = await middleware(c, async () => {
-    nextCalled = true;
-  });
-
-  if (result instanceof Response) {
-    return result;
-  }
-
-  if (!nextCalled && c.res) {
-    return c.res;
-  }
-
-  return null;
-}
 
 /**
  * GET /api/orgs/:orgId/projects/:projectId/invitations

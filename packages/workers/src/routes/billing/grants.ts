@@ -12,6 +12,7 @@ import { resolveOrgIdWithRole } from './helpers/orgContext.js';
 import { requireOrgOwner } from '@/policies';
 import { validationHook } from '@/lib/honoValidationHook.js';
 import type { Env } from '../../types';
+import { ErrorResponseSchema } from '@/schemas/common.js';
 
 const billingGrantRoutes = new OpenAPIHono<{ Bindings: Env }>({
   defaultHook: validationHook,
@@ -26,14 +27,6 @@ const TrialStartSuccessSchema = z
   })
   .openapi('TrialStartSuccess');
 
-const GrantErrorSchema = z
-  .object({
-    code: z.string(),
-    message: z.string(),
-    statusCode: z.number(),
-    details: z.record(z.string(), z.unknown()).optional(),
-  })
-  .openapi('GrantError');
 
 // Route definitions
 const startTrialRoute = createRoute({
@@ -50,15 +43,15 @@ const startTrialRoute = createRoute({
       description: 'Trial started successfully',
     },
     400: {
-      content: { 'application/json': { schema: GrantErrorSchema } },
+      content: { 'application/json': { schema: ErrorResponseSchema } },
       description: 'Trial already exists',
     },
     403: {
-      content: { 'application/json': { schema: GrantErrorSchema } },
+      content: { 'application/json': { schema: ErrorResponseSchema } },
       description: 'Not org owner',
     },
     500: {
-      content: { 'application/json': { schema: GrantErrorSchema } },
+      content: { 'application/json': { schema: ErrorResponseSchema } },
       description: 'Internal error',
     },
   },

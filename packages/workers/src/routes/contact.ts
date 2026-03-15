@@ -16,6 +16,7 @@ import type { ValidationErrorCode } from '@corates/shared';
 import { escapeHtml } from '@/lib/escapeHtml';
 import { queueEmail } from '@/lib/email-queue';
 import type { Env } from '../types';
+import { ErrorResponseSchema } from '@/schemas/common.js';
 
 const contact = new OpenAPIHono<{ Bindings: Env }>({
   defaultHook: (result, c) => {
@@ -104,15 +105,6 @@ const ContactSuccessSchema = z
   })
   .openapi('ContactSuccess');
 
-const ContactErrorSchema = z
-  .object({
-    code: z.string().openapi({ example: 'VALIDATION_ERROR' }),
-    message: z.string().openapi({ example: 'Name is required' }),
-    statusCode: z.number().openapi({ example: 400 }),
-    field: z.string().optional().openapi({ example: 'name' }),
-    details: z.record(z.string(), z.unknown()).optional(),
-  })
-  .openapi('ContactError');
 
 // Route definition
 const submitContactRoute = createRoute({
@@ -143,7 +135,7 @@ const submitContactRoute = createRoute({
     400: {
       content: {
         'application/json': {
-          schema: ContactErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
       description: 'Validation error',
@@ -151,7 +143,7 @@ const submitContactRoute = createRoute({
     429: {
       content: {
         'application/json': {
-          schema: ContactErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
       description: 'Rate limit exceeded',
@@ -159,7 +151,7 @@ const submitContactRoute = createRoute({
     503: {
       content: {
         'application/json': {
-          schema: ContactErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
       description: 'Email service unavailable',

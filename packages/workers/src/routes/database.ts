@@ -16,6 +16,7 @@ import {
   SYSTEM_ERRORS,
 } from '@corates/shared';
 import type { Env } from '../types';
+import { ErrorResponseSchema } from '@/schemas/common.js';
 
 const dbRoutes = new OpenAPIHono<{ Bindings: Env }>();
 
@@ -47,14 +48,6 @@ const MigrationResponseSchema = z
   })
   .openapi('MigrationResponse');
 
-const ErrorSchema = z
-  .object({
-    code: z.string(),
-    message: z.string(),
-    statusCode: z.number(),
-    details: z.record(z.string(), z.unknown()).optional(),
-  })
-  .openapi('DbError');
 
 // List users route
 const listUsersRoute = createRoute({
@@ -74,7 +67,7 @@ const listUsersRoute = createRoute({
       description: 'List of users',
     },
     500: {
-      content: { 'application/json': { schema: ErrorSchema } },
+      content: { 'application/json': { schema: ErrorResponseSchema } },
       description: 'Database error',
     },
   },
@@ -118,7 +111,7 @@ const createUserRoute = createRoute({
   description: 'This endpoint is deprecated. Use /api/auth/sign-up instead.',
   responses: {
     400: {
-      content: { 'application/json': { schema: ErrorSchema } },
+      content: { 'application/json': { schema: ErrorResponseSchema } },
       description: 'Use auth register endpoint',
     },
   },
@@ -152,7 +145,7 @@ const checkMigrationRoute = createRoute({
       description: 'Migration status',
     },
     500: {
-      content: { 'application/json': { schema: ErrorSchema } },
+      content: { 'application/json': { schema: ErrorResponseSchema } },
       description: 'Database error',
     },
   },

@@ -12,6 +12,7 @@ import { createDomainError, SYSTEM_ERRORS } from '@corates/shared';
 import { createStripeClient } from '@/lib/stripe.js';
 import { validationHook } from '@/lib/honoValidationHook.js';
 import type { Env } from '../../types';
+import { ErrorResponseSchema } from '@/schemas/common.js';
 
 const statsRoutes = new OpenAPIHono<{ Bindings: Env }>({
   defaultHook: validationHook,
@@ -97,14 +98,6 @@ const RevenueResponseSchema = z
   })
   .openapi('RevenueResponse');
 
-const StatsErrorSchema = z
-  .object({
-    code: z.string(),
-    message: z.string(),
-    statusCode: z.number(),
-    details: z.record(z.string(), z.unknown()).optional(),
-  })
-  .openapi('StatsError');
 
 // Route definitions
 const signupsRoute = createRoute({
@@ -134,7 +127,7 @@ const signupsRoute = createRoute({
       description: 'Database error',
       content: {
         'application/json': {
-          schema: StatsErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },
@@ -168,7 +161,7 @@ const organizationsRoute = createRoute({
       description: 'Database error',
       content: {
         'application/json': {
-          schema: StatsErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },
@@ -202,7 +195,7 @@ const projectsRoute = createRoute({
       description: 'Database error',
       content: {
         'application/json': {
-          schema: StatsErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },
@@ -236,7 +229,7 @@ const webhooksRoute = createRoute({
       description: 'Database error',
       content: {
         'application/json': {
-          schema: StatsErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },
@@ -262,7 +255,7 @@ const subscriptionsRoute = createRoute({
       description: 'Stripe API error',
       content: {
         'application/json': {
-          schema: StatsErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },
@@ -296,7 +289,7 @@ const revenueRoute = createRoute({
       description: 'Stripe API error',
       content: {
         'application/json': {
-          schema: StatsErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },

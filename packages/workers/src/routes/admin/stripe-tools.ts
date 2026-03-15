@@ -13,6 +13,7 @@ import type Stripe from 'stripe';
 import { createStripeClient } from '@/lib/stripe.js';
 import { validationHook } from '@/lib/honoValidationHook.js';
 import type { Env } from '../../types';
+import { ErrorResponseSchema } from '@/schemas/common.js';
 
 const stripeToolsRoutes = new OpenAPIHono<{ Bindings: Env }>({
   defaultHook: validationHook,
@@ -179,14 +180,6 @@ const SubscriptionsResponseSchema = z
   })
   .openapi('SubscriptionsResponse');
 
-const StripeErrorSchema = z
-  .object({
-    code: z.string(),
-    message: z.string(),
-    statusCode: z.number(),
-    details: z.record(z.string(), z.unknown()).optional(),
-  })
-  .openapi('StripeToolsError');
 
 // Route definitions
 const customerLookupRoute = createRoute({
@@ -214,7 +207,7 @@ const customerLookupRoute = createRoute({
       description: 'Missing required parameter',
       content: {
         'application/json': {
-          schema: StripeErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },
@@ -222,7 +215,7 @@ const customerLookupRoute = createRoute({
       description: 'Stripe API error',
       content: {
         'application/json': {
-          schema: StripeErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },
@@ -263,7 +256,7 @@ const portalLinkRoute = createRoute({
       description: 'Validation error',
       content: {
         'application/json': {
-          schema: StripeErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },
@@ -271,7 +264,7 @@ const portalLinkRoute = createRoute({
       description: 'Stripe API error',
       content: {
         'application/json': {
-          schema: StripeErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },
@@ -305,7 +298,7 @@ const invoicesRoute = createRoute({
       description: 'Stripe API error',
       content: {
         'application/json': {
-          schema: StripeErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },
@@ -336,7 +329,7 @@ const paymentMethodsRoute = createRoute({
       description: 'Stripe API error',
       content: {
         'application/json': {
-          schema: StripeErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },
@@ -367,7 +360,7 @@ const subscriptionsRoute = createRoute({
       description: 'Stripe API error',
       content: {
         'application/json': {
-          schema: StripeErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },

@@ -20,6 +20,7 @@ import { requireOrgOwner } from '@/policies';
 import { createSingleProjectCheckout } from '@/commands';
 import { validationHook } from '@/lib/honoValidationHook';
 import type { Env } from '@/types';
+import { ErrorResponseSchema } from '@/schemas/common.js';
 
 const billingCheckoutRoutes = new OpenAPIHono<{ Bindings: Env }>({
   defaultHook: validationHook,
@@ -74,14 +75,6 @@ const SingleProjectCheckoutResponseSchema = z
   })
   .openapi('SingleProjectCheckoutResponse');
 
-const CheckoutErrorSchema = z
-  .object({
-    code: z.string(),
-    message: z.string(),
-    statusCode: z.number(),
-    details: z.record(z.string(), z.unknown()).optional(),
-  })
-  .openapi('CheckoutError');
 
 // Route definitions
 const validateCouponRoute = createRoute({
@@ -137,19 +130,19 @@ const checkoutRoute = createRoute({
       description: 'Checkout session created',
     },
     400: {
-      content: { 'application/json': { schema: CheckoutErrorSchema } },
+      content: { 'application/json': { schema: ErrorResponseSchema } },
       description: 'Invalid tier or downgrade validation failed',
     },
     403: {
-      content: { 'application/json': { schema: CheckoutErrorSchema } },
+      content: { 'application/json': { schema: ErrorResponseSchema } },
       description: 'Not org owner',
     },
     429: {
-      content: { 'application/json': { schema: CheckoutErrorSchema } },
+      content: { 'application/json': { schema: ErrorResponseSchema } },
       description: 'Rate limit exceeded',
     },
     500: {
-      content: { 'application/json': { schema: CheckoutErrorSchema } },
+      content: { 'application/json': { schema: ErrorResponseSchema } },
       description: 'Internal error',
     },
   },
@@ -169,15 +162,15 @@ const singleProjectCheckoutRoute = createRoute({
       description: 'Checkout session created',
     },
     403: {
-      content: { 'application/json': { schema: CheckoutErrorSchema } },
+      content: { 'application/json': { schema: ErrorResponseSchema } },
       description: 'Not org owner',
     },
     429: {
-      content: { 'application/json': { schema: CheckoutErrorSchema } },
+      content: { 'application/json': { schema: ErrorResponseSchema } },
       description: 'Rate limit exceeded',
     },
     500: {
-      content: { 'application/json': { schema: CheckoutErrorSchema } },
+      content: { 'application/json': { schema: ErrorResponseSchema } },
       description: 'Internal error or Stripe not configured',
     },
   },

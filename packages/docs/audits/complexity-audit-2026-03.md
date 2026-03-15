@@ -6,13 +6,13 @@ A full-codebase audit focused on identifying sources of complexity, maintenance 
 
 ## Executive Summary
 
-The codebase has solid architectural foundations -- clean store patterns, good package boundaries, correct SolidJS reactivity usage, and a well-structured shared package. The primary sources of complexity are:
+The codebase has solid architectural foundations -- good package boundaries, a well-structured shared package, and clean backend patterns. The SolidJS web package is being retired imminently (within the week) in favor of the React-based landing package, so frontend findings focus on the landing package and shared concerns only. The primary sources of complexity are:
 
-1. **Systematic file duplication** between web and landing packages (15+ files)
-2. **Large files** concentrating too many concerns (12 files over 500 lines in production code)
-3. **Missing type safety** in the web package (`strict: false`, `checkJs: false`)
-4. **Security gaps** in the backend (CSRF, user deletion, auth bypass)
-5. **Duplicated backend patterns** (error schemas, middleware helpers, invitation logic)
+1. **Framework-agnostic utilities duplicated in landing** that should be extracted to `@corates/shared` before the web package is deleted (13 files)
+2. **Security gaps** in the backend (CSRF, user deletion, auth bypass)
+3. **Large backend files** concentrating too many concerns
+4. **Duplicated backend patterns** (error schemas, middleware helpers, invitation logic)
+5. **Type safety gaps** between frontend and backend (no shared API contract)
 
 ---
 
@@ -71,57 +71,45 @@ Every `DB_ERROR` construction passes `originalError: error.message` unconditiona
 
 ## Part 2: Architecture -- The Duplication Problem
 
-### A1. Web/Landing file duplication (highest maintenance risk)
+### A1. Framework-agnostic utilities must be extracted before web package deletion
 
-The React migration has created 15+ utility files that are byte-for-byte identical or near-identical across both packages:
+The web package is being deleted within the week. 13 framework-agnostic utility files currently live as local copies in the landing package. Once web is gone, these become the only copies with no upstream reference. They should be extracted to `@corates/shared` or a new `@corates/lib` package now.
 
-| Category           | Files                                                                                                                                             |
-| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Pure utilities** | `referenceParser.js`, `checklist-domain.js`, `pdfValidation.js`, `pdfUtils.js`, `errorLogger.js`, `formStatePersistence.js`, `error-utils.js/.ts` |
-| **Primitives**     | `db.js`, `pdfCache.js`, `avatarCache.js`                                                                                                          |
-| **Registries**     | `checklist-registry/index.js`, `checklist-registry/types.js`                                                                                      |
-| **API clients**    | `google-drive.js`, `pdf-api.js`, `account-merge.js/.ts`                                                                                           |
-| **Project sync**   | `useProject/sync.js`, `useProject/outcomes.js`, `useProject/studies.js`, `useProject/reconciliation.js`, `useProject/annotations.js`              |
-| **Tests**          | All `lib/__tests__/` files are copies                                                                                                             |
+**Immediately shareable (identical or import-path-only differences):**
 
-**Why this matters:** A bug fix to `referenceParser.js` must be applied to both packages. The `.js` (web) and `.ts` (landing) versions have already started diverging (e.g., `error-utils` is 266 lines in web vs 204 in landing).
+| Category           | Files                                                                                                |
+| ------------------ | ---------------------------------------------------------------------------------------------------- |
+| **Pure utilities** | `referenceParser.js`, `pdfValidation.js`, `pdfUtils.js`, `errorLogger.js`, `formStatePersistence.js` |
+| **Primitives**     | `db.js`, `pdfCache.js`, `avatarCache.js`                                                             |
+| **Registries**     | `checklist-registry/types.js`                                                                        |
+| **API clients**    | `google-drive.js`, `pdf-api.js`                                                                      |
+| **Project sync**   | `useProject/outcomes.js`, `useProject/reconciliation.js`                                             |
 
-**Recommendation:** Extract framework-agnostic utilities into `@corates/shared` or a new `@corates/lib` package. These files have zero framework dependencies -- they work with plain JS/TS.
+**Require minor work before sharing:**
 
-### A2. Three identical ReconciliationWithPdf components
+| File                          | Issue                                                                                                                                                                                                                      |
+| ----------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `checklist-domain.js`         | Landing has more accurate JSDoc types (`string \| null` for userId) -- use landing version                                                                                                                                 |
+| `checklist-registry/index.js` | Landing already imports from `@corates/shared` (correct); web still imports from component-local files                                                                                                                     |
+| `useProject/sync.js`          | Framework-specific store access (`useProjectStore.getState()` vs `projectStore`). Core sync logic (buildStudyFromYMap, etc.) is identical and extractable; store interaction stays in landing                              |
+| `useProject/studies.js`       | Same store access difference. CRUD logic is identical and extractable                                                                                                                                                      |
+| `useProject/annotations.js`   | Landing version is cleaner (removed debug console.logs from web). Use landing version                                                                                                                                      |
+| `error-utils`                 | Most diverged file. Landing has TypeScript types, different navigate API shape (`{ to: '/signin' }` vs `('/signin')`), and different route name (`/check-email` vs `/verify-email`). Needs a navigate abstraction to share |
+| `account-merge`               | Landing has TypeScript interfaces. Runtime logic identical. Use landing `.ts` version                                                                                                                                      |
 
-These three files are ~95% identical (182-183 lines each):
-
-- `reconcile-tab/ReconciliationWithPdf.jsx` (AMSTAR2)
-- `reconcile-tab/rob2-reconcile/ROB2ReconciliationWithPdf.jsx`
-- `reconcile-tab/robins-i-reconcile/RobinsIReconciliationWithPdf.jsx`
-
-They share identical: store creation, presence initialization, header layout, split-screen setup, remote cursors, and PDF viewer rendering. The only differences are the title string, the reconciliation component, and the navbar component.
-
-**Recommendation:** One parameterized `ReconciliationWithPdf` component accepting `{ title, ReconciliationComponent, NavbarComponent }`.
-
-### A3. PDF loading logic duplicated between two wrappers
-
-The cache-check -> cloud-download -> store-in-cache pattern (5 signals, 3 memos, 2 effects, 1 handler -- ~60 lines) is copy-pasted between:
-
-- `components/checklist/ChecklistYjsWrapper.jsx:150-196`
-- `components/project/reconcile-tab/ReconciliationWrapper.jsx:142-183`
-
-**Recommendation:** Extract a `usePdfLoader` primitive.
-
-### A4. `runMiddleware` helper duplicated in 5 backend files
+### A2. `runMiddleware` helper duplicated in 5 backend files
 
 The same function is copy-pasted into 5 files under `routes/orgs/`. This exists because OpenAPIHono cannot chain `.use()` middleware on specific openapi routes.
 
 **Recommendation:** Extract to `lib/runMiddleware.ts`.
 
-### A5. Error schema boilerplate duplicated in 10+ route files
+### A3. Error schema boilerplate duplicated in 10+ route files
 
 Every route file defines its own Zod error schema (`OrgErrorSchema`, `ProjectErrorSchema`, `PdfErrorSchema`, etc.) with identical structure. A `schemas/common.ts` file exists but is not used for this.
 
 **Recommendation:** Define one `ErrorResponseSchema` in `schemas/common.ts` and import everywhere.
 
-### A6. Duplicate invitation acceptance logic
+### A4. Duplicate invitation acceptance logic
 
 Invitation acceptance is implemented twice with largely the same logic:
 
@@ -132,61 +120,49 @@ Both do token lookup, email verification, org membership check, batch insert, DO
 
 **Recommendation:** Extract shared logic into a command/service function.
 
-### A7. Sidebar resize/mobile logic duplicated
-
-`Sidebar.jsx` and `SettingsSidebar.jsx` duplicate resize drag handling, mobile overlay mount/animate, escape key close, and route change close.
-
-**Recommendation:** Extract a `useSidebarBehavior` primitive.
-
 ---
 
 ## Part 3: File Size Hotspots
 
-Production files over 500 lines that should be split:
+Backend files over 500 lines that should be split:
 
-| Lines | File                                                                                | Recommended split                                                                                          |
-| ----- | ----------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
-| 804   | `web/api/better-auth-store.js`                                                      | Core auth state / social auth / 2FA / profile methods / session management                                 |
-| 829   | `web/components/checklist/AMSTAR2Checklist.jsx`                                     | Data-driven approach: 16 Question components share ~80% structure, extract per-question handlers to config |
-| 697   | `web/components/project/reconcile-tab/rob2-reconcile/ROB2Reconciliation.jsx`        | After extracting shared ReconciliationWithPdf (A2)                                                         |
-| 658   | `web/components/project/reconcile-tab/robins-i-reconcile/RobinsIReconciliation.jsx` | Same as above                                                                                              |
-| 654   | `web/components/sidebar/Sidebar.jsx`                                                | Extract resize behavior (A7), project tree, and local checklists into sub-components                       |
-| 619   | `web/components/billing/PricingTable.jsx`                                           | Plan card component, feature comparison, billing toggle                                                    |
-| 584   | `web/components/project/overview-tab/ReviewerAssignment.jsx`                        | Percentage slider, preset selector, allocation logic as utilities                                          |
-| 551   | `web/components/checklist/ChecklistYjsWrapper.jsx`                                  | Extract usePdfLoader (A3), completion logic, annotation handling                                           |
-| 938   | `workers/routes/orgs/index.ts`                                                      | Split by resource: org CRUD, org settings, org membership                                                  |
-| 931   | `workers/routes/orgs/invitations.ts`                                                | After extracting shared invitation logic (A6)                                                              |
-| 808   | `workers/routes/orgs/pdfs.ts`                                                       | PDF upload, download, metadata as separate route files                                                     |
-| 554   | `workers/routes/google-drive.ts`                                                    | Extract token management/refresh into a service module                                                     |
-| 715   | `workers/durable-objects/ProjectDoc.ts`                                             | Extract RPC handlers, member sync logic into separate modules                                              |
+| Lines | File                                    | Recommended split                                                    |
+| ----- | --------------------------------------- | -------------------------------------------------------------------- |
+| 938   | `workers/routes/orgs/index.ts`          | Split by resource: org CRUD, org settings, org membership            |
+| 931   | `workers/routes/orgs/invitations.ts`    | After extracting shared invitation logic (A4)                        |
+| 808   | `workers/routes/orgs/pdfs.ts`           | PDF upload, download, metadata as separate route files               |
+| 733   | `workers/routes/orgs/members.ts`        | Member CRUD, role management, invitation-related members logic       |
+| 715   | `workers/durable-objects/ProjectDoc.ts` | Extract RPC handlers, member sync logic into separate modules        |
+| 654   | `workers/auth/config.ts`                | Configuration-heavy by nature, but plugin setup could be modularized |
+| 554   | `workers/routes/google-drive.ts`        | Extract token management/refresh into a service module               |
+
+Landing package files to watch as the migration continues:
+
+| Lines | File                                                             | Notes                                                             |
+| ----- | ---------------------------------------------------------------- | ----------------------------------------------------------------- |
+| 570   | `landing/components/FeatureShowcase.tsx`                         | Marketing component, acceptable for now                           |
+| 508   | `landing/components/billing/PricingTable.tsx`                    | Plan card, feature comparison, billing toggle could be split      |
+| 501   | `landing/components/project/overview-tab/ReviewerAssignment.tsx` | Percentage slider, preset selector, allocation logic as utilities |
 
 ---
 
 ## Part 4: Type Safety Gaps
 
-### T1. The web package has zero type checking
-
-`packages/web/tsconfig.json` sets `strict: false` and `checkJs: false`. The web package imports from strictly-typed `@corates/shared` but gets no compile-time benefit. Bugs that would be caught in every other package slip through here.
-
-**Impact:** This is the largest package by code volume, and the one most likely to have subtle data-shape bugs.
-
-**Recommendation:** Incrementally enable `checkJs: true` on a per-directory basis, or convert high-value files to TypeScript (stores, primitives, API layer first).
-
-### T2. No shared API contract types
+### T1. No shared API contract types
 
 Workers defines routes with Zod schemas, but these types are not exported. The frontend constructs API calls with `apiFetch` and manually shapes data. Any API change requires coordinating across packages by convention, not compilation.
 
 **Recommendation:** Generate TypeScript types from the OpenAPI schema (already generated via `pnpm openapi`) and consume them in the frontend.
 
-### T3. Database schema types locked in workers
+### T2. Database schema types locked in workers
 
 Drizzle schema at `workers/db/schema.ts` defines all table shapes, but inferred types are never exported. Frontend code has no typed knowledge of row shapes.
 
-### T4. Subscription tier naming inconsistency
+### T3. Subscription tier naming inconsistency
 
 `SUBSCRIPTION_TIERS` in `workers/config/constants.ts` uses `'free' | 'basic' | 'pro' | 'team' | 'enterprise'`. `PlanId` in `@corates/shared/plans` uses `'free' | 'starter_team' | 'team' | 'unlimited_team'`. These should be a single source of truth.
 
-### T5. Duplicated interfaces within workers
+### T4. Duplicated interfaces within workers
 
 `MemberData` / `ProjectMeta` / `ProjectMember` are defined in both `lib/project-sync.ts` and `lib/syncWithRetry.ts` with different field sets.
 
@@ -232,22 +208,12 @@ Every OpenAPIHono route handler is preceded by `// @ts-expect-error OpenAPIHono 
 
 ## Part 6: Code Quality
 
-### Q1. Console.log pollution in production code
-
-`ChecklistYjsWrapper.jsx` has 7 `console.log` statements and `useProject/annotations.js` has 3 more -- clearly debug logging left in.
-
-### Q2. Dead code
+### Q1. Dead code in workers
 
 - `asyncHandler` in `middleware/errorHandler.ts` is a no-op function that does nothing
-- `recents` in `Sidebar.jsx:85` is hardcoded to `() => []` with the real hook commented out
 - `routes/members.ts` at the root level appears unused (not imported in `index.ts`)
-- `ProjectViewV2.jsx` (2803 lines) is a mock file inflating the codebase
 
-### Q3. Org barrel export leaks project component
-
-`components/org/index.js:7` re-exports `ProjectView` from `@/components/project/ProjectView.jsx`. An org barrel should not export project components.
-
-### Q4. Vitest version mismatch prevents shared test infrastructure
+### Q2. Vitest version mismatch prevents shared test infrastructure
 
 Workers uses `vitest@3.2.0` (pinned for `@cloudflare/vitest-pool-workers` compatibility). Everything else uses `vitest@^4.0.18`. Test utilities cannot be shared across packages.
 
@@ -261,8 +227,8 @@ Workers uses `vitest@3.2.0` (pinned for `@cloudflare/vitest-pool-workers` compat
 2. S2 -- Add CSRF protection to state-changing endpoints
 3. S3 -- Add org-level auth to Google Drive import
 
-**Short-term (stop the bleeding):** 4. A1 -- Extract shared utilities to prevent web/landing divergence from getting worse 5. Q1 -- Remove console.log statements 6. S4 -- Gate error detail leaking
+**Short-term (before web package deletion):** 4. A1 -- Extract framework-agnostic utilities to `@corates/shared` before the web package is deleted and the landing copies become orphaned 5. S4 -- Gate error detail leaking in production
 
-**Medium-term (reduce complexity):** 7. A2 -- Unify ReconciliationWithPdf components 8. A3 -- Extract usePdfLoader primitive 9. A4/A5 -- Extract runMiddleware and error schemas 10. Split the largest files (better-auth-store, sidebar, AMSTAR2Checklist)
+**Medium-term (reduce backend complexity):** 6. A2/A3 -- Extract runMiddleware and error schemas 7. A4 -- Unify invitation acceptance logic 8. Split the largest backend route files (orgs/index.ts, orgs/invitations.ts, orgs/pdfs.ts) 9. B1 -- Cache orgBilling resolution across middleware
 
-**Longer-term (structural improvements):** 11. T1 -- Incrementally enable type checking in web package 12. T2 -- Generate API types from OpenAPI schema 13. B1 -- Cache orgBilling resolution across middleware 14. B4 -- Move rate limiting to Cloudflare's native solution 15. T4 -- Unify subscription tier naming
+**Longer-term (structural improvements):** 10. T1 -- Generate API types from OpenAPI schema for landing package 11. T3 -- Unify subscription tier naming 12. B4 -- Move rate limiting to Cloudflare's native solution 13. B5 -- Address the 106 `@ts-expect-error` comments with a route factory pattern

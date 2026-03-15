@@ -22,6 +22,7 @@ import {
 import { validationHook } from '@/lib/honoValidationHook.js';
 import { requireProjectEdit } from '@/policies/projects.js';
 import type { Env } from '../types';
+import { ErrorResponseSchema } from '@/schemas/common.js';
 
 const googleDriveRoutes = new OpenAPIHono<{ Bindings: Env }>({
   defaultHook: validationHook,
@@ -66,14 +67,6 @@ const ImportSuccessSchema = z
   })
   .openapi('ImportSuccess');
 
-const DriveErrorSchema = z
-  .object({
-    code: z.string(),
-    message: z.string(),
-    statusCode: z.number(),
-    details: z.record(z.string(), z.unknown()).optional(),
-  })
-  .openapi('DriveError');
 
 interface GoogleTokens {
   accessToken: string | null;
@@ -223,7 +216,7 @@ const pickerTokenRoute = createRoute({
       description: 'Picker token',
     },
     401: {
-      content: { 'application/json': { schema: DriveErrorSchema } },
+      content: { 'application/json': { schema: ErrorResponseSchema } },
       description: 'Google not connected',
     },
   },
@@ -344,15 +337,15 @@ const importRoute = createRoute({
       description: 'File imported successfully',
     },
     400: {
-      content: { 'application/json': { schema: DriveErrorSchema } },
+      content: { 'application/json': { schema: ErrorResponseSchema } },
       description: 'Validation error or invalid file type',
     },
     401: {
-      content: { 'application/json': { schema: DriveErrorSchema } },
+      content: { 'application/json': { schema: ErrorResponseSchema } },
       description: 'Google not connected',
     },
     404: {
-      content: { 'application/json': { schema: DriveErrorSchema } },
+      content: { 'application/json': { schema: ErrorResponseSchema } },
       description: 'File not found',
     },
   },

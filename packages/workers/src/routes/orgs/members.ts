@@ -5,7 +5,8 @@
 
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
 import type { ContentfulStatusCode } from 'hono/utils/http-status';
-import type { Context, MiddlewareHandler } from 'hono';
+import type { Context } from 'hono';
+import { runMiddleware } from '@/lib/runMiddleware.js';
 import { createDb } from '@/db/client.js';
 import { projectMembers, user, projects, projectInvitations } from '@/db/schema.js';
 import { eq, and } from 'drizzle-orm';
@@ -29,6 +30,7 @@ import { validationHook } from '@/lib/honoValidationHook.js';
 import { addMember, updateMemberRole, removeMember } from '@/commands/members/index.js';
 import { requireMemberRemoval } from '@/policies';
 import type { Env } from '../../types';
+import { ErrorResponseSchema } from '@/schemas/common.js';
 
 const orgProjectMemberRoutes = new OpenAPIHono<{ Bindings: Env }>({
   defaultHook: validationHook,
@@ -80,14 +82,6 @@ const UpdateMemberRoleRequestSchema = z
   })
   .openapi('UpdateMemberRoleRequest');
 
-const MemberErrorSchema = z
-  .object({
-    code: z.string(),
-    message: z.string(),
-    statusCode: z.number(),
-    details: z.record(z.string(), z.unknown()).optional(),
-  })
-  .openapi('MemberError');
 
 const MemberAddedSchema = z
   .object({
@@ -147,7 +141,7 @@ const listMembersRoute = createRoute({
       description: 'Unauthorized',
       content: {
         'application/json': {
-          schema: MemberErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },
@@ -155,7 +149,7 @@ const listMembersRoute = createRoute({
       description: 'Forbidden - not a project member',
       content: {
         'application/json': {
-          schema: MemberErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },
@@ -163,7 +157,7 @@ const listMembersRoute = createRoute({
       description: 'Database error',
       content: {
         'application/json': {
-          schema: MemberErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },
@@ -200,7 +194,7 @@ const addMemberRoute = createRoute({
       description: 'Validation error',
       content: {
         'application/json': {
-          schema: MemberErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },
@@ -208,7 +202,7 @@ const addMemberRoute = createRoute({
       description: 'Unauthorized',
       content: {
         'application/json': {
-          schema: MemberErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },
@@ -216,7 +210,7 @@ const addMemberRoute = createRoute({
       description: 'Forbidden - not a project owner',
       content: {
         'application/json': {
-          schema: MemberErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },
@@ -224,7 +218,7 @@ const addMemberRoute = createRoute({
       description: 'User not found',
       content: {
         'application/json': {
-          schema: MemberErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },
@@ -232,7 +226,7 @@ const addMemberRoute = createRoute({
       description: 'Member already exists',
       content: {
         'application/json': {
-          schema: MemberErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },
@@ -240,7 +234,7 @@ const addMemberRoute = createRoute({
       description: 'Database error',
       content: {
         'application/json': {
-          schema: MemberErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },
@@ -279,7 +273,7 @@ const updateMemberRoleRoute = createRoute({
       description: 'Validation error or last owner',
       content: {
         'application/json': {
-          schema: MemberErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },
@@ -287,7 +281,7 @@ const updateMemberRoleRoute = createRoute({
       description: 'Unauthorized',
       content: {
         'application/json': {
-          schema: MemberErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },
@@ -295,7 +289,7 @@ const updateMemberRoleRoute = createRoute({
       description: 'Forbidden - not a project owner',
       content: {
         'application/json': {
-          schema: MemberErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },
@@ -303,7 +297,7 @@ const updateMemberRoleRoute = createRoute({
       description: 'Database error',
       content: {
         'application/json': {
-          schema: MemberErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },
@@ -334,7 +328,7 @@ const removeMemberRoute = createRoute({
       description: 'Cannot remove last owner',
       content: {
         'application/json': {
-          schema: MemberErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },
@@ -342,7 +336,7 @@ const removeMemberRoute = createRoute({
       description: 'Unauthorized',
       content: {
         'application/json': {
-          schema: MemberErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },
@@ -350,7 +344,7 @@ const removeMemberRoute = createRoute({
       description: 'Forbidden - not a project owner and not self',
       content: {
         'application/json': {
-          schema: MemberErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },
@@ -358,7 +352,7 @@ const removeMemberRoute = createRoute({
       description: 'Member not found',
       content: {
         'application/json': {
-          schema: MemberErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },
@@ -366,33 +360,12 @@ const removeMemberRoute = createRoute({
       description: 'Database error',
       content: {
         'application/json': {
-          schema: MemberErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },
   },
 });
-
-/**
- * Helper to run middleware manually and check for early response
- */
-async function runMiddleware(middleware: MiddlewareHandler, c: Context): Promise<Response | null> {
-  let nextCalled = false;
-
-  const result = await middleware(c, async () => {
-    nextCalled = true;
-  });
-
-  if (result instanceof Response) {
-    return result;
-  }
-
-  if (!nextCalled && c.res) {
-    return c.res;
-  }
-
-  return null;
-}
 
 /**
  * GET /api/orgs/:orgId/projects/:projectId/members

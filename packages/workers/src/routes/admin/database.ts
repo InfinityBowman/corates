@@ -12,6 +12,7 @@ import { count, desc, asc, eq, and, sum } from 'drizzle-orm';
 import { createDomainError, SYSTEM_ERRORS, VALIDATION_ERRORS } from '@corates/shared';
 import { validationHook } from '@/lib/honoValidationHook.js';
 import type { Env } from '../../types';
+import { ErrorResponseSchema } from '@/schemas/common.js';
 
 const databaseRoutes = new OpenAPIHono<{ Bindings: Env }>({
   defaultHook: validationHook,
@@ -156,14 +157,6 @@ const RecentUploadSchema = z
   })
   .openapi('RecentUpload');
 
-const DatabaseErrorSchema = z
-  .object({
-    code: z.string(),
-    message: z.string(),
-    statusCode: z.number(),
-    details: z.record(z.string(), z.unknown()).optional(),
-  })
-  .openapi('DatabaseError');
 
 // Route definitions
 const listTablesRoute = createRoute({
@@ -185,7 +178,7 @@ const listTablesRoute = createRoute({
       description: 'Internal error',
       content: {
         'application/json': {
-          schema: DatabaseErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },
@@ -217,7 +210,7 @@ const getTableSchemaRoute = createRoute({
       description: 'Invalid table name',
       content: {
         'application/json': {
-          schema: DatabaseErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },
@@ -259,7 +252,7 @@ const getTableRowsRoute = createRoute({
       description: 'Invalid table name or parameters',
       content: {
         'application/json': {
-          schema: DatabaseErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },
@@ -267,7 +260,7 @@ const getTableRowsRoute = createRoute({
       description: 'Database error',
       content: {
         'application/json': {
-          schema: DatabaseErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },
@@ -295,7 +288,7 @@ const pdfsByOrgRoute = createRoute({
       description: 'Database error',
       content: {
         'application/json': {
-          schema: DatabaseErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },
@@ -323,7 +316,7 @@ const pdfsByUserRoute = createRoute({
       description: 'Database error',
       content: {
         'application/json': {
-          schema: DatabaseErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },
@@ -351,7 +344,7 @@ const pdfsByProjectRoute = createRoute({
       description: 'Database error',
       content: {
         'application/json': {
-          schema: DatabaseErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },
@@ -387,7 +380,7 @@ const recentUploadsRoute = createRoute({
       description: 'Database error',
       content: {
         'application/json': {
-          schema: DatabaseErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },

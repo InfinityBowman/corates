@@ -690,23 +690,38 @@ Full project view migrated across 4 phases (A-D) with code reviews after each:
 - `ReconcileStudyRow.tsx` -- READY/WAITING sections for multi-outcome, inline controls for single-outcome
 - `ReconcileStatusTag.tsx` -- "Ready" or "Waiting for {reviewer}" badge
 
-**Stubs (to be filled in later):**
+**Stubs filled (2026-03-14):**
 
-- `AddStudiesForm` -- PDF upload, DOI lookup, reference import, Google Drive picker sections
-- `ReviewerAssignment` -- bulk reviewer assignment (634 lines)
-- `OutcomeManager` -- outcome definition management
-- `GoogleDrivePickerModal` -- Google Drive file picker SDK integration
-- `ChartSection` + `AMSTAR2ResultsTable` -- D3 chart visualizations
-- `PreviousReviewersView` -- original reviewer checklist comparison (needs GenericChecklist)
-- `EmbedPdfViewer` -- Preact PDF viewer island
+- `AddStudiesForm` -- full 4-tab form (Upload PDFs, Import References, DOI/PMID, Google Drive) with 3 UI modes (collapsible card, always expanded, empty project dropzone), drag-and-drop, submit/cancel, OAuth state restoration. 8 files total:
+  - `PdfUploadSection.tsx` -- Ark FileUpload dropzone, pending/error list with retry
+  - `ReferenceImportSection.tsx` -- RIS/BibTeX/ENW import, PDF matching status badges, checkbox list
+  - `DoiLookupSection.tsx` -- identifier lookup, results split by PDF availability, manual PDF upload with tooltips
+  - `StagedStudiesSection.tsx` -- unified staging area showing merged/deduplicated studies
+  - `GoogleDriveSection.tsx` -- thin wrapper around GoogleDrivePickerLauncher for multiselect
+  - `GoogleDrivePickerLauncher.tsx` -- connection status check, OAuth connect flow, Google Picker SDK launch
+  - `GoogleDrivePickerModal.tsx` -- single-study import modal using Dialog + launcher
+- `useAddStudies` hook -- full coordinator with 4 sub-hooks (pdfs, references, lookup, drive), matching effects, deduplication, serialization
+- `ReviewerAssignment` -- full 634 LOC with percentage distribution, preview, conflict resolution
+- `OutcomeManager` -- full CRUD with inline editing, AlertDialog for delete
+- `AMSTAR2ResultsTable` -- full results table with summary statistics
+- `ScoreTag` -- score display with type-aware styling
+
+**Remaining stubs (not yet filled):**
+
+- `ChartSection` -- D3 chart visualizations (AMSTARRobvis, AMSTARDistribution, ChartSettingsModal). Cosmetic, not blocking.
+- `PreviousReviewersView` -- blocked on GenericChecklist migration (Phase 4.7)
+- `EmbedPdfViewer` -- Preact PDF viewer island migration
 
 Key decisions:
 
-- `/projects` NOT yet removed from SPA_ROUTE_PREFIXES -- stubs would degrade UX for existing users
+- `/projects` NOT yet removed from SPA_ROUTE_PREFIXES -- remaining stubs are cosmetic/blocked, can be removed soon
 - `projectActionsStore` accessed via `as any` cast due to JS module without type declarations
 - `CircularProgress` rewritten as pure SVG instead of porting the D3 imperative version
 - Pending data read via `useState` lazy initializer to prevent StrictMode data loss
 - Manual `connect()`/`disconnect()` removed from ProjectView -- `useProject` manages its own lifecycle
+- Drag-and-drop handlers use refs to avoid stale closures (registered once, read current values via refs)
+- OAuth state restoration expands form unconditionally (restoreState enqueues React state updates that haven't committed)
+- Checkbox inside clickable rows uses onClick stopPropagation to prevent double-fire
 
 ### 4.7 Checklists (most complex UI)
 
@@ -839,16 +854,16 @@ Key decisions:
 
 ## Estimated Effort
 
-| Phase                | Effort         | Can parallelize?               | Status                |
-| -------------------- | -------------- | ------------------------------ | --------------------- |
-| Phase 0: Preparation | 0.5 days       | --                             | DONE (2026-03-14)     |
-| Phase 1: Foundation  | 3-4 days       | --                             | DONE (2026-03-14)     |
-| Phase 2: UI Library  | 2 days         | Yes (with Phase 3)             | DONE (2026-03-14)     |
-| Phase 3: Primitives  | 3-4 days       | Yes (with Phase 2)             | DONE (2026-03-14)     |
-| Phase 4: Pages       | 5-7 days       | Partially (independent routes) | 4.1-4.6 DONE          |
-| Phase 5: Tests       | 2 days         | Yes (with Phase 4)             | Not started           |
-| Phase 6: Cleanup     | 0.5 days       | --                             | Not started           |
-| **Total**            | **~2-3 weeks** |                                | **Phases 0-4.6 done** |
+| Phase                | Effort         | Can parallelize?               | Status                              |
+| -------------------- | -------------- | ------------------------------ | ----------------------------------- |
+| Phase 0: Preparation | 0.5 days       | --                             | DONE (2026-03-14)                   |
+| Phase 1: Foundation  | 3-4 days       | --                             | DONE (2026-03-14)                   |
+| Phase 2: UI Library  | 2 days         | Yes (with Phase 3)             | DONE (2026-03-14)                   |
+| Phase 3: Primitives  | 3-4 days       | Yes (with Phase 2)             | DONE (2026-03-14)                   |
+| Phase 4: Pages       | 5-7 days       | Partially (independent routes) | 4.1-4.6 DONE (stubs filled)        |
+| Phase 5: Tests       | 2 days         | Yes (with Phase 4)             | Not started                         |
+| Phase 6: Cleanup     | 0.5 days       | --                             | Not started                         |
+| **Total**            | **~2-3 weeks** |                                | **Phases 0-4.6 done + stubs filled** |
 
 Phase 0 is shorter since landing already exists. Claude Code can handle the mechanical parts (UI components, query hooks, icon swaps, simple page conversions) to significantly speed up Phases 2 and 4.
 

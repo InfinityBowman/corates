@@ -25,6 +25,7 @@ import { validationHook } from '@/lib/honoValidationHook.js';
 import type { Env, AppVariables } from '../../types';
 import type { DrizzleD1Database } from 'drizzle-orm/d1';
 import type * as schema from '@/db/schema.js';
+import { ErrorResponseSchema } from '@/schemas/common.js';
 
 type Database = DrizzleD1Database<typeof schema>;
 
@@ -162,14 +163,6 @@ const SuccessMessageResponseSchema = z
   })
   .openapi('AdminBillingSuccessMessage');
 
-const BillingErrorSchema = z
-  .object({
-    code: z.string(),
-    message: z.string(),
-    statusCode: z.number(),
-    details: z.record(z.string(), z.unknown()).optional(),
-  })
-  .openapi('AdminBillingError');
 
 // Request schemas
 const CreateSubscriptionBodySchema = z.object({
@@ -250,7 +243,7 @@ const getBillingRoute = createRoute({
       description: 'Invalid org ID',
       content: {
         'application/json': {
-          schema: BillingErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },
@@ -258,7 +251,7 @@ const getBillingRoute = createRoute({
       description: 'Database error',
       content: {
         'application/json': {
-          schema: BillingErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },
@@ -296,7 +289,7 @@ const createSubscriptionRoute = createRoute({
       description: 'Validation error',
       content: {
         'application/json': {
-          schema: BillingErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },
@@ -304,7 +297,7 @@ const createSubscriptionRoute = createRoute({
       description: 'Database error',
       content: {
         'application/json': {
-          schema: BillingErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },
@@ -343,7 +336,7 @@ const updateSubscriptionRoute = createRoute({
       description: 'Validation error',
       content: {
         'application/json': {
-          schema: BillingErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },
@@ -351,7 +344,7 @@ const updateSubscriptionRoute = createRoute({
       description: 'Database error',
       content: {
         'application/json': {
-          schema: BillingErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },
@@ -383,7 +376,7 @@ const deleteSubscriptionRoute = createRoute({
       description: 'Invalid subscription ID',
       content: {
         'application/json': {
-          schema: BillingErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },
@@ -391,7 +384,7 @@ const deleteSubscriptionRoute = createRoute({
       description: 'Database error',
       content: {
         'application/json': {
-          schema: BillingErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },
@@ -429,7 +422,7 @@ const createGrantRoute = createRoute({
       description: 'Validation error',
       content: {
         'application/json': {
-          schema: BillingErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },
@@ -437,7 +430,7 @@ const createGrantRoute = createRoute({
       description: 'Database error',
       content: {
         'application/json': {
-          schema: BillingErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },
@@ -476,7 +469,7 @@ const updateGrantRoute = createRoute({
       description: 'Validation error',
       content: {
         'application/json': {
-          schema: BillingErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },
@@ -484,7 +477,7 @@ const updateGrantRoute = createRoute({
       description: 'Database error',
       content: {
         'application/json': {
-          schema: BillingErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },
@@ -516,7 +509,7 @@ const deleteGrantRoute = createRoute({
       description: 'Invalid grant ID',
       content: {
         'application/json': {
-          schema: BillingErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },
@@ -524,7 +517,7 @@ const deleteGrantRoute = createRoute({
       description: 'Database error',
       content: {
         'application/json': {
-          schema: BillingErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },
@@ -555,7 +548,7 @@ const grantTrialRoute = createRoute({
       description: 'Trial already exists or invalid org',
       content: {
         'application/json': {
-          schema: BillingErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },
@@ -563,7 +556,7 @@ const grantTrialRoute = createRoute({
       description: 'Database error',
       content: {
         'application/json': {
-          schema: BillingErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },
@@ -602,7 +595,7 @@ const grantSingleProjectRoute = createRoute({
       description: 'Invalid org',
       content: {
         'application/json': {
-          schema: BillingErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },
@@ -610,7 +603,7 @@ const grantSingleProjectRoute = createRoute({
       description: 'Database error',
       content: {
         'application/json': {
-          schema: BillingErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },

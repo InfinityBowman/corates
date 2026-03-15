@@ -10,6 +10,7 @@ import { mediaFiles } from '@/db/schema.js';
 import { createDomainError, SYSTEM_ERRORS } from '@corates/shared';
 import { validationHook } from '@/lib/honoValidationHook.js';
 import type { Env } from '../../types';
+import { ErrorResponseSchema } from '@/schemas/common.js';
 
 const storageRoutes = new OpenAPIHono<{ Bindings: Env }>({
   defaultHook: validationHook,
@@ -89,14 +90,6 @@ const StorageStatsResponseSchema = z
   })
   .openapi('StorageStatsResponse');
 
-const StorageErrorSchema = z
-  .object({
-    code: z.string(),
-    message: z.string(),
-    statusCode: z.number(),
-    details: z.record(z.string(), z.unknown()).optional(),
-  })
-  .openapi('StorageError');
 
 const R2_KEY_PATTERN = /^projects\/[^/]+\/studies\/[^/]+\/.+$/;
 
@@ -154,7 +147,7 @@ const listDocumentsRoute = createRoute({
       description: 'Unauthorized - not logged in',
       content: {
         'application/json': {
-          schema: StorageErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },
@@ -162,7 +155,7 @@ const listDocumentsRoute = createRoute({
       description: 'Forbidden - not an admin',
       content: {
         'application/json': {
-          schema: StorageErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },
@@ -170,7 +163,7 @@ const listDocumentsRoute = createRoute({
       description: 'Internal error',
       content: {
         'application/json': {
-          schema: StorageErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },
@@ -205,7 +198,7 @@ const deleteDocumentsRoute = createRoute({
       description: 'Validation error',
       content: {
         'application/json': {
-          schema: StorageErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },
@@ -213,7 +206,7 @@ const deleteDocumentsRoute = createRoute({
       description: 'Internal error',
       content: {
         'application/json': {
-          schema: StorageErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },
@@ -239,7 +232,7 @@ const getStorageStatsRoute = createRoute({
       description: 'Unauthorized - not logged in',
       content: {
         'application/json': {
-          schema: StorageErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },
@@ -247,7 +240,7 @@ const getStorageStatsRoute = createRoute({
       description: 'Forbidden - not an admin',
       content: {
         'application/json': {
-          schema: StorageErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },
@@ -255,7 +248,7 @@ const getStorageStatsRoute = createRoute({
       description: 'Internal error',
       content: {
         'application/json': {
-          schema: StorageErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },

@@ -7,7 +7,8 @@
 
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
 import type { ContentfulStatusCode } from 'hono/utils/http-status';
-import type { Context, MiddlewareHandler } from 'hono';
+import type { Context } from 'hono';
+import { runMiddleware } from '@/lib/runMiddleware.js';
 import { requireAuth, getAuth } from '@/middleware/auth.js';
 import {
   requireOrgMembership,
@@ -34,6 +35,7 @@ import { eq, and } from 'drizzle-orm';
 import { validationHook } from '@/lib/honoValidationHook.js';
 import type { Env } from '../../types';
 import type { DrizzleD1Database } from 'drizzle-orm/d1';
+import { ErrorResponseSchema } from '@/schemas/common.js';
 
 const orgPdfRoutes = new OpenAPIHono<{ Bindings: Env }>({
   defaultHook: validationHook,
@@ -88,14 +90,6 @@ const PdfDeleteResponseSchema = z
   })
   .openapi('PdfDeleteResponse');
 
-const PdfErrorSchema = z
-  .object({
-    code: z.string(),
-    message: z.string(),
-    statusCode: z.number(),
-    details: z.record(z.string(), z.unknown()).optional(),
-  })
-  .openapi('PdfError');
 
 // Route definitions
 const listPdfsRoute = createRoute({
@@ -117,7 +111,7 @@ const listPdfsRoute = createRoute({
       description: 'Validation error (missing studyId)',
       content: {
         'application/json': {
-          schema: PdfErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },
@@ -125,7 +119,7 @@ const listPdfsRoute = createRoute({
       description: 'Unauthorized',
       content: {
         'application/json': {
-          schema: PdfErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },
@@ -133,7 +127,7 @@ const listPdfsRoute = createRoute({
       description: 'Forbidden - not a project member',
       content: {
         'application/json': {
-          schema: PdfErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },
@@ -141,7 +135,7 @@ const listPdfsRoute = createRoute({
       description: 'Database error',
       content: {
         'application/json': {
-          schema: PdfErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },
@@ -168,7 +162,7 @@ const uploadPdfRoute = createRoute({
       description: 'Validation error (invalid file, too large, etc.)',
       content: {
         'application/json': {
-          schema: PdfErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },
@@ -176,7 +170,7 @@ const uploadPdfRoute = createRoute({
       description: 'Unauthorized',
       content: {
         'application/json': {
-          schema: PdfErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },
@@ -184,7 +178,7 @@ const uploadPdfRoute = createRoute({
       description: 'Forbidden - not a project member or read-only org',
       content: {
         'application/json': {
-          schema: PdfErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },
@@ -192,7 +186,7 @@ const uploadPdfRoute = createRoute({
       description: 'File too large',
       content: {
         'application/json': {
-          schema: PdfErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },
@@ -200,7 +194,7 @@ const uploadPdfRoute = createRoute({
       description: 'Upload failed',
       content: {
         'application/json': {
-          schema: PdfErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },
@@ -231,7 +225,7 @@ const downloadPdfRoute = createRoute({
       description: 'Invalid filename',
       content: {
         'application/json': {
-          schema: PdfErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },
@@ -239,7 +233,7 @@ const downloadPdfRoute = createRoute({
       description: 'Unauthorized',
       content: {
         'application/json': {
-          schema: PdfErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },
@@ -247,7 +241,7 @@ const downloadPdfRoute = createRoute({
       description: 'Forbidden - not a project member',
       content: {
         'application/json': {
-          schema: PdfErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },
@@ -255,7 +249,7 @@ const downloadPdfRoute = createRoute({
       description: 'PDF not found',
       content: {
         'application/json': {
-          schema: PdfErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },
@@ -263,7 +257,7 @@ const downloadPdfRoute = createRoute({
       description: 'Download failed',
       content: {
         'application/json': {
-          schema: PdfErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },
@@ -294,7 +288,7 @@ const deletePdfRoute = createRoute({
       description: 'Invalid filename',
       content: {
         'application/json': {
-          schema: PdfErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },
@@ -302,7 +296,7 @@ const deletePdfRoute = createRoute({
       description: 'Unauthorized',
       content: {
         'application/json': {
-          schema: PdfErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },
@@ -310,7 +304,7 @@ const deletePdfRoute = createRoute({
       description: 'Forbidden - not a project member or read-only org',
       content: {
         'application/json': {
-          schema: PdfErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },
@@ -318,33 +312,12 @@ const deletePdfRoute = createRoute({
       description: 'Delete failed',
       content: {
         'application/json': {
-          schema: PdfErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },
   },
 });
-
-/**
- * Helper to run middleware manually and check for early response
- */
-async function runMiddleware(middleware: MiddlewareHandler, c: Context): Promise<Response | null> {
-  let nextCalled = false;
-
-  const result = await middleware(c, async () => {
-    nextCalled = true;
-  });
-
-  if (result instanceof Response) {
-    return result;
-  }
-
-  if (!nextCalled && c.res) {
-    return c.res;
-  }
-
-  return null;
-}
 
 /**
  * Extract studyId from params and validate

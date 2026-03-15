@@ -5,7 +5,8 @@
 
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
 import type { ContentfulStatusCode } from 'hono/utils/http-status';
-import type { Context, MiddlewareHandler } from 'hono';
+import type { Context } from 'hono';
+import { runMiddleware } from '@/lib/runMiddleware.js';
 import { createDb } from '@/db/client.js';
 import { projects, projectMembers } from '@/db/schema.js';
 import { eq, and, count, desc } from 'drizzle-orm';
@@ -27,6 +28,7 @@ import { orgPdfRoutes } from './pdfs.js';
 import { orgInvitationRoutes } from './invitations.js';
 import { devRoutes } from './dev-routes.js';
 import type { Env } from '../../types';
+import { ErrorResponseSchema } from '@/schemas/common.js';
 
 const orgProjectRoutes = new OpenAPIHono<{ Bindings: Env }>({
   defaultHook: validationHook,
@@ -74,14 +76,6 @@ const UpdateProjectRequestSchema = z
   })
   .openapi('UpdateProjectRequest');
 
-const ProjectErrorSchema = z
-  .object({
-    code: z.string(),
-    message: z.string(),
-    statusCode: z.number(),
-    details: z.record(z.string(), z.unknown()).optional(),
-  })
-  .openapi('ProjectError');
 
 // Route definitions
 const listProjectsRoute = createRoute({
@@ -97,11 +91,11 @@ const listProjectsRoute = createRoute({
       description: 'List of projects',
     },
     403: {
-      content: { 'application/json': { schema: ProjectErrorSchema } },
+      content: { 'application/json': { schema: ErrorResponseSchema } },
       description: 'Not authorized',
     },
     500: {
-      content: { 'application/json': { schema: ProjectErrorSchema } },
+      content: { 'application/json': { schema: ErrorResponseSchema } },
       description: 'Database error',
     },
   },
@@ -130,11 +124,11 @@ const createProjectRoute = createRoute({
       description: 'Project created',
     },
     403: {
-      content: { 'application/json': { schema: ProjectErrorSchema } },
+      content: { 'application/json': { schema: ErrorResponseSchema } },
       description: 'Not authorized or quota exceeded',
     },
     500: {
-      content: { 'application/json': { schema: ProjectErrorSchema } },
+      content: { 'application/json': { schema: ErrorResponseSchema } },
       description: 'Database error',
     },
   },
@@ -158,15 +152,15 @@ const getProjectRoute = createRoute({
       description: 'Project details',
     },
     403: {
-      content: { 'application/json': { schema: ProjectErrorSchema } },
+      content: { 'application/json': { schema: ErrorResponseSchema } },
       description: 'Not authorized',
     },
     404: {
-      content: { 'application/json': { schema: ProjectErrorSchema } },
+      content: { 'application/json': { schema: ErrorResponseSchema } },
       description: 'Project not found',
     },
     500: {
-      content: { 'application/json': { schema: ProjectErrorSchema } },
+      content: { 'application/json': { schema: ErrorResponseSchema } },
       description: 'Database error',
     },
   },
@@ -207,11 +201,11 @@ const updateProjectRoute = createRoute({
       description: 'Project updated',
     },
     403: {
-      content: { 'application/json': { schema: ProjectErrorSchema } },
+      content: { 'application/json': { schema: ErrorResponseSchema } },
       description: 'Not authorized',
     },
     500: {
-      content: { 'application/json': { schema: ProjectErrorSchema } },
+      content: { 'application/json': { schema: ErrorResponseSchema } },
       description: 'Database error',
     },
   },
@@ -244,36 +238,15 @@ const deleteProjectRoute = createRoute({
       description: 'Project deleted',
     },
     403: {
-      content: { 'application/json': { schema: ProjectErrorSchema } },
+      content: { 'application/json': { schema: ErrorResponseSchema } },
       description: 'Not authorized',
     },
     500: {
-      content: { 'application/json': { schema: ProjectErrorSchema } },
+      content: { 'application/json': { schema: ErrorResponseSchema } },
       description: 'Database error',
     },
   },
 });
-
-/**
- * Helper to run middleware manually and check for early response
- */
-async function runMiddleware(middleware: MiddlewareHandler, c: Context): Promise<Response | null> {
-  let nextCalled = false;
-
-  const result = await middleware(c, async () => {
-    nextCalled = true;
-  });
-
-  if (result instanceof Response) {
-    return result;
-  }
-
-  if (!nextCalled && c.res) {
-    return c.res;
-  }
-
-  return null;
-}
 
 /**
  * Helper to get current project count for org

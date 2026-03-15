@@ -26,6 +26,7 @@ import {
 import { syncMemberToDO } from '@/lib/project-sync.js';
 import { validationHook } from '@/lib/honoValidationHook.js';
 import type { Env } from '../types';
+import { ErrorResponseSchema } from '@/schemas/common.js';
 
 const invitationRoutes = new OpenAPIHono<{ Bindings: Env }>({
   defaultHook: validationHook,
@@ -54,14 +55,6 @@ const AcceptInvitationSuccessSchema = z
   })
   .openapi('AcceptInvitationSuccess');
 
-const InvitationErrorSchema = z
-  .object({
-    code: z.string(),
-    message: z.string(),
-    statusCode: z.number(),
-    details: z.record(z.string(), z.unknown()).optional(),
-  })
-  .openapi('InvitationError');
 
 // Accept invitation route
 const acceptInvitationRoute = createRoute({
@@ -91,11 +84,11 @@ const acceptInvitationRoute = createRoute({
       description: 'Invitation accepted successfully',
     },
     400: {
-      content: { 'application/json': { schema: InvitationErrorSchema } },
+      content: { 'application/json': { schema: ErrorResponseSchema } },
       description: 'Invalid or expired token',
     },
     403: {
-      content: { 'application/json': { schema: InvitationErrorSchema } },
+      content: { 'application/json': { schema: ErrorResponseSchema } },
       description: 'Email mismatch or already a member',
     },
   },

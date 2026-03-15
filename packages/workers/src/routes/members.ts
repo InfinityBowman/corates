@@ -31,6 +31,7 @@ import {
 } from '@/policies';
 import type { Env } from '../types';
 import type { Context, Next } from 'hono';
+import { ErrorResponseSchema } from '@/schemas/common.js';
 
 interface MemberContext {
   projectId: string;
@@ -157,14 +158,6 @@ const RemoveMemberSuccessSchema = z
   })
   .openapi('RemoveMemberSuccess');
 
-const MemberErrorSchema = z
-  .object({
-    code: z.string(),
-    message: z.string(),
-    statusCode: z.number(),
-    details: z.record(z.string(), z.unknown()).optional(),
-  })
-  .openapi('MemberError');
 
 // Route definitions
 const listMembersRoute = createRoute({
@@ -180,11 +173,11 @@ const listMembersRoute = createRoute({
       description: 'List of members',
     },
     403: {
-      content: { 'application/json': { schema: MemberErrorSchema } },
+      content: { 'application/json': { schema: ErrorResponseSchema } },
       description: 'Access denied',
     },
     500: {
-      content: { 'application/json': { schema: MemberErrorSchema } },
+      content: { 'application/json': { schema: ErrorResponseSchema } },
       description: 'Database error',
     },
   },
@@ -217,19 +210,19 @@ const addMemberRoute = createRoute({
       description: 'Member added or invitation sent',
     },
     400: {
-      content: { 'application/json': { schema: MemberErrorSchema } },
+      content: { 'application/json': { schema: ErrorResponseSchema } },
       description: 'Validation error',
     },
     403: {
-      content: { 'application/json': { schema: MemberErrorSchema } },
+      content: { 'application/json': { schema: ErrorResponseSchema } },
       description: 'Not authorized',
     },
     404: {
-      content: { 'application/json': { schema: MemberErrorSchema } },
+      content: { 'application/json': { schema: ErrorResponseSchema } },
       description: 'User not found',
     },
     409: {
-      content: { 'application/json': { schema: MemberErrorSchema } },
+      content: { 'application/json': { schema: ErrorResponseSchema } },
       description: 'Member already exists',
     },
   },
@@ -261,11 +254,11 @@ const updateRoleRoute = createRoute({
       description: 'Role updated',
     },
     400: {
-      content: { 'application/json': { schema: MemberErrorSchema } },
+      content: { 'application/json': { schema: ErrorResponseSchema } },
       description: 'Validation error',
     },
     403: {
-      content: { 'application/json': { schema: MemberErrorSchema } },
+      content: { 'application/json': { schema: ErrorResponseSchema } },
       description: 'Not authorized or last owner',
     },
   },
@@ -289,11 +282,11 @@ const removeMemberRoute = createRoute({
       description: 'Member removed',
     },
     403: {
-      content: { 'application/json': { schema: MemberErrorSchema } },
+      content: { 'application/json': { schema: ErrorResponseSchema } },
       description: 'Not authorized or last owner',
     },
     404: {
-      content: { 'application/json': { schema: MemberErrorSchema } },
+      content: { 'application/json': { schema: ErrorResponseSchema } },
       description: 'Member not found',
     },
   },

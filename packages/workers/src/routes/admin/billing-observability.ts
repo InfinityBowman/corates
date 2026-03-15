@@ -13,6 +13,7 @@ import { getLedgerEntriesByOrgId, LedgerStatus } from '@/db/stripeEventLedger.js
 import { createStripeClient } from '@/lib/stripe.js';
 import { validationHook } from '@/lib/honoValidationHook.js';
 import type { Env } from '../../types';
+import { ErrorResponseSchema } from '@/schemas/common.js';
 
 const billingObservabilityRoutes = new OpenAPIHono<{ Bindings: Env }>({
   defaultHook: validationHook,
@@ -126,14 +127,6 @@ const LedgerResponseSchema = z
   })
   .openapi('LedgerResponse');
 
-const ObservabilityErrorSchema = z
-  .object({
-    code: z.string(),
-    message: z.string(),
-    statusCode: z.number(),
-    details: z.record(z.string(), z.unknown()).optional(),
-  })
-  .openapi('ObservabilityError');
 
 // Route definitions
 const reconcileRoute = createRoute({
@@ -179,7 +172,7 @@ const reconcileRoute = createRoute({
       description: 'Invalid org ID',
       content: {
         'application/json': {
-          schema: ObservabilityErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },
@@ -187,7 +180,7 @@ const reconcileRoute = createRoute({
       description: 'Database error',
       content: {
         'application/json': {
-          schema: ObservabilityErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },
@@ -222,7 +215,7 @@ const stuckStatesRoute = createRoute({
       description: 'Database error',
       content: {
         'application/json': {
-          schema: ObservabilityErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },
@@ -255,7 +248,7 @@ const ledgerRoute = createRoute({
       description: 'Database error',
       content: {
         'application/json': {
-          schema: ObservabilityErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },

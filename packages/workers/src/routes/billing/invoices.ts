@@ -13,6 +13,7 @@ import { eq, desc, and, or } from 'drizzle-orm';
 import { createStripeClient } from '@/lib/stripe.js';
 import { validationHook } from '@/lib/honoValidationHook.js';
 import type { Env } from '../../types';
+import { ErrorResponseSchema } from '@/schemas/common.js';
 
 const billingInvoicesRoutes = new OpenAPIHono<{ Bindings: Env }>({
   defaultHook: validationHook,
@@ -38,14 +39,6 @@ const InvoicesResponseSchema = z
   })
   .openapi('InvoicesResponse');
 
-const InvoicesErrorSchema = z
-  .object({
-    code: z.string(),
-    message: z.string(),
-    statusCode: z.number(),
-    details: z.record(z.string(), z.unknown()).optional(),
-  })
-  .openapi('InvoicesError');
 
 // Route definitions
 const getInvoicesRoute = createRoute({
@@ -62,11 +55,11 @@ const getInvoicesRoute = createRoute({
       description: 'Invoices list',
     },
     403: {
-      content: { 'application/json': { schema: InvoicesErrorSchema } },
+      content: { 'application/json': { schema: ErrorResponseSchema } },
       description: 'No org found',
     },
     500: {
-      content: { 'application/json': { schema: InvoicesErrorSchema } },
+      content: { 'application/json': { schema: ErrorResponseSchema } },
       description: 'Internal error',
     },
   },

@@ -13,6 +13,7 @@ import { resolveOrgAccess } from '@/lib/billingResolver.js';
 import { getPlan, getGrantPlan, type GrantType } from '@corates/shared/plans';
 import { validationHook } from '@/lib/honoValidationHook.js';
 import type { Env } from '../../types';
+import { ErrorResponseSchema } from '@/schemas/common.js';
 
 const orgRoutes = new OpenAPIHono<{ Bindings: Env }>({
   defaultHook: validationHook,
@@ -88,14 +89,6 @@ const OrgDetailsResponseSchema = z
   })
   .openapi('AdminOrgDetailsResponse');
 
-const AdminErrorSchema = z
-  .object({
-    code: z.string(),
-    message: z.string(),
-    statusCode: z.number(),
-    details: z.record(z.string(), z.unknown()).optional(),
-  })
-  .openapi('AdminError');
 
 // Route definitions
 const listOrgsRoute = createRoute({
@@ -130,7 +123,7 @@ const listOrgsRoute = createRoute({
       description: 'Unauthorized - not logged in',
       content: {
         'application/json': {
-          schema: AdminErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },
@@ -138,7 +131,7 @@ const listOrgsRoute = createRoute({
       description: 'Forbidden - not an admin',
       content: {
         'application/json': {
-          schema: AdminErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },
@@ -146,7 +139,7 @@ const listOrgsRoute = createRoute({
       description: 'Database error',
       content: {
         'application/json': {
-          schema: AdminErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },
@@ -177,7 +170,7 @@ const getOrgDetailsRoute = createRoute({
       description: 'Unauthorized - not logged in',
       content: {
         'application/json': {
-          schema: AdminErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },
@@ -185,7 +178,7 @@ const getOrgDetailsRoute = createRoute({
       description: 'Forbidden - not an admin or org not found',
       content: {
         'application/json': {
-          schema: AdminErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },
@@ -193,7 +186,7 @@ const getOrgDetailsRoute = createRoute({
       description: 'Database error',
       content: {
         'application/json': {
-          schema: AdminErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },

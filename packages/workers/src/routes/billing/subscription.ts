@@ -12,6 +12,7 @@ import { createDomainError, SYSTEM_ERRORS, AUTH_ERRORS } from '@corates/shared';
 import { resolveOrgId } from './helpers/orgContext.js';
 import { validationHook } from '@/lib/honoValidationHook.js';
 import type { Env } from '../../types';
+import { ErrorResponseSchema } from '@/schemas/common.js';
 
 const billingSubscriptionRoutes = new OpenAPIHono<{ Bindings: Env }>({
   defaultHook: validationHook,
@@ -67,14 +68,6 @@ const MembersResponseSchema = z
   })
   .openapi('MembersResponse');
 
-const BillingErrorSchema = z
-  .object({
-    code: z.string(),
-    message: z.string(),
-    statusCode: z.number(),
-    details: z.record(z.string(), z.unknown()).optional(),
-  })
-  .openapi('BillingError');
 
 // Route definitions
 const usageRoute = createRoute({
@@ -90,11 +83,11 @@ const usageRoute = createRoute({
       description: 'Usage data',
     },
     403: {
-      content: { 'application/json': { schema: BillingErrorSchema } },
+      content: { 'application/json': { schema: ErrorResponseSchema } },
       description: 'No org found',
     },
     500: {
-      content: { 'application/json': { schema: BillingErrorSchema } },
+      content: { 'application/json': { schema: ErrorResponseSchema } },
       description: 'Database error',
     },
   },
@@ -113,11 +106,11 @@ const subscriptionRoute = createRoute({
       description: 'Subscription data',
     },
     403: {
-      content: { 'application/json': { schema: BillingErrorSchema } },
+      content: { 'application/json': { schema: ErrorResponseSchema } },
       description: 'No org found',
     },
     500: {
-      content: { 'application/json': { schema: BillingErrorSchema } },
+      content: { 'application/json': { schema: ErrorResponseSchema } },
       description: 'Database error',
     },
   },
@@ -136,11 +129,11 @@ const membersRoute = createRoute({
       description: 'Members list',
     },
     403: {
-      content: { 'application/json': { schema: BillingErrorSchema } },
+      content: { 'application/json': { schema: ErrorResponseSchema } },
       description: 'No org found',
     },
     500: {
-      content: { 'application/json': { schema: BillingErrorSchema } },
+      content: { 'application/json': { schema: ErrorResponseSchema } },
       description: 'Database error',
     },
   },

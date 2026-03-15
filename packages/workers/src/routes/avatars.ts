@@ -16,6 +16,7 @@ import { eq } from 'drizzle-orm';
 import { getProjectDocStub } from '@/lib/project-doc-id';
 import { validationHook } from '@/lib/honoValidationHook';
 import type { Env } from '../types';
+import { ErrorResponseSchema } from '@/schemas/common.js';
 
 const avatarRoutes = new OpenAPIHono<{ Bindings: Env }>({
   defaultHook: validationHook,
@@ -43,14 +44,6 @@ const AvatarDeleteSuccessSchema = z
   })
   .openapi('AvatarDeleteSuccess');
 
-const AvatarErrorSchema = z
-  .object({
-    code: z.string().openapi({ example: 'FILE_TOO_LARGE' }),
-    message: z.string().openapi({ example: 'Avatar size exceeds limit' }),
-    statusCode: z.number().openapi({ example: 400 }),
-    details: z.record(z.string(), z.unknown()).optional(),
-  })
-  .openapi('AvatarError');
 
 /**
  * Sync avatar URL to all project memberships for a user
@@ -117,7 +110,7 @@ const uploadAvatarRoute = createRoute({
     400: {
       content: {
         'application/json': {
-          schema: AvatarErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
       description: 'Invalid file type or size',
@@ -125,7 +118,7 @@ const uploadAvatarRoute = createRoute({
     401: {
       content: {
         'application/json': {
-          schema: AvatarErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
       description: 'Unauthorized',
@@ -133,7 +126,7 @@ const uploadAvatarRoute = createRoute({
     500: {
       content: {
         'application/json': {
-          schema: AvatarErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
       description: 'Server error',
@@ -280,7 +273,7 @@ const getAvatarRoute = createRoute({
     404: {
       content: {
         'application/json': {
-          schema: AvatarErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
       description: 'Avatar not found',
@@ -288,7 +281,7 @@ const getAvatarRoute = createRoute({
     500: {
       content: {
         'application/json': {
-          schema: AvatarErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
       description: 'Server error',
@@ -352,7 +345,7 @@ const deleteAvatarRoute = createRoute({
     401: {
       content: {
         'application/json': {
-          schema: AvatarErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
       description: 'Unauthorized',
@@ -360,7 +353,7 @@ const deleteAvatarRoute = createRoute({
     500: {
       content: {
         'application/json': {
-          schema: AvatarErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
       description: 'Server error',

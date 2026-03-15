@@ -12,6 +12,7 @@ import { resolveOrgIdWithRole } from './helpers/orgContext.js';
 import { requireOrgOwner } from '@/policies';
 import { validationHook } from '@/lib/honoValidationHook.js';
 import type { Env } from '../../types';
+import { ErrorResponseSchema } from '@/schemas/common.js';
 
 const billingPortalRoutes = new OpenAPIHono<{ Bindings: Env }>({
   defaultHook: validationHook,
@@ -24,14 +25,6 @@ const PortalResponseSchema = z
   })
   .openapi('PortalResponse');
 
-const PortalErrorSchema = z
-  .object({
-    code: z.string(),
-    message: z.string(),
-    statusCode: z.number(),
-    details: z.record(z.string(), z.unknown()).optional(),
-  })
-  .openapi('PortalError');
 
 // Route definitions
 const createPortalRoute = createRoute({
@@ -47,15 +40,15 @@ const createPortalRoute = createRoute({
       description: 'Portal session created',
     },
     403: {
-      content: { 'application/json': { schema: PortalErrorSchema } },
+      content: { 'application/json': { schema: ErrorResponseSchema } },
       description: 'Not org owner',
     },
     429: {
-      content: { 'application/json': { schema: PortalErrorSchema } },
+      content: { 'application/json': { schema: ErrorResponseSchema } },
       description: 'Rate limit exceeded',
     },
     500: {
-      content: { 'application/json': { schema: PortalErrorSchema } },
+      content: { 'application/json': { schema: ErrorResponseSchema } },
       description: 'Internal error',
     },
   },

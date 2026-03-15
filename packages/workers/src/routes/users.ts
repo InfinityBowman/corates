@@ -24,6 +24,7 @@ import { syncMemberToDO } from '@/lib/project-sync';
 import { getProjectDocStub } from '@/lib/project-doc-id';
 import { validationHook } from '@/lib/honoValidationHook';
 import type { Env } from '../types';
+import { ErrorResponseSchema } from '@/schemas/common.js';
 
 const userRoutes = new OpenAPIHono<{ Bindings: Env }>({
   defaultHook: validationHook,
@@ -60,14 +61,6 @@ const UserProjectSchema = z
   })
   .openapi('UserProject');
 
-const ErrorSchema = z
-  .object({
-    code: z.string(),
-    message: z.string(),
-    statusCode: z.number(),
-    details: z.record(z.string(), z.unknown()).optional(),
-  })
-  .openapi('UserError');
 
 const SuccessSchema = z
   .object({
@@ -124,7 +117,7 @@ const searchUsersRoute = createRoute({
       description: 'Search results',
     },
     400: {
-      content: { 'application/json': { schema: ErrorSchema } },
+      content: { 'application/json': { schema: ErrorResponseSchema } },
       description: 'Validation error',
     },
   },
@@ -281,7 +274,7 @@ const getUserProjectsRoute = createRoute({
       description: 'User projects',
     },
     403: {
-      content: { 'application/json': { schema: ErrorSchema } },
+      content: { 'application/json': { schema: ErrorResponseSchema } },
       description: 'Forbidden',
     },
   },
@@ -422,7 +415,7 @@ const syncProfileRoute = createRoute({
       description: 'Profile synced successfully',
     },
     404: {
-      content: { 'application/json': { schema: ErrorSchema } },
+      content: { 'application/json': { schema: ErrorResponseSchema } },
       description: 'User not found',
     },
   },

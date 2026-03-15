@@ -31,6 +31,7 @@ import {
 } from '@corates/shared';
 import { validationHook } from '@/lib/honoValidationHook.js';
 import type { Env } from '../types';
+import { ErrorResponseSchema } from '@/schemas/common.js';
 
 type Variables = {
   mergeInitiateKey: string;
@@ -147,14 +148,6 @@ const CancelSuccessSchema = z
   })
   .openapi('MergeCancelSuccess');
 
-const MergeErrorSchema = z
-  .object({
-    code: z.string(),
-    message: z.string(),
-    statusCode: z.number(),
-    details: z.record(z.string(), z.unknown()).optional(),
-  })
-  .openapi('MergeError');
 
 // Route definitions
 const initiateRoute = createRoute({
@@ -180,15 +173,15 @@ const initiateRoute = createRoute({
       description: 'Merge initiated, verification code sent',
     },
     400: {
-      content: { 'application/json': { schema: MergeErrorSchema } },
+      content: { 'application/json': { schema: ErrorResponseSchema } },
       description: 'Validation error',
     },
     404: {
-      content: { 'application/json': { schema: MergeErrorSchema } },
+      content: { 'application/json': { schema: ErrorResponseSchema } },
       description: 'Target user not found',
     },
     429: {
-      content: { 'application/json': { schema: MergeErrorSchema } },
+      content: { 'application/json': { schema: ErrorResponseSchema } },
       description: 'Rate limit exceeded',
     },
   },
@@ -217,15 +210,15 @@ const verifyRoute = createRoute({
       description: 'Code verified successfully',
     },
     400: {
-      content: { 'application/json': { schema: MergeErrorSchema } },
+      content: { 'application/json': { schema: ErrorResponseSchema } },
       description: 'Invalid or expired code',
     },
     404: {
-      content: { 'application/json': { schema: MergeErrorSchema } },
+      content: { 'application/json': { schema: ErrorResponseSchema } },
       description: 'Merge request not found',
     },
     429: {
-      content: { 'application/json': { schema: MergeErrorSchema } },
+      content: { 'application/json': { schema: ErrorResponseSchema } },
       description: 'Rate limit exceeded',
     },
   },
@@ -254,15 +247,15 @@ const completeRoute = createRoute({
       description: 'Accounts merged successfully',
     },
     400: {
-      content: { 'application/json': { schema: MergeErrorSchema } },
+      content: { 'application/json': { schema: ErrorResponseSchema } },
       description: 'Validation error or not verified',
     },
     404: {
-      content: { 'application/json': { schema: MergeErrorSchema } },
+      content: { 'application/json': { schema: ErrorResponseSchema } },
       description: 'Merge request not found',
     },
     500: {
-      content: { 'application/json': { schema: MergeErrorSchema } },
+      content: { 'application/json': { schema: ErrorResponseSchema } },
       description: 'Database error',
     },
   },
@@ -291,7 +284,7 @@ const cancelRoute = createRoute({
       description: 'Merge request cancelled',
     },
     400: {
-      content: { 'application/json': { schema: MergeErrorSchema } },
+      content: { 'application/json': { schema: ErrorResponseSchema } },
       description: 'Invalid token',
     },
   },
