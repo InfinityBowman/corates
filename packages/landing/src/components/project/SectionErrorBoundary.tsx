@@ -31,16 +31,14 @@ export class SectionErrorBoundary extends Component<Props, State> {
   render() {
     if (this.state.hasError) {
       return (
-        <div className="border-border bg-card rounded-lg border p-6 text-center">
-          <p className="text-foreground font-medium">
-            Something went wrong in {this.props.name}
-          </p>
-          <p className="text-muted-foreground mt-1 text-sm">
+        <div className='border-border bg-card rounded-lg border p-6 text-center'>
+          <p className='text-foreground font-medium'>Something went wrong in {this.props.name}</p>
+          <p className='text-muted-foreground mt-1 text-sm'>
             {this.state.error?.message || 'An unexpected error occurred'}
           </p>
           <button
             onClick={() => this.setState({ hasError: false, error: null })}
-            className="text-primary hover:text-primary/80 mt-3 text-sm font-medium"
+            className='text-primary hover:text-primary/80 mt-3 text-sm font-medium'
           >
             Try again
           </button>

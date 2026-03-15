@@ -12,12 +12,10 @@ interface EmbedPdfViewerProps {
 
 export default function EmbedPdfViewer({ pdfFileName }: EmbedPdfViewerProps) {
   return (
-    <div className="flex h-full flex-col items-center justify-center bg-secondary p-8">
-      <p className="text-foreground font-medium">PDF Viewer</p>
-      <p className="text-muted-foreground mt-1 text-sm">
-        {pdfFileName || 'No file selected'}
-      </p>
-      <p className="text-muted-foreground mt-4 text-xs">
+    <div className='bg-secondary flex h-full flex-col items-center justify-center p-8'>
+      <p className='text-foreground font-medium'>PDF Viewer</p>
+      <p className='text-muted-foreground mt-1 text-sm'>{pdfFileName || 'No file selected'}</p>
+      <p className='text-muted-foreground mt-4 text-xs'>
         PDF viewer will be available after full migration
       </p>
     </div>

@@ -656,6 +656,7 @@ Key changes:
 Full project view migrated across 4 phases (A-D) with code reviews after each:
 
 **Phase A -- Project shell + Overview Tab:**
+
 - `ProjectView.tsx` -- layout shell, Yjs boot (via useProject), pending data processing (PDFs, refs, Google Drive files), 5-tab interface with URL-based tab state
 - `ProjectContext.tsx` -- React context providing projectId, orgId, userRole, path builders, member helpers (stable useCallback separation)
 - `ProjectHeader.tsx` -- inline-editable name/description via Ark UI Editable
@@ -666,6 +667,7 @@ Full project view migrated across 4 phases (A-D) with code reviews after each:
 - `AddMemberModal.tsx` -- user search with debounce, email invitation, role selection
 
 **Phase B -- All Studies Tab:**
+
 - `AllStudiesTab.tsx` -- expandable study cards, form state restoration after OAuth redirect
 - `StudyCard.tsx` + `StudyCardHeader.tsx` -- editable name, reviewer avatars with tooltips, actions dropdown menu
 - `StudyPdfSection.tsx` -- PDF upload with validation, tag management, Google Drive import
@@ -674,6 +676,7 @@ Full project view migrated across 4 phases (A-D) with code reviews after each:
 - `EditPdfMetadataModal.tsx` -- citation metadata editing with year validation
 
 **Phase C -- Todo + Completed Tabs:**
+
 - `ToDoTab.tsx` -- studies assigned to current user, checklist creation flow
 - `TodoStudyRow.tsx` -- single/multi checklist modes, inline create form, delete confirmation
 - `ChecklistForm.tsx` -- type/outcome selection with availability filtering
@@ -682,11 +685,13 @@ Full project view migrated across 4 phases (A-D) with code reviews after each:
 - `CompletedOutcomeRow.tsx` -- per-outcome status and reconciliation actions
 
 **Phase D -- Reconcile Tab listing:**
+
 - `ReconcileTab.tsx` -- studies in reconciliation workflow
 - `ReconcileStudyRow.tsx` -- READY/WAITING sections for multi-outcome, inline controls for single-outcome
 - `ReconcileStatusTag.tsx` -- "Ready" or "Waiting for {reviewer}" badge
 
 **Stubs (to be filled in later):**
+
 - `AddStudiesForm` -- PDF upload, DOI lookup, reference import, Google Drive picker sections
 - `ReviewerAssignment` -- bulk reviewer assignment (634 lines)
 - `OutcomeManager` -- outcome definition management
@@ -696,6 +701,7 @@ Full project view migrated across 4 phases (A-D) with code reviews after each:
 - `EmbedPdfViewer` -- Preact PDF viewer island
 
 Key decisions:
+
 - `/projects` NOT yet removed from SPA_ROUTE_PREFIXES -- stubs would degrade UX for existing users
 - `projectActionsStore` accessed via `as any` cast due to JS module without type declarations
 - `CircularProgress` rewritten as pure SVG instead of porting the D3 imperative version

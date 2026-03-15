@@ -63,7 +63,7 @@ export function CompletedStudyRow({
 
   return (
     <>
-      <div className="border-border bg-card overflow-hidden rounded-lg border transition-colors hover:border-border">
+      <div className='border-border bg-card hover:border-border overflow-hidden rounded-lg border transition-colors'>
         <Collapsible open={expanded} onOpenChange={setExpanded}>
           {/* Header */}
           <div
@@ -71,23 +71,28 @@ export function CompletedStudyRow({
             onClick={handleRowClick}
           >
             {hasPdfs && (
-              <div className="-ml-1 shrink-0 p-1">
+              <div className='-ml-1 shrink-0 p-1'>
                 <ChevronRightIcon
                   className={`text-muted-foreground/70 h-5 w-5 transition-transform duration-200 ${expanded ? 'rotate-90' : ''}`}
                 />
               </div>
             )}
 
-            <div className="min-w-0 flex-1">
-              <span className="text-foreground truncate font-medium">{study.name}</span>
+            <div className='min-w-0 flex-1'>
+              <span className='text-foreground truncate font-medium'>{study.name}</span>
               {citationLine && (
-                <p className="text-muted-foreground w-fit cursor-text truncate text-xs select-text" data-selectable>
+                <p
+                  className='text-muted-foreground w-fit cursor-text truncate text-xs select-text'
+                  data-selectable
+                >
                   {citationLine}
-                  {hasPdfs && <span className="text-muted-foreground/70"> -- {sortedPdfs.length} PDFs</span>}
+                  {hasPdfs && (
+                    <span className='text-muted-foreground/70'> -- {sortedPdfs.length} PDFs</span>
+                  )}
                 </p>
               )}
               {!citationLine && hasPdfs && (
-                <p className="text-muted-foreground/70 text-xs">{sortedPdfs.length} PDFs</p>
+                <p className='text-muted-foreground/70 text-xs'>{sortedPdfs.length} PDFs</p>
               )}
             </div>
 
@@ -95,11 +100,17 @@ export function CompletedStudyRow({
             {!hasMultipleOutcomes && firstGroup && (
               <>
                 {firstGroup.outcomeId && (
-                  <span className="bg-secondary text-secondary-foreground inline-flex shrink-0 rounded-full px-2 py-0.5 text-xs font-medium" data-selectable>
+                  <span
+                    className='bg-secondary text-secondary-foreground inline-flex shrink-0 rounded-full px-2 py-0.5 text-xs font-medium'
+                    data-selectable
+                  >
                     {getOutcomeName(firstGroup.outcomeId) || 'Unknown Outcome'}
                   </span>
                 )}
-                <span className="bg-secondary text-secondary-foreground inline-flex shrink-0 rounded-full px-2 py-0.5 text-xs font-medium" data-selectable>
+                <span
+                  className='bg-secondary text-secondary-foreground inline-flex shrink-0 rounded-full px-2 py-0.5 text-xs font-medium'
+                  data-selectable
+                >
                   {(getChecklistMetadata(firstGroup.type) as any)?.name || 'Checklist'}
                 </span>
                 <span
@@ -110,15 +121,21 @@ export function CompletedStudyRow({
                 </span>
                 {hasPreviousReviewers && (
                   <button
-                    onClick={e => { e.stopPropagation(); setShowPreviousReviewers(true); }}
-                    className="bg-secondary text-secondary-foreground hover:bg-secondary/80 shrink-0 rounded-lg px-4 py-1.5 text-sm font-medium transition-colors"
+                    onClick={e => {
+                      e.stopPropagation();
+                      setShowPreviousReviewers(true);
+                    }}
+                    className='bg-secondary text-secondary-foreground hover:bg-secondary/80 shrink-0 rounded-lg px-4 py-1.5 text-sm font-medium transition-colors'
                   >
                     View Previous
                   </button>
                 )}
                 <button
-                  onClick={e => { e.stopPropagation(); onOpenChecklist(firstGroup.checklists[0].id); }}
-                  className="bg-primary hover:bg-primary/90 shrink-0 rounded-lg px-4 py-1.5 text-sm font-medium text-white transition-colors"
+                  onClick={e => {
+                    e.stopPropagation();
+                    onOpenChecklist(firstGroup.checklists[0].id);
+                  }}
+                  className='bg-primary hover:bg-primary/90 shrink-0 rounded-lg px-4 py-1.5 text-sm font-medium text-white transition-colors'
                 >
                   Open
                 </button>
@@ -128,7 +145,7 @@ export function CompletedStudyRow({
 
           {/* Multi-outcome stacked */}
           {hasMultipleOutcomes && (
-            <div className="divide-border divide-y">
+            <div className='divide-border divide-y'>
               {completedOutcomeGroups.map((outcomeGroup: any, i: number) => (
                 <CompletedOutcomeRow
                   key={outcomeGroup.outcomeId || i}
@@ -146,7 +163,7 @@ export function CompletedStudyRow({
           {/* PDFs */}
           <CollapsibleContent>
             {hasPdfs && (
-              <div className="border-border space-y-2 border-t px-4 py-3">
+              <div className='border-border space-y-2 border-t px-4 py-3'>
                 {sortedPdfs.map((pdf: any) => (
                   <PdfListItem
                     key={pdf.id}
@@ -165,7 +182,10 @@ export function CompletedStudyRow({
       {showPreviousReviewers && firstGroup && (
         <PreviousReviewersView
           study={study}
-          reconciliationProgress={getReconciliationProgress?.(firstGroup.outcomeId, firstGroup.type)}
+          reconciliationProgress={getReconciliationProgress?.(
+            firstGroup.outcomeId,
+            firstGroup.type,
+          )}
           getAssigneeName={getAssigneeName}
           onClose={() => setShowPreviousReviewers(false)}
         />

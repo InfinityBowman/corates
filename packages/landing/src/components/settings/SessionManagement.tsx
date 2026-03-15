@@ -188,7 +188,7 @@ export function SessionManagement() {
   }, [sessions]);
 
   const dedupedSessions = useMemo(() => {
-    const rawSessions = ((sessions || []) as Session[]);
+    const rawSessions = (sessions || []) as Session[];
     const byDevice = new Map<string, Session>();
 
     for (const s of rawSessions) {

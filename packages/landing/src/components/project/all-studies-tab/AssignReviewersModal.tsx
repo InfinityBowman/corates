@@ -5,12 +5,7 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { UserIcon } from 'lucide-react';
 import { useProjectStore } from '@/stores/projectStore';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import {
   Select,
   SelectContent,
@@ -25,7 +20,10 @@ interface AssignReviewersModalProps {
   onOpenChange: (open: boolean) => void;
   study: any;
   projectId: string;
-  onSave: (studyId: string, updates: { reviewer1: string | null; reviewer2: string | null }) => void;
+  onSave: (
+    studyId: string,
+    updates: { reviewer1: string | null; reviewer2: string | null },
+  ) => void;
 }
 /* eslint-enable no-unused-vars */
 
@@ -95,30 +93,30 @@ export function AssignReviewersModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
+      <DialogContent className='max-w-md'>
         <DialogHeader>
           <DialogTitle>Assign Reviewers</DialogTitle>
         </DialogHeader>
-        <div className="space-y-4">
-          <p className="text-secondary-foreground text-sm">
+        <div className='space-y-4'>
+          <p className='text-secondary-foreground text-sm'>
             Assign two reviewers to this study. Each reviewer will independently complete their
             assessments.
           </p>
 
-          <div className="space-y-4">
-            <div className="text-foreground flex items-center gap-2 text-sm font-medium">
-              <UserIcon className="h-4 w-4" />
+          <div className='space-y-4'>
+            <div className='text-foreground flex items-center gap-2 text-sm font-medium'>
+              <UserIcon className='h-4 w-4' />
               <span>Reviewer Assignments</span>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className='grid grid-cols-2 gap-4'>
               <div>
-                <label className="text-secondary-foreground mb-1 block text-sm font-medium">
+                <label className='text-secondary-foreground mb-1 block text-sm font-medium'>
                   Reviewer 1
                 </label>
                 <Select value={reviewer1} onValueChange={setReviewer1}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Unassigned" />
+                    <SelectValue placeholder='Unassigned' />
                   </SelectTrigger>
                   <SelectContent>
                     {memberItems
@@ -132,12 +130,12 @@ export function AssignReviewersModal({
                 </Select>
               </div>
               <div>
-                <label className="text-secondary-foreground mb-1 block text-sm font-medium">
+                <label className='text-secondary-foreground mb-1 block text-sm font-medium'>
                   Reviewer 2
                 </label>
                 <Select value={reviewer2} onValueChange={setReviewer2}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Unassigned" />
+                    <SelectValue placeholder='Unassigned' />
                   </SelectTrigger>
                   <SelectContent>
                     {memberItems
@@ -153,26 +151,26 @@ export function AssignReviewersModal({
             </div>
 
             {members.length === 0 && (
-              <p className="text-muted-foreground text-sm">
+              <p className='text-muted-foreground text-sm'>
                 No team members available. Add members to the project first.
               </p>
             )}
           </div>
 
-          <div className="border-border flex justify-end gap-3 border-t pt-4">
+          <div className='border-border flex justify-end gap-3 border-t pt-4'>
             <button
-              type="button"
+              type='button'
               onClick={() => onOpenChange(false)}
               disabled={saving}
-              className="border-border bg-card text-secondary-foreground hover:bg-muted rounded-md border px-4 py-2 text-sm font-medium disabled:opacity-50"
+              className='border-border bg-card text-secondary-foreground hover:bg-muted rounded-md border px-4 py-2 text-sm font-medium disabled:opacity-50'
             >
               Cancel
             </button>
             <button
-              type="button"
+              type='button'
               onClick={handleSave}
               disabled={saving}
-              className="bg-primary hover:bg-primary/90 rounded-md px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+              className='bg-primary hover:bg-primary/90 rounded-md px-4 py-2 text-sm font-medium text-white disabled:opacity-50'
             >
               {saving ? 'Saving...' : 'Save'}
             </button>

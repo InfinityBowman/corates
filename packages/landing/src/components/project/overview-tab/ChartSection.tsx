@@ -14,8 +14,8 @@ export function ChartSection({ studies }: ChartSectionProps) {
 
   if (!hasFinalizedChecklists) {
     return (
-      <div className="border-border bg-card rounded-lg border px-4 py-8 text-center">
-        <p className="text-muted-foreground">
+      <div className='border-border bg-card rounded-lg border px-4 py-8 text-center'>
+        <p className='text-muted-foreground'>
           Once appraisals are completed, this section will display domain-level judgments by review
           and across reviews.
         </p>
@@ -24,8 +24,8 @@ export function ChartSection({ studies }: ChartSectionProps) {
   }
 
   return (
-    <div className="border-border bg-card rounded-lg border px-4 py-8 text-center">
-      <p className="text-muted-foreground">
+    <div className='border-border bg-card rounded-lg border px-4 py-8 text-center'>
+      <p className='text-muted-foreground'>
         Chart visualizations will be available after full migration.
       </p>
     </div>

@@ -3,13 +3,7 @@
  */
 
 import { useState, useMemo, useCallback } from 'react';
-import {
-  Trash2Icon,
-  EyeIcon,
-  DownloadIcon,
-  PencilIcon,
-  FileIcon,
-} from 'lucide-react';
+import { Trash2Icon, EyeIcon, DownloadIcon, PencilIcon, FileIcon } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -88,58 +82,58 @@ export function PdfListItem({
 
   return (
     <>
-      <div className="border-border bg-card flex items-center gap-3 rounded-lg border p-3 transition-colors hover:border-border">
-        <div className="shrink-0">
-          <FileIcon className="text-muted-foreground h-8 w-8" />
+      <div className='border-border bg-card hover:border-border flex items-center gap-3 rounded-lg border p-3 transition-colors'>
+        <div className='shrink-0'>
+          <FileIcon className='text-muted-foreground h-8 w-8' />
         </div>
 
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2">
-            <span className="text-foreground truncate text-sm font-medium">{pdf.fileName}</span>
+        <div className='min-w-0 flex-1'>
+          <div className='flex items-center gap-2'>
+            <span className='text-foreground truncate text-sm font-medium'>{pdf.fileName}</span>
             <PdfTagBadge tag={pdf.tag} />
           </div>
-          <div className="text-muted-foreground mt-0.5 text-xs">
+          <div className='text-muted-foreground mt-0.5 text-xs'>
             {formatFileSize(pdf.size)}
             {pdf.uploadedAt && <> &middot; {new Date(pdf.uploadedAt).toLocaleDateString()}</>}
           </div>
         </div>
 
-        <div className="flex items-center gap-1">
+        <div className='flex items-center gap-1'>
           <button
-            type="button"
+            type='button'
             onClick={() => onView?.(pdf)}
-            className="text-muted-foreground hover:bg-primary/5 hover:text-primary rounded-md p-2 transition-colors"
-            title="View PDF"
+            className='text-muted-foreground hover:bg-primary/5 hover:text-primary rounded-md p-2 transition-colors'
+            title='View PDF'
           >
-            <EyeIcon className="h-4 w-4" />
+            <EyeIcon className='h-4 w-4' />
           </button>
 
           <button
-            type="button"
+            type='button'
             onClick={() => onDownload?.(pdf)}
-            className="text-muted-foreground hover:bg-primary/5 hover:text-primary rounded-md p-2 transition-colors"
-            title="Download PDF"
+            className='text-muted-foreground hover:bg-primary/5 hover:text-primary rounded-md p-2 transition-colors'
+            title='Download PDF'
           >
-            <DownloadIcon className="h-4 w-4" />
+            <DownloadIcon className='h-4 w-4' />
           </button>
 
           {!readOnly && (
             <>
               <button
-                type="button"
+                type='button'
                 onClick={() => onEditMetadata?.(pdf)}
-                className="text-muted-foreground hover:bg-primary/5 hover:text-primary rounded-md p-2 transition-colors"
-                title="Edit Metadata"
+                className='text-muted-foreground hover:bg-primary/5 hover:text-primary rounded-md p-2 transition-colors'
+                title='Edit Metadata'
               >
-                <PencilIcon className="h-4 w-4" />
+                <PencilIcon className='h-4 w-4' />
               </button>
 
               {tagMenuItems.length > 0 && (
                 <DropdownMenu>
-                  <DropdownMenuTrigger className="text-muted-foreground hover:bg-primary/5 hover:text-primary rounded-md px-2 py-1 text-xs transition-colors">
+                  <DropdownMenuTrigger className='text-muted-foreground hover:bg-primary/5 hover:text-primary rounded-md px-2 py-1 text-xs transition-colors'>
                     Tag
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
+                  <DropdownMenuContent align='end'>
                     {tagMenuItems.map(item => (
                       <DropdownMenuItem
                         key={item.value}
@@ -153,12 +147,12 @@ export function PdfListItem({
               )}
 
               <button
-                type="button"
+                type='button'
                 onClick={() => setShowDeleteConfirm(true)}
-                className="text-muted-foreground hover:bg-destructive/5 hover:text-destructive rounded-md p-2 transition-colors"
-                title="Delete PDF"
+                className='text-muted-foreground hover:bg-destructive/5 hover:text-destructive rounded-md p-2 transition-colors'
+                title='Delete PDF'
               >
-                <Trash2Icon className="h-4 w-4" />
+                <Trash2Icon className='h-4 w-4' />
               </button>
             </>
           )}
@@ -170,13 +164,13 @@ export function PdfListItem({
           <AlertDialogHeader>
             <AlertDialogTitle>Delete PDF</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete <strong>{pdf.fileName}</strong>? This action cannot
-              be undone.
+              Are you sure you want to delete <strong>{pdf.fileName}</strong>? This action cannot be
+              undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction variant="destructive" onClick={handleDelete}>
+            <AlertDialogAction variant='destructive' onClick={handleDelete}>
               Delete
             </AlertDialogAction>
           </AlertDialogFooter>

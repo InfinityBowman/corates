@@ -102,27 +102,27 @@ export function StudyCardHeader({
 
   return (
     <div
-      className="flex cursor-pointer items-center gap-3 px-4 py-3 select-none"
+      className='flex cursor-pointer items-center gap-3 px-4 py-3 select-none'
       onClick={handleHeaderClick}
     >
-      <div className="-ml-1 shrink-0 p-1">
+      <div className='-ml-1 shrink-0 p-1'>
         <ChevronRightIcon
           className={`text-muted-foreground/70 h-5 w-5 transition-transform duration-200 ${expanded ? 'rotate-90' : ''}`}
         />
       </div>
 
-      <div className="min-w-0 flex-1">
+      <div className='min-w-0 flex-1'>
         <SimpleEditable
           key={studyName}
-          activationMode="click"
+          activationMode='click'
           value={studyName}
           onSubmit={handleNameChange}
           showEditIcon
-          className="text-foreground -ml-2 font-medium"
+          className='text-foreground -ml-2 font-medium'
         />
         {citationLine && (
           <p
-            className="text-muted-foreground w-fit cursor-text truncate text-xs select-text"
+            className='text-muted-foreground w-fit cursor-text truncate text-xs select-text'
             data-selectable
           >
             {citationLine}
@@ -130,20 +130,21 @@ export function StudyCardHeader({
         )}
       </div>
 
-      {hasReviewers ? (
-        <div className="flex shrink-0 -space-x-1.5" data-selectable>
+      {hasReviewers ?
+        <div className='flex shrink-0 -space-x-1.5' data-selectable>
           {assignedReviewers.map((member: any) => {
             const displayName = member?.name || member?.email || 'Unknown';
             const colorClasses = getAvatarColorClasses(displayName);
-            const avatarSrc = member?.image
-              ? member.image.startsWith('/')
-                ? `${API_BASE}${member.image}`
+            const avatarSrc =
+              member?.image ?
+                member.image.startsWith('/') ?
+                  `${API_BASE}${member.image}`
                 : member.image
               : undefined;
             return (
               <Tooltip key={member.userId}>
                 <TooltipTrigger>
-                  <Avatar className="h-7 w-7 border-2 border-white text-xs">
+                  <Avatar className='h-7 w-7 border-2 border-white text-xs'>
                     <AvatarImage src={avatarSrc} alt={displayName} />
                     <AvatarFallback className={`${colorClasses.bg} ${colorClasses.text}`}>
                       {getInitials(displayName)}
@@ -155,25 +156,23 @@ export function StudyCardHeader({
             );
           })}
         </div>
-      ) : (
-        <span className="text-muted-foreground/70 shrink-0 text-xs italic">No reviewers</span>
-      )}
+      : <span className='text-muted-foreground/70 shrink-0 text-xs italic'>No reviewers</span>}
 
       <DropdownMenu>
-        <DropdownMenuTrigger className="text-muted-foreground/70 hover:bg-secondary hover:text-secondary-foreground rounded-md p-1.5 transition-colors">
-          <MoreVerticalIcon className="h-4 w-4" />
+        <DropdownMenuTrigger className='text-muted-foreground/70 hover:bg-secondary hover:text-secondary-foreground rounded-md p-1.5 transition-colors'>
+          <MoreVerticalIcon className='h-4 w-4' />
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
+        <DropdownMenuContent align='end'>
           <DropdownMenuItem onClick={() => onAssignReviewers?.()}>
-            <UsersIcon className="mr-2 h-4 w-4" />
+            <UsersIcon className='mr-2 h-4 w-4' />
             Assign Reviewers
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem
-            className="text-destructive focus:text-destructive"
+            className='text-destructive focus:text-destructive'
             onClick={() => projectActionsStore.study.delete(study.id)}
           >
-            <Trash2Icon className="mr-2 h-4 w-4" />
+            <Trash2Icon className='mr-2 h-4 w-4' />
             Delete Study
           </DropdownMenuItem>
         </DropdownMenuContent>

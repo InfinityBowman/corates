@@ -147,7 +147,10 @@ export function useReferenceOperations() {
       try {
         const refs = await parseReferenceFile(file);
         if (refs.length === 0) {
-          showToast.warning('No References Found', 'The file does not contain any valid references.');
+          showToast.warning(
+            'No References Found',
+            'The file does not contain any valid references.',
+          );
           setImportedRefs([]);
           setSelectedRefIds(new Set());
           setRefPdfFiles([]);
@@ -266,8 +269,13 @@ export function useReferenceOperations() {
           doi: pdf.doi,
           matched: pdf.matched,
           matchedRefId: pdf.matchedRefId,
-          file: pdf.fileName
-            ? { name: pdf.fileName, type: pdf.fileType || 'application/pdf', size: pdf.fileSize || pdf.data?.byteLength || 0 }
+          file:
+            pdf.fileName ?
+              {
+                name: pdf.fileName,
+                type: pdf.fileType || 'application/pdf',
+                size: pdf.fileSize || pdf.data?.byteLength || 0,
+              }
             : null,
         })),
       );

@@ -28,7 +28,7 @@ export function StudyCard({
   readOnly,
 }: StudyCardProps) {
   return (
-    <div className="border-border bg-card rounded-lg border transition-colors hover:border-border">
+    <div className='border-border bg-card hover:border-border rounded-lg border transition-colors'>
       <Collapsible open={expanded} onOpenChange={onToggleExpanded}>
         <StudyCardHeader
           study={study}
@@ -38,7 +38,7 @@ export function StudyCard({
           getMember={getMember}
         />
         <CollapsibleContent>
-          <div className="border-border border-t">
+          <div className='border-border border-t'>
             <StudyPdfSection
               study={study}
               onOpenGoogleDrive={onOpenGoogleDrive}

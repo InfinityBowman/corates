@@ -32,9 +32,9 @@ export function isSubscriptionActive(subscription: Subscription | null): boolean
   const now = Math.floor(Date.now() / 1000);
 
   const endTime =
-    typeof subscription.currentPeriodEnd === 'number'
-      ? subscription.currentPeriodEnd
-      : parseInt(String(subscription.currentPeriodEnd));
+    typeof subscription.currentPeriodEnd === 'number' ?
+      subscription.currentPeriodEnd
+    : parseInt(String(subscription.currentPeriodEnd));
   return endTime > now;
 }
 

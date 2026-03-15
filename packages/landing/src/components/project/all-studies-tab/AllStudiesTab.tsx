@@ -58,7 +58,9 @@ export function AllStudiesTab() {
         if (!cancelled) clearRestoreParamsFromUrl();
       })();
     }
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [projectId]);
 
   const handleSaveState = useCallback(
@@ -73,7 +75,8 @@ export function AllStudiesTab() {
     [studies],
   );
 
-  const shouldShowReviewerAssignment = isOwner && studies.length > 0 && unassignedStudies.length > 0;
+  const shouldShowReviewerAssignment =
+    isOwner && studies.length > 0 && unassignedStudies.length > 0;
 
   const handleAssignReviewers = useCallback((studyId: string, updates: any) => {
     projectActionsStore.study.update(studyId, updates);
@@ -111,7 +114,7 @@ export function AllStudiesTab() {
       {hasData && (
         <AddStudiesForm
           projectId={projectId}
-          formType="addStudies"
+          formType='addStudies'
           initialState={restoredState}
           onSaveState={handleSaveState}
           onAddStudies={handleAddStudies}
@@ -119,13 +122,13 @@ export function AllStudiesTab() {
       )}
 
       {hasData && (
-        <div className="mt-5">
+        <div className='mt-5'>
           <OutcomeManager />
         </div>
       )}
 
       {shouldShowReviewerAssignment && (
-        <div className="mt-5">
+        <div className='mt-5'>
           <ReviewerAssignment
             studies={studies}
             members={members}
@@ -135,19 +138,19 @@ export function AllStudiesTab() {
       )}
 
       {!hasData && (
-        <div className="bg-muted rounded-lg py-12 text-center">
-          <p className="text-muted-foreground/70">Loading studies...</p>
+        <div className='bg-muted rounded-lg py-12 text-center'>
+          <p className='text-muted-foreground/70'>Loading studies...</p>
         </div>
       )}
 
-      <div className="mt-6 mb-3 flex items-center justify-between">
-        <p className="text-muted-foreground text-sm">
+      <div className='mt-6 mb-3 flex items-center justify-between'>
+        <p className='text-muted-foreground text-sm'>
           {studies.length} {studies.length === 1 ? 'study' : 'studies'} in this project
         </p>
       </div>
 
-      {studies.length > 0 ? (
-        <div className="space-y-3">
+      {studies.length > 0 ?
+        <div className='space-y-3'>
           {studies.map((study: any) => (
             <StudyCard
               key={study.id}
@@ -163,14 +166,15 @@ export function AllStudiesTab() {
             />
           ))}
         </div>
-      ) : (
-        hasData && (
-          <div className="bg-muted rounded-lg py-12 text-center">
-            <BookOpenIcon className="text-muted-foreground/50 mx-auto mb-4 h-12 w-12" />
-            <p className="text-muted-foreground">No studies added yet. Add your first study above.</p>
+      : hasData && (
+          <div className='bg-muted rounded-lg py-12 text-center'>
+            <BookOpenIcon className='text-muted-foreground/50 mx-auto mb-4 h-12 w-12' />
+            <p className='text-muted-foreground'>
+              No studies added yet. Add your first study above.
+            </p>
           </div>
         )
-      )}
+      }
 
       <GoogleDrivePickerModal
         open={showGoogleDriveModal}

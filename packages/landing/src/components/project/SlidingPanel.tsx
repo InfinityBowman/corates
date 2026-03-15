@@ -45,7 +45,7 @@ export function SlidingPanel({
         });
       });
     } else {
-      setVisible(false);  
+      setVisible(false);
     }
   }, [open]);
 
@@ -94,26 +94,24 @@ export function SlidingPanel({
         backfaceVisibility: 'hidden',
       }}
       onTransitionEnd={handleTransitionEnd}
-      role="complementary"
+      role='complementary'
       aria-label={title || 'Side panel'}
     >
       {/* Header */}
-      <div className="border-border flex shrink-0 items-center justify-between border-b px-4 py-3">
-        {title && (
-          <h2 className="text-foreground truncate pr-4 text-lg font-semibold">{title}</h2>
-        )}
+      <div className='border-border flex shrink-0 items-center justify-between border-b px-4 py-3'>
+        {title && <h2 className='text-foreground truncate pr-4 text-lg font-semibold'>{title}</h2>}
         <button
-          type="button"
+          type='button'
           onClick={onClose}
-          className="text-muted-foreground/70 hover:bg-secondary hover:text-secondary-foreground ml-auto rounded-md p-1.5 transition-colors"
-          aria-label="Close panel"
+          className='text-muted-foreground/70 hover:bg-secondary hover:text-secondary-foreground ml-auto rounded-md p-1.5 transition-colors'
+          aria-label='Close panel'
         >
-          <XIcon className="h-5 w-5" />
+          <XIcon className='h-5 w-5' />
         </button>
       </div>
 
       {/* Content */}
-      <div className="min-h-0 flex-1 overflow-hidden">{children}</div>
+      <div className='min-h-0 flex-1 overflow-hidden'>{children}</div>
     </div>
   );
 }
