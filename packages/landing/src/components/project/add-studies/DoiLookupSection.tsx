@@ -18,12 +18,7 @@ import {
   DownloadIcon,
 } from 'lucide-react';
 import { showToast } from '@/components/ui/toast';
-import {
-  Tooltip,
-  TooltipTrigger,
-  TooltipContent,
-  TooltipProvider,
-} from '@/components/ui/tooltip';
+import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/components/ui/tooltip';
 import { Checkbox } from '@/components/ui/checkbox';
 import { getRefDisplayName } from '@/lib/referenceParser.js';
 import { validatePdfFile } from '@/lib/pdfValidation.js';
@@ -43,55 +38,52 @@ export function DoiLookupSection({ studies }: DoiLookupSectionProps) {
   );
 
   const allWithPdfSelected =
-    refsWithPdf.length > 0 &&
-    refsWithPdf.every((r: any) => studies.selectedLookupIds.has(r._id));
-  const someWithPdfSelected =
-    studies.selectedLookupIds.size > 0 && !allWithPdfSelected;
+    refsWithPdf.length > 0 && refsWithPdf.every((r: any) => studies.selectedLookupIds.has(r._id));
+  const someWithPdfSelected = studies.selectedLookupIds.size > 0 && !allWithPdfSelected;
 
   return (
     <TooltipProvider delayDuration={300}>
-      <div className="space-y-3">
-        <p className="text-muted-foreground text-sm">
+      <div className='space-y-3'>
+        <p className='text-muted-foreground text-sm'>
           Paste DOIs or PubMed IDs to find references with open-access PDFs. Only references with
           available PDFs can be added.
         </p>
 
-        <div className="space-y-2">
+        <div className='space-y-2'>
           <textarea
             placeholder={'10.1000/xyz123\n32615397\n10.1016/j.example.2023.01.001'}
             value={studies.identifierInput}
             onChange={e => studies.setIdentifierInput(e.target.value)}
             rows={4}
-            className="border-border text-foreground placeholder-muted-foreground/70 focus:ring-primary w-full rounded-lg border px-3 py-2 font-mono text-sm transition focus:border-transparent focus:ring-2 focus:outline-none"
+            className='border-border text-foreground placeholder-muted-foreground/70 focus:ring-primary w-full rounded-lg border px-3 py-2 font-mono text-sm transition focus:border-transparent focus:ring-2 focus:outline-none'
           />
           <button
-            type="button"
+            type='button'
             onClick={() => studies.handleLookup()}
             disabled={studies.lookingUp || !studies.identifierInput.trim()}
-            className="bg-primary hover:bg-primary/90 focus:ring-primary inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-white transition-colors focus:ring-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+            className='bg-primary hover:bg-primary/90 focus:ring-primary inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-white transition-colors focus:ring-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50'
           >
-            {studies.lookingUp ? (
+            {studies.lookingUp ?
               <>
-                <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                <div className='h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent' />
                 Looking up...
               </>
-            ) : (
-              <>
-                <SearchIcon className="h-4 w-4" />
+            : <>
+                <SearchIcon className='h-4 w-4' />
                 Look Up References
               </>
-            )}
+            }
           </button>
         </div>
 
         {/* Lookup errors */}
         {studies.lookupErrors.length > 0 && (
-          <div className="rounded-lg border border-red-200 bg-red-50 p-3">
-            <p className="mb-1 text-sm font-medium text-red-700">Some lookups failed:</p>
-            <ul className="list-inside list-disc text-xs text-red-600">
+          <div className='rounded-lg border border-red-200 bg-red-50 p-3'>
+            <p className='mb-1 text-sm font-medium text-red-700'>Some lookups failed:</p>
+            <ul className='list-inside list-disc text-xs text-red-600'>
               {studies.lookupErrors.map((err: any, i: number) => (
                 <li key={i}>
-                  <code className="font-mono">{err.identifier}</code>: {err.error}
+                  <code className='font-mono'>{err.identifier}</code>: {err.error}
                 </li>
               ))}
             </ul>
@@ -100,26 +92,22 @@ export function DoiLookupSection({ studies }: DoiLookupSectionProps) {
 
         {/* Results */}
         {studies.lookupRefs.length > 0 && (
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <span className="text-secondary-foreground text-sm">
+          <div className='space-y-2'>
+            <div className='flex items-center justify-between'>
+              <span className='text-secondary-foreground text-sm'>
                 Found references:{' '}
-                <span className="font-medium text-green-600">
-                  {refsWithPdf.length} with PDF
-                </span>
+                <span className='font-medium text-green-600'>{refsWithPdf.length} with PDF</span>
                 {refsWithoutPdf.length > 0 && (
                   <>
-                    <span className="text-muted-foreground/70 mx-1">|</span>
-                    <span className="text-amber-600">
-                      {refsWithoutPdf.length} without PDF
-                    </span>
+                    <span className='text-muted-foreground/70 mx-1'>|</span>
+                    <span className='text-amber-600'>{refsWithoutPdf.length} without PDF</span>
                   </>
                 )}
               </span>
               <button
-                type="button"
+                type='button'
                 onClick={() => studies.clearLookupRefs()}
-                className="text-xs text-red-600 hover:text-red-700 hover:underline"
+                className='text-xs text-red-600 hover:text-red-700 hover:underline'
               >
                 Clear all
               </button>
@@ -127,13 +115,13 @@ export function DoiLookupSection({ studies }: DoiLookupSectionProps) {
 
             {/* Select all with PDF */}
             {refsWithPdf.length > 0 && (
-              <div className="border-border flex items-center gap-2 border-b pb-2">
+              <div className='border-border flex items-center gap-2 border-b pb-2'>
                 <Checkbox
                   checked={someWithPdfSelected ? 'indeterminate' : allWithPdfSelected}
                   onCheckedChange={() => studies.toggleSelectAllLookup()}
                 />
                 <label
-                  className="text-sm cursor-pointer"
+                  className='cursor-pointer text-sm'
                   onClick={() => studies.toggleSelectAllLookup()}
                 >
                   Select all with PDF ({studies.selectedLookupIds.size}/{refsWithPdf.length})
@@ -141,7 +129,7 @@ export function DoiLookupSection({ studies }: DoiLookupSectionProps) {
               </div>
             )}
 
-            <div className="max-h-64 space-y-1 overflow-y-auto pr-1">
+            <div className='max-h-64 space-y-1 overflow-y-auto pr-1'>
               {/* References with PDF available */}
               {refsWithPdf.map((ref: any) => (
                 <LookupRefWithPdf
@@ -156,9 +144,9 @@ export function DoiLookupSection({ studies }: DoiLookupSectionProps) {
 
               {/* References without PDF */}
               {refsWithoutPdf.length > 0 && (
-                <div className="border-border mt-2 border-t pt-2">
-                  <p className="mb-2 flex items-center gap-1 text-xs font-medium text-amber-600">
-                    <AlertCircleIcon className="h-3.5 w-3.5" />
+                <div className='border-border mt-2 border-t pt-2'>
+                  <p className='mb-2 flex items-center gap-1 text-xs font-medium text-amber-600'>
+                    <AlertCircleIcon className='h-3.5 w-3.5' />
                     No open-access PDF available:
                   </p>
                   {refsWithoutPdf.map((ref: any) => (
@@ -226,18 +214,18 @@ function LookupRefWithPdf({
   return (
     <div
       className={`flex cursor-pointer items-start gap-3 rounded-lg p-2 transition-colors ${
-        isSelected
-          ? 'border border-green-200 bg-green-50 hover:bg-green-100'
-          : 'bg-muted hover:bg-secondary border border-transparent'
+        isSelected ?
+          'border border-green-200 bg-green-50 hover:bg-green-100'
+        : 'bg-muted hover:bg-secondary border border-transparent'
       }`}
       onClick={onToggle}
     >
       {/* Hidden file input for manual PDF upload */}
       <input
         ref={fileInputRef}
-        type="file"
-        accept="application/pdf"
-        className="hidden"
+        type='file'
+        accept='application/pdf'
+        className='hidden'
         onChange={handleManualPdfSelect}
       />
 
@@ -245,13 +233,13 @@ function LookupRefWithPdf({
         checked={isSelected}
         onCheckedChange={onToggle}
         onClick={(e: React.MouseEvent) => e.stopPropagation()}
-        className="mt-0.5"
+        className='mt-0.5'
       />
 
-      <div className="min-w-0 flex-1">
-        <div className="flex items-start gap-2">
-          <p className="text-foreground line-clamp-2 flex-1 text-sm font-medium">{ref_.title}</p>
-          <div className="flex shrink-0 items-center gap-1">
+      <div className='min-w-0 flex-1'>
+        <div className='flex items-start gap-2'>
+          <p className='text-foreground line-clamp-2 flex-1 text-sm font-medium'>{ref_.title}</p>
+          <div className='flex shrink-0 items-center gap-1'>
             <PdfStatusBadge
               ref_={ref_}
               onUploadClick={e => {
@@ -265,12 +253,12 @@ function LookupRefWithPdf({
                 <TooltipTrigger asChild>
                   <a
                     href={ref_.pdfUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                    target='_blank'
+                    rel='noopener noreferrer'
                     onClick={e => e.stopPropagation()}
-                    className="text-primary hover:bg-primary/10 inline-flex h-6 w-6 items-center justify-center rounded transition-colors"
+                    className='text-primary hover:bg-primary/10 inline-flex h-6 w-6 items-center justify-center rounded transition-colors'
                   >
-                    <ExternalLinkIcon className="h-4 w-4" />
+                    <ExternalLinkIcon className='h-4 w-4' />
                   </a>
                 </TooltipTrigger>
                 <TooltipContent>View PDF</TooltipContent>
@@ -278,27 +266,27 @@ function LookupRefWithPdf({
             )}
           </div>
         </div>
-        <p className="text-muted-foreground mt-0.5 text-xs">
+        <p className='text-muted-foreground mt-0.5 text-xs'>
           {getRefDisplayName(ref_)}
           {ref_.journal && (
             <>
-              <span className="mx-1">-</span>
-              <span className="italic">{ref_.journal}</span>
+              <span className='mx-1'>-</span>
+              <span className='italic'>{ref_.journal}</span>
             </>
           )}
         </p>
-        {ref_.doi && <p className="mt-0.5 font-mono text-xs text-blue-500">{ref_.doi}</p>}
+        {ref_.doi && <p className='mt-0.5 font-mono text-xs text-blue-500'>{ref_.doi}</p>}
       </div>
 
       <button
-        type="button"
+        type='button'
         onClick={e => {
           e.stopPropagation();
           onRemove();
         }}
-        className="text-muted-foreground/70 focus:ring-primary rounded p-1 transition-colors hover:bg-red-50 hover:text-red-600 focus:ring-2 focus:outline-none"
+        className='text-muted-foreground/70 focus:ring-primary rounded p-1 transition-colors hover:bg-red-50 hover:text-red-600 focus:ring-2 focus:outline-none'
       >
-        <Trash2Icon className="h-4 w-4" />
+        <Trash2Icon className='h-4 w-4' />
       </button>
     </div>
   );
@@ -320,8 +308,8 @@ function PdfStatusBadge({
     return (
       <Tooltip>
         <TooltipTrigger asChild>
-          <span className="inline-flex items-center gap-1 rounded bg-green-100 px-1.5 py-0.5 text-xs font-medium text-green-700">
-            <CheckIcon className="h-3 w-3" />
+          <span className='inline-flex items-center gap-1 rounded bg-green-100 px-1.5 py-0.5 text-xs font-medium text-green-700'>
+            <CheckIcon className='h-3 w-3' />
             PDF Ready
           </span>
         </TooltipTrigger>
@@ -335,8 +323,8 @@ function PdfStatusBadge({
     return (
       <Tooltip>
         <TooltipTrigger asChild>
-          <span className="inline-flex items-center gap-1 rounded bg-green-100 px-1.5 py-0.5 text-xs font-medium text-green-700">
-            <FileTextIcon className="h-3 w-3" />
+          <span className='inline-flex items-center gap-1 rounded bg-green-100 px-1.5 py-0.5 text-xs font-medium text-green-700'>
+            <FileTextIcon className='h-3 w-3' />
             PDF
           </span>
         </TooltipTrigger>
@@ -353,11 +341,11 @@ function PdfStatusBadge({
       <Tooltip>
         <TooltipTrigger asChild>
           <button
-            type="button"
+            type='button'
             onClick={onUploadClick}
-            className="inline-flex items-center gap-1 rounded bg-amber-100 px-1.5 py-0.5 text-xs font-medium text-amber-700 transition-colors hover:bg-amber-200"
+            className='inline-flex items-center gap-1 rounded bg-amber-100 px-1.5 py-0.5 text-xs font-medium text-amber-700 transition-colors hover:bg-amber-200'
           >
-            <UploadIcon className="h-3 w-3" />
+            <UploadIcon className='h-3 w-3' />
             Upload PDF
           </button>
         </TooltipTrigger>
@@ -370,12 +358,12 @@ function PdfStatusBadge({
           <TooltipTrigger asChild>
             <a
               href={ref_.pdfUrl}
-              target="_blank"
-              rel="noopener noreferrer"
+              target='_blank'
+              rel='noopener noreferrer'
               onClick={e => e.stopPropagation()}
-              className="text-primary hover:bg-primary/10 inline-flex h-6 w-6 items-center justify-center rounded transition-colors"
+              className='text-primary hover:bg-primary/10 inline-flex h-6 w-6 items-center justify-center rounded transition-colors'
             >
-              <DownloadIcon className="h-4 w-4" />
+              <DownloadIcon className='h-4 w-4' />
             </a>
           </TooltipTrigger>
           <TooltipContent>Download PDF from publisher (then upload)</TooltipContent>
@@ -388,53 +376,47 @@ function PdfStatusBadge({
 /**
  * Row for a lookup reference without PDF (read-only, not selectable).
  */
-function LookupRefWithoutPdf({
-  ref_,
-  onRemove,
-}: {
-  ref_: any;
-  onRemove: () => void;
-}) {
+function LookupRefWithoutPdf({ ref_, onRemove }: { ref_: any; onRemove: () => void }) {
   return (
-    <div className="flex items-start gap-3 rounded-lg border border-amber-100 bg-amber-50/50 p-2 opacity-75">
-      <div className="mt-0.5 flex h-5 w-5 items-center justify-center">
-        <FileIcon className="h-4 w-4 text-amber-400" />
+    <div className='flex items-start gap-3 rounded-lg border border-amber-100 bg-amber-50/50 p-2 opacity-75'>
+      <div className='mt-0.5 flex h-5 w-5 items-center justify-center'>
+        <FileIcon className='h-4 w-4 text-amber-400' />
       </div>
-      <div className="min-w-0 flex-1">
-        <p className="text-secondary-foreground line-clamp-2 text-sm font-medium">{ref_.title}</p>
-        <p className="text-muted-foreground mt-0.5 text-xs">
+      <div className='min-w-0 flex-1'>
+        <p className='text-secondary-foreground line-clamp-2 text-sm font-medium'>{ref_.title}</p>
+        <p className='text-muted-foreground mt-0.5 text-xs'>
           {getRefDisplayName(ref_)}
           {ref_.journal && (
             <>
-              <span className="mx-1">-</span>
-              <span className="italic">{ref_.journal}</span>
+              <span className='mx-1'>-</span>
+              <span className='italic'>{ref_.journal}</span>
             </>
           )}
         </p>
         {ref_.doi && (
-          <div className="mt-1 flex items-center gap-2">
-            <span className="text-muted-foreground/70 font-mono text-xs">{ref_.doi}</span>
+          <div className='mt-1 flex items-center gap-2'>
+            <span className='text-muted-foreground/70 font-mono text-xs'>{ref_.doi}</span>
             <a
               href={`https://doi.org/${ref_.doi}`}
-              target="_blank"
-              rel="noopener noreferrer"
+              target='_blank'
+              rel='noopener noreferrer'
               onClick={e => e.stopPropagation()}
-              className="hover:text-primary inline-flex items-center gap-0.5 text-xs text-blue-500"
+              className='hover:text-primary inline-flex items-center gap-0.5 text-xs text-blue-500'
             >
-              View <ExternalLinkIcon className="h-3 w-3" />
+              View <ExternalLinkIcon className='h-3 w-3' />
             </a>
           </div>
         )}
       </div>
       <button
-        type="button"
+        type='button'
         onClick={e => {
           e.stopPropagation();
           onRemove();
         }}
-        className="text-muted-foreground/70 focus:ring-primary rounded p-1 transition-colors hover:bg-red-50 hover:text-red-600 focus:ring-2 focus:outline-none"
+        className='text-muted-foreground/70 focus:ring-primary rounded p-1 transition-colors hover:bg-red-50 hover:text-red-600 focus:ring-2 focus:outline-none'
       >
-        <Trash2Icon className="h-4 w-4" />
+        <Trash2Icon className='h-4 w-4' />
       </button>
     </div>
   );

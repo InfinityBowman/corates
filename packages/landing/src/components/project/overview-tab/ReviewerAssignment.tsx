@@ -22,7 +22,7 @@ function MemberPercentRow({
 }: {
   member: any;
   percent: number;
-  onChange: (val: number) => void;
+  onChange: (_val: number) => void;
 }) {
   const [showCustom, setShowCustom] = useState(false);
   const isPreset = PRESETS.includes(percent);

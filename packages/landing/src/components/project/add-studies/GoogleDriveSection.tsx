@@ -23,9 +23,7 @@ export function GoogleDriveSection({
   const handlePick = useCallback(
     (picked: Array<{ id: string; name: string }>) => {
       for (const file of picked) {
-        const alreadySelected = studies.selectedDriveFiles.some(
-          (f: any) => f.id === file.id,
-        );
+        const alreadySelected = studies.selectedDriveFiles.some((f: any) => f.id === file.id);
         if (!alreadySelected) {
           studies.toggleDriveFile({ id: file.id, name: file.name });
         }
@@ -35,8 +33,8 @@ export function GoogleDriveSection({
   );
 
   return (
-    <div className="space-y-3">
-      <p className="text-muted-foreground text-sm">
+    <div className='space-y-3'>
+      <p className='text-muted-foreground text-sm'>
         Import PDFs from your Google Drive. Each selected file will create a new study.
       </p>
 

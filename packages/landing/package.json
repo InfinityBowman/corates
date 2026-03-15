@@ -11,7 +11,7 @@
     "preview": "vite preview",
     "deploy": "wrangler deploy",
     "lint": "eslint",
-    "format": "prettier",
+    "format": "prettier --write .",
     "check": "prettier --write . && eslint --fix",
     "typecheck": "tsc --noEmit"
   },

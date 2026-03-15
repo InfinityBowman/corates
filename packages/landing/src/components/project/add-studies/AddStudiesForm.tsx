@@ -37,12 +37,7 @@ interface AddStudiesFormProps {
   onAddStudies?: (studies: any[]) => Promise<void>;
   alwaysExpanded?: boolean;
   collectMode?: boolean;
-  onStudiesChange?: (data: {
-    pdfs: any[];
-    refs: any[];
-    lookups: any[];
-    driveFiles: any[];
-  }) => void;
+  onStudiesChange?: (data: { pdfs: any[]; refs: any[]; lookups: any[]; driveFiles: any[] }) => void;
   formType?: 'createProject' | 'addStudies';
   initialState?: any;
   getExternalState?: () => Record<string, unknown>;
@@ -74,8 +69,8 @@ export function AddStudiesForm({
   });
 
   // Check if project has existing studies via store
-  const existingStudyCount = useProjectStore(
-    s => (projectId ? s.projects[projectId]?.studies?.length ?? 0 : 0),
+  const existingStudyCount = useProjectStore(s =>
+    projectId ? (s.projects[projectId]?.studies?.length ?? 0) : 0,
   );
   const hasExistingStudies = !collectMode && !!projectId && existingStudyCount > 0;
 
@@ -117,7 +112,11 @@ export function AddStudiesForm({
 
     const handleDragEnter = (e: Event) => {
       const de = e as globalThis.DragEvent;
-      if (hasExistingStudiesRef.current && !isExpandedRef.current && de.dataTransfer?.types?.includes('Files')) {
+      if (
+        hasExistingStudiesRef.current &&
+        !isExpandedRef.current &&
+        de.dataTransfer?.types?.includes('Files')
+      ) {
         setIsDraggingOver(true);
       }
     };
@@ -178,83 +177,170 @@ export function AddStudiesForm({
     }
   }, [studies, onAddStudies]);
 
-  const handleKeyDown = useCallback(
-    (e: React.KeyboardEvent) => {
-      if (e.key === 'Enter') {
-        e.preventDefault();
-        handleAddStudy();
-      }
-    },
-    [handleAddStudy],
+  const handleCancel = useCallback(() => {
+    studies.clearAll();
+    setExpanded(false);
+  }, [studies]);
+
+  // Shared tab content rendered in all three UI modes
+  const tabContent = (
+    <>
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <TabsList variant='line' className='relative flex gap-1 overflow-x-auto pb-px'>
+          {TABS.map(tab => {
+            const count = getTabCount(tab.value, studies);
+            return (
+              <TabsTrigger
+                key={tab.value}
+                value={tab.value}
+                className='group text-muted-foreground hover:bg-muted hover:text-secondary-foreground data-active:text-foreground relative gap-2 rounded-t-lg px-4 py-2.5 transition-all'
+              >
+                <span className='opacity-60 transition-opacity group-data-active:opacity-100'>
+                  <tab.icon className='h-4 w-4' />
+                </span>
+                <span className='font-medium'>{tab.label}</span>
+                {count > 0 && (
+                  <span className='bg-secondary text-secondary-foreground group-data-active:bg-primary/10 group-data-active:text-primary min-w-6 rounded-full px-1.5 py-0.5 text-center text-xs font-medium tabular-nums transition-colors'>
+                    {count}
+                  </span>
+                )}
+              </TabsTrigger>
+            );
+          })}
+        </TabsList>
+
+        <div className='mt-4'>
+          <TabsContent value='pdfs' className='mt-0'>
+            <PdfUploadSection studies={studies} />
+          </TabsContent>
+          <TabsContent value='references' className='mt-0'>
+            <ReferenceImportSection studies={studies} />
+          </TabsContent>
+          <TabsContent value='lookup' className='mt-0'>
+            <DoiLookupSection studies={studies} />
+          </TabsContent>
+          <TabsContent value='drive' className='mt-0'>
+            <GoogleDriveSection
+              studies={studies}
+              formType={formType}
+              projectId={projectId}
+              onSaveFormState={handleSaveFormState}
+            />
+          </TabsContent>
+        </div>
+      </Tabs>
+
+      <StagedStudiesSection studies={studies} />
+
+      {studies.totalStudyCount > 0 && !collectMode && (
+        <div className='border-border mt-4 flex items-center justify-end gap-2 border-t pt-4'>
+          {!alwaysExpanded && (
+            <button
+              type='button'
+              onClick={handleCancel}
+              className='text-secondary-foreground hover:bg-secondary hover:text-foreground rounded-lg px-3 py-1.5 text-sm transition-colors'
+            >
+              Cancel
+            </button>
+          )}
+          <button
+            type='button'
+            onClick={handleSubmit}
+            disabled={isSubmitting || studies.totalStudyCount === 0}
+            className='bg-primary hover:bg-primary/90 focus:ring-primary inline-flex items-center gap-2 rounded-lg px-4 py-1.5 text-sm font-medium text-white transition-colors focus:ring-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50'
+          >
+            {isSubmitting ?
+              <>
+                <div className='h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent' />
+                Adding...
+              </>
+            : <>
+                Add {studies.totalStudyCount} {studies.totalStudyCount === 1 ? 'Study' : 'Studies'}
+              </>
+            }
+          </button>
+        </div>
+      )}
+    </>
   );
 
   return (
-    <div className="border-border bg-card overflow-hidden rounded-lg border">
-      <Collapsible open={expanded} onOpenChange={setExpanded}>
-        {/* Header */}
-        <div
-          className="flex cursor-pointer items-center justify-between px-4 py-3 select-none"
-          onClick={() => setExpanded(!expanded)}
-        >
-          <div className="flex items-center gap-2">
-            <PlusIcon className="text-primary h-5 w-5" />
-            <span className="text-foreground font-medium">Add Studies</span>
+    <div ref={containerRef} className='relative'>
+      {/* Drag overlay */}
+      {isDraggingOver && hasExistingStudies && !isExpanded && (
+        <div className='pointer-events-none fixed inset-0 z-50 flex items-center justify-center bg-blue-500/10'>
+          <div className='bg-card rounded-xl border-2 border-dashed border-blue-500 p-8'>
+            <p className='text-lg font-medium text-blue-600'>Drop PDFs to add studies</p>
           </div>
-          <button
-            onClick={e => {
-              e.stopPropagation();
-              setExpanded(!expanded);
-            }}
-            className={`flex items-center gap-1 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
-              expanded
-                ? 'text-muted-foreground hover:bg-muted'
-                : 'bg-primary/10 text-primary hover:bg-primary/20'
-            }`}
-          >
-            {expanded ? <XIcon className="h-4 w-4" /> : <PlusIcon className="h-4 w-4" />}
-            {expanded ? 'Close' : 'Add'}
-          </button>
         </div>
+      )}
 
-        <CollapsibleContent>
-          <div className="border-border space-y-4 border-t px-4 py-4">
-            {/* Quick add by name */}
-            <div>
-              <label className="text-secondary-foreground mb-1 block text-sm font-medium">
-                Study Name
-              </label>
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  value={studyName}
-                  onChange={e => setStudyName(e.target.value)}
-                  onKeyDown={handleKeyDown}
-                  placeholder="Enter study name or title..."
-                  className="border-border focus:border-primary focus:ring-primary flex-1 rounded-lg border px-3 py-2 text-sm focus:ring-1 focus:outline-none"
-                  disabled={isSubmitting}
-                />
-                <button
-                  onClick={handleAddStudy}
-                  disabled={!studyName.trim() || isSubmitting}
-                  className="bg-primary hover:bg-primary/90 shrink-0 rounded-lg px-4 py-2 text-sm font-medium text-white transition-colors disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  {isSubmitting ? 'Adding...' : 'Add'}
-                </button>
+      {/* Mode 1: Collapsible card (has existing studies) */}
+      {hasExistingStudies && !alwaysExpanded && (
+        <div className='border-border bg-card overflow-hidden rounded-lg border'>
+          <div className='flex items-center justify-between px-4 py-4'>
+            <div className='flex items-center gap-3'>
+              <div className='bg-primary/10 text-primary flex h-10 w-10 items-center justify-center rounded-lg'>
+                <PlusIcon className='h-5 w-5' />
+              </div>
+              <div>
+                <h3 className='text-foreground text-base font-semibold'>Add Studies</h3>
+                <p className='text-muted-foreground text-sm'>
+                  {studies.totalStudyCount > 0 ?
+                    `${studies.totalStudyCount} staged`
+                  : 'Upload PDFs, import references, or look up by DOI'}
+                </p>
               </div>
             </div>
+            <button
+              type='button'
+              onClick={() => setExpanded(!expanded)}
+              className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                isExpanded ? 'bg-primary text-white' : (
+                  'bg-primary/10 text-primary hover:bg-primary/20'
+                )
+              }`}
+            >
+              {isExpanded ?
+                <XIcon className='h-4 w-4' />
+              : <PlusIcon className='h-4 w-4' />}
+              {isExpanded ? 'Close' : 'Add'}
+            </button>
+          </div>
 
-            {/* Advanced features notice */}
-            <div className="border-border bg-muted/50 rounded-lg border p-3">
-              <p className="text-muted-foreground text-xs">
-                Advanced import options (PDF upload with metadata extraction, DOI/PMID lookup,
-                reference file import, Google Drive) will be available after full migration.
+          <Collapsible open={isExpanded} onOpenChange={setExpanded}>
+            <CollapsibleContent>
+              <div className='border-border border-t px-6 pt-4 pb-6'>{tabContent}</div>
+            </CollapsibleContent>
+          </Collapsible>
+        </div>
+      )}
+
+      {/* Mode 2: Always expanded standalone card */}
+      {alwaysExpanded && (
+        <div className={collectMode ? '' : 'border-border bg-card rounded-lg border p-6 shadow-sm'}>
+          {tabContent}
+        </div>
+      )}
+
+      {/* Mode 3: Empty project - dashed dropzone or expanded form */}
+      {!hasExistingStudies && !alwaysExpanded && (
+        <>
+          {!isExpanded ?
+            <div
+              className='border-border cursor-pointer rounded-lg border-2 border-dashed p-8 text-center transition-colors hover:border-blue-500 hover:bg-blue-50/50'
+              onClick={() => setExpanded(true)}
+            >
+              <CloudUploadIcon className='text-muted-foreground/70 mx-auto mb-3 h-12 w-12' />
+              <p className='text-secondary-foreground font-medium'>Add Studies to Your Project</p>
+              <p className='text-muted-foreground mt-1 text-sm'>
+                Upload PDFs, import from reference managers, or look up by DOI/PMID
               </p>
             </div>
-          ) : (
-            <div className="border-border bg-card overflow-hidden rounded-lg border shadow-sm">
-              <div className="p-6">{tabContent}</div>
+          : <div className='border-border bg-card overflow-hidden rounded-lg border shadow-sm'>
+              <div className='p-6'>{tabContent}</div>
             </div>
-          )}
+          }
         </>
       )}
     </div>

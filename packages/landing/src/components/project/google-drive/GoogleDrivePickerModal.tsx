@@ -65,15 +65,13 @@ export function GoogleDrivePickerModal({
 
   return (
     <Dialog open={open} onOpenChange={openState => !openState && onClose()}>
-      <DialogContent className="max-w-lg">
+      <DialogContent className='max-w-lg'>
         <DialogHeader>
           <DialogTitle>Import from Google Drive</DialogTitle>
-          <DialogDescription>
-            Select a PDF from your Google Drive to import
-          </DialogDescription>
+          <DialogDescription>Select a PDF from your Google Drive to import</DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4">
+        <div className='space-y-4'>
           <GoogleDrivePickerLauncher
             active={open}
             multiselect={false}
@@ -84,11 +82,11 @@ export function GoogleDrivePickerModal({
             studyId={studyId || undefined}
           />
 
-          <div className="flex justify-end">
+          <div className='flex justify-end'>
             <button
-              type="button"
+              type='button'
               onClick={onClose}
-              className="border-border bg-card text-secondary-foreground hover:bg-muted rounded-lg border px-4 py-2 text-sm font-medium transition-colors"
+              className='border-border bg-card text-secondary-foreground hover:bg-muted rounded-lg border px-4 py-2 text-sm font-medium transition-colors'
             >
               Cancel
             </button>
