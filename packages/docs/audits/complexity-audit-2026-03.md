@@ -227,15 +227,6 @@ Workers pins `vitest@3.2.0` for `@cloudflare/vitest-pool-workers` compatibility.
 
 **Short-term (before web package deletion):** 4. A1 -- Extract framework-agnostic utilities to `@corates/shared` before the web package is deleted and the landing copies become orphaned 5. S4 -- Gate error detail leaking in production
 
-**Medium-term (reduce backend complexity):**
-6. A2 -- Extract runMiddleware helper
-7. A3 -- Unify invitation acceptance logic
-8. Split the largest backend route files (orgs/index.ts, orgs/invitations.ts, orgs/pdfs.ts)
-9. B1 -- Cache orgBilling resolution across middleware
-10. Q2 -- Upgrade workers to vitest 4 + pool-workers 0.13.0 to unify test infrastructure
+**Medium-term (reduce backend complexity):** 6. A2 -- Extract runMiddleware helper 7. A3 -- Unify invitation acceptance logic 8. Split the largest backend route files (orgs/index.ts, orgs/invitations.ts, orgs/pdfs.ts) 9. B1 -- Cache orgBilling resolution across middleware 10. Q2 -- Upgrade workers to vitest 4 + pool-workers 0.13.0 to unify test infrastructure
 
-**Longer-term (structural improvements):**
-11. T1 -- Generate API types from OpenAPI schema for landing package
-12. T3 -- Unify subscription tier naming
-13. B4 -- Move rate limiting to Cloudflare's native solution
-14. B5 -- Address the 106 `@ts-expect-error` comments with a route factory pattern
+**Longer-term (structural improvements):** 11. T1 -- Generate API types from OpenAPI schema for landing package 12. T3 -- Unify subscription tier naming 13. B4 -- Move rate limiting to Cloudflare's native solution 14. B5 -- Address the 106 `@ts-expect-error` comments with a route factory pattern
