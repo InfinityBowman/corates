@@ -126,7 +126,7 @@ export function ProjectsSection({
     <section style={animation.fadeUp(200)}>
       {/* Contact prompt for users who can't create projects */}
       {!subscriptionLoading && !canCreateProject && (
-        <div className="mb-4">
+        <div className='mb-4'>
           <ContactPrompt
             restrictionType={restrictionType}
             projectCount={projectCount}

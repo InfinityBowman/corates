@@ -152,79 +152,76 @@ export function ProfileInfoSection() {
   );
 
   return (
-    <div className="space-y-6">
+    <div className='space-y-6'>
       {/* Avatar and Name Row */}
-      <div className="flex items-center gap-6">
+      <div className='flex items-center gap-6'>
         {/* Avatar */}
-        <div className="group relative shrink-0">
-          {avatarUrl ? (
+        <div className='group relative shrink-0'>
+          {avatarUrl ?
             <img
               src={avatarUrl}
               alt={user?.name || 'Profile'}
-              className="ring-background h-20 w-20 rounded-full object-cover shadow-md ring-2"
-              referrerPolicy="no-referrer"
+              className='ring-background h-20 w-20 rounded-full object-cover shadow-md ring-2'
+              referrerPolicy='no-referrer'
             />
-          ) : (
-            <div className="from-primary to-primary/80 text-primary-foreground flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br text-xl font-semibold shadow-md">
+          : <div className='from-primary to-primary/80 text-primary-foreground flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br text-xl font-semibold shadow-md'>
               {userInitials}
             </div>
-          )}
+          }
           <button
             onClick={() => fileInputRef.current?.click()}
             disabled={uploadingImage}
-            className="bg-foreground/60 absolute inset-0 flex cursor-pointer items-center justify-center rounded-full opacity-0 backdrop-blur-sm transition-all duration-200 group-hover:opacity-100 disabled:cursor-wait"
-            title="Change profile photo"
+            className='bg-foreground/60 absolute inset-0 flex cursor-pointer items-center justify-center rounded-full opacity-0 backdrop-blur-sm transition-all duration-200 group-hover:opacity-100 disabled:cursor-wait'
+            title='Change profile photo'
           >
-            {uploadingImage ? (
-              <div className="h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent" />
-            ) : (
-              <CameraIcon className="h-5 w-5 text-white" />
-            )}
+            {uploadingImage ?
+              <div className='h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent' />
+            : <CameraIcon className='h-5 w-5 text-white' />}
           </button>
           <input
             ref={fileInputRef}
-            type="file"
-            accept="image/jpeg,image/png,image/gif,image/webp"
-            className="hidden"
+            type='file'
+            accept='image/jpeg,image/png,image/gif,image/webp'
+            className='hidden'
             onChange={handleImageSelect}
           />
         </div>
 
         {/* Name Fields */}
-        <div className="min-w-0 flex-1">
-          <div className="grid grid-cols-2 gap-4">
+        <div className='min-w-0 flex-1'>
+          <div className='grid grid-cols-2 gap-4'>
             <div>
-              <label className="text-muted-foreground mb-1 block text-xs font-medium uppercase tracking-wide">
+              <label className='text-muted-foreground mb-1 block text-xs font-medium tracking-wide uppercase'>
                 First Name
               </label>
               <SimpleEditable
-                activationMode="click"
+                activationMode='click'
                 value={firstName || 'Add first name'}
                 onSubmit={handleFirstNameChange}
                 showEditIcon
-                placeholder="First name"
-                className="text-foreground text-lg font-medium"
+                placeholder='First name'
+                className='text-foreground text-lg font-medium'
               />
             </div>
             <div>
-              <label className="text-muted-foreground mb-1 block text-xs font-medium uppercase tracking-wide">
+              <label className='text-muted-foreground mb-1 block text-xs font-medium tracking-wide uppercase'>
                 Last Name
               </label>
               <SimpleEditable
-                activationMode="click"
+                activationMode='click'
                 value={lastName || 'Add last name'}
                 onSubmit={handleLastNameChange}
                 showEditIcon
-                placeholder="Last name"
-                className="text-foreground text-lg font-medium"
+                placeholder='Last name'
+                className='text-foreground text-lg font-medium'
               />
             </div>
           </div>
-          <div className="mt-3 flex items-center gap-2">
-            <p className="text-muted-foreground text-sm">{user?.email as string}</p>
+          <div className='mt-3 flex items-center gap-2'>
+            <p className='text-muted-foreground text-sm'>{user?.email as string}</p>
             {!!user?.emailVerified && (
-              <span className="bg-emerald-50 text-emerald-600 ring-emerald-600/10 inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-xs font-medium ring-1">
-                <CheckIcon className="h-3 w-3" />
+              <span className='inline-flex items-center gap-1 rounded-full bg-emerald-50 px-1.5 py-0.5 text-xs font-medium text-emerald-600 ring-1 ring-emerald-600/10'>
+                <CheckIcon className='h-3 w-3' />
                 Verified
               </span>
             )}
@@ -233,11 +230,11 @@ export function ProfileInfoSection() {
       </div>
 
       {/* Member Since */}
-      <div className="border-border pt-5 border-t">
-        <label className="text-muted-foreground mb-1 block text-xs font-medium uppercase tracking-wide">
+      <div className='border-border border-t pt-5'>
+        <label className='text-muted-foreground mb-1 block text-xs font-medium tracking-wide uppercase'>
           Member Since
         </label>
-        <p className="text-foreground">{formatDate(user?.createdAt as string | undefined)}</p>
+        <p className='text-foreground'>{formatDate(user?.createdAt as string | undefined)}</p>
       </div>
     </div>
   );

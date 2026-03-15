@@ -5,25 +5,10 @@
  */
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import {
-  TriangleAlertIcon,
-  CheckIcon,
-  LoaderIcon,
-  UserPlusIcon,
-  MailIcon,
-} from 'lucide-react';
+import { TriangleAlertIcon, CheckIcon, LoaderIcon, UserPlusIcon, MailIcon } from 'lucide-react';
 import { showToast } from '@/components/ui/toast';
-import {
-  InputOTP,
-  InputOTPGroup,
-  InputOTPSlot,
-} from '@/components/ui/input-otp';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { initiateMerge, verifyMergeCode, completeMerge, cancelMerge } from '@/api/account-merge.js';
 
 const STEPS = {
@@ -107,9 +92,9 @@ export function MergeAccountsDialog({
     const input = targetEmail.trim();
     if (!input) {
       setError(
-        isOrcidConflict
-          ? 'Please enter the email address or ORCID ID of the other account'
-          : 'Please enter the email address of the other account',
+        isOrcidConflict ?
+          'Please enter the email address or ORCID ID of the other account'
+        : 'Please enter the email address of the other account',
       );
       return;
     }
@@ -222,53 +207,48 @@ export function MergeAccountsDialog({
         }
       }}
     >
-      <DialogContent className="max-w-md">
+      <DialogContent className='max-w-md'>
         <DialogHeader>
-          <DialogTitle>
-            {step === STEPS.SUCCESS ? 'Accounts Merged' : 'Merge Accounts'}
-          </DialogTitle>
+          <DialogTitle>{step === STEPS.SUCCESS ? 'Accounts Merged' : 'Merge Accounts'}</DialogTitle>
         </DialogHeader>
-        <div className="space-y-4">
+        <div className='space-y-4'>
           {/* PROMPT */}
           {step === STEPS.PROMPT && (
             <>
-              <div className="flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 p-3">
-                <TriangleAlertIcon className="mt-0.5 h-5 w-5 shrink-0 text-amber-600" />
-                <div className="text-sm text-amber-800">
-                  <p className="font-medium">
-                    This {providerName} account belongs to another user
-                  </p>
-                  <p className="mt-1">
-                    If you own both accounts and want to combine them, you can merge them into
-                    one.
+              <div className='flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 p-3'>
+                <TriangleAlertIcon className='mt-0.5 h-5 w-5 shrink-0 text-amber-600' />
+                <div className='text-sm text-amber-800'>
+                  <p className='font-medium'>This {providerName} account belongs to another user</p>
+                  <p className='mt-1'>
+                    If you own both accounts and want to combine them, you can merge them into one.
                   </p>
                 </div>
               </div>
               {isOrcidConflict && (
-                <div className="rounded-lg border border-blue-200 bg-blue-50 p-3 text-sm text-blue-800">
-                  <p className="font-medium">ORCID Account Merge</p>
-                  <p className="mt-1">
+                <div className='rounded-lg border border-blue-200 bg-blue-50 p-3 text-sm text-blue-800'>
+                  <p className='font-medium'>ORCID Account Merge</p>
+                  <p className='mt-1'>
                     You can enter either the email address or your ORCID ID (e.g.,
                     0000-0001-2345-6789) to identify the account you want to merge.
                   </p>
                 </div>
               )}
-              <p className="text-secondary-foreground text-sm">
-                Merging will combine all your projects, data, and sign-in methods into this
-                account. The other account will be deleted.
+              <p className='text-secondary-foreground text-sm'>
+                Merging will combine all your projects, data, and sign-in methods into this account.
+                The other account will be deleted.
               </p>
-              <div className="flex justify-end gap-3 pt-2">
+              <div className='flex justify-end gap-3 pt-2'>
                 <button
                   onClick={() => onOpenChange(false)}
-                  className="bg-secondary text-secondary-foreground hover:bg-secondary/80 rounded-lg px-4 py-2 text-sm font-medium transition-colors"
+                  className='bg-secondary text-secondary-foreground hover:bg-secondary/80 rounded-lg px-4 py-2 text-sm font-medium transition-colors'
                 >
                   Cancel
                 </button>
                 <button
                   onClick={() => setStep(STEPS.ENTER_EMAIL)}
-                  className="bg-primary hover:bg-primary/90 inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-white transition-colors"
+                  className='bg-primary hover:bg-primary/90 inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-white transition-colors'
                 >
-                  <UserPlusIcon className="h-4 w-4" />
+                  <UserPlusIcon className='h-4 w-4' />
                   Merge Accounts
                 </button>
               </div>
@@ -278,29 +258,30 @@ export function MergeAccountsDialog({
           {/* ENTER_EMAIL */}
           {step === STEPS.ENTER_EMAIL && (
             <>
-              <p className="text-secondary-foreground text-sm">
-                {isOrcidConflict
-                  ? "Enter the email address or ORCID ID (e.g., 0000-0001-2345-6789) of the other CoRATES account. We'll send a verification code to prove you own it."
-                  : "Enter the email address of the other CoRATES account. We'll send a verification code to prove you own it."}
+              <p className='text-secondary-foreground text-sm'>
+                {isOrcidConflict ?
+                  "Enter the email address or ORCID ID (e.g., 0000-0001-2345-6789) of the other CoRATES account. We'll send a verification code to prove you own it."
+                : "Enter the email address of the other CoRATES account. We'll send a verification code to prove you own it."
+                }
               </p>
               <input
-                type="text"
+                type='text'
                 value={targetEmail}
                 onChange={e => setTargetEmail(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && handleSendCode()}
                 placeholder={
-                  isOrcidConflict
-                    ? 'Email or ORCID ID (e.g., 0000-0001-2345-6789)'
-                    : 'other@example.com'
+                  isOrcidConflict ?
+                    'Email or ORCID ID (e.g., 0000-0001-2345-6789)'
+                  : 'other@example.com'
                 }
-                className="border-border focus:border-primary focus:ring-ring w-full rounded-lg border px-3 py-2 focus:ring-2"
+                className='border-border focus:border-primary focus:ring-ring w-full rounded-lg border px-3 py-2 focus:ring-2'
                 disabled={loading}
               />
-              {error && <p className="text-destructive text-sm">{error}</p>}
-              <div className="flex justify-end gap-3 pt-2">
+              {error && <p className='text-destructive text-sm'>{error}</p>}
+              <div className='flex justify-end gap-3 pt-2'>
                 <button
                   onClick={() => setStep(STEPS.PROMPT)}
-                  className="bg-secondary text-secondary-foreground hover:bg-secondary/80 rounded-lg px-4 py-2 text-sm font-medium transition-colors"
+                  className='bg-secondary text-secondary-foreground hover:bg-secondary/80 rounded-lg px-4 py-2 text-sm font-medium transition-colors'
                   disabled={loading}
                 >
                   Back
@@ -308,13 +289,11 @@ export function MergeAccountsDialog({
                 <button
                   onClick={handleSendCode}
                   disabled={loading || !targetEmail.trim()}
-                  className="bg-primary hover:bg-primary/90 inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-white transition-colors disabled:opacity-50"
+                  className='bg-primary hover:bg-primary/90 inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-white transition-colors disabled:opacity-50'
                 >
-                  {loading ? (
-                    <LoaderIcon className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <MailIcon className="h-4 w-4" />
-                  )}
+                  {loading ?
+                    <LoaderIcon className='h-4 w-4 animate-spin' />
+                  : <MailIcon className='h-4 w-4' />}
                   Send Code
                 </button>
               </div>
@@ -324,20 +303,20 @@ export function MergeAccountsDialog({
           {/* ENTER_CODE */}
           {step === STEPS.ENTER_CODE && (
             <>
-              <div className="flex items-start gap-3 rounded-lg border border-blue-200 bg-blue-50 p-3">
-                <MailIcon className="text-primary mt-0.5 h-5 w-5 shrink-0" />
-                <div className="text-sm text-blue-800">
-                  <p className="font-medium">Verification code sent</p>
-                  <p className="mt-1">
+              <div className='flex items-start gap-3 rounded-lg border border-blue-200 bg-blue-50 p-3'>
+                <MailIcon className='text-primary mt-0.5 h-5 w-5 shrink-0' />
+                <div className='text-sm text-blue-800'>
+                  <p className='font-medium'>Verification code sent</p>
+                  <p className='mt-1'>
                     Check <strong>{displayTarget}</strong> for a 6-digit code.
                   </p>
                 </div>
               </div>
               <div>
-                <label className="text-secondary-foreground mb-1 block text-center text-sm font-medium">
+                <label className='text-secondary-foreground mb-1 block text-center text-sm font-medium'>
                   Verification Code
                 </label>
-                <div className="flex justify-center">
+                <div className='flex justify-center'>
                   <InputOTP
                     maxLength={6}
                     value={verificationCode}
@@ -355,17 +334,17 @@ export function MergeAccountsDialog({
                   </InputOTP>
                 </div>
               </div>
-              {error && <p className="text-destructive text-sm">{error}</p>}
-              <p className="text-muted-foreground text-xs">
+              {error && <p className='text-destructive text-sm'>{error}</p>}
+              <p className='text-muted-foreground text-xs'>
                 Didn&apos;t receive the code?{' '}
-                <button onClick={handleResendCode} className="text-primary hover:underline">
+                <button onClick={handleResendCode} className='text-primary hover:underline'>
                   Send again
                 </button>
               </p>
-              <div className="flex justify-end gap-3 pt-2">
+              <div className='flex justify-end gap-3 pt-2'>
                 <button
                   onClick={handleCancel}
-                  className="bg-secondary text-secondary-foreground hover:bg-secondary/80 rounded-lg px-4 py-2 text-sm font-medium transition-colors"
+                  className='bg-secondary text-secondary-foreground hover:bg-secondary/80 rounded-lg px-4 py-2 text-sm font-medium transition-colors'
                   disabled={loading}
                 >
                   Cancel
@@ -373,9 +352,9 @@ export function MergeAccountsDialog({
                 <button
                   onClick={() => handleVerifyCode()}
                   disabled={loading || verificationCode.length !== 6}
-                  className="bg-primary hover:bg-primary/90 inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-white transition-colors disabled:opacity-50"
+                  className='bg-primary hover:bg-primary/90 inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-white transition-colors disabled:opacity-50'
                 >
-                  {loading && <LoaderIcon className="h-4 w-4 animate-spin" />}
+                  {loading && <LoaderIcon className='h-4 w-4 animate-spin' />}
                   Verify Code
                 </button>
               </div>
@@ -385,19 +364,19 @@ export function MergeAccountsDialog({
           {/* CONFIRM */}
           {step === STEPS.CONFIRM && (
             <>
-              <div className="flex items-start gap-3 rounded-lg border border-green-200 bg-green-50 p-3">
-                <CheckIcon className="mt-0.5 h-5 w-5 shrink-0 text-green-600" />
-                <div className="text-sm text-green-800">
-                  <p className="font-medium">Email verified!</p>
-                  <p className="mt-1">You&apos;ve confirmed access to {displayTarget}.</p>
+              <div className='flex items-start gap-3 rounded-lg border border-green-200 bg-green-50 p-3'>
+                <CheckIcon className='mt-0.5 h-5 w-5 shrink-0 text-green-600' />
+                <div className='text-sm text-green-800'>
+                  <p className='font-medium'>Email verified!</p>
+                  <p className='mt-1'>You&apos;ve confirmed access to {displayTarget}.</p>
                 </div>
               </div>
               {mergePreview && (
-                <div className="border-border bg-muted rounded-lg border p-3 text-sm">
-                  <p className="text-secondary-foreground mb-2 font-medium">
+                <div className='border-border bg-muted rounded-lg border p-3 text-sm'>
+                  <p className='text-secondary-foreground mb-2 font-medium'>
                     After merging, you&apos;ll have:
                   </p>
-                  <ul className="text-secondary-foreground list-inside list-disc space-y-1">
+                  <ul className='text-secondary-foreground list-inside list-disc space-y-1'>
                     <li>
                       Sign-in methods:{' '}
                       {[
@@ -411,18 +390,18 @@ export function MergeAccountsDialog({
                   </ul>
                 </div>
               )}
-              <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
-                <p className="font-medium">Warning: This action cannot be undone.</p>
-                <p className="mt-1">
+              <div className='rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800'>
+                <p className='font-medium'>Warning: This action cannot be undone.</p>
+                <p className='mt-1'>
                   The account ({displayTarget}) will be deleted and all its data merged into your
                   current account.
                 </p>
               </div>
-              {error && <p className="text-destructive text-sm">{error}</p>}
-              <div className="flex justify-end gap-3 pt-2">
+              {error && <p className='text-destructive text-sm'>{error}</p>}
+              <div className='flex justify-end gap-3 pt-2'>
                 <button
                   onClick={handleCancel}
-                  className="bg-secondary text-secondary-foreground hover:bg-secondary/80 rounded-lg px-4 py-2 text-sm font-medium transition-colors"
+                  className='bg-secondary text-secondary-foreground hover:bg-secondary/80 rounded-lg px-4 py-2 text-sm font-medium transition-colors'
                   disabled={loading}
                 >
                   Cancel
@@ -430,9 +409,9 @@ export function MergeAccountsDialog({
                 <button
                   onClick={handleCompleteMerge}
                   disabled={loading}
-                  className="focus:ring-ring inline-flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-red-700 focus:ring-2 focus:outline-none disabled:opacity-50"
+                  className='focus:ring-ring inline-flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-red-700 focus:ring-2 focus:outline-none disabled:opacity-50'
                 >
-                  {loading && <LoaderIcon className="h-4 w-4 animate-spin" />}
+                  {loading && <LoaderIcon className='h-4 w-4 animate-spin' />}
                   Merge Accounts
                 </button>
               </div>
@@ -441,29 +420,29 @@ export function MergeAccountsDialog({
 
           {/* MERGING */}
           {step === STEPS.MERGING && (
-            <div className="flex flex-col items-center py-6">
-              <LoaderIcon className="text-primary h-8 w-8 animate-spin" />
-              <p className="text-secondary-foreground mt-3">Merging accounts...</p>
-              <p className="text-muted-foreground mt-1 text-sm">This may take a moment.</p>
+            <div className='flex flex-col items-center py-6'>
+              <LoaderIcon className='text-primary h-8 w-8 animate-spin' />
+              <p className='text-secondary-foreground mt-3'>Merging accounts...</p>
+              <p className='text-muted-foreground mt-1 text-sm'>This may take a moment.</p>
             </div>
           )}
 
           {/* SUCCESS */}
           {step === STEPS.SUCCESS && (
             <>
-              <div className="flex flex-col items-center py-6">
-                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-green-100">
-                  <CheckIcon className="h-6 w-6 text-green-600" />
+              <div className='flex flex-col items-center py-6'>
+                <div className='flex h-12 w-12 items-center justify-center rounded-full bg-green-100'>
+                  <CheckIcon className='h-6 w-6 text-green-600' />
                 </div>
-                <p className="text-foreground mt-3 font-medium">Accounts Merged Successfully!</p>
-                <p className="text-secondary-foreground mt-1 text-sm">
+                <p className='text-foreground mt-3 font-medium'>Accounts Merged Successfully!</p>
+                <p className='text-secondary-foreground mt-1 text-sm'>
                   All data has been combined into your account.
                 </p>
               </div>
-              <div className="flex justify-center pt-2">
+              <div className='flex justify-center pt-2'>
                 <button
                   onClick={() => onOpenChange(false)}
-                  className="bg-primary hover:bg-primary/90 rounded-lg px-4 py-2 text-sm font-medium text-white transition-colors"
+                  className='bg-primary hover:bg-primary/90 rounded-lg px-4 py-2 text-sm font-medium text-white transition-colors'
                 >
                   Done
                 </button>

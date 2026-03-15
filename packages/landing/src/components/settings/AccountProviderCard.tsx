@@ -58,75 +58,67 @@ export function AccountProviderCard({
   const isCredential = account.providerId === 'credential';
   const isOrcid = account.providerId === 'orcid';
   const orcidProfileUrl =
-    isOrcid && account.accountId
-      ? `https://orcid.org/${formatOrcidId(account.accountId)}`
-      : null;
+    isOrcid && account.accountId ? `https://orcid.org/${formatOrcidId(account.accountId)}` : null;
 
   return (
-    <div className="border-border bg-muted flex items-center justify-between rounded-lg border p-4">
-      <div className="flex items-center gap-3">
-        <div className="border-border bg-card rounded-lg border p-2">
-          {provider?.icon ? (
-            <img src={provider.icon} alt={provider?.name} className="h-5 w-5" />
-          ) : (
-            <MailIcon className="text-secondary-foreground h-5 w-5" />
-          )}
+    <div className='border-border bg-muted flex items-center justify-between rounded-lg border p-4'>
+      <div className='flex items-center gap-3'>
+        <div className='border-border bg-card rounded-lg border p-2'>
+          {provider?.icon ?
+            <img src={provider.icon} alt={provider?.name} className='h-5 w-5' />
+          : <MailIcon className='text-secondary-foreground h-5 w-5' />}
         </div>
         <div>
-          <div className="flex items-center gap-2">
-            <p className="text-foreground font-medium">
-              {provider?.name || account.providerId}
-            </p>
+          <div className='flex items-center gap-2'>
+            <p className='text-foreground font-medium'>{provider?.name || account.providerId}</p>
             {isCredential && (
-              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-600">
-                <CheckIcon className="h-3 w-3" />
+              <span className='inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-600'>
+                <CheckIcon className='h-3 w-3' />
                 Primary
               </span>
             )}
           </div>
-          <div className="flex items-center gap-1">
-            <p className="text-muted-foreground text-sm">{displayId}</p>
+          <div className='flex items-center gap-1'>
+            <p className='text-muted-foreground text-sm'>{displayId}</p>
             {isOrcid && orcidProfileUrl && (
               <a
                 href={orcidProfileUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-muted-foreground/70 hover:text-secondary-foreground transition-colors"
-                aria-label="View ORCID profile"
+                target='_blank'
+                rel='noopener noreferrer'
+                className='text-muted-foreground/70 hover:text-secondary-foreground transition-colors'
+                aria-label='View ORCID profile'
               >
-                <ExternalLinkIcon className="h-3.5 w-3.5" />
+                <ExternalLinkIcon className='h-3.5 w-3.5' />
               </a>
             )}
           </div>
           {linkedDate && (
-            <p className="text-muted-foreground/70 mt-0.5 text-xs">Linked on {linkedDate}</p>
+            <p className='text-muted-foreground/70 mt-0.5 text-xs'>Linked on {linkedDate}</p>
           )}
         </div>
       </div>
 
       {!isCredential &&
-        (canUnlink ? (
+        (canUnlink ?
           <button
             onClick={onUnlink}
             disabled={unlinking}
-            className="text-destructive hover:bg-destructive/10 inline-flex items-center gap-1 rounded-lg bg-red-50 px-3 py-1.5 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+            className='text-destructive hover:bg-destructive/10 inline-flex items-center gap-1 rounded-lg bg-red-50 px-3 py-1.5 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50'
             aria-label={`Unlink ${provider?.name} account`}
           >
-            <Trash2Icon className="h-4 w-4" />
+            <Trash2Icon className='h-4 w-4' />
             {unlinking ? 'Unlinking...' : 'Unlink'}
           </button>
-        ) : (
-          <Tooltip>
+        : <Tooltip>
             <TooltipTrigger>
-              <span className="text-muted-foreground/70 cursor-help text-xs">
+              <span className='text-muted-foreground/70 cursor-help text-xs'>
                 Only sign-in method
               </span>
             </TooltipTrigger>
             <TooltipContent>
               Can&apos;t unlink your only sign-in method. Link another account first.
             </TooltipContent>
-          </Tooltip>
-        ))}
+          </Tooltip>)}
     </div>
   );
 }

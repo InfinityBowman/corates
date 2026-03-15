@@ -18,23 +18,23 @@ function FAQItem({ question, answer }: { question: string; answer: string }) {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
-    <div className="border-border last:border-b-0 border-b">
+    <div className='border-border border-b last:border-b-0'>
       <button
-        type="button"
-        className="flex w-full items-center justify-between py-5 text-left"
+        type='button'
+        className='flex w-full items-center justify-between py-5 text-left'
         onClick={() => setIsOpen(!isOpen)}
       >
-        <span className="text-foreground text-base font-medium">{question}</span>
+        <span className='text-foreground text-base font-medium'>{question}</span>
         <ChevronDownIcon
           className={`text-muted-foreground h-5 w-5 shrink-0 transition-transform duration-300 ease-out ${isOpen ? 'rotate-180' : ''}`}
         />
       </button>
       <div
-        className="grid transition-[grid-template-rows] duration-300 ease-out"
+        className='grid transition-[grid-template-rows] duration-300 ease-out'
         style={{ gridTemplateRows: isOpen ? '1fr' : '0fr' }}
       >
-        <div className="overflow-hidden">
-          <p className="text-muted-foreground pb-5">{answer}</p>
+        <div className='overflow-hidden'>
+          <p className='text-muted-foreground pb-5'>{answer}</p>
         </div>
       </div>
     </div>
@@ -79,8 +79,8 @@ export function PlansSettings() {
   const tier = subscription?.tier;
   const navigate = useNavigate();
 
-  const [pageState, setPageState] = useState<'checking' | 'redirecting' | 'error' | 'ready'>(
-    () => (hasPendingPlan() ? 'checking' : 'ready'),
+  const [pageState, setPageState] = useState<'checking' | 'redirecting' | 'error' | 'ready'>(() =>
+    hasPendingPlan() ? 'checking' : 'ready',
   );
 
   const processPendingPlan = useCallback(async () => {
@@ -99,32 +99,32 @@ export function PlansSettings() {
 
   if (pageState === 'error') {
     return (
-      <div className="flex min-h-[60vh] flex-col items-center justify-center px-4">
-        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-red-100">
-          <AlertCircleIcon className="h-8 w-8 text-red-600" />
+      <div className='flex min-h-[60vh] flex-col items-center justify-center px-4'>
+        <div className='flex h-16 w-16 items-center justify-center rounded-full bg-red-100'>
+          <AlertCircleIcon className='h-8 w-8 text-red-600' />
         </div>
-        <h2 className="text-foreground mt-4 text-xl font-semibold">
+        <h2 className='text-foreground mt-4 text-xl font-semibold'>
           {BILLING_MESSAGES.CHECKOUT_ERROR.title}
         </h2>
-        <p className="text-muted-foreground mt-2 max-w-md text-center">
+        <p className='text-muted-foreground mt-2 max-w-md text-center'>
           {BILLING_MESSAGES.CHECKOUT_ERROR.message}
         </p>
-        <div className="mt-6 flex gap-3">
+        <div className='mt-6 flex gap-3'>
           <button
-            type="button"
+            type='button'
             onClick={processPendingPlan}
-            className="bg-primary hover:bg-primary/90 inline-flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold text-white transition"
+            className='bg-primary hover:bg-primary/90 inline-flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold text-white transition'
           >
-            <RefreshCwIcon className="h-4 w-4" />
+            <RefreshCwIcon className='h-4 w-4' />
             Try Again
           </button>
           <button
-            type="button"
+            type='button'
             onClick={() => {
               clearPendingPlan();
               setPageState('ready');
             }}
-            className="border-border bg-card text-foreground hover:bg-muted rounded-lg border px-4 py-2.5 text-sm font-semibold transition"
+            className='border-border bg-card text-foreground hover:bg-muted rounded-lg border px-4 py-2.5 text-sm font-semibold transition'
           >
             Choose a Plan
           </button>
@@ -135,10 +135,10 @@ export function PlansSettings() {
 
   if (pageState !== 'ready') {
     return (
-      <div className="flex min-h-[60vh] flex-col items-center justify-center">
-        <LoaderIcon className="text-primary h-8 w-8 animate-spin" />
-        <p className="text-foreground mt-4 text-lg font-medium">Redirecting to checkout...</p>
-        <p className="text-muted-foreground mt-1 text-sm">
+      <div className='flex min-h-[60vh] flex-col items-center justify-center'>
+        <LoaderIcon className='text-primary h-8 w-8 animate-spin' />
+        <p className='text-foreground mt-4 text-lg font-medium'>Redirecting to checkout...</p>
+        <p className='text-muted-foreground mt-1 text-sm'>
           Please wait while we prepare your order.
         </p>
       </div>
@@ -146,13 +146,13 @@ export function PlansSettings() {
   }
 
   return (
-    <div className="min-h-full bg-muted/50 py-6">
-      <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
-        <div className="mb-8 text-center">
-          <h1 className="text-foreground text-4xl font-bold">
+    <div className='bg-muted/50 min-h-full py-6'>
+      <div className='mx-auto max-w-6xl px-4 sm:px-6 lg:px-8'>
+        <div className='mb-8 text-center'>
+          <h1 className='text-foreground text-4xl font-bold'>
             Choose the right plan for your team
           </h1>
-          <p className="text-muted-foreground mx-auto mt-4 max-w-2xl text-lg">
+          <p className='text-muted-foreground mx-auto mt-4 max-w-2xl text-lg'>
             Start with a free trial, then pick the plan that fits your workflow. All plans include
             our core features.
           </p>
@@ -161,14 +161,14 @@ export function PlansSettings() {
         <PricingTable currentTier={tier} />
 
         {/* FAQ */}
-        <div className="mt-16">
-          <div className="mb-8 text-center">
-            <h2 className="text-foreground text-2xl font-bold">Frequently asked questions</h2>
-            <p className="text-muted-foreground mt-2">
+        <div className='mt-16'>
+          <div className='mb-8 text-center'>
+            <h2 className='text-foreground text-2xl font-bold'>Frequently asked questions</h2>
+            <p className='text-muted-foreground mt-2'>
               Everything you need to know about our plans and billing.
             </p>
           </div>
-          <div className="border-border bg-card mx-auto max-w-3xl rounded-2xl border px-6">
+          <div className='border-border bg-card mx-auto max-w-3xl rounded-2xl border px-6'>
             {FAQ_ITEMS.map((faq, i) => (
               <FAQItem key={i} question={faq.question} answer={faq.answer} />
             ))}
@@ -176,14 +176,14 @@ export function PlansSettings() {
         </div>
 
         {/* Bottom CTA */}
-        <div className="from-primary to-primary/90 mt-16 rounded-2xl bg-gradient-to-r px-8 py-12 text-center">
-          <h2 className="text-2xl font-bold text-white">Still have questions?</h2>
-          <p className="mx-auto mt-2 max-w-xl text-blue-100">
+        <div className='from-primary to-primary/90 mt-16 rounded-2xl bg-gradient-to-r px-8 py-12 text-center'>
+          <h2 className='text-2xl font-bold text-white'>Still have questions?</h2>
+          <p className='mx-auto mt-2 max-w-xl text-blue-100'>
             Our team is here to help. Reach out and we&apos;ll get back to you within 24 hours.
           </p>
           <a
-            href="/contact"
-            className="bg-card text-primary mt-6 inline-flex items-center rounded-xl px-6 py-3 font-semibold shadow-lg transition-all hover:shadow-xl"
+            href='/contact'
+            className='bg-card text-primary mt-6 inline-flex items-center rounded-xl px-6 py-3 font-semibold shadow-lg transition-all hover:shadow-xl'
           >
             Contact Support
           </a>

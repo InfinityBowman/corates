@@ -84,45 +84,43 @@ export function GoogleDriveSettings() {
 
   return (
     <>
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="bg-secondary rounded-lg p-2">
-            <img src="/logos/drive.svg" alt="Google Drive" className="h-5 w-5" />
+      <div className='flex items-center justify-between'>
+        <div className='flex items-center gap-3'>
+          <div className='bg-secondary rounded-lg p-2'>
+            <img src='/logos/drive.svg' alt='Google Drive' className='h-5 w-5' />
           </div>
           <div>
-            <p className="text-foreground font-medium">Google Drive</p>
-            <p className="text-muted-foreground text-sm">
-              {loading
-                ? 'Checking connection...'
-                : connected
-                  ? 'Connected - You can import PDFs from your Drive'
-                  : 'Connect to import PDFs from Google Drive'}
+            <p className='text-foreground font-medium'>Google Drive</p>
+            <p className='text-muted-foreground text-sm'>
+              {loading ?
+                'Checking connection...'
+              : connected ?
+                'Connected - You can import PDFs from your Drive'
+              : 'Connect to import PDFs from Google Drive'}
             </p>
           </div>
         </div>
 
         {!loading &&
-          (connected ? (
+          (connected ?
             <button
-              type="button"
+              type='button'
               onClick={() => setConfirmOpen(true)}
               disabled={disconnecting}
-              className="text-destructive hover:bg-destructive/10 inline-flex items-center gap-1 rounded-lg bg-red-50 px-3 py-1.5 text-sm font-medium transition-colors disabled:opacity-50"
+              className='text-destructive hover:bg-destructive/10 inline-flex items-center gap-1 rounded-lg bg-red-50 px-3 py-1.5 text-sm font-medium transition-colors disabled:opacity-50'
             >
-              <XIcon className="h-4 w-4" />
+              <XIcon className='h-4 w-4' />
               {disconnecting ? 'Disconnecting...' : 'Disconnect'}
             </button>
-          ) : (
-            <button
-              type="button"
+          : <button
+              type='button'
               onClick={handleConnect}
               disabled={connecting}
-              className="bg-primary text-primary-foreground hover:bg-primary/90 inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors disabled:opacity-50"
+              className='bg-primary text-primary-foreground hover:bg-primary/90 inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors disabled:opacity-50'
             >
-              <img src="/logos/drive.svg" alt="Google Drive" className="h-4 w-4" />
+              <img src='/logos/drive.svg' alt='Google Drive' className='h-4 w-4' />
               {connecting ? 'Connecting...' : 'Connect'}
-            </button>
-          ))}
+            </button>)}
       </div>
 
       <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
@@ -136,7 +134,7 @@ export function GoogleDriveSettings() {
           <AlertDialogFooter>
             <AlertDialogCancel disabled={disconnecting}>Cancel</AlertDialogCancel>
             <AlertDialogAction
-              variant="destructive"
+              variant='destructive'
               disabled={disconnecting}
               onClick={handleDisconnect}
             >
