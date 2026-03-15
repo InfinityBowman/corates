@@ -133,72 +133,25 @@ result = await initiateMerge(input, null as any);
 
 `initiateMerge` should accept `null` natively in its signature instead of requiring `null as any`.
 
-### 15. `project as any` and `study as any` prop casts
+### ~~15. `project as any` and `study as any` prop casts~~ FIXED
 
-**Files**:
+Fixed: `ProjectCard` now imports shared `Project` type from `useMyProjectsList`. `ProjectsSection` passes projects directly without casts. `StudyInfo` and `ChecklistInfo` in `projectStore.ts` gained `name`/`type`/`assignedTo` fields so `ProjectTreeItem` passes studies to `StudyTreeItem` without casts.
 
-- `packages/landing/src/components/dashboard/ProjectsSection.tsx` line 189: `project={project as any}`
-- `packages/landing/src/components/layout/sidebar/ProjectTreeItem.tsx` line 76: `study={study as any}`
+### ~~16. `(a: any, b: any)` and `(project: any)` in Dashboard activities~~ FIXED
 
-Bypasses whatever interfaces `ProjectCard` and `StudyTreeItem` expect.
+Fixed: Sort/map callbacks now use the imported `Project` type instead of `any`.
 
-### 16. `(a: any, b: any)` and `(project: any)` in Dashboard activities
+### ~~17. Suppressed `exhaustive-deps` on `canCreateProject` memo~~ FIXED
 
-**File**: `packages/landing/src/components/dashboard/Dashboard.tsx` lines 44, 49
+Fixed: Added `hasEntitlement` and `hasQuota` to the dependency array, removed the `eslint-disable-next-line` comment.
 
-```ts
-.sort((a: any, b: any) => ...)
-.map((project: any) => ({ ... }))
-```
+### ~~18. Suppressed deps on route-change close effect~~ FIXED
 
-The project array items are typed upstream but forced to `any` in the sort/map callbacks.
+Fixed: Added `mobileOpen` and `onCloseMobile` to the dependency arrays in both `Sidebar.tsx` and `SettingsSidebar.tsx`, removed the `eslint-disable-line` comments.
 
-### 17. Suppressed `exhaustive-deps` on `canCreateProject` memo
+### ~~19. Unmanaged `setTimeout` race in `pdfPreviewStore`~~ FIXED
 
-**File**: `packages/landing/src/components/dashboard/Dashboard.tsx` lines 37-38
-
-```ts
-const canCreateProject = useMemo(() => {
-  if (!isOnline || !isLoggedIn) return false;
-  if (!hasEntitlement('project.create')) return false;
-  return hasQuota('projects.max', { used: projects?.length || 0, requested: 1 });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-}, [isOnline, isLoggedIn, subscription, projects]);
-```
-
-`hasEntitlement` and `hasQuota` are functions from `useSubscription` that close over subscription state. They are not in the dependency array. The `subscription` object being listed is an indirect mitigation but it's a fragile assumption.
-
-**Fix**: Include `hasEntitlement` and `hasQuota` in the deps, or derive the boolean value outside the memo.
-
-### 18. Suppressed deps on route-change close effect
-
-**Files**:
-
-- `packages/landing/src/components/layout/Sidebar.tsx` lines 163-165
-- `packages/landing/src/components/layout/SettingsSidebar.tsx` lines 93-95
-
-```ts
-useEffect(() => {
-  if (mobileOpen) onCloseMobile();
-}, [currentPath]); // eslint-disable-line react-hooks/exhaustive-deps
-```
-
-`mobileOpen` and `onCloseMobile` are captured as stale closures. Since `onCloseMobile` is `useCallback` with `[]` deps in `AppLayout`, adding it to the array has no performance cost.
-
-### 19. Unmanaged `setTimeout` race in `pdfPreviewStore`
-
-**File**: `packages/landing/src/stores/pdfPreviewStore.ts` lines 56-68
-
-```ts
-closePreview: () => {
-  set({ isOpen: false });
-  setTimeout(() => {
-    set({ projectId: null, studyId: null, pdf: null, ... });
-  }, 300);
-},
-```
-
-If the user closes and immediately reopens the preview, the delayed `set` will null out the new preview's data. Track a timeout ID and cancel it on `openPreview`.
+Fixed: Added a module-level `closeTimeoutId` that `openPreview` cancels before setting new state, preventing the delayed `set` from nulling out a newly opened preview.
 
 ### 20. Module-level mutable singletons in `useProjectList`
 
@@ -296,9 +249,9 @@ These represent the majority of business logic surface area.
 
 ## Summary
 
-| Priority                                    | Count                                                             | Action                                                                                                              |
-| ------------------------------------------- | ----------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
-| ~~Fix immediately (runtime breakage)~~      | ~~4~~ 1 remaining                                                 | ~~SolidJS navigate signatures~~, ~~SolidJS bfcache imports~~, SolidJS form-errors test, ~~wrong route destination~~ |
-| Fix before merge (type safety + React bugs) | ~~16~~ 15 remaining                                               | `as any` casts, stale closures, suppressed lint rules, race conditions (~~useSubscription casts fixed~~)            |
-| ~~Fix soon (consistency)~~                  | ~~7~~ 6 remaining                                                 | Untyped JS files, mixed icon libs, missing guards, module singletons, ~~apiFetch inconsistency~~                    |
-| **Total**                                   | **22 remaining** (5 fixed + `apiFetch` typed with all call sites) |                                                                                                                     |
+| Priority                                    | Count              | Action                                                                                                              |
+| ------------------------------------------- | ------------------ | ------------------------------------------------------------------------------------------------------------------- |
+| ~~Fix immediately (runtime breakage)~~      | ~~4~~ 1 remaining  | ~~SolidJS navigate signatures~~, ~~SolidJS bfcache imports~~, SolidJS form-errors test, ~~wrong route destination~~ |
+| Fix before merge (type safety + React bugs) | ~~16~~ 10 remaining | `as any` casts, ~~stale closures~~, ~~suppressed lint rules~~, ~~race conditions~~, ~~useSubscription casts~~, ~~project/study casts~~, ~~Dashboard any casts~~ |
+| ~~Fix soon (consistency)~~                  | ~~7~~ 5 remaining  | Untyped JS files, missing guards, module singletons, ~~apiFetch inconsistency~~, ~~mixed icon libs (accepted)~~     |
+| **Total**                                   | **16 remaining** (10 fixed + `apiFetch` typed, 1 accepted) |                                                                                                   |

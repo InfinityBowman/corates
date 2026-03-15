@@ -67,13 +67,11 @@ export function ProjectTreeItem({
       </div>
       <CollapsibleContent>
         <div className='border-border mt-0.5 ml-6 space-y-0.5 border-l pl-2'>
-          {(projectData.studies as unknown[])?.length > 0 ?
-            (
-              projectData.studies as Array<{ id: string; name: string; checklists?: unknown[] }>
-            ).map(study => (
+          {projectData.studies?.length > 0 ?
+            projectData.studies.map(study => (
               <StudyTreeItem
                 key={study.id}
-                study={study as any}
+                study={study}
                 projectId={project.id}
                 userId={userId}
                 currentPath={currentPath}

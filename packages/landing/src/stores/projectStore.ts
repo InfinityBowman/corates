@@ -36,7 +36,9 @@ interface PdfInfo {
 
 interface ChecklistInfo {
   id: string;
+  type: string;
   status?: string;
+  assignedTo?: string;
   score?: unknown;
   consolidatedAnswers?: unknown;
   answers?: unknown;
@@ -45,6 +47,7 @@ interface ChecklistInfo {
 
 interface StudyInfo {
   id: string;
+  name: string;
   checklists?: ChecklistInfo[];
   pdfs?: PdfInfo[];
   [key: string]: unknown;

@@ -5,20 +5,8 @@
 import { useMemo } from 'react';
 import { UsersIcon, ChevronRightIcon, TrashIcon } from 'lucide-react';
 import { useProjectStore, selectProjectStats } from '@/stores/projectStore';
+import { type Project } from '@/hooks/useMyProjectsList';
 import { formatRelativeTime, getAccentColors } from './utils';
-
-interface Project {
-  id: string;
-  name: string;
-  description?: string;
-  role?: string;
-  studyCount?: number;
-  completedCount?: number;
-  memberCount?: number;
-  members?: unknown[];
-  updatedAt?: string | number;
-  createdAt?: string | number;
-}
 
 /* eslint-disable no-unused-vars */
 interface ProjectCardProps {

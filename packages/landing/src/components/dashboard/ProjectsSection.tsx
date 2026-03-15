@@ -94,7 +94,7 @@ export function ProjectsSection({
       return;
     }
 
-    const project = projects?.find((p: { id: string }) => p.id === pendingDeleteId);
+    const project = projects?.find(p => p.id === pendingDeleteId);
     if (!project?.orgId) {
       showToast.error('Error', 'Unable to find project organization');
       setDeleteDialogOpen(false);
@@ -182,17 +182,15 @@ export function ProjectsSection({
           </div>
         )}
 
-        {(projects as Array<{ id: string; name: string; [key: string]: unknown }>)?.map(
-          (project, index) => (
-            <ProjectCard
-              key={project.id}
-              project={project as any}
-              onOpen={openProject}
-              onDelete={handleDeleteProject}
-              style={animation.statRise(index * 50)}
-            />
-          ),
-        )}
+        {projects?.map((project, index) => (
+          <ProjectCard
+            key={project.id}
+            project={project}
+            onOpen={openProject}
+            onDelete={handleDeleteProject}
+            style={animation.statRise(index * 50)}
+          />
+        ))}
       </div>
 
       {/* Delete confirmation dialog */}

@@ -162,7 +162,7 @@ export function Sidebar({
   // Close mobile on route change
   useEffect(() => {
     if (mobileOpen) onCloseMobile();
-  }, [currentPath]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [currentPath, mobileOpen, onCloseMobile]);
 
   // --- Shared sidebar content (lowercase to avoid lint "component during render" error) ---
   function renderSidebarContent() {

@@ -27,7 +27,7 @@ interface RetryOptions {
   maxRetries?: number;
   baseDelayMs?: number;
   maxDelayMs?: number;
-  shouldRetry?: (error: ApiError, attempt: number, maxRetries: number) => boolean;
+  shouldRetry?: (_error: ApiError, _attempt: number, _maxRetries: number) => boolean;
 }
 
 interface ToastMessage {
@@ -45,15 +45,15 @@ interface ApiFetchOptions {
   showToast?: boolean;
   retry?: number;
   retryOptions?: RetryOptions;
-  onError?: (error: ApiError) => void;
-  navigate?: (opts: { to: string; replace?: boolean }) => void;
+  onError?: (_error: ApiError) => void;
+  navigate?: (_opts: { to: string; replace?: boolean }) => void;
 }
 
 interface ResolvedRetryConfig {
   maxRetries: number;
   baseDelayMs: number;
   maxDelayMs: number;
-  shouldRetry: (error: ApiError, attempt: number, maxRetries: number) => boolean;
+  shouldRetry: (_error: ApiError, _attempt: number, _maxRetries: number) => boolean;
 }
 
 const DEFAULT_RETRY_OPTIONS: ResolvedRetryConfig = {
@@ -230,6 +230,7 @@ async function apiFetchImpl<T = unknown>(path: string, options: ApiFetchOptions 
 
 type ApiFetchBody = Record<string, unknown> | FormData | Blob | string | null;
 
+/* eslint-disable no-unused-vars */
 interface ApiFetchFn {
   <T = unknown>(path: string, options?: ApiFetchOptions): Promise<T>;
   get: <T = unknown>(
@@ -253,6 +254,7 @@ interface ApiFetchFn {
   ) => Promise<T>;
   delete: <T = unknown>(path: string, options?: Omit<ApiFetchOptions, 'method'>) => Promise<T>;
 }
+/* eslint-enable no-unused-vars */
 
 export const apiFetch: ApiFetchFn = Object.assign(apiFetchImpl, {
   get: <T = unknown>(path: string, options: Omit<ApiFetchOptions, 'method' | 'body'> = {}) =>

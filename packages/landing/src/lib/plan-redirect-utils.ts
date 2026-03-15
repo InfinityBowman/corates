@@ -26,7 +26,7 @@ interface NavigateOptions {
 }
 
 interface HandlePendingPlanRedirectOptions {
-  navigate?: (opts: NavigateOptions) => void;
+  navigate?: (_opts: NavigateOptions) => void;
   refetch?: () => Promise<unknown>;
 }
 

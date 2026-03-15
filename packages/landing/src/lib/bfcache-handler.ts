@@ -16,7 +16,7 @@ import { queryKeys } from '@/lib/queryKeys.js';
 export function initBfcacheHandler(): (() => void) | undefined {
   if (typeof window === 'undefined') return;
 
-  const handlePageshow = async (event: PageTransitionEvent) => {
+  const handlePageshow = async (event: { persisted: boolean }) => {
     if (!event.persisted) return;
 
     console.info('[bfcache] Page restored from back-forward cache, refreshing state...');

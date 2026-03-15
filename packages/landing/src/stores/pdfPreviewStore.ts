@@ -33,6 +33,8 @@ interface PdfPreviewActions {
 }
 /* eslint-enable no-unused-vars */
 
+let closeTimeoutId: ReturnType<typeof setTimeout> | null = null;
+
 export const usePdfPreviewStore = create<PdfPreviewState & PdfPreviewActions>()(set => ({
   isOpen: false,
   projectId: null,
@@ -42,7 +44,11 @@ export const usePdfPreviewStore = create<PdfPreviewState & PdfPreviewActions>()(
   loading: false,
   error: null,
 
-  openPreview: (projectId, studyId, pdfInfo) =>
+  openPreview: (projectId, studyId, pdfInfo) => {
+    if (closeTimeoutId) {
+      clearTimeout(closeTimeoutId);
+      closeTimeoutId = null;
+    }
     set({
       projectId,
       studyId,
@@ -51,12 +57,14 @@ export const usePdfPreviewStore = create<PdfPreviewState & PdfPreviewActions>()(
       error: null,
       loading: true,
       isOpen: true,
-    }),
+    });
+  },
 
   closePreview: () => {
     set({ isOpen: false });
     // Clear state after animation completes
-    setTimeout(() => {
+    closeTimeoutId = setTimeout(() => {
+      closeTimeoutId = null;
       set({
         projectId: null,
         studyId: null,

@@ -92,7 +92,7 @@ export function SettingsSidebar({
   // Close mobile on route change
   useEffect(() => {
     if (mobileOpen) onCloseMobile();
-  }, [currentPath]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [currentPath, mobileOpen, onCloseMobile]);
 
   function renderNavContent() {
     return (
