@@ -6,9 +6,14 @@
  */
 
 import { create } from 'zustand';
-import { apiFetch } from '@/lib/apiFetch.js';
+import { apiFetch } from '@/lib/apiFetch';
 import { queryClient } from '@/lib/queryClient.js';
 import { queryKeys } from '@/lib/queryKeys.js';
+
+interface SessionResponse {
+  user?: { role?: string; [key: string]: unknown };
+  session?: { impersonatedBy?: string; [key: string]: unknown };
+}
 
 interface AdminState {
   isAdminChecked: boolean;
@@ -34,7 +39,7 @@ export const useAdminStore = create<AdminState & AdminActions>()(set => ({
 
   checkAdminStatus: async () => {
     try {
-      const data = await apiFetch.get('/api/auth/get-session', { toastMessage: false });
+      const data = await apiFetch.get<SessionResponse>('/api/auth/get-session', { toastMessage: false });
       const admin = data?.user?.role === 'admin';
       set({ isAdmin: admin });
       return admin;
@@ -49,7 +54,7 @@ export const useAdminStore = create<AdminState & AdminActions>()(set => ({
 
   checkImpersonationStatus: async () => {
     try {
-      const data = await apiFetch.get('/api/auth/get-session', { toastMessage: false });
+      const data = await apiFetch.get<SessionResponse>('/api/auth/get-session', { toastMessage: false });
       if (data?.session?.impersonatedBy) {
         set({ isImpersonating: true, impersonatedBy: data.session.impersonatedBy });
         return;
@@ -160,7 +165,7 @@ export async function fetchOrgBilling(orgId: string) {
   return apiFetch.get(`/api/admin/orgs/${orgId}/billing`, { toastMessage: false });
 }
 
-export async function createOrgSubscription(orgId: string, subscriptionData: unknown) {
+export async function createOrgSubscription(orgId: string, subscriptionData: Record<string, unknown>) {
   const result = await apiFetch.post(`/api/admin/orgs/${orgId}/subscriptions`, subscriptionData, {
     toastMessage: false,
   });
@@ -172,7 +177,7 @@ export async function createOrgSubscription(orgId: string, subscriptionData: unk
 export async function updateOrgSubscription(
   orgId: string,
   subscriptionId: string,
-  updateData: unknown,
+  updateData: Record<string, unknown>,
 ) {
   const result = await apiFetch.put(
     `/api/admin/orgs/${orgId}/subscriptions/${subscriptionId}`,
@@ -193,7 +198,7 @@ export async function cancelOrgSubscription(orgId: string, subscriptionId: strin
   return result;
 }
 
-export async function createOrgGrant(orgId: string, grantData: unknown) {
+export async function createOrgGrant(orgId: string, grantData: Record<string, unknown>) {
   const result = await apiFetch.post(`/api/admin/orgs/${orgId}/grants`, grantData, {
     toastMessage: false,
   });
@@ -202,7 +207,7 @@ export async function createOrgGrant(orgId: string, grantData: unknown) {
   return result;
 }
 
-export async function updateOrgGrant(orgId: string, grantId: string, updateData: unknown) {
+export async function updateOrgGrant(orgId: string, grantId: string, updateData: Record<string, unknown>) {
   const result = await apiFetch.put(`/api/admin/orgs/${orgId}/grants/${grantId}`, updateData, {
     toastMessage: false,
   });

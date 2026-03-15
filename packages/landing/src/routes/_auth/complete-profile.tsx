@@ -3,14 +3,14 @@ import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { CheckIcon } from 'lucide-react';
 import { useAuthStore, selectUser, selectIsAuthLoading } from '@/stores/authStore';
 import { handleError } from '@/lib/error-utils.js';
-import { apiFetch } from '@/lib/apiFetch.js';
+import { apiFetch } from '@/lib/apiFetch';
 import { showToast } from '@/components/ui/toast';
 import {
   hasPendingPlan,
   clearPendingPlan,
   handlePendingPlanRedirect,
   BILLING_MESSAGES,
-} from '@/lib/plan-redirect-utils.js';
+} from '@/lib/plan-redirect-utils';
 import {
   Select,
   SelectContent,
@@ -76,7 +76,7 @@ function CompleteProfilePage() {
 
     if (user?.profileCompletedAt) {
       if (hasPendingPlan()) {
-        navigate({ to: '/settings' as any, replace: true });
+        navigate({ to: '/settings/plans', replace: true });
       } else {
         navigate({ to: '/dashboard', replace: true });
       }
@@ -212,7 +212,7 @@ function CompleteProfilePage() {
 
       if (invitationToken) {
         try {
-          const result = await apiFetch.post(
+          const result = await apiFetch.post<{ projectId?: string; projectName?: string }>(
             '/api/invitations/accept',
             { token: invitationToken },
             { toastMessage: false },
@@ -242,7 +242,7 @@ function CompleteProfilePage() {
             BILLING_MESSAGES.CHECKOUT_ERROR.title,
             BILLING_MESSAGES.CHECKOUT_ERROR.message,
           );
-          navigate({ to: '/settings' as any, replace: true });
+          navigate({ to: '/settings/plans', replace: true });
         }
         return;
       }

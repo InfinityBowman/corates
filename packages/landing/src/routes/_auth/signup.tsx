@@ -4,7 +4,7 @@ import { useAuthStore } from '@/stores/authStore';
 import { handleError } from '@/lib/error-utils.js';
 import { useOAuthError } from '@/hooks/useOAuthError';
 import { useBfcacheReset } from '@/hooks/useBfcacheReset';
-import { capturePlanParams } from '@/lib/plan-redirect-utils.js';
+import { capturePlanParams } from '@/lib/plan-redirect-utils';
 import { ErrorMessage } from '@/components/auth/ErrorMessage';
 import { AuthLink } from '@/components/auth/AuthButtons';
 import {

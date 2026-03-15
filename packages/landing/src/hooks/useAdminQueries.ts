@@ -5,7 +5,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { queryKeys } from '@/lib/queryKeys.js';
-import { apiFetch } from '@/lib/apiFetch.js';
+import { apiFetch } from '@/lib/apiFetch';
 import {
   fetchOrgs,
   fetchOrgDetails,

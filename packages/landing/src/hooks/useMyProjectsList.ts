@@ -4,11 +4,25 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { queryKeys } from '@/lib/queryKeys.js';
-import { apiFetch } from '@/lib/apiFetch.js';
+import { apiFetch } from '@/lib/apiFetch';
 import { useAuthStore, selectIsLoggedIn, selectIsAuthLoading } from '@/stores/authStore';
 
-async function fetchMyProjects() {
-  return apiFetch.get('/api/users/me/projects', { toastMessage: false });
+export interface Project {
+  id: string;
+  name: string;
+  orgId?: string;
+  description?: string;
+  role?: string;
+  studyCount?: number;
+  completedCount?: number;
+  memberCount?: number;
+  members?: unknown[];
+  updatedAt?: string | number;
+  createdAt?: string | number;
+}
+
+async function fetchMyProjects(): Promise<Project[]> {
+  return apiFetch.get<Project[]>('/api/users/me/projects', { toastMessage: false });
 }
 
 export function useMyProjectsList(options: { enabled?: boolean } = {}) {

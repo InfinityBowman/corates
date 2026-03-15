@@ -4,14 +4,28 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { DownloadIcon, FileTextIcon, ExternalLinkIcon } from 'lucide-react';
-import { apiFetch } from '@/lib/apiFetch.js';
+import { apiFetch } from '@/lib/apiFetch';
 import { queryKeys } from '@/lib/queryKeys.js';
 
-async function fetchInvoices() {
+interface Invoice {
+  id: string;
+  status: string;
+  amount: number;
+  date: string | number | null;
+  pdfUrl?: string;
+  hostedUrl?: string;
+  description?: string;
+}
+
+interface InvoicesResponse {
+  invoices: Invoice[];
+}
+
+async function fetchInvoices(): Promise<InvoicesResponse> {
   try {
-    return await apiFetch.get('/api/billing/invoices', { toastMessage: false });
-  } catch (err: any) {
-    console.warn('Failed to fetch invoices:', err.message);
+    return await apiFetch.get<InvoicesResponse>('/api/billing/invoices', { toastMessage: false });
+  } catch (err) {
+    console.warn('Failed to fetch invoices:', (err as Error).message);
     return { invoices: [] };
   }
 }

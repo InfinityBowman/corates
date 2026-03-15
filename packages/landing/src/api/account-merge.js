@@ -5,7 +5,7 @@
  * multiple accounts and wants to combine them.
  */
 
-import { apiFetch } from '@/lib/apiFetch.js';
+import { apiFetch } from '@/lib/apiFetch';
 
 /**
  * Initiate a merge request

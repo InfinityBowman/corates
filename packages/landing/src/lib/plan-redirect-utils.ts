@@ -8,23 +8,41 @@ import { CHECKOUT_ELIGIBLE_TIERS } from '@corates/shared/plans';
 import { startTrial, redirectToCheckout, redirectToSingleProjectCheckout } from '@/api/billing.js';
 import { showToast } from '@/components/ui/toast';
 
-/**
- * Valid billing intervals
- */
-export const VALID_INTERVALS = ['monthly', 'yearly'];
-export const DEFAULT_INTERVAL = 'monthly';
+type BillingInterval = 'monthly' | 'yearly';
 
-/**
- * Centralized localStorage keys for plan redirect state
- */
+interface PlanRedirectError {
+  code?: string;
+  details?: {
+    field?: string;
+    value?: string;
+    reason?: string;
+  };
+  message?: string;
+}
+
+interface NavigateOptions {
+  to: string;
+  replace?: boolean;
+}
+
+interface HandlePendingPlanRedirectOptions {
+  navigate?: (opts: NavigateOptions) => void;
+  refetch?: () => Promise<unknown>;
+}
+
+interface PlanRedirectResult {
+  handled: boolean;
+  error: PlanRedirectError | null;
+}
+
+export const VALID_INTERVALS: BillingInterval[] = ['monthly', 'yearly'];
+export const DEFAULT_INTERVAL: BillingInterval = 'monthly';
+
 export const STORAGE_KEYS = {
   PENDING_PLAN: 'pendingPlan',
   PENDING_INTERVAL: 'pendingInterval',
-};
+} as const;
 
-/**
- * Billing-related toast messages
- */
 export const BILLING_MESSAGES = {
   TRIAL_STARTED: {
     title: 'Trial Started',
@@ -46,28 +64,21 @@ export const BILLING_MESSAGES = {
     title: 'Checkout Error',
     message: 'Unable to redirect to checkout. Please try again.',
   },
-};
+} as const;
 
-/**
- * Validate and normalize billing interval
- * @param {string | null} interval - Raw interval value
- * @returns {'monthly' | 'yearly'}
- */
-export function validateInterval(interval) {
+export function validateInterval(interval: string | null): BillingInterval {
   return interval === 'yearly' ? 'yearly' : DEFAULT_INTERVAL;
 }
 
 /**
- * Capture plan/interval params from URL and store in localStorage
- * Call this when user lands on signup page with plan params from landing pricing
- * @param {URLSearchParams} urlParams - URL search params
- * @returns {boolean} - True if valid plan was captured
+ * Capture plan/interval params from URL and store in localStorage.
+ * Call this when user lands on signup page with plan params from landing pricing.
  */
-export function capturePlanParams(urlParams) {
+export function capturePlanParams(urlParams: URLSearchParams): boolean {
   const planParam = urlParams.get('plan');
   const intervalParam = urlParams.get('interval');
 
-  if (planParam && CHECKOUT_ELIGIBLE_TIERS.includes(planParam)) {
+  if (planParam && (CHECKOUT_ELIGIBLE_TIERS as readonly string[]).includes(planParam)) {
     try {
       localStorage.setItem(STORAGE_KEYS.PENDING_PLAN, planParam);
       localStorage.setItem(STORAGE_KEYS.PENDING_INTERVAL, validateInterval(intervalParam));
@@ -80,11 +91,7 @@ export function capturePlanParams(urlParams) {
   return false;
 }
 
-/**
- * Get pending plan data from localStorage
- * @returns {{ plan: string | null, interval: 'monthly' | 'yearly' }}
- */
-export function getPendingPlan() {
+export function getPendingPlan(): { plan: string | null; interval: BillingInterval } {
   try {
     const plan = localStorage.getItem(STORAGE_KEYS.PENDING_PLAN);
     const rawInterval = localStorage.getItem(STORAGE_KEYS.PENDING_INTERVAL);
@@ -98,22 +105,15 @@ export function getPendingPlan() {
   }
 }
 
-/**
- * Check if there's a pending plan in localStorage
- * @returns {boolean}
- */
-export function hasPendingPlan() {
+export function hasPendingPlan(): boolean {
   try {
     return !!localStorage.getItem(STORAGE_KEYS.PENDING_PLAN);
-  } catch (_err) {
+  } catch {
     return false;
   }
 }
 
-/**
- * Clear pending plan data from localStorage
- */
-export function clearPendingPlan() {
+export function clearPendingPlan(): void {
   try {
     localStorage.removeItem(STORAGE_KEYS.PENDING_PLAN);
     localStorage.removeItem(STORAGE_KEYS.PENDING_INTERVAL);
@@ -122,51 +122,33 @@ export function clearPendingPlan() {
   }
 }
 
-/**
- * Check if error indicates trial was already used
- * @param {Error} err - Error object from API
- * @returns {boolean}
- */
-function isTrialAlreadyUsedError(err) {
+function isTrialAlreadyUsedError(err: unknown): boolean {
+  const e = err as PlanRedirectError | undefined;
   return (
-    err?.code?.startsWith?.('VALIDATION_') &&
-    err?.details?.field === 'trial' &&
-    err?.details?.value === 'already_exists'
+    !!e?.code?.startsWith?.('VALIDATION_') &&
+    e?.details?.field === 'trial' &&
+    e?.details?.value === 'already_exists'
   );
 }
 
-/**
- * Check if error indicates user is already on this plan
- * @param {Error} err - Error object from API
- * @returns {boolean}
- */
-function isAlreadyOnPlanError(err) {
-  return err?.code?.startsWith?.('VALIDATION_') && err?.details?.reason === 'already_on_plan';
+function isAlreadyOnPlanError(err: unknown): boolean {
+  const e = err as PlanRedirectError | undefined;
+  return !!e?.code?.startsWith?.('VALIDATION_') && e?.details?.reason === 'already_on_plan';
+}
+
+function isPlanChangeBlockedError(err: unknown): boolean {
+  const e = err as PlanRedirectError | undefined;
+  return !!e?.code?.startsWith?.('VALIDATION_') && e?.details?.reason === 'downgrade_exceeds_quotas';
 }
 
 /**
- * Check if error indicates plan change blocked due to quota violations
- * @param {Error} err - Error object from API
- * @returns {boolean}
- */
-function isPlanChangeBlockedError(err) {
-  return (
-    err?.code?.startsWith?.('VALIDATION_') && err?.details?.reason === 'downgrade_exceeds_quotas'
-  );
-}
-
-/**
- * Handle pending plan redirect from localStorage
+ * Handle pending plan redirect from localStorage.
  * Processes plan param and redirects to appropriate checkout or starts trial.
- *
- * @param {Object} options
- * @param {Function} options.navigate - SolidJS navigate function
- * @param {Function} [options.refetch] - Optional subscription refetch function (for trial)
- * @returns {Promise<{ handled: boolean, error: Error | null }>}
- *   - handled: true if there was a pending plan (success or error)
- *   - error: Error object if redirect failed, null otherwise
  */
-export async function handlePendingPlanRedirect({ navigate, refetch } = {}) {
+export async function handlePendingPlanRedirect(
+  options: HandlePendingPlanRedirectOptions = {},
+): Promise<PlanRedirectResult> {
+  const { navigate, refetch } = options;
   const { plan: pendingPlan, interval: pendingInterval } = getPendingPlan();
 
   if (!pendingPlan) {
@@ -182,7 +164,7 @@ export async function handlePendingPlanRedirect({ navigate, refetch } = {}) {
         BILLING_MESSAGES.TRIAL_STARTED.message,
       );
       if (refetch) await refetch();
-      if (navigate) navigate('/dashboard', { replace: true });
+      if (navigate) navigate({ to: '/dashboard', replace: true });
       return { handled: true, error: null };
     }
 
@@ -199,15 +181,13 @@ export async function handlePendingPlanRedirect({ navigate, refetch } = {}) {
   } catch (err) {
     console.error('Plan redirect error:', err);
 
-    // Handle specific error cases with appropriate messaging
     if (isTrialAlreadyUsedError(err)) {
       clearPendingPlan();
       showToast.info(
         BILLING_MESSAGES.TRIAL_ALREADY_USED.title,
         BILLING_MESSAGES.TRIAL_ALREADY_USED.message,
       );
-      // Redirect to plans page so they can choose a paid plan
-      if (navigate) navigate('/settings/plans', { replace: true });
+      if (navigate) navigate({ to: '/settings/plans', replace: true });
       return { handled: true, error: null };
     }
 
@@ -217,8 +197,7 @@ export async function handlePendingPlanRedirect({ navigate, refetch } = {}) {
         BILLING_MESSAGES.ALREADY_ON_PLAN.title,
         BILLING_MESSAGES.ALREADY_ON_PLAN.message,
       );
-      // Redirect to billing settings since they're already subscribed
-      if (navigate) navigate('/settings/billing', { replace: true });
+      if (navigate) navigate({ to: '/settings/billing', replace: true });
       return { handled: true, error: null };
     }
 
@@ -241,6 +220,6 @@ export async function handlePendingPlanRedirect({ navigate, refetch } = {}) {
     // For checkout redirects, keep pending plan for retry
     // These can fail transiently (network issues, Stripe API timeouts)
 
-    return { handled: true, error: err };
+    return { handled: true, error: err as PlanRedirectError };
   }
 }

@@ -12,7 +12,7 @@ import {
   clearPendingPlan,
   handlePendingPlanRedirect,
   BILLING_MESSAGES,
-} from '@/lib/plan-redirect-utils.js';
+} from '@/lib/plan-redirect-utils';
 
 function FAQItem({ question, answer }: { question: string; answer: string }) {
   const [isOpen, setIsOpen] = useState(false);

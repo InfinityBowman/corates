@@ -2,7 +2,7 @@
  * Google Drive API - Interact with user's connected Google Drive
  */
 
-import { apiFetch } from '@/lib/apiFetch.js';
+import { apiFetch } from '@/lib/apiFetch';
 
 /**
  * Check if the user has connected their Google account

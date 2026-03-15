@@ -2,7 +2,7 @@
  * Profile sync utility - fire-and-forget sync of profile changes to all projects
  */
 
-import { apiFetch } from '@/lib/apiFetch.js';
+import { apiFetch } from '@/lib/apiFetch';
 
 export async function syncProfileToProjects() {
   try {

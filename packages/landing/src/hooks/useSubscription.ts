@@ -5,7 +5,7 @@
 import { useMemo } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { queryKeys } from '@/lib/queryKeys.js';
-import { apiFetch } from '@/lib/apiFetch.js';
+import { apiFetch } from '@/lib/apiFetch';
 import { hasActiveAccess as checkActiveAccess } from '@/lib/access.js';
 import {
   hasEntitlement as checkEntitlement,
@@ -15,7 +15,16 @@ import {
 } from '@/lib/entitlements.js';
 import { useAuthStore, selectIsLoggedIn } from '@/stores/authStore';
 
-const DEFAULT_SUBSCRIPTION = {
+export interface Subscription {
+  tier: string;
+  status: string;
+  tierInfo: { name: string; description: string };
+  stripeSubscriptionId: string | null;
+  currentPeriodEnd: number | null;
+  cancelAtPeriodEnd: boolean;
+}
+
+const DEFAULT_SUBSCRIPTION: Subscription = {
   tier: 'free',
   status: 'active',
   tierInfo: { name: 'Free', description: 'For individuals getting started' },
@@ -24,8 +33,8 @@ const DEFAULT_SUBSCRIPTION = {
   cancelAtPeriodEnd: false,
 };
 
-async function fetchSubscription() {
-  return apiFetch.get('/api/billing/subscription', { toastMessage: false });
+async function fetchSubscription(): Promise<Subscription> {
+  return apiFetch.get<Subscription>('/api/billing/subscription', { toastMessage: false });
 }
 
 export function useSubscription() {
@@ -64,18 +73,18 @@ export function useSubscription() {
   }
 
   const subscriptionFetchFailed = isLoggedIn && query.isError;
-  const tier = (subscription as Record<string, unknown>)?.tier ?? 'free';
-  const status = (subscription as Record<string, unknown>)?.status;
+  const tier = subscription.tier;
+  const status = subscription.status;
   const isActive = status === 'active' || status === 'trialing';
-  const willCancel = (subscription as Record<string, unknown>)?.cancelAtPeriodEnd ?? false;
+  const willCancel = subscription.cancelAtPeriodEnd;
   const hasActiveAccess = checkActiveAccess(subscription);
   const entitlements = useMemo(() => getEffectiveEntitlements(subscription), [subscription]);
   const quotas = useMemo(() => getEffectiveQuotas(subscription), [subscription]);
 
   const periodEndDate = useMemo(() => {
-    const endDate = (subscription as Record<string, unknown>)?.currentPeriodEnd;
+    const endDate = subscription.currentPeriodEnd;
     if (!endDate) return null;
-    const timestamp = typeof endDate === 'number' ? endDate : parseInt(endDate as string);
+    const timestamp = typeof endDate === 'number' ? endDate : parseInt(String(endDate));
     const date = timestamp > 1000000000000 ? new Date(timestamp) : new Date(timestamp * 1000);
     return date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
   }, [subscription]);
@@ -92,7 +101,7 @@ export function useSubscription() {
     refetch: async () => {
       return queryClient.resetQueries({ queryKey: queryKeys.subscription.current });
     },
-    mutate: (data: unknown) => {
+    mutate: (data: Subscription) => {
       queryClient.setQueryData(queryKeys.subscription.current, data);
     },
     clearCache: () => {
@@ -100,7 +109,7 @@ export function useSubscription() {
     },
 
     tier,
-    tierInfo: (subscription as Record<string, unknown>)?.tierInfo,
+    tierInfo: subscription.tierInfo,
     status,
     isActive,
     hasActiveAccess,
@@ -111,6 +120,6 @@ export function useSubscription() {
       checkQuota(subscription, quotaKey, opts),
     willCancel,
     periodEndDate,
-    stripeSubscriptionId: (subscription as Record<string, unknown>)?.stripeSubscriptionId,
+    stripeSubscriptionId: subscription.stripeSubscriptionId,
   };
 }

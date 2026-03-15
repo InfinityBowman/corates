@@ -3,7 +3,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { apiFetch } from '../apiFetch.js';
+import { apiFetch } from '../apiFetch';
 
 // Mock dependencies
 vi.mock('@config/api.js', () => ({

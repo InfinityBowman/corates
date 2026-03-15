@@ -3,7 +3,7 @@
  * Handles all billing-related API calls
  */
 
-import { apiFetch } from '@/lib/apiFetch.js';
+import { apiFetch } from '@/lib/apiFetch';
 
 /**
  * Get the current user's subscription

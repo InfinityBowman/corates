@@ -5,7 +5,7 @@
  */
 
 import { API_BASE } from '@/config/api.js';
-import { apiFetch } from '@/lib/apiFetch.js';
+import { apiFetch } from '@/lib/apiFetch';
 
 /**
  * Fetch a PDF from an external URL via the backend proxy (avoids CORS issues)
