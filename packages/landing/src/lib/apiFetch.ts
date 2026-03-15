@@ -232,22 +232,46 @@ type ApiFetchBody = Record<string, unknown> | FormData | Blob | string | null;
 
 interface ApiFetchFn {
   <T = unknown>(path: string, options?: ApiFetchOptions): Promise<T>;
-  get: <T = unknown>(path: string, options?: Omit<ApiFetchOptions, 'method' | 'body'>) => Promise<T>;
-  post: <T = unknown>(path: string, body?: ApiFetchBody, options?: Omit<ApiFetchOptions, 'method' | 'body'>) => Promise<T>;
-  put: <T = unknown>(path: string, body?: ApiFetchBody, options?: Omit<ApiFetchOptions, 'method' | 'body'>) => Promise<T>;
-  patch: <T = unknown>(path: string, body?: ApiFetchBody, options?: Omit<ApiFetchOptions, 'method' | 'body'>) => Promise<T>;
+  get: <T = unknown>(
+    path: string,
+    options?: Omit<ApiFetchOptions, 'method' | 'body'>,
+  ) => Promise<T>;
+  post: <T = unknown>(
+    path: string,
+    body?: ApiFetchBody,
+    options?: Omit<ApiFetchOptions, 'method' | 'body'>,
+  ) => Promise<T>;
+  put: <T = unknown>(
+    path: string,
+    body?: ApiFetchBody,
+    options?: Omit<ApiFetchOptions, 'method' | 'body'>,
+  ) => Promise<T>;
+  patch: <T = unknown>(
+    path: string,
+    body?: ApiFetchBody,
+    options?: Omit<ApiFetchOptions, 'method' | 'body'>,
+  ) => Promise<T>;
   delete: <T = unknown>(path: string, options?: Omit<ApiFetchOptions, 'method'>) => Promise<T>;
 }
 
 export const apiFetch: ApiFetchFn = Object.assign(apiFetchImpl, {
   get: <T = unknown>(path: string, options: Omit<ApiFetchOptions, 'method' | 'body'> = {}) =>
     apiFetchImpl<T>(path, { ...options, method: 'GET' }),
-  post: <T = unknown>(path: string, body?: ApiFetchBody, options: Omit<ApiFetchOptions, 'method' | 'body'> = {}) =>
-    apiFetchImpl<T>(path, { ...options, method: 'POST', body }),
-  put: <T = unknown>(path: string, body?: ApiFetchBody, options: Omit<ApiFetchOptions, 'method' | 'body'> = {}) =>
-    apiFetchImpl<T>(path, { ...options, method: 'PUT', body }),
-  patch: <T = unknown>(path: string, body?: ApiFetchBody, options: Omit<ApiFetchOptions, 'method' | 'body'> = {}) =>
-    apiFetchImpl<T>(path, { ...options, method: 'PATCH', body }),
+  post: <T = unknown>(
+    path: string,
+    body?: ApiFetchBody,
+    options: Omit<ApiFetchOptions, 'method' | 'body'> = {},
+  ) => apiFetchImpl<T>(path, { ...options, method: 'POST', body }),
+  put: <T = unknown>(
+    path: string,
+    body?: ApiFetchBody,
+    options: Omit<ApiFetchOptions, 'method' | 'body'> = {},
+  ) => apiFetchImpl<T>(path, { ...options, method: 'PUT', body }),
+  patch: <T = unknown>(
+    path: string,
+    body?: ApiFetchBody,
+    options: Omit<ApiFetchOptions, 'method' | 'body'> = {},
+  ) => apiFetchImpl<T>(path, { ...options, method: 'PATCH', body }),
   delete: <T = unknown>(path: string, options: Omit<ApiFetchOptions, 'method'> = {}) =>
     apiFetchImpl<T>(path, { ...options, method: 'DELETE' }),
 });

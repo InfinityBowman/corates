@@ -138,7 +138,9 @@ function isAlreadyOnPlanError(err: unknown): boolean {
 
 function isPlanChangeBlockedError(err: unknown): boolean {
   const e = err as PlanRedirectError | undefined;
-  return !!e?.code?.startsWith?.('VALIDATION_') && e?.details?.reason === 'downgrade_exceeds_quotas';
+  return (
+    !!e?.code?.startsWith?.('VALIDATION_') && e?.details?.reason === 'downgrade_exceeds_quotas'
+  );
 }
 
 /**
