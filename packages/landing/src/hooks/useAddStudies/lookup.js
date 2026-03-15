@@ -100,7 +100,9 @@ export function useLookupOperations() {
   const attachPdfToLookupRef = useCallback((refId, fileName, arrayBuffer) => {
     setLookupRefs(prev =>
       prev.map(ref =>
-        ref._id === refId ? { ...ref, manualPdfData: arrayBuffer, manualPdfFileName: fileName } : ref,
+        ref._id === refId ?
+          { ...ref, manualPdfData: arrayBuffer, manualPdfFileName: fileName }
+        : ref,
       ),
     );
   }, []);
@@ -108,9 +110,15 @@ export function useLookupOperations() {
   const markRefMatched = useCallback((refId, pdfData, pdfFileName) => {
     setLookupRefs(prev =>
       prev.map(r =>
-        r._id === refId
-          ? { ...r, pdfAvailable: true, manualPdfData: pdfData, manualPdfFileName: pdfFileName, matchedFromUpload: true }
-          : r,
+        r._id === refId ?
+          {
+            ...r,
+            pdfAvailable: true,
+            manualPdfData: pdfData,
+            manualPdfFileName: pdfFileName,
+            matchedFromUpload: true,
+          }
+        : r,
       ),
     );
     setSelectedLookupIds(prev => {

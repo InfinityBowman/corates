@@ -29,9 +29,8 @@ export function CompletedOutcomeRow({
   const [showPreviousReviewers, setShowPreviousReviewers] = useState(false);
 
   const finalizedChecklist = outcomeGroup.checklists[0];
-  const outcomeName = outcomeGroup.outcomeId
-    ? getOutcomeName(outcomeGroup.outcomeId) || 'Unknown Outcome'
-    : null;
+  const outcomeName =
+    outcomeGroup.outcomeId ? getOutcomeName(outcomeGroup.outcomeId) || 'Unknown Outcome' : null;
 
   const reconciliationProgress = useMemo(
     () => getReconciliationProgress?.(outcomeGroup.outcomeId, outcomeGroup.type),
@@ -44,14 +43,14 @@ export function CompletedOutcomeRow({
 
   return (
     <>
-      <div className="bg-muted/50 flex items-center justify-between rounded-lg p-3">
-        <div className="flex items-center gap-3">
+      <div className='bg-muted/50 flex items-center justify-between rounded-lg p-3'>
+        <div className='flex items-center gap-3'>
           {outcomeName && (
-            <span className="bg-secondary text-secondary-foreground rounded-full px-2 py-0.5 text-xs font-medium">
+            <span className='bg-secondary text-secondary-foreground rounded-full px-2 py-0.5 text-xs font-medium'>
               {outcomeName}
             </span>
           )}
-          <span className="bg-secondary text-secondary-foreground rounded-full px-2 py-0.5 text-xs font-medium">
+          <span className='bg-secondary text-secondary-foreground rounded-full px-2 py-0.5 text-xs font-medium'>
             {(getChecklistMetadata(outcomeGroup.type) as any)?.name || outcomeGroup.type}
           </span>
           <span
@@ -61,18 +60,18 @@ export function CompletedOutcomeRow({
           </span>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className='flex items-center gap-2'>
           {hasPreviousReviewers && (
             <button
               onClick={() => setShowPreviousReviewers(true)}
-              className="bg-secondary text-secondary-foreground hover:bg-secondary/80 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors"
+              className='bg-secondary text-secondary-foreground hover:bg-secondary/80 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors'
             >
               View Previous
             </button>
           )}
           <button
             onClick={() => onOpenChecklist(finalizedChecklist?.id)}
-            className="bg-primary hover:bg-primary/90 rounded-lg px-3 py-1.5 text-sm font-medium text-white transition-colors"
+            className='bg-primary hover:bg-primary/90 rounded-lg px-3 py-1.5 text-sm font-medium text-white transition-colors'
           >
             Open
           </button>

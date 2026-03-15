@@ -17,17 +17,16 @@ export function PdfTagBadge({ tag }: PdfTagBadgeProps) {
         tag === 'primary' ? 'bg-blue-100 text-blue-700' : 'bg-purple-100 text-purple-700'
       }`}
     >
-      {tag === 'primary' ? (
+      {tag === 'primary' ?
         <>
-          <StarIcon className="h-3 w-3" />
+          <StarIcon className='h-3 w-3' />
           <span>Primary</span>
         </>
-      ) : (
-        <>
-          <FileTextIcon className="h-3 w-3" />
+      : <>
+          <FileTextIcon className='h-3 w-3' />
           <span>Protocol</span>
         </>
-      )}
+      }
     </span>
   );
 }

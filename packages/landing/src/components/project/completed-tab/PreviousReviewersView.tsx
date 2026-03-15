@@ -22,16 +22,22 @@ interface PreviousReviewersViewProps {
 
 export function PreviousReviewersView({ onClose }: PreviousReviewersViewProps) {
   return (
-    <Dialog open onOpenChange={open => { if (!open) onClose(); }}>
-      <DialogContent className="max-w-4xl">
+    <Dialog
+      open
+      onOpenChange={open => {
+        if (!open) onClose();
+      }}
+    >
+      <DialogContent className='max-w-4xl'>
         <DialogHeader>
           <DialogTitle>Original Reviewer Appraisals</DialogTitle>
           <DialogDescription>
-            The original appraisals from each reviewer that were reconciled to create the final version.
+            The original appraisals from each reviewer that were reconciled to create the final
+            version.
           </DialogDescription>
         </DialogHeader>
-        <div className="flex items-center justify-center py-16">
-          <p className="text-muted-foreground">
+        <div className='flex items-center justify-center py-16'>
+          <p className='text-muted-foreground'>
             Reviewer comparison view will be available after checklist forms are migrated.
           </p>
         </div>

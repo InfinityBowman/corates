@@ -82,14 +82,25 @@ export function ProjectView({ projectId }: ProjectViewProps) {
   // Read pending data exactly once via lazy initializer (safe for StrictMode)
   const [pendingState] = useState(() => {
     const d = (useProjectStore.getState() as any).getPendingProjectData?.(projectId);
-    return { pdfs: d?.pendingPdfs || null, refs: d?.pendingRefs || null, drive: d?.driveFiles || null };
+    return {
+      pdfs: d?.pendingPdfs || null,
+      refs: d?.pendingRefs || null,
+      drive: d?.driveFiles || null,
+    };
   });
   const [pendingPdfs, setPendingPdfs] = useState<any[] | null>(pendingState.pdfs);
   const [pendingRefs, setPendingRefs] = useState<any[] | null>(pendingState.refs);
   const [pendingDriveFiles, setPendingDriveFiles] = useState<any[] | null>(pendingState.drive);
 
   useEffect(() => {
-    if (!connectionState.synced || !projectId || !orgId || !Array.isArray(pendingPdfs) || pendingPdfs.length === 0) return;
+    if (
+      !connectionState.synced ||
+      !projectId ||
+      !orgId ||
+      !Array.isArray(pendingPdfs) ||
+      pendingPdfs.length === 0
+    )
+      return;
     const pdfs = pendingPdfs;
     setPendingPdfs(null); // eslint-disable-line react-hooks/set-state-in-effect -- one-time consumption
 
@@ -101,7 +112,11 @@ export function ProjectView({ projectId }: ProjectViewProps) {
         doi: pdf.doi ?? pdf.metadata?.doi ?? null,
         importSource: pdf.metadata?.importSource || 'pdf',
       };
-      const studyId = projectActionsStore.study.create(studyName, pdf.metadata?.abstract || '', metadata);
+      const studyId = projectActionsStore.study.create(
+        studyName,
+        pdf.metadata?.abstract || '',
+        metadata,
+      );
       if (studyId && pdf.data) {
         const arrayBuffer = new Uint8Array(pdf.data).buffer;
         uploadPdf(orgId, projectId, studyId, arrayBuffer, pdf.fileName)
@@ -142,7 +157,13 @@ export function ProjectView({ projectId }: ProjectViewProps) {
   }, [connectionState.synced, projectId, orgId, pendingPdfs, user?.id]);
 
   useEffect(() => {
-    if (!connectionState.synced || !projectId || !Array.isArray(pendingRefs) || pendingRefs.length === 0) return;
+    if (
+      !connectionState.synced ||
+      !projectId ||
+      !Array.isArray(pendingRefs) ||
+      pendingRefs.length === 0
+    )
+      return;
     const refs = pendingRefs;
     setPendingRefs(null); // eslint-disable-line react-hooks/set-state-in-effect -- one-time consumption
     for (const ref of refs) {
@@ -151,7 +172,14 @@ export function ProjectView({ projectId }: ProjectViewProps) {
   }, [connectionState.synced, projectId, pendingRefs]);
 
   useEffect(() => {
-    if (!connectionState.synced || !projectId || !orgId || !Array.isArray(pendingDriveFiles) || pendingDriveFiles.length === 0) return;
+    if (
+      !connectionState.synced ||
+      !projectId ||
+      !orgId ||
+      !Array.isArray(pendingDriveFiles) ||
+      pendingDriveFiles.length === 0
+    )
+      return;
     const driveFiles = pendingDriveFiles;
     setPendingDriveFiles(null); // eslint-disable-line react-hooks/set-state-in-effect -- one-time consumption
     for (const file of driveFiles) {
@@ -160,7 +188,11 @@ export function ProjectView({ projectId }: ProjectViewProps) {
         ...(file.metadata || {}),
         importSource: file.metadata?.importSource || file.importSource || 'google-drive',
       };
-      const studyId = projectActionsStore.study.create(title, file.metadata?.abstract || '', metadata);
+      const studyId = projectActionsStore.study.create(
+        title,
+        file.metadata?.abstract || '',
+        metadata,
+      );
       if (studyId && file.id) {
         importFromGoogleDrive(file.id, projectId, studyId)
           .then((result: any) => {
@@ -225,26 +257,44 @@ export function ProjectView({ projectId }: ProjectViewProps) {
   const TAB_DEFS = useMemo(
     () => [
       { value: 'overview', label: 'Overview', icon: HomeIcon },
-      { value: 'all-studies', label: 'All Studies', icon: BookOpenIcon, getCount: getAllStudiesCount },
+      {
+        value: 'all-studies',
+        label: 'All Studies',
+        icon: BookOpenIcon,
+        getCount: getAllStudiesCount,
+      },
       { value: 'todo', label: 'To Do', icon: ListTodoIcon, getCount: getToDoCount },
-      { value: 'reconcile', label: 'Reconcile', icon: ArrowRightLeftIcon, getCount: getReconcileCount },
-      { value: 'completed', label: 'Completed', icon: CheckCircleIcon, getCount: getCompletedCount },
+      {
+        value: 'reconcile',
+        label: 'Reconcile',
+        icon: ArrowRightLeftIcon,
+        getCount: getReconcileCount,
+      },
+      {
+        value: 'completed',
+        label: 'Completed',
+        icon: CheckCircleIcon,
+        getCount: getCompletedCount,
+      },
     ],
     [getAllStudiesCount, getToDoCount, getReconcileCount, getCompletedCount],
   );
 
   return (
-    <ProjectProvider projectId={projectId} projectOps={projectConnection as Record<string, unknown>}>
+    <ProjectProvider
+      projectId={projectId}
+      projectOps={projectConnection as Record<string, unknown>}
+    >
       {/* Child routes */}
       {isChildRoute && <Outlet />}
 
       {/* Main project view */}
       {!isChildRoute && (
-        <div className="bg-background min-h-screen">
+        <div className='bg-background min-h-screen'>
           <Tabs value={tabFromUrl} onValueChange={handleTabChange}>
             {/* Sticky header */}
-            <header className="border-border bg-card sticky top-0 z-20 border-b">
-              <div className="mx-auto max-w-7xl px-6">
+            <header className='border-border bg-card sticky top-0 z-20 border-b'>
+              <div className='mx-auto max-w-7xl px-6'>
                 <ProjectHeader
                   name={meta?.name as string}
                   description={meta?.description as string}
@@ -254,20 +304,20 @@ export function ProjectView({ projectId }: ProjectViewProps) {
                 />
               </div>
 
-              <div className="mx-auto max-w-7xl px-6">
-                <TabsList className="relative flex gap-1 overflow-x-auto border-b-0 bg-transparent pb-px">
+              <div className='mx-auto max-w-7xl px-6'>
+                <TabsList className='relative flex gap-1 overflow-x-auto border-b-0 bg-transparent pb-px'>
                   {TAB_DEFS.map(tab => {
                     const Icon = tab.icon;
                     return (
                       <TabsTrigger
                         key={tab.value}
                         value={tab.value}
-                        className="text-muted-foreground hover:bg-muted hover:text-secondary-foreground data-[state=active]:text-foreground group relative gap-2 rounded-t-lg border-b-2 border-transparent px-4 py-2.5 transition-all data-[state=active]:border-primary"
+                        className='text-muted-foreground hover:bg-muted hover:text-secondary-foreground data-[state=active]:text-foreground group data-[state=active]:border-primary relative gap-2 rounded-t-lg border-b-2 border-transparent px-4 py-2.5 transition-all'
                       >
-                        <Icon className="h-4 w-4 opacity-60 transition-opacity group-data-[state=active]:opacity-100" />
-                        <span className="font-medium">{tab.label}</span>
+                        <Icon className='h-4 w-4 opacity-60 transition-opacity group-data-[state=active]:opacity-100' />
+                        <span className='font-medium'>{tab.label}</span>
                         {tab.getCount && (
-                          <span className="bg-secondary text-secondary-foreground group-data-[state=active]:bg-primary/10 group-data-[state=active]:text-primary min-w-6 rounded-full px-1.5 py-0.5 text-center text-xs font-medium tabular-nums transition-colors">
+                          <span className='bg-secondary text-secondary-foreground group-data-[state=active]:bg-primary/10 group-data-[state=active]:text-primary min-w-6 rounded-full px-1.5 py-0.5 text-center text-xs font-medium tabular-nums transition-colors'>
                             {tab.getCount()}
                           </span>
                         )}
@@ -279,29 +329,29 @@ export function ProjectView({ projectId }: ProjectViewProps) {
             </header>
 
             {/* Main content */}
-            <main className="mx-auto max-w-7xl px-6 py-6">
-              <TabsContent value="overview" className="mt-0">
-                <SectionErrorBoundary name="Overview">
+            <main className='mx-auto max-w-7xl px-6 py-6'>
+              <TabsContent value='overview' className='mt-0'>
+                <SectionErrorBoundary name='Overview'>
                   <OverviewTab />
                 </SectionErrorBoundary>
               </TabsContent>
-              <TabsContent value="all-studies" className="mt-0">
-                <SectionErrorBoundary name="All Studies">
+              <TabsContent value='all-studies' className='mt-0'>
+                <SectionErrorBoundary name='All Studies'>
                   <AllStudiesTab />
                 </SectionErrorBoundary>
               </TabsContent>
-              <TabsContent value="todo" className="mt-0">
-                <SectionErrorBoundary name="To-Do">
+              <TabsContent value='todo' className='mt-0'>
+                <SectionErrorBoundary name='To-Do'>
                   <ToDoTab />
                 </SectionErrorBoundary>
               </TabsContent>
-              <TabsContent value="reconcile" className="mt-0">
-                <SectionErrorBoundary name="Reconcile">
+              <TabsContent value='reconcile' className='mt-0'>
+                <SectionErrorBoundary name='Reconcile'>
                   <ReconcileTab />
                 </SectionErrorBoundary>
               </TabsContent>
-              <TabsContent value="completed" className="mt-0">
-                <SectionErrorBoundary name="Completed">
+              <TabsContent value='completed' className='mt-0'>
+                <SectionErrorBoundary name='Completed'>
                   <CompletedTab />
                 </SectionErrorBoundary>
               </TabsContent>

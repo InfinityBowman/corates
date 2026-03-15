@@ -3,14 +3,7 @@
  */
 
 import { useState, useMemo, useCallback } from 'react';
-import {
-  ChevronRightIcon,
-  PlusIcon,
-  PencilIcon,
-  Trash2Icon,
-  CheckIcon,
-  XIcon,
-} from 'lucide-react';
+import { ChevronRightIcon, PlusIcon, PencilIcon, Trash2Icon, CheckIcon, XIcon } from 'lucide-react';
 import { Collapsible, CollapsibleContent } from '@/components/ui/collapsible';
 import {
   AlertDialog,
@@ -92,7 +85,10 @@ export function OutcomeManager() {
       if (result?.success) {
         showToast.success('Outcome deleted');
       } else {
-        showToast.error('Cannot delete outcome', result?.error || 'Outcome is in use by checklists');
+        showToast.error(
+          'Cannot delete outcome',
+          result?.error || 'Outcome is in use by checklists',
+        );
       }
     } catch (err: any) {
       showToast.error('Failed to delete outcome', err.message);
@@ -122,26 +118,26 @@ export function OutcomeManager() {
   );
 
   return (
-    <div className="border-border bg-card overflow-hidden rounded-lg border">
+    <div className='border-border bg-card overflow-hidden rounded-lg border'>
       <Collapsible open={expanded} onOpenChange={setExpanded}>
         <div
-          className="flex cursor-pointer items-center gap-3 px-4 py-3 select-none"
+          className='flex cursor-pointer items-center gap-3 px-4 py-3 select-none'
           onClick={handleHeaderClick}
         >
-          <div className="-ml-1 shrink-0 p-1">
+          <div className='-ml-1 shrink-0 p-1'>
             <ChevronRightIcon
               className={`text-muted-foreground/70 h-5 w-5 transition-transform duration-200 ${expanded ? 'rotate-90' : ''}`}
             />
           </div>
 
-          <div className="min-w-0 flex-1">
-            <span className="text-foreground font-medium">Outcomes</span>
-            <span className="text-muted-foreground ml-2 text-sm">
-              {outcomes.length === 0
-                ? 'None defined'
-                : outcomes.length === 1
-                  ? '1 outcome'
-                  : `${outcomes.length} outcomes`}
+          <div className='min-w-0 flex-1'>
+            <span className='text-foreground font-medium'>Outcomes</span>
+            <span className='text-muted-foreground ml-2 text-sm'>
+              {outcomes.length === 0 ?
+                'None defined'
+              : outcomes.length === 1 ?
+                '1 outcome'
+              : `${outcomes.length} outcomes`}
             </span>
           </div>
 
@@ -153,21 +149,21 @@ export function OutcomeManager() {
                 setExpanded(true);
                 setNewName('');
               }}
-              className="text-muted-foreground hover:text-primary flex items-center gap-1 text-sm transition-colors"
+              className='text-muted-foreground hover:text-primary flex items-center gap-1 text-sm transition-colors'
             >
-              <PlusIcon className="h-4 w-4" />
+              <PlusIcon className='h-4 w-4' />
               Add
             </button>
           )}
         </div>
 
         <CollapsibleContent>
-          <div className="border-border space-y-2 border-t px-4 py-3">
+          <div className='border-border space-y-2 border-t px-4 py-3'>
             {/* Add form */}
             {isAdding && (
-              <div className="flex items-center gap-2">
+              <div className='flex items-center gap-2'>
                 <input
-                  type="text"
+                  type='text'
                   value={newName}
                   onChange={e => setNewName(e.target.value)}
                   onKeyDown={e =>
@@ -176,44 +172,44 @@ export function OutcomeManager() {
                       setNewName('');
                     })
                   }
-                  placeholder="Outcome name (e.g., Overall mortality)"
-                  className="border-border focus:border-primary flex-1 rounded border px-3 py-1.5 text-sm focus:ring-1 focus:ring-blue-200 focus:outline-none"
+                  placeholder='Outcome name (e.g., Overall mortality)'
+                  className='border-border focus:border-primary flex-1 rounded border px-3 py-1.5 text-sm focus:ring-1 focus:ring-blue-200 focus:outline-none'
                   autoFocus
                 />
                 <button
                   onClick={handleAdd}
                   disabled={!newName.trim() || isSaving}
-                  className="text-primary hover:text-primary/80 p-1.5 transition-colors disabled:opacity-50"
-                  title="Add"
+                  className='text-primary hover:text-primary/80 p-1.5 transition-colors disabled:opacity-50'
+                  title='Add'
                 >
-                  <CheckIcon className="h-4 w-4" />
+                  <CheckIcon className='h-4 w-4' />
                 </button>
                 <button
                   onClick={() => {
                     setIsAdding(false);
                     setNewName('');
                   }}
-                  className="text-muted-foreground hover:text-foreground p-1.5 transition-colors"
-                  title="Cancel"
+                  className='text-muted-foreground hover:text-foreground p-1.5 transition-colors'
+                  title='Cancel'
                 >
-                  <XIcon className="h-4 w-4" />
+                  <XIcon className='h-4 w-4' />
                 </button>
               </div>
             )}
 
             {/* Empty state */}
             {outcomes.length === 0 && !isAdding && (
-              <p className="text-muted-foreground text-sm">
+              <p className='text-muted-foreground text-sm'>
                 No outcomes defined. Add outcomes to enable ROB-2 and ROBINS-I checklists.
               </p>
             )}
 
             {/* Outcomes list */}
             {outcomes.map((outcome: any) =>
-              editingId === outcome.id ? (
-                <div key={outcome.id} className="flex items-center gap-2">
+              editingId === outcome.id ?
+                <div key={outcome.id} className='flex items-center gap-2'>
                   <input
-                    type="text"
+                    type='text'
                     value={newName}
                     onChange={e => setNewName(e.target.value)}
                     onKeyDown={e =>
@@ -226,32 +222,31 @@ export function OutcomeManager() {
                         },
                       )
                     }
-                    placeholder="Outcome name"
-                    className="border-border focus:border-primary flex-1 rounded border px-3 py-1.5 text-sm focus:ring-1 focus:ring-blue-200 focus:outline-none"
+                    placeholder='Outcome name'
+                    className='border-border focus:border-primary flex-1 rounded border px-3 py-1.5 text-sm focus:ring-1 focus:ring-blue-200 focus:outline-none'
                     autoFocus
                   />
                   <button
                     onClick={() => handleUpdate(outcome.id)}
                     disabled={!newName.trim() || isSaving}
-                    className="text-primary hover:text-primary/80 p-1.5 transition-colors disabled:opacity-50"
-                    title="Save"
+                    className='text-primary hover:text-primary/80 p-1.5 transition-colors disabled:opacity-50'
+                    title='Save'
                   >
-                    <CheckIcon className="h-4 w-4" />
+                    <CheckIcon className='h-4 w-4' />
                   </button>
                   <button
                     onClick={() => {
                       setEditingId(null);
                       setNewName('');
                     }}
-                    className="text-muted-foreground hover:text-foreground p-1.5 transition-colors"
-                    title="Cancel"
+                    className='text-muted-foreground hover:text-foreground p-1.5 transition-colors'
+                    title='Cancel'
                   >
-                    <XIcon className="h-4 w-4" />
+                    <XIcon className='h-4 w-4' />
                   </button>
                 </div>
-              ) : (
-                <div key={outcome.id} className="flex items-center gap-2">
-                  <span className="text-foreground min-w-0 flex-1 truncate text-sm">
+              : <div key={outcome.id} className='flex items-center gap-2'>
+                  <span className='text-foreground min-w-0 flex-1 truncate text-sm'>
                     {outcome.name}
                   </span>
                   {isOwner && (
@@ -261,29 +256,31 @@ export function OutcomeManager() {
                           setEditingId(outcome.id);
                           setNewName(outcome.name);
                         }}
-                        className="text-muted-foreground hover:text-foreground p-1 transition-colors"
-                        title="Edit"
+                        className='text-muted-foreground hover:text-foreground p-1 transition-colors'
+                        title='Edit'
                       >
-                        <PencilIcon className="h-3.5 w-3.5" />
+                        <PencilIcon className='h-3.5 w-3.5' />
                       </button>
                       <button
                         onClick={() => setDeleteTarget(outcome.id)}
-                        className="text-muted-foreground p-1 transition-colors hover:text-red-600"
-                        title="Delete"
+                        className='text-muted-foreground p-1 transition-colors hover:text-red-600'
+                        title='Delete'
                       >
-                        <Trash2Icon className="h-3.5 w-3.5" />
+                        <Trash2Icon className='h-3.5 w-3.5' />
                       </button>
                     </>
                   )}
-                </div>
-              ),
+                </div>,
             )}
           </div>
         </CollapsibleContent>
       </Collapsible>
 
       {/* Delete confirmation */}
-      <AlertDialog open={deleteTarget !== null} onOpenChange={open => !open && setDeleteTarget(null)}>
+      <AlertDialog
+        open={deleteTarget !== null}
+        onOpenChange={open => !open && setDeleteTarget(null)}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Outcome</AlertDialogTitle>
@@ -293,7 +290,7 @@ export function OutcomeManager() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction variant="destructive" onClick={confirmDelete}>
+            <AlertDialogAction variant='destructive' onClick={confirmDelete}>
               Delete
             </AlertDialogAction>
           </AlertDialogFooter>

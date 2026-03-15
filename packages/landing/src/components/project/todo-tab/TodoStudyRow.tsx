@@ -114,26 +114,29 @@ export function TodoStudyRow({
     }
   }, [deleteChecklistId, onDeleteChecklist]);
 
-  const addCancelButton = ((hasChecklists && canAddMore) || showChecklistForm) ? (
-    <button
-      onClick={e => {
-        e.stopPropagation();
-        onToggleChecklistForm();
-      }}
-      className={`flex shrink-0 items-center gap-1 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
-        showChecklistForm
-          ? 'text-red-500 hover:bg-red-50 hover:text-red-600'
+  const addCancelButton =
+    (hasChecklists && canAddMore) || showChecklistForm ?
+      <button
+        onClick={e => {
+          e.stopPropagation();
+          onToggleChecklistForm();
+        }}
+        className={`flex shrink-0 items-center gap-1 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
+          showChecklistForm ?
+            'text-red-500 hover:bg-red-50 hover:text-red-600'
           : 'bg-primary hover:bg-primary/90 text-white'
-      }`}
-      title={showChecklistForm ? 'Cancel' : 'Add another checklist'}
-    >
-      {showChecklistForm ? <XIcon className="h-4 w-4" /> : <PlusIcon className="h-4 w-4" />}
-      {showChecklistForm ? 'Cancel' : 'Add'}
-    </button>
-  ) : null;
+        }`}
+        title={showChecklistForm ? 'Cancel' : 'Add another checklist'}
+      >
+        {showChecklistForm ?
+          <XIcon className='h-4 w-4' />
+        : <PlusIcon className='h-4 w-4' />}
+        {showChecklistForm ? 'Cancel' : 'Add'}
+      </button>
+    : null;
 
   return (
-    <div className="border-border bg-card overflow-hidden rounded-lg border transition-colors hover:border-border">
+    <div className='border-border bg-card hover:border-border overflow-hidden rounded-lg border transition-colors'>
       <Collapsible open={expanded} onOpenChange={onToggleExpanded}>
         {/* Header */}
         <div
@@ -141,66 +144,90 @@ export function TodoStudyRow({
           onClick={handleRowClick}
         >
           {hasPdfs && (
-            <div className="-ml-1 shrink-0 p-1">
+            <div className='-ml-1 shrink-0 p-1'>
               <ChevronRightIcon
                 className={`text-muted-foreground/70 h-5 w-5 transition-transform duration-200 ${expanded ? 'rotate-90' : ''}`}
               />
             </div>
           )}
 
-          <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-2">
-              <span className="text-foreground truncate font-medium">{study.name}</span>
+          <div className='min-w-0 flex-1'>
+            <div className='flex items-center gap-2'>
+              <span className='text-foreground truncate font-medium'>{study.name}</span>
             </div>
             {citationLine && (
-              <p className="text-muted-foreground w-fit cursor-text truncate text-xs select-text" data-selectable>
+              <p
+                className='text-muted-foreground w-fit cursor-text truncate text-xs select-text'
+                data-selectable
+              >
                 {citationLine}
-                {hasPdfs && <span className="text-muted-foreground/70"> -- {sortedPdfs.length} PDFs</span>}
+                {hasPdfs && (
+                  <span className='text-muted-foreground/70'> -- {sortedPdfs.length} PDFs</span>
+                )}
               </p>
             )}
             {!citationLine && hasPdfs && (
-              <p className="text-muted-foreground/70 text-xs">{sortedPdfs.length} PDFs</p>
+              <p className='text-muted-foreground/70 text-xs'>{sortedPdfs.length} PDFs</p>
             )}
           </div>
 
           {/* Single checklist inline */}
-          {checklists.length === 1 && (() => {
-            const checklist = checklists[0];
-            return (
-              <>
-                <span className="bg-secondary text-secondary-foreground inline-flex shrink-0 rounded-full px-2 py-0.5 text-xs font-medium" data-selectable>
-                  {(getChecklistMetadata(checklist.type) as any)?.name || 'Checklist'}
-                </span>
-                {checklist.outcomeId && (
-                  <span className="bg-secondary text-secondary-foreground inline-flex shrink-0 rounded-full px-2 py-0.5 text-xs font-medium" data-selectable>
-                    {getOutcomeName(checklist.outcomeId)}
+          {checklists.length === 1 &&
+            (() => {
+              const checklist = checklists[0];
+              return (
+                <>
+                  <span
+                    className='bg-secondary text-secondary-foreground inline-flex shrink-0 rounded-full px-2 py-0.5 text-xs font-medium'
+                    data-selectable
+                  >
+                    {(getChecklistMetadata(checklist.type) as any)?.name || 'Checklist'}
                   </span>
-                )}
-                <span className={`inline-flex shrink-0 rounded-full px-2.5 py-1 text-xs font-medium ${getStatusStyle(checklist.status)}`} data-selectable>
-                  {getStatusLabel(checklist.status)}
-                </span>
-                <button
-                  onClick={e => { e.stopPropagation(); onOpenChecklist(checklist.id); }}
-                  className="bg-primary hover:bg-primary/90 shrink-0 rounded-lg px-4 py-1.5 text-sm font-medium text-white transition-colors"
-                >
-                  Open
-                </button>
-                <button
-                  onClick={e => { e.stopPropagation(); setDeleteChecklistId(checklist.id); }}
-                  className="text-muted-foreground shrink-0 p-1.5 transition-colors hover:text-red-600"
-                  title="Delete checklist"
-                >
-                  <Trash2Icon className="h-4 w-4" />
-                </button>
-              </>
-            );
-          })()}
+                  {checklist.outcomeId && (
+                    <span
+                      className='bg-secondary text-secondary-foreground inline-flex shrink-0 rounded-full px-2 py-0.5 text-xs font-medium'
+                      data-selectable
+                    >
+                      {getOutcomeName(checklist.outcomeId)}
+                    </span>
+                  )}
+                  <span
+                    className={`inline-flex shrink-0 rounded-full px-2.5 py-1 text-xs font-medium ${getStatusStyle(checklist.status)}`}
+                    data-selectable
+                  >
+                    {getStatusLabel(checklist.status)}
+                  </span>
+                  <button
+                    onClick={e => {
+                      e.stopPropagation();
+                      onOpenChecklist(checklist.id);
+                    }}
+                    className='bg-primary hover:bg-primary/90 shrink-0 rounded-lg px-4 py-1.5 text-sm font-medium text-white transition-colors'
+                  >
+                    Open
+                  </button>
+                  <button
+                    onClick={e => {
+                      e.stopPropagation();
+                      setDeleteChecklistId(checklist.id);
+                    }}
+                    className='text-muted-foreground shrink-0 p-1.5 transition-colors hover:text-red-600'
+                    title='Delete checklist'
+                  >
+                    <Trash2Icon className='h-4 w-4' />
+                  </button>
+                </>
+              );
+            })()}
 
           {/* No checklists */}
           {!hasChecklists && (
             <button
-              onClick={e => { e.stopPropagation(); onToggleChecklistForm(); }}
-              className="bg-primary hover:bg-primary/90 shrink-0 rounded-lg px-4 py-1.5 text-sm font-medium text-white transition-colors"
+              onClick={e => {
+                e.stopPropagation();
+                onToggleChecklistForm();
+              }}
+              className='bg-primary hover:bg-primary/90 shrink-0 rounded-lg px-4 py-1.5 text-sm font-medium text-white transition-colors'
             >
               Select Checklist
             </button>
@@ -211,34 +238,36 @@ export function TodoStudyRow({
 
         {/* Multi-checklist sub-rows */}
         {checklists.length > 1 && (
-          <div className="divide-border divide-y">
+          <div className='divide-border divide-y'>
             {checklists.map((checklist: any) => (
-              <div key={checklist.id} className="flex items-center gap-3 px-4 py-2.5">
-                <div className="flex flex-1 flex-wrap items-center gap-1.5">
-                  <span className="bg-secondary text-secondary-foreground rounded-full px-2 py-0.5 text-xs font-medium">
+              <div key={checklist.id} className='flex items-center gap-3 px-4 py-2.5'>
+                <div className='flex flex-1 flex-wrap items-center gap-1.5'>
+                  <span className='bg-secondary text-secondary-foreground rounded-full px-2 py-0.5 text-xs font-medium'>
                     {(getChecklistMetadata(checklist.type) as any)?.name || 'Checklist'}
                   </span>
                   {checklist.outcomeId && (
-                    <span className="bg-secondary text-secondary-foreground rounded-full px-2 py-0.5 text-xs font-medium">
+                    <span className='bg-secondary text-secondary-foreground rounded-full px-2 py-0.5 text-xs font-medium'>
                       {getOutcomeName(checklist.outcomeId)}
                     </span>
                   )}
-                  <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${getStatusStyle(checklist.status)}`}>
+                  <span
+                    className={`rounded-full px-2 py-0.5 text-xs font-medium ${getStatusStyle(checklist.status)}`}
+                  >
                     {getStatusLabel(checklist.status)}
                   </span>
                 </div>
                 <button
                   onClick={() => onOpenChecklist(checklist.id)}
-                  className="bg-primary hover:bg-primary/90 shrink-0 rounded-lg px-3 py-1.5 text-sm font-medium text-white transition-colors"
+                  className='bg-primary hover:bg-primary/90 shrink-0 rounded-lg px-3 py-1.5 text-sm font-medium text-white transition-colors'
                 >
                   Open
                 </button>
                 <button
                   onClick={() => setDeleteChecklistId(checklist.id)}
-                  className="text-muted-foreground shrink-0 p-1.5 transition-colors hover:text-red-600"
-                  title="Delete checklist"
+                  className='text-muted-foreground shrink-0 p-1.5 transition-colors hover:text-red-600'
+                  title='Delete checklist'
                 >
-                  <Trash2Icon className="h-4 w-4" />
+                  <Trash2Icon className='h-4 w-4' />
                 </button>
               </div>
             ))}
@@ -248,7 +277,7 @@ export function TodoStudyRow({
         {/* Expandable PDFs */}
         <CollapsibleContent>
           {hasPdfs && (
-            <div className="border-border space-y-2 border-t px-4 py-3">
+            <div className='border-border space-y-2 border-t px-4 py-3'>
               {sortedPdfs.map((pdf: any) => (
                 <PdfListItem
                   key={pdf.id}
@@ -266,7 +295,7 @@ export function TodoStudyRow({
       {/* Checklist Form */}
       <Collapsible open={showChecklistForm}>
         <CollapsibleContent>
-          <div className="border-border border-t">
+          <div className='border-border border-t'>
             <ChecklistForm
               members={members}
               currentUserId={currentUserId}
@@ -280,20 +309,24 @@ export function TodoStudyRow({
       </Collapsible>
 
       {/* Delete confirmation */}
-      <AlertDialog open={deleteChecklistId !== null} onOpenChange={open => !open && setDeleteChecklistId(null)}>
+      <AlertDialog
+        open={deleteChecklistId !== null}
+        onOpenChange={open => !open && setDeleteChecklistId(null)}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogIcon variant="danger" />
+            <AlertDialogIcon variant='danger' />
             <div>
               <AlertDialogTitle>Delete Checklist</AlertDialogTitle>
               <AlertDialogDescription>
-                This will permanently delete this checklist and all its data. This action cannot be undone.
+                This will permanently delete this checklist and all its data. This action cannot be
+                undone.
               </AlertDialogDescription>
             </div>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction variant="destructive" onClick={handleConfirmDelete}>
+            <AlertDialogAction variant='destructive' onClick={handleConfirmDelete}>
               Delete
             </AlertDialogAction>
           </AlertDialogFooter>

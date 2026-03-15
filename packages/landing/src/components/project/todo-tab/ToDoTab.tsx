@@ -62,8 +62,8 @@ export function ToDoTab() {
   );
 
   return (
-    <div className="space-y-2">
-      {myStudies.length > 0 ? (
+    <div className='space-y-2'>
+      {myStudies.length > 0 ?
         myStudies.map((study: any) => (
           <TodoStudyRow
             key={study.id}
@@ -88,18 +88,17 @@ export function ToDoTab() {
             creatingChecklist={false}
           />
         ))
-      ) : (
-        hasData && (
-          <div className="py-16 text-center">
-            <ListTodoIcon className="text-muted-foreground/50 mx-auto mb-4 h-12 w-12" />
-            <h3 className="text-foreground mb-2 text-lg font-medium">To Do</h3>
-            <p className="text-muted-foreground mx-auto max-w-md">
+      : hasData && (
+          <div className='py-16 text-center'>
+            <ListTodoIcon className='text-muted-foreground/50 mx-auto mb-4 h-12 w-12' />
+            <h3 className='text-foreground mb-2 text-lg font-medium'>To Do</h3>
+            <p className='text-muted-foreground mx-auto max-w-md'>
               Studies assigned to you will appear here. Complete your appraisals to move them to the
               next stage.
             </p>
           </div>
         )
-      )}
+      }
     </div>
   );
 }

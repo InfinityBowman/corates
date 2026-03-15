@@ -28,32 +28,32 @@ function MemberPercentRow({
   const isPreset = PRESETS.includes(percent);
 
   return (
-    <div className="border-border bg-card flex items-center gap-3 rounded-lg border p-2.5">
-      <div className="text-foreground min-w-0 flex-1 truncate text-sm font-medium">
+    <div className='border-border bg-card flex items-center gap-3 rounded-lg border p-2.5'>
+      <div className='text-foreground min-w-0 flex-1 truncate text-sm font-medium'>
         {member.name || member.email || 'Unknown'}
       </div>
-      <div className="flex items-center gap-1">
+      <div className='flex items-center gap-1'>
         {PRESETS.map(preset => (
           <button
             key={preset}
-            type="button"
+            type='button'
             onClick={() => {
               onChange(preset);
               setShowCustom(false);
             }}
             className={`rounded px-2 py-1 text-xs font-medium transition-colors ${
-              percent === preset && !showCustom
-                ? 'bg-primary text-white'
-                : 'bg-secondary text-secondary-foreground hover:bg-secondary/80'
+              percent === preset && !showCustom ?
+                'bg-primary text-white'
+              : 'bg-secondary text-secondary-foreground hover:bg-secondary/80'
             }`}
           >
             {preset}%
           </button>
         ))}
 
-        {showCustom || !isPreset ? (
+        {showCustom || !isPreset ?
           <input
-            type="number"
+            type='number'
             min={0}
             max={100}
             value={percent}
@@ -61,19 +61,18 @@ function MemberPercentRow({
             onBlur={() => {
               if (isPreset) setShowCustom(false);
             }}
-            className="border-border focus:ring-primary w-14 rounded border px-1.5 py-1 text-center text-xs focus:border-transparent focus:ring-2 focus:outline-none"
+            className='border-border focus:ring-primary w-14 rounded border px-1.5 py-1 text-center text-xs focus:border-transparent focus:ring-2 focus:outline-none'
             autoFocus={showCustom}
           />
-        ) : (
-          <button
-            type="button"
+        : <button
+            type='button'
             onClick={() => setShowCustom(true)}
-            className="bg-secondary text-secondary-foreground hover:bg-secondary/80 rounded px-2 py-1 text-xs font-medium transition-colors"
-            title="Enter custom percentage"
+            className='bg-secondary text-secondary-foreground hover:bg-secondary/80 rounded px-2 py-1 text-xs font-medium transition-colors'
+            title='Enter custom percentage'
           >
             ...
           </button>
-        )}
+        }
       </div>
     </div>
   );
@@ -128,8 +127,14 @@ export function ReviewerAssignment({
     [members, pool2Percents, evenPercent],
   );
 
-  const pool1Total = useMemo(() => pool1Members.reduce((sum, m) => sum + m.percent, 0), [pool1Members]);
-  const pool2Total = useMemo(() => pool2Members.reduce((sum, m) => sum + m.percent, 0), [pool2Members]);
+  const pool1Total = useMemo(
+    () => pool1Members.reduce((sum, m) => sum + m.percent, 0),
+    [pool1Members],
+  );
+  const pool2Total = useMemo(
+    () => pool2Members.reduce((sum, m) => sum + m.percent, 0),
+    [pool2Members],
+  );
 
   const isPoolValid = (total: number) => total >= 99 && total <= 101;
   const isCustomValid = isPoolValid(pool1Total) && isPoolValid(pool2Total);
@@ -294,16 +299,16 @@ export function ReviewerAssignment({
   const conflictCount = previewAssignments.filter(a => a.sameReviewer).length;
 
   return (
-    <div className="border-border bg-card overflow-hidden rounded-lg border">
+    <div className='border-border bg-card overflow-hidden rounded-lg border'>
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-4">
-        <div className="flex items-center gap-3">
-          <div className="bg-primary/10 text-primary flex h-10 w-10 items-center justify-center rounded-lg">
-            <UsersIcon className="h-5 w-5" />
+      <div className='flex items-center justify-between px-4 py-4'>
+        <div className='flex items-center gap-3'>
+          <div className='bg-primary/10 text-primary flex h-10 w-10 items-center justify-center rounded-lg'>
+            <UsersIcon className='h-5 w-5' />
           </div>
           <div>
-            <h3 className="text-foreground text-base font-semibold">Assign Reviewers</h3>
-            <p className="text-muted-foreground text-sm">
+            <h3 className='text-foreground text-base font-semibold'>Assign Reviewers</h3>
+            <p className='text-muted-foreground text-sm'>
               {unassignedStudies.length} studies need assignment
             </p>
           </div>
@@ -323,49 +328,52 @@ export function ReviewerAssignment({
 
       <Collapsible open={isOpen} onOpenChange={setIsOpen}>
         <CollapsibleContent>
-          <div className="border-border border-t px-4 pt-4 pb-4">
-            {members.length < 2 ? (
-              <p className="text-muted-foreground text-sm">
+          <div className='border-border border-t px-4 pt-4 pb-4'>
+            {members.length < 2 ?
+              <p className='text-muted-foreground text-sm'>
                 At least 2 project members are required to assign reviewers.
               </p>
-            ) : unassignedStudies.length === 0 && !showPreview ? (
-              <div className="flex items-center gap-2 text-green-600">
-                <CheckIcon className="h-5 w-5" />
-                <p className="text-sm">All studies have reviewers assigned.</p>
+            : unassignedStudies.length === 0 && !showPreview ?
+              <div className='flex items-center gap-2 text-green-600'>
+                <CheckIcon className='h-5 w-5' />
+                <p className='text-sm'>All studies have reviewers assigned.</p>
               </div>
-            ) : (
-              <div className="space-y-4">
+            : <div className='space-y-4'>
                 {/* Summary */}
-                <div className="bg-muted flex items-center justify-between rounded-lg px-4 py-3">
-                  <p className="text-muted-foreground text-sm">
-                    <span className="text-foreground font-semibold">{unassignedStudies.length}</span>{' '}
+                <div className='bg-muted flex items-center justify-between rounded-lg px-4 py-3'>
+                  <p className='text-muted-foreground text-sm'>
+                    <span className='text-foreground font-semibold'>
+                      {unassignedStudies.length}
+                    </span>{' '}
                     unassigned
                   </p>
-                  <p className="text-muted-foreground text-sm">
-                    <span className="text-foreground font-semibold">{members.length}</span> reviewers
+                  <p className='text-muted-foreground text-sm'>
+                    <span className='text-foreground font-semibold'>{members.length}</span>{' '}
+                    reviewers
                   </p>
-                  <p className="text-muted-foreground text-sm">
-                    <span className="text-foreground font-semibold">{evenPercent}%</span> each (even)
+                  <p className='text-muted-foreground text-sm'>
+                    <span className='text-foreground font-semibold'>{evenPercent}%</span> each
+                    (even)
                   </p>
                 </div>
 
                 {/* Customize */}
                 <Collapsible open={showCustomize} onOpenChange={setShowCustomize}>
-                  <CollapsibleTrigger className="border-border bg-card hover:bg-muted data-[state=open]:border-primary data-[state=open]:bg-primary/5 flex w-full items-center justify-between rounded-lg border px-4 py-3 text-sm font-medium transition-all">
-                    <div className="flex items-center gap-2">
-                      <SlidersHorizontalIcon className="h-4 w-4" />
+                  <CollapsibleTrigger className='border-border bg-card hover:bg-muted data-[state=open]:border-primary data-[state=open]:bg-primary/5 flex w-full items-center justify-between rounded-lg border px-4 py-3 text-sm font-medium transition-all'>
+                    <div className='flex items-center gap-2'>
+                      <SlidersHorizontalIcon className='h-4 w-4' />
                       <span>Customize distribution</span>
                     </div>
-                    <span className="text-muted-foreground text-xs">
+                    <span className='text-muted-foreground text-xs'>
                       {showCustomize ? 'Using custom' : 'Adjust percentages'}
                     </span>
                   </CollapsibleTrigger>
                   <CollapsibleContent>
-                    <div className="mt-4 space-y-4">
+                    <div className='mt-4 space-y-4'>
                       {/* Pool 1 */}
-                      <div className="border-border bg-muted rounded-xl border p-4">
-                        <div className="mb-3 flex items-center justify-between">
-                          <h4 className="text-secondary-foreground text-sm font-semibold">
+                      <div className='border-border bg-muted rounded-xl border p-4'>
+                        <div className='mb-3 flex items-center justify-between'>
+                          <h4 className='text-secondary-foreground text-sm font-semibold'>
                             1st Reviewer Pool
                           </h4>
                           <span
@@ -374,7 +382,7 @@ export function ReviewerAssignment({
                             Total: {pool1Total}%
                           </span>
                         </div>
-                        <div className="space-y-2">
+                        <div className='space-y-2'>
                           {pool1Members.map((member: any) => (
                             <MemberPercentRow
                               key={member.userId}
@@ -387,9 +395,9 @@ export function ReviewerAssignment({
                       </div>
 
                       {/* Pool 2 */}
-                      <div className="border-border bg-muted rounded-xl border p-4">
-                        <div className="mb-3 flex items-center justify-between">
-                          <h4 className="text-secondary-foreground text-sm font-semibold">
+                      <div className='border-border bg-muted rounded-xl border p-4'>
+                        <div className='mb-3 flex items-center justify-between'>
+                          <h4 className='text-secondary-foreground text-sm font-semibold'>
                             2nd Reviewer Pool
                           </h4>
                           <span
@@ -398,7 +406,7 @@ export function ReviewerAssignment({
                             Total: {pool2Total}%
                           </span>
                         </div>
-                        <div className="space-y-2">
+                        <div className='space-y-2'>
                           {pool2Members.map((member: any) => (
                             <MemberPercentRow
                               key={member.userId}
@@ -410,16 +418,16 @@ export function ReviewerAssignment({
                         </div>
                       </div>
 
-                      <div className="flex items-center justify-between">
+                      <div className='flex items-center justify-between'>
                         {!isCustomValid && (
-                          <p className="text-xs text-amber-600">
+                          <p className='text-xs text-amber-600'>
                             Each pool must total 99-101% to generate
                           </p>
                         )}
                         <button
-                          type="button"
+                          type='button'
                           onClick={resetToEven}
-                          className="text-primary hover:text-primary/80 ml-auto text-xs font-medium"
+                          className='text-primary hover:text-primary/80 ml-auto text-xs font-medium'
                         >
                           Reset to even split
                         </button>
@@ -432,14 +440,14 @@ export function ReviewerAssignment({
                 <button
                   onClick={handleGenerate}
                   disabled={showCustomize && !isCustomValid}
-                  className="bg-primary hover:bg-primary/90 inline-flex items-center gap-2 rounded-lg px-5 py-2.5 text-sm font-medium text-white transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+                  className='bg-primary hover:bg-primary/90 inline-flex items-center gap-2 rounded-lg px-5 py-2.5 text-sm font-medium text-white transition-colors disabled:cursor-not-allowed disabled:opacity-50'
                 >
-                  <ShuffleIcon className="h-4 w-4" />
-                  {showPreview
-                    ? 'Reshuffle'
-                    : showCustomize
-                      ? 'Generate with Custom Split'
-                      : 'Assign Randomly (Even Split)'}
+                  <ShuffleIcon className='h-4 w-4' />
+                  {showPreview ?
+                    'Reshuffle'
+                  : showCustomize ?
+                    'Generate with Custom Split'
+                  : 'Assign Randomly (Even Split)'}
                 </button>
 
                 {/* Preview */}
@@ -459,41 +467,41 @@ export function ReviewerAssignment({
                           Assignment Preview
                         </h4>
                         {hasConflicts && (
-                          <p className="text-xs text-red-600">
+                          <p className='text-xs text-red-600'>
                             {conflictCount} conflict{conflictCount !== 1 && 's'} - click Reshuffle
                           </p>
                         )}
                       </div>
-                      <span className="text-muted-foreground text-xs">
+                      <span className='text-muted-foreground text-xs'>
                         {previewAssignments.length} studies
                       </span>
                     </div>
 
-                    <div className="max-h-64 overflow-y-auto">
-                      <table className="w-full text-left text-sm">
-                        <thead className="bg-muted sticky top-0">
+                    <div className='max-h-64 overflow-y-auto'>
+                      <table className='w-full text-left text-sm'>
+                        <thead className='bg-muted sticky top-0'>
                           <tr>
-                            <th className="text-muted-foreground py-2 pl-4 pr-4 text-xs font-medium">
+                            <th className='text-muted-foreground py-2 pr-4 pl-4 text-xs font-medium'>
                               Study
                             </th>
-                            <th className="text-muted-foreground py-2 pr-4 text-xs font-medium">
+                            <th className='text-muted-foreground py-2 pr-4 text-xs font-medium'>
                               1st Reviewer
                             </th>
-                            <th className="text-muted-foreground py-2 pr-4 text-xs font-medium">
+                            <th className='text-muted-foreground py-2 pr-4 text-xs font-medium'>
                               2nd Reviewer
                             </th>
                           </tr>
                         </thead>
-                        <tbody className="divide-border divide-y">
+                        <tbody className='divide-border divide-y'>
                           {previewAssignments.map(assignment => (
                             <tr
                               key={assignment.studyId}
                               className={`hover:bg-muted ${assignment.sameReviewer ? 'bg-red-50' : ''}`}
                             >
-                              <td className="text-foreground max-w-xs truncate py-2 pl-4 pr-4">
+                              <td className='text-foreground max-w-xs truncate py-2 pr-4 pl-4'>
                                 {assignment.studyName}
                               </td>
-                              <td className="text-secondary-foreground py-2 pr-4">
+                              <td className='text-secondary-foreground py-2 pr-4'>
                                 {assignment.reviewer1Name}
                               </td>
                               <td
@@ -508,13 +516,13 @@ export function ReviewerAssignment({
                       </table>
                     </div>
 
-                    <div className="border-border bg-muted flex gap-2 border-t px-4 py-3">
+                    <div className='border-border bg-muted flex gap-2 border-t px-4 py-3'>
                       <button
                         onClick={handleApply}
                         disabled={hasConflicts}
-                        className="inline-flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-50"
+                        className='inline-flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-50'
                       >
-                        <CheckIcon className="h-4 w-4" />
+                        <CheckIcon className='h-4 w-4' />
                         Apply Assignments
                       </button>
                       <button
@@ -522,7 +530,7 @@ export function ReviewerAssignment({
                           setShowPreview(false);
                           setPreviewAssignments([]);
                         }}
-                        className="border-border bg-card text-secondary-foreground hover:bg-secondary rounded-lg border px-4 py-2 text-sm font-medium transition-colors"
+                        className='border-border bg-card text-secondary-foreground hover:bg-secondary rounded-lg border px-4 py-2 text-sm font-medium transition-colors'
                       >
                         Cancel
                       </button>
@@ -530,7 +538,7 @@ export function ReviewerAssignment({
                   </div>
                 )}
               </div>
-            )}
+            }
           </div>
         </CollapsibleContent>
       </Collapsible>

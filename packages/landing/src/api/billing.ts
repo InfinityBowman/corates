@@ -76,9 +76,7 @@ export async function createSingleProjectCheckout(
   return apiFetch.post<CheckoutSession>('/api/billing/single-project/checkout', {}, options);
 }
 
-export async function redirectToSingleProjectCheckout(
-  options: BillingOptions = {},
-): Promise<void> {
+export async function redirectToSingleProjectCheckout(options: BillingOptions = {}): Promise<void> {
   const { url } = await createSingleProjectCheckout({ showToast: false, ...options });
   window.location.href = url;
 }
@@ -88,7 +86,11 @@ export async function getMembers(): Promise<MembersResponse> {
 }
 
 export async function startTrial(options: BillingOptions = {}): Promise<TrialResult> {
-  return apiFetch.post<TrialResult>('/api/billing/trial/start', {}, { showToast: false, ...options });
+  return apiFetch.post<TrialResult>(
+    '/api/billing/trial/start',
+    {},
+    { showToast: false, ...options },
+  );
 }
 
 export async function validatePlanChange(targetPlan: string): Promise<PlanChangeValidation> {

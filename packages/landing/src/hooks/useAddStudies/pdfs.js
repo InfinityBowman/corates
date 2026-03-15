@@ -48,10 +48,7 @@ export function usePdfOperations() {
           const truncatedName = fileName.length > 50 ? fileName.slice(0, 47) + '...' : fileName;
           showToast.warning('Invalid PDF', `"${truncatedName}" - ${invalidFiles[0].message}`);
         } else {
-          showToast.warning(
-            'Invalid PDFs',
-            `${invalidFiles.length} files have invalid filenames.`,
-          );
+          showToast.warning('Invalid PDFs', `${invalidFiles.length} files have invalid filenames.`);
         }
       }
 
@@ -114,9 +111,9 @@ export function usePdfOperations() {
         } catch (error) {
           console.error('Error extracting PDF metadata:', pdf.file.name, error);
           extractionError =
-            error.message?.includes('timed out')
-              ? 'Extraction timed out'
-              : 'Failed to extract metadata';
+            error.message?.includes('timed out') ?
+              'Extraction timed out'
+            : 'Failed to extract metadata';
         }
 
         updatePdf(pdf.id, {
@@ -235,8 +232,13 @@ export function usePdfOperations() {
         doi: pdf.doi,
         metadata: pdf.metadata,
         matchedToRef: pdf.matchedToRef,
-        file: pdf.fileName
-          ? { name: pdf.fileName, type: pdf.fileType || 'application/pdf', size: pdf.fileSize || pdf.data?.byteLength || 0 }
+        file:
+          pdf.fileName ?
+            {
+              name: pdf.fileName,
+              type: pdf.fileType || 'application/pdf',
+              size: pdf.fileSize || pdf.data?.byteLength || 0,
+            }
           : null,
       })),
     );

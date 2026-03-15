@@ -189,6 +189,7 @@ Fixed: Replaced `createReconciliationProgressGetter` factory with a single stabl
 ### 24. `<label>` elements not associated with inputs
 
 **Files**:
+
 - `components/project/add-studies/AddStudiesForm.tsx` line 96
 - `components/project/all-studies-tab/EditPdfMetadataModal.tsx` lines 112, 125, 138, 155, 167
 - `components/project/outcomes/OutcomeManager.tsx` lines 178, 229
@@ -198,6 +199,7 @@ Labels lack `htmlFor` and inputs lack `id`. Screen readers cannot associate labe
 ### 25. Icon-only buttons lack `aria-label`
 
 **Files**:
+
 - `components/project/todo-tab/TodoStudyRow.tsx` lines 202-209, 251-256
 - `components/project/outcomes/OutcomeManager.tsx` lines 269-274
 
@@ -217,9 +219,9 @@ Fixed: Extracted `sortStudyPdfs()` and `getCitationLine()` to `components/projec
 
 ## Summary
 
-| Priority                               | Count  | Action                                                                    |
-| -------------------------------------- | ------ | ------------------------------------------------------------------------- |
-| Fix immediately (runtime breakage)     | 1      | SolidJS form-errors test                                                  |
-| Fix before merge (type safety + React) | 4      | `as any` casts, stale closure risk                                        |
+| Priority                               | Count  | Action                                                                                          |
+| -------------------------------------- | ------ | ----------------------------------------------------------------------------------------------- |
+| Fix immediately (runtime breakage)     | 1      | SolidJS form-errors test                                                                        |
+| Fix before merge (type safety + React) | 4      | `as any` casts, stale closure risk                                                              |
 | Fix soon (consistency + a11y)          | 10     | Untyped JS files, missing guards, render functions, redirect, a11y (#24-25), unused props (#26) |
-| **Total**                              | **15** |                                                                           |
+| **Total**                              | **15** |                                                                                                 |

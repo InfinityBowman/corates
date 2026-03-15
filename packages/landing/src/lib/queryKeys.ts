@@ -62,13 +62,10 @@ export const queryKeys = {
     orgBilling: (orgId: string | null | undefined) => ['adminOrgBilling', orgId] as const,
     projects: (page: number, limit: number, search: string, orgId?: string) =>
       ['adminProjects', page, limit, search, orgId] as const,
-    projectDetails: (projectId: string | null | undefined) => ['adminProjectDetails', projectId] as const,
-    storageDocuments: (
-      cursor: string | null,
-      limit: number,
-      prefix: string,
-      search: string,
-    ) => ['storageDocuments', cursor, limit, prefix, search] as const,
+    projectDetails: (projectId: string | null | undefined) =>
+      ['adminProjectDetails', projectId] as const,
+    storageDocuments: (cursor: string | null, limit: number, prefix: string, search: string) =>
+      ['storageDocuments', cursor, limit, prefix, search] as const,
     storageStats: ['storageStats'] as const,
     billingLedger: (params: Record<string, unknown>) => ['adminBillingLedger', params] as const,
     billingStuckStates: (params: Record<string, unknown>) =>
@@ -76,7 +73,8 @@ export const queryKeys = {
     orgBillingReconcile: (orgId: string | null | undefined, params: Record<string, unknown>) =>
       ['adminOrgBillingReconcile', orgId, params] as const,
     databaseTables: ['admin', 'database', 'tables'] as const,
-    tableSchema: (tableName: string | null | undefined) => ['admin', 'database', 'schema', tableName] as const,
+    tableSchema: (tableName: string | null | undefined) =>
+      ['admin', 'database', 'schema', tableName] as const,
     tableRows: (
       tableName: string | undefined,
       page: number,
@@ -85,6 +83,18 @@ export const queryKeys = {
       order: string,
       filterBy: string | null,
       filterValue: string | null,
-    ) => ['admin', 'database', 'rows', tableName, page, limit, orderBy, order, filterBy, filterValue] as const,
+    ) =>
+      [
+        'admin',
+        'database',
+        'rows',
+        tableName,
+        page,
+        limit,
+        orderBy,
+        order,
+        filterBy,
+        filterValue,
+      ] as const,
   },
 };

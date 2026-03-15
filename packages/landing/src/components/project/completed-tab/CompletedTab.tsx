@@ -30,10 +30,7 @@ export function CompletedTab() {
     [meta],
   );
 
-  const completedStudies = useMemo(
-    () => getStudiesForTab(studies, 'completed', null),
-    [studies],
-  );
+  const completedStudies = useMemo(() => getStudiesForTab(studies, 'completed', null), [studies]);
 
   const openChecklist = useCallback(
     (studyId: string, checklistId: string) => {
@@ -55,8 +52,8 @@ export function CompletedTab() {
   );
 
   return (
-    <div className="space-y-2">
-      {completedStudies.length > 0 ? (
+    <div className='space-y-2'>
+      {completedStudies.length > 0 ?
         completedStudies.map((study: any) => (
           <CompletedStudyRow
             key={study.id}
@@ -64,20 +61,21 @@ export function CompletedTab() {
             onOpenChecklist={checklistId => openChecklist(study.id, checklistId)}
             onViewPdf={pdf => projectActionsStore.pdf.view(study.id, pdf)}
             onDownloadPdf={pdf => projectActionsStore.pdf.download(study.id, pdf)}
-            getReconciliationProgress={(outcomeId, type) => getReconciliationProgress(study.id, outcomeId, type)}
+            getReconciliationProgress={(outcomeId, type) =>
+              getReconciliationProgress(study.id, outcomeId, type)
+            }
             getAssigneeName={getAssigneeName}
             getOutcomeName={getOutcomeName}
           />
         ))
-      ) : (
-        <div className="py-16 text-center">
-          <CheckCircleIcon className="text-muted-foreground/50 mx-auto mb-4 h-12 w-12" />
-          <h3 className="text-foreground mb-2 text-lg font-medium">Completed</h3>
-          <p className="text-muted-foreground mx-auto max-w-md">
+      : <div className='py-16 text-center'>
+          <CheckCircleIcon className='text-muted-foreground/50 mx-auto mb-4 h-12 w-12' />
+          <h3 className='text-foreground mb-2 text-lg font-medium'>Completed</h3>
+          <p className='text-muted-foreground mx-auto max-w-md'>
             Studies that have completed reconciliation will appear here.
           </p>
         </div>
-      )}
+      }
     </div>
   );
 }

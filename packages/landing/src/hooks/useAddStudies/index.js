@@ -60,7 +60,12 @@ export function useAddStudies(options = {}) {
       refOps.selectedRefIds.size > 0 ||
       lookupOps.selectedLookupIds.size > 0 ||
       driveOps.selectedDriveFiles.length > 0,
-    [pdfOps.uploadedPdfs, refOps.selectedRefIds, lookupOps.selectedLookupIds, driveOps.selectedDriveFiles],
+    [
+      pdfOps.uploadedPdfs,
+      refOps.selectedRefIds,
+      lookupOps.selectedLookupIds,
+      driveOps.selectedDriveFiles,
+    ],
   );
 
   // Match uploaded PDFs with lookup refs that need PDFs
@@ -78,10 +83,18 @@ export function useAddStudies(options = {}) {
     let matchCount = 0;
     const matchedPdfIds = new Set();
     for (const ref of refsNeedingPdf) {
-      const matchingPdf = findMatchingRef(ref, pdfs, pdf => !pdf.matchedToRef && !matchedPdfIds.has(pdf.id));
+      const matchingPdf = findMatchingRef(
+        ref,
+        pdfs,
+        pdf => !pdf.matchedToRef && !matchedPdfIds.has(pdf.id),
+      );
       if (matchingPdf) {
         matchedPdfIds.add(matchingPdf.id);
-        lookupOps.markRefMatched(ref._id, matchingPdf.data, matchingPdf.file?.name || 'matched.pdf');
+        lookupOps.markRefMatched(
+          ref._id,
+          matchingPdf.data,
+          matchingPdf.file?.name || 'matched.pdf',
+        );
         pdfOps.markPdfMatched(matchingPdf.id, ref.title || 'DOI reference');
         matchCount++;
       }
@@ -108,7 +121,11 @@ export function useAddStudies(options = {}) {
     let matchCount = 0;
     const matchedRefIds = new Set();
     for (const pdf of unmatchedPdfs) {
-      const matchingRef = findMatchingRef(pdf, refs, ref => !ref.pdfData && !matchedRefIds.has(ref._id));
+      const matchingRef = findMatchingRef(
+        pdf,
+        refs,
+        ref => !ref.pdfData && !matchedRefIds.has(ref._id),
+      );
       if (matchingRef) {
         matchedRefIds.add(matchingRef._id);
         refOps.attachPdfToRef(matchingRef._id, pdf.data, pdf.fileName);

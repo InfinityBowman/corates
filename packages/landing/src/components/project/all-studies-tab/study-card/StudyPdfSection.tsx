@@ -46,7 +46,7 @@ export function StudyPdfSection({ study, onOpenGoogleDrive, readOnly }: StudyPdf
       const file = e.target.files?.[0];
       if (!file) return;
 
-      const validation = await validatePdfFile(file) as any;
+      const validation = (await validatePdfFile(file)) as any;
       if (!validation.valid) {
         showToast.error('Invalid File', validation.details.message as string);
         if (fileInputRef.current) fileInputRef.current.value = '';
@@ -68,42 +68,42 @@ export function StudyPdfSection({ study, onOpenGoogleDrive, readOnly }: StudyPdf
   );
 
   return (
-    <div className="px-4 pb-4">
+    <div className='px-4 pb-4'>
       <input
         ref={fileInputRef}
-        type="file"
-        accept="application/pdf"
-        className="hidden"
+        type='file'
+        accept='application/pdf'
+        className='hidden'
         onChange={handleFileSelect}
       />
 
-      <div className="space-y-3">
-        <div className="flex items-center justify-between">
-          <h4 className="text-secondary-foreground text-sm font-medium">PDFs ({pdfs.length})</h4>
+      <div className='space-y-3'>
+        <div className='flex items-center justify-between'>
+          <h4 className='text-secondary-foreground text-sm font-medium'>PDFs ({pdfs.length})</h4>
           {!readOnly && (
-            <div className="mt-1 flex items-center gap-2">
+            <div className='mt-1 flex items-center gap-2'>
               <button
-                type="button"
+                type='button'
                 onClick={() => fileInputRef.current?.click()}
                 disabled={uploading}
-                className="text-primary inline-flex items-center gap-1 rounded-md bg-blue-50 px-2 py-1.5 text-sm font-medium transition-colors hover:bg-blue-100 disabled:cursor-not-allowed disabled:opacity-50"
+                className='text-primary inline-flex items-center gap-1 rounded-md bg-blue-50 px-2 py-1.5 text-sm font-medium transition-colors hover:bg-blue-100 disabled:cursor-not-allowed disabled:opacity-50'
               >
-                {uploading ? 'Uploading...' : <PlusIcon className="h-4 w-4" />}
+                {uploading ? 'Uploading...' : <PlusIcon className='h-4 w-4' />}
               </button>
               <button
-                type="button"
+                type='button'
                 onClick={() => onOpenGoogleDrive?.(study.id)}
-                className="text-muted-foreground hover:text-primary rounded-md px-2 py-1.5 text-sm font-medium transition-colors hover:bg-blue-50"
-                title="Import from Google Drive"
+                className='text-muted-foreground hover:text-primary rounded-md px-2 py-1.5 text-sm font-medium transition-colors hover:bg-blue-50'
+                title='Import from Google Drive'
               >
-                <img src="/logos/drive.svg" alt="Google Drive" className="h-4 w-4" />
+                <img src='/logos/drive.svg' alt='Google Drive' className='h-4 w-4' />
               </button>
             </div>
           )}
         </div>
 
-        {pdfs.length > 0 ? (
-          <div className="space-y-2">
+        {pdfs.length > 0 ?
+          <div className='space-y-2'>
             {sortedPdfs.map((pdf: any) => (
               <PdfListItem
                 key={pdf.id}
@@ -124,31 +124,30 @@ export function StudyPdfSection({ study, onOpenGoogleDrive, readOnly }: StudyPdf
               />
             ))}
           </div>
-        ) : (
-          <div className="border-border rounded-lg border-2 border-dashed p-6 text-center">
-            <p className="text-muted-foreground text-sm">No PDFs uploaded yet</p>
+        : <div className='border-border rounded-lg border-2 border-dashed p-6 text-center'>
+            <p className='text-muted-foreground text-sm'>No PDFs uploaded yet</p>
             {!readOnly && (
-              <div className="mt-2 flex items-center justify-center gap-2">
+              <div className='mt-2 flex items-center justify-center gap-2'>
                 <button
-                  type="button"
+                  type='button'
                   onClick={() => fileInputRef.current?.click()}
                   disabled={uploading}
-                  className="text-primary hover:text-primary/80 text-sm"
+                  className='text-primary hover:text-primary/80 text-sm'
                 >
                   Upload a PDF
                 </button>
-                <span className="text-muted-foreground/70">or</span>
+                <span className='text-muted-foreground/70'>or</span>
                 <button
-                  type="button"
+                  type='button'
                   onClick={() => onOpenGoogleDrive?.(study.id)}
-                  className="text-primary hover:text-primary/80 text-sm"
+                  className='text-primary hover:text-primary/80 text-sm'
                 >
                   Import from Google Drive
                 </button>
               </div>
             )}
           </div>
-        )}
+        }
       </div>
 
       <EditPdfMetadataModal

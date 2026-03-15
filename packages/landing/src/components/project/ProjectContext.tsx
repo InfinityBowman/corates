@@ -94,7 +94,17 @@ export function ProjectProvider({ projectId, projectOps, children }: ProjectProv
       getReconcilePath,
       projectOps: projectOps || null,
     }),
-    [projectId, orgId, userRole, isOwner, getAssigneeName, getMember, getChecklistPath, getReconcilePath, projectOps],
+    [
+      projectId,
+      orgId,
+      userRole,
+      isOwner,
+      getAssigneeName,
+      getMember,
+      getChecklistPath,
+      getReconcilePath,
+      projectOps,
+    ],
   );
 
   return <ProjectCtx.Provider value={value}>{children}</ProjectCtx.Provider>;
