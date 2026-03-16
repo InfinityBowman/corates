@@ -46,13 +46,13 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
-    "@cloudflare/vitest-pool-workers": "^0.11.1",
-    "better-sqlite3": "^12.6.2",
-    "dotenv": "^16.6.1",
+    "@cloudflare/vitest-pool-workers": "^0.13.0",
+    "better-sqlite3": "^12.8.0",
+    "dotenv": "^17.3.1",
     "drizzle-kit": "^0.31.9",
-    "localflare": "^0.3.1",
+    "localflare": "^0.5.0",
     "typescript": "^5.9.3",
     "vitest": "3.2.0",
-    "wrangler": "^4.71.0"
+    "wrangler": "^4.73.0"
   }
 }
