@@ -138,9 +138,9 @@ Extract to shared admin utility.
 
 ## Summary
 
-| Priority                               | Count  | Action                                                              |
-| -------------------------------------- | ------ | ------------------------------------------------------------------- |
-| Fix immediately (runtime breakage)     | 0      | All resolved                                                        |
-| Fix before merge (type safety + React) | 0      | All resolved                                                        |
+| Priority                               | Count  | Action                                                                                                                                                                                                                                |
+| -------------------------------------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Fix immediately (runtime breakage)     | 0      | All resolved                                                                                                                                                                                                                          |
+| Fix before merge (type safety + React) | 0      | All resolved                                                                                                                                                                                                                          |
 | Fix soon (consistency + a11y)          | 17     | Untyped JS (#15), missing guards (#16), index keys (#17), redirect (#18), render fns (#19), a11y (#24-25,33,38), unused props (#26,29), duplicates (#31-32,36), HTML (#34), pagination (#37), confusing props (#39), singletons (#11) |
-| **Total**                              | **17** |                                                                     |
+| **Total**                              | **17** |                                                                                                                                                                                                                                       |
