@@ -29,16 +29,17 @@ export function OverallSection({
   const effectiveJudgement = calculatedDisplayJudgement;
 
   // Auto-persist calculated judgement when it differs from stored.
-  // The condition `!== overallState?.judgement` prevents re-entrancy.
+  // Deps track only overallState?.judgement (not the full object) to avoid
+  // re-triggering on unrelated changes like direction.
   useEffect(() => {
     if (
       calculatedDisplayJudgement &&
       calculatedDisplayJudgement !== overallState?.judgement &&
       !disabled
     ) {
-      onUpdate({ ...overallState, judgement: calculatedDisplayJudgement });
+      onUpdate({ ...(overallState || {}), judgement: calculatedDisplayJudgement });
     }
-  }, [calculatedDisplayJudgement, overallState, onUpdate, disabled]);
+  }, [calculatedDisplayJudgement, overallState?.judgement, disabled]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleDirectionChange = useCallback(
     (direction: string | null) => {

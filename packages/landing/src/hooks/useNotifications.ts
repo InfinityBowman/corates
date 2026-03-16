@@ -144,7 +144,7 @@ export function useNotifications(
             clearPongTimeout();
             return;
           }
-          setNotifications(prev => [data, ...prev]);
+          setNotifications(prev => [data, ...prev].slice(0, 50));
           onNotificationRef.current?.(data);
         } catch (err) {
           console.error('Error parsing notification:', err);
@@ -213,6 +213,8 @@ export function useNotifications(
       window.removeEventListener('offline', handleOffline);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
+    // disconnect, cleanupTimers, clearPongTimeout are stable useCallback refs
+    // with [] deps -- intentionally excluded to avoid reconnect cycles
   }, [userId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const clearNotifications = useCallback(() => setNotifications([]), []);

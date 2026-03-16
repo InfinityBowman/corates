@@ -15,7 +15,6 @@ interface LocalChecklist {
   createdAt: number;
   updatedAt: number;
   isLocal: boolean;
-  [key: string]: unknown;
 }
 
 interface LocalChecklistPdf {
@@ -100,7 +99,8 @@ export const useLocalChecklistsStore = create<LocalChecklistsState & LocalCheckl
         isLocal: true,
       };
 
-      await db.localChecklists.add(checklist as any);
+      // Dexie table type from untyped db.js doesn't match our interface
+      await (db.localChecklists as any).add(checklist);
       set(state => ({ checklists: [checklist, ...state.checklists] }));
       return checklist;
     },
@@ -114,7 +114,7 @@ export const useLocalChecklistsStore = create<LocalChecklistsState & LocalCheckl
       if (!existing) return null;
 
       const updatedChecklist = { ...existing, ...updates, updatedAt: Date.now() };
-      await db.localChecklists.put(updatedChecklist as any);
+      await (db.localChecklists as any).put(updatedChecklist);
       set(state => ({
         checklists: state.checklists.map(c => (c.id === checklistId ? updatedChecklist : c)),
       }));

@@ -3,7 +3,7 @@
  * Lists all organizations with search, pagination, and navigation to details
  */
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router';
 import {
   SearchIcon,
@@ -68,86 +68,89 @@ function AdminOrgList() {
     setPage(1);
   };
 
-  const columns: ColumnDef<OrgRow, unknown>[] = [
-    {
-      accessorKey: 'name',
-      header: 'Organization',
-      cell: info => {
-        const org = info.row.original;
-        return (
-          <div className='flex items-center space-x-3'>
-            <div className='flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100'>
-              <HomeIcon className='h-5 w-5 text-blue-600' />
+  const columns = useMemo<ColumnDef<OrgRow, unknown>[]>(
+    () => [
+      {
+        accessorKey: 'name',
+        header: 'Organization',
+        cell: info => {
+          const org = info.row.original;
+          return (
+            <div className='flex items-center space-x-3'>
+              <div className='flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100'>
+                <HomeIcon className='h-5 w-5 text-blue-600' />
+              </div>
+              <div>
+                <p className='text-foreground font-medium'>{org.name}</p>
+              </div>
             </div>
-            <div>
-              <p className='text-foreground font-medium'>{org.name}</p>
+          );
+        },
+      },
+      {
+        accessorKey: 'slug',
+        header: 'Slug',
+        cell: info => (
+          <code className='bg-secondary text-secondary-foreground rounded px-2 py-1 text-sm'>
+            {info.getValue() as string}
+          </code>
+        ),
+      },
+      {
+        accessorKey: 'stats.memberCount',
+        header: 'Members',
+        cell: info => {
+          const org = info.row.original;
+          return (
+            <div className='text-muted-foreground flex items-center space-x-1'>
+              <UsersIcon className='text-muted-foreground/70 h-4 w-4' />
+              <span>{org.stats?.memberCount ?? '-'}</span>
             </div>
-          </div>
-        );
+          );
+        },
       },
-    },
-    {
-      accessorKey: 'slug',
-      header: 'Slug',
-      cell: info => (
-        <code className='bg-secondary text-secondary-foreground rounded px-2 py-1 text-sm'>
-          {info.getValue() as string}
-        </code>
-      ),
-    },
-    {
-      accessorKey: 'stats.memberCount',
-      header: 'Members',
-      cell: info => {
-        const org = info.row.original;
-        return (
-          <div className='text-muted-foreground flex items-center space-x-1'>
-            <UsersIcon className='text-muted-foreground/70 h-4 w-4' />
-            <span>{org.stats?.memberCount ?? '-'}</span>
-          </div>
-        );
+      {
+        accessorKey: 'stats.projectCount',
+        header: 'Projects',
+        cell: info => {
+          const org = info.row.original;
+          return (
+            <div className='text-muted-foreground flex items-center space-x-1'>
+              <FolderIcon className='text-muted-foreground/70 h-4 w-4' />
+              <span>{org.stats?.projectCount ?? '-'}</span>
+            </div>
+          );
+        },
       },
-    },
-    {
-      accessorKey: 'stats.projectCount',
-      header: 'Projects',
-      cell: info => {
-        const org = info.row.original;
-        return (
-          <div className='text-muted-foreground flex items-center space-x-1'>
-            <FolderIcon className='text-muted-foreground/70 h-4 w-4' />
-            <span>{org.stats?.projectCount ?? '-'}</span>
-          </div>
-        );
+      {
+        accessorKey: 'createdAt',
+        header: 'Created',
+        cell: info => (
+          <span className='text-muted-foreground'>
+            {formatDate(info.getValue() as string | number | null | undefined)}
+          </span>
+        ),
       },
-    },
-    {
-      accessorKey: 'createdAt',
-      header: 'Created',
-      cell: info => (
-        <span className='text-muted-foreground'>
-          {formatDate(info.getValue() as string | number | null | undefined)}
-        </span>
-      ),
-    },
-    {
-      id: 'actions',
-      header: '',
-      cell: info => {
-        const org = info.row.original;
-        return (
-          <Link
-            to={'/admin/orgs/$orgId' as string}
-            params={{ orgId: org.id } as Record<string, string>}
-            className='inline-flex items-center rounded-lg bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-700 focus:ring-[3px] focus:ring-blue-100 focus:outline-none'
-            onClick={(e: React.MouseEvent) => e.stopPropagation()}
-          >
-            Details
-          </Link>
-        );
+      {
+        id: 'actions',
+        header: '',
+        cell: info => {
+          const org = info.row.original;
+          return (
+            <Link
+              to={'/admin/orgs/$orgId' as string}
+              params={{ orgId: org.id } as Record<string, string>}
+              className='inline-flex items-center rounded-lg bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-700 focus:ring-[3px] focus:ring-blue-100 focus:outline-none'
+              onClick={(e: React.MouseEvent) => e.stopPropagation()}
+            >
+              Details
+            </Link>
+          );
+        },
       },
-    },
-  ];
+    ],
+    [navigate],
+  );
 
   return (
     <>

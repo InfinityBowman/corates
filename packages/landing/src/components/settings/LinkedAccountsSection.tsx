@@ -100,7 +100,7 @@ export function LinkedAccountsSection() {
     }
   }, []);
 
-  const handleUnlink = useCallback((account: any) => {
+  const handleUnlink = useCallback((account: { providerId: string; accountId: string }) => {
     setAccountToUnlink(account);
     setUnlinkError(null);
     setUnlinkDialogOpen(true);
@@ -130,12 +130,12 @@ export function LinkedAccountsSection() {
   }, [accountToUnlink, refetch]);
 
   const availableProviders = useMemo(() => {
-    const linked = new Set((accounts || []).map((a: any) => a.providerId));
+    const linked = new Set((accounts || []).map(a => a.providerId));
     return Object.values(PROVIDERS).filter(p => !linked.has(p.id));
   }, [accounts]);
 
   const canUnlink = useMemo(() => {
-    const accountCount = (accounts as any[])?.length || 0;
+    const accountCount = accounts?.length || 0;
     const hasVerifiedEmail = !!user?.emailVerified;
     return accountCount > 1 || hasVerifiedEmail;
   }, [accounts, user?.emailVerified]);
@@ -174,9 +174,9 @@ export function LinkedAccountsSection() {
           </div>
         )}
 
-        {(accounts as any[])?.length > 0 ?
+        {accounts?.length > 0 ?
           <div className='space-y-3' role='list' aria-label='Linked accounts'>
-            {(accounts as any[]).map((account: any) => (
+            {accounts.map(account => (
               <AccountProviderCard
                 key={account.id}
                 account={account}
@@ -204,11 +204,9 @@ export function LinkedAccountsSection() {
         }
 
         {availableProviders.length > 0 && (
-          <div
-            className={(accounts as any[])?.length > 0 ? 'border-border mt-4 border-t pt-4' : ''}
-          >
+          <div className={accounts?.length > 0 ? 'border-border mt-4 border-t pt-4' : ''}>
             <p className='text-secondary-foreground mb-3 text-sm font-medium'>
-              {(accounts as any[])?.length > 0 ? 'Link another account:' : 'Link an account:'}
+              {accounts?.length > 0 ? 'Link another account:' : 'Link an account:'}
             </p>
             <div className='flex flex-wrap gap-2'>
               {availableProviders.map(provider => (

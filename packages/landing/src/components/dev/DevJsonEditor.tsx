@@ -170,8 +170,11 @@ export function DevJsonEditor({ projectId, orgId, data }: DevJsonEditorProps) {
       <textarea
         className='flex-1 resize-none bg-gray-900 p-3 font-mono text-[11px] text-green-400 focus:outline-none'
         placeholder='Paste JSON here or click Export to fetch current state...'
-        value={hasUserEdited ? jsonText : (jsonText || currentJson)}
-        onChange={e => { setJsonText(e.target.value); setHasUserEdited(true); }}
+        value={hasUserEdited ? jsonText : jsonText || currentJson}
+        onChange={e => {
+          setJsonText(e.target.value);
+          setHasUserEdited(true);
+        }}
         spellCheck={false}
       />
     </div>

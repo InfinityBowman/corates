@@ -3,7 +3,7 @@
  * Displays Stripe event ledger entries with filtering and search
  */
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { createFileRoute, Link } from '@tanstack/react-router';
 import { LoaderIcon, CopyIcon, CheckIcon, ExternalLinkIcon, FilterIcon } from 'lucide-react';
 import { useAdminBillingLedger } from '@/hooks/useAdminQueries';
@@ -127,241 +127,246 @@ function AdminBillingLedgerPage() {
     }
   }, []);
 
-  const columns: ColumnDef<LedgerEntry, unknown>[] = [
-    {
-      accessorKey: 'receivedAt',
-      header: 'Time',
-      cell: info => {
-        const entry = info.row.original;
-        return (
-          <div className='text-muted-foreground whitespace-nowrap'>
-            <div>{formatDate(entry.receivedAt)}</div>
-            {entry.processedAt && (
-              <div className='text-muted-foreground/70 text-xs'>
-                Processed: {formatDate(entry.processedAt)}
-              </div>
-            )}
-          </div>
-        );
-      },
-    },
-    {
-      accessorKey: 'status',
-      header: 'Status',
-      cell: info => {
-        const value = info.getValue() as string;
-        return (
-          <span
-            className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium whitespace-nowrap ${getStatusColor(value)}`}
-          >
-            {value.replace(/_/g, ' ')}
-          </span>
-        );
-      },
-    },
-    {
-      accessorKey: 'type',
-      header: 'Type',
-      cell: info => (
-        <code className='text-xs whitespace-nowrap'>{(info.getValue() as string) || '-'}</code>
-      ),
-    },
-    {
-      accessorKey: 'stripeEventId',
-      header: 'Event ID',
-      cell: info => {
-        const entry = info.row.original;
-        if (!entry.stripeEventId) {
-          return <span className='text-muted-foreground/70'>-</span>;
-        }
-        return (
-          <div className='flex items-center space-x-1 whitespace-nowrap'>
-            <code className='text-foreground font-mono text-xs'>
-              {entry.stripeEventId.slice(0, 12)}...
-            </code>
-            <button
-              type='button'
-              onClick={() => handleCopy(entry.stripeEventId!, 'Event ID')}
-              className='text-muted-foreground/70 hover:text-muted-foreground'
-              title='Copy event ID'
-            >
-              {copiedId === `Event ID-${entry.stripeEventId}` ?
-                <CheckIcon className='h-3 w-3 text-green-600' />
-              : <CopyIcon className='h-3 w-3' />}
-            </button>
-            <a
-              href={getStripeUrl('event', entry.stripeEventId) || '#'}
-              target='_blank'
-              rel='noopener noreferrer'
-              className='text-muted-foreground/70 hover:text-muted-foreground'
-              title='Open in Stripe'
-            >
-              <ExternalLinkIcon className='h-3 w-3' />
-            </a>
-          </div>
-        );
-      },
-    },
-    {
-      accessorKey: 'orgId',
-      header: 'Org ID',
-      cell: info => {
-        const entry = info.row.original;
-        if (!entry.orgId) {
-          return <span className='text-muted-foreground/70'>-</span>;
-        }
-        return (
-          <div className='flex items-center space-x-1 whitespace-nowrap'>
-            <Link
-              to={'/admin/orgs/$orgId' as string}
-              params={{ orgId: entry.orgId } as Record<string, string>}
-              className='text-blue-600 hover:text-blue-800'
-            >
-              <code className='font-mono text-xs'>{entry.orgId.slice(0, 8)}...</code>
-            </Link>
-            <button
-              type='button'
-              onClick={() => handleCopy(entry.orgId!, 'Org ID')}
-              className='text-muted-foreground/70 hover:text-muted-foreground'
-              title='Copy org ID'
-            >
-              {copiedId === `Org ID-${entry.orgId}` ?
-                <CheckIcon className='h-3 w-3 text-green-600' />
-              : <CopyIcon className='h-3 w-3' />}
-            </button>
-          </div>
-        );
-      },
-    },
-    {
-      id: 'stripeIds',
-      header: 'Stripe IDs',
-      cell: info => {
-        const entry = info.row.original;
-        return (
-          <div className='space-y-1'>
-            {entry.stripeCustomerId && (
-              <div className='flex items-center space-x-1'>
-                <span className='text-muted-foreground text-xs'>C:</span>
-                <code className='text-foreground font-mono text-xs'>
-                  {entry.stripeCustomerId.slice(0, 12)}...
-                </code>
-                <button
-                  type='button'
-                  onClick={() => handleCopy(entry.stripeCustomerId!, 'Customer ID')}
-                  className='text-muted-foreground/70 hover:text-muted-foreground'
-                  title='Copy customer ID'
-                >
-                  {copiedId === `Customer ID-${entry.stripeCustomerId}` ?
-                    <CheckIcon className='h-3 w-3 text-green-600' />
-                  : <CopyIcon className='h-3 w-3' />}
-                </button>
-                <a
-                  href={getStripeUrl('customer', entry.stripeCustomerId) || '#'}
-                  target='_blank'
-                  rel='noopener noreferrer'
-                  className='text-muted-foreground/70 hover:text-muted-foreground'
-                  title='Open in Stripe'
-                >
-                  <ExternalLinkIcon className='h-3 w-3' />
-                </a>
-              </div>
-            )}
-            {entry.stripeSubscriptionId && (
-              <div className='flex items-center space-x-1'>
-                <span className='text-muted-foreground text-xs'>S:</span>
-                <code className='text-foreground font-mono text-xs'>
-                  {entry.stripeSubscriptionId.slice(0, 12)}...
-                </code>
-                <button
-                  type='button'
-                  onClick={() => handleCopy(entry.stripeSubscriptionId!, 'Subscription ID')}
-                  className='text-muted-foreground/70 hover:text-muted-foreground'
-                  title='Copy subscription ID'
-                >
-                  {copiedId === `Subscription ID-${entry.stripeSubscriptionId}` ?
-                    <CheckIcon className='h-3 w-3 text-green-600' />
-                  : <CopyIcon className='h-3 w-3' />}
-                </button>
-                <a
-                  href={getStripeUrl('subscription', entry.stripeSubscriptionId) || '#'}
-                  target='_blank'
-                  rel='noopener noreferrer'
-                  className='text-muted-foreground/70 hover:text-muted-foreground'
-                  title='Open in Stripe'
-                >
-                  <ExternalLinkIcon className='h-3 w-3' />
-                </a>
-              </div>
-            )}
-            {entry.stripeCheckoutSessionId && (
-              <div className='flex items-center space-x-1'>
-                <span className='text-muted-foreground text-xs'>CS:</span>
-                <code className='text-foreground font-mono text-xs'>
-                  {entry.stripeCheckoutSessionId.slice(0, 12)}...
-                </code>
-                <button
-                  type='button'
-                  onClick={() => handleCopy(entry.stripeCheckoutSessionId!, 'Checkout Session ID')}
-                  className='text-muted-foreground/70 hover:text-muted-foreground'
-                  title='Copy checkout session ID'
-                >
-                  {copiedId === `Checkout Session ID-${entry.stripeCheckoutSessionId}` ?
-                    <CheckIcon className='h-3 w-3 text-green-600' />
-                  : <CopyIcon className='h-3 w-3' />}
-                </button>
-              </div>
-            )}
-          </div>
-        );
-      },
-    },
-    {
-      accessorKey: 'requestId',
-      header: 'Request ID',
-      cell: info => {
-        const entry = info.row.original;
-        if (!entry.requestId) {
-          return <span className='text-muted-foreground/70'>-</span>;
-        }
-        return (
-          <div className='flex items-center space-x-1 whitespace-nowrap'>
-            <code className='text-foreground font-mono text-xs'>
-              {entry.requestId.slice(0, 8)}...
-            </code>
-            <button
-              type='button'
-              onClick={() => handleCopy(entry.requestId!, 'Request ID')}
-              className='text-muted-foreground/70 hover:text-muted-foreground'
-              title='Copy request ID'
-            >
-              {copiedId === `Request ID-${entry.requestId}` ?
-                <CheckIcon className='h-3 w-3 text-green-600' />
-              : <CopyIcon className='h-3 w-3' />}
-            </button>
-          </div>
-        );
-      },
-    },
-    {
-      accessorKey: 'error',
-      header: 'Error',
-      cell: info => {
-        const entry = info.row.original;
-        if (entry.error) {
+  const columns = useMemo<ColumnDef<LedgerEntry, unknown>[]>(
+    () => [
+      {
+        accessorKey: 'receivedAt',
+        header: 'Time',
+        cell: info => {
+          const entry = info.row.original;
           return (
-            <span className='text-xs text-red-600' title={entry.error}>
-              {entry.error.length > 50 ? `${entry.error.slice(0, 50)}...` : entry.error}
+            <div className='text-muted-foreground whitespace-nowrap'>
+              <div>{formatDate(entry.receivedAt)}</div>
+              {entry.processedAt && (
+                <div className='text-muted-foreground/70 text-xs'>
+                  Processed: {formatDate(entry.processedAt)}
+                </div>
+              )}
+            </div>
+          );
+        },
+      },
+      {
+        accessorKey: 'status',
+        header: 'Status',
+        cell: info => {
+          const value = info.getValue() as string;
+          return (
+            <span
+              className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium whitespace-nowrap ${getStatusColor(value)}`}
+            >
+              {value.replace(/_/g, ' ')}
             </span>
           );
-        }
-        if (entry.httpStatus) {
-          return <span className='text-muted-foreground text-xs'>{entry.httpStatus}</span>;
-        }
-        return <span className='text-muted-foreground/70'>-</span>;
+        },
       },
-    },
-  ];
+      {
+        accessorKey: 'type',
+        header: 'Type',
+        cell: info => (
+          <code className='text-xs whitespace-nowrap'>{(info.getValue() as string) || '-'}</code>
+        ),
+      },
+      {
+        accessorKey: 'stripeEventId',
+        header: 'Event ID',
+        cell: info => {
+          const entry = info.row.original;
+          if (!entry.stripeEventId) {
+            return <span className='text-muted-foreground/70'>-</span>;
+          }
+          return (
+            <div className='flex items-center space-x-1 whitespace-nowrap'>
+              <code className='text-foreground font-mono text-xs'>
+                {entry.stripeEventId.slice(0, 12)}...
+              </code>
+              <button
+                type='button'
+                onClick={() => handleCopy(entry.stripeEventId!, 'Event ID')}
+                className='text-muted-foreground/70 hover:text-muted-foreground'
+                title='Copy event ID'
+              >
+                {copiedId === `Event ID-${entry.stripeEventId}` ?
+                  <CheckIcon className='h-3 w-3 text-green-600' />
+                : <CopyIcon className='h-3 w-3' />}
+              </button>
+              <a
+                href={getStripeUrl('event', entry.stripeEventId) || '#'}
+                target='_blank'
+                rel='noopener noreferrer'
+                className='text-muted-foreground/70 hover:text-muted-foreground'
+                title='Open in Stripe'
+              >
+                <ExternalLinkIcon className='h-3 w-3' />
+              </a>
+            </div>
+          );
+        },
+      },
+      {
+        accessorKey: 'orgId',
+        header: 'Org ID',
+        cell: info => {
+          const entry = info.row.original;
+          if (!entry.orgId) {
+            return <span className='text-muted-foreground/70'>-</span>;
+          }
+          return (
+            <div className='flex items-center space-x-1 whitespace-nowrap'>
+              <Link
+                to={'/admin/orgs/$orgId' as string}
+                params={{ orgId: entry.orgId } as Record<string, string>}
+                className='text-blue-600 hover:text-blue-800'
+              >
+                <code className='font-mono text-xs'>{entry.orgId.slice(0, 8)}...</code>
+              </Link>
+              <button
+                type='button'
+                onClick={() => handleCopy(entry.orgId!, 'Org ID')}
+                className='text-muted-foreground/70 hover:text-muted-foreground'
+                title='Copy org ID'
+              >
+                {copiedId === `Org ID-${entry.orgId}` ?
+                  <CheckIcon className='h-3 w-3 text-green-600' />
+                : <CopyIcon className='h-3 w-3' />}
+              </button>
+            </div>
+          );
+        },
+      },
+      {
+        id: 'stripeIds',
+        header: 'Stripe IDs',
+        cell: info => {
+          const entry = info.row.original;
+          return (
+            <div className='space-y-1'>
+              {entry.stripeCustomerId && (
+                <div className='flex items-center space-x-1'>
+                  <span className='text-muted-foreground text-xs'>C:</span>
+                  <code className='text-foreground font-mono text-xs'>
+                    {entry.stripeCustomerId.slice(0, 12)}...
+                  </code>
+                  <button
+                    type='button'
+                    onClick={() => handleCopy(entry.stripeCustomerId!, 'Customer ID')}
+                    className='text-muted-foreground/70 hover:text-muted-foreground'
+                    title='Copy customer ID'
+                  >
+                    {copiedId === `Customer ID-${entry.stripeCustomerId}` ?
+                      <CheckIcon className='h-3 w-3 text-green-600' />
+                    : <CopyIcon className='h-3 w-3' />}
+                  </button>
+                  <a
+                    href={getStripeUrl('customer', entry.stripeCustomerId) || '#'}
+                    target='_blank'
+                    rel='noopener noreferrer'
+                    className='text-muted-foreground/70 hover:text-muted-foreground'
+                    title='Open in Stripe'
+                  >
+                    <ExternalLinkIcon className='h-3 w-3' />
+                  </a>
+                </div>
+              )}
+              {entry.stripeSubscriptionId && (
+                <div className='flex items-center space-x-1'>
+                  <span className='text-muted-foreground text-xs'>S:</span>
+                  <code className='text-foreground font-mono text-xs'>
+                    {entry.stripeSubscriptionId.slice(0, 12)}...
+                  </code>
+                  <button
+                    type='button'
+                    onClick={() => handleCopy(entry.stripeSubscriptionId!, 'Subscription ID')}
+                    className='text-muted-foreground/70 hover:text-muted-foreground'
+                    title='Copy subscription ID'
+                  >
+                    {copiedId === `Subscription ID-${entry.stripeSubscriptionId}` ?
+                      <CheckIcon className='h-3 w-3 text-green-600' />
+                    : <CopyIcon className='h-3 w-3' />}
+                  </button>
+                  <a
+                    href={getStripeUrl('subscription', entry.stripeSubscriptionId) || '#'}
+                    target='_blank'
+                    rel='noopener noreferrer'
+                    className='text-muted-foreground/70 hover:text-muted-foreground'
+                    title='Open in Stripe'
+                  >
+                    <ExternalLinkIcon className='h-3 w-3' />
+                  </a>
+                </div>
+              )}
+              {entry.stripeCheckoutSessionId && (
+                <div className='flex items-center space-x-1'>
+                  <span className='text-muted-foreground text-xs'>CS:</span>
+                  <code className='text-foreground font-mono text-xs'>
+                    {entry.stripeCheckoutSessionId.slice(0, 12)}...
+                  </code>
+                  <button
+                    type='button'
+                    onClick={() =>
+                      handleCopy(entry.stripeCheckoutSessionId!, 'Checkout Session ID')
+                    }
+                    className='text-muted-foreground/70 hover:text-muted-foreground'
+                    title='Copy checkout session ID'
+                  >
+                    {copiedId === `Checkout Session ID-${entry.stripeCheckoutSessionId}` ?
+                      <CheckIcon className='h-3 w-3 text-green-600' />
+                    : <CopyIcon className='h-3 w-3' />}
+                  </button>
+                </div>
+              )}
+            </div>
+          );
+        },
+      },
+      {
+        accessorKey: 'requestId',
+        header: 'Request ID',
+        cell: info => {
+          const entry = info.row.original;
+          if (!entry.requestId) {
+            return <span className='text-muted-foreground/70'>-</span>;
+          }
+          return (
+            <div className='flex items-center space-x-1 whitespace-nowrap'>
+              <code className='text-foreground font-mono text-xs'>
+                {entry.requestId.slice(0, 8)}...
+              </code>
+              <button
+                type='button'
+                onClick={() => handleCopy(entry.requestId!, 'Request ID')}
+                className='text-muted-foreground/70 hover:text-muted-foreground'
+                title='Copy request ID'
+              >
+                {copiedId === `Request ID-${entry.requestId}` ?
+                  <CheckIcon className='h-3 w-3 text-green-600' />
+                : <CopyIcon className='h-3 w-3' />}
+              </button>
+            </div>
+          );
+        },
+      },
+      {
+        accessorKey: 'error',
+        header: 'Error',
+        cell: info => {
+          const entry = info.row.original;
+          if (entry.error) {
+            return (
+              <span className='text-xs text-red-600' title={entry.error}>
+                {entry.error.length > 50 ? `${entry.error.slice(0, 50)}...` : entry.error}
+              </span>
+            );
+          }
+          if (entry.httpStatus) {
+            return <span className='text-muted-foreground text-xs'>{entry.httpStatus}</span>;
+          }
+          return <span className='text-muted-foreground/70'>-</span>;
+        },
+      },
+    ],
+    [handleCopy, copiedId],
+  );
 
   return (
     <>

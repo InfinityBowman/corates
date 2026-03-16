@@ -3,7 +3,7 @@
  * Lists all projects with search, org filtering, and pagination
  */
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router';
 import {
   SearchIcon,
@@ -106,84 +106,87 @@ function AdminProjectList() {
     setPage(1);
   };
 
-  const columns: ColumnDef<ProjectRow, unknown>[] = [
-    {
-      accessorKey: 'name',
-      header: 'Project',
-      cell: info => {
-        const project = info.row.original;
-        return (
-          <Link
-            to={'/admin/projects/$projectId' as string}
-            params={{ projectId: project.id } as Record<string, string>}
-            className='flex items-center space-x-3'
-          >
-            <div className='flex h-10 w-10 items-center justify-center rounded-lg bg-green-100'>
-              <FolderIcon className='h-5 w-5 text-green-600' />
-            </div>
-            <div>
-              <p className='font-medium text-blue-600 hover:text-blue-700'>{project.name}</p>
-              {project.description && (
-                <p className='text-muted-foreground max-w-xs truncate text-sm'>
-                  {project.description}
-                </p>
-              )}
-            </div>
-          </Link>
-        );
-      },
-    },
-    {
-      accessorKey: 'orgName',
-      header: 'Organization',
-      cell: info => {
-        const project = info.row.original;
-        return (
-          <div>
+  const columns = useMemo<ColumnDef<ProjectRow, unknown>[]>(
+    () => [
+      {
+        accessorKey: 'name',
+        header: 'Project',
+        cell: info => {
+          const project = info.row.original;
+          return (
             <Link
-              to={'/admin/orgs/$orgId' as string}
-              params={{ orgId: project.orgId } as Record<string, string>}
-              className='text-secondary-foreground flex items-center space-x-2 hover:text-blue-600'
-              onClick={(e: React.MouseEvent) => e.stopPropagation()}
+              to={'/admin/projects/$projectId' as string}
+              params={{ projectId: project.id } as Record<string, string>}
+              className='flex items-center space-x-3'
             >
-              <HomeIcon className='h-4 w-4' />
-              <span>{project.orgName}</span>
+              <div className='flex h-10 w-10 items-center justify-center rounded-lg bg-green-100'>
+                <FolderIcon className='h-5 w-5 text-green-600' />
+              </div>
+              <div>
+                <p className='font-medium text-blue-600 hover:text-blue-700'>{project.name}</p>
+                {project.description && (
+                  <p className='text-muted-foreground max-w-xs truncate text-sm'>
+                    {project.description}
+                  </p>
+                )}
+              </div>
             </Link>
-            <p className='text-muted-foreground text-xs'>@{project.orgSlug}</p>
-          </div>
-        );
+          );
+        },
       },
-    },
-    {
-      accessorKey: 'memberCount',
-      header: 'Members',
-      cell: info => (
-        <span className='bg-secondary text-secondary-foreground inline-flex items-center rounded-full px-2.5 py-0.5 text-sm font-medium'>
-          <UsersIcon className='mr-1 h-3 w-3' />
-          {info.getValue() as number}
-        </span>
-      ),
-    },
-    {
-      accessorKey: 'fileCount',
-      header: 'Files',
-      cell: info => (
-        <span className='bg-secondary text-secondary-foreground inline-flex items-center rounded-full px-2.5 py-0.5 text-sm font-medium'>
-          <FileIcon className='mr-1 h-3 w-3' />
-          {info.getValue() as number}
-        </span>
-      ),
-    },
-    {
-      accessorKey: 'createdAt',
-      header: 'Created',
-      cell: info => (
-        <span className='text-muted-foreground'>
-          {formatDate(info.getValue() as string | number | null | undefined)}
-        </span>
-      ),
-    },
-  ];
+      {
+        accessorKey: 'orgName',
+        header: 'Organization',
+        cell: info => {
+          const project = info.row.original;
+          return (
+            <div>
+              <Link
+                to={'/admin/orgs/$orgId' as string}
+                params={{ orgId: project.orgId } as Record<string, string>}
+                className='text-secondary-foreground flex items-center space-x-2 hover:text-blue-600'
+                onClick={(e: React.MouseEvent) => e.stopPropagation()}
+              >
+                <HomeIcon className='h-4 w-4' />
+                <span>{project.orgName}</span>
+              </Link>
+              <p className='text-muted-foreground text-xs'>@{project.orgSlug}</p>
+            </div>
+          );
+        },
+      },
+      {
+        accessorKey: 'memberCount',
+        header: 'Members',
+        cell: info => (
+          <span className='bg-secondary text-secondary-foreground inline-flex items-center rounded-full px-2.5 py-0.5 text-sm font-medium'>
+            <UsersIcon className='mr-1 h-3 w-3' />
+            {info.getValue() as number}
+          </span>
+        ),
+      },
+      {
+        accessorKey: 'fileCount',
+        header: 'Files',
+        cell: info => (
+          <span className='bg-secondary text-secondary-foreground inline-flex items-center rounded-full px-2.5 py-0.5 text-sm font-medium'>
+            <FileIcon className='mr-1 h-3 w-3' />
+            {info.getValue() as number}
+          </span>
+        ),
+      },
+      {
+        accessorKey: 'createdAt',
+        header: 'Created',
+        cell: info => (
+          <span className='text-muted-foreground'>
+            {formatDate(info.getValue() as string | number | null | undefined)}
+          </span>
+        ),
+      },
+    ],
+    [],
+  );
 
   return (
     <>

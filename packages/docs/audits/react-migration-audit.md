@@ -132,7 +132,7 @@ Extract to shared admin utility.
 
 ## Items Resolved
 
-2, 4, 5, 6, 7, 10, 12, 13, 14, 20, 21 (partially -- API layer complete, lib mostly done), 22, 23, 27, 30 (flicker fixed -- `?? false` now consistent with useState default)
+1 (dead code -- form-errors.js and test deleted), 2, 3 (documented deps, added 50-notification cap), 4, 5, 6, 7, 8 (removed index signature, Dexie boundary casts documented), 9 (typed LinkedAccount interface, removed all as any[] casts), 10, 12, 13, 14, 20, 21 (partially -- API layer complete, lib mostly done), 22, 23, 27, 28 (narrowed deps to overallState?.judgement), 30 (flicker fixed), 35 (all 4 admin files wrapped in useMemo)
 
 ---
 
@@ -140,7 +140,7 @@ Extract to shared admin utility.
 
 | Priority                               | Count  | Action                                                              |
 | -------------------------------------- | ------ | ------------------------------------------------------------------- |
-| Fix immediately (runtime breakage)     | 1      | SolidJS form-errors test (#1)                                       |
-| Fix before merge (type safety + React) | 5      | Stale closure (#3), Dexie cast (#8), LinkedAccounts (#9), effect re-fire (#28), unstable columns (#35) |
+| Fix immediately (runtime breakage)     | 0      | All resolved                                                        |
+| Fix before merge (type safety + React) | 0      | All resolved                                                        |
 | Fix soon (consistency + a11y)          | 17     | Untyped JS (#15), missing guards (#16), index keys (#17), redirect (#18), render fns (#19), a11y (#24-25,33,38), unused props (#26,29), duplicates (#31-32,36), HTML (#34), pagination (#37), confusing props (#39), singletons (#11) |
-| **Total**                              | **23** |                                                                     |
+| **Total**                              | **17** |                                                                     |
