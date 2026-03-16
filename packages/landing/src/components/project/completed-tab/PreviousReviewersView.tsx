@@ -51,48 +51,44 @@ export function PreviousReviewersView({
   // Load checklist data
   useEffect(() => {
     if (originalChecklists.length === 0) {
-       
       setLoading(false);
       setChecklist1Data(null);
       setChecklist2Data(null);
       return;
     }
 
-     
     setLoading(true);
 
     try {
-      const data1 = originalChecklists[0]
-        ? getChecklistData?.(study.id, originalChecklists[0].id)
-        : null;
-      const data2 = originalChecklists[1]
-        ? getChecklistData?.(study.id, originalChecklists[1].id)
-        : null;
+      const data1 =
+        originalChecklists[0] ? getChecklistData?.(study.id, originalChecklists[0].id) : null;
+      const data2 =
+        originalChecklists[1] ? getChecklistData?.(study.id, originalChecklists[1].id) : null;
 
       setChecklist1Data(
-        data1
-          ? {
-              id: originalChecklists[0].id,
-              name: study?.name || 'Checklist',
-              reviewerName: getAssigneeName(originalChecklists[0].assignedTo),
-              createdAt: originalChecklists[0].createdAt,
-              type: originalChecklists[0].type,
-              ...data1.answers,
-            }
-          : null,
+        data1 ?
+          {
+            id: originalChecklists[0].id,
+            name: study?.name || 'Checklist',
+            reviewerName: getAssigneeName(originalChecklists[0].assignedTo),
+            createdAt: originalChecklists[0].createdAt,
+            type: originalChecklists[0].type,
+            ...data1.answers,
+          }
+        : null,
       );
 
       setChecklist2Data(
-        data2
-          ? {
-              id: originalChecklists[1].id,
-              name: study?.name || 'Checklist',
-              reviewerName: getAssigneeName(originalChecklists[1].assignedTo),
-              createdAt: originalChecklists[1].createdAt,
-              type: originalChecklists[1].type,
-              ...data2.answers,
-            }
-          : null,
+        data2 ?
+          {
+            id: originalChecklists[1].id,
+            name: study?.name || 'Checklist',
+            reviewerName: getAssigneeName(originalChecklists[1].assignedTo),
+            createdAt: originalChecklists[1].createdAt,
+            type: originalChecklists[1].type,
+            ...data2.answers,
+          }
+        : null,
       );
     } catch (err) {
       console.error('Failed to load checklist data:', err);
@@ -135,7 +131,6 @@ export function PreviousReviewersView({
   // Set default tab when data loads
   useEffect(() => {
     if (!loading && reviewerTabs.length > 0 && !currentChecklistData) {
-       
       setActiveTab(reviewerTabs[0].value);
     }
   }, [loading, reviewerTabs, currentChecklistData]);
@@ -147,7 +142,7 @@ export function PreviousReviewersView({
         if (!open) onClose();
       }}
     >
-      <DialogContent className="max-w-4xl">
+      <DialogContent className='max-w-4xl'>
         <DialogHeader>
           <DialogTitle>Original Reviewer Appraisals</DialogTitle>
           <DialogDescription>
@@ -156,18 +151,18 @@ export function PreviousReviewersView({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="flex flex-col" style={{ minHeight: '600px', maxHeight: '70vh' }}>
-          {hasData ? (
+        <div className='flex flex-col' style={{ minHeight: '600px', maxHeight: '70vh' }}>
+          {hasData ?
             <>
               {reviewerTabs.length > 1 && (
-                <div className="mb-4">
+                <div className='mb-4'>
                   <Tabs value={activeTab} onValueChange={v => setActiveTab(v)}>
-                    <TabsList className="border-border bg-card overflow-x-auto rounded-t-lg border">
+                    <TabsList className='border-border bg-card overflow-x-auto rounded-t-lg border'>
                       {reviewerTabs.map(tab => (
                         <TabsTrigger
                           key={tab.value}
                           value={tab.value}
-                          className="text-secondary-foreground hover:bg-muted hover:text-foreground data-[state=active]:text-foreground gap-2 border-b-2 border-transparent data-[state=active]:border-blue-600"
+                          className='text-secondary-foreground hover:bg-muted hover:text-foreground data-[state=active]:text-foreground gap-2 border-b-2 border-transparent data-[state=active]:border-blue-600'
                         >
                           {tab.label}
                         </TabsTrigger>
@@ -177,19 +172,19 @@ export function PreviousReviewersView({
                 </div>
               )}
 
-              <div className="border-border bg-card flex-1 overflow-y-auto rounded-lg border p-6">
+              <div className='border-border bg-card flex-1 overflow-y-auto rounded-lg border p-6'>
                 {currentChecklistData && (
                   <>
-                    <div className="border-border mb-4 border-b pb-3">
-                      <div className="flex items-center justify-between">
-                        <h3 className="text-foreground text-base font-semibold">
+                    <div className='border-border mb-4 border-b pb-3'>
+                      <div className='flex items-center justify-between'>
+                        <h3 className='text-foreground text-base font-semibold'>
                           {currentChecklistData.reviewerName || 'Reviewer'}
                         </h3>
-                        <span className="text-muted-foreground text-sm">
-                          {currentChecklistType
-                            ? (getChecklistMetadata as any)(currentChecklistType)?.name ||
-                              currentChecklistType
-                            : ''}
+                        <span className='text-muted-foreground text-sm'>
+                          {currentChecklistType ?
+                            (getChecklistMetadata as any)(currentChecklistType)?.name ||
+                            currentChecklistType
+                          : ''}
                         </span>
                       </div>
                     </div>
@@ -207,13 +202,12 @@ export function PreviousReviewersView({
                 )}
               </div>
             </>
-          ) : (
-            <div className="flex flex-1 items-center justify-center py-16">
-              <div className="text-muted-foreground text-center">
+          : <div className='flex flex-1 items-center justify-center py-16'>
+              <div className='text-muted-foreground text-center'>
                 {loading ? 'Loading appraisals...' : 'No previous reviewer appraisals found.'}
               </div>
             </div>
-          )}
+          }
         </div>
       </DialogContent>
     </Dialog>

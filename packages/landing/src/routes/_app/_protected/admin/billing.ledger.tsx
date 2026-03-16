@@ -5,13 +5,7 @@
 
 import { useState, useCallback } from 'react';
 import { createFileRoute, Link } from '@tanstack/react-router';
-import {
-  LoaderIcon,
-  CopyIcon,
-  CheckIcon,
-  ExternalLinkIcon,
-  FilterIcon,
-} from 'lucide-react';
+import { LoaderIcon, CopyIcon, CheckIcon, ExternalLinkIcon, FilterIcon } from 'lucide-react';
 import { useAdminBillingLedger } from '@/hooks/useAdminQueries';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { showToast } from '@/components/ui/toast';
@@ -53,11 +47,9 @@ const LIMIT_OPTIONS = [25, 50, 100, 200];
 const formatDate = (timestamp: string | number | Date | null | undefined): string => {
   if (!timestamp) return '-';
   const date =
-    timestamp instanceof Date
-      ? timestamp
-      : typeof timestamp === 'string'
-        ? new Date(timestamp)
-        : new Date(timestamp * 1000);
+    timestamp instanceof Date ? timestamp
+    : typeof timestamp === 'string' ? new Date(timestamp)
+    : new Date(timestamp * 1000);
   return date.toLocaleDateString('en-US', {
     month: 'short',
     day: 'numeric',
@@ -139,13 +131,13 @@ function AdminBillingLedgerPage() {
     {
       accessorKey: 'receivedAt',
       header: 'Time',
-      cell: (info) => {
+      cell: info => {
         const entry = info.row.original;
         return (
-          <div className="text-muted-foreground whitespace-nowrap">
+          <div className='text-muted-foreground whitespace-nowrap'>
             <div>{formatDate(entry.receivedAt)}</div>
             {entry.processedAt && (
-              <div className="text-muted-foreground/70 text-xs">
+              <div className='text-muted-foreground/70 text-xs'>
                 Processed: {formatDate(entry.processedAt)}
               </div>
             )}
@@ -156,7 +148,7 @@ function AdminBillingLedgerPage() {
     {
       accessorKey: 'status',
       header: 'Status',
-      cell: (info) => {
+      cell: info => {
         const value = info.getValue() as string;
         return (
           <span
@@ -170,43 +162,41 @@ function AdminBillingLedgerPage() {
     {
       accessorKey: 'type',
       header: 'Type',
-      cell: (info) => (
-        <code className="text-xs whitespace-nowrap">{(info.getValue() as string) || '-'}</code>
+      cell: info => (
+        <code className='text-xs whitespace-nowrap'>{(info.getValue() as string) || '-'}</code>
       ),
     },
     {
       accessorKey: 'stripeEventId',
       header: 'Event ID',
-      cell: (info) => {
+      cell: info => {
         const entry = info.row.original;
         if (!entry.stripeEventId) {
-          return <span className="text-muted-foreground/70">-</span>;
+          return <span className='text-muted-foreground/70'>-</span>;
         }
         return (
-          <div className="flex items-center space-x-1 whitespace-nowrap">
-            <code className="text-foreground font-mono text-xs">
+          <div className='flex items-center space-x-1 whitespace-nowrap'>
+            <code className='text-foreground font-mono text-xs'>
               {entry.stripeEventId.slice(0, 12)}...
             </code>
             <button
-              type="button"
+              type='button'
               onClick={() => handleCopy(entry.stripeEventId!, 'Event ID')}
-              className="text-muted-foreground/70 hover:text-muted-foreground"
-              title="Copy event ID"
+              className='text-muted-foreground/70 hover:text-muted-foreground'
+              title='Copy event ID'
             >
-              {copiedId === `Event ID-${entry.stripeEventId}` ? (
-                <CheckIcon className="h-3 w-3 text-green-600" />
-              ) : (
-                <CopyIcon className="h-3 w-3" />
-              )}
+              {copiedId === `Event ID-${entry.stripeEventId}` ?
+                <CheckIcon className='h-3 w-3 text-green-600' />
+              : <CopyIcon className='h-3 w-3' />}
             </button>
             <a
               href={getStripeUrl('event', entry.stripeEventId) || '#'}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-muted-foreground/70 hover:text-muted-foreground"
-              title="Open in Stripe"
+              target='_blank'
+              rel='noopener noreferrer'
+              className='text-muted-foreground/70 hover:text-muted-foreground'
+              title='Open in Stripe'
             >
-              <ExternalLinkIcon className="h-3 w-3" />
+              <ExternalLinkIcon className='h-3 w-3' />
             </a>
           </div>
         );
@@ -215,31 +205,29 @@ function AdminBillingLedgerPage() {
     {
       accessorKey: 'orgId',
       header: 'Org ID',
-      cell: (info) => {
+      cell: info => {
         const entry = info.row.original;
         if (!entry.orgId) {
-          return <span className="text-muted-foreground/70">-</span>;
+          return <span className='text-muted-foreground/70'>-</span>;
         }
         return (
-          <div className="flex items-center space-x-1 whitespace-nowrap">
+          <div className='flex items-center space-x-1 whitespace-nowrap'>
             <Link
               to={'/admin/orgs/$orgId' as string}
               params={{ orgId: entry.orgId } as Record<string, string>}
-              className="text-blue-600 hover:text-blue-800"
+              className='text-blue-600 hover:text-blue-800'
             >
-              <code className="font-mono text-xs">{entry.orgId.slice(0, 8)}...</code>
+              <code className='font-mono text-xs'>{entry.orgId.slice(0, 8)}...</code>
             </Link>
             <button
-              type="button"
+              type='button'
               onClick={() => handleCopy(entry.orgId!, 'Org ID')}
-              className="text-muted-foreground/70 hover:text-muted-foreground"
-              title="Copy org ID"
+              className='text-muted-foreground/70 hover:text-muted-foreground'
+              title='Copy org ID'
             >
-              {copiedId === `Org ID-${entry.orgId}` ? (
-                <CheckIcon className="h-3 w-3 text-green-600" />
-              ) : (
-                <CopyIcon className="h-3 w-3" />
-              )}
+              {copiedId === `Org ID-${entry.orgId}` ?
+                <CheckIcon className='h-3 w-3 text-green-600' />
+              : <CopyIcon className='h-3 w-3' />}
             </button>
           </div>
         );
@@ -248,87 +236,79 @@ function AdminBillingLedgerPage() {
     {
       id: 'stripeIds',
       header: 'Stripe IDs',
-      cell: (info) => {
+      cell: info => {
         const entry = info.row.original;
         return (
-          <div className="space-y-1">
+          <div className='space-y-1'>
             {entry.stripeCustomerId && (
-              <div className="flex items-center space-x-1">
-                <span className="text-muted-foreground text-xs">C:</span>
-                <code className="text-foreground font-mono text-xs">
+              <div className='flex items-center space-x-1'>
+                <span className='text-muted-foreground text-xs'>C:</span>
+                <code className='text-foreground font-mono text-xs'>
                   {entry.stripeCustomerId.slice(0, 12)}...
                 </code>
                 <button
-                  type="button"
+                  type='button'
                   onClick={() => handleCopy(entry.stripeCustomerId!, 'Customer ID')}
-                  className="text-muted-foreground/70 hover:text-muted-foreground"
-                  title="Copy customer ID"
+                  className='text-muted-foreground/70 hover:text-muted-foreground'
+                  title='Copy customer ID'
                 >
-                  {copiedId === `Customer ID-${entry.stripeCustomerId}` ? (
-                    <CheckIcon className="h-3 w-3 text-green-600" />
-                  ) : (
-                    <CopyIcon className="h-3 w-3" />
-                  )}
+                  {copiedId === `Customer ID-${entry.stripeCustomerId}` ?
+                    <CheckIcon className='h-3 w-3 text-green-600' />
+                  : <CopyIcon className='h-3 w-3' />}
                 </button>
                 <a
                   href={getStripeUrl('customer', entry.stripeCustomerId) || '#'}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-muted-foreground/70 hover:text-muted-foreground"
-                  title="Open in Stripe"
+                  target='_blank'
+                  rel='noopener noreferrer'
+                  className='text-muted-foreground/70 hover:text-muted-foreground'
+                  title='Open in Stripe'
                 >
-                  <ExternalLinkIcon className="h-3 w-3" />
+                  <ExternalLinkIcon className='h-3 w-3' />
                 </a>
               </div>
             )}
             {entry.stripeSubscriptionId && (
-              <div className="flex items-center space-x-1">
-                <span className="text-muted-foreground text-xs">S:</span>
-                <code className="text-foreground font-mono text-xs">
+              <div className='flex items-center space-x-1'>
+                <span className='text-muted-foreground text-xs'>S:</span>
+                <code className='text-foreground font-mono text-xs'>
                   {entry.stripeSubscriptionId.slice(0, 12)}...
                 </code>
                 <button
-                  type="button"
+                  type='button'
                   onClick={() => handleCopy(entry.stripeSubscriptionId!, 'Subscription ID')}
-                  className="text-muted-foreground/70 hover:text-muted-foreground"
-                  title="Copy subscription ID"
+                  className='text-muted-foreground/70 hover:text-muted-foreground'
+                  title='Copy subscription ID'
                 >
-                  {copiedId === `Subscription ID-${entry.stripeSubscriptionId}` ? (
-                    <CheckIcon className="h-3 w-3 text-green-600" />
-                  ) : (
-                    <CopyIcon className="h-3 w-3" />
-                  )}
+                  {copiedId === `Subscription ID-${entry.stripeSubscriptionId}` ?
+                    <CheckIcon className='h-3 w-3 text-green-600' />
+                  : <CopyIcon className='h-3 w-3' />}
                 </button>
                 <a
                   href={getStripeUrl('subscription', entry.stripeSubscriptionId) || '#'}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-muted-foreground/70 hover:text-muted-foreground"
-                  title="Open in Stripe"
+                  target='_blank'
+                  rel='noopener noreferrer'
+                  className='text-muted-foreground/70 hover:text-muted-foreground'
+                  title='Open in Stripe'
                 >
-                  <ExternalLinkIcon className="h-3 w-3" />
+                  <ExternalLinkIcon className='h-3 w-3' />
                 </a>
               </div>
             )}
             {entry.stripeCheckoutSessionId && (
-              <div className="flex items-center space-x-1">
-                <span className="text-muted-foreground text-xs">CS:</span>
-                <code className="text-foreground font-mono text-xs">
+              <div className='flex items-center space-x-1'>
+                <span className='text-muted-foreground text-xs'>CS:</span>
+                <code className='text-foreground font-mono text-xs'>
                   {entry.stripeCheckoutSessionId.slice(0, 12)}...
                 </code>
                 <button
-                  type="button"
-                  onClick={() =>
-                    handleCopy(entry.stripeCheckoutSessionId!, 'Checkout Session ID')
-                  }
-                  className="text-muted-foreground/70 hover:text-muted-foreground"
-                  title="Copy checkout session ID"
+                  type='button'
+                  onClick={() => handleCopy(entry.stripeCheckoutSessionId!, 'Checkout Session ID')}
+                  className='text-muted-foreground/70 hover:text-muted-foreground'
+                  title='Copy checkout session ID'
                 >
-                  {copiedId === `Checkout Session ID-${entry.stripeCheckoutSessionId}` ? (
-                    <CheckIcon className="h-3 w-3 text-green-600" />
-                  ) : (
-                    <CopyIcon className="h-3 w-3" />
-                  )}
+                  {copiedId === `Checkout Session ID-${entry.stripeCheckoutSessionId}` ?
+                    <CheckIcon className='h-3 w-3 text-green-600' />
+                  : <CopyIcon className='h-3 w-3' />}
                 </button>
               </div>
             )}
@@ -339,27 +319,25 @@ function AdminBillingLedgerPage() {
     {
       accessorKey: 'requestId',
       header: 'Request ID',
-      cell: (info) => {
+      cell: info => {
         const entry = info.row.original;
         if (!entry.requestId) {
-          return <span className="text-muted-foreground/70">-</span>;
+          return <span className='text-muted-foreground/70'>-</span>;
         }
         return (
-          <div className="flex items-center space-x-1 whitespace-nowrap">
-            <code className="text-foreground font-mono text-xs">
+          <div className='flex items-center space-x-1 whitespace-nowrap'>
+            <code className='text-foreground font-mono text-xs'>
               {entry.requestId.slice(0, 8)}...
             </code>
             <button
-              type="button"
+              type='button'
               onClick={() => handleCopy(entry.requestId!, 'Request ID')}
-              className="text-muted-foreground/70 hover:text-muted-foreground"
-              title="Copy request ID"
+              className='text-muted-foreground/70 hover:text-muted-foreground'
+              title='Copy request ID'
             >
-              {copiedId === `Request ID-${entry.requestId}` ? (
-                <CheckIcon className="h-3 w-3 text-green-600" />
-              ) : (
-                <CopyIcon className="h-3 w-3" />
-              )}
+              {copiedId === `Request ID-${entry.requestId}` ?
+                <CheckIcon className='h-3 w-3 text-green-600' />
+              : <CopyIcon className='h-3 w-3' />}
             </button>
           </div>
         );
@@ -368,19 +346,19 @@ function AdminBillingLedgerPage() {
     {
       accessorKey: 'error',
       header: 'Error',
-      cell: (info) => {
+      cell: info => {
         const entry = info.row.original;
         if (entry.error) {
           return (
-            <span className="text-xs text-red-600" title={entry.error}>
+            <span className='text-xs text-red-600' title={entry.error}>
               {entry.error.length > 50 ? `${entry.error.slice(0, 50)}...` : entry.error}
             </span>
           );
         }
         if (entry.httpStatus) {
-          return <span className="text-muted-foreground text-xs">{entry.httpStatus}</span>;
+          return <span className='text-muted-foreground text-xs'>{entry.httpStatus}</span>;
         }
-        return <span className="text-muted-foreground/70">-</span>;
+        return <span className='text-muted-foreground/70'>-</span>;
       },
     },
   ];
@@ -389,53 +367,51 @@ function AdminBillingLedgerPage() {
     <>
       <DashboardHeader
         icon={FilterIcon}
-        title="Billing Ledger"
-        description="Stripe event ledger entries with filtering and search"
+        title='Billing Ledger'
+        description='Stripe event ledger entries with filtering and search'
         actions={
           <button
-            type="button"
+            type='button'
             onClick={() => ledgerQuery.refetch()}
-            className="border-border bg-card text-secondary-foreground hover:bg-muted inline-flex items-center gap-2 rounded-xl border px-4 py-2 text-sm font-medium shadow-xs focus:ring-[3px] focus:ring-blue-100 focus:outline-none"
+            className='border-border bg-card text-secondary-foreground hover:bg-muted inline-flex items-center gap-2 rounded-xl border px-4 py-2 text-sm font-medium shadow-xs focus:ring-[3px] focus:ring-blue-100 focus:outline-none'
             disabled={ledgerQuery.isFetching}
           >
-            {ledgerQuery.isFetching ? (
-              <LoaderIcon className="h-4 w-4 animate-spin" />
-            ) : (
-              'Refresh'
-            )}
+            {ledgerQuery.isFetching ?
+              <LoaderIcon className='h-4 w-4 animate-spin' />
+            : 'Refresh'}
           </button>
         }
       />
 
       {/* Stats Summary */}
       {stats && (
-        <div className="mb-6 grid grid-cols-2 gap-4 md:grid-cols-5">
-          <div className="border-border bg-card rounded-xl border p-4 shadow-xs">
-            <p className="text-muted-foreground text-sm">Total</p>
-            <p className="text-foreground text-2xl font-bold">{stats.total || 0}</p>
+        <div className='mb-6 grid grid-cols-2 gap-4 md:grid-cols-5'>
+          <div className='border-border bg-card rounded-xl border p-4 shadow-xs'>
+            <p className='text-muted-foreground text-sm'>Total</p>
+            <p className='text-foreground text-2xl font-bold'>{stats.total || 0}</p>
           </div>
           {Object.entries(stats.byStatus || {}).map(([status, count]) => (
-            <div key={status} className="border-border bg-card rounded-xl border p-4 shadow-xs">
-              <p className="text-muted-foreground text-sm capitalize">
+            <div key={status} className='border-border bg-card rounded-xl border p-4 shadow-xs'>
+              <p className='text-muted-foreground text-sm capitalize'>
                 {status.replace(/_/g, ' ')}
               </p>
-              <p className="text-foreground text-2xl font-bold">{count as number}</p>
+              <p className='text-foreground text-2xl font-bold'>{count as number}</p>
             </div>
           ))}
         </div>
       )}
 
       {/* Filters */}
-      <AdminBox className="mb-6">
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+      <AdminBox className='mb-6'>
+        <div className='grid grid-cols-1 gap-4 md:grid-cols-3'>
           <div>
-            <label className="text-secondary-foreground block text-sm font-medium">Status</label>
+            <label className='text-secondary-foreground block text-sm font-medium'>Status</label>
             <select
               value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
+              onChange={e => setStatusFilter(e.target.value)}
               className={`mt-1 block w-full ${input.base}`}
             >
-              {STATUS_OPTIONS.map((option) => (
+              {STATUS_OPTIONS.map(option => (
                 <option key={option.value} value={option.value}>
                   {option.label}
                 </option>
@@ -443,25 +419,25 @@ function AdminBillingLedgerPage() {
             </select>
           </div>
           <div>
-            <label className="text-secondary-foreground block text-sm font-medium">
+            <label className='text-secondary-foreground block text-sm font-medium'>
               Event Type
             </label>
             <input
-              type="text"
+              type='text'
               value={typeFilter}
-              onChange={(e) => setTypeFilter(e.target.value)}
-              placeholder="e.g., checkout.session.completed"
+              onChange={e => setTypeFilter(e.target.value)}
+              placeholder='e.g., checkout.session.completed'
               className={`mt-1 block w-full ${input.base}`}
             />
           </div>
           <div>
-            <label className="text-secondary-foreground block text-sm font-medium">Limit</label>
+            <label className='text-secondary-foreground block text-sm font-medium'>Limit</label>
             <select
               value={limit}
-              onChange={(e) => setLimit(parseInt(e.target.value, 10))}
+              onChange={e => setLimit(parseInt(e.target.value, 10))}
               className={`mt-1 block w-full ${input.base}`}
             >
-              {LIMIT_OPTIONS.map((opt) => (
+              {LIMIT_OPTIONS.map(opt => (
                 <option key={opt} value={opt}>
                   {opt}
                 </option>
@@ -476,7 +452,7 @@ function AdminBillingLedgerPage() {
         columns={columns}
         data={entries}
         loading={ledgerQuery.isLoading}
-        emptyMessage="No ledger entries found"
+        emptyMessage='No ledger entries found'
         enableSorting
         pageSize={limit}
       />
