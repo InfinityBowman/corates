@@ -10,6 +10,7 @@ import { useMyProjectsList } from '@/hooks/useMyProjectsList';
 import { useSubscription } from '@/hooks/useSubscription';
 import { useOnlineStatus } from '@/hooks/useOnlineStatus';
 import { showToast } from '@/components/ui/toast';
+import { CreateProjectModal } from '@/components/project/CreateProjectModal';
 import { queryKeys } from '@/lib/queryKeys';
 import {
   AlertDialog,
@@ -37,8 +38,8 @@ interface ProjectsSectionProps {
 
 export function ProjectsSection({
   showHeader = true,
-  createModalOpen: _createModalOpen,
-  setCreateModalOpen: _setCreateModalOpen,
+  createModalOpen,
+  setCreateModalOpen,
   onCreateClick,
 }: ProjectsSectionProps) {
   const navigate = useNavigate();
@@ -72,10 +73,9 @@ export function ProjectsSection({
     if (onCreateClick) {
       onCreateClick();
     } else {
-      // Stub: show toast until CreateProjectModal is migrated
-      showToast.info('Coming Soon', 'Project creation will be available after full migration');
+      setCreateModalOpen(true);
     }
-  }, [onCreateClick]);
+  }, [onCreateClick, setCreateModalOpen]);
 
   const openProject = useCallback(
     (projectId: string) => {
@@ -220,6 +220,8 @@ export function ProjectsSection({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <CreateProjectModal open={createModalOpen} onOpenChange={setCreateModalOpen} />
     </section>
   );
 }

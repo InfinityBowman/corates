@@ -706,15 +706,15 @@ Full project view migrated across 4 phases (A-D) with code reviews after each:
 - `AMSTAR2ResultsTable` -- full results table with summary statistics
 - `ScoreTag` -- score display with type-aware styling
 
-**Remaining stubs (not yet filled):**
+**All stubs now filled:**
 
-- `ChartSection` -- D3 chart visualizations (AMSTARRobvis, AMSTARDistribution, ChartSettingsModal). Cosmetic, not blocking.
-- `PreviousReviewersView` -- GenericChecklist now migrated, can be filled in
-- `EmbedPdfViewer` -- Preact PDF viewer island migration
+- `ChartSection` -- COMPLETED (2026-03-15): D3 charts + Recharts admin charts
+- `PreviousReviewersView` -- COMPLETED (2026-03-16): Dialog with tabs showing original reviewer checklists in read-only GenericChecklist
+- `EmbedPdfViewer` -- COMPLETED (2026-03-15): Preact island copied, React wrapper created
 
 Key decisions:
 
-- `/projects` NOT yet removed from SPA_ROUTE_PREFIXES -- remaining stubs are cosmetic/blocked, can be removed soon
+- `/projects` removed from SPA_ROUTE_PREFIXES (2026-03-15) -- React now serves all project routes
 - `projectActionsStore` accessed via `as any` cast due to JS module without type declarations
 - `CircularProgress` rewritten as pure SVG instead of porting the D3 imperative version
 - Pending data read via `useState` lazy initializer to prevent StrictMode data loss
@@ -774,15 +774,18 @@ Key decisions:
 44 files migrated across 6 sub-phases:
 
 **4.8A - Presence system + shared components (5 files):**
+
 - `useReconciliationPresence.ts` hook (Yjs awareness protocol, cursor tracking, user-by-page grouping)
 - `userColors.js` (already existed from earlier phase)
 - `PresenceAvatars.tsx`, `RemoteCursors.tsx`, `QuestionPresenceIndicator.tsx`
 
 **4.8B - Route + ReconciliationWrapper (2 files):**
+
 - Route: `studies.$studyId.reconcile.$checklist1Id.$checklist2Id.tsx`
 - `ReconciliationWrapper.tsx` (Yjs lifecycle, PDF loading, reconciled checklist creation with race condition handling, type dispatch to AMSTAR2/ROB2/ROBINS-I)
 
 **4.8C - AMSTAR2 reconciliation (10 files):**
+
 - `ReconciliationWithPdf.tsx` (split-screen wrapper with presence)
 - `ChecklistReconciliation.tsx` (main question-page navigation, answer writing to Yjs, auto-fill, navbar store bridge)
 - `ReconciliationQuestionPage.tsx` + `MultiPartQuestionPage.tsx` (q9/q11 multi-part)
@@ -790,6 +793,7 @@ Key decisions:
 - `Navbar.tsx`, `navbar-utils.js`
 
 **4.8D - ROB2 reconciliation (14 files):**
+
 - `ROB2ReconciliationWithPdf.tsx`, `ROB2Reconciliation.tsx`
 - `ROB2Navbar.tsx`, `NavbarDomainPill.tsx`, `ROB2SummaryView.tsx`
 - `navbar-utils.js`, `index.ts`
@@ -797,6 +801,7 @@ Key decisions:
 - panels: `ROB2AnswerPanel.tsx`, `DirectionPanel.tsx`, `JudgementPanel.tsx`
 
 **4.8E - ROBINS-I reconciliation (14 files):**
+
 - `RobinsIReconciliationWithPdf.tsx`, `RobinsIReconciliation.tsx`
 - `RobinsINavbar.tsx`, `NavbarDomainPill.tsx`, `RobinsISummaryView.tsx`
 - `navbar-utils.js`, `index.ts`
@@ -804,6 +809,7 @@ Key decisions:
 - panels: `RobinsAnswerPanel.tsx`, `DirectionPanel.tsx`, `JudgementPanel.tsx`
 
 **Key patterns and fixes:**
+
 - Navbar store bridge: SolidJS `createStore` replaced with React `useState` + setter callback
 - Presence hook: custom throttle replacing `@solid-primitives/scheduled`, `getAwareness` stabilized with `useMemo` to prevent effect churn
 - Module-level helper functions to avoid React TDZ issues (`answersEqual`, `multiPartEqual`, `singleAnswerEqual`)
@@ -821,13 +827,96 @@ Migrated together with Phase 4.7 since they share checklist form components:
 
 ### 4.10 Admin (last, isolated)
 
-- `_app/_protected/admin.tsx` (layout, lazy loaded) + `_app/_protected/admin/*.tsx`
-- Admin queries already migrated in Phase 3
-- Admin chart components (LineChart, BarChart, DoughnutChart) already migrated using Recharts
+~36 SolidJS files, ~5,600 LOC. Isolated internal tool - no Yjs, no real-time collaboration.
+
+**Already migrated (Phases 1 and 3):**
+
+- `adminStore.ts` (Zustand) - isAdmin, isAdminChecked, impersonation, all API functions
+- `useAdminQueries.ts` (React Query) - 16 query hooks
+- `queryKeys.ts` (admin section)
+- `ImpersonationBanner.tsx`
+- Recharts chart components (LineChart, BarChart, DoughnutChart)
+- `useDebouncedValue.ts` hook
+- `@tanstack/react-table@^8.21.3` installed
+
+**Phase A: Foundation layer (7 files)**
+
+- `admin-tokens.ts` - convert from .js, add proper types to helper functions
+- UI primitives: `AdminBox.tsx`, `AdminSection.tsx`, `DashboardHeader.tsx`, `DashboardBody.tsx`, `index.ts`
+- `AdminDataTable.tsx` - convert `createSolidTable` -> `useReactTable`, generic `ColumnDef<T>` typing
+- Code review after Phase A
+
+**Phase B: Layout route + small presentational components (9 files)**
+
+- `routes/_app/_protected/admin.tsx` - layout route with admin guard, tab navbar, error boundary
+- `StatsCard.tsx`, `OrgBillingSummary.tsx`, `OrgQuickActions.tsx`
+- `GrantList.tsx`, `GrantDialog.tsx` (shadcn Dialog)
+- `SubscriptionList.tsx`, `SubscriptionDialog.tsx` (shadcn Dialog)
+- `UserTable.tsx` (uses AdminDataTable)
+- Code review after Phase B
+
+**Phase C: Simple page routes (6 files)**
+
+- `admin/index.tsx` - Dashboard with stats grid, user search, UserTable
+- `admin/orgs.tsx` - OrgList with search + paginated AdminDataTable
+- `admin/projects.tsx` - ProjectList with search + org filter
+- `admin/billing.stuck-states.tsx` - summary count, grouped stuck orgs
+- `admin/billing.ledger.tsx` - filters, data table, Stripe links
+- `admin/billing.stripe-tools.tsx` - customer search, detail cards
+- Modern React: `useDebouncedValue` for search, React Query for all data, proper loading/error states
+- Code review after Phase C
+
+**Phase D: Complex detail pages + analytics (7 files)**
+
+- `AnalyticsSection.tsx` - convert 5 `createResource` -> `useQuery`, wire Recharts charts, period selectors
+- `admin/users.$userId.tsx` - UserDetail (752 LOC), ban/unban/impersonate/delete, confirmation dialogs
+- `admin/orgs.$orgId.tsx` - OrgDetail (512 LOC), billing, subscriptions, grants, reconciliation panel
+- `admin/projects.$projectId.tsx` - ProjectDetail (585 LOC), members, files, invitations
+- `OrgBillingReconcilePanel.tsx` - reconciliation controls, stuck state cards
+- `admin/storage.tsx` - StorageManagement (465 LOC), R2 browser, bulk delete
+- `admin/database.tsx` - DatabaseViewer (412 LOC), table sidebar, data grid, FK navigation
+- Code review after Phase D
+
+**Phase E: Final integration**
+
+- Remove `/admin` from `SPA_ROUTE_PREFIXES`
+- Full lint + typecheck
+- Comprehensive opus code review of entire admin module
+
+**Quality standards:**
+
+- All components fully typed (no `any` props, proper interfaces)
+- Every dialog handles loading/error/success states
+- Every mutation refreshes relevant queries
+- Every page has loading and empty states
+- Ark UI Dialog/Tooltip -> shadcn equivalents
+- `solid-icons/fi` -> `lucide-react`
+- `@tanstack/solid-table` -> `@tanstack/react-table`
+- `createResource` -> `useQuery`
+
+**Route structure:**
+
+```
+routes/_app/_protected/
+  admin.tsx                          # Layout: navbar tabs, admin guard
+  admin/
+    index.tsx                        # AdminDashboard
+    users.$userId.tsx                # UserDetail
+    orgs.tsx                         # OrgList
+    orgs.$orgId.tsx                  # OrgDetail
+    projects.tsx                     # ProjectList
+    projects.$projectId.tsx          # ProjectDetail
+    storage.tsx                      # StorageManagement
+    database.tsx                     # DatabaseViewer
+    billing.ledger.tsx               # AdminBillingLedgerPage
+    billing.stuck-states.tsx         # AdminBillingStuckStatesPage
+    billing.stripe-tools.tsx         # StripeToolsPage
+```
 
 ### Charts -- COMPLETED (2026-03-15)
 
 **D3 charts (project overview):**
+
 - `AMSTARRobvis.tsx` - D3 traffic light heatmap with `useLayoutEffect` for text measurement (avoids margin flash)
 - `AMSTARDistribution.tsx` - D3 horizontal stacked bar chart with ResizeObserver
 - `ChartSettingsModal.tsx` - Pure UI modal for labels, titles, greyscale toggle, SVG/PNG export
@@ -835,6 +924,7 @@ Migrated together with Phase 4.7 since they share checklist form components:
 - `forwardRef` + `useImperativeHandle` pattern for SVG element export access
 
 **Admin charts (Recharts, replacing solid-chartjs/Chart.js):**
+
 - `LineChart.tsx` - Recharts `ResponsiveContainer` + `LineChart` (declarative JSX API)
 - `BarChart.tsx` - Recharts `BarChart` with per-bar `Cell` colors
 - `DoughnutChart.tsx` - Recharts `PieChart` + `Pie` with inner radius for doughnut effect
