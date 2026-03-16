@@ -104,10 +104,11 @@ export function EditPdfMetadataModal({
           </div>
 
           <div>
-            <label className='text-secondary-foreground mb-1 block text-sm font-medium'>
+            <label htmlFor='edit-pdf-title' className='text-secondary-foreground mb-1 block text-sm font-medium'>
               Article Title
             </label>
             <textarea
+              id='edit-pdf-title'
               value={title}
               onChange={e => setTitle(e.target.value)}
               className='border-border focus:border-primary focus:ring-primary w-full rounded-md border px-3 py-2 shadow-sm'
@@ -118,10 +119,11 @@ export function EditPdfMetadataModal({
 
           <div className='grid grid-cols-2 gap-4'>
             <div>
-              <label className='text-secondary-foreground mb-1 block text-sm font-medium'>
+              <label htmlFor='edit-pdf-first-author' className='text-secondary-foreground mb-1 block text-sm font-medium'>
                 First Author
               </label>
               <input
+                id='edit-pdf-first-author'
                 type='text'
                 value={firstAuthor}
                 onChange={e => setFirstAuthor(e.target.value)}
@@ -130,10 +132,11 @@ export function EditPdfMetadataModal({
               />
             </div>
             <div>
-              <label className='text-secondary-foreground mb-1 block text-sm font-medium'>
+              <label htmlFor='edit-pdf-pub-year' className='text-secondary-foreground mb-1 block text-sm font-medium'>
                 Publication Year
               </label>
               <input
+                id='edit-pdf-pub-year'
                 type='number'
                 value={publicationYear}
                 onChange={e => setPublicationYear(e.target.value)}
@@ -147,10 +150,11 @@ export function EditPdfMetadataModal({
           </div>
 
           <div>
-            <label className='text-secondary-foreground mb-1 block text-sm font-medium'>
+            <label htmlFor='edit-pdf-journal' className='text-secondary-foreground mb-1 block text-sm font-medium'>
               Journal
             </label>
             <input
+              id='edit-pdf-journal'
               type='text'
               value={journal}
               onChange={e => setJournal(e.target.value)}
@@ -160,8 +164,9 @@ export function EditPdfMetadataModal({
           </div>
 
           <div>
-            <label className='text-secondary-foreground mb-1 block text-sm font-medium'>DOI</label>
+            <label htmlFor='edit-pdf-doi' className='text-secondary-foreground mb-1 block text-sm font-medium'>DOI</label>
             <input
+              id='edit-pdf-doi'
               type='text'
               value={doi}
               onChange={e => setDoi(e.target.value)}

@@ -6,8 +6,6 @@ import { SECTION_A } from './checklist-map';
 import { NoteEditor } from '@/components/checklist/common/NoteEditor';
 
 interface SectionAProps {
-  sectionAState: any;
-  onUpdate: (_newState: any) => void;
   disabled?: boolean;
   getRobinsText?: (_sectionKey: string, _fieldKey: string) => any;
 }

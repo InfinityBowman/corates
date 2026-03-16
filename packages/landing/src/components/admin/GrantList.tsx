@@ -83,6 +83,7 @@ export function GrantList({ grants: grantsProp, loading, isLoading, onRevoke }: 
                           onClick={() => onRevoke?.(grant.id)}
                           disabled={loading}
                           className='bg-card rounded-lg border border-red-300 px-3 py-2 text-sm font-medium text-red-600 hover:bg-red-50 disabled:opacity-50'
+                          aria-label='Revoke grant'
                         >
                           <Trash2Icon className='h-4 w-4' />
                         </button>

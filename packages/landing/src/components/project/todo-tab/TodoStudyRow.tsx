@@ -213,6 +213,7 @@ export function TodoStudyRow({
                     }}
                     className='text-muted-foreground shrink-0 p-1.5 transition-colors hover:text-red-600'
                     title='Delete checklist'
+                    aria-label='Delete checklist'
                   >
                     <Trash2Icon className='h-4 w-4' />
                   </button>
@@ -266,6 +267,7 @@ export function TodoStudyRow({
                   onClick={() => setDeleteChecklistId(checklist.id)}
                   className='text-muted-foreground shrink-0 p-1.5 transition-colors hover:text-red-600'
                   title='Delete checklist'
+                  aria-label='Delete checklist'
                 >
                   <Trash2Icon className='h-4 w-4' />
                 </button>

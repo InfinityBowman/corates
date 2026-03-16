@@ -60,8 +60,6 @@ export function ROBINSIChecklist({
 
   const activeDomains = useMemo(() => getActiveDomainKeys(isPerProtocol), [isPerProtocol]);
 
-  const handlePlanningUpdate = useCallback((v: any) => onUpdate({ planning: v }), [onUpdate]);
-  const handleSectionAUpdate = useCallback((v: any) => onUpdate({ sectionA: v }), [onUpdate]);
   const handleSectionBUpdate = useCallback((v: any) => onUpdate({ sectionB: v }), [onUpdate]);
   const handleSectionCUpdate = useCallback((v: any) => onUpdate({ sectionC: v }), [onUpdate]);
   const handleSectionDUpdate = useCallback((v: any) => onUpdate({ sectionD: v }), [onUpdate]);
@@ -107,8 +105,6 @@ export function ROBINSIChecklist({
 
         {/* Planning Stage */}
         <PlanningSection
-          planningState={checklistState?.planning}
-          onUpdate={handlePlanningUpdate}
           disabled={isReadOnly}
           getRobinsText={getRobinsText}
         />
@@ -121,8 +117,6 @@ export function ROBINSIChecklist({
         </div>
 
         <SectionA
-          sectionAState={checklistState?.sectionA}
-          onUpdate={handleSectionAUpdate}
           disabled={isReadOnly}
           getRobinsText={getRobinsText}
         />

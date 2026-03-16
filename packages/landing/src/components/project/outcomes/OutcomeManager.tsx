@@ -162,7 +162,9 @@ export function OutcomeManager() {
             {/* Add form */}
             {isAdding && (
               <div className='flex items-center gap-2'>
+                <label htmlFor='outcome-new-name' className='sr-only'>Outcome name</label>
                 <input
+                  id='outcome-new-name'
                   type='text'
                   value={newName}
                   onChange={e => setNewName(e.target.value)}
@@ -181,6 +183,7 @@ export function OutcomeManager() {
                   disabled={!newName.trim() || isSaving}
                   className='text-primary hover:text-primary/80 p-1.5 transition-colors disabled:opacity-50'
                   title='Add'
+                  aria-label='Add'
                 >
                   <CheckIcon className='h-4 w-4' />
                 </button>
@@ -191,6 +194,7 @@ export function OutcomeManager() {
                   }}
                   className='text-muted-foreground hover:text-foreground p-1.5 transition-colors'
                   title='Cancel'
+                  aria-label='Cancel'
                 >
                   <XIcon className='h-4 w-4' />
                 </button>
@@ -208,7 +212,9 @@ export function OutcomeManager() {
             {outcomes.map((outcome: any) =>
               editingId === outcome.id ?
                 <div key={outcome.id} className='flex items-center gap-2'>
+                  <label htmlFor={`outcome-edit-${outcome.id}`} className='sr-only'>Outcome name</label>
                   <input
+                    id={`outcome-edit-${outcome.id}`}
                     type='text'
                     value={newName}
                     onChange={e => setNewName(e.target.value)}
@@ -231,6 +237,7 @@ export function OutcomeManager() {
                     disabled={!newName.trim() || isSaving}
                     className='text-primary hover:text-primary/80 p-1.5 transition-colors disabled:opacity-50'
                     title='Save'
+                    aria-label='Save'
                   >
                     <CheckIcon className='h-4 w-4' />
                   </button>
@@ -241,6 +248,7 @@ export function OutcomeManager() {
                     }}
                     className='text-muted-foreground hover:text-foreground p-1.5 transition-colors'
                     title='Cancel'
+                    aria-label='Cancel'
                   >
                     <XIcon className='h-4 w-4' />
                   </button>
@@ -258,6 +266,7 @@ export function OutcomeManager() {
                         }}
                         className='text-muted-foreground hover:text-foreground p-1 transition-colors'
                         title='Edit'
+                        aria-label='Edit'
                       >
                         <PencilIcon className='h-3.5 w-3.5' />
                       </button>
@@ -265,6 +274,7 @@ export function OutcomeManager() {
                         onClick={() => setDeleteTarget(outcome.id)}
                         className='text-muted-foreground p-1 transition-colors hover:text-red-600'
                         title='Delete'
+                        aria-label='Delete'
                       >
                         <Trash2Icon className='h-3.5 w-3.5' />
                       </button>

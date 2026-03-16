@@ -69,6 +69,7 @@ export function SplitPanelControls({
           showSecondPanel ? 'bg-blue-100 text-blue-700' : 'text-muted-foreground hover:bg-secondary'
         }`}
         title={showSecondPanel ? `Hide ${panelLabel}` : `Show ${panelLabel}`}
+        aria-label={showSecondPanel ? `Hide ${panelLabel}` : `Show ${panelLabel}`}
       >
         <FileTextIcon className='h-5 w-5' />
       </button>
@@ -86,6 +87,7 @@ export function SplitPanelControls({
               : 'text-muted-foreground hover:bg-secondary'
             }`}
             title='Side by side'
+            aria-label='Side by side'
           >
             <Columns2Icon className='h-5 w-5' />
           </button>
@@ -99,6 +101,7 @@ export function SplitPanelControls({
               : 'text-muted-foreground hover:bg-secondary'
             }`}
             title='Stacked'
+            aria-label='Stacked'
           >
             <RowsIcon className='h-5 w-5' />
           </button>
@@ -108,6 +111,7 @@ export function SplitPanelControls({
             onClick={() => onResetRatio?.()}
             className='text-muted-foreground hover:bg-secondary rounded p-1.5 transition-colors'
             title={`Reset split (${ratioLabel})`}
+            aria-label={`Reset split (${ratioLabel})`}
           >
             <RefreshCwIcon className='h-5 w-5' />
           </button>
@@ -120,6 +124,7 @@ export function SplitPanelControls({
                 onClick={handleOpenInNewTab}
                 className='text-muted-foreground hover:bg-secondary rounded p-1.5 transition-colors'
                 title='Open PDF in new tab'
+                aria-label='Open PDF in new tab'
               >
                 <ExternalLinkIcon className='h-5 w-5' />
               </button>

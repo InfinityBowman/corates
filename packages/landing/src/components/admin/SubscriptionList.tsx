@@ -191,6 +191,7 @@ export function SubscriptionList({
                         disabled={loading}
                         className='border-border bg-card text-secondary-foreground hover:bg-muted rounded-lg border px-3 py-2 text-sm font-medium disabled:opacity-50'
                         title='Edit subscription'
+                        aria-label='Edit subscription'
                       >
                         <PencilIcon className='h-4 w-4' />
                       </button>
@@ -199,6 +200,7 @@ export function SubscriptionList({
                         disabled={loading}
                         className='bg-card rounded-lg border border-red-300 px-3 py-2 text-sm font-medium text-red-600 hover:bg-red-50 disabled:opacity-50'
                         title='Cancel subscription'
+                        aria-label='Cancel subscription'
                       >
                         <Trash2Icon className='h-4 w-4' />
                       </button>

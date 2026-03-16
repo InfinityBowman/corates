@@ -7,8 +7,6 @@ import { PLANNING_SECTION } from './checklist-map';
 import { NoteEditor } from '@/components/checklist/common/NoteEditor';
 
 interface PlanningSectionProps {
-  planningState: any;
-  onUpdate: (_newState: any) => void;
   disabled?: boolean;
   getRobinsText?: (_sectionKey: string, _fieldKey: string) => any;
 }

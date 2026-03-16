@@ -193,9 +193,12 @@ function AdminOrgList() {
         {orgsData?.pagination && (
           <div className='mt-4 flex items-center justify-between'>
             <p className='text-muted-foreground text-sm'>
-              Showing {(page - 1) * (orgsData.pagination.limit || 20) + 1} to{' '}
-              {Math.min(page * (orgsData.pagination.limit || 20), orgsData.pagination.total || 0)}{' '}
-              of {orgsData.pagination.total || 0} organizations
+              {(orgsData.pagination.total || 0) > 0
+                ? `Showing ${(page - 1) * (orgsData.pagination.limit || 20) + 1} to ${Math.min(
+                    page * (orgsData.pagination.limit || 20),
+                    orgsData.pagination.total || 0,
+                  )} of ${orgsData.pagination.total || 0} organizations`
+                : 'No organizations found'}
             </p>
             <div className='flex items-center space-x-2'>
               <button

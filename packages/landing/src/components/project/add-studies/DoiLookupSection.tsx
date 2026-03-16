@@ -117,10 +117,12 @@ export function DoiLookupSection({ studies }: DoiLookupSectionProps) {
             {refsWithPdf.length > 0 && (
               <div className='border-border flex items-center gap-2 border-b pb-2'>
                 <Checkbox
+                  id='select-all-lookup-pdfs'
                   checked={someWithPdfSelected ? 'indeterminate' : allWithPdfSelected}
                   onCheckedChange={() => studies.toggleSelectAllLookup()}
                 />
                 <label
+                  htmlFor='select-all-lookup-pdfs'
                   className='cursor-pointer text-sm'
                   onClick={() => studies.toggleSelectAllLookup()}
                 >
