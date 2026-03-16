@@ -19,6 +19,7 @@ import { downloadPdf, getPdfUrl } from '@/api/pdf-api.js';
 import { getCachedPdf, cachePdf } from '@/primitives/pdfCache.js';
 import { showToast } from '@/components/ui/toast';
 import { CHECKLIST_TYPES } from '@/checklist-registry/types.js';
+import { usePdfPreviewStore } from '@/stores/pdfPreviewStore';
 import { ReconciliationWithPdf } from './amstar2-reconcile/ReconciliationWithPdf';
 import { ROB2ReconciliationWithPdf } from './rob2-reconcile/index';
 import { RobinsIReconciliationWithPdf } from './robins-i-reconcile/index';
@@ -43,6 +44,12 @@ export function ReconciliationWrapper({
   const user = useAuthStore(selectUser);
 
   const [error, setError] = useState<string | null>(null);
+  const closePreview = usePdfPreviewStore(s => s.closePreview);
+
+  // Close any open PDF preview panel to avoid two viewers in memory simultaneously
+  useEffect(() => {
+    closePreview();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Destructure Y.js operations from parent ProjectView's connection
   const ops = projectOps as any;
@@ -131,6 +138,7 @@ export function ReconciliationWrapper({
 
     setAttemptedPdfFile(fileName);
     setPdfLoading(true);
+    setPdfData(null);
 
     getCachedPdf(projectId, studyId, fileName)
       .then((cachedData: any) => {

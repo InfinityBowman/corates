@@ -3,7 +3,6 @@
  * Used by SplitScreenLayout to provide consistent UI for toggling/configuring panels
  */
 
-import { useState, useEffect } from 'react';
 import {
   FileTextIcon,
   ExternalLinkIcon,
@@ -40,49 +39,26 @@ export function SplitPanelControls({
   const panelLabel = secondPanelLabel || 'second panel';
   const ratioLabel = defaultRatioLabel || '50/50';
 
-  // Create and manage blob URL from PDF data for "open in new tab" functionality.
-  // Uses setState in effect because this syncs browser object URLs with external PDF data.
-  const [blobUrl, setBlobUrl] = useState<string | null>(null);
+  const hasPdf = !!(pdfUrl || pdfData);
 
-  useEffect(() => {
-    // If server URL exists or no data, no blob needed
-    if (pdfUrl || !pdfData) {
-      setBlobUrl(prev => {
-        // eslint-disable-line react-hooks/set-state-in-effect -- syncing blob URL with external PDF data
-        if (prev) {
-          try {
-            URL.revokeObjectURL(prev);
-          } catch (_e) {
-            /* ignore */
-          }
-        }
-        return null;
-      });
+  // Create a Blob URL on demand when the user clicks "open in new tab",
+  // rather than eagerly allocating a copy of the PDF in memory on mount.
+  const handleOpenInNewTab = () => {
+    if (pdfUrl) {
+      window.open(pdfUrl, '_blank');
       return;
     }
-
-    let url: string | null = null;
+    if (!pdfData) return;
     try {
       const blob = new Blob([pdfData], { type: 'application/pdf' });
-      url = URL.createObjectURL(blob);
-      setBlobUrl(url);
+      const url = URL.createObjectURL(blob);
+      window.open(url, '_blank');
+      // Revoke after a short delay to allow the new tab to start loading
+      setTimeout(() => URL.revokeObjectURL(url), 5000);
     } catch (_e) {
       console.warn('Failed to create blob URL from PDF data:', _e);
     }
-
-    return () => {
-      if (url) {
-        try {
-          URL.revokeObjectURL(url);
-        } catch (_e) {
-          /* ignore */
-        }
-      }
-    };
-  }, [pdfUrl, pdfData]);
-
-  const effectivePdfUrl = pdfUrl || blobUrl || null;
-  const hasPdf = !!effectivePdfUrl;
+  };
 
   return (
     <div className='flex shrink-0 items-center gap-2'>
@@ -141,9 +117,7 @@ export function SplitPanelControls({
             <>
               <div className='bg-border mx-1 h-4 w-px' />
               <button
-                onClick={() => {
-                  if (effectivePdfUrl) window.open(effectivePdfUrl, '_blank');
-                }}
+                onClick={handleOpenInNewTab}
                 className='text-muted-foreground hover:bg-secondary rounded p-1.5 transition-colors'
                 title='Open PDF in new tab'
               >

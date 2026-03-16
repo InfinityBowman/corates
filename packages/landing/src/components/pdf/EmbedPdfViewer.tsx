@@ -1,7 +1,9 @@
 /**
  * EmbedPdfViewer - React wrapper that manages a Preact island for the PDF viewer.
- * Mounts the Preact EmbedPDF component into a container div, re-rendering only
- * when pdfData or selectedPdfId changes (full document reload triggers).
+ *
+ * Mounts the Preact EmbedPDF component once and re-renders it in-place when props
+ * change, avoiding the cost of destroying and recreating the PDFium engine + workers
+ * on every PDF switch.
  */
 
 import { useEffect, useRef } from 'react';
@@ -37,9 +39,11 @@ export default function EmbedPdfViewer({
   initialAnnotations,
 }: EmbedPdfViewerProps) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const mountedRef = useRef(false);
 
-  // Mount/remount Preact component when pdfData or selectedPdfId changes.
-  // Other props are read fresh at mount time but don't trigger remounts.
+  // Mount the Preact tree once, then re-render in-place on prop changes.
+  // Preact's render() with the same container diffs the existing tree rather
+  // than destroying it, so the PDFium engine and Web Workers are preserved.
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
@@ -60,15 +64,19 @@ export default function EmbedPdfViewer({
       container,
     );
 
+    mountedRef.current = true;
+  });
+
+  // Unmount only when the component is removed from the DOM
+  useEffect(() => {
     return () => {
-      if (container) {
+      const container = containerRef.current;
+      if (container && mountedRef.current) {
         render(null, container);
+        mountedRef.current = false;
       }
     };
-    // Only re-mount on pdfData/selectedPdfId changes (document reload triggers).
-    // Other props are read at mount time; the Preact component handles its own updates.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pdfData, selectedPdfId]);
+  }, []);
 
   return <div ref={containerRef} className="flex h-full w-full flex-col" />;
 }

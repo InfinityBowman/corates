@@ -45,33 +45,30 @@ export async function getCachedPdf(projectId, studyId, fileName) {
 }
 
 /**
- * Get total cache size
- * @returns {Promise<number>}
- */
-async function getTotalCacheSize() {
-  const all = await db.pdfs.toArray();
-  return all.reduce((sum, entry) => sum + (entry.size || 0), 0);
-}
-
-/**
- * Evict oldest entries until cache size is under the limit
+ * Evict oldest entries until cache size is under the limit.
+ * Uses a metadata-only query to avoid loading PDF binary data into memory.
  * @param {number} requiredSpace - Additional space needed for new entry
  */
 async function evictIfNeeded(requiredSpace) {
   try {
-    const all = await db.pdfs.orderBy('cachedAt').toArray();
-    let totalSize = all.reduce((sum, entry) => sum + (entry.size || 0), 0);
-    const targetSize = MAX_CACHE_SIZE_BYTES - requiredSpace;
+    // Only read id, size, and cachedAt -- never touch the data blob
+    const metadata = [];
+    let totalSize = 0;
+    await db.pdfs.orderBy('cachedAt').each(entry => {
+      metadata.push({ id: entry.id, size: entry.size || 0 });
+      totalSize += entry.size || 0;
+    });
 
+    const targetSize = MAX_CACHE_SIZE_BYTES - requiredSpace;
     if (totalSize <= targetSize) {
       return;
     }
 
     const toDelete = [];
-    for (const entry of all) {
+    for (const entry of metadata) {
       if (totalSize <= targetSize) break;
       toDelete.push(entry.id);
-      totalSize -= entry.size || 0;
+      totalSize -= entry.size;
     }
 
     if (toDelete.length > 0) {
