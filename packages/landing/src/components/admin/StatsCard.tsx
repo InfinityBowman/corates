@@ -41,17 +41,15 @@ export function StatsCard({ title, value, color, icon: Icon, loading }: StatsCar
 
   return (
     <div className={`border-border rounded-lg border p-5 ${colors.bg}`}>
-      <div className="flex items-center justify-between">
+      <div className='flex items-center justify-between'>
         <div>
-          <p className="text-muted-foreground text-sm font-medium">{title}</p>
-          {loading ? (
-            <div className="bg-secondary mt-1 h-8 w-16 animate-pulse rounded" />
-          ) : (
-            <p className={`mt-1 text-2xl font-bold ${colors.text}`}>{value}</p>
-          )}
+          <p className='text-muted-foreground text-sm font-medium'>{title}</p>
+          {loading ?
+            <div className='bg-secondary mt-1 h-8 w-16 animate-pulse rounded' />
+          : <p className={`mt-1 text-2xl font-bold ${colors.text}`}>{value}</p>}
         </div>
         <div className={`rounded-lg p-3 ${colors.icon}`}>
-          <Icon className="h-6 w-6" />
+          <Icon className='h-6 w-6' />
         </div>
       </div>
     </div>

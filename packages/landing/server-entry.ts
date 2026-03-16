@@ -8,7 +8,7 @@ const SPA_ROUTE_PREFIXES = [
   // '/dashboard', // migrated to React
   '/checklist',
   // '/settings', // migrated to React
-  '/admin',
+  // '/admin', // migrated to React (Phase 4.10)
   // '/projects', // migrated to React (Phase 4.5-4.8)
   // '/orgs', // migrated to React
   '/mocks',

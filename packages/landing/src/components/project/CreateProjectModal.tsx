@@ -132,15 +132,15 @@ export function CreateProjectModal({ open, onOpenChange }: CreateProjectModalPro
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className='sm:max-w-lg'>
         <DialogHeader>
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50">
-              <FolderIcon className="h-5 w-5 text-blue-600" />
+          <div className='flex items-center gap-3'>
+            <div className='flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50'>
+              <FolderIcon className='h-5 w-5 text-blue-600' />
             </div>
             <div>
               <DialogTitle>Create a new project</DialogTitle>
-              <p className="text-muted-foreground text-sm">
+              <p className='text-muted-foreground text-sm'>
                 You can add studies and invite collaborators later.
               </p>
             </div>
@@ -148,35 +148,35 @@ export function CreateProjectModal({ open, onOpenChange }: CreateProjectModalPro
         </DialogHeader>
 
         <form onSubmit={handleSubmit}>
-          <div className="space-y-4 py-2">
+          <div className='space-y-4 py-2'>
             {/* Project Name */}
             <div>
               <label
-                htmlFor="project-name"
-                className="text-secondary-foreground mb-1.5 block text-sm font-medium"
+                htmlFor='project-name'
+                className='text-secondary-foreground mb-1.5 block text-sm font-medium'
               >
                 What should we call this project?
               </label>
               <input
-                id="project-name"
-                type="text"
-                placeholder="My Systematic Review"
+                id='project-name'
+                type='text'
+                placeholder='My Systematic Review'
                 value={projectName}
                 onChange={e => setProjectName(e.target.value)}
                 autoFocus
-                className="border-border bg-card text-foreground placeholder-muted-foreground/70 focus:border-primary focus:ring-primary/20 w-full rounded-lg border px-3.5 py-2.5 text-sm shadow-sm transition-all duration-150 focus:ring-2 focus:outline-none"
+                className='border-border bg-card text-foreground placeholder-muted-foreground/70 focus:border-primary focus:ring-primary/20 w-full rounded-lg border px-3.5 py-2.5 text-sm shadow-sm transition-all duration-150 focus:ring-2 focus:outline-none'
               />
             </div>
 
             {/* Organization - only show if multiple */}
             {!orgsLoading && orgs.length > 1 && (
               <div>
-                <label className="text-secondary-foreground mb-1.5 block text-sm font-medium">
+                <label className='text-secondary-foreground mb-1.5 block text-sm font-medium'>
                   Which team is this for?
                 </label>
                 <Select value={selectedOrgId || ''} onValueChange={setSelectedOrgId}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select a team" />
+                    <SelectValue placeholder='Select a team' />
                   </SelectTrigger>
                   <SelectContent>
                     {orgs.map((org: { id: string; name: string }) => (
@@ -192,33 +192,33 @@ export function CreateProjectModal({ open, onOpenChange }: CreateProjectModalPro
             {/* Description */}
             <div>
               <label
-                htmlFor="project-description"
-                className="text-secondary-foreground mb-1.5 block text-sm font-medium"
+                htmlFor='project-description'
+                className='text-secondary-foreground mb-1.5 block text-sm font-medium'
               >
                 Add a description{' '}
-                <span className="text-muted-foreground/70 font-normal">(optional)</span>
+                <span className='text-muted-foreground/70 font-normal'>(optional)</span>
               </label>
               <textarea
-                id="project-description"
-                placeholder="What is this review about?"
+                id='project-description'
+                placeholder='What is this review about?'
                 value={projectDescription}
                 onChange={e => setProjectDescription(e.target.value)}
                 rows={2}
-                className="border-border bg-card text-foreground placeholder-muted-foreground/70 focus:border-primary focus:ring-primary/20 w-full resize-none rounded-lg border px-3.5 py-2.5 text-sm shadow-sm transition-all duration-150 focus:ring-2 focus:outline-none"
+                className='border-border bg-card text-foreground placeholder-muted-foreground/70 focus:border-primary focus:ring-primary/20 w-full resize-none rounded-lg border px-3.5 py-2.5 text-sm shadow-sm transition-all duration-150 focus:ring-2 focus:outline-none'
               />
             </div>
           </div>
 
           <DialogFooter>
             <Button
-              type="button"
-              variant="outline"
+              type='button'
+              variant='outline'
               onClick={() => onOpenChange(false)}
               disabled={isSubmitting}
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={!canSubmit}>
+            <Button type='submit' disabled={!canSubmit}>
               {isSubmitting ? 'Creating...' : 'Create Project'}
             </Button>
           </DialogFooter>

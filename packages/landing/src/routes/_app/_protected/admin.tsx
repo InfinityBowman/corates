@@ -51,7 +51,7 @@ function AdminLayout() {
   const { isAdmin, isAdminChecked, checkAdminStatus } = useAdminStore();
 
   useEffect(() => {
-    checkAdminStatus().then((admin) => {
+    checkAdminStatus().then(admin => {
       if (!admin) {
         navigate({ to: '/dashboard' });
       }
@@ -68,29 +68,29 @@ function AdminLayout() {
 
   if (!isAdminChecked) {
     return (
-      <div className="flex min-h-100 items-center justify-center">
-        <LoaderIcon className="h-8 w-8 animate-spin text-blue-600" />
+      <div className='flex min-h-100 items-center justify-center'>
+        <LoaderIcon className='h-8 w-8 animate-spin text-blue-600' />
       </div>
     );
   }
 
   if (!isAdmin) {
     return (
-      <div className="text-muted-foreground flex min-h-100 flex-col items-center justify-center">
-        <AlertCircleIcon className="mb-4 h-12 w-12" />
-        <p className="text-lg font-medium">Access Denied</p>
-        <p className="text-sm">You do not have admin privileges.</p>
+      <div className='text-muted-foreground flex min-h-100 flex-col items-center justify-center'>
+        <AlertCircleIcon className='mb-4 h-12 w-12' />
+        <p className='text-lg font-medium'>Access Denied</p>
+        <p className='text-sm'>You do not have admin privileges.</p>
       </div>
     );
   }
 
   return (
-    <div className="bg-muted mx-auto min-h-full">
+    <div className='bg-muted mx-auto min-h-full'>
       {/* Navbar */}
-      <div className="border-border bg-card border-b">
-        <div className="px-6">
-          <nav className="flex space-x-1" role="navigation" aria-label="Admin navigation">
-            {navItems.map((item) => {
+      <div className='border-border bg-card border-b'>
+        <div className='px-6'>
+          <nav className='flex space-x-1' role='navigation' aria-label='Admin navigation'>
+            {navItems.map(item => {
               const Icon = item.icon;
               const active = isActive(item.path);
               return (
@@ -98,12 +98,12 @@ function AdminLayout() {
                   key={item.path}
                   to={item.path as string}
                   className={`flex items-center space-x-2 rounded-t-lg border-b-2 px-4 py-3 text-sm font-medium transition-colors ${
-                    active
-                      ? 'border-blue-600 bg-blue-50 text-blue-700'
-                      : 'text-muted-foreground hover:border-border hover:bg-muted hover:text-foreground border-transparent'
+                    active ?
+                      'border-blue-600 bg-blue-50 text-blue-700'
+                    : 'text-muted-foreground hover:border-border hover:bg-muted hover:text-foreground border-transparent'
                   }`}
                 >
-                  <Icon className="h-4 w-4" />
+                  <Icon className='h-4 w-4' />
                   <span>{item.label}</span>
                 </Link>
               );
@@ -114,7 +114,7 @@ function AdminLayout() {
 
       {/* Page Content */}
       <DashboardBody>
-        <SectionErrorBoundary name="Admin">
+        <SectionErrorBoundary name='Admin'>
           <Outlet />
         </SectionErrorBoundary>
       </DashboardBody>

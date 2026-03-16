@@ -264,11 +264,45 @@ Interactive elements must not contain heading elements per the HTML content mode
 
 ---
 
+## New Findings (admin pages migration)
+
+### 35. Column definitions not wrapped in `useMemo` (unstable references for TanStack Table)
+
+**Files**: `admin/UserTable.tsx:63`, `admin/orgs.tsx:71`, `admin/projects.tsx:109`, `admin/billing.ledger.tsx:138`
+
+Column arrays are declared as plain variables inside component bodies. TanStack Table requires stable column references to avoid recalculating its internal model on every render. Wrap in `useMemo`.
+
+### 36. Duplicate `formatDate` function across 4 admin files
+
+**Files**: `admin/UserTable.tsx:44`, `admin/GrantList.tsx:24`, `admin/SubscriptionList.tsx:34`, `admin/SubscriptionDialog.tsx:41`
+
+Nearly identical `formatDate` utility defined in each file. Extract to a shared admin utility.
+
+### 37. Pagination shows "Showing 1 to 0 of 0" when result set is empty
+
+**Files**: `admin/index.tsx:125`, `admin/orgs.tsx:193`
+
+When total is 0, the pagination text computes `(page - 1) * limit + 1` which renders as "Showing 1 to 0 of 0". Guard with `total > 0`.
+
+### 38. Icon-only buttons missing `aria-label` in admin components
+
+**Files**: `admin/GrantList.tsx:86` (revoke button), `admin/SubscriptionList.tsx:201-215` (edit/cancel buttons)
+
+Buttons render only icons with no accessible text. `title` attribute is not reliably announced by screen readers.
+
+### 39. `GrantList` has confusingly-named `loading`/`isLoading` props
+
+**File**: `admin/GrantList.tsx:18-21`
+
+Both `loading` and `isLoading` are boolean props. `loading` controls button disabled state, `isLoading` controls the spinner. Confusing API surface.
+
+---
+
 ## Summary
 
 | Priority                               | Count  | Action                                                                                                                                    |
 | -------------------------------------- | ------ | ----------------------------------------------------------------------------------------------------------------------------------------- |
 | Fix immediately (runtime breakage)     | 1      | SolidJS form-errors test                                                                                                                  |
-| Fix before merge (type safety + React) | 7      | `as any` casts, stale closure risk, effect re-fire (#28), dead props (#29), flicker (#30)                                                 |
-| Fix soon (consistency + a11y)          | 14     | Untyped JS, missing guards, render fns, redirect, a11y (#24-25,33), unused props (#26), duplicate components (#31-32), invalid HTML (#34) |
-| **Total**                              | **22** |                                                                                                                                           |
+| Fix before merge (type safety + React) | 8      | `as any` casts, stale closure risk, effect re-fire (#28), dead props (#29), flicker (#30), unstable columns (#35)                         |
+| Fix soon (consistency + a11y)          | 18     | Untyped JS, missing guards, render fns, redirect, a11y (#24-25,33,38), unused props (#26), duplicates (#31-32,36), invalid HTML (#34), pagination (#37), confusing props (#39) |
+| **Total**                              | **27** |                                                                                                                                           |

@@ -16,7 +16,9 @@ const PADDING_CLASSES = {
 
 export function AdminBox({ padding = 'default', className = '', children }: AdminBoxProps) {
   return (
-    <div className={`border-border bg-card rounded-xl border shadow-xs ${PADDING_CLASSES[padding]} ${className}`}>
+    <div
+      className={`border-border bg-card rounded-xl border shadow-xs ${PADDING_CLASSES[padding]} ${className}`}
+    >
       {children}
     </div>
   );

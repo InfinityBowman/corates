@@ -104,7 +104,7 @@ function AdminBillingStuckStatesPage() {
   const data = stuckStatesQuery.data as
     | { stuckOrgs: StuckOrg[]; checkedAt?: string | number }
     | undefined;
-  const stuckOrgs = data?.stuckOrgs || [];
+  const stuckOrgs = useMemo(() => data?.stuckOrgs || [], [data?.stuckOrgs]);
   const checkedAt = data?.checkedAt;
 
   const groupedByType = useMemo(() => {
@@ -123,53 +123,50 @@ function AdminBillingStuckStatesPage() {
     <div>
       <DashboardHeader
         icon={AlertTriangleIcon}
-        title="Stuck Billing States"
-        description="Organizations with billing issues requiring attention"
-        iconColor="orange"
+        title='Stuck Billing States'
+        description='Organizations with billing issues requiring attention'
+        iconColor='orange'
         actions={
-          <div className="flex items-center gap-2">
-            <div className="flex items-center space-x-2">
-              <label className="text-muted-foreground text-sm">Threshold (min):</label>
+          <div className='flex items-center gap-2'>
+            <div className='flex items-center space-x-2'>
+              <label className='text-muted-foreground text-sm'>Threshold (min):</label>
               <input
-                type="number"
+                type='number'
                 value={incompleteThreshold}
-                onChange={(e) => setIncompleteThreshold(parseInt(e.target.value, 10))}
-                min="1"
+                onChange={e => setIncompleteThreshold(parseInt(e.target.value, 10) || 30)}
+                min='1'
                 className={`w-20 ${input.base}`}
               />
             </div>
             <button
-              type="button"
+              type='button'
               onClick={() => stuckStatesQuery.refetch()}
-              className="border-border bg-card text-secondary-foreground hover:bg-muted inline-flex items-center gap-2 rounded-xl border px-4 py-2 text-sm font-medium shadow-xs focus:ring-[3px] focus:ring-blue-100 focus:outline-none"
+              className='border-border bg-card text-secondary-foreground hover:bg-muted inline-flex items-center gap-2 rounded-xl border px-4 py-2 text-sm font-medium shadow-xs focus:ring-[3px] focus:ring-blue-100 focus:outline-none'
               disabled={stuckStatesQuery.isFetching}
             >
-              {stuckStatesQuery.isFetching ? (
-                <LoaderIcon className="h-4 w-4 animate-spin" />
-              ) : (
-                <>
-                  <RefreshCwIcon className="h-4 w-4" /> Refresh
+              {stuckStatesQuery.isFetching ?
+                <LoaderIcon className='h-4 w-4 animate-spin' />
+              : <>
+                  <RefreshCwIcon className='h-4 w-4' /> Refresh
                 </>
-              )}
+              }
             </button>
           </div>
         }
       />
 
       {checkedAt && (
-        <p className="text-muted-foreground mb-6 text-sm">
-          Last checked: {formatDate(checkedAt)}
-        </p>
+        <p className='text-muted-foreground mb-6 text-sm'>Last checked: {formatDate(checkedAt)}</p>
       )}
 
       {/* Summary */}
-      <AdminBox className="mb-6">
-        <div className="flex items-center justify-between">
+      <AdminBox className='mb-6'>
+        <div className='flex items-center justify-between'>
           <div>
-            <p className="text-foreground text-lg font-semibold">
+            <p className='text-foreground text-lg font-semibold'>
               {stuckOrgs.length} Organization{stuckOrgs.length !== 1 ? 's' : ''} with Stuck States
             </p>
-            <p className="text-muted-foreground text-sm">
+            <p className='text-muted-foreground text-sm'>
               Click on an org to view details and run reconciliation
             </p>
           </div>
@@ -177,78 +174,77 @@ function AdminBillingStuckStatesPage() {
       </AdminBox>
 
       {/* Stuck Orgs by Type */}
-      {stuckStatesQuery.isLoading ? (
-        <div className="flex items-center justify-center py-12">
-          <LoaderIcon className="h-8 w-8 animate-spin text-blue-600" />
+      {stuckStatesQuery.isLoading ?
+        <div className='flex items-center justify-center py-12'>
+          <LoaderIcon className='h-8 w-8 animate-spin text-blue-600' />
         </div>
-      ) : stuckOrgs.length === 0 ? (
-        <AdminBox className="p-12 text-center">
-          <CheckCircleIcon className="mx-auto mb-4 h-12 w-12 text-green-500" />
-          <p className="text-foreground text-lg font-medium">No stuck states found</p>
-          <p className="text-muted-foreground text-sm">
+      : stuckOrgs.length === 0 ?
+        <AdminBox className='p-12 text-center'>
+          <CheckCircleIcon className='mx-auto mb-4 h-12 w-12 text-green-500' />
+          <p className='text-foreground text-lg font-medium'>No stuck states found</p>
+          <p className='text-muted-foreground text-sm'>
             All organizations have healthy billing states
           </p>
         </AdminBox>
-      ) : (
-        <div className="space-y-6">
+      : <div className='space-y-6'>
           {Object.entries(groupedByType).map(([type, orgs]) => {
             const Icon = getStuckStateSeverityIcon(type);
             const steps = getInvestigationSteps(type);
             return (
-              <AdminBox key={type} padding="compact" className="overflow-hidden p-0">
-                <div className="border-border border-b px-6 py-4">
-                  <div className="flex items-center space-x-3">
-                    <Icon className="h-5 w-5 text-orange-600" />
-                    <h2 className="text-foreground text-lg font-semibold">
+              <AdminBox key={type} padding='compact' className='overflow-hidden p-0'>
+                <div className='border-border border-b px-6 py-4'>
+                  <div className='flex items-center space-x-3'>
+                    <Icon className='h-5 w-5 text-orange-600' />
+                    <h2 className='text-foreground text-lg font-semibold'>
                       {getStuckStateTypeLabel(type)}
                     </h2>
-                    <span className="rounded-full bg-orange-100 px-2.5 py-0.5 text-xs font-medium text-orange-800">
+                    <span className='rounded-full bg-orange-100 px-2.5 py-0.5 text-xs font-medium text-orange-800'>
                       {orgs.length}
                     </span>
                   </div>
                 </div>
-                <div className="p-6">
-                  <div className="space-y-4">
-                    {orgs.map((org) => (
-                      <div key={org.orgId} className="border-border rounded-lg border p-4">
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1">
-                            <div className="flex items-center space-x-2">
+                <div className='p-6'>
+                  <div className='space-y-4'>
+                    {orgs.map(org => (
+                      <div key={org.orgId} className='border-border rounded-lg border p-4'>
+                        <div className='flex items-start justify-between'>
+                          <div className='flex-1'>
+                            <div className='flex items-center space-x-2'>
                               <Link
                                 to={'/admin/orgs/$orgId' as string}
                                 params={{ orgId: org.orgId } as Record<string, string>}
-                                className="font-medium text-blue-600 hover:text-blue-800"
+                                className='font-medium text-blue-600 hover:text-blue-800'
                               >
                                 Org: {org.orgId.slice(0, 8)}...
                               </Link>
                               {org.ageMinutes && (
-                                <span className="text-muted-foreground text-sm">
+                                <span className='text-muted-foreground text-sm'>
                                   ({org.ageMinutes} minutes)
                                 </span>
                               )}
                             </div>
                             {org.description && (
-                              <p className="text-muted-foreground mt-2 text-sm">
+                              <p className='text-muted-foreground mt-2 text-sm'>
                                 {org.description}
                               </p>
                             )}
                             {org.subscriptionId && (
-                              <p className="text-muted-foreground mt-1 text-xs">
+                              <p className='text-muted-foreground mt-1 text-xs'>
                                 Subscription: {org.subscriptionId}
                               </p>
                             )}
                             {org.stripeSubscriptionId && (
-                              <p className="text-muted-foreground mt-1 text-xs">
+                              <p className='text-muted-foreground mt-1 text-xs'>
                                 Stripe: {org.stripeSubscriptionId}
                               </p>
                             )}
                             {org.stripeEventId && (
-                              <p className="text-muted-foreground mt-1 text-xs">
+                              <p className='text-muted-foreground mt-1 text-xs'>
                                 Event: {org.stripeEventId}
                               </p>
                             )}
                             {org.failedCount && (
-                              <p className="mt-1 text-xs text-red-600">
+                              <p className='mt-1 text-xs text-red-600'>
                                 {org.failedCount} webhook failures
                               </p>
                             )}
@@ -256,17 +252,17 @@ function AdminBillingStuckStatesPage() {
                           <Link
                             to={'/admin/orgs/$orgId' as string}
                             params={{ orgId: org.orgId } as Record<string, string>}
-                            className="border-border bg-card text-secondary-foreground hover:bg-muted ml-4 rounded-md border px-4 py-2 text-sm font-medium"
+                            className='border-border bg-card text-secondary-foreground hover:bg-muted ml-4 rounded-md border px-4 py-2 text-sm font-medium'
                           >
                             View Details
                           </Link>
                         </div>
-                        <div className="bg-muted mt-4 rounded p-3">
-                          <p className="text-secondary-foreground mb-2 text-xs font-medium">
+                        <div className='bg-muted mt-4 rounded p-3'>
+                          <p className='text-secondary-foreground mb-2 text-xs font-medium'>
                             Investigation Steps:
                           </p>
-                          <ul className="text-muted-foreground list-inside list-disc space-y-1 text-xs">
-                            {steps.map((step) => (
+                          <ul className='text-muted-foreground list-inside list-disc space-y-1 text-xs'>
+                            {steps.map(step => (
                               <li key={step}>{step}</li>
                             ))}
                           </ul>
@@ -279,7 +275,7 @@ function AdminBillingStuckStatesPage() {
             );
           })}
         </div>
-      )}
+      }
     </div>
   );
 }
