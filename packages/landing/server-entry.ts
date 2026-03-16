@@ -6,7 +6,7 @@ const handler = createStartHandler(defaultStreamHandler);
 // Auth routes migrated to React: /signin, /signup, /check-email, /reset-password, /complete-profile
 const SPA_ROUTE_PREFIXES = [
   // '/dashboard', // migrated to React
-  '/checklist',
+  // '/checklist', // migrated to React (Phase 4.9)
   // '/settings', // migrated to React
   // '/admin', // migrated to React (Phase 4.10)
   // '/projects', // migrated to React (Phase 4.5-4.8)

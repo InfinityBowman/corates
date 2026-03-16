@@ -133,8 +133,8 @@ function AdminBillingStuckStatesPage() {
               <input
                 type='number'
                 value={incompleteThreshold}
-                onChange={e => setIncompleteThreshold(parseInt(e.target.value, 10) || 30)}
-                min='1'
+                onChange={(e) => setIncompleteThreshold(parseInt(e.target.value, 10) || 30)}
+                min="1"
                 className={`w-20 ${input.base}`}
               />
             </div>
