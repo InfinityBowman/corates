@@ -822,15 +822,30 @@ Migrated together with Phase 4.7 since they share checklist form components:
 ### 4.10 Admin (last, isolated)
 
 - `_app/_protected/admin.tsx` (layout, lazy loaded) + `_app/_protected/admin/*.tsx`
-- Charts: `solid-chartjs` -> `react-chartjs-2`
 - Admin queries already migrated in Phase 3
+- Admin chart components (LineChart, BarChart, DoughnutChart) already migrated using Recharts
 
-### 4.11 PDF components
+### Charts -- COMPLETED (2026-03-15)
 
-- The EmbedPDF Preact viewer is isolated -- keep as-is
-- Create a React wrapper that mounts the Preact island (same pattern as current SolidJS wrapper)
-- PDF preview panel uses pdfPreviewStore (Zustand)
-- **Vite config note:** The web package uses `@preact/preset-vite` scoped to `**/preact/**` files alongside the SolidJS plugin. In landing, you'll need to add the Preact plugin similarly scoped, alongside `@vitejs/plugin-react`. Test that TanStack Start's Vite plugin doesn't conflict with dual React/Preact setup. If it does, consider converting the PDF viewer to React (it's small) or embedding it via iframe
+**D3 charts (project overview):**
+- `AMSTARRobvis.tsx` - D3 traffic light heatmap with `useLayoutEffect` for text measurement (avoids margin flash)
+- `AMSTARDistribution.tsx` - D3 horizontal stacked bar chart with ResizeObserver
+- `ChartSettingsModal.tsx` - Pure UI modal for labels, titles, greyscale toggle, SVG/PNG export
+- `ChartSection.tsx` - Orchestrator replacing stub, with `exportChart` utility (framework-agnostic SVG/PNG export)
+- `forwardRef` + `useImperativeHandle` pattern for SVG element export access
+
+**Admin charts (Recharts, replacing solid-chartjs/Chart.js):**
+- `LineChart.tsx` - Recharts `ResponsiveContainer` + `LineChart` (declarative JSX API)
+- `BarChart.tsx` - Recharts `BarChart` with per-bar `Cell` colors
+- `DoughnutChart.tsx` - Recharts `PieChart` + `Pie` with inner radius for doughnut effect
+- Added `recharts@^3.8.0` dependency (replacing `solid-chartjs` and eventually `chart.js`/`react-chartjs-2`)
+
+### 4.11 PDF components -- COMPLETED (2026-03-15)
+
+- Copied Preact island source (`preact/src/`) from web to landing under `components/pdf/embedpdf/preact/`
+- Created React wrapper `EmbedPdfViewer.tsx` that mounts Preact component via `render(h(...))` in useEffect
+- Added `@preact/preset-vite` to `vite.config.ts` scoped to `**/preact/**` files, excluded from React plugin
+- Removed `/projects` from `SPA_ROUTE_PREFIXES` in `server-entry.ts` so React serves project routes
 
 ---
 
