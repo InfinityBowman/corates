@@ -3,14 +3,7 @@
  */
 
 import { useMemo } from 'react';
-import {
-  ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
-  Tooltip,
-  Legend,
-} from 'recharts';
+import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip, Legend } from 'recharts';
 
 const DEFAULT_COLORS = [
   'rgba(59, 130, 246, 0.8)',
@@ -50,18 +43,18 @@ export function DoughnutChart({
 
   return (
     <div className={className}>
-      <ResponsiveContainer width="100%" height="100%">
+      <ResponsiveContainer width='100%' height='100%'>
         <PieChart>
           <Pie
             data={chartData}
-            dataKey="value"
-            nameKey="name"
-            cx="50%"
-            cy="50%"
-            innerRadius="60%"
-            outerRadius="80%"
+            dataKey='value'
+            nameKey='name'
+            cx='50%'
+            cy='50%'
+            innerRadius='60%'
+            outerRadius='80%'
             paddingAngle={1}
-            stroke="none"
+            stroke='none'
           >
             {chartData.map((_entry, index) => (
               <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />
@@ -79,7 +72,7 @@ export function DoughnutChart({
               layout={legendPosition === 'right' ? 'vertical' : 'horizontal'}
               align={legendPosition === 'right' ? 'right' : 'center'}
               verticalAlign={legendPosition === 'right' ? 'middle' : 'bottom'}
-              iconType="circle"
+              iconType='circle'
             />
           )}
         </PieChart>

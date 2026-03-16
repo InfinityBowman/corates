@@ -78,5 +78,5 @@ export default function EmbedPdfViewer({
     };
   }, []);
 
-  return <div ref={containerRef} className="flex h-full w-full flex-col" />;
+  return <div ref={containerRef} className='flex h-full w-full flex-col' />;
 }

@@ -29,9 +29,9 @@ function getPanelBackground(panelType: string): string {
  */
 function ReadOnlyTextField({ value }: { value: string | null }) {
   return (
-    <div className="border-border bg-muted rounded-lg border p-3">
-      <p className="text-secondary-foreground text-sm whitespace-pre-wrap">
-        {value || <span className="text-muted-foreground/70 italic">Not specified</span>}
+    <div className='border-border bg-muted rounded-lg border p-3'>
+      <p className='text-secondary-foreground text-sm whitespace-pre-wrap'>
+        {value || <span className='text-muted-foreground/70 italic'>Not specified</span>}
       </p>
     </div>
   );
@@ -53,27 +53,27 @@ function PillSelectField({
 }) {
   if (readOnly) {
     return (
-      <div className="border-border bg-muted rounded-lg border p-3">
-        <p className="text-secondary-foreground text-sm">
-          {value || <span className="text-muted-foreground/70 italic">Not selected</span>}
+      <div className='border-border bg-muted rounded-lg border p-3'>
+        <p className='text-secondary-foreground text-sm'>
+          {value || <span className='text-muted-foreground/70 italic'>Not selected</span>}
         </p>
       </div>
     );
   }
 
   return (
-    <div className="flex flex-wrap gap-2">
-      {options.map((option) => {
+    <div className='flex flex-wrap gap-2'>
+      {options.map(option => {
         const isSelected = value === option;
         return (
           <button
             key={option}
-            type="button"
+            type='button'
             onClick={() => onChange?.(isSelected ? null : option)}
             className={`rounded-lg border-2 px-3 py-2 text-sm transition-colors ${
-              isSelected
-                ? 'border-green-400 bg-green-50 text-green-800'
-                : 'border-border bg-card text-secondary-foreground hover:border-green-300'
+              isSelected ?
+                'border-green-400 bg-green-50 text-green-800'
+              : 'border-border bg-card text-secondary-foreground hover:border-green-300'
             }`}
           >
             {option}
@@ -99,7 +99,7 @@ function AimField({
   const radioGroupName = useId();
 
   return (
-    <div className="flex flex-col gap-2">
+    <div className='flex flex-col gap-2'>
       {Object.entries(AIM_OPTIONS).map(([key, label]) => {
         const isSelected = value === key;
 
@@ -108,13 +108,13 @@ function AimField({
             <div
               key={key}
               className={`rounded-lg border-2 p-3 text-sm ${
-                isSelected
-                  ? 'border-blue-400 bg-blue-50 text-blue-800'
-                  : 'border-border bg-muted text-muted-foreground'
+                isSelected ?
+                  'border-blue-400 bg-blue-50 text-blue-800'
+                : 'border-border bg-muted text-muted-foreground'
               }`}
             >
-              <div className="flex items-center gap-2">
-                {isSelected && <CheckIcon className="h-4 w-4" />}
+              <div className='flex items-center gap-2'>
+                {isSelected && <CheckIcon className='h-4 w-4' />}
                 <span className={isSelected ? 'font-medium' : ''}>{label}</span>
               </div>
             </div>
@@ -125,21 +125,21 @@ function AimField({
           <label
             key={key}
             className={`cursor-pointer rounded-lg border-2 p-3 text-sm transition-all hover:border-green-300 ${
-              isSelected
-                ? 'border-green-400 bg-green-50 text-green-800'
-                : 'border-border bg-card text-secondary-foreground'
+              isSelected ?
+                'border-green-400 bg-green-50 text-green-800'
+              : 'border-border bg-card text-secondary-foreground'
             }`}
           >
             <input
-              type="radio"
+              type='radio'
               name={radioGroupName}
               value={key}
               checked={isSelected}
               onChange={() => onChange?.(key)}
-              className="hidden"
+              className='hidden'
             />
-            <div className="flex items-center gap-2">
-              {isSelected && <CheckIcon className="h-4 w-4" />}
+            <div className='flex items-center gap-2'>
+              {isSelected && <CheckIcon className='h-4 w-4' />}
               <span className={isSelected ? 'font-medium' : ''}>{label}</span>
             </div>
           </label>
@@ -175,10 +175,7 @@ function MultiSelectField({
     return [];
   }, [value]);
 
-  const isSelected = useCallback(
-    (option: string) => selected.includes(option),
-    [selected],
-  );
+  const isSelected = useCallback((option: string) => selected.includes(option), [selected]);
 
   const handleToggle = useCallback(
     (option: string) => {
@@ -190,9 +187,8 @@ function MultiSelectField({
         onChange?.(newValue);
       } else {
         const current = selected;
-        const newValue = isSelected(option)
-          ? current.filter((v: string) => v !== option)
-          : [...current, option];
+        const newValue =
+          isSelected(option) ? current.filter((v: string) => v !== option) : [...current, option];
         onChange?.(newValue);
       }
     },
@@ -200,8 +196,8 @@ function MultiSelectField({
   );
 
   return (
-    <div className="flex max-h-48 flex-col gap-1.5 overflow-y-auto pr-2">
-      {options.map((option) => {
+    <div className='flex max-h-48 flex-col gap-1.5 overflow-y-auto pr-2'>
+      {options.map(option => {
         const optionSelected = isSelected(option);
 
         if (readOnly) {
@@ -209,14 +205,14 @@ function MultiSelectField({
             <div
               key={option}
               className={`rounded border px-2 py-1.5 text-xs ${
-                optionSelected
-                  ? 'border-blue-200 bg-blue-50 text-blue-700'
-                  : 'border-border-subtle bg-muted text-muted-foreground/70'
+                optionSelected ?
+                  'border-blue-200 bg-blue-50 text-blue-700'
+                : 'border-border-subtle bg-muted text-muted-foreground/70'
               }`}
             >
-              <div className="flex items-center gap-1.5">
-                {optionSelected && <CheckIcon className="h-3 w-3 shrink-0" />}
-                <span className="line-clamp-2">{option}</span>
+              <div className='flex items-center gap-1.5'>
+                {optionSelected && <CheckIcon className='h-3 w-3 shrink-0' />}
+                <span className='line-clamp-2'>{option}</span>
               </div>
             </div>
           );
@@ -226,20 +222,20 @@ function MultiSelectField({
           <label
             key={option}
             className={`cursor-pointer rounded border px-2 py-1.5 text-xs transition-all hover:border-green-300 ${
-              optionSelected
-                ? 'border-green-300 bg-green-50 text-green-700'
-                : 'border-border bg-card text-secondary-foreground'
+              optionSelected ?
+                'border-green-300 bg-green-50 text-green-700'
+              : 'border-border bg-card text-secondary-foreground'
             }`}
           >
             <input
-              type="checkbox"
+              type='checkbox'
               checked={optionSelected}
               onChange={() => handleToggle(option)}
-              className="hidden"
+              className='hidden'
             />
-            <div className="flex items-center gap-1.5">
-              {optionSelected && <CheckIcon className="h-3 w-3 shrink-0" />}
-              <span className="line-clamp-2">{option}</span>
+            <div className='flex items-center gap-1.5'>
+              {optionSelected && <CheckIcon className='h-3 w-3 shrink-0' />}
+              <span className='line-clamp-2'>{option}</span>
             </div>
           </label>
         );
@@ -339,7 +335,9 @@ export function PreliminaryPage({
       case 'aim':
         return <AimField value={value} readOnly={true} />;
       case 'multiselect':
-        return <MultiSelectField value={value} options={options} readOnly={true} isObject={false} />;
+        return (
+          <MultiSelectField value={value} options={options} readOnly={true} isObject={false} />
+        );
       case 'multiselect-object':
         return <MultiSelectField value={value} options={options} readOnly={true} isObject={true} />;
       default:
@@ -381,7 +379,7 @@ export function PreliminaryPage({
               placeholder={fieldDef?.placeholder}
               readOnly={false}
               inline={true}
-              focusRingColor="green-500"
+              focusRingColor='green-500'
             />
           );
         }
@@ -390,38 +388,37 @@ export function PreliminaryPage({
   };
 
   return (
-    <div className="bg-card rounded-xl shadow-lg">
+    <div className='bg-card rounded-xl shadow-lg'>
       {/* Header */}
       <div
         className={`rounded-t-xl border-b p-4 ${
           isAgreement ? 'border-green-200 bg-green-50' : 'border-amber-200 bg-amber-50'
         }`}
       >
-        <div className="flex items-center gap-2">
-          {isAgreement ? (
-            <div className="flex h-6 w-6 items-center justify-center rounded-full bg-green-500">
-              <CheckIcon className="h-4 w-4 text-white" />
+        <div className='flex items-center gap-2'>
+          {isAgreement ?
+            <div className='flex h-6 w-6 items-center justify-center rounded-full bg-green-500'>
+              <CheckIcon className='h-4 w-4 text-white' />
             </div>
-          ) : (
-            <div className="flex h-6 w-6 items-center justify-center rounded-full bg-amber-500">
-              <XIcon className="h-4 w-4 text-white" />
+          : <div className='flex h-6 w-6 items-center justify-center rounded-full bg-amber-500'>
+              <XIcon className='h-4 w-4 text-white' />
             </div>
-          )}
+          }
           <div>
-            <h2 className="text-foreground font-semibold">{fieldLabel}</h2>
-            <p className="text-muted-foreground text-sm">Preliminary Considerations</p>
+            <h2 className='text-foreground font-semibold'>{fieldLabel}</h2>
+            <p className='text-muted-foreground text-sm'>Preliminary Considerations</p>
           </div>
         </div>
       </div>
 
       {/* Aim Mismatch Warning */}
       {fieldKey === 'aim' && isAimMismatch && (
-        <div className="mx-4 mt-4 rounded-lg border-2 border-red-300 bg-red-50 p-4">
-          <div className="flex items-start gap-3">
-            <AlertTriangleIcon className="h-5 w-5 shrink-0 text-red-600" />
+        <div className='mx-4 mt-4 rounded-lg border-2 border-red-300 bg-red-50 p-4'>
+          <div className='flex items-start gap-3'>
+            <AlertTriangleIcon className='h-5 w-5 shrink-0 text-red-600' />
             <div>
-              <h3 className="font-semibold text-red-800">Cannot Proceed - Aim Mismatch</h3>
-              <p className="mt-1 text-sm text-red-700">
+              <h3 className='font-semibold text-red-800'>Cannot Proceed - Aim Mismatch</h3>
+              <p className='mt-1 text-sm text-red-700'>
                 Reviewers selected different aims. This determines which Domain 2 questions are
                 assessed (2a for assignment effect, 2b for adhering effect). You must agree on the
                 aim before continuing to domain reconciliation.
@@ -432,14 +429,14 @@ export function PreliminaryPage({
       )}
 
       {/* Three-column comparison */}
-      <div className="grid grid-cols-3 divide-x">
+      <div className='grid grid-cols-3 divide-x'>
         {/* Reviewer 1 */}
         <div className={`p-4 ${getPanelBackground('reviewer1')}`}>
-          <div className="mb-4 flex items-center justify-between">
-            <h3 className="text-foreground font-semibold">{reviewer1Name || 'Reviewer 1'}</h3>
+          <div className='mb-4 flex items-center justify-between'>
+            <h3 className='text-foreground font-semibold'>{reviewer1Name || 'Reviewer 1'}</h3>
             <button
               onClick={() => onUseReviewer1?.()}
-              className="bg-secondary text-secondary-foreground rounded-lg px-3 py-1.5 text-xs font-medium transition-colors hover:bg-blue-100 hover:text-blue-700"
+              className='bg-secondary text-secondary-foreground rounded-lg px-3 py-1.5 text-xs font-medium transition-colors hover:bg-blue-100 hover:text-blue-700'
             >
               Use This
             </button>
@@ -449,11 +446,11 @@ export function PreliminaryPage({
 
         {/* Reviewer 2 */}
         <div className={`p-4 ${getPanelBackground('reviewer2')}`}>
-          <div className="mb-4 flex items-center justify-between">
-            <h3 className="text-foreground font-semibold">{reviewer2Name || 'Reviewer 2'}</h3>
+          <div className='mb-4 flex items-center justify-between'>
+            <h3 className='text-foreground font-semibold'>{reviewer2Name || 'Reviewer 2'}</h3>
             <button
               onClick={() => onUseReviewer2?.()}
-              className="bg-secondary text-secondary-foreground rounded-lg px-3 py-1.5 text-xs font-medium transition-colors hover:bg-blue-100 hover:text-blue-700"
+              className='bg-secondary text-secondary-foreground rounded-lg px-3 py-1.5 text-xs font-medium transition-colors hover:bg-blue-100 hover:text-blue-700'
             >
               Use This
             </button>
@@ -463,8 +460,8 @@ export function PreliminaryPage({
 
         {/* Final */}
         <div className={`p-4 ${getPanelBackground('final')}`}>
-          <div className="mb-4">
-            <h3 className="text-foreground font-semibold">Final Answer</h3>
+          <div className='mb-4'>
+            <h3 className='text-foreground font-semibold'>Final Answer</h3>
           </div>
           {renderFinalField()}
         </div>

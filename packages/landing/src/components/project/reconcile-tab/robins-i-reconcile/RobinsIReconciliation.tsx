@@ -136,10 +136,7 @@ export function RobinsIReconciliation({
   }, [currentPage, viewMode, getStorageKey]);
 
   // Determine protocol type from checklist (for Domain 1A vs 1B)
-  const isPerProtocol = useMemo(
-    () => checklist1?.sectionC?.isPerProtocol || false,
-    [checklist1],
-  );
+  const isPerProtocol = useMemo(() => checklist1?.sectionC?.isPerProtocol || false, [checklist1]);
 
   // Build navigation items based on protocol type
   const navItems = useMemo(() => buildNavigationItems(isPerProtocol), [isPerProtocol]);
@@ -159,10 +156,7 @@ export function RobinsIReconciliation({
   }, [checklist1, checklist2]);
 
   // Get final answers from reconciled checklist (reactive)
-  const finalAnswers = useMemo(
-    () => reconciledChecklist || {},
-    [reconciledChecklist],
-  );
+  const finalAnswers = useMemo(() => reconciledChecklist || {}, [reconciledChecklist]);
 
   // Auto-expand domain based on current page
   useEffect(() => {
@@ -175,15 +169,18 @@ export function RobinsIReconciliation({
   }, [navItems, currentPage, expandedDomain]);
 
   // Navigation function for going to a specific page
-  const goToPage = useCallback((index: number) => {
-    setCurrentPage(index);
-    setViewMode('questions');
-    // Auto-expand the domain containing this page
-    const sectionKey = getSectionKeyForPage(navItems, index);
-    if (sectionKey) {
-      setExpandedDomain(sectionKey);
-    }
-  }, [navItems]);
+  const goToPage = useCallback(
+    (index: number) => {
+      setCurrentPage(index);
+      setViewMode('questions');
+      // Auto-expand the domain containing this page
+      const sectionKey = getSectionKeyForPage(navItems, index);
+      if (sectionKey) {
+        setExpandedDomain(sectionKey);
+      }
+    },
+    [navItems],
+  );
 
   // Reset all reconciliation answers
   const handleReset = useCallback(() => {
@@ -433,20 +430,24 @@ export function RobinsIReconciliation({
   const currentItemComparison = getCurrentItemComparison();
 
   return (
-    <div className="bg-blue-50">
-      <div className="mx-auto max-w-7xl px-4 py-4">
+    <div className='bg-blue-50'>
+      <div className='mx-auto max-w-7xl px-4 py-4'>
         {/* Finish confirmation dialog */}
         <AlertDialog open={finishDialogOpen} onOpenChange={setFinishDialogOpen}>
           <AlertDialogContent>
             <AlertDialogHeader>
               <AlertDialogTitle>Finish reconciliation?</AlertDialogTitle>
               <AlertDialogDescription>
-                This will mark the reconciled checklist as completed. You will no longer be able
-                to edit these reconciliation answers afterwards.
+                This will mark the reconciled checklist as completed. You will no longer be able to
+                edit these reconciliation answers afterwards.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <Button variant="outline" onClick={() => setFinishDialogOpen(false)} disabled={saving}>
+              <Button
+                variant='outline'
+                onClick={() => setFinishDialogOpen(false)}
+                disabled={saving}
+              >
                 Cancel
               </Button>
               <AlertDialogAction disabled={saving} onClick={confirmSave}>
@@ -458,10 +459,10 @@ export function RobinsIReconciliation({
 
         {/* Critical Risk Warning Banner */}
         {sectionBCritical && (
-          <div className="mb-4 flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
-            <AlertTriangleIcon className="h-5 w-5 shrink-0" />
+          <div className='mb-4 flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700'>
+            <AlertTriangleIcon className='h-5 w-5 shrink-0' />
             <div>
-              <span className="font-medium">Critical Risk Detected:</span> Section B indicates this
+              <span className='font-medium'>Critical Risk Detected:</span> Section B indicates this
               study may be at critical risk of bias. Consider whether to proceed with full domain
               assessment.
             </div>
@@ -471,7 +472,7 @@ export function RobinsIReconciliation({
         {/* Main Content */}
         {viewMode === 'questions' && (
           <>
-            {currentNavItem ? (
+            {currentNavItem ?
               <>
                 {/* Section B Question */}
                 {currentNavItem.type === NAV_ITEM_TYPES.SECTION_B && (
@@ -480,17 +481,11 @@ export function RobinsIReconciliation({
                     reviewer1Data={checklist1?.sectionB?.[currentNavItem.key]}
                     reviewer2Data={checklist2?.sectionB?.[currentNavItem.key]}
                     finalData={finalAnswers.sectionB?.[currentNavItem.key]}
-                    finalCommentYText={getRobinsText?.(
-                      'sectionB',
-                      'comment',
-                      currentNavItem.key,
-                    )}
+                    finalCommentYText={getRobinsText?.('sectionB', 'comment', currentNavItem.key)}
                     reviewer1Name={reviewer1Name || 'Reviewer 1'}
                     reviewer2Name={reviewer2Name || 'Reviewer 2'}
                     isAgreement={isNavItemAgreement(currentNavItem, comparison as any)}
-                    onFinalAnswerChange={answer =>
-                      updateSectionBAnswer(currentNavItem.key, answer)
-                    }
+                    onFinalAnswerChange={answer => updateSectionBAnswer(currentNavItem.key, answer)}
                     onUseReviewer1={() => {
                       const data = checklist1?.sectionB?.[currentNavItem.key];
                       if (data) {
@@ -692,36 +687,34 @@ export function RobinsIReconciliation({
                 )}
 
                 {/* Navigation Buttons */}
-                <div className="mt-4 flex items-center justify-between">
+                <div className='mt-4 flex items-center justify-between'>
                   <button
                     onClick={goToPrevious}
                     disabled={currentPage === 0}
                     className={`flex items-center gap-2 rounded-lg px-4 py-2 font-medium transition-colors ${
-                      currentPage === 0
-                        ? 'bg-secondary text-muted-foreground/70 cursor-not-allowed'
-                        : 'bg-card text-secondary-foreground hover:bg-secondary shadow'
+                      currentPage === 0 ?
+                        'bg-secondary text-muted-foreground/70 cursor-not-allowed'
+                      : 'bg-card text-secondary-foreground hover:bg-secondary shadow'
                     }`}
                   >
-                    <ArrowLeftIcon className="h-4 w-4" />
+                    <ArrowLeftIcon className='h-4 w-4' />
                     Previous
                   </button>
 
-                  <div className="text-muted-foreground text-sm">
+                  <div className='text-muted-foreground text-sm'>
                     Item {currentPage + 1} of {totalPages}
                   </div>
 
                   <button
                     onClick={goToNext}
-                    className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 font-medium text-white shadow transition-colors hover:bg-blue-700"
+                    className='flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 font-medium text-white shadow transition-colors hover:bg-blue-700'
                   >
                     {currentPage === totalPages - 1 ? 'Review Summary' : 'Next'}
-                    <ArrowRightIcon className="h-4 w-4" />
+                    <ArrowRightIcon className='h-4 w-4' />
                   </button>
                 </div>
               </>
-            ) : (
-              <div className="py-12 text-center">Loading...</div>
-            )}
+            : <div className='py-12 text-center'>Loading...</div>}
           </>
         )}
 

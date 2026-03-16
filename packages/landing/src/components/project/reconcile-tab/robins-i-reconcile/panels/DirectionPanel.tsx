@@ -39,10 +39,10 @@ export function DirectionPanel({
   const radioGroupName = useId();
 
   return (
-    <div className="p-4">
+    <div className='p-4'>
       {/* Panel Header */}
-      <div className="mb-4 flex items-center justify-between">
-        <h3 className="text-foreground font-semibold">{title}</h3>
+      <div className='mb-4 flex items-center justify-between'>
+        <h3 className='text-foreground font-semibold'>{title}</h3>
         {!isFinal && !hideUseThis && (
           <button
             onClick={() => onUseThis?.()}
@@ -59,17 +59,17 @@ export function DirectionPanel({
 
       {/* Direction Badge (for reviewer panels) */}
       {!isFinal && (
-        <div className="mb-4 flex flex-wrap items-center gap-2">
-          <span className="text-muted-foreground text-xs">Direction:</span>
-          <span className="border-border bg-secondary text-secondary-foreground inline-flex items-center rounded-full border px-2 py-1 text-xs font-medium">
+        <div className='mb-4 flex flex-wrap items-center gap-2'>
+          <span className='text-muted-foreground text-xs'>Direction:</span>
+          <span className='border-border bg-secondary text-secondary-foreground inline-flex items-center rounded-full border px-2 py-1 text-xs font-medium'>
             {direction || 'Not set'}
           </span>
         </div>
       )}
 
       {/* Direction Options */}
-      <div className="space-y-2">
-        <label className="text-secondary-foreground mb-1 block text-xs font-medium">
+      <div className='space-y-2'>
+        <label className='text-secondary-foreground mb-1 block text-xs font-medium'>
           Predicted Direction of Bias
         </label>
         {options.map(option => {
@@ -77,26 +77,27 @@ export function DirectionPanel({
           const baseClasses =
             'w-full rounded-lg border-2 px-3 py-2 text-left text-sm font-medium transition-all';
 
-          return readOnly ? (
-            <div key={option} className={`${baseClasses} ${getDirectionButtonStyle(optionSelected)}`}>
-              {option}
-            </div>
-          ) : (
-            <label
-              key={option}
-              className={`${baseClasses} block cursor-pointer hover:border-blue-300 ${getDirectionButtonStyle(optionSelected)}`}
-            >
-              <input
-                type="radio"
-                name={radioGroupName}
-                value={option}
-                checked={optionSelected}
-                onChange={() => onDirectionChange?.(option)}
-                className="hidden"
-              />
-              {option}
-            </label>
-          );
+          return readOnly ?
+              <div
+                key={option}
+                className={`${baseClasses} ${getDirectionButtonStyle(optionSelected)}`}
+              >
+                {option}
+              </div>
+            : <label
+                key={option}
+                className={`${baseClasses} block cursor-pointer hover:border-blue-300 ${getDirectionButtonStyle(optionSelected)}`}
+              >
+                <input
+                  type='radio'
+                  name={radioGroupName}
+                  value={option}
+                  checked={optionSelected}
+                  onChange={() => onDirectionChange?.(option)}
+                  className='hidden'
+                />
+                {option}
+              </label>;
         })}
       </div>
     </div>

@@ -128,7 +128,6 @@ export function useReconciliationPresence({
   currentUser,
   containerRef,
 }: UseReconciliationPresenceOptions) {
-
   // Refresh tick for stale cursor detection (updates every second)
   const [refreshTick, setRefreshTick] = useState(0);
 
@@ -168,7 +167,14 @@ export function useReconciliationPresence({
         timestamp: Date.now(),
       },
     });
-  }, [getAwareness, currentUser?.id, currentUser?.name, currentUser?.image, getCurrentPage, checklistType]);
+  }, [
+    getAwareness,
+    currentUser?.id,
+    currentUser?.name,
+    currentUser?.image,
+    getCurrentPage,
+    checklistType,
+  ]);
 
   // Throttled cursor position update - Date.now() is called inside the throttled
   // callback (on mouse move), not during render, so the purity lint is a false positive
@@ -298,9 +304,7 @@ export function useReconciliationPresence({
   const usersWithCursors = useMemo(() => {
     // refreshTick forces periodic re-evaluation for stale cursor detection
     void refreshTick;
-    return remoteUsers.filter(
-      user => user.cursor != null && user.currentPage === getCurrentPage,
-    );
+    return remoteUsers.filter(user => user.cursor != null && user.currentPage === getCurrentPage);
   }, [remoteUsers, getCurrentPage, refreshTick]);
 
   // Helper: get users on a specific page

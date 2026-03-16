@@ -1,11 +1,6 @@
 import { useMemo } from 'react';
 import { ChevronDownIcon, ChevronRightIcon, CheckIcon } from 'lucide-react';
-import {
-  Tooltip,
-  TooltipTrigger,
-  TooltipContent,
-  TooltipProvider,
-} from '@/components/ui/tooltip';
+import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/components/ui/tooltip';
 import { Collapsible, CollapsibleContent } from '@/components/ui/collapsible';
 import {
   getSectionLabel,
@@ -85,19 +80,17 @@ export function NavbarDomainPill({
       <TooltipProvider>
         <Tooltip delayDuration={300}>
           <TooltipTrigger asChild>
-            <button type="button" onClick={onClick} className={labelStyle}>
-              <span className="font-semibold">{label}</span>
+            <button type='button' onClick={onClick} className={labelStyle}>
+              <span className='font-semibold'>{label}</span>
               {!isExpanded && (
-                <span className="text-2xs opacity-80">
+                <span className='text-2xs opacity-80'>
                   {progress?.answered || 0}/{progress?.total || 0}
                 </span>
               )}
               {sectionKey !== 'overall' &&
-                (isExpanded ? (
-                  <ChevronDownIcon className="h-3 w-3 opacity-60" />
-                ) : (
-                  <ChevronRightIcon className="h-3 w-3 opacity-60" />
-                ))}
+                (isExpanded ?
+                  <ChevronDownIcon className='h-3 w-3 opacity-60' />
+                : <ChevronRightIcon className='h-3 w-3 opacity-60' />)}
             </button>
           </TooltipTrigger>
           <TooltipContent>{tooltipContent}</TooltipContent>
@@ -105,7 +98,7 @@ export function NavbarDomainPill({
       </TooltipProvider>
 
       {/* Animated expanded question pills */}
-      <CollapsibleContent className="flex items-center overflow-visible py-1">
+      <CollapsibleContent className='flex items-center overflow-visible py-1'>
         {items.map((item: any, idx: number) => {
           const globalIndex = allNavItems?.indexOf(item) ?? -1;
           const itemCount = items.length;
@@ -206,8 +199,7 @@ function QuestionPill({
   const displayLabel = getDisplayLabel(item);
 
   const isDirection =
-    item.type === NAV_ITEM_TYPES.DOMAIN_DIRECTION ||
-    item.type === NAV_ITEM_TYPES.OVERALL_DIRECTION;
+    item.type === NAV_ITEM_TYPES.DOMAIN_DIRECTION || item.type === NAV_ITEM_TYPES.OVERALL_DIRECTION;
 
   const pillSizeClass = isDirection ? 'h-6 px-2 text-2xs' : 'h-6 w-6 text-2xs';
 
@@ -226,7 +218,7 @@ function QuestionPill({
       <Tooltip delayDuration={200}>
         <TooltipTrigger asChild>
           <button
-            type="button"
+            type='button'
             onClick={() => goToPage?.(globalIndex)}
             className={`relative flex items-center justify-center overflow-visible rounded-full font-medium transition-all ${pillSizeClass} ${pillSpacingClass} ${pillStyle}`}
             aria-label={tooltip}
@@ -235,10 +227,10 @@ function QuestionPill({
             {displayLabel}
             {hasAnswer && (
               <span
-                className="bg-card absolute -top-0.5 -right-0.5 flex h-2.5 w-2.5 items-center justify-center rounded-full border-[0.5px] shadow-sm"
-                aria-hidden="true"
+                className='bg-card absolute -top-0.5 -right-0.5 flex h-2.5 w-2.5 items-center justify-center rounded-full border-[0.5px] shadow-sm'
+                aria-hidden='true'
               >
-                <CheckIcon className="h-1.5 w-1.5 text-green-600" />
+                <CheckIcon className='h-1.5 w-1.5 text-green-600' />
               </span>
             )}
           </button>

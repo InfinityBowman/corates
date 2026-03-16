@@ -41,27 +41,27 @@ export function OverallJudgementPage({
   selectedDirectionSource,
 }: OverallJudgementPageProps) {
   return (
-    <div className="space-y-4">
+    <div className='space-y-4'>
       {/* Overall Header */}
-      <div className="bg-card overflow-hidden rounded-lg shadow-lg">
-        <div className="border-border bg-secondary border-b px-4 py-3">
-          <h2 className="text-foreground text-lg font-semibold">Overall Risk of Bias</h2>
-          <p className="text-muted-foreground text-sm">
+      <div className='bg-card overflow-hidden rounded-lg shadow-lg'>
+        <div className='border-border bg-secondary border-b px-4 py-3'>
+          <h2 className='text-foreground text-lg font-semibold'>Overall Risk of Bias</h2>
+          <p className='text-muted-foreground text-sm'>
             Final assessment based on judgements across all domains
           </p>
         </div>
       </div>
 
       {/* Judgement Row */}
-      <div className="bg-card overflow-hidden rounded-lg shadow-lg">
+      <div className='bg-card overflow-hidden rounded-lg shadow-lg'>
         <div
           className={`p-3 ${
-            judgementMatch
-              ? 'border-b border-green-200 bg-green-50'
-              : 'border-b border-amber-200 bg-amber-50'
+            judgementMatch ?
+              'border-b border-green-200 bg-green-50'
+            : 'border-b border-amber-200 bg-amber-50'
           }`}
         >
-          <h3 className="text-foreground font-medium">Overall Risk of Bias Judgement</h3>
+          <h3 className='text-foreground font-medium'>Overall Risk of Bias Judgement</h3>
           <span
             className={`text-xs font-medium ${
               judgementMatch ? 'text-green-700' : 'text-amber-700'
@@ -71,10 +71,10 @@ export function OverallJudgementPage({
           </span>
         </div>
 
-        <div className="divide-border grid grid-cols-3 divide-x">
+        <div className='divide-border grid grid-cols-3 divide-x'>
           <JudgementPanel
             title={reviewer1Name || 'Reviewer 1'}
-            panelType="reviewer1"
+            panelType='reviewer1'
             judgement={reviewer1Data?.judgement}
             judgementOptions={OVERALL_ROB_JUDGEMENTS}
             readOnly={true}
@@ -85,7 +85,7 @@ export function OverallJudgementPage({
 
           <JudgementPanel
             title={reviewer2Name || 'Reviewer 2'}
-            panelType="reviewer2"
+            panelType='reviewer2'
             judgement={reviewer2Data?.judgement}
             judgementOptions={OVERALL_ROB_JUDGEMENTS}
             readOnly={true}
@@ -95,8 +95,8 @@ export function OverallJudgementPage({
           />
 
           <JudgementPanel
-            title="Final Judgement"
-            panelType="final"
+            title='Final Judgement'
+            panelType='final'
             judgement={finalData?.judgement}
             judgementOptions={OVERALL_ROB_JUDGEMENTS}
             readOnly={false}
@@ -107,15 +107,15 @@ export function OverallJudgementPage({
       </div>
 
       {/* Direction Row */}
-      <div className="bg-card overflow-hidden rounded-lg shadow-lg">
+      <div className='bg-card overflow-hidden rounded-lg shadow-lg'>
         <div
           className={`p-3 ${
-            directionMatch
-              ? 'border-b border-green-200 bg-green-50'
-              : 'border-b border-amber-200 bg-amber-50'
+            directionMatch ?
+              'border-b border-green-200 bg-green-50'
+            : 'border-b border-amber-200 bg-amber-50'
           }`}
         >
-          <h3 className="text-foreground font-medium">Predicted Direction of Bias (Overall)</h3>
+          <h3 className='text-foreground font-medium'>Predicted Direction of Bias (Overall)</h3>
           <span
             className={`text-xs font-medium ${
               directionMatch ? 'text-green-700' : 'text-amber-700'
@@ -125,10 +125,10 @@ export function OverallJudgementPage({
           </span>
         </div>
 
-        <div className="divide-border grid grid-cols-3 divide-x">
+        <div className='divide-border grid grid-cols-3 divide-x'>
           <DirectionPanel
             title={reviewer1Name || 'Reviewer 1'}
-            panelType="reviewer1"
+            panelType='reviewer1'
             direction={reviewer1Data?.direction}
             directionOptions={BIAS_DIRECTIONS}
             readOnly={true}
@@ -139,7 +139,7 @@ export function OverallJudgementPage({
 
           <DirectionPanel
             title={reviewer2Name || 'Reviewer 2'}
-            panelType="reviewer2"
+            panelType='reviewer2'
             direction={reviewer2Data?.direction}
             directionOptions={BIAS_DIRECTIONS}
             readOnly={true}
@@ -149,8 +149,8 @@ export function OverallJudgementPage({
           />
 
           <DirectionPanel
-            title="Final Direction"
-            panelType="final"
+            title='Final Direction'
+            panelType='final'
             direction={finalData?.direction}
             directionOptions={BIAS_DIRECTIONS}
             readOnly={false}

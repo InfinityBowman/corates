@@ -196,10 +196,12 @@ export function ChecklistReconciliation({
       if (isMultiPartQuestion(key)) {
         const dataKeys = getDataKeysForQuestion(key);
         for (const dk of dataKeys) {
-          if ((defaultChecklist as Record<string, any>)[dk]) updateChecklistAnswer(dk, (defaultChecklist as Record<string, any>)[dk]);
+          if ((defaultChecklist as Record<string, any>)[dk])
+            updateChecklistAnswer(dk, (defaultChecklist as Record<string, any>)[dk]);
         }
       } else {
-        if ((defaultChecklist as Record<string, any>)[key]) updateChecklistAnswer(key, (defaultChecklist as Record<string, any>)[key]);
+        if ((defaultChecklist as Record<string, any>)[key])
+          updateChecklistAnswer(key, (defaultChecklist as Record<string, any>)[key]);
       }
     }
 
@@ -349,8 +351,8 @@ export function ChecklistReconciliation({
   }
 
   return (
-    <div className="bg-blue-50">
-      <div className="mx-auto max-w-7xl px-4 py-4">
+    <div className='bg-blue-50'>
+      <div className='mx-auto max-w-7xl px-4 py-4'>
         {/* Finish confirmation dialog */}
         <AlertDialog open={finishDialogOpen} onOpenChange={setFinishDialogOpen}>
           <AlertDialogContent>
@@ -362,7 +364,11 @@ export function ChecklistReconciliation({
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <Button variant="outline" onClick={() => setFinishDialogOpen(false)} disabled={saving}>
+              <Button
+                variant='outline'
+                onClick={() => setFinishDialogOpen(false)}
+                disabled={saving}
+              >
                 Cancel
               </Button>
               <AlertDialogAction disabled={saving} onClick={confirmSave}>
@@ -375,7 +381,7 @@ export function ChecklistReconciliation({
         {/* Main Content */}
         {viewMode === 'questions' && (
           <>
-            {comparison && currentQuestionKey ? (
+            {comparison && currentQuestionKey ?
               <>
                 <ReconciliationQuestionPage
                   questionKey={currentQuestionKey}
@@ -393,36 +399,34 @@ export function ChecklistReconciliation({
                 />
 
                 {/* Navigation Buttons */}
-                <div className="mt-4 flex items-center justify-between">
+                <div className='mt-4 flex items-center justify-between'>
                   <button
                     onClick={goToPrevious}
                     disabled={currentPage === 0}
                     className={`flex items-center gap-2 rounded-lg px-4 py-2 font-medium transition-colors ${
-                      currentPage === 0
-                        ? 'bg-secondary text-muted-foreground/70 cursor-not-allowed'
-                        : 'bg-card text-secondary-foreground hover:bg-secondary shadow'
+                      currentPage === 0 ?
+                        'bg-secondary text-muted-foreground/70 cursor-not-allowed'
+                      : 'bg-card text-secondary-foreground hover:bg-secondary shadow'
                     }`}
                   >
-                    <ArrowLeftIcon className="h-4 w-4" />
+                    <ArrowLeftIcon className='h-4 w-4' />
                     Previous
                   </button>
 
-                  <div className="text-muted-foreground text-sm">
+                  <div className='text-muted-foreground text-sm'>
                     Question {currentPage + 1} of {totalPages}
                   </div>
 
                   <button
                     onClick={goToNext}
-                    className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 font-medium text-white shadow transition-colors hover:bg-blue-700"
+                    className='flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 font-medium text-white shadow transition-colors hover:bg-blue-700'
                   >
                     {currentPage === totalPages - 1 ? 'Review Summary' : 'Next'}
-                    <ArrowRightIcon className="h-4 w-4" />
+                    <ArrowRightIcon className='h-4 w-4' />
                   </button>
                 </div>
               </>
-            ) : (
-              <div className="py-12 text-center">Loading...</div>
-            )}
+            : <div className='py-12 text-center'>Loading...</div>}
           </>
         )}
 

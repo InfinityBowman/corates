@@ -62,7 +62,7 @@ export function LineChart({
       return datasets.map(ds => (
         <Line
           key={ds.label}
-          type="monotone"
+          type='monotone'
           dataKey={ds.label}
           stroke={ds.color || color}
           fill={ds.fill ? `${ds.color || color}1A` : 'transparent'}
@@ -74,7 +74,7 @@ export function LineChart({
     }
     return (
       <Line
-        type="monotone"
+        type='monotone'
         dataKey={label}
         stroke={color}
         fill={fill ? `${color}1A` : 'transparent'}
@@ -87,10 +87,10 @@ export function LineChart({
 
   return (
     <div className={className}>
-      <ResponsiveContainer width="100%" height="100%">
+      <ResponsiveContainer width='100%' height='100%'>
         <RechartsLineChart data={chartData}>
-          <CartesianGrid strokeDasharray="3 3" vertical={false} />
-          <XAxis dataKey="name" tick={{ fontSize: 12 }} />
+          <CartesianGrid strokeDasharray='3 3' vertical={false} />
+          <XAxis dataKey='name' tick={{ fontSize: 12 }} />
           <YAxis allowDecimals={false} tick={{ fontSize: 12 }} />
           <Tooltip />
           {showLegend && <Legend />}

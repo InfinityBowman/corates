@@ -87,8 +87,8 @@ export function ReconciliationWrapper({
   const connectionState = useProjectStore(
     s => (s.projects[projectId] as any)?.connectionState || {},
   ) as any;
-  const currentStudy = useProjectStore(
-    s => (s.projects[projectId]?.studies || []).find((st: any) => st.id === studyId),
+  const currentStudy = useProjectStore(s =>
+    (s.projects[projectId]?.studies || []).find((st: any) => st.id === studyId),
   ) as any;
   const members = useProjectStore(s => s.projects[projectId]?.members || []) as any[];
 
@@ -210,7 +210,14 @@ export function ReconciliationWrapper({
       createdAt: checklist1Meta.createdAt,
       ...data.answers,
     };
-  }, [checklist1Meta, getChecklistData, studyId, checklist1Id, currentStudy?.name, getReviewerName]);
+  }, [
+    checklist1Meta,
+    getChecklistData,
+    studyId,
+    checklist1Id,
+    currentStudy?.name,
+    getReviewerName,
+  ]);
 
   const checklist2Data = useMemo(() => {
     if (!checklist2Meta || !getChecklistData) return null;
@@ -223,7 +230,14 @@ export function ReconciliationWrapper({
       createdAt: checklist2Meta.createdAt,
       ...data.answers,
     };
-  }, [checklist2Meta, getChecklistData, studyId, checklist2Id, currentStudy?.name, getReviewerName]);
+  }, [
+    checklist2Meta,
+    getChecklistData,
+    studyId,
+    checklist2Id,
+    currentStudy?.name,
+    getReviewerName,
+  ]);
 
   // State for reconciled checklist
   const [reconciledChecklistId, setReconciledChecklistId] = useState<string | null>(null);
@@ -379,15 +393,11 @@ export function ReconciliationWrapper({
     };
   }, [reconciledChecklistId, getChecklistData, studyId, reconciledChecklistMeta]);
 
-  const isRobinsI =
-    checklistType === CHECKLIST_TYPES.ROBINS_I || checklistType === 'ROBINS_I';
+  const isRobinsI = checklistType === CHECKLIST_TYPES.ROBINS_I || checklistType === 'ROBINS_I';
   const isRob2 = checklistType === CHECKLIST_TYPES.ROB2 || checklistType === 'ROB2';
 
   // Build project path
-  const getProjectPath = useCallback(
-    () => `/projects/${projectId}`,
-    [projectId],
-  );
+  const getProjectPath = useCallback(() => `/projects/${projectId}`, [projectId]);
 
   // Handle saving the reconciled checklist
   const handleSaveReconciled = useCallback(
@@ -438,13 +448,13 @@ export function ReconciliationWrapper({
   // Error state
   if (error) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-blue-50">
-        <div className="bg-card max-w-md rounded-lg p-8 shadow-lg">
-          <h2 className="mb-2 text-xl font-bold text-red-600">Error</h2>
-          <p className="text-secondary-foreground">{error}</p>
+      <div className='flex min-h-screen items-center justify-center bg-blue-50'>
+        <div className='bg-card max-w-md rounded-lg p-8 shadow-lg'>
+          <h2 className='mb-2 text-xl font-bold text-red-600'>Error</h2>
+          <p className='text-secondary-foreground'>{error}</p>
           <button
             onClick={handleCancel}
-            className="bg-primary hover:bg-primary/90 focus:ring-primary mt-4 rounded-lg px-4 py-2 text-white focus:ring-2 focus:outline-none"
+            className='bg-primary hover:bg-primary/90 focus:ring-primary mt-4 rounded-lg px-4 py-2 text-white focus:ring-2 focus:outline-none'
           >
             Go Back
           </button>
@@ -454,20 +464,13 @@ export function ReconciliationWrapper({
   }
 
   // Loading state
-  if (
-    !checklist1Data ||
-    !checklist2Data ||
-    reconciledChecklistLoading ||
-    !reconciledChecklistId
-  ) {
+  if (!checklist1Data || !checklist2Data || reconciledChecklistLoading || !reconciledChecklistId) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-blue-50">
-        <div className="text-center">
-          <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-4 border-blue-600 border-t-transparent" />
-          <p className="text-secondary-foreground">
-            {reconciledChecklistLoading
-              ? 'Setting up reconciliation...'
-              : 'Loading checklists...'}
+      <div className='flex min-h-screen items-center justify-center bg-blue-50'>
+        <div className='text-center'>
+          <div className='mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-4 border-blue-600 border-t-transparent' />
+          <p className='text-secondary-foreground'>
+            {reconciledChecklistLoading ? 'Setting up reconciliation...' : 'Loading checklists...'}
           </p>
         </div>
       </div>
@@ -487,7 +490,7 @@ export function ReconciliationWrapper({
         getRobinsText={(sectionKey: string, fieldKey: string, questionKey?: string) =>
           getRobinsText?.(studyId, reconciledChecklistId, sectionKey, fieldKey, questionKey)
         }
-        checklistType="ROBINS_I"
+        checklistType='ROBINS_I'
       />
     );
   }
@@ -503,7 +506,7 @@ export function ReconciliationWrapper({
         getRob2Text={(sectionKey: string, fieldKey: string, questionKey?: string) =>
           getRob2Text?.(studyId, reconciledChecklistId, sectionKey, fieldKey, questionKey)
         }
-        checklistType="ROB2"
+        checklistType='ROB2'
       />
     );
   }
@@ -519,9 +522,7 @@ export function ReconciliationWrapper({
         if (!reconciledChecklistId) return;
         updateChecklistAnswer?.(studyId, reconciledChecklistId, questionKey, questionData);
       }}
-      checklistType="AMSTAR2"
+      checklistType='AMSTAR2'
     />
   );
 }
-
-
