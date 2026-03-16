@@ -26,30 +26,33 @@ export default function FlipNumber({
   const currentDecimalsRef = useRef<number>(decimals);
   const prevValueRef = useRef<number>(value);
 
-  const createCountUp = useCallback((startVal: number, endVal: number, dec: number) => {
-    if (!ref.current) return;
+  const createCountUp = useCallback(
+    (startVal: number, endVal: number, dec: number) => {
+      if (!ref.current) return;
 
-    if (countUpRef.current) {
-      countUpRef.current.reset();
-    }
+      if (countUpRef.current) {
+        countUpRef.current.reset();
+      }
 
-    const instance = new CountUp(ref.current, endVal, {
-      startVal,
-      decimalPlaces: dec,
-      duration,
-      prefix,
-      useEasing: true,
-      useGrouping: true,
-      separator: ',',
-    });
+      const instance = new CountUp(ref.current, endVal, {
+        startVal,
+        decimalPlaces: dec,
+        duration,
+        prefix,
+        useEasing: true,
+        useGrouping: true,
+        separator: ',',
+      });
 
-    currentDecimalsRef.current = dec;
-    countUpRef.current = instance;
+      currentDecimalsRef.current = dec;
+      countUpRef.current = instance;
 
-    if (!instance.error) {
-      instance.start();
-    }
-  }, [duration, prefix]);
+      if (!instance.error) {
+        instance.start();
+      }
+    },
+    [duration, prefix],
+  );
 
   // Initialize on mount
   useEffect(() => {
