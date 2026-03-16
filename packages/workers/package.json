@@ -30,7 +30,7 @@
     "localflare": "localflare"
   },
   "dependencies": {
-    "@better-auth/stripe": "^1.5.4",
+    "@better-auth/stripe": "^1.5.5",
     "@cloudflare/workers-types": "^4.20260307.1",
     "@corates/shared": "workspace:*",
     "@hono/zod-openapi": "^1.2.2",
