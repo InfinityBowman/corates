@@ -300,9 +300,9 @@ Both `loading` and `isLoading` are boolean props. `loading` controls button disa
 
 ## Summary
 
-| Priority                               | Count  | Action                                                                                                                                    |
-| -------------------------------------- | ------ | ----------------------------------------------------------------------------------------------------------------------------------------- |
-| Fix immediately (runtime breakage)     | 1      | SolidJS form-errors test                                                                                                                  |
-| Fix before merge (type safety + React) | 8      | `as any` casts, stale closure risk, effect re-fire (#28), dead props (#29), flicker (#30), unstable columns (#35)                         |
+| Priority                               | Count  | Action                                                                                                                                                                         |
+| -------------------------------------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Fix immediately (runtime breakage)     | 1      | SolidJS form-errors test                                                                                                                                                       |
+| Fix before merge (type safety + React) | 8      | `as any` casts, stale closure risk, effect re-fire (#28), dead props (#29), flicker (#30), unstable columns (#35)                                                              |
 | Fix soon (consistency + a11y)          | 18     | Untyped JS, missing guards, render fns, redirect, a11y (#24-25,33,38), unused props (#26), duplicates (#31-32,36), invalid HTML (#34), pagination (#37), confusing props (#39) |
-| **Total**                              | **27** |                                                                                                                                           |
+| **Total**                              | **27** |                                                                                                                                                                                |
