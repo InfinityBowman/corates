@@ -14,7 +14,7 @@ import _projectActionsStore from '@/stores/projectActionsStore/index.js';
 import { ACCESS_DENIED_ERRORS } from '@/constants/errors.js';
 import { CHECKLIST_STATUS, isEditable } from '@/constants/checklist-status.js';
 import { getNextStatusForCompletion } from '@/lib/checklist-domain.js';
-import { downloadPdf, uploadPdf, deletePdf, getPdfUrl } from '@/api/pdf-api.js';
+import { downloadPdf, uploadPdf, deletePdf, getPdfUrl } from '@/api/pdf-api';
 import { getCachedPdf, cachePdf } from '@/primitives/pdfCache.js';
 import { showToast } from '@/components/ui/toast';
 import {
@@ -26,7 +26,7 @@ import {
   AlertDialogFooter,
   AlertDialogAction,
 } from '@/components/ui/alert-dialog';
-import { getChecklistTypeFromState, scoreChecklistOfType } from '@/checklist-registry/index.js';
+import { getChecklistTypeFromState, scoreChecklistOfType } from '@/checklist-registry/index';
 import { ScoreTag } from '@/components/checklist/ScoreTag';
 import { isAMSTAR2Complete } from '@/components/checklist/AMSTAR2Checklist/checklist.js';
 import { isROBINSIComplete } from '@/components/checklist/ROBINSIChecklist/checklist';

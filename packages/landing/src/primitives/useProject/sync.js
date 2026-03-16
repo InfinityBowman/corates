@@ -4,7 +4,7 @@
  */
 
 import { useProjectStore } from '@/stores/projectStore';
-import { scoreChecklistOfType } from '@/checklist-registry/index.js';
+import { scoreChecklistOfType } from '@/checklist-registry/index';
 import { amstar2 } from '@corates/shared';
 import { CHECKLIST_STATUS } from '@/constants/checklist-status';
 

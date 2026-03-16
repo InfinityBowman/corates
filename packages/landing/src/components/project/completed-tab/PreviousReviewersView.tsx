@@ -16,7 +16,7 @@ import {
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useProjectContext } from '@/components/project/ProjectContext';
 import { getOriginalReviewerChecklists } from '@/lib/checklist-domain.js';
-import { getChecklistMetadata } from '@/checklist-registry/index.js';
+import { getChecklistMetadata } from '@/checklist-registry/index';
 import { GenericChecklist } from '@/components/checklist/GenericChecklist';
 
 interface PreviousReviewersViewProps {

@@ -10,7 +10,7 @@ import { ChevronLeftIcon } from 'lucide-react';
 import { ChecklistWithPdf } from '@/components/checklist/ChecklistWithPdf';
 import { CreateLocalChecklist } from '@/components/checklist/CreateLocalChecklist';
 import { useLocalChecklistsStore } from '@/stores/localChecklistsStore';
-import { getChecklistTypeFromState, scoreChecklistOfType } from '@/checklist-registry/index.js';
+import { getChecklistTypeFromState, scoreChecklistOfType } from '@/checklist-registry/index';
 import { ScoreTag } from '@/components/checklist/ScoreTag';
 import { createLocalAdapterFactories } from '@/components/checklist/common/LocalTextAdapter.js';
 

@@ -11,7 +11,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from '@/components/ui/dialog';
-import { importFromGoogleDrive } from '@/api/google-drive.js';
+import { importFromGoogleDrive } from '@/api/google-drive';
 import { GoogleDrivePickerLauncher } from './GoogleDrivePickerLauncher';
 
 interface GoogleDrivePickerModalProps {

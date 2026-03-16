@@ -2,11 +2,11 @@
  * Study operations for projectActionsStore
  */
 
-import { uploadPdf, fetchPdfViaProxy, downloadPdf, deletePdf } from '@/api/pdf-api.js';
+import { uploadPdf, fetchPdfViaProxy, downloadPdf, deletePdf } from '@/api/pdf-api';
 import { cachePdf, clearStudyCache } from '@/primitives/pdfCache.js';
 import { bestEffort } from '@/lib/errorLogger.js';
 import { showToast } from '@/components/ui/toast';
-import { importFromGoogleDrive } from '@/api/google-drive.js';
+import { importFromGoogleDrive } from '@/api/google-drive';
 import { extractPdfDoi, extractPdfTitle } from '@/lib/pdfUtils.js';
 import { fetchFromDOI } from '@/lib/referenceLookup.js';
 import { useProjectStore } from '../projectStore';

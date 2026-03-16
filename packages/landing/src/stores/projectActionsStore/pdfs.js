@@ -2,7 +2,7 @@
  * PDF operations for projectActionsStore
  */
 
-import { uploadPdf, downloadPdf, deletePdf } from '@/api/pdf-api.js';
+import { uploadPdf, downloadPdf, deletePdf } from '@/api/pdf-api';
 import { cachePdf, removeCachedPdf, getCachedPdf } from '@/primitives/pdfCache.js';
 import { bestEffort } from '@/lib/errorLogger.js';
 import { extractPdfDoi, extractPdfTitle } from '@/lib/pdfUtils.js';

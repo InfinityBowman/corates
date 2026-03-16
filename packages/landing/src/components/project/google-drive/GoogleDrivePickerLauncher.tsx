@@ -9,8 +9,8 @@ import {
   getGoogleDriveStatus,
   getGoogleDrivePickerToken,
   connectGoogleAccount,
-} from '@/api/google-drive.js';
-import { GOOGLE_PICKER_API_KEY, GOOGLE_PICKER_APP_ID } from '@/config/google.js';
+} from '@/api/google-drive';
+import { GOOGLE_PICKER_API_KEY, GOOGLE_PICKER_APP_ID } from '@/config/google';
 import { pickGooglePdfFiles } from '@/lib/googlePicker.js';
 import { buildRestoreCallbackUrl } from '@/lib/formStatePersistence.js';
 

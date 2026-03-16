@@ -13,10 +13,10 @@ import { useAuthStore, selectUser } from '@/stores/authStore';
 import { ACCESS_DENIED_ERRORS } from '@/constants/errors';
 import _projectActionsStore from '@/stores/projectActionsStore/index.js';
 const projectActionsStore = _projectActionsStore as any;
-import { uploadPdf, deletePdf } from '@/api/pdf-api.js';
+import { uploadPdf, deletePdf } from '@/api/pdf-api';
 import { cachePdf } from '@/primitives/pdfCache.js';
 import { bestEffort } from '@/lib/errorLogger.js';
-import { importFromGoogleDrive } from '@/api/google-drive.js';
+import { importFromGoogleDrive } from '@/api/google-drive';
 import { showToast } from '@/components/ui/toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {

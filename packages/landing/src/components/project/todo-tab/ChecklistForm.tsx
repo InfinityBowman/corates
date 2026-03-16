@@ -39,7 +39,7 @@ export function ChecklistForm({
 }: ChecklistFormProps) {
   const { projectId } = useProjectContext();
 
-  const [type, setType] = useState(DEFAULT_CHECKLIST_TYPE);
+  const [type, setType] = useState<string>(DEFAULT_CHECKLIST_TYPE);
   const [selectedOutcomeId, setSelectedOutcomeId] = useState<string | null>(null);
 
   const typeOptions = useMemo(() => getChecklistTypeOptions(), []);

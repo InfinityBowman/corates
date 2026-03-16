@@ -4,7 +4,7 @@
  */
 
 import { ROBINS_I_CHECKLIST, getDomainQuestions, getActiveDomainKeys } from './checklist-map';
-import { CHECKLIST_TYPES } from '@/checklist-registry/types.js';
+import { CHECKLIST_TYPES } from '@/checklist-registry/types';
 
 /**
  * Deep clone a plain object/array via JSON serialization

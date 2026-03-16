@@ -9,7 +9,7 @@ import { FileTextIcon, XIcon, CloudUploadIcon } from 'lucide-react';
 import { useLocalChecklistsStore } from '@/stores/localChecklistsStore';
 import { FileUpload, FileUploadDropzone, FileUploadHiddenInput } from '@/components/ui/file-upload';
 import { LANDING_URL } from '@/config/api.js';
-import { getChecklistTypeOptions, DEFAULT_CHECKLIST_TYPE } from '@/checklist-registry/index.js';
+import { getChecklistTypeOptions, DEFAULT_CHECKLIST_TYPE } from '@/checklist-registry/index';
 import { validatePdfFile } from '@/lib/pdfValidation.js';
 
 export function CreateLocalChecklist({ type: typeParam }: { type?: string }) {

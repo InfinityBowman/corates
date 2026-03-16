@@ -15,10 +15,10 @@ import {
   findReconciledChecklistForOutcome,
   getInProgressReconciledChecklists,
 } from '@/lib/checklist-domain.js';
-import { downloadPdf, getPdfUrl } from '@/api/pdf-api.js';
+import { downloadPdf, getPdfUrl } from '@/api/pdf-api';
 import { getCachedPdf, cachePdf } from '@/primitives/pdfCache.js';
 import { showToast } from '@/components/ui/toast';
-import { CHECKLIST_TYPES } from '@/checklist-registry/types.js';
+import { CHECKLIST_TYPES } from '@/checklist-registry/types';
 import { usePdfPreviewStore } from '@/stores/pdfPreviewStore';
 import { ReconciliationWithPdf } from './amstar2-reconcile/ReconciliationWithPdf';
 import { ROB2ReconciliationWithPdf } from './rob2-reconcile/index';

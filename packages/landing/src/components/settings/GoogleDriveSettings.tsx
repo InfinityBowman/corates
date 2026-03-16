@@ -19,7 +19,7 @@ import {
   getGoogleDriveStatus,
   disconnectGoogleDrive,
   connectGoogleAccount,
-} from '@/api/google-drive.js';
+} from '@/api/google-drive';
 
 export function GoogleDriveSettings() {
   const [loading, setLoading] = useState(true);
