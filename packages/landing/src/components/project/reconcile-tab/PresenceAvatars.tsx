@@ -10,12 +10,7 @@
 
 import { useMemo } from 'react';
 import { Avatar, AvatarImage, AvatarFallback, getInitials } from '@/components/ui/avatar';
-import {
-  Tooltip,
-  TooltipTrigger,
-  TooltipContent,
-  TooltipProvider,
-} from '@/components/ui/tooltip';
+import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/components/ui/tooltip';
 import { API_BASE } from '@/config/api';
 import type { RemoteUser } from '@/hooks/useReconciliationPresence';
 
@@ -49,23 +44,23 @@ export function PresenceAvatars({
   };
 
   return (
-    <div className="flex items-center gap-2">
-      <div className="flex -space-x-2">
+    <div className='flex items-center gap-2'>
+      <div className='flex -space-x-2'>
         <TooltipProvider>
           {visibleUsers.map(user => (
             <Tooltip key={user.clientId} delayDuration={200}>
               <TooltipTrigger asChild>
                 <button
                   onClick={() => onUserClick?.(user.userId, user.currentPage)}
-                  className="focus:ring-primary relative rounded-full transition-transform hover:z-10 hover:scale-110 focus:z-10 focus:ring-2 focus:ring-offset-2 focus:outline-none"
+                  className='focus:ring-primary relative rounded-full transition-transform hover:z-10 hover:scale-110 focus:z-10 focus:ring-2 focus:ring-offset-2 focus:outline-none'
                   style={{
                     boxShadow: `0 0 0 2px ${(user.color as Record<string, any>).hex}`,
                   }}
                 >
-                  <Avatar className="h-7 w-7 border-2 border-white text-xs">
+                  <Avatar className='h-7 w-7 border-2 border-white text-xs'>
                     <AvatarImage src={getAvatarUrl(user)} alt={user.name} />
                     <AvatarFallback
-                      className="text-white"
+                      className='text-white'
                       style={{ backgroundColor: (user.color as Record<string, any>).hex }}
                     >
                       {getInitials(user.name)}
@@ -73,9 +68,9 @@ export function PresenceAvatars({
                   </Avatar>
                 </button>
               </TooltipTrigger>
-              <TooltipContent side="bottom" className="flex flex-col gap-0.5">
-                <span className="font-medium">{user.name}</span>
-                <span className="text-muted-foreground text-xs">
+              <TooltipContent side='bottom' className='flex flex-col gap-0.5'>
+                <span className='font-medium'>{user.name}</span>
+                <span className='text-muted-foreground text-xs'>
                   Viewing {getLabel(user.currentPage)}
                 </span>
               </TooltipContent>
@@ -86,11 +81,11 @@ export function PresenceAvatars({
           {overflowCount > 0 && (
             <Tooltip delayDuration={200}>
               <TooltipTrigger asChild>
-                <div className="bg-muted text-muted-foreground flex h-7 w-7 items-center justify-center rounded-full border-2 border-white text-xs font-medium">
+                <div className='bg-muted text-muted-foreground flex h-7 w-7 items-center justify-center rounded-full border-2 border-white text-xs font-medium'>
                   +{overflowCount}
                 </div>
               </TooltipTrigger>
-              <TooltipContent side="bottom">
+              <TooltipContent side='bottom'>
                 {overflowCount} more {overflowCount === 1 ? 'person' : 'people'} viewing
               </TooltipContent>
             </Tooltip>

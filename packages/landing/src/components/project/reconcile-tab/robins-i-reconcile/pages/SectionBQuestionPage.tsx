@@ -1,7 +1,4 @@
-import {
-  SECTION_B,
-  RESPONSE_TYPES,
-} from '@/components/checklist/ROBINSIChecklist/checklist-map';
+import { SECTION_B, RESPONSE_TYPES } from '@/components/checklist/ROBINSIChecklist/checklist-map';
 import { RobinsAnswerPanel } from '../panels/RobinsAnswerPanel';
 
 interface SectionBQuestionPageProps {
@@ -39,22 +36,20 @@ export function SectionBQuestionPage({
     (RESPONSE_TYPES as unknown as Record<string, readonly string[]>).STANDARD;
 
   return (
-    <div className="bg-card overflow-hidden rounded-lg shadow-lg">
+    <div className='bg-card overflow-hidden rounded-lg shadow-lg'>
       {/* Question Header */}
       <div
         className={`p-4 ${
-          isAgreement
-            ? 'border-b border-green-200 bg-green-50'
-            : 'border-b border-amber-200 bg-amber-50'
+          isAgreement ?
+            'border-b border-green-200 bg-green-50'
+          : 'border-b border-amber-200 bg-amber-50'
         }`}
       >
-        <h2 className="text-md text-foreground font-medium">
-          <span className="font-semibold">{questionKey.toUpperCase()}.</span> {question?.text}
+        <h2 className='text-md text-foreground font-medium'>
+          <span className='font-semibold'>{questionKey.toUpperCase()}.</span> {question?.text}
         </h2>
-        {question?.info && (
-          <p className="text-muted-foreground mt-2 text-sm">{question.info}</p>
-        )}
-        <div className="mt-2 flex items-center gap-3">
+        {question?.info && <p className='text-muted-foreground mt-2 text-sm'>{question.info}</p>}
+        <div className='mt-2 flex items-center gap-3'>
           <span
             className={`text-xs font-medium ${isAgreement ? 'text-green-700' : 'text-amber-700'}`}
           >
@@ -64,10 +59,10 @@ export function SectionBQuestionPage({
       </div>
 
       {/* Three Column Layout */}
-      <div className="divide-border grid grid-cols-3 divide-x">
+      <div className='divide-border grid grid-cols-3 divide-x'>
         <RobinsAnswerPanel
           title={reviewer1Name || 'Reviewer 1'}
-          panelType="reviewer1"
+          panelType='reviewer1'
           answer={reviewer1Data?.answer}
           comment={reviewer1Data?.comment}
           responseOptions={responseOptions}
@@ -79,7 +74,7 @@ export function SectionBQuestionPage({
 
         <RobinsAnswerPanel
           title={reviewer2Name || 'Reviewer 2'}
-          panelType="reviewer2"
+          panelType='reviewer2'
           answer={reviewer2Data?.answer}
           comment={reviewer2Data?.comment}
           responseOptions={responseOptions}
@@ -90,8 +85,8 @@ export function SectionBQuestionPage({
         />
 
         <RobinsAnswerPanel
-          title="Final Answer"
-          panelType="final"
+          title='Final Answer'
+          panelType='final'
           answer={finalData?.answer}
           commentYText={finalCommentYText}
           responseOptions={responseOptions}

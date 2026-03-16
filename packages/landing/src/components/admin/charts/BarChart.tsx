@@ -50,10 +50,10 @@ export function BarChart({
 
   return (
     <div className={className}>
-      <ResponsiveContainer width="100%" height="100%">
+      <ResponsiveContainer width='100%' height='100%'>
         <RechartsBarChart data={chartData}>
-          <CartesianGrid strokeDasharray="3 3" vertical={false} />
-          <XAxis dataKey="name" tick={{ fontSize: 12 }} />
+          <CartesianGrid strokeDasharray='3 3' vertical={false} />
+          <XAxis dataKey='name' tick={{ fontSize: 12 }} />
           <YAxis allowDecimals={false} tick={{ fontSize: 12 }} />
           <Tooltip />
           {showLegend && <Legend />}

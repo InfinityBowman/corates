@@ -44,30 +44,26 @@ export function DomainQuestionPage({
     (RESPONSE_TYPES as unknown as Record<string, readonly string[]>).WITH_NI;
 
   return (
-    <div className="bg-card overflow-hidden rounded-lg shadow-lg">
+    <div className='bg-card overflow-hidden rounded-lg shadow-lg'>
       {/* Domain Header */}
-      <div className="border-border bg-muted border-b px-4 py-2">
-        <h3 className="text-secondary-foreground text-sm font-medium">{domain?.name}</h3>
-        {domain?.subtitle && (
-          <p className="text-muted-foreground text-xs">{domain.subtitle}</p>
-        )}
+      <div className='border-border bg-muted border-b px-4 py-2'>
+        <h3 className='text-secondary-foreground text-sm font-medium'>{domain?.name}</h3>
+        {domain?.subtitle && <p className='text-muted-foreground text-xs'>{domain.subtitle}</p>}
       </div>
 
       {/* Question Header */}
       <div
         className={`p-4 ${
-          isAgreement
-            ? 'border-b border-green-200 bg-green-50'
-            : 'border-b border-amber-200 bg-amber-50'
+          isAgreement ?
+            'border-b border-green-200 bg-green-50'
+          : 'border-b border-amber-200 bg-amber-50'
         }`}
       >
-        <h2 className="text-md text-foreground font-medium">
-          <span className="font-semibold">{question?.number}.</span> {question?.text}
+        <h2 className='text-md text-foreground font-medium'>
+          <span className='font-semibold'>{question?.number}.</span> {question?.text}
         </h2>
-        {question?.note && (
-          <p className="text-muted-foreground mt-2 text-sm">{question.note}</p>
-        )}
-        <div className="mt-2 flex items-center gap-3">
+        {question?.note && <p className='text-muted-foreground mt-2 text-sm'>{question.note}</p>}
+        <div className='mt-2 flex items-center gap-3'>
           <span
             className={`text-xs font-medium ${isAgreement ? 'text-green-700' : 'text-amber-700'}`}
           >
@@ -77,10 +73,10 @@ export function DomainQuestionPage({
       </div>
 
       {/* Three Column Layout */}
-      <div className="divide-border grid grid-cols-3 divide-x">
+      <div className='divide-border grid grid-cols-3 divide-x'>
         <RobinsAnswerPanel
           title={reviewer1Name || 'Reviewer 1'}
-          panelType="reviewer1"
+          panelType='reviewer1'
           answer={reviewer1Data?.answer}
           comment={reviewer1Data?.comment}
           responseOptions={responseOptions}
@@ -92,7 +88,7 @@ export function DomainQuestionPage({
 
         <RobinsAnswerPanel
           title={reviewer2Name || 'Reviewer 2'}
-          panelType="reviewer2"
+          panelType='reviewer2'
           answer={reviewer2Data?.answer}
           comment={reviewer2Data?.comment}
           responseOptions={responseOptions}
@@ -103,8 +99,8 @@ export function DomainQuestionPage({
         />
 
         <RobinsAnswerPanel
-          title="Final Answer"
-          panelType="final"
+          title='Final Answer'
+          panelType='final'
           answer={finalData?.answer}
           commentYText={finalCommentYText}
           responseOptions={responseOptions}

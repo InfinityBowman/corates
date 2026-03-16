@@ -14,7 +14,12 @@ import { CHECKLIST_STATUS } from '@/constants/checklist-status.js';
  * Export an SVG element as a file (framework-agnostic utility)
  */
 // eslint-disable-next-line no-undef
-function exportChart(svgElement: SVGSVGElement | null, filename: string, format: 'svg' | 'png', transparent = false) {
+function exportChart(
+  svgElement: SVGSVGElement | null,
+  filename: string,
+  format: 'svg' | 'png',
+  transparent = false,
+) {
   if (!svgElement) return;
 
   // eslint-disable-next-line no-undef
@@ -39,8 +44,10 @@ function exportChart(svgElement: SVGSVGElement | null, filename: string, format:
     const ctx = canvas.getContext('2d')!;
     const img = new Image();
 
-    const svgWidth = Number(svgElement.getAttribute('width')) || svgElement.getBoundingClientRect().width;
-    const svgHeight = Number(svgElement.getAttribute('height')) || svgElement.getBoundingClientRect().height;
+    const svgWidth =
+      Number(svgElement.getAttribute('width')) || svgElement.getBoundingClientRect().width;
+    const svgHeight =
+      Number(svgElement.getAttribute('height')) || svgElement.getBoundingClientRect().height;
 
     const scale = 2;
     canvas.width = svgWidth * scale;
@@ -72,7 +79,24 @@ function exportChart(svgElement: SVGSVGElement | null, filename: string, format:
   }
 }
 
-const QUESTION_ORDER = ['q1', 'q2', 'q3', 'q4', 'q5', 'q6', 'q7', 'q8', 'q9', 'q10', 'q11', 'q12', 'q13', 'q14', 'q15', 'q16'];
+const QUESTION_ORDER = [
+  'q1',
+  'q2',
+  'q3',
+  'q4',
+  'q5',
+  'q6',
+  'q7',
+  'q8',
+  'q9',
+  'q10',
+  'q11',
+  'q12',
+  'q13',
+  'q14',
+  'q15',
+  'q16',
+];
 
 interface ChartSectionProps {
   studies: any[];
@@ -84,7 +108,9 @@ export function ChartSection({ studies, members = [] }: ChartSectionProps) {
   const [customLabels, setCustomLabels] = useState<Array<{ id: string; label: string }>>([]);
   const [greyscale, setGreyscale] = useState(false);
   const [robvisTitle, setRobvisTitle] = useState('AMSTAR 2 Item-Level Judgments by Review');
-  const [distributionTitle, setDistributionTitle] = useState('Level Judgments Across Included Reviews');
+  const [distributionTitle, setDistributionTitle] = useState(
+    'Level Judgments Across Included Reviews',
+  );
   const [transparentExport, setTransparentExport] = useState(false);
 
   // eslint-disable-next-line no-undef
@@ -143,23 +169,27 @@ export function ChartSection({ studies, members = [] }: ChartSectionProps) {
   }, [rawChecklistData, customLabels]);
 
   const handleLabelChange = useCallback((index: number, newValue: string) => {
-    setCustomLabels(prev => prev.map((item, i) => (i === index ? { ...item, label: newValue } : item)));
+    setCustomLabels(prev =>
+      prev.map((item, i) => (i === index ? { ...item, label: newValue } : item)),
+    );
   }, []);
 
   const handleExportRobvis = useCallback(
-    (format: 'svg' | 'png') => exportChart(robvisSvgRef.current, 'amstar-quality-assessment', format, transparentExport),
+    (format: 'svg' | 'png') =>
+      exportChart(robvisSvgRef.current, 'amstar-quality-assessment', format, transparentExport),
     [transparentExport],
   );
 
   const handleExportDistribution = useCallback(
-    (format: 'svg' | 'png') => exportChart(distributionSvgRef.current, 'amstar-distribution', format, transparentExport),
+    (format: 'svg' | 'png') =>
+      exportChart(distributionSvgRef.current, 'amstar-distribution', format, transparentExport),
     [transparentExport],
   );
 
   if (checklistData.length === 0) {
     return (
-      <div className="border-border bg-card rounded-lg border px-4 py-8 text-center">
-        <p className="text-muted-foreground">
+      <div className='border-border bg-card rounded-lg border px-4 py-8 text-center'>
+        <p className='text-muted-foreground'>
           Once appraisals are completed, this section will display domain-level judgments by review
           and across reviews, along with a figure summarizing the ratings of overall confidence in
           the results of the included reviews.
@@ -169,21 +199,21 @@ export function ChartSection({ studies, members = [] }: ChartSectionProps) {
   }
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className='flex flex-col gap-6'>
       {/* Header */}
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex-1">
-          <p className="text-secondary-foreground text-sm">
-            Visual representation of AMSTAR-2 quality assessment ratings across completed checklists.
-            Use the settings to customize chart appearance, labels, and export options.
+      <div className='flex items-start justify-between gap-4'>
+        <div className='flex-1'>
+          <p className='text-secondary-foreground text-sm'>
+            Visual representation of AMSTAR-2 quality assessment ratings across completed
+            checklists. Use the settings to customize chart appearance, labels, and export options.
           </p>
         </div>
         <button
           onClick={() => setShowSettingsModal(true)}
-          className="text-secondary-foreground hover:bg-secondary hover:text-foreground inline-flex shrink-0 items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors"
-          title="Chart Settings"
+          className='text-secondary-foreground hover:bg-secondary hover:text-foreground inline-flex shrink-0 items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors'
+          title='Chart Settings'
         >
-          <SettingsIcon className="h-4 w-4" />
+          <SettingsIcon className='h-4 w-4' />
           Settings
         </button>
       </div>

@@ -97,7 +97,6 @@ export function MultiPartQuestionPage({
     }
 
     if (reviewer1Answers && dataKeys.some((dk: string) => reviewer1Answers[dk])) {
-       
       setLocalFinal(JSON.parse(JSON.stringify(reviewer1Answers)));
       setSelectedSource('reviewer1');
     }
@@ -192,16 +191,16 @@ export function MultiPartQuestionPage({
     reviewer1Answers?.[dataKeys[0]]?.critical || reviewer2Answers?.[dataKeys[0]]?.critical;
 
   return (
-    <div className="bg-card overflow-hidden rounded-lg shadow-lg">
+    <div className='bg-card overflow-hidden rounded-lg shadow-lg'>
       {/* Question Header */}
       <div
         className={`p-4 ${isAgreement ? 'border-b border-green-200 bg-green-50' : 'border-b border-amber-200 bg-amber-50'}`}
       >
-        <h2 className="text-foreground text-lg font-semibold">
+        <h2 className='text-foreground text-lg font-semibold'>
           {question?.text}
-          {isCritical && <span className="ml-2 text-sm font-medium text-red-600">(Critical)</span>}
+          {isCritical && <span className='ml-2 text-sm font-medium text-red-600'>(Critical)</span>}
         </h2>
-        <div className="mt-2 flex items-center gap-3">
+        <div className='mt-2 flex items-center gap-3'>
           <span
             className={`text-sm font-medium ${isAgreement ? 'text-green-700' : 'text-amber-700'}`}
           >
@@ -211,18 +210,18 @@ export function MultiPartQuestionPage({
       </div>
 
       {/* Three Column Layout */}
-      <div className="divide-border grid grid-cols-3 divide-x">
+      <div className='divide-border grid grid-cols-3 divide-x'>
         {/* Reviewer 1 Panel */}
-        <div className="p-4">
-          <div className="mb-4 flex items-center justify-between">
-            <h3 className="text-foreground font-semibold">{reviewer1Name || 'Reviewer 1'}</h3>
+        <div className='p-4'>
+          <div className='mb-4 flex items-center justify-between'>
+            <h3 className='text-foreground font-semibold'>{reviewer1Name || 'Reviewer 1'}</h3>
             {!reviewersAgree && (
               <button
                 onClick={useReviewer1}
                 className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
-                  selectedSource === 'reviewer1'
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-secondary text-secondary-foreground hover:bg-blue-100 hover:text-blue-700'
+                  selectedSource === 'reviewer1' ? 'bg-blue-600 text-white' : (
+                    'bg-secondary text-secondary-foreground hover:bg-blue-100 hover:text-blue-700'
+                  )
                 }`}
               >
                 {selectedSource === 'reviewer1' ? 'Selected' : 'Use This'}
@@ -230,13 +229,13 @@ export function MultiPartQuestionPage({
             )}
           </div>
           {dataKeys.map((partKey: string) => (
-            <div key={partKey} className="mb-6 last:mb-0">
-              <div className="mb-2 flex flex-wrap items-center gap-2">
-                <span className="text-secondary-foreground text-xs font-semibold">
+            <div key={partKey} className='mb-6 last:mb-0'>
+              <div className='mb-2 flex flex-wrap items-center gap-2'>
+                <span className='text-secondary-foreground text-xs font-semibold'>
                   {getSubtitleForPart(partKey)}
                 </span>
-                <span className="text-muted-foreground text-xs">Result:</span>
-                <span className="border-border bg-secondary text-muted-foreground inline-flex items-center rounded-full border px-2 py-1 text-xs font-medium">
+                <span className='text-muted-foreground text-xs'>Result:</span>
+                <span className='border-border bg-secondary text-muted-foreground inline-flex items-center rounded-full border px-2 py-1 text-xs font-medium'>
                   {getFinalAnswerForPart(reviewer1Answers, partKey) || 'Not selected'}
                 </span>
               </div>
@@ -246,24 +245,24 @@ export function MultiPartQuestionPage({
                 columns={getColumnsForPart(partKey)}
                 readOnly={true}
                 compact={true}
-                panelId="reviewer1"
-                title="Reviewer 1"
+                panelId='reviewer1'
+                title='Reviewer 1'
               />
             </div>
           ))}
         </div>
 
         {/* Reviewer 2 Panel */}
-        <div className="p-4">
-          <div className="mb-4 flex items-center justify-between">
-            <h3 className="text-foreground font-semibold">{reviewer2Name || 'Reviewer 2'}</h3>
+        <div className='p-4'>
+          <div className='mb-4 flex items-center justify-between'>
+            <h3 className='text-foreground font-semibold'>{reviewer2Name || 'Reviewer 2'}</h3>
             {!reviewersAgree && (
               <button
                 onClick={useReviewer2}
                 className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
-                  selectedSource === 'reviewer2'
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-secondary text-secondary-foreground hover:bg-blue-100 hover:text-blue-700'
+                  selectedSource === 'reviewer2' ? 'bg-blue-600 text-white' : (
+                    'bg-secondary text-secondary-foreground hover:bg-blue-100 hover:text-blue-700'
+                  )
                 }`}
               >
                 {selectedSource === 'reviewer2' ? 'Selected' : 'Use This'}
@@ -271,13 +270,13 @@ export function MultiPartQuestionPage({
             )}
           </div>
           {dataKeys.map((partKey: string) => (
-            <div key={partKey} className="mb-6 last:mb-0">
-              <div className="mb-2 flex flex-wrap items-center gap-2">
-                <span className="text-secondary-foreground text-xs font-semibold">
+            <div key={partKey} className='mb-6 last:mb-0'>
+              <div className='mb-2 flex flex-wrap items-center gap-2'>
+                <span className='text-secondary-foreground text-xs font-semibold'>
                   {getSubtitleForPart(partKey)}
                 </span>
-                <span className="text-muted-foreground text-xs">Result:</span>
-                <span className="border-border bg-secondary text-muted-foreground inline-flex items-center rounded-full border px-2 py-1 text-xs font-medium">
+                <span className='text-muted-foreground text-xs'>Result:</span>
+                <span className='border-border bg-secondary text-muted-foreground inline-flex items-center rounded-full border px-2 py-1 text-xs font-medium'>
                   {getFinalAnswerForPart(reviewer2Answers, partKey) || 'Not selected'}
                 </span>
               </div>
@@ -287,35 +286,35 @@ export function MultiPartQuestionPage({
                 columns={getColumnsForPart(partKey)}
                 readOnly={true}
                 compact={true}
-                panelId="reviewer2"
-                title="Reviewer 2"
+                panelId='reviewer2'
+                title='Reviewer 2'
               />
             </div>
           ))}
         </div>
 
         {/* Final/Merged Panel */}
-        <div className="bg-green-50/30 p-4">
-          <div className="mb-4 flex items-center justify-between">
+        <div className='bg-green-50/30 p-4'>
+          <div className='mb-4 flex items-center justify-between'>
             <div>
-              <h3 className="text-foreground font-semibold">Final Answer</h3>
+              <h3 className='text-foreground font-semibold'>Final Answer</h3>
               {selectedSource && (
-                <span className="text-muted-foreground text-xs">
-                  {selectedSource === 'custom'
-                    ? 'Custom selection'
-                    : `Based on ${selectedSource === 'reviewer1' ? 'Reviewer 1' : 'Reviewer 2'}`}
+                <span className='text-muted-foreground text-xs'>
+                  {selectedSource === 'custom' ?
+                    'Custom selection'
+                  : `Based on ${selectedSource === 'reviewer1' ? 'Reviewer 1' : 'Reviewer 2'}`}
                 </span>
               )}
             </div>
           </div>
           {dataKeys.map((partKey: string) => (
-            <div key={partKey} className="mb-6 last:mb-0">
-              <div className="mb-2 flex flex-wrap items-center gap-2">
-                <span className="text-secondary-foreground text-xs font-semibold">
+            <div key={partKey} className='mb-6 last:mb-0'>
+              <div className='mb-2 flex flex-wrap items-center gap-2'>
+                <span className='text-secondary-foreground text-xs font-semibold'>
                   {getSubtitleForPart(partKey)}
                 </span>
-                <span className="text-muted-foreground text-xs">Result:</span>
-                <span className="inline-flex items-center rounded-full border border-green-200 bg-green-100 px-2 py-1 text-xs font-medium text-green-800">
+                <span className='text-muted-foreground text-xs'>Result:</span>
+                <span className='inline-flex items-center rounded-full border border-green-200 bg-green-100 px-2 py-1 text-xs font-medium text-green-800'>
                   {getFinalAnswerForPart(localFinal, partKey) || 'Not selected'}
                 </span>
               </div>
@@ -325,14 +324,12 @@ export function MultiPartQuestionPage({
                 columns={getColumnsForPart(partKey)}
                 readOnly={false}
                 compact={true}
-                panelId="final"
-                title="Final"
+                panelId='final'
+                title='Final'
                 onCheckboxChange={(colIdx, optIdx) =>
                   handlePartCheckboxChange(partKey, colIdx, optIdx)
                 }
-                onRadioChange={(colIdx, optIdx) =>
-                  handlePartRadioChange(partKey, colIdx, optIdx)
-                }
+                onRadioChange={(colIdx, optIdx) => handlePartRadioChange(partKey, colIdx, optIdx)}
               />
             </div>
           ))}
@@ -340,7 +337,7 @@ export function MultiPartQuestionPage({
       </div>
 
       {/* Notes Section */}
-      <div className="px-4 pb-4">
+      <div className='px-4 pb-4'>
         <NotesCompareSection
           reviewer1Note={reviewer1Note}
           reviewer2Note={reviewer2Note}

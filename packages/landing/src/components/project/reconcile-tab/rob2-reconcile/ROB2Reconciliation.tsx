@@ -65,11 +65,7 @@ function copyCommentToYText(
 /**
  * Copy preliminary text field value to Y.Text when using "Use This"
  */
-function copyPreliminaryTextToYText(
-  getRob2Text: any,
-  fieldKey: string,
-  value: any,
-) {
+function copyPreliminaryTextToYText(getRob2Text: any, fieldKey: string, value: any) {
   if (!PRELIMINARY_TEXT_FIELDS.includes(fieldKey)) return;
   if (!getRob2Text) return;
   const yText = getRob2Text('preliminary', fieldKey);
@@ -163,9 +159,9 @@ export function ROB2Reconciliation({
       const scoring = scoreRob2Domain(domainKey, domainAnswers);
       if (scoring.isComplete && scoring.judgement !== null) {
         const items = navItems.filter(
-          (item) => item.type === NAV_ITEM_TYPES.DOMAIN_QUESTION && item.domainKey === domainKey,
+          item => item.type === NAV_ITEM_TYPES.DOMAIN_QUESTION && item.domainKey === domainKey,
         );
-        const hasSkippedQuestion = items.some((item) => {
+        const hasSkippedQuestion = items.some(item => {
           const answer = domainAnswers[item.key]?.answer;
           return !answer || answer === 'NA';
         });
@@ -185,7 +181,7 @@ export function ROB2Reconciliation({
     for (const domainKey of earlyCompleteDomains) {
       const domainAnswers = finalAnswers[domainKey]?.answers || {};
       const items = navItems.filter(
-        (item) => item.type === NAV_ITEM_TYPES.DOMAIN_QUESTION && item.domainKey === domainKey,
+        item => item.type === NAV_ITEM_TYPES.DOMAIN_QUESTION && item.domainKey === domainKey,
       );
       for (const item of items) {
         const answer = domainAnswers[item.key]?.answer;
@@ -255,9 +251,7 @@ export function ROB2Reconciliation({
     if (skippableQuestions.size === 0) return;
 
     for (const qKey of skippableQuestions) {
-      const item = navItems.find(
-        (i) => i.type === NAV_ITEM_TYPES.DOMAIN_QUESTION && i.key === qKey,
-      );
+      const item = navItems.find(i => i.type === NAV_ITEM_TYPES.DOMAIN_QUESTION && i.key === qKey);
       if (!item) continue;
 
       const currentAnswer = finalAnswers[item.domainKey]?.answers?.[qKey]?.answer;
@@ -356,7 +350,11 @@ export function ROB2Reconciliation({
     const item = currentNavItem;
 
     // Auto-fill from reviewer1 if no final answer yet and reviewers agree
-    if (item && !hasNavItemAnswer(item, finalAnswers) && isNavItemAgreement(item, comparison as any)) {
+    if (
+      item &&
+      !hasNavItemAnswer(item, finalAnswers) &&
+      isNavItemAgreement(item, comparison as any)
+    ) {
       autoFillFromReviewer1(item);
     }
 
@@ -440,14 +438,14 @@ export function ROB2Reconciliation({
 
   // Check if all items have been answered
   const allAnswered = useMemo(
-    () => navItems.every((item) => hasNavItemAnswer(item, finalAnswers)),
+    () => navItems.every(item => hasNavItemAnswer(item, finalAnswers)),
     [navItems, finalAnswers],
   );
 
   // Summary stats
   const summaryStats = useMemo(() => {
     const total = navItems.length;
-    const agreed = navItems.filter((item) => isNavItemAgreement(item, comparison as any)).length;
+    const agreed = navItems.filter(item => isNavItemAgreement(item, comparison as any)).length;
     const answered = getAnsweredCount(navItems, finalAnswers);
 
     return {
@@ -509,8 +507,8 @@ export function ROB2Reconciliation({
   }, [currentNavItem, comparison]);
 
   return (
-    <div className="bg-blue-50">
-      <div className="mx-auto max-w-7xl px-4 py-4">
+    <div className='bg-blue-50'>
+      <div className='mx-auto max-w-7xl px-4 py-4'>
         {/* Finish confirmation dialog */}
         <AlertDialog open={finishDialogOpen} onOpenChange={setFinishDialogOpen}>
           <AlertDialogContent>
@@ -522,7 +520,11 @@ export function ROB2Reconciliation({
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <Button variant="outline" disabled={saving} onClick={() => setFinishDialogOpen(false)}>
+              <Button
+                variant='outline'
+                disabled={saving}
+                onClick={() => setFinishDialogOpen(false)}
+              >
                 Cancel
               </Button>
               <AlertDialogAction disabled={saving} onClick={confirmSave}>
@@ -534,10 +536,10 @@ export function ROB2Reconciliation({
 
         {/* Aim Mismatch Warning Banner */}
         {aimMismatch && (
-          <div className="mb-4 flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
-            <AlertTriangleIcon className="h-5 w-5 shrink-0" />
+          <div className='mb-4 flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700'>
+            <AlertTriangleIcon className='h-5 w-5 shrink-0' />
             <div>
-              <span className="font-medium">Aim Mismatch Detected:</span> Reviewers selected
+              <span className='font-medium'>Aim Mismatch Detected:</span> Reviewers selected
               different aims. You must reconcile the aim field before proceeding to domain
               assessment.
             </div>
@@ -547,7 +549,7 @@ export function ROB2Reconciliation({
         {/* Main Content */}
         {viewMode === 'questions' && (
           <>
-            {currentNavItem ? (
+            {currentNavItem ?
               <>
                 {/* Preliminary Field */}
                 {currentNavItem.type === NAV_ITEM_TYPES.PRELIMINARY && (
@@ -712,36 +714,34 @@ export function ROB2Reconciliation({
                 )}
 
                 {/* Navigation Buttons */}
-                <div className="mt-4 flex items-center justify-between">
+                <div className='mt-4 flex items-center justify-between'>
                   <button
                     onClick={goToPrevious}
                     disabled={currentPage === 0}
                     className={`flex items-center gap-2 rounded-lg px-4 py-2 font-medium transition-colors ${
-                      currentPage === 0
-                        ? 'bg-secondary text-muted-foreground/70 cursor-not-allowed'
-                        : 'bg-card text-secondary-foreground hover:bg-secondary shadow'
+                      currentPage === 0 ?
+                        'bg-secondary text-muted-foreground/70 cursor-not-allowed'
+                      : 'bg-card text-secondary-foreground hover:bg-secondary shadow'
                     }`}
                   >
-                    <ArrowLeftIcon className="h-4 w-4" />
+                    <ArrowLeftIcon className='h-4 w-4' />
                     Previous
                   </button>
 
-                  <div className="text-muted-foreground text-sm">
+                  <div className='text-muted-foreground text-sm'>
                     Item {currentPage + 1} of {totalPages}
                   </div>
 
                   <button
                     onClick={goToNext}
-                    className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 font-medium text-white shadow transition-colors hover:bg-blue-700"
+                    className='flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 font-medium text-white shadow transition-colors hover:bg-blue-700'
                   >
                     {currentPage === totalPages - 1 ? 'Review Summary' : 'Next'}
-                    <ArrowRightIcon className="h-4 w-4" />
+                    <ArrowRightIcon className='h-4 w-4' />
                   </button>
                 </div>
               </>
-            ) : (
-              <div className="py-12 text-center">Loading...</div>
-            )}
+            : <div className='py-12 text-center'>Loading...</div>}
           </>
         )}
 

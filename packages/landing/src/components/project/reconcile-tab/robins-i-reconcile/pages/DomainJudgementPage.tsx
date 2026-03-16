@@ -47,30 +47,28 @@ export function DomainJudgementPage({
   const directionOptions = domain?.directionOptions || BIAS_DIRECTIONS;
 
   return (
-    <div className="space-y-4">
+    <div className='space-y-4'>
       {/* Domain Header */}
-      <div className="bg-card overflow-hidden rounded-lg shadow-lg">
-        <div className="border-border bg-secondary border-b px-4 py-3">
-          <h2 className="text-foreground text-lg font-semibold">{domain?.name}</h2>
-          {domain?.subtitle && (
-            <p className="text-muted-foreground text-sm">{domain.subtitle}</p>
-          )}
-          <p className="text-secondary-foreground mt-1 text-sm font-medium">
+      <div className='bg-card overflow-hidden rounded-lg shadow-lg'>
+        <div className='border-border bg-secondary border-b px-4 py-3'>
+          <h2 className='text-foreground text-lg font-semibold'>{domain?.name}</h2>
+          {domain?.subtitle && <p className='text-muted-foreground text-sm'>{domain.subtitle}</p>}
+          <p className='text-secondary-foreground mt-1 text-sm font-medium'>
             Domain Judgement & Direction
           </p>
         </div>
       </div>
 
       {/* Judgement Row */}
-      <div className="bg-card overflow-hidden rounded-lg shadow-lg">
+      <div className='bg-card overflow-hidden rounded-lg shadow-lg'>
         <div
           className={`p-3 ${
-            judgementMatch
-              ? 'border-b border-green-200 bg-green-50'
-              : 'border-b border-amber-200 bg-amber-50'
+            judgementMatch ?
+              'border-b border-green-200 bg-green-50'
+            : 'border-b border-amber-200 bg-amber-50'
           }`}
         >
-          <h3 className="text-foreground font-medium">Risk of Bias Judgement</h3>
+          <h3 className='text-foreground font-medium'>Risk of Bias Judgement</h3>
           <span
             className={`text-xs font-medium ${
               judgementMatch ? 'text-green-700' : 'text-amber-700'
@@ -80,10 +78,10 @@ export function DomainJudgementPage({
           </span>
         </div>
 
-        <div className="divide-border grid grid-cols-3 divide-x">
+        <div className='divide-border grid grid-cols-3 divide-x'>
           <JudgementPanel
             title={reviewer1Name || 'Reviewer 1'}
-            panelType="reviewer1"
+            panelType='reviewer1'
             judgement={reviewer1Data?.judgement}
             judgementOptions={ROB_JUDGEMENTS}
             readOnly={true}
@@ -94,7 +92,7 @@ export function DomainJudgementPage({
 
           <JudgementPanel
             title={reviewer2Name || 'Reviewer 2'}
-            panelType="reviewer2"
+            panelType='reviewer2'
             judgement={reviewer2Data?.judgement}
             judgementOptions={ROB_JUDGEMENTS}
             readOnly={true}
@@ -104,8 +102,8 @@ export function DomainJudgementPage({
           />
 
           <JudgementPanel
-            title="Final Judgement"
-            panelType="final"
+            title='Final Judgement'
+            panelType='final'
             judgement={finalData?.judgement}
             judgementOptions={ROB_JUDGEMENTS}
             readOnly={false}
@@ -117,15 +115,15 @@ export function DomainJudgementPage({
 
       {/* Direction Row */}
       {domain?.hasDirection && (
-        <div className="bg-card overflow-hidden rounded-lg shadow-lg">
+        <div className='bg-card overflow-hidden rounded-lg shadow-lg'>
           <div
             className={`p-3 ${
-              directionMatch
-                ? 'border-b border-green-200 bg-green-50'
-                : 'border-b border-amber-200 bg-amber-50'
+              directionMatch ?
+                'border-b border-green-200 bg-green-50'
+              : 'border-b border-amber-200 bg-amber-50'
             }`}
           >
-            <h3 className="text-foreground font-medium">Predicted Direction of Bias</h3>
+            <h3 className='text-foreground font-medium'>Predicted Direction of Bias</h3>
             <span
               className={`text-xs font-medium ${
                 directionMatch ? 'text-green-700' : 'text-amber-700'
@@ -135,10 +133,10 @@ export function DomainJudgementPage({
             </span>
           </div>
 
-          <div className="divide-border grid grid-cols-3 divide-x">
+          <div className='divide-border grid grid-cols-3 divide-x'>
             <DirectionPanel
               title={reviewer1Name || 'Reviewer 1'}
-              panelType="reviewer1"
+              panelType='reviewer1'
               direction={reviewer1Data?.direction}
               directionOptions={directionOptions}
               readOnly={true}
@@ -149,7 +147,7 @@ export function DomainJudgementPage({
 
             <DirectionPanel
               title={reviewer2Name || 'Reviewer 2'}
-              panelType="reviewer2"
+              panelType='reviewer2'
               direction={reviewer2Data?.direction}
               directionOptions={directionOptions}
               readOnly={true}
@@ -159,8 +157,8 @@ export function DomainJudgementPage({
             />
 
             <DirectionPanel
-              title="Final Direction"
-              panelType="final"
+              title='Final Direction'
+              panelType='final'
               direction={finalData?.direction}
               directionOptions={directionOptions}
               readOnly={false}

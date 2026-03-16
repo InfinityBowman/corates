@@ -124,21 +124,21 @@ export function ReconciliationWithPdf({
         {/* Back button */}
         <button
           onClick={onCancel}
-          className="hover:bg-secondary shrink-0 rounded-lg p-2 transition-colors"
-          title="Go back"
+          className='hover:bg-secondary shrink-0 rounded-lg p-2 transition-colors'
+          title='Go back'
         >
-          <ArrowLeftIcon className="text-muted-foreground h-5 w-5" />
+          <ArrowLeftIcon className='text-muted-foreground h-5 w-5' />
         </button>
 
         {/* Title */}
-        <div className="shrink-0">
-          <h1 className="text-foreground text-lg font-bold">Reconciliation</h1>
-          <p className="text-muted-foreground text-xs">
+        <div className='shrink-0'>
+          <h1 className='text-foreground text-lg font-bold'>Reconciliation</h1>
+          <p className='text-muted-foreground text-xs'>
             {reviewer1Name || 'Reviewer 1'} vs {reviewer2Name || 'Reviewer 2'}
           </p>
         </div>
 
-        <div className="bg-border h-8 w-px shrink-0" />
+        <div className='bg-border h-8 w-px shrink-0' />
 
         {/* Presence avatars */}
         {presence.remoteUsers.length > 0 && (
@@ -150,34 +150,41 @@ export function ReconciliationWithPdf({
               }}
               getPageLabel={pageIndex => `Question ${pageIndex + 1}`}
             />
-            <div className="bg-border h-8 w-px shrink-0" />
+            <div className='bg-border h-8 w-px shrink-0' />
           </>
         )}
 
         {/* Navbar */}
         {navbarStore.questionKeys.length > 0 && (
-          <div className="flex flex-1 items-center gap-4 overflow-x-auto">
+          <div className='flex flex-1 items-center gap-4 overflow-x-auto'>
             <Navbar store={navbarStore} usersByPage={presence.usersByPage} />
           </div>
         )}
       </>
     ),
-    [onCancel, reviewer1Name, reviewer2Name, presence.remoteUsers, presence.usersByPage, navbarStore],
+    [
+      onCancel,
+      reviewer1Name,
+      reviewer2Name,
+      presence.remoteUsers,
+      presence.usersByPage,
+      navbarStore,
+    ],
   );
 
   return (
-    <div className="flex h-full flex-col bg-blue-50">
+    <div className='flex h-full flex-col bg-blue-50'>
       <SplitScreenLayout
-        defaultLayout="vertical"
+        defaultLayout='vertical'
         defaultRatio={60}
         showSecondPanel={false}
         headerContent={headerContent}
-        secondPanelLabel="PDF viewer"
+        secondPanelLabel='PDF viewer'
         pdfUrl={pdfUrl}
         pdfData={pdfData}
       >
         {/* First panel: Reconciliation view with cursor tracking */}
-        <div ref={containerRef} className="relative h-full overflow-auto" onScroll={handleScroll}>
+        <div ref={containerRef} className='relative h-full overflow-auto' onScroll={handleScroll}>
           <RemoteCursors users={presence.usersWithCursors} containerScrollY={containerScrollY} />
 
           <ChecklistReconciliation
@@ -198,18 +205,17 @@ export function ReconciliationWithPdf({
         {/* Second panel: PDF Viewer (read-only) */}
         {hasPdf && (
           <>
-            {pdfLoading ? (
-              <div className="bg-secondary flex h-full items-center justify-center">
-                <div className="text-muted-foreground flex items-center gap-3">
-                  <div className="h-6 w-6 animate-spin rounded-full border-b-2 border-blue-600" />
+            {pdfLoading ?
+              <div className='bg-secondary flex h-full items-center justify-center'>
+                <div className='text-muted-foreground flex items-center gap-3'>
+                  <div className='h-6 w-6 animate-spin rounded-full border-b-2 border-blue-600' />
                   Loading PDF...
                 </div>
               </div>
-            ) : (
-              <Suspense
+            : <Suspense
                 fallback={
-                  <div className="bg-secondary flex h-full items-center justify-center">
-                    <div className="h-6 w-6 animate-spin rounded-full border-b-2 border-blue-600" />
+                  <div className='bg-secondary flex h-full items-center justify-center'>
+                    <div className='h-6 w-6 animate-spin rounded-full border-b-2 border-blue-600' />
                   </div>
                 }
               >
@@ -222,7 +228,7 @@ export function ReconciliationWithPdf({
                   onPdfSelect={onPdfSelect}
                 />
               </Suspense>
-            )}
+            }
           </>
         )}
       </SplitScreenLayout>

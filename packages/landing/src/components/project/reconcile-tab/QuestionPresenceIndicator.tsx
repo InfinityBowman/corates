@@ -36,11 +36,11 @@ export function QuestionPresenceIndicator({
   };
 
   return (
-    <div className="pointer-events-none absolute inset-0">
+    <div className='pointer-events-none absolute inset-0'>
       {visibleUsers.map((user, index) => (
         <div
           key={user.clientId}
-          className="absolute inset-0 animate-pulse rounded-full"
+          className='absolute inset-0 animate-pulse rounded-full'
           style={{
             margin: `-${getOffset(index)}px`,
             border: `${getRingWidth()}px solid ${(user.color as Record<string, any>).hex}`,

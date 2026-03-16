@@ -43,30 +43,29 @@ export function OverallDirectionPage({
   const judgementMatch = reviewer1Scoring.overall === reviewer2Scoring.overall;
 
   return (
-    <div className="bg-card rounded-xl shadow-lg">
+    <div className='bg-card rounded-xl shadow-lg'>
       {/* Header */}
       <div
         className={`rounded-t-xl border-b p-4 ${
-          directionMatch && judgementMatch
-            ? 'border-green-200 bg-green-50'
-            : 'border-amber-200 bg-amber-50'
+          directionMatch && judgementMatch ?
+            'border-green-200 bg-green-50'
+          : 'border-amber-200 bg-amber-50'
         }`}
       >
-        <div className="flex items-start gap-3">
-          {directionMatch && judgementMatch ? (
-            <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-green-500">
-              <CheckIcon className="h-4 w-4 text-white" />
+        <div className='flex items-start gap-3'>
+          {directionMatch && judgementMatch ?
+            <div className='flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-green-500'>
+              <CheckIcon className='h-4 w-4 text-white' />
             </div>
-          ) : (
-            <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-amber-500">
-              <XIcon className="h-4 w-4 text-white" />
+          : <div className='flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-amber-500'>
+              <XIcon className='h-4 w-4 text-white' />
             </div>
-          )}
+          }
           <div>
-            <h2 className="text-foreground font-semibold">
+            <h2 className='text-foreground font-semibold'>
               Overall Risk of Bias - Judgement &amp; Direction
             </h2>
-            <p className="text-muted-foreground mt-1 text-sm">
+            <p className='text-muted-foreground mt-1 text-sm'>
               Review the overall calculated judgement and select the overall bias direction
             </p>
           </div>
@@ -74,15 +73,15 @@ export function OverallDirectionPage({
       </div>
 
       {/* Auto-calculated Overall Judgement Section */}
-      <div className="border-b p-4">
-        <div className="mb-3 flex items-start gap-2 rounded-lg border border-blue-200 bg-blue-50 p-3">
-          <InfoIcon className="h-4 w-4 shrink-0 text-blue-600" />
-          <div className="text-xs text-blue-800">
+      <div className='border-b p-4'>
+        <div className='mb-3 flex items-start gap-2 rounded-lg border border-blue-200 bg-blue-50 p-3'>
+          <InfoIcon className='h-4 w-4 shrink-0 text-blue-600' />
+          <div className='text-xs text-blue-800'>
             <p>
               The overall risk of bias judgement is automatically calculated from the domain
               judgements:
             </p>
-            <ul className="mt-1 ml-4 list-disc">
+            <ul className='mt-1 ml-4 list-disc'>
               <li>
                 If any domain is <strong>High</strong>, overall is High
               </li>
@@ -97,26 +96,26 @@ export function OverallDirectionPage({
           </div>
         </div>
 
-        <h3 className="text-secondary-foreground mb-3 text-sm font-semibold">
+        <h3 className='text-secondary-foreground mb-3 text-sm font-semibold'>
           Auto-calculated Overall Judgement
         </h3>
 
-        <div className="grid grid-cols-3 divide-x rounded-lg border">
+        <div className='grid grid-cols-3 divide-x rounded-lg border'>
           <JudgementPanel
             title={reviewer1Name || 'Reviewer 1'}
-            panelType="reviewer1"
+            panelType='reviewer1'
             judgement={reviewer1Scoring.overall}
             isComplete={reviewer1Scoring.isComplete}
           />
           <JudgementPanel
             title={reviewer2Name || 'Reviewer 2'}
-            panelType="reviewer2"
+            panelType='reviewer2'
             judgement={reviewer2Scoring.overall}
             isComplete={reviewer2Scoring.isComplete}
           />
           <JudgementPanel
-            title="Final (Reconciled)"
-            panelType="final"
+            title='Final (Reconciled)'
+            panelType='final'
             judgement={finalScoring.overall}
             isComplete={finalScoring.isComplete}
           />
@@ -124,40 +123,39 @@ export function OverallDirectionPage({
       </div>
 
       {/* Direction Section */}
-      <div className="p-4">
-        <div className="mb-3 flex items-center gap-2">
-          <h3 className="text-secondary-foreground text-sm font-semibold">
+      <div className='p-4'>
+        <div className='mb-3 flex items-center gap-2'>
+          <h3 className='text-secondary-foreground text-sm font-semibold'>
             Predicted Overall Direction of Bias
           </h3>
-          {directionMatch ? (
-            <span className="rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700">
+          {directionMatch ?
+            <span className='rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700'>
               Agree
             </span>
-          ) : (
-            <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700">
+          : <span className='rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700'>
               Disagree
             </span>
-          )}
+          }
         </div>
 
-        <div className="grid grid-cols-3 divide-x rounded-lg border">
+        <div className='grid grid-cols-3 divide-x rounded-lg border'>
           <DirectionPanel
             title={reviewer1Name || 'Reviewer 1'}
-            panelType="reviewer1"
+            panelType='reviewer1'
             direction={reviewer1Direction}
             readOnly={true}
             onUseThis={onUseReviewer1}
           />
           <DirectionPanel
             title={reviewer2Name || 'Reviewer 2'}
-            panelType="reviewer2"
+            panelType='reviewer2'
             direction={reviewer2Direction}
             readOnly={true}
             onUseThis={onUseReviewer2}
           />
           <DirectionPanel
-            title="Final Direction"
-            panelType="final"
+            title='Final Direction'
+            panelType='final'
             direction={finalDirection}
             readOnly={false}
             onDirectionChange={onFinalDirectionChange}

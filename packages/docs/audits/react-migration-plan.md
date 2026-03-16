@@ -774,15 +774,18 @@ Key decisions:
 44 files migrated across 6 sub-phases:
 
 **4.8A - Presence system + shared components (5 files):**
+
 - `useReconciliationPresence.ts` hook (Yjs awareness protocol, cursor tracking, user-by-page grouping)
 - `userColors.js` (already existed from earlier phase)
 - `PresenceAvatars.tsx`, `RemoteCursors.tsx`, `QuestionPresenceIndicator.tsx`
 
 **4.8B - Route + ReconciliationWrapper (2 files):**
+
 - Route: `studies.$studyId.reconcile.$checklist1Id.$checklist2Id.tsx`
 - `ReconciliationWrapper.tsx` (Yjs lifecycle, PDF loading, reconciled checklist creation with race condition handling, type dispatch to AMSTAR2/ROB2/ROBINS-I)
 
 **4.8C - AMSTAR2 reconciliation (10 files):**
+
 - `ReconciliationWithPdf.tsx` (split-screen wrapper with presence)
 - `ChecklistReconciliation.tsx` (main question-page navigation, answer writing to Yjs, auto-fill, navbar store bridge)
 - `ReconciliationQuestionPage.tsx` + `MultiPartQuestionPage.tsx` (q9/q11 multi-part)
@@ -790,6 +793,7 @@ Key decisions:
 - `Navbar.tsx`, `navbar-utils.js`
 
 **4.8D - ROB2 reconciliation (14 files):**
+
 - `ROB2ReconciliationWithPdf.tsx`, `ROB2Reconciliation.tsx`
 - `ROB2Navbar.tsx`, `NavbarDomainPill.tsx`, `ROB2SummaryView.tsx`
 - `navbar-utils.js`, `index.ts`
@@ -797,6 +801,7 @@ Key decisions:
 - panels: `ROB2AnswerPanel.tsx`, `DirectionPanel.tsx`, `JudgementPanel.tsx`
 
 **4.8E - ROBINS-I reconciliation (14 files):**
+
 - `RobinsIReconciliationWithPdf.tsx`, `RobinsIReconciliation.tsx`
 - `RobinsINavbar.tsx`, `NavbarDomainPill.tsx`, `RobinsISummaryView.tsx`
 - `navbar-utils.js`, `index.ts`
@@ -804,6 +809,7 @@ Key decisions:
 - panels: `RobinsAnswerPanel.tsx`, `DirectionPanel.tsx`, `JudgementPanel.tsx`
 
 **Key patterns and fixes:**
+
 - Navbar store bridge: SolidJS `createStore` replaced with React `useState` + setter callback
 - Presence hook: custom throttle replacing `@solid-primitives/scheduled`, `getAwareness` stabilized with `useMemo` to prevent effect churn
 - Module-level helper functions to avoid React TDZ issues (`answersEqual`, `multiPartEqual`, `singleAnswerEqual`)
@@ -828,6 +834,7 @@ Migrated together with Phase 4.7 since they share checklist form components:
 ### Charts -- COMPLETED (2026-03-15)
 
 **D3 charts (project overview):**
+
 - `AMSTARRobvis.tsx` - D3 traffic light heatmap with `useLayoutEffect` for text measurement (avoids margin flash)
 - `AMSTARDistribution.tsx` - D3 horizontal stacked bar chart with ResizeObserver
 - `ChartSettingsModal.tsx` - Pure UI modal for labels, titles, greyscale toggle, SVG/PNG export
@@ -835,6 +842,7 @@ Migrated together with Phase 4.7 since they share checklist form components:
 - `forwardRef` + `useImperativeHandle` pattern for SVG element export access
 
 **Admin charts (Recharts, replacing solid-chartjs/Chart.js):**
+
 - `LineChart.tsx` - Recharts `ResponsiveContainer` + `LineChart` (declarative JSX API)
 - `BarChart.tsx` - Recharts `BarChart` with per-bar `Cell` colors
 - `DoughnutChart.tsx` - Recharts `PieChart` + `Pie` with inner radius for doughnut effect

@@ -148,53 +148,48 @@ export function RobinsISummaryView({
   allAnswered,
   saving,
 }: RobinsISummaryViewProps) {
-  const groupedItems = useMemo(
-    () => getGroupedNavigationItems(navItems || []),
-    [navItems],
-  );
+  const groupedItems = useMemo(() => getGroupedNavigationItems(navItems || []), [navItems]);
 
   return (
-    <div className="bg-card overflow-hidden rounded-lg shadow-lg">
+    <div className='bg-card overflow-hidden rounded-lg shadow-lg'>
       {/* Summary Header */}
-      <div className="border-border bg-muted border-b p-6">
-        <h2 className="text-foreground mb-4 text-xl font-bold">Review Summary</h2>
+      <div className='border-border bg-muted border-b p-6'>
+        <h2 className='text-foreground mb-4 text-xl font-bold'>Review Summary</h2>
 
         {/* Stats */}
         {summary && (
-          <div className="mb-6 grid grid-cols-4 gap-4">
-            <div className="border-border bg-card rounded-lg border p-3 text-center">
-              <div className="text-secondary-foreground text-2xl font-bold">{summary.total}</div>
-              <div className="text-muted-foreground text-xs">Total Items</div>
+          <div className='mb-6 grid grid-cols-4 gap-4'>
+            <div className='border-border bg-card rounded-lg border p-3 text-center'>
+              <div className='text-secondary-foreground text-2xl font-bold'>{summary.total}</div>
+              <div className='text-muted-foreground text-xs'>Total Items</div>
             </div>
-            <div className="rounded-lg border border-green-200 bg-green-50 p-3 text-center">
-              <div className="text-2xl font-bold text-green-700">{summary.agreed}</div>
-              <div className="text-xs text-green-600">Agreements</div>
+            <div className='rounded-lg border border-green-200 bg-green-50 p-3 text-center'>
+              <div className='text-2xl font-bold text-green-700'>{summary.agreed}</div>
+              <div className='text-xs text-green-600'>Agreements</div>
             </div>
-            <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-center">
-              <div className="text-2xl font-bold text-amber-700">{summary.disagreed}</div>
-              <div className="text-xs text-amber-600">Disagreements</div>
+            <div className='rounded-lg border border-amber-200 bg-amber-50 p-3 text-center'>
+              <div className='text-2xl font-bold text-amber-700'>{summary.disagreed}</div>
+              <div className='text-xs text-amber-600'>Disagreements</div>
             </div>
-            <div className="rounded-lg border border-sky-200 bg-sky-50 p-3 text-center">
-              <div className="text-2xl font-bold text-sky-700">
-                {summary.agreementPercentage}%
-              </div>
-              <div className="text-xs text-sky-600">Agreement Rate</div>
+            <div className='rounded-lg border border-sky-200 bg-sky-50 p-3 text-center'>
+              <div className='text-2xl font-bold text-sky-700'>{summary.agreementPercentage}%</div>
+              <div className='text-xs text-sky-600'>Agreement Rate</div>
             </div>
           </div>
         )}
       </div>
 
       {/* Grouped Items List */}
-      <div className="divide-border divide-y">
+      <div className='divide-border divide-y'>
         {groupedItems.map(group => (
           <div key={group.section}>
             {/* Group Header */}
-            <div className="bg-secondary px-4 py-2">
-              <h3 className="text-secondary-foreground text-sm font-semibold">{group.section}</h3>
+            <div className='bg-secondary px-4 py-2'>
+              <h3 className='text-secondary-foreground text-sm font-semibold'>{group.section}</h3>
             </div>
 
             {/* Group Items */}
-            <div className="divide-border-subtle divide-y">
+            <div className='divide-border-subtle divide-y'>
               {group.items.map((item: any) => {
                 const itemIndex = navItems?.indexOf(item) ?? -1;
                 const agreement = isNavItemAgreement(item, comparison);
@@ -204,50 +199,46 @@ export function RobinsISummaryView({
                 return (
                   <div
                     key={item.key}
-                    className="hover:bg-muted flex cursor-pointer items-center justify-between p-4"
+                    className='hover:bg-muted flex cursor-pointer items-center justify-between p-4'
                     onClick={() => onGoToPage(itemIndex)}
                   >
-                    <div className="flex items-center gap-3">
+                    <div className='flex items-center gap-3'>
                       <span
                         className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-medium ${
-                          agreement
-                            ? 'bg-green-100 text-green-700'
-                            : 'bg-amber-100 text-amber-700'
+                          agreement ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'
                         }`}
                       >
                         {getItemDisplayNumber(item)}
                       </span>
                       <div>
-                        <div className="text-foreground text-sm font-medium">
+                        <div className='text-foreground text-sm font-medium'>
                           {getItemLabel(item)}
                         </div>
-                        <div className="text-muted-foreground text-xs">
+                        <div className='text-muted-foreground text-xs'>
                           {agreement ? 'Reviewers agreed' : 'Reviewers differed'}
                         </div>
                       </div>
                     </div>
-                    <div className="flex items-center gap-3">
-                      {value ? (
+                    <div className='flex items-center gap-3'>
+                      {value ?
                         <span
                           className={`rounded-full px-3 py-1 text-sm font-medium ${
-                            value.type === 'judgement'
-                              ? getJudgementBadgeStyle(value.value)
-                              : getAnswerBadgeStyle(value.value)
+                            value.type === 'judgement' ?
+                              getJudgementBadgeStyle(value.value)
+                            : getAnswerBadgeStyle(value.value)
                           }`}
                         >
-                          {value.type === 'answer'
-                            ? `${value.value} - ${(RESPONSE_LABELS as Record<string, string>)[value.value]}`
-                            : value.value}
+                          {value.type === 'answer' ?
+                            `${value.value} - ${(RESPONSE_LABELS as Record<string, string>)[value.value]}`
+                          : value.value}
                         </span>
-                      ) : (
-                        <span className="text-muted-foreground/70 text-xs">Not set</span>
-                      )}
+                      : <span className='text-muted-foreground/70 text-xs'>Not set</span>}
                       {answered && (
-                        <span className="flex h-5 w-5 items-center justify-center rounded-full bg-green-100">
-                          <CheckIcon className="h-3 w-3 text-green-600" />
+                        <span className='flex h-5 w-5 items-center justify-center rounded-full bg-green-100'>
+                          <CheckIcon className='h-3 w-3 text-green-600' />
                         </span>
                       )}
-                      <ArrowRightIcon className="text-muted-foreground/70 h-4 w-4" />
+                      <ArrowRightIcon className='text-muted-foreground/70 h-4 w-4' />
                     </div>
                   </div>
                 );
@@ -258,12 +249,12 @@ export function RobinsISummaryView({
       </div>
 
       {/* Footer Actions */}
-      <div className="border-border bg-muted flex items-center justify-between border-t p-6">
+      <div className='border-border bg-muted flex items-center justify-between border-t p-6'>
         <button
           onClick={onBack}
-          className="bg-card text-secondary-foreground hover:bg-secondary flex items-center gap-2 rounded-lg px-4 py-2 font-medium shadow transition-colors focus:ring-2 focus:ring-blue-500 focus:outline-none"
+          className='bg-card text-secondary-foreground hover:bg-secondary flex items-center gap-2 rounded-lg px-4 py-2 font-medium shadow transition-colors focus:ring-2 focus:ring-blue-500 focus:outline-none'
         >
-          <ArrowLeftIcon className="h-4 w-4" />
+          <ArrowLeftIcon className='h-4 w-4' />
           Back to Questions
         </button>
 
@@ -271,19 +262,18 @@ export function RobinsISummaryView({
           onClick={onSave}
           disabled={!allAnswered || saving}
           className={`flex items-center gap-2 rounded-lg px-6 py-2 font-medium transition-colors focus:outline-none ${
-            allAnswered && !saving
-              ? 'bg-blue-600 text-white shadow hover:bg-blue-700 focus:ring-2 focus:ring-blue-500'
-              : 'bg-border text-muted-foreground cursor-not-allowed'
+            allAnswered && !saving ?
+              'bg-blue-600 text-white shadow hover:bg-blue-700 focus:ring-2 focus:ring-blue-500'
+            : 'bg-border text-muted-foreground cursor-not-allowed'
           }`}
         >
-          {saving ? (
+          {saving ?
             'Saving...'
-          ) : (
-            <>
-              <CheckIcon className="h-4 w-4" />
+          : <>
+              <CheckIcon className='h-4 w-4' />
               Save Reconciled Checklist
             </>
-          )}
+          }
         </button>
       </div>
     </div>

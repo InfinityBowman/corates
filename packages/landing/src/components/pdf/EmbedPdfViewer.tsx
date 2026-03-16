@@ -70,5 +70,5 @@ export default function EmbedPdfViewer({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pdfData, selectedPdfId]);
 
-  return <div ref={containerRef} className="flex h-full w-full flex-col" />;
+  return <div ref={containerRef} className='flex h-full w-full flex-col' />;
 }

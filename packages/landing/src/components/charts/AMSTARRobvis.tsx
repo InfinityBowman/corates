@@ -4,7 +4,15 @@
  * Uses useLayoutEffect for text measurement to avoid flash of incorrect margins.
  */
 
-import { useState, useEffect, useLayoutEffect, useMemo, useRef, useImperativeHandle, forwardRef } from 'react';
+import {
+  useState,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useImperativeHandle,
+  forwardRef,
+} from 'react';
 // @ts-expect-error -- d3 has no type declarations in this project
 import * as d3 from 'd3';
 
@@ -39,7 +47,13 @@ const N_QUESTIONS = 16;
 
 // eslint-disable-next-line no-undef
 export const AMSTARRobvis = forwardRef<SVGSVGElement, AMSTARRobvisProps>(function AMSTARRobvis(
-  { data = [], width: widthProp, height: heightProp, title = 'AMSTAR 2 Item-Level Judgments by Review', greyscale = false },
+  {
+    data = [],
+    width: widthProp,
+    height: heightProp,
+    title = 'AMSTAR 2 Item-Level Judgments by Review',
+    greyscale = false,
+  },
   ref,
 ) {
   const svgRef = useRef<SVGSVGElement>(null); // eslint-disable-line no-undef
@@ -82,12 +96,15 @@ export const AMSTARRobvis = forwardRef<SVGSVGElement, AMSTARRobvisProps>(functio
   const width = widthProp ?? containerSize.width;
   const height = heightProp ?? containerSize.height;
 
-  const margin = useMemo(() => ({
-    top: 60,
-    right: 170,
-    bottom: data.length <= 1 ? 80 : 60,
-    left: dynamicMarginLeft,
-  }), [data.length, dynamicMarginLeft]);
+  const margin = useMemo(
+    () => ({
+      top: 60,
+      right: 170,
+      bottom: data.length <= 1 ? 80 : 60,
+      left: dynamicMarginLeft,
+    }),
+    [data.length, dynamicMarginLeft],
+  );
 
   const cellSizeX = Math.max(0, (width - margin.left - margin.right) / N_QUESTIONS);
   const cellSizeY = Math.max(0, (height - margin.top - margin.bottom) / Math.max(data.length, 1));
@@ -101,13 +118,19 @@ export const AMSTARRobvis = forwardRef<SVGSVGElement, AMSTARRobvisProps>(functio
   useLayoutEffect(() => {
     if (!svgRef.current || !data.length) return;
 
-    const tempSvg = d3.select(document.body).append('svg')
+    const tempSvg = d3
+      .select(document.body)
+      .append('svg')
       .style('visibility', 'hidden')
       .style('position', 'absolute');
 
     let maxLabelWidth = 0;
     data.forEach(row => {
-      const tempText = tempSvg.append('text').attr('font-size', '12px').attr('font-weight', '500').text(row.label);
+      const tempText = tempSvg
+        .append('text')
+        .attr('font-size', '12px')
+        .attr('font-weight', '500')
+        .text(row.label);
       const bbox = tempText.node()!.getBBox();
       if (bbox.width > maxLabelWidth) maxLabelWidth = bbox.width;
       tempText.remove();
@@ -122,7 +145,8 @@ export const AMSTARRobvis = forwardRef<SVGSVGElement, AMSTARRobvisProps>(functio
   useEffect(() => {
     if (!svgRef.current || !data.length || cellSize <= 0 || svgWidth <= 0 || svgHeight <= 0) return;
 
-    const svg = d3.select(svgRef.current)
+    const svg = d3
+      .select(svgRef.current)
       .attr('width', svgWidth)
       .attr('height', svgHeight)
       .style('background', '#ffffff')
@@ -133,9 +157,12 @@ export const AMSTARRobvis = forwardRef<SVGSVGElement, AMSTARRobvisProps>(functio
     const m = margin;
 
     // Column headers
-    svg.append('g').selectAll('text')
+    svg
+      .append('g')
+      .selectAll('text')
       .data(d3.range(1, N_QUESTIONS + 1))
-      .enter().append('text')
+      .enter()
+      .append('text')
       .attr('x', (_d: number, i: number) => m.left + i * cellSize + cellSize / 2)
       .attr('y', m.top + chartHeight + 20)
       .attr('text-anchor', 'middle')
@@ -145,9 +172,12 @@ export const AMSTARRobvis = forwardRef<SVGSVGElement, AMSTARRobvisProps>(functio
       .text((d: number) => `Q${d}`);
 
     // Row labels
-    svg.append('g').selectAll('text')
+    svg
+      .append('g')
+      .selectAll('text')
       .data(data)
-      .enter().append('text')
+      .enter()
+      .append('text')
       .attr('x', m.left - 10)
       .attr('y', (_: any, i: number) => m.top + i * cellSize + cellSize / 2)
       .attr('text-anchor', 'end')
@@ -165,12 +195,15 @@ export const AMSTARRobvis = forwardRef<SVGSVGElement, AMSTARRobvisProps>(functio
         const cellColor = colors[value] ?? '#e5e7eb';
         const cw = Math.max(0, cellSize - 4);
         if (cw > 0) {
-          cellGroup.append('rect')
+          cellGroup
+            .append('rect')
             .attr('x', m.left + colIdx * cellSize + 2)
             .attr('y', m.top + rowIdx * cellSize + 2)
-            .attr('width', cw).attr('height', cw)
+            .attr('width', cw)
+            .attr('height', cw)
             .attr('fill', cellColor)
-            .attr('stroke', '#ffffff').attr('stroke-width', 1)
+            .attr('stroke', '#ffffff')
+            .attr('stroke-width', 1)
             .attr('rx', Math.max(2, cellSize * 0.12))
             .style('filter', 'drop-shadow(0px 1px 2px rgba(0, 0, 0, 0.1))');
         }
@@ -184,19 +217,47 @@ export const AMSTARRobvis = forwardRef<SVGSVGElement, AMSTARRobvisProps>(functio
       { key: 'no', label: 'No' },
       { key: 'no ma', label: 'No MA' },
     ];
-    const legend = svg.append('g').attr('transform', `translate(${svgWidth - m.right + 20}, ${m.top + 20})`);
-    const items = legend.selectAll('.legend-item').data(legendData).enter().append('g')
+    const legend = svg
+      .append('g')
+      .attr('transform', `translate(${svgWidth - m.right + 20}, ${m.top + 20})`);
+    const items = legend
+      .selectAll('.legend-item')
+      .data(legendData)
+      .enter()
+      .append('g')
       .attr('transform', (_d: any, i: number) => `translate(0, ${i * 25})`);
-    items.append('rect').attr('y', -8).attr('width', 16).attr('height', 16).attr('rx', 2)
-      .attr('fill', (d: any) => colors[d.key]).attr('stroke', '#ffffff').attr('stroke-width', 1);
-    items.append('text').attr('x', 24).attr('dy', '0.35em').attr('font-size', '13px')
-      .attr('font-weight', '500').attr('fill', '#374151').text((d: any) => d.label);
+    items
+      .append('rect')
+      .attr('y', -8)
+      .attr('width', 16)
+      .attr('height', 16)
+      .attr('rx', 2)
+      .attr('fill', (d: any) => colors[d.key])
+      .attr('stroke', '#ffffff')
+      .attr('stroke-width', 1);
+    items
+      .append('text')
+      .attr('x', 24)
+      .attr('dy', '0.35em')
+      .attr('font-size', '13px')
+      .attr('font-weight', '500')
+      .attr('fill', '#374151')
+      .text((d: any) => d.label);
 
     // Title
-    svg.append('text').attr('x', svgWidth / 2).attr('y', 40).attr('text-anchor', 'middle')
-      .attr('font-size', '18px').attr('font-weight', '600').attr('fill', '#111827').text(title);
+    svg
+      .append('text')
+      .attr('x', svgWidth / 2)
+      .attr('y', 40)
+      .attr('text-anchor', 'middle')
+      .attr('font-size', '18px')
+      .attr('font-weight', '600')
+      .attr('fill', '#111827')
+      .text(title);
 
-    return () => { svg.selectAll('*').remove(); };
+    return () => {
+      svg.selectAll('*').remove();
+    };
   }, [data, colors, cellSize, svgWidth, svgHeight, chartWidth, chartHeight, margin, title]);
 
   return (

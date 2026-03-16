@@ -1,11 +1,6 @@
 import { useMemo } from 'react';
 import { CheckIcon, ChevronRightIcon } from 'lucide-react';
-import {
-  Tooltip,
-  TooltipTrigger,
-  TooltipContent,
-  TooltipProvider,
-} from '@/components/ui/tooltip';
+import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/components/ui/tooltip';
 import {
   getSectionLabel,
   hasNavItemAnswer,
@@ -98,10 +93,10 @@ export function NavbarDomainPill({
       <TooltipProvider>
         <Tooltip delayDuration={300}>
           <TooltipTrigger asChild>
-            <button type="button" onClick={onClick} className={labelStyle}>
-              <span className="font-semibold">{label}</span>
+            <button type='button' onClick={onClick} className={labelStyle}>
+              <span className='font-semibold'>{label}</span>
               {!isExpanded && (
-                <span className="text-2xs opacity-80">
+                <span className='text-2xs opacity-80'>
                   {progress?.answered || 0}/{progress?.total || 0}
                 </span>
               )}
@@ -112,13 +107,13 @@ export function NavbarDomainPill({
               )}
             </button>
           </TooltipTrigger>
-          <TooltipContent side="bottom">{tooltipContent}</TooltipContent>
+          <TooltipContent side='bottom'>{tooltipContent}</TooltipContent>
         </Tooltip>
       </TooltipProvider>
 
       {/* Expanded question pills */}
       {isExpanded && (
-        <div className="flex items-center overflow-visible py-1">
+        <div className='flex items-center overflow-visible py-1'>
           {items.map((item, idx) => {
             const globalIndex = allNavItems?.indexOf(item) ?? -1;
             const isFirst = idx === 0;
@@ -189,8 +184,7 @@ function QuestionPill({
   })();
 
   const isJudgement =
-    item.type === NAV_ITEM_TYPES.DOMAIN_JUDGEMENT ||
-    item.type === NAV_ITEM_TYPES.OVERALL_JUDGEMENT;
+    item.type === NAV_ITEM_TYPES.DOMAIN_JUDGEMENT || item.type === NAV_ITEM_TYPES.OVERALL_JUDGEMENT;
 
   const pillSizeClass = isJudgement ? 'h-6 px-2 text-2xs' : 'h-6 w-6 text-2xs';
 
@@ -206,7 +200,7 @@ function QuestionPill({
       <Tooltip delayDuration={200}>
         <TooltipTrigger asChild>
           <button
-            type="button"
+            type='button'
             onClick={() => goToPage(globalIndex)}
             className={`relative flex items-center justify-center overflow-visible rounded-full font-medium transition-all ${pillSizeClass} ${pillSpacingClass} ${pillStyle}`}
             aria-label={tooltip}
@@ -215,15 +209,15 @@ function QuestionPill({
             {displayLabel}
             {hasAnswer && (
               <span
-                className="bg-card absolute -top-0.5 -right-0.5 flex h-2.5 w-2.5 items-center justify-center rounded-full border-[0.5px] shadow-sm"
-                aria-hidden="true"
+                className='bg-card absolute -top-0.5 -right-0.5 flex h-2.5 w-2.5 items-center justify-center rounded-full border-[0.5px] shadow-sm'
+                aria-hidden='true'
               >
-                <CheckIcon className="h-1.5 w-1.5 text-green-600" />
+                <CheckIcon className='h-1.5 w-1.5 text-green-600' />
               </span>
             )}
           </button>
         </TooltipTrigger>
-        <TooltipContent side="bottom">{tooltip}</TooltipContent>
+        <TooltipContent side='bottom'>{tooltip}</TooltipContent>
       </Tooltip>
     </TooltipProvider>
   );

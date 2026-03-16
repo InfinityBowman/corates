@@ -170,29 +170,29 @@ function SingleQuestionPage({
   const isCritical = reviewer1Answers?.critical || reviewer2Answers?.critical;
 
   return (
-    <div className="bg-card overflow-hidden rounded-lg shadow-lg">
+    <div className='bg-card overflow-hidden rounded-lg shadow-lg'>
       {/* Question Header */}
       <div
         className={`p-4 ${isAgreement ? 'border-b border-green-200 bg-green-50' : 'border-b border-amber-200 bg-amber-50'}`}
       >
-        <h2 className="text-md text-foreground font-medium">
+        <h2 className='text-md text-foreground font-medium'>
           {question?.text}
-          {isCritical && <span className="ml-2 text-sm font-medium text-red-600">(Critical)</span>}
+          {isCritical && <span className='ml-2 text-sm font-medium text-red-600'>(Critical)</span>}
         </h2>
-        <div className="mt-2 flex items-center gap-3">
+        <div className='mt-2 flex items-center gap-3'>
           <span
             className={`text-xs font-medium ${isAgreement ? 'text-green-700' : 'text-amber-700'}`}
           >
             {isAgreement ? 'Reviewers Agree' : 'Requires Reconciliation'}
           </span>
           {question?.subtitle && (
-            <span className="text-muted-foreground text-sm">({question.subtitle})</span>
+            <span className='text-muted-foreground text-sm'>({question.subtitle})</span>
           )}
         </div>
       </div>
 
       {/* Three Column Layout */}
-      <div className="divide-border grid grid-cols-3 divide-x">
+      <div className='divide-border grid grid-cols-3 divide-x'>
         <AnswerPanel
           title={reviewer1Name || 'Reviewer 1'}
           answers={reviewer1Answers}
@@ -201,7 +201,7 @@ function SingleQuestionPage({
           isSelected={selectedSource === 'reviewer1'}
           onUseThis={useReviewer1}
           readOnly={true}
-          highlightColor="blue"
+          highlightColor='blue'
           hideSelectButtons={reviewersAgree}
         />
         <AnswerPanel
@@ -212,11 +212,11 @@ function SingleQuestionPage({
           isSelected={selectedSource === 'reviewer2'}
           onUseThis={useReviewer2}
           readOnly={true}
-          highlightColor="purple"
+          highlightColor='purple'
           hideSelectButtons={reviewersAgree}
         />
         <AnswerPanel
-          title="Final Answer"
+          title='Final Answer'
           answers={localFinal}
           questionKey={questionKey}
           finalAnswer={finalFinalAnswer}
@@ -225,13 +225,13 @@ function SingleQuestionPage({
           readOnly={false}
           onCheckboxChange={handleFinalCheckboxChange}
           onRadioChange={handleFinalRadioChange}
-          highlightColor="green"
+          highlightColor='green'
           selectedSource={selectedSource}
         />
       </div>
 
       {/* Notes Section */}
-      <div className="px-4 pb-4">
+      <div className='px-4 pb-4'>
         <NotesCompareSection
           reviewer1Note={reviewer1Note}
           reviewer2Note={reviewer2Note}

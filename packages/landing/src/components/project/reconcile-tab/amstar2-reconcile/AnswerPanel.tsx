@@ -62,19 +62,19 @@ export function AnswerPanel({
 
   if (compact) {
     return (
-      <div className="space-y-3">
+      <div className='space-y-3'>
         {columns.map((col: any, colIdx: number) => {
           const isLastColumn = colIdx === columns.length - 1;
           const colAnswers = answersArray[colIdx] || [];
 
           return (
-            <div key={colIdx} className="border-border border-t pt-2 first:border-t-0 first:pt-0">
+            <div key={colIdx} className='border-border border-t pt-2 first:border-t-0 first:pt-0'>
               {col.label && (
-                <div className="text-secondary-foreground mb-1 text-xs font-semibold">
+                <div className='text-secondary-foreground mb-1 text-xs font-semibold'>
                   {col.label}
                 </div>
               )}
-              <div className="space-y-1">
+              <div className='space-y-1'>
                 {col.options.map((option: string, optIdx: number) => {
                   const isChecked = colAnswers[optIdx] === true;
                   return (
@@ -82,24 +82,23 @@ export function AnswerPanel({
                       key={optIdx}
                       className={`flex items-start gap-2 text-xs ${readOnly ? '' : 'hover:bg-muted -m-1 cursor-pointer rounded p-1'}`}
                     >
-                      {isLastColumn ? (
+                      {isLastColumn ?
                         <input
-                          type="radio"
+                          type='radio'
                           name={`${panelId || title || 'panel'}-${questionKey}-compact-${colIdx}-${uniqueId}`}
                           checked={isChecked}
                           disabled={readOnly}
                           onChange={() => !readOnly && onRadioChange?.(colIdx, optIdx)}
-                          className="border-border focus:ring-primary mt-0.5 h-3 w-3 shrink-0 text-blue-600"
+                          className='border-border focus:ring-primary mt-0.5 h-3 w-3 shrink-0 text-blue-600'
                         />
-                      ) : (
-                        <input
-                          type="checkbox"
+                      : <input
+                          type='checkbox'
                           checked={isChecked}
                           disabled={readOnly}
                           onChange={() => !readOnly && onCheckboxChange?.(colIdx, optIdx)}
-                          className="border-border focus:ring-primary mt-0.5 h-3 w-3 shrink-0 rounded text-blue-600"
+                          className='border-border focus:ring-primary mt-0.5 h-3 w-3 shrink-0 rounded text-blue-600'
                         />
-                      )}
+                      }
                       <span
                         className={`text-xs ${isChecked ? 'text-foreground font-medium' : 'text-muted-foreground'}`}
                       >
@@ -118,16 +117,16 @@ export function AnswerPanel({
 
   // Full (non-compact) mode
   return (
-    <div className="p-4">
+    <div className='p-4'>
       {/* Panel Header */}
       <div className={`${isFinal ? 'mb-0' : 'mb-4'} flex items-center justify-between`}>
         <div>
-          <h3 className="text-foreground -mb-1 font-semibold">{title}</h3>
+          <h3 className='text-foreground -mb-1 font-semibold'>{title}</h3>
           {isFinal && selectedSource && (
-            <span className="text-muted-foreground text-xs">
-              {selectedSource === 'custom'
-                ? 'Custom selection'
-                : `Based on ${selectedSource === 'reviewer1' ? 'Reviewer 1' : 'Reviewer 2'}`}
+            <span className='text-muted-foreground text-xs'>
+              {selectedSource === 'custom' ?
+                'Custom selection'
+              : `Based on ${selectedSource === 'reviewer1' ? 'Reviewer 1' : 'Reviewer 2'}`}
             </span>
           )}
         </div>
@@ -135,9 +134,9 @@ export function AnswerPanel({
           <button
             onClick={() => onUseThis?.()}
             className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
-              isSelected
-                ? 'bg-blue-600 text-white'
-                : 'bg-secondary text-secondary-foreground hover:bg-blue-100 hover:text-blue-700'
+              isSelected ? 'bg-blue-600 text-white' : (
+                'bg-secondary text-secondary-foreground hover:bg-blue-100 hover:text-blue-700'
+              )
             }`}
           >
             {isSelected ? 'Selected' : 'Use This'}
@@ -146,8 +145,8 @@ export function AnswerPanel({
       </div>
 
       {/* Final Answer Badge */}
-      <div className="mb-4 flex flex-wrap items-center gap-2">
-        <span className="text-muted-foreground text-xs">Result:</span>
+      <div className='mb-4 flex flex-wrap items-center gap-2'>
+        <span className='text-muted-foreground text-xs'>Result:</span>
         <span
           className={`inline-flex items-center rounded-full border px-2 py-1 text-xs font-medium ${getAnswerBadgeStyle(finalAnswer || null)}`}
         >
@@ -156,22 +155,22 @@ export function AnswerPanel({
       </div>
 
       {/* Answer Columns */}
-      <div className="space-y-4">
+      <div className='space-y-4'>
         {columns.map((col: any, colIdx: number) => {
           const isLastColumn = colIdx === columns.length - 1;
           const colAnswers = answersArray[colIdx] || [];
 
           return (
-            <div key={colIdx} className="border-border border-t pt-3">
+            <div key={colIdx} className='border-border border-t pt-3'>
               {col.label && (
-                <div className="text-secondary-foreground mb-2 text-xs font-semibold">
+                <div className='text-secondary-foreground mb-2 text-xs font-semibold'>
                   {col.label}
                 </div>
               )}
               {col.description && (
-                <div className="text-muted-foreground mb-2 text-xs">{col.description}</div>
+                <div className='text-muted-foreground mb-2 text-xs'>{col.description}</div>
               )}
-              <div className="space-y-2">
+              <div className='space-y-2'>
                 {col.options.map((option: string, optIdx: number) => {
                   const isChecked = colAnswers[optIdx] === true;
                   return (
@@ -179,24 +178,23 @@ export function AnswerPanel({
                       key={optIdx}
                       className={`flex items-start gap-2 text-xs ${readOnly ? '' : 'hover:bg-muted -m-1 cursor-pointer rounded p-1'}`}
                     >
-                      {isLastColumn ? (
+                      {isLastColumn ?
                         <input
-                          type="radio"
+                          type='radio'
                           name={`${title}-${questionKey}-final-${uniqueId}`}
                           checked={isChecked}
                           disabled={readOnly}
                           onChange={() => !readOnly && onRadioChange?.(colIdx, optIdx)}
-                          className="border-border focus:ring-primary mt-0.5 h-3.5 w-3.5 shrink-0 text-blue-600"
+                          className='border-border focus:ring-primary mt-0.5 h-3.5 w-3.5 shrink-0 text-blue-600'
                         />
-                      ) : (
-                        <input
-                          type="checkbox"
+                      : <input
+                          type='checkbox'
                           checked={isChecked}
                           disabled={readOnly}
                           onChange={() => !readOnly && onCheckboxChange?.(colIdx, optIdx)}
-                          className="border-border focus:ring-primary mt-0.5 h-3.5 w-3.5 shrink-0 rounded text-blue-600"
+                          className='border-border focus:ring-primary mt-0.5 h-3.5 w-3.5 shrink-0 rounded text-blue-600'
                         />
-                      )}
+                      }
                       <span
                         className={`${isChecked ? 'text-foreground font-medium' : 'text-muted-foreground'}`}
                       >

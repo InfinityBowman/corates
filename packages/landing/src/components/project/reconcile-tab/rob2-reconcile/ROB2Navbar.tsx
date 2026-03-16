@@ -5,12 +5,7 @@
 
 import { useMemo, useCallback } from 'react';
 import { RotateCcwIcon, AlertTriangleIcon } from 'lucide-react';
-import {
-  Tooltip,
-  TooltipTrigger,
-  TooltipContent,
-  TooltipProvider,
-} from '@/components/ui/tooltip';
+import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/components/ui/tooltip';
 import { NavbarDomainPill } from './NavbarDomainPill';
 import {
   getDomainProgress,
@@ -90,17 +85,17 @@ export function ROB2Navbar({ store }: ROB2NavbarProps) {
   );
 
   return (
-    <nav className="flex items-center gap-1 px-1 py-1.5" aria-label="Question navigation">
+    <nav className='flex items-center gap-1 px-1 py-1.5' aria-label='Question navigation'>
       {/* Aim Mismatch Warning */}
       {store.aimMismatch && (
         <TooltipProvider>
           <Tooltip delayDuration={200}>
             <TooltipTrigger asChild>
               <button
-                type="button"
-                className="mr-1 flex shrink-0 items-center gap-1 rounded-full bg-red-100 px-2 py-1 text-xs font-medium text-red-700"
+                type='button'
+                className='mr-1 flex shrink-0 items-center gap-1 rounded-full bg-red-100 px-2 py-1 text-xs font-medium text-red-700'
               >
-                <AlertTriangleIcon className="h-3 w-3" />
+                <AlertTriangleIcon className='h-3 w-3' />
                 Aim
               </button>
             </TooltipTrigger>
@@ -110,8 +105,8 @@ export function ROB2Navbar({ store }: ROB2NavbarProps) {
       )}
 
       {/* Domain pills with expandable groups */}
-      {sectionKeys.map((sectionKey) => (
-        <div key={sectionKey} className="shrink-0">
+      {sectionKeys.map(sectionKey => (
+        <div key={sectionKey} className='shrink-0'>
           <NavbarDomainPill
             sectionKey={sectionKey}
             progress={(domainProgress as Record<string, any>)[sectionKey]}
@@ -129,9 +124,9 @@ export function ROB2Navbar({ store }: ROB2NavbarProps) {
       ))}
 
       {/* Separator before summary/reset */}
-      <span className="text-border mx-1 shrink-0">|</span>
+      <span className='text-border mx-1 shrink-0'>|</span>
 
-      <div className="flex shrink-0 items-center gap-1">
+      <div className='flex shrink-0 items-center gap-1'>
         <SummaryButton store={store} />
         <ResetButton onClick={() => store.onReset?.()} />
       </div>
@@ -145,8 +140,9 @@ export function ROB2Navbar({ store }: ROB2NavbarProps) {
 function SummaryButton({ store }: { store: NavbarStore }) {
   const isActive = store.viewMode === 'summary';
 
-  const buttonStyle = isActive
-    ? 'bg-blue-600 text-white ring-2 ring-blue-300'
+  const buttonStyle =
+    isActive ?
+      'bg-blue-600 text-white ring-2 ring-blue-300'
     : 'bg-secondary text-muted-foreground hover:bg-border';
 
   return (
@@ -154,10 +150,10 @@ function SummaryButton({ store }: { store: NavbarStore }) {
       <Tooltip delayDuration={200}>
         <TooltipTrigger asChild>
           <button
-            type="button"
+            type='button'
             onClick={() => store.setViewMode?.('summary')}
             className={`h-7 rounded-full px-3 text-xs font-medium transition-all ${buttonStyle}`}
-            aria-label="View summary"
+            aria-label='View summary'
             aria-current={isActive ? 'page' : undefined}
           >
             Summary
@@ -178,12 +174,12 @@ function ResetButton({ onClick }: { onClick: () => void }) {
       <Tooltip delayDuration={200}>
         <TooltipTrigger asChild>
           <button
-            type="button"
+            type='button'
             onClick={onClick}
-            className="flex h-7 items-center gap-1 rounded-full bg-red-100 px-2 text-xs font-medium text-red-700 transition-all hover:bg-red-200"
-            aria-label="Reset reconciliation"
+            className='flex h-7 items-center gap-1 rounded-full bg-red-100 px-2 text-xs font-medium text-red-700 transition-all hover:bg-red-200'
+            aria-label='Reset reconciliation'
           >
-            <RotateCcwIcon className="h-2.5 w-2.5" />
+            <RotateCcwIcon className='h-2.5 w-2.5' />
             Reset
           </button>
         </TooltipTrigger>

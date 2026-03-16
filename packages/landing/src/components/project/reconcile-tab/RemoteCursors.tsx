@@ -12,19 +12,19 @@ import type { RemoteUser } from '@/hooks/useReconciliationPresence';
 function CursorIcon({ color }: { color: string }) {
   return (
     <svg
-      width="20"
-      height="24"
-      viewBox="0 0 20 24"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
+      width='20'
+      height='24'
+      viewBox='0 0 20 24'
+      fill='none'
+      xmlns='http://www.w3.org/2000/svg'
       style={{ filter: 'drop-shadow(0 1px 3px rgba(0,0,0,0.25))' }}
     >
       <path
-        d="M2 1L2 21L8 15L18 15L2 1Z"
+        d='M2 1L2 21L8 15L18 15L2 1Z'
         fill={color}
-        stroke="white"
-        strokeWidth="1.5"
-        strokeLinejoin="round"
+        stroke='white'
+        strokeWidth='1.5'
+        strokeLinejoin='round'
       />
     </svg>
   );
@@ -45,7 +45,7 @@ export function RemoteCursors({ users, containerScrollY }: RemoteCursorsProps) {
   };
 
   return (
-    <div className="pointer-events-none absolute inset-0" style={{ zIndex: 9999 }}>
+    <div className='pointer-events-none absolute inset-0' style={{ zIndex: 9999 }}>
       {activeCursors.map(user => {
         if (!user.cursor) return null;
         const x = user.cursor.x;
@@ -54,7 +54,7 @@ export function RemoteCursors({ users, containerScrollY }: RemoteCursorsProps) {
         return (
           <div
             key={user.clientId}
-            className="absolute top-0 left-0"
+            className='absolute top-0 left-0'
             style={{
               transform: `translate(${x}px, ${y}px)`,
               zIndex: 9999,
@@ -65,7 +65,7 @@ export function RemoteCursors({ users, containerScrollY }: RemoteCursorsProps) {
 
             {/* Name label */}
             <div
-              className="-mt-1 ml-3 px-1.5 py-0.5 text-xs font-medium whitespace-nowrap text-white shadow-sm"
+              className='-mt-1 ml-3 px-1.5 py-0.5 text-xs font-medium whitespace-nowrap text-white shadow-sm'
               style={{
                 backgroundColor: (user.color as Record<string, any>).hex,
                 borderRadius: '2px 6px 6px 6px',
