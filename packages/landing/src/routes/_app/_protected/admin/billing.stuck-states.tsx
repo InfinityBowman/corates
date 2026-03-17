@@ -87,7 +87,7 @@ const getInvestigationSteps = (type: string): string[] => {
   }
 };
 
-export const Route = (createFileRoute as unknown as Function)(
+export const Route = createFileRoute(
   '/_app/_protected/admin/billing/stuck-states',
 )({
   component: AdminBillingStuckStatesPage,

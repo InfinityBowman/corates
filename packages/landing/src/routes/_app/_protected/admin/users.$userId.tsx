@@ -59,10 +59,7 @@ import { handleError } from '@/lib/error-utils';
 import { AdminBox } from '@/components/admin/ui';
 import { table } from '@/components/admin/styles/admin-tokens';
 import { queryKeys } from '@/lib/queryKeys';
-
-export const Route = (createFileRoute as unknown as Function)(
-  '/_app/_protected/admin/users/$userId',
-)({
+export const Route = createFileRoute('/_app/_protected/admin/users/$userId')({
   component: UserDetailPage,
 });
 
@@ -286,7 +283,7 @@ function UserDetailPage() {
 
   if (!isAdminChecked) {
     return (
-      <div className='flex min-h-[400px] items-center justify-center'>
+      <div className='min-h-[400px flex items-center justify-center'>
         <LoaderIcon className='h-8 w-8 animate-spin text-blue-600' />
       </div>
     );
@@ -294,7 +291,7 @@ function UserDetailPage() {
 
   if (!isAdmin) {
     return (
-      <div className='text-muted-foreground flex min-h-[400px] flex-col items-center justify-center'>
+      <div className='text-muted-foreground min-h-[400px flex flex-col items-center justify-center'>
         <AlertCircleIcon className='mb-4 h-12 w-12' />
         <p className='text-lg font-medium'>Access Denied</p>
         <p className='text-sm'>You do not have admin privileges.</p>

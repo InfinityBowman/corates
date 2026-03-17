@@ -1,28 +1,28 @@
-import { Command } from '@embedpdf/plugin-commands/preact';
-import { CapturePlugin } from '@embedpdf/plugin-capture/preact';
-import { ZoomMode, ZoomPlugin } from '@embedpdf/plugin-zoom/preact';
-import { PanPlugin } from '@embedpdf/plugin-pan/preact';
-import { SpreadMode, SpreadPlugin } from '@embedpdf/plugin-spread/preact';
-import { RotatePlugin } from '@embedpdf/plugin-rotate/preact';
+import { Command } from '@embedpdf/plugin-commands/react';
+import { CapturePlugin } from '@embedpdf/plugin-capture/react';
+import { ZoomMode, ZoomPlugin } from '@embedpdf/plugin-zoom/react';
+import { PanPlugin } from '@embedpdf/plugin-pan/react';
+import { SpreadMode, SpreadPlugin } from '@embedpdf/plugin-spread/react';
+import { RotatePlugin } from '@embedpdf/plugin-rotate/react';
 import {
   ANNOTATION_PLUGIN_ID,
   AnnotationPlugin,
   getToolDefaultsById,
-} from '@embedpdf/plugin-annotation/preact';
+} from '@embedpdf/plugin-annotation/react';
 // import {
 //   REDACTION_PLUGIN_ID,
 //   RedactionMode,
 //   RedactionPlugin,
 // } from '@embedpdf/plugin-redaction/react';
-import { PrintPlugin } from '@embedpdf/plugin-print/preact';
-import { ExportPlugin } from '@embedpdf/plugin-export/preact';
-import { DocumentManagerPlugin } from '@embedpdf/plugin-document-manager/preact';
-import { HISTORY_PLUGIN_ID, HistoryPlugin } from '@embedpdf/plugin-history/preact';
+import { PrintPlugin } from '@embedpdf/plugin-print/react';
+import { ExportPlugin } from '@embedpdf/plugin-export/react';
+import { DocumentManagerPlugin } from '@embedpdf/plugin-document-manager/react';
+import { HISTORY_PLUGIN_ID, HistoryPlugin } from '@embedpdf/plugin-history/react';
 import { State } from './types';
 import { isSidebarOpen, isToolbarOpen, UI_PLUGIN_ID, UIPlugin } from '@embedpdf/plugin-ui';
-import { ScrollPlugin, ScrollStrategy } from '@embedpdf/plugin-scroll/preact';
+import { ScrollPlugin, ScrollStrategy } from '@embedpdf/plugin-scroll/react';
 import { InteractionManagerPlugin } from '@embedpdf/plugin-interaction-manager';
-import { SelectionPlugin } from '@embedpdf/plugin-selection/preact';
+import { SelectionPlugin } from '@embedpdf/plugin-selection/react';
 
 export const commands: Record<string, Command<State>> = {
   // ─────────────────────────────────────────────────────────

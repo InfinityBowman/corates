@@ -11,7 +11,6 @@
     "moduleDetection": "force",
     "noEmit": true,
     "jsx": "react-jsx",
-    "jsxImportSource": "preact",
     "strict": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
@@ -19,13 +18,7 @@
     "noUncheckedIndexedAccess": true,
     "resolveJsonModule": true,
     "esModuleInterop": true,
-    "allowSyntheticDefaultImports": true,
-    "baseUrl": "../../../../..",
-    "paths": {
-      "react": ["node_modules/preact/compat"],
-      "react-dom": ["node_modules/preact/compat"],
-      "react/jsx-runtime": ["node_modules/preact/jsx-runtime"]
-    }
+    "allowSyntheticDefaultImports": true
   },
   "include": ["src"]
 }

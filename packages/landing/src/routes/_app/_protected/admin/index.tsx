@@ -24,7 +24,7 @@ import { AnalyticsSection } from '@/components/admin/AnalyticsSection';
 import { AdminSection, AdminBox, DashboardHeader } from '@/components/admin/ui';
 import { input } from '@/components/admin/styles/admin-tokens';
 
-export const Route = (createFileRoute as unknown as Function)('/_app/_protected/admin/')({
+export const Route = createFileRoute('/_app/_protected/admin/')({
   component: AdminDashboard,
 });
 

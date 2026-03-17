@@ -33,6 +33,7 @@ import { adminRoutes } from './routes/admin/index';
 import { accountMergeRoutes } from './routes/account-merge';
 import { contactRoutes } from './routes/contact';
 import { invitationRoutes } from './routes/invitations';
+import { testSeedRoutes } from './routes/test-seed';
 
 // Export Durable Objects
 export { UserSession, ProjectDoc };
@@ -91,6 +92,9 @@ app.get('/openapi.json', c => {
     ],
   });
 });
+
+// Mount test seed routes (dev only, gated inside the route handler)
+app.route('/api/test', testSeedRoutes);
 
 // Mount auth routes
 app.route('/api/auth', auth);

@@ -1,12 +1,12 @@
 // @ts-nocheck
 import { useSearch } from '@embedpdf/plugin-search/react';
 import { useScrollCapability } from '@embedpdf/plugin-scroll/react';
-import { useState, useRef, useEffect } from 'preact/hooks';
+import { useState, useRef, useEffect } from 'react';
 import { MatchFlag } from '@embedpdf/models';
 import { SearchResult } from '@embedpdf/models';
 import { SearchIcon, CloseIcon, ChevronRightIcon, ChevronLeftIcon } from './icons';
 import { useTranslations } from '@embedpdf/plugin-i18n/react';
-import { TargetedEvent } from 'preact';
+import type { ChangeEvent } from 'react';
 
 const HitLine = ({
   hit,
@@ -75,7 +75,7 @@ export function SearchSidebar({ documentId, onClose }: SearchSidebarProps) {
     }
   }, [state.activeResultIndex, state.loading, state.query, state.flags]);
 
-  const handleInputChange = (e: TargetedEvent<HTMLInputElement>) => {
+  const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
     const value = (e.target as HTMLInputElement).value;
     setInputValue(value);
 

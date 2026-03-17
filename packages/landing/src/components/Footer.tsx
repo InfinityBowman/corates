@@ -1,6 +1,6 @@
 import { Link } from '@tanstack/react-router';
 import { BiCopyright } from 'react-icons/bi';
-import { urls } from '../lib/config';
+
 
 export default function Footer() {
   const year = new Date().getFullYear();
@@ -46,13 +46,12 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
-                <a
-                  href={urls.checklist()}
-                  rel='external'
+                <Link
+                  to='/checklist'
                   className='text-gray-500 transition-colors hover:text-gray-700'
                 >
                   Try Appraisal
-                </a>
+                </Link>
               </li>
             </ul>
           </div>
@@ -106,20 +105,18 @@ export default function Footer() {
             {year} Syntch LLC. All rights reserved.
           </p>
           <div className='flex gap-4'>
-            <a
-              href={urls.signIn()}
-              rel='external'
+            <Link
+              to='/signin'
               className='text-sm text-gray-500 transition-colors hover:text-gray-700'
             >
               Sign In
-            </a>
-            <a
-              href={urls.signUp()}
-              rel='external'
+            </Link>
+            <Link
+              to='/signup'
               className='text-sm font-medium text-blue-700 transition-colors hover:text-blue-700/90'
             >
               Get Started
-            </a>
+            </Link>
           </div>
         </div>
       </div>

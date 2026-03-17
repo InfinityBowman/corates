@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link } from '@tanstack/react-router';
 import { FiMenu, FiX } from 'react-icons/fi';
-import { urls } from '../lib/config';
+
 import { useAuth } from '../lib/auth';
 import EarlyAccessBanner from './EarlyAccessBanner';
 
@@ -49,13 +49,12 @@ function MobileMenu({ isOpen, onClose }: { isOpen: boolean; onClose: () => void 
             style={{ animationDelay: getDelay(navLinks.length) }}
           >
             {isLoggedIn ?
-              <a
-                href={urls.dashboard()}
-                rel='external'
+              <Link
+                to='/dashboard'
                 className='block w-full rounded-lg border border-transparent bg-blue-600 px-4 py-3 text-center font-medium text-white shadow-sm transition-colors hover:bg-blue-700'
               >
                 My Dashboard
-              </a>
+              </Link>
             : <>
                 <Link
                   to='/signin'
@@ -122,13 +121,12 @@ export default function Navbar() {
                 <span className='hidden sm:inline-flex'>
                   Welcome back, {user?.name || 'User'}!&nbsp;
                 </span>
-                <a
-                  href={urls.dashboard()}
-                  rel='external'
+                <Link
+                  to='/dashboard'
                   className='hidden items-center gap-2 rounded-lg border border-transparent bg-blue-600 px-4 py-1.5 text-white shadow-sm transition-colors hover:bg-blue-700 focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2 focus-visible:outline-none sm:inline-flex'
                 >
                   My Dashboard
-                </a>
+                </Link>
               </>
             : <>
                 <Link

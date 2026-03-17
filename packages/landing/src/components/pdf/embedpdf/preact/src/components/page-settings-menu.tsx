@@ -1,5 +1,5 @@
 // @ts-nocheck
-import { useState } from 'preact/hooks';
+import { useState } from 'react';
 import { useRotate } from '@embedpdf/plugin-rotate/react';
 import { useSpread } from '@embedpdf/plugin-spread/react';
 import { SpreadMode } from '@embedpdf/plugin-spread';

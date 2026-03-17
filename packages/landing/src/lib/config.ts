@@ -12,7 +12,6 @@ export const urls = {
     if (interval) params.set('interval', interval);
     return `${base}?${params.toString()}`;
   },
-  // These still live in the SolidJS app
-  checklist: () => `${config.appUrl}/checklist?from=landing`,
-  dashboard: () => `${config.appUrl}/dashboard`,
+  checklist: () => '/checklist',
+  dashboard: () => '/dashboard',
 };

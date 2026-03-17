@@ -8,7 +8,7 @@
  * - Calling callbacks to sync changes to Y.js
  */
 
-import { useEffect, useRef, useCallback } from 'preact/hooks';
+import { useEffect, useRef, useCallback } from 'react';
 import { useAnnotationCapability } from '@embedpdf/plugin-annotation/react';
 
 /**

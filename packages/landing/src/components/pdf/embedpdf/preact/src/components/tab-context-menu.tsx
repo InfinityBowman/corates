@@ -1,5 +1,5 @@
 // @ts-nocheck
-import { useEffect, useRef } from 'preact/hooks';
+import { useEffect, useRef } from 'react';
 import { DocumentState } from '@embedpdf/core';
 import { useViewManagerCapability, useAllViews } from '@embedpdf/plugin-view-manager/react';
 

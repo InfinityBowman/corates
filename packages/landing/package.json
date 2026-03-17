@@ -17,7 +17,8 @@
     "test": "vitest run --config vitest.config.ts --reporter=verbose",
     "test:watch": "vitest --config vitest.config.ts",
     "test:browser": "vitest run --config vitest.browser.config.ts --reporter=verbose",
-    "test:browser:ui": "vitest --config vitest.browser.config.ts --ui"
+    "test:browser:ui": "vitest --config vitest.browser.config.ts --ui",
+    "test:e2e": "vitest run --config vitest.e2e.config.ts --reporter=verbose"
   },
   "dependencies": {
     "@ark-ui/react": "^5.34.1",
@@ -67,7 +68,6 @@
     "input-otp": "^1.4.2",
     "lucide-react": "^0.577.0",
     "next-themes": "^0.4.6",
-    "preact": "^10.28.4",
     "radix-ui": "^1.4.3",
     "react": "19.2.4",
     "react-chartjs-2": "^5.3.1",
@@ -85,7 +85,6 @@
   },
   "devDependencies": {
     "@cloudflare/vite-plugin": "^1.25.2",
-    "@preact/preset-vite": "^2.10.3",
     "@tailwindcss/vite": "^4.2.1",
     "@tanstack/eslint-config": "^0.4.0",
     "@tanstack/router-plugin": "^1.132.0",
@@ -103,6 +102,7 @@
     "vite": "^7.3.1",
     "vite-tsconfig-paths": "^5.1.4",
     "vitest": "^4.1.0",
+    "vitest-browser-react": "^2.1.0",
     "wrangler": "^4.71.0"
   }
 }

@@ -41,7 +41,7 @@ const formatDate = (timestamp: string | number | null | undefined): string => {
   });
 };
 
-export const Route = (createFileRoute as unknown as Function)('/_app/_protected/admin/orgs')({
+export const Route = createFileRoute('/_app/_protected/admin/orgs')({
   component: AdminOrgList,
 });
 

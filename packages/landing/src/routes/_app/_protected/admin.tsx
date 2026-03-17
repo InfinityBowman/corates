@@ -41,7 +41,7 @@ const navItems: NavItem[] = [
 ];
 
 // Route path will be registered once the route tree is regenerated
-export const Route = (createFileRoute as unknown as Function)('/_app/_protected/admin')({
+export const Route = createFileRoute('/_app/_protected/admin')({
   component: AdminLayout,
 });
 

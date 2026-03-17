@@ -1,7 +1,14 @@
 import { betterAuth } from 'better-auth';
 import { createAuthMiddleware } from 'better-auth/api';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
-import { genericOAuth, magicLink, twoFactor, admin, organization } from 'better-auth/plugins';
+import {
+  genericOAuth,
+  magicLink,
+  twoFactor,
+  admin,
+  organization,
+  testUtils,
+} from 'better-auth/plugins';
 import { oAuthRelay } from './oauth-relay';
 import { stripe } from '@better-auth/stripe';
 import Stripe from 'stripe';
@@ -113,6 +120,11 @@ export function createAuth(env: Env, ctx?: ExecutionContext) {
 
   // Build plugins array
   const plugins: any[] = [];
+
+  // Test utilities for e2e testing (dev only)
+  if (env.DEV_MODE) {
+    plugins.push(testUtils());
+  }
 
   // OAuth Relay plugin for local development
   // Relays OAuth tokens through production so localhost can create its own sessions

@@ -29,7 +29,7 @@ import {
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/components/ui/tooltip';
 import { DashboardHeader } from '@/components/admin/ui';
 
-export const Route = (createFileRoute as unknown as Function)('/_app/_protected/admin/database')({
+export const Route = createFileRoute('/_app/_protected/admin/database')({
   component: DatabaseViewerPage,
 });
 
@@ -161,7 +161,7 @@ function DatabaseViewerPage() {
 
   if (!isAdminChecked) {
     return (
-      <div className='flex min-h-[400px] items-center justify-center'>
+      <div className='flex min-h-100 items-center justify-center'>
         <LoaderIcon className='h-8 w-8 animate-spin text-blue-600' />
       </div>
     );
@@ -169,7 +169,7 @@ function DatabaseViewerPage() {
 
   if (!isAdmin) {
     return (
-      <div className='text-muted-foreground flex min-h-[400px] flex-col items-center justify-center'>
+      <div className='text-muted-foreground flex min-h-100 flex-col items-center justify-center'>
         <AlertCircleIcon className='mb-4 h-12 w-12' />
         <p className='text-lg font-medium'>Access Denied</p>
         <p className='text-sm'>You do not have admin privileges.</p>
@@ -208,7 +208,7 @@ function DatabaseViewerPage() {
               <div className='flex justify-center p-4'>
                 <LoaderIcon className='h-6 w-6 animate-spin text-blue-600' />
               </div>
-            : <div className='max-h-[600px] overflow-y-auto'>
+            : <div className='max-h-150 overflow-y-auto'>
                 {tables.map(tbl => (
                   <button
                     key={tbl.name}
@@ -328,7 +328,7 @@ function DatabaseViewerPage() {
                                   )}
                                   {col}
                                   {schema?.type && (
-                                    <span className='bg-secondary text-muted-foreground ml-1 rounded px-1 py-0.5 text-[10px] font-normal normal-case'>
+                                    <span className='bg-secondary text-muted-foreground text-2xs ml-1 rounded px-1 py-0.5 font-normal normal-case'>
                                       {schema.type}
                                     </span>
                                   )}

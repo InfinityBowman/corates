@@ -1,5 +1,5 @@
 // @ts-nocheck
-import { useState, useEffect } from 'preact/hooks';
+import { useState, useEffect } from 'react';
 import { usePrint } from '@embedpdf/plugin-print/react';
 import { useScroll } from '@embedpdf/plugin-scroll/react';
 import type { PdfPrintOptions } from '@embedpdf/models';

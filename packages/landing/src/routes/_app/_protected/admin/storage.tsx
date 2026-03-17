@@ -33,7 +33,7 @@ import {
 import { DashboardHeader, AdminSection, AdminBox } from '@/components/admin/ui';
 import { input, table } from '@/components/admin/styles/admin-tokens';
 
-export const Route = (createFileRoute as unknown as Function)('/_app/_protected/admin/storage')({
+export const Route = createFileRoute('/_app/_protected/admin/storage')({
   component: StorageManagementPage,
 });
 

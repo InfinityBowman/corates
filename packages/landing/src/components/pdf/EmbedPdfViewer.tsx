@@ -1,14 +1,11 @@
 /**
- * EmbedPdfViewer - React wrapper that manages a Preact island for the PDF viewer.
+ * EmbedPdfViewer - React wrapper for the EmbedPDF viewer component.
  *
- * Mounts the Preact EmbedPDF component once and re-renders it in-place when props
- * change, avoiding the cost of destroying and recreating the PDFium engine + workers
- * on every PDF switch.
+ * Renders the viewer directly as a React component. The PDFium engine and
+ * Web Workers are preserved across re-renders by the viewer's internal state.
  */
 
-import { useEffect, useRef } from 'react';
-import { render, h } from 'preact';
-import EmbedPdfViewerPreact from './embedpdf/preact/src/main';
+import { ViewerPage } from './embedpdf/preact/src/viewer';
 
 export interface EmbedPdfViewerProps {
   pdfData?: ArrayBuffer | null;
@@ -38,45 +35,18 @@ export default function EmbedPdfViewer({
   onAnnotationDelete,
   initialAnnotations,
 }: EmbedPdfViewerProps) {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const mountedRef = useRef(false);
-
-  // Mount the Preact tree once, then re-render in-place on prop changes.
-  // Preact's render() with the same container diffs the existing tree rather
-  // than destroying it, so the PDFium engine and Web Workers are preserved.
-  useEffect(() => {
-    const container = containerRef.current;
-    if (!container) return;
-
-    render(
-      h(EmbedPdfViewerPreact as any, {
-        pdfData,
-        selectedPdfId,
-        pdfFileName,
-        pdfs,
-        onPdfSelect,
-        readOnly,
-        onAnnotationAdd,
-        onAnnotationUpdate,
-        onAnnotationDelete,
-        initialAnnotations,
-      }),
-      container,
-    );
-
-    mountedRef.current = true;
-  });
-
-  // Unmount only when the component is removed from the DOM
-  useEffect(() => {
-    return () => {
-      const container = containerRef.current;
-      if (container && mountedRef.current) {
-        render(null, container);
-        mountedRef.current = false;
-      }
-    };
-  }, []);
-
-  return <div ref={containerRef} className='flex h-full w-full flex-col' />;
+  return (
+    <ViewerPage
+      pdfData={pdfData ?? undefined}
+      pdfFileName={pdfFileName}
+      pdfs={pdfs}
+      selectedPdfId={selectedPdfId}
+      onPdfSelect={onPdfSelect}
+      readOnly={readOnly}
+      onAnnotationAdd={onAnnotationAdd}
+      onAnnotationUpdate={onAnnotationUpdate}
+      onAnnotationDelete={onAnnotationDelete}
+      initialAnnotations={initialAnnotations}
+    />
+  );
 }

@@ -1,5 +1,5 @@
 // @ts-nocheck
-import { CSSProperties } from 'preact';
+import { CSSProperties } from 'react';
 
 type IconProps = {
   className?: string;

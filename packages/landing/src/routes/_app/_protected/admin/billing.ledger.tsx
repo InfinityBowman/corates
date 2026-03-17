@@ -92,7 +92,7 @@ const getStripeUrl = (type: string, id: string | undefined): string | null => {
   }
 };
 
-export const Route = (createFileRoute as unknown as Function)(
+export const Route = createFileRoute(
   '/_app/_protected/admin/billing/ledger',
 )({
   component: AdminBillingLedgerPage,
