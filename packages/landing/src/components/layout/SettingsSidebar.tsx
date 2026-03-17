@@ -19,7 +19,7 @@ import {
   XIcon,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
-import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/components/ui/tooltip';
+import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 
 const SETTINGS_NAV_ITEMS: Array<{ id: string; label: string; icon: LucideIcon; path: string }> = [
   { id: 'profile', label: 'Profile', icon: UserIcon, path: '/settings/profile' },
@@ -140,7 +140,7 @@ export function SettingsSidebar({
   }
 
   return (
-    <TooltipProvider delayDuration={500}>
+    <>
       {/* Desktop sidebar */}
       <div
         className={`sidebar-container border-border bg-card relative hidden h-full shrink-0 border-r md:block ${
@@ -155,7 +155,7 @@ export function SettingsSidebar({
               className={`flex items-center justify-center p-2 transition-opacity duration-200 ${isExpanded ? 'pointer-events-none opacity-0' : 'opacity-100'}`}
               aria-hidden={isExpanded}
             >
-              <Tooltip>
+              <Tooltip delayDuration={500}>
                 <TooltipTrigger asChild>
                   <button
                     onClick={onToggleDesktop}
@@ -175,7 +175,7 @@ export function SettingsSidebar({
               <span className='text-secondary-foreground flex-1 truncate px-2 text-sm font-semibold'>
                 Settings
               </span>
-              <Tooltip>
+              <Tooltip delayDuration={500}>
                 <TooltipTrigger asChild>
                   <button
                     onClick={onToggleDesktop}
@@ -286,6 +286,6 @@ export function SettingsSidebar({
         </div>,
         document.body,
       )}
-    </TooltipProvider>
+    </>
   );
 }

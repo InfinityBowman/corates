@@ -110,6 +110,31 @@ export async function switchUser(context: BrowserContext, cookies: SessionCookie
   await context.addCookies(cookies);
 }
 
+/**
+ * Add a project member via the real API (handles both DB + Yjs sync).
+ * Requires the session cookie of an authenticated project owner.
+ */
+export async function addProjectMember(
+  orgId: string,
+  projectId: string,
+  userId: string,
+  sessionCookies: SessionCookie[],
+  role = 'member',
+) {
+  const cookieHeader = sessionCookies.map(c => `${c.name}=${c.value}`).join('; ');
+  const res = await fetch(`${API_BASE}/api/orgs/${orgId}/projects/${projectId}/members`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Cookie: cookieHeader,
+    },
+    body: JSON.stringify({ userId, role }),
+  });
+  if (!res.ok) {
+    throw new Error(`Add project member failed: ${res.status} ${await res.text()}`);
+  }
+}
+
 export async function cleanupScenario(scenario: DualReviewerScenario) {
   await fetch(`${API_BASE}/api/test/cleanup`, {
     method: 'POST',

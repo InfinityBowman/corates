@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { ChevronDownIcon, ChevronRightIcon, CheckIcon } from 'lucide-react';
-import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/components/ui/tooltip';
+import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { Collapsible, CollapsibleContent } from '@/components/ui/collapsible';
 import {
   getSectionLabel,
@@ -77,25 +77,23 @@ export function NavbarDomainPill({
   return (
     <Collapsible open={isExpanded} className={containerStyle}>
       {/* Label/collapse button */}
-      <TooltipProvider>
-        <Tooltip delayDuration={300}>
-          <TooltipTrigger asChild>
-            <button type='button' onClick={onClick} className={labelStyle}>
-              <span className='font-semibold'>{label}</span>
-              {!isExpanded && (
-                <span className='text-2xs opacity-80'>
-                  {progress?.answered || 0}/{progress?.total || 0}
-                </span>
-              )}
-              {sectionKey !== 'overall' &&
-                (isExpanded ?
-                  <ChevronDownIcon className='h-3 w-3 opacity-60' />
-                : <ChevronRightIcon className='h-3 w-3 opacity-60' />)}
-            </button>
-          </TooltipTrigger>
-          <TooltipContent>{tooltipContent}</TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
+      <Tooltip delayDuration={300}>
+        <TooltipTrigger asChild>
+          <button type='button' onClick={onClick} className={labelStyle}>
+            <span className='font-semibold'>{label}</span>
+            {!isExpanded && (
+              <span className='text-2xs opacity-80'>
+                {progress?.answered || 0}/{progress?.total || 0}
+              </span>
+            )}
+            {sectionKey !== 'overall' &&
+              (isExpanded ?
+                <ChevronDownIcon className='h-3 w-3 opacity-60' />
+              : <ChevronRightIcon className='h-3 w-3 opacity-60' />)}
+          </button>
+        </TooltipTrigger>
+        <TooltipContent>{tooltipContent}</TooltipContent>
+      </Tooltip>
 
       {/* Animated expanded question pills */}
       <CollapsibleContent className='flex items-center overflow-visible py-1'>
@@ -214,29 +212,27 @@ function QuestionPill({
   }, [isFirst, isLast]);
 
   return (
-    <TooltipProvider>
-      <Tooltip delayDuration={200}>
-        <TooltipTrigger asChild>
-          <button
-            type='button'
-            onClick={() => goToPage?.(globalIndex)}
-            className={`relative flex items-center justify-center overflow-visible rounded-full font-medium transition-all ${pillSizeClass} ${pillSpacingClass} ${pillStyle}`}
-            aria-label={tooltip}
-            aria-current={isCurrentPage ? 'page' : undefined}
-          >
-            {displayLabel}
-            {hasAnswer && (
-              <span
-                className='bg-card absolute -top-0.5 -right-0.5 flex h-2.5 w-2.5 items-center justify-center rounded-full border-[0.5px] shadow-sm'
-                aria-hidden='true'
-              >
-                <CheckIcon className='h-1.5 w-1.5 text-green-600' />
-              </span>
-            )}
-          </button>
-        </TooltipTrigger>
-        <TooltipContent>{tooltip}</TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
+    <Tooltip delayDuration={200}>
+      <TooltipTrigger asChild>
+        <button
+          type='button'
+          onClick={() => goToPage?.(globalIndex)}
+          className={`relative flex items-center justify-center overflow-visible rounded-full font-medium transition-all ${pillSizeClass} ${pillSpacingClass} ${pillStyle}`}
+          aria-label={tooltip}
+          aria-current={isCurrentPage ? 'page' : undefined}
+        >
+          {displayLabel}
+          {hasAnswer && (
+            <span
+              className='bg-card absolute -top-0.5 -right-0.5 flex h-2.5 w-2.5 items-center justify-center rounded-full border-[0.5px] shadow-sm'
+              aria-hidden='true'
+            >
+              <CheckIcon className='h-1.5 w-1.5 text-green-600' />
+            </span>
+          )}
+        </button>
+      </TooltipTrigger>
+      <TooltipContent>{tooltip}</TooltipContent>
+    </Tooltip>
   );
 }

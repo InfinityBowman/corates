@@ -20,7 +20,7 @@ import {
   FolderIcon,
 } from 'lucide-react';
 import { Collapsible, CollapsibleContent } from '@/components/ui/collapsible';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { Tabs, TabsList, TabsTrigger, TabsIndicator, TabsContent } from '@/components/ui/tabs';
 import { showToast } from '@/components/ui/toast';
 import { useProjectStore } from '@/stores/projectStore';
 import { useAddStudies } from '@/hooks/useAddStudies/index.js';
@@ -186,7 +186,7 @@ export function AddStudiesForm({
   const tabContent = (
     <>
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList variant='line' className='relative flex gap-1 overflow-x-auto pb-px'>
+        <TabsList className='relative flex gap-1 overflow-x-auto pb-px'>
           {TABS.map(tab => {
             const count = getTabCount(tab.value, studies);
             return (
@@ -207,6 +207,7 @@ export function AddStudiesForm({
               </TabsTrigger>
             );
           })}
+          <TabsIndicator className='bg-primary h-0.5 rounded-full' />
         </TabsList>
 
         <div className='mt-4'>

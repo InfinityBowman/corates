@@ -7,7 +7,7 @@ import { useMemo } from 'react';
 import { Link, useNavigate } from '@tanstack/react-router';
 import { CheckCircleIcon, MailIcon } from 'lucide-react';
 import { UserAvatar } from '@/components/ui/avatar';
-import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/components/ui/tooltip';
+import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { AdminDataTable } from '@/components/admin/ui';
 import { getStatusBadgeClass } from '@/components/admin/styles/admin-tokens';
 import type { ColumnDef } from '@tanstack/react-table';
@@ -104,8 +104,7 @@ export function UserTable({ users, loading }: UserTableProps) {
           const user = info.row.original;
           const providers = user.providers || [];
           return (
-            <TooltipProvider>
-              <div className='flex items-center gap-1.5'>
+            <div className='flex items-center gap-1.5'>
                 {providers.length > 0 ?
                   providers.map(provider => {
                     const providerInfo = PROVIDER_INFO[provider];
@@ -129,7 +128,6 @@ export function UserTable({ users, loading }: UserTableProps) {
                   })
                 : <span className='text-muted-foreground/70 text-xs'>None</span>}
               </div>
-            </TooltipProvider>
           );
         },
       },

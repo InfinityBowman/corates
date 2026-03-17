@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { CheckIcon, ChevronRightIcon } from 'lucide-react';
-import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/components/ui/tooltip';
+import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import {
   getSectionLabel,
   hasNavItemAnswer,
@@ -90,26 +90,24 @@ export function NavbarDomainPill({
   return (
     <div className={containerStyle}>
       {/* Label/collapse button */}
-      <TooltipProvider>
-        <Tooltip delayDuration={300}>
-          <TooltipTrigger asChild>
-            <button type='button' onClick={onClick} className={labelStyle}>
-              <span className='font-semibold'>{label}</span>
-              {!isExpanded && (
-                <span className='text-2xs opacity-80'>
-                  {progress?.answered || 0}/{progress?.total || 0}
-                </span>
-              )}
-              {sectionKey !== 'overall' && (
-                <ChevronRightIcon
-                  className={`h-3 w-3 opacity-60 transition-transform ${isExpanded ? 'rotate-90' : ''}`}
-                />
-              )}
-            </button>
-          </TooltipTrigger>
-          <TooltipContent side='bottom'>{tooltipContent}</TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
+      <Tooltip delayDuration={300}>
+        <TooltipTrigger asChild>
+          <button type='button' onClick={onClick} className={labelStyle}>
+            <span className='font-semibold'>{label}</span>
+            {!isExpanded && (
+              <span className='text-2xs opacity-80'>
+                {progress?.answered || 0}/{progress?.total || 0}
+              </span>
+            )}
+            {sectionKey !== 'overall' && (
+              <ChevronRightIcon
+                className={`h-3 w-3 opacity-60 transition-transform ${isExpanded ? 'rotate-90' : ''}`}
+              />
+            )}
+          </button>
+        </TooltipTrigger>
+        <TooltipContent side='bottom'>{tooltipContent}</TooltipContent>
+      </Tooltip>
 
       {/* Expanded question pills */}
       {isExpanded && (
@@ -196,29 +194,27 @@ function QuestionPill({
   if (!isFirst && isLast) pillSpacingClass += 'ml-0.5 ';
 
   return (
-    <TooltipProvider>
-      <Tooltip delayDuration={200}>
-        <TooltipTrigger asChild>
-          <button
-            type='button'
-            onClick={() => goToPage(globalIndex)}
-            className={`relative flex items-center justify-center overflow-visible rounded-full font-medium transition-all ${pillSizeClass} ${pillSpacingClass} ${pillStyle}`}
-            aria-label={tooltip}
-            aria-current={isCurrentPage ? 'page' : undefined}
-          >
-            {displayLabel}
-            {hasAnswer && (
-              <span
-                className='bg-card absolute -top-0.5 -right-0.5 flex h-2.5 w-2.5 items-center justify-center rounded-full border-[0.5px] shadow-sm'
-                aria-hidden='true'
-              >
-                <CheckIcon className='h-1.5 w-1.5 text-green-600' />
-              </span>
-            )}
-          </button>
-        </TooltipTrigger>
-        <TooltipContent side='bottom'>{tooltip}</TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
+    <Tooltip delayDuration={200}>
+      <TooltipTrigger asChild>
+        <button
+          type='button'
+          onClick={() => goToPage(globalIndex)}
+          className={`relative flex items-center justify-center overflow-visible rounded-full font-medium transition-all ${pillSizeClass} ${pillSpacingClass} ${pillStyle}`}
+          aria-label={tooltip}
+          aria-current={isCurrentPage ? 'page' : undefined}
+        >
+          {displayLabel}
+          {hasAnswer && (
+            <span
+              className='bg-card absolute -top-0.5 -right-0.5 flex h-2.5 w-2.5 items-center justify-center rounded-full border-[0.5px] shadow-sm'
+              aria-hidden='true'
+            >
+              <CheckIcon className='h-1.5 w-1.5 text-green-600' />
+            </span>
+          )}
+        </button>
+      </TooltipTrigger>
+      <TooltipContent side='bottom'>{tooltip}</TooltipContent>
+    </Tooltip>
   );
 }

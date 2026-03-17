@@ -5,7 +5,7 @@
 
 import { useMemo, useCallback } from 'react';
 import { RotateCcwIcon, AlertTriangleIcon } from 'lucide-react';
-import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/components/ui/tooltip';
+import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { NavbarDomainPill } from './NavbarDomainPill';
 import {
   getDomainProgress,
@@ -88,20 +88,18 @@ export function ROB2Navbar({ store }: ROB2NavbarProps) {
     <nav className='flex items-center gap-1 px-1 py-1.5' aria-label='Question navigation'>
       {/* Aim Mismatch Warning */}
       {store.aimMismatch && (
-        <TooltipProvider>
-          <Tooltip delayDuration={200}>
-            <TooltipTrigger asChild>
-              <button
-                type='button'
-                className='mr-1 flex shrink-0 items-center gap-1 rounded-full bg-red-100 px-2 py-1 text-xs font-medium text-red-700'
-              >
-                <AlertTriangleIcon className='h-3 w-3' />
-                Aim
-              </button>
-            </TooltipTrigger>
-            <TooltipContent>Aim mismatch - reconcile the aim field first</TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
+        <Tooltip delayDuration={200}>
+          <TooltipTrigger asChild>
+            <button
+              type='button'
+              className='mr-1 flex shrink-0 items-center gap-1 rounded-full bg-red-100 px-2 py-1 text-xs font-medium text-red-700'
+            >
+              <AlertTriangleIcon className='h-3 w-3' />
+              Aim
+            </button>
+          </TooltipTrigger>
+          <TooltipContent>Aim mismatch - reconcile the aim field first</TooltipContent>
+        </Tooltip>
       )}
 
       {/* Domain pills with expandable groups */}
@@ -146,22 +144,20 @@ function SummaryButton({ store }: { store: NavbarStore }) {
     : 'bg-secondary text-muted-foreground hover:bg-border';
 
   return (
-    <TooltipProvider>
-      <Tooltip delayDuration={200}>
-        <TooltipTrigger asChild>
-          <button
-            type='button'
-            onClick={() => store.setViewMode?.('summary')}
-            className={`h-7 rounded-full px-3 text-xs font-medium transition-all ${buttonStyle}`}
-            aria-label='View summary'
-            aria-current={isActive ? 'page' : undefined}
-          >
-            Summary
-          </button>
-        </TooltipTrigger>
-        <TooltipContent>View summary of all items</TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
+    <Tooltip delayDuration={200}>
+      <TooltipTrigger asChild>
+        <button
+          type='button'
+          onClick={() => store.setViewMode?.('summary')}
+          className={`h-7 rounded-full px-3 text-xs font-medium transition-all ${buttonStyle}`}
+          aria-label='View summary'
+          aria-current={isActive ? 'page' : undefined}
+        >
+          Summary
+        </button>
+      </TooltipTrigger>
+      <TooltipContent>View summary of all items</TooltipContent>
+    </Tooltip>
   );
 }
 
@@ -170,21 +166,19 @@ function SummaryButton({ store }: { store: NavbarStore }) {
  */
 function ResetButton({ onClick }: { onClick: () => void }) {
   return (
-    <TooltipProvider>
-      <Tooltip delayDuration={200}>
-        <TooltipTrigger asChild>
-          <button
-            type='button'
-            onClick={onClick}
-            className='flex h-7 items-center gap-1 rounded-full bg-red-100 px-2 text-xs font-medium text-red-700 transition-all hover:bg-red-200'
-            aria-label='Reset reconciliation'
-          >
-            <RotateCcwIcon className='h-2.5 w-2.5' />
-            Reset
-          </button>
-        </TooltipTrigger>
-        <TooltipContent>Reset all final answers</TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
+    <Tooltip delayDuration={200}>
+      <TooltipTrigger asChild>
+        <button
+          type='button'
+          onClick={onClick}
+          className='flex h-7 items-center gap-1 rounded-full bg-red-100 px-2 text-xs font-medium text-red-700 transition-all hover:bg-red-200'
+          aria-label='Reset reconciliation'
+        >
+          <RotateCcwIcon className='h-2.5 w-2.5' />
+          Reset
+        </button>
+      </TooltipTrigger>
+      <TooltipContent>Reset all final answers</TooltipContent>
+    </Tooltip>
   );
 }

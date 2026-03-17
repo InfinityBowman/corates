@@ -18,7 +18,7 @@ import {
   DownloadIcon,
 } from 'lucide-react';
 import { showToast } from '@/components/ui/toast';
-import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/components/ui/tooltip';
+import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { Checkbox } from '@/components/ui/checkbox';
 import { getRefDisplayName } from '@/lib/referenceParser.js';
 import { validatePdfFile } from '@/lib/pdfValidation.js';
@@ -42,8 +42,7 @@ export function DoiLookupSection({ studies }: DoiLookupSectionProps) {
   const someWithPdfSelected = studies.selectedLookupIds.size > 0 && !allWithPdfSelected;
 
   return (
-    <TooltipProvider delayDuration={300}>
-      <div className='space-y-3'>
+    <div className='space-y-3'>
         <p className='text-muted-foreground text-sm'>
           Paste DOIs or PubMed IDs to find references with open-access PDFs. Only references with
           available PDFs can be added.
@@ -163,8 +162,7 @@ export function DoiLookupSection({ studies }: DoiLookupSectionProps) {
             </div>
           </div>
         )}
-      </div>
-    </TooltipProvider>
+    </div>
   );
 }
 

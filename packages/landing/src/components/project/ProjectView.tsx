@@ -23,7 +23,7 @@ import { cachePdf } from '@/primitives/pdfCache.js';
 import { bestEffort } from '@/lib/errorLogger.js';
 import { importFromGoogleDrive } from '@/api/google-drive';
 import { showToast } from '@/components/ui/toast';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsContent, TabsIndicator, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   HomeIcon,
   BookOpenIcon,
@@ -310,14 +310,14 @@ export function ProjectView({ projectId }: ProjectViewProps) {
               </div>
 
               <div className='mx-auto max-w-7xl px-6'>
-                <TabsList className='relative flex gap-1 overflow-x-auto border-b-0 bg-transparent pb-px'>
+                <TabsList className='relative flex gap-1 overflow-x-auto bg-transparent pb-px'>
                   {TAB_DEFS.map(tab => {
                     const Icon = tab.icon;
                     return (
                       <TabsTrigger
                         key={tab.value}
                         value={tab.value}
-                        className='text-muted-foreground hover:bg-muted hover:text-secondary-foreground data-[state=active]:text-foreground group data-[state=active]:border-primary relative gap-2 rounded-t-lg border-b-2 border-transparent px-4 py-2.5 transition-all'
+                        className='text-muted-foreground hover:bg-muted hover:text-secondary-foreground data-[state=active]:text-foreground group relative gap-2 rounded-t-lg px-4 py-2.5 transition-all'
                       >
                         <Icon className='h-4 w-4 opacity-60 transition-opacity group-data-[state=active]:opacity-100' />
                         <span className='font-medium'>{tab.label}</span>
@@ -329,6 +329,7 @@ export function ProjectView({ projectId }: ProjectViewProps) {
                       </TabsTrigger>
                     );
                   })}
+                  <TabsIndicator className='bg-primary h-0.5 rounded-full' />
                 </TabsList>
               </div>
             </header>

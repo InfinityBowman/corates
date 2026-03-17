@@ -9,7 +9,7 @@
 import { Hono } from 'hono';
 import { drizzle } from 'drizzle-orm/d1';
 import { eq } from 'drizzle-orm';
-import { user, organization, member, session, subscription } from '@/db/schema.js';
+import { user, organization, member, session, subscription, projects, projectMembers } from '@/db/schema.js';
 import { createAuth } from '@/auth/config.js';
 import type { Env } from '../types';
 
@@ -129,6 +129,34 @@ testSeedRoutes.post('/session', async c => {
     });
   } catch (err) {
     console.error('[test-seed] Session error:', err);
+    return c.json({ error: (err as Error).message }, 500);
+  }
+});
+
+/**
+ * POST /api/test/add-project-member
+ * Adds a user as a project member via direct insert.
+ */
+testSeedRoutes.post('/add-project-member', async c => {
+  try {
+    const db = drizzle(c.env.DB);
+    const body = await c.req.json<{
+      projectId: string;
+      userId: string;
+      role?: string;
+    }>();
+
+    await db.insert(projectMembers).values({
+      id: crypto.randomUUID(),
+      projectId: body.projectId,
+      userId: body.userId,
+      role: body.role || 'collaborator',
+      joinedAt: new Date(),
+    });
+
+    return c.json({ success: true });
+  } catch (err) {
+    console.error('[test-seed] Add project member error:', err);
     return c.json({ error: (err as Error).message }, 500);
   }
 });

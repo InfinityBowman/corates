@@ -23,7 +23,7 @@ import { useAuthStore, selectUser, selectIsLoggedIn } from '@/stores/authStore';
 import { useLocalChecklistsStore } from '@/stores/localChecklistsStore';
 import { useMyProjectsList } from '@/hooks/useMyProjectsList';
 import { showToast } from '@/components/ui/toast';
-import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/components/ui/tooltip';
+import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -271,7 +271,7 @@ export function Sidebar({
   }
 
   return (
-    <TooltipProvider delayDuration={500}>
+    <>
       {/* Desktop sidebar */}
       <div
         className={`sidebar-container border-border bg-card relative hidden h-full shrink-0 border-r md:block ${
@@ -292,7 +292,7 @@ export function Sidebar({
               }`}
               aria-hidden={isExpanded}
             >
-              <Tooltip>
+              <Tooltip delayDuration={500}>
                 <TooltipTrigger asChild>
                   <button
                     onClick={onToggleDesktop}
@@ -316,7 +316,7 @@ export function Sidebar({
               <span className='text-secondary-foreground flex-1 truncate px-2 text-sm font-semibold'>
                 CoRATES
               </span>
-              <Tooltip>
+              <Tooltip delayDuration={500}>
                 <TooltipTrigger asChild>
                   <button
                     onClick={onToggleDesktop}
@@ -471,6 +471,6 @@ export function Sidebar({
         </div>,
         document.body,
       )}
-    </TooltipProvider>
+    </>
   );
 }

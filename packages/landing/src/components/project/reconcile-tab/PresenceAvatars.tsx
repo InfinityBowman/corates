@@ -10,7 +10,7 @@
 
 import { useMemo } from 'react';
 import { Avatar, AvatarImage, AvatarFallback, getInitials } from '@/components/ui/avatar';
-import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/components/ui/tooltip';
+import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { API_BASE } from '@/config/api';
 import type { RemoteUser } from '@/hooks/useReconciliationPresence';
 
@@ -46,7 +46,6 @@ export function PresenceAvatars({
   return (
     <div className='flex items-center gap-2'>
       <div className='flex -space-x-2'>
-        <TooltipProvider>
           {visibleUsers.map(user => (
             <Tooltip key={user.clientId} delayDuration={200}>
               <TooltipTrigger asChild>
@@ -90,7 +89,6 @@ export function PresenceAvatars({
               </TooltipContent>
             </Tooltip>
           )}
-        </TooltipProvider>
       </div>
     </div>
   );

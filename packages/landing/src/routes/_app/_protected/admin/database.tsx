@@ -26,7 +26,7 @@ import {
   useAdminTableRows,
   useAdminTableSchema,
 } from '@/hooks/useAdminQueries';
-import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/components/ui/tooltip';
+import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { DashboardHeader } from '@/components/admin/ui';
 
 export const Route = createFileRoute('/_app/_protected/admin/database')({
@@ -178,7 +178,7 @@ function DatabaseViewerPage() {
   }
 
   return (
-    <TooltipProvider>
+    <>
       <DashboardHeader
         icon={DatabaseIcon}
         title='Database Viewer'
@@ -417,6 +417,6 @@ function DatabaseViewerPage() {
           }
         </div>
       </div>
-    </TooltipProvider>
+    </>
   );
 }

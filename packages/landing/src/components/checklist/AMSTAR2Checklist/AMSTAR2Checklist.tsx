@@ -13,7 +13,7 @@ import { useState, useCallback, useMemo } from 'react';
 import { InfoIcon } from 'lucide-react';
 import { AMSTAR_CHECKLIST } from './checklist-map';
 import { createChecklist as createAMSTAR2Checklist } from './checklist.js';
-import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/components/ui/tooltip';
+import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { NoteEditor } from '@/components/checklist/common/NoteEditor';
 
 // -- Shared internal components --
@@ -594,8 +594,7 @@ export function AMSTAR2Checklist({
   if (!checklist) return <div>Loading...</div>;
 
   return (
-    <TooltipProvider delayDuration={200}>
-      <div className='bg-blue-50'>
+    <div className='bg-blue-50'>
         <div className='container mx-auto max-w-5xl px-4 py-6'>
           <div className='text-foreground mb-6 text-left text-lg font-semibold sm:text-center'>
             {checklist.name || 'AMSTAR 2 Checklist'}
@@ -691,7 +690,6 @@ export function AMSTAR2Checklist({
             </div>
           </fieldset>
         </div>
-      </div>
-    </TooltipProvider>
+    </div>
   );
 }

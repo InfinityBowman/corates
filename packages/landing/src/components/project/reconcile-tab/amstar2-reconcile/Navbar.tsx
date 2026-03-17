@@ -5,7 +5,7 @@
 
 import { useMemo } from 'react';
 import { RotateCcwIcon, CheckIcon } from 'lucide-react';
-import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/components/ui/tooltip';
+import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { hasQuestionAnswer, getQuestionPillStyle, getQuestionTooltip } from './navbar-utils.js';
 import { QuestionPresenceIndicator } from '../QuestionPresenceIndicator';
 import type { RemoteUser } from '@/hooks/useReconciliationPresence';
@@ -28,8 +28,7 @@ interface NavbarProps {
 
 export function Navbar({ store, usersByPage }: NavbarProps) {
   return (
-    <TooltipProvider>
-      <nav className='flex flex-wrap gap-1 py-1 pl-1' aria-label='Question navigation'>
+    <nav className='flex flex-wrap gap-1 py-1 pl-1' aria-label='Question navigation'>
         {store.questionKeys.map((key, index) => (
           <QuestionPill
             key={key}
@@ -40,8 +39,7 @@ export function Navbar({ store, usersByPage }: NavbarProps) {
         ))}
         <SummaryButton store={store} />
         <ResetButton onClick={() => store.onReset?.()} />
-      </nav>
-    </TooltipProvider>
+    </nav>
   );
 }
 
