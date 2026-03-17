@@ -1,7 +1,6 @@
 /**
- * Tests for ErrorBoundary component
- * Note: Full component testing requires SolidJS testing library setup
- * These are unit tests for the error handling logic
+ * Tests for normalizeError from @corates/shared
+ * Tests the error normalization logic used by ErrorBoundary and error handlers.
  */
 
 import { describe, it, expect } from 'vitest';

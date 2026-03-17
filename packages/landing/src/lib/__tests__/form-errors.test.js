@@ -1,9 +1,9 @@
 /**
  * Tests for form error handling utilities
  *
- * Note: createFormErrorSignals tests are skipped because they depend on
- * SolidJS primitives (createSignal, createStore) which are not available
- * in the React-based landing package.
+ * Note: createFormErrorSignals is untested here because it accepts
+ * createSignal/createStore as parameters (framework-agnostic interface).
+ * It could be tested by passing mock implementations.
  */
 
 import { describe, it, expect, vi } from 'vitest';

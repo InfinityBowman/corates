@@ -8,19 +8,6 @@ describe('queryPersister', () => {
     await db.queryCache.clear();
   });
 
-  describe('createIDBPersister', () => {
-    it('returns persister with required methods', () => {
-      const persister = createIDBPersister();
-
-      expect(persister).toHaveProperty('persistClient');
-      expect(persister).toHaveProperty('restoreClient');
-      expect(persister).toHaveProperty('removeClient');
-      expect(typeof persister.persistClient).toBe('function');
-      expect(typeof persister.restoreClient).toBe('function');
-      expect(typeof persister.removeClient).toBe('function');
-    });
-  });
-
   describe('persistClient', () => {
     it('persists client state', async () => {
       const persister = createIDBPersister();

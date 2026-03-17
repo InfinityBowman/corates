@@ -8,6 +8,17 @@ export default defineConfig({
       '@/': path.resolve(import.meta.dirname, 'src') + '/',
     },
   },
+  optimizeDeps: {
+    include: [
+      'yjs',
+      'dexie',
+      'y-dexie',
+      'zustand',
+      'zustand/middleware/immer',
+      'immer',
+      '@corates/shared',
+    ],
+  },
   test: {
     browser: {
       enabled: true,

@@ -24,6 +24,9 @@ packages/landing/app.config.timestamp_*.js
 # testing
 /coverage
 /packages/workers/src/lib/dev-seed/pdfs/
+**/.vitest**
+__screenshots__/
+__playwright-report__/
 
 # production
 /build

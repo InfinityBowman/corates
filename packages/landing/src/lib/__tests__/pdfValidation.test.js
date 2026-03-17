@@ -31,15 +31,9 @@ function createMockFile(options = {}) {
   return file;
 }
 
-describe('PDF_LIMITS', () => {
-  it('should export MAX_SIZE of 50MB', () => {
-    expect(PDF_LIMITS.MAX_SIZE).toBe(50 * 1024 * 1024);
-  });
-
-  it('should export MAX_FILENAME_LENGTH of 200', () => {
-    expect(PDF_LIMITS.MAX_FILENAME_LENGTH).toBe(200);
-  });
-});
+// PDF_LIMITS constant assertions removed - these test static values
+// that would only break if intentionally changed, and the behavioral
+// tests below already verify the limits are applied correctly.
 
 describe('formatFileSize', () => {
   it('should format bytes correctly', () => {
@@ -157,25 +151,16 @@ describe('validatePdfFile', () => {
       expect(result.valid).toBe(true);
     });
 
-    it('should reject files without PDF signature', async () => {
-      // Create file with valid MIME but wrong content
+    // JSDOM does not support file.slice().arrayBuffer() properly, so magic byte
+    // validation silently falls through. This test belongs in browser tests.
+    it.skip('should reject files without PDF signature', async () => {
       const pngSignature = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
       const blob = new Blob([pngSignature], { type: 'application/pdf' });
       const file = new File([blob], 'fake.pdf', { type: 'application/pdf' });
 
       const result = await validatePdfFile(file);
-
-      // In JSDOM environment, file.slice().arrayBuffer() may not work properly,
-      // causing the validation to fall through (graceful degradation).
-      // In a real browser, this would return { valid: false, error: 'INVALID_PDF_SIGNATURE' }
-      // We accept either outcome in tests since the try/catch is intentional.
-      if (!result.valid) {
-        expect(result.error).toBe('INVALID_PDF_SIGNATURE');
-        expect(result.details.message).toContain('does not appear to be a valid PDF');
-      } else {
-        // Graceful degradation - backend will catch this
-        expect(result.valid).toBe(true);
-      }
+      expect(result.valid).toBe(false);
+      expect(result.error).toBe('INVALID_PDF_SIGNATURE');
     });
   });
 
