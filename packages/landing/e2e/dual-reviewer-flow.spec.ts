@@ -120,16 +120,153 @@ test('Dual-Reviewer AMSTAR2 Workflow', async ({ context, page }) => {
 
   // Should navigate to the checklist page
   await expect(page).toHaveURL(/\/checklists\//, { timeout: 10_000 });
-
-  // TODO(agent): Continue the workflow:
-  // - Fill all 16 AMSTAR2 questions
-  // - Mark checklist as complete
-  // - Switch to User B
-  // - User B fills their checklist
-  // - Reconciliation
-  // - Verify completed
-
-  // For now, verify the checklist page loaded
   await page.waitForTimeout(2000);
-  await page.screenshot({ path: 'e2e/debug-checklist-page.png' });
+
+  // Fill all AMSTAR2 questions -- User A answers "Yes" to everything
+  // Click every "Yes" radio button on the page
+  const yesRadios = page.getByRole('radio', { name: 'Yes' });
+  const count = await yesRadios.count();
+  for (let i = 0; i < count; i++) {
+    await yesRadios.nth(i).click();
+  }
+  await page.waitForTimeout(1000);
+
+  // Mark as complete
+  await page.getByRole('button', { name: /Mark Complete/i }).click();
+
+  // Confirm dialog
+  await page.waitForTimeout(500);
+  const confirmBtn = page.getByRole('button', { name: /Confirm|Complete|Submit/i }).last();
+  if (await confirmBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
+    await confirmBtn.click();
+  }
+  await page.waitForTimeout(2000);
+
+  // Navigate back to the project
+  await page.goto(`/projects/${projectId}`);
+  await page.waitForTimeout(2000);
+
+  // ================================================================
+  // Phase 5: Switch to User B, fill their checklist
+  // ================================================================
+  await switchUser(context, scenario.cookiesB);
+  await page.goto(`/projects/${projectId}`);
+  await page.waitForTimeout(3000);
+
+  // Go to Todo tab
+  await page.getByRole('tab', { name: /To Do/i }).click();
+  await page.waitForTimeout(1000);
+
+  // User B creates their checklist
+  await page.getByRole('button', { name: /Select Checklist/i }).click();
+  await page.getByRole('button', { name: /Add Checklist/i }).click();
+  await page.waitForTimeout(1000);
+
+  // There may now be two checklists (User A's completed + User B's new one)
+  // The "Open" button for User B's checklist should be the one that's not read-only
+  // Click the last "Open" button (most recently created)
+  await page.getByRole('button', { name: /Open/i }).last().click();
+  await expect(page).toHaveURL(/\/checklists\//, { timeout: 10_000 });
+  await page.waitForTimeout(2000);
+
+  // Verify this is not read-only (User B's own checklist)
+  const isReadOnly = await page.getByText('Read-only').isVisible().catch(() => false);
+  if (isReadOnly) {
+    // Wrong checklist -- go back and try the other one
+    await page.goBack();
+    await page.waitForTimeout(1000);
+    await page.getByRole('button', { name: /Open/i }).first().click();
+    await expect(page).toHaveURL(/\/checklists\//, { timeout: 10_000 });
+    await page.waitForTimeout(2000);
+  }
+
+  // User B answers "No" to everything (different from User A)
+  const noRadios = page.getByRole('radio', { name: 'No' });
+  const noCount = await noRadios.count();
+  for (let i = 0; i < noCount; i++) {
+    await noRadios.nth(i).click();
+  }
+  await page.waitForTimeout(1000);
+
+  // Mark as complete
+  await page.getByRole('button', { name: /Mark Complete/i }).click();
+  await page.waitForTimeout(500);
+  const confirmBtn2 = page.getByRole('button', { name: /Confirm|Complete|Submit/i }).last();
+  if (await confirmBtn2.isVisible({ timeout: 3000 }).catch(() => false)) {
+    await confirmBtn2.click();
+  }
+  await page.waitForTimeout(2000);
+
+  // Navigate back to project
+  await page.goto(`/projects/${projectId}`);
+  await page.waitForTimeout(2000);
+
+  // ================================================================
+  // Phase 6: Reconciliation
+  // ================================================================
+  await page.getByRole('tab', { name: /Reconcile/i }).click();
+  await page.waitForTimeout(2000);
+
+  // Verify reconcile tab shows the study ready for reconciliation
+  await expect(page.getByText('Ready')).toBeVisible({ timeout: 5_000 });
+
+  // Click Reconcile
+  await page.getByRole('button', { name: /Reconcile/i }).click();
+
+  // Should navigate to reconciliation view
+  await expect(page).toHaveURL(/\/reconcile\//, { timeout: 10_000 });
+  await page.waitForTimeout(2000);
+
+  // Verify reconciliation view loaded
+  await expect(page.getByRole('heading', { name: 'Reconciliation' })).toBeVisible();
+  await expect(page.getByText('Question 1 of 16')).toBeVisible();
+
+  // For each of the 16 questions, click "Use This" on Alice's answer (first one)
+  // then click "Next" to advance
+  for (let q = 1; q <= 16; q++) {
+    await expect(page.getByText(`Question ${q} of 16`)).toBeVisible({ timeout: 5_000 });
+
+    // Click the first "Use This" button (Alice's answer)
+    await page.getByRole('button', { name: 'Use This' }).first().click();
+    await page.waitForTimeout(300);
+
+    // Click Next (except on the last question)
+    if (q < 16) {
+      await page.getByRole('button', { name: /Next/i }).click();
+      await page.waitForTimeout(300);
+    }
+  }
+
+  // After all 16 questions, click "Review Summary" to see the summary
+  await page.getByRole('button', { name: 'Review Summary' }).click();
+  await page.waitForTimeout(1000);
+
+  // Verify summary loaded
+  await expect(page.getByText('Review Summary')).toBeVisible();
+  await expect(page.getByText('Total Questions')).toBeVisible();
+
+  // Scroll down and click "Save Reconciled Checklist"
+  const saveBtn = page.getByRole('button', { name: /Save Reconciled Checklist/i });
+  await saveBtn.scrollIntoViewIfNeeded();
+  await saveBtn.click();
+
+  // Confirm the "Finish reconciliation?" dialog
+  await expect(page.getByText('Finish reconciliation?')).toBeVisible({ timeout: 5_000 });
+  await page.getByRole('button', { name: 'Finish' }).click();
+
+  await page.waitForTimeout(3000);
+
+  // ================================================================
+  // Phase 7: Verify completed checklist
+  // ================================================================
+  // Navigate back to the project
+  await page.goto(`/projects/${projectId}`);
+  await page.waitForTimeout(2000);
+
+  // Click the Completed tab
+  await page.getByRole('tab', { name: /Completed/i }).click();
+  await page.waitForTimeout(1000);
+
+  // The study should appear in the completed list with a finalized checklist
+  await expect(page.getByText('Untitled Study')).toBeVisible({ timeout: 5_000 });
 });

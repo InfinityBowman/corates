@@ -6,7 +6,7 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { useProjectContext } from '@/components/project/ProjectContext';
-import { useProjectStore, selectMembers } from '@/stores/projectStore';
+import { useProjectStore, selectMembers, selectConnectionState, selectStudy } from '@/stores/projectStore';
 import { useAuthStore, selectUser } from '@/stores/authStore';
 import _projectActionsStore from '@/stores/projectActionsStore/index.js';
 import { ACCESS_DENIED_ERRORS } from '@/constants/errors.js';
@@ -83,13 +83,9 @@ export function ReconciliationWrapper({
     }
   }, [projectId, orgId]);
 
-  // Read data from store
-  const connectionState = useProjectStore(
-    s => (s.projects[projectId] as any)?.connectionState || {},
-  ) as any;
-  const currentStudy = useProjectStore(s =>
-    (s.projects[projectId]?.studies || []).find((st: any) => st.id === studyId),
-  ) as any;
+  // Read data from store (use stable selectors to avoid infinite re-render loops)
+  const connectionState = useProjectStore(s => selectConnectionState(s, projectId)) as any;
+  const currentStudy = useProjectStore(s => selectStudy(s, projectId, studyId)) as any;
   const members = useProjectStore(s => selectMembers(s, projectId)) as any[];
 
   // Watch for access-denied errors and redirect

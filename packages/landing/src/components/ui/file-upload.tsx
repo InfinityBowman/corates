@@ -35,8 +35,8 @@ function FileUploadDropzone({
     <FileUploadPrimitive.Dropzone
       className={cn(
         'border-border bg-muted/50 flex min-h-32 cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed p-6 transition-colors',
-        'hover:border-primary hover:bg-accent',
-        'data-dragging:border-primary data-dragging:bg-accent',
+        'hover:border-primary hover:bg-primary/5',
+        'data-dragging:border-primary data-dragging:bg-primary/5',
         className,
       )}
       {...props}

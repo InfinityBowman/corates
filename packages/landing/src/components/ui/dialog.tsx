@@ -31,7 +31,7 @@ function DialogOverlay({
     <DialogPrimitive.Overlay
       data-slot='dialog-overlay'
       className={cn(
-        'data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0 fixed inset-0 isolate z-50 bg-black/10 duration-100 supports-backdrop-filter:backdrop-blur-xs',
+        'data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0 fixed inset-0 isolate z-50 bg-black/50 duration-100',
         className,
       )}
       {...props}
@@ -74,7 +74,11 @@ function DialogContent({
 
 function DialogHeader({ className, ...props }: React.ComponentProps<'div'>) {
   return (
-    <div data-slot='dialog-header' className={cn('flex flex-col gap-2', className)} {...props} />
+    <div
+      data-slot='dialog-header'
+      className={cn('border-border flex items-center justify-between border-b p-4', className)}
+      {...props}
+    />
   );
 }
 
@@ -90,7 +94,7 @@ function DialogFooter({
     <div
       data-slot='dialog-footer'
       className={cn(
-        'bg-muted/50 -mx-4 -mb-4 flex flex-col-reverse gap-2 rounded-b-xl border-t p-4 sm:flex-row sm:justify-end',
+        'bg-muted flex justify-end gap-3 px-4 py-3',
         className,
       )}
       {...props}
