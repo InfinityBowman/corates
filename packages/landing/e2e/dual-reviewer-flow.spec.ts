@@ -275,3 +275,226 @@ test('Dual-Reviewer AMSTAR2 Workflow', async ({ context, page }) => {
   // The study should appear in the completed list with a finalized checklist
   await expect(page.getByText('Untitled Study')).toBeVisible({ timeout: 5_000 });
 });
+
+test('Dual-Reviewer ROB2 Workflow', async ({ context, page }) => {
+  // ================================================================
+  // Phase 1: User A creates a project with an outcome
+  // ================================================================
+  await loginAs(context, scenario.cookiesA);
+  await page.goto('/dashboard');
+  await expect(page.getByText('Welcome back,')).toBeVisible({ timeout: 15_000 });
+
+  // Create project (use header button to avoid strict mode with project section button)
+  await page.locator('header').getByRole('button', { name: /New Project/i }).click();
+  await expect(page.getByText('Create a new project')).toBeVisible();
+  await page.getByPlaceholder('My Systematic Review').fill('ROB2 E2E Test');
+  await page.getByRole('button', { name: 'Create Project' }).click();
+  await expect(page).toHaveURL(/\/projects\//, { timeout: 15_000 });
+
+  const projectId = page.url().match(/\/projects\/([^/?]+)/)?.[1];
+  if (!projectId) throw new Error('Could not extract projectId from URL');
+  await addProjectMember(scenario.orgId, projectId, scenario.userB.id, scenario.cookiesA);
+  await page.waitForTimeout(2000);
+
+  // ================================================================
+  // Phase 2: Add an outcome
+  // ================================================================
+  await page.getByRole('tab', { name: /All Studies/i }).click();
+
+  // Expand the Outcomes section and add an outcome
+  await page.getByText('Outcomes').click();
+  await page.waitForTimeout(500);
+  await page.getByRole('button', { name: /Add/i }).last().click();
+
+  // Fill the outcome name input and save
+  await page.getByPlaceholder(/outcome/i).fill('Pain reduction');
+  await page.keyboard.press('Enter');
+  await page.waitForTimeout(1000);
+
+  // ================================================================
+  // Phase 3: Add a study
+  // ================================================================
+  await page.getByText('Add Studies to Your Project').click();
+  await page.getByText('DOI / PMID').click();
+  const doiInput = page.getByPlaceholder(/10\.1000/);
+  await doiInput.fill('32615397');
+  await page.getByRole('button', { name: /Look Up/i }).click();
+  await expect(page.getByText(/Found references/)).toBeVisible({ timeout: 15_000 });
+  await page.getByRole('button', { name: /Add \d+ Stud/i }).click();
+  await expect(page.getByText(/1 study in this project/i)).toBeVisible({ timeout: 10_000 });
+
+  // ================================================================
+  // Phase 4: Assign reviewers
+  // ================================================================
+  await page.locator('button:has(svg.lucide-ellipsis-vertical)').first().click();
+  await page.getByRole('menuitem', { name: /Assign Reviewers/i }).click();
+  await expect(page.getByRole('heading', { name: 'Assign Reviewers' })).toBeVisible({
+    timeout: 5_000,
+  });
+
+  const dialog = page.getByRole('dialog');
+  await dialog.getByText('Unassigned').first().click();
+  await page.getByRole('option', { name: /Alice/i }).click();
+  await dialog.getByText('Unassigned').first().click();
+  await page.getByRole('option', { name: /Bob/i }).click();
+  await dialog.getByRole('button', { name: 'Save' }).click();
+  await expect(dialog).toBeHidden({ timeout: 5_000 });
+
+  // ================================================================
+  // Phase 5: User A creates ROB2 checklist with outcome
+  // ================================================================
+  await page.getByRole('tab', { name: /To Do/i }).click();
+  await page.waitForTimeout(1000);
+
+  await page.getByRole('button', { name: /Select Checklist/i }).click();
+
+  // Change checklist type to ROB2
+  await page.getByText(/AMSTAR 2/i).click();
+  await page.getByRole('option', { name: /RoB 2/i }).click();
+
+  // Select the outcome
+  await page.getByText(/Select outcome/i).click();
+  await page.getByRole('option', { name: /Pain reduction/i }).click();
+
+  await page.getByRole('button', { name: /Add Checklist/i }).click();
+  await page.waitForTimeout(1000);
+
+  // Open the checklist
+  await page.getByRole('button', { name: /Open/i }).click();
+  await expect(page).toHaveURL(/\/checklists\//, { timeout: 10_000 });
+  await page.waitForTimeout(2000);
+
+  // ROB2: Fill preliminary section
+  await page.getByText('Individually-randomized parallel-group trial').click();
+  await page.getByPlaceholder(/experimental intervention/i).fill('Drug X');
+  await page.getByPlaceholder(/comparator intervention/i).fill('Placebo');
+  await page.getByPlaceholder(/e\.g\. RR/i).fill('RR = 1.5 (95% CI 0.9 to 2.5)');
+
+  // Select the assessment aim (required for domain questions to appear)
+  const aimBtn = page.getByText('to assess the effect of assignment to intervention');
+  await aimBtn.scrollIntoViewIfNeeded();
+  await aimBtn.click();
+  await page.waitForTimeout(1000);
+
+  // ROB2 domain questions use toggle buttons (not radio inputs)
+  // Navigate each domain and click the "Y" button for each question
+  for (const domain of ['D1', 'D2', 'D3', 'D4', 'D5']) {
+    // Click domain nav button to scroll to that section
+    await page.getByRole('button', { name: domain, exact: true }).click();
+    await page.waitForTimeout(500);
+
+    // Find all "Y" toggle buttons that are NOT already selected
+    // ROB2 question buttons have text Y, PY, PN, N, NI
+    const domainSection = page.locator(`text=Domain ${domain.replace('D', '')}`).first().locator('..');
+    // Click all Y buttons on the page (they're unique per question row)
+    const yButtons = page.getByRole('button', { name: 'Y', exact: true });
+    const yCount = await yButtons.count();
+    for (let i = 0; i < yCount; i++) {
+      await yButtons.nth(i).scrollIntoViewIfNeeded();
+      await yButtons.nth(i).click();
+      await page.waitForTimeout(100);
+    }
+    await page.waitForTimeout(300);
+  }
+  await page.waitForTimeout(1000);
+
+  // Mark complete
+  await page.getByRole('button', { name: /Mark Complete/i }).click();
+  await page.waitForTimeout(500);
+  const confirmBtn = page.getByRole('button', { name: /Mark Complete/i }).last();
+  if (await confirmBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
+    await confirmBtn.click();
+  }
+  await page.waitForTimeout(2000);
+  await page.goto(`/projects/${projectId}`);
+  await page.waitForTimeout(2000);
+
+  // ================================================================
+  // Phase 6: Switch to User B, fill ROB2 checklist
+  // ================================================================
+  await switchUser(context, scenario.cookiesB);
+  await page.goto(`/projects/${projectId}`);
+  await page.waitForTimeout(3000);
+
+  await page.getByRole('tab', { name: /To Do/i }).click();
+  await page.waitForTimeout(1000);
+
+  await page.getByRole('button', { name: /Select Checklist/i }).click();
+
+  // Select ROB2 type
+  await page.getByText(/AMSTAR 2/i).click();
+  await page.getByRole('option', { name: /RoB 2/i }).click();
+
+  // Select the same outcome
+  await page.getByText(/Select outcome/i).click();
+  await page.getByRole('option', { name: /Pain reduction/i }).click();
+
+  await page.getByRole('button', { name: /Add Checklist/i }).click();
+  await page.waitForTimeout(1000);
+
+  await page.getByRole('button', { name: /Open/i }).last().click();
+  await expect(page).toHaveURL(/\/checklists\//, { timeout: 10_000 });
+  await page.waitForTimeout(2000);
+
+  // Verify not read-only
+  const isReadOnly = await page.getByText('Read-only').isVisible().catch(() => false);
+  if (isReadOnly) {
+    await page.goBack();
+    await page.waitForTimeout(1000);
+    await page.getByRole('button', { name: /Open/i }).first().click();
+    await expect(page).toHaveURL(/\/checklists\//, { timeout: 10_000 });
+    await page.waitForTimeout(2000);
+  }
+
+  // Fill preliminary
+  await page.getByText('Individually-randomized parallel-group trial').click();
+  await page.getByPlaceholder(/experimental intervention/i).fill('Drug Y');
+  await page.getByPlaceholder(/comparator intervention/i).fill('Standard care');
+  await page.getByPlaceholder(/e\.g\. RR/i).fill('OR = 2.1 (95% CI 1.2 to 3.6)');
+
+  // Select assessment aim
+  const aimBtn2 = page.getByText('to assess the effect of assignment to intervention');
+  await aimBtn2.scrollIntoViewIfNeeded();
+  await aimBtn2.click();
+  await page.waitForTimeout(1000);
+
+  // Navigate domains and answer "N" for all questions
+  for (const domain of ['D1', 'D2', 'D3', 'D4', 'D5']) {
+    await page.getByRole('button', { name: domain, exact: true }).click();
+    await page.waitForTimeout(500);
+
+    const nButtons = page.getByRole('button', { name: 'N', exact: true });
+    const nCount = await nButtons.count();
+    for (let i = 0; i < nCount; i++) {
+      await nButtons.nth(i).scrollIntoViewIfNeeded();
+      await nButtons.nth(i).click();
+      await page.waitForTimeout(100);
+    }
+    await page.waitForTimeout(300);
+  }
+  await page.waitForTimeout(1000);
+
+  await page.getByRole('button', { name: /Mark Complete/i }).click();
+  await page.waitForTimeout(500);
+  const confirmBtn2 = page.getByRole('button', { name: /Mark Complete/i }).last();
+  if (await confirmBtn2.isVisible({ timeout: 3000 }).catch(() => false)) {
+    await confirmBtn2.click();
+  }
+  await page.waitForTimeout(2000);
+  await page.goto(`/projects/${projectId}`);
+  await page.waitForTimeout(2000);
+
+  // ================================================================
+  // Phase 7: Reconciliation
+  // ================================================================
+  await page.getByRole('tab', { name: /Reconcile/i }).click();
+  await page.waitForTimeout(2000);
+  await expect(page.getByText('Ready')).toBeVisible({ timeout: 5_000 });
+
+  await page.getByRole('button', { name: /Reconcile/i }).click();
+  await expect(page).toHaveURL(/\/reconcile\//, { timeout: 10_000 });
+  await page.waitForTimeout(2000);
+
+  // Debug: see what the ROB2 reconciliation looks like
+  await page.screenshot({ path: 'e2e/debug-rob2-reconcile.png' });
+});
