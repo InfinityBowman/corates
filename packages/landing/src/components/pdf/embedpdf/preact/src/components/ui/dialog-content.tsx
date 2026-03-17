@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { ReactNode } from 'react';
 
 type DialogContentProps = {

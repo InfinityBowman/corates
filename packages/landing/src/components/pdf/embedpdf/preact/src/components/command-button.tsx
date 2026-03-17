@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { useCommand } from '@embedpdf/plugin-commands/react';
 import { useRegisterAnchor } from '@embedpdf/plugin-ui/react';
 import { twMerge } from 'tailwind-merge';

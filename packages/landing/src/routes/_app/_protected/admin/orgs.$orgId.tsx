@@ -47,11 +47,9 @@ import { GrantDialog } from '@/components/admin/GrantDialog';
 import { OrgBillingReconcilePanel } from '@/components/admin/OrgBillingReconcilePanel';
 import { queryKeys } from '@/lib/queryKeys';
 
-export const Route = createFileRoute('/_app/_protected/admin/orgs/$orgId')(
-  {
-    component: OrgDetailPage,
-  },
-);
+export const Route = createFileRoute('/_app/_protected/admin/orgs/$orgId')({
+  component: OrgDetailPage,
+});
 
 interface OrgDetails {
   org?: { name?: string; slug?: string };

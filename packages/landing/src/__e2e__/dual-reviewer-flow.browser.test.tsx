@@ -18,7 +18,11 @@ import { page } from 'vitest/browser';
 import { render, cleanup } from 'vitest-browser-react';
 import React from 'react';
 import { createTestApp } from './helpers/app';
-import { seedDualReviewerScenario, cleanupScenario, type DualReviewerScenario } from './helpers/seed';
+import {
+  seedDualReviewerScenario,
+  cleanupScenario,
+  type DualReviewerScenario,
+} from './helpers/seed';
 import { injectSessionCookie, clearBrowserState } from './helpers/auth';
 
 // Shared state across sequential tests
@@ -49,12 +53,12 @@ describe('Dual-Reviewer AMSTAR2 Workflow', () => {
   // -- Phase 1: User A creates a project --
 
   it('User A sees the dashboard after login', async () => {
-    injectSessionCookie(scenario.cookieA);
+    await injectSessionCookie(scenario.cookieA);
     renderApp('/dashboard');
 
     // Dashboard should load and show a "New Project" button
-    await expect.element(
-      page.getByRole('button', { name: /New Project/i }),
-    ).toBeVisible({ timeout: 10_000 });
+    await expect
+      .element(page.getByRole('button', { name: /New Project/i }))
+      .toBeVisible({ timeout: 10_000 });
   });
 });

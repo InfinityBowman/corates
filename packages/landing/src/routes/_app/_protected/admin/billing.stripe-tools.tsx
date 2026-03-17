@@ -114,9 +114,7 @@ const getStatusColor = (status: string): string => {
   return colors[status] || 'bg-secondary text-foreground';
 };
 
-export const Route = createFileRoute(
-  '/_app/_protected/admin/billing/stripe-tools',
-)({
+export const Route = createFileRoute('/_app/_protected/admin/billing/stripe-tools')({
   component: StripeToolsPage,
 });
 

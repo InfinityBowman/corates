@@ -55,7 +55,7 @@ export function handleFormError(error, setFieldError, setGlobalError) {
 }
 
 /**
- * Create a field error state manager for SolidJS forms
+ * Create a field error state manager
  * Returns a store-like object with field errors and helper functions
  * @returns {Object} Form error state manager
  */
@@ -125,104 +125,3 @@ export function createFormErrorState() {
   };
 }
 
-/**
- * Helper to create SolidJS signals for form errors
- * Returns reactive signals for field errors and global error
- * Note: This function must be called inside a SolidJS component context
- * @param {Function} createSignal - SolidJS createSignal function (imported from 'solid-js')
- * @param {Function} createStore - SolidJS createStore function (imported from 'solid-js/store')
- * @returns {Object} Object with fieldErrors store, globalError signal, and helper functions
- */
-export function createFormErrorSignals(createSignal, createStore) {
-  // Use store for field errors for fine-grained reactivity per field
-  const [fieldErrors, setFieldErrors] = createStore({});
-  const [globalError, _setGlobalErrorSignal] = createSignal('');
-
-  return {
-    /**
-     * Reactive store for field errors: { [fieldName]: errorMessage }
-     * Access individual fields directly: fieldErrors.email, fieldErrors.password
-     */
-    fieldErrors,
-
-    /**
-     * Reactive signal for global form error
-     */
-    globalError,
-
-    /**
-     * Get error for a specific field (for compatibility with signal-style access)
-     * @param {string} field - Field name
-     * @returns {string|undefined} Error message
-     */
-    getFieldError(field) {
-      return fieldErrors[field];
-    },
-
-    /**
-     * Set error for a specific field
-     * @param {string} field - Field name
-     * @param {string} message - Error message
-     */
-    setFieldError(field, message) {
-      if (field && message) {
-        setFieldErrors(field, message);
-      }
-    },
-
-    /**
-     * Clear error for a specific field
-     * @param {string} field - Field name
-     */
-    clearFieldError(field) {
-      setFieldErrors(field, undefined);
-    },
-
-    /**
-     * Clear all field errors
-     */
-    clearFieldErrors() {
-      // Get all current keys and set them to undefined
-      Object.keys(fieldErrors).forEach(key => {
-        setFieldErrors(key, undefined);
-      });
-    },
-
-    /**
-     * Set global form error
-     * @param {string} message - Error message
-     */
-    setGlobalError(message) {
-      _setGlobalErrorSignal(message || '');
-    },
-
-    /**
-     * Clear global error
-     */
-    clearGlobalError() {
-      _setGlobalErrorSignal('');
-    },
-
-    /**
-     * Clear all errors (both field and global)
-     */
-    clearAll() {
-      Object.keys(fieldErrors).forEach(key => {
-        setFieldErrors(key, undefined);
-      });
-      _setGlobalErrorSignal('');
-    },
-
-    /**
-     * Handle an error using handleFormError
-     * @param {DomainError|TransportError} error - Error to handle
-     */
-    handleError(error) {
-      handleFormError(
-        error,
-        (field, message) => this.setFieldError(field, message),
-        message => this.setGlobalError(message),
-      );
-    },
-  };
-}

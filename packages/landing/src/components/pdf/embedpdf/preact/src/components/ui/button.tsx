@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { ButtonHTMLAttributes, ReactNode } from 'react';
 
 type ButtonVariant = 'default' | 'primary' | 'secondary' | 'ghost';

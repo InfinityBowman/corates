@@ -142,7 +142,7 @@ retries += 1;
 ## Documentation
 
 - **Primary source**: Comprehensive guides are in the docs site (`packages/docs/`) - run `pnpm docs` to view
-- **ALWAYS use Corates MCP tools or other MCP** for Better-Auth, Drizzle, Icons, linting, and Ark UI documentation
+- **ALWAYS use Corates MCP tools or other MCP** for Better-Auth, Drizzle, Icons, linting, and TanStack documentation
 - **For comprehensive documentation**, see the docs site guides in `packages/docs/guides/`:
   - testing.md - Frontend and backend testing patterns, setup, and best practices
   - authentication.md - Setup, configuration, API endpoints, and usage patterns

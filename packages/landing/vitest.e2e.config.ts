@@ -35,6 +35,21 @@ const cleanupTestData: BrowserCommand<[data: Record<string, unknown>]> = async (
   return res.json();
 };
 
+// Inject cookies via Playwright context (bypasses httpOnly)
+const setCookies: BrowserCommand<
+  [cookies: Array<{ name: string; value: string; domain: string; path: string }>]
+> = async (ctx, cookies) => {
+  const context = (ctx as any).context;
+  await context.addCookies(cookies);
+  return { success: true };
+};
+
+const clearCookies: BrowserCommand<[]> = async (ctx) => {
+  const context = (ctx as any).context;
+  await context.clearCookies();
+  return { success: true };
+};
+
 export default defineConfig({
   resolve: {
     alias: {
@@ -86,6 +101,8 @@ export default defineConfig({
         seedTestData,
         getSessionCookie,
         cleanupTestData,
+        setCookies,
+        clearCookies,
       },
     },
     include: ['src/__e2e__/**/*.browser.test.{ts,tsx}'],

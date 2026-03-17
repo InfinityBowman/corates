@@ -4,7 +4,7 @@
  */
 
 import { useState, useCallback } from 'react';
-import { useNavigate, useSearch } from '@tanstack/react-router';
+import { useNavigate, useSearch, Link } from '@tanstack/react-router';
 import { FileTextIcon, XIcon, CloudUploadIcon } from 'lucide-react';
 import { useLocalChecklistsStore } from '@/stores/localChecklistsStore';
 import { FileUpload, FileUploadDropzone, FileUploadHiddenInput } from '@/components/ui/file-upload';
@@ -202,9 +202,9 @@ export function CreateLocalChecklist({ type: typeParam }: { type?: string }) {
             <p className='text-muted-foreground text-xs'>
               Local studies are stored only on this device and don't require an account. To
               collaborate with others or access your studies from multiple devices,{' '}
-              <a href='/signup' className='text-blue-600 hover:underline'>
+              <Link to='/signup' className='text-blue-600 hover:underline'>
                 create an account
-              </a>
+              </Link>
               .
             </p>
           </div>

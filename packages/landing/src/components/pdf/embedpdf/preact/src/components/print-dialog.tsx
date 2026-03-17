@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { useState, useEffect } from 'react';
 import { usePrint } from '@embedpdf/plugin-print/react';
 import { useScroll } from '@embedpdf/plugin-scroll/react';

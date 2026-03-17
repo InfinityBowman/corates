@@ -1,4 +1,3 @@
-// @ts-nocheck
 type ToolbarDividerProps = {
   orientation?: 'vertical' | 'horizontal';
   className?: string;

@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { useSearch } from '@embedpdf/plugin-search/react';
 import { useScrollCapability } from '@embedpdf/plugin-scroll/react';
 import { useState, useRef, useEffect } from 'react';

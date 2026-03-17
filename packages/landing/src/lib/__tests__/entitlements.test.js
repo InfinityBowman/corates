@@ -76,12 +76,18 @@ describe('entitlements', () => {
 
     it('returns true 1 second before expiration', () => {
       const nowSeconds = Math.floor(Date.now() / 1000);
-      expect(isSubscriptionActive({ status: 'active', currentPeriodEnd: nowSeconds + 1 })).toBe(true);
+      expect(isSubscriptionActive({ status: 'active', currentPeriodEnd: nowSeconds + 1 })).toBe(
+        true,
+      );
     });
 
     it('handles string timestamp conversion', () => {
-      expect(isSubscriptionActive({ status: 'active', currentPeriodEnd: String(futureEnd) })).toBe(true);
-      expect(isSubscriptionActive({ status: 'active', currentPeriodEnd: String(pastEnd) })).toBe(false);
+      expect(isSubscriptionActive({ status: 'active', currentPeriodEnd: String(futureEnd) })).toBe(
+        true,
+      );
+      expect(isSubscriptionActive({ status: 'active', currentPeriodEnd: String(pastEnd) })).toBe(
+        false,
+      );
     });
   });
 
@@ -92,22 +98,38 @@ describe('entitlements', () => {
     });
 
     it('returns free plan entitlements for expired subscription', () => {
-      const entitlements = getEffectiveEntitlements({ status: 'active', tier: 'team', currentPeriodEnd: pastEnd });
+      const entitlements = getEffectiveEntitlements({
+        status: 'active',
+        tier: 'team',
+        currentPeriodEnd: pastEnd,
+      });
       expect(entitlements['project.create']).toBe(false);
     });
 
     it('returns team plan entitlements for active team subscription', () => {
-      const entitlements = getEffectiveEntitlements({ status: 'active', tier: 'team', currentPeriodEnd: futureEnd });
+      const entitlements = getEffectiveEntitlements({
+        status: 'active',
+        tier: 'team',
+        currentPeriodEnd: futureEnd,
+      });
       expect(entitlements['project.create']).toBe(true);
     });
 
     it('returns free plan for canceled subscription even with future end', () => {
-      const entitlements = getEffectiveEntitlements({ status: 'canceled', tier: 'team', currentPeriodEnd: futureEnd });
+      const entitlements = getEffectiveEntitlements({
+        status: 'canceled',
+        tier: 'team',
+        currentPeriodEnd: futureEnd,
+      });
       expect(entitlements['project.create']).toBe(false);
     });
 
     it('returns entitlements for trialing subscription', () => {
-      const entitlements = getEffectiveEntitlements({ status: 'trialing', tier: 'starter_team', currentPeriodEnd: futureEnd });
+      const entitlements = getEffectiveEntitlements({
+        status: 'trialing',
+        tier: 'starter_team',
+        currentPeriodEnd: futureEnd,
+      });
       expect(entitlements['project.create']).toBe(true);
     });
   });
@@ -120,26 +142,43 @@ describe('entitlements', () => {
     });
 
     it('returns team plan quotas for active team subscription', () => {
-      const quotas = getEffectiveQuotas({ status: 'active', tier: 'team', currentPeriodEnd: futureEnd });
+      const quotas = getEffectiveQuotas({
+        status: 'active',
+        tier: 'team',
+        currentPeriodEnd: futureEnd,
+      });
       expect(quotas['projects.max']).toBe(10);
       expect(quotas['collaborators.org.max']).toBe(15);
     });
 
     it('returns unlimited quotas for unlimited_team plan', () => {
-      const quotas = getEffectiveQuotas({ status: 'active', tier: 'unlimited_team', currentPeriodEnd: futureEnd });
+      const quotas = getEffectiveQuotas({
+        status: 'active',
+        tier: 'unlimited_team',
+        currentPeriodEnd: futureEnd,
+      });
       expect(quotas['projects.max']).toBe(-1);
       expect(quotas['collaborators.org.max']).toBe(-1);
     });
 
     it('returns free plan quotas for expired subscription', () => {
-      const quotas = getEffectiveQuotas({ status: 'active', tier: 'team', currentPeriodEnd: pastEnd });
+      const quotas = getEffectiveQuotas({
+        status: 'active',
+        tier: 'team',
+        currentPeriodEnd: pastEnd,
+      });
       expect(quotas['projects.max']).toBe(0);
     });
   });
 
   describe('hasEntitlement', () => {
     it('returns true for team subscription with project.create', () => {
-      expect(hasEntitlement({ status: 'active', tier: 'team', currentPeriodEnd: futureEnd }, 'project.create')).toBe(true);
+      expect(
+        hasEntitlement(
+          { status: 'active', tier: 'team', currentPeriodEnd: futureEnd },
+          'project.create',
+        ),
+      ).toBe(true);
     });
 
     it('returns false for free plan with project.create', () => {
@@ -147,7 +186,12 @@ describe('entitlements', () => {
     });
 
     it('returns false for nonexistent entitlement', () => {
-      expect(hasEntitlement({ status: 'active', tier: 'team', currentPeriodEnd: futureEnd }, 'nonexistent')).toBe(false);
+      expect(
+        hasEntitlement(
+          { status: 'active', tier: 'team', currentPeriodEnd: futureEnd },
+          'nonexistent',
+        ),
+      ).toBe(false);
     });
   });
 

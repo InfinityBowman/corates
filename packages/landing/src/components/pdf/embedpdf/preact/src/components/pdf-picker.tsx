@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { useState, useMemo } from 'react';
 import { ToolbarButton, DropdownMenu, DropdownItem } from './ui';
 import { DocumentIcon } from './icons';

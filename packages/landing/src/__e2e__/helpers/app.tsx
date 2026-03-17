@@ -4,11 +4,7 @@
  */
 
 import React from 'react';
-import {
-  RouterProvider,
-  createMemoryHistory,
-  createRouter,
-} from '@tanstack/react-router';
+import { RouterProvider, createMemoryHistory, createRouter } from '@tanstack/react-router';
 import { QueryClientProvider, QueryClient } from '@tanstack/react-query';
 import { routeTree } from '@/routeTree.gen';
 

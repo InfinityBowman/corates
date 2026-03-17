@@ -23,7 +23,7 @@ describe('POC Step 1: Basic React rendering', () => {
       const [count, setCount] = React.useState(0);
       return (
         <div>
-          <span data-testid="count">{count}</span>
+          <span data-testid='count'>{count}</span>
           <button onClick={() => setCount(c => c + 1)}>Increment</button>
         </div>
       );

@@ -1,7 +1,6 @@
 import { Link } from '@tanstack/react-router';
 import { BiCopyright } from 'react-icons/bi';
 
-
 export default function Footer() {
   const year = new Date().getFullYear();
 

@@ -96,7 +96,7 @@ This repository has a persistent memory system (`@corates/mcp-memory`) that stor
 - "authentication patterns" before working on auth
 - "error handling" before adding try/catch blocks
 - "database migrations" before schema changes
-- "SolidJS props" before creating components
+- "React patterns" before creating components
 
 ### When to Write Memory
 

@@ -1,12 +1,10 @@
 import js from '@eslint/js';
-import solid from 'eslint-plugin-solid/configs/recommended';
 import * as tsParser from '@typescript-eslint/parser';
 import reactHooks from 'eslint-plugin-react-hooks';
 import coratesRules from './eslint-rules/index.js';
 
 export default [
   js.configs.recommended,
-  solid,
   // eslintPluginUnicorn.configs.recommended,
   // {
   //   rules: {
@@ -129,154 +127,6 @@ export default [
       // Prevent Outlet usage - use props.children for nested routes
       'corates/no-outlet': 'error',
 
-      // Restrict direct imports from @ark-ui/solid - use @corates/ui instead
-      // This ensures consistent styling and prevents confusion between
-      // prestyled components (Dialog) and primitives (DialogPrimitive)
-      'no-restricted-imports': [
-        'error',
-        {
-          paths: [
-            {
-              name: '@ark-ui/solid',
-              message:
-                'Import from @corates/ui instead. Use ComponentName for prestyled or ComponentNamePrimitive for the Ark UI primitive.',
-            },
-            {
-              name: '@ark-ui/solid/accordion',
-              message: "Import { Accordion } or { AccordionPrimitive } from '@corates/ui'",
-            },
-            {
-              name: '@ark-ui/solid/avatar',
-              message: "Import { Avatar } or { AvatarPrimitive } from '@corates/ui'",
-            },
-            {
-              name: '@ark-ui/solid/checkbox',
-              message: "Import { Checkbox } or { CheckboxPrimitive } from '@corates/ui'",
-            },
-            {
-              name: '@ark-ui/solid/clipboard',
-              message: "Import { Clipboard } or { ClipboardPrimitive } from '@corates/ui'",
-            },
-            {
-              name: '@ark-ui/solid/collapsible',
-              message: "Import { Collapsible } or { CollapsiblePrimitive } from '@corates/ui'",
-            },
-            {
-              name: '@ark-ui/solid/combobox',
-              message: "Import { Combobox } or { ComboboxPrimitive } from '@corates/ui'",
-            },
-            {
-              name: '@ark-ui/solid/dialog',
-              message: "Import { Dialog } or { DialogPrimitive } from '@corates/ui'",
-            },
-            {
-              name: '@ark-ui/solid/drawer',
-              message: "Import { Drawer } or { DrawerPrimitive } from '@corates/ui'",
-            },
-            {
-              name: '@ark-ui/solid/editable',
-              message: "Import { Editable } or { EditablePrimitive } from '@corates/ui'",
-            },
-            {
-              name: '@ark-ui/solid/file-upload',
-              message: "Import { FileUpload } or { FileUploadPrimitive } from '@corates/ui'",
-            },
-            {
-              name: '@ark-ui/solid/floating-panel',
-              message: "Import { FloatingPanel } or { FloatingPanelPrimitive } from '@corates/ui'",
-            },
-            {
-              name: '@ark-ui/solid/menu',
-              message: "Import { Menu } or { MenuPrimitive } from '@corates/ui'",
-            },
-            {
-              name: '@ark-ui/solid/number-input',
-              message: "Import { NumberInput } or { NumberInputPrimitive } from '@corates/ui'",
-            },
-            {
-              name: '@ark-ui/solid/pin-input',
-              message: "Import { PinInput } or { PinInputPrimitive } from '@corates/ui'",
-            },
-            {
-              name: '@ark-ui/solid/popover',
-              message: "Import { Popover } or { PopoverPrimitive } from '@corates/ui'",
-            },
-            {
-              name: '@ark-ui/solid/progress',
-              message: "Import { Progress } or { ProgressPrimitive } from '@corates/ui'",
-            },
-            {
-              name: '@ark-ui/solid/qr-code',
-              message: "Import { QRCode } or { QRCodePrimitive } from '@corates/ui'",
-            },
-            {
-              name: '@ark-ui/solid/radio-group',
-              message: "Import { RadioGroup } or { RadioGroupPrimitive } from '@corates/ui'",
-            },
-            {
-              name: '@ark-ui/solid/select',
-              message: "Import { Select } or { SelectPrimitive } from '@corates/ui'",
-            },
-            {
-              name: '@ark-ui/solid/splitter',
-              message: "Import { Splitter } or { SplitterPrimitive } from '@corates/ui'",
-            },
-            {
-              name: '@ark-ui/solid/switch',
-              message: "Import { Switch } or { SwitchPrimitive } from '@corates/ui'",
-            },
-            {
-              name: '@ark-ui/solid/tabs',
-              message: "Import { Tabs } or { TabsPrimitive } from '@corates/ui'",
-            },
-            {
-              name: '@ark-ui/solid/tags-input',
-              message: "Import { TagsInput } or { TagsInputPrimitive } from '@corates/ui'",
-            },
-            {
-              name: '@ark-ui/solid/toast',
-              message: "Import { Toaster, showToast } or { ToastPrimitive } from '@corates/ui'",
-            },
-            {
-              name: '@ark-ui/solid/toggle-group',
-              message: "Import { ToggleGroup } or { ToggleGroupPrimitive } from '@corates/ui'",
-            },
-            {
-              name: '@ark-ui/solid/tooltip',
-              message: "Import { Tooltip } or { TooltipPrimitive } from '@corates/ui'",
-            },
-          ],
-          patterns: [
-            {
-              group: ['@ark-ui/solid/*'],
-              message:
-                'Import from @corates/ui instead. Use ComponentName for prestyled or ComponentNamePrimitive for the Ark UI primitive.',
-            },
-          ],
-        },
-      ],
-    },
-  },
-  {
-    // UI package can import from @ark-ui/solid directly (it wraps primitives)
-    files: ['packages/ui/**/*.{js,jsx,ts,tsx}'],
-    rules: {
-      'no-restricted-imports': 'off',
-    },
-  },
-  {
-    // Web UI components can import from @ark-ui/solid directly (shadcn-style primitives)
-    files: ['packages/web/src/components/ui/**/*.{js,jsx,ts,tsx}'],
-    rules: {
-      'no-restricted-imports': 'off',
-      'corates/corates-ui-imports': 'off',
-    },
-  },
-  {
-    // Web lib/ui can import from @ark-ui/solid directly
-    files: ['packages/web/src/lib/ui/**/*.{js,jsx,ts,tsx}'],
-    rules: {
-      'no-restricted-imports': 'off',
     },
   },
   {
@@ -355,7 +205,7 @@ export default [
     },
   },
   {
-    // Landing package - React (not SolidJS), disable SolidJS rules and enable React hooks
+    // Landing package - React with hooks linting
     files: ['packages/landing/**/*.{js,jsx,ts,tsx}'],
     plugins: {
       'react-hooks': reactHooks,
@@ -365,43 +215,15 @@ export default [
         React: 'readonly',
         HTMLSpanElement: 'readonly',
         HTMLFormElement: 'readonly',
-      },
-    },
-    rules: {
-      ...reactHooks.configs.recommended.rules,
-      'solid/reactivity': 'off',
-      'solid/no-destructure': 'off',
-      'solid/prefer-for': 'off',
-      'solid/components-return-once': 'off',
-      'solid/no-react-specific-props': 'off',
-      'solid/style-prop': 'off',
-      'solid/event-handlers': 'off',
-      'solid/no-innerhtml': 'off',
-      'solid/jsx-no-undef': 'off',
-      'corates/corates-ui-imports': 'off',
-      'corates/no-outlet': 'off',
-      'no-restricted-imports': 'off',
-    },
-  },
-  {
-    // Preact components - disable SolidJS rules
-    files: ['**/preact/**/*.{js,jsx,ts,tsx}'],
-    languageOptions: {
-      globals: {
-        React: 'readonly',
         HTMLAnchorElement: 'readonly',
-        HTMLFormElement: 'readonly',
         Node: 'readonly',
         NodeJS: 'readonly',
       },
     },
     rules: {
-      'solid/reactivity': 'off',
-      'solid/no-destructure': 'off',
-      'solid/prefer-for': 'off',
-      'solid/components-return-once': 'off',
-      'solid/no-react-specific-props': 'off',
-      'solid/style-prop': 'off',
+      ...reactHooks.configs.recommended.rules,
+      'corates/corates-ui-imports': 'off',
+      'corates/no-outlet': 'off',
     },
   },
   {

@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { CSSProperties } from 'react';
 
 type IconProps = {

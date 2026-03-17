@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { RedactionMode, useRedaction } from '@embedpdf/plugin-redaction/react';
 import { ToolbarButton } from './ui';
 import { CheckIcon, CloseIcon, RedactTextIcon, RedactAreaIcon } from './icons';

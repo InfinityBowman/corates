@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { SelectionSelectionMenuProps } from '@embedpdf/plugin-selection/react';
 import { useSelectionCapability } from '@embedpdf/plugin-selection/react';
 import { useState, useEffect } from 'react';

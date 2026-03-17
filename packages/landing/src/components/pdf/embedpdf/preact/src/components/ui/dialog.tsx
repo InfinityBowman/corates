@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { ReactNode, useEffect, useRef } from 'react';
 import { CloseIcon } from '../icons';
 

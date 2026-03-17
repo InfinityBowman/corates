@@ -1,10 +1,9 @@
 export const config = {
-  appUrl: import.meta.env.VITE_PUBLIC_APP_URL || 'http://localhost:5173',
+  appUrl: import.meta.env.VITE_PUBLIC_APP_URL || 'http://localhost:3010',
   apiUrl: import.meta.env.VITE_API_URL || 'http://localhost:8787',
 };
 
 export const urls = {
-  signIn: () => '/signin',
   signUp: (plan?: string, interval?: string) => {
     const base = '/signup';
     if (!plan) return base;
@@ -12,6 +11,4 @@ export const urls = {
     if (interval) params.set('interval', interval);
     return `${base}?${params.toString()}`;
   },
-  checklist: () => '/checklist',
-  dashboard: () => '/dashboard',
 };

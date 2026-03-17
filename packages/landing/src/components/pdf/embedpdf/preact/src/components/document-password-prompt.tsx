@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { useState } from 'react';
 import { useDocumentManagerCapability } from '@embedpdf/plugin-document-manager/react';
 import { PdfErrorCode } from '@embedpdf/models';

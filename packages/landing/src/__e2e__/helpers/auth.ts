@@ -3,17 +3,26 @@
  * Manages session cookies and browser state cleanup
  */
 
-export function injectSessionCookie(token: string) {
-  // Better Auth uses 'better-auth.session_token' cookie
-  document.cookie = `better-auth.session_token=${token};path=/;`;
+import { commands } from 'vitest/browser';
+
+/**
+ * Inject session cookie via Playwright context (server-side).
+ * This bypasses httpOnly restrictions that document.cookie can't handle.
+ */
+export async function injectSessionCookie(token: string) {
+  await (commands as any).setCookies([
+    {
+      name: 'better-auth.session_token',
+      value: token,
+      domain: 'localhost',
+      path: '/',
+    },
+  ]);
 }
 
 export async function clearBrowserState() {
-  // Clear all cookies
-  document.cookie.split(';').forEach(c => {
-    const name = c.split('=')[0].trim();
-    document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/`;
-  });
+  // Clear cookies via Playwright (server-side, handles httpOnly)
+  await (commands as any).clearCookies();
 
   // Clear localStorage
   localStorage.clear();
