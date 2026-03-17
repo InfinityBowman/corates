@@ -18,7 +18,7 @@
     "test:watch": "vitest --config vitest.config.ts",
     "test:browser": "vitest run --config vitest.browser.config.ts --reporter=verbose",
     "test:browser:ui": "vitest --config vitest.browser.config.ts --ui",
-    "test:e2e": "vitest run --config vitest.e2e.config.ts --reporter=verbose"
+    "test:e2e": "playwright test"
   },
   "dependencies": {
     "@ark-ui/react": "^5.34.1",
@@ -85,6 +85,7 @@
   },
   "devDependencies": {
     "@cloudflare/vite-plugin": "^1.25.2",
+    "@playwright/test": "^1.58.2",
     "@tailwindcss/vite": "^4.2.1",
     "@tanstack/eslint-config": "^0.4.0",
     "@tanstack/router-plugin": "^1.132.0",

@@ -27,6 +27,9 @@ packages/landing/app.config.timestamp_*.js
 **/.vitest**
 __screenshots__/
 __playwright-report__/
+test-results/
+playwright-report/
+blob-report/
 
 # production
 /build

@@ -54,6 +54,7 @@ testSeedRoutes.post('/seed', async c => {
         givenName: u.givenName || null,
         familyName: u.familyName || null,
         emailVerified: true,
+        profileCompletedAt: Math.floor(Date.now() / 1000),
         createdAt: new Date(),
         updatedAt: new Date(),
       });
@@ -93,28 +94,25 @@ testSeedRoutes.post('/seed', async c => {
 
 /**
  * POST /api/test/session
- * Creates a session for a user and returns the cookie name + value.
+ * Creates a session via Better Auth's testUtils (handles token hashing correctly).
  */
 testSeedRoutes.post('/session', async c => {
   try {
-    const db = drizzle(c.env.DB);
+    const auth = createAuth(c.env);
+    const ctx = await auth.$context;
+    const test = (ctx as any).test;
+
+    if (!test) {
+      return c.json({ error: 'testUtils plugin not available' }, 500);
+    }
+
     const body = await c.req.json<{ userId: string }>();
-
-    const token = crypto.randomUUID();
-    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
-
-    await db.insert(session).values({
-      id: crypto.randomUUID(),
-      token,
-      userId: body.userId,
-      expiresAt,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    });
+    const result = await test.login({ userId: body.userId });
 
     return c.json({
       success: true,
-      token,
+      token: result.token,
+      cookies: result.cookies,
     });
   } catch (err) {
     console.error('[test-seed] Session error:', err);
