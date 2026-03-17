@@ -121,12 +121,12 @@ Replace three checklist-type-specific methods with one:
 
 ```typescript
 // Before
-getQuestionNote(studyId, checklistId, 'q1');       // AMSTAR2
-getRobinsText(studyId, checklistId, 'domain1', 'support', 'q1a');  // ROBINS-I
-getRob2Text(studyId, checklistId, 'domain1', 'support');            // ROB2
+getQuestionNote(studyId, checklistId, 'q1'); // AMSTAR2
+getRobinsText(studyId, checklistId, 'domain1', 'support', 'q1a'); // ROBINS-I
+getRob2Text(studyId, checklistId, 'domain1', 'support'); // ROB2
 
 // After
-getTextRef(studyId, checklistId, { questionKey: 'q1' });                          // AMSTAR2
+getTextRef(studyId, checklistId, { questionKey: 'q1' }); // AMSTAR2
 getTextRef(studyId, checklistId, { sectionKey: 'domain1', fieldKey: 'support', questionKey: 'q1a' }); // ROBINS-I
 getTextRef(studyId, checklistId, { sectionKey: 'domain1', fieldKey: 'support' }); // ROB2
 ```
@@ -180,14 +180,14 @@ Impossible states are structurally eliminated.
 
 Migration is largely mechanical:
 
-| Current import | New import | Change type |
-|---|---|---|
-| `projectActionsStore.study.create(...)` | `project.study.create(...)` | Find-and-replace |
-| `projectActionsStore.checklist.*` | `project.checklist.*` | Find-and-replace |
-| `projectActionsStore.pdf.*` | `project.pdf.*` | Find-and-replace |
-| `useProject(projectId)` in ProjectView | `<ProjectGate>` component | Rewrite (1 file) |
-| `useProjectContext().projectOps` | `useAwareness()` (only for presence) | Targeted (2-3 files) |
-| `_projectActionsStore as any` cast | Typed import, no cast | Delete cast |
+| Current import                          | New import                           | Change type          |
+| --------------------------------------- | ------------------------------------ | -------------------- |
+| `projectActionsStore.study.create(...)` | `project.study.create(...)`          | Find-and-replace     |
+| `projectActionsStore.checklist.*`       | `project.checklist.*`                | Find-and-replace     |
+| `projectActionsStore.pdf.*`             | `project.pdf.*`                      | Find-and-replace     |
+| `useProject(projectId)` in ProjectView  | `<ProjectGate>` component            | Rewrite (1 file)     |
+| `useProjectContext().projectOps`        | `useAwareness()` (only for presence) | Targeted (2-3 files) |
+| `_projectActionsStore as any` cast      | Typed import, no cast                | Delete cast          |
 
 **Files affected**: ~15 component files for the find-and-replace, 1 file (ProjectView) for the structural rewrite, 2-3 reconciliation files for awareness access.
 
@@ -195,15 +195,15 @@ Migration is largely mechanical:
 
 ## What callers no longer need to know
 
-| Concern | Before | After |
-|---|---|---|
-| Y.js (Y.Doc, Y.Map, transact) | Leaked through `useProject` return, `projectOps` context | Hidden behind operation methods |
-| Dexie/IndexedDB | Must load before WebSocket; `isLoadingPersistedState` guard | `<ProjectGate fallback={...}>` |
-| WebSocket lifecycle | Connection, reconnection, access denied handling | `connection.phase` enum |
-| Ref-counting | Implicit in `useProject` hook | Declarative via `<ProjectGate>` mount/unmount |
-| Dual registration | 40 methods registered on both hook return + action store | One `project.*` singleton |
-| Active project setup | Manual `_setActiveProject` / `_clearActiveProject` | Automatic in `<ProjectGate>` |
-| Which API to use | Hook return vs action store vs context | Store for reads, singleton for writes |
+| Concern                       | Before                                                      | After                                         |
+| ----------------------------- | ----------------------------------------------------------- | --------------------------------------------- |
+| Y.js (Y.Doc, Y.Map, transact) | Leaked through `useProject` return, `projectOps` context    | Hidden behind operation methods               |
+| Dexie/IndexedDB               | Must load before WebSocket; `isLoadingPersistedState` guard | `<ProjectGate fallback={...}>`                |
+| WebSocket lifecycle           | Connection, reconnection, access denied handling            | `connection.phase` enum                       |
+| Ref-counting                  | Implicit in `useProject` hook                               | Declarative via `<ProjectGate>` mount/unmount |
+| Dual registration             | 40 methods registered on both hook return + action store    | One `project.*` singleton                     |
+| Active project setup          | Manual `_setActiveProject` / `_clearActiveProject`          | Automatic in `<ProjectGate>`                  |
+| Which API to use              | Hook return vs action store vs context                      | Store for reads, singleton for writes         |
 
 ## Non-goals
 

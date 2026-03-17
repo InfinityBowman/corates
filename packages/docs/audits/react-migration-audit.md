@@ -69,9 +69,9 @@ Extract to shared admin utility.
 
 ## Summary
 
-| Priority         | Count  | Action                                        |
-| ---------------- | ------ | --------------------------------------------- |
-| Critical         | 0      | All resolved                                  |
-| Fix before merge | 0      | All resolved                                  |
-| Fix soon         | 11     | Duplicates, consistency, untyped JS, minor    |
-| **Total**        | **11** |                                               |
+| Priority         | Count  | Action                                     |
+| ---------------- | ------ | ------------------------------------------ |
+| Critical         | 0      | All resolved                               |
+| Fix before merge | 0      | All resolved                               |
+| Fix soon         | 11     | Duplicates, consistency, untyped JS, minor |
+| **Total**        | **11** |                                            |

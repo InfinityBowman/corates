@@ -15,6 +15,7 @@ Annotations and backward compatibility (legacy reconciliation format) are out of
 ### 1. `__tests__/helpers.ts` (shared test utilities)
 
 Extract common helpers from the existing test file:
+
 - `populateDoc()` - seed a Y.Doc with studies/meta/members
 - `setupProject()` - create Y.Doc + all operation modules + sync manager
 - `syncAndRead()` - call syncFromYDoc, return store state for projectId
@@ -122,14 +123,14 @@ describe('Full sync pipeline')
 
 ## Files to Modify/Create
 
-| File | Action |
-|------|--------|
-| `packages/landing/src/primitives/useProject/__tests__/helpers.ts` | Create |
-| `packages/landing/src/primitives/useProject/__tests__/domain-operations.browser.test.ts` | Create |
-| `packages/landing/src/primitives/useProject/__tests__/checklist-handlers.browser.test.ts` | Create |
-| `packages/landing/src/primitives/useProject/__tests__/reconciliation.browser.test.ts` | Create |
-| `packages/landing/src/primitives/useProject/__tests__/multi-client-convergence.browser.test.ts` | Create |
-| `packages/landing/src/primitives/useProject/__tests__/yjs-sync.browser.test.ts` | Update to use shared helpers |
+| File                                                                                            | Action                       |
+| ----------------------------------------------------------------------------------------------- | ---------------------------- |
+| `packages/landing/src/primitives/useProject/__tests__/helpers.ts`                               | Create                       |
+| `packages/landing/src/primitives/useProject/__tests__/domain-operations.browser.test.ts`        | Create                       |
+| `packages/landing/src/primitives/useProject/__tests__/checklist-handlers.browser.test.ts`       | Create                       |
+| `packages/landing/src/primitives/useProject/__tests__/reconciliation.browser.test.ts`           | Create                       |
+| `packages/landing/src/primitives/useProject/__tests__/multi-client-convergence.browser.test.ts` | Create                       |
+| `packages/landing/src/primitives/useProject/__tests__/yjs-sync.browser.test.ts`                 | Update to use shared helpers |
 
 ## Key Source Files (read-only reference)
 

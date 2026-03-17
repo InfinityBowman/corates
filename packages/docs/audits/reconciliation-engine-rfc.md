@@ -32,6 +32,7 @@ The `setNavbarStore` lifting pattern is the most structurally damaging decision.
 ### Files involved (current state)
 
 **AMSTAR2** (10 files):
+
 - `amstar2-reconcile/ReconciliationWithPdf.tsx` -- wrapper
 - `amstar2-reconcile/ChecklistReconciliation.tsx` -- state machine
 - `amstar2-reconcile/Navbar.tsx` -- navigation bar
@@ -44,6 +45,7 @@ The `setNavbarStore` lifting pattern is the most structurally damaging decision.
 - `amstar2-reconcile/NotesCompareSection.tsx` -- note comparison
 
 **ROB2** (14 files):
+
 - `rob2-reconcile/ROB2ReconciliationWithPdf.tsx` -- wrapper
 - `rob2-reconcile/ROB2Reconciliation.tsx` -- state machine
 - `rob2-reconcile/ROB2Navbar.tsx` -- navigation bar
@@ -59,6 +61,7 @@ The `setNavbarStore` lifting pattern is the most structurally damaging decision.
 - `rob2-reconcile/panels/DirectionPanel.tsx`
 
 **ROBINS-I** (14 files):
+
 - `robins-i-reconcile/RobinsIReconciliationWithPdf.tsx` -- wrapper
 - `robins-i-reconcile/RobinsIReconciliation.tsx` -- state machine
 - `robins-i-reconcile/RobinsINavbar.tsx` -- navigation bar
@@ -86,7 +89,7 @@ interface ReconciliationNavItem {
   key: string;
   label: string;
   section: string;
-  type: string;         // opaque to the engine, interpreted by the adapter
+  type: string; // opaque to the engine, interpreted by the adapter
   meta?: Record<string, unknown>; // adapter-defined payload
 }
 
@@ -94,7 +97,7 @@ interface ReconciliationAdapter {
   // Identity
   checklistType: string;
   title: string;
-  pageCounterLabel: string;  // "Question" vs "Item"
+  pageCounterLabel: string; // "Question" vs "Item"
   getPageLabel: (pageIndex: number) => string;
 
   // Navigation item building (called every render, must be memoizable)
@@ -105,11 +108,7 @@ interface ReconciliationAdapter {
   isAgreement: (item: ReconciliationNavItem, comparison: unknown) => boolean;
 
   // Comparison (pure function, wraps type-specific compareChecklists)
-  compare: (
-    checklist1: unknown,
-    checklist2: unknown,
-    reconciledChecklist: unknown,
-  ) => unknown;
+  compare: (checklist1: unknown, checklist2: unknown, reconciledChecklist: unknown) => unknown;
 
   // Write operations (receive updateChecklistAnswer + getTextRef from engine)
   autoFillFromReviewer1: (
@@ -119,9 +118,7 @@ interface ReconciliationAdapter {
     getTextRef: ((...args: unknown[]) => unknown) | null,
   ) => void;
 
-  resetAllAnswers: (
-    updateChecklistAnswer: (sectionKey: string, data: unknown) => void,
-  ) => void;
+  resetAllAnswers: (updateChecklistAnswer: (sectionKey: string, data: unknown) => void) => void;
 
   // Optional side effects (ROB2 auto-NA for skipped questions)
   onAfterNavigate?: (
@@ -134,11 +131,7 @@ interface ReconciliationAdapter {
   renderPage: (context: EngineContext) => ReactNode;
   NavbarComponent: React.ComponentType<NavbarContext>;
   SummaryComponent: React.ComponentType<SummaryContext>;
-  renderWarningBanner?: (
-    checklist1: unknown,
-    checklist2: unknown,
-    reconciledChecklist: unknown,
-  ) => ReactNode | null;
+  renderWarningBanner?: (checklist1: unknown, checklist2: unknown, reconciledChecklist: unknown) => ReactNode | null;
 }
 ```
 

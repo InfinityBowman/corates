@@ -40,9 +40,7 @@ return async (c, next) => {
 **File:** `packages/workers/src/routes/database.ts:155-158`
 
 ```ts
-const tableCheck = await c.env.DB.prepare(
-  "SELECT name FROM sqlite_master WHERE type='table' AND name='user'",
-).first();
+const tableCheck = await c.env.DB.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='user'").first();
 ```
 
 The project guidelines explicitly state "Never bypass Drizzle for database access."
@@ -58,7 +56,7 @@ The project guidelines explicitly state "Never bypass Drizzle for database acces
 The route applies only `requireAuth` (any authenticated user), not an admin check. It returns user IDs, emails, usernames, given names, and email verification status for the 20 most recent users (capped by `.limit(20)` at line 91). While not the full user table, any authenticated user can enumerate PII.
 
 ```ts
-dbRoutes.use('/users', requireAuth);  // No admin check
+dbRoutes.use('/users', requireAuth); // No admin check
 ```
 
 The `/api/migrate` POST endpoint (line 154) has no authentication at all.
@@ -145,6 +143,7 @@ The `useEffect` captures `location.pathname` from TanStack Router's `useLocation
 **Files:** `packages/workers/src/routes/invitations.ts:218-259`, `packages/workers/src/routes/orgs/invitations.ts:754-832`
 
 Two endpoints accept invitation tokens:
+
 - `POST /api/invitations/accept` (no quota check)
 - `POST /api/orgs/:orgId/projects/:projectId/invitations/accept` (has quota check)
 
@@ -167,6 +166,7 @@ The OpenAPI schema declares `userDisplayName`, but the handler returns `userGive
 ### I4. Duplicate invitation creation logic in three files
 
 **Files:**
+
 - `packages/workers/src/routes/members.ts:394-502`
 - `packages/workers/src/routes/orgs/members.ts:659-773`
 - `packages/workers/src/routes/orgs/invitations.ts:438-558`
@@ -216,8 +216,7 @@ Each iteration of the dedup loop issues an independent DB query (up to 1,000 ser
 **File:** `packages/workers/src/routes/contact.ts:167`
 
 ```ts
-const contactEmail =
-  (env as unknown as Record<string, string | undefined>).CONTACT_EMAIL ?? 'contact@corates.org';
+const contactEmail = (env as unknown as Record<string, string | undefined>).CONTACT_EMAIL ?? 'contact@corates.org';
 ```
 
 Not declared in the `Env` type. The cast silences TypeScript without fixing the underlying issue.
@@ -275,6 +274,7 @@ Mount-only `useEffect` closes over the initial `session.refetch` reference with 
 ### I14. Index-based keys used on dynamic-capable lists
 
 **Files:**
+
 - `packages/landing/src/components/Audience.tsx:44`
 - `packages/landing/src/components/settings/PlansSettings.tsx:173`
 - `packages/landing/src/components/HowItWorks.tsx:50`
@@ -297,6 +297,7 @@ Mount-only `useEffect` closes over the initial `session.refetch` reference with 
 ### I16. Widespread `as any` casts in checklist components
 
 **Files:**
+
 - `packages/landing/src/components/checklist/ROB2Checklist/DomainSection.tsx:32`
 - `packages/landing/src/components/checklist/ROBINSIChecklist/DomainSection.tsx:34`
 - `packages/landing/src/stores/localChecklistsStore.ts:103, 117`
@@ -407,11 +408,11 @@ The shared version accepts `ChecklistStatus | string`; the landing copy accepts 
 
 ## Summary
 
-| Severity | Count | Key Themes |
-|----------|-------|------------|
-| Critical | 8 | Ineffective rate limiting, raw SQL, user data exposure, URL injection, missing scripts, untyped API boundary |
-| Important | 23 | Stale closures, quota bypass, duplicate logic, error leakage, icon inconsistency, code duplication, `as any` casts, legacy code |
-| Documentation | 3 | Stale SolidJS references, phantom package, type mismatches |
+| Severity      | Count | Key Themes                                                                                                                      |
+| ------------- | ----- | ------------------------------------------------------------------------------------------------------------------------------- |
+| Critical      | 8     | Ineffective rate limiting, raw SQL, user data exposure, URL injection, missing scripts, untyped API boundary                    |
+| Important     | 23    | Stale closures, quota bypass, duplicate logic, error leakage, icon inconsistency, code duplication, `as any` casts, legacy code |
+| Documentation | 3     | Stale SolidJS references, phantom package, type mismatches                                                                      |
 
 ### Top 10 highest-impact fixes (in priority order)
 

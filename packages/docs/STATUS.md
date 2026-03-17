@@ -173,7 +173,7 @@ Future planned: ROBINS-E, GRADE
 | Lib utilities | Good     | 12 test files covering domain logic, parsing, auth |
 | Checklists    | Good     | AMSTAR2 compare/scoring, ROBINS-I scoring          |
 | Stores        | Partial  | projectStore, authStore have tests                 |
-| Hooks         | Partial  | useAddStudies deduplication/matching tested         |
+| Hooks         | Partial  | useAddStudies deduplication/matching tested        |
 | Entitlements  | Good     | Full plan/quota/subscription coverage              |
 
 ---

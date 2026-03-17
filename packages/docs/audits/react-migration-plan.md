@@ -951,20 +951,24 @@ routes/_app/_protected/
 ### 5.2 Test migration (25 files, 560 tests, all passing)
 
 **Fixed 4 pre-existing test failures:**
+
 - Import path aliases (`@config/` -> `@/config/`, etc.)
 - TanStack Router navigate assertion (`navigate({ to, replace })` vs `navigate(path, opts)`)
 
 **Migrated 13 new test files:**
+
 - Pure logic: checklist-compare, checklist, robins-scoring, form-errors, avatarCache, db, pdfCache, robins-i handler
 - Store tests rewritten for Zustand: projectStore, better-auth-store
 - Hook utility tests: useAddStudies deduplication + matching
 - Component: ErrorBoundary
 
 **Skipped 2 (deeply SolidJS-reactive, would need full renderHook rewrite):**
+
 - `useAddStudies.sync.test.js` (SolidJS createRoot/createEffect lifecycle)
 - `useProject.test.js` (SolidJS reactive lifecycle)
 
 **Bug fix discovered during migration:**
+
 - Fixed missing `getTotalCacheSize()` in `pdfCache.js`
 
 ---

@@ -126,7 +126,6 @@ export default [
 
       // Prevent Outlet usage - use props.children for nested routes
       'corates/no-outlet': 'error',
-
     },
   },
   {

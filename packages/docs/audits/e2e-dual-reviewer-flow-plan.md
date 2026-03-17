@@ -44,6 +44,7 @@ TanStack Router handles all navigation internally. The test clicks links/buttons
 ### Step 1: Clean up old files
 
 Delete from `packages/landing/src/primitives/useProject/__tests__/`:
+
 - `helpers.ts`
 - `domain-operations.browser.test.ts`
 - `checklist-handlers.browser.test.ts`
@@ -82,6 +83,7 @@ Mount at `/api/test/*` in the main Hono router, gated behind `DEV_MODE`.
 File: `packages/landing/vitest.e2e.config.ts`
 
 Already created during POC with:
+
 - `viteReact()` plugin for JSX
 - `playwright()` provider, headless Chromium
 - Custom `commands` for seedTestData, getSessionCookie, cleanupTestData
@@ -94,6 +96,7 @@ Already created during POC with:
 Directory: `packages/landing/src/__e2e__/helpers/`
 
 **`app.tsx`** -- Creates and renders the full app:
+
 ```tsx
 function createTestApp(initialPath: string) {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
@@ -104,13 +107,16 @@ function createTestApp(initialPath: string) {
 ```
 
 **`seed.ts`** -- Wraps `commands` calls:
+
 - `seedDualReviewerScenario()` -- seeds User A, User B, org, returns IDs and cookie values
 
 **`auth.ts`** -- Browser-side cookie management:
+
 - `injectSessionCookie(token)` -- sets `better-auth.session_token` cookie
 - `clearBrowserState()` -- clears cookies, localStorage, IndexedDB
 
 **`interactions.ts`** -- Reusable UI helpers:
+
 - `createProject(page, name)`
 - `addStudyManually(page, title, author, year)`
 - `assignReviewers(page, reviewer1Name, reviewer2Name)`
@@ -178,6 +184,7 @@ describe('Dual-Reviewer AMSTAR2 Workflow')
 ### Step 7: Add data-testid attributes as needed
 
 Discover during implementation. Likely candidates:
+
 - Tab triggers in ProjectView
 - Mark Complete / Finalize buttons
 - AMSTAR2 answer radio buttons
@@ -185,18 +192,18 @@ Discover during implementation. Likely candidates:
 
 ## Files to Create/Modify
 
-| File | Action |
-|------|--------|
-| `packages/workers/src/auth/config.ts` | Add testUtils plugin (conditional) |
-| `packages/workers/src/routes/test-seed.ts` | Create -- seed/session/cleanup endpoints |
-| `packages/workers/src/index.ts` (or router) | Mount test-seed routes |
-| `packages/landing/vitest.e2e.config.ts` | Already created -- minor updates |
-| `packages/landing/src/__e2e__/helpers/app.tsx` | Create |
-| `packages/landing/src/__e2e__/helpers/seed.ts` | Create |
-| `packages/landing/src/__e2e__/helpers/auth.ts` | Create |
-| `packages/landing/src/__e2e__/helpers/interactions.ts` | Create |
-| `packages/landing/src/__e2e__/dual-reviewer-flow.browser.test.tsx` | Create |
-| Various components | Add data-testid as needed |
+| File                                                               | Action                                   |
+| ------------------------------------------------------------------ | ---------------------------------------- |
+| `packages/workers/src/auth/config.ts`                              | Add testUtils plugin (conditional)       |
+| `packages/workers/src/routes/test-seed.ts`                         | Create -- seed/session/cleanup endpoints |
+| `packages/workers/src/index.ts` (or router)                        | Mount test-seed routes                   |
+| `packages/landing/vitest.e2e.config.ts`                            | Already created -- minor updates         |
+| `packages/landing/src/__e2e__/helpers/app.tsx`                     | Create                                   |
+| `packages/landing/src/__e2e__/helpers/seed.ts`                     | Create                                   |
+| `packages/landing/src/__e2e__/helpers/auth.ts`                     | Create                                   |
+| `packages/landing/src/__e2e__/helpers/interactions.ts`             | Create                                   |
+| `packages/landing/src/__e2e__/dual-reviewer-flow.browser.test.tsx` | Create                                   |
+| Various components                                                 | Add data-testid as needed                |
 
 ## Key Source Files (reference)
 

@@ -65,6 +65,7 @@ interface OrgMemberRow {
 `DrizzleMembershipReader` implements this with the actual Drizzle queries, pulled from the 10+ locations where they currently live. The `OrgMemberRow` projection includes `orgName` and `orgSlug` so the middleware join query and the policy lookup are the same operation.
 
 **Callers use it like:**
+
 ```typescript
 // In requireOrgMembership middleware
 const reader = new DrizzleMembershipReader(db);
@@ -95,6 +96,7 @@ interface ProjectDocAuthPort {
 `D1ProjectDocAuth` wraps `createDb(env.DB)` and runs the two existing queries. `InMemoryProjectDocAuth` is a Map-based test double.
 
 **Usage in ProjectDoc:**
+
 ```typescript
 // Production path (in handleWebSocket)
 const authPort = new D1ProjectDocAuth(this.env.DB);
@@ -116,10 +118,10 @@ A thin function that returns a memoized handle from the Hono context:
 
 ```typescript
 interface DbHandle {
-  raw: Database;                    // escape hatch for ad-hoc queries
-  membership: MembershipReader;     // memoized membership queries
-  resolveOrgAccess(orgId: string): Promise<OrgBilling>;  // memoized billing
-  batch(statements: BatchItem<'sqlite'>[]): Promise<void>;  // typed, no cast
+  raw: Database; // escape hatch for ad-hoc queries
+  membership: MembershipReader; // memoized membership queries
+  resolveOrgAccess(orgId: string): Promise<OrgBilling>; // memoized billing
+  batch(statements: BatchItem<'sqlite'>[]): Promise<void>; // typed, no cast
 }
 
 function useDb(c: AppContext): DbHandle;
@@ -128,6 +130,7 @@ function useDb(c: AppContext): DbHandle;
 On first call, `useDb(c)` creates a `Database` via `createDb(c.env.DB)`, wraps a `DrizzleMembershipReader` with a memoization layer (Map stored on `c`), wraps `resolveOrgAccess` with a per-orgId cache, and stores the handle on `c.get('__dbHandle')`. Subsequent calls return the cached handle.
 
 **Usage in middleware chain:**
+
 ```typescript
 // requireOrgMembership (first call creates the handle)
 const db = useDb(c);
