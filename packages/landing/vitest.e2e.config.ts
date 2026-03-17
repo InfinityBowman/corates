@@ -81,6 +81,7 @@ export default defineConfig({
       provider: playwright(),
       instances: [{ browser: 'chromium' }],
       headless: true,
+      api: { port: 63315 },
       commands: {
         seedTestData,
         getSessionCookie,

@@ -6,7 +6,7 @@
   "keywords": [
     "cloudflare",
     "durable-objects",
-    "solidjs",
+    "react",
     "workers"
   ],
   "license": "PolyForm-Noncommercial-1.0.0",
@@ -14,14 +14,11 @@
   "type": "module",
   "scripts": {
     "kill-ports": "for port in 5173 8787 3010 8080; do lsof -ti:$port | xargs kill -9 2>/dev/null; done || true",
-    "dev": "pnpm --filter web dev",
-    "dev:landing": "pnpm --filter landing dev",
+    "dev": "pnpm --filter landing dev",
     "dev:workers": "pnpm --filter workers dev",
     "build": "pnpm --recursive run build",
-    "build:web": "pnpm --filter web run build",
     "build:landing": "pnpm --filter landing run build",
     "deploy": "pnpm run deploy:workers && pnpm run deploy:landing",
-    "deploy:web": "pnpm --filter web run deploy",
     "deploy:workers": "pnpm --filter workers run deploy",
     "deploy:reset:workers": "pnpm --filter workers run db:reset:prod",
     "deploy:landing": "pnpm --filter landing run deploy",
@@ -30,7 +27,7 @@
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "initialize-mcp": "pnpm --filter mcp run scrape:all",
-    "test:ui": "pnpm --filter web test",
+    "test:ui": "pnpm --filter landing test",
     "test": "pnpm --recursive run test",
     "typecheck": "pnpm --recursive run typecheck",
     "logs": "pnpm --filter workers run logs",

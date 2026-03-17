@@ -1,6 +1,6 @@
 # CoRATES Implementation Status
 
-**Last Updated:** 2025-01-15
+**Last Updated:** 2026-03-17
 
 This document tracks the current implementation status of CoRATES features and systems.
 
@@ -8,7 +8,7 @@ This document tracks the current implementation status of CoRATES features and s
 
 ## Current Focus
 
-**Pre-production readiness** - The application is feature-complete for core workflows but not yet deployed to production. No active users.
+**React migration complete** - The frontend was fully migrated from SolidJS to React/TanStack Start in March 2026. The `packages/landing` package is now the sole frontend. `packages/web` (SolidJS) is deprecated and pending removal. The application is feature-complete for core workflows but not yet deployed to production. No active users.
 
 ---
 
@@ -32,20 +32,21 @@ This document tracks the current implementation status of CoRATES features and s
 
 ## System Components
 
-### Frontend (packages/web)
+### Frontend (packages/landing - React/TanStack Start)
 
 | Component         | Status   | Notes                                                             |
 | ----------------- | -------- | ----------------------------------------------------------------- |
-| Auth UI           | Complete | Login, signup, OAuth, 2FA setup, sessions                         |
-| Organization UI   | Complete | Org settings, members, roles, invitations                         |
+| Auth UI           | Complete | Login, signup, OAuth, 2FA setup, sessions (React)                 |
+| Organization UI   | Complete | Org settings, members, roles, invitations (React)                 |
 | Project UI        | Complete | Project tabs (Overview, All Studies, To-Do, Reconcile, Completed) |
-| Checklist UI      | Complete | AMSTAR2, ROBINS-I, ROB2 with scoring                              |
-| PDF Viewer        | Complete | Embedded viewer with split-screen layout                          |
-| Study Management  | Complete | Add studies, manage PDFs, assign reviewers                        |
-| Reconciliation UI | Complete | Side-by-side comparison views                                     |
-| Dashboard         | Complete | Project overview, quick actions                                   |
-| Settings          | Complete | Profile, security, billing, notifications, Google Drive           |
-| Admin Dashboard   | Complete | Users, orgs, billing, storage, database viewer                    |
+| Checklist UI      | Complete | AMSTAR2, ROBINS-I, ROB2 with scoring (React)                      |
+| PDF Viewer        | Complete | Preact island with React wrapper, split-screen layout             |
+| Study Management  | Complete | Add studies, manage PDFs, assign reviewers (React)                |
+| Reconciliation UI | Complete | Side-by-side comparison with presence tracking (React)            |
+| Dashboard         | Complete | Project overview, quick actions (React)                           |
+| Settings          | Complete | Profile, security, billing, notifications, Google Drive (React)   |
+| Admin Dashboard   | Complete | Users, orgs, billing, storage, database viewer (React/Recharts)   |
+| Dev Panel         | Complete | Floating Yjs state inspector, templates, JSON import/export       |
 
 ### Backend (packages/workers)
 
@@ -165,14 +166,15 @@ Future planned: ROBINS-E, GRADE
 | Billing routes    | Partial  | Tests in billing/**tests**/               |
 | Admin routes      | Partial  | Tests in admin/**tests**/                 |
 
-### Frontend (packages/web)
+### Frontend (packages/landing)
 
-| Area          | Coverage | Notes                             |
-| ------------- | -------- | --------------------------------- |
-| Primitives    | Partial  | useProject, useOrgs have tests    |
-| Components    | Sparse   | Only ErrorBoundary.test.jsx       |
-| Lib utilities | Partial  | checklist-domain, pdfUtils tested |
-| Checklists    | Partial  | AMSTAR2, ROBINS-I have tests      |
+| Area          | Coverage | Notes                                              |
+| ------------- | -------- | -------------------------------------------------- |
+| Lib utilities | Good     | 12 test files covering domain logic, parsing, auth |
+| Checklists    | Good     | AMSTAR2 compare/scoring, ROBINS-I scoring          |
+| Stores        | Partial  | projectStore, authStore have tests                 |
+| Hooks         | Partial  | useAddStudies deduplication/matching tested         |
+| Entitlements  | Good     | Full plan/quota/subscription coverage              |
 
 ---
 

@@ -2,7 +2,7 @@
 
 This file contains critical instructions for Agents. For detailed patterns, see specialized rule files in this directory.
 
-This project is CoRATES (Collaborative Research Appraisal Tool for Evidence Synthesis), a SolidJS-based web application deployed on Cloudflare Workers.
+This project is CoRATES (Collaborative Research Appraisal Tool for Evidence Synthesis), a React/TanStack Start web application deployed on Cloudflare Workers.
 
 ## Reading Order
 
@@ -12,7 +12,6 @@ Before making changes, read these documents in order:
 2. **STATUS.md** (packages/docs/STATUS.md) - Current implementation state and known gaps
 3. **AGENTS.md** (root) - Quick orientation and success criteria
 4. **Relevant guide** from `packages/docs/guides/` for your task
-5. **Specialized rules** - `.cursor/rules/*.mdc` (Cursor) or `.github/instructions/*.instructions.md` (VS Code)
 
 **Source of Truth Policy**: Documentation is authoritative. If code conflicts with documentation, either fix the code or update the documentation - never leave them out of sync.
 
@@ -20,15 +19,15 @@ Before making changes, read these documents in order:
 
 The project is split into multiple packages under the `packages/` directory:
 
-- `/web`: Frontend application built with SolidJS
+- `/landing`: Frontend application built with React, TanStack Start, TanStack Router (deployed on Cloudflare Workers)
 - `/workers`: Backend services, API endpoints, and database migrations
-- `/landing`: Marketing and landing site
+- `/web`: Legacy SolidJS frontend (being removed -- all features migrated to landing)
 - `/shared`: Shared TypeScript utilities and error definitions
 - `/mcp`: MCP server for development tools and documentation
 - `/mcp-memory`: Persistent agent memory system
 - `/docs`: Vitepress docs site containing internal documentation
 
-The web package is copied into the landing package during build and deployed as a single site on one worker.
+The landing package is the main frontend. It is deployed as a single Cloudflare Worker.
 
 Do not worry about migrations (client side or backend) unless specifically instructed. This project is not in production and has no users.
 
@@ -36,16 +35,14 @@ Do not worry about migrations (client side or backend) unless specifically instr
 
 ```bash
 # Development
-pnpm dev:front              # Frontend web app (port 5173 and port 3010)
-pnpm dev:workers      # Backend workers (port 8787)
-pnpm --filter web build        # Main web SPA frontend
-pnpm --filter landing build     # Landing site only
+pnpm dev:front              # Frontend (port 3010)
+pnpm dev:workers            # Backend workers (port 8787)
+pnpm --filter landing build # Build frontend
 
 # Testing
-pnpm test             # Run all tests
-pnpm --filter web test          # Frontend tests only
+pnpm --filter landing test              # Frontend unit tests
 pnpm --filter workers test              # Backend tests only
-pnpm --filter web vitest run path/file  # Single test file
+pnpm --filter landing test:browser      # Browser integration tests
 
 # Code Quality
 pnpm lint             # ESLint check
@@ -70,7 +67,7 @@ pnpm logs             # View production worker logs
 
 - **NEVER use emojis anywhere** - Not in code, comments, documentation, plan files, commit messages, or examples
 - This includes unicode symbols, DO NOT USE unicode symbols or emojis anywhere
-- For UI icons, use `solid-icons` library or SVGs only (never emojis)
+- For UI icons, use `lucide-react` library or SVGs only (never emojis)
 - Prefer modern ES6+ syntax and features
 - Use import aliases from jsconfig.json (see ui-components.mdc)
 - Prefer config files over hardcoding values
@@ -89,8 +86,12 @@ pnpm logs             # View production worker logs
 - **Zod**: Schema and input validation (backend)
 - **Drizzle ORM**: ALL database interactions and migrations
 - **Better-Auth**: Authentication and user management
-- **Ark UI**: UI components (`@ark-ui/solid`)
-- **solid-icons**: Icon library (e.g., `solid-icons/bi`, `solid-icons/fi`)
+- **shadcn/ui**: UI components (Radix-based, in `@/components/ui/`)
+- **lucide-react**: Icon library
+- **TanStack Router**: File-based routing (`createFileRoute`)
+- **TanStack Query**: Server state management (`useQuery`, `useMutation`)
+- **Zustand**: Client state management (stores in `@/stores/`)
+- **Recharts**: Data visualization (admin charts)
 
 ### Code Comments
 
@@ -126,17 +127,17 @@ retries += 1;
 - Do NOT create separate migration files manually (0002_xxx.sql, etc.)
 - You must use DrizzleKit, the workers package has a script to generate migrations
 
-### SolidJS Critical Patterns
+### React Patterns
 
-- **Do NOT prop-drill application state** - Import stores directly where needed
-- **Do NOT destructure props** - Access `props.field` directly or wrap in function: `() => props.field`
-- Shared state lives in external stores under `packages/web/src/stores/`
-- Components should receive at most 1-5 props (local config only, not shared state)
-- Use `createStore` for complex state objects
-- Use `createMemo` for derived values
-- Move business logic to stores, utilities, or primitives (not components)
-
-See `solidjs.mdc` for detailed reactivity patterns and examples.
+- **Import stores directly** - Use Zustand stores from `@/stores/` instead of prop-drilling shared state
+- Shared state lives in Zustand stores under `packages/landing/src/stores/`
+- Use `useMemo` for derived values, `useCallback` for stable callbacks
+- Use `useEffect` with explicit dependency arrays (never omit deps)
+- Use `useLayoutEffect` for DOM measurements before paint
+- Use `useSyncExternalStore` for external store subscriptions (e.g., Yjs awareness)
+- Use `useId()` for unique IDs on form elements (radio buttons, checkboxes)
+- Move business logic to stores, hooks, or utilities (not components)
+- Path aliases: `@/` maps to `packages/landing/src/`
 
 ## Documentation
 
@@ -146,7 +147,7 @@ See `solidjs.mdc` for detailed reactivity patterns and examples.
   - testing.md - Frontend and backend testing patterns, setup, and best practices
   - authentication.md - Setup, configuration, API endpoints, and usage patterns
   - database.md - Schema management, Drizzle ORM patterns, migrations, and test helpers
-  - state-management.md - SolidJS store patterns
+  - state-management.md - Zustand store patterns
   - primitives.md - Reusable hooks and primitives
   - components.md - Component development patterns
   - api-development.md - Backend API route patterns
@@ -159,7 +160,6 @@ See `solidjs.mdc` for detailed reactivity patterns and examples.
 
 For detailed patterns, see:
 
-- `solidjs.mdc` - Reactivity patterns, props, stores, primitives
 - `api-routes.mdc` - API route patterns, validation, database operations
 - `error-handling.mdc` - Error handling patterns (frontend + backend)
 - `workers.mdc` - Workers package specific patterns
@@ -179,7 +179,7 @@ For specific complex areas, see:
 
 - Cloudflare Pages is NOT used; only Cloudflare Workers
 - Packages are under `packages/` directory with their own dependencies
-- Path aliases are defined in `packages/web/jsconfig.json`
+- Path aliases: `@/` maps to `packages/landing/src/` (defined in tsconfig.json)
 - Adjust documentation if your changes would affect any existing documentation
 
 ## Anti-Patterns (Never Do These)
@@ -187,9 +187,8 @@ For specific complex areas, see:
 1. **Never use emojis or unicode symbols** - Not in code, comments, docs, or commits
 2. **Never bypass Drizzle** for database access
 3. **Never manually create migration files** - Use DrizzleKit only
-4. **Never destructure SolidJS props** - Breaks reactivity
-5. **Never prop-drill shared state** - Import stores directly
-6. **Never leave code that conflicts with documentation** - Update docs or fix code
+4. **Never prop-drill shared state** - Import Zustand stores directly
+5. **Never leave code that conflicts with documentation** - Update docs or fix code
 
 ## Agent TODO Convention
 
@@ -236,7 +235,7 @@ This repository has a persistent memory system (`@corates/mcp-memory`) that stor
 - "authentication patterns" before working on auth
 - "error handling" before adding try/catch blocks
 - "database migrations" before schema changes
-- "SolidJS props" before creating components
+- "React patterns" before creating components
 
 ### When to Write Memory
 

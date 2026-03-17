@@ -20,7 +20,7 @@ Read these documents in order before making changes:
 
 CoRATES (Collaborative Research Appraisal Tool for Evidence Synthesis) is a web application for researchers conducting systematic reviews. It enables real-time collaboration on quality appraisals with PDF annotation support.
 
-**Tech Stack:** SolidJS, Cloudflare Workers, D1 (SQLite), R2 (storage), Yjs (CRDT sync), Better-Auth
+**Tech Stack:** React 19, TanStack Start/Router, Zustand, Cloudflare Workers, D1 (SQLite), R2 (storage), Yjs (CRDT sync), Better-Auth, shadcn/ui
 
 ---
 
@@ -28,13 +28,13 @@ CoRATES (Collaborative Research Appraisal Tool for Evidence Synthesis) is a web 
 
 ```
 packages/
-  web/       # SolidJS frontend application
-  workers/   # Cloudflare Workers backend (API, database)
-  landing/   # Marketing site (includes web app in build)
-  shared/    # Shared TypeScript utilities (@corates/shared)
-  mcp/       # MCP server for dev tools (@corates/mcp)
+  landing/    # React/TanStack Start frontend (main application)
+  workers/    # Cloudflare Workers backend (API, database)
+  shared/     # Shared TypeScript utilities (@corates/shared)
+  mcp/        # MCP server for dev tools (@corates/mcp)
   mcp-memory/ # Persistent agent memory (@corates/mcp-memory)
-  docs/      # VitePress documentation site
+  docs/       # VitePress documentation site
+  web/        # Legacy SolidJS frontend (deprecated, being removed)
 ```
 
 ---
@@ -42,12 +42,11 @@ packages/
 ## Critical Rules (Do These)
 
 1. **Search memory first** - Call `search_memory` before complex tasks
-2. **Use required libraries**: Zod (validation), Drizzle (database), Better-Auth (auth), Ark UI (components)
-3. **Import stores directly** - Never prop-drill application state
-4. **Never destructure props** - Use `props.field` or `() => props.field`
-5. **Use MCP tools** for documentation: `better_auth_docs`, `drizzle_docs`, `search_icons`
-6. **Keep files small** - Extract large files into sub-modules
-7. **Update docs** if your changes affect documented behavior
+2. **Use required libraries**: Zod (validation), Drizzle (database), Better-Auth (auth), shadcn/ui (components), lucide-react (icons), Zustand (state), TanStack Query (server state)
+3. **Import Zustand stores directly** - Never prop-drill application state
+4. **Use MCP tools** for documentation: `better_auth_docs`, `drizzle_docs`, `search_icons`
+5. **Keep files small** - Extract large files into sub-modules
+6. **Update docs** if your changes affect documented behavior
 
 ---
 
@@ -56,9 +55,8 @@ packages/
 1. **Never use emojis or unicode symbols** - Not in code, comments, docs, or commits
 2. **Never bypass Drizzle** for database access
 3. **Never manually create migration files** - Use DrizzleKit
-4. **Never destructure SolidJS props** - Breaks reactivity
-5. **Never prop-drill shared state** - Import stores directly
-6. **Never leave code that conflicts with documentation** - Update docs or fix code
+4. **Never prop-drill shared state** - Import Zustand stores directly
+5. **Never leave code that conflicts with documentation** - Update docs or fix code
 
 ---
 
@@ -185,7 +183,7 @@ propose_memory_update({
 
 ### By Task Type
 
-- **Frontend work**: State Management guide, Components guide, `solidjs.mdc` / `solidjs.instructions.md`
+- **Frontend work**: State Management guide, Components guide
 - **Backend work**: API Development guide, Database guide, `api-routes.mdc` / `api-routes.instructions.md`
 - **Auth work**: Authentication guide, MCP `better_auth_docs`
 - **Org/Project work**: Organizations guide, `organizations.mdc`
@@ -199,12 +197,11 @@ propose_memory_update({
 Before considering work complete:
 
 - [ ] Code follows patterns in relevant `.mdc` rules
-- [ ] Required libraries used (Zod, Drizzle, Better-Auth, Ark UI)
+- [ ] Required libraries used (Zod, Drizzle, Better-Auth, shadcn/ui, lucide-react, Zustand, TanStack Query)
 - [ ] No emojis or unicode symbols anywhere
 - [ ] Tests added for new functionality (when applicable)
 - [ ] Documentation updated if behavior changed
-- [ ] No prop-drilling of shared state
-- [ ] SolidJS reactivity preserved (no prop destructuring)
+- [ ] No prop-drilling of shared state (use Zustand stores)
 
 ---
 

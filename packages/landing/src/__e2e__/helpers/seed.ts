@@ -44,7 +44,7 @@ export async function seedDualReviewerScenario(): Promise<DualReviewerScenario> 
         familyName: 'Reviewer',
       },
     ],
-    org: { id: orgId, name: 'E2E Test Org' },
+    org: { id: orgId, name: 'E2E Test Org', slug: `e2e-test-org-${TEST_PREFIX}` },
     orgMembers: [
       { userId: userAId, role: 'owner' },
       { userId: userBId, role: 'member' },

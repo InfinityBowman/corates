@@ -2,6 +2,7 @@ export const STATIC_ORIGINS: readonly string[] = [
   'http://localhost:5173',
   'http://localhost:8787',
   'http://localhost:3010',
+  'http://localhost:63315', // Vitest Browser Mode e2e tests
   'https://corates.org',
 ];
 
