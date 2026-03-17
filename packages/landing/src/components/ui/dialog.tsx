@@ -93,10 +93,7 @@ function DialogFooter({
   return (
     <div
       data-slot='dialog-footer'
-      className={cn(
-        'bg-muted flex justify-end gap-3 px-4 py-3',
-        className,
-      )}
+      className={cn('bg-muted flex justify-end gap-3 px-4 py-3', className)}
       {...props}
     >
       {children}

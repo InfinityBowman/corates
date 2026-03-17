@@ -105,29 +105,29 @@ export function UserTable({ users, loading }: UserTableProps) {
           const providers = user.providers || [];
           return (
             <div className='flex items-center gap-1.5'>
-                {providers.length > 0 ?
-                  providers.map(provider => {
-                    const providerInfo = PROVIDER_INFO[provider];
-                    return (
-                      <Tooltip key={provider}>
-                        <TooltipTrigger asChild>
-                          <div className='flex h-5 w-5 items-center justify-center'>
-                            {providerInfo?.icon ?
-                              <img
-                                src={providerInfo.icon}
-                                alt={providerInfo.name || provider}
-                                title={providerInfo.name || provider}
-                                className='h-4 w-4'
-                              />
-                            : <MailIcon className='text-muted-foreground h-4 w-4' />}
-                          </div>
-                        </TooltipTrigger>
-                        <TooltipContent>{providerInfo?.name || provider}</TooltipContent>
-                      </Tooltip>
-                    );
-                  })
-                : <span className='text-muted-foreground/70 text-xs'>None</span>}
-              </div>
+              {providers.length > 0 ?
+                providers.map(provider => {
+                  const providerInfo = PROVIDER_INFO[provider];
+                  return (
+                    <Tooltip key={provider}>
+                      <TooltipTrigger asChild>
+                        <div className='flex h-5 w-5 items-center justify-center'>
+                          {providerInfo?.icon ?
+                            <img
+                              src={providerInfo.icon}
+                              alt={providerInfo.name || provider}
+                              title={providerInfo.name || provider}
+                              className='h-4 w-4'
+                            />
+                          : <MailIcon className='text-muted-foreground h-4 w-4' />}
+                        </div>
+                      </TooltipTrigger>
+                      <TooltipContent>{providerInfo?.name || provider}</TooltipContent>
+                    </Tooltip>
+                  );
+                })
+              : <span className='text-muted-foreground/70 text-xs'>None</span>}
+            </div>
           );
         },
       },

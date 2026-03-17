@@ -10,7 +10,12 @@ import { StudyCard } from './study-card/StudyCard';
 import { AssignReviewersModal } from './AssignReviewersModal';
 import { ReviewerAssignment } from '../overview-tab/ReviewerAssignment';
 import { OutcomeManager } from '../outcomes/OutcomeManager';
-import { useProjectStore, selectStudies, selectMembers, selectConnectionState } from '@/stores/projectStore';
+import {
+  useProjectStore,
+  selectStudies,
+  selectMembers,
+  selectConnectionState,
+} from '@/stores/projectStore';
 import _projectActionsStore from '@/stores/projectActionsStore/index.js';
 import { useProjectContext } from '../ProjectContext';
 import {

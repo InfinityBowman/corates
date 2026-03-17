@@ -51,17 +51,17 @@ function SettingsLayout() {
 
   return (
     <div className='flex h-full'>
-        <SettingsSidebar
-          desktopMode={desktopMode}
-          mobileOpen={mobileOpen}
-          onToggleDesktop={toggleDesktop}
-          onCloseMobile={() => setMobileOpen(false)}
-          width={width}
-          onWidthChange={handleWidthChange}
-        />
-        <main className='flex-1 overflow-auto'>
-          <Outlet />
-        </main>
+      <SettingsSidebar
+        desktopMode={desktopMode}
+        mobileOpen={mobileOpen}
+        onToggleDesktop={toggleDesktop}
+        onCloseMobile={() => setMobileOpen(false)}
+        width={width}
+        onWidthChange={handleWidthChange}
+      />
+      <main className='flex-1 overflow-auto'>
+        <Outlet />
+      </main>
     </div>
   );
 }

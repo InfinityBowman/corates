@@ -82,7 +82,9 @@ test('Dual-Reviewer AMSTAR2 Workflow', async ({ context, page }) => {
   await page.getByRole('menuitem', { name: /Assign Reviewers/i }).click();
 
   // Modal should appear
-  await expect(page.getByRole('heading', { name: 'Assign Reviewers' })).toBeVisible({ timeout: 5_000 });
+  await expect(page.getByRole('heading', { name: 'Assign Reviewers' })).toBeVisible({
+    timeout: 5_000,
+  });
 
   // Select User A as Reviewer 1, User B as Reviewer 2
   // The dialog has two Select triggers labeled "Reviewer 1" and "Reviewer 2"
@@ -170,7 +172,10 @@ test('Dual-Reviewer AMSTAR2 Workflow', async ({ context, page }) => {
   await page.waitForTimeout(2000);
 
   // Verify this is not read-only (User B's own checklist)
-  const isReadOnly = await page.getByText('Read-only').isVisible().catch(() => false);
+  const isReadOnly = await page
+    .getByText('Read-only')
+    .isVisible()
+    .catch(() => false);
   if (isReadOnly) {
     // Wrong checklist -- go back and try the other one
     await page.goBack();

@@ -29,16 +29,16 @@ interface NavbarProps {
 export function Navbar({ store, usersByPage }: NavbarProps) {
   return (
     <nav className='flex flex-wrap gap-1 py-1 pl-1' aria-label='Question navigation'>
-        {store.questionKeys.map((key, index) => (
-          <QuestionPill
-            key={key}
-            questionIndex={index}
-            store={store}
-            usersOnPage={usersByPage?.get(index) || []}
-          />
-        ))}
-        <SummaryButton store={store} />
-        <ResetButton onClick={() => store.onReset?.()} />
+      {store.questionKeys.map((key, index) => (
+        <QuestionPill
+          key={key}
+          questionIndex={index}
+          store={store}
+          usersOnPage={usersByPage?.get(index) || []}
+        />
+      ))}
+      <SummaryButton store={store} />
+      <ResetButton onClick={() => store.onReset?.()} />
     </nav>
   );
 }

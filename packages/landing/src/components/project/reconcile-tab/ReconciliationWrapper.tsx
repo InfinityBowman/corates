@@ -6,7 +6,12 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { useProjectContext } from '@/components/project/ProjectContext';
-import { useProjectStore, selectMembers, selectConnectionState, selectStudy } from '@/stores/projectStore';
+import {
+  useProjectStore,
+  selectMembers,
+  selectConnectionState,
+  selectStudy,
+} from '@/stores/projectStore';
 import { useAuthStore, selectUser } from '@/stores/authStore';
 import _projectActionsStore from '@/stores/projectActionsStore/index.js';
 import { ACCESS_DENIED_ERRORS } from '@/constants/errors.js';

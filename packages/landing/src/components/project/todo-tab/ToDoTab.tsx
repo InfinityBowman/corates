@@ -6,7 +6,12 @@ import { useState, useMemo, useCallback } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { ListTodoIcon } from 'lucide-react';
 import { TodoStudyRow } from './TodoStudyRow';
-import { useProjectStore, selectStudies, selectMembers, selectConnectionState } from '@/stores/projectStore';
+import {
+  useProjectStore,
+  selectStudies,
+  selectMembers,
+  selectConnectionState,
+} from '@/stores/projectStore';
 import { useAuthStore, selectUser } from '@/stores/authStore';
 import { useProjectContext } from '../ProjectContext';
 import { getStudiesForTab } from '@/lib/checklist-domain.js';

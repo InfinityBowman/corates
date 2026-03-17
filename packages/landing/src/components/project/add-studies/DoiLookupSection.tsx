@@ -43,125 +43,125 @@ export function DoiLookupSection({ studies }: DoiLookupSectionProps) {
 
   return (
     <div className='space-y-3'>
-        <p className='text-muted-foreground text-sm'>
-          Paste DOIs or PubMed IDs to find references with open-access PDFs. Only references with
-          available PDFs can be added.
-        </p>
+      <p className='text-muted-foreground text-sm'>
+        Paste DOIs or PubMed IDs to find references with open-access PDFs. Only references with
+        available PDFs can be added.
+      </p>
 
-        <div className='space-y-2'>
-          <textarea
-            placeholder={'10.1000/xyz123\n32615397\n10.1016/j.example.2023.01.001'}
-            value={studies.identifierInput}
-            onChange={e => studies.setIdentifierInput(e.target.value)}
-            rows={4}
-            className='border-border text-foreground placeholder-muted-foreground/70 focus:ring-primary w-full rounded-lg border px-3 py-2 font-mono text-sm transition focus:border-transparent focus:ring-2 focus:outline-none'
-          />
-          <button
-            type='button'
-            onClick={() => studies.handleLookup()}
-            disabled={studies.lookingUp || !studies.identifierInput.trim()}
-            className='bg-primary hover:bg-primary/90 focus:ring-primary inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-white transition-colors focus:ring-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50'
-          >
-            {studies.lookingUp ?
-              <>
-                <div className='h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent' />
-                Looking up...
-              </>
-            : <>
-                <SearchIcon className='h-4 w-4' />
-                Look Up References
-              </>
-            }
-          </button>
+      <div className='space-y-2'>
+        <textarea
+          placeholder={'10.1000/xyz123\n32615397\n10.1016/j.example.2023.01.001'}
+          value={studies.identifierInput}
+          onChange={e => studies.setIdentifierInput(e.target.value)}
+          rows={4}
+          className='border-border text-foreground placeholder-muted-foreground/70 focus:ring-primary w-full rounded-lg border px-3 py-2 font-mono text-sm transition focus:border-transparent focus:ring-2 focus:outline-none'
+        />
+        <button
+          type='button'
+          onClick={() => studies.handleLookup()}
+          disabled={studies.lookingUp || !studies.identifierInput.trim()}
+          className='bg-primary hover:bg-primary/90 focus:ring-primary inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-white transition-colors focus:ring-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50'
+        >
+          {studies.lookingUp ?
+            <>
+              <div className='h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent' />
+              Looking up...
+            </>
+          : <>
+              <SearchIcon className='h-4 w-4' />
+              Look Up References
+            </>
+          }
+        </button>
+      </div>
+
+      {/* Lookup errors */}
+      {studies.lookupErrors.length > 0 && (
+        <div className='rounded-lg border border-red-200 bg-red-50 p-3'>
+          <p className='mb-1 text-sm font-medium text-red-700'>Some lookups failed:</p>
+          <ul className='list-inside list-disc text-xs text-red-600'>
+            {studies.lookupErrors.map((err: any, i: number) => (
+              <li key={i}>
+                <code className='font-mono'>{err.identifier}</code>: {err.error}
+              </li>
+            ))}
+          </ul>
         </div>
+      )}
 
-        {/* Lookup errors */}
-        {studies.lookupErrors.length > 0 && (
-          <div className='rounded-lg border border-red-200 bg-red-50 p-3'>
-            <p className='mb-1 text-sm font-medium text-red-700'>Some lookups failed:</p>
-            <ul className='list-inside list-disc text-xs text-red-600'>
-              {studies.lookupErrors.map((err: any, i: number) => (
-                <li key={i}>
-                  <code className='font-mono'>{err.identifier}</code>: {err.error}
-                </li>
-              ))}
-            </ul>
+      {/* Results */}
+      {studies.lookupRefs.length > 0 && (
+        <div className='space-y-2'>
+          <div className='flex items-center justify-between'>
+            <span className='text-secondary-foreground text-sm'>
+              Found references:{' '}
+              <span className='font-medium text-green-600'>{refsWithPdf.length} with PDF</span>
+              {refsWithoutPdf.length > 0 && (
+                <>
+                  <span className='text-muted-foreground/70 mx-1'>|</span>
+                  <span className='text-amber-600'>{refsWithoutPdf.length} without PDF</span>
+                </>
+              )}
+            </span>
+            <button
+              type='button'
+              onClick={() => studies.clearLookupRefs()}
+              className='text-xs text-red-600 hover:text-red-700 hover:underline'
+            >
+              Clear all
+            </button>
           </div>
-        )}
 
-        {/* Results */}
-        {studies.lookupRefs.length > 0 && (
-          <div className='space-y-2'>
-            <div className='flex items-center justify-between'>
-              <span className='text-secondary-foreground text-sm'>
-                Found references:{' '}
-                <span className='font-medium text-green-600'>{refsWithPdf.length} with PDF</span>
-                {refsWithoutPdf.length > 0 && (
-                  <>
-                    <span className='text-muted-foreground/70 mx-1'>|</span>
-                    <span className='text-amber-600'>{refsWithoutPdf.length} without PDF</span>
-                  </>
-                )}
-              </span>
-              <button
-                type='button'
-                onClick={() => studies.clearLookupRefs()}
-                className='text-xs text-red-600 hover:text-red-700 hover:underline'
+          {/* Select all with PDF */}
+          {refsWithPdf.length > 0 && (
+            <div className='border-border flex items-center gap-2 border-b pb-2'>
+              <Checkbox
+                id='select-all-lookup-pdfs'
+                checked={someWithPdfSelected ? 'indeterminate' : allWithPdfSelected}
+                onCheckedChange={() => studies.toggleSelectAllLookup()}
+              />
+              <label
+                htmlFor='select-all-lookup-pdfs'
+                className='cursor-pointer text-sm'
+                onClick={() => studies.toggleSelectAllLookup()}
               >
-                Clear all
-              </button>
+                Select all with PDF ({studies.selectedLookupIds.size}/{refsWithPdf.length})
+              </label>
             </div>
+          )}
 
-            {/* Select all with PDF */}
-            {refsWithPdf.length > 0 && (
-              <div className='border-border flex items-center gap-2 border-b pb-2'>
-                <Checkbox
-                  id='select-all-lookup-pdfs'
-                  checked={someWithPdfSelected ? 'indeterminate' : allWithPdfSelected}
-                  onCheckedChange={() => studies.toggleSelectAllLookup()}
-                />
-                <label
-                  htmlFor='select-all-lookup-pdfs'
-                  className='cursor-pointer text-sm'
-                  onClick={() => studies.toggleSelectAllLookup()}
-                >
-                  Select all with PDF ({studies.selectedLookupIds.size}/{refsWithPdf.length})
-                </label>
+          <div className='max-h-64 space-y-1 overflow-y-auto pr-1'>
+            {/* References with PDF available */}
+            {refsWithPdf.map((ref: any) => (
+              <LookupRefWithPdf
+                key={ref._id}
+                ref_={ref}
+                isSelected={studies.selectedLookupIds.has(ref._id)}
+                onToggle={() => studies.toggleLookupSelection(ref._id)}
+                onRemove={() => studies.removeLookupRef(ref._id)}
+                onAttachPdf={studies.attachPdfToLookupRef}
+              />
+            ))}
+
+            {/* References without PDF */}
+            {refsWithoutPdf.length > 0 && (
+              <div className='border-border mt-2 border-t pt-2'>
+                <p className='mb-2 flex items-center gap-1 text-xs font-medium text-amber-600'>
+                  <AlertCircleIcon className='h-3.5 w-3.5' />
+                  No open-access PDF available:
+                </p>
+                {refsWithoutPdf.map((ref: any) => (
+                  <LookupRefWithoutPdf
+                    key={ref._id}
+                    ref_={ref}
+                    onRemove={() => studies.removeLookupRef(ref._id)}
+                  />
+                ))}
               </div>
             )}
-
-            <div className='max-h-64 space-y-1 overflow-y-auto pr-1'>
-              {/* References with PDF available */}
-              {refsWithPdf.map((ref: any) => (
-                <LookupRefWithPdf
-                  key={ref._id}
-                  ref_={ref}
-                  isSelected={studies.selectedLookupIds.has(ref._id)}
-                  onToggle={() => studies.toggleLookupSelection(ref._id)}
-                  onRemove={() => studies.removeLookupRef(ref._id)}
-                  onAttachPdf={studies.attachPdfToLookupRef}
-                />
-              ))}
-
-              {/* References without PDF */}
-              {refsWithoutPdf.length > 0 && (
-                <div className='border-border mt-2 border-t pt-2'>
-                  <p className='mb-2 flex items-center gap-1 text-xs font-medium text-amber-600'>
-                    <AlertCircleIcon className='h-3.5 w-3.5' />
-                    No open-access PDF available:
-                  </p>
-                  {refsWithoutPdf.map((ref: any) => (
-                    <LookupRefWithoutPdf
-                      key={ref._id}
-                      ref_={ref}
-                      onRemove={() => studies.removeLookupRef(ref._id)}
-                    />
-                  ))}
-                </div>
-              )}
-            </div>
           </div>
-        )}
+        </div>
+      )}
     </div>
   );
 }

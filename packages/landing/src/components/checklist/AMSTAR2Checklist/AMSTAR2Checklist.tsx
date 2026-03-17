@@ -595,101 +595,101 @@ export function AMSTAR2Checklist({
 
   return (
     <div className='bg-blue-50'>
-        <div className='container mx-auto max-w-5xl px-4 py-6'>
-          <div className='text-foreground mb-6 text-left text-lg font-semibold sm:text-center'>
-            {checklist.name || 'AMSTAR 2 Checklist'}
-          </div>
-          <fieldset disabled={!!readOnly} className={readOnly ? 'opacity-90' : ''}>
-            <div className='space-y-6'>
-              {/* Q1: special 3-col handler (col0 all -> col2) */}
-              <StandardQuestion
-                state={checklist.q1}
-                question={AMSTAR_CHECKLIST.q1}
-                handleChange={(colIdx, optIdx) => {
-                  const state = checklist.q1;
-                  const newAnswers = state.answers.map((arr: boolean[]) => [...arr]);
-                  newAnswers[colIdx][optIdx] = !state.answers[colIdx][optIdx];
-                  if (colIdx === 0) {
-                    const allChecked = newAnswers[0].every(Boolean);
-                    newAnswers[2][0] = allChecked;
-                    newAnswers[2][1] = !allChecked;
-                  }
-                  if (colIdx === 2) {
-                    if (optIdx === 0 && newAnswers[2][0]) newAnswers[2][1] = false;
-                    if (optIdx === 1 && newAnswers[2][1]) newAnswers[2][0] = false;
-                  }
-                  handleChecklistChange({ q1: { ...state, answers: newAnswers } });
-                }}
-                onUpdate={(newQ: any) => handleChecklistChange({ q1: newQ })}
-                getQuestionNote={getQuestionNote}
-                readOnly={readOnly}
-              />
-
-              {/* Q2-Q8 (standard patterns) */}
-              {QUESTION_CONFIGS.slice(0, 7).map(cfg => (
-                <StandardQuestion
-                  key={cfg.qKey}
-                  state={checklist[cfg.qKey]}
-                  question={cfg.schema}
-                  handleChange={(colIdx, optIdx) => {
-                    const newQ = cfg.handler(checklist, colIdx, optIdx);
-                    handleChecklistChange({ [cfg.qKey]: newQ });
-                  }}
-                  onUpdate={(newQ: any) => handleChecklistChange({ [cfg.qKey]: newQ })}
-                  getQuestionNote={getQuestionNote}
-                  readOnly={readOnly}
-                  width={cfg.width}
-                />
-              ))}
-
-              {/* Q9: split question */}
-              <Question9
-                checklist={checklist}
-                onUpdate={handleChecklistChange}
-                getQuestionNote={getQuestionNote}
-                readOnly={readOnly}
-              />
-
-              {/* Q10 */}
-              <StandardQuestion
-                state={checklist.q10}
-                question={AMSTAR_CHECKLIST.q10}
-                handleChange={(colIdx, optIdx) => {
-                  const newQ = QUESTION_CONFIGS[7].handler(checklist, colIdx, optIdx);
-                  handleChecklistChange({ q10: newQ });
-                }}
-                onUpdate={(newQ: any) => handleChecklistChange({ q10: newQ })}
-                getQuestionNote={getQuestionNote}
-                readOnly={readOnly}
-              />
-
-              {/* Q11: split question */}
-              <Question11
-                checklist={checklist}
-                onUpdate={handleChecklistChange}
-                getQuestionNote={getQuestionNote}
-                readOnly={readOnly}
-              />
-
-              {/* Q12-Q16 */}
-              {QUESTION_CONFIGS.slice(8).map(cfg => (
-                <StandardQuestion
-                  key={cfg.qKey}
-                  state={checklist[cfg.qKey]}
-                  question={cfg.schema}
-                  handleChange={(colIdx, optIdx) => {
-                    const newQ = cfg.handler(checklist, colIdx, optIdx);
-                    handleChecklistChange({ [cfg.qKey]: newQ });
-                  }}
-                  onUpdate={(newQ: any) => handleChecklistChange({ [cfg.qKey]: newQ })}
-                  getQuestionNote={getQuestionNote}
-                  readOnly={readOnly}
-                  width={cfg.width}
-                />
-              ))}
-            </div>
-          </fieldset>
+      <div className='container mx-auto max-w-5xl px-4 py-6'>
+        <div className='text-foreground mb-6 text-left text-lg font-semibold sm:text-center'>
+          {checklist.name || 'AMSTAR 2 Checklist'}
         </div>
+        <fieldset disabled={!!readOnly} className={readOnly ? 'opacity-90' : ''}>
+          <div className='space-y-6'>
+            {/* Q1: special 3-col handler (col0 all -> col2) */}
+            <StandardQuestion
+              state={checklist.q1}
+              question={AMSTAR_CHECKLIST.q1}
+              handleChange={(colIdx, optIdx) => {
+                const state = checklist.q1;
+                const newAnswers = state.answers.map((arr: boolean[]) => [...arr]);
+                newAnswers[colIdx][optIdx] = !state.answers[colIdx][optIdx];
+                if (colIdx === 0) {
+                  const allChecked = newAnswers[0].every(Boolean);
+                  newAnswers[2][0] = allChecked;
+                  newAnswers[2][1] = !allChecked;
+                }
+                if (colIdx === 2) {
+                  if (optIdx === 0 && newAnswers[2][0]) newAnswers[2][1] = false;
+                  if (optIdx === 1 && newAnswers[2][1]) newAnswers[2][0] = false;
+                }
+                handleChecklistChange({ q1: { ...state, answers: newAnswers } });
+              }}
+              onUpdate={(newQ: any) => handleChecklistChange({ q1: newQ })}
+              getQuestionNote={getQuestionNote}
+              readOnly={readOnly}
+            />
+
+            {/* Q2-Q8 (standard patterns) */}
+            {QUESTION_CONFIGS.slice(0, 7).map(cfg => (
+              <StandardQuestion
+                key={cfg.qKey}
+                state={checklist[cfg.qKey]}
+                question={cfg.schema}
+                handleChange={(colIdx, optIdx) => {
+                  const newQ = cfg.handler(checklist, colIdx, optIdx);
+                  handleChecklistChange({ [cfg.qKey]: newQ });
+                }}
+                onUpdate={(newQ: any) => handleChecklistChange({ [cfg.qKey]: newQ })}
+                getQuestionNote={getQuestionNote}
+                readOnly={readOnly}
+                width={cfg.width}
+              />
+            ))}
+
+            {/* Q9: split question */}
+            <Question9
+              checklist={checklist}
+              onUpdate={handleChecklistChange}
+              getQuestionNote={getQuestionNote}
+              readOnly={readOnly}
+            />
+
+            {/* Q10 */}
+            <StandardQuestion
+              state={checklist.q10}
+              question={AMSTAR_CHECKLIST.q10}
+              handleChange={(colIdx, optIdx) => {
+                const newQ = QUESTION_CONFIGS[7].handler(checklist, colIdx, optIdx);
+                handleChecklistChange({ q10: newQ });
+              }}
+              onUpdate={(newQ: any) => handleChecklistChange({ q10: newQ })}
+              getQuestionNote={getQuestionNote}
+              readOnly={readOnly}
+            />
+
+            {/* Q11: split question */}
+            <Question11
+              checklist={checklist}
+              onUpdate={handleChecklistChange}
+              getQuestionNote={getQuestionNote}
+              readOnly={readOnly}
+            />
+
+            {/* Q12-Q16 */}
+            {QUESTION_CONFIGS.slice(8).map(cfg => (
+              <StandardQuestion
+                key={cfg.qKey}
+                state={checklist[cfg.qKey]}
+                question={cfg.schema}
+                handleChange={(colIdx, optIdx) => {
+                  const newQ = cfg.handler(checklist, colIdx, optIdx);
+                  handleChecklistChange({ [cfg.qKey]: newQ });
+                }}
+                onUpdate={(newQ: any) => handleChecklistChange({ [cfg.qKey]: newQ })}
+                getQuestionNote={getQuestionNote}
+                readOnly={readOnly}
+                width={cfg.width}
+              />
+            ))}
+          </div>
+        </fieldset>
+      </div>
     </div>
   );
 }
