@@ -8,7 +8,12 @@ import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate, useLocation, Outlet } from '@tanstack/react-router';
 import { useProject } from '@/primitives/useProject';
 import { useProjectOrgId } from '@/hooks/useProjectOrgId';
-import { useProjectStore } from '@/stores/projectStore';
+import {
+  useProjectStore,
+  selectStudies,
+  selectMeta,
+  selectConnectionState,
+} from '@/stores/projectStore';
 import { useAuthStore, selectUser } from '@/stores/authStore';
 import { ACCESS_DENIED_ERRORS } from '@/constants/errors';
 import _projectActionsStore from '@/stores/projectActionsStore/index.js';
@@ -57,9 +62,9 @@ export function ProjectView({ projectId }: ProjectViewProps) {
     return path.includes('/checklists/') || path.includes('/reconcile/');
   }, [location.pathname]);
 
-  const studies = useProjectStore(s => s.projects[projectId]?.studies || []);
-  const meta = useProjectStore(s => s.projects[projectId]?.meta);
-  const connectionState = useProjectStore(s => s.connections[projectId] || {});
+  const studies = useProjectStore(s => selectStudies(s, projectId));
+  const meta = useProjectStore(s => selectMeta(s, projectId));
+  const connectionState = useProjectStore(s => selectConnectionState(s, projectId));
 
   // Set active project for action store (separate from connection lifecycle)
   useEffect(() => {

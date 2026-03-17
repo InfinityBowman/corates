@@ -8,7 +8,7 @@ import { useNavigate, useLocation } from '@tanstack/react-router';
 import { ChevronLeftIcon } from 'lucide-react';
 import { ChecklistWithPdf } from '@/components/checklist/ChecklistWithPdf';
 import { useProjectContext } from '@/components/project/ProjectContext';
-import { useProjectStore } from '@/stores/projectStore';
+import { useProjectStore, selectConnectionState } from '@/stores/projectStore';
 import { useAuthStore, selectUser } from '@/stores/authStore';
 import _projectActionsStore from '@/stores/projectActionsStore/index.js';
 import { ACCESS_DENIED_ERRORS } from '@/constants/errors.js';
@@ -103,7 +103,7 @@ export function ChecklistYjsWrapper({ projectId, studyId, checklistId }: Checkli
     }
   }, [projectId, orgId]);
 
-  const connectionState = useProjectStore(s => s.connections[projectId] || {});
+  const connectionState = useProjectStore(s => selectConnectionState(s, projectId));
 
   // Access denied redirect
   useEffect(() => {

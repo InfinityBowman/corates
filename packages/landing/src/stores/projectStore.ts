@@ -163,6 +163,20 @@ export const useProjectStore = create<ProjectStoreState & ProjectStoreActions>()
   })),
 );
 
+// Stable fallback constants -- must be module-level so they're referentially equal
+// across renders. Without these, selectors return new objects/arrays on every call
+// when a project doesn't exist in the store, causing infinite re-render loops.
+const EMPTY_CONNECTION: ConnectionState = {
+  connected: false,
+  connecting: false,
+  synced: false,
+  error: null,
+};
+const EMPTY_STUDIES: StudyInfo[] = [];
+const EMPTY_MEMBERS: unknown[] = [];
+const EMPTY_META: Record<string, unknown> = {};
+const EMPTY_PDFS: PdfInfo[] = [];
+
 // Selectors (pure functions, not hooks -- can be used with useProjectStore(selector))
 
 export function selectProject(
@@ -181,14 +195,7 @@ export function selectConnectionState(
   state: ProjectStoreState,
   projectId: string,
 ): ConnectionState {
-  return (
-    state.connections[projectId] || {
-      connected: false,
-      connecting: false,
-      synced: false,
-      error: null,
-    }
-  );
+  return state.connections[projectId] || EMPTY_CONNECTION;
 }
 
 export function selectProjectStats(
@@ -199,15 +206,15 @@ export function selectProjectStats(
 }
 
 export function selectStudies(state: ProjectStoreState, projectId: string): StudyInfo[] {
-  return state.projects[projectId]?.studies || [];
+  return state.projects[projectId]?.studies || EMPTY_STUDIES;
 }
 
 export function selectMembers(state: ProjectStoreState, projectId: string): unknown[] {
-  return state.projects[projectId]?.members || [];
+  return state.projects[projectId]?.members || EMPTY_MEMBERS;
 }
 
 export function selectMeta(state: ProjectStoreState, projectId: string): Record<string, unknown> {
-  return state.projects[projectId]?.meta || {};
+  return state.projects[projectId]?.meta || EMPTY_META;
 }
 
 export function selectStudy(
@@ -237,7 +244,7 @@ export function selectStudyPdfs(
   studyId: string,
 ): PdfInfo[] {
   const study = selectStudy(state, projectId, studyId);
-  return study?.pdfs || [];
+  return study?.pdfs || EMPTY_PDFS;
 }
 
 export function selectPrimaryPdf(

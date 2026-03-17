@@ -5,7 +5,7 @@
  * module-level connectionRegistry for ref-counted connections.
  */
 
-import { useEffect, useRef, useCallback } from 'react';
+import { useEffect, useLayoutEffect, useRef, useCallback } from 'react';
 import * as Y from 'yjs';
 import { DexieYProvider } from 'y-dexie';
 import { shallow } from 'zustand/shallow';
@@ -148,8 +148,9 @@ export function useProject(projectId) {
   const meta = useProjectStore(state => state.projects[projectId]?.meta || EMPTY_OBJECT);
   const members = useProjectStore(state => state.projects[projectId]?.members || EMPTY_ARRAY);
 
-  // Connect/disconnect lifecycle
-  useEffect(() => {
+  // Connect/disconnect lifecycle -- useLayoutEffect matches SolidJS createEffect timing
+  // (runs synchronously before paint, preventing race conditions with other effects)
+  useLayoutEffect(() => {
     if (!projectId) return;
 
     // Cancellation flag for async operations (handles StrictMode double-mount
@@ -317,19 +318,20 @@ export function useProject(projectId) {
     };
   }, [projectId]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Reconnect when coming back online
+  // Reconnect when coming back online (only trigger on isOnline transition)
+  const wasOnlineRef = useRef(isOnline);
   useEffect(() => {
+    const wasOffline = !wasOnlineRef.current;
+    wasOnlineRef.current = isOnline;
+
+    if (!isOnline || !wasOffline) return;
+
     const cm = connectionEntryRef.current?.connectionManager;
-    if (
-      isOnline &&
-      cm?.getShouldReconnect() &&
-      !connectionState.connected &&
-      !connectionState.connecting
-    ) {
+    if (cm?.getShouldReconnect()) {
       cm.setShouldReconnect(false);
       cm.reconnect();
     }
-  }, [isOnline, connectionState.connected, connectionState.connecting]);
+  }, [isOnline]);
 
   // Stable operation reference getter
   const getEntry = useCallback(() => connectionEntryRef.current, []);

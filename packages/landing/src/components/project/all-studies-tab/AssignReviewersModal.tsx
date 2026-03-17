@@ -4,7 +4,7 @@
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { UserIcon } from 'lucide-react';
-import { useProjectStore } from '@/stores/projectStore';
+import { useProjectStore, selectMembers, selectStudies } from '@/stores/projectStore';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import {
   Select,
@@ -38,8 +38,8 @@ export function AssignReviewersModal({
   const [reviewer2, setReviewer2] = useState('');
   const [saving, setSaving] = useState(false);
 
-  const members: any[] = useProjectStore(s => s.projects[projectId]?.members || []);
-  const studies: any[] = useProjectStore(s => s.projects[projectId]?.studies || []);
+  const members: any[] = useProjectStore(s => selectMembers(s, projectId));
+  const studies: any[] = useProjectStore(s => selectStudies(s, projectId));
 
   // Get latest study data from store
   const currentStudy = useMemo(

@@ -6,7 +6,7 @@ import { useState, useMemo, useCallback } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { ListTodoIcon } from 'lucide-react';
 import { TodoStudyRow } from './TodoStudyRow';
-import { useProjectStore } from '@/stores/projectStore';
+import { useProjectStore, selectStudies, selectMembers, selectConnectionState } from '@/stores/projectStore';
 import { useAuthStore, selectUser } from '@/stores/authStore';
 import { useProjectContext } from '../ProjectContext';
 import { getStudiesForTab } from '@/lib/checklist-domain.js';
@@ -31,9 +31,9 @@ export function ToDoTab() {
     });
   }, []);
 
-  const studies = useProjectStore(s => s.projects[projectId]?.studies || []);
-  const members = useProjectStore(s => s.projects[projectId]?.members || []);
-  const connectionState = useProjectStore(s => s.connections[projectId] || {});
+  const studies = useProjectStore(s => selectStudies(s, projectId));
+  const members = useProjectStore(s => selectMembers(s, projectId));
+  const connectionState = useProjectStore(s => selectConnectionState(s, projectId));
   const hasData = connectionState.synced || studies.length > 0;
   const currentUserId = user?.id;
 

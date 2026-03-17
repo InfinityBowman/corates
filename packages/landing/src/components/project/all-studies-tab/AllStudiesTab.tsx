@@ -10,7 +10,7 @@ import { StudyCard } from './study-card/StudyCard';
 import { AssignReviewersModal } from './AssignReviewersModal';
 import { ReviewerAssignment } from '../overview-tab/ReviewerAssignment';
 import { OutcomeManager } from '../outcomes/OutcomeManager';
-import { useProjectStore } from '@/stores/projectStore';
+import { useProjectStore, selectStudies, selectMembers, selectConnectionState } from '@/stores/projectStore';
 import _projectActionsStore from '@/stores/projectActionsStore/index.js';
 import { useProjectContext } from '../ProjectContext';
 import {
@@ -33,9 +33,9 @@ export function AllStudiesTab() {
   const [showReviewersModal, setShowReviewersModal] = useState(false);
   const [editingStudy, setEditingStudy] = useState<any>(null);
 
-  const studies = useProjectStore(s => s.projects[projectId]?.studies || []);
-  const members = useProjectStore(s => s.projects[projectId]?.members || []);
-  const connectionState = useProjectStore(s => s.connections[projectId] || {});
+  const studies = useProjectStore(s => selectStudies(s, projectId));
+  const members = useProjectStore(s => selectMembers(s, projectId));
+  const connectionState = useProjectStore(s => selectConnectionState(s, projectId));
   const hasData = connectionState.synced || studies.length > 0;
 
   // Restore state after OAuth redirect
