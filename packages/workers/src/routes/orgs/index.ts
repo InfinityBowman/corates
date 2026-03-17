@@ -4,8 +4,6 @@
  */
 
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
-import type { ContentfulStatusCode } from 'hono/utils/http-status';
-import type { Context } from 'hono';
 import { runMiddleware } from '@/lib/runMiddleware.js';
 import { createDb } from '@/db/client.js';
 import { projects } from '@/db/schema.js';
@@ -503,7 +501,6 @@ const setActiveOrgRoute = createRoute({
 orgRoutes.use('*', requireAuth);
 
 // Route handlers
-// @ts-expect-error OpenAPIHono strict return types don't account for error responses
 orgRoutes.openapi(listOrgsRoute, async c => {
   try {
     const orgApi = getOrgApi(c.env, c.executionCtx);
@@ -511,7 +508,7 @@ orgRoutes.openapi(listOrgsRoute, async c => {
       headers: c.req.raw.headers,
     });
 
-    return c.json(result);
+    return c.json(result as z.infer<typeof OrganizationListResponseSchema>, 200);
   } catch (err) {
     const error = err as Error;
     console.error('Error listing organizations:', error);
@@ -519,11 +516,10 @@ orgRoutes.openapi(listOrgsRoute, async c => {
       operation: 'list_organizations',
       originalError: error.message,
     });
-    return c.json(dbError, dbError.statusCode as ContentfulStatusCode);
+    return c.json(dbError, 500);
   }
 });
 
-// @ts-expect-error OpenAPIHono strict return types don't account for error responses
 orgRoutes.openapi(createOrgRoute, async c => {
   try {
     const body = c.req.valid('json');
@@ -532,7 +528,7 @@ orgRoutes.openapi(createOrgRoute, async c => {
       const error = createDomainError(AUTH_ERRORS.FORBIDDEN, {
         reason: 'name_required',
       });
-      return c.json(error, error.statusCode as ContentfulStatusCode);
+      return c.json(error, 403);
     }
 
     const orgApi = getOrgApi(c.env, c.executionCtx);
@@ -546,7 +542,7 @@ orgRoutes.openapi(createOrgRoute, async c => {
       },
     });
 
-    return c.json(result, 201);
+    return c.json(result as z.infer<typeof OrganizationSchema>, 201);
   } catch (err) {
     const error = err as Error;
     console.error('Error creating organization:', error);
@@ -554,21 +550,20 @@ orgRoutes.openapi(createOrgRoute, async c => {
       const slugError = createDomainError(AUTH_ERRORS.FORBIDDEN, {
         reason: 'slug_taken',
       });
-      return c.json(slugError, slugError.statusCode as ContentfulStatusCode);
+      return c.json(slugError, 403);
     }
     const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
       operation: 'create_organization',
       originalError: error.message,
     });
-    return c.json(dbError, dbError.statusCode as ContentfulStatusCode);
+    return c.json(dbError, 500);
   }
 });
 
-// @ts-expect-error OpenAPIHono strict return types don't account for error responses
 orgRoutes.openapi(getOrgRoute, async c => {
   // Run membership middleware
   const membershipResponse = await runMiddleware(requireOrgMembership(), c);
-  if (membershipResponse) return membershipResponse;
+  if (membershipResponse) return membershipResponse as never;
 
   const { orgId } = c.req.valid('param');
 
@@ -586,7 +581,7 @@ orgRoutes.openapi(getOrgRoute, async c => {
         reason: 'org_not_found',
         orgId,
       });
-      return c.json(error, error.statusCode as ContentfulStatusCode);
+      return c.json(error, 403);
     }
 
     const db = createDb(c.env.DB);
@@ -595,10 +590,13 @@ orgRoutes.openapi(getOrgRoute, async c => {
       .from(projects)
       .where(eq(projects.orgId, orgId));
 
-    return c.json({
-      ...result,
-      projectCount: projectCount?.count || 0,
-    });
+    return c.json(
+      {
+        ...result,
+        projectCount: projectCount?.count || 0,
+      } as z.infer<typeof OrganizationDetailSchema>,
+      200,
+    );
   } catch (err) {
     const error = err as Error;
     console.error('Error fetching organization:', error);
@@ -606,19 +604,18 @@ orgRoutes.openapi(getOrgRoute, async c => {
       operation: 'fetch_organization',
       originalError: error.message,
     });
-    return c.json(dbError, dbError.statusCode as ContentfulStatusCode);
+    return c.json(dbError, 500);
   }
 });
 
-// @ts-expect-error OpenAPIHono strict return types don't account for error responses
 orgRoutes.openapi(updateOrgRoute, async c => {
   // Run membership middleware (admin required)
   const membershipResponse = await runMiddleware(requireOrgMembership('admin'), c);
-  if (membershipResponse) return membershipResponse;
+  if (membershipResponse) return membershipResponse as never;
 
   // Run write access middleware
   const writeAccessResponse = await runMiddleware(requireOrgWriteAccess(), c);
-  if (writeAccessResponse) return writeAccessResponse;
+  if (writeAccessResponse) return writeAccessResponse as never;
 
   const { orgId } = c.req.valid('param');
 
@@ -639,7 +636,7 @@ orgRoutes.openapi(updateOrgRoute, async c => {
       },
     });
 
-    return c.json({ success: true as const, orgId, ...(result as Record<string, unknown>) });
+    return c.json({ success: true as const, orgId, ...(result as Record<string, unknown>) }, 200);
   } catch (err) {
     const error = err as Error;
     console.error('Error updating organization:', error);
@@ -647,25 +644,24 @@ orgRoutes.openapi(updateOrgRoute, async c => {
       const slugError = createDomainError(AUTH_ERRORS.FORBIDDEN, {
         reason: 'slug_taken',
       });
-      return c.json(slugError, slugError.statusCode as ContentfulStatusCode);
+      return c.json(slugError, 403);
     }
     const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
       operation: 'update_organization',
       originalError: error.message,
     });
-    return c.json(dbError, dbError.statusCode as ContentfulStatusCode);
+    return c.json(dbError, 500);
   }
 });
 
-// @ts-expect-error OpenAPIHono strict return types don't account for error responses
 orgRoutes.openapi(deleteOrgRoute, async c => {
   // Run membership middleware (owner required)
   const membershipResponse = await runMiddleware(requireOrgMembership('owner'), c);
-  if (membershipResponse) return membershipResponse;
+  if (membershipResponse) return membershipResponse as never;
 
   // Run write access middleware
   const writeAccessResponse = await runMiddleware(requireOrgWriteAccess(), c);
-  if (writeAccessResponse) return writeAccessResponse;
+  if (writeAccessResponse) return writeAccessResponse as never;
 
   const { orgId } = c.req.valid('param');
 
@@ -678,7 +674,7 @@ orgRoutes.openapi(deleteOrgRoute, async c => {
       },
     });
 
-    return c.json({ success: true as const, deleted: orgId });
+    return c.json({ success: true as const, deleted: orgId }, 200);
   } catch (err) {
     const error = err as Error;
     console.error('Error deleting organization:', error);
@@ -686,15 +682,14 @@ orgRoutes.openapi(deleteOrgRoute, async c => {
       operation: 'delete_organization',
       originalError: error.message,
     });
-    return c.json(dbError, dbError.statusCode as ContentfulStatusCode);
+    return c.json(dbError, 500);
   }
 });
 
-// @ts-expect-error OpenAPIHono strict return types don't account for error responses
 orgRoutes.openapi(listMembersRoute, async c => {
   // Run membership middleware
   const membershipResponse = await runMiddleware(requireOrgMembership(), c);
-  if (membershipResponse) return membershipResponse;
+  if (membershipResponse) return membershipResponse as never;
 
   const { orgId } = c.req.valid('param');
 
@@ -707,7 +702,7 @@ orgRoutes.openapi(listMembersRoute, async c => {
       },
     });
 
-    return c.json(result);
+    return c.json(result as z.infer<typeof MembersListResponseSchema>, 200);
   } catch (err) {
     const error = err as Error;
     console.error('Error listing org members:', error);
@@ -715,19 +710,18 @@ orgRoutes.openapi(listMembersRoute, async c => {
       operation: 'list_org_members',
       originalError: error.message,
     });
-    return c.json(dbError, dbError.statusCode as ContentfulStatusCode);
+    return c.json(dbError, 500);
   }
 });
 
-// @ts-expect-error OpenAPIHono strict return types don't account for error responses
 orgRoutes.openapi(addMemberRoute, async c => {
   // Run membership middleware (admin required)
   const membershipResponse = await runMiddleware(requireOrgMembership('admin'), c);
-  if (membershipResponse) return membershipResponse;
+  if (membershipResponse) return membershipResponse as never;
 
   // Run write access middleware
   const writeAccessResponse = await runMiddleware(requireOrgWriteAccess(), c);
-  if (writeAccessResponse) return writeAccessResponse;
+  if (writeAccessResponse) return writeAccessResponse as never;
 
   const { orgId } = c.req.valid('param');
 
@@ -752,25 +746,24 @@ orgRoutes.openapi(addMemberRoute, async c => {
       const memberError = createDomainError(AUTH_ERRORS.FORBIDDEN, {
         reason: 'already_member',
       });
-      return c.json(memberError, memberError.statusCode as ContentfulStatusCode);
+      return c.json(memberError, 403);
     }
     const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
       operation: 'add_org_member',
       originalError: error.message,
     });
-    return c.json(dbError, dbError.statusCode as ContentfulStatusCode);
+    return c.json(dbError, 500);
   }
 });
 
-// @ts-expect-error OpenAPIHono strict return types don't account for error responses
 orgRoutes.openapi(updateMemberRoleRoute, async c => {
   // Run membership middleware (admin required)
   const membershipResponse = await runMiddleware(requireOrgMembership('admin'), c);
-  if (membershipResponse) return membershipResponse;
+  if (membershipResponse) return membershipResponse as never;
 
   // Run write access middleware
   const writeAccessResponse = await runMiddleware(requireOrgWriteAccess(), c);
-  if (writeAccessResponse) return writeAccessResponse;
+  if (writeAccessResponse) return writeAccessResponse as never;
 
   const { orgId, memberId } = c.req.valid('param');
 
@@ -787,7 +780,7 @@ orgRoutes.openapi(updateMemberRoleRoute, async c => {
       },
     });
 
-    return c.json({ success: true as const, memberId, role: body.role });
+    return c.json({ success: true as const, memberId, role: body.role }, 200);
   } catch (err) {
     const error = err as Error;
     console.error('Error updating org member:', error);
@@ -795,30 +788,29 @@ orgRoutes.openapi(updateMemberRoleRoute, async c => {
       const permError = createDomainError(AUTH_ERRORS.FORBIDDEN, {
         reason: 'owner_role_change_requires_owner',
       });
-      return c.json(permError, permError.statusCode as ContentfulStatusCode);
+      return c.json(permError, 403);
     }
     const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
       operation: 'update_org_member',
       originalError: error.message,
     });
-    return c.json(dbError, dbError.statusCode as ContentfulStatusCode);
+    return c.json(dbError, 500);
   }
 });
 
-// @ts-expect-error OpenAPIHono strict return types don't account for error responses
 orgRoutes.openapi(removeMemberRoute, async c => {
   // Run membership middleware
   const membershipResponse = await runMiddleware(requireOrgMembership(), c);
-  if (membershipResponse) return membershipResponse;
+  if (membershipResponse) return membershipResponse as never;
 
   // Run write access middleware
   const writeAccessResponse = await runMiddleware(requireOrgWriteAccess(), c);
-  if (writeAccessResponse) return writeAccessResponse;
+  if (writeAccessResponse) return writeAccessResponse as never;
 
   const { user: authUser } = getAuth(c);
   if (!authUser) {
     const error = createDomainError(AUTH_ERRORS.REQUIRED, { reason: 'no_user' });
-    return c.json(error, error.statusCode as ContentfulStatusCode);
+    return c.json(error, 403);
   }
 
   const { orgId, memberId } = c.req.valid('param');
@@ -830,7 +822,7 @@ orgRoutes.openapi(removeMemberRoute, async c => {
     await requireOrgMemberRemoval(db, authUser.id, orgId, memberId);
   } catch (err) {
     if (isDomainError(err)) {
-      return c.json(err, err.statusCode as ContentfulStatusCode);
+      return c.json(err, 403);
     }
     throw err;
   }
@@ -855,7 +847,7 @@ orgRoutes.openapi(removeMemberRoute, async c => {
       });
     }
 
-    return c.json({ success: true as const, removed: memberId, isSelf });
+    return c.json({ success: true as const, removed: memberId, isSelf }, 200);
   } catch (err) {
     const error = err as Error;
     console.error('Error removing org member:', error);
@@ -863,21 +855,20 @@ orgRoutes.openapi(removeMemberRoute, async c => {
       const ownerError = createDomainError(AUTH_ERRORS.FORBIDDEN, {
         reason: 'cannot_remove_last_owner',
       });
-      return c.json(ownerError, ownerError.statusCode as ContentfulStatusCode);
+      return c.json(ownerError, 403);
     }
     const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
       operation: 'remove_org_member',
       originalError: error.message,
     });
-    return c.json(dbError, dbError.statusCode as ContentfulStatusCode);
+    return c.json(dbError, 500);
   }
 });
 
-// @ts-expect-error OpenAPIHono strict return types don't account for error responses
 orgRoutes.openapi(setActiveOrgRoute, async c => {
   // Run membership middleware
   const membershipResponse = await runMiddleware(requireOrgMembership(), c);
-  if (membershipResponse) return membershipResponse;
+  if (membershipResponse) return membershipResponse as never;
 
   const { orgId } = c.req.valid('param');
 
@@ -890,7 +881,7 @@ orgRoutes.openapi(setActiveOrgRoute, async c => {
       },
     });
 
-    return c.json({ success: true as const, activeOrganizationId: orgId });
+    return c.json({ success: true as const, activeOrganizationId: orgId }, 200);
   } catch (err) {
     const error = err as Error;
     console.error('Error setting active organization:', error);
@@ -898,7 +889,7 @@ orgRoutes.openapi(setActiveOrgRoute, async c => {
       operation: 'set_active_organization',
       originalError: error.message,
     });
-    return c.json(dbError, dbError.statusCode as ContentfulStatusCode);
+    return c.json(dbError, 500);
   }
 });
 

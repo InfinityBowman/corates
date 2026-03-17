@@ -5,7 +5,7 @@
 
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
 import type { Context } from 'hono';
-import type { ContentfulStatusCode } from 'hono/utils/http-status';
+
 import { createDb } from '@/db/client.js';
 import { dbSchema, mediaFiles, organization, projects, user } from '@/db/schema.js';
 import { count, desc, asc, eq, and, sum } from 'drizzle-orm';
@@ -399,7 +399,6 @@ interface MediaFilesQueryOptions {
  * GET /api/admin/database/tables
  * List all available tables with row counts
  */
-// @ts-expect-error OpenAPIHono strict return types don't account for error responses
 databaseRoutes.openapi(listTablesRoute, async c => {
   try {
     const db = createDb(c.env.DB);
@@ -425,16 +424,19 @@ databaseRoutes.openapi(listTablesRoute, async c => {
       }),
     );
 
-    return c.json({
-      tables: tables.filter(Boolean),
-    });
+    return c.json(
+      {
+        tables: tables.filter(t => t !== null),
+      },
+      200,
+    );
   } catch (err) {
     const error = err as Error;
     console.error('Database tables list error:', error);
     const domainError = createDomainError(SYSTEM_ERRORS.INTERNAL_ERROR, {
       message: 'Failed to list database tables',
     });
-    return c.json(domainError, domainError.statusCode as ContentfulStatusCode);
+    return c.json(domainError, 500);
   }
 });
 
@@ -442,7 +444,6 @@ databaseRoutes.openapi(listTablesRoute, async c => {
  * GET /api/admin/database/tables/:tableName/schema
  * Get table schema (column names, types, and foreign key references)
  */
-// @ts-expect-error OpenAPIHono strict return types don't account for error responses
 databaseRoutes.openapi(getTableSchemaRoute, async c => {
   const { tableName } = c.req.valid('param');
 
@@ -452,7 +453,7 @@ databaseRoutes.openapi(getTableSchemaRoute, async c => {
       value: tableName,
       message: `Table '${tableName}' is not available for viewing`,
     });
-    return c.json(error, error.statusCode as ContentfulStatusCode);
+    return c.json(error, 400);
   }
 
   const table = dbSchema[tableName as AllowedTableName];
@@ -462,7 +463,7 @@ databaseRoutes.openapi(getTableSchemaRoute, async c => {
       value: tableName,
       message: `Table '${tableName}' not found in schema`,
     });
-    return c.json(error, error.statusCode as ContentfulStatusCode);
+    return c.json(error, 400);
   }
 
   // Extract column info from Drizzle schema including foreign key references
@@ -524,14 +525,14 @@ databaseRoutes.openapi(getTableSchemaRoute, async c => {
     return columnInfo;
   });
 
-  return c.json({ tableName, columns });
+  return c.json({ tableName, columns }, 200);
 });
 
 /**
  * GET /api/admin/database/tables/:tableName/rows
  * Get rows from a table with pagination and filtering
  */
-// @ts-expect-error OpenAPIHono strict return types don't account for error responses
+// @ts-expect-error Handler delegates to handleMediaFilesQuery which returns a different response type
 databaseRoutes.openapi(getTableRowsRoute, async c => {
   const { tableName } = c.req.valid('param');
   const query = c.req.valid('query');
@@ -549,7 +550,7 @@ databaseRoutes.openapi(getTableRowsRoute, async c => {
       value: tableName,
       message: `Table '${tableName}' is not available for viewing`,
     });
-    return c.json(error, error.statusCode as ContentfulStatusCode);
+    return c.json(error, 400);
   }
 
   const table = dbSchema[tableName as AllowedTableName];
@@ -559,7 +560,7 @@ databaseRoutes.openapi(getTableRowsRoute, async c => {
       value: tableName,
       message: `Table '${tableName}' not found in schema`,
     });
-    return c.json(error, error.statusCode as ContentfulStatusCode);
+    return c.json(error, 400);
   }
 
   // Special handling for mediaFiles with joins
@@ -622,18 +623,21 @@ databaseRoutes.openapi(getTableRowsRoute, async c => {
           .limit(limit)
           .offset(offset);
 
-    return c.json({
-      tableName,
-      rows,
-      pagination: {
-        page,
-        limit,
-        totalRows,
-        totalPages: Math.ceil(totalRows / limit),
-        orderBy: orderColumnName,
-        order,
+    return c.json(
+      {
+        tableName,
+        rows,
+        pagination: {
+          page,
+          limit,
+          totalRows,
+          totalPages: Math.ceil(totalRows / limit),
+          orderBy: orderColumnName,
+          order,
+        },
       },
-    });
+      200,
+    );
   } catch (err) {
     const error = err as Error;
     console.error('Database rows fetch error:', error);
@@ -642,7 +646,7 @@ databaseRoutes.openapi(getTableRowsRoute, async c => {
       tableName,
       originalError: error.message,
     });
-    return c.json(domainError, domainError.statusCode as ContentfulStatusCode);
+    return c.json(domainError, 500);
   }
 });
 
@@ -773,7 +777,7 @@ async function handleMediaFilesQuery(
       operation: 'fetch_mediafiles_rows',
       originalError: error.message,
     });
-    return c.json(domainError, domainError.statusCode as ContentfulStatusCode);
+    return c.json(domainError, 500);
   }
 }
 
@@ -781,7 +785,6 @@ async function handleMediaFilesQuery(
  * GET /api/admin/database/analytics/pdfs-by-org
  * Get PDF count and total storage per organization
  */
-// @ts-expect-error OpenAPIHono strict return types don't account for error responses
 databaseRoutes.openapi(pdfsByOrgRoute, async c => {
   try {
     const db = createDb(c.env.DB);
@@ -807,7 +810,7 @@ databaseRoutes.openapi(pdfsByOrgRoute, async c => {
       totalStorage: Number(row.totalStorage || 0),
     }));
 
-    return c.json({ analytics });
+    return c.json({ analytics }, 200);
   } catch (err) {
     const error = err as Error;
     console.error('PDFs by org analytics error:', error);
@@ -815,7 +818,7 @@ databaseRoutes.openapi(pdfsByOrgRoute, async c => {
       operation: 'analytics_pdfs_by_org',
       originalError: error.message,
     });
-    return c.json(domainError, domainError.statusCode as ContentfulStatusCode);
+    return c.json(domainError, 500);
   }
 });
 
@@ -823,7 +826,6 @@ databaseRoutes.openapi(pdfsByOrgRoute, async c => {
  * GET /api/admin/database/analytics/pdfs-by-user
  * Get uploads by user
  */
-// @ts-expect-error OpenAPIHono strict return types don't account for error responses
 databaseRoutes.openapi(pdfsByUserRoute, async c => {
   try {
     const db = createDb(c.env.DB);
@@ -848,12 +850,12 @@ databaseRoutes.openapi(pdfsByUserRoute, async c => {
         userId: row.userId as string,
         userName: row.userName,
         userEmail: row.userEmail,
-        userGivenName: row.userGivenName,
+        userDisplayName: row.userGivenName,
         pdfCount: Number(row.pdfCount || 0),
         totalStorage: Number(row.totalStorage || 0),
       }));
 
-    return c.json({ analytics });
+    return c.json({ analytics }, 200);
   } catch (err) {
     const error = err as Error;
     console.error('PDFs by user analytics error:', error);
@@ -861,7 +863,7 @@ databaseRoutes.openapi(pdfsByUserRoute, async c => {
       operation: 'analytics_pdfs_by_user',
       originalError: error.message,
     });
-    return c.json(domainError, domainError.statusCode as ContentfulStatusCode);
+    return c.json(domainError, 500);
   }
 });
 
@@ -869,7 +871,6 @@ databaseRoutes.openapi(pdfsByUserRoute, async c => {
  * GET /api/admin/database/analytics/pdfs-by-project
  * Get PDFs per project
  */
-// @ts-expect-error OpenAPIHono strict return types don't account for error responses
 databaseRoutes.openapi(pdfsByProjectRoute, async c => {
   try {
     const db = createDb(c.env.DB);
@@ -906,7 +907,7 @@ databaseRoutes.openapi(pdfsByProjectRoute, async c => {
       totalStorage: Number(row.totalStorage || 0),
     }));
 
-    return c.json({ analytics });
+    return c.json({ analytics }, 200);
   } catch (err) {
     const error = err as Error;
     console.error('PDFs by project analytics error:', error);
@@ -914,7 +915,7 @@ databaseRoutes.openapi(pdfsByProjectRoute, async c => {
       operation: 'analytics_pdfs_by_project',
       originalError: error.message,
     });
-    return c.json(domainError, domainError.statusCode as ContentfulStatusCode);
+    return c.json(domainError, 500);
   }
 });
 
@@ -922,7 +923,6 @@ databaseRoutes.openapi(pdfsByProjectRoute, async c => {
  * GET /api/admin/database/analytics/recent-uploads
  * Get recent PDF uploads with user/org context
  */
-// @ts-expect-error OpenAPIHono strict return types don't account for error responses
 databaseRoutes.openapi(recentUploadsRoute, async c => {
   try {
     const query = c.req.valid('query');
@@ -979,7 +979,7 @@ databaseRoutes.openapi(recentUploadsRoute, async c => {
         : null,
     }));
 
-    return c.json({ uploads });
+    return c.json({ uploads }, 200);
   } catch (err) {
     const error = err as Error;
     console.error('Recent uploads analytics error:', error);
@@ -987,7 +987,7 @@ databaseRoutes.openapi(recentUploadsRoute, async c => {
       operation: 'analytics_recent_uploads',
       originalError: error.message,
     });
-    return c.json(domainError, domainError.statusCode as ContentfulStatusCode);
+    return c.json(domainError, 500);
   }
 });
 

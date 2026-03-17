@@ -4,7 +4,7 @@
  */
 
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
-import type { ContentfulStatusCode } from 'hono/utils/http-status';
+
 import { createDb } from '@/db/client.js';
 import { subscription, organization, stripeEventLedger } from '@/db/schema.js';
 import { eq, and, desc } from 'drizzle-orm';
@@ -293,7 +293,6 @@ interface StuckOrg {
  * GET /api/admin/orgs/:orgId/billing/reconcile
  * Reconciliation endpoint to detect stuck subscription states
  */
-// @ts-expect-error OpenAPIHono strict return types don't account for error responses
 billingObservabilityRoutes.openapi(reconcileRoute, async c => {
   const { orgId } = c.req.valid('param');
   const query = c.req.valid('query');
@@ -313,7 +312,7 @@ billingObservabilityRoutes.openapi(reconcileRoute, async c => {
         field: 'orgId',
         value: orgId,
       });
-      return c.json(error, error.statusCode as ContentfulStatusCode);
+      return c.json(error, 400);
     }
 
     const stuckStates: StuckState[] = [];
@@ -535,7 +534,7 @@ billingObservabilityRoutes.openapi(reconcileRoute, async c => {
       stripeComparison,
     };
 
-    return c.json(response);
+    return c.json(response, 200);
   } catch (err) {
     const error = err as Error;
     console.error('Error in billing reconcile:', error);
@@ -543,7 +542,7 @@ billingObservabilityRoutes.openapi(reconcileRoute, async c => {
       operation: 'billing_reconcile',
       originalError: error.message,
     });
-    return c.json(dbError, dbError.statusCode as ContentfulStatusCode);
+    return c.json(dbError, 500);
   }
 });
 
@@ -551,7 +550,6 @@ billingObservabilityRoutes.openapi(reconcileRoute, async c => {
  * GET /api/admin/billing/stuck-states
  * Global endpoint to find all orgs with stuck billing states
  */
-// @ts-expect-error OpenAPIHono strict return types don't account for error responses
 billingObservabilityRoutes.openapi(stuckStatesRoute, async c => {
   const db = createDb(c.env.DB);
   const query = c.req.valid('query');
@@ -665,14 +663,17 @@ billingObservabilityRoutes.openapi(stuckStatesRoute, async c => {
       }
     }
 
-    return c.json({
-      checkedAt: now.toISOString(),
-      thresholds: {
-        incompleteMinutes: incompleteThresholdMinutes,
+    return c.json(
+      {
+        checkedAt: now.toISOString(),
+        thresholds: {
+          incompleteMinutes: incompleteThresholdMinutes,
+        },
+        totalStuckOrgs: stuckOrgs.length,
+        stuckOrgs,
       },
-      totalStuckOrgs: stuckOrgs.length,
-      stuckOrgs,
-    });
+      200,
+    );
   } catch (err) {
     const error = err as Error;
     console.error('Error finding stuck states:', error);
@@ -680,7 +681,7 @@ billingObservabilityRoutes.openapi(stuckStatesRoute, async c => {
       operation: 'find_stuck_states',
       originalError: error.message,
     });
-    return c.json(dbError, dbError.statusCode as ContentfulStatusCode);
+    return c.json(dbError, 500);
   }
 });
 
@@ -688,7 +689,6 @@ billingObservabilityRoutes.openapi(stuckStatesRoute, async c => {
  * GET /api/admin/billing/ledger
  * View recent Stripe event ledger entries (global)
  */
-// @ts-expect-error OpenAPIHono strict return types don't account for error responses
 billingObservabilityRoutes.openapi(ledgerRoute, async c => {
   const db = createDb(c.env.DB);
   const query = c.req.valid('query');
@@ -746,28 +746,31 @@ billingObservabilityRoutes.openapi(ledgerRoute, async c => {
         ),
     };
 
-    return c.json({
-      stats,
-      entries: entries.map(e => ({
-        id: e.id,
-        stripeEventId: e.stripeEventId,
-        type: e.type,
-        status: e.status,
-        httpStatus: e.httpStatus,
-        error: e.error,
-        orgId: e.orgId,
-        stripeCustomerId: e.stripeCustomerId,
-        stripeSubscriptionId: e.stripeSubscriptionId,
-        stripeCheckoutSessionId: e.stripeCheckoutSessionId,
-        payloadHash: e.payloadHash,
-        signaturePresent: e.signaturePresent,
-        livemode: e.livemode,
-        receivedAt: e.receivedAt,
-        processedAt: e.processedAt,
-        requestId: e.requestId,
-        route: e.route,
-      })),
-    });
+    return c.json(
+      {
+        stats,
+        entries: entries.map(e => ({
+          id: e.id,
+          stripeEventId: e.stripeEventId,
+          type: e.type,
+          status: e.status,
+          httpStatus: e.httpStatus,
+          error: e.error,
+          orgId: e.orgId,
+          stripeCustomerId: e.stripeCustomerId,
+          stripeSubscriptionId: e.stripeSubscriptionId,
+          stripeCheckoutSessionId: e.stripeCheckoutSessionId,
+          payloadHash: e.payloadHash,
+          signaturePresent: e.signaturePresent,
+          livemode: e.livemode,
+          receivedAt: e.receivedAt,
+          processedAt: e.processedAt,
+          requestId: e.requestId,
+          route: e.route,
+        })),
+      },
+      200,
+    );
   } catch (err) {
     const error = err as Error;
     console.error('Error fetching ledger:', error);
@@ -775,7 +778,7 @@ billingObservabilityRoutes.openapi(ledgerRoute, async c => {
       operation: 'fetch_ledger',
       originalError: error.message,
     });
-    return c.json(dbError, dbError.statusCode as ContentfulStatusCode);
+    return c.json(dbError, 500);
   }
 });
 

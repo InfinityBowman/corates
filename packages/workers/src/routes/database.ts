@@ -4,7 +4,7 @@
  */
 
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
-import type { ContentfulStatusCode } from 'hono/utils/http-status';
+
 import { createDb } from '@/db/client.js';
 import { user } from '@/db/schema.js';
 import { desc } from 'drizzle-orm';
@@ -72,7 +72,6 @@ const listUsersRoute = createRoute({
   },
 });
 
-// @ts-expect-error OpenAPIHono strict return types don't account for error responses
 dbRoutes.openapi(listUsersRoute, async c => {
   const db = createDb(c.env.DB);
 
@@ -90,14 +89,14 @@ dbRoutes.openapi(listUsersRoute, async c => {
       .orderBy(desc(user.createdAt))
       .limit(20);
 
-    return c.json({ users: results });
+    return c.json({ users: results } as unknown as z.infer<typeof UsersResponseSchema>, 200);
   } catch (error) {
     console.error('Error fetching users:', error);
     const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
       operation: 'fetch_users',
       originalError: error instanceof Error ? error.message : String(error),
     });
-    return c.json(dbError, dbError.statusCode as ContentfulStatusCode);
+    return c.json(dbError, 500);
   }
 });
 
@@ -116,7 +115,6 @@ const createUserRoute = createRoute({
   },
 });
 
-// @ts-expect-error OpenAPIHono strict return types don't account for error responses
 dbRoutes.openapi(createUserRoute, c => {
   const error = createValidationError(
     'endpoint',
@@ -124,7 +122,7 @@ dbRoutes.openapi(createUserRoute, c => {
     null,
     'use_auth_register',
   );
-  return c.json(error, error.statusCode as ContentfulStatusCode);
+  return c.json(error, 400);
 });
 
 // Check migration status route
@@ -150,7 +148,6 @@ const checkMigrationRoute = createRoute({
   },
 });
 
-// @ts-expect-error OpenAPIHono strict return types don't account for error responses
 dbRoutes.openapi(checkMigrationRoute, async c => {
   try {
     const tableCheck = await c.env.DB.prepare(
@@ -158,20 +155,23 @@ dbRoutes.openapi(checkMigrationRoute, async c => {
     ).first();
 
     if (!tableCheck) {
-      return c.json({
-        success: false,
-        message: 'Please run: pnpm db:migrate in the workers directory',
-      });
+      return c.json(
+        {
+          success: false,
+          message: 'Please run: pnpm db:migrate in the workers directory',
+        },
+        200,
+      );
     }
 
-    return c.json({ success: true, message: 'Migration completed' });
+    return c.json({ success: true, message: 'Migration completed' }, 200);
   } catch (error) {
     console.error('Migration error:', error);
     const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
       operation: 'check_migration',
       originalError: error instanceof Error ? error.message : String(error),
     });
-    return c.json(dbError, dbError.statusCode as ContentfulStatusCode);
+    return c.json(dbError, 500);
   }
 });
 

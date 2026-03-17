@@ -4,7 +4,7 @@
  */
 
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
-import type { ContentfulStatusCode } from 'hono/utils/http-status';
+
 import { createDb } from '@/db/client.js';
 import { mediaFiles } from '@/db/schema.js';
 import { createDomainError, SYSTEM_ERRORS } from '@corates/shared';
@@ -275,7 +275,6 @@ interface ListResponse {
  * GET /api/admin/storage/documents
  * List documents with cursor-based pagination
  */
-// @ts-expect-error OpenAPIHono strict return types don't account for error responses
 storageRoutes.openapi(listDocumentsRoute, async c => {
   try {
     const query = c.req.valid('query');
@@ -411,7 +410,7 @@ storageRoutes.openapi(listDocumentsRoute, async c => {
       response.truncated = true;
     }
 
-    return c.json(response);
+    return c.json(response, 200);
   } catch (err) {
     const error = err as Error;
     console.error('Error listing storage documents:', error);
@@ -419,7 +418,7 @@ storageRoutes.openapi(listDocumentsRoute, async c => {
       operation: 'list_storage_documents',
       originalError: error.message,
     });
-    return c.json(systemError, systemError.statusCode as ContentfulStatusCode);
+    return c.json(systemError, 500);
   }
 });
 
@@ -427,7 +426,6 @@ storageRoutes.openapi(listDocumentsRoute, async c => {
  * DELETE /api/admin/storage/documents
  * Bulk delete documents
  */
-// @ts-expect-error OpenAPIHono strict return types don't account for error responses
 storageRoutes.openapi(deleteDocumentsRoute, async c => {
   try {
     const { keys } = c.req.valid('json');
@@ -451,11 +449,14 @@ storageRoutes.openapi(deleteDocumentsRoute, async c => {
       });
     }
 
-    return c.json({
-      deleted,
-      failed,
-      errors,
-    });
+    return c.json(
+      {
+        deleted,
+        failed,
+        errors,
+      },
+      200,
+    );
   } catch (err) {
     const error = err as Error;
     console.error('Error deleting storage documents:', error);
@@ -463,7 +464,7 @@ storageRoutes.openapi(deleteDocumentsRoute, async c => {
       operation: 'delete_storage_documents',
       originalError: error.message,
     });
-    return c.json(systemError, systemError.statusCode as ContentfulStatusCode);
+    return c.json(systemError, 500);
   }
 });
 
@@ -471,7 +472,6 @@ storageRoutes.openapi(deleteDocumentsRoute, async c => {
  * GET /api/admin/storage/stats
  * Get storage statistics
  */
-// @ts-expect-error OpenAPIHono strict return types don't account for error responses
 storageRoutes.openapi(getStorageStatsRoute, async c => {
   try {
     let cursor: string | undefined = undefined;
@@ -499,14 +499,17 @@ storageRoutes.openapi(getStorageStatsRoute, async c => {
       cursor = listed.truncated ? listed.cursor : undefined;
     } while (cursor);
 
-    return c.json({
-      totalFiles,
-      totalSize,
-      filesByProject: Object.entries(filesByProject).map(([projectId, count]) => ({
-        projectId,
-        count,
-      })),
-    });
+    return c.json(
+      {
+        totalFiles,
+        totalSize,
+        filesByProject: Object.entries(filesByProject).map(([projectId, count]) => ({
+          projectId,
+          count,
+        })),
+      },
+      200,
+    );
   } catch (err) {
     const error = err as Error;
     console.error('Error fetching storage stats:', error);
@@ -514,7 +517,7 @@ storageRoutes.openapi(getStorageStatsRoute, async c => {
       operation: 'fetch_storage_stats',
       originalError: error.message,
     });
-    return c.json(systemError, systemError.statusCode as ContentfulStatusCode);
+    return c.json(systemError, 500);
   }
 });
 

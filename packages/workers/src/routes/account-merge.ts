@@ -14,7 +14,7 @@
  */
 
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
-import type { ContentfulStatusCode } from 'hono/utils/http-status';
+
 import { createDb } from '@/db/client.js';
 import { user, account, projects, projectMembers, mediaFiles, verification } from '@/db/schema.js';
 import { eq, sql, like, and } from 'drizzle-orm';
@@ -290,12 +290,11 @@ const cancelRoute = createRoute({
 });
 
 // Route handlers
-// @ts-expect-error OpenAPIHono strict return types don't account for error responses
 accountMergeRoutes.openapi(initiateRoute, async c => {
   const { user: currentUser } = getAuth(c);
   if (!currentUser) {
     const error = createDomainError(USER_ERRORS.NOT_FOUND, { context: 'current_user' });
-    return c.json(error, error.statusCode as ContentfulStatusCode);
+    return c.json(error, 404);
   }
   const { targetEmail, targetOrcidId } = c.req.valid('json');
 
@@ -309,7 +308,7 @@ accountMergeRoutes.openapi(initiateRoute, async c => {
       null,
       'required',
     );
-    return c.json(error, error.statusCode as ContentfulStatusCode);
+    return c.json(error, 400);
   }
 
   if (hasEmail && hasOrcidId) {
@@ -319,7 +318,7 @@ accountMergeRoutes.openapi(initiateRoute, async c => {
       null,
       'cannot_provide_both',
     );
-    return c.json(error, error.statusCode as ContentfulStatusCode);
+    return c.json(error, 400);
   }
 
   const db = createDb(c.env.DB);
@@ -337,13 +336,13 @@ accountMergeRoutes.openapi(initiateRoute, async c => {
         normalizedEmail,
         'cannot_merge_self',
       );
-      return c.json(error, error.statusCode as ContentfulStatusCode);
+      return c.json(error, 400);
     }
 
     c.set('mergeInitiateKey', `${currentUser.id}:${normalizedEmail}`);
     const rateLimitResult = await mergeInitiateRateLimiter(c, async () => {});
     if (rateLimitResult) {
-      return rateLimitResult;
+      return rateLimitResult as never;
     }
 
     targetUser =
@@ -363,13 +362,13 @@ accountMergeRoutes.openapi(initiateRoute, async c => {
         targetOrcidId,
         'invalid_orcid_format',
       );
-      return c.json(error, error.statusCode as ContentfulStatusCode);
+      return c.json(error, 400);
     }
 
     c.set('mergeInitiateKey', `${currentUser.id}:${normalizedOrcidId}`);
     const rateLimitResult = await mergeInitiateRateLimiter(c, async () => {});
     if (rateLimitResult) {
-      return rateLimitResult;
+      return rateLimitResult as never;
     }
 
     targetOrcidAccount =
@@ -406,7 +405,7 @@ accountMergeRoutes.openapi(initiateRoute, async c => {
       email: hasEmail ? targetEmail : undefined,
       orcidId: hasOrcidId ? targetOrcidId : undefined,
     });
-    return c.json(error, error.statusCode as ContentfulStatusCode);
+    return c.json(error, 404);
   }
 
   if (targetUser.id === currentUser.id) {
@@ -416,7 +415,7 @@ accountMergeRoutes.openapi(initiateRoute, async c => {
       hasEmail ? targetEmail : targetOrcidId,
       'cannot_merge_self',
     );
-    return c.json(error, error.statusCode as ContentfulStatusCode);
+    return c.json(error, 400);
   }
 
   const [currentAccounts, _targetAccounts] = await Promise.all([
@@ -471,7 +470,7 @@ accountMergeRoutes.openapi(initiateRoute, async c => {
       operation: 'send_merge_verification',
       originalError: String(err instanceof Error ? err.message : 'Unknown email error'),
     });
-    return c.json(error, error.statusCode as ContentfulStatusCode);
+    return c.json(error, 400);
   }
 
   if (c.env.ENVIRONMENT !== 'production') {
@@ -494,23 +493,25 @@ accountMergeRoutes.openapi(initiateRoute, async c => {
     }
   }
 
-  return c.json({
-    success: true as const,
-    mergeToken,
-    targetEmail: targetUser.email,
-    targetOrcidId: formattedOrcidId,
-    preview: {
-      currentProviders: currentAccounts.map(a => a.providerId),
+  return c.json(
+    {
+      success: true as const,
+      mergeToken,
+      targetEmail: targetUser.email,
+      targetOrcidId: formattedOrcidId,
+      preview: {
+        currentProviders: currentAccounts.map(a => a.providerId),
+      },
     },
-  });
+    200,
+  );
 });
 
-// @ts-expect-error OpenAPIHono strict return types don't account for error responses
 accountMergeRoutes.openapi(verifyRoute, async c => {
   const { user: currentUser } = getAuth(c);
   if (!currentUser) {
     const error = createDomainError(USER_ERRORS.NOT_FOUND, { context: 'current_user' });
-    return c.json(error, error.statusCode as ContentfulStatusCode);
+    return c.json(error, 404);
   }
   const { mergeToken, code } = c.req.valid('json');
 
@@ -519,7 +520,7 @@ accountMergeRoutes.openapi(verifyRoute, async c => {
   c.set('mergeTokenKey', mergeToken);
   const rateLimitResult = await mergeVerifyRateLimiter(c, async () => {});
   if (rateLimitResult) {
-    return rateLimitResult;
+    return rateLimitResult as never;
   }
 
   const db = createDb(c.env.DB);
@@ -534,7 +535,7 @@ accountMergeRoutes.openapi(verifyRoute, async c => {
       context: 'merge_request',
       userId: currentUser.id,
     });
-    return c.json(error, error.statusCode as ContentfulStatusCode);
+    return c.json(error, 404);
   }
 
   const mergeRequest = mergeRequests[0];
@@ -552,7 +553,7 @@ accountMergeRoutes.openapi(verifyRoute, async c => {
       mergeToken,
       'invalid_token',
     );
-    return c.json(error, error.statusCode as ContentfulStatusCode);
+    return c.json(error, 400);
   }
 
   if (mergeRequest.expiresAt < new Date()) {
@@ -563,7 +564,7 @@ accountMergeRoutes.openapi(verifyRoute, async c => {
       null,
       'expired',
     );
-    return c.json(error, error.statusCode as ContentfulStatusCode);
+    return c.json(error, 400);
   }
 
   if (mergeData.code !== trimmedCode) {
@@ -573,7 +574,7 @@ accountMergeRoutes.openapi(verifyRoute, async c => {
       null,
       'invalid_code',
     );
-    return c.json(error, error.statusCode as ContentfulStatusCode);
+    return c.json(error, 400);
   }
 
   const verifiedData = {
@@ -601,22 +602,24 @@ accountMergeRoutes.openapi(verifyRoute, async c => {
       .where(eq(account.userId, mergeData.targetId)),
   ]);
 
-  return c.json({
-    success: true as const,
-    message: 'Code verified. You can now complete the merge.',
-    preview: {
-      currentProviders: currentAccounts.map(a => a.providerId),
-      targetProviders: targetAccounts.map(a => a.providerId),
+  return c.json(
+    {
+      success: true as const,
+      message: 'Code verified. You can now complete the merge.',
+      preview: {
+        currentProviders: currentAccounts.map(a => a.providerId),
+        targetProviders: targetAccounts.map(a => a.providerId),
+      },
     },
-  });
+    200,
+  );
 });
 
-// @ts-expect-error OpenAPIHono strict return types don't account for error responses
 accountMergeRoutes.openapi(completeRoute, async c => {
   const { user: currentUser } = getAuth(c);
   if (!currentUser) {
     const error = createDomainError(USER_ERRORS.NOT_FOUND, { context: 'current_user' });
-    return c.json(error, error.statusCode as ContentfulStatusCode);
+    return c.json(error, 404);
   }
   const { mergeToken } = c.req.valid('json');
 
@@ -632,7 +635,7 @@ accountMergeRoutes.openapi(completeRoute, async c => {
       context: 'merge_request',
       userId: currentUser.id,
     });
-    return c.json(error, error.statusCode as ContentfulStatusCode);
+    return c.json(error, 404);
   }
 
   const mergeRequest = mergeRequests[0];
@@ -649,7 +652,7 @@ accountMergeRoutes.openapi(completeRoute, async c => {
       mergeToken,
       'invalid_token',
     );
-    return c.json(error, error.statusCode as ContentfulStatusCode);
+    return c.json(error, 400);
   }
 
   if (!mergeData.verified) {
@@ -659,7 +662,7 @@ accountMergeRoutes.openapi(completeRoute, async c => {
       null,
       'code_not_verified',
     );
-    return c.json(error, error.statusCode as ContentfulStatusCode);
+    return c.json(error, 400);
   }
 
   if (mergeRequest.expiresAt < new Date()) {
@@ -670,7 +673,7 @@ accountMergeRoutes.openapi(completeRoute, async c => {
       null,
       'expired',
     );
-    return c.json(error, error.statusCode as ContentfulStatusCode);
+    return c.json(error, 400);
   }
 
   const primaryUserId = currentUser.id;
@@ -753,27 +756,29 @@ accountMergeRoutes.openapi(completeRoute, async c => {
     // Type assertion needed because TypeScript can't infer the array always has elements
     await db.batch(batchOps as [(typeof batchOps)[0], ...typeof batchOps]);
 
-    return c.json({
-      success: true as const,
-      message: 'Accounts merged successfully',
-      mergedProviders,
-    });
+    return c.json(
+      {
+        success: true as const,
+        message: 'Accounts merged successfully',
+        mergedProviders,
+      },
+      200,
+    );
   } catch (err) {
     console.error('[AccountMerge] Error during merge:', err);
     const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
       operation: 'merge_accounts',
       originalError: err instanceof Error ? err.message : String(err),
     });
-    return c.json(dbError, dbError.statusCode as ContentfulStatusCode);
+    return c.json(dbError, 500);
   }
 });
 
-// @ts-expect-error OpenAPIHono strict return types don't account for error responses
 accountMergeRoutes.openapi(cancelRoute, async c => {
   const { user: currentUser } = getAuth(c);
   if (!currentUser) {
     const error = createDomainError(USER_ERRORS.NOT_FOUND, { context: 'current_user' });
-    return c.json(error, error.statusCode as ContentfulStatusCode);
+    return c.json(error, 400);
   }
   const { mergeToken } = c.req.valid('json');
 
@@ -785,7 +790,7 @@ accountMergeRoutes.openapi(cancelRoute, async c => {
     .where(like(verification.identifier, `merge:${currentUser.id}:%`));
 
   if (mergeRequests.length === 0) {
-    return c.json({ success: true as const });
+    return c.json({ success: true as const }, 200);
   }
 
   const mergeRequest = mergeRequests[0];
@@ -798,12 +803,12 @@ accountMergeRoutes.openapi(cancelRoute, async c => {
       mergeToken,
       'invalid_token',
     );
-    return c.json(error, error.statusCode as ContentfulStatusCode);
+    return c.json(error, 400);
   }
 
   await db.delete(verification).where(eq(verification.id, mergeRequest.id));
 
-  return c.json({ success: true as const });
+  return c.json({ success: true as const }, 200);
 });
 
 export { accountMergeRoutes };

@@ -5,7 +5,7 @@
 
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
 import type { Context } from 'hono';
-import type { ContentfulStatusCode } from 'hono/utils/http-status';
+
 import { createDb } from '@/db/client.js';
 import { subscription, orgAccessGrants, organization } from '@/db/schema.js';
 import { eq, and, desc } from 'drizzle-orm';
@@ -613,7 +613,6 @@ const grantSingleProjectRoute = createRoute({
  * GET /api/admin/orgs/:orgId/billing
  * Get org billing resolution and details
  */
-// @ts-expect-error OpenAPIHono strict return types don't account for error responses
 billingRoutes.openapi(getBillingRoute, async c => {
   const { orgId } = c.req.valid('param');
   const db = createDb(c.env.DB);
@@ -626,7 +625,7 @@ billingRoutes.openapi(getBillingRoute, async c => {
         field: 'orgId',
         value: orgId,
       });
-      return c.json(error, error.statusCode as ContentfulStatusCode);
+      return c.json(error, 400);
     }
 
     // Get billing resolution
@@ -649,25 +648,28 @@ billingRoutes.openapi(getBillingRoute, async c => {
         getGrantPlan(orgBilling.effectivePlanId as GrantType)
       : getPlan(orgBilling.effectivePlanId);
 
-    return c.json({
-      orgId,
-      orgName: org.name,
-      orgSlug: org.slug,
-      billing: {
-        effectivePlanId: orgBilling.effectivePlanId,
-        source: orgBilling.source,
-        accessMode: orgBilling.accessMode,
-        plan: {
-          name: effectivePlan.name,
-          entitlements: effectivePlan.entitlements,
-          quotas: effectivePlan.quotas,
+    return c.json(
+      {
+        orgId,
+        orgName: org.name,
+        orgSlug: org.slug,
+        billing: {
+          effectivePlanId: orgBilling.effectivePlanId,
+          source: orgBilling.source,
+          accessMode: orgBilling.accessMode,
+          plan: {
+            name: effectivePlan.name,
+            entitlements: effectivePlan.entitlements,
+            quotas: effectivePlan.quotas,
+          },
+          subscription: orgBilling.subscription,
+          grant: orgBilling.grant,
         },
-        subscription: orgBilling.subscription,
-        grant: orgBilling.grant,
+        subscriptions: allSubscriptions,
+        grants: allGrants,
       },
-      subscriptions: allSubscriptions,
-      grants: allGrants,
-    });
+      200,
+    );
   } catch (err) {
     const error = err as Error;
     console.error('Error fetching org billing:', error);
@@ -675,7 +677,7 @@ billingRoutes.openapi(getBillingRoute, async c => {
       operation: 'fetch_org_billing',
       originalError: error.message,
     });
-    return c.json(dbError, dbError.statusCode as ContentfulStatusCode);
+    return c.json(dbError, 500);
   }
 });
 
@@ -683,7 +685,6 @@ billingRoutes.openapi(getBillingRoute, async c => {
  * POST /api/admin/orgs/:orgId/subscriptions
  * Manually create a subscription for an org
  */
-// @ts-expect-error OpenAPIHono strict return types don't account for error responses
 billingRoutes.openapi(createSubscriptionRoute, async c => {
   const { orgId } = c.req.valid('param');
   const db = createDb(c.env.DB);
@@ -697,7 +698,7 @@ billingRoutes.openapi(createSubscriptionRoute, async c => {
         field: 'orgId',
         value: orgId,
       });
-      return c.json(error, error.statusCode as ContentfulStatusCode);
+      return c.json(error, 400);
     }
 
     // Validate plan
@@ -707,7 +708,7 @@ billingRoutes.openapi(createSubscriptionRoute, async c => {
         field: 'plan',
         value: body.plan,
       });
-      return c.json(error, error.statusCode as ContentfulStatusCode);
+      return c.json(error, 400);
     }
 
     const subscriptionId = crypto.randomUUID();
@@ -755,7 +756,7 @@ billingRoutes.openapi(createSubscriptionRoute, async c => {
       operation: 'create_subscription',
       originalError: error.message,
     });
-    return c.json(dbError, dbError.statusCode as ContentfulStatusCode);
+    return c.json(dbError, 500);
   }
 });
 
@@ -763,7 +764,6 @@ billingRoutes.openapi(createSubscriptionRoute, async c => {
  * PUT /api/admin/orgs/:orgId/subscriptions/:subscriptionId
  * Update a subscription
  */
-// @ts-expect-error OpenAPIHono strict return types don't account for error responses
 billingRoutes.openapi(updateSubscriptionRoute, async c => {
   const { orgId, subscriptionId } = c.req.valid('param');
   const db = createDb(c.env.DB);
@@ -782,7 +782,7 @@ billingRoutes.openapi(updateSubscriptionRoute, async c => {
         field: 'subscriptionId',
         value: subscriptionId,
       });
-      return c.json(error, error.statusCode as ContentfulStatusCode);
+      return c.json(error, 400);
     }
 
     const updateData: Record<string, unknown> = {
@@ -819,7 +819,7 @@ billingRoutes.openapi(updateSubscriptionRoute, async c => {
       'update',
     );
 
-    return c.json({ success: true, subscription: updatedSubscription });
+    return c.json({ success: true, subscription: updatedSubscription }, 200);
   } catch (err) {
     const error = err as Error;
     console.error('Error updating subscription:', error);
@@ -827,7 +827,7 @@ billingRoutes.openapi(updateSubscriptionRoute, async c => {
       operation: 'update_subscription',
       originalError: error.message,
     });
-    return c.json(dbError, dbError.statusCode as ContentfulStatusCode);
+    return c.json(dbError, 500);
   }
 });
 
@@ -835,7 +835,6 @@ billingRoutes.openapi(updateSubscriptionRoute, async c => {
  * DELETE /api/admin/orgs/:orgId/subscriptions/:subscriptionId
  * Cancel/delete a subscription
  */
-// @ts-expect-error OpenAPIHono strict return types don't account for error responses
 billingRoutes.openapi(deleteSubscriptionRoute, async c => {
   const { orgId, subscriptionId } = c.req.valid('param');
   const db = createDb(c.env.DB);
@@ -853,7 +852,7 @@ billingRoutes.openapi(deleteSubscriptionRoute, async c => {
         field: 'subscriptionId',
         value: subscriptionId,
       });
-      return c.json(error, error.statusCode as ContentfulStatusCode);
+      return c.json(error, 400);
     }
 
     // Cancel subscription (set status to canceled and endedAt)
@@ -884,7 +883,7 @@ billingRoutes.openapi(deleteSubscriptionRoute, async c => {
       'cancellation',
     );
 
-    return c.json({ success: true, message: 'Subscription canceled' });
+    return c.json({ success: true, message: 'Subscription canceled' }, 200);
   } catch (err) {
     const error = err as Error;
     console.error('Error canceling subscription:', error);
@@ -892,7 +891,7 @@ billingRoutes.openapi(deleteSubscriptionRoute, async c => {
       operation: 'cancel_subscription',
       originalError: error.message,
     });
-    return c.json(dbError, dbError.statusCode as ContentfulStatusCode);
+    return c.json(dbError, 500);
   }
 });
 
@@ -900,7 +899,6 @@ billingRoutes.openapi(deleteSubscriptionRoute, async c => {
  * POST /api/admin/orgs/:orgId/grants
  * Create a grant manually
  */
-// @ts-expect-error OpenAPIHono strict return types don't account for error responses
 billingRoutes.openapi(createGrantRoute, async c => {
   const { orgId } = c.req.valid('param');
   const db = createDb(c.env.DB);
@@ -914,7 +912,7 @@ billingRoutes.openapi(createGrantRoute, async c => {
         field: 'orgId',
         value: orgId,
       });
-      return c.json(error, error.statusCode as ContentfulStatusCode);
+      return c.json(error, 400);
     }
 
     // Validate grant type
@@ -923,7 +921,7 @@ billingRoutes.openapi(createGrantRoute, async c => {
         field: 'type',
         value: body.type,
       });
-      return c.json(error, error.statusCode as ContentfulStatusCode);
+      return c.json(error, 400);
     }
 
     // Enforce trial uniqueness
@@ -938,7 +936,7 @@ billingRoutes.openapi(createGrantRoute, async c => {
           },
           'Trial grant already exists for this organization. Each organization can only have one trial grant.',
         );
-        return c.json(error, error.statusCode as ContentfulStatusCode);
+        return c.json(error, 400);
       }
     }
 
@@ -948,7 +946,7 @@ billingRoutes.openapi(createGrantRoute, async c => {
         field: 'expiresAt',
         value: 'expiresAt must be after startsAt',
       });
-      return c.json(error, error.statusCode as ContentfulStatusCode);
+      return c.json(error, 400);
     }
 
     const grantId = crypto.randomUUID();
@@ -969,7 +967,7 @@ billingRoutes.openapi(createGrantRoute, async c => {
       operation: 'create_grant',
       originalError: error.message,
     });
-    return c.json(dbError, dbError.statusCode as ContentfulStatusCode);
+    return c.json(dbError, 500);
   }
 });
 
@@ -977,7 +975,7 @@ billingRoutes.openapi(createGrantRoute, async c => {
  * PUT /api/admin/orgs/:orgId/grants/:grantId
  * Update a grant
  */
-// @ts-expect-error OpenAPIHono strict return types don't account for error responses
+// @ts-expect-error Handler returns multiple status codes (200/400/500) not representable in OpenAPIHono's strict return type
 billingRoutes.openapi(updateGrantRoute, async c => {
   const { orgId, grantId } = c.req.valid('param');
   const db = createDb(c.env.DB);
@@ -991,13 +989,13 @@ billingRoutes.openapi(updateGrantRoute, async c => {
         field: 'grantId',
         value: grantId,
       });
-      return c.json(error, error.statusCode as ContentfulStatusCode);
+      return c.json(error, 400);
     }
 
     // Update grant
     if (body.expiresAt !== undefined) {
       const updatedGrant = await updateGrantExpiresAt(db, grantId, body.expiresAt);
-      return c.json({ success: true, grant: updatedGrant });
+      return c.json({ success: true, grant: updatedGrant }, 200);
     }
 
     if (body.revokedAt !== undefined) {
@@ -1009,11 +1007,11 @@ billingRoutes.openapi(updateGrantRoute, async c => {
           .where(eq(orgAccessGrants.id, grantId))
           .returning()
           .get();
-        return c.json({ success: true, grant: result });
+        return c.json({ success: true, grant: result }, 200);
       } else {
         // Revoke
         const revokedGrant = await revokeGrant(db, grantId);
-        return c.json({ success: true, grant: revokedGrant });
+        return c.json({ success: true, grant: revokedGrant }, 200);
       }
     }
 
@@ -1022,7 +1020,7 @@ billingRoutes.openapi(updateGrantRoute, async c => {
       field: 'body',
       value: 'At least one field (expiresAt or revokedAt) must be provided',
     });
-    return c.json(error, error.statusCode as ContentfulStatusCode);
+    return c.json(error, 400);
   } catch (err) {
     const error = err as Error;
     console.error('Error updating grant:', error);
@@ -1030,7 +1028,7 @@ billingRoutes.openapi(updateGrantRoute, async c => {
       operation: 'update_grant',
       originalError: error.message,
     });
-    return c.json(dbError, dbError.statusCode as ContentfulStatusCode);
+    return c.json(dbError, 500);
   }
 });
 
@@ -1038,7 +1036,6 @@ billingRoutes.openapi(updateGrantRoute, async c => {
  * DELETE /api/admin/orgs/:orgId/grants/:grantId
  * Revoke a grant
  */
-// @ts-expect-error OpenAPIHono strict return types don't account for error responses
 billingRoutes.openapi(deleteGrantRoute, async c => {
   const { orgId, grantId } = c.req.valid('param');
   const db = createDb(c.env.DB);
@@ -1051,13 +1048,13 @@ billingRoutes.openapi(deleteGrantRoute, async c => {
         field: 'grantId',
         value: grantId,
       });
-      return c.json(error, error.statusCode as ContentfulStatusCode);
+      return c.json(error, 400);
     }
 
     // Revoke grant
     await revokeGrant(db, grantId);
 
-    return c.json({ success: true, message: 'Grant revoked' });
+    return c.json({ success: true, message: 'Grant revoked' }, 200);
   } catch (err) {
     const error = err as Error;
     console.error('Error revoking grant:', error);
@@ -1065,7 +1062,7 @@ billingRoutes.openapi(deleteGrantRoute, async c => {
       operation: 'revoke_grant',
       originalError: error.message,
     });
-    return c.json(dbError, dbError.statusCode as ContentfulStatusCode);
+    return c.json(dbError, 500);
   }
 });
 
@@ -1073,7 +1070,6 @@ billingRoutes.openapi(deleteGrantRoute, async c => {
  * POST /api/admin/orgs/:orgId/grant-trial
  * Convenience endpoint to create a trial grant (14 days from now)
  */
-// @ts-expect-error OpenAPIHono strict return types don't account for error responses
 billingRoutes.openapi(grantTrialRoute, async c => {
   const { orgId } = c.req.valid('param');
   const db = createDb(c.env.DB);
@@ -1086,7 +1082,7 @@ billingRoutes.openapi(grantTrialRoute, async c => {
         field: 'orgId',
         value: orgId,
       });
-      return c.json(error, error.statusCode as ContentfulStatusCode);
+      return c.json(error, 400);
     }
 
     // Check for existing trial
@@ -1100,7 +1096,7 @@ billingRoutes.openapi(grantTrialRoute, async c => {
         },
         'Trial grant already exists for this organization.',
       );
-      return c.json(error, error.statusCode as ContentfulStatusCode);
+      return c.json(error, 400);
     }
 
     const now = new Date();
@@ -1125,7 +1121,7 @@ billingRoutes.openapi(grantTrialRoute, async c => {
       operation: 'create_trial_grant',
       originalError: error.message,
     });
-    return c.json(dbError, dbError.statusCode as ContentfulStatusCode);
+    return c.json(dbError, 500);
   }
 });
 
@@ -1133,7 +1129,7 @@ billingRoutes.openapi(grantTrialRoute, async c => {
  * POST /api/admin/orgs/:orgId/grant-single-project
  * Convenience endpoint to create a single_project grant (6 months from now)
  */
-// @ts-expect-error OpenAPIHono strict return types don't account for error responses
+// @ts-expect-error Handler returns both 200 and 201 status codes
 billingRoutes.openapi(grantSingleProjectRoute, async c => {
   const { orgId } = c.req.valid('param');
   const db = createDb(c.env.DB);
@@ -1146,7 +1142,7 @@ billingRoutes.openapi(grantSingleProjectRoute, async c => {
         field: 'orgId',
         value: orgId,
       });
-      return c.json(error, error.statusCode as ContentfulStatusCode);
+      return c.json(error, 400);
     }
 
     // Check for existing single_project grant (extend if exists)
@@ -1165,7 +1161,7 @@ billingRoutes.openapi(grantSingleProjectRoute, async c => {
       newExpiresAt.setMonth(newExpiresAt.getMonth() + 6);
 
       const updatedGrant = await updateGrantExpiresAt(db, existingGrant.id, newExpiresAt);
-      return c.json({ success: true, grant: updatedGrant, action: 'extended' as const });
+      return c.json({ success: true, grant: updatedGrant, action: 'extended' as const }, 200);
     }
 
     // Create new grant (6 months from now)
@@ -1190,7 +1186,7 @@ billingRoutes.openapi(grantSingleProjectRoute, async c => {
       operation: 'create_single_project_grant',
       originalError: error.message,
     });
-    return c.json(dbError, dbError.statusCode as ContentfulStatusCode);
+    return c.json(dbError, 500);
   }
 });
 

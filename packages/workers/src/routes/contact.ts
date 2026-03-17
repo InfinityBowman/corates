@@ -4,7 +4,7 @@
  */
 
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
-import type { ContentfulStatusCode } from 'hono/utils/http-status';
+
 import { contactRateLimit } from '@/middleware/rateLimit';
 import {
   createDomainError,
@@ -158,7 +158,6 @@ const submitContactRoute = createRoute({
   },
 });
 
-// @ts-expect-error OpenAPIHono strict return types don't account for error responses
 contact.openapi(submitContactRoute, async c => {
   const env = c.env;
   const { name, email, subject, message } = c.req.valid('json');
@@ -198,7 +197,7 @@ contact.openapi(submitContactRoute, async c => {
       `,
     });
 
-    return c.json({ success: true as const, messageId: crypto.randomUUID() });
+    return c.json({ success: true as const, messageId: crypto.randomUUID() }, 200);
   } catch (err) {
     const error = err as Error;
     console.error('[Contact] Failed to queue email:', error.message);
@@ -206,7 +205,7 @@ contact.openapi(submitContactRoute, async c => {
       service: 'email',
       originalError: error.message,
     });
-    return c.json(domainError, domainError.statusCode as ContentfulStatusCode);
+    return c.json(domainError, 503);
   }
 });
 

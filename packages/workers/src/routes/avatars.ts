@@ -6,7 +6,7 @@
  */
 
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
-import type { ContentfulStatusCode } from 'hono/utils/http-status';
+
 import { requireAuth, getAuth } from '@/middleware/auth';
 import { createDomainError, FILE_ERRORS, SYSTEM_ERRORS, VALIDATION_ERRORS } from '@corates/shared';
 import { FILE_SIZE_LIMITS } from '@/config/constants';
@@ -133,7 +133,6 @@ const uploadAvatarRoute = createRoute({
   },
 });
 
-// @ts-expect-error OpenAPIHono strict return types don't account for error responses
 avatarRoutes.openapi(uploadAvatarRoute, async c => {
   const { user } = getAuth(c);
   // requireAuth middleware guarantees user exists
@@ -147,7 +146,7 @@ avatarRoutes.openapi(uploadAvatarRoute, async c => {
       { fileSize: contentLength, maxSize: FILE_SIZE_LIMITS.AVATAR },
       `Avatar size exceeds limit of ${FILE_SIZE_LIMITS.AVATAR / (1024 * 1024)}MB`,
     );
-    return c.json(error, error.statusCode as ContentfulStatusCode);
+    return c.json(error, 400);
   }
 
   try {
@@ -163,7 +162,7 @@ avatarRoutes.openapi(uploadAvatarRoute, async c => {
           { field: 'avatar' },
           'No avatar file provided',
         );
-        return c.json(error, error.statusCode as ContentfulStatusCode);
+        return c.json(error, 400);
       }
 
       if (!ALLOWED_TYPES.includes(file.type)) {
@@ -172,7 +171,7 @@ avatarRoutes.openapi(uploadAvatarRoute, async c => {
           { fileType: file.type, allowedTypes: ALLOWED_TYPES },
           'Invalid file type. Allowed: JPEG, PNG, GIF, WebP',
         );
-        return c.json(error, error.statusCode as ContentfulStatusCode);
+        return c.json(error, 400);
       }
 
       if (file.size > FILE_SIZE_LIMITS.AVATAR) {
@@ -181,7 +180,7 @@ avatarRoutes.openapi(uploadAvatarRoute, async c => {
           { fileSize: file.size, maxSize: FILE_SIZE_LIMITS.AVATAR },
           `Avatar size exceeds limit of ${FILE_SIZE_LIMITS.AVATAR / (1024 * 1024)}MB`,
         );
-        return c.json(error, error.statusCode as ContentfulStatusCode);
+        return c.json(error, 400);
       }
 
       const ext = file.type.split('/')[1] || 'jpg';
@@ -214,11 +213,14 @@ avatarRoutes.openapi(uploadAvatarRoute, async c => {
       const avatarUrl = `/api/users/avatar/${userId}?t=${timestamp}`;
       await syncAvatarToProjects(c.env, userId, avatarUrl);
 
-      return c.json({
-        success: true as const,
-        url: avatarUrl,
-        key,
-      });
+      return c.json(
+        {
+          success: true as const,
+          url: avatarUrl,
+          key,
+        },
+        200,
+      );
     }
 
     const error = createDomainError(
@@ -226,7 +228,7 @@ avatarRoutes.openapi(uploadAvatarRoute, async c => {
       { field: 'Content-Type' },
       'Invalid content type',
     );
-    return c.json(error, error.statusCode as ContentfulStatusCode);
+    return c.json(error, 400);
   } catch (err) {
     const error = err as Error;
     console.error('Avatar upload error:', error);
@@ -234,7 +236,7 @@ avatarRoutes.openapi(uploadAvatarRoute, async c => {
       operation: 'upload_avatar',
       originalError: error.message,
     });
-    return c.json(dbError, dbError.statusCode as ContentfulStatusCode);
+    return c.json(dbError, 500);
   }
 });
 
@@ -296,7 +298,7 @@ avatarRoutes.openapi(getAvatarRoute, async c => {
 
     if (listed.objects.length === 0) {
       const error = createDomainError(FILE_ERRORS.NOT_FOUND, { fileName: 'avatar' });
-      return c.json(error, error.statusCode as ContentfulStatusCode);
+      return c.json(error, 404);
     }
 
     const avatarKey = listed.objects[0].key;
@@ -304,7 +306,7 @@ avatarRoutes.openapi(getAvatarRoute, async c => {
 
     if (!object) {
       const error = createDomainError(FILE_ERRORS.NOT_FOUND, { fileName: 'avatar' });
-      return c.json(error, error.statusCode as ContentfulStatusCode);
+      return c.json(error, 404);
     }
 
     const headers = new Headers();
@@ -320,7 +322,7 @@ avatarRoutes.openapi(getAvatarRoute, async c => {
       operation: 'fetch_avatar',
       originalError: error.message,
     });
-    return c.json(dbError, dbError.statusCode as ContentfulStatusCode);
+    return c.json(dbError, 500);
   }
 });
 
@@ -360,7 +362,6 @@ const deleteAvatarRoute = createRoute({
   },
 });
 
-// @ts-expect-error OpenAPIHono strict return types don't account for error responses
 avatarRoutes.openapi(deleteAvatarRoute, async c => {
   const { user } = getAuth(c);
   // requireAuth middleware guarantees user exists
@@ -373,7 +374,7 @@ avatarRoutes.openapi(deleteAvatarRoute, async c => {
       await c.env.PDF_BUCKET.delete(obj.key);
     }
 
-    return c.json({ success: true as const, message: 'Avatar deleted' });
+    return c.json({ success: true as const, message: 'Avatar deleted' }, 200);
   } catch (err) {
     const error = err as Error;
     console.error('Avatar delete error:', error);
@@ -381,7 +382,7 @@ avatarRoutes.openapi(deleteAvatarRoute, async c => {
       operation: 'delete_avatar',
       originalError: error.message,
     });
-    return c.json(dbError, dbError.statusCode as ContentfulStatusCode);
+    return c.json(dbError, 500);
   }
 });
 

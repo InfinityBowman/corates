@@ -4,7 +4,7 @@
  */
 
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
-import type { ContentfulStatusCode } from 'hono/utils/http-status';
+
 import { createDb } from '@/db/client.js';
 import {
   user,
@@ -523,7 +523,6 @@ const deleteUserRoute = createRoute({
  * GET /api/admin/stats
  * Get dashboard statistics
  */
-// @ts-expect-error OpenAPIHono strict return types don't account for error responses
 userRoutes.openapi(getStatsRoute, async c => {
   const db = createDb(c.env.DB);
 
@@ -542,12 +541,15 @@ userRoutes.openapi(getStatsRoute, async c => {
       .from(user)
       .where(sql`${user.createdAt} > ${sevenDaysAgo}`);
 
-    return c.json({
-      users: userCount[0]?.count || 0,
-      projects: projectCount[0]?.count || 0,
-      activeSessions: sessionCount[0]?.count || 0,
-      recentSignups: recentSignups?.count || 0,
-    });
+    return c.json(
+      {
+        users: userCount[0]?.count || 0,
+        projects: projectCount[0]?.count || 0,
+        activeSessions: sessionCount[0]?.count || 0,
+        recentSignups: recentSignups?.count || 0,
+      },
+      200,
+    );
   } catch (err) {
     const error = err as Error;
     console.error('Error fetching admin stats:', error);
@@ -555,7 +557,7 @@ userRoutes.openapi(getStatsRoute, async c => {
       operation: 'fetch_admin_stats',
       originalError: error.message,
     });
-    return c.json(dbError, dbError.statusCode as ContentfulStatusCode);
+    return c.json(dbError, 500);
   }
 });
 
@@ -563,7 +565,6 @@ userRoutes.openapi(getStatsRoute, async c => {
  * GET /api/admin/users
  * List all users with pagination and search
  */
-// @ts-expect-error OpenAPIHono strict return types don't account for error responses
 userRoutes.openapi(listUsersRoute, async c => {
   const db = createDb(c.env.DB);
   const query = c.req.valid('query');
@@ -660,15 +661,18 @@ userRoutes.openapi(listUsersRoute, async c => {
       providers: accountsMap[u.id] || [],
     }));
 
-    return c.json({
-      users: usersWithProviders,
-      pagination: {
-        page,
-        limit,
-        total: totalResult?.count || 0,
-        totalPages: Math.ceil((totalResult?.count || 0) / limit),
+    return c.json(
+      {
+        users: usersWithProviders,
+        pagination: {
+          page,
+          limit,
+          total: totalResult?.count || 0,
+          totalPages: Math.ceil((totalResult?.count || 0) / limit),
+        },
       },
-    });
+      200,
+    );
   } catch (err) {
     const error = err as Error;
     console.error('Error fetching users:', error);
@@ -676,7 +680,7 @@ userRoutes.openapi(listUsersRoute, async c => {
       operation: 'fetch_users',
       originalError: error.message,
     });
-    return c.json(dbError, dbError.statusCode as ContentfulStatusCode);
+    return c.json(dbError, 500);
   }
 });
 
@@ -684,7 +688,6 @@ userRoutes.openapi(listUsersRoute, async c => {
  * GET /api/admin/users/:userId
  * Get detailed user info
  */
-// @ts-expect-error OpenAPIHono strict return types don't account for error responses
 userRoutes.openapi(getUserDetailsRoute, async c => {
   const { userId } = c.req.valid('param');
   const db = createDb(c.env.DB);
@@ -694,7 +697,7 @@ userRoutes.openapi(getUserDetailsRoute, async c => {
 
     if (!userData) {
       const error = createDomainError(USER_ERRORS.NOT_FOUND, { userId });
-      return c.json(error, error.statusCode as ContentfulStatusCode);
+      return c.json(error, 404);
     }
 
     // Get user's projects
@@ -773,13 +776,16 @@ userRoutes.openapi(getUserDetailsRoute, async c => {
       }),
     );
 
-    return c.json({
-      user: userData,
-      projects: userProjects,
-      sessions: userSessions,
-      accounts: linkedAccounts,
-      orgs: orgsWithBilling,
-    });
+    return c.json(
+      {
+        user: userData,
+        projects: userProjects,
+        sessions: userSessions,
+        accounts: linkedAccounts,
+        orgs: orgsWithBilling,
+      },
+      200,
+    );
   } catch (err) {
     const error = err as Error;
     console.error('Error fetching user details:', error);
@@ -787,7 +793,7 @@ userRoutes.openapi(getUserDetailsRoute, async c => {
       operation: 'fetch_user_details',
       originalError: error.message,
     });
-    return c.json(dbError, dbError.statusCode as ContentfulStatusCode);
+    return c.json(dbError, 500);
   }
 });
 
@@ -795,7 +801,6 @@ userRoutes.openapi(getUserDetailsRoute, async c => {
  * POST /api/admin/users/:userId/ban
  * Ban a user
  */
-// @ts-expect-error OpenAPIHono strict return types don't account for error responses
 userRoutes.openapi(banUserRoute, async c => {
   const { userId } = c.req.valid('param');
   const db = createDb(c.env.DB);
@@ -821,7 +826,7 @@ userRoutes.openapi(banUserRoute, async c => {
         userId,
         'cannot_ban_self',
       );
-      return c.json(error, error.statusCode as ContentfulStatusCode);
+      return c.json(error, 400);
     }
 
     // Ban user and invalidate sessions atomically
@@ -838,7 +843,7 @@ userRoutes.openapi(banUserRoute, async c => {
       db.delete(session).where(eq(session.userId, userId)),
     ]);
 
-    return c.json({ success: true, message: 'User banned successfully' });
+    return c.json({ success: true, message: 'User banned successfully' }, 200);
   } catch (err) {
     const error = err as Error;
     console.error('Error banning user:', error);
@@ -846,7 +851,7 @@ userRoutes.openapi(banUserRoute, async c => {
       operation: 'ban_user',
       originalError: error.message,
     });
-    return c.json(dbError, dbError.statusCode as ContentfulStatusCode);
+    return c.json(dbError, 500);
   }
 });
 
@@ -854,7 +859,6 @@ userRoutes.openapi(banUserRoute, async c => {
  * POST /api/admin/users/:userId/unban
  * Unban a user
  */
-// @ts-expect-error OpenAPIHono strict return types don't account for error responses
 userRoutes.openapi(unbanUserRoute, async c => {
   const { userId } = c.req.valid('param');
   const db = createDb(c.env.DB);
@@ -870,7 +874,7 @@ userRoutes.openapi(unbanUserRoute, async c => {
       })
       .where(eq(user.id, userId));
 
-    return c.json({ success: true, message: 'User unbanned successfully' });
+    return c.json({ success: true, message: 'User unbanned successfully' }, 200);
   } catch (err) {
     const error = err as Error;
     console.error('Error unbanning user:', error);
@@ -878,7 +882,7 @@ userRoutes.openapi(unbanUserRoute, async c => {
       operation: 'unban_user',
       originalError: error.message,
     });
-    return c.json(dbError, dbError.statusCode as ContentfulStatusCode);
+    return c.json(dbError, 500);
   }
 });
 
@@ -886,7 +890,7 @@ userRoutes.openapi(unbanUserRoute, async c => {
  * POST /api/admin/users/:userId/impersonate
  * Start impersonating a user (creates a new session)
  */
-// @ts-expect-error OpenAPIHono strict return types don't account for error responses
+// @ts-expect-error Handler returns raw Response from Better Auth's handler
 userRoutes.openapi(impersonateUserRoute, async c => {
   const { userId } = c.req.valid('param');
   const adminUser = c.get('user') as AuthUser;
@@ -901,7 +905,7 @@ userRoutes.openapi(impersonateUserRoute, async c => {
         userId,
         'cannot_impersonate_self',
       );
-      return c.json(error, error.statusCode as ContentfulStatusCode);
+      return c.json(error, 400);
     }
 
     // Use Better Auth's handler for impersonation to properly handle cookies
@@ -945,7 +949,7 @@ userRoutes.openapi(impersonateUserRoute, async c => {
       operation: 'impersonate_user',
       originalError: error.message,
     });
-    return c.json(dbError, dbError.statusCode as ContentfulStatusCode);
+    return c.json(dbError, 500);
   }
 });
 
@@ -953,7 +957,6 @@ userRoutes.openapi(impersonateUserRoute, async c => {
  * DELETE /api/admin/users/:userId/sessions
  * Revoke all sessions for a user
  */
-// @ts-expect-error OpenAPIHono strict return types don't account for error responses
 userRoutes.openapi(revokeAllSessionsRoute, async c => {
   const { userId } = c.req.valid('param');
   const db = createDb(c.env.DB);
@@ -961,7 +964,7 @@ userRoutes.openapi(revokeAllSessionsRoute, async c => {
   try {
     await db.delete(session).where(eq(session.userId, userId));
 
-    return c.json({ success: true, message: 'All sessions revoked' });
+    return c.json({ success: true, message: 'All sessions revoked' }, 200);
   } catch (err) {
     const error = err as Error;
     console.error('Error revoking sessions:', error);
@@ -969,7 +972,7 @@ userRoutes.openapi(revokeAllSessionsRoute, async c => {
       operation: 'revoke_sessions',
       originalError: error.message,
     });
-    return c.json(dbError, dbError.statusCode as ContentfulStatusCode);
+    return c.json(dbError, 500);
   }
 });
 
@@ -977,7 +980,6 @@ userRoutes.openapi(revokeAllSessionsRoute, async c => {
  * DELETE /api/admin/users/:userId/sessions/:sessionId
  * Revoke a specific session for a user
  */
-// @ts-expect-error OpenAPIHono strict return types don't account for error responses
 userRoutes.openapi(revokeSessionRoute, async c => {
   const { userId, sessionId } = c.req.valid('param');
   const db = createDb(c.env.DB);
@@ -992,18 +994,18 @@ userRoutes.openapi(revokeSessionRoute, async c => {
 
     if (!existingSession) {
       const error = createDomainError(USER_ERRORS.NOT_FOUND, { sessionId });
-      return c.json(error, error.statusCode as ContentfulStatusCode);
+      return c.json(error, 404);
     }
 
     // Verify session belongs to the specified user
     if (existingSession.userId !== userId) {
       const error = createDomainError(USER_ERRORS.NOT_FOUND, { sessionId });
-      return c.json(error, error.statusCode as ContentfulStatusCode);
+      return c.json(error, 404);
     }
 
     await db.delete(session).where(eq(session.id, sessionId));
 
-    return c.json({ success: true, message: 'Session revoked' });
+    return c.json({ success: true, message: 'Session revoked' }, 200);
   } catch (err) {
     const error = err as Error;
     console.error('Error revoking session:', error);
@@ -1011,7 +1013,7 @@ userRoutes.openapi(revokeSessionRoute, async c => {
       operation: 'revoke_session',
       originalError: error.message,
     });
-    return c.json(dbError, dbError.statusCode as ContentfulStatusCode);
+    return c.json(dbError, 500);
   }
 });
 
@@ -1019,7 +1021,6 @@ userRoutes.openapi(revokeSessionRoute, async c => {
  * DELETE /api/admin/users/:userId
  * Delete a user and all their data
  */
-// @ts-expect-error OpenAPIHono strict return types don't account for error responses
 userRoutes.openapi(deleteUserRoute, async c => {
   const { userId } = c.req.valid('param');
   const adminUser = c.get('user') as AuthUser;
@@ -1034,7 +1035,7 @@ userRoutes.openapi(deleteUserRoute, async c => {
         userId,
         'cannot_delete_self',
       );
-      return c.json(error, error.statusCode as ContentfulStatusCode);
+      return c.json(error, 400);
     }
 
     // Fetch user to get email for verification cleanup
@@ -1044,7 +1045,7 @@ userRoutes.openapi(deleteUserRoute, async c => {
       .where(eq(user.id, userId));
     if (!userToDelete) {
       const error = createDomainError(USER_ERRORS.NOT_FOUND, { userId });
-      return c.json(error, error.statusCode as ContentfulStatusCode);
+      return c.json(error, 404);
     }
 
     // Fetch all projects the user is a member of before any deletions (with orgId)
@@ -1075,7 +1076,7 @@ userRoutes.openapi(deleteUserRoute, async c => {
       db.delete(user).where(eq(user.id, userId)),
     ]);
 
-    return c.json({ success: true, message: 'User deleted successfully' });
+    return c.json({ success: true, message: 'User deleted successfully' }, 200);
   } catch (err) {
     const error = err as Error;
     console.error('Error deleting user:', error);
@@ -1083,7 +1084,7 @@ userRoutes.openapi(deleteUserRoute, async c => {
       operation: 'delete_user',
       originalError: error.message,
     });
-    return c.json(dbError, dbError.statusCode as ContentfulStatusCode);
+    return c.json(dbError, 500);
   }
 });
 

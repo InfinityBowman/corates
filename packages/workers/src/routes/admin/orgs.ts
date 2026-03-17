@@ -4,7 +4,7 @@
  */
 
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
-import type { ContentfulStatusCode } from 'hono/utils/http-status';
+
 import { createDb } from '@/db/client.js';
 import { organization, member, projects } from '@/db/schema.js';
 import { eq, count, desc, like, or, sql } from 'drizzle-orm';
@@ -196,7 +196,6 @@ const getOrgDetailsRoute = createRoute({
  * GET /api/admin/orgs
  * List all orgs with pagination and search
  */
-// @ts-expect-error OpenAPIHono strict return types don't account for error responses
 orgRoutes.openapi(listOrgsRoute, async c => {
   const db = createDb(c.env.DB);
 
@@ -292,15 +291,18 @@ orgRoutes.openapi(listOrgsRoute, async c => {
       },
     }));
 
-    return c.json({
-      orgs: orgsWithStats,
-      pagination: {
-        page,
-        limit,
-        total,
-        totalPages: Math.ceil(total / limit),
+    return c.json(
+      {
+        orgs: orgsWithStats,
+        pagination: {
+          page,
+          limit,
+          total,
+          totalPages: Math.ceil(total / limit),
+        },
       },
-    });
+      200,
+    );
   } catch (err) {
     const error = err as Error;
     console.error('Error fetching orgs:', error);
@@ -308,7 +310,7 @@ orgRoutes.openapi(listOrgsRoute, async c => {
       operation: 'fetch_orgs',
       originalError: error.message,
     });
-    return c.json(dbError, dbError.statusCode as ContentfulStatusCode);
+    return c.json(dbError, 500);
   }
 });
 
@@ -316,7 +318,6 @@ orgRoutes.openapi(listOrgsRoute, async c => {
  * GET /api/admin/orgs/:orgId
  * Get org details with billing summary
  */
-// @ts-expect-error OpenAPIHono strict return types don't account for error responses
 orgRoutes.openapi(getOrgDetailsRoute, async c => {
   const { orgId } = c.req.valid('param');
   const db = createDb(c.env.DB);
@@ -329,7 +330,7 @@ orgRoutes.openapi(getOrgDetailsRoute, async c => {
         reason: 'org_not_found',
         orgId,
       });
-      return c.json(error, error.statusCode as ContentfulStatusCode);
+      return c.json(error, 403);
     }
 
     // Get member count
@@ -355,25 +356,28 @@ orgRoutes.openapi(getOrgDetailsRoute, async c => {
         getGrantPlan(orgBilling.effectivePlanId as GrantType)
       : getPlan(orgBilling.effectivePlanId);
 
-    return c.json({
-      org,
-      stats: {
-        memberCount,
-        projectCount,
-      },
-      billing: {
-        effectivePlanId: orgBilling.effectivePlanId,
-        source: orgBilling.source,
-        accessMode: orgBilling.accessMode,
-        plan: {
-          name: effectivePlan.name,
-          entitlements: effectivePlan.entitlements,
-          quotas: effectivePlan.quotas,
+    return c.json(
+      {
+        org,
+        stats: {
+          memberCount,
+          projectCount,
         },
-        subscription: orgBilling.subscription,
-        grant: orgBilling.grant,
+        billing: {
+          effectivePlanId: orgBilling.effectivePlanId,
+          source: orgBilling.source,
+          accessMode: orgBilling.accessMode,
+          plan: {
+            name: effectivePlan.name,
+            entitlements: effectivePlan.entitlements,
+            quotas: effectivePlan.quotas,
+          },
+          subscription: orgBilling.subscription,
+          grant: orgBilling.grant,
+        },
       },
-    });
+      200,
+    );
   } catch (err) {
     const error = err as Error;
     console.error('Error fetching org details:', error);
@@ -381,7 +385,7 @@ orgRoutes.openapi(getOrgDetailsRoute, async c => {
       operation: 'fetch_org_details',
       originalError: error.message,
     });
-    return c.json(dbError, dbError.statusCode as ContentfulStatusCode);
+    return c.json(dbError, 500);
   }
 });
 

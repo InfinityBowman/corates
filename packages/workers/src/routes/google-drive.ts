@@ -4,7 +4,7 @@
  */
 
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
-import type { ContentfulStatusCode } from 'hono/utils/http-status';
+
 import { requireAuth, getAuth } from '@/middleware/auth.js';
 import { createDb } from '@/db/client.js';
 import { account, projects, mediaFiles } from '@/db/schema.js';
@@ -221,7 +221,6 @@ const pickerTokenRoute = createRoute({
   },
 });
 
-// @ts-expect-error OpenAPIHono strict return types don't account for error responses
 googleDriveRoutes.openapi(pickerTokenRoute, async c => {
   const { user } = getAuth(c);
   const db = createDb(c.env.DB);
@@ -232,7 +231,7 @@ googleDriveRoutes.openapi(pickerTokenRoute, async c => {
       context: 'google_not_connected',
       code: 'GOOGLE_NOT_CONNECTED',
     });
-    return c.json(error, error.statusCode as ContentfulStatusCode);
+    return c.json(error, 401);
   }
 
   try {
@@ -240,10 +239,13 @@ googleDriveRoutes.openapi(pickerTokenRoute, async c => {
     const updatedTokens = await getGoogleTokens(db, user!.id);
     const expiresAt = updatedTokens?.accessTokenExpiresAt;
 
-    return c.json({
-      accessToken,
-      expiresAt: expiresAt instanceof Date ? expiresAt.toISOString() : expiresAt || null,
-    });
+    return c.json(
+      {
+        accessToken,
+        expiresAt: expiresAt instanceof Date ? expiresAt.toISOString() : expiresAt || null,
+      },
+      200,
+    );
   } catch (error) {
     console.error('Google Drive picker-token error:', error);
     const err = error as { message?: string; code?: string };
@@ -258,13 +260,13 @@ googleDriveRoutes.openapi(pickerTokenRoute, async c => {
             originalError: typeof err?.message === 'string' ? err.message : String(error),
           })
         );
-      return c.json(authError, authError.statusCode as ContentfulStatusCode);
+      return c.json(authError, 401);
     }
     const systemError = createDomainError(SYSTEM_ERRORS.INTERNAL_ERROR, {
       operation: 'get_google_picker_token',
       originalError: typeof err?.message === 'string' ? err.message : String(error),
     });
-    return c.json(systemError, systemError.statusCode as ContentfulStatusCode);
+    return c.json(systemError, 401);
   }
 });
 
@@ -281,10 +283,13 @@ const disconnectRoute = createRoute({
       content: { 'application/json': { schema: DisconnectSuccessSchema } },
       description: 'Disconnected successfully',
     },
+    500: {
+      content: { 'application/json': { schema: ErrorResponseSchema } },
+      description: 'Database error',
+    },
   },
 });
 
-// @ts-expect-error OpenAPIHono strict return types don't account for error responses
 googleDriveRoutes.openapi(disconnectRoute, async c => {
   const { user } = getAuth(c);
   const db = createDb(c.env.DB);
@@ -294,7 +299,7 @@ googleDriveRoutes.openapi(disconnectRoute, async c => {
       .delete(account)
       .where(and(eq(account.userId, user!.id), eq(account.providerId, 'google')));
 
-    return c.json({ success: true as const, message: 'Google account disconnected' });
+    return c.json({ success: true as const, message: 'Google account disconnected' }, 200);
   } catch (error) {
     console.error('Google disconnect error:', error);
     const err = error as Error;
@@ -302,7 +307,7 @@ googleDriveRoutes.openapi(disconnectRoute, async c => {
       operation: 'disconnect_google_account',
       originalError: err?.message || String(error),
     });
-    return c.json(systemError, systemError.statusCode as ContentfulStatusCode);
+    return c.json(systemError, 500);
   }
 });
 
@@ -350,7 +355,6 @@ const importRoute = createRoute({
   },
 });
 
-// @ts-expect-error OpenAPIHono strict return types don't account for error responses
 googleDriveRoutes.openapi(importRoute, async c => {
   const { user } = getAuth(c);
   const db = createDb(c.env.DB);
@@ -361,7 +365,7 @@ googleDriveRoutes.openapi(importRoute, async c => {
     await requireProjectEdit(db, user!.id, projectId);
   } catch (err) {
     if (isDomainError(err)) {
-      return c.json(err, err.statusCode as ContentfulStatusCode);
+      return c.json(err, 401);
     }
     throw err;
   }
@@ -373,7 +377,7 @@ googleDriveRoutes.openapi(importRoute, async c => {
       context: 'google_not_connected',
       code: 'GOOGLE_NOT_CONNECTED',
     });
-    return c.json(error, error.statusCode as ContentfulStatusCode);
+    return c.json(error, 401);
   }
 
   try {
@@ -395,13 +399,13 @@ googleDriveRoutes.openapi(importRoute, async c => {
           fileName: fileId,
           source: 'google-drive',
         });
-        return c.json(error, error.statusCode as ContentfulStatusCode);
+        return c.json(error, 404);
       }
       const systemError = createDomainError(SYSTEM_ERRORS.INTERNAL_ERROR, {
         operation: 'fetch_google_drive_file',
         originalError: `HTTP ${metaResponse.status}`,
       });
-      return c.json(systemError, systemError.statusCode as ContentfulStatusCode);
+      return c.json(systemError, 400);
     }
 
     const fileMeta = (await metaResponse.json()) as {
@@ -417,7 +421,7 @@ googleDriveRoutes.openapi(importRoute, async c => {
         expectedType: 'application/pdf',
         receivedType: fileMeta.mimeType,
       });
-      return c.json(error, error.statusCode as ContentfulStatusCode);
+      return c.json(error, 400);
     }
 
     // Check file size (limit to 50MB)
@@ -427,7 +431,7 @@ googleDriveRoutes.openapi(importRoute, async c => {
         maxSize: maxSize,
         fileSize: parseInt(fileMeta.size, 10),
       });
-      return c.json(error, error.statusCode as ContentfulStatusCode);
+      return c.json(error, 400);
     }
 
     // Download the file content
@@ -445,7 +449,7 @@ googleDriveRoutes.openapi(importRoute, async c => {
         operation: 'download_google_drive_file',
         originalError: `HTTP ${downloadResponse.status}`,
       });
-      return c.json(systemError, systemError.statusCode as ContentfulStatusCode);
+      return c.json(systemError, 400);
     }
 
     const fileContent = await downloadResponse.arrayBuffer();
@@ -458,7 +462,7 @@ googleDriveRoutes.openapi(importRoute, async c => {
         receivedType: 'unknown (invalid PDF signature)',
         source: 'google-drive',
       });
-      return c.json(error, error.statusCode as ContentfulStatusCode);
+      return c.json(error, 400);
     }
 
     // Get project to retrieve orgId
@@ -474,7 +478,7 @@ googleDriveRoutes.openapi(importRoute, async c => {
         projectId,
         message: 'Project not found',
       });
-      return c.json(error, error.statusCode as ContentfulStatusCode);
+      return c.json(error, 404);
     }
 
     // Generate unique filename
@@ -518,28 +522,31 @@ googleDriveRoutes.openapi(importRoute, async c => {
       console.error('Failed to insert mediaFiles record after Google Drive import:', dbError);
     }
 
-    return c.json({
-      success: true as const,
-      id: mediaFileId,
-      file: {
-        key: r2Key,
-        fileName: uniqueFileName,
-        originalFileName: originalFileName !== uniqueFileName ? originalFileName : undefined,
-        size: fileSize,
-        source: 'google-drive' as const,
+    return c.json(
+      {
+        success: true as const,
+        id: mediaFileId,
+        file: {
+          key: r2Key,
+          fileName: uniqueFileName,
+          originalFileName: originalFileName !== uniqueFileName ? originalFileName : undefined,
+          size: fileSize,
+          source: 'google-drive' as const,
+        },
       },
-    });
+      200,
+    );
   } catch (error) {
     console.error('Google Drive import error:', error);
     if (isDomainError(error)) {
-      return c.json(error, error.statusCode as ContentfulStatusCode);
+      return c.json(error, 400);
     }
     const err = error as Error;
     const systemError = createDomainError(SYSTEM_ERRORS.INTERNAL_ERROR, {
       operation: 'import_google_drive_file',
       originalError: typeof err?.message === 'string' ? err.message : String(error),
     });
-    return c.json(systemError, systemError.statusCode as ContentfulStatusCode);
+    return c.json(systemError, 400);
   }
 });
 

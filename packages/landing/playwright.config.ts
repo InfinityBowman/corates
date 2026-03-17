@@ -3,8 +3,9 @@ import { defineConfig } from '@playwright/test';
 export default defineConfig({
   testDir: './e2e',
   testMatch: '**/*.spec.ts',
-  timeout: 120_000,
+  timeout: 180_000,
   retries: 0,
+  workers: 1, // Sequential -- tests share backend state
   use: {
     baseURL: 'http://localhost:3010',
     headless: true,

@@ -163,10 +163,13 @@ billingSubscriptionRoutes.openapi(usageRoute, async c => {
     const { getOrgResourceUsage } = await import('@/lib/billingResolver.js');
     const usage = await getOrgResourceUsage(db, orgId);
 
-    return c.json({
-      projects: usage.projects,
-      collaborators: usage.collaborators,
-    }, 200);
+    return c.json(
+      {
+        projects: usage.projects,
+        collaborators: usage.collaborators,
+      },
+      200,
+    );
   } catch (err) {
     const error = err as Error;
     console.error('Error fetching org usage:', error);
@@ -218,21 +221,24 @@ billingSubscriptionRoutes.openapi(subscriptionRoute, async c => {
         : orgBilling.subscription.periodEnd
       : null;
 
-    return c.json({
-      tier: orgBilling.effectivePlanId,
-      status:
-        orgBilling.subscription?.status || (orgBilling.source === 'free' ? 'inactive' : 'active'),
-      tierInfo: {
-        name: effectivePlan.name,
-        description: `Plan: ${effectivePlan.name}`,
+    return c.json(
+      {
+        tier: orgBilling.effectivePlanId,
+        status:
+          orgBilling.subscription?.status || (orgBilling.source === 'free' ? 'inactive' : 'active'),
+        tierInfo: {
+          name: effectivePlan.name,
+          description: `Plan: ${effectivePlan.name}`,
+        },
+        stripeSubscriptionId: orgBilling.subscription?.id || null,
+        currentPeriodEnd,
+        cancelAtPeriodEnd: orgBilling.subscription?.cancelAtPeriodEnd || false,
+        accessMode: orgBilling.accessMode,
+        source: orgBilling.source,
+        projectCount: projectCountResult?.count || 0,
       },
-      stripeSubscriptionId: orgBilling.subscription?.id || null,
-      currentPeriodEnd,
-      cancelAtPeriodEnd: orgBilling.subscription?.cancelAtPeriodEnd || false,
-      accessMode: orgBilling.accessMode,
-      source: orgBilling.source,
-      projectCount: projectCountResult?.count || 0,
-    }, 200);
+      200,
+    );
   } catch (err) {
     const error = err as Error;
     console.error('Error fetching org billing:', error);
@@ -280,10 +286,13 @@ billingSubscriptionRoutes.openapi(membersRoute, async c => {
     });
 
     const members = (result.members || []) as z.infer<typeof MemberSchema>[];
-    return c.json({
-      members,
-      count: members.length,
-    }, 200);
+    return c.json(
+      {
+        members,
+        count: members.length,
+      },
+      200,
+    );
   } catch (err) {
     const error = err as Error;
     console.error('Error fetching org members:', error);

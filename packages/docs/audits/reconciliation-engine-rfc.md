@@ -341,7 +341,7 @@ Delete the three `*WithPdf.tsx` wrappers, the three `*Reconciliation.tsx` state 
 
 **getTextRef normalization**: The three types receive different Yjs text accessor functions (`getQuestionNote`, `getRob2Text`, `getRobinsText`) with different signatures. The wrapper normalizes these into a single `getTextRef` prop before passing to the engine. The adapter calls it with the correct argument pattern for its type inside `autoFillFromReviewer1` and `renderPage`.
 
-**ROB2 skippable-questions side effect**: The auto-NA logic currently in a `useEffect` in `ROB2Reconciliation.tsx` moves into the adapter's `onAfterNavigate` method. The engine calls it after each navigation step. AMSTAR2 and ROBINS-I adapters omit this method.
+**Skippable-questions side effects via `onAfterNavigate`**: ROB2's auto-NA logic (currently in a `useEffect` in `ROB2Reconciliation.tsx`) moves into the adapter's `onAfterNavigate` method. The engine calls it after each navigation step. ROBINS-I will likely gain similar skip logic in the future (scoring can cause certain questions to become skippable, though users currently select manually). The `onAfterNavigate` hook is the designated seam for both -- when ROBINS-I adds skip detection, it implements this same adapter method without touching the engine. AMSTAR2 omits this method.
 
 **localStorage key stability**: Each type currently uses a different key prefix. The engine uses a unified `recon-nav-${checklistType}-${c1id}-${c2id}` format. Existing persisted state from old keys will be silently ignored on first load (defaults to page 0), which is safe.
 

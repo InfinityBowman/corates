@@ -144,7 +144,8 @@ retries += 1;
 ## Documentation
 
 - **Primary source**: Comprehensive guides are in the docs site (`packages/docs/`) - run `pnpm docs` to view
-- **ALWAYS use Corates MCP tools or other MCP** for Better-Auth, Drizzle, Icons, linting, and TanStack documentation
+- **ALWAYS use Corates MCP tools or other MCP** for Better-Auth, Drizzle, Icons, and linting
+- **TanStack documentation**: Use the TanStack CLI: `npx @tanstack/cli search-docs "<query>" --library <router|start|query> --framework react --json`
 - **Hono documentation**: Use the `hono` CLI for Hono docs. Run `hono docs [path]` to view docs, `hono search <query>` to fuzzy search, or `hono --help` for all commands
 - **For comprehensive documentation**, see the docs site guides in `packages/docs/guides/`:
   - testing.md - Frontend and backend testing patterns, setup, and best practices

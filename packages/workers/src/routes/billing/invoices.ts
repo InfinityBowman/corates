@@ -3,7 +3,6 @@
  * Fetches invoices from Stripe for the current org's subscription
  */
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
-import type { ContentfulStatusCode } from 'hono/utils/http-status';
 import { requireAuth, getAuth } from '@/middleware/auth.js';
 import { createDb } from '@/db/client.js';
 import { subscription } from '@/db/schema.js';
@@ -67,13 +66,12 @@ const getInvoicesRoute = createRoute({
 // Route handlers
 billingInvoicesRoutes.use('*', requireAuth);
 
-// @ts-expect-error OpenAPIHono strict return types don't account for error responses
 billingInvoicesRoutes.openapi(getInvoicesRoute, async c => {
   const { user, session } = getAuth(c);
 
   if (!user || !session) {
     const error = createDomainError(AUTH_ERRORS.REQUIRED, { reason: 'no_user' });
-    return c.json(error, error.statusCode as ContentfulStatusCode);
+    return c.json(error, 403);
   }
 
   const db = createDb(c.env.DB);
@@ -85,7 +83,7 @@ billingInvoicesRoutes.openapi(getInvoicesRoute, async c => {
       const error = createDomainError(AUTH_ERRORS.FORBIDDEN, {
         reason: 'no_org_found',
       });
-      return c.json(error, error.statusCode as ContentfulStatusCode);
+      return c.json(error, 403);
     }
 
     // Get the subscription for this org to find the Stripe customer ID
@@ -106,7 +104,7 @@ billingInvoicesRoutes.openapi(getInvoicesRoute, async c => {
 
     // If no subscription found, return empty invoices
     if (!orgSubscription?.stripeCustomerId) {
-      return c.json({ invoices: [] });
+      return c.json({ invoices: [] }, 200);
     }
 
     // Initialize Stripe client
@@ -124,29 +122,29 @@ billingInvoicesRoutes.openapi(getInvoicesRoute, async c => {
       number: invoice.number,
       amount: invoice.amount_paid / 100, // Convert from cents
       currency: invoice.currency,
-      status: invoice.status,
+      status: invoice.status as string | null,
       created: invoice.created,
       periodStart: invoice.period_start,
       periodEnd: invoice.period_end,
-      pdfUrl: invoice.invoice_pdf,
-      hostedUrl: invoice.hosted_invoice_url,
+      pdfUrl: invoice.invoice_pdf ?? null,
+      hostedUrl: invoice.hosted_invoice_url ?? null,
     }));
 
-    return c.json({ invoices });
+    return c.json({ invoices }, 200);
   } catch (err) {
     const error = err as Error & { code?: string; statusCode?: number };
     console.error('Error fetching invoices:', error);
 
     // If error is already a domain error, return it as-is
     if (error.code && error.statusCode) {
-      return c.json(error, error.statusCode as ContentfulStatusCode);
+      return c.json(error as z.infer<typeof ErrorResponseSchema>, 403);
     }
 
     const systemError = createDomainError(SYSTEM_ERRORS.INTERNAL_ERROR, {
       operation: 'fetch_invoices',
       originalError: error.message,
     });
-    return c.json(systemError, systemError.statusCode as ContentfulStatusCode);
+    return c.json(systemError, 500);
   }
 });
 

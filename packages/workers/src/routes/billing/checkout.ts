@@ -3,7 +3,6 @@
  * Handles Stripe Checkout session creation for subscriptions and one-time purchases
  */
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
-import type { ContentfulStatusCode } from 'hono/utils/http-status';
 import { requireAuth, getAuth } from '@/middleware/auth';
 import { createDb } from '@/db/client';
 import { user as userTable } from '@/db/schema';
@@ -242,7 +241,6 @@ billingCheckoutRoutes.openapi(validateCouponRoute, async c => {
   }
 });
 
-// @ts-expect-error OpenAPIHono strict return types don't account for error responses
 billingCheckoutRoutes.openapi(checkoutRoute, async c => {
   const { user, session } = getAuth(c);
   const db = createDb(c.env.DB);
@@ -265,7 +263,7 @@ billingCheckoutRoutes.openapi(checkoutRoute, async c => {
         field: 'tier',
         value: tier,
       });
-      return c.json(error, error.statusCode as ContentfulStatusCode);
+      return c.json(error, 400);
     }
 
     // Check if user already has an active subscription with the same plan
@@ -281,7 +279,7 @@ billingCheckoutRoutes.openapi(checkoutRoute, async c => {
         },
         `You are already subscribed to the ${tier} plan. To change your billing interval, use the billing portal.`,
       );
-      return c.json(error, error.statusCode as ContentfulStatusCode);
+      return c.json(error, 400);
     }
 
     // Validate plan change to prevent downgrades that exceed quotas
@@ -297,7 +295,7 @@ billingCheckoutRoutes.openapi(checkoutRoute, async c => {
         },
         validationResult.violations.map(v => v.message).join(' '),
       );
-      return c.json(error, error.statusCode as ContentfulStatusCode);
+      return c.json(error, 400);
     }
 
     // Log checkout initiation
@@ -339,7 +337,7 @@ billingCheckoutRoutes.openapi(checkoutRoute, async c => {
         result?.url?.includes('cs_') ? result.url.split('/').pop() : undefined,
     });
 
-    return c.json(result);
+    return c.json(result, 200);
   } catch (error) {
     const err = error as Error & { code?: string; statusCode?: number };
     logger.error('checkout_failed', {
@@ -351,18 +349,17 @@ billingCheckoutRoutes.openapi(checkoutRoute, async c => {
 
     // If error is already a domain error, return it as-is
     if (err.code && err.statusCode) {
-      return c.json(error, err.statusCode as ContentfulStatusCode);
+      return c.json(error as z.infer<typeof ErrorResponseSchema>, 403);
     }
 
     const systemError = createDomainError(SYSTEM_ERRORS.INTERNAL_ERROR, {
       operation: 'create_checkout_session',
       originalError: err.message,
     });
-    return c.json(systemError, systemError.statusCode as ContentfulStatusCode);
+    return c.json(systemError, 500);
   }
 });
 
-// @ts-expect-error OpenAPIHono strict return types don't account for error responses
 billingCheckoutRoutes.openapi(singleProjectCheckoutRoute, async c => {
   const { user, session } = getAuth(c);
   const db = createDb(c.env.DB);
@@ -411,7 +408,7 @@ billingCheckoutRoutes.openapi(singleProjectCheckoutRoute, async c => {
       stripeCustomerId: userRecord?.stripeCustomerId || undefined,
     });
 
-    return c.json(result);
+    return c.json(result, 200);
   } catch (error) {
     const err = error as Error & { code?: string; statusCode?: number };
     logger.stripe('single_project_checkout_failed', {
@@ -423,14 +420,14 @@ billingCheckoutRoutes.openapi(singleProjectCheckoutRoute, async c => {
 
     // If error is already a domain error, return it as-is
     if (err.code && err.statusCode) {
-      return c.json(error, err.statusCode as ContentfulStatusCode);
+      return c.json(error as z.infer<typeof ErrorResponseSchema>, 403);
     }
 
     const systemError = createDomainError(SYSTEM_ERRORS.INTERNAL_ERROR, {
       operation: 'create_single_project_checkout',
       originalError: err.message,
     });
-    return c.json(systemError, systemError.statusCode as ContentfulStatusCode);
+    return c.json(systemError, 500);
   }
 });
 

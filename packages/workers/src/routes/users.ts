@@ -4,7 +4,7 @@
  */
 
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
-import type { ContentfulStatusCode } from 'hono/utils/http-status';
+
 import { createDb } from '@/db/client';
 import {
   projects,
@@ -119,15 +119,22 @@ const searchUsersRoute = createRoute({
       content: { 'application/json': { schema: ErrorResponseSchema } },
       description: 'Validation error',
     },
+    401: {
+      content: { 'application/json': { schema: ErrorResponseSchema } },
+      description: 'Unauthorized',
+    },
+    500: {
+      content: { 'application/json': { schema: ErrorResponseSchema } },
+      description: 'Database error',
+    },
   },
 });
 
-// @ts-expect-error OpenAPIHono strict return types don't account for error responses
 userRoutes.openapi(searchUsersRoute, async c => {
   const { user: currentUser } = getAuth(c);
   if (!currentUser) {
     const error = createDomainError(AUTH_ERRORS.REQUIRED, { reason: 'no_user' });
-    return c.json(error, error.statusCode as ContentfulStatusCode);
+    return c.json(error, 401);
   }
 
   const { q: query, projectId, limit } = c.req.valid('query');
@@ -180,7 +187,7 @@ userRoutes.openapi(searchUsersRoute, async c => {
       email: query.includes('@') ? u.email : maskEmail(u.email),
     }));
 
-    return c.json(sanitizedResults);
+    return c.json(sanitizedResults, 200);
   } catch (err) {
     const error = err as Error;
     console.error('Error searching users:', error);
@@ -188,7 +195,7 @@ userRoutes.openapi(searchUsersRoute, async c => {
       operation: 'search_users',
       originalError: error.message,
     });
-    return c.json(dbError, dbError.statusCode as ContentfulStatusCode);
+    return c.json(dbError, 500);
   }
 });
 
@@ -209,15 +216,22 @@ const getMyProjectsRoute = createRoute({
       },
       description: 'User projects',
     },
+    401: {
+      content: { 'application/json': { schema: ErrorResponseSchema } },
+      description: 'Unauthorized',
+    },
+    500: {
+      content: { 'application/json': { schema: ErrorResponseSchema } },
+      description: 'Database error',
+    },
   },
 });
 
-// @ts-expect-error OpenAPIHono strict return types don't account for error responses
 userRoutes.openapi(getMyProjectsRoute, async c => {
   const { user: authUser } = getAuth(c);
   if (!authUser) {
     const error = createDomainError(AUTH_ERRORS.REQUIRED, { reason: 'no_user' });
-    return c.json(error, error.statusCode as ContentfulStatusCode);
+    return c.json(error, 401);
   }
 
   const db = createDb(c.env.DB);
@@ -238,7 +252,7 @@ userRoutes.openapi(getMyProjectsRoute, async c => {
       .where(eq(projectMembers.userId, authUser.id))
       .orderBy(desc(projects.updatedAt));
 
-    return c.json(results);
+    return c.json(results as unknown as z.infer<typeof UserProjectSchema>[], 200);
   } catch (err) {
     const error = err as Error;
     console.error('Error fetching user projects:', error);
@@ -246,7 +260,7 @@ userRoutes.openapi(getMyProjectsRoute, async c => {
       operation: 'fetch_user_projects',
       originalError: error.message,
     });
-    return c.json(dbError, dbError.statusCode as ContentfulStatusCode);
+    return c.json(dbError, 500);
   }
 });
 
@@ -272,19 +286,26 @@ const getUserProjectsRoute = createRoute({
       },
       description: 'User projects',
     },
+    401: {
+      content: { 'application/json': { schema: ErrorResponseSchema } },
+      description: 'Unauthorized',
+    },
     403: {
       content: { 'application/json': { schema: ErrorResponseSchema } },
       description: 'Forbidden',
     },
+    500: {
+      content: { 'application/json': { schema: ErrorResponseSchema } },
+      description: 'Database error',
+    },
   },
 });
 
-// @ts-expect-error OpenAPIHono strict return types don't account for error responses
 userRoutes.openapi(getUserProjectsRoute, async c => {
   const { user: authUser } = getAuth(c);
   if (!authUser) {
     const error = createDomainError(AUTH_ERRORS.REQUIRED, { reason: 'no_user' });
-    return c.json(error, error.statusCode as ContentfulStatusCode);
+    return c.json(error, 401);
   }
 
   const { userId } = c.req.valid('param');
@@ -293,7 +314,7 @@ userRoutes.openapi(getUserProjectsRoute, async c => {
     const error = createDomainError(AUTH_ERRORS.FORBIDDEN, {
       reason: 'view_other_user_projects',
     });
-    return c.json(error, error.statusCode as ContentfulStatusCode);
+    return c.json(error, 403);
   }
 
   const db = createDb(c.env.DB);
@@ -314,7 +335,7 @@ userRoutes.openapi(getUserProjectsRoute, async c => {
       .where(eq(projectMembers.userId, userId))
       .orderBy(desc(projects.updatedAt));
 
-    return c.json(results);
+    return c.json(results as unknown as z.infer<typeof UserProjectSchema>[], 200);
   } catch (err) {
     const error = err as Error;
     console.error('Error fetching user projects:', error);
@@ -322,7 +343,7 @@ userRoutes.openapi(getUserProjectsRoute, async c => {
       operation: 'fetch_user_projects',
       originalError: error.message,
     });
-    return c.json(dbError, dbError.statusCode as ContentfulStatusCode);
+    return c.json(dbError, 500);
   }
 });
 
@@ -343,15 +364,22 @@ const deleteMyAccountRoute = createRoute({
       },
       description: 'Account deleted successfully',
     },
+    401: {
+      content: { 'application/json': { schema: ErrorResponseSchema } },
+      description: 'Unauthorized',
+    },
+    500: {
+      content: { 'application/json': { schema: ErrorResponseSchema } },
+      description: 'Database error',
+    },
   },
 });
 
-// @ts-expect-error OpenAPIHono strict return types don't account for error responses
 userRoutes.openapi(deleteMyAccountRoute, async c => {
   const { user: currentUser } = getAuth(c);
   if (!currentUser) {
     const error = createDomainError(AUTH_ERRORS.REQUIRED, { reason: 'no_user' });
-    return c.json(error, error.statusCode as ContentfulStatusCode);
+    return c.json(error, 401);
   }
 
   const db = createDb(c.env.DB);
@@ -384,7 +412,7 @@ userRoutes.openapi(deleteMyAccountRoute, async c => {
 
     console.log(`Account deleted successfully for user: ${userId}`);
 
-    return c.json({ success: true as const, message: 'Account deleted successfully' });
+    return c.json({ success: true as const, message: 'Account deleted successfully' }, 200);
   } catch (err) {
     const error = err as Error;
     console.error('Error deleting account:', error);
@@ -392,7 +420,7 @@ userRoutes.openapi(deleteMyAccountRoute, async c => {
       operation: 'delete_account',
       originalError: error.message,
     });
-    return c.json(dbError, dbError.statusCode as ContentfulStatusCode);
+    return c.json(dbError, 500);
   }
 });
 
@@ -413,19 +441,26 @@ const syncProfileRoute = createRoute({
       },
       description: 'Profile synced successfully',
     },
+    401: {
+      content: { 'application/json': { schema: ErrorResponseSchema } },
+      description: 'Unauthorized',
+    },
     404: {
       content: { 'application/json': { schema: ErrorResponseSchema } },
       description: 'User not found',
     },
+    500: {
+      content: { 'application/json': { schema: ErrorResponseSchema } },
+      description: 'Database error',
+    },
   },
 });
 
-// @ts-expect-error OpenAPIHono strict return types don't account for error responses
 userRoutes.openapi(syncProfileRoute, async c => {
   const { user: currentUser } = getAuth(c);
   if (!currentUser) {
     const error = createDomainError(AUTH_ERRORS.REQUIRED, { reason: 'no_user' });
-    return c.json(error, error.statusCode as ContentfulStatusCode);
+    return c.json(error, 401);
   }
 
   const db = createDb(c.env.DB);
@@ -444,7 +479,7 @@ userRoutes.openapi(syncProfileRoute, async c => {
 
     if (!userData) {
       const error = createDomainError(USER_ERRORS.NOT_FOUND, { userId: currentUser.id });
-      return c.json(error, error.statusCode as ContentfulStatusCode);
+      return c.json(error, 404);
     }
 
     const userProjects = await db
@@ -478,11 +513,14 @@ userRoutes.openapi(syncProfileRoute, async c => {
     const results = await Promise.all(syncPromises);
     const successCount = results.filter(r => r.success).length;
 
-    return c.json({
-      success: true as const,
-      synced: successCount,
-      total: userProjects.length,
-    });
+    return c.json(
+      {
+        success: true as const,
+        synced: successCount,
+        total: userProjects.length,
+      },
+      200,
+    );
   } catch (err) {
     const error = err as Error;
     console.error('Error syncing profile:', error);
@@ -490,7 +528,7 @@ userRoutes.openapi(syncProfileRoute, async c => {
       operation: 'sync_profile',
       originalError: error.message,
     });
-    return c.json(dbError, dbError.statusCode as ContentfulStatusCode);
+    return c.json(dbError, 500);
   }
 });
 

@@ -4,7 +4,7 @@
  */
 
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
-import type { ContentfulStatusCode } from 'hono/utils/http-status';
+
 import { createDb } from '@/db/client.js';
 import { user, organization, stripeEventLedger, projects } from '@/db/schema.js';
 import { sql, count, gte } from 'drizzle-orm';
@@ -327,7 +327,6 @@ function fillMissingDays(
  * GET /api/admin/stats/signups
  * Returns daily signup counts for the specified number of days
  */
-// @ts-expect-error OpenAPIHono strict return types don't account for error responses
 statsRoutes.openapi(signupsRoute, async c => {
   const db = createDb(c.env.DB);
   const query = c.req.valid('query');
@@ -353,11 +352,14 @@ statsRoutes.openapi(signupsRoute, async c => {
     // Fill in missing days with zero counts
     const filledData = fillMissingDays(results, days);
 
-    return c.json({
-      data: filledData,
-      total: filledData.reduce((sum, d) => sum + d.count, 0),
-      days,
-    });
+    return c.json(
+      {
+        data: filledData,
+        total: filledData.reduce((sum, d) => sum + d.count, 0),
+        days,
+      },
+      200,
+    );
   } catch (err) {
     const error = err as Error;
     console.error('Error fetching signup stats:', error);
@@ -365,7 +367,7 @@ statsRoutes.openapi(signupsRoute, async c => {
       operation: 'fetch_signup_stats',
       originalError: error.message,
     });
-    return c.json(dbError, dbError.statusCode as ContentfulStatusCode);
+    return c.json(dbError, 500);
   }
 });
 
@@ -373,7 +375,6 @@ statsRoutes.openapi(signupsRoute, async c => {
  * GET /api/admin/stats/organizations
  * Returns daily organization creation counts
  */
-// @ts-expect-error OpenAPIHono strict return types don't account for error responses
 statsRoutes.openapi(organizationsRoute, async c => {
   const db = createDb(c.env.DB);
   const query = c.req.valid('query');
@@ -397,11 +398,14 @@ statsRoutes.openapi(organizationsRoute, async c => {
 
     const filledData = fillMissingDays(results, days);
 
-    return c.json({
-      data: filledData,
-      total: filledData.reduce((sum, d) => sum + d.count, 0),
-      days,
-    });
+    return c.json(
+      {
+        data: filledData,
+        total: filledData.reduce((sum, d) => sum + d.count, 0),
+        days,
+      },
+      200,
+    );
   } catch (err) {
     const error = err as Error;
     console.error('Error fetching organization stats:', error);
@@ -409,7 +413,7 @@ statsRoutes.openapi(organizationsRoute, async c => {
       operation: 'fetch_org_stats',
       originalError: error.message,
     });
-    return c.json(dbError, dbError.statusCode as ContentfulStatusCode);
+    return c.json(dbError, 500);
   }
 });
 
@@ -417,7 +421,6 @@ statsRoutes.openapi(organizationsRoute, async c => {
  * GET /api/admin/stats/projects
  * Returns daily project creation counts
  */
-// @ts-expect-error OpenAPIHono strict return types don't account for error responses
 statsRoutes.openapi(projectsRoute, async c => {
   const db = createDb(c.env.DB);
   const query = c.req.valid('query');
@@ -441,11 +444,14 @@ statsRoutes.openapi(projectsRoute, async c => {
 
     const filledData = fillMissingDays(results, days);
 
-    return c.json({
-      data: filledData,
-      total: filledData.reduce((sum, d) => sum + d.count, 0),
-      days,
-    });
+    return c.json(
+      {
+        data: filledData,
+        total: filledData.reduce((sum, d) => sum + d.count, 0),
+        days,
+      },
+      200,
+    );
   } catch (err) {
     const error = err as Error;
     console.error('Error fetching project stats:', error);
@@ -453,7 +459,7 @@ statsRoutes.openapi(projectsRoute, async c => {
       operation: 'fetch_project_stats',
       originalError: error.message,
     });
-    return c.json(dbError, dbError.statusCode as ContentfulStatusCode);
+    return c.json(dbError, 500);
   }
 });
 
@@ -474,7 +480,6 @@ interface WebhookDayData {
  * GET /api/admin/stats/webhooks
  * Returns webhook event counts by day, grouped by success/failure
  */
-// @ts-expect-error OpenAPIHono strict return types don't account for error responses
 statsRoutes.openapi(webhooksRoute, async c => {
   const db = createDb(c.env.DB);
   const query = c.req.valid('query');
@@ -527,15 +532,18 @@ statsRoutes.openapi(webhooksRoute, async c => {
       filledData.push(existing || { date: dateStr, success: 0, failed: 0, pending: 0 });
     }
 
-    return c.json({
-      data: filledData,
-      totals: {
-        success: filledData.reduce((sum, d) => sum + d.success, 0),
-        failed: filledData.reduce((sum, d) => sum + d.failed, 0),
-        pending: filledData.reduce((sum, d) => sum + d.pending, 0),
+    return c.json(
+      {
+        data: filledData,
+        totals: {
+          success: filledData.reduce((sum, d) => sum + d.success, 0),
+          failed: filledData.reduce((sum, d) => sum + d.failed, 0),
+          pending: filledData.reduce((sum, d) => sum + d.pending, 0),
+        },
+        days,
       },
-      days,
-    });
+      200,
+    );
   } catch (err) {
     const error = err as Error;
     console.error('Error fetching webhook stats:', error);
@@ -543,7 +551,7 @@ statsRoutes.openapi(webhooksRoute, async c => {
       operation: 'fetch_webhook_stats',
       originalError: error.message,
     });
-    return c.json(dbError, dbError.statusCode as ContentfulStatusCode);
+    return c.json(dbError, 500);
   }
 });
 
@@ -551,7 +559,6 @@ statsRoutes.openapi(webhooksRoute, async c => {
  * GET /api/admin/stats/subscriptions
  * Returns subscription status breakdown from Stripe
  */
-// @ts-expect-error OpenAPIHono strict return types don't account for error responses
 statsRoutes.openapi(subscriptionsRoute, async c => {
   try {
     const stripe = createStripeClient(c.env);
@@ -564,13 +571,16 @@ statsRoutes.openapi(subscriptionsRoute, async c => {
       stripe.subscriptions.search({ query: 'status:"canceled"', limit: 100 }),
     ]);
 
-    return c.json({
-      active: statusCounts[0].data.length,
-      trialing: statusCounts[1].data.length,
-      pastDue: statusCounts[2].data.length,
-      canceled: statusCounts[3].data.length,
-      hasMore: statusCounts.some(r => r.has_more),
-    });
+    return c.json(
+      {
+        active: statusCounts[0].data.length,
+        trialing: statusCounts[1].data.length,
+        pastDue: statusCounts[2].data.length,
+        canceled: statusCounts[3].data.length,
+        hasMore: statusCounts.some(r => r.has_more),
+      },
+      200,
+    );
   } catch (err) {
     const error = err as Error;
     console.error('Error fetching subscription stats:', error);
@@ -578,7 +588,7 @@ statsRoutes.openapi(subscriptionsRoute, async c => {
       service: 'Stripe',
       message: error.message,
     });
-    return c.json(stripeError, stripeError.statusCode as ContentfulStatusCode);
+    return c.json(stripeError, 500);
   }
 });
 
@@ -586,7 +596,6 @@ statsRoutes.openapi(subscriptionsRoute, async c => {
  * GET /api/admin/stats/revenue
  * Returns monthly revenue from Stripe
  */
-// @ts-expect-error OpenAPIHono strict return types don't account for error responses
 statsRoutes.openapi(revenueRoute, async c => {
   const query = c.req.valid('query');
   const months = Math.min(parseInt(query.months || '6', 10) || 6, 12);
@@ -632,12 +641,15 @@ statsRoutes.openapi(revenueRoute, async c => {
       });
     }
 
-    return c.json({
-      data,
-      total: data.reduce((sum, d) => sum + d.revenue, 0),
-      currency: 'usd',
-      months,
-    });
+    return c.json(
+      {
+        data,
+        total: data.reduce((sum, d) => sum + d.revenue, 0),
+        currency: 'usd',
+        months,
+      },
+      200,
+    );
   } catch (err) {
     const error = err as Error;
     console.error('Error fetching revenue stats:', error);
@@ -645,7 +657,7 @@ statsRoutes.openapi(revenueRoute, async c => {
       service: 'Stripe',
       message: error.message,
     });
-    return c.json(stripeError, stripeError.statusCode as ContentfulStatusCode);
+    return c.json(stripeError, 500);
   }
 });
 

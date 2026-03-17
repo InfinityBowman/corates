@@ -4,7 +4,7 @@
  */
 
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
-import type { ContentfulStatusCode } from 'hono/utils/http-status';
+
 import { createDb } from '@/db/client';
 import { projectMembers, user, projects, projectInvitations } from '@/db/schema';
 import { eq, and } from 'drizzle-orm';
@@ -62,12 +62,12 @@ async function projectMembershipMiddleware(
       { field: 'projectId' },
       'Project ID required',
     );
-    return c.json(error, error.statusCode as ContentfulStatusCode);
+    return c.json(error, 400);
   }
 
   if (!authUser) {
     const error = createDomainError(AUTH_ERRORS.REQUIRED, { reason: 'no_user' });
-    return c.json(error, error.statusCode as ContentfulStatusCode);
+    return c.json(error, 401);
   }
 
   const db = createDb(c.env.DB);
@@ -75,7 +75,7 @@ async function projectMembershipMiddleware(
 
   if (!membership || !membership.role) {
     const error = createDomainError(PROJECT_ERRORS.ACCESS_DENIED, { projectId });
-    return c.json(error, error.statusCode as ContentfulStatusCode);
+    return c.json(error, 403);
   }
 
   c.set('projectId', projectId);
@@ -292,7 +292,6 @@ const removeMemberRoute = createRoute({
 });
 
 // Route handlers
-// @ts-expect-error OpenAPIHono strict return types don't account for error responses
 memberRoutes.openapi(listMembersRoute, async c => {
   const projectId = c.get('projectId');
   const db = createDb(c.env.DB);
@@ -315,7 +314,7 @@ memberRoutes.openapi(listMembersRoute, async c => {
       .where(eq(projectMembers.projectId, projectId))
       .orderBy(projectMembers.joinedAt);
 
-    return c.json(results);
+    return c.json(results as unknown as z.infer<typeof MemberListSchema>, 200);
   } catch (err) {
     const error = err as Error;
     console.error('Error listing members:', error);
@@ -323,11 +322,10 @@ memberRoutes.openapi(listMembersRoute, async c => {
       operation: 'list_members',
       originalError: error.message,
     });
-    return c.json(dbError, dbError.statusCode as ContentfulStatusCode);
+    return c.json(dbError, 500);
   }
 });
 
-// @ts-expect-error OpenAPIHono strict return types don't account for error responses
 memberRoutes.openapi(addMemberRoute, async c => {
   const projectId = c.get('projectId');
   const db = createDb(c.env.DB);
@@ -336,14 +334,14 @@ memberRoutes.openapi(addMemberRoute, async c => {
 
   if (!authUser) {
     const error = createDomainError(AUTH_ERRORS.REQUIRED, { reason: 'no_user' });
-    return c.json(error, error.statusCode as ContentfulStatusCode);
+    return c.json(error, 403);
   }
 
   try {
     await requireMemberManagement(db, authUser.id, projectId);
   } catch (err) {
     if (isDomainError(err)) {
-      return c.json(err, err.statusCode as ContentfulStatusCode);
+      return c.json(err, 403);
     }
     throw err;
   }
@@ -426,7 +424,7 @@ memberRoutes.openapi(addMemberRoute, async c => {
         const error = createDomainError(PROJECT_ERRORS.INVITATION_ALREADY_ACCEPTED, {
           invitationId: existingInvitation.id,
         });
-        return c.json(error, error.statusCode as ContentfulStatusCode);
+        return c.json(error, 400);
       } else {
         invitationId = crypto.randomUUID();
         token = crypto.randomUUID();
@@ -441,7 +439,7 @@ memberRoutes.openapi(addMemberRoute, async c => {
 
         if (!projectForInvite) {
           const error = createDomainError(PROJECT_ERRORS.NOT_FOUND, { projectId });
-          return c.json(error, error.statusCode as ContentfulStatusCode);
+          return c.json(error, 404);
         }
 
         await db.insert(projectInvitations).values({
@@ -504,7 +502,7 @@ memberRoutes.openapi(addMemberRoute, async c => {
 
     if (!userToAdd) {
       const error = createDomainError(USER_ERRORS.NOT_FOUND, { userId, email });
-      return c.json(error, error.statusCode as ContentfulStatusCode);
+      return c.json(error, 404);
     }
 
     const existingMember = await db
@@ -518,7 +516,7 @@ memberRoutes.openapi(addMemberRoute, async c => {
         projectId,
         userId: userToAdd.id,
       });
-      return c.json(error, error.statusCode as ContentfulStatusCode);
+      return c.json(error, 409);
     }
 
     const now = new Date();
@@ -586,11 +584,10 @@ memberRoutes.openapi(addMemberRoute, async c => {
       operation: 'add_member',
       originalError: error.message,
     });
-    return c.json(dbError, dbError.statusCode as ContentfulStatusCode);
+    return c.json(dbError, 400);
   }
 });
 
-// @ts-expect-error OpenAPIHono strict return types don't account for error responses
 memberRoutes.openapi(updateRoleRoute, async c => {
   const projectId = c.get('projectId');
   const memberId = c.req.param('userId');
@@ -600,7 +597,7 @@ memberRoutes.openapi(updateRoleRoute, async c => {
 
   if (!authUser) {
     const error = createDomainError(AUTH_ERRORS.REQUIRED, { reason: 'no_user' });
-    return c.json(error, error.statusCode as ContentfulStatusCode);
+    return c.json(error, 403);
   }
 
   try {
@@ -608,7 +605,7 @@ memberRoutes.openapi(updateRoleRoute, async c => {
     await requireSafeRoleChange(db, projectId, memberId!, role);
   } catch (err) {
     if (isDomainError(err)) {
-      return c.json(err, err.statusCode as ContentfulStatusCode);
+      return c.json(err, 403);
     }
     throw err;
   }
@@ -628,7 +625,7 @@ memberRoutes.openapi(updateRoleRoute, async c => {
       console.error('Failed to sync member update to DO:', err);
     }
 
-    return c.json({ success: true as const, userId: memberId!, role });
+    return c.json({ success: true as const, userId: memberId!, role }, 200);
   } catch (err) {
     const error = err as Error;
     console.error('Error updating member role:', error);
@@ -636,11 +633,10 @@ memberRoutes.openapi(updateRoleRoute, async c => {
       operation: 'update_member_role',
       originalError: error.message,
     });
-    return c.json(dbError, dbError.statusCode as ContentfulStatusCode);
+    return c.json(dbError, 400);
   }
 });
 
-// @ts-expect-error OpenAPIHono strict return types don't account for error responses
 memberRoutes.openapi(removeMemberRoute, async c => {
   const { user: authUser } = getAuth(c);
   const projectId = c.get('projectId');
@@ -649,7 +645,7 @@ memberRoutes.openapi(removeMemberRoute, async c => {
 
   if (!authUser) {
     const error = createDomainError(AUTH_ERRORS.REQUIRED, { reason: 'no_user' });
-    return c.json(error, error.statusCode as ContentfulStatusCode);
+    return c.json(error, 403);
   }
 
   const isSelfRemoval = memberId === authUser.id;
@@ -659,7 +655,7 @@ memberRoutes.openapi(removeMemberRoute, async c => {
     await requireSafeRemoval(db, projectId, memberId!);
   } catch (err) {
     if (isDomainError(err)) {
-      return c.json(err, err.statusCode as ContentfulStatusCode);
+      return c.json(err, 403);
     }
     throw err;
   }
@@ -673,7 +669,7 @@ memberRoutes.openapi(removeMemberRoute, async c => {
         { projectId, userId: memberId },
         'Member not found',
       );
-      return c.json(error, error.statusCode as ContentfulStatusCode);
+      return c.json(error, 404);
     }
 
     await db
@@ -710,7 +706,7 @@ memberRoutes.openapi(removeMemberRoute, async c => {
       }
     }
 
-    return c.json({ success: true as const, removed: memberId! });
+    return c.json({ success: true as const, removed: memberId! }, 200);
   } catch (err) {
     const error = err as Error;
     console.error('Error removing member:', error);
@@ -718,7 +714,7 @@ memberRoutes.openapi(removeMemberRoute, async c => {
       operation: 'remove_member',
       originalError: error.message,
     });
-    return c.json(dbError, dbError.statusCode as ContentfulStatusCode);
+    return c.json(dbError, 403);
   }
 });
 
