@@ -1,5 +1,7 @@
 # Agent Instructions
 
+NEVER commit anything, the user will decide what and when to commit, you may request the user commit if you have a strong desire for something to be committed
+
 This file contains critical instructions for Agents. For detailed patterns, see specialized rule files in this directory.
 
 This project is CoRATES (Collaborative Research Appraisal Tool for Evidence Synthesis), a React/TanStack Start web application deployed on Cloudflare Workers.

@@ -9,7 +9,7 @@
 import { Hono } from 'hono';
 import { drizzle } from 'drizzle-orm/d1';
 import { eq } from 'drizzle-orm';
-import { user, organization, member, session } from '@/db/schema.js';
+import { user, organization, member, session, subscription } from '@/db/schema.js';
 import { createAuth } from '@/auth/config.js';
 import type { Env } from '../types';
 
@@ -68,6 +68,19 @@ testSeedRoutes.post('/seed', async c => {
       name: body.org.name,
       slug: orgSlug,
       createdAt: new Date(),
+    });
+
+    // Create a starter_team subscription for the org so users can create projects
+    await db.insert(subscription).values({
+      id: `${body.org.id}-sub`,
+      plan: 'starter_team',
+      referenceId: body.org.id,
+      status: 'active',
+      periodStart: new Date(),
+      periodEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
+      seats: 5,
+      createdAt: new Date(),
+      updatedAt: new Date(),
     });
 
     // Add members to organization
@@ -143,6 +156,7 @@ testSeedRoutes.post('/cleanup', async c => {
     }
 
     if (body.orgId) {
+      await db.delete(subscription).where(eq(subscription.referenceId, body.orgId));
       await db.delete(member).where(eq(member.organizationId, body.orgId));
       await db.delete(organization).where(eq(organization.id, body.orgId));
     }
