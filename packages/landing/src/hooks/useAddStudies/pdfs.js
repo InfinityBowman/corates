@@ -1,7 +1,5 @@
 /**
- * PDF upload operations for useAddStudies (React version)
- *
- * Uses useState with immutable updates instead of SolidJS createStore/produce.
+ * PDF upload operations for useAddStudies
  */
 
 import { useState, useCallback, useRef } from 'react';

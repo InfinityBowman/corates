@@ -45,7 +45,7 @@ export function GoogleDrivePickerLauncher({
   const [connected, setConnected] = useState<boolean | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  // Capture studyId at mount time (stable across renders, same as SolidJS version)
+  // Capture studyId at mount time (stable across renders)
   const studyIdRef = useRef(studyId);
 
   const pickerConfigured = !!GOOGLE_PICKER_API_KEY;

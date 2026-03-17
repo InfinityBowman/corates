@@ -16,6 +16,8 @@ export async function injectSessionCookie(token: string) {
       value: token,
       domain: 'localhost',
       path: '/',
+      sameSite: 'None',
+      secure: false,
     },
   ]);
 }

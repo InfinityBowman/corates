@@ -2,13 +2,13 @@ export const STATIC_ORIGINS: readonly string[] = [
   'http://localhost:5173',
   'http://localhost:8787',
   'http://localhost:3010',
-  'http://localhost:63315', // Vitest Browser Mode e2e tests
   'https://corates.org',
 ];
 
 export const ORIGIN_PATTERNS: readonly RegExp[] = [
   /^https:\/\/[a-z0-9-]+-corates\.jacobamaynard\.workers\.dev$/,
   /^https:\/\/corates\.jacobamaynard\.workers\.dev$/,
+  /^http:\/\/localhost:\d+$/, // Any localhost port (dev + Vitest browser tests)
 ];
 
 interface EnvWithOrigins {

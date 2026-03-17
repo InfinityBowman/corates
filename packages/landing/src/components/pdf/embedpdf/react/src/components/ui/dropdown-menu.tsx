@@ -40,7 +40,7 @@ export function DropdownItem({ onClick, icon, children, isActive = false }: Drop
         isActive ? 'bg-blue-50 text-blue-600' : 'text-gray-700'
       }`}
     >
-      {icon && <span className='flex-shrink-0'>{icon}</span>}
+      {icon && <span className='shrink-0'>{icon}</span>}
       <span>{children}</span>
     </button>
   );

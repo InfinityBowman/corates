@@ -154,7 +154,7 @@ export const useLocalChecklistsStore = create<LocalChecklistsState & LocalCheckl
   }),
 );
 
-// Auto-initialize when module loads (matches SolidJS behavior)
+// Auto-initialize when module loads
 if (typeof window !== 'undefined') {
   useLocalChecklistsStore.getState().init();
 }

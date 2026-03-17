@@ -5,7 +5,7 @@
  * Web Workers are preserved across re-renders by the viewer's internal state.
  */
 
-import { ViewerPage } from './embedpdf/preact/src/viewer';
+import { ViewerPage } from './embedpdf/react/src/viewer';
 
 export interface EmbedPdfViewerProps {
   pdfData?: ArrayBuffer | null;

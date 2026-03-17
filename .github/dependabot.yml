@@ -104,60 +104,6 @@ updates:
           - '*'
         dependency-type: 'development'
 
-  # UI package
-  - package-ecosystem: 'npm'
-    directory: '/packages/ui'
-    schedule:
-      interval: 'weekly'
-      day: 'monday'
-      time: '09:00'
-    open-pull-requests-limit: 3
-    labels:
-      - 'dependencies'
-      - 'ui'
-    versioning-strategy: increase
-    commit-message:
-      prefix: 'chore'
-      prefix-development: 'chore'
-      include: 'scope'
-    rebase-strategy: 'auto'
-    groups:
-      ui-dependencies:
-        patterns:
-          - '*'
-        dependency-type: 'production'
-      ui-dev-dependencies:
-        patterns:
-          - '*'
-        dependency-type: 'development'
-
-  # Web package
-  - package-ecosystem: 'npm'
-    directory: '/packages/web'
-    schedule:
-      interval: 'weekly'
-      day: 'monday'
-      time: '09:00'
-    open-pull-requests-limit: 5
-    labels:
-      - 'dependencies'
-      - 'web'
-    versioning-strategy: increase
-    commit-message:
-      prefix: 'chore'
-      prefix-development: 'chore'
-      include: 'scope'
-    rebase-strategy: 'auto'
-    groups:
-      web-dependencies:
-        patterns:
-          - '*'
-        dependency-type: 'production'
-      web-dev-dependencies:
-        patterns:
-          - '*'
-        dependency-type: 'development'
-
   # Workers package
   - package-ecosystem: 'npm'
     directory: '/packages/workers'
@@ -175,8 +121,6 @@ updates:
       prefix-development: 'chore'
       include: 'scope'
     rebase-strategy: 'auto'
-    ignore:
-      - dependency-name: 'vitest'
     groups:
       workers-dependencies:
         patterns:

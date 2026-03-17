@@ -477,8 +477,7 @@ export function ReconciliationWrapper({
     );
   }
 
-  // Type dispatch - placeholder imports until Phase 4.8C-E create the actual components
-  // For now, render a placeholder indicating which type would be shown
+  // Type dispatch
   if (isRobinsI) {
     return (
       <RobinsIReconciliationWithPdf

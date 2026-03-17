@@ -32,7 +32,6 @@ export function OverallSection({
     isManualMode && overallState?.judgement ? overallState.judgement : calculatedDisplayJudgement;
 
   // Auto-persist calculated judgement in auto mode.
-  // Deps track only the specific fields the SolidJS createEffect(on(...)) tracked.
   // overallState is read inside the effect but only overallState?.judgement is in deps
   // to avoid re-triggering on direction changes.
   useEffect(() => {

@@ -1,8 +1,7 @@
 /**
  * useProject hook - Manages Y.js connection and operations for a single project
  *
- * React version of the SolidJS useProject hook.
- * Uses useEffect for lifecycle, Zustand for state, and the same
+ * Uses useEffect for lifecycle, Zustand for state, and a
  * module-level connectionRegistry for ref-counted connections.
  */
 
