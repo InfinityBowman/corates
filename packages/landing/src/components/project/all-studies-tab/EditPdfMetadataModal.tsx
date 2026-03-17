@@ -104,7 +104,10 @@ export function EditPdfMetadataModal({
           </div>
 
           <div>
-            <label htmlFor='edit-pdf-title' className='text-secondary-foreground mb-1 block text-sm font-medium'>
+            <label
+              htmlFor='edit-pdf-title'
+              className='text-secondary-foreground mb-1 block text-sm font-medium'
+            >
               Article Title
             </label>
             <textarea
@@ -119,7 +122,10 @@ export function EditPdfMetadataModal({
 
           <div className='grid grid-cols-2 gap-4'>
             <div>
-              <label htmlFor='edit-pdf-first-author' className='text-secondary-foreground mb-1 block text-sm font-medium'>
+              <label
+                htmlFor='edit-pdf-first-author'
+                className='text-secondary-foreground mb-1 block text-sm font-medium'
+              >
                 First Author
               </label>
               <input
@@ -132,7 +138,10 @@ export function EditPdfMetadataModal({
               />
             </div>
             <div>
-              <label htmlFor='edit-pdf-pub-year' className='text-secondary-foreground mb-1 block text-sm font-medium'>
+              <label
+                htmlFor='edit-pdf-pub-year'
+                className='text-secondary-foreground mb-1 block text-sm font-medium'
+              >
                 Publication Year
               </label>
               <input
@@ -150,7 +159,10 @@ export function EditPdfMetadataModal({
           </div>
 
           <div>
-            <label htmlFor='edit-pdf-journal' className='text-secondary-foreground mb-1 block text-sm font-medium'>
+            <label
+              htmlFor='edit-pdf-journal'
+              className='text-secondary-foreground mb-1 block text-sm font-medium'
+            >
               Journal
             </label>
             <input
@@ -164,7 +176,12 @@ export function EditPdfMetadataModal({
           </div>
 
           <div>
-            <label htmlFor='edit-pdf-doi' className='text-secondary-foreground mb-1 block text-sm font-medium'>DOI</label>
+            <label
+              htmlFor='edit-pdf-doi'
+              className='text-secondary-foreground mb-1 block text-sm font-medium'
+            >
+              DOI
+            </label>
             <input
               id='edit-pdf-doi'
               type='text'

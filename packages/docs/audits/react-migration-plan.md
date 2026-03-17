@@ -939,19 +939,33 @@ routes/_app/_protected/
 
 ---
 
-## Phase 5: Tests
+## Phase 5: Tests -- COMPLETED (2026-03-17)
 
-### 5.1 Set up test infrastructure
+### 5.1 Test infrastructure
 
-- `@testing-library/react` (replaces `@solidjs/testing-library`)
-- Same `render()`, `screen`, `fireEvent`, `waitFor` patterns
-- Test setup file with Zustand store resets between tests
+- Created `vitest.config.ts` (separate from main vite.config.ts to avoid Cloudflare plugin conflict)
+- Created `src/__tests__/setup.ts` with mocks for matchMedia, ResizeObserver, IntersectionObserver, crypto.randomUUID, IndexedDB
+- Added `jsdom`, `@testing-library/react`, `@testing-library/jest-dom`, `fake-indexeddb` dev deps
+- Added `test` and `test:watch` scripts to package.json
 
-### 5.2 Migrate test files (27 files)
+### 5.2 Test migration (25 files, 560 tests, all passing)
 
-- Import swaps, provider wrappers
-- Framework-agnostic tests (lib/, checklist-registry/) may need no changes
-- Component tests need React render wrappers
+**Fixed 4 pre-existing test failures:**
+- Import path aliases (`@config/` -> `@/config/`, etc.)
+- TanStack Router navigate assertion (`navigate({ to, replace })` vs `navigate(path, opts)`)
+
+**Migrated 13 new test files:**
+- Pure logic: checklist-compare, checklist, robins-scoring, form-errors, avatarCache, db, pdfCache, robins-i handler
+- Store tests rewritten for Zustand: projectStore, better-auth-store
+- Hook utility tests: useAddStudies deduplication + matching
+- Component: ErrorBoundary
+
+**Skipped 2 (deeply SolidJS-reactive, would need full renderHook rewrite):**
+- `useAddStudies.sync.test.js` (SolidJS createRoot/createEffect lifecycle)
+- `useProject.test.js` (SolidJS reactive lifecycle)
+
+**Bug fix discovered during migration:**
+- Fixed missing `getTotalCacheSize()` in `pdfCache.js`
 
 ---
 

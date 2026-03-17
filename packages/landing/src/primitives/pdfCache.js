@@ -167,6 +167,15 @@ export async function clearProjectCache(projectId) {
 }
 
 /**
+ * Get total cache size
+ * @returns {Promise<number>}
+ */
+async function getTotalCacheSize() {
+  const all = await db.pdfs.toArray();
+  return all.reduce((sum, entry) => sum + (entry.size || 0), 0);
+}
+
+/**
  * Get current cache size in bytes (for monitoring/debugging)
  * @returns {Promise<number>}
  */

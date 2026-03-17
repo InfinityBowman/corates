@@ -162,7 +162,9 @@ export function OutcomeManager() {
             {/* Add form */}
             {isAdding && (
               <div className='flex items-center gap-2'>
-                <label htmlFor='outcome-new-name' className='sr-only'>Outcome name</label>
+                <label htmlFor='outcome-new-name' className='sr-only'>
+                  Outcome name
+                </label>
                 <input
                   id='outcome-new-name'
                   type='text'
@@ -212,7 +214,9 @@ export function OutcomeManager() {
             {outcomes.map((outcome: any) =>
               editingId === outcome.id ?
                 <div key={outcome.id} className='flex items-center gap-2'>
-                  <label htmlFor={`outcome-edit-${outcome.id}`} className='sr-only'>Outcome name</label>
+                  <label htmlFor={`outcome-edit-${outcome.id}`} className='sr-only'>
+                    Outcome name
+                  </label>
                   <input
                     id={`outcome-edit-${outcome.id}`}
                     type='text'

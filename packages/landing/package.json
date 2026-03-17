@@ -13,7 +13,11 @@
     "lint": "eslint",
     "format": "prettier --write .",
     "check": "prettier --write . && eslint --fix",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run --config vitest.config.ts --reporter=verbose",
+    "test:watch": "vitest --config vitest.config.ts",
+    "test:browser": "vitest run --config vitest.browser.config.ts --reporter=verbose",
+    "test:browser:ui": "vitest --config vitest.browser.config.ts --ui"
   },
   "dependencies": {
     "@ark-ui/react": "^5.34.1",
@@ -85,11 +89,15 @@
     "@tailwindcss/vite": "^4.2.1",
     "@tanstack/eslint-config": "^0.4.0",
     "@tanstack/router-plugin": "^1.132.0",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
     "@types/react": "19.2.14",
     "@types/react-dom": "19.2.3",
     "@vitejs/plugin-react": "^5.0.4",
     "@vitest/browser": "^4.1.0",
     "@vitest/browser-playwright": "^4.1.0",
+    "fake-indexeddb": "^6.2.5",
+    "jsdom": "^29.0.0",
     "tailwindcss": "^4.2.1",
     "typescript": "^5.9.3",
     "vite": "^7.3.1",

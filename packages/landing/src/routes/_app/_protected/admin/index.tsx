@@ -132,12 +132,12 @@ function AdminDashboard() {
           {usersData?.pagination && (
             <div className='border-border flex items-center justify-between border-t px-6 py-4'>
               <p className='text-muted-foreground text-sm'>
-                {(usersData.pagination.total || 0) > 0
-                  ? `Showing ${(page - 1) * (usersData.pagination.limit || 20) + 1} to ${Math.min(
-                      page * (usersData.pagination.limit || 20),
-                      usersData.pagination.total || 0,
-                    )} of ${usersData.pagination.total || 0} users`
-                  : 'No users found'}
+                {(usersData.pagination.total || 0) > 0 ?
+                  `Showing ${(page - 1) * (usersData.pagination.limit || 20) + 1} to ${Math.min(
+                    page * (usersData.pagination.limit || 20),
+                    usersData.pagination.total || 0,
+                  )} of ${usersData.pagination.total || 0} users`
+                : 'No users found'}
               </p>
               <div className='flex items-center space-x-2'>
                 <button

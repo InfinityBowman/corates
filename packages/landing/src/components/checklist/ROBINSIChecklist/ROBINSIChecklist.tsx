@@ -104,10 +104,7 @@ export function ROBINSIChecklist({
         {showLegend !== false && <ResponseLegend />}
 
         {/* Planning Stage */}
-        <PlanningSection
-          disabled={isReadOnly}
-          getRobinsText={getRobinsText}
-        />
+        <PlanningSection disabled={isReadOnly} getRobinsText={getRobinsText} />
 
         {/* Preliminary Considerations Header */}
         <div className='rounded-lg border border-blue-200 bg-blue-100 px-6 py-4'>
@@ -116,10 +113,7 @@ export function ROBINSIChecklist({
           </h2>
         </div>
 
-        <SectionA
-          disabled={isReadOnly}
-          getRobinsText={getRobinsText}
-        />
+        <SectionA disabled={isReadOnly} getRobinsText={getRobinsText} />
 
         <SectionB
           sectionBState={checklistState?.sectionB}
