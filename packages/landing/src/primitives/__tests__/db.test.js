@@ -30,12 +30,10 @@ describe('db.js - Unified Dexie Database', () => {
     if (db.isOpen()) {
       await db.projects.clear();
       await db.pdfs.clear();
-      await db.ops.clear();
       await db.avatars.clear();
       await db.formStates.clear();
       await db.localChecklists.clear();
       await db.localChecklistPdfs.clear();
-      await db.queryCache.clear();
     }
   });
 
@@ -56,15 +54,13 @@ describe('db.js - Unified Dexie Database', () => {
         'formStates',
         'localChecklistPdfs',
         'localChecklists',
-        'ops',
         'pdfs',
         'projects',
-        'queryCache',
       ]);
     });
 
-    it('should be at version 1', () => {
-      expect(db.verno).toBe(1);
+    it('should be at version 2', () => {
+      expect(db.verno).toBe(2);
     });
   });
 
@@ -192,110 +188,6 @@ describe('db.js - Unified Dexie Database', () => {
     });
   });
 
-  describe('Ops Table (Operation Queue)', () => {
-    it('should add operation with auto-increment id', async () => {
-      const op = {
-        idempotencyKey: 'key-123',
-        endpoint: '/api/projects',
-        payload: { name: 'Test' },
-        status: 'pending',
-        createdAt: Date.now(),
-        attempts: 0,
-      };
-
-      const id = await db.ops.add(op);
-      const retrieved = await db.ops.get(id);
-
-      expect(retrieved.id).toBe(id);
-      expect(retrieved.idempotencyKey).toBe('key-123');
-      expect(retrieved.status).toBe('pending');
-    });
-
-    it('should query pending operations', async () => {
-      await db.ops.bulkAdd([
-        {
-          idempotencyKey: 'k1',
-          endpoint: '/api/a',
-          payload: {},
-          status: 'pending',
-          createdAt: 1,
-          attempts: 0,
-        },
-        {
-          idempotencyKey: 'k2',
-          endpoint: '/api/b',
-          payload: {},
-          status: 'applied',
-          createdAt: 2,
-          attempts: 1,
-        },
-        {
-          idempotencyKey: 'k3',
-          endpoint: '/api/c',
-          payload: {},
-          status: 'pending',
-          createdAt: 3,
-          attempts: 0,
-        },
-      ]);
-
-      const pending = await db.ops.where('status').equals('pending').toArray();
-
-      expect(pending).toHaveLength(2);
-      expect(pending.map(o => o.idempotencyKey).sort()).toEqual(['k1', 'k3']);
-    });
-
-    it('should query pending ops sorted by createdAt using compound index', async () => {
-      await db.ops.bulkAdd([
-        {
-          idempotencyKey: 'k3',
-          endpoint: '/api/c',
-          payload: {},
-          status: 'pending',
-          createdAt: 3000,
-          attempts: 0,
-        },
-        {
-          idempotencyKey: 'k1',
-          endpoint: '/api/a',
-          payload: {},
-          status: 'pending',
-          createdAt: 1000,
-          attempts: 0,
-        },
-        {
-          idempotencyKey: 'k2',
-          endpoint: '/api/b',
-          payload: {},
-          status: 'pending',
-          createdAt: 2000,
-          attempts: 0,
-        },
-      ]);
-
-      const pending = await db.ops.where('status').equals('pending').sortBy('createdAt');
-
-      expect(pending.map(o => o.idempotencyKey)).toEqual(['k1', 'k2', 'k3']);
-    });
-
-    it('should update operation status', async () => {
-      const id = await db.ops.add({
-        idempotencyKey: 'k1',
-        endpoint: '/api/test',
-        payload: {},
-        status: 'pending',
-        createdAt: Date.now(),
-        attempts: 0,
-      });
-
-      await db.ops.update(id, { status: 'syncing', attempts: 1 });
-      const updated = await db.ops.get(id);
-
-      expect(updated.status).toBe('syncing');
-      expect(updated.attempts).toBe(1);
-    });
-  });
-
   describe('deleteProjectData', () => {
     it('should delete project and associated PDFs', async () => {
       await db.projects.add({ id: 'proj-to-delete', orgId: 'org-1', updatedAt: 1 });
@@ -344,7 +236,7 @@ describe('db.js - Unified Dexie Database', () => {
   });
 
   describe('clearAllData', () => {
-    it('should clear all tables', async () => {
+    it('should clear all session tables', async () => {
       await db.projects.add({ id: 'p1', orgId: 'o1', updatedAt: 1 });
       await db.pdfs.add({
         id: 'p1:s1:a.pdf',
@@ -355,20 +247,26 @@ describe('db.js - Unified Dexie Database', () => {
         size: 10,
         cachedAt: 1,
       });
-      await db.ops.add({
-        idempotencyKey: 'k1',
-        endpoint: '/api/test',
-        payload: {},
-        status: 'pending',
-        createdAt: 1,
-        attempts: 0,
-      });
 
       await clearAllData();
 
       expect(await db.projects.count()).toBe(0);
       expect(await db.pdfs.count()).toBe(0);
-      expect(await db.ops.count()).toBe(0);
+    });
+
+    it('should not clear local checklists', async () => {
+      await db.localChecklists.add({
+        id: 'local-123',
+        name: 'Practice',
+        type: 'AMSTAR2',
+        data: {},
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      });
+
+      await clearAllData();
+
+      expect(await db.localChecklists.count()).toBe(1);
     });
   });
 });

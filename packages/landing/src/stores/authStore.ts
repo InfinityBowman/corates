@@ -17,7 +17,7 @@ import {
   revokeOtherSessions as _revokeOtherSessions,
   revokeSessions as _revokeSessions,
 } from '@/api/auth-client';
-import { queryClient, clearPersistedQueryCache } from '@/lib/queryClient';
+import { queryClient } from '@/lib/queryClient';
 import { API_BASE, BASEPATH } from '@/config/api';
 import { saveLastLoginMethod, LOGIN_METHODS } from '@/lib/lastLoginMethod';
 import { getCachedAvatar, pruneExpiredAvatars } from '@/primitives/avatarCache.js';
@@ -145,7 +145,7 @@ async function performSignoutCleanup() {
 
   await clearAllData();
   queryClient.clear();
-  await clearPersistedQueryCache();
+  localStorage.removeItem('corates:projectStats');
 
   // Refetch session to clear it
   await state.sessionRefetch?.();
@@ -264,7 +264,6 @@ export const useAuthStore = create<AuthState & AuthActions>()((set, get) => ({
       if (error) throw new Error(error.message);
 
       localStorage.setItem('pendingEmail', email);
-      localStorage.setItem('magicLinkSent', 'true');
       saveLastLoginMethod(LOGIN_METHODS.MAGIC_LINK);
       return data;
     } catch (err) {

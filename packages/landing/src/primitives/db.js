@@ -4,7 +4,6 @@
  * This module provides a single IndexedDB database for all local data:
  * - Project Y.Doc persistence (via y-dexie)
  * - PDF cache for offline access
- * - Operation queue for offline mutations
  *
  * @see packages/docs/plans/dexie-migration.md
  */
@@ -35,20 +34,6 @@ import yDexie from 'y-dexie';
  * @property {ArrayBuffer} data - PDF binary data
  * @property {number} size - Size in bytes
  * @property {number} cachedAt - Cache timestamp
- */
-
-/**
- * Operation queue entry for offline mutations
- * @typedef {Object} OpQueueRow
- * @property {number} [id] - Auto-incremented ID
- * @property {string} idempotencyKey - Unique key for server replay
- * @property {string} endpoint - API endpoint
- * @property {unknown} payload - Operation payload
- * @property {'pending'|'syncing'|'applied'|'failed'} status - Operation status
- * @property {number} createdAt - Creation timestamp
- * @property {number} attempts - Number of sync attempts
- * @property {number} [lastAttempt] - Last attempt timestamp
- * @property {string} [error] - Error message if failed
  */
 
 /**
@@ -91,13 +76,6 @@ import yDexie from 'y-dexie';
  */
 
 /**
- * TanStack Query cache entry
- * @typedef {Object} QueryCacheRow
- * @property {string} key - Cache key (primary key)
- * @property {unknown} data - Serialized query client state
- */
-
-/**
  * CoRATES unified database
  * @extends Dexie
  */
@@ -107,9 +85,6 @@ class CoratesDB extends Dexie {
 
   /** @type {Dexie.Table<PdfCacheRow, string>} */
   pdfs;
-
-  /** @type {Dexie.Table<OpQueueRow, number>} */
-  ops;
 
   /** @type {Dexie.Table<AvatarRow, string>} */
   avatars;
@@ -123,29 +98,24 @@ class CoratesDB extends Dexie {
   /** @type {Dexie.Table<LocalChecklistPdfRow, string>} */
   localChecklistPdfs;
 
-  /** @type {Dexie.Table<QueryCacheRow, string>} */
-  queryCache;
-
   constructor() {
     super('corates', { addons: [yDexie] });
 
     this.version(1).stores({
-      // Y.Doc stored as 'ydoc' property via y-dexie
       projects: 'id, orgId, updatedAt, ydoc: Y.Doc',
-      // PDF cache with LRU eviction by cachedAt
       pdfs: 'id, projectId, studyId, cachedAt',
-      // Operation queue with compound index for efficient pending queries
       ops: '++id, idempotencyKey, status, createdAt, [status+createdAt]',
-      // Avatar cache with expiry by cachedAt
       avatars: 'userId, cachedAt',
-      // Form state persistence for OAuth redirects
       formStates: 'key, type, timestamp',
-      // Local checklists for offline practice
       localChecklists: 'id, createdAt, updatedAt',
-      // PDFs associated with local checklists
       localChecklistPdfs: 'checklistId, updatedAt',
-      // TanStack Query cache persistence
       queryCache: 'key',
+    });
+
+    // v2: Remove unused ops table and query cache persistence
+    this.version(2).stores({
+      ops: null,
+      queryCache: null,
     });
   }
 }
@@ -174,16 +144,10 @@ export async function deleteProjectData(projectId) {
  * as they are user's local practice data not tied to authentication
  */
 export async function clearAllData() {
-  await db.transaction(
-    'rw',
-    [db.projects, db.pdfs, db.ops, db.avatars, db.formStates, db.queryCache],
-    async () => {
-      await db.projects.clear();
-      await db.pdfs.clear();
-      await db.ops.clear();
-      await db.avatars.clear();
-      await db.formStates.clear();
-      await db.queryCache.clear();
-    },
-  );
+  await db.transaction('rw', [db.projects, db.pdfs, db.avatars, db.formStates], async () => {
+    await db.projects.clear();
+    await db.pdfs.clear();
+    await db.avatars.clear();
+    await db.formStates.clear();
+  });
 }

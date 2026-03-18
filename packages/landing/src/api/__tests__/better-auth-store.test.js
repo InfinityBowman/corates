@@ -40,7 +40,6 @@ vi.mock('@/api/auth-client', () => ({
 
 vi.mock('@/lib/queryClient', () => ({
   queryClient: { clear: vi.fn() },
-  clearPersistedQueryCache: vi.fn().mockResolvedValue(undefined),
 }));
 
 vi.mock('@/config/api', () => ({
@@ -289,7 +288,6 @@ describe('authStore - Social Auth', () => {
     });
 
     expect(localStorage.getItem('pendingEmail')).toBe('test@example.com');
-    expect(localStorage.getItem('magicLinkSent')).toBe('true');
     expect(saveLastLoginMethod).toHaveBeenCalledWith(LOGIN_METHODS.MAGIC_LINK);
   });
 });
