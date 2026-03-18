@@ -1,10 +1,14 @@
 /**
  * DevTemplateSelector - Dropdown for selecting and applying mock templates
+ *
+ * After selecting a template, shows a user mapping step if the template
+ * contains user IDs that need to be remapped to real users.
  */
 
-import { useState, useEffect } from 'react';
-import { DownloadIcon, CheckIcon, AlertCircleIcon } from 'lucide-react';
+import { useState, useEffect, useCallback } from 'react';
+import { DownloadIcon, CheckIcon, AlertCircleIcon, ArrowLeftIcon } from 'lucide-react';
 import { API_BASE } from '@/config/api';
+import { DevUserMapping, TEMPLATE_USER_IDS } from './DevUserMapping';
 
 interface ActionResult {
   success: boolean;
@@ -21,6 +25,8 @@ interface DevTemplateSelectorProps {
   orgId: string | null;
 }
 
+type Step = 'select' | 'mapping';
+
 export function DevTemplateSelector({ projectId, orgId }: DevTemplateSelectorProps) {
   const [templates, setTemplates] = useState<TemplatesData | null>(null);
   const [templatesLoading, setTemplatesLoading] = useState(false);
@@ -29,6 +35,12 @@ export function DevTemplateSelector({ projectId, orgId }: DevTemplateSelectorPro
   const [mode, setMode] = useState<'replace' | 'merge'>('replace');
   const [isApplying, setIsApplying] = useState(false);
   const [result, setResult] = useState<ActionResult | null>(null);
+
+  // Mapping step state
+  const [step, setStep] = useState<Step>('select');
+  const [pendingTemplate, setPendingTemplate] = useState('');
+  const [pendingMode, setPendingMode] = useState<'replace' | 'merge'>('replace');
+  const [templateUserIds, setTemplateUserIds] = useState<string[]>([]);
 
   useEffect(() => {
     if (!orgId || !projectId) return;
@@ -72,40 +84,121 @@ export function DevTemplateSelector({ projectId, orgId }: DevTemplateSelectorPro
     };
   }, [orgId, projectId]);
 
-  const applyTemplate = async () => {
-    if (!selectedTemplate || !projectId || !orgId) return;
+  const handleApplyClick = () => {
+    if (!selectedTemplate) return;
 
-    setIsApplying(true);
-    setResult(null);
-
-    try {
-      const url = new URL(`${API_BASE}/api/orgs/${orgId}/projects/${projectId}/dev/apply-template`);
-      url.searchParams.set('template', selectedTemplate);
-      url.searchParams.set('mode', mode);
-
-      console.log('[DevPanel] Applying template:', url.toString());
-      const res = await fetch(url.toString(), {
-        method: 'POST',
-        credentials: 'include',
-      });
-
-      if (!res.ok) {
-        const err = await res.json();
-        console.error('[DevPanel] Apply template failed:', err);
-        throw new Error(err.error || 'Failed to apply template');
-      }
-
-      const data = await res.json();
-      console.log('[DevPanel] Template applied:', data);
-      setResult({ success: true, message: `Applied "${selectedTemplate}" template` });
-      setSelectedTemplate('');
-    } catch (err) {
-      console.error('[DevPanel] Apply template error:', err);
-      setResult({ success: false, message: (err as Error).message });
-    } finally {
-      setIsApplying(false);
+    const userIds = TEMPLATE_USER_IDS[selectedTemplate] || [];
+    if (userIds.length === 0) {
+      // No user IDs in this template, apply directly
+      doApplyTemplate(selectedTemplate, mode);
+    } else {
+      setPendingTemplate(selectedTemplate);
+      setPendingMode(mode);
+      setTemplateUserIds(userIds);
+      setStep('mapping');
+      setResult(null);
     }
   };
+
+  const doApplyTemplate = useCallback(
+    async (
+      template: string,
+      applyMode: 'replace' | 'merge',
+      userMapping?: Record<string, string>,
+    ) => {
+      if (!projectId || !orgId) return;
+
+      setIsApplying(true);
+      setResult(null);
+
+      try {
+        const url = new URL(
+          `${API_BASE}/api/orgs/${orgId}/projects/${projectId}/dev/apply-template`,
+        );
+        url.searchParams.set('template', template);
+        url.searchParams.set('mode', applyMode);
+
+        console.log('[DevPanel] Applying template:', url.toString());
+
+        const body: Record<string, unknown> = {};
+        if (userMapping && Object.keys(userMapping).length > 0) {
+          body.userMapping = userMapping;
+        }
+
+        const res = await fetch(url.toString(), {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+        });
+
+        if (!res.ok) {
+          const err = await res.json();
+          console.error('[DevPanel] Apply template failed:', err);
+          throw new Error(err.error || 'Failed to apply template');
+        }
+
+        const data = await res.json();
+        console.log('[DevPanel] Template applied:', data);
+        setResult({ success: true, message: `Applied "${template}" template` });
+        setSelectedTemplate('');
+        setStep('select');
+      } catch (err) {
+        console.error('[DevPanel] Apply template error:', err);
+        setResult({ success: false, message: (err as Error).message });
+      } finally {
+        setIsApplying(false);
+      }
+    },
+    [projectId, orgId],
+  );
+
+  if (step === 'mapping') {
+    return (
+      <div className='flex flex-col gap-3'>
+        <button
+          className='flex items-center gap-1 self-start text-xs text-gray-500 hover:text-gray-700'
+          onClick={() => setStep('select')}
+        >
+          <ArrowLeftIcon size={12} />
+          Back to template selection
+        </button>
+
+        <div className='text-xs text-gray-500'>
+          Template: <span className='font-medium text-gray-700'>{pendingTemplate}</span>
+        </div>
+
+        <DevUserMapping
+          userIds={templateUserIds}
+          projectId={projectId || undefined}
+          onConfirm={mapping => doApplyTemplate(pendingTemplate, pendingMode, mapping)}
+          onSkip={() => doApplyTemplate(pendingTemplate, pendingMode)}
+          confirmLabel='Apply with Mapping'
+          skipLabel='Apply As-Is'
+        />
+
+        {isApplying && (
+          <div className='flex items-center gap-2 text-xs text-gray-500'>
+            <span className='h-3 w-3 animate-spin rounded-full border-2 border-purple-500 border-t-transparent' />
+            Applying template...
+          </div>
+        )}
+
+        {result && (
+          <div
+            className={`flex items-center gap-1.5 rounded p-2 text-xs ${
+              result.success ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-600'
+            }`}
+          >
+            {result.success ?
+              <CheckIcon size={14} />
+            : <AlertCircleIcon size={14} />}
+            {result.message}
+          </div>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div className='flex flex-col gap-3'>
@@ -175,7 +268,7 @@ export function DevTemplateSelector({ projectId, orgId }: DevTemplateSelectorPro
 
           <button
             className='flex items-center justify-center gap-2 rounded bg-purple-600 px-4 py-2 text-xs font-medium text-white transition-colors hover:bg-purple-700 disabled:cursor-not-allowed disabled:opacity-50'
-            onClick={applyTemplate}
+            onClick={handleApplyClick}
             disabled={!selectedTemplate || isApplying}
           >
             {isApplying ?

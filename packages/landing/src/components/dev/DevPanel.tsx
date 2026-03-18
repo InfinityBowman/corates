@@ -9,15 +9,9 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import {
-  XIcon,
-  ChevronDownIcon,
-  ChevronUpIcon,
-  LayoutIcon,
-  BugIcon,
-  BracesIcon,
-} from 'lucide-react';
-import { useProjectStore } from '@/stores/projectStore';
+import { XIcon, ChevronDownIcon, ChevronUpIcon, BugIcon, BracesIcon } from 'lucide-react';
+import { useProjectStore, selectConnectionState } from '@/stores/projectStore';
+import { useProjectOrgId } from '@/hooks/useProjectOrgId';
 import { DevStateTree } from './DevStateTree';
 import { DevTemplateSelector } from './DevTemplateSelector';
 import { DevQuickActions } from './DevQuickActions';
@@ -55,22 +49,13 @@ export function DevPanel() {
 
   const isProjectContext = !!projectId;
 
-  // Get orgId from project store
-  const orgId = useProjectStore(s => {
-    if (!projectId) return null;
-    const project = s.projects[projectId];
-    return (project?.meta?.orgId as string) || null;
-  });
+  const orgId = useProjectOrgId(projectId);
 
-  const projectData = useProjectStore(s => {
-    if (!projectId) return null;
-    return s.projects[projectId] || null;
-  });
+  const projectData = useProjectStore(s => (projectId ? s.projects[projectId] || null : null));
 
-  const connectionState = useProjectStore(s => {
-    if (!projectId) return null;
-    return s.connections[projectId] || null;
-  });
+  const connectionState = useProjectStore(s =>
+    projectId ? selectConnectionState(s, projectId) : null,
+  );
 
   const [isOpen, setIsOpen] = useState(false);
   const [userSelectedTab, setUserSelectedTab] = useState<TabId | null>(null);
@@ -170,10 +155,6 @@ export function DevPanel() {
     attachListenersRef.current();
   };
 
-  const handleNavigateToMocks = () => {
-    window.location.href = '/mocks';
-  };
-
   const tabClass = (isActive: boolean) =>
     `flex-1 px-3 py-2 text-xs font-medium flex items-center justify-center gap-1 transition-colors ${
       isActive ?
@@ -224,18 +205,21 @@ export function DevPanel() {
               }
             </div>
             <div className='flex items-center gap-1'>
+              {isProjectContext && connectionState?.connecting && (
+                <span className='text-2xs rounded bg-yellow-100 px-2 py-0.5 text-yellow-700'>
+                  Connecting...
+                </span>
+              )}
               {isProjectContext && connectionState?.connected && (
                 <span className='text-2xs rounded bg-green-100 px-2 py-0.5 text-green-700'>
                   Connected
                 </span>
               )}
-              <button
-                className='rounded p-1 text-gray-400 hover:bg-purple-100 hover:text-purple-600'
-                onClick={handleNavigateToMocks}
-                title='Go to Mocks'
-              >
-                <LayoutIcon size={16} />
-              </button>
+              {isProjectContext && !connectionState?.connected && !connectionState?.connecting && (
+                <span className='text-2xs rounded bg-red-100 px-2 py-0.5 text-red-700'>
+                  Disconnected
+                </span>
+              )}
               <button
                 className='rounded p-1 text-gray-400 hover:bg-gray-200 hover:text-gray-600'
                 onClick={() => setIsMinimized(!isMinimized)}

@@ -119,6 +119,7 @@ interface ImportRequest {
     data?: ImportData;
     mode?: 'replace' | 'merge';
     targetOrgId?: string;
+    userMapping?: Record<string, string>;
     importer?: {
       userId?: string;
       name?: string | null;
@@ -126,6 +127,46 @@ interface ImportRequest {
       image?: string | null;
     };
   }>;
+}
+
+/**
+ * Remap user IDs throughout import data using the provided mapping.
+ * Only remaps IDs that have an entry in the mapping -- unmapped IDs are left as-is.
+ */
+function remapUserIds(data: ImportData, mapping: Record<string, string>): ImportData {
+  const remapped = JSON.parse(JSON.stringify(data)) as ImportData;
+
+  if (remapped.members) {
+    remapped.members = remapped.members.map(m => ({
+      ...m,
+      userId: mapping[m.userId] || m.userId,
+    }));
+  }
+
+  if (remapped.studies) {
+    for (const study of remapped.studies) {
+      if (study.reviewer1 && mapping[study.reviewer1 as string]) {
+        study.reviewer1 = mapping[study.reviewer1 as string];
+      }
+      if (study.reviewer2 && mapping[study.reviewer2 as string]) {
+        study.reviewer2 = mapping[study.reviewer2 as string];
+      }
+
+      for (const cl of study.checklists || []) {
+        if (cl.assignedTo && mapping[cl.assignedTo]) {
+          cl.assignedTo = mapping[cl.assignedTo];
+        }
+      }
+
+      for (const pdf of study.pdfs || []) {
+        if (pdf.uploadedBy && mapping[pdf.uploadedBy]) {
+          pdf.uploadedBy = mapping[pdf.uploadedBy];
+        }
+      }
+    }
+  }
+
+  return remapped;
 }
 
 interface PatchOperation {
@@ -287,14 +328,19 @@ export async function handleDevImport(ctx: DevContext, request: ImportRequest): 
   const { doc } = ctx;
 
   try {
-    const { data, mode = 'replace', targetOrgId, importer } = await request.json();
+    const { data: rawData, mode = 'replace', targetOrgId, userMapping, importer } = await request.json();
 
-    if (!data) {
+    if (!rawData) {
       return new Response(JSON.stringify({ error: 'Missing data field' }), {
         status: 400,
         headers: { 'Content-Type': 'application/json' },
       });
     }
+
+    // Apply user ID remapping if provided
+    const data = userMapping && Object.keys(userMapping).length > 0
+      ? remapUserIds(rawData, userMapping)
+      : rawData;
 
     doc.transact(() => {
       const metaMap = doc.getMap('meta');
@@ -635,11 +681,20 @@ export async function handleDevApplyTemplate(ctx: DevContext, request: Request):
     );
   }
 
+  // Parse userMapping from request body if present
+  let userMapping: Record<string, string> | undefined;
+  try {
+    const body = await request.json() as { userMapping?: Record<string, string> };
+    userMapping = body?.userMapping;
+  } catch {
+    // No body or invalid JSON is fine -- just skip mapping
+  }
+
   // Re-use the import handler with the template data
   // Cast through unknown because MockProjectData and ImportData have compatible structures
   // but TypeScript can't verify all the nested types automatically
   const fakeRequest: ImportRequest = {
-    json: async () => ({ data: templateData as unknown as ImportData, mode }),
+    json: async () => ({ data: templateData as unknown as ImportData, mode, userMapping }),
   };
 
   return handleDevImport(ctx, fakeRequest);

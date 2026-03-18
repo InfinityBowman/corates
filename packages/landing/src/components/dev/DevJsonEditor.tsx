@@ -1,10 +1,21 @@
 /**
  * DevJsonEditor - JSON export/import for project state
+ *
+ * When importing, if the JSON contains user IDs, shows a mapping step
+ * so they can be remapped to real users.
  */
 
-import { useState, useMemo } from 'react';
-import { DownloadIcon, UploadIcon, CopyIcon, CheckIcon, AlertCircleIcon } from 'lucide-react';
+import { useState, useMemo, useCallback } from 'react';
+import {
+  DownloadIcon,
+  UploadIcon,
+  CopyIcon,
+  CheckIcon,
+  AlertCircleIcon,
+  ArrowLeftIcon,
+} from 'lucide-react';
 import { API_BASE } from '@/config/api';
+import { DevUserMapping, extractUserIds } from './DevUserMapping';
 
 interface ActionResult {
   success: boolean;
@@ -17,6 +28,8 @@ interface DevJsonEditorProps {
   data: object | null;
 }
 
+type Step = 'editor' | 'mapping';
+
 export function DevJsonEditor({ projectId, orgId, data }: DevJsonEditorProps) {
   const [jsonText, setJsonText] = useState('');
   const [hasUserEdited, setHasUserEdited] = useState(false);
@@ -24,6 +37,11 @@ export function DevJsonEditor({ projectId, orgId, data }: DevJsonEditorProps) {
   const [isImporting, setIsImporting] = useState(false);
   const [copied, setCopied] = useState(false);
   const [result, setResult] = useState<ActionResult | null>(null);
+
+  // Mapping step state
+  const [step, setStep] = useState<Step>('editor');
+  const [parsedImport, setParsedImport] = useState<Record<string, unknown> | null>(null);
+  const [importUserIds, setImportUserIds] = useState<string[]>([]);
 
   const currentJson = useMemo(() => {
     if (!data) return '{}';
@@ -62,8 +80,51 @@ export function DevJsonEditor({ projectId, orgId, data }: DevJsonEditorProps) {
     }
   };
 
-  const importState = async () => {
-    if (!projectId || !orgId || !jsonText) return;
+  const doImport = useCallback(
+    async (parsed: Record<string, unknown>, userMapping?: Record<string, string>) => {
+      if (!projectId || !orgId) return;
+
+      setIsImporting(true);
+      setResult(null);
+
+      try {
+        const url = `${API_BASE}/api/orgs/${orgId}/projects/${projectId}/dev/import`;
+        console.log('[DevPanel] Importing state to:', url);
+
+        const body: Record<string, unknown> = { data: parsed, mode: 'replace' };
+        if (userMapping && Object.keys(userMapping).length > 0) {
+          body.userMapping = userMapping;
+        }
+
+        const res = await fetch(url, {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+        });
+
+        if (!res.ok) {
+          const err = await res.json();
+          console.error('[DevPanel] Import failed:', err);
+          throw new Error(err.error || 'Failed to import');
+        }
+
+        console.log('[DevPanel] Import success');
+        setResult({ success: true, message: 'State imported' });
+        setStep('editor');
+        setParsedImport(null);
+      } catch (err) {
+        console.error('[DevPanel] Import error:', err);
+        setResult({ success: false, message: (err as Error).message });
+      } finally {
+        setIsImporting(false);
+      }
+    },
+    [projectId, orgId],
+  );
+
+  const handleImportClick = () => {
+    if (!jsonText) return;
 
     let parsed;
     try {
@@ -74,34 +135,14 @@ export function DevJsonEditor({ projectId, orgId, data }: DevJsonEditorProps) {
       return;
     }
 
-    setIsImporting(true);
-    setResult(null);
-
-    try {
-      const url = `${API_BASE}/api/orgs/${orgId}/projects/${projectId}/dev/import`;
-      console.log('[DevPanel] Importing state to:', url);
-      const res = await fetch(url, {
-        method: 'POST',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ data: parsed, mode: 'replace' }),
-      });
-
-      if (!res.ok) {
-        const err = await res.json();
-        console.error('[DevPanel] Import failed:', err);
-        throw new Error(err.error || 'Failed to import');
-      }
-
-      console.log('[DevPanel] Import success');
-      setResult({ success: true, message: 'State imported' });
-    } catch (err) {
-      console.error('[DevPanel] Import error:', err);
-      setResult({ success: false, message: (err as Error).message });
-    } finally {
-      setIsImporting(false);
+    const userIds = extractUserIds(parsed);
+    if (userIds.length === 0) {
+      doImport(parsed);
+    } else {
+      setParsedImport(parsed);
+      setImportUserIds(userIds);
+      setStep('mapping');
+      setResult(null);
     }
   };
 
@@ -111,6 +152,47 @@ export function DevJsonEditor({ projectId, orgId, data }: DevJsonEditorProps) {
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
+
+  if (step === 'mapping') {
+    return (
+      <div className='flex h-full flex-col gap-3 p-3'>
+        <button
+          className='flex items-center gap-1 self-start text-xs text-gray-500 hover:text-gray-700'
+          onClick={() => setStep('editor')}
+        >
+          <ArrowLeftIcon size={12} />
+          Back to editor
+        </button>
+
+        <DevUserMapping
+          userIds={importUserIds}
+          projectId={projectId || undefined}
+          onConfirm={mapping => parsedImport && doImport(parsedImport, mapping)}
+          onSkip={() => parsedImport && doImport(parsedImport)}
+        />
+
+        {isImporting && (
+          <div className='flex items-center gap-2 text-xs text-gray-500'>
+            <span className='h-3 w-3 animate-spin rounded-full border-2 border-purple-500 border-t-transparent' />
+            Importing...
+          </div>
+        )}
+
+        {result && (
+          <div
+            className={`flex items-center gap-1.5 px-3 py-1.5 text-xs ${
+              result.success ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-600'
+            }`}
+          >
+            {result.success ?
+              <CheckIcon size={12} />
+            : <AlertCircleIcon size={12} />}
+            {result.message}
+          </div>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div className='flex h-full flex-col'>
@@ -130,7 +212,7 @@ export function DevJsonEditor({ projectId, orgId, data }: DevJsonEditorProps) {
 
         <button
           className='flex items-center gap-1 rounded bg-purple-600 px-2 py-1 text-xs text-white hover:bg-purple-700 disabled:opacity-50'
-          onClick={importState}
+          onClick={handleImportClick}
           disabled={isImporting || !jsonText}
           title='Import JSON to server'
         >
