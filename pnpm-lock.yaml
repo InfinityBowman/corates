@@ -194,6 +194,9 @@ importers:
       dexie:
         specifier: ^4.3.0
         version: 4.3.0
+      hono:
+        specifier: ^4.12.5
+        version: 4.12.5
       immer:
         specifier: ^11.1.4
         version: 11.1.4

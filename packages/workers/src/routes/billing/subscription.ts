@@ -2,7 +2,7 @@
  * Billing subscription routes
  * Handles org-scoped billing status and member info (read-only endpoints)
  */
-import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
+import { OpenAPIHono, createRoute, z, $ } from '@hono/zod-openapi';
 import { requireAuth, getAuth } from '@/middleware/auth.js';
 import { createDb } from '@/db/client.js';
 import { resolveOrgAccess } from '@/lib/billingResolver.js';
@@ -13,7 +13,7 @@ import { validationHook } from '@/lib/honoValidationHook.js';
 import type { Env } from '../../types';
 import { ErrorResponseSchema } from '@/schemas/common.js';
 
-const billingSubscriptionRoutes = new OpenAPIHono<{ Bindings: Env }>({
+const base = new OpenAPIHono<{ Bindings: Env }>({
   defaultHook: validationHook,
 });
 
@@ -137,10 +137,10 @@ const membersRoute = createRoute({
   },
 });
 
-// Route handlers
-billingSubscriptionRoutes.use('*', requireAuth);
+// Route handlers - chained for RPC type inference
+const billingSubscriptionRoutes = $(base.use('*', requireAuth))
 
-billingSubscriptionRoutes.openapi(usageRoute, async c => {
+.openapi(usageRoute, async c => {
   const { user, session } = getAuth(c);
 
   if (!user || !session) {
@@ -179,9 +179,9 @@ billingSubscriptionRoutes.openapi(usageRoute, async c => {
     });
     return c.json(dbError, 500);
   }
-});
+})
 
-billingSubscriptionRoutes.openapi(subscriptionRoute, async c => {
+.openapi(subscriptionRoute, async c => {
   const { user, session } = getAuth(c);
 
   if (!user || !session) {
@@ -248,9 +248,9 @@ billingSubscriptionRoutes.openapi(subscriptionRoute, async c => {
     });
     return c.json(dbError, 500);
   }
-});
+})
 
-billingSubscriptionRoutes.openapi(membersRoute, async c => {
+.openapi(membersRoute, async c => {
   const { user, session } = getAuth(c);
 
   if (!user || !session) {
@@ -305,3 +305,4 @@ billingSubscriptionRoutes.openapi(membersRoute, async c => {
 });
 
 export { billingSubscriptionRoutes };
+export type BillingSubscriptionRoutes = typeof billingSubscriptionRoutes;

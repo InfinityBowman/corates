@@ -86,14 +86,19 @@ export async function addOutcome(page: Page, name: string) {
 
 /**
  * Marks the current checklist as complete and handles the confirmation dialog.
+ * The dialog says "Mark Appraisal as Complete?" with a "Mark Complete" action button.
  */
 export async function markChecklistComplete(page: Page) {
+  // Click the header "Mark Complete" button
   await page.getByRole('button', { name: /Mark Complete/i }).click();
-  await page.waitForTimeout(500);
-  const confirmBtn = page.getByRole('button', { name: /Mark Complete/i }).last();
-  if (await confirmBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
-    await confirmBtn.click();
-  }
+
+  // Wait for the confirmation dialog to appear
+  await expect(page.getByText('Mark Appraisal as Complete?')).toBeVisible({ timeout: 5_000 });
+
+  // Click the "Mark Complete" button inside the dialog
+  const dialog = page.getByRole('alertdialog');
+  await dialog.getByRole('button', { name: /Mark Complete/i }).click();
+
   await page.waitForTimeout(2000);
 }
 
