@@ -85,9 +85,9 @@ async function fillROBINSIChecklist(page: import('@playwright/test').Page, domai
       const isVisible = await btn.isVisible().catch(() => false);
       if (isVisible) {
         // Check if not already selected
-        const isSelected = await btn.evaluate(
-          el => el.classList.contains('bg-blue-100'),
-        ).catch(() => false);
+        const isSelected = await btn
+          .evaluate(el => el.classList.contains('bg-blue-100'))
+          .catch(() => false);
         if (!isSelected) {
           await btn.click();
           await page.waitForTimeout(30);
