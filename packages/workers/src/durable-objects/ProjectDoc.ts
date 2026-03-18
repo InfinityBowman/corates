@@ -458,7 +458,11 @@ export class ProjectDoc extends DurableObject<Env> {
     return response.json();
   }
 
-  async devApplyTemplate(template: string, mode: string = 'replace', userMapping?: Record<string, string>): Promise<unknown> {
+  async devApplyTemplate(
+    template: string,
+    mode: string = 'replace',
+    userMapping?: Record<string, string>,
+  ): Promise<unknown> {
     await this.initializeDoc();
     const devHandlers = await import('./dev-handlers');
     const fakeRequest = new Request(

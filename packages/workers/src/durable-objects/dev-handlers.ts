@@ -328,7 +328,13 @@ export async function handleDevImport(ctx: DevContext, request: ImportRequest): 
   const { doc } = ctx;
 
   try {
-    const { data: rawData, mode = 'replace', targetOrgId, userMapping, importer } = await request.json();
+    const {
+      data: rawData,
+      mode = 'replace',
+      targetOrgId,
+      userMapping,
+      importer,
+    } = await request.json();
 
     if (!rawData) {
       return new Response(JSON.stringify({ error: 'Missing data field' }), {
@@ -338,8 +344,9 @@ export async function handleDevImport(ctx: DevContext, request: ImportRequest): 
     }
 
     // Apply user ID remapping if provided
-    const data = userMapping && Object.keys(userMapping).length > 0
-      ? remapUserIds(rawData, userMapping)
+    const data =
+      userMapping && Object.keys(userMapping).length > 0 ?
+        remapUserIds(rawData, userMapping)
       : rawData;
 
     doc.transact(() => {
@@ -684,7 +691,7 @@ export async function handleDevApplyTemplate(ctx: DevContext, request: Request):
   // Parse userMapping from request body if present
   let userMapping: Record<string, string> | undefined;
   try {
-    const body = await request.json() as { userMapping?: Record<string, string> };
+    const body = (await request.json()) as { userMapping?: Record<string, string> };
     userMapping = body?.userMapping;
   } catch {
     // No body or invalid JSON is fine -- just skip mapping
