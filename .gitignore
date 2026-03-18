@@ -30,6 +30,7 @@ __playwright-report__/
 test-results/
 playwright-report/
 blob-report/
+excalidraw.log
 
 # production
 /build

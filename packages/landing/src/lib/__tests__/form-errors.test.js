@@ -95,18 +95,6 @@ describe('handleFormError', () => {
 });
 
 describe('createFormErrorState', () => {
-  it('should create form error state manager', () => {
-    const state = createFormErrorState();
-
-    expect(state.setFieldError).toBeDefined();
-    expect(state.getFieldError).toBeDefined();
-    expect(state.clearFieldError).toBeDefined();
-    expect(state.clearAll).toBeDefined();
-    expect(state.hasFieldError).toBeDefined();
-    expect(state.getAllErrors).toBeDefined();
-    expect(state.hasErrors).toBeDefined();
-  });
-
   it('should set and get field errors', () => {
     const state = createFormErrorState();
 

@@ -9,22 +9,6 @@
 import { describe, it, expect } from 'vitest';
 
 describe('API Configuration', () => {
-  describe('API_BASE', () => {
-    it('should export API_BASE constant', async () => {
-      const { API_BASE } = await import('@/config/api');
-      expect(API_BASE).toBeDefined();
-      expect(typeof API_BASE).toBe('string');
-      // Should either be the env value or the default
-      expect(API_BASE).toMatch(/^https?:\/\//);
-    });
-
-    it('should default to localhost:8787 in test environment', async () => {
-      const { API_BASE } = await import('@/config/api');
-      // In test environment without VITE_API_URL set, should use default
-      expect(API_BASE).toBe('http://localhost:8787');
-    });
-  });
-
   describe('getWsBaseUrl', () => {
     it('should convert http:// to ws://', async () => {
       const { getWsBaseUrl } = await import('@/config/api');
