@@ -69,6 +69,7 @@ export function DevImportProject() {
 
     if (userIds.length === 0) {
       // No user IDs to map, import directly
+      setIsImporting(true);
       doImport(parsed);
     } else {
       setStep('mapping');
@@ -205,10 +206,10 @@ export function DevImportProject() {
           </div>
 
           {/* JSON text area */}
-          <div className='flex-1'>
+          <div className='min-h-0 flex-1'>
             <label className='mb-1 block text-xs text-gray-500'>Or paste JSON</label>
             <textarea
-              className='h-full min-h-37.5 w-full resize-none rounded border border-gray-300 bg-gray-50 p-2 font-mono text-xs focus:border-purple-500 focus:ring-1 focus:ring-purple-500 focus:outline-none'
+              className='h-[calc(100%-1.25rem)] w-full resize-none rounded border border-gray-300 bg-gray-50 p-2 font-mono text-xs focus:border-purple-500 focus:ring-1 focus:ring-purple-500 focus:outline-none'
               placeholder='Paste exported project JSON here...'
               value={jsonText}
               onChange={e => setJsonText(e.target.value)}
@@ -240,6 +241,7 @@ export function DevImportProject() {
           </button>
 
           <DevUserMapping
+            key={extractedUserIds.join(',')}
             userIds={extractedUserIds}
             onConfirm={handleMappingConfirm}
             onSkip={handleMappingSkip}

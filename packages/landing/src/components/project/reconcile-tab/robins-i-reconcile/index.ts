@@ -1,6 +1,5 @@
-// Robins-I Reconciliation Components
-export { RobinsIReconciliation } from './RobinsIReconciliation';
-export { RobinsIReconciliationWithPdf } from './RobinsIReconciliationWithPdf';
+// ROBINS-I Reconciliation - Adapter + Components
+export { robinsIAdapter } from './adapter';
 export { RobinsINavbar } from './RobinsINavbar';
 export { RobinsISummaryView } from './RobinsISummaryView';
 
@@ -14,6 +13,3 @@ export { OverallJudgementPage } from './pages/OverallJudgementPage';
 export { RobinsAnswerPanel } from './panels/RobinsAnswerPanel';
 export { JudgementPanel } from './panels/JudgementPanel';
 export { DirectionPanel } from './panels/DirectionPanel';
-
-// Utils
-export * from './navbar-utils.js';

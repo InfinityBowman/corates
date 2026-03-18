@@ -16,6 +16,7 @@ export const getAnswers = rob2.getAnswers;
 export const getSelectedAnswer = rob2.getSelectedAnswer;
 export const getDomainSummary = rob2.getDomainSummary;
 export const scoreRob2Domain = rob2.scoreRob2Domain;
+export const getRequiredQuestions = rob2.getRequiredQuestions;
 export const scoreAllDomains = rob2.scoreAllDomains;
 export const createROB2Checklist = rob2.createROB2Checklist;
 

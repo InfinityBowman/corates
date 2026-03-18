@@ -6,7 +6,7 @@ import { useMemo, useCallback } from 'react';
 import { ROB2_CHECKLIST, getDomainQuestions } from './checklist-map';
 import { SignallingQuestion } from './SignallingQuestion';
 import { DomainJudgement, JudgementBadge } from './DomainJudgement';
-import { scoreRob2Domain } from './checklist.js';
+import { scoreRob2Domain, getRequiredQuestions } from './checklist.js';
 
 interface DomainSectionProps {
   domainKey: string;
@@ -37,11 +37,19 @@ export function DomainSection({
     [domainKey, domainState?.answers],
   );
 
-  const isEarlyComplete = autoScore.isComplete && autoScore.judgement !== null;
+  const requiredQuestions = useMemo(
+    () => getRequiredQuestions(domainKey, domainState?.answers),
+    [domainKey, domainState?.answers],
+  );
 
+  // A question is skippable if it's not on the active scoring path
+  // and hasn't already been answered
   const isQuestionSkippable = useCallback(
-    (qKey: string) => isEarlyComplete && !domainState?.answers?.[qKey]?.answer,
-    [isEarlyComplete, domainState?.answers],
+    (qKey: string) =>
+      requiredQuestions.size > 0 &&
+      !requiredQuestions.has(qKey) &&
+      !domainState?.answers?.[qKey]?.answer,
+    [requiredQuestions, domainState?.answers],
   );
 
   const effectiveJudgement = autoScore.judgement;

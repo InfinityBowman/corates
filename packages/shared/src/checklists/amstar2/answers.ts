@@ -17,7 +17,7 @@ type AnswerLabel = 'Yes' | 'Partial Yes' | 'No' | 'No MA' | null;
  */
 export function getSelectedAnswer(answers: boolean[][], questionKey: string): AnswerLabel {
   // Questions with custom pattern (Yes/No/No MA instead of Yes/Partial Yes/No/No MA)
-  const customPatternQuestions = ['q11a', 'q11b', 'q12', 'q15'];
+  const customPatternQuestions = ['q11', 'q11a', 'q11b', 'q12', 'q15'];
   const customLabels: AnswerLabel[] = ['Yes', 'No', 'No MA'];
   const defaultLabels: AnswerLabel[] = ['Yes', 'Partial Yes', 'No', 'No MA'];
 

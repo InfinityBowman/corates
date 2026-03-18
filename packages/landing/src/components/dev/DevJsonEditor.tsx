@@ -165,6 +165,7 @@ export function DevJsonEditor({ projectId, orgId, data }: DevJsonEditorProps) {
         </button>
 
         <DevUserMapping
+          key={importUserIds.join(',')}
           userIds={importUserIds}
           projectId={projectId || undefined}
           onConfirm={mapping => parsedImport && doImport(parsedImport, mapping)}

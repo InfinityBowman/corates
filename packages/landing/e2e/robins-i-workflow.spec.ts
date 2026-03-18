@@ -135,7 +135,7 @@ test.skip('Dual-Reviewer ROBINS-I Workflow', async ({ context, page }) => {
   await page.getByRole('button', { name: /Add Checklist/i }).click();
   await page.waitForTimeout(1000);
 
-  await page.getByRole('button', { name: /Open/i }).click();
+  await page.getByRole('button', { name: 'Open', exact: true }).click();
   await expect(page).toHaveURL(/\/checklists\//, { timeout: 10_000 });
   await page.waitForTimeout(2000);
 
@@ -161,7 +161,7 @@ test.skip('Dual-Reviewer ROBINS-I Workflow', async ({ context, page }) => {
   await page.getByRole('button', { name: /Add Checklist/i }).click();
   await page.waitForTimeout(1000);
 
-  await page.getByRole('button', { name: /Open/i }).last().click();
+  await page.getByRole('button', { name: 'Open', exact: true }).last().click();
   await expect(page).toHaveURL(/\/checklists\//, { timeout: 10_000 });
   await page.waitForTimeout(2000);
 
@@ -173,7 +173,7 @@ test.skip('Dual-Reviewer ROBINS-I Workflow', async ({ context, page }) => {
   ) {
     await page.goBack();
     await page.waitForTimeout(1000);
-    await page.getByRole('button', { name: /Open/i }).first().click();
+    await page.getByRole('button', { name: 'Open', exact: true }).first().click();
     await expect(page).toHaveURL(/\/checklists\//, { timeout: 10_000 });
     await page.waitForTimeout(2000);
   }

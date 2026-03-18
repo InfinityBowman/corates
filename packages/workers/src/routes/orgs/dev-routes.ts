@@ -306,7 +306,8 @@ devRoutes.openapi(applyTemplateRoute, async c => {
 
   try {
     const projectDoc = getProjectDocStub(c.env, projectId);
-    const data = await projectDoc.devApplyTemplate(template, mode);
+    const body = await c.req.json().catch(() => ({}));
+    const data = await projectDoc.devApplyTemplate(template, mode, body.userMapping);
     return c.json(data);
   } catch (err) {
     const error = err as Error;

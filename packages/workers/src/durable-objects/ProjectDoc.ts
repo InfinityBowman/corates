@@ -458,13 +458,15 @@ export class ProjectDoc extends DurableObject<Env> {
     return response.json();
   }
 
-  async devApplyTemplate(template: string, mode: string = 'replace'): Promise<unknown> {
+  async devApplyTemplate(template: string, mode: string = 'replace', userMapping?: Record<string, string>): Promise<unknown> {
     await this.initializeDoc();
     const devHandlers = await import('./dev-handlers');
     const fakeRequest = new Request(
       `https://internal/dev/apply-template?template=${template}&mode=${mode}`,
       {
         method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userMapping }),
       },
     );
     const response = await devHandlers.handleDevApplyTemplate(this.devCtx, fakeRequest);

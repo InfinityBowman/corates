@@ -1,3 +1,4 @@
+import { useSyncExternalStore, lazy, Suspense } from 'react';
 import { HeadContent, Link, Outlet, Scripts, createRootRoute } from '@tanstack/react-router';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { queryClient } from '@/lib/queryClient';
@@ -6,6 +7,18 @@ import { Toaster } from '@/components/ui/sonner';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import appCss from '../styles.css?url';
 import type { ErrorComponentProps } from '@tanstack/react-router';
+
+const LazyDevPanel = import.meta.env.VITE_DEV_PANEL === 'true'
+  ? lazy(() => import('@/components/dev/DevPanel').then(m => ({ default: m.DevPanel })))
+  : null;
+
+const emptySubscribe = () => () => {};
+
+/** Render children only on the client, never during SSR. */
+function ClientOnly({ children }: { children: React.ReactNode }) {
+  const isClient = useSyncExternalStore(emptySubscribe, () => true, () => false);
+  return isClient ? children : null;
+}
 
 const SITE_URL = 'https://corates.org';
 const IMAGE_URL = `${SITE_URL}/landing_preview.png`;
@@ -171,6 +184,13 @@ function RootLayout() {
         <TooltipProvider>
           <Outlet />
           <Toaster />
+          {LazyDevPanel && (
+            <ClientOnly>
+              <Suspense>
+                <LazyDevPanel />
+              </Suspense>
+            </ClientOnly>
+          )}
         </TooltipProvider>
       </AuthProvider>
     </QueryClientProvider>

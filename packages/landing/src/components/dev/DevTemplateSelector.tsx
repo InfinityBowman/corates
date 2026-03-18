@@ -169,6 +169,7 @@ export function DevTemplateSelector({ projectId, orgId }: DevTemplateSelectorPro
         </div>
 
         <DevUserMapping
+          key={templateUserIds.join(',')}
           userIds={templateUserIds}
           projectId={projectId || undefined}
           onConfirm={mapping => doApplyTemplate(pendingTemplate, pendingMode, mapping)}

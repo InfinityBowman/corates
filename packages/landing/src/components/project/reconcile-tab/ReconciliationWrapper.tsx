@@ -25,9 +25,15 @@ import { getCachedPdf, cachePdf } from '@/primitives/pdfCache.js';
 import { showToast } from '@/components/ui/toast';
 import { CHECKLIST_TYPES } from '@/checklist-registry/types';
 import { usePdfPreviewStore } from '@/stores/pdfPreviewStore';
-import { ReconciliationWithPdf } from './amstar2-reconcile/ReconciliationWithPdf';
-import { ROB2ReconciliationWithPdf } from './rob2-reconcile/index';
-import { RobinsIReconciliationWithPdf } from './robins-i-reconcile/index';
+import { ReconciliationEngine, registerReconciliationAdapter } from './engine';
+import { amstar2Adapter } from './amstar2-reconcile/adapter';
+import { rob2Adapter } from './rob2-reconcile/adapter';
+import { robinsIAdapter } from './robins-i-reconcile/adapter';
+
+// Register adapters
+registerReconciliationAdapter('AMSTAR2', amstar2Adapter);
+registerReconciliationAdapter('ROB2', rob2Adapter);
+registerReconciliationAdapter('ROBINS_I', robinsIAdapter);
 
 const projectActionsStore = _projectActionsStore as any;
 
@@ -425,6 +431,21 @@ export function ReconciliationWrapper({
     navigate({ to: `${getProjectPath()}?tab=reconcile` as string });
   }, [navigate, getProjectPath]);
 
+  // Unified getTextRef that routes to the correct Yjs text accessor per type
+  const getTextRef = useCallback(
+    (...args: unknown[]) => {
+      if (isRobinsI) {
+        return getRobinsText?.(studyId, reconciledChecklistId, ...args);
+      }
+      if (isRob2) {
+        return getRob2Text?.(studyId, reconciledChecklistId, ...args);
+      }
+      // AMSTAR2: getQuestionNote takes just the question key
+      return getQuestionNote?.(studyId, reconciledChecklistId, args[0]);
+    },
+    [isRobinsI, isRob2, studyId, reconciledChecklistId, getRobinsText, getRob2Text, getQuestionNote],
+  );
+
   // Shared props for all reconciliation types
   const sharedProps = {
     checklist1: checklist1Data,
@@ -478,51 +499,16 @@ export function ReconciliationWrapper({
     );
   }
 
-  // Type dispatch
-  if (isRobinsI) {
-    return (
-      <RobinsIReconciliationWithPdf
-        {...sharedProps}
-        updateChecklistAnswer={(questionKey: string, questionData: any) => {
-          if (!reconciledChecklistId) return;
-          updateChecklistAnswer?.(studyId, reconciledChecklistId, questionKey, questionData);
-        }}
-        getRobinsText={(sectionKey: string, fieldKey: string, questionKey?: string) =>
-          getRobinsText?.(studyId, reconciledChecklistId, sectionKey, fieldKey, questionKey)
-        }
-        checklistType='ROBINS_I'
-      />
-    );
-  }
-
-  if (isRob2) {
-    return (
-      <ROB2ReconciliationWithPdf
-        {...sharedProps}
-        updateChecklistAnswer={(questionKey: string, questionData: any) => {
-          if (!reconciledChecklistId) return;
-          updateChecklistAnswer?.(studyId, reconciledChecklistId, questionKey, questionData);
-        }}
-        getRob2Text={(sectionKey: string, fieldKey: string, questionKey?: string) =>
-          getRob2Text?.(studyId, reconciledChecklistId, sectionKey, fieldKey, questionKey)
-        }
-        checklistType='ROB2'
-      />
-    );
-  }
-
-  // Default: AMSTAR2
+  // All types now route through the engine
   return (
-    <ReconciliationWithPdf
+    <ReconciliationEngine
       {...sharedProps}
-      getQuestionNote={(questionKey: string) =>
-        getQuestionNote?.(studyId, reconciledChecklistId, questionKey)
-      }
-      updateChecklistAnswer={(questionKey: string, questionData: any) => {
+      checklistType={checklistType}
+      updateChecklistAnswer={(sectionKey: string, data: any) => {
         if (!reconciledChecklistId) return;
-        updateChecklistAnswer?.(studyId, reconciledChecklistId, questionKey, questionData);
+        updateChecklistAnswer?.(studyId, reconciledChecklistId, sectionKey, data);
       }}
-      checklistType='AMSTAR2'
+      getTextRef={getTextRef}
     />
   );
 }

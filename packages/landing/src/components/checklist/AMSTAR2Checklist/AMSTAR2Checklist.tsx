@@ -493,7 +493,7 @@ function Question11({
       if (colIdx === 0) {
         const allChecked = newAnswers[0].every(Boolean);
         newAnswers[1][0] = allChecked;
-        newAnswers[1][1] = !allChecked;
+        newAnswers[1][1] = false;
         newAnswers[1][2] = false;
       }
       if (colIdx === 1) {

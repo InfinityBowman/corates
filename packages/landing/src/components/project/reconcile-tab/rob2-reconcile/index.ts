@@ -1,6 +1,5 @@
-// ROB-2 Reconciliation Components
-export { ROB2Reconciliation } from './ROB2Reconciliation';
-export { ROB2ReconciliationWithPdf } from './ROB2ReconciliationWithPdf';
+// ROB-2 Reconciliation - Adapter + Components
+export { rob2Adapter } from './adapter';
 export { ROB2Navbar } from './ROB2Navbar';
 export { ROB2SummaryView } from './ROB2SummaryView';
 export { NavbarDomainPill } from './NavbarDomainPill';
@@ -15,6 +14,3 @@ export { OverallDirectionPage } from './pages/OverallDirectionPage';
 export { ROB2AnswerPanel } from './panels/ROB2AnswerPanel';
 export { JudgementPanel } from './panels/JudgementPanel';
 export { DirectionPanel } from './panels/DirectionPanel';
-
-// Utils
-export * from './navbar-utils.js';
