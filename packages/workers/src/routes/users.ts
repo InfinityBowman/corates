@@ -3,7 +3,7 @@
  * Handles user operations including search and profile management
  */
 
-import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
+import { OpenAPIHono, createRoute, z, $ } from '@hono/zod-openapi';
 
 import { createDb } from '@/db/client';
 import {
@@ -26,15 +26,13 @@ import { validationHook } from '@/lib/honoValidationHook';
 import type { Env } from '../types';
 import { ErrorResponseSchema } from '@/schemas/common.js';
 
-const userRoutes = new OpenAPIHono<{ Bindings: Env }>({
+const base = new OpenAPIHono<{ Bindings: Env }>({
   defaultHook: validationHook,
 });
 
-// Apply auth middleware to all routes
-userRoutes.use('*', requireAuth);
-
-// Apply rate limiting to search endpoint
-userRoutes.use('/search', searchRateLimit);
+// Apply auth middleware to all routes, rate limiting to search
+base.use('*', requireAuth);
+base.use('/search', searchRateLimit);
 
 // Response schemas
 const UserSearchResultSchema = z
@@ -87,7 +85,7 @@ function maskEmail(email: string | null): string | null {
   return `${masked}@${domain}`;
 }
 
-// Search users route
+// Route definitions
 const searchUsersRoute = createRoute({
   method: 'get',
   path: '/search',
@@ -130,7 +128,131 @@ const searchUsersRoute = createRoute({
   },
 });
 
-userRoutes.openapi(searchUsersRoute, async c => {
+const getMyProjectsRoute = createRoute({
+  method: 'get',
+  path: '/me/projects',
+  tags: ['Users'],
+  summary: 'Get my projects',
+  description: 'Get all projects for the current authenticated user',
+  security: [{ cookieAuth: [] }],
+  responses: {
+    200: {
+      content: {
+        'application/json': {
+          schema: z.array(UserProjectSchema),
+        },
+      },
+      description: 'User projects',
+    },
+    401: {
+      content: { 'application/json': { schema: ErrorResponseSchema } },
+      description: 'Unauthorized',
+    },
+    500: {
+      content: { 'application/json': { schema: ErrorResponseSchema } },
+      description: 'Database error',
+    },
+  },
+});
+
+const getUserProjectsRoute = createRoute({
+  method: 'get',
+  path: '/{userId}/projects',
+  tags: ['Users'],
+  summary: 'Get user projects',
+  description: 'Get all projects for a user (only accessible by the user themselves)',
+  security: [{ cookieAuth: [] }],
+  request: {
+    params: z.object({
+      userId: z.string(),
+    }),
+  },
+  responses: {
+    200: {
+      content: {
+        'application/json': {
+          schema: z.array(UserProjectSchema),
+        },
+      },
+      description: 'User projects',
+    },
+    401: {
+      content: { 'application/json': { schema: ErrorResponseSchema } },
+      description: 'Unauthorized',
+    },
+    403: {
+      content: { 'application/json': { schema: ErrorResponseSchema } },
+      description: 'Forbidden',
+    },
+    500: {
+      content: { 'application/json': { schema: ErrorResponseSchema } },
+      description: 'Database error',
+    },
+  },
+});
+
+const deleteMyAccountRoute = createRoute({
+  method: 'delete',
+  path: '/me',
+  tags: ['Users'],
+  summary: 'Delete my account',
+  description: "Delete current user's account and all associated data",
+  security: [{ cookieAuth: [] }],
+  responses: {
+    200: {
+      content: {
+        'application/json': {
+          schema: SuccessSchema,
+        },
+      },
+      description: 'Account deleted successfully',
+    },
+    401: {
+      content: { 'application/json': { schema: ErrorResponseSchema } },
+      description: 'Unauthorized',
+    },
+    500: {
+      content: { 'application/json': { schema: ErrorResponseSchema } },
+      description: 'Database error',
+    },
+  },
+});
+
+const syncProfileRoute = createRoute({
+  method: 'post',
+  path: '/sync-profile',
+  tags: ['Users'],
+  summary: 'Sync profile to projects',
+  description: "Sync the current user's profile changes to all their project memberships",
+  security: [{ cookieAuth: [] }],
+  responses: {
+    200: {
+      content: {
+        'application/json': {
+          schema: SyncResultSchema,
+        },
+      },
+      description: 'Profile synced successfully',
+    },
+    401: {
+      content: { 'application/json': { schema: ErrorResponseSchema } },
+      description: 'Unauthorized',
+    },
+    404: {
+      content: { 'application/json': { schema: ErrorResponseSchema } },
+      description: 'User not found',
+    },
+    500: {
+      content: { 'application/json': { schema: ErrorResponseSchema } },
+      description: 'Database error',
+    },
+  },
+});
+
+// Route handlers - chained for RPC type inference
+const userRoutes = $(base)
+
+.openapi(searchUsersRoute, async c => {
   const { user: currentUser } = getAuth(c);
   if (!currentUser) {
     const error = createDomainError(AUTH_ERRORS.REQUIRED, { reason: 'no_user' });
@@ -197,37 +319,9 @@ userRoutes.openapi(searchUsersRoute, async c => {
     });
     return c.json(dbError, 500);
   }
-});
+})
 
-// Get my projects route
-const getMyProjectsRoute = createRoute({
-  method: 'get',
-  path: '/me/projects',
-  tags: ['Users'],
-  summary: 'Get my projects',
-  description: 'Get all projects for the current authenticated user',
-  security: [{ cookieAuth: [] }],
-  responses: {
-    200: {
-      content: {
-        'application/json': {
-          schema: z.array(UserProjectSchema),
-        },
-      },
-      description: 'User projects',
-    },
-    401: {
-      content: { 'application/json': { schema: ErrorResponseSchema } },
-      description: 'Unauthorized',
-    },
-    500: {
-      content: { 'application/json': { schema: ErrorResponseSchema } },
-      description: 'Database error',
-    },
-  },
-});
-
-userRoutes.openapi(getMyProjectsRoute, async c => {
+.openapi(getMyProjectsRoute, async c => {
   const { user: authUser } = getAuth(c);
   if (!authUser) {
     const error = createDomainError(AUTH_ERRORS.REQUIRED, { reason: 'no_user' });
@@ -262,46 +356,9 @@ userRoutes.openapi(getMyProjectsRoute, async c => {
     });
     return c.json(dbError, 500);
   }
-});
+})
 
-// Get user projects by ID route
-const getUserProjectsRoute = createRoute({
-  method: 'get',
-  path: '/{userId}/projects',
-  tags: ['Users'],
-  summary: 'Get user projects',
-  description: 'Get all projects for a user (only accessible by the user themselves)',
-  security: [{ cookieAuth: [] }],
-  request: {
-    params: z.object({
-      userId: z.string(),
-    }),
-  },
-  responses: {
-    200: {
-      content: {
-        'application/json': {
-          schema: z.array(UserProjectSchema),
-        },
-      },
-      description: 'User projects',
-    },
-    401: {
-      content: { 'application/json': { schema: ErrorResponseSchema } },
-      description: 'Unauthorized',
-    },
-    403: {
-      content: { 'application/json': { schema: ErrorResponseSchema } },
-      description: 'Forbidden',
-    },
-    500: {
-      content: { 'application/json': { schema: ErrorResponseSchema } },
-      description: 'Database error',
-    },
-  },
-});
-
-userRoutes.openapi(getUserProjectsRoute, async c => {
+.openapi(getUserProjectsRoute, async c => {
   const { user: authUser } = getAuth(c);
   if (!authUser) {
     const error = createDomainError(AUTH_ERRORS.REQUIRED, { reason: 'no_user' });
@@ -345,37 +402,9 @@ userRoutes.openapi(getUserProjectsRoute, async c => {
     });
     return c.json(dbError, 500);
   }
-});
+})
 
-// Delete my account route
-const deleteMyAccountRoute = createRoute({
-  method: 'delete',
-  path: '/me',
-  tags: ['Users'],
-  summary: 'Delete my account',
-  description: "Delete current user's account and all associated data",
-  security: [{ cookieAuth: [] }],
-  responses: {
-    200: {
-      content: {
-        'application/json': {
-          schema: SuccessSchema,
-        },
-      },
-      description: 'Account deleted successfully',
-    },
-    401: {
-      content: { 'application/json': { schema: ErrorResponseSchema } },
-      description: 'Unauthorized',
-    },
-    500: {
-      content: { 'application/json': { schema: ErrorResponseSchema } },
-      description: 'Database error',
-    },
-  },
-});
-
-userRoutes.openapi(deleteMyAccountRoute, async c => {
+.openapi(deleteMyAccountRoute, async c => {
   const { user: currentUser } = getAuth(c);
   if (!currentUser) {
     const error = createDomainError(AUTH_ERRORS.REQUIRED, { reason: 'no_user' });
@@ -422,41 +451,9 @@ userRoutes.openapi(deleteMyAccountRoute, async c => {
     });
     return c.json(dbError, 500);
   }
-});
+})
 
-// Sync profile route
-const syncProfileRoute = createRoute({
-  method: 'post',
-  path: '/sync-profile',
-  tags: ['Users'],
-  summary: 'Sync profile to projects',
-  description: "Sync the current user's profile changes to all their project memberships",
-  security: [{ cookieAuth: [] }],
-  responses: {
-    200: {
-      content: {
-        'application/json': {
-          schema: SyncResultSchema,
-        },
-      },
-      description: 'Profile synced successfully',
-    },
-    401: {
-      content: { 'application/json': { schema: ErrorResponseSchema } },
-      description: 'Unauthorized',
-    },
-    404: {
-      content: { 'application/json': { schema: ErrorResponseSchema } },
-      description: 'User not found',
-    },
-    500: {
-      content: { 'application/json': { schema: ErrorResponseSchema } },
-      description: 'Database error',
-    },
-  },
-});
-
-userRoutes.openapi(syncProfileRoute, async c => {
+.openapi(syncProfileRoute, async c => {
   const { user: currentUser } = getAuth(c);
   if (!currentUser) {
     const error = createDomainError(AUTH_ERRORS.REQUIRED, { reason: 'no_user' });
@@ -533,3 +530,4 @@ userRoutes.openapi(syncProfileRoute, async c => {
 });
 
 export { userRoutes };
+export type UserRoutes = typeof userRoutes;

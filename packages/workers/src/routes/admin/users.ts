@@ -35,7 +35,7 @@ import { validationHook } from '@/lib/honoValidationHook.js';
 import type { Env, AuthUser, AppVariables } from '../../types';
 import { ErrorResponseSchema } from '@/schemas/common.js';
 
-const userRoutes = new OpenAPIHono<{ Bindings: Env; Variables: AppVariables }>({
+const base = new OpenAPIHono<{ Bindings: Env; Variables: AppVariables }>({
   defaultHook: validationHook,
 });
 
@@ -523,7 +523,8 @@ const deleteUserRoute = createRoute({
  * GET /api/admin/stats
  * Get dashboard statistics
  */
-userRoutes.openapi(getStatsRoute, async c => {
+const userRoutes = base
+  .openapi(getStatsRoute, async c => {
   const db = createDb(c.env.DB);
 
   try {
@@ -559,13 +560,13 @@ userRoutes.openapi(getStatsRoute, async c => {
     });
     return c.json(dbError, 500);
   }
-});
+})
 
 /**
  * GET /api/admin/users
  * List all users with pagination and search
  */
-userRoutes.openapi(listUsersRoute, async c => {
+  .openapi(listUsersRoute, async c => {
   const db = createDb(c.env.DB);
   const query = c.req.valid('query');
 
@@ -682,13 +683,13 @@ userRoutes.openapi(listUsersRoute, async c => {
     });
     return c.json(dbError, 500);
   }
-});
+})
 
 /**
  * GET /api/admin/users/:userId
  * Get detailed user info
  */
-userRoutes.openapi(getUserDetailsRoute, async c => {
+  .openapi(getUserDetailsRoute, async c => {
   const { userId } = c.req.valid('param');
   const db = createDb(c.env.DB);
 
@@ -795,13 +796,13 @@ userRoutes.openapi(getUserDetailsRoute, async c => {
     });
     return c.json(dbError, 500);
   }
-});
+})
 
 /**
  * POST /api/admin/users/:userId/ban
  * Ban a user
  */
-userRoutes.openapi(banUserRoute, async c => {
+  .openapi(banUserRoute, async c => {
   const { userId } = c.req.valid('param');
   const db = createDb(c.env.DB);
 
@@ -853,13 +854,13 @@ userRoutes.openapi(banUserRoute, async c => {
     });
     return c.json(dbError, 500);
   }
-});
+})
 
 /**
  * POST /api/admin/users/:userId/unban
  * Unban a user
  */
-userRoutes.openapi(unbanUserRoute, async c => {
+  .openapi(unbanUserRoute, async c => {
   const { userId } = c.req.valid('param');
   const db = createDb(c.env.DB);
 
@@ -884,14 +885,14 @@ userRoutes.openapi(unbanUserRoute, async c => {
     });
     return c.json(dbError, 500);
   }
-});
+})
 
 /**
  * POST /api/admin/users/:userId/impersonate
  * Start impersonating a user (creates a new session)
  */
 // @ts-expect-error Handler returns raw Response from Better Auth's handler
-userRoutes.openapi(impersonateUserRoute, async c => {
+  .openapi(impersonateUserRoute, async c => {
   const { userId } = c.req.valid('param');
   const adminUser = c.get('user') as AuthUser;
   const body = c.req.valid('json');
@@ -951,13 +952,13 @@ userRoutes.openapi(impersonateUserRoute, async c => {
     });
     return c.json(dbError, 500);
   }
-});
+})
 
 /**
  * DELETE /api/admin/users/:userId/sessions
  * Revoke all sessions for a user
  */
-userRoutes.openapi(revokeAllSessionsRoute, async c => {
+  .openapi(revokeAllSessionsRoute, async c => {
   const { userId } = c.req.valid('param');
   const db = createDb(c.env.DB);
 
@@ -974,13 +975,13 @@ userRoutes.openapi(revokeAllSessionsRoute, async c => {
     });
     return c.json(dbError, 500);
   }
-});
+})
 
 /**
  * DELETE /api/admin/users/:userId/sessions/:sessionId
  * Revoke a specific session for a user
  */
-userRoutes.openapi(revokeSessionRoute, async c => {
+  .openapi(revokeSessionRoute, async c => {
   const { userId, sessionId } = c.req.valid('param');
   const db = createDb(c.env.DB);
 
@@ -1015,13 +1016,13 @@ userRoutes.openapi(revokeSessionRoute, async c => {
     });
     return c.json(dbError, 500);
   }
-});
+})
 
 /**
  * DELETE /api/admin/users/:userId
  * Delete a user and all their data
  */
-userRoutes.openapi(deleteUserRoute, async c => {
+  .openapi(deleteUserRoute, async c => {
   const { userId } = c.req.valid('param');
   const adminUser = c.get('user') as AuthUser;
   const db = createDb(c.env.DB);
@@ -1089,3 +1090,4 @@ userRoutes.openapi(deleteUserRoute, async c => {
 });
 
 export { userRoutes };
+export type UserRoutes = typeof userRoutes;

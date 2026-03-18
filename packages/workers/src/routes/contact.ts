@@ -3,7 +3,7 @@
  * Handles contact form submissions and sends emails via Postmark
  */
 
-import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
+import { OpenAPIHono, createRoute, z, $ } from '@hono/zod-openapi';
 
 import { contactRateLimit } from '@/middleware/rateLimit';
 import {
@@ -18,7 +18,7 @@ import { queueEmail } from '@/lib/email-queue';
 import type { Env } from '../types';
 import { ErrorResponseSchema } from '@/schemas/common.js';
 
-const contact = new OpenAPIHono<{ Bindings: Env }>({
+const base = new OpenAPIHono<{ Bindings: Env }>({
   defaultHook: (result, c) => {
     if (!result.success) {
       const firstIssue = result.error.issues[0];
@@ -53,7 +53,7 @@ const contact = new OpenAPIHono<{ Bindings: Env }>({
 });
 
 // Handle JSON parse errors
-contact.onError((err, c) => {
+base.onError((err, c) => {
   if (err.message?.includes('JSON')) {
     const error = createValidationError('body', VALIDATION_ERRORS.INVALID_INPUT.code, null);
     error.message = 'Invalid JSON input';
@@ -61,9 +61,6 @@ contact.onError((err, c) => {
   }
   throw err;
 });
-
-// Apply rate limiting to contact endpoints
-contact.use('*', contactRateLimit);
 
 // Request schema
 const ContactRequestSchema = z
@@ -158,7 +155,10 @@ const submitContactRoute = createRoute({
   },
 });
 
-contact.openapi(submitContactRoute, async c => {
+// Route handlers - chained for RPC type inference
+const contactRoutes = $(base.use('*', contactRateLimit))
+
+.openapi(submitContactRoute, async c => {
   const env = c.env;
   const { name, email, subject, message } = c.req.valid('json');
 
@@ -209,4 +209,5 @@ contact.openapi(submitContactRoute, async c => {
   }
 });
 
-export { contact as contactRoutes };
+export { contactRoutes };
+export type ContactRoutes = typeof contactRoutes;

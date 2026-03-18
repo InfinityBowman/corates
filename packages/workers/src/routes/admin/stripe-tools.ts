@@ -15,7 +15,7 @@ import { validationHook } from '@/lib/honoValidationHook.js';
 import type { Env } from '../../types';
 import { ErrorResponseSchema } from '@/schemas/common.js';
 
-const stripeToolsRoutes = new OpenAPIHono<{ Bindings: Env }>({
+const _stripeToolsBase = new OpenAPIHono<{ Bindings: Env }>({
   defaultHook: validationHook,
 });
 
@@ -384,8 +384,9 @@ interface LinkedOrg {
  * GET /api/admin/stripe/customer
  * Look up a Stripe customer by email or customer ID
  */
-// @ts-expect-error Handler returns multiple 200 response shapes plus error status codes
-stripeToolsRoutes.openapi(customerLookupRoute, async c => {
+const stripeToolsRoutes = _stripeToolsBase
+  // @ts-expect-error Handler returns multiple 200 response shapes plus error status codes
+  .openapi(customerLookupRoute, async c => {
   const query = c.req.valid('query');
   const email = query.email;
   const customerId = query.customerId;
@@ -561,13 +562,13 @@ stripeToolsRoutes.openapi(customerLookupRoute, async c => {
     });
     return c.json(dbError, 500);
   }
-});
+})
 
 /**
  * POST /api/admin/stripe/portal-link
  * Generate a customer portal link for a Stripe customer
  */
-stripeToolsRoutes.openapi(portalLinkRoute, async c => {
+  .openapi(portalLinkRoute, async c => {
   const body = c.req.valid('json');
   const { customerId, returnUrl } = body;
 
@@ -603,14 +604,14 @@ stripeToolsRoutes.openapi(portalLinkRoute, async c => {
     });
     return c.json(dbError, 500);
   }
-});
+})
 
 /**
  * GET /api/admin/stripe/customer/:customerId/invoices
  * Get recent invoices for a Stripe customer
  */
 // @ts-expect-error Handler returns 500 outside try block for service unavailable check
-stripeToolsRoutes.openapi(invoicesRoute, async c => {
+  .openapi(invoicesRoute, async c => {
   const { customerId } = c.req.valid('param');
   const query = c.req.valid('query');
   const parsedLimit = parseInt(query.limit || '10', 10);
@@ -672,13 +673,13 @@ stripeToolsRoutes.openapi(invoicesRoute, async c => {
     });
     return c.json(dbError, 500);
   }
-});
+})
 
 /**
  * GET /api/admin/stripe/customer/:customerId/payment-methods
  * Get payment methods for a Stripe customer
  */
-stripeToolsRoutes.openapi(paymentMethodsRoute, async c => {
+  .openapi(paymentMethodsRoute, async c => {
   const { customerId } = c.req.valid('param');
 
   if (!c.env.STRIPE_SECRET_KEY) {
@@ -727,14 +728,14 @@ stripeToolsRoutes.openapi(paymentMethodsRoute, async c => {
     });
     return c.json(dbError, 500);
   }
-});
+})
 
 /**
  * GET /api/admin/stripe/customer/:customerId/subscriptions
  * Get subscriptions for a Stripe customer directly from Stripe
  */
 // @ts-expect-error Handler returns 500 outside try block for service unavailable check
-stripeToolsRoutes.openapi(subscriptionsRoute, async c => {
+  .openapi(subscriptionsRoute, async c => {
   const { customerId } = c.req.valid('param');
 
   if (!c.env.STRIPE_SECRET_KEY) {
@@ -805,3 +806,4 @@ stripeToolsRoutes.openapi(subscriptionsRoute, async c => {
 });
 
 export { stripeToolsRoutes };
+export type StripeToolsRoutes = typeof stripeToolsRoutes;

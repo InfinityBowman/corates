@@ -3,7 +3,7 @@
  * Provides admin dashboard API endpoints
  */
 
-import { OpenAPIHono } from '@hono/zod-openapi';
+import { $, OpenAPIHono } from '@hono/zod-openapi';
 import { requireAdmin } from '@/middleware/requireAdmin';
 import { requireTrustedOrigin } from '@/middleware/csrf';
 import { userRoutes } from './users.js';
@@ -17,22 +17,19 @@ import { stripeToolsRoutes } from './stripe-tools.js';
 import { statsRoutes } from './stats.js';
 import type { Env } from '../../types';
 
-const adminRoutes = new OpenAPIHono<{ Bindings: Env }>();
+const _adminBase = new OpenAPIHono<{ Bindings: Env }>();
 
-// Apply admin middleware to all routes
-adminRoutes.use('*', requireAdmin);
-// CSRF guard for all state-changing admin routes
-adminRoutes.use('*', requireTrustedOrigin);
-
-// Mount route handlers
-adminRoutes.route('/', userRoutes);
-adminRoutes.route('/', storageRoutes);
-adminRoutes.route('/', billingRoutes);
-adminRoutes.route('/', billingObservabilityRoutes);
-adminRoutes.route('/', orgRoutes);
-adminRoutes.route('/', databaseRoutes);
-adminRoutes.route('/', projectRoutes);
-adminRoutes.route('/', stripeToolsRoutes);
-adminRoutes.route('/stats', statsRoutes);
+// Apply admin middleware to all routes, then mount route handlers
+const adminRoutes = $(_adminBase.use('*', requireAdmin).use('*', requireTrustedOrigin))
+  .route('/', userRoutes)
+  .route('/', storageRoutes)
+  .route('/', billingRoutes)
+  .route('/', billingObservabilityRoutes)
+  .route('/', orgRoutes)
+  .route('/', databaseRoutes)
+  .route('/', projectRoutes)
+  .route('/', stripeToolsRoutes)
+  .route('/stats', statsRoutes);
 
 export { adminRoutes };
+export type AdminRoutes = typeof adminRoutes;

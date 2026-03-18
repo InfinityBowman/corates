@@ -3,7 +3,7 @@
  * Handles database operations and migrations
  */
 
-import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
+import { OpenAPIHono, createRoute, z, $ } from '@hono/zod-openapi';
 
 import { createDb } from '@/db/client.js';
 import { user } from '@/db/schema.js';
@@ -18,10 +18,10 @@ import {
 import type { Env } from '../types';
 import { ErrorResponseSchema } from '@/schemas/common.js';
 
-const dbRoutes = new OpenAPIHono<{ Bindings: Env }>();
+const base = new OpenAPIHono<{ Bindings: Env }>();
 
 // Apply auth middleware to users endpoint
-dbRoutes.use('/users', requireAuth);
+base.use('/users', requireAuth);
 
 // Response schemas
 const UserListSchema = z
@@ -48,7 +48,7 @@ const MigrationResponseSchema = z
   })
   .openapi('MigrationResponse');
 
-// List users route
+// Route definitions
 const listUsersRoute = createRoute({
   method: 'get',
   path: '/users',
@@ -72,7 +72,46 @@ const listUsersRoute = createRoute({
   },
 });
 
-dbRoutes.openapi(listUsersRoute, async c => {
+const createUserRoute = createRoute({
+  method: 'post',
+  path: '/users',
+  tags: ['Database'],
+  summary: 'Create user (deprecated)',
+  description: 'This endpoint is deprecated. Use /api/auth/sign-up instead.',
+  responses: {
+    400: {
+      content: { 'application/json': { schema: ErrorResponseSchema } },
+      description: 'Use auth register endpoint',
+    },
+  },
+});
+
+const checkMigrationRoute = createRoute({
+  method: 'post',
+  path: '/migrate',
+  tags: ['Database'],
+  summary: 'Check migration status',
+  description: 'Check if database migrations have been applied',
+  responses: {
+    200: {
+      content: {
+        'application/json': {
+          schema: MigrationResponseSchema,
+        },
+      },
+      description: 'Migration status',
+    },
+    500: {
+      content: { 'application/json': { schema: ErrorResponseSchema } },
+      description: 'Database error',
+    },
+  },
+});
+
+// Route handlers - chained for RPC type inference
+const dbRoutes = $(base)
+
+.openapi(listUsersRoute, async c => {
   const db = createDb(c.env.DB);
 
   try {
@@ -98,24 +137,9 @@ dbRoutes.openapi(listUsersRoute, async c => {
     });
     return c.json(dbError, 500);
   }
-});
+})
 
-// Create user route (redirect to auth)
-const createUserRoute = createRoute({
-  method: 'post',
-  path: '/users',
-  tags: ['Database'],
-  summary: 'Create user (deprecated)',
-  description: 'This endpoint is deprecated. Use /api/auth/sign-up instead.',
-  responses: {
-    400: {
-      content: { 'application/json': { schema: ErrorResponseSchema } },
-      description: 'Use auth register endpoint',
-    },
-  },
-});
-
-dbRoutes.openapi(createUserRoute, c => {
+.openapi(createUserRoute, c => {
   const error = createValidationError(
     'endpoint',
     VALIDATION_ERRORS.INVALID_INPUT.code,
@@ -123,32 +147,9 @@ dbRoutes.openapi(createUserRoute, c => {
     'use_auth_register',
   );
   return c.json(error, 400);
-});
+})
 
-// Check migration status route
-const checkMigrationRoute = createRoute({
-  method: 'post',
-  path: '/migrate',
-  tags: ['Database'],
-  summary: 'Check migration status',
-  description: 'Check if database migrations have been applied',
-  responses: {
-    200: {
-      content: {
-        'application/json': {
-          schema: MigrationResponseSchema,
-        },
-      },
-      description: 'Migration status',
-    },
-    500: {
-      content: { 'application/json': { schema: ErrorResponseSchema } },
-      description: 'Database error',
-    },
-  },
-});
-
-dbRoutes.openapi(checkMigrationRoute, async c => {
+.openapi(checkMigrationRoute, async c => {
   try {
     const tableCheck = await c.env.DB.prepare(
       "SELECT name FROM sqlite_master WHERE type='table' AND name='user'",
@@ -176,3 +177,4 @@ dbRoutes.openapi(checkMigrationRoute, async c => {
 });
 
 export { dbRoutes };
+export type DbRoutes = typeof dbRoutes;

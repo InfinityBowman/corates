@@ -15,7 +15,7 @@ import { validationHook } from '@/lib/honoValidationHook.js';
 import type { Env } from '../../types';
 import { ErrorResponseSchema } from '@/schemas/common.js';
 
-const billingObservabilityRoutes = new OpenAPIHono<{ Bindings: Env }>({
+const base = new OpenAPIHono<{ Bindings: Env }>({
   defaultHook: validationHook,
 });
 
@@ -293,7 +293,8 @@ interface StuckOrg {
  * GET /api/admin/orgs/:orgId/billing/reconcile
  * Reconciliation endpoint to detect stuck subscription states
  */
-billingObservabilityRoutes.openapi(reconcileRoute, async c => {
+const billingObservabilityRoutes = base
+  .openapi(reconcileRoute, async c => {
   const { orgId } = c.req.valid('param');
   const query = c.req.valid('query');
   const db = createDb(c.env.DB);
@@ -544,13 +545,13 @@ billingObservabilityRoutes.openapi(reconcileRoute, async c => {
     });
     return c.json(dbError, 500);
   }
-});
+})
 
 /**
  * GET /api/admin/billing/stuck-states
  * Global endpoint to find all orgs with stuck billing states
  */
-billingObservabilityRoutes.openapi(stuckStatesRoute, async c => {
+  .openapi(stuckStatesRoute, async c => {
   const db = createDb(c.env.DB);
   const query = c.req.valid('query');
   const incompleteThresholdMinutes = parseInt(query.incompleteThreshold || '30', 10);
@@ -683,13 +684,13 @@ billingObservabilityRoutes.openapi(stuckStatesRoute, async c => {
     });
     return c.json(dbError, 500);
   }
-});
+})
 
 /**
  * GET /api/admin/billing/ledger
  * View recent Stripe event ledger entries (global)
  */
-billingObservabilityRoutes.openapi(ledgerRoute, async c => {
+  .openapi(ledgerRoute, async c => {
   const db = createDb(c.env.DB);
   const query = c.req.valid('query');
   const limit = parseInt(query.limit || '50', 10);
@@ -783,3 +784,4 @@ billingObservabilityRoutes.openapi(ledgerRoute, async c => {
 });
 
 export { billingObservabilityRoutes };
+export type BillingObservabilityRoutes = typeof billingObservabilityRoutes;

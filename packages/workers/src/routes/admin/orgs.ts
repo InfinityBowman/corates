@@ -15,7 +15,7 @@ import { validationHook } from '@/lib/honoValidationHook.js';
 import type { Env } from '../../types';
 import { ErrorResponseSchema } from '@/schemas/common.js';
 
-const orgRoutes = new OpenAPIHono<{ Bindings: Env }>({
+const base = new OpenAPIHono<{ Bindings: Env }>({
   defaultHook: validationHook,
 });
 
@@ -196,7 +196,8 @@ const getOrgDetailsRoute = createRoute({
  * GET /api/admin/orgs
  * List all orgs with pagination and search
  */
-orgRoutes.openapi(listOrgsRoute, async c => {
+const orgRoutes = base
+  .openapi(listOrgsRoute, async c => {
   const db = createDb(c.env.DB);
 
   try {
@@ -312,13 +313,13 @@ orgRoutes.openapi(listOrgsRoute, async c => {
     });
     return c.json(dbError, 500);
   }
-});
+})
 
 /**
  * GET /api/admin/orgs/:orgId
  * Get org details with billing summary
  */
-orgRoutes.openapi(getOrgDetailsRoute, async c => {
+  .openapi(getOrgDetailsRoute, async c => {
   const { orgId } = c.req.valid('param');
   const db = createDb(c.env.DB);
 
@@ -390,3 +391,4 @@ orgRoutes.openapi(getOrgDetailsRoute, async c => {
 });
 
 export { orgRoutes };
+export type OrgRoutes = typeof orgRoutes;

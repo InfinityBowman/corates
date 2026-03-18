@@ -5,7 +5,7 @@
  * Avatars are stored with keys: avatars/{userId}/{filename}
  */
 
-import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
+import { OpenAPIHono, createRoute, z, $ } from '@hono/zod-openapi';
 
 import { requireAuth, getAuth } from '@/middleware/auth';
 import { createDomainError, FILE_ERRORS, SYSTEM_ERRORS, VALIDATION_ERRORS } from '@corates/shared';
@@ -18,12 +18,9 @@ import { validationHook } from '@/lib/honoValidationHook';
 import type { Env } from '../types';
 import { ErrorResponseSchema } from '@/schemas/common.js';
 
-const avatarRoutes = new OpenAPIHono<{ Bindings: Env }>({
+const base = new OpenAPIHono<{ Bindings: Env }>({
   defaultHook: validationHook,
 });
-
-// Apply auth middleware to all routes
-avatarRoutes.use('*', requireAuth);
 
 // Allowed image types
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
@@ -77,7 +74,7 @@ async function syncAvatarToProjects(env: Env, userId: string, avatarUrl: string)
   }
 }
 
-// Upload avatar route
+// Route definitions
 const uploadAvatarRoute = createRoute({
   method: 'post',
   path: '/',
@@ -133,7 +130,94 @@ const uploadAvatarRoute = createRoute({
   },
 });
 
-avatarRoutes.openapi(uploadAvatarRoute, async c => {
+const getAvatarRoute = createRoute({
+  method: 'get',
+  path: '/{userId}',
+  tags: ['Avatar'],
+  summary: 'Get user avatar',
+  description: "Retrieves a user's avatar image",
+  security: [{ cookieAuth: [] }],
+  request: {
+    params: z.object({
+      userId: z.string().openapi({ example: 'user123' }),
+    }),
+  },
+  responses: {
+    200: {
+      content: {
+        'image/jpeg': {
+          schema: z.any().openapi({ type: 'string', format: 'binary' }),
+        },
+        'image/png': {
+          schema: z.any().openapi({ type: 'string', format: 'binary' }),
+        },
+        'image/gif': {
+          schema: z.any().openapi({ type: 'string', format: 'binary' }),
+        },
+        'image/webp': {
+          schema: z.any().openapi({ type: 'string', format: 'binary' }),
+        },
+      },
+      description: 'Avatar image',
+    },
+    404: {
+      content: {
+        'application/json': {
+          schema: ErrorResponseSchema,
+        },
+      },
+      description: 'Avatar not found',
+    },
+    500: {
+      content: {
+        'application/json': {
+          schema: ErrorResponseSchema,
+        },
+      },
+      description: 'Server error',
+    },
+  },
+});
+
+const deleteAvatarRoute = createRoute({
+  method: 'delete',
+  path: '/',
+  tags: ['Avatar'],
+  summary: 'Delete avatar',
+  description: "Deletes the current user's avatar",
+  security: [{ cookieAuth: [] }],
+  responses: {
+    200: {
+      content: {
+        'application/json': {
+          schema: AvatarDeleteSuccessSchema,
+        },
+      },
+      description: 'Avatar deleted successfully',
+    },
+    401: {
+      content: {
+        'application/json': {
+          schema: ErrorResponseSchema,
+        },
+      },
+      description: 'Unauthorized',
+    },
+    500: {
+      content: {
+        'application/json': {
+          schema: ErrorResponseSchema,
+        },
+      },
+      description: 'Server error',
+    },
+  },
+});
+
+// Route handlers - chained for RPC type inference
+const avatarRoutes = $(base.use('*', requireAuth))
+
+.openapi(uploadAvatarRoute, async c => {
   const { user } = getAuth(c);
   // requireAuth middleware guarantees user exists
   const userId = user!.id;
@@ -238,59 +322,9 @@ avatarRoutes.openapi(uploadAvatarRoute, async c => {
     });
     return c.json(dbError, 500);
   }
-});
+})
 
-// Get avatar route
-const getAvatarRoute = createRoute({
-  method: 'get',
-  path: '/{userId}',
-  tags: ['Avatar'],
-  summary: 'Get user avatar',
-  description: "Retrieves a user's avatar image",
-  security: [{ cookieAuth: [] }],
-  request: {
-    params: z.object({
-      userId: z.string().openapi({ example: 'user123' }),
-    }),
-  },
-  responses: {
-    200: {
-      content: {
-        'image/jpeg': {
-          schema: z.any().openapi({ type: 'string', format: 'binary' }),
-        },
-        'image/png': {
-          schema: z.any().openapi({ type: 'string', format: 'binary' }),
-        },
-        'image/gif': {
-          schema: z.any().openapi({ type: 'string', format: 'binary' }),
-        },
-        'image/webp': {
-          schema: z.any().openapi({ type: 'string', format: 'binary' }),
-        },
-      },
-      description: 'Avatar image',
-    },
-    404: {
-      content: {
-        'application/json': {
-          schema: ErrorResponseSchema,
-        },
-      },
-      description: 'Avatar not found',
-    },
-    500: {
-      content: {
-        'application/json': {
-          schema: ErrorResponseSchema,
-        },
-      },
-      description: 'Server error',
-    },
-  },
-});
-
-avatarRoutes.openapi(getAvatarRoute, async c => {
+.openapi(getAvatarRoute, async c => {
   const { userId } = c.req.valid('param');
 
   try {
@@ -324,45 +358,9 @@ avatarRoutes.openapi(getAvatarRoute, async c => {
     });
     return c.json(dbError, 500);
   }
-});
+})
 
-// Delete avatar route
-const deleteAvatarRoute = createRoute({
-  method: 'delete',
-  path: '/',
-  tags: ['Avatar'],
-  summary: 'Delete avatar',
-  description: "Deletes the current user's avatar",
-  security: [{ cookieAuth: [] }],
-  responses: {
-    200: {
-      content: {
-        'application/json': {
-          schema: AvatarDeleteSuccessSchema,
-        },
-      },
-      description: 'Avatar deleted successfully',
-    },
-    401: {
-      content: {
-        'application/json': {
-          schema: ErrorResponseSchema,
-        },
-      },
-      description: 'Unauthorized',
-    },
-    500: {
-      content: {
-        'application/json': {
-          schema: ErrorResponseSchema,
-        },
-      },
-      description: 'Server error',
-    },
-  },
-});
-
-avatarRoutes.openapi(deleteAvatarRoute, async c => {
+.openapi(deleteAvatarRoute, async c => {
   const { user } = getAuth(c);
   // requireAuth middleware guarantees user exists
   const userId = user!.id;
@@ -387,3 +385,4 @@ avatarRoutes.openapi(deleteAvatarRoute, async c => {
 });
 
 export { avatarRoutes };
+export type AvatarRoutes = typeof avatarRoutes;

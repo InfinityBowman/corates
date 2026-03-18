@@ -3,7 +3,7 @@
  * Handles project invitation acceptance with combined org + project flow
  */
 
-import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
+import { OpenAPIHono, createRoute, z, $ } from '@hono/zod-openapi';
 
 import { createDb } from '@/db/client.js';
 import {
@@ -28,12 +28,9 @@ import { validationHook } from '@/lib/honoValidationHook.js';
 import type { Env } from '../types';
 import { ErrorResponseSchema } from '@/schemas/common.js';
 
-const invitationRoutes = new OpenAPIHono<{ Bindings: Env }>({
+const base = new OpenAPIHono<{ Bindings: Env }>({
   defaultHook: validationHook,
 });
-
-// Apply auth middleware
-invitationRoutes.use('*', requireAuth);
 
 // Request schema
 const AcceptInvitationRequestSchema = z
@@ -55,7 +52,7 @@ const AcceptInvitationSuccessSchema = z
   })
   .openapi('AcceptInvitationSuccess');
 
-// Accept invitation route
+// Route definitions
 const acceptInvitationRoute = createRoute({
   method: 'post',
   path: '/accept',
@@ -93,7 +90,10 @@ const acceptInvitationRoute = createRoute({
   },
 });
 
-invitationRoutes.openapi(acceptInvitationRoute, async c => {
+// Route handlers - chained for RPC type inference
+const invitationRoutes = $(base.use('*', requireAuth))
+
+.openapi(acceptInvitationRoute, async c => {
   const { user: authUser } = getAuth(c);
   if (!authUser) {
     const error = createDomainError(AUTH_ERRORS.REQUIRED, { reason: 'no_user' });
@@ -330,3 +330,4 @@ invitationRoutes.openapi(acceptInvitationRoute, async c => {
 });
 
 export { invitationRoutes };
+export type InvitationRoutes = typeof invitationRoutes;

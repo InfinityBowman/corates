@@ -3,7 +3,7 @@
  * Allows users to list and import PDFs from their connected Google Drive
  */
 
-import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
+import { OpenAPIHono, createRoute, z, $ } from '@hono/zod-openapi';
 
 import { requireAuth, getAuth } from '@/middleware/auth.js';
 import { createDb } from '@/db/client.js';
@@ -24,12 +24,9 @@ import { requireProjectEdit } from '@/policies/projects.js';
 import type { Env } from '../types';
 import { ErrorResponseSchema } from '@/schemas/common.js';
 
-const googleDriveRoutes = new OpenAPIHono<{ Bindings: Env }>({
+const base = new OpenAPIHono<{ Bindings: Env }>({
   defaultHook: validationHook,
 });
-
-// Apply auth middleware to all routes
-googleDriveRoutes.use('*', requireAuth);
 
 // Response schemas
 const DriveStatusSchema = z
@@ -173,7 +170,7 @@ async function getValidAccessToken(
   return newTokens.accessToken;
 }
 
-// Status route
+// Route definitions
 const statusRoute = createRoute({
   method: 'get',
   path: '/status',
@@ -189,19 +186,6 @@ const statusRoute = createRoute({
   },
 });
 
-googleDriveRoutes.openapi(statusRoute, async c => {
-  const { user } = getAuth(c);
-  const db = createDb(c.env.DB);
-
-  const tokens = await getGoogleTokens(db, user!.id);
-
-  return c.json({
-    connected: !!tokens?.accessToken,
-    hasRefreshToken: !!tokens?.refreshToken,
-  });
-});
-
-// Picker token route
 const pickerTokenRoute = createRoute({
   method: 'get',
   path: '/picker-token',
@@ -221,7 +205,84 @@ const pickerTokenRoute = createRoute({
   },
 });
 
-googleDriveRoutes.openapi(pickerTokenRoute, async c => {
+const disconnectRoute = createRoute({
+  method: 'delete',
+  path: '/disconnect',
+  tags: ['Google Drive'],
+  summary: 'Disconnect Google account',
+  description: 'Remove OAuth tokens and disconnect Google account',
+  security: [{ cookieAuth: [] }],
+  responses: {
+    200: {
+      content: { 'application/json': { schema: DisconnectSuccessSchema } },
+      description: 'Disconnected successfully',
+    },
+    500: {
+      content: { 'application/json': { schema: ErrorResponseSchema } },
+      description: 'Database error',
+    },
+  },
+});
+
+const importRoute = createRoute({
+  method: 'post',
+  path: '/import',
+  tags: ['Google Drive'],
+  summary: 'Import PDF from Google Drive',
+  description: 'Import a PDF file from Google Drive to a project study',
+  security: [{ cookieAuth: [] }],
+  request: {
+    body: {
+      content: {
+        'application/json': {
+          schema: z
+            .object({
+              fileId: z.string().min(1).openapi({ example: '1abc123def456' }),
+              projectId: z.string().min(1).openapi({ example: 'proj-123' }),
+              studyId: z.string().min(1).openapi({ example: 'study-456' }),
+            })
+            .openapi('ImportRequest'),
+        },
+      },
+      required: true,
+    },
+  },
+  responses: {
+    200: {
+      content: { 'application/json': { schema: ImportSuccessSchema } },
+      description: 'File imported successfully',
+    },
+    400: {
+      content: { 'application/json': { schema: ErrorResponseSchema } },
+      description: 'Validation error or invalid file type',
+    },
+    401: {
+      content: { 'application/json': { schema: ErrorResponseSchema } },
+      description: 'Google not connected',
+    },
+    404: {
+      content: { 'application/json': { schema: ErrorResponseSchema } },
+      description: 'File not found',
+    },
+  },
+});
+
+// Route handlers - chained for RPC type inference
+const googleDriveRoutes = $(base.use('*', requireAuth))
+
+.openapi(statusRoute, async c => {
+  const { user } = getAuth(c);
+  const db = createDb(c.env.DB);
+
+  const tokens = await getGoogleTokens(db, user!.id);
+
+  return c.json({
+    connected: !!tokens?.accessToken,
+    hasRefreshToken: !!tokens?.refreshToken,
+  });
+})
+
+.openapi(pickerTokenRoute, async c => {
   const { user } = getAuth(c);
   const db = createDb(c.env.DB);
 
@@ -268,29 +329,9 @@ googleDriveRoutes.openapi(pickerTokenRoute, async c => {
     });
     return c.json(systemError, 401);
   }
-});
+})
 
-// Disconnect route
-const disconnectRoute = createRoute({
-  method: 'delete',
-  path: '/disconnect',
-  tags: ['Google Drive'],
-  summary: 'Disconnect Google account',
-  description: 'Remove OAuth tokens and disconnect Google account',
-  security: [{ cookieAuth: [] }],
-  responses: {
-    200: {
-      content: { 'application/json': { schema: DisconnectSuccessSchema } },
-      description: 'Disconnected successfully',
-    },
-    500: {
-      content: { 'application/json': { schema: ErrorResponseSchema } },
-      description: 'Database error',
-    },
-  },
-});
-
-googleDriveRoutes.openapi(disconnectRoute, async c => {
+.openapi(disconnectRoute, async c => {
   const { user } = getAuth(c);
   const db = createDb(c.env.DB);
 
@@ -309,53 +350,9 @@ googleDriveRoutes.openapi(disconnectRoute, async c => {
     });
     return c.json(systemError, 500);
   }
-});
+})
 
-// Import route
-const importRoute = createRoute({
-  method: 'post',
-  path: '/import',
-  tags: ['Google Drive'],
-  summary: 'Import PDF from Google Drive',
-  description: 'Import a PDF file from Google Drive to a project study',
-  security: [{ cookieAuth: [] }],
-  request: {
-    body: {
-      content: {
-        'application/json': {
-          schema: z
-            .object({
-              fileId: z.string().min(1).openapi({ example: '1abc123def456' }),
-              projectId: z.string().min(1).openapi({ example: 'proj-123' }),
-              studyId: z.string().min(1).openapi({ example: 'study-456' }),
-            })
-            .openapi('ImportRequest'),
-        },
-      },
-      required: true,
-    },
-  },
-  responses: {
-    200: {
-      content: { 'application/json': { schema: ImportSuccessSchema } },
-      description: 'File imported successfully',
-    },
-    400: {
-      content: { 'application/json': { schema: ErrorResponseSchema } },
-      description: 'Validation error or invalid file type',
-    },
-    401: {
-      content: { 'application/json': { schema: ErrorResponseSchema } },
-      description: 'Google not connected',
-    },
-    404: {
-      content: { 'application/json': { schema: ErrorResponseSchema } },
-      description: 'File not found',
-    },
-  },
-});
-
-googleDriveRoutes.openapi(importRoute, async c => {
+.openapi(importRoute, async c => {
   const { user } = getAuth(c);
   const db = createDb(c.env.DB);
   const { fileId, projectId, studyId } = c.req.valid('json');
@@ -551,3 +548,4 @@ googleDriveRoutes.openapi(importRoute, async c => {
 });
 
 export { googleDriveRoutes };
+export type GoogleDriveRoutes = typeof googleDriveRoutes;

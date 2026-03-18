@@ -29,7 +29,7 @@ import { ErrorResponseSchema } from '@/schemas/common.js';
 
 type Database = DrizzleD1Database<typeof schema>;
 
-const billingRoutes = new OpenAPIHono<{ Bindings: Env; Variables: AppVariables }>({
+const base = new OpenAPIHono<{ Bindings: Env; Variables: AppVariables }>({
   defaultHook: validationHook,
 });
 
@@ -613,7 +613,8 @@ const grantSingleProjectRoute = createRoute({
  * GET /api/admin/orgs/:orgId/billing
  * Get org billing resolution and details
  */
-billingRoutes.openapi(getBillingRoute, async c => {
+const billingRoutes = base
+  .openapi(getBillingRoute, async c => {
   const { orgId } = c.req.valid('param');
   const db = createDb(c.env.DB);
 
@@ -679,13 +680,13 @@ billingRoutes.openapi(getBillingRoute, async c => {
     });
     return c.json(dbError, 500);
   }
-});
+})
 
 /**
  * POST /api/admin/orgs/:orgId/subscriptions
  * Manually create a subscription for an org
  */
-billingRoutes.openapi(createSubscriptionRoute, async c => {
+  .openapi(createSubscriptionRoute, async c => {
   const { orgId } = c.req.valid('param');
   const db = createDb(c.env.DB);
   const body = c.req.valid('json');
@@ -758,13 +759,13 @@ billingRoutes.openapi(createSubscriptionRoute, async c => {
     });
     return c.json(dbError, 500);
   }
-});
+})
 
 /**
  * PUT /api/admin/orgs/:orgId/subscriptions/:subscriptionId
  * Update a subscription
  */
-billingRoutes.openapi(updateSubscriptionRoute, async c => {
+  .openapi(updateSubscriptionRoute, async c => {
   const { orgId, subscriptionId } = c.req.valid('param');
   const db = createDb(c.env.DB);
   const body = c.req.valid('json');
@@ -829,13 +830,13 @@ billingRoutes.openapi(updateSubscriptionRoute, async c => {
     });
     return c.json(dbError, 500);
   }
-});
+})
 
 /**
  * DELETE /api/admin/orgs/:orgId/subscriptions/:subscriptionId
  * Cancel/delete a subscription
  */
-billingRoutes.openapi(deleteSubscriptionRoute, async c => {
+  .openapi(deleteSubscriptionRoute, async c => {
   const { orgId, subscriptionId } = c.req.valid('param');
   const db = createDb(c.env.DB);
 
@@ -893,13 +894,13 @@ billingRoutes.openapi(deleteSubscriptionRoute, async c => {
     });
     return c.json(dbError, 500);
   }
-});
+})
 
 /**
  * POST /api/admin/orgs/:orgId/grants
  * Create a grant manually
  */
-billingRoutes.openapi(createGrantRoute, async c => {
+  .openapi(createGrantRoute, async c => {
   const { orgId } = c.req.valid('param');
   const db = createDb(c.env.DB);
   const body = c.req.valid('json');
@@ -969,14 +970,14 @@ billingRoutes.openapi(createGrantRoute, async c => {
     });
     return c.json(dbError, 500);
   }
-});
+})
 
 /**
  * PUT /api/admin/orgs/:orgId/grants/:grantId
  * Update a grant
  */
 // @ts-expect-error Handler returns multiple status codes (200/400/500) not representable in OpenAPIHono's strict return type
-billingRoutes.openapi(updateGrantRoute, async c => {
+  .openapi(updateGrantRoute, async c => {
   const { orgId, grantId } = c.req.valid('param');
   const db = createDb(c.env.DB);
   const body = c.req.valid('json');
@@ -1030,13 +1031,13 @@ billingRoutes.openapi(updateGrantRoute, async c => {
     });
     return c.json(dbError, 500);
   }
-});
+})
 
 /**
  * DELETE /api/admin/orgs/:orgId/grants/:grantId
  * Revoke a grant
  */
-billingRoutes.openapi(deleteGrantRoute, async c => {
+  .openapi(deleteGrantRoute, async c => {
   const { orgId, grantId } = c.req.valid('param');
   const db = createDb(c.env.DB);
 
@@ -1064,13 +1065,13 @@ billingRoutes.openapi(deleteGrantRoute, async c => {
     });
     return c.json(dbError, 500);
   }
-});
+})
 
 /**
  * POST /api/admin/orgs/:orgId/grant-trial
  * Convenience endpoint to create a trial grant (14 days from now)
  */
-billingRoutes.openapi(grantTrialRoute, async c => {
+  .openapi(grantTrialRoute, async c => {
   const { orgId } = c.req.valid('param');
   const db = createDb(c.env.DB);
 
@@ -1123,14 +1124,14 @@ billingRoutes.openapi(grantTrialRoute, async c => {
     });
     return c.json(dbError, 500);
   }
-});
+})
 
 /**
  * POST /api/admin/orgs/:orgId/grant-single-project
  * Convenience endpoint to create a single_project grant (6 months from now)
  */
 // @ts-expect-error Handler returns both 200 and 201 status codes
-billingRoutes.openapi(grantSingleProjectRoute, async c => {
+  .openapi(grantSingleProjectRoute, async c => {
   const { orgId } = c.req.valid('param');
   const db = createDb(c.env.DB);
 
@@ -1191,3 +1192,4 @@ billingRoutes.openapi(grantSingleProjectRoute, async c => {
 });
 
 export { billingRoutes };
+export type BillingRoutes = typeof billingRoutes;

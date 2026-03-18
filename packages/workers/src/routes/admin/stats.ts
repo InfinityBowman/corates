@@ -14,7 +14,7 @@ import { validationHook } from '@/lib/honoValidationHook.js';
 import type { Env } from '../../types';
 import { ErrorResponseSchema } from '@/schemas/common.js';
 
-const statsRoutes = new OpenAPIHono<{ Bindings: Env }>({
+const _statsBase = new OpenAPIHono<{ Bindings: Env }>({
   defaultHook: validationHook,
 });
 
@@ -300,6 +300,19 @@ interface DailyCount {
   count: number;
 }
 
+interface WebhookRow {
+  date: string | null;
+  status: string | null;
+  count: number;
+}
+
+interface WebhookDayData {
+  date: string;
+  success: number;
+  failed: number;
+  pending: number;
+}
+
 /**
  * Helper function to fill missing days in time series data
  */
@@ -327,7 +340,8 @@ function fillMissingDays(
  * GET /api/admin/stats/signups
  * Returns daily signup counts for the specified number of days
  */
-statsRoutes.openapi(signupsRoute, async c => {
+const statsRoutes = _statsBase
+  .openapi(signupsRoute, async c => {
   const db = createDb(c.env.DB);
   const query = c.req.valid('query');
   const days = Math.min(parseInt(query.days || '30', 10) || 30, 90);
@@ -369,13 +383,13 @@ statsRoutes.openapi(signupsRoute, async c => {
     });
     return c.json(dbError, 500);
   }
-});
+})
 
 /**
  * GET /api/admin/stats/organizations
  * Returns daily organization creation counts
  */
-statsRoutes.openapi(organizationsRoute, async c => {
+  .openapi(organizationsRoute, async c => {
   const db = createDb(c.env.DB);
   const query = c.req.valid('query');
   const days = Math.min(parseInt(query.days || '30', 10) || 30, 90);
@@ -415,13 +429,13 @@ statsRoutes.openapi(organizationsRoute, async c => {
     });
     return c.json(dbError, 500);
   }
-});
+})
 
 /**
  * GET /api/admin/stats/projects
  * Returns daily project creation counts
  */
-statsRoutes.openapi(projectsRoute, async c => {
+  .openapi(projectsRoute, async c => {
   const db = createDb(c.env.DB);
   const query = c.req.valid('query');
   const days = Math.min(parseInt(query.days || '30', 10) || 30, 90);
@@ -461,26 +475,13 @@ statsRoutes.openapi(projectsRoute, async c => {
     });
     return c.json(dbError, 500);
   }
-});
-
-interface WebhookRow {
-  date: string | null;
-  status: string | null;
-  count: number;
-}
-
-interface WebhookDayData {
-  date: string;
-  success: number;
-  failed: number;
-  pending: number;
-}
+})
 
 /**
  * GET /api/admin/stats/webhooks
  * Returns webhook event counts by day, grouped by success/failure
  */
-statsRoutes.openapi(webhooksRoute, async c => {
+  .openapi(webhooksRoute, async c => {
   const db = createDb(c.env.DB);
   const query = c.req.valid('query');
   const days = Math.min(parseInt(query.days || '7', 10) || 7, 30);
@@ -553,13 +554,13 @@ statsRoutes.openapi(webhooksRoute, async c => {
     });
     return c.json(dbError, 500);
   }
-});
+})
 
 /**
  * GET /api/admin/stats/subscriptions
  * Returns subscription status breakdown from Stripe
  */
-statsRoutes.openapi(subscriptionsRoute, async c => {
+  .openapi(subscriptionsRoute, async c => {
   try {
     const stripe = createStripeClient(c.env);
 
@@ -590,13 +591,13 @@ statsRoutes.openapi(subscriptionsRoute, async c => {
     });
     return c.json(stripeError, 500);
   }
-});
+})
 
 /**
  * GET /api/admin/stats/revenue
  * Returns monthly revenue from Stripe
  */
-statsRoutes.openapi(revenueRoute, async c => {
+  .openapi(revenueRoute, async c => {
   const query = c.req.valid('query');
   const months = Math.min(parseInt(query.months || '6', 10) || 6, 12);
 
@@ -662,3 +663,4 @@ statsRoutes.openapi(revenueRoute, async c => {
 });
 
 export { statsRoutes };
+export type StatsRoutes = typeof statsRoutes;

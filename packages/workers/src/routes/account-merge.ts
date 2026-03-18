@@ -13,7 +13,7 @@
  * 6. Backend performs the merge
  */
 
-import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
+import { OpenAPIHono, createRoute, z, $ } from '@hono/zod-openapi';
 
 import { createDb } from '@/db/client.js';
 import { user, account, projects, projectMembers, mediaFiles, verification } from '@/db/schema.js';
@@ -38,12 +38,9 @@ type Variables = {
   mergeTokenKey: string;
 };
 
-const accountMergeRoutes = new OpenAPIHono<{ Bindings: Env; Variables: Variables }>({
+const base = new OpenAPIHono<{ Bindings: Env; Variables: Variables }>({
   defaultHook: validationHook,
 });
-
-// All routes require authentication
-accountMergeRoutes.use('*', requireAuth);
 
 // Rate limiters
 const mergeInitiateRateLimiter = rateLimit({
@@ -289,8 +286,10 @@ const cancelRoute = createRoute({
   },
 });
 
-// Route handlers
-accountMergeRoutes.openapi(initiateRoute, async c => {
+// Route handlers - chained for RPC type inference
+const accountMergeRoutes = $(base.use('*', requireAuth))
+
+.openapi(initiateRoute, async c => {
   const { user: currentUser } = getAuth(c);
   if (!currentUser) {
     const error = createDomainError(USER_ERRORS.NOT_FOUND, { context: 'current_user' });
@@ -505,9 +504,9 @@ accountMergeRoutes.openapi(initiateRoute, async c => {
     },
     200,
   );
-});
+})
 
-accountMergeRoutes.openapi(verifyRoute, async c => {
+.openapi(verifyRoute, async c => {
   const { user: currentUser } = getAuth(c);
   if (!currentUser) {
     const error = createDomainError(USER_ERRORS.NOT_FOUND, { context: 'current_user' });
@@ -613,9 +612,9 @@ accountMergeRoutes.openapi(verifyRoute, async c => {
     },
     200,
   );
-});
+})
 
-accountMergeRoutes.openapi(completeRoute, async c => {
+.openapi(completeRoute, async c => {
   const { user: currentUser } = getAuth(c);
   if (!currentUser) {
     const error = createDomainError(USER_ERRORS.NOT_FOUND, { context: 'current_user' });
@@ -772,9 +771,9 @@ accountMergeRoutes.openapi(completeRoute, async c => {
     });
     return c.json(dbError, 500);
   }
-});
+})
 
-accountMergeRoutes.openapi(cancelRoute, async c => {
+.openapi(cancelRoute, async c => {
   const { user: currentUser } = getAuth(c);
   if (!currentUser) {
     const error = createDomainError(USER_ERRORS.NOT_FOUND, { context: 'current_user' });
@@ -812,3 +811,4 @@ accountMergeRoutes.openapi(cancelRoute, async c => {
 });
 
 export { accountMergeRoutes };
+export type AccountMergeRoutes = typeof accountMergeRoutes;

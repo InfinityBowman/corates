@@ -20,7 +20,7 @@ import { validationHook } from '@/lib/honoValidationHook.js';
 import type { Env } from '../../types';
 import { ErrorResponseSchema } from '@/schemas/common.js';
 
-const projectRoutes = new OpenAPIHono<{ Bindings: Env }>({
+const base = new OpenAPIHono<{ Bindings: Env }>({
   defaultHook: validationHook,
 });
 
@@ -328,7 +328,8 @@ interface ProjectStats {
  * GET /api/admin/projects
  * List all projects with pagination and search
  */
-projectRoutes.openapi(listProjectsRoute, async c => {
+const projectRoutes = base
+  .openapi(listProjectsRoute, async c => {
   const db = createDb(c.env.DB);
 
   try {
@@ -464,13 +465,13 @@ projectRoutes.openapi(listProjectsRoute, async c => {
     });
     return c.json(dbError, 500);
   }
-});
+})
 
 /**
  * GET /api/admin/projects/:projectId
  * Get full project details including members, files, and invitations
  */
-projectRoutes.openapi(getProjectDetailsRoute, async c => {
+  .openapi(getProjectDetailsRoute, async c => {
   const { projectId } = c.req.valid('param');
   const db = createDb(c.env.DB);
 
@@ -586,13 +587,13 @@ projectRoutes.openapi(getProjectDetailsRoute, async c => {
     });
     return c.json(dbError, 500);
   }
-});
+})
 
 /**
  * DELETE /api/admin/projects/:projectId/members/:memberId
  * Remove a member from a project
  */
-projectRoutes.openapi(removeProjectMemberRoute, async c => {
+  .openapi(removeProjectMemberRoute, async c => {
   const { projectId, memberId } = c.req.valid('param');
   const db = createDb(c.env.DB);
 
@@ -620,13 +621,13 @@ projectRoutes.openapi(removeProjectMemberRoute, async c => {
     });
     return c.json(dbError, 500);
   }
-});
+})
 
 /**
  * DELETE /api/admin/projects/:projectId
  * Delete a project and all associated data
  */
-projectRoutes.openapi(deleteProjectRoute, async c => {
+  .openapi(deleteProjectRoute, async c => {
   const { projectId } = c.req.valid('param');
   const db = createDb(c.env.DB);
 
@@ -658,3 +659,4 @@ projectRoutes.openapi(deleteProjectRoute, async c => {
 });
 
 export { projectRoutes };
+export type ProjectRoutes = typeof projectRoutes;

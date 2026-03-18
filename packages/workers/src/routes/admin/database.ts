@@ -14,7 +14,7 @@ import { validationHook } from '@/lib/honoValidationHook.js';
 import type { Env } from '../../types';
 import { ErrorResponseSchema } from '@/schemas/common.js';
 
-const databaseRoutes = new OpenAPIHono<{ Bindings: Env }>({
+const _databaseBase = new OpenAPIHono<{ Bindings: Env }>({
   defaultHook: validationHook,
 });
 
@@ -396,261 +396,6 @@ interface MediaFilesQueryOptions {
 }
 
 /**
- * GET /api/admin/database/tables
- * List all available tables with row counts
- */
-databaseRoutes.openapi(listTablesRoute, async c => {
-  try {
-    const db = createDb(c.env.DB);
-
-    const tables = await Promise.all(
-      ALLOWED_TABLES.map(async tableName => {
-        const table = dbSchema[tableName];
-        if (!table) return null;
-
-        try {
-          const result = await db.select({ count: count() }).from(table);
-          return {
-            name: tableName,
-            rowCount: result[0]?.count ?? 0,
-          };
-        } catch {
-          return {
-            name: tableName,
-            rowCount: 0,
-            error: 'Failed to count rows',
-          };
-        }
-      }),
-    );
-
-    return c.json(
-      {
-        tables: tables.filter(t => t !== null),
-      },
-      200,
-    );
-  } catch (err) {
-    const error = err as Error;
-    console.error('Database tables list error:', error);
-    const domainError = createDomainError(SYSTEM_ERRORS.INTERNAL_ERROR, {
-      message: 'Failed to list database tables',
-    });
-    return c.json(domainError, 500);
-  }
-});
-
-/**
- * GET /api/admin/database/tables/:tableName/schema
- * Get table schema (column names, types, and foreign key references)
- */
-databaseRoutes.openapi(getTableSchemaRoute, async c => {
-  const { tableName } = c.req.valid('param');
-
-  if (!ALLOWED_TABLES.includes(tableName as AllowedTableName)) {
-    const error = createDomainError(VALIDATION_ERRORS.FIELD_INVALID_FORMAT, {
-      field: 'tableName',
-      value: tableName,
-      message: `Table '${tableName}' is not available for viewing`,
-    });
-    return c.json(error, 400);
-  }
-
-  const table = dbSchema[tableName as AllowedTableName];
-  if (!table) {
-    const error = createDomainError(VALIDATION_ERRORS.FIELD_INVALID_FORMAT, {
-      field: 'tableName',
-      value: tableName,
-      message: `Table '${tableName}' not found in schema`,
-    });
-    return c.json(error, 400);
-  }
-
-  // Extract column info from Drizzle schema including foreign key references
-  interface ColumnInfo {
-    name: string;
-    type: string;
-    notNull: boolean;
-    primaryKey: boolean;
-    unique: boolean;
-    hasDefault: boolean;
-    foreignKey?: {
-      table: string;
-      column: string;
-    };
-  }
-
-  interface DrizzleColumn {
-    dataType?: string;
-    notNull?: boolean;
-    primary?: boolean;
-    isUnique?: boolean;
-    hasDefault?: boolean;
-    config?: {
-      references?: () => { table?: unknown; name?: string };
-    };
-  }
-
-  const columns: ColumnInfo[] = Object.entries(
-    table as unknown as Record<string, DrizzleColumn>,
-  ).map(([name, column]) => {
-    const columnInfo: ColumnInfo = {
-      name,
-      type: column.dataType || 'unknown',
-      notNull: column.notNull ?? false,
-      primaryKey: column.primary ?? false,
-      unique: column.isUnique ?? false,
-      hasDefault: column.hasDefault ?? false,
-    };
-
-    // Check for foreign key reference
-    if (column.config?.references) {
-      const refFn = column.config.references;
-      try {
-        const refColumn = refFn();
-        if (refColumn?.table) {
-          const refTableName = Object.entries(dbSchema).find(([, t]) => t === refColumn.table)?.[0];
-          if (refTableName && ALLOWED_TABLES.includes(refTableName as AllowedTableName)) {
-            columnInfo.foreignKey = {
-              table: refTableName,
-              column: refColumn.name || '',
-            };
-          }
-        }
-      } catch {
-        // Reference function failed, skip FK info
-      }
-    }
-
-    return columnInfo;
-  });
-
-  return c.json({ tableName, columns }, 200);
-});
-
-/**
- * GET /api/admin/database/tables/:tableName/rows
- * Get rows from a table with pagination and filtering
- */
-// @ts-expect-error Handler delegates to handleMediaFilesQuery which returns a different response type
-databaseRoutes.openapi(getTableRowsRoute, async c => {
-  const { tableName } = c.req.valid('param');
-  const query = c.req.valid('query');
-
-  const page = parseInt(query.page || '1', 10) || 1;
-  const limit = Math.min(Math.max(parseInt(query.limit || '50', 10) || 50, 1), 100);
-  const orderByParam = query.orderBy?.trim() || '';
-  const order = query.order || 'desc';
-  const filterBy = query.filterBy?.trim();
-  const filterValue = query.filterValue?.trim();
-
-  if (!ALLOWED_TABLES.includes(tableName as AllowedTableName)) {
-    const error = createDomainError(VALIDATION_ERRORS.FIELD_INVALID_FORMAT, {
-      field: 'tableName',
-      value: tableName,
-      message: `Table '${tableName}' is not available for viewing`,
-    });
-    return c.json(error, 400);
-  }
-
-  const table = dbSchema[tableName as AllowedTableName];
-  if (!table) {
-    const error = createDomainError(VALIDATION_ERRORS.FIELD_INVALID_FORMAT, {
-      field: 'tableName',
-      value: tableName,
-      message: `Table '${tableName}' not found in schema`,
-    });
-    return c.json(error, 400);
-  }
-
-  // Special handling for mediaFiles with joins
-  if (tableName === 'mediaFiles') {
-    return handleMediaFilesQuery(c, {
-      page,
-      limit,
-      orderBy: orderByParam,
-      order,
-      filterBy,
-      filterValue,
-    });
-  }
-
-  try {
-    const db = createDb(c.env.DB);
-    const offset = (page - 1) * limit;
-
-    // Build where clause for filtering
-    const whereConditions = [];
-    const tableRecord = table as unknown as Record<string, unknown>;
-    if (filterBy && filterValue && tableRecord[filterBy]) {
-      whereConditions.push(eq(tableRecord[filterBy] as never, filterValue));
-    }
-
-    // Get total count with filtering
-    const countQuery =
-      whereConditions.length > 0 ?
-        db
-          .select({ count: count() })
-          .from(table)
-          .where(and(...whereConditions))
-      : db.select({ count: count() }).from(table);
-    const countResult = await countQuery;
-    const totalRows = countResult[0]?.count ?? 0;
-
-    // Determine order column (use provided column, fall back to 'id', then first column)
-    const columnNames = Object.keys(table);
-    let orderColumnName = orderByParam;
-    if (!orderColumnName || !tableRecord[orderColumnName]) {
-      orderColumnName = tableRecord['id'] ? 'id' : columnNames[0];
-    }
-    const orderColumn = tableRecord[orderColumnName];
-    const orderFn = order === 'asc' ? asc : desc;
-
-    // Get rows with ordering and filtering
-    const rows =
-      whereConditions.length > 0 ?
-        await db
-          .select()
-          .from(table)
-          .where(and(...whereConditions))
-          .orderBy(orderFn(orderColumn as never))
-          .limit(limit)
-          .offset(offset)
-      : await db
-          .select()
-          .from(table)
-          .orderBy(orderFn(orderColumn as never))
-          .limit(limit)
-          .offset(offset);
-
-    return c.json(
-      {
-        tableName,
-        rows,
-        pagination: {
-          page,
-          limit,
-          totalRows,
-          totalPages: Math.ceil(totalRows / limit),
-          orderBy: orderColumnName,
-          order,
-        },
-      },
-      200,
-    );
-  } catch (err) {
-    const error = err as Error;
-    console.error('Database rows fetch error:', error);
-    const domainError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
-      operation: 'fetch_table_rows',
-      tableName,
-      originalError: error.message,
-    });
-    return c.json(domainError, 500);
-  }
-});
-
-/**
  * Handle mediaFiles query with joins for better readability
  */
 async function handleMediaFilesQuery(
@@ -782,10 +527,266 @@ async function handleMediaFilesQuery(
 }
 
 /**
+ * GET /api/admin/database/tables
+ * List all available tables with row counts
+ */
+const databaseRoutes = _databaseBase
+  .openapi(listTablesRoute, async c => {
+  try {
+    const db = createDb(c.env.DB);
+
+    const tables = await Promise.all(
+      ALLOWED_TABLES.map(async tableName => {
+        const table = dbSchema[tableName];
+        if (!table) return null;
+
+        try {
+          const result = await db.select({ count: count() }).from(table);
+          return {
+            name: tableName,
+            rowCount: result[0]?.count ?? 0,
+          };
+        } catch {
+          return {
+            name: tableName,
+            rowCount: 0,
+            error: 'Failed to count rows',
+          };
+        }
+      }),
+    );
+
+    return c.json(
+      {
+        tables: tables.filter(t => t !== null),
+      },
+      200,
+    );
+  } catch (err) {
+    const error = err as Error;
+    console.error('Database tables list error:', error);
+    const domainError = createDomainError(SYSTEM_ERRORS.INTERNAL_ERROR, {
+      message: 'Failed to list database tables',
+    });
+    return c.json(domainError, 500);
+  }
+})
+
+/**
+ * GET /api/admin/database/tables/:tableName/schema
+ * Get table schema (column names, types, and foreign key references)
+ */
+  .openapi(getTableSchemaRoute, async c => {
+  const { tableName } = c.req.valid('param');
+
+  if (!ALLOWED_TABLES.includes(tableName as AllowedTableName)) {
+    const error = createDomainError(VALIDATION_ERRORS.FIELD_INVALID_FORMAT, {
+      field: 'tableName',
+      value: tableName,
+      message: `Table '${tableName}' is not available for viewing`,
+    });
+    return c.json(error, 400);
+  }
+
+  const table = dbSchema[tableName as AllowedTableName];
+  if (!table) {
+    const error = createDomainError(VALIDATION_ERRORS.FIELD_INVALID_FORMAT, {
+      field: 'tableName',
+      value: tableName,
+      message: `Table '${tableName}' not found in schema`,
+    });
+    return c.json(error, 400);
+  }
+
+  // Extract column info from Drizzle schema including foreign key references
+  interface ColumnInfo {
+    name: string;
+    type: string;
+    notNull: boolean;
+    primaryKey: boolean;
+    unique: boolean;
+    hasDefault: boolean;
+    foreignKey?: {
+      table: string;
+      column: string;
+    };
+  }
+
+  interface DrizzleColumn {
+    dataType?: string;
+    notNull?: boolean;
+    primary?: boolean;
+    isUnique?: boolean;
+    hasDefault?: boolean;
+    config?: {
+      references?: () => { table?: unknown; name?: string };
+    };
+  }
+
+  const columns: ColumnInfo[] = Object.entries(
+    table as unknown as Record<string, DrizzleColumn>,
+  ).map(([name, column]) => {
+    const columnInfo: ColumnInfo = {
+      name,
+      type: column.dataType || 'unknown',
+      notNull: column.notNull ?? false,
+      primaryKey: column.primary ?? false,
+      unique: column.isUnique ?? false,
+      hasDefault: column.hasDefault ?? false,
+    };
+
+    // Check for foreign key reference
+    if (column.config?.references) {
+      const refFn = column.config.references;
+      try {
+        const refColumn = refFn();
+        if (refColumn?.table) {
+          const refTableName = Object.entries(dbSchema).find(([, t]) => t === refColumn.table)?.[0];
+          if (refTableName && ALLOWED_TABLES.includes(refTableName as AllowedTableName)) {
+            columnInfo.foreignKey = {
+              table: refTableName,
+              column: refColumn.name || '',
+            };
+          }
+        }
+      } catch {
+        // Reference function failed, skip FK info
+      }
+    }
+
+    return columnInfo;
+  });
+
+  return c.json({ tableName, columns }, 200);
+})
+
+/**
+ * GET /api/admin/database/tables/:tableName/rows
+ * Get rows from a table with pagination and filtering
+ */
+// @ts-expect-error Handler delegates to handleMediaFilesQuery which returns a different response type
+  .openapi(getTableRowsRoute, async c => {
+  const { tableName } = c.req.valid('param');
+  const query = c.req.valid('query');
+
+  const page = parseInt(query.page || '1', 10) || 1;
+  const limit = Math.min(Math.max(parseInt(query.limit || '50', 10) || 50, 1), 100);
+  const orderByParam = query.orderBy?.trim() || '';
+  const order = query.order || 'desc';
+  const filterBy = query.filterBy?.trim();
+  const filterValue = query.filterValue?.trim();
+
+  if (!ALLOWED_TABLES.includes(tableName as AllowedTableName)) {
+    const error = createDomainError(VALIDATION_ERRORS.FIELD_INVALID_FORMAT, {
+      field: 'tableName',
+      value: tableName,
+      message: `Table '${tableName}' is not available for viewing`,
+    });
+    return c.json(error, 400);
+  }
+
+  const table = dbSchema[tableName as AllowedTableName];
+  if (!table) {
+    const error = createDomainError(VALIDATION_ERRORS.FIELD_INVALID_FORMAT, {
+      field: 'tableName',
+      value: tableName,
+      message: `Table '${tableName}' not found in schema`,
+    });
+    return c.json(error, 400);
+  }
+
+  // Special handling for mediaFiles with joins
+  if (tableName === 'mediaFiles') {
+    return handleMediaFilesQuery(c, {
+      page,
+      limit,
+      orderBy: orderByParam,
+      order,
+      filterBy,
+      filterValue,
+    });
+  }
+
+  try {
+    const db = createDb(c.env.DB);
+    const offset = (page - 1) * limit;
+
+    // Build where clause for filtering
+    const whereConditions = [];
+    const tableRecord = table as unknown as Record<string, unknown>;
+    if (filterBy && filterValue && tableRecord[filterBy]) {
+      whereConditions.push(eq(tableRecord[filterBy] as never, filterValue));
+    }
+
+    // Get total count with filtering
+    const countQuery =
+      whereConditions.length > 0 ?
+        db
+          .select({ count: count() })
+          .from(table)
+          .where(and(...whereConditions))
+      : db.select({ count: count() }).from(table);
+    const countResult = await countQuery;
+    const totalRows = countResult[0]?.count ?? 0;
+
+    // Determine order column (use provided column, fall back to 'id', then first column)
+    const columnNames = Object.keys(table);
+    let orderColumnName = orderByParam;
+    if (!orderColumnName || !tableRecord[orderColumnName]) {
+      orderColumnName = tableRecord['id'] ? 'id' : columnNames[0];
+    }
+    const orderColumn = tableRecord[orderColumnName];
+    const orderFn = order === 'asc' ? asc : desc;
+
+    // Get rows with ordering and filtering
+    const rows =
+      whereConditions.length > 0 ?
+        await db
+          .select()
+          .from(table)
+          .where(and(...whereConditions))
+          .orderBy(orderFn(orderColumn as never))
+          .limit(limit)
+          .offset(offset)
+      : await db
+          .select()
+          .from(table)
+          .orderBy(orderFn(orderColumn as never))
+          .limit(limit)
+          .offset(offset);
+
+    return c.json(
+      {
+        tableName,
+        rows,
+        pagination: {
+          page,
+          limit,
+          totalRows,
+          totalPages: Math.ceil(totalRows / limit),
+          orderBy: orderColumnName,
+          order,
+        },
+      },
+      200,
+    );
+  } catch (err) {
+    const error = err as Error;
+    console.error('Database rows fetch error:', error);
+    const domainError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
+      operation: 'fetch_table_rows',
+      tableName,
+      originalError: error.message,
+    });
+    return c.json(domainError, 500);
+  }
+})
+
+/**
  * GET /api/admin/database/analytics/pdfs-by-org
  * Get PDF count and total storage per organization
  */
-databaseRoutes.openapi(pdfsByOrgRoute, async c => {
+  .openapi(pdfsByOrgRoute, async c => {
   try {
     const db = createDb(c.env.DB);
 
@@ -820,13 +821,13 @@ databaseRoutes.openapi(pdfsByOrgRoute, async c => {
     });
     return c.json(domainError, 500);
   }
-});
+})
 
 /**
  * GET /api/admin/database/analytics/pdfs-by-user
  * Get uploads by user
  */
-databaseRoutes.openapi(pdfsByUserRoute, async c => {
+  .openapi(pdfsByUserRoute, async c => {
   try {
     const db = createDb(c.env.DB);
 
@@ -865,13 +866,13 @@ databaseRoutes.openapi(pdfsByUserRoute, async c => {
     });
     return c.json(domainError, 500);
   }
-});
+})
 
 /**
  * GET /api/admin/database/analytics/pdfs-by-project
  * Get PDFs per project
  */
-databaseRoutes.openapi(pdfsByProjectRoute, async c => {
+  .openapi(pdfsByProjectRoute, async c => {
   try {
     const db = createDb(c.env.DB);
 
@@ -917,13 +918,13 @@ databaseRoutes.openapi(pdfsByProjectRoute, async c => {
     });
     return c.json(domainError, 500);
   }
-});
+})
 
 /**
  * GET /api/admin/database/analytics/recent-uploads
  * Get recent PDF uploads with user/org context
  */
-databaseRoutes.openapi(recentUploadsRoute, async c => {
+  .openapi(recentUploadsRoute, async c => {
   try {
     const query = c.req.valid('query');
     const limit = Math.min(Math.max(parseInt(query.limit || '50', 10) || 50, 1), 100);
@@ -992,3 +993,4 @@ databaseRoutes.openapi(recentUploadsRoute, async c => {
 });
 
 export { databaseRoutes };
+export type DatabaseRoutes = typeof databaseRoutes;

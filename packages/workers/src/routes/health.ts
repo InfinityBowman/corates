@@ -6,8 +6,6 @@
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
 import type { Env } from '../types';
 
-const health = new OpenAPIHono<{ Bindings: Env }>();
-
 // Service status schema
 const ServiceStatusSchema = z
   .object({
@@ -48,7 +46,7 @@ interface HealthChecks {
   };
 }
 
-// Health check route
+// Route definitions
 const healthRoute = createRoute({
   method: 'get',
   path: '/',
@@ -76,7 +74,28 @@ const healthRoute = createRoute({
   },
 });
 
-health.openapi(healthRoute, async c => {
+const livenessRoute = createRoute({
+  method: 'get',
+  path: '/live',
+  tags: ['Health'],
+  summary: 'Liveness probe',
+  description: 'Simple liveness check for load balancers. Returns OK if the service is running.',
+  responses: {
+    200: {
+      content: {
+        'text/plain': {
+          schema: z.string().openapi({ example: 'OK' }),
+        },
+      },
+      description: 'Service is alive',
+    },
+  },
+});
+
+// Route handlers - chained for RPC type inference
+const healthRoutes = new OpenAPIHono<{ Bindings: Env }>()
+
+.openapi(healthRoute, async c => {
   const checks: HealthChecks = {
     status: 'healthy',
     timestamp: new Date().toISOString(),
@@ -139,29 +158,11 @@ health.openapi(healthRoute, async c => {
 
   const httpStatus = checks.status === 'healthy' ? 200 : 503;
   return c.json(checks, httpStatus);
-});
+})
 
-// Liveness probe route
-const livenessRoute = createRoute({
-  method: 'get',
-  path: '/live',
-  tags: ['Health'],
-  summary: 'Liveness probe',
-  description: 'Simple liveness check for load balancers. Returns OK if the service is running.',
-  responses: {
-    200: {
-      content: {
-        'text/plain': {
-          schema: z.string().openapi({ example: 'OK' }),
-        },
-      },
-      description: 'Service is alive',
-    },
-  },
-});
-
-health.openapi(livenessRoute, c => {
+.openapi(livenessRoute, c => {
   return c.text('OK');
 });
 
-export { health as healthRoutes };
+export { healthRoutes };
+export type HealthRoutes = typeof healthRoutes;

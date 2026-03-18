@@ -3,7 +3,7 @@
  * Handles project membership management
  */
 
-import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
+import { OpenAPIHono, createRoute, z, $ } from '@hono/zod-openapi';
 
 import { createDb } from '@/db/client';
 import { projectMembers, user, projects, projectInvitations } from '@/db/schema';
@@ -39,12 +39,12 @@ interface MemberContext {
   isOwner: boolean;
 }
 
-const memberRoutes = new OpenAPIHono<{ Bindings: Env; Variables: MemberContext }>({
+const base = new OpenAPIHono<{ Bindings: Env; Variables: MemberContext }>({
   defaultHook: validationHook,
 });
 
 // Apply auth middleware to all routes
-memberRoutes.use('*', requireAuth);
+base.use('*', requireAuth);
 
 /**
  * Middleware to verify project membership and set context
@@ -86,7 +86,7 @@ async function projectMembershipMiddleware(
 }
 
 // Apply project membership middleware to all routes
-memberRoutes.use('*', projectMembershipMiddleware);
+base.use('*', projectMembershipMiddleware);
 
 // Request schemas
 const AddMemberRequestSchema = z
@@ -291,8 +291,10 @@ const removeMemberRoute = createRoute({
   },
 });
 
-// Route handlers
-memberRoutes.openapi(listMembersRoute, async c => {
+// Route handlers - chained for RPC type inference
+const memberRoutes = $(base)
+
+.openapi(listMembersRoute, async c => {
   const projectId = c.get('projectId');
   const db = createDb(c.env.DB);
 
@@ -324,9 +326,9 @@ memberRoutes.openapi(listMembersRoute, async c => {
     });
     return c.json(dbError, 500);
   }
-});
+})
 
-memberRoutes.openapi(addMemberRoute, async c => {
+.openapi(addMemberRoute, async c => {
   const projectId = c.get('projectId');
   const db = createDb(c.env.DB);
   const { userId, email, role } = c.req.valid('json');
@@ -586,9 +588,9 @@ memberRoutes.openapi(addMemberRoute, async c => {
     });
     return c.json(dbError, 400);
   }
-});
+})
 
-memberRoutes.openapi(updateRoleRoute, async c => {
+.openapi(updateRoleRoute, async c => {
   const projectId = c.get('projectId');
   const memberId = c.req.param('userId');
   const db = createDb(c.env.DB);
@@ -635,9 +637,9 @@ memberRoutes.openapi(updateRoleRoute, async c => {
     });
     return c.json(dbError, 400);
   }
-});
+})
 
-memberRoutes.openapi(removeMemberRoute, async c => {
+.openapi(removeMemberRoute, async c => {
   const { user: authUser } = getAuth(c);
   const projectId = c.get('projectId');
   const memberId = c.req.param('userId');
@@ -719,3 +721,4 @@ memberRoutes.openapi(removeMemberRoute, async c => {
 });
 
 export { memberRoutes };
+export type MemberRoutes = typeof memberRoutes;

@@ -12,7 +12,7 @@ import { validationHook } from '@/lib/honoValidationHook.js';
 import type { Env } from '../../types';
 import { ErrorResponseSchema } from '@/schemas/common.js';
 
-const storageRoutes = new OpenAPIHono<{ Bindings: Env }>({
+const _storageBase = new OpenAPIHono<{ Bindings: Env }>({
   defaultHook: validationHook,
 });
 
@@ -275,7 +275,8 @@ interface ListResponse {
  * GET /api/admin/storage/documents
  * List documents with cursor-based pagination
  */
-storageRoutes.openapi(listDocumentsRoute, async c => {
+const storageRoutes = _storageBase
+  .openapi(listDocumentsRoute, async c => {
   try {
     const query = c.req.valid('query');
     const requestCursor = query.cursor?.trim() || undefined;
@@ -420,13 +421,13 @@ storageRoutes.openapi(listDocumentsRoute, async c => {
     });
     return c.json(systemError, 500);
   }
-});
+})
 
 /**
  * DELETE /api/admin/storage/documents
  * Bulk delete documents
  */
-storageRoutes.openapi(deleteDocumentsRoute, async c => {
+  .openapi(deleteDocumentsRoute, async c => {
   try {
     const { keys } = c.req.valid('json');
 
@@ -466,13 +467,13 @@ storageRoutes.openapi(deleteDocumentsRoute, async c => {
     });
     return c.json(systemError, 500);
   }
-});
+})
 
 /**
  * GET /api/admin/storage/stats
  * Get storage statistics
  */
-storageRoutes.openapi(getStorageStatsRoute, async c => {
+  .openapi(getStorageStatsRoute, async c => {
   try {
     let cursor: string | undefined = undefined;
     let totalFiles = 0;
@@ -522,3 +523,4 @@ storageRoutes.openapi(getStorageStatsRoute, async c => {
 });
 
 export { storageRoutes };
+export type StorageRoutes = typeof storageRoutes;
