@@ -392,6 +392,54 @@ describe('scoreChecklist', () => {
 
     expect(scoreChecklist(checklist)).toBe('High');
   });
+
+  it('should not count "No MA" on q11a/q11b as a critical flaw after consolidation', () => {
+    // q11 is critical; "No MA" on both should not count as a flaw.
+    // This tests the consolidation path: q11a/q11b merge into q11,
+    // which must use the 3-option label mapping (Yes/No/No MA)
+    // rather than the 4-option default (Yes/Partial Yes/No/No MA).
+    const checklist = createChecklist({ id: 'test', name: 'Test' });
+
+    // q11a and q11b have 3-option last columns: [Yes, No, No MA]
+    // Set both to "No MA" (index 2)
+    checklist.q11a.answers[1] = [false, false, true];
+    checklist.q11b.answers[1] = [false, false, true];
+
+    // Set all other questions to Yes
+    const otherQuestions = [
+      'q1', 'q2', 'q3', 'q4', 'q5', 'q6', 'q7', 'q8',
+      'q9a', 'q9b', 'q10', 'q12', 'q13', 'q14', 'q15', 'q16',
+    ];
+    for (const q of otherQuestions) {
+      const lastCol = checklist[q].answers[checklist[q].answers.length - 1];
+      lastCol.fill(false);
+      lastCol[0] = true; // Yes
+    }
+
+    expect(scoreChecklist(checklist)).toBe('High');
+  });
+
+  it('should count "No" on q11a as a critical flaw after consolidation', () => {
+    const checklist = createChecklist({ id: 'test', name: 'Test' });
+
+    // q11a: "No" (index 1), q11b: "Yes" (index 0)
+    checklist.q11a.answers[1] = [false, true, false];
+    checklist.q11b.answers[1] = [true, false, false];
+
+    // Set all other questions to Yes
+    const otherQuestions = [
+      'q1', 'q2', 'q3', 'q4', 'q5', 'q6', 'q7', 'q8',
+      'q9a', 'q9b', 'q10', 'q12', 'q13', 'q14', 'q15', 'q16',
+    ];
+    for (const q of otherQuestions) {
+      const lastCol = checklist[q].answers[checklist[q].answers.length - 1];
+      lastCol.fill(false);
+      lastCol[0] = true; // Yes
+    }
+
+    // q11 is critical, "No" on q11a should be 1 critical flaw = Low
+    expect(scoreChecklist(checklist)).toBe('Low');
+  });
 });
 
 describe('getAnswers', () => {
@@ -462,6 +510,47 @@ describe('getAnswers', () => {
 
     const answers = getAnswers(checklist);
     expect(answers.q9).toBe('Yes');
+  });
+
+  it('should return q11="No MA" when both q11a and q11b are "No MA"', () => {
+    const checklist = createChecklist({ id: 'test', name: 'Test' });
+
+    // q11a/q11b last column is 3-option: [Yes, No, No MA]
+    checklist.q11a.answers[1] = [false, false, true]; // No MA
+    checklist.q11b.answers[1] = [false, false, true]; // No MA
+
+    const answers = getAnswers(checklist);
+    expect(answers.q11).toBe('No MA');
+  });
+
+  it('should return q11="No" when q11a is "No" and q11b is "Yes"', () => {
+    const checklist = createChecklist({ id: 'test', name: 'Test' });
+
+    checklist.q11a.answers[1] = [false, true, false]; // No
+    checklist.q11b.answers[1] = [true, false, false]; // Yes
+
+    const answers = getAnswers(checklist);
+    expect(answers.q11).toBe('No');
+  });
+
+  it('should return q11="No" when q11a is "Yes" and q11b is "No"', () => {
+    const checklist = createChecklist({ id: 'test', name: 'Test' });
+
+    checklist.q11a.answers[1] = [true, false, false]; // Yes
+    checklist.q11b.answers[1] = [false, true, false]; // No
+
+    const answers = getAnswers(checklist);
+    expect(answers.q11).toBe('No');
+  });
+
+  it('should return q11="Yes" when both q11a and q11b are "Yes"', () => {
+    const checklist = createChecklist({ id: 'test', name: 'Test' });
+
+    checklist.q11a.answers[1] = [true, false, false]; // Yes
+    checklist.q11b.answers[1] = [true, false, false]; // Yes
+
+    const answers = getAnswers(checklist);
+    expect(answers.q11).toBe('Yes');
   });
 });
 
