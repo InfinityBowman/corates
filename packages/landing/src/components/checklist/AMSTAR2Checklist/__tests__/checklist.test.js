@@ -407,8 +407,22 @@ describe('scoreChecklist', () => {
 
     // Set all other questions to Yes
     const otherQuestions = [
-      'q1', 'q2', 'q3', 'q4', 'q5', 'q6', 'q7', 'q8',
-      'q9a', 'q9b', 'q10', 'q12', 'q13', 'q14', 'q15', 'q16',
+      'q1',
+      'q2',
+      'q3',
+      'q4',
+      'q5',
+      'q6',
+      'q7',
+      'q8',
+      'q9a',
+      'q9b',
+      'q10',
+      'q12',
+      'q13',
+      'q14',
+      'q15',
+      'q16',
     ];
     for (const q of otherQuestions) {
       const lastCol = checklist[q].answers[checklist[q].answers.length - 1];
@@ -428,8 +442,22 @@ describe('scoreChecklist', () => {
 
     // Set all other questions to Yes
     const otherQuestions = [
-      'q1', 'q2', 'q3', 'q4', 'q5', 'q6', 'q7', 'q8',
-      'q9a', 'q9b', 'q10', 'q12', 'q13', 'q14', 'q15', 'q16',
+      'q1',
+      'q2',
+      'q3',
+      'q4',
+      'q5',
+      'q6',
+      'q7',
+      'q8',
+      'q9a',
+      'q9b',
+      'q10',
+      'q12',
+      'q13',
+      'q14',
+      'q15',
+      'q16',
     ];
     for (const q of otherQuestions) {
       const lastCol = checklist[q].answers[checklist[q].answers.length - 1];

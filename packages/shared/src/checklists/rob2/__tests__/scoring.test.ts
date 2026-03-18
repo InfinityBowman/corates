@@ -101,23 +101,43 @@ describe('Domain 2a scoring', () => {
   });
 
   it('should return Low when 2.1=Y, 2.2=N, 2.3=N, 2.6=Y', () => {
-    const r = scoreRob2Domain('domain2a', answers({
-      d2a_1: 'Y', d2a_2: 'N', d2a_3: 'N', d2a_6: 'Y',
-    }));
+    const r = scoreRob2Domain(
+      'domain2a',
+      answers({
+        d2a_1: 'Y',
+        d2a_2: 'N',
+        d2a_3: 'N',
+        d2a_6: 'Y',
+      }),
+    );
     expect(r.judgement).toBe('Low');
   });
 
   it('should return Some concerns when 2.3=NI, 2.6=Y', () => {
-    const r = scoreRob2Domain('domain2a', answers({
-      d2a_1: 'Y', d2a_2: 'N', d2a_3: 'NI', d2a_6: 'Y',
-    }));
+    const r = scoreRob2Domain(
+      'domain2a',
+      answers({
+        d2a_1: 'Y',
+        d2a_2: 'N',
+        d2a_3: 'NI',
+        d2a_6: 'Y',
+      }),
+    );
     expect(r.judgement).toBe('Some concerns');
   });
 
   it('should return High when 2.3=Y, 2.4=Y, 2.5=N, 2.6=Y', () => {
-    const r = scoreRob2Domain('domain2a', answers({
-      d2a_1: 'Y', d2a_2: 'N', d2a_3: 'Y', d2a_4: 'Y', d2a_5: 'N', d2a_6: 'Y',
-    }));
+    const r = scoreRob2Domain(
+      'domain2a',
+      answers({
+        d2a_1: 'Y',
+        d2a_2: 'N',
+        d2a_3: 'Y',
+        d2a_4: 'Y',
+        d2a_5: 'N',
+        d2a_6: 'Y',
+      }),
+    );
     expect(r.judgement).toBe('High');
   });
 });
