@@ -251,283 +251,282 @@ const syncProfileRoute = createRoute({
 
 // Route handlers - chained for RPC type inference
 const userRoutes = $(base)
-
-.openapi(searchUsersRoute, async c => {
-  const { user: currentUser } = getAuth(c);
-  if (!currentUser) {
-    const error = createDomainError(AUTH_ERRORS.REQUIRED, { reason: 'no_user' });
-    return c.json(error, 401);
-  }
-
-  const { q: query, projectId, limit } = c.req.valid('query');
-
-  const db = createDb(c.env.DB);
-  const searchPattern = `%${query.toLowerCase()}%`;
-
-  try {
-    let results = await db
-      .select({
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        username: user.username,
-        givenName: user.givenName,
-        familyName: user.familyName,
-        image: user.image,
-      })
-      .from(user)
-      .where(
-        or(
-          like(sql`lower(${user.email})`, searchPattern),
-          like(sql`lower(${user.name})`, searchPattern),
-          like(sql`lower(${user.givenName})`, searchPattern),
-          like(sql`lower(${user.familyName})`, searchPattern),
-          like(sql`lower(${user.username})`, searchPattern),
-        ),
-      )
-      .limit(limit);
-
-    if (projectId) {
-      const existingMembers = await db
-        .select({ userId: projectMembers.userId })
-        .from(projectMembers)
-        .where(eq(projectMembers.projectId, projectId));
-
-      const existingUserIds = new Set(existingMembers.map(m => m.userId));
-      results = results.filter(u => !existingUserIds.has(u.id));
+  .openapi(searchUsersRoute, async c => {
+    const { user: currentUser } = getAuth(c);
+    if (!currentUser) {
+      const error = createDomainError(AUTH_ERRORS.REQUIRED, { reason: 'no_user' });
+      return c.json(error, 401);
     }
 
-    results = results.filter(u => u.id !== currentUser.id);
+    const { q: query, projectId, limit } = c.req.valid('query');
 
-    const sanitizedResults = results.map(u => ({
-      id: u.id,
-      name: u.name,
-      givenName: u.givenName,
-      familyName: u.familyName,
-      username: u.username,
-      image: u.image,
-      email: query.includes('@') ? u.email : maskEmail(u.email),
-    }));
+    const db = createDb(c.env.DB);
+    const searchPattern = `%${query.toLowerCase()}%`;
 
-    return c.json(sanitizedResults, 200);
-  } catch (err) {
-    const error = err as Error;
-    console.error('Error searching users:', error);
-    const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
-      operation: 'search_users',
-      originalError: error.message,
-    });
-    return c.json(dbError, 500);
-  }
-})
+    try {
+      let results = await db
+        .select({
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          username: user.username,
+          givenName: user.givenName,
+          familyName: user.familyName,
+          image: user.image,
+        })
+        .from(user)
+        .where(
+          or(
+            like(sql`lower(${user.email})`, searchPattern),
+            like(sql`lower(${user.name})`, searchPattern),
+            like(sql`lower(${user.givenName})`, searchPattern),
+            like(sql`lower(${user.familyName})`, searchPattern),
+            like(sql`lower(${user.username})`, searchPattern),
+          ),
+        )
+        .limit(limit);
 
-.openapi(getMyProjectsRoute, async c => {
-  const { user: authUser } = getAuth(c);
-  if (!authUser) {
-    const error = createDomainError(AUTH_ERRORS.REQUIRED, { reason: 'no_user' });
-    return c.json(error, 401);
-  }
+      if (projectId) {
+        const existingMembers = await db
+          .select({ userId: projectMembers.userId })
+          .from(projectMembers)
+          .where(eq(projectMembers.projectId, projectId));
 
-  const db = createDb(c.env.DB);
-
-  try {
-    const results = await db
-      .select({
-        id: projects.id,
-        name: projects.name,
-        description: projects.description,
-        orgId: projects.orgId,
-        role: projectMembers.role,
-        createdAt: projects.createdAt,
-        updatedAt: projects.updatedAt,
-      })
-      .from(projects)
-      .innerJoin(projectMembers, eq(projects.id, projectMembers.projectId))
-      .where(eq(projectMembers.userId, authUser.id))
-      .orderBy(desc(projects.updatedAt));
-
-    return c.json(results as unknown as z.infer<typeof UserProjectSchema>[], 200);
-  } catch (err) {
-    const error = err as Error;
-    console.error('Error fetching user projects:', error);
-    const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
-      operation: 'fetch_user_projects',
-      originalError: error.message,
-    });
-    return c.json(dbError, 500);
-  }
-})
-
-.openapi(getUserProjectsRoute, async c => {
-  const { user: authUser } = getAuth(c);
-  if (!authUser) {
-    const error = createDomainError(AUTH_ERRORS.REQUIRED, { reason: 'no_user' });
-    return c.json(error, 401);
-  }
-
-  const { userId } = c.req.valid('param');
-
-  if (authUser.id !== userId) {
-    const error = createDomainError(AUTH_ERRORS.FORBIDDEN, {
-      reason: 'view_other_user_projects',
-    });
-    return c.json(error, 403);
-  }
-
-  const db = createDb(c.env.DB);
-
-  try {
-    const results = await db
-      .select({
-        id: projects.id,
-        name: projects.name,
-        description: projects.description,
-        orgId: projects.orgId,
-        role: projectMembers.role,
-        createdAt: projects.createdAt,
-        updatedAt: projects.updatedAt,
-      })
-      .from(projects)
-      .innerJoin(projectMembers, eq(projects.id, projectMembers.projectId))
-      .where(eq(projectMembers.userId, userId))
-      .orderBy(desc(projects.updatedAt));
-
-    return c.json(results as unknown as z.infer<typeof UserProjectSchema>[], 200);
-  } catch (err) {
-    const error = err as Error;
-    console.error('Error fetching user projects:', error);
-    const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
-      operation: 'fetch_user_projects',
-      originalError: error.message,
-    });
-    return c.json(dbError, 500);
-  }
-})
-
-.openapi(deleteMyAccountRoute, async c => {
-  const { user: currentUser } = getAuth(c);
-  if (!currentUser) {
-    const error = createDomainError(AUTH_ERRORS.REQUIRED, { reason: 'no_user' });
-    return c.json(error, 401);
-  }
-
-  const db = createDb(c.env.DB);
-  const userId = currentUser.id;
-
-  try {
-    const userProjects = await db
-      .select({
-        projectId: projectMembers.projectId,
-        orgId: projects.orgId,
-      })
-      .from(projectMembers)
-      .innerJoin(projects, eq(projectMembers.projectId, projects.id))
-      .where(eq(projectMembers.userId, userId));
-
-    await Promise.all(
-      userProjects.map(({ projectId }) => syncMemberToDO(c.env, projectId, 'remove', { userId })),
-    );
-
-    await db.batch([
-      db.update(mediaFiles).set({ uploadedBy: null }).where(eq(mediaFiles.uploadedBy, userId)),
-      db.delete(projectMembers).where(eq(projectMembers.userId, userId)),
-      db.delete(projects).where(eq(projects.createdBy, userId)),
-      db.delete(twoFactor).where(eq(twoFactor.userId, userId)),
-      db.delete(session).where(eq(session.userId, userId)),
-      db.delete(account).where(eq(account.userId, userId)),
-      db.delete(verification).where(eq(verification.identifier, currentUser.email)),
-      db.delete(user).where(eq(user.id, userId)),
-    ]);
-
-    console.log(`Account deleted successfully for user: ${userId}`);
-
-    return c.json({ success: true as const, message: 'Account deleted successfully' }, 200);
-  } catch (err) {
-    const error = err as Error;
-    console.error('Error deleting account:', error);
-    const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
-      operation: 'delete_account',
-      originalError: error.message,
-    });
-    return c.json(dbError, 500);
-  }
-})
-
-.openapi(syncProfileRoute, async c => {
-  const { user: currentUser } = getAuth(c);
-  if (!currentUser) {
-    const error = createDomainError(AUTH_ERRORS.REQUIRED, { reason: 'no_user' });
-    return c.json(error, 401);
-  }
-
-  const db = createDb(c.env.DB);
-
-  try {
-    const [userData] = await db
-      .select({
-        name: user.name,
-        givenName: user.givenName,
-        familyName: user.familyName,
-        image: user.image,
-      })
-      .from(user)
-      .where(eq(user.id, currentUser.id))
-      .limit(1);
-
-    if (!userData) {
-      const error = createDomainError(USER_ERRORS.NOT_FOUND, { userId: currentUser.id });
-      return c.json(error, 404);
-    }
-
-    const userProjects = await db
-      .select({
-        projectId: projectMembers.projectId,
-        orgId: projects.orgId,
-      })
-      .from(projectMembers)
-      .innerJoin(projects, eq(projectMembers.projectId, projects.id))
-      .where(eq(projectMembers.userId, currentUser.id));
-
-    const syncPromises = userProjects.map(async ({ projectId }) => {
-      try {
-        const projectDoc = getProjectDocStub(c.env, projectId);
-
-        await projectDoc.syncMember('update', {
-          userId: currentUser.id,
-          name: userData.name,
-          givenName: userData.givenName,
-          familyName: userData.familyName,
-          image: userData.image,
-        });
-        return { projectId, success: true };
-      } catch (err) {
-        const error = err as Error;
-        console.error(`Failed to sync profile to project ${projectId}:`, err);
-        return { projectId, success: false, error: error.message };
+        const existingUserIds = new Set(existingMembers.map(m => m.userId));
+        results = results.filter(u => !existingUserIds.has(u.id));
       }
-    });
 
-    const results = await Promise.all(syncPromises);
-    const successCount = results.filter(r => r.success).length;
+      results = results.filter(u => u.id !== currentUser.id);
 
-    return c.json(
-      {
-        success: true as const,
-        synced: successCount,
-        total: userProjects.length,
-      },
-      200,
-    );
-  } catch (err) {
-    const error = err as Error;
-    console.error('Error syncing profile:', error);
-    const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
-      operation: 'sync_profile',
-      originalError: error.message,
-    });
-    return c.json(dbError, 500);
-  }
-});
+      const sanitizedResults = results.map(u => ({
+        id: u.id,
+        name: u.name,
+        givenName: u.givenName,
+        familyName: u.familyName,
+        username: u.username,
+        image: u.image,
+        email: query.includes('@') ? u.email : maskEmail(u.email),
+      }));
+
+      return c.json(sanitizedResults, 200);
+    } catch (err) {
+      const error = err as Error;
+      console.error('Error searching users:', error);
+      const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
+        operation: 'search_users',
+        originalError: error.message,
+      });
+      return c.json(dbError, 500);
+    }
+  })
+
+  .openapi(getMyProjectsRoute, async c => {
+    const { user: authUser } = getAuth(c);
+    if (!authUser) {
+      const error = createDomainError(AUTH_ERRORS.REQUIRED, { reason: 'no_user' });
+      return c.json(error, 401);
+    }
+
+    const db = createDb(c.env.DB);
+
+    try {
+      const results = await db
+        .select({
+          id: projects.id,
+          name: projects.name,
+          description: projects.description,
+          orgId: projects.orgId,
+          role: projectMembers.role,
+          createdAt: projects.createdAt,
+          updatedAt: projects.updatedAt,
+        })
+        .from(projects)
+        .innerJoin(projectMembers, eq(projects.id, projectMembers.projectId))
+        .where(eq(projectMembers.userId, authUser.id))
+        .orderBy(desc(projects.updatedAt));
+
+      return c.json(results as unknown as z.infer<typeof UserProjectSchema>[], 200);
+    } catch (err) {
+      const error = err as Error;
+      console.error('Error fetching user projects:', error);
+      const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
+        operation: 'fetch_user_projects',
+        originalError: error.message,
+      });
+      return c.json(dbError, 500);
+    }
+  })
+
+  .openapi(getUserProjectsRoute, async c => {
+    const { user: authUser } = getAuth(c);
+    if (!authUser) {
+      const error = createDomainError(AUTH_ERRORS.REQUIRED, { reason: 'no_user' });
+      return c.json(error, 401);
+    }
+
+    const { userId } = c.req.valid('param');
+
+    if (authUser.id !== userId) {
+      const error = createDomainError(AUTH_ERRORS.FORBIDDEN, {
+        reason: 'view_other_user_projects',
+      });
+      return c.json(error, 403);
+    }
+
+    const db = createDb(c.env.DB);
+
+    try {
+      const results = await db
+        .select({
+          id: projects.id,
+          name: projects.name,
+          description: projects.description,
+          orgId: projects.orgId,
+          role: projectMembers.role,
+          createdAt: projects.createdAt,
+          updatedAt: projects.updatedAt,
+        })
+        .from(projects)
+        .innerJoin(projectMembers, eq(projects.id, projectMembers.projectId))
+        .where(eq(projectMembers.userId, userId))
+        .orderBy(desc(projects.updatedAt));
+
+      return c.json(results as unknown as z.infer<typeof UserProjectSchema>[], 200);
+    } catch (err) {
+      const error = err as Error;
+      console.error('Error fetching user projects:', error);
+      const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
+        operation: 'fetch_user_projects',
+        originalError: error.message,
+      });
+      return c.json(dbError, 500);
+    }
+  })
+
+  .openapi(deleteMyAccountRoute, async c => {
+    const { user: currentUser } = getAuth(c);
+    if (!currentUser) {
+      const error = createDomainError(AUTH_ERRORS.REQUIRED, { reason: 'no_user' });
+      return c.json(error, 401);
+    }
+
+    const db = createDb(c.env.DB);
+    const userId = currentUser.id;
+
+    try {
+      const userProjects = await db
+        .select({
+          projectId: projectMembers.projectId,
+          orgId: projects.orgId,
+        })
+        .from(projectMembers)
+        .innerJoin(projects, eq(projectMembers.projectId, projects.id))
+        .where(eq(projectMembers.userId, userId));
+
+      await Promise.all(
+        userProjects.map(({ projectId }) => syncMemberToDO(c.env, projectId, 'remove', { userId })),
+      );
+
+      await db.batch([
+        db.update(mediaFiles).set({ uploadedBy: null }).where(eq(mediaFiles.uploadedBy, userId)),
+        db.delete(projectMembers).where(eq(projectMembers.userId, userId)),
+        db.delete(projects).where(eq(projects.createdBy, userId)),
+        db.delete(twoFactor).where(eq(twoFactor.userId, userId)),
+        db.delete(session).where(eq(session.userId, userId)),
+        db.delete(account).where(eq(account.userId, userId)),
+        db.delete(verification).where(eq(verification.identifier, currentUser.email)),
+        db.delete(user).where(eq(user.id, userId)),
+      ]);
+
+      console.log(`Account deleted successfully for user: ${userId}`);
+
+      return c.json({ success: true as const, message: 'Account deleted successfully' }, 200);
+    } catch (err) {
+      const error = err as Error;
+      console.error('Error deleting account:', error);
+      const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
+        operation: 'delete_account',
+        originalError: error.message,
+      });
+      return c.json(dbError, 500);
+    }
+  })
+
+  .openapi(syncProfileRoute, async c => {
+    const { user: currentUser } = getAuth(c);
+    if (!currentUser) {
+      const error = createDomainError(AUTH_ERRORS.REQUIRED, { reason: 'no_user' });
+      return c.json(error, 401);
+    }
+
+    const db = createDb(c.env.DB);
+
+    try {
+      const [userData] = await db
+        .select({
+          name: user.name,
+          givenName: user.givenName,
+          familyName: user.familyName,
+          image: user.image,
+        })
+        .from(user)
+        .where(eq(user.id, currentUser.id))
+        .limit(1);
+
+      if (!userData) {
+        const error = createDomainError(USER_ERRORS.NOT_FOUND, { userId: currentUser.id });
+        return c.json(error, 404);
+      }
+
+      const userProjects = await db
+        .select({
+          projectId: projectMembers.projectId,
+          orgId: projects.orgId,
+        })
+        .from(projectMembers)
+        .innerJoin(projects, eq(projectMembers.projectId, projects.id))
+        .where(eq(projectMembers.userId, currentUser.id));
+
+      const syncPromises = userProjects.map(async ({ projectId }) => {
+        try {
+          const projectDoc = getProjectDocStub(c.env, projectId);
+
+          await projectDoc.syncMember('update', {
+            userId: currentUser.id,
+            name: userData.name,
+            givenName: userData.givenName,
+            familyName: userData.familyName,
+            image: userData.image,
+          });
+          return { projectId, success: true };
+        } catch (err) {
+          const error = err as Error;
+          console.error(`Failed to sync profile to project ${projectId}:`, err);
+          return { projectId, success: false, error: error.message };
+        }
+      });
+
+      const results = await Promise.all(syncPromises);
+      const successCount = results.filter(r => r.success).length;
+
+      return c.json(
+        {
+          success: true as const,
+          synced: successCount,
+          total: userProjects.length,
+        },
+        200,
+      );
+    } catch (err) {
+      const error = err as Error;
+      console.error('Error syncing profile:', error);
+      const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
+        operation: 'sync_profile',
+        originalError: error.message,
+      });
+      return c.json(dbError, 500);
+    }
+  });
 
 export { userRoutes };
 export type UserRoutes = typeof userRoutes;

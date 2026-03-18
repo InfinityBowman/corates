@@ -91,9 +91,7 @@ const acceptInvitationRoute = createRoute({
 });
 
 // Route handlers - chained for RPC type inference
-const invitationRoutes = $(base.use('*', requireAuth))
-
-.openapi(acceptInvitationRoute, async c => {
+const invitationRoutes = $(base.use('*', requireAuth)).openapi(acceptInvitationRoute, async c => {
   const { user: authUser } = getAuth(c);
   if (!authUser) {
     const error = createDomainError(AUTH_ERRORS.REQUIRED, { reason: 'no_user' });

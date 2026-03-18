@@ -615,581 +615,582 @@ const grantSingleProjectRoute = createRoute({
  */
 const billingRoutes = base
   .openapi(getBillingRoute, async c => {
-  const { orgId } = c.req.valid('param');
-  const db = createDb(c.env.DB);
+    const { orgId } = c.req.valid('param');
+    const db = createDb(c.env.DB);
 
-  try {
-    // Verify org exists
-    const org = await db.select().from(organization).where(eq(organization.id, orgId)).get();
-    if (!org) {
-      const error = createDomainError(VALIDATION_ERRORS.FIELD_INVALID_FORMAT, {
-        field: 'orgId',
-        value: orgId,
-      });
-      return c.json(error, 400);
-    }
+    try {
+      // Verify org exists
+      const org = await db.select().from(organization).where(eq(organization.id, orgId)).get();
+      if (!org) {
+        const error = createDomainError(VALIDATION_ERRORS.FIELD_INVALID_FORMAT, {
+          field: 'orgId',
+          value: orgId,
+        });
+        return c.json(error, 400);
+      }
 
-    // Get billing resolution
-    const orgBilling = await resolveOrgAccess(db, orgId);
+      // Get billing resolution
+      const orgBilling = await resolveOrgAccess(db, orgId);
 
-    // Get all subscriptions for this org
-    const allSubscriptions = await db
-      .select()
-      .from(subscription)
-      .where(eq(subscription.referenceId, orgId))
-      .orderBy(desc(subscription.createdAt))
-      .all();
+      // Get all subscriptions for this org
+      const allSubscriptions = await db
+        .select()
+        .from(subscription)
+        .where(eq(subscription.referenceId, orgId))
+        .orderBy(desc(subscription.createdAt))
+        .all();
 
-    // Get all grants for this org
-    const allGrants = await getGrantsByOrgId(db, orgId);
+      // Get all grants for this org
+      const allGrants = await getGrantsByOrgId(db, orgId);
 
-    // Format response
-    const effectivePlan =
-      orgBilling.source === 'grant' ?
-        getGrantPlan(orgBilling.effectivePlanId as GrantType)
-      : getPlan(orgBilling.effectivePlanId);
+      // Format response
+      const effectivePlan =
+        orgBilling.source === 'grant' ?
+          getGrantPlan(orgBilling.effectivePlanId as GrantType)
+        : getPlan(orgBilling.effectivePlanId);
 
-    return c.json(
-      {
-        orgId,
-        orgName: org.name,
-        orgSlug: org.slug,
-        billing: {
-          effectivePlanId: orgBilling.effectivePlanId,
-          source: orgBilling.source,
-          accessMode: orgBilling.accessMode,
-          plan: {
-            name: effectivePlan.name,
-            entitlements: effectivePlan.entitlements,
-            quotas: effectivePlan.quotas,
+      return c.json(
+        {
+          orgId,
+          orgName: org.name,
+          orgSlug: org.slug,
+          billing: {
+            effectivePlanId: orgBilling.effectivePlanId,
+            source: orgBilling.source,
+            accessMode: orgBilling.accessMode,
+            plan: {
+              name: effectivePlan.name,
+              entitlements: effectivePlan.entitlements,
+              quotas: effectivePlan.quotas,
+            },
+            subscription: orgBilling.subscription,
+            grant: orgBilling.grant,
           },
-          subscription: orgBilling.subscription,
-          grant: orgBilling.grant,
+          subscriptions: allSubscriptions,
+          grants: allGrants,
         },
-        subscriptions: allSubscriptions,
-        grants: allGrants,
-      },
-      200,
-    );
-  } catch (err) {
-    const error = err as Error;
-    console.error('Error fetching org billing:', error);
-    const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
-      operation: 'fetch_org_billing',
-      originalError: error.message,
-    });
-    return c.json(dbError, 500);
-  }
-})
+        200,
+      );
+    } catch (err) {
+      const error = err as Error;
+      console.error('Error fetching org billing:', error);
+      const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
+        operation: 'fetch_org_billing',
+        originalError: error.message,
+      });
+      return c.json(dbError, 500);
+    }
+  })
 
-/**
- * POST /api/admin/orgs/:orgId/subscriptions
- * Manually create a subscription for an org
- */
+  /**
+   * POST /api/admin/orgs/:orgId/subscriptions
+   * Manually create a subscription for an org
+   */
   .openapi(createSubscriptionRoute, async c => {
-  const { orgId } = c.req.valid('param');
-  const db = createDb(c.env.DB);
-  const body = c.req.valid('json');
+    const { orgId } = c.req.valid('param');
+    const db = createDb(c.env.DB);
+    const body = c.req.valid('json');
 
-  try {
-    // Verify org exists
-    const org = await db.select().from(organization).where(eq(organization.id, orgId)).get();
-    if (!org) {
-      const error = createDomainError(VALIDATION_ERRORS.FIELD_INVALID_FORMAT, {
-        field: 'orgId',
-        value: orgId,
-      });
-      return c.json(error, 400);
-    }
+    try {
+      // Verify org exists
+      const org = await db.select().from(organization).where(eq(organization.id, orgId)).get();
+      if (!org) {
+        const error = createDomainError(VALIDATION_ERRORS.FIELD_INVALID_FORMAT, {
+          field: 'orgId',
+          value: orgId,
+        });
+        return c.json(error, 400);
+      }
 
-    // Validate plan
-    const plan = getPlan(body.plan);
-    if (!plan) {
-      const error = createDomainError(VALIDATION_ERRORS.INVALID_INPUT, {
-        field: 'plan',
-        value: body.plan,
-      });
-      return c.json(error, 400);
-    }
+      // Validate plan
+      const plan = getPlan(body.plan);
+      if (!plan) {
+        const error = createDomainError(VALIDATION_ERRORS.INVALID_INPUT, {
+          field: 'plan',
+          value: body.plan,
+        });
+        return c.json(error, 400);
+      }
 
-    const subscriptionId = crypto.randomUUID();
-    const now = new Date();
+      const subscriptionId = crypto.randomUUID();
+      const now = new Date();
 
-    const subscriptionData = {
-      id: subscriptionId,
-      plan: body.plan,
-      referenceId: orgId,
-      status: body.status,
-      stripeCustomerId: body.stripeCustomerId || null,
-      stripeSubscriptionId: body.stripeSubscriptionId || null,
-      periodStart: body.periodStart || now,
-      periodEnd: body.periodEnd || null,
-      cancelAtPeriodEnd: body.cancelAtPeriodEnd || false,
-      createdAt: now,
-      updatedAt: now,
-    };
-
-    const createdSubscription = await db
-      .insert(subscription)
-      .values(subscriptionData)
-      .returning()
-      .get();
-
-    // Notify org members about the new subscription (async, don't block response)
-    notifySubscriptionChange(
-      c,
-      db,
-      orgId,
-      {
-        subscriptionId: createdSubscription.id,
-        tier: createdSubscription.plan,
-        status: createdSubscription.status,
-        periodEnd: createdSubscription.periodEnd,
-      },
-      'creation',
-    );
-
-    return c.json({ success: true, subscription: createdSubscription }, 201);
-  } catch (err) {
-    const error = err as Error;
-    console.error('Error creating subscription:', error);
-    const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
-      operation: 'create_subscription',
-      originalError: error.message,
-    });
-    return c.json(dbError, 500);
-  }
-})
-
-/**
- * PUT /api/admin/orgs/:orgId/subscriptions/:subscriptionId
- * Update a subscription
- */
-  .openapi(updateSubscriptionRoute, async c => {
-  const { orgId, subscriptionId } = c.req.valid('param');
-  const db = createDb(c.env.DB);
-  const body = c.req.valid('json');
-
-  try {
-    // Verify subscription exists and belongs to org
-    const existingSubscription = await db
-      .select()
-      .from(subscription)
-      .where(and(eq(subscription.id, subscriptionId), eq(subscription.referenceId, orgId)))
-      .get();
-
-    if (!existingSubscription) {
-      const error = createDomainError(VALIDATION_ERRORS.FIELD_INVALID_FORMAT, {
-        field: 'subscriptionId',
-        value: subscriptionId,
-      });
-      return c.json(error, 400);
-    }
-
-    const updateData: Record<string, unknown> = {
-      updatedAt: new Date(),
-    };
-
-    if (body.plan !== undefined) updateData.plan = body.plan;
-    if (body.status !== undefined) updateData.status = body.status;
-    if (body.periodStart !== undefined) updateData.periodStart = body.periodStart;
-    if (body.periodEnd !== undefined) updateData.periodEnd = body.periodEnd;
-    if (body.cancelAtPeriodEnd !== undefined) updateData.cancelAtPeriodEnd = body.cancelAtPeriodEnd;
-    if (body.canceledAt !== undefined) updateData.canceledAt = body.canceledAt;
-    if (body.endedAt !== undefined) updateData.endedAt = body.endedAt;
-
-    const updatedSubscription = await db
-      .update(subscription)
-      .set(updateData)
-      .where(eq(subscription.id, subscriptionId))
-      .returning()
-      .get();
-
-    // Notify org members about the subscription update (async, don't block response)
-    notifySubscriptionChange(
-      c,
-      db,
-      orgId,
-      {
-        subscriptionId: updatedSubscription.id,
-        tier: updatedSubscription.plan,
-        status: updatedSubscription.status,
-        periodEnd: updatedSubscription.periodEnd,
-        cancelAtPeriodEnd: updatedSubscription.cancelAtPeriodEnd,
-      },
-      'update',
-    );
-
-    return c.json({ success: true, subscription: updatedSubscription }, 200);
-  } catch (err) {
-    const error = err as Error;
-    console.error('Error updating subscription:', error);
-    const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
-      operation: 'update_subscription',
-      originalError: error.message,
-    });
-    return c.json(dbError, 500);
-  }
-})
-
-/**
- * DELETE /api/admin/orgs/:orgId/subscriptions/:subscriptionId
- * Cancel/delete a subscription
- */
-  .openapi(deleteSubscriptionRoute, async c => {
-  const { orgId, subscriptionId } = c.req.valid('param');
-  const db = createDb(c.env.DB);
-
-  try {
-    // Verify subscription exists and belongs to org
-    const existingSubscription = await db
-      .select()
-      .from(subscription)
-      .where(and(eq(subscription.id, subscriptionId), eq(subscription.referenceId, orgId)))
-      .get();
-
-    if (!existingSubscription) {
-      const error = createDomainError(VALIDATION_ERRORS.FIELD_INVALID_FORMAT, {
-        field: 'subscriptionId',
-        value: subscriptionId,
-      });
-      return c.json(error, 400);
-    }
-
-    // Cancel subscription (set status to canceled and endedAt)
-    const now = new Date();
-    const canceledSubscription = await db
-      .update(subscription)
-      .set({
-        status: 'canceled',
-        endedAt: now,
+      const subscriptionData = {
+        id: subscriptionId,
+        plan: body.plan,
+        referenceId: orgId,
+        status: body.status,
+        stripeCustomerId: body.stripeCustomerId || null,
+        stripeSubscriptionId: body.stripeSubscriptionId || null,
+        periodStart: body.periodStart || now,
+        periodEnd: body.periodEnd || null,
+        cancelAtPeriodEnd: body.cancelAtPeriodEnd || false,
+        createdAt: now,
         updatedAt: now,
-      })
-      .where(eq(subscription.id, subscriptionId))
-      .returning()
-      .get();
+      };
 
-    // Notify org members about the subscription cancellation (async, don't block response)
-    notifySubscriptionChange(
-      c,
-      db,
-      orgId,
-      {
-        subscriptionId,
-        tier: canceledSubscription.plan,
-        status: 'canceled',
-        periodEnd: canceledSubscription.periodEnd,
-        endedAt: canceledSubscription.endedAt,
-      },
-      'cancellation',
-    );
+      const createdSubscription = await db
+        .insert(subscription)
+        .values(subscriptionData)
+        .returning()
+        .get();
 
-    return c.json({ success: true, message: 'Subscription canceled' }, 200);
-  } catch (err) {
-    const error = err as Error;
-    console.error('Error canceling subscription:', error);
-    const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
-      operation: 'cancel_subscription',
-      originalError: error.message,
-    });
-    return c.json(dbError, 500);
-  }
-})
+      // Notify org members about the new subscription (async, don't block response)
+      notifySubscriptionChange(
+        c,
+        db,
+        orgId,
+        {
+          subscriptionId: createdSubscription.id,
+          tier: createdSubscription.plan,
+          status: createdSubscription.status,
+          periodEnd: createdSubscription.periodEnd,
+        },
+        'creation',
+      );
 
-/**
- * POST /api/admin/orgs/:orgId/grants
- * Create a grant manually
- */
+      return c.json({ success: true, subscription: createdSubscription }, 201);
+    } catch (err) {
+      const error = err as Error;
+      console.error('Error creating subscription:', error);
+      const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
+        operation: 'create_subscription',
+        originalError: error.message,
+      });
+      return c.json(dbError, 500);
+    }
+  })
+
+  /**
+   * PUT /api/admin/orgs/:orgId/subscriptions/:subscriptionId
+   * Update a subscription
+   */
+  .openapi(updateSubscriptionRoute, async c => {
+    const { orgId, subscriptionId } = c.req.valid('param');
+    const db = createDb(c.env.DB);
+    const body = c.req.valid('json');
+
+    try {
+      // Verify subscription exists and belongs to org
+      const existingSubscription = await db
+        .select()
+        .from(subscription)
+        .where(and(eq(subscription.id, subscriptionId), eq(subscription.referenceId, orgId)))
+        .get();
+
+      if (!existingSubscription) {
+        const error = createDomainError(VALIDATION_ERRORS.FIELD_INVALID_FORMAT, {
+          field: 'subscriptionId',
+          value: subscriptionId,
+        });
+        return c.json(error, 400);
+      }
+
+      const updateData: Record<string, unknown> = {
+        updatedAt: new Date(),
+      };
+
+      if (body.plan !== undefined) updateData.plan = body.plan;
+      if (body.status !== undefined) updateData.status = body.status;
+      if (body.periodStart !== undefined) updateData.periodStart = body.periodStart;
+      if (body.periodEnd !== undefined) updateData.periodEnd = body.periodEnd;
+      if (body.cancelAtPeriodEnd !== undefined)
+        updateData.cancelAtPeriodEnd = body.cancelAtPeriodEnd;
+      if (body.canceledAt !== undefined) updateData.canceledAt = body.canceledAt;
+      if (body.endedAt !== undefined) updateData.endedAt = body.endedAt;
+
+      const updatedSubscription = await db
+        .update(subscription)
+        .set(updateData)
+        .where(eq(subscription.id, subscriptionId))
+        .returning()
+        .get();
+
+      // Notify org members about the subscription update (async, don't block response)
+      notifySubscriptionChange(
+        c,
+        db,
+        orgId,
+        {
+          subscriptionId: updatedSubscription.id,
+          tier: updatedSubscription.plan,
+          status: updatedSubscription.status,
+          periodEnd: updatedSubscription.periodEnd,
+          cancelAtPeriodEnd: updatedSubscription.cancelAtPeriodEnd,
+        },
+        'update',
+      );
+
+      return c.json({ success: true, subscription: updatedSubscription }, 200);
+    } catch (err) {
+      const error = err as Error;
+      console.error('Error updating subscription:', error);
+      const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
+        operation: 'update_subscription',
+        originalError: error.message,
+      });
+      return c.json(dbError, 500);
+    }
+  })
+
+  /**
+   * DELETE /api/admin/orgs/:orgId/subscriptions/:subscriptionId
+   * Cancel/delete a subscription
+   */
+  .openapi(deleteSubscriptionRoute, async c => {
+    const { orgId, subscriptionId } = c.req.valid('param');
+    const db = createDb(c.env.DB);
+
+    try {
+      // Verify subscription exists and belongs to org
+      const existingSubscription = await db
+        .select()
+        .from(subscription)
+        .where(and(eq(subscription.id, subscriptionId), eq(subscription.referenceId, orgId)))
+        .get();
+
+      if (!existingSubscription) {
+        const error = createDomainError(VALIDATION_ERRORS.FIELD_INVALID_FORMAT, {
+          field: 'subscriptionId',
+          value: subscriptionId,
+        });
+        return c.json(error, 400);
+      }
+
+      // Cancel subscription (set status to canceled and endedAt)
+      const now = new Date();
+      const canceledSubscription = await db
+        .update(subscription)
+        .set({
+          status: 'canceled',
+          endedAt: now,
+          updatedAt: now,
+        })
+        .where(eq(subscription.id, subscriptionId))
+        .returning()
+        .get();
+
+      // Notify org members about the subscription cancellation (async, don't block response)
+      notifySubscriptionChange(
+        c,
+        db,
+        orgId,
+        {
+          subscriptionId,
+          tier: canceledSubscription.plan,
+          status: 'canceled',
+          periodEnd: canceledSubscription.periodEnd,
+          endedAt: canceledSubscription.endedAt,
+        },
+        'cancellation',
+      );
+
+      return c.json({ success: true, message: 'Subscription canceled' }, 200);
+    } catch (err) {
+      const error = err as Error;
+      console.error('Error canceling subscription:', error);
+      const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
+        operation: 'cancel_subscription',
+        originalError: error.message,
+      });
+      return c.json(dbError, 500);
+    }
+  })
+
+  /**
+   * POST /api/admin/orgs/:orgId/grants
+   * Create a grant manually
+   */
   .openapi(createGrantRoute, async c => {
-  const { orgId } = c.req.valid('param');
-  const db = createDb(c.env.DB);
-  const body = c.req.valid('json');
+    const { orgId } = c.req.valid('param');
+    const db = createDb(c.env.DB);
+    const body = c.req.valid('json');
 
-  try {
-    // Verify org exists
-    const org = await db.select().from(organization).where(eq(organization.id, orgId)).get();
-    if (!org) {
-      const error = createDomainError(VALIDATION_ERRORS.FIELD_INVALID_FORMAT, {
-        field: 'orgId',
-        value: orgId,
+    try {
+      // Verify org exists
+      const org = await db.select().from(organization).where(eq(organization.id, orgId)).get();
+      if (!org) {
+        const error = createDomainError(VALIDATION_ERRORS.FIELD_INVALID_FORMAT, {
+          field: 'orgId',
+          value: orgId,
+        });
+        return c.json(error, 400);
+      }
+
+      // Validate grant type
+      if (body.type !== 'trial' && body.type !== 'single_project') {
+        const error = createDomainError(VALIDATION_ERRORS.INVALID_INPUT, {
+          field: 'type',
+          value: body.type,
+        });
+        return c.json(error, 400);
+      }
+
+      // Enforce trial uniqueness
+      if (body.type === 'trial') {
+        const existingTrial = await getGrantByOrgIdAndType(db, orgId, 'trial');
+        if (existingTrial) {
+          const error = createDomainError(
+            VALIDATION_ERRORS.INVALID_INPUT,
+            {
+              field: 'type',
+              value: 'trial',
+            },
+            'Trial grant already exists for this organization. Each organization can only have one trial grant.',
+          );
+          return c.json(error, 400);
+        }
+      }
+
+      // Validate dates
+      if (body.expiresAt <= body.startsAt) {
+        const error = createDomainError(VALIDATION_ERRORS.INVALID_INPUT, {
+          field: 'expiresAt',
+          value: 'expiresAt must be after startsAt',
+        });
+        return c.json(error, 400);
+      }
+
+      const grantId = crypto.randomUUID();
+      const createdGrant = await createGrant(db, {
+        id: grantId,
+        orgId,
+        type: body.type,
+        startsAt: body.startsAt,
+        expiresAt: body.expiresAt,
+        metadata: body.metadata || null,
       });
-      return c.json(error, 400);
-    }
 
-    // Validate grant type
-    if (body.type !== 'trial' && body.type !== 'single_project') {
+      return c.json({ success: true, grant: createdGrant }, 201);
+    } catch (err) {
+      const error = err as Error;
+      console.error('Error creating grant:', error);
+      const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
+        operation: 'create_grant',
+        originalError: error.message,
+      });
+      return c.json(dbError, 500);
+    }
+  })
+
+  /**
+   * PUT /api/admin/orgs/:orgId/grants/:grantId
+   * Update a grant
+   */
+  // @ts-expect-error Handler returns multiple status codes (200/400/500) not representable in OpenAPIHono's strict return type
+  .openapi(updateGrantRoute, async c => {
+    const { orgId, grantId } = c.req.valid('param');
+    const db = createDb(c.env.DB);
+    const body = c.req.valid('json');
+
+    try {
+      // Verify grant exists and belongs to org
+      const existingGrant = await getGrantById(db, grantId);
+      if (!existingGrant || existingGrant.orgId !== orgId) {
+        const error = createDomainError(VALIDATION_ERRORS.FIELD_INVALID_FORMAT, {
+          field: 'grantId',
+          value: grantId,
+        });
+        return c.json(error, 400);
+      }
+
+      // Update grant
+      if (body.expiresAt !== undefined) {
+        const updatedGrant = await updateGrantExpiresAt(db, grantId, body.expiresAt);
+        return c.json({ success: true, grant: updatedGrant }, 200);
+      }
+
+      if (body.revokedAt !== undefined) {
+        if (body.revokedAt === null) {
+          // Unrevoke (set revokedAt to null) - need to update directly
+          const result = await db
+            .update(orgAccessGrants)
+            .set({ revokedAt: null })
+            .where(eq(orgAccessGrants.id, grantId))
+            .returning()
+            .get();
+          return c.json({ success: true, grant: result }, 200);
+        } else {
+          // Revoke
+          const revokedGrant = await revokeGrant(db, grantId);
+          return c.json({ success: true, grant: revokedGrant }, 200);
+        }
+      }
+
+      // No updates provided
       const error = createDomainError(VALIDATION_ERRORS.INVALID_INPUT, {
-        field: 'type',
-        value: body.type,
+        field: 'body',
+        value: 'At least one field (expiresAt or revokedAt) must be provided',
       });
       return c.json(error, 400);
+    } catch (err) {
+      const error = err as Error;
+      console.error('Error updating grant:', error);
+      const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
+        operation: 'update_grant',
+        originalError: error.message,
+      });
+      return c.json(dbError, 500);
     }
+  })
 
-    // Enforce trial uniqueness
-    if (body.type === 'trial') {
+  /**
+   * DELETE /api/admin/orgs/:orgId/grants/:grantId
+   * Revoke a grant
+   */
+  .openapi(deleteGrantRoute, async c => {
+    const { orgId, grantId } = c.req.valid('param');
+    const db = createDb(c.env.DB);
+
+    try {
+      // Verify grant exists and belongs to org
+      const existingGrant = await getGrantById(db, grantId);
+      if (!existingGrant || existingGrant.orgId !== orgId) {
+        const error = createDomainError(VALIDATION_ERRORS.FIELD_INVALID_FORMAT, {
+          field: 'grantId',
+          value: grantId,
+        });
+        return c.json(error, 400);
+      }
+
+      // Revoke grant
+      await revokeGrant(db, grantId);
+
+      return c.json({ success: true, message: 'Grant revoked' }, 200);
+    } catch (err) {
+      const error = err as Error;
+      console.error('Error revoking grant:', error);
+      const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
+        operation: 'revoke_grant',
+        originalError: error.message,
+      });
+      return c.json(dbError, 500);
+    }
+  })
+
+  /**
+   * POST /api/admin/orgs/:orgId/grant-trial
+   * Convenience endpoint to create a trial grant (14 days from now)
+   */
+  .openapi(grantTrialRoute, async c => {
+    const { orgId } = c.req.valid('param');
+    const db = createDb(c.env.DB);
+
+    try {
+      // Verify org exists
+      const org = await db.select().from(organization).where(eq(organization.id, orgId)).get();
+      if (!org) {
+        const error = createDomainError(VALIDATION_ERRORS.FIELD_INVALID_FORMAT, {
+          field: 'orgId',
+          value: orgId,
+        });
+        return c.json(error, 400);
+      }
+
+      // Check for existing trial
       const existingTrial = await getGrantByOrgIdAndType(db, orgId, 'trial');
       if (existingTrial) {
         const error = createDomainError(
           VALIDATION_ERRORS.INVALID_INPUT,
           {
-            field: 'type',
-            value: 'trial',
+            field: 'trial',
+            value: 'already_exists',
           },
-          'Trial grant already exists for this organization. Each organization can only have one trial grant.',
+          'Trial grant already exists for this organization.',
         );
         return c.json(error, 400);
       }
-    }
 
-    // Validate dates
-    if (body.expiresAt <= body.startsAt) {
-      const error = createDomainError(VALIDATION_ERRORS.INVALID_INPUT, {
-        field: 'expiresAt',
-        value: 'expiresAt must be after startsAt',
+      const now = new Date();
+      const expiresAt = new Date(now);
+      expiresAt.setDate(expiresAt.getDate() + 14);
+
+      const grantId = crypto.randomUUID();
+      const createdGrant = await createGrant(db, {
+        id: grantId,
+        orgId,
+        type: 'trial',
+        startsAt: now,
+        expiresAt,
+        metadata: { createdBy: 'admin' },
       });
-      return c.json(error, 400);
-    }
 
-    const grantId = crypto.randomUUID();
-    const createdGrant = await createGrant(db, {
-      id: grantId,
-      orgId,
-      type: body.type,
-      startsAt: body.startsAt,
-      expiresAt: body.expiresAt,
-      metadata: body.metadata || null,
-    });
-
-    return c.json({ success: true, grant: createdGrant }, 201);
-  } catch (err) {
-    const error = err as Error;
-    console.error('Error creating grant:', error);
-    const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
-      operation: 'create_grant',
-      originalError: error.message,
-    });
-    return c.json(dbError, 500);
-  }
-})
-
-/**
- * PUT /api/admin/orgs/:orgId/grants/:grantId
- * Update a grant
- */
-// @ts-expect-error Handler returns multiple status codes (200/400/500) not representable in OpenAPIHono's strict return type
-  .openapi(updateGrantRoute, async c => {
-  const { orgId, grantId } = c.req.valid('param');
-  const db = createDb(c.env.DB);
-  const body = c.req.valid('json');
-
-  try {
-    // Verify grant exists and belongs to org
-    const existingGrant = await getGrantById(db, grantId);
-    if (!existingGrant || existingGrant.orgId !== orgId) {
-      const error = createDomainError(VALIDATION_ERRORS.FIELD_INVALID_FORMAT, {
-        field: 'grantId',
-        value: grantId,
+      return c.json({ success: true, grant: createdGrant }, 201);
+    } catch (err) {
+      const error = err as Error;
+      console.error('Error creating trial grant:', error);
+      const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
+        operation: 'create_trial_grant',
+        originalError: error.message,
       });
-      return c.json(error, 400);
+      return c.json(dbError, 500);
     }
+  })
 
-    // Update grant
-    if (body.expiresAt !== undefined) {
-      const updatedGrant = await updateGrantExpiresAt(db, grantId, body.expiresAt);
-      return c.json({ success: true, grant: updatedGrant }, 200);
-    }
-
-    if (body.revokedAt !== undefined) {
-      if (body.revokedAt === null) {
-        // Unrevoke (set revokedAt to null) - need to update directly
-        const result = await db
-          .update(orgAccessGrants)
-          .set({ revokedAt: null })
-          .where(eq(orgAccessGrants.id, grantId))
-          .returning()
-          .get();
-        return c.json({ success: true, grant: result }, 200);
-      } else {
-        // Revoke
-        const revokedGrant = await revokeGrant(db, grantId);
-        return c.json({ success: true, grant: revokedGrant }, 200);
-      }
-    }
-
-    // No updates provided
-    const error = createDomainError(VALIDATION_ERRORS.INVALID_INPUT, {
-      field: 'body',
-      value: 'At least one field (expiresAt or revokedAt) must be provided',
-    });
-    return c.json(error, 400);
-  } catch (err) {
-    const error = err as Error;
-    console.error('Error updating grant:', error);
-    const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
-      operation: 'update_grant',
-      originalError: error.message,
-    });
-    return c.json(dbError, 500);
-  }
-})
-
-/**
- * DELETE /api/admin/orgs/:orgId/grants/:grantId
- * Revoke a grant
- */
-  .openapi(deleteGrantRoute, async c => {
-  const { orgId, grantId } = c.req.valid('param');
-  const db = createDb(c.env.DB);
-
-  try {
-    // Verify grant exists and belongs to org
-    const existingGrant = await getGrantById(db, grantId);
-    if (!existingGrant || existingGrant.orgId !== orgId) {
-      const error = createDomainError(VALIDATION_ERRORS.FIELD_INVALID_FORMAT, {
-        field: 'grantId',
-        value: grantId,
-      });
-      return c.json(error, 400);
-    }
-
-    // Revoke grant
-    await revokeGrant(db, grantId);
-
-    return c.json({ success: true, message: 'Grant revoked' }, 200);
-  } catch (err) {
-    const error = err as Error;
-    console.error('Error revoking grant:', error);
-    const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
-      operation: 'revoke_grant',
-      originalError: error.message,
-    });
-    return c.json(dbError, 500);
-  }
-})
-
-/**
- * POST /api/admin/orgs/:orgId/grant-trial
- * Convenience endpoint to create a trial grant (14 days from now)
- */
-  .openapi(grantTrialRoute, async c => {
-  const { orgId } = c.req.valid('param');
-  const db = createDb(c.env.DB);
-
-  try {
-    // Verify org exists
-    const org = await db.select().from(organization).where(eq(organization.id, orgId)).get();
-    if (!org) {
-      const error = createDomainError(VALIDATION_ERRORS.FIELD_INVALID_FORMAT, {
-        field: 'orgId',
-        value: orgId,
-      });
-      return c.json(error, 400);
-    }
-
-    // Check for existing trial
-    const existingTrial = await getGrantByOrgIdAndType(db, orgId, 'trial');
-    if (existingTrial) {
-      const error = createDomainError(
-        VALIDATION_ERRORS.INVALID_INPUT,
-        {
-          field: 'trial',
-          value: 'already_exists',
-        },
-        'Trial grant already exists for this organization.',
-      );
-      return c.json(error, 400);
-    }
-
-    const now = new Date();
-    const expiresAt = new Date(now);
-    expiresAt.setDate(expiresAt.getDate() + 14);
-
-    const grantId = crypto.randomUUID();
-    const createdGrant = await createGrant(db, {
-      id: grantId,
-      orgId,
-      type: 'trial',
-      startsAt: now,
-      expiresAt,
-      metadata: { createdBy: 'admin' },
-    });
-
-    return c.json({ success: true, grant: createdGrant }, 201);
-  } catch (err) {
-    const error = err as Error;
-    console.error('Error creating trial grant:', error);
-    const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
-      operation: 'create_trial_grant',
-      originalError: error.message,
-    });
-    return c.json(dbError, 500);
-  }
-})
-
-/**
- * POST /api/admin/orgs/:orgId/grant-single-project
- * Convenience endpoint to create a single_project grant (6 months from now)
- */
-// @ts-expect-error Handler returns both 200 and 201 status codes
+  /**
+   * POST /api/admin/orgs/:orgId/grant-single-project
+   * Convenience endpoint to create a single_project grant (6 months from now)
+   */
+  // @ts-expect-error Handler returns both 200 and 201 status codes
   .openapi(grantSingleProjectRoute, async c => {
-  const { orgId } = c.req.valid('param');
-  const db = createDb(c.env.DB);
+    const { orgId } = c.req.valid('param');
+    const db = createDb(c.env.DB);
 
-  try {
-    // Verify org exists
-    const org = await db.select().from(organization).where(eq(organization.id, orgId)).get();
-    if (!org) {
-      const error = createDomainError(VALIDATION_ERRORS.FIELD_INVALID_FORMAT, {
-        field: 'orgId',
-        value: orgId,
+    try {
+      // Verify org exists
+      const org = await db.select().from(organization).where(eq(organization.id, orgId)).get();
+      if (!org) {
+        const error = createDomainError(VALIDATION_ERRORS.FIELD_INVALID_FORMAT, {
+          field: 'orgId',
+          value: orgId,
+        });
+        return c.json(error, 400);
+      }
+
+      // Check for existing single_project grant (extend if exists)
+      const existingGrant = await getGrantByOrgIdAndType(db, orgId, 'single_project');
+      const now = new Date();
+
+      if (existingGrant && !existingGrant.revokedAt) {
+        // Extend existing grant by 6 months from max(now, expiresAt)
+        const existingExpiresAtTimestamp =
+          existingGrant.expiresAt instanceof Date ?
+            Math.floor(existingGrant.expiresAt.getTime() / 1000)
+          : (existingGrant.expiresAt as number);
+        const nowTimestamp = Math.floor(now.getTime() / 1000);
+        const baseExpiresAt = Math.max(nowTimestamp, existingExpiresAtTimestamp);
+        const newExpiresAt = new Date(baseExpiresAt * 1000);
+        newExpiresAt.setMonth(newExpiresAt.getMonth() + 6);
+
+        const updatedGrant = await updateGrantExpiresAt(db, existingGrant.id, newExpiresAt);
+        return c.json({ success: true, grant: updatedGrant, action: 'extended' as const }, 200);
+      }
+
+      // Create new grant (6 months from now)
+      const expiresAt = new Date(now);
+      expiresAt.setMonth(expiresAt.getMonth() + 6);
+
+      const grantId = crypto.randomUUID();
+      const createdGrant = await createGrant(db, {
+        id: grantId,
+        orgId,
+        type: 'single_project',
+        startsAt: now,
+        expiresAt,
+        metadata: { createdBy: 'admin' },
       });
-      return c.json(error, 400);
+
+      return c.json({ success: true, grant: createdGrant, action: 'created' as const }, 201);
+    } catch (err) {
+      const error = err as Error;
+      console.error('Error creating single_project grant:', error);
+      const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
+        operation: 'create_single_project_grant',
+        originalError: error.message,
+      });
+      return c.json(dbError, 500);
     }
-
-    // Check for existing single_project grant (extend if exists)
-    const existingGrant = await getGrantByOrgIdAndType(db, orgId, 'single_project');
-    const now = new Date();
-
-    if (existingGrant && !existingGrant.revokedAt) {
-      // Extend existing grant by 6 months from max(now, expiresAt)
-      const existingExpiresAtTimestamp =
-        existingGrant.expiresAt instanceof Date ?
-          Math.floor(existingGrant.expiresAt.getTime() / 1000)
-        : (existingGrant.expiresAt as number);
-      const nowTimestamp = Math.floor(now.getTime() / 1000);
-      const baseExpiresAt = Math.max(nowTimestamp, existingExpiresAtTimestamp);
-      const newExpiresAt = new Date(baseExpiresAt * 1000);
-      newExpiresAt.setMonth(newExpiresAt.getMonth() + 6);
-
-      const updatedGrant = await updateGrantExpiresAt(db, existingGrant.id, newExpiresAt);
-      return c.json({ success: true, grant: updatedGrant, action: 'extended' as const }, 200);
-    }
-
-    // Create new grant (6 months from now)
-    const expiresAt = new Date(now);
-    expiresAt.setMonth(expiresAt.getMonth() + 6);
-
-    const grantId = crypto.randomUUID();
-    const createdGrant = await createGrant(db, {
-      id: grantId,
-      orgId,
-      type: 'single_project',
-      startsAt: now,
-      expiresAt,
-      metadata: { createdBy: 'admin' },
-    });
-
-    return c.json({ success: true, grant: createdGrant, action: 'created' as const }, 201);
-  } catch (err) {
-    const error = err as Error;
-    console.error('Error creating single_project grant:', error);
-    const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
-      operation: 'create_single_project_grant',
-      originalError: error.message,
-    });
-    return c.json(dbError, 500);
-  }
-});
+  });
 
 export { billingRoutes };
 export type BillingRoutes = typeof billingRoutes;

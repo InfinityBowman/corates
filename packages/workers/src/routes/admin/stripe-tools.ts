@@ -387,423 +387,423 @@ interface LinkedOrg {
 const stripeToolsRoutes = _stripeToolsBase
   // @ts-expect-error Handler returns multiple 200 response shapes plus error status codes
   .openapi(customerLookupRoute, async c => {
-  const query = c.req.valid('query');
-  const email = query.email;
-  const customerId = query.customerId;
+    const query = c.req.valid('query');
+    const email = query.email;
+    const customerId = query.customerId;
 
-  if (!email && !customerId) {
-    const error = createDomainError(VALIDATION_ERRORS.FIELD_REQUIRED, {
-      field: 'email or customerId',
-    });
-    return c.json(error, 400);
-  }
-
-  if (!c.env.STRIPE_SECRET_KEY) {
-    const error = createDomainError(SYSTEM_ERRORS.SERVICE_UNAVAILABLE, {
-      message: 'Stripe is not configured',
-    });
-    return c.json(error, 500);
-  }
-
-  const stripe = createStripeClient(c.env);
-
-  try {
-    let customer: Stripe.Customer | null = null;
-
-    if (customerId) {
-      // Direct lookup by ID
-      try {
-        const retrieved = await stripe.customers.retrieve(customerId);
-        if ((retrieved as Stripe.DeletedCustomer).deleted) {
-          return c.json(
-            {
-              found: false,
-              message: 'Customer has been deleted in Stripe',
-              customerId,
-            },
-            200,
-          );
-        }
-        customer = retrieved as Stripe.Customer;
-      } catch (err) {
-        const stripeErr = err as Stripe.errors.StripeError;
-        if (stripeErr.code === 'resource_missing') {
-          return c.json(
-            {
-              found: false,
-              message: 'Customer not found in Stripe',
-              customerId,
-            },
-            200,
-          );
-        }
-        throw err;
-      }
-    } else if (email) {
-      // Search by email
-      const customers = await stripe.customers.list({
-        email: email.toLowerCase(),
-        limit: 1,
+    if (!email && !customerId) {
+      const error = createDomainError(VALIDATION_ERRORS.FIELD_REQUIRED, {
+        field: 'email or customerId',
       });
+      return c.json(error, 400);
+    }
 
-      if (customers.data.length === 0) {
+    if (!c.env.STRIPE_SECRET_KEY) {
+      const error = createDomainError(SYSTEM_ERRORS.SERVICE_UNAVAILABLE, {
+        message: 'Stripe is not configured',
+      });
+      return c.json(error, 500);
+    }
+
+    const stripe = createStripeClient(c.env);
+
+    try {
+      let customer: Stripe.Customer | null = null;
+
+      if (customerId) {
+        // Direct lookup by ID
+        try {
+          const retrieved = await stripe.customers.retrieve(customerId);
+          if ((retrieved as Stripe.DeletedCustomer).deleted) {
+            return c.json(
+              {
+                found: false,
+                message: 'Customer has been deleted in Stripe',
+                customerId,
+              },
+              200,
+            );
+          }
+          customer = retrieved as Stripe.Customer;
+        } catch (err) {
+          const stripeErr = err as Stripe.errors.StripeError;
+          if (stripeErr.code === 'resource_missing') {
+            return c.json(
+              {
+                found: false,
+                message: 'Customer not found in Stripe',
+                customerId,
+              },
+              200,
+            );
+          }
+          throw err;
+        }
+      } else if (email) {
+        // Search by email
+        const customers = await stripe.customers.list({
+          email: email.toLowerCase(),
+          limit: 1,
+        });
+
+        if (customers.data.length === 0) {
+          return c.json(
+            {
+              found: false,
+              message: 'No customer found with this email',
+              email,
+            },
+            200,
+          );
+        }
+
+        customer = customers.data[0];
+      }
+
+      if (!customer) {
         return c.json(
           {
             found: false,
-            message: 'No customer found with this email',
-            email,
+            message: 'Customer not found',
           },
           200,
         );
       }
 
-      customer = customers.data[0];
-    }
+      // Look up associated user and org in our database
+      const db = createDb(c.env.DB);
 
-    if (!customer) {
-      return c.json(
-        {
-          found: false,
-          message: 'Customer not found',
-        },
-        200,
-      );
-    }
+      let linkedUser: LinkedUser | null = null;
+      let linkedOrg: LinkedOrg | null = null;
 
-    // Look up associated user and org in our database
-    const db = createDb(c.env.DB);
-
-    let linkedUser: LinkedUser | null = null;
-    let linkedOrg: LinkedOrg | null = null;
-
-    // Find user by stripeCustomerId
-    const [userByStripe] = await db
-      .select({
-        id: user.id,
-        email: user.email,
-        name: user.name,
-        givenName: user.givenName,
-      })
-      .from(user)
-      .where(eq(user.stripeCustomerId, customer.id))
-      .limit(1);
-
-    if (userByStripe) {
-      linkedUser = userByStripe;
-    } else if (customer.email) {
-      // Try to find by email
-      const [userByEmail] = await db
+      // Find user by stripeCustomerId
+      const [userByStripe] = await db
         .select({
           id: user.id,
           email: user.email,
           name: user.name,
           givenName: user.givenName,
-          stripeCustomerId: user.stripeCustomerId,
         })
         .from(user)
-        .where(eq(user.email, customer.email))
+        .where(eq(user.stripeCustomerId, customer.id))
         .limit(1);
 
-      if (userByEmail) {
-        linkedUser = userByEmail;
+      if (userByStripe) {
+        linkedUser = userByStripe;
+      } else if (customer.email) {
+        // Try to find by email
+        const [userByEmail] = await db
+          .select({
+            id: user.id,
+            email: user.email,
+            name: user.name,
+            givenName: user.givenName,
+            stripeCustomerId: user.stripeCustomerId,
+          })
+          .from(user)
+          .where(eq(user.email, customer.email))
+          .limit(1);
+
+        if (userByEmail) {
+          linkedUser = userByEmail;
+        }
       }
-    }
 
-    // Find org by stripeCustomerId in subscription table
-    const [subWithOrg] = await db
-      .select({
-        orgId: subscription.referenceId,
-        orgName: organization.name,
-        orgSlug: organization.slug,
-      })
-      .from(subscription)
-      .leftJoin(organization, eq(subscription.referenceId, organization.id))
-      .where(eq(subscription.stripeCustomerId, customer.id))
-      .limit(1);
+      // Find org by stripeCustomerId in subscription table
+      const [subWithOrg] = await db
+        .select({
+          orgId: subscription.referenceId,
+          orgName: organization.name,
+          orgSlug: organization.slug,
+        })
+        .from(subscription)
+        .leftJoin(organization, eq(subscription.referenceId, organization.id))
+        .where(eq(subscription.stripeCustomerId, customer.id))
+        .limit(1);
 
-    if (subWithOrg) {
-      linkedOrg = {
-        id: subWithOrg.orgId,
-        name: subWithOrg.orgName,
-        slug: subWithOrg.orgSlug,
-      };
-    }
+      if (subWithOrg) {
+        linkedOrg = {
+          id: subWithOrg.orgId,
+          name: subWithOrg.orgName,
+          slug: subWithOrg.orgSlug,
+        };
+      }
 
-    return c.json(
-      {
-        found: true,
-        customer: {
-          id: customer.id,
-          email: customer.email,
-          name: customer.name,
-          phone: customer.phone,
-          created: customer.created,
-          currency: customer.currency,
-          defaultSource:
-            typeof customer.default_source === 'string' ? customer.default_source : null,
-          invoicePrefix: customer.invoice_prefix,
-          balance: customer.balance,
-          delinquent: customer.delinquent ?? false,
-          metadata: customer.metadata as Record<string, string>,
-          livemode: customer.livemode,
+      return c.json(
+        {
+          found: true,
+          customer: {
+            id: customer.id,
+            email: customer.email,
+            name: customer.name,
+            phone: customer.phone,
+            created: customer.created,
+            currency: customer.currency,
+            defaultSource:
+              typeof customer.default_source === 'string' ? customer.default_source : null,
+            invoicePrefix: customer.invoice_prefix,
+            balance: customer.balance,
+            delinquent: customer.delinquent ?? false,
+            metadata: customer.metadata as Record<string, string>,
+            livemode: customer.livemode,
+          },
+          linkedUser,
+          linkedOrg,
+          stripeDashboardUrl: `https://dashboard.stripe.com/customers/${customer.id}`,
         },
-        linkedUser,
-        linkedOrg,
-        stripeDashboardUrl: `https://dashboard.stripe.com/customers/${customer.id}`,
-      },
-      200,
-    );
-  } catch (err) {
-    const error = err as Error;
-    console.error('Error looking up Stripe customer:', error);
-    const dbError = createDomainError(SYSTEM_ERRORS.INTERNAL_ERROR, {
-      service: 'Stripe',
-      originalError: error.message,
-    });
-    return c.json(dbError, 500);
-  }
-})
+        200,
+      );
+    } catch (err) {
+      const error = err as Error;
+      console.error('Error looking up Stripe customer:', error);
+      const dbError = createDomainError(SYSTEM_ERRORS.INTERNAL_ERROR, {
+        service: 'Stripe',
+        originalError: error.message,
+      });
+      return c.json(dbError, 500);
+    }
+  })
 
-/**
- * POST /api/admin/stripe/portal-link
- * Generate a customer portal link for a Stripe customer
- */
+  /**
+   * POST /api/admin/stripe/portal-link
+   * Generate a customer portal link for a Stripe customer
+   */
   .openapi(portalLinkRoute, async c => {
-  const body = c.req.valid('json');
-  const { customerId, returnUrl } = body;
+    const body = c.req.valid('json');
+    const { customerId, returnUrl } = body;
 
-  if (!c.env.STRIPE_SECRET_KEY) {
-    const error = createDomainError(SYSTEM_ERRORS.SERVICE_UNAVAILABLE, {
-      message: 'Stripe is not configured',
-    });
-    return c.json(error, 500);
-  }
+    if (!c.env.STRIPE_SECRET_KEY) {
+      const error = createDomainError(SYSTEM_ERRORS.SERVICE_UNAVAILABLE, {
+        message: 'Stripe is not configured',
+      });
+      return c.json(error, 500);
+    }
 
-  const stripe = createStripeClient(c.env);
+    const stripe = createStripeClient(c.env);
 
-  try {
-    const session = await stripe.billingPortal.sessions.create({
-      customer: customerId,
-      return_url: returnUrl || c.env.APP_URL || 'https://corates.com',
-    });
+    try {
+      const session = await stripe.billingPortal.sessions.create({
+        customer: customerId,
+        return_url: returnUrl || c.env.APP_URL || 'https://corates.com',
+      });
 
-    return c.json(
-      {
-        success: true,
-        url: session.url,
-        expiresAt: session.created + 300, // Portal links typically expire in 5 minutes
-      },
-      200,
-    );
-  } catch (err) {
-    const error = err as Error;
-    console.error('Error creating portal link:', error);
-    const dbError = createDomainError(SYSTEM_ERRORS.INTERNAL_ERROR, {
-      service: 'Stripe',
-      originalError: error.message,
-    });
-    return c.json(dbError, 500);
-  }
-})
+      return c.json(
+        {
+          success: true,
+          url: session.url,
+          expiresAt: session.created + 300, // Portal links typically expire in 5 minutes
+        },
+        200,
+      );
+    } catch (err) {
+      const error = err as Error;
+      console.error('Error creating portal link:', error);
+      const dbError = createDomainError(SYSTEM_ERRORS.INTERNAL_ERROR, {
+        service: 'Stripe',
+        originalError: error.message,
+      });
+      return c.json(dbError, 500);
+    }
+  })
 
-/**
- * GET /api/admin/stripe/customer/:customerId/invoices
- * Get recent invoices for a Stripe customer
- */
-// @ts-expect-error Handler returns 500 outside try block for service unavailable check
+  /**
+   * GET /api/admin/stripe/customer/:customerId/invoices
+   * Get recent invoices for a Stripe customer
+   */
+  // @ts-expect-error Handler returns 500 outside try block for service unavailable check
   .openapi(invoicesRoute, async c => {
-  const { customerId } = c.req.valid('param');
-  const query = c.req.valid('query');
-  const parsedLimit = parseInt(query.limit || '10', 10);
-  const limit = Math.min(Number.isNaN(parsedLimit) ? 10 : parsedLimit, 50);
+    const { customerId } = c.req.valid('param');
+    const query = c.req.valid('query');
+    const parsedLimit = parseInt(query.limit || '10', 10);
+    const limit = Math.min(Number.isNaN(parsedLimit) ? 10 : parsedLimit, 50);
 
-  if (!c.env.STRIPE_SECRET_KEY) {
-    const error = createDomainError(SYSTEM_ERRORS.SERVICE_UNAVAILABLE, {
-      message: 'Stripe is not configured',
-    });
-    return c.json(error, 500);
-  }
+    if (!c.env.STRIPE_SECRET_KEY) {
+      const error = createDomainError(SYSTEM_ERRORS.SERVICE_UNAVAILABLE, {
+        message: 'Stripe is not configured',
+      });
+      return c.json(error, 500);
+    }
 
-  const stripe = createStripeClient(c.env);
+    const stripe = createStripeClient(c.env);
 
-  try {
-    const invoices = await stripe.invoices.list({
-      customer: customerId,
-      limit,
-    });
+    try {
+      const invoices = await stripe.invoices.list({
+        customer: customerId,
+        limit,
+      });
 
-    return c.json(
-      {
-        customerId,
-        invoices: invoices.data.map(inv => {
-          const invWithSub = inv as InvoiceWithSubscription;
-          return {
-            id: inv.id,
-            number: inv.number,
-            status: inv.status,
-            currency: inv.currency,
-            amountDue: inv.amount_due,
-            amountPaid: inv.amount_paid,
-            amountRemaining: inv.amount_remaining,
-            total: inv.total,
-            subtotal: inv.subtotal,
-            created: inv.created,
-            dueDate: inv.due_date,
-            paidAt: inv.status_transitions?.paid_at ?? null,
-            hostedInvoiceUrl: inv.hosted_invoice_url,
-            invoicePdf: inv.invoice_pdf,
-            subscriptionId:
-              typeof invWithSub.subscription === 'string' ?
-                invWithSub.subscription
-              : ((invWithSub.subscription as Stripe.Subscription)?.id ?? null),
-            periodStart: inv.period_start,
-            periodEnd: inv.period_end,
-          };
-        }),
-        hasMore: invoices.has_more,
-      },
-      200,
-    );
-  } catch (err) {
-    const error = err as Error;
-    console.error('Error fetching invoices:', error);
-    const dbError = createDomainError(SYSTEM_ERRORS.INTERNAL_ERROR, {
-      service: 'Stripe',
-      originalError: error.message,
-    });
-    return c.json(dbError, 500);
-  }
-})
+      return c.json(
+        {
+          customerId,
+          invoices: invoices.data.map(inv => {
+            const invWithSub = inv as InvoiceWithSubscription;
+            return {
+              id: inv.id,
+              number: inv.number,
+              status: inv.status,
+              currency: inv.currency,
+              amountDue: inv.amount_due,
+              amountPaid: inv.amount_paid,
+              amountRemaining: inv.amount_remaining,
+              total: inv.total,
+              subtotal: inv.subtotal,
+              created: inv.created,
+              dueDate: inv.due_date,
+              paidAt: inv.status_transitions?.paid_at ?? null,
+              hostedInvoiceUrl: inv.hosted_invoice_url,
+              invoicePdf: inv.invoice_pdf,
+              subscriptionId:
+                typeof invWithSub.subscription === 'string' ?
+                  invWithSub.subscription
+                : ((invWithSub.subscription as Stripe.Subscription)?.id ?? null),
+              periodStart: inv.period_start,
+              periodEnd: inv.period_end,
+            };
+          }),
+          hasMore: invoices.has_more,
+        },
+        200,
+      );
+    } catch (err) {
+      const error = err as Error;
+      console.error('Error fetching invoices:', error);
+      const dbError = createDomainError(SYSTEM_ERRORS.INTERNAL_ERROR, {
+        service: 'Stripe',
+        originalError: error.message,
+      });
+      return c.json(dbError, 500);
+    }
+  })
 
-/**
- * GET /api/admin/stripe/customer/:customerId/payment-methods
- * Get payment methods for a Stripe customer
- */
+  /**
+   * GET /api/admin/stripe/customer/:customerId/payment-methods
+   * Get payment methods for a Stripe customer
+   */
   .openapi(paymentMethodsRoute, async c => {
-  const { customerId } = c.req.valid('param');
+    const { customerId } = c.req.valid('param');
 
-  if (!c.env.STRIPE_SECRET_KEY) {
-    const error = createDomainError(SYSTEM_ERRORS.SERVICE_UNAVAILABLE, {
-      message: 'Stripe is not configured',
-    });
-    return c.json(error, 500);
-  }
+    if (!c.env.STRIPE_SECRET_KEY) {
+      const error = createDomainError(SYSTEM_ERRORS.SERVICE_UNAVAILABLE, {
+        message: 'Stripe is not configured',
+      });
+      return c.json(error, 500);
+    }
 
-  const stripe = createStripeClient(c.env);
+    const stripe = createStripeClient(c.env);
 
-  try {
-    const paymentMethods = await stripe.paymentMethods.list({
-      customer: customerId,
-      type: 'card',
-    });
+    try {
+      const paymentMethods = await stripe.paymentMethods.list({
+        customer: customerId,
+        type: 'card',
+      });
 
-    return c.json(
-      {
-        customerId,
-        paymentMethods: paymentMethods.data.map(pm => ({
-          id: pm.id,
-          type: pm.type,
-          card:
-            pm.card ?
-              {
-                brand: pm.card.brand,
-                last4: pm.card.last4,
-                expMonth: pm.card.exp_month,
-                expYear: pm.card.exp_year,
-                funding: pm.card.funding,
-                country: pm.card.country,
-              }
-            : null,
-          created: pm.created,
-        })),
-      },
-      200,
-    );
-  } catch (err) {
-    const error = err as Error;
-    console.error('Error fetching payment methods:', error);
-    const dbError = createDomainError(SYSTEM_ERRORS.INTERNAL_ERROR, {
-      service: 'Stripe',
-      originalError: error.message,
-    });
-    return c.json(dbError, 500);
-  }
-})
+      return c.json(
+        {
+          customerId,
+          paymentMethods: paymentMethods.data.map(pm => ({
+            id: pm.id,
+            type: pm.type,
+            card:
+              pm.card ?
+                {
+                  brand: pm.card.brand,
+                  last4: pm.card.last4,
+                  expMonth: pm.card.exp_month,
+                  expYear: pm.card.exp_year,
+                  funding: pm.card.funding,
+                  country: pm.card.country,
+                }
+              : null,
+            created: pm.created,
+          })),
+        },
+        200,
+      );
+    } catch (err) {
+      const error = err as Error;
+      console.error('Error fetching payment methods:', error);
+      const dbError = createDomainError(SYSTEM_ERRORS.INTERNAL_ERROR, {
+        service: 'Stripe',
+        originalError: error.message,
+      });
+      return c.json(dbError, 500);
+    }
+  })
 
-/**
- * GET /api/admin/stripe/customer/:customerId/subscriptions
- * Get subscriptions for a Stripe customer directly from Stripe
- */
-// @ts-expect-error Handler returns 500 outside try block for service unavailable check
+  /**
+   * GET /api/admin/stripe/customer/:customerId/subscriptions
+   * Get subscriptions for a Stripe customer directly from Stripe
+   */
+  // @ts-expect-error Handler returns 500 outside try block for service unavailable check
   .openapi(subscriptionsRoute, async c => {
-  const { customerId } = c.req.valid('param');
+    const { customerId } = c.req.valid('param');
 
-  if (!c.env.STRIPE_SECRET_KEY) {
-    const error = createDomainError(SYSTEM_ERRORS.SERVICE_UNAVAILABLE, {
-      message: 'Stripe is not configured',
-    });
-    return c.json(error, 500);
-  }
+    if (!c.env.STRIPE_SECRET_KEY) {
+      const error = createDomainError(SYSTEM_ERRORS.SERVICE_UNAVAILABLE, {
+        message: 'Stripe is not configured',
+      });
+      return c.json(error, 500);
+    }
 
-  const stripe = createStripeClient(c.env);
+    const stripe = createStripeClient(c.env);
 
-  try {
-    const subscriptions = await stripe.subscriptions.list({
-      customer: customerId,
-      status: 'all',
-      limit: 20,
-    });
+    try {
+      const subscriptions = await stripe.subscriptions.list({
+        customer: customerId,
+        status: 'all',
+        limit: 20,
+      });
 
-    return c.json(
-      {
-        customerId,
-        subscriptions: subscriptions.data.map(sub => {
-          return {
-            id: sub.id,
-            status: sub.status,
-            currency: sub.currency,
-            cancelAtPeriodEnd: sub.cancel_at_period_end,
-            cancelAt: sub.cancel_at,
-            canceledAt: sub.canceled_at,
-            endedAt: sub.ended_at,
-            trialStart: sub.trial_start,
-            trialEnd: sub.trial_end,
-            created: sub.created,
-            items: sub.items.data.map(item => ({
-              id: item.id,
-              priceId: item.price.id,
-              productId: item.price.product,
-              unitAmount: item.price.unit_amount,
-              interval: item.price.recurring?.interval ?? null,
-              currentPeriodStart: item.current_period_start,
-              currentPeriodEnd: item.current_period_end,
-              quantity: item.quantity,
-            })),
-            defaultPaymentMethod:
-              typeof sub.default_payment_method === 'string' ?
-                sub.default_payment_method
-              : ((sub.default_payment_method as Stripe.PaymentMethod)?.id ?? null),
-            latestInvoice:
-              typeof sub.latest_invoice === 'string' ?
-                sub.latest_invoice
-              : ((sub.latest_invoice as Stripe.Invoice)?.id ?? null),
-            metadata: sub.metadata as Record<string, string>,
-          };
-        }),
-        hasMore: subscriptions.has_more,
-      },
-      200,
-    );
-  } catch (err) {
-    const error = err as Error;
-    console.error('Error fetching subscriptions:', error);
-    const dbError = createDomainError(SYSTEM_ERRORS.INTERNAL_ERROR, {
-      service: 'Stripe',
-      originalError: error.message,
-    });
-    return c.json(dbError, 500);
-  }
-});
+      return c.json(
+        {
+          customerId,
+          subscriptions: subscriptions.data.map(sub => {
+            return {
+              id: sub.id,
+              status: sub.status,
+              currency: sub.currency,
+              cancelAtPeriodEnd: sub.cancel_at_period_end,
+              cancelAt: sub.cancel_at,
+              canceledAt: sub.canceled_at,
+              endedAt: sub.ended_at,
+              trialStart: sub.trial_start,
+              trialEnd: sub.trial_end,
+              created: sub.created,
+              items: sub.items.data.map(item => ({
+                id: item.id,
+                priceId: item.price.id,
+                productId: item.price.product,
+                unitAmount: item.price.unit_amount,
+                interval: item.price.recurring?.interval ?? null,
+                currentPeriodStart: item.current_period_start,
+                currentPeriodEnd: item.current_period_end,
+                quantity: item.quantity,
+              })),
+              defaultPaymentMethod:
+                typeof sub.default_payment_method === 'string' ?
+                  sub.default_payment_method
+                : ((sub.default_payment_method as Stripe.PaymentMethod)?.id ?? null),
+              latestInvoice:
+                typeof sub.latest_invoice === 'string' ?
+                  sub.latest_invoice
+                : ((sub.latest_invoice as Stripe.Invoice)?.id ?? null),
+              metadata: sub.metadata as Record<string, string>,
+            };
+          }),
+          hasMore: subscriptions.has_more,
+        },
+        200,
+      );
+    } catch (err) {
+      const error = err as Error;
+      console.error('Error fetching subscriptions:', error);
+      const dbError = createDomainError(SYSTEM_ERRORS.INTERNAL_ERROR, {
+        service: 'Stripe',
+        originalError: error.message,
+      });
+      return c.json(dbError, 500);
+    }
+  });
 
 export { stripeToolsRoutes };
 export type StripeToolsRoutes = typeof stripeToolsRoutes;

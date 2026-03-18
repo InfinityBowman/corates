@@ -88,11 +88,11 @@ A single `ReconciliationEngine` component driven by a `ReconciliationAdapter` re
 // Unified navigation item. All three types reduce to this shape.
 // The engine iterates over these; the adapter interprets them.
 interface ReconciliationNavItem {
-  key: string;          // unique key (e.g. "q1", "d1_q1", "overall_direction")
-  label: string;        // display label for pills and summary ("1", "D2", "B3")
-  section: string;      // grouping section for navbar and summary
-  type: string;         // opaque to engine, interpreted by adapter
-  domainKey?: string;   // ROB2/ROBINS-I domain identifier (optional)
+  key: string; // unique key (e.g. "q1", "d1_q1", "overall_direction")
+  label: string; // display label for pills and summary ("1", "D2", "B3")
+  section: string; // grouping section for navbar and summary
+  type: string; // opaque to engine, interpreted by adapter
+  domainKey?: string; // ROB2/ROBINS-I domain identifier (optional)
   meta?: Record<string, unknown>; // adapter-defined payload
 }
 ```
@@ -103,8 +103,8 @@ interface ReconciliationNavItem {
 interface ReconciliationAdapter {
   // --- Identity ---
   checklistType: string;
-  title: string;                              // "Reconciliation", "ROB-2 Reconciliation"
-  pageCounterLabel: string;                   // "Question" vs "Item"
+  title: string; // "Reconciliation", "ROB-2 Reconciliation"
+  pageCounterLabel: string; // "Question" vs "Item"
   getPageLabel: (pageIndex: number) => string;
 
   // --- Data derivation ---
@@ -124,11 +124,7 @@ interface ReconciliationAdapter {
   // AMSTAR2: returns {agreements, disagreements} keyed by question.
   // ROB2: returns {preliminary, domains, overall} with per-domain comparison.
   // ROBINS-I: returns {sectionB, domains, overall} with per-domain comparison.
-  compare: (
-    checklist1: unknown,
-    checklist2: unknown,
-    reconciledChecklist: unknown,
-  ) => unknown;
+  compare: (checklist1: unknown, checklist2: unknown, reconciledChecklist: unknown) => unknown;
 
   // --- Answer checking (pure functions) ---
 
@@ -147,9 +143,7 @@ interface ReconciliationAdapter {
   ) => void;
 
   // Reset all answers to empty/default state.
-  resetAllAnswers: (
-    updateChecklistAnswer: (sectionKey: string, data: unknown) => void,
-  ) => void;
+  resetAllAnswers: (updateChecklistAnswer: (sectionKey: string, data: unknown) => void) => void;
 
   // Optional: called after each navigation step.
   // ROB2 uses this to auto-set NA for skipped questions.
@@ -176,11 +170,7 @@ interface ReconciliationAdapter {
   // Optional: warning banner above the page content.
   // ROB2: aim mismatch warning.
   // ROBINS-I: section B critical risk warning.
-  renderWarningBanner?: (
-    checklist1: unknown,
-    checklist2: unknown,
-    reconciledChecklist: unknown,
-  ) => ReactNode | null;
+  renderWarningBanner?: (checklist1: unknown, checklist2: unknown, reconciledChecklist: unknown) => ReactNode | null;
 }
 ```
 
@@ -194,11 +184,11 @@ interface EngineContext {
   currentItem: ReconciliationNavItem;
   checklist1: unknown;
   checklist2: unknown;
-  finalAnswers: unknown;          // derived via adapter.deriveFinalAnswers
-  comparison: unknown;            // from adapter.compare
+  finalAnswers: unknown; // derived via adapter.deriveFinalAnswers
+  comparison: unknown; // from adapter.compare
   reviewer1Name: string;
   reviewer2Name: string;
-  isAgreement: boolean;           // pre-computed by engine
+  isAgreement: boolean; // pre-computed by engine
   updateChecklistAnswer: (sectionKey: string, data: unknown) => void;
   getTextRef: ((...args: unknown[]) => unknown) | null;
 }
@@ -467,6 +457,7 @@ Create the engine types, the `useReconciliationEngine` hook (extracted from the 
 **Phase 2 -- AMSTAR2 adapter**
 
 Create `amstar2Adapter` implementing the `ReconciliationAdapter` interface:
+
 - `buildNavItems`: wraps `getQuestionKeys()`, maps each to a `ReconciliationNavItem` with `meta: { isMultiPart }`
 - `deriveFinalAnswers`: extracts the filter/group logic from `ChecklistReconciliation.tsx` lines 136-157 (filters by questionKeys, groups multi-part q9/q11)
 - `hasAnswer`: lifts `hasQuestionAnswer` from `navbar-utils.js`
@@ -480,6 +471,7 @@ Update `ReconciliationWrapper` for AMSTAR2 only (keep other types on old path). 
 **Phase 3 -- ROB2 adapter**
 
 Create `rob2Adapter`:
+
 - `buildNavItems`: wraps existing `buildNavigationItems(isAdhering)` where `isAdhering` is derived from `reconciledChecklist?.preliminary?.aim`
 - `deriveFinalAnswers`: returns `reconciledChecklist || {}`
 - `renderPage`: dispatches on `item.type` to render PreliminaryPage, SignallingQuestionPage, DomainDirectionPage, or OverallDirectionPage. For each, slices reviewer data from `checklist1[domainKey]`, builds `onUseReviewer1/2` callbacks that both update the answer AND copy comment text via `getTextRef`
@@ -492,6 +484,7 @@ Migrate ROB2 path in `ReconciliationWrapper`. Verify.
 **Phase 4 -- ROBINS-I adapter**
 
 Create `robinsIAdapter`:
+
 - `buildNavItems`: uses `isPerProtocol` from `checklist1?.sectionC?.isPerProtocol` to determine domain structure
 - `deriveFinalAnswers`: returns `reconciledChecklist || {}`
 - `renderPage`: dispatches on `item.type` to render SectionBQuestionPage, DomainQuestionPage, DomainJudgementPage, or OverallJudgementPage. For DomainJudgementPage, builds four separate `onUseReviewer*` callbacks (judgement and direction independently)

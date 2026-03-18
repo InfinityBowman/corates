@@ -198,197 +198,197 @@ const getOrgDetailsRoute = createRoute({
  */
 const orgRoutes = base
   .openapi(listOrgsRoute, async c => {
-  const db = createDb(c.env.DB);
+    const db = createDb(c.env.DB);
 
-  try {
-    const query = c.req.valid('query');
-    const page = parseInt(query.page || '1', 10);
-    const limit = Math.min(parseInt(query.limit || '20', 10), 100);
-    const search = query.search;
+    try {
+      const query = c.req.valid('query');
+      const page = parseInt(query.page || '1', 10);
+      const limit = Math.min(parseInt(query.limit || '20', 10), 100);
+      const search = query.search;
 
-    const offset = (page - 1) * limit;
+      const offset = (page - 1) * limit;
 
-    // Build search condition if provided
-    const searchCondition =
-      search ?
-        or(
-          like(sql`LOWER(${organization.name})`, `%${search.toLowerCase()}%`),
-          like(sql`LOWER(${organization.slug})`, `%${search.toLowerCase()}%`),
-        )
-      : undefined;
+      // Build search condition if provided
+      const searchCondition =
+        search ?
+          or(
+            like(sql`LOWER(${organization.name})`, `%${search.toLowerCase()}%`),
+            like(sql`LOWER(${organization.slug})`, `%${search.toLowerCase()}%`),
+          )
+        : undefined;
 
-    // Get total count for pagination
-    const totalCountQuery =
-      searchCondition ?
-        db.select({ count: count() }).from(organization).where(searchCondition)
-      : db.select({ count: count() }).from(organization);
+      // Get total count for pagination
+      const totalCountQuery =
+        searchCondition ?
+          db.select({ count: count() }).from(organization).where(searchCondition)
+        : db.select({ count: count() }).from(organization);
 
-    const [totalResult] = await totalCountQuery.all();
-    const total = totalResult?.count || 0;
+      const [totalResult] = await totalCountQuery.all();
+      const total = totalResult?.count || 0;
 
-    // Get paginated results
-    const baseQuery = db.select().from(organization);
-    const orgs = await (searchCondition ? baseQuery.where(searchCondition) : baseQuery)
-      .orderBy(desc(organization.createdAt))
-      .limit(limit)
-      .offset(offset)
-      .all();
-
-    // Get stats for all orgs in parallel
-    const orgIds = orgs.map(org => org.id);
-    const statsMap: Record<string, { memberCount?: number; projectCount?: number }> = {};
-
-    if (orgIds.length > 0) {
-      // Get member counts
-      const memberCounts = await db
-        .select({
-          organizationId: member.organizationId,
-          count: count(),
-        })
-        .from(member)
-        .where(
-          sql`${member.organizationId} IN (${sql.join(
-            orgIds.map(id => sql`${id}`),
-            sql`, `,
-          )})`,
-        )
-        .groupBy(member.organizationId)
+      // Get paginated results
+      const baseQuery = db.select().from(organization);
+      const orgs = await (searchCondition ? baseQuery.where(searchCondition) : baseQuery)
+        .orderBy(desc(organization.createdAt))
+        .limit(limit)
+        .offset(offset)
         .all();
 
-      // Get project counts
-      const projectCounts = await db
-        .select({
-          orgId: projects.orgId,
-          count: count(),
-        })
-        .from(projects)
-        .where(
-          sql`${projects.orgId} IN (${sql.join(
-            orgIds.map(id => sql`${id}`),
-            sql`, `,
-          )})`,
-        )
-        .groupBy(projects.orgId)
-        .all();
+      // Get stats for all orgs in parallel
+      const orgIds = orgs.map(org => org.id);
+      const statsMap: Record<string, { memberCount?: number; projectCount?: number }> = {};
 
-      // Build stats map
-      memberCounts.forEach(({ organizationId, count: cnt }) => {
-        if (!statsMap[organizationId]) statsMap[organizationId] = {};
-        statsMap[organizationId].memberCount = cnt;
-      });
+      if (orgIds.length > 0) {
+        // Get member counts
+        const memberCounts = await db
+          .select({
+            organizationId: member.organizationId,
+            count: count(),
+          })
+          .from(member)
+          .where(
+            sql`${member.organizationId} IN (${sql.join(
+              orgIds.map(id => sql`${id}`),
+              sql`, `,
+            )})`,
+          )
+          .groupBy(member.organizationId)
+          .all();
 
-      projectCounts.forEach(({ orgId, count: cnt }) => {
-        if (!statsMap[orgId]) statsMap[orgId] = {};
-        statsMap[orgId].projectCount = cnt;
-      });
-    }
+        // Get project counts
+        const projectCounts = await db
+          .select({
+            orgId: projects.orgId,
+            count: count(),
+          })
+          .from(projects)
+          .where(
+            sql`${projects.orgId} IN (${sql.join(
+              orgIds.map(id => sql`${id}`),
+              sql`, `,
+            )})`,
+          )
+          .groupBy(projects.orgId)
+          .all();
 
-    // Attach stats to each org
-    const orgsWithStats = orgs.map(org => ({
-      ...org,
-      stats: {
-        memberCount: statsMap[org.id]?.memberCount || 0,
-        projectCount: statsMap[org.id]?.projectCount || 0,
-      },
-    }));
+        // Build stats map
+        memberCounts.forEach(({ organizationId, count: cnt }) => {
+          if (!statsMap[organizationId]) statsMap[organizationId] = {};
+          statsMap[organizationId].memberCount = cnt;
+        });
 
-    return c.json(
-      {
-        orgs: orgsWithStats,
-        pagination: {
-          page,
-          limit,
-          total,
-          totalPages: Math.ceil(total / limit),
-        },
-      },
-      200,
-    );
-  } catch (err) {
-    const error = err as Error;
-    console.error('Error fetching orgs:', error);
-    const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
-      operation: 'fetch_orgs',
-      originalError: error.message,
-    });
-    return c.json(dbError, 500);
-  }
-})
+        projectCounts.forEach(({ orgId, count: cnt }) => {
+          if (!statsMap[orgId]) statsMap[orgId] = {};
+          statsMap[orgId].projectCount = cnt;
+        });
+      }
 
-/**
- * GET /api/admin/orgs/:orgId
- * Get org details with billing summary
- */
-  .openapi(getOrgDetailsRoute, async c => {
-  const { orgId } = c.req.valid('param');
-  const db = createDb(c.env.DB);
-
-  try {
-    // Get org
-    const org = await db.select().from(organization).where(eq(organization.id, orgId)).get();
-    if (!org) {
-      const error = createDomainError(AUTH_ERRORS.FORBIDDEN, {
-        reason: 'org_not_found',
-        orgId,
-      });
-      return c.json(error, 403);
-    }
-
-    // Get member count
-    const [memberCountResult] = await db
-      .select({ count: count() })
-      .from(member)
-      .where(eq(member.organizationId, orgId))
-      .all();
-    const memberCount = memberCountResult?.count || 0;
-
-    // Get project count
-    const [projectCountResult] = await db
-      .select({ count: count() })
-      .from(projects)
-      .where(eq(projects.orgId, orgId))
-      .all();
-    const projectCount = projectCountResult?.count || 0;
-
-    // Get billing summary
-    const orgBilling = await resolveOrgAccess(db, orgId);
-    const effectivePlan =
-      orgBilling.source === 'grant' ?
-        getGrantPlan(orgBilling.effectivePlanId as GrantType)
-      : getPlan(orgBilling.effectivePlanId);
-
-    return c.json(
-      {
-        org,
+      // Attach stats to each org
+      const orgsWithStats = orgs.map(org => ({
+        ...org,
         stats: {
-          memberCount,
-          projectCount,
+          memberCount: statsMap[org.id]?.memberCount || 0,
+          projectCount: statsMap[org.id]?.projectCount || 0,
         },
-        billing: {
-          effectivePlanId: orgBilling.effectivePlanId,
-          source: orgBilling.source,
-          accessMode: orgBilling.accessMode,
-          plan: {
-            name: effectivePlan.name,
-            entitlements: effectivePlan.entitlements,
-            quotas: effectivePlan.quotas,
+      }));
+
+      return c.json(
+        {
+          orgs: orgsWithStats,
+          pagination: {
+            page,
+            limit,
+            total,
+            totalPages: Math.ceil(total / limit),
           },
-          subscription: orgBilling.subscription,
-          grant: orgBilling.grant,
         },
-      },
-      200,
-    );
-  } catch (err) {
-    const error = err as Error;
-    console.error('Error fetching org details:', error);
-    const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
-      operation: 'fetch_org_details',
-      originalError: error.message,
-    });
-    return c.json(dbError, 500);
-  }
-});
+        200,
+      );
+    } catch (err) {
+      const error = err as Error;
+      console.error('Error fetching orgs:', error);
+      const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
+        operation: 'fetch_orgs',
+        originalError: error.message,
+      });
+      return c.json(dbError, 500);
+    }
+  })
+
+  /**
+   * GET /api/admin/orgs/:orgId
+   * Get org details with billing summary
+   */
+  .openapi(getOrgDetailsRoute, async c => {
+    const { orgId } = c.req.valid('param');
+    const db = createDb(c.env.DB);
+
+    try {
+      // Get org
+      const org = await db.select().from(organization).where(eq(organization.id, orgId)).get();
+      if (!org) {
+        const error = createDomainError(AUTH_ERRORS.FORBIDDEN, {
+          reason: 'org_not_found',
+          orgId,
+        });
+        return c.json(error, 403);
+      }
+
+      // Get member count
+      const [memberCountResult] = await db
+        .select({ count: count() })
+        .from(member)
+        .where(eq(member.organizationId, orgId))
+        .all();
+      const memberCount = memberCountResult?.count || 0;
+
+      // Get project count
+      const [projectCountResult] = await db
+        .select({ count: count() })
+        .from(projects)
+        .where(eq(projects.orgId, orgId))
+        .all();
+      const projectCount = projectCountResult?.count || 0;
+
+      // Get billing summary
+      const orgBilling = await resolveOrgAccess(db, orgId);
+      const effectivePlan =
+        orgBilling.source === 'grant' ?
+          getGrantPlan(orgBilling.effectivePlanId as GrantType)
+        : getPlan(orgBilling.effectivePlanId);
+
+      return c.json(
+        {
+          org,
+          stats: {
+            memberCount,
+            projectCount,
+          },
+          billing: {
+            effectivePlanId: orgBilling.effectivePlanId,
+            source: orgBilling.source,
+            accessMode: orgBilling.accessMode,
+            plan: {
+              name: effectivePlan.name,
+              entitlements: effectivePlan.entitlements,
+              quotas: effectivePlan.quotas,
+            },
+            subscription: orgBilling.subscription,
+            grant: orgBilling.grant,
+          },
+        },
+        200,
+      );
+    } catch (err) {
+      const error = err as Error;
+      console.error('Error fetching org details:', error);
+      const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
+        operation: 'fetch_org_details',
+        originalError: error.message,
+      });
+      return c.json(dbError, 500);
+    }
+  });
 
 export { orgRoutes };
 export type OrgRoutes = typeof orgRoutes;

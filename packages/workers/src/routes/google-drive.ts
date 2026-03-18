@@ -269,283 +269,282 @@ const importRoute = createRoute({
 
 // Route handlers - chained for RPC type inference
 const googleDriveRoutes = $(base.use('*', requireAuth))
+  .openapi(statusRoute, async c => {
+    const { user } = getAuth(c);
+    const db = createDb(c.env.DB);
 
-.openapi(statusRoute, async c => {
-  const { user } = getAuth(c);
-  const db = createDb(c.env.DB);
+    const tokens = await getGoogleTokens(db, user!.id);
 
-  const tokens = await getGoogleTokens(db, user!.id);
-
-  return c.json({
-    connected: !!tokens?.accessToken,
-    hasRefreshToken: !!tokens?.refreshToken,
-  });
-})
-
-.openapi(pickerTokenRoute, async c => {
-  const { user } = getAuth(c);
-  const db = createDb(c.env.DB);
-
-  const tokens = await getGoogleTokens(db, user!.id);
-  if (!tokens?.accessToken) {
-    const error = createDomainError(AUTH_ERRORS.INVALID, {
-      context: 'google_not_connected',
-      code: 'GOOGLE_NOT_CONNECTED',
+    return c.json({
+      connected: !!tokens?.accessToken,
+      hasRefreshToken: !!tokens?.refreshToken,
     });
-    return c.json(error, 401);
-  }
+  })
 
-  try {
-    const accessToken = await getValidAccessToken(c.env, db, user!.id, tokens);
-    const updatedTokens = await getGoogleTokens(db, user!.id);
-    const expiresAt = updatedTokens?.accessTokenExpiresAt;
+  .openapi(pickerTokenRoute, async c => {
+    const { user } = getAuth(c);
+    const db = createDb(c.env.DB);
 
-    return c.json(
-      {
-        accessToken,
-        expiresAt: expiresAt instanceof Date ? expiresAt.toISOString() : expiresAt || null,
-      },
-      200,
-    );
-  } catch (error) {
-    console.error('Google Drive picker-token error:', error);
-    const err = error as { message?: string; code?: string };
-    if (
-      (typeof err?.message === 'string' && err.message.includes('reconnect')) ||
-      (typeof err?.code === 'string' && err.code.includes('GOOGLE'))
-    ) {
-      const authError =
-        isDomainError(error) ? error : (
-          createDomainError(AUTH_ERRORS.INVALID, {
-            context: 'google_token_expired',
-            originalError: typeof err?.message === 'string' ? err.message : String(error),
-          })
-        );
-      return c.json(authError, 401);
+    const tokens = await getGoogleTokens(db, user!.id);
+    if (!tokens?.accessToken) {
+      const error = createDomainError(AUTH_ERRORS.INVALID, {
+        context: 'google_not_connected',
+        code: 'GOOGLE_NOT_CONNECTED',
+      });
+      return c.json(error, 401);
     }
-    const systemError = createDomainError(SYSTEM_ERRORS.INTERNAL_ERROR, {
-      operation: 'get_google_picker_token',
-      originalError: typeof err?.message === 'string' ? err.message : String(error),
-    });
-    return c.json(systemError, 401);
-  }
-})
 
-.openapi(disconnectRoute, async c => {
-  const { user } = getAuth(c);
-  const db = createDb(c.env.DB);
+    try {
+      const accessToken = await getValidAccessToken(c.env, db, user!.id, tokens);
+      const updatedTokens = await getGoogleTokens(db, user!.id);
+      const expiresAt = updatedTokens?.accessTokenExpiresAt;
 
-  try {
-    await db
-      .delete(account)
-      .where(and(eq(account.userId, user!.id), eq(account.providerId, 'google')));
-
-    return c.json({ success: true as const, message: 'Google account disconnected' }, 200);
-  } catch (error) {
-    console.error('Google disconnect error:', error);
-    const err = error as Error;
-    const systemError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
-      operation: 'disconnect_google_account',
-      originalError: err?.message || String(error),
-    });
-    return c.json(systemError, 500);
-  }
-})
-
-.openapi(importRoute, async c => {
-  const { user } = getAuth(c);
-  const db = createDb(c.env.DB);
-  const { fileId, projectId, studyId } = c.req.valid('json');
-
-  // Check project access before proceeding with import
-  try {
-    await requireProjectEdit(db, user!.id, projectId);
-  } catch (err) {
-    if (isDomainError(err)) {
-      return c.json(err, 401);
-    }
-    throw err;
-  }
-
-  const tokens = await getGoogleTokens(db, user!.id);
-
-  if (!tokens?.accessToken) {
-    const error = createDomainError(AUTH_ERRORS.INVALID, {
-      context: 'google_not_connected',
-      code: 'GOOGLE_NOT_CONNECTED',
-    });
-    return c.json(error, 401);
-  }
-
-  try {
-    const accessToken = await getValidAccessToken(c.env, db, user!.id, tokens);
-
-    // Get file metadata
-    const metaResponse = await fetch(
-      `https://www.googleapis.com/drive/v3/files/${fileId}?fields=id,name,mimeType,size`,
-      {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
+      return c.json(
+        {
+          accessToken,
+          expiresAt: expiresAt instanceof Date ? expiresAt.toISOString() : expiresAt || null,
         },
-      },
-    );
+        200,
+      );
+    } catch (error) {
+      console.error('Google Drive picker-token error:', error);
+      const err = error as { message?: string; code?: string };
+      if (
+        (typeof err?.message === 'string' && err.message.includes('reconnect')) ||
+        (typeof err?.code === 'string' && err.code.includes('GOOGLE'))
+      ) {
+        const authError =
+          isDomainError(error) ? error : (
+            createDomainError(AUTH_ERRORS.INVALID, {
+              context: 'google_token_expired',
+              originalError: typeof err?.message === 'string' ? err.message : String(error),
+            })
+          );
+        return c.json(authError, 401);
+      }
+      const systemError = createDomainError(SYSTEM_ERRORS.INTERNAL_ERROR, {
+        operation: 'get_google_picker_token',
+        originalError: typeof err?.message === 'string' ? err.message : String(error),
+      });
+      return c.json(systemError, 401);
+    }
+  })
 
-    if (!metaResponse.ok) {
-      if (metaResponse.status === 404) {
-        const error = createDomainError(FILE_ERRORS.NOT_FOUND, {
-          fileName: fileId,
+  .openapi(disconnectRoute, async c => {
+    const { user } = getAuth(c);
+    const db = createDb(c.env.DB);
+
+    try {
+      await db
+        .delete(account)
+        .where(and(eq(account.userId, user!.id), eq(account.providerId, 'google')));
+
+      return c.json({ success: true as const, message: 'Google account disconnected' }, 200);
+    } catch (error) {
+      console.error('Google disconnect error:', error);
+      const err = error as Error;
+      const systemError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
+        operation: 'disconnect_google_account',
+        originalError: err?.message || String(error),
+      });
+      return c.json(systemError, 500);
+    }
+  })
+
+  .openapi(importRoute, async c => {
+    const { user } = getAuth(c);
+    const db = createDb(c.env.DB);
+    const { fileId, projectId, studyId } = c.req.valid('json');
+
+    // Check project access before proceeding with import
+    try {
+      await requireProjectEdit(db, user!.id, projectId);
+    } catch (err) {
+      if (isDomainError(err)) {
+        return c.json(err, 401);
+      }
+      throw err;
+    }
+
+    const tokens = await getGoogleTokens(db, user!.id);
+
+    if (!tokens?.accessToken) {
+      const error = createDomainError(AUTH_ERRORS.INVALID, {
+        context: 'google_not_connected',
+        code: 'GOOGLE_NOT_CONNECTED',
+      });
+      return c.json(error, 401);
+    }
+
+    try {
+      const accessToken = await getValidAccessToken(c.env, db, user!.id, tokens);
+
+      // Get file metadata
+      const metaResponse = await fetch(
+        `https://www.googleapis.com/drive/v3/files/${fileId}?fields=id,name,mimeType,size`,
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        },
+      );
+
+      if (!metaResponse.ok) {
+        if (metaResponse.status === 404) {
+          const error = createDomainError(FILE_ERRORS.NOT_FOUND, {
+            fileName: fileId,
+            source: 'google-drive',
+          });
+          return c.json(error, 404);
+        }
+        const systemError = createDomainError(SYSTEM_ERRORS.INTERNAL_ERROR, {
+          operation: 'fetch_google_drive_file',
+          originalError: `HTTP ${metaResponse.status}`,
+        });
+        return c.json(systemError, 400);
+      }
+
+      const fileMeta = (await metaResponse.json()) as {
+        id: string;
+        name: string;
+        mimeType: string;
+        size?: string;
+      };
+
+      // Verify it's a PDF
+      if (fileMeta.mimeType !== 'application/pdf') {
+        const error = createDomainError(FILE_ERRORS.INVALID_TYPE, {
+          expectedType: 'application/pdf',
+          receivedType: fileMeta.mimeType,
+        });
+        return c.json(error, 400);
+      }
+
+      // Check file size (limit to 50MB)
+      const maxSize = 50 * 1024 * 1024;
+      if (fileMeta.size && parseInt(fileMeta.size, 10) > maxSize) {
+        const error = createDomainError(FILE_ERRORS.TOO_LARGE, {
+          maxSize: maxSize,
+          fileSize: parseInt(fileMeta.size, 10),
+        });
+        return c.json(error, 400);
+      }
+
+      // Download the file content
+      const downloadResponse = await fetch(
+        `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`,
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        },
+      );
+
+      if (!downloadResponse.ok) {
+        const systemError = createDomainError(SYSTEM_ERRORS.INTERNAL_ERROR, {
+          operation: 'download_google_drive_file',
+          originalError: `HTTP ${downloadResponse.status}`,
+        });
+        return c.json(systemError, 400);
+      }
+
+      const fileContent = await downloadResponse.arrayBuffer();
+
+      // Verify PDF magic bytes
+      const header = new Uint8Array(fileContent.slice(0, PDF_MAGIC_BYTES.length));
+      if (!isPdfSignature(header)) {
+        const error = createDomainError(FILE_ERRORS.INVALID_TYPE, {
+          expectedType: 'application/pdf',
+          receivedType: 'unknown (invalid PDF signature)',
           source: 'google-drive',
+        });
+        return c.json(error, 400);
+      }
+
+      // Get project to retrieve orgId
+      const project = await db
+        .select({ orgId: projects.orgId })
+        .from(projects)
+        .where(eq(projects.id, projectId))
+        .get();
+
+      if (!project) {
+        const error = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
+          operation: 'fetch_project_for_import',
+          projectId,
+          message: 'Project not found',
         });
         return c.json(error, 404);
       }
+
+      // Generate unique filename
+      const originalFileName = fileMeta.name;
+      const uniqueFileName = await generateUniqueFileName(fileMeta.name, projectId, studyId, db);
+      const r2Key = `projects/${projectId}/studies/${studyId}/${uniqueFileName}`;
+
+      // Upload to R2
+      const fileSize = fileContent.byteLength;
+
+      await c.env.PDF_BUCKET.put(r2Key, fileContent, {
+        httpMetadata: {
+          contentType: 'application/pdf',
+        },
+        customMetadata: {
+          originalName: originalFileName,
+          importedFrom: 'google-drive',
+          googleDriveFileId: fileId,
+          uploadedBy: user!.id,
+          uploadedAt: new Date().toISOString(),
+        },
+      });
+
+      // Insert into mediaFiles table
+      const mediaFileId = crypto.randomUUID();
+      try {
+        await db.insert(mediaFiles).values({
+          id: mediaFileId,
+          filename: uniqueFileName,
+          originalName: originalFileName,
+          fileType: 'application/pdf',
+          fileSize: fileSize,
+          uploadedBy: user!.id,
+          bucketKey: r2Key,
+          orgId: project.orgId,
+          projectId,
+          studyId,
+          createdAt: new Date(),
+        });
+      } catch (dbError) {
+        console.error('Failed to insert mediaFiles record after Google Drive import:', dbError);
+      }
+
+      return c.json(
+        {
+          success: true as const,
+          id: mediaFileId,
+          file: {
+            key: r2Key,
+            fileName: uniqueFileName,
+            originalFileName: originalFileName !== uniqueFileName ? originalFileName : undefined,
+            size: fileSize,
+            source: 'google-drive' as const,
+          },
+        },
+        200,
+      );
+    } catch (error) {
+      console.error('Google Drive import error:', error);
+      if (isDomainError(error)) {
+        return c.json(error, 400);
+      }
+      const err = error as Error;
       const systemError = createDomainError(SYSTEM_ERRORS.INTERNAL_ERROR, {
-        operation: 'fetch_google_drive_file',
-        originalError: `HTTP ${metaResponse.status}`,
+        operation: 'import_google_drive_file',
+        originalError: typeof err?.message === 'string' ? err.message : String(error),
       });
       return c.json(systemError, 400);
     }
-
-    const fileMeta = (await metaResponse.json()) as {
-      id: string;
-      name: string;
-      mimeType: string;
-      size?: string;
-    };
-
-    // Verify it's a PDF
-    if (fileMeta.mimeType !== 'application/pdf') {
-      const error = createDomainError(FILE_ERRORS.INVALID_TYPE, {
-        expectedType: 'application/pdf',
-        receivedType: fileMeta.mimeType,
-      });
-      return c.json(error, 400);
-    }
-
-    // Check file size (limit to 50MB)
-    const maxSize = 50 * 1024 * 1024;
-    if (fileMeta.size && parseInt(fileMeta.size, 10) > maxSize) {
-      const error = createDomainError(FILE_ERRORS.TOO_LARGE, {
-        maxSize: maxSize,
-        fileSize: parseInt(fileMeta.size, 10),
-      });
-      return c.json(error, 400);
-    }
-
-    // Download the file content
-    const downloadResponse = await fetch(
-      `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`,
-      {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      },
-    );
-
-    if (!downloadResponse.ok) {
-      const systemError = createDomainError(SYSTEM_ERRORS.INTERNAL_ERROR, {
-        operation: 'download_google_drive_file',
-        originalError: `HTTP ${downloadResponse.status}`,
-      });
-      return c.json(systemError, 400);
-    }
-
-    const fileContent = await downloadResponse.arrayBuffer();
-
-    // Verify PDF magic bytes
-    const header = new Uint8Array(fileContent.slice(0, PDF_MAGIC_BYTES.length));
-    if (!isPdfSignature(header)) {
-      const error = createDomainError(FILE_ERRORS.INVALID_TYPE, {
-        expectedType: 'application/pdf',
-        receivedType: 'unknown (invalid PDF signature)',
-        source: 'google-drive',
-      });
-      return c.json(error, 400);
-    }
-
-    // Get project to retrieve orgId
-    const project = await db
-      .select({ orgId: projects.orgId })
-      .from(projects)
-      .where(eq(projects.id, projectId))
-      .get();
-
-    if (!project) {
-      const error = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
-        operation: 'fetch_project_for_import',
-        projectId,
-        message: 'Project not found',
-      });
-      return c.json(error, 404);
-    }
-
-    // Generate unique filename
-    const originalFileName = fileMeta.name;
-    const uniqueFileName = await generateUniqueFileName(fileMeta.name, projectId, studyId, db);
-    const r2Key = `projects/${projectId}/studies/${studyId}/${uniqueFileName}`;
-
-    // Upload to R2
-    const fileSize = fileContent.byteLength;
-
-    await c.env.PDF_BUCKET.put(r2Key, fileContent, {
-      httpMetadata: {
-        contentType: 'application/pdf',
-      },
-      customMetadata: {
-        originalName: originalFileName,
-        importedFrom: 'google-drive',
-        googleDriveFileId: fileId,
-        uploadedBy: user!.id,
-        uploadedAt: new Date().toISOString(),
-      },
-    });
-
-    // Insert into mediaFiles table
-    const mediaFileId = crypto.randomUUID();
-    try {
-      await db.insert(mediaFiles).values({
-        id: mediaFileId,
-        filename: uniqueFileName,
-        originalName: originalFileName,
-        fileType: 'application/pdf',
-        fileSize: fileSize,
-        uploadedBy: user!.id,
-        bucketKey: r2Key,
-        orgId: project.orgId,
-        projectId,
-        studyId,
-        createdAt: new Date(),
-      });
-    } catch (dbError) {
-      console.error('Failed to insert mediaFiles record after Google Drive import:', dbError);
-    }
-
-    return c.json(
-      {
-        success: true as const,
-        id: mediaFileId,
-        file: {
-          key: r2Key,
-          fileName: uniqueFileName,
-          originalFileName: originalFileName !== uniqueFileName ? originalFileName : undefined,
-          size: fileSize,
-          source: 'google-drive' as const,
-        },
-      },
-      200,
-    );
-  } catch (error) {
-    console.error('Google Drive import error:', error);
-    if (isDomainError(error)) {
-      return c.json(error, 400);
-    }
-    const err = error as Error;
-    const systemError = createDomainError(SYSTEM_ERRORS.INTERNAL_ERROR, {
-      operation: 'import_google_drive_file',
-      originalError: typeof err?.message === 'string' ? err.message : String(error),
-    });
-    return c.json(systemError, 400);
-  }
-});
+  });
 
 export { googleDriveRoutes };
 export type GoogleDriveRoutes = typeof googleDriveRoutes;

@@ -156,9 +156,7 @@ const submitContactRoute = createRoute({
 });
 
 // Route handlers - chained for RPC type inference
-const contactRoutes = $(base.use('*', contactRateLimit))
-
-.openapi(submitContactRoute, async c => {
+const contactRoutes = $(base.use('*', contactRateLimit)).openapi(submitContactRoute, async c => {
   const env = c.env;
   const { name, email, subject, message } = c.req.valid('json');
 

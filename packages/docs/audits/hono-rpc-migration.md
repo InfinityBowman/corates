@@ -33,29 +33,32 @@ Successfully verified end-to-end type inference with billing subscription routes
 ### 1. Backend: Chain `.openapi()` Calls
 
 **Before:**
+
 ```typescript
 const routes = new OpenAPIHono<{ Bindings: Env }>();
 routes.use('*', requireAuth);
-routes.openapi(routeA, handlerA);  // type lost
-routes.openapi(routeB, handlerB);  // type lost
+routes.openapi(routeA, handlerA); // type lost
+routes.openapi(routeB, handlerB); // type lost
 export { routes };
 ```
 
 **After:**
+
 ```typescript
 import { $, OpenAPIHono } from '@hono/zod-openapi';
 
 const base = new OpenAPIHono<{ Bindings: Env }>();
 
 const routes = $(base.use('*', requireAuth))
-  .openapi(routeA, handlerA)   // type accumulates
-  .openapi(routeB, handlerB);  // type accumulates
+  .openapi(routeA, handlerA) // type accumulates
+  .openapi(routeB, handlerB); // type accumulates
 
 export { routes };
 export type Routes = typeof routes;
 ```
 
 Key details:
+
 - `$()` converts the `Hono` type returned by `.use()` back to `OpenAPIHono`
 - Each `.openapi()` must chain (assign return value), not be a standalone statement
 - Export `typeof routes` for the frontend to import
@@ -71,9 +74,7 @@ app.route('/api/billing', billingRoutes);
 app.route('/api/users', userRoutes);
 
 // After
-const app = new OpenAPIHono()
-  .route('/api/billing', billingRoutes)
-  .route('/api/users', userRoutes);
+const app = new OpenAPIHono().route('/api/billing', billingRoutes).route('/api/users', userRoutes);
 
 export type AppType = typeof app;
 ```
@@ -91,6 +92,7 @@ export const api = hc<AppType>(API_BASE, {
 ```
 
 Consider adding a tsconfig path alias to clean up the import:
+
 ```json
 // landing/tsconfig.json
 "paths": {

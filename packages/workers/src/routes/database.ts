@@ -110,71 +110,70 @@ const checkMigrationRoute = createRoute({
 
 // Route handlers - chained for RPC type inference
 const dbRoutes = $(base)
+  .openapi(listUsersRoute, async c => {
+    const db = createDb(c.env.DB);
 
-.openapi(listUsersRoute, async c => {
-  const db = createDb(c.env.DB);
+    try {
+      const results = await db
+        .select({
+          id: user.id,
+          username: user.username,
+          email: user.email,
+          givenName: user.givenName,
+          emailVerified: user.emailVerified,
+          createdAt: user.createdAt,
+        })
+        .from(user)
+        .orderBy(desc(user.createdAt))
+        .limit(20);
 
-  try {
-    const results = await db
-      .select({
-        id: user.id,
-        username: user.username,
-        email: user.email,
-        givenName: user.givenName,
-        emailVerified: user.emailVerified,
-        createdAt: user.createdAt,
-      })
-      .from(user)
-      .orderBy(desc(user.createdAt))
-      .limit(20);
-
-    return c.json({ users: results } as unknown as z.infer<typeof UsersResponseSchema>, 200);
-  } catch (error) {
-    console.error('Error fetching users:', error);
-    const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
-      operation: 'fetch_users',
-      originalError: error instanceof Error ? error.message : String(error),
-    });
-    return c.json(dbError, 500);
-  }
-})
-
-.openapi(createUserRoute, c => {
-  const error = createValidationError(
-    'endpoint',
-    VALIDATION_ERRORS.INVALID_INPUT.code,
-    null,
-    'use_auth_register',
-  );
-  return c.json(error, 400);
-})
-
-.openapi(checkMigrationRoute, async c => {
-  try {
-    const tableCheck = await c.env.DB.prepare(
-      "SELECT name FROM sqlite_master WHERE type='table' AND name='user'",
-    ).first();
-
-    if (!tableCheck) {
-      return c.json(
-        {
-          success: false,
-          message: 'Please run: pnpm db:migrate in the workers directory',
-        },
-        200,
-      );
+      return c.json({ users: results } as unknown as z.infer<typeof UsersResponseSchema>, 200);
+    } catch (error) {
+      console.error('Error fetching users:', error);
+      const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
+        operation: 'fetch_users',
+        originalError: error instanceof Error ? error.message : String(error),
+      });
+      return c.json(dbError, 500);
     }
+  })
 
-    return c.json({ success: true, message: 'Migration completed' }, 200);
-  } catch (error) {
-    console.error('Migration error:', error);
-    const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
-      operation: 'check_migration',
-      originalError: error instanceof Error ? error.message : String(error),
-    });
-    return c.json(dbError, 500);
-  }
-});
+  .openapi(createUserRoute, c => {
+    const error = createValidationError(
+      'endpoint',
+      VALIDATION_ERRORS.INVALID_INPUT.code,
+      null,
+      'use_auth_register',
+    );
+    return c.json(error, 400);
+  })
+
+  .openapi(checkMigrationRoute, async c => {
+    try {
+      const tableCheck = await c.env.DB.prepare(
+        "SELECT name FROM sqlite_master WHERE type='table' AND name='user'",
+      ).first();
+
+      if (!tableCheck) {
+        return c.json(
+          {
+            success: false,
+            message: 'Please run: pnpm db:migrate in the workers directory',
+          },
+          200,
+        );
+      }
+
+      return c.json({ success: true, message: 'Migration completed' }, 200);
+    } catch (error) {
+      console.error('Migration error:', error);
+      const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
+        operation: 'check_migration',
+        originalError: error instanceof Error ? error.message : String(error),
+      });
+      return c.json(dbError, 500);
+    }
+  });
 
 export { dbRoutes };
 export type DbRoutes = typeof dbRoutes;

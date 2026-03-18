@@ -293,78 +293,16 @@ const removeMemberRoute = createRoute({
 
 // Route handlers - chained for RPC type inference
 const memberRoutes = $(base)
+  .openapi(listMembersRoute, async c => {
+    const projectId = c.get('projectId');
+    const db = createDb(c.env.DB);
 
-.openapi(listMembersRoute, async c => {
-  const projectId = c.get('projectId');
-  const db = createDb(c.env.DB);
-
-  try {
-    const results = await db
-      .select({
-        userId: projectMembers.userId,
-        role: projectMembers.role,
-        joinedAt: projectMembers.joinedAt,
-        name: user.name,
-        email: user.email,
-        username: user.username,
-        givenName: user.givenName,
-        familyName: user.familyName,
-        image: user.image,
-      })
-      .from(projectMembers)
-      .innerJoin(user, eq(projectMembers.userId, user.id))
-      .where(eq(projectMembers.projectId, projectId))
-      .orderBy(projectMembers.joinedAt);
-
-    return c.json(results as unknown as z.infer<typeof MemberListSchema>, 200);
-  } catch (err) {
-    const error = err as Error;
-    console.error('Error listing members:', error);
-    const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
-      operation: 'list_members',
-      originalError: error.message,
-    });
-    return c.json(dbError, 500);
-  }
-})
-
-.openapi(addMemberRoute, async c => {
-  const projectId = c.get('projectId');
-  const db = createDb(c.env.DB);
-  const { userId, email, role } = c.req.valid('json');
-  const { user: authUser } = getAuth(c);
-
-  if (!authUser) {
-    const error = createDomainError(AUTH_ERRORS.REQUIRED, { reason: 'no_user' });
-    return c.json(error, 403);
-  }
-
-  try {
-    await requireMemberManagement(db, authUser.id, projectId);
-  } catch (err) {
-    if (isDomainError(err)) {
-      return c.json(err, 403);
-    }
-    throw err;
-  }
-
-  try {
-    let userToAdd:
-      | {
-          id: string;
-          name: string | null;
-          email: string;
-          username: string | null;
-          givenName: string | null;
-          familyName: string | null;
-          image: string | null;
-        }
-      | undefined;
-
-    if (userId) {
-      userToAdd = await db
+    try {
+      const results = await db
         .select({
-          id: user.id,
+          userId: projectMembers.userId,
+          role: projectMembers.role,
+          joinedAt: projectMembers.joinedAt,
           name: user.name,
           email: user.email,
           username: user.username,
@@ -372,90 +310,226 @@ const memberRoutes = $(base)
           familyName: user.familyName,
           image: user.image,
         })
-        .from(user)
-        .where(eq(user.id, userId))
-        .get();
-    } else if (email) {
-      userToAdd = await db
-        .select({
-          id: user.id,
-          name: user.name,
-          email: user.email,
-          username: user.username,
-          givenName: user.givenName,
-          familyName: user.familyName,
-          image: user.image,
-        })
-        .from(user)
-        .where(eq(user.email, email.toLowerCase()))
-        .get();
+        .from(projectMembers)
+        .innerJoin(user, eq(projectMembers.userId, user.id))
+        .where(eq(projectMembers.projectId, projectId))
+        .orderBy(projectMembers.joinedAt);
+
+      return c.json(results as unknown as z.infer<typeof MemberListSchema>, 200);
+    } catch (err) {
+      const error = err as Error;
+      console.error('Error listing members:', error);
+      const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
+        operation: 'list_members',
+        originalError: error.message,
+      });
+      return c.json(dbError, 500);
+    }
+  })
+
+  .openapi(addMemberRoute, async c => {
+    const projectId = c.get('projectId');
+    const db = createDb(c.env.DB);
+    const { userId, email, role } = c.req.valid('json');
+    const { user: authUser } = getAuth(c);
+
+    if (!authUser) {
+      const error = createDomainError(AUTH_ERRORS.REQUIRED, { reason: 'no_user' });
+      return c.json(error, 403);
     }
 
-    if (!userToAdd && email) {
-      const existingInvitation = await db
-        .select({
-          id: projectInvitations.id,
-          token: projectInvitations.token,
-          acceptedAt: projectInvitations.acceptedAt,
-        })
-        .from(projectInvitations)
-        .where(
-          and(
-            eq(projectInvitations.projectId, projectId),
-            eq(projectInvitations.email, email.toLowerCase()),
-          ),
-        )
-        .get();
+    try {
+      await requireMemberManagement(db, authUser.id, projectId);
+    } catch (err) {
+      if (isDomainError(err)) {
+        return c.json(err, 403);
+      }
+      throw err;
+    }
 
-      let token: string;
-      let invitationId: string;
+    try {
+      let userToAdd:
+        | {
+            id: string;
+            name: string | null;
+            email: string;
+            username: string | null;
+            givenName: string | null;
+            familyName: string | null;
+            image: string | null;
+          }
+        | undefined;
 
-      if (existingInvitation && !existingInvitation.acceptedAt) {
-        invitationId = existingInvitation.id;
-        token = existingInvitation.token;
-        const expiresAt = new Date(Date.now() + TIME_DURATIONS.INVITATION_EXPIRY_MS);
-
-        await db
-          .update(projectInvitations)
-          .set({
-            role,
-            expiresAt,
+      if (userId) {
+        userToAdd = await db
+          .select({
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            username: user.username,
+            givenName: user.givenName,
+            familyName: user.familyName,
+            image: user.image,
           })
-          .where(eq(projectInvitations.id, existingInvitation.id));
-      } else if (existingInvitation && existingInvitation.acceptedAt) {
-        const error = createDomainError(PROJECT_ERRORS.INVITATION_ALREADY_ACCEPTED, {
-          invitationId: existingInvitation.id,
-        });
-        return c.json(error, 400);
-      } else {
-        invitationId = crypto.randomUUID();
-        token = crypto.randomUUID();
-        const expiresAt = new Date(Date.now() + TIME_DURATIONS.INVITATION_EXPIRY_MS);
+          .from(user)
+          .where(eq(user.id, userId))
+          .get();
+      } else if (email) {
+        userToAdd = await db
+          .select({
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            username: user.username,
+            givenName: user.givenName,
+            familyName: user.familyName,
+            image: user.image,
+          })
+          .from(user)
+          .where(eq(user.email, email.toLowerCase()))
+          .get();
+      }
 
-        // Fetch project's orgId for the invitation
-        const projectForInvite = await db
-          .select({ orgId: projects.orgId })
+      if (!userToAdd && email) {
+        const existingInvitation = await db
+          .select({
+            id: projectInvitations.id,
+            token: projectInvitations.token,
+            acceptedAt: projectInvitations.acceptedAt,
+          })
+          .from(projectInvitations)
+          .where(
+            and(
+              eq(projectInvitations.projectId, projectId),
+              eq(projectInvitations.email, email.toLowerCase()),
+            ),
+          )
+          .get();
+
+        let token: string;
+        let invitationId: string;
+
+        if (existingInvitation && !existingInvitation.acceptedAt) {
+          invitationId = existingInvitation.id;
+          token = existingInvitation.token;
+          const expiresAt = new Date(Date.now() + TIME_DURATIONS.INVITATION_EXPIRY_MS);
+
+          await db
+            .update(projectInvitations)
+            .set({
+              role,
+              expiresAt,
+            })
+            .where(eq(projectInvitations.id, existingInvitation.id));
+        } else if (existingInvitation && existingInvitation.acceptedAt) {
+          const error = createDomainError(PROJECT_ERRORS.INVITATION_ALREADY_ACCEPTED, {
+            invitationId: existingInvitation.id,
+          });
+          return c.json(error, 400);
+        } else {
+          invitationId = crypto.randomUUID();
+          token = crypto.randomUUID();
+          const expiresAt = new Date(Date.now() + TIME_DURATIONS.INVITATION_EXPIRY_MS);
+
+          // Fetch project's orgId for the invitation
+          const projectForInvite = await db
+            .select({ orgId: projects.orgId })
+            .from(projects)
+            .where(eq(projects.id, projectId))
+            .get();
+
+          if (!projectForInvite) {
+            const error = createDomainError(PROJECT_ERRORS.NOT_FOUND, { projectId });
+            return c.json(error, 404);
+          }
+
+          await db.insert(projectInvitations).values({
+            id: invitationId,
+            projectId,
+            orgId: projectForInvite.orgId,
+            email: email.toLowerCase(),
+            role,
+            token,
+            invitedBy: authUser.id,
+            expiresAt,
+            createdAt: new Date(),
+          });
+        }
+
+        const project = await db
+          .select({ name: projects.name })
           .from(projects)
           .where(eq(projects.id, projectId))
           .get();
 
-        if (!projectForInvite) {
-          const error = createDomainError(PROJECT_ERRORS.NOT_FOUND, { projectId });
-          return c.json(error, 404);
+        const inviter = await db
+          .select({ name: user.name, givenName: user.givenName, email: user.email })
+          .from(user)
+          .where(eq(user.id, authUser.id))
+          .get();
+
+        const projectName = project?.name || 'Unknown Project';
+        const inviterName = inviter?.givenName || inviter?.name || inviter?.email || 'Someone';
+
+        let emailQueued = false;
+        try {
+          const { sendInvitationEmail } = await import('../lib/send-invitation-email');
+          const result = await sendInvitationEmail({
+            env: c.env,
+            email,
+            token,
+            projectName,
+            inviterName,
+            role,
+          });
+          emailQueued = result.emailQueued;
+        } catch (err) {
+          console.error('[Invitation] Magic link generation failed:', err);
         }
 
-        await db.insert(projectInvitations).values({
-          id: invitationId,
-          projectId,
-          orgId: projectForInvite.orgId,
-          email: email.toLowerCase(),
-          role,
-          token,
-          invitedBy: authUser.id,
-          expiresAt,
-          createdAt: new Date(),
-        });
+        return c.json(
+          {
+            success: true as const,
+            invitation: true as const,
+            message:
+              emailQueued ?
+                'Invitation sent successfully'
+              : 'Invitation created but email delivery may be delayed',
+            email,
+          },
+          201,
+        );
       }
+
+      if (!userToAdd) {
+        const error = createDomainError(USER_ERRORS.NOT_FOUND, { userId, email });
+        return c.json(error, 404);
+      }
+
+      const existingMember = await db
+        .select({ id: projectMembers.id })
+        .from(projectMembers)
+        .where(
+          and(eq(projectMembers.projectId, projectId), eq(projectMembers.userId, userToAdd.id)),
+        )
+        .get();
+
+      if (existingMember) {
+        const error = createDomainError(PROJECT_ERRORS.MEMBER_ALREADY_EXISTS, {
+          projectId,
+          userId: userToAdd.id,
+        });
+        return c.json(error, 409);
+      }
+
+      const now = new Date();
+      await db.insert(projectMembers).values({
+        id: crypto.randomUUID(),
+        projectId,
+        userId: userToAdd.id,
+        role,
+        joinedAt: now,
+      });
 
       const project = await db
         .select({ name: projects.name })
@@ -463,262 +537,189 @@ const memberRoutes = $(base)
         .where(eq(projects.id, projectId))
         .get();
 
-      const inviter = await db
-        .select({ name: user.name, givenName: user.givenName, email: user.email })
-        .from(user)
-        .where(eq(user.id, authUser.id))
-        .get();
-
-      const projectName = project?.name || 'Unknown Project';
-      const inviterName = inviter?.givenName || inviter?.name || inviter?.email || 'Someone';
-
-      let emailQueued = false;
       try {
-        const { sendInvitationEmail } = await import('../lib/send-invitation-email');
-        const result = await sendInvitationEmail({
-          env: c.env,
-          email,
-          token,
-          projectName,
-          inviterName,
+        const userSessionId = c.env.USER_SESSION.idFromName(userToAdd.id);
+        const userSession = c.env.USER_SESSION.get(userSessionId);
+        await userSession.notify({
+          type: 'project-invite',
+          projectId,
+          projectName: project?.name || 'Unknown Project',
           role,
+          timestamp: Date.now(),
         });
-        emailQueued = result.emailQueued;
       } catch (err) {
-        console.error('[Invitation] Magic link generation failed:', err);
+        console.error('Failed to send project invite notification:', err);
+      }
+
+      try {
+        await syncMemberToDO(c.env, projectId, 'add', {
+          userId: userToAdd.id,
+          role,
+          joinedAt: now.getTime(),
+          name: userToAdd.name,
+          email: userToAdd.email,
+          givenName: userToAdd.givenName,
+          familyName: userToAdd.familyName,
+          image: userToAdd.image,
+        });
+      } catch (err) {
+        console.error('Failed to sync member to DO:', err);
       }
 
       return c.json(
         {
-          success: true as const,
-          invitation: true as const,
-          message:
-            emailQueued ?
-              'Invitation sent successfully'
-            : 'Invitation created but email delivery may be delayed',
-          email,
+          userId: userToAdd.id,
+          name: userToAdd.name,
+          email: userToAdd.email,
+          username: userToAdd.username,
+          givenName: userToAdd.givenName,
+          familyName: userToAdd.familyName,
+          image: userToAdd.image,
+          role,
+          joinedAt: now,
         },
         201,
       );
-    }
-
-    if (!userToAdd) {
-      const error = createDomainError(USER_ERRORS.NOT_FOUND, { userId, email });
-      return c.json(error, 404);
-    }
-
-    const existingMember = await db
-      .select({ id: projectMembers.id })
-      .from(projectMembers)
-      .where(and(eq(projectMembers.projectId, projectId), eq(projectMembers.userId, userToAdd.id)))
-      .get();
-
-    if (existingMember) {
-      const error = createDomainError(PROJECT_ERRORS.MEMBER_ALREADY_EXISTS, {
-        projectId,
-        userId: userToAdd.id,
-      });
-      return c.json(error, 409);
-    }
-
-    const now = new Date();
-    await db.insert(projectMembers).values({
-      id: crypto.randomUUID(),
-      projectId,
-      userId: userToAdd.id,
-      role,
-      joinedAt: now,
-    });
-
-    const project = await db
-      .select({ name: projects.name })
-      .from(projects)
-      .where(eq(projects.id, projectId))
-      .get();
-
-    try {
-      const userSessionId = c.env.USER_SESSION.idFromName(userToAdd.id);
-      const userSession = c.env.USER_SESSION.get(userSessionId);
-      await userSession.notify({
-        type: 'project-invite',
-        projectId,
-        projectName: project?.name || 'Unknown Project',
-        role,
-        timestamp: Date.now(),
-      });
     } catch (err) {
-      console.error('Failed to send project invite notification:', err);
+      const error = err as Error;
+      console.error('Error adding member:', error);
+      const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
+        operation: 'add_member',
+        originalError: error.message,
+      });
+      return c.json(dbError, 400);
+    }
+  })
+
+  .openapi(updateRoleRoute, async c => {
+    const projectId = c.get('projectId');
+    const memberId = c.req.param('userId');
+    const db = createDb(c.env.DB);
+    const { role } = c.req.valid('json');
+    const { user: authUser } = getAuth(c);
+
+    if (!authUser) {
+      const error = createDomainError(AUTH_ERRORS.REQUIRED, { reason: 'no_user' });
+      return c.json(error, 403);
     }
 
     try {
-      await syncMemberToDO(c.env, projectId, 'add', {
-        userId: userToAdd.id,
-        role,
-        joinedAt: now.getTime(),
-        name: userToAdd.name,
-        email: userToAdd.email,
-        givenName: userToAdd.givenName,
-        familyName: userToAdd.familyName,
-        image: userToAdd.image,
-      });
+      await requireMemberManagement(db, authUser.id, projectId);
+      await requireSafeRoleChange(db, projectId, memberId!, role);
     } catch (err) {
-      console.error('Failed to sync member to DO:', err);
+      if (isDomainError(err)) {
+        return c.json(err, 403);
+      }
+      throw err;
     }
-
-    return c.json(
-      {
-        userId: userToAdd.id,
-        name: userToAdd.name,
-        email: userToAdd.email,
-        username: userToAdd.username,
-        givenName: userToAdd.givenName,
-        familyName: userToAdd.familyName,
-        image: userToAdd.image,
-        role,
-        joinedAt: now,
-      },
-      201,
-    );
-  } catch (err) {
-    const error = err as Error;
-    console.error('Error adding member:', error);
-    const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
-      operation: 'add_member',
-      originalError: error.message,
-    });
-    return c.json(dbError, 400);
-  }
-})
-
-.openapi(updateRoleRoute, async c => {
-  const projectId = c.get('projectId');
-  const memberId = c.req.param('userId');
-  const db = createDb(c.env.DB);
-  const { role } = c.req.valid('json');
-  const { user: authUser } = getAuth(c);
-
-  if (!authUser) {
-    const error = createDomainError(AUTH_ERRORS.REQUIRED, { reason: 'no_user' });
-    return c.json(error, 403);
-  }
-
-  try {
-    await requireMemberManagement(db, authUser.id, projectId);
-    await requireSafeRoleChange(db, projectId, memberId!, role);
-  } catch (err) {
-    if (isDomainError(err)) {
-      return c.json(err, 403);
-    }
-    throw err;
-  }
-
-  try {
-    await db
-      .update(projectMembers)
-      .set({ role })
-      .where(and(eq(projectMembers.projectId, projectId), eq(projectMembers.userId, memberId!)));
 
     try {
-      await syncMemberToDO(c.env, projectId, 'update', {
-        userId: memberId!,
-        role,
-      });
-    } catch (err) {
-      console.error('Failed to sync member update to DO:', err);
-    }
+      await db
+        .update(projectMembers)
+        .set({ role })
+        .where(and(eq(projectMembers.projectId, projectId), eq(projectMembers.userId, memberId!)));
 
-    return c.json({ success: true as const, userId: memberId!, role }, 200);
-  } catch (err) {
-    const error = err as Error;
-    console.error('Error updating member role:', error);
-    const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
-      operation: 'update_member_role',
-      originalError: error.message,
-    });
-    return c.json(dbError, 400);
-  }
-})
-
-.openapi(removeMemberRoute, async c => {
-  const { user: authUser } = getAuth(c);
-  const projectId = c.get('projectId');
-  const memberId = c.req.param('userId');
-  const db = createDb(c.env.DB);
-
-  if (!authUser) {
-    const error = createDomainError(AUTH_ERRORS.REQUIRED, { reason: 'no_user' });
-    return c.json(error, 403);
-  }
-
-  const isSelfRemoval = memberId === authUser.id;
-
-  try {
-    await requireMemberRemoval(db, authUser.id, projectId, memberId!);
-    await requireSafeRemoval(db, projectId, memberId!);
-  } catch (err) {
-    if (isDomainError(err)) {
-      return c.json(err, 403);
-    }
-    throw err;
-  }
-
-  try {
-    const targetMember = await getProjectMembership(db, memberId!, projectId);
-
-    if (!targetMember) {
-      const error = createDomainError(
-        PROJECT_ERRORS.NOT_FOUND,
-        { projectId, userId: memberId },
-        'Member not found',
-      );
-      return c.json(error, 404);
-    }
-
-    await db
-      .delete(projectMembers)
-      .where(and(eq(projectMembers.projectId, projectId), eq(projectMembers.userId, memberId!)));
-
-    try {
-      await syncMemberToDO(c.env, projectId, 'remove', {
-        userId: memberId!,
-      });
-    } catch (err) {
-      console.error('Failed to sync member removal to DO:', err);
-    }
-
-    if (!isSelfRemoval) {
       try {
-        const project = await db
-          .select({ name: projects.name })
-          .from(projects)
-          .where(eq(projects.id, projectId))
-          .get();
-
-        const userSessionId = c.env.USER_SESSION.idFromName(memberId!);
-        const userSession = c.env.USER_SESSION.get(userSessionId);
-        await userSession.notify({
-          type: 'removed-from-project',
-          projectId,
-          projectName: project?.name || 'Unknown Project',
-          removedBy: authUser.name || authUser.email,
-          timestamp: Date.now(),
+        await syncMemberToDO(c.env, projectId, 'update', {
+          userId: memberId!,
+          role,
         });
       } catch (err) {
-        console.error('Failed to send removal notification:', err);
+        console.error('Failed to sync member update to DO:', err);
       }
+
+      return c.json({ success: true as const, userId: memberId!, role }, 200);
+    } catch (err) {
+      const error = err as Error;
+      console.error('Error updating member role:', error);
+      const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
+        operation: 'update_member_role',
+        originalError: error.message,
+      });
+      return c.json(dbError, 400);
+    }
+  })
+
+  .openapi(removeMemberRoute, async c => {
+    const { user: authUser } = getAuth(c);
+    const projectId = c.get('projectId');
+    const memberId = c.req.param('userId');
+    const db = createDb(c.env.DB);
+
+    if (!authUser) {
+      const error = createDomainError(AUTH_ERRORS.REQUIRED, { reason: 'no_user' });
+      return c.json(error, 403);
     }
 
-    return c.json({ success: true as const, removed: memberId! }, 200);
-  } catch (err) {
-    const error = err as Error;
-    console.error('Error removing member:', error);
-    const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
-      operation: 'remove_member',
-      originalError: error.message,
-    });
-    return c.json(dbError, 403);
-  }
-});
+    const isSelfRemoval = memberId === authUser.id;
+
+    try {
+      await requireMemberRemoval(db, authUser.id, projectId, memberId!);
+      await requireSafeRemoval(db, projectId, memberId!);
+    } catch (err) {
+      if (isDomainError(err)) {
+        return c.json(err, 403);
+      }
+      throw err;
+    }
+
+    try {
+      const targetMember = await getProjectMembership(db, memberId!, projectId);
+
+      if (!targetMember) {
+        const error = createDomainError(
+          PROJECT_ERRORS.NOT_FOUND,
+          { projectId, userId: memberId },
+          'Member not found',
+        );
+        return c.json(error, 404);
+      }
+
+      await db
+        .delete(projectMembers)
+        .where(and(eq(projectMembers.projectId, projectId), eq(projectMembers.userId, memberId!)));
+
+      try {
+        await syncMemberToDO(c.env, projectId, 'remove', {
+          userId: memberId!,
+        });
+      } catch (err) {
+        console.error('Failed to sync member removal to DO:', err);
+      }
+
+      if (!isSelfRemoval) {
+        try {
+          const project = await db
+            .select({ name: projects.name })
+            .from(projects)
+            .where(eq(projects.id, projectId))
+            .get();
+
+          const userSessionId = c.env.USER_SESSION.idFromName(memberId!);
+          const userSession = c.env.USER_SESSION.get(userSessionId);
+          await userSession.notify({
+            type: 'removed-from-project',
+            projectId,
+            projectName: project?.name || 'Unknown Project',
+            removedBy: authUser.name || authUser.email,
+            timestamp: Date.now(),
+          });
+        } catch (err) {
+          console.error('Failed to send removal notification:', err);
+        }
+      }
+
+      return c.json({ success: true as const, removed: memberId! }, 200);
+    } catch (err) {
+      const error = err as Error;
+      console.error('Error removing member:', error);
+      const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
+        operation: 'remove_member',
+        originalError: error.message,
+      });
+      return c.json(dbError, 403);
+    }
+  });
 
 export { memberRoutes };
 export type MemberRoutes = typeof memberRoutes;
