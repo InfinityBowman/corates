@@ -8,15 +8,20 @@ import { TooltipProvider } from '@/components/ui/tooltip';
 import appCss from '../styles.css?url';
 import type { ErrorComponentProps } from '@tanstack/react-router';
 
-const LazyDevPanel = import.meta.env.VITE_DEV_PANEL === 'true'
-  ? lazy(() => import('@/components/dev/DevPanel').then(m => ({ default: m.DevPanel })))
+const LazyDevPanel =
+  import.meta.env.VITE_DEV_PANEL === 'true' ?
+    lazy(() => import('@/components/dev/DevPanel').then(m => ({ default: m.DevPanel })))
   : null;
 
 const emptySubscribe = () => () => {};
 
 /** Render children only on the client, never during SSR. */
 function ClientOnly({ children }: { children: React.ReactNode }) {
-  const isClient = useSyncExternalStore(emptySubscribe, () => true, () => false);
+  const isClient = useSyncExternalStore(
+    emptySubscribe,
+    () => true,
+    () => false,
+  );
   return isClient ? children : null;
 }
 

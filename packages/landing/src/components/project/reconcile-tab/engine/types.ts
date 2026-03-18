@@ -164,11 +164,7 @@ export interface ReconciliationAdapter {
    * The engine stores the result and passes it to isAgreement, renderPage,
    * NavbarComponent, and SummaryComponent.
    */
-  compare: (
-    checklist1: unknown,
-    checklist2: unknown,
-    reconciledChecklist: unknown,
-  ) => unknown;
+  compare: (checklist1: unknown, checklist2: unknown, reconciledChecklist: unknown) => unknown;
 
   // --- Answer checking (pure functions) ---
 
@@ -192,9 +188,7 @@ export interface ReconciliationAdapter {
   ) => void;
 
   /** Reset all answers to empty/default state */
-  resetAllAnswers: (
-    updateChecklistAnswer: (sectionKey: string, data: unknown) => void,
-  ) => void;
+  resetAllAnswers: (updateChecklistAnswer: (sectionKey: string, data: unknown) => void) => void;
 
   /**
    * Optional: called after each navigation step.

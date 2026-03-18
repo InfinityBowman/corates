@@ -148,9 +148,7 @@ function autoFillFromReviewer1(
   }
 }
 
-function resetAllAnswers(
-  updateChecklistAnswer: (sectionKey: string, data: unknown) => void,
-): void {
+function resetAllAnswers(updateChecklistAnswer: (sectionKey: string, data: unknown) => void): void {
   const defaultChecklist = createChecklist({ name: 'temp', id: 'temp' }) as Record<string, any>;
   for (const key of questionKeys) {
     if (isMultiPartQuestion(key)) {

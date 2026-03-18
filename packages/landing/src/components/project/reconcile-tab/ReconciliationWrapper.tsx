@@ -443,7 +443,15 @@ export function ReconciliationWrapper({
       // AMSTAR2: getQuestionNote takes just the question key
       return getQuestionNote?.(studyId, reconciledChecklistId, args[0]);
     },
-    [isRobinsI, isRob2, studyId, reconciledChecklistId, getRobinsText, getRob2Text, getQuestionNote],
+    [
+      isRobinsI,
+      isRob2,
+      studyId,
+      reconciledChecklistId,
+      getRobinsText,
+      getRob2Text,
+      getQuestionNote,
+    ],
   );
 
   // Shared props for all reconciliation types

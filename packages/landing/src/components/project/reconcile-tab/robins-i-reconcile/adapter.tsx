@@ -193,7 +193,12 @@ function autoFillFromReviewer1(
   } else if (item.type === NAV_ITEM_TYPES.DOMAIN_JUDGEMENT && item.domainKey) {
     const domain = c1?.[item.domainKey];
     if (domain?.judgement) {
-      updateDomainJudgement(updateChecklistAnswer, item.domainKey, domain.judgement, domain.direction);
+      updateDomainJudgement(
+        updateChecklistAnswer,
+        item.domainKey,
+        domain.judgement,
+        domain.direction,
+      );
     }
   } else if (item.type === NAV_ITEM_TYPES.OVERALL_JUDGEMENT) {
     const overall = c1?.overall;
@@ -203,9 +208,7 @@ function autoFillFromReviewer1(
   }
 }
 
-function resetAllAnswers(
-  updateChecklistAnswer: (sectionKey: string, data: unknown) => void,
-): void {
+function resetAllAnswers(updateChecklistAnswer: (sectionKey: string, data: unknown) => void): void {
   const sectionBKeys = getSectionBKeys();
   const emptySectionB: Record<string, any> = {};
   sectionBKeys.forEach((key: string) => {

@@ -111,7 +111,11 @@ function updateOverallDirection(
 // Skippable questions detection
 // ---------------------------------------------------------------------------
 
-function getSkippableQuestions(finalAnswers: any, isAdhering: boolean, navItems: any[]): Set<string> {
+function getSkippableQuestions(
+  finalAnswers: any,
+  isAdhering: boolean,
+  navItems: any[],
+): Set<string> {
   const activeDomains = getActiveDomainKeys(isAdhering);
   const earlyCompleteDomains = new Set<string>();
 
@@ -196,11 +200,7 @@ function deriveFinalAnswers(reconciledChecklist: unknown): unknown {
   return reconciledChecklist || {};
 }
 
-function compare(
-  checklist1: unknown,
-  checklist2: unknown,
-  reconciledChecklist: unknown,
-): unknown {
+function compare(checklist1: unknown, checklist2: unknown, reconciledChecklist: unknown): unknown {
   if (!checklist1 || !checklist2) return null;
   const reconciledAim = (reconciledChecklist as any)?.preliminary?.aim;
   return compareChecklists(checklist1 as any, checklist2 as any, reconciledAim);
@@ -255,9 +255,7 @@ function autoFillFromReviewer1(
   }
 }
 
-function resetAllAnswers(
-  updateChecklistAnswer: (sectionKey: string, data: unknown) => void,
-): void {
+function resetAllAnswers(updateChecklistAnswer: (sectionKey: string, data: unknown) => void): void {
   updateChecklistAnswer('preliminary', {
     studyDesign: null,
     aim: null,
@@ -304,9 +302,7 @@ function onAfterNavigate(
   if (skippable.size === 0) return;
 
   for (const qKey of skippable) {
-    const item = navItems.find(
-      i => i.type === NAV_ITEM_TYPES.DOMAIN_QUESTION && i.key === qKey,
-    );
+    const item = navItems.find(i => i.type === NAV_ITEM_TYPES.DOMAIN_QUESTION && i.key === qKey);
     if (!item) continue;
 
     const currentAnswer = fa[item.domainKey!]?.answers?.[qKey]?.answer;
@@ -339,11 +335,7 @@ function renderPage(context: EngineContext) {
         reviewer1Name={context.reviewer1Name || 'Reviewer 1'}
         reviewer2Name={context.reviewer2Name || 'Reviewer 2'}
         isAgreement={context.isAgreement}
-        isAimMismatch={
-          currentItem.key === 'aim' &&
-          hasAimMismatch(c1, c2) &&
-          !fa?.preliminary?.aim
-        }
+        isAimMismatch={currentItem.key === 'aim' && hasAimMismatch(c1, c2) && !fa?.preliminary?.aim}
         onFinalChange={(value: any) =>
           updatePreliminaryField(context.updateChecklistAnswer, currentItem.key, value)
         }
