@@ -6,7 +6,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { hasActiveAccess, isAccessExpired } from '../access';
+import { hasActiveAccess } from '../access';
 
 describe('access', () => {
   beforeEach(() => {
@@ -96,85 +96,6 @@ describe('access', () => {
     });
   });
 
-  describe('isAccessExpired', () => {
-    it('returns true for null subscription', () => {
-      expect(isAccessExpired(null)).toBe(true);
-    });
-
-    it('returns true for undefined subscription', () => {
-      expect(isAccessExpired(undefined)).toBe(true);
-    });
-
-    it('returns true for inactive status', () => {
-      const nowSeconds = Math.floor(Date.now() / 1000);
-      const subscription = {
-        status: 'canceled',
-        currentPeriodEnd: nowSeconds + 86400,
-      };
-      expect(isAccessExpired(subscription)).toBe(true);
-    });
-
-    it('returns false for active subscription with no expiration (never expires)', () => {
-      const subscription = {
-        status: 'active',
-        currentPeriodEnd: null,
-      };
-      expect(isAccessExpired(subscription)).toBe(false);
-    });
-
-    it('returns false for active subscription with undefined expiration', () => {
-      const subscription = {
-        status: 'active',
-      };
-      expect(isAccessExpired(subscription)).toBe(false);
-    });
-
-    it('returns false for active subscription with future expiration', () => {
-      const nowSeconds = Math.floor(Date.now() / 1000);
-      const subscription = {
-        status: 'active',
-        currentPeriodEnd: nowSeconds + 86400,
-      };
-      expect(isAccessExpired(subscription)).toBe(false);
-    });
-
-    it('returns true for active subscription with past expiration', () => {
-      const nowSeconds = Math.floor(Date.now() / 1000);
-      const subscription = {
-        status: 'active',
-        currentPeriodEnd: nowSeconds - 86400,
-      };
-      expect(isAccessExpired(subscription)).toBe(true);
-    });
-
-    it('returns true when expiration equals current time (boundary)', () => {
-      const nowSeconds = Math.floor(Date.now() / 1000);
-      const subscription = {
-        status: 'active',
-        currentPeriodEnd: nowSeconds,
-      };
-      expect(isAccessExpired(subscription)).toBe(true);
-    });
-
-    it('is inverse of hasActiveAccess for valid subscriptions', () => {
-      const nowSeconds = Math.floor(Date.now() / 1000);
-      const activeWithFuture = {
-        status: 'active',
-        currentPeriodEnd: nowSeconds + 86400,
-      };
-      expect(isAccessExpired(activeWithFuture)).toBe(!hasActiveAccess(activeWithFuture));
-
-      const activeWithPast = {
-        status: 'active',
-        currentPeriodEnd: nowSeconds - 86400,
-      };
-      expect(isAccessExpired(activeWithPast)).toBe(!hasActiveAccess(activeWithPast));
-
-      const activeNoExpiry = { status: 'active' };
-      expect(isAccessExpired(activeNoExpiry)).toBe(!hasActiveAccess(activeNoExpiry));
-    });
-  });
-
   describe('edge cases', () => {
     it('handles very far future dates', () => {
       const subscription = {
@@ -182,7 +103,6 @@ describe('access', () => {
         currentPeriodEnd: 4102444800, // Jan 1, 2100
       };
       expect(hasActiveAccess(subscription)).toBe(true);
-      expect(isAccessExpired(subscription)).toBe(false);
     });
 
     it('handles very old past dates', () => {
@@ -191,22 +111,14 @@ describe('access', () => {
         currentPeriodEnd: 946684800, // Jan 1, 2000
       };
       expect(hasActiveAccess(subscription)).toBe(false);
-      expect(isAccessExpired(subscription)).toBe(true);
     });
 
     it('handles empty object (no status field)', () => {
-      const subscription = {};
-      // No status means not active
-      expect(hasActiveAccess(subscription)).toBe(false);
-      expect(isAccessExpired(subscription)).toBe(true);
+      expect(hasActiveAccess({})).toBe(false);
     });
 
     it('handles subscription with only status field', () => {
-      const subscription = {
-        status: 'active',
-      };
-      expect(hasActiveAccess(subscription)).toBe(true);
-      expect(isAccessExpired(subscription)).toBe(false);
+      expect(hasActiveAccess({ status: 'active' })).toBe(true);
     });
   });
 });

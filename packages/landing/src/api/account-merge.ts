@@ -27,14 +27,6 @@ interface MergeCompleteResult {
   mergedProviders: string[];
 }
 
-interface MergeStatus {
-  status: string;
-  initiatorEmail: string;
-  targetEmail: string;
-  isInitiator: boolean;
-  verified: boolean;
-}
-
 export async function initiateMerge(
   targetEmail: string | null,
   targetOrcidId: string | null,
@@ -60,12 +52,6 @@ export async function verifyMergeCode(
 
 export async function completeMerge(mergeToken: string): Promise<MergeCompleteResult> {
   return apiFetch.post<MergeCompleteResult>('/api/accounts/merge/complete', { mergeToken });
-}
-
-export async function getMergeStatus(mergeToken: string): Promise<MergeStatus> {
-  return apiFetch.get<MergeStatus>(
-    `/api/accounts/merge/status?token=${encodeURIComponent(mergeToken)}`,
-  );
 }
 
 export async function cancelMerge(mergeToken: string): Promise<{ success: boolean }> {

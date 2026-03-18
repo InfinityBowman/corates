@@ -538,9 +538,3 @@ export function selectTwoFactorEnabled(state: AuthState): boolean {
   const user = selectUser(state);
   return user?.twoFactorEnabled ?? false;
 }
-
-// Utility functions
-
-export function getPendingEmail(): string | null {
-  return localStorage.getItem('pendingEmail');
-}

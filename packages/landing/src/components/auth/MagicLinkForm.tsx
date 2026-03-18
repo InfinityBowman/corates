@@ -50,7 +50,6 @@ export function MagicLinkForm({
       setLoading(true);
 
       try {
-        localStorage.setItem('magicLinkSignup', 'true');
         localStorage.setItem('pendingName', email);
         await signinWithMagicLink(email, callbackPath);
         setSent(true);

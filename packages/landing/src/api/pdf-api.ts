@@ -14,10 +14,6 @@ interface PdfUploadResponse {
   size: number;
 }
 
-interface PdfListResponse {
-  pdfs: Array<{ key: string; fileName: string; size: number; uploaded: string }>;
-}
-
 export async function fetchPdfViaProxy(url: string): Promise<ArrayBuffer> {
   const response = await apiFetch<Response>('/api/pdf-proxy', {
     method: 'POST',
@@ -94,13 +90,4 @@ export async function deletePdf(
   const path = `${basePath}/${encodeURIComponent(fileName)}`;
 
   return apiFetch.delete<{ success: boolean }>(path);
-}
-
-export async function listPdfs(
-  orgId: string,
-  projectId: string,
-  studyId: string,
-): Promise<PdfListResponse> {
-  const path = buildPdfBasePath(orgId, projectId, studyId);
-  return apiFetch.get<PdfListResponse>(path);
 }

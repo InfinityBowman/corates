@@ -35,7 +35,6 @@ interface PlanRedirectResult {
   error: PlanRedirectError | null;
 }
 
-export const VALID_INTERVALS: BillingInterval[] = ['monthly', 'yearly'];
 export const DEFAULT_INTERVAL: BillingInterval = 'monthly';
 
 export const STORAGE_KEYS = {

@@ -4,7 +4,6 @@
  */
 
 import { apiFetch } from '@/lib/apiFetch';
-import { type Subscription } from '@/hooks/useSubscription';
 
 interface CheckoutSession {
   url: string;
@@ -40,11 +39,7 @@ interface BillingOptions {
   toastMessage?: string | false;
 }
 
-export async function getSubscription(): Promise<Subscription> {
-  return apiFetch.get<Subscription>('/api/billing/subscription');
-}
-
-export async function createCheckoutSession(
+async function createCheckoutSession(
   tier: string,
   interval: BillingInterval = 'monthly',
   options: BillingOptions = {},
@@ -70,9 +65,7 @@ export async function redirectToPortal(): Promise<void> {
   window.location.href = url;
 }
 
-export async function createSingleProjectCheckout(
-  options: BillingOptions = {},
-): Promise<CheckoutSession> {
+async function createSingleProjectCheckout(options: BillingOptions = {}): Promise<CheckoutSession> {
   return apiFetch.post<CheckoutSession>('/api/billing/single-project/checkout', {}, options);
 }
 

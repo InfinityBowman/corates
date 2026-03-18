@@ -202,7 +202,6 @@ function CompleteProfilePage() {
 
       // Clear signup flags
       localStorage.removeItem('oauthSignup');
-      localStorage.removeItem('magicLinkSignup');
       localStorage.removeItem('pendingName');
       localStorage.removeItem('pendingPersona');
 

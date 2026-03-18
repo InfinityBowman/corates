@@ -37,16 +37,3 @@ export function getLastLoginMethod(): string | null {
     return null;
   }
 }
-
-export function getLastLoginMethodLabel(): string | null {
-  const method = getLastLoginMethod();
-  return method ? LOGIN_METHOD_LABELS[method] || null : null;
-}
-
-export function clearLastLoginMethod(): void {
-  try {
-    localStorage.removeItem(STORAGE_KEY);
-  } catch (err) {
-    console.warn('Failed to clear last login method from localStorage:', (err as Error).message);
-  }
-}

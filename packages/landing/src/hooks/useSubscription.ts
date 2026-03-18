@@ -56,22 +56,6 @@ export function useSubscription() {
 
   const subscription = query.data ?? DEFAULT_SUBSCRIPTION;
 
-  const isUsingCachedData = isLoggedIn && query.isStale && !query.isFetching;
-
-  // Computed on-demand rather than during render (avoids impure Date.now() in render)
-  function getLastSynced(): string | null {
-    const timestamp = query.dataUpdatedAt;
-    if (!timestamp) return null;
-    const diffMs = Date.now() - timestamp;
-    const diffMins = Math.floor(diffMs / (1000 * 60));
-    if (diffMins < 1) return 'Just now';
-    if (diffMins < 60) return `${diffMins} min ago`;
-    const diffHours = Math.floor(diffMins / 60);
-    if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
-    const diffDays = Math.floor(diffHours / 24);
-    return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
-  }
-
   const subscriptionFetchFailed = isLoggedIn && query.isError;
   const tier = subscription.tier;
   const status = subscription.status;
@@ -95,8 +79,6 @@ export function useSubscription() {
     isFetching: query.isFetching,
     error: query.error,
     subscriptionFetchFailed,
-    isUsingCachedData,
-    getLastSynced,
 
     refetch: async () => {
       return queryClient.resetQueries({ queryKey: queryKeys.subscription.current });
