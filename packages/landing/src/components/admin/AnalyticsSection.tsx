@@ -186,7 +186,7 @@ export function AnalyticsSection() {
               <select
                 value={signupDays}
                 onChange={e => setSignupDays(parseInt(e.target.value, 10))}
-                className='border-input bg-transparent h-8 rounded-lg border px-2.5 py-2 text-sm'
+                className='border-input h-8 rounded-lg border bg-transparent px-2.5 py-2 text-sm'
               >
                 {PERIOD_OPTIONS.map(opt => (
                   <option key={opt.value} value={opt.value}>
@@ -379,7 +379,7 @@ export function AnalyticsSection() {
             <select
               value={webhookDays}
               onChange={e => setWebhookDays(parseInt(e.target.value, 10))}
-              className='border-input bg-transparent h-8 rounded-lg border px-2.5 py-2 text-sm'
+              className='border-input h-8 rounded-lg border bg-transparent px-2.5 py-2 text-sm'
             >
               <option value={7}>7 days</option>
               <option value={14}>14 days</option>

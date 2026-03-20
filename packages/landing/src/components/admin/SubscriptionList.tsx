@@ -102,17 +102,14 @@ export function SubscriptionList({
                         <p className='text-foreground font-medium'>{subscription.plan}</p>
                         <Badge
                           variant={
-                            subscription.status === 'active' ||
-                            subscription.status === 'trialing' ?
+                            subscription.status === 'active' || subscription.status === 'trialing' ?
                               'success'
                             : 'secondary'
                           }
                         >
                           {subscription.status}
                         </Badge>
-                        {isEffective(subscription) && (
-                          <Badge variant='info'>Effective</Badge>
-                        )}
+                        {isEffective(subscription) && <Badge variant='info'>Effective</Badge>}
                       </div>
                       <div className='text-muted-foreground mt-2 grid grid-cols-1 gap-3 text-sm md:grid-cols-2'>
                         <div className='flex flex-col gap-1'>

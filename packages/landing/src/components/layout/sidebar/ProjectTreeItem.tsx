@@ -68,7 +68,10 @@ export function ProjectTreeItem({
         >
           {canExpand && isExpanded ?
             <FolderOpenIcon className='text-primary size-4' />
-          : <FolderIcon className={`size-4 ${isInProject ? 'text-primary' : 'text-muted-foreground'}`} />}
+          : <FolderIcon
+              className={`size-4 ${isInProject ? 'text-primary' : 'text-muted-foreground'}`}
+            />
+          }
           <span className='truncate text-sm font-medium'>{project.name}</span>
         </button>
       </div>

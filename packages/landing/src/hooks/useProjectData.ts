@@ -31,8 +31,12 @@ const IDLE_STATE = {
 };
 
 export function useProjectData(projectId: string | undefined) {
-  const studies = useProjectStore(state => (projectId ? selectStudies(state, projectId) : EMPTY_STUDIES));
-  const members = useProjectStore(state => (projectId ? selectMembers(state, projectId) : EMPTY_MEMBERS));
+  const studies = useProjectStore(state =>
+    projectId ? selectStudies(state, projectId) : EMPTY_STUDIES,
+  );
+  const members = useProjectStore(state =>
+    projectId ? selectMembers(state, projectId) : EMPTY_MEMBERS,
+  );
   const meta = useProjectStore(state => (projectId ? selectMeta(state, projectId) : EMPTY_META));
   const connectionState = useProjectStore(state =>
     projectId ? selectConnectionState(state, projectId) : IDLE_STATE,

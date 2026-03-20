@@ -42,8 +42,8 @@ export function PaymentIssueBanner({ status, onUpdatePayment, loading }: Payment
           <AlertDescription>{message}</AlertDescription>
           {isPastDue && (
             <AlertDescription className='mt-2 text-xs'>
-              Your access will continue until the end of your billing period, but you may lose access
-              to premium features if payment is not updated.
+              Your access will continue until the end of your billing period, but you may lose
+              access to premium features if payment is not updated.
             </AlertDescription>
           )}
         </div>

@@ -207,7 +207,7 @@ function AdminProjectList() {
               value={searchInput}
               onChange={e => setSearchInput(e.target.value)}
               placeholder='Search by project name...'
-              className='w-full pl-10 pr-10'
+              className='w-full pr-10 pl-10'
             />
             {searchInput && (
               <button
@@ -226,7 +226,7 @@ function AdminProjectList() {
           <select
             value={selectedOrgId}
             onChange={e => handleOrgFilter(e.target.value)}
-            className='border-input bg-transparent h-8 rounded-lg border px-2.5 py-2 text-sm'
+            className='border-input h-8 rounded-lg border bg-transparent px-2.5 py-2 text-sm'
           >
             <option value=''>All Organizations</option>
             {orgs.map(org => (

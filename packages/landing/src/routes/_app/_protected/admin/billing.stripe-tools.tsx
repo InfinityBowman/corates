@@ -283,7 +283,7 @@ function StripeToolsPage() {
           <select
             value={searchType}
             onChange={e => setSearchType(e.target.value as 'email' | 'customerId')}
-            className='border-input bg-transparent h-8 rounded-lg border px-2.5 py-2 text-sm'
+            className='border-input h-8 rounded-lg border bg-transparent px-2.5 py-2 text-sm'
           >
             <option value='email'>Search by Email</option>
             <option value='customerId'>Search by Customer ID</option>
