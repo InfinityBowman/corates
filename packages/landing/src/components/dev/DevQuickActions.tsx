@@ -56,8 +56,8 @@ export function DevQuickActions({ projectId, orgId }: DevQuickActionsProps) {
   };
 
   return (
-    <div className='flex flex-col gap-3 border-t border-gray-200 pt-3'>
-      <h4 className='text-xs font-semibold text-gray-900'>Quick Actions</h4>
+    <div className='flex flex-col gap-3 border-t border-border pt-3'>
+      <h4 className='text-xs font-semibold text-foreground'>Quick Actions</h4>
 
       <div className='flex gap-2'>
         <button
@@ -73,7 +73,7 @@ export function DevQuickActions({ projectId, orgId }: DevQuickActionsProps) {
         </button>
 
         <button
-          className='flex items-center gap-1.5 rounded border border-gray-300 px-3 py-1.5 text-xs text-gray-600 transition-colors hover:border-gray-400 hover:bg-gray-50'
+          className='flex items-center gap-1.5 rounded border border-border px-3 py-1.5 text-xs text-muted-foreground transition-colors hover:border-border hover:bg-muted'
           onClick={forceRefresh}
           title='Reload the page'
         >
@@ -85,7 +85,7 @@ export function DevQuickActions({ projectId, orgId }: DevQuickActionsProps) {
       {result && (
         <div
           className={`flex items-center gap-1.5 rounded p-2 text-xs ${
-            result.success ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-600'
+            result.success ? 'bg-green-50 text-green-700' : 'bg-destructive/10 text-destructive'
           }`}
         >
           {result.success ?

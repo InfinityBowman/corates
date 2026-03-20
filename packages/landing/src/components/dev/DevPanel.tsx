@@ -158,8 +158,8 @@ export function DevPanel() {
   const tabClass = (isActive: boolean) =>
     `flex-1 px-3 py-2 text-xs font-medium flex items-center justify-center gap-1 transition-colors ${
       isActive ?
-        'text-purple-600 bg-white border-b-2 border-purple-600'
-      : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'
+        'text-purple-600 bg-card border-b-2 border-purple-600'
+      : 'text-muted-foreground hover:text-foreground hover:bg-muted'
     }`;
 
   return createPortal(
@@ -178,7 +178,7 @@ export function DevPanel() {
       {/* Main panel */}
       {isOpen && (
         <div
-          className='fixed z-9999 flex flex-col overflow-hidden rounded-lg border border-gray-200 bg-white font-mono text-xs shadow-xl'
+          className='fixed z-9999 flex flex-col overflow-hidden rounded-lg border border-border bg-card font-mono text-xs shadow-xl'
           style={{
             left: `${position.x}px`,
             top: `${position.y}px`,
@@ -190,13 +190,13 @@ export function DevPanel() {
           {/* Header */}
           <div
             data-drag-handle
-            className='flex cursor-grab items-center justify-between border-b border-gray-200 bg-gray-50 px-3 py-2 select-none active:cursor-grabbing'
+            className='flex cursor-grab items-center justify-between border-b border-border bg-muted px-3 py-2 select-none active:cursor-grabbing'
           >
-            <div className='flex items-center gap-2 text-gray-600'>
+            <div className='flex items-center gap-2 text-muted-foreground'>
               <BugIcon size={16} className='text-purple-600' />
-              <span className='font-semibold text-gray-900'>Dev Panel</span>
+              <span className='font-semibold text-foreground'>Dev Panel</span>
               {isProjectContext ?
-                <span className='text-2xs rounded bg-gray-200 px-1.5 py-0.5 text-gray-500'>
+                <span className='text-2xs rounded bg-muted px-1.5 py-0.5 text-muted-foreground'>
                   {projectId?.slice(0, 8)}...
                 </span>
               : <span className='text-2xs rounded bg-blue-100 px-1.5 py-0.5 text-blue-600'>
@@ -221,7 +221,7 @@ export function DevPanel() {
                 </span>
               )}
               <button
-                className='rounded p-1 text-gray-400 hover:bg-gray-200 hover:text-gray-600'
+                className='rounded p-1 text-muted-foreground hover:bg-muted hover:text-muted-foreground'
                 onClick={() => setIsMinimized(!isMinimized)}
                 title={isMinimized ? 'Expand' : 'Minimize'}
               >
@@ -230,7 +230,7 @@ export function DevPanel() {
                 : <ChevronUpIcon size={16} />}
               </button>
               <button
-                className='rounded p-1 text-gray-400 hover:bg-gray-200 hover:text-gray-600'
+                className='rounded p-1 text-muted-foreground hover:bg-muted hover:text-muted-foreground'
                 onClick={() => setIsOpen(false)}
                 title='Close'
               >
@@ -243,7 +243,7 @@ export function DevPanel() {
           {!isMinimized && (
             <>
               {/* Tabs */}
-              <div className='flex border-b border-gray-200 bg-gray-50'>
+              <div className='flex border-b border-border bg-muted'>
                 {/* Always available tabs */}
                 <button
                   className={tabClass(activeTab === 'import')}
@@ -308,7 +308,7 @@ export function DevPanel() {
                 className='absolute right-0 bottom-0 size-4 cursor-se-resize'
                 onMouseDown={handleResizeStart}
               >
-                <svg className='size-4 text-gray-400' viewBox='0 0 16 16' fill='currentColor'>
+                <svg className='size-4 text-muted-foreground' viewBox='0 0 16 16' fill='currentColor'>
                   <path d='M14 14v-2h-2v2h2zm0-4v-2h-2v2h2zm-4 4v-2H8v2h2zm0-4v-2H8v2h2zm-4 4v-2H4v2h2z' />
                 </svg>
               </div>

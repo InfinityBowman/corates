@@ -453,21 +453,21 @@ export function ReviewerAssignment({
                 {/* Preview */}
                 {showPreview && (
                   <div
-                    className={`overflow-hidden rounded-xl border ${hasConflicts ? 'border-red-200' : 'border-primary'}`}
+                    className={`overflow-hidden rounded-xl border ${hasConflicts ? 'border-destructive/20' : 'border-primary'}`}
                   >
                     <div
                       className={`flex items-center justify-between border-b px-4 py-3 ${
-                        hasConflicts ? 'border-red-200 bg-red-50' : 'border-primary bg-primary/5'
+                        hasConflicts ? 'border-destructive/20 bg-destructive/10' : 'border-primary bg-primary/5'
                       }`}
                     >
                       <div>
                         <h4
-                          className={`text-sm font-semibold ${hasConflicts ? 'text-red-900' : 'text-primary'}`}
+                          className={`text-sm font-semibold ${hasConflicts ? 'text-destructive' : 'text-primary'}`}
                         >
                           Assignment Preview
                         </h4>
                         {hasConflicts && (
-                          <p className='text-xs text-red-600'>
+                          <p className='text-xs text-destructive'>
                             {conflictCount} conflict{conflictCount !== 1 && 's'} - click Reshuffle
                           </p>
                         )}
@@ -496,7 +496,7 @@ export function ReviewerAssignment({
                           {previewAssignments.map(assignment => (
                             <tr
                               key={assignment.studyId}
-                              className={`hover:bg-muted ${assignment.sameReviewer ? 'bg-red-50' : ''}`}
+                              className={`hover:bg-muted ${assignment.sameReviewer ? 'bg-destructive/10' : ''}`}
                             >
                               <td className='text-foreground max-w-xs truncate py-2 pr-4 pl-4'>
                                 {assignment.studyName}
@@ -505,7 +505,7 @@ export function ReviewerAssignment({
                                 {assignment.reviewer1Name}
                               </td>
                               <td
-                                className={`py-2 pr-4 ${assignment.sameReviewer ? 'font-medium text-red-600' : 'text-secondary-foreground'}`}
+                                className={`py-2 pr-4 ${assignment.sameReviewer ? 'font-medium text-destructive' : 'text-secondary-foreground'}`}
                               >
                                 {assignment.reviewer2Name}
                                 {assignment.sameReviewer && ' (conflict)'}

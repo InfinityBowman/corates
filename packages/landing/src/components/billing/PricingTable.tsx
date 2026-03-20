@@ -189,7 +189,7 @@ export function PricingTable({ currentTier: currentTierProp }: PricingTableProps
     <div className='pb-6'>
       {/* Trial CTA */}
       {canStartTrial && trialPlan && (
-        <div className='mb-10 rounded-2xl border-2 border-blue-200 bg-gradient-to-r from-blue-50 to-indigo-50 p-6'>
+        <div className='mb-10 rounded-2xl border-2 border-blue-200 bg-linear-to-r from-blue-50 to-indigo-50 p-6'>
           <div className='flex flex-col items-center gap-4 text-center sm:flex-row sm:text-left'>
             <div className='flex size-12 shrink-0 items-center justify-center rounded-full bg-blue-100'>
               <ZapIcon className='size-6 text-blue-600' />
@@ -445,8 +445,8 @@ export function PricingTable({ currentTier: currentTierProp }: PricingTableProps
         <DialogContent className='max-w-md'>
           <DialogHeader>
             <div className='flex items-start gap-3'>
-              <div className='flex size-10 shrink-0 items-center justify-center rounded-full bg-red-100'>
-                <AlertCircleIcon className='size-5 text-red-600' />
+              <div className='flex size-10 shrink-0 items-center justify-center rounded-full bg-destructive/10'>
+                <AlertCircleIcon className='size-5 text-destructive' />
               </div>
               <div>
                 <DialogTitle>Cannot Change Plan</DialogTitle>

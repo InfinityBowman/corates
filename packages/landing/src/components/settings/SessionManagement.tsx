@@ -310,7 +310,7 @@ export function SessionManagement() {
               <button
                 onClick={() => setShowRevokeAllDialog(true)}
                 disabled={revokingAll}
-                className='text-destructive hover:bg-destructive/10 flex items-center gap-2 rounded-md bg-red-50 px-4 py-2 text-sm font-medium transition disabled:opacity-50'
+                className='text-destructive hover:bg-destructive/10 flex items-center gap-2 rounded-md bg-destructive/10 px-4 py-2 text-sm font-medium transition disabled:opacity-50'
               >
                 <Trash2Icon className='size-4' />
                 <span>Sign out everywhere</span>

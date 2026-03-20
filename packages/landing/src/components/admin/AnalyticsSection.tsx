@@ -409,7 +409,7 @@ export function AnalyticsSection() {
                 <span className='text-muted-foreground ml-1 text-sm'>success</span>
               </div>
               <div>
-                <span className='text-2xl font-bold text-red-600'>
+                <span className='text-2xl font-bold text-destructive'>
                   {webhookData.totals?.failed ?? 0}
                 </span>
                 <span className='text-muted-foreground ml-1 text-sm'>failed</span>

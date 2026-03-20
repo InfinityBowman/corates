@@ -45,18 +45,18 @@ export function PdfUploadSection({ studies }: PdfUploadSectionProps) {
             <div
               key={pdf.id}
               className={`flex items-center gap-3 rounded-lg border p-3 ${
-                pdf.error ? 'border-red-200 bg-red-50' : 'bg-muted border-border'
+                pdf.error ? 'border-destructive/20 bg-destructive/10' : 'bg-muted border-border'
               }`}
             >
               <FileTextIcon
-                className={`size-5 shrink-0 ${pdf.error ? 'text-red-600' : 'text-muted-foreground'}`}
+                className={`size-5 shrink-0 ${pdf.error ? 'text-destructive' : 'text-muted-foreground'}`}
               />
               <div className='min-w-0 flex-1'>
                 {pdf.error ?
                   <>
                     <div className='flex items-center gap-2'>
-                      <AlertTriangleIcon className='size-4 shrink-0 text-red-600' />
-                      <span className='text-sm font-medium text-red-600'>{pdf.error}</span>
+                      <AlertTriangleIcon className='size-4 shrink-0 text-destructive' />
+                      <span className='text-sm font-medium text-destructive'>{pdf.error}</span>
                       <button
                         type='button'
                         onClick={() => studies.retryPdfExtraction?.(pdf.id)}
@@ -66,7 +66,7 @@ export function PdfUploadSection({ studies }: PdfUploadSectionProps) {
                         Retry
                       </button>
                     </div>
-                    <p className='mt-1 truncate text-xs text-red-600'>{pdf.file.name}</p>
+                    <p className='mt-1 truncate text-xs text-destructive'>{pdf.file.name}</p>
                   </>
                 : <>
                     <div className='flex items-center gap-2'>

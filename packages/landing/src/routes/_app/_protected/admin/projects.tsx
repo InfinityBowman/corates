@@ -240,13 +240,13 @@ function AdminProjectList() {
 
       {/* Error State */}
       {projectsQuery.isError && (
-        <div className='rounded-lg border border-red-200 bg-red-50 p-6 text-center'>
-          <AlertCircleIcon className='mx-auto mb-2 size-8 text-red-500' />
-          <p className='text-red-700'>Failed to load projects</p>
+        <div className='rounded-lg border border-destructive/20 bg-destructive/10 p-6 text-center'>
+          <AlertCircleIcon className='mx-auto mb-2 size-8 text-destructive' />
+          <p className='text-destructive'>Failed to load projects</p>
           <button
             type='button'
             onClick={() => projectsQuery.refetch()}
-            className='mt-2 text-sm text-red-600 hover:text-red-700'
+            className='mt-2 text-sm text-destructive hover:text-destructive/80'
           >
             Try again
           </button>

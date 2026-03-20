@@ -100,8 +100,8 @@ export function PlansSettings() {
   if (pageState === 'error') {
     return (
       <div className='flex min-h-[60vh] flex-col items-center justify-center px-4'>
-        <div className='flex size-16 items-center justify-center rounded-full bg-red-100'>
-          <AlertCircleIcon className='size-8 text-red-600' />
+        <div className='flex size-16 items-center justify-center rounded-full bg-destructive/10'>
+          <AlertCircleIcon className='size-8 text-destructive' />
         </div>
         <h2 className='text-foreground mt-4 text-xl font-semibold'>
           {BILLING_MESSAGES.CHECKOUT_ERROR.title}

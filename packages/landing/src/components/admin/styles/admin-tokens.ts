@@ -35,25 +35,25 @@ export const shadowScale: Record<string, string> = {
 };
 
 export const textColors: Record<string, string> = {
-  primary: 'text-gray-900',
-  secondary: 'text-gray-500',
-  tertiary: 'text-gray-400',
-  disabled: 'text-gray-300',
+  primary: 'text-foreground',
+  secondary: 'text-muted-foreground',
+  tertiary: 'text-muted-foreground',
+  disabled: 'text-muted-foreground',
   inverse: 'text-white',
   link: 'text-blue-600 hover:text-blue-700',
-  error: 'text-red-600',
+  error: 'text-destructive',
   success: 'text-green-600',
   warning: 'text-yellow-600',
 };
 
 export const bgColors: Record<string, string> = {
-  page: 'bg-gray-50',
-  card: 'bg-white',
-  elevated: 'bg-white',
-  subtle: 'bg-gray-50',
-  hover: 'hover:bg-gray-50',
+  page: 'bg-muted',
+  card: 'bg-card',
+  elevated: 'bg-card',
+  subtle: 'bg-muted',
+  hover: 'hover:bg-muted',
   active: 'bg-blue-50',
-  tableHeader: 'bg-gray-50',
+  tableHeader: 'bg-muted',
   selected: 'bg-blue-50',
 };
 
@@ -61,27 +61,27 @@ export const statusBadge: Record<string, string> = {
   base: 'inline-flex items-center justify-center rounded-[0.5em] px-[0.7em] py-[0.3em] text-sm font-medium',
   small: 'px-[0.4em] py-[0.1em] text-[10px]',
   success: 'bg-green-100 text-green-800',
-  error: 'bg-red-100 text-red-800',
+  error: 'bg-destructive/10 text-destructive',
   warning: 'bg-yellow-100 text-yellow-800',
   info: 'bg-blue-100 text-blue-800',
-  neutral: 'bg-gray-100 text-gray-800',
+  neutral: 'bg-muted text-foreground',
   purple: 'bg-purple-100 text-purple-800',
 };
 
 export const typography: Record<string, string> = {
-  h1: 'text-2xl font-bold text-gray-900',
-  h2: 'text-lg font-medium text-gray-900',
-  h3: 'text-base font-medium text-gray-900',
-  h4: 'text-sm font-medium text-gray-900',
-  body: 'text-sm text-gray-900',
-  bodySecondary: 'text-sm text-gray-500',
-  bodyTertiary: 'text-sm text-gray-400',
-  caption: 'text-xs text-gray-500',
-  label: 'text-sm font-medium text-gray-700',
+  h1: 'text-2xl font-bold text-foreground',
+  h2: 'text-lg font-medium text-foreground',
+  h3: 'text-base font-medium text-foreground',
+  h4: 'text-sm font-medium text-foreground',
+  body: 'text-sm text-foreground',
+  bodySecondary: 'text-sm text-muted-foreground',
+  bodyTertiary: 'text-sm text-muted-foreground',
+  caption: 'text-xs text-muted-foreground',
+  label: 'text-sm font-medium text-foreground',
   code: 'font-mono text-sm',
   codeSmall: 'font-mono text-xs',
-  tableHeader: 'text-xs font-medium tracking-wider text-gray-500 uppercase',
-  tableCell: 'text-sm text-gray-900',
+  tableHeader: 'text-xs font-medium tracking-wider text-muted-foreground uppercase',
+  tableCell: 'text-sm text-foreground',
 };
 
 export const spacing: Record<string, string> = {
@@ -120,11 +120,11 @@ export const shadows: Record<string, string> = {
 };
 
 export const borders: Record<string, string> = {
-  card: 'border border-gray-200',
-  input: 'border border-gray-200',
+  card: 'border border-border',
+  input: 'border border-border',
   inputFocus: 'border-blue-300',
-  divider: 'border-b border-gray-200',
-  table: 'border border-gray-200',
+  divider: 'border-b border-border',
+  table: 'border border-border',
 };
 
 export const focus: Record<string, string> = {
@@ -143,10 +143,10 @@ const buttonVariantStyles: Record<string, string> = {
   destructive:
     'bg-red-500 text-white hover:bg-red-600 focus:ring-2 focus:ring-red-500 focus:ring-offset-2',
   outline:
-    'border border-gray-200 bg-transparent hover:bg-gray-50 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2',
+    'border border-border bg-transparent hover:bg-muted text-foreground focus:ring-2 focus:ring-blue-500 focus:ring-offset-2',
   secondary:
-    'bg-gray-100 text-gray-900 hover:bg-gray-200 border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2',
-  ghost: 'bg-transparent hover:bg-gray-100 text-gray-900 focus:ring-2 focus:ring-blue-500',
+    'bg-muted text-foreground hover:bg-muted/80 border border-border focus:ring-2 focus:ring-blue-500 focus:ring-offset-2',
+  ghost: 'bg-transparent hover:bg-muted text-foreground focus:ring-2 focus:ring-blue-500',
   link: 'text-blue-600 hover:underline bg-transparent underline-offset-4',
 };
 
@@ -166,49 +166,49 @@ export const button: Record<string, string> = {
   primary:
     'bg-blue-600 text-white hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none',
   secondary:
-    'border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none',
+    'border border-border bg-card text-foreground hover:bg-muted focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none',
   danger:
     'bg-red-600 text-white hover:bg-red-700 focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:outline-none',
   dangerOutline:
-    'border border-red-300 bg-white text-red-600 hover:bg-red-50 focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:outline-none',
+    'border border-destructive/30 bg-card text-destructive hover:bg-destructive/10 focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:outline-none',
   ghost:
-    'text-gray-600 hover:bg-gray-100 hover:text-gray-900 focus:ring-2 focus:ring-blue-500 focus:outline-none',
+    'text-muted-foreground hover:bg-muted hover:text-foreground focus:ring-2 focus:ring-blue-500 focus:outline-none',
   link: 'text-blue-600 hover:text-blue-700 focus:outline-none',
   small: 'px-3 py-1.5 text-sm rounded-lg',
   icon: 'p-2',
 };
 
 export const card: Record<string, string> = {
-  base: 'rounded-xl border border-gray-200 bg-white shadow-xs',
-  header: 'border-b border-gray-200 px-6 py-4',
+  base: 'rounded-xl border border-border bg-card shadow-xs',
+  header: 'border-b border-border px-6 py-4',
   body: 'p-6',
   bodyCompact: 'p-4',
   bodySpacious: 'p-8',
-  footer: 'border-t border-gray-200 px-6 py-4',
+  footer: 'border-t border-border px-6 py-4',
 };
 
 export const table: Record<string, string> = {
-  container: 'overflow-hidden rounded-xl border border-gray-200',
+  container: 'overflow-hidden rounded-xl border border-border',
   base: 'w-full',
-  header: 'border-b border-gray-200 bg-gray-50',
-  headerCell: 'px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase',
-  headerCellSortable: 'cursor-pointer select-none hover:bg-gray-100',
-  body: 'divide-y divide-gray-200 bg-white',
-  row: 'transition-colors hover:bg-gray-50',
+  header: 'border-b border-border bg-muted',
+  headerCell: 'px-6 py-3 text-left text-xs font-medium tracking-wider text-muted-foreground uppercase',
+  headerCellSortable: 'cursor-pointer select-none hover:bg-muted',
+  body: 'divide-y divide-border bg-card',
+  row: 'transition-colors hover:bg-muted',
   rowClickable: 'cursor-pointer',
-  cell: 'px-6 py-4 text-sm text-gray-900',
-  cellCompact: 'px-4 py-3 text-sm text-gray-900',
+  cell: 'px-6 py-4 text-sm text-foreground',
+  cellCompact: 'px-4 py-3 text-sm text-foreground',
 };
 
 export const input: Record<string, string> = {
-  base: 'w-full h-10 rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 shadow-xs placeholder:text-gray-400 focus:outline-none focus:border-blue-300 focus:ring-[3px] focus:ring-blue-100',
+  base: 'w-full h-10 rounded-xl border border-border bg-card px-3 py-2 text-sm text-foreground shadow-xs placeholder:text-muted-foreground focus:outline-none focus:border-blue-300 focus:ring-[3px] focus:ring-blue-100',
   withIconLeft: 'pl-10',
   withIconRight: 'pr-10',
   error:
     'border-red-300 focus:border-red-300 focus:ring-red-100 text-red-900 placeholder:text-red-300',
-  disabled: 'bg-gray-50 text-gray-500 cursor-not-allowed',
+  disabled: 'bg-muted text-muted-foreground cursor-not-allowed',
   select:
-    'h-10 rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm focus:outline-none focus:border-blue-300 focus:ring-[3px] focus:ring-blue-100',
+    'h-10 rounded-xl border border-border bg-card px-3 py-2 text-sm focus:outline-none focus:border-blue-300 focus:ring-[3px] focus:ring-blue-100',
 };
 
 export const alert: Record<string, string> = {
@@ -216,7 +216,7 @@ export const alert: Record<string, string> = {
   info: 'border-blue-200 bg-blue-50 text-blue-700',
   success: 'border-green-200 bg-green-50 text-green-700',
   warning: 'border-yellow-200 bg-yellow-50 text-yellow-700',
-  error: 'border-red-200 bg-red-50 text-red-700',
+  error: 'border-destructive/20 bg-destructive/10 text-destructive',
 };
 
 export const loading: Record<string, string> = {
@@ -225,9 +225,9 @@ export const loading: Record<string, string> = {
   spinner: 'h-8 w-8 animate-spin text-blue-600',
   spinnerSmall: 'h-6 w-6 animate-spin text-blue-500',
   spinnerInline: 'h-4 w-4 animate-spin',
-  skeleton: 'animate-pulse rounded bg-gray-200',
-  skeletonText: 'h-4 w-3/4 animate-pulse rounded bg-gray-200',
-  skeletonCircle: 'h-10 w-10 animate-pulse rounded-full bg-gray-200',
+  skeleton: 'animate-pulse rounded bg-muted',
+  skeletonText: 'h-4 w-3/4 animate-pulse rounded bg-muted',
+  skeletonCircle: 'h-10 w-10 animate-pulse rounded-full bg-muted',
 };
 
 export const iconSize: Record<string, string> = {

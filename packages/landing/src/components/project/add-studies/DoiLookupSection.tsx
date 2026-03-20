@@ -109,7 +109,7 @@ export function DoiLookupSection({ studies }: DoiLookupSectionProps) {
             <button
               type='button'
               onClick={() => studies.clearLookupRefs()}
-              className='text-xs text-red-600 hover:text-red-700 hover:underline'
+              className='text-xs text-destructive hover:text-destructive/80 hover:underline'
             >
               Clear all
             </button>

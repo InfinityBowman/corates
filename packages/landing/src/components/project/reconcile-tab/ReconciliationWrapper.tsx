@@ -480,7 +480,7 @@ export function ReconciliationWrapper({
     return (
       <div className='flex min-h-screen items-center justify-center bg-blue-50'>
         <div className='bg-card max-w-md rounded-lg p-8 shadow-lg'>
-          <h2 className='mb-2 text-xl font-bold text-red-600'>Error</h2>
+          <h2 className='mb-2 text-xl font-bold text-destructive'>Error</h2>
           <p className='text-secondary-foreground'>{error}</p>
           <button
             onClick={handleCancel}

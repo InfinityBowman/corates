@@ -174,9 +174,9 @@ export function ROBINSIChecklist({
 
         {/* Critical risk message when stopped */}
         {stopAssessment && (
-          <div className='rounded-lg border-2 border-red-200 bg-red-50 p-6 text-center'>
-            <div className='mb-2 text-lg font-semibold text-red-800'>Critical Risk of Bias</div>
-            <p className='text-sm text-red-600'>
+          <div className='rounded-lg border-2 border-destructive/20 bg-destructive/10 p-6 text-center'>
+            <div className='mb-2 text-lg font-semibold text-destructive'>Critical Risk of Bias</div>
+            <p className='text-sm text-destructive'>
               Based on Section B responses, this result has been classified as Critical risk of
               bias. Domain assessment is not required.
             </p>

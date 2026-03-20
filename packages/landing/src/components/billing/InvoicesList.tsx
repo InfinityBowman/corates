@@ -75,7 +75,7 @@ export function InvoicesList() {
 
   return (
     <Card>
-      <CardHeader className='bg-muted/50 border-b'>
+      <CardHeader className='border-b'>
         <CardTitle className='flex items-center gap-2'>
           <FileTextIcon className='text-muted-foreground size-5' />
           Invoices

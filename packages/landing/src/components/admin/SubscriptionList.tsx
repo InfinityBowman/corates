@@ -126,12 +126,12 @@ export function SubscriptionList({
                             <p>Updated: {formatDate(subscription.updatedAt)}</p>
                           )}
                           {subscription.canceledAt && (
-                            <p className='text-red-600'>
+                            <p className='text-destructive'>
                               Canceled: {formatDate(subscription.canceledAt)}
                             </p>
                           )}
                           {subscription.endedAt && (
-                            <p className='text-red-600'>
+                            <p className='text-destructive'>
                               Ended: {formatDate(subscription.endedAt)}
                             </p>
                           )}
@@ -198,7 +198,7 @@ export function SubscriptionList({
                       <button
                         onClick={() => onCancel?.(subscription.id)}
                         disabled={loading}
-                        className='bg-card rounded-lg border border-red-300 px-3 py-2 text-sm font-medium text-red-600 hover:bg-red-50 disabled:opacity-50'
+                        className='bg-card rounded-lg border border-destructive/30 px-3 py-2 text-sm font-medium text-destructive hover:bg-destructive/10 disabled:opacity-50'
                         title='Cancel subscription'
                         aria-label='Cancel subscription'
                       >

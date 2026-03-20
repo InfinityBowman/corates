@@ -327,13 +327,13 @@ function UserDetailPage() {
 
       {/* Error state */}
       {userDetailsQuery.isError && (
-        <div className='rounded-lg border border-red-200 bg-red-50 p-6 text-center'>
-          <AlertCircleIcon className='mx-auto mb-2 size-8 text-red-500' />
-          <p className='text-red-700'>Failed to load user details</p>
+        <div className='rounded-lg border border-destructive/20 bg-destructive/10 p-6 text-center'>
+          <AlertCircleIcon className='mx-auto mb-2 size-8 text-destructive' />
+          <p className='text-destructive'>Failed to load user details</p>
           <button
             type='button'
             onClick={() => userDetailsQuery.refetch()}
-            className='mt-2 text-sm text-red-600 hover:text-red-700'
+            className='mt-2 text-sm text-destructive hover:text-destructive/80'
           >
             Try again
           </button>
@@ -485,7 +485,7 @@ function UserDetailPage() {
                 <>
                   <div>
                     <dt className='text-muted-foreground text-sm font-medium'>Ban Reason</dt>
-                    <dd className='mt-1 text-sm text-red-600'>{userData.user.banReason || '-'}</dd>
+                    <dd className='mt-1 text-sm text-destructive'>{userData.user.banReason || '-'}</dd>
                   </div>
                   <div>
                     <dt className='text-muted-foreground text-sm font-medium'>Ban Expires</dt>
@@ -546,20 +546,20 @@ function UserDetailPage() {
             {(userData.orgs?.length ?? 0) > 0 ?
               <Table>
                 <TableHeader>
-                  <TableRow className='border-b border-gray-200 bg-gray-50'>
-                    <TableHead className='px-6 py-3 text-xs font-medium tracking-wider text-gray-500 uppercase'>
+                  <TableRow className='border-b border-border bg-muted'>
+                    <TableHead className='px-6 py-3 text-xs font-medium tracking-wider text-muted-foreground uppercase'>
                       Organization
                     </TableHead>
-                    <TableHead className='px-6 py-3 text-xs font-medium tracking-wider text-gray-500 uppercase'>
+                    <TableHead className='px-6 py-3 text-xs font-medium tracking-wider text-muted-foreground uppercase'>
                       Role
                     </TableHead>
-                    <TableHead className='px-6 py-3 text-xs font-medium tracking-wider text-gray-500 uppercase'>
+                    <TableHead className='px-6 py-3 text-xs font-medium tracking-wider text-muted-foreground uppercase'>
                       Plan
                     </TableHead>
-                    <TableHead className='px-6 py-3 text-xs font-medium tracking-wider text-gray-500 uppercase'>
+                    <TableHead className='px-6 py-3 text-xs font-medium tracking-wider text-muted-foreground uppercase'>
                       Access
                     </TableHead>
-                    <TableHead className='px-6 py-3 text-xs font-medium tracking-wider text-gray-500 uppercase'>
+                    <TableHead className='px-6 py-3 text-xs font-medium tracking-wider text-muted-foreground uppercase'>
                       Joined
                     </TableHead>
                   </TableRow>
@@ -567,7 +567,7 @@ function UserDetailPage() {
                 <TableBody>
                   {userData.orgs!.map(org => (
                     <TableRow key={org.orgId}>
-                      <TableCell className='px-4 py-3 text-sm text-gray-900'>
+                      <TableCell className='px-4 py-3 text-sm text-foreground'>
                         <Link
                           to={'/admin/orgs/$orgId' as string}
                           params={{ orgId: org.orgId } as Record<string, string>}
@@ -577,7 +577,7 @@ function UserDetailPage() {
                         </Link>
                         <p className='text-muted-foreground text-xs'>@{org.orgSlug}</p>
                       </TableCell>
-                      <TableCell className='px-4 py-3 text-sm text-gray-900'>
+                      <TableCell className='px-4 py-3 text-sm text-foreground'>
                         <Badge
                           variant={
                             org.role === 'owner' ? 'default'
@@ -589,10 +589,10 @@ function UserDetailPage() {
                           {org.role}
                         </Badge>
                       </TableCell>
-                      <TableCell className='px-4 py-3 text-sm text-gray-900'>
+                      <TableCell className='px-4 py-3 text-sm text-foreground'>
                         {org.billing.planName}
                       </TableCell>
-                      <TableCell className='px-4 py-3 text-sm text-gray-900'>
+                      <TableCell className='px-4 py-3 text-sm text-foreground'>
                         <Badge
                           variant={
                             org.billing.accessMode === 'full' ? 'success'
@@ -623,14 +623,14 @@ function UserDetailPage() {
             {(userData.projects?.length ?? 0) > 0 ?
               <Table>
                 <TableHeader>
-                  <TableRow className='border-b border-gray-200 bg-gray-50'>
-                    <TableHead className='px-6 py-3 text-xs font-medium tracking-wider text-gray-500 uppercase'>
+                  <TableRow className='border-b border-border bg-muted'>
+                    <TableHead className='px-6 py-3 text-xs font-medium tracking-wider text-muted-foreground uppercase'>
                       Project
                     </TableHead>
-                    <TableHead className='px-6 py-3 text-xs font-medium tracking-wider text-gray-500 uppercase'>
+                    <TableHead className='px-6 py-3 text-xs font-medium tracking-wider text-muted-foreground uppercase'>
                       Role
                     </TableHead>
-                    <TableHead className='px-6 py-3 text-xs font-medium tracking-wider text-gray-500 uppercase'>
+                    <TableHead className='px-6 py-3 text-xs font-medium tracking-wider text-muted-foreground uppercase'>
                       Joined
                     </TableHead>
                   </TableRow>
@@ -638,10 +638,10 @@ function UserDetailPage() {
                 <TableBody>
                   {userData.projects!.map(project => (
                     <TableRow key={project.id}>
-                      <TableCell className='px-4 py-3 text-sm font-medium text-gray-900'>
+                      <TableCell className='px-4 py-3 text-sm font-medium text-foreground'>
                         {project.name}
                       </TableCell>
-                      <TableCell className='px-4 py-3 text-sm text-gray-900'>
+                      <TableCell className='px-4 py-3 text-sm text-foreground'>
                         <Badge variant={project.role === 'owner' ? 'default' : 'secondary'}>
                           {project.role}
                         </Badge>
@@ -668,7 +668,7 @@ function UserDetailPage() {
                   type='button'
                   onClick={() => setConfirmDialog({ type: 'revoke-all' })}
                   disabled={loading}
-                  className='inline-flex items-center text-sm text-red-600 hover:text-red-700 disabled:opacity-50'
+                  className='inline-flex items-center text-sm text-destructive hover:text-destructive/80 disabled:opacity-50'
                 >
                   <LogOutIcon className='mr-1 size-4' />
                   Revoke All
@@ -708,7 +708,7 @@ function UserDetailPage() {
                         type='button'
                         onClick={() => handleRevokeSession(session.id)}
                         disabled={loading}
-                        className='bg-card inline-flex items-center rounded-lg border border-red-200 px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50 disabled:opacity-50'
+                        className='bg-card inline-flex items-center rounded-lg border border-destructive/20 px-3 py-1.5 text-xs font-medium text-destructive hover:bg-destructive/10 disabled:opacity-50'
                       >
                         <LogOutIcon className='mr-1 size-3' />
                         Revoke

@@ -157,15 +157,15 @@ export function DevTemplateSelector({ projectId, orgId }: DevTemplateSelectorPro
     return (
       <div className='flex flex-col gap-3'>
         <button
-          className='flex items-center gap-1 self-start text-xs text-gray-500 hover:text-gray-700'
+          className='flex items-center gap-1 self-start text-xs text-muted-foreground hover:text-foreground'
           onClick={() => setStep('select')}
         >
           <ArrowLeftIcon size={12} />
           Back to template selection
         </button>
 
-        <div className='text-xs text-gray-500'>
-          Template: <span className='font-medium text-gray-700'>{pendingTemplate}</span>
+        <div className='text-xs text-muted-foreground'>
+          Template: <span className='font-medium text-foreground'>{pendingTemplate}</span>
         </div>
 
         <DevUserMapping
@@ -179,7 +179,7 @@ export function DevTemplateSelector({ projectId, orgId }: DevTemplateSelectorPro
         />
 
         {isApplying && (
-          <div className='flex items-center gap-2 text-xs text-gray-500'>
+          <div className='flex items-center gap-2 text-xs text-muted-foreground'>
             <span className='size-3 animate-spin rounded-full border-2 border-purple-500 border-t-transparent' />
             Applying template...
           </div>
@@ -188,7 +188,7 @@ export function DevTemplateSelector({ projectId, orgId }: DevTemplateSelectorPro
         {result && (
           <div
             className={`flex items-center gap-1.5 rounded p-2 text-xs ${
-              result.success ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-600'
+              result.success ? 'bg-green-50 text-green-700' : 'bg-destructive/10 text-destructive'
             }`}
           >
             {result.success ?
@@ -203,12 +203,12 @@ export function DevTemplateSelector({ projectId, orgId }: DevTemplateSelectorPro
 
   return (
     <div className='flex flex-col gap-3'>
-      <h4 className='text-xs font-semibold text-gray-900'>Mock Data Templates</h4>
+      <h4 className='text-xs font-semibold text-foreground'>Mock Data Templates</h4>
 
-      {templatesLoading && <div className='text-xs text-gray-400'>Loading templates...</div>}
+      {templatesLoading && <div className='text-xs text-muted-foreground'>Loading templates...</div>}
 
       {templatesError && (
-        <div className='flex items-center gap-1.5 rounded bg-red-50 p-2 text-xs text-red-600'>
+        <div className='flex items-center gap-1.5 rounded bg-destructive/10 p-2 text-xs text-destructive'>
           <AlertCircleIcon size={14} />
           Failed to load templates
         </div>
@@ -217,11 +217,11 @@ export function DevTemplateSelector({ projectId, orgId }: DevTemplateSelectorPro
       {templates && (
         <div className='flex flex-col gap-3'>
           <div className='flex flex-col gap-1'>
-            <label className='text-2xs font-medium tracking-wide text-gray-500 uppercase'>
+            <label className='text-2xs font-medium tracking-wide text-muted-foreground uppercase'>
               Template
             </label>
             <select
-              className='rounded border border-gray-300 bg-white px-2 py-1.5 text-xs text-gray-700 focus:border-purple-500 focus:outline-none'
+              className='rounded border border-border bg-card px-2 py-1.5 text-xs text-foreground focus:border-purple-500 focus:outline-none'
               value={selectedTemplate}
               onChange={e => setSelectedTemplate(e.target.value)}
               disabled={isApplying}
@@ -236,11 +236,11 @@ export function DevTemplateSelector({ projectId, orgId }: DevTemplateSelectorPro
           </div>
 
           <div className='flex flex-col gap-1'>
-            <label className='text-2xs font-medium tracking-wide text-gray-500 uppercase'>
+            <label className='text-2xs font-medium tracking-wide text-muted-foreground uppercase'>
               Mode
             </label>
             <div className='flex flex-col gap-1.5'>
-              <label className='flex cursor-pointer items-center gap-2 text-xs text-gray-600'>
+              <label className='flex cursor-pointer items-center gap-2 text-xs text-muted-foreground'>
                 <input
                   type='radio'
                   name='mode'
@@ -252,7 +252,7 @@ export function DevTemplateSelector({ projectId, orgId }: DevTemplateSelectorPro
                 />
                 Replace (clear existing)
               </label>
-              <label className='flex cursor-pointer items-center gap-2 text-xs text-gray-600'>
+              <label className='flex cursor-pointer items-center gap-2 text-xs text-muted-foreground'>
                 <input
                   type='radio'
                   name='mode'
@@ -283,7 +283,7 @@ export function DevTemplateSelector({ projectId, orgId }: DevTemplateSelectorPro
       {result && (
         <div
           className={`flex items-center gap-1.5 rounded p-2 text-xs ${
-            result.success ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-600'
+            result.success ? 'bg-green-50 text-green-700' : 'bg-destructive/10 text-destructive'
           }`}
         >
           {result.success ?

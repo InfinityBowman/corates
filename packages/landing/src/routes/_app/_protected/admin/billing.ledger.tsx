@@ -352,7 +352,7 @@ function AdminBillingLedgerPage() {
           const entry = info.row.original;
           if (entry.error) {
             return (
-              <span className='text-xs text-red-600' title={entry.error}>
+              <span className='text-xs text-destructive' title={entry.error}>
                 {entry.error.length > 50 ? `${entry.error.slice(0, 50)}...` : entry.error}
               </span>
             );

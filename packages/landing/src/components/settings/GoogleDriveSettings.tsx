@@ -107,7 +107,7 @@ export function GoogleDriveSettings() {
               type='button'
               onClick={() => setConfirmOpen(true)}
               disabled={disconnecting}
-              className='text-destructive hover:bg-destructive/10 inline-flex items-center gap-1 rounded-lg bg-red-50 px-3 py-1.5 text-sm font-medium transition-colors disabled:opacity-50'
+              className='text-destructive hover:bg-destructive/10 inline-flex items-center gap-1 rounded-lg bg-destructive/10 px-3 py-1.5 text-sm font-medium transition-colors disabled:opacity-50'
             >
               <XIcon className='size-4' />
               {disconnecting ? 'Disconnecting...' : 'Disconnect'}

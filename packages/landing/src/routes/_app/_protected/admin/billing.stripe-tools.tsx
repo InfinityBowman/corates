@@ -549,7 +549,7 @@ function StripeToolsPage() {
                           {formatDate(sub.currentPeriodStart)} - {formatDate(sub.currentPeriodEnd)}
                         </div>
                         {sub.cancelAtPeriodEnd && (
-                          <div className='text-red-600'>Cancels at period end</div>
+                          <div className='text-destructive'>Cancels at period end</div>
                         )}
                         {sub.trialEnd && sub.status === 'trialing' && (
                           <div>

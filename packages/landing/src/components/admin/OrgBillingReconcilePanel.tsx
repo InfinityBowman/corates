@@ -66,7 +66,7 @@ const getSeverityIcon = (severity: string) => {
 const getSeverityColor = (severity: string): string => {
   switch (severity) {
     case 'critical':
-      return 'bg-red-100 text-red-800 border-red-300';
+      return 'bg-destructive/10 text-destructive border-destructive/30';
     case 'high':
       return 'bg-orange-100 text-orange-800 border-orange-300';
     case 'medium':
@@ -191,9 +191,9 @@ export function OrgBillingReconcilePanel({ orgId }: OrgBillingReconcilePanelProp
                 <p className='text-muted-foreground text-sm'>Total Stuck</p>
                 <p className='text-foreground text-2xl font-bold'>{summary.stuckStateCount ?? 0}</p>
               </div>
-              <div className='rounded-lg border border-red-300 bg-red-50 p-4'>
+              <div className='rounded-lg border border-destructive/30 bg-destructive/10 p-4'>
                 <p className='text-muted-foreground text-sm'>Critical</p>
-                <p className='text-2xl font-bold text-red-800'>
+                <p className='text-2xl font-bold text-destructive'>
                   {stuckStates.filter(s => s.severity === 'critical').length}
                 </p>
               </div>
@@ -313,7 +313,7 @@ export function OrgBillingReconcilePanel({ orgId }: OrgBillingReconcilePanelProp
               <div className='border-border bg-muted mt-6 rounded-lg border p-4'>
                 <h3 className='text-foreground mb-3 font-semibold'>Stripe API Comparison</h3>
                 {reconcileData.stripeComparison.error ?
-                  <p className='text-sm text-red-600'>
+                  <p className='text-sm text-destructive'>
                     Error: {reconcileData.stripeComparison.error}
                   </p>
                 : reconcileData.stripeComparison.noActiveSubscription ?
@@ -323,7 +323,7 @@ export function OrgBillingReconcilePanel({ orgId }: OrgBillingReconcilePanelProp
                       <span className='font-medium'>Status Match:</span>
                       {reconcileData.stripeComparison.match ?
                         <CheckCircleIcon className='size-4 text-green-600' />
-                      : <AlertTriangleIcon className='size-4 text-red-600' />}
+                      : <AlertTriangleIcon className='size-4 text-destructive' />}
                     </div>
                     <div>
                       <span className='font-medium'>Local:</span>{' '}

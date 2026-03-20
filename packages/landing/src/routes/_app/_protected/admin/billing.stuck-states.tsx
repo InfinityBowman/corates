@@ -241,7 +241,7 @@ function AdminBillingStuckStatesPage() {
                               </p>
                             )}
                             {org.failedCount && (
-                              <p className='mt-1 text-xs text-red-600'>
+                              <p className='mt-1 text-xs text-destructive'>
                                 {org.failedCount} webhook failures
                               </p>
                             )}
