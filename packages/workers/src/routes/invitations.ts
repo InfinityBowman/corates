@@ -87,6 +87,10 @@ const acceptInvitationRoute = createRoute({
       content: { 'application/json': { schema: ErrorResponseSchema } },
       description: 'Email mismatch or already a member',
     },
+    500: {
+      content: { 'application/json': { schema: ErrorResponseSchema } },
+      description: 'Internal server error',
+    },
   },
 });
 
@@ -323,7 +327,7 @@ const invitationRoutes = $(base.use('*', requireAuth)).openapi(acceptInvitationR
       operation: 'accept_invitation',
       originalError: err.message,
     });
-    return c.json(dbError, 400);
+    return c.json(dbError, 500);
   }
 });
 

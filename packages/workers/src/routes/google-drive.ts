@@ -202,6 +202,10 @@ const pickerTokenRoute = createRoute({
       content: { 'application/json': { schema: ErrorResponseSchema } },
       description: 'Google not connected',
     },
+    500: {
+      content: { 'application/json': { schema: ErrorResponseSchema } },
+      description: 'Internal server error',
+    },
   },
 });
 
@@ -260,9 +264,17 @@ const importRoute = createRoute({
       content: { 'application/json': { schema: ErrorResponseSchema } },
       description: 'Google not connected',
     },
+    403: {
+      content: { 'application/json': { schema: ErrorResponseSchema } },
+      description: 'Access denied',
+    },
     404: {
       content: { 'application/json': { schema: ErrorResponseSchema } },
       description: 'File not found',
+    },
+    500: {
+      content: { 'application/json': { schema: ErrorResponseSchema } },
+      description: 'Internal server error',
     },
   },
 });
@@ -326,7 +338,7 @@ const googleDriveRoutes = $(base.use('*', requireAuth))
         operation: 'get_google_picker_token',
         originalError: typeof err?.message === 'string' ? err.message : String(error),
       });
-      return c.json(systemError, 401);
+      return c.json(systemError, 500);
     }
   })
 
@@ -361,7 +373,7 @@ const googleDriveRoutes = $(base.use('*', requireAuth))
       await requireProjectEdit(db, user!.id, projectId);
     } catch (err) {
       if (isDomainError(err)) {
-        return c.json(err, 401);
+        return c.json(err, 403);
       }
       throw err;
     }
@@ -401,7 +413,7 @@ const googleDriveRoutes = $(base.use('*', requireAuth))
           operation: 'fetch_google_drive_file',
           originalError: `HTTP ${metaResponse.status}`,
         });
-        return c.json(systemError, 400);
+        return c.json(systemError, 500);
       }
 
       const fileMeta = (await metaResponse.json()) as {
@@ -445,7 +457,7 @@ const googleDriveRoutes = $(base.use('*', requireAuth))
           operation: 'download_google_drive_file',
           originalError: `HTTP ${downloadResponse.status}`,
         });
-        return c.json(systemError, 400);
+        return c.json(systemError, 500);
       }
 
       const fileContent = await downloadResponse.arrayBuffer();
@@ -542,7 +554,7 @@ const googleDriveRoutes = $(base.use('*', requireAuth))
         operation: 'import_google_drive_file',
         originalError: typeof err?.message === 'string' ? err.message : String(error),
       });
-      return c.json(systemError, 400);
+      return c.json(systemError, 500);
     }
   });
 
