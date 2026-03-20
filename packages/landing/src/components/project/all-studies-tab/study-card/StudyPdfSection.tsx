@@ -77,7 +77,7 @@ export function StudyPdfSection({ study, onOpenGoogleDrive, readOnly }: StudyPdf
         onChange={handleFileSelect}
       />
 
-      <div className='space-y-3'>
+      <div className='flex flex-col gap-3'>
         <div className='flex items-center justify-between'>
           <h4 className='text-secondary-foreground text-sm font-medium'>PDFs ({pdfs.length})</h4>
           {!readOnly && (
@@ -88,7 +88,7 @@ export function StudyPdfSection({ study, onOpenGoogleDrive, readOnly }: StudyPdf
                 disabled={uploading}
                 className='text-primary inline-flex items-center gap-1 rounded-md bg-blue-50 px-2 py-1.5 text-sm font-medium transition-colors hover:bg-blue-100 disabled:cursor-not-allowed disabled:opacity-50'
               >
-                {uploading ? 'Uploading...' : <PlusIcon className='h-4 w-4' />}
+                {uploading ? 'Uploading...' : <PlusIcon className='size-4' />}
               </button>
               <button
                 type='button'
@@ -96,14 +96,14 @@ export function StudyPdfSection({ study, onOpenGoogleDrive, readOnly }: StudyPdf
                 className='text-muted-foreground hover:text-primary rounded-md px-2 py-1.5 text-sm font-medium transition-colors hover:bg-blue-50'
                 title='Import from Google Drive'
               >
-                <img src='/logos/drive.svg' alt='Google Drive' className='h-4 w-4' />
+                <img src='/logos/drive.svg' alt='Google Drive' className='size-4' />
               </button>
             </div>
           )}
         </div>
 
         {pdfs.length > 0 ?
-          <div className='space-y-2'>
+          <div className='flex flex-col gap-2'>
             {sortedPdfs.map((pdf: any) => (
               <PdfListItem
                 key={pdf.id}

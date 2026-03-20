@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { createFileRoute, useNavigate, useSearch } from '@tanstack/react-router';
 import { useAuthStore } from '@/stores/authStore';
 import { handleError } from '@/lib/error-utils';
+import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import {
   PasswordInput,
   PasswordInputControl,
@@ -25,7 +26,7 @@ function ResetPasswordPage() {
   const { token } = useSearch({ from: '/_auth/reset-password' });
 
   return (
-    <div className='border-border bg-card relative w-full max-w-md space-y-4 rounded-xl border p-6 shadow-2xl sm:max-w-xl sm:rounded-3xl sm:p-12'>
+    <div className='border-border bg-card relative flex w-full max-w-md flex-col gap-4 rounded-xl border p-6 shadow-2xl sm:max-w-xl sm:rounded-3xl sm:p-12'>
       <a href='/' className='absolute top-4 left-4 sm:top-6 sm:left-6'>
         <img src='/logo.svg' alt='CoRATES' className='h-6 w-auto sm:h-7' />
       </a>
@@ -94,16 +95,22 @@ function RequestResetForm() {
       </div>
 
       {success && (
-        <div className='animate-in fade-in rounded-lg border border-green-200 bg-green-50 p-4 text-center duration-200'>
-          <p className='mb-1 text-sm font-medium text-green-700'>Reset Email Sent!</p>
-          <p className='text-xs text-green-600'>
-            Check your email for instructions to reset your password. Redirecting you to sign in...
-          </p>
-        </div>
+        <Alert variant='success' className='animate-in fade-in text-center duration-200'>
+          <div>
+            <AlertTitle>Reset Email Sent!</AlertTitle>
+            <AlertDescription>
+              Check your email for instructions to reset your password. Redirecting you to sign
+              in...
+            </AlertDescription>
+          </div>
+        </Alert>
       )}
 
       {!success && (
-        <form onSubmit={handleSubmit} className='animate-in fade-in space-y-4 duration-200'>
+        <form
+          onSubmit={handleSubmit}
+          className='animate-in fade-in flex flex-col gap-4 duration-200'
+        >
           <div>
             <label
               className='text-secondary-foreground mb-1 block text-xs font-semibold sm:mb-2 sm:text-sm'
@@ -220,16 +227,21 @@ function SetNewPasswordForm({ token }: { token: string }) {
       </div>
 
       {success && (
-        <div className='animate-in fade-in rounded-lg border border-green-200 bg-green-50 p-4 text-center duration-200'>
-          <p className='mb-1 text-sm font-medium text-green-700'>Password Reset Successfully!</p>
-          <p className='text-xs text-green-600'>
-            Your password has been updated. Redirecting you to sign in...
-          </p>
-        </div>
+        <Alert variant='success' className='animate-in fade-in text-center duration-200'>
+          <div>
+            <AlertTitle>Password Reset Successfully!</AlertTitle>
+            <AlertDescription>
+              Your password has been updated. Redirecting you to sign in...
+            </AlertDescription>
+          </div>
+        </Alert>
       )}
 
       {!success && (
-        <form onSubmit={handleSubmit} className='animate-in fade-in space-y-4 duration-200'>
+        <form
+          onSubmit={handleSubmit}
+          className='animate-in fade-in flex flex-col gap-4 duration-200'
+        >
           <div>
             <label
               className='text-secondary-foreground mb-1 block text-xs font-semibold sm:mb-2 sm:text-sm'

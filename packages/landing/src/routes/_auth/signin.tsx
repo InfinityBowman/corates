@@ -75,7 +75,7 @@ function SignInPage() {
 
   useLayoutEffect(() => {
     updateFormHeight();
-  }, [updateFormHeight]);
+  }, [updateFormHeight, displayError]);
 
   async function handleGoogleSignIn() {
     setGoogleLoading(true);
@@ -141,7 +141,7 @@ function SignInPage() {
   }
 
   return (
-    <div className='border-border bg-card relative w-full max-w-md space-y-4 rounded-xl border p-6 shadow-2xl sm:max-w-xl sm:rounded-3xl sm:p-12'>
+    <div className='border-border bg-card relative flex w-full max-w-md flex-col gap-4 rounded-xl border p-6 shadow-2xl sm:max-w-xl sm:rounded-3xl sm:p-12'>
       <a href='/' className='absolute top-4 left-4 sm:top-6 sm:left-6'>
         <img src='/logo.svg' alt='CoRATES' className='h-6 w-auto sm:h-7' />
       </a>
@@ -240,7 +240,7 @@ function SignInPage() {
                 className='bg-card w-1/2 shrink-0 px-1'
               >
                 <form aria-labelledby='signin-heading' onSubmit={handleSubmit} autoComplete='off'>
-                  <div className='space-y-4'>
+                  <div className='flex flex-col gap-4'>
                     <div>
                       <label
                         className='text-secondary-foreground mb-1 block text-xs font-semibold sm:mb-2 sm:text-sm'

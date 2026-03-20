@@ -150,7 +150,7 @@ export function DomainSection({
           }
 
           <svg
-            className={`text-muted-foreground/70 h-5 w-5 transition-transform ${collapsed ? '' : 'rotate-180'}`}
+            className={`text-muted-foreground/70 size-5 transition-transform ${collapsed ? '' : 'rotate-180'}`}
             fill='none'
             stroke='currentColor'
             viewBox='0 0 24 24'
@@ -171,11 +171,11 @@ export function DomainSection({
                   <div className='border-border/50 text-muted-foreground mb-2 border-b pb-1 text-sm font-medium'>
                     {subsection.name}
                   </div>
-                  <div className='space-y-1'>{renderQuestions(subsection.questions)}</div>
+                  <div className='flex flex-col gap-1'>{renderQuestions(subsection.questions)}</div>
                 </div>
               ))}
             </>
-          : <div className='space-y-1'>{renderQuestions(questions)}</div>}
+          : <div className='flex flex-col gap-1'>{renderQuestions(questions)}</div>}
 
           {/* Auto-first judgement section */}
           <div className='bg-muted mt-4 rounded-lg p-4'>

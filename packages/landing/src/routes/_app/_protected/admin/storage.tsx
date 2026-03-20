@@ -20,6 +20,7 @@ import { useStorageDocuments } from '@/hooks/useAdminQueries';
 import { deleteStorageDocuments } from '@/stores/adminStore';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { showToast } from '@/components/ui/toast';
+import { Badge } from '@/components/ui/badge';
 import {
   AlertDialog,
   AlertDialogContent,
@@ -31,7 +32,15 @@ import {
   AlertDialogAction,
 } from '@/components/ui/alert-dialog';
 import { DashboardHeader, AdminSection, AdminBox } from '@/components/admin/ui';
-import { input, table } from '@/components/admin/styles/admin-tokens';
+import { Input } from '@/components/ui/input';
+import {
+  Table,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableHead,
+  TableCell,
+} from '@/components/ui/table';
 
 export const Route = createFileRoute('/_app/_protected/admin/storage')({
   component: StorageManagementPage,
@@ -231,22 +240,22 @@ function StorageManagementPage() {
       {/* Filters and Search */}
       <div className='mb-6 flex flex-col gap-4 sm:flex-row'>
         <div className='relative flex-1'>
-          <SearchIcon className='text-muted-foreground/70 absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2' />
-          <input
+          <SearchIcon className='text-muted-foreground/70 absolute top-1/2 left-3 size-4 -translate-y-1/2' />
+          <Input
             type='text'
             placeholder='Search by file name...'
             value={search}
             onChange={handleSearchInput}
-            className={`w-full ${input.base} ${input.withIconLeft}`}
+            className='w-full pl-10'
           />
         </div>
         <div className='sm:w-64'>
-          <input
+          <Input
             type='text'
             placeholder='Filter by prefix (e.g., projects/{id}/)'
             value={prefix}
             onChange={handlePrefixChange}
-            className={`w-full ${input.base}`}
+            className='w-full'
           />
         </div>
       </div>
@@ -279,113 +288,121 @@ function StorageManagementPage() {
       {/* Documents Table */}
       <AdminSection title='Documents'>
         <AdminBox padding='compact' className='overflow-hidden p-0'>
-          <div className='overflow-x-auto'>
-            <table className={table.base}>
-              <thead className={table.header}>
-                <tr className='border-border border-b'>
-                  <th className='px-6 py-3 text-left'>
-                    <button
-                      type='button'
-                      onClick={toggleSelectAll}
-                      className='text-muted-foreground/70 hover:text-muted-foreground flex items-center'
-                      title='Select all'
-                    >
-                      {allCurrentPageSelected ?
-                        <CheckSquareIcon className='h-4 w-4 text-blue-600' />
-                      : <SquareIcon className='h-4 w-4' />}
-                    </button>
-                  </th>
-                  <th className={table.headerCell}>File Name</th>
-                  <th className={table.headerCell}>Size</th>
-                  <th className={table.headerCell}>Project ID</th>
-                  <th className={table.headerCell}>Study ID</th>
-                  <th className={table.headerCell}>Uploaded</th>
-                  <th className={`${table.headerCell} text-right`}>Actions</th>
-                </tr>
-              </thead>
-              <tbody className={table.body}>
-                {documentsDataQuery.isLoading ?
-                  <tr>
-                    <td colSpan={7} className='px-6 py-12 text-center'>
-                      <div className='flex items-center justify-center'>
-                        <LoaderIcon className='h-8 w-8 animate-spin text-blue-600' />
+          <Table>
+            <TableHeader className='border-border bg-muted border-b'>
+              <TableRow className='border-border border-b'>
+                <TableHead className='px-6 py-3'>
+                  <button
+                    type='button'
+                    onClick={toggleSelectAll}
+                    className='text-muted-foreground/70 hover:text-muted-foreground flex items-center'
+                    title='Select all'
+                  >
+                    {allCurrentPageSelected ?
+                      <CheckSquareIcon className='size-4 text-blue-600' />
+                    : <SquareIcon className='size-4' />}
+                  </button>
+                </TableHead>
+                <TableHead className='text-muted-foreground px-6 py-3 text-xs font-medium tracking-wider uppercase'>
+                  File Name
+                </TableHead>
+                <TableHead className='text-muted-foreground px-6 py-3 text-xs font-medium tracking-wider uppercase'>
+                  Size
+                </TableHead>
+                <TableHead className='text-muted-foreground px-6 py-3 text-xs font-medium tracking-wider uppercase'>
+                  Project ID
+                </TableHead>
+                <TableHead className='text-muted-foreground px-6 py-3 text-xs font-medium tracking-wider uppercase'>
+                  Study ID
+                </TableHead>
+                <TableHead className='text-muted-foreground px-6 py-3 text-xs font-medium tracking-wider uppercase'>
+                  Uploaded
+                </TableHead>
+                <TableHead className='text-muted-foreground px-6 py-3 text-right text-xs font-medium tracking-wider uppercase'>
+                  Actions
+                </TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {documentsDataQuery.isLoading ?
+                <TableRow>
+                  <TableCell colSpan={7} className='px-6 py-12 text-center'>
+                    <div className='flex items-center justify-center'>
+                      <LoaderIcon className='size-8 animate-spin text-blue-600' />
+                    </div>
+                  </TableCell>
+                </TableRow>
+              : (documentsData?.documents ?? []).length > 0 ?
+                (documentsData?.documents ?? []).map(doc => (
+                  <TableRow
+                    key={doc.key}
+                    className={doc.orphaned ? 'bg-orange-50' : ''}
+                    onClick={e => handleRowClick(e, doc.key)}
+                  >
+                    <TableCell className='text-foreground px-6 py-4 text-sm'>
+                      <button
+                        type='button'
+                        onClick={e => {
+                          e.stopPropagation();
+                          toggleSelect(doc.key);
+                        }}
+                        className='text-muted-foreground/70 hover:text-muted-foreground'
+                      >
+                        {selectedKeys.has(doc.key) ?
+                          <CheckSquareIcon className='size-4 text-blue-600' />
+                        : <SquareIcon className='size-4' />}
+                      </button>
+                    </TableCell>
+                    <TableCell className='text-foreground px-6 py-4 text-sm'>
+                      <div className='flex items-center gap-2'>
+                        <span className='text-foreground font-mono text-sm'>{doc.fileName}</span>
+                        {doc.orphaned && (
+                          <Badge
+                            variant='warning'
+                            title='Orphaned: File exists in R2 but is not tracked in mediaFiles database table'
+                          >
+                            Orphaned
+                          </Badge>
+                        )}
                       </div>
-                    </td>
-                  </tr>
-                : (documentsData?.documents ?? []).length > 0 ?
-                  (documentsData?.documents ?? []).map(doc => (
-                    <tr
-                      key={doc.key}
-                      className={`${table.row} ${doc.orphaned ? 'bg-orange-50' : ''}`}
-                      onClick={e => handleRowClick(e, doc.key)}
-                    >
-                      <td className={table.cell}>
-                        <button
-                          type='button'
-                          onClick={e => {
-                            e.stopPropagation();
-                            toggleSelect(doc.key);
-                          }}
-                          className='text-muted-foreground/70 hover:text-muted-foreground'
-                        >
-                          {selectedKeys.has(doc.key) ?
-                            <CheckSquareIcon className='h-4 w-4 text-blue-600' />
-                          : <SquareIcon className='h-4 w-4' />}
-                        </button>
-                      </td>
-                      <td className={table.cell}>
-                        <div className='flex items-center gap-2'>
-                          <span className='text-foreground font-mono text-sm'>{doc.fileName}</span>
-                          {doc.orphaned && (
-                            <span
-                              className='inline-flex items-center rounded-full bg-orange-100 px-2 py-0.5 text-xs font-medium text-orange-800'
-                              title='Orphaned: File exists in R2 but is not tracked in mediaFiles database table'
-                            >
-                              Orphaned
-                            </span>
-                          )}
-                        </div>
-                      </td>
-                      <td className={`${table.cell} text-muted-foreground`}>
-                        {formatFileSize(doc.size)}
-                      </td>
-                      <td className={table.cell}>
-                        <span className='text-muted-foreground font-mono text-xs'>
-                          {doc.projectId}
-                        </span>
-                      </td>
-                      <td className={table.cell}>
-                        <span className='text-muted-foreground font-mono text-xs'>
-                          {doc.studyId}
-                        </span>
-                      </td>
-                      <td className={`${table.cell} text-muted-foreground`}>
-                        {formatDate(doc.uploaded)}
-                      </td>
-                      <td className={`${table.cell} text-right`}>
-                        <button
-                          type='button'
-                          onClick={e => {
-                            e.stopPropagation();
-                            handleSingleDelete(doc.key);
-                          }}
-                          className='rounded-lg p-2 text-red-600 hover:bg-red-50'
-                          title='Delete'
-                        >
-                          <Trash2Icon className='h-4 w-4' />
-                        </button>
-                      </td>
-                    </tr>
-                  ))
-                : <tr>
-                    <td colSpan={7} className='text-muted-foreground px-6 py-12 text-center'>
-                      No documents found
-                    </td>
-                  </tr>
-                }
-              </tbody>
-            </table>
-          </div>
+                    </TableCell>
+                    <TableCell className='text-muted-foreground px-6 py-4 text-sm'>
+                      {formatFileSize(doc.size)}
+                    </TableCell>
+                    <TableCell className='text-foreground px-6 py-4 text-sm'>
+                      <span className='text-muted-foreground font-mono text-xs'>
+                        {doc.projectId}
+                      </span>
+                    </TableCell>
+                    <TableCell className='text-foreground px-6 py-4 text-sm'>
+                      <span className='text-muted-foreground font-mono text-xs'>{doc.studyId}</span>
+                    </TableCell>
+                    <TableCell className='text-muted-foreground px-6 py-4 text-sm'>
+                      {formatDate(doc.uploaded)}
+                    </TableCell>
+                    <TableCell className='text-foreground px-6 py-4 text-right text-sm'>
+                      <button
+                        type='button'
+                        onClick={e => {
+                          e.stopPropagation();
+                          handleSingleDelete(doc.key);
+                        }}
+                        className='text-destructive hover:bg-destructive/10 rounded-lg p-2'
+                        title='Delete'
+                      >
+                        <Trash2Icon className='size-4' />
+                      </button>
+                    </TableCell>
+                  </TableRow>
+                ))
+              : <TableRow>
+                  <TableCell colSpan={7} className='text-muted-foreground px-6 py-12 text-center'>
+                    No documents found
+                  </TableCell>
+                </TableRow>
+              }
+            </TableBody>
+          </Table>
 
           {/* Pagination */}
           {documentsData && (
@@ -401,14 +418,14 @@ function StorageManagementPage() {
                   </p>
                 )}
               </div>
-              <div className='flex items-center space-x-2'>
+              <div className='flex items-center gap-2'>
                 <button
                   type='button'
                   onClick={handlePrevPage}
                   disabled={cursorHistory.length === 0}
                   className='hover:bg-muted border-border bg-card rounded-xl border p-2 shadow-xs disabled:cursor-not-allowed disabled:opacity-50'
                 >
-                  <ChevronLeftIcon className='h-4 w-4' />
+                  <ChevronLeftIcon className='size-4' />
                 </button>
                 <span className='text-muted-foreground text-sm'>
                   {cursorHistory.length + 1}
@@ -420,7 +437,7 @@ function StorageManagementPage() {
                   disabled={!documentsData.nextCursor}
                   className='hover:bg-muted border-border bg-card rounded-xl border p-2 shadow-xs disabled:cursor-not-allowed disabled:opacity-50'
                 >
-                  <ChevronRightIcon className='h-4 w-4' />
+                  <ChevronRightIcon className='size-4' />
                 </button>
               </div>
             </div>

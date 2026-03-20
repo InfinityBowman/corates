@@ -1,5 +1,4 @@
-import { FiUser, FiBook, FiBookOpen, FiUsers } from 'react-icons/fi';
-import type { IconType } from 'react-icons';
+import { UserIcon, BookIcon, BookOpenIcon, UsersIcon, type LucideIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export const TITLE_OPTIONS = [
@@ -18,7 +17,7 @@ interface RoleOption {
   id: string;
   label: string;
   description: string;
-  icon: IconType;
+  icon: LucideIcon;
 }
 
 export const ROLES: RoleOption[] = [
@@ -26,11 +25,11 @@ export const ROLES: RoleOption[] = [
     id: 'researcher',
     label: 'Researcher',
     description: 'Academic or professional',
-    icon: FiBookOpen,
+    icon: BookOpenIcon,
   },
-  { id: 'student', label: 'Student', description: 'Graduate or undergraduate', icon: FiBook },
-  { id: 'librarian', label: 'Librarian', description: 'Information specialist', icon: FiUsers },
-  { id: 'other', label: 'Other', description: 'Clinician, policy maker, etc.', icon: FiUser },
+  { id: 'student', label: 'Student', description: 'Graduate or undergraduate', icon: BookIcon },
+  { id: 'librarian', label: 'Librarian', description: 'Information specialist', icon: UsersIcon },
+  { id: 'other', label: 'Other', description: 'Clinician, policy maker, etc.', icon: UserIcon },
 ];
 
 export function getRoleLabel(roleId: string): string {
@@ -66,7 +65,7 @@ export function RoleSelector({ selectedRole, onSelect }: RoleSelectorProps) {
               isSelected ? 'border-primary bg-primary/5' : 'border-border',
             )}
           >
-            <Icon className='text-primary mb-1.5 h-5 w-5 sm:h-6 sm:w-6' aria-hidden='true' />
+            <Icon className='text-primary mb-1.5 size-5 sm:size-6' aria-hidden='true' />
             <div className='text-foreground text-sm font-semibold'>{roleOption.label}</div>
             <div className='text-muted-foreground mt-0.5 hidden text-xs sm:block'>
               {roleOption.description}

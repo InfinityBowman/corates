@@ -27,7 +27,7 @@ function QuestionInfo({ question }: { question: any }) {
             type='button'
             className='focus:ring-primary inline-flex items-center justify-center rounded-full p-1.5 opacity-70 hover:opacity-100 focus:opacity-100 focus:ring-2 focus:outline-none'
           >
-            <InfoIcon className='h-3 w-3' />
+            <InfoIcon className='size-3' />
           </button>
         </TooltipTrigger>
         <TooltipContent className='max-w-xs'>{question.info}</TooltipContent>
@@ -92,13 +92,13 @@ function StandardQuestionInternal({
             {isLastCol ?
               <div className='mt-1 flex flex-col gap-2'>
                 {col.options.map((option: string, optIdx: number) => (
-                  <label key={optIdx} className='flex items-center space-x-2 text-xs'>
+                  <label key={optIdx} className='flex items-center gap-2 text-xs'>
                     <input
                       type='radio'
                       name={`col-${colIdx}-${question?.text ?? ''}`}
                       checked={state.answers[colIdx]?.[optIdx] ?? false}
                       onChange={() => handleChange(colIdx, optIdx)}
-                      className='border-border focus:ring-primary h-3.5 w-3.5 cursor-pointer text-blue-600'
+                      className='border-border focus:ring-primary size-3.5 cursor-pointer text-blue-600'
                     />
                     <span className='wrap-break-words text-secondary-foreground'>{option}</span>
                   </label>
@@ -106,12 +106,12 @@ function StandardQuestionInternal({
               </div>
             : <div className='flex flex-col gap-2'>
                 {col.options.map((option: string, optIdx: number) => (
-                  <label key={optIdx} className='flex items-center space-x-2 text-xs'>
+                  <label key={optIdx} className='flex items-center gap-2 text-xs'>
                     <input
                       type='checkbox'
                       checked={state.answers[colIdx]?.[optIdx] ?? false}
                       onChange={() => handleChange(colIdx, optIdx)}
-                      className='border-border focus:ring-primary h-3 w-3 shrink-0 text-blue-600'
+                      className='border-border focus:ring-primary size-3 shrink-0 text-blue-600'
                     />
                     <span className='wrap-break-words text-secondary-foreground'>{option}</span>
                   </label>
@@ -600,7 +600,7 @@ export function AMSTAR2Checklist({
           {checklist.name || 'AMSTAR 2 Checklist'}
         </div>
         <fieldset disabled={!!readOnly} className={readOnly ? 'opacity-90' : ''}>
-          <div className='space-y-6'>
+          <div className='flex flex-col gap-6'>
             {/* Q1: special 3-col handler (col0 all -> col2) */}
             <StandardQuestion
               state={checklist.q1}

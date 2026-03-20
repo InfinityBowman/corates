@@ -37,7 +37,7 @@ export function SectionD({ sectionDState, onUpdate, disabled, getRobinsText }: S
         <p className='text-muted-foreground mt-1 text-xs'>{(SECTION_D as any).description}</p>
       </div>
 
-      <div className='space-y-3 px-6 py-4'>
+      <div className='flex flex-col gap-3 px-6 py-4'>
         <div className='grid grid-cols-1 gap-2 md:grid-cols-2'>
           {INFORMATION_SOURCES.map(source => {
             const isChecked = sectionDState?.sources?.[source] || false;
@@ -55,7 +55,7 @@ export function SectionD({ sectionDState, onUpdate, disabled, getRobinsText }: S
                   checked={isChecked}
                   disabled={disabled}
                   onChange={() => !disabled && handleSourceToggle(source)}
-                  className='border-border focus:ring-primary mt-0.5 h-4 w-4 rounded text-blue-600'
+                  className='border-border focus:ring-primary mt-0.5 size-4 rounded text-blue-600'
                 />
                 <span className='text-secondary-foreground text-sm'>{source}</span>
               </label>

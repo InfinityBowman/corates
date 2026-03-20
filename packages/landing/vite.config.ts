@@ -16,7 +16,28 @@ export default defineConfig({
     cloudflare({ viteEnvironment: { name: 'ssr' } }),
     viteTsConfigPaths({ projects: ['./tsconfig.json'] }),
     tailwindcss(),
-    tanstackStart(),
+    tanstackStart({
+      prerender: {
+        enabled: true,
+        crawlLinks: false,
+        filter: ({ path }) => {
+          const normalized = path !== '/' && path.endsWith('/') ? path.slice(0, -1) : path;
+          const allowed = [
+            '/',
+            '/about',
+            '/terms',
+            '/privacy',
+            '/security',
+            '/contact',
+            '/resources',
+            '/resources/amstar2',
+            '/resources/rob2',
+            '/resources/robins-i',
+          ];
+          return allowed.includes(normalized);
+        },
+      },
+    }),
     viteReact(),
   ],
 });

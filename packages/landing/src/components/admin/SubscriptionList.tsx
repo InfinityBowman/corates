@@ -4,8 +4,11 @@
  */
 
 import { useState } from 'react';
-import { LoaderIcon, Trash2Icon, PencilIcon, CopyIcon, CheckIcon } from 'lucide-react';
+import { Trash2Icon, PencilIcon, CopyIcon, CheckIcon } from 'lucide-react';
 import { showToast } from '@/components/ui/toast';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Spinner } from '@/components/ui/spinner';
 
 interface Subscription {
   id: string;
@@ -79,59 +82,55 @@ export function SubscriptionList({
       </div>
       {isLoading ?
         <div className='flex items-center justify-center py-12'>
-          <LoaderIcon className='h-8 w-8 animate-spin text-blue-600' />
+          <Spinner size='lg' />
         </div>
       : <div className='p-6'>
           {subscriptions.length > 0 ?
-            <div className='space-y-4'>
+            <div className='flex flex-col gap-4'>
               {subscriptions.map(subscription => (
                 <div
                   key={subscription.id}
                   className={`rounded-lg border p-4 ${
                     isEffective(subscription) ?
-                      'border-blue-300 bg-blue-50'
+                      'border-primary/30 bg-primary/5'
                     : 'border-border bg-card'
                   }`}
                 >
                   <div className='flex items-start justify-between'>
                     <div className='flex-1'>
-                      <div className='flex items-center space-x-2'>
+                      <div className='flex items-center gap-2'>
                         <p className='text-foreground font-medium'>{subscription.plan}</p>
-                        <span
-                          className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                        <Badge
+                          variant={
                             subscription.status === 'active' || subscription.status === 'trialing' ?
-                              'bg-green-100 text-green-800'
-                            : 'bg-secondary text-foreground'
-                          }`}
+                              'success'
+                            : 'secondary'
+                          }
                         >
                           {subscription.status}
-                        </span>
-                        {isEffective(subscription) && (
-                          <span className='inline-flex items-center rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-blue-800'>
-                            Effective
-                          </span>
-                        )}
+                        </Badge>
+                        {isEffective(subscription) && <Badge variant='info'>Effective</Badge>}
                       </div>
                       <div className='text-muted-foreground mt-2 grid grid-cols-1 gap-3 text-sm md:grid-cols-2'>
-                        <div className='space-y-1'>
+                        <div className='flex flex-col gap-1'>
                           <p>Period Start: {formatDate(subscription.periodStart)}</p>
                           <p>Period End: {formatDate(subscription.periodEnd)}</p>
                           {subscription.cancelAtPeriodEnd && (
-                            <p className='text-orange-600'>Cancels at period end</p>
+                            <p className='text-warning'>Cancels at period end</p>
                           )}
                         </div>
-                        <div className='space-y-1'>
+                        <div className='flex flex-col gap-1'>
                           <p>Created: {formatDate(subscription.createdAt)}</p>
                           {subscription.updatedAt && (
                             <p>Updated: {formatDate(subscription.updatedAt)}</p>
                           )}
                           {subscription.canceledAt && (
-                            <p className='text-red-600'>
+                            <p className='text-destructive'>
                               Canceled: {formatDate(subscription.canceledAt)}
                             </p>
                           )}
                           {subscription.endedAt && (
-                            <p className='text-red-600'>
+                            <p className='text-destructive'>
                               Ended: {formatDate(subscription.endedAt)}
                             </p>
                           )}
@@ -141,7 +140,7 @@ export function SubscriptionList({
                       {(subscription.stripeCustomerId || subscription.stripeSubscriptionId) && (
                         <div className='mt-3 flex flex-wrap gap-2'>
                           {subscription.stripeCustomerId && (
-                            <div className='bg-secondary flex items-center space-x-1 rounded px-2 py-1'>
+                            <div className='bg-secondary flex items-center gap-1 rounded px-2 py-1'>
                               <span className='text-muted-foreground text-xs font-medium'>
                                 Customer:
                               </span>
@@ -156,13 +155,13 @@ export function SubscriptionList({
                                 title='Copy customer ID'
                               >
                                 {copiedId === `customer-${subscription.stripeCustomerId}` ?
-                                  <CheckIcon className='h-3 w-3 text-green-600' />
-                                : <CopyIcon className='h-3 w-3' />}
+                                  <CheckIcon className='text-success size-3' />
+                                : <CopyIcon className='size-3' />}
                               </button>
                             </div>
                           )}
                           {subscription.stripeSubscriptionId && (
-                            <div className='bg-secondary flex items-center space-x-1 rounded px-2 py-1'>
+                            <div className='bg-secondary flex items-center gap-1 rounded px-2 py-1'>
                               <span className='text-muted-foreground text-xs font-medium'>
                                 Subscription:
                               </span>
@@ -177,33 +176,34 @@ export function SubscriptionList({
                                 title='Copy subscription ID'
                               >
                                 {copiedId === `subscription-${subscription.stripeSubscriptionId}` ?
-                                  <CheckIcon className='h-3 w-3 text-green-600' />
-                                : <CopyIcon className='h-3 w-3' />}
+                                  <CheckIcon className='text-success size-3' />
+                                : <CopyIcon className='size-3' />}
                               </button>
                             </div>
                           )}
                         </div>
                       )}
                     </div>
-                    <div className='ml-4 flex space-x-2'>
-                      <button
+                    <div className='ml-4 flex gap-2'>
+                      <Button
+                        variant='outline'
+                        size='icon'
                         onClick={() => onEdit?.(subscription)}
                         disabled={loading}
-                        className='border-border bg-card text-secondary-foreground hover:bg-muted rounded-lg border px-3 py-2 text-sm font-medium disabled:opacity-50'
-                        title='Edit subscription'
                         aria-label='Edit subscription'
                       >
-                        <PencilIcon className='h-4 w-4' />
-                      </button>
-                      <button
+                        <PencilIcon />
+                      </Button>
+                      <Button
+                        variant='outline'
+                        size='icon'
                         onClick={() => onCancel?.(subscription.id)}
                         disabled={loading}
-                        className='bg-card rounded-lg border border-red-300 px-3 py-2 text-sm font-medium text-red-600 hover:bg-red-50 disabled:opacity-50'
-                        title='Cancel subscription'
+                        className='border-destructive/30 text-destructive hover:bg-destructive/10'
                         aria-label='Cancel subscription'
                       >
-                        <Trash2Icon className='h-4 w-4' />
-                      </button>
+                        <Trash2Icon />
+                      </Button>
                     </div>
                   </div>
                 </div>

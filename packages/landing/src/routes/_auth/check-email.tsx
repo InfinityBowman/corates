@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { createFileRoute, useNavigate, useSearch } from '@tanstack/react-router';
 import { Loader2Icon, MailIcon } from 'lucide-react';
 import { useAuthStore, selectUser } from '@/stores/authStore';
+import { Alert } from '@/components/ui/alert';
 import { ErrorMessage } from '@/components/auth/ErrorMessage';
 import { PrimaryButton, SecondaryButton } from '@/components/auth/AuthButtons';
 
@@ -114,7 +115,7 @@ function CheckEmailPage() {
   }
 
   return (
-    <div className='border-border bg-card relative w-full max-w-md space-y-6 rounded-xl border p-6 text-center shadow-2xl sm:max-w-xl sm:rounded-3xl sm:p-12'>
+    <div className='border-border bg-card relative flex w-full max-w-md flex-col gap-6 rounded-xl border p-6 text-center shadow-2xl sm:max-w-xl sm:rounded-3xl sm:p-12'>
       <a href='/' className='absolute top-4 left-4 sm:top-6 sm:left-6'>
         <img src='/logo.svg' alt='CoRATES' className='h-6 w-auto sm:h-7' />
       </a>
@@ -122,7 +123,7 @@ function CheckEmailPage() {
       {verified ?
         <>
           <div className='flex justify-center'>
-            <Loader2Icon className='text-primary h-12 w-12 animate-spin' />
+            <Loader2Icon className='text-primary size-12 animate-spin' />
           </div>
           <h2 className='text-foreground text-xl font-bold sm:text-2xl'>Email Verified!</h2>
           <p className='text-muted-foreground text-sm sm:text-base'>
@@ -134,7 +135,7 @@ function CheckEmailPage() {
       : <>
           <div className='flex justify-center'>
             <div className='bg-primary/10 rounded-full p-4'>
-              <MailIcon className='text-primary h-12 w-12' />
+              <MailIcon className='text-primary size-12' />
             </div>
           </div>
 
@@ -146,7 +147,7 @@ function CheckEmailPage() {
             <p className='text-primary mt-1 text-sm font-semibold sm:text-base'>{email}</p>
           </div>
 
-          <div className='space-y-4'>
+          <div className='flex flex-col gap-4'>
             <p className='text-muted-foreground text-xs sm:text-sm'>
               Click the verification link in your email to activate your account. Once verified,
               you&apos;ll automatically be redirected to the dashboard.
@@ -155,13 +156,13 @@ function CheckEmailPage() {
             <ErrorMessage error={error} />
 
             {resent && (
-              <div className='rounded-lg border border-green-200 bg-green-50 p-3 text-xs text-green-600 sm:text-sm'>
+              <Alert variant='success' className='text-xs sm:text-sm'>
                 Verification email sent successfully!
-              </div>
+              </Alert>
             )}
           </div>
 
-          <div className='space-y-3'>
+          <div className='flex flex-col gap-3'>
             <PrimaryButton
               loading={resending}
               loadingText='Sending...'

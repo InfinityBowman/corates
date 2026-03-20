@@ -9,6 +9,7 @@ import { authClient } from '@/api/auth-client';
 import { useAuthStore, selectUser } from '@/stores/authStore';
 import { useLinkedAccounts } from '@/hooks/useLinkedAccounts';
 import { showToast } from '@/components/ui/toast';
+import { Alert } from '@/components/ui/alert';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -19,6 +20,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { Skeleton } from '@/components/ui/skeleton';
 import { AccountProviderCard } from './AccountProviderCard';
 import { MergeAccountsDialog } from './MergeAccountsDialog';
 import { parseOAuthError, getLinkErrorMessage } from '@/lib/account-linking-errors.js';
@@ -148,34 +150,29 @@ export function LinkedAccountsSection() {
   return (
     <div className='border-border bg-card mb-6 overflow-hidden rounded-lg border shadow-sm'>
       <div className='border-border from-muted/50 to-background border-b bg-gradient-to-r px-6 py-4'>
-        <div className='flex items-center space-x-2'>
-          <LinkIcon className='text-secondary-foreground h-5 w-5' />
+        <div className='flex items-center gap-2'>
+          <LinkIcon className='text-secondary-foreground size-5' />
           <h2 className='text-foreground text-lg font-medium'>Linked Accounts</h2>
         </div>
         <p className='text-muted-foreground mt-1 text-sm'>Manage how you sign in to CoRATES</p>
       </div>
 
-      <div className='space-y-4 p-6'>
+      <div className='flex flex-col gap-4 p-6'>
         {error && (
-          <div className='rounded-lg border border-red-200 bg-red-50 p-4'>
-            <div className='flex items-start gap-3'>
-              <AlertCircleIcon className='text-destructive mt-0.5 h-5 w-5' />
-              <div>
-                <p className='text-destructive font-medium'>Failed to load linked accounts</p>
-                <p className='text-destructive mt-1 text-sm'>{(error as Error)?.message}</p>
-                <button
-                  onClick={() => refetch()}
-                  className='text-destructive mt-2 text-sm font-medium underline'
-                >
-                  Try again
-                </button>
-              </div>
+          <Alert variant='destructive'>
+            <AlertCircleIcon />
+            <div>
+              <p className='font-medium'>Failed to load linked accounts</p>
+              <p className='mt-1 text-sm'>{(error as Error)?.message}</p>
+              <button onClick={() => refetch()} className='mt-2 text-sm font-medium underline'>
+                Try again
+              </button>
             </div>
-          </div>
+          </Alert>
         )}
 
         {accounts?.length > 0 ?
-          <div className='space-y-3' role='list' aria-label='Linked accounts'>
+          <div className='flex flex-col gap-3' role='list' aria-label='Linked accounts'>
             {accounts.map(account => (
               <AccountProviderCard
                 key={account.id}
@@ -188,16 +185,16 @@ export function LinkedAccountsSection() {
             ))}
           </div>
         : isLoading && (
-            <div className='space-y-3'>
-              <div className='border-border flex animate-pulse items-center justify-between rounded-lg border p-4'>
+            <div className='flex flex-col gap-3'>
+              <div className='border-border flex items-center justify-between rounded-lg border p-4'>
                 <div className='flex items-center gap-3'>
-                  <div className='bg-secondary h-10 w-10 rounded-lg' />
-                  <div className='space-y-2'>
-                    <div className='bg-secondary h-4 w-24 rounded' />
-                    <div className='bg-secondary h-3 w-32 rounded' />
+                  <Skeleton className='size-10 rounded-lg' />
+                  <div className='flex flex-col gap-2'>
+                    <Skeleton className='h-4 w-24' />
+                    <Skeleton className='h-3 w-32' />
                   </div>
                 </div>
-                <div className='bg-secondary h-8 w-16 rounded' />
+                <Skeleton className='h-8 w-16' />
               </div>
             </div>
           )
@@ -218,8 +215,8 @@ export function LinkedAccountsSection() {
                   aria-label={`Link ${provider.name} account`}
                 >
                   {provider.icon ?
-                    <img src={provider.icon} alt='' className='h-4 w-4' />
-                  : <MailIcon className='h-4 w-4' />}
+                    <img src={provider.icon} alt='' className='size-4' />
+                  : <MailIcon className='size-4' />}
                   {linkingProvider === provider.id ? 'Linking...' : `+ ${provider.name}`}
                 </button>
               ))}
@@ -227,16 +224,14 @@ export function LinkedAccountsSection() {
           </div>
         )}
 
-        <div className='bg-primary/5 mt-4 rounded-lg border border-blue-200 p-4'>
-          <div className='flex items-start gap-3'>
-            <InfoIcon className='text-primary mt-0.5 h-5 w-5 shrink-0' />
-            <p className='text-primary text-sm'>
-              <strong>Why link accounts?</strong> Linking multiple sign-in methods gives you backup
-              options if you lose access to one. Your projects and data are shared across all linked
-              accounts.
-            </p>
-          </div>
-        </div>
+        <Alert variant='info' className='mt-4'>
+          <InfoIcon />
+          <p className='text-sm'>
+            <strong>Why link accounts?</strong> Linking multiple sign-in methods gives you backup
+            options if you lose access to one. Your projects and data are shared across all linked
+            accounts.
+          </p>
+        </Alert>
       </div>
 
       {/* Unlink confirmation dialog */}
@@ -249,11 +244,7 @@ export function LinkedAccountsSection() {
               Your CoRATES data will not be affected.
             </AlertDialogDescription>
           </AlertDialogHeader>
-          {unlinkError && (
-            <div className='rounded-md border border-red-200 bg-red-50 p-3'>
-              <p className='text-destructive text-sm'>{unlinkError}</p>
-            </div>
-          )}
+          {unlinkError && <Alert variant='destructive'>{unlinkError}</Alert>}
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction

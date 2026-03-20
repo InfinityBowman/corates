@@ -3,7 +3,7 @@
  */
 
 import { useMemo, useEffect } from 'react';
-import { FiCheck, FiX } from 'react-icons/fi';
+import { CheckIcon, XIcon } from 'lucide-react';
 
 const requirementsList = [
   {
@@ -56,7 +56,7 @@ export function StrengthIndicator({ password, onUnmet }: StrengthIndicatorProps)
   return (
     <div className='mt-2 w-full'>
       <ul
-        className='text-secondary-foreground space-y-0.5 text-xs sm:space-y-1'
+        className='text-secondary-foreground flex flex-col gap-0.5 text-xs sm:gap-1'
         id='password-requirements'
         aria-live='polite'
       >
@@ -65,18 +65,18 @@ export function StrengthIndicator({ password, onUnmet }: StrengthIndicatorProps)
           return (
             <li key={req.label} className='flex items-center gap-2'>
               <span
-                className={`ml-1 flex h-4 w-4 items-center justify-center rounded-full ${
+                className={`ml-1 flex size-4 items-center justify-center rounded-full ${
                   met ?
-                    'border border-green-500 bg-white text-green-500'
-                  : 'border border-red-600 text-red-600'
+                    'border-success text-success border bg-white'
+                  : 'border-destructive text-destructive border'
                 }`}
                 aria-hidden='true'
               >
                 {met ?
-                  <FiCheck className='h-3 w-3' />
-                : <FiX className='h-3 w-3' />}
+                  <CheckIcon className='size-3' />
+                : <XIcon className='size-3' />}
               </span>
-              <span className={met ? 'text-green-500' : 'text-red-600'}>{req.label}</span>
+              <span className={met ? 'text-success' : 'text-destructive'}>{req.label}</span>
             </li>
           );
         })}

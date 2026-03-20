@@ -17,10 +17,19 @@ import {
   CopyIcon,
   CheckCircleIcon,
 } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import {
+  Table,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableHead,
+  TableCell,
+} from '@/components/ui/table';
 import { apiFetch } from '@/lib/apiFetch';
 import { showToast } from '@/components/ui/toast';
 import { DashboardHeader, AdminBox } from '@/components/admin/ui';
-import { input } from '@/components/admin/styles/admin-tokens';
+import { Input } from '@/components/ui/input';
 
 interface StripeCustomer {
   id: string;
@@ -95,23 +104,25 @@ const formatCurrency = (amount: number | null | undefined, currency = 'usd'): st
   }).format(amount / 100);
 };
 
-const getStatusColor = (status: string): string => {
-  const colors: Record<string, string> = {
-    active: 'bg-green-100 text-green-800',
-    trialing: 'bg-blue-100 text-blue-800',
-    past_due: 'bg-yellow-100 text-yellow-800',
-    canceled: 'bg-secondary text-foreground',
-    unpaid: 'bg-red-100 text-red-800',
-    incomplete: 'bg-orange-100 text-orange-800',
-    incomplete_expired: 'bg-red-100 text-red-800',
-    paused: 'bg-secondary text-foreground',
-    paid: 'bg-green-100 text-green-800',
-    open: 'bg-blue-100 text-blue-800',
-    draft: 'bg-secondary text-foreground',
-    void: 'bg-secondary text-foreground',
-    uncollectible: 'bg-red-100 text-red-800',
+const getStatusVariant = (
+  status: string,
+): 'success' | 'destructive' | 'warning' | 'info' | 'secondary' => {
+  const variants: Record<string, 'success' | 'destructive' | 'warning' | 'info' | 'secondary'> = {
+    active: 'success',
+    trialing: 'info',
+    past_due: 'warning',
+    canceled: 'secondary',
+    unpaid: 'destructive',
+    incomplete: 'warning',
+    incomplete_expired: 'destructive',
+    paused: 'secondary',
+    paid: 'success',
+    open: 'info',
+    draft: 'secondary',
+    void: 'secondary',
+    uncollectible: 'destructive',
   };
-  return colors[status] || 'bg-secondary text-foreground';
+  return variants[status] || 'secondary';
 };
 
 export const Route = createFileRoute('/_app/_protected/admin/billing/stripe-tools')({
@@ -272,19 +283,19 @@ function StripeToolsPage() {
           <select
             value={searchType}
             onChange={e => setSearchType(e.target.value as 'email' | 'customerId')}
-            className={input.base}
+            className='border-input h-8 rounded-lg border bg-transparent px-2.5 py-2 text-sm'
           >
             <option value='email'>Search by Email</option>
             <option value='customerId'>Search by Customer ID</option>
           </select>
           <div className='relative flex-1'>
-            <SearchIcon className='text-muted-foreground/70 pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2' />
-            <input
+            <SearchIcon className='text-muted-foreground/70 pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2' />
+            <Input
               type='text'
               value={searchInput}
               onChange={e => setSearchInput(e.target.value)}
               placeholder={searchType === 'email' ? 'customer@example.com' : 'cus_xxxxxxxxxxxxx'}
-              className={`w-full ${input.base} ${input.withIconLeft}`}
+              className='w-full pl-10'
             />
           </div>
           <button
@@ -293,8 +304,8 @@ function StripeToolsPage() {
             className='inline-flex items-center rounded-xl bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-xs hover:bg-blue-700 focus:ring-[3px] focus:ring-blue-100 focus:outline-none disabled:opacity-50'
           >
             {searching ?
-              <LoaderIcon className='mr-2 h-4 w-4 animate-spin' />
-            : <SearchIcon className='mr-2 h-4 w-4' />}
+              <LoaderIcon className='mr-2 size-4 animate-spin' />
+            : <SearchIcon className='mr-2 size-4' />}
             Search
           </button>
         </form>
@@ -321,7 +332,7 @@ function StripeToolsPage() {
                 className='inline-flex items-center text-sm text-blue-600 hover:text-blue-700'
               >
                 View in Stripe
-                <ExternalLinkIcon className='ml-1 h-4 w-4' />
+                <ExternalLinkIcon className='ml-1 size-4' />
               </a>
             </div>
 
@@ -336,8 +347,8 @@ function StripeToolsPage() {
                     className='text-muted-foreground/70 hover:text-muted-foreground ml-2'
                   >
                     {copiedId === `Customer ID-${customerData.customer.id}` ?
-                      <CheckCircleIcon className='h-4 w-4 text-green-500' />
-                    : <CopyIcon className='h-4 w-4' />}
+                      <CheckCircleIcon className='text-success size-4' />
+                    : <CopyIcon className='size-4' />}
                   </button>
                 </dd>
               </div>
@@ -368,29 +379,17 @@ function StripeToolsPage() {
               <div>
                 <dt className='text-muted-foreground text-sm font-medium'>Delinquent</dt>
                 <dd className='mt-1'>
-                  <span
-                    className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
-                      customerData.customer.delinquent ?
-                        'bg-red-100 text-red-800'
-                      : 'bg-green-100 text-green-800'
-                    }`}
-                  >
+                  <Badge variant={customerData.customer.delinquent ? 'destructive' : 'success'}>
                     {customerData.customer.delinquent ? 'Yes' : 'No'}
-                  </span>
+                  </Badge>
                 </dd>
               </div>
               <div>
                 <dt className='text-muted-foreground text-sm font-medium'>Mode</dt>
                 <dd className='mt-1'>
-                  <span
-                    className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
-                      customerData.customer.livemode ?
-                        'bg-green-100 text-green-800'
-                      : 'bg-yellow-100 text-yellow-800'
-                    }`}
-                  >
+                  <Badge variant={customerData.customer.livemode ? 'success' : 'warning'}>
                     {customerData.customer.livemode ? 'Live' : 'Test'}
-                  </span>
+                  </Badge>
                 </dd>
               </div>
             </dl>
@@ -405,11 +404,11 @@ function StripeToolsPage() {
                     params={{ userId: customerData.linkedUser.id } as Record<string, string>}
                     className='inline-flex items-center text-sm text-blue-600 hover:text-blue-700'
                   >
-                    <UserIcon className='mr-1 h-4 w-4' />
+                    <UserIcon className='mr-1 size-4' />
                     {customerData.linkedUser.name || customerData.linkedUser.email}
                   </Link>
                 : <span className='text-muted-foreground inline-flex items-center text-sm'>
-                    <UserIcon className='mr-1 h-4 w-4' />
+                    <UserIcon className='mr-1 size-4' />
                     No linked user
                   </span>
                 }
@@ -419,11 +418,11 @@ function StripeToolsPage() {
                     params={{ orgId: customerData.linkedOrg.id } as Record<string, string>}
                     className='inline-flex items-center text-sm text-blue-600 hover:text-blue-700'
                   >
-                    <HomeIcon className='mr-1 h-4 w-4' />
+                    <HomeIcon className='mr-1 size-4' />
                     {customerData.linkedOrg.name}
                   </Link>
                 : <span className='text-muted-foreground inline-flex items-center text-sm'>
-                    <HomeIcon className='mr-1 h-4 w-4' />
+                    <HomeIcon className='mr-1 size-4' />
                     No linked organization
                   </span>
                 }
@@ -442,8 +441,8 @@ function StripeToolsPage() {
                 className='border-border bg-card text-secondary-foreground hover:bg-muted inline-flex items-center rounded-lg border px-4 py-2 text-sm font-medium disabled:opacity-50'
               >
                 {generatingPortal ?
-                  <LoaderIcon className='mr-2 h-4 w-4 animate-spin' />
-                : <ExternalLinkIcon className='mr-2 h-4 w-4' />}
+                  <LoaderIcon className='mr-2 size-4 animate-spin' />
+                : <ExternalLinkIcon className='mr-2 size-4' />}
                 Generate Portal Link
               </button>
               <button
@@ -453,8 +452,8 @@ function StripeToolsPage() {
                 className='border-border bg-card text-secondary-foreground hover:bg-muted inline-flex items-center rounded-lg border px-4 py-2 text-sm font-medium disabled:opacity-50'
               >
                 {loadingInvoices ?
-                  <LoaderIcon className='mr-2 h-4 w-4 animate-spin' />
-                : <FileTextIcon className='mr-2 h-4 w-4' />}
+                  <LoaderIcon className='mr-2 size-4 animate-spin' />
+                : <FileTextIcon className='mr-2 size-4' />}
                 Load Invoices
               </button>
               <button
@@ -464,8 +463,8 @@ function StripeToolsPage() {
                 className='border-border bg-card text-secondary-foreground hover:bg-muted inline-flex items-center rounded-lg border px-4 py-2 text-sm font-medium disabled:opacity-50'
               >
                 {loadingPaymentMethods ?
-                  <LoaderIcon className='mr-2 h-4 w-4 animate-spin' />
-                : <CreditCardIcon className='mr-2 h-4 w-4' />}
+                  <LoaderIcon className='mr-2 size-4 animate-spin' />
+                : <CreditCardIcon className='mr-2 size-4' />}
                 Load Payment Methods
               </button>
               <button
@@ -475,27 +474,27 @@ function StripeToolsPage() {
                 className='border-border bg-card text-secondary-foreground hover:bg-muted inline-flex items-center rounded-lg border px-4 py-2 text-sm font-medium disabled:opacity-50'
               >
                 {loadingSubscriptions ?
-                  <LoaderIcon className='mr-2 h-4 w-4 animate-spin' />
-                : <DollarSignIcon className='mr-2 h-4 w-4' />}
+                  <LoaderIcon className='mr-2 size-4 animate-spin' />
+                : <DollarSignIcon className='mr-2 size-4' />}
                 Load Subscriptions
               </button>
             </div>
 
             {/* Portal Link Result */}
             {portalUrl && (
-              <div className='mt-4 rounded-lg border border-green-200 bg-green-50 p-4'>
-                <p className='mb-2 text-sm font-medium text-green-800'>Portal Link Generated</p>
+              <div className='border-success/20 bg-success/10 mt-4 rounded-lg border p-4'>
+                <p className='text-success mb-2 text-sm font-medium'>Portal Link Generated</p>
                 <div className='flex items-center gap-2'>
                   <input
                     type='text'
                     value={portalUrl}
                     readOnly
-                    className='bg-card flex-1 rounded border border-green-300 px-3 py-1 text-sm'
+                    className='bg-card border-success/30 flex-1 rounded border px-3 py-1 text-sm'
                   />
                   <button
                     type='button'
                     onClick={() => handleCopy(portalUrl, 'Portal URL')}
-                    className='rounded bg-green-600 px-3 py-1 text-sm text-white hover:bg-green-700'
+                    className='bg-success hover:bg-success/80 rounded px-3 py-1 text-sm text-white'
                   >
                     Copy
                   </button>
@@ -503,12 +502,12 @@ function StripeToolsPage() {
                     href={portalUrl}
                     target='_blank'
                     rel='noopener noreferrer'
-                    className='rounded bg-green-600 px-3 py-1 text-sm text-white hover:bg-green-700'
+                    className='bg-success hover:bg-success/80 rounded px-3 py-1 text-sm text-white'
                   >
                     Open
                   </a>
                 </div>
-                <p className='mt-2 text-xs text-green-600'>Link expires in 5 minutes</p>
+                <p className='text-success mt-2 text-xs'>Link expires in 5 minutes</p>
               </div>
             )}
           </AdminBox>
@@ -517,12 +516,12 @@ function StripeToolsPage() {
           {subscriptions && (
             <AdminBox className='mb-6'>
               <h2 className='text-foreground mb-4 flex items-center text-lg font-semibold'>
-                <DollarSignIcon className='mr-2 h-5 w-5' />
+                <DollarSignIcon className='mr-2 size-5' />
                 Subscriptions ({subscriptions.length})
               </h2>
               {subscriptions.length === 0 ?
                 <p className='text-muted-foreground text-sm'>No subscriptions found</p>
-              : <div className='space-y-4'>
+              : <div className='flex flex-col gap-4'>
                   {subscriptions.map(sub => (
                     <div
                       key={sub.id}
@@ -531,11 +530,9 @@ function StripeToolsPage() {
                       <div className='flex items-start justify-between'>
                         <div>
                           <p className='text-foreground font-mono text-sm'>{sub.id}</p>
-                          <span
-                            className={`mt-1 inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${getStatusColor(sub.status)}`}
-                          >
+                          <Badge variant={getStatusVariant(sub.status)} className='mt-1'>
                             {sub.status}
-                          </span>
+                          </Badge>
                         </div>
                         <a
                           href={`https://dashboard.stripe.com/subscriptions/${sub.id}`}
@@ -543,7 +540,7 @@ function StripeToolsPage() {
                           rel='noopener noreferrer'
                           className='text-blue-600 hover:text-blue-700'
                         >
-                          <ExternalLinkIcon className='h-4 w-4' />
+                          <ExternalLinkIcon className='size-4' />
                         </a>
                       </div>
                       <div className='mt-3 grid grid-cols-2 gap-2 text-sm'>
@@ -552,7 +549,7 @@ function StripeToolsPage() {
                           {formatDate(sub.currentPeriodStart)} - {formatDate(sub.currentPeriodEnd)}
                         </div>
                         {sub.cancelAtPeriodEnd && (
-                          <div className='text-red-600'>Cancels at period end</div>
+                          <div className='text-destructive'>Cancels at period end</div>
                         )}
                         {sub.trialEnd && sub.status === 'trialing' && (
                           <div>
@@ -581,84 +578,76 @@ function StripeToolsPage() {
           {invoices && (
             <AdminBox className='mb-6'>
               <h2 className='text-foreground mb-4 flex items-center text-lg font-semibold'>
-                <FileTextIcon className='mr-2 h-5 w-5' />
+                <FileTextIcon className='mr-2 size-5' />
                 Recent Invoices ({invoices.length})
               </h2>
               {invoices.length === 0 ?
                 <p className='text-muted-foreground text-sm'>No invoices found</p>
-              : <div className='overflow-x-auto'>
-                  <table className='w-full'>
-                    <thead>
-                      <tr className='border-border bg-muted border-b'>
-                        <th className='text-muted-foreground px-4 py-2 text-left text-xs font-medium uppercase'>
-                          Invoice
-                        </th>
-                        <th className='text-muted-foreground px-4 py-2 text-left text-xs font-medium uppercase'>
-                          Status
-                        </th>
-                        <th className='text-muted-foreground px-4 py-2 text-right text-xs font-medium uppercase'>
-                          Amount
-                        </th>
-                        <th className='text-muted-foreground px-4 py-2 text-left text-xs font-medium uppercase'>
-                          Created
-                        </th>
-                        <th className='text-muted-foreground px-4 py-2 text-right text-xs font-medium uppercase'>
-                          Actions
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className='divide-border divide-y'>
-                      {invoices.map(invoice => (
-                        <tr key={invoice.id} className='hover:bg-muted'>
-                          <td className='px-4 py-3'>
-                            <span className='font-mono text-sm'>
-                              {invoice.number || invoice.id}
-                            </span>
-                          </td>
-                          <td className='px-4 py-3'>
-                            <span
-                              className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${getStatusColor(invoice.status)}`}
-                            >
-                              {invoice.status}
-                            </span>
-                          </td>
-                          <td className='px-4 py-3 text-right text-sm'>
-                            {formatCurrency(invoice.total, invoice.currency)}
-                          </td>
-                          <td className='text-muted-foreground px-4 py-3 text-sm'>
-                            {formatDate(invoice.created)}
-                          </td>
-                          <td className='px-4 py-3 text-right'>
-                            <div className='flex justify-end gap-2'>
-                              {invoice.hostedInvoiceUrl && (
-                                <a
-                                  href={invoice.hostedInvoiceUrl}
-                                  target='_blank'
-                                  rel='noopener noreferrer'
-                                  className='text-blue-600 hover:text-blue-700'
-                                  title='View Invoice'
-                                >
-                                  <ExternalLinkIcon className='h-4 w-4' />
-                                </a>
-                              )}
-                              {invoice.invoicePdf && (
-                                <a
-                                  href={invoice.invoicePdf}
-                                  target='_blank'
-                                  rel='noopener noreferrer'
-                                  className='text-muted-foreground hover:text-secondary-foreground'
-                                  title='Download PDF'
-                                >
-                                  <FileTextIcon className='h-4 w-4' />
-                                </a>
-                              )}
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+              : <Table>
+                  <TableHeader>
+                    <TableRow className='border-border bg-muted border-b'>
+                      <TableHead className='text-muted-foreground px-4 py-2 text-xs font-medium uppercase'>
+                        Invoice
+                      </TableHead>
+                      <TableHead className='text-muted-foreground px-4 py-2 text-xs font-medium uppercase'>
+                        Status
+                      </TableHead>
+                      <TableHead className='text-muted-foreground px-4 py-2 text-right text-xs font-medium uppercase'>
+                        Amount
+                      </TableHead>
+                      <TableHead className='text-muted-foreground px-4 py-2 text-xs font-medium uppercase'>
+                        Created
+                      </TableHead>
+                      <TableHead className='text-muted-foreground px-4 py-2 text-right text-xs font-medium uppercase'>
+                        Actions
+                      </TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {invoices.map(invoice => (
+                      <TableRow key={invoice.id}>
+                        <TableCell className='px-4 py-3'>
+                          <span className='font-mono text-sm'>{invoice.number || invoice.id}</span>
+                        </TableCell>
+                        <TableCell className='px-4 py-3'>
+                          <Badge variant={getStatusVariant(invoice.status)}>{invoice.status}</Badge>
+                        </TableCell>
+                        <TableCell className='px-4 py-3 text-right text-sm'>
+                          {formatCurrency(invoice.total, invoice.currency)}
+                        </TableCell>
+                        <TableCell className='text-muted-foreground px-4 py-3 text-sm'>
+                          {formatDate(invoice.created)}
+                        </TableCell>
+                        <TableCell className='px-4 py-3 text-right'>
+                          <div className='flex justify-end gap-2'>
+                            {invoice.hostedInvoiceUrl && (
+                              <a
+                                href={invoice.hostedInvoiceUrl}
+                                target='_blank'
+                                rel='noopener noreferrer'
+                                className='text-blue-600 hover:text-blue-700'
+                                title='View Invoice'
+                              >
+                                <ExternalLinkIcon className='size-4' />
+                              </a>
+                            )}
+                            {invoice.invoicePdf && (
+                              <a
+                                href={invoice.invoicePdf}
+                                target='_blank'
+                                rel='noopener noreferrer'
+                                className='text-muted-foreground hover:text-secondary-foreground'
+                                title='Download PDF'
+                              >
+                                <FileTextIcon className='size-4' />
+                              </a>
+                            )}
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
               }
             </AdminBox>
           )}
@@ -667,19 +656,19 @@ function StripeToolsPage() {
           {paymentMethods && (
             <AdminBox className='mb-6'>
               <h2 className='text-foreground mb-4 flex items-center text-lg font-semibold'>
-                <CreditCardIcon className='mr-2 h-5 w-5' />
+                <CreditCardIcon className='mr-2 size-5' />
                 Payment Methods ({paymentMethods.length})
               </h2>
               {paymentMethods.length === 0 ?
                 <p className='text-muted-foreground text-sm'>No payment methods found</p>
-              : <div className='space-y-3'>
+              : <div className='flex flex-col gap-3'>
                   {paymentMethods.map(pm => (
                     <div
                       key={pm.id}
                       className='border-border-subtle bg-muted flex items-center justify-between rounded-lg border p-4'
                     >
-                      <div className='flex items-center space-x-3'>
-                        <CreditCardIcon className='text-muted-foreground/70 h-6 w-6' />
+                      <div className='flex items-center gap-3'>
+                        <CreditCardIcon className='text-muted-foreground/70 size-6' />
                         <div>
                           <p className='text-foreground text-sm font-medium capitalize'>
                             {pm.card?.brand} **** {pm.card?.last4}

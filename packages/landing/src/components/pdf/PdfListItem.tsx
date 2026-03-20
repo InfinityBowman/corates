@@ -3,7 +3,7 @@
  */
 
 import { useState, useMemo, useCallback } from 'react';
-import { Trash2Icon, EyeIcon, DownloadIcon, PencilIcon, FileIcon } from 'lucide-react';
+import { Trash2Icon, EyeIcon, DownloadIcon, PencilIcon, FileTextIcon } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -84,7 +84,7 @@ export function PdfListItem({
     <>
       <div className='border-border bg-card hover:border-border flex items-center gap-3 rounded-lg border p-3 transition-colors'>
         <div className='shrink-0'>
-          <FileIcon className='text-muted-foreground h-8 w-8' />
+          <FileTextIcon className='text-muted-foreground size-8' />
         </div>
 
         <div className='min-w-0 flex-1'>
@@ -105,7 +105,7 @@ export function PdfListItem({
             className='text-muted-foreground hover:bg-primary/5 hover:text-primary rounded-md p-2 transition-colors'
             title='View PDF'
           >
-            <EyeIcon className='h-4 w-4' />
+            <EyeIcon className='size-4' />
           </button>
 
           <button
@@ -114,7 +114,7 @@ export function PdfListItem({
             className='text-muted-foreground hover:bg-primary/5 hover:text-primary rounded-md p-2 transition-colors'
             title='Download PDF'
           >
-            <DownloadIcon className='h-4 w-4' />
+            <DownloadIcon className='size-4' />
           </button>
 
           {!readOnly && (
@@ -125,7 +125,7 @@ export function PdfListItem({
                 className='text-muted-foreground hover:bg-primary/5 hover:text-primary rounded-md p-2 transition-colors'
                 title='Edit Metadata'
               >
-                <PencilIcon className='h-4 w-4' />
+                <PencilIcon className='size-4' />
               </button>
 
               {tagMenuItems.length > 0 && (
@@ -152,7 +152,7 @@ export function PdfListItem({
                 className='text-muted-foreground hover:bg-destructive/5 hover:text-destructive rounded-md p-2 transition-colors'
                 title='Delete PDF'
               >
-                <Trash2Icon className='h-4 w-4' />
+                <Trash2Icon className='size-4' />
               </button>
             </>
           )}

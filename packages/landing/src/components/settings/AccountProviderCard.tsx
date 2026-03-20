@@ -5,6 +5,7 @@
 import { useMemo } from 'react';
 import { MailIcon, Trash2Icon, CheckIcon, ExternalLinkIcon } from 'lucide-react';
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
+import { Badge } from '@/components/ui/badge';
 
 function formatOrcidId(id: string) {
   if (!id) return '';
@@ -65,17 +66,17 @@ export function AccountProviderCard({
       <div className='flex items-center gap-3'>
         <div className='border-border bg-card rounded-lg border p-2'>
           {provider?.icon ?
-            <img src={provider.icon} alt={provider?.name} className='h-5 w-5' />
-          : <MailIcon className='text-secondary-foreground h-5 w-5' />}
+            <img src={provider.icon} alt={provider?.name} className='size-5' />
+          : <MailIcon className='text-secondary-foreground size-5' />}
         </div>
         <div>
           <div className='flex items-center gap-2'>
             <p className='text-foreground font-medium'>{provider?.name || account.providerId}</p>
             {isCredential && (
-              <span className='inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-600'>
-                <CheckIcon className='h-3 w-3' />
+              <Badge variant='success'>
+                <CheckIcon className='size-3' />
                 Primary
-              </span>
+              </Badge>
             )}
           </div>
           <div className='flex items-center gap-1'>
@@ -88,7 +89,7 @@ export function AccountProviderCard({
                 className='text-muted-foreground/70 hover:text-secondary-foreground transition-colors'
                 aria-label='View ORCID profile'
               >
-                <ExternalLinkIcon className='h-3.5 w-3.5' />
+                <ExternalLinkIcon className='size-3.5' />
               </a>
             )}
           </div>
@@ -103,10 +104,10 @@ export function AccountProviderCard({
           <button
             onClick={onUnlink}
             disabled={unlinking}
-            className='text-destructive hover:bg-destructive/10 inline-flex items-center gap-1 rounded-lg bg-red-50 px-3 py-1.5 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50'
+            className='text-destructive hover:bg-destructive/10 bg-destructive/10 inline-flex items-center gap-1 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50'
             aria-label={`Unlink ${provider?.name} account`}
           >
-            <Trash2Icon className='h-4 w-4' />
+            <Trash2Icon className='size-4' />
             {unlinking ? 'Unlinking...' : 'Unlink'}
           </button>
         : <Tooltip>

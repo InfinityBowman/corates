@@ -4,6 +4,9 @@ import Footer from '../components/Footer';
 import { config } from '../lib/config';
 
 export const Route = createFileRoute('/privacy')({
+  headers: () => ({
+    'Cache-Control': 'public, s-maxage=3600, stale-while-revalidate=86400',
+  }),
   head: () => ({
     meta: [
       { title: 'Privacy Policy - CoRATES' },
@@ -41,7 +44,7 @@ function PrivacyPage() {
           <h1 className='mb-2 text-4xl font-bold text-gray-900'>Privacy Policy</h1>
           <p className='mb-8 text-gray-500'>Effective date: January 7, 2026</p>
 
-          <div className='space-y-6 leading-relaxed text-gray-700'>
+          <div className='flex flex-col gap-6 leading-relaxed text-gray-700'>
             <p>
               At Syntch LLC, doing business as CoRATES ("Syntch LLC" or "we"), we take your privacy
               seriously. Please read this Privacy Policy to learn how we treat your personal data.
@@ -73,7 +76,7 @@ function PrivacyPage() {
               <h2 className='mb-4 text-lg font-semibold text-gray-900'>
                 Privacy Policy Table of Contents
               </h2>
-              <ul className='space-y-2 text-gray-700'>
+              <ul className='flex flex-col gap-2 text-gray-700'>
                 <li>
                   <a href='#what-this-covers' className='hover:text-blue-600'>
                     What this Privacy Policy Covers
@@ -83,7 +86,7 @@ function PrivacyPage() {
                   <a href='#personal-data' className='hover:text-blue-600'>
                     Personal Data
                   </a>
-                  <ul className='mt-1 ml-4 space-y-1 text-sm text-gray-600'>
+                  <ul className='mt-1 ml-4 flex flex-col gap-1 text-sm text-gray-600'>
                     <li>Categories of Personal Data We Collect</li>
                     <li>Categories of Sources of Personal Data</li>
                     <li>Our Purposes for Collecting Personal Data</li>
@@ -160,7 +163,7 @@ function PrivacyPage() {
               over the past 12 months:
             </p>
 
-            <div className='space-y-6'>
+            <div className='flex flex-col gap-6'>
               <div className='border-l-2 border-gray-200 pl-4'>
                 <h4 className='font-medium text-gray-900'>Profile or Contact Data</h4>
                 <p className='mt-1 text-sm text-gray-600'>
@@ -242,7 +245,7 @@ function PrivacyPage() {
 
             <p>We collect Personal Data about you from the following categories of sources:</p>
 
-            <ul className='ml-6 list-outside list-disc space-y-2'>
+            <ul className='ml-6 flex list-outside list-disc flex-col gap-2'>
               <li>
                 <strong>You</strong>
                 <ul className='mt-1 ml-6 list-outside list-disc text-gray-600'>
@@ -276,7 +279,7 @@ function PrivacyPage() {
               Our Purposes for Collecting Personal Data
             </h3>
 
-            <ul className='ml-6 list-outside list-disc space-y-2'>
+            <ul className='ml-6 flex list-outside list-disc flex-col gap-2'>
               <li>
                 <strong>Providing, Customizing and Improving the Services</strong>
                 <ul className='mt-1 ml-6 list-outside list-disc text-gray-600'>
@@ -342,7 +345,7 @@ function PrivacyPage() {
               parties listed in this section.
             </p>
 
-            <ul className='ml-6 list-outside list-disc space-y-3'>
+            <ul className='ml-6 flex list-outside list-disc flex-col gap-3'>
               <li>
                 <strong>Service Providers.</strong> These parties help us provide the Services or
                 perform business functions on our behalf. They include:
@@ -404,7 +407,7 @@ function PrivacyPage() {
               to provide the Services.
             </p>
 
-            <ul className='ml-6 list-outside list-disc space-y-2 text-gray-600'>
+            <ul className='ml-6 flex list-outside list-disc flex-col gap-2 text-gray-600'>
               <li>
                 <strong>Scopes requested.</strong> When you connect Google, we request standard
                 OpenID Connect scopes (openid, email, profile) and Google Drive read-only access
@@ -450,7 +453,7 @@ function PrivacyPage() {
               billing. When you subscribe to a paid plan or update your payment information:
             </p>
 
-            <ul className='ml-6 list-outside list-disc space-y-2 text-gray-600'>
+            <ul className='ml-6 flex list-outside list-disc flex-col gap-2 text-gray-600'>
               <li>
                 <strong>Data collected by Stripe.</strong> Stripe collects your payment card
                 information (card number, expiration date, CVC), billing address, and email address
@@ -487,7 +490,7 @@ function PrivacyPage() {
               Service-related notifications.
             </p>
 
-            <ul className='ml-6 list-outside list-disc space-y-2 text-gray-600'>
+            <ul className='ml-6 flex list-outside list-disc flex-col gap-2 text-gray-600'>
               <li>
                 <strong>Data shared with Postmark.</strong> When we send you an email, we share your
                 email address and name with Postmark. The email content may include information
@@ -524,7 +527,7 @@ function PrivacyPage() {
 
             <p>We use the following types of Cookies:</p>
 
-            <ul className='ml-6 list-outside list-disc space-y-2'>
+            <ul className='ml-6 flex list-outside list-disc flex-col gap-2'>
               <li>
                 <strong>Essential Cookies.</strong> Essential Cookies are required for providing you
                 with features or services that you have requested. For example, certain Cookies
@@ -558,7 +561,7 @@ function PrivacyPage() {
               measures include:
             </p>
 
-            <ul className='ml-6 list-outside list-disc space-y-1'>
+            <ul className='ml-6 flex list-outside list-disc flex-col gap-1'>
               <li>Encryption of data in transit (HTTPS/TLS)</li>
               <li>Secure password hashing</li>
               <li>Access controls and authentication</li>
@@ -669,7 +672,7 @@ function PrivacyPage() {
               .
             </p>
 
-            <ul className='ml-6 list-outside list-disc space-y-2'>
+            <ul className='ml-6 flex list-outside list-disc flex-col gap-2'>
               <li>
                 <strong>Access:</strong> You can request more information about the Personal Data we
                 hold about you and request a copy of such Personal Data.

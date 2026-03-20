@@ -166,7 +166,7 @@ export function LocalChecklistView({ checklistId, searchType }: LocalChecklistVi
         onClick={handleBack}
         className='text-muted-foreground hover:text-foreground inline-flex items-center gap-2 transition-colors'
       >
-        <ChevronLeftIcon className='h-5 w-5' />
+        <ChevronLeftIcon className='size-5' />
         Back
       </button>
       <div className='bg-border h-4 w-px' />
@@ -193,7 +193,7 @@ export function LocalChecklistView({ checklistId, searchType }: LocalChecklistVi
   if (error) {
     return (
       <div className='flex min-h-screen flex-col items-center justify-center gap-4 bg-blue-50'>
-        <div className='text-red-600'>{error}</div>
+        <div className='text-destructive'>{error}</div>
         <button
           onClick={handleBack}
           className='rounded-lg bg-blue-600 px-4 py-2 text-white transition-colors hover:bg-blue-700'

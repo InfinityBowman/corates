@@ -55,7 +55,7 @@ export function JudgementPanel({
             {judgement}
           </span>
         : <div className='flex items-center gap-2'>
-            <div className='bg-border h-4 w-4 animate-pulse rounded-full' />
+            <div className='bg-border size-4 animate-pulse rounded-full' />
             <span className='text-muted-foreground text-sm italic'>
               {isComplete === false ? 'Not yet calculated' : 'Not available'}
             </span>
@@ -69,7 +69,7 @@ export function JudgementPanel({
 
         {/* Auto-calculated indicator */}
         <div className='text-muted-foreground flex items-center gap-1.5 text-xs'>
-          <svg className='h-3.5 w-3.5' fill='none' viewBox='0 0 24 24' stroke='currentColor'>
+          <svg className='size-3.5' fill='none' viewBox='0 0 24 24' stroke='currentColor'>
             <path
               strokeLinecap='round'
               strokeLinejoin='round'

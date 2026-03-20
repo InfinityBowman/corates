@@ -1,11 +1,18 @@
 import { ReactNode } from 'react';
-import { AiOutlineCheck, AiOutlineMail, AiOutlineLink } from 'react-icons/ai';
-import { HiOutlineDocumentText, HiOutlineShieldCheck } from 'react-icons/hi2';
-import { BsLightningChargeFill } from 'react-icons/bs';
-import { FiLock, FiKey, FiShield } from 'react-icons/fi';
-import { BiComment } from 'react-icons/bi';
-import { RiWifiOffLine } from 'react-icons/ri';
-import { IoTimerOutline } from 'react-icons/io5';
+import {
+  CheckIcon,
+  MailIcon,
+  LinkIcon,
+  FileTextIcon,
+  ShieldCheckIcon,
+  ZapIcon,
+  LockIcon,
+  KeyIcon,
+  ShieldIcon,
+  MessageCircleIcon,
+  WifiOffIcon,
+  TimerIcon,
+} from 'lucide-react';
 
 interface IllustrationWrapperProps {
   gradient: string;
@@ -34,12 +41,12 @@ function UserAvatar({ position, gradient, letter, statusColor, pulse }: UserAvat
     <div className={`absolute ${position}`}>
       <div className='relative'>
         <div
-          className={`h-8 w-8 rounded-full bg-linear-to-br ${gradient} flex items-center justify-center font-bold text-white shadow-lg`}
+          className={`size-8 rounded-full bg-linear-to-br ${gradient} flex items-center justify-center font-bold text-white shadow-lg`}
         >
           {letter}
         </div>
         <div
-          className={`absolute right-0 bottom-0 h-2 w-2 ${statusColor} rounded-full border border-white ${pulse ? 'animate-pulse' : ''}`}
+          className={`absolute right-0 bottom-0 size-2 ${statusColor} rounded-full border border-white ${pulse ? 'animate-pulse' : ''}`}
         />
       </div>
     </div>
@@ -164,7 +171,7 @@ function CollaborationIllustration() {
 
         {/* Activity indicators */}
         <FloatingBadge position='-left-4 -bottom-2' border='border-green-200'>
-          <div className='h-2 w-2 animate-pulse rounded-full bg-green-500' />
+          <div className='size-2 animate-pulse rounded-full bg-green-500' />
           <span className='text-xs font-medium text-gray-700'>Live</span>
         </FloatingBadge>
       </IllustrationWrapper>
@@ -179,7 +186,7 @@ function SecurityIllustration() {
       <div className='absolute inset-0 flex items-center justify-center'>
         <div className='relative'>
           <div className='flex h-36 w-32 items-center justify-center rounded-lg bg-linear-to-br from-emerald-500 to-teal-600 shadow-xl'>
-            <HiOutlineShieldCheck className='h-16 w-16 text-white' />
+            <ShieldCheckIcon className='size-16 text-white' />
           </div>
           <div className='absolute -inset-4 animate-pulse rounded-lg border-2 border-emerald-300 opacity-50' />
         </div>
@@ -187,22 +194,22 @@ function SecurityIllustration() {
 
       {/* Auth method badges */}
       <FloatingBadge position='top-4 left-4' border='border-emerald-200'>
-        <FiKey className='h-4 w-4 text-emerald-600' />
+        <KeyIcon className='size-4 text-emerald-600' />
         <span className='text-xs font-medium text-gray-700'>OAuth</span>
       </FloatingBadge>
 
       <FloatingBadge position='top-4 right-4' border='border-blue-200'>
-        <FiLock className='h-4 w-4 text-blue-600' />
+        <LockIcon className='size-4 text-blue-600' />
         <span className='text-xs font-medium text-gray-700'>2FA</span>
       </FloatingBadge>
 
       <FloatingBadge position='bottom-6 left-6' border='border-purple-200'>
-        <AiOutlineMail className='h-4 w-4 text-purple-600' />
+        <MailIcon className='size-4 text-purple-600' />
         <span className='text-xs font-medium text-gray-700'>Passwordless</span>
       </FloatingBadge>
 
       <FloatingBadge position='bottom-6 right-6' border='border-indigo-200'>
-        <FiShield className='h-4 w-4 text-indigo-600' />
+        <ShieldIcon className='size-4 text-indigo-600' />
         <span className='text-xs font-medium text-gray-700'>SSO</span>
       </FloatingBadge>
     </IllustrationWrapper>
@@ -240,19 +247,19 @@ function PDFAnnotationIllustration() {
       <div className='w-52 overflow-hidden rounded-lg border border-gray-200 bg-white shadow-lg'>
         {/* PDF header bar */}
         <div className='flex items-center gap-2 border-b border-gray-200 bg-gray-100 px-3 py-1.5'>
-          <HiOutlineDocumentText className='h-4 w-4 text-rose-500' />
+          <FileTextIcon className='size-4 text-rose-500' />
           <span className='truncate text-xs text-gray-600'>study_2025.pdf</span>
         </div>
 
         {/* PDF content */}
-        <div className='space-y-2 p-3'>
+        <div className='flex flex-col gap-2 p-3'>
           <div className='h-2 w-full rounded bg-gray-200' />
           <div className='h-2 w-5/6 rounded bg-gray-200' />
 
           {/* Highlighted text */}
           <div className='relative'>
             <div className='h-2 w-4/5 rounded bg-yellow-300' />
-            <div className='absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-yellow-500 shadow-sm'>
+            <div className='absolute -top-1 -right-1 flex size-4 items-center justify-center rounded-full bg-yellow-500 shadow-sm'>
               <span className='text-xs font-bold text-white'>1</span>
             </div>
           </div>
@@ -262,8 +269,8 @@ function PDFAnnotationIllustration() {
 
           {/* Another highlight */}
           <div className='relative'>
-            <div className='h-2 w-2/3 rounded bg-blue-300' />
-            <div className='absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-blue-500 shadow-sm'>
+            <div className='size-2/3 rounded bg-blue-300' />
+            <div className='absolute -top-1 -right-1 flex size-4 items-center justify-center rounded-full bg-blue-500 shadow-sm'>
               <span className='text-xs font-bold text-white'>2</span>
             </div>
           </div>
@@ -277,7 +284,7 @@ function PDFAnnotationIllustration() {
       <div className='absolute -top-2 -right-4'>
         <div className='w-32 rounded-lg border border-rose-200 bg-white p-3 shadow-lg'>
           <div className='mb-1.5 flex items-center gap-1.5'>
-            <div className='flex h-5 w-5 items-center justify-center rounded-full bg-linear-to-br from-rose-400 to-pink-500 text-xs font-bold text-white'>
+            <div className='flex size-5 items-center justify-center rounded-full bg-linear-to-br from-rose-400 to-pink-500 text-xs font-bold text-white'>
               R
             </div>
             <span className='text-xs font-medium text-gray-700'>Note</span>
@@ -288,21 +295,21 @@ function PDFAnnotationIllustration() {
 
       {/* Link indicator */}
       <FloatingBadge position='-bottom-2 -left-2' border='border-rose-200'>
-        <AiOutlineLink className='h-4 w-4 text-rose-500' />
+        <LinkIcon className='size-4 text-rose-500' />
         <span className='text-xs font-medium text-gray-700'>Linked</span>
       </FloatingBadge>
 
       {/* Toolbar floating */}
       <div className='absolute top-1/2 -left-4 -translate-y-1/2 transform'>
         <div className='flex flex-col gap-1 rounded-lg border border-gray-200 bg-white p-1.5 shadow-md'>
-          <div className='flex h-6 w-6 items-center justify-center rounded bg-yellow-100'>
-            <div className='h-3 w-3 rounded-sm bg-yellow-400' />
+          <div className='flex size-6 items-center justify-center rounded bg-yellow-100'>
+            <div className='size-3 rounded-sm bg-yellow-400' />
           </div>
-          <div className='flex h-6 w-6 items-center justify-center rounded bg-blue-100'>
-            <div className='h-3 w-3 rounded-sm bg-blue-400' />
+          <div className='flex size-6 items-center justify-center rounded bg-blue-100'>
+            <div className='size-3 rounded-sm bg-blue-400' />
           </div>
-          <div className='flex h-6 w-6 items-center justify-center rounded bg-rose-100'>
-            <BiComment className='h-3 w-3 text-rose-500' />
+          <div className='flex size-6 items-center justify-center rounded bg-rose-100'>
+            <MessageCircleIcon className='size-3 text-rose-500' />
           </div>
         </div>
       </div>
@@ -339,7 +346,7 @@ function SpeedIllustration() {
       <IllustrationWrapper gradient='from-amber-50 to-orange-50' border='border-amber-200'>
         {/* Animation layer - behind everything */}
         <div className='pointer-events-none absolute inset-0 z-0 flex items-center justify-center'>
-          <div className='relative h-36 w-36'>
+          <div className='relative size-36'>
             {/* Expanding ping rings */}
             <div
               className='absolute -inset-4 rounded-full border border-amber-300'
@@ -384,10 +391,10 @@ function SpeedIllustration() {
 
         {/* Content layer - above animations */}
         <div className='absolute inset-0 z-10 flex items-center justify-center'>
-          <div className='flex h-36 w-36 items-center justify-center rounded-full border-4 border-amber-200 bg-white shadow-lg'>
+          <div className='flex size-36 items-center justify-center rounded-full border-4 border-amber-200 bg-white shadow-lg'>
             <div className='text-center'>
               <div style={{ animation: 'boltGlow 2.5s ease-in-out infinite' }}>
-                <BsLightningChargeFill className='mx-auto h-12 w-12 text-amber-500' />
+                <ZapIcon className='mx-auto size-12 text-amber-500' />
               </div>
               <div className='mt-1 text-xs font-semibold text-gray-500'>Streamlined</div>
             </div>
@@ -396,17 +403,17 @@ function SpeedIllustration() {
 
         {/* Time saved badges */}
         <FloatingBadge position='-top-2 -left-2 z-10' border='border-green-200'>
-          <IoTimerOutline className='h-4 w-4 text-green-600' />
+          <TimerIcon className='size-4 text-green-600' />
           <span className='text-xs font-medium text-gray-700'>Save hours</span>
         </FloatingBadge>
 
         <FloatingBadge position='-top-2 -right-2 z-10' border='border-amber-200'>
-          <AiOutlineCheck className='h-4 w-4 text-amber-600' />
+          <CheckIcon className='size-4 text-amber-600' />
           <span className='text-xs font-medium text-gray-700'>Automated</span>
         </FloatingBadge>
 
         <FloatingBadge position='top-[40%] -right-2 z-10' border='border-blue-200'>
-          <RiWifiOffLine className='h-4 w-4 text-blue-600' />
+          <WifiOffIcon className='size-4 text-blue-600' />
           <span className='text-xs font-medium text-gray-700'>Works offline</span>
         </FloatingBadge>
 
@@ -508,10 +515,10 @@ function FeatureSection({ feature, reversed }: FeatureSectionProps) {
       <div className={reversed ? 'md:order-1' : ''}>
         <h3 className='mb-4 text-2xl font-bold text-gray-900 md:text-3xl'>{feature.title}</h3>
         <p className='mb-6 text-lg leading-relaxed text-gray-600'>{feature.description}</p>
-        <ul className='space-y-3'>
+        <ul className='flex flex-col gap-3'>
           {feature.bullets.map((bullet, index) => (
             <li key={index} className='flex items-start gap-3'>
-              <AiOutlineCheck className='mt-0.5 h-5 w-5 shrink-0 text-blue-700' />
+              <CheckIcon className='mt-0.5 size-5 shrink-0 text-blue-700' />
               <span className='text-gray-700'>{bullet}</span>
             </li>
           ))}
@@ -604,7 +611,7 @@ export default function FeatureShowcase() {
         </p>
       </div>
 
-      <div className='space-y-16 md:space-y-24'>
+      <div className='flex flex-col gap-16 md:gap-24'>
         {features.map((feature, index) => (
           <FeatureSection key={index} feature={feature} reversed={index % 2 === 1} />
         ))}

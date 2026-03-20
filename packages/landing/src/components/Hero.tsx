@@ -49,9 +49,9 @@ export default function Hero() {
                   {/* Browser top bar */}
                   <div className='flex items-center rounded-t-xl border-b border-gray-200 bg-gray-100 px-2 py-1 sm:px-4 sm:py-2'>
                     <div className='flex items-center gap-2'>
-                      <span className='inline-block h-2.5 w-2.5 rounded-full bg-red-400 sm:h-3 sm:w-3' />
-                      <span className='inline-block h-2.5 w-2.5 rounded-full bg-yellow-400 sm:h-3 sm:w-3' />
-                      <span className='inline-block h-2.5 w-2.5 rounded-full bg-green-400 sm:h-3 sm:w-3' />
+                      <span className='inline-block size-2.5 rounded-full bg-red-400 sm:h-3 sm:w-3' />
+                      <span className='inline-block size-2.5 rounded-full bg-yellow-400 sm:h-3 sm:w-3' />
+                      <span className='inline-block size-2.5 rounded-full bg-green-400 sm:h-3 sm:w-3' />
                     </div>
                     <div className='mx-4 flex-1'>
                       <div className='text-2xs mx-auto max-w-50 truncate rounded-md border border-gray-300 bg-white px-1.5 py-0.5 text-gray-500 sm:max-w-[320px] sm:px-3 sm:py-1 sm:text-xs'>
@@ -81,8 +81,8 @@ export default function Hero() {
         </div>
       </div>
       {/* Background decoration */}
-      <div className='absolute top-0 left-1/2 -z-10 h-250 w-250 -translate-x-1/2 rounded-full bg-linear-to-b from-blue-700/5 to-transparent blur-3xl' />
-      <div className='absolute top-1/2 right-0 -z-10 h-125 w-125 rounded-full bg-linear-to-l from-blue-700/5 to-transparent blur-3xl' />
+      <div className='absolute top-0 left-1/2 -z-10 size-250 -translate-x-1/2 rounded-full bg-linear-to-b from-blue-700/5 to-transparent blur-3xl' />
+      <div className='absolute top-1/2 right-0 -z-10 size-125 rounded-full bg-linear-to-l from-blue-700/5 to-transparent blur-3xl' />
     </section>
   );
 }

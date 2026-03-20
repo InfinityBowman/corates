@@ -3,7 +3,7 @@
  * Shows merged/deduplicated studies ready for submission.
  */
 
-import { FileIcon, FileTextIcon, Trash2Icon } from 'lucide-react';
+import { FileTextIcon, Trash2Icon } from 'lucide-react';
 
 interface StagedStudiesSectionProps {
   studies: any;
@@ -22,16 +22,14 @@ export function StagedStudiesSection({ studies }: StagedStudiesSectionProps) {
         </h4>
       </div>
 
-      <div className='space-y-2'>
+      <div className='flex flex-col gap-2'>
         {stagedStudies.map((study: any, index: number) => (
           <div
             key={study.doi || study.title || index}
             className='border-border bg-muted flex items-center gap-3 rounded-lg border p-3'
           >
             <div className='text-muted-foreground shrink-0'>
-              {study.pdfData || study.googleDriveFileId ?
-                <FileTextIcon className='h-5 w-5' />
-              : <FileIcon className='h-5 w-5' />}
+              <FileTextIcon className='size-5' />
             </div>
 
             <div className='min-w-0 flex-1'>
@@ -63,7 +61,7 @@ export function StagedStudiesSection({ studies }: StagedStudiesSectionProps) {
               className='text-muted-foreground/70 focus:ring-primary shrink-0 rounded p-1.5 transition-colors hover:bg-red-50 hover:text-red-600 focus:ring-2 focus:outline-none'
               title='Remove study'
             >
-              <Trash2Icon className='h-4 w-4' />
+              <Trash2Icon className='size-4' />
             </button>
           </div>
         ))}

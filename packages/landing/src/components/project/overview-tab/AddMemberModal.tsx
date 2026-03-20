@@ -6,6 +6,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { Link } from '@tanstack/react-router';
 import { TriangleAlertIcon } from 'lucide-react';
 import { showToast } from '@/components/ui/toast';
+import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { getInitials } from '@/components/ui/avatar';
 import {
@@ -151,21 +152,21 @@ export function AddMemberModal({
           <DialogTitle>Add Member</DialogTitle>
         </DialogHeader>
 
-        <div className='space-y-4'>
+        <div className='flex flex-col gap-4'>
           {isAtQuotaLimit && (
-            <div className='flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 p-3'>
-              <TriangleAlertIcon className='mt-0.5 h-5 w-5 shrink-0 text-amber-600' />
-              <div className='text-sm'>
-                <p className='font-medium text-amber-800'>Collaborator limit reached</p>
-                <p className='mt-1 text-amber-700'>
+            <Alert variant='warning'>
+              <TriangleAlertIcon />
+              <div>
+                <AlertTitle>Collaborator limit reached</AlertTitle>
+                <AlertDescription>
                   Your team has {quotaInfo?.used} of {quotaInfo?.max} collaborators.{' '}
                   <Link to='/settings/plans' className='font-medium underline'>
                     Upgrade your plan
                   </Link>{' '}
                   to add more team members.
-                </p>
+                </AlertDescription>
               </div>
-            </div>
+            </Alert>
           )}
 
           <div className='relative'>
@@ -195,7 +196,7 @@ export function AddMemberModal({
                     onClick={() => handleSelectUser(user)}
                     className='flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-blue-50'
                   >
-                    <Avatar className='h-8 w-8 shrink-0'>
+                    <Avatar className='size-8 shrink-0'>
                       <AvatarImage src={user.image} alt={user.name || user.email} />
                       <AvatarFallback className='bg-primary text-sm text-white'>
                         {getInitials(user.name || user.email)}
@@ -214,7 +215,7 @@ export function AddMemberModal({
 
             {searching && (
               <div className='absolute top-8 right-3'>
-                <div className='border-primary h-5 w-5 animate-spin rounded-full border-2 border-t-transparent' />
+                <div className='border-primary size-5 animate-spin rounded-full border-2 border-t-transparent' />
               </div>
             )}
           </div>
@@ -230,18 +231,18 @@ export function AddMemberModal({
             )}
 
           {canAddByEmail && (
-            <div className='rounded-lg border border-blue-200 bg-blue-50 p-3'>
-              <p className='text-secondary-foreground text-sm'>
+            <Alert variant='info'>
+              <p className='text-sm'>
                 No user found. You can send an invitation to{' '}
                 <span className='font-medium'>{searchQuery.trim()}</span>.
               </p>
-            </div>
+            </Alert>
           )}
 
           {selectedUser && (
             <div className='flex items-center justify-between rounded-lg border border-blue-200 bg-blue-50 p-3'>
               <div className='flex items-center gap-3'>
-                <Avatar className='h-10 w-10'>
+                <Avatar className='size-10'>
                   <AvatarImage
                     src={selectedUser.image}
                     alt={selectedUser.name || selectedUser.email}
@@ -274,7 +275,7 @@ export function AddMemberModal({
                 Role
               </label>
               <Select value={selectedRole} onValueChange={setSelectedRole}>
-                <SelectTrigger>
+                <SelectTrigger className='w-full'>
                   <SelectValue placeholder='Select a role' />
                 </SelectTrigger>
                 <SelectContent>
@@ -285,11 +286,7 @@ export function AddMemberModal({
             </div>
           )}
 
-          {error && (
-            <div className='rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700'>
-              {error}
-            </div>
-          )}
+          {error && <Alert variant='destructive'>{error}</Alert>}
         </div>
 
         <DialogFooter>

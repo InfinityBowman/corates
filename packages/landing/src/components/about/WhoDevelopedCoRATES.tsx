@@ -21,14 +21,14 @@ export default function WhoDevelopedCoRATES() {
             <img
               src='/brandy.jpg'
               alt='Brandy Maynard'
-              className='mb-4 h-28 w-28 rounded-full object-cover ring-4 ring-blue-50'
+              className='mb-4 size-28 rounded-full object-cover ring-4 ring-blue-50'
               width={1990}
               height={2984}
             />
             <h3 className='text-xl font-semibold text-gray-900'>Brandy Maynard</h3>
             <p className='mt-1 text-sm font-medium text-blue-600'>Research Synthesis Expert</p>
           </div>
-          <div className='space-y-4 text-sm leading-relaxed text-gray-600'>
+          <div className='flex flex-col gap-4 text-sm leading-relaxed text-gray-600'>
             <p>
               Brandy is a research synthesist with extensive expertise in systematic review
               methodology and evidence appraisal. She completed her first systematic review as a{' '}
@@ -76,7 +76,7 @@ export default function WhoDevelopedCoRATES() {
             <img
               src='/jacob.jpeg'
               alt='Jacob Maynard'
-              className='mb-4 h-28 w-28 rounded-full object-cover ring-4 ring-blue-50'
+              className='mb-4 size-28 rounded-full object-cover ring-4 ring-blue-50'
               width={460}
               height={460}
             />
@@ -85,7 +85,7 @@ export default function WhoDevelopedCoRATES() {
               Software Engineer & Data Scientist
             </p>
           </div>
-          <div className='space-y-4 text-sm leading-relaxed text-gray-600'>
+          <div className='flex flex-col gap-4 text-sm leading-relaxed text-gray-600'>
             <p>
               Jacob is a software engineer and data scientist who focuses on designing clear,
               intuitive, and scalable software. With strengths in systems architecture, user

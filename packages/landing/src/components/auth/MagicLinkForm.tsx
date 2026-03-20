@@ -4,9 +4,10 @@
  */
 
 import { useState, useCallback } from 'react';
-import { FiMail } from 'react-icons/fi';
+import { MailIcon } from 'lucide-react';
 import { useAuthStore } from '@/stores/authStore';
 import { handleError } from '@/lib/error-utils';
+import { Alert } from '@/components/ui/alert';
 import { ErrorMessage } from './ErrorMessage';
 import { PrimaryButton } from './AuthButtons';
 
@@ -96,10 +97,10 @@ export function MagicLinkForm({
 
   if (sent) {
     return (
-      <div className='space-y-4'>
+      <div className='flex flex-col gap-4'>
         <div className='py-4 text-center'>
-          <div className='mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-green-100'>
-            <FiMail className='h-7 w-7 text-green-600' />
+          <div className='bg-success/10 mx-auto mb-3 flex size-14 items-center justify-center rounded-full'>
+            <MailIcon className='text-success size-7' />
           </div>
           <h3 className='text-foreground mb-1 text-base font-semibold'>Check your email</h3>
           <p className='text-muted-foreground mb-3 text-sm'>
@@ -112,9 +113,9 @@ export function MagicLinkForm({
           <ErrorMessage error={displayError} id='magic-link-resend-error' />
 
           {resent && (
-            <div className='mb-4 rounded-lg border border-green-200 bg-green-50 p-3 text-xs text-green-600 sm:text-sm'>
+            <Alert variant='success' className='mb-4 text-xs sm:text-sm'>
               Email sent successfully!
-            </div>
+            </Alert>
           )}
 
           <div className='flex flex-col gap-2'>
@@ -148,9 +149,9 @@ export function MagicLinkForm({
   }
 
   return (
-    <div className='space-y-4'>
+    <div className='flex flex-col gap-4'>
       <form onSubmit={handleSubmit} autoComplete='off'>
-        <div className='space-y-4'>
+        <div className='flex flex-col gap-4'>
           <div>
             <label
               className='text-secondary-foreground mb-1 block text-xs font-semibold sm:mb-2 sm:text-sm'

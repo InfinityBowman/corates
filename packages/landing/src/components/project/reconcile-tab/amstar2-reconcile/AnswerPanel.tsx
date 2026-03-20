@@ -62,7 +62,7 @@ export function AnswerPanel({
 
   if (compact) {
     return (
-      <div className='space-y-3'>
+      <div className='flex flex-col gap-3'>
         {columns.map((col: any, colIdx: number) => {
           const isLastColumn = colIdx === columns.length - 1;
           const colAnswers = answersArray[colIdx] || [];
@@ -74,7 +74,7 @@ export function AnswerPanel({
                   {col.label}
                 </div>
               )}
-              <div className='space-y-1'>
+              <div className='flex flex-col gap-1'>
                 {col.options.map((option: string, optIdx: number) => {
                   const isChecked = colAnswers[optIdx] === true;
                   return (
@@ -89,14 +89,14 @@ export function AnswerPanel({
                           checked={isChecked}
                           disabled={readOnly}
                           onChange={() => !readOnly && onRadioChange?.(colIdx, optIdx)}
-                          className='border-border focus:ring-primary mt-0.5 h-3 w-3 shrink-0 text-blue-600'
+                          className='border-border focus:ring-primary mt-0.5 size-3 shrink-0 text-blue-600'
                         />
                       : <input
                           type='checkbox'
                           checked={isChecked}
                           disabled={readOnly}
                           onChange={() => !readOnly && onCheckboxChange?.(colIdx, optIdx)}
-                          className='border-border focus:ring-primary mt-0.5 h-3 w-3 shrink-0 rounded text-blue-600'
+                          className='border-border focus:ring-primary mt-0.5 size-3 shrink-0 rounded text-blue-600'
                         />
                       }
                       <span
@@ -155,7 +155,7 @@ export function AnswerPanel({
       </div>
 
       {/* Answer Columns */}
-      <div className='space-y-4'>
+      <div className='flex flex-col gap-4'>
         {columns.map((col: any, colIdx: number) => {
           const isLastColumn = colIdx === columns.length - 1;
           const colAnswers = answersArray[colIdx] || [];
@@ -170,7 +170,7 @@ export function AnswerPanel({
               {col.description && (
                 <div className='text-muted-foreground mb-2 text-xs'>{col.description}</div>
               )}
-              <div className='space-y-2'>
+              <div className='flex flex-col gap-2'>
                 {col.options.map((option: string, optIdx: number) => {
                   const isChecked = colAnswers[optIdx] === true;
                   return (
@@ -185,14 +185,14 @@ export function AnswerPanel({
                           checked={isChecked}
                           disabled={readOnly}
                           onChange={() => !readOnly && onRadioChange?.(colIdx, optIdx)}
-                          className='border-border focus:ring-primary mt-0.5 h-3.5 w-3.5 shrink-0 text-blue-600'
+                          className='border-border focus:ring-primary mt-0.5 size-3.5 shrink-0 text-blue-600'
                         />
                       : <input
                           type='checkbox'
                           checked={isChecked}
                           disabled={readOnly}
                           onChange={() => !readOnly && onCheckboxChange?.(colIdx, optIdx)}
-                          className='border-border focus:ring-primary mt-0.5 h-3.5 w-3.5 shrink-0 rounded text-blue-600'
+                          className='border-border focus:ring-primary mt-0.5 size-3.5 shrink-0 rounded text-blue-600'
                         />
                       }
                       <span

@@ -74,7 +74,7 @@ function QuestionPill({
       <TooltipTrigger asChild>
         <button
           onClick={() => store.goToQuestion?.(questionIndex)}
-          className={`relative h-8 w-8 rounded-full text-xs font-medium transition-all ${pillStyle}`}
+          className={`relative size-8 rounded-full text-xs font-medium transition-all ${pillStyle}`}
           aria-label={tooltip}
           aria-current={isCurrentPage ? 'page' : undefined}
         >
@@ -85,10 +85,10 @@ function QuestionPill({
 
           {hasAnswer && (
             <span
-              className='absolute -top-0.5 -right-0.5 flex h-3.5 w-3.5 items-center justify-center rounded-full border-[0.5px] bg-white shadow-sm'
+              className='absolute -top-0.5 -right-0.5 flex size-3.5 items-center justify-center rounded-full border-[0.5px] bg-white shadow-sm'
               aria-hidden='true'
             >
-              <CheckIcon className='h-2.5 w-2.5 text-green-600' />
+              <CheckIcon className='size-2.5 text-green-600' />
             </span>
           )}
         </button>
@@ -131,7 +131,7 @@ function ResetButton({ onClick }: { onClick: () => void }) {
           className='flex h-8 items-center gap-1 rounded-full bg-red-100 px-3 text-xs font-medium text-red-700 transition-all hover:bg-red-200'
           aria-label='Reset reconciliation'
         >
-          <RotateCcwIcon className='h-3 w-3' />
+          <RotateCcwIcon className='size-3' />
           Reset
         </button>
       </TooltipTrigger>

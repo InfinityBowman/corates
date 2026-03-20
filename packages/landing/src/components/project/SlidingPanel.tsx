@@ -106,7 +106,7 @@ export function SlidingPanel({
           className='text-muted-foreground/70 hover:bg-secondary hover:text-secondary-foreground ml-auto rounded-md p-1.5 transition-colors'
           aria-label='Close panel'
         >
-          <XIcon className='h-5 w-5' />
+          <XIcon className='size-5' />
         </button>
       </div>
 

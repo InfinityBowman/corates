@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { createFileRoute, Link } from '@tanstack/react-router';
-import { FiCheck, FiChevronDown, FiStar, FiZap } from 'react-icons/fi';
+import { CheckIcon, ChevronDownIcon, StarIcon, ZapIcon } from 'lucide-react';
 import { getBillingPlanCatalog } from '@corates/shared/plans';
+import { Badge } from '@/components/ui/badge';
 
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
@@ -65,8 +66,8 @@ function FAQItem({ question, answer }: { question: string; answer: string }) {
         onClick={() => setIsOpen(!isOpen)}
       >
         <span className='text-base font-medium text-gray-900'>{question}</span>
-        <FiChevronDown
-          className={`h-5 w-5 shrink-0 text-gray-500 transition-transform duration-300 ease-out ${isOpen ? 'rotate-180' : ''}`}
+        <ChevronDownIcon
+          className={`size-5 shrink-0 text-gray-500 transition-transform duration-300 ease-out ${isOpen ? 'rotate-180' : ''}`}
         />
       </button>
       <div
@@ -82,6 +83,9 @@ function FAQItem({ question, answer }: { question: string; answer: string }) {
 }
 
 export const Route = createFileRoute('/pricing')({
+  headers: () => ({
+    'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=3600',
+  }),
   head: () => ({
     meta: [
       { title: 'Pricing - CoRATES' },
@@ -168,8 +172,8 @@ function PricingPage() {
         {trialPlan && (
           <div className='mt-10 rounded-2xl border-2 border-blue-200 bg-linear-to-r from-blue-50 to-indigo-50 p-6'>
             <div className='flex flex-col items-center gap-4 text-center sm:flex-row sm:text-left'>
-              <div className='flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-blue-100'>
-                <FiZap className='h-6 w-6 text-blue-600' />
+              <div className='flex size-12 shrink-0 items-center justify-center rounded-full bg-blue-100'>
+                <ZapIcon className='size-6 text-blue-600' />
               </div>
               <div className='flex-1'>
                 <h3 className='text-lg font-bold text-gray-900'>Start your 14-day free trial</h3>
@@ -190,7 +194,7 @@ function PricingPage() {
         {/* Billing interval toggle */}
         <div className='mt-10 flex flex-col items-center gap-4'>
           <div className='flex items-center gap-2 rounded-full bg-green-50 px-4 py-2 text-sm font-medium text-green-700'>
-            <FiStar className='h-4 w-4' />
+            <StarIcon className='size-4' />
             Save 2 months with annual billing
           </div>
           <div className='relative inline-flex rounded-xl bg-gray-100 p-1.5'>
@@ -242,10 +246,13 @@ function PricingPage() {
                 {/* Popular badge */}
                 {isPopular && (
                   <div className='absolute -top-4 left-1/2 -translate-x-1/2'>
-                    <span className='inline-flex items-center gap-1.5 rounded-full bg-blue-600 px-4 py-1.5 text-xs font-bold text-white shadow-lg'>
-                      <FiZap className='h-3.5 w-3.5' />
+                    <Badge
+                      variant='default'
+                      className='bg-blue-600 px-4 py-1.5 font-bold text-white shadow-lg'
+                    >
+                      <ZapIcon className='size-3.5' />
                       Most Popular
-                    </span>
+                    </Badge>
                   </div>
                 )}
 
@@ -315,11 +322,11 @@ function PricingPage() {
                   <p className='mb-3 text-xs font-semibold tracking-wide text-gray-400 uppercase'>
                     What's included
                   </p>
-                  <ul className='space-y-3'>
+                  <ul className='flex flex-col gap-3'>
                     {plan.features.map(feature => (
                       <li key={feature} className='flex items-start gap-3'>
-                        <div className='mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-green-100'>
-                          <FiCheck className='h-3 w-3 text-green-600' />
+                        <div className='mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-green-100'>
+                          <CheckIcon className='size-3 text-green-600' />
                         </div>
                         <span className='text-sm text-gray-600'>{feature}</span>
                       </li>
@@ -338,15 +345,13 @@ function PricingPage() {
               <div className='flex-1'>
                 <div className='mb-2 flex items-center gap-2'>
                   <h3 className='text-lg font-bold text-gray-900'>{singleProjectPlan.name}</h3>
-                  <span className='rounded-full bg-gray-200 px-2.5 py-0.5 text-xs font-medium text-gray-600'>
-                    One-time purchase
-                  </span>
+                  <Badge variant='secondary'>One-time purchase</Badge>
                 </div>
                 <p className='text-sm text-gray-600'>{singleProjectPlan.description}</p>
                 <ul className='mt-3 flex flex-wrap gap-x-4 gap-y-1'>
                   {singleProjectPlan.features.map(feature => (
                     <li key={feature} className='flex items-center gap-1.5 text-sm text-gray-600'>
-                      <FiCheck className='h-3.5 w-3.5 text-green-600' />
+                      <CheckIcon className='size-3.5 text-green-600' />
                       {feature}
                     </li>
                   ))}

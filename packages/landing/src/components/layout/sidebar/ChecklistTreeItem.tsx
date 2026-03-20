@@ -31,7 +31,7 @@ export function ChecklistTreeItem({
         isSelected ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted'
       }`}
     >
-      <FileCheck2Icon className='h-3 w-3 shrink-0' />
+      <FileCheck2Icon className='size-3 shrink-0' />
       <span className='text-2xs truncate font-medium'>
         {(getChecklistMetadata(checklist.type) as { name: string }).name}
       </span>

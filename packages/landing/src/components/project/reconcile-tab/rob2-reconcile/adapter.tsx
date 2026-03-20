@@ -556,8 +556,8 @@ function renderWarningBanner(
   if (finalAim) return null;
 
   return (
-    <div className='mb-4 flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700'>
-      <AlertTriangleIcon className='h-5 w-5 shrink-0' />
+    <div className='border-destructive/20 bg-destructive/10 text-destructive mb-4 flex items-center gap-2 rounded-lg border p-3 text-sm'>
+      <AlertTriangleIcon className='size-5 shrink-0' />
       <div>
         <span className='font-medium'>Aim Mismatch Detected:</span> Reviewers selected different
         aims. You must reconcile the aim field before proceeding to domain assessment.

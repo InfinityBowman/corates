@@ -5,14 +5,15 @@
 
 import { useState } from 'react';
 import { Link } from '@tanstack/react-router';
-import {
-  AlertTriangleIcon,
-  CheckCircleIcon,
-  LoaderIcon,
-  RefreshCwIcon,
-  AlertCircleIcon,
-} from 'lucide-react';
+import { AlertTriangleIcon, CheckCircleIcon, RefreshCwIcon, AlertCircleIcon } from 'lucide-react';
 import { useAdminOrgBillingReconcile } from '@/hooks/useAdminQueries';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Spinner } from '@/components/ui/spinner';
+import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 
 interface StuckState {
   type: string;
@@ -63,16 +64,16 @@ const getSeverityIcon = (severity: string) => {
   }
 };
 
-const getSeverityColor = (severity: string): string => {
+const getSeverityVariant = (severity: string) => {
   switch (severity) {
     case 'critical':
-      return 'bg-red-100 text-red-800 border-red-300';
+      return 'destructive' as const;
     case 'high':
-      return 'bg-orange-100 text-orange-800 border-orange-300';
+      return 'warning' as const;
     case 'medium':
-      return 'bg-yellow-100 text-yellow-800 border-yellow-300';
+      return 'warning' as const;
     default:
-      return 'bg-secondary text-foreground border-border';
+      return 'default' as const;
   }
 };
 
@@ -97,89 +98,74 @@ export function OrgBillingReconcilePanel({ orgId }: OrgBillingReconcilePanelProp
     <div className='border-border bg-card rounded-lg border'>
       <div className='border-border border-b px-6 py-4'>
         <div className='flex items-center justify-between'>
-          <div className='flex items-center space-x-3'>
-            <RefreshCwIcon className='text-muted-foreground/70 h-5 w-5' />
+          <div className='flex items-center gap-3'>
+            <RefreshCwIcon className='text-muted-foreground/70 size-5' />
             <h2 className='text-foreground text-lg font-semibold'>Billing Reconciliation</h2>
           </div>
-          <button
-            type='button'
+          <Button
+            variant='outline'
             onClick={() => reconcileQuery.refetch()}
-            className='border-border bg-card text-secondary-foreground hover:bg-muted rounded-md border px-4 py-2 text-sm font-medium'
             disabled={reconcileQuery.isFetching}
           >
             {reconcileQuery.isFetching ?
-              <LoaderIcon className='h-4 w-4 animate-spin' />
-            : 'Refresh'}
-          </button>
+              <Spinner size='sm' data-icon='inline-start' />
+            : null}
+            {reconcileQuery.isFetching ? 'Refreshing...' : 'Refresh'}
+          </Button>
         </div>
       </div>
 
       <div className='p-6'>
         {reconcileQuery.isLoading ?
           <div className='flex items-center justify-center py-8'>
-            <LoaderIcon className='h-6 w-6 animate-spin text-blue-600' />
+            <Spinner size='md' />
           </div>
         : reconcileData ?
           <>
             {/* Controls */}
             <div className='border-border bg-muted mb-6 rounded-lg border p-4'>
               <div className='grid grid-cols-1 gap-4 md:grid-cols-4'>
-                <div>
-                  <label className='text-secondary-foreground block text-sm font-medium'>
-                    Incomplete Threshold (min)
-                  </label>
-                  <input
+                <div className='flex flex-col gap-2'>
+                  <Label>Incomplete Threshold (min)</Label>
+                  <Input
                     type='number'
                     value={incompleteThreshold}
                     onChange={e => setIncompleteThreshold(parseInt(e.target.value, 10) || 30)}
-                    min='1'
-                    className='border-border mt-1 block w-full rounded-md text-sm'
+                    min={1}
                   />
                 </div>
-                <div>
-                  <label className='text-secondary-foreground block text-sm font-medium'>
-                    Checkout No Sub Threshold (min)
-                  </label>
-                  <input
+                <div className='flex flex-col gap-2'>
+                  <Label>Checkout No Sub Threshold (min)</Label>
+                  <Input
                     type='number'
                     value={checkoutNoSubThreshold}
                     onChange={e => setCheckoutNoSubThreshold(parseInt(e.target.value, 10) || 15)}
-                    min='1'
-                    className='border-border mt-1 block w-full rounded-md text-sm'
+                    min={1}
                   />
                 </div>
-                <div>
-                  <label className='text-secondary-foreground block text-sm font-medium'>
-                    Processing Lag Threshold (min)
-                  </label>
-                  <input
+                <div className='flex flex-col gap-2'>
+                  <Label>Processing Lag Threshold (min)</Label>
+                  <Input
                     type='number'
                     value={processingLagThreshold}
                     onChange={e => setProcessingLagThreshold(parseInt(e.target.value, 10) || 10)}
-                    min='1'
-                    className='border-border mt-1 block w-full rounded-md text-sm'
+                    min={1}
                   />
                 </div>
-                <div>
-                  <label className='text-secondary-foreground block text-sm font-medium'>
-                    Options
-                  </label>
-                  <div className='mt-2 flex items-center'>
-                    <input
-                      type='checkbox'
+                <div className='flex flex-col gap-2'>
+                  <Label>Options</Label>
+                  <div className='flex items-center gap-2'>
+                    <Checkbox
                       id='checkStripe'
                       checked={checkStripe}
-                      onChange={e => setCheckStripe(e.target.checked)}
-                      className='border-border h-4 w-4 rounded text-blue-600 focus:ring-blue-500'
+                      onCheckedChange={checked => setCheckStripe(checked === true)}
                     />
-                    <label htmlFor='checkStripe' className='text-secondary-foreground ml-2 text-sm'>
+                    <Label htmlFor='checkStripe' className='font-normal'>
                       Check Stripe API
-                    </label>
+                    </Label>
                   </div>
                   {checkStripe && (
-                    <p className='mt-1 text-xs text-yellow-600'>
-                      Note: This makes API calls to Stripe
-                    </p>
+                    <p className='text-warning text-xs'>Note: This makes API calls to Stripe</p>
                   )}
                 </div>
               </div>
@@ -191,15 +177,15 @@ export function OrgBillingReconcilePanel({ orgId }: OrgBillingReconcilePanelProp
                 <p className='text-muted-foreground text-sm'>Total Stuck</p>
                 <p className='text-foreground text-2xl font-bold'>{summary.stuckStateCount ?? 0}</p>
               </div>
-              <div className='rounded-lg border border-red-300 bg-red-50 p-4'>
+              <div className='border-destructive/30 bg-destructive/10 rounded-lg border p-4'>
                 <p className='text-muted-foreground text-sm'>Critical</p>
-                <p className='text-2xl font-bold text-red-800'>
+                <p className='text-destructive text-2xl font-bold'>
                   {stuckStates.filter(s => s.severity === 'critical').length}
                 </p>
               </div>
-              <div className='rounded-lg border border-orange-300 bg-orange-50 p-4'>
+              <div className='border-warning-border bg-warning-bg rounded-lg border p-4'>
                 <p className='text-muted-foreground text-sm'>High</p>
-                <p className='text-2xl font-bold text-orange-800'>
+                <p className='text-warning text-2xl font-bold'>
                   {stuckStates.filter(s => s.severity === 'high').length}
                 </p>
               </div>
@@ -215,97 +201,91 @@ export function OrgBillingReconcilePanel({ orgId }: OrgBillingReconcilePanelProp
 
             {/* Stuck States */}
             {stuckStates.length > 0 ?
-              <div className='space-y-4'>
+              <div className='flex flex-col gap-4'>
                 {stuckStates.map((state, idx) => {
                   const Icon = getSeverityIcon(state.severity);
+                  const variant = getSeverityVariant(state.severity);
                   return (
-                    <div
-                      key={idx}
-                      className={`rounded-lg border-2 p-4 ${getSeverityColor(state.severity)}`}
-                    >
-                      <div className='flex items-start space-x-3'>
-                        <Icon className='mt-0.5 h-5 w-5 shrink-0' />
-                        <div className='flex-1'>
-                          <div className='flex items-center space-x-2'>
-                            <h3 className='font-semibold'>{state.type.replace(/_/g, ' ')}</h3>
-                            <span
-                              className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${getSeverityColor(state.severity)}`}
-                            >
-                              {state.severity}
-                            </span>
-                          </div>
-                          <p className='mt-2 text-sm'>{state.description}</p>
-                          {state.ageMinutes != null && (
-                            <p className='mt-1 text-xs opacity-75'>
-                              Age: {state.ageMinutes} minutes (threshold: {state.threshold})
-                            </p>
-                          )}
-                          {state.subscriptionId && (
-                            <p className='mt-1 text-xs opacity-75'>
-                              Subscription: <code>{state.subscriptionId}</code>
-                            </p>
-                          )}
-                          {state.stripeSubscriptionId && (
-                            <div className='mt-1 flex items-center space-x-2 text-xs opacity-75'>
-                              <span>Stripe Subscription:</span>
-                              <code>{state.stripeSubscriptionId}</code>
-                              <a
-                                href={`https://dashboard.stripe.com/subscriptions/${state.stripeSubscriptionId}`}
-                                target='_blank'
-                                rel='noopener noreferrer'
-                                className='text-blue-600 hover:text-blue-800'
-                              >
-                                View in Stripe
-                              </a>
-                            </div>
-                          )}
-                          {state.stripeEventId && (
-                            <div className='mt-1 flex items-center space-x-2 text-xs opacity-75'>
-                              <span>Event:</span>
-                              <code>{state.stripeEventId}</code>
-                              <Link
-                                to={'/admin/billing/ledger' as string}
-                                search={
-                                  {
-                                    type: 'checkout.session.completed',
-                                  } as Record<string, string>
-                                }
-                                className='text-blue-600 hover:text-blue-800'
-                              >
-                                View in Ledger
-                              </Link>
-                            </div>
-                          )}
-                          {state.localStatus && state.stripeStatus && (
-                            <p className='mt-1 text-xs opacity-75'>
-                              Status mismatch: Local={state.localStatus}, Stripe=
-                              {state.stripeStatus}
-                            </p>
-                          )}
-                          {state.type === 'checkout_no_subscription' && (
-                            <div className='bg-card/50 mt-4 rounded p-3'>
-                              <p className='mb-2 text-xs font-semibold'>Recommended Checks:</p>
-                              <ul className='list-inside list-disc space-y-1 text-xs'>
-                                <li>Verify Better Auth Stripe plugin configuration</li>
-                                <li>Check authorizeReference function returns true for this org</li>
-                                <li>Verify referenceId/orgId mapping matches checkout metadata</li>
-                                <li>Check Stripe dashboard for subscription creation attempts</li>
-                              </ul>
-                            </div>
-                          )}
+                    <Alert key={idx} variant={variant} className='border-2'>
+                      <Icon />
+                      <div className='flex-1'>
+                        <div className='flex items-center gap-2'>
+                          <AlertTitle>{state.type.replace(/_/g, ' ')}</AlertTitle>
+                          <Badge variant={variant}>{state.severity}</Badge>
                         </div>
+                        <AlertDescription className='mt-2'>{state.description}</AlertDescription>
+                        {state.ageMinutes != null && (
+                          <p className='mt-1 text-xs opacity-75'>
+                            Age: {state.ageMinutes} minutes (threshold: {state.threshold})
+                          </p>
+                        )}
+                        {state.subscriptionId && (
+                          <p className='mt-1 text-xs opacity-75'>
+                            Subscription: <code>{state.subscriptionId}</code>
+                          </p>
+                        )}
+                        {state.stripeSubscriptionId && (
+                          <div className='mt-1 flex items-center gap-2 text-xs opacity-75'>
+                            <span>Stripe Subscription:</span>
+                            <code>{state.stripeSubscriptionId}</code>
+                            <a
+                              href={`https://dashboard.stripe.com/subscriptions/${state.stripeSubscriptionId}`}
+                              target='_blank'
+                              rel='noopener noreferrer'
+                              className='text-primary hover:text-primary/80'
+                            >
+                              View in Stripe
+                            </a>
+                          </div>
+                        )}
+                        {state.stripeEventId && (
+                          <div className='mt-1 flex items-center gap-2 text-xs opacity-75'>
+                            <span>Event:</span>
+                            <code>{state.stripeEventId}</code>
+                            <Link
+                              to={'/admin/billing/ledger' as string}
+                              search={
+                                {
+                                  type: 'checkout.session.completed',
+                                } as Record<string, string>
+                              }
+                              className='text-primary hover:text-primary/80'
+                            >
+                              View in Ledger
+                            </Link>
+                          </div>
+                        )}
+                        {state.localStatus && state.stripeStatus && (
+                          <p className='mt-1 text-xs opacity-75'>
+                            Status mismatch: Local={state.localStatus}, Stripe=
+                            {state.stripeStatus}
+                          </p>
+                        )}
+                        {state.type === 'checkout_no_subscription' && (
+                          <div className='bg-card/50 mt-4 rounded p-3'>
+                            <p className='mb-2 text-xs font-semibold'>Recommended Checks:</p>
+                            <ul className='flex list-inside list-disc flex-col gap-1 text-xs'>
+                              <li>Verify Better Auth Stripe plugin configuration</li>
+                              <li>Check authorizeReference function returns true for this org</li>
+                              <li>Verify referenceId/orgId mapping matches checkout metadata</li>
+                              <li>Check Stripe dashboard for subscription creation attempts</li>
+                            </ul>
+                          </div>
+                        )}
                       </div>
-                    </div>
+                    </Alert>
                   );
                 })}
               </div>
-            : <div className='rounded-lg border border-green-200 bg-green-50 p-8 text-center'>
-                <CheckCircleIcon className='mx-auto mb-4 h-12 w-12 text-green-600' />
-                <p className='text-lg font-medium text-green-900'>No stuck states found</p>
-                <p className='text-sm text-green-700'>
-                  All billing states are healthy for this organization
-                </p>
-              </div>
+            : <Alert variant='success' className='py-8 text-center'>
+                <div className='flex w-full flex-col items-center'>
+                  <CheckCircleIcon className='text-success mb-4 size-12' />
+                  <p className='text-success text-lg font-medium'>No stuck states found</p>
+                  <p className='text-success text-sm'>
+                    All billing states are healthy for this organization
+                  </p>
+                </div>
+              </Alert>
             }
 
             {/* Stripe Comparison */}
@@ -313,17 +293,17 @@ export function OrgBillingReconcilePanel({ orgId }: OrgBillingReconcilePanelProp
               <div className='border-border bg-muted mt-6 rounded-lg border p-4'>
                 <h3 className='text-foreground mb-3 font-semibold'>Stripe API Comparison</h3>
                 {reconcileData.stripeComparison.error ?
-                  <p className='text-sm text-red-600'>
+                  <p className='text-destructive text-sm'>
                     Error: {reconcileData.stripeComparison.error}
                   </p>
                 : reconcileData.stripeComparison.noActiveSubscription ?
                   <p className='text-muted-foreground text-sm'>No active subscription to compare</p>
-                : <div className='space-y-2 text-sm'>
-                    <div className='flex items-center space-x-2'>
+                : <div className='flex flex-col gap-2 text-sm'>
+                    <div className='flex items-center gap-2'>
                       <span className='font-medium'>Status Match:</span>
                       {reconcileData.stripeComparison.match ?
-                        <CheckCircleIcon className='h-4 w-4 text-green-600' />
-                      : <AlertTriangleIcon className='h-4 w-4 text-red-600' />}
+                        <CheckCircleIcon className='text-success size-4' />
+                      : <AlertTriangleIcon className='text-destructive size-4' />}
                     </div>
                     <div>
                       <span className='font-medium'>Local:</span>{' '}

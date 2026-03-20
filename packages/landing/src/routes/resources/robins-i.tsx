@@ -14,6 +14,9 @@ const description =
   : 'ROBINS-I appraisal tool resources.';
 
 export const Route = createFileRoute('/resources/robins-i')({
+  headers: () => ({
+    'Cache-Control': 'public, s-maxage=3600, stale-while-revalidate=86400',
+  }),
   head: () => ({
     meta: [
       { title },

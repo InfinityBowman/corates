@@ -101,7 +101,7 @@ export function NavbarDomainPill({
             )}
             {sectionKey !== 'overall' && (
               <ChevronRightIcon
-                className={`h-3 w-3 opacity-60 transition-transform ${isExpanded ? 'rotate-90' : ''}`}
+                className={`size-3 opacity-60 transition-transform ${isExpanded ? 'rotate-90' : ''}`}
               />
             )}
           </button>
@@ -184,7 +184,7 @@ function QuestionPill({
   const isJudgement =
     item.type === NAV_ITEM_TYPES.DOMAIN_JUDGEMENT || item.type === NAV_ITEM_TYPES.OVERALL_JUDGEMENT;
 
-  const pillSizeClass = isJudgement ? 'h-6 px-2 text-2xs' : 'h-6 w-6 text-2xs';
+  const pillSizeClass = isJudgement ? 'h-6 px-2 text-2xs' : 'size-6 text-2xs';
 
   let pillSpacingClass = '';
   if (isFirst) pillSpacingClass += 'ml-0.5 ';
@@ -206,10 +206,10 @@ function QuestionPill({
           {displayLabel}
           {hasAnswer && (
             <span
-              className='bg-card absolute -top-0.5 -right-0.5 flex h-2.5 w-2.5 items-center justify-center rounded-full border-[0.5px] shadow-sm'
+              className='bg-card absolute -top-0.5 -right-0.5 flex size-2.5 items-center justify-center rounded-full border-[0.5px] shadow-sm'
               aria-hidden='true'
             >
-              <CheckIcon className='h-1.5 w-1.5 text-green-600' />
+              <CheckIcon className='size-1.5 text-green-600' />
             </span>
           )}
         </button>

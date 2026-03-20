@@ -149,7 +149,7 @@ export function ProjectsSection({
               disabled={!isOnline}
               className='text-primary hover:bg-primary/5 flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition-all hover:scale-105 hover:shadow-sm active:scale-100 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:scale-100'
             >
-              <PlusIcon className='h-4 w-4' />
+              <PlusIcon className='size-4' />
               New Project
             </button>
           )}
@@ -160,8 +160,8 @@ export function ProjectsSection({
       <div className='grid gap-4 sm:grid-cols-2 xl:grid-cols-3'>
         {!hasProjects && (
           <div className='border-border bg-muted/50 col-span-full flex flex-col items-center justify-center rounded-2xl border-2 border-dashed px-6 py-16'>
-            <div className='bg-secondary mb-4 flex h-16 w-16 items-center justify-center rounded-2xl'>
-              <FolderIcon className='text-muted-foreground/70 h-8 w-8' />
+            <div className='bg-secondary mb-4 flex size-16 items-center justify-center rounded-2xl'>
+              <FolderIcon className='text-muted-foreground/70 size-8' />
             </div>
             <h3 className='text-secondary-foreground mb-2 text-lg font-semibold'>
               No projects yet
@@ -176,7 +176,7 @@ export function ProjectsSection({
                 disabled={!isOnline}
                 className='bg-primary text-primary-foreground hover:bg-primary/90 flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-medium shadow-lg transition-all hover:shadow-xl disabled:cursor-not-allowed disabled:opacity-50'
               >
-                <PlusIcon className='h-4 w-4' />
+                <PlusIcon className='size-4' />
                 Create First Project
               </button>
             )}

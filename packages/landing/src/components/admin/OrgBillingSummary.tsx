@@ -3,6 +3,8 @@
  * Displays current billing state for an organization including plan, entitlements, and quotas
  */
 
+import { Badge } from '@/components/ui/badge';
+
 interface BillingPlan {
   name?: string;
   entitlements?: Record<string, boolean | string | number>;
@@ -71,15 +73,10 @@ export function OrgBillingSummary({ billing }: OrgBillingSummaryProps) {
         </div>
         <div>
           <p className='text-muted-foreground text-sm'>Access Mode</p>
-          <p className='text-foreground mt-1 text-lg font-medium'>
+          <p className='mt-1'>
             {accessMode === 'full' ?
-              <span className='inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800'>
-                Full Access
-              </span>
-            : <span className='inline-flex items-center rounded-full bg-yellow-100 px-2.5 py-0.5 text-xs font-medium text-yellow-800'>
-                Read Only
-              </span>
-            }
+              <Badge variant='success'>Full Access</Badge>
+            : <Badge variant='warning'>Read Only</Badge>}
           </p>
         </div>
         <div>
@@ -100,7 +97,7 @@ export function OrgBillingSummary({ billing }: OrgBillingSummaryProps) {
       <div className='mt-6 grid grid-cols-1 gap-6 md:grid-cols-2'>
         <div>
           <h3 className='text-foreground mb-3 text-sm font-semibold'>Entitlements</h3>
-          <dl className='space-y-2'>
+          <dl className='flex flex-col gap-2'>
             {entitlementEntries.length > 0 ?
               entitlementEntries.map(([key, value]) => (
                 <div key={key} className='border-border-subtle flex justify-between border-b pb-2'>
@@ -121,7 +118,7 @@ export function OrgBillingSummary({ billing }: OrgBillingSummaryProps) {
         </div>
         <div>
           <h3 className='text-foreground mb-3 text-sm font-semibold'>Quotas</h3>
-          <dl className='space-y-2'>
+          <dl className='flex flex-col gap-2'>
             {quotaEntries.length > 0 ?
               quotaEntries.map(([key, value]) => (
                 <div key={key} className='border-border-subtle flex justify-between border-b pb-2'>

@@ -88,7 +88,7 @@ export function ROBINSIChecklist({
 
   return (
     <div className='bg-blue-50'>
-      <div className='container mx-auto max-w-5xl space-y-4 px-4 py-6'>
+      <div className='container mx-auto flex max-w-5xl flex-col gap-4 px-4 py-6'>
         <div className='text-foreground mb-6 text-left text-lg font-semibold sm:text-center'>
           {checklistState?.name || 'ROBINS-I Checklist'}
         </div>
@@ -139,7 +139,7 @@ export function ROBINSIChecklist({
         {/* Domain sections - hidden if assessment stopped */}
         {!stopAssessment && (
           <>
-            <div className='space-y-4'>
+            <div className='flex flex-col gap-4'>
               {activeDomains.map((domainKey: string) => (
                 <div
                   key={domainKey}
@@ -174,9 +174,9 @@ export function ROBINSIChecklist({
 
         {/* Critical risk message when stopped */}
         {stopAssessment && (
-          <div className='rounded-lg border-2 border-red-200 bg-red-50 p-6 text-center'>
-            <div className='mb-2 text-lg font-semibold text-red-800'>Critical Risk of Bias</div>
-            <p className='text-sm text-red-600'>
+          <div className='border-destructive/20 bg-destructive/10 rounded-lg border-2 p-6 text-center'>
+            <div className='text-destructive mb-2 text-lg font-semibold'>Critical Risk of Bias</div>
+            <p className='text-destructive text-sm'>
               Based on Section B responses, this result has been classified as Critical risk of
               bias. Domain assessment is not required.
             </p>

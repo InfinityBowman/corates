@@ -27,6 +27,14 @@ import {
   useAdminTableSchema,
 } from '@/hooks/useAdminQueries';
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
+import {
+  Table,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableHead,
+  TableCell,
+} from '@/components/ui/table';
 import { DashboardHeader } from '@/components/admin/ui';
 
 export const Route = createFileRoute('/_app/_protected/admin/database')({
@@ -162,7 +170,7 @@ function DatabaseViewerPage() {
   if (!isAdminChecked) {
     return (
       <div className='flex min-h-100 items-center justify-center'>
-        <LoaderIcon className='h-8 w-8 animate-spin text-blue-600' />
+        <LoaderIcon className='size-8 animate-spin text-blue-600' />
       </div>
     );
   }
@@ -170,7 +178,7 @@ function DatabaseViewerPage() {
   if (!isAdmin) {
     return (
       <div className='text-muted-foreground flex min-h-100 flex-col items-center justify-center'>
-        <AlertCircleIcon className='mb-4 h-12 w-12' />
+        <AlertCircleIcon className='mb-4 size-12' />
         <p className='text-lg font-medium'>Access Denied</p>
         <p className='text-sm'>You do not have admin privileges.</p>
       </div>
@@ -200,13 +208,13 @@ function DatabaseViewerPage() {
                 title='Refresh tables'
               >
                 <RefreshCwIcon
-                  className={`h-4 w-4 ${tablesQuery.isFetching ? 'animate-spin' : ''}`}
+                  className={`size-4 ${tablesQuery.isFetching ? 'animate-spin' : ''}`}
                 />
               </button>
             </div>
             {tablesQuery.isLoading ?
               <div className='flex justify-center p-4'>
-                <LoaderIcon className='h-6 w-6 animate-spin text-blue-600' />
+                <LoaderIcon className='size-6 animate-spin text-blue-600' />
               </div>
             : <div className='max-h-150 overflow-y-auto'>
                 {tables.map(tbl => (
@@ -221,7 +229,7 @@ function DatabaseViewerPage() {
                     }`}
                   >
                     <span className='flex items-center gap-2'>
-                      <TableIcon className='h-4 w-4' />
+                      <TableIcon className='size-4' />
                       {tbl.name}
                     </span>
                     <span className='text-muted-foreground/70 text-xs'>{tbl.rowCount}</span>
@@ -242,7 +250,7 @@ function DatabaseViewerPage() {
                   <h2 className='text-foreground font-semibold'>{selectedTable}</h2>
                   {filterColumn && (
                     <span className='flex items-center gap-1 rounded-full bg-blue-100 px-2 py-0.5 text-xs text-blue-700'>
-                      <LinkIcon className='h-3 w-3' />
+                      <LinkIcon className='size-3' />
                       {filterColumn} = {filterValue}
                       <button
                         type='button'
@@ -250,7 +258,7 @@ function DatabaseViewerPage() {
                         className='ml-1 rounded-full p-0.5 hover:bg-blue-200'
                         title='Clear filter'
                       >
-                        <XIcon className='h-3 w-3' />
+                        <XIcon className='size-3' />
                       </button>
                     </span>
                   )}
@@ -277,7 +285,7 @@ function DatabaseViewerPage() {
                     disabled={rowsQuery.isFetching}
                   >
                     <RefreshCwIcon
-                      className={`h-3 w-3 ${rowsQuery.isFetching ? 'animate-spin' : ''}`}
+                      className={`size-3 ${rowsQuery.isFetching ? 'animate-spin' : ''}`}
                     />
                     Refresh
                   </button>
@@ -287,94 +295,92 @@ function DatabaseViewerPage() {
               {/* Table Data */}
               {rowsQuery.isLoading ?
                 <div className='flex justify-center p-8'>
-                  <LoaderIcon className='h-6 w-6 animate-spin text-blue-600' />
+                  <LoaderIcon className='size-6 animate-spin text-blue-600' />
                 </div>
               : rows.length > 0 ?
                 <>
-                  <div className='overflow-x-auto'>
-                    <table className='divide-border min-w-full divide-y'>
-                      <thead className='bg-muted'>
-                        <tr>
+                  <Table className='min-w-full'>
+                    <TableHeader className='bg-muted'>
+                      <TableRow>
+                        {columns.map(col => {
+                          const schema = columnSchemaMap[col];
+                          return (
+                            <TableHead
+                              key={col}
+                              className='text-muted-foreground hover:bg-secondary cursor-pointer px-4 py-2 text-xs font-medium tracking-wider uppercase'
+                              onClick={() => handleSort(col)}
+                            >
+                              <span className='flex items-center gap-1'>
+                                {schema?.primaryKey && (
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <span className='inline-flex'>
+                                        <KeyRoundIcon className='size-3 text-amber-500' />
+                                      </span>
+                                    </TooltipTrigger>
+                                    <TooltipContent>Primary Key</TooltipContent>
+                                  </Tooltip>
+                                )}
+                                {schema?.foreignKey && (
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <span className='inline-flex'>
+                                        <LinkIcon className='size-3 text-blue-500' />
+                                      </span>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                      FK: {schema.foreignKey.table}.{schema.foreignKey.column}
+                                    </TooltipContent>
+                                  </Tooltip>
+                                )}
+                                {col}
+                                {schema?.type && (
+                                  <span className='bg-secondary text-muted-foreground text-2xs ml-1 rounded px-1 py-0.5 font-normal normal-case'>
+                                    {schema.type}
+                                  </span>
+                                )}
+                                {orderBy === col &&
+                                  (order === 'desc' ?
+                                    <ArrowDownIcon className='size-3' />
+                                  : <ArrowUpIcon className='size-3' />)}
+                              </span>
+                            </TableHead>
+                          );
+                        })}
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody className='bg-card'>
+                      {rows.map((row, rowIdx) => (
+                        <TableRow key={rowIdx}>
                           {columns.map(col => {
                             const schema = columnSchemaMap[col];
+                            const cellValue = row[col];
+                            const fk = schema?.foreignKey;
+
                             return (
-                              <th
+                              <TableCell
                                 key={col}
-                                className='text-muted-foreground hover:bg-secondary cursor-pointer px-4 py-2 text-left text-xs font-medium tracking-wider uppercase'
-                                onClick={() => handleSort(col)}
+                                className='text-secondary-foreground max-w-xs truncate px-4 py-2 text-sm'
                               >
-                                <span className='flex items-center gap-1'>
-                                  {schema?.primaryKey && (
-                                    <Tooltip>
-                                      <TooltipTrigger asChild>
-                                        <span className='inline-flex'>
-                                          <KeyRoundIcon className='h-3 w-3 text-amber-500' />
-                                        </span>
-                                      </TooltipTrigger>
-                                      <TooltipContent>Primary Key</TooltipContent>
-                                    </Tooltip>
-                                  )}
-                                  {schema?.foreignKey && (
-                                    <Tooltip>
-                                      <TooltipTrigger asChild>
-                                        <span className='inline-flex'>
-                                          <LinkIcon className='h-3 w-3 text-blue-500' />
-                                        </span>
-                                      </TooltipTrigger>
-                                      <TooltipContent>
-                                        FK: {schema.foreignKey.table}.{schema.foreignKey.column}
-                                      </TooltipContent>
-                                    </Tooltip>
-                                  )}
-                                  {col}
-                                  {schema?.type && (
-                                    <span className='bg-secondary text-muted-foreground text-2xs ml-1 rounded px-1 py-0.5 font-normal normal-case'>
-                                      {schema.type}
-                                    </span>
-                                  )}
-                                  {orderBy === col &&
-                                    (order === 'desc' ?
-                                      <ArrowDownIcon className='h-3 w-3' />
-                                    : <ArrowUpIcon className='h-3 w-3' />)}
-                                </span>
-                              </th>
+                                {fk && cellValue != null ?
+                                  <button
+                                    type='button'
+                                    onClick={() =>
+                                      navigateToForeignKey(fk.table, fk.column, cellValue)
+                                    }
+                                    className='text-blue-600 underline decoration-dotted hover:text-blue-800'
+                                    title={`View in ${fk.table}`}
+                                  >
+                                    {formatCellValue(cellValue)}
+                                  </button>
+                                : formatCellValue(cellValue)}
+                              </TableCell>
                             );
                           })}
-                        </tr>
-                      </thead>
-                      <tbody className='divide-border bg-card divide-y'>
-                        {rows.map((row, rowIdx) => (
-                          <tr key={rowIdx} className='hover:bg-muted'>
-                            {columns.map(col => {
-                              const schema = columnSchemaMap[col];
-                              const cellValue = row[col];
-                              const fk = schema?.foreignKey;
-
-                              return (
-                                <td
-                                  key={col}
-                                  className='text-secondary-foreground max-w-xs truncate px-4 py-2 text-sm whitespace-nowrap'
-                                >
-                                  {fk && cellValue != null ?
-                                    <button
-                                      type='button'
-                                      onClick={() =>
-                                        navigateToForeignKey(fk.table, fk.column, cellValue)
-                                      }
-                                      className='text-blue-600 underline decoration-dotted hover:text-blue-800'
-                                      title={`View in ${fk.table}`}
-                                    >
-                                      {formatCellValue(cellValue)}
-                                    </button>
-                                  : formatCellValue(cellValue)}
-                                </td>
-                              );
-                            })}
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
 
                   {/* Pagination */}
                   <div className='border-border flex items-center justify-between border-t px-4 py-3'>
@@ -390,7 +396,7 @@ function DatabaseViewerPage() {
                         disabled={page <= 1}
                         className='border-border hover:bg-secondary rounded border p-1 disabled:cursor-not-allowed disabled:opacity-50'
                       >
-                        <ChevronLeftIcon className='h-5 w-5' />
+                        <ChevronLeftIcon className='size-5' />
                       </button>
                       <span className='flex items-center px-2 text-sm'>
                         Page {pagination.page} of {pagination.totalPages}
@@ -401,7 +407,7 @@ function DatabaseViewerPage() {
                         disabled={page >= pagination.totalPages}
                         className='border-border hover:bg-secondary rounded border p-1 disabled:cursor-not-allowed disabled:opacity-50'
                       >
-                        <ChevronRightIcon className='h-5 w-5' />
+                        <ChevronRightIcon className='size-5' />
                       </button>
                     </div>
                   </div>

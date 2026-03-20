@@ -111,7 +111,7 @@ export function ScoringSummary({ checklistState, onDomainClick }: ScoringSummary
       <div className='flex flex-wrap items-center justify-between gap-4'>
         <div className='flex items-center gap-3'>
           <div className='flex items-center gap-2'>
-            <div className={`h-3 w-3 rounded-full ${getOverallColor()}`} />
+            <div className={`size-3 rounded-full ${getOverallColor()}`} />
             <span className='text-secondary-foreground text-sm font-medium'>Overall:</span>
             <span className='text-foreground text-sm font-semibold'>
               {smartScoring.overall || 'Incomplete'}
@@ -144,7 +144,7 @@ export function ScoringSummary({ checklistState, onDomainClick }: ScoringSummary
             onClick={() => setResourcesOpen(true)}
             className='ml-2 inline-flex items-center gap-1 rounded border border-blue-200 bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-700 transition-colors hover:bg-blue-100'
           >
-            <InfoIcon className='h-3 w-3' />
+            <InfoIcon className='size-3' />
             Resources
           </button>
         </div>
@@ -166,7 +166,7 @@ function ResourcesDialog({ open, onClose }: { open: boolean; onClose: () => void
           </DialogDescription>
         </DialogHeader>
 
-        <div className='space-y-4 py-4'>
+        <div className='flex flex-col gap-4 py-4'>
           <ResourceLink
             title='ROBINS-I Tool (Official)'
             description='Risk Of Bias In Non-randomized Studies of Interventions'
@@ -227,7 +227,7 @@ function ResourceLink({
           <h4 className='text-foreground text-sm font-medium'>{title}</h4>
           <p className='text-muted-foreground mt-0.5 text-xs'>{description}</p>
         </div>
-        <ExternalLinkIcon className='text-muted-foreground/70 mt-0.5 h-3.5 w-3.5 shrink-0' />
+        <ExternalLinkIcon className='text-muted-foreground/70 mt-0.5 size-3.5 shrink-0' />
       </div>
     </a>
   );

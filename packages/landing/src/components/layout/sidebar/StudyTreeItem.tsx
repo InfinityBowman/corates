@@ -51,15 +51,15 @@ export function StudyTreeItem({
     >
       <CollapsibleTrigger className='group text-muted-foreground hover:bg-muted flex w-full items-center rounded px-2 py-1.5 transition-colors'>
         <ChevronRightIcon
-          className={`text-muted-foreground/70 mr-1 h-2.5 w-2.5 shrink-0 transition-transform ${isExpanded ? 'rotate-90' : ''}`}
+          className={`text-muted-foreground/70 mr-1 size-2.5 shrink-0 transition-transform ${isExpanded ? 'rotate-90' : ''}`}
         />
         <div className='flex flex-1 items-center gap-1.5 text-left'>
-          <BookOpenIcon className='text-muted-foreground/70 h-3.5 w-3.5' />
+          <BookOpenIcon className='text-muted-foreground/70 size-3.5' />
           <span className='truncate text-xs font-medium'>{study.name}</span>
         </div>
       </CollapsibleTrigger>
       <CollapsibleContent>
-        <div className='border-border mt-0.5 ml-4 space-y-0.5 border-l pl-2'>
+        <div className='border-border mt-0.5 ml-4 flex flex-col gap-0.5 border-l pl-2'>
           {assignedChecklists.length > 0 ?
             assignedChecklists.map(checklist => (
               <ChecklistTreeItem

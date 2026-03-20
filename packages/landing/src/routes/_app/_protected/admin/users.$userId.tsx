@@ -55,9 +55,17 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { handleError } from '@/lib/error-utils';
 import { AdminBox } from '@/components/admin/ui';
-import { table } from '@/components/admin/styles/admin-tokens';
+import {
+  Table,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableHead,
+  TableCell,
+} from '@/components/ui/table';
 import { queryKeys } from '@/lib/queryKeys';
 export const Route = createFileRoute('/_app/_protected/admin/users/$userId')({
   component: UserDetailPage,
@@ -284,7 +292,7 @@ function UserDetailPage() {
   if (!isAdminChecked) {
     return (
       <div className='min-h-[400px flex items-center justify-center'>
-        <LoaderIcon className='h-8 w-8 animate-spin text-blue-600' />
+        <LoaderIcon className='size-8 animate-spin text-blue-600' />
       </div>
     );
   }
@@ -292,7 +300,7 @@ function UserDetailPage() {
   if (!isAdmin) {
     return (
       <div className='text-muted-foreground min-h-[400px flex flex-col items-center justify-center'>
-        <AlertCircleIcon className='mb-4 h-12 w-12' />
+        <AlertCircleIcon className='mb-4 size-12' />
         <p className='text-lg font-medium'>Access Denied</p>
         <p className='text-sm'>You do not have admin privileges.</p>
       </div>
@@ -306,26 +314,26 @@ function UserDetailPage() {
         to={'/admin' as string}
         className='text-muted-foreground hover:text-secondary-foreground mb-6 inline-flex items-center text-sm'
       >
-        <ArrowLeftIcon className='mr-2 h-4 w-4' />
+        <ArrowLeftIcon className='mr-2 size-4' />
         Back to Admin Dashboard
       </Link>
 
       {/* Loading state */}
       {userDetailsQuery.isLoading && (
         <div className='flex min-h-64 items-center justify-center'>
-          <LoaderIcon className='h-8 w-8 animate-spin text-blue-600' />
+          <LoaderIcon className='size-8 animate-spin text-blue-600' />
         </div>
       )}
 
       {/* Error state */}
       {userDetailsQuery.isError && (
-        <div className='rounded-lg border border-red-200 bg-red-50 p-6 text-center'>
-          <AlertCircleIcon className='mx-auto mb-2 h-8 w-8 text-red-500' />
-          <p className='text-red-700'>Failed to load user details</p>
+        <div className='border-destructive/20 bg-destructive/10 rounded-lg border p-6 text-center'>
+          <AlertCircleIcon className='text-destructive mx-auto mb-2 size-8' />
+          <p className='text-destructive'>Failed to load user details</p>
           <button
             type='button'
             onClick={() => userDetailsQuery.refetch()}
-            className='mt-2 text-sm text-red-600 hover:text-red-700'
+            className='text-destructive hover:text-destructive/80 mt-2 text-sm'
           >
             Try again
           </button>
@@ -337,7 +345,7 @@ function UserDetailPage() {
         <>
           {/* Header */}
           <div className='mb-8 flex items-start justify-between'>
-            <div className='flex items-center space-x-4'>
+            <div className='flex items-center gap-4'>
               <UserAvatar
                 src={userData.user.avatarUrl || userData.user.image}
                 name={userData.user.name}
@@ -346,44 +354,44 @@ function UserDetailPage() {
               <div>
                 <h1 className='text-foreground text-2xl font-bold'>{userData.user.name}</h1>
                 <p className='text-muted-foreground'>{userData.user.email}</p>
-                <div className='mt-1 flex items-center space-x-2'>
+                <div className='mt-1 flex items-center gap-2'>
                   {userData.user.role === 'admin' && (
-                    <span className='inline-flex items-center rounded-full bg-purple-100 px-2 py-0.5 text-xs font-medium text-purple-800'>
-                      <ShieldIcon className='mr-1 h-3 w-3' />
+                    <Badge variant='default'>
+                      <ShieldIcon data-icon='inline-start' />
                       Admin
-                    </span>
+                    </Badge>
                   )}
                   {userData.user.banned && (
-                    <span className='inline-flex items-center rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-800'>
-                      <UserXIcon className='mr-1 h-3 w-3' />
+                    <Badge variant='destructive'>
+                      <UserXIcon data-icon='inline-start' />
                       Banned
-                    </span>
+                    </Badge>
                   )}
                   {userData.user.emailVerified && (
-                    <span className='inline-flex items-center rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800'>
-                      <CheckCircleIcon className='mr-1 h-3 w-3' />
+                    <Badge variant='success'>
+                      <CheckCircleIcon data-icon='inline-start' />
                       Verified
-                    </span>
+                    </Badge>
                   )}
                   {userData.user.twoFactorEnabled && (
-                    <span className='inline-flex items-center rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-800'>
-                      <ShieldIcon className='mr-1 h-3 w-3' />
+                    <Badge variant='info'>
+                      <ShieldIcon data-icon='inline-start' />
                       2FA
-                    </span>
+                    </Badge>
                   )}
                 </div>
               </div>
             </div>
 
             {/* Actions */}
-            <div className='flex space-x-2'>
+            <div className='flex gap-2'>
               <button
                 type='button'
                 onClick={handleImpersonate}
                 disabled={loading}
                 className='border-border bg-card text-secondary-foreground hover:bg-muted inline-flex items-center rounded-lg border px-3 py-2 text-sm font-medium disabled:opacity-50'
               >
-                <LogInIcon className='mr-2 h-4 w-4' />
+                <LogInIcon className='mr-2 size-4' />
                 Impersonate
               </button>
               {userData.user.banned ?
@@ -391,9 +399,9 @@ function UserDetailPage() {
                   type='button'
                   onClick={handleUnban}
                   disabled={loading}
-                  className='bg-card inline-flex items-center rounded-lg border border-green-300 px-3 py-2 text-sm font-medium text-green-700 hover:bg-green-50 disabled:opacity-50'
+                  className='bg-card border-success/30 text-success hover:bg-success/10 inline-flex items-center rounded-lg border px-3 py-2 text-sm font-medium disabled:opacity-50'
                 >
-                  <UserCheckIcon className='mr-2 h-4 w-4' />
+                  <UserCheckIcon className='mr-2 size-4' />
                   Unban
                 </button>
               : <button
@@ -402,7 +410,7 @@ function UserDetailPage() {
                   disabled={loading}
                   className='bg-card inline-flex items-center rounded-lg border border-red-300 px-3 py-2 text-sm font-medium text-red-700 hover:bg-red-50 disabled:opacity-50'
                 >
-                  <UserXIcon className='mr-2 h-4 w-4' />
+                  <UserXIcon className='mr-2 size-4' />
                   Ban
                 </button>
               }
@@ -412,7 +420,7 @@ function UserDetailPage() {
                 disabled={loading}
                 className='inline-flex items-center rounded-lg bg-red-600 px-3 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50'
               >
-                <Trash2Icon className='mr-2 h-4 w-4' />
+                <Trash2Icon className='mr-2 size-4' />
                 Delete
               </button>
             </div>
@@ -432,8 +440,8 @@ function UserDetailPage() {
                     className='text-muted-foreground/70 hover:text-muted-foreground ml-2'
                   >
                     {copiedId === `User ID-${userData.user.id}` ?
-                      <CheckCircleIcon className='h-4 w-4 text-green-500' />
-                    : <CopyIcon className='h-4 w-4' />}
+                      <CheckCircleIcon className='text-success size-4' />
+                    : <CopyIcon className='size-4' />}
                   </button>
                 </dd>
               </div>
@@ -468,7 +476,7 @@ function UserDetailPage() {
                       className='inline-flex items-center text-blue-600 hover:text-blue-700'
                     >
                       <span className='font-mono'>{userData.user.stripeCustomerId}</span>
-                      <ExternalLinkIcon className='ml-1 h-3 w-3' />
+                      <ExternalLinkIcon className='ml-1 size-3' />
                     </a>
                   : '-'}
                 </dd>
@@ -477,7 +485,9 @@ function UserDetailPage() {
                 <>
                   <div>
                     <dt className='text-muted-foreground text-sm font-medium'>Ban Reason</dt>
-                    <dd className='mt-1 text-sm text-red-600'>{userData.user.banReason || '-'}</dd>
+                    <dd className='text-destructive mt-1 text-sm'>
+                      {userData.user.banReason || '-'}
+                    </dd>
                   </div>
                   <div>
                     <dt className='text-muted-foreground text-sm font-medium'>Ban Expires</dt>
@@ -494,22 +504,22 @@ function UserDetailPage() {
           <AdminBox className='mb-6'>
             <h2 className='text-foreground mb-4 text-lg font-semibold'>Linked Accounts</h2>
             {(userData.accounts?.length ?? 0) > 0 ?
-              <div className='space-y-2'>
+              <div className='flex flex-col gap-2'>
                 {userData.accounts!.map((account, idx) => (
                   <div
                     key={idx}
                     className='border-border bg-muted flex items-center justify-between rounded-lg border p-3'
                   >
-                    <div className='flex items-center space-x-3'>
-                      <span className='bg-card inline-flex h-8 w-8 items-center justify-center rounded-full'>
+                    <div className='flex items-center gap-3'>
+                      <span className='bg-card inline-flex size-8 items-center justify-center rounded-full'>
                         {account.providerId === 'google' && (
-                          <img src='/logos/google.svg' alt='Google' className='h-5 w-5' />
+                          <img src='/logos/google.svg' alt='Google' className='size-5' />
                         )}
                         {account.providerId === 'orcid' && (
-                          <img src='/logos/orcid.svg' alt='ORCID' className='h-5 w-5' />
+                          <img src='/logos/orcid.svg' alt='ORCID' className='size-5' />
                         )}
                         {account.providerId === 'credential' && (
-                          <MailIcon className='text-muted-foreground h-5 w-5' />
+                          <MailIcon className='text-muted-foreground size-5' />
                         )}
                       </span>
                       <div>
@@ -532,108 +542,119 @@ function UserDetailPage() {
           {/* Organizations */}
           <AdminBox className='mb-6'>
             <h2 className='text-foreground mb-4 flex items-center text-lg font-semibold'>
-              <HomeIcon className='mr-2 h-5 w-5' />
+              <HomeIcon className='mr-2 size-5' />
               Organizations ({userData.orgs?.length ?? 0})
             </h2>
             {(userData.orgs?.length ?? 0) > 0 ?
-              <div className='overflow-x-auto'>
-                <table className={table.base}>
-                  <thead>
-                    <tr className={table.header}>
-                      <th className={table.headerCell}>Organization</th>
-                      <th className={table.headerCell}>Role</th>
-                      <th className={table.headerCell}>Plan</th>
-                      <th className={table.headerCell}>Access</th>
-                      <th className={table.headerCell}>Joined</th>
-                    </tr>
-                  </thead>
-                  <tbody className={table.body}>
-                    {userData.orgs!.map(org => (
-                      <tr key={org.orgId} className={table.row}>
-                        <td className={table.cellCompact}>
-                          <Link
-                            to={'/admin/orgs/$orgId' as string}
-                            params={{ orgId: org.orgId } as Record<string, string>}
-                            className='font-medium text-blue-600 hover:text-blue-700'
-                          >
-                            {org.orgName}
-                          </Link>
-                          <p className='text-muted-foreground text-xs'>@{org.orgSlug}</p>
-                        </td>
-                        <td className={table.cellCompact}>
-                          <span
-                            className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
-                              org.role === 'owner' ? 'bg-purple-100 text-purple-800'
-                              : org.role === 'admin' ? 'bg-blue-100 text-blue-800'
-                              : 'bg-secondary text-foreground'
-                            }`}
-                          >
-                            {org.role}
-                          </span>
-                        </td>
-                        <td className={table.cellCompact}>{org.billing.planName}</td>
-                        <td className={table.cellCompact}>
-                          <span
-                            className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
-                              org.billing.accessMode === 'full' ? 'bg-green-100 text-green-800'
-                              : org.billing.accessMode === 'limited' ?
-                                'bg-yellow-100 text-yellow-800'
-                              : 'bg-red-100 text-red-800'
-                            }`}
-                          >
-                            {org.billing.accessMode}
-                          </span>
-                        </td>
-                        <td className={`${table.cellCompact} text-muted-foreground`}>
-                          {formatShortDate(org.membershipCreatedAt)}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+              <Table>
+                <TableHeader>
+                  <TableRow className='border-border bg-muted border-b'>
+                    <TableHead className='text-muted-foreground px-6 py-3 text-xs font-medium tracking-wider uppercase'>
+                      Organization
+                    </TableHead>
+                    <TableHead className='text-muted-foreground px-6 py-3 text-xs font-medium tracking-wider uppercase'>
+                      Role
+                    </TableHead>
+                    <TableHead className='text-muted-foreground px-6 py-3 text-xs font-medium tracking-wider uppercase'>
+                      Plan
+                    </TableHead>
+                    <TableHead className='text-muted-foreground px-6 py-3 text-xs font-medium tracking-wider uppercase'>
+                      Access
+                    </TableHead>
+                    <TableHead className='text-muted-foreground px-6 py-3 text-xs font-medium tracking-wider uppercase'>
+                      Joined
+                    </TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {userData.orgs!.map(org => (
+                    <TableRow key={org.orgId}>
+                      <TableCell className='text-foreground px-4 py-3 text-sm'>
+                        <Link
+                          to={'/admin/orgs/$orgId' as string}
+                          params={{ orgId: org.orgId } as Record<string, string>}
+                          className='font-medium text-blue-600 hover:text-blue-700'
+                        >
+                          {org.orgName}
+                        </Link>
+                        <p className='text-muted-foreground text-xs'>@{org.orgSlug}</p>
+                      </TableCell>
+                      <TableCell className='text-foreground px-4 py-3 text-sm'>
+                        <Badge
+                          variant={
+                            org.role === 'owner' ? 'default'
+                            : org.role === 'admin' ?
+                              'info'
+                            : 'secondary'
+                          }
+                        >
+                          {org.role}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className='text-foreground px-4 py-3 text-sm'>
+                        {org.billing.planName}
+                      </TableCell>
+                      <TableCell className='text-foreground px-4 py-3 text-sm'>
+                        <Badge
+                          variant={
+                            org.billing.accessMode === 'full' ? 'success'
+                            : org.billing.accessMode === 'limited' ?
+                              'warning'
+                            : 'destructive'
+                          }
+                        >
+                          {org.billing.accessMode}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className='text-muted-foreground px-4 py-3 text-sm'>
+                        {formatShortDate(org.membershipCreatedAt)}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
             : <p className='text-muted-foreground text-sm'>Not a member of any organizations</p>}
           </AdminBox>
 
           {/* Projects */}
           <AdminBox className='mb-6'>
             <h2 className='text-foreground mb-4 flex items-center text-lg font-semibold'>
-              <FolderIcon className='mr-2 h-5 w-5' />
+              <FolderIcon className='mr-2 size-5' />
               Projects ({userData.projects?.length ?? 0})
             </h2>
             {(userData.projects?.length ?? 0) > 0 ?
-              <div className='overflow-x-auto'>
-                <table className={table.base}>
-                  <thead>
-                    <tr className={table.header}>
-                      <th className={table.headerCell}>Project</th>
-                      <th className={table.headerCell}>Role</th>
-                      <th className={table.headerCell}>Joined</th>
-                    </tr>
-                  </thead>
-                  <tbody className={table.body}>
-                    {userData.projects!.map(project => (
-                      <tr key={project.id} className={table.row}>
-                        <td className={`${table.cellCompact} font-medium`}>{project.name}</td>
-                        <td className={table.cellCompact}>
-                          <span
-                            className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
-                              project.role === 'owner' ?
-                                'bg-purple-100 text-purple-800'
-                              : 'bg-secondary text-foreground'
-                            }`}
-                          >
-                            {project.role}
-                          </span>
-                        </td>
-                        <td className={`${table.cellCompact} text-muted-foreground`}>
-                          {formatShortDate(project.joinedAt)}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+              <Table>
+                <TableHeader>
+                  <TableRow className='border-border bg-muted border-b'>
+                    <TableHead className='text-muted-foreground px-6 py-3 text-xs font-medium tracking-wider uppercase'>
+                      Project
+                    </TableHead>
+                    <TableHead className='text-muted-foreground px-6 py-3 text-xs font-medium tracking-wider uppercase'>
+                      Role
+                    </TableHead>
+                    <TableHead className='text-muted-foreground px-6 py-3 text-xs font-medium tracking-wider uppercase'>
+                      Joined
+                    </TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {userData.projects!.map(project => (
+                    <TableRow key={project.id}>
+                      <TableCell className='text-foreground px-4 py-3 text-sm font-medium'>
+                        {project.name}
+                      </TableCell>
+                      <TableCell className='text-foreground px-4 py-3 text-sm'>
+                        <Badge variant={project.role === 'owner' ? 'default' : 'secondary'}>
+                          {project.role}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className='text-muted-foreground px-4 py-3 text-sm'>
+                        {formatShortDate(project.joinedAt)}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
             : <p className='text-muted-foreground text-sm'>Not a member of any projects</p>}
           </AdminBox>
 
@@ -641,7 +662,7 @@ function UserDetailPage() {
           <AdminBox className='mb-6'>
             <div className='mb-4 flex items-center justify-between'>
               <h2 className='text-foreground flex items-center text-lg font-semibold'>
-                <MonitorIcon className='mr-2 h-5 w-5' />
+                <MonitorIcon className='mr-2 size-5' />
                 Active Sessions ({userData.sessions?.length ?? 0})
               </h2>
               {(userData.sessions?.length ?? 0) > 0 && (
@@ -649,15 +670,15 @@ function UserDetailPage() {
                   type='button'
                   onClick={() => setConfirmDialog({ type: 'revoke-all' })}
                   disabled={loading}
-                  className='inline-flex items-center text-sm text-red-600 hover:text-red-700 disabled:opacity-50'
+                  className='text-destructive hover:text-destructive/80 inline-flex items-center text-sm disabled:opacity-50'
                 >
-                  <LogOutIcon className='mr-1 h-4 w-4' />
+                  <LogOutIcon className='mr-1 size-4' />
                   Revoke All
                 </button>
               )}
             </div>
             {(userData.sessions?.length ?? 0) > 0 ?
-              <div className='space-y-3'>
+              <div className='flex flex-col gap-3'>
                 {userData.sessions!.map(session => {
                   const { browser, os } = parseUserAgent(session.userAgent);
                   return (
@@ -665,17 +686,17 @@ function UserDetailPage() {
                       key={session.id}
                       className='border-border bg-muted flex items-center justify-between rounded-lg border p-4'
                     >
-                      <div className='flex items-center space-x-4'>
-                        <div className='bg-card flex h-10 w-10 items-center justify-center rounded-full'>
-                          <MonitorIcon className='text-muted-foreground h-5 w-5' />
+                      <div className='flex items-center gap-4'>
+                        <div className='bg-card flex size-10 items-center justify-center rounded-full'>
+                          <MonitorIcon className='text-muted-foreground size-5' />
                         </div>
                         <div>
                           <p className='text-foreground text-sm font-medium'>
                             {browser} on {os}
                           </p>
-                          <div className='text-muted-foreground flex items-center space-x-3 text-xs'>
+                          <div className='text-muted-foreground flex items-center gap-3 text-xs'>
                             <span className='flex items-center'>
-                              <ClockIcon className='mr-1 h-3 w-3' />
+                              <ClockIcon className='mr-1 size-3' />
                               {formatDate(session.createdAt)}
                             </span>
                             {session.ipAddress && <span>IP: {session.ipAddress}</span>}
@@ -689,9 +710,9 @@ function UserDetailPage() {
                         type='button'
                         onClick={() => handleRevokeSession(session.id)}
                         disabled={loading}
-                        className='bg-card inline-flex items-center rounded-lg border border-red-200 px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50 disabled:opacity-50'
+                        className='bg-card border-destructive/20 text-destructive hover:bg-destructive/10 inline-flex items-center rounded-lg border px-3 py-1.5 text-xs font-medium disabled:opacity-50'
                       >
-                        <LogOutIcon className='mr-1 h-3 w-3' />
+                        <LogOutIcon className='mr-1 size-3' />
                         Revoke
                       </button>
                     </div>
@@ -709,7 +730,7 @@ function UserDetailPage() {
           <DialogHeader>
             <DialogTitle>Ban User</DialogTitle>
           </DialogHeader>
-          <div className='space-y-4'>
+          <div className='flex flex-col gap-4'>
             <p className='text-muted-foreground text-sm'>
               This will ban the user and revoke all their sessions.
             </p>

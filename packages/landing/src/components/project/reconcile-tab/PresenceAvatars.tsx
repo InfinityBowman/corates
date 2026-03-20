@@ -56,7 +56,7 @@ export function PresenceAvatars({
                   boxShadow: `0 0 0 2px ${(user.color as Record<string, any>).hex}`,
                 }}
               >
-                <Avatar className='h-7 w-7 border-2 border-white text-xs'>
+                <Avatar className='size-7 border-2 border-white text-xs'>
                   <AvatarImage src={getAvatarUrl(user)} alt={user.name} />
                   <AvatarFallback
                     className='text-white'
@@ -80,7 +80,7 @@ export function PresenceAvatars({
         {overflowCount > 0 && (
           <Tooltip delayDuration={200}>
             <TooltipTrigger asChild>
-              <div className='bg-muted text-muted-foreground flex h-7 w-7 items-center justify-center rounded-full border-2 border-white text-xs font-medium'>
+              <div className='bg-muted text-muted-foreground flex size-7 items-center justify-center rounded-full border-2 border-white text-xs font-medium'>
                 +{overflowCount}
               </div>
             </TooltipTrigger>

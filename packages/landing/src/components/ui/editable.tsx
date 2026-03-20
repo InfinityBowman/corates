@@ -19,7 +19,7 @@
 
 import * as React from 'react';
 import { Editable as EditablePrimitive } from '@ark-ui/react/editable';
-import { FiCheck, FiX, FiEdit2 } from 'react-icons/fi';
+import { CheckIcon, XIcon, PencilIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const variants = {
@@ -146,15 +146,15 @@ function SimpleEditable({
                 <div className='flex items-center gap-1'>
                   {api.editing ?
                     <>
-                      <EditablePrimitive.SubmitTrigger className='rounded p-1 text-green-500 transition-colors hover:bg-green-50 hover:text-green-600'>
-                        <FiCheck className='h-4 w-4' />
+                      <EditablePrimitive.SubmitTrigger className='text-success hover:bg-success-bg hover:text-success rounded p-1 transition-colors'>
+                        <CheckIcon className='h-4 w-4' />
                       </EditablePrimitive.SubmitTrigger>
                       <EditablePrimitive.CancelTrigger className='text-muted-foreground/70 hover:bg-secondary hover:text-muted-foreground rounded p-1 transition-colors'>
-                        <FiX className='h-4 w-4' />
+                        <XIcon className='h-4 w-4' />
                       </EditablePrimitive.CancelTrigger>
                     </>
                   : <EditablePrimitive.EditTrigger className='text-muted-foreground/70 hover:bg-secondary hover:text-muted-foreground rounded p-1 opacity-0 transition-colors group-hover:opacity-100'>
-                      <FiEdit2 className='h-4 w-4' />
+                      <PencilIcon className='h-4 w-4' />
                     </EditablePrimitive.EditTrigger>
                   }
                 </div>
@@ -162,7 +162,7 @@ function SimpleEditable({
 
               {showEditIcon && !showControls && !api.editing && (
                 <EditablePrimitive.EditTrigger className='text-muted-foreground/70 hover:bg-secondary hover:text-muted-foreground rounded p-1 opacity-0 transition-colors group-hover:opacity-100'>
-                  <FiEdit2 className='h-4 w-4' />
+                  <PencilIcon className='h-4 w-4' />
                 </EditablePrimitive.EditTrigger>
               )}
             </div>

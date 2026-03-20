@@ -52,7 +52,7 @@ export function CompletedTab() {
   );
 
   return (
-    <div className='space-y-2'>
+    <div className='flex flex-col gap-2'>
       {completedStudies.length > 0 ?
         completedStudies.map((study: any) => (
           <CompletedStudyRow
@@ -69,7 +69,7 @@ export function CompletedTab() {
           />
         ))
       : <div className='py-16 text-center'>
-          <CheckCircleIcon className='text-muted-foreground/50 mx-auto mb-4 h-12 w-12' />
+          <CheckCircleIcon className='text-muted-foreground/50 mx-auto mb-4 size-12' />
           <h3 className='text-foreground mb-2 text-lg font-medium'>Completed</h3>
           <p className='text-muted-foreground mx-auto max-w-md'>
             Studies that have completed reconciliation will appear here.

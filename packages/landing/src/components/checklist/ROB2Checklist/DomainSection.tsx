@@ -105,7 +105,7 @@ export function DomainSection({
           }
 
           <svg
-            className={`text-muted-foreground/70 h-5 w-5 transition-transform ${collapsed ? '' : 'rotate-180'}`}
+            className={`text-muted-foreground/70 size-5 transition-transform ${collapsed ? '' : 'rotate-180'}`}
             fill='none'
             stroke='currentColor'
             viewBox='0 0 24 24'
@@ -118,7 +118,7 @@ export function DomainSection({
       {/* Domain content */}
       {!collapsed && (
         <div className='px-6 py-4'>
-          <div className='space-y-1'>
+          <div className='flex flex-col gap-1'>
             {Object.entries(questions).map(([qKey, qDef]: [string, any]) => (
               <SignallingQuestion
                 key={qKey}

@@ -1,8 +1,13 @@
 import { useMemo } from 'react';
 import { Link } from '@tanstack/react-router';
-import { HiOutlineDocumentText } from 'react-icons/hi2';
-import { AiOutlineCheckCircle } from 'react-icons/ai';
-import { FiExternalLink, FiAlertCircle, FiAlertTriangle, FiHelpCircle } from 'react-icons/fi';
+import {
+  FileTextIcon,
+  CheckCircleIcon,
+  ExternalLinkIcon,
+  AlertCircleIcon,
+  AlertTriangleIcon,
+  HelpCircleIcon,
+} from 'lucide-react';
 import { config } from '../../lib/config';
 import type { ToolContent, ScoreLevel } from '../../lib/tool-content';
 
@@ -40,24 +45,24 @@ const COLOR_CONFIG = {
 };
 
 const SCORE_ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
-  green: AiOutlineCheckCircle,
-  yellow: FiAlertCircle,
-  orange: FiAlertTriangle,
-  red: FiAlertCircle,
-  gray: FiHelpCircle,
+  green: CheckCircleIcon,
+  yellow: AlertCircleIcon,
+  orange: AlertTriangleIcon,
+  red: AlertCircleIcon,
+  gray: HelpCircleIcon,
 };
 
 function ScoreLevelCard({ level }: { level: ScoreLevel }) {
   const colors = COLOR_CONFIG[level.color] || COLOR_CONFIG.gray;
-  const Icon = SCORE_ICON_MAP[level.color] || FiAlertCircle;
+  const Icon = SCORE_ICON_MAP[level.color] || AlertCircleIcon;
 
   return (
     <div className={`rounded-lg border p-6 ${colors.border} ${colors.bg}`}>
       <div className='flex items-start gap-4'>
         <div
-          className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${colors.iconBg}`}
+          className={`flex size-10 shrink-0 items-center justify-center rounded-lg ${colors.iconBg}`}
         >
-          <Icon className={`h-5 w-5 ${colors.iconColor}`} />
+          <Icon className={`size-5 ${colors.iconColor}`} />
         </div>
         <div>
           <h3 className='mb-2 text-lg font-semibold text-gray-900'>{level.name}</h3>
@@ -124,7 +129,7 @@ function ToolContentView({ tool }: { tool: ToolContent }) {
           <h1 className='mb-2 text-4xl font-bold text-gray-900'>{tool.name}</h1>
           <p className='mb-8 text-gray-500'>Appraisal tool guidance</p>
 
-          <div className='space-y-8 leading-relaxed text-gray-700'>
+          <div className='flex flex-col gap-8 leading-relaxed text-gray-700'>
             <div>
               <h2 className='mb-4 text-2xl font-semibold text-gray-900'>{tool.name}</h2>
               <p className='mb-6 text-gray-600'>{tool.description}</p>
@@ -132,8 +137,8 @@ function ToolContentView({ tool }: { tool: ToolContent }) {
 
             <div className='rounded-lg bg-gray-50 p-6'>
               <div className='flex items-start gap-4'>
-                <div className='flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-100'>
-                  <HiOutlineDocumentText className='h-5 w-5 text-blue-600' />
+                <div className='flex size-10 shrink-0 items-center justify-center rounded-lg bg-blue-100'>
+                  <FileTextIcon className='size-5 text-blue-600' />
                 </div>
                 <div>
                   <h2 className='mb-2 text-lg font-semibold text-gray-900'>Best used for</h2>
@@ -144,12 +149,12 @@ function ToolContentView({ tool }: { tool: ToolContent }) {
 
             <div className='rounded-lg bg-gray-50 p-6'>
               <div className='flex items-start gap-4'>
-                <div className='flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-100'>
-                  <FiExternalLink className='h-5 w-5 text-blue-600' />
+                <div className='flex size-10 shrink-0 items-center justify-center rounded-lg bg-blue-100'>
+                  <ExternalLinkIcon className='size-5 text-blue-600' />
                 </div>
                 <div className='flex-1'>
                   <h2 className='mb-4 text-lg font-semibold text-gray-900'>Reference Documents</h2>
-                  <ul className='space-y-3 text-gray-600'>
+                  <ul className='flex flex-col gap-3 text-gray-600'>
                     {tool.referenceLinks.map(link => (
                       <li key={link.href}>
                         <a
@@ -159,7 +164,7 @@ function ToolContentView({ tool }: { tool: ToolContent }) {
                           className='inline-flex items-center gap-2 font-medium text-blue-600 hover:text-blue-700'
                         >
                           {link.text}
-                          <FiExternalLink className='h-4 w-4' />
+                          <ExternalLinkIcon className='size-4' />
                         </a>
                       </li>
                     ))}

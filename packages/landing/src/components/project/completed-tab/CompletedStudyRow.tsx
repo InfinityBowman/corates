@@ -73,7 +73,7 @@ export function CompletedStudyRow({
             {hasPdfs && (
               <div className='-ml-1 shrink-0 p-1'>
                 <ChevronRightIcon
-                  className={`text-muted-foreground/70 h-5 w-5 transition-transform duration-200 ${expanded ? 'rotate-90' : ''}`}
+                  className={`text-muted-foreground/70 size-5 transition-transform duration-200 ${expanded ? 'rotate-90' : ''}`}
                 />
               </div>
             )}
@@ -163,7 +163,7 @@ export function CompletedStudyRow({
           {/* PDFs */}
           <CollapsibleContent>
             {hasPdfs && (
-              <div className='border-border space-y-2 border-t px-4 py-3'>
+              <div className='border-border flex flex-col gap-2 border-t px-4 py-3'>
                 {sortedPdfs.map((pdf: any) => (
                   <PdfListItem
                     key={pdf.id}

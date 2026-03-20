@@ -204,7 +204,7 @@ export function RobinsISummaryView({
                   >
                     <div className='flex items-center gap-3'>
                       <span
-                        className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-medium ${
+                        className={`flex size-8 items-center justify-center rounded-full text-sm font-medium ${
                           agreement ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'
                         }`}
                       >
@@ -234,11 +234,11 @@ export function RobinsISummaryView({
                         </span>
                       : <span className='text-muted-foreground/70 text-xs'>Not set</span>}
                       {answered && (
-                        <span className='flex h-5 w-5 items-center justify-center rounded-full bg-green-100'>
-                          <CheckIcon className='h-3 w-3 text-green-600' />
+                        <span className='flex size-5 items-center justify-center rounded-full bg-green-100'>
+                          <CheckIcon className='size-3 text-green-600' />
                         </span>
                       )}
-                      <ArrowRightIcon className='text-muted-foreground/70 h-4 w-4' />
+                      <ArrowRightIcon className='text-muted-foreground/70 size-4' />
                     </div>
                   </div>
                 );
@@ -254,7 +254,7 @@ export function RobinsISummaryView({
           onClick={onBack}
           className='bg-card text-secondary-foreground hover:bg-secondary flex items-center gap-2 rounded-lg px-4 py-2 font-medium shadow transition-colors focus:ring-2 focus:ring-blue-500 focus:outline-none'
         >
-          <ArrowLeftIcon className='h-4 w-4' />
+          <ArrowLeftIcon className='size-4' />
           Back to Questions
         </button>
 
@@ -270,7 +270,7 @@ export function RobinsISummaryView({
           {saving ?
             'Saving...'
           : <>
-              <CheckIcon className='h-4 w-4' />
+              <CheckIcon className='size-4' />
               Save Reconciled Checklist
             </>
           }

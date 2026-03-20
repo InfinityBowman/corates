@@ -1,7 +1,4 @@
-import { AiOutlineCheckCircle } from 'react-icons/ai';
-import { HiOutlineDocumentText } from 'react-icons/hi2';
-import { BsGraphUp } from 'react-icons/bs';
-import { FiUsers } from 'react-icons/fi';
+import { CheckCircleIcon, FileTextIcon, TrendingUpIcon, UsersIcon } from 'lucide-react';
 
 function EcosystemIllustration() {
   return (
@@ -9,7 +6,7 @@ function EcosystemIllustration() {
       <div className='relative'>
         {/* Central hub */}
         <div className='flex items-center justify-center'>
-          <div className='flex h-20 w-20 items-center justify-center rounded-2xl bg-linear-to-br from-blue-500 to-blue-700 shadow-lg'>
+          <div className='flex size-20 items-center justify-center rounded-2xl bg-linear-to-br from-blue-500 to-blue-700 shadow-lg'>
             <span className='text-lg font-bold text-white'>Co</span>
           </div>
         </div>
@@ -17,25 +14,25 @@ function EcosystemIllustration() {
         {/* Orbiting elements */}
         <div className='absolute top-0 left-1/4 -translate-x-1/2 -translate-y-2'>
           <div className='rounded-lg border border-gray-200 bg-white p-2.5 shadow-md'>
-            <HiOutlineDocumentText className='h-5 w-5 text-rose-500' />
+            <FileTextIcon className='size-5 text-rose-500' />
           </div>
         </div>
 
         <div className='absolute top-0 right-1/4 translate-x-1/2 -translate-y-2'>
           <div className='rounded-lg border border-gray-200 bg-white p-2.5 shadow-md'>
-            <BsGraphUp className='h-5 w-5 text-violet-500' />
+            <TrendingUpIcon className='size-5 text-violet-500' />
           </div>
         </div>
 
         <div className='absolute bottom-0 left-1/4 -translate-x-1/2 translate-y-2'>
           <div className='rounded-lg border border-gray-200 bg-white p-2.5 shadow-md'>
-            <FiUsers className='h-5 w-5 text-emerald-500' />
+            <UsersIcon className='size-5 text-emerald-500' />
           </div>
         </div>
 
         <div className='absolute right-1/4 bottom-0 translate-x-1/2 translate-y-2'>
           <div className='rounded-lg border border-gray-200 bg-white p-2.5 shadow-md'>
-            <AiOutlineCheckCircle className='h-5 w-5 text-amber-500' />
+            <CheckCircleIcon className='size-5 text-amber-500' />
           </div>
         </div>
 
@@ -80,7 +77,7 @@ export default function WhatIsCoRATES() {
           {/* Content */}
           <div className='md:col-span-3'>
             <h2 className='mb-8 text-2xl font-bold text-gray-900 md:text-3xl'>What is CoRATES?</h2>
-            <div className='space-y-5 leading-relaxed text-gray-600'>
+            <div className='flex flex-col gap-5 leading-relaxed text-gray-600'>
               <p>
                 CoRATES is more than a checklist platform. It is an ecosystem built to support
                 high-quality and efficient study appraisal by bringing every part of the process

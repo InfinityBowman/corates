@@ -53,7 +53,7 @@ export function ScoreTooltip({ checklistType }: ScoreTooltipProps) {
   const infoUrl = metadata?.url;
   const tooltipText = `See ${metadata?.shortName || metadata?.name} resources`;
 
-  if (!infoUrl) return <InfoIcon className='h-3 w-3 opacity-50' />;
+  if (!infoUrl) return <InfoIcon className='size-3 opacity-50' />;
 
   return (
     <Tooltip>
@@ -65,7 +65,7 @@ export function ScoreTooltip({ checklistType }: ScoreTooltipProps) {
           className='mt-0.5 inline-flex items-center justify-center rounded-full p-0.5 opacity-70 hover:opacity-100 focus:opacity-100'
           aria-label={`Open ${metadata?.name} guidance in a new tab`}
         >
-          <InfoIcon className='h-3 w-3' />
+          <InfoIcon className='size-3' />
         </a>
       </TooltipTrigger>
       <TooltipContent>{tooltipText}</TooltipContent>

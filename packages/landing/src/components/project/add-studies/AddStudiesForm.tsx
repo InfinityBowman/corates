@@ -196,7 +196,7 @@ export function AddStudiesForm({
                 className='group text-muted-foreground hover:bg-muted hover:text-secondary-foreground data-active:text-foreground relative gap-2 rounded-t-lg px-4 py-2.5 transition-all'
               >
                 <span className='opacity-60 transition-opacity group-data-active:opacity-100'>
-                  <tab.icon className='h-4 w-4' />
+                  <tab.icon className='size-4' />
                 </span>
                 <span className='font-medium'>{tab.label}</span>
                 {count > 0 && (
@@ -252,7 +252,7 @@ export function AddStudiesForm({
           >
             {isSubmitting ?
               <>
-                <div className='h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent' />
+                <div className='size-4 animate-spin rounded-full border-2 border-white border-t-transparent' />
                 Adding...
               </>
             : <>
@@ -281,8 +281,8 @@ export function AddStudiesForm({
         <div className='border-border bg-card overflow-hidden rounded-lg border'>
           <div className='flex items-center justify-between px-4 py-4'>
             <div className='flex items-center gap-3'>
-              <div className='bg-primary/10 text-primary flex h-10 w-10 items-center justify-center rounded-lg'>
-                <PlusIcon className='h-5 w-5' />
+              <div className='bg-primary/10 text-primary flex size-10 items-center justify-center rounded-lg'>
+                <PlusIcon className='size-5' />
               </div>
               <div>
                 <h3 className='text-foreground text-base font-semibold'>Add Studies</h3>
@@ -303,8 +303,8 @@ export function AddStudiesForm({
               }`}
             >
               {isExpanded ?
-                <XIcon className='h-4 w-4' />
-              : <PlusIcon className='h-4 w-4' />}
+                <XIcon className='size-4' />
+              : <PlusIcon className='size-4' />}
               {isExpanded ? 'Close' : 'Add'}
             </button>
           </div>
@@ -332,7 +332,7 @@ export function AddStudiesForm({
               className='border-border cursor-pointer rounded-lg border-2 border-dashed p-8 text-center transition-colors hover:border-blue-500 hover:bg-blue-50/50'
               onClick={() => setExpanded(true)}
             >
-              <CloudUploadIcon className='text-muted-foreground/70 mx-auto mb-3 h-12 w-12' />
+              <CloudUploadIcon className='text-muted-foreground/70 mx-auto mb-3 size-12' />
               <p className='text-secondary-foreground font-medium'>Add Studies to Your Project</p>
               <p className='text-muted-foreground mt-1 text-sm'>
                 Upload PDFs, import from reference managers, or look up by DOI/PMID

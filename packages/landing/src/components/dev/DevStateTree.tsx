@@ -50,26 +50,26 @@ function TreeNode({ nodeKey, value, depth, defaultExpanded = false }: TreeNodePr
   };
 
   const getValueClass = (): string => {
-    if (value === null || value === undefined) return 'text-gray-400 italic';
+    if (value === null || value === undefined) return 'text-muted-foreground italic';
     if (typeof value === 'boolean') return 'text-purple-600';
     if (typeof value === 'number') return 'text-orange-600';
-    if (typeof value === 'string') return 'text-green-600';
-    return 'text-gray-500';
+    if (typeof value === 'string') return 'text-success';
+    return 'text-muted-foreground';
   };
 
   return (
     <div style={{ paddingLeft: `${depth * 16}px` }}>
       <div
-        className='flex cursor-pointer items-center gap-1 rounded px-2 py-0.5 hover:bg-gray-100'
+        className='hover:bg-muted flex cursor-pointer items-center gap-1 rounded px-2 py-0.5'
         onClick={() => isExpandable && setIsExpanded(!isExpanded)}
       >
         {isExpandable && !isEmpty ?
-          <span className='flex h-4 w-4 items-center justify-center text-gray-400'>
+          <span className='text-muted-foreground flex size-4 items-center justify-center'>
             {isExpanded ?
               <ChevronDownIcon size={12} />
             : <ChevronRightIcon size={12} />}
           </span>
-        : <span className='h-4 w-4' />}
+        : <span className='size-4' />}
 
         <span className='text-cyan-600'>{nodeKey}:</span>
         <span className={`ml-1 ${getValueClass()}`}>{getValuePreview()}</span>
@@ -115,15 +115,15 @@ export function DevStateTree({ data }: DevStateTreeProps) {
     <div className='flex h-full flex-col'>
       {/* Summary bar */}
       {summary && (
-        <div className='flex gap-4 border-b border-gray-200 bg-gray-50 px-3 py-2'>
-          <span className='text-xs text-gray-500'>
-            <strong className='text-gray-700'>{summary.studiesCount}</strong> studies
+        <div className='border-border bg-muted flex gap-4 border-b px-3 py-2'>
+          <span className='text-muted-foreground text-xs'>
+            <strong className='text-foreground'>{summary.studiesCount}</strong> studies
           </span>
-          <span className='text-xs text-gray-500'>
-            <strong className='text-gray-700'>{summary.checklistsCount}</strong> checklists
+          <span className='text-muted-foreground text-xs'>
+            <strong className='text-foreground'>{summary.checklistsCount}</strong> checklists
           </span>
-          <span className='text-xs text-gray-500'>
-            <strong className='text-gray-700'>{summary.membersCount}</strong> members
+          <span className='text-muted-foreground text-xs'>
+            <strong className='text-foreground'>{summary.membersCount}</strong> members
           </span>
         </div>
       )}
@@ -135,7 +135,7 @@ export function DevStateTree({ data }: DevStateTreeProps) {
           <TreeNode nodeKey='members' value={data.members} depth={0} defaultExpanded={false} />
           <TreeNode nodeKey='studies' value={data.studies} depth={0} defaultExpanded={true} />
         </div>
-      : <div className='p-6 text-center text-gray-400'>No data loaded</div>}
+      : <div className='text-muted-foreground p-6 text-center'>No data loaded</div>}
     </div>
   );
 }

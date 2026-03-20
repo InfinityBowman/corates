@@ -4,7 +4,7 @@
  * Supports dropping PDFs alongside reference files for automatic matching.
  */
 
-import { CloudUploadIcon, FileTextIcon, FileIcon, Link2Icon } from 'lucide-react';
+import { CloudUploadIcon, FileTextIcon, Link2Icon } from 'lucide-react';
 import { FileUpload, FileUploadDropzone, FileUploadHiddenInput } from '@/components/ui/file-upload';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
@@ -25,11 +25,11 @@ export function ReferenceImportSection({ studies }: ReferenceImportSectionProps)
     const someSelected = studies.selectedRefIds.size > 0 && !allSelected;
 
     return (
-      <div className='space-y-3'>
+      <div className='flex flex-col gap-3'>
         {/* File name chip */}
         <div className='bg-muted flex items-center justify-between rounded-lg px-3 py-2'>
           <div className='text-secondary-foreground flex items-center gap-2 text-sm'>
-            <FileTextIcon className='h-4 w-4' />
+            <FileTextIcon className='size-4' />
             <span className='max-w-48 truncate'>{studies.refFileName}</span>
             <span className='text-muted-foreground/70'>
               ({studies.importedRefs.length} references)
@@ -52,26 +52,26 @@ export function ReferenceImportSection({ studies }: ReferenceImportSectionProps)
           <div className='flex flex-wrap items-center gap-3 text-xs'>
             {studies.lookingUpRefPdfs && (
               <span className='inline-flex items-center gap-1 rounded-full bg-blue-50 px-2 py-1 text-blue-700'>
-                <div className='h-3 w-3 animate-spin rounded-full border-2 border-blue-500 border-t-transparent' />
+                <div className='size-3 animate-spin rounded-full border-2 border-blue-500 border-t-transparent' />
                 Looking up PDFs...
               </span>
             )}
             {studies.matchedRefPdfCount > 0 && (
-              <span className='inline-flex items-center gap-1 rounded-full bg-green-50 px-2 py-1 text-green-700'>
-                <Link2Icon className='h-3 w-3' />
+              <span className='bg-success-bg text-success inline-flex items-center gap-1 rounded-full px-2 py-1'>
+                <Link2Icon className='size-3' />
                 {studies.matchedRefPdfCount} PDF
                 {studies.matchedRefPdfCount > 1 ? 's' : ''} matched
               </span>
             )}
             {studies.foundPdfCount > 0 && (
-              <span className='inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-1 text-emerald-700'>
-                <FileIcon className='h-3 w-3' />
+              <span className='bg-success-bg text-success inline-flex items-center gap-1 rounded-full px-2 py-1'>
+                <FileTextIcon className='size-3' />
                 {studies.foundPdfCount} open access
               </span>
             )}
             {studies.unmatchedRefPdfCount > 0 && (
               <span className='inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-1 text-amber-700'>
-                <FileIcon className='h-3 w-3' />
+                <FileTextIcon className='size-3' />
                 {studies.unmatchedRefPdfCount} PDF
                 {studies.unmatchedRefPdfCount > 1 ? 's' : ''} unmatched
               </span>
@@ -91,7 +91,7 @@ export function ReferenceImportSection({ studies }: ReferenceImportSectionProps)
         </div>
 
         {/* Reference list */}
-        <div className='max-h-48 space-y-1 overflow-y-auto pr-1'>
+        <div className='flex max-h-48 flex-col gap-1 overflow-y-auto pr-1'>
           {studies.importedRefs.map((ref: any) => (
             <div
               key={ref._id}
@@ -114,8 +114,8 @@ export function ReferenceImportSection({ studies }: ReferenceImportSectionProps)
                     {ref.title}
                   </p>
                   {ref.pdfData && (
-                    <span className='inline-flex shrink-0 items-center gap-1 rounded bg-green-100 px-1.5 py-0.5 text-xs text-green-700'>
-                      <FileIcon className='h-3 w-3' />
+                    <span className='bg-success-bg text-success inline-flex shrink-0 items-center gap-1 rounded px-1.5 py-0.5 text-xs'>
+                      <FileTextIcon className='size-3' />
                       PDF
                     </span>
                   )}
@@ -123,7 +123,7 @@ export function ReferenceImportSection({ studies }: ReferenceImportSectionProps)
                     <span
                       className={`inline-flex shrink-0 items-center gap-1 rounded px-1.5 py-0.5 text-xs ${
                         ref.pdfAccessible ?
-                          'bg-emerald-100 text-emerald-700'
+                          'bg-success-bg text-success'
                         : 'bg-amber-100 text-amber-700'
                       }`}
                       title={
@@ -132,7 +132,7 @@ export function ReferenceImportSection({ studies }: ReferenceImportSectionProps)
                         : 'PDF available (may require manual download)'
                       }
                     >
-                      <Link2Icon className='h-3 w-3' />
+                      <Link2Icon className='size-3' />
                       {ref.pdfAccessible ? 'OA' : 'PDF'}
                     </span>
                   )}
@@ -148,7 +148,7 @@ export function ReferenceImportSection({ studies }: ReferenceImportSectionProps)
                   {ref.pdfFileName && (
                     <>
                       <span className='mx-1'>-</span>
-                      <span className='inline-block max-w-32 truncate align-bottom text-green-600'>
+                      <span className='text-success inline-block max-w-32 truncate align-bottom'>
                         {ref.pdfFileName}
                       </span>
                     </>
@@ -156,7 +156,7 @@ export function ReferenceImportSection({ studies }: ReferenceImportSectionProps)
                   {!ref.pdfData && ref.pdfSource && (
                     <>
                       <span className='mx-1'>-</span>
-                      <span className='text-emerald-600'>{ref.pdfSource}</span>
+                      <span className='text-success'>{ref.pdfSource}</span>
                     </>
                   )}
                 </p>
@@ -170,7 +170,7 @@ export function ReferenceImportSection({ studies }: ReferenceImportSectionProps)
 
   // Empty state - show file upload
   return (
-    <div className='space-y-3'>
+    <div className='flex flex-col gap-3'>
       <p className='text-muted-foreground text-sm'>
         Import references from Zotero, EndNote, Mendeley, or other reference managers. You can also
         drop PDFs alongside your reference file to automatically match them.
@@ -182,7 +182,7 @@ export function ReferenceImportSection({ studies }: ReferenceImportSectionProps)
         onFileAccept={(details: any) => studies.handleRefFileSelect(details.files)}
       >
         <FileUploadDropzone className='min-h-24 p-4'>
-          <CloudUploadIcon className='text-muted-foreground/70 h-6 w-6' />
+          <CloudUploadIcon className='text-muted-foreground/70 size-6' />
           <p className='text-secondary-foreground mt-2 text-center text-xs'>
             <span className='text-primary font-medium'>Click to upload</span> or drag and drop
           </p>
@@ -195,7 +195,7 @@ export function ReferenceImportSection({ studies }: ReferenceImportSectionProps)
 
       <div className='text-muted-foreground text-xs'>
         <p className='mb-1 font-medium'>Supported formats:</p>
-        <ul className='list-inside list-disc space-y-0.5'>
+        <ul className='flex list-inside list-disc flex-col gap-0.5'>
           {(SUPPORTED_FORMATS as any[]).map((format: any) => (
             <li key={format.extension}>
               <span className='font-medium'>{format.extension}</span> - {format.description}
@@ -209,7 +209,7 @@ export function ReferenceImportSection({ studies }: ReferenceImportSectionProps)
 
       {studies.parsingRefs && (
         <div className='text-muted-foreground flex items-center justify-center gap-2 py-4'>
-          <div className='h-4 w-4 animate-spin rounded-full border-2 border-blue-500 border-t-transparent' />
+          <div className='size-4 animate-spin rounded-full border-2 border-blue-500 border-t-transparent' />
           <span>Parsing references...</span>
         </div>
       )}

@@ -16,6 +16,16 @@ import {
   type SortingState,
 } from '@tanstack/react-table';
 import { ChevronUpIcon, ChevronDownIcon } from 'lucide-react';
+import {
+  Table,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableHead,
+  TableCell,
+} from '@/components/ui/table';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Button } from '@/components/ui/button';
 
 interface AdminDataTableProps<T> {
   columns: ColumnDef<T, any>[];
@@ -62,15 +72,15 @@ export function AdminDataTable<T>({
 
   return (
     <div className={`flex flex-col gap-4 ${className}`}>
-      <div className='border-border overflow-x-auto rounded-xl border'>
-        <table className='w-full min-w-max'>
-          <thead className='border-border bg-muted border-b'>
+      <div className='border-border rounded-xl border'>
+        <Table className='min-w-max'>
+          <TableHeader className='border-border bg-muted'>
             {table.getHeaderGroups().map(headerGroup => (
-              <tr key={headerGroup.id}>
+              <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map(header => (
-                  <th
+                  <TableHead
                     key={header.id}
-                    className={`text-muted-foreground px-4 py-2 text-left text-xs font-medium tracking-wider whitespace-nowrap uppercase ${
+                    className={`text-muted-foreground px-4 py-2 text-xs tracking-wider uppercase ${
                       header.column.getCanSort() && enableSorting ?
                         'hover:bg-secondary cursor-pointer select-none'
                       : ''
@@ -88,35 +98,35 @@ export function AdminDataTable<T>({
                       {enableSorting && header.column.getCanSort() && (
                         <span className='text-muted-foreground/70 ml-1'>
                           {header.column.getIsSorted() === 'asc' ?
-                            <ChevronUpIcon className='h-4 w-4' />
+                            <ChevronUpIcon className='size-4' />
                           : header.column.getIsSorted() === 'desc' ?
-                            <ChevronDownIcon className='h-4 w-4' />
-                          : <span className='h-4 w-4' />}
+                            <ChevronDownIcon className='size-4' />
+                          : <span className='size-4' />}
                         </span>
                       )}
                     </div>
-                  </th>
+                  </TableHead>
                 ))}
-              </tr>
+              </TableRow>
             ))}
-          </thead>
-          <tbody className='divide-border bg-card divide-y'>
+          </TableHeader>
+          <TableBody className='divide-border bg-card divide-y'>
             {/* Loading State */}
             {loading &&
               skeletonRows.map((_, i) => (
-                <tr key={`skeleton-${i}`}>
+                <TableRow key={`skeleton-${i}`}>
                   {columns.map((_, j) => (
-                    <td key={`skeleton-cell-${j}`} className='px-4 py-2'>
-                      <div className='bg-secondary h-4 w-3/4 animate-pulse rounded' />
-                    </td>
+                    <TableCell key={`skeleton-cell-${j}`} className='px-4 py-2'>
+                      <Skeleton className='h-4 w-3/4' />
+                    </TableCell>
                   ))}
-                </tr>
+                </TableRow>
               ))}
 
             {/* Empty State */}
             {!loading && table.getRowModel().rows.length === 0 && (
-              <tr>
-                <td colSpan={columns.length || 1} className='px-4 py-8 text-center'>
+              <TableRow>
+                <TableCell colSpan={columns.length || 1} className='px-4 py-8 text-center'>
                   {emptyState || (
                     <div className='flex flex-col items-center gap-2'>
                       <span className='text-muted-foreground/70'>
@@ -124,30 +134,27 @@ export function AdminDataTable<T>({
                       </span>
                     </div>
                   )}
-                </td>
-              </tr>
+                </TableCell>
+              </TableRow>
             )}
 
             {/* Data Rows */}
             {!loading &&
               table.getRowModel().rows.map(row => (
-                <tr
+                <TableRow
                   key={row.id}
-                  className={`hover:bg-muted transition-colors ${onRowClick ? 'cursor-pointer' : ''}`}
+                  className={onRowClick ? 'cursor-pointer' : ''}
                   onClick={() => onRowClick?.(row.original)}
                 >
                   {row.getVisibleCells().map(cell => (
-                    <td
-                      key={cell.id}
-                      className='text-foreground px-4 py-2 text-sm whitespace-nowrap'
-                    >
+                    <TableCell key={cell.id} className='text-foreground px-4 py-2 text-sm'>
                       {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                    </td>
+                    </TableCell>
                   ))}
-                </tr>
+                </TableRow>
               ))}
-          </tbody>
-        </table>
+          </TableBody>
+        </Table>
       </div>
 
       {/* Pagination */}
@@ -163,22 +170,22 @@ export function AdminDataTable<T>({
             of {data?.length || 0} results
           </span>
           <div className='flex gap-2'>
-            <button
-              type='button'
-              className='border-border bg-card text-secondary-foreground hover:bg-muted rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50'
+            <Button
+              variant='outline'
+              size='sm'
               disabled={!table.getCanPreviousPage()}
               onClick={() => table.previousPage()}
             >
               Previous
-            </button>
-            <button
-              type='button'
-              className='border-border bg-card text-secondary-foreground hover:bg-muted rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50'
+            </Button>
+            <Button
+              variant='outline'
+              size='sm'
               disabled={!table.getCanNextPage()}
               onClick={() => table.nextPage()}
             >
               Next
-            </button>
+            </Button>
           </div>
         </div>
       )}

@@ -129,8 +129,8 @@ export function TodoStudyRow({
         title={showChecklistForm ? 'Cancel' : 'Add another checklist'}
       >
         {showChecklistForm ?
-          <XIcon className='h-4 w-4' />
-        : <PlusIcon className='h-4 w-4' />}
+          <XIcon className='size-4' />
+        : <PlusIcon className='size-4' />}
         {showChecklistForm ? 'Cancel' : 'Add'}
       </button>
     : null;
@@ -146,7 +146,7 @@ export function TodoStudyRow({
           {hasPdfs && (
             <div className='-ml-1 shrink-0 p-1'>
               <ChevronRightIcon
-                className={`text-muted-foreground/70 h-5 w-5 transition-transform duration-200 ${expanded ? 'rotate-90' : ''}`}
+                className={`text-muted-foreground/70 size-5 transition-transform duration-200 ${expanded ? 'rotate-90' : ''}`}
               />
             </div>
           )}
@@ -215,7 +215,7 @@ export function TodoStudyRow({
                     title='Delete checklist'
                     aria-label='Delete checklist'
                   >
-                    <Trash2Icon className='h-4 w-4' />
+                    <Trash2Icon className='size-4' />
                   </button>
                 </>
               );
@@ -269,7 +269,7 @@ export function TodoStudyRow({
                   title='Delete checklist'
                   aria-label='Delete checklist'
                 >
-                  <Trash2Icon className='h-4 w-4' />
+                  <Trash2Icon className='size-4' />
                 </button>
               </div>
             ))}
@@ -279,7 +279,7 @@ export function TodoStudyRow({
         {/* Expandable PDFs */}
         <CollapsibleContent>
           {hasPdfs && (
-            <div className='border-border space-y-2 border-t px-4 py-3'>
+            <div className='border-border flex flex-col gap-2 border-t px-4 py-3'>
               {sortedPdfs.map((pdf: any) => (
                 <PdfListItem
                   key={pdf.id}

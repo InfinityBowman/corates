@@ -303,8 +303,8 @@ export function ReviewerAssignment({
       {/* Header */}
       <div className='flex items-center justify-between px-4 py-4'>
         <div className='flex items-center gap-3'>
-          <div className='bg-primary/10 text-primary flex h-10 w-10 items-center justify-center rounded-lg'>
-            <UsersIcon className='h-5 w-5' />
+          <div className='bg-primary/10 text-primary flex size-10 items-center justify-center rounded-lg'>
+            <UsersIcon className='size-5' />
           </div>
           <div>
             <h3 className='text-foreground text-base font-semibold'>Assign Reviewers</h3>
@@ -320,7 +320,7 @@ export function ReviewerAssignment({
           }`}
         >
           <ChevronRightIcon
-            className={`h-4 w-4 transition-transform duration-200 ${isOpen ? 'rotate-90' : ''}`}
+            className={`size-4 transition-transform duration-200 ${isOpen ? 'rotate-90' : ''}`}
           />
           {isOpen ? 'Hide' : 'Show'}
         </button>
@@ -334,11 +334,11 @@ export function ReviewerAssignment({
                 At least 2 project members are required to assign reviewers.
               </p>
             : unassignedStudies.length === 0 && !showPreview ?
-              <div className='flex items-center gap-2 text-green-600'>
-                <CheckIcon className='h-5 w-5' />
+              <div className='text-success flex items-center gap-2'>
+                <CheckIcon className='size-5' />
                 <p className='text-sm'>All studies have reviewers assigned.</p>
               </div>
-            : <div className='space-y-4'>
+            : <div className='flex flex-col gap-4'>
                 {/* Summary */}
                 <div className='bg-muted flex items-center justify-between rounded-lg px-4 py-3'>
                   <p className='text-muted-foreground text-sm'>
@@ -361,7 +361,7 @@ export function ReviewerAssignment({
                 <Collapsible open={showCustomize} onOpenChange={setShowCustomize}>
                   <CollapsibleTrigger className='border-border bg-card hover:bg-muted data-[state=open]:border-primary data-[state=open]:bg-primary/5 flex w-full items-center justify-between rounded-lg border px-4 py-3 text-sm font-medium transition-all'>
                     <div className='flex items-center gap-2'>
-                      <SlidersHorizontalIcon className='h-4 w-4' />
+                      <SlidersHorizontalIcon className='size-4' />
                       <span>Customize distribution</span>
                     </div>
                     <span className='text-muted-foreground text-xs'>
@@ -369,7 +369,7 @@ export function ReviewerAssignment({
                     </span>
                   </CollapsibleTrigger>
                   <CollapsibleContent>
-                    <div className='mt-4 space-y-4'>
+                    <div className='mt-4 flex flex-col gap-4'>
                       {/* Pool 1 */}
                       <div className='border-border bg-muted rounded-xl border p-4'>
                         <div className='mb-3 flex items-center justify-between'>
@@ -377,12 +377,12 @@ export function ReviewerAssignment({
                             1st Reviewer Pool
                           </h4>
                           <span
-                            className={`text-xs font-medium ${isPoolValid(pool1Total) ? 'text-green-600' : 'text-amber-600'}`}
+                            className={`text-xs font-medium ${isPoolValid(pool1Total) ? 'text-success' : 'text-amber-600'}`}
                           >
                             Total: {pool1Total}%
                           </span>
                         </div>
-                        <div className='space-y-2'>
+                        <div className='flex flex-col gap-2'>
                           {pool1Members.map((member: any) => (
                             <MemberPercentRow
                               key={member.userId}
@@ -401,12 +401,12 @@ export function ReviewerAssignment({
                             2nd Reviewer Pool
                           </h4>
                           <span
-                            className={`text-xs font-medium ${isPoolValid(pool2Total) ? 'text-green-600' : 'text-amber-600'}`}
+                            className={`text-xs font-medium ${isPoolValid(pool2Total) ? 'text-success' : 'text-amber-600'}`}
                           >
                             Total: {pool2Total}%
                           </span>
                         </div>
-                        <div className='space-y-2'>
+                        <div className='flex flex-col gap-2'>
                           {pool2Members.map((member: any) => (
                             <MemberPercentRow
                               key={member.userId}
@@ -442,7 +442,7 @@ export function ReviewerAssignment({
                   disabled={showCustomize && !isCustomValid}
                   className='bg-primary hover:bg-primary/90 inline-flex items-center gap-2 rounded-lg px-5 py-2.5 text-sm font-medium text-white transition-colors disabled:cursor-not-allowed disabled:opacity-50'
                 >
-                  <ShuffleIcon className='h-4 w-4' />
+                  <ShuffleIcon className='size-4' />
                   {showPreview ?
                     'Reshuffle'
                   : showCustomize ?
@@ -453,21 +453,23 @@ export function ReviewerAssignment({
                 {/* Preview */}
                 {showPreview && (
                   <div
-                    className={`overflow-hidden rounded-xl border ${hasConflicts ? 'border-red-200' : 'border-primary'}`}
+                    className={`overflow-hidden rounded-xl border ${hasConflicts ? 'border-destructive/20' : 'border-primary'}`}
                   >
                     <div
                       className={`flex items-center justify-between border-b px-4 py-3 ${
-                        hasConflicts ? 'border-red-200 bg-red-50' : 'border-primary bg-primary/5'
+                        hasConflicts ?
+                          'border-destructive/20 bg-destructive/10'
+                        : 'border-primary bg-primary/5'
                       }`}
                     >
                       <div>
                         <h4
-                          className={`text-sm font-semibold ${hasConflicts ? 'text-red-900' : 'text-primary'}`}
+                          className={`text-sm font-semibold ${hasConflicts ? 'text-destructive' : 'text-primary'}`}
                         >
                           Assignment Preview
                         </h4>
                         {hasConflicts && (
-                          <p className='text-xs text-red-600'>
+                          <p className='text-destructive text-xs'>
                             {conflictCount} conflict{conflictCount !== 1 && 's'} - click Reshuffle
                           </p>
                         )}
@@ -496,7 +498,7 @@ export function ReviewerAssignment({
                           {previewAssignments.map(assignment => (
                             <tr
                               key={assignment.studyId}
-                              className={`hover:bg-muted ${assignment.sameReviewer ? 'bg-red-50' : ''}`}
+                              className={`hover:bg-muted ${assignment.sameReviewer ? 'bg-destructive/10' : ''}`}
                             >
                               <td className='text-foreground max-w-xs truncate py-2 pr-4 pl-4'>
                                 {assignment.studyName}
@@ -505,7 +507,7 @@ export function ReviewerAssignment({
                                 {assignment.reviewer1Name}
                               </td>
                               <td
-                                className={`py-2 pr-4 ${assignment.sameReviewer ? 'font-medium text-red-600' : 'text-secondary-foreground'}`}
+                                className={`py-2 pr-4 ${assignment.sameReviewer ? 'text-destructive font-medium' : 'text-secondary-foreground'}`}
                               >
                                 {assignment.reviewer2Name}
                                 {assignment.sameReviewer && ' (conflict)'}
@@ -520,9 +522,9 @@ export function ReviewerAssignment({
                       <button
                         onClick={handleApply}
                         disabled={hasConflicts}
-                        className='inline-flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-50'
+                        className='bg-success hover:bg-success/80 inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-white transition-colors disabled:cursor-not-allowed disabled:opacity-50'
                       >
-                        <CheckIcon className='h-4 w-4' />
+                        <CheckIcon className='size-4' />
                         Apply Assignments
                       </button>
                       <button

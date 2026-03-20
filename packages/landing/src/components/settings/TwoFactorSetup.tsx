@@ -14,8 +14,11 @@ import {
 } from 'lucide-react';
 import { useAuthStore, selectUser, selectTwoFactorEnabled } from '@/stores/authStore';
 import { showToast } from '@/components/ui/toast';
+import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
+import { Badge } from '@/components/ui/badge';
 import { QRCode, QRCodeFrame, QRCodePattern } from '@/components/ui/qr-code';
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
+import { Spinner } from '@/components/ui/spinner';
 
 export function TwoFactorSetup() {
   const user = useAuthStore(selectUser);
@@ -170,11 +173,11 @@ export function TwoFactorSetup() {
   }, []);
 
   return (
-    <div className='space-y-4'>
+    <div className='flex flex-col gap-4'>
       {/* Loading state */}
       {loading && !setupMode && !disableMode && (
         <div className='flex items-center justify-center py-4'>
-          <div className='border-primary h-6 w-6 animate-spin rounded-full border-2 border-t-transparent' />
+          <Spinner size='md' />
         </div>
       )}
 
@@ -182,35 +185,31 @@ export function TwoFactorSetup() {
       {!loading && !setupMode && !disableMode && (
         <>
           {needsPassword && (
-            <div className='mb-4 flex items-start space-x-3 rounded-lg border border-amber-200 bg-amber-50 p-3'>
-              <InfoIcon className='mt-0.5 h-5 w-5 shrink-0 text-amber-600' />
-              <div className='text-sm text-amber-700'>
-                <p className='font-medium'>Password required</p>
-                <p className='mt-1'>
+            <Alert variant='warning' className='mb-4'>
+              <InfoIcon />
+              <div>
+                <AlertTitle>Password required</AlertTitle>
+                <AlertDescription>
                   Two-factor authentication requires a password. Use the &quot;Add Password&quot;
                   option above to set one up first.
-                </p>
+                </AlertDescription>
               </div>
-            </div>
+            </Alert>
           )}
 
           <div className='flex items-center justify-between'>
             <div>
-              <div className='flex items-center space-x-2'>
+              <div className='flex items-center gap-2'>
                 <ShieldIcon
-                  className={`h-5 w-5 ${isEnabled ? 'text-emerald-500' : 'text-muted-foreground'}`}
+                  className={`size-5 ${isEnabled ? 'text-success' : 'text-muted-foreground'}`}
                 />
                 <p className='text-foreground font-medium'>Two-Factor Authentication</p>
-                {isEnabled && (
-                  <span className='rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-600'>
-                    Enabled
-                  </span>
-                )}
+                {isEnabled && <Badge variant='success'>Enabled</Badge>}
                 {!isEnabled && (
                   <Tooltip>
                     <TooltipTrigger>
                       <span className='inline-flex cursor-help'>
-                        <CircleHelpIcon className='text-muted-foreground h-4 w-4' />
+                        <CircleHelpIcon className='text-muted-foreground size-4' />
                       </span>
                     </TooltipTrigger>
                     <TooltipContent>
@@ -245,14 +244,14 @@ export function TwoFactorSetup() {
 
       {/* Setup Mode */}
       {setupMode && (
-        <div className='border-border space-y-4 rounded-lg border p-4'>
+        <div className='border-border flex flex-col gap-4 rounded-lg border p-4'>
           <div className='flex items-center justify-between'>
-            <div className='flex items-center space-x-2'>
+            <div className='flex items-center gap-2'>
               <h3 className='text-foreground font-medium'>Set Up Two-Factor Authentication</h3>
               <Tooltip>
                 <TooltipTrigger>
                   <span className='inline-flex cursor-help'>
-                    <CircleHelpIcon className='text-muted-foreground h-4 w-4' />
+                    <CircleHelpIcon className='text-muted-foreground size-4' />
                   </span>
                 </TooltipTrigger>
                 <TooltipContent>
@@ -264,15 +263,15 @@ export function TwoFactorSetup() {
               onClick={handleCancel}
               className='text-muted-foreground hover:text-secondary-foreground'
             >
-              <XIcon className='h-5 w-5' />
+              <XIcon className='size-5' />
             </button>
           </div>
 
           {/* Step 0: Password */}
           {setupStep === 0 && (
-            <form onSubmit={handlePasswordSubmit} className='space-y-4'>
-              <div className='bg-primary/5 flex items-start space-x-3 rounded-lg p-3'>
-                <LockIcon className='text-primary mt-0.5 h-5 w-5' />
+            <form onSubmit={handlePasswordSubmit} className='flex flex-col gap-4'>
+              <div className='bg-primary/5 flex items-start gap-3 rounded-lg p-3'>
+                <LockIcon className='text-primary mt-0.5 size-5' />
                 <div className='text-primary text-sm'>
                   <p className='font-medium'>Verify your identity</p>
                   <p className='mt-1'>Enter your password to enable two-factor authentication.</p>
@@ -299,7 +298,7 @@ export function TwoFactorSetup() {
                   className='border-border bg-card focus:border-primary focus:ring-ring/20 block w-full rounded-lg border px-3 py-2 text-sm shadow-sm transition-colors focus:ring-2 focus:outline-none'
                 />
               </div>
-              <div className='flex space-x-3'>
+              <div className='flex gap-3'>
                 <button
                   type='button'
                   onClick={handleCancel}
@@ -320,9 +319,9 @@ export function TwoFactorSetup() {
 
           {/* Step 1: QR Code */}
           {setupStep === 1 && (
-            <div className='space-y-4'>
-              <div className='bg-primary/5 flex items-start space-x-3 rounded-lg p-3'>
-                <SmartphoneIcon className='text-primary mt-0.5 h-5 w-5' />
+            <div className='flex flex-col gap-4'>
+              <div className='bg-primary/5 flex items-start gap-3 rounded-lg p-3'>
+                <SmartphoneIcon className='text-primary mt-0.5 size-5' />
                 <div className='text-primary text-sm'>
                   <p className='font-medium'>Step 1: Scan QR Code</p>
                   <p className='mt-1'>
@@ -342,7 +341,7 @@ export function TwoFactorSetup() {
               </div>
               <div className='text-center'>
                 <p className='text-muted-foreground mb-2 text-sm'>Or enter this code manually:</p>
-                <div className='flex items-center justify-center space-x-2'>
+                <div className='flex items-center justify-center gap-2'>
                   <code className='bg-muted text-foreground rounded px-3 py-1.5 font-mono text-sm'>
                     {secret}
                   </code>
@@ -351,10 +350,10 @@ export function TwoFactorSetup() {
                     className='text-muted-foreground hover:bg-muted hover:text-secondary-foreground rounded p-1.5'
                     title='Copy to clipboard'
                   >
-                    <CopyIcon className='h-4 w-4' />
+                    <CopyIcon className='size-4' />
                   </button>
                 </div>
-                {copied && <p className='mt-1 text-xs text-emerald-500'>Copied!</p>}
+                {copied && <p className='text-success mt-1 text-xs'>Copied!</p>}
               </div>
               <button
                 onClick={() => setSetupStep(2)}
@@ -367,9 +366,9 @@ export function TwoFactorSetup() {
 
           {/* Step 2: Verify */}
           {setupStep === 2 && (
-            <form onSubmit={handleVerifySetup} className='space-y-4'>
-              <div className='bg-primary/5 flex items-start space-x-3 rounded-lg p-3'>
-                <ShieldIcon className='text-primary mt-0.5 h-5 w-5' />
+            <form onSubmit={handleVerifySetup} className='flex flex-col gap-4'>
+              <div className='bg-primary/5 flex items-start gap-3 rounded-lg p-3'>
+                <ShieldIcon className='text-primary mt-0.5 size-5' />
                 <div className='text-primary text-sm'>
                   <p className='font-medium'>Step 2: Verify Setup</p>
                   <p className='mt-1'>
@@ -393,7 +392,7 @@ export function TwoFactorSetup() {
                   disabled={loading}
                 />
               </div>
-              <div className='flex space-x-3'>
+              <div className='flex gap-3'>
                 <button
                   type='button'
                   onClick={() => setSetupStep(1)}
@@ -414,17 +413,17 @@ export function TwoFactorSetup() {
 
           {/* Step 3: Backup Codes */}
           {setupStep === 3 && (
-            <div className='space-y-4'>
-              <div className='flex items-start space-x-3 rounded-lg border border-amber-200 bg-amber-50 p-3'>
-                <ShieldIcon className='mt-0.5 h-5 w-5 text-amber-600' />
-                <div className='text-sm text-amber-700'>
-                  <p className='font-medium'>Save Your Backup Codes</p>
-                  <p className='mt-1'>
+            <div className='flex flex-col gap-4'>
+              <Alert variant='warning'>
+                <ShieldIcon />
+                <div>
+                  <AlertTitle>Save Your Backup Codes</AlertTitle>
+                  <AlertDescription>
                     Store these codes in a safe place. You can use them to access your account if
                     you lose your authenticator device.
-                  </p>
+                  </AlertDescription>
                 </div>
-              </div>
+              </Alert>
               <div className='bg-muted rounded-lg p-4'>
                 <div className='grid grid-cols-2 gap-2'>
                   {backupCodes.map((code, i) => (
@@ -438,15 +437,15 @@ export function TwoFactorSetup() {
                 </div>
                 <button
                   onClick={copyBackupCodes}
-                  className='text-secondary-foreground hover:bg-secondary mt-3 flex w-full items-center justify-center space-x-2 rounded-md px-3 py-2 text-sm transition'
+                  className='text-secondary-foreground hover:bg-secondary mt-3 flex w-full items-center justify-center gap-2 rounded-md px-3 py-2 text-sm transition'
                 >
-                  <CopyIcon className='h-4 w-4' />
+                  <CopyIcon className='size-4' />
                   <span>{copied ? 'Copied!' : 'Copy all codes'}</span>
                 </button>
               </div>
               <button
                 onClick={handleCompleteSetup}
-                className='w-full rounded-md bg-emerald-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-emerald-700'
+                className='bg-success hover:bg-success/80 w-full rounded-md px-4 py-2 text-sm font-medium text-white transition'
               >
                 I&apos;ve Saved My Backup Codes
               </button>
@@ -457,26 +456,26 @@ export function TwoFactorSetup() {
 
       {/* Disable Mode */}
       {disableMode && (
-        <div className='border-border space-y-4 rounded-lg border p-4'>
+        <div className='border-border flex flex-col gap-4 rounded-lg border p-4'>
           <div className='flex items-center justify-between'>
             <h3 className='text-foreground font-medium'>Disable Two-Factor Authentication</h3>
             <button
               onClick={handleCancel}
               className='text-muted-foreground hover:text-secondary-foreground'
             >
-              <XIcon className='h-5 w-5' />
+              <XIcon className='size-5' />
             </button>
           </div>
-          <div className='flex items-start space-x-3 rounded-lg border border-amber-200 bg-amber-50 p-3'>
-            <ShieldIcon className='mt-0.5 h-5 w-5 text-amber-600' />
-            <div className='text-sm text-amber-700'>
-              <p className='font-medium'>Are you sure?</p>
-              <p className='mt-1'>
+          <Alert variant='warning'>
+            <ShieldIcon />
+            <div>
+              <AlertTitle>Are you sure?</AlertTitle>
+              <AlertDescription>
                 Disabling 2FA will make your account less secure. Enter your password to confirm.
-              </p>
+              </AlertDescription>
             </div>
-          </div>
-          <form onSubmit={handleDisable} className='space-y-4'>
+          </Alert>
+          <form onSubmit={handleDisable} className='flex flex-col gap-4'>
             <div>
               <label className='text-secondary-foreground mb-1 block text-sm font-medium'>
                 Password
@@ -490,7 +489,7 @@ export function TwoFactorSetup() {
                 disabled={loading}
               />
             </div>
-            <div className='flex space-x-3'>
+            <div className='flex gap-3'>
               <button
                 type='button'
                 onClick={handleCancel}

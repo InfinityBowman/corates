@@ -91,7 +91,7 @@ export function JudgementPanel({
       )}
 
       {/* Judgement Options */}
-      <div className='space-y-2'>
+      <div className='flex flex-col gap-2'>
         <label className='text-secondary-foreground mb-1 block text-xs font-medium'>
           Risk of Bias Judgement
         </label>

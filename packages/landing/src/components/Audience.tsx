@@ -1,7 +1,5 @@
 import { ReactNode } from 'react';
-import { FaGraduationCap } from 'react-icons/fa6';
-import { BiPlusMedical } from 'react-icons/bi';
-import { BsBook } from 'react-icons/bs';
+import { GraduationCapIcon, CrossIcon, BookIcon } from 'lucide-react';
 
 interface AudienceItem {
   icon: ReactNode;
@@ -12,17 +10,17 @@ interface AudienceItem {
 export default function Audience() {
   const audiences: AudienceItem[] = [
     {
-      icon: <FaGraduationCap className='h-6 w-6 text-blue-600' />,
+      icon: <GraduationCapIcon className='size-6 text-blue-600' />,
       title: 'Graduate Students',
       description: 'Learning how to appraise study quality',
     },
     {
-      icon: <BiPlusMedical className='h-6 w-6 text-blue-600' />,
+      icon: <CrossIcon className='size-6 text-blue-600' />,
       title: 'Clinicians & Practitioners',
       description: 'Needing quick, one-off appraisals',
     },
     {
-      icon: <BsBook className='h-6 w-6 text-blue-600' />,
+      icon: <BookIcon className='size-6 text-blue-600' />,
       title: 'Faculty & Educators',
       description: 'Teaching appraisal or methodology courses',
     },
@@ -42,7 +40,7 @@ export default function Audience() {
         <div className='mb-10 grid gap-6 md:grid-cols-3'>
           {audiences.map((audience, index) => (
             <div key={index} className='p-4 text-center'>
-              <div className='mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-lg bg-blue-50'>
+              <div className='mx-auto mb-3 flex size-12 items-center justify-center rounded-lg bg-blue-50'>
                 {audience.icon}
               </div>
               <h3 className='mb-1 font-semibold text-gray-900'>{audience.title}</h3>

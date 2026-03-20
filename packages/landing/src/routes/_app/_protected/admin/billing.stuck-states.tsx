@@ -12,9 +12,10 @@ import {
   CheckCircleIcon,
   RefreshCwIcon,
 } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 import { useAdminBillingStuckStates } from '@/hooks/useAdminQueries';
 import { DashboardHeader, AdminBox } from '@/components/admin/ui';
-import { input } from '@/components/admin/styles/admin-tokens';
+import { Input } from '@/components/ui/input';
 
 interface StuckOrg {
   type: string;
@@ -126,14 +127,14 @@ function AdminBillingStuckStatesPage() {
         iconColor='orange'
         actions={
           <div className='flex items-center gap-2'>
-            <div className='flex items-center space-x-2'>
+            <div className='flex items-center gap-2'>
               <label className='text-muted-foreground text-sm'>Threshold (min):</label>
-              <input
+              <Input
                 type='number'
                 value={incompleteThreshold}
                 onChange={e => setIncompleteThreshold(parseInt(e.target.value, 10) || 30)}
                 min='1'
-                className={`w-20 ${input.base}`}
+                className='w-20'
               />
             </div>
             <button
@@ -143,9 +144,9 @@ function AdminBillingStuckStatesPage() {
               disabled={stuckStatesQuery.isFetching}
             >
               {stuckStatesQuery.isFetching ?
-                <LoaderIcon className='h-4 w-4 animate-spin' />
+                <LoaderIcon className='size-4 animate-spin' />
               : <>
-                  <RefreshCwIcon className='h-4 w-4' /> Refresh
+                  <RefreshCwIcon className='size-4' /> Refresh
                 </>
               }
             </button>
@@ -174,40 +175,38 @@ function AdminBillingStuckStatesPage() {
       {/* Stuck Orgs by Type */}
       {stuckStatesQuery.isLoading ?
         <div className='flex items-center justify-center py-12'>
-          <LoaderIcon className='h-8 w-8 animate-spin text-blue-600' />
+          <LoaderIcon className='size-8 animate-spin text-blue-600' />
         </div>
       : stuckOrgs.length === 0 ?
         <AdminBox className='p-12 text-center'>
-          <CheckCircleIcon className='mx-auto mb-4 h-12 w-12 text-green-500' />
+          <CheckCircleIcon className='text-success mx-auto mb-4 size-12' />
           <p className='text-foreground text-lg font-medium'>No stuck states found</p>
           <p className='text-muted-foreground text-sm'>
             All organizations have healthy billing states
           </p>
         </AdminBox>
-      : <div className='space-y-6'>
+      : <div className='flex flex-col gap-6'>
           {Object.entries(groupedByType).map(([type, orgs]) => {
             const Icon = getStuckStateSeverityIcon(type);
             const steps = getInvestigationSteps(type);
             return (
               <AdminBox key={type} padding='compact' className='overflow-hidden p-0'>
                 <div className='border-border border-b px-6 py-4'>
-                  <div className='flex items-center space-x-3'>
-                    <Icon className='h-5 w-5 text-orange-600' />
+                  <div className='flex items-center gap-3'>
+                    <Icon className='size-5 text-orange-600' />
                     <h2 className='text-foreground text-lg font-semibold'>
                       {getStuckStateTypeLabel(type)}
                     </h2>
-                    <span className='rounded-full bg-orange-100 px-2.5 py-0.5 text-xs font-medium text-orange-800'>
-                      {orgs.length}
-                    </span>
+                    <Badge variant='warning'>{orgs.length}</Badge>
                   </div>
                 </div>
                 <div className='p-6'>
-                  <div className='space-y-4'>
+                  <div className='flex flex-col gap-4'>
                     {orgs.map(org => (
                       <div key={org.orgId} className='border-border rounded-lg border p-4'>
                         <div className='flex items-start justify-between'>
                           <div className='flex-1'>
-                            <div className='flex items-center space-x-2'>
+                            <div className='flex items-center gap-2'>
                               <Link
                                 to={'/admin/orgs/$orgId' as string}
                                 params={{ orgId: org.orgId } as Record<string, string>}
@@ -242,7 +241,7 @@ function AdminBillingStuckStatesPage() {
                               </p>
                             )}
                             {org.failedCount && (
-                              <p className='mt-1 text-xs text-red-600'>
+                              <p className='text-destructive mt-1 text-xs'>
                                 {org.failedCount} webhook failures
                               </p>
                             )}
@@ -259,7 +258,7 @@ function AdminBillingStuckStatesPage() {
                           <p className='text-secondary-foreground mb-2 text-xs font-medium'>
                             Investigation Steps:
                           </p>
-                          <ul className='text-muted-foreground list-inside list-disc space-y-1 text-xs'>
+                          <ul className='text-muted-foreground flex list-inside list-disc flex-col gap-1 text-xs'>
                             {steps.map(step => (
                               <li key={step}>{step}</li>
                             ))}

@@ -3,7 +3,10 @@
  * Displays and manages grants for an organization
  */
 
-import { LoaderIcon, Trash2Icon } from 'lucide-react';
+import { Trash2Icon } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Spinner } from '@/components/ui/spinner';
 
 interface Grant {
   id: string;
@@ -46,25 +49,20 @@ export function GrantList({ grants: grantsProp, loading, isLoading, onRevoke }: 
       </div>
       {isLoading ?
         <div className='flex items-center justify-center py-12'>
-          <LoaderIcon className='h-8 w-8 animate-spin text-blue-600' />
+          <Spinner size='lg' />
         </div>
       : <div className='p-6'>
           {grants.length > 0 ?
-            <div className='space-y-4'>
+            <div className='flex flex-col gap-4'>
               {grants.map(grant => (
                 <div key={grant.id} className='border-border rounded-lg border p-4'>
                   <div className='flex items-start justify-between'>
                     <div className='flex-1'>
-                      <div className='flex items-center space-x-2'>
+                      <div className='flex items-center gap-2'>
                         <p className='text-foreground font-medium capitalize'>{grant.type}</p>
                         {grant.revokedAt ?
-                          <span className='inline-flex items-center rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-800'>
-                            Revoked
-                          </span>
-                        : <span className='inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800'>
-                            Active
-                          </span>
-                        }
+                          <Badge variant='destructive'>Revoked</Badge>
+                        : <Badge variant='success'>Active</Badge>}
                       </div>
                       <div className='text-muted-foreground mt-2 grid grid-cols-2 gap-4 text-sm'>
                         <div>
@@ -79,14 +77,16 @@ export function GrantList({ grants: grantsProp, loading, isLoading, onRevoke }: 
                     </div>
                     {!grant.revokedAt && (
                       <div className='ml-4'>
-                        <button
+                        <Button
+                          variant='outline'
+                          size='icon'
                           onClick={() => onRevoke?.(grant.id)}
                           disabled={loading}
-                          className='bg-card rounded-lg border border-red-300 px-3 py-2 text-sm font-medium text-red-600 hover:bg-red-50 disabled:opacity-50'
+                          className='border-destructive/30 text-destructive hover:bg-destructive/10'
                           aria-label='Revoke grant'
                         >
-                          <Trash2Icon className='h-4 w-4' />
-                        </button>
+                          <Trash2Icon />
+                        </Button>
                       </div>
                     )}
                   </div>

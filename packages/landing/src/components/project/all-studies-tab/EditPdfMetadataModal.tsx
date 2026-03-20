@@ -85,7 +85,7 @@ export function EditPdfMetadataModal({
         <DialogHeader>
           <DialogTitle>Edit PDF Metadata</DialogTitle>
         </DialogHeader>
-        <div className='space-y-4'>
+        <div className='flex flex-col gap-4'>
           <div className='border-border bg-muted rounded-lg border p-3'>
             <div className='text-secondary-foreground truncate text-sm font-medium'>
               {pdf?.fileName}

@@ -157,7 +157,7 @@ export function DevJsonEditor({ projectId, orgId, data }: DevJsonEditorProps) {
     return (
       <div className='flex h-full flex-col gap-3 p-3'>
         <button
-          className='flex items-center gap-1 self-start text-xs text-gray-500 hover:text-gray-700'
+          className='text-muted-foreground hover:text-foreground flex items-center gap-1 self-start text-xs'
           onClick={() => setStep('editor')}
         >
           <ArrowLeftIcon size={12} />
@@ -173,8 +173,8 @@ export function DevJsonEditor({ projectId, orgId, data }: DevJsonEditorProps) {
         />
 
         {isImporting && (
-          <div className='flex items-center gap-2 text-xs text-gray-500'>
-            <span className='h-3 w-3 animate-spin rounded-full border-2 border-purple-500 border-t-transparent' />
+          <div className='text-muted-foreground flex items-center gap-2 text-xs'>
+            <span className='size-3 animate-spin rounded-full border-2 border-purple-500 border-t-transparent' />
             Importing...
           </div>
         )}
@@ -182,7 +182,7 @@ export function DevJsonEditor({ projectId, orgId, data }: DevJsonEditorProps) {
         {result && (
           <div
             className={`flex items-center gap-1.5 px-3 py-1.5 text-xs ${
-              result.success ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-600'
+              result.success ? 'bg-success-bg text-success' : 'bg-destructive/10 text-destructive'
             }`}
           >
             {result.success ?
@@ -198,15 +198,15 @@ export function DevJsonEditor({ projectId, orgId, data }: DevJsonEditorProps) {
   return (
     <div className='flex h-full flex-col'>
       {/* Toolbar */}
-      <div className='flex items-center gap-2 border-b border-gray-200 bg-gray-50 px-3 py-2'>
+      <div className='border-border bg-muted flex items-center gap-2 border-b px-3 py-2'>
         <button
-          className='flex items-center gap-1 rounded bg-gray-200 px-2 py-1 text-xs text-gray-700 hover:bg-gray-300 disabled:opacity-50'
+          className='bg-muted text-foreground hover:bg-muted/80 flex items-center gap-1 rounded px-2 py-1 text-xs disabled:opacity-50'
           onClick={exportState}
           disabled={isExporting}
           title='Fetch current state from server'
         >
           {isExporting ?
-            <span className='h-3 w-3 animate-spin rounded-full border-2 border-current border-t-transparent' />
+            <span className='size-3 animate-spin rounded-full border-2 border-current border-t-transparent' />
           : <DownloadIcon size={12} />}
           Export
         </button>
@@ -218,18 +218,18 @@ export function DevJsonEditor({ projectId, orgId, data }: DevJsonEditorProps) {
           title='Import JSON to server'
         >
           {isImporting ?
-            <span className='h-3 w-3 animate-spin rounded-full border-2 border-current border-t-transparent' />
+            <span className='size-3 animate-spin rounded-full border-2 border-current border-t-transparent' />
           : <UploadIcon size={12} />}
           Import
         </button>
 
         <button
-          className='flex items-center gap-1 rounded bg-gray-200 px-2 py-1 text-xs text-gray-700 hover:bg-gray-300'
+          className='bg-muted text-foreground hover:bg-muted/80 flex items-center gap-1 rounded px-2 py-1 text-xs'
           onClick={copyToClipboard}
           title='Copy to clipboard'
         >
           {copied ?
-            <CheckIcon size={12} className='text-green-600' />
+            <CheckIcon size={12} className='text-success' />
           : <CopyIcon size={12} />}
           {copied ? 'Copied' : 'Copy'}
         </button>
@@ -239,7 +239,7 @@ export function DevJsonEditor({ projectId, orgId, data }: DevJsonEditorProps) {
       {result && (
         <div
           className={`flex items-center gap-1.5 px-3 py-1.5 text-xs ${
-            result.success ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-600'
+            result.success ? 'bg-success-bg text-success' : 'bg-destructive/10 text-destructive'
           }`}
         >
           {result.success ?

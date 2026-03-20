@@ -1,10 +1,20 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { FiShield, FiLock, FiServer, FiUsers, FiAlertCircle, FiMail } from 'react-icons/fi';
+import {
+  ShieldIcon,
+  LockIcon,
+  ServerIcon,
+  UsersIcon,
+  AlertCircleIcon,
+  MailIcon,
+} from 'lucide-react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import { config } from '../lib/config';
 
 export const Route = createFileRoute('/security')({
+  headers: () => ({
+    'Cache-Control': 'public, s-maxage=3600, stale-while-revalidate=86400',
+  }),
   head: () => ({
     meta: [
       { title: 'Security - CoRATES' },
@@ -42,7 +52,7 @@ function SecurityPage() {
           <h1 className='mb-2 text-4xl font-bold text-gray-900'>Security</h1>
           <p className='mb-8 text-gray-500'>How we protect your research data</p>
 
-          <div className='space-y-8 leading-relaxed text-gray-700'>
+          <div className='flex flex-col gap-8 leading-relaxed text-gray-700'>
             <p>
               At CoRATES, we understand that your research data is valuable and sensitive. We are
               committed to implementing robust security measures to protect your information and
@@ -53,8 +63,8 @@ function SecurityPage() {
             <div className='grid gap-6'>
               <div className='rounded-lg bg-gray-50 p-6'>
                 <div className='flex items-start gap-4'>
-                  <div className='flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-100'>
-                    <FiLock className='h-5 w-5 text-blue-600' />
+                  <div className='flex size-10 shrink-0 items-center justify-center rounded-lg bg-blue-100'>
+                    <LockIcon className='size-5 text-blue-600' />
                   </div>
                   <div>
                     <h2 className='mb-2 text-lg font-semibold text-gray-900'>Encryption</h2>
@@ -70,8 +80,8 @@ function SecurityPage() {
 
               <div className='rounded-lg bg-gray-50 p-6'>
                 <div className='flex items-start gap-4'>
-                  <div className='flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-100'>
-                    <FiShield className='h-5 w-5 text-blue-600' />
+                  <div className='flex size-10 shrink-0 items-center justify-center rounded-lg bg-blue-100'>
+                    <ShieldIcon className='size-5 text-blue-600' />
                   </div>
                   <div>
                     <h2 className='mb-2 text-lg font-semibold text-gray-900'>Authentication</h2>
@@ -86,8 +96,8 @@ function SecurityPage() {
 
               <div className='rounded-lg bg-gray-50 p-6'>
                 <div className='flex items-start gap-4'>
-                  <div className='flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-100'>
-                    <FiAlertCircle className='h-5 w-5 text-blue-600' />
+                  <div className='flex size-10 shrink-0 items-center justify-center rounded-lg bg-blue-100'>
+                    <AlertCircleIcon className='size-5 text-blue-600' />
                   </div>
                   <div>
                     <h2 className='mb-2 text-lg font-semibold text-gray-900'>Abuse Prevention</h2>
@@ -102,8 +112,8 @@ function SecurityPage() {
 
               <div className='rounded-lg bg-gray-50 p-6'>
                 <div className='flex items-start gap-4'>
-                  <div className='flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-100'>
-                    <FiServer className='h-5 w-5 text-blue-600' />
+                  <div className='flex size-10 shrink-0 items-center justify-center rounded-lg bg-blue-100'>
+                    <ServerIcon className='size-5 text-blue-600' />
                   </div>
                   <div>
                     <h2 className='mb-2 text-lg font-semibold text-gray-900'>Infrastructure</h2>
@@ -118,8 +128,8 @@ function SecurityPage() {
 
               <div className='rounded-lg bg-gray-50 p-6'>
                 <div className='flex items-start gap-4'>
-                  <div className='flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-100'>
-                    <FiUsers className='h-5 w-5 text-blue-600' />
+                  <div className='flex size-10 shrink-0 items-center justify-center rounded-lg bg-blue-100'>
+                    <UsersIcon className='size-5 text-blue-600' />
                   </div>
                   <div>
                     <h2 className='mb-2 text-lg font-semibold text-gray-900'>Access Control</h2>
@@ -137,8 +147,8 @@ function SecurityPage() {
             {/* Responsible Disclosure */}
             <div className='border-t border-gray-200 pt-8'>
               <div className='flex items-start gap-4'>
-                <div className='flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-amber-100'>
-                  <FiAlertCircle className='h-5 w-5 text-amber-600' />
+                <div className='flex size-10 shrink-0 items-center justify-center rounded-lg bg-amber-100'>
+                  <AlertCircleIcon className='size-5 text-amber-600' />
                 </div>
                 <div>
                   <h2 className='mb-3 text-xl font-semibold text-gray-900'>
@@ -160,7 +170,7 @@ function SecurityPage() {
                     </a>
                     . Include as much information as possible, such as:
                   </p>
-                  <ul className='mb-4 ml-6 list-outside list-disc space-y-1 text-gray-600'>
+                  <ul className='mb-4 ml-6 flex list-outside list-disc flex-col gap-1 text-gray-600'>
                     <li>A description of the vulnerability</li>
                     <li>Steps to reproduce the issue</li>
                     <li>Potential impact of the vulnerability</li>
@@ -179,8 +189,8 @@ function SecurityPage() {
             {/* Contact */}
             <div className='border-t border-gray-200 pt-8'>
               <div className='flex items-start gap-4'>
-                <div className='flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-100'>
-                  <FiMail className='h-5 w-5 text-blue-600' />
+                <div className='flex size-10 shrink-0 items-center justify-center rounded-lg bg-blue-100'>
+                  <MailIcon className='size-5 text-blue-600' />
                 </div>
                 <div>
                   <h2 className='mb-3 text-xl font-semibold text-gray-900'>Security Questions</h2>

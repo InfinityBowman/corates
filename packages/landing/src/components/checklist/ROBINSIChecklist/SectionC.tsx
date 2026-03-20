@@ -42,10 +42,10 @@ export function SectionC({ sectionCState, onUpdate, disabled, getRobinsText }: S
         <p className='text-muted-foreground mt-1 text-xs'>{(SECTION_C as any).description}</p>
       </div>
 
-      <div className='space-y-4 px-6 py-4'>
+      <div className='flex flex-col gap-4 px-6 py-4'>
         {/* Text fields: C1, C2, C3 */}
         {textFields.map(([key, field]) => (
-          <div key={key} className='space-y-2'>
+          <div key={key} className='flex flex-col gap-2'>
             <label className='block'>
               <span className='text-secondary-foreground text-sm'>
                 <span className='font-medium'>{field.label}.</span>
@@ -64,7 +64,7 @@ export function SectionC({ sectionCState, onUpdate, disabled, getRobinsText }: S
         ))}
 
         {/* C4: Protocol type radio */}
-        <div className='border-border space-y-2 border-t pt-2'>
+        <div className='border-border flex flex-col gap-2 border-t pt-2'>
           <div className='text-secondary-foreground text-sm'>
             <span className='font-medium'>{c4Field.label}.</span>
             <span className='ml-1'>{c4Field.text}</span>
@@ -85,7 +85,7 @@ export function SectionC({ sectionCState, onUpdate, disabled, getRobinsText }: S
                   checked={sectionCState?.isPerProtocol === option.value}
                   disabled={disabled}
                   onChange={() => !disabled && handleProtocolToggle(option.value)}
-                  className='h-4 w-4 text-blue-600'
+                  className='size-4 text-blue-600'
                 />
                 <span className='text-secondary-foreground text-sm'>{option.label}</span>
               </label>

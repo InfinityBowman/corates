@@ -18,7 +18,6 @@ import { apiFetch } from '@/lib/apiFetch';
 import { queryKeys } from '@/lib/queryKeys';
 import { LineChart, BarChart, DoughnutChart } from '@/components/admin/charts';
 import { AdminBox } from '@/components/admin/ui';
-import { input } from '@/components/admin/styles/admin-tokens';
 
 const PERIOD_OPTIONS = [
   { value: 7, label: '7 days' },
@@ -163,12 +162,12 @@ export function AnalyticsSection() {
   const revenueData = revenueQuery.data;
 
   return (
-    <div className='space-y-6'>
+    <div className='flex flex-col gap-6'>
       {/* Section Header */}
       <div className='flex items-center justify-between'>
-        <div className='flex items-center space-x-3'>
+        <div className='flex items-center gap-3'>
           <div className='rounded-xl bg-purple-100 p-2'>
-            <TrendingUpIcon className='h-5 w-5 text-purple-600' />
+            <TrendingUpIcon className='size-5 text-purple-600' />
           </div>
           <h2 className='text-foreground text-lg font-semibold'>Analytics</h2>
         </div>
@@ -179,15 +178,15 @@ export function AnalyticsSection() {
         {/* Signups Chart */}
         <AdminBox>
           <div className='mb-4 flex items-center justify-between'>
-            <div className='flex items-center space-x-2'>
-              <UsersIcon className='h-5 w-5 text-blue-500' />
+            <div className='flex items-center gap-2'>
+              <UsersIcon className='size-5 text-blue-500' />
               <h3 className='text-foreground font-medium'>User Signups</h3>
             </div>
-            <div className='flex items-center space-x-2'>
+            <div className='flex items-center gap-2'>
               <select
                 value={signupDays}
                 onChange={e => setSignupDays(parseInt(e.target.value, 10))}
-                className={input.base}
+                className='border-input h-8 rounded-lg border bg-transparent px-2.5 py-2 text-sm'
               >
                 {PERIOD_OPTIONS.map(opt => (
                   <option key={opt.value} value={opt.value}>
@@ -200,13 +199,13 @@ export function AnalyticsSection() {
                 onClick={() => signupQuery.refetch()}
                 className='text-muted-foreground/70 hover:bg-secondary hover:text-muted-foreground rounded-lg p-1'
               >
-                <RefreshCwIcon className='h-4 w-4' />
+                <RefreshCwIcon className='size-4' />
               </button>
             </div>
           </div>
           {signupQuery.isLoading ?
             <div className='flex h-64 items-center justify-center'>
-              <LoaderIcon className='h-6 w-6 animate-spin text-blue-500' />
+              <LoaderIcon className='size-6 animate-spin text-blue-500' />
             </div>
           : signupData?.data ?
             <>
@@ -231,20 +230,20 @@ export function AnalyticsSection() {
         {/* Organizations & Projects Chart */}
         <AdminBox>
           <div className='mb-4 flex items-center justify-between'>
-            <div className='flex items-center space-x-2'>
-              <HomeIcon className='h-5 w-5 text-green-500' />
+            <div className='flex items-center gap-2'>
+              <HomeIcon className='text-success size-5' />
               <h3 className='text-foreground font-medium'>Orgs & Projects</h3>
             </div>
           </div>
           {orgQuery.isLoading || projectQuery.isLoading ?
             <div className='flex h-64 items-center justify-center'>
-              <LoaderIcon className='h-6 w-6 animate-spin text-green-500' />
+              <LoaderIcon className='text-success size-6 animate-spin' />
             </div>
           : orgData && projectData ?
             <>
-              <div className='mb-2 flex space-x-4'>
+              <div className='mb-2 flex gap-4'>
                 <div>
-                  <span className='text-2xl font-bold text-green-600'>{orgData.total ?? 0}</span>
+                  <span className='text-success text-2xl font-bold'>{orgData.total ?? 0}</span>
                   <span className='text-muted-foreground ml-1 text-sm'>orgs</span>
                 </div>
                 <div>
@@ -289,18 +288,18 @@ export function AnalyticsSection() {
               onClick={() => subscriptionQuery.refetch()}
               className='text-muted-foreground/70 hover:bg-secondary hover:text-muted-foreground rounded p-1'
             >
-              <RefreshCwIcon className='h-4 w-4' />
+              <RefreshCwIcon className='size-4' />
             </button>
           </div>
           {subscriptionQuery.isLoading ?
             <div className='flex h-48 items-center justify-center'>
-              <LoaderIcon className='h-6 w-6 animate-spin text-blue-500' />
+              <LoaderIcon className='size-6 animate-spin text-blue-500' />
             </div>
           : subscriptionData ?
             <>
               {subscriptionData.error && (
                 <div className='mb-2 flex items-center text-sm text-yellow-600'>
-                  <AlertTriangleIcon className='mr-1 h-4 w-4' />
+                  <AlertTriangleIcon className='mr-1 size-4' />
                   Stripe unavailable
                 </div>
               )}
@@ -331,8 +330,8 @@ export function AnalyticsSection() {
         {/* Revenue Chart */}
         <AdminBox className='lg:col-span-2'>
           <div className='mb-4 flex items-center justify-between'>
-            <div className='flex items-center space-x-2'>
-              <DollarSignIcon className='h-5 w-5 text-green-500' />
+            <div className='flex items-center gap-2'>
+              <DollarSignIcon className='text-success size-5' />
               <h3 className='text-foreground font-medium'>Revenue (6 months)</h3>
             </div>
             <button
@@ -340,12 +339,12 @@ export function AnalyticsSection() {
               onClick={() => revenueQuery.refetch()}
               className='text-muted-foreground/70 hover:bg-secondary hover:text-muted-foreground rounded p-1'
             >
-              <RefreshCwIcon className='h-4 w-4' />
+              <RefreshCwIcon className='size-4' />
             </button>
           </div>
           {revenueQuery.isLoading ?
             <div className='flex h-48 items-center justify-center'>
-              <LoaderIcon className='h-6 w-6 animate-spin text-green-500' />
+              <LoaderIcon className='text-success size-6 animate-spin' />
             </div>
           : revenueData?.data && revenueData.data.length > 0 ?
             <>
@@ -362,7 +361,7 @@ export function AnalyticsSection() {
               />
             </>
           : <div className='text-muted-foreground/70 flex h-48 flex-col items-center justify-center'>
-              {revenueData?.error && <AlertTriangleIcon className='mb-2 h-6 w-6 text-yellow-500' />}
+              {revenueData?.error && <AlertTriangleIcon className='mb-2 size-6 text-yellow-500' />}
               <span>No revenue data</span>
             </div>
           }
@@ -372,15 +371,15 @@ export function AnalyticsSection() {
       {/* Webhook Health Row */}
       <AdminBox>
         <div className='mb-4 flex items-center justify-between'>
-          <div className='flex items-center space-x-2'>
-            <AlertTriangleIcon className='h-5 w-5 text-orange-500' />
+          <div className='flex items-center gap-2'>
+            <AlertTriangleIcon className='size-5 text-orange-500' />
             <h3 className='text-foreground font-medium'>Webhook Health</h3>
           </div>
-          <div className='flex items-center space-x-2'>
+          <div className='flex items-center gap-2'>
             <select
               value={webhookDays}
               onChange={e => setWebhookDays(parseInt(e.target.value, 10))}
-              className={input.base}
+              className='border-input h-8 rounded-lg border bg-transparent px-2.5 py-2 text-sm'
             >
               <option value={7}>7 days</option>
               <option value={14}>14 days</option>
@@ -391,25 +390,25 @@ export function AnalyticsSection() {
               onClick={() => webhookQuery.refetch()}
               className='text-muted-foreground/70 hover:bg-secondary hover:text-muted-foreground rounded p-1'
             >
-              <RefreshCwIcon className='h-4 w-4' />
+              <RefreshCwIcon className='size-4' />
             </button>
           </div>
         </div>
         {webhookQuery.isLoading ?
           <div className='flex h-48 items-center justify-center'>
-            <LoaderIcon className='h-6 w-6 animate-spin text-orange-500' />
+            <LoaderIcon className='size-6 animate-spin text-orange-500' />
           </div>
         : webhookData?.data ?
           <>
-            <div className='mb-4 flex space-x-6'>
+            <div className='mb-4 flex gap-6'>
               <div>
-                <span className='text-2xl font-bold text-green-600'>
+                <span className='text-success text-2xl font-bold'>
                   {webhookData.totals?.success ?? 0}
                 </span>
                 <span className='text-muted-foreground ml-1 text-sm'>success</span>
               </div>
               <div>
-                <span className='text-2xl font-bold text-red-600'>
+                <span className='text-destructive text-2xl font-bold'>
                   {webhookData.totals?.failed ?? 0}
                 </span>
                 <span className='text-muted-foreground ml-1 text-sm'>failed</span>

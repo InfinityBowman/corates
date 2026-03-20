@@ -1,6 +1,5 @@
 import { createFileRoute, Link } from '@tanstack/react-router';
-import { FiArrowRight } from 'react-icons/fi';
-import { HiOutlineDocumentText } from 'react-icons/hi2';
+import { ArrowRightIcon, FileTextIcon } from 'lucide-react';
 import Navbar from '../../components/Navbar';
 import Footer from '../../components/Footer';
 import { config } from '../../lib/config';
@@ -13,6 +12,9 @@ const description =
   'Learn about AMSTAR 2, ROBINS-I, RoB 2, and other appraisal tools supported by CoRATES, including scoring guidance and links to official documentation.';
 
 export const Route = createFileRoute('/resources/')({
+  headers: () => ({
+    'Cache-Control': 'public, s-maxage=3600, stale-while-revalidate=86400',
+  }),
   head: () => ({
     meta: [
       { title },
@@ -34,14 +36,14 @@ function ToolCard({ tool }: { tool: ToolContent }) {
       to={`/resources/${tool.slug}` as string}
       className='group flex flex-col rounded-xl border border-gray-200 bg-white p-6 transition-all hover:border-blue-300 hover:shadow-lg'
     >
-      <div className='mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-blue-100'>
-        <HiOutlineDocumentText className='h-6 w-6 text-blue-600' />
+      <div className='mb-4 flex size-12 items-center justify-center rounded-lg bg-blue-100'>
+        <FileTextIcon className='size-6 text-blue-600' />
       </div>
       <h3 className='mb-2 text-xl font-semibold text-gray-900'>{tool.name}</h3>
       <p className='mb-4 flex-1 text-sm text-gray-600'>{tool.bestUsedFor}</p>
       <div className='flex items-center gap-2 text-sm font-medium text-blue-600 group-hover:text-blue-700'>
         Learn more
-        <FiArrowRight className='h-4 w-4 transition-transform group-hover:translate-x-1' />
+        <ArrowRightIcon className='size-4 transition-transform group-hover:translate-x-1' />
       </div>
     </Link>
   );

@@ -5,7 +5,7 @@
 
 import { useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
-import { FiLock } from 'react-icons/fi';
+import { LockIcon } from 'lucide-react';
 import { useAuthStore } from '@/stores/authStore';
 import { handleError } from '@/lib/error-utils';
 import { ErrorMessage } from './ErrorMessage';
@@ -55,10 +55,10 @@ export function TwoFactorVerify({ onCancel }: TwoFactorVerifyProps) {
   }
 
   return (
-    <div className='space-y-4'>
+    <div className='flex flex-col gap-4'>
       <div className='mb-4 text-center'>
-        <div className='bg-primary/10 mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full'>
-          <FiLock className='text-primary h-8 w-8' />
+        <div className='bg-primary/10 mx-auto mb-4 flex size-16 items-center justify-center rounded-full'>
+          <LockIcon className='text-primary size-8' />
         </div>
         <h2 className='text-foreground mb-1 text-xl font-bold'>Two-Factor Authentication</h2>
         <p className='text-muted-foreground text-sm'>
@@ -68,7 +68,7 @@ export function TwoFactorVerify({ onCancel }: TwoFactorVerifyProps) {
         </p>
       </div>
 
-      <form onSubmit={handleSubmit} className='space-y-4'>
+      <form onSubmit={handleSubmit} className='flex flex-col gap-4'>
         <div>
           <label
             className='text-secondary-foreground mb-2 block text-sm font-medium'
@@ -100,7 +100,7 @@ export function TwoFactorVerify({ onCancel }: TwoFactorVerifyProps) {
           Verify
         </PrimaryButton>
 
-        <div className='space-y-2 text-center'>
+        <div className='flex flex-col gap-2 text-center'>
           <button
             type='button'
             onClick={() => {

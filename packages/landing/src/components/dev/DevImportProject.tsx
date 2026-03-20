@@ -171,16 +171,16 @@ export function DevImportProject() {
 
   return (
     <div className='flex h-full flex-col gap-3 p-3'>
-      <div className='text-sm font-medium text-gray-700'>Import Project from JSON</div>
+      <div className='text-foreground text-sm font-medium'>Import Project from JSON</div>
 
       {step === 'input' && (
         <>
           {/* Org selector - only show if multiple orgs */}
           {!orgsLoading && orgs.length > 1 && (
             <div>
-              <label className='mb-1 block text-xs text-gray-500'>Organization</label>
+              <label className='text-muted-foreground mb-1 block text-xs'>Organization</label>
               <select
-                className='w-full rounded border border-gray-300 bg-white px-2 py-1.5 text-xs text-gray-700 focus:border-purple-500 focus:outline-none'
+                className='border-border bg-card text-foreground w-full rounded border px-2 py-1.5 text-xs focus:border-purple-500 focus:outline-none'
                 value={selectedOrgId || ''}
                 onChange={e => setSelectedOrgId(e.target.value || null)}
               >
@@ -196,7 +196,7 @@ export function DevImportProject() {
 
           {/* File input */}
           <div>
-            <label className='mb-1 block text-xs text-gray-500'>JSON File</label>
+            <label className='text-muted-foreground mb-1 block text-xs'>JSON File</label>
             <input
               type='file'
               accept='.json,application/json'
@@ -207,9 +207,9 @@ export function DevImportProject() {
 
           {/* JSON text area */}
           <div className='min-h-0 flex-1'>
-            <label className='mb-1 block text-xs text-gray-500'>Or paste JSON</label>
+            <label className='text-muted-foreground mb-1 block text-xs'>Or paste JSON</label>
             <textarea
-              className='h-[calc(100%-1.25rem)] w-full resize-none rounded border border-gray-300 bg-gray-50 p-2 font-mono text-xs focus:border-purple-500 focus:ring-1 focus:ring-purple-500 focus:outline-none'
+              className='border-border bg-muted h-[calc(100%-1.25rem)] w-full resize-none rounded border p-2 font-mono text-xs focus:border-purple-500 focus:ring-1 focus:ring-purple-500 focus:outline-none'
               placeholder='Paste exported project JSON here...'
               value={jsonText}
               onChange={e => setJsonText(e.target.value)}
@@ -223,7 +223,7 @@ export function DevImportProject() {
             disabled={isImporting || !jsonText.trim() || !resolvedOrgId}
           >
             {isImporting ?
-              <span className='h-3 w-3 animate-spin rounded-full border-2 border-current border-t-transparent' />
+              <span className='size-3 animate-spin rounded-full border-2 border-current border-t-transparent' />
             : <UploadIcon size={14} />}
             {isImporting ? 'Importing...' : 'Create & Import Project'}
           </button>
@@ -233,7 +233,7 @@ export function DevImportProject() {
       {step === 'mapping' && (
         <>
           <button
-            className='flex items-center gap-1 self-start text-xs text-gray-500 hover:text-gray-700'
+            className='text-muted-foreground hover:text-foreground flex items-center gap-1 self-start text-xs'
             onClick={() => setStep('input')}
           >
             <ArrowLeftIcon size={12} />
@@ -248,8 +248,8 @@ export function DevImportProject() {
           />
 
           {isImporting && (
-            <div className='flex items-center gap-2 text-xs text-gray-500'>
-              <span className='h-3 w-3 animate-spin rounded-full border-2 border-purple-500 border-t-transparent' />
+            <div className='text-muted-foreground flex items-center gap-2 text-xs'>
+              <span className='size-3 animate-spin rounded-full border-2 border-purple-500 border-t-transparent' />
               Importing...
             </div>
           )}
@@ -260,7 +260,7 @@ export function DevImportProject() {
       {result && (
         <div
           className={`flex items-center gap-2 rounded p-2 text-xs ${
-            result.success ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+            result.success ? 'bg-success-bg text-success' : 'bg-destructive/10 text-destructive'
           }`}
         >
           {result.success ?

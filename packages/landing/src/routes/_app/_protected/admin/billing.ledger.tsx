@@ -6,11 +6,12 @@
 import { useState, useCallback, useMemo } from 'react';
 import { createFileRoute, Link } from '@tanstack/react-router';
 import { LoaderIcon, CopyIcon, CheckIcon, ExternalLinkIcon, FilterIcon } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 import { useAdminBillingLedger } from '@/hooks/useAdminQueries';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { showToast } from '@/components/ui/toast';
 import { DashboardHeader, AdminBox, AdminDataTable } from '@/components/admin/ui';
-import { input } from '@/components/admin/styles/admin-tokens';
+import { Input } from '@/components/ui/input';
 import type { ColumnDef } from '@tanstack/react-table';
 
 interface LedgerEntry {
@@ -60,20 +61,22 @@ const formatDate = (timestamp: string | number | Date | null | undefined): strin
   });
 };
 
-const getStatusColor = (status: string): string => {
+const getStatusVariant = (
+  status: string,
+): 'success' | 'destructive' | 'warning' | 'info' | 'secondary' => {
   switch (status) {
     case 'processed':
-      return 'bg-green-100 text-green-800';
+      return 'success';
     case 'failed':
-      return 'bg-red-100 text-red-800';
+      return 'destructive';
     case 'ignored_unverified':
-      return 'bg-yellow-100 text-yellow-800';
+      return 'warning';
     case 'skipped_duplicate':
-      return 'bg-secondary text-foreground';
+      return 'secondary';
     case 'received':
-      return 'bg-blue-100 text-blue-800';
+      return 'info';
     default:
-      return 'bg-secondary text-foreground';
+      return 'secondary';
   }
 };
 
@@ -150,11 +153,9 @@ function AdminBillingLedgerPage() {
         cell: info => {
           const value = info.getValue() as string;
           return (
-            <span
-              className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium whitespace-nowrap ${getStatusColor(value)}`}
-            >
+            <Badge variant={getStatusVariant(value)} className='whitespace-nowrap'>
               {value.replace(/_/g, ' ')}
-            </span>
+            </Badge>
           );
         },
       },
@@ -174,7 +175,7 @@ function AdminBillingLedgerPage() {
             return <span className='text-muted-foreground/70'>-</span>;
           }
           return (
-            <div className='flex items-center space-x-1 whitespace-nowrap'>
+            <div className='flex items-center gap-1 whitespace-nowrap'>
               <code className='text-foreground font-mono text-xs'>
                 {entry.stripeEventId.slice(0, 12)}...
               </code>
@@ -185,8 +186,8 @@ function AdminBillingLedgerPage() {
                 title='Copy event ID'
               >
                 {copiedId === `Event ID-${entry.stripeEventId}` ?
-                  <CheckIcon className='h-3 w-3 text-green-600' />
-                : <CopyIcon className='h-3 w-3' />}
+                  <CheckIcon className='text-success size-3' />
+                : <CopyIcon className='size-3' />}
               </button>
               <a
                 href={getStripeUrl('event', entry.stripeEventId) || '#'}
@@ -195,7 +196,7 @@ function AdminBillingLedgerPage() {
                 className='text-muted-foreground/70 hover:text-muted-foreground'
                 title='Open in Stripe'
               >
-                <ExternalLinkIcon className='h-3 w-3' />
+                <ExternalLinkIcon className='size-3' />
               </a>
             </div>
           );
@@ -210,7 +211,7 @@ function AdminBillingLedgerPage() {
             return <span className='text-muted-foreground/70'>-</span>;
           }
           return (
-            <div className='flex items-center space-x-1 whitespace-nowrap'>
+            <div className='flex items-center gap-1 whitespace-nowrap'>
               <Link
                 to={'/admin/orgs/$orgId' as string}
                 params={{ orgId: entry.orgId } as Record<string, string>}
@@ -225,8 +226,8 @@ function AdminBillingLedgerPage() {
                 title='Copy org ID'
               >
                 {copiedId === `Org ID-${entry.orgId}` ?
-                  <CheckIcon className='h-3 w-3 text-green-600' />
-                : <CopyIcon className='h-3 w-3' />}
+                  <CheckIcon className='text-success size-3' />
+                : <CopyIcon className='size-3' />}
               </button>
             </div>
           );
@@ -238,9 +239,9 @@ function AdminBillingLedgerPage() {
         cell: info => {
           const entry = info.row.original;
           return (
-            <div className='space-y-1'>
+            <div className='flex flex-col gap-1'>
               {entry.stripeCustomerId && (
-                <div className='flex items-center space-x-1'>
+                <div className='flex items-center gap-1'>
                   <span className='text-muted-foreground text-xs'>C:</span>
                   <code className='text-foreground font-mono text-xs'>
                     {entry.stripeCustomerId.slice(0, 12)}...
@@ -252,8 +253,8 @@ function AdminBillingLedgerPage() {
                     title='Copy customer ID'
                   >
                     {copiedId === `Customer ID-${entry.stripeCustomerId}` ?
-                      <CheckIcon className='h-3 w-3 text-green-600' />
-                    : <CopyIcon className='h-3 w-3' />}
+                      <CheckIcon className='text-success size-3' />
+                    : <CopyIcon className='size-3' />}
                   </button>
                   <a
                     href={getStripeUrl('customer', entry.stripeCustomerId) || '#'}
@@ -262,12 +263,12 @@ function AdminBillingLedgerPage() {
                     className='text-muted-foreground/70 hover:text-muted-foreground'
                     title='Open in Stripe'
                   >
-                    <ExternalLinkIcon className='h-3 w-3' />
+                    <ExternalLinkIcon className='size-3' />
                   </a>
                 </div>
               )}
               {entry.stripeSubscriptionId && (
-                <div className='flex items-center space-x-1'>
+                <div className='flex items-center gap-1'>
                   <span className='text-muted-foreground text-xs'>S:</span>
                   <code className='text-foreground font-mono text-xs'>
                     {entry.stripeSubscriptionId.slice(0, 12)}...
@@ -279,8 +280,8 @@ function AdminBillingLedgerPage() {
                     title='Copy subscription ID'
                   >
                     {copiedId === `Subscription ID-${entry.stripeSubscriptionId}` ?
-                      <CheckIcon className='h-3 w-3 text-green-600' />
-                    : <CopyIcon className='h-3 w-3' />}
+                      <CheckIcon className='text-success size-3' />
+                    : <CopyIcon className='size-3' />}
                   </button>
                   <a
                     href={getStripeUrl('subscription', entry.stripeSubscriptionId) || '#'}
@@ -289,12 +290,12 @@ function AdminBillingLedgerPage() {
                     className='text-muted-foreground/70 hover:text-muted-foreground'
                     title='Open in Stripe'
                   >
-                    <ExternalLinkIcon className='h-3 w-3' />
+                    <ExternalLinkIcon className='size-3' />
                   </a>
                 </div>
               )}
               {entry.stripeCheckoutSessionId && (
-                <div className='flex items-center space-x-1'>
+                <div className='flex items-center gap-1'>
                   <span className='text-muted-foreground text-xs'>CS:</span>
                   <code className='text-foreground font-mono text-xs'>
                     {entry.stripeCheckoutSessionId.slice(0, 12)}...
@@ -308,8 +309,8 @@ function AdminBillingLedgerPage() {
                     title='Copy checkout session ID'
                   >
                     {copiedId === `Checkout Session ID-${entry.stripeCheckoutSessionId}` ?
-                      <CheckIcon className='h-3 w-3 text-green-600' />
-                    : <CopyIcon className='h-3 w-3' />}
+                      <CheckIcon className='text-success size-3' />
+                    : <CopyIcon className='size-3' />}
                   </button>
                 </div>
               )}
@@ -326,7 +327,7 @@ function AdminBillingLedgerPage() {
             return <span className='text-muted-foreground/70'>-</span>;
           }
           return (
-            <div className='flex items-center space-x-1 whitespace-nowrap'>
+            <div className='flex items-center gap-1 whitespace-nowrap'>
               <code className='text-foreground font-mono text-xs'>
                 {entry.requestId.slice(0, 8)}...
               </code>
@@ -337,8 +338,8 @@ function AdminBillingLedgerPage() {
                 title='Copy request ID'
               >
                 {copiedId === `Request ID-${entry.requestId}` ?
-                  <CheckIcon className='h-3 w-3 text-green-600' />
-                : <CopyIcon className='h-3 w-3' />}
+                  <CheckIcon className='text-success size-3' />
+                : <CopyIcon className='size-3' />}
               </button>
             </div>
           );
@@ -351,7 +352,7 @@ function AdminBillingLedgerPage() {
           const entry = info.row.original;
           if (entry.error) {
             return (
-              <span className='text-xs text-red-600' title={entry.error}>
+              <span className='text-destructive text-xs' title={entry.error}>
                 {entry.error.length > 50 ? `${entry.error.slice(0, 50)}...` : entry.error}
               </span>
             );
@@ -380,7 +381,7 @@ function AdminBillingLedgerPage() {
             disabled={ledgerQuery.isFetching}
           >
             {ledgerQuery.isFetching ?
-              <LoaderIcon className='h-4 w-4 animate-spin' />
+              <LoaderIcon className='size-4 animate-spin' />
             : 'Refresh'}
           </button>
         }
@@ -412,7 +413,7 @@ function AdminBillingLedgerPage() {
             <select
               value={statusFilter}
               onChange={e => setStatusFilter(e.target.value)}
-              className={`mt-1 block w-full ${input.base}`}
+              className='border-input mt-1 block h-8 w-full rounded-lg border bg-transparent px-2.5 py-2 text-sm'
             >
               {STATUS_OPTIONS.map(option => (
                 <option key={option.value} value={option.value}>
@@ -425,12 +426,12 @@ function AdminBillingLedgerPage() {
             <label className='text-secondary-foreground block text-sm font-medium'>
               Event Type
             </label>
-            <input
+            <Input
               type='text'
               value={typeFilter}
               onChange={e => setTypeFilter(e.target.value)}
               placeholder='e.g., checkout.session.completed'
-              className={`mt-1 block w-full ${input.base}`}
+              className='mt-1 block w-full'
             />
           </div>
           <div>
@@ -438,7 +439,7 @@ function AdminBillingLedgerPage() {
             <select
               value={limit}
               onChange={e => setLimit(parseInt(e.target.value, 10))}
-              className={`mt-1 block w-full ${input.base}`}
+              className='border-input mt-1 block h-8 w-full rounded-lg border bg-transparent px-2.5 py-2 text-sm'
             >
               {LIMIT_OPTIONS.map(opt => (
                 <option key={opt} value={opt}>

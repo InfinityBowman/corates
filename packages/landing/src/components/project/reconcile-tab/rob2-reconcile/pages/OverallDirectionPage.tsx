@@ -54,11 +54,11 @@ export function OverallDirectionPage({
       >
         <div className='flex items-start gap-3'>
           {directionMatch && judgementMatch ?
-            <div className='flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-green-500'>
-              <CheckIcon className='h-4 w-4 text-white' />
+            <div className='flex size-6 shrink-0 items-center justify-center rounded-full bg-green-500'>
+              <CheckIcon className='size-4 text-white' />
             </div>
-          : <div className='flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-amber-500'>
-              <XIcon className='h-4 w-4 text-white' />
+          : <div className='flex size-6 shrink-0 items-center justify-center rounded-full bg-amber-500'>
+              <XIcon className='size-4 text-white' />
             </div>
           }
           <div>
@@ -75,7 +75,7 @@ export function OverallDirectionPage({
       {/* Auto-calculated Overall Judgement Section */}
       <div className='border-b p-4'>
         <div className='mb-3 flex items-start gap-2 rounded-lg border border-blue-200 bg-blue-50 p-3'>
-          <InfoIcon className='h-4 w-4 shrink-0 text-blue-600' />
+          <InfoIcon className='size-4 shrink-0 text-blue-600' />
           <div className='text-xs text-blue-800'>
             <p>
               The overall risk of bias judgement is automatically calculated from the domain

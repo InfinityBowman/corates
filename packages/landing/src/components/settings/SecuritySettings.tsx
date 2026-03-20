@@ -5,6 +5,7 @@
 import { useState, useCallback } from 'react';
 import { ShieldIcon, KeyIcon, EyeIcon, EyeOffIcon, MailIcon, MonitorIcon } from 'lucide-react';
 import { useAuthStore, selectUser } from '@/stores/authStore';
+import { Alert } from '@/components/ui/alert';
 import { StrengthIndicator } from '@/components/auth/StrengthIndicator';
 import { TwoFactorSetup } from './TwoFactorSetup';
 import { LinkedAccountsSection } from './LinkedAccountsSection';
@@ -94,43 +95,35 @@ export function SecuritySettings() {
           className='border-border bg-card mb-6 overflow-hidden rounded-xl border shadow-sm transition-shadow duration-200 hover:shadow-md'
         >
           <div className='border-border bg-primary/5 border-b px-6 py-4'>
-            <div className='flex items-center space-x-2.5'>
-              <div className='bg-primary/15 flex h-8 w-8 items-center justify-center rounded-lg'>
-                <ShieldIcon className='text-primary h-4 w-4' />
+            <div className='flex items-center gap-2.5'>
+              <div className='bg-primary/15 flex size-8 items-center justify-center rounded-lg'>
+                <ShieldIcon className='text-primary size-4' />
               </div>
               <h2 className='text-foreground text-base font-semibold'>Password & Authentication</h2>
             </div>
           </div>
-          <div className='space-y-6 p-6'>
-            {passwordSuccess && (
-              <div className='rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-700'>
-                {passwordSuccess}
-              </div>
-            )}
+          <div className='flex flex-col gap-6 p-6'>
+            {passwordSuccess && <Alert variant='success'>{passwordSuccess}</Alert>}
 
             {/* Add Password */}
             {addPasswordSent ?
-              <div className='rounded-lg border border-blue-200 bg-blue-50 p-4'>
-                <div className='flex items-start space-x-3'>
-                  <div className='bg-primary/10 flex h-8 w-8 items-center justify-center rounded-lg'>
-                    <MailIcon className='text-primary h-4 w-4' />
-                  </div>
-                  <div>
-                    <p className='text-foreground font-medium'>Check your email</p>
-                    <p className='text-secondary-foreground mt-1 text-sm'>
-                      We sent a link to <strong className='text-foreground'>{user?.email}</strong>{' '}
-                      to set your password.
-                    </p>
-                    <button
-                      type='button'
-                      onClick={() => setAddPasswordSent(false)}
-                      className='text-primary hover:text-primary/80 mt-2 text-sm font-medium transition-colors'
-                    >
-                      Dismiss
-                    </button>
-                  </div>
+              <Alert variant='info'>
+                <MailIcon />
+                <div>
+                  <p className='font-medium'>Check your email</p>
+                  <p className='mt-1 text-sm'>
+                    We sent a link to <strong className='text-foreground'>{user?.email}</strong> to
+                    set your password.
+                  </p>
+                  <button
+                    type='button'
+                    onClick={() => setAddPasswordSent(false)}
+                    className='text-primary hover:text-primary/80 mt-2 text-sm font-medium transition-colors'
+                  >
+                    Dismiss
+                  </button>
                 </div>
-              </div>
+              </Alert>
             : <div className='flex items-center justify-between'>
                 <div>
                   <p className='text-foreground font-medium'>Add Password</p>
@@ -144,9 +137,9 @@ export function SecuritySettings() {
                 <button
                   onClick={handleSendPasswordSetup}
                   disabled={addPasswordLoading}
-                  className='bg-primary text-primary-foreground hover:bg-primary/90 focus:ring-ring/20 flex items-center space-x-2 rounded-lg px-4 py-2 text-sm font-medium shadow-sm transition-all hover:shadow focus:ring-2 focus:outline-none disabled:opacity-50'
+                  className='bg-primary text-primary-foreground hover:bg-primary/90 focus:ring-ring/20 flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium shadow-sm transition-all hover:shadow focus:ring-2 focus:outline-none disabled:opacity-50'
                 >
-                  <MailIcon className='h-4 w-4' />
+                  <MailIcon className='size-4' />
                   <span>{addPasswordLoading ? 'Sending...' : 'Send Setup Email'}</span>
                 </button>
               </div>
@@ -156,12 +149,8 @@ export function SecuritySettings() {
 
             {/* Change Password */}
             {showPasswordForm ?
-              <form onSubmit={handlePasswordChange} className='space-y-4'>
-                {passwordError && (
-                  <div className='rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-600'>
-                    {passwordError}
-                  </div>
-                )}
+              <form onSubmit={handlePasswordChange} className='flex flex-col gap-4'>
+                {passwordError && <Alert variant='destructive'>{passwordError}</Alert>}
                 <div>
                   <label className='text-secondary-foreground mb-1.5 block text-sm font-medium'>
                     Current Password
@@ -180,8 +169,8 @@ export function SecuritySettings() {
                       className='text-muted-foreground hover:text-secondary-foreground absolute inset-y-0 right-0 flex items-center px-3 transition-colors'
                     >
                       {showCurrentPassword ?
-                        <EyeOffIcon className='h-4 w-4' />
-                      : <EyeIcon className='h-4 w-4' />}
+                        <EyeOffIcon className='size-4' />
+                      : <EyeIcon className='size-4' />}
                     </button>
                   </div>
                 </div>
@@ -203,8 +192,8 @@ export function SecuritySettings() {
                       className='text-muted-foreground hover:text-secondary-foreground absolute inset-y-0 right-0 flex items-center px-3 transition-colors'
                     >
                       {showNewPassword ?
-                        <EyeOffIcon className='h-4 w-4' />
-                      : <EyeIcon className='h-4 w-4' />}
+                        <EyeOffIcon className='size-4' />
+                      : <EyeIcon className='size-4' />}
                     </button>
                   </div>
                   <StrengthIndicator password={newPassword} onUnmet={setUnmetRequirements} />
@@ -251,9 +240,9 @@ export function SecuritySettings() {
                 </div>
                 <button
                   onClick={() => setShowPasswordForm(true)}
-                  className='bg-secondary text-secondary-foreground hover:bg-secondary/80 flex items-center space-x-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors'
+                  className='bg-secondary text-secondary-foreground hover:bg-secondary/80 flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors'
                 >
-                  <KeyIcon className='h-4 w-4' />
+                  <KeyIcon className='size-4' />
                   <span>Change Password</span>
                 </button>
               </div>
@@ -269,9 +258,9 @@ export function SecuritySettings() {
         {/* Sessions */}
         <div className='border-border bg-card mb-6 overflow-hidden rounded-xl border shadow-sm transition-shadow duration-200 hover:shadow-md'>
           <div className='border-border from-muted/50 to-background border-b bg-gradient-to-r px-6 py-4'>
-            <div className='flex items-center space-x-2.5'>
-              <div className='bg-secondary flex h-8 w-8 items-center justify-center rounded-lg'>
-                <MonitorIcon className='text-secondary-foreground h-4 w-4' />
+            <div className='flex items-center gap-2.5'>
+              <div className='bg-secondary flex size-8 items-center justify-center rounded-lg'>
+                <MonitorIcon className='text-secondary-foreground size-4' />
               </div>
               <h2 className='text-foreground text-base font-semibold'>Active Sessions</h2>
             </div>

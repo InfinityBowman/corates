@@ -22,7 +22,7 @@ import { StatsCard } from '@/components/admin/StatsCard';
 import { UserTable } from '@/components/admin/UserTable';
 import { AnalyticsSection } from '@/components/admin/AnalyticsSection';
 import { AdminSection, AdminBox, DashboardHeader } from '@/components/admin/ui';
-import { input } from '@/components/admin/styles/admin-tokens';
+import { Input } from '@/components/ui/input';
 
 export const Route = createFileRoute('/_app/_protected/admin/')({
   component: AdminDashboard,
@@ -110,13 +110,13 @@ function AdminDashboard() {
         description='Manage system users and their access'
         cta={
           <div className='relative'>
-            <SearchIcon className='text-muted-foreground/70 absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2' />
-            <input
+            <SearchIcon className='text-muted-foreground/70 absolute top-1/2 left-3 size-4 -translate-y-1/2' />
+            <Input
               type='text'
               placeholder='Search by name or email...'
               value={search}
               onChange={handleSearchInput}
-              className={`w-64 ${input.base} ${input.withIconLeft}`}
+              className='w-64 pl-10'
             />
           </div>
         }
@@ -124,7 +124,7 @@ function AdminDashboard() {
         <AdminBox padding='compact' className='overflow-hidden p-0'>
           {usersDataQuery.isLoading ?
             <div className='flex items-center justify-center py-12'>
-              <LoaderIcon className='h-8 w-8 animate-spin text-blue-600' />
+              <LoaderIcon className='size-8 animate-spin text-blue-600' />
             </div>
           : <UserTable users={usersData?.users || []} />}
 
@@ -139,14 +139,14 @@ function AdminDashboard() {
                   )} of ${usersData.pagination.total || 0} users`
                 : 'No users found'}
               </p>
-              <div className='flex items-center space-x-2'>
+              <div className='flex items-center gap-2'>
                 <button
                   type='button'
                   onClick={() => setPage(p => Math.max(1, p - 1))}
                   disabled={page === 1}
                   className='border-border hover:bg-muted rounded-lg border p-2 transition-colors disabled:cursor-not-allowed disabled:opacity-50'
                 >
-                  <ChevronLeftIcon className='h-4 w-4' />
+                  <ChevronLeftIcon className='size-4' />
                 </button>
                 <span className='text-muted-foreground text-sm'>
                   Page {page} of {usersData.pagination.totalPages || 1}
@@ -159,7 +159,7 @@ function AdminDashboard() {
                   disabled={page >= (usersData.pagination.totalPages || 1)}
                   className='border-border hover:bg-muted rounded-lg border p-2 transition-colors disabled:cursor-not-allowed disabled:opacity-50'
                 >
-                  <ChevronRightIcon className='h-4 w-4' />
+                  <ChevronRightIcon className='size-4' />
                 </button>
               </div>
             </div>

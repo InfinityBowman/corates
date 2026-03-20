@@ -5,12 +5,15 @@
 
 import { useState, useMemo, useRef, useCallback } from 'react';
 import { CameraIcon, CheckIcon } from 'lucide-react';
+import { Separator } from '@/components/ui/separator';
+import { Badge } from '@/components/ui/badge';
 import { useAuthStore, selectUser, selectUserAvatarUrl } from '@/stores/authStore';
 import { showToast } from '@/components/ui/toast';
 import { SimpleEditable } from '@/components/ui/editable';
 import { API_BASE } from '@/config/api';
 import { compressImageFile } from '@/lib/imageUtils.js';
 import { syncProfileToProjects } from '@/lib/syncUtils';
+import { Spinner } from '@/components/ui/spinner';
 
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
 const AVATAR_MAX_SIZE = 256;
@@ -152,7 +155,7 @@ export function ProfileInfoSection() {
   );
 
   return (
-    <div className='space-y-6'>
+    <div className='flex flex-col gap-6'>
       {/* Avatar and Name Row */}
       <div className='flex items-center gap-6'>
         {/* Avatar */}
@@ -161,10 +164,10 @@ export function ProfileInfoSection() {
             <img
               src={avatarUrl}
               alt={user?.name || 'Profile'}
-              className='ring-background h-20 w-20 rounded-full object-cover shadow-md ring-2'
+              className='ring-background size-20 rounded-full object-cover shadow-md ring-2'
               referrerPolicy='no-referrer'
             />
-          : <div className='from-primary to-primary/80 text-primary-foreground flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br text-xl font-semibold shadow-md'>
+          : <div className='from-primary to-primary/80 text-primary-foreground flex size-20 items-center justify-center rounded-full bg-gradient-to-br text-xl font-semibold shadow-md'>
               {userInitials}
             </div>
           }
@@ -175,8 +178,8 @@ export function ProfileInfoSection() {
             title='Change profile photo'
           >
             {uploadingImage ?
-              <div className='h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent' />
-            : <CameraIcon className='h-5 w-5 text-white' />}
+              <Spinner size='sm' variant='white' />
+            : <CameraIcon className='size-5 text-white' />}
           </button>
           <input
             ref={fileInputRef}
@@ -220,17 +223,18 @@ export function ProfileInfoSection() {
           <div className='mt-3 flex items-center gap-2'>
             <p className='text-muted-foreground text-sm'>{user?.email as string}</p>
             {!!user?.emailVerified && (
-              <span className='inline-flex items-center gap-1 rounded-full bg-emerald-50 px-1.5 py-0.5 text-xs font-medium text-emerald-600 ring-1 ring-emerald-600/10'>
-                <CheckIcon className='h-3 w-3' />
+              <Badge variant='success'>
+                <CheckIcon className='size-3' />
                 Verified
-              </span>
+              </Badge>
             )}
           </div>
         </div>
       </div>
 
       {/* Member Since */}
-      <div className='border-border border-t pt-5'>
+      <Separator />
+      <div>
         <label className='text-muted-foreground mb-1 block text-xs font-medium tracking-wide uppercase'>
           Member Since
         </label>

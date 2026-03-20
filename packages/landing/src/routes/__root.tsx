@@ -73,6 +73,19 @@ export const Route = createRootRoute({
     'X-Content-Type-Options': 'nosniff',
     'Referrer-Policy': 'strict-origin-when-cross-origin',
     'Permissions-Policy': 'camera=(), microphone=(), geolocation=()',
+    'Content-Security-Policy': [
+      "default-src 'self'",
+      "script-src 'self' 'unsafe-inline'",
+      "style-src 'self' 'unsafe-inline'",
+      "img-src 'self' data: blob:",
+      import.meta.env.DEV ?
+        "connect-src 'self' http://localhost:* ws://localhost:*"
+      : "connect-src 'self' wss://corates.org",
+      "font-src 'self'",
+      "frame-ancestors 'none'",
+      "form-action 'self'",
+      "base-uri 'self'",
+    ].join('; '),
   }),
   head: () => ({
     meta: [

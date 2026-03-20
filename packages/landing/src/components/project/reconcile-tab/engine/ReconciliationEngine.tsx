@@ -160,7 +160,7 @@ export function ReconciliationEngine({
           className='hover:bg-secondary shrink-0 rounded-lg p-2 transition-colors'
           title='Go back'
         >
-          <ArrowLeftIcon className='text-muted-foreground h-5 w-5' />
+          <ArrowLeftIcon className='text-muted-foreground size-5' />
         </button>
 
         {/* Title */}
@@ -306,7 +306,7 @@ export function ReconciliationEngine({
                           : 'bg-card text-secondary-foreground hover:bg-secondary shadow'
                         }`}
                       >
-                        <ArrowLeftIcon className='h-4 w-4' />
+                        <ArrowLeftIcon className='size-4' />
                         Previous
                       </button>
 
@@ -322,7 +322,7 @@ export function ReconciliationEngine({
                         {engine.currentPage === engine.navItems.length - 1 ?
                           'Review Summary'
                         : 'Next'}
-                        <ArrowRightIcon className='h-4 w-4' />
+                        <ArrowRightIcon className='size-4' />
                       </button>
                     </div>
                   </>
@@ -355,14 +355,14 @@ export function ReconciliationEngine({
             {pdfLoading ?
               <div className='bg-secondary flex h-full items-center justify-center'>
                 <div className='text-muted-foreground flex items-center gap-3'>
-                  <div className='h-6 w-6 animate-spin rounded-full border-b-2 border-blue-600' />
+                  <div className='size-6 animate-spin rounded-full border-b-2 border-blue-600' />
                   Loading PDF...
                 </div>
               </div>
             : <Suspense
                 fallback={
                   <div className='bg-secondary flex h-full items-center justify-center'>
-                    <div className='h-6 w-6 animate-spin rounded-full border-b-2 border-blue-600' />
+                    <div className='size-6 animate-spin rounded-full border-b-2 border-blue-600' />
                   </div>
                 }
               >

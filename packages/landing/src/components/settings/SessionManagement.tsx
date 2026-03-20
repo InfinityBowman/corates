@@ -14,6 +14,9 @@ import {
 } from 'lucide-react';
 import { useAuthStore } from '@/stores/authStore';
 import { showToast } from '@/components/ui/toast';
+import { Alert } from '@/components/ui/alert';
+import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -102,26 +105,22 @@ function SessionCard({ session, isCurrent, revoking, onRevoke }: SessionCardProp
       }`}
     >
       <div className='flex items-start justify-between'>
-        <div className='flex items-start space-x-3'>
+        <div className='flex items-start gap-3'>
           <div className={`rounded-full p-2 ${isCurrent ? 'bg-primary/10' : 'bg-secondary'}`}>
             <DeviceIcon
-              className={`h-5 w-5 ${isCurrent ? 'text-primary' : 'text-secondary-foreground'}`}
+              className={`size-5 ${isCurrent ? 'text-primary' : 'text-secondary-foreground'}`}
             />
           </div>
           <div>
-            <div className='flex items-center space-x-2'>
+            <div className='flex items-center gap-2'>
               <p className='text-foreground font-medium'>
                 {deviceInfo.browser} on {deviceInfo.os}
               </p>
-              {isCurrent && (
-                <span className='bg-primary/10 text-primary rounded-full px-2 py-0.5 text-xs font-medium'>
-                  Current
-                </span>
-              )}
+              {isCurrent && <Badge variant='default'>Current</Badge>}
             </div>
-            <div className='text-muted-foreground mt-1 flex items-center space-x-3 text-sm'>
+            <div className='text-muted-foreground mt-1 flex items-center gap-3 text-sm'>
               <span className='flex items-center'>
-                <GlobeIcon className='mr-1 h-3.5 w-3.5' />
+                <GlobeIcon className='mr-1 size-3.5' />
                 {maskIp(session.ipAddress)}
               </span>
               <span>
@@ -136,11 +135,11 @@ function SessionCard({ session, isCurrent, revoking, onRevoke }: SessionCardProp
           <button
             onClick={() => onRevoke(session.token)}
             disabled={revoking}
-            className='text-destructive hover:bg-destructive/5 flex items-center space-x-1 rounded-md px-3 py-1.5 text-sm font-medium transition disabled:opacity-50'
+            className='text-destructive hover:bg-destructive/5 flex items-center gap-1 rounded-md px-3 py-1.5 text-sm font-medium transition disabled:opacity-50'
           >
             {revoking ?
-              <LoaderIcon className='h-4 w-4 animate-spin' />
-            : <Trash2Icon className='h-4 w-4' />}
+              <LoaderIcon className='size-4 animate-spin' />
+            : <Trash2Icon className='size-4' />}
             <span>Revoke</span>
           </button>
         )}
@@ -263,7 +262,7 @@ export function SessionManagement() {
   }, [revokeAllSessions]);
 
   return (
-    <div className='space-y-4'>
+    <div className='flex flex-col gap-4'>
       <div className='flex items-center justify-between'>
         <div>
           <p className='text-foreground font-medium'>Active Sessions</p>
@@ -275,20 +274,18 @@ export function SessionManagement() {
 
       {isLoading && (
         <div className='text-muted-foreground flex items-center justify-center py-8'>
-          <LoaderIcon className='mr-2 h-5 w-5 animate-spin' />
+          <LoaderIcon className='mr-2 size-5 animate-spin' />
           <span>Loading sessions...</span>
         </div>
       )}
 
       {sessionsError && (
-        <div className='rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-600'>
-          Failed to load sessions. Please try again.
-        </div>
+        <Alert variant='destructive'>Failed to load sessions. Please try again.</Alert>
       )}
 
       {!isLoading && !sessionsError && (
         <>
-          <div className='space-y-3'>
+          <div className='flex flex-col gap-3'>
             {dedupedSessions.map((sessionItem: any) => (
               <SessionCard
                 key={sessionItem.token}
@@ -301,25 +298,28 @@ export function SessionManagement() {
           </div>
 
           {dedupedSessions.length > 1 && (
-            <div className='border-border mt-4 flex flex-wrap gap-3 border-t pt-4'>
-              <button
-                onClick={handleRevokeOther}
-                disabled={revokingAll}
-                className='bg-secondary text-secondary-foreground hover:bg-secondary/80 flex items-center space-x-2 rounded-md px-4 py-2 text-sm font-medium transition disabled:opacity-50'
-              >
-                <LogOutIcon className='h-4 w-4' />
-                <span>{revokingAll ? 'Revoking...' : 'Sign out other sessions'}</span>
-              </button>
+            <>
+              <Separator className='mt-4' />
+              <div className='mt-4 flex flex-wrap gap-3'>
+                <button
+                  onClick={handleRevokeOther}
+                  disabled={revokingAll}
+                  className='bg-secondary text-secondary-foreground hover:bg-secondary/80 flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition disabled:opacity-50'
+                >
+                  <LogOutIcon className='size-4' />
+                  <span>{revokingAll ? 'Revoking...' : 'Sign out other sessions'}</span>
+                </button>
 
-              <button
-                onClick={() => setShowRevokeAllDialog(true)}
-                disabled={revokingAll}
-                className='text-destructive hover:bg-destructive/10 flex items-center space-x-2 rounded-md bg-red-50 px-4 py-2 text-sm font-medium transition disabled:opacity-50'
-              >
-                <Trash2Icon className='h-4 w-4' />
-                <span>Sign out everywhere</span>
-              </button>
-            </div>
+                <button
+                  onClick={() => setShowRevokeAllDialog(true)}
+                  disabled={revokingAll}
+                  className='text-destructive hover:bg-destructive/10 bg-destructive/10 flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition disabled:opacity-50'
+                >
+                  <Trash2Icon className='size-4' />
+                  <span>Sign out everywhere</span>
+                </button>
+              </div>
+            </>
           )}
 
           {dedupedSessions.length === 1 && (

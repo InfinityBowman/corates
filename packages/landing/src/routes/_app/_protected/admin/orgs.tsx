@@ -16,7 +16,7 @@ import {
 import { useAdminOrgs } from '@/hooks/useAdminQueries';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { DashboardHeader, AdminSection, AdminDataTable } from '@/components/admin/ui';
-import { input } from '@/components/admin/styles/admin-tokens';
+import { Input } from '@/components/ui/input';
 import type { ColumnDef } from '@tanstack/react-table';
 
 interface OrgRow {
@@ -76,9 +76,9 @@ function AdminOrgList() {
         cell: info => {
           const org = info.row.original;
           return (
-            <div className='flex items-center space-x-3'>
-              <div className='flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100'>
-                <HomeIcon className='h-5 w-5 text-blue-600' />
+            <div className='flex items-center gap-3'>
+              <div className='flex size-10 items-center justify-center rounded-lg bg-blue-100'>
+                <HomeIcon className='size-5 text-blue-600' />
               </div>
               <div>
                 <p className='text-foreground font-medium'>{org.name}</p>
@@ -102,8 +102,8 @@ function AdminOrgList() {
         cell: info => {
           const org = info.row.original;
           return (
-            <div className='text-muted-foreground flex items-center space-x-1'>
-              <UsersIcon className='text-muted-foreground/70 h-4 w-4' />
+            <div className='text-muted-foreground flex items-center gap-1'>
+              <UsersIcon className='text-muted-foreground/70 size-4' />
               <span>{org.stats?.memberCount ?? '-'}</span>
             </div>
           );
@@ -115,8 +115,8 @@ function AdminOrgList() {
         cell: info => {
           const org = info.row.original;
           return (
-            <div className='text-muted-foreground flex items-center space-x-1'>
-              <FolderIcon className='text-muted-foreground/70 h-4 w-4' />
+            <div className='text-muted-foreground flex items-center gap-1'>
+              <FolderIcon className='text-muted-foreground/70 size-4' />
               <span>{org.stats?.projectCount ?? '-'}</span>
             </div>
           );
@@ -164,13 +164,13 @@ function AdminOrgList() {
         title='Organizations'
         cta={
           <div className='relative'>
-            <SearchIcon className='text-muted-foreground/70 absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2' />
-            <input
+            <SearchIcon className='text-muted-foreground/70 absolute top-1/2 left-3 size-4 -translate-y-1/2' />
+            <Input
               type='text'
               placeholder='Search by name or slug...'
               value={search}
               onChange={handleSearchInput}
-              className={`w-64 ${input.base} ${input.withIconLeft}`}
+              className='w-64 pl-10'
             />
           </div>
         }
@@ -200,14 +200,14 @@ function AdminOrgList() {
                 )} of ${orgsData.pagination.total || 0} organizations`
               : 'No organizations found'}
             </p>
-            <div className='flex items-center space-x-2'>
+            <div className='flex items-center gap-2'>
               <button
                 type='button'
                 onClick={() => setPage(p => Math.max(1, p - 1))}
                 disabled={page === 1}
                 className='border-border bg-card text-muted-foreground hover:bg-muted rounded-xl border p-2 shadow-xs disabled:cursor-not-allowed disabled:opacity-50'
               >
-                <ChevronLeftIcon className='h-4 w-4' />
+                <ChevronLeftIcon className='size-4' />
               </button>
               <span className='text-muted-foreground text-sm'>
                 Page {page} of {orgsData.pagination.totalPages || 1}
@@ -218,7 +218,7 @@ function AdminOrgList() {
                 disabled={page >= (orgsData.pagination.totalPages || 1)}
                 className='border-border bg-card text-muted-foreground hover:bg-muted rounded-xl border p-2 shadow-xs disabled:cursor-not-allowed disabled:opacity-50'
               >
-                <ChevronRightIcon className='h-4 w-4' />
+                <ChevronRightIcon className='size-4' />
               </button>
             </div>
           </div>

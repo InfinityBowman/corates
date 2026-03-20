@@ -114,7 +114,7 @@ function AimField({
               }`}
             >
               <div className='flex items-center gap-2'>
-                {isSelected && <CheckIcon className='h-4 w-4' />}
+                {isSelected && <CheckIcon className='size-4' />}
                 <span className={isSelected ? 'font-medium' : ''}>{label}</span>
               </div>
             </div>
@@ -139,7 +139,7 @@ function AimField({
               className='hidden'
             />
             <div className='flex items-center gap-2'>
-              {isSelected && <CheckIcon className='h-4 w-4' />}
+              {isSelected && <CheckIcon className='size-4' />}
               <span className={isSelected ? 'font-medium' : ''}>{label}</span>
             </div>
           </label>
@@ -211,7 +211,7 @@ function MultiSelectField({
               }`}
             >
               <div className='flex items-center gap-1.5'>
-                {optionSelected && <CheckIcon className='h-3 w-3 shrink-0' />}
+                {optionSelected && <CheckIcon className='size-3 shrink-0' />}
                 <span className='line-clamp-2'>{option}</span>
               </div>
             </div>
@@ -234,7 +234,7 @@ function MultiSelectField({
               className='hidden'
             />
             <div className='flex items-center gap-1.5'>
-              {optionSelected && <CheckIcon className='h-3 w-3 shrink-0' />}
+              {optionSelected && <CheckIcon className='size-3 shrink-0' />}
               <span className='line-clamp-2'>{option}</span>
             </div>
           </label>
@@ -397,11 +397,11 @@ export function PreliminaryPage({
       >
         <div className='flex items-center gap-2'>
           {isAgreement ?
-            <div className='flex h-6 w-6 items-center justify-center rounded-full bg-green-500'>
-              <CheckIcon className='h-4 w-4 text-white' />
+            <div className='flex size-6 items-center justify-center rounded-full bg-green-500'>
+              <CheckIcon className='size-4 text-white' />
             </div>
-          : <div className='flex h-6 w-6 items-center justify-center rounded-full bg-amber-500'>
-              <XIcon className='h-4 w-4 text-white' />
+          : <div className='flex size-6 items-center justify-center rounded-full bg-amber-500'>
+              <XIcon className='size-4 text-white' />
             </div>
           }
           <div>
@@ -413,12 +413,12 @@ export function PreliminaryPage({
 
       {/* Aim Mismatch Warning */}
       {fieldKey === 'aim' && isAimMismatch && (
-        <div className='mx-4 mt-4 rounded-lg border-2 border-red-300 bg-red-50 p-4'>
+        <div className='border-destructive/30 bg-destructive/10 mx-4 mt-4 rounded-lg border-2 p-4'>
           <div className='flex items-start gap-3'>
-            <AlertTriangleIcon className='h-5 w-5 shrink-0 text-red-600' />
+            <AlertTriangleIcon className='text-destructive size-5 shrink-0' />
             <div>
-              <h3 className='font-semibold text-red-800'>Cannot Proceed - Aim Mismatch</h3>
-              <p className='mt-1 text-sm text-red-700'>
+              <h3 className='text-destructive font-semibold'>Cannot Proceed - Aim Mismatch</h3>
+              <p className='text-destructive mt-1 text-sm'>
                 Reviewers selected different aims. This determines which Domain 2 questions are
                 assessed (2a for assignment effect, 2b for adhering effect). You must agree on the
                 aim before continuing to domain reconciliation.

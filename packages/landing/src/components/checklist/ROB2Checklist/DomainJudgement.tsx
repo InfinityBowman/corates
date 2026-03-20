@@ -68,7 +68,7 @@ export function DomainJudgement({
   };
 
   return (
-    <div className='space-y-4'>
+    <div className='flex flex-col gap-4'>
       <div>
         <div className='text-muted-foreground mb-2 text-xs font-medium'>
           {isAutoMode ? 'Auto-calculated judgement' : 'Select judgement'}

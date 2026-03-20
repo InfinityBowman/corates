@@ -31,7 +31,7 @@ export function LocalChecklistItem({ checklist, isSelected, onDelete }: LocalChe
         onClick={() => navigate({ to: `/checklist/${checklist.id}` as string })}
         className='flex min-w-0 flex-1 items-center gap-2 px-3 py-2 text-left focus:outline-none'
       >
-        <FileCheck2Icon className='text-muted-foreground h-4 w-4 shrink-0' />
+        <FileCheck2Icon className='text-muted-foreground size-4 shrink-0' />
         <div className='min-w-0 flex-1'>
           <div className='truncate text-sm font-medium'>
             {checklist.name || 'Untitled Checklist'}
@@ -46,7 +46,7 @@ export function LocalChecklistItem({ checklist, isSelected, onDelete }: LocalChe
         className='text-muted-foreground/70 focus:ring-primary mr-1 rounded p-1.5 opacity-0 transition-colors group-hover:opacity-100 hover:bg-red-50 hover:text-red-600 focus:opacity-100 focus:ring-2 focus:outline-none'
         aria-label='Delete checklist'
       >
-        <TrashIcon className='h-4 w-4' />
+        <TrashIcon className='size-4' />
       </button>
     </div>
   );

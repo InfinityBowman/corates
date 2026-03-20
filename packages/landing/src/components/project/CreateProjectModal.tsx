@@ -135,8 +135,8 @@ export function CreateProjectModal({ open, onOpenChange }: CreateProjectModalPro
       <DialogContent className='sm:max-w-lg'>
         <DialogHeader>
           <div className='flex items-center gap-3'>
-            <div className='flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50'>
-              <FolderIcon className='h-5 w-5 text-blue-600' />
+            <div className='flex size-10 items-center justify-center rounded-xl bg-blue-50'>
+              <FolderIcon className='size-5 text-blue-600' />
             </div>
             <div>
               <DialogTitle>Create a new project</DialogTitle>
@@ -148,7 +148,7 @@ export function CreateProjectModal({ open, onOpenChange }: CreateProjectModalPro
         </DialogHeader>
 
         <form onSubmit={handleSubmit}>
-          <div className='space-y-4 py-2'>
+          <div className='flex flex-col gap-4 py-2'>
             {/* Project Name */}
             <div>
               <label

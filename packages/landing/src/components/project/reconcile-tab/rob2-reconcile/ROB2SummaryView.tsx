@@ -163,13 +163,13 @@ export function ROB2SummaryView({
                   >
                     {/* Status Icon */}
                     <div
-                      className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full ${
+                      className={`flex size-6 shrink-0 items-center justify-center rounded-full ${
                         agreement ? 'bg-green-100 text-green-600' : 'bg-amber-100 text-amber-600'
                       }`}
                     >
                       {agreement ?
-                        <CheckIcon className='h-3.5 w-3.5' />
-                      : <XIcon className='h-3.5 w-3.5' />}
+                        <CheckIcon className='size-3.5' />
+                      : <XIcon className='size-3.5' />}
                     </div>
 
                     {/* Item Label */}
@@ -206,7 +206,7 @@ export function ROB2SummaryView({
                           >
                             {displayVal}
                           </span>
-                          <CheckIcon className='h-4 w-4 text-green-500' />
+                          <CheckIcon className='size-4 text-green-500' />
                         </>
                       : <span className='bg-secondary text-muted-foreground rounded-full px-2 py-1 text-xs'>
                           Not set
@@ -215,7 +215,7 @@ export function ROB2SummaryView({
                     </div>
 
                     {/* Chevron */}
-                    <ChevronRightIcon className='text-muted-foreground/70 h-4 w-4 shrink-0' />
+                    <ChevronRightIcon className='text-muted-foreground/70 size-4 shrink-0' />
                   </button>
                 );
               })}
@@ -231,7 +231,7 @@ export function ROB2SummaryView({
           onClick={() => onBack?.()}
           className='bg-secondary text-secondary-foreground hover:bg-border flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors'
         >
-          <ArrowLeftIcon className='h-4 w-4' />
+          <ArrowLeftIcon className='size-4' />
           Back to Questions
         </button>
 
@@ -250,7 +250,7 @@ export function ROB2SummaryView({
               : 'bg-border text-muted-foreground/70 cursor-not-allowed'
             }`}
           >
-            <CheckIcon className='h-4 w-4' />
+            <CheckIcon className='size-4' />
             {saving ? 'Saving...' : 'Save Reconciled Checklist'}
           </button>
         </div>

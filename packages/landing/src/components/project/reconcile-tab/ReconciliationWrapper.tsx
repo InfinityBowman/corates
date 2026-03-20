@@ -480,7 +480,7 @@ export function ReconciliationWrapper({
     return (
       <div className='flex min-h-screen items-center justify-center bg-blue-50'>
         <div className='bg-card max-w-md rounded-lg p-8 shadow-lg'>
-          <h2 className='mb-2 text-xl font-bold text-red-600'>Error</h2>
+          <h2 className='text-destructive mb-2 text-xl font-bold'>Error</h2>
           <p className='text-secondary-foreground'>{error}</p>
           <button
             onClick={handleCancel}
@@ -498,7 +498,7 @@ export function ReconciliationWrapper({
     return (
       <div className='flex min-h-screen items-center justify-center bg-blue-50'>
         <div className='text-center'>
-          <div className='mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-4 border-blue-600 border-t-transparent' />
+          <div className='mx-auto mb-4 size-8 animate-spin rounded-full border-4 border-blue-600 border-t-transparent' />
           <p className='text-secondary-foreground'>
             {reconciledChecklistLoading ? 'Setting up reconciliation...' : 'Loading checklists...'}
           </p>

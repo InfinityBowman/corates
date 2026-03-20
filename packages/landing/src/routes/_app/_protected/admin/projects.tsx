@@ -9,7 +9,7 @@ import {
   SearchIcon,
   FolderIcon,
   UsersIcon,
-  FileIcon,
+  FileTextIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
   AlertCircleIcon,
@@ -19,7 +19,7 @@ import {
 import { useAdminProjects, useAdminOrgs } from '@/hooks/useAdminQueries';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { DashboardHeader, AdminSection, AdminDataTable } from '@/components/admin/ui';
-import { input } from '@/components/admin/styles/admin-tokens';
+import { Input } from '@/components/ui/input';
 import type { ColumnDef } from '@tanstack/react-table';
 
 interface ProjectRow {
@@ -117,10 +117,10 @@ function AdminProjectList() {
             <Link
               to={'/admin/projects/$projectId' as string}
               params={{ projectId: project.id } as Record<string, string>}
-              className='flex items-center space-x-3'
+              className='flex items-center gap-3'
             >
-              <div className='flex h-10 w-10 items-center justify-center rounded-lg bg-green-100'>
-                <FolderIcon className='h-5 w-5 text-green-600' />
+              <div className='bg-success/10 flex size-10 items-center justify-center rounded-lg'>
+                <FolderIcon className='text-success size-5' />
               </div>
               <div>
                 <p className='font-medium text-blue-600 hover:text-blue-700'>{project.name}</p>
@@ -144,10 +144,10 @@ function AdminProjectList() {
               <Link
                 to={'/admin/orgs/$orgId' as string}
                 params={{ orgId: project.orgId } as Record<string, string>}
-                className='text-secondary-foreground flex items-center space-x-2 hover:text-blue-600'
+                className='text-secondary-foreground flex items-center gap-2 hover:text-blue-600'
                 onClick={(e: React.MouseEvent) => e.stopPropagation()}
               >
-                <HomeIcon className='h-4 w-4' />
+                <HomeIcon className='size-4' />
                 <span>{project.orgName}</span>
               </Link>
               <p className='text-muted-foreground text-xs'>@{project.orgSlug}</p>
@@ -160,7 +160,7 @@ function AdminProjectList() {
         header: 'Members',
         cell: info => (
           <span className='bg-secondary text-secondary-foreground inline-flex items-center rounded-full px-2.5 py-0.5 text-sm font-medium'>
-            <UsersIcon className='mr-1 h-3 w-3' />
+            <UsersIcon className='mr-1 size-3' />
             {info.getValue() as number}
           </span>
         ),
@@ -170,7 +170,7 @@ function AdminProjectList() {
         header: 'Files',
         cell: info => (
           <span className='bg-secondary text-secondary-foreground inline-flex items-center rounded-full px-2.5 py-0.5 text-sm font-medium'>
-            <FileIcon className='mr-1 h-3 w-3' />
+            <FileTextIcon className='mr-1 size-3' />
             {info.getValue() as number}
           </span>
         ),
@@ -201,13 +201,13 @@ function AdminProjectList() {
       <div className='mb-6 flex flex-col gap-4 sm:flex-row'>
         <form onSubmit={handleSearch} className='flex-1'>
           <div className='relative'>
-            <SearchIcon className='text-muted-foreground/70 pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2' />
-            <input
+            <SearchIcon className='text-muted-foreground/70 pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2' />
+            <Input
               type='text'
               value={searchInput}
               onChange={e => setSearchInput(e.target.value)}
               placeholder='Search by project name...'
-              className={`w-full ${input.base} ${input.withIconLeft} pr-10`}
+              className='w-full pr-10 pl-10'
             />
             {searchInput && (
               <button
@@ -215,7 +215,7 @@ function AdminProjectList() {
                 onClick={clearSearch}
                 className='text-muted-foreground/70 hover:text-muted-foreground absolute top-1/2 right-3 -translate-y-1/2'
               >
-                <XIcon className='h-4 w-4' />
+                <XIcon className='size-4' />
               </button>
             )}
           </div>
@@ -226,7 +226,7 @@ function AdminProjectList() {
           <select
             value={selectedOrgId}
             onChange={e => handleOrgFilter(e.target.value)}
-            className={input.base}
+            className='border-input h-8 rounded-lg border bg-transparent px-2.5 py-2 text-sm'
           >
             <option value=''>All Organizations</option>
             {orgs.map(org => (
@@ -240,13 +240,13 @@ function AdminProjectList() {
 
       {/* Error State */}
       {projectsQuery.isError && (
-        <div className='rounded-lg border border-red-200 bg-red-50 p-6 text-center'>
-          <AlertCircleIcon className='mx-auto mb-2 h-8 w-8 text-red-500' />
-          <p className='text-red-700'>Failed to load projects</p>
+        <div className='border-destructive/20 bg-destructive/10 rounded-lg border p-6 text-center'>
+          <AlertCircleIcon className='text-destructive mx-auto mb-2 size-8' />
+          <p className='text-destructive'>Failed to load projects</p>
           <button
             type='button'
             onClick={() => projectsQuery.refetch()}
-            className='mt-2 text-sm text-red-600 hover:text-red-700'
+            className='text-destructive hover:text-destructive/80 mt-2 text-sm'
           >
             Try again
           </button>
@@ -262,7 +262,7 @@ function AdminProjectList() {
             loading={projectsQuery.isLoading}
             emptyState={
               <div className='flex flex-col items-center gap-2'>
-                <FolderIcon className='text-muted-foreground/50 h-8 w-8' />
+                <FolderIcon className='text-muted-foreground/50 size-8' />
                 <span className='text-muted-foreground'>No projects found</span>
                 {(search || selectedOrgId) && (
                   <button
@@ -294,14 +294,14 @@ function AdminProjectList() {
                 Showing {(pagination.page - 1) * limit + 1} to{' '}
                 {Math.min(pagination.page * limit, pagination.total)} of {pagination.total} projects
               </div>
-              <div className='flex items-center space-x-2'>
+              <div className='flex items-center gap-2'>
                 <button
                   type='button'
                   onClick={() => setPage(p => Math.max(1, p - 1))}
                   disabled={page === 1}
                   className='border-border bg-card text-muted-foreground hover:bg-muted rounded-xl border p-2 shadow-xs disabled:cursor-not-allowed disabled:opacity-50'
                 >
-                  <ChevronLeftIcon className='h-4 w-4' />
+                  <ChevronLeftIcon className='size-4' />
                 </button>
                 <span className='text-muted-foreground text-sm'>
                   Page {pagination.page} of {pagination.totalPages}
@@ -312,7 +312,7 @@ function AdminProjectList() {
                   disabled={page === pagination.totalPages}
                   className='border-border bg-card text-muted-foreground hover:bg-muted rounded-xl border p-2 shadow-xs disabled:cursor-not-allowed disabled:opacity-50'
                 >
-                  <ChevronRightIcon className='h-4 w-4' />
+                  <ChevronRightIcon className='size-4' />
                 </button>
               </div>
             </div>

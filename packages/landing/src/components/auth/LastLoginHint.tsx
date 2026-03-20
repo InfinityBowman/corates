@@ -3,21 +3,19 @@
  */
 
 import { useState } from 'react';
-import { FiLock, FiMail } from 'react-icons/fi';
-import { AiOutlineGoogle } from 'react-icons/ai';
-import { FaOrcid } from 'react-icons/fa6';
+import { LockIcon, MailIcon } from 'lucide-react';
 import { getLastLoginMethod, LOGIN_METHOD_LABELS, LOGIN_METHODS } from '@/lib/lastLoginMethod';
 
 function getIcon(method: string) {
   switch (method) {
     case LOGIN_METHODS.GOOGLE:
-      return <AiOutlineGoogle className='h-4 w-4' />;
+      return <img src='/logos/google.svg' alt='' className='size-4' aria-hidden='true' />;
     case LOGIN_METHODS.ORCID:
-      return <FaOrcid className='h-4 w-4' />;
+      return <img src='/logos/orcid.svg' alt='' className='size-4' aria-hidden='true' />;
     case LOGIN_METHODS.MAGIC_LINK:
-      return <FiMail className='h-4 w-4' />;
+      return <MailIcon className='size-4' />;
     default:
-      return <FiLock className='h-4 w-4' />;
+      return <LockIcon className='size-4' />;
   }
 }
 

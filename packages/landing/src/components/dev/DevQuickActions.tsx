@@ -56,8 +56,8 @@ export function DevQuickActions({ projectId, orgId }: DevQuickActionsProps) {
   };
 
   return (
-    <div className='flex flex-col gap-3 border-t border-gray-200 pt-3'>
-      <h4 className='text-xs font-semibold text-gray-900'>Quick Actions</h4>
+    <div className='border-border flex flex-col gap-3 border-t pt-3'>
+      <h4 className='text-foreground text-xs font-semibold'>Quick Actions</h4>
 
       <div className='flex gap-2'>
         <button
@@ -67,13 +67,13 @@ export function DevQuickActions({ projectId, orgId }: DevQuickActionsProps) {
           title='Clear all project data'
         >
           {isResetting ?
-            <span className='h-3.5 w-3.5 animate-spin rounded-full border-2 border-current border-t-transparent' />
+            <span className='size-3.5 animate-spin rounded-full border-2 border-current border-t-transparent' />
           : <Trash2Icon size={14} />}
           Reset State
         </button>
 
         <button
-          className='flex items-center gap-1.5 rounded border border-gray-300 px-3 py-1.5 text-xs text-gray-600 transition-colors hover:border-gray-400 hover:bg-gray-50'
+          className='border-border text-muted-foreground hover:border-border hover:bg-muted flex items-center gap-1.5 rounded border px-3 py-1.5 text-xs transition-colors'
           onClick={forceRefresh}
           title='Reload the page'
         >
@@ -85,7 +85,7 @@ export function DevQuickActions({ projectId, orgId }: DevQuickActionsProps) {
       {result && (
         <div
           className={`flex items-center gap-1.5 rounded p-2 text-xs ${
-            result.success ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-600'
+            result.success ? 'bg-success-bg text-success' : 'bg-destructive/10 text-destructive'
           }`}
         >
           {result.success ?

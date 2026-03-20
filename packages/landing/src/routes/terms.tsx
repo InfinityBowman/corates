@@ -4,6 +4,9 @@ import Footer from '../components/Footer';
 import { config } from '../lib/config';
 
 export const Route = createFileRoute('/terms')({
+  headers: () => ({
+    'Cache-Control': 'public, s-maxage=3600, stale-while-revalidate=86400',
+  }),
   head: () => ({
     meta: [
       { title: 'Terms of Service - CoRATES' },
@@ -41,7 +44,7 @@ function TermsPage() {
           <h1 className='mb-2 text-4xl font-bold text-gray-900'>Terms of Service</h1>
           <p className='mb-12 text-gray-500'>Effective date: January 7, 2026</p>
 
-          <div className='space-y-6 leading-relaxed text-gray-700'>
+          <div className='flex flex-col gap-6 leading-relaxed text-gray-700'>
             <p>
               THESE TERMS OF SERVICE (the "Agreement") GOVERN CUSTOMER'S RECEIPT, ACCESS TO AND USE
               OF THE SERVICE (AS DEFINED BELOW) PROVIDED BY SYNTCH LLC, doing business as CoRATES

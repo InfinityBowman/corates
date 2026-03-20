@@ -319,7 +319,7 @@ export function ProjectView({ projectId }: ProjectViewProps) {
                         value={tab.value}
                         className='text-muted-foreground hover:bg-muted hover:text-secondary-foreground group relative gap-2 rounded-t-lg px-4 py-2.5 transition-all data-[state=active]:bg-blue-50/50 data-[state=active]:text-blue-600'
                       >
-                        <Icon className='h-4 w-4 opacity-60 transition-opacity group-data-[state=active]:opacity-100' />
+                        <Icon className='size-4 opacity-60 transition-opacity group-data-[state=active]:opacity-100' />
                         <span className='font-medium'>{tab.label}</span>
                         {tab.getCount && (
                           <span className='bg-secondary text-secondary-foreground min-w-6 rounded-full px-1.5 py-0.5 text-center text-xs font-medium tabular-nums transition-colors group-data-[state=active]:bg-blue-100 group-data-[state=active]:text-blue-700'>

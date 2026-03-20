@@ -41,7 +41,7 @@ export function OverallJudgementPage({
   selectedDirectionSource,
 }: OverallJudgementPageProps) {
   return (
-    <div className='space-y-4'>
+    <div className='flex flex-col gap-4'>
       {/* Overall Header */}
       <div className='bg-card overflow-hidden rounded-lg shadow-lg'>
         <div className='border-border bg-secondary border-b px-4 py-3'>

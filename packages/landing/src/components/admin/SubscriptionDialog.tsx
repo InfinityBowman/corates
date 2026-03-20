@@ -3,7 +3,6 @@
  * Dialog for creating and editing subscriptions using shadcn Dialog
  */
 
-import { useId } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -11,6 +10,19 @@ import {
   DialogTitle,
   DialogFooter,
 } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Checkbox } from '@/components/ui/checkbox';
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Spinner } from '@/components/ui/spinner';
 
 interface SubscriptionDialogProps {
   open: boolean;
@@ -77,146 +89,121 @@ export function SubscriptionDialog({
   onSubmit,
   loading,
 }: SubscriptionDialogProps) {
-  const checkboxId = useId();
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className='max-w-lg'>
         <DialogHeader>
           <DialogTitle>{isEdit ? 'Edit Subscription' : 'Create Subscription'}</DialogTitle>
         </DialogHeader>
-        <div className='space-y-4'>
-          <div>
-            <label className='text-secondary-foreground mb-1 block text-sm font-medium'>Plan</label>
-            <select
-              value={plan}
-              onChange={e => onPlanChange?.(e.target.value)}
-              className='border-border w-full rounded-lg border px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none'
-            >
-              <option value='starter_team'>Starter Team</option>
-              <option value='team'>Team</option>
-              <option value='unlimited_team'>Unlimited Team</option>
-            </select>
+        <div className='flex flex-col gap-4'>
+          <div className='flex flex-col gap-2'>
+            <Label>Plan</Label>
+            <Select value={plan} onValueChange={onPlanChange}>
+              <SelectTrigger className='w-full'>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectGroup>
+                  <SelectItem value='starter_team'>Starter Team</SelectItem>
+                  <SelectItem value='team'>Team</SelectItem>
+                  <SelectItem value='unlimited_team'>Unlimited Team</SelectItem>
+                </SelectGroup>
+              </SelectContent>
+            </Select>
           </div>
-          <div>
-            <label className='text-secondary-foreground mb-1 block text-sm font-medium'>
-              Status
-            </label>
-            <select
-              value={status}
-              onChange={e => onStatusChange?.(e.target.value)}
-              className='border-border w-full rounded-lg border px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none'
-            >
-              <option value='active'>Active</option>
-              <option value='trialing'>Trialing</option>
-              <option value='past_due'>Past Due</option>
-              <option value='paused'>Paused</option>
-              <option value='canceled'>Canceled</option>
-              <option value='unpaid'>Unpaid</option>
-              <option value='incomplete'>Incomplete</option>
-            </select>
+          <div className='flex flex-col gap-2'>
+            <Label>Status</Label>
+            <Select value={status} onValueChange={onStatusChange}>
+              <SelectTrigger className='w-full'>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectGroup>
+                  <SelectItem value='active'>Active</SelectItem>
+                  <SelectItem value='trialing'>Trialing</SelectItem>
+                  <SelectItem value='past_due'>Past Due</SelectItem>
+                  <SelectItem value='paused'>Paused</SelectItem>
+                  <SelectItem value='canceled'>Canceled</SelectItem>
+                  <SelectItem value='unpaid'>Unpaid</SelectItem>
+                  <SelectItem value='incomplete'>Incomplete</SelectItem>
+                </SelectGroup>
+              </SelectContent>
+            </Select>
           </div>
-          <div>
-            <label className='text-secondary-foreground mb-1 block text-sm font-medium'>
-              Period Start (optional)
-            </label>
-            <input
+          <div className='flex flex-col gap-2'>
+            <Label>Period Start (optional)</Label>
+            <Input
               type='datetime-local'
               value={periodStart || ''}
               onChange={e => onPeriodStartChange?.(e.target.value)}
-              className='border-border w-full rounded-lg border px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none'
             />
           </div>
-          <div>
-            <label className='text-secondary-foreground mb-1 block text-sm font-medium'>
-              Period End (optional)
-            </label>
-            <input
+          <div className='flex flex-col gap-2'>
+            <Label>Period End (optional)</Label>
+            <Input
               type='datetime-local'
               value={periodEnd || ''}
               onChange={e => onPeriodEndChange?.(e.target.value)}
-              className='border-border w-full rounded-lg border px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none'
             />
           </div>
-          <div className='flex items-center space-x-2'>
-            <input
-              type='checkbox'
-              id={checkboxId}
+          <div className='flex items-center gap-2'>
+            <Checkbox
               checked={cancelAtPeriodEnd}
-              onChange={e => onCancelAtPeriodEndChange?.(e.target.checked)}
-              className='border-border h-4 w-4 rounded text-blue-600 focus:ring-2 focus:ring-blue-500'
+              onCheckedChange={checked => onCancelAtPeriodEndChange?.(checked === true)}
             />
-            <label htmlFor={checkboxId} className='text-secondary-foreground text-sm font-medium'>
-              Cancel at period end
-            </label>
+            <Label>Cancel at period end</Label>
           </div>
-          <div>
-            <label className='text-secondary-foreground mb-1 block text-sm font-medium'>
-              Canceled At (optional)
-            </label>
-            <input
+          <div className='flex flex-col gap-2'>
+            <Label>Canceled At (optional)</Label>
+            <Input
               type='datetime-local'
               value={canceledAt ? formatDateInput(canceledAt) : ''}
               onChange={e => onCanceledAtChange?.(e.target.value ? new Date(e.target.value) : null)}
-              className='border-border w-full rounded-lg border px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none'
             />
           </div>
-          <div>
-            <label className='text-secondary-foreground mb-1 block text-sm font-medium'>
-              Ended At (optional)
-            </label>
-            <input
+          <div className='flex flex-col gap-2'>
+            <Label>Ended At (optional)</Label>
+            <Input
               type='datetime-local'
               value={endedAt ? formatDateInput(endedAt) : ''}
               onChange={e => onEndedAtChange?.(e.target.value ? new Date(e.target.value) : null)}
-              className='border-border w-full rounded-lg border px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none'
             />
           </div>
-          <div>
-            <label className='text-secondary-foreground mb-1 block text-sm font-medium'>
-              Stripe Customer ID (optional)
-            </label>
-            <input
+          <div className='flex flex-col gap-2'>
+            <Label>Stripe Customer ID (optional)</Label>
+            <Input
               type='text'
               value={stripeCustomerId}
               onChange={e => onStripeCustomerIdChange?.(e.target.value)}
               placeholder='cus_...'
-              className='border-border w-full rounded-lg border px-3 py-2 font-mono text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none'
+              className='font-mono'
             />
           </div>
-          <div>
-            <label className='text-secondary-foreground mb-1 block text-sm font-medium'>
-              Stripe Subscription ID (optional)
-            </label>
-            <input
+          <div className='flex flex-col gap-2'>
+            <Label>Stripe Subscription ID (optional)</Label>
+            <Input
               type='text'
               value={stripeSubscriptionId}
               onChange={e => onStripeSubscriptionIdChange?.(e.target.value)}
               placeholder='sub_...'
-              className='border-border w-full rounded-lg border px-3 py-2 font-mono text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none'
+              className='font-mono'
             />
           </div>
         </div>
         <DialogFooter>
-          <button
-            onClick={() => onOpenChange?.(false)}
-            className='bg-secondary text-secondary-foreground hover:bg-secondary rounded-lg px-4 py-2 text-sm font-medium'
-          >
+          <Button variant='secondary' onClick={() => onOpenChange?.(false)}>
             Cancel
-          </button>
-          <button
-            onClick={() => onSubmit?.()}
-            disabled={loading}
-            className='rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none disabled:opacity-50'
-          >
+          </Button>
+          <Button onClick={() => onSubmit?.()} disabled={loading}>
             {loading ?
-              isEdit ?
-                'Updating...'
-              : 'Creating...'
+              <>
+                <Spinner size='sm' variant='white' data-icon='inline-start' />
+                {isEdit ? 'Updating...' : 'Creating...'}
+              </>
             : isEdit ?
               'Update'
             : 'Create'}
-          </button>
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
