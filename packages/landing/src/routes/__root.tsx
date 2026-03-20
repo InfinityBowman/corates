@@ -78,7 +78,9 @@ export const Route = createRootRoute({
       "script-src 'self' 'unsafe-inline'",
       "style-src 'self' 'unsafe-inline'",
       "img-src 'self' data: blob:",
-      "connect-src 'self' https://api.corates.org wss://api.corates.org",
+      import.meta.env.DEV ?
+        "connect-src 'self' http://localhost:* ws://localhost:*"
+      : "connect-src 'self' wss://corates.org",
       "font-src 'self'",
       "frame-ancestors 'none'",
       "form-action 'self'",
@@ -120,7 +122,6 @@ export const Route = createRootRoute({
       { name: 'twitter:image', content: IMAGE_URL },
     ],
     links: [
-      { rel: 'preconnect', href: 'https://api.corates.org' },
       { rel: 'icon', href: '/favicon.svg', type: 'image/svg+xml' },
       { rel: 'icon', href: '/favicon.ico', sizes: '48x48' },
       {

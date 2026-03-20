@@ -75,7 +75,7 @@ function SignInPage() {
 
   useLayoutEffect(() => {
     updateFormHeight();
-  }, [updateFormHeight]);
+  }, [updateFormHeight, displayError]);
 
   async function handleGoogleSignIn() {
     setGoogleLoading(true);
