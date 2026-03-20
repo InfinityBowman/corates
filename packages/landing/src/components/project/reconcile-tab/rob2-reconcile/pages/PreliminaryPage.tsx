@@ -413,12 +413,12 @@ export function PreliminaryPage({
 
       {/* Aim Mismatch Warning */}
       {fieldKey === 'aim' && isAimMismatch && (
-        <div className='mx-4 mt-4 rounded-lg border-2 border-destructive/30 bg-destructive/10 p-4'>
+        <div className='border-destructive/30 bg-destructive/10 mx-4 mt-4 rounded-lg border-2 p-4'>
           <div className='flex items-start gap-3'>
-            <AlertTriangleIcon className='size-5 shrink-0 text-destructive' />
+            <AlertTriangleIcon className='text-destructive size-5 shrink-0' />
             <div>
-              <h3 className='font-semibold text-destructive'>Cannot Proceed - Aim Mismatch</h3>
-              <p className='mt-1 text-sm text-destructive'>
+              <h3 className='text-destructive font-semibold'>Cannot Proceed - Aim Mismatch</h3>
+              <p className='text-destructive mt-1 text-sm'>
                 Reviewers selected different aims. This determines which Domain 2 questions are
                 assessed (2a for assignment effect, 2b for adhering effect). You must agree on the
                 aim before continuing to domain reconciliation.

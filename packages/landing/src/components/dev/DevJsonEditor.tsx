@@ -157,7 +157,7 @@ export function DevJsonEditor({ projectId, orgId, data }: DevJsonEditorProps) {
     return (
       <div className='flex h-full flex-col gap-3 p-3'>
         <button
-          className='flex items-center gap-1 self-start text-xs text-muted-foreground hover:text-foreground'
+          className='text-muted-foreground hover:text-foreground flex items-center gap-1 self-start text-xs'
           onClick={() => setStep('editor')}
         >
           <ArrowLeftIcon size={12} />
@@ -173,7 +173,7 @@ export function DevJsonEditor({ projectId, orgId, data }: DevJsonEditorProps) {
         />
 
         {isImporting && (
-          <div className='flex items-center gap-2 text-xs text-muted-foreground'>
+          <div className='text-muted-foreground flex items-center gap-2 text-xs'>
             <span className='size-3 animate-spin rounded-full border-2 border-purple-500 border-t-transparent' />
             Importing...
           </div>
@@ -198,9 +198,9 @@ export function DevJsonEditor({ projectId, orgId, data }: DevJsonEditorProps) {
   return (
     <div className='flex h-full flex-col'>
       {/* Toolbar */}
-      <div className='flex items-center gap-2 border-b border-border bg-muted px-3 py-2'>
+      <div className='border-border bg-muted flex items-center gap-2 border-b px-3 py-2'>
         <button
-          className='flex items-center gap-1 rounded bg-muted px-2 py-1 text-xs text-foreground hover:bg-muted/80 disabled:opacity-50'
+          className='bg-muted text-foreground hover:bg-muted/80 flex items-center gap-1 rounded px-2 py-1 text-xs disabled:opacity-50'
           onClick={exportState}
           disabled={isExporting}
           title='Fetch current state from server'
@@ -224,7 +224,7 @@ export function DevJsonEditor({ projectId, orgId, data }: DevJsonEditorProps) {
         </button>
 
         <button
-          className='flex items-center gap-1 rounded bg-muted px-2 py-1 text-xs text-foreground hover:bg-muted/80'
+          className='bg-muted text-foreground hover:bg-muted/80 flex items-center gap-1 rounded px-2 py-1 text-xs'
           onClick={copyToClipboard}
           title='Copy to clipboard'
         >

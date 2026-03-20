@@ -73,7 +73,7 @@ export function OrgBillingSummary({ billing }: OrgBillingSummaryProps) {
           <p className='text-muted-foreground text-sm'>Access Mode</p>
           <p className='text-foreground mt-1 text-lg font-medium'>
             {accessMode === 'full' ?
-              <span className='inline-flex items-center rounded-full bg-success-bg px-2.5 py-0.5 text-xs font-medium text-success'>
+              <span className='bg-success-bg text-success inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium'>
                 Full Access
               </span>
             : <span className='inline-flex items-center rounded-full bg-yellow-100 px-2.5 py-0.5 text-xs font-medium text-yellow-800'>

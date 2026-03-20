@@ -299,26 +299,26 @@ export function SessionManagement() {
 
           {dedupedSessions.length > 1 && (
             <>
-            <Separator className='mt-4' />
-            <div className='mt-4 flex flex-wrap gap-3'>
-              <button
-                onClick={handleRevokeOther}
-                disabled={revokingAll}
-                className='bg-secondary text-secondary-foreground hover:bg-secondary/80 flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition disabled:opacity-50'
-              >
-                <LogOutIcon className='size-4' />
-                <span>{revokingAll ? 'Revoking...' : 'Sign out other sessions'}</span>
-              </button>
+              <Separator className='mt-4' />
+              <div className='mt-4 flex flex-wrap gap-3'>
+                <button
+                  onClick={handleRevokeOther}
+                  disabled={revokingAll}
+                  className='bg-secondary text-secondary-foreground hover:bg-secondary/80 flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition disabled:opacity-50'
+                >
+                  <LogOutIcon className='size-4' />
+                  <span>{revokingAll ? 'Revoking...' : 'Sign out other sessions'}</span>
+                </button>
 
-              <button
-                onClick={() => setShowRevokeAllDialog(true)}
-                disabled={revokingAll}
-                className='text-destructive hover:bg-destructive/10 flex items-center gap-2 rounded-md bg-destructive/10 px-4 py-2 text-sm font-medium transition disabled:opacity-50'
-              >
-                <Trash2Icon className='size-4' />
-                <span>Sign out everywhere</span>
-              </button>
-            </div>
+                <button
+                  onClick={() => setShowRevokeAllDialog(true)}
+                  disabled={revokingAll}
+                  className='text-destructive hover:bg-destructive/10 bg-destructive/10 flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition disabled:opacity-50'
+                >
+                  <Trash2Icon className='size-4' />
+                  <span>Sign out everywhere</span>
+                </button>
+              </div>
             </>
           )}
 

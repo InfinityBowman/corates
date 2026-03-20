@@ -119,8 +119,8 @@ function AdminProjectList() {
               params={{ projectId: project.id } as Record<string, string>}
               className='flex items-center gap-3'
             >
-              <div className='flex size-10 items-center justify-center rounded-lg bg-success/10'>
-                <FolderIcon className='size-5 text-success' />
+              <div className='bg-success/10 flex size-10 items-center justify-center rounded-lg'>
+                <FolderIcon className='text-success size-5' />
               </div>
               <div>
                 <p className='font-medium text-blue-600 hover:text-blue-700'>{project.name}</p>
@@ -240,13 +240,13 @@ function AdminProjectList() {
 
       {/* Error State */}
       {projectsQuery.isError && (
-        <div className='rounded-lg border border-destructive/20 bg-destructive/10 p-6 text-center'>
-          <AlertCircleIcon className='mx-auto mb-2 size-8 text-destructive' />
+        <div className='border-destructive/20 bg-destructive/10 rounded-lg border p-6 text-center'>
+          <AlertCircleIcon className='text-destructive mx-auto mb-2 size-8' />
           <p className='text-destructive'>Failed to load projects</p>
           <button
             type='button'
             onClick={() => projectsQuery.refetch()}
-            className='mt-2 text-sm text-destructive hover:text-destructive/80'
+            className='text-destructive hover:text-destructive/80 mt-2 text-sm'
           >
             Try again
           </button>

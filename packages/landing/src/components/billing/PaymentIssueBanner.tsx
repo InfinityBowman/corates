@@ -31,17 +31,17 @@ export function PaymentIssueBanner({ status, onUpdatePayment, loading }: Payment
     : 'Your subscription is unpaid. Please update your payment method to restore access.';
 
   return (
-    <div className='mb-6 overflow-hidden rounded-xl border-2 border-destructive/30 bg-destructive/10 shadow-sm'>
+    <div className='border-destructive/30 bg-destructive/10 mb-6 overflow-hidden rounded-xl border-2 shadow-sm'>
       <div className='flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between'>
         <div className='flex items-start gap-4'>
-          <div className='flex size-12 shrink-0 items-center justify-center rounded-full bg-destructive/10'>
-            <TriangleAlertIcon className='size-6 text-destructive' />
+          <div className='bg-destructive/10 flex size-12 shrink-0 items-center justify-center rounded-full'>
+            <TriangleAlertIcon className='text-destructive size-6' />
           </div>
           <div>
-            <h3 className='text-lg font-semibold text-destructive'>{title}</h3>
-            <p className='mt-1 text-sm text-destructive'>{message}</p>
+            <h3 className='text-destructive text-lg font-semibold'>{title}</h3>
+            <p className='text-destructive mt-1 text-sm'>{message}</p>
             {isPastDue && (
-              <p className='mt-2 text-xs text-destructive'>
+              <p className='text-destructive mt-2 text-xs'>
                 Your access will continue until the end of your billing period, but you may lose
                 access to premium features if payment is not updated.
               </p>

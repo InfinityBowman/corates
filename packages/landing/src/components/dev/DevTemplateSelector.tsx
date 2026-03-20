@@ -157,15 +157,15 @@ export function DevTemplateSelector({ projectId, orgId }: DevTemplateSelectorPro
     return (
       <div className='flex flex-col gap-3'>
         <button
-          className='flex items-center gap-1 self-start text-xs text-muted-foreground hover:text-foreground'
+          className='text-muted-foreground hover:text-foreground flex items-center gap-1 self-start text-xs'
           onClick={() => setStep('select')}
         >
           <ArrowLeftIcon size={12} />
           Back to template selection
         </button>
 
-        <div className='text-xs text-muted-foreground'>
-          Template: <span className='font-medium text-foreground'>{pendingTemplate}</span>
+        <div className='text-muted-foreground text-xs'>
+          Template: <span className='text-foreground font-medium'>{pendingTemplate}</span>
         </div>
 
         <DevUserMapping
@@ -179,7 +179,7 @@ export function DevTemplateSelector({ projectId, orgId }: DevTemplateSelectorPro
         />
 
         {isApplying && (
-          <div className='flex items-center gap-2 text-xs text-muted-foreground'>
+          <div className='text-muted-foreground flex items-center gap-2 text-xs'>
             <span className='size-3 animate-spin rounded-full border-2 border-purple-500 border-t-transparent' />
             Applying template...
           </div>
@@ -203,12 +203,14 @@ export function DevTemplateSelector({ projectId, orgId }: DevTemplateSelectorPro
 
   return (
     <div className='flex flex-col gap-3'>
-      <h4 className='text-xs font-semibold text-foreground'>Mock Data Templates</h4>
+      <h4 className='text-foreground text-xs font-semibold'>Mock Data Templates</h4>
 
-      {templatesLoading && <div className='text-xs text-muted-foreground'>Loading templates...</div>}
+      {templatesLoading && (
+        <div className='text-muted-foreground text-xs'>Loading templates...</div>
+      )}
 
       {templatesError && (
-        <div className='flex items-center gap-1.5 rounded bg-destructive/10 p-2 text-xs text-destructive'>
+        <div className='bg-destructive/10 text-destructive flex items-center gap-1.5 rounded p-2 text-xs'>
           <AlertCircleIcon size={14} />
           Failed to load templates
         </div>
@@ -217,11 +219,11 @@ export function DevTemplateSelector({ projectId, orgId }: DevTemplateSelectorPro
       {templates && (
         <div className='flex flex-col gap-3'>
           <div className='flex flex-col gap-1'>
-            <label className='text-2xs font-medium tracking-wide text-muted-foreground uppercase'>
+            <label className='text-2xs text-muted-foreground font-medium tracking-wide uppercase'>
               Template
             </label>
             <select
-              className='rounded border border-border bg-card px-2 py-1.5 text-xs text-foreground focus:border-purple-500 focus:outline-none'
+              className='border-border bg-card text-foreground rounded border px-2 py-1.5 text-xs focus:border-purple-500 focus:outline-none'
               value={selectedTemplate}
               onChange={e => setSelectedTemplate(e.target.value)}
               disabled={isApplying}
@@ -236,11 +238,11 @@ export function DevTemplateSelector({ projectId, orgId }: DevTemplateSelectorPro
           </div>
 
           <div className='flex flex-col gap-1'>
-            <label className='text-2xs font-medium tracking-wide text-muted-foreground uppercase'>
+            <label className='text-2xs text-muted-foreground font-medium tracking-wide uppercase'>
               Mode
             </label>
             <div className='flex flex-col gap-1.5'>
-              <label className='flex cursor-pointer items-center gap-2 text-xs text-muted-foreground'>
+              <label className='text-muted-foreground flex cursor-pointer items-center gap-2 text-xs'>
                 <input
                   type='radio'
                   name='mode'
@@ -252,7 +254,7 @@ export function DevTemplateSelector({ projectId, orgId }: DevTemplateSelectorPro
                 />
                 Replace (clear existing)
               </label>
-              <label className='flex cursor-pointer items-center gap-2 text-xs text-muted-foreground'>
+              <label className='text-muted-foreground flex cursor-pointer items-center gap-2 text-xs'>
                 <input
                   type='radio'
                   name='mode'

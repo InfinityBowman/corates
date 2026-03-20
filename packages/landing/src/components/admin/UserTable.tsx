@@ -90,7 +90,7 @@ export function UserTable({ users, loading }: UserTableProps) {
               <span className='text-muted-foreground text-sm'>{user.email}</span>
               {user.emailVerified && (
                 <span title='Email verified'>
-                  <CheckCircleIcon className='size-4 text-success' />
+                  <CheckCircleIcon className='text-success size-4' />
                 </span>
               )}
             </div>

@@ -56,8 +56,8 @@ export function DevQuickActions({ projectId, orgId }: DevQuickActionsProps) {
   };
 
   return (
-    <div className='flex flex-col gap-3 border-t border-border pt-3'>
-      <h4 className='text-xs font-semibold text-foreground'>Quick Actions</h4>
+    <div className='border-border flex flex-col gap-3 border-t pt-3'>
+      <h4 className='text-foreground text-xs font-semibold'>Quick Actions</h4>
 
       <div className='flex gap-2'>
         <button
@@ -73,7 +73,7 @@ export function DevQuickActions({ projectId, orgId }: DevQuickActionsProps) {
         </button>
 
         <button
-          className='flex items-center gap-1.5 rounded border border-border px-3 py-1.5 text-xs text-muted-foreground transition-colors hover:border-border hover:bg-muted'
+          className='border-border text-muted-foreground hover:border-border hover:bg-muted flex items-center gap-1.5 rounded border px-3 py-1.5 text-xs transition-colors'
           onClick={forceRefresh}
           title='Reload the page'
         >

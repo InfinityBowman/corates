@@ -214,12 +214,12 @@ export function OverviewTab() {
               <p className='text-foreground text-2xl font-bold'>{studies.length}</p>
               <p className='text-muted-foreground mt-1 text-xs font-medium'>Total Studies</p>
             </div>
-            <div className='rounded-lg border border-success-border bg-success-bg p-4 text-center'>
+            <div className='border-success-border bg-success-bg rounded-lg border p-4 text-center'>
               <div className='mb-2 flex justify-center'>
-                <ArrowRightLeftIcon className='size-5 text-success' />
+                <ArrowRightLeftIcon className='text-success size-5' />
               </div>
-              <p className='text-2xl font-bold text-success'>{readyToReconcile}</p>
-              <p className='mt-1 text-xs font-medium text-success'>Ready to Reconcile</p>
+              <p className='text-success text-2xl font-bold'>{readyToReconcile}</p>
+              <p className='text-success mt-1 text-xs font-medium'>Ready to Reconcile</p>
             </div>
             <div className='rounded-lg border border-blue-200 bg-blue-50 p-4 text-center'>
               <div className='mb-2 flex justify-center'>
@@ -241,7 +241,7 @@ export function OverviewTab() {
                 <p className='text-muted-foreground mt-1 text-xs'>Studies Included</p>
               </div>
               <div className='text-center'>
-                <p className='text-2xl font-bold text-success'>
+                <p className='text-success text-2xl font-bold'>
                   {interRaterMetrics.percentAgreement != null ?
                     `${interRaterMetrics.percentAgreement.toFixed(1)}%`
                   : 'N/A'}

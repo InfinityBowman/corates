@@ -58,10 +58,10 @@ export function GrantList({ grants: grantsProp, loading, isLoading, onRevoke }: 
                       <div className='flex items-center gap-2'>
                         <p className='text-foreground font-medium capitalize'>{grant.type}</p>
                         {grant.revokedAt ?
-                          <span className='inline-flex items-center rounded-full bg-destructive/10 px-2.5 py-0.5 text-xs font-medium text-destructive'>
+                          <span className='bg-destructive/10 text-destructive inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium'>
                             Revoked
                           </span>
-                        : <span className='inline-flex items-center rounded-full bg-success-bg px-2.5 py-0.5 text-xs font-medium text-success'>
+                        : <span className='bg-success-bg text-success inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium'>
                             Active
                           </span>
                         }
@@ -82,7 +82,7 @@ export function GrantList({ grants: grantsProp, loading, isLoading, onRevoke }: 
                         <button
                           onClick={() => onRevoke?.(grant.id)}
                           disabled={loading}
-                          className='bg-card rounded-lg border border-destructive/30 px-3 py-2 text-sm font-medium text-destructive hover:bg-destructive/10 disabled:opacity-50'
+                          className='bg-card border-destructive/30 text-destructive hover:bg-destructive/10 rounded-lg border px-3 py-2 text-sm font-medium disabled:opacity-50'
                           aria-label='Revoke grant'
                         >
                           <Trash2Icon className='size-4' />

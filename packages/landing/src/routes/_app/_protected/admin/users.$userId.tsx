@@ -327,13 +327,13 @@ function UserDetailPage() {
 
       {/* Error state */}
       {userDetailsQuery.isError && (
-        <div className='rounded-lg border border-destructive/20 bg-destructive/10 p-6 text-center'>
-          <AlertCircleIcon className='mx-auto mb-2 size-8 text-destructive' />
+        <div className='border-destructive/20 bg-destructive/10 rounded-lg border p-6 text-center'>
+          <AlertCircleIcon className='text-destructive mx-auto mb-2 size-8' />
           <p className='text-destructive'>Failed to load user details</p>
           <button
             type='button'
             onClick={() => userDetailsQuery.refetch()}
-            className='mt-2 text-sm text-destructive hover:text-destructive/80'
+            className='text-destructive hover:text-destructive/80 mt-2 text-sm'
           >
             Try again
           </button>
@@ -399,7 +399,7 @@ function UserDetailPage() {
                   type='button'
                   onClick={handleUnban}
                   disabled={loading}
-                  className='bg-card inline-flex items-center rounded-lg border border-success/30 px-3 py-2 text-sm font-medium text-success hover:bg-success/10 disabled:opacity-50'
+                  className='bg-card border-success/30 text-success hover:bg-success/10 inline-flex items-center rounded-lg border px-3 py-2 text-sm font-medium disabled:opacity-50'
                 >
                   <UserCheckIcon className='mr-2 size-4' />
                   Unban
@@ -440,7 +440,7 @@ function UserDetailPage() {
                     className='text-muted-foreground/70 hover:text-muted-foreground ml-2'
                   >
                     {copiedId === `User ID-${userData.user.id}` ?
-                      <CheckCircleIcon className='size-4 text-success' />
+                      <CheckCircleIcon className='text-success size-4' />
                     : <CopyIcon className='size-4' />}
                   </button>
                 </dd>
@@ -485,7 +485,9 @@ function UserDetailPage() {
                 <>
                   <div>
                     <dt className='text-muted-foreground text-sm font-medium'>Ban Reason</dt>
-                    <dd className='mt-1 text-sm text-destructive'>{userData.user.banReason || '-'}</dd>
+                    <dd className='text-destructive mt-1 text-sm'>
+                      {userData.user.banReason || '-'}
+                    </dd>
                   </div>
                   <div>
                     <dt className='text-muted-foreground text-sm font-medium'>Ban Expires</dt>
@@ -546,20 +548,20 @@ function UserDetailPage() {
             {(userData.orgs?.length ?? 0) > 0 ?
               <Table>
                 <TableHeader>
-                  <TableRow className='border-b border-border bg-muted'>
-                    <TableHead className='px-6 py-3 text-xs font-medium tracking-wider text-muted-foreground uppercase'>
+                  <TableRow className='border-border bg-muted border-b'>
+                    <TableHead className='text-muted-foreground px-6 py-3 text-xs font-medium tracking-wider uppercase'>
                       Organization
                     </TableHead>
-                    <TableHead className='px-6 py-3 text-xs font-medium tracking-wider text-muted-foreground uppercase'>
+                    <TableHead className='text-muted-foreground px-6 py-3 text-xs font-medium tracking-wider uppercase'>
                       Role
                     </TableHead>
-                    <TableHead className='px-6 py-3 text-xs font-medium tracking-wider text-muted-foreground uppercase'>
+                    <TableHead className='text-muted-foreground px-6 py-3 text-xs font-medium tracking-wider uppercase'>
                       Plan
                     </TableHead>
-                    <TableHead className='px-6 py-3 text-xs font-medium tracking-wider text-muted-foreground uppercase'>
+                    <TableHead className='text-muted-foreground px-6 py-3 text-xs font-medium tracking-wider uppercase'>
                       Access
                     </TableHead>
-                    <TableHead className='px-6 py-3 text-xs font-medium tracking-wider text-muted-foreground uppercase'>
+                    <TableHead className='text-muted-foreground px-6 py-3 text-xs font-medium tracking-wider uppercase'>
                       Joined
                     </TableHead>
                   </TableRow>
@@ -567,7 +569,7 @@ function UserDetailPage() {
                 <TableBody>
                   {userData.orgs!.map(org => (
                     <TableRow key={org.orgId}>
-                      <TableCell className='px-4 py-3 text-sm text-foreground'>
+                      <TableCell className='text-foreground px-4 py-3 text-sm'>
                         <Link
                           to={'/admin/orgs/$orgId' as string}
                           params={{ orgId: org.orgId } as Record<string, string>}
@@ -577,7 +579,7 @@ function UserDetailPage() {
                         </Link>
                         <p className='text-muted-foreground text-xs'>@{org.orgSlug}</p>
                       </TableCell>
-                      <TableCell className='px-4 py-3 text-sm text-foreground'>
+                      <TableCell className='text-foreground px-4 py-3 text-sm'>
                         <Badge
                           variant={
                             org.role === 'owner' ? 'default'
@@ -589,10 +591,10 @@ function UserDetailPage() {
                           {org.role}
                         </Badge>
                       </TableCell>
-                      <TableCell className='px-4 py-3 text-sm text-foreground'>
+                      <TableCell className='text-foreground px-4 py-3 text-sm'>
                         {org.billing.planName}
                       </TableCell>
-                      <TableCell className='px-4 py-3 text-sm text-foreground'>
+                      <TableCell className='text-foreground px-4 py-3 text-sm'>
                         <Badge
                           variant={
                             org.billing.accessMode === 'full' ? 'success'
@@ -623,14 +625,14 @@ function UserDetailPage() {
             {(userData.projects?.length ?? 0) > 0 ?
               <Table>
                 <TableHeader>
-                  <TableRow className='border-b border-border bg-muted'>
-                    <TableHead className='px-6 py-3 text-xs font-medium tracking-wider text-muted-foreground uppercase'>
+                  <TableRow className='border-border bg-muted border-b'>
+                    <TableHead className='text-muted-foreground px-6 py-3 text-xs font-medium tracking-wider uppercase'>
                       Project
                     </TableHead>
-                    <TableHead className='px-6 py-3 text-xs font-medium tracking-wider text-muted-foreground uppercase'>
+                    <TableHead className='text-muted-foreground px-6 py-3 text-xs font-medium tracking-wider uppercase'>
                       Role
                     </TableHead>
-                    <TableHead className='px-6 py-3 text-xs font-medium tracking-wider text-muted-foreground uppercase'>
+                    <TableHead className='text-muted-foreground px-6 py-3 text-xs font-medium tracking-wider uppercase'>
                       Joined
                     </TableHead>
                   </TableRow>
@@ -638,10 +640,10 @@ function UserDetailPage() {
                 <TableBody>
                   {userData.projects!.map(project => (
                     <TableRow key={project.id}>
-                      <TableCell className='px-4 py-3 text-sm font-medium text-foreground'>
+                      <TableCell className='text-foreground px-4 py-3 text-sm font-medium'>
                         {project.name}
                       </TableCell>
-                      <TableCell className='px-4 py-3 text-sm text-foreground'>
+                      <TableCell className='text-foreground px-4 py-3 text-sm'>
                         <Badge variant={project.role === 'owner' ? 'default' : 'secondary'}>
                           {project.role}
                         </Badge>
@@ -668,7 +670,7 @@ function UserDetailPage() {
                   type='button'
                   onClick={() => setConfirmDialog({ type: 'revoke-all' })}
                   disabled={loading}
-                  className='inline-flex items-center text-sm text-destructive hover:text-destructive/80 disabled:opacity-50'
+                  className='text-destructive hover:text-destructive/80 inline-flex items-center text-sm disabled:opacity-50'
                 >
                   <LogOutIcon className='mr-1 size-4' />
                   Revoke All
@@ -708,7 +710,7 @@ function UserDetailPage() {
                         type='button'
                         onClick={() => handleRevokeSession(session.id)}
                         disabled={loading}
-                        className='bg-card inline-flex items-center rounded-lg border border-destructive/20 px-3 py-1.5 text-xs font-medium text-destructive hover:bg-destructive/10 disabled:opacity-50'
+                        className='bg-card border-destructive/20 text-destructive hover:bg-destructive/10 inline-flex items-center rounded-lg border px-3 py-1.5 text-xs font-medium disabled:opacity-50'
                       >
                         <LogOutIcon className='mr-1 size-3' />
                         Revoke

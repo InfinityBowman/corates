@@ -63,7 +63,7 @@ export function DevUserMapping({
 
   return (
     <div className='flex flex-col gap-3'>
-      <div className='text-xs font-medium text-foreground'>
+      <div className='text-foreground text-xs font-medium'>
         {userIds.length} user ID{userIds.length !== 1 ? 's' : ''} found in data
       </div>
 
@@ -89,7 +89,7 @@ export function DevUserMapping({
           {confirmLabel}
         </button>
         <button
-          className='flex-1 rounded border border-border px-3 py-2 text-xs font-medium text-foreground hover:bg-muted'
+          className='border-border text-foreground hover:bg-muted flex-1 rounded border px-3 py-2 text-xs font-medium'
           onClick={onSkip}
         >
           {skipLabel}
@@ -186,31 +186,31 @@ function MappingRow({ originalId, mappedTo, currentUser, projectId, onSelect }: 
 
   return (
     <div
-      className='flex items-center gap-2 rounded border border-border bg-muted p-2'
+      className='border-border bg-muted flex items-center gap-2 rounded border p-2'
       ref={containerRef}
     >
       {/* Original ID */}
       <div className='min-w-0 flex-shrink-0'>
-        <code className='rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground'>
+        <code className='bg-muted text-muted-foreground rounded px-1.5 py-0.5 text-[10px]'>
           {originalId}
         </code>
       </div>
 
-      <span className='text-xs text-muted-foreground'>-&gt;</span>
+      <span className='text-muted-foreground text-xs'>-&gt;</span>
 
       {/* Mapped user or search input */}
       <div className='relative min-w-0 flex-1'>
         {mappedTo ?
           <div className='flex items-center gap-1.5'>
             <UserIcon size={12} className='shrink-0 text-purple-500' />
-            <span className='truncate text-xs font-medium text-foreground'>
+            <span className='text-foreground truncate text-xs font-medium'>
               {mappedTo.name || mappedTo.email}
             </span>
             {currentUser && mappedTo.id === currentUser.id && (
               <span className='text-2xs rounded bg-purple-100 px-1 text-purple-600'>(me)</span>
             )}
             <button
-              className='ml-auto shrink-0 rounded p-0.5 text-muted-foreground hover:bg-muted hover:text-muted-foreground'
+              className='text-muted-foreground hover:bg-muted hover:text-muted-foreground ml-auto shrink-0 rounded p-0.5'
               onClick={handleClear}
             >
               <XIcon size={10} />
@@ -220,11 +220,11 @@ function MappingRow({ originalId, mappedTo, currentUser, projectId, onSelect }: 
             <div className='relative'>
               <SearchIcon
                 size={10}
-                className='absolute top-1/2 left-1.5 -translate-y-1/2 text-muted-foreground'
+                className='text-muted-foreground absolute top-1/2 left-1.5 -translate-y-1/2'
               />
               <input
                 type='text'
-                className='w-full rounded border border-border py-1 pr-2 pl-5 text-xs focus:border-purple-500 focus:outline-none'
+                className='border-border w-full rounded border py-1 pr-2 pl-5 text-xs focus:border-purple-500 focus:outline-none'
                 placeholder='Search user...'
                 value={query}
                 onChange={e => {
@@ -234,13 +234,13 @@ function MappingRow({ originalId, mappedTo, currentUser, projectId, onSelect }: 
                 onFocus={() => setIsOpen(true)}
               />
               {searching && (
-                <span className='absolute top-1/2 right-1.5 size-3 -translate-y-1/2 animate-spin rounded-full border border-muted-foreground border-t-transparent' />
+                <span className='border-muted-foreground absolute top-1/2 right-1.5 size-3 -translate-y-1/2 animate-spin rounded-full border border-t-transparent' />
               )}
             </div>
 
             {/* Dropdown */}
             {isOpen && options.length > 0 && (
-              <div className='absolute top-full right-0 left-0 z-50 mt-1 max-h-32 overflow-y-auto rounded border border-border bg-card shadow-lg'>
+              <div className='border-border bg-card absolute top-full right-0 left-0 z-50 mt-1 max-h-32 overflow-y-auto rounded border shadow-lg'>
                 {options.map(user => (
                   <button
                     key={user.id}
@@ -248,11 +248,11 @@ function MappingRow({ originalId, mappedTo, currentUser, projectId, onSelect }: 
                     className='flex w-full items-center gap-2 px-2 py-1.5 text-left text-xs hover:bg-purple-50'
                     onClick={() => handleSelectUser(user)}
                   >
-                    <UserIcon size={10} className='shrink-0 text-muted-foreground' />
-                    <span className='truncate font-medium text-foreground'>
+                    <UserIcon size={10} className='text-muted-foreground shrink-0' />
+                    <span className='text-foreground truncate font-medium'>
                       {user.name || 'Unknown'}
                     </span>
-                    <span className='truncate text-muted-foreground'>{user.email}</span>
+                    <span className='text-muted-foreground truncate'>{user.email}</span>
                     {currentUser && user.id === currentUser.id && (
                       <span className='text-2xs rounded bg-purple-100 px-1 text-purple-600'>
                         (me)
@@ -264,7 +264,7 @@ function MappingRow({ originalId, mappedTo, currentUser, projectId, onSelect }: 
             )}
 
             {isOpen && debouncedQuery.length >= 2 && !searching && options.length === 0 && (
-              <div className='absolute top-full right-0 left-0 z-50 mt-1 rounded border border-border bg-card p-2 text-xs text-muted-foreground shadow-lg'>
+              <div className='border-border bg-card text-muted-foreground absolute top-full right-0 left-0 z-50 mt-1 rounded border p-2 text-xs shadow-lg'>
                 No users found
               </div>
             )}

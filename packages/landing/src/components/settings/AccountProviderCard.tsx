@@ -104,7 +104,7 @@ export function AccountProviderCard({
           <button
             onClick={onUnlink}
             disabled={unlinking}
-            className='text-destructive hover:bg-destructive/10 inline-flex items-center gap-1 rounded-lg bg-destructive/10 px-3 py-1.5 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50'
+            className='text-destructive hover:bg-destructive/10 bg-destructive/10 inline-flex items-center gap-1 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50'
             aria-label={`Unlink ${provider?.name} account`}
           >
             <Trash2Icon className='size-4' />

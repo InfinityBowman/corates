@@ -57,14 +57,14 @@ export function ReferenceImportSection({ studies }: ReferenceImportSectionProps)
               </span>
             )}
             {studies.matchedRefPdfCount > 0 && (
-              <span className='inline-flex items-center gap-1 rounded-full bg-success-bg px-2 py-1 text-success'>
+              <span className='bg-success-bg text-success inline-flex items-center gap-1 rounded-full px-2 py-1'>
                 <Link2Icon className='size-3' />
                 {studies.matchedRefPdfCount} PDF
                 {studies.matchedRefPdfCount > 1 ? 's' : ''} matched
               </span>
             )}
             {studies.foundPdfCount > 0 && (
-              <span className='inline-flex items-center gap-1 rounded-full bg-success-bg px-2 py-1 text-success'>
+              <span className='bg-success-bg text-success inline-flex items-center gap-1 rounded-full px-2 py-1'>
                 <FileTextIcon className='size-3' />
                 {studies.foundPdfCount} open access
               </span>
@@ -114,7 +114,7 @@ export function ReferenceImportSection({ studies }: ReferenceImportSectionProps)
                     {ref.title}
                   </p>
                   {ref.pdfData && (
-                    <span className='inline-flex shrink-0 items-center gap-1 rounded bg-success-bg px-1.5 py-0.5 text-xs text-success'>
+                    <span className='bg-success-bg text-success inline-flex shrink-0 items-center gap-1 rounded px-1.5 py-0.5 text-xs'>
                       <FileTextIcon className='size-3' />
                       PDF
                     </span>
@@ -148,7 +148,7 @@ export function ReferenceImportSection({ studies }: ReferenceImportSectionProps)
                   {ref.pdfFileName && (
                     <>
                       <span className='mx-1'>-</span>
-                      <span className='inline-block max-w-32 truncate align-bottom text-success'>
+                      <span className='text-success inline-block max-w-32 truncate align-bottom'>
                         {ref.pdfFileName}
                       </span>
                     </>
