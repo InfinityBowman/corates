@@ -55,8 +55,7 @@ export async function initEmbedPdfEngine() {
         'EmbedPDF module loading',
       );
 
-      // Load PDFium WASM from CDN
-      const wasmUrl = 'https://cdn.jsdelivr.net/npm/@embedpdf/pdfium/dist/pdfium.wasm';
+      const wasmUrl = '/pdfium.wasm';
       const response = await withTimeout(fetch(wasmUrl), ENGINE_INIT_TIMEOUT, 'PDFium WASM fetch');
 
       if (!response.ok) {

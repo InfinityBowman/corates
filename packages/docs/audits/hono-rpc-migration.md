@@ -60,7 +60,7 @@ The `/api/admin/stop-impersonation` endpoint is currently inline on `base` -- it
 
 ---
 
-## Architecture Decision: Custom Fetch + `rpc()` Helper
+## Architecture Decision: `parseResponse` + TanStack Query Error Handling
 
 ### Problem
 
@@ -68,12 +68,16 @@ The `hc` client returns raw `Response` objects. The current `apiFetch` provides 
 
 ### Decision
 
-Error handling is split into two layers:
+Use Hono's built-in `parseResponse` from `hono/client` instead of writing custom helpers. It:
 
-1. **Transport layer** (custom `fetch` in `hc`): Throws structured errors on non-ok responses. This runs automatically on every RPC call.
-2. **UI layer** (TanStack Query global config): Shows toasts, handles auth redirects. This is where per-call customization happens.
+1. Auto-detects content type (JSON vs text) and parses accordingly
+2. Throws `DetailedError` on non-ok responses (includes `statusCode` and `detail.data` with the parsed response body)
+3. Returns typed data directly -- no need to call `.json()`
+4. Handles null-body responses (204, 304, etc.)
 
-A thin `rpc()` helper extracts typed JSON from successful responses. It contains no error handling logic.
+Error handling lives in TanStack Query's global config, not in the transport layer.
+
+**No custom `fetch`, no `rpc()` helper, no `unwrap()`.** Just `parseResponse` (from Hono) + TanStack Query error handlers.
 
 ### Implementation
 
@@ -82,54 +86,67 @@ A thin `rpc()` helper extracts typed JSON from successful responses. It contains
 import { hc } from 'hono/client';
 import type { AppType } from '@workers/index';
 import { API_BASE } from '@/config/api';
-import { parseApiError } from '@/lib/error-utils';
 
-export const api = hc<AppType>(API_BASE, {
+// Pre-computed client type for IDE performance (official Hono recommendation).
+// Moves type instantiation to compile time so tsserver doesn't re-compute
+// all route types on every use.
+type Client = ReturnType<typeof hc<AppType>>;
+export const hcWithType = (...args: Parameters<typeof hc>): Client =>
+  hc<typeof app>(...args);
+
+export const api = hcWithType(API_BASE, {
   init: { credentials: 'include' },
-  fetch: async (input, init) => {
-    const res = await fetch(input, init);
-    if (!res.ok) {
-      const error = await parseApiError(res);
-      throw error;
-    }
-    return res;
-  },
 });
-
-/**
- * Extract typed JSON from an RPC response.
- * Error handling is NOT here -- it's in the custom fetch (throws on non-ok)
- * and TanStack Query's global error handlers (toasts, redirects).
- */
-export async function rpc<T>(
-  promise: Promise<Response & { json(): Promise<T> }>,
-): Promise<T> {
-  const res = await promise;
-  return res.json();
-}
 ```
+
+```typescript
+// Usage -- parseResponse is imported from hono/client at each call site
+import { parseResponse } from 'hono/client';
+
+const data = await parseResponse(api.api.billing.subscription.$get());
+// data is typed as the Zod schema shape from the backend
+// Throws DetailedError automatically on non-ok responses
+```
+
+### How `DetailedError` maps to our domain errors
+
+When the backend returns a non-ok response with a JSON body (our `DomainError` shape: `{ code, message, statusCode, details }`), `parseResponse` throws a `DetailedError` with:
+
+- `error.statusCode` -- HTTP status code (e.g., 403)
+- `error.detail.data` -- the parsed JSON body (our `DomainError` object)
+- `error.detail.statusText` -- HTTP status text (e.g., "Forbidden")
+- `error.message` -- `"403 Forbidden"`
 
 ### Error handling in TanStack Query
 
 ```typescript
 // lib/queryClient.ts
-import { isDomainError, getUserFriendlyMessage } from '@/lib/error-utils';
+import { DetailedError } from 'hono/client';
 import { toast } from 'sonner';
+
+// Helper to extract our DomainError from Hono's DetailedError
+function getDomainError(error: unknown) {
+  if (error instanceof DetailedError && error.detail?.data?.code) {
+    return error.detail.data;
+  }
+  return null;
+}
 
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       retry: (failureCount, error) => {
-        // Don't retry auth errors or client errors
-        if (isDomainError(error) && error.statusCode < 500) return false;
+        if (error instanceof DetailedError && error.statusCode < 500) return false;
         return failureCount < 2;
       },
     },
     mutations: {
       onError: (error) => {
-        // Global toast for mutation failures
-        if (isDomainError(error)) {
-          toast.error(getUserFriendlyMessage(error.code));
+        const domainError = getDomainError(error);
+        if (domainError) {
+          toast.error(getUserFriendlyMessage(domainError.code));
+        } else {
+          toast.error('An unexpected error occurred');
         }
       },
     },
@@ -139,8 +156,8 @@ const queryClient = new QueryClient({
 // Global auth redirect handler
 queryClient.getQueryCache().subscribe((event) => {
   if (event.type === 'updated' && event.query.state.error) {
-    const error = event.query.state.error;
-    if (isDomainError(error) && (error.code === 'AUTH_REQUIRED' || error.code === 'AUTH_EXPIRED')) {
+    const domainError = getDomainError(event.query.state.error);
+    if (domainError?.code === 'AUTH_REQUIRED' || domainError?.code === 'AUTH_EXPIRED') {
       window.location.href = '/signin';
     }
   }
@@ -156,47 +173,70 @@ const data = await apiFetch.get<Subscription>('/api/billing/subscription', {
 });
 
 // After (RPC -- fully typed, no manual interface, no error options needed)
-// Queries don't show toasts by default (only mutations do)
+// Queries don't show toasts by default (only mutations do via global onError)
+import { parseResponse } from 'hono/client';
+
 const { data } = useQuery({
   queryKey: ['subscription'],
-  queryFn: () => rpc(api.api.billing.subscription.$get()),
+  queryFn: () => parseResponse(api.api.billing.subscription.$get()),
 });
 
 // Mutations get global toast handling automatically
 const mutation = useMutation({
-  mutationFn: (data) => rpc(api.api.billing.checkout.$post({ json: data })),
+  mutationFn: (data) => parseResponse(api.api.billing.checkout.$post({ json: data })),
   // To suppress toast for a specific mutation:
   // onError: () => {},
 });
 ```
 
-### Why not `unwrap()`?
+### Why `parseResponse` over custom helpers?
 
-The earlier plan used an `unwrap()` helper with per-call `showToast`/`toastMessage` options. This was rejected because:
+| Approach | Lines of custom code | Error handling | Type safety |
+|----------|---------------------|----------------|-------------|
+| `unwrap()` (v1) | ~20 lines + per-call options | In transport layer (wrong place) | Yes |
+| Custom fetch + `rpc()` (v2) | ~15 lines | Split transport/UI | Yes |
+| `parseResponse` (v3, chosen) | 0 lines (built into Hono) | All in TanStack Query (right place) | Yes |
 
-- It duplicates TanStack Query's error handling (which already has `onError`, `retry`, `throwOnError`)
-- ~52 of ~70 call sites suppress toasts. The global default should be "no toast for queries, toast for mutations" -- not opt-out per call
-- Error handling belongs at the UI layer (query/mutation hooks), not the transport layer
-- `rpc()` is 4 lines with no options. `unwrap()` was a mini error-handling framework
+- Zero custom transport code to maintain
+- `DetailedError` is Hono's standard -- no need to define our own error type for RPC calls
+- `parseResponse` handles content-type detection, null bodies, and error throwing in one call
+- Stays aligned with upstream Hono patterns -- no custom abstractions that diverge over time
 
 ### Calls NOT using TanStack Query
 
-The Zustand admin store actions (`impersonateUser`, `stopImpersonation`) and a few component event handlers call the API directly without TanStack Query. For these, use try/catch:
+The Zustand admin store actions (`impersonateUser`, `stopImpersonation`) and a few component event handlers call the API directly without TanStack Query. For these, use try/catch with `parseResponse`:
 
 ```typescript
+import { parseResponse, DetailedError } from 'hono/client';
+
 // Zustand store action
 impersonateUser: async (userId) => {
   try {
-    await rpc(api.api.admin.users[':userId'].impersonate.$post({
+    await parseResponse(api.api.admin.users[':userId'].impersonate.$post({
       param: { userId },
       json: { userId },
     }));
     set({ isImpersonating: true });
     window.location.href = '/';
   } catch (error) {
-    toast.error('Failed to impersonate user');
+    if (error instanceof DetailedError) {
+      toast.error(getUserFriendlyMessage(error.detail?.data?.code));
+    } else {
+      toast.error('Failed to impersonate user');
+    }
   }
 },
+```
+
+### Type inference utilities
+
+Hono exports `InferRequestType` and `InferResponseType` for cases where you need to type function arguments or return values explicitly:
+
+```typescript
+import type { InferRequestType, InferResponseType } from 'hono/client';
+
+type CreateProjectReq = InferRequestType<typeof api.api.orgs[':orgId'].projects.$post>;
+type CreateProjectRes = InferResponseType<typeof api.api.orgs[':orgId'].projects.$post>;
 ```
 
 ---
@@ -307,18 +347,22 @@ Add `@workers/*` alias to `packages/landing/tsconfig.json`:
 2. Add `@cloudflare/workers-types` to landing devDependencies
 3. Include workers' `worker-configuration.d.ts` in landing tsconfig `files` array
 
-### 1e. Frontend: Create `lib/rpc.ts`
+### 1e. Frontend: Verify Hono version alignment
 
-Create the typed `hc` client with custom error-throwing fetch and the `rpc()` helper as described in the Architecture Decision section.
+Both packages must use identical Hono versions to avoid "Type instantiation is excessively deep" errors (official Hono docs warning). Currently both specify `"hono": "^4.12.5"` but pnpm has resolved both 4.12.5 and 4.11.4. Pin to the same exact version or ensure deduplication.
 
-### 1f. Frontend: Update `lib/queryClient.ts`
+### 1f. Frontend: Create `lib/rpc.ts`
 
-Add global error handlers:
-- Mutation `onError`: show toast via `getUserFriendlyMessage()`
-- Query retry: skip retries for client errors (4xx)
+Create the typed `hc` client using the `hcWithType` pattern as described in the Architecture Decision section. No custom fetch or helper functions needed -- `parseResponse` from `hono/client` handles everything.
+
+### 1g. Frontend: Update `lib/queryClient.ts`
+
+Add global error handlers for `DetailedError` from `hono/client`:
+- Mutation `onError`: extract domain error from `error.detail.data`, show toast via `getUserFriendlyMessage()`
+- Query retry: skip retries for client errors (4xx) using `error.statusCode`
 - Auth redirect: subscribe to query cache for `AUTH_REQUIRED`/`AUTH_EXPIRED`
 
-### 1g. Verify end-to-end
+### 1h. Verify end-to-end
 
 - Run `pnpm --filter workers typecheck` after backend changes
 - Run `pnpm --filter landing typecheck` after frontend setup
@@ -353,7 +397,7 @@ const { data } = useQuery({
 // After
 const { data } = useQuery({
   queryKey: ['subscription'],
-  queryFn: () => rpc(api.api.billing.subscription.$get()),
+  queryFn: () => parseResponse(api.api.billing.subscription.$get()),
 });
 ```
 
@@ -377,7 +421,7 @@ export async function createCheckoutSession(data: CheckoutData, options?: ApiFet
 
 // After
 export async function createCheckoutSession(data: CheckoutData) {
-  return rpc(api.api.billing.checkout.$post({ json: data }));
+  return parseResponse(api.api.billing.checkout.$post({ json: data }));
 }
 ```
 
@@ -400,7 +444,7 @@ export async function createCheckoutSession(data: CheckoutData) {
 await apiFetch.post(`/api/orgs/${orgId}/projects`, projectData, { showToast: false });
 
 // After
-await rpc(api.api.orgs[':orgId'].projects.$post({
+await parseResponse(api.api.orgs[':orgId'].projects.$post({
   param: { orgId },
   json: projectData,
 }));
@@ -430,7 +474,7 @@ export async function fetchUsers({ page = 1, limit = 20, search = '' } = {}) {
 
 // After
 export async function fetchUsers({ page = 1, limit = 20, search = '' } = {}) {
-  return rpc(api.api.admin.users.$get({
+  return parseResponse(api.api.admin.users.$get({
     query: { page: page.toString(), limit: limit.toString(), search },
   }));
 }
@@ -452,7 +496,7 @@ export function useAdminStats() {
 export function useAdminStats() {
   return useQuery({
     queryKey: queryKeys.admin.stats,
-    queryFn: () => rpc(api.api.admin.stats.$get()),
+    queryFn: () => parseResponse(api.api.admin.stats.$get()),
   });
 }
 ```
@@ -531,7 +575,10 @@ export type AppType = typeof app;
 
 - **`$()` helper**: Needed when mixing `.use()` middleware with `.openapi()` since `.use()` returns `Hono` not `OpenAPIHono`
 - **Chaining footgun**: If someone adds a route with imperative `routes.openapi()` instead of chaining, that route silently disappears from `AppType`. Mitigated by the `no-restricted-syntax` lint rule added in Phase 1a, which catches discarded return values on `.openapi()` and `.route()` calls in route files.
-- **IDE performance**: Large chained types can slow down TypeScript. Mitigate with `export type AppType = typeof app` (pre-computes the type) and TypeScript project references if needed
+- **IDE performance**: Large chained types can slow down TypeScript. Mitigated by the `hcWithType` pattern (official Hono recommendation) which pre-computes the client type at compile time. Consider TypeScript project references if still slow.
+- **Hono version mismatch**: Both packages MUST use identical Hono versions. Mismatched versions cause "Type instantiation is excessively deep and possibly infinite" errors. Currently both specify `^4.12.5` but pnpm has resolved 4.11.4 alongside 4.12.5 -- deduplicate before starting.
+- **`c.notFound()` loses type info**: Don't use `c.notFound()` in RPC endpoints. Return `c.json({ error: 'not found' }, 404)` instead.
+- **Path params must be strings**: `hc` requires all path and query params to be strings. Numbers must be `.toString()`'d.
 - **Error responses**: Handlers must use literal status codes, not dynamic `error.statusCode as ContentfulStatusCode`
 - **`hc` needs absolute URLs**: `API_BASE` must be a full URL (e.g., `http://localhost:8787`), not a relative path
 - **Credentials**: Pass `{ init: { credentials: 'include' } }` to `hc()` for cookie auth
