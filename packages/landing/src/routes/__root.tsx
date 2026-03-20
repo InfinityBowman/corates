@@ -81,6 +81,7 @@ export const Route = createRootRoute({
       import.meta.env.DEV ?
         "connect-src 'self' http://localhost:* ws://localhost:*"
       : "connect-src 'self' wss://corates.org",
+      "worker-src 'self' blob:",
       "font-src 'self'",
       "frame-ancestors 'none'",
       "form-action 'self'",
