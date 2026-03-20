@@ -2,7 +2,10 @@
  * PaymentIssueBanner - Prominent banner for payment issues
  */
 
-import { TriangleAlertIcon, CreditCardIcon, LoaderIcon } from 'lucide-react';
+import { TriangleAlertIcon, CreditCardIcon } from 'lucide-react';
+import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
+import { Spinner } from '@/components/ui/spinner';
 
 interface PaymentIssueBannerProps {
   status: string;
@@ -31,41 +34,32 @@ export function PaymentIssueBanner({ status, onUpdatePayment, loading }: Payment
     : 'Your subscription is unpaid. Please update your payment method to restore access.';
 
   return (
-    <div className='border-destructive/30 bg-destructive/10 mb-6 overflow-hidden rounded-xl border-2 shadow-sm'>
-      <div className='flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between'>
-        <div className='flex items-start gap-4'>
-          <div className='bg-destructive/10 flex size-12 shrink-0 items-center justify-center rounded-full'>
-            <TriangleAlertIcon className='text-destructive size-6' />
-          </div>
-          <div>
-            <h3 className='text-destructive text-lg font-semibold'>{title}</h3>
-            <p className='text-destructive mt-1 text-sm'>{message}</p>
-            {isPastDue && (
-              <p className='text-destructive mt-2 text-xs'>
-                Your access will continue until the end of your billing period, but you may lose
-                access to premium features if payment is not updated.
-              </p>
-            )}
-          </div>
+    <Alert variant='destructive' className='mb-6 border-2 shadow-sm'>
+      <TriangleAlertIcon />
+      <div className='flex flex-1 flex-col gap-4 sm:flex-row sm:items-center sm:justify-between'>
+        <div>
+          <AlertTitle className='text-lg'>{title}</AlertTitle>
+          <AlertDescription>{message}</AlertDescription>
+          {isPastDue && (
+            <AlertDescription className='mt-2 text-xs'>
+              Your access will continue until the end of your billing period, but you may lose access
+              to premium features if payment is not updated.
+            </AlertDescription>
+          )}
         </div>
-        <button
-          type='button'
-          className='inline-flex shrink-0 items-center justify-center gap-2 rounded-lg bg-red-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-red-700 focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50'
+        <Button
+          variant='destructive'
+          size='lg'
+          className='shrink-0'
           onClick={onUpdatePayment}
           disabled={loading}
         >
           {loading ?
-            <>
-              <LoaderIcon className='size-4 animate-spin' />
-              Loading...
-            </>
-          : <>
-              <CreditCardIcon className='size-4' />
-              Update Payment Method
-            </>
-          }
-        </button>
+            <Spinner size='sm' variant='white' data-icon='inline-start' />
+          : <CreditCardIcon data-icon='inline-start' />}
+          {loading ? 'Loading...' : 'Update Payment Method'}
+        </Button>
       </div>
-    </div>
+    </Alert>
   );
 }

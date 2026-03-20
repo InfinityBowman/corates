@@ -3,6 +3,8 @@
  * Displays current billing state for an organization including plan, entitlements, and quotas
  */
 
+import { Badge } from '@/components/ui/badge';
+
 interface BillingPlan {
   name?: string;
   entitlements?: Record<string, boolean | string | number>;
@@ -71,15 +73,10 @@ export function OrgBillingSummary({ billing }: OrgBillingSummaryProps) {
         </div>
         <div>
           <p className='text-muted-foreground text-sm'>Access Mode</p>
-          <p className='text-foreground mt-1 text-lg font-medium'>
+          <p className='mt-1'>
             {accessMode === 'full' ?
-              <span className='bg-success-bg text-success inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium'>
-                Full Access
-              </span>
-            : <span className='inline-flex items-center rounded-full bg-yellow-100 px-2.5 py-0.5 text-xs font-medium text-yellow-800'>
-                Read Only
-              </span>
-            }
+              <Badge variant='success'>Full Access</Badge>
+            : <Badge variant='warning'>Read Only</Badge>}
           </p>
         </div>
         <div>

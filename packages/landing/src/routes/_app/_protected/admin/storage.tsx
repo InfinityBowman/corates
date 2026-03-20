@@ -32,7 +32,7 @@ import {
   AlertDialogAction,
 } from '@/components/ui/alert-dialog';
 import { DashboardHeader, AdminSection, AdminBox } from '@/components/admin/ui';
-import { input } from '@/components/admin/styles/admin-tokens';
+import { Input } from '@/components/ui/input';
 import {
   Table,
   TableHeader,
@@ -241,21 +241,21 @@ function StorageManagementPage() {
       <div className='mb-6 flex flex-col gap-4 sm:flex-row'>
         <div className='relative flex-1'>
           <SearchIcon className='text-muted-foreground/70 absolute top-1/2 left-3 size-4 -translate-y-1/2' />
-          <input
+          <Input
             type='text'
             placeholder='Search by file name...'
             value={search}
             onChange={handleSearchInput}
-            className={`w-full ${input.base} ${input.withIconLeft}`}
+            className='w-full pl-10'
           />
         </div>
         <div className='sm:w-64'>
-          <input
+          <Input
             type='text'
             placeholder='Filter by prefix (e.g., projects/{id}/)'
             value={prefix}
             onChange={handlePrefixChange}
-            className={`w-full ${input.base}`}
+            className='w-full'
           />
         </div>
       </div>

@@ -25,6 +25,7 @@ import {
   TableCell,
 } from '@/components/ui/table';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Button } from '@/components/ui/button';
 
 interface AdminDataTableProps<T> {
   columns: ColumnDef<T, any>[];
@@ -169,22 +170,22 @@ export function AdminDataTable<T>({
             of {data?.length || 0} results
           </span>
           <div className='flex gap-2'>
-            <button
-              type='button'
-              className='border-border bg-card text-secondary-foreground hover:bg-muted rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50'
+            <Button
+              variant='outline'
+              size='sm'
               disabled={!table.getCanPreviousPage()}
               onClick={() => table.previousPage()}
             >
               Previous
-            </button>
-            <button
-              type='button'
-              className='border-border bg-card text-secondary-foreground hover:bg-muted rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50'
+            </Button>
+            <Button
+              variant='outline'
+              size='sm'
               disabled={!table.getCanNextPage()}
               onClick={() => table.nextPage()}
             >
               Next
-            </button>
+            </Button>
           </div>
         </div>
       )}

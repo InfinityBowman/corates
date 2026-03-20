@@ -13,6 +13,7 @@ import { SimpleEditable } from '@/components/ui/editable';
 import { API_BASE } from '@/config/api';
 import { compressImageFile } from '@/lib/imageUtils.js';
 import { syncProfileToProjects } from '@/lib/syncUtils';
+import { Spinner } from '@/components/ui/spinner';
 
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
 const AVATAR_MAX_SIZE = 256;
@@ -177,7 +178,7 @@ export function ProfileInfoSection() {
             title='Change profile photo'
           >
             {uploadingImage ?
-              <div className='size-5 animate-spin rounded-full border-2 border-white border-t-transparent' />
+              <Spinner size='sm' variant='white' />
             : <CameraIcon className='size-5 text-white' />}
           </button>
           <input

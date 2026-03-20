@@ -32,26 +32,33 @@ export function ProjectTreeItem({
 }: ProjectTreeItemProps) {
   const navigate = useNavigate();
   const projectPath = `/projects/${project.id}`;
+  const isInProject = currentPath.startsWith(projectPath);
   const isSelected = currentPath === projectPath;
-  const projectData = useProjectData(project.id);
+
+  // Only connect to Yjs when inside this project to avoid unnecessary WebSocket connections
+  const projectData = useProjectData(isInProject ? project.id : undefined);
+  const canExpand = isInProject;
 
   function handleRowClick(e: React.MouseEvent) {
     const target = e.target as HTMLElement;
     if (target.closest('button, [role="button"]')) return;
-    onToggle();
+    if (canExpand) onToggle();
+    else navigate({ to: projectPath as string });
   }
 
   return (
-    <Collapsible open={isExpanded}>
+    <Collapsible open={canExpand && isExpanded}>
       <div
         className={`group flex cursor-pointer items-center rounded-lg px-2 py-1.5 transition-colors ${
           isSelected ? 'bg-primary/10 text-primary' : 'text-secondary-foreground hover:bg-muted'
         }`}
         onClick={handleRowClick}
       >
-        <ChevronRightIcon
-          className={`text-muted-foreground mr-1 size-3 shrink-0 transition-transform ${isExpanded ? 'rotate-90' : ''}`}
-        />
+        {canExpand && (
+          <ChevronRightIcon
+            className={`text-muted-foreground mr-1 size-3 shrink-0 transition-transform ${isExpanded ? 'rotate-90' : ''}`}
+          />
+        )}
         <button
           onClick={e => {
             e.stopPropagation();
@@ -59,9 +66,9 @@ export function ProjectTreeItem({
           }}
           className='flex flex-1 items-center gap-2 text-left'
         >
-          {isExpanded ?
+          {canExpand && isExpanded ?
             <FolderOpenIcon className='text-primary size-4' />
-          : <FolderIcon className='text-muted-foreground size-4' />}
+          : <FolderIcon className={`size-4 ${isInProject ? 'text-primary' : 'text-muted-foreground'}`} />}
           <span className='truncate text-sm font-medium'>{project.name}</span>
         </button>
       </div>

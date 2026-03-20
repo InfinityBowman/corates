@@ -9,7 +9,7 @@ import { CheckCircleIcon, MailIcon } from 'lucide-react';
 import { UserAvatar } from '@/components/ui/avatar';
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { AdminDataTable } from '@/components/admin/ui';
-import { getStatusBadgeClass } from '@/components/admin/styles/admin-tokens';
+import { Badge } from '@/components/ui/badge';
 import type { ColumnDef } from '@tanstack/react-table';
 
 interface UserRow {
@@ -137,8 +137,8 @@ export function UserTable({ users, loading }: UserTableProps) {
         cell: info => {
           const user = info.row.original;
           return user.banned ?
-              <span className={getStatusBadgeClass('error')}>Banned</span>
-            : <span className={getStatusBadgeClass('success')}>Active</span>;
+              <Badge variant='destructive'>Banned</Badge>
+            : <Badge variant='success'>Active</Badge>;
         },
       },
       {

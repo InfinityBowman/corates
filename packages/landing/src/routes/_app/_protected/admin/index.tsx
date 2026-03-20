@@ -22,7 +22,7 @@ import { StatsCard } from '@/components/admin/StatsCard';
 import { UserTable } from '@/components/admin/UserTable';
 import { AnalyticsSection } from '@/components/admin/AnalyticsSection';
 import { AdminSection, AdminBox, DashboardHeader } from '@/components/admin/ui';
-import { input } from '@/components/admin/styles/admin-tokens';
+import { Input } from '@/components/ui/input';
 
 export const Route = createFileRoute('/_app/_protected/admin/')({
   component: AdminDashboard,
@@ -111,12 +111,12 @@ function AdminDashboard() {
         cta={
           <div className='relative'>
             <SearchIcon className='text-muted-foreground/70 absolute top-1/2 left-3 size-4 -translate-y-1/2' />
-            <input
+            <Input
               type='text'
               placeholder='Search by name or email...'
               value={search}
               onChange={handleSearchInput}
-              className={`w-64 ${input.base} ${input.withIconLeft}`}
+              className='w-64 pl-10'
             />
           </div>
         }

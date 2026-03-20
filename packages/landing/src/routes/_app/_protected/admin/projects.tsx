@@ -19,7 +19,7 @@ import {
 import { useAdminProjects, useAdminOrgs } from '@/hooks/useAdminQueries';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { DashboardHeader, AdminSection, AdminDataTable } from '@/components/admin/ui';
-import { input } from '@/components/admin/styles/admin-tokens';
+import { Input } from '@/components/ui/input';
 import type { ColumnDef } from '@tanstack/react-table';
 
 interface ProjectRow {
@@ -202,12 +202,12 @@ function AdminProjectList() {
         <form onSubmit={handleSearch} className='flex-1'>
           <div className='relative'>
             <SearchIcon className='text-muted-foreground/70 pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2' />
-            <input
+            <Input
               type='text'
               value={searchInput}
               onChange={e => setSearchInput(e.target.value)}
               placeholder='Search by project name...'
-              className={`w-full ${input.base} ${input.withIconLeft} pr-10`}
+              className='w-full pl-10 pr-10'
             />
             {searchInput && (
               <button
@@ -226,7 +226,7 @@ function AdminProjectList() {
           <select
             value={selectedOrgId}
             onChange={e => handleOrgFilter(e.target.value)}
-            className={input.base}
+            className='border-input bg-transparent h-8 rounded-lg border px-2.5 py-2 text-sm'
           >
             <option value=''>All Organizations</option>
             {orgs.map(org => (

@@ -29,7 +29,7 @@ import {
 import { apiFetch } from '@/lib/apiFetch';
 import { showToast } from '@/components/ui/toast';
 import { DashboardHeader, AdminBox } from '@/components/admin/ui';
-import { input } from '@/components/admin/styles/admin-tokens';
+import { Input } from '@/components/ui/input';
 
 interface StripeCustomer {
   id: string;
@@ -283,19 +283,19 @@ function StripeToolsPage() {
           <select
             value={searchType}
             onChange={e => setSearchType(e.target.value as 'email' | 'customerId')}
-            className={input.base}
+            className='border-input bg-transparent h-8 rounded-lg border px-2.5 py-2 text-sm'
           >
             <option value='email'>Search by Email</option>
             <option value='customerId'>Search by Customer ID</option>
           </select>
           <div className='relative flex-1'>
             <SearchIcon className='text-muted-foreground/70 pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2' />
-            <input
+            <Input
               type='text'
               value={searchInput}
               onChange={e => setSearchInput(e.target.value)}
               placeholder={searchType === 'email' ? 'customer@example.com' : 'cus_xxxxxxxxxxxxx'}
-              className={`w-full ${input.base} ${input.withIconLeft}`}
+              className='w-full pl-10'
             />
           </div>
           <button

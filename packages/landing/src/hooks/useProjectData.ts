@@ -16,12 +16,30 @@ import {
   selectMeta,
 } from '@/stores/projectStore';
 
-export function useProjectData(projectId: string) {
-  const studies = useProjectStore(state => selectStudies(state, projectId));
-  const members = useProjectStore(state => selectMembers(state, projectId));
-  const meta = useProjectStore(state => selectMeta(state, projectId));
-  const connectionState = useProjectStore(state => selectConnectionState(state, projectId));
-  const hasData = useProjectStore(state => !!state.projects[projectId]);
+const EMPTY_STUDIES: never[] = [];
+const EMPTY_MEMBERS: never[] = [];
+const EMPTY_META = {};
+const IDLE_STATE = {
+  studies: EMPTY_STUDIES,
+  members: EMPTY_MEMBERS,
+  meta: EMPTY_META,
+  connected: false,
+  connecting: false,
+  synced: false,
+  error: null as string | null,
+  hasData: false,
+};
+
+export function useProjectData(projectId: string | undefined) {
+  const studies = useProjectStore(state => (projectId ? selectStudies(state, projectId) : EMPTY_STUDIES));
+  const members = useProjectStore(state => (projectId ? selectMembers(state, projectId) : EMPTY_MEMBERS));
+  const meta = useProjectStore(state => (projectId ? selectMeta(state, projectId) : EMPTY_META));
+  const connectionState = useProjectStore(state =>
+    projectId ? selectConnectionState(state, projectId) : IDLE_STATE,
+  );
+  const hasData = useProjectStore(state => (projectId ? !!state.projects[projectId] : false));
+
+  if (!projectId) return IDLE_STATE;
 
   return {
     studies,

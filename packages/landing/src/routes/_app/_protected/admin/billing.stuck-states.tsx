@@ -15,7 +15,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { useAdminBillingStuckStates } from '@/hooks/useAdminQueries';
 import { DashboardHeader, AdminBox } from '@/components/admin/ui';
-import { input } from '@/components/admin/styles/admin-tokens';
+import { Input } from '@/components/ui/input';
 
 interface StuckOrg {
   type: string;
@@ -129,12 +129,12 @@ function AdminBillingStuckStatesPage() {
           <div className='flex items-center gap-2'>
             <div className='flex items-center gap-2'>
               <label className='text-muted-foreground text-sm'>Threshold (min):</label>
-              <input
+              <Input
                 type='number'
                 value={incompleteThreshold}
                 onChange={e => setIncompleteThreshold(parseInt(e.target.value, 10) || 30)}
                 min='1'
-                className={`w-20 ${input.base}`}
+                className='w-20'
               />
             </div>
             <button

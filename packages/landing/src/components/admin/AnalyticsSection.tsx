@@ -18,7 +18,6 @@ import { apiFetch } from '@/lib/apiFetch';
 import { queryKeys } from '@/lib/queryKeys';
 import { LineChart, BarChart, DoughnutChart } from '@/components/admin/charts';
 import { AdminBox } from '@/components/admin/ui';
-import { input } from '@/components/admin/styles/admin-tokens';
 
 const PERIOD_OPTIONS = [
   { value: 7, label: '7 days' },
@@ -187,7 +186,7 @@ export function AnalyticsSection() {
               <select
                 value={signupDays}
                 onChange={e => setSignupDays(parseInt(e.target.value, 10))}
-                className={input.base}
+                className='border-input bg-transparent h-8 rounded-lg border px-2.5 py-2 text-sm'
               >
                 {PERIOD_OPTIONS.map(opt => (
                   <option key={opt.value} value={opt.value}>
@@ -380,7 +379,7 @@ export function AnalyticsSection() {
             <select
               value={webhookDays}
               onChange={e => setWebhookDays(parseInt(e.target.value, 10))}
-              className={input.base}
+              className='border-input bg-transparent h-8 rounded-lg border px-2.5 py-2 text-sm'
             >
               <option value={7}>7 days</option>
               <option value={14}>14 days</option>

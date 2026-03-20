@@ -11,7 +11,7 @@ import { useAdminBillingLedger } from '@/hooks/useAdminQueries';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { showToast } from '@/components/ui/toast';
 import { DashboardHeader, AdminBox, AdminDataTable } from '@/components/admin/ui';
-import { input } from '@/components/admin/styles/admin-tokens';
+import { Input } from '@/components/ui/input';
 import type { ColumnDef } from '@tanstack/react-table';
 
 interface LedgerEntry {
@@ -413,7 +413,7 @@ function AdminBillingLedgerPage() {
             <select
               value={statusFilter}
               onChange={e => setStatusFilter(e.target.value)}
-              className={`mt-1 block w-full ${input.base}`}
+              className='border-input bg-transparent mt-1 block h-8 w-full rounded-lg border px-2.5 py-2 text-sm'
             >
               {STATUS_OPTIONS.map(option => (
                 <option key={option.value} value={option.value}>
@@ -426,12 +426,12 @@ function AdminBillingLedgerPage() {
             <label className='text-secondary-foreground block text-sm font-medium'>
               Event Type
             </label>
-            <input
+            <Input
               type='text'
               value={typeFilter}
               onChange={e => setTypeFilter(e.target.value)}
               placeholder='e.g., checkout.session.completed'
-              className={`mt-1 block w-full ${input.base}`}
+              className='mt-1 block w-full'
             />
           </div>
           <div>
@@ -439,7 +439,7 @@ function AdminBillingLedgerPage() {
             <select
               value={limit}
               onChange={e => setLimit(parseInt(e.target.value, 10))}
-              className={`mt-1 block w-full ${input.base}`}
+              className='border-input bg-transparent mt-1 block h-8 w-full rounded-lg border px-2.5 py-2 text-sm'
             >
               {LIMIT_OPTIONS.map(opt => (
                 <option key={opt} value={opt}>

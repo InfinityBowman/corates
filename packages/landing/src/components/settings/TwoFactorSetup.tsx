@@ -18,6 +18,7 @@ import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { QRCode, QRCodeFrame, QRCodePattern } from '@/components/ui/qr-code';
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
+import { Spinner } from '@/components/ui/spinner';
 
 export function TwoFactorSetup() {
   const user = useAuthStore(selectUser);
@@ -176,7 +177,7 @@ export function TwoFactorSetup() {
       {/* Loading state */}
       {loading && !setupMode && !disableMode && (
         <div className='flex items-center justify-center py-4'>
-          <div className='border-primary size-6 animate-spin rounded-full border-2 border-t-transparent' />
+          <Spinner size='md' />
         </div>
       )}
 
