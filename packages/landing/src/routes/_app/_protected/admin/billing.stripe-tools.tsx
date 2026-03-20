@@ -482,14 +482,14 @@ function StripeToolsPage() {
 
             {/* Portal Link Result */}
             {portalUrl && (
-              <div className='border-success/20 bg-success/10 mt-4 rounded-lg border p-4'>
+              <div className='border-success-border bg-success-bg mt-4 rounded-lg border p-4'>
                 <p className='text-success mb-2 text-sm font-medium'>Portal Link Generated</p>
                 <div className='flex items-center gap-2'>
                   <input
                     type='text'
                     value={portalUrl}
                     readOnly
-                    className='bg-card border-success/30 flex-1 rounded border px-3 py-1 text-sm'
+                    className='bg-card border-success-border flex-1 rounded border px-3 py-1 text-sm'
                   />
                   <button
                     type='button'

@@ -219,7 +219,7 @@ export function PricingTable({ currentTier: currentTierProp }: PricingTableProps
 
       {/* Billing toggle */}
       <div className='mb-10 flex flex-col items-center gap-4'>
-        <div className='bg-success/10 text-success flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium'>
+        <div className='bg-success-bg text-success flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium'>
           <StarIcon className='size-4' />
           Save 2 months with annual billing
         </div>
@@ -376,7 +376,7 @@ export function PricingTable({ currentTier: currentTierProp }: PricingTableProps
                 <ul className='flex flex-col gap-3'>
                   {plan.features.map((feature: string, i: number) => (
                     <li key={i} className='flex items-start gap-3'>
-                      <div className='bg-success/10 mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full'>
+                      <div className='bg-success-bg mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full'>
                         <CheckIcon className='text-success size-3' />
                       </div>
                       <span className='text-muted-foreground text-sm'>{feature}</span>

@@ -33,6 +33,8 @@ export default defineConfig({
             '/resources/amstar2',
             '/resources/rob2',
             '/resources/robins-i',
+            '/signin',
+            '/signup',
           ];
           return allowed.includes(normalized);
         },

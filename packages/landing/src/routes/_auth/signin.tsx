@@ -150,12 +150,12 @@ function SignInPage() {
         <TwoFactorVerify onCancel={handleTwoFactorCancel} />
       : <>
           <div className='mb-2 text-center sm:mb-4'>
-            <h2
+            <h1
               className='text-foreground mb-1 text-xl font-bold sm:mb-2 sm:text-2xl'
               id='signin-heading'
             >
               Welcome Back
-            </h2>
+            </h1>
             <p className='text-muted-foreground text-xs sm:text-sm'>Sign in to your account.</p>
           </div>
 

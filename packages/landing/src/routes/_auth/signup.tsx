@@ -88,9 +88,9 @@ function SignUpPage() {
       </a>
 
       <div className='mb-4 text-center sm:mb-6'>
-        <h2 className='text-foreground mb-1 text-xl font-bold sm:mb-2 sm:text-2xl'>
+        <h1 className='text-foreground mb-1 text-xl font-bold sm:mb-2 sm:text-2xl' id='signup-heading'>
           Create an Account
-        </h2>
+        </h1>
         <p className='text-muted-foreground text-xs sm:text-sm'>Get started with CoRATES</p>
       </div>
 

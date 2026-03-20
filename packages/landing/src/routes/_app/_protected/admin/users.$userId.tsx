@@ -399,7 +399,7 @@ function UserDetailPage() {
                   type='button'
                   onClick={handleUnban}
                   disabled={loading}
-                  className='bg-card border-success/30 text-success hover:bg-success/10 inline-flex items-center rounded-lg border px-3 py-2 text-sm font-medium disabled:opacity-50'
+                  className='bg-card border-success-border text-success hover:bg-success-bg inline-flex items-center rounded-lg border px-3 py-2 text-sm font-medium disabled:opacity-50'
                 >
                   <UserCheckIcon className='mr-2 size-4' />
                   Unban

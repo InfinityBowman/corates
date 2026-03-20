@@ -25,7 +25,7 @@ const ICON_MAP: Record<string, React.ReactNode> = {
 const BG_MAP: Record<string, string> = {
   study: 'bg-blue-100 text-primary',
   project: 'bg-amber-100 text-amber-600',
-  complete: 'bg-success/10 text-success',
+  complete: 'bg-success-bg text-success',
   user: 'bg-violet-100 text-violet-600',
 };
 

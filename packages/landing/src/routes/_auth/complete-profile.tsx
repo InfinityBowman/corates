@@ -511,7 +511,7 @@ function CompleteProfilePage() {
 
         <StepsCompletedContent>
           <div className='flex flex-col items-center justify-center py-8'>
-            <div className='bg-success/10 mb-4 flex size-16 items-center justify-center rounded-full'>
+            <div className='bg-success-bg mb-4 flex size-16 items-center justify-center rounded-full'>
               <CheckIcon className='text-success size-8' />
             </div>
             <h2 className='text-foreground mb-2 text-xl font-bold'>All Done!</h2>

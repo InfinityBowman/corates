@@ -119,7 +119,7 @@ function AdminProjectList() {
               params={{ projectId: project.id } as Record<string, string>}
               className='flex items-center gap-3'
             >
-              <div className='bg-success/10 flex size-10 items-center justify-center rounded-lg'>
+              <div className='bg-success-bg flex size-10 items-center justify-center rounded-lg'>
                 <FolderIcon className='text-success size-5' />
               </div>
               <div>
