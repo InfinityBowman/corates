@@ -35,7 +35,7 @@
     "@corates/shared": "workspace:*",
     "@hono/zod-openapi": "^1.2.2",
     "@sentry/cloudflare": "^10.42.0",
-    "better-auth": "^1.5.4",
+    "better-auth": "^1.5.5",
     "drizzle-orm": "^0.45.1",
     "hono": "^4.12.5",
     "lib0": "^0.2.117",

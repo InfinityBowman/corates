@@ -57,7 +57,7 @@
     "@tanstack/react-router": "^1.132.0",
     "@tanstack/react-start": "^1.132.0",
     "@tanstack/react-table": "^8.21.3",
-    "better-auth": "^1.5.4",
+    "better-auth": "^1.5.5",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "countup.js": "^2.10.0",
