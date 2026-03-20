@@ -49,7 +49,7 @@ export function DashboardHeader({
               title={!isOnline ? 'Cannot create projects while offline' : ''}
               className='bg-primary text-primary-foreground hover:bg-primary/90 flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium transition-all disabled:cursor-not-allowed disabled:opacity-50'
             >
-              <PlusIcon className='h-4 w-4' />
+              <PlusIcon className='size-4' />
               New Project
             </button>
           )}

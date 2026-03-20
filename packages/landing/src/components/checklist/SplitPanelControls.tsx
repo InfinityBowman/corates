@@ -71,7 +71,7 @@ export function SplitPanelControls({
         title={showSecondPanel ? `Hide ${panelLabel}` : `Show ${panelLabel}`}
         aria-label={showSecondPanel ? `Hide ${panelLabel}` : `Show ${panelLabel}`}
       >
-        <FileTextIcon className='h-5 w-5' />
+        <FileTextIcon className='size-5' />
       </button>
 
       {showSecondPanel && (
@@ -89,7 +89,7 @@ export function SplitPanelControls({
             title='Side by side'
             aria-label='Side by side'
           >
-            <Columns2Icon className='h-5 w-5' />
+            <Columns2Icon className='size-5' />
           </button>
 
           {/* Horizontal split (stacked) */}
@@ -103,7 +103,7 @@ export function SplitPanelControls({
             title='Stacked'
             aria-label='Stacked'
           >
-            <RowsIcon className='h-5 w-5' />
+            <RowsIcon className='size-5' />
           </button>
 
           {/* Reset ratio */}
@@ -113,7 +113,7 @@ export function SplitPanelControls({
             title={`Reset split (${ratioLabel})`}
             aria-label={`Reset split (${ratioLabel})`}
           >
-            <RefreshCwIcon className='h-5 w-5' />
+            <RefreshCwIcon className='size-5' />
           </button>
 
           {/* Open PDF in new tab */}
@@ -126,7 +126,7 @@ export function SplitPanelControls({
                 title='Open PDF in new tab'
                 aria-label='Open PDF in new tab'
               >
-                <ExternalLinkIcon className='h-5 w-5' />
+                <ExternalLinkIcon className='size-5' />
               </button>
             </>
           )}

@@ -49,7 +49,7 @@ export function StatsCard({ title, value, color, icon: Icon, loading }: StatsCar
           : <p className={`mt-1 text-2xl font-bold ${colors.text}`}>{value}</p>}
         </div>
         <div className={`rounded-lg p-3 ${colors.icon}`}>
-          <Icon className='h-6 w-6' />
+          <Icon className='size-6' />
         </div>
       </div>
     </div>

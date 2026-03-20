@@ -105,7 +105,7 @@ export function DomainSection({
           }
 
           <svg
-            className={`text-muted-foreground/70 h-5 w-5 transition-transform ${collapsed ? '' : 'rotate-180'}`}
+            className={`text-muted-foreground/70 size-5 transition-transform ${collapsed ? '' : 'rotate-180'}`}
             fill='none'
             stroke='currentColor'
             viewBox='0 0 24 24'

@@ -89,14 +89,14 @@ export function AnswerPanel({
                           checked={isChecked}
                           disabled={readOnly}
                           onChange={() => !readOnly && onRadioChange?.(colIdx, optIdx)}
-                          className='border-border focus:ring-primary mt-0.5 h-3 w-3 shrink-0 text-blue-600'
+                          className='border-border focus:ring-primary mt-0.5 size-3 shrink-0 text-blue-600'
                         />
                       : <input
                           type='checkbox'
                           checked={isChecked}
                           disabled={readOnly}
                           onChange={() => !readOnly && onCheckboxChange?.(colIdx, optIdx)}
-                          className='border-border focus:ring-primary mt-0.5 h-3 w-3 shrink-0 rounded text-blue-600'
+                          className='border-border focus:ring-primary mt-0.5 size-3 shrink-0 rounded text-blue-600'
                         />
                       }
                       <span
@@ -185,14 +185,14 @@ export function AnswerPanel({
                           checked={isChecked}
                           disabled={readOnly}
                           onChange={() => !readOnly && onRadioChange?.(colIdx, optIdx)}
-                          className='border-border focus:ring-primary mt-0.5 h-3.5 w-3.5 shrink-0 text-blue-600'
+                          className='border-border focus:ring-primary mt-0.5 size-3.5 shrink-0 text-blue-600'
                         />
                       : <input
                           type='checkbox'
                           checked={isChecked}
                           disabled={readOnly}
                           onChange={() => !readOnly && onCheckboxChange?.(colIdx, optIdx)}
-                          className='border-border focus:ring-primary mt-0.5 h-3.5 w-3.5 shrink-0 rounded text-blue-600'
+                          className='border-border focus:ring-primary mt-0.5 size-3.5 shrink-0 rounded text-blue-600'
                         />
                       }
                       <span

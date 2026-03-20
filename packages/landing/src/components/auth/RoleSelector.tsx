@@ -65,7 +65,7 @@ export function RoleSelector({ selectedRole, onSelect }: RoleSelectorProps) {
               isSelected ? 'border-primary bg-primary/5' : 'border-border',
             )}
           >
-            <Icon className='text-primary mb-1.5 h-5 w-5 sm:h-6 sm:w-6' aria-hidden='true' />
+            <Icon className='text-primary mb-1.5 size-5 sm:size-6' aria-hidden='true' />
             <div className='text-foreground text-sm font-semibold'>{roleOption.label}</div>
             <div className='text-muted-foreground mt-0.5 hidden text-xs sm:block'>
               {roleOption.description}

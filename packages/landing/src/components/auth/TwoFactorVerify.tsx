@@ -57,8 +57,8 @@ export function TwoFactorVerify({ onCancel }: TwoFactorVerifyProps) {
   return (
     <div className='space-y-4'>
       <div className='mb-4 text-center'>
-        <div className='bg-primary/10 mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full'>
-          <LockIcon className='text-primary h-8 w-8' />
+        <div className='bg-primary/10 mx-auto mb-4 flex size-16 items-center justify-center rounded-full'>
+          <LockIcon className='text-primary size-8' />
         </div>
         <h2 className='text-foreground mb-1 text-xl font-bold'>Two-Factor Authentication</h2>
         <p className='text-muted-foreground text-sm'>

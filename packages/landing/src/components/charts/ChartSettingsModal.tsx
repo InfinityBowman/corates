@@ -74,7 +74,7 @@ export function ChartSettingsModal({
               onClick={onClose}
               className='rounded-lg p-1.5 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600'
             >
-              <XIcon className='h-5 w-5' />
+              <XIcon className='size-5' />
             </button>
           </div>
 
@@ -139,7 +139,7 @@ export function ChartSettingsModal({
                   type='checkbox'
                   checked={greyscale}
                   onChange={e => onGreyscaleChange(e.target.checked)}
-                  className='h-4 w-4 rounded border-gray-300 bg-gray-100 text-blue-600 focus:ring-2 focus:ring-blue-500'
+                  className='size-4 rounded border-gray-300 bg-gray-100 text-blue-600 focus:ring-2 focus:ring-blue-500'
                 />
                 <div>
                   <span className='text-sm font-medium text-gray-700'>Greyscale Mode</span>
@@ -158,7 +158,7 @@ export function ChartSettingsModal({
                   type='checkbox'
                   checked={transparentExport}
                   onChange={e => onTransparentExportChange(e.target.checked)}
-                  className='h-4 w-4 rounded border-gray-300 bg-gray-100 text-blue-600 focus:ring-2 focus:ring-blue-500'
+                  className='size-4 rounded border-gray-300 bg-gray-100 text-blue-600 focus:ring-2 focus:ring-blue-500'
                 />
                 <div>
                   <span className='text-sm font-medium text-gray-700'>Transparent Background</span>

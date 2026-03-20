@@ -102,7 +102,7 @@ export function ReconcileStudyRow({
           {hasPdfs && (
             <div className='-ml-1 shrink-0 p-1'>
               <ChevronRightIcon
-                className={`text-muted-foreground/70 h-5 w-5 transition-transform duration-200 ${expanded ? 'rotate-90' : ''}`}
+                className={`text-muted-foreground/70 size-5 transition-transform duration-200 ${expanded ? 'rotate-90' : ''}`}
               />
             </div>
           )}
@@ -159,7 +159,7 @@ export function ReconcileStudyRow({
                   : 'bg-secondary text-muted-foreground cursor-not-allowed'
                 }`}
               >
-                <GitCompareArrowsIcon className='h-4 w-4' />
+                <GitCompareArrowsIcon className='size-4' />
                 Reconcile
               </button>
             </>
@@ -217,7 +217,7 @@ export function ReconcileStudyRow({
                         onClick={() => startReconciliation(group)}
                         className='bg-primary hover:bg-primary/90 flex shrink-0 items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-medium text-white transition-colors'
                       >
-                        <GitCompareArrowsIcon className='h-4 w-4' />
+                        <GitCompareArrowsIcon className='size-4' />
                         Reconcile
                       </button>
                     </div>

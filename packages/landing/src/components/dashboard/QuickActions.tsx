@@ -16,7 +16,7 @@ const ACTIONS = [
     id: 'robins-i',
     title: 'Start ROBINS-I',
     description: 'Risk of bias for non-randomized studies',
-    icon: <PlayCircleIcon className='h-6 w-6 text-blue-600' />,
+    icon: <PlayCircleIcon className='size-6 text-blue-600' />,
     iconBg: 'bg-blue-50',
     border: 'border-blue-100 hover:border-blue-200',
   },
@@ -24,7 +24,7 @@ const ACTIONS = [
     id: 'amstar-2',
     title: 'Start AMSTAR 2',
     description: 'Quality assessment for systematic reviews',
-    icon: <PlayCircleIcon className='h-6 w-6 text-emerald-600' />,
+    icon: <PlayCircleIcon className='size-6 text-emerald-600' />,
     iconBg: 'bg-emerald-50',
     border: 'border-emerald-100 hover:border-emerald-200',
   },
@@ -32,7 +32,7 @@ const ACTIONS = [
     id: 'learn-more',
     title: 'Learn More',
     description: 'View documentation and guides',
-    icon: <BookOpenIcon className='h-6 w-6 text-violet-600' />,
+    icon: <BookOpenIcon className='size-6 text-violet-600' />,
     iconBg: 'bg-violet-50',
     border: 'border-violet-100 hover:border-violet-200',
   },
@@ -61,7 +61,7 @@ export function QuickActions({ onStartROBINSI, onStartAMSTAR2, onLearnMore }: Qu
             className={`group bg-card flex items-center gap-4 rounded-xl border p-4 text-left transition-all duration-200 hover:shadow-md ${action.border}`}
           >
             <div
-              className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl ${action.iconBg} transition-transform duration-200 group-hover:scale-105`}
+              className={`flex size-12 shrink-0 items-center justify-center rounded-xl ${action.iconBg} transition-transform duration-200 group-hover:scale-105`}
             >
               {action.icon}
             </div>

@@ -498,7 +498,7 @@ export function ReconciliationWrapper({
     return (
       <div className='flex min-h-screen items-center justify-center bg-blue-50'>
         <div className='text-center'>
-          <div className='mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-4 border-blue-600 border-t-transparent' />
+          <div className='mx-auto mb-4 size-8 animate-spin rounded-full border-4 border-blue-600 border-t-transparent' />
           <p className='text-secondary-foreground'>
             {reconciledChecklistLoading ? 'Setting up reconciliation...' : 'Loading checklists...'}
           </p>

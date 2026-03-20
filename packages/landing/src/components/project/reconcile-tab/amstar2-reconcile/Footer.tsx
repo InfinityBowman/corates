@@ -18,7 +18,7 @@ export function Footer({ onBack, onSave, allAnswered, saving }: FooterProps) {
         onClick={onBack}
         className='bg-card text-secondary-foreground hover:bg-secondary focus:ring-primary flex items-center gap-2 rounded-lg px-4 py-2 font-medium shadow transition-colors focus:ring-2 focus:outline-none'
       >
-        <ArrowLeftIcon className='h-4 w-4' />
+        <ArrowLeftIcon className='size-4' />
         Back to Questions
       </button>
 
@@ -34,7 +34,7 @@ export function Footer({ onBack, onSave, allAnswered, saving }: FooterProps) {
         {saving ?
           'Saving...'
         : <>
-            <CheckIcon className='h-4 w-4' />
+            <CheckIcon className='size-4' />
             Save Reconciled Checklist
           </>
         }

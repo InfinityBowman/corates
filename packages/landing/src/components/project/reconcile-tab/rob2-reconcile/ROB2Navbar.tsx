@@ -94,7 +94,7 @@ export function ROB2Navbar({ store }: ROB2NavbarProps) {
               type='button'
               className='mr-1 flex shrink-0 items-center gap-1 rounded-full bg-red-100 px-2 py-1 text-xs font-medium text-red-700'
             >
-              <AlertTriangleIcon className='h-3 w-3' />
+              <AlertTriangleIcon className='size-3' />
               Aim
             </button>
           </TooltipTrigger>
@@ -174,7 +174,7 @@ function ResetButton({ onClick }: { onClick: () => void }) {
           className='flex h-7 items-center gap-1 rounded-full bg-red-100 px-2 text-xs font-medium text-red-700 transition-all hover:bg-red-200'
           aria-label='Reset reconciliation'
         >
-          <RotateCcwIcon className='h-2.5 w-2.5' />
+          <RotateCcwIcon className='size-2.5' />
           Reset
         </button>
       </TooltipTrigger>

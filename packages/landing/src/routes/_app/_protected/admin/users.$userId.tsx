@@ -55,6 +55,7 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { handleError } from '@/lib/error-utils';
 import { AdminBox } from '@/components/admin/ui';
 import { table } from '@/components/admin/styles/admin-tokens';
@@ -284,7 +285,7 @@ function UserDetailPage() {
   if (!isAdminChecked) {
     return (
       <div className='min-h-[400px flex items-center justify-center'>
-        <LoaderIcon className='h-8 w-8 animate-spin text-blue-600' />
+        <LoaderIcon className='size-8 animate-spin text-blue-600' />
       </div>
     );
   }
@@ -292,7 +293,7 @@ function UserDetailPage() {
   if (!isAdmin) {
     return (
       <div className='text-muted-foreground min-h-[400px flex flex-col items-center justify-center'>
-        <AlertCircleIcon className='mb-4 h-12 w-12' />
+        <AlertCircleIcon className='mb-4 size-12' />
         <p className='text-lg font-medium'>Access Denied</p>
         <p className='text-sm'>You do not have admin privileges.</p>
       </div>
@@ -306,21 +307,21 @@ function UserDetailPage() {
         to={'/admin' as string}
         className='text-muted-foreground hover:text-secondary-foreground mb-6 inline-flex items-center text-sm'
       >
-        <ArrowLeftIcon className='mr-2 h-4 w-4' />
+        <ArrowLeftIcon className='mr-2 size-4' />
         Back to Admin Dashboard
       </Link>
 
       {/* Loading state */}
       {userDetailsQuery.isLoading && (
         <div className='flex min-h-64 items-center justify-center'>
-          <LoaderIcon className='h-8 w-8 animate-spin text-blue-600' />
+          <LoaderIcon className='size-8 animate-spin text-blue-600' />
         </div>
       )}
 
       {/* Error state */}
       {userDetailsQuery.isError && (
         <div className='rounded-lg border border-red-200 bg-red-50 p-6 text-center'>
-          <AlertCircleIcon className='mx-auto mb-2 h-8 w-8 text-red-500' />
+          <AlertCircleIcon className='mx-auto mb-2 size-8 text-red-500' />
           <p className='text-red-700'>Failed to load user details</p>
           <button
             type='button'
@@ -348,28 +349,28 @@ function UserDetailPage() {
                 <p className='text-muted-foreground'>{userData.user.email}</p>
                 <div className='mt-1 flex items-center space-x-2'>
                   {userData.user.role === 'admin' && (
-                    <span className='inline-flex items-center rounded-full bg-purple-100 px-2 py-0.5 text-xs font-medium text-purple-800'>
-                      <ShieldIcon className='mr-1 h-3 w-3' />
+                    <Badge variant='default'>
+                      <ShieldIcon data-icon='inline-start' />
                       Admin
-                    </span>
+                    </Badge>
                   )}
                   {userData.user.banned && (
-                    <span className='inline-flex items-center rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-800'>
-                      <UserXIcon className='mr-1 h-3 w-3' />
+                    <Badge variant='destructive'>
+                      <UserXIcon data-icon='inline-start' />
                       Banned
-                    </span>
+                    </Badge>
                   )}
                   {userData.user.emailVerified && (
-                    <span className='inline-flex items-center rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800'>
-                      <CheckCircleIcon className='mr-1 h-3 w-3' />
+                    <Badge variant='success'>
+                      <CheckCircleIcon data-icon='inline-start' />
                       Verified
-                    </span>
+                    </Badge>
                   )}
                   {userData.user.twoFactorEnabled && (
-                    <span className='inline-flex items-center rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-800'>
-                      <ShieldIcon className='mr-1 h-3 w-3' />
+                    <Badge variant='info'>
+                      <ShieldIcon data-icon='inline-start' />
                       2FA
-                    </span>
+                    </Badge>
                   )}
                 </div>
               </div>
@@ -383,7 +384,7 @@ function UserDetailPage() {
                 disabled={loading}
                 className='border-border bg-card text-secondary-foreground hover:bg-muted inline-flex items-center rounded-lg border px-3 py-2 text-sm font-medium disabled:opacity-50'
               >
-                <LogInIcon className='mr-2 h-4 w-4' />
+                <LogInIcon className='mr-2 size-4' />
                 Impersonate
               </button>
               {userData.user.banned ?
@@ -393,7 +394,7 @@ function UserDetailPage() {
                   disabled={loading}
                   className='bg-card inline-flex items-center rounded-lg border border-green-300 px-3 py-2 text-sm font-medium text-green-700 hover:bg-green-50 disabled:opacity-50'
                 >
-                  <UserCheckIcon className='mr-2 h-4 w-4' />
+                  <UserCheckIcon className='mr-2 size-4' />
                   Unban
                 </button>
               : <button
@@ -402,7 +403,7 @@ function UserDetailPage() {
                   disabled={loading}
                   className='bg-card inline-flex items-center rounded-lg border border-red-300 px-3 py-2 text-sm font-medium text-red-700 hover:bg-red-50 disabled:opacity-50'
                 >
-                  <UserXIcon className='mr-2 h-4 w-4' />
+                  <UserXIcon className='mr-2 size-4' />
                   Ban
                 </button>
               }
@@ -412,7 +413,7 @@ function UserDetailPage() {
                 disabled={loading}
                 className='inline-flex items-center rounded-lg bg-red-600 px-3 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50'
               >
-                <Trash2Icon className='mr-2 h-4 w-4' />
+                <Trash2Icon className='mr-2 size-4' />
                 Delete
               </button>
             </div>
@@ -432,8 +433,8 @@ function UserDetailPage() {
                     className='text-muted-foreground/70 hover:text-muted-foreground ml-2'
                   >
                     {copiedId === `User ID-${userData.user.id}` ?
-                      <CheckCircleIcon className='h-4 w-4 text-green-500' />
-                    : <CopyIcon className='h-4 w-4' />}
+                      <CheckCircleIcon className='size-4 text-green-500' />
+                    : <CopyIcon className='size-4' />}
                   </button>
                 </dd>
               </div>
@@ -468,7 +469,7 @@ function UserDetailPage() {
                       className='inline-flex items-center text-blue-600 hover:text-blue-700'
                     >
                       <span className='font-mono'>{userData.user.stripeCustomerId}</span>
-                      <ExternalLinkIcon className='ml-1 h-3 w-3' />
+                      <ExternalLinkIcon className='ml-1 size-3' />
                     </a>
                   : '-'}
                 </dd>
@@ -501,15 +502,15 @@ function UserDetailPage() {
                     className='border-border bg-muted flex items-center justify-between rounded-lg border p-3'
                   >
                     <div className='flex items-center space-x-3'>
-                      <span className='bg-card inline-flex h-8 w-8 items-center justify-center rounded-full'>
+                      <span className='bg-card inline-flex size-8 items-center justify-center rounded-full'>
                         {account.providerId === 'google' && (
-                          <img src='/logos/google.svg' alt='Google' className='h-5 w-5' />
+                          <img src='/logos/google.svg' alt='Google' className='size-5' />
                         )}
                         {account.providerId === 'orcid' && (
-                          <img src='/logos/orcid.svg' alt='ORCID' className='h-5 w-5' />
+                          <img src='/logos/orcid.svg' alt='ORCID' className='size-5' />
                         )}
                         {account.providerId === 'credential' && (
-                          <MailIcon className='text-muted-foreground h-5 w-5' />
+                          <MailIcon className='text-muted-foreground size-5' />
                         )}
                       </span>
                       <div>
@@ -532,7 +533,7 @@ function UserDetailPage() {
           {/* Organizations */}
           <AdminBox className='mb-6'>
             <h2 className='text-foreground mb-4 flex items-center text-lg font-semibold'>
-              <HomeIcon className='mr-2 h-5 w-5' />
+              <HomeIcon className='mr-2 size-5' />
               Organizations ({userData.orgs?.length ?? 0})
             </h2>
             {(userData.orgs?.length ?? 0) > 0 ?
@@ -561,28 +562,27 @@ function UserDetailPage() {
                           <p className='text-muted-foreground text-xs'>@{org.orgSlug}</p>
                         </td>
                         <td className={table.cellCompact}>
-                          <span
-                            className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
-                              org.role === 'owner' ? 'bg-purple-100 text-purple-800'
-                              : org.role === 'admin' ? 'bg-blue-100 text-blue-800'
-                              : 'bg-secondary text-foreground'
-                            }`}
+                          <Badge
+                            variant={
+                              org.role === 'owner' ? 'default'
+                              : org.role === 'admin' ? 'info'
+                              : 'secondary'
+                            }
                           >
                             {org.role}
-                          </span>
+                          </Badge>
                         </td>
                         <td className={table.cellCompact}>{org.billing.planName}</td>
                         <td className={table.cellCompact}>
-                          <span
-                            className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
-                              org.billing.accessMode === 'full' ? 'bg-green-100 text-green-800'
-                              : org.billing.accessMode === 'limited' ?
-                                'bg-yellow-100 text-yellow-800'
-                              : 'bg-red-100 text-red-800'
-                            }`}
+                          <Badge
+                            variant={
+                              org.billing.accessMode === 'full' ? 'success'
+                              : org.billing.accessMode === 'limited' ? 'warning'
+                              : 'destructive'
+                            }
                           >
                             {org.billing.accessMode}
-                          </span>
+                          </Badge>
                         </td>
                         <td className={`${table.cellCompact} text-muted-foreground`}>
                           {formatShortDate(org.membershipCreatedAt)}
@@ -598,7 +598,7 @@ function UserDetailPage() {
           {/* Projects */}
           <AdminBox className='mb-6'>
             <h2 className='text-foreground mb-4 flex items-center text-lg font-semibold'>
-              <FolderIcon className='mr-2 h-5 w-5' />
+              <FolderIcon className='mr-2 size-5' />
               Projects ({userData.projects?.length ?? 0})
             </h2>
             {(userData.projects?.length ?? 0) > 0 ?
@@ -616,15 +616,9 @@ function UserDetailPage() {
                       <tr key={project.id} className={table.row}>
                         <td className={`${table.cellCompact} font-medium`}>{project.name}</td>
                         <td className={table.cellCompact}>
-                          <span
-                            className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
-                              project.role === 'owner' ?
-                                'bg-purple-100 text-purple-800'
-                              : 'bg-secondary text-foreground'
-                            }`}
-                          >
+                          <Badge variant={project.role === 'owner' ? 'default' : 'secondary'}>
                             {project.role}
-                          </span>
+                          </Badge>
                         </td>
                         <td className={`${table.cellCompact} text-muted-foreground`}>
                           {formatShortDate(project.joinedAt)}
@@ -641,7 +635,7 @@ function UserDetailPage() {
           <AdminBox className='mb-6'>
             <div className='mb-4 flex items-center justify-between'>
               <h2 className='text-foreground flex items-center text-lg font-semibold'>
-                <MonitorIcon className='mr-2 h-5 w-5' />
+                <MonitorIcon className='mr-2 size-5' />
                 Active Sessions ({userData.sessions?.length ?? 0})
               </h2>
               {(userData.sessions?.length ?? 0) > 0 && (
@@ -651,7 +645,7 @@ function UserDetailPage() {
                   disabled={loading}
                   className='inline-flex items-center text-sm text-red-600 hover:text-red-700 disabled:opacity-50'
                 >
-                  <LogOutIcon className='mr-1 h-4 w-4' />
+                  <LogOutIcon className='mr-1 size-4' />
                   Revoke All
                 </button>
               )}
@@ -666,8 +660,8 @@ function UserDetailPage() {
                       className='border-border bg-muted flex items-center justify-between rounded-lg border p-4'
                     >
                       <div className='flex items-center space-x-4'>
-                        <div className='bg-card flex h-10 w-10 items-center justify-center rounded-full'>
-                          <MonitorIcon className='text-muted-foreground h-5 w-5' />
+                        <div className='bg-card flex size-10 items-center justify-center rounded-full'>
+                          <MonitorIcon className='text-muted-foreground size-5' />
                         </div>
                         <div>
                           <p className='text-foreground text-sm font-medium'>
@@ -675,7 +669,7 @@ function UserDetailPage() {
                           </p>
                           <div className='text-muted-foreground flex items-center space-x-3 text-xs'>
                             <span className='flex items-center'>
-                              <ClockIcon className='mr-1 h-3 w-3' />
+                              <ClockIcon className='mr-1 size-3' />
                               {formatDate(session.createdAt)}
                             </span>
                             {session.ipAddress && <span>IP: {session.ipAddress}</span>}
@@ -691,7 +685,7 @@ function UserDetailPage() {
                         disabled={loading}
                         className='bg-card inline-flex items-center rounded-lg border border-red-200 px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50 disabled:opacity-50'
                       >
-                        <LogOutIcon className='mr-1 h-3 w-3' />
+                        <LogOutIcon className='mr-1 size-3' />
                         Revoke
                       </button>
                     </div>

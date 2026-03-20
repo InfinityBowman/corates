@@ -73,7 +73,7 @@ export function CompletedStudyRow({
             {hasPdfs && (
               <div className='-ml-1 shrink-0 p-1'>
                 <ChevronRightIcon
-                  className={`text-muted-foreground/70 h-5 w-5 transition-transform duration-200 ${expanded ? 'rotate-90' : ''}`}
+                  className={`text-muted-foreground/70 size-5 transition-transform duration-200 ${expanded ? 'rotate-90' : ''}`}
                 />
               </div>
             )}

@@ -60,11 +60,11 @@ export function SignallingQuestionPage({
       >
         <div className='flex items-start gap-3'>
           {isAgreement ?
-            <div className='flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-green-500'>
-              <CheckIcon className='h-4 w-4 text-white' />
+            <div className='flex size-6 shrink-0 items-center justify-center rounded-full bg-green-500'>
+              <CheckIcon className='size-4 text-white' />
             </div>
-          : <div className='flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-amber-500'>
-              <XIcon className='h-4 w-4 text-white' />
+          : <div className='flex size-6 shrink-0 items-center justify-center rounded-full bg-amber-500'>
+              <XIcon className='size-4 text-white' />
             </div>
           }
           <div className='flex-1'>
@@ -79,7 +79,7 @@ export function SignallingQuestionPage({
         {/* Info text if available */}
         {question?.info && (
           <div className='mt-3 flex items-start gap-2 rounded-lg border border-blue-200 bg-blue-50 p-3'>
-            <InfoIcon className='h-4 w-4 shrink-0 text-blue-600' />
+            <InfoIcon className='size-4 shrink-0 text-blue-600' />
             <p className='text-xs text-blue-800'>{question.info}</p>
           </div>
         )}
@@ -89,7 +89,7 @@ export function SignallingQuestionPage({
       {isSkipped && (
         <div className='border-b border-slate-200 bg-slate-50 px-4 py-3'>
           <div className='flex items-center gap-2'>
-            <InfoIcon className='h-4 w-4 shrink-0 text-slate-500' />
+            <InfoIcon className='size-4 shrink-0 text-slate-500' />
             <p className='text-sm text-slate-600'>
               This question was auto-set to NA because the domain judgement is already determined by
               earlier answers. You can still change it if needed.

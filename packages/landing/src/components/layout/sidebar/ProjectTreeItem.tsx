@@ -50,7 +50,7 @@ export function ProjectTreeItem({
         onClick={handleRowClick}
       >
         <ChevronRightIcon
-          className={`text-muted-foreground mr-1 h-3 w-3 shrink-0 transition-transform ${isExpanded ? 'rotate-90' : ''}`}
+          className={`text-muted-foreground mr-1 size-3 shrink-0 transition-transform ${isExpanded ? 'rotate-90' : ''}`}
         />
         <button
           onClick={e => {
@@ -60,8 +60,8 @@ export function ProjectTreeItem({
           className='flex flex-1 items-center gap-2 text-left'
         >
           {isExpanded ?
-            <FolderOpenIcon className='text-primary h-4 w-4' />
-          : <FolderIcon className='text-muted-foreground h-4 w-4' />}
+            <FolderOpenIcon className='text-primary size-4' />
+          : <FolderIcon className='text-muted-foreground size-4' />}
           <span className='truncate text-sm font-medium'>{project.name}</span>
         </button>
       </div>

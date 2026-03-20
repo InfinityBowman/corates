@@ -95,7 +95,7 @@ export function ToDoTab() {
         ))
       : hasData && (
           <div className='py-16 text-center'>
-            <ListTodoIcon className='text-muted-foreground/50 mx-auto mb-4 h-12 w-12' />
+            <ListTodoIcon className='text-muted-foreground/50 mx-auto mb-4 size-12' />
             <h3 className='text-foreground mb-2 text-lg font-medium'>To Do</h3>
             <p className='text-muted-foreground mx-auto max-w-md'>
               Studies assigned to you will appear here. Complete your appraisals to move them to the

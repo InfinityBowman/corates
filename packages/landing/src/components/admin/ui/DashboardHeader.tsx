@@ -37,7 +37,7 @@ export function DashboardHeader({
       <div className='flex items-center gap-3'>
         {Icon && (
           <div className={`rounded-xl p-2.5 ${ICON_COLOR_CLASSES[iconColor]}`}>
-            <Icon className='h-6 w-6' />
+            <Icon className='size-6' />
           </div>
         )}
         <div>

@@ -88,9 +88,9 @@ export function ProjectHeader({
       <div className='flex items-center gap-4'>
         <button
           onClick={onBack}
-          className='border-border text-muted-foreground hover:text-secondary-foreground flex h-9 w-9 items-center justify-center rounded-lg border transition-colors'
+          className='border-border text-muted-foreground hover:text-secondary-foreground flex size-9 items-center justify-center rounded-lg border transition-colors'
         >
-          <ArrowLeftIcon className='h-4 w-4' />
+          <ArrowLeftIcon className='size-4' />
         </button>
         <div className='min-w-0'>
           {/* Project Name */}
@@ -115,7 +115,7 @@ export function ProjectHeader({
                     {(api: any) =>
                       !api.editing && (
                         <EditableEditTrigger className='text-muted-foreground/60 hover:text-muted-foreground rounded p-1 opacity-0 transition-colors group-hover:opacity-100'>
-                          <PencilIcon className='h-3.5 w-3.5' />
+                          <PencilIcon className='size-3.5' />
                         </EditableEditTrigger>
                       )
                     }
@@ -155,7 +155,7 @@ export function ProjectHeader({
                   {(api: any) =>
                     !api.editing && (
                       <EditableEditTrigger className='text-muted-foreground/60 hover:text-muted-foreground self-start rounded p-1 opacity-0 transition-colors group-hover:opacity-100'>
-                        <PencilIcon className='h-3 w-3' />
+                        <PencilIcon className='size-3' />
                       </EditableEditTrigger>
                     )
                   }

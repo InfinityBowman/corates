@@ -118,7 +118,7 @@ export function BillingSettings() {
               className='border-border bg-card text-foreground hover:bg-muted inline-flex items-center justify-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-medium shadow-sm transition-all hover:shadow'
             >
               View All Plans
-              <ArrowRightIcon className='h-4 w-4' />
+              <ArrowRightIcon className='size-4' />
             </Link>
           </div>
         </div>
@@ -143,7 +143,7 @@ export function BillingSettings() {
                 className='text-green-600 hover:text-green-800'
                 aria-label='Dismiss'
               >
-                <XCircleIcon className='h-5 w-5' />
+                <XCircleIcon className='size-5' />
               </button>
             </AlertAction>
           </Alert>
@@ -163,7 +163,7 @@ export function BillingSettings() {
                 className='text-amber-600 hover:text-amber-800'
                 aria-label='Dismiss'
               >
-                <XCircleIcon className='h-5 w-5' />
+                <XCircleIcon className='size-5' />
               </button>
             </AlertAction>
           </Alert>

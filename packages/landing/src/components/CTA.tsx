@@ -17,7 +17,7 @@ export default function CTA() {
           className='inline-flex items-center justify-center gap-2 rounded-lg bg-white px-6 py-3 font-medium text-blue-600 transition-colors hover:bg-blue-100'
         >
           Get Started
-          <ArrowRightIcon className='h-5 w-5' />
+          <ArrowRightIcon className='size-5' />
         </Link>
       </div>
     </section>

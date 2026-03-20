@@ -99,8 +99,8 @@ export function MagicLinkForm({
     return (
       <div className='space-y-4'>
         <div className='py-4 text-center'>
-          <div className='mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-green-100'>
-            <MailIcon className='h-7 w-7 text-green-600' />
+          <div className='mx-auto mb-3 flex size-14 items-center justify-center rounded-full bg-green-100'>
+            <MailIcon className='size-7 text-green-600' />
           </div>
           <h3 className='text-foreground mb-1 text-base font-semibold'>Check your email</h3>
           <p className='text-muted-foreground mb-3 text-sm'>

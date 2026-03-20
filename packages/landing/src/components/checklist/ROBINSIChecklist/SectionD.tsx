@@ -55,7 +55,7 @@ export function SectionD({ sectionDState, onUpdate, disabled, getRobinsText }: S
                   checked={isChecked}
                   disabled={disabled}
                   onChange={() => !disabled && handleSourceToggle(source)}
-                  className='border-border focus:ring-primary mt-0.5 h-4 w-4 rounded text-blue-600'
+                  className='border-border focus:ring-primary mt-0.5 size-4 rounded text-blue-600'
                 />
                 <span className='text-secondary-foreground text-sm'>{source}</span>
               </label>

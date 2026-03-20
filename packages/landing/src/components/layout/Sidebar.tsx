@@ -178,7 +178,7 @@ export function Sidebar({
               : 'text-secondary-foreground hover:bg-secondary'
             }`}
           >
-            <HomeIcon className='h-4 w-4 shrink-0' />
+            <HomeIcon className='size-4 shrink-0' />
             <span className='truncate'>Projects</span>
           </button>
         </div>
@@ -188,7 +188,7 @@ export function Sidebar({
           <>
             <div className='px-3 pt-4 pb-2'>
               <h3 className='text-muted-foreground flex items-center gap-1.5 text-xs font-semibold tracking-wider uppercase'>
-                <CloudIcon className='h-3 w-3' />
+                <CloudIcon className='size-3' />
                 Projects
               </h3>
             </div>
@@ -208,8 +208,8 @@ export function Sidebar({
                 ))
               : !isProjectsLoading ?
                 <div className='px-2 py-4 text-center'>
-                  <div className='bg-secondary mx-auto mb-2 flex h-8 w-8 items-center justify-center rounded-lg'>
-                    <FolderIcon className='text-muted-foreground/70 h-4 w-4' />
+                  <div className='bg-secondary mx-auto mb-2 flex size-8 items-center justify-center rounded-lg'>
+                    <FolderIcon className='text-muted-foreground/70 size-4' />
                   </div>
                   <p className='text-muted-foreground text-xs font-medium'>No projects yet</p>
                   <button
@@ -227,7 +227,7 @@ export function Sidebar({
         {/* Local Checklists */}
         <div className='px-3 pt-6 pb-2'>
           <h3 className='text-muted-foreground flex items-center gap-1.5 text-xs font-semibold tracking-wider uppercase'>
-            <FileCheck2Icon className='h-3 w-3' />
+            <FileCheck2Icon className='size-3' />
             Appraisals
           </h3>
         </div>
@@ -251,8 +251,8 @@ export function Sidebar({
                 ),
               )
           : <div className='px-2 py-4 text-center'>
-              <div className='bg-secondary mx-auto mb-2 flex h-8 w-8 items-center justify-center rounded-lg'>
-                <FileCheck2Icon className='text-muted-foreground/70 h-4 w-4' />
+              <div className='bg-secondary mx-auto mb-2 flex size-8 items-center justify-center rounded-lg'>
+                <FileCheck2Icon className='text-muted-foreground/70 size-4' />
               </div>
               <p className='text-muted-foreground text-xs font-medium'>No appraisals</p>
               <button
@@ -296,10 +296,10 @@ export function Sidebar({
                 <TooltipTrigger asChild>
                   <button
                     onClick={onToggleDesktop}
-                    className='text-muted-foreground hover:bg-secondary hover:text-secondary-foreground hidden h-8 w-8 items-center justify-center rounded-md transition-colors md:flex'
+                    className='text-muted-foreground hover:bg-secondary hover:text-secondary-foreground hidden size-8 items-center justify-center rounded-md transition-colors md:flex'
                     aria-label='Expand sidebar'
                   >
-                    <ChevronsRightIcon className='h-4 w-4' />
+                    <ChevronsRightIcon className='size-4' />
                   </button>
                 </TooltipTrigger>
                 <TooltipContent side='right'>Expand sidebar</TooltipContent>
@@ -320,10 +320,10 @@ export function Sidebar({
                 <TooltipTrigger asChild>
                   <button
                     onClick={onToggleDesktop}
-                    className='text-muted-foreground/70 hover:bg-secondary hover:text-muted-foreground hidden h-8 w-8 items-center justify-center rounded-md transition-colors md:flex'
+                    className='text-muted-foreground/70 hover:bg-secondary hover:text-muted-foreground hidden size-8 items-center justify-center rounded-md transition-colors md:flex'
                     aria-label='Collapse sidebar'
                   >
-                    <ChevronsLeftIcon className='h-4 w-4' />
+                    <ChevronsLeftIcon className='size-4' />
                   </button>
                 </TooltipTrigger>
                 <TooltipContent side='right'>Collapse sidebar</TooltipContent>
@@ -345,14 +345,14 @@ export function Sidebar({
                 <TooltipTrigger asChild>
                   <button
                     onClick={() => navigate({ to: '/dashboard' })}
-                    className={`flex h-8 w-8 items-center justify-center rounded-md transition-colors ${
+                    className={`flex size-8 items-center justify-center rounded-md transition-colors ${
                       isCurrentPath('/dashboard') || isCurrentPath('/') ?
                         'bg-primary/10 text-primary'
                       : 'text-muted-foreground hover:bg-secondary hover:text-secondary-foreground'
                     }`}
                     aria-label='Projects'
                   >
-                    <HomeIcon className='h-4 w-4' />
+                    <HomeIcon className='size-4' />
                   </button>
                 </TooltipTrigger>
                 <TooltipContent side='right'>Projects</TooltipContent>
@@ -363,10 +363,10 @@ export function Sidebar({
                   <TooltipTrigger asChild>
                     <button
                       onClick={onToggleDesktop}
-                      className='text-muted-foreground hover:bg-secondary hover:text-secondary-foreground flex h-8 w-8 items-center justify-center rounded-md transition-colors'
+                      className='text-muted-foreground hover:bg-secondary hover:text-secondary-foreground flex size-8 items-center justify-center rounded-md transition-colors'
                       aria-label='Projects'
                     >
-                      <CloudIcon className='h-4 w-4' />
+                      <CloudIcon className='size-4' />
                     </button>
                   </TooltipTrigger>
                   <TooltipContent side='right'>Projects</TooltipContent>
@@ -377,10 +377,10 @@ export function Sidebar({
                 <TooltipTrigger asChild>
                   <button
                     onClick={onToggleDesktop}
-                    className='text-muted-foreground hover:bg-secondary hover:text-secondary-foreground flex h-8 w-8 items-center justify-center rounded-md transition-colors'
+                    className='text-muted-foreground hover:bg-secondary hover:text-secondary-foreground flex size-8 items-center justify-center rounded-md transition-colors'
                     aria-label='Appraisals'
                   >
-                    <FileCheck2Icon className='h-4 w-4' />
+                    <FileCheck2Icon className='size-4' />
                   </button>
                 </TooltipTrigger>
                 <TooltipContent side='right'>Appraisals</TooltipContent>
@@ -459,10 +459,10 @@ export function Sidebar({
                 </span>
                 <button
                   onClick={onCloseMobile}
-                  className='text-muted-foreground/70 hover:bg-secondary hover:text-muted-foreground flex h-7 w-7 items-center justify-center rounded-md transition-colors'
+                  className='text-muted-foreground/70 hover:bg-secondary hover:text-muted-foreground flex size-7 items-center justify-center rounded-md transition-colors'
                   aria-label='Close sidebar'
                 >
-                  <XIcon className='h-4 w-4' />
+                  <XIcon className='size-4' />
                 </button>
               </div>
               {renderSidebarContent()}

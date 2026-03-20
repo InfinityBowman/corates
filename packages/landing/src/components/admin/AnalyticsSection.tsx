@@ -168,7 +168,7 @@ export function AnalyticsSection() {
       <div className='flex items-center justify-between'>
         <div className='flex items-center space-x-3'>
           <div className='rounded-xl bg-purple-100 p-2'>
-            <TrendingUpIcon className='h-5 w-5 text-purple-600' />
+            <TrendingUpIcon className='size-5 text-purple-600' />
           </div>
           <h2 className='text-foreground text-lg font-semibold'>Analytics</h2>
         </div>
@@ -180,7 +180,7 @@ export function AnalyticsSection() {
         <AdminBox>
           <div className='mb-4 flex items-center justify-between'>
             <div className='flex items-center space-x-2'>
-              <UsersIcon className='h-5 w-5 text-blue-500' />
+              <UsersIcon className='size-5 text-blue-500' />
               <h3 className='text-foreground font-medium'>User Signups</h3>
             </div>
             <div className='flex items-center space-x-2'>
@@ -200,13 +200,13 @@ export function AnalyticsSection() {
                 onClick={() => signupQuery.refetch()}
                 className='text-muted-foreground/70 hover:bg-secondary hover:text-muted-foreground rounded-lg p-1'
               >
-                <RefreshCwIcon className='h-4 w-4' />
+                <RefreshCwIcon className='size-4' />
               </button>
             </div>
           </div>
           {signupQuery.isLoading ?
             <div className='flex h-64 items-center justify-center'>
-              <LoaderIcon className='h-6 w-6 animate-spin text-blue-500' />
+              <LoaderIcon className='size-6 animate-spin text-blue-500' />
             </div>
           : signupData?.data ?
             <>
@@ -232,13 +232,13 @@ export function AnalyticsSection() {
         <AdminBox>
           <div className='mb-4 flex items-center justify-between'>
             <div className='flex items-center space-x-2'>
-              <HomeIcon className='h-5 w-5 text-green-500' />
+              <HomeIcon className='size-5 text-green-500' />
               <h3 className='text-foreground font-medium'>Orgs & Projects</h3>
             </div>
           </div>
           {orgQuery.isLoading || projectQuery.isLoading ?
             <div className='flex h-64 items-center justify-center'>
-              <LoaderIcon className='h-6 w-6 animate-spin text-green-500' />
+              <LoaderIcon className='size-6 animate-spin text-green-500' />
             </div>
           : orgData && projectData ?
             <>
@@ -289,18 +289,18 @@ export function AnalyticsSection() {
               onClick={() => subscriptionQuery.refetch()}
               className='text-muted-foreground/70 hover:bg-secondary hover:text-muted-foreground rounded p-1'
             >
-              <RefreshCwIcon className='h-4 w-4' />
+              <RefreshCwIcon className='size-4' />
             </button>
           </div>
           {subscriptionQuery.isLoading ?
             <div className='flex h-48 items-center justify-center'>
-              <LoaderIcon className='h-6 w-6 animate-spin text-blue-500' />
+              <LoaderIcon className='size-6 animate-spin text-blue-500' />
             </div>
           : subscriptionData ?
             <>
               {subscriptionData.error && (
                 <div className='mb-2 flex items-center text-sm text-yellow-600'>
-                  <AlertTriangleIcon className='mr-1 h-4 w-4' />
+                  <AlertTriangleIcon className='mr-1 size-4' />
                   Stripe unavailable
                 </div>
               )}
@@ -332,7 +332,7 @@ export function AnalyticsSection() {
         <AdminBox className='lg:col-span-2'>
           <div className='mb-4 flex items-center justify-between'>
             <div className='flex items-center space-x-2'>
-              <DollarSignIcon className='h-5 w-5 text-green-500' />
+              <DollarSignIcon className='size-5 text-green-500' />
               <h3 className='text-foreground font-medium'>Revenue (6 months)</h3>
             </div>
             <button
@@ -340,12 +340,12 @@ export function AnalyticsSection() {
               onClick={() => revenueQuery.refetch()}
               className='text-muted-foreground/70 hover:bg-secondary hover:text-muted-foreground rounded p-1'
             >
-              <RefreshCwIcon className='h-4 w-4' />
+              <RefreshCwIcon className='size-4' />
             </button>
           </div>
           {revenueQuery.isLoading ?
             <div className='flex h-48 items-center justify-center'>
-              <LoaderIcon className='h-6 w-6 animate-spin text-green-500' />
+              <LoaderIcon className='size-6 animate-spin text-green-500' />
             </div>
           : revenueData?.data && revenueData.data.length > 0 ?
             <>
@@ -362,7 +362,7 @@ export function AnalyticsSection() {
               />
             </>
           : <div className='text-muted-foreground/70 flex h-48 flex-col items-center justify-center'>
-              {revenueData?.error && <AlertTriangleIcon className='mb-2 h-6 w-6 text-yellow-500' />}
+              {revenueData?.error && <AlertTriangleIcon className='mb-2 size-6 text-yellow-500' />}
               <span>No revenue data</span>
             </div>
           }
@@ -373,7 +373,7 @@ export function AnalyticsSection() {
       <AdminBox>
         <div className='mb-4 flex items-center justify-between'>
           <div className='flex items-center space-x-2'>
-            <AlertTriangleIcon className='h-5 w-5 text-orange-500' />
+            <AlertTriangleIcon className='size-5 text-orange-500' />
             <h3 className='text-foreground font-medium'>Webhook Health</h3>
           </div>
           <div className='flex items-center space-x-2'>
@@ -391,13 +391,13 @@ export function AnalyticsSection() {
               onClick={() => webhookQuery.refetch()}
               className='text-muted-foreground/70 hover:bg-secondary hover:text-muted-foreground rounded p-1'
             >
-              <RefreshCwIcon className='h-4 w-4' />
+              <RefreshCwIcon className='size-4' />
             </button>
           </div>
         </div>
         {webhookQuery.isLoading ?
           <div className='flex h-48 items-center justify-center'>
-            <LoaderIcon className='h-6 w-6 animate-spin text-orange-500' />
+            <LoaderIcon className='size-6 animate-spin text-orange-500' />
           </div>
         : webhookData?.data ?
           <>

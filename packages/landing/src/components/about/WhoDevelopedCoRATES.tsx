@@ -21,7 +21,7 @@ export default function WhoDevelopedCoRATES() {
             <img
               src='/brandy.jpg'
               alt='Brandy Maynard'
-              className='mb-4 h-28 w-28 rounded-full object-cover ring-4 ring-blue-50'
+              className='mb-4 size-28 rounded-full object-cover ring-4 ring-blue-50'
               width={1990}
               height={2984}
             />
@@ -76,7 +76,7 @@ export default function WhoDevelopedCoRATES() {
             <img
               src='/jacob.jpeg'
               alt='Jacob Maynard'
-              className='mb-4 h-28 w-28 rounded-full object-cover ring-4 ring-blue-50'
+              className='mb-4 size-28 rounded-full object-cover ring-4 ring-blue-50'
               width={460}
               height={460}
             />

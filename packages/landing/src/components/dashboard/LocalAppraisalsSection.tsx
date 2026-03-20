@@ -82,7 +82,7 @@ export function LocalAppraisalsSection({
               onClick={handleCreate}
               className='text-primary hover:bg-primary/5 flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition-all hover:scale-105 hover:shadow-sm active:scale-100'
             >
-              <PlusIcon className='h-4 w-4' />
+              <PlusIcon className='size-4' />
               New
             </button>
           )}
@@ -93,8 +93,8 @@ export function LocalAppraisalsSection({
       {showSignInPrompt && (
         <div className='border-primary/20 bg-primary/5 mb-4 flex items-center justify-between rounded-xl border p-4'>
           <div className='flex items-center gap-3'>
-            <div className='bg-primary/10 flex h-10 w-10 items-center justify-center rounded-lg'>
-              <LogInIcon className='text-primary h-5 w-5' />
+            <div className='bg-primary/10 flex size-10 items-center justify-center rounded-lg'>
+              <LogInIcon className='text-primary size-5' />
             </div>
             <div>
               <p className='text-primary text-sm font-medium'>Want to collaborate?</p>
@@ -117,8 +117,8 @@ export function LocalAppraisalsSection({
       <div className='space-y-3'>
         {!hasChecklists && (
           <div className='border-border bg-muted/50 flex flex-col items-center justify-center rounded-xl border-2 border-dashed px-6 py-10'>
-            <div className='bg-secondary mb-3 flex h-12 w-12 items-center justify-center rounded-xl'>
-              <FileTextIcon className='text-muted-foreground/70 h-6 w-6' />
+            <div className='bg-secondary mb-3 flex size-12 items-center justify-center rounded-xl'>
+              <FileTextIcon className='text-muted-foreground/70 size-6' />
             </div>
             <h3 className='text-secondary-foreground mb-1 text-sm font-medium'>
               No local appraisals
@@ -131,7 +131,7 @@ export function LocalAppraisalsSection({
               onClick={handleCreate}
               className='bg-primary text-primary-foreground hover:bg-primary/90 flex items-center gap-1.5 rounded-lg px-4 py-2 text-sm font-medium transition-colors'
             >
-              <PlusIcon className='h-4 w-4' />
+              <PlusIcon className='size-4' />
               Create Appraisal
             </button>
           </div>

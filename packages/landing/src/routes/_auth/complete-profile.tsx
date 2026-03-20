@@ -276,9 +276,9 @@ function CompleteProfilePage() {
                 className='group flex flex-col items-center focus:outline-none'
                 disabled={index > currentStep + 1}
               >
-                <StepsIndicator className='data-complete:bg-primary data-complete:text-primary-foreground data-current:bg-primary data-current:text-primary-foreground data-incomplete:bg-secondary data-incomplete:text-muted-foreground group-hover:data-incomplete:bg-border flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold transition-colors'>
+                <StepsIndicator className='data-complete:bg-primary data-complete:text-primary-foreground data-current:bg-primary data-current:text-primary-foreground data-incomplete:bg-secondary data-incomplete:text-muted-foreground group-hover:data-incomplete:bg-border flex size-8 items-center justify-center rounded-full text-sm font-semibold transition-colors'>
                   {index < currentStep ?
-                    <CheckIcon className='h-4 w-4' />
+                    <CheckIcon className='size-4' />
                   : index + 1}
                 </StepsIndicator>
                 <span className='text-muted-foreground mt-1 hidden text-xs sm:block'>
@@ -511,8 +511,8 @@ function CompleteProfilePage() {
 
         <StepsCompletedContent>
           <div className='flex flex-col items-center justify-center py-8'>
-            <div className='mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-green-100'>
-              <CheckIcon className='h-8 w-8 text-green-600' />
+            <div className='mb-4 flex size-16 items-center justify-center rounded-full bg-green-100'>
+              <CheckIcon className='size-8 text-green-600' />
             </div>
             <h2 className='text-foreground mb-2 text-xl font-bold'>All Done!</h2>
             <p className='text-muted-foreground text-sm'>Redirecting to your dashboard...</p>

@@ -174,7 +174,7 @@ export function DevJsonEditor({ projectId, orgId, data }: DevJsonEditorProps) {
 
         {isImporting && (
           <div className='flex items-center gap-2 text-xs text-gray-500'>
-            <span className='h-3 w-3 animate-spin rounded-full border-2 border-purple-500 border-t-transparent' />
+            <span className='size-3 animate-spin rounded-full border-2 border-purple-500 border-t-transparent' />
             Importing...
           </div>
         )}
@@ -206,7 +206,7 @@ export function DevJsonEditor({ projectId, orgId, data }: DevJsonEditorProps) {
           title='Fetch current state from server'
         >
           {isExporting ?
-            <span className='h-3 w-3 animate-spin rounded-full border-2 border-current border-t-transparent' />
+            <span className='size-3 animate-spin rounded-full border-2 border-current border-t-transparent' />
           : <DownloadIcon size={12} />}
           Export
         </button>
@@ -218,7 +218,7 @@ export function DevJsonEditor({ projectId, orgId, data }: DevJsonEditorProps) {
           title='Import JSON to server'
         >
           {isImporting ?
-            <span className='h-3 w-3 animate-spin rounded-full border-2 border-current border-t-transparent' />
+            <span className='size-3 animate-spin rounded-full border-2 border-current border-t-transparent' />
           : <UploadIcon size={12} />}
           Import
         </button>

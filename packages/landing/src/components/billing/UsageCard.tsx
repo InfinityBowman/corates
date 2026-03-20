@@ -21,7 +21,7 @@ function UsageMetric({ label, icon, used, max }: UsageMetricProps) {
     <div className='space-y-2'>
       <div className='flex items-center justify-between'>
         <div className='flex items-center gap-2'>
-          <div className='bg-muted flex h-8 w-8 items-center justify-center rounded-lg'>{icon}</div>
+          <div className='bg-muted flex size-8 items-center justify-center rounded-lg'>{icon}</div>
           <span className='text-secondary-foreground text-sm font-medium'>{label}</span>
         </div>
         <span className='text-foreground text-sm font-semibold'>
@@ -48,14 +48,14 @@ export function UsageCard({ quotas, usage }: UsageCardProps) {
       {
         key: 'projects',
         label: 'Projects',
-        icon: <FolderIcon className='text-muted-foreground h-4 w-4' />,
+        icon: <FolderIcon className='text-muted-foreground size-4' />,
         used: usage?.projects ?? 0,
         max: quotas?.['projects.max'] ?? 0,
       },
       {
         key: 'collaborators',
         label: 'Team Members',
-        icon: <UsersIcon className='text-muted-foreground h-4 w-4' />,
+        icon: <UsersIcon className='text-muted-foreground size-4' />,
         used: usage?.collaborators ?? 0,
         max: quotas?.['collaborators.org.max'] ?? 0,
       },
@@ -69,7 +69,7 @@ export function UsageCard({ quotas, usage }: UsageCardProps) {
   return (
     <div className='border-border bg-card rounded-xl border p-6 shadow-sm'>
       <div className='mb-5 flex items-center gap-2'>
-        <TrendingUpIcon className='text-muted-foreground h-5 w-5' />
+        <TrendingUpIcon className='text-muted-foreground size-5' />
         <h3 className='text-foreground text-lg font-semibold'>Usage</h3>
       </div>
 

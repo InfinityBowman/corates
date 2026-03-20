@@ -34,8 +34,8 @@ export function PaymentIssueBanner({ status, onUpdatePayment, loading }: Payment
     <div className='mb-6 overflow-hidden rounded-xl border-2 border-red-300 bg-red-50 shadow-sm'>
       <div className='flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between'>
         <div className='flex items-start gap-4'>
-          <div className='flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-red-100'>
-            <TriangleAlertIcon className='h-6 w-6 text-red-600' />
+          <div className='flex size-12 shrink-0 items-center justify-center rounded-full bg-red-100'>
+            <TriangleAlertIcon className='size-6 text-red-600' />
           </div>
           <div>
             <h3 className='text-lg font-semibold text-red-800'>{title}</h3>
@@ -56,11 +56,11 @@ export function PaymentIssueBanner({ status, onUpdatePayment, loading }: Payment
         >
           {loading ?
             <>
-              <LoaderIcon className='h-4 w-4 animate-spin' />
+              <LoaderIcon className='size-4 animate-spin' />
               Loading...
             </>
           : <>
-              <CreditCardIcon className='h-4 w-4' />
+              <CreditCardIcon className='size-4' />
               Update Payment Method
             </>
           }

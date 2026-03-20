@@ -114,7 +114,7 @@ export function SummaryView({
             >
               <div className='flex items-center gap-3'>
                 <span
-                  className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-medium ${isAgreement ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}
+                  className={`flex size-8 items-center justify-center rounded-full text-sm font-medium ${isAgreement ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}
                 >
                   {index + 1}
                 </span>
@@ -141,7 +141,7 @@ export function SummaryView({
                     Critical
                   </span>
                 )}
-                <ArrowRightIcon className='text-muted-foreground/70 h-4 w-4' />
+                <ArrowRightIcon className='text-muted-foreground/70 size-4' />
               </div>
             </div>
           );

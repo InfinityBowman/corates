@@ -123,7 +123,7 @@ function CheckEmailPage() {
       {verified ?
         <>
           <div className='flex justify-center'>
-            <Loader2Icon className='text-primary h-12 w-12 animate-spin' />
+            <Loader2Icon className='text-primary size-12 animate-spin' />
           </div>
           <h2 className='text-foreground text-xl font-bold sm:text-2xl'>Email Verified!</h2>
           <p className='text-muted-foreground text-sm sm:text-base'>
@@ -135,7 +135,7 @@ function CheckEmailPage() {
       : <>
           <div className='flex justify-center'>
             <div className='bg-primary/10 rounded-full p-4'>
-              <MailIcon className='text-primary h-12 w-12' />
+              <MailIcon className='text-primary size-12' />
             </div>
           </div>
 

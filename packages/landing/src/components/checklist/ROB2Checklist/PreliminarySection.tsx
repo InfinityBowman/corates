@@ -170,14 +170,14 @@ export function PreliminarySection({
               >
                 <div className='mt-0.5 mr-3'>
                   <div
-                    className={`flex h-4 w-4 items-center justify-center rounded-full border-2 ${
+                    className={`flex size-4 items-center justify-center rounded-full border-2 ${
                       preliminaryState?.aim === aim ?
                         'border-blue-500 bg-blue-500'
                       : 'border-border'
                     }`}
                   >
                     {preliminaryState?.aim === aim && (
-                      <div className='h-2 w-2 rounded-full bg-white' />
+                      <div className='size-2 rounded-full bg-white' />
                     )}
                   </div>
                 </div>
@@ -210,12 +210,12 @@ export function PreliminarySection({
                     } ${isChecked ? 'border-blue-300 bg-blue-50' : 'border-border bg-card hover:border-border'}`}
                   >
                     <div
-                      className={`mr-3 flex h-4 w-4 items-center justify-center rounded border ${
+                      className={`mr-3 flex size-4 items-center justify-center rounded border ${
                         isChecked ? 'border-blue-500 bg-blue-500' : 'border-border'
                       }`}
                     >
                       {isChecked && (
-                        <svg className='h-3 w-3 text-white' fill='currentColor' viewBox='0 0 20 20'>
+                        <svg className='size-3 text-white' fill='currentColor' viewBox='0 0 20 20'>
                           <path
                             fillRule='evenodd'
                             d='M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z'
@@ -251,13 +251,13 @@ export function PreliminarySection({
                   } ${isChecked ? 'border-blue-300 bg-blue-50' : 'border-border bg-card hover:border-border'}`}
                 >
                   <div
-                    className={`mr-2 flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded border ${
+                    className={`mr-2 flex size-3.5 shrink-0 items-center justify-center rounded border ${
                       isChecked ? 'border-blue-500 bg-blue-500' : 'border-border'
                     }`}
                   >
                     {isChecked && (
                       <svg
-                        className='h-2.5 w-2.5 text-white'
+                        className='size-2.5 text-white'
                         fill='currentColor'
                         viewBox='0 0 20 20'
                       >

@@ -45,8 +45,8 @@ export function LocalAppraisalCard({
       style={style}
     >
       {/* Icon */}
-      <div className='bg-secondary text-muted-foreground group-hover:bg-primary/10 group-hover:text-primary flex h-10 w-10 shrink-0 items-center justify-center rounded-lg transition-colors'>
-        <FileTextIcon className='h-5 w-5' />
+      <div className='bg-secondary text-muted-foreground group-hover:bg-primary/10 group-hover:text-primary flex size-10 shrink-0 items-center justify-center rounded-lg transition-colors'>
+        <FileTextIcon className='size-5' />
       </div>
 
       {/* Content */}
@@ -81,7 +81,7 @@ export function LocalAppraisalCard({
             className='text-muted-foreground/50 rounded-lg p-2 opacity-0 transition-all group-hover:opacity-100 hover:bg-red-50 hover:text-red-500'
             title='Delete appraisal'
           >
-            <TrashIcon className='h-4 w-4' />
+            <TrashIcon className='size-4' />
           </button>
         )}
         <button
@@ -91,7 +91,7 @@ export function LocalAppraisalCard({
           title='Open appraisal'
         >
           Open
-          <ChevronRightIcon className='h-4 w-4 transition-transform group-hover:translate-x-0.5' />
+          <ChevronRightIcon className='size-4 transition-transform group-hover:translate-x-0.5' />
         </button>
       </div>
     </div>

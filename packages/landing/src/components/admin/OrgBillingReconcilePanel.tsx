@@ -98,7 +98,7 @@ export function OrgBillingReconcilePanel({ orgId }: OrgBillingReconcilePanelProp
       <div className='border-border border-b px-6 py-4'>
         <div className='flex items-center justify-between'>
           <div className='flex items-center space-x-3'>
-            <RefreshCwIcon className='text-muted-foreground/70 h-5 w-5' />
+            <RefreshCwIcon className='text-muted-foreground/70 size-5' />
             <h2 className='text-foreground text-lg font-semibold'>Billing Reconciliation</h2>
           </div>
           <button
@@ -108,7 +108,7 @@ export function OrgBillingReconcilePanel({ orgId }: OrgBillingReconcilePanelProp
             disabled={reconcileQuery.isFetching}
           >
             {reconcileQuery.isFetching ?
-              <LoaderIcon className='h-4 w-4 animate-spin' />
+              <LoaderIcon className='size-4 animate-spin' />
             : 'Refresh'}
           </button>
         </div>
@@ -117,7 +117,7 @@ export function OrgBillingReconcilePanel({ orgId }: OrgBillingReconcilePanelProp
       <div className='p-6'>
         {reconcileQuery.isLoading ?
           <div className='flex items-center justify-center py-8'>
-            <LoaderIcon className='h-6 w-6 animate-spin text-blue-600' />
+            <LoaderIcon className='size-6 animate-spin text-blue-600' />
           </div>
         : reconcileData ?
           <>
@@ -170,7 +170,7 @@ export function OrgBillingReconcilePanel({ orgId }: OrgBillingReconcilePanelProp
                       id='checkStripe'
                       checked={checkStripe}
                       onChange={e => setCheckStripe(e.target.checked)}
-                      className='border-border h-4 w-4 rounded text-blue-600 focus:ring-blue-500'
+                      className='border-border size-4 rounded text-blue-600 focus:ring-blue-500'
                     />
                     <label htmlFor='checkStripe' className='text-secondary-foreground ml-2 text-sm'>
                       Check Stripe API
@@ -224,7 +224,7 @@ export function OrgBillingReconcilePanel({ orgId }: OrgBillingReconcilePanelProp
                       className={`rounded-lg border-2 p-4 ${getSeverityColor(state.severity)}`}
                     >
                       <div className='flex items-start space-x-3'>
-                        <Icon className='mt-0.5 h-5 w-5 shrink-0' />
+                        <Icon className='mt-0.5 size-5 shrink-0' />
                         <div className='flex-1'>
                           <div className='flex items-center space-x-2'>
                             <h3 className='font-semibold'>{state.type.replace(/_/g, ' ')}</h3>
@@ -300,7 +300,7 @@ export function OrgBillingReconcilePanel({ orgId }: OrgBillingReconcilePanelProp
                 })}
               </div>
             : <div className='rounded-lg border border-green-200 bg-green-50 p-8 text-center'>
-                <CheckCircleIcon className='mx-auto mb-4 h-12 w-12 text-green-600' />
+                <CheckCircleIcon className='mx-auto mb-4 size-12 text-green-600' />
                 <p className='text-lg font-medium text-green-900'>No stuck states found</p>
                 <p className='text-sm text-green-700'>
                   All billing states are healthy for this organization
@@ -322,8 +322,8 @@ export function OrgBillingReconcilePanel({ orgId }: OrgBillingReconcilePanelProp
                     <div className='flex items-center space-x-2'>
                       <span className='font-medium'>Status Match:</span>
                       {reconcileData.stripeComparison.match ?
-                        <CheckCircleIcon className='h-4 w-4 text-green-600' />
-                      : <AlertTriangleIcon className='h-4 w-4 text-red-600' />}
+                        <CheckCircleIcon className='size-4 text-green-600' />
+                      : <AlertTriangleIcon className='size-4 text-red-600' />}
                     </div>
                     <div>
                       <span className='font-medium'>Local:</span>{' '}

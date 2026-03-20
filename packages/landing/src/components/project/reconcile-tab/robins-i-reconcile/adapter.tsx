@@ -526,7 +526,7 @@ function renderWarningBanner(checklist1: unknown, checklist2: unknown) {
 
   return (
     <div className='mb-4 flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700'>
-      <AlertTriangleIcon className='h-5 w-5 shrink-0' />
+      <AlertTriangleIcon className='size-5 shrink-0' />
       <div>
         <span className='font-medium'>Critical Risk Detected:</span> Section B indicates this study
         may be at critical risk of bias. Consider whether to proceed with full domain assessment.

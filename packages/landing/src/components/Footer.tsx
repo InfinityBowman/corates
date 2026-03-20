@@ -100,7 +100,7 @@ export default function Footer() {
 
         <div className='flex flex-col items-center justify-between gap-4 border-t border-gray-200 pt-8 sm:flex-row'>
           <p className='inline-flex items-center gap-1 text-sm text-gray-400'>
-            <CopyrightIcon className='h-4 w-4' />
+            <CopyrightIcon className='size-4' />
             {year} Syntch LLC. All rights reserved.
           </p>
           <div className='flex gap-4'>

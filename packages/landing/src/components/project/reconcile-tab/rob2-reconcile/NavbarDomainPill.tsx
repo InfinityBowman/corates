@@ -88,8 +88,8 @@ export function NavbarDomainPill({
             )}
             {sectionKey !== 'overall' &&
               (isExpanded ?
-                <ChevronDownIcon className='h-3 w-3 opacity-60' />
-              : <ChevronRightIcon className='h-3 w-3 opacity-60' />)}
+                <ChevronDownIcon className='size-3 opacity-60' />
+              : <ChevronRightIcon className='size-3 opacity-60' />)}
           </button>
         </TooltipTrigger>
         <TooltipContent>{tooltipContent}</TooltipContent>
@@ -199,7 +199,7 @@ function QuestionPill({
   const isDirection =
     item.type === NAV_ITEM_TYPES.DOMAIN_DIRECTION || item.type === NAV_ITEM_TYPES.OVERALL_DIRECTION;
 
-  const pillSizeClass = isDirection ? 'h-6 px-2 text-2xs' : 'h-6 w-6 text-2xs';
+  const pillSizeClass = isDirection ? 'h-6 px-2 text-2xs' : 'size-6 text-2xs';
 
   const pillSpacingClass = useMemo(() => {
     let spacing = '';
@@ -224,10 +224,10 @@ function QuestionPill({
           {displayLabel}
           {hasAnswer && (
             <span
-              className='bg-card absolute -top-0.5 -right-0.5 flex h-2.5 w-2.5 items-center justify-center rounded-full border-[0.5px] shadow-sm'
+              className='bg-card absolute -top-0.5 -right-0.5 flex size-2.5 items-center justify-center rounded-full border-[0.5px] shadow-sm'
               aria-hidden='true'
             >
-              <CheckIcon className='h-1.5 w-1.5 text-green-600' />
+              <CheckIcon className='size-1.5 text-green-600' />
             </span>
           )}
         </button>

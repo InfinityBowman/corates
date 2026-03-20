@@ -144,7 +144,7 @@ export function SubscriptionDialog({
               id={checkboxId}
               checked={cancelAtPeriodEnd}
               onChange={e => onCancelAtPeriodEndChange?.(e.target.checked)}
-              className='border-border h-4 w-4 rounded text-blue-600 focus:ring-2 focus:ring-blue-500'
+              className='border-border size-4 rounded text-blue-600 focus:ring-2 focus:ring-blue-500'
             />
             <label htmlFor={checkboxId} className='text-secondary-foreground text-sm font-medium'>
               Cancel at period end

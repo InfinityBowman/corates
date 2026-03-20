@@ -213,7 +213,7 @@ export function ChartSection({ studies, members = [] }: ChartSectionProps) {
           className='text-secondary-foreground hover:bg-secondary hover:text-foreground inline-flex shrink-0 items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors'
           title='Chart Settings'
         >
-          <SettingsIcon className='h-4 w-4' />
+          <SettingsIcon className='size-4' />
           Settings
         </button>
       </div>

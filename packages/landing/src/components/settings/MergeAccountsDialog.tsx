@@ -253,7 +253,7 @@ export function MergeAccountsDialog({
                   onClick={() => setStep(STEPS.ENTER_EMAIL)}
                   className='bg-primary hover:bg-primary/90 inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-white transition-colors'
                 >
-                  <UserPlusIcon className='h-4 w-4' />
+                  <UserPlusIcon className='size-4' />
                   Merge Accounts
                 </button>
               </div>
@@ -297,8 +297,8 @@ export function MergeAccountsDialog({
                   className='bg-primary hover:bg-primary/90 inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-white transition-colors disabled:opacity-50'
                 >
                   {loading ?
-                    <LoaderIcon className='h-4 w-4 animate-spin' />
-                  : <MailIcon className='h-4 w-4' />}
+                    <LoaderIcon className='size-4 animate-spin' />
+                  : <MailIcon className='size-4' />}
                   Send Code
                 </button>
               </div>
@@ -359,7 +359,7 @@ export function MergeAccountsDialog({
                   disabled={loading || verificationCode.length !== 6}
                   className='bg-primary hover:bg-primary/90 inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-white transition-colors disabled:opacity-50'
                 >
-                  {loading && <LoaderIcon className='h-4 w-4 animate-spin' />}
+                  {loading && <LoaderIcon className='size-4 animate-spin' />}
                   Verify Code
                 </button>
               </div>
@@ -418,7 +418,7 @@ export function MergeAccountsDialog({
                   disabled={loading}
                   className='focus:ring-ring inline-flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-red-700 focus:ring-2 focus:outline-none disabled:opacity-50'
                 >
-                  {loading && <LoaderIcon className='h-4 w-4 animate-spin' />}
+                  {loading && <LoaderIcon className='size-4 animate-spin' />}
                   Merge Accounts
                 </button>
               </div>
@@ -428,7 +428,7 @@ export function MergeAccountsDialog({
           {/* MERGING */}
           {step === STEPS.MERGING && (
             <div className='flex flex-col items-center py-6'>
-              <LoaderIcon className='text-primary h-8 w-8 animate-spin' />
+              <LoaderIcon className='text-primary size-8 animate-spin' />
               <p className='text-secondary-foreground mt-3'>Merging accounts...</p>
               <p className='text-muted-foreground mt-1 text-sm'>This may take a moment.</p>
             </div>
@@ -438,8 +438,8 @@ export function MergeAccountsDialog({
           {step === STEPS.SUCCESS && (
             <>
               <div className='flex flex-col items-center py-6'>
-                <div className='flex h-12 w-12 items-center justify-center rounded-full bg-green-100'>
-                  <CheckIcon className='h-6 w-6 text-green-600' />
+                <div className='flex size-12 items-center justify-center rounded-full bg-green-100'>
+                  <CheckIcon className='size-6 text-green-600' />
                 </div>
                 <p className='text-foreground mt-3 font-medium'>Accounts Merged Successfully!</p>
                 <p className='text-secondary-foreground mt-1 text-sm'>

@@ -32,7 +32,7 @@ export function PrimaryButton({
     >
       {loading ?
         <span className='flex items-center'>
-          <Loader2Icon className='mr-2 h-5 w-5 animate-spin' />
+          <Loader2Icon className='mr-2 size-5 animate-spin' />
           <span aria-live='polite'>{loadingText || 'Loading...'}</span>
         </span>
       : children}

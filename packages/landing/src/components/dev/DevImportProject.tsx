@@ -223,7 +223,7 @@ export function DevImportProject() {
             disabled={isImporting || !jsonText.trim() || !resolvedOrgId}
           >
             {isImporting ?
-              <span className='h-3 w-3 animate-spin rounded-full border-2 border-current border-t-transparent' />
+              <span className='size-3 animate-spin rounded-full border-2 border-current border-t-transparent' />
             : <UploadIcon size={14} />}
             {isImporting ? 'Importing...' : 'Create & Import Project'}
           </button>
@@ -249,7 +249,7 @@ export function DevImportProject() {
 
           {isImporting && (
             <div className='flex items-center gap-2 text-xs text-gray-500'>
-              <span className='h-3 w-3 animate-spin rounded-full border-2 border-purple-500 border-t-transparent' />
+              <span className='size-3 animate-spin rounded-full border-2 border-purple-500 border-t-transparent' />
               Importing...
             </div>
           )}

@@ -355,7 +355,7 @@ function OrgDetailPage() {
   if (!isAdminChecked) {
     return (
       <div className='flex min-h-[400px] items-center justify-center'>
-        <LoaderIcon className='h-8 w-8 animate-spin text-blue-600' />
+        <LoaderIcon className='size-8 animate-spin text-blue-600' />
       </div>
     );
   }
@@ -363,7 +363,7 @@ function OrgDetailPage() {
   if (!isAdmin) {
     return (
       <div className='text-muted-foreground flex min-h-[400px] flex-col items-center justify-center'>
-        <ShieldIcon className='mb-4 h-12 w-12' />
+        <ShieldIcon className='mb-4 size-12' />
         <p className='text-lg font-medium'>Access Denied</p>
         <p className='text-sm'>You do not have admin privileges.</p>
       </div>
@@ -378,12 +378,12 @@ function OrgDetailPage() {
           to={'/admin/orgs' as string}
           className='text-muted-foreground hover:text-secondary-foreground mb-4 inline-flex items-center text-sm'
         >
-          <ArrowLeftIcon className='mr-1 h-4 w-4' />
+          <ArrowLeftIcon className='mr-1 size-4' />
           Back to Organizations
         </Link>
         <div className='flex items-center space-x-3'>
-          <div className='flex h-12 w-12 items-center justify-center rounded-lg bg-blue-100'>
-            <HomeIcon className='h-6 w-6 text-blue-600' />
+          <div className='flex size-12 items-center justify-center rounded-lg bg-blue-100'>
+            <HomeIcon className='size-6 text-blue-600' />
           </div>
           <div>
             <h1 className='text-foreground text-2xl font-bold'>
@@ -401,7 +401,7 @@ function OrgDetailPage() {
         <div className='mb-6 grid grid-cols-1 gap-4 md:grid-cols-3'>
           <AdminBox padding='compact'>
             <div className='flex items-center space-x-2'>
-              <UsersIcon className='text-muted-foreground/70 h-5 w-5' />
+              <UsersIcon className='text-muted-foreground/70 size-5' />
               <div>
                 <p className='text-muted-foreground text-sm'>Members</p>
                 <p className='text-foreground text-2xl font-bold'>
@@ -412,7 +412,7 @@ function OrgDetailPage() {
           </AdminBox>
           <AdminBox padding='compact'>
             <div className='flex items-center space-x-2'>
-              <FolderIcon className='text-muted-foreground/70 h-5 w-5' />
+              <FolderIcon className='text-muted-foreground/70 size-5' />
               <div>
                 <p className='text-muted-foreground text-sm'>Projects</p>
                 <p className='text-foreground text-2xl font-bold'>

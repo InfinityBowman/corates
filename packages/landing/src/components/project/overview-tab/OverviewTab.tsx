@@ -209,21 +209,21 @@ export function OverviewTab() {
           <div className='grid flex-1 grid-cols-2 gap-3 md:grid-cols-3'>
             <div className='border-border bg-muted rounded-lg border p-4 text-center'>
               <div className='mb-2 flex justify-center'>
-                <BookOpenIcon className='text-muted-foreground h-5 w-5' />
+                <BookOpenIcon className='text-muted-foreground size-5' />
               </div>
               <p className='text-foreground text-2xl font-bold'>{studies.length}</p>
               <p className='text-muted-foreground mt-1 text-xs font-medium'>Total Studies</p>
             </div>
             <div className='rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-center'>
               <div className='mb-2 flex justify-center'>
-                <ArrowRightLeftIcon className='h-5 w-5 text-emerald-600' />
+                <ArrowRightLeftIcon className='size-5 text-emerald-600' />
               </div>
               <p className='text-2xl font-bold text-emerald-700'>{readyToReconcile}</p>
               <p className='mt-1 text-xs font-medium text-emerald-600'>Ready to Reconcile</p>
             </div>
             <div className='rounded-lg border border-blue-200 bg-blue-50 p-4 text-center'>
               <div className='mb-2 flex justify-center'>
-                <CheckCircleIcon className='h-5 w-5 text-blue-600' />
+                <CheckCircleIcon className='size-5 text-blue-600' />
               </div>
               <p className='text-2xl font-bold text-blue-700'>{completedStudies}</p>
               <p className='mt-1 text-xs font-medium text-blue-600'>Completed</p>
@@ -275,13 +275,13 @@ export function OverviewTab() {
                 onClick={() => setShowAddMemberModal(true)}
                 className='bg-primary hover:bg-primary/90 focus:ring-primary inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium text-white transition-colors focus:ring-2 focus:outline-none'
               >
-                <PlusIcon className='h-4 w-4' />
+                <PlusIcon className='size-4' />
                 Invite
               </button>
             : <Tooltip>
                 <TooltipTrigger asChild>
                   <span className='bg-secondary text-muted-foreground/70 inline-flex cursor-not-allowed items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium'>
-                    <PlusIcon className='h-4 w-4' />
+                    <PlusIcon className='size-4' />
                     Invite
                   </span>
                 </TooltipTrigger>
@@ -306,7 +306,7 @@ export function OverviewTab() {
                   style={{ background: index % 2 === 0 ? 'var(--muted)' : 'transparent' }}
                 >
                   <div className='flex items-center gap-3'>
-                    <Avatar className='h-9 w-9'>
+                    <Avatar className='size-9'>
                       <AvatarImage
                         src={
                           member.image ?
@@ -348,7 +348,7 @@ export function OverviewTab() {
                         className='text-muted-foreground/70 focus:ring-primary rounded p-1.5 transition-colors hover:bg-red-50 hover:text-red-600 focus:ring-2 focus:outline-none'
                         title={isSelf ? 'Leave project' : 'Remove member'}
                       >
-                        <Trash2Icon className='h-4 w-4' />
+                        <Trash2Icon className='size-4' />
                       </button>
                     )}
                   </div>
@@ -368,7 +368,7 @@ export function OverviewTab() {
               <div className='text-muted-foreground flex items-center gap-2 text-sm'>
                 {chartsExpanded ? 'Click to collapse' : 'Click to expand'}
                 <ChevronDownIcon
-                  className={`h-4 w-4 transition-transform ${chartsExpanded ? 'rotate-180' : ''}`}
+                  className={`size-4 transition-transform ${chartsExpanded ? 'rotate-180' : ''}`}
                 />
               </div>
             </CollapsibleTrigger>
@@ -386,7 +386,7 @@ export function OverviewTab() {
               <div className='text-muted-foreground flex items-center gap-2 text-sm'>
                 {tablesExpanded ? 'Click to collapse' : 'Click to expand'}
                 <ChevronDownIcon
-                  className={`h-4 w-4 transition-transform ${tablesExpanded ? 'rotate-180' : ''}`}
+                  className={`size-4 transition-transform ${tablesExpanded ? 'rotate-180' : ''}`}
                 />
               </div>
             </CollapsibleTrigger>

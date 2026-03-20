@@ -39,7 +39,7 @@ export function ProjectCard({ project, onOpen, onDelete, style }: ProjectCardPro
     >
       {/* Decorative accent blob */}
       <div
-        className={`absolute -top-10 -right-10 h-24 w-24 rounded-full opacity-20 blur-2xl transition-opacity duration-300 group-hover:opacity-40 ${colors.fill}`}
+        className={`absolute -top-10 -right-10 size-24 rounded-full opacity-20 blur-2xl transition-opacity duration-300 group-hover:opacity-40 ${colors.fill}`}
       />
 
       {/* Header */}
@@ -68,7 +68,7 @@ export function ProjectCard({ project, onOpen, onDelete, style }: ProjectCardPro
             className='text-muted-foreground/50 z-10 shrink-0 rounded-lg p-2 opacity-0 transition-all group-hover:opacity-100 hover:bg-red-50 hover:text-red-500'
             title='Delete Project'
           >
-            <Trash2Icon className='h-4 w-4' />
+            <Trash2Icon className='size-4' />
           </button>
         )}
       </div>
@@ -97,7 +97,7 @@ export function ProjectCard({ project, onOpen, onDelete, style }: ProjectCardPro
       {/* Footer */}
       <div className='flex items-center justify-between'>
         <div className='text-muted-foreground flex items-center gap-1.5 text-xs'>
-          <UsersIcon className='h-3.5 w-3.5' />
+          <UsersIcon className='size-3.5' />
           <span>
             {memberCount} member{memberCount !== 1 ? 's' : ''}
           </span>
@@ -108,7 +108,7 @@ export function ProjectCard({ project, onOpen, onDelete, style }: ProjectCardPro
           className='text-primary hover:bg-primary/5 hover:text-primary/80 flex items-center gap-1 rounded-lg px-3 py-1.5 text-sm font-medium transition-all'
         >
           Open
-          <ChevronRightIcon className='h-4 w-4 transition-transform group-hover:translate-x-0.5' />
+          <ChevronRightIcon className='size-4 transition-transform group-hover:translate-x-0.5' />
         </button>
       </div>
     </div>

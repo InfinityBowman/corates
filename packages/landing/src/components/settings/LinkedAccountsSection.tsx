@@ -150,7 +150,7 @@ export function LinkedAccountsSection() {
     <div className='border-border bg-card mb-6 overflow-hidden rounded-lg border shadow-sm'>
       <div className='border-border from-muted/50 to-background border-b bg-gradient-to-r px-6 py-4'>
         <div className='flex items-center space-x-2'>
-          <LinkIcon className='text-secondary-foreground h-5 w-5' />
+          <LinkIcon className='text-secondary-foreground size-5' />
           <h2 className='text-foreground text-lg font-medium'>Linked Accounts</h2>
         </div>
         <p className='text-muted-foreground mt-1 text-sm'>Manage how you sign in to CoRATES</p>
@@ -190,7 +190,7 @@ export function LinkedAccountsSection() {
             <div className='space-y-3'>
               <div className='border-border flex animate-pulse items-center justify-between rounded-lg border p-4'>
                 <div className='flex items-center gap-3'>
-                  <div className='bg-secondary h-10 w-10 rounded-lg' />
+                  <div className='bg-secondary size-10 rounded-lg' />
                   <div className='space-y-2'>
                     <div className='bg-secondary h-4 w-24 rounded' />
                     <div className='bg-secondary h-3 w-32 rounded' />
@@ -217,8 +217,8 @@ export function LinkedAccountsSection() {
                   aria-label={`Link ${provider.name} account`}
                 >
                   {provider.icon ?
-                    <img src={provider.icon} alt='' className='h-4 w-4' />
-                  : <MailIcon className='h-4 w-4' />}
+                    <img src={provider.icon} alt='' className='size-4' />
+                  : <MailIcon className='size-4' />}
                   {linkingProvider === provider.id ? 'Linking...' : `+ ${provider.name}`}
                 </button>
               ))}

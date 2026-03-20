@@ -87,9 +87,9 @@ export function NotesCompareSection({
           className={`flex cursor-pointer items-center gap-1.5 py-1 text-sm select-none ${hasAnyNote ? 'text-blue-600 hover:text-blue-700' : 'text-muted-foreground hover:text-secondary-foreground'}`}
         >
           <ChevronRightIcon
-            className={`h-4 w-4 shrink-0 transition-transform duration-200 ${expanded ? 'rotate-90' : ''}`}
+            className={`size-4 shrink-0 transition-transform duration-200 ${expanded ? 'rotate-90' : ''}`}
           />
-          <BookOpenIcon className='h-4 w-4 shrink-0' />
+          <BookOpenIcon className='size-4 shrink-0' />
           <span className='font-medium'>Question Notes</span>
           {hasAnyNote && (
             <span className='text-muted-foreground/70 ml-1 text-xs'>
@@ -116,7 +116,7 @@ export function NotesCompareSection({
                       className='flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800'
                       title='Copy to final note'
                     >
-                      <ClipboardIcon className='h-3 w-3' />
+                      <ClipboardIcon className='size-3' />
                       Use
                     </button>
                   )}
@@ -140,7 +140,7 @@ export function NotesCompareSection({
                       className='flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800'
                       title='Copy to final note'
                     >
-                      <ClipboardIcon className='h-3 w-3' />
+                      <ClipboardIcon className='size-3' />
                       Use
                     </button>
                   )}

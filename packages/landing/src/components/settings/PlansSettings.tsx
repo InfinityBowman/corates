@@ -26,7 +26,7 @@ function FAQItem({ question, answer }: { question: string; answer: string }) {
       >
         <span className='text-foreground text-base font-medium'>{question}</span>
         <ChevronDownIcon
-          className={`text-muted-foreground h-5 w-5 shrink-0 transition-transform duration-300 ease-out ${isOpen ? 'rotate-180' : ''}`}
+          className={`text-muted-foreground size-5 shrink-0 transition-transform duration-300 ease-out ${isOpen ? 'rotate-180' : ''}`}
         />
       </button>
       <div
@@ -100,8 +100,8 @@ export function PlansSettings() {
   if (pageState === 'error') {
     return (
       <div className='flex min-h-[60vh] flex-col items-center justify-center px-4'>
-        <div className='flex h-16 w-16 items-center justify-center rounded-full bg-red-100'>
-          <AlertCircleIcon className='h-8 w-8 text-red-600' />
+        <div className='flex size-16 items-center justify-center rounded-full bg-red-100'>
+          <AlertCircleIcon className='size-8 text-red-600' />
         </div>
         <h2 className='text-foreground mt-4 text-xl font-semibold'>
           {BILLING_MESSAGES.CHECKOUT_ERROR.title}
@@ -115,7 +115,7 @@ export function PlansSettings() {
             onClick={processPendingPlan}
             className='bg-primary hover:bg-primary/90 inline-flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold text-white transition'
           >
-            <RefreshCwIcon className='h-4 w-4' />
+            <RefreshCwIcon className='size-4' />
             Try Again
           </button>
           <button
@@ -136,7 +136,7 @@ export function PlansSettings() {
   if (pageState !== 'ready') {
     return (
       <div className='flex min-h-[60vh] flex-col items-center justify-center'>
-        <LoaderIcon className='text-primary h-8 w-8 animate-spin' />
+        <LoaderIcon className='text-primary size-8 animate-spin' />
         <p className='text-foreground mt-4 text-lg font-medium'>Redirecting to checkout...</p>
         <p className='text-muted-foreground mt-1 text-sm'>
           Please wait while we prepare your order.

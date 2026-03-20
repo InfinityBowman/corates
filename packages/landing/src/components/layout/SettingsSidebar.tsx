@@ -103,7 +103,7 @@ export function SettingsSidebar({
             onClick={() => navigate({ to: '/dashboard' })}
             className='text-muted-foreground hover:bg-secondary hover:text-secondary-foreground flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors'
           >
-            <ArrowLeftIcon className='h-4 w-4 shrink-0' />
+            <ArrowLeftIcon className='size-4 shrink-0' />
             <span className='truncate'>Back to App</span>
           </button>
         </div>
@@ -129,7 +129,7 @@ export function SettingsSidebar({
                   : 'text-muted-foreground hover:bg-secondary hover:text-secondary-foreground'
                 }`}
               >
-                <Icon className='h-4 w-4 shrink-0' />
+                <Icon className='size-4 shrink-0' />
                 <span className='truncate'>{item.label}</span>
               </button>
             );
@@ -159,10 +159,10 @@ export function SettingsSidebar({
                 <TooltipTrigger asChild>
                   <button
                     onClick={onToggleDesktop}
-                    className='text-muted-foreground hover:bg-secondary hover:text-secondary-foreground hidden h-8 w-8 items-center justify-center rounded-md transition-colors md:flex'
+                    className='text-muted-foreground hover:bg-secondary hover:text-secondary-foreground hidden size-8 items-center justify-center rounded-md transition-colors md:flex'
                     aria-label='Expand sidebar'
                   >
-                    <ChevronsRightIcon className='h-4 w-4' />
+                    <ChevronsRightIcon className='size-4' />
                   </button>
                 </TooltipTrigger>
                 <TooltipContent side='right'>Expand sidebar</TooltipContent>
@@ -179,10 +179,10 @@ export function SettingsSidebar({
                 <TooltipTrigger asChild>
                   <button
                     onClick={onToggleDesktop}
-                    className='text-muted-foreground/70 hover:bg-secondary hover:text-muted-foreground hidden h-8 w-8 items-center justify-center rounded-md transition-colors md:flex'
+                    className='text-muted-foreground/70 hover:bg-secondary hover:text-muted-foreground hidden size-8 items-center justify-center rounded-md transition-colors md:flex'
                     aria-label='Collapse sidebar'
                   >
-                    <ChevronsLeftIcon className='h-4 w-4' />
+                    <ChevronsLeftIcon className='size-4' />
                   </button>
                 </TooltipTrigger>
                 <TooltipContent side='right'>Collapse sidebar</TooltipContent>
@@ -202,10 +202,10 @@ export function SettingsSidebar({
                 <TooltipTrigger asChild>
                   <button
                     onClick={() => navigate({ to: '/dashboard' })}
-                    className='text-muted-foreground hover:bg-secondary hover:text-secondary-foreground flex h-8 w-8 items-center justify-center rounded-md transition-colors'
+                    className='text-muted-foreground hover:bg-secondary hover:text-secondary-foreground flex size-8 items-center justify-center rounded-md transition-colors'
                     aria-label='Back to App'
                   >
-                    <ArrowLeftIcon className='h-4 w-4' />
+                    <ArrowLeftIcon className='size-4' />
                   </button>
                 </TooltipTrigger>
                 <TooltipContent side='right'>Back to App</TooltipContent>
@@ -218,10 +218,10 @@ export function SettingsSidebar({
                     <TooltipTrigger asChild>
                       <button
                         onClick={() => navigate({ to: item.path as string })}
-                        className={`flex h-8 w-8 items-center justify-center rounded-md transition-colors ${isActive ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-secondary hover:text-secondary-foreground'}`}
+                        className={`flex size-8 items-center justify-center rounded-md transition-colors ${isActive ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-secondary hover:text-secondary-foreground'}`}
                         aria-label={item.label}
                       >
-                        <Icon className='h-4 w-4' />
+                        <Icon className='size-4' />
                       </button>
                     </TooltipTrigger>
                     <TooltipContent side='right'>{item.label}</TooltipContent>
@@ -274,10 +274,10 @@ export function SettingsSidebar({
                 </span>
                 <button
                   onClick={onCloseMobile}
-                  className='text-muted-foreground/70 hover:bg-secondary hover:text-muted-foreground flex h-7 w-7 items-center justify-center rounded-md transition-colors'
+                  className='text-muted-foreground/70 hover:bg-secondary hover:text-muted-foreground flex size-7 items-center justify-center rounded-md transition-colors'
                   aria-label='Close sidebar'
                 >
-                  <XIcon className='h-4 w-4' />
+                  <XIcon className='size-4' />
                 </button>
               </div>
               {renderNavContent()}

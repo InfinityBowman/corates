@@ -6,7 +6,7 @@ function EcosystemIllustration() {
       <div className='relative'>
         {/* Central hub */}
         <div className='flex items-center justify-center'>
-          <div className='flex h-20 w-20 items-center justify-center rounded-2xl bg-linear-to-br from-blue-500 to-blue-700 shadow-lg'>
+          <div className='flex size-20 items-center justify-center rounded-2xl bg-linear-to-br from-blue-500 to-blue-700 shadow-lg'>
             <span className='text-lg font-bold text-white'>Co</span>
           </div>
         </div>
@@ -14,25 +14,25 @@ function EcosystemIllustration() {
         {/* Orbiting elements */}
         <div className='absolute top-0 left-1/4 -translate-x-1/2 -translate-y-2'>
           <div className='rounded-lg border border-gray-200 bg-white p-2.5 shadow-md'>
-            <FileTextIcon className='h-5 w-5 text-rose-500' />
+            <FileTextIcon className='size-5 text-rose-500' />
           </div>
         </div>
 
         <div className='absolute top-0 right-1/4 translate-x-1/2 -translate-y-2'>
           <div className='rounded-lg border border-gray-200 bg-white p-2.5 shadow-md'>
-            <TrendingUpIcon className='h-5 w-5 text-violet-500' />
+            <TrendingUpIcon className='size-5 text-violet-500' />
           </div>
         </div>
 
         <div className='absolute bottom-0 left-1/4 -translate-x-1/2 translate-y-2'>
           <div className='rounded-lg border border-gray-200 bg-white p-2.5 shadow-md'>
-            <UsersIcon className='h-5 w-5 text-emerald-500' />
+            <UsersIcon className='size-5 text-emerald-500' />
           </div>
         </div>
 
         <div className='absolute right-1/4 bottom-0 translate-x-1/2 translate-y-2'>
           <div className='rounded-lg border border-gray-200 bg-white p-2.5 shadow-md'>
-            <CheckCircleIcon className='h-5 w-5 text-amber-500' />
+            <CheckCircleIcon className='size-5 text-amber-500' />
           </div>
         </div>
 

@@ -9,13 +9,13 @@ import { getLastLoginMethod, LOGIN_METHOD_LABELS, LOGIN_METHODS } from '@/lib/la
 function getIcon(method: string) {
   switch (method) {
     case LOGIN_METHODS.GOOGLE:
-      return <img src='/logos/google.svg' alt='' className='h-4 w-4' aria-hidden='true' />;
+      return <img src='/logos/google.svg' alt='' className='size-4' aria-hidden='true' />;
     case LOGIN_METHODS.ORCID:
-      return <img src='/logos/orcid.svg' alt='' className='h-4 w-4' aria-hidden='true' />;
+      return <img src='/logos/orcid.svg' alt='' className='size-4' aria-hidden='true' />;
     case LOGIN_METHODS.MAGIC_LINK:
-      return <MailIcon className='h-4 w-4' />;
+      return <MailIcon className='size-4' />;
     default:
-      return <LockIcon className='h-4 w-4' />;
+      return <LockIcon className='size-4' />;
   }
 }
 

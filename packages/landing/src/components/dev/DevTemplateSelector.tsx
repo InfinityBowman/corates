@@ -180,7 +180,7 @@ export function DevTemplateSelector({ projectId, orgId }: DevTemplateSelectorPro
 
         {isApplying && (
           <div className='flex items-center gap-2 text-xs text-gray-500'>
-            <span className='h-3 w-3 animate-spin rounded-full border-2 border-purple-500 border-t-transparent' />
+            <span className='size-3 animate-spin rounded-full border-2 border-purple-500 border-t-transparent' />
             Applying template...
           </div>
         )}
@@ -273,7 +273,7 @@ export function DevTemplateSelector({ projectId, orgId }: DevTemplateSelectorPro
             disabled={!selectedTemplate || isApplying}
           >
             {isApplying ?
-              <span className='h-3.5 w-3.5 animate-spin rounded-full border-2 border-current border-t-transparent' />
+              <span className='size-3.5 animate-spin rounded-full border-2 border-current border-t-transparent' />
             : <DownloadIcon size={14} />}
             {isApplying ? 'Applying...' : 'Apply Template'}
           </button>

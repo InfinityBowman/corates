@@ -88,10 +88,10 @@ export function AdminDataTable<T>({
                       {enableSorting && header.column.getCanSort() && (
                         <span className='text-muted-foreground/70 ml-1'>
                           {header.column.getIsSorted() === 'asc' ?
-                            <ChevronUpIcon className='h-4 w-4' />
+                            <ChevronUpIcon className='size-4' />
                           : header.column.getIsSorted() === 'desc' ?
-                            <ChevronDownIcon className='h-4 w-4' />
-                          : <span className='h-4 w-4' />}
+                            <ChevronDownIcon className='size-4' />
+                          : <span className='size-4' />}
                         </span>
                       )}
                     </div>

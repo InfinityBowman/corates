@@ -15,10 +15,10 @@ interface Activity {
 }
 
 const ICON_MAP: Record<string, React.ReactNode> = {
-  study: <FileTextIcon className='h-4 w-4' />,
-  project: <FolderIcon className='h-4 w-4' />,
-  complete: <CheckIcon className='h-4 w-4' />,
-  user: <UserIcon className='h-4 w-4' />,
+  study: <FileTextIcon className='size-4' />,
+  project: <FolderIcon className='size-4' />,
+  complete: <CheckIcon className='size-4' />,
+  user: <UserIcon className='size-4' />,
 };
 
 const BG_MAP: Record<string, string> = {
@@ -31,9 +31,9 @@ const BG_MAP: Record<string, string> = {
 function ActivityIcon({ type }: { type: string }) {
   return (
     <div
-      className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${BG_MAP[type] || 'bg-secondary text-secondary-foreground'}`}
+      className={`flex size-8 shrink-0 items-center justify-center rounded-full ${BG_MAP[type] || 'bg-secondary text-secondary-foreground'}`}
     >
-      {ICON_MAP[type] || <ClockIcon className='h-4 w-4' />}
+      {ICON_MAP[type] || <ClockIcon className='size-4' />}
     </div>
   );
 }
@@ -89,8 +89,8 @@ export function ActivityFeed({ activities = [], limit = 5, onViewAll }: Activity
           ))}
         </div>
       : <div className='py-8 text-center'>
-          <div className='bg-secondary mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full'>
-            <ClockIcon className='text-muted-foreground/70 h-5 w-5' />
+          <div className='bg-secondary mx-auto mb-3 flex size-12 items-center justify-center rounded-full'>
+            <ClockIcon className='text-muted-foreground/70 size-5' />
           </div>
           <p className='text-muted-foreground text-sm'>No recent activity</p>
           <p className='text-muted-foreground/70 mt-1 text-xs'>

@@ -79,7 +79,7 @@ export function SubscriptionList({
       </div>
       {isLoading ?
         <div className='flex items-center justify-center py-12'>
-          <LoaderIcon className='h-8 w-8 animate-spin text-blue-600' />
+          <LoaderIcon className='size-8 animate-spin text-blue-600' />
         </div>
       : <div className='p-6'>
           {subscriptions.length > 0 ?
@@ -156,8 +156,8 @@ export function SubscriptionList({
                                 title='Copy customer ID'
                               >
                                 {copiedId === `customer-${subscription.stripeCustomerId}` ?
-                                  <CheckIcon className='h-3 w-3 text-green-600' />
-                                : <CopyIcon className='h-3 w-3' />}
+                                  <CheckIcon className='size-3 text-green-600' />
+                                : <CopyIcon className='size-3' />}
                               </button>
                             </div>
                           )}
@@ -177,8 +177,8 @@ export function SubscriptionList({
                                 title='Copy subscription ID'
                               >
                                 {copiedId === `subscription-${subscription.stripeSubscriptionId}` ?
-                                  <CheckIcon className='h-3 w-3 text-green-600' />
-                                : <CopyIcon className='h-3 w-3' />}
+                                  <CheckIcon className='size-3 text-green-600' />
+                                : <CopyIcon className='size-3' />}
                               </button>
                             </div>
                           )}
@@ -193,7 +193,7 @@ export function SubscriptionList({
                         title='Edit subscription'
                         aria-label='Edit subscription'
                       >
-                        <PencilIcon className='h-4 w-4' />
+                        <PencilIcon className='size-4' />
                       </button>
                       <button
                         onClick={() => onCancel?.(subscription.id)}
@@ -202,7 +202,7 @@ export function SubscriptionList({
                         title='Cancel subscription'
                         aria-label='Cancel subscription'
                       >
-                        <Trash2Icon className='h-4 w-4' />
+                        <Trash2Icon className='size-4' />
                       </button>
                     </div>
                   </div>

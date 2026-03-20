@@ -12,6 +12,7 @@ import {
   CheckCircleIcon,
   RefreshCwIcon,
 } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 import { useAdminBillingStuckStates } from '@/hooks/useAdminQueries';
 import { DashboardHeader, AdminBox } from '@/components/admin/ui';
 import { input } from '@/components/admin/styles/admin-tokens';
@@ -143,9 +144,9 @@ function AdminBillingStuckStatesPage() {
               disabled={stuckStatesQuery.isFetching}
             >
               {stuckStatesQuery.isFetching ?
-                <LoaderIcon className='h-4 w-4 animate-spin' />
+                <LoaderIcon className='size-4 animate-spin' />
               : <>
-                  <RefreshCwIcon className='h-4 w-4' /> Refresh
+                  <RefreshCwIcon className='size-4' /> Refresh
                 </>
               }
             </button>
@@ -174,11 +175,11 @@ function AdminBillingStuckStatesPage() {
       {/* Stuck Orgs by Type */}
       {stuckStatesQuery.isLoading ?
         <div className='flex items-center justify-center py-12'>
-          <LoaderIcon className='h-8 w-8 animate-spin text-blue-600' />
+          <LoaderIcon className='size-8 animate-spin text-blue-600' />
         </div>
       : stuckOrgs.length === 0 ?
         <AdminBox className='p-12 text-center'>
-          <CheckCircleIcon className='mx-auto mb-4 h-12 w-12 text-green-500' />
+          <CheckCircleIcon className='mx-auto mb-4 size-12 text-green-500' />
           <p className='text-foreground text-lg font-medium'>No stuck states found</p>
           <p className='text-muted-foreground text-sm'>
             All organizations have healthy billing states
@@ -192,13 +193,13 @@ function AdminBillingStuckStatesPage() {
               <AdminBox key={type} padding='compact' className='overflow-hidden p-0'>
                 <div className='border-border border-b px-6 py-4'>
                   <div className='flex items-center space-x-3'>
-                    <Icon className='h-5 w-5 text-orange-600' />
+                    <Icon className='size-5 text-orange-600' />
                     <h2 className='text-foreground text-lg font-semibold'>
                       {getStuckStateTypeLabel(type)}
                     </h2>
-                    <span className='rounded-full bg-orange-100 px-2.5 py-0.5 text-xs font-medium text-orange-800'>
+                    <Badge variant='warning'>
                       {orgs.length}
-                    </span>
+                    </Badge>
                   </div>
                 </div>
                 <div className='p-6'>

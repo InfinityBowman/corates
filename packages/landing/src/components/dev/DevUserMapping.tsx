@@ -234,7 +234,7 @@ function MappingRow({ originalId, mappedTo, currentUser, projectId, onSelect }: 
                 onFocus={() => setIsOpen(true)}
               />
               {searching && (
-                <span className='absolute top-1/2 right-1.5 h-3 w-3 -translate-y-1/2 animate-spin rounded-full border border-gray-400 border-t-transparent' />
+                <span className='absolute top-1/2 right-1.5 size-3 -translate-y-1/2 animate-spin rounded-full border border-gray-400 border-t-transparent' />
               )}
             </div>
 

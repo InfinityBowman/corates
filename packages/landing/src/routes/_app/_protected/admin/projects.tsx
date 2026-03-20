@@ -119,8 +119,8 @@ function AdminProjectList() {
               params={{ projectId: project.id } as Record<string, string>}
               className='flex items-center space-x-3'
             >
-              <div className='flex h-10 w-10 items-center justify-center rounded-lg bg-green-100'>
-                <FolderIcon className='h-5 w-5 text-green-600' />
+              <div className='flex size-10 items-center justify-center rounded-lg bg-green-100'>
+                <FolderIcon className='size-5 text-green-600' />
               </div>
               <div>
                 <p className='font-medium text-blue-600 hover:text-blue-700'>{project.name}</p>
@@ -147,7 +147,7 @@ function AdminProjectList() {
                 className='text-secondary-foreground flex items-center space-x-2 hover:text-blue-600'
                 onClick={(e: React.MouseEvent) => e.stopPropagation()}
               >
-                <HomeIcon className='h-4 w-4' />
+                <HomeIcon className='size-4' />
                 <span>{project.orgName}</span>
               </Link>
               <p className='text-muted-foreground text-xs'>@{project.orgSlug}</p>
@@ -160,7 +160,7 @@ function AdminProjectList() {
         header: 'Members',
         cell: info => (
           <span className='bg-secondary text-secondary-foreground inline-flex items-center rounded-full px-2.5 py-0.5 text-sm font-medium'>
-            <UsersIcon className='mr-1 h-3 w-3' />
+            <UsersIcon className='mr-1 size-3' />
             {info.getValue() as number}
           </span>
         ),
@@ -170,7 +170,7 @@ function AdminProjectList() {
         header: 'Files',
         cell: info => (
           <span className='bg-secondary text-secondary-foreground inline-flex items-center rounded-full px-2.5 py-0.5 text-sm font-medium'>
-            <FileIcon className='mr-1 h-3 w-3' />
+            <FileIcon className='mr-1 size-3' />
             {info.getValue() as number}
           </span>
         ),
@@ -201,7 +201,7 @@ function AdminProjectList() {
       <div className='mb-6 flex flex-col gap-4 sm:flex-row'>
         <form onSubmit={handleSearch} className='flex-1'>
           <div className='relative'>
-            <SearchIcon className='text-muted-foreground/70 pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2' />
+            <SearchIcon className='text-muted-foreground/70 pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2' />
             <input
               type='text'
               value={searchInput}
@@ -215,7 +215,7 @@ function AdminProjectList() {
                 onClick={clearSearch}
                 className='text-muted-foreground/70 hover:text-muted-foreground absolute top-1/2 right-3 -translate-y-1/2'
               >
-                <XIcon className='h-4 w-4' />
+                <XIcon className='size-4' />
               </button>
             )}
           </div>
@@ -241,7 +241,7 @@ function AdminProjectList() {
       {/* Error State */}
       {projectsQuery.isError && (
         <div className='rounded-lg border border-red-200 bg-red-50 p-6 text-center'>
-          <AlertCircleIcon className='mx-auto mb-2 h-8 w-8 text-red-500' />
+          <AlertCircleIcon className='mx-auto mb-2 size-8 text-red-500' />
           <p className='text-red-700'>Failed to load projects</p>
           <button
             type='button'
@@ -262,7 +262,7 @@ function AdminProjectList() {
             loading={projectsQuery.isLoading}
             emptyState={
               <div className='flex flex-col items-center gap-2'>
-                <FolderIcon className='text-muted-foreground/50 h-8 w-8' />
+                <FolderIcon className='text-muted-foreground/50 size-8' />
                 <span className='text-muted-foreground'>No projects found</span>
                 {(search || selectedOrgId) && (
                   <button
@@ -301,7 +301,7 @@ function AdminProjectList() {
                   disabled={page === 1}
                   className='border-border bg-card text-muted-foreground hover:bg-muted rounded-xl border p-2 shadow-xs disabled:cursor-not-allowed disabled:opacity-50'
                 >
-                  <ChevronLeftIcon className='h-4 w-4' />
+                  <ChevronLeftIcon className='size-4' />
                 </button>
                 <span className='text-muted-foreground text-sm'>
                   Page {pagination.page} of {pagination.totalPages}
@@ -312,7 +312,7 @@ function AdminProjectList() {
                   disabled={page === pagination.totalPages}
                   className='border-border bg-card text-muted-foreground hover:bg-muted rounded-xl border p-2 shadow-xs disabled:cursor-not-allowed disabled:opacity-50'
                 >
-                  <ChevronRightIcon className='h-4 w-4' />
+                  <ChevronRightIcon className='size-4' />
                 </button>
               </div>
             </div>

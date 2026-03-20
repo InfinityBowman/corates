@@ -69,7 +69,7 @@ function AdminLayout() {
   if (!isAdminChecked) {
     return (
       <div className='flex min-h-100 items-center justify-center'>
-        <LoaderIcon className='h-8 w-8 animate-spin text-blue-600' />
+        <LoaderIcon className='size-8 animate-spin text-blue-600' />
       </div>
     );
   }
@@ -77,7 +77,7 @@ function AdminLayout() {
   if (!isAdmin) {
     return (
       <div className='text-muted-foreground flex min-h-100 flex-col items-center justify-center'>
-        <AlertCircleIcon className='mb-4 h-12 w-12' />
+        <AlertCircleIcon className='mb-4 size-12' />
         <p className='text-lg font-medium'>Access Denied</p>
         <p className='text-sm'>You do not have admin privileges.</p>
       </div>
@@ -103,7 +103,7 @@ function AdminLayout() {
                     : 'text-muted-foreground hover:border-border hover:bg-muted hover:text-foreground border-transparent'
                   }`}
                 >
-                  <Icon className='h-4 w-4' />
+                  <Icon className='size-4' />
                   <span>{item.label}</span>
                 </Link>
               );

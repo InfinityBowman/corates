@@ -126,7 +126,7 @@ export function OutcomeManager() {
         >
           <div className='-ml-1 shrink-0 p-1'>
             <ChevronRightIcon
-              className={`text-muted-foreground/70 h-5 w-5 transition-transform duration-200 ${expanded ? 'rotate-90' : ''}`}
+              className={`text-muted-foreground/70 size-5 transition-transform duration-200 ${expanded ? 'rotate-90' : ''}`}
             />
           </div>
 
@@ -151,7 +151,7 @@ export function OutcomeManager() {
               }}
               className='text-muted-foreground hover:text-primary flex items-center gap-1 text-sm transition-colors'
             >
-              <PlusIcon className='h-4 w-4' />
+              <PlusIcon className='size-4' />
               Add
             </button>
           )}
@@ -187,7 +187,7 @@ export function OutcomeManager() {
                   title='Add'
                   aria-label='Add'
                 >
-                  <CheckIcon className='h-4 w-4' />
+                  <CheckIcon className='size-4' />
                 </button>
                 <button
                   onClick={() => {
@@ -198,7 +198,7 @@ export function OutcomeManager() {
                   title='Cancel'
                   aria-label='Cancel'
                 >
-                  <XIcon className='h-4 w-4' />
+                  <XIcon className='size-4' />
                 </button>
               </div>
             )}
@@ -243,7 +243,7 @@ export function OutcomeManager() {
                     title='Save'
                     aria-label='Save'
                   >
-                    <CheckIcon className='h-4 w-4' />
+                    <CheckIcon className='size-4' />
                   </button>
                   <button
                     onClick={() => {
@@ -254,7 +254,7 @@ export function OutcomeManager() {
                     title='Cancel'
                     aria-label='Cancel'
                   >
-                    <XIcon className='h-4 w-4' />
+                    <XIcon className='size-4' />
                   </button>
                 </div>
               : <div key={outcome.id} className='flex items-center gap-2'>
@@ -272,7 +272,7 @@ export function OutcomeManager() {
                         title='Edit'
                         aria-label='Edit'
                       >
-                        <PencilIcon className='h-3.5 w-3.5' />
+                        <PencilIcon className='size-3.5' />
                       </button>
                       <button
                         onClick={() => setDeleteTarget(outcome.id)}
@@ -280,7 +280,7 @@ export function OutcomeManager() {
                         title='Delete'
                         aria-label='Delete'
                       >
-                        <Trash2Icon className='h-3.5 w-3.5' />
+                        <Trash2Icon className='size-3.5' />
                       </button>
                     </>
                   )}

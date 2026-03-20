@@ -3,35 +3,35 @@ import { UserPlusIcon, SchoolIcon, BriefcaseMedicalIcon, FileTextIcon } from 'lu
 export default function WhoIsCoRATESFor() {
   const audiences = [
     {
-      icon: <UserPlusIcon className='h-6 w-6' />,
+      icon: <UserPlusIcon className='size-6' />,
       title: 'Systematic review and evidence synthesis teams',
       description:
         'Appraise multiple studies in a structured, consistent way that supports rigorous, transparent, and well-documented review processes.',
       color: 'blue',
     },
     {
-      icon: <SchoolIcon className='h-6 w-6' />,
+      icon: <SchoolIcon className='size-6' />,
       title: 'Students learning to appraise research',
       description:
         'Learn study appraisal by using validated tools in a guided interface, with free single-study assessments for easy practice.',
       color: 'emerald',
     },
     {
-      icon: <SchoolIcon className='h-6 w-6' />,
+      icon: <SchoolIcon className='size-6' />,
       title: 'Faculty teaching research methods or appraisal',
       description:
         'Use structured appraisal activities to help students understand what makes different research designs rigorous by examining real published studies.',
       color: 'violet',
     },
     {
-      icon: <BriefcaseMedicalIcon className='h-6 w-6' />,
+      icon: <BriefcaseMedicalIcon className='size-6' />,
       title: 'Clinicians and practitioners',
       description:
         'Evaluate the quality of individual studies when deciding whether evidence should inform practice, policy, or program decisions.',
       color: 'rose',
     },
     {
-      icon: <FileTextIcon className='h-6 w-6' />,
+      icon: <FileTextIcon className='size-6' />,
       title: 'Anyone needing to appraise a single study',
       description:
         'CoRATES makes it easy to complete a one-off appraisal for free, including automatic study-level scoring.',
@@ -66,7 +66,7 @@ export default function WhoIsCoRATESFor() {
               className='group relative overflow-hidden rounded-xl border border-gray-100 bg-white p-6 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md'
             >
               <div
-                className={`h-12 w-12 ${colors.bg} mb-4 flex items-center justify-center rounded-xl ${colors.icon}`}
+                className={`size-12 ${colors.bg} mb-4 flex items-center justify-center rounded-xl ${colors.icon}`}
               >
                 {audience.icon}
               </div>

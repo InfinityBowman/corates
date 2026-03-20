@@ -167,7 +167,7 @@ export function DevPanel() {
       {/* Floating toggle button */}
       {!isOpen && (
         <button
-          className='fixed bottom-5 left-5 z-9999 flex h-12 w-12 items-center justify-center rounded-full bg-purple-600 text-white shadow-lg transition-transform hover:scale-110 hover:bg-purple-700'
+          className='fixed bottom-5 left-5 z-9999 flex size-12 items-center justify-center rounded-full bg-purple-600 text-white shadow-lg transition-transform hover:scale-110 hover:bg-purple-700'
           onClick={() => setIsOpen(true)}
           title='Open Dev Panel'
         >
@@ -305,10 +305,10 @@ export function DevPanel() {
 
               {/* Resize handle */}
               <div
-                className='absolute right-0 bottom-0 h-4 w-4 cursor-se-resize'
+                className='absolute right-0 bottom-0 size-4 cursor-se-resize'
                 onMouseDown={handleResizeStart}
               >
-                <svg className='h-4 w-4 text-gray-400' viewBox='0 0 16 16' fill='currentColor'>
+                <svg className='size-4 text-gray-400' viewBox='0 0 16 16' fill='currentColor'>
                   <path d='M14 14v-2h-2v2h2zm0-4v-2h-2v2h2zm-4 4v-2H8v2h2zm0-4v-2H8v2h2zm-4 4v-2H4v2h2z' />
                 </svg>
               </div>

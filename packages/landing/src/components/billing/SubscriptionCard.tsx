@@ -91,7 +91,7 @@ export function SubscriptionCard({ subscription, onManage, manageLoading }: Subs
             className={`mt-4 flex items-center gap-2 rounded-lg px-3 py-2 backdrop-blur-sm ${daysRemaining <= 3 ? 'bg-amber-500/20' : 'bg-white/10'}`}
           >
             <ClockIcon
-              className={`h-4 w-4 ${daysRemaining <= 3 ? 'text-amber-200' : 'text-blue-200'}`}
+              className={`size-4 ${daysRemaining <= 3 ? 'text-amber-200' : 'text-blue-200'}`}
             />
             <span className='text-sm font-medium text-white'>
               {daysRemaining} days remaining in trial
@@ -141,7 +141,7 @@ export function SubscriptionCard({ subscription, onManage, manageLoading }: Subs
                 className='mt-2 inline-flex items-center gap-1 text-sm font-medium text-amber-700 hover:text-amber-800'
               >
                 View upgrade options
-                <ArrowRightIcon className='h-4 w-4' />
+                <ArrowRightIcon className='size-4' />
               </Link>
             </div>
           </Alert>
@@ -153,7 +153,7 @@ export function SubscriptionCard({ subscription, onManage, manageLoading }: Subs
             {sub.currentPeriodEnd && !willCancel && (
               <div className='flex items-center justify-between text-sm'>
                 <span className='text-muted-foreground flex items-center gap-2'>
-                  <CalendarIcon className='h-4 w-4' />
+                  <CalendarIcon className='size-4' />
                   {isTrial ? 'Trial ends' : 'Next billing date'}
                 </span>
                 <span className='text-foreground font-medium'>{periodEndDate}</span>
@@ -175,7 +175,7 @@ export function SubscriptionCard({ subscription, onManage, manageLoading }: Subs
               to='/settings/plans'
               className='bg-primary text-primary-foreground hover:bg-primary/90 inline-flex flex-1 items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold shadow-sm transition-all hover:shadow-md'
             >
-              <ZapIcon className='h-4 w-4' />
+              <ZapIcon className='size-4' />
               Upgrade Now
             </Link>
           : <>
@@ -187,11 +187,11 @@ export function SubscriptionCard({ subscription, onManage, manageLoading }: Subs
               >
                 {manageLoading ?
                   <>
-                    <LoaderIcon className='h-4 w-4 animate-spin' />
+                    <LoaderIcon className='size-4 animate-spin' />
                     Loading...
                   </>
                 : <>
-                    <CreditCardIcon className='h-4 w-4' />
+                    <CreditCardIcon className='size-4' />
                     Manage Billing
                   </>
                 }
@@ -201,7 +201,7 @@ export function SubscriptionCard({ subscription, onManage, manageLoading }: Subs
                 className='text-primary hover:bg-primary/5 inline-flex items-center gap-1 rounded-lg px-4 py-2.5 text-sm font-medium transition-colors'
               >
                 Change Plan
-                <ArrowRightIcon className='h-4 w-4' />
+                <ArrowRightIcon className='size-4' />
               </Link>
             </>
           }

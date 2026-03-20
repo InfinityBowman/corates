@@ -6,6 +6,7 @@
 import { useState, useCallback, useMemo } from 'react';
 import { createFileRoute, Link } from '@tanstack/react-router';
 import { LoaderIcon, CopyIcon, CheckIcon, ExternalLinkIcon, FilterIcon } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 import { useAdminBillingLedger } from '@/hooks/useAdminQueries';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { showToast } from '@/components/ui/toast';
@@ -60,20 +61,20 @@ const formatDate = (timestamp: string | number | Date | null | undefined): strin
   });
 };
 
-const getStatusColor = (status: string): string => {
+const getStatusVariant = (status: string): 'success' | 'destructive' | 'warning' | 'info' | 'secondary' => {
   switch (status) {
     case 'processed':
-      return 'bg-green-100 text-green-800';
+      return 'success';
     case 'failed':
-      return 'bg-red-100 text-red-800';
+      return 'destructive';
     case 'ignored_unverified':
-      return 'bg-yellow-100 text-yellow-800';
+      return 'warning';
     case 'skipped_duplicate':
-      return 'bg-secondary text-foreground';
+      return 'secondary';
     case 'received':
-      return 'bg-blue-100 text-blue-800';
+      return 'info';
     default:
-      return 'bg-secondary text-foreground';
+      return 'secondary';
   }
 };
 
@@ -150,11 +151,9 @@ function AdminBillingLedgerPage() {
         cell: info => {
           const value = info.getValue() as string;
           return (
-            <span
-              className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium whitespace-nowrap ${getStatusColor(value)}`}
-            >
+            <Badge variant={getStatusVariant(value)} className='whitespace-nowrap'>
               {value.replace(/_/g, ' ')}
-            </span>
+            </Badge>
           );
         },
       },
@@ -185,8 +184,8 @@ function AdminBillingLedgerPage() {
                 title='Copy event ID'
               >
                 {copiedId === `Event ID-${entry.stripeEventId}` ?
-                  <CheckIcon className='h-3 w-3 text-green-600' />
-                : <CopyIcon className='h-3 w-3' />}
+                  <CheckIcon className='size-3 text-green-600' />
+                : <CopyIcon className='size-3' />}
               </button>
               <a
                 href={getStripeUrl('event', entry.stripeEventId) || '#'}
@@ -195,7 +194,7 @@ function AdminBillingLedgerPage() {
                 className='text-muted-foreground/70 hover:text-muted-foreground'
                 title='Open in Stripe'
               >
-                <ExternalLinkIcon className='h-3 w-3' />
+                <ExternalLinkIcon className='size-3' />
               </a>
             </div>
           );
@@ -225,8 +224,8 @@ function AdminBillingLedgerPage() {
                 title='Copy org ID'
               >
                 {copiedId === `Org ID-${entry.orgId}` ?
-                  <CheckIcon className='h-3 w-3 text-green-600' />
-                : <CopyIcon className='h-3 w-3' />}
+                  <CheckIcon className='size-3 text-green-600' />
+                : <CopyIcon className='size-3' />}
               </button>
             </div>
           );
@@ -252,8 +251,8 @@ function AdminBillingLedgerPage() {
                     title='Copy customer ID'
                   >
                     {copiedId === `Customer ID-${entry.stripeCustomerId}` ?
-                      <CheckIcon className='h-3 w-3 text-green-600' />
-                    : <CopyIcon className='h-3 w-3' />}
+                      <CheckIcon className='size-3 text-green-600' />
+                    : <CopyIcon className='size-3' />}
                   </button>
                   <a
                     href={getStripeUrl('customer', entry.stripeCustomerId) || '#'}
@@ -262,7 +261,7 @@ function AdminBillingLedgerPage() {
                     className='text-muted-foreground/70 hover:text-muted-foreground'
                     title='Open in Stripe'
                   >
-                    <ExternalLinkIcon className='h-3 w-3' />
+                    <ExternalLinkIcon className='size-3' />
                   </a>
                 </div>
               )}
@@ -279,8 +278,8 @@ function AdminBillingLedgerPage() {
                     title='Copy subscription ID'
                   >
                     {copiedId === `Subscription ID-${entry.stripeSubscriptionId}` ?
-                      <CheckIcon className='h-3 w-3 text-green-600' />
-                    : <CopyIcon className='h-3 w-3' />}
+                      <CheckIcon className='size-3 text-green-600' />
+                    : <CopyIcon className='size-3' />}
                   </button>
                   <a
                     href={getStripeUrl('subscription', entry.stripeSubscriptionId) || '#'}
@@ -289,7 +288,7 @@ function AdminBillingLedgerPage() {
                     className='text-muted-foreground/70 hover:text-muted-foreground'
                     title='Open in Stripe'
                   >
-                    <ExternalLinkIcon className='h-3 w-3' />
+                    <ExternalLinkIcon className='size-3' />
                   </a>
                 </div>
               )}
@@ -308,8 +307,8 @@ function AdminBillingLedgerPage() {
                     title='Copy checkout session ID'
                   >
                     {copiedId === `Checkout Session ID-${entry.stripeCheckoutSessionId}` ?
-                      <CheckIcon className='h-3 w-3 text-green-600' />
-                    : <CopyIcon className='h-3 w-3' />}
+                      <CheckIcon className='size-3 text-green-600' />
+                    : <CopyIcon className='size-3' />}
                   </button>
                 </div>
               )}
@@ -337,8 +336,8 @@ function AdminBillingLedgerPage() {
                 title='Copy request ID'
               >
                 {copiedId === `Request ID-${entry.requestId}` ?
-                  <CheckIcon className='h-3 w-3 text-green-600' />
-                : <CopyIcon className='h-3 w-3' />}
+                  <CheckIcon className='size-3 text-green-600' />
+                : <CopyIcon className='size-3' />}
               </button>
             </div>
           );
@@ -380,7 +379,7 @@ function AdminBillingLedgerPage() {
             disabled={ledgerQuery.isFetching}
           >
             {ledgerQuery.isFetching ?
-              <LoaderIcon className='h-4 w-4 animate-spin' />
+              <LoaderIcon className='size-4 animate-spin' />
             : 'Refresh'}
           </button>
         }

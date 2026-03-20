@@ -383,7 +383,7 @@ export function ChecklistYjsWrapper({ projectId, studyId, checklistId }: Checkli
         onClick={() => navigate({ to: getBackPath() as string })}
         className='text-muted-foreground/70 hover:text-secondary-foreground transition-colors'
       >
-        <ChevronLeftIcon className='h-5 w-5' />
+        <ChevronLeftIcon className='size-5' />
       </button>
       <div className='text-muted-foreground truncate text-sm'>
         <span className='text-foreground font-medium'>

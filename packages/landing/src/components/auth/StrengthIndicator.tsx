@@ -65,7 +65,7 @@ export function StrengthIndicator({ password, onUnmet }: StrengthIndicatorProps)
           return (
             <li key={req.label} className='flex items-center gap-2'>
               <span
-                className={`ml-1 flex h-4 w-4 items-center justify-center rounded-full ${
+                className={`ml-1 flex size-4 items-center justify-center rounded-full ${
                   met ?
                     'border border-green-500 bg-white text-green-500'
                   : 'border border-red-600 text-red-600'
@@ -73,8 +73,8 @@ export function StrengthIndicator({ password, onUnmet }: StrengthIndicatorProps)
                 aria-hidden='true'
               >
                 {met ?
-                  <CheckIcon className='h-3 w-3' />
-                : <XIcon className='h-3 w-3' />}
+                  <CheckIcon className='size-3' />
+                : <XIcon className='size-3' />}
               </span>
               <span className={met ? 'text-green-500' : 'text-red-600'}>{req.label}</span>
             </li>

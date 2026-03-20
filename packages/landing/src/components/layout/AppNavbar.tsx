@@ -78,8 +78,8 @@ export function AppNavbar({ mobileSidebarOpen, toggleMobileSidebar }: AppNavbarP
             aria-label={mobileSidebarOpen ? 'Close sidebar' : 'Open sidebar'}
           >
             {mobileSidebarOpen ?
-              <XIcon className='h-4 w-4' />
-            : <MenuIcon className='h-4 w-4' />}
+              <XIcon className='size-4' />
+            : <MenuIcon className='size-4' />}
           </button>
         )}
 
@@ -93,7 +93,7 @@ export function AppNavbar({ mobileSidebarOpen, toggleMobileSidebar }: AppNavbarP
               src='/logo.svg'
               alt='CoRATES Logo'
               aria-hidden='true'
-              className='h-5 w-5 rounded-sm'
+              className='size-5 rounded-sm'
               width='20'
               height='20'
             />
@@ -104,7 +104,7 @@ export function AppNavbar({ mobileSidebarOpen, toggleMobileSidebar }: AppNavbarP
         {/* Offline indicator */}
         {!isOnline && (
           <div className='flex items-center gap-1 rounded-full bg-amber-500/90 px-2 py-1 text-xs text-white'>
-            <WifiOffIcon className='h-3 w-3' />
+            <WifiOffIcon className='size-3' />
             <span className='hidden sm:inline'>Offline</span>
           </div>
         )}
@@ -131,7 +131,7 @@ export function AppNavbar({ mobileSidebarOpen, toggleMobileSidebar }: AppNavbarP
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button className='flex h-9 items-center space-x-2 rounded px-2 font-medium transition hover:bg-blue-600'>
-                <Avatar className='h-6 w-6' size='sm'>
+                <Avatar className='size-6' size='sm'>
                   {user?.image ?
                     <AvatarImage src={user.image} alt={displayName} />
                   : null}
@@ -140,7 +140,7 @@ export function AppNavbar({ mobileSidebarOpen, toggleMobileSidebar }: AppNavbarP
                   </AvatarFallback>
                 </Avatar>
                 <span className='hidden sm:block'>{displayName}</span>
-                <ChevronDownIcon className='h-3 w-3' aria-hidden='true' />
+                <ChevronDownIcon className='size-3' aria-hidden='true' />
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align='end' className='w-48'>

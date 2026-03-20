@@ -67,7 +67,7 @@ export function DevQuickActions({ projectId, orgId }: DevQuickActionsProps) {
           title='Clear all project data'
         >
           {isResetting ?
-            <span className='h-3.5 w-3.5 animate-spin rounded-full border-2 border-current border-t-transparent' />
+            <span className='size-3.5 animate-spin rounded-full border-2 border-current border-t-transparent' />
           : <Trash2Icon size={14} />}
           Reset State
         </button>

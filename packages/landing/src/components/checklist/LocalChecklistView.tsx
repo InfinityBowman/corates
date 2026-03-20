@@ -166,7 +166,7 @@ export function LocalChecklistView({ checklistId, searchType }: LocalChecklistVi
         onClick={handleBack}
         className='text-muted-foreground hover:text-foreground inline-flex items-center gap-2 transition-colors'
       >
-        <ChevronLeftIcon className='h-5 w-5' />
+        <ChevronLeftIcon className='size-5' />
         Back
       </button>
       <div className='bg-border h-4 w-px' />

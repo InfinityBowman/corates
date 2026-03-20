@@ -85,7 +85,7 @@ export function SectionC({ sectionCState, onUpdate, disabled, getRobinsText }: S
                   checked={sectionCState?.isPerProtocol === option.value}
                   disabled={disabled}
                   onChange={() => !disabled && handleProtocolToggle(option.value)}
-                  className='h-4 w-4 text-blue-600'
+                  className='size-4 text-blue-600'
                 />
                 <span className='text-secondary-foreground text-sm'>{option.label}</span>
               </label>

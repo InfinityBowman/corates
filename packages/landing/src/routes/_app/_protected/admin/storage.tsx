@@ -20,6 +20,7 @@ import { useStorageDocuments } from '@/hooks/useAdminQueries';
 import { deleteStorageDocuments } from '@/stores/adminStore';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { showToast } from '@/components/ui/toast';
+import { Badge } from '@/components/ui/badge';
 import {
   AlertDialog,
   AlertDialogContent,
@@ -231,7 +232,7 @@ function StorageManagementPage() {
       {/* Filters and Search */}
       <div className='mb-6 flex flex-col gap-4 sm:flex-row'>
         <div className='relative flex-1'>
-          <SearchIcon className='text-muted-foreground/70 absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2' />
+          <SearchIcon className='text-muted-foreground/70 absolute top-1/2 left-3 size-4 -translate-y-1/2' />
           <input
             type='text'
             placeholder='Search by file name...'
@@ -291,8 +292,8 @@ function StorageManagementPage() {
                       title='Select all'
                     >
                       {allCurrentPageSelected ?
-                        <CheckSquareIcon className='h-4 w-4 text-blue-600' />
-                      : <SquareIcon className='h-4 w-4' />}
+                        <CheckSquareIcon className='size-4 text-blue-600' />
+                      : <SquareIcon className='size-4' />}
                     </button>
                   </th>
                   <th className={table.headerCell}>File Name</th>
@@ -308,7 +309,7 @@ function StorageManagementPage() {
                   <tr>
                     <td colSpan={7} className='px-6 py-12 text-center'>
                       <div className='flex items-center justify-center'>
-                        <LoaderIcon className='h-8 w-8 animate-spin text-blue-600' />
+                        <LoaderIcon className='size-8 animate-spin text-blue-600' />
                       </div>
                     </td>
                   </tr>
@@ -329,20 +330,20 @@ function StorageManagementPage() {
                           className='text-muted-foreground/70 hover:text-muted-foreground'
                         >
                           {selectedKeys.has(doc.key) ?
-                            <CheckSquareIcon className='h-4 w-4 text-blue-600' />
-                          : <SquareIcon className='h-4 w-4' />}
+                            <CheckSquareIcon className='size-4 text-blue-600' />
+                          : <SquareIcon className='size-4' />}
                         </button>
                       </td>
                       <td className={table.cell}>
                         <div className='flex items-center gap-2'>
                           <span className='text-foreground font-mono text-sm'>{doc.fileName}</span>
                           {doc.orphaned && (
-                            <span
-                              className='inline-flex items-center rounded-full bg-orange-100 px-2 py-0.5 text-xs font-medium text-orange-800'
+                            <Badge
+                              variant='warning'
                               title='Orphaned: File exists in R2 but is not tracked in mediaFiles database table'
                             >
                               Orphaned
-                            </span>
+                            </Badge>
                           )}
                         </div>
                       </td>
@@ -372,7 +373,7 @@ function StorageManagementPage() {
                           className='rounded-lg p-2 text-red-600 hover:bg-red-50'
                           title='Delete'
                         >
-                          <Trash2Icon className='h-4 w-4' />
+                          <Trash2Icon className='size-4' />
                         </button>
                       </td>
                     </tr>
@@ -408,7 +409,7 @@ function StorageManagementPage() {
                   disabled={cursorHistory.length === 0}
                   className='hover:bg-muted border-border bg-card rounded-xl border p-2 shadow-xs disabled:cursor-not-allowed disabled:opacity-50'
                 >
-                  <ChevronLeftIcon className='h-4 w-4' />
+                  <ChevronLeftIcon className='size-4' />
                 </button>
                 <span className='text-muted-foreground text-sm'>
                   {cursorHistory.length + 1}
@@ -420,7 +421,7 @@ function StorageManagementPage() {
                   disabled={!documentsData.nextCursor}
                   className='hover:bg-muted border-border bg-card rounded-xl border p-2 shadow-xs disabled:cursor-not-allowed disabled:opacity-50'
                 >
-                  <ChevronRightIcon className='h-4 w-4' />
+                  <ChevronRightIcon className='size-4' />
                 </button>
               </div>
             </div>

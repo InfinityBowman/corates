@@ -53,8 +53,8 @@ function SecurityPage() {
             <div className='grid gap-6'>
               <div className='rounded-lg bg-gray-50 p-6'>
                 <div className='flex items-start gap-4'>
-                  <div className='flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-100'>
-                    <LockIcon className='h-5 w-5 text-blue-600' />
+                  <div className='flex size-10 shrink-0 items-center justify-center rounded-lg bg-blue-100'>
+                    <LockIcon className='size-5 text-blue-600' />
                   </div>
                   <div>
                     <h2 className='mb-2 text-lg font-semibold text-gray-900'>Encryption</h2>
@@ -70,8 +70,8 @@ function SecurityPage() {
 
               <div className='rounded-lg bg-gray-50 p-6'>
                 <div className='flex items-start gap-4'>
-                  <div className='flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-100'>
-                    <ShieldIcon className='h-5 w-5 text-blue-600' />
+                  <div className='flex size-10 shrink-0 items-center justify-center rounded-lg bg-blue-100'>
+                    <ShieldIcon className='size-5 text-blue-600' />
                   </div>
                   <div>
                     <h2 className='mb-2 text-lg font-semibold text-gray-900'>Authentication</h2>
@@ -86,8 +86,8 @@ function SecurityPage() {
 
               <div className='rounded-lg bg-gray-50 p-6'>
                 <div className='flex items-start gap-4'>
-                  <div className='flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-100'>
-                    <AlertCircleIcon className='h-5 w-5 text-blue-600' />
+                  <div className='flex size-10 shrink-0 items-center justify-center rounded-lg bg-blue-100'>
+                    <AlertCircleIcon className='size-5 text-blue-600' />
                   </div>
                   <div>
                     <h2 className='mb-2 text-lg font-semibold text-gray-900'>Abuse Prevention</h2>
@@ -102,8 +102,8 @@ function SecurityPage() {
 
               <div className='rounded-lg bg-gray-50 p-6'>
                 <div className='flex items-start gap-4'>
-                  <div className='flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-100'>
-                    <ServerIcon className='h-5 w-5 text-blue-600' />
+                  <div className='flex size-10 shrink-0 items-center justify-center rounded-lg bg-blue-100'>
+                    <ServerIcon className='size-5 text-blue-600' />
                   </div>
                   <div>
                     <h2 className='mb-2 text-lg font-semibold text-gray-900'>Infrastructure</h2>
@@ -118,8 +118,8 @@ function SecurityPage() {
 
               <div className='rounded-lg bg-gray-50 p-6'>
                 <div className='flex items-start gap-4'>
-                  <div className='flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-100'>
-                    <UsersIcon className='h-5 w-5 text-blue-600' />
+                  <div className='flex size-10 shrink-0 items-center justify-center rounded-lg bg-blue-100'>
+                    <UsersIcon className='size-5 text-blue-600' />
                   </div>
                   <div>
                     <h2 className='mb-2 text-lg font-semibold text-gray-900'>Access Control</h2>
@@ -137,8 +137,8 @@ function SecurityPage() {
             {/* Responsible Disclosure */}
             <div className='border-t border-gray-200 pt-8'>
               <div className='flex items-start gap-4'>
-                <div className='flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-amber-100'>
-                  <AlertCircleIcon className='h-5 w-5 text-amber-600' />
+                <div className='flex size-10 shrink-0 items-center justify-center rounded-lg bg-amber-100'>
+                  <AlertCircleIcon className='size-5 text-amber-600' />
                 </div>
                 <div>
                   <h2 className='mb-3 text-xl font-semibold text-gray-900'>
@@ -179,8 +179,8 @@ function SecurityPage() {
             {/* Contact */}
             <div className='border-t border-gray-200 pt-8'>
               <div className='flex items-start gap-4'>
-                <div className='flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-100'>
-                  <MailIcon className='h-5 w-5 text-blue-600' />
+                <div className='flex size-10 shrink-0 items-center justify-center rounded-lg bg-blue-100'>
+                  <MailIcon className='size-5 text-blue-600' />
                 </div>
                 <div>
                   <h2 className='mb-3 text-xl font-semibold text-gray-900'>Security Questions</h2>

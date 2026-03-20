@@ -37,6 +37,7 @@ import {
   AlertDialogCancel,
   AlertDialogAction,
 } from '@/components/ui/alert-dialog';
+import { Badge } from '@/components/ui/badge';
 import { handleError } from '@/lib/error-utils';
 import { AdminBox } from '@/components/admin/ui';
 import { table } from '@/components/admin/styles/admin-tokens';
@@ -219,7 +220,7 @@ function ProjectDetailPage() {
   if (!isAdminChecked) {
     return (
       <div className='flex min-h-100 items-center justify-center'>
-        <LoaderIcon className='h-8 w-8 animate-spin text-blue-600' />
+        <LoaderIcon className='size-8 animate-spin text-blue-600' />
       </div>
     );
   }
@@ -227,7 +228,7 @@ function ProjectDetailPage() {
   if (!isAdmin) {
     return (
       <div className='text-muted-foreground flex min-h-100 flex-col items-center justify-center'>
-        <AlertCircleIcon className='mb-4 h-12 w-12' />
+        <AlertCircleIcon className='mb-4 size-12' />
         <p className='text-lg font-medium'>Access Denied</p>
         <p className='text-sm'>You do not have admin privileges.</p>
       </div>
@@ -241,21 +242,21 @@ function ProjectDetailPage() {
         to={'/admin/projects' as string}
         className='text-muted-foreground hover:text-secondary-foreground mb-6 inline-flex items-center text-sm'
       >
-        <ArrowLeftIcon className='mr-2 h-4 w-4' />
+        <ArrowLeftIcon className='mr-2 size-4' />
         Back to Projects
       </Link>
 
       {/* Loading state */}
       {projectQuery.isLoading && (
         <div className='flex min-h-64 items-center justify-center'>
-          <LoaderIcon className='h-8 w-8 animate-spin text-blue-600' />
+          <LoaderIcon className='size-8 animate-spin text-blue-600' />
         </div>
       )}
 
       {/* Error state */}
       {projectQuery.isError && (
         <div className='rounded-lg border border-red-200 bg-red-50 p-6 text-center'>
-          <AlertCircleIcon className='mx-auto mb-2 h-8 w-8 text-red-500' />
+          <AlertCircleIcon className='mx-auto mb-2 size-8 text-red-500' />
           <p className='text-red-700'>Failed to load project details</p>
           <button
             type='button'
@@ -273,8 +274,8 @@ function ProjectDetailPage() {
           {/* Header */}
           <div className='mb-8 flex items-start justify-between'>
             <div className='flex items-center space-x-4'>
-              <div className='flex h-16 w-16 items-center justify-center rounded-lg bg-blue-100'>
-                <FolderIcon className='h-8 w-8 text-blue-600' />
+              <div className='flex size-16 items-center justify-center rounded-lg bg-blue-100'>
+                <FolderIcon className='size-8 text-blue-600' />
               </div>
               <div>
                 <h1 className='text-foreground text-2xl font-bold'>{projectData.project.name}</h1>
@@ -287,15 +288,15 @@ function ProjectDetailPage() {
                     params={{ orgId: projectData.project.orgId } as Record<string, string>}
                     className='flex items-center hover:text-blue-600'
                   >
-                    <HomeIcon className='mr-1 h-4 w-4' />
+                    <HomeIcon className='mr-1 size-4' />
                     {projectData.project.orgName}
                   </Link>
                   <span className='flex items-center'>
-                    <UsersIcon className='mr-1 h-4 w-4' />
+                    <UsersIcon className='mr-1 size-4' />
                     {projectData.stats.memberCount} members
                   </span>
                   <span className='flex items-center'>
-                    <FileIcon className='mr-1 h-4 w-4' />
+                    <FileIcon className='mr-1 size-4' />
                     {projectData.stats.fileCount} files
                   </span>
                 </div>
@@ -309,7 +310,7 @@ function ProjectDetailPage() {
               disabled={loading}
               className='inline-flex items-center rounded-lg bg-red-600 px-3 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50'
             >
-              <Trash2Icon className='mr-2 h-4 w-4' />
+              <Trash2Icon className='mr-2 size-4' />
               Delete Project
             </button>
           </div>
@@ -328,8 +329,8 @@ function ProjectDetailPage() {
                     className='text-muted-foreground/70 hover:text-muted-foreground ml-2'
                   >
                     {copiedId === `Project ID-${projectData.project.id}` ?
-                      <CheckCircleIcon className='h-4 w-4 text-green-500' />
-                    : <CopyIcon className='h-4 w-4' />}
+                      <CheckCircleIcon className='size-4 text-green-500' />
+                    : <CopyIcon className='size-4' />}
                   </button>
                 </dd>
               </div>
@@ -375,7 +376,7 @@ function ProjectDetailPage() {
               <div>
                 <dt className='text-muted-foreground text-sm font-medium'>Storage Used</dt>
                 <dd className='text-foreground mt-1 flex items-center text-sm'>
-                  <HardDriveIcon className='text-muted-foreground/70 mr-1 h-4 w-4' />
+                  <HardDriveIcon className='text-muted-foreground/70 mr-1 size-4' />
                   {formatBytes(projectData.stats.totalStorageBytes)}
                 </dd>
               </div>
@@ -385,7 +386,7 @@ function ProjectDetailPage() {
           {/* Members Section */}
           <AdminBox className='mb-6'>
             <h2 className='text-foreground mb-4 flex items-center text-lg font-semibold'>
-              <UsersIcon className='mr-2 h-5 w-5' />
+              <UsersIcon className='mr-2 size-5' />
               Members ({projectData.members?.length ?? 0})
             </h2>
             {(projectData.members?.length ?? 0) > 0 ?
@@ -422,15 +423,9 @@ function ProjectDetailPage() {
                           </div>
                         </td>
                         <td className={table.cellCompact}>
-                          <span
-                            className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
-                              member.role === 'owner' ?
-                                'bg-purple-100 text-purple-800'
-                              : 'bg-secondary text-foreground'
-                            }`}
-                          >
+                          <Badge variant={member.role === 'owner' ? 'default' : 'secondary'}>
                             {member.role}
-                          </span>
+                          </Badge>
                         </td>
                         <td className={`${table.cellCompact} text-muted-foreground`}>
                           {formatShortDate(member.joinedAt)}
@@ -443,7 +438,7 @@ function ProjectDetailPage() {
                             className='inline-flex items-center text-sm text-red-600 hover:text-red-700 disabled:opacity-50'
                             title='Remove member'
                           >
-                            <UserMinusIcon className='h-4 w-4' />
+                            <UserMinusIcon className='size-4' />
                           </button>
                         </td>
                       </tr>
@@ -457,7 +452,7 @@ function ProjectDetailPage() {
           {/* Files Section */}
           <AdminBox className='mb-6'>
             <h2 className='text-foreground mb-4 flex items-center text-lg font-semibold'>
-              <FileIcon className='mr-2 h-5 w-5' />
+              <FileIcon className='mr-2 size-5' />
               Files ({projectData.files?.length ?? 0})
             </h2>
             {(projectData.files?.length ?? 0) > 0 ?
@@ -477,7 +472,7 @@ function ProjectDetailPage() {
                       <tr key={file.id} className={table.row}>
                         <td className={table.cellCompact}>
                           <div className='flex items-center space-x-2'>
-                            <FileIcon className='text-muted-foreground/70 h-4 w-4' />
+                            <FileIcon className='text-muted-foreground/70 size-4' />
                             <span className='text-foreground font-medium'>
                               {file.originalName || file.filename}
                             </span>
@@ -514,7 +509,7 @@ function ProjectDetailPage() {
           {/* Invitations Section */}
           <AdminBox className='mb-6'>
             <h2 className='text-foreground mb-4 flex items-center text-lg font-semibold'>
-              <MailIcon className='mr-2 h-5 w-5' />
+              <MailIcon className='mr-2 size-5' />
               Invitations ({projectData.invitations?.length ?? 0})
             </h2>
             {(projectData.invitations?.length ?? 0) > 0 ?
@@ -534,30 +529,30 @@ function ProjectDetailPage() {
                       <tr key={invitation.id} className={table.row}>
                         <td className={table.cellCompact}>{invitation.email}</td>
                         <td className={table.cellCompact}>
-                          <span className='bg-secondary text-foreground inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium'>
+                          <Badge variant='secondary'>
                             {invitation.role}
-                          </span>
+                          </Badge>
                           {invitation.grantOrgMembership && (
                             <span className='text-muted-foreground ml-1 text-xs'>+ org</span>
                           )}
                         </td>
                         <td className={table.cellCompact}>
                           {invitation.acceptedAt && (
-                            <span className='inline-flex items-center rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800'>
-                              <CheckCircleIcon className='mr-1 h-3 w-3' />
+                            <Badge variant='success'>
+                              <CheckCircleIcon className='mr-1 size-3' />
                               Accepted
-                            </span>
+                            </Badge>
                           )}
                           {isInvitationPending(invitation) && (
-                            <span className='inline-flex items-center rounded-full bg-yellow-100 px-2 py-0.5 text-xs font-medium text-yellow-800'>
-                              <ClockIcon className='mr-1 h-3 w-3' />
+                            <Badge variant='warning'>
+                              <ClockIcon className='mr-1 size-3' />
                               Pending
-                            </span>
+                            </Badge>
                           )}
                           {isInvitationExpired(invitation) && (
-                            <span className='inline-flex items-center rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-800'>
+                            <Badge variant='destructive'>
                               Expired
-                            </span>
+                            </Badge>
                           )}
                         </td>
                         <td className={table.cellCompact}>

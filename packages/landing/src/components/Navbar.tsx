@@ -99,7 +99,7 @@ export default function Navbar() {
                 src='/logo.svg'
                 alt='CoRATES Logo'
                 aria-hidden='true'
-                className='h-6 w-6 rounded-sm'
+                className='size-6 rounded-sm'
                 width='24'
                 height='24'
               />
@@ -154,8 +154,8 @@ export default function Navbar() {
               aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}
             >
               {mobileMenuOpen ?
-                <XIcon className='h-6 w-6' />
-              : <MenuIcon className='h-6 w-6' />}
+                <XIcon className='size-6' />
+              : <MenuIcon className='size-6' />}
             </button>
           </div>
         </div>

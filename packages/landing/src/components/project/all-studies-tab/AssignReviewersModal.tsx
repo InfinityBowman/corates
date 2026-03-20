@@ -105,7 +105,7 @@ export function AssignReviewersModal({
 
           <div className='space-y-4'>
             <div className='text-foreground flex items-center gap-2 text-sm font-medium'>
-              <UserIcon className='h-4 w-4' />
+              <UserIcon className='size-4' />
               <span>Reviewer Assignments</span>
             </div>
 

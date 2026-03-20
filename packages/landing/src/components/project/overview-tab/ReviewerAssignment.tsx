@@ -303,8 +303,8 @@ export function ReviewerAssignment({
       {/* Header */}
       <div className='flex items-center justify-between px-4 py-4'>
         <div className='flex items-center gap-3'>
-          <div className='bg-primary/10 text-primary flex h-10 w-10 items-center justify-center rounded-lg'>
-            <UsersIcon className='h-5 w-5' />
+          <div className='bg-primary/10 text-primary flex size-10 items-center justify-center rounded-lg'>
+            <UsersIcon className='size-5' />
           </div>
           <div>
             <h3 className='text-foreground text-base font-semibold'>Assign Reviewers</h3>
@@ -320,7 +320,7 @@ export function ReviewerAssignment({
           }`}
         >
           <ChevronRightIcon
-            className={`h-4 w-4 transition-transform duration-200 ${isOpen ? 'rotate-90' : ''}`}
+            className={`size-4 transition-transform duration-200 ${isOpen ? 'rotate-90' : ''}`}
           />
           {isOpen ? 'Hide' : 'Show'}
         </button>
@@ -335,7 +335,7 @@ export function ReviewerAssignment({
               </p>
             : unassignedStudies.length === 0 && !showPreview ?
               <div className='flex items-center gap-2 text-green-600'>
-                <CheckIcon className='h-5 w-5' />
+                <CheckIcon className='size-5' />
                 <p className='text-sm'>All studies have reviewers assigned.</p>
               </div>
             : <div className='space-y-4'>
@@ -361,7 +361,7 @@ export function ReviewerAssignment({
                 <Collapsible open={showCustomize} onOpenChange={setShowCustomize}>
                   <CollapsibleTrigger className='border-border bg-card hover:bg-muted data-[state=open]:border-primary data-[state=open]:bg-primary/5 flex w-full items-center justify-between rounded-lg border px-4 py-3 text-sm font-medium transition-all'>
                     <div className='flex items-center gap-2'>
-                      <SlidersHorizontalIcon className='h-4 w-4' />
+                      <SlidersHorizontalIcon className='size-4' />
                       <span>Customize distribution</span>
                     </div>
                     <span className='text-muted-foreground text-xs'>
@@ -442,7 +442,7 @@ export function ReviewerAssignment({
                   disabled={showCustomize && !isCustomValid}
                   className='bg-primary hover:bg-primary/90 inline-flex items-center gap-2 rounded-lg px-5 py-2.5 text-sm font-medium text-white transition-colors disabled:cursor-not-allowed disabled:opacity-50'
                 >
-                  <ShuffleIcon className='h-4 w-4' />
+                  <ShuffleIcon className='size-4' />
                   {showPreview ?
                     'Reshuffle'
                   : showCustomize ?
@@ -522,7 +522,7 @@ export function ReviewerAssignment({
                         disabled={hasConflicts}
                         className='inline-flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-50'
                       >
-                        <CheckIcon className='h-4 w-4' />
+                        <CheckIcon className='size-4' />
                         Apply Assignments
                       </button>
                       <button

@@ -65,11 +65,11 @@ export function DoiLookupSection({ studies }: DoiLookupSectionProps) {
         >
           {studies.lookingUp ?
             <>
-              <div className='h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent' />
+              <div className='size-4 animate-spin rounded-full border-2 border-white border-t-transparent' />
               Looking up...
             </>
           : <>
-              <SearchIcon className='h-4 w-4' />
+              <SearchIcon className='size-4' />
               Look Up References
             </>
           }
@@ -151,7 +151,7 @@ export function DoiLookupSection({ studies }: DoiLookupSectionProps) {
             {refsWithoutPdf.length > 0 && (
               <div className='border-border mt-2 border-t pt-2'>
                 <p className='mb-2 flex items-center gap-1 text-xs font-medium text-amber-600'>
-                  <AlertCircleIcon className='h-3.5 w-3.5' />
+                  <AlertCircleIcon className='size-3.5' />
                   No open-access PDF available:
                 </p>
                 {refsWithoutPdf.map((ref: any) => (
@@ -260,9 +260,9 @@ function LookupRefWithPdf({
                     target='_blank'
                     rel='noopener noreferrer'
                     onClick={e => e.stopPropagation()}
-                    className='text-primary hover:bg-primary/10 inline-flex h-6 w-6 items-center justify-center rounded transition-colors'
+                    className='text-primary hover:bg-primary/10 inline-flex size-6 items-center justify-center rounded transition-colors'
                   >
-                    <ExternalLinkIcon className='h-4 w-4' />
+                    <ExternalLinkIcon className='size-4' />
                   </a>
                 </TooltipTrigger>
                 <TooltipContent>View PDF</TooltipContent>
@@ -290,7 +290,7 @@ function LookupRefWithPdf({
         }}
         className='text-muted-foreground/70 focus:ring-primary rounded p-1 transition-colors hover:bg-red-50 hover:text-red-600 focus:ring-2 focus:outline-none'
       >
-        <Trash2Icon className='h-4 w-4' />
+        <Trash2Icon className='size-4' />
       </button>
     </div>
   );
@@ -313,7 +313,7 @@ function PdfStatusBadge({
       <Tooltip>
         <TooltipTrigger asChild>
           <span className='inline-flex items-center gap-1 rounded bg-green-100 px-1.5 py-0.5 text-xs font-medium text-green-700'>
-            <CheckIcon className='h-3 w-3' />
+            <CheckIcon className='size-3' />
             PDF Ready
           </span>
         </TooltipTrigger>
@@ -328,7 +328,7 @@ function PdfStatusBadge({
       <Tooltip>
         <TooltipTrigger asChild>
           <span className='inline-flex items-center gap-1 rounded bg-green-100 px-1.5 py-0.5 text-xs font-medium text-green-700'>
-            <FileTextIcon className='h-3 w-3' />
+            <FileTextIcon className='size-3' />
             PDF
           </span>
         </TooltipTrigger>
@@ -349,7 +349,7 @@ function PdfStatusBadge({
             onClick={onUploadClick}
             className='inline-flex items-center gap-1 rounded bg-amber-100 px-1.5 py-0.5 text-xs font-medium text-amber-700 transition-colors hover:bg-amber-200'
           >
-            <UploadIcon className='h-3 w-3' />
+            <UploadIcon className='size-3' />
             Upload PDF
           </button>
         </TooltipTrigger>
@@ -365,9 +365,9 @@ function PdfStatusBadge({
               target='_blank'
               rel='noopener noreferrer'
               onClick={e => e.stopPropagation()}
-              className='text-primary hover:bg-primary/10 inline-flex h-6 w-6 items-center justify-center rounded transition-colors'
+              className='text-primary hover:bg-primary/10 inline-flex size-6 items-center justify-center rounded transition-colors'
             >
-              <DownloadIcon className='h-4 w-4' />
+              <DownloadIcon className='size-4' />
             </a>
           </TooltipTrigger>
           <TooltipContent>Download PDF from publisher (then upload)</TooltipContent>
@@ -383,8 +383,8 @@ function PdfStatusBadge({
 function LookupRefWithoutPdf({ ref_, onRemove }: { ref_: any; onRemove: () => void }) {
   return (
     <div className='flex items-start gap-3 rounded-lg border border-amber-100 bg-amber-50/50 p-2 opacity-75'>
-      <div className='mt-0.5 flex h-5 w-5 items-center justify-center'>
-        <FileIcon className='h-4 w-4 text-amber-400' />
+      <div className='mt-0.5 flex size-5 items-center justify-center'>
+        <FileIcon className='size-4 text-amber-400' />
       </div>
       <div className='min-w-0 flex-1'>
         <p className='text-secondary-foreground line-clamp-2 text-sm font-medium'>{ref_.title}</p>
@@ -407,7 +407,7 @@ function LookupRefWithoutPdf({ ref_, onRemove }: { ref_: any; onRemove: () => vo
               onClick={e => e.stopPropagation()}
               className='hover:text-primary inline-flex items-center gap-0.5 text-xs text-blue-500'
             >
-              View <ExternalLinkIcon className='h-3 w-3' />
+              View <ExternalLinkIcon className='size-3' />
             </a>
           </div>
         )}
@@ -420,7 +420,7 @@ function LookupRefWithoutPdf({ ref_, onRemove }: { ref_: any; onRemove: () => vo
         }}
         className='text-muted-foreground/70 focus:ring-primary rounded p-1 transition-colors hover:bg-red-50 hover:text-red-600 focus:ring-2 focus:outline-none'
       >
-        <Trash2Icon className='h-4 w-4' />
+        <Trash2Icon className='size-4' />
       </button>
     </div>
   );

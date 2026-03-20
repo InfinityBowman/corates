@@ -53,9 +53,9 @@ function ScoreLevelCard({ level }: { level: ScoreLevel }) {
     <div className={`rounded-lg border p-6 ${colors.border} ${colors.bg}`}>
       <div className='flex items-start gap-4'>
         <div
-          className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${colors.iconBg}`}
+          className={`flex size-10 shrink-0 items-center justify-center rounded-lg ${colors.iconBg}`}
         >
-          <Icon className={`h-5 w-5 ${colors.iconColor}`} />
+          <Icon className={`size-5 ${colors.iconColor}`} />
         </div>
         <div>
           <h3 className='mb-2 text-lg font-semibold text-gray-900'>{level.name}</h3>
@@ -130,8 +130,8 @@ function ToolContentView({ tool }: { tool: ToolContent }) {
 
             <div className='rounded-lg bg-gray-50 p-6'>
               <div className='flex items-start gap-4'>
-                <div className='flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-100'>
-                  <FileTextIcon className='h-5 w-5 text-blue-600' />
+                <div className='flex size-10 shrink-0 items-center justify-center rounded-lg bg-blue-100'>
+                  <FileTextIcon className='size-5 text-blue-600' />
                 </div>
                 <div>
                   <h2 className='mb-2 text-lg font-semibold text-gray-900'>Best used for</h2>
@@ -142,8 +142,8 @@ function ToolContentView({ tool }: { tool: ToolContent }) {
 
             <div className='rounded-lg bg-gray-50 p-6'>
               <div className='flex items-start gap-4'>
-                <div className='flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-100'>
-                  <ExternalLinkIcon className='h-5 w-5 text-blue-600' />
+                <div className='flex size-10 shrink-0 items-center justify-center rounded-lg bg-blue-100'>
+                  <ExternalLinkIcon className='size-5 text-blue-600' />
                 </div>
                 <div className='flex-1'>
                   <h2 className='mb-4 text-lg font-semibold text-gray-900'>Reference Documents</h2>
@@ -157,7 +157,7 @@ function ToolContentView({ tool }: { tool: ToolContent }) {
                           className='inline-flex items-center gap-2 font-medium text-blue-600 hover:text-blue-700'
                         >
                           {link.text}
-                          <ExternalLinkIcon className='h-4 w-4' />
+                          <ExternalLinkIcon className='size-4' />
                         </a>
                       </li>
                     ))}

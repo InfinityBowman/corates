@@ -30,8 +30,8 @@ export function StagedStudiesSection({ studies }: StagedStudiesSectionProps) {
           >
             <div className='text-muted-foreground shrink-0'>
               {study.pdfData || study.googleDriveFileId ?
-                <FileTextIcon className='h-5 w-5' />
-              : <FileIcon className='h-5 w-5' />}
+                <FileTextIcon className='size-5' />
+              : <FileIcon className='size-5' />}
             </div>
 
             <div className='min-w-0 flex-1'>
@@ -63,7 +63,7 @@ export function StagedStudiesSection({ studies }: StagedStudiesSectionProps) {
               className='text-muted-foreground/70 focus:ring-primary shrink-0 rounded p-1.5 transition-colors hover:bg-red-50 hover:text-red-600 focus:ring-2 focus:outline-none'
               title='Remove study'
             >
-              <Trash2Icon className='h-4 w-4' />
+              <Trash2Icon className='size-4' />
             </button>
           </div>
         ))}

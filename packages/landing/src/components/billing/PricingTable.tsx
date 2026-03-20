@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { showToast } from '@/components/ui/toast';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
+import { Badge } from '@/components/ui/badge';
 import FlipNumber from '@/components/FlipNumber';
 import {
   Dialog,
@@ -190,8 +191,8 @@ export function PricingTable({ currentTier: currentTierProp }: PricingTableProps
       {canStartTrial && trialPlan && (
         <div className='mb-10 rounded-2xl border-2 border-blue-200 bg-gradient-to-r from-blue-50 to-indigo-50 p-6'>
           <div className='flex flex-col items-center gap-4 text-center sm:flex-row sm:text-left'>
-            <div className='flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-blue-100'>
-              <ZapIcon className='h-6 w-6 text-blue-600' />
+            <div className='flex size-12 shrink-0 items-center justify-center rounded-full bg-blue-100'>
+              <ZapIcon className='size-6 text-blue-600' />
             </div>
             <div className='flex-1'>
               <h3 className='text-foreground text-lg font-bold'>Start your 14-day free trial</h3>
@@ -207,7 +208,7 @@ export function PricingTable({ currentTier: currentTierProp }: PricingTableProps
             >
               {loadingTier === 'trial' ?
                 <span className='flex items-center gap-2'>
-                  <LoaderIcon className='h-4 w-4 animate-spin' />
+                  <LoaderIcon className='size-4 animate-spin' />
                   Starting...
                 </span>
               : 'Start Free Trial'}
@@ -219,7 +220,7 @@ export function PricingTable({ currentTier: currentTierProp }: PricingTableProps
       {/* Billing toggle */}
       <div className='mb-10 flex flex-col items-center gap-4'>
         <div className='flex items-center gap-2 rounded-full bg-emerald-50 px-4 py-2 text-sm font-medium text-emerald-700'>
-          <StarIcon className='h-4 w-4' />
+          <StarIcon className='size-4' />
           Save 2 months with annual billing
         </div>
         <div className='bg-muted relative inline-flex rounded-xl p-1.5'>
@@ -277,18 +278,18 @@ export function PricingTable({ currentTier: currentTierProp }: PricingTableProps
             >
               {isPopular && !isCurrent && (
                 <div className='absolute -top-4 left-1/2 -translate-x-1/2'>
-                  <span className='bg-primary inline-flex items-center gap-1.5 rounded-full px-4 py-1.5 text-xs font-bold text-white shadow-lg'>
-                    <ZapIcon className='h-3.5 w-3.5' />
+                  <Badge variant='default' className='px-4 py-1.5 font-bold text-white shadow-lg'>
+                    <ZapIcon className='size-3.5' />
                     Most Popular
-                  </span>
+                  </Badge>
                 </div>
               )}
               {isCurrent && (
                 <div className='absolute -top-4 left-1/2 -translate-x-1/2'>
-                  <span className='bg-primary inline-flex items-center gap-1.5 rounded-full px-4 py-1.5 text-xs font-bold text-white shadow-lg'>
-                    <CheckIcon className='h-3.5 w-3.5' />
+                  <Badge variant='default' className='px-4 py-1.5 font-bold text-white shadow-lg'>
+                    <CheckIcon className='size-3.5' />
                     Current Plan
-                  </span>
+                  </Badge>
                 </div>
               )}
 
@@ -361,7 +362,7 @@ export function PricingTable({ currentTier: currentTierProp }: PricingTableProps
                 >
                   {loadingTier === plan.tier ?
                     <span className='flex items-center justify-center gap-2'>
-                      <LoaderIcon className='h-4 w-4 animate-spin' />
+                      <LoaderIcon className='size-4 animate-spin' />
                       Processing...
                     </span>
                   : getButtonText(plan)}
@@ -375,8 +376,8 @@ export function PricingTable({ currentTier: currentTierProp }: PricingTableProps
                 <ul className='space-y-3'>
                   {plan.features.map((feature: string, i: number) => (
                     <li key={i} className='flex items-start gap-3'>
-                      <div className='mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-100'>
-                        <CheckIcon className='h-3 w-3 text-emerald-600' />
+                      <div className='mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-emerald-100'>
+                        <CheckIcon className='size-3 text-emerald-600' />
                       </div>
                       <span className='text-muted-foreground text-sm'>{feature}</span>
                     </li>
@@ -395,15 +396,15 @@ export function PricingTable({ currentTier: currentTierProp }: PricingTableProps
             <div className='flex-1'>
               <div className='mb-2 flex items-center gap-2'>
                 <h3 className='text-foreground text-lg font-bold'>{singleProjectPlan.name}</h3>
-                <span className='bg-muted text-muted-foreground rounded-full px-2.5 py-0.5 text-xs font-medium'>
+                <Badge variant='secondary'>
                   One-time purchase
-                </span>
+                </Badge>
               </div>
               <p className='text-muted-foreground text-sm'>{singleProjectPlan.description}</p>
               <ul className='mt-3 flex flex-wrap gap-x-4 gap-y-1'>
                 {singleProjectPlan.features.map((feature: string, i: number) => (
                   <li key={i} className='text-muted-foreground flex items-center gap-1.5 text-sm'>
-                    <CheckIcon className='h-3.5 w-3.5 text-emerald-600' />
+                    <CheckIcon className='size-3.5 text-emerald-600' />
                     {feature}
                   </li>
                 ))}
@@ -426,7 +427,7 @@ export function PricingTable({ currentTier: currentTierProp }: PricingTableProps
               >
                 {loadingTier === 'single_project' ?
                   <span className='flex items-center gap-2'>
-                    <LoaderIcon className='h-4 w-4 animate-spin' />
+                    <LoaderIcon className='size-4 animate-spin' />
                     Processing...
                   </span>
                 : currentTier === 'single_project' ?
@@ -446,8 +447,8 @@ export function PricingTable({ currentTier: currentTierProp }: PricingTableProps
         <DialogContent className='max-w-md'>
           <DialogHeader>
             <div className='flex items-start gap-3'>
-              <div className='flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-red-100'>
-                <AlertCircleIcon className='h-5 w-5 text-red-600' />
+              <div className='flex size-10 shrink-0 items-center justify-center rounded-full bg-red-100'>
+                <AlertCircleIcon className='size-5 text-red-600' />
               </div>
               <div>
                 <DialogTitle>Cannot Change Plan</DialogTitle>
@@ -487,8 +488,8 @@ export function PricingTable({ currentTier: currentTierProp }: PricingTableProps
         <DialogContent className='max-w-md'>
           <DialogHeader>
             <div className='flex items-start gap-3'>
-              <div className='flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-amber-100'>
-                <ArrowDownIcon className='h-5 w-5 text-amber-600' />
+              <div className='flex size-10 shrink-0 items-center justify-center rounded-full bg-amber-100'>
+                <ArrowDownIcon className='size-5 text-amber-600' />
               </div>
               <div>
                 <DialogTitle>Confirm Downgrade</DialogTitle>

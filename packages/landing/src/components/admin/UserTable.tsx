@@ -64,7 +64,7 @@ export function UserTable({ users, loading }: UserTableProps) {
           const user = info.row.original;
           return (
             <div className='flex items-center space-x-3'>
-              <UserAvatar src={user.avatarUrl || user.image} name={user.name} className='h-8 w-8' />
+              <UserAvatar src={user.avatarUrl || user.image} name={user.name} className='size-8' />
               <div>
                 <Link
                   to={'/admin/users/$userId' as string}
@@ -90,7 +90,7 @@ export function UserTable({ users, loading }: UserTableProps) {
               <span className='text-muted-foreground text-sm'>{user.email}</span>
               {user.emailVerified && (
                 <span title='Email verified'>
-                  <CheckCircleIcon className='h-4 w-4 text-green-500' />
+                  <CheckCircleIcon className='size-4 text-green-500' />
                 </span>
               )}
             </div>
@@ -111,15 +111,15 @@ export function UserTable({ users, loading }: UserTableProps) {
                   return (
                     <Tooltip key={provider}>
                       <TooltipTrigger asChild>
-                        <div className='flex h-5 w-5 items-center justify-center'>
+                        <div className='flex size-5 items-center justify-center'>
                           {providerInfo?.icon ?
                             <img
                               src={providerInfo.icon}
                               alt={providerInfo.name || provider}
                               title={providerInfo.name || provider}
-                              className='h-4 w-4'
+                              className='size-4'
                             />
-                          : <MailIcon className='text-muted-foreground h-4 w-4' />}
+                          : <MailIcon className='text-muted-foreground size-4' />}
                         </div>
                       </TooltipTrigger>
                       <TooltipContent>{providerInfo?.name || provider}</TooltipContent>

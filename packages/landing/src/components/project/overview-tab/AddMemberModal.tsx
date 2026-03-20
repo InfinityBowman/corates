@@ -196,7 +196,7 @@ export function AddMemberModal({
                     onClick={() => handleSelectUser(user)}
                     className='flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-blue-50'
                   >
-                    <Avatar className='h-8 w-8 shrink-0'>
+                    <Avatar className='size-8 shrink-0'>
                       <AvatarImage src={user.image} alt={user.name || user.email} />
                       <AvatarFallback className='bg-primary text-sm text-white'>
                         {getInitials(user.name || user.email)}
@@ -215,7 +215,7 @@ export function AddMemberModal({
 
             {searching && (
               <div className='absolute top-8 right-3'>
-                <div className='border-primary h-5 w-5 animate-spin rounded-full border-2 border-t-transparent' />
+                <div className='border-primary size-5 animate-spin rounded-full border-2 border-t-transparent' />
               </div>
             )}
           </div>
@@ -242,7 +242,7 @@ export function AddMemberModal({
           {selectedUser && (
             <div className='flex items-center justify-between rounded-lg border border-blue-200 bg-blue-50 p-3'>
               <div className='flex items-center gap-3'>
-                <Avatar className='h-10 w-10'>
+                <Avatar className='size-10'>
                   <AvatarImage
                     src={selectedUser.image}
                     alt={selectedUser.name || selectedUser.email}

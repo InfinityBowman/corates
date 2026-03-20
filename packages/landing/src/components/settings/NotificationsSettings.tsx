@@ -24,8 +24,8 @@ export function NotificationsSettings() {
         <div className='border-border/60 bg-card mb-6 overflow-hidden rounded-xl border shadow-sm transition-shadow duration-200 hover:shadow-md'>
           <div className='border-border bg-primary/5 border-b px-6 py-4'>
             <div className='flex items-center space-x-2.5'>
-              <div className='bg-primary/15 flex h-8 w-8 items-center justify-center rounded-lg'>
-                <BellIcon className='text-primary h-4 w-4' />
+              <div className='bg-primary/15 flex size-8 items-center justify-center rounded-lg'>
+                <BellIcon className='text-primary size-4' />
               </div>
               <h2 className='text-foreground text-base font-semibold'>Email Notifications</h2>
             </div>
@@ -56,8 +56,8 @@ export function NotificationsSettings() {
         <div className='border-border/60 bg-card mb-6 overflow-hidden rounded-xl border shadow-sm transition-shadow duration-200 hover:shadow-md'>
           <div className='border-border from-muted/50 to-background border-b bg-gradient-to-r px-6 py-4'>
             <div className='flex items-center space-x-2.5'>
-              <div className='bg-secondary flex h-8 w-8 items-center justify-center rounded-lg'>
-                <MoonIcon className='text-secondary-foreground h-4 w-4' />
+              <div className='bg-secondary flex size-8 items-center justify-center rounded-lg'>
+                <MoonIcon className='text-secondary-foreground size-4' />
               </div>
               <h2 className='text-foreground text-base font-semibold'>Appearance</h2>
             </div>

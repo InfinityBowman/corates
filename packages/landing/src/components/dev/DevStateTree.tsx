@@ -64,12 +64,12 @@ function TreeNode({ nodeKey, value, depth, defaultExpanded = false }: TreeNodePr
         onClick={() => isExpandable && setIsExpanded(!isExpanded)}
       >
         {isExpandable && !isEmpty ?
-          <span className='flex h-4 w-4 items-center justify-center text-gray-400'>
+          <span className='flex size-4 items-center justify-center text-gray-400'>
             {isExpanded ?
               <ChevronDownIcon size={12} />
             : <ChevronRightIcon size={12} />}
           </span>
-        : <span className='h-4 w-4' />}
+        : <span className='size-4' />}
 
         <span className='text-cyan-600'>{nodeKey}:</span>
         <span className={`ml-1 ${getValueClass()}`}>{getValuePreview()}</span>

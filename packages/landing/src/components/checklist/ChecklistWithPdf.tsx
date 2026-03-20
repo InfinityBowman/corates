@@ -84,7 +84,7 @@ export function ChecklistWithPdf({
           <Suspense
             fallback={
               <div className='flex h-full items-center justify-center'>
-                <div className='h-6 w-6 animate-spin rounded-full border-b-2 border-blue-600' />
+                <div className='size-6 animate-spin rounded-full border-b-2 border-blue-600' />
               </div>
             }
           >

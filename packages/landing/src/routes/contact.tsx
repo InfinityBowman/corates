@@ -95,8 +95,8 @@ function ContactPage() {
 
               <div className='space-y-6'>
                 <div className='flex items-start gap-4'>
-                  <div className='flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-blue-100'>
-                    <MailIcon className='h-6 w-6 text-blue-600' />
+                  <div className='flex size-12 shrink-0 items-center justify-center rounded-lg bg-blue-100'>
+                    <MailIcon className='size-6 text-blue-600' />
                   </div>
                   <div>
                     <h3 className='mb-1 font-semibold text-gray-900'>Send Us a Message</h3>
@@ -105,8 +105,8 @@ function ContactPage() {
                 </div>
 
                 <div className='flex items-start gap-4'>
-                  <div className='flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-blue-100'>
-                    <MessageSquareIcon className='h-6 w-6 text-blue-600' />
+                  <div className='flex size-12 shrink-0 items-center justify-center rounded-lg bg-blue-100'>
+                    <MessageSquareIcon className='size-6 text-blue-600' />
                   </div>
                   <div>
                     <h3 className='mb-1 font-semibold text-gray-900'>Feedback Welcome</h3>
@@ -126,7 +126,7 @@ function ContactPage() {
                     Your Name
                   </label>
                   <div className='relative'>
-                    <UserIcon className='absolute top-1/2 left-3 h-5 w-5 -translate-y-1/2 text-gray-400' />
+                    <UserIcon className='absolute top-1/2 left-3 size-5 -translate-y-1/2 text-gray-400' />
                     <input
                       type='text'
                       id='name'
@@ -143,7 +143,7 @@ function ContactPage() {
                     Email Address
                   </label>
                   <div className='relative'>
-                    <MailIcon className='absolute top-1/2 left-3 h-5 w-5 -translate-y-1/2 text-gray-400' />
+                    <MailIcon className='absolute top-1/2 left-3 size-5 -translate-y-1/2 text-gray-400' />
                     <input
                       type='email'
                       id='email'
@@ -189,11 +189,11 @@ function ContactPage() {
                 >
                   {formState === 'sending' ?
                     <>
-                      <LoaderIcon className='h-5 w-5 animate-spin' />
+                      <LoaderIcon className='size-5 animate-spin' />
                       Sending...
                     </>
                   : <>
-                      <SendIcon className='h-5 w-5' />
+                      <SendIcon className='size-5' />
                       Send Message
                     </>
                   }
@@ -207,7 +207,7 @@ function ContactPage() {
 
                 {formState === 'error' && (
                   <div className='flex items-center justify-center gap-2 text-sm text-red-600'>
-                    <AlertCircleIcon className='h-4 w-4' />
+                    <AlertCircleIcon className='size-4' />
                     <p>{errorMessage}</p>
                   </div>
                 )}

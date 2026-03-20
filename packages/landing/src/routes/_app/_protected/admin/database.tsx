@@ -162,7 +162,7 @@ function DatabaseViewerPage() {
   if (!isAdminChecked) {
     return (
       <div className='flex min-h-100 items-center justify-center'>
-        <LoaderIcon className='h-8 w-8 animate-spin text-blue-600' />
+        <LoaderIcon className='size-8 animate-spin text-blue-600' />
       </div>
     );
   }
@@ -170,7 +170,7 @@ function DatabaseViewerPage() {
   if (!isAdmin) {
     return (
       <div className='text-muted-foreground flex min-h-100 flex-col items-center justify-center'>
-        <AlertCircleIcon className='mb-4 h-12 w-12' />
+        <AlertCircleIcon className='mb-4 size-12' />
         <p className='text-lg font-medium'>Access Denied</p>
         <p className='text-sm'>You do not have admin privileges.</p>
       </div>
@@ -200,13 +200,13 @@ function DatabaseViewerPage() {
                 title='Refresh tables'
               >
                 <RefreshCwIcon
-                  className={`h-4 w-4 ${tablesQuery.isFetching ? 'animate-spin' : ''}`}
+                  className={`size-4 ${tablesQuery.isFetching ? 'animate-spin' : ''}`}
                 />
               </button>
             </div>
             {tablesQuery.isLoading ?
               <div className='flex justify-center p-4'>
-                <LoaderIcon className='h-6 w-6 animate-spin text-blue-600' />
+                <LoaderIcon className='size-6 animate-spin text-blue-600' />
               </div>
             : <div className='max-h-150 overflow-y-auto'>
                 {tables.map(tbl => (
@@ -221,7 +221,7 @@ function DatabaseViewerPage() {
                     }`}
                   >
                     <span className='flex items-center gap-2'>
-                      <TableIcon className='h-4 w-4' />
+                      <TableIcon className='size-4' />
                       {tbl.name}
                     </span>
                     <span className='text-muted-foreground/70 text-xs'>{tbl.rowCount}</span>
@@ -242,7 +242,7 @@ function DatabaseViewerPage() {
                   <h2 className='text-foreground font-semibold'>{selectedTable}</h2>
                   {filterColumn && (
                     <span className='flex items-center gap-1 rounded-full bg-blue-100 px-2 py-0.5 text-xs text-blue-700'>
-                      <LinkIcon className='h-3 w-3' />
+                      <LinkIcon className='size-3' />
                       {filterColumn} = {filterValue}
                       <button
                         type='button'
@@ -250,7 +250,7 @@ function DatabaseViewerPage() {
                         className='ml-1 rounded-full p-0.5 hover:bg-blue-200'
                         title='Clear filter'
                       >
-                        <XIcon className='h-3 w-3' />
+                        <XIcon className='size-3' />
                       </button>
                     </span>
                   )}
@@ -277,7 +277,7 @@ function DatabaseViewerPage() {
                     disabled={rowsQuery.isFetching}
                   >
                     <RefreshCwIcon
-                      className={`h-3 w-3 ${rowsQuery.isFetching ? 'animate-spin' : ''}`}
+                      className={`size-3 ${rowsQuery.isFetching ? 'animate-spin' : ''}`}
                     />
                     Refresh
                   </button>
@@ -287,7 +287,7 @@ function DatabaseViewerPage() {
               {/* Table Data */}
               {rowsQuery.isLoading ?
                 <div className='flex justify-center p-8'>
-                  <LoaderIcon className='h-6 w-6 animate-spin text-blue-600' />
+                  <LoaderIcon className='size-6 animate-spin text-blue-600' />
                 </div>
               : rows.length > 0 ?
                 <>
@@ -308,7 +308,7 @@ function DatabaseViewerPage() {
                                     <Tooltip>
                                       <TooltipTrigger asChild>
                                         <span className='inline-flex'>
-                                          <KeyRoundIcon className='h-3 w-3 text-amber-500' />
+                                          <KeyRoundIcon className='size-3 text-amber-500' />
                                         </span>
                                       </TooltipTrigger>
                                       <TooltipContent>Primary Key</TooltipContent>
@@ -318,7 +318,7 @@ function DatabaseViewerPage() {
                                     <Tooltip>
                                       <TooltipTrigger asChild>
                                         <span className='inline-flex'>
-                                          <LinkIcon className='h-3 w-3 text-blue-500' />
+                                          <LinkIcon className='size-3 text-blue-500' />
                                         </span>
                                       </TooltipTrigger>
                                       <TooltipContent>
@@ -334,8 +334,8 @@ function DatabaseViewerPage() {
                                   )}
                                   {orderBy === col &&
                                     (order === 'desc' ?
-                                      <ArrowDownIcon className='h-3 w-3' />
-                                    : <ArrowUpIcon className='h-3 w-3' />)}
+                                      <ArrowDownIcon className='size-3' />
+                                    : <ArrowUpIcon className='size-3' />)}
                                 </span>
                               </th>
                             );
@@ -390,7 +390,7 @@ function DatabaseViewerPage() {
                         disabled={page <= 1}
                         className='border-border hover:bg-secondary rounded border p-1 disabled:cursor-not-allowed disabled:opacity-50'
                       >
-                        <ChevronLeftIcon className='h-5 w-5' />
+                        <ChevronLeftIcon className='size-5' />
                       </button>
                       <span className='flex items-center px-2 text-sm'>
                         Page {pagination.page} of {pagination.totalPages}
@@ -401,7 +401,7 @@ function DatabaseViewerPage() {
                         disabled={page >= pagination.totalPages}
                         className='border-border hover:bg-secondary rounded border p-1 disabled:cursor-not-allowed disabled:opacity-50'
                       >
-                        <ChevronRightIcon className='h-5 w-5' />
+                        <ChevronRightIcon className='size-5' />
                       </button>
                     </div>
                   </div>
