@@ -164,11 +164,7 @@ export function GoogleDrivePickerLauncher({
         </Alert>
       )}
 
-      {error && (
-        <Alert variant='destructive'>
-          {error}
-        </Alert>
-      )}
+      {error && <Alert variant='destructive'>{error}</Alert>}
 
       {connected === false && (
         <div className='border-border rounded-lg border px-4 py-4 text-center'>

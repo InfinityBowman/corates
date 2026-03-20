@@ -565,7 +565,8 @@ function UserDetailPage() {
                           <Badge
                             variant={
                               org.role === 'owner' ? 'default'
-                              : org.role === 'admin' ? 'info'
+                              : org.role === 'admin' ?
+                                'info'
                               : 'secondary'
                             }
                           >
@@ -577,7 +578,8 @@ function UserDetailPage() {
                           <Badge
                             variant={
                               org.billing.accessMode === 'full' ? 'success'
-                              : org.billing.accessMode === 'limited' ? 'warning'
+                              : org.billing.accessMode === 'limited' ?
+                                'warning'
                               : 'destructive'
                             }
                           >

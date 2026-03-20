@@ -90,11 +90,7 @@ export function CreateOrgPage() {
           </div>
 
           <form onSubmit={handleSubmit} className='flex flex-col gap-4'>
-            {error && (
-              <Alert variant='destructive'>
-                {error}
-              </Alert>
-            )}
+            {error && <Alert variant='destructive'>{error}</Alert>}
 
             <div>
               <label htmlFor='org-name' className='text-foreground block text-sm font-medium'>

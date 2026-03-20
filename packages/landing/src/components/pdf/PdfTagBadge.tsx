@@ -15,7 +15,11 @@ export function PdfTagBadge({ tag }: PdfTagBadgeProps) {
   return (
     <Badge
       variant='info'
-      className={tag === 'protocol' ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400' : undefined}
+      className={
+        tag === 'protocol' ?
+          'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400'
+        : undefined
+      }
     >
       {tag === 'primary' ?
         <>

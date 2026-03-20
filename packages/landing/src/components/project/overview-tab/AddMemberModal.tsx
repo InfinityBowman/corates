@@ -286,11 +286,7 @@ export function AddMemberModal({
             </div>
           )}
 
-          {error && (
-            <Alert variant='destructive'>
-              {error}
-            </Alert>
-          )}
+          {error && <Alert variant='destructive'>{error}</Alert>}
         </div>
 
         <DialogFooter>

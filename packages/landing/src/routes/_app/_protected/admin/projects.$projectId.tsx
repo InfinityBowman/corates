@@ -529,9 +529,7 @@ function ProjectDetailPage() {
                       <tr key={invitation.id} className={table.row}>
                         <td className={table.cellCompact}>{invitation.email}</td>
                         <td className={table.cellCompact}>
-                          <Badge variant='secondary'>
-                            {invitation.role}
-                          </Badge>
+                          <Badge variant='secondary'>{invitation.role}</Badge>
                           {invitation.grantOrgMembership && (
                             <span className='text-muted-foreground ml-1 text-xs'>+ org</span>
                           )}
@@ -550,9 +548,7 @@ function ProjectDetailPage() {
                             </Badge>
                           )}
                           {isInvitationExpired(invitation) && (
-                            <Badge variant='destructive'>
-                              Expired
-                            </Badge>
+                            <Badge variant='destructive'>Expired</Badge>
                           )}
                         </td>
                         <td className={table.cellCompact}>

@@ -96,7 +96,9 @@ const formatCurrency = (amount: number | null | undefined, currency = 'usd'): st
   }).format(amount / 100);
 };
 
-const getStatusVariant = (status: string): 'success' | 'destructive' | 'warning' | 'info' | 'secondary' => {
+const getStatusVariant = (
+  status: string,
+): 'success' | 'destructive' | 'warning' | 'info' | 'secondary' => {
   const variants: Record<string, 'success' | 'destructive' | 'warning' | 'info' | 'secondary'> = {
     active: 'success',
     trialing: 'info',
