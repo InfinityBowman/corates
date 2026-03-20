@@ -1,39 +1,37 @@
-import { AiOutlineUsergroupAdd } from 'react-icons/ai';
-import { IoSchoolOutline } from 'react-icons/io5';
-import { FaSchool, FaBriefcaseMedical, FaFileLines } from 'react-icons/fa6';
+import { UserPlusIcon, SchoolIcon, BriefcaseMedicalIcon, FileTextIcon } from 'lucide-react';
 
 export default function WhoIsCoRATESFor() {
   const audiences = [
     {
-      icon: <AiOutlineUsergroupAdd className='h-6 w-6' />,
+      icon: <UserPlusIcon className='h-6 w-6' />,
       title: 'Systematic review and evidence synthesis teams',
       description:
         'Appraise multiple studies in a structured, consistent way that supports rigorous, transparent, and well-documented review processes.',
       color: 'blue',
     },
     {
-      icon: <IoSchoolOutline className='h-6 w-6' />,
+      icon: <SchoolIcon className='h-6 w-6' />,
       title: 'Students learning to appraise research',
       description:
         'Learn study appraisal by using validated tools in a guided interface, with free single-study assessments for easy practice.',
       color: 'emerald',
     },
     {
-      icon: <FaSchool className='h-6 w-6' />,
+      icon: <SchoolIcon className='h-6 w-6' />,
       title: 'Faculty teaching research methods or appraisal',
       description:
         'Use structured appraisal activities to help students understand what makes different research designs rigorous by examining real published studies.',
       color: 'violet',
     },
     {
-      icon: <FaBriefcaseMedical className='h-6 w-6' />,
+      icon: <BriefcaseMedicalIcon className='h-6 w-6' />,
       title: 'Clinicians and practitioners',
       description:
         'Evaluate the quality of individual studies when deciding whether evidence should inform practice, policy, or program decisions.',
       color: 'rose',
     },
     {
-      icon: <FaFileLines className='h-6 w-6' />,
+      icon: <FileTextIcon className='h-6 w-6' />,
       title: 'Anyone needing to appraise a single study',
       description:
         'CoRATES makes it easy to complete a one-off appraisal for free, including automatic study-level scoring.',

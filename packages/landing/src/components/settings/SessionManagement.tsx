@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { useAuthStore } from '@/stores/authStore';
 import { showToast } from '@/components/ui/toast';
+import { Alert } from '@/components/ui/alert';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -281,9 +282,9 @@ export function SessionManagement() {
       )}
 
       {sessionsError && (
-        <div className='rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-600'>
+        <Alert variant='destructive'>
           Failed to load sessions. Please try again.
-        </div>
+        </Alert>
       )}
 
       {!isLoading && !sessionsError && (

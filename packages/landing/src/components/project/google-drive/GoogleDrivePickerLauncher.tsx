@@ -10,6 +10,7 @@ import {
   getGoogleDrivePickerToken,
   connectGoogleAccount,
 } from '@/api/google-drive';
+import { Alert } from '@/components/ui/alert';
 import { GOOGLE_PICKER_API_KEY, GOOGLE_PICKER_APP_ID } from '@/config/google';
 import { pickGooglePdfFiles } from '@/lib/googlePicker.js';
 import { buildRestoreCallbackUrl } from '@/lib/formStatePersistence.js';
@@ -158,15 +159,15 @@ export function GoogleDrivePickerLauncher({
   return (
     <div className='space-y-3'>
       {!pickerConfigured && (
-        <div className='rounded-lg border border-yellow-200 bg-yellow-50 p-3 text-sm text-yellow-800'>
+        <Alert variant='warning'>
           Google Picker is not configured. Set VITE_GOOGLE_PICKER_API_KEY.
-        </div>
+        </Alert>
       )}
 
       {error && (
-        <div className='rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700'>
+        <Alert variant='destructive'>
           {error}
-        </div>
+        </Alert>
       )}
 
       {connected === false && (

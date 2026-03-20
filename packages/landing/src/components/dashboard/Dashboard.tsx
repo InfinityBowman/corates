@@ -10,6 +10,7 @@ import { useAuthStore, selectUser, selectIsLoggedIn } from '@/stores/authStore';
 import { useOnlineStatus } from '@/hooks/useOnlineStatus';
 import { useSubscription } from '@/hooks/useSubscription';
 import { useMyProjectsList, type Project } from '@/hooks/useMyProjectsList';
+import { Alert } from '@/components/ui/alert';
 
 import { DashboardHeader } from './DashboardHeader';
 import { QuickActions } from './QuickActions';
@@ -74,12 +75,9 @@ export function Dashboard() {
       <div className='mx-auto px-4 py-8 sm:px-6 lg:px-8'>
         {/* Subscription error banner */}
         {isLoggedIn && subscriptionFetchFailed && (
-          <div
-            className='mb-6 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-700'
-            role='alert'
-          >
+          <Alert variant='warning' className='mb-6'>
             Could not load subscription details. Some features may be limited.
-          </div>
+          </Alert>
         )}
 
         <DashboardHeader

@@ -6,6 +6,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Link } from '@tanstack/react-router';
 import { useQuery } from '@tanstack/react-query';
 import { CheckCircleIcon, ArrowRightIcon, XCircleIcon } from 'lucide-react';
+import { Alert, AlertAction, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { useSubscription } from '@/hooks/useSubscription';
 import { useMembers } from '@/hooks/useMembers';
 import { redirectToPortal } from '@/api/billing';
@@ -129,43 +130,43 @@ export function BillingSettings() {
         />
 
         {checkoutOutcome === 'success' && (
-          <div className='mb-6 flex items-center gap-3 rounded-xl border border-emerald-200 bg-emerald-50 p-4'>
-            <div className='flex h-10 w-10 items-center justify-center rounded-full bg-emerald-100'>
-              <CheckCircleIcon className='h-5 w-5 text-emerald-600' />
-            </div>
+          <Alert variant='success' className='mb-6'>
+            <CheckCircleIcon />
             <div>
-              <p className='font-semibold text-emerald-800'>Payment successful!</p>
-              <p className='text-sm text-emerald-600'>Your subscription has been activated.</p>
+              <AlertTitle>Payment successful!</AlertTitle>
+              <AlertDescription>Your subscription has been activated.</AlertDescription>
             </div>
-            <button
-              type='button'
-              onClick={() => setCheckoutOutcome(null)}
-              className='ml-auto text-emerald-600 hover:text-emerald-800'
-              aria-label='Dismiss'
-            >
-              <XCircleIcon className='h-5 w-5' />
-            </button>
-          </div>
+            <AlertAction>
+              <button
+                type='button'
+                onClick={() => setCheckoutOutcome(null)}
+                className='text-green-600 hover:text-green-800'
+                aria-label='Dismiss'
+              >
+                <XCircleIcon className='h-5 w-5' />
+              </button>
+            </AlertAction>
+          </Alert>
         )}
 
         {checkoutOutcome === 'canceled' && (
-          <div className='mb-6 flex items-center gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4'>
-            <div className='flex h-10 w-10 items-center justify-center rounded-full bg-amber-100'>
-              <XCircleIcon className='h-5 w-5 text-amber-600' />
-            </div>
+          <Alert variant='warning' className='mb-6'>
+            <XCircleIcon />
             <div>
-              <p className='font-semibold text-amber-800'>Checkout canceled</p>
-              <p className='text-sm text-amber-600'>No changes were made to your subscription.</p>
+              <AlertTitle>Checkout canceled</AlertTitle>
+              <AlertDescription>No changes were made to your subscription.</AlertDescription>
             </div>
-            <button
-              type='button'
-              onClick={() => setCheckoutOutcome(null)}
-              className='ml-auto text-amber-600 hover:text-amber-800'
-              aria-label='Dismiss'
-            >
-              <XCircleIcon className='h-5 w-5' />
-            </button>
-          </div>
+            <AlertAction>
+              <button
+                type='button'
+                onClick={() => setCheckoutOutcome(null)}
+                className='text-amber-600 hover:text-amber-800'
+                aria-label='Dismiss'
+              >
+                <XCircleIcon className='h-5 w-5' />
+              </button>
+            </AlertAction>
+          </Alert>
         )}
 
         <div className='grid gap-6 lg:grid-cols-3'>

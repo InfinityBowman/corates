@@ -5,7 +5,7 @@
 
 import { useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
-import { FiLock } from 'react-icons/fi';
+import { LockIcon } from 'lucide-react';
 import { useAuthStore } from '@/stores/authStore';
 import { handleError } from '@/lib/error-utils';
 import { ErrorMessage } from './ErrorMessage';
@@ -58,7 +58,7 @@ export function TwoFactorVerify({ onCancel }: TwoFactorVerifyProps) {
     <div className='space-y-4'>
       <div className='mb-4 text-center'>
         <div className='bg-primary/10 mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full'>
-          <FiLock className='text-primary h-8 w-8' />
+          <LockIcon className='text-primary h-8 w-8' />
         </div>
         <h2 className='text-foreground mb-1 text-xl font-bold'>Two-Factor Authentication</h2>
         <p className='text-muted-foreground text-sm'>

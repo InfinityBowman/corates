@@ -1,5 +1,5 @@
 import { Link } from '@tanstack/react-router';
-import { BiCopyright } from 'react-icons/bi';
+import { CopyrightIcon } from 'lucide-react';
 
 export default function Footer() {
   const year = new Date().getFullYear();
@@ -100,7 +100,7 @@ export default function Footer() {
 
         <div className='flex flex-col items-center justify-between gap-4 border-t border-gray-200 pt-8 sm:flex-row'>
           <p className='inline-flex items-center gap-1 text-sm text-gray-400'>
-            <BiCopyright className='h-4 w-4' />
+            <CopyrightIcon className='h-4 w-4' />
             {year} Syntch LLC. All rights reserved.
           </p>
           <div className='flex gap-4'>

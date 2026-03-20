@@ -12,6 +12,7 @@ import {
   LoaderIcon,
 } from 'lucide-react';
 import { showToast } from '@/components/ui/toast';
+import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import FlipNumber from '@/components/FlipNumber';
 import {
   Dialog,
@@ -247,15 +248,15 @@ export function PricingTable({ currentTier: currentTierProp }: PricingTableProps
 
       {/* Trial upgrade prompt */}
       {isTrialing && (
-        <div className='mb-6 flex items-center gap-3 rounded-xl border border-blue-200 bg-blue-50 p-4'>
-          <ZapIcon className='h-5 w-5 shrink-0 text-blue-600' />
+        <Alert variant='info' className='mb-6'>
+          <ZapIcon />
           <div>
-            <p className='font-medium text-blue-800'>Enjoying your trial?</p>
-            <p className='text-sm text-blue-600'>
+            <AlertTitle>Enjoying your trial?</AlertTitle>
+            <AlertDescription>
               Upgrade now to keep your projects and avoid any interruption when your trial ends.
-            </p>
+            </AlertDescription>
           </div>
-        </div>
+        </Alert>
       )}
 
       {/* Plans grid */}
@@ -459,12 +460,12 @@ export function PricingTable({ currentTier: currentTierProp }: PricingTableProps
           {validationError && (
             <div className='mb-6 space-y-3'>
               {validationError.violations?.map((v: any, i: number) => (
-                <div key={i} className='rounded-lg border border-red-200 bg-red-50 p-3'>
-                  <p className='text-sm font-medium text-red-800'>{v.message}</p>
-                  <p className='mt-1 text-xs text-red-600'>
+                <Alert key={i} variant='destructive'>
+                  <AlertTitle>{v.message}</AlertTitle>
+                  <AlertDescription>
                     Current: {v.current} / Limit: {v.limit}
-                  </p>
-                </div>
+                  </AlertDescription>
+                </Alert>
               ))}
             </div>
           )}
@@ -498,15 +499,17 @@ export function PricingTable({ currentTier: currentTierProp }: PricingTableProps
             </div>
           </DialogHeader>
           {pendingDowngrade && (
-            <div className='mb-6 rounded-lg border border-amber-200 bg-amber-50 p-4'>
-              <p className='text-sm text-amber-800'>
-                You&apos;re switching from <span className='font-semibold'>{currentTier}</span> to{' '}
-                <span className='font-semibold'>{pendingDowngrade.name}</span>.
-              </p>
-              <p className='mt-2 text-sm text-amber-700'>
-                Your new plan will take effect at the end of your current billing period.
-              </p>
-            </div>
+            <Alert variant='warning' className='mb-6'>
+              <AlertDescription>
+                <p>
+                  You&apos;re switching from <span className='font-semibold'>{currentTier}</span> to{' '}
+                  <span className='font-semibold'>{pendingDowngrade.name}</span>.
+                </p>
+                <p className='mt-2'>
+                  Your new plan will take effect at the end of your current billing period.
+                </p>
+              </AlertDescription>
+            </Alert>
           )}
           <div className='flex justify-end gap-3'>
             <button

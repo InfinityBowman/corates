@@ -1,5 +1,5 @@
 import { ReactNode } from 'react';
-import { AiOutlineFolderAdd, AiOutlineFileAdd, AiOutlineEdit, AiOutlineTeam } from 'react-icons/ai';
+import { FolderPlusIcon, FilePlusIcon, PencilIcon, UsersIcon } from 'lucide-react';
 
 interface Step {
   number: number;
@@ -12,25 +12,25 @@ export default function HowItWorks() {
   const steps: Step[] = [
     {
       number: 1,
-      icon: <AiOutlineFolderAdd className='h-6 w-6' />,
+      icon: <FolderPlusIcon className='h-6 w-6' />,
       title: 'Create a Project',
       description: 'Set up a review project and invite your team members to collaborate.',
     },
     {
       number: 2,
-      icon: <AiOutlineFileAdd className='h-6 w-6' />,
+      icon: <FilePlusIcon className='h-6 w-6' />,
       title: 'Add Studies',
       description: 'Upload PDFs and easily assign reviewers.',
     },
     {
       number: 3,
-      icon: <AiOutlineEdit className='h-6 w-6' />,
+      icon: <PencilIcon className='h-6 w-6' />,
       title: 'Appraise Independently',
       description: 'Complete assessments independently with guided checklists and PDF annotations.',
     },
     {
       number: 4,
-      icon: <AiOutlineTeam className='h-6 w-6' />,
+      icon: <UsersIcon className='h-6 w-6' />,
       title: 'Resolve Collaboratively',
       description: 'Resolve discrepancies together with automatic scoring and summaries.',
     },

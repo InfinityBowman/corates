@@ -3,7 +3,7 @@
  */
 
 import { useMemo } from 'react';
-import { UsersIcon, ChevronRightIcon, TrashIcon } from 'lucide-react';
+import { UsersIcon, ChevronRightIcon, Trash2Icon } from 'lucide-react';
 import { useProjectStore, selectProjectStats } from '@/stores/projectStore';
 import { type Project } from '@/hooks/useMyProjectsList';
 import { formatRelativeTime, getAccentColors } from './utils';
@@ -68,7 +68,7 @@ export function ProjectCard({ project, onOpen, onDelete, style }: ProjectCardPro
             className='text-muted-foreground/50 z-10 shrink-0 rounded-lg p-2 opacity-0 transition-all group-hover:opacity-100 hover:bg-red-50 hover:text-red-500'
             title='Delete Project'
           >
-            <TrashIcon className='h-4 w-4' />
+            <Trash2Icon className='h-4 w-4' />
           </button>
         )}
       </div>
@@ -88,7 +88,7 @@ export function ProjectCard({ project, onOpen, onDelete, style }: ProjectCardPro
         </div>
         <div className='bg-secondary h-1.5 overflow-hidden rounded-full'>
           <div
-            className={`h-full rounded-full bg-gradient-to-r ${colors.gradient} transition-all duration-500`}
+            className={`h-full rounded-full bg-linear-to-r ${colors.gradient} transition-all duration-500`}
             style={{ width: `${progress.percentage}%` }}
           />
         </div>

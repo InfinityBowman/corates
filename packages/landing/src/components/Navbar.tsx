@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from '@tanstack/react-router';
-import { FiMenu, FiX } from 'react-icons/fi';
+import { MenuIcon, XIcon } from 'lucide-react';
 
 import { useAuth } from '../lib/auth';
 import EarlyAccessBanner from './EarlyAccessBanner';
@@ -154,8 +154,8 @@ export default function Navbar() {
               aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}
             >
               {mobileMenuOpen ?
-                <FiX className='h-6 w-6' />
-              : <FiMenu className='h-6 w-6' />}
+                <XIcon className='h-6 w-6' />
+              : <MenuIcon className='h-6 w-6' />}
             </button>
           </div>
         </div>

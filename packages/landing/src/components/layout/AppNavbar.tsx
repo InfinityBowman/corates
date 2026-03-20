@@ -5,8 +5,7 @@
 
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from '@tanstack/react-router';
-import { FiMenu, FiWifiOff, FiX } from 'react-icons/fi';
-import { ChevronDownIcon } from 'lucide-react';
+import { MenuIcon, WifiOffIcon, XIcon, ChevronDownIcon } from 'lucide-react';
 import { useAuthStore, selectUser, selectIsAuthLoading } from '@/stores/authStore';
 import { useAdminStore } from '@/stores/adminStore';
 import { useOnlineStatus } from '@/hooks/useOnlineStatus';
@@ -79,8 +78,8 @@ export function AppNavbar({ mobileSidebarOpen, toggleMobileSidebar }: AppNavbarP
             aria-label={mobileSidebarOpen ? 'Close sidebar' : 'Open sidebar'}
           >
             {mobileSidebarOpen ?
-              <FiX className='h-4 w-4' />
-            : <FiMenu className='h-4 w-4' />}
+              <XIcon className='h-4 w-4' />
+            : <MenuIcon className='h-4 w-4' />}
           </button>
         )}
 
@@ -105,7 +104,7 @@ export function AppNavbar({ mobileSidebarOpen, toggleMobileSidebar }: AppNavbarP
         {/* Offline indicator */}
         {!isOnline && (
           <div className='flex items-center gap-1 rounded-full bg-amber-500/90 px-2 py-1 text-xs text-white'>
-            <FiWifiOff className='h-3 w-3' />
+            <WifiOffIcon className='h-3 w-3' />
             <span className='hidden sm:inline'>Offline</span>
           </div>
         )}

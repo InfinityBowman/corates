@@ -1,7 +1,4 @@
-import { AiOutlineCheckCircle } from 'react-icons/ai';
-import { HiOutlineDocumentText } from 'react-icons/hi2';
-import { BsGraphUp } from 'react-icons/bs';
-import { FiUsers } from 'react-icons/fi';
+import { CheckCircleIcon, FileTextIcon, TrendingUpIcon, UsersIcon } from 'lucide-react';
 
 function EcosystemIllustration() {
   return (
@@ -17,25 +14,25 @@ function EcosystemIllustration() {
         {/* Orbiting elements */}
         <div className='absolute top-0 left-1/4 -translate-x-1/2 -translate-y-2'>
           <div className='rounded-lg border border-gray-200 bg-white p-2.5 shadow-md'>
-            <HiOutlineDocumentText className='h-5 w-5 text-rose-500' />
+            <FileTextIcon className='h-5 w-5 text-rose-500' />
           </div>
         </div>
 
         <div className='absolute top-0 right-1/4 translate-x-1/2 -translate-y-2'>
           <div className='rounded-lg border border-gray-200 bg-white p-2.5 shadow-md'>
-            <BsGraphUp className='h-5 w-5 text-violet-500' />
+            <TrendingUpIcon className='h-5 w-5 text-violet-500' />
           </div>
         </div>
 
         <div className='absolute bottom-0 left-1/4 -translate-x-1/2 translate-y-2'>
           <div className='rounded-lg border border-gray-200 bg-white p-2.5 shadow-md'>
-            <FiUsers className='h-5 w-5 text-emerald-500' />
+            <UsersIcon className='h-5 w-5 text-emerald-500' />
           </div>
         </div>
 
         <div className='absolute right-1/4 bottom-0 translate-x-1/2 translate-y-2'>
           <div className='rounded-lg border border-gray-200 bg-white p-2.5 shadow-md'>
-            <AiOutlineCheckCircle className='h-5 w-5 text-amber-500' />
+            <CheckCircleIcon className='h-5 w-5 text-amber-500' />
           </div>
         </div>
 

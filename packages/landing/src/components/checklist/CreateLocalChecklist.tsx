@@ -7,6 +7,7 @@ import { useState, useCallback } from 'react';
 import { useNavigate, useSearch, Link } from '@tanstack/react-router';
 import { FileTextIcon, XIcon, CloudUploadIcon } from 'lucide-react';
 import { useLocalChecklistsStore } from '@/stores/localChecklistsStore';
+import { Alert } from '@/components/ui/alert';
 import { FileUpload, FileUploadDropzone, FileUploadHiddenInput } from '@/components/ui/file-upload';
 import { LANDING_URL } from '@/config/api.js';
 import { getChecklistTypeOptions, DEFAULT_CHECKLIST_TYPE } from '@/checklist-registry/index';
@@ -174,9 +175,9 @@ export function CreateLocalChecklist({ type: typeParam }: { type?: string }) {
 
             {/* Error */}
             {error && (
-              <div className='rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-600'>
+              <Alert variant='destructive'>
                 {error}
-              </div>
+              </Alert>
             )}
 
             {/* Buttons */}

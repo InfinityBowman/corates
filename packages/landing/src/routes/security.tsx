@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { FiShield, FiLock, FiServer, FiUsers, FiAlertCircle, FiMail } from 'react-icons/fi';
+import { ShieldIcon, LockIcon, ServerIcon, UsersIcon, AlertCircleIcon, MailIcon } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import { config } from '../lib/config';
@@ -54,7 +54,7 @@ function SecurityPage() {
               <div className='rounded-lg bg-gray-50 p-6'>
                 <div className='flex items-start gap-4'>
                   <div className='flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-100'>
-                    <FiLock className='h-5 w-5 text-blue-600' />
+                    <LockIcon className='h-5 w-5 text-blue-600' />
                   </div>
                   <div>
                     <h2 className='mb-2 text-lg font-semibold text-gray-900'>Encryption</h2>
@@ -71,7 +71,7 @@ function SecurityPage() {
               <div className='rounded-lg bg-gray-50 p-6'>
                 <div className='flex items-start gap-4'>
                   <div className='flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-100'>
-                    <FiShield className='h-5 w-5 text-blue-600' />
+                    <ShieldIcon className='h-5 w-5 text-blue-600' />
                   </div>
                   <div>
                     <h2 className='mb-2 text-lg font-semibold text-gray-900'>Authentication</h2>
@@ -87,7 +87,7 @@ function SecurityPage() {
               <div className='rounded-lg bg-gray-50 p-6'>
                 <div className='flex items-start gap-4'>
                   <div className='flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-100'>
-                    <FiAlertCircle className='h-5 w-5 text-blue-600' />
+                    <AlertCircleIcon className='h-5 w-5 text-blue-600' />
                   </div>
                   <div>
                     <h2 className='mb-2 text-lg font-semibold text-gray-900'>Abuse Prevention</h2>
@@ -103,7 +103,7 @@ function SecurityPage() {
               <div className='rounded-lg bg-gray-50 p-6'>
                 <div className='flex items-start gap-4'>
                   <div className='flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-100'>
-                    <FiServer className='h-5 w-5 text-blue-600' />
+                    <ServerIcon className='h-5 w-5 text-blue-600' />
                   </div>
                   <div>
                     <h2 className='mb-2 text-lg font-semibold text-gray-900'>Infrastructure</h2>
@@ -119,7 +119,7 @@ function SecurityPage() {
               <div className='rounded-lg bg-gray-50 p-6'>
                 <div className='flex items-start gap-4'>
                   <div className='flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-100'>
-                    <FiUsers className='h-5 w-5 text-blue-600' />
+                    <UsersIcon className='h-5 w-5 text-blue-600' />
                   </div>
                   <div>
                     <h2 className='mb-2 text-lg font-semibold text-gray-900'>Access Control</h2>
@@ -138,7 +138,7 @@ function SecurityPage() {
             <div className='border-t border-gray-200 pt-8'>
               <div className='flex items-start gap-4'>
                 <div className='flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-amber-100'>
-                  <FiAlertCircle className='h-5 w-5 text-amber-600' />
+                  <AlertCircleIcon className='h-5 w-5 text-amber-600' />
                 </div>
                 <div>
                   <h2 className='mb-3 text-xl font-semibold text-gray-900'>
@@ -180,7 +180,7 @@ function SecurityPage() {
             <div className='border-t border-gray-200 pt-8'>
               <div className='flex items-start gap-4'>
                 <div className='flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-100'>
-                  <FiMail className='h-5 w-5 text-blue-600' />
+                  <MailIcon className='h-5 w-5 text-blue-600' />
                 </div>
                 <div>
                   <h2 className='mb-3 text-xl font-semibold text-gray-900'>Security Questions</h2>

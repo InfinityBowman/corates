@@ -6,6 +6,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { Link } from '@tanstack/react-router';
 import { TriangleAlertIcon } from 'lucide-react';
 import { showToast } from '@/components/ui/toast';
+import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { getInitials } from '@/components/ui/avatar';
 import {
@@ -153,19 +154,19 @@ export function AddMemberModal({
 
         <div className='space-y-4'>
           {isAtQuotaLimit && (
-            <div className='flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 p-3'>
-              <TriangleAlertIcon className='mt-0.5 h-5 w-5 shrink-0 text-amber-600' />
-              <div className='text-sm'>
-                <p className='font-medium text-amber-800'>Collaborator limit reached</p>
-                <p className='mt-1 text-amber-700'>
+            <Alert variant='warning'>
+              <TriangleAlertIcon />
+              <div>
+                <AlertTitle>Collaborator limit reached</AlertTitle>
+                <AlertDescription>
                   Your team has {quotaInfo?.used} of {quotaInfo?.max} collaborators.{' '}
                   <Link to='/settings/plans' className='font-medium underline'>
                     Upgrade your plan
                   </Link>{' '}
                   to add more team members.
-                </p>
+                </AlertDescription>
               </div>
-            </div>
+            </Alert>
           )}
 
           <div className='relative'>
@@ -230,12 +231,12 @@ export function AddMemberModal({
             )}
 
           {canAddByEmail && (
-            <div className='rounded-lg border border-blue-200 bg-blue-50 p-3'>
-              <p className='text-secondary-foreground text-sm'>
+            <Alert variant='info'>
+              <p className='text-sm'>
                 No user found. You can send an invitation to{' '}
                 <span className='font-medium'>{searchQuery.trim()}</span>.
               </p>
-            </div>
+            </Alert>
           )}
 
           {selectedUser && (
@@ -286,9 +287,9 @@ export function AddMemberModal({
           )}
 
           {error && (
-            <div className='rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700'>
+            <Alert variant='destructive'>
               {error}
-            </div>
+            </Alert>
           )}
         </div>
 

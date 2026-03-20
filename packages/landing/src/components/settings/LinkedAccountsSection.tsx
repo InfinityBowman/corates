@@ -9,6 +9,7 @@ import { authClient } from '@/api/auth-client';
 import { useAuthStore, selectUser } from '@/stores/authStore';
 import { useLinkedAccounts } from '@/hooks/useLinkedAccounts';
 import { showToast } from '@/components/ui/toast';
+import { Alert } from '@/components/ui/alert';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -157,21 +158,19 @@ export function LinkedAccountsSection() {
 
       <div className='space-y-4 p-6'>
         {error && (
-          <div className='rounded-lg border border-red-200 bg-red-50 p-4'>
-            <div className='flex items-start gap-3'>
-              <AlertCircleIcon className='text-destructive mt-0.5 h-5 w-5' />
-              <div>
-                <p className='text-destructive font-medium'>Failed to load linked accounts</p>
-                <p className='text-destructive mt-1 text-sm'>{(error as Error)?.message}</p>
-                <button
-                  onClick={() => refetch()}
-                  className='text-destructive mt-2 text-sm font-medium underline'
-                >
-                  Try again
-                </button>
-              </div>
+          <Alert variant='destructive'>
+            <AlertCircleIcon />
+            <div>
+              <p className='font-medium'>Failed to load linked accounts</p>
+              <p className='mt-1 text-sm'>{(error as Error)?.message}</p>
+              <button
+                onClick={() => refetch()}
+                className='mt-2 text-sm font-medium underline'
+              >
+                Try again
+              </button>
             </div>
-          </div>
+          </Alert>
         )}
 
         {accounts?.length > 0 ?
@@ -227,16 +226,14 @@ export function LinkedAccountsSection() {
           </div>
         )}
 
-        <div className='bg-primary/5 mt-4 rounded-lg border border-blue-200 p-4'>
-          <div className='flex items-start gap-3'>
-            <InfoIcon className='text-primary mt-0.5 h-5 w-5 shrink-0' />
-            <p className='text-primary text-sm'>
-              <strong>Why link accounts?</strong> Linking multiple sign-in methods gives you backup
-              options if you lose access to one. Your projects and data are shared across all linked
-              accounts.
-            </p>
-          </div>
-        </div>
+        <Alert variant='info' className='mt-4'>
+          <InfoIcon />
+          <p className='text-sm'>
+            <strong>Why link accounts?</strong> Linking multiple sign-in methods gives you backup
+            options if you lose access to one. Your projects and data are shared across all linked
+            accounts.
+          </p>
+        </Alert>
       </div>
 
       {/* Unlink confirmation dialog */}
@@ -250,9 +247,9 @@ export function LinkedAccountsSection() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           {unlinkError && (
-            <div className='rounded-md border border-red-200 bg-red-50 p-3'>
-              <p className='text-destructive text-sm'>{unlinkError}</p>
-            </div>
+            <Alert variant='destructive'>
+              {unlinkError}
+            </Alert>
           )}
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>

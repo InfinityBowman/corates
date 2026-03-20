@@ -1,11 +1,5 @@
 import { ReactNode } from 'react';
-import { AiOutlineCheck, AiOutlineMail, AiOutlineLink } from 'react-icons/ai';
-import { HiOutlineDocumentText, HiOutlineShieldCheck } from 'react-icons/hi2';
-import { BsLightningChargeFill } from 'react-icons/bs';
-import { FiLock, FiKey, FiShield } from 'react-icons/fi';
-import { BiComment } from 'react-icons/bi';
-import { RiWifiOffLine } from 'react-icons/ri';
-import { IoTimerOutline } from 'react-icons/io5';
+import { CheckIcon, MailIcon, LinkIcon, FileTextIcon, ShieldCheckIcon, ZapIcon, LockIcon, KeyIcon, ShieldIcon, MessageCircleIcon, WifiOffIcon, TimerIcon } from 'lucide-react';
 
 interface IllustrationWrapperProps {
   gradient: string;
@@ -179,7 +173,7 @@ function SecurityIllustration() {
       <div className='absolute inset-0 flex items-center justify-center'>
         <div className='relative'>
           <div className='flex h-36 w-32 items-center justify-center rounded-lg bg-linear-to-br from-emerald-500 to-teal-600 shadow-xl'>
-            <HiOutlineShieldCheck className='h-16 w-16 text-white' />
+            <ShieldCheckIcon className='h-16 w-16 text-white' />
           </div>
           <div className='absolute -inset-4 animate-pulse rounded-lg border-2 border-emerald-300 opacity-50' />
         </div>
@@ -187,22 +181,22 @@ function SecurityIllustration() {
 
       {/* Auth method badges */}
       <FloatingBadge position='top-4 left-4' border='border-emerald-200'>
-        <FiKey className='h-4 w-4 text-emerald-600' />
+        <KeyIcon className='h-4 w-4 text-emerald-600' />
         <span className='text-xs font-medium text-gray-700'>OAuth</span>
       </FloatingBadge>
 
       <FloatingBadge position='top-4 right-4' border='border-blue-200'>
-        <FiLock className='h-4 w-4 text-blue-600' />
+        <LockIcon className='h-4 w-4 text-blue-600' />
         <span className='text-xs font-medium text-gray-700'>2FA</span>
       </FloatingBadge>
 
       <FloatingBadge position='bottom-6 left-6' border='border-purple-200'>
-        <AiOutlineMail className='h-4 w-4 text-purple-600' />
+        <MailIcon className='h-4 w-4 text-purple-600' />
         <span className='text-xs font-medium text-gray-700'>Passwordless</span>
       </FloatingBadge>
 
       <FloatingBadge position='bottom-6 right-6' border='border-indigo-200'>
-        <FiShield className='h-4 w-4 text-indigo-600' />
+        <ShieldIcon className='h-4 w-4 text-indigo-600' />
         <span className='text-xs font-medium text-gray-700'>SSO</span>
       </FloatingBadge>
     </IllustrationWrapper>
@@ -240,7 +234,7 @@ function PDFAnnotationIllustration() {
       <div className='w-52 overflow-hidden rounded-lg border border-gray-200 bg-white shadow-lg'>
         {/* PDF header bar */}
         <div className='flex items-center gap-2 border-b border-gray-200 bg-gray-100 px-3 py-1.5'>
-          <HiOutlineDocumentText className='h-4 w-4 text-rose-500' />
+          <FileTextIcon className='h-4 w-4 text-rose-500' />
           <span className='truncate text-xs text-gray-600'>study_2025.pdf</span>
         </div>
 
@@ -288,7 +282,7 @@ function PDFAnnotationIllustration() {
 
       {/* Link indicator */}
       <FloatingBadge position='-bottom-2 -left-2' border='border-rose-200'>
-        <AiOutlineLink className='h-4 w-4 text-rose-500' />
+        <LinkIcon className='h-4 w-4 text-rose-500' />
         <span className='text-xs font-medium text-gray-700'>Linked</span>
       </FloatingBadge>
 
@@ -302,7 +296,7 @@ function PDFAnnotationIllustration() {
             <div className='h-3 w-3 rounded-sm bg-blue-400' />
           </div>
           <div className='flex h-6 w-6 items-center justify-center rounded bg-rose-100'>
-            <BiComment className='h-3 w-3 text-rose-500' />
+            <MessageCircleIcon className='h-3 w-3 text-rose-500' />
           </div>
         </div>
       </div>
@@ -387,7 +381,7 @@ function SpeedIllustration() {
           <div className='flex h-36 w-36 items-center justify-center rounded-full border-4 border-amber-200 bg-white shadow-lg'>
             <div className='text-center'>
               <div style={{ animation: 'boltGlow 2.5s ease-in-out infinite' }}>
-                <BsLightningChargeFill className='mx-auto h-12 w-12 text-amber-500' />
+                <ZapIcon className='mx-auto h-12 w-12 text-amber-500' />
               </div>
               <div className='mt-1 text-xs font-semibold text-gray-500'>Streamlined</div>
             </div>
@@ -396,17 +390,17 @@ function SpeedIllustration() {
 
         {/* Time saved badges */}
         <FloatingBadge position='-top-2 -left-2 z-10' border='border-green-200'>
-          <IoTimerOutline className='h-4 w-4 text-green-600' />
+          <TimerIcon className='h-4 w-4 text-green-600' />
           <span className='text-xs font-medium text-gray-700'>Save hours</span>
         </FloatingBadge>
 
         <FloatingBadge position='-top-2 -right-2 z-10' border='border-amber-200'>
-          <AiOutlineCheck className='h-4 w-4 text-amber-600' />
+          <CheckIcon className='h-4 w-4 text-amber-600' />
           <span className='text-xs font-medium text-gray-700'>Automated</span>
         </FloatingBadge>
 
         <FloatingBadge position='top-[40%] -right-2 z-10' border='border-blue-200'>
-          <RiWifiOffLine className='h-4 w-4 text-blue-600' />
+          <WifiOffIcon className='h-4 w-4 text-blue-600' />
           <span className='text-xs font-medium text-gray-700'>Works offline</span>
         </FloatingBadge>
 
@@ -511,7 +505,7 @@ function FeatureSection({ feature, reversed }: FeatureSectionProps) {
         <ul className='space-y-3'>
           {feature.bullets.map((bullet, index) => (
             <li key={index} className='flex items-start gap-3'>
-              <AiOutlineCheck className='mt-0.5 h-5 w-5 shrink-0 text-blue-700' />
+              <CheckIcon className='mt-0.5 h-5 w-5 shrink-0 text-blue-700' />
               <span className='text-gray-700'>{bullet}</span>
             </li>
           ))}

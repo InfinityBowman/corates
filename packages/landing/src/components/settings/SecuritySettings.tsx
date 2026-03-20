@@ -5,6 +5,7 @@
 import { useState, useCallback } from 'react';
 import { ShieldIcon, KeyIcon, EyeIcon, EyeOffIcon, MailIcon, MonitorIcon } from 'lucide-react';
 import { useAuthStore, selectUser } from '@/stores/authStore';
+import { Alert } from '@/components/ui/alert';
 import { StrengthIndicator } from '@/components/auth/StrengthIndicator';
 import { TwoFactorSetup } from './TwoFactorSetup';
 import { LinkedAccountsSection } from './LinkedAccountsSection';
@@ -103,34 +104,30 @@ export function SecuritySettings() {
           </div>
           <div className='space-y-6 p-6'>
             {passwordSuccess && (
-              <div className='rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-700'>
+              <Alert variant='success'>
                 {passwordSuccess}
-              </div>
+              </Alert>
             )}
 
             {/* Add Password */}
             {addPasswordSent ?
-              <div className='rounded-lg border border-blue-200 bg-blue-50 p-4'>
-                <div className='flex items-start space-x-3'>
-                  <div className='bg-primary/10 flex h-8 w-8 items-center justify-center rounded-lg'>
-                    <MailIcon className='text-primary h-4 w-4' />
-                  </div>
-                  <div>
-                    <p className='text-foreground font-medium'>Check your email</p>
-                    <p className='text-secondary-foreground mt-1 text-sm'>
-                      We sent a link to <strong className='text-foreground'>{user?.email}</strong>{' '}
-                      to set your password.
-                    </p>
-                    <button
-                      type='button'
-                      onClick={() => setAddPasswordSent(false)}
-                      className='text-primary hover:text-primary/80 mt-2 text-sm font-medium transition-colors'
-                    >
-                      Dismiss
-                    </button>
-                  </div>
+              <Alert variant='info'>
+                <MailIcon />
+                <div>
+                  <p className='font-medium'>Check your email</p>
+                  <p className='mt-1 text-sm'>
+                    We sent a link to <strong className='text-foreground'>{user?.email}</strong>{' '}
+                    to set your password.
+                  </p>
+                  <button
+                    type='button'
+                    onClick={() => setAddPasswordSent(false)}
+                    className='text-primary hover:text-primary/80 mt-2 text-sm font-medium transition-colors'
+                  >
+                    Dismiss
+                  </button>
                 </div>
-              </div>
+              </Alert>
             : <div className='flex items-center justify-between'>
                 <div>
                   <p className='text-foreground font-medium'>Add Password</p>
@@ -158,9 +155,9 @@ export function SecuritySettings() {
             {showPasswordForm ?
               <form onSubmit={handlePasswordChange} className='space-y-4'>
                 {passwordError && (
-                  <div className='rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-600'>
+                  <Alert variant='destructive'>
                     {passwordError}
-                  </div>
+                  </Alert>
                 )}
                 <div>
                   <label className='text-secondary-foreground mb-1.5 block text-sm font-medium'>

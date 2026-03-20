@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { useAuthStore, selectUser, selectTwoFactorEnabled } from '@/stores/authStore';
 import { showToast } from '@/components/ui/toast';
+import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { QRCode, QRCodeFrame, QRCodePattern } from '@/components/ui/qr-code';
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 
@@ -182,16 +183,16 @@ export function TwoFactorSetup() {
       {!loading && !setupMode && !disableMode && (
         <>
           {needsPassword && (
-            <div className='mb-4 flex items-start space-x-3 rounded-lg border border-amber-200 bg-amber-50 p-3'>
-              <InfoIcon className='mt-0.5 h-5 w-5 shrink-0 text-amber-600' />
-              <div className='text-sm text-amber-700'>
-                <p className='font-medium'>Password required</p>
-                <p className='mt-1'>
+            <Alert variant='warning' className='mb-4'>
+              <InfoIcon />
+              <div>
+                <AlertTitle>Password required</AlertTitle>
+                <AlertDescription>
                   Two-factor authentication requires a password. Use the &quot;Add Password&quot;
                   option above to set one up first.
-                </p>
+                </AlertDescription>
               </div>
-            </div>
+            </Alert>
           )}
 
           <div className='flex items-center justify-between'>
@@ -415,16 +416,16 @@ export function TwoFactorSetup() {
           {/* Step 3: Backup Codes */}
           {setupStep === 3 && (
             <div className='space-y-4'>
-              <div className='flex items-start space-x-3 rounded-lg border border-amber-200 bg-amber-50 p-3'>
-                <ShieldIcon className='mt-0.5 h-5 w-5 text-amber-600' />
-                <div className='text-sm text-amber-700'>
-                  <p className='font-medium'>Save Your Backup Codes</p>
-                  <p className='mt-1'>
+              <Alert variant='warning'>
+                <ShieldIcon />
+                <div>
+                  <AlertTitle>Save Your Backup Codes</AlertTitle>
+                  <AlertDescription>
                     Store these codes in a safe place. You can use them to access your account if
                     you lose your authenticator device.
-                  </p>
+                  </AlertDescription>
                 </div>
-              </div>
+              </Alert>
               <div className='bg-muted rounded-lg p-4'>
                 <div className='grid grid-cols-2 gap-2'>
                   {backupCodes.map((code, i) => (
@@ -467,15 +468,15 @@ export function TwoFactorSetup() {
               <XIcon className='h-5 w-5' />
             </button>
           </div>
-          <div className='flex items-start space-x-3 rounded-lg border border-amber-200 bg-amber-50 p-3'>
-            <ShieldIcon className='mt-0.5 h-5 w-5 text-amber-600' />
-            <div className='text-sm text-amber-700'>
-              <p className='font-medium'>Are you sure?</p>
-              <p className='mt-1'>
+          <Alert variant='warning'>
+            <ShieldIcon />
+            <div>
+              <AlertTitle>Are you sure?</AlertTitle>
+              <AlertDescription>
                 Disabling 2FA will make your account less secure. Enter your password to confirm.
-              </p>
+              </AlertDescription>
             </div>
-          </div>
+          </Alert>
           <form onSubmit={handleDisable} className='space-y-4'>
             <div>
               <label className='text-secondary-foreground mb-1 block text-sm font-medium'>

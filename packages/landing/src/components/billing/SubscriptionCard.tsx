@@ -13,6 +13,7 @@ import {
   ZapIcon,
   LoaderIcon,
 } from 'lucide-react';
+import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { useMembers } from '@/hooks/useMembers';
 
 function getDaysRemaining(endTimestamp: number | undefined) {
@@ -104,37 +105,37 @@ export function SubscriptionCard({ subscription, onManage, manageLoading }: Subs
       <div className='p-6'>
         {/* Alerts */}
         {status === 'past_due' && (
-          <div className='mb-4 flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 p-4'>
-            <AlertCircleIcon className='mt-0.5 h-5 w-5 shrink-0 text-red-500' />
+          <Alert variant='destructive' className='mb-4'>
+            <AlertCircleIcon />
             <div>
-              <p className='font-medium text-red-800'>Payment failed</p>
-              <p className='mt-1 text-sm text-red-600'>
+              <AlertTitle>Payment failed</AlertTitle>
+              <AlertDescription>
                 Please update your payment method to continue using premium features.
-              </p>
+              </AlertDescription>
             </div>
-          </div>
+          </Alert>
         )}
         {willCancel && (
-          <div className='mb-4 flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 p-4'>
-            <AlertCircleIcon className='mt-0.5 h-5 w-5 shrink-0 text-amber-500' />
+          <Alert variant='warning' className='mb-4'>
+            <AlertCircleIcon />
             <div>
-              <p className='font-medium text-amber-800'>Subscription ending</p>
-              <p className='mt-1 text-sm text-amber-600'>
+              <AlertTitle>Subscription ending</AlertTitle>
+              <AlertDescription>
                 Your subscription will end on {periodEndDate}. You&apos;ll be downgraded to the Free
                 plan.
-              </p>
+              </AlertDescription>
             </div>
-          </div>
+          </Alert>
         )}
         {isTrial && daysRemaining !== null && daysRemaining <= 3 && (
-          <div className='mb-4 flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 p-4'>
-            <ClockIcon className='mt-0.5 h-5 w-5 shrink-0 text-amber-500' />
+          <Alert variant='warning' className='mb-4'>
+            <ClockIcon />
             <div>
-              <p className='font-medium text-amber-800'>Trial ending soon</p>
-              <p className='mt-1 text-sm text-amber-600'>
+              <AlertTitle>Trial ending soon</AlertTitle>
+              <AlertDescription>
                 Your trial ends in {daysRemaining} day{daysRemaining !== 1 ? 's' : ''}. Upgrade now
                 to keep your projects and data.
-              </p>
+              </AlertDescription>
               <Link
                 to='/settings/plans'
                 className='mt-2 inline-flex items-center gap-1 text-sm font-medium text-amber-700 hover:text-amber-800'
@@ -143,7 +144,7 @@ export function SubscriptionCard({ subscription, onManage, manageLoading }: Subs
                 <ArrowRightIcon className='h-4 w-4' />
               </Link>
             </div>
-          </div>
+          </Alert>
         )}
 
         {/* Details */}

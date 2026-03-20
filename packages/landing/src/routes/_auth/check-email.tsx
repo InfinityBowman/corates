@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { createFileRoute, useNavigate, useSearch } from '@tanstack/react-router';
 import { Loader2Icon, MailIcon } from 'lucide-react';
 import { useAuthStore, selectUser } from '@/stores/authStore';
+import { Alert } from '@/components/ui/alert';
 import { ErrorMessage } from '@/components/auth/ErrorMessage';
 import { PrimaryButton, SecondaryButton } from '@/components/auth/AuthButtons';
 
@@ -155,9 +156,9 @@ function CheckEmailPage() {
             <ErrorMessage error={error} />
 
             {resent && (
-              <div className='rounded-lg border border-green-200 bg-green-50 p-3 text-xs text-green-600 sm:text-sm'>
+              <Alert variant='success' className='text-xs sm:text-sm'>
                 Verification email sent successfully!
-              </div>
+              </Alert>
             )}
           </div>
 

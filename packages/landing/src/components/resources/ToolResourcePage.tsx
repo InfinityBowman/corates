@@ -1,8 +1,6 @@
 import { useMemo } from 'react';
 import { Link } from '@tanstack/react-router';
-import { HiOutlineDocumentText } from 'react-icons/hi2';
-import { AiOutlineCheckCircle } from 'react-icons/ai';
-import { FiExternalLink, FiAlertCircle, FiAlertTriangle, FiHelpCircle } from 'react-icons/fi';
+import { FileTextIcon, CheckCircleIcon, ExternalLinkIcon, AlertCircleIcon, AlertTriangleIcon, HelpCircleIcon } from 'lucide-react';
 import { config } from '../../lib/config';
 import type { ToolContent, ScoreLevel } from '../../lib/tool-content';
 
@@ -40,16 +38,16 @@ const COLOR_CONFIG = {
 };
 
 const SCORE_ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
-  green: AiOutlineCheckCircle,
-  yellow: FiAlertCircle,
-  orange: FiAlertTriangle,
-  red: FiAlertCircle,
-  gray: FiHelpCircle,
+  green: CheckCircleIcon,
+  yellow: AlertCircleIcon,
+  orange: AlertTriangleIcon,
+  red: AlertCircleIcon,
+  gray: HelpCircleIcon,
 };
 
 function ScoreLevelCard({ level }: { level: ScoreLevel }) {
   const colors = COLOR_CONFIG[level.color] || COLOR_CONFIG.gray;
-  const Icon = SCORE_ICON_MAP[level.color] || FiAlertCircle;
+  const Icon = SCORE_ICON_MAP[level.color] || AlertCircleIcon;
 
   return (
     <div className={`rounded-lg border p-6 ${colors.border} ${colors.bg}`}>
@@ -133,7 +131,7 @@ function ToolContentView({ tool }: { tool: ToolContent }) {
             <div className='rounded-lg bg-gray-50 p-6'>
               <div className='flex items-start gap-4'>
                 <div className='flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-100'>
-                  <HiOutlineDocumentText className='h-5 w-5 text-blue-600' />
+                  <FileTextIcon className='h-5 w-5 text-blue-600' />
                 </div>
                 <div>
                   <h2 className='mb-2 text-lg font-semibold text-gray-900'>Best used for</h2>
@@ -145,7 +143,7 @@ function ToolContentView({ tool }: { tool: ToolContent }) {
             <div className='rounded-lg bg-gray-50 p-6'>
               <div className='flex items-start gap-4'>
                 <div className='flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-100'>
-                  <FiExternalLink className='h-5 w-5 text-blue-600' />
+                  <ExternalLinkIcon className='h-5 w-5 text-blue-600' />
                 </div>
                 <div className='flex-1'>
                   <h2 className='mb-4 text-lg font-semibold text-gray-900'>Reference Documents</h2>
@@ -159,7 +157,7 @@ function ToolContentView({ tool }: { tool: ToolContent }) {
                           className='inline-flex items-center gap-2 font-medium text-blue-600 hover:text-blue-700'
                         >
                           {link.text}
-                          <FiExternalLink className='h-4 w-4' />
+                          <ExternalLinkIcon className='h-4 w-4' />
                         </a>
                       </li>
                     ))}

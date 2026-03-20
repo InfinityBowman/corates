@@ -7,6 +7,7 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { TriangleAlertIcon, CheckIcon, LoaderIcon, UserPlusIcon, MailIcon } from 'lucide-react';
 import { showToast } from '@/components/ui/toast';
+import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { initiateMerge, verifyMergeCode, completeMerge, cancelMerge } from '@/api/account-merge';
@@ -217,23 +218,25 @@ export function MergeAccountsDialog({
           {/* PROMPT */}
           {step === STEPS.PROMPT && (
             <>
-              <div className='flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 p-3'>
-                <TriangleAlertIcon className='mt-0.5 h-5 w-5 shrink-0 text-amber-600' />
-                <div className='text-sm text-amber-800'>
-                  <p className='font-medium'>This {providerName} account belongs to another user</p>
-                  <p className='mt-1'>
+              <Alert variant='warning'>
+                <TriangleAlertIcon />
+                <div>
+                  <AlertTitle>This {providerName} account belongs to another user</AlertTitle>
+                  <AlertDescription>
                     If you own both accounts and want to combine them, you can merge them into one.
-                  </p>
+                  </AlertDescription>
                 </div>
-              </div>
+              </Alert>
               {isOrcidConflict && (
-                <div className='rounded-lg border border-blue-200 bg-blue-50 p-3 text-sm text-blue-800'>
-                  <p className='font-medium'>ORCID Account Merge</p>
-                  <p className='mt-1'>
-                    You can enter either the email address or your ORCID ID (e.g.,
-                    0000-0001-2345-6789) to identify the account you want to merge.
-                  </p>
-                </div>
+                <Alert variant='info'>
+                  <div>
+                    <AlertTitle>ORCID Account Merge</AlertTitle>
+                    <AlertDescription>
+                      You can enter either the email address or your ORCID ID (e.g.,
+                      0000-0001-2345-6789) to identify the account you want to merge.
+                    </AlertDescription>
+                  </div>
+                </Alert>
               )}
               <p className='text-secondary-foreground text-sm'>
                 Merging will combine all your projects, data, and sign-in methods into this account.
@@ -305,15 +308,15 @@ export function MergeAccountsDialog({
           {/* ENTER_CODE */}
           {step === STEPS.ENTER_CODE && (
             <>
-              <div className='flex items-start gap-3 rounded-lg border border-blue-200 bg-blue-50 p-3'>
-                <MailIcon className='text-primary mt-0.5 h-5 w-5 shrink-0' />
-                <div className='text-sm text-blue-800'>
-                  <p className='font-medium'>Verification code sent</p>
-                  <p className='mt-1'>
+              <Alert variant='info'>
+                <MailIcon />
+                <div>
+                  <AlertTitle>Verification code sent</AlertTitle>
+                  <AlertDescription>
                     Check <strong>{displayTarget}</strong> for a 6-digit code.
-                  </p>
+                  </AlertDescription>
                 </div>
-              </div>
+              </Alert>
               <div>
                 <label className='text-secondary-foreground mb-1 block text-center text-sm font-medium'>
                   Verification Code
@@ -366,13 +369,13 @@ export function MergeAccountsDialog({
           {/* CONFIRM */}
           {step === STEPS.CONFIRM && (
             <>
-              <div className='flex items-start gap-3 rounded-lg border border-green-200 bg-green-50 p-3'>
-                <CheckIcon className='mt-0.5 h-5 w-5 shrink-0 text-green-600' />
-                <div className='text-sm text-green-800'>
-                  <p className='font-medium'>Email verified!</p>
-                  <p className='mt-1'>You&apos;ve confirmed access to {displayTarget}.</p>
+              <Alert variant='success'>
+                <CheckIcon />
+                <div>
+                  <AlertTitle>Email verified!</AlertTitle>
+                  <AlertDescription>You&apos;ve confirmed access to {displayTarget}.</AlertDescription>
                 </div>
-              </div>
+              </Alert>
               {mergePreview && (
                 <div className='border-border bg-muted rounded-lg border p-3 text-sm'>
                   <p className='text-secondary-foreground mb-2 font-medium'>
@@ -392,13 +395,15 @@ export function MergeAccountsDialog({
                   </ul>
                 </div>
               )}
-              <div className='rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800'>
-                <p className='font-medium'>Warning: This action cannot be undone.</p>
-                <p className='mt-1'>
-                  The account ({displayTarget}) will be deleted and all its data merged into your
-                  current account.
-                </p>
-              </div>
+              <Alert variant='warning'>
+                <div>
+                  <AlertTitle>Warning: This action cannot be undone.</AlertTitle>
+                  <AlertDescription>
+                    The account ({displayTarget}) will be deleted and all its data merged into your
+                    current account.
+                  </AlertDescription>
+                </div>
+              </Alert>
               {error && <p className='text-destructive text-sm'>{error}</p>}
               <div className='flex justify-end gap-3 pt-2'>
                 <button

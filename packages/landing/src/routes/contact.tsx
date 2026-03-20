@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { createFileRoute } from '@tanstack/react-router';
-import { FiMail, FiSend, FiUser, FiMessageSquare, FiLoader, FiAlertCircle } from 'react-icons/fi';
+import { MailIcon, SendIcon, UserIcon, MessageSquareIcon, LoaderIcon, AlertCircleIcon } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import { config } from '../lib/config';
@@ -96,7 +96,7 @@ function ContactPage() {
               <div className='space-y-6'>
                 <div className='flex items-start gap-4'>
                   <div className='flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-blue-100'>
-                    <FiMail className='h-6 w-6 text-blue-600' />
+                    <MailIcon className='h-6 w-6 text-blue-600' />
                   </div>
                   <div>
                     <h3 className='mb-1 font-semibold text-gray-900'>Send Us a Message</h3>
@@ -106,7 +106,7 @@ function ContactPage() {
 
                 <div className='flex items-start gap-4'>
                   <div className='flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-blue-100'>
-                    <FiMessageSquare className='h-6 w-6 text-blue-600' />
+                    <MessageSquareIcon className='h-6 w-6 text-blue-600' />
                   </div>
                   <div>
                     <h3 className='mb-1 font-semibold text-gray-900'>Feedback Welcome</h3>
@@ -126,7 +126,7 @@ function ContactPage() {
                     Your Name
                   </label>
                   <div className='relative'>
-                    <FiUser className='absolute top-1/2 left-3 h-5 w-5 -translate-y-1/2 text-gray-400' />
+                    <UserIcon className='absolute top-1/2 left-3 h-5 w-5 -translate-y-1/2 text-gray-400' />
                     <input
                       type='text'
                       id='name'
@@ -143,7 +143,7 @@ function ContactPage() {
                     Email Address
                   </label>
                   <div className='relative'>
-                    <FiMail className='absolute top-1/2 left-3 h-5 w-5 -translate-y-1/2 text-gray-400' />
+                    <MailIcon className='absolute top-1/2 left-3 h-5 w-5 -translate-y-1/2 text-gray-400' />
                     <input
                       type='email'
                       id='email'
@@ -189,11 +189,11 @@ function ContactPage() {
                 >
                   {formState === 'sending' ?
                     <>
-                      <FiLoader className='h-5 w-5 animate-spin' />
+                      <LoaderIcon className='h-5 w-5 animate-spin' />
                       Sending...
                     </>
                   : <>
-                      <FiSend className='h-5 w-5' />
+                      <SendIcon className='h-5 w-5' />
                       Send Message
                     </>
                   }
@@ -207,7 +207,7 @@ function ContactPage() {
 
                 {formState === 'error' && (
                   <div className='flex items-center justify-center gap-2 text-sm text-red-600'>
-                    <FiAlertCircle className='h-4 w-4' />
+                    <AlertCircleIcon className='h-4 w-4' />
                     <p>{errorMessage}</p>
                   </div>
                 )}

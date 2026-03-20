@@ -8,6 +8,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { authClient } from '@/api/auth-client';
 import { queryKeys } from '@/lib/queryKeys';
 import { showToast } from '@/components/ui/toast';
+import { Alert } from '@/components/ui/alert';
 import { setLastOrgSlug } from '@/hooks/useOrgContext';
 
 export function CreateOrgPage() {
@@ -90,9 +91,9 @@ export function CreateOrgPage() {
 
           <form onSubmit={handleSubmit} className='space-y-4'>
             {error && (
-              <div className='rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700'>
+              <Alert variant='destructive'>
                 {error}
-              </div>
+              </Alert>
             )}
 
             <div>

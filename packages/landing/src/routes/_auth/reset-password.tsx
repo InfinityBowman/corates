@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { createFileRoute, useNavigate, useSearch } from '@tanstack/react-router';
 import { useAuthStore } from '@/stores/authStore';
 import { handleError } from '@/lib/error-utils';
+import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import {
   PasswordInput,
   PasswordInputControl,
@@ -94,12 +95,14 @@ function RequestResetForm() {
       </div>
 
       {success && (
-        <div className='animate-in fade-in rounded-lg border border-green-200 bg-green-50 p-4 text-center duration-200'>
-          <p className='mb-1 text-sm font-medium text-green-700'>Reset Email Sent!</p>
-          <p className='text-xs text-green-600'>
-            Check your email for instructions to reset your password. Redirecting you to sign in...
-          </p>
-        </div>
+        <Alert variant='success' className='animate-in fade-in text-center duration-200'>
+          <div>
+            <AlertTitle>Reset Email Sent!</AlertTitle>
+            <AlertDescription>
+              Check your email for instructions to reset your password. Redirecting you to sign in...
+            </AlertDescription>
+          </div>
+        </Alert>
       )}
 
       {!success && (
@@ -220,12 +223,14 @@ function SetNewPasswordForm({ token }: { token: string }) {
       </div>
 
       {success && (
-        <div className='animate-in fade-in rounded-lg border border-green-200 bg-green-50 p-4 text-center duration-200'>
-          <p className='mb-1 text-sm font-medium text-green-700'>Password Reset Successfully!</p>
-          <p className='text-xs text-green-600'>
-            Your password has been updated. Redirecting you to sign in...
-          </p>
-        </div>
+        <Alert variant='success' className='animate-in fade-in text-center duration-200'>
+          <div>
+            <AlertTitle>Password Reset Successfully!</AlertTitle>
+            <AlertDescription>
+              Your password has been updated. Redirecting you to sign in...
+            </AlertDescription>
+          </div>
+        </Alert>
       )}
 
       {!success && (

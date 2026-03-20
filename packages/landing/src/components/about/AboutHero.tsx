@@ -1,5 +1,4 @@
-import { BsLightbulb } from 'react-icons/bs';
-import { FiUsers, FiCode } from 'react-icons/fi';
+import { LightbulbIcon, UsersIcon, CodeIcon } from 'lucide-react';
 
 export default function AboutHero() {
   return (
@@ -7,13 +6,13 @@ export default function AboutHero() {
       <div className='mx-auto max-w-4xl px-6 py-20 text-center'>
         <div className='mb-8 flex items-center justify-center gap-4'>
           <div className='flex h-14 w-14 -rotate-6 transform items-center justify-center rounded-xl bg-blue-100'>
-            <BsLightbulb className='h-7 w-7 text-blue-600' />
+            <LightbulbIcon className='h-7 w-7 text-blue-600' />
           </div>
           <div className='flex h-16 w-16 items-center justify-center rounded-xl bg-linear-to-br from-blue-500 to-blue-700 shadow-lg'>
-            <FiUsers className='h-8 w-8 text-white' />
+            <UsersIcon className='h-8 w-8 text-white' />
           </div>
           <div className='flex h-14 w-14 rotate-6 transform items-center justify-center rounded-xl bg-blue-100'>
-            <FiCode className='h-7 w-7 text-blue-600' />
+            <CodeIcon className='h-7 w-7 text-blue-600' />
           </div>
         </div>
 

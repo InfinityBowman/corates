@@ -3,7 +3,7 @@
  */
 
 import { useMemo, useEffect } from 'react';
-import { FiCheck, FiX } from 'react-icons/fi';
+import { CheckIcon, XIcon } from 'lucide-react';
 
 const requirementsList = [
   {
@@ -73,8 +73,8 @@ export function StrengthIndicator({ password, onUnmet }: StrengthIndicatorProps)
                 aria-hidden='true'
               >
                 {met ?
-                  <FiCheck className='h-3 w-3' />
-                : <FiX className='h-3 w-3' />}
+                  <CheckIcon className='h-3 w-3' />
+                : <XIcon className='h-3 w-3' />}
               </span>
               <span className={met ? 'text-green-500' : 'text-red-600'}>{req.label}</span>
             </li>

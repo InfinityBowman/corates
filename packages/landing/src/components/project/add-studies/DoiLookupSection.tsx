@@ -18,6 +18,7 @@ import {
   DownloadIcon,
 } from 'lucide-react';
 import { showToast } from '@/components/ui/toast';
+import { Alert, AlertTitle } from '@/components/ui/alert';
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { Checkbox } from '@/components/ui/checkbox';
 import { getRefDisplayName } from '@/lib/referenceParser.js';
@@ -77,16 +78,19 @@ export function DoiLookupSection({ studies }: DoiLookupSectionProps) {
 
       {/* Lookup errors */}
       {studies.lookupErrors.length > 0 && (
-        <div className='rounded-lg border border-red-200 bg-red-50 p-3'>
-          <p className='mb-1 text-sm font-medium text-red-700'>Some lookups failed:</p>
-          <ul className='list-inside list-disc text-xs text-red-600'>
-            {studies.lookupErrors.map((err: any, i: number) => (
-              <li key={i}>
-                <code className='font-mono'>{err.identifier}</code>: {err.error}
-              </li>
-            ))}
-          </ul>
-        </div>
+        <Alert variant='destructive'>
+          <AlertCircleIcon />
+          <div>
+            <AlertTitle>Some lookups failed:</AlertTitle>
+            <ul className='list-inside list-disc text-xs'>
+              {studies.lookupErrors.map((err: any, i: number) => (
+                <li key={i}>
+                  <code className='font-mono'>{err.identifier}</code>: {err.error}
+                </li>
+              ))}
+            </ul>
+          </div>
+        </Alert>
       )}
 
       {/* Results */}
