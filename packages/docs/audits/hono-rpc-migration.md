@@ -91,8 +91,8 @@ import { API_BASE } from '@/config/api';
 // Moves type instantiation to compile time so tsserver doesn't re-compute
 // all route types on every use.
 type Client = ReturnType<typeof hc<AppType>>;
-export const hcWithType = (...args: Parameters<typeof hc>): Client =>
-  hc<typeof app>(...args);
+const hcWithType = (...args: Parameters<typeof hc>): Client =>
+  hc<AppType>(...args);
 
 export const api = hcWithType(API_BASE, {
   init: { credentials: 'include' },

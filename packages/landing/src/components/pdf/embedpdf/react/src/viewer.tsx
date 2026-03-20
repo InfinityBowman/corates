@@ -1,6 +1,7 @@
 import { useMemo, useRef, useState, useEffect } from 'react';
 import { EmbedPDF } from '@embedpdf/core/react';
 import { usePdfiumEngine } from '@embedpdf/engines/react';
+import { LANDING_URL } from '../../../../../config/api';
 import { createPluginRegistration } from '@embedpdf/core';
 import { ViewportPluginPackage, Viewport } from '@embedpdf/plugin-viewport/react';
 import { ScrollPluginPackage, ScrollStrategy, Scroller } from '@embedpdf/plugin-scroll/react';
@@ -301,7 +302,7 @@ export function ViewerPage({
 }: ViewerPageProps = {}) {
   const containerRef = useRef<HTMLDivElement>(null);
   const { engine, isLoading, error } = usePdfiumEngine({
-    // logger,
+    wasmUrl: `${LANDING_URL}/pdfium.wasm`,
   });
 
   // Track sidebar state per document

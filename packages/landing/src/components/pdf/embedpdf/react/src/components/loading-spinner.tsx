@@ -12,8 +12,8 @@ const sizeClasses = {
 
 export function LoadingSpinner({ size = 'md', message, className = '' }: LoadingSpinnerProps) {
   return (
-    <div className={`flex items-center gap-2 text-gray-600 ${className}`}>
-      <svg className={`${sizeClasses[size]} animate-spin`} fill='none' viewBox='0 0 24 24'>
+    <div className={`text-muted-foreground flex items-center gap-2 ${className}`}>
+      <svg className={`${sizeClasses[size]} text-primary animate-spin`} fill='none' viewBox='0 0 24 24'>
         <circle
           className='opacity-25'
           cx='12'
