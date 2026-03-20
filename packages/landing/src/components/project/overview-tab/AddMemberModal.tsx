@@ -275,7 +275,7 @@ export function AddMemberModal({
                 Role
               </label>
               <Select value={selectedRole} onValueChange={setSelectedRole}>
-                <SelectTrigger>
+                <SelectTrigger className='w-full'>
                   <SelectValue placeholder='Select a role' />
                 </SelectTrigger>
                 <SelectContent>
