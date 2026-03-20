@@ -53,23 +53,29 @@ The SolidJS `packages/web` stays untouched as reference until migration is compl
 
 Already set up. App routes become new files under `src/routes/`.
 
-### UI Components: Ark UI for React
+### UI Components: shadcn/ui (Radix) + Ark UI for React
 
-`@ark-ui/solid` -> `@ark-ui/react` -- nearly identical API, mechanical swap.
+Primary UI library is **shadcn/ui** (built on Radix UI primitives, Tailwind CSS, CVA). This replaces most `@ark-ui/solid` components. `@ark-ui/react` is kept as a fallback for components shadcn doesn't cover.
+
+**shadcn/ui covers (use these):** button, dialog, alert-dialog, select, tabs, dropdown-menu, context-menu, tooltip, popover, checkbox, switch, collapsible, progress, avatar, toast (sonner), input-otp (pin-input equivalent), sheet (drawer)
+
+**No shadcn equivalent (use @ark-ui/react):** editable, file-upload, steps, qr-code
+
+**Custom components (no library needed):** spinner (simple Tailwind animation), password-input (input + toggle), flip-number (already custom)
 
 ### Library Swaps
 
-| SolidJS                       | React                        | API similarity                         |
-| ----------------------------- | ---------------------------- | -------------------------------------- |
-| `@tanstack/solid-query`       | `@tanstack/react-query`      | Near-identical                         |
-| `@tanstack/solid-table`       | `@tanstack/react-table`      | Near-identical                         |
-| `@ark-ui/solid`               | `@ark-ui/react`              | Near-identical                         |
-| `solid-icons`                 | `react-icons`                | Same icons, different imports          |
-| `solid-chartjs`               | `react-chartjs-2`            | Same Chart.js underneath               |
-| `@sentry/solid`               | `@sentry/react`              | Direct swap                            |
-| `@solid-primitives/scheduled` | Custom hook or `usehooks-ts` | Used in 7 files for debounce/throttle  |
-| `better-auth/solid`           | `better-auth/react`          | `createAuthClient` + `useSession` swap |
-| `@solidjs/router`             | `@tanstack/react-router`     | Already in landing                     |
+| SolidJS                       | React                         | API similarity                                                 |
+| ----------------------------- | ----------------------------- | -------------------------------------------------------------- |
+| `@tanstack/solid-query`       | `@tanstack/react-query`       | Near-identical                                                 |
+| `@tanstack/solid-table`       | `@tanstack/react-table`       | Near-identical                                                 |
+| `@ark-ui/solid`               | `shadcn/ui` + `@ark-ui/react` | shadcn for most; Ark for editable, file-upload, steps, qr-code |
+| `solid-icons`                 | `react-icons`                 | Same icons, different imports                                  |
+| `solid-chartjs`               | `react-chartjs-2`             | Same Chart.js underneath                                       |
+| `@sentry/solid`               | `@sentry/react`               | Direct swap                                                    |
+| `@solid-primitives/scheduled` | Custom hook or `usehooks-ts`  | Used in 7 files for debounce/throttle                          |
+| `better-auth/solid`           | `better-auth/react`           | `createAuthClient` + `useSession` swap                         |
+| `@solidjs/router`             | `@tanstack/react-router`      | Already in landing                                             |
 
 ---
 
@@ -192,72 +198,66 @@ TanStack Start gives you SSR by default. The `ssr: false` on `_app` means all ap
 
 ---
 
-## Phase 0: Preparation
+## Phase 0: Preparation -- COMPLETED (2026-03-14)
 
-### 0.1 Add dependencies to landing
+### 0.1 Add dependencies to landing -- DONE
 
-Already in landing: `react`, `react-dom`, `react-icons`, `@tanstack/react-router`, `@tanstack/react-start`, `countup.js`, `@corates/shared`, `tailwindcss`.
+All dependencies installed including all 28 @embedpdf packages, Preact + @preact/preset-vite (devDep).
 
-Still need to add:
+### 0.2 Verify path aliases -- DONE
 
-```bash
-pnpm --filter landing add \
-  zustand immer \
-  @tanstack/react-query \
-  @tanstack/react-table \
-  @ark-ui/react \
-  better-auth \
-  chart.js react-chartjs-2 \
-  @sentry/react \
-  class-variance-authority clsx tailwind-merge \
-  dexie \
-  yjs y-websocket y-dexie \
-  d3
-```
+Using `@/` prefix for everything (Option 1). Added explicit `resolve.alias` in `vite.config.ts` for SSR build compatibility with the Cloudflare plugin (vite-tsconfig-paths alone did not resolve aliases in the SSR environment). Also added `allowJs: true` to tsconfig.json for importing copied JS files from TS code.
 
-Plus EmbedPDF packages (the full list from web/package.json). And Preact + `@preact/preset-vite` for the PDF viewer island (devDep).
+### 0.3 Copy framework-agnostic code into landing -- DONE
 
-### 0.2 Verify path aliases
+Copied 37+ files:
 
-Landing already has `@/*` -> `./src/*` in tsconfig.json (matching web's jsconfig.json). The web app uses more specific aliases (`@components`, `@primitives`, `@api`, `@config`, `@lib`). Two options:
+- `lib/` -- 24 utility files + 11 test files (all import aliases updated to `@/` prefix)
+- `constants/` -- 2 files (errors.js, checklist-status.js)
+- `config/` -- api.js, google.js copied; sentry.js rewritten for @sentry/react
+- `checklist-registry/` -- 2 files (index.js, types.js)
+- `primitives/` -- db.js, avatarCache.js, pdfCache.js
+- `styles/ark-ui.css`
 
-1. **Use `@/` prefix for everything** (simpler): `@/components/...`, `@/lib/...`, `@/stores/...`. This already works with the existing `@/*` alias.
-2. **Add specific aliases** if you want shorter imports: add `@components/*`, `@lib/*`, etc. to both tsconfig.json and vite-tsconfig-paths will pick them up.
+`queryClient.js` was rewritten: `@tanstack/solid-query` -> `@tanstack/react-query`, `@solid-primitives/scheduled` debounce replaced with inline implementation.
 
-Option 1 is recommended -- less config, and `@/` is already set up. The web code already uses `@/` for most imports anyway. Also ensure `vite-tsconfig-paths` (already in landing devDeps) resolves these correctly.
-
-### 0.3 Copy framework-agnostic code into landing
-
-Create these directories in landing/src and copy from web/src:
-
-```
-packages/landing/src/
-  lib/           <- copy all from web/src/lib/ (24 of 25 files are framework-agnostic)
-  constants/     <- copy from web/src/constants/
-  config/        <- copy from web/src/config/ (update sentry to @sentry/react)
-  checklist-registry/  <- copy from web/src/checklist-registry/
-  styles/        <- copy from web/src/styles/
-```
-
-Also copy framework-agnostic primitives:
-
-- `primitives/db.js` (Dexie setup)
-- `primitives/avatarCache.js`
-- `primitives/pdfCache.js`
-
-Verify they compile -- no `solid-js` imports should remain.
+`bfcache-handler.js` was copied but still references old SolidJS `useBetterAuth` -- needs rewrite when wired up.
 
 ### 0.4 Set up vitest
 
-Add vitest + @testing-library/react to landing devDependencies. Copy test setup from web, adapting for React.
+Not yet done -- test infrastructure setup deferred to Phase 5.
 
-**Checkpoint: landing still builds and runs, new lib/config/constants files import cleanly, no solid-js in copied code.**
+**Checkpoint: landing builds and runs, all copied code compiles, no solid-js imports in active code paths.**
 
 ---
 
-## Phase 1: Foundation (stores + auth)
+## Phase 1: Foundation (stores + auth) -- COMPLETED (2026-03-14)
 
 Everything else depends on this layer. Build it first, test it standalone.
+
+> **Implementation notes (2026-03-14):**
+> All stores, auth, and layout routes are implemented and verified (build + typecheck + lint all pass).
+> Key files created:
+>
+> - `stores/projectStore.ts` -- Zustand + immer, with exported selector functions
+> - `stores/pdfPreviewStore.ts` -- simple Zustand store
+> - `stores/localChecklistsStore.ts` -- Zustand + Dexie, auto-initializes on module load
+> - `stores/adminStore.ts` -- tiny Zustand store + exported plain async API functions
+> - `stores/authStore.ts` -- full auth Zustand store with all methods (signin, signup, 2FA, session management, offline fallback, cross-tab BroadcastChannel)
+> - `api/auth-client.ts` -- `better-auth/react` client with all plugins
+> - `components/auth/AuthProvider.tsx` -- syncs useSession() into Zustand, handles avatar caching, visibility refresh
+> - `components/ui/toast.tsx` -- minimal stub providing showToast API (console-based, replace in Phase 2)
+> - `routes/_app.tsx` -- QueryClientProvider + AuthProvider, ssr:false
+> - `routes/_auth.tsx` -- auth layout with guest guard, ssr:false
+> - `routes/_app/_protected.tsx` -- auth guard via beforeLoad
+> - `routes/_app/dashboard.tsx`, `routes/_auth/signin.tsx`, `routes/_app/_protected/settings.tsx` -- placeholders
+>
+> **Discovered during implementation:**
+>
+> - `vite-tsconfig-paths` does not resolve `@/` aliases in the Cloudflare SSR build environment. Fixed with explicit `resolve.alias` in vite.config.ts.
+> - `apiFetch.delete()` only accepts 2 args `(path, options)` not 3. The original SolidJS adminStore had 3-arg calls that silently dropped the body. Fixed in the React version.
+> - ESLint `no-unused-vars` rule does not understand TypeScript interface method parameters. Suppressed with eslint-disable blocks around interface definitions.
+> - `server-entry.ts` is unchanged -- all SPA routes still serve the SolidJS app.html. New TanStack Start routes are defined but unreachable until entries are removed from `SPA_ROUTE_PREFIXES`.
 
 ### 1.1 Migrate stores to Zustand
 
@@ -412,50 +412,89 @@ Create placeholder routes:
 
 ---
 
-## Phase 2: UI Component Library
+## Phase 2: UI Component Library -- COMPLETED (2026-03-14)
 
-Create `packages/landing/src/components/ui/`:
+Create `packages/landing/src/components/ui/` using shadcn/ui + @ark-ui/react for gaps.
 
-### 2.1 Migrate Ark UI wrappers (25 files, ~3,800 LOC)
+### Design Decisions (2026-03-14)
 
-Conversion pattern for each file:
+- **Use shadcn design tokens**, not the custom semantic tokens from the SolidJS app. This means adopting shadcn's CSS variable system and default styling. Components will be visually consistent with the shadcn ecosystem and get theming support for free.
+- **Use shadcn CLI** (`npx shadcn@latest add`) to install all shadcn components properly. Do not hand-write shadcn components.
+- **Standard shadcn component APIs** -- no compatibility wrappers mapping old Ark UI sub-component names to shadcn equivalents. Page components in Phase 4 will use shadcn patterns directly.
+- **Custom extensions** for app-specific patterns: `AlertDialogIcon` (danger/warning/info variants), `AlertDialogAction` (variant-based button colors), `UserAvatar` (convenience wrapper with initials), `showToast` API adapter over Sonner.
+- **Password input** stays on `@ark-ui/react` (headless primitive handles visibility state and accessibility).
+- **Icon migration** scoped to files created/modified in this phase only. Page-level icon migration happens in Phase 4.
 
-```tsx
-// Before (SolidJS)
-import type { Component, ComponentProps } from 'solid-js'
-import { splitProps } from 'solid-js'
-import { Dialog as ArkDialog } from '@ark-ui/solid'
+### 2.0 Set up shadcn/ui
 
-const Button: Component<ButtonProps> = (props) => {
-  const [local, others] = splitProps(props, ['variant', 'size', 'class'])
-  return <button class={cn(...)} {...others} />
-}
+Initialize shadcn/ui in the landing package via `npx shadcn@latest init`. This creates `components.json`, installs Radix UI primitives, and sets up the `cn()` utility + CSS variables.
 
-// After (React)
-import { Dialog as ArkDialog } from '@ark-ui/react'
+The existing `cn.ts` (copied from web in Phase 0) will be replaced by shadcn's version. The existing `z-index.ts` constants file is kept for app-level overlay stacking.
 
-function Button({ variant, size, className, ...rest }: ButtonProps) {
-  return <button className={cn(...)} {...rest} />
-}
-```
+### 2.1 Install shadcn components via CLI
 
-Changes per file:
+Use `npx shadcn@latest add <component>` for each. These replace the corresponding `@ark-ui/solid` wrappers:
 
-- `splitProps(props, [...])` -> destructure `const { a, b, ...rest } = props`
-- `class=` -> `className=`
-- `<Show when={x}>` -> `{x && ...}`
-- `<For each={items}>{(item) => ...}</For>` -> `{items.map(item => ...)}` with `key` prop
-- `Component<Props>` -> function component with typed props
-- `props.children` -> destructured `children`
-- `@ark-ui/solid` -> `@ark-ui/react`
+| SolidJS (Ark UI) | shadcn component | Notes                                                               |
+| ---------------- | ---------------- | ------------------------------------------------------------------- |
+| button.tsx       | `button`         | Use shadcn default variants and design tokens                       |
+| dialog.tsx       | `dialog`         | Different composition API (no Positioner/Backdrop)                  |
+| alert-dialog.tsx | `alert-dialog`   | Add custom AlertDialogIcon + AlertDialogAction extensions           |
+| select.tsx       | `select`         | Different API; SimpleSelect convenience wrapper deferred to Phase 4 |
+| tabs.tsx         | `tabs`           | No animated TabsIndicator (simpler approach)                        |
+| menu.tsx         | `dropdown-menu`  | Ark Menu -> Radix DropdownMenu                                      |
+| tooltip.tsx      | `tooltip`        | Direct replacement                                                  |
+| popover.tsx      | `popover`        | Direct replacement                                                  |
+| checkbox.tsx     | `checkbox`       | Direct replacement                                                  |
+| switch.tsx       | `switch`         | Direct replacement                                                  |
+| collapsible.tsx  | `collapsible`    | Direct replacement                                                  |
+| progress.tsx     | `progress`       | Direct replacement                                                  |
+| avatar.tsx       | `avatar`         | Add UserAvatar + getInitials convenience wrapper                    |
+| toast.tsx        | `sonner`         | Replace console stub with Sonner; add showToast adapter             |
+| pin-input.tsx    | `input-otp`      | Similar API, different component name                               |
+| (new)            | `input`          | Base input component (needed by password-input and forms)           |
+| (new)            | `label`          | Form labels                                                         |
 
-**Order (most-used first):** button, spinner, toast, dialog, alert-dialog, select, tabs, menu, tooltip, popover, checkbox, switch, editable, collapsible, file-upload, steps, pin-input, password-input, progress, qr-code, avatar, flip-number
+### 2.2 Ark UI components (no shadcn equivalent)
 
-### 2.2 Icon migration
+These stay on `@ark-ui/react` with custom styled wrappers:
 
-7 files: `solid-icons/bi` -> `react-icons/bi`, `solid-icons/fi` -> `react-icons/fi`, etc. Same icon names.
+| Component          | Notes                                                            |
+| ------------------ | ---------------------------------------------------------------- |
+| editable.tsx       | Inline text editing -- no Radix/shadcn equivalent                |
+| file-upload.tsx    | Drag-and-drop file upload with progress                          |
+| steps.tsx          | Multi-step wizard UI                                             |
+| qr-code.tsx        | QR code generation for 2FA setup                                 |
+| password-input.tsx | Visibility toggle with full a11y -- @ark-ui/react/password-input |
 
-**Checkpoint: all UI components render, can be imported from routes.**
+### 2.3 Custom components (no library needed)
+
+| Component       | Approach                                                                             |
+| --------------- | ------------------------------------------------------------------------------------ |
+| spinner.tsx     | Pure Tailwind `animate-spin` div with CVA variants (sm/md/lg/xl, default/white/gray) |
+| flip-number.tsx | Already ported to React in landing package (uses countup.js). Move to components/ui/ |
+
+### 2.4 Icon migration (this phase only)
+
+Only update icon imports in files created/modified during Phase 2 (`packages/landing/src/components/ui/`). Page-level icon migration (80+ files) happens in Phase 4.
+
+Key mapping: `solid-icons/fi` -> `react-icons/fi` (same names). `solid-icons/bi` -> `react-icons/bi` (drop `Regular`/`Solid` infix). `solid-icons/vs` -> `react-icons/vsc` (VS Code icons).
+
+**Checkpoint: all UI components installed, build + typecheck + lint pass, shadcn design tokens active.**
+
+> **Implementation notes (2026-03-14):**
+>
+> - shadcn/ui initialized with `radix-nova` style, neutral base color, CSS variables enabled
+> - 18 shadcn components installed via CLI: button, dialog, alert-dialog, select, tabs, dropdown-menu, tooltip, popover, checkbox, switch, collapsible, progress, avatar, sonner, input-otp, input, label
+> - shadcn's `cn()` utility at `src/lib/utils.ts` replaces the old copied `cn.ts`
+> - shadcn added Geist font -- overridden back to Inter in `@theme inline` block
+> - `sonner.tsx` fixed: removed `next-themes` dependency (not used), hardcoded `theme="light"`
+> - `toast.tsx` replaced: old console stub replaced with Sonner-backed adapter preserving `showToast.success/error/warning/info/loading/dismiss/update` API with 2-second deduplication
+> - Custom extensions added: `AlertDialogIcon` (danger/warning/info variant coloring), `UserAvatar` + `getInitials` (convenience wrapper)
+> - 5 Ark UI components ported to `@ark-ui/react`: editable (with SimpleEditable), file-upload, steps, qr-code, password-input
+> - Custom components: `spinner.tsx` (CVA variants: sm/md/lg/xl, default/white/gray + PageLoader/LoadingPlaceholder/ButtonSpinner composites), `flip-number.tsx` (copied from existing React landing component)
+> - `z-index.ts` copied from web for overlay stacking constants
+> - All components use `lucide-react` icons (shadcn default) or `react-icons` -- zero `solid-icons` imports
 
 ---
 
@@ -540,88 +579,397 @@ function useProject(projectId: string) {
 
 Start simple, build confidence, tackle complex last. Each route becomes a file in `packages/landing/src/routes/`.
 
-### 4.1 Auth pages (simplest)
+### 4.1 Auth pages -- COMPLETED (2026-03-14)
 
-- `_auth/signin.tsx`, `signup.tsx`, `check-email.tsx`, `complete-profile.tsx`, `reset-password.tsx`
-- Form state, auth store calls, simple UI
-- Replace each placeholder from Phase 1
+All 5 auth pages migrated to React and serving in production:
 
-### 4.2 App shell (needed for everything else)
+- `_auth/signin.tsx` -- password/magic-link tab animation, 2FA inline, OAuth (Google/ORCID)
+- `_auth/signup.tsx` -- OAuth + magic link, invitation/plan capture from URL
+- `_auth/check-email.tsx` -- email verification polling, visibility change detection
+- `_auth/reset-password.tsx` -- dual-form (request reset / set new password with strength indicator)
+- `_auth/complete-profile.tsx` -- 3-step wizard (name/title, institution, persona), OAuth name autofill, invitation acceptance, plan redirect
 
-- `components/layout/AppLayout.tsx` -- navbar + sidebar + main content area
-- `components/layout/Navbar.tsx`
-- `components/layout/Sidebar.tsx`
-- These use route location, auth state, project list -- all available from previous phases
+Supporting components created:
 
-### 4.3 Dashboard
+- `components/auth/` -- ErrorMessage, AuthButtons, SocialAuthButtons, LastLoginHint, StrengthIndicator, TwoFactorVerify, MagicLinkForm, RoleSelector
+- `hooks/useOAuthError.ts` -- OAuth error URL cleanup
+- `hooks/useBfcacheReset.ts` -- shared bfcache loading state reset
+- `api/billing.js` -- billing API (copied, framework-agnostic)
 
-- `_app/dashboard.tsx` -- project list, stats cards
-- Uses useMyProjectsList, projectStore.getProjectStats()
-- Read-only views, straightforward
+Key changes:
 
-### 4.4 Settings
+- `server-entry.ts` -- auth routes removed from SPA_ROUTE_PREFIXES (React serves them)
+- `_auth.tsx` layout -- guest guard with exemptions for /reset-password, /complete-profile, /check-email
+- `__root.tsx` -- providers (QueryClientProvider, AuthProvider, Toaster) hoisted here
+- `lib/config.ts` -- signIn/signUp URLs changed to relative paths (same-origin navigation)
+- `lib/error-utils.js` -- navigate calls updated to TanStack Router object form
+- Navbar -- Sign In/Sign Up links use TanStack `<Link>` for client-side navigation
+- All auth components use shadcn design tokens (no hardcoded blue)
+- `selectUser` selector fixed to avoid object spread (was causing infinite re-render loop)
 
-- `_app/_protected/settings.tsx` (layout) + `_app/_protected/settings/*.tsx` (pages)
-- Profile, billing, integrations, security, notifications
-- Self-contained form pages
+### 4.2 App shell -- COMPLETED (2026-03-14)
 
-### 4.5 Organization + billing
+- `components/layout/AppLayout.tsx`, `AppNavbar.tsx`, `Sidebar.tsx`, `SettingsSidebar.tsx`
+- Cross-fade sidebar animation, mobile portal overlay
+- `/dashboard` removed from SPA_ROUTE_PREFIXES
 
-- `_app/_protected/orgs.new.tsx`
-- Billing components
+### 4.3 Dashboard -- COMPLETED (2026-03-14)
 
-### 4.6 Project view (complex)
+- 10 component files: Dashboard, DashboardHeader, ProjectsSection, ProjectCard, LocalAppraisalsSection, LocalAppraisalCard, ActivityFeed, QuickActions, useInitialAnimation, utils
+- `/dashboard` served by React in production
 
-- `_app/_protected/projects.$projectId.tsx` (layout -- Yjs connection)
-- `_app/_protected/projects.$projectId/index.tsx` (overview, tab system)
-- Study cards, add-studies flow, all-studies tab, completed tab, todo tab
-- Heavy Yjs data consumption from projectStore via Zustand selectors
+### 4.4 Settings -- COMPLETED (2026-03-14)
 
-### 4.7 Checklists (most complex UI)
+All 6 settings pages migrated to React:
 
-- `_app/_protected/projects.$projectId/studies.$studyId.checklists.$checklistId.tsx`
-- AMSTAR2, ROB2, ROBINS-I checklist forms
-- Complex conditional fields, scoring visualization, decision diagrams
-- PDF viewer integration
+- `settings/profile.tsx` -- avatar upload, inline name editing (SimpleEditable), persona selector, academic info, account deletion
+- `settings/integrations.tsx` -- Google Drive connect/disconnect with AlertDialog confirmation
+- `settings/billing.tsx` -- subscription card, usage card, invoices list, payment issue banner, checkout redirect handling
+- `settings/plans.tsx` -- pricing table with billing interval toggle, trial CTA, FAQ accordion, pending plan redirect
+- `settings/security.tsx` -- password add/change, 2FA 4-step setup/disable, linked accounts with OAuth error handling and merge flow, session management with revocation
+- `settings/notifications.tsx` -- toggle stubs (no backend persistence yet)
 
-### 4.8 Reconciliation (complex)
+Supporting components created:
 
-- `_app/_protected/projects.$projectId/studies.$studyId.reconcile.$c1Id.$c2Id.tsx`
-- Multi-reviewer comparison, conflict resolution
+- `components/settings/` -- ProfileInfoSection, PersonaSection, AcademicInfoSection, DeleteAccountSection, GoogleDriveSettings, SecuritySettings, TwoFactorSetup, LinkedAccountsSection, AccountProviderCard, MergeAccountsDialog, SessionManagement
+- `components/billing/` -- SubscriptionCard, UsageCard, InvoicesList, PaymentIssueBanner, PricingTable
+- `api/account-merge.js` -- account merge API (copied from web, framework-agnostic)
+- `lib/syncUtils.ts` -- shared profile sync utility
 
-### 4.9 Local checklists
+Key changes:
 
-- `_app/checklist.tsx`, `_app/checklist.$checklistId.tsx`
-- Uses localChecklistsStore (Zustand) + Dexie
+- `server-entry.ts` -- `/settings` removed from SPA_ROUTE_PREFIXES (React serves them)
+- SolidJS `createResource` for sessions replaced with `useQuery`
+- Ark UI Select/Dialog replaced with shadcn equivalents
+- `window.confirm()` replaced with `AlertDialog`
+- `TwoFactorSetup` derives `isEnabled` from store instead of local state
+- All billing components use shadcn design tokens instead of hardcoded colors
 
-### 4.10 Admin (last, isolated)
+### 4.5 Organization -- COMPLETED (2026-03-14)
 
-- `_app/_protected/admin.tsx` (layout, lazy loaded) + `_app/_protected/admin/*.tsx`
-- Charts: `solid-chartjs` -> `react-chartjs-2`
-- Admin queries already migrated in Phase 3
+- `_app/_protected/orgs.new.tsx` -- CreateOrgPage (name, slug, auto-generate)
+- `/orgs` removed from SPA_ROUTE_PREFIXES
+- Post-create navigates to /dashboard (org detail page not yet migrated)
 
-### 4.11 PDF components
+### 4.6 Project view -- COMPLETED (2026-03-14)
 
-- The EmbedPDF Preact viewer is isolated -- keep as-is
-- Create a React wrapper that mounts the Preact island (same pattern as current SolidJS wrapper)
-- PDF preview panel uses pdfPreviewStore (Zustand)
-- **Vite config note:** The web package uses `@preact/preset-vite` scoped to `**/preact/**` files alongside the SolidJS plugin. In landing, you'll need to add the Preact plugin similarly scoped, alongside `@vitejs/plugin-react`. Test that TanStack Start's Vite plugin doesn't conflict with dual React/Preact setup. If it does, consider converting the PDF viewer to React (it's small) or embedding it via iframe
+Full project view migrated across 4 phases (A-D) with code reviews after each:
+
+**Phase A -- Project shell + Overview Tab:**
+
+- `ProjectView.tsx` -- layout shell, Yjs boot (via useProject), pending data processing (PDFs, refs, Google Drive files), 5-tab interface with URL-based tab state
+- `ProjectContext.tsx` -- React context providing projectId, orgId, userRole, path builders, member helpers (stable useCallback separation)
+- `ProjectHeader.tsx` -- inline-editable name/description via Ark UI Editable
+- `PdfPreviewPanel.tsx` + `SlidingPanel.tsx` -- GPU-accelerated slide-in PDF viewer
+- `SectionErrorBoundary.tsx` -- React class error boundary
+- `OverviewTab.tsx` -- project progress (CircularProgress SVG), stats grid, inter-rater reliability, team members with add/remove, collapsible charts/tables sections
+- `CircularProgress.tsx` -- pure SVG (replaced D3 dependency), uses CSS custom properties
+- `AddMemberModal.tsx` -- user search with debounce, email invitation, role selection
+
+**Phase B -- All Studies Tab:**
+
+- `AllStudiesTab.tsx` -- expandable study cards, form state restoration after OAuth redirect
+- `StudyCard.tsx` + `StudyCardHeader.tsx` -- editable name, reviewer avatars with tooltips, actions dropdown menu
+- `StudyPdfSection.tsx` -- PDF upload with validation, tag management, Google Drive import
+- `PdfListItem.tsx` + `PdfTagBadge.tsx` -- shared PDF row components with view/download/delete/tag actions
+- `AssignReviewersModal.tsx` -- reviewer 1/2 selection with duplicate prevention
+- `EditPdfMetadataModal.tsx` -- citation metadata editing with year validation
+
+**Phase C -- Todo + Completed Tabs:**
+
+- `ToDoTab.tsx` -- studies assigned to current user, checklist creation flow
+- `TodoStudyRow.tsx` -- single/multi checklist modes, inline create form, delete confirmation
+- `ChecklistForm.tsx` -- type/outcome selection with availability filtering
+- `CompletedTab.tsx` -- reconciliation progress-aware display
+- `CompletedStudyRow.tsx` -- single/multi outcome modes with "View Previous" button
+- `CompletedOutcomeRow.tsx` -- per-outcome status and reconciliation actions
+
+**Phase D -- Reconcile Tab listing:**
+
+- `ReconcileTab.tsx` -- studies in reconciliation workflow
+- `ReconcileStudyRow.tsx` -- READY/WAITING sections for multi-outcome, inline controls for single-outcome
+- `ReconcileStatusTag.tsx` -- "Ready" or "Waiting for {reviewer}" badge
+
+**Stubs filled (2026-03-14):**
+
+- `AddStudiesForm` -- full 4-tab form (Upload PDFs, Import References, DOI/PMID, Google Drive) with 3 UI modes (collapsible card, always expanded, empty project dropzone), drag-and-drop, submit/cancel, OAuth state restoration. 8 files total:
+  - `PdfUploadSection.tsx` -- Ark FileUpload dropzone, pending/error list with retry
+  - `ReferenceImportSection.tsx` -- RIS/BibTeX/ENW import, PDF matching status badges, checkbox list
+  - `DoiLookupSection.tsx` -- identifier lookup, results split by PDF availability, manual PDF upload with tooltips
+  - `StagedStudiesSection.tsx` -- unified staging area showing merged/deduplicated studies
+  - `GoogleDriveSection.tsx` -- thin wrapper around GoogleDrivePickerLauncher for multiselect
+  - `GoogleDrivePickerLauncher.tsx` -- connection status check, OAuth connect flow, Google Picker SDK launch
+  - `GoogleDrivePickerModal.tsx` -- single-study import modal using Dialog + launcher
+- `useAddStudies` hook -- full coordinator with 4 sub-hooks (pdfs, references, lookup, drive), matching effects, deduplication, serialization
+- `ReviewerAssignment` -- full 634 LOC with percentage distribution, preview, conflict resolution
+- `OutcomeManager` -- full CRUD with inline editing, AlertDialog for delete
+- `AMSTAR2ResultsTable` -- full results table with summary statistics
+- `ScoreTag` -- score display with type-aware styling
+
+**All stubs now filled:**
+
+- `ChartSection` -- COMPLETED (2026-03-15): D3 charts + Recharts admin charts
+- `PreviousReviewersView` -- COMPLETED (2026-03-16): Dialog with tabs showing original reviewer checklists in read-only GenericChecklist
+- `EmbedPdfViewer` -- COMPLETED (2026-03-15): Preact island copied, React wrapper created
+
+Key decisions:
+
+- `/projects` removed from SPA_ROUTE_PREFIXES (2026-03-15) -- React now serves all project routes
+- `projectActionsStore` accessed via `as any` cast due to JS module without type declarations
+- `CircularProgress` rewritten as pure SVG instead of porting the D3 imperative version
+- Pending data read via `useState` lazy initializer to prevent StrictMode data loss
+- Manual `connect()`/`disconnect()` removed from ProjectView -- `useProject` manages its own lifecycle
+- Drag-and-drop handlers use refs to avoid stale closures (registered once, read current values via refs)
+- OAuth state restoration expands form unconditionally (restoreState enqueues React state updates that haven't committed)
+- Checkbox inside clickable rows uses onClick stopPropagation to prevent double-fire
+
+### 4.7 Checklists -- COMPLETED (2026-03-15)
+
+All three checklist types migrated across 5 sub-phases (A-E) with code reviews after each:
+
+**Phase A -- Infrastructure:**
+
+- `common/LocalTextAdapter.js` -- Y.Text shim for offline mode (copied, framework-agnostic)
+- `common/NoteEditor.tsx` -- Y.Text-bound textarea, collapsible + inline modes
+- `SplitScreenLayout.tsx` + `SplitPanelControls.tsx` -- resizable split panel with PDF viewer toggle
+- `GenericChecklist.tsx` -- type dispatcher (AMSTAR2/ROB2/ROBINS-I)
+- `ChecklistWithPdf.tsx` -- layout wrapper combining checklist + PDF viewer
+
+**Phase B -- AMSTAR2 (958 LOC original):**
+
+- `AMSTAR2Checklist.tsx` -- all 16 questions with extracted helper functions for column/radio logic
+- Q1 (3-column special case) uses inline handler; Q9/Q11 (split questions) are dedicated components
+- `checklist-map.js` copied, `checklist.js` updated with missing exports (isAMSTAR2Complete)
+
+**Phase C -- ROB2 (7 sub-components, ~1,340 LOC):**
+
+- `ROB2Checklist.tsx`, `DomainSection.tsx`, `DomainJudgement.tsx`, `PreliminarySection.tsx`, `OverallSection.tsx`, `ScoringSummary.tsx`, `SignallingQuestion.tsx`
+- Auto-scoring only (no manual override), aim-based domain selection (assignment vs. adhering)
+
+**Phase D -- ROBINS-I (12 sub-components, ~1,545 LOC):**
+
+- `ROBINSIChecklist.tsx`, `DomainSection.tsx`, `DomainJudgement.tsx`, `OverallSection.tsx`, `ScoringSummary.tsx`, `SignallingQuestion.tsx`, `PlanningSection.tsx`, `SectionA.tsx`, `SectionB.tsx`, `SectionC.tsx`, `SectionD.tsx`
+- Auto/Manual mode toggle, stop-assessment gating from Section B, isPerProtocol domain selection, subsection support (Domain 3)
+
+**Phase E -- Wrappers + Routes:**
+
+- `ChecklistYjsWrapper.tsx` -- project-mode Yjs bridge with PDF loading, completion flow, annotation support
+- `LocalChecklistView.tsx` -- offline mode with debounced IndexedDB save and LocalTextAdapter
+- `CreateLocalChecklist.tsx` -- local checklist creation form with PDF upload
+- `routes/_app/checklist.tsx` + `routes/_app/checklist.$checklistId.tsx` -- local checklist routes
+- `routes/_app/_protected/projects.$projectId/studies.$studyId.checklists.$checklistId.tsx` -- project checklist route
+
+Key decisions:
+
+- OverallSection auto-persist uses narrowed deps (overallState?.judgement not full object) to avoid re-triggering on direction changes
+- SignallingQuestion NA-to-NI coercion uses narrowed deps (answer?.answer not full answer object)
+- DomainSection completionStatus uses `!= null` to correctly exclude undefined answers
+- SectionC radio names use `useId()` to prevent collision across instances
+- Store methods accessed via `getStoreActions()` at call sites, not destructured at render time
+- ChecklistWithPdf shows PDF panel when pdfData is available (`showSecondPanel={!!pdfData}`)
+- AMSTAR2 QUESTION_CONFIGS excludes Q1 (3-column special case handled inline)
+
+### 4.8 Reconciliation child routes -- COMPLETED (2026-03-15)
+
+44 files migrated across 6 sub-phases:
+
+**4.8A - Presence system + shared components (5 files):**
+
+- `useReconciliationPresence.ts` hook (Yjs awareness protocol, cursor tracking, user-by-page grouping)
+- `userColors.js` (already existed from earlier phase)
+- `PresenceAvatars.tsx`, `RemoteCursors.tsx`, `QuestionPresenceIndicator.tsx`
+
+**4.8B - Route + ReconciliationWrapper (2 files):**
+
+- Route: `studies.$studyId.reconcile.$checklist1Id.$checklist2Id.tsx`
+- `ReconciliationWrapper.tsx` (Yjs lifecycle, PDF loading, reconciled checklist creation with race condition handling, type dispatch to AMSTAR2/ROB2/ROBINS-I)
+
+**4.8C - AMSTAR2 reconciliation (10 files):**
+
+- `ReconciliationWithPdf.tsx` (split-screen wrapper with presence)
+- `ChecklistReconciliation.tsx` (main question-page navigation, answer writing to Yjs, auto-fill, navbar store bridge)
+- `ReconciliationQuestionPage.tsx` + `MultiPartQuestionPage.tsx` (q9/q11 multi-part)
+- `AnswerPanel.tsx`, `NotesCompareSection.tsx`, `SummaryView.tsx`, `Footer.tsx`
+- `Navbar.tsx`, `navbar-utils.js`
+
+**4.8D - ROB2 reconciliation (14 files):**
+
+- `ROB2ReconciliationWithPdf.tsx`, `ROB2Reconciliation.tsx`
+- `ROB2Navbar.tsx`, `NavbarDomainPill.tsx`, `ROB2SummaryView.tsx`
+- `navbar-utils.js`, `index.ts`
+- pages: `PreliminaryPage.tsx`, `SignallingQuestionPage.tsx`, `DomainDirectionPage.tsx`, `OverallDirectionPage.tsx`
+- panels: `ROB2AnswerPanel.tsx`, `DirectionPanel.tsx`, `JudgementPanel.tsx`
+
+**4.8E - ROBINS-I reconciliation (14 files):**
+
+- `RobinsIReconciliationWithPdf.tsx`, `RobinsIReconciliation.tsx`
+- `RobinsINavbar.tsx`, `NavbarDomainPill.tsx`, `RobinsISummaryView.tsx`
+- `navbar-utils.js`, `index.ts`
+- pages: `SectionBQuestionPage.tsx`, `DomainQuestionPage.tsx`, `DomainJudgementPage.tsx`, `OverallJudgementPage.tsx`
+- panels: `RobinsAnswerPanel.tsx`, `DirectionPanel.tsx`, `JudgementPanel.tsx`
+
+**Key patterns and fixes:**
+
+- Navbar store bridge: SolidJS `createStore` replaced with React `useState` + setter callback
+- Presence hook: custom throttle replacing `@solid-primitives/scheduled`, `getAwareness` stabilized with `useMemo` to prevent effect churn
+- Module-level helper functions to avoid React TDZ issues (`answersEqual`, `multiPartEqual`, `singleAnswerEqual`)
+- ROBINS-I update functions refactored to send only changed fields (avoid spreading state over Y.Text objects)
+- `handleReset` positioned before `useEffect` that references it to prevent TDZ crash
+
+### 4.9 Local checklists -- COMPLETED (2026-03-15)
+
+Migrated together with Phase 4.7 since they share checklist form components:
+
+- `routes/_app/checklist.tsx` and `routes/_app/checklist.$checklistId.tsx` route files
+- `LocalChecklistView.tsx` wrapper with debounced IndexedDB persistence
+- `CreateLocalChecklist.tsx` creation form
+- `localChecklistsStore` (Zustand + Dexie) was already migrated in Phase 1
+
+### 4.10 Admin -- COMPLETED (2026-03-16)
+
+~36 SolidJS files, ~5,600 LOC. Isolated internal tool - no Yjs, no real-time collaboration.
+
+**Already migrated (Phases 1 and 3):**
+
+- `adminStore.ts` (Zustand) - isAdmin, isAdminChecked, impersonation, all API functions
+- `useAdminQueries.ts` (React Query) - 16 query hooks
+- `queryKeys.ts` (admin section)
+- `ImpersonationBanner.tsx`
+- Recharts chart components (LineChart, BarChart, DoughnutChart)
+- `useDebouncedValue.ts` hook
+- `@tanstack/react-table@^8.21.3` installed
+
+**Phase A: Foundation layer (7 files)**
+
+- `admin-tokens.ts` - convert from .js, add proper types to helper functions
+- UI primitives: `AdminBox.tsx`, `AdminSection.tsx`, `DashboardHeader.tsx`, `DashboardBody.tsx`, `index.ts`
+- `AdminDataTable.tsx` - convert `createSolidTable` -> `useReactTable`, generic `ColumnDef<T>` typing
+- Code review after Phase A
+
+**Phase B: Layout route + small presentational components (9 files)**
+
+- `routes/_app/_protected/admin.tsx` - layout route with admin guard, tab navbar, error boundary
+- `StatsCard.tsx`, `OrgBillingSummary.tsx`, `OrgQuickActions.tsx`
+- `GrantList.tsx`, `GrantDialog.tsx` (shadcn Dialog)
+- `SubscriptionList.tsx`, `SubscriptionDialog.tsx` (shadcn Dialog)
+- `UserTable.tsx` (uses AdminDataTable)
+- Code review after Phase B
+
+**Phase C: Simple page routes (6 files)**
+
+- `admin/index.tsx` - Dashboard with stats grid, user search, UserTable
+- `admin/orgs.tsx` - OrgList with search + paginated AdminDataTable
+- `admin/projects.tsx` - ProjectList with search + org filter
+- `admin/billing.stuck-states.tsx` - summary count, grouped stuck orgs
+- `admin/billing.ledger.tsx` - filters, data table, Stripe links
+- `admin/billing.stripe-tools.tsx` - customer search, detail cards
+- Modern React: `useDebouncedValue` for search, React Query for all data, proper loading/error states
+- Code review after Phase C
+
+**Phase D: Complex detail pages + analytics (7 files)**
+
+- `AnalyticsSection.tsx` - convert 5 `createResource` -> `useQuery`, wire Recharts charts, period selectors
+- `admin/users.$userId.tsx` - UserDetail (752 LOC), ban/unban/impersonate/delete, confirmation dialogs
+- `admin/orgs.$orgId.tsx` - OrgDetail (512 LOC), billing, subscriptions, grants, reconciliation panel
+- `admin/projects.$projectId.tsx` - ProjectDetail (585 LOC), members, files, invitations
+- `OrgBillingReconcilePanel.tsx` - reconciliation controls, stuck state cards
+- `admin/storage.tsx` - StorageManagement (465 LOC), R2 browser, bulk delete
+- `admin/database.tsx` - DatabaseViewer (412 LOC), table sidebar, data grid, FK navigation
+- Code review after Phase D
+
+**Phase E: Final integration**
+
+- Remove `/admin` from `SPA_ROUTE_PREFIXES`
+- Full lint + typecheck
+- Comprehensive opus code review of entire admin module
+
+**Quality standards:**
+
+- All components fully typed (no `any` props, proper interfaces)
+- Every dialog handles loading/error/success states
+- Every mutation refreshes relevant queries
+- Every page has loading and empty states
+- Ark UI Dialog/Tooltip -> shadcn equivalents
+- `solid-icons/fi` -> `lucide-react`
+- `@tanstack/solid-table` -> `@tanstack/react-table`
+- `createResource` -> `useQuery`
+
+**Route structure:**
+
+```
+routes/_app/_protected/
+  admin.tsx                          # Layout: navbar tabs, admin guard
+  admin/
+    index.tsx                        # AdminDashboard
+    users.$userId.tsx                # UserDetail
+    orgs.tsx                         # OrgList
+    orgs.$orgId.tsx                  # OrgDetail
+    projects.tsx                     # ProjectList
+    projects.$projectId.tsx          # ProjectDetail
+    storage.tsx                      # StorageManagement
+    database.tsx                     # DatabaseViewer
+    billing.ledger.tsx               # AdminBillingLedgerPage
+    billing.stuck-states.tsx         # AdminBillingStuckStatesPage
+    billing.stripe-tools.tsx         # StripeToolsPage
+```
+
+### Charts -- COMPLETED (2026-03-15)
+
+**D3 charts (project overview):**
+
+- `AMSTARRobvis.tsx` - D3 traffic light heatmap with `useLayoutEffect` for text measurement (avoids margin flash)
+- `AMSTARDistribution.tsx` - D3 horizontal stacked bar chart with ResizeObserver
+- `ChartSettingsModal.tsx` - Pure UI modal for labels, titles, greyscale toggle, SVG/PNG export
+- `ChartSection.tsx` - Orchestrator replacing stub, with `exportChart` utility (framework-agnostic SVG/PNG export)
+- `forwardRef` + `useImperativeHandle` pattern for SVG element export access
+
+**Admin charts (Recharts, replacing solid-chartjs/Chart.js):**
+
+- `LineChart.tsx` - Recharts `ResponsiveContainer` + `LineChart` (declarative JSX API)
+- `BarChart.tsx` - Recharts `BarChart` with per-bar `Cell` colors
+- `DoughnutChart.tsx` - Recharts `PieChart` + `Pie` with inner radius for doughnut effect
+- Added `recharts@^3.8.0` dependency (replacing `solid-chartjs` and eventually `chart.js`/`react-chartjs-2`)
+
+### 4.11 PDF components -- COMPLETED (2026-03-15)
+
+- Copied Preact island source (`preact/src/`) from web to landing under `components/pdf/embedpdf/preact/`
+- Created React wrapper `EmbedPdfViewer.tsx` that mounts Preact component via `render(h(...))` in useEffect
+- Added `@preact/preset-vite` to `vite.config.ts` scoped to `**/preact/**` files, excluded from React plugin
+- Removed `/projects` from `SPA_ROUTE_PREFIXES` in `server-entry.ts` so React serves project routes
 
 ---
 
-## Phase 5: Tests
+## Phase 5: Tests -- COMPLETED (2026-03-17)
 
-### 5.1 Set up test infrastructure
+### 5.1 Test infrastructure
 
-- `@testing-library/react` (replaces `@solidjs/testing-library`)
-- Same `render()`, `screen`, `fireEvent`, `waitFor` patterns
-- Test setup file with Zustand store resets between tests
+- Created `vitest.config.ts` (separate from main vite.config.ts to avoid Cloudflare plugin conflict)
+- Created `src/__tests__/setup.ts` with mocks for matchMedia, ResizeObserver, IntersectionObserver, crypto.randomUUID, IndexedDB
+- Added `jsdom`, `@testing-library/react`, `@testing-library/jest-dom`, `fake-indexeddb` dev deps
+- Added `test` and `test:watch` scripts to package.json
 
-### 5.2 Migrate test files (27 files)
+### 5.2 Test migration (25 files, 560 tests, all passing)
 
-- Import swaps, provider wrappers
-- Framework-agnostic tests (lib/, checklist-registry/) may need no changes
-- Component tests need React render wrappers
+**Fixed 4 pre-existing test failures:**
+
+- Import path aliases (`@config/` -> `@/config/`, etc.)
+- TanStack Router navigate assertion (`navigate({ to, replace })` vs `navigate(path, opts)`)
+
+**Migrated 13 new test files:**
+
+- Pure logic: checklist-compare, checklist, robins-scoring, form-errors, avatarCache, db, pdfCache, robins-i handler
+- Store tests rewritten for Zustand: projectStore, better-auth-store
+- Hook utility tests: useAddStudies deduplication + matching
+- Component: ErrorBoundary
+
+**Skipped 2 (deeply SolidJS-reactive, would need full renderHook rewrite):**
+
+- `useAddStudies.sync.test.js` (SolidJS createRoot/createEffect lifecycle)
+- `useProject.test.js` (SolidJS reactive lifecycle)
+
+**Bug fix discovered during migration:**
+
+- Fixed missing `getTotalCacheSize()` in `pdfCache.js`
 
 ---
 
@@ -702,16 +1050,16 @@ Start simple, build confidence, tackle complex last. Each route becomes a file i
 
 ## Estimated Effort
 
-| Phase                | Effort         | Can parallelize?               |
-| -------------------- | -------------- | ------------------------------ |
-| Phase 0: Preparation | 0.5 days       | --                             |
-| Phase 1: Foundation  | 3-4 days       | --                             |
-| Phase 2: UI Library  | 2 days         | Yes (with Phase 3)             |
-| Phase 3: Primitives  | 3-4 days       | Yes (with Phase 2)             |
-| Phase 4: Pages       | 5-7 days       | Partially (independent routes) |
-| Phase 5: Tests       | 2 days         | Yes (with Phase 4)             |
-| Phase 6: Cleanup     | 0.5 days       | --                             |
-| **Total**            | **~2-3 weeks** |                                |
+| Phase                | Effort         | Can parallelize?               | Status                     |
+| -------------------- | -------------- | ------------------------------ | -------------------------- |
+| Phase 0: Preparation | 0.5 days       | --                             | DONE (2026-03-14)          |
+| Phase 1: Foundation  | 3-4 days       | --                             | DONE (2026-03-14)          |
+| Phase 2: UI Library  | 2 days         | Yes (with Phase 3)             | DONE (2026-03-14)          |
+| Phase 3: Primitives  | 3-4 days       | Yes (with Phase 2)             | DONE (2026-03-14)          |
+| Phase 4: Pages       | 5-7 days       | Partially (independent routes) | 4.1-4.7, 4.9 DONE          |
+| Phase 5: Tests       | 2 days         | Yes (with Phase 4)             | Not started                |
+| Phase 6: Cleanup     | 0.5 days       | --                             | Not started                |
+| **Total**            | **~2-3 weeks** |                                | **Phases 0-4.7, 4.9 done** |
 
 Phase 0 is shorter since landing already exists. Claude Code can handle the mechanical parts (UI components, query hooks, icon swaps, simple page conversions) to significantly speed up Phases 2 and 4.
 

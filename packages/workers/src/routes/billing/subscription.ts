@@ -2,8 +2,7 @@
  * Billing subscription routes
  * Handles org-scoped billing status and member info (read-only endpoints)
  */
-import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
-import type { ContentfulStatusCode } from 'hono/utils/http-status';
+import { OpenAPIHono, createRoute, z, $ } from '@hono/zod-openapi';
 import { requireAuth, getAuth } from '@/middleware/auth.js';
 import { createDb } from '@/db/client.js';
 import { resolveOrgAccess } from '@/lib/billingResolver.js';
@@ -12,8 +11,9 @@ import { createDomainError, SYSTEM_ERRORS, AUTH_ERRORS } from '@corates/shared';
 import { resolveOrgId } from './helpers/orgContext.js';
 import { validationHook } from '@/lib/honoValidationHook.js';
 import type { Env } from '../../types';
+import { ErrorResponseSchema } from '@/schemas/common.js';
 
-const billingSubscriptionRoutes = new OpenAPIHono<{ Bindings: Env }>({
+const base = new OpenAPIHono<{ Bindings: Env }>({
   defaultHook: validationHook,
 });
 
@@ -67,15 +67,6 @@ const MembersResponseSchema = z
   })
   .openapi('MembersResponse');
 
-const BillingErrorSchema = z
-  .object({
-    code: z.string(),
-    message: z.string(),
-    statusCode: z.number(),
-    details: z.record(z.string(), z.unknown()).optional(),
-  })
-  .openapi('BillingError');
-
 // Route definitions
 const usageRoute = createRoute({
   method: 'get',
@@ -90,11 +81,11 @@ const usageRoute = createRoute({
       description: 'Usage data',
     },
     403: {
-      content: { 'application/json': { schema: BillingErrorSchema } },
+      content: { 'application/json': { schema: ErrorResponseSchema } },
       description: 'No org found',
     },
     500: {
-      content: { 'application/json': { schema: BillingErrorSchema } },
+      content: { 'application/json': { schema: ErrorResponseSchema } },
       description: 'Database error',
     },
   },
@@ -113,11 +104,11 @@ const subscriptionRoute = createRoute({
       description: 'Subscription data',
     },
     403: {
-      content: { 'application/json': { schema: BillingErrorSchema } },
+      content: { 'application/json': { schema: ErrorResponseSchema } },
       description: 'No org found',
     },
     500: {
-      content: { 'application/json': { schema: BillingErrorSchema } },
+      content: { 'application/json': { schema: ErrorResponseSchema } },
       description: 'Database error',
     },
   },
@@ -136,174 +127,182 @@ const membersRoute = createRoute({
       description: 'Members list',
     },
     403: {
-      content: { 'application/json': { schema: BillingErrorSchema } },
+      content: { 'application/json': { schema: ErrorResponseSchema } },
       description: 'No org found',
     },
     500: {
-      content: { 'application/json': { schema: BillingErrorSchema } },
+      content: { 'application/json': { schema: ErrorResponseSchema } },
       description: 'Database error',
     },
   },
 });
 
-// Route handlers
-billingSubscriptionRoutes.use('*', requireAuth);
+// Route handlers - chained for RPC type inference
+const billingSubscriptionRoutes = $(base.use('*', requireAuth))
+  .openapi(usageRoute, async c => {
+    const { user, session } = getAuth(c);
 
-// @ts-expect-error OpenAPIHono strict return types don't account for error responses
-billingSubscriptionRoutes.openapi(usageRoute, async c => {
-  const { user, session } = getAuth(c);
-
-  if (!user || !session) {
-    const error = createDomainError(AUTH_ERRORS.REQUIRED, { reason: 'no_user' });
-    return c.json(error, error.statusCode as ContentfulStatusCode);
-  }
-
-  const db = createDb(c.env.DB);
-
-  try {
-    const orgId = await resolveOrgId({ db, session, userId: user.id });
-
-    if (!orgId) {
-      const error = createDomainError(AUTH_ERRORS.FORBIDDEN, {
-        reason: 'no_org_found',
-      });
-      return c.json(error, error.statusCode as ContentfulStatusCode);
+    if (!user || !session) {
+      const error = createDomainError(AUTH_ERRORS.REQUIRED, { reason: 'no_user' });
+      return c.json(error, 403);
     }
 
-    const { getOrgResourceUsage } = await import('@/lib/billingResolver.js');
-    const usage = await getOrgResourceUsage(db, orgId);
+    const db = createDb(c.env.DB);
 
-    return c.json({
-      projects: usage.projects,
-      collaborators: usage.collaborators,
-    });
-  } catch (err) {
-    const error = err as Error;
-    console.error('Error fetching org usage:', error);
-    const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
-      operation: 'fetch_org_usage',
-      originalError: error.message,
-    });
-    return c.json(dbError, dbError.statusCode as ContentfulStatusCode);
-  }
-});
+    try {
+      const orgId = await resolveOrgId({ db, session, userId: user.id });
 
-// @ts-expect-error OpenAPIHono strict return types don't account for error responses
-billingSubscriptionRoutes.openapi(subscriptionRoute, async c => {
-  const { user, session } = getAuth(c);
+      if (!orgId) {
+        const error = createDomainError(AUTH_ERRORS.FORBIDDEN, {
+          reason: 'no_org_found',
+        });
+        return c.json(error, 403);
+      }
 
-  if (!user || !session) {
-    const error = createDomainError(AUTH_ERRORS.REQUIRED, { reason: 'no_user' });
-    return c.json(error, error.statusCode as ContentfulStatusCode);
-  }
+      const { getOrgResourceUsage } = await import('@/lib/billingResolver.js');
+      const usage = await getOrgResourceUsage(db, orgId);
 
-  const db = createDb(c.env.DB);
-
-  try {
-    const orgId = await resolveOrgId({ db, session, userId: user.id });
-
-    if (!orgId) {
-      const error = createDomainError(AUTH_ERRORS.FORBIDDEN, {
-        reason: 'no_org_found',
+      return c.json(
+        {
+          projects: usage.projects,
+          collaborators: usage.collaborators,
+        },
+        200,
+      );
+    } catch (err) {
+      const error = err as Error;
+      console.error('Error fetching org usage:', error);
+      const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
+        operation: 'fetch_org_usage',
+        originalError: error.message,
       });
-      return c.json(error, error.statusCode as ContentfulStatusCode);
+      return c.json(dbError, 500);
+    }
+  })
+
+  .openapi(subscriptionRoute, async c => {
+    const { user, session } = getAuth(c);
+
+    if (!user || !session) {
+      const error = createDomainError(AUTH_ERRORS.REQUIRED, { reason: 'no_user' });
+      return c.json(error, 403);
     }
 
-    const orgBilling = await resolveOrgAccess(db, orgId);
+    const db = createDb(c.env.DB);
 
-    const { projects } = await import('@/db/schema.js');
-    const { eq, count } = await import('drizzle-orm');
-    const [projectCountResult] = await db
-      .select({ count: count() })
-      .from(projects)
-      .where(eq(projects.orgId, orgId));
+    try {
+      const orgId = await resolveOrgId({ db, session, userId: user.id });
 
-    const effectivePlan =
-      orgBilling.source === 'grant' ?
-        getGrantPlan(orgBilling.effectivePlanId as GrantType)
-      : getPlan(orgBilling.effectivePlanId);
-    const currentPeriodEnd =
-      orgBilling.subscription?.periodEnd ?
-        orgBilling.subscription.periodEnd instanceof Date ?
-          Math.floor(orgBilling.subscription.periodEnd.getTime() / 1000)
-        : orgBilling.subscription.periodEnd
-      : null;
+      if (!orgId) {
+        const error = createDomainError(AUTH_ERRORS.FORBIDDEN, {
+          reason: 'no_org_found',
+        });
+        return c.json(error, 403);
+      }
 
-    return c.json({
-      tier: orgBilling.effectivePlanId,
-      status:
-        orgBilling.subscription?.status || (orgBilling.source === 'free' ? 'inactive' : 'active'),
-      tierInfo: {
-        name: effectivePlan.name,
-        description: `Plan: ${effectivePlan.name}`,
-      },
-      stripeSubscriptionId: orgBilling.subscription?.id || null,
-      currentPeriodEnd,
-      cancelAtPeriodEnd: orgBilling.subscription?.cancelAtPeriodEnd || false,
-      accessMode: orgBilling.accessMode,
-      source: orgBilling.source,
-      projectCount: projectCountResult?.count || 0,
-    });
-  } catch (err) {
-    const error = err as Error;
-    console.error('Error fetching org billing:', error);
-    const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
-      operation: 'fetch_org_billing',
-      originalError: error.message,
-    });
-    return c.json(dbError, dbError.statusCode as ContentfulStatusCode);
-  }
-});
+      const orgBilling = await resolveOrgAccess(db, orgId);
 
-// @ts-expect-error OpenAPIHono strict return types don't account for error responses
-billingSubscriptionRoutes.openapi(membersRoute, async c => {
-  const { user, session } = getAuth(c);
+      const { projects } = await import('@/db/schema.js');
+      const { eq, count } = await import('drizzle-orm');
+      const [projectCountResult] = await db
+        .select({ count: count() })
+        .from(projects)
+        .where(eq(projects.orgId, orgId));
 
-  if (!user || !session) {
-    const error = createDomainError(AUTH_ERRORS.REQUIRED, { reason: 'no_user' });
-    return c.json(error, error.statusCode as ContentfulStatusCode);
-  }
+      const effectivePlan =
+        orgBilling.source === 'grant' ?
+          getGrantPlan(orgBilling.effectivePlanId as GrantType)
+        : getPlan(orgBilling.effectivePlanId);
+      const currentPeriodEnd =
+        orgBilling.subscription?.periodEnd ?
+          orgBilling.subscription.periodEnd instanceof Date ?
+            Math.floor(orgBilling.subscription.periodEnd.getTime() / 1000)
+          : orgBilling.subscription.periodEnd
+        : null;
 
-  const db = createDb(c.env.DB);
-
-  try {
-    const orgId = await resolveOrgId({ db, session, userId: user.id });
-
-    if (!orgId) {
-      const error = createDomainError(AUTH_ERRORS.FORBIDDEN, {
-        reason: 'no_org_found',
+      return c.json(
+        {
+          tier: orgBilling.effectivePlanId,
+          status:
+            orgBilling.subscription?.status ||
+            (orgBilling.source === 'free' ? 'inactive' : 'active'),
+          tierInfo: {
+            name: effectivePlan.name,
+            description: `Plan: ${effectivePlan.name}`,
+          },
+          stripeSubscriptionId: orgBilling.subscription?.id || null,
+          currentPeriodEnd,
+          cancelAtPeriodEnd: orgBilling.subscription?.cancelAtPeriodEnd || false,
+          accessMode: orgBilling.accessMode,
+          source: orgBilling.source,
+          projectCount: projectCountResult?.count || 0,
+        },
+        200,
+      );
+    } catch (err) {
+      const error = err as Error;
+      console.error('Error fetching org billing:', error);
+      const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
+        operation: 'fetch_org_billing',
+        originalError: error.message,
       });
-      return c.json(error, error.statusCode as ContentfulStatusCode);
+      return c.json(dbError, 500);
+    }
+  })
+
+  .openapi(membersRoute, async c => {
+    const { user, session } = getAuth(c);
+
+    if (!user || !session) {
+      const error = createDomainError(AUTH_ERRORS.REQUIRED, { reason: 'no_user' });
+      return c.json(error, 403);
     }
 
-    const { createAuth } = await import('@/auth/config.js');
-    const auth = createAuth(c.env, c.executionCtx);
-    const listMembersApi = auth.api as unknown as {
-      listMembers: (_req: {
-        headers: Headers;
-        query: { organizationId: string };
-      }) => Promise<{ members?: Array<Record<string, unknown>> }>;
-    };
-    const result = await listMembersApi.listMembers({
-      headers: c.req.raw.headers,
-      query: {
-        organizationId: orgId,
-      },
-    });
+    const db = createDb(c.env.DB);
 
-    return c.json({
-      members: result.members || [],
-      count: result.members?.length || 0,
-    });
-  } catch (err) {
-    const error = err as Error;
-    console.error('Error fetching org members:', error);
-    const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
-      operation: 'fetch_org_members',
-      originalError: error.message,
-    });
-    return c.json(dbError, dbError.statusCode as ContentfulStatusCode);
-  }
-});
+    try {
+      const orgId = await resolveOrgId({ db, session, userId: user.id });
+
+      if (!orgId) {
+        const error = createDomainError(AUTH_ERRORS.FORBIDDEN, {
+          reason: 'no_org_found',
+        });
+        return c.json(error, 403);
+      }
+
+      const { createAuth } = await import('@/auth/config.js');
+      const auth = createAuth(c.env, c.executionCtx);
+      const listMembersApi = auth.api as unknown as {
+        listMembers: (_req: {
+          headers: Headers;
+          query: { organizationId: string };
+        }) => Promise<{ members?: Array<Record<string, unknown>> }>;
+      };
+      const result = await listMembersApi.listMembers({
+        headers: c.req.raw.headers,
+        query: {
+          organizationId: orgId,
+        },
+      });
+
+      const members = (result.members || []) as z.infer<typeof MemberSchema>[];
+      return c.json(
+        {
+          members,
+          count: members.length,
+        },
+        200,
+      );
+    } catch (err) {
+      const error = err as Error;
+      console.error('Error fetching org members:', error);
+      const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
+        operation: 'fetch_org_members',
+        originalError: error.message,
+      });
+      return c.json(dbError, 500);
+    }
+  });
 
 export { billingSubscriptionRoutes };
+export type BillingSubscriptionRoutes = typeof billingSubscriptionRoutes;

@@ -78,7 +78,7 @@
     "ENVIRONMENT": "development",
     "DEV_MODE": true,
     "AUTH_BASE_URL": "http://localhost:8787",
-    "APP_URL": "http://localhost:5173",
+    "APP_URL": "http://localhost:3010",
     "SENTRY_DSN": "https://3ddf61abb06680bffc1ebc7f540f05de@o4510738063818752.ingest.us.sentry.io/4510738126274560"
   },
 

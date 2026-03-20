@@ -1,17 +1,14 @@
 export const config = {
-  appUrl: import.meta.env.VITE_PUBLIC_APP_URL || 'http://localhost:5173',
+  appUrl: import.meta.env.VITE_PUBLIC_APP_URL || 'http://localhost:3010',
   apiUrl: import.meta.env.VITE_API_URL || 'http://localhost:8787',
 };
 
 export const urls = {
-  signIn: () => `${config.appUrl}/signin`,
   signUp: (plan?: string, interval?: string) => {
-    const base = `${config.appUrl}/signup`;
+    const base = '/signup';
     if (!plan) return base;
     const params = new URLSearchParams({ plan });
     if (interval) params.set('interval', interval);
     return `${base}?${params.toString()}`;
   },
-  checklist: () => `${config.appUrl}/checklist?from=landing`,
-  dashboard: () => `${config.appUrl}/dashboard`,
 };

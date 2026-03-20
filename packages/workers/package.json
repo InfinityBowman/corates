@@ -5,6 +5,7 @@
   "description": "Cloudflare Workers with Durable Objects",
   "license": "PolyForm-Noncommercial-1.0.0",
   "main": "src/index.js",
+  "type": "module",
   "scripts": {
     "dev": "wrangler dev",
     "deploy": "pnpm --filter shared build && wrangler deploy --env production",
@@ -31,7 +32,6 @@
   },
   "dependencies": {
     "@better-auth/stripe": "^1.5.4",
-    "@cloudflare/workers-types": "^4.20260307.1",
     "@corates/shared": "workspace:*",
     "@hono/zod-openapi": "^1.2.2",
     "@sentry/cloudflare": "^10.42.0",
@@ -46,13 +46,16 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
-    "@cloudflare/vitest-pool-workers": "^0.11.1",
+    "@cloudflare/vitest-pool-workers": "^0.13.0",
+    "@cloudflare/workers-types": "^4.20260313.1",
+    "@vitest/runner": "^4.1.0",
+    "@vitest/snapshot": "^4.1.0",
     "better-sqlite3": "^12.6.2",
     "dotenv": "^16.6.1",
     "drizzle-kit": "^0.31.9",
     "localflare": "^0.3.1",
     "typescript": "^5.9.3",
-    "vitest": "3.2.0",
-    "wrangler": "^4.71.0"
+    "vitest": "4.1.0",
+    "wrangler": "^4.73.0"
   }
 }

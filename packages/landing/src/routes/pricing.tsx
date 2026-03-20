@@ -177,13 +177,12 @@ function PricingPage() {
                   {trialPlan.features[0]}. {trialPlan.features[1]}. No credit card required.
                 </p>
               </div>
-              <a
-                href={getButtonUrl(trialPlan)}
-                rel='external'
+              <Link
+                to={getButtonUrl(trialPlan)}
                 className='shrink-0 rounded-xl bg-blue-600 px-6 py-3 text-sm font-semibold text-white transition-all hover:bg-blue-700'
               >
                 Start Free Trial
-              </a>
+              </Link>
             </div>
           </div>
         )}
@@ -300,9 +299,8 @@ function PricingPage() {
                 </div>
 
                 {/* CTA Button */}
-                <a
-                  href={getButtonUrl(plan)}
-                  rel='external'
+                <Link
+                  to={getButtonUrl(plan)}
                   className={`mb-6 block w-full rounded-xl px-4 py-3 text-center text-sm font-semibold transition-all focus:ring-2 focus:ring-offset-2 focus:outline-none ${
                     isPopular ?
                       'bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500'
@@ -310,7 +308,7 @@ function PricingPage() {
                   }`}
                 >
                   {getButtonText(plan)}
-                </a>
+                </Link>
 
                 {/* Features */}
                 <div className='flex-1'>
@@ -363,13 +361,12 @@ function PricingPage() {
                     {singleProjectPlan.oneTime!.durationMonths} months access
                   </p>
                 </div>
-                <a
-                  href={getButtonUrl(singleProjectPlan)}
-                  rel='external'
+                <Link
+                  to={getButtonUrl(singleProjectPlan)}
                   className='rounded-xl bg-gray-900 px-5 py-2.5 text-sm font-semibold text-white transition-all hover:bg-gray-800'
                 >
                   Buy Now
-                </a>
+                </Link>
               </div>
             </div>
           </div>

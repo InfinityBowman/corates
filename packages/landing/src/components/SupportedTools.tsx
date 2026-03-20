@@ -50,14 +50,9 @@ export default function SupportedTools() {
           );
 
           return isAvailable ?
-              <a
-                key={index}
-                href={tool.href}
-                rel='external'
-                className={`${baseClasses} ${interactiveClasses}`}
-              >
+              <Link key={index} to={tool.href} className={`${baseClasses} ${interactiveClasses}`}>
                 {content}
-              </a>
+              </Link>
             : <div key={index} className={baseClasses}>
                 {content}
               </div>;

@@ -4,14 +4,15 @@
  */
 
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
-import type { ContentfulStatusCode } from 'hono/utils/http-status';
+
 import { createDb } from '@/db/client.js';
 import { mediaFiles } from '@/db/schema.js';
 import { createDomainError, SYSTEM_ERRORS } from '@corates/shared';
 import { validationHook } from '@/lib/honoValidationHook.js';
 import type { Env } from '../../types';
+import { ErrorResponseSchema } from '@/schemas/common.js';
 
-const storageRoutes = new OpenAPIHono<{ Bindings: Env }>({
+const _storageBase = new OpenAPIHono<{ Bindings: Env }>({
   defaultHook: validationHook,
 });
 
@@ -89,15 +90,6 @@ const StorageStatsResponseSchema = z
   })
   .openapi('StorageStatsResponse');
 
-const StorageErrorSchema = z
-  .object({
-    code: z.string(),
-    message: z.string(),
-    statusCode: z.number(),
-    details: z.record(z.string(), z.unknown()).optional(),
-  })
-  .openapi('StorageError');
-
 const R2_KEY_PATTERN = /^projects\/[^/]+\/studies\/[^/]+\/.+$/;
 
 const DeleteDocumentsRequestSchema = z
@@ -154,7 +146,7 @@ const listDocumentsRoute = createRoute({
       description: 'Unauthorized - not logged in',
       content: {
         'application/json': {
-          schema: StorageErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },
@@ -162,7 +154,7 @@ const listDocumentsRoute = createRoute({
       description: 'Forbidden - not an admin',
       content: {
         'application/json': {
-          schema: StorageErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },
@@ -170,7 +162,7 @@ const listDocumentsRoute = createRoute({
       description: 'Internal error',
       content: {
         'application/json': {
-          schema: StorageErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },
@@ -205,7 +197,7 @@ const deleteDocumentsRoute = createRoute({
       description: 'Validation error',
       content: {
         'application/json': {
-          schema: StorageErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },
@@ -213,7 +205,7 @@ const deleteDocumentsRoute = createRoute({
       description: 'Internal error',
       content: {
         'application/json': {
-          schema: StorageErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },
@@ -239,7 +231,7 @@ const getStorageStatsRoute = createRoute({
       description: 'Unauthorized - not logged in',
       content: {
         'application/json': {
-          schema: StorageErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },
@@ -247,7 +239,7 @@ const getStorageStatsRoute = createRoute({
       description: 'Forbidden - not an admin',
       content: {
         'application/json': {
-          schema: StorageErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },
@@ -255,7 +247,7 @@ const getStorageStatsRoute = createRoute({
       description: 'Internal error',
       content: {
         'application/json': {
-          schema: StorageErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },
@@ -283,247 +275,252 @@ interface ListResponse {
  * GET /api/admin/storage/documents
  * List documents with cursor-based pagination
  */
-// @ts-expect-error OpenAPIHono strict return types don't account for error responses
-storageRoutes.openapi(listDocumentsRoute, async c => {
-  try {
-    const query = c.req.valid('query');
-    const requestCursor = query.cursor?.trim() || undefined;
-    const limit = Math.min(Math.max(parseInt(query.limit || '50', 10) || 50, 1), 1000);
-    const prefix = query.prefix?.trim() || '';
-    const search = query.search?.trim().toLowerCase() || '';
+const storageRoutes = _storageBase
+  .openapi(listDocumentsRoute, async c => {
+    try {
+      const query = c.req.valid('query');
+      const requestCursor = query.cursor?.trim() || undefined;
+      const limit = Math.min(Math.max(parseInt(query.limit || '50', 10) || 50, 1), 1000);
+      const prefix = query.prefix?.trim() || '';
+      const search = query.search?.trim().toLowerCase() || '';
 
-    // Decode composite cursor: {r2Cursor: string | undefined, skipCount: number}
-    let r2Cursor: string | undefined = undefined;
-    let skipCount = 0;
-    if (requestCursor) {
-      try {
-        const decoded = JSON.parse(requestCursor) as { r2Cursor?: string; skipCount?: number };
-        r2Cursor = decoded.r2Cursor;
-        skipCount = Math.max(0, decoded.skipCount || 0);
-        // If r2Cursor is undefined, we're starting from beginning of R2, so reset skipCount
-        if (!r2Cursor) {
+      // Decode composite cursor: {r2Cursor: string | undefined, skipCount: number}
+      let r2Cursor: string | undefined = undefined;
+      let skipCount = 0;
+      if (requestCursor) {
+        try {
+          const decoded = JSON.parse(requestCursor) as { r2Cursor?: string; skipCount?: number };
+          r2Cursor = decoded.r2Cursor;
+          skipCount = Math.max(0, decoded.skipCount || 0);
+          // If r2Cursor is undefined, we're starting from beginning of R2, so reset skipCount
+          if (!r2Cursor) {
+            skipCount = 0;
+          }
+        } catch {
+          // Invalid cursor format, treat as first request
+          r2Cursor = requestCursor;
           skipCount = 0;
         }
-      } catch {
-        // Invalid cursor format, treat as first request
-        r2Cursor = requestCursor;
-        skipCount = 0;
       }
-    }
 
-    const PROCESSING_CAP = 10000;
-    const matchingObjects: StorageDoc[] = [];
-    let currentCursor = r2Cursor;
-    let objectsProcessed = 0;
-    let truncated = false;
-    let listedTruncated = false;
+      const PROCESSING_CAP = 10000;
+      const matchingObjects: StorageDoc[] = [];
+      let currentCursor = r2Cursor;
+      let objectsProcessed = 0;
+      let truncated = false;
+      let listedTruncated = false;
 
-    // Process batches until we have enough matching results (skipCount + limit) or hit the cap
-    while (matchingObjects.length < skipCount + limit && objectsProcessed < PROCESSING_CAP) {
-      const listOptions: { limit: number; prefix?: string; cursor?: string } = {
-        limit: 1000,
-        prefix: prefix || undefined,
+      // Process batches until we have enough matching results (skipCount + limit) or hit the cap
+      while (matchingObjects.length < skipCount + limit && objectsProcessed < PROCESSING_CAP) {
+        const listOptions: { limit: number; prefix?: string; cursor?: string } = {
+          limit: 1000,
+          prefix: prefix || undefined,
+        };
+        if (currentCursor) {
+          listOptions.cursor = currentCursor;
+        }
+
+        const listed = await c.env.PDF_BUCKET.list(listOptions);
+
+        if (listed.objects.length === 0) {
+          listedTruncated = false;
+          break;
+        }
+
+        objectsProcessed += listed.objects.length;
+
+        // Process the entire batch to avoid skipping objects when we hit the limit
+        for (const obj of listed.objects) {
+          const parsed = parseKey(obj.key);
+          if (!parsed) {
+            continue;
+          }
+
+          // Apply search filter if provided
+          if (search && !parsed.fileName.toLowerCase().includes(search)) {
+            continue;
+          }
+
+          matchingObjects.push({
+            key: obj.key,
+            fileName: parsed.fileName,
+            projectId: parsed.projectId,
+            studyId: parsed.studyId,
+            size: obj.size,
+            uploaded: obj.uploaded,
+            etag: obj.etag,
+          });
+        }
+
+        // Update cursor for next batch
+        if (listed.truncated) {
+          currentCursor = listed.cursor;
+          listedTruncated = true;
+        } else {
+          listedTruncated = false;
+          break;
+        }
+
+        // Stop if we hit the processing cap
+        if (objectsProcessed >= PROCESSING_CAP) {
+          truncated = true;
+          break;
+        }
+      }
+
+      // Guard against skipCount exceeding matchingObjects.length
+      skipCount = Math.min(skipCount, matchingObjects.length);
+
+      // Slice with offset to get the correct page
+      const paginatedObjects = matchingObjects.slice(skipCount, skipCount + limit);
+
+      // Check which PDFs are tracked in mediaFiles table to identify orphaned PDFs
+      // Orphans are R2 objects whose keys are NOT in mediaFiles.bucketKey
+      const db = createDb(c.env.DB);
+      const trackedKeys = await db.select({ bucketKey: mediaFiles.bucketKey }).from(mediaFiles);
+
+      const trackedKeysSet = new Set(trackedKeys.map(row => row.bucketKey));
+
+      // Mark documents as orphaned if their key is not in mediaFiles table
+      const documentsWithOrphanStatus = paginatedObjects.map(doc => ({
+        ...doc,
+        orphaned: !trackedKeysSet.has(doc.key),
+      }));
+
+      const response: ListResponse = {
+        documents: documentsWithOrphanStatus,
+        limit,
       };
-      if (currentCursor) {
-        listOptions.cursor = currentCursor;
+
+      // Determine if there are more results available
+      const hasMoreR2Objects = listedTruncated && currentCursor;
+      const canContinueAfterCap = truncated && currentCursor;
+
+      // Include nextCursor if there are more results available and we have a cursor to continue from
+      if (hasMoreR2Objects || canContinueAfterCap) {
+        const nextSkipCount = Math.max(0, skipCount + paginatedObjects.length);
+        const nextCursorData = {
+          r2Cursor: currentCursor,
+          skipCount: nextSkipCount,
+        };
+        response.nextCursor = JSON.stringify(nextCursorData);
       }
 
-      const listed = await c.env.PDF_BUCKET.list(listOptions);
-
-      if (listed.objects.length === 0) {
-        listedTruncated = false;
-        break;
+      // Include truncated flag if we hit the processing cap
+      if (truncated) {
+        response.truncated = true;
       }
 
-      objectsProcessed += listed.objects.length;
+      return c.json(response, 200);
+    } catch (err) {
+      const error = err as Error;
+      console.error('Error listing storage documents:', error);
+      const systemError = createDomainError(SYSTEM_ERRORS.INTERNAL_ERROR, {
+        operation: 'list_storage_documents',
+        originalError: error.message,
+      });
+      return c.json(systemError, 500);
+    }
+  })
 
-      // Process the entire batch to avoid skipping objects when we hit the limit
-      for (const obj of listed.objects) {
-        const parsed = parseKey(obj.key);
-        if (!parsed) {
-          continue;
-        }
+  /**
+   * DELETE /api/admin/storage/documents
+   * Bulk delete documents
+   */
+  .openapi(deleteDocumentsRoute, async c => {
+    try {
+      const { keys } = c.req.valid('json');
 
-        // Apply search filter if provided
-        if (search && !parsed.fileName.toLowerCase().includes(search)) {
-          continue;
-        }
+      // Delete all keys in parallel
+      const deleteResults = await Promise.allSettled(keys.map(key => c.env.PDF_BUCKET.delete(key)));
 
-        matchingObjects.push({
-          key: obj.key,
-          fileName: parsed.fileName,
-          projectId: parsed.projectId,
-          studyId: parsed.studyId,
-          size: obj.size,
-          uploaded: obj.uploaded,
-          etag: obj.etag,
+      const deleted = deleteResults.filter(r => r.status === 'fulfilled').length;
+      const failed = deleteResults.filter(r => r.status === 'rejected').length;
+
+      let errors: Array<{ key: string; error: string }> | undefined;
+      if (failed > 0) {
+        errors = [];
+        deleteResults.forEach((result, i) => {
+          if (result.status === 'rejected') {
+            errors!.push({
+              key: keys[i],
+              error: (result.reason as Error)?.message || 'Unknown error',
+            });
+          }
         });
       }
 
-      // Update cursor for next batch
-      if (listed.truncated) {
-        currentCursor = listed.cursor;
-        listedTruncated = true;
-      } else {
-        listedTruncated = false;
-        break;
-      }
-
-      // Stop if we hit the processing cap
-      if (objectsProcessed >= PROCESSING_CAP) {
-        truncated = true;
-        break;
-      }
-    }
-
-    // Guard against skipCount exceeding matchingObjects.length
-    skipCount = Math.min(skipCount, matchingObjects.length);
-
-    // Slice with offset to get the correct page
-    const paginatedObjects = matchingObjects.slice(skipCount, skipCount + limit);
-
-    // Check which PDFs are tracked in mediaFiles table to identify orphaned PDFs
-    // Orphans are R2 objects whose keys are NOT in mediaFiles.bucketKey
-    const db = createDb(c.env.DB);
-    const trackedKeys = await db.select({ bucketKey: mediaFiles.bucketKey }).from(mediaFiles);
-
-    const trackedKeysSet = new Set(trackedKeys.map(row => row.bucketKey));
-
-    // Mark documents as orphaned if their key is not in mediaFiles table
-    const documentsWithOrphanStatus = paginatedObjects.map(doc => ({
-      ...doc,
-      orphaned: !trackedKeysSet.has(doc.key),
-    }));
-
-    const response: ListResponse = {
-      documents: documentsWithOrphanStatus,
-      limit,
-    };
-
-    // Determine if there are more results available
-    const hasMoreR2Objects = listedTruncated && currentCursor;
-    const canContinueAfterCap = truncated && currentCursor;
-
-    // Include nextCursor if there are more results available and we have a cursor to continue from
-    if (hasMoreR2Objects || canContinueAfterCap) {
-      const nextSkipCount = Math.max(0, skipCount + paginatedObjects.length);
-      const nextCursorData = {
-        r2Cursor: currentCursor,
-        skipCount: nextSkipCount,
-      };
-      response.nextCursor = JSON.stringify(nextCursorData);
-    }
-
-    // Include truncated flag if we hit the processing cap
-    if (truncated) {
-      response.truncated = true;
-    }
-
-    return c.json(response);
-  } catch (err) {
-    const error = err as Error;
-    console.error('Error listing storage documents:', error);
-    const systemError = createDomainError(SYSTEM_ERRORS.INTERNAL_ERROR, {
-      operation: 'list_storage_documents',
-      originalError: error.message,
-    });
-    return c.json(systemError, systemError.statusCode as ContentfulStatusCode);
-  }
-});
-
-/**
- * DELETE /api/admin/storage/documents
- * Bulk delete documents
- */
-// @ts-expect-error OpenAPIHono strict return types don't account for error responses
-storageRoutes.openapi(deleteDocumentsRoute, async c => {
-  try {
-    const { keys } = c.req.valid('json');
-
-    // Delete all keys in parallel
-    const deleteResults = await Promise.allSettled(keys.map(key => c.env.PDF_BUCKET.delete(key)));
-
-    const deleted = deleteResults.filter(r => r.status === 'fulfilled').length;
-    const failed = deleteResults.filter(r => r.status === 'rejected').length;
-
-    let errors: Array<{ key: string; error: string }> | undefined;
-    if (failed > 0) {
-      errors = [];
-      deleteResults.forEach((result, i) => {
-        if (result.status === 'rejected') {
-          errors!.push({
-            key: keys[i],
-            error: (result.reason as Error)?.message || 'Unknown error',
-          });
-        }
+      return c.json(
+        {
+          deleted,
+          failed,
+          errors,
+        },
+        200,
+      );
+    } catch (err) {
+      const error = err as Error;
+      console.error('Error deleting storage documents:', error);
+      const systemError = createDomainError(SYSTEM_ERRORS.INTERNAL_ERROR, {
+        operation: 'delete_storage_documents',
+        originalError: error.message,
       });
+      return c.json(systemError, 500);
     }
+  })
 
-    return c.json({
-      deleted,
-      failed,
-      errors,
-    });
-  } catch (err) {
-    const error = err as Error;
-    console.error('Error deleting storage documents:', error);
-    const systemError = createDomainError(SYSTEM_ERRORS.INTERNAL_ERROR, {
-      operation: 'delete_storage_documents',
-      originalError: error.message,
-    });
-    return c.json(systemError, systemError.statusCode as ContentfulStatusCode);
-  }
-});
+  /**
+   * GET /api/admin/storage/stats
+   * Get storage statistics
+   */
+  .openapi(getStorageStatsRoute, async c => {
+    try {
+      let cursor: string | undefined = undefined;
+      let totalFiles = 0;
+      let totalSize = 0;
+      const filesByProject: Record<string, number> = {};
 
-/**
- * GET /api/admin/storage/stats
- * Get storage statistics
- */
-// @ts-expect-error OpenAPIHono strict return types don't account for error responses
-storageRoutes.openapi(getStorageStatsRoute, async c => {
-  try {
-    let cursor: string | undefined = undefined;
-    let totalFiles = 0;
-    let totalSize = 0;
-    const filesByProject: Record<string, number> = {};
+      // Iterate through all objects to calculate stats
+      do {
+        const listed = await c.env.PDF_BUCKET.list({
+          limit: 1000,
+          cursor,
+        });
 
-    // Iterate through all objects to calculate stats
-    do {
-      const listed = await c.env.PDF_BUCKET.list({
-        limit: 1000,
-        cursor,
-      });
+        for (const obj of listed.objects) {
+          totalFiles++;
+          totalSize += obj.size;
 
-      for (const obj of listed.objects) {
-        totalFiles++;
-        totalSize += obj.size;
-
-        const parsed = parseKey(obj.key);
-        if (parsed) {
-          filesByProject[parsed.projectId] = (filesByProject[parsed.projectId] || 0) + 1;
+          const parsed = parseKey(obj.key);
+          if (parsed) {
+            filesByProject[parsed.projectId] = (filesByProject[parsed.projectId] || 0) + 1;
+          }
         }
-      }
 
-      cursor = listed.truncated ? listed.cursor : undefined;
-    } while (cursor);
+        cursor = listed.truncated ? listed.cursor : undefined;
+      } while (cursor);
 
-    return c.json({
-      totalFiles,
-      totalSize,
-      filesByProject: Object.entries(filesByProject).map(([projectId, count]) => ({
-        projectId,
-        count,
-      })),
-    });
-  } catch (err) {
-    const error = err as Error;
-    console.error('Error fetching storage stats:', error);
-    const systemError = createDomainError(SYSTEM_ERRORS.INTERNAL_ERROR, {
-      operation: 'fetch_storage_stats',
-      originalError: error.message,
-    });
-    return c.json(systemError, systemError.statusCode as ContentfulStatusCode);
-  }
-});
+      return c.json(
+        {
+          totalFiles,
+          totalSize,
+          filesByProject: Object.entries(filesByProject).map(([projectId, count]) => ({
+            projectId,
+            count,
+          })),
+        },
+        200,
+      );
+    } catch (err) {
+      const error = err as Error;
+      console.error('Error fetching storage stats:', error);
+      const systemError = createDomainError(SYSTEM_ERRORS.INTERNAL_ERROR, {
+        operation: 'fetch_storage_stats',
+        originalError: error.message,
+      });
+      return c.json(systemError, 500);
+    }
+  });
 
 export { storageRoutes };
+export type StorageRoutes = typeof storageRoutes;

@@ -8,6 +8,7 @@ export const STATIC_ORIGINS: readonly string[] = [
 export const ORIGIN_PATTERNS: readonly RegExp[] = [
   /^https:\/\/[a-z0-9-]+-corates\.jacobamaynard\.workers\.dev$/,
   /^https:\/\/corates\.jacobamaynard\.workers\.dev$/,
+  /^http:\/\/localhost:\d+$/, // Any localhost port (dev + Vitest browser tests)
 ];
 
 interface EnvWithOrigins {

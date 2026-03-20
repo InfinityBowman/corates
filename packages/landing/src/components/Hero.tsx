@@ -1,4 +1,4 @@
-import { urls } from '../lib/config';
+import { Link } from '@tanstack/react-router';
 
 export default function Hero() {
   return (
@@ -21,20 +21,18 @@ export default function Hero() {
             every stage.
           </p>
           <div className='mb-2 flex flex-col justify-center gap-4 sm:flex-row sm:gap-12'>
-            <a
-              href={urls.checklist()}
-              rel='external'
+            <Link
+              to='/checklist'
               className='inline-flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 px-5 py-2.5 text-base font-semibold text-white shadow-md shadow-blue-600/20 transition-colors hover:bg-blue-500 sm:w-auto'
             >
               Start an Appraisal
-            </a>
-            <a
-              href={urls.signUp()}
-              rel='external'
+            </Link>
+            <Link
+              to='/signup'
               className='inline-flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 px-5 py-2.5 text-base font-semibold text-white shadow-md shadow-blue-600/20 transition-colors hover:bg-blue-500 sm:w-auto'
             >
               Start a Review Project
-            </a>
+            </Link>
           </div>
         </div>
       </div>

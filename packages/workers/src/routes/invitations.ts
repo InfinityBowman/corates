@@ -3,8 +3,8 @@
  * Handles project invitation acceptance with combined org + project flow
  */
 
-import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
-import type { ContentfulStatusCode } from 'hono/utils/http-status';
+import { OpenAPIHono, createRoute, z, $ } from '@hono/zod-openapi';
+
 import { createDb } from '@/db/client.js';
 import {
   projectInvitations,
@@ -26,13 +26,11 @@ import {
 import { syncMemberToDO } from '@/lib/project-sync.js';
 import { validationHook } from '@/lib/honoValidationHook.js';
 import type { Env } from '../types';
+import { ErrorResponseSchema } from '@/schemas/common.js';
 
-const invitationRoutes = new OpenAPIHono<{ Bindings: Env }>({
+const base = new OpenAPIHono<{ Bindings: Env }>({
   defaultHook: validationHook,
 });
-
-// Apply auth middleware
-invitationRoutes.use('*', requireAuth);
 
 // Request schema
 const AcceptInvitationRequestSchema = z
@@ -54,16 +52,7 @@ const AcceptInvitationSuccessSchema = z
   })
   .openapi('AcceptInvitationSuccess');
 
-const InvitationErrorSchema = z
-  .object({
-    code: z.string(),
-    message: z.string(),
-    statusCode: z.number(),
-    details: z.record(z.string(), z.unknown()).optional(),
-  })
-  .openapi('InvitationError');
-
-// Accept invitation route
+// Route definitions
 const acceptInvitationRoute = createRoute({
   method: 'post',
   path: '/accept',
@@ -91,22 +80,26 @@ const acceptInvitationRoute = createRoute({
       description: 'Invitation accepted successfully',
     },
     400: {
-      content: { 'application/json': { schema: InvitationErrorSchema } },
+      content: { 'application/json': { schema: ErrorResponseSchema } },
       description: 'Invalid or expired token',
     },
     403: {
-      content: { 'application/json': { schema: InvitationErrorSchema } },
+      content: { 'application/json': { schema: ErrorResponseSchema } },
       description: 'Email mismatch or already a member',
+    },
+    500: {
+      content: { 'application/json': { schema: ErrorResponseSchema } },
+      description: 'Internal server error',
     },
   },
 });
 
-// @ts-expect-error OpenAPIHono strict return types don't account for error responses
-invitationRoutes.openapi(acceptInvitationRoute, async c => {
+// Route handlers - chained for RPC type inference
+const invitationRoutes = $(base.use('*', requireAuth)).openapi(acceptInvitationRoute, async c => {
   const { user: authUser } = getAuth(c);
   if (!authUser) {
     const error = createDomainError(AUTH_ERRORS.REQUIRED, { reason: 'no_user' });
-    return c.json(error, error.statusCode as ContentfulStatusCode);
+    return c.json(error, 403);
   }
   const db = createDb(c.env.DB);
   const { token } = c.req.valid('json');
@@ -133,7 +126,7 @@ invitationRoutes.openapi(acceptInvitationRoute, async c => {
         field: 'token',
         value: token,
       });
-      return c.json(error, error.statusCode as ContentfulStatusCode);
+      return c.json(error, 400);
     }
 
     // Check if invitation has expired
@@ -144,7 +137,7 @@ invitationRoutes.openapi(acceptInvitationRoute, async c => {
         field: 'token',
         value: 'expired',
       });
-      return c.json(error, error.statusCode as ContentfulStatusCode);
+      return c.json(error, 400);
     }
 
     // Check if invitation already accepted
@@ -152,7 +145,7 @@ invitationRoutes.openapi(acceptInvitationRoute, async c => {
       const error = createDomainError(PROJECT_ERRORS.MEMBER_ALREADY_EXISTS, {
         projectId: invitation.projectId,
       });
-      return c.json(error, error.statusCode as ContentfulStatusCode);
+      return c.json(error, 400);
     }
 
     // Verify user email matches invitation email
@@ -172,7 +165,7 @@ invitationRoutes.openapi(acceptInvitationRoute, async c => {
       const error = createDomainError(AUTH_ERRORS.FORBIDDEN, {
         reason: 'user_not_found',
       });
-      return c.json(error, error.statusCode as ContentfulStatusCode);
+      return c.json(error, 403);
     }
 
     const normalizedUserEmail = (currentUser.email || '').trim().toLowerCase();
@@ -187,7 +180,7 @@ invitationRoutes.openapi(acceptInvitationRoute, async c => {
         userEmail: currentUser.email,
         invitationEmail: invitation.email,
       });
-      return c.json(error, error.statusCode as ContentfulStatusCode);
+      return c.json(error, 403);
     }
 
     // Check if user is already a member
@@ -214,12 +207,15 @@ invitationRoutes.openapi(acceptInvitationRoute, async c => {
         .where(eq(projects.id, invitation.projectId))
         .get();
 
-      return c.json({
-        success: true as const,
-        projectId: invitation.projectId,
-        projectName: project?.name || 'Unknown Project',
-        alreadyMember: true,
-      });
+      return c.json(
+        {
+          success: true as const,
+          projectId: invitation.projectId,
+          projectName: project?.name || 'Unknown Project',
+          alreadyMember: true,
+        } as z.infer<typeof AcceptInvitationSuccessSchema>,
+        200,
+      );
     }
 
     // Combined flow: ensure org membership, then add project membership
@@ -313,14 +309,17 @@ invitationRoutes.openapi(acceptInvitationRoute, async c => {
       console.error('Failed to sync member to DO:', err);
     }
 
-    return c.json({
-      success: true as const,
-      orgId: invitation.orgId,
-      orgSlug: orgSlug ?? undefined,
-      projectId: invitation.projectId,
-      projectName: project?.name || 'Unknown Project',
-      role: invitation.role,
-    });
+    return c.json(
+      {
+        success: true as const,
+        orgId: invitation.orgId,
+        orgSlug: orgSlug ?? undefined,
+        projectId: invitation.projectId,
+        projectName: project?.name || 'Unknown Project',
+        role: invitation.role ?? undefined,
+      } as z.infer<typeof AcceptInvitationSuccessSchema>,
+      200,
+    );
   } catch (error) {
     console.error('Error accepting invitation:', error);
     const err = error as Error;
@@ -328,8 +327,9 @@ invitationRoutes.openapi(acceptInvitationRoute, async c => {
       operation: 'accept_invitation',
       originalError: err.message,
     });
-    return c.json(dbError, dbError.statusCode as ContentfulStatusCode);
+    return c.json(dbError, 500);
   }
 });
 
 export { invitationRoutes };
+export type InvitationRoutes = typeof invitationRoutes;

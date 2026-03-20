@@ -65,6 +65,18 @@ Get a structured code review of current git changes or branch diff. Returns the 
 - Excludes common binary/generated files (`.txt`, `.png`, `.jpg`, `.svg`, fonts, etc.)
 - Branch names are validated to prevent command injection
 
+## External CLI Tools
+
+### `hono` CLI
+
+The `hono` CLI is installed globally and provides Hono framework documentation and utilities.
+
+- `hono docs [path]` - Display Hono documentation (e.g., `hono docs /docs/concepts/motivation`)
+- `hono search <query>` - Fuzzy search Hono documentation (e.g., `hono search "rpc client"`)
+- `hono --help` - List all available commands
+
+Use this for Hono-specific questions (routing, middleware, RPC, OpenAPI, etc.) instead of web searches.
+
 ## Resources
 
 - `icon://libraries` - List all available icon libraries with icon counts

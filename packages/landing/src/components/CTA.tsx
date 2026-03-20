@@ -1,5 +1,5 @@
 import { FaArrowRight } from 'react-icons/fa6';
-import { urls } from '../lib/config';
+import { Link } from '@tanstack/react-router';
 
 export default function CTA() {
   return (
@@ -12,14 +12,13 @@ export default function CTA() {
           Join a growing community of researchers who use CoRATES to streamline their evidence
           appraisal workflows and improve efficiency and transparency throughout the process.
         </p>
-        <a
-          href={urls.signUp()}
-          rel='external'
+        <Link
+          to='/signup'
           className='inline-flex items-center justify-center gap-2 rounded-lg bg-white px-6 py-3 font-medium text-blue-600 transition-colors hover:bg-blue-100'
         >
           Get Started
           <FaArrowRight className='h-5 w-5' />
-        </a>
+        </Link>
       </div>
     </section>
   );

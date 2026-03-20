@@ -6,8 +6,6 @@
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
 import type { Env } from '../types';
 
-const health = new OpenAPIHono<{ Bindings: Env }>();
-
 // Service status schema
 const ServiceStatusSchema = z
   .object({
@@ -48,7 +46,7 @@ interface HealthChecks {
   };
 }
 
-// Health check route
+// Route definitions
 const healthRoute = createRoute({
   method: 'get',
   path: '/',
@@ -76,72 +74,6 @@ const healthRoute = createRoute({
   },
 });
 
-health.openapi(healthRoute, async c => {
-  const checks: HealthChecks = {
-    status: 'healthy',
-    timestamp: new Date().toISOString(),
-    services: {},
-  };
-
-  // Check D1 database
-  try {
-    const result = await c.env.DB.prepare('SELECT 1 as ok').first<{ ok: number }>();
-    checks.services.database = {
-      status: result?.ok === 1 ? 'healthy' : 'unhealthy',
-      type: 'D1',
-    };
-  } catch (error) {
-    const err = error as Error;
-    checks.services.database = {
-      status: 'unhealthy',
-      type: 'D1',
-      error: err.message,
-    };
-    checks.status = 'degraded';
-  }
-
-  // Check R2 bucket
-  try {
-    await c.env.PDF_BUCKET.list({ limit: 1 });
-    checks.services.storage = {
-      status: 'healthy',
-      type: 'R2',
-    };
-  } catch (error) {
-    const err = error as Error;
-    checks.services.storage = {
-      status: 'unhealthy',
-      type: 'R2',
-      error: err.message,
-    };
-    checks.status = 'degraded';
-  }
-
-  // Check Durable Objects are available
-  try {
-    checks.services.durableObjects = {
-      status: c.env.USER_SESSION && c.env.PROJECT_DOC ? 'healthy' : 'unhealthy',
-      type: 'Durable Objects',
-      bindings: {
-        USER_SESSION: !!c.env.USER_SESSION,
-        PROJECT_DOC: !!c.env.PROJECT_DOC,
-      },
-    };
-  } catch (error) {
-    const err = error as Error;
-    checks.services.durableObjects = {
-      status: 'unhealthy',
-      type: 'Durable Objects',
-      error: err.message,
-    };
-    checks.status = 'degraded';
-  }
-
-  const httpStatus = checks.status === 'healthy' ? 200 : 503;
-  return c.json(checks, httpStatus);
-});
-
-// Liveness probe route
 const livenessRoute = createRoute({
   method: 'get',
   path: '/live',
@@ -160,8 +92,77 @@ const livenessRoute = createRoute({
   },
 });
 
-health.openapi(livenessRoute, c => {
-  return c.text('OK');
-});
+// Route handlers - chained for RPC type inference
+const healthRoutes = new OpenAPIHono<{ Bindings: Env }>()
 
-export { health as healthRoutes };
+  .openapi(healthRoute, async c => {
+    const checks: HealthChecks = {
+      status: 'healthy',
+      timestamp: new Date().toISOString(),
+      services: {},
+    };
+
+    // Check D1 database
+    try {
+      const result = await c.env.DB.prepare('SELECT 1 as ok').first<{ ok: number }>();
+      checks.services.database = {
+        status: result?.ok === 1 ? 'healthy' : 'unhealthy',
+        type: 'D1',
+      };
+    } catch (error) {
+      const err = error as Error;
+      checks.services.database = {
+        status: 'unhealthy',
+        type: 'D1',
+        error: err.message,
+      };
+      checks.status = 'degraded';
+    }
+
+    // Check R2 bucket
+    try {
+      await c.env.PDF_BUCKET.list({ limit: 1 });
+      checks.services.storage = {
+        status: 'healthy',
+        type: 'R2',
+      };
+    } catch (error) {
+      const err = error as Error;
+      checks.services.storage = {
+        status: 'unhealthy',
+        type: 'R2',
+        error: err.message,
+      };
+      checks.status = 'degraded';
+    }
+
+    // Check Durable Objects are available
+    try {
+      checks.services.durableObjects = {
+        status: c.env.USER_SESSION && c.env.PROJECT_DOC ? 'healthy' : 'unhealthy',
+        type: 'Durable Objects',
+        bindings: {
+          USER_SESSION: !!c.env.USER_SESSION,
+          PROJECT_DOC: !!c.env.PROJECT_DOC,
+        },
+      };
+    } catch (error) {
+      const err = error as Error;
+      checks.services.durableObjects = {
+        status: 'unhealthy',
+        type: 'Durable Objects',
+        error: err.message,
+      };
+      checks.status = 'degraded';
+    }
+
+    const httpStatus = checks.status === 'healthy' ? 200 : 503;
+    return c.json(checks, httpStatus);
+  })
+
+  .openapi(livenessRoute, c => {
+    return c.text('OK');
+  });
+
+export { healthRoutes };
+export type HealthRoutes = typeof healthRoutes;

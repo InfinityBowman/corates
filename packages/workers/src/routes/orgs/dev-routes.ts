@@ -16,6 +16,7 @@ import {
 import { getAuth } from '@/middleware/auth.js';
 import { getProjectDocStub } from '@/lib/project-doc-id.js';
 import type { Env } from '../../types';
+import { ErrorResponseSchema } from '@/schemas/common.js';
 
 const devRoutes = new OpenAPIHono<{ Bindings: Env }>();
 
@@ -38,11 +39,6 @@ devRoutes.use('/import', requireProjectAccess());
 devRoutes.use('/reset', requireProjectAccess());
 
 // Response schemas
-const DevErrorSchema = z
-  .object({
-    error: z.string(),
-  })
-  .openapi('DevError');
 
 const TemplateSchema = z
   .object({
@@ -106,7 +102,7 @@ const getTemplatesRoute = createRoute({
       description: 'Dev mode disabled or no access',
       content: {
         'application/json': {
-          schema: DevErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },
@@ -114,7 +110,7 @@ const getTemplatesRoute = createRoute({
       description: 'Internal error',
       content: {
         'application/json': {
-          schema: DevErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },
@@ -149,7 +145,7 @@ const applyTemplateRoute = createRoute({
       description: 'Missing required template parameter',
       content: {
         'application/json': {
-          schema: DevErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },
@@ -157,7 +153,7 @@ const applyTemplateRoute = createRoute({
       description: 'Dev mode disabled or no access',
       content: {
         'application/json': {
-          schema: DevErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },
@@ -165,7 +161,7 @@ const applyTemplateRoute = createRoute({
       description: 'Internal error',
       content: {
         'application/json': {
-          schema: DevErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },
@@ -191,7 +187,7 @@ const exportRoute = createRoute({
       description: 'Dev mode disabled or no access',
       content: {
         'application/json': {
-          schema: DevErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },
@@ -199,7 +195,7 @@ const exportRoute = createRoute({
       description: 'Internal error',
       content: {
         'application/json': {
-          schema: DevErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },
@@ -225,7 +221,7 @@ const importRoute = createRoute({
       description: 'Dev mode disabled or no access',
       content: {
         'application/json': {
-          schema: DevErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },
@@ -233,7 +229,7 @@ const importRoute = createRoute({
       description: 'Internal error',
       content: {
         'application/json': {
-          schema: DevErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },
@@ -259,7 +255,7 @@ const resetRoute = createRoute({
       description: 'Dev mode disabled or no access',
       content: {
         'application/json': {
-          schema: DevErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },
@@ -267,7 +263,7 @@ const resetRoute = createRoute({
       description: 'Internal error',
       content: {
         'application/json': {
-          schema: DevErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },
@@ -275,6 +271,7 @@ const resetRoute = createRoute({
 });
 
 // GET /dev/templates
+// @ts-expect-error Dev route returns simplified error format
 devRoutes.openapi(getTemplatesRoute, async c => {
   const { projectId } = getProjectContext(c);
   if (!projectId) {
@@ -293,6 +290,7 @@ devRoutes.openapi(getTemplatesRoute, async c => {
 });
 
 // POST /dev/apply-template
+// @ts-expect-error Dev route returns simplified error format
 devRoutes.openapi(applyTemplateRoute, async c => {
   const { projectId } = getProjectContext(c);
   if (!projectId) {
@@ -308,7 +306,8 @@ devRoutes.openapi(applyTemplateRoute, async c => {
 
   try {
     const projectDoc = getProjectDocStub(c.env, projectId);
-    const data = await projectDoc.devApplyTemplate(template, mode);
+    const body = await c.req.json().catch(() => ({}));
+    const data = await projectDoc.devApplyTemplate(template, mode, body.userMapping);
     return c.json(data);
   } catch (err) {
     const error = err as Error;
@@ -318,6 +317,7 @@ devRoutes.openapi(applyTemplateRoute, async c => {
 });
 
 // GET /dev/export
+// @ts-expect-error Dev route returns simplified error format
 devRoutes.openapi(exportRoute, async c => {
   const { projectId } = getProjectContext(c);
   if (!projectId) {
@@ -336,6 +336,7 @@ devRoutes.openapi(exportRoute, async c => {
 });
 
 // POST /dev/import
+// @ts-expect-error Dev route returns simplified error format
 devRoutes.openapi(importRoute, async c => {
   const { projectId } = getProjectContext(c);
   const { orgId } = getOrgContext(c);
@@ -367,6 +368,7 @@ devRoutes.openapi(importRoute, async c => {
 });
 
 // POST /dev/reset
+// @ts-expect-error Dev route returns simplified error format
 devRoutes.openapi(resetRoute, async c => {
   const { projectId } = getProjectContext(c);
   if (!projectId) {

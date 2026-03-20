@@ -3,7 +3,6 @@
  * Handles plan change validation logic
  */
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
-import type { ContentfulStatusCode } from 'hono/utils/http-status';
 import { requireAuth, getAuth } from '@/middleware/auth.js';
 import { createDb } from '@/db/client.js';
 import { validatePlanChange } from '@/lib/billingResolver.js';
@@ -11,6 +10,7 @@ import { createDomainError, SYSTEM_ERRORS, AUTH_ERRORS } from '@corates/shared';
 import { resolveOrgId } from './helpers/orgContext.js';
 import { validationHook } from '@/lib/honoValidationHook.js';
 import type { Env } from '../../types';
+import { ErrorResponseSchema } from '@/schemas/common.js';
 
 const billingValidationRoutes = new OpenAPIHono<{ Bindings: Env }>({
   defaultHook: validationHook,
@@ -46,15 +46,6 @@ const PlanValidationResponseSchema = z
   })
   .openapi('PlanValidationResponse');
 
-const ValidationErrorSchema = z
-  .object({
-    code: z.string(),
-    message: z.string(),
-    statusCode: z.number(),
-    details: z.record(z.string(), z.unknown()).optional(),
-  })
-  .openapi('ValidationError');
-
 // Route definitions
 const validatePlanChangeRoute = createRoute({
   method: 'get',
@@ -75,15 +66,15 @@ const validatePlanChangeRoute = createRoute({
       description: 'Validation result',
     },
     400: {
-      content: { 'application/json': { schema: ValidationErrorSchema } },
+      content: { 'application/json': { schema: ErrorResponseSchema } },
       description: 'Missing targetPlan parameter',
     },
     403: {
-      content: { 'application/json': { schema: ValidationErrorSchema } },
+      content: { 'application/json': { schema: ErrorResponseSchema } },
       description: 'No org found',
     },
     500: {
-      content: { 'application/json': { schema: ValidationErrorSchema } },
+      content: { 'application/json': { schema: ErrorResponseSchema } },
       description: 'Database error',
     },
   },
@@ -92,13 +83,12 @@ const validatePlanChangeRoute = createRoute({
 // Route handlers
 billingValidationRoutes.use('*', requireAuth);
 
-// @ts-expect-error OpenAPIHono strict return types don't account for error responses
 billingValidationRoutes.openapi(validatePlanChangeRoute, async c => {
   const { user, session } = getAuth(c);
 
   if (!user || !session) {
     const error = createDomainError(AUTH_ERRORS.REQUIRED, { reason: 'no_user' });
-    return c.json(error, error.statusCode as ContentfulStatusCode);
+    return c.json(error, 403);
   }
 
   const db = createDb(c.env.DB);
@@ -112,12 +102,12 @@ billingValidationRoutes.openapi(validatePlanChangeRoute, async c => {
       const error = createDomainError(AUTH_ERRORS.FORBIDDEN, {
         reason: 'no_org_found',
       });
-      return c.json(error, error.statusCode as ContentfulStatusCode);
+      return c.json(error, 403);
     }
 
     const validationResult = await validatePlanChange(db, orgId, targetPlan);
 
-    return c.json(validationResult);
+    return c.json(validationResult as unknown as z.infer<typeof PlanValidationResponseSchema>, 200);
   } catch (err) {
     const error = err as Error;
     console.error('Error validating plan change:', error);
@@ -125,7 +115,7 @@ billingValidationRoutes.openapi(validatePlanChangeRoute, async c => {
       operation: 'validate_plan_change',
       originalError: error.message,
     });
-    return c.json(dbError, dbError.statusCode as ContentfulStatusCode);
+    return c.json(dbError, 500);
   }
 });
 

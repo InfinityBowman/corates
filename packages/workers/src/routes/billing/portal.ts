@@ -3,7 +3,6 @@
  * Handles Stripe Customer Portal session creation (delegates to Better Auth)
  */
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
-import type { ContentfulStatusCode } from 'hono/utils/http-status';
 import { requireAuth, getAuth } from '@/middleware/auth.js';
 import { createDb } from '@/db/client.js';
 import { createDomainError, SYSTEM_ERRORS, AUTH_ERRORS } from '@corates/shared';
@@ -12,6 +11,7 @@ import { resolveOrgIdWithRole } from './helpers/orgContext.js';
 import { requireOrgOwner } from '@/policies';
 import { validationHook } from '@/lib/honoValidationHook.js';
 import type { Env } from '../../types';
+import { ErrorResponseSchema } from '@/schemas/common.js';
 
 const billingPortalRoutes = new OpenAPIHono<{ Bindings: Env }>({
   defaultHook: validationHook,
@@ -23,15 +23,6 @@ const PortalResponseSchema = z
     url: z.string(),
   })
   .openapi('PortalResponse');
-
-const PortalErrorSchema = z
-  .object({
-    code: z.string(),
-    message: z.string(),
-    statusCode: z.number(),
-    details: z.record(z.string(), z.unknown()).optional(),
-  })
-  .openapi('PortalError');
 
 // Route definitions
 const createPortalRoute = createRoute({
@@ -47,15 +38,15 @@ const createPortalRoute = createRoute({
       description: 'Portal session created',
     },
     403: {
-      content: { 'application/json': { schema: PortalErrorSchema } },
+      content: { 'application/json': { schema: ErrorResponseSchema } },
       description: 'Not org owner',
     },
     429: {
-      content: { 'application/json': { schema: PortalErrorSchema } },
+      content: { 'application/json': { schema: ErrorResponseSchema } },
       description: 'Rate limit exceeded',
     },
     500: {
-      content: { 'application/json': { schema: PortalErrorSchema } },
+      content: { 'application/json': { schema: ErrorResponseSchema } },
       description: 'Internal error',
     },
   },
@@ -65,13 +56,12 @@ const createPortalRoute = createRoute({
 billingPortalRoutes.use('*', billingPortalRateLimit);
 billingPortalRoutes.use('*', requireAuth);
 
-// @ts-expect-error OpenAPIHono strict return types don't account for error responses
 billingPortalRoutes.openapi(createPortalRoute, async c => {
   const { user, session } = getAuth(c);
 
   if (!user || !session) {
     const error = createDomainError(AUTH_ERRORS.REQUIRED, { reason: 'no_user' });
-    return c.json(error, error.statusCode as ContentfulStatusCode);
+    return c.json(error, 403);
   }
 
   const db = createDb(c.env.DB);
@@ -99,21 +89,21 @@ billingPortalRoutes.openapi(createPortalRoute, async c => {
       },
     });
 
-    return c.json(result);
+    return c.json(result as z.infer<typeof PortalResponseSchema>, 200);
   } catch (err) {
     const error = err as Error & { code?: string; statusCode?: number };
     console.error('Error creating portal session:', error);
 
     // If error is already a domain error, return it as-is
     if (error.code && error.statusCode) {
-      return c.json(error, error.statusCode as ContentfulStatusCode);
+      return c.json(error as z.infer<typeof ErrorResponseSchema>, 403);
     }
 
     const systemError = createDomainError(SYSTEM_ERRORS.INTERNAL_ERROR, {
       operation: 'create_portal_session',
       originalError: error.message,
     });
-    return c.json(systemError, systemError.statusCode as ContentfulStatusCode);
+    return c.json(systemError, 500);
   }
 });
 

@@ -1,7 +1,14 @@
 import { betterAuth } from 'better-auth';
 import { createAuthMiddleware } from 'better-auth/api';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
-import { genericOAuth, magicLink, twoFactor, admin, organization } from 'better-auth/plugins';
+import {
+  genericOAuth,
+  magicLink,
+  twoFactor,
+  admin,
+  organization,
+  testUtils,
+} from 'better-auth/plugins';
 import { oAuthRelay } from './oauth-relay';
 import { stripe } from '@better-auth/stripe';
 import Stripe from 'stripe';
@@ -114,6 +121,11 @@ export function createAuth(env: Env, ctx?: ExecutionContext) {
   // Build plugins array
   const plugins: any[] = [];
 
+  // Test utilities for e2e testing (dev only)
+  if (env.DEV_MODE) {
+    plugins.push(testUtils());
+  }
+
   // OAuth Relay plugin for local development
   // Relays OAuth tokens through production so localhost can create its own sessions
   // Unlike oAuthProxy, this works with separate databases (no session sharing needed)
@@ -174,6 +186,10 @@ export function createAuth(env: Env, ctx?: ExecutionContext) {
   plugins.push(
     magicLink({
       sendMagicLink: async ({ email, url }: { email: string; url: string }) => {
+        if (env.ENVIRONMENT !== 'production') {
+          console.log('[Auth] Magic link URL:', url);
+        }
+
         const subject = 'Sign in to CoRATES';
         const html = getMagicLinkEmailHtml({ subject, magicLinkUrl: url });
         const text = getMagicLinkEmailText({ magicLinkUrl: url });

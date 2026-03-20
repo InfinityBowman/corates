@@ -103,8 +103,11 @@ export async function sendInvitationEmail(
     );
   }
 
+  // TS doesn't track that the callback in signInMagicLink assigned this
+  const magicLinkUrl: string = capturedMagicLinkUrl;
+
   if (env.ENVIRONMENT !== 'production') {
-    const redacted = capturedMagicLinkUrl.replace(/token=[^&]+/, 'token=REDACTED');
+    const redacted = magicLinkUrl.replace(/token=[^&]+/, 'token=REDACTED');
     console.log('[Email] Project invitation magic link URL:', redacted);
   }
 
@@ -115,13 +118,13 @@ export async function sendInvitationEmail(
   const emailHtml = getProjectInvitationEmailHtml({
     projectName,
     inviterName,
-    invitationUrl: capturedMagicLinkUrl,
+    invitationUrl: magicLinkUrl,
     role,
   });
   const emailText = getProjectInvitationEmailText({
     projectName,
     inviterName,
-    invitationUrl: capturedMagicLinkUrl,
+    invitationUrl: magicLinkUrl,
     role,
   });
 

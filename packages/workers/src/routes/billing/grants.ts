@@ -3,7 +3,6 @@
  * Handles trial and access grant management
  */
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
-import type { ContentfulStatusCode } from 'hono/utils/http-status';
 import { requireAuth, getAuth } from '@/middleware/auth.js';
 import { createDb } from '@/db/client.js';
 import { createDomainError, SYSTEM_ERRORS, VALIDATION_ERRORS, AUTH_ERRORS } from '@corates/shared';
@@ -12,6 +11,7 @@ import { resolveOrgIdWithRole } from './helpers/orgContext.js';
 import { requireOrgOwner } from '@/policies';
 import { validationHook } from '@/lib/honoValidationHook.js';
 import type { Env } from '../../types';
+import { ErrorResponseSchema } from '@/schemas/common.js';
 
 const billingGrantRoutes = new OpenAPIHono<{ Bindings: Env }>({
   defaultHook: validationHook,
@@ -25,15 +25,6 @@ const TrialStartSuccessSchema = z
     expiresAt: z.number(),
   })
   .openapi('TrialStartSuccess');
-
-const GrantErrorSchema = z
-  .object({
-    code: z.string(),
-    message: z.string(),
-    statusCode: z.number(),
-    details: z.record(z.string(), z.unknown()).optional(),
-  })
-  .openapi('GrantError');
 
 // Route definitions
 const startTrialRoute = createRoute({
@@ -50,15 +41,15 @@ const startTrialRoute = createRoute({
       description: 'Trial started successfully',
     },
     400: {
-      content: { 'application/json': { schema: GrantErrorSchema } },
+      content: { 'application/json': { schema: ErrorResponseSchema } },
       description: 'Trial already exists',
     },
     403: {
-      content: { 'application/json': { schema: GrantErrorSchema } },
+      content: { 'application/json': { schema: ErrorResponseSchema } },
       description: 'Not org owner',
     },
     500: {
-      content: { 'application/json': { schema: GrantErrorSchema } },
+      content: { 'application/json': { schema: ErrorResponseSchema } },
       description: 'Internal error',
     },
   },
@@ -67,13 +58,12 @@ const startTrialRoute = createRoute({
 // Route handlers
 billingGrantRoutes.use('*', requireAuth);
 
-// @ts-expect-error OpenAPIHono strict return types don't account for error responses
 billingGrantRoutes.openapi(startTrialRoute, async c => {
   const { user, session } = getAuth(c);
 
   if (!user || !session) {
     const error = createDomainError(AUTH_ERRORS.REQUIRED, { reason: 'no_user' });
-    return c.json(error, error.statusCode as ContentfulStatusCode);
+    return c.json(error, 403);
   }
 
   const db = createDb(c.env.DB);
@@ -83,7 +73,7 @@ billingGrantRoutes.openapi(startTrialRoute, async c => {
 
     if (!orgId) {
       const error = createDomainError(AUTH_ERRORS.FORBIDDEN, { reason: 'no_org_found' });
-      return c.json(error, error.statusCode as ContentfulStatusCode);
+      return c.json(error, 403);
     }
 
     // Verify user is org owner
@@ -102,7 +92,7 @@ billingGrantRoutes.openapi(startTrialRoute, async c => {
         },
         'Trial grant already exists for this organization. Each organization can only have one trial grant.',
       );
-      return c.json(error, error.statusCode as ContentfulStatusCode);
+      return c.json(error, 400);
     }
 
     // Create trial grant (configured trial days from now)
@@ -119,25 +109,28 @@ billingGrantRoutes.openapi(startTrialRoute, async c => {
       expiresAt,
     });
 
-    return c.json({
-      success: true as const,
-      grantId,
-      expiresAt: Math.floor(expiresAt.getTime() / 1000),
-    });
+    return c.json(
+      {
+        success: true as const,
+        grantId,
+        expiresAt: Math.floor(expiresAt.getTime() / 1000),
+      },
+      200,
+    );
   } catch (err) {
     const error = err as Error & { code?: string; statusCode?: number };
     console.error('Error starting trial:', error);
 
     // If error is already a domain error, return it as-is
     if (error.code && error.statusCode) {
-      return c.json(error, error.statusCode as ContentfulStatusCode);
+      return c.json(error as z.infer<typeof ErrorResponseSchema>, 403);
     }
 
     const systemError = createDomainError(SYSTEM_ERRORS.INTERNAL_ERROR, {
       operation: 'start_trial',
       originalError: error.message,
     });
-    return c.json(systemError, systemError.statusCode as ContentfulStatusCode);
+    return c.json(systemError, 500);
   }
 });
 

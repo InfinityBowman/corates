@@ -4,7 +4,7 @@
  */
 
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
-import type { ContentfulStatusCode } from 'hono/utils/http-status';
+
 import { createDb } from '@/db/client.js';
 import {
   projects,
@@ -18,8 +18,9 @@ import { eq, count, desc, like, sql, and } from 'drizzle-orm';
 import { createDomainError, SYSTEM_ERRORS, PROJECT_ERRORS } from '@corates/shared';
 import { validationHook } from '@/lib/honoValidationHook.js';
 import type { Env } from '../../types';
+import { ErrorResponseSchema } from '@/schemas/common.js';
 
-const projectRoutes = new OpenAPIHono<{ Bindings: Env }>({
+const base = new OpenAPIHono<{ Bindings: Env }>({
   defaultHook: validationHook,
 });
 
@@ -140,15 +141,6 @@ const SuccessResponseSchema = z
   })
   .openapi('AdminProjectSuccessResponse');
 
-const AdminErrorSchema = z
-  .object({
-    code: z.string(),
-    message: z.string(),
-    statusCode: z.number(),
-    details: z.record(z.string(), z.unknown()).optional(),
-  })
-  .openapi('AdminProjectError');
-
 // Route definitions
 const listProjectsRoute = createRoute({
   method: 'get',
@@ -186,7 +178,7 @@ const listProjectsRoute = createRoute({
       description: 'Unauthorized - not logged in',
       content: {
         'application/json': {
-          schema: AdminErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },
@@ -194,7 +186,7 @@ const listProjectsRoute = createRoute({
       description: 'Forbidden - not an admin',
       content: {
         'application/json': {
-          schema: AdminErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },
@@ -202,7 +194,7 @@ const listProjectsRoute = createRoute({
       description: 'Database error',
       content: {
         'application/json': {
-          schema: AdminErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },
@@ -233,7 +225,7 @@ const getProjectDetailsRoute = createRoute({
       description: 'Project not found',
       content: {
         'application/json': {
-          schema: AdminErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },
@@ -241,7 +233,7 @@ const getProjectDetailsRoute = createRoute({
       description: 'Database error',
       content: {
         'application/json': {
-          schema: AdminErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },
@@ -273,7 +265,7 @@ const removeProjectMemberRoute = createRoute({
       description: 'Member not found',
       content: {
         'application/json': {
-          schema: AdminErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },
@@ -281,7 +273,7 @@ const removeProjectMemberRoute = createRoute({
       description: 'Database error',
       content: {
         'application/json': {
-          schema: AdminErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },
@@ -312,7 +304,7 @@ const deleteProjectRoute = createRoute({
       description: 'Project not found',
       content: {
         'application/json': {
-          schema: AdminErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },
@@ -320,7 +312,7 @@ const deleteProjectRoute = createRoute({
       description: 'Database error',
       content: {
         'application/json': {
-          schema: AdminErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },
@@ -336,331 +328,335 @@ interface ProjectStats {
  * GET /api/admin/projects
  * List all projects with pagination and search
  */
-// @ts-expect-error OpenAPIHono strict return types don't account for error responses
-projectRoutes.openapi(listProjectsRoute, async c => {
-  const db = createDb(c.env.DB);
+const projectRoutes = base
+  .openapi(listProjectsRoute, async c => {
+    const db = createDb(c.env.DB);
 
-  try {
-    const query = c.req.valid('query');
-    const page = parseInt(query.page || '1', 10);
-    const limit = Math.min(parseInt(query.limit || '20', 10), 100);
-    const search = query.search;
-    const orgId = query.orgId;
+    try {
+      const query = c.req.valid('query');
+      const page = parseInt(query.page || '1', 10);
+      const limit = Math.min(parseInt(query.limit || '20', 10), 100);
+      const search = query.search;
+      const orgId = query.orgId;
 
-    const offset = (page - 1) * limit;
+      const offset = (page - 1) * limit;
 
-    // Build where conditions
-    const conditions = [];
-    if (search) {
-      const searchLower = search.toLowerCase();
-      conditions.push(like(sql`LOWER(${projects.name})`, `%${searchLower}%`));
-    }
-    if (orgId) {
-      conditions.push(eq(projects.orgId, orgId));
-    }
-
-    const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
-
-    // Get total count for pagination
-    const totalCountQuery =
-      whereClause ?
-        db.select({ count: count() }).from(projects).where(whereClause)
-      : db.select({ count: count() }).from(projects);
-
-    const [totalResult] = await totalCountQuery.all();
-    const total = totalResult?.count || 0;
-
-    // Get paginated results with org and creator info
-    const baseQuery = db
-      .select({
-        id: projects.id,
-        name: projects.name,
-        description: projects.description,
-        orgId: projects.orgId,
-        orgName: organization.name,
-        orgSlug: organization.slug,
-        createdBy: projects.createdBy,
-        creatorName: user.name,
-        creatorGivenName: user.givenName,
-        creatorEmail: user.email,
-        createdAt: projects.createdAt,
-        updatedAt: projects.updatedAt,
-      })
-      .from(projects)
-      .leftJoin(organization, eq(projects.orgId, organization.id))
-      .leftJoin(user, eq(projects.createdBy, user.id));
-
-    const projectList = await (whereClause ? baseQuery.where(whereClause) : baseQuery)
-      .orderBy(desc(projects.createdAt))
-      .limit(limit)
-      .offset(offset)
-      .all();
-
-    // Get member counts and file counts for all projects
-    const projectIds = projectList.map(p => p.id);
-    const statsMap: Record<string, ProjectStats> = {};
-
-    if (projectIds.length > 0) {
-      // Get member counts
-      const memberCounts = await db
-        .select({
-          projectId: projectMembers.projectId,
-          count: count(),
-        })
-        .from(projectMembers)
-        .where(
-          sql`${projectMembers.projectId} IN (${sql.join(
-            projectIds.map(id => sql`${id}`),
-            sql`, `,
-          )})`,
-        )
-        .groupBy(projectMembers.projectId)
-        .all();
-
-      // Get file counts
-      const fileCounts = await db
-        .select({
-          projectId: mediaFiles.projectId,
-          count: count(),
-        })
-        .from(mediaFiles)
-        .where(
-          sql`${mediaFiles.projectId} IN (${sql.join(
-            projectIds.map(id => sql`${id}`),
-            sql`, `,
-          )})`,
-        )
-        .groupBy(mediaFiles.projectId)
-        .all();
-
-      // Build stats map
-      for (const mc of memberCounts) {
-        statsMap[mc.projectId] = { memberCount: mc.count, fileCount: 0 };
+      // Build where conditions
+      const conditions = [];
+      if (search) {
+        const searchLower = search.toLowerCase();
+        conditions.push(like(sql`LOWER(${projects.name})`, `%${searchLower}%`));
       }
-      for (const fc of fileCounts) {
-        if (!statsMap[fc.projectId]) {
-          statsMap[fc.projectId] = { memberCount: 0, fileCount: fc.count };
-        } else {
-          statsMap[fc.projectId].fileCount = fc.count;
+      if (orgId) {
+        conditions.push(eq(projects.orgId, orgId));
+      }
+
+      const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+
+      // Get total count for pagination
+      const totalCountQuery =
+        whereClause ?
+          db.select({ count: count() }).from(projects).where(whereClause)
+        : db.select({ count: count() }).from(projects);
+
+      const [totalResult] = await totalCountQuery.all();
+      const total = totalResult?.count || 0;
+
+      // Get paginated results with org and creator info
+      const baseQuery = db
+        .select({
+          id: projects.id,
+          name: projects.name,
+          description: projects.description,
+          orgId: projects.orgId,
+          orgName: organization.name,
+          orgSlug: organization.slug,
+          createdBy: projects.createdBy,
+          creatorName: user.name,
+          creatorGivenName: user.givenName,
+          creatorEmail: user.email,
+          createdAt: projects.createdAt,
+          updatedAt: projects.updatedAt,
+        })
+        .from(projects)
+        .leftJoin(organization, eq(projects.orgId, organization.id))
+        .leftJoin(user, eq(projects.createdBy, user.id));
+
+      const projectList = await (whereClause ? baseQuery.where(whereClause) : baseQuery)
+        .orderBy(desc(projects.createdAt))
+        .limit(limit)
+        .offset(offset)
+        .all();
+
+      // Get member counts and file counts for all projects
+      const projectIds = projectList.map(p => p.id);
+      const statsMap: Record<string, ProjectStats> = {};
+
+      if (projectIds.length > 0) {
+        // Get member counts
+        const memberCounts = await db
+          .select({
+            projectId: projectMembers.projectId,
+            count: count(),
+          })
+          .from(projectMembers)
+          .where(
+            sql`${projectMembers.projectId} IN (${sql.join(
+              projectIds.map(id => sql`${id}`),
+              sql`, `,
+            )})`,
+          )
+          .groupBy(projectMembers.projectId)
+          .all();
+
+        // Get file counts
+        const fileCounts = await db
+          .select({
+            projectId: mediaFiles.projectId,
+            count: count(),
+          })
+          .from(mediaFiles)
+          .where(
+            sql`${mediaFiles.projectId} IN (${sql.join(
+              projectIds.map(id => sql`${id}`),
+              sql`, `,
+            )})`,
+          )
+          .groupBy(mediaFiles.projectId)
+          .all();
+
+        // Build stats map
+        for (const mc of memberCounts) {
+          statsMap[mc.projectId] = { memberCount: mc.count, fileCount: 0 };
+        }
+        for (const fc of fileCounts) {
+          if (!statsMap[fc.projectId]) {
+            statsMap[fc.projectId] = { memberCount: 0, fileCount: fc.count };
+          } else {
+            statsMap[fc.projectId].fileCount = fc.count;
+          }
         }
       }
+
+      // Merge stats into project list
+      const projectsWithStats = projectList.map(p => ({
+        ...p,
+        memberCount: statsMap[p.id]?.memberCount || 0,
+        fileCount: statsMap[p.id]?.fileCount || 0,
+      }));
+
+      return c.json(
+        {
+          projects: projectsWithStats,
+          pagination: {
+            page,
+            limit,
+            total,
+            totalPages: Math.ceil(total / limit),
+          },
+        },
+        200,
+      );
+    } catch (err) {
+      const error = err as Error;
+      console.error('Error fetching admin projects:', error);
+      const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
+        message: error.message,
+      });
+      return c.json(dbError, 500);
     }
+  })
 
-    // Merge stats into project list
-    const projectsWithStats = projectList.map(p => ({
-      ...p,
-      memberCount: statsMap[p.id]?.memberCount || 0,
-      fileCount: statsMap[p.id]?.fileCount || 0,
-    }));
+  /**
+   * GET /api/admin/projects/:projectId
+   * Get full project details including members, files, and invitations
+   */
+  .openapi(getProjectDetailsRoute, async c => {
+    const { projectId } = c.req.valid('param');
+    const db = createDb(c.env.DB);
 
-    return c.json({
-      projects: projectsWithStats,
-      pagination: {
-        page,
-        limit,
-        total,
-        totalPages: Math.ceil(total / limit),
-      },
-    });
-  } catch (err) {
-    const error = err as Error;
-    console.error('Error fetching admin projects:', error);
-    const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
-      message: error.message,
-    });
-    return c.json(dbError, dbError.statusCode as ContentfulStatusCode);
-  }
-});
+    try {
+      // Get project with org and creator info
+      const [project] = await db
+        .select({
+          id: projects.id,
+          name: projects.name,
+          description: projects.description,
+          orgId: projects.orgId,
+          orgName: organization.name,
+          orgSlug: organization.slug,
+          createdBy: projects.createdBy,
+          creatorName: user.name,
+          creatorGivenName: user.givenName,
+          creatorEmail: user.email,
+          createdAt: projects.createdAt,
+          updatedAt: projects.updatedAt,
+        })
+        .from(projects)
+        .leftJoin(organization, eq(projects.orgId, organization.id))
+        .leftJoin(user, eq(projects.createdBy, user.id))
+        .where(eq(projects.id, projectId))
+        .limit(1);
 
-/**
- * GET /api/admin/projects/:projectId
- * Get full project details including members, files, and invitations
- */
-// @ts-expect-error OpenAPIHono strict return types don't account for error responses
-projectRoutes.openapi(getProjectDetailsRoute, async c => {
-  const { projectId } = c.req.valid('param');
-  const db = createDb(c.env.DB);
+      if (!project) {
+        const error = createDomainError(PROJECT_ERRORS.NOT_FOUND, { projectId });
+        return c.json(error, 404);
+      }
 
-  try {
-    // Get project with org and creator info
-    const [project] = await db
-      .select({
-        id: projects.id,
-        name: projects.name,
-        description: projects.description,
-        orgId: projects.orgId,
-        orgName: organization.name,
-        orgSlug: organization.slug,
-        createdBy: projects.createdBy,
-        creatorName: user.name,
-        creatorGivenName: user.givenName,
-        creatorEmail: user.email,
-        createdAt: projects.createdAt,
-        updatedAt: projects.updatedAt,
-      })
-      .from(projects)
-      .leftJoin(organization, eq(projects.orgId, organization.id))
-      .leftJoin(user, eq(projects.createdBy, user.id))
-      .where(eq(projects.id, projectId))
-      .limit(1);
+      // Get project members with user details
+      const members = await db
+        .select({
+          id: projectMembers.id,
+          userId: projectMembers.userId,
+          userName: user.name,
+          userGivenName: user.givenName,
+          userEmail: user.email,
+          userAvatar: user.image,
+          role: projectMembers.role,
+          joinedAt: projectMembers.joinedAt,
+        })
+        .from(projectMembers)
+        .leftJoin(user, eq(projectMembers.userId, user.id))
+        .where(eq(projectMembers.projectId, projectId))
+        .orderBy(desc(projectMembers.joinedAt))
+        .all();
 
-    if (!project) {
-      const error = createDomainError(PROJECT_ERRORS.NOT_FOUND, { projectId });
-      return c.json(error, error.statusCode as ContentfulStatusCode);
+      // Get media files
+      const files = await db
+        .select({
+          id: mediaFiles.id,
+          filename: mediaFiles.filename,
+          originalName: mediaFiles.originalName,
+          fileType: mediaFiles.fileType,
+          fileSize: mediaFiles.fileSize,
+          uploadedBy: mediaFiles.uploadedBy,
+          uploaderName: user.name,
+          uploaderGivenName: user.givenName,
+          studyId: mediaFiles.studyId,
+          createdAt: mediaFiles.createdAt,
+        })
+        .from(mediaFiles)
+        .leftJoin(user, eq(mediaFiles.uploadedBy, user.id))
+        .where(eq(mediaFiles.projectId, projectId))
+        .orderBy(desc(mediaFiles.createdAt))
+        .all();
+
+      // Get invitations (pending and recent)
+      const invitations = await db
+        .select({
+          id: projectInvitations.id,
+          email: projectInvitations.email,
+          role: projectInvitations.role,
+          invitedBy: projectInvitations.invitedBy,
+          inviterName: user.name,
+          inviterGivenName: user.givenName,
+          expiresAt: projectInvitations.expiresAt,
+          acceptedAt: projectInvitations.acceptedAt,
+          createdAt: projectInvitations.createdAt,
+          grantOrgMembership: projectInvitations.grantOrgMembership,
+        })
+        .from(projectInvitations)
+        .leftJoin(user, eq(projectInvitations.invitedBy, user.id))
+        .where(eq(projectInvitations.projectId, projectId))
+        .orderBy(desc(projectInvitations.createdAt))
+        .limit(50)
+        .all();
+
+      // Calculate storage usage
+      const totalStorageBytes = files.reduce((sum, f) => sum + (f.fileSize || 0), 0);
+
+      return c.json(
+        {
+          project,
+          members,
+          files,
+          invitations,
+          stats: {
+            memberCount: members.length,
+            fileCount: files.length,
+            totalStorageBytes,
+          },
+        },
+        200,
+      );
+    } catch (err) {
+      const error = err as Error;
+      console.error('Error fetching admin project detail:', error);
+      const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
+        message: error.message,
+      });
+      return c.json(dbError, 500);
     }
+  })
 
-    // Get project members with user details
-    const members = await db
-      .select({
-        id: projectMembers.id,
-        userId: projectMembers.userId,
-        userName: user.name,
-        userGivenName: user.givenName,
-        userEmail: user.email,
-        userAvatar: user.image,
-        role: projectMembers.role,
-        joinedAt: projectMembers.joinedAt,
-      })
-      .from(projectMembers)
-      .leftJoin(user, eq(projectMembers.userId, user.id))
-      .where(eq(projectMembers.projectId, projectId))
-      .orderBy(desc(projectMembers.joinedAt))
-      .all();
+  /**
+   * DELETE /api/admin/projects/:projectId/members/:memberId
+   * Remove a member from a project
+   */
+  .openapi(removeProjectMemberRoute, async c => {
+    const { projectId, memberId } = c.req.valid('param');
+    const db = createDb(c.env.DB);
 
-    // Get media files
-    const files = await db
-      .select({
-        id: mediaFiles.id,
-        filename: mediaFiles.filename,
-        originalName: mediaFiles.originalName,
-        fileType: mediaFiles.fileType,
-        fileSize: mediaFiles.fileSize,
-        uploadedBy: mediaFiles.uploadedBy,
-        uploaderName: user.name,
-        uploaderGivenName: user.givenName,
-        studyId: mediaFiles.studyId,
-        createdAt: mediaFiles.createdAt,
-      })
-      .from(mediaFiles)
-      .leftJoin(user, eq(mediaFiles.uploadedBy, user.id))
-      .where(eq(mediaFiles.projectId, projectId))
-      .orderBy(desc(mediaFiles.createdAt))
-      .all();
+    try {
+      // Verify the member belongs to the project
+      const [existingMember] = await db
+        .select({ id: projectMembers.id })
+        .from(projectMembers)
+        .where(and(eq(projectMembers.id, memberId), eq(projectMembers.projectId, projectId)))
+        .limit(1);
 
-    // Get invitations (pending and recent)
-    const invitations = await db
-      .select({
-        id: projectInvitations.id,
-        email: projectInvitations.email,
-        role: projectInvitations.role,
-        invitedBy: projectInvitations.invitedBy,
-        inviterName: user.name,
-        inviterGivenName: user.givenName,
-        expiresAt: projectInvitations.expiresAt,
-        acceptedAt: projectInvitations.acceptedAt,
-        createdAt: projectInvitations.createdAt,
-        grantOrgMembership: projectInvitations.grantOrgMembership,
-      })
-      .from(projectInvitations)
-      .leftJoin(user, eq(projectInvitations.invitedBy, user.id))
-      .where(eq(projectInvitations.projectId, projectId))
-      .orderBy(desc(projectInvitations.createdAt))
-      .limit(50)
-      .all();
+      if (!existingMember) {
+        const error = createDomainError(PROJECT_ERRORS.NOT_FOUND, { memberId });
+        return c.json(error, 404);
+      }
 
-    // Calculate storage usage
-    const totalStorageBytes = files.reduce((sum, f) => sum + (f.fileSize || 0), 0);
+      await db.delete(projectMembers).where(eq(projectMembers.id, memberId));
 
-    return c.json({
-      project,
-      members,
-      files,
-      invitations,
-      stats: {
-        memberCount: members.length,
-        fileCount: files.length,
-        totalStorageBytes,
-      },
-    });
-  } catch (err) {
-    const error = err as Error;
-    console.error('Error fetching admin project detail:', error);
-    const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
-      message: error.message,
-    });
-    return c.json(dbError, dbError.statusCode as ContentfulStatusCode);
-  }
-});
-
-/**
- * DELETE /api/admin/projects/:projectId/members/:memberId
- * Remove a member from a project
- */
-// @ts-expect-error OpenAPIHono strict return types don't account for error responses
-projectRoutes.openapi(removeProjectMemberRoute, async c => {
-  const { projectId, memberId } = c.req.valid('param');
-  const db = createDb(c.env.DB);
-
-  try {
-    // Verify the member belongs to the project
-    const [existingMember] = await db
-      .select({ id: projectMembers.id })
-      .from(projectMembers)
-      .where(and(eq(projectMembers.id, memberId), eq(projectMembers.projectId, projectId)))
-      .limit(1);
-
-    if (!existingMember) {
-      const error = createDomainError(PROJECT_ERRORS.NOT_FOUND, { memberId });
-      return c.json(error, error.statusCode as ContentfulStatusCode);
+      return c.json({ success: true, message: 'Member removed from project' }, 200);
+    } catch (err) {
+      const error = err as Error;
+      console.error('Error removing project member:', error);
+      const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
+        message: error.message,
+      });
+      return c.json(dbError, 500);
     }
+  })
 
-    await db.delete(projectMembers).where(eq(projectMembers.id, memberId));
+  /**
+   * DELETE /api/admin/projects/:projectId
+   * Delete a project and all associated data
+   */
+  .openapi(deleteProjectRoute, async c => {
+    const { projectId } = c.req.valid('param');
+    const db = createDb(c.env.DB);
 
-    return c.json({ success: true, message: 'Member removed from project' });
-  } catch (err) {
-    const error = err as Error;
-    console.error('Error removing project member:', error);
-    const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
-      message: error.message,
-    });
-    return c.json(dbError, dbError.statusCode as ContentfulStatusCode);
-  }
-});
+    try {
+      // Verify project exists
+      const [existingProject] = await db
+        .select({ id: projects.id })
+        .from(projects)
+        .where(eq(projects.id, projectId))
+        .limit(1);
 
-/**
- * DELETE /api/admin/projects/:projectId
- * Delete a project and all associated data
- */
-// @ts-expect-error OpenAPIHono strict return types don't account for error responses
-projectRoutes.openapi(deleteProjectRoute, async c => {
-  const { projectId } = c.req.valid('param');
-  const db = createDb(c.env.DB);
+      if (!existingProject) {
+        const error = createDomainError(PROJECT_ERRORS.NOT_FOUND, { projectId });
+        return c.json(error, 404);
+      }
 
-  try {
-    // Verify project exists
-    const [existingProject] = await db
-      .select({ id: projects.id })
-      .from(projects)
-      .where(eq(projects.id, projectId))
-      .limit(1);
+      // Delete project (cascade will handle members, invitations, files)
+      await db.delete(projects).where(eq(projects.id, projectId));
 
-    if (!existingProject) {
-      const error = createDomainError(PROJECT_ERRORS.NOT_FOUND, { projectId });
-      return c.json(error, error.statusCode as ContentfulStatusCode);
+      return c.json({ success: true, message: 'Project deleted' }, 200);
+    } catch (err) {
+      const error = err as Error;
+      console.error('Error deleting project:', error);
+      const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
+        message: error.message,
+      });
+      return c.json(dbError, 500);
     }
-
-    // Delete project (cascade will handle members, invitations, files)
-    await db.delete(projects).where(eq(projects.id, projectId));
-
-    return c.json({ success: true, message: 'Project deleted' });
-  } catch (err) {
-    const error = err as Error;
-    console.error('Error deleting project:', error);
-    const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
-      message: error.message,
-    });
-    return c.json(dbError, dbError.statusCode as ContentfulStatusCode);
-  }
-});
+  });
 
 export { projectRoutes };
+export type ProjectRoutes = typeof projectRoutes;

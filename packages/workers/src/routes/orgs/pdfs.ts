@@ -6,8 +6,8 @@
  */
 
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
-import type { ContentfulStatusCode } from 'hono/utils/http-status';
-import type { Context, MiddlewareHandler } from 'hono';
+import type { Context } from 'hono';
+import { runMiddleware } from '@/lib/runMiddleware.js';
 import { requireAuth, getAuth } from '@/middleware/auth.js';
 import {
   requireOrgMembership,
@@ -34,6 +34,7 @@ import { eq, and } from 'drizzle-orm';
 import { validationHook } from '@/lib/honoValidationHook.js';
 import type { Env } from '../../types';
 import type { DrizzleD1Database } from 'drizzle-orm/d1';
+import { ErrorResponseSchema } from '@/schemas/common.js';
 
 const orgPdfRoutes = new OpenAPIHono<{ Bindings: Env }>({
   defaultHook: validationHook,
@@ -88,15 +89,6 @@ const PdfDeleteResponseSchema = z
   })
   .openapi('PdfDeleteResponse');
 
-const PdfErrorSchema = z
-  .object({
-    code: z.string(),
-    message: z.string(),
-    statusCode: z.number(),
-    details: z.record(z.string(), z.unknown()).optional(),
-  })
-  .openapi('PdfError');
-
 // Route definitions
 const listPdfsRoute = createRoute({
   method: 'get',
@@ -117,7 +109,7 @@ const listPdfsRoute = createRoute({
       description: 'Validation error (missing studyId)',
       content: {
         'application/json': {
-          schema: PdfErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },
@@ -125,7 +117,7 @@ const listPdfsRoute = createRoute({
       description: 'Unauthorized',
       content: {
         'application/json': {
-          schema: PdfErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },
@@ -133,7 +125,7 @@ const listPdfsRoute = createRoute({
       description: 'Forbidden - not a project member',
       content: {
         'application/json': {
-          schema: PdfErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },
@@ -141,7 +133,7 @@ const listPdfsRoute = createRoute({
       description: 'Database error',
       content: {
         'application/json': {
-          schema: PdfErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },
@@ -168,7 +160,7 @@ const uploadPdfRoute = createRoute({
       description: 'Validation error (invalid file, too large, etc.)',
       content: {
         'application/json': {
-          schema: PdfErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },
@@ -176,7 +168,7 @@ const uploadPdfRoute = createRoute({
       description: 'Unauthorized',
       content: {
         'application/json': {
-          schema: PdfErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },
@@ -184,7 +176,7 @@ const uploadPdfRoute = createRoute({
       description: 'Forbidden - not a project member or read-only org',
       content: {
         'application/json': {
-          schema: PdfErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },
@@ -192,7 +184,7 @@ const uploadPdfRoute = createRoute({
       description: 'File too large',
       content: {
         'application/json': {
-          schema: PdfErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },
@@ -200,7 +192,7 @@ const uploadPdfRoute = createRoute({
       description: 'Upload failed',
       content: {
         'application/json': {
-          schema: PdfErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },
@@ -231,7 +223,7 @@ const downloadPdfRoute = createRoute({
       description: 'Invalid filename',
       content: {
         'application/json': {
-          schema: PdfErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },
@@ -239,7 +231,7 @@ const downloadPdfRoute = createRoute({
       description: 'Unauthorized',
       content: {
         'application/json': {
-          schema: PdfErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },
@@ -247,7 +239,7 @@ const downloadPdfRoute = createRoute({
       description: 'Forbidden - not a project member',
       content: {
         'application/json': {
-          schema: PdfErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },
@@ -255,7 +247,7 @@ const downloadPdfRoute = createRoute({
       description: 'PDF not found',
       content: {
         'application/json': {
-          schema: PdfErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },
@@ -263,7 +255,7 @@ const downloadPdfRoute = createRoute({
       description: 'Download failed',
       content: {
         'application/json': {
-          schema: PdfErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },
@@ -294,7 +286,7 @@ const deletePdfRoute = createRoute({
       description: 'Invalid filename',
       content: {
         'application/json': {
-          schema: PdfErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },
@@ -302,7 +294,7 @@ const deletePdfRoute = createRoute({
       description: 'Unauthorized',
       content: {
         'application/json': {
-          schema: PdfErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },
@@ -310,7 +302,7 @@ const deletePdfRoute = createRoute({
       description: 'Forbidden - not a project member or read-only org',
       content: {
         'application/json': {
-          schema: PdfErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },
@@ -318,33 +310,12 @@ const deletePdfRoute = createRoute({
       description: 'Delete failed',
       content: {
         'application/json': {
-          schema: PdfErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
     },
   },
 });
-
-/**
- * Helper to run middleware manually and check for early response
- */
-async function runMiddleware(middleware: MiddlewareHandler, c: Context): Promise<Response | null> {
-  let nextCalled = false;
-
-  const result = await middleware(c, async () => {
-    nextCalled = true;
-  });
-
-  if (result instanceof Response) {
-    return result;
-  }
-
-  if (!nextCalled && c.res) {
-    return c.res;
-  }
-
-  return null;
-}
 
 /**
  * Extract studyId from params and validate
@@ -436,17 +407,16 @@ export async function generateUniqueFileName(
  * GET /api/orgs/:orgId/projects/:projectId/studies/:studyId/pdfs
  * List PDFs for a study
  */
-// @ts-expect-error OpenAPIHono strict return types don't account for error responses
 orgPdfRoutes.openapi(listPdfsRoute, async c => {
   const membershipResponse = await runMiddleware(requireOrgMembership(), c);
-  if (membershipResponse) return membershipResponse;
+  if (membershipResponse) return membershipResponse as never;
 
   const projectAccessResponse = await runMiddleware(requireProjectAccess(), c);
-  if (projectAccessResponse) return projectAccessResponse;
+  if (projectAccessResponse) return projectAccessResponse as never;
 
   const { studyId, error: studyIdError } = extractStudyId(c);
   if (studyIdError) {
-    return c.json(studyIdError, studyIdError.statusCode as ContentfulStatusCode);
+    return c.json(studyIdError, 400);
   }
 
   const { projectId } = getProjectContext(c);
@@ -455,7 +425,7 @@ orgPdfRoutes.openapi(listPdfsRoute, async c => {
       operation: 'list_pdfs',
       originalError: 'Missing context',
     });
-    return c.json(error, error.statusCode as ContentfulStatusCode);
+    return c.json(error, 500);
   }
 
   try {
@@ -499,7 +469,7 @@ orgPdfRoutes.openapi(listPdfsRoute, async c => {
         : null,
     }));
 
-    return c.json({ pdfs });
+    return c.json({ pdfs }, 200);
   } catch (err) {
     const error = err as Error;
     console.error('PDF list error:', error);
@@ -507,7 +477,7 @@ orgPdfRoutes.openapi(listPdfsRoute, async c => {
       operation: 'list_pdfs',
       originalError: error.message,
     });
-    return c.json(dbError, dbError.statusCode as ContentfulStatusCode);
+    return c.json(dbError, 500);
   }
 });
 
@@ -515,20 +485,19 @@ orgPdfRoutes.openapi(listPdfsRoute, async c => {
  * POST /api/orgs/:orgId/projects/:projectId/studies/:studyId/pdfs
  * Upload a PDF for a study
  */
-// @ts-expect-error OpenAPIHono strict return types don't account for error responses
 orgPdfRoutes.openapi(uploadPdfRoute, async c => {
   const membershipResponse = await runMiddleware(requireOrgMembership(), c);
-  if (membershipResponse) return membershipResponse;
+  if (membershipResponse) return membershipResponse as never;
 
   const writeAccessResponse = await runMiddleware(requireOrgWriteAccess(), c);
-  if (writeAccessResponse) return writeAccessResponse;
+  if (writeAccessResponse) return writeAccessResponse as never;
 
   const projectAccessResponse = await runMiddleware(requireProjectAccess(), c);
-  if (projectAccessResponse) return projectAccessResponse;
+  if (projectAccessResponse) return projectAccessResponse as never;
 
   const { studyId, error: studyIdError } = extractStudyId(c);
   if (studyIdError) {
-    return c.json(studyIdError, studyIdError.statusCode as ContentfulStatusCode);
+    return c.json(studyIdError, 400);
   }
 
   const { user: authUser } = getAuth(c);
@@ -540,7 +509,7 @@ orgPdfRoutes.openapi(uploadPdfRoute, async c => {
       operation: 'upload_pdf',
       originalError: 'Missing context',
     });
-    return c.json(error, error.statusCode as ContentfulStatusCode);
+    return c.json(error, 500);
   }
 
   // Check Content-Length header first for early rejection
@@ -551,7 +520,7 @@ orgPdfRoutes.openapi(uploadPdfRoute, async c => {
       { fileSize: contentLength, maxSize: PDF_LIMITS.MAX_SIZE },
       `File size exceeds limit of ${formatFileSize(PDF_LIMITS.MAX_SIZE)}`,
     );
-    return c.json(error, error.statusCode as ContentfulStatusCode);
+    return c.json(error, 413);
   }
 
   const contentType = c.req.header('Content-Type') || '';
@@ -571,7 +540,7 @@ orgPdfRoutes.openapi(uploadPdfRoute, async c => {
           { field: 'file' },
           'No file provided',
         );
-        return c.json(error, error.statusCode as ContentfulStatusCode);
+        return c.json(error, 400);
       }
 
       // Check file size
@@ -581,7 +550,7 @@ orgPdfRoutes.openapi(uploadPdfRoute, async c => {
           { fileSize: file.size, maxSize: PDF_LIMITS.MAX_SIZE },
           `File size (${formatFileSize(file.size)}) exceeds limit of ${formatFileSize(PDF_LIMITS.MAX_SIZE)}`,
         );
-        return c.json(error, error.statusCode as ContentfulStatusCode);
+        return c.json(error, 413);
       }
 
       fileName = file.name || 'document.pdf';
@@ -598,7 +567,7 @@ orgPdfRoutes.openapi(uploadPdfRoute, async c => {
           { fileSize: pdfData.byteLength, maxSize: PDF_LIMITS.MAX_SIZE },
           `File size (${formatFileSize(pdfData.byteLength)}) exceeds limit of ${formatFileSize(PDF_LIMITS.MAX_SIZE)}`,
         );
-        return c.json(error, error.statusCode as ContentfulStatusCode);
+        return c.json(error, 413);
       }
     } else {
       const error = createDomainError(
@@ -606,7 +575,7 @@ orgPdfRoutes.openapi(uploadPdfRoute, async c => {
         { contentType },
         'Invalid content type. Expected multipart/form-data or application/pdf',
       );
-      return c.json(error, error.statusCode as ContentfulStatusCode);
+      return c.json(error, 400);
     }
 
     if (!isValidFileName(fileName)) {
@@ -615,7 +584,7 @@ orgPdfRoutes.openapi(uploadPdfRoute, async c => {
         { field: 'fileName', value: fileName },
         'Invalid file name. Avoid quotes, slashes, control characters, and very long names.',
       );
-      return c.json(error, error.statusCode as ContentfulStatusCode);
+      return c.json(error, 400);
     }
 
     // Validate it's a PDF (check magic bytes)
@@ -626,7 +595,7 @@ orgPdfRoutes.openapi(uploadPdfRoute, async c => {
         { fileType: 'unknown', expectedType: 'application/pdf' },
         'File is not a valid PDF',
       );
-      return c.json(error, error.statusCode as ContentfulStatusCode);
+      return c.json(error, 400);
     }
 
     const originalFileName = fileName;
@@ -681,17 +650,20 @@ orgPdfRoutes.openapi(uploadPdfRoute, async c => {
         { operation: 'upload_pdf_db_insert', originalError: dbError.message },
         'Failed to save file metadata',
       );
-      return c.json(uploadError, uploadError.statusCode as ContentfulStatusCode);
+      return c.json(uploadError, 500);
     }
 
-    return c.json({
-      success: true,
-      id: mediaFileId,
-      key,
-      fileName: uniqueFileName,
-      originalFileName: originalFileName !== uniqueFileName ? originalFileName : undefined,
-      size: pdfData.byteLength,
-    });
+    return c.json(
+      {
+        success: true,
+        id: mediaFileId,
+        key,
+        fileName: uniqueFileName,
+        originalFileName: originalFileName !== uniqueFileName ? originalFileName : undefined,
+        size: pdfData.byteLength,
+      },
+      200,
+    );
   } catch (err) {
     const error = err as Error;
     console.error('PDF upload error:', error);
@@ -700,7 +672,7 @@ orgPdfRoutes.openapi(uploadPdfRoute, async c => {
       { operation: 'upload_pdf', originalError: error.message },
       error.message,
     );
-    return c.json(uploadError, uploadError.statusCode as ContentfulStatusCode);
+    return c.json(uploadError, 500);
   }
 });
 
@@ -710,14 +682,14 @@ orgPdfRoutes.openapi(uploadPdfRoute, async c => {
  */
 orgPdfRoutes.openapi(downloadPdfRoute, async c => {
   const membershipResponse = await runMiddleware(requireOrgMembership(), c);
-  if (membershipResponse) return membershipResponse;
+  if (membershipResponse) return membershipResponse as never;
 
   const projectAccessResponse = await runMiddleware(requireProjectAccess(), c);
-  if (projectAccessResponse) return projectAccessResponse;
+  if (projectAccessResponse) return projectAccessResponse as never;
 
   const { studyId, error: studyIdError } = extractStudyId(c);
   if (studyIdError) {
-    return c.json(studyIdError, studyIdError.statusCode as ContentfulStatusCode);
+    return c.json(studyIdError, 400);
   }
 
   const { projectId } = getProjectContext(c);
@@ -726,7 +698,7 @@ orgPdfRoutes.openapi(downloadPdfRoute, async c => {
       operation: 'download_pdf',
       originalError: 'Missing context',
     });
-    return c.json(error, error.statusCode as ContentfulStatusCode);
+    return c.json(error, 500);
   }
 
   const { fileName: rawFileName } = c.req.valid('param');
@@ -738,7 +710,7 @@ orgPdfRoutes.openapi(downloadPdfRoute, async c => {
       { field: 'fileName' },
       'Missing file name',
     );
-    return c.json(error, error.statusCode as ContentfulStatusCode);
+    return c.json(error, 400);
   }
 
   if (!isValidFileName(fileName)) {
@@ -747,7 +719,7 @@ orgPdfRoutes.openapi(downloadPdfRoute, async c => {
       { field: 'fileName', value: fileName },
       'Invalid file name',
     );
-    return c.json(error, error.statusCode as ContentfulStatusCode);
+    return c.json(error, 400);
   }
 
   const key = `projects/${projectId}/studies/${studyId}/${fileName}`;
@@ -757,7 +729,7 @@ orgPdfRoutes.openapi(downloadPdfRoute, async c => {
 
     if (!object) {
       const error = createDomainError(FILE_ERRORS.NOT_FOUND, { fileName, key });
-      return c.json(error, error.statusCode as ContentfulStatusCode);
+      return c.json(error, 404);
     }
 
     return new Response(object.body, {
@@ -777,7 +749,7 @@ orgPdfRoutes.openapi(downloadPdfRoute, async c => {
       { operation: 'download_pdf', originalError: error.message },
       error.message,
     );
-    return c.json(internalError, internalError.statusCode as ContentfulStatusCode);
+    return c.json(internalError, 500);
   }
 });
 
@@ -785,20 +757,19 @@ orgPdfRoutes.openapi(downloadPdfRoute, async c => {
  * DELETE /api/orgs/:orgId/projects/:projectId/studies/:studyId/pdfs/:fileName
  * Delete a PDF for a study
  */
-// @ts-expect-error OpenAPIHono strict return types don't account for error responses
 orgPdfRoutes.openapi(deletePdfRoute, async c => {
   const membershipResponse = await runMiddleware(requireOrgMembership(), c);
-  if (membershipResponse) return membershipResponse;
+  if (membershipResponse) return membershipResponse as never;
 
   const writeAccessResponse = await runMiddleware(requireOrgWriteAccess(), c);
-  if (writeAccessResponse) return writeAccessResponse;
+  if (writeAccessResponse) return writeAccessResponse as never;
 
   const projectAccessResponse = await runMiddleware(requireProjectAccess(), c);
-  if (projectAccessResponse) return projectAccessResponse;
+  if (projectAccessResponse) return projectAccessResponse as never;
 
   const { studyId, error: studyIdError } = extractStudyId(c);
   if (studyIdError) {
-    return c.json(studyIdError, studyIdError.statusCode as ContentfulStatusCode);
+    return c.json(studyIdError, 400);
   }
 
   const { projectId } = getProjectContext(c);
@@ -807,7 +778,7 @@ orgPdfRoutes.openapi(deletePdfRoute, async c => {
       operation: 'delete_pdf',
       originalError: 'Missing context',
     });
-    return c.json(error, error.statusCode as ContentfulStatusCode);
+    return c.json(error, 500);
   }
 
   const { fileName: rawFileName } = c.req.valid('param');
@@ -819,7 +790,7 @@ orgPdfRoutes.openapi(deletePdfRoute, async c => {
       { field: 'fileName' },
       'Missing file name',
     );
-    return c.json(error, error.statusCode as ContentfulStatusCode);
+    return c.json(error, 400);
   }
 
   if (!isValidFileName(fileName)) {
@@ -828,7 +799,7 @@ orgPdfRoutes.openapi(deletePdfRoute, async c => {
       { field: 'fileName', value: fileName },
       'Invalid file name',
     );
-    return c.json(error, error.statusCode as ContentfulStatusCode);
+    return c.json(error, 400);
   }
 
   const key = `projects/${projectId}/studies/${studyId}/${fileName}`;
@@ -857,7 +828,7 @@ orgPdfRoutes.openapi(deletePdfRoute, async c => {
         // R2 delete failed, but that's okay - return success since DB record doesn't exist
         console.warn('PDF not found in database, R2 delete also failed:', r2Error);
       }
-      return c.json({ success: true });
+      return c.json({ success: true }, 200);
     }
 
     // Delete from mediaFiles table (database is source of truth)
@@ -879,7 +850,7 @@ orgPdfRoutes.openapi(deletePdfRoute, async c => {
       // Continue - database is source of truth
     }
 
-    return c.json({ success: true });
+    return c.json({ success: true }, 200);
   } catch (err) {
     const error = err as Error;
     console.error('PDF delete error:', error);
@@ -887,7 +858,7 @@ orgPdfRoutes.openapi(deletePdfRoute, async c => {
       operation: 'delete_pdf',
       originalError: error.message,
     });
-    return c.json(dbError, dbError.statusCode as ContentfulStatusCode);
+    return c.json(dbError, 500);
   }
 });
 

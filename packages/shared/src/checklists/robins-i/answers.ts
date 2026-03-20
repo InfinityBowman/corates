@@ -4,7 +4,7 @@
  * Functions for getting and manipulating ROBINS-I checklist answers.
  */
 
-import type { ROBINSIChecklist } from '../types.js';
+import type { ROBINSIChecklist, ROBINSIScore } from '../types.js';
 import { ROBINS_I_CHECKLIST, getActiveDomainKeys, getDomainQuestions } from './schema.js';
 import { scoreAllDomains } from './scoring.js';
 
@@ -24,7 +24,7 @@ export function shouldStopAssessment(sectionB: ROBINSIChecklist['sectionB'] | un
 /**
  * Score the overall checklist based on domain judgements
  */
-export function scoreROBINSIChecklist(state: ROBINSIChecklist): string {
+export function scoreROBINSIChecklist(state: ROBINSIChecklist): ROBINSIScore {
   if (!state || typeof state !== 'object') return 'Error';
 
   if (shouldStopAssessment(state.sectionB)) {

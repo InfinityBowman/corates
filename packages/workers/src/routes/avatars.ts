@@ -5,8 +5,8 @@
  * Avatars are stored with keys: avatars/{userId}/{filename}
  */
 
-import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
-import type { ContentfulStatusCode } from 'hono/utils/http-status';
+import { OpenAPIHono, createRoute, z, $ } from '@hono/zod-openapi';
+
 import { requireAuth, getAuth } from '@/middleware/auth';
 import { createDomainError, FILE_ERRORS, SYSTEM_ERRORS, VALIDATION_ERRORS } from '@corates/shared';
 import { FILE_SIZE_LIMITS } from '@/config/constants';
@@ -16,13 +16,11 @@ import { eq } from 'drizzle-orm';
 import { getProjectDocStub } from '@/lib/project-doc-id';
 import { validationHook } from '@/lib/honoValidationHook';
 import type { Env } from '../types';
+import { ErrorResponseSchema } from '@/schemas/common.js';
 
-const avatarRoutes = new OpenAPIHono<{ Bindings: Env }>({
+const base = new OpenAPIHono<{ Bindings: Env }>({
   defaultHook: validationHook,
 });
-
-// Apply auth middleware to all routes
-avatarRoutes.use('*', requireAuth);
 
 // Allowed image types
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
@@ -42,15 +40,6 @@ const AvatarDeleteSuccessSchema = z
     message: z.string().openapi({ example: 'Avatar deleted' }),
   })
   .openapi('AvatarDeleteSuccess');
-
-const AvatarErrorSchema = z
-  .object({
-    code: z.string().openapi({ example: 'FILE_TOO_LARGE' }),
-    message: z.string().openapi({ example: 'Avatar size exceeds limit' }),
-    statusCode: z.number().openapi({ example: 400 }),
-    details: z.record(z.string(), z.unknown()).optional(),
-  })
-  .openapi('AvatarError');
 
 /**
  * Sync avatar URL to all project memberships for a user
@@ -85,7 +74,7 @@ async function syncAvatarToProjects(env: Env, userId: string, avatarUrl: string)
   }
 }
 
-// Upload avatar route
+// Route definitions
 const uploadAvatarRoute = createRoute({
   method: 'post',
   path: '/',
@@ -117,7 +106,7 @@ const uploadAvatarRoute = createRoute({
     400: {
       content: {
         'application/json': {
-          schema: AvatarErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
       description: 'Invalid file type or size',
@@ -125,7 +114,7 @@ const uploadAvatarRoute = createRoute({
     401: {
       content: {
         'application/json': {
-          schema: AvatarErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
       description: 'Unauthorized',
@@ -133,7 +122,7 @@ const uploadAvatarRoute = createRoute({
     500: {
       content: {
         'application/json': {
-          schema: AvatarErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
       description: 'Server error',
@@ -141,112 +130,6 @@ const uploadAvatarRoute = createRoute({
   },
 });
 
-// @ts-expect-error OpenAPIHono strict return types don't account for error responses
-avatarRoutes.openapi(uploadAvatarRoute, async c => {
-  const { user } = getAuth(c);
-  // requireAuth middleware guarantees user exists
-  const userId = user!.id;
-
-  // Check Content-Length header first for early rejection
-  const contentLength = parseInt(c.req.header('Content-Length') || '0', 10);
-  if (contentLength > FILE_SIZE_LIMITS.AVATAR) {
-    const error = createDomainError(
-      FILE_ERRORS.TOO_LARGE,
-      { fileSize: contentLength, maxSize: FILE_SIZE_LIMITS.AVATAR },
-      `Avatar size exceeds limit of ${FILE_SIZE_LIMITS.AVATAR / (1024 * 1024)}MB`,
-    );
-    return c.json(error, error.statusCode as ContentfulStatusCode);
-  }
-
-  try {
-    const contentType = c.req.header('Content-Type') || '';
-
-    if (contentType.includes('multipart/form-data')) {
-      const formData = await c.req.formData();
-      const file = formData.get('avatar');
-
-      if (!file || !(file instanceof File)) {
-        const error = createDomainError(
-          VALIDATION_ERRORS.FIELD_REQUIRED,
-          { field: 'avatar' },
-          'No avatar file provided',
-        );
-        return c.json(error, error.statusCode as ContentfulStatusCode);
-      }
-
-      if (!ALLOWED_TYPES.includes(file.type)) {
-        const error = createDomainError(
-          FILE_ERRORS.INVALID_TYPE,
-          { fileType: file.type, allowedTypes: ALLOWED_TYPES },
-          'Invalid file type. Allowed: JPEG, PNG, GIF, WebP',
-        );
-        return c.json(error, error.statusCode as ContentfulStatusCode);
-      }
-
-      if (file.size > FILE_SIZE_LIMITS.AVATAR) {
-        const error = createDomainError(
-          FILE_ERRORS.TOO_LARGE,
-          { fileSize: file.size, maxSize: FILE_SIZE_LIMITS.AVATAR },
-          `Avatar size exceeds limit of ${FILE_SIZE_LIMITS.AVATAR / (1024 * 1024)}MB`,
-        );
-        return c.json(error, error.statusCode as ContentfulStatusCode);
-      }
-
-      const ext = file.type.split('/')[1] || 'jpg';
-      const timestamp = Date.now();
-      const key = `avatars/${userId}/${timestamp}.${ext}`;
-
-      // Delete old avatar if exists
-      try {
-        const oldAvatars = await c.env.PDF_BUCKET.list({ prefix: `avatars/${userId}/` });
-        for (const obj of oldAvatars.objects) {
-          await c.env.PDF_BUCKET.delete(obj.key);
-        }
-      } catch (e) {
-        console.warn('Failed to delete old avatar:', e);
-      }
-
-      // Upload new avatar to R2
-      const arrayBuffer = await file.arrayBuffer();
-      await c.env.PDF_BUCKET.put(key, arrayBuffer, {
-        httpMetadata: {
-          contentType: file.type,
-          cacheControl: 'public, max-age=31536000',
-        },
-        customMetadata: {
-          userId,
-          uploadedAt: new Date().toISOString(),
-        },
-      });
-
-      const avatarUrl = `/api/users/avatar/${userId}?t=${timestamp}`;
-      await syncAvatarToProjects(c.env, userId, avatarUrl);
-
-      return c.json({
-        success: true as const,
-        url: avatarUrl,
-        key,
-      });
-    }
-
-    const error = createDomainError(
-      VALIDATION_ERRORS.FIELD_INVALID_FORMAT,
-      { field: 'Content-Type' },
-      'Invalid content type',
-    );
-    return c.json(error, error.statusCode as ContentfulStatusCode);
-  } catch (err) {
-    const error = err as Error;
-    console.error('Avatar upload error:', error);
-    const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
-      operation: 'upload_avatar',
-      originalError: error.message,
-    });
-    return c.json(dbError, dbError.statusCode as ContentfulStatusCode);
-  }
-});
-
-// Get avatar route
 const getAvatarRoute = createRoute({
   method: 'get',
   path: '/{userId}',
@@ -280,7 +163,7 @@ const getAvatarRoute = createRoute({
     404: {
       content: {
         'application/json': {
-          schema: AvatarErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
       description: 'Avatar not found',
@@ -288,7 +171,7 @@ const getAvatarRoute = createRoute({
     500: {
       content: {
         'application/json': {
-          schema: AvatarErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
       description: 'Server error',
@@ -296,43 +179,6 @@ const getAvatarRoute = createRoute({
   },
 });
 
-avatarRoutes.openapi(getAvatarRoute, async c => {
-  const { userId } = c.req.valid('param');
-
-  try {
-    const listed = await c.env.PDF_BUCKET.list({ prefix: `avatars/${userId}/` });
-
-    if (listed.objects.length === 0) {
-      const error = createDomainError(FILE_ERRORS.NOT_FOUND, { fileName: 'avatar' });
-      return c.json(error, error.statusCode as ContentfulStatusCode);
-    }
-
-    const avatarKey = listed.objects[0].key;
-    const object = await c.env.PDF_BUCKET.get(avatarKey);
-
-    if (!object) {
-      const error = createDomainError(FILE_ERRORS.NOT_FOUND, { fileName: 'avatar' });
-      return c.json(error, error.statusCode as ContentfulStatusCode);
-    }
-
-    const headers = new Headers();
-    headers.set('Content-Type', object.httpMetadata?.contentType || 'image/jpeg');
-    headers.set('Cache-Control', 'public, max-age=31536000');
-    headers.set('ETag', object.etag);
-
-    return new Response(object.body, { headers });
-  } catch (err) {
-    const error = err as Error;
-    console.error('Avatar fetch error:', error);
-    const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
-      operation: 'fetch_avatar',
-      originalError: error.message,
-    });
-    return c.json(dbError, dbError.statusCode as ContentfulStatusCode);
-  }
-});
-
-// Delete avatar route
 const deleteAvatarRoute = createRoute({
   method: 'delete',
   path: '/',
@@ -352,7 +198,7 @@ const deleteAvatarRoute = createRoute({
     401: {
       content: {
         'application/json': {
-          schema: AvatarErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
       description: 'Unauthorized',
@@ -360,7 +206,7 @@ const deleteAvatarRoute = createRoute({
     500: {
       content: {
         'application/json': {
-          schema: AvatarErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
       description: 'Server error',
@@ -368,29 +214,174 @@ const deleteAvatarRoute = createRoute({
   },
 });
 
-// @ts-expect-error OpenAPIHono strict return types don't account for error responses
-avatarRoutes.openapi(deleteAvatarRoute, async c => {
-  const { user } = getAuth(c);
-  // requireAuth middleware guarantees user exists
-  const userId = user!.id;
+// Route handlers - chained for RPC type inference
+const avatarRoutes = $(base.use('*', requireAuth))
+  .openapi(uploadAvatarRoute, async c => {
+    const { user } = getAuth(c);
+    // requireAuth middleware guarantees user exists
+    const userId = user!.id;
 
-  try {
-    const listed = await c.env.PDF_BUCKET.list({ prefix: `avatars/${userId}/` });
-
-    for (const obj of listed.objects) {
-      await c.env.PDF_BUCKET.delete(obj.key);
+    // Check Content-Length header first for early rejection
+    const contentLength = parseInt(c.req.header('Content-Length') || '0', 10);
+    if (contentLength > FILE_SIZE_LIMITS.AVATAR) {
+      const error = createDomainError(
+        FILE_ERRORS.TOO_LARGE,
+        { fileSize: contentLength, maxSize: FILE_SIZE_LIMITS.AVATAR },
+        `Avatar size exceeds limit of ${FILE_SIZE_LIMITS.AVATAR / (1024 * 1024)}MB`,
+      );
+      return c.json(error, 400);
     }
 
-    return c.json({ success: true as const, message: 'Avatar deleted' });
-  } catch (err) {
-    const error = err as Error;
-    console.error('Avatar delete error:', error);
-    const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
-      operation: 'delete_avatar',
-      originalError: error.message,
-    });
-    return c.json(dbError, dbError.statusCode as ContentfulStatusCode);
-  }
-});
+    try {
+      const contentType = c.req.header('Content-Type') || '';
+
+      if (contentType.includes('multipart/form-data')) {
+        const formData = await c.req.formData();
+        const file = formData.get('avatar');
+
+        if (!file || !(file instanceof File)) {
+          const error = createDomainError(
+            VALIDATION_ERRORS.FIELD_REQUIRED,
+            { field: 'avatar' },
+            'No avatar file provided',
+          );
+          return c.json(error, 400);
+        }
+
+        if (!ALLOWED_TYPES.includes(file.type)) {
+          const error = createDomainError(
+            FILE_ERRORS.INVALID_TYPE,
+            { fileType: file.type, allowedTypes: ALLOWED_TYPES },
+            'Invalid file type. Allowed: JPEG, PNG, GIF, WebP',
+          );
+          return c.json(error, 400);
+        }
+
+        if (file.size > FILE_SIZE_LIMITS.AVATAR) {
+          const error = createDomainError(
+            FILE_ERRORS.TOO_LARGE,
+            { fileSize: file.size, maxSize: FILE_SIZE_LIMITS.AVATAR },
+            `Avatar size exceeds limit of ${FILE_SIZE_LIMITS.AVATAR / (1024 * 1024)}MB`,
+          );
+          return c.json(error, 400);
+        }
+
+        const ext = file.type.split('/')[1] || 'jpg';
+        const timestamp = Date.now();
+        const key = `avatars/${userId}/${timestamp}.${ext}`;
+
+        // Delete old avatar if exists
+        try {
+          const oldAvatars = await c.env.PDF_BUCKET.list({ prefix: `avatars/${userId}/` });
+          for (const obj of oldAvatars.objects) {
+            await c.env.PDF_BUCKET.delete(obj.key);
+          }
+        } catch (e) {
+          console.warn('Failed to delete old avatar:', e);
+        }
+
+        // Upload new avatar to R2
+        const arrayBuffer = await file.arrayBuffer();
+        await c.env.PDF_BUCKET.put(key, arrayBuffer, {
+          httpMetadata: {
+            contentType: file.type,
+            cacheControl: 'public, max-age=31536000',
+          },
+          customMetadata: {
+            userId,
+            uploadedAt: new Date().toISOString(),
+          },
+        });
+
+        const avatarUrl = `/api/users/avatar/${userId}?t=${timestamp}`;
+        await syncAvatarToProjects(c.env, userId, avatarUrl);
+
+        return c.json(
+          {
+            success: true as const,
+            url: avatarUrl,
+            key,
+          },
+          200,
+        );
+      }
+
+      const error = createDomainError(
+        VALIDATION_ERRORS.FIELD_INVALID_FORMAT,
+        { field: 'Content-Type' },
+        'Invalid content type',
+      );
+      return c.json(error, 400);
+    } catch (err) {
+      const error = err as Error;
+      console.error('Avatar upload error:', error);
+      const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
+        operation: 'upload_avatar',
+        originalError: error.message,
+      });
+      return c.json(dbError, 500);
+    }
+  })
+
+  .openapi(getAvatarRoute, async c => {
+    const { userId } = c.req.valid('param');
+
+    try {
+      const listed = await c.env.PDF_BUCKET.list({ prefix: `avatars/${userId}/` });
+
+      if (listed.objects.length === 0) {
+        const error = createDomainError(FILE_ERRORS.NOT_FOUND, { fileName: 'avatar' });
+        return c.json(error, 404);
+      }
+
+      const avatarKey = listed.objects[0].key;
+      const object = await c.env.PDF_BUCKET.get(avatarKey);
+
+      if (!object) {
+        const error = createDomainError(FILE_ERRORS.NOT_FOUND, { fileName: 'avatar' });
+        return c.json(error, 404);
+      }
+
+      const headers = new Headers();
+      headers.set('Content-Type', object.httpMetadata?.contentType || 'image/jpeg');
+      headers.set('Cache-Control', 'public, max-age=31536000');
+      headers.set('ETag', object.etag);
+
+      return new Response(object.body, { headers });
+    } catch (err) {
+      const error = err as Error;
+      console.error('Avatar fetch error:', error);
+      const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
+        operation: 'fetch_avatar',
+        originalError: error.message,
+      });
+      return c.json(dbError, 500);
+    }
+  })
+
+  .openapi(deleteAvatarRoute, async c => {
+    const { user } = getAuth(c);
+    // requireAuth middleware guarantees user exists
+    const userId = user!.id;
+
+    try {
+      const listed = await c.env.PDF_BUCKET.list({ prefix: `avatars/${userId}/` });
+
+      for (const obj of listed.objects) {
+        await c.env.PDF_BUCKET.delete(obj.key);
+      }
+
+      return c.json({ success: true as const, message: 'Avatar deleted' }, 200);
+    } catch (err) {
+      const error = err as Error;
+      console.error('Avatar delete error:', error);
+      const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
+        operation: 'delete_avatar',
+        originalError: error.message,
+      });
+      return c.json(dbError, 500);
+    }
+  });
 
 export { avatarRoutes };
+export type AvatarRoutes = typeof avatarRoutes;

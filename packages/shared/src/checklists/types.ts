@@ -248,3 +248,15 @@ export interface ROB2Checklist extends Omit<ChecklistMetadata, 'type'> {
  * ROB-2 scoring result
  */
 export type ROB2Score = 'Low' | 'Some concerns' | 'High' | 'Incomplete' | 'Error';
+
+/**
+ * ROBINS-I scoring result
+ */
+export type ROBINSIScore =
+  | 'Low'
+  | 'Low (except for concerns about uncontrolled confounding)'
+  | 'Moderate'
+  | 'Serious'
+  | 'Critical'
+  | 'Incomplete'
+  | 'Error';

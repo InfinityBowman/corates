@@ -3,8 +3,8 @@
  * Handles contact form submissions and sends emails via Postmark
  */
 
-import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
-import type { ContentfulStatusCode } from 'hono/utils/http-status';
+import { OpenAPIHono, createRoute, z, $ } from '@hono/zod-openapi';
+
 import { contactRateLimit } from '@/middleware/rateLimit';
 import {
   createDomainError,
@@ -16,8 +16,9 @@ import type { ValidationErrorCode } from '@corates/shared';
 import { escapeHtml } from '@/lib/escapeHtml';
 import { queueEmail } from '@/lib/email-queue';
 import type { Env } from '../types';
+import { ErrorResponseSchema } from '@/schemas/common.js';
 
-const contact = new OpenAPIHono<{ Bindings: Env }>({
+const base = new OpenAPIHono<{ Bindings: Env }>({
   defaultHook: (result, c) => {
     if (!result.success) {
       const firstIssue = result.error.issues[0];
@@ -52,7 +53,7 @@ const contact = new OpenAPIHono<{ Bindings: Env }>({
 });
 
 // Handle JSON parse errors
-contact.onError((err, c) => {
+base.onError((err, c) => {
   if (err.message?.includes('JSON')) {
     const error = createValidationError('body', VALIDATION_ERRORS.INVALID_INPUT.code, null);
     error.message = 'Invalid JSON input';
@@ -60,9 +61,6 @@ contact.onError((err, c) => {
   }
   throw err;
 });
-
-// Apply rate limiting to contact endpoints
-contact.use('*', contactRateLimit);
 
 // Request schema
 const ContactRequestSchema = z
@@ -104,16 +102,6 @@ const ContactSuccessSchema = z
   })
   .openapi('ContactSuccess');
 
-const ContactErrorSchema = z
-  .object({
-    code: z.string().openapi({ example: 'VALIDATION_ERROR' }),
-    message: z.string().openapi({ example: 'Name is required' }),
-    statusCode: z.number().openapi({ example: 400 }),
-    field: z.string().optional().openapi({ example: 'name' }),
-    details: z.record(z.string(), z.unknown()).optional(),
-  })
-  .openapi('ContactError');
-
 // Route definition
 const submitContactRoute = createRoute({
   method: 'post',
@@ -143,7 +131,7 @@ const submitContactRoute = createRoute({
     400: {
       content: {
         'application/json': {
-          schema: ContactErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
       description: 'Validation error',
@@ -151,7 +139,7 @@ const submitContactRoute = createRoute({
     429: {
       content: {
         'application/json': {
-          schema: ContactErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
       description: 'Rate limit exceeded',
@@ -159,7 +147,7 @@ const submitContactRoute = createRoute({
     503: {
       content: {
         'application/json': {
-          schema: ContactErrorSchema,
+          schema: ErrorResponseSchema,
         },
       },
       description: 'Email service unavailable',
@@ -167,8 +155,8 @@ const submitContactRoute = createRoute({
   },
 });
 
-// @ts-expect-error OpenAPIHono strict return types don't account for error responses
-contact.openapi(submitContactRoute, async c => {
+// Route handlers - chained for RPC type inference
+const contactRoutes = $(base.use('*', contactRateLimit)).openapi(submitContactRoute, async c => {
   const env = c.env;
   const { name, email, subject, message } = c.req.valid('json');
 
@@ -207,7 +195,7 @@ contact.openapi(submitContactRoute, async c => {
       `,
     });
 
-    return c.json({ success: true as const, messageId: crypto.randomUUID() });
+    return c.json({ success: true as const, messageId: crypto.randomUUID() }, 200);
   } catch (err) {
     const error = err as Error;
     console.error('[Contact] Failed to queue email:', error.message);
@@ -215,8 +203,9 @@ contact.openapi(submitContactRoute, async c => {
       service: 'email',
       originalError: error.message,
     });
-    return c.json(domainError, domainError.statusCode as ContentfulStatusCode);
+    return c.json(domainError, 503);
   }
 });
 
-export { contact as contactRoutes };
+export { contactRoutes };
+export type ContactRoutes = typeof contactRoutes;

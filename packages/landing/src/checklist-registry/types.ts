@@ -1,0 +1,92 @@
+import { LANDING_URL } from '@/config/api';
+
+/**
+ * Checklist Type Constants and Metadata
+ */
+
+export const CHECKLIST_TYPES = {
+  AMSTAR2: 'AMSTAR2',
+  ROBINS_I: 'ROBINS_I',
+  ROB2: 'ROB2',
+} as const;
+
+export type ChecklistType = (typeof CHECKLIST_TYPES)[keyof typeof CHECKLIST_TYPES];
+
+interface ScoreColorConfig {
+  bg: string;
+  text: string;
+}
+
+export interface ChecklistMetadata {
+  name: string;
+  shortName: string;
+  description: string;
+  version: string;
+  url: string;
+  scoreLevels: string[];
+  scoreColors: Record<string, ScoreColorConfig>;
+}
+
+export const CHECKLIST_METADATA: Record<string, ChecklistMetadata> = {
+  [CHECKLIST_TYPES.AMSTAR2]: {
+    name: 'AMSTAR 2',
+    shortName: 'AMSTAR 2',
+    description: 'Quality assessment of systematic reviews',
+    version: '2017',
+    url: `${LANDING_URL}/resources/amstar2`,
+    scoreLevels: ['High', 'Moderate', 'Low', 'Critically Low'],
+    scoreColors: {
+      High: { bg: 'bg-green-100', text: 'text-green-800' },
+      Moderate: { bg: 'bg-yellow-100', text: 'text-yellow-800' },
+      Low: { bg: 'bg-orange-100', text: 'text-orange-800' },
+      'Critically Low': { bg: 'bg-red-100', text: 'text-red-800' },
+    },
+  },
+  [CHECKLIST_TYPES.ROBINS_I]: {
+    name: 'ROBINS-I V2',
+    shortName: 'ROBINS-I',
+    description: 'Risk of bias in non-randomized studies of interventions',
+    version: 'V2',
+    url: `${LANDING_URL}/resources/robins-i`,
+    scoreLevels: ['Low', 'Moderate', 'Serious', 'Critical', 'Incomplete'],
+    scoreColors: {
+      Low: { bg: 'bg-green-100', text: 'text-green-800' },
+      Moderate: { bg: 'bg-yellow-100', text: 'text-yellow-800' },
+      Serious: { bg: 'bg-orange-100', text: 'text-orange-800' },
+      Critical: { bg: 'bg-red-100', text: 'text-red-800' },
+      Incomplete: { bg: 'bg-gray-100', text: 'text-gray-600' },
+    },
+  },
+  [CHECKLIST_TYPES.ROB2]: {
+    name: 'RoB 2',
+    shortName: 'RoB 2',
+    description: 'Risk of bias in randomized trials',
+    version: '2.0',
+    url: `${LANDING_URL}/resources/rob2`,
+    scoreLevels: ['Low', 'Some concerns', 'High', 'Incomplete'],
+    scoreColors: {
+      Low: { bg: 'bg-green-100', text: 'text-green-800' },
+      'Some concerns': { bg: 'bg-yellow-100', text: 'text-yellow-800' },
+      High: { bg: 'bg-red-100', text: 'text-red-800' },
+      Incomplete: { bg: 'bg-gray-100', text: 'text-gray-600' },
+    },
+  },
+};
+
+export const DEFAULT_CHECKLIST_TYPE = CHECKLIST_TYPES.AMSTAR2;
+
+export function getChecklistMetadata(type: string): ChecklistMetadata {
+  return CHECKLIST_METADATA[type] || CHECKLIST_METADATA[DEFAULT_CHECKLIST_TYPE];
+}
+
+export function getChecklistTypeOptions(): Array<{
+  value: string;
+  label: string;
+  description: string;
+}> {
+  return Object.entries(CHECKLIST_METADATA).map(([type, meta]) => ({
+    value: type,
+    label: meta.name,
+    description: meta.description,
+  }));
+}

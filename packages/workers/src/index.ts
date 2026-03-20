@@ -4,7 +4,7 @@
  * This is the main Hono application that routes to specific handlers.
  */
 
-import { OpenAPIHono } from '@hono/zod-openapi';
+import { OpenAPIHono, $ } from '@hono/zod-openapi';
 import type { Context } from 'hono';
 import type { ContentfulStatusCode } from 'hono/utils/http-status';
 import * as Sentry from '@sentry/cloudflare';
@@ -33,30 +33,33 @@ import { adminRoutes } from './routes/admin/index';
 import { accountMergeRoutes } from './routes/account-merge';
 import { contactRoutes } from './routes/contact';
 import { invitationRoutes } from './routes/invitations';
+import { testSeedRoutes } from './routes/test-seed';
 
 // Export Durable Objects
 export { UserSession, ProjectDoc };
 
 // Create main Hono app with OpenAPI support
-const app = new OpenAPIHono<{ Bindings: Env }>();
+// Infrastructure routes (middleware, inline handlers) go on base
+// API sub-routers are chained on app for RPC type inference
+const base = new OpenAPIHono<{ Bindings: Env }>();
 
 // Apply CORS middleware globally (needs env, so we do it per-request)
-app.use('*', async (c, next) => {
+base.use('*', async (c, next) => {
   const corsMiddleware = createCorsMiddleware(c.env);
   return corsMiddleware(c, next);
 });
 
 // Apply security headers to all responses
-app.use('*', securityHeaders());
+base.use('*', securityHeaders());
 
 // Mount health routes
-app.route('/health', healthRoutes);
+base.route('/health', healthRoutes);
 
 // Simple liveness probe (for load balancers) - keep at root for backwards compatibility
-app.get('/healthz', c => c.text('OK'));
+base.get('/healthz', c => c.text('OK'));
 
 // Root endpoint - redirect browsers to frontend, return text for API clients
-app.get('/', c => {
+base.get('/', c => {
   const accept = c.req.header('Accept') || '';
   // If browser request (accepts HTML), redirect to frontend
   if (accept.includes('text/html')) {
@@ -67,14 +70,14 @@ app.get('/', c => {
 });
 
 // API Documentation (development only)
-app.get('/docs', async c => {
+base.get('/docs', async c => {
   if (c.env.ENVIRONMENT === 'production') return c.text('Not Found', 404);
   const { getDocsHtml } = await import('./docs');
   return c.html(await getDocsHtml(c.env));
 });
 
 // OpenAPI JSON spec (development only)
-app.get('/openapi.json', c => {
+base.get('/openapi.json', c => {
   if (c.env.ENVIRONMENT === 'production') return c.text('Not Found', 404);
   return c.json({
     openapi: '3.1.0',
@@ -92,15 +95,18 @@ app.get('/openapi.json', c => {
   });
 });
 
+// Mount test seed routes (dev only, gated inside the route handler)
+base.route('/api/test', testSeedRoutes);
+
 // Mount auth routes
-app.route('/api/auth', auth);
+base.route('/api/auth', auth);
 
 // CSRF guard for stop-impersonation (cookie-authenticated POST)
-app.use('/api/admin/stop-impersonation', requireTrustedOrigin);
+base.use('/api/admin/stop-impersonation', requireTrustedOrigin);
 
 // Stop impersonation route - separate from admin routes as it doesn't require admin role
 // (the impersonated user won't have admin role)
-app.post('/api/admin/stop-impersonation', async c => {
+base.post('/api/admin/stop-impersonation', async c => {
   try {
     const { createAuth } = await import('./auth/config');
     const authInstance = createAuth(c.env, c.executionCtx);
@@ -130,39 +136,22 @@ app.post('/api/admin/stop-impersonation', async c => {
   }
 });
 
-// Mount admin routes
-app.route('/api/admin', adminRoutes);
-
-// Mount contact form route (public)
-app.route('/api/contact', contactRoutes);
-
-// Mount billing routes
-app.route('/api/billing', billingRoutes);
-
-// Mount database routes
-app.route('/api/db', dbRoutes);
-
-// Mount user routes
-app.route('/api/users', userRoutes);
-
-// Mount avatar routes
-app.route('/api/users/avatar', avatarRoutes);
-
-// Mount account merge routes
-app.route('/api/accounts/merge', accountMergeRoutes);
-
-// Mount invitation routes (for accepting project invitations)
-app.route('/api/invitations', invitationRoutes);
-
-// Mount organization routes (all project operations now live under /api/orgs/:orgId/projects/...)
-app.route('/api/orgs', orgRoutes);
-
-// Mount Google Drive routes
-app.route('/api/google-drive', googleDriveRoutes);
+// Chain API sub-routers for RPC type inference
+const app = $(base)
+  .route('/api/admin', adminRoutes)
+  .route('/api/contact', contactRoutes)
+  .route('/api/billing', billingRoutes)
+  .route('/api/db', dbRoutes)
+  .route('/api/users', userRoutes)
+  .route('/api/users/avatar', avatarRoutes)
+  .route('/api/accounts/merge', accountMergeRoutes)
+  .route('/api/invitations', invitationRoutes)
+  .route('/api/orgs', orgRoutes)
+  .route('/api/google-drive', googleDriveRoutes);
 
 // PDF proxy endpoint - fetches external PDFs to avoid CORS issues
 // Only requires authentication, not project membership
-app.post('/api/pdf-proxy', requireAuth, async c => {
+base.post('/api/pdf-proxy', requireAuth, async c => {
   try {
     const body = await c.req.json<{ url?: string }>();
     const { url } = body;
@@ -301,8 +290,8 @@ const handleProjectDoc = async (c: Context<{ Bindings: Env }>) => {
 };
 
 // Project-scoped routes for WebSocket connections (y-websocket appends room as final segment)
-app.all('/api/project-doc/:projectId', handleProjectDoc);
-app.all('/api/project-doc/:projectId/*', handleProjectDoc);
+base.all('/api/project-doc/:projectId', handleProjectDoc);
+base.all('/api/project-doc/:projectId/*', handleProjectDoc);
 
 // Legacy org-scoped routes - return 410 Gone
 const legacyOrgProjectDocHandler = (c: Context<{ Bindings: Env }>) =>
@@ -314,8 +303,8 @@ const legacyOrgProjectDocHandler = (c: Context<{ Bindings: Env }>) =>
     },
     410,
   );
-app.all('/api/orgs/:orgId/project-doc/:projectId', legacyOrgProjectDocHandler);
-app.all('/api/orgs/:orgId/project-doc/:projectId/*', legacyOrgProjectDocHandler);
+base.all('/api/orgs/:orgId/project-doc/:projectId', legacyOrgProjectDocHandler);
+base.all('/api/orgs/:orgId/project-doc/:projectId/*', legacyOrgProjectDocHandler);
 
 // Legacy project WebSocket endpoint - return 410 Gone
 const legacyProjectDocHandler = (c: Context<{ Bindings: Env }>) =>
@@ -327,8 +316,8 @@ const legacyProjectDocHandler = (c: Context<{ Bindings: Env }>) =>
     },
     410,
   );
-app.all('/api/project/:projectId', legacyProjectDocHandler);
-app.all('/api/project/:projectId/*', legacyProjectDocHandler);
+base.all('/api/project/:projectId', legacyProjectDocHandler);
+base.all('/api/project/:projectId/*', legacyProjectDocHandler);
 
 // User Session Durable Object routes
 // Handler function shared between both route patterns
@@ -352,18 +341,18 @@ const handleUserSession = async (c: Context<{ Bindings: Env }>) => {
 };
 
 // Route without trailing path (for WebSocket connections)
-app.all('/api/sessions/:sessionId', handleUserSession);
+base.all('/api/sessions/:sessionId', handleUserSession);
 // Route with trailing path (for any sub-resource requests)
-app.all('/api/sessions/:sessionId/*', handleUserSession);
+base.all('/api/sessions/:sessionId/*', handleUserSession);
 
 // 404 handler
-app.notFound(c => {
+base.notFound(c => {
   const error = createDomainError(SYSTEM_ERRORS.ROUTE_NOT_FOUND, { path: c.req.path });
   return c.json(error, error.statusCode as ContentfulStatusCode);
 });
 
 // Global error handler - catches all uncaught errors in routes
-app.onError(errorHandler);
+base.onError(errorHandler);
 
 const workerHandler = {
   fetch: app.fetch,
@@ -401,6 +390,8 @@ const workerHandler = {
 // which is unavailable in the vitest-pool-workers test runtime.
 // @ts-expect-error import.meta.env is set by vitest but not typed in workers
 const isTest = typeof import.meta !== 'undefined' && import.meta.env?.MODE === 'test';
+
+export type AppType = typeof app;
 
 export default isTest ? workerHandler : (
   Sentry.withSentry(
