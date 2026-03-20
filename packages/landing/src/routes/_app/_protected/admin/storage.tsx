@@ -289,7 +289,7 @@ function StorageManagementPage() {
       <AdminSection title='Documents'>
         <AdminBox padding='compact' className='overflow-hidden p-0'>
           <Table>
-            <TableHeader className='border-b border-border bg-muted'>
+            <TableHeader className='border-border bg-muted border-b'>
               <TableRow className='border-border border-b'>
                 <TableHead className='px-6 py-3'>
                   <button
@@ -303,22 +303,22 @@ function StorageManagementPage() {
                     : <SquareIcon className='size-4' />}
                   </button>
                 </TableHead>
-                <TableHead className='px-6 py-3 text-xs font-medium tracking-wider text-muted-foreground uppercase'>
+                <TableHead className='text-muted-foreground px-6 py-3 text-xs font-medium tracking-wider uppercase'>
                   File Name
                 </TableHead>
-                <TableHead className='px-6 py-3 text-xs font-medium tracking-wider text-muted-foreground uppercase'>
+                <TableHead className='text-muted-foreground px-6 py-3 text-xs font-medium tracking-wider uppercase'>
                   Size
                 </TableHead>
-                <TableHead className='px-6 py-3 text-xs font-medium tracking-wider text-muted-foreground uppercase'>
+                <TableHead className='text-muted-foreground px-6 py-3 text-xs font-medium tracking-wider uppercase'>
                   Project ID
                 </TableHead>
-                <TableHead className='px-6 py-3 text-xs font-medium tracking-wider text-muted-foreground uppercase'>
+                <TableHead className='text-muted-foreground px-6 py-3 text-xs font-medium tracking-wider uppercase'>
                   Study ID
                 </TableHead>
-                <TableHead className='px-6 py-3 text-xs font-medium tracking-wider text-muted-foreground uppercase'>
+                <TableHead className='text-muted-foreground px-6 py-3 text-xs font-medium tracking-wider uppercase'>
                   Uploaded
                 </TableHead>
-                <TableHead className='px-6 py-3 text-right text-xs font-medium tracking-wider text-muted-foreground uppercase'>
+                <TableHead className='text-muted-foreground px-6 py-3 text-right text-xs font-medium tracking-wider uppercase'>
                   Actions
                 </TableHead>
               </TableRow>
@@ -339,7 +339,7 @@ function StorageManagementPage() {
                     className={doc.orphaned ? 'bg-orange-50' : ''}
                     onClick={e => handleRowClick(e, doc.key)}
                   >
-                    <TableCell className='px-6 py-4 text-sm text-foreground'>
+                    <TableCell className='text-foreground px-6 py-4 text-sm'>
                       <button
                         type='button'
                         onClick={e => {
@@ -353,7 +353,7 @@ function StorageManagementPage() {
                         : <SquareIcon className='size-4' />}
                       </button>
                     </TableCell>
-                    <TableCell className='px-6 py-4 text-sm text-foreground'>
+                    <TableCell className='text-foreground px-6 py-4 text-sm'>
                       <div className='flex items-center gap-2'>
                         <span className='text-foreground font-mono text-sm'>{doc.fileName}</span>
                         {doc.orphaned && (
@@ -369,25 +369,25 @@ function StorageManagementPage() {
                     <TableCell className='text-muted-foreground px-6 py-4 text-sm'>
                       {formatFileSize(doc.size)}
                     </TableCell>
-                    <TableCell className='px-6 py-4 text-sm text-foreground'>
+                    <TableCell className='text-foreground px-6 py-4 text-sm'>
                       <span className='text-muted-foreground font-mono text-xs'>
                         {doc.projectId}
                       </span>
                     </TableCell>
-                    <TableCell className='px-6 py-4 text-sm text-foreground'>
+                    <TableCell className='text-foreground px-6 py-4 text-sm'>
                       <span className='text-muted-foreground font-mono text-xs'>{doc.studyId}</span>
                     </TableCell>
                     <TableCell className='text-muted-foreground px-6 py-4 text-sm'>
                       {formatDate(doc.uploaded)}
                     </TableCell>
-                    <TableCell className='px-6 py-4 text-right text-sm text-foreground'>
+                    <TableCell className='text-foreground px-6 py-4 text-right text-sm'>
                       <button
                         type='button'
                         onClick={e => {
                           e.stopPropagation();
                           handleSingleDelete(doc.key);
                         }}
-                        className='rounded-lg p-2 text-destructive hover:bg-destructive/10'
+                        className='text-destructive hover:bg-destructive/10 rounded-lg p-2'
                         title='Delete'
                       >
                         <Trash2Icon className='size-4' />

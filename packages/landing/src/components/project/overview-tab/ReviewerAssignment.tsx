@@ -334,7 +334,7 @@ export function ReviewerAssignment({
                 At least 2 project members are required to assign reviewers.
               </p>
             : unassignedStudies.length === 0 && !showPreview ?
-              <div className='flex items-center gap-2 text-success'>
+              <div className='text-success flex items-center gap-2'>
                 <CheckIcon className='size-5' />
                 <p className='text-sm'>All studies have reviewers assigned.</p>
               </div>
@@ -457,7 +457,9 @@ export function ReviewerAssignment({
                   >
                     <div
                       className={`flex items-center justify-between border-b px-4 py-3 ${
-                        hasConflicts ? 'border-destructive/20 bg-destructive/10' : 'border-primary bg-primary/5'
+                        hasConflicts ?
+                          'border-destructive/20 bg-destructive/10'
+                        : 'border-primary bg-primary/5'
                       }`}
                     >
                       <div>
@@ -467,7 +469,7 @@ export function ReviewerAssignment({
                           Assignment Preview
                         </h4>
                         {hasConflicts && (
-                          <p className='text-xs text-destructive'>
+                          <p className='text-destructive text-xs'>
                             {conflictCount} conflict{conflictCount !== 1 && 's'} - click Reshuffle
                           </p>
                         )}
@@ -505,7 +507,7 @@ export function ReviewerAssignment({
                                 {assignment.reviewer1Name}
                               </td>
                               <td
-                                className={`py-2 pr-4 ${assignment.sameReviewer ? 'font-medium text-destructive' : 'text-secondary-foreground'}`}
+                                className={`py-2 pr-4 ${assignment.sameReviewer ? 'text-destructive font-medium' : 'text-secondary-foreground'}`}
                               >
                                 {assignment.reviewer2Name}
                                 {assignment.sameReviewer && ' (conflict)'}
@@ -520,7 +522,7 @@ export function ReviewerAssignment({
                       <button
                         onClick={handleApply}
                         disabled={hasConflicts}
-                        className='inline-flex items-center gap-2 rounded-lg bg-success px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-success/80 disabled:cursor-not-allowed disabled:opacity-50'
+                        className='bg-success hover:bg-success/80 inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-white transition-colors disabled:cursor-not-allowed disabled:opacity-50'
                       >
                         <CheckIcon className='size-4' />
                         Apply Assignments

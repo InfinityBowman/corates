@@ -80,119 +80,121 @@ export function AcademicInfoSection() {
 
   return (
     <>
-    <Separator />
-    <div className='flex items-start justify-between mt-4'>
-      <div className='flex-1'>
-        <label className='text-muted-foreground mb-1 block text-xs font-medium tracking-wide uppercase'>
-          Academic Information
-        </label>
-        {isEditing ?
-          <div className='mt-3 flex flex-col gap-4'>
-            <div>
-              <label className='text-muted-foreground mb-1.5 block text-xs font-medium tracking-wide uppercase'>
-                Title
-              </label>
-              <Select value={editTitleSelection} onValueChange={setEditTitleSelection}>
-                <SelectTrigger className='max-w-xs'>
-                  <SelectValue placeholder='Select a title (optional)' />
-                </SelectTrigger>
-                <SelectContent>
-                  {TITLE_OPTIONS.map(option => (
-                    <SelectItem key={option.value || '_none'} value={option.value || '_none'}>
-                      {option.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {isEditingCustomTitle && (
+      <Separator />
+      <div className='mt-4 flex items-start justify-between'>
+        <div className='flex-1'>
+          <label className='text-muted-foreground mb-1 block text-xs font-medium tracking-wide uppercase'>
+            Academic Information
+          </label>
+          {isEditing ?
+            <div className='mt-3 flex flex-col gap-4'>
+              <div>
+                <label className='text-muted-foreground mb-1.5 block text-xs font-medium tracking-wide uppercase'>
+                  Title
+                </label>
+                <Select value={editTitleSelection} onValueChange={setEditTitleSelection}>
+                  <SelectTrigger className='max-w-xs'>
+                    <SelectValue placeholder='Select a title (optional)' />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {TITLE_OPTIONS.map(option => (
+                      <SelectItem key={option.value || '_none'} value={option.value || '_none'}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {isEditingCustomTitle && (
+                  <input
+                    type='text'
+                    value={editCustomTitle}
+                    onChange={e => setEditCustomTitle(e.target.value)}
+                    className='border-border bg-card focus:border-primary focus:ring-ring/20 mt-2 block w-full max-w-xs rounded-lg border px-3 py-2 text-sm shadow-sm transition-colors focus:ring-2 focus:outline-none'
+                    placeholder='Enter your title'
+                    maxLength={50}
+                  />
+                )}
+              </div>
+              <div>
+                <label className='text-muted-foreground mb-1.5 block text-xs font-medium tracking-wide uppercase'>
+                  Institution
+                </label>
                 <input
                   type='text'
-                  value={editCustomTitle}
-                  onChange={e => setEditCustomTitle(e.target.value)}
-                  className='border-border bg-card focus:border-primary focus:ring-ring/20 mt-2 block w-full max-w-xs rounded-lg border px-3 py-2 text-sm shadow-sm transition-colors focus:ring-2 focus:outline-none'
-                  placeholder='Enter your title'
-                  maxLength={50}
+                  value={editInstitution}
+                  onChange={e => setEditInstitution(e.target.value)}
+                  className='border-border bg-card focus:border-primary focus:ring-ring/20 block w-full max-w-md rounded-lg border px-3 py-2 text-sm shadow-sm transition-colors focus:ring-2 focus:outline-none'
+                  placeholder='University or organization'
+                  maxLength={200}
                 />
-              )}
+              </div>
+              <div>
+                <label className='text-muted-foreground mb-1.5 block text-xs font-medium tracking-wide uppercase'>
+                  Department
+                </label>
+                <input
+                  type='text'
+                  value={editDepartment}
+                  onChange={e => setEditDepartment(e.target.value)}
+                  className='border-border bg-card focus:border-primary focus:ring-ring/20 block w-full max-w-md rounded-lg border px-3 py-2 text-sm shadow-sm transition-colors focus:ring-2 focus:outline-none'
+                  placeholder='Department or faculty'
+                  maxLength={200}
+                />
+              </div>
+              <div className='flex gap-2 pt-1'>
+                <button
+                  onClick={saveAcademic}
+                  disabled={saving}
+                  className='bg-primary hover:bg-primary/90 rounded-lg px-4 py-2 text-sm font-medium text-white shadow-sm transition-all hover:shadow disabled:opacity-50'
+                >
+                  Save
+                </button>
+                <button
+                  onClick={cancelEditing}
+                  disabled={saving}
+                  className='bg-secondary text-secondary-foreground hover:bg-secondary/80 rounded-lg px-4 py-2 text-sm font-medium transition-colors disabled:opacity-50'
+                >
+                  Cancel
+                </button>
+              </div>
             </div>
-            <div>
-              <label className='text-muted-foreground mb-1.5 block text-xs font-medium tracking-wide uppercase'>
-                Institution
-              </label>
-              <input
-                type='text'
-                value={editInstitution}
-                onChange={e => setEditInstitution(e.target.value)}
-                className='border-border bg-card focus:border-primary focus:ring-ring/20 block w-full max-w-md rounded-lg border px-3 py-2 text-sm shadow-sm transition-colors focus:ring-2 focus:outline-none'
-                placeholder='University or organization'
-                maxLength={200}
-              />
+          : <div className='mt-1 flex flex-col gap-1.5'>
+              <div className='flex items-baseline gap-2'>
+                <span className='text-muted-foreground text-xs font-medium'>Title:</span>
+                <span className='text-foreground text-sm'>
+                  {(user?.title as string) || (
+                    <span className='text-muted-foreground'>Not set</span>
+                  )}
+                </span>
+              </div>
+              <div className='flex items-baseline gap-2'>
+                <span className='text-muted-foreground text-xs font-medium'>Institution:</span>
+                <span className='text-foreground text-sm'>
+                  {(user?.institution as string) || (
+                    <span className='text-muted-foreground'>Not set</span>
+                  )}
+                </span>
+              </div>
+              <div className='flex items-baseline gap-2'>
+                <span className='text-muted-foreground text-xs font-medium'>Department:</span>
+                <span className='text-foreground text-sm'>
+                  {(user?.department as string) || (
+                    <span className='text-muted-foreground'>Not set</span>
+                  )}
+                </span>
+              </div>
             </div>
-            <div>
-              <label className='text-muted-foreground mb-1.5 block text-xs font-medium tracking-wide uppercase'>
-                Department
-              </label>
-              <input
-                type='text'
-                value={editDepartment}
-                onChange={e => setEditDepartment(e.target.value)}
-                className='border-border bg-card focus:border-primary focus:ring-ring/20 block w-full max-w-md rounded-lg border px-3 py-2 text-sm shadow-sm transition-colors focus:ring-2 focus:outline-none'
-                placeholder='Department or faculty'
-                maxLength={200}
-              />
-            </div>
-            <div className='flex gap-2 pt-1'>
-              <button
-                onClick={saveAcademic}
-                disabled={saving}
-                className='bg-primary hover:bg-primary/90 rounded-lg px-4 py-2 text-sm font-medium text-white shadow-sm transition-all hover:shadow disabled:opacity-50'
-              >
-                Save
-              </button>
-              <button
-                onClick={cancelEditing}
-                disabled={saving}
-                className='bg-secondary text-secondary-foreground hover:bg-secondary/80 rounded-lg px-4 py-2 text-sm font-medium transition-colors disabled:opacity-50'
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        : <div className='mt-1 flex flex-col gap-1.5'>
-            <div className='flex items-baseline gap-2'>
-              <span className='text-muted-foreground text-xs font-medium'>Title:</span>
-              <span className='text-foreground text-sm'>
-                {(user?.title as string) || <span className='text-muted-foreground'>Not set</span>}
-              </span>
-            </div>
-            <div className='flex items-baseline gap-2'>
-              <span className='text-muted-foreground text-xs font-medium'>Institution:</span>
-              <span className='text-foreground text-sm'>
-                {(user?.institution as string) || (
-                  <span className='text-muted-foreground'>Not set</span>
-                )}
-              </span>
-            </div>
-            <div className='flex items-baseline gap-2'>
-              <span className='text-muted-foreground text-xs font-medium'>Department:</span>
-              <span className='text-foreground text-sm'>
-                {(user?.department as string) || (
-                  <span className='text-muted-foreground'>Not set</span>
-                )}
-              </span>
-            </div>
-          </div>
-        }
+          }
+        </div>
+        {!isEditing && (
+          <button
+            onClick={startEditing}
+            className='text-primary hover:text-primary/80 text-sm font-medium transition-colors'
+          >
+            Edit
+          </button>
+        )}
       </div>
-      {!isEditing && (
-        <button
-          onClick={startEditing}
-          className='text-primary hover:text-primary/80 text-sm font-medium transition-colors'
-        >
-          Edit
-        </button>
-      )}
-    </div>
     </>
   );
 }

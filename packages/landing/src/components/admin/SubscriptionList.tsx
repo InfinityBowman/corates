@@ -156,7 +156,7 @@ export function SubscriptionList({
                                 title='Copy customer ID'
                               >
                                 {copiedId === `customer-${subscription.stripeCustomerId}` ?
-                                  <CheckIcon className='size-3 text-success' />
+                                  <CheckIcon className='text-success size-3' />
                                 : <CopyIcon className='size-3' />}
                               </button>
                             </div>
@@ -177,7 +177,7 @@ export function SubscriptionList({
                                 title='Copy subscription ID'
                               >
                                 {copiedId === `subscription-${subscription.stripeSubscriptionId}` ?
-                                  <CheckIcon className='size-3 text-success' />
+                                  <CheckIcon className='text-success size-3' />
                                 : <CopyIcon className='size-3' />}
                               </button>
                             </div>
@@ -198,7 +198,7 @@ export function SubscriptionList({
                       <button
                         onClick={() => onCancel?.(subscription.id)}
                         disabled={loading}
-                        className='bg-card rounded-lg border border-destructive/30 px-3 py-2 text-sm font-medium text-destructive hover:bg-destructive/10 disabled:opacity-50'
+                        className='bg-card border-destructive/30 text-destructive hover:bg-destructive/10 rounded-lg border px-3 py-2 text-sm font-medium disabled:opacity-50'
                         title='Cancel subscription'
                         aria-label='Cancel subscription'
                       >

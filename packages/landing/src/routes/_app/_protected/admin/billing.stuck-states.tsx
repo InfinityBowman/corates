@@ -179,7 +179,7 @@ function AdminBillingStuckStatesPage() {
         </div>
       : stuckOrgs.length === 0 ?
         <AdminBox className='p-12 text-center'>
-          <CheckCircleIcon className='mx-auto mb-4 size-12 text-success' />
+          <CheckCircleIcon className='text-success mx-auto mb-4 size-12' />
           <p className='text-foreground text-lg font-medium'>No stuck states found</p>
           <p className='text-muted-foreground text-sm'>
             All organizations have healthy billing states
@@ -241,7 +241,7 @@ function AdminBillingStuckStatesPage() {
                               </p>
                             )}
                             {org.failedCount && (
-                              <p className='mt-1 text-xs text-destructive'>
+                              <p className='text-destructive mt-1 text-xs'>
                                 {org.failedCount} webhook failures
                               </p>
                             )}

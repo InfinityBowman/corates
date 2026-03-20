@@ -35,14 +35,14 @@ export function DeleteAccountSection() {
   if (!user) return null;
 
   return (
-    <div className='rounded-xl border border-destructive/20 bg-destructive/10 p-5'>
+    <div className='border-destructive/20 bg-destructive/10 rounded-xl border p-5'>
       {showConfirm ?
         <div className='flex flex-col gap-4'>
-          <div className='rounded-lg border border-destructive/20 bg-destructive/10 p-4'>
-            <p className='mb-2 text-sm font-medium text-destructive'>
+          <div className='border-destructive/20 bg-destructive/10 rounded-lg border p-4'>
+            <p className='text-destructive mb-2 text-sm font-medium'>
               Are you sure you want to delete your account?
             </p>
-            <ul className='flex list-inside list-disc flex-col gap-1 text-sm text-destructive'>
+            <ul className='text-destructive flex list-inside list-disc flex-col gap-1 text-sm'>
               <li>All your projects will be permanently deleted</li>
               <li>All your checklists and reviews will be lost</li>
               <li>You will be removed from all shared projects</li>
@@ -52,7 +52,8 @@ export function DeleteAccountSection() {
 
           <div>
             <label className='text-secondary-foreground mb-1.5 block text-sm font-medium'>
-              Type <span className='font-mono font-semibold text-destructive'>DELETE</span> to confirm
+              Type <span className='text-destructive font-mono font-semibold'>DELETE</span> to
+              confirm
             </label>
             <input
               type='text'
@@ -92,7 +93,7 @@ export function DeleteAccountSection() {
           </div>
           <button
             onClick={() => setShowConfirm(true)}
-            className='rounded-lg border border-destructive/20 bg-card px-4 py-2 text-sm font-medium text-destructive shadow-sm transition-all hover:bg-destructive/10 hover:shadow'
+            className='border-destructive/20 bg-card text-destructive hover:bg-destructive/10 rounded-lg border px-4 py-2 text-sm font-medium shadow-sm transition-all hover:shadow'
           >
             Delete Account
           </button>

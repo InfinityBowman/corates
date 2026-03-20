@@ -219,7 +219,7 @@ export function PricingTable({ currentTier: currentTierProp }: PricingTableProps
 
       {/* Billing toggle */}
       <div className='mb-10 flex flex-col items-center gap-4'>
-        <div className='flex items-center gap-2 rounded-full bg-success/10 px-4 py-2 text-sm font-medium text-success'>
+        <div className='bg-success/10 text-success flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium'>
           <StarIcon className='size-4' />
           Save 2 months with annual billing
         </div>
@@ -339,7 +339,7 @@ export function PricingTable({ currentTier: currentTierProp }: PricingTableProps
                           </p>
                         )}
                         {savings && (
-                          <p className='text-sm font-medium text-success'>
+                          <p className='text-success text-sm font-medium'>
                             Save {formatUsd(savings)} per year
                           </p>
                         )}
@@ -376,8 +376,8 @@ export function PricingTable({ currentTier: currentTierProp }: PricingTableProps
                 <ul className='flex flex-col gap-3'>
                   {plan.features.map((feature: string, i: number) => (
                     <li key={i} className='flex items-start gap-3'>
-                      <div className='mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-success/10'>
-                        <CheckIcon className='size-3 text-success' />
+                      <div className='bg-success/10 mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full'>
+                        <CheckIcon className='text-success size-3' />
                       </div>
                       <span className='text-muted-foreground text-sm'>{feature}</span>
                     </li>
@@ -402,7 +402,7 @@ export function PricingTable({ currentTier: currentTierProp }: PricingTableProps
               <ul className='mt-3 flex flex-wrap gap-x-4 gap-y-1'>
                 {singleProjectPlan.features.map((feature: string, i: number) => (
                   <li key={i} className='text-muted-foreground flex items-center gap-1.5 text-sm'>
-                    <CheckIcon className='size-3.5 text-success' />
+                    <CheckIcon className='text-success size-3.5' />
                     {feature}
                   </li>
                 ))}
@@ -445,8 +445,8 @@ export function PricingTable({ currentTier: currentTierProp }: PricingTableProps
         <DialogContent className='max-w-md'>
           <DialogHeader>
             <div className='flex items-start gap-3'>
-              <div className='flex size-10 shrink-0 items-center justify-center rounded-full bg-destructive/10'>
-                <AlertCircleIcon className='size-5 text-destructive' />
+              <div className='bg-destructive/10 flex size-10 shrink-0 items-center justify-center rounded-full'>
+                <AlertCircleIcon className='text-destructive size-5' />
               </div>
               <div>
                 <DialogTitle>Cannot Change Plan</DialogTitle>

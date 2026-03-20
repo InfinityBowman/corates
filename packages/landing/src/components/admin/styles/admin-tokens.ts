@@ -191,7 +191,8 @@ export const table: Record<string, string> = {
   container: 'overflow-hidden rounded-xl border border-border',
   base: 'w-full',
   header: 'border-b border-border bg-muted',
-  headerCell: 'px-6 py-3 text-left text-xs font-medium tracking-wider text-muted-foreground uppercase',
+  headerCell:
+    'px-6 py-3 text-left text-xs font-medium tracking-wider text-muted-foreground uppercase',
   headerCellSortable: 'cursor-pointer select-none hover:bg-muted',
   body: 'divide-y divide-border bg-card',
   row: 'transition-colors hover:bg-muted',

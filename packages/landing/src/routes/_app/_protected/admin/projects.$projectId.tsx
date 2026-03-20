@@ -262,13 +262,13 @@ function ProjectDetailPage() {
 
       {/* Error state */}
       {projectQuery.isError && (
-        <div className='rounded-lg border border-destructive/20 bg-destructive/10 p-6 text-center'>
-          <AlertCircleIcon className='mx-auto mb-2 size-8 text-destructive' />
+        <div className='border-destructive/20 bg-destructive/10 rounded-lg border p-6 text-center'>
+          <AlertCircleIcon className='text-destructive mx-auto mb-2 size-8' />
           <p className='text-destructive'>Failed to load project details</p>
           <button
             type='button'
             onClick={() => projectQuery.refetch()}
-            className='mt-2 text-sm text-destructive hover:text-destructive/80'
+            className='text-destructive hover:text-destructive/80 mt-2 text-sm'
           >
             Try again
           </button>
@@ -399,17 +399,17 @@ function ProjectDetailPage() {
             {(projectData.members?.length ?? 0) > 0 ?
               <Table>
                 <TableHeader>
-                  <TableRow className='border-b border-border bg-muted'>
-                    <TableHead className='px-6 py-3 text-xs font-medium tracking-wider text-muted-foreground uppercase'>
+                  <TableRow className='border-border bg-muted border-b'>
+                    <TableHead className='text-muted-foreground px-6 py-3 text-xs font-medium tracking-wider uppercase'>
                       User
                     </TableHead>
-                    <TableHead className='px-6 py-3 text-xs font-medium tracking-wider text-muted-foreground uppercase'>
+                    <TableHead className='text-muted-foreground px-6 py-3 text-xs font-medium tracking-wider uppercase'>
                       Role
                     </TableHead>
-                    <TableHead className='px-6 py-3 text-xs font-medium tracking-wider text-muted-foreground uppercase'>
+                    <TableHead className='text-muted-foreground px-6 py-3 text-xs font-medium tracking-wider uppercase'>
                       Joined
                     </TableHead>
-                    <TableHead className='px-6 py-3 text-right text-xs font-medium tracking-wider text-muted-foreground uppercase'>
+                    <TableHead className='text-muted-foreground px-6 py-3 text-right text-xs font-medium tracking-wider uppercase'>
                       Actions
                     </TableHead>
                   </TableRow>
@@ -417,7 +417,7 @@ function ProjectDetailPage() {
                 <TableBody>
                   {projectData.members!.map(member => (
                     <TableRow key={member.id}>
-                      <TableCell className='px-4 py-3 text-sm text-foreground'>
+                      <TableCell className='text-foreground px-4 py-3 text-sm'>
                         <div className='flex items-center gap-3'>
                           <UserAvatar
                             src={member.userAvatar}
@@ -436,7 +436,7 @@ function ProjectDetailPage() {
                           </div>
                         </div>
                       </TableCell>
-                      <TableCell className='px-4 py-3 text-sm text-foreground'>
+                      <TableCell className='text-foreground px-4 py-3 text-sm'>
                         <Badge variant={member.role === 'owner' ? 'default' : 'secondary'}>
                           {member.role}
                         </Badge>
@@ -444,12 +444,12 @@ function ProjectDetailPage() {
                       <TableCell className='text-muted-foreground px-4 py-3 text-sm'>
                         {formatShortDate(member.joinedAt)}
                       </TableCell>
-                      <TableCell className='px-4 py-3 text-right text-sm text-foreground'>
+                      <TableCell className='text-foreground px-4 py-3 text-right text-sm'>
                         <button
                           type='button'
                           onClick={() => setConfirmDialog({ type: 'remove-member', member })}
                           disabled={loading}
-                          className='inline-flex items-center text-sm text-destructive hover:text-destructive/80 disabled:opacity-50'
+                          className='text-destructive hover:text-destructive/80 inline-flex items-center text-sm disabled:opacity-50'
                           title='Remove member'
                         >
                           <UserMinusIcon className='size-4' />
@@ -471,20 +471,20 @@ function ProjectDetailPage() {
             {(projectData.files?.length ?? 0) > 0 ?
               <Table>
                 <TableHeader>
-                  <TableRow className='border-b border-border bg-muted'>
-                    <TableHead className='px-6 py-3 text-xs font-medium tracking-wider text-muted-foreground uppercase'>
+                  <TableRow className='border-border bg-muted border-b'>
+                    <TableHead className='text-muted-foreground px-6 py-3 text-xs font-medium tracking-wider uppercase'>
                       File
                     </TableHead>
-                    <TableHead className='px-6 py-3 text-xs font-medium tracking-wider text-muted-foreground uppercase'>
+                    <TableHead className='text-muted-foreground px-6 py-3 text-xs font-medium tracking-wider uppercase'>
                       Type
                     </TableHead>
-                    <TableHead className='px-6 py-3 text-xs font-medium tracking-wider text-muted-foreground uppercase'>
+                    <TableHead className='text-muted-foreground px-6 py-3 text-xs font-medium tracking-wider uppercase'>
                       Size
                     </TableHead>
-                    <TableHead className='px-6 py-3 text-xs font-medium tracking-wider text-muted-foreground uppercase'>
+                    <TableHead className='text-muted-foreground px-6 py-3 text-xs font-medium tracking-wider uppercase'>
                       Uploaded By
                     </TableHead>
-                    <TableHead className='px-6 py-3 text-xs font-medium tracking-wider text-muted-foreground uppercase'>
+                    <TableHead className='text-muted-foreground px-6 py-3 text-xs font-medium tracking-wider uppercase'>
                       Uploaded
                     </TableHead>
                   </TableRow>
@@ -492,7 +492,7 @@ function ProjectDetailPage() {
                 <TableBody>
                   {projectData.files!.map(file => (
                     <TableRow key={file.id}>
-                      <TableCell className='px-4 py-3 text-sm text-foreground'>
+                      <TableCell className='text-foreground px-4 py-3 text-sm'>
                         <div className='flex items-center gap-2'>
                           <FileTextIcon className='text-muted-foreground/70 size-4' />
                           <span className='text-foreground font-medium'>
@@ -506,7 +506,7 @@ function ProjectDetailPage() {
                       <TableCell className='text-muted-foreground px-4 py-3 text-sm'>
                         {formatBytes(file.fileSize)}
                       </TableCell>
-                      <TableCell className='px-4 py-3 text-sm text-foreground'>
+                      <TableCell className='text-foreground px-4 py-3 text-sm'>
                         {file.uploadedBy ?
                           <Link
                             to={'/admin/users/$userId' as string}
@@ -536,20 +536,20 @@ function ProjectDetailPage() {
             {(projectData.invitations?.length ?? 0) > 0 ?
               <Table>
                 <TableHeader>
-                  <TableRow className='border-b border-border bg-muted'>
-                    <TableHead className='px-6 py-3 text-xs font-medium tracking-wider text-muted-foreground uppercase'>
+                  <TableRow className='border-border bg-muted border-b'>
+                    <TableHead className='text-muted-foreground px-6 py-3 text-xs font-medium tracking-wider uppercase'>
                       Email
                     </TableHead>
-                    <TableHead className='px-6 py-3 text-xs font-medium tracking-wider text-muted-foreground uppercase'>
+                    <TableHead className='text-muted-foreground px-6 py-3 text-xs font-medium tracking-wider uppercase'>
                       Role
                     </TableHead>
-                    <TableHead className='px-6 py-3 text-xs font-medium tracking-wider text-muted-foreground uppercase'>
+                    <TableHead className='text-muted-foreground px-6 py-3 text-xs font-medium tracking-wider uppercase'>
                       Status
                     </TableHead>
-                    <TableHead className='px-6 py-3 text-xs font-medium tracking-wider text-muted-foreground uppercase'>
+                    <TableHead className='text-muted-foreground px-6 py-3 text-xs font-medium tracking-wider uppercase'>
                       Invited By
                     </TableHead>
-                    <TableHead className='px-6 py-3 text-xs font-medium tracking-wider text-muted-foreground uppercase'>
+                    <TableHead className='text-muted-foreground px-6 py-3 text-xs font-medium tracking-wider uppercase'>
                       Created
                     </TableHead>
                   </TableRow>
@@ -557,16 +557,16 @@ function ProjectDetailPage() {
                 <TableBody>
                   {projectData.invitations!.map(invitation => (
                     <TableRow key={invitation.id}>
-                      <TableCell className='px-4 py-3 text-sm text-foreground'>
+                      <TableCell className='text-foreground px-4 py-3 text-sm'>
                         {invitation.email}
                       </TableCell>
-                      <TableCell className='px-4 py-3 text-sm text-foreground'>
+                      <TableCell className='text-foreground px-4 py-3 text-sm'>
                         <Badge variant='secondary'>{invitation.role}</Badge>
                         {invitation.grantOrgMembership && (
                           <span className='text-muted-foreground ml-1 text-xs'>+ org</span>
                         )}
                       </TableCell>
-                      <TableCell className='px-4 py-3 text-sm text-foreground'>
+                      <TableCell className='text-foreground px-4 py-3 text-sm'>
                         {invitation.acceptedAt && (
                           <Badge variant='success'>
                             <CheckCircleIcon className='mr-1 size-3' />
@@ -583,7 +583,7 @@ function ProjectDetailPage() {
                           <Badge variant='destructive'>Expired</Badge>
                         )}
                       </TableCell>
-                      <TableCell className='px-4 py-3 text-sm text-foreground'>
+                      <TableCell className='text-foreground px-4 py-3 text-sm'>
                         <Link
                           to={'/admin/users/$userId' as string}
                           params={{ userId: invitation.invitedBy } as Record<string, string>}

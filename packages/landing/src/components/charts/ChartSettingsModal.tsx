@@ -64,15 +64,15 @@ export function ChartSettingsModal({
         }}
       >
         <div
-          className='flex max-h-[80vh] w-full max-w-3xl flex-col rounded-xl bg-card shadow-2xl'
+          className='bg-card flex max-h-[80vh] w-full max-w-3xl flex-col rounded-xl shadow-2xl'
           onMouseDown={e => e.stopPropagation()}
         >
           {/* Header */}
-          <div className='flex items-center justify-between border-b border-border px-6 py-4'>
-            <h2 className='text-lg font-semibold text-foreground'>Chart Settings</h2>
+          <div className='border-border flex items-center justify-between border-b px-6 py-4'>
+            <h2 className='text-foreground text-lg font-semibold'>Chart Settings</h2>
             <button
               onClick={onClose}
-              className='rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-muted-foreground'
+              className='text-muted-foreground hover:bg-muted hover:text-muted-foreground rounded-lg p-1.5 transition-colors'
             >
               <XIcon className='size-5' />
             </button>
@@ -82,8 +82,8 @@ export function ChartSettingsModal({
           <div className='flex-1 overflow-y-auto p-6'>
             {/* Labels Section */}
             <div>
-              <h3 className='mb-3 text-sm font-medium text-foreground'>Chart Labels</h3>
-              <p className='mb-4 text-xs text-muted-foreground'>
+              <h3 className='text-foreground mb-3 text-sm font-medium'>Chart Labels</h3>
+              <p className='text-muted-foreground mb-4 text-xs'>
                 Edit labels directly. Changes are temporary and won't be saved.
               </p>
               <div className='flex flex-col gap-2'>
@@ -93,57 +93,59 @@ export function ChartSettingsModal({
                     type='text'
                     value={item.label}
                     onChange={e => onLabelChange(index, e.target.value)}
-                    className='w-full rounded-lg border border-border bg-muted px-3 py-2 text-sm text-foreground transition-colors focus:border-blue-400 focus:ring-2 focus:ring-blue-500 focus:outline-none'
+                    className='border-border bg-muted text-foreground w-full rounded-lg border px-3 py-2 text-sm transition-colors focus:border-blue-400 focus:ring-2 focus:ring-blue-500 focus:outline-none'
                   />
                 ))}
               </div>
               {labels.length === 0 && (
-                <p className='py-4 text-center text-sm text-muted-foreground'>
+                <p className='text-muted-foreground py-4 text-center text-sm'>
                   No chart data available to edit.
                 </p>
               )}
             </div>
 
             {/* Chart Titles Section */}
-            <div className='mt-6 border-t border-border pt-6'>
-              <h3 className='mb-3 text-sm font-medium text-foreground'>Chart Titles</h3>
+            <div className='border-border mt-6 border-t pt-6'>
+              <h3 className='text-foreground mb-3 text-sm font-medium'>Chart Titles</h3>
               <div className='flex flex-col gap-3'>
                 <div>
-                  <label className='mb-1 block text-xs text-muted-foreground'>
+                  <label className='text-muted-foreground mb-1 block text-xs'>
                     Quality Assessment Chart
                   </label>
                   <input
                     type='text'
                     value={robvisTitle}
                     onChange={e => onRobvisTitleChange(e.target.value)}
-                    className='w-full rounded-lg border border-border bg-muted px-3 py-2 text-sm text-foreground transition-colors focus:border-blue-400 focus:ring-2 focus:ring-blue-500 focus:outline-none'
+                    className='border-border bg-muted text-foreground w-full rounded-lg border px-3 py-2 text-sm transition-colors focus:border-blue-400 focus:ring-2 focus:ring-blue-500 focus:outline-none'
                   />
                 </div>
                 <div>
-                  <label className='mb-1 block text-xs text-muted-foreground'>Distribution Chart</label>
+                  <label className='text-muted-foreground mb-1 block text-xs'>
+                    Distribution Chart
+                  </label>
                   <input
                     type='text'
                     value={distributionTitle}
                     onChange={e => onDistributionTitleChange(e.target.value)}
-                    className='w-full rounded-lg border border-border bg-muted px-3 py-2 text-sm text-foreground transition-colors focus:border-blue-400 focus:ring-2 focus:ring-blue-500 focus:outline-none'
+                    className='border-border bg-muted text-foreground w-full rounded-lg border px-3 py-2 text-sm transition-colors focus:border-blue-400 focus:ring-2 focus:ring-blue-500 focus:outline-none'
                   />
                 </div>
               </div>
             </div>
 
             {/* Display Options */}
-            <div className='mt-6 border-t border-border pt-6'>
-              <h3 className='mb-3 text-sm font-medium text-foreground'>Display Options</h3>
-              <label className='flex cursor-pointer items-center gap-3 rounded-lg bg-muted p-3 transition-colors hover:bg-muted/80'>
+            <div className='border-border mt-6 border-t pt-6'>
+              <h3 className='text-foreground mb-3 text-sm font-medium'>Display Options</h3>
+              <label className='bg-muted hover:bg-muted/80 flex cursor-pointer items-center gap-3 rounded-lg p-3 transition-colors'>
                 <input
                   type='checkbox'
                   checked={greyscale}
                   onChange={e => onGreyscaleChange(e.target.checked)}
-                  className='size-4 rounded border-border bg-muted text-blue-600 focus:ring-2 focus:ring-blue-500'
+                  className='border-border bg-muted size-4 rounded text-blue-600 focus:ring-2 focus:ring-blue-500'
                 />
                 <div>
-                  <span className='text-sm font-medium text-foreground'>Greyscale Mode</span>
-                  <p className='text-xs text-muted-foreground'>
+                  <span className='text-foreground text-sm font-medium'>Greyscale Mode</span>
+                  <p className='text-muted-foreground text-xs'>
                     Use greyscale colors for print-friendly charts
                   </p>
                 </div>
@@ -151,51 +153,55 @@ export function ChartSettingsModal({
             </div>
 
             {/* Export Section */}
-            <div className='mt-6 border-t border-border pt-6'>
-              <h3 className='mb-3 text-sm font-medium text-foreground'>Export Charts</h3>
-              <label className='mb-3 flex cursor-pointer items-center gap-3 rounded-lg bg-muted p-3 transition-colors hover:bg-muted/80'>
+            <div className='border-border mt-6 border-t pt-6'>
+              <h3 className='text-foreground mb-3 text-sm font-medium'>Export Charts</h3>
+              <label className='bg-muted hover:bg-muted/80 mb-3 flex cursor-pointer items-center gap-3 rounded-lg p-3 transition-colors'>
                 <input
                   type='checkbox'
                   checked={transparentExport}
                   onChange={e => onTransparentExportChange(e.target.checked)}
-                  className='size-4 rounded border-border bg-muted text-blue-600 focus:ring-2 focus:ring-blue-500'
+                  className='border-border bg-muted size-4 rounded text-blue-600 focus:ring-2 focus:ring-blue-500'
                 />
                 <div>
-                  <span className='text-sm font-medium text-foreground'>Transparent Background</span>
-                  <p className='text-xs text-muted-foreground'>Export without white background</p>
+                  <span className='text-foreground text-sm font-medium'>
+                    Transparent Background
+                  </span>
+                  <p className='text-muted-foreground text-xs'>Export without white background</p>
                 </div>
               </label>
 
               <div className='flex flex-col gap-3'>
-                <div className='rounded-lg bg-muted p-3'>
-                  <p className='mb-2 text-sm font-medium text-foreground'>Quality Assessment Chart</p>
+                <div className='bg-muted rounded-lg p-3'>
+                  <p className='text-foreground mb-2 text-sm font-medium'>
+                    Quality Assessment Chart
+                  </p>
                   <div className='flex gap-2'>
                     <button
                       onClick={() => onExportRobvis('svg')}
-                      className='rounded-md border border-border bg-card px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-muted'
+                      className='border-border bg-card text-foreground hover:bg-muted rounded-md border px-3 py-1.5 text-xs font-medium transition-colors'
                     >
                       Export SVG
                     </button>
                     <button
                       onClick={() => onExportRobvis('png')}
-                      className='rounded-md border border-border bg-card px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-muted'
+                      className='border-border bg-card text-foreground hover:bg-muted rounded-md border px-3 py-1.5 text-xs font-medium transition-colors'
                     >
                       Export PNG
                     </button>
                   </div>
                 </div>
-                <div className='rounded-lg bg-muted p-3'>
-                  <p className='mb-2 text-sm font-medium text-foreground'>Distribution Chart</p>
+                <div className='bg-muted rounded-lg p-3'>
+                  <p className='text-foreground mb-2 text-sm font-medium'>Distribution Chart</p>
                   <div className='flex gap-2'>
                     <button
                       onClick={() => onExportDistribution('svg')}
-                      className='rounded-md border border-border bg-card px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-muted'
+                      className='border-border bg-card text-foreground hover:bg-muted rounded-md border px-3 py-1.5 text-xs font-medium transition-colors'
                     >
                       Export SVG
                     </button>
                     <button
                       onClick={() => onExportDistribution('png')}
-                      className='rounded-md border border-border bg-card px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-muted'
+                      className='border-border bg-card text-foreground hover:bg-muted rounded-md border px-3 py-1.5 text-xs font-medium transition-colors'
                     >
                       Export PNG
                     </button>
@@ -205,23 +211,23 @@ export function ChartSettingsModal({
             </div>
 
             {/* Citation Section */}
-            <div className='mt-6 border-t border-border pt-6'>
-              <h3 className='mb-3 text-sm font-medium text-foreground'>How to Cite CoRATES</h3>
-              <p className='mb-4 text-xs text-muted-foreground'>
+            <div className='border-border mt-6 border-t pt-6'>
+              <h3 className='text-foreground mb-3 text-sm font-medium'>How to Cite CoRATES</h3>
+              <p className='text-muted-foreground mb-4 text-xs'>
                 Use this citation when you reference CoRATES as the software used for study
                 appraisal.
               </p>
               <div className='flex flex-col gap-4'>
-                <div className='rounded-lg bg-muted p-4'>
-                  <h4 className='mb-2 text-xs font-semibold text-foreground'>APA</h4>
-                  <p className='text-sm leading-relaxed text-foreground'>
+                <div className='bg-muted rounded-lg p-4'>
+                  <h4 className='text-foreground mb-2 text-xs font-semibold'>APA</h4>
+                  <p className='text-foreground text-sm leading-relaxed'>
                     Maynard, J. A., & Maynard, B. R. (2025). CoRATES (Collaborative Risk-of-Bias and
                     Appraisal Tracking for Evidence Synthesis) [Software]. https://corates.org
                   </p>
                 </div>
-                <div className='rounded-lg bg-muted p-4'>
-                  <h4 className='mb-2 text-xs font-semibold text-foreground'>AMA</h4>
-                  <p className='text-sm leading-relaxed text-foreground'>
+                <div className='bg-muted rounded-lg p-4'>
+                  <h4 className='text-foreground mb-2 text-xs font-semibold'>AMA</h4>
+                  <p className='text-foreground text-sm leading-relaxed'>
                     Maynard JA, Maynard BR. CoRATES (Collaborative Risk-of-Bias and Appraisal
                     Tracking for Evidence Synthesis)[software]. 2025. Accessed Month Day, Year.
                     https://corates.org
@@ -232,7 +238,7 @@ export function ChartSettingsModal({
           </div>
 
           {/* Footer */}
-          <div className='flex justify-end border-t border-border px-6 py-4'>
+          <div className='border-border flex justify-end border-t px-6 py-4'>
             <button
               onClick={onClose}
               className='rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700'

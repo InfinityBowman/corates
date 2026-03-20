@@ -67,8 +67,8 @@ export function StrengthIndicator({ password, onUnmet }: StrengthIndicatorProps)
               <span
                 className={`ml-1 flex size-4 items-center justify-center rounded-full ${
                   met ?
-                    'border border-success bg-white text-success'
-                  : 'border border-destructive text-destructive'
+                    'border-success text-success border bg-white'
+                  : 'border-destructive text-destructive border'
                 }`}
                 aria-hidden='true'
               >

@@ -100,12 +100,12 @@ export function SectionB({ sectionBState, onUpdate, disabled, getRobinsText }: S
         ))}
 
         {stopAssessment && (
-          <div className='mt-5 rounded-lg border-2 border-destructive/20 bg-destructive/10 p-4'>
+          <div className='border-destructive/20 bg-destructive/10 mt-5 rounded-lg border-2 p-4'>
             <div className='flex items-center gap-2'>
-              <AlertCircleIcon className='size-5 text-destructive' />
-              <span className='font-semibold text-destructive'>Assessment Stopped</span>
+              <AlertCircleIcon className='text-destructive size-5' />
+              <span className='text-destructive font-semibold'>Assessment Stopped</span>
             </div>
-            <p className='mt-2 text-sm text-destructive'>
+            <p className='text-destructive mt-2 text-sm'>
               Based on the responses to B2 or B3, this result should be classified as
               <span className='font-semibold'> Critical risk of bias</span>. Further domain
               assessment is not required.

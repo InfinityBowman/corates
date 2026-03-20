@@ -60,11 +60,11 @@ function TreeNode({ nodeKey, value, depth, defaultExpanded = false }: TreeNodePr
   return (
     <div style={{ paddingLeft: `${depth * 16}px` }}>
       <div
-        className='flex cursor-pointer items-center gap-1 rounded px-2 py-0.5 hover:bg-muted'
+        className='hover:bg-muted flex cursor-pointer items-center gap-1 rounded px-2 py-0.5'
         onClick={() => isExpandable && setIsExpanded(!isExpanded)}
       >
         {isExpandable && !isEmpty ?
-          <span className='flex size-4 items-center justify-center text-muted-foreground'>
+          <span className='text-muted-foreground flex size-4 items-center justify-center'>
             {isExpanded ?
               <ChevronDownIcon size={12} />
             : <ChevronRightIcon size={12} />}
@@ -115,14 +115,14 @@ export function DevStateTree({ data }: DevStateTreeProps) {
     <div className='flex h-full flex-col'>
       {/* Summary bar */}
       {summary && (
-        <div className='flex gap-4 border-b border-border bg-muted px-3 py-2'>
-          <span className='text-xs text-muted-foreground'>
+        <div className='border-border bg-muted flex gap-4 border-b px-3 py-2'>
+          <span className='text-muted-foreground text-xs'>
             <strong className='text-foreground'>{summary.studiesCount}</strong> studies
           </span>
-          <span className='text-xs text-muted-foreground'>
+          <span className='text-muted-foreground text-xs'>
             <strong className='text-foreground'>{summary.checklistsCount}</strong> checklists
           </span>
-          <span className='text-xs text-muted-foreground'>
+          <span className='text-muted-foreground text-xs'>
             <strong className='text-foreground'>{summary.membersCount}</strong> members
           </span>
         </div>
@@ -135,7 +135,7 @@ export function DevStateTree({ data }: DevStateTreeProps) {
           <TreeNode nodeKey='members' value={data.members} depth={0} defaultExpanded={false} />
           <TreeNode nodeKey='studies' value={data.studies} depth={0} defaultExpanded={true} />
         </div>
-      : <div className='p-6 text-center text-muted-foreground'>No data loaded</div>}
+      : <div className='text-muted-foreground p-6 text-center'>No data loaded</div>}
     </div>
   );
 }

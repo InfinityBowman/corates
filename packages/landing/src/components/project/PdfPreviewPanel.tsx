@@ -44,7 +44,7 @@ export function PdfPreviewPanel() {
           <div className='bg-secondary flex h-full flex-1 flex-col'>
             <div className='flex flex-1 items-center justify-center'>
               <div className='text-center'>
-                <p className='mb-2 text-destructive'>Failed to load PDF</p>
+                <p className='text-destructive mb-2'>Failed to load PDF</p>
                 <p className='text-muted-foreground text-sm'>{error}</p>
               </div>
             </div>

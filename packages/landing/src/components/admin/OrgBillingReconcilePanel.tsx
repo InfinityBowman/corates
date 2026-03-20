@@ -191,9 +191,9 @@ export function OrgBillingReconcilePanel({ orgId }: OrgBillingReconcilePanelProp
                 <p className='text-muted-foreground text-sm'>Total Stuck</p>
                 <p className='text-foreground text-2xl font-bold'>{summary.stuckStateCount ?? 0}</p>
               </div>
-              <div className='rounded-lg border border-destructive/30 bg-destructive/10 p-4'>
+              <div className='border-destructive/30 bg-destructive/10 rounded-lg border p-4'>
                 <p className='text-muted-foreground text-sm'>Critical</p>
-                <p className='text-2xl font-bold text-destructive'>
+                <p className='text-destructive text-2xl font-bold'>
                   {stuckStates.filter(s => s.severity === 'critical').length}
                 </p>
               </div>
@@ -299,10 +299,10 @@ export function OrgBillingReconcilePanel({ orgId }: OrgBillingReconcilePanelProp
                   );
                 })}
               </div>
-            : <div className='rounded-lg border border-success-border bg-success-bg p-8 text-center'>
-                <CheckCircleIcon className='mx-auto mb-4 size-12 text-success' />
-                <p className='text-lg font-medium text-success'>No stuck states found</p>
-                <p className='text-sm text-success'>
+            : <div className='border-success-border bg-success-bg rounded-lg border p-8 text-center'>
+                <CheckCircleIcon className='text-success mx-auto mb-4 size-12' />
+                <p className='text-success text-lg font-medium'>No stuck states found</p>
+                <p className='text-success text-sm'>
                   All billing states are healthy for this organization
                 </p>
               </div>
@@ -313,7 +313,7 @@ export function OrgBillingReconcilePanel({ orgId }: OrgBillingReconcilePanelProp
               <div className='border-border bg-muted mt-6 rounded-lg border p-4'>
                 <h3 className='text-foreground mb-3 font-semibold'>Stripe API Comparison</h3>
                 {reconcileData.stripeComparison.error ?
-                  <p className='text-sm text-destructive'>
+                  <p className='text-destructive text-sm'>
                     Error: {reconcileData.stripeComparison.error}
                   </p>
                 : reconcileData.stripeComparison.noActiveSubscription ?
@@ -322,8 +322,8 @@ export function OrgBillingReconcilePanel({ orgId }: OrgBillingReconcilePanelProp
                     <div className='flex items-center gap-2'>
                       <span className='font-medium'>Status Match:</span>
                       {reconcileData.stripeComparison.match ?
-                        <CheckCircleIcon className='size-4 text-success' />
-                      : <AlertTriangleIcon className='size-4 text-destructive' />}
+                        <CheckCircleIcon className='text-success size-4' />
+                      : <AlertTriangleIcon className='text-destructive size-4' />}
                     </div>
                     <div>
                       <span className='font-medium'>Local:</span>{' '}

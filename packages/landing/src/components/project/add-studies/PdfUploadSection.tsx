@@ -55,8 +55,8 @@ export function PdfUploadSection({ studies }: PdfUploadSectionProps) {
                 {pdf.error ?
                   <>
                     <div className='flex items-center gap-2'>
-                      <AlertTriangleIcon className='size-4 shrink-0 text-destructive' />
-                      <span className='text-sm font-medium text-destructive'>{pdf.error}</span>
+                      <AlertTriangleIcon className='text-destructive size-4 shrink-0' />
+                      <span className='text-destructive text-sm font-medium'>{pdf.error}</span>
                       <button
                         type='button'
                         onClick={() => studies.retryPdfExtraction?.(pdf.id)}
@@ -66,7 +66,7 @@ export function PdfUploadSection({ studies }: PdfUploadSectionProps) {
                         Retry
                       </button>
                     </div>
-                    <p className='mt-1 truncate text-xs text-destructive'>{pdf.file.name}</p>
+                    <p className='text-destructive mt-1 truncate text-xs'>{pdf.file.name}</p>
                   </>
                 : <>
                     <div className='flex items-center gap-2'>

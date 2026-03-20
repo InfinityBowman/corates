@@ -32,7 +32,7 @@ function UsageMetric({ label, icon, used, max }: UsageMetricProps) {
         </span>
       </div>
       {isUnlimited ?
-        <div className='h-2 w-full rounded-full bg-gradient-to-r from-success/10 to-success/20' />
+        <div className='from-success/10 to-success/20 h-2 w-full rounded-full bg-gradient-to-r' />
       : <Progress value={percentage} />}
     </div>
   );
