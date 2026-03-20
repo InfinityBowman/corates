@@ -27,12 +27,12 @@ function UsageMetric({ label, icon, used, max }: UsageMetricProps) {
         </div>
         <span className='text-foreground text-sm font-semibold'>
           {isUnlimited ?
-            <span className='text-emerald-600'>Unlimited</span>
+            <span className='text-success'>Unlimited</span>
           : `${used} / ${max}`}
         </span>
       </div>
       {isUnlimited ?
-        <div className='h-2 w-full rounded-full bg-gradient-to-r from-emerald-100 to-emerald-200' />
+        <div className='h-2 w-full rounded-full bg-gradient-to-r from-success/10 to-success/20' />
       : <Progress value={percentage} />}
     </div>
   );

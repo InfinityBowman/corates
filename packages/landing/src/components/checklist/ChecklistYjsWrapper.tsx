@@ -405,7 +405,7 @@ export function ChecklistYjsWrapper({ projectId, studyId, checklistId }: Checkli
             }
             className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
               currentChecklist?.status === CHECKLIST_STATUS.FINALIZED ?
-                'bg-green-100 text-green-700 hover:bg-green-200'
+                'bg-success/10 text-success hover:bg-success/20'
               : !isChecklistValid ? 'bg-muted text-muted-foreground cursor-not-allowed opacity-60'
               : 'bg-blue-600 text-white hover:bg-blue-700'
             }`}
@@ -417,7 +417,7 @@ export function ChecklistYjsWrapper({ projectId, studyId, checklistId }: Checkli
         : <span
             className={`rounded-lg px-3 py-1.5 text-sm font-medium ${
               currentChecklist?.status === CHECKLIST_STATUS.FINALIZED ?
-                'bg-green-100 text-green-700'
+                'bg-success/10 text-success'
               : 'bg-secondary text-secondary-foreground'
             }`}
           >

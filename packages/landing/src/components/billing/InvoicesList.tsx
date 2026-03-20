@@ -6,6 +6,7 @@ import { useQuery } from '@tanstack/react-query';
 import { DownloadIcon, FileTextIcon, ExternalLinkIcon } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
 import { apiFetch } from '@/lib/apiFetch';
 import { queryKeys } from '@/lib/queryKeys';
 
@@ -86,17 +87,17 @@ export function InvoicesList() {
         {isFetching ?
           <div className='divide-border divide-y'>
             {[1, 2, 3].map(i => (
-              <div key={i} className='flex animate-pulse items-center justify-between px-6 py-4'>
+              <div key={i} className='flex items-center justify-between px-6 py-4'>
                 <div className='flex items-center gap-4'>
-                  <div className='bg-secondary size-10 rounded-lg' />
+                  <Skeleton className='size-10 rounded-lg' />
                   <div className='flex flex-col gap-2'>
-                    <div className='bg-secondary h-4 w-32 rounded' />
-                    <div className='bg-secondary h-3 w-24 rounded' />
+                    <Skeleton className='h-4 w-32' />
+                    <Skeleton className='h-3 w-24' />
                   </div>
                 </div>
                 <div className='flex items-center gap-4'>
-                  <div className='bg-secondary h-4 w-16 rounded' />
-                  <div className='bg-secondary h-6 w-14 rounded-full' />
+                  <Skeleton className='h-4 w-16' />
+                  <Skeleton className='h-6 w-14 rounded-full' />
                 </div>
               </div>
             ))}

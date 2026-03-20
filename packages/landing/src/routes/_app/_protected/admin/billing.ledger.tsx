@@ -186,7 +186,7 @@ function AdminBillingLedgerPage() {
                 title='Copy event ID'
               >
                 {copiedId === `Event ID-${entry.stripeEventId}` ?
-                  <CheckIcon className='size-3 text-green-600' />
+                  <CheckIcon className='size-3 text-success' />
                 : <CopyIcon className='size-3' />}
               </button>
               <a
@@ -226,7 +226,7 @@ function AdminBillingLedgerPage() {
                 title='Copy org ID'
               >
                 {copiedId === `Org ID-${entry.orgId}` ?
-                  <CheckIcon className='size-3 text-green-600' />
+                  <CheckIcon className='size-3 text-success' />
                 : <CopyIcon className='size-3' />}
               </button>
             </div>
@@ -253,7 +253,7 @@ function AdminBillingLedgerPage() {
                     title='Copy customer ID'
                   >
                     {copiedId === `Customer ID-${entry.stripeCustomerId}` ?
-                      <CheckIcon className='size-3 text-green-600' />
+                      <CheckIcon className='size-3 text-success' />
                     : <CopyIcon className='size-3' />}
                   </button>
                   <a
@@ -280,7 +280,7 @@ function AdminBillingLedgerPage() {
                     title='Copy subscription ID'
                   >
                     {copiedId === `Subscription ID-${entry.stripeSubscriptionId}` ?
-                      <CheckIcon className='size-3 text-green-600' />
+                      <CheckIcon className='size-3 text-success' />
                     : <CopyIcon className='size-3' />}
                   </button>
                   <a
@@ -309,7 +309,7 @@ function AdminBillingLedgerPage() {
                     title='Copy checkout session ID'
                   >
                     {copiedId === `Checkout Session ID-${entry.stripeCheckoutSessionId}` ?
-                      <CheckIcon className='size-3 text-green-600' />
+                      <CheckIcon className='size-3 text-success' />
                     : <CopyIcon className='size-3' />}
                   </button>
                 </div>
@@ -338,7 +338,7 @@ function AdminBillingLedgerPage() {
                 title='Copy request ID'
               >
                 {copiedId === `Request ID-${entry.requestId}` ?
-                  <CheckIcon className='size-3 text-green-600' />
+                  <CheckIcon className='size-3 text-success' />
                 : <CopyIcon className='size-3' />}
               </button>
             </div>

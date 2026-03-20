@@ -334,7 +334,7 @@ export function ReviewerAssignment({
                 At least 2 project members are required to assign reviewers.
               </p>
             : unassignedStudies.length === 0 && !showPreview ?
-              <div className='flex items-center gap-2 text-green-600'>
+              <div className='flex items-center gap-2 text-success'>
                 <CheckIcon className='size-5' />
                 <p className='text-sm'>All studies have reviewers assigned.</p>
               </div>
@@ -377,7 +377,7 @@ export function ReviewerAssignment({
                             1st Reviewer Pool
                           </h4>
                           <span
-                            className={`text-xs font-medium ${isPoolValid(pool1Total) ? 'text-green-600' : 'text-amber-600'}`}
+                            className={`text-xs font-medium ${isPoolValid(pool1Total) ? 'text-success' : 'text-amber-600'}`}
                           >
                             Total: {pool1Total}%
                           </span>
@@ -401,7 +401,7 @@ export function ReviewerAssignment({
                             2nd Reviewer Pool
                           </h4>
                           <span
-                            className={`text-xs font-medium ${isPoolValid(pool2Total) ? 'text-green-600' : 'text-amber-600'}`}
+                            className={`text-xs font-medium ${isPoolValid(pool2Total) ? 'text-success' : 'text-amber-600'}`}
                           >
                             Total: {pool2Total}%
                           </span>
@@ -520,7 +520,7 @@ export function ReviewerAssignment({
                       <button
                         onClick={handleApply}
                         disabled={hasConflicts}
-                        className='inline-flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-50'
+                        className='inline-flex items-center gap-2 rounded-lg bg-success px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-success/80 disabled:cursor-not-allowed disabled:opacity-50'
                       >
                         <CheckIcon className='size-4' />
                         Apply Assignments

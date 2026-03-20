@@ -98,7 +98,7 @@ export function DoiLookupSection({ studies }: DoiLookupSectionProps) {
           <div className='flex items-center justify-between'>
             <span className='text-secondary-foreground text-sm'>
               Found references:{' '}
-              <span className='font-medium text-green-600'>{refsWithPdf.length} with PDF</span>
+              <span className='font-medium text-success'>{refsWithPdf.length} with PDF</span>
               {refsWithoutPdf.length > 0 && (
                 <>
                   <span className='text-muted-foreground/70 mx-1'>|</span>
@@ -218,7 +218,7 @@ function LookupRefWithPdf({
     <div
       className={`flex cursor-pointer items-start gap-3 rounded-lg p-2 transition-colors ${
         isSelected ?
-          'border border-green-200 bg-green-50 hover:bg-green-100'
+          'border border-success-border bg-success-bg hover:bg-success-bg/80'
         : 'bg-muted hover:bg-secondary border border-transparent'
       }`}
       onClick={onToggle}
@@ -311,7 +311,7 @@ function PdfStatusBadge({
     return (
       <Tooltip>
         <TooltipTrigger asChild>
-          <span className='inline-flex items-center gap-1 rounded bg-green-100 px-1.5 py-0.5 text-xs font-medium text-green-700'>
+          <span className='inline-flex items-center gap-1 rounded bg-success-bg px-1.5 py-0.5 text-xs font-medium text-success'>
             <CheckIcon className='size-3' />
             PDF Ready
           </span>
@@ -326,7 +326,7 @@ function PdfStatusBadge({
     return (
       <Tooltip>
         <TooltipTrigger asChild>
-          <span className='inline-flex items-center gap-1 rounded bg-green-100 px-1.5 py-0.5 text-xs font-medium text-green-700'>
+          <span className='inline-flex items-center gap-1 rounded bg-success-bg px-1.5 py-0.5 text-xs font-medium text-success'>
             <FileTextIcon className='size-3' />
             PDF
           </span>

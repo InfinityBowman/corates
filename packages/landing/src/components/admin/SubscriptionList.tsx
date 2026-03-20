@@ -100,7 +100,7 @@ export function SubscriptionList({
                         <span
                           className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
                             subscription.status === 'active' || subscription.status === 'trialing' ?
-                              'bg-green-100 text-green-800'
+                              'bg-success-bg text-success'
                             : 'bg-secondary text-foreground'
                           }`}
                         >
@@ -156,7 +156,7 @@ export function SubscriptionList({
                                 title='Copy customer ID'
                               >
                                 {copiedId === `customer-${subscription.stripeCustomerId}` ?
-                                  <CheckIcon className='size-3 text-green-600' />
+                                  <CheckIcon className='size-3 text-success' />
                                 : <CopyIcon className='size-3' />}
                               </button>
                             </div>
@@ -177,7 +177,7 @@ export function SubscriptionList({
                                 title='Copy subscription ID'
                               >
                                 {copiedId === `subscription-${subscription.stripeSubscriptionId}` ?
-                                  <CheckIcon className='size-3 text-green-600' />
+                                  <CheckIcon className='size-3 text-success' />
                                 : <CopyIcon className='size-3' />}
                               </button>
                             </div>

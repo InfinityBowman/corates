@@ -179,7 +179,7 @@ function AdminBillingStuckStatesPage() {
         </div>
       : stuckOrgs.length === 0 ?
         <AdminBox className='p-12 text-center'>
-          <CheckCircleIcon className='mx-auto mb-4 size-12 text-green-500' />
+          <CheckCircleIcon className='mx-auto mb-4 size-12 text-success' />
           <p className='text-foreground text-lg font-medium'>No stuck states found</p>
           <p className='text-muted-foreground text-sm'>
             All organizations have healthy billing states

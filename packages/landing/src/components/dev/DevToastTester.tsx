@@ -59,7 +59,7 @@ export function DevToastTester() {
         <h4 className='mb-2 text-xs font-semibold text-foreground'>Toast Types</h4>
         <div className='flex flex-wrap gap-2'>
           <button
-            className={`${buttonClass} border-green-200 text-green-600 hover:border-green-400 hover:bg-green-50`}
+            className={`${buttonClass} border-success-border text-success hover:border-success hover:bg-success-bg`}
             onClick={() => triggerToast('success')}
           >
             <CheckCircleIcon size={14} />

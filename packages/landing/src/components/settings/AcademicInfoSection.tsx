@@ -7,6 +7,7 @@ import { useAuthStore, selectUser } from '@/stores/authStore';
 import { showToast } from '@/components/ui/toast';
 import { TITLE_OPTIONS } from '@/components/auth/RoleSelector';
 import { syncProfileToProjects } from '@/lib/syncUtils';
+import { Separator } from '@/components/ui/separator';
 import {
   Select,
   SelectContent,
@@ -78,7 +79,9 @@ export function AcademicInfoSection() {
   }, [editTitle, editInstitution, editDepartment, updateProfile]);
 
   return (
-    <div className='border-border flex items-start justify-between border-t pt-4'>
+    <>
+    <Separator />
+    <div className='flex items-start justify-between mt-4'>
       <div className='flex-1'>
         <label className='text-muted-foreground mb-1 block text-xs font-medium tracking-wide uppercase'>
           Academic Information
@@ -190,5 +193,6 @@ export function AcademicInfoSection() {
         </button>
       )}
     </div>
+    </>
   );
 }

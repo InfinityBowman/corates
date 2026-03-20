@@ -20,6 +20,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { Skeleton } from '@/components/ui/skeleton';
 import { AccountProviderCard } from './AccountProviderCard';
 import { MergeAccountsDialog } from './MergeAccountsDialog';
 import { parseOAuthError, getLinkErrorMessage } from '@/lib/account-linking-errors.js';
@@ -185,15 +186,15 @@ export function LinkedAccountsSection() {
           </div>
         : isLoading && (
             <div className='flex flex-col gap-3'>
-              <div className='border-border flex animate-pulse items-center justify-between rounded-lg border p-4'>
+              <div className='border-border flex items-center justify-between rounded-lg border p-4'>
                 <div className='flex items-center gap-3'>
-                  <div className='bg-secondary size-10 rounded-lg' />
+                  <Skeleton className='size-10 rounded-lg' />
                   <div className='flex flex-col gap-2'>
-                    <div className='bg-secondary h-4 w-24 rounded' />
-                    <div className='bg-secondary h-3 w-32 rounded' />
+                    <Skeleton className='h-4 w-24' />
+                    <Skeleton className='h-3 w-32' />
                   </div>
                 </div>
-                <div className='bg-secondary h-8 w-16 rounded' />
+                <Skeleton className='h-8 w-16' />
               </div>
             </div>
           )

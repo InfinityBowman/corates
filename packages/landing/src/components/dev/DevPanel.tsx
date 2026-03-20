@@ -211,7 +211,7 @@ export function DevPanel() {
                 </span>
               )}
               {isProjectContext && connectionState?.connected && (
-                <span className='text-2xs rounded bg-green-100 px-2 py-0.5 text-green-700'>
+                <span className='text-2xs rounded bg-success-bg px-2 py-0.5 text-success'>
                   Connected
                 </span>
               )}

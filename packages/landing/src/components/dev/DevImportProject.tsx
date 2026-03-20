@@ -260,7 +260,7 @@ export function DevImportProject() {
       {result && (
         <div
           className={`flex items-center gap-2 rounded p-2 text-xs ${
-            result.success ? 'bg-green-100 text-green-700' : 'bg-destructive/10 text-destructive'
+            result.success ? 'bg-success-bg text-success' : 'bg-destructive/10 text-destructive'
           }`}
         >
           {result.success ?

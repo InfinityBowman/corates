@@ -5,6 +5,7 @@
 
 import { useState, useMemo, useRef, useCallback } from 'react';
 import { CameraIcon, CheckIcon } from 'lucide-react';
+import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { useAuthStore, selectUser, selectUserAvatarUrl } from '@/stores/authStore';
 import { showToast } from '@/components/ui/toast';
@@ -231,7 +232,8 @@ export function ProfileInfoSection() {
       </div>
 
       {/* Member Since */}
-      <div className='border-border border-t pt-5'>
+      <Separator />
+      <div>
         <label className='text-muted-foreground mb-1 block text-xs font-medium tracking-wide uppercase'>
           Member Since
         </label>

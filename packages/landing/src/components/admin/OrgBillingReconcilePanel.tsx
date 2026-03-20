@@ -299,10 +299,10 @@ export function OrgBillingReconcilePanel({ orgId }: OrgBillingReconcilePanelProp
                   );
                 })}
               </div>
-            : <div className='rounded-lg border border-green-200 bg-green-50 p-8 text-center'>
-                <CheckCircleIcon className='mx-auto mb-4 size-12 text-green-600' />
-                <p className='text-lg font-medium text-green-900'>No stuck states found</p>
-                <p className='text-sm text-green-700'>
+            : <div className='rounded-lg border border-success-border bg-success-bg p-8 text-center'>
+                <CheckCircleIcon className='mx-auto mb-4 size-12 text-success' />
+                <p className='text-lg font-medium text-success'>No stuck states found</p>
+                <p className='text-sm text-success'>
                   All billing states are healthy for this organization
                 </p>
               </div>
@@ -322,7 +322,7 @@ export function OrgBillingReconcilePanel({ orgId }: OrgBillingReconcilePanelProp
                     <div className='flex items-center gap-2'>
                       <span className='font-medium'>Status Match:</span>
                       {reconcileData.stripeComparison.match ?
-                        <CheckCircleIcon className='size-4 text-green-600' />
+                        <CheckCircleIcon className='size-4 text-success' />
                       : <AlertTriangleIcon className='size-4 text-destructive' />}
                     </div>
                     <div>

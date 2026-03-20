@@ -440,8 +440,8 @@ export function MergeAccountsDialog({
           {step === STEPS.SUCCESS && (
             <>
               <div className='flex flex-col items-center py-6'>
-                <div className='flex size-12 items-center justify-center rounded-full bg-green-100'>
-                  <CheckIcon className='size-6 text-green-600' />
+                <div className='flex size-12 items-center justify-center rounded-full bg-success-bg'>
+                  <CheckIcon className='size-6 text-success' />
                 </div>
                 <p className='text-foreground mt-3 font-medium'>Accounts Merged Successfully!</p>
                 <p className='text-secondary-foreground mt-1 text-sm'>

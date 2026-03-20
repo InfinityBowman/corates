@@ -232,19 +232,19 @@ export function AnalyticsSection() {
         <AdminBox>
           <div className='mb-4 flex items-center justify-between'>
             <div className='flex items-center gap-2'>
-              <HomeIcon className='size-5 text-green-500' />
+              <HomeIcon className='size-5 text-success' />
               <h3 className='text-foreground font-medium'>Orgs & Projects</h3>
             </div>
           </div>
           {orgQuery.isLoading || projectQuery.isLoading ?
             <div className='flex h-64 items-center justify-center'>
-              <LoaderIcon className='size-6 animate-spin text-green-500' />
+              <LoaderIcon className='size-6 animate-spin text-success' />
             </div>
           : orgData && projectData ?
             <>
               <div className='mb-2 flex gap-4'>
                 <div>
-                  <span className='text-2xl font-bold text-green-600'>{orgData.total ?? 0}</span>
+                  <span className='text-2xl font-bold text-success'>{orgData.total ?? 0}</span>
                   <span className='text-muted-foreground ml-1 text-sm'>orgs</span>
                 </div>
                 <div>
@@ -332,7 +332,7 @@ export function AnalyticsSection() {
         <AdminBox className='lg:col-span-2'>
           <div className='mb-4 flex items-center justify-between'>
             <div className='flex items-center gap-2'>
-              <DollarSignIcon className='size-5 text-green-500' />
+              <DollarSignIcon className='size-5 text-success' />
               <h3 className='text-foreground font-medium'>Revenue (6 months)</h3>
             </div>
             <button
@@ -345,7 +345,7 @@ export function AnalyticsSection() {
           </div>
           {revenueQuery.isLoading ?
             <div className='flex h-48 items-center justify-center'>
-              <LoaderIcon className='size-6 animate-spin text-green-500' />
+              <LoaderIcon className='size-6 animate-spin text-success' />
             </div>
           : revenueData?.data && revenueData.data.length > 0 ?
             <>
@@ -403,7 +403,7 @@ export function AnalyticsSection() {
           <>
             <div className='mb-4 flex gap-6'>
               <div>
-                <span className='text-2xl font-bold text-green-600'>
+                <span className='text-2xl font-bold text-success'>
                   {webhookData.totals?.success ?? 0}
                 </span>
                 <span className='text-muted-foreground ml-1 text-sm'>success</span>

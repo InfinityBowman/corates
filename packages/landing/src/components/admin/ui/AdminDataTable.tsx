@@ -24,6 +24,7 @@ import {
   TableHead,
   TableCell,
 } from '@/components/ui/table';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface AdminDataTableProps<T> {
   columns: ColumnDef<T, any>[];
@@ -115,7 +116,7 @@ export function AdminDataTable<T>({
                 <TableRow key={`skeleton-${i}`}>
                   {columns.map((_, j) => (
                     <TableCell key={`skeleton-cell-${j}`} className='px-4 py-2'>
-                      <div className='bg-secondary h-4 w-3/4 animate-pulse rounded' />
+                      <Skeleton className='h-4 w-3/4' />
                     </TableCell>
                   ))}
                 </TableRow>

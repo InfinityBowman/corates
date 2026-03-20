@@ -57,14 +57,14 @@ export function ReferenceImportSection({ studies }: ReferenceImportSectionProps)
               </span>
             )}
             {studies.matchedRefPdfCount > 0 && (
-              <span className='inline-flex items-center gap-1 rounded-full bg-green-50 px-2 py-1 text-green-700'>
+              <span className='inline-flex items-center gap-1 rounded-full bg-success-bg px-2 py-1 text-success'>
                 <Link2Icon className='size-3' />
                 {studies.matchedRefPdfCount} PDF
                 {studies.matchedRefPdfCount > 1 ? 's' : ''} matched
               </span>
             )}
             {studies.foundPdfCount > 0 && (
-              <span className='inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-1 text-emerald-700'>
+              <span className='inline-flex items-center gap-1 rounded-full bg-success-bg px-2 py-1 text-success'>
                 <FileTextIcon className='size-3' />
                 {studies.foundPdfCount} open access
               </span>
@@ -114,7 +114,7 @@ export function ReferenceImportSection({ studies }: ReferenceImportSectionProps)
                     {ref.title}
                   </p>
                   {ref.pdfData && (
-                    <span className='inline-flex shrink-0 items-center gap-1 rounded bg-green-100 px-1.5 py-0.5 text-xs text-green-700'>
+                    <span className='inline-flex shrink-0 items-center gap-1 rounded bg-success-bg px-1.5 py-0.5 text-xs text-success'>
                       <FileTextIcon className='size-3' />
                       PDF
                     </span>
@@ -123,7 +123,7 @@ export function ReferenceImportSection({ studies }: ReferenceImportSectionProps)
                     <span
                       className={`inline-flex shrink-0 items-center gap-1 rounded px-1.5 py-0.5 text-xs ${
                         ref.pdfAccessible ?
-                          'bg-emerald-100 text-emerald-700'
+                          'bg-success-bg text-success'
                         : 'bg-amber-100 text-amber-700'
                       }`}
                       title={
@@ -148,7 +148,7 @@ export function ReferenceImportSection({ studies }: ReferenceImportSectionProps)
                   {ref.pdfFileName && (
                     <>
                       <span className='mx-1'>-</span>
-                      <span className='inline-block max-w-32 truncate align-bottom text-green-600'>
+                      <span className='inline-block max-w-32 truncate align-bottom text-success'>
                         {ref.pdfFileName}
                       </span>
                     </>
@@ -156,7 +156,7 @@ export function ReferenceImportSection({ studies }: ReferenceImportSectionProps)
                   {!ref.pdfData && ref.pdfSource && (
                     <>
                       <span className='mx-1'>-</span>
-                      <span className='text-emerald-600'>{ref.pdfSource}</span>
+                      <span className='text-success'>{ref.pdfSource}</span>
                     </>
                   )}
                 </p>

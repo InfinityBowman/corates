@@ -67,7 +67,7 @@ export function StrengthIndicator({ password, onUnmet }: StrengthIndicatorProps)
               <span
                 className={`ml-1 flex size-4 items-center justify-center rounded-full ${
                   met ?
-                    'border border-green-500 bg-white text-green-500'
+                    'border border-success bg-white text-success'
                   : 'border border-destructive text-destructive'
                 }`}
                 aria-hidden='true'
@@ -76,7 +76,7 @@ export function StrengthIndicator({ password, onUnmet }: StrengthIndicatorProps)
                   <CheckIcon className='size-3' />
                 : <XIcon className='size-3' />}
               </span>
-              <span className={met ? 'text-green-500' : 'text-destructive'}>{req.label}</span>
+              <span className={met ? 'text-success' : 'text-destructive'}>{req.label}</span>
             </li>
           );
         })}

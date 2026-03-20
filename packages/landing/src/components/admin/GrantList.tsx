@@ -61,7 +61,7 @@ export function GrantList({ grants: grantsProp, loading, isLoading, onRevoke }: 
                           <span className='inline-flex items-center rounded-full bg-destructive/10 px-2.5 py-0.5 text-xs font-medium text-destructive'>
                             Revoked
                           </span>
-                        : <span className='inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800'>
+                        : <span className='inline-flex items-center rounded-full bg-success-bg px-2.5 py-0.5 text-xs font-medium text-success'>
                             Active
                           </span>
                         }

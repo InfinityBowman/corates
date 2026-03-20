@@ -188,7 +188,7 @@ export function DevTemplateSelector({ projectId, orgId }: DevTemplateSelectorPro
         {result && (
           <div
             className={`flex items-center gap-1.5 rounded p-2 text-xs ${
-              result.success ? 'bg-green-50 text-green-700' : 'bg-destructive/10 text-destructive'
+              result.success ? 'bg-success-bg text-success' : 'bg-destructive/10 text-destructive'
             }`}
           >
             {result.success ?
@@ -283,7 +283,7 @@ export function DevTemplateSelector({ projectId, orgId }: DevTemplateSelectorPro
       {result && (
         <div
           className={`flex items-center gap-1.5 rounded p-2 text-xs ${
-            result.success ? 'bg-green-50 text-green-700' : 'bg-destructive/10 text-destructive'
+            result.success ? 'bg-success-bg text-success' : 'bg-destructive/10 text-destructive'
           }`}
         >
           {result.success ?

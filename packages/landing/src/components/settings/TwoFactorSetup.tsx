@@ -200,7 +200,7 @@ export function TwoFactorSetup() {
             <div>
               <div className='flex items-center gap-2'>
                 <ShieldIcon
-                  className={`size-5 ${isEnabled ? 'text-emerald-500' : 'text-muted-foreground'}`}
+                  className={`size-5 ${isEnabled ? 'text-success' : 'text-muted-foreground'}`}
                 />
                 <p className='text-foreground font-medium'>Two-Factor Authentication</p>
                 {isEnabled && <Badge variant='success'>Enabled</Badge>}
@@ -352,7 +352,7 @@ export function TwoFactorSetup() {
                     <CopyIcon className='size-4' />
                   </button>
                 </div>
-                {copied && <p className='mt-1 text-xs text-emerald-500'>Copied!</p>}
+                {copied && <p className='mt-1 text-xs text-success'>Copied!</p>}
               </div>
               <button
                 onClick={() => setSetupStep(2)}
@@ -444,7 +444,7 @@ export function TwoFactorSetup() {
               </div>
               <button
                 onClick={handleCompleteSetup}
-                className='w-full rounded-md bg-emerald-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-emerald-700'
+                className='w-full rounded-md bg-success px-4 py-2 text-sm font-medium text-white transition hover:bg-success/80'
               >
                 I&apos;ve Saved My Backup Codes
               </button>

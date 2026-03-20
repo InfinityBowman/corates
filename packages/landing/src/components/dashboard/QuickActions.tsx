@@ -24,9 +24,9 @@ const ACTIONS = [
     id: 'amstar-2',
     title: 'Start AMSTAR 2',
     description: 'Quality assessment for systematic reviews',
-    icon: <PlayCircleIcon className='size-6 text-emerald-600' />,
-    iconBg: 'bg-emerald-50',
-    border: 'border-emerald-100 hover:border-emerald-200',
+    icon: <PlayCircleIcon className='size-6 text-success' />,
+    iconBg: 'bg-success-bg',
+    border: 'border-success-border/50 hover:border-success-border',
   },
   {
     id: 'learn-more',

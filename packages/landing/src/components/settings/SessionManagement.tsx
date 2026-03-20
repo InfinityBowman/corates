@@ -16,6 +16,7 @@ import { useAuthStore } from '@/stores/authStore';
 import { showToast } from '@/components/ui/toast';
 import { Alert } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -297,7 +298,9 @@ export function SessionManagement() {
           </div>
 
           {dedupedSessions.length > 1 && (
-            <div className='border-border mt-4 flex flex-wrap gap-3 border-t pt-4'>
+            <>
+            <Separator className='mt-4' />
+            <div className='mt-4 flex flex-wrap gap-3'>
               <button
                 onClick={handleRevokeOther}
                 disabled={revokingAll}
@@ -316,6 +319,7 @@ export function SessionManagement() {
                 <span>Sign out everywhere</span>
               </button>
             </div>
+            </>
           )}
 
           {dedupedSessions.length === 1 && (

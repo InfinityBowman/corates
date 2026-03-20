@@ -182,7 +182,7 @@ export function DevJsonEditor({ projectId, orgId, data }: DevJsonEditorProps) {
         {result && (
           <div
             className={`flex items-center gap-1.5 px-3 py-1.5 text-xs ${
-              result.success ? 'bg-green-50 text-green-700' : 'bg-destructive/10 text-destructive'
+              result.success ? 'bg-success-bg text-success' : 'bg-destructive/10 text-destructive'
             }`}
           >
             {result.success ?
@@ -229,7 +229,7 @@ export function DevJsonEditor({ projectId, orgId, data }: DevJsonEditorProps) {
           title='Copy to clipboard'
         >
           {copied ?
-            <CheckIcon size={12} className='text-green-600' />
+            <CheckIcon size={12} className='text-success' />
           : <CopyIcon size={12} />}
           {copied ? 'Copied' : 'Copy'}
         </button>
@@ -239,7 +239,7 @@ export function DevJsonEditor({ projectId, orgId, data }: DevJsonEditorProps) {
       {result && (
         <div
           className={`flex items-center gap-1.5 px-3 py-1.5 text-xs ${
-            result.success ? 'bg-green-50 text-green-700' : 'bg-destructive/10 text-destructive'
+            result.success ? 'bg-success-bg text-success' : 'bg-destructive/10 text-destructive'
           }`}
         >
           {result.success ?

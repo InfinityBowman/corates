@@ -347,7 +347,7 @@ function StripeToolsPage() {
                     className='text-muted-foreground/70 hover:text-muted-foreground ml-2'
                   >
                     {copiedId === `Customer ID-${customerData.customer.id}` ?
-                      <CheckCircleIcon className='size-4 text-green-500' />
+                      <CheckCircleIcon className='size-4 text-success' />
                     : <CopyIcon className='size-4' />}
                   </button>
                 </dd>
@@ -482,19 +482,19 @@ function StripeToolsPage() {
 
             {/* Portal Link Result */}
             {portalUrl && (
-              <div className='mt-4 rounded-lg border border-green-200 bg-green-50 p-4'>
-                <p className='mb-2 text-sm font-medium text-green-800'>Portal Link Generated</p>
+              <div className='mt-4 rounded-lg border border-success/20 bg-success/10 p-4'>
+                <p className='mb-2 text-sm font-medium text-success'>Portal Link Generated</p>
                 <div className='flex items-center gap-2'>
                   <input
                     type='text'
                     value={portalUrl}
                     readOnly
-                    className='bg-card flex-1 rounded border border-green-300 px-3 py-1 text-sm'
+                    className='bg-card flex-1 rounded border border-success/30 px-3 py-1 text-sm'
                   />
                   <button
                     type='button'
                     onClick={() => handleCopy(portalUrl, 'Portal URL')}
-                    className='rounded bg-green-600 px-3 py-1 text-sm text-white hover:bg-green-700'
+                    className='rounded bg-success px-3 py-1 text-sm text-white hover:bg-success/80'
                   >
                     Copy
                   </button>
@@ -502,12 +502,12 @@ function StripeToolsPage() {
                     href={portalUrl}
                     target='_blank'
                     rel='noopener noreferrer'
-                    className='rounded bg-green-600 px-3 py-1 text-sm text-white hover:bg-green-700'
+                    className='rounded bg-success px-3 py-1 text-sm text-white hover:bg-success/80'
                   >
                     Open
                   </a>
                 </div>
-                <p className='mt-2 text-xs text-green-600'>Link expires in 5 minutes</p>
+                <p className='mt-2 text-xs text-success'>Link expires in 5 minutes</p>
               </div>
             )}
           </AdminBox>

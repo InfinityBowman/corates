@@ -53,7 +53,7 @@ function TreeNode({ nodeKey, value, depth, defaultExpanded = false }: TreeNodePr
     if (value === null || value === undefined) return 'text-muted-foreground italic';
     if (typeof value === 'boolean') return 'text-purple-600';
     if (typeof value === 'number') return 'text-orange-600';
-    if (typeof value === 'string') return 'text-green-600';
+    if (typeof value === 'string') return 'text-success';
     return 'text-muted-foreground';
   };
 

@@ -12,6 +12,7 @@ import { useMembers } from '@/hooks/useMembers';
 import { redirectToPortal } from '@/api/billing';
 import { apiFetch } from '@/lib/apiFetch';
 import { queryKeys } from '@/lib/queryKeys';
+import { Skeleton } from '@/components/ui/skeleton';
 import { SubscriptionCard } from '@/components/billing/SubscriptionCard';
 import { UsageCard } from '@/components/billing/UsageCard';
 import { InvoicesList } from '@/components/billing/InvoicesList';
@@ -19,16 +20,16 @@ import { PaymentIssueBanner } from '@/components/billing/PaymentIssueBanner';
 
 function SubscriptionSkeleton() {
   return (
-    <div className='border-border bg-card animate-pulse overflow-hidden rounded-xl border'>
+    <div className='border-border bg-card overflow-hidden rounded-xl border'>
       <div className='from-muted to-muted/80 h-28 bg-gradient-to-r' />
       <div className='p-6'>
         <div className='mb-4 flex flex-col gap-3'>
-          <div className='bg-muted h-4 w-1/2 rounded' />
-          <div className='bg-muted h-4 w-1/3 rounded' />
+          <Skeleton className='h-4 w-1/2' />
+          <Skeleton className='h-4 w-1/3' />
         </div>
         <div className='flex gap-3'>
-          <div className='bg-muted h-10 flex-1 rounded-lg' />
-          <div className='bg-muted h-10 w-28 rounded-lg' />
+          <Skeleton className='h-10 flex-1 rounded-lg' />
+          <Skeleton className='h-10 w-28 rounded-lg' />
         </div>
       </div>
     </div>
@@ -37,15 +38,15 @@ function SubscriptionSkeleton() {
 
 function UsageSkeleton() {
   return (
-    <div className='border-border bg-card animate-pulse rounded-xl border p-6'>
-      <div className='bg-muted mb-5 h-6 w-20 rounded' />
+    <div className='border-border bg-card rounded-xl border p-6'>
+      <Skeleton className='mb-5 h-6 w-20' />
       <div className='flex flex-col gap-5'>
         <div className='flex flex-col gap-2'>
           <div className='flex justify-between'>
-            <div className='bg-muted h-4 w-24 rounded' />
-            <div className='bg-muted h-4 w-12 rounded' />
+            <Skeleton className='h-4 w-24' />
+            <Skeleton className='h-4 w-12' />
           </div>
-          <div className='bg-muted h-2 w-full rounded-full' />
+          <Skeleton className='h-2 w-full rounded-full' />
         </div>
       </div>
     </div>
@@ -140,7 +141,7 @@ export function BillingSettings() {
               <button
                 type='button'
                 onClick={() => setCheckoutOutcome(null)}
-                className='text-green-600 hover:text-green-800'
+                className='text-success hover:text-success/80'
                 aria-label='Dismiss'
               >
                 <XCircleIcon className='size-5' />

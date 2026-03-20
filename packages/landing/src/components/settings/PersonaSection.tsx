@@ -7,6 +7,7 @@ import { useAuthStore, selectUser } from '@/stores/authStore';
 import { showToast } from '@/components/ui/toast';
 import { ROLES, getRoleLabel } from '@/components/auth/RoleSelector';
 import { syncProfileToProjects } from '@/lib/syncUtils';
+import { Separator } from '@/components/ui/separator';
 import {
   Select,
   SelectContent,
@@ -48,7 +49,9 @@ export function PersonaSection() {
   }, [editSelection, updateProfile]);
 
   return (
-    <div className='border-border flex items-start justify-between border-t py-4'>
+    <>
+    <Separator />
+    <div className='flex items-start justify-between my-4'>
       <div className='flex-1'>
         <label className='text-muted-foreground mb-1 block text-xs font-medium tracking-wide uppercase'>
           Persona
@@ -102,5 +105,6 @@ export function PersonaSection() {
         </button>
       )}
     </div>
+    </>
   );
 }

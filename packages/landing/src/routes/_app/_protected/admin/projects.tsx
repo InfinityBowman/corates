@@ -119,8 +119,8 @@ function AdminProjectList() {
               params={{ projectId: project.id } as Record<string, string>}
               className='flex items-center gap-3'
             >
-              <div className='flex size-10 items-center justify-center rounded-lg bg-green-100'>
-                <FolderIcon className='size-5 text-green-600' />
+              <div className='flex size-10 items-center justify-center rounded-lg bg-success/10'>
+                <FolderIcon className='size-5 text-success' />
               </div>
               <div>
                 <p className='font-medium text-blue-600 hover:text-blue-700'>{project.name}</p>

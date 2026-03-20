@@ -399,7 +399,7 @@ function UserDetailPage() {
                   type='button'
                   onClick={handleUnban}
                   disabled={loading}
-                  className='bg-card inline-flex items-center rounded-lg border border-green-300 px-3 py-2 text-sm font-medium text-green-700 hover:bg-green-50 disabled:opacity-50'
+                  className='bg-card inline-flex items-center rounded-lg border border-success/30 px-3 py-2 text-sm font-medium text-success hover:bg-success/10 disabled:opacity-50'
                 >
                   <UserCheckIcon className='mr-2 size-4' />
                   Unban
@@ -440,7 +440,7 @@ function UserDetailPage() {
                     className='text-muted-foreground/70 hover:text-muted-foreground ml-2'
                   >
                     {copiedId === `User ID-${userData.user.id}` ?
-                      <CheckCircleIcon className='size-4 text-green-500' />
+                      <CheckCircleIcon className='size-4 text-success' />
                     : <CopyIcon className='size-4' />}
                   </button>
                 </dd>

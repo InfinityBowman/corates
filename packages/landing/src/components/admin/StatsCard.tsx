@@ -5,6 +5,7 @@
 
 import type { LucideIcon } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const colorMap: Record<string, { bg: string; icon: string; text: string }> = {
   blue: {
@@ -13,9 +14,9 @@ const colorMap: Record<string, { bg: string; icon: string; text: string }> = {
     text: 'text-blue-600',
   },
   green: {
-    bg: 'bg-green-50',
-    icon: 'bg-green-100 text-green-600',
-    text: 'text-green-600',
+    bg: 'bg-success-bg',
+    icon: 'bg-success-bg text-success',
+    text: 'text-success',
   },
   purple: {
     bg: 'bg-purple-50',
@@ -47,7 +48,7 @@ export function StatsCard({ title, value, color, icon: Icon, loading }: StatsCar
           <div>
             <p className='text-muted-foreground text-sm font-medium'>{title}</p>
             {loading ?
-              <div className='bg-secondary mt-1 h-8 w-16 animate-pulse rounded' />
+              <Skeleton className='mt-1 h-8 w-16' />
             : <p className={`mt-1 text-2xl font-bold ${colors.text}`}>{value}</p>}
           </div>
           <div className={`rounded-lg p-3 ${colors.icon}`}>

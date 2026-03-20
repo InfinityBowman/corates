@@ -146,7 +146,7 @@ function SimpleEditable({
                 <div className='flex items-center gap-1'>
                   {api.editing ?
                     <>
-                      <EditablePrimitive.SubmitTrigger className='rounded p-1 text-green-500 transition-colors hover:bg-green-50 hover:text-green-600'>
+                      <EditablePrimitive.SubmitTrigger className='rounded p-1 text-success transition-colors hover:bg-success-bg hover:text-success'>
                         <CheckIcon className='h-4 w-4' />
                       </EditablePrimitive.SubmitTrigger>
                       <EditablePrimitive.CancelTrigger className='text-muted-foreground/70 hover:bg-secondary hover:text-muted-foreground rounded p-1 transition-colors'>
