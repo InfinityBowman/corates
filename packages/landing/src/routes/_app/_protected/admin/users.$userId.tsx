@@ -58,7 +58,14 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { handleError } from '@/lib/error-utils';
 import { AdminBox } from '@/components/admin/ui';
-import { table } from '@/components/admin/styles/admin-tokens';
+import {
+  Table,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableHead,
+  TableCell,
+} from '@/components/ui/table';
 import { queryKeys } from '@/lib/queryKeys';
 export const Route = createFileRoute('/_app/_protected/admin/users/$userId')({
   component: UserDetailPage,
@@ -537,61 +544,73 @@ function UserDetailPage() {
               Organizations ({userData.orgs?.length ?? 0})
             </h2>
             {(userData.orgs?.length ?? 0) > 0 ?
-              <div className='overflow-x-auto'>
-                <table className={table.base}>
-                  <thead>
-                    <tr className={table.header}>
-                      <th className={table.headerCell}>Organization</th>
-                      <th className={table.headerCell}>Role</th>
-                      <th className={table.headerCell}>Plan</th>
-                      <th className={table.headerCell}>Access</th>
-                      <th className={table.headerCell}>Joined</th>
-                    </tr>
-                  </thead>
-                  <tbody className={table.body}>
-                    {userData.orgs!.map(org => (
-                      <tr key={org.orgId} className={table.row}>
-                        <td className={table.cellCompact}>
-                          <Link
-                            to={'/admin/orgs/$orgId' as string}
-                            params={{ orgId: org.orgId } as Record<string, string>}
-                            className='font-medium text-blue-600 hover:text-blue-700'
-                          >
-                            {org.orgName}
-                          </Link>
-                          <p className='text-muted-foreground text-xs'>@{org.orgSlug}</p>
-                        </td>
-                        <td className={table.cellCompact}>
-                          <Badge
-                            variant={
-                              org.role === 'owner' ? 'default'
-                              : org.role === 'admin' ? 'info'
-                              : 'secondary'
-                            }
-                          >
-                            {org.role}
-                          </Badge>
-                        </td>
-                        <td className={table.cellCompact}>{org.billing.planName}</td>
-                        <td className={table.cellCompact}>
-                          <Badge
-                            variant={
-                              org.billing.accessMode === 'full' ? 'success'
-                              : org.billing.accessMode === 'limited' ? 'warning'
-                              : 'destructive'
-                            }
-                          >
-                            {org.billing.accessMode}
-                          </Badge>
-                        </td>
-                        <td className={`${table.cellCompact} text-muted-foreground`}>
-                          {formatShortDate(org.membershipCreatedAt)}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+              <Table>
+                <TableHeader>
+                  <TableRow className='border-b border-gray-200 bg-gray-50'>
+                    <TableHead className='px-6 py-3 text-xs font-medium tracking-wider text-gray-500 uppercase'>
+                      Organization
+                    </TableHead>
+                    <TableHead className='px-6 py-3 text-xs font-medium tracking-wider text-gray-500 uppercase'>
+                      Role
+                    </TableHead>
+                    <TableHead className='px-6 py-3 text-xs font-medium tracking-wider text-gray-500 uppercase'>
+                      Plan
+                    </TableHead>
+                    <TableHead className='px-6 py-3 text-xs font-medium tracking-wider text-gray-500 uppercase'>
+                      Access
+                    </TableHead>
+                    <TableHead className='px-6 py-3 text-xs font-medium tracking-wider text-gray-500 uppercase'>
+                      Joined
+                    </TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {userData.orgs!.map(org => (
+                    <TableRow key={org.orgId}>
+                      <TableCell className='px-4 py-3 text-sm text-gray-900'>
+                        <Link
+                          to={'/admin/orgs/$orgId' as string}
+                          params={{ orgId: org.orgId } as Record<string, string>}
+                          className='font-medium text-blue-600 hover:text-blue-700'
+                        >
+                          {org.orgName}
+                        </Link>
+                        <p className='text-muted-foreground text-xs'>@{org.orgSlug}</p>
+                      </TableCell>
+                      <TableCell className='px-4 py-3 text-sm text-gray-900'>
+                        <Badge
+                          variant={
+                            org.role === 'owner' ? 'default'
+                            : org.role === 'admin' ?
+                              'info'
+                            : 'secondary'
+                          }
+                        >
+                          {org.role}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className='px-4 py-3 text-sm text-gray-900'>
+                        {org.billing.planName}
+                      </TableCell>
+                      <TableCell className='px-4 py-3 text-sm text-gray-900'>
+                        <Badge
+                          variant={
+                            org.billing.accessMode === 'full' ? 'success'
+                            : org.billing.accessMode === 'limited' ?
+                              'warning'
+                            : 'destructive'
+                          }
+                        >
+                          {org.billing.accessMode}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className='text-muted-foreground px-4 py-3 text-sm'>
+                        {formatShortDate(org.membershipCreatedAt)}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
             : <p className='text-muted-foreground text-sm'>Not a member of any organizations</p>}
           </AdminBox>
 
@@ -602,32 +621,38 @@ function UserDetailPage() {
               Projects ({userData.projects?.length ?? 0})
             </h2>
             {(userData.projects?.length ?? 0) > 0 ?
-              <div className='overflow-x-auto'>
-                <table className={table.base}>
-                  <thead>
-                    <tr className={table.header}>
-                      <th className={table.headerCell}>Project</th>
-                      <th className={table.headerCell}>Role</th>
-                      <th className={table.headerCell}>Joined</th>
-                    </tr>
-                  </thead>
-                  <tbody className={table.body}>
-                    {userData.projects!.map(project => (
-                      <tr key={project.id} className={table.row}>
-                        <td className={`${table.cellCompact} font-medium`}>{project.name}</td>
-                        <td className={table.cellCompact}>
-                          <Badge variant={project.role === 'owner' ? 'default' : 'secondary'}>
-                            {project.role}
-                          </Badge>
-                        </td>
-                        <td className={`${table.cellCompact} text-muted-foreground`}>
-                          {formatShortDate(project.joinedAt)}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+              <Table>
+                <TableHeader>
+                  <TableRow className='border-b border-gray-200 bg-gray-50'>
+                    <TableHead className='px-6 py-3 text-xs font-medium tracking-wider text-gray-500 uppercase'>
+                      Project
+                    </TableHead>
+                    <TableHead className='px-6 py-3 text-xs font-medium tracking-wider text-gray-500 uppercase'>
+                      Role
+                    </TableHead>
+                    <TableHead className='px-6 py-3 text-xs font-medium tracking-wider text-gray-500 uppercase'>
+                      Joined
+                    </TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {userData.projects!.map(project => (
+                    <TableRow key={project.id}>
+                      <TableCell className='px-4 py-3 text-sm font-medium text-gray-900'>
+                        {project.name}
+                      </TableCell>
+                      <TableCell className='px-4 py-3 text-sm text-gray-900'>
+                        <Badge variant={project.role === 'owner' ? 'default' : 'secondary'}>
+                          {project.role}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className='text-muted-foreground px-4 py-3 text-sm'>
+                        {formatShortDate(project.joinedAt)}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
             : <p className='text-muted-foreground text-sm'>Not a member of any projects</p>}
           </AdminBox>
 

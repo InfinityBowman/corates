@@ -91,7 +91,7 @@ export function ReferenceImportSection({ studies }: ReferenceImportSectionProps)
         </div>
 
         {/* Reference list */}
-        <div className='max-h-48 flex flex-col gap-1 overflow-y-auto pr-1'>
+        <div className='flex max-h-48 flex-col gap-1 overflow-y-auto pr-1'>
           {studies.importedRefs.map((ref: any) => (
             <div
               key={ref._id}
@@ -195,7 +195,7 @@ export function ReferenceImportSection({ studies }: ReferenceImportSectionProps)
 
       <div className='text-muted-foreground text-xs'>
         <p className='mb-1 font-medium'>Supported formats:</p>
-        <ul className='list-inside list-disc flex flex-col gap-0.5'>
+        <ul className='flex list-inside list-disc flex-col gap-0.5'>
           {(SUPPORTED_FORMATS as any[]).map((format: any) => (
             <li key={format.extension}>
               <span className='font-medium'>{format.extension}</span> - {format.description}

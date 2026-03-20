@@ -14,6 +14,7 @@ import {
   LoaderIcon,
 } from 'lucide-react';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
+import { Card, CardContent } from '@/components/ui/card';
 import { useMembers } from '@/hooks/useMembers';
 
 function getDaysRemaining(endTimestamp: number | undefined) {
@@ -73,7 +74,7 @@ export function SubscriptionCard({ subscription, onManage, manageLoading }: Subs
   const { memberCount } = useMembers();
 
   return (
-    <div className='border-border bg-card overflow-hidden rounded-xl border shadow-sm'>
+    <Card className='py-0'>
       {/* Header */}
       <div className='from-primary to-primary/90 relative bg-gradient-to-r px-6 py-5'>
         <div className='flex items-start justify-between'>
@@ -102,7 +103,7 @@ export function SubscriptionCard({ subscription, onManage, manageLoading }: Subs
       </div>
 
       {/* Content */}
-      <div className='p-6'>
+      <CardContent className='p-6'>
         {/* Alerts */}
         {status === 'past_due' && (
           <Alert variant='destructive' className='mb-4'>
@@ -206,7 +207,7 @@ export function SubscriptionCard({ subscription, onManage, manageLoading }: Subs
             </>
           }
         </div>
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   );
 }

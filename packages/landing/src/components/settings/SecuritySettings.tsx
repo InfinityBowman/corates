@@ -103,11 +103,7 @@ export function SecuritySettings() {
             </div>
           </div>
           <div className='flex flex-col gap-6 p-6'>
-            {passwordSuccess && (
-              <Alert variant='success'>
-                {passwordSuccess}
-              </Alert>
-            )}
+            {passwordSuccess && <Alert variant='success'>{passwordSuccess}</Alert>}
 
             {/* Add Password */}
             {addPasswordSent ?
@@ -116,8 +112,8 @@ export function SecuritySettings() {
                 <div>
                   <p className='font-medium'>Check your email</p>
                   <p className='mt-1 text-sm'>
-                    We sent a link to <strong className='text-foreground'>{user?.email}</strong>{' '}
-                    to set your password.
+                    We sent a link to <strong className='text-foreground'>{user?.email}</strong> to
+                    set your password.
                   </p>
                   <button
                     type='button'
@@ -154,11 +150,7 @@ export function SecuritySettings() {
             {/* Change Password */}
             {showPasswordForm ?
               <form onSubmit={handlePasswordChange} className='flex flex-col gap-4'>
-                {passwordError && (
-                  <Alert variant='destructive'>
-                    {passwordError}
-                  </Alert>
-                )}
+                {passwordError && <Alert variant='destructive'>{passwordError}</Alert>}
                 <div>
                   <label className='text-secondary-foreground mb-1.5 block text-sm font-medium'>
                     Current Password

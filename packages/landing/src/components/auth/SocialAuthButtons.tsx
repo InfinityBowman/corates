@@ -30,12 +30,7 @@ export function GoogleButton({ loading, onClick, iconOnly }: SocialButtonProps) 
             aria-label='Signing in with Google'
             className='border-border border-t-secondary-foreground size-5 animate-spin rounded-full border-2 sm:h-6 sm:w-6'
           />
-        : <img
-            src='/logos/google.svg'
-            alt=''
-            className='size-5 sm:h-6 sm:w-6'
-            aria-hidden='true'
-          />
+        : <img src='/logos/google.svg' alt='' className='size-5 sm:h-6 sm:w-6' aria-hidden='true' />
         }
       </button>
     );
@@ -80,8 +75,7 @@ export function OrcidButton({ loading, onClick, iconOnly }: SocialButtonProps) {
             aria-label='Signing in with ORCID'
             className='border-border border-t-secondary-foreground size-5 animate-spin rounded-full border-2 sm:h-6 sm:w-6'
           />
-        : <img src='/logos/orcid.svg' alt='' className='size-5 sm:h-6 sm:w-6' aria-hidden='true' />
-        }
+        : <img src='/logos/orcid.svg' alt='' className='size-5 sm:h-6 sm:w-6' aria-hidden='true' />}
       </button>
     );
   }

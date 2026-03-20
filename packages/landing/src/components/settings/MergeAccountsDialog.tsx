@@ -373,7 +373,9 @@ export function MergeAccountsDialog({
                 <CheckIcon />
                 <div>
                   <AlertTitle>Email verified!</AlertTitle>
-                  <AlertDescription>You&apos;ve confirmed access to {displayTarget}.</AlertDescription>
+                  <AlertDescription>
+                    You&apos;ve confirmed access to {displayTarget}.
+                  </AlertDescription>
                 </div>
               </Alert>
               {mergePreview && (
@@ -381,7 +383,7 @@ export function MergeAccountsDialog({
                   <p className='text-secondary-foreground mb-2 font-medium'>
                     After merging, you&apos;ll have:
                   </p>
-                  <ul className='text-secondary-foreground flex flex-col list-inside list-disc gap-1'>
+                  <ul className='text-secondary-foreground flex list-inside list-disc flex-col gap-1'>
                     <li>
                       Sign-in methods:{' '}
                       {[

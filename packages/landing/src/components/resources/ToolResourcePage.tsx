@@ -1,6 +1,13 @@
 import { useMemo } from 'react';
 import { Link } from '@tanstack/react-router';
-import { FileTextIcon, CheckCircleIcon, ExternalLinkIcon, AlertCircleIcon, AlertTriangleIcon, HelpCircleIcon } from 'lucide-react';
+import {
+  FileTextIcon,
+  CheckCircleIcon,
+  ExternalLinkIcon,
+  AlertCircleIcon,
+  AlertTriangleIcon,
+  HelpCircleIcon,
+} from 'lucide-react';
 import { config } from '../../lib/config';
 import type { ToolContent, ScoreLevel } from '../../lib/tool-content';
 

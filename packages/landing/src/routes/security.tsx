@@ -1,5 +1,12 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { ShieldIcon, LockIcon, ServerIcon, UsersIcon, AlertCircleIcon, MailIcon } from 'lucide-react';
+import {
+  ShieldIcon,
+  LockIcon,
+  ServerIcon,
+  UsersIcon,
+  AlertCircleIcon,
+  MailIcon,
+} from 'lucide-react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import { config } from '../lib/config';

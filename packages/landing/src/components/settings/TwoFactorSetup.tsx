@@ -203,11 +203,7 @@ export function TwoFactorSetup() {
                   className={`size-5 ${isEnabled ? 'text-emerald-500' : 'text-muted-foreground'}`}
                 />
                 <p className='text-foreground font-medium'>Two-Factor Authentication</p>
-                {isEnabled && (
-                  <Badge variant='success'>
-                    Enabled
-                  </Badge>
-                )}
+                {isEnabled && <Badge variant='success'>Enabled</Badge>}
                 {!isEnabled && (
                   <Tooltip>
                     <TooltipTrigger>

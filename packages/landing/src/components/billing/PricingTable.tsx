@@ -396,9 +396,7 @@ export function PricingTable({ currentTier: currentTierProp }: PricingTableProps
             <div className='flex-1'>
               <div className='mb-2 flex items-center gap-2'>
                 <h3 className='text-foreground text-lg font-bold'>{singleProjectPlan.name}</h3>
-                <Badge variant='secondary'>
-                  One-time purchase
-                </Badge>
+                <Badge variant='secondary'>One-time purchase</Badge>
               </div>
               <p className='text-muted-foreground text-sm'>{singleProjectPlan.description}</p>
               <ul className='mt-3 flex flex-wrap gap-x-4 gap-y-1'>

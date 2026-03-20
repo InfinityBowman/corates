@@ -174,11 +174,7 @@ export function CreateLocalChecklist({ type: typeParam }: { type?: string }) {
             </div>
 
             {/* Error */}
-            {error && (
-              <Alert variant='destructive'>
-                {error}
-              </Alert>
-            )}
+            {error && <Alert variant='destructive'>{error}</Alert>}
 
             {/* Buttons */}
             <div className='flex gap-3'>

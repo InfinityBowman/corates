@@ -115,11 +115,7 @@ function SessionCard({ session, isCurrent, revoking, onRevoke }: SessionCardProp
               <p className='text-foreground font-medium'>
                 {deviceInfo.browser} on {deviceInfo.os}
               </p>
-              {isCurrent && (
-                <Badge variant='default'>
-                  Current
-                </Badge>
-              )}
+              {isCurrent && <Badge variant='default'>Current</Badge>}
             </div>
             <div className='text-muted-foreground mt-1 flex items-center gap-3 text-sm'>
               <span className='flex items-center'>
@@ -283,9 +279,7 @@ export function SessionManagement() {
       )}
 
       {sessionsError && (
-        <Alert variant='destructive'>
-          Failed to load sessions. Please try again.
-        </Alert>
+        <Alert variant='destructive'>Failed to load sessions. Please try again.</Alert>
       )}
 
       {!isLoading && !sessionsError && (

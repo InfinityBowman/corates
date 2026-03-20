@@ -163,10 +163,7 @@ export function LinkedAccountsSection() {
             <div>
               <p className='font-medium'>Failed to load linked accounts</p>
               <p className='mt-1 text-sm'>{(error as Error)?.message}</p>
-              <button
-                onClick={() => refetch()}
-                className='mt-2 text-sm font-medium underline'
-              >
+              <button onClick={() => refetch()} className='mt-2 text-sm font-medium underline'>
                 Try again
               </button>
             </div>
@@ -246,11 +243,7 @@ export function LinkedAccountsSection() {
               Your CoRATES data will not be affected.
             </AlertDialogDescription>
           </AlertDialogHeader>
-          {unlinkError && (
-            <Alert variant='destructive'>
-              {unlinkError}
-            </Alert>
-          )}
+          {unlinkError && <Alert variant='destructive'>{unlinkError}</Alert>}
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction

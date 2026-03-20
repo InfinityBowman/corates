@@ -197,9 +197,7 @@ function AdminBillingStuckStatesPage() {
                     <h2 className='text-foreground text-lg font-semibold'>
                       {getStuckStateTypeLabel(type)}
                     </h2>
-                    <Badge variant='warning'>
-                      {orgs.length}
-                    </Badge>
+                    <Badge variant='warning'>{orgs.length}</Badge>
                   </div>
                 </div>
                 <div className='p-6'>

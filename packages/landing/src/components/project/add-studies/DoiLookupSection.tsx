@@ -133,7 +133,7 @@ export function DoiLookupSection({ studies }: DoiLookupSectionProps) {
             </div>
           )}
 
-          <div className='max-h-64 flex flex-col gap-1 overflow-y-auto pr-1'>
+          <div className='flex max-h-64 flex-col gap-1 overflow-y-auto pr-1'>
             {/* References with PDF available */}
             {refsWithPdf.map((ref: any) => (
               <LookupRefWithPdf

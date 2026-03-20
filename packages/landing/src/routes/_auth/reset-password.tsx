@@ -99,14 +99,18 @@ function RequestResetForm() {
           <div>
             <AlertTitle>Reset Email Sent!</AlertTitle>
             <AlertDescription>
-              Check your email for instructions to reset your password. Redirecting you to sign in...
+              Check your email for instructions to reset your password. Redirecting you to sign
+              in...
             </AlertDescription>
           </div>
         </Alert>
       )}
 
       {!success && (
-        <form onSubmit={handleSubmit} className='animate-in fade-in flex flex-col gap-4 duration-200'>
+        <form
+          onSubmit={handleSubmit}
+          className='animate-in fade-in flex flex-col gap-4 duration-200'
+        >
           <div>
             <label
               className='text-secondary-foreground mb-1 block text-xs font-semibold sm:mb-2 sm:text-sm'
@@ -234,7 +238,10 @@ function SetNewPasswordForm({ token }: { token: string }) {
       )}
 
       {!success && (
-        <form onSubmit={handleSubmit} className='animate-in fade-in flex flex-col gap-4 duration-200'>
+        <form
+          onSubmit={handleSubmit}
+          className='animate-in fade-in flex flex-col gap-4 duration-200'
+        >
           <div>
             <label
               className='text-secondary-foreground mb-1 block text-xs font-semibold sm:mb-2 sm:text-sm'

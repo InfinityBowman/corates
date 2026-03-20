@@ -18,10 +18,7 @@ export function ErrorMessage({ error, id, className }: ErrorMessageProps) {
     <Alert
       variant='destructive'
       aria-live='assertive'
-      className={cn(
-        'animate-in fade-in mt-1 px-2 py-1 text-xs duration-200 sm:text-sm',
-        className,
-      )}
+      className={cn('animate-in fade-in mt-1 px-2 py-1 text-xs duration-200 sm:text-sm', className)}
     >
       <p id={id}>{error}</p>
     </Alert>

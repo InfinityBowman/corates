@@ -1,6 +1,13 @@
 import { useState } from 'react';
 import { createFileRoute } from '@tanstack/react-router';
-import { MailIcon, SendIcon, UserIcon, MessageSquareIcon, LoaderIcon, AlertCircleIcon } from 'lucide-react';
+import {
+  MailIcon,
+  SendIcon,
+  UserIcon,
+  MessageSquareIcon,
+  LoaderIcon,
+  AlertCircleIcon,
+} from 'lucide-react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import { config } from '../lib/config';

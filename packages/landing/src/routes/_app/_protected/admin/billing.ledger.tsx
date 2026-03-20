@@ -61,7 +61,9 @@ const formatDate = (timestamp: string | number | Date | null | undefined): strin
   });
 };
 
-const getStatusVariant = (status: string): 'success' | 'destructive' | 'warning' | 'info' | 'secondary' => {
+const getStatusVariant = (
+  status: string,
+): 'success' | 'destructive' | 'warning' | 'info' | 'secondary' => {
   switch (status) {
     case 'processed':
       return 'success';

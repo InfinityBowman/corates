@@ -243,7 +243,10 @@ function PricingPage() {
                 {/* Popular badge */}
                 {isPopular && (
                   <div className='absolute -top-4 left-1/2 -translate-x-1/2'>
-                    <Badge variant='default' className='bg-blue-600 px-4 py-1.5 font-bold text-white shadow-lg'>
+                    <Badge
+                      variant='default'
+                      className='bg-blue-600 px-4 py-1.5 font-bold text-white shadow-lg'
+                    >
                       <ZapIcon className='size-3.5' />
                       Most Popular
                     </Badge>
@@ -339,9 +342,7 @@ function PricingPage() {
               <div className='flex-1'>
                 <div className='mb-2 flex items-center gap-2'>
                   <h3 className='text-lg font-bold text-gray-900'>{singleProjectPlan.name}</h3>
-                  <Badge variant='secondary'>
-                    One-time purchase
-                  </Badge>
+                  <Badge variant='secondary'>One-time purchase</Badge>
                 </div>
                 <p className='text-sm text-gray-600'>{singleProjectPlan.description}</p>
                 <ul className='mt-3 flex flex-wrap gap-x-4 gap-y-1'>

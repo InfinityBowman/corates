@@ -40,7 +40,14 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { handleError } from '@/lib/error-utils';
 import { AdminBox } from '@/components/admin/ui';
-import { table } from '@/components/admin/styles/admin-tokens';
+import {
+  Table,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableHead,
+  TableCell,
+} from '@/components/ui/table';
 import { queryKeys } from '@/lib/queryKeys';
 
 export const Route = createFileRoute('/_app/_protected/admin/projects/$projectId')({
@@ -390,62 +397,68 @@ function ProjectDetailPage() {
               Members ({projectData.members?.length ?? 0})
             </h2>
             {(projectData.members?.length ?? 0) > 0 ?
-              <div className='overflow-x-auto'>
-                <table className={table.base}>
-                  <thead>
-                    <tr className={table.header}>
-                      <th className={table.headerCell}>User</th>
-                      <th className={table.headerCell}>Role</th>
-                      <th className={table.headerCell}>Joined</th>
-                      <th className={`${table.headerCell} text-right`}>Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className={table.body}>
-                    {projectData.members!.map(member => (
-                      <tr key={member.id} className={table.row}>
-                        <td className={table.cellCompact}>
-                          <div className='flex items-center gap-3'>
-                            <UserAvatar
-                              src={member.userAvatar}
-                              name={member.userDisplayName || member.userName}
-                              size='sm'
-                            />
-                            <div>
-                              <Link
-                                to={'/admin/users/$userId' as string}
-                                params={{ userId: member.userId } as Record<string, string>}
-                                className='font-medium text-blue-600 hover:text-blue-700'
-                              >
-                                {member.userDisplayName || member.userName}
-                              </Link>
-                              <p className='text-muted-foreground text-xs'>{member.userEmail}</p>
-                            </div>
+              <Table>
+                <TableHeader>
+                  <TableRow className='border-b border-gray-200 bg-gray-50'>
+                    <TableHead className='px-6 py-3 text-xs font-medium tracking-wider text-gray-500 uppercase'>
+                      User
+                    </TableHead>
+                    <TableHead className='px-6 py-3 text-xs font-medium tracking-wider text-gray-500 uppercase'>
+                      Role
+                    </TableHead>
+                    <TableHead className='px-6 py-3 text-xs font-medium tracking-wider text-gray-500 uppercase'>
+                      Joined
+                    </TableHead>
+                    <TableHead className='px-6 py-3 text-right text-xs font-medium tracking-wider text-gray-500 uppercase'>
+                      Actions
+                    </TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {projectData.members!.map(member => (
+                    <TableRow key={member.id}>
+                      <TableCell className='px-4 py-3 text-sm text-gray-900'>
+                        <div className='flex items-center gap-3'>
+                          <UserAvatar
+                            src={member.userAvatar}
+                            name={member.userDisplayName || member.userName}
+                            size='sm'
+                          />
+                          <div>
+                            <Link
+                              to={'/admin/users/$userId' as string}
+                              params={{ userId: member.userId } as Record<string, string>}
+                              className='font-medium text-blue-600 hover:text-blue-700'
+                            >
+                              {member.userDisplayName || member.userName}
+                            </Link>
+                            <p className='text-muted-foreground text-xs'>{member.userEmail}</p>
                           </div>
-                        </td>
-                        <td className={table.cellCompact}>
-                          <Badge variant={member.role === 'owner' ? 'default' : 'secondary'}>
-                            {member.role}
-                          </Badge>
-                        </td>
-                        <td className={`${table.cellCompact} text-muted-foreground`}>
-                          {formatShortDate(member.joinedAt)}
-                        </td>
-                        <td className={`${table.cellCompact} text-right`}>
-                          <button
-                            type='button'
-                            onClick={() => setConfirmDialog({ type: 'remove-member', member })}
-                            disabled={loading}
-                            className='inline-flex items-center text-sm text-red-600 hover:text-red-700 disabled:opacity-50'
-                            title='Remove member'
-                          >
-                            <UserMinusIcon className='size-4' />
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                        </div>
+                      </TableCell>
+                      <TableCell className='px-4 py-3 text-sm text-gray-900'>
+                        <Badge variant={member.role === 'owner' ? 'default' : 'secondary'}>
+                          {member.role}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className='text-muted-foreground px-4 py-3 text-sm'>
+                        {formatShortDate(member.joinedAt)}
+                      </TableCell>
+                      <TableCell className='px-4 py-3 text-right text-sm text-gray-900'>
+                        <button
+                          type='button'
+                          onClick={() => setConfirmDialog({ type: 'remove-member', member })}
+                          disabled={loading}
+                          className='inline-flex items-center text-sm text-red-600 hover:text-red-700 disabled:opacity-50'
+                          title='Remove member'
+                        >
+                          <UserMinusIcon className='size-4' />
+                        </button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
             : <p className='text-muted-foreground text-sm'>No members</p>}
           </AdminBox>
 
@@ -456,53 +469,61 @@ function ProjectDetailPage() {
               Files ({projectData.files?.length ?? 0})
             </h2>
             {(projectData.files?.length ?? 0) > 0 ?
-              <div className='overflow-x-auto'>
-                <table className={table.base}>
-                  <thead>
-                    <tr className={table.header}>
-                      <th className={table.headerCell}>File</th>
-                      <th className={table.headerCell}>Type</th>
-                      <th className={table.headerCell}>Size</th>
-                      <th className={table.headerCell}>Uploaded By</th>
-                      <th className={table.headerCell}>Uploaded</th>
-                    </tr>
-                  </thead>
-                  <tbody className={table.body}>
-                    {projectData.files!.map(file => (
-                      <tr key={file.id} className={table.row}>
-                        <td className={table.cellCompact}>
-                          <div className='flex items-center gap-2'>
-                            <FileTextIcon className='text-muted-foreground/70 size-4' />
-                            <span className='text-foreground font-medium'>
-                              {file.originalName || file.filename}
-                            </span>
-                          </div>
-                        </td>
-                        <td className={`${table.cellCompact} text-muted-foreground`}>
-                          {file.fileType || '-'}
-                        </td>
-                        <td className={`${table.cellCompact} text-muted-foreground`}>
-                          {formatBytes(file.fileSize)}
-                        </td>
-                        <td className={table.cellCompact}>
-                          {file.uploadedBy ?
-                            <Link
-                              to={'/admin/users/$userId' as string}
-                              params={{ userId: file.uploadedBy } as Record<string, string>}
-                              className='text-blue-600 hover:text-blue-700'
-                            >
-                              {file.uploaderDisplayName || file.uploaderName}
-                            </Link>
-                          : <span className='text-muted-foreground/70'>-</span>}
-                        </td>
-                        <td className={`${table.cellCompact} text-muted-foreground`}>
-                          {formatShortDate(file.createdAt)}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+              <Table>
+                <TableHeader>
+                  <TableRow className='border-b border-gray-200 bg-gray-50'>
+                    <TableHead className='px-6 py-3 text-xs font-medium tracking-wider text-gray-500 uppercase'>
+                      File
+                    </TableHead>
+                    <TableHead className='px-6 py-3 text-xs font-medium tracking-wider text-gray-500 uppercase'>
+                      Type
+                    </TableHead>
+                    <TableHead className='px-6 py-3 text-xs font-medium tracking-wider text-gray-500 uppercase'>
+                      Size
+                    </TableHead>
+                    <TableHead className='px-6 py-3 text-xs font-medium tracking-wider text-gray-500 uppercase'>
+                      Uploaded By
+                    </TableHead>
+                    <TableHead className='px-6 py-3 text-xs font-medium tracking-wider text-gray-500 uppercase'>
+                      Uploaded
+                    </TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {projectData.files!.map(file => (
+                    <TableRow key={file.id}>
+                      <TableCell className='px-4 py-3 text-sm text-gray-900'>
+                        <div className='flex items-center gap-2'>
+                          <FileTextIcon className='text-muted-foreground/70 size-4' />
+                          <span className='text-foreground font-medium'>
+                            {file.originalName || file.filename}
+                          </span>
+                        </div>
+                      </TableCell>
+                      <TableCell className='text-muted-foreground px-4 py-3 text-sm'>
+                        {file.fileType || '-'}
+                      </TableCell>
+                      <TableCell className='text-muted-foreground px-4 py-3 text-sm'>
+                        {formatBytes(file.fileSize)}
+                      </TableCell>
+                      <TableCell className='px-4 py-3 text-sm text-gray-900'>
+                        {file.uploadedBy ?
+                          <Link
+                            to={'/admin/users/$userId' as string}
+                            params={{ userId: file.uploadedBy } as Record<string, string>}
+                            className='text-blue-600 hover:text-blue-700'
+                          >
+                            {file.uploaderDisplayName || file.uploaderName}
+                          </Link>
+                        : <span className='text-muted-foreground/70'>-</span>}
+                      </TableCell>
+                      <TableCell className='text-muted-foreground px-4 py-3 text-sm'>
+                        {formatShortDate(file.createdAt)}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
             : <p className='text-muted-foreground text-sm'>No files uploaded</p>}
           </AdminBox>
 
@@ -513,65 +534,71 @@ function ProjectDetailPage() {
               Invitations ({projectData.invitations?.length ?? 0})
             </h2>
             {(projectData.invitations?.length ?? 0) > 0 ?
-              <div className='overflow-x-auto'>
-                <table className={table.base}>
-                  <thead>
-                    <tr className={table.header}>
-                      <th className={table.headerCell}>Email</th>
-                      <th className={table.headerCell}>Role</th>
-                      <th className={table.headerCell}>Status</th>
-                      <th className={table.headerCell}>Invited By</th>
-                      <th className={table.headerCell}>Created</th>
-                    </tr>
-                  </thead>
-                  <tbody className={table.body}>
-                    {projectData.invitations!.map(invitation => (
-                      <tr key={invitation.id} className={table.row}>
-                        <td className={table.cellCompact}>{invitation.email}</td>
-                        <td className={table.cellCompact}>
-                          <Badge variant='secondary'>
-                            {invitation.role}
+              <Table>
+                <TableHeader>
+                  <TableRow className='border-b border-gray-200 bg-gray-50'>
+                    <TableHead className='px-6 py-3 text-xs font-medium tracking-wider text-gray-500 uppercase'>
+                      Email
+                    </TableHead>
+                    <TableHead className='px-6 py-3 text-xs font-medium tracking-wider text-gray-500 uppercase'>
+                      Role
+                    </TableHead>
+                    <TableHead className='px-6 py-3 text-xs font-medium tracking-wider text-gray-500 uppercase'>
+                      Status
+                    </TableHead>
+                    <TableHead className='px-6 py-3 text-xs font-medium tracking-wider text-gray-500 uppercase'>
+                      Invited By
+                    </TableHead>
+                    <TableHead className='px-6 py-3 text-xs font-medium tracking-wider text-gray-500 uppercase'>
+                      Created
+                    </TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {projectData.invitations!.map(invitation => (
+                    <TableRow key={invitation.id}>
+                      <TableCell className='px-4 py-3 text-sm text-gray-900'>
+                        {invitation.email}
+                      </TableCell>
+                      <TableCell className='px-4 py-3 text-sm text-gray-900'>
+                        <Badge variant='secondary'>{invitation.role}</Badge>
+                        {invitation.grantOrgMembership && (
+                          <span className='text-muted-foreground ml-1 text-xs'>+ org</span>
+                        )}
+                      </TableCell>
+                      <TableCell className='px-4 py-3 text-sm text-gray-900'>
+                        {invitation.acceptedAt && (
+                          <Badge variant='success'>
+                            <CheckCircleIcon className='mr-1 size-3' />
+                            Accepted
                           </Badge>
-                          {invitation.grantOrgMembership && (
-                            <span className='text-muted-foreground ml-1 text-xs'>+ org</span>
-                          )}
-                        </td>
-                        <td className={table.cellCompact}>
-                          {invitation.acceptedAt && (
-                            <Badge variant='success'>
-                              <CheckCircleIcon className='mr-1 size-3' />
-                              Accepted
-                            </Badge>
-                          )}
-                          {isInvitationPending(invitation) && (
-                            <Badge variant='warning'>
-                              <ClockIcon className='mr-1 size-3' />
-                              Pending
-                            </Badge>
-                          )}
-                          {isInvitationExpired(invitation) && (
-                            <Badge variant='destructive'>
-                              Expired
-                            </Badge>
-                          )}
-                        </td>
-                        <td className={table.cellCompact}>
-                          <Link
-                            to={'/admin/users/$userId' as string}
-                            params={{ userId: invitation.invitedBy } as Record<string, string>}
-                            className='text-blue-600 hover:text-blue-700'
-                          >
-                            {invitation.inviterDisplayName || invitation.inviterName}
-                          </Link>
-                        </td>
-                        <td className={`${table.cellCompact} text-muted-foreground`}>
-                          {formatShortDate(invitation.createdAt)}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                        )}
+                        {isInvitationPending(invitation) && (
+                          <Badge variant='warning'>
+                            <ClockIcon className='mr-1 size-3' />
+                            Pending
+                          </Badge>
+                        )}
+                        {isInvitationExpired(invitation) && (
+                          <Badge variant='destructive'>Expired</Badge>
+                        )}
+                      </TableCell>
+                      <TableCell className='px-4 py-3 text-sm text-gray-900'>
+                        <Link
+                          to={'/admin/users/$userId' as string}
+                          params={{ userId: invitation.invitedBy } as Record<string, string>}
+                          className='text-blue-600 hover:text-blue-700'
+                        >
+                          {invitation.inviterDisplayName || invitation.inviterName}
+                        </Link>
+                      </TableCell>
+                      <TableCell className='text-muted-foreground px-4 py-3 text-sm'>
+                        {formatShortDate(invitation.createdAt)}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
             : <p className='text-muted-foreground text-sm'>No invitations</p>}
           </AdminBox>
         </>

@@ -32,7 +32,15 @@ import {
   AlertDialogAction,
 } from '@/components/ui/alert-dialog';
 import { DashboardHeader, AdminSection, AdminBox } from '@/components/admin/ui';
-import { input, table } from '@/components/admin/styles/admin-tokens';
+import { input } from '@/components/admin/styles/admin-tokens';
+import {
+  Table,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableHead,
+  TableCell,
+} from '@/components/ui/table';
 
 export const Route = createFileRoute('/_app/_protected/admin/storage')({
   component: StorageManagementPage,
@@ -280,113 +288,121 @@ function StorageManagementPage() {
       {/* Documents Table */}
       <AdminSection title='Documents'>
         <AdminBox padding='compact' className='overflow-hidden p-0'>
-          <div className='overflow-x-auto'>
-            <table className={table.base}>
-              <thead className={table.header}>
-                <tr className='border-border border-b'>
-                  <th className='px-6 py-3 text-left'>
-                    <button
-                      type='button'
-                      onClick={toggleSelectAll}
-                      className='text-muted-foreground/70 hover:text-muted-foreground flex items-center'
-                      title='Select all'
-                    >
-                      {allCurrentPageSelected ?
-                        <CheckSquareIcon className='size-4 text-blue-600' />
-                      : <SquareIcon className='size-4' />}
-                    </button>
-                  </th>
-                  <th className={table.headerCell}>File Name</th>
-                  <th className={table.headerCell}>Size</th>
-                  <th className={table.headerCell}>Project ID</th>
-                  <th className={table.headerCell}>Study ID</th>
-                  <th className={table.headerCell}>Uploaded</th>
-                  <th className={`${table.headerCell} text-right`}>Actions</th>
-                </tr>
-              </thead>
-              <tbody className={table.body}>
-                {documentsDataQuery.isLoading ?
-                  <tr>
-                    <td colSpan={7} className='px-6 py-12 text-center'>
-                      <div className='flex items-center justify-center'>
-                        <LoaderIcon className='size-8 animate-spin text-blue-600' />
+          <Table>
+            <TableHeader className='border-b border-gray-200 bg-gray-50'>
+              <TableRow className='border-border border-b'>
+                <TableHead className='px-6 py-3'>
+                  <button
+                    type='button'
+                    onClick={toggleSelectAll}
+                    className='text-muted-foreground/70 hover:text-muted-foreground flex items-center'
+                    title='Select all'
+                  >
+                    {allCurrentPageSelected ?
+                      <CheckSquareIcon className='size-4 text-blue-600' />
+                    : <SquareIcon className='size-4' />}
+                  </button>
+                </TableHead>
+                <TableHead className='px-6 py-3 text-xs font-medium tracking-wider text-gray-500 uppercase'>
+                  File Name
+                </TableHead>
+                <TableHead className='px-6 py-3 text-xs font-medium tracking-wider text-gray-500 uppercase'>
+                  Size
+                </TableHead>
+                <TableHead className='px-6 py-3 text-xs font-medium tracking-wider text-gray-500 uppercase'>
+                  Project ID
+                </TableHead>
+                <TableHead className='px-6 py-3 text-xs font-medium tracking-wider text-gray-500 uppercase'>
+                  Study ID
+                </TableHead>
+                <TableHead className='px-6 py-3 text-xs font-medium tracking-wider text-gray-500 uppercase'>
+                  Uploaded
+                </TableHead>
+                <TableHead className='px-6 py-3 text-right text-xs font-medium tracking-wider text-gray-500 uppercase'>
+                  Actions
+                </TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {documentsDataQuery.isLoading ?
+                <TableRow>
+                  <TableCell colSpan={7} className='px-6 py-12 text-center'>
+                    <div className='flex items-center justify-center'>
+                      <LoaderIcon className='size-8 animate-spin text-blue-600' />
+                    </div>
+                  </TableCell>
+                </TableRow>
+              : (documentsData?.documents ?? []).length > 0 ?
+                (documentsData?.documents ?? []).map(doc => (
+                  <TableRow
+                    key={doc.key}
+                    className={doc.orphaned ? 'bg-orange-50' : ''}
+                    onClick={e => handleRowClick(e, doc.key)}
+                  >
+                    <TableCell className='px-6 py-4 text-sm text-gray-900'>
+                      <button
+                        type='button'
+                        onClick={e => {
+                          e.stopPropagation();
+                          toggleSelect(doc.key);
+                        }}
+                        className='text-muted-foreground/70 hover:text-muted-foreground'
+                      >
+                        {selectedKeys.has(doc.key) ?
+                          <CheckSquareIcon className='size-4 text-blue-600' />
+                        : <SquareIcon className='size-4' />}
+                      </button>
+                    </TableCell>
+                    <TableCell className='px-6 py-4 text-sm text-gray-900'>
+                      <div className='flex items-center gap-2'>
+                        <span className='text-foreground font-mono text-sm'>{doc.fileName}</span>
+                        {doc.orphaned && (
+                          <Badge
+                            variant='warning'
+                            title='Orphaned: File exists in R2 but is not tracked in mediaFiles database table'
+                          >
+                            Orphaned
+                          </Badge>
+                        )}
                       </div>
-                    </td>
-                  </tr>
-                : (documentsData?.documents ?? []).length > 0 ?
-                  (documentsData?.documents ?? []).map(doc => (
-                    <tr
-                      key={doc.key}
-                      className={`${table.row} ${doc.orphaned ? 'bg-orange-50' : ''}`}
-                      onClick={e => handleRowClick(e, doc.key)}
-                    >
-                      <td className={table.cell}>
-                        <button
-                          type='button'
-                          onClick={e => {
-                            e.stopPropagation();
-                            toggleSelect(doc.key);
-                          }}
-                          className='text-muted-foreground/70 hover:text-muted-foreground'
-                        >
-                          {selectedKeys.has(doc.key) ?
-                            <CheckSquareIcon className='size-4 text-blue-600' />
-                          : <SquareIcon className='size-4' />}
-                        </button>
-                      </td>
-                      <td className={table.cell}>
-                        <div className='flex items-center gap-2'>
-                          <span className='text-foreground font-mono text-sm'>{doc.fileName}</span>
-                          {doc.orphaned && (
-                            <Badge
-                              variant='warning'
-                              title='Orphaned: File exists in R2 but is not tracked in mediaFiles database table'
-                            >
-                              Orphaned
-                            </Badge>
-                          )}
-                        </div>
-                      </td>
-                      <td className={`${table.cell} text-muted-foreground`}>
-                        {formatFileSize(doc.size)}
-                      </td>
-                      <td className={table.cell}>
-                        <span className='text-muted-foreground font-mono text-xs'>
-                          {doc.projectId}
-                        </span>
-                      </td>
-                      <td className={table.cell}>
-                        <span className='text-muted-foreground font-mono text-xs'>
-                          {doc.studyId}
-                        </span>
-                      </td>
-                      <td className={`${table.cell} text-muted-foreground`}>
-                        {formatDate(doc.uploaded)}
-                      </td>
-                      <td className={`${table.cell} text-right`}>
-                        <button
-                          type='button'
-                          onClick={e => {
-                            e.stopPropagation();
-                            handleSingleDelete(doc.key);
-                          }}
-                          className='rounded-lg p-2 text-red-600 hover:bg-red-50'
-                          title='Delete'
-                        >
-                          <Trash2Icon className='size-4' />
-                        </button>
-                      </td>
-                    </tr>
-                  ))
-                : <tr>
-                    <td colSpan={7} className='text-muted-foreground px-6 py-12 text-center'>
-                      No documents found
-                    </td>
-                  </tr>
-                }
-              </tbody>
-            </table>
-          </div>
+                    </TableCell>
+                    <TableCell className='text-muted-foreground px-6 py-4 text-sm'>
+                      {formatFileSize(doc.size)}
+                    </TableCell>
+                    <TableCell className='px-6 py-4 text-sm text-gray-900'>
+                      <span className='text-muted-foreground font-mono text-xs'>
+                        {doc.projectId}
+                      </span>
+                    </TableCell>
+                    <TableCell className='px-6 py-4 text-sm text-gray-900'>
+                      <span className='text-muted-foreground font-mono text-xs'>{doc.studyId}</span>
+                    </TableCell>
+                    <TableCell className='text-muted-foreground px-6 py-4 text-sm'>
+                      {formatDate(doc.uploaded)}
+                    </TableCell>
+                    <TableCell className='px-6 py-4 text-right text-sm text-gray-900'>
+                      <button
+                        type='button'
+                        onClick={e => {
+                          e.stopPropagation();
+                          handleSingleDelete(doc.key);
+                        }}
+                        className='rounded-lg p-2 text-red-600 hover:bg-red-50'
+                        title='Delete'
+                      >
+                        <Trash2Icon className='size-4' />
+                      </button>
+                    </TableCell>
+                  </TableRow>
+                ))
+              : <TableRow>
+                  <TableCell colSpan={7} className='text-muted-foreground px-6 py-12 text-center'>
+                    No documents found
+                  </TableCell>
+                </TableRow>
+              }
+            </TableBody>
+          </Table>
 
           {/* Pagination */}
           {documentsData && (

@@ -1,5 +1,18 @@
 import { ReactNode } from 'react';
-import { CheckIcon, MailIcon, LinkIcon, FileTextIcon, ShieldCheckIcon, ZapIcon, LockIcon, KeyIcon, ShieldIcon, MessageCircleIcon, WifiOffIcon, TimerIcon } from 'lucide-react';
+import {
+  CheckIcon,
+  MailIcon,
+  LinkIcon,
+  FileTextIcon,
+  ShieldCheckIcon,
+  ZapIcon,
+  LockIcon,
+  KeyIcon,
+  ShieldIcon,
+  MessageCircleIcon,
+  WifiOffIcon,
+  TimerIcon,
+} from 'lucide-react';
 
 interface IllustrationWrapperProps {
   gradient: string;

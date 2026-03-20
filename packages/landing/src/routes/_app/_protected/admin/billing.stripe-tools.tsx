@@ -18,6 +18,14 @@ import {
   CheckCircleIcon,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import {
+  Table,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableHead,
+  TableCell,
+} from '@/components/ui/table';
 import { apiFetch } from '@/lib/apiFetch';
 import { showToast } from '@/components/ui/toast';
 import { DashboardHeader, AdminBox } from '@/components/admin/ui';
@@ -96,7 +104,9 @@ const formatCurrency = (amount: number | null | undefined, currency = 'usd'): st
   }).format(amount / 100);
 };
 
-const getStatusVariant = (status: string): 'success' | 'destructive' | 'warning' | 'info' | 'secondary' => {
+const getStatusVariant = (
+  status: string,
+): 'success' | 'destructive' | 'warning' | 'info' | 'secondary' => {
   const variants: Record<string, 'success' | 'destructive' | 'warning' | 'info' | 'secondary'> = {
     active: 'success',
     trialing: 'info',
@@ -573,77 +583,71 @@ function StripeToolsPage() {
               </h2>
               {invoices.length === 0 ?
                 <p className='text-muted-foreground text-sm'>No invoices found</p>
-              : <div className='overflow-x-auto'>
-                  <table className='w-full'>
-                    <thead>
-                      <tr className='border-border bg-muted border-b'>
-                        <th className='text-muted-foreground px-4 py-2 text-left text-xs font-medium uppercase'>
-                          Invoice
-                        </th>
-                        <th className='text-muted-foreground px-4 py-2 text-left text-xs font-medium uppercase'>
-                          Status
-                        </th>
-                        <th className='text-muted-foreground px-4 py-2 text-right text-xs font-medium uppercase'>
-                          Amount
-                        </th>
-                        <th className='text-muted-foreground px-4 py-2 text-left text-xs font-medium uppercase'>
-                          Created
-                        </th>
-                        <th className='text-muted-foreground px-4 py-2 text-right text-xs font-medium uppercase'>
-                          Actions
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className='divide-border divide-y'>
-                      {invoices.map(invoice => (
-                        <tr key={invoice.id} className='hover:bg-muted'>
-                          <td className='px-4 py-3'>
-                            <span className='font-mono text-sm'>
-                              {invoice.number || invoice.id}
-                            </span>
-                          </td>
-                          <td className='px-4 py-3'>
-                            <Badge variant={getStatusVariant(invoice.status)}>
-                              {invoice.status}
-                            </Badge>
-                          </td>
-                          <td className='px-4 py-3 text-right text-sm'>
-                            {formatCurrency(invoice.total, invoice.currency)}
-                          </td>
-                          <td className='text-muted-foreground px-4 py-3 text-sm'>
-                            {formatDate(invoice.created)}
-                          </td>
-                          <td className='px-4 py-3 text-right'>
-                            <div className='flex justify-end gap-2'>
-                              {invoice.hostedInvoiceUrl && (
-                                <a
-                                  href={invoice.hostedInvoiceUrl}
-                                  target='_blank'
-                                  rel='noopener noreferrer'
-                                  className='text-blue-600 hover:text-blue-700'
-                                  title='View Invoice'
-                                >
-                                  <ExternalLinkIcon className='size-4' />
-                                </a>
-                              )}
-                              {invoice.invoicePdf && (
-                                <a
-                                  href={invoice.invoicePdf}
-                                  target='_blank'
-                                  rel='noopener noreferrer'
-                                  className='text-muted-foreground hover:text-secondary-foreground'
-                                  title='Download PDF'
-                                >
-                                  <FileTextIcon className='size-4' />
-                                </a>
-                              )}
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+              : <Table>
+                  <TableHeader>
+                    <TableRow className='border-border bg-muted border-b'>
+                      <TableHead className='text-muted-foreground px-4 py-2 text-xs font-medium uppercase'>
+                        Invoice
+                      </TableHead>
+                      <TableHead className='text-muted-foreground px-4 py-2 text-xs font-medium uppercase'>
+                        Status
+                      </TableHead>
+                      <TableHead className='text-muted-foreground px-4 py-2 text-right text-xs font-medium uppercase'>
+                        Amount
+                      </TableHead>
+                      <TableHead className='text-muted-foreground px-4 py-2 text-xs font-medium uppercase'>
+                        Created
+                      </TableHead>
+                      <TableHead className='text-muted-foreground px-4 py-2 text-right text-xs font-medium uppercase'>
+                        Actions
+                      </TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {invoices.map(invoice => (
+                      <TableRow key={invoice.id}>
+                        <TableCell className='px-4 py-3'>
+                          <span className='font-mono text-sm'>{invoice.number || invoice.id}</span>
+                        </TableCell>
+                        <TableCell className='px-4 py-3'>
+                          <Badge variant={getStatusVariant(invoice.status)}>{invoice.status}</Badge>
+                        </TableCell>
+                        <TableCell className='px-4 py-3 text-right text-sm'>
+                          {formatCurrency(invoice.total, invoice.currency)}
+                        </TableCell>
+                        <TableCell className='text-muted-foreground px-4 py-3 text-sm'>
+                          {formatDate(invoice.created)}
+                        </TableCell>
+                        <TableCell className='px-4 py-3 text-right'>
+                          <div className='flex justify-end gap-2'>
+                            {invoice.hostedInvoiceUrl && (
+                              <a
+                                href={invoice.hostedInvoiceUrl}
+                                target='_blank'
+                                rel='noopener noreferrer'
+                                className='text-blue-600 hover:text-blue-700'
+                                title='View Invoice'
+                              >
+                                <ExternalLinkIcon className='size-4' />
+                              </a>
+                            )}
+                            {invoice.invoicePdf && (
+                              <a
+                                href={invoice.invoicePdf}
+                                target='_blank'
+                                rel='noopener noreferrer'
+                                className='text-muted-foreground hover:text-secondary-foreground'
+                                title='Download PDF'
+                              >
+                                <FileTextIcon className='size-4' />
+                              </a>
+                            )}
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
               }
             </AdminBox>
           )}

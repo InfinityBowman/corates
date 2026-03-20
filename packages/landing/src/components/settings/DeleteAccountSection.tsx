@@ -42,7 +42,7 @@ export function DeleteAccountSection() {
             <p className='mb-2 text-sm font-medium text-red-800'>
               Are you sure you want to delete your account?
             </p>
-            <ul className='flex flex-col list-inside list-disc gap-1 text-sm text-red-700'>
+            <ul className='flex list-inside list-disc flex-col gap-1 text-sm text-red-700'>
               <li>All your projects will be permanently deleted</li>
               <li>All your checklists and reviews will be lost</li>
               <li>You will be removed from all shared projects</li>

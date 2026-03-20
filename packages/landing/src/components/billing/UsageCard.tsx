@@ -4,6 +4,7 @@
 
 import { useMemo } from 'react';
 import { UsersIcon, FolderIcon, TrendingUpIcon } from 'lucide-react';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 
 interface UsageMetricProps {
@@ -67,33 +68,37 @@ export function UsageCard({ quotas, usage }: UsageCardProps) {
     quotas && (quotas['projects.max'] !== 0 || quotas['collaborators.org.max'] !== 0);
 
   return (
-    <div className='border-border bg-card rounded-xl border p-6 shadow-sm'>
-      <div className='mb-5 flex items-center gap-2'>
-        <TrendingUpIcon className='text-muted-foreground size-5' />
-        <h3 className='text-foreground text-lg font-semibold'>Usage</h3>
-      </div>
+    <Card>
+      <CardHeader>
+        <CardTitle className='flex items-center gap-2 text-lg'>
+          <TrendingUpIcon className='text-muted-foreground size-5' />
+          Usage
+        </CardTitle>
+      </CardHeader>
 
-      {hasAnyQuota ?
-        <div className='flex flex-col gap-5'>
-          {metrics.map(
-            metric =>
-              (metric.max !== 0 || metric.used > 0) && (
-                <UsageMetric
-                  key={metric.key}
-                  label={metric.label}
-                  icon={metric.icon}
-                  used={metric.used}
-                  max={metric.max}
-                />
-              ),
-          )}
-        </div>
-      : <div className='py-6 text-center'>
-          <p className='text-muted-foreground text-sm'>
-            Upgrade to a paid plan to create projects and collaborate with your team.
-          </p>
-        </div>
-      }
-    </div>
+      <CardContent>
+        {hasAnyQuota ?
+          <div className='flex flex-col gap-5'>
+            {metrics.map(
+              metric =>
+                (metric.max !== 0 || metric.used > 0) && (
+                  <UsageMetric
+                    key={metric.key}
+                    label={metric.label}
+                    icon={metric.icon}
+                    used={metric.used}
+                    max={metric.max}
+                  />
+                ),
+            )}
+          </div>
+        : <div className='py-6 text-center'>
+            <p className='text-muted-foreground text-sm'>
+              Upgrade to a paid plan to create projects and collaborate with your team.
+            </p>
+          </div>
+        }
+      </CardContent>
+    </Card>
   );
 }
