@@ -59,7 +59,7 @@ export function StudyTreeItem({
         </div>
       </CollapsibleTrigger>
       <CollapsibleContent>
-        <div className='border-border mt-0.5 ml-4 space-y-0.5 border-l pl-2'>
+        <div className='border-border mt-0.5 ml-4 flex flex-col gap-0.5 border-l pl-2'>
           {assignedChecklists.length > 0 ?
             assignedChecklists.map(checklist => (
               <ChecklistTreeItem

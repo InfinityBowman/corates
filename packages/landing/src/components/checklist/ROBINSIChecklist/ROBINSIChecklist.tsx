@@ -88,7 +88,7 @@ export function ROBINSIChecklist({
 
   return (
     <div className='bg-blue-50'>
-      <div className='container mx-auto max-w-5xl space-y-4 px-4 py-6'>
+      <div className='container mx-auto flex max-w-5xl flex-col gap-4 px-4 py-6'>
         <div className='text-foreground mb-6 text-left text-lg font-semibold sm:text-center'>
           {checklistState?.name || 'ROBINS-I Checklist'}
         </div>
@@ -139,7 +139,7 @@ export function ROBINSIChecklist({
         {/* Domain sections - hidden if assessment stopped */}
         {!stopAssessment && (
           <>
-            <div className='space-y-4'>
+            <div className='flex flex-col gap-4'>
               {activeDomains.map((domainKey: string) => (
                 <div
                   key={domainKey}

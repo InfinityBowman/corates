@@ -69,7 +69,7 @@ export function AppNavbar({ mobileSidebarOpen, toggleMobileSidebar }: AppNavbarP
 
   return (
     <nav className='sticky top-0 z-50 flex items-center justify-between bg-gradient-to-r from-blue-700 to-blue-500 px-4 py-2 text-white shadow-lg'>
-      <div className='flex items-center space-x-3'>
+      <div className='flex items-center gap-3'>
         {/* Mobile sidebar toggle */}
         {toggleMobileSidebar && (
           <button
@@ -110,7 +110,7 @@ export function AppNavbar({ mobileSidebarOpen, toggleMobileSidebar }: AppNavbarP
         )}
       </div>
 
-      <div className='text-2xs flex items-center space-x-4 sm:text-xs'>
+      <div className='text-2xs flex items-center gap-4 sm:text-xs'>
         <Link
           to='/dashboard'
           className='flex h-9 items-center rounded px-2 font-medium transition hover:bg-blue-600'
@@ -130,7 +130,7 @@ export function AppNavbar({ mobileSidebarOpen, toggleMobileSidebar }: AppNavbarP
         {showUser ?
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <button className='flex h-9 items-center space-x-2 rounded px-2 font-medium transition hover:bg-blue-600'>
+              <button className='flex h-9 items-center gap-2 rounded px-2 font-medium transition hover:bg-blue-600'>
                 <Avatar className='size-6' size='sm'>
                   {user?.image ?
                     <AvatarImage src={user.image} alt={displayName} />

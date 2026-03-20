@@ -12,7 +12,6 @@ import {
   ExternalLinkIcon,
   UploadIcon,
   FileTextIcon,
-  FileIcon,
   AlertCircleIcon,
   CheckIcon,
   DownloadIcon,
@@ -43,13 +42,13 @@ export function DoiLookupSection({ studies }: DoiLookupSectionProps) {
   const someWithPdfSelected = studies.selectedLookupIds.size > 0 && !allWithPdfSelected;
 
   return (
-    <div className='space-y-3'>
+    <div className='flex flex-col gap-3'>
       <p className='text-muted-foreground text-sm'>
         Paste DOIs or PubMed IDs to find references with open-access PDFs. Only references with
         available PDFs can be added.
       </p>
 
-      <div className='space-y-2'>
+      <div className='flex flex-col gap-2'>
         <textarea
           placeholder={'10.1000/xyz123\n32615397\n10.1016/j.example.2023.01.001'}
           value={studies.identifierInput}
@@ -95,7 +94,7 @@ export function DoiLookupSection({ studies }: DoiLookupSectionProps) {
 
       {/* Results */}
       {studies.lookupRefs.length > 0 && (
-        <div className='space-y-2'>
+        <div className='flex flex-col gap-2'>
           <div className='flex items-center justify-between'>
             <span className='text-secondary-foreground text-sm'>
               Found references:{' '}
@@ -134,7 +133,7 @@ export function DoiLookupSection({ studies }: DoiLookupSectionProps) {
             </div>
           )}
 
-          <div className='max-h-64 space-y-1 overflow-y-auto pr-1'>
+          <div className='max-h-64 flex flex-col gap-1 overflow-y-auto pr-1'>
             {/* References with PDF available */}
             {refsWithPdf.map((ref: any) => (
               <LookupRefWithPdf
@@ -384,7 +383,7 @@ function LookupRefWithoutPdf({ ref_, onRemove }: { ref_: any; onRemove: () => vo
   return (
     <div className='flex items-start gap-3 rounded-lg border border-amber-100 bg-amber-50/50 p-2 opacity-75'>
       <div className='mt-0.5 flex size-5 items-center justify-center'>
-        <FileIcon className='size-4 text-amber-400' />
+        <FileTextIcon className='size-4 text-amber-400' />
       </div>
       <div className='min-w-0 flex-1'>
         <p className='text-secondary-foreground line-clamp-2 text-sm font-medium'>{ref_.title}</p>

@@ -114,7 +114,7 @@ export function SettingsSidebar({
           </h3>
         </div>
 
-        <div className='space-y-0.5 px-2'>
+        <div className='flex flex-col gap-0.5 px-2'>
           {SETTINGS_NAV_ITEMS.map(item => {
             const Icon = item.icon;
             const isActive =

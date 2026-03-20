@@ -155,7 +155,7 @@ export function AllStudiesTab() {
       </div>
 
       {studies.length > 0 ?
-        <div className='space-y-3'>
+        <div className='flex flex-col gap-3'>
           {studies.map((study: any) => (
             <StudyCard
               key={study.id}

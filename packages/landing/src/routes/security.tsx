@@ -42,7 +42,7 @@ function SecurityPage() {
           <h1 className='mb-2 text-4xl font-bold text-gray-900'>Security</h1>
           <p className='mb-8 text-gray-500'>How we protect your research data</p>
 
-          <div className='space-y-8 leading-relaxed text-gray-700'>
+          <div className='flex flex-col gap-8 leading-relaxed text-gray-700'>
             <p>
               At CoRATES, we understand that your research data is valuable and sensitive. We are
               committed to implementing robust security measures to protect your information and
@@ -160,7 +160,7 @@ function SecurityPage() {
                     </a>
                     . Include as much information as possible, such as:
                   </p>
-                  <ul className='mb-4 ml-6 list-outside list-disc space-y-1 text-gray-600'>
+                  <ul className='mb-4 ml-6 flex list-outside list-disc flex-col gap-1 text-gray-600'>
                     <li>A description of the vulnerability</li>
                     <li>Steps to reproduce the issue</li>
                     <li>Potential impact of the vulnerability</li>

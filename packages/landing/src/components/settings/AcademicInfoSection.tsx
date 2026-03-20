@@ -84,7 +84,7 @@ export function AcademicInfoSection() {
           Academic Information
         </label>
         {isEditing ?
-          <div className='mt-3 space-y-4'>
+          <div className='mt-3 flex flex-col gap-4'>
             <div>
               <label className='text-muted-foreground mb-1.5 block text-xs font-medium tracking-wide uppercase'>
                 Title
@@ -155,7 +155,7 @@ export function AcademicInfoSection() {
               </button>
             </div>
           </div>
-        : <div className='mt-1 space-y-1.5'>
+        : <div className='mt-1 flex flex-col gap-1.5'>
             <div className='flex items-baseline gap-2'>
               <span className='text-muted-foreground text-xs font-medium'>Title:</span>
               <span className='text-foreground text-sm'>

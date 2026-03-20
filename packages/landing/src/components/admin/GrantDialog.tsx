@@ -42,7 +42,7 @@ export function GrantDialog({
         <DialogHeader>
           <DialogTitle>Create Grant</DialogTitle>
         </DialogHeader>
-        <div className='space-y-4'>
+        <div className='flex flex-col gap-4'>
           <div>
             <label className='text-secondary-foreground mb-1 block text-sm font-medium'>Type</label>
             <select

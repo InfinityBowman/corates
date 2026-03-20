@@ -173,7 +173,7 @@ function AdminBillingLedgerPage() {
             return <span className='text-muted-foreground/70'>-</span>;
           }
           return (
-            <div className='flex items-center space-x-1 whitespace-nowrap'>
+            <div className='flex items-center gap-1 whitespace-nowrap'>
               <code className='text-foreground font-mono text-xs'>
                 {entry.stripeEventId.slice(0, 12)}...
               </code>
@@ -209,7 +209,7 @@ function AdminBillingLedgerPage() {
             return <span className='text-muted-foreground/70'>-</span>;
           }
           return (
-            <div className='flex items-center space-x-1 whitespace-nowrap'>
+            <div className='flex items-center gap-1 whitespace-nowrap'>
               <Link
                 to={'/admin/orgs/$orgId' as string}
                 params={{ orgId: entry.orgId } as Record<string, string>}
@@ -237,9 +237,9 @@ function AdminBillingLedgerPage() {
         cell: info => {
           const entry = info.row.original;
           return (
-            <div className='space-y-1'>
+            <div className='flex flex-col gap-1'>
               {entry.stripeCustomerId && (
-                <div className='flex items-center space-x-1'>
+                <div className='flex items-center gap-1'>
                   <span className='text-muted-foreground text-xs'>C:</span>
                   <code className='text-foreground font-mono text-xs'>
                     {entry.stripeCustomerId.slice(0, 12)}...
@@ -266,7 +266,7 @@ function AdminBillingLedgerPage() {
                 </div>
               )}
               {entry.stripeSubscriptionId && (
-                <div className='flex items-center space-x-1'>
+                <div className='flex items-center gap-1'>
                   <span className='text-muted-foreground text-xs'>S:</span>
                   <code className='text-foreground font-mono text-xs'>
                     {entry.stripeSubscriptionId.slice(0, 12)}...
@@ -293,7 +293,7 @@ function AdminBillingLedgerPage() {
                 </div>
               )}
               {entry.stripeCheckoutSessionId && (
-                <div className='flex items-center space-x-1'>
+                <div className='flex items-center gap-1'>
                   <span className='text-muted-foreground text-xs'>CS:</span>
                   <code className='text-foreground font-mono text-xs'>
                     {entry.stripeCheckoutSessionId.slice(0, 12)}...
@@ -325,7 +325,7 @@ function AdminBillingLedgerPage() {
             return <span className='text-muted-foreground/70'>-</span>;
           }
           return (
-            <div className='flex items-center space-x-1 whitespace-nowrap'>
+            <div className='flex items-center gap-1 whitespace-nowrap'>
               <code className='text-foreground font-mono text-xs'>
                 {entry.requestId.slice(0, 8)}...
               </code>

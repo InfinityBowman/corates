@@ -303,7 +303,7 @@ function CompleteProfilePage() {
             </p>
           </div>
 
-          <form onSubmit={handleStep1Next} className='space-y-4' autoComplete='off'>
+          <form onSubmit={handleStep1Next} className='flex flex-col gap-4' autoComplete='off'>
             <div className='grid grid-cols-2 gap-3'>
               <div>
                 <label
@@ -354,7 +354,7 @@ function CompleteProfilePage() {
               </div>
             </div>
 
-            <div className='space-y-2'>
+            <div className='flex flex-col gap-2'>
               <label className='text-secondary-foreground mb-1 block text-xs font-semibold sm:text-sm'>
                 Title
               </label>
@@ -399,7 +399,7 @@ function CompleteProfilePage() {
             </p>
           </div>
 
-          <form onSubmit={handleStep2Next} className='space-y-4' autoComplete='off'>
+          <form onSubmit={handleStep2Next} className='flex flex-col gap-4' autoComplete='off'>
             <div>
               <label
                 className='text-secondary-foreground mb-1 block text-xs font-semibold sm:text-sm'
@@ -480,7 +480,7 @@ function CompleteProfilePage() {
               e.preventDefault();
               handleSubmit(persona);
             }}
-            className='space-y-4'
+            className='flex flex-col gap-4'
           >
             <RoleSelector selectedRole={persona} onSelect={setPersona} />
 

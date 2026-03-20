@@ -381,7 +381,7 @@ function OrgDetailPage() {
           <ArrowLeftIcon className='mr-1 size-4' />
           Back to Organizations
         </Link>
-        <div className='flex items-center space-x-3'>
+        <div className='flex items-center gap-3'>
           <div className='flex size-12 items-center justify-center rounded-lg bg-blue-100'>
             <HomeIcon className='size-6 text-blue-600' />
           </div>
@@ -400,7 +400,7 @@ function OrgDetailPage() {
       {orgDetails && (
         <div className='mb-6 grid grid-cols-1 gap-4 md:grid-cols-3'>
           <AdminBox padding='compact'>
-            <div className='flex items-center space-x-2'>
+            <div className='flex items-center gap-2'>
               <UsersIcon className='text-muted-foreground/70 size-5' />
               <div>
                 <p className='text-muted-foreground text-sm'>Members</p>
@@ -411,7 +411,7 @@ function OrgDetailPage() {
             </div>
           </AdminBox>
           <AdminBox padding='compact'>
-            <div className='flex items-center space-x-2'>
+            <div className='flex items-center gap-2'>
               <FolderIcon className='text-muted-foreground/70 size-5' />
               <div>
                 <p className='text-muted-foreground text-sm'>Projects</p>

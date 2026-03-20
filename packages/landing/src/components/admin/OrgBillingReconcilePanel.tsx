@@ -97,7 +97,7 @@ export function OrgBillingReconcilePanel({ orgId }: OrgBillingReconcilePanelProp
     <div className='border-border bg-card rounded-lg border'>
       <div className='border-border border-b px-6 py-4'>
         <div className='flex items-center justify-between'>
-          <div className='flex items-center space-x-3'>
+          <div className='flex items-center gap-3'>
             <RefreshCwIcon className='text-muted-foreground/70 size-5' />
             <h2 className='text-foreground text-lg font-semibold'>Billing Reconciliation</h2>
           </div>
@@ -215,7 +215,7 @@ export function OrgBillingReconcilePanel({ orgId }: OrgBillingReconcilePanelProp
 
             {/* Stuck States */}
             {stuckStates.length > 0 ?
-              <div className='space-y-4'>
+              <div className='flex flex-col gap-4'>
                 {stuckStates.map((state, idx) => {
                   const Icon = getSeverityIcon(state.severity);
                   return (
@@ -223,10 +223,10 @@ export function OrgBillingReconcilePanel({ orgId }: OrgBillingReconcilePanelProp
                       key={idx}
                       className={`rounded-lg border-2 p-4 ${getSeverityColor(state.severity)}`}
                     >
-                      <div className='flex items-start space-x-3'>
+                      <div className='flex items-start gap-3'>
                         <Icon className='mt-0.5 size-5 shrink-0' />
                         <div className='flex-1'>
-                          <div className='flex items-center space-x-2'>
+                          <div className='flex items-center gap-2'>
                             <h3 className='font-semibold'>{state.type.replace(/_/g, ' ')}</h3>
                             <span
                               className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${getSeverityColor(state.severity)}`}
@@ -246,7 +246,7 @@ export function OrgBillingReconcilePanel({ orgId }: OrgBillingReconcilePanelProp
                             </p>
                           )}
                           {state.stripeSubscriptionId && (
-                            <div className='mt-1 flex items-center space-x-2 text-xs opacity-75'>
+                            <div className='mt-1 flex items-center gap-2 text-xs opacity-75'>
                               <span>Stripe Subscription:</span>
                               <code>{state.stripeSubscriptionId}</code>
                               <a
@@ -260,7 +260,7 @@ export function OrgBillingReconcilePanel({ orgId }: OrgBillingReconcilePanelProp
                             </div>
                           )}
                           {state.stripeEventId && (
-                            <div className='mt-1 flex items-center space-x-2 text-xs opacity-75'>
+                            <div className='mt-1 flex items-center gap-2 text-xs opacity-75'>
                               <span>Event:</span>
                               <code>{state.stripeEventId}</code>
                               <Link
@@ -285,7 +285,7 @@ export function OrgBillingReconcilePanel({ orgId }: OrgBillingReconcilePanelProp
                           {state.type === 'checkout_no_subscription' && (
                             <div className='bg-card/50 mt-4 rounded p-3'>
                               <p className='mb-2 text-xs font-semibold'>Recommended Checks:</p>
-                              <ul className='list-inside list-disc space-y-1 text-xs'>
+                              <ul className='flex list-inside list-disc flex-col gap-1 text-xs'>
                                 <li>Verify Better Auth Stripe plugin configuration</li>
                                 <li>Check authorizeReference function returns true for this org</li>
                                 <li>Verify referenceId/orgId mapping matches checkout metadata</li>
@@ -318,8 +318,8 @@ export function OrgBillingReconcilePanel({ orgId }: OrgBillingReconcilePanelProp
                   </p>
                 : reconcileData.stripeComparison.noActiveSubscription ?
                   <p className='text-muted-foreground text-sm'>No active subscription to compare</p>
-                : <div className='space-y-2 text-sm'>
-                    <div className='flex items-center space-x-2'>
+                : <div className='flex flex-col gap-2 text-sm'>
+                    <div className='flex items-center gap-2'>
                       <span className='font-medium'>Status Match:</span>
                       {reconcileData.stripeComparison.match ?
                         <CheckCircleIcon className='size-4 text-green-600' />

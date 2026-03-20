@@ -56,7 +56,7 @@ export function StrengthIndicator({ password, onUnmet }: StrengthIndicatorProps)
   return (
     <div className='mt-2 w-full'>
       <ul
-        className='text-secondary-foreground space-y-0.5 text-xs sm:space-y-1'
+        className='text-secondary-foreground flex flex-col gap-0.5 text-xs sm:gap-1'
         id='password-requirements'
         aria-live='polite'
       >

@@ -26,7 +26,7 @@ function ResetPasswordPage() {
   const { token } = useSearch({ from: '/_auth/reset-password' });
 
   return (
-    <div className='border-border bg-card relative w-full max-w-md space-y-4 rounded-xl border p-6 shadow-2xl sm:max-w-xl sm:rounded-3xl sm:p-12'>
+    <div className='border-border bg-card relative flex w-full max-w-md flex-col gap-4 rounded-xl border p-6 shadow-2xl sm:max-w-xl sm:rounded-3xl sm:p-12'>
       <a href='/' className='absolute top-4 left-4 sm:top-6 sm:left-6'>
         <img src='/logo.svg' alt='CoRATES' className='h-6 w-auto sm:h-7' />
       </a>
@@ -106,7 +106,7 @@ function RequestResetForm() {
       )}
 
       {!success && (
-        <form onSubmit={handleSubmit} className='animate-in fade-in space-y-4 duration-200'>
+        <form onSubmit={handleSubmit} className='animate-in fade-in flex flex-col gap-4 duration-200'>
           <div>
             <label
               className='text-secondary-foreground mb-1 block text-xs font-semibold sm:mb-2 sm:text-sm'
@@ -234,7 +234,7 @@ function SetNewPasswordForm({ token }: { token: string }) {
       )}
 
       {!success && (
-        <form onSubmit={handleSubmit} className='animate-in fade-in space-y-4 duration-200'>
+        <form onSubmit={handleSubmit} className='animate-in fade-in flex flex-col gap-4 duration-200'>
           <div>
             <label
               className='text-secondary-foreground mb-1 block text-xs font-semibold sm:mb-2 sm:text-sm'

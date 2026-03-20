@@ -152,7 +152,7 @@ export function AddMemberModal({
           <DialogTitle>Add Member</DialogTitle>
         </DialogHeader>
 
-        <div className='space-y-4'>
+        <div className='flex flex-col gap-4'>
           {isAtQuotaLimit && (
             <Alert variant='warning'>
               <TriangleAlertIcon />

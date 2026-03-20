@@ -214,7 +214,7 @@ export function MergeAccountsDialog({
         <DialogHeader>
           <DialogTitle>{step === STEPS.SUCCESS ? 'Accounts Merged' : 'Merge Accounts'}</DialogTitle>
         </DialogHeader>
-        <div className='space-y-4'>
+        <div className='flex flex-col gap-4'>
           {/* PROMPT */}
           {step === STEPS.PROMPT && (
             <>
@@ -381,7 +381,7 @@ export function MergeAccountsDialog({
                   <p className='text-secondary-foreground mb-2 font-medium'>
                     After merging, you&apos;ll have:
                   </p>
-                  <ul className='text-secondary-foreground list-inside list-disc space-y-1'>
+                  <ul className='text-secondary-foreground flex flex-col list-inside list-disc gap-1'>
                     <li>
                       Sign-in methods:{' '}
                       {[

@@ -63,7 +63,7 @@ export function UserTable({ users, loading }: UserTableProps) {
         cell: info => {
           const user = info.row.original;
           return (
-            <div className='flex items-center space-x-3'>
+            <div className='flex items-center gap-3'>
               <UserAvatar src={user.avatarUrl || user.image} name={user.name} className='size-8' />
               <div>
                 <Link
@@ -86,7 +86,7 @@ export function UserTable({ users, loading }: UserTableProps) {
         cell: info => {
           const user = info.row.original;
           return (
-            <div className='flex items-center space-x-2'>
+            <div className='flex items-center gap-2'>
               <span className='text-muted-foreground text-sm'>{user.email}</span>
               {user.emailVerified && (
                 <span title='Email verified'>

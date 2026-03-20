@@ -291,7 +291,7 @@ export function OverviewTab() {
               </Tooltip>)}
         </div>
         {members.length > 0 && (
-          <div className='space-y-2'>
+          <div className='flex flex-col gap-2'>
             {members.map((member: ProjectMember, index: number) => {
               const isSelf = user?.id === member.userId;
               const canRemove = isOwner || isSelf;
@@ -360,7 +360,7 @@ export function OverviewTab() {
       </div>
 
       {/* Results */}
-      <div className='space-y-4'>
+      <div className='flex flex-col gap-4'>
         <div className='border-border bg-card overflow-hidden rounded-xl border'>
           <Collapsible open={chartsExpanded} onOpenChange={setChartsExpanded}>
             <CollapsibleTrigger className='hover:bg-muted flex w-full cursor-pointer items-center justify-between px-5 py-4 transition-colors select-none'>

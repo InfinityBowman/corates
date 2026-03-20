@@ -316,7 +316,7 @@ function PricingPage() {
                   <p className='mb-3 text-xs font-semibold tracking-wide text-gray-400 uppercase'>
                     What's included
                   </p>
-                  <ul className='space-y-3'>
+                  <ul className='flex flex-col gap-3'>
                     {plan.features.map(feature => (
                       <li key={feature} className='flex items-start gap-3'>
                         <div className='mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-green-100'>

@@ -29,7 +29,7 @@ export function PlanningSection({ disabled, getRobinsText }: PlanningSectionProp
       </div>
 
       <div className='px-6 py-4'>
-        <div className='space-y-2'>
+        <div className='flex flex-col gap-2'>
           <label className='block'>
             <span className='text-secondary-foreground text-sm'>
               <span className='font-medium'>{p1Field.label}.</span>

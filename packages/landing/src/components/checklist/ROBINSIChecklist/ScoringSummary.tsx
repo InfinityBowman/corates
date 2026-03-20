@@ -166,7 +166,7 @@ function ResourcesDialog({ open, onClose }: { open: boolean; onClose: () => void
           </DialogDescription>
         </DialogHeader>
 
-        <div className='space-y-4 py-4'>
+        <div className='flex flex-col gap-4 py-4'>
           <ResourceLink
             title='ROBINS-I Tool (Official)'
             description='Risk Of Bias In Non-randomized Studies of Interventions'

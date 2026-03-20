@@ -18,7 +18,7 @@ function UsageMetric({ label, icon, used, max }: UsageMetricProps) {
   const percentage = isUnlimited || max === 0 ? 0 : Math.min(100, Math.round((used / max) * 100));
 
   return (
-    <div className='space-y-2'>
+    <div className='flex flex-col gap-2'>
       <div className='flex items-center justify-between'>
         <div className='flex items-center gap-2'>
           <div className='bg-muted flex size-8 items-center justify-center rounded-lg'>{icon}</div>
@@ -74,7 +74,7 @@ export function UsageCard({ quotas, usage }: UsageCardProps) {
       </div>
 
       {hasAnyQuota ?
-        <div className='space-y-5'>
+        <div className='flex flex-col gap-5'>
           {metrics.map(
             metric =>
               (metric.max !== 0 || metric.used > 0) && (

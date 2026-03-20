@@ -4,7 +4,7 @@
  * Supports dropping PDFs alongside reference files for automatic matching.
  */
 
-import { CloudUploadIcon, FileTextIcon, FileIcon, Link2Icon } from 'lucide-react';
+import { CloudUploadIcon, FileTextIcon, Link2Icon } from 'lucide-react';
 import { FileUpload, FileUploadDropzone, FileUploadHiddenInput } from '@/components/ui/file-upload';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
@@ -25,7 +25,7 @@ export function ReferenceImportSection({ studies }: ReferenceImportSectionProps)
     const someSelected = studies.selectedRefIds.size > 0 && !allSelected;
 
     return (
-      <div className='space-y-3'>
+      <div className='flex flex-col gap-3'>
         {/* File name chip */}
         <div className='bg-muted flex items-center justify-between rounded-lg px-3 py-2'>
           <div className='text-secondary-foreground flex items-center gap-2 text-sm'>
@@ -65,13 +65,13 @@ export function ReferenceImportSection({ studies }: ReferenceImportSectionProps)
             )}
             {studies.foundPdfCount > 0 && (
               <span className='inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-1 text-emerald-700'>
-                <FileIcon className='size-3' />
+                <FileTextIcon className='size-3' />
                 {studies.foundPdfCount} open access
               </span>
             )}
             {studies.unmatchedRefPdfCount > 0 && (
               <span className='inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-1 text-amber-700'>
-                <FileIcon className='size-3' />
+                <FileTextIcon className='size-3' />
                 {studies.unmatchedRefPdfCount} PDF
                 {studies.unmatchedRefPdfCount > 1 ? 's' : ''} unmatched
               </span>
@@ -91,7 +91,7 @@ export function ReferenceImportSection({ studies }: ReferenceImportSectionProps)
         </div>
 
         {/* Reference list */}
-        <div className='max-h-48 space-y-1 overflow-y-auto pr-1'>
+        <div className='max-h-48 flex flex-col gap-1 overflow-y-auto pr-1'>
           {studies.importedRefs.map((ref: any) => (
             <div
               key={ref._id}
@@ -115,7 +115,7 @@ export function ReferenceImportSection({ studies }: ReferenceImportSectionProps)
                   </p>
                   {ref.pdfData && (
                     <span className='inline-flex shrink-0 items-center gap-1 rounded bg-green-100 px-1.5 py-0.5 text-xs text-green-700'>
-                      <FileIcon className='size-3' />
+                      <FileTextIcon className='size-3' />
                       PDF
                     </span>
                   )}
@@ -170,7 +170,7 @@ export function ReferenceImportSection({ studies }: ReferenceImportSectionProps)
 
   // Empty state - show file upload
   return (
-    <div className='space-y-3'>
+    <div className='flex flex-col gap-3'>
       <p className='text-muted-foreground text-sm'>
         Import references from Zotero, EndNote, Mendeley, or other reference managers. You can also
         drop PDFs alongside your reference file to automatically match them.
@@ -195,7 +195,7 @@ export function ReferenceImportSection({ studies }: ReferenceImportSectionProps)
 
       <div className='text-muted-foreground text-xs'>
         <p className='mb-1 font-medium'>Supported formats:</p>
-        <ul className='list-inside list-disc space-y-0.5'>
+        <ul className='list-inside list-disc flex flex-col gap-0.5'>
           {(SUPPORTED_FORMATS as any[]).map((format: any) => (
             <li key={format.extension}>
               <span className='font-medium'>{format.extension}</span> - {format.description}

@@ -68,7 +68,7 @@ export function DirectionPanel({
       )}
 
       {/* Direction Options */}
-      <div className='space-y-2'>
+      <div className='flex flex-col gap-2'>
         <label className='text-secondary-foreground mb-1 block text-xs font-medium'>
           Predicted Direction of Bias
         </label>

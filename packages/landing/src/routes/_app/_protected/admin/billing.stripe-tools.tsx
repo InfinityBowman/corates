@@ -511,7 +511,7 @@ function StripeToolsPage() {
               </h2>
               {subscriptions.length === 0 ?
                 <p className='text-muted-foreground text-sm'>No subscriptions found</p>
-              : <div className='space-y-4'>
+              : <div className='flex flex-col gap-4'>
                   {subscriptions.map(sub => (
                     <div
                       key={sub.id}
@@ -657,13 +657,13 @@ function StripeToolsPage() {
               </h2>
               {paymentMethods.length === 0 ?
                 <p className='text-muted-foreground text-sm'>No payment methods found</p>
-              : <div className='space-y-3'>
+              : <div className='flex flex-col gap-3'>
                   {paymentMethods.map(pm => (
                     <div
                       key={pm.id}
                       className='border-border-subtle bg-muted flex items-center justify-between rounded-lg border p-4'
                     >
-                      <div className='flex items-center space-x-3'>
+                      <div className='flex items-center gap-3'>
                         <CreditCardIcon className='text-muted-foreground/70 size-6' />
                         <div>
                           <p className='text-foreground text-sm font-medium capitalize'>

@@ -91,7 +91,7 @@ export function CreateLocalChecklist({ type: typeParam }: { type?: string }) {
             Start a new quality assessment. Your progress will be saved locally on this device.
           </p>
 
-          <form onSubmit={handleSubmit} className='space-y-6'>
+          <form onSubmit={handleSubmit} className='flex flex-col gap-6'>
             {/* Checklist Type */}
             <div>
               <label

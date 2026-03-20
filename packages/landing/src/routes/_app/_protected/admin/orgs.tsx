@@ -76,7 +76,7 @@ function AdminOrgList() {
         cell: info => {
           const org = info.row.original;
           return (
-            <div className='flex items-center space-x-3'>
+            <div className='flex items-center gap-3'>
               <div className='flex size-10 items-center justify-center rounded-lg bg-blue-100'>
                 <HomeIcon className='size-5 text-blue-600' />
               </div>
@@ -102,7 +102,7 @@ function AdminOrgList() {
         cell: info => {
           const org = info.row.original;
           return (
-            <div className='text-muted-foreground flex items-center space-x-1'>
+            <div className='text-muted-foreground flex items-center gap-1'>
               <UsersIcon className='text-muted-foreground/70 size-4' />
               <span>{org.stats?.memberCount ?? '-'}</span>
             </div>
@@ -115,7 +115,7 @@ function AdminOrgList() {
         cell: info => {
           const org = info.row.original;
           return (
-            <div className='text-muted-foreground flex items-center space-x-1'>
+            <div className='text-muted-foreground flex items-center gap-1'>
               <FolderIcon className='text-muted-foreground/70 size-4' />
               <span>{org.stats?.projectCount ?? '-'}</span>
             </div>
@@ -200,7 +200,7 @@ function AdminOrgList() {
                 )} of ${orgsData.pagination.total || 0} organizations`
               : 'No organizations found'}
             </p>
-            <div className='flex items-center space-x-2'>
+            <div className='flex items-center gap-2'>
               <button
                 type='button'
                 onClick={() => setPage(p => Math.max(1, p - 1))}

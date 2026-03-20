@@ -89,7 +89,7 @@ function AdminLayout() {
       {/* Navbar */}
       <div className='border-border bg-card border-b'>
         <div className='px-6'>
-          <nav className='flex space-x-1' role='navigation' aria-label='Admin navigation'>
+          <nav className='flex gap-1' role='navigation' aria-label='Admin navigation'>
             {navItems.map(item => {
               const Icon = item.icon;
               const active = isActive(item.path);
@@ -97,7 +97,7 @@ function AdminLayout() {
                 <Link
                   key={item.path}
                   to={item.path as string}
-                  className={`flex items-center space-x-2 rounded-t-lg border-b-2 px-4 py-3 text-sm font-medium transition-colors ${
+                  className={`flex items-center gap-2 rounded-t-lg border-b-2 px-4 py-3 text-sm font-medium transition-colors ${
                     active ?
                       'border-blue-600 bg-blue-50 text-blue-700'
                     : 'text-muted-foreground hover:border-border hover:bg-muted hover:text-foreground border-transparent'

@@ -83,7 +83,7 @@ export function SubscriptionList({
         </div>
       : <div className='p-6'>
           {subscriptions.length > 0 ?
-            <div className='space-y-4'>
+            <div className='flex flex-col gap-4'>
               {subscriptions.map(subscription => (
                 <div
                   key={subscription.id}
@@ -95,7 +95,7 @@ export function SubscriptionList({
                 >
                   <div className='flex items-start justify-between'>
                     <div className='flex-1'>
-                      <div className='flex items-center space-x-2'>
+                      <div className='flex items-center gap-2'>
                         <p className='text-foreground font-medium'>{subscription.plan}</p>
                         <span
                           className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
@@ -113,14 +113,14 @@ export function SubscriptionList({
                         )}
                       </div>
                       <div className='text-muted-foreground mt-2 grid grid-cols-1 gap-3 text-sm md:grid-cols-2'>
-                        <div className='space-y-1'>
+                        <div className='flex flex-col gap-1'>
                           <p>Period Start: {formatDate(subscription.periodStart)}</p>
                           <p>Period End: {formatDate(subscription.periodEnd)}</p>
                           {subscription.cancelAtPeriodEnd && (
                             <p className='text-orange-600'>Cancels at period end</p>
                           )}
                         </div>
-                        <div className='space-y-1'>
+                        <div className='flex flex-col gap-1'>
                           <p>Created: {formatDate(subscription.createdAt)}</p>
                           {subscription.updatedAt && (
                             <p>Updated: {formatDate(subscription.updatedAt)}</p>
@@ -141,7 +141,7 @@ export function SubscriptionList({
                       {(subscription.stripeCustomerId || subscription.stripeSubscriptionId) && (
                         <div className='mt-3 flex flex-wrap gap-2'>
                           {subscription.stripeCustomerId && (
-                            <div className='bg-secondary flex items-center space-x-1 rounded px-2 py-1'>
+                            <div className='bg-secondary flex items-center gap-1 rounded px-2 py-1'>
                               <span className='text-muted-foreground text-xs font-medium'>
                                 Customer:
                               </span>
@@ -162,7 +162,7 @@ export function SubscriptionList({
                             </div>
                           )}
                           {subscription.stripeSubscriptionId && (
-                            <div className='bg-secondary flex items-center space-x-1 rounded px-2 py-1'>
+                            <div className='bg-secondary flex items-center gap-1 rounded px-2 py-1'>
                               <span className='text-muted-foreground text-xs font-medium'>
                                 Subscription:
                               </span>
@@ -185,7 +185,7 @@ export function SubscriptionList({
                         </div>
                       )}
                     </div>
-                    <div className='ml-4 flex space-x-2'>
+                    <div className='ml-4 flex gap-2'>
                       <button
                         onClick={() => onEdit?.(subscription)}
                         disabled={loading}

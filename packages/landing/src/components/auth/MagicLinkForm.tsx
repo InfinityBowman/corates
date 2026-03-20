@@ -97,7 +97,7 @@ export function MagicLinkForm({
 
   if (sent) {
     return (
-      <div className='space-y-4'>
+      <div className='flex flex-col gap-4'>
         <div className='py-4 text-center'>
           <div className='mx-auto mb-3 flex size-14 items-center justify-center rounded-full bg-green-100'>
             <MailIcon className='size-7 text-green-600' />
@@ -149,9 +149,9 @@ export function MagicLinkForm({
   }
 
   return (
-    <div className='space-y-4'>
+    <div className='flex flex-col gap-4'>
       <form onSubmit={handleSubmit} autoComplete='off'>
-        <div className='space-y-4'>
+        <div className='flex flex-col gap-4'>
           <div>
             <label
               className='text-secondary-foreground mb-1 block text-xs font-semibold sm:mb-2 sm:text-sm'

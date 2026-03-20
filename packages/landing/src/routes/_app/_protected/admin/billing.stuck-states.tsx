@@ -127,7 +127,7 @@ function AdminBillingStuckStatesPage() {
         iconColor='orange'
         actions={
           <div className='flex items-center gap-2'>
-            <div className='flex items-center space-x-2'>
+            <div className='flex items-center gap-2'>
               <label className='text-muted-foreground text-sm'>Threshold (min):</label>
               <input
                 type='number'
@@ -185,14 +185,14 @@ function AdminBillingStuckStatesPage() {
             All organizations have healthy billing states
           </p>
         </AdminBox>
-      : <div className='space-y-6'>
+      : <div className='flex flex-col gap-6'>
           {Object.entries(groupedByType).map(([type, orgs]) => {
             const Icon = getStuckStateSeverityIcon(type);
             const steps = getInvestigationSteps(type);
             return (
               <AdminBox key={type} padding='compact' className='overflow-hidden p-0'>
                 <div className='border-border border-b px-6 py-4'>
-                  <div className='flex items-center space-x-3'>
+                  <div className='flex items-center gap-3'>
                     <Icon className='size-5 text-orange-600' />
                     <h2 className='text-foreground text-lg font-semibold'>
                       {getStuckStateTypeLabel(type)}
@@ -203,12 +203,12 @@ function AdminBillingStuckStatesPage() {
                   </div>
                 </div>
                 <div className='p-6'>
-                  <div className='space-y-4'>
+                  <div className='flex flex-col gap-4'>
                     {orgs.map(org => (
                       <div key={org.orgId} className='border-border rounded-lg border p-4'>
                         <div className='flex items-start justify-between'>
                           <div className='flex-1'>
-                            <div className='flex items-center space-x-2'>
+                            <div className='flex items-center gap-2'>
                               <Link
                                 to={'/admin/orgs/$orgId' as string}
                                 params={{ orgId: org.orgId } as Record<string, string>}
@@ -260,7 +260,7 @@ function AdminBillingStuckStatesPage() {
                           <p className='text-secondary-foreground mb-2 text-xs font-medium'>
                             Investigation Steps:
                           </p>
-                          <ul className='text-muted-foreground list-inside list-disc space-y-1 text-xs'>
+                          <ul className='text-muted-foreground flex list-inside list-disc flex-col gap-1 text-xs'>
                             {steps.map(step => (
                               <li key={step}>{step}</li>
                             ))}

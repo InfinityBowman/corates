@@ -66,7 +66,7 @@ export function ProjectTreeItem({
         </button>
       </div>
       <CollapsibleContent>
-        <div className='border-border mt-0.5 ml-6 space-y-0.5 border-l pl-2'>
+        <div className='border-border mt-0.5 ml-6 flex flex-col gap-0.5 border-l pl-2'>
           {projectData.studies?.length > 0 ?
             projectData.studies.map(study => (
               <StudyTreeItem

@@ -77,7 +77,7 @@ export function StudyPdfSection({ study, onOpenGoogleDrive, readOnly }: StudyPdf
         onChange={handleFileSelect}
       />
 
-      <div className='space-y-3'>
+      <div className='flex flex-col gap-3'>
         <div className='flex items-center justify-between'>
           <h4 className='text-secondary-foreground text-sm font-medium'>PDFs ({pdfs.length})</h4>
           {!readOnly && (
@@ -103,7 +103,7 @@ export function StudyPdfSection({ study, onOpenGoogleDrive, readOnly }: StudyPdf
         </div>
 
         {pdfs.length > 0 ?
-          <div className='space-y-2'>
+          <div className='flex flex-col gap-2'>
             {sortedPdfs.map((pdf: any) => (
               <PdfListItem
                 key={pdf.id}

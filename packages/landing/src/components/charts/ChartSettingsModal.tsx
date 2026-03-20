@@ -86,7 +86,7 @@ export function ChartSettingsModal({
               <p className='mb-4 text-xs text-gray-500'>
                 Edit labels directly. Changes are temporary and won't be saved.
               </p>
-              <div className='space-y-2'>
+              <div className='flex flex-col gap-2'>
                 {labels.map((item, index) => (
                   <input
                     key={item.id}
@@ -107,7 +107,7 @@ export function ChartSettingsModal({
             {/* Chart Titles Section */}
             <div className='mt-6 border-t border-gray-200 pt-6'>
               <h3 className='mb-3 text-sm font-medium text-gray-700'>Chart Titles</h3>
-              <div className='space-y-3'>
+              <div className='flex flex-col gap-3'>
                 <div>
                   <label className='mb-1 block text-xs text-gray-500'>
                     Quality Assessment Chart
@@ -166,7 +166,7 @@ export function ChartSettingsModal({
                 </div>
               </label>
 
-              <div className='space-y-3'>
+              <div className='flex flex-col gap-3'>
                 <div className='rounded-lg bg-gray-50 p-3'>
                   <p className='mb-2 text-sm font-medium text-gray-700'>Quality Assessment Chart</p>
                   <div className='flex gap-2'>
@@ -211,7 +211,7 @@ export function ChartSettingsModal({
                 Use this citation when you reference CoRATES as the software used for study
                 appraisal.
               </p>
-              <div className='space-y-4'>
+              <div className='flex flex-col gap-4'>
                 <div className='rounded-lg bg-gray-50 p-4'>
                   <h4 className='mb-2 text-xs font-semibold text-gray-700'>APA</h4>
                   <p className='text-sm leading-relaxed text-gray-700'>

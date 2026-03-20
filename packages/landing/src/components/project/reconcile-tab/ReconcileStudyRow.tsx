@@ -192,7 +192,7 @@ export function ReconcileStudyRow({
                   <span className='text-xs text-green-600'>({readyGroups.length})</span>
                   <div className='h-px flex-1 bg-green-200' />
                 </div>
-                <div className='space-y-1'>
+                <div className='flex flex-col gap-1'>
                   {readyGroups.map((group: any, i: number) => (
                     <div
                       key={group.outcomeId || i}
@@ -237,7 +237,7 @@ export function ReconcileStudyRow({
                   <span className='text-xs text-yellow-600'>({waitingGroups.length})</span>
                   <div className='h-px flex-1 bg-yellow-200' />
                 </div>
-                <div className='space-y-1'>
+                <div className='flex flex-col gap-1'>
                   {waitingGroups.map((group: any, i: number) => (
                     <div
                       key={group.outcomeId || i}
@@ -270,7 +270,7 @@ export function ReconcileStudyRow({
         {/* PDFs */}
         <CollapsibleContent>
           {hasPdfs && (
-            <div className='border-border space-y-2 border-t px-4 py-3'>
+            <div className='border-border flex flex-col gap-2 border-t px-4 py-3'>
               {sortedPdfs.map((pdf: any) => (
                 <PdfListItem
                   key={pdf.id}

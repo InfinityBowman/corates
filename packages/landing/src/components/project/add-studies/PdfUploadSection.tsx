@@ -4,7 +4,7 @@
  */
 
 import { useMemo } from 'react';
-import { CloudUploadIcon, FileIcon, AlertTriangleIcon, RefreshCwIcon } from 'lucide-react';
+import { CloudUploadIcon, FileTextIcon, AlertTriangleIcon, RefreshCwIcon } from 'lucide-react';
 import { FileUpload, FileUploadDropzone, FileUploadHiddenInput } from '@/components/ui/file-upload';
 
 interface PdfUploadSectionProps {
@@ -18,7 +18,7 @@ export function PdfUploadSection({ studies }: PdfUploadSectionProps) {
   );
 
   return (
-    <div className='space-y-3'>
+    <div className='flex flex-col gap-3'>
       <p className='text-muted-foreground text-sm'>
         Upload research papers to automatically create studies. Titles will be extracted from each
         PDF.
@@ -40,7 +40,7 @@ export function PdfUploadSection({ studies }: PdfUploadSectionProps) {
       </FileUpload>
 
       {pendingPdfs.length > 0 && (
-        <div className='space-y-2'>
+        <div className='flex flex-col gap-2'>
           {pendingPdfs.map((pdf: any) => (
             <div
               key={pdf.id}
@@ -48,7 +48,7 @@ export function PdfUploadSection({ studies }: PdfUploadSectionProps) {
                 pdf.error ? 'border-red-200 bg-red-50' : 'bg-muted border-border'
               }`}
             >
-              <FileIcon
+              <FileTextIcon
                 className={`size-5 shrink-0 ${pdf.error ? 'text-red-600' : 'text-muted-foreground'}`}
               />
               <div className='min-w-0 flex-1'>

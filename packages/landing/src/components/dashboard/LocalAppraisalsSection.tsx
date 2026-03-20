@@ -114,7 +114,7 @@ export function LocalAppraisalsSection({
       )}
 
       {/* Appraisals list */}
-      <div className='space-y-3'>
+      <div className='flex flex-col gap-3'>
         {!hasChecklists && (
           <div className='border-border bg-muted/50 flex flex-col items-center justify-center rounded-xl border-2 border-dashed px-6 py-10'>
             <div className='bg-secondary mb-3 flex size-12 items-center justify-center rounded-xl'>

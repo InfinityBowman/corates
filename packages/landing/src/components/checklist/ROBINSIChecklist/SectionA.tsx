@@ -22,9 +22,9 @@ export function SectionA({ disabled, getRobinsText }: SectionAProps) {
         </p>
       </div>
 
-      <div className='space-y-4 px-6 py-4'>
+      <div className='flex flex-col gap-4 px-6 py-4'>
         {Object.entries(SECTION_A as Record<string, any>).map(([key, field]) => (
-          <div key={key} className='space-y-2'>
+          <div key={key} className='flex flex-col gap-2'>
             <label className='block'>
               <span className='text-secondary-foreground text-sm'>
                 <span className='font-medium'>{field.label}.</span>

@@ -50,12 +50,12 @@ export function GrantList({ grants: grantsProp, loading, isLoading, onRevoke }: 
         </div>
       : <div className='p-6'>
           {grants.length > 0 ?
-            <div className='space-y-4'>
+            <div className='flex flex-col gap-4'>
               {grants.map(grant => (
                 <div key={grant.id} className='border-border rounded-lg border p-4'>
                   <div className='flex items-start justify-between'>
                     <div className='flex-1'>
-                      <div className='flex items-center space-x-2'>
+                      <div className='flex items-center gap-2'>
                         <p className='text-foreground font-medium capitalize'>{grant.type}</p>
                         {grant.revokedAt ?
                           <span className='inline-flex items-center rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-800'>

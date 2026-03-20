@@ -67,7 +67,7 @@ export function ToDoTab() {
   );
 
   return (
-    <div className='space-y-2'>
+    <div className='flex flex-col gap-2'>
       {myStudies.length > 0 ?
         myStudies.map((study: any) => (
           <TodoStudyRow

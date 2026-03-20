@@ -22,7 +22,7 @@ function SubscriptionSkeleton() {
     <div className='border-border bg-card animate-pulse overflow-hidden rounded-xl border'>
       <div className='from-muted to-muted/80 h-28 bg-gradient-to-r' />
       <div className='p-6'>
-        <div className='mb-4 space-y-3'>
+        <div className='mb-4 flex flex-col gap-3'>
           <div className='bg-muted h-4 w-1/2 rounded' />
           <div className='bg-muted h-4 w-1/3 rounded' />
         </div>
@@ -39,8 +39,8 @@ function UsageSkeleton() {
   return (
     <div className='border-border bg-card animate-pulse rounded-xl border p-6'>
       <div className='bg-muted mb-5 h-6 w-20 rounded' />
-      <div className='space-y-5'>
-        <div className='space-y-2'>
+      <div className='flex flex-col gap-5'>
+        <div className='flex flex-col gap-2'>
           <div className='flex justify-between'>
             <div className='bg-muted h-4 w-24 rounded' />
             <div className='bg-muted h-4 w-12 rounded' />
@@ -170,7 +170,7 @@ export function BillingSettings() {
         )}
 
         <div className='grid gap-6 lg:grid-cols-3'>
-          <div className='space-y-6 lg:col-span-2'>
+          <div className='flex flex-col gap-6 lg:col-span-2'>
             {loading ?
               <SubscriptionSkeleton />
             : <SubscriptionCard
@@ -182,7 +182,7 @@ export function BillingSettings() {
             <InvoicesList />
           </div>
 
-          <div className='space-y-6'>
+          <div className='flex flex-col gap-6'>
             {loading ?
               <UsageSkeleton />
             : <UsageCard quotas={quotas as Record<string, number> | null} usage={usage} />}

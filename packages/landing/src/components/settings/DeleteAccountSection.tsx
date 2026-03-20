@@ -37,12 +37,12 @@ export function DeleteAccountSection() {
   return (
     <div className='rounded-xl border border-red-200/60 bg-red-50/30 p-5'>
       {showConfirm ?
-        <div className='space-y-4'>
+        <div className='flex flex-col gap-4'>
           <div className='rounded-lg border border-red-200 bg-red-100/80 p-4'>
             <p className='mb-2 text-sm font-medium text-red-800'>
               Are you sure you want to delete your account?
             </p>
-            <ul className='list-inside list-disc space-y-1 text-sm text-red-700'>
+            <ul className='flex flex-col list-inside list-disc gap-1 text-sm text-red-700'>
               <li>All your projects will be permanently deleted</li>
               <li>All your checklists and reviews will be lost</li>
               <li>You will be removed from all shared projects</li>

@@ -82,7 +82,7 @@ function ContactPage() {
           </div>
 
           <div className='grid gap-12 lg:grid-cols-2 lg:gap-16'>
-            <div className='space-y-8'>
+            <div className='flex flex-col gap-8'>
               <div>
                 <h2 className='mb-6 text-2xl font-semibold text-gray-900'>We are here to help</h2>
                 <p className='mb-8 text-gray-600'>
@@ -93,7 +93,7 @@ function ContactPage() {
                 </p>
               </div>
 
-              <div className='space-y-6'>
+              <div className='flex flex-col gap-6'>
                 <div className='flex items-start gap-4'>
                   <div className='flex size-12 shrink-0 items-center justify-center rounded-lg bg-blue-100'>
                     <MailIcon className='size-6 text-blue-600' />
@@ -120,7 +120,7 @@ function ContactPage() {
 
             <div className='rounded-2xl border border-gray-100 bg-white p-8 shadow-lg'>
               <h2 className='mb-6 text-xl font-semibold text-gray-900'>Send us a message</h2>
-              <form onSubmit={handleSubmit} className='space-y-6'>
+              <form onSubmit={handleSubmit} className='flex flex-col gap-6'>
                 <div>
                   <label htmlFor='name' className='mb-2 block text-sm font-medium text-gray-700'>
                     Your Name

@@ -21,7 +21,7 @@ export default function Footer() {
           {/* Product */}
           <div>
             <h4 className='mb-3 font-semibold text-gray-900'>Product</h4>
-            <ul className='space-y-2 text-sm'>
+            <ul className='flex flex-col gap-2 text-sm'>
               <li>
                 <Link to='/pricing' className='text-gray-500 transition-colors hover:text-gray-700'>
                   Pricing
@@ -58,7 +58,7 @@ export default function Footer() {
           {/* Company */}
           <div>
             <h4 className='mb-3 font-semibold text-gray-900'>Company</h4>
-            <ul className='space-y-2 text-sm'>
+            <ul className='flex flex-col gap-2 text-sm'>
               <li>
                 <Link to='/about' className='text-gray-500 transition-colors hover:text-gray-700'>
                   About
@@ -75,7 +75,7 @@ export default function Footer() {
           {/* Legal */}
           <div>
             <h4 className='mb-3 font-semibold text-gray-900'>Legal</h4>
-            <ul className='space-y-2 text-sm'>
+            <ul className='flex flex-col gap-2 text-sm'>
               <li>
                 <Link to='/privacy' className='text-gray-500 transition-colors hover:text-gray-700'>
                   Privacy Policy

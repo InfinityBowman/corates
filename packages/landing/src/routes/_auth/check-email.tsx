@@ -115,7 +115,7 @@ function CheckEmailPage() {
   }
 
   return (
-    <div className='border-border bg-card relative w-full max-w-md space-y-6 rounded-xl border p-6 text-center shadow-2xl sm:max-w-xl sm:rounded-3xl sm:p-12'>
+    <div className='border-border bg-card relative flex w-full max-w-md flex-col gap-6 rounded-xl border p-6 text-center shadow-2xl sm:max-w-xl sm:rounded-3xl sm:p-12'>
       <a href='/' className='absolute top-4 left-4 sm:top-6 sm:left-6'>
         <img src='/logo.svg' alt='CoRATES' className='h-6 w-auto sm:h-7' />
       </a>
@@ -147,7 +147,7 @@ function CheckEmailPage() {
             <p className='text-primary mt-1 text-sm font-semibold sm:text-base'>{email}</p>
           </div>
 
-          <div className='space-y-4'>
+          <div className='flex flex-col gap-4'>
             <p className='text-muted-foreground text-xs sm:text-sm'>
               Click the verification link in your email to activate your account. Once verified,
               you&apos;ll automatically be redirected to the dashboard.
@@ -162,7 +162,7 @@ function CheckEmailPage() {
             )}
           </div>
 
-          <div className='space-y-3'>
+          <div className='flex flex-col gap-3'>
             <PrimaryButton
               loading={resending}
               loadingText='Sending...'

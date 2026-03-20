@@ -32,7 +32,7 @@ function MobileMenu({ isOpen, onClose }: { isOpen: boolean; onClose: () => void 
         id='mobile-menu'
         className='animate-slide-down fixed top-16 right-0 left-0 z-50 border-b border-gray-200 bg-white/95 shadow-lg backdrop-blur-md sm:hidden'
       >
-        <div className='space-y-1 px-6 py-6'>
+        <div className='flex flex-col gap-1 px-6 py-6'>
           {navLinks.map((link, index) => (
             <Link
               key={link.href}
@@ -45,7 +45,7 @@ function MobileMenu({ isOpen, onClose }: { isOpen: boolean; onClose: () => void 
             </Link>
           ))}
           <div
-            className='animate-stagger-item mt-4 space-y-3 border-t border-gray-200 pt-4'
+            className='animate-stagger-item mt-4 flex flex-col gap-3 border-t border-gray-200 pt-4'
             style={{ animationDelay: getDelay(navLinks.length) }}
           >
             {isLoggedIn ?

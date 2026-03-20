@@ -338,7 +338,7 @@ export function ReviewerAssignment({
                 <CheckIcon className='size-5' />
                 <p className='text-sm'>All studies have reviewers assigned.</p>
               </div>
-            : <div className='space-y-4'>
+            : <div className='flex flex-col gap-4'>
                 {/* Summary */}
                 <div className='bg-muted flex items-center justify-between rounded-lg px-4 py-3'>
                   <p className='text-muted-foreground text-sm'>
@@ -369,7 +369,7 @@ export function ReviewerAssignment({
                     </span>
                   </CollapsibleTrigger>
                   <CollapsibleContent>
-                    <div className='mt-4 space-y-4'>
+                    <div className='mt-4 flex flex-col gap-4'>
                       {/* Pool 1 */}
                       <div className='border-border bg-muted rounded-xl border p-4'>
                         <div className='mb-3 flex items-center justify-between'>
@@ -382,7 +382,7 @@ export function ReviewerAssignment({
                             Total: {pool1Total}%
                           </span>
                         </div>
-                        <div className='space-y-2'>
+                        <div className='flex flex-col gap-2'>
                           {pool1Members.map((member: any) => (
                             <MemberPercentRow
                               key={member.userId}
@@ -406,7 +406,7 @@ export function ReviewerAssignment({
                             Total: {pool2Total}%
                           </span>
                         </div>
-                        <div className='space-y-2'>
+                        <div className='flex flex-col gap-2'>
                           {pool2Members.map((member: any) => (
                             <MemberPercentRow
                               key={member.userId}

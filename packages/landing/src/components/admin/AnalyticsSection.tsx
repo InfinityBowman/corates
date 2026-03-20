@@ -163,10 +163,10 @@ export function AnalyticsSection() {
   const revenueData = revenueQuery.data;
 
   return (
-    <div className='space-y-6'>
+    <div className='flex flex-col gap-6'>
       {/* Section Header */}
       <div className='flex items-center justify-between'>
-        <div className='flex items-center space-x-3'>
+        <div className='flex items-center gap-3'>
           <div className='rounded-xl bg-purple-100 p-2'>
             <TrendingUpIcon className='size-5 text-purple-600' />
           </div>
@@ -179,11 +179,11 @@ export function AnalyticsSection() {
         {/* Signups Chart */}
         <AdminBox>
           <div className='mb-4 flex items-center justify-between'>
-            <div className='flex items-center space-x-2'>
+            <div className='flex items-center gap-2'>
               <UsersIcon className='size-5 text-blue-500' />
               <h3 className='text-foreground font-medium'>User Signups</h3>
             </div>
-            <div className='flex items-center space-x-2'>
+            <div className='flex items-center gap-2'>
               <select
                 value={signupDays}
                 onChange={e => setSignupDays(parseInt(e.target.value, 10))}
@@ -231,7 +231,7 @@ export function AnalyticsSection() {
         {/* Organizations & Projects Chart */}
         <AdminBox>
           <div className='mb-4 flex items-center justify-between'>
-            <div className='flex items-center space-x-2'>
+            <div className='flex items-center gap-2'>
               <HomeIcon className='size-5 text-green-500' />
               <h3 className='text-foreground font-medium'>Orgs & Projects</h3>
             </div>
@@ -242,7 +242,7 @@ export function AnalyticsSection() {
             </div>
           : orgData && projectData ?
             <>
-              <div className='mb-2 flex space-x-4'>
+              <div className='mb-2 flex gap-4'>
                 <div>
                   <span className='text-2xl font-bold text-green-600'>{orgData.total ?? 0}</span>
                   <span className='text-muted-foreground ml-1 text-sm'>orgs</span>
@@ -331,7 +331,7 @@ export function AnalyticsSection() {
         {/* Revenue Chart */}
         <AdminBox className='lg:col-span-2'>
           <div className='mb-4 flex items-center justify-between'>
-            <div className='flex items-center space-x-2'>
+            <div className='flex items-center gap-2'>
               <DollarSignIcon className='size-5 text-green-500' />
               <h3 className='text-foreground font-medium'>Revenue (6 months)</h3>
             </div>
@@ -372,11 +372,11 @@ export function AnalyticsSection() {
       {/* Webhook Health Row */}
       <AdminBox>
         <div className='mb-4 flex items-center justify-between'>
-          <div className='flex items-center space-x-2'>
+          <div className='flex items-center gap-2'>
             <AlertTriangleIcon className='size-5 text-orange-500' />
             <h3 className='text-foreground font-medium'>Webhook Health</h3>
           </div>
-          <div className='flex items-center space-x-2'>
+          <div className='flex items-center gap-2'>
             <select
               value={webhookDays}
               onChange={e => setWebhookDays(parseInt(e.target.value, 10))}
@@ -401,7 +401,7 @@ export function AnalyticsSection() {
           </div>
         : webhookData?.data ?
           <>
-            <div className='mb-4 flex space-x-6'>
+            <div className='mb-4 flex gap-6'>
               <div>
                 <span className='text-2xl font-bold text-green-600'>
                   {webhookData.totals?.success ?? 0}

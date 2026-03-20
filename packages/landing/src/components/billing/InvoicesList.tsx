@@ -89,7 +89,7 @@ export function InvoicesList() {
             <div key={i} className='flex animate-pulse items-center justify-between px-6 py-4'>
               <div className='flex items-center gap-4'>
                 <div className='bg-secondary size-10 rounded-lg' />
-                <div className='space-y-2'>
+                <div className='flex flex-col gap-2'>
                   <div className='bg-secondary h-4 w-32 rounded' />
                   <div className='bg-secondary h-3 w-24 rounded' />
                 </div>

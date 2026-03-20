@@ -172,7 +172,7 @@ export function TwoFactorSetup() {
   }, []);
 
   return (
-    <div className='space-y-4'>
+    <div className='flex flex-col gap-4'>
       {/* Loading state */}
       {loading && !setupMode && !disableMode && (
         <div className='flex items-center justify-center py-4'>
@@ -198,7 +198,7 @@ export function TwoFactorSetup() {
 
           <div className='flex items-center justify-between'>
             <div>
-              <div className='flex items-center space-x-2'>
+              <div className='flex items-center gap-2'>
                 <ShieldIcon
                   className={`size-5 ${isEnabled ? 'text-emerald-500' : 'text-muted-foreground'}`}
                 />
@@ -247,9 +247,9 @@ export function TwoFactorSetup() {
 
       {/* Setup Mode */}
       {setupMode && (
-        <div className='border-border space-y-4 rounded-lg border p-4'>
+        <div className='border-border flex flex-col gap-4 rounded-lg border p-4'>
           <div className='flex items-center justify-between'>
-            <div className='flex items-center space-x-2'>
+            <div className='flex items-center gap-2'>
               <h3 className='text-foreground font-medium'>Set Up Two-Factor Authentication</h3>
               <Tooltip>
                 <TooltipTrigger>
@@ -272,8 +272,8 @@ export function TwoFactorSetup() {
 
           {/* Step 0: Password */}
           {setupStep === 0 && (
-            <form onSubmit={handlePasswordSubmit} className='space-y-4'>
-              <div className='bg-primary/5 flex items-start space-x-3 rounded-lg p-3'>
+            <form onSubmit={handlePasswordSubmit} className='flex flex-col gap-4'>
+              <div className='bg-primary/5 flex items-start gap-3 rounded-lg p-3'>
                 <LockIcon className='text-primary mt-0.5 size-5' />
                 <div className='text-primary text-sm'>
                   <p className='font-medium'>Verify your identity</p>
@@ -301,7 +301,7 @@ export function TwoFactorSetup() {
                   className='border-border bg-card focus:border-primary focus:ring-ring/20 block w-full rounded-lg border px-3 py-2 text-sm shadow-sm transition-colors focus:ring-2 focus:outline-none'
                 />
               </div>
-              <div className='flex space-x-3'>
+              <div className='flex gap-3'>
                 <button
                   type='button'
                   onClick={handleCancel}
@@ -322,8 +322,8 @@ export function TwoFactorSetup() {
 
           {/* Step 1: QR Code */}
           {setupStep === 1 && (
-            <div className='space-y-4'>
-              <div className='bg-primary/5 flex items-start space-x-3 rounded-lg p-3'>
+            <div className='flex flex-col gap-4'>
+              <div className='bg-primary/5 flex items-start gap-3 rounded-lg p-3'>
                 <SmartphoneIcon className='text-primary mt-0.5 size-5' />
                 <div className='text-primary text-sm'>
                   <p className='font-medium'>Step 1: Scan QR Code</p>
@@ -344,7 +344,7 @@ export function TwoFactorSetup() {
               </div>
               <div className='text-center'>
                 <p className='text-muted-foreground mb-2 text-sm'>Or enter this code manually:</p>
-                <div className='flex items-center justify-center space-x-2'>
+                <div className='flex items-center justify-center gap-2'>
                   <code className='bg-muted text-foreground rounded px-3 py-1.5 font-mono text-sm'>
                     {secret}
                   </code>
@@ -369,8 +369,8 @@ export function TwoFactorSetup() {
 
           {/* Step 2: Verify */}
           {setupStep === 2 && (
-            <form onSubmit={handleVerifySetup} className='space-y-4'>
-              <div className='bg-primary/5 flex items-start space-x-3 rounded-lg p-3'>
+            <form onSubmit={handleVerifySetup} className='flex flex-col gap-4'>
+              <div className='bg-primary/5 flex items-start gap-3 rounded-lg p-3'>
                 <ShieldIcon className='text-primary mt-0.5 size-5' />
                 <div className='text-primary text-sm'>
                   <p className='font-medium'>Step 2: Verify Setup</p>
@@ -395,7 +395,7 @@ export function TwoFactorSetup() {
                   disabled={loading}
                 />
               </div>
-              <div className='flex space-x-3'>
+              <div className='flex gap-3'>
                 <button
                   type='button'
                   onClick={() => setSetupStep(1)}
@@ -416,7 +416,7 @@ export function TwoFactorSetup() {
 
           {/* Step 3: Backup Codes */}
           {setupStep === 3 && (
-            <div className='space-y-4'>
+            <div className='flex flex-col gap-4'>
               <Alert variant='warning'>
                 <ShieldIcon />
                 <div>
@@ -440,7 +440,7 @@ export function TwoFactorSetup() {
                 </div>
                 <button
                   onClick={copyBackupCodes}
-                  className='text-secondary-foreground hover:bg-secondary mt-3 flex w-full items-center justify-center space-x-2 rounded-md px-3 py-2 text-sm transition'
+                  className='text-secondary-foreground hover:bg-secondary mt-3 flex w-full items-center justify-center gap-2 rounded-md px-3 py-2 text-sm transition'
                 >
                   <CopyIcon className='size-4' />
                   <span>{copied ? 'Copied!' : 'Copy all codes'}</span>
@@ -459,7 +459,7 @@ export function TwoFactorSetup() {
 
       {/* Disable Mode */}
       {disableMode && (
-        <div className='border-border space-y-4 rounded-lg border p-4'>
+        <div className='border-border flex flex-col gap-4 rounded-lg border p-4'>
           <div className='flex items-center justify-between'>
             <h3 className='text-foreground font-medium'>Disable Two-Factor Authentication</h3>
             <button
@@ -478,7 +478,7 @@ export function TwoFactorSetup() {
               </AlertDescription>
             </div>
           </Alert>
-          <form onSubmit={handleDisable} className='space-y-4'>
+          <form onSubmit={handleDisable} className='flex flex-col gap-4'>
             <div>
               <label className='text-secondary-foreground mb-1 block text-sm font-medium'>
                 Password
@@ -492,7 +492,7 @@ export function TwoFactorSetup() {
                 disabled={loading}
               />
             </div>
-            <div className='flex space-x-3'>
+            <div className='flex gap-3'>
               <button
                 type='button'
                 onClick={handleCancel}

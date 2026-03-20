@@ -7,7 +7,7 @@ export default function HowDidCoRATESStart() {
         </h2>
 
         <div className='rounded-2xl border border-gray-100 bg-white p-8 shadow-sm md:p-10'>
-          <div className='space-y-6 leading-relaxed text-gray-600'>
+          <div className='flex flex-col gap-6 leading-relaxed text-gray-600'>
             <p>
               CoRATES began with a problem familiar to anyone involved in evidence synthesis: the
               study appraisal process was far more cumbersome than it needed to be. Managing PDF or

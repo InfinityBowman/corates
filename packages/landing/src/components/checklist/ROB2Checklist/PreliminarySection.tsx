@@ -82,7 +82,7 @@ export function PreliminarySection({
         </p>
       </div>
 
-      <div className='space-y-6 px-6 py-5'>
+      <div className='flex flex-col gap-6 px-6 py-5'>
         {/* Study Design */}
         <div>
           <label className='text-secondary-foreground mb-2 block text-sm font-medium'>
@@ -153,7 +153,7 @@ export function PreliminarySection({
           <label className='text-secondary-foreground mb-2 block text-sm font-medium'>
             {(PRELIMINARY_SECTION as any).aim.label}
           </label>
-          <div className='space-y-2'>
+          <div className='flex flex-col gap-2'>
             {(['ASSIGNMENT', 'ADHERING'] as const).map(aim => (
               <button
                 key={aim}
@@ -196,7 +196,7 @@ export function PreliminarySection({
             <p className='text-muted-foreground mb-3 text-xs'>
               {(PRELIMINARY_SECTION as any).deviationsToAddress.info}
             </p>
-            <div className='space-y-2'>
+            <div className='flex flex-col gap-2'>
               {DEVIATION_OPTIONS.map(deviation => {
                 const isChecked = (preliminaryState?.deviationsToAddress || []).includes(deviation);
                 return (

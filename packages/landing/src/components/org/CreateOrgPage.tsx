@@ -89,7 +89,7 @@ export function CreateOrgPage() {
             </p>
           </div>
 
-          <form onSubmit={handleSubmit} className='space-y-4'>
+          <form onSubmit={handleSubmit} className='flex flex-col gap-4'>
             {error && (
               <Alert variant='destructive'>
                 {error}

@@ -157,7 +157,7 @@ export function GoogleDrivePickerLauncher({
   }, [disabled, busy, onBeforeOpenPicker, openPicker, multiselect, onPick]);
 
   return (
-    <div className='space-y-3'>
+    <div className='flex flex-col gap-3'>
       {!pickerConfigured && (
         <Alert variant='warning'>
           Google Picker is not configured. Set VITE_GOOGLE_PICKER_API_KEY.

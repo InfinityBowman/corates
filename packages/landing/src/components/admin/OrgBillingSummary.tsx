@@ -100,7 +100,7 @@ export function OrgBillingSummary({ billing }: OrgBillingSummaryProps) {
       <div className='mt-6 grid grid-cols-1 gap-6 md:grid-cols-2'>
         <div>
           <h3 className='text-foreground mb-3 text-sm font-semibold'>Entitlements</h3>
-          <dl className='space-y-2'>
+          <dl className='flex flex-col gap-2'>
             {entitlementEntries.length > 0 ?
               entitlementEntries.map(([key, value]) => (
                 <div key={key} className='border-border-subtle flex justify-between border-b pb-2'>
@@ -121,7 +121,7 @@ export function OrgBillingSummary({ billing }: OrgBillingSummaryProps) {
         </div>
         <div>
           <h3 className='text-foreground mb-3 text-sm font-semibold'>Quotas</h3>
-          <dl className='space-y-2'>
+          <dl className='flex flex-col gap-2'>
             {quotaEntries.length > 0 ?
               quotaEntries.map(([key, value]) => (
                 <div key={key} className='border-border-subtle flex justify-between border-b pb-2'>

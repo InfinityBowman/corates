@@ -92,7 +92,7 @@ export function Dashboard() {
         {/* Main content grid */}
         <div className='grid gap-6 lg:grid-cols-3'>
           {/* Left column */}
-          <div id='projects-section' className='space-y-6 lg:col-span-2'>
+          <div id='projects-section' className='flex flex-col gap-6 lg:col-span-2'>
             {isLoggedIn && (
               <ProjectsSection
                 createModalOpen={createModalOpen}
@@ -104,7 +104,7 @@ export function Dashboard() {
           </div>
 
           {/* Right sidebar */}
-          <div className='space-y-6'>
+          <div className='flex flex-col gap-6'>
             <QuickActions
               onStartROBINSI={handleStartROBINSI}
               onStartAMSTAR2={handleStartAMSTAR2}

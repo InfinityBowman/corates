@@ -54,7 +54,7 @@ export function PersonaSection() {
           Persona
         </label>
         {isEditing ?
-          <div className='mt-3 space-y-4'>
+          <div className='mt-3 flex flex-col gap-4'>
             <Select value={editSelection} onValueChange={setEditSelection}>
               <SelectTrigger className='max-w-xs'>
                 <SelectValue placeholder='Select a persona' />

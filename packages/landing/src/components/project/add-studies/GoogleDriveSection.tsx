@@ -33,7 +33,7 @@ export function GoogleDriveSection({
   );
 
   return (
-    <div className='space-y-3'>
+    <div className='flex flex-col gap-3'>
       <p className='text-muted-foreground text-sm'>
         Import PDFs from your Google Drive. Each selected file will create a new study.
       </p>

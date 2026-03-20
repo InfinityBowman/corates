@@ -104,14 +104,14 @@ function SessionCard({ session, isCurrent, revoking, onRevoke }: SessionCardProp
       }`}
     >
       <div className='flex items-start justify-between'>
-        <div className='flex items-start space-x-3'>
+        <div className='flex items-start gap-3'>
           <div className={`rounded-full p-2 ${isCurrent ? 'bg-primary/10' : 'bg-secondary'}`}>
             <DeviceIcon
               className={`size-5 ${isCurrent ? 'text-primary' : 'text-secondary-foreground'}`}
             />
           </div>
           <div>
-            <div className='flex items-center space-x-2'>
+            <div className='flex items-center gap-2'>
               <p className='text-foreground font-medium'>
                 {deviceInfo.browser} on {deviceInfo.os}
               </p>
@@ -121,7 +121,7 @@ function SessionCard({ session, isCurrent, revoking, onRevoke }: SessionCardProp
                 </Badge>
               )}
             </div>
-            <div className='text-muted-foreground mt-1 flex items-center space-x-3 text-sm'>
+            <div className='text-muted-foreground mt-1 flex items-center gap-3 text-sm'>
               <span className='flex items-center'>
                 <GlobeIcon className='mr-1 size-3.5' />
                 {maskIp(session.ipAddress)}
@@ -138,7 +138,7 @@ function SessionCard({ session, isCurrent, revoking, onRevoke }: SessionCardProp
           <button
             onClick={() => onRevoke(session.token)}
             disabled={revoking}
-            className='text-destructive hover:bg-destructive/5 flex items-center space-x-1 rounded-md px-3 py-1.5 text-sm font-medium transition disabled:opacity-50'
+            className='text-destructive hover:bg-destructive/5 flex items-center gap-1 rounded-md px-3 py-1.5 text-sm font-medium transition disabled:opacity-50'
           >
             {revoking ?
               <LoaderIcon className='size-4 animate-spin' />
@@ -265,7 +265,7 @@ export function SessionManagement() {
   }, [revokeAllSessions]);
 
   return (
-    <div className='space-y-4'>
+    <div className='flex flex-col gap-4'>
       <div className='flex items-center justify-between'>
         <div>
           <p className='text-foreground font-medium'>Active Sessions</p>
@@ -290,7 +290,7 @@ export function SessionManagement() {
 
       {!isLoading && !sessionsError && (
         <>
-          <div className='space-y-3'>
+          <div className='flex flex-col gap-3'>
             {dedupedSessions.map((sessionItem: any) => (
               <SessionCard
                 key={sessionItem.token}
@@ -307,7 +307,7 @@ export function SessionManagement() {
               <button
                 onClick={handleRevokeOther}
                 disabled={revokingAll}
-                className='bg-secondary text-secondary-foreground hover:bg-secondary/80 flex items-center space-x-2 rounded-md px-4 py-2 text-sm font-medium transition disabled:opacity-50'
+                className='bg-secondary text-secondary-foreground hover:bg-secondary/80 flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition disabled:opacity-50'
               >
                 <LogOutIcon className='size-4' />
                 <span>{revokingAll ? 'Revoking...' : 'Sign out other sessions'}</span>
@@ -316,7 +316,7 @@ export function SessionManagement() {
               <button
                 onClick={() => setShowRevokeAllDialog(true)}
                 disabled={revokingAll}
-                className='text-destructive hover:bg-destructive/10 flex items-center space-x-2 rounded-md bg-red-50 px-4 py-2 text-sm font-medium transition disabled:opacity-50'
+                className='text-destructive hover:bg-destructive/10 flex items-center gap-2 rounded-md bg-red-50 px-4 py-2 text-sm font-medium transition disabled:opacity-50'
               >
                 <Trash2Icon className='size-4' />
                 <span>Sign out everywhere</span>

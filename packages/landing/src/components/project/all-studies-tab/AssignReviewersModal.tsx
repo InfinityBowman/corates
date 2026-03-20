@@ -97,13 +97,13 @@ export function AssignReviewersModal({
         <DialogHeader>
           <DialogTitle>Assign Reviewers</DialogTitle>
         </DialogHeader>
-        <div className='space-y-4'>
+        <div className='flex flex-col gap-4'>
           <p className='text-secondary-foreground text-sm'>
             Assign two reviewers to this study. Each reviewer will independently complete their
             assessments.
           </p>
 
-          <div className='space-y-4'>
+          <div className='flex flex-col gap-4'>
             <div className='text-foreground flex items-center gap-2 text-sm font-medium'>
               <UserIcon className='size-4' />
               <span>Reviewer Assignments</span>

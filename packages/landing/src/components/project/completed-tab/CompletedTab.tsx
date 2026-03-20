@@ -52,7 +52,7 @@ export function CompletedTab() {
   );
 
   return (
-    <div className='space-y-2'>
+    <div className='flex flex-col gap-2'>
       {completedStudies.length > 0 ?
         completedStudies.map((study: any) => (
           <CompletedStudyRow

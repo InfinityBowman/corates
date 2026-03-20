@@ -118,7 +118,7 @@ export function DomainSection({
       {/* Domain content */}
       {!collapsed && (
         <div className='px-6 py-4'>
-          <div className='space-y-1'>
+          <div className='flex flex-col gap-1'>
             {Object.entries(questions).map(([qKey, qDef]: [string, any]) => (
               <SignallingQuestion
                 key={qKey}

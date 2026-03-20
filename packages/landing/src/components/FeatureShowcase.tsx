@@ -239,7 +239,7 @@ function PDFAnnotationIllustration() {
         </div>
 
         {/* PDF content */}
-        <div className='space-y-2 p-3'>
+        <div className='flex flex-col gap-2 p-3'>
           <div className='h-2 w-full rounded bg-gray-200' />
           <div className='h-2 w-5/6 rounded bg-gray-200' />
 
@@ -502,7 +502,7 @@ function FeatureSection({ feature, reversed }: FeatureSectionProps) {
       <div className={reversed ? 'md:order-1' : ''}>
         <h3 className='mb-4 text-2xl font-bold text-gray-900 md:text-3xl'>{feature.title}</h3>
         <p className='mb-6 text-lg leading-relaxed text-gray-600'>{feature.description}</p>
-        <ul className='space-y-3'>
+        <ul className='flex flex-col gap-3'>
           {feature.bullets.map((bullet, index) => (
             <li key={index} className='flex items-start gap-3'>
               <CheckIcon className='mt-0.5 size-5 shrink-0 text-blue-700' />
@@ -598,7 +598,7 @@ export default function FeatureShowcase() {
         </p>
       </div>
 
-      <div className='space-y-16 md:space-y-24'>
+      <div className='flex flex-col gap-16 md:gap-24'>
         {features.map((feature, index) => (
           <FeatureSection key={index} feature={feature} reversed={index % 2 === 1} />
         ))}

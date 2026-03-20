@@ -122,7 +122,7 @@ function ToolContentView({ tool }: { tool: ToolContent }) {
           <h1 className='mb-2 text-4xl font-bold text-gray-900'>{tool.name}</h1>
           <p className='mb-8 text-gray-500'>Appraisal tool guidance</p>
 
-          <div className='space-y-8 leading-relaxed text-gray-700'>
+          <div className='flex flex-col gap-8 leading-relaxed text-gray-700'>
             <div>
               <h2 className='mb-4 text-2xl font-semibold text-gray-900'>{tool.name}</h2>
               <p className='mb-6 text-gray-600'>{tool.description}</p>
@@ -147,7 +147,7 @@ function ToolContentView({ tool }: { tool: ToolContent }) {
                 </div>
                 <div className='flex-1'>
                   <h2 className='mb-4 text-lg font-semibold text-gray-900'>Reference Documents</h2>
-                  <ul className='space-y-3 text-gray-600'>
+                  <ul className='flex flex-col gap-3 text-gray-600'>
                     {tool.referenceLinks.map(link => (
                       <li key={link.href}>
                         <a

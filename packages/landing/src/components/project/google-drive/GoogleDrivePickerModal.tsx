@@ -71,7 +71,7 @@ export function GoogleDrivePickerModal({
           <DialogDescription>Select a PDF from your Google Drive to import</DialogDescription>
         </DialogHeader>
 
-        <div className='space-y-4'>
+        <div className='flex flex-col gap-4'>
           <GoogleDrivePickerLauncher
             active={open}
             multiselect={false}

@@ -373,7 +373,7 @@ export function PricingTable({ currentTier: currentTierProp }: PricingTableProps
                 <p className='text-muted-foreground mb-3 text-xs font-semibold tracking-wide uppercase'>
                   What&apos;s included
                 </p>
-                <ul className='space-y-3'>
+                <ul className='flex flex-col gap-3'>
                   {plan.features.map((feature: string, i: number) => (
                     <li key={i} className='flex items-start gap-3'>
                       <div className='mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-emerald-100'>
@@ -459,7 +459,7 @@ export function PricingTable({ currentTier: currentTierProp }: PricingTableProps
             </div>
           </DialogHeader>
           {validationError && (
-            <div className='mb-6 space-y-3'>
+            <div className='mb-6 flex flex-col gap-3'>
               {validationError.violations?.map((v: any, i: number) => (
                 <Alert key={i} variant='destructive'>
                   <AlertTitle>{v.message}</AlertTitle>

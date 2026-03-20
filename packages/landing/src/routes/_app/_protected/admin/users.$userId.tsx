@@ -338,7 +338,7 @@ function UserDetailPage() {
         <>
           {/* Header */}
           <div className='mb-8 flex items-start justify-between'>
-            <div className='flex items-center space-x-4'>
+            <div className='flex items-center gap-4'>
               <UserAvatar
                 src={userData.user.avatarUrl || userData.user.image}
                 name={userData.user.name}
@@ -347,7 +347,7 @@ function UserDetailPage() {
               <div>
                 <h1 className='text-foreground text-2xl font-bold'>{userData.user.name}</h1>
                 <p className='text-muted-foreground'>{userData.user.email}</p>
-                <div className='mt-1 flex items-center space-x-2'>
+                <div className='mt-1 flex items-center gap-2'>
                   {userData.user.role === 'admin' && (
                     <Badge variant='default'>
                       <ShieldIcon data-icon='inline-start' />
@@ -377,7 +377,7 @@ function UserDetailPage() {
             </div>
 
             {/* Actions */}
-            <div className='flex space-x-2'>
+            <div className='flex gap-2'>
               <button
                 type='button'
                 onClick={handleImpersonate}
@@ -495,13 +495,13 @@ function UserDetailPage() {
           <AdminBox className='mb-6'>
             <h2 className='text-foreground mb-4 text-lg font-semibold'>Linked Accounts</h2>
             {(userData.accounts?.length ?? 0) > 0 ?
-              <div className='space-y-2'>
+              <div className='flex flex-col gap-2'>
                 {userData.accounts!.map((account, idx) => (
                   <div
                     key={idx}
                     className='border-border bg-muted flex items-center justify-between rounded-lg border p-3'
                   >
-                    <div className='flex items-center space-x-3'>
+                    <div className='flex items-center gap-3'>
                       <span className='bg-card inline-flex size-8 items-center justify-center rounded-full'>
                         {account.providerId === 'google' && (
                           <img src='/logos/google.svg' alt='Google' className='size-5' />
@@ -651,7 +651,7 @@ function UserDetailPage() {
               )}
             </div>
             {(userData.sessions?.length ?? 0) > 0 ?
-              <div className='space-y-3'>
+              <div className='flex flex-col gap-3'>
                 {userData.sessions!.map(session => {
                   const { browser, os } = parseUserAgent(session.userAgent);
                   return (
@@ -659,7 +659,7 @@ function UserDetailPage() {
                       key={session.id}
                       className='border-border bg-muted flex items-center justify-between rounded-lg border p-4'
                     >
-                      <div className='flex items-center space-x-4'>
+                      <div className='flex items-center gap-4'>
                         <div className='bg-card flex size-10 items-center justify-center rounded-full'>
                           <MonitorIcon className='text-muted-foreground size-5' />
                         </div>
@@ -667,7 +667,7 @@ function UserDetailPage() {
                           <p className='text-foreground text-sm font-medium'>
                             {browser} on {os}
                           </p>
-                          <div className='text-muted-foreground flex items-center space-x-3 text-xs'>
+                          <div className='text-muted-foreground flex items-center gap-3 text-xs'>
                             <span className='flex items-center'>
                               <ClockIcon className='mr-1 size-3' />
                               {formatDate(session.createdAt)}
@@ -703,7 +703,7 @@ function UserDetailPage() {
           <DialogHeader>
             <DialogTitle>Ban User</DialogTitle>
           </DialogHeader>
-          <div className='space-y-4'>
+          <div className='flex flex-col gap-4'>
             <p className='text-muted-foreground text-sm'>
               This will ban the user and revoke all their sessions.
             </p>

@@ -139,7 +139,7 @@ function AdminDashboard() {
                   )} of ${usersData.pagination.total || 0} users`
                 : 'No users found'}
               </p>
-              <div className='flex items-center space-x-2'>
+              <div className='flex items-center gap-2'>
                 <button
                   type='button'
                   onClick={() => setPage(p => Math.max(1, p - 1))}

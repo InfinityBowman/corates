@@ -9,7 +9,7 @@ import {
   SearchIcon,
   FolderIcon,
   UsersIcon,
-  FileIcon,
+  FileTextIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
   AlertCircleIcon,
@@ -117,7 +117,7 @@ function AdminProjectList() {
             <Link
               to={'/admin/projects/$projectId' as string}
               params={{ projectId: project.id } as Record<string, string>}
-              className='flex items-center space-x-3'
+              className='flex items-center gap-3'
             >
               <div className='flex size-10 items-center justify-center rounded-lg bg-green-100'>
                 <FolderIcon className='size-5 text-green-600' />
@@ -144,7 +144,7 @@ function AdminProjectList() {
               <Link
                 to={'/admin/orgs/$orgId' as string}
                 params={{ orgId: project.orgId } as Record<string, string>}
-                className='text-secondary-foreground flex items-center space-x-2 hover:text-blue-600'
+                className='text-secondary-foreground flex items-center gap-2 hover:text-blue-600'
                 onClick={(e: React.MouseEvent) => e.stopPropagation()}
               >
                 <HomeIcon className='size-4' />
@@ -170,7 +170,7 @@ function AdminProjectList() {
         header: 'Files',
         cell: info => (
           <span className='bg-secondary text-secondary-foreground inline-flex items-center rounded-full px-2.5 py-0.5 text-sm font-medium'>
-            <FileIcon className='mr-1 size-3' />
+            <FileTextIcon className='mr-1 size-3' />
             {info.getValue() as number}
           </span>
         ),
@@ -294,7 +294,7 @@ function AdminProjectList() {
                 Showing {(pagination.page - 1) * limit + 1} to{' '}
                 {Math.min(pagination.page * limit, pagination.total)} of {pagination.total} projects
               </div>
-              <div className='flex items-center space-x-2'>
+              <div className='flex items-center gap-2'>
                 <button
                   type='button'
                   onClick={() => setPage(p => Math.max(1, p - 1))}

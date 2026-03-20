@@ -3,7 +3,7 @@
  */
 
 import { useState, useMemo, useCallback } from 'react';
-import { Trash2Icon, EyeIcon, DownloadIcon, PencilIcon, FileIcon } from 'lucide-react';
+import { Trash2Icon, EyeIcon, DownloadIcon, PencilIcon, FileTextIcon } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -84,7 +84,7 @@ export function PdfListItem({
     <>
       <div className='border-border bg-card hover:border-border flex items-center gap-3 rounded-lg border p-3 transition-colors'>
         <div className='shrink-0'>
-          <FileIcon className='text-muted-foreground size-8' />
+          <FileTextIcon className='text-muted-foreground size-8' />
         </div>
 
         <div className='min-w-0 flex-1'>

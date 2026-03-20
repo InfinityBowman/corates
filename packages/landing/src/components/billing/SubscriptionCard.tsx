@@ -149,7 +149,7 @@ export function SubscriptionCard({ subscription, onManage, manageLoading }: Subs
 
         {/* Details */}
         {!isFree && (
-          <div className='mb-6 space-y-3'>
+          <div className='mb-6 flex flex-col gap-3'>
             {sub.currentPeriodEnd && !willCancel && (
               <div className='flex items-center justify-between text-sm'>
                 <span className='text-muted-foreground flex items-center gap-2'>

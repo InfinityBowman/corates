@@ -192,7 +192,7 @@ export function Sidebar({
                 Projects
               </h3>
             </div>
-            <div className='space-y-0.5 px-2'>
+            <div className='flex flex-col gap-0.5 px-2'>
               {cloudProjects?.length > 0 ?
                 cloudProjects.map((project: { id: string; name: string }) => (
                   <ProjectTreeItem
@@ -231,7 +231,7 @@ export function Sidebar({
             Appraisals
           </h3>
         </div>
-        <div className='space-y-0.5 px-2'>
+        <div className='flex flex-col gap-0.5 px-2'>
           {checklists?.length > 0 ?
             checklists
               .filter((c: { id?: string }) => c?.id)

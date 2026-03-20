@@ -140,7 +140,7 @@ function ResourcesDialog({ open, onClose }: { open: boolean; onClose: () => void
           </DialogDescription>
         </DialogHeader>
 
-        <div className='space-y-4 py-4'>
+        <div className='flex flex-col gap-4 py-4'>
           <ResourceLink
             title='RoB 2 Tool (Official)'
             description='Risk of Bias 2 - Assessing risk of bias in randomized trials'

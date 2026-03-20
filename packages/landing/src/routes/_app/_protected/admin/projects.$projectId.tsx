@@ -10,7 +10,7 @@ import {
   ArrowLeftIcon,
   FolderIcon,
   UsersIcon,
-  FileIcon,
+  FileTextIcon,
   MailIcon,
   Trash2Icon,
   LoaderIcon,
@@ -273,7 +273,7 @@ function ProjectDetailPage() {
         <>
           {/* Header */}
           <div className='mb-8 flex items-start justify-between'>
-            <div className='flex items-center space-x-4'>
+            <div className='flex items-center gap-4'>
               <div className='flex size-16 items-center justify-center rounded-lg bg-blue-100'>
                 <FolderIcon className='size-8 text-blue-600' />
               </div>
@@ -282,7 +282,7 @@ function ProjectDetailPage() {
                 {projectData.project.description && (
                   <p className='text-muted-foreground mt-1'>{projectData.project.description}</p>
                 )}
-                <div className='text-muted-foreground mt-2 flex items-center space-x-4 text-sm'>
+                <div className='text-muted-foreground mt-2 flex items-center gap-4 text-sm'>
                   <Link
                     to={'/admin/orgs/$orgId' as string}
                     params={{ orgId: projectData.project.orgId } as Record<string, string>}
@@ -296,7 +296,7 @@ function ProjectDetailPage() {
                     {projectData.stats.memberCount} members
                   </span>
                   <span className='flex items-center'>
-                    <FileIcon className='mr-1 size-4' />
+                    <FileTextIcon className='mr-1 size-4' />
                     {projectData.stats.fileCount} files
                   </span>
                 </div>
@@ -404,7 +404,7 @@ function ProjectDetailPage() {
                     {projectData.members!.map(member => (
                       <tr key={member.id} className={table.row}>
                         <td className={table.cellCompact}>
-                          <div className='flex items-center space-x-3'>
+                          <div className='flex items-center gap-3'>
                             <UserAvatar
                               src={member.userAvatar}
                               name={member.userDisplayName || member.userName}
@@ -452,7 +452,7 @@ function ProjectDetailPage() {
           {/* Files Section */}
           <AdminBox className='mb-6'>
             <h2 className='text-foreground mb-4 flex items-center text-lg font-semibold'>
-              <FileIcon className='mr-2 size-5' />
+              <FileTextIcon className='mr-2 size-5' />
               Files ({projectData.files?.length ?? 0})
             </h2>
             {(projectData.files?.length ?? 0) > 0 ?
@@ -471,8 +471,8 @@ function ProjectDetailPage() {
                     {projectData.files!.map(file => (
                       <tr key={file.id} className={table.row}>
                         <td className={table.cellCompact}>
-                          <div className='flex items-center space-x-2'>
-                            <FileIcon className='text-muted-foreground/70 size-4' />
+                          <div className='flex items-center gap-2'>
+                            <FileTextIcon className='text-muted-foreground/70 size-4' />
                             <span className='text-foreground font-medium'>
                               {file.originalName || file.filename}
                             </span>

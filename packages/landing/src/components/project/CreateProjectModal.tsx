@@ -148,7 +148,7 @@ export function CreateProjectModal({ open, onOpenChange }: CreateProjectModalPro
         </DialogHeader>
 
         <form onSubmit={handleSubmit}>
-          <div className='space-y-4 py-2'>
+          <div className='flex flex-col gap-4 py-2'>
             {/* Project Name */}
             <div>
               <label

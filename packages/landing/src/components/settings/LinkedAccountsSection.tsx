@@ -149,14 +149,14 @@ export function LinkedAccountsSection() {
   return (
     <div className='border-border bg-card mb-6 overflow-hidden rounded-lg border shadow-sm'>
       <div className='border-border from-muted/50 to-background border-b bg-gradient-to-r px-6 py-4'>
-        <div className='flex items-center space-x-2'>
+        <div className='flex items-center gap-2'>
           <LinkIcon className='text-secondary-foreground size-5' />
           <h2 className='text-foreground text-lg font-medium'>Linked Accounts</h2>
         </div>
         <p className='text-muted-foreground mt-1 text-sm'>Manage how you sign in to CoRATES</p>
       </div>
 
-      <div className='space-y-4 p-6'>
+      <div className='flex flex-col gap-4 p-6'>
         {error && (
           <Alert variant='destructive'>
             <AlertCircleIcon />
@@ -174,7 +174,7 @@ export function LinkedAccountsSection() {
         )}
 
         {accounts?.length > 0 ?
-          <div className='space-y-3' role='list' aria-label='Linked accounts'>
+          <div className='flex flex-col gap-3' role='list' aria-label='Linked accounts'>
             {accounts.map(account => (
               <AccountProviderCard
                 key={account.id}
@@ -187,11 +187,11 @@ export function LinkedAccountsSection() {
             ))}
           </div>
         : isLoading && (
-            <div className='space-y-3'>
+            <div className='flex flex-col gap-3'>
               <div className='border-border flex animate-pulse items-center justify-between rounded-lg border p-4'>
                 <div className='flex items-center gap-3'>
                   <div className='bg-secondary size-10 rounded-lg' />
-                  <div className='space-y-2'>
+                  <div className='flex flex-col gap-2'>
                     <div className='bg-secondary h-4 w-24 rounded' />
                     <div className='bg-secondary h-3 w-32 rounded' />
                   </div>
