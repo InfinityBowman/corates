@@ -145,5 +145,5 @@ test('Dual-Reviewer AMSTAR2 Workflow', async ({ context, page }) => {
   await page.waitForTimeout(2000);
   await page.getByRole('tab', { name: /Completed/i }).click();
   await page.waitForTimeout(1000);
-  await expect(page.getByText('Untitled Study')).toBeVisible({ timeout: 5_000 });
+  await expect(page.getByText('Petrie2019')).toBeVisible({ timeout: 5_000 });
 });

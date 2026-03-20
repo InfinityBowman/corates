@@ -145,9 +145,9 @@ export function ChecklistForm({
       )}
 
       {requiresOutcome && hasOutcomeIssue && outcomes.length > 0 && (
-        <div className='mt-2 rounded-lg border border-blue-300 bg-blue-50 p-3'>
-          <p className='text-sm font-medium text-blue-800'>All outcomes covered</p>
-          <p className='mt-1 text-xs text-blue-700'>
+        <div className='mt-2 rounded-lg border border-info-border bg-info-bg p-3'>
+          <p className='text-sm font-medium text-info-foreground'>All outcomes covered</p>
+          <p className='mt-1 text-xs text-info'>
             You already have a {(getChecklistMetadata(type) as any)?.name || type} checklist for
             each available outcome.
           </p>

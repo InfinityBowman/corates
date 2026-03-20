@@ -60,82 +60,193 @@ The `/api/admin/stop-impersonation` endpoint is currently inline on `base` -- it
 
 ---
 
-## Architecture Decision: `unwrap()` Pattern
+## Architecture Decision: Custom Fetch + `rpc()` Helper
 
-The `hc` client returns raw `Response` objects. The current `apiFetch` provides valuable error handling (toast display, auth redirects, retry, domain error parsing). We preserve this with an `unwrap()` helper:
+### Problem
+
+The `hc` client returns raw `Response` objects. The current `apiFetch` provides error handling (toast display, auth redirects, retry, domain error parsing). We need to preserve error handling without coupling it to every call site.
+
+### Decision
+
+Error handling is split into two layers:
+
+1. **Transport layer** (custom `fetch` in `hc`): Throws structured errors on non-ok responses. This runs automatically on every RPC call.
+2. **UI layer** (TanStack Query global config): Shows toasts, handles auth redirects. This is where per-call customization happens.
+
+A thin `rpc()` helper extracts typed JSON from successful responses. It contains no error handling logic.
+
+### Implementation
 
 ```typescript
 // lib/rpc.ts
 import { hc } from 'hono/client';
 import type { AppType } from '@workers/index';
 import { API_BASE } from '@/config/api';
-import { parseApiError, handleDomainError } from '@/lib/error-utils';
+import { parseApiError } from '@/lib/error-utils';
 
 export const api = hc<AppType>(API_BASE, {
   init: { credentials: 'include' },
+  fetch: async (input, init) => {
+    const res = await fetch(input, init);
+    if (!res.ok) {
+      const error = await parseApiError(res);
+      throw error;
+    }
+    return res;
+  },
 });
 
 /**
- * Extract typed JSON from an RPC response, applying error handling.
- * Reuses the same error parsing/toast/redirect logic as apiFetch.
+ * Extract typed JSON from an RPC response.
+ * Error handling is NOT here -- it's in the custom fetch (throws on non-ok)
+ * and TanStack Query's global error handlers (toasts, redirects).
  */
-export async function unwrap<T>(
-  response: Response & { json(): Promise<T> },
-  options?: {
-    toastMessage?: string | false;
-    showToast?: boolean;
-    onError?: (error: unknown) => void;
-  },
+export async function rpc<T>(
+  promise: Promise<Response & { json(): Promise<T> }>,
 ): Promise<T> {
-  if (!response.ok) {
-    const error = await parseApiError(response);
-    handleDomainError(error, {
-      showToast: options?.showToast ?? (options?.toastMessage !== false),
-      toastTitle: typeof options?.toastMessage === 'string' ? options.toastMessage : undefined,
-    });
-    if (options?.onError) options.onError(error);
-    throw error;
-  }
-  return response.json();
+  const res = await promise;
+  return res.json();
 }
+```
+
+### Error handling in TanStack Query
+
+```typescript
+// lib/queryClient.ts
+import { isDomainError, getUserFriendlyMessage } from '@/lib/error-utils';
+import { toast } from 'sonner';
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: (failureCount, error) => {
+        // Don't retry auth errors or client errors
+        if (isDomainError(error) && error.statusCode < 500) return false;
+        return failureCount < 2;
+      },
+    },
+    mutations: {
+      onError: (error) => {
+        // Global toast for mutation failures
+        if (isDomainError(error)) {
+          toast.error(getUserFriendlyMessage(error.code));
+        }
+      },
+    },
+  },
+});
+
+// Global auth redirect handler
+queryClient.getQueryCache().subscribe((event) => {
+  if (event.type === 'updated' && event.query.state.error) {
+    const error = event.query.state.error;
+    if (isDomainError(error) && (error.code === 'AUTH_REQUIRED' || error.code === 'AUTH_EXPIRED')) {
+      window.location.href = '/signin';
+    }
+  }
+});
 ```
 
 ### Usage comparison
 
 ```typescript
-// Before (apiFetch -- no type safety)
+// Before (apiFetch -- no type safety, per-call error options)
 const data = await apiFetch.get<Subscription>('/api/billing/subscription', {
   toastMessage: false,
 });
 
-// After (RPC -- fully typed, no manual Subscription interface)
-const res = await api.api.billing.subscription.$get();
-const data = await unwrap(res, { showToast: false });
-// data type is inferred from the backend Zod schema
+// After (RPC -- fully typed, no manual interface, no error options needed)
+// Queries don't show toasts by default (only mutations do)
+const { data } = useQuery({
+  queryKey: ['subscription'],
+  queryFn: () => rpc(api.api.billing.subscription.$get()),
+});
+
+// Mutations get global toast handling automatically
+const mutation = useMutation({
+  mutationFn: (data) => rpc(api.api.billing.checkout.$post({ json: data })),
+  // To suppress toast for a specific mutation:
+  // onError: () => {},
+});
+```
+
+### Why not `unwrap()`?
+
+The earlier plan used an `unwrap()` helper with per-call `showToast`/`toastMessage` options. This was rejected because:
+
+- It duplicates TanStack Query's error handling (which already has `onError`, `retry`, `throwOnError`)
+- ~52 of ~70 call sites suppress toasts. The global default should be "no toast for queries, toast for mutations" -- not opt-out per call
+- Error handling belongs at the UI layer (query/mutation hooks), not the transport layer
+- `rpc()` is 4 lines with no options. `unwrap()` was a mini error-handling framework
+
+### Calls NOT using TanStack Query
+
+The Zustand admin store actions (`impersonateUser`, `stopImpersonation`) and a few component event handlers call the API directly without TanStack Query. For these, use try/catch:
+
+```typescript
+// Zustand store action
+impersonateUser: async (userId) => {
+  try {
+    await rpc(api.api.admin.users[':userId'].impersonate.$post({
+      param: { userId },
+      json: { userId },
+    }));
+    set({ isImpersonating: true });
+    window.location.href = '/';
+  } catch (error) {
+    toast.error('Failed to impersonate user');
+  }
+},
 ```
 
 ---
 
 ## Phase 1: Infrastructure Setup
 
-### 1a. Backend: Fix sub-router chaining
+### 1a. Add lint rule to enforce chaining
 
-Two sub-routers use imperative (non-chained) patterns, which means their route types are lost and don't flow into `AppType`.
+Before converting any routes, add a lint rule that catches the anti-pattern. This uses ESLint's built-in `no-restricted-syntax` with AST selectors -- no custom plugin needed.
+
+Add to the workers ESLint config, scoped to route files:
+
+```javascript
+// In eslint config, scoped to route files
+{
+  files: ['packages/workers/src/routes/**/*.ts'],
+  rules: {
+    'no-restricted-syntax': ['error', {
+      selector: 'ExpressionStatement > CallExpression[callee.property.name="openapi"]',
+      message: 'Chain .openapi() calls (assign return value) so types flow into AppType. See docs/audits/hono-rpc-migration.md',
+    }, {
+      selector: 'ExpressionStatement > CallExpression[callee.property.name="route"]',
+      message: 'Chain .route() calls (assign return value) so types flow into AppType. See docs/audits/hono-rpc-migration.md',
+    }],
+  },
+}
+```
+
+This catches any `.openapi()` or `.route()` call whose return value is discarded (an `ExpressionStatement` means the result isn't assigned to a variable). It will immediately flag all the imperative calls that need conversion.
+
+**Validation steps:**
+1. Add the rule
+2. Run `pnpm --filter workers lint` to confirm it catches the known violations
+3. Verify it does NOT flag already-chained routes (e.g., `routes/users.ts`)
+4. Verify it does NOT flag non-route `.route()` calls elsewhere in the codebase
+
+### 1b. Backend: Fix sub-router chaining
+
+Fix all violations caught by the lint rule. Two sub-routers use imperative (non-chained) patterns, which means their route types are lost and don't flow into `AppType`.
 
 **`routes/billing/index.ts`** -- 7 imperative `.route()` calls:
 
 ```typescript
-// Current (types lost)
+// Current (types lost -- lint error)
 const billingRoutes = new OpenAPIHono<{ Bindings: Env }>();
 billingRoutes.route('/', billingWebhookRoutes);
 billingRoutes.route('/', billingSubscriptionRoutes);
-billingRoutes.route('/', billingValidationRoutes);
-billingRoutes.route('/', billingPortalRoutes);
-billingRoutes.route('/', billingCheckoutRoutes);
-billingRoutes.route('/', billingGrantRoutes);
-billingRoutes.route('/', billingInvoicesRoutes);
+// ...5 more...
 
-// Target (types accumulate)
+// Target (types accumulate -- lint passes)
 import { $ } from '@hono/zod-openapi';
 
 const base = new OpenAPIHono<{ Bindings: Env }>();
@@ -152,14 +263,14 @@ const billingRoutes = $(base)
 **`routes/orgs/index.ts`** -- ~11 imperative `.openapi()` calls across ~900 lines:
 
 ```typescript
-// Current (types lost)
+// Current (types lost -- lint error)
 const orgRoutes = new OpenAPIHono<{ Bindings: Env }>();
 orgRoutes.openapi(listOrgsRoute, handler);
 orgRoutes.openapi(createOrgRoute, handler);
-// ...11 more...
+// ...
 orgRoutes.route('/:orgId/projects', orgProjectRoutes);
 
-// Target (types accumulate)
+// Target (types accumulate -- lint passes)
 const base = new OpenAPIHono<{ Bindings: Env }>({ defaultHook: validationHook });
 const orgRoutes = $(base.use('*', requireAuth))
   .openapi(listOrgsRoute, handler)
@@ -168,14 +279,14 @@ const orgRoutes = $(base.use('*', requireAuth))
   .route('/:orgId/projects', orgProjectRoutes);
 ```
 
-Also check and convert if needed:
+Also check and convert if needed (the lint rule will catch these):
 - Each billing sub-router file (subscription.ts already done, check others)
 - `routes/orgs/projects.ts` (nested sub-routes)
 - `routes/admin/` sub-routers (admin/index.ts already chains `.route()`)
 
 **Move stop-impersonation**: Move the inline `/api/admin/stop-impersonation` handler from `index.ts` base into the chained admin routes so it's included in `AppType`.
 
-### 1b. Frontend: tsconfig path alias
+### 1c. Frontend: tsconfig path alias
 
 Add `@workers/*` alias to `packages/landing/tsconfig.json`:
 
@@ -188,7 +299,7 @@ Add `@workers/*` alias to `packages/landing/tsconfig.json`:
 
 `vite-tsconfig-paths` (already in devDependencies and configured in `vite.config.ts`) will resolve this at build time.
 
-### 1c. Frontend: Cloudflare Env type resolution
+### 1d. Frontend: Cloudflare Env type resolution
 
 `AppType` depends on `Cloudflare.Env` from `worker-configuration.d.ts`. TypeScript needs to resolve this when type-checking `AppType` in landing. Options (test in order):
 
@@ -196,16 +307,24 @@ Add `@workers/*` alias to `packages/landing/tsconfig.json`:
 2. Add `@cloudflare/workers-types` to landing devDependencies
 3. Include workers' `worker-configuration.d.ts` in landing tsconfig `files` array
 
-### 1d. Frontend: Create `lib/rpc.ts`
+### 1e. Frontend: Create `lib/rpc.ts`
 
-Create the typed client and `unwrap()` helper as described in the Architecture Decision section above. The `unwrap` function reuses existing `parseApiError` and `handleDomainError` from `lib/error-utils.ts`.
+Create the typed `hc` client with custom error-throwing fetch and the `rpc()` helper as described in the Architecture Decision section.
 
-### 1e. Verify end-to-end
+### 1f. Frontend: Update `lib/queryClient.ts`
+
+Add global error handlers:
+- Mutation `onError`: show toast via `getUserFriendlyMessage()`
+- Query retry: skip retries for client errors (4xx)
+- Auth redirect: subscribe to query cache for `AUTH_REQUIRED`/`AUTH_EXPIRED`
+
+### 1g. Verify end-to-end
 
 - Run `pnpm --filter workers typecheck` after backend changes
 - Run `pnpm --filter landing typecheck` after frontend setup
 - Convert one route (billing subscription GET) as smoke test
 - Confirm inferred types match expected shape in IDE
+- Verify error responses trigger toast/redirect correctly
 
 ---
 
@@ -222,7 +341,7 @@ Lowest risk -- these are simple queryFn replacements with no mutations.
 | `hooks/useMyProjectsList.ts` | 1 GET `/api/users/me/projects` | Simple conversion |
 | `api/google-drive.ts` | 2 GETs (`/status`, `/picker-token`) | Convert in API module |
 
-**Pattern for TanStack Query hooks:**
+**Pattern:**
 
 ```typescript
 // Before
@@ -234,10 +353,7 @@ const { data } = useQuery({
 // After
 const { data } = useQuery({
   queryKey: ['subscription'],
-  queryFn: async () => {
-    const res = await api.api.billing.subscription.$get();
-    return unwrap(res, { showToast: false });
-  },
+  queryFn: () => rpc(api.api.billing.subscription.$get()),
 });
 ```
 
@@ -247,12 +363,11 @@ const { data } = useQuery({
 
 | File | Calls | Notes |
 |------|-------|-------|
-| `api/billing.ts` | 3 POSTs (`/checkout`, `/portal`, `/trial/start`) | Return redirect URLs; caller-provided toast options |
-| `api/billing.ts` | 1 POST (`/single-project/checkout`) | Same pattern as checkout |
-| `api/account-merge.ts` | 3 POSTs + 1 DELETE (`/initiate`, `/verify`, `/complete`, `/cancel`) | All use default toasts |
-| `api/google-drive.ts` | 2 POSTs + 1 DELETE (`/import`, link-social, `/disconnect`) | Note: `/api/auth/link-social` is NOT on `app` -- keep as apiFetch |
+| `api/billing.ts` | 4 POSTs (`/checkout`, `/portal`, `/trial/start`, `/single-project/checkout`) | Return redirect URLs |
+| `api/account-merge.ts` | 3 POSTs + 1 DELETE (`/initiate`, `/verify`, `/complete`, `/cancel`) | Toast handled by global mutation onError |
+| `api/google-drive.ts` | 2 POSTs + 1 DELETE (`/import`, `/disconnect`) | `/api/auth/link-social` stays as apiFetch |
 
-**Pattern for mutations:**
+**Pattern:**
 
 ```typescript
 // Before
@@ -261,9 +376,8 @@ export async function createCheckoutSession(data: CheckoutData, options?: ApiFet
 }
 
 // After
-export async function createCheckoutSession(data: CheckoutData, options?: UnwrapOptions) {
-  const res = await api.api.billing.checkout.$post({ json: data });
-  return unwrap(res, options);
+export async function createCheckoutSession(data: CheckoutData) {
+  return rpc(api.api.billing.checkout.$post({ json: data }));
 }
 ```
 
@@ -286,22 +400,25 @@ export async function createCheckoutSession(data: CheckoutData, options?: Unwrap
 await apiFetch.post(`/api/orgs/${orgId}/projects`, projectData, { showToast: false });
 
 // After
-const res = await api.api.orgs[':orgId'].projects.$post({
+await rpc(api.api.orgs[':orgId'].projects.$post({
   param: { orgId },
   json: projectData,
-});
-await unwrap(res, { showToast: false });
+}));
 ```
 
 ---
 
-## Phase 5: Migrate Admin Routes (largest group)
+## Phase 5: Migrate Admin Routes (optional, defer recommended)
 
-~37 call sites across 4 files. The admin area is the biggest refactor because of the `adminFetch` dynamic path helper.
+~37 call sites across 4 files. This is the largest refactor and has the lowest ROI since admin is internal-only tooling where type drift is low-consequence.
+
+**Recommend deferring this phase.** Phases 1-4 cover all user-facing routes (~33 call sites across 14 files) and capture the majority of the type safety benefit.
+
+If done, the key changes are:
 
 ### 5a. Convert `stores/adminStore.ts` (33 calls)
 
-The Zustand store has 4 actions + 29 plain async functions. Each builds a URL string manually. Convert each to typed RPC calls:
+Each plain async function builds a URL string manually. Convert each to typed RPC calls:
 
 ```typescript
 // Before
@@ -313,41 +430,36 @@ export async function fetchUsers({ page = 1, limit = 20, search = '' } = {}) {
 
 // After
 export async function fetchUsers({ page = 1, limit = 20, search = '' } = {}) {
-  const res = await api.api.admin.users.$get({
+  return rpc(api.api.admin.users.$get({
     query: { page: page.toString(), limit: limit.toString(), search },
-  });
-  return unwrap(res, { showToast: false });
+  }));
 }
 ```
 
 ### 5b. Rewrite `hooks/useAdminQueries.ts`
 
-The current `adminFetch` helper uses dynamic string paths:
-
-```typescript
-const adminFetch = (path: string) => apiFetch(`/api/admin/${path}`, { method: 'GET', showToast: false });
-```
-
-This pattern is incompatible with RPC. Each `useQuery` hook must call its specific typed endpoint directly:
+The `adminFetch` dynamic path helper is incompatible with RPC. Each `useQuery` hook must call its specific typed endpoint:
 
 ```typescript
 // Before
+const adminFetch = (path: string) => apiFetch(`/api/admin/${path}`, { method: 'GET', showToast: false });
+
 export function useAdminStats() {
   return useQuery({ queryKey: queryKeys.admin.stats, queryFn: () => adminFetch('stats') });
 }
 
-// After
+// After (adminFetch deleted)
 export function useAdminStats() {
   return useQuery({
     queryKey: queryKeys.admin.stats,
-    queryFn: async () => unwrap(await api.api.admin.stats.$get(), { showToast: false }),
+    queryFn: () => rpc(api.api.admin.stats.$get()),
   });
 }
 ```
 
 ### 5c. Rewrite `components/admin/AnalyticsSection.tsx`
 
-Same dynamic path issue as useAdminQueries -- the `fetchStats` helper builds `/api/admin/stats/${path}`. Each chart query needs its own typed call.
+Same dynamic path issue -- the `fetchStats` helper builds `/api/admin/stats/${path}`. Each chart query needs its own typed call.
 
 ### 5d. Convert `routes/.../billing.stripe-tools.tsx` (5 calls)
 
@@ -357,9 +469,10 @@ Stripe admin tool endpoints -- straightforward conversions.
 
 ## Phase 6: Cleanup
 
-- [ ] Delete all manually-defined TypeScript interfaces that are now inferred from backend Zod schemas (e.g., `Subscription`, `CheckoutSession`, `PortalSession`, `MembersResponse`)
-- [ ] Evaluate whether `apiFetch` can be fully removed or still needed for non-RPC routes (auth, PDF proxy, WebSocket DO proxies)
-- [ ] If `apiFetch` is still needed, consider renaming to `legacyFetch` or `rawFetch` to signal it should not be used for RPC-covered routes
+- [ ] Delete all manually-defined TypeScript interfaces now inferred from backend Zod schemas (e.g., `Subscription`, `CheckoutSession`, `PortalSession`, `MembersResponse`)
+- [ ] Simplify `lib/error-utils.ts` -- retry logic, per-call toast options, and `handleFetchError` wrapper become dead code once all calls migrate to RPC + TanStack Query error handling
+- [ ] Evaluate whether `apiFetch` can be fully removed or is still needed for non-RPC routes (auth, PDF proxy, WebSocket DO proxies)
+- [ ] If `apiFetch` is still needed, consider renaming to `rawFetch` to signal it should not be used for RPC-covered routes
 - [ ] Run full typecheck: `pnpm typecheck`
 - [ ] Run full test suite: `pnpm --filter landing test`
 - [ ] Update this document with final status
@@ -417,6 +530,7 @@ export type AppType = typeof app;
 ## Gotchas
 
 - **`$()` helper**: Needed when mixing `.use()` middleware with `.openapi()` since `.use()` returns `Hono` not `OpenAPIHono`
+- **Chaining footgun**: If someone adds a route with imperative `routes.openapi()` instead of chaining, that route silently disappears from `AppType`. Mitigated by the `no-restricted-syntax` lint rule added in Phase 1a, which catches discarded return values on `.openapi()` and `.route()` calls in route files.
 - **IDE performance**: Large chained types can slow down TypeScript. Mitigate with `export type AppType = typeof app` (pre-computes the type) and TypeScript project references if needed
 - **Error responses**: Handlers must use literal status codes, not dynamic `error.statusCode as ContentfulStatusCode`
 - **`hc` needs absolute URLs**: `API_BASE` must be a full URL (e.g., `http://localhost:8787`), not a relative path
@@ -424,6 +538,7 @@ export type AppType = typeof app;
 - **Dynamic admin paths**: The `adminFetch` and `fetchStats` helpers build URLs from string paths. These CANNOT be expressed with RPC -- each query must be converted to call its specific typed endpoint
 - **`/api/auth/link-social`**: Used by google-drive.ts but mounted on `base`, not `app`. Must stay as apiFetch
 - **Orgs route file size**: 900 lines of imperative `.openapi()` calls. Chaining conversion is mechanical but tedious
+- **Alternative considered**: openapi-fetch + openapi-typescript could generate types from the OpenAPI spec without requiring backend chaining. Rejected because the POC and prep work are already done for hc, and hc provides live type inference without a codegen step.
 
 ## Files Modified in Prep Work
 

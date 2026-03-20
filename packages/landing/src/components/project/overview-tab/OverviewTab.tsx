@@ -221,12 +221,12 @@ export function OverviewTab() {
               <p className='text-success text-2xl font-bold'>{readyToReconcile}</p>
               <p className='text-success mt-1 text-xs font-medium'>Ready to Reconcile</p>
             </div>
-            <div className='rounded-lg border border-blue-200 bg-blue-50 p-4 text-center'>
+            <div className='rounded-lg border border-info-border bg-info-bg p-4 text-center'>
               <div className='mb-2 flex justify-center'>
-                <CheckCircleIcon className='size-5 text-blue-600' />
+                <CheckCircleIcon className='size-5 text-info' />
               </div>
-              <p className='text-2xl font-bold text-blue-700'>{completedStudies}</p>
-              <p className='mt-1 text-xs font-medium text-blue-600'>Completed</p>
+              <p className='text-2xl font-bold text-info'>{completedStudies}</p>
+              <p className='mt-1 text-xs font-medium text-info'>Completed</p>
             </div>
           </div>
         </div>
@@ -249,7 +249,7 @@ export function OverviewTab() {
                 <p className='text-muted-foreground mt-1 text-xs'>Percent Agreement</p>
               </div>
               <div className='text-center'>
-                <p className='text-2xl font-bold text-blue-600'>
+                <p className='text-2xl font-bold text-info'>
                   {interRaterMetrics.cohensKappa != null ?
                     interRaterMetrics.cohensKappa.toFixed(3)
                   : 'N/A'}
@@ -334,7 +334,7 @@ export function OverviewTab() {
                     </div>
                   </div>
                   <div className='flex items-center gap-2'>
-                    <span className='inline-flex items-center rounded-md border border-blue-200 bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-700 capitalize'>
+                    <span className='inline-flex items-center rounded-md border border-info-border bg-info-bg px-2 py-0.5 text-xs font-medium text-info capitalize'>
                       {member.role}
                     </span>
                     {canRemove && !isLastOwner && (

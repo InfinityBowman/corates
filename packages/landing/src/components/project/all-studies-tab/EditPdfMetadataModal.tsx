@@ -93,7 +93,7 @@ export function EditPdfMetadataModal({
             <div className='text-muted-foreground mt-1 text-xs'>
               <span
                 className={`inline-flex items-center rounded px-2 py-0.5 text-xs font-medium ${
-                  pdf?.tag === 'primary' ? 'bg-blue-100 text-blue-800'
+                  pdf?.tag === 'primary' ? 'bg-info-bg text-info'
                   : pdf?.tag === 'protocol' ? 'bg-purple-100 text-purple-800'
                   : 'bg-secondary text-secondary-foreground'
                 }`}

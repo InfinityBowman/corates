@@ -100,7 +100,7 @@ test('Dual-Reviewer ROB2 Workflow', async ({ context, page }) => {
   await switchUser(context, scenario.cookiesB);
   await page.goto(`/projects/${projectId}`);
   await page.getByRole('tab', { name: /To Do/i }).click();
-  await expect(page.getByText(/Untitled Study|Xavier/i).first()).toBeVisible({ timeout: 30_000 });
+  await expect(page.getByText(/Petrie2019/i).first()).toBeVisible({ timeout: 30_000 });
 
   await page.getByRole('button', { name: /Select Checklist/i }).click();
   await page.getByText(/AMSTAR 2/i).click();

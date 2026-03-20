@@ -139,8 +139,8 @@ export function CreateLocalChecklist({ type: typeParam }: { type?: string }) {
               </label>
 
               {pdfFile ?
-                <div className='flex items-center gap-3 rounded-lg border border-blue-200 bg-blue-50 p-4'>
-                  <FileTextIcon className='size-8 shrink-0 text-blue-600' />
+                <div className='flex items-center gap-3 rounded-lg border border-info-border bg-info-bg p-4'>
+                  <FileTextIcon className='size-8 shrink-0 text-info' />
                   <div className='min-w-0 flex-1'>
                     <p className='text-foreground truncate text-sm font-medium'>{pdfFile.name}</p>
                     <p className='text-muted-foreground text-xs'>
@@ -163,7 +163,7 @@ export function CreateLocalChecklist({ type: typeParam }: { type?: string }) {
                   <FileUploadDropzone>
                     <CloudUploadIcon className='text-muted-foreground/70 size-8' />
                     <p className='text-muted-foreground mt-2 text-center text-sm'>
-                      <span className='font-medium text-blue-600'>Click to upload</span> or drag and
+                      <span className='font-medium text-primary'>Click to upload</span> or drag and
                       drop
                     </p>
                     <p className='text-muted-foreground/70 mt-1 text-xs'>PDF files only</p>

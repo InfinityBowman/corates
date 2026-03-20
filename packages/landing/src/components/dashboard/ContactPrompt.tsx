@@ -18,10 +18,10 @@ export function ContactPrompt({ restrictionType, projectCount, quotaLimit }: Con
     : `You've reached your project limit (${projectCount}/${quotaLimit === null || quotaLimit === -1 ? 'unlimited' : quotaLimit}). Request early access for more projects.`;
 
   return (
-    <div className='bg-card flex items-center justify-between rounded-lg border border-blue-200 p-4'>
+    <div className='bg-card flex items-center justify-between rounded-lg border border-info-border p-4'>
       <div>
-        <p className='font-medium text-blue-800'>{title}</p>
-        <p className='text-sm text-blue-600'>{message}</p>
+        <p className='font-medium text-info-foreground'>{title}</p>
+        <p className='text-sm text-info'>{message}</p>
       </div>
       <a
         href='/contact'

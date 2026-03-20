@@ -51,8 +51,8 @@ export function ReferenceImportSection({ studies }: ReferenceImportSectionProps)
           studies.foundPdfCount > 0) && (
           <div className='flex flex-wrap items-center gap-3 text-xs'>
             {studies.lookingUpRefPdfs && (
-              <span className='inline-flex items-center gap-1 rounded-full bg-blue-50 px-2 py-1 text-blue-700'>
-                <div className='size-3 animate-spin rounded-full border-2 border-blue-500 border-t-transparent' />
+              <span className='inline-flex items-center gap-1 rounded-full bg-info-bg px-2 py-1 text-info'>
+                <div className='size-3 animate-spin rounded-full border-2 border-info border-t-transparent' />
                 Looking up PDFs...
               </span>
             )}

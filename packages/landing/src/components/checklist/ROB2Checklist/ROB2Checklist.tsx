@@ -109,9 +109,9 @@ export function ROB2Checklist({
 
         {/* Message when aim not selected */}
         {!hasAimSelected && (
-          <div className='rounded-lg border-2 border-blue-200 bg-blue-50 p-6 text-center'>
-            <div className='mb-2 text-lg font-semibold text-blue-800'>Select Assessment Aim</div>
-            <p className='text-sm text-blue-600'>
+          <div className='rounded-lg border-2 border-info-border bg-info-bg p-6 text-center'>
+            <div className='mb-2 text-lg font-semibold text-info-foreground'>Select Assessment Aim</div>
+            <p className='text-sm text-info'>
               Please select the review team's aim in the Preliminary Considerations section above to
               proceed with the domain assessment.
             </p>
