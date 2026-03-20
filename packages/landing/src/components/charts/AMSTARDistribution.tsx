@@ -3,7 +3,7 @@
  * of AMSTAR-2 ratings across reviews for each of the 16 questions.
  */
 
-import { useState, useEffect, useRef, useImperativeHandle, forwardRef } from 'react';
+import { useState, useEffect, useRef, useImperativeHandle } from 'react';
 // @ts-expect-error -- d3 has no type declarations in this project
 import * as d3 from 'd3';
 
@@ -13,6 +13,7 @@ interface DistributionDataItem {
 }
 
 interface AMSTARDistributionProps {
+  ref?: React.Ref<SVGSVGElement>;
   data: DistributionDataItem[];
   width?: number;
   height?: number;
@@ -36,18 +37,14 @@ const COLOR_MAP_GREYSCALE: Record<string, string> = {
 
 const MARGIN = { top: 50, right: 150, bottom: 60, left: 80 };
 
-// eslint-disable-next-line no-undef
-export const AMSTARDistribution = forwardRef<SVGSVGElement, AMSTARDistributionProps>(
-  function AMSTARDistribution(
-    {
-      data = [],
-      width: widthProp,
-      height: heightProp,
-      title = 'Level Judgments Across Included Reviews',
-      greyscale = false,
-    },
-    ref,
-  ) {
+export function AMSTARDistribution({
+  data = [],
+  width: widthProp,
+  height: heightProp,
+  title = 'Level Judgments Across Included Reviews',
+  greyscale = false,
+  ref,
+}: AMSTARDistributionProps) {
     const svgRef = useRef<SVGSVGElement>(null); // eslint-disable-line no-undef
     const containerRef = useRef<HTMLDivElement>(null);
     const [containerSize, setContainerSize] = useState({ width: 900, height: 600 });
@@ -293,5 +290,4 @@ export const AMSTARDistribution = forwardRef<SVGSVGElement, AMSTARDistributionPr
         />
       </div>
     );
-  },
-);
+}

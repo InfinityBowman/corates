@@ -15,6 +15,9 @@ const description =
   'Learn about CoRATES, developed by a research synthesis expert and software engineer to support rigorous evidence appraisal.';
 
 export const Route = createFileRoute('/about')({
+  headers: () => ({
+    'Cache-Control': 'public, s-maxage=3600, stale-while-revalidate=86400',
+  }),
   head: () => ({
     meta: [
       { title },

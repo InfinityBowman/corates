@@ -14,6 +14,9 @@ const description =
   : 'RoB 2 appraisal tool resources.';
 
 export const Route = createFileRoute('/resources/rob2')({
+  headers: () => ({
+    'Cache-Control': 'public, s-maxage=3600, stale-while-revalidate=86400',
+  }),
   head: () => ({
     meta: [
       { title },

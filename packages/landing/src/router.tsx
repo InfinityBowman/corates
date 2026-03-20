@@ -5,7 +5,8 @@ export const getRouter = () => {
   return createRouter({
     routeTree,
     scrollRestoration: true,
-    defaultPreloadStaleTime: 0,
+    defaultPreload: 'intent',
+    defaultPreloadStaleTime: 30_000,
   });
 };
 

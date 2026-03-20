@@ -73,6 +73,17 @@ export const Route = createRootRoute({
     'X-Content-Type-Options': 'nosniff',
     'Referrer-Policy': 'strict-origin-when-cross-origin',
     'Permissions-Policy': 'camera=(), microphone=(), geolocation=()',
+    'Content-Security-Policy': [
+      "default-src 'self'",
+      "script-src 'self' 'unsafe-inline'",
+      "style-src 'self' 'unsafe-inline'",
+      "img-src 'self' data: blob:",
+      "connect-src 'self' https://api.corates.org wss://api.corates.org",
+      "font-src 'self'",
+      "frame-ancestors 'none'",
+      "form-action 'self'",
+      "base-uri 'self'",
+    ].join('; '),
   }),
   head: () => ({
     meta: [
@@ -109,6 +120,7 @@ export const Route = createRootRoute({
       { name: 'twitter:image', content: IMAGE_URL },
     ],
     links: [
+      { rel: 'preconnect', href: 'https://api.corates.org' },
       { rel: 'icon', href: '/favicon.svg', type: 'image/svg+xml' },
       { rel: 'icon', href: '/favicon.ico', sizes: '48x48' },
       {

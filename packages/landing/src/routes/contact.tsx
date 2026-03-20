@@ -18,6 +18,9 @@ const description =
   'Get in touch with the CoRATES team. We would love to hear from you about questions, feedback, or partnership opportunities.';
 
 export const Route = createFileRoute('/contact')({
+  headers: () => ({
+    'Cache-Control': 'public, s-maxage=3600, stale-while-revalidate=86400',
+  }),
   head: () => ({
     meta: [
       { title },

@@ -4,15 +4,7 @@
  * Uses useLayoutEffect for text measurement to avoid flash of incorrect margins.
  */
 
-import {
-  useState,
-  useEffect,
-  useLayoutEffect,
-  useMemo,
-  useRef,
-  useImperativeHandle,
-  forwardRef,
-} from 'react';
+import { useState, useEffect, useLayoutEffect, useMemo, useRef, useImperativeHandle } from 'react';
 // @ts-expect-error -- d3 has no type declarations in this project
 import * as d3 from 'd3';
 
@@ -22,6 +14,7 @@ interface RobvisDataItem {
 }
 
 interface AMSTARRobvisProps {
+  ref?: React.Ref<SVGSVGElement>;
   data: RobvisDataItem[];
   width?: number;
   height?: number;
@@ -45,17 +38,14 @@ const COLOR_MAP_GREYSCALE: Record<string, string> = {
 
 const N_QUESTIONS = 16;
 
-// eslint-disable-next-line no-undef
-export const AMSTARRobvis = forwardRef<SVGSVGElement, AMSTARRobvisProps>(function AMSTARRobvis(
-  {
-    data = [],
-    width: widthProp,
-    height: heightProp,
-    title = 'AMSTAR 2 Item-Level Judgments by Review',
-    greyscale = false,
-  },
+export function AMSTARRobvis({
+  data = [],
+  width: widthProp,
+  height: heightProp,
+  title = 'AMSTAR 2 Item-Level Judgments by Review',
+  greyscale = false,
   ref,
-) {
+}: AMSTARRobvisProps) {
   const svgRef = useRef<SVGSVGElement>(null); // eslint-disable-line no-undef
   const containerRef = useRef<HTMLDivElement>(null);
   const [containerSize, setContainerSize] = useState({ width: 800, height: 500 });
@@ -277,4 +267,4 @@ export const AMSTARRobvis = forwardRef<SVGSVGElement, AMSTARRobvisProps>(functio
       />
     </div>
   );
-});
+}

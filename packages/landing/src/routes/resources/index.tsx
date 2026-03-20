@@ -12,6 +12,9 @@ const description =
   'Learn about AMSTAR 2, ROBINS-I, RoB 2, and other appraisal tools supported by CoRATES, including scoring guidance and links to official documentation.';
 
 export const Route = createFileRoute('/resources/')({
+  headers: () => ({
+    'Cache-Control': 'public, s-maxage=3600, stale-while-revalidate=86400',
+  }),
   head: () => ({
     meta: [
       { title },

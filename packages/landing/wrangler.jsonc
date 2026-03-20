@@ -6,7 +6,8 @@
   "main": "./server-entry.ts",
   "routes": [{ "pattern": "corates.org/*", "zone_name": "corates.org" }],
   "assets": {
-    "binding": "ASSETS"
+    "binding": "ASSETS",
+    "html_handling": "drop-trailing-slash"
   },
   "observability": {
     "logs": {

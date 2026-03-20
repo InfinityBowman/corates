@@ -12,6 +12,9 @@ import Footer from '../components/Footer';
 import { config } from '../lib/config';
 
 export const Route = createFileRoute('/security')({
+  headers: () => ({
+    'Cache-Control': 'public, s-maxage=3600, stale-while-revalidate=86400',
+  }),
   head: () => ({
     meta: [
       { title: 'Security - CoRATES' },
