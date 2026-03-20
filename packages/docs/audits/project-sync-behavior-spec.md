@@ -152,16 +152,16 @@ When the user navigates away:
 
 Current state is 4 booleans: `connected`, `connecting`, `synced`, `error`.
 
-| Event | connected | connecting | synced | error |
-|---|---|---|---|---|
-| Initial mount | false | true | false | null |
-| WebSocket connected | true | false | (unchanged) | null |
-| Yjs sync complete | true | false | true | null |
-| WebSocket disconnected | false | false | (unchanged) | null |
-| Connection error | false | false | (unchanged) | 'Connection error' |
-| 5 consecutive errors | false | false | false | 'Unable to connect...' |
-| Access denied | false | false | false | (specific message) |
-| Unmount / cleanup | false | false | false | null |
+| Event                  | connected | connecting | synced      | error                  |
+| ---------------------- | --------- | ---------- | ----------- | ---------------------- |
+| Initial mount          | false     | true       | false       | null                   |
+| WebSocket connected    | true      | false      | (unchanged) | null                   |
+| Yjs sync complete      | true      | false      | true        | null                   |
+| WebSocket disconnected | false     | false      | (unchanged) | null                   |
+| Connection error       | false     | false      | (unchanged) | 'Connection error'     |
+| 5 consecutive errors   | false     | false      | false       | 'Unable to connect...' |
+| Access denied          | false     | false      | false       | (specific message)     |
+| Unmount / cleanup      | false     | false      | false       | null                   |
 
 ### Ref-Counting (Shared Connections)
 
@@ -172,12 +172,14 @@ The `connectionRegistry` (module-level Map) allows multiple components to share 
 **Going offline:** `connection.js` sets `provider.shouldConnect = false` (stops y-websocket reconnection) but preserves `shouldBeConnected = true` (intent to connect).
 
 **Coming back online:** Two mechanisms respond:
+
 1. `connection.js handleOnline()`: if `shouldBeConnected` and provider exists but not connected, calls `provider.connect()`.
 2. `useProject useEffect(isOnline)`: detects offline-to-online transition via `wasOnlineRef`, calls `connectionManager.reconnect()`.
 
 ### Error Thresholds
 
 `consecutiveErrors` counter in `connection.js`:
+
 - Incremented on every `connection-error` event when online.
 - Reset to 0 on successful WebSocket connection.
 - At 5 consecutive errors: gives up, sets error state, calls `onAccessDenied({ reason: 'connection-failed' })` which triggers full local data cleanup.
@@ -185,6 +187,7 @@ The `connectionRegistry` (module-level Map) allows multiple components to share 
 ### Access Denied Handling
 
 Three WebSocket close reasons trigger immediate cleanup:
+
 - `project-deleted` -- "This project has been deleted"
 - `membership-revoked` -- "You have been removed from this project"
 - `not-a-member` (code 1008) -- "You are not a member of this project"
@@ -198,6 +201,7 @@ All three: set error in store, stop reconnection, call `onAccessDenied` which ca
 ### useProject(projectId) Return Object
 
 **Reactive state (from Zustand):**
+
 - `connected`, `connecting`, `synced`: boolean
 - `error`: string | null
 - `studies`: StudyInfo[]
@@ -206,6 +210,7 @@ All three: set error in store, stop reconnection, call `onAccessDenied` which ca
 - `isLocalProject`: boolean
 
 **Study operations:**
+
 - `createStudy(name, description?, metadata?)` -> string | null
 - `updateStudy(studyId, updates)` -> void
 - `deleteStudy(studyId)` -> void
@@ -214,6 +219,7 @@ All three: set error in store, stop reconnection, call `onAccessDenied` which ca
 - `updateDescription(newDescription)` -> Promise<string> (HTTP + Y.Doc + Zustand + query cache)
 
 **Checklist operations:**
+
 - `createChecklist(studyId, type?, assignedTo?, outcomeId?)` -> string | null
 - `updateChecklist(studyId, checklistId, updates)` -> void
 - `deleteChecklist(studyId, checklistId)` -> void
@@ -225,6 +231,7 @@ All three: set error in store, stop reconnection, call `onAccessDenied` which ca
 - `getRob2Text(studyId, checklistId, sectionKey, fieldKey, questionKey?)` -> Y.Text | null (ROB2)
 
 **PDF operations:**
+
 - `addPdfToStudy(studyId, pdfInfo, tag?)` -> string | null
 - `removePdfFromStudy(studyId, pdfId)` -> void
 - `removePdfByFileName(studyId, fileName)` -> void
@@ -234,12 +241,14 @@ All three: set error in store, stop reconnection, call `onAccessDenied` which ca
 - `setPdfAsProtocol(studyId, pdfId)` -> void
 
 **Reconciliation operations:**
+
 - `saveReconciliationProgress(studyId, outcomeId, type, progressData)` -> void
 - `getReconciliationProgress(studyId, outcomeId, type)` -> Object | null (reads new format, falls back to legacy)
 - `getAllReconciliationProgress(studyId)` -> Array (deduplicates new + legacy formats)
 - `clearReconciliationProgress(studyId, outcomeId, type)` -> void
 
 **Annotation operations:**
+
 - `addAnnotation(studyId, pdfId, checklistId, annotationData, userId?)` -> string | null
 - `addAnnotations(studyId, pdfId, checklistId, annotations, userId?)` -> string[] (uses Y.Doc transact for atomic batch)
 - `updateAnnotation(studyId, checklistId, annotationId, annotationData)` -> void
@@ -250,6 +259,7 @@ All three: set error in store, stop reconnection, call `onAccessDenied` which ca
 - `mergeAnnotations(studyId, pdfId, targetChecklistId, sourceChecklistIds, userId)` -> number (uses Y.Doc transact)
 
 **Outcome operations:**
+
 - `getOutcomes()` -> Array (sorted by createdAt)
 - `getOutcome(outcomeId)` -> Object | null
 - `createOutcome(name, createdBy)` -> string | null
@@ -258,6 +268,7 @@ All three: set error in store, stop reconnection, call `onAccessDenied` which ca
 - `isOutcomeInUse(outcomeId)` -> boolean
 
 **Connection:**
+
 - `connect()` -> no-op
 - `disconnect()` -> calls releaseConnection
 - `getAwareness()` -> Awareness | null
@@ -265,12 +276,14 @@ All three: set error in store, stop reconnection, call `onAccessDenied` which ca
 ### projectActionsStore Singleton
 
 **Lifecycle methods (called by useProject and ProjectView):**
+
 - `_setActiveProject(projectId, orgId)` -- stores both IDs in closure
 - `_clearActiveProject()` -- nulls both
 - `_setConnection(projectId, ops)` -- registers Y.js operations
 - `_removeConnection(projectId)` -- unregisters them
 
 **Public accessors (non-throwing):**
+
 - `getActiveProjectId()` -> string | null
 - `getActiveOrgId()` -> string | null
 
@@ -323,23 +336,32 @@ All three: set error in store, stop reconnection, call `onAccessDenied` which ca
 
 ```typescript
 {
-  projects: Record<string, {
-    meta: Record<string, unknown>;
-    members: unknown[];
-    studies: StudyInfo[];
-  }>;
+  projects: Record<
+    string,
+    {
+      meta: Record<string, unknown>;
+      members: unknown[];
+      studies: StudyInfo[];
+    }
+  >;
   activeProjectId: string | null;
-  connections: Record<string, {
-    connected: boolean;
-    connecting: boolean;
-    synced: boolean;
-    error: string | null;
-  }>;
-  projectStats: Record<string, {
-    studyCount: number;
-    completedCount: number;
-    lastUpdated: number;
-  }>;
+  connections: Record<
+    string,
+    {
+      connected: boolean;
+      connecting: boolean;
+      synced: boolean;
+      error: string | null;
+    }
+  >;
+  projectStats: Record<
+    string,
+    {
+      studyCount: number;
+      completedCount: number;
+      lastUpdated: number;
+    }
+  >;
 }
 ```
 
@@ -352,7 +374,7 @@ All three: set error in store, stop reconnection, call `onAccessDenied` which ca
 
 ### Selectors (pure functions)
 
-All return stable references via module-level EMPTY_* constants when data is missing:
+All return stable references via module-level EMPTY\_\* constants when data is missing:
 
 - `selectProject(state, projectId)` -> ProjectData | undefined
 - `selectActiveProject(state)` -> ProjectData | null
@@ -369,6 +391,7 @@ All return stable references via module-level EMPTY_* constants when data is mis
 ### Pending Project Data
 
 Module-level `Map` (outside Zustand) for passing data from project creation to ProjectView:
+
 - `setPendingProjectData(projectId, data)` -- stashes PDFs/refs/drive files
 - `getPendingProjectData(projectId)` -- reads and deletes (consumed once)
 
@@ -378,40 +401,40 @@ Module-level `Map` (outside Zustand) for passing data from project creation to P
 
 ### Files importing projectActionsStore (13 files)
 
-| File | Methods Used |
-|---|---|
-| `useProject/index.js` | `_setConnection`, `_removeConnection` |
-| `useProject/studies.js` | `getActiveOrgId()` |
-| `ProjectView.tsx` | `_setActiveProject`, `_clearActiveProject`, `study.create`, `pdf.addToStudy`, `project.rename`, `project.updateDescription` |
-| `ChecklistYjsWrapper.tsx` | `_setActiveProject` (no clear on unmount) |
-| `ReconciliationWrapper.tsx` | `_setActiveProject` (no clear on unmount) |
-| `OutcomeManager.tsx` | `outcome.create`, `outcome.update`, `outcome.delete` |
-| `ToDoTab.tsx` | `checklist.create`, `checklist.delete`, `pdf.view`, `pdf.download` |
-| `OverviewTab.tsx` | `member.remove`, `checklist.getData` |
-| `CompletedTab.tsx` | `pdf.view`, `pdf.download` |
-| `ReconcileTab.tsx` | `pdf.view`, `pdf.download` |
-| `StudyPdfSection.tsx` | `pdf.upload`, `pdf.view`, `pdf.download`, `pdf.delete`, `pdf.updateTag`, `pdf.updateMetadata` |
-| `StudyCardHeader.tsx` | `study.update`, `study.delete` |
-| `AllStudiesTab.tsx` | `study.update`, `study.addBatch`, `pdf.handleGoogleDriveImport` |
+| File                        | Methods Used                                                                                                                |
+| --------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| `useProject/index.js`       | `_setConnection`, `_removeConnection`                                                                                       |
+| `useProject/studies.js`     | `getActiveOrgId()`                                                                                                          |
+| `ProjectView.tsx`           | `_setActiveProject`, `_clearActiveProject`, `study.create`, `pdf.addToStudy`, `project.rename`, `project.updateDescription` |
+| `ChecklistYjsWrapper.tsx`   | `_setActiveProject` (no clear on unmount)                                                                                   |
+| `ReconciliationWrapper.tsx` | `_setActiveProject` (no clear on unmount)                                                                                   |
+| `OutcomeManager.tsx`        | `outcome.create`, `outcome.update`, `outcome.delete`                                                                        |
+| `ToDoTab.tsx`               | `checklist.create`, `checklist.delete`, `pdf.view`, `pdf.download`                                                          |
+| `OverviewTab.tsx`           | `member.remove`, `checklist.getData`                                                                                        |
+| `CompletedTab.tsx`          | `pdf.view`, `pdf.download`                                                                                                  |
+| `ReconcileTab.tsx`          | `pdf.view`, `pdf.download`                                                                                                  |
+| `StudyPdfSection.tsx`       | `pdf.upload`, `pdf.view`, `pdf.download`, `pdf.delete`, `pdf.updateTag`, `pdf.updateMetadata`                               |
+| `StudyCardHeader.tsx`       | `study.update`, `study.delete`                                                                                              |
+| `AllStudiesTab.tsx`         | `study.update`, `study.addBatch`, `pdf.handleGoogleDriveImport`                                                             |
 
 All TypeScript consumers use `import _projectActionsStore ... as any` cast workaround.
 
 ### Files calling useProjectContext() (12 files)
 
-| File | Destructured Fields |
-|---|---|
-| `ProjectHeader.tsx` | `userRole` |
-| `OverviewTab.tsx` | `projectId`, `orgId`, `isOwner` |
-| `AllStudiesTab.tsx` | `projectId`, `getMember`, `isOwner` |
-| `ToDoTab.tsx` | `projectId`, `getChecklistPath` |
-| `TodoStudyRow.tsx` | `projectId` |
-| `ChecklistForm.tsx` | `projectId` |
-| `ReconcileTab.tsx` | `projectId`, `getAssigneeName`, `getReconcilePath` |
-| `CompletedTab.tsx` | `projectId`, `getAssigneeName`, `getChecklistPath` |
-| `OutcomeManager.tsx` | `projectId`, `isOwner` |
-| `ChecklistYjsWrapper.tsx` | `orgId`, `projectOps` |
-| `ReconciliationWrapper.tsx` | `orgId`, `projectOps` |
-| `PreviousReviewersView.tsx` | `projectOps` |
+| File                        | Destructured Fields                                |
+| --------------------------- | -------------------------------------------------- |
+| `ProjectHeader.tsx`         | `userRole`                                         |
+| `OverviewTab.tsx`           | `projectId`, `orgId`, `isOwner`                    |
+| `AllStudiesTab.tsx`         | `projectId`, `getMember`, `isOwner`                |
+| `ToDoTab.tsx`               | `projectId`, `getChecklistPath`                    |
+| `TodoStudyRow.tsx`          | `projectId`                                        |
+| `ChecklistForm.tsx`         | `projectId`                                        |
+| `ReconcileTab.tsx`          | `projectId`, `getAssigneeName`, `getReconcilePath` |
+| `CompletedTab.tsx`          | `projectId`, `getAssigneeName`, `getChecklistPath` |
+| `OutcomeManager.tsx`        | `projectId`, `isOwner`                             |
+| `ChecklistYjsWrapper.tsx`   | `orgId`, `projectOps`                              |
+| `ReconciliationWrapper.tsx` | `orgId`, `projectOps`                              |
+| `PreviousReviewersView.tsx` | `projectOps`                                       |
 
 Only child-route components (`ChecklistYjsWrapper`, `ReconciliationWrapper`, `PreviousReviewersView`) access `projectOps` for Y.js operations. Tab components use `projectId` for store reads and context helpers for role checks/path generation.
 
@@ -420,6 +443,7 @@ Only child-route components (`ChecklistYjsWrapper`, `ReconciliationWrapper`, `Pr
 ## Sync Manager Behavior
 
 `syncFromYDoc()` performs a **complete snapshot** on every call:
+
 1. Reads all studies from `reviews` Y.Map, building full objects (checklists, PDFs, annotations, reconciliation).
 2. Reads all metadata from `meta` Y.Map (including outcomes).
 3. Reads all members from `members` Y.Map.

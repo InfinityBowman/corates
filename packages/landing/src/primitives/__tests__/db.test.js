@@ -58,7 +58,6 @@ describe('db.js - Unified Dexie Database', () => {
         'projects',
       ]);
     });
-
   });
 
   describe('Projects Table', () => {
