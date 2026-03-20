@@ -35,11 +35,11 @@ function formatDate(timestamp: number | undefined) {
 
 const STATUS_STYLES: Record<string, string> = {
   active: 'bg-emerald-50 text-emerald-700 border-emerald-200',
-  trialing: 'bg-blue-50 text-blue-700 border-blue-200',
-  past_due: 'bg-destructive/10 text-destructive border-destructive/20',
+  trialing: 'bg-info-bg text-info border-info-border',
+  past_due: 'bg-destructive-bg text-destructive border-destructive-border',
   canceled: 'bg-muted text-foreground border-border',
-  incomplete: 'bg-amber-50 text-amber-700 border-amber-200',
-  unpaid: 'bg-destructive/10 text-destructive border-destructive/20',
+  incomplete: 'bg-warning-bg text-warning-foreground border-warning-border',
+  unpaid: 'bg-destructive-bg text-destructive border-destructive-border',
 };
 
 const STATUS_LABELS: Record<string, string> = {

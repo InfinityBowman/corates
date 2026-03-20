@@ -134,7 +134,7 @@ export function OverallSection({
               >
                 {calculatedScore}
               </span>
-              {isManualMode && <span className='text-xs text-amber-300'>Manual override</span>}
+              {isManualMode && <span className='text-xs text-warning'>Manual override</span>}
             </div>
           : (calculatedScore as string) === 'Incomplete' ?
             <span className='bg-muted-foreground/50 text-muted rounded-md px-3 py-1 text-sm'>
@@ -180,7 +180,7 @@ export function OverallSection({
                 disabled={disabled}
                 className={`border-border rounded-r-md border-l px-2.5 py-1 transition-colors ${
                   isManualMode ?
-                    'bg-amber-100 text-amber-800'
+                    'bg-warning-bg text-warning-foreground'
                   : 'text-muted-foreground hover:bg-muted'
                 } ${disabled ? 'cursor-not-allowed opacity-50' : ''}`}
               >

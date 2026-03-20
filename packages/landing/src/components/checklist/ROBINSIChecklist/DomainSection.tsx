@@ -141,7 +141,7 @@ export function DomainSection({
 
           {effectiveJudgement ?
             <div className='flex items-center gap-1.5'>
-              {isManualMode && <span className='text-xs text-amber-600'>Manual</span>}
+              {isManualMode && <span className='text-xs text-warning'>Manual</span>}
               <JudgementBadge judgement={effectiveJudgement} />
             </div>
           : !autoScore.isComplete && (
@@ -224,7 +224,7 @@ export function DomainSection({
                     disabled={disabled}
                     className={`border-border rounded-r-md border-l px-2.5 py-1 transition-colors ${
                       isManualMode ?
-                        'bg-amber-100 text-amber-800'
+                        'bg-warning-bg text-warning-foreground'
                       : 'text-muted-foreground hover:bg-muted'
                     } ${disabled ? 'cursor-not-allowed opacity-50' : ''}`}
                   >

@@ -161,7 +161,7 @@ export function BillingSettings() {
               <button
                 type='button'
                 onClick={() => setCheckoutOutcome(null)}
-                className='text-amber-600 hover:text-amber-800'
+                className='text-warning hover:text-warning-foreground'
                 aria-label='Dismiss'
               >
                 <XCircleIcon className='size-5' />

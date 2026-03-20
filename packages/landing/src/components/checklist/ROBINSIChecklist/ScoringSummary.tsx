@@ -134,7 +134,7 @@ export function ScoringSummary({ checklistState, onDomainClick }: ScoringSummary
             >
               <span>{getDomainShortName(dk)}</span>
               {smartScoring.domains[dk]?.source === 'manual' && (
-                <span className='text-amber-600'>*</span>
+                <span className='text-warning'>*</span>
               )}
             </button>
           ))}

@@ -55,7 +55,7 @@ export function SectionB({ sectionBState, onUpdate, disabled, getRobinsText }: S
               </div>
 
               {question.info && (
-                <p className='rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-700'>
+                <p className='rounded-lg border border-warning-border bg-warning-bg px-3 py-2 text-xs text-warning-foreground'>
                   {question.info}
                 </p>
               )}

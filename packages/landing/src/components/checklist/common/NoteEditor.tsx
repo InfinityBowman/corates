@@ -111,7 +111,7 @@ export function NoteEditor({
       />
       <div className='text-2xs text-muted-foreground/70 mt-1 flex items-center justify-between'>
         <span>{readOnly ? 'Read-only' : ''}</span>
-        <span className={charCount > maxLength * 0.9 ? 'text-amber-500' : ''}>
+        <span className={charCount > maxLength * 0.9 ? 'text-warning' : ''}>
           {charCount} / {maxLength}
         </span>
       </div>

@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { AlertDialog as AlertDialogPrimitive } from 'radix-ui';
+import { TriangleAlertIcon, InfoIcon, AlertCircleIcon } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -183,9 +184,17 @@ function AlertDialogIcon({
 }) {
   const variantStyles = {
     danger: 'bg-destructive/10 text-destructive',
-    warning: 'bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400',
-    info: 'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400',
+    warning: 'bg-warning-bg text-warning',
+    info: 'bg-info-bg text-info',
   };
+
+  const defaultIcons = {
+    danger: TriangleAlertIcon,
+    warning: AlertCircleIcon,
+    info: InfoIcon,
+  };
+
+  const DefaultIcon = defaultIcons[variant];
 
   return (
     <div
@@ -197,7 +206,7 @@ function AlertDialogIcon({
       )}
       {...props}
     >
-      {children}
+      {children || <DefaultIcon />}
     </div>
   );
 }

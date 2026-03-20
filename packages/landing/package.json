@@ -16,8 +16,6 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run --config vitest.config.ts --reporter=verbose",
     "test:watch": "vitest --config vitest.config.ts",
-    "test:browser": "vitest run --config vitest.browser.config.ts --reporter=verbose",
-    "test:browser:ui": "vitest --config vitest.browser.config.ts --ui",
     "test:e2e": "playwright test"
   },
   "dependencies": {

@@ -62,7 +62,7 @@ export function DocumentPasswordPrompt({ documentState }: DocumentPasswordPrompt
 
   return (
     <div className='flex h-full items-center justify-center p-8'>
-      <div className='w-full max-w-md rounded-lg border border-amber-200 bg-amber-50 p-6'>
+      <div className='w-full max-w-md rounded-lg border border-warning-border bg-warning-bg p-6'>
         <div className='flex items-start justify-between'>
           <div>
             <h3 className='text-lg font-semibold text-gray-900'>Password Required</h3>
@@ -78,7 +78,7 @@ export function DocumentPasswordPrompt({ documentState }: DocumentPasswordPrompt
         </div>
 
         {/* Different message based on state */}
-        <p className='mt-4 text-sm text-amber-800'>
+        <p className='mt-4 text-sm text-warning-foreground'>
           {isPasswordRequired &&
             'This document is password protected. Please enter the password to open it.'}
           {isPasswordIncorrect && 'The password you entered was incorrect. Please try again.'}

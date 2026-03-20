@@ -2,13 +2,11 @@
  * Shared e2e workflow steps reused across checklist type tests
  */
 
+import path from 'node:path';
 import { expect, type Page, type BrowserContext } from '@playwright/test';
-import {
-  loginAs,
-  addProjectMember,
-  type DualReviewerScenario,
-  type SessionCookie,
-} from './helpers';
+import { loginAs, addProjectMember, type DualReviewerScenario } from './helpers';
+
+const FIXTURES_DIR = path.join(import.meta.dirname, 'fixtures');
 
 /**
  * Creates a project from the dashboard. Returns the projectId.
@@ -39,17 +37,22 @@ export async function createProject(page: Page, name: string, description = ''):
 }
 
 /**
- * Adds a study to the current project via PMID lookup.
+ * Adds a study to the current project by uploading a PDF fixture.
+ * No external API calls -- metadata is extracted locally from the PDF.
  */
-export async function addStudyViaPMID(page: Page, pmid = '32615397') {
+export async function addStudyViaPdf(page: Page, fixture = 'Petrie2019.pdf') {
   await page.getByRole('tab', { name: /All Studies/i }).click();
   await page.getByText('Add Studies to Your Project').click();
-  await page.getByText('DOI / PMID').click();
-  await page.getByPlaceholder(/10\.1000/).fill(pmid);
-  await page.getByRole('button', { name: /Look Up/i }).click();
-  await expect(page.getByText(/Found references/)).toBeVisible({ timeout: 15_000 });
-  await page.getByRole('button', { name: /Add \d+ Stud/i }).click();
-  await expect(page.getByText(/1 study in this project/i)).toBeVisible({ timeout: 10_000 });
+
+  // "Upload PDFs" tab is active by default
+  const fileInput = page.locator('input[type="file"][accept*="pdf"]');
+  await fileInput.setInputFiles(path.join(FIXTURES_DIR, fixture));
+
+  // Wait for metadata extraction to finish and the study to appear in staged list
+  await expect(page.getByRole('button', { name: /Add 1 Stud/i })).toBeVisible({ timeout: 30_000 });
+  await page.getByRole('button', { name: /Add 1 Stud/i }).click();
+
+  await expect(page.getByText(/1 study in this project/i)).toBeVisible({ timeout: 15_000 });
 }
 
 /**
@@ -120,7 +123,7 @@ export async function setupProjectWithStudy(
   await addProjectMember(scenario.orgId, projectId, scenario.userB.id, scenario.cookiesA);
   await page.waitForTimeout(2000);
 
-  await addStudyViaPMID(page);
+  await addStudyViaPdf(page);
   await assignReviewers(page);
 
   return projectId;
