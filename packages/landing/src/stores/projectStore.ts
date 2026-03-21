@@ -122,23 +122,35 @@ export const useProjectStore = create<ProjectStoreState & ProjectStoreActions>()
       }),
 
     setProjectData: (projectId, data) => {
+      let studiesChanged = false;
       set(state => {
         if (!state.projects[projectId]) {
           state.projects[projectId] = { meta: {}, members: [], studies: [] };
         }
-        if (data.meta !== undefined) state.projects[projectId].meta = data.meta;
-        if (data.members !== undefined) state.projects[projectId].members = data.members;
+        const project = state.projects[projectId];
+        if (data.meta !== undefined) {
+          if (JSON.stringify(project.meta) !== JSON.stringify(data.meta)) {
+            project.meta = data.meta;
+          }
+        }
+        if (data.members !== undefined) {
+          if (JSON.stringify(project.members) !== JSON.stringify(data.members)) {
+            project.members = data.members;
+          }
+        }
         if (data.studies !== undefined) {
-          state.projects[projectId].studies = data.studies;
-          const stats = computeProjectStats(data.studies);
-          state.projectStats[projectId] = {
-            ...stats,
-            lastUpdated: Date.now(),
-          };
+          if (JSON.stringify(project.studies) !== JSON.stringify(data.studies)) {
+            project.studies = data.studies;
+            const stats = computeProjectStats(data.studies);
+            state.projectStats[projectId] = {
+              ...stats,
+              lastUpdated: Date.now(),
+            };
+            studiesChanged = true;
+          }
         }
       });
-      // Persist after produce completes to avoid passing Immer draft to JSON.stringify
-      if (data.studies !== undefined) {
+      if (studiesChanged) {
         persistStats(useProjectStore.getState().projectStats);
       }
     },

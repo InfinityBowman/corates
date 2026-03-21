@@ -152,24 +152,37 @@ test('Dual-Reviewer ROB2 Workflow', async ({ context, page }) => {
   await expect(page.getByText('D5').first()).toBeVisible();
 
   // ================================================================
-  // Walk through reconciliation: click "Use This" on Reviewer 1 for
-  // each page, then Next. The engine auto-fills agreed items on Next.
+  // Walk through reconciliation: for each page, try "Use This" first.
+  // If no "Use This" is available (e.g., direction pages where both
+  // reviewers left it blank), pick a value in the Final panel directly.
   // ================================================================
   const nextBtn = page.getByRole('button', { name: /Next|Review Summary/i });
 
-  // Loop through all items until we reach the summary view
   let safety = 0;
   while (safety < 80) {
     safety++;
 
-    // Click the first "Use This" button (Reviewer 1's panel).
-    // After clicking, the button text changes to "Selected", so we
-    // re-query each iteration to get only unclicked buttons.
+    // Try clicking "Use This" (Reviewer 1's panel)
     const useThisBtn = page.getByRole('button', { name: 'Use This' }).first();
-    if (await useThisBtn.isVisible().catch(() => false)) {
+    const hasUseThis = await useThisBtn.isVisible().catch(() => false);
+
+    if (hasUseThis) {
       await useThisBtn.click();
-      // Y.Text fields need time to propagate via observer
       await page.waitForTimeout(500);
+    }
+
+    // For direction pages where reviewers didn't set a value, "Use This"
+    // copies null which doesn't count as answered. Pick "NA" in the Final
+    // Direction panel if a direction radio labeled "NA" is visible and
+    // not already selected.
+    const naLabel = page.locator('label').filter({ hasText: /^NA$/ });
+    if (await naLabel.first().isVisible().catch(() => false)) {
+      // Only click if we're on a direction page (Final Direction panel)
+      const finalDirectionHeading = page.getByText('Final Direction');
+      if (await finalDirectionHeading.isVisible().catch(() => false)) {
+        await naLabel.first().click();
+        await page.waitForTimeout(300);
+      }
     }
 
     // Check if the Next button says "Review Summary" (last page)

@@ -228,76 +228,71 @@ export class ROBINSIHandler extends ChecklistHandler {
    * @param {Object} data - The answer data
    */
   updateAnswer(answersMap, key, data) {
-    let sectionYMap = answersMap.get(key);
+    const doc = answersMap.doc;
+    doc.transact(() => {
+      let sectionYMap = answersMap.get(key);
 
-    // Create section Y.Map if it doesn't exist
-    if (!sectionYMap || !(sectionYMap instanceof Y.Map)) {
-      sectionYMap = new Y.Map();
-      answersMap.set(key, sectionYMap);
-    }
-
-    // Domain keys have nested 'answers' object with individual questions
-    if (key.startsWith('domain') || key === 'overall') {
-      // Update judgement and direction at section level
-      if (data.judgement !== undefined) {
-        sectionYMap.set('judgement', data.judgement);
-      }
-      if (data.judgementSource !== undefined) {
-        sectionYMap.set('judgementSource', data.judgementSource);
-      }
-      if (data.direction !== undefined) {
-        sectionYMap.set('direction', data.direction);
+      if (!sectionYMap || !(sectionYMap instanceof Y.Map)) {
+        sectionYMap = new Y.Map();
+        answersMap.set(key, sectionYMap);
       }
 
-      // Update individual questions in answers
-      if (data.answers) {
-        let answersNestedYMap = sectionYMap.get('answers');
-        if (!answersNestedYMap || !(answersNestedYMap instanceof Y.Map)) {
-          answersNestedYMap = new Y.Map();
-          sectionYMap.set('answers', answersNestedYMap);
+      if (key.startsWith('domain') || key === 'overall') {
+        if (data.judgement !== undefined) {
+          sectionYMap.set('judgement', data.judgement);
+        }
+        if (data.judgementSource !== undefined) {
+          sectionYMap.set('judgementSource', data.judgementSource);
+        }
+        if (data.direction !== undefined) {
+          sectionYMap.set('direction', data.direction);
         }
 
-        Object.entries(data.answers).forEach(([qKey, qValue]) => {
-          let questionYMap = answersNestedYMap.get(qKey);
-          if (!questionYMap || !(questionYMap instanceof Y.Map)) {
-            questionYMap = new Y.Map();
-            answersNestedYMap.set(qKey, questionYMap);
+        if (data.answers) {
+          let answersNestedYMap = sectionYMap.get('answers');
+          if (!answersNestedYMap || !(answersNestedYMap instanceof Y.Map)) {
+            answersNestedYMap = new Y.Map();
+            sectionYMap.set('answers', answersNestedYMap);
           }
-          if (qValue.answer !== undefined) questionYMap.set('answer', qValue.answer);
-          if (qValue.comment !== undefined)
-            this.setYTextField(questionYMap, 'comment', qValue.comment);
+
+          Object.entries(data.answers).forEach(([qKey, qValue]) => {
+            let questionYMap = answersNestedYMap.get(qKey);
+            if (!questionYMap || !(questionYMap instanceof Y.Map)) {
+              questionYMap = new Y.Map();
+              answersNestedYMap.set(qKey, questionYMap);
+            }
+            if (qValue.answer !== undefined) questionYMap.set('answer', qValue.answer);
+            if (qValue.comment !== undefined)
+              this.setYTextField(questionYMap, 'comment', qValue.comment);
+          });
+        }
+      } else if (key === 'sectionB') {
+        Object.entries(data).forEach(([subKey, subValue]) => {
+          if (typeof subValue === 'object' && subValue !== null) {
+            let questionYMap = sectionYMap.get(subKey);
+            if (!questionYMap || !(questionYMap instanceof Y.Map)) {
+              questionYMap = new Y.Map();
+              sectionYMap.set(subKey, questionYMap);
+            }
+            if (subValue.answer !== undefined) questionYMap.set('answer', subValue.answer);
+            if (subValue.comment !== undefined)
+              this.setYTextField(questionYMap, 'comment', subValue.comment);
+          } else {
+            sectionYMap.set(subKey, subValue);
+          }
+        });
+      } else if (key === 'confoundingEvaluation') {
+        if (data.predefined !== undefined) sectionYMap.set('predefined', data.predefined);
+        if (data.additional !== undefined) sectionYMap.set('additional', data.additional);
+      } else if (key === 'sectionD') {
+        if (data.sources !== undefined) sectionYMap.set('sources', data.sources);
+        if (data.otherSpecify !== undefined) sectionYMap.set('otherSpecify', data.otherSpecify);
+      } else {
+        Object.entries(data).forEach(([fieldKey, fieldValue]) => {
+          sectionYMap.set(fieldKey, fieldValue);
         });
       }
-    } else if (key === 'sectionB') {
-      // Section B: update individual questions or stopAssessment
-      Object.entries(data).forEach(([subKey, subValue]) => {
-        if (typeof subValue === 'object' && subValue !== null) {
-          let questionYMap = sectionYMap.get(subKey);
-          if (!questionYMap || !(questionYMap instanceof Y.Map)) {
-            questionYMap = new Y.Map();
-            sectionYMap.set(subKey, questionYMap);
-          }
-          if (subValue.answer !== undefined) questionYMap.set('answer', subValue.answer);
-          if (subValue.comment !== undefined)
-            this.setYTextField(questionYMap, 'comment', subValue.comment);
-        } else {
-          sectionYMap.set(subKey, subValue);
-        }
-      });
-    } else if (key === 'confoundingEvaluation') {
-      // Confounding evaluation: update arrays
-      if (data.predefined !== undefined) sectionYMap.set('predefined', data.predefined);
-      if (data.additional !== undefined) sectionYMap.set('additional', data.additional);
-    } else if (key === 'sectionD') {
-      // Section D: update sources or otherSpecify
-      if (data.sources !== undefined) sectionYMap.set('sources', data.sources);
-      if (data.otherSpecify !== undefined) sectionYMap.set('otherSpecify', data.otherSpecify);
-    } else {
-      // Other sections: update individual fields
-      Object.entries(data).forEach(([fieldKey, fieldValue]) => {
-        sectionYMap.set(fieldKey, fieldValue);
-      });
-    }
+    });
   }
 
   /**

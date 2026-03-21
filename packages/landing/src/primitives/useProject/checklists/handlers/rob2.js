@@ -194,62 +194,60 @@ export class ROB2Handler extends ChecklistHandler {
    * @param {Object} data - The answer data
    */
   updateAnswer(answersMap, key, data) {
-    let sectionYMap = answersMap.get(key);
+    const doc = answersMap.doc;
+    doc.transact(() => {
+      let sectionYMap = answersMap.get(key);
 
-    // Create section Y.Map if it doesn't exist
-    if (!sectionYMap || !(sectionYMap instanceof Y.Map)) {
-      sectionYMap = new Y.Map();
-      answersMap.set(key, sectionYMap);
-    }
-
-    if (key.startsWith('domain') || key === 'overall') {
-      // Update judgement and direction at section level
-      if (data.judgement !== undefined) {
-        sectionYMap.set('judgement', data.judgement);
-      }
-      if (data.direction !== undefined) {
-        sectionYMap.set('direction', data.direction);
+      // Create section Y.Map if it doesn't exist
+      if (!sectionYMap || !(sectionYMap instanceof Y.Map)) {
+        sectionYMap = new Y.Map();
+        answersMap.set(key, sectionYMap);
       }
 
-      // Update individual questions in answers
-      if (data.answers) {
-        let answersNestedYMap = sectionYMap.get('answers');
-        if (!answersNestedYMap || !(answersNestedYMap instanceof Y.Map)) {
-          answersNestedYMap = new Y.Map();
-          sectionYMap.set('answers', answersNestedYMap);
+      if (key.startsWith('domain') || key === 'overall') {
+        if (data.judgement !== undefined) {
+          sectionYMap.set('judgement', data.judgement);
+        }
+        if (data.direction !== undefined) {
+          sectionYMap.set('direction', data.direction);
         }
 
-        Object.entries(data.answers).forEach(([qKey, qValue]) => {
-          let questionYMap = answersNestedYMap.get(qKey);
-          if (!questionYMap || !(questionYMap instanceof Y.Map)) {
-            questionYMap = new Y.Map();
-            answersNestedYMap.set(qKey, questionYMap);
+        if (data.answers) {
+          let answersNestedYMap = sectionYMap.get('answers');
+          if (!answersNestedYMap || !(answersNestedYMap instanceof Y.Map)) {
+            answersNestedYMap = new Y.Map();
+            sectionYMap.set('answers', answersNestedYMap);
           }
-          if (qValue.answer !== undefined) questionYMap.set('answer', qValue.answer);
-          if (qValue.comment !== undefined)
-            this.setYTextField(questionYMap, 'comment', qValue.comment);
+
+          Object.entries(data.answers).forEach(([qKey, qValue]) => {
+            let questionYMap = answersNestedYMap.get(qKey);
+            if (!questionYMap || !(questionYMap instanceof Y.Map)) {
+              questionYMap = new Y.Map();
+              answersNestedYMap.set(qKey, questionYMap);
+            }
+            if (qValue.answer !== undefined) questionYMap.set('answer', qValue.answer);
+            if (qValue.comment !== undefined)
+              this.setYTextField(questionYMap, 'comment', qValue.comment);
+          });
+        }
+      } else if (key === 'preliminary') {
+        if (data.studyDesign !== undefined) sectionYMap.set('studyDesign', data.studyDesign);
+        if (data.aim !== undefined) sectionYMap.set('aim', data.aim);
+        if (data.deviationsToAddress !== undefined)
+          sectionYMap.set('deviationsToAddress', data.deviationsToAddress);
+        if (data.sources !== undefined) sectionYMap.set('sources', data.sources);
+        if (data.experimental !== undefined)
+          this.setYTextField(sectionYMap, 'experimental', data.experimental);
+        if (data.comparator !== undefined)
+          this.setYTextField(sectionYMap, 'comparator', data.comparator);
+        if (data.numericalResult !== undefined)
+          this.setYTextField(sectionYMap, 'numericalResult', data.numericalResult);
+      } else {
+        Object.entries(data).forEach(([fieldKey, fieldValue]) => {
+          sectionYMap.set(fieldKey, fieldValue);
         });
       }
-    } else if (key === 'preliminary') {
-      // Preliminary section: update various fields
-      if (data.studyDesign !== undefined) sectionYMap.set('studyDesign', data.studyDesign);
-      if (data.aim !== undefined) sectionYMap.set('aim', data.aim);
-      if (data.deviationsToAddress !== undefined)
-        sectionYMap.set('deviationsToAddress', data.deviationsToAddress);
-      if (data.sources !== undefined) sectionYMap.set('sources', data.sources);
-      // Free text fields
-      if (data.experimental !== undefined)
-        this.setYTextField(sectionYMap, 'experimental', data.experimental);
-      if (data.comparator !== undefined)
-        this.setYTextField(sectionYMap, 'comparator', data.comparator);
-      if (data.numericalResult !== undefined)
-        this.setYTextField(sectionYMap, 'numericalResult', data.numericalResult);
-    } else {
-      // Other sections: update individual fields
-      Object.entries(data).forEach(([fieldKey, fieldValue]) => {
-        sectionYMap.set(fieldKey, fieldValue);
-      });
-    }
+    });
   }
 
   /**
