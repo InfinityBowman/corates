@@ -24,22 +24,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { parseResponse } from 'hono/client';
 import { showToast } from '@/components/ui/toast';
-import { apiFetch } from '@/lib/apiFetch';
+import { api } from '@/lib/rpc';
 import { useOrgs } from '@/hooks/useOrgs';
 import { queryKeys } from '@/lib/queryKeys';
-import { handleError, isErrorCode } from '@/lib/error-utils';
+import { handleError, isErrorCode, getDomainError } from '@/lib/error-utils';
 import { AUTH_ERRORS } from '@corates/shared';
 import { isUnlimitedQuota } from '@corates/shared/plans';
 
 interface CreateProjectModalProps {
   open: boolean;
   onOpenChange: (_open: boolean) => void;
-}
-
-interface CreateProjectResponse {
-  id: string;
-  name: string;
 }
 
 export function CreateProjectModal({ open, onOpenChange }: CreateProjectModalProps) {
@@ -91,28 +87,31 @@ export function CreateProjectModal({ open, onOpenChange }: CreateProjectModalPro
 
       setIsSubmitting(true);
       try {
-        const newProject = await apiFetch.post<CreateProjectResponse>(
-          `/api/orgs/${orgId}/projects`,
-          {
-            name: projectName.trim(),
-            description: projectDescription.trim() || undefined,
-          },
-          { showToast: false },
+        const newProject = await parseResponse(
+          api.api.orgs[':orgId'].projects.$post({
+            param: { orgId },
+            json: {
+              name: projectName.trim(),
+              description: projectDescription.trim() || undefined,
+            },
+          }),
         );
 
         queryClient.invalidateQueries({ queryKey: queryKeys.projects.all });
         onOpenChange(false);
 
         navigate({ to: `/projects/${newProject.id}` as string });
-      } catch (error: any) {
-        if (isErrorCode(error, AUTH_ERRORS.FORBIDDEN.code)) {
-          if (error.details?.reason === 'missing_entitlement') {
+      } catch (error: unknown) {
+        const domainError = getDomainError(error);
+        const details = domainError?.details as Record<string, unknown> | undefined;
+        if (domainError && isErrorCode(domainError, AUTH_ERRORS.FORBIDDEN.code)) {
+          if (details?.reason === 'missing_entitlement') {
             showToast.error(
               'Feature Not Available',
-              `This feature requires the '${error.details.entitlement}' entitlement. Please upgrade your plan.`,
+              `This feature requires the '${details.entitlement}' entitlement. Please upgrade your plan.`,
             );
-          } else if (error.details?.reason === 'quota_exceeded') {
-            const { quotaKey, used, limit, requested } = error.details;
+          } else if (details?.reason === 'quota_exceeded') {
+            const { quotaKey, used, limit, requested } = details as Record<string, number>;
             showToast.error(
               'Quota Exceeded',
               `${quotaKey}: Current usage ${used}, Limit ${isUnlimitedQuota(limit) ? 'unlimited' : limit}, Requested ${requested}`,

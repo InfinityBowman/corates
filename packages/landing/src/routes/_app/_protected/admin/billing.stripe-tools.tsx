@@ -26,7 +26,8 @@ import {
   TableHead,
   TableCell,
 } from '@/components/ui/table';
-import { apiFetch } from '@/lib/apiFetch';
+import { parseResponse } from 'hono/client';
+import { api } from '@/lib/rpc';
 import { showToast } from '@/components/ui/toast';
 import { DashboardHeader, AdminBox } from '@/components/admin/ui';
 import { Input } from '@/components/ui/input';
@@ -173,17 +174,15 @@ function StripeToolsPage() {
     setPortalUrl(null);
 
     try {
-      const params = new URLSearchParams();
-      if (searchType === 'email') {
-        params.set('email', searchInput.trim());
-      } else {
-        params.set('customerId', searchInput.trim());
-      }
+      const query =
+        searchType === 'email'
+          ? { email: searchInput.trim() }
+          : { customerId: searchInput.trim() };
 
-      const data = await apiFetch.get<CustomerData>(`/api/admin/stripe/customer?${params}`, {
-        toastMessage: false,
-      });
-      setCustomerData(data);
+      const data = await parseResponse(
+        api.api.admin.stripe.customer.$get({ query }),
+      );
+      setCustomerData(data as CustomerData);
 
       if (!data.found) {
         setSearchError(data.message || 'Customer not found');
@@ -202,11 +201,13 @@ function StripeToolsPage() {
 
     setLoadingInvoices(true);
     try {
-      const data = await apiFetch.get<{ invoices: StripeInvoice[] }>(
-        `/api/admin/stripe/customer/${customerData.customer.id}/invoices`,
-        { toastMessage: false },
+      const data = await parseResponse(
+        api.api.admin.stripe.customer[':customerId'].invoices.$get({
+          param: { customerId: customerData.customer.id },
+          query: {},
+        }),
       );
-      setInvoices(data.invoices);
+      setInvoices(data.invoices as StripeInvoice[]);
     } catch (error) {
       showToast.error('Failed to load invoices', (error as Error).message);
     } finally {
@@ -219,11 +220,12 @@ function StripeToolsPage() {
 
     setLoadingPaymentMethods(true);
     try {
-      const data = await apiFetch.get<{ paymentMethods: StripePaymentMethod[] }>(
-        `/api/admin/stripe/customer/${customerData.customer.id}/payment-methods`,
-        { toastMessage: false },
+      const data = await parseResponse(
+        api.api.admin.stripe.customer[':customerId']['payment-methods'].$get({
+          param: { customerId: customerData.customer.id },
+        }),
       );
-      setPaymentMethods(data.paymentMethods);
+      setPaymentMethods(data.paymentMethods as StripePaymentMethod[]);
     } catch (error) {
       showToast.error('Failed to load payment methods', (error as Error).message);
     } finally {
@@ -236,11 +238,12 @@ function StripeToolsPage() {
 
     setLoadingSubscriptions(true);
     try {
-      const data = await apiFetch.get<{ subscriptions: StripeSubscription[] }>(
-        `/api/admin/stripe/customer/${customerData.customer.id}/subscriptions`,
-        { toastMessage: false },
+      const data = await parseResponse(
+        api.api.admin.stripe.customer[':customerId'].subscriptions.$get({
+          param: { customerId: customerData.customer.id },
+        }),
       );
-      setSubscriptions(data.subscriptions);
+      setSubscriptions(data.subscriptions as StripeSubscription[]);
     } catch (error) {
       showToast.error('Failed to load subscriptions', (error as Error).message);
     } finally {
@@ -253,10 +256,10 @@ function StripeToolsPage() {
 
     setGeneratingPortal(true);
     try {
-      const data = await apiFetch.post<{ url: string }>(
-        '/api/admin/stripe/portal-link',
-        { customerId: customerData.customer.id },
-        { toastMessage: false },
+      const data = await parseResponse(
+        api.api.admin.stripe['portal-link'].$post({
+          json: { customerId: customerData.customer.id },
+        }),
       );
       setPortalUrl(data.url);
       showToast.success('Success', 'Portal link generated');

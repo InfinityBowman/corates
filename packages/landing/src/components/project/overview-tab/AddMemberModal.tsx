@@ -24,7 +24,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { apiFetch } from '@/lib/apiFetch';
+import { parseResponse } from 'hono/client';
+import { api } from '@/lib/rpc';
 import { isUnlimitedQuota } from '@corates/shared/plans';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 
@@ -47,7 +48,7 @@ export function AddMemberModal({
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [searching, setSearching] = useState(false);
   const [selectedUser, setSelectedUser] = useState<any>(null);
-  const [selectedRole, setSelectedRole] = useState('member');
+  const [selectedRole, setSelectedRole] = useState<'member' | 'owner'>('member');
   const [adding, setAdding] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -75,9 +76,10 @@ export function AddMemberModal({
       if (cancelled) return;
       setSearching(true);
       try {
-        const results = await apiFetch.get(
-          `/api/users/search?q=${encodeURIComponent(debouncedQuery)}&projectId=${encodeURIComponent(projectId)}`,
-          { toastMessage: false },
+        const results = await parseResponse(
+          api.api.users.search.$get({
+            query: { q: debouncedQuery, projectId },
+          }),
         );
         if (!cancelled) setSearchResults(results as any[]);
       } catch (err: any) {
@@ -119,12 +121,13 @@ export function AddMemberModal({
     setAdding(true);
     setError(null);
     try {
-      const result = await apiFetch.post(
-        `/api/orgs/${orgId}/projects/${projectId}/members`,
-        selectedUser ?
-          { userId: selectedUser.id, role: selectedRole }
-        : { email: searchQuery.trim(), role: selectedRole },
-        { toastMessage: false },
+      const result = await parseResponse(
+        api.api.orgs[':orgId'].projects[':projectId'].members.$post({
+          param: { orgId, projectId },
+          json: selectedUser ?
+            { userId: selectedUser.id, role: selectedRole }
+          : { email: searchQuery.trim(), role: selectedRole },
+        }),
       );
       if ((result as any).invitation) {
         showToast.success(
@@ -274,7 +277,7 @@ export function AddMemberModal({
               <label className='text-secondary-foreground mb-1 block text-sm font-medium'>
                 Role
               </label>
-              <Select value={selectedRole} onValueChange={setSelectedRole}>
+              <Select value={selectedRole} onValueChange={v => setSelectedRole(v as 'member' | 'owner')}>
                 <SelectTrigger className='w-full'>
                   <SelectValue placeholder='Select a role' />
                 </SelectTrigger>

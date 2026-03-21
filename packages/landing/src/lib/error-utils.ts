@@ -14,6 +14,7 @@ import {
   type DomainError,
   type TransportError,
 } from '@corates/shared';
+import { DetailedError } from 'hono/client';
 import { showToast } from '@/components/ui/toast';
 
 /**
@@ -237,4 +238,18 @@ export function parseError(error: unknown): AppError {
 
 export function isErrorCode(error: AppError | null | undefined, code: string): boolean {
   return error?.code === code;
+}
+
+/**
+ * Extract a DomainError from either a DetailedError (thrown by parseResponse)
+ * or a raw DomainError. Returns null if the error is neither.
+ */
+export function getDomainError(error: unknown): DomainError | null {
+  if (error instanceof DetailedError && error.detail?.data?.code) {
+    return error.detail.data as DomainError;
+  }
+  if (isDomainError(error)) {
+    return error;
+  }
+  return null;
 }

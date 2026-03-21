@@ -7,7 +7,8 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { SearchIcon, XIcon, UserIcon } from 'lucide-react';
-import { apiFetch } from '@/lib/apiFetch';
+import { parseResponse } from 'hono/client';
+import { api } from '@/lib/rpc';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { useAuthStore, selectUser } from '@/stores/authStore';
 
@@ -128,11 +129,11 @@ function MappingRow({ originalId, mappedTo, currentUser, projectId, onSelect }: 
     (async () => {
       setSearching(true);
       try {
-        const params = new URLSearchParams({ q: debouncedQuery });
-        if (projectId) params.set('projectId', projectId);
-        const data = await apiFetch.get(`/api/users/search?${params.toString()}`, {
-          toastMessage: false,
-        });
+        const data = await parseResponse(
+          api.api.users.search.$get({
+            query: { q: debouncedQuery, ...(projectId ? { projectId } : {}) },
+          }),
+        );
         if (!cancelled) setResults(data as SearchResult[]);
       } catch {
         if (!cancelled) setResults([]);
