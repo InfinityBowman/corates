@@ -6,29 +6,22 @@ import { parseResponse } from 'hono/client';
 import { apiFetch } from '@/lib/apiFetch';
 import { api } from '@/lib/rpc';
 
-interface DriveImportResult {
-  success: boolean;
-  file: Record<string, unknown>;
-}
-
 export async function getGoogleDriveStatus() {
   return parseResponse(api.api['google-drive'].status.$get());
 }
 
-export async function disconnectGoogleDrive(): Promise<{ success: boolean }> {
-  return apiFetch.delete<{ success: boolean }>('/api/google-drive/disconnect');
+export async function disconnectGoogleDrive() {
+  return parseResponse(api.api['google-drive'].disconnect.$delete());
 }
 
 export async function importFromGoogleDrive(
   fileId: string,
   projectId: string,
   studyId: string,
-): Promise<DriveImportResult> {
-  return apiFetch.post<DriveImportResult>('/api/google-drive/import', {
-    fileId,
-    projectId,
-    studyId,
-  });
+) {
+  return parseResponse(
+    api.api['google-drive'].import.$post({ json: { fileId, projectId, studyId } }),
+  );
 }
 
 export async function getGoogleDrivePickerToken() {

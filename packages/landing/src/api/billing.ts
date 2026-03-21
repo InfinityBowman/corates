@@ -4,49 +4,23 @@
  */
 
 import { parseResponse } from 'hono/client';
-import { apiFetch } from '@/lib/apiFetch';
 import { api } from '@/lib/rpc';
-
-interface CheckoutSession {
-  url: string;
-  sessionId: string;
-}
-
-interface PortalSession {
-  url: string;
-}
-
-interface TrialResult {
-  success: boolean;
-  grantId: string;
-  expiresAt: number;
-}
 
 type BillingInterval = 'monthly' | 'yearly';
 
-interface BillingOptions {
-  showToast?: boolean;
-  toastMessage?: string | false;
+async function createCheckoutSession(tier: string, interval: BillingInterval = 'monthly') {
+  return parseResponse(api.api.billing.checkout.$post({ json: { tier, interval } }));
 }
 
-async function createCheckoutSession(
-  tier: string,
-  interval: BillingInterval = 'monthly',
-  options: BillingOptions = {},
-): Promise<CheckoutSession> {
-  return apiFetch.post<CheckoutSession>('/api/billing/checkout', { tier, interval }, options);
-}
-
-export async function createPortalSession(): Promise<PortalSession> {
-  return apiFetch.post<PortalSession>('/api/billing/portal');
+async function createPortalSession() {
+  return parseResponse(api.api.billing.portal.$post({}));
 }
 
 export async function redirectToCheckout(
   tier: string,
   interval: BillingInterval = 'monthly',
-  options: BillingOptions = {},
 ): Promise<void> {
-  const { url } = await createCheckoutSession(tier, interval, { showToast: false, ...options });
+  const { url } = await createCheckoutSession(tier, interval);
   window.location.href = url;
 }
 
@@ -55,12 +29,14 @@ export async function redirectToPortal(): Promise<void> {
   window.location.href = url;
 }
 
-async function createSingleProjectCheckout(options: BillingOptions = {}): Promise<CheckoutSession> {
-  return apiFetch.post<CheckoutSession>('/api/billing/single-project/checkout', {}, options);
+async function createSingleProjectCheckout() {
+  return parseResponse(
+    api.api.billing['single-project'].checkout.$post({ json: {} }),
+  );
 }
 
-export async function redirectToSingleProjectCheckout(options: BillingOptions = {}): Promise<void> {
-  const { url } = await createSingleProjectCheckout({ showToast: false, ...options });
+export async function redirectToSingleProjectCheckout(): Promise<void> {
+  const { url } = await createSingleProjectCheckout();
   window.location.href = url;
 }
 
@@ -68,12 +44,8 @@ export async function getMembers() {
   return parseResponse(api.api.billing.members.$get());
 }
 
-export async function startTrial(options: BillingOptions = {}): Promise<TrialResult> {
-  return apiFetch.post<TrialResult>(
-    '/api/billing/trial/start',
-    {},
-    { showToast: false, ...options },
-  );
+export async function startTrial() {
+  return parseResponse(api.api.billing.trial.start.$post({ json: {} }));
 }
 
 export async function validatePlanChange(targetPlan: string) {
