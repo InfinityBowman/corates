@@ -46,16 +46,16 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
-    "@cloudflare/vitest-pool-workers": "^0.13.0",
-    "@cloudflare/workers-types": "^4.20260313.1",
+    "@cloudflare/vitest-pool-workers": "^0.13.3",
+    "@cloudflare/workers-types": "^4.20260317.1",
     "@vitest/runner": "^4.1.0",
     "@vitest/snapshot": "^4.1.0",
     "better-sqlite3": "^12.6.2",
-    "dotenv": "^16.6.1",
-    "drizzle-kit": "^0.31.9",
-    "localflare": "^0.3.1",
+    "dotenv": "^17.3.1",
+    "drizzle-kit": "^0.31.10",
+    "localflare": "^0.5.0",
     "typescript": "^5.9.3",
     "vitest": "4.1.0",
-    "wrangler": "^4.73.0"
+    "wrangler": "^4.76.0"
   }
 }
