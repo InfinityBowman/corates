@@ -1,9 +1,44 @@
 /**
  * TanStack Query Client Configuration
  * Configured with offline-first defaults.
+ * Global error handlers for Hono RPC DetailedError (see docs/audits/hono-rpc-migration.md).
  */
 
 import { QueryClient } from '@tanstack/react-query';
+import { DetailedError } from 'hono/client';
+import { showToast } from '@/components/ui/toast';
+
+const USER_FRIENDLY_MESSAGES: Record<string, string> = {
+  AUTH_REQUIRED: 'Please sign in to continue',
+  AUTH_EXPIRED: 'Your session has expired. Please sign in again.',
+  AUTH_FORBIDDEN: "You don't have permission to do that",
+  SYSTEM_RATE_LIMITED: 'Too many requests. Please wait a moment and try again.',
+};
+
+/**
+ * Extract our DomainError from Hono's DetailedError.
+ * Backend returns { code, message, statusCode, details } as the JSON body,
+ * which parseResponse puts into DetailedError.detail.data on failure.
+ */
+function getDomainError(
+  error: unknown,
+): { code: string; message: string; statusCode: number; details?: unknown } | null {
+  if (error instanceof DetailedError && error.detail?.data?.code) {
+    return error.detail.data;
+  }
+  return null;
+}
+
+function getFriendlyMessage(error: unknown): string {
+  const domainError = getDomainError(error);
+  if (domainError?.code && USER_FRIENDLY_MESSAGES[domainError.code]) {
+    return USER_FRIENDLY_MESSAGES[domainError.code];
+  }
+  if (domainError?.message) {
+    return domainError.message;
+  }
+  return 'Something went wrong. Please try again.';
+}
 
 let queryClientInstance: QueryClient | null = null;
 
@@ -20,7 +55,13 @@ export function getQueryClient(): QueryClient {
         networkMode: 'offlineFirst',
         staleTime: isDevelopment ? 0 : 1000 * 60 * 5,
         gcTime: isDevelopment ? 0 : 1000 * 60 * 10,
-        retry: 3,
+        retry: (failureCount, error) => {
+          // Don't retry auth or other client errors
+          if (error instanceof DetailedError && error.statusCode && error.statusCode < 500) {
+            return false;
+          }
+          return failureCount < 3;
+        },
         retryDelay: (attemptIndex: number) => Math.min(1000 * 2 ** attemptIndex, 30000),
         refetchOnReconnect: true,
         refetchOnMount: true,
@@ -28,8 +69,21 @@ export function getQueryClient(): QueryClient {
       mutations: {
         retry: 1,
         networkMode: 'online',
+        onError: error => {
+          showToast.error(getFriendlyMessage(error));
+        },
       },
     },
+  });
+
+  // Auth redirect handler for RPC errors
+  queryClientInstance.getQueryCache().subscribe(event => {
+    if (event.type === 'updated' && event.query.state.error) {
+      const domainError = getDomainError(event.query.state.error);
+      if (domainError?.code === 'AUTH_REQUIRED' || domainError?.code === 'AUTH_EXPIRED') {
+        window.location.href = '/signin';
+      }
+    }
   });
 
   return queryClientInstance;

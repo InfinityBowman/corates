@@ -27,6 +27,7 @@
     "stripe:setup": "node ./scripts/setup-stripe-test.mjs",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
+    "build:rpc": "tsc -p tsconfig.rpc.json",
     "studio": "drizzle-kit studio",
     "localflare": "localflare"
   },

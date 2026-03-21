@@ -3,7 +3,7 @@
  * Wraps Better Auth organization plugin APIs - delegates to plugin as service boundary
  */
 
-import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
+import { OpenAPIHono, createRoute, z, $ } from '@hono/zod-openapi';
 import { runMiddleware } from '@/lib/runMiddleware.js';
 import { createDb } from '@/db/client.js';
 import { projects } from '@/db/schema.js';
@@ -51,7 +51,7 @@ function getOrgApi(
   return auth.api as unknown as OrgApiMethods;
 }
 
-const orgRoutes = new OpenAPIHono<{ Bindings: Env }>({
+const base = new OpenAPIHono<{ Bindings: Env }>({
   defaultHook: validationHook,
 });
 
@@ -497,403 +497,401 @@ const setActiveOrgRoute = createRoute({
   },
 });
 
-// Apply auth middleware to all routes
-orgRoutes.use('*', requireAuth);
-
 // Route handlers
-orgRoutes.openapi(listOrgsRoute, async c => {
-  try {
-    const orgApi = getOrgApi(c.env, c.executionCtx);
-    const result = await orgApi.listOrganizations({
-      headers: c.req.raw.headers,
-    });
-
-    return c.json(result as z.infer<typeof OrganizationListResponseSchema>, 200);
-  } catch (err) {
-    const error = err as Error;
-    console.error('Error listing organizations:', error);
-    const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
-      operation: 'list_organizations',
-      originalError: error.message,
-    });
-    return c.json(dbError, 500);
-  }
-});
-
-orgRoutes.openapi(createOrgRoute, async c => {
-  try {
-    const body = c.req.valid('json');
-
-    if (!body.name?.trim()) {
-      const error = createDomainError(AUTH_ERRORS.FORBIDDEN, {
-        reason: 'name_required',
+const orgRoutes = $(base.use('*', requireAuth))
+  .openapi(listOrgsRoute, async c => {
+    try {
+      const orgApi = getOrgApi(c.env, c.executionCtx);
+      const result = await orgApi.listOrganizations({
+        headers: c.req.raw.headers,
       });
-      return c.json(error, 403);
-    }
 
-    const orgApi = getOrgApi(c.env, c.executionCtx);
-    const result = await orgApi.createOrganization({
-      headers: c.req.raw.headers,
-      body: {
-        name: body.name.trim(),
-        slug: body.slug,
-        logo: body.logo,
-        metadata: body.metadata,
-      },
-    });
-
-    return c.json(result as z.infer<typeof OrganizationSchema>, 201);
-  } catch (err) {
-    const error = err as Error;
-    console.error('Error creating organization:', error);
-    if (error.message?.includes('slug')) {
-      const slugError = createDomainError(AUTH_ERRORS.FORBIDDEN, {
-        reason: 'slug_taken',
+      return c.json(result as z.infer<typeof OrganizationListResponseSchema>, 200);
+    } catch (err) {
+      const error = err as Error;
+      console.error('Error listing organizations:', error);
+      const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
+        operation: 'list_organizations',
+        originalError: error.message,
       });
-      return c.json(slugError, 403);
+      return c.json(dbError, 500);
     }
-    const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
-      operation: 'create_organization',
-      originalError: error.message,
-    });
-    return c.json(dbError, 500);
-  }
-});
+  })
 
-orgRoutes.openapi(getOrgRoute, async c => {
-  // Run membership middleware
-  const membershipResponse = await runMiddleware(requireOrgMembership(), c);
-  if (membershipResponse) return membershipResponse as never;
+  .openapi(createOrgRoute, async c => {
+    try {
+      const body = c.req.valid('json');
 
-  const { orgId } = c.req.valid('param');
+      if (!body.name?.trim()) {
+        const error = createDomainError(AUTH_ERRORS.FORBIDDEN, {
+          reason: 'name_required',
+        });
+        return c.json(error, 403);
+      }
 
-  try {
-    const orgApi = getOrgApi(c.env, c.executionCtx);
-    const result = await orgApi.getFullOrganization({
-      headers: c.req.raw.headers,
-      query: {
-        organizationId: orgId,
-      },
-    });
-
-    if (!result) {
-      const error = createDomainError(AUTH_ERRORS.FORBIDDEN, {
-        reason: 'org_not_found',
-        orgId,
-      });
-      return c.json(error, 403);
-    }
-
-    const db = createDb(c.env.DB);
-    const [projectCount] = await db
-      .select({ count: count() })
-      .from(projects)
-      .where(eq(projects.orgId, orgId));
-
-    return c.json(
-      {
-        ...result,
-        projectCount: projectCount?.count || 0,
-      } as z.infer<typeof OrganizationDetailSchema>,
-      200,
-    );
-  } catch (err) {
-    const error = err as Error;
-    console.error('Error fetching organization:', error);
-    const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
-      operation: 'fetch_organization',
-      originalError: error.message,
-    });
-    return c.json(dbError, 500);
-  }
-});
-
-orgRoutes.openapi(updateOrgRoute, async c => {
-  // Run membership middleware (admin required)
-  const membershipResponse = await runMiddleware(requireOrgMembership('admin'), c);
-  if (membershipResponse) return membershipResponse as never;
-
-  // Run write access middleware
-  const writeAccessResponse = await runMiddleware(requireOrgWriteAccess(), c);
-  if (writeAccessResponse) return writeAccessResponse as never;
-
-  const { orgId } = c.req.valid('param');
-
-  try {
-    const body = c.req.valid('json');
-
-    const orgApi = getOrgApi(c.env, c.executionCtx);
-    const result = await orgApi.updateOrganization({
-      headers: c.req.raw.headers,
-      body: {
-        organizationId: orgId,
-        data: {
-          name: body.name,
+      const orgApi = getOrgApi(c.env, c.executionCtx);
+      const result = await orgApi.createOrganization({
+        headers: c.req.raw.headers,
+        body: {
+          name: body.name.trim(),
           slug: body.slug,
           logo: body.logo,
           metadata: body.metadata,
         },
-      },
-    });
-
-    return c.json({ success: true as const, orgId, ...(result as Record<string, unknown>) }, 200);
-  } catch (err) {
-    const error = err as Error;
-    console.error('Error updating organization:', error);
-    if (error.message?.includes('slug')) {
-      const slugError = createDomainError(AUTH_ERRORS.FORBIDDEN, {
-        reason: 'slug_taken',
       });
-      return c.json(slugError, 403);
-    }
-    const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
-      operation: 'update_organization',
-      originalError: error.message,
-    });
-    return c.json(dbError, 500);
-  }
-});
 
-orgRoutes.openapi(deleteOrgRoute, async c => {
-  // Run membership middleware (owner required)
-  const membershipResponse = await runMiddleware(requireOrgMembership('owner'), c);
-  if (membershipResponse) return membershipResponse as never;
-
-  // Run write access middleware
-  const writeAccessResponse = await runMiddleware(requireOrgWriteAccess(), c);
-  if (writeAccessResponse) return writeAccessResponse as never;
-
-  const { orgId } = c.req.valid('param');
-
-  try {
-    const orgApi = getOrgApi(c.env, c.executionCtx);
-    await orgApi.deleteOrganization({
-      headers: c.req.raw.headers,
-      body: {
-        organizationId: orgId,
-      },
-    });
-
-    return c.json({ success: true as const, deleted: orgId }, 200);
-  } catch (err) {
-    const error = err as Error;
-    console.error('Error deleting organization:', error);
-    const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
-      operation: 'delete_organization',
-      originalError: error.message,
-    });
-    return c.json(dbError, 500);
-  }
-});
-
-orgRoutes.openapi(listMembersRoute, async c => {
-  // Run membership middleware
-  const membershipResponse = await runMiddleware(requireOrgMembership(), c);
-  if (membershipResponse) return membershipResponse as never;
-
-  const { orgId } = c.req.valid('param');
-
-  try {
-    const orgApi = getOrgApi(c.env, c.executionCtx);
-    const result = await orgApi.listMembers({
-      headers: c.req.raw.headers,
-      query: {
-        organizationId: orgId,
-      },
-    });
-
-    return c.json(result as z.infer<typeof MembersListResponseSchema>, 200);
-  } catch (err) {
-    const error = err as Error;
-    console.error('Error listing org members:', error);
-    const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
-      operation: 'list_org_members',
-      originalError: error.message,
-    });
-    return c.json(dbError, 500);
-  }
-});
-
-orgRoutes.openapi(addMemberRoute, async c => {
-  // Run membership middleware (admin required)
-  const membershipResponse = await runMiddleware(requireOrgMembership('admin'), c);
-  if (membershipResponse) return membershipResponse as never;
-
-  // Run write access middleware
-  const writeAccessResponse = await runMiddleware(requireOrgWriteAccess(), c);
-  if (writeAccessResponse) return writeAccessResponse as never;
-
-  const { orgId } = c.req.valid('param');
-
-  try {
-    const body = c.req.valid('json');
-
-    const orgApi = getOrgApi(c.env, c.executionCtx);
-    const result = await orgApi.addMember({
-      body: {
-        organizationId: orgId,
-        userId: body.userId,
-        role: body.role,
-      },
-      headers: c.req.raw.headers,
-    });
-
-    return c.json({ success: true as const, ...(result as Record<string, unknown>) }, 201);
-  } catch (err) {
-    const error = err as Error;
-    console.error('Error adding org member:', error);
-    if (error.message?.includes('already') || error.message?.includes('member')) {
-      const memberError = createDomainError(AUTH_ERRORS.FORBIDDEN, {
-        reason: 'already_member',
+      return c.json(result as z.infer<typeof OrganizationSchema>, 201);
+    } catch (err) {
+      const error = err as Error;
+      console.error('Error creating organization:', error);
+      if (error.message?.includes('slug')) {
+        const slugError = createDomainError(AUTH_ERRORS.FORBIDDEN, {
+          reason: 'slug_taken',
+        });
+        return c.json(slugError, 403);
+      }
+      const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
+        operation: 'create_organization',
+        originalError: error.message,
       });
-      return c.json(memberError, 403);
+      return c.json(dbError, 500);
     }
-    const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
-      operation: 'add_org_member',
-      originalError: error.message,
-    });
-    return c.json(dbError, 500);
-  }
-});
+  })
 
-orgRoutes.openapi(updateMemberRoleRoute, async c => {
-  // Run membership middleware (admin required)
-  const membershipResponse = await runMiddleware(requireOrgMembership('admin'), c);
-  if (membershipResponse) return membershipResponse as never;
+  .openapi(getOrgRoute, async c => {
+    // Run membership middleware
+    const membershipResponse = await runMiddleware(requireOrgMembership(), c);
+    if (membershipResponse) return membershipResponse as never;
 
-  // Run write access middleware
-  const writeAccessResponse = await runMiddleware(requireOrgWriteAccess(), c);
-  if (writeAccessResponse) return writeAccessResponse as never;
+    const { orgId } = c.req.valid('param');
 
-  const { orgId, memberId } = c.req.valid('param');
-
-  try {
-    const body = c.req.valid('json');
-
-    const orgApi = getOrgApi(c.env, c.executionCtx);
-    await orgApi.updateMemberRole({
-      headers: c.req.raw.headers,
-      body: {
-        organizationId: orgId,
-        memberId,
-        role: body.role,
-      },
-    });
-
-    return c.json({ success: true as const, memberId, role: body.role }, 200);
-  } catch (err) {
-    const error = err as Error;
-    console.error('Error updating org member:', error);
-    if (error.message?.includes('owner') || error.message?.includes('permission')) {
-      const permError = createDomainError(AUTH_ERRORS.FORBIDDEN, {
-        reason: 'owner_role_change_requires_owner',
+    try {
+      const orgApi = getOrgApi(c.env, c.executionCtx);
+      const result = await orgApi.getFullOrganization({
+        headers: c.req.raw.headers,
+        query: {
+          organizationId: orgId,
+        },
       });
-      return c.json(permError, 403);
+
+      if (!result) {
+        const error = createDomainError(AUTH_ERRORS.FORBIDDEN, {
+          reason: 'org_not_found',
+          orgId,
+        });
+        return c.json(error, 403);
+      }
+
+      const db = createDb(c.env.DB);
+      const [projectCount] = await db
+        .select({ count: count() })
+        .from(projects)
+        .where(eq(projects.orgId, orgId));
+
+      return c.json(
+        {
+          ...result,
+          projectCount: projectCount?.count || 0,
+        } as z.infer<typeof OrganizationDetailSchema>,
+        200,
+      );
+    } catch (err) {
+      const error = err as Error;
+      console.error('Error fetching organization:', error);
+      const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
+        operation: 'fetch_organization',
+        originalError: error.message,
+      });
+      return c.json(dbError, 500);
     }
-    const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
-      operation: 'update_org_member',
-      originalError: error.message,
-    });
-    return c.json(dbError, 500);
-  }
-});
+  })
 
-orgRoutes.openapi(removeMemberRoute, async c => {
-  // Run membership middleware
-  const membershipResponse = await runMiddleware(requireOrgMembership(), c);
-  if (membershipResponse) return membershipResponse as never;
+  .openapi(updateOrgRoute, async c => {
+    // Run membership middleware (admin required)
+    const membershipResponse = await runMiddleware(requireOrgMembership('admin'), c);
+    if (membershipResponse) return membershipResponse as never;
 
-  // Run write access middleware
-  const writeAccessResponse = await runMiddleware(requireOrgWriteAccess(), c);
-  if (writeAccessResponse) return writeAccessResponse as never;
+    // Run write access middleware
+    const writeAccessResponse = await runMiddleware(requireOrgWriteAccess(), c);
+    if (writeAccessResponse) return writeAccessResponse as never;
 
-  const { user: authUser } = getAuth(c);
-  if (!authUser) {
-    const error = createDomainError(AUTH_ERRORS.REQUIRED, { reason: 'no_user' });
-    return c.json(error, 403);
-  }
+    const { orgId } = c.req.valid('param');
 
-  const { orgId, memberId } = c.req.valid('param');
-  const db = createDb(c.env.DB);
+    try {
+      const body = c.req.valid('json');
 
-  const isSelf = memberId === authUser.id;
+      const orgApi = getOrgApi(c.env, c.executionCtx);
+      const result = await orgApi.updateOrganization({
+        headers: c.req.raw.headers,
+        body: {
+          organizationId: orgId,
+          data: {
+            name: body.name,
+            slug: body.slug,
+            logo: body.logo,
+            metadata: body.metadata,
+          },
+        },
+      });
 
-  try {
-    await requireOrgMemberRemoval(db, authUser.id, orgId, memberId);
-  } catch (err) {
-    if (isDomainError(err)) {
-      return c.json(err, 403);
+      return c.json({ success: true as const, orgId, ...(result as Record<string, unknown>) }, 200);
+    } catch (err) {
+      const error = err as Error;
+      console.error('Error updating organization:', error);
+      if (error.message?.includes('slug')) {
+        const slugError = createDomainError(AUTH_ERRORS.FORBIDDEN, {
+          reason: 'slug_taken',
+        });
+        return c.json(slugError, 403);
+      }
+      const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
+        operation: 'update_organization',
+        originalError: error.message,
+      });
+      return c.json(dbError, 500);
     }
-    throw err;
-  }
+  })
 
-  try {
-    const orgApi = getOrgApi(c.env, c.executionCtx);
+  .openapi(deleteOrgRoute, async c => {
+    // Run membership middleware (owner required)
+    const membershipResponse = await runMiddleware(requireOrgMembership('owner'), c);
+    if (membershipResponse) return membershipResponse as never;
 
-    if (isSelf) {
-      await orgApi.leaveOrganization({
+    // Run write access middleware
+    const writeAccessResponse = await runMiddleware(requireOrgWriteAccess(), c);
+    if (writeAccessResponse) return writeAccessResponse as never;
+
+    const { orgId } = c.req.valid('param');
+
+    try {
+      const orgApi = getOrgApi(c.env, c.executionCtx);
+      await orgApi.deleteOrganization({
         headers: c.req.raw.headers,
         body: {
           organizationId: orgId,
         },
       });
-    } else {
-      await orgApi.removeMember({
+
+      return c.json({ success: true as const, deleted: orgId }, 200);
+    } catch (err) {
+      const error = err as Error;
+      console.error('Error deleting organization:', error);
+      const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
+        operation: 'delete_organization',
+        originalError: error.message,
+      });
+      return c.json(dbError, 500);
+    }
+  })
+
+  .openapi(listMembersRoute, async c => {
+    // Run membership middleware
+    const membershipResponse = await runMiddleware(requireOrgMembership(), c);
+    if (membershipResponse) return membershipResponse as never;
+
+    const { orgId } = c.req.valid('param');
+
+    try {
+      const orgApi = getOrgApi(c.env, c.executionCtx);
+      const result = await orgApi.listMembers({
+        headers: c.req.raw.headers,
+        query: {
+          organizationId: orgId,
+        },
+      });
+
+      return c.json(result as z.infer<typeof MembersListResponseSchema>, 200);
+    } catch (err) {
+      const error = err as Error;
+      console.error('Error listing org members:', error);
+      const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
+        operation: 'list_org_members',
+        originalError: error.message,
+      });
+      return c.json(dbError, 500);
+    }
+  })
+
+  .openapi(addMemberRoute, async c => {
+    // Run membership middleware (admin required)
+    const membershipResponse = await runMiddleware(requireOrgMembership('admin'), c);
+    if (membershipResponse) return membershipResponse as never;
+
+    // Run write access middleware
+    const writeAccessResponse = await runMiddleware(requireOrgWriteAccess(), c);
+    if (writeAccessResponse) return writeAccessResponse as never;
+
+    const { orgId } = c.req.valid('param');
+
+    try {
+      const body = c.req.valid('json');
+
+      const orgApi = getOrgApi(c.env, c.executionCtx);
+      const result = await orgApi.addMember({
+        body: {
+          organizationId: orgId,
+          userId: body.userId,
+          role: body.role,
+        },
+        headers: c.req.raw.headers,
+      });
+
+      return c.json({ success: true as const, ...(result as Record<string, unknown>) }, 201);
+    } catch (err) {
+      const error = err as Error;
+      console.error('Error adding org member:', error);
+      if (error.message?.includes('already') || error.message?.includes('member')) {
+        const memberError = createDomainError(AUTH_ERRORS.FORBIDDEN, {
+          reason: 'already_member',
+        });
+        return c.json(memberError, 403);
+      }
+      const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
+        operation: 'add_org_member',
+        originalError: error.message,
+      });
+      return c.json(dbError, 500);
+    }
+  })
+
+  .openapi(updateMemberRoleRoute, async c => {
+    // Run membership middleware (admin required)
+    const membershipResponse = await runMiddleware(requireOrgMembership('admin'), c);
+    if (membershipResponse) return membershipResponse as never;
+
+    // Run write access middleware
+    const writeAccessResponse = await runMiddleware(requireOrgWriteAccess(), c);
+    if (writeAccessResponse) return writeAccessResponse as never;
+
+    const { orgId, memberId } = c.req.valid('param');
+
+    try {
+      const body = c.req.valid('json');
+
+      const orgApi = getOrgApi(c.env, c.executionCtx);
+      await orgApi.updateMemberRole({
         headers: c.req.raw.headers,
         body: {
           organizationId: orgId,
-          memberIdOrEmail: memberId,
+          memberId,
+          role: body.role,
         },
       });
-    }
 
-    return c.json({ success: true as const, removed: memberId, isSelf }, 200);
-  } catch (err) {
-    const error = err as Error;
-    console.error('Error removing org member:', error);
-    if (error.message?.includes('owner') || error.message?.includes('last')) {
-      const ownerError = createDomainError(AUTH_ERRORS.FORBIDDEN, {
-        reason: 'cannot_remove_last_owner',
+      return c.json({ success: true as const, memberId, role: body.role }, 200);
+    } catch (err) {
+      const error = err as Error;
+      console.error('Error updating org member:', error);
+      if (error.message?.includes('owner') || error.message?.includes('permission')) {
+        const permError = createDomainError(AUTH_ERRORS.FORBIDDEN, {
+          reason: 'owner_role_change_requires_owner',
+        });
+        return c.json(permError, 403);
+      }
+      const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
+        operation: 'update_org_member',
+        originalError: error.message,
       });
-      return c.json(ownerError, 403);
+      return c.json(dbError, 500);
     }
-    const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
-      operation: 'remove_org_member',
-      originalError: error.message,
-    });
-    return c.json(dbError, 500);
-  }
-});
+  })
 
-orgRoutes.openapi(setActiveOrgRoute, async c => {
-  // Run membership middleware
-  const membershipResponse = await runMiddleware(requireOrgMembership(), c);
-  if (membershipResponse) return membershipResponse as never;
+  .openapi(removeMemberRoute, async c => {
+    // Run membership middleware
+    const membershipResponse = await runMiddleware(requireOrgMembership(), c);
+    if (membershipResponse) return membershipResponse as never;
 
-  const { orgId } = c.req.valid('param');
+    // Run write access middleware
+    const writeAccessResponse = await runMiddleware(requireOrgWriteAccess(), c);
+    if (writeAccessResponse) return writeAccessResponse as never;
 
-  try {
-    const orgApi = getOrgApi(c.env, c.executionCtx);
-    await orgApi.setActiveOrganization({
-      headers: c.req.raw.headers,
-      body: {
-        organizationId: orgId,
-      },
-    });
+    const { user: authUser } = getAuth(c);
+    if (!authUser) {
+      const error = createDomainError(AUTH_ERRORS.REQUIRED, { reason: 'no_user' });
+      return c.json(error, 403);
+    }
 
-    return c.json({ success: true as const, activeOrganizationId: orgId }, 200);
-  } catch (err) {
-    const error = err as Error;
-    console.error('Error setting active organization:', error);
-    const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
-      operation: 'set_active_organization',
-      originalError: error.message,
-    });
-    return c.json(dbError, 500);
-  }
-});
+    const { orgId, memberId } = c.req.valid('param');
+    const db = createDb(c.env.DB);
 
-// Mount org-scoped project routes
-orgRoutes.route('/:orgId/projects', orgProjectRoutes);
+    const isSelf = memberId === authUser.id;
+
+    try {
+      await requireOrgMemberRemoval(db, authUser.id, orgId, memberId);
+    } catch (err) {
+      if (isDomainError(err)) {
+        return c.json(err, 403);
+      }
+      throw err;
+    }
+
+    try {
+      const orgApi = getOrgApi(c.env, c.executionCtx);
+
+      if (isSelf) {
+        await orgApi.leaveOrganization({
+          headers: c.req.raw.headers,
+          body: {
+            organizationId: orgId,
+          },
+        });
+      } else {
+        await orgApi.removeMember({
+          headers: c.req.raw.headers,
+          body: {
+            organizationId: orgId,
+            memberIdOrEmail: memberId,
+          },
+        });
+      }
+
+      return c.json({ success: true as const, removed: memberId, isSelf }, 200);
+    } catch (err) {
+      const error = err as Error;
+      console.error('Error removing org member:', error);
+      if (error.message?.includes('owner') || error.message?.includes('last')) {
+        const ownerError = createDomainError(AUTH_ERRORS.FORBIDDEN, {
+          reason: 'cannot_remove_last_owner',
+        });
+        return c.json(ownerError, 403);
+      }
+      const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
+        operation: 'remove_org_member',
+        originalError: error.message,
+      });
+      return c.json(dbError, 500);
+    }
+  })
+
+  .openapi(setActiveOrgRoute, async c => {
+    // Run membership middleware
+    const membershipResponse = await runMiddleware(requireOrgMembership(), c);
+    if (membershipResponse) return membershipResponse as never;
+
+    const { orgId } = c.req.valid('param');
+
+    try {
+      const orgApi = getOrgApi(c.env, c.executionCtx);
+      await orgApi.setActiveOrganization({
+        headers: c.req.raw.headers,
+        body: {
+          organizationId: orgId,
+        },
+      });
+
+      return c.json({ success: true as const, activeOrganizationId: orgId }, 200);
+    } catch (err) {
+      const error = err as Error;
+      console.error('Error setting active organization:', error);
+      const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
+        operation: 'set_active_organization',
+        originalError: error.message,
+      });
+      return c.json(dbError, 500);
+    }
+  })
+
+  // Mount org-scoped project routes
+  .route('/:orgId/projects', orgProjectRoutes);
 
 export { orgRoutes };

@@ -221,12 +221,12 @@ export function OverviewTab() {
               <p className='text-success text-2xl font-bold'>{readyToReconcile}</p>
               <p className='text-success mt-1 text-xs font-medium'>Ready to Reconcile</p>
             </div>
-            <div className='rounded-lg border border-info-border bg-info-bg p-4 text-center'>
+            <div className='border-info-border bg-info-bg rounded-lg border p-4 text-center'>
               <div className='mb-2 flex justify-center'>
-                <CheckCircleIcon className='size-5 text-info' />
+                <CheckCircleIcon className='text-info size-5' />
               </div>
-              <p className='text-2xl font-bold text-info'>{completedStudies}</p>
-              <p className='mt-1 text-xs font-medium text-info'>Completed</p>
+              <p className='text-info text-2xl font-bold'>{completedStudies}</p>
+              <p className='text-info mt-1 text-xs font-medium'>Completed</p>
             </div>
           </div>
         </div>
@@ -249,7 +249,7 @@ export function OverviewTab() {
                 <p className='text-muted-foreground mt-1 text-xs'>Percent Agreement</p>
               </div>
               <div className='text-center'>
-                <p className='text-2xl font-bold text-info'>
+                <p className='text-info text-2xl font-bold'>
                   {interRaterMetrics.cohensKappa != null ?
                     interRaterMetrics.cohensKappa.toFixed(3)
                   : 'N/A'}
@@ -334,7 +334,7 @@ export function OverviewTab() {
                     </div>
                   </div>
                   <div className='flex items-center gap-2'>
-                    <span className='inline-flex items-center rounded-md border border-info-border bg-info-bg px-2 py-0.5 text-xs font-medium text-info capitalize'>
+                    <span className='border-info-border bg-info-bg text-info inline-flex items-center rounded-md border px-2 py-0.5 text-xs font-medium capitalize'>
                       {member.role}
                     </span>
                     {canRemove && !isLastOwner && (

@@ -2,7 +2,7 @@
  * Billing grants routes
  * Handles trial and access grant management
  */
-import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
+import { OpenAPIHono, createRoute, z, $ } from '@hono/zod-openapi';
 import { requireAuth, getAuth } from '@/middleware/auth.js';
 import { createDb } from '@/db/client.js';
 import { createDomainError, SYSTEM_ERRORS, VALIDATION_ERRORS, AUTH_ERRORS } from '@corates/shared';
@@ -13,7 +13,7 @@ import { validationHook } from '@/lib/honoValidationHook.js';
 import type { Env } from '../../types';
 import { ErrorResponseSchema } from '@/schemas/common.js';
 
-const billingGrantRoutes = new OpenAPIHono<{ Bindings: Env }>({
+const base = new OpenAPIHono<{ Bindings: Env }>({
   defaultHook: validationHook,
 });
 
@@ -56,9 +56,7 @@ const startTrialRoute = createRoute({
 });
 
 // Route handlers
-billingGrantRoutes.use('*', requireAuth);
-
-billingGrantRoutes.openapi(startTrialRoute, async c => {
+const billingGrantRoutes = $(base.use('*', requireAuth)).openapi(startTrialRoute, async c => {
   const { user, session } = getAuth(c);
 
   if (!user || !session) {

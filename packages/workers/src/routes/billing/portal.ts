@@ -2,7 +2,7 @@
  * Billing portal routes
  * Handles Stripe Customer Portal session creation (delegates to Better Auth)
  */
-import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
+import { OpenAPIHono, createRoute, z, $ } from '@hono/zod-openapi';
 import { requireAuth, getAuth } from '@/middleware/auth.js';
 import { createDb } from '@/db/client.js';
 import { createDomainError, SYSTEM_ERRORS, AUTH_ERRORS } from '@corates/shared';
@@ -13,7 +13,7 @@ import { validationHook } from '@/lib/honoValidationHook.js';
 import type { Env } from '../../types';
 import { ErrorResponseSchema } from '@/schemas/common.js';
 
-const billingPortalRoutes = new OpenAPIHono<{ Bindings: Env }>({
+const base = new OpenAPIHono<{ Bindings: Env }>({
   defaultHook: validationHook,
 });
 
@@ -53,10 +53,8 @@ const createPortalRoute = createRoute({
 });
 
 // Route handlers
-billingPortalRoutes.use('*', billingPortalRateLimit);
-billingPortalRoutes.use('*', requireAuth);
-
-billingPortalRoutes.openapi(createPortalRoute, async c => {
+base.use('*', billingPortalRateLimit);
+const billingPortalRoutes = $(base.use('*', requireAuth)).openapi(createPortalRoute, async c => {
   const { user, session } = getAuth(c);
 
   if (!user || !session) {

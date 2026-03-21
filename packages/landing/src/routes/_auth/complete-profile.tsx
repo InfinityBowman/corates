@@ -2,8 +2,9 @@ import { useState, useEffect, useMemo, useCallback } from 'react';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { CheckIcon } from 'lucide-react';
 import { useAuthStore, selectUser, selectIsAuthLoading } from '@/stores/authStore';
+import { parseResponse } from 'hono/client';
 import { handleError } from '@/lib/error-utils';
-import { apiFetch } from '@/lib/apiFetch';
+import { api } from '@/lib/rpc';
 import { showToast } from '@/components/ui/toast';
 import {
   hasPendingPlan,
@@ -211,10 +212,8 @@ function CompleteProfilePage() {
 
       if (invitationToken) {
         try {
-          const result = await apiFetch.post<{ projectId?: string; projectName?: string }>(
-            '/api/invitations/accept',
-            { token: invitationToken },
-            { toastMessage: false },
+          const result = await parseResponse(
+            api.api.invitations.accept.$post({ json: { token: invitationToken } }),
           );
           localStorage.removeItem('pendingInvitationToken');
 

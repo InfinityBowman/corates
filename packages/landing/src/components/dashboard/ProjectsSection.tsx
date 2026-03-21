@@ -104,17 +104,19 @@ export function ProjectsSection({
 
     setDeleteLoading(true);
     try {
-      const { apiFetch } = await import('@/lib/apiFetch.js');
-      await apiFetch(`/api/orgs/${project.orgId}/projects/${pendingDeleteId}`, {
-        method: 'DELETE',
-        toastMessage: 'Delete Failed',
-      });
+      const { parseResponse } = await import('hono/client');
+      const { api } = await import('@/lib/rpc');
+      await parseResponse(
+        api.api.orgs[':orgId'].projects[':projectId'].$delete({
+          param: { orgId: project.orgId, projectId: pendingDeleteId },
+        }),
+      );
 
       queryClient.invalidateQueries({ queryKey: queryKeys.projects.all });
       showToast.success('Project Deleted', 'The project has been deleted successfully');
       setDeleteDialogOpen(false);
     } catch {
-      // apiFetch already showed the toast via toastMessage
+      showToast.error('Delete Failed');
     } finally {
       setDeleteLoading(false);
       setPendingDeleteId(null);

@@ -124,7 +124,7 @@ export function ProjectHeader({
               </div>
             </Editable>
             {userRole && (
-              <span className='inline-flex items-center rounded-md border border-info-border bg-info-bg px-2 py-0.5 text-xs font-medium text-info capitalize'>
+              <span className='border-info-border bg-info-bg text-info inline-flex items-center rounded-md border px-2 py-0.5 text-xs font-medium capitalize'>
                 {userRole}
               </span>
             )}

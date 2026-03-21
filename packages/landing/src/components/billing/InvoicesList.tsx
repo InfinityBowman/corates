@@ -3,33 +3,20 @@
  */
 
 import { useQuery } from '@tanstack/react-query';
+import { parseResponse } from 'hono/client';
 import { DownloadIcon, FileTextIcon, ExternalLinkIcon } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { apiFetch } from '@/lib/apiFetch';
+import { api } from '@/lib/rpc';
 import { queryKeys } from '@/lib/queryKeys';
 
-interface Invoice {
-  id: string;
-  status: string;
-  amount: number;
-  date: string | number | null;
-  pdfUrl?: string;
-  hostedUrl?: string;
-  description?: string;
-}
-
-interface InvoicesResponse {
-  invoices: Invoice[];
-}
-
-async function fetchInvoices(): Promise<InvoicesResponse> {
+async function fetchInvoices() {
   try {
-    return await apiFetch.get<InvoicesResponse>('/api/billing/invoices', { toastMessage: false });
+    return await parseResponse(api.api.billing.invoices.$get());
   } catch (err) {
     console.warn('Failed to fetch invoices:', (err as Error).message);
-    return { invoices: [] };
+    return { invoices: [] as never[] };
   }
 }
 

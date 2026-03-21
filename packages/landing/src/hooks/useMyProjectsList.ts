@@ -3,26 +3,23 @@
  */
 
 import { useQuery } from '@tanstack/react-query';
+import { parseResponse, type InferResponseType } from 'hono/client';
 import { queryKeys } from '@/lib/queryKeys';
-import { apiFetch } from '@/lib/apiFetch';
+import { api } from '@/lib/rpc';
 import { useAuthStore, selectIsLoggedIn, selectIsAuthLoading } from '@/stores/authStore';
 
-export interface Project {
-  id: string;
-  name: string;
-  orgId?: string;
-  description?: string;
-  role?: string;
+// Base type from backend Zod schema. The extra fields (studyCount, etc.) are
+// returned at runtime but not declared in the schema -- backend should add them.
+type ProjectBase = InferResponseType<typeof api.api.users.me.projects.$get, 200>[number];
+export type Project = ProjectBase & {
   studyCount?: number;
   completedCount?: number;
   memberCount?: number;
   members?: unknown[];
-  updatedAt?: string | number;
-  createdAt?: string | number;
-}
+};
 
-async function fetchMyProjects(): Promise<Project[]> {
-  return apiFetch.get<Project[]>('/api/users/me/projects', { toastMessage: false });
+async function fetchMyProjects() {
+  return parseResponse(api.api.users.me.projects.$get());
 }
 
 export function useMyProjectsList(options: { enabled?: boolean } = {}) {

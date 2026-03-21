@@ -31,7 +31,7 @@
  * See: packages/docs/guides/billing.md for detailed architecture
  */
 
-import { OpenAPIHono } from '@hono/zod-openapi';
+import { $, OpenAPIHono } from '@hono/zod-openapi';
 import { billingSubscriptionRoutes } from './subscription.js';
 import { billingValidationRoutes } from './validation.js';
 import { billingPortalRoutes } from './portal.js';
@@ -41,17 +41,18 @@ import { billingWebhookRoutes } from './webhooks.js';
 import { billingInvoicesRoutes } from './invoices.js';
 import type { Env } from '../../types';
 
-const billingRoutes = new OpenAPIHono<{ Bindings: Env }>();
+const base = new OpenAPIHono<{ Bindings: Env }>();
 
 // Mount all routes at root level
 // Each sub-router handles its full path (e.g., /subscription, /members, /checkout, etc.)
 // Webhook routes mounted FIRST since they don't require auth middleware
-billingRoutes.route('/', billingWebhookRoutes);
-billingRoutes.route('/', billingSubscriptionRoutes);
-billingRoutes.route('/', billingValidationRoutes);
-billingRoutes.route('/', billingPortalRoutes);
-billingRoutes.route('/', billingCheckoutRoutes);
-billingRoutes.route('/', billingGrantRoutes);
-billingRoutes.route('/', billingInvoicesRoutes);
+const billingRoutes = $(base)
+  .route('/', billingWebhookRoutes)
+  .route('/', billingSubscriptionRoutes)
+  .route('/', billingValidationRoutes)
+  .route('/', billingPortalRoutes)
+  .route('/', billingCheckoutRoutes)
+  .route('/', billingGrantRoutes)
+  .route('/', billingInvoicesRoutes);
 
 export { billingRoutes };

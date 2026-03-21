@@ -6,7 +6,7 @@
  * Each route checks DEV_MODE at runtime.
  */
 
-import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
+import { OpenAPIHono, createRoute, z, $ } from '@hono/zod-openapi';
 import {
   requireOrgMembership,
   requireProjectAccess,
@@ -18,10 +18,10 @@ import { getProjectDocStub } from '@/lib/project-doc-id.js';
 import type { Env } from '../../types';
 import { ErrorResponseSchema } from '@/schemas/common.js';
 
-const devRoutes = new OpenAPIHono<{ Bindings: Env }>();
+const base = new OpenAPIHono<{ Bindings: Env }>();
 
 // Middleware to check DEV_MODE for all dev routes
-devRoutes.use('*', async (c, next) => {
+base.use('*', async (c, next) => {
   if (!c.env.DEV_MODE) {
     return c.json({ error: 'Dev endpoints disabled' }, 403);
   }
@@ -29,14 +29,14 @@ devRoutes.use('*', async (c, next) => {
 });
 
 // Middleware to set org context - required before requireProjectAccess
-devRoutes.use('*', requireOrgMembership());
+base.use('*', requireOrgMembership());
 
 // Apply project access middleware to all dev routes
-devRoutes.use('/templates', requireProjectAccess());
-devRoutes.use('/apply-template', requireProjectAccess());
-devRoutes.use('/export', requireProjectAccess());
-devRoutes.use('/import', requireProjectAccess());
-devRoutes.use('/reset', requireProjectAccess());
+base.use('/templates', requireProjectAccess());
+base.use('/apply-template', requireProjectAccess());
+base.use('/export', requireProjectAccess());
+base.use('/import', requireProjectAccess());
+base.use('/reset', requireProjectAccess());
 
 // Response schemas
 
@@ -271,119 +271,120 @@ const resetRoute = createRoute({
 });
 
 // GET /dev/templates
-// @ts-expect-error Dev route returns simplified error format
-devRoutes.openapi(getTemplatesRoute, async c => {
-  const { projectId } = getProjectContext(c);
-  if (!projectId) {
-    return c.json({ error: 'Project ID required' }, 403);
-  }
+const devRoutes = $(base)
+  // @ts-expect-error Dev route returns simplified error format
+  .openapi(getTemplatesRoute, async c => {
+    const { projectId } = getProjectContext(c);
+    if (!projectId) {
+      return c.json({ error: 'Project ID required' }, 403);
+    }
 
-  try {
-    const projectDoc = getProjectDocStub(c.env, projectId);
-    const data = await projectDoc.devTemplates();
-    return c.json(data);
-  } catch (err) {
-    const error = err as Error;
-    console.error('[Dev] Failed to fetch templates:', error);
-    return c.json({ error: error.message }, 500);
-  }
-});
+    try {
+      const projectDoc = getProjectDocStub(c.env, projectId);
+      const data = await projectDoc.devTemplates();
+      return c.json(data);
+    } catch (err) {
+      const error = err as Error;
+      console.error('[Dev] Failed to fetch templates:', error);
+      return c.json({ error: error.message }, 500);
+    }
+  })
 
-// POST /dev/apply-template
-// @ts-expect-error Dev route returns simplified error format
-devRoutes.openapi(applyTemplateRoute, async c => {
-  const { projectId } = getProjectContext(c);
-  if (!projectId) {
-    return c.json({ error: 'Project ID required' }, 403);
-  }
-  const query = c.req.valid('query');
-  const template = query.template;
-  const mode = query.mode || 'replace';
+  // POST /dev/apply-template
+  // @ts-expect-error Dev route returns simplified error format
+  .openapi(applyTemplateRoute, async c => {
+    const { projectId } = getProjectContext(c);
+    if (!projectId) {
+      return c.json({ error: 'Project ID required' }, 403);
+    }
+    const query = c.req.valid('query');
+    const template = query.template;
+    const mode = query.mode || 'replace';
 
-  if (!template) {
-    return c.json({ error: 'template query parameter is required' }, 400);
-  }
+    if (!template) {
+      return c.json({ error: 'template query parameter is required' }, 400);
+    }
 
-  try {
-    const projectDoc = getProjectDocStub(c.env, projectId);
-    const body = await c.req.json().catch(() => ({}));
-    const data = await projectDoc.devApplyTemplate(template, mode, body.userMapping);
-    return c.json(data);
-  } catch (err) {
-    const error = err as Error;
-    console.error('[Dev] Failed to apply template:', error);
-    return c.json({ error: error.message }, 500);
-  }
-});
+    try {
+      const projectDoc = getProjectDocStub(c.env, projectId);
+      const body = await c.req.json().catch(() => ({}));
+      const data = await projectDoc.devApplyTemplate(template, mode, body.userMapping);
+      return c.json(data);
+    } catch (err) {
+      const error = err as Error;
+      console.error('[Dev] Failed to apply template:', error);
+      return c.json({ error: error.message }, 500);
+    }
+  })
 
-// GET /dev/export
-// @ts-expect-error Dev route returns simplified error format
-devRoutes.openapi(exportRoute, async c => {
-  const { projectId } = getProjectContext(c);
-  if (!projectId) {
-    return c.json({ error: 'Project ID required' }, 403);
-  }
+  // GET /dev/export
+  // @ts-expect-error Dev route returns simplified error format
+  .openapi(exportRoute, async c => {
+    const { projectId } = getProjectContext(c);
+    if (!projectId) {
+      return c.json({ error: 'Project ID required' }, 403);
+    }
 
-  try {
-    const projectDoc = getProjectDocStub(c.env, projectId);
-    const data = await projectDoc.devExport();
-    return c.json(data);
-  } catch (err) {
-    const error = err as Error;
-    console.error('[Dev] Failed to export state:', error);
-    return c.json({ error: error.message }, 500);
-  }
-});
+    try {
+      const projectDoc = getProjectDocStub(c.env, projectId);
+      const data = await projectDoc.devExport();
+      return c.json(data);
+    } catch (err) {
+      const error = err as Error;
+      console.error('[Dev] Failed to export state:', error);
+      return c.json({ error: error.message }, 500);
+    }
+  })
 
-// POST /dev/import
-// @ts-expect-error Dev route returns simplified error format
-devRoutes.openapi(importRoute, async c => {
-  const { projectId } = getProjectContext(c);
-  const { orgId } = getOrgContext(c);
-  const { user } = getAuth(c);
+  // POST /dev/import
+  // @ts-expect-error Dev route returns simplified error format
+  .openapi(importRoute, async c => {
+    const { projectId } = getProjectContext(c);
+    const { orgId } = getOrgContext(c);
+    const { user } = getAuth(c);
 
-  if (!projectId) {
-    return c.json({ error: 'Project ID required' }, 403);
-  }
+    if (!projectId) {
+      return c.json({ error: 'Project ID required' }, 403);
+    }
 
-  try {
-    const body = await c.req.json();
-    const projectDoc = getProjectDocStub(c.env, projectId);
-    const data = await projectDoc.devImport({
-      ...body,
-      targetOrgId: orgId,
-      importer: {
-        userId: user?.id,
-        email: user?.email,
-        name: user?.name,
-        image: user?.image,
-      },
-    });
-    return c.json(data);
-  } catch (err) {
-    const error = err as Error;
-    console.error('[Dev] Failed to import state:', error);
-    return c.json({ error: error.message }, 500);
-  }
-});
+    try {
+      const body = await c.req.json();
+      const projectDoc = getProjectDocStub(c.env, projectId);
+      const data = await projectDoc.devImport({
+        ...body,
+        targetOrgId: orgId,
+        importer: {
+          userId: user?.id,
+          email: user?.email,
+          name: user?.name,
+          image: user?.image,
+        },
+      });
+      return c.json(data);
+    } catch (err) {
+      const error = err as Error;
+      console.error('[Dev] Failed to import state:', error);
+      return c.json({ error: error.message }, 500);
+    }
+  })
 
-// POST /dev/reset
-// @ts-expect-error Dev route returns simplified error format
-devRoutes.openapi(resetRoute, async c => {
-  const { projectId } = getProjectContext(c);
-  if (!projectId) {
-    return c.json({ error: 'Project ID required' }, 403);
-  }
+  // POST /dev/reset
+  // @ts-expect-error Dev route returns simplified error format
+  .openapi(resetRoute, async c => {
+    const { projectId } = getProjectContext(c);
+    if (!projectId) {
+      return c.json({ error: 'Project ID required' }, 403);
+    }
 
-  try {
-    const projectDoc = getProjectDocStub(c.env, projectId);
-    const data = await projectDoc.devReset();
-    return c.json(data);
-  } catch (err) {
-    const error = err as Error;
-    console.error('[Dev] Failed to reset state:', error);
-    return c.json({ error: error.message }, 500);
-  }
-});
+    try {
+      const projectDoc = getProjectDocStub(c.env, projectId);
+      const data = await projectDoc.devReset();
+      return c.json(data);
+    } catch (err) {
+      const error = err as Error;
+      console.error('[Dev] Failed to reset state:', error);
+      return c.json({ error: error.message }, 500);
+    }
+  });
 
 export { devRoutes };

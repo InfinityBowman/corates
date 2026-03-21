@@ -2,45 +2,26 @@
  * Google Drive API - Interact with user's connected Google Drive
  */
 
+import { parseResponse } from 'hono/client';
 import { apiFetch } from '@/lib/apiFetch';
+import { api } from '@/lib/rpc';
 
-interface DriveStatus {
-  connected: boolean;
-  hasRefreshToken: boolean;
+export async function getGoogleDriveStatus() {
+  return parseResponse(api.api['google-drive'].status.$get());
 }
 
-interface DriveImportResult {
-  success: boolean;
-  file: Record<string, unknown>;
+export async function disconnectGoogleDrive() {
+  return parseResponse(api.api['google-drive'].disconnect.$delete());
 }
 
-interface PickerToken {
-  accessToken: string;
-  expiresAt: string | null;
+export async function importFromGoogleDrive(fileId: string, projectId: string, studyId: string) {
+  return parseResponse(
+    api.api['google-drive'].import.$post({ json: { fileId, projectId, studyId } }),
+  );
 }
 
-export async function getGoogleDriveStatus(): Promise<DriveStatus> {
-  return apiFetch.get<DriveStatus>('/api/google-drive/status');
-}
-
-export async function disconnectGoogleDrive(): Promise<{ success: boolean }> {
-  return apiFetch.delete<{ success: boolean }>('/api/google-drive/disconnect');
-}
-
-export async function importFromGoogleDrive(
-  fileId: string,
-  projectId: string,
-  studyId: string,
-): Promise<DriveImportResult> {
-  return apiFetch.post<DriveImportResult>('/api/google-drive/import', {
-    fileId,
-    projectId,
-    studyId,
-  });
-}
-
-export async function getGoogleDrivePickerToken(): Promise<PickerToken> {
-  return apiFetch.get<PickerToken>('/api/google-drive/picker-token');
+export async function getGoogleDrivePickerToken() {
+  return parseResponse(api.api['google-drive']['picker-token'].$get());
 }
 
 export async function connectGoogleAccount(callbackUrl?: string): Promise<void> {

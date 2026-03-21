@@ -134,7 +134,7 @@ export function OverallSection({
               >
                 {calculatedScore}
               </span>
-              {isManualMode && <span className='text-xs text-warning'>Manual override</span>}
+              {isManualMode && <span className='text-warning text-xs'>Manual override</span>}
             </div>
           : (calculatedScore as string) === 'Incomplete' ?
             <span className='bg-muted-foreground/50 text-muted rounded-md px-3 py-1 text-sm'>

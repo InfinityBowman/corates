@@ -5,7 +5,7 @@
  * Combined invite flow: accepting ensures org membership then project membership
  */
 
-import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
+import { OpenAPIHono, createRoute, z, $ } from '@hono/zod-openapi';
 import { runMiddleware } from '@/lib/runMiddleware.js';
 import { createDb } from '@/db/client.js';
 import {
@@ -39,12 +39,9 @@ import { validationHook } from '@/lib/honoValidationHook.js';
 import type { Env } from '../../types';
 import { ErrorResponseSchema } from '@/schemas/common.js';
 
-const orgInvitationRoutes = new OpenAPIHono<{ Bindings: Env }>({
+const base = new OpenAPIHono<{ Bindings: Env }>({
   defaultHook: validationHook,
 });
-
-// Apply auth middleware to all routes
-orgInvitationRoutes.use('*', requireAuth);
 
 // Response schemas
 const InvitationSchema = z
@@ -353,551 +350,552 @@ const acceptInvitationRoute = createRoute({
  * GET /api/orgs/:orgId/projects/:projectId/invitations
  * List pending invitations for a project
  */
-orgInvitationRoutes.openapi(listInvitationsRoute, async c => {
-  const membershipResponse = await runMiddleware(requireOrgMembership(), c);
-  if (membershipResponse) return membershipResponse as never;
+const orgInvitationRoutes = $(base.use('*', requireAuth))
+  .openapi(listInvitationsRoute, async c => {
+    const membershipResponse = await runMiddleware(requireOrgMembership(), c);
+    if (membershipResponse) return membershipResponse as never;
 
-  const projectAccessResponse = await runMiddleware(requireProjectAccess(), c);
-  if (projectAccessResponse) return projectAccessResponse as never;
+    const projectAccessResponse = await runMiddleware(requireProjectAccess(), c);
+    if (projectAccessResponse) return projectAccessResponse as never;
 
-  const { projectId } = getProjectContext(c);
-  if (!projectId) {
-    const error = createDomainError(AUTH_ERRORS.FORBIDDEN, { reason: 'project_id_required' });
-    return c.json(error, 403);
-  }
+    const { projectId } = getProjectContext(c);
+    if (!projectId) {
+      const error = createDomainError(AUTH_ERRORS.FORBIDDEN, { reason: 'project_id_required' });
+      return c.json(error, 403);
+    }
 
-  const db = createDb(c.env.DB);
+    const db = createDb(c.env.DB);
 
-  try {
-    const invitations = await db
-      .select({
-        id: projectInvitations.id,
-        email: projectInvitations.email,
-        role: projectInvitations.role,
-        orgRole: projectInvitations.orgRole,
-        expiresAt: projectInvitations.expiresAt,
-        acceptedAt: projectInvitations.acceptedAt,
-        createdAt: projectInvitations.createdAt,
-        invitedBy: projectInvitations.invitedBy,
-      })
-      .from(projectInvitations)
-      .where(
-        and(eq(projectInvitations.projectId, projectId), isNull(projectInvitations.acceptedAt)),
-      )
-      .orderBy(desc(projectInvitations.createdAt));
+    try {
+      const invitations = await db
+        .select({
+          id: projectInvitations.id,
+          email: projectInvitations.email,
+          role: projectInvitations.role,
+          orgRole: projectInvitations.orgRole,
+          expiresAt: projectInvitations.expiresAt,
+          acceptedAt: projectInvitations.acceptedAt,
+          createdAt: projectInvitations.createdAt,
+          invitedBy: projectInvitations.invitedBy,
+        })
+        .from(projectInvitations)
+        .where(
+          and(eq(projectInvitations.projectId, projectId), isNull(projectInvitations.acceptedAt)),
+        )
+        .orderBy(desc(projectInvitations.createdAt));
 
-    return c.json(invitations, 200);
-  } catch (err) {
-    const error = err as Error;
-    console.error('Error listing invitations:', error);
-    const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
-      operation: 'list_invitations',
-      originalError: error.message,
-    });
-    return c.json(dbError, 500);
-  }
-});
+      return c.json(invitations, 200);
+    } catch (err) {
+      const error = err as Error;
+      console.error('Error listing invitations:', error);
+      const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
+        operation: 'list_invitations',
+        originalError: error.message,
+      });
+      return c.json(dbError, 500);
+    }
+  })
 
-/**
- * POST /api/orgs/:orgId/projects/:projectId/invitations
- * Create a new invitation (project owner only)
- */
-orgInvitationRoutes.openapi(createInvitationRoute, async c => {
-  const membershipResponse = await runMiddleware(requireOrgMembership(), c);
-  if (membershipResponse) return membershipResponse as never;
+  /**
+   * POST /api/orgs/:orgId/projects/:projectId/invitations
+   * Create a new invitation (project owner only)
+   */
+  .openapi(createInvitationRoute, async c => {
+    const membershipResponse = await runMiddleware(requireOrgMembership(), c);
+    if (membershipResponse) return membershipResponse as never;
 
-  const writeAccessResponse = await runMiddleware(requireOrgWriteAccess(), c);
-  if (writeAccessResponse) return writeAccessResponse as never;
+    const writeAccessResponse = await runMiddleware(requireOrgWriteAccess(), c);
+    if (writeAccessResponse) return writeAccessResponse as never;
 
-  const projectAccessResponse = await runMiddleware(requireProjectAccess('owner'), c);
-  if (projectAccessResponse) return projectAccessResponse as never;
+    const projectAccessResponse = await runMiddleware(requireProjectAccess('owner'), c);
+    if (projectAccessResponse) return projectAccessResponse as never;
 
-  const { user: authUser } = getAuth(c);
-  if (!authUser) {
-    const error = createDomainError(AUTH_ERRORS.REQUIRED, { reason: 'no_user' });
-    return c.json(error, 401);
-  }
+    const { user: authUser } = getAuth(c);
+    if (!authUser) {
+      const error = createDomainError(AUTH_ERRORS.REQUIRED, { reason: 'no_user' });
+      return c.json(error, 401);
+    }
 
-  const { orgId } = getOrgContext(c);
-  if (!orgId) {
-    const error = createDomainError(AUTH_ERRORS.FORBIDDEN, { reason: 'org_id_required' });
-    return c.json(error, 403);
-  }
+    const { orgId } = getOrgContext(c);
+    if (!orgId) {
+      const error = createDomainError(AUTH_ERRORS.FORBIDDEN, { reason: 'org_id_required' });
+      return c.json(error, 403);
+    }
 
-  const { projectId } = getProjectContext(c);
-  if (!projectId) {
-    const error = createDomainError(AUTH_ERRORS.FORBIDDEN, { reason: 'project_id_required' });
-    return c.json(error, 403);
-  }
+    const { projectId } = getProjectContext(c);
+    if (!projectId) {
+      const error = createDomainError(AUTH_ERRORS.FORBIDDEN, { reason: 'project_id_required' });
+      return c.json(error, 403);
+    }
 
-  const db = createDb(c.env.DB);
+    const db = createDb(c.env.DB);
 
-  try {
-    const body = c.req.valid('json');
-    const { email, role } = body;
+    try {
+      const body = c.req.valid('json');
+      const { email, role } = body;
 
-    // Check for existing pending invitation
-    const existingInvitation = await db
-      .select({
-        id: projectInvitations.id,
-        token: projectInvitations.token,
-        acceptedAt: projectInvitations.acceptedAt,
-      })
-      .from(projectInvitations)
-      .where(
-        and(
-          eq(projectInvitations.projectId, projectId),
-          eq(projectInvitations.email, email.toLowerCase()),
-        ),
-      )
-      .get();
+      // Check for existing pending invitation
+      const existingInvitation = await db
+        .select({
+          id: projectInvitations.id,
+          token: projectInvitations.token,
+          acceptedAt: projectInvitations.acceptedAt,
+        })
+        .from(projectInvitations)
+        .where(
+          and(
+            eq(projectInvitations.projectId, projectId),
+            eq(projectInvitations.email, email.toLowerCase()),
+          ),
+        )
+        .get();
 
-    let token;
-    let invitationId;
+      let token;
+      let invitationId;
 
-    // Always grant org membership when accepting project invitation
-    const finalGrantOrgMembership = true;
+      // Always grant org membership when accepting project invitation
+      const finalGrantOrgMembership = true;
 
-    if (existingInvitation && !existingInvitation.acceptedAt) {
-      // Resend existing invitation - update role and extend expiration
-      invitationId = existingInvitation.id;
-      token = existingInvitation.token;
-      const expiresAt = new Date(Date.now() + TIME_DURATIONS.INVITATION_EXPIRY_MS);
+      if (existingInvitation && !existingInvitation.acceptedAt) {
+        // Resend existing invitation - update role and extend expiration
+        invitationId = existingInvitation.id;
+        token = existingInvitation.token;
+        const expiresAt = new Date(Date.now() + TIME_DURATIONS.INVITATION_EXPIRY_MS);
 
-      await db
-        .update(projectInvitations)
-        .set({
+        await db
+          .update(projectInvitations)
+          .set({
+            role,
+            orgRole: 'member',
+            grantOrgMembership: finalGrantOrgMembership,
+            expiresAt,
+          })
+          .where(eq(projectInvitations.id, existingInvitation.id));
+      } else if (existingInvitation && existingInvitation.acceptedAt) {
+        const error = createDomainError(PROJECT_ERRORS.INVITATION_ALREADY_ACCEPTED, {
+          invitationId: existingInvitation.id,
+        });
+        return c.json(error, 409);
+      } else {
+        // Create new invitation with orgId
+        invitationId = crypto.randomUUID();
+        token = crypto.randomUUID();
+        const expiresAt = new Date(Date.now() + TIME_DURATIONS.INVITATION_EXPIRY_MS);
+
+        await db.insert(projectInvitations).values({
+          id: invitationId,
+          orgId,
+          projectId,
+          email: email.toLowerCase(),
           role,
           orgRole: 'member',
           grantOrgMembership: finalGrantOrgMembership,
+          token,
+          invitedBy: authUser.id,
           expiresAt,
-        })
-        .where(eq(projectInvitations.id, existingInvitation.id));
-    } else if (existingInvitation && existingInvitation.acceptedAt) {
-      const error = createDomainError(PROJECT_ERRORS.INVITATION_ALREADY_ACCEPTED, {
-        invitationId: existingInvitation.id,
-      });
-      return c.json(error, 409);
-    } else {
-      // Create new invitation with orgId
-      invitationId = crypto.randomUUID();
-      token = crypto.randomUUID();
-      const expiresAt = new Date(Date.now() + TIME_DURATIONS.INVITATION_EXPIRY_MS);
+          createdAt: new Date(),
+        });
+      }
 
-      await db.insert(projectInvitations).values({
-        id: invitationId,
-        orgId,
-        projectId,
-        email: email.toLowerCase(),
-        role,
-        orgRole: 'member',
-        grantOrgMembership: finalGrantOrgMembership,
-        token,
-        invitedBy: authUser.id,
-        expiresAt,
-        createdAt: new Date(),
-      });
-    }
+      // Get project and inviter info for email
+      const project = await db
+        .select({ name: projects.name })
+        .from(projects)
+        .where(eq(projects.id, projectId))
+        .get();
 
-    // Get project and inviter info for email
-    const project = await db
-      .select({ name: projects.name })
-      .from(projects)
-      .where(eq(projects.id, projectId))
-      .get();
+      const inviter = await db
+        .select({ name: user.name, givenName: user.givenName, email: user.email })
+        .from(user)
+        .where(eq(user.id, authUser.id))
+        .get();
 
-    const inviter = await db
-      .select({ name: user.name, givenName: user.givenName, email: user.email })
-      .from(user)
-      .where(eq(user.id, authUser.id))
-      .get();
+      // Send invitation email
+      const projectName = project?.name || 'Unknown Project';
+      const inviterName = inviter?.givenName || inviter?.name || inviter?.email || 'Someone';
 
-    // Send invitation email
-    const projectName = project?.name || 'Unknown Project';
-    const inviterName = inviter?.givenName || inviter?.name || inviter?.email || 'Someone';
+      let emailQueued = false;
+      try {
+        const { sendInvitationEmail } = await import('@/lib/send-invitation-email.js');
+        const result = await sendInvitationEmail({
+          env: c.env,
+          email,
+          token,
+          projectName,
+          inviterName,
+          role,
+        });
+        emailQueued = result.emailQueued;
+      } catch (err) {
+        console.error('[Invitation] Magic link generation failed:', err);
+      }
 
-    let emailQueued = false;
-    try {
-      const { sendInvitationEmail } = await import('@/lib/send-invitation-email.js');
-      const result = await sendInvitationEmail({
-        env: c.env,
-        email,
-        token,
-        projectName,
-        inviterName,
-        role,
-      });
-      emailQueued = result.emailQueued;
-    } catch (err) {
-      console.error('[Invitation] Magic link generation failed:', err);
-    }
-
-    return c.json(
-      {
-        success: true,
-        invitationId,
-        message:
-          emailQueued ?
-            'Invitation sent successfully'
-          : 'Invitation created but email delivery may be delayed',
-        email,
-      },
-      201,
-    );
-  } catch (err) {
-    const error = err as Error;
-    console.error('Error creating invitation:', error);
-    const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
-      operation: 'create_invitation',
-      originalError: error.message,
-    });
-    return c.json(dbError, 500);
-  }
-});
-
-/**
- * DELETE /api/orgs/:orgId/projects/:projectId/invitations/:invitationId
- * Cancel a pending invitation (project owner only)
- */
-orgInvitationRoutes.openapi(cancelInvitationRoute, async c => {
-  const membershipResponse = await runMiddleware(requireOrgMembership(), c);
-  if (membershipResponse) return membershipResponse as never;
-
-  const writeAccessResponse = await runMiddleware(requireOrgWriteAccess(), c);
-  if (writeAccessResponse) return writeAccessResponse as never;
-
-  const projectAccessResponse = await runMiddleware(requireProjectAccess('owner'), c);
-  if (projectAccessResponse) return projectAccessResponse as never;
-
-  const { projectId } = getProjectContext(c);
-  if (!projectId) {
-    const error = createDomainError(AUTH_ERRORS.FORBIDDEN, { reason: 'project_id_required' });
-    return c.json(error, 403);
-  }
-
-  const { invitationId } = c.req.valid('param');
-  const db = createDb(c.env.DB);
-
-  try {
-    const invitation = await db
-      .select({ acceptedAt: projectInvitations.acceptedAt })
-      .from(projectInvitations)
-      .where(
-        and(eq(projectInvitations.id, invitationId), eq(projectInvitations.projectId, projectId)),
-      )
-      .get();
-
-    if (!invitation) {
-      const error = createDomainError(VALIDATION_ERRORS.FIELD_INVALID_FORMAT, {
-        field: 'invitationId',
-        value: invitationId,
-      });
-      return c.json(error, 400);
-    }
-
-    if (invitation.acceptedAt) {
-      const error = createDomainError(PROJECT_ERRORS.INVITATION_ALREADY_ACCEPTED, {
-        invitationId,
-      });
-      return c.json(error, 409);
-    }
-
-    await db.delete(projectInvitations).where(eq(projectInvitations.id, invitationId));
-
-    return c.json({ success: true, cancelled: invitationId }, 200);
-  } catch (err) {
-    const error = err as Error;
-    console.error('Error cancelling invitation:', error);
-    const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
-      operation: 'cancel_invitation',
-      originalError: error.message,
-    });
-    return c.json(dbError, 500);
-  }
-});
-
-/**
- * POST /api/orgs/:orgId/projects/:projectId/invitations/accept
- * Accept a project invitation by token
- */
-orgInvitationRoutes.openapi(acceptInvitationRoute, async c => {
-  const { user: authUser } = getAuth(c);
-  if (!authUser) {
-    const error = createDomainError(AUTH_ERRORS.REQUIRED, { reason: 'no_user' });
-    return c.json(error, 401);
-  }
-
-  const db = createDb(c.env.DB);
-  const { token } = c.req.valid('json');
-
-  try {
-    // Find invitation by token (includes org fields)
-    const invitation = await db
-      .select({
-        id: projectInvitations.id,
-        orgId: projectInvitations.orgId,
-        projectId: projectInvitations.projectId,
-        email: projectInvitations.email,
-        role: projectInvitations.role,
-        orgRole: projectInvitations.orgRole,
-        grantOrgMembership: projectInvitations.grantOrgMembership,
-        expiresAt: projectInvitations.expiresAt,
-        acceptedAt: projectInvitations.acceptedAt,
-      })
-      .from(projectInvitations)
-      .where(eq(projectInvitations.token, token))
-      .get();
-
-    if (!invitation) {
-      const error = createDomainError(VALIDATION_ERRORS.FIELD_INVALID_FORMAT, {
-        field: 'token',
-        value: token,
-      });
-      return c.json(error, 400);
-    }
-
-    // Check if invitation has expired
-    const now = Date.now();
-    const expiresAt = invitation.expiresAt.getTime();
-    if (now > expiresAt) {
-      const error = createDomainError(VALIDATION_ERRORS.FIELD_INVALID_FORMAT, {
-        field: 'token',
-        value: 'expired',
-      });
-      return c.json(error, 400);
-    }
-
-    // Check if invitation already accepted
-    if (invitation.acceptedAt) {
-      const error = createDomainError(PROJECT_ERRORS.MEMBER_ALREADY_EXISTS, {
-        projectId: invitation.projectId,
-      });
-      return c.json(error, 409);
-    }
-
-    // Verify user email matches invitation email
-    const currentUser = await db
-      .select({
-        email: user.email,
-        name: user.name,
-        givenName: user.givenName,
-        familyName: user.familyName,
-        image: user.image,
-      })
-      .from(user)
-      .where(eq(user.id, authUser.id))
-      .get();
-
-    if (!currentUser) {
-      const error = createDomainError(AUTH_ERRORS.FORBIDDEN, {
-        reason: 'user_not_found',
-      });
-      return c.json(error, 403);
-    }
-
-    // Normalize both emails for comparison
-    const normalizedUserEmail = (currentUser.email || '').trim().toLowerCase();
-    const normalizedInvitationEmail = (invitation.email || '').trim().toLowerCase();
-
-    if (normalizedUserEmail !== normalizedInvitationEmail) {
-      console.error(
-        `[Invitation] Email mismatch: user email="${currentUser.email}", invitation email="${invitation.email}"`,
+      return c.json(
+        {
+          success: true,
+          invitationId,
+          message:
+            emailQueued ?
+              'Invitation sent successfully'
+            : 'Invitation created but email delivery may be delayed',
+          email,
+        },
+        201,
       );
-      const error = createDomainError(AUTH_ERRORS.FORBIDDEN, {
-        reason: 'email_mismatch',
-        userEmail: currentUser.email,
-        invitationEmail: invitation.email,
+    } catch (err) {
+      const error = err as Error;
+      console.error('Error creating invitation:', error);
+      const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
+        operation: 'create_invitation',
+        originalError: error.message,
       });
+      return c.json(dbError, 500);
+    }
+  })
+
+  /**
+   * DELETE /api/orgs/:orgId/projects/:projectId/invitations/:invitationId
+   * Cancel a pending invitation (project owner only)
+   */
+  .openapi(cancelInvitationRoute, async c => {
+    const membershipResponse = await runMiddleware(requireOrgMembership(), c);
+    if (membershipResponse) return membershipResponse as never;
+
+    const writeAccessResponse = await runMiddleware(requireOrgWriteAccess(), c);
+    if (writeAccessResponse) return writeAccessResponse as never;
+
+    const projectAccessResponse = await runMiddleware(requireProjectAccess('owner'), c);
+    if (projectAccessResponse) return projectAccessResponse as never;
+
+    const { projectId } = getProjectContext(c);
+    if (!projectId) {
+      const error = createDomainError(AUTH_ERRORS.FORBIDDEN, { reason: 'project_id_required' });
       return c.json(error, 403);
     }
 
-    // Check if user is already a project member
-    const existingMember = await db
-      .select({ id: projectMembers.id })
-      .from(projectMembers)
-      .where(
-        and(
-          eq(projectMembers.projectId, invitation.projectId),
-          eq(projectMembers.userId, authUser.id),
-        ),
-      )
-      .get();
+    const { invitationId } = c.req.valid('param');
+    const db = createDb(c.env.DB);
 
-    if (existingMember) {
-      // Mark invitation as accepted anyway
-      await db
-        .update(projectInvitations)
-        .set({ acceptedAt: new Date() })
-        .where(eq(projectInvitations.id, invitation.id));
+    try {
+      const invitation = await db
+        .select({ acceptedAt: projectInvitations.acceptedAt })
+        .from(projectInvitations)
+        .where(
+          and(eq(projectInvitations.id, invitationId), eq(projectInvitations.projectId, projectId)),
+        )
+        .get();
 
+      if (!invitation) {
+        const error = createDomainError(VALIDATION_ERRORS.FIELD_INVALID_FORMAT, {
+          field: 'invitationId',
+          value: invitationId,
+        });
+        return c.json(error, 400);
+      }
+
+      if (invitation.acceptedAt) {
+        const error = createDomainError(PROJECT_ERRORS.INVITATION_ALREADY_ACCEPTED, {
+          invitationId,
+        });
+        return c.json(error, 409);
+      }
+
+      await db.delete(projectInvitations).where(eq(projectInvitations.id, invitationId));
+
+      return c.json({ success: true, cancelled: invitationId }, 200);
+    } catch (err) {
+      const error = err as Error;
+      console.error('Error cancelling invitation:', error);
+      const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
+        operation: 'cancel_invitation',
+        originalError: error.message,
+      });
+      return c.json(dbError, 500);
+    }
+  })
+
+  /**
+   * POST /api/orgs/:orgId/projects/:projectId/invitations/accept
+   * Accept a project invitation by token
+   */
+  .openapi(acceptInvitationRoute, async c => {
+    const { user: authUser } = getAuth(c);
+    if (!authUser) {
+      const error = createDomainError(AUTH_ERRORS.REQUIRED, { reason: 'no_user' });
+      return c.json(error, 401);
+    }
+
+    const db = createDb(c.env.DB);
+    const { token } = c.req.valid('json');
+
+    try {
+      // Find invitation by token (includes org fields)
+      const invitation = await db
+        .select({
+          id: projectInvitations.id,
+          orgId: projectInvitations.orgId,
+          projectId: projectInvitations.projectId,
+          email: projectInvitations.email,
+          role: projectInvitations.role,
+          orgRole: projectInvitations.orgRole,
+          grantOrgMembership: projectInvitations.grantOrgMembership,
+          expiresAt: projectInvitations.expiresAt,
+          acceptedAt: projectInvitations.acceptedAt,
+        })
+        .from(projectInvitations)
+        .where(eq(projectInvitations.token, token))
+        .get();
+
+      if (!invitation) {
+        const error = createDomainError(VALIDATION_ERRORS.FIELD_INVALID_FORMAT, {
+          field: 'token',
+          value: token,
+        });
+        return c.json(error, 400);
+      }
+
+      // Check if invitation has expired
+      const now = Date.now();
+      const expiresAt = invitation.expiresAt.getTime();
+      if (now > expiresAt) {
+        const error = createDomainError(VALIDATION_ERRORS.FIELD_INVALID_FORMAT, {
+          field: 'token',
+          value: 'expired',
+        });
+        return c.json(error, 400);
+      }
+
+      // Check if invitation already accepted
+      if (invitation.acceptedAt) {
+        const error = createDomainError(PROJECT_ERRORS.MEMBER_ALREADY_EXISTS, {
+          projectId: invitation.projectId,
+        });
+        return c.json(error, 409);
+      }
+
+      // Verify user email matches invitation email
+      const currentUser = await db
+        .select({
+          email: user.email,
+          name: user.name,
+          givenName: user.givenName,
+          familyName: user.familyName,
+          image: user.image,
+        })
+        .from(user)
+        .where(eq(user.id, authUser.id))
+        .get();
+
+      if (!currentUser) {
+        const error = createDomainError(AUTH_ERRORS.FORBIDDEN, {
+          reason: 'user_not_found',
+        });
+        return c.json(error, 403);
+      }
+
+      // Normalize both emails for comparison
+      const normalizedUserEmail = (currentUser.email || '').trim().toLowerCase();
+      const normalizedInvitationEmail = (invitation.email || '').trim().toLowerCase();
+
+      if (normalizedUserEmail !== normalizedInvitationEmail) {
+        console.error(
+          `[Invitation] Email mismatch: user email="${currentUser.email}", invitation email="${invitation.email}"`,
+        );
+        const error = createDomainError(AUTH_ERRORS.FORBIDDEN, {
+          reason: 'email_mismatch',
+          userEmail: currentUser.email,
+          invitationEmail: invitation.email,
+        });
+        return c.json(error, 403);
+      }
+
+      // Check if user is already a project member
+      const existingMember = await db
+        .select({ id: projectMembers.id })
+        .from(projectMembers)
+        .where(
+          and(
+            eq(projectMembers.projectId, invitation.projectId),
+            eq(projectMembers.userId, authUser.id),
+          ),
+        )
+        .get();
+
+      if (existingMember) {
+        // Mark invitation as accepted anyway
+        await db
+          .update(projectInvitations)
+          .set({ acceptedAt: new Date() })
+          .where(eq(projectInvitations.id, invitation.id));
+
+        const project = await db
+          .select({ name: projects.name })
+          .from(projects)
+          .where(eq(projects.id, invitation.projectId))
+          .get();
+
+        return c.json(
+          {
+            success: true,
+            orgId: invitation.orgId,
+            projectId: invitation.projectId,
+            projectName: project?.name || 'Unknown Project',
+            alreadyMember: true,
+          } as z.infer<typeof InvitationAcceptedSchema>,
+          200,
+        );
+      }
+
+      // Enforce collaborator quota before acceptance
+      if (invitation.orgId) {
+        // Check if user is already an org member
+        const existingOrgMembership = await db
+          .select({ id: member.id, role: member.role })
+          .from(member)
+          .where(and(eq(member.organizationId, invitation.orgId), eq(member.userId, authUser.id)))
+          .get();
+
+        // Only enforce quota if user is not already an org member
+        if (!existingOrgMembership) {
+          const quotaResult = await checkCollaboratorQuota(db, invitation.orgId);
+          if (!quotaResult.allowed && quotaResult.error) {
+            return c.json(quotaResult.error, 403);
+          }
+        }
+      }
+
+      // Always grant org membership and add project membership
+      const nowDate = new Date();
+      const batchOps: Promise<unknown>[] = [];
+
+      // Always add user to org with role 'member' (if not already a member)
+      if (invitation.orgId) {
+        const existingOrgMembership = await db
+          .select({ id: member.id })
+          .from(member)
+          .where(and(eq(member.organizationId, invitation.orgId), eq(member.userId, authUser.id)))
+          .get();
+
+        if (!existingOrgMembership) {
+          batchOps.push(
+            db.insert(member).values({
+              id: crypto.randomUUID(),
+              userId: authUser.id,
+              organizationId: invitation.orgId,
+              role: 'member',
+              createdAt: nowDate,
+            }),
+          );
+        }
+      }
+
+      // Always add user to project (projects are invite-only)
+      batchOps.push(
+        db.insert(projectMembers).values({
+          id: crypto.randomUUID(),
+          projectId: invitation.projectId,
+          userId: authUser.id,
+          role: invitation.role,
+          joinedAt: nowDate,
+        }),
+      );
+
+      // Mark invitation as accepted
+      batchOps.push(
+        db
+          .update(projectInvitations)
+          .set({ acceptedAt: nowDate })
+          .where(eq(projectInvitations.id, invitation.id)),
+      );
+
+      // Execute atomically
+      await db.batch(batchOps as unknown as Parameters<typeof db.batch>[0]);
+
+      // Post-insert verification for collaborator quota race conditions
+      if (invitation.orgId) {
+        const postInsertQuotaResult = await checkCollaboratorQuota(db, invitation.orgId);
+        if (
+          !postInsertQuotaResult.allowed &&
+          postInsertQuotaResult.used > postInsertQuotaResult.limit
+        ) {
+          // Race condition detected - log for admin review
+          console.warn(
+            `[Invitation] Race condition detected: collaborator quota exceeded for org ${invitation.orgId}. ` +
+              `Count: ${postInsertQuotaResult.used}, Limit: ${postInsertQuotaResult.limit}. ` +
+              `User ${authUser.id} was still added. Consider manual intervention.`,
+          );
+        }
+      }
+
+      // Get project name and org slug for response
       const project = await db
         .select({ name: projects.name })
         .from(projects)
         .where(eq(projects.id, invitation.projectId))
         .get();
 
+      // Get org slug for navigation
+      let orgSlug: string | null = null;
+      if (invitation.orgId) {
+        const org = await db
+          .select({ slug: organization.slug })
+          .from(organization)
+          .where(eq(organization.id, invitation.orgId))
+          .get();
+        orgSlug = org?.slug ?? null;
+      }
+
+      // Send notification to the added user via their UserSession DO
+      try {
+        const userSessionId = c.env.USER_SESSION.idFromName(authUser.id);
+        const userSession = c.env.USER_SESSION.get(userSessionId);
+        await userSession.notify({
+          type: 'project-invite',
+          projectId: invitation.projectId,
+          projectName: project?.name || 'Unknown Project',
+          role: invitation.role,
+          timestamp: Date.now(),
+        });
+      } catch (err) {
+        console.error('Failed to send project invite notification:', err);
+      }
+
+      // Sync member to DO
+      try {
+        await syncMemberToDO(c.env, invitation.projectId, 'add', {
+          userId: authUser.id,
+          role: invitation.role ?? undefined,
+          joinedAt: nowDate.getTime(),
+          name: currentUser.name,
+          email: currentUser.email,
+          givenName: currentUser.givenName,
+          familyName: currentUser.familyName,
+          image: currentUser.image,
+        });
+      } catch (err) {
+        console.error('Failed to sync member to DO:', err);
+      }
+
       return c.json(
         {
           success: true,
           orgId: invitation.orgId,
+          orgSlug,
           projectId: invitation.projectId,
           projectName: project?.name || 'Unknown Project',
-          alreadyMember: true,
+          role: invitation.role,
         } as z.infer<typeof InvitationAcceptedSchema>,
         200,
       );
-    }
-
-    // Enforce collaborator quota before acceptance
-    if (invitation.orgId) {
-      // Check if user is already an org member
-      const existingOrgMembership = await db
-        .select({ id: member.id, role: member.role })
-        .from(member)
-        .where(and(eq(member.organizationId, invitation.orgId), eq(member.userId, authUser.id)))
-        .get();
-
-      // Only enforce quota if user is not already an org member
-      if (!existingOrgMembership) {
-        const quotaResult = await checkCollaboratorQuota(db, invitation.orgId);
-        if (!quotaResult.allowed && quotaResult.error) {
-          return c.json(quotaResult.error, 403);
-        }
-      }
-    }
-
-    // Always grant org membership and add project membership
-    const nowDate = new Date();
-    const batchOps: Promise<unknown>[] = [];
-
-    // Always add user to org with role 'member' (if not already a member)
-    if (invitation.orgId) {
-      const existingOrgMembership = await db
-        .select({ id: member.id })
-        .from(member)
-        .where(and(eq(member.organizationId, invitation.orgId), eq(member.userId, authUser.id)))
-        .get();
-
-      if (!existingOrgMembership) {
-        batchOps.push(
-          db.insert(member).values({
-            id: crypto.randomUUID(),
-            userId: authUser.id,
-            organizationId: invitation.orgId,
-            role: 'member',
-            createdAt: nowDate,
-          }),
-        );
-      }
-    }
-
-    // Always add user to project (projects are invite-only)
-    batchOps.push(
-      db.insert(projectMembers).values({
-        id: crypto.randomUUID(),
-        projectId: invitation.projectId,
-        userId: authUser.id,
-        role: invitation.role,
-        joinedAt: nowDate,
-      }),
-    );
-
-    // Mark invitation as accepted
-    batchOps.push(
-      db
-        .update(projectInvitations)
-        .set({ acceptedAt: nowDate })
-        .where(eq(projectInvitations.id, invitation.id)),
-    );
-
-    // Execute atomically
-    await db.batch(batchOps as unknown as Parameters<typeof db.batch>[0]);
-
-    // Post-insert verification for collaborator quota race conditions
-    if (invitation.orgId) {
-      const postInsertQuotaResult = await checkCollaboratorQuota(db, invitation.orgId);
-      if (
-        !postInsertQuotaResult.allowed &&
-        postInsertQuotaResult.used > postInsertQuotaResult.limit
-      ) {
-        // Race condition detected - log for admin review
-        console.warn(
-          `[Invitation] Race condition detected: collaborator quota exceeded for org ${invitation.orgId}. ` +
-            `Count: ${postInsertQuotaResult.used}, Limit: ${postInsertQuotaResult.limit}. ` +
-            `User ${authUser.id} was still added. Consider manual intervention.`,
-        );
-      }
-    }
-
-    // Get project name and org slug for response
-    const project = await db
-      .select({ name: projects.name })
-      .from(projects)
-      .where(eq(projects.id, invitation.projectId))
-      .get();
-
-    // Get org slug for navigation
-    let orgSlug: string | null = null;
-    if (invitation.orgId) {
-      const org = await db
-        .select({ slug: organization.slug })
-        .from(organization)
-        .where(eq(organization.id, invitation.orgId))
-        .get();
-      orgSlug = org?.slug ?? null;
-    }
-
-    // Send notification to the added user via their UserSession DO
-    try {
-      const userSessionId = c.env.USER_SESSION.idFromName(authUser.id);
-      const userSession = c.env.USER_SESSION.get(userSessionId);
-      await userSession.notify({
-        type: 'project-invite',
-        projectId: invitation.projectId,
-        projectName: project?.name || 'Unknown Project',
-        role: invitation.role,
-        timestamp: Date.now(),
-      });
     } catch (err) {
-      console.error('Failed to send project invite notification:', err);
-    }
-
-    // Sync member to DO
-    try {
-      await syncMemberToDO(c.env, invitation.projectId, 'add', {
-        userId: authUser.id,
-        role: invitation.role ?? undefined,
-        joinedAt: nowDate.getTime(),
-        name: currentUser.name,
-        email: currentUser.email,
-        givenName: currentUser.givenName,
-        familyName: currentUser.familyName,
-        image: currentUser.image,
+      const error = err as Error;
+      console.error('Error accepting invitation:', error);
+      const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
+        operation: 'accept_invitation',
+        originalError: error.message,
       });
-    } catch (err) {
-      console.error('Failed to sync member to DO:', err);
+      return c.json(dbError, 500);
     }
-
-    return c.json(
-      {
-        success: true,
-        orgId: invitation.orgId,
-        orgSlug,
-        projectId: invitation.projectId,
-        projectName: project?.name || 'Unknown Project',
-        role: invitation.role,
-      } as z.infer<typeof InvitationAcceptedSchema>,
-      200,
-    );
-  } catch (err) {
-    const error = err as Error;
-    console.error('Error accepting invitation:', error);
-    const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
-      operation: 'accept_invitation',
-      originalError: error.message,
-    });
-    return c.json(dbError, 500);
-  }
-});
+  });
 
 export { orgInvitationRoutes };

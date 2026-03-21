@@ -4,8 +4,9 @@
  */
 
 import { useQuery } from '@tanstack/react-query';
+import { parseResponse } from 'hono/client';
+import { api } from '@/lib/rpc';
 import { queryKeys } from '@/lib/queryKeys';
-import { apiFetch } from '@/lib/apiFetch';
 import {
   fetchOrgs,
   fetchOrgDetails,
@@ -14,10 +15,6 @@ import {
   fetchBillingStuckStates,
   fetchOrgBillingReconcile,
 } from '@/stores/adminStore';
-
-async function adminFetch(path: string) {
-  return apiFetch(`/api/admin/${path}`, { showToast: false });
-}
 
 const ADMIN_QUERY_CONFIG = {
   staleTime: 0,
@@ -28,7 +25,7 @@ const ADMIN_QUERY_CONFIG = {
 export function useAdminStats() {
   return useQuery({
     queryKey: queryKeys.admin.stats,
-    queryFn: () => adminFetch('stats'),
+    queryFn: () => parseResponse(api.api.admin.stats.$get()),
     ...ADMIN_QUERY_CONFIG,
   });
 }
@@ -40,9 +37,12 @@ export function useAdminUsers(params: { page?: number; limit?: number; search?: 
   return useQuery({
     queryKey: queryKeys.admin.users(page, limit, search),
     queryFn: () => {
-      const searchParams = new URLSearchParams({ page: page.toString(), limit: limit.toString() });
-      if (search) searchParams.set('search', search);
-      return adminFetch(`users?${searchParams.toString()}`);
+      const query: Record<string, string> = {
+        page: page.toString(),
+        limit: limit.toString(),
+      };
+      if (search) query.search = search;
+      return parseResponse(api.api.admin.users.$get({ query }));
     },
     ...ADMIN_QUERY_CONFIG,
   });
@@ -51,7 +51,8 @@ export function useAdminUsers(params: { page?: number; limit?: number; search?: 
 export function useAdminUserDetails(userId: string | null | undefined) {
   return useQuery({
     queryKey: queryKeys.admin.userDetails(userId),
-    queryFn: () => adminFetch(`users/${userId}`),
+    queryFn: () =>
+      parseResponse(api.api.admin.users[':userId'].$get({ param: { userId: userId! } })),
     enabled: !!userId,
     ...ADMIN_QUERY_CONFIG,
   });
@@ -67,10 +68,13 @@ export function useAdminProjects(
   return useQuery({
     queryKey: queryKeys.admin.projects(page, limit, search, orgId),
     queryFn: () => {
-      const searchParams = new URLSearchParams({ page: page.toString(), limit: limit.toString() });
-      if (search) searchParams.set('search', search);
-      if (orgId) searchParams.set('orgId', orgId);
-      return adminFetch(`projects?${searchParams.toString()}`);
+      const query: Record<string, string> = {
+        page: page.toString(),
+        limit: limit.toString(),
+      };
+      if (search) query.search = search;
+      if (orgId) query.orgId = orgId;
+      return parseResponse(api.api.admin.projects.$get({ query }));
     },
     ...ADMIN_QUERY_CONFIG,
   });
@@ -79,7 +83,10 @@ export function useAdminProjects(
 export function useAdminProjectDetails(projectId: string | null | undefined) {
   return useQuery({
     queryKey: queryKeys.admin.projectDetails(projectId),
-    queryFn: () => adminFetch(`projects/${projectId}`),
+    queryFn: () =>
+      parseResponse(
+        api.api.admin.projects[':projectId'].$get({ param: { projectId: projectId! } }),
+      ),
     enabled: !!projectId,
     ...ADMIN_QUERY_CONFIG,
   });
@@ -95,11 +102,11 @@ export function useStorageDocuments(
   return useQuery({
     queryKey: queryKeys.admin.storageDocuments(cursor, limit, prefix, search),
     queryFn: () => {
-      const searchParams = new URLSearchParams({ limit: limit.toString() });
-      if (cursor) searchParams.set('cursor', cursor);
-      if (prefix) searchParams.set('prefix', prefix);
-      if (search) searchParams.set('search', search);
-      return adminFetch(`storage/documents?${searchParams.toString()}`);
+      const query: Record<string, string> = { limit: limit.toString() };
+      if (cursor) query.cursor = cursor;
+      if (prefix) query.prefix = prefix;
+      if (search) query.search = search;
+      return parseResponse(api.api.admin.storage.documents.$get({ query }));
     },
     ...ADMIN_QUERY_CONFIG,
   });
@@ -108,7 +115,7 @@ export function useStorageDocuments(
 export function useStorageStats() {
   return useQuery({
     queryKey: queryKeys.admin.storageStats,
-    queryFn: () => adminFetch('storage/stats'),
+    queryFn: () => parseResponse(api.api.admin.storage.stats.$get()),
     ...ADMIN_QUERY_CONFIG,
   });
 }
@@ -197,7 +204,7 @@ export function useAdminOrgBillingReconcile(
 export function useAdminDatabaseTables() {
   return useQuery({
     queryKey: queryKeys.admin.databaseTables,
-    queryFn: () => adminFetch('database/tables'),
+    queryFn: () => parseResponse(api.api.admin.database.tables.$get()),
     ...ADMIN_QUERY_CONFIG,
   });
 }
@@ -205,7 +212,12 @@ export function useAdminDatabaseTables() {
 export function useAdminTableSchema(tableName: string | null | undefined) {
   return useQuery({
     queryKey: queryKeys.admin.tableSchema(tableName),
-    queryFn: () => adminFetch(`database/tables/${tableName}/schema`),
+    queryFn: () =>
+      parseResponse(
+        api.api.admin.database.tables[':tableName'].schema.$get({
+          param: { tableName: tableName! },
+        }),
+      ),
     enabled: !!tableName,
     staleTime: 1000 * 60 * 10,
     gcTime: 1000 * 60 * 30,
@@ -242,17 +254,22 @@ export function useAdminTableRows(
       filterValue,
     ),
     queryFn: () => {
-      const searchParams = new URLSearchParams({
+      const query: Record<string, string> = {
         page: page.toString(),
         limit: limit.toString(),
         orderBy,
         order,
-      });
+      };
       if (filterBy && filterValue) {
-        searchParams.set('filterBy', filterBy);
-        searchParams.set('filterValue', filterValue);
+        query.filterBy = filterBy;
+        query.filterValue = filterValue;
       }
-      return adminFetch(`database/tables/${tableName}/rows?${searchParams}`);
+      return parseResponse(
+        api.api.admin.database.tables[':tableName'].rows.$get({
+          param: { tableName: tableName! },
+          query,
+        }),
+      );
     },
     enabled: !!tableName,
     ...ADMIN_QUERY_CONFIG,

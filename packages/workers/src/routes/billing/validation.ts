@@ -2,7 +2,7 @@
  * Billing plan validation routes
  * Handles plan change validation logic
  */
-import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
+import { OpenAPIHono, createRoute, z, $ } from '@hono/zod-openapi';
 import { requireAuth, getAuth } from '@/middleware/auth.js';
 import { createDb } from '@/db/client.js';
 import { validatePlanChange } from '@/lib/billingResolver.js';
@@ -12,7 +12,7 @@ import { validationHook } from '@/lib/honoValidationHook.js';
 import type { Env } from '../../types';
 import { ErrorResponseSchema } from '@/schemas/common.js';
 
-const billingValidationRoutes = new OpenAPIHono<{ Bindings: Env }>({
+const base = new OpenAPIHono<{ Bindings: Env }>({
   defaultHook: validationHook,
 });
 
@@ -81,42 +81,46 @@ const validatePlanChangeRoute = createRoute({
 });
 
 // Route handlers
-billingValidationRoutes.use('*', requireAuth);
+const billingValidationRoutes = $(base.use('*', requireAuth)).openapi(
+  validatePlanChangeRoute,
+  async c => {
+    const { user, session } = getAuth(c);
 
-billingValidationRoutes.openapi(validatePlanChangeRoute, async c => {
-  const { user, session } = getAuth(c);
-
-  if (!user || !session) {
-    const error = createDomainError(AUTH_ERRORS.REQUIRED, { reason: 'no_user' });
-    return c.json(error, 403);
-  }
-
-  const db = createDb(c.env.DB);
-
-  try {
-    const { targetPlan } = c.req.valid('query');
-
-    const orgId = await resolveOrgId({ db, session, userId: user.id });
-
-    if (!orgId) {
-      const error = createDomainError(AUTH_ERRORS.FORBIDDEN, {
-        reason: 'no_org_found',
-      });
+    if (!user || !session) {
+      const error = createDomainError(AUTH_ERRORS.REQUIRED, { reason: 'no_user' });
       return c.json(error, 403);
     }
 
-    const validationResult = await validatePlanChange(db, orgId, targetPlan);
+    const db = createDb(c.env.DB);
 
-    return c.json(validationResult as unknown as z.infer<typeof PlanValidationResponseSchema>, 200);
-  } catch (err) {
-    const error = err as Error;
-    console.error('Error validating plan change:', error);
-    const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
-      operation: 'validate_plan_change',
-      originalError: error.message,
-    });
-    return c.json(dbError, 500);
-  }
-});
+    try {
+      const { targetPlan } = c.req.valid('query');
+
+      const orgId = await resolveOrgId({ db, session, userId: user.id });
+
+      if (!orgId) {
+        const error = createDomainError(AUTH_ERRORS.FORBIDDEN, {
+          reason: 'no_org_found',
+        });
+        return c.json(error, 403);
+      }
+
+      const validationResult = await validatePlanChange(db, orgId, targetPlan);
+
+      return c.json(
+        validationResult as unknown as z.infer<typeof PlanValidationResponseSchema>,
+        200,
+      );
+    } catch (err) {
+      const error = err as Error;
+      console.error('Error validating plan change:', error);
+      const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
+        operation: 'validate_plan_change',
+        originalError: error.message,
+      });
+      return c.json(dbError, 500);
+    }
+  },
+);
 
 export { billingValidationRoutes };

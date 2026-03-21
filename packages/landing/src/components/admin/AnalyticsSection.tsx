@@ -14,7 +14,8 @@ import {
   HomeIcon,
   DollarSignIcon,
 } from 'lucide-react';
-import { apiFetch } from '@/lib/apiFetch';
+import { parseResponse } from 'hono/client';
+import { api } from '@/lib/rpc';
 import { queryKeys } from '@/lib/queryKeys';
 import { LineChart, BarChart, DoughnutChart } from '@/components/admin/charts';
 import { AdminBox } from '@/components/admin/ui';
@@ -25,81 +26,11 @@ const PERIOD_OPTIONS = [
   { value: 30, label: '30 days' },
 ];
 
-interface SignupDataPoint {
-  date: string;
-  count: number;
-}
-
-interface SignupData {
-  data: SignupDataPoint[];
-  total: number;
-}
-
-interface OrgDataPoint {
-  date: string;
-  count: number;
-}
-
-interface OrgData {
-  data: OrgDataPoint[];
-  total: number;
-}
-
-interface ProjectDataPoint {
-  date: string;
-  count: number;
-}
-
-interface ProjectData {
-  data: ProjectDataPoint[];
-  total: number;
-}
-
-interface WebhookDataPoint {
-  date: string;
-  success: number;
-  failed: number;
-  pending: number;
-}
-
-interface WebhookData {
-  data: WebhookDataPoint[];
-  totals?: { success?: number; failed?: number; pending?: number };
-}
-
-interface SubscriptionStatsData {
-  active?: number;
-  trialing?: number;
-  pastDue?: number;
-  canceled?: number;
-  error?: string;
-}
-
-interface RevenueDataPoint {
-  label: string;
-  revenue: number;
-}
-
-interface RevenueData {
-  data: RevenueDataPoint[];
-  total: number;
-  error?: string;
-}
-
 const QUERY_CONFIG = {
   staleTime: 0,
   gcTime: 1000 * 60 * 5,
   refetchOnMount: 'always' as const,
 };
-
-async function fetchStats(path: string): Promise<unknown> {
-  try {
-    return await apiFetch(`/api/admin/stats/${path}`, { showToast: false });
-  } catch (err) {
-    console.warn(`Failed to fetch ${path} stats:`, (err as Error).message);
-    return null;
-  }
-}
 
 const formatDate = (dateStr: string): string => {
   const date = new Date(dateStr);
@@ -120,37 +51,87 @@ export function AnalyticsSection() {
 
   const signupQuery = useQuery({
     queryKey: [...queryKeys.admin.stats, 'signups', signupDays],
-    queryFn: () => fetchStats(`signups?days=${signupDays}`) as Promise<SignupData | null>,
+    queryFn: async () => {
+      try {
+        return await parseResponse(
+          api.api.admin.stats.signups.$get({ query: { days: signupDays.toString() } }),
+        );
+      } catch (err) {
+        console.warn('Failed to fetch signups stats:', (err as Error).message);
+        return null;
+      }
+    },
     ...QUERY_CONFIG,
   });
 
   const orgQuery = useQuery({
     queryKey: [...queryKeys.admin.stats, 'organizations', signupDays],
-    queryFn: () => fetchStats(`organizations?days=${signupDays}`) as Promise<OrgData | null>,
+    queryFn: async () => {
+      try {
+        return await parseResponse(
+          api.api.admin.stats.organizations.$get({ query: { days: signupDays.toString() } }),
+        );
+      } catch (err) {
+        console.warn('Failed to fetch organizations stats:', (err as Error).message);
+        return null;
+      }
+    },
     ...QUERY_CONFIG,
   });
 
   const projectQuery = useQuery({
     queryKey: [...queryKeys.admin.stats, 'projects', signupDays],
-    queryFn: () => fetchStats(`projects?days=${signupDays}`) as Promise<ProjectData | null>,
+    queryFn: async () => {
+      try {
+        return await parseResponse(
+          api.api.admin.stats.projects.$get({ query: { days: signupDays.toString() } }),
+        );
+      } catch (err) {
+        console.warn('Failed to fetch projects stats:', (err as Error).message);
+        return null;
+      }
+    },
     ...QUERY_CONFIG,
   });
 
   const webhookQuery = useQuery({
     queryKey: [...queryKeys.admin.stats, 'webhooks', webhookDays],
-    queryFn: () => fetchStats(`webhooks?days=${webhookDays}`) as Promise<WebhookData | null>,
+    queryFn: async () => {
+      try {
+        return await parseResponse(
+          api.api.admin.stats.webhooks.$get({ query: { days: webhookDays.toString() } }),
+        );
+      } catch (err) {
+        console.warn('Failed to fetch webhooks stats:', (err as Error).message);
+        return null;
+      }
+    },
     ...QUERY_CONFIG,
   });
 
   const subscriptionQuery = useQuery({
     queryKey: [...queryKeys.admin.stats, 'subscriptions'],
-    queryFn: () => fetchStats('subscriptions') as Promise<SubscriptionStatsData | null>,
+    queryFn: async () => {
+      try {
+        return await parseResponse(api.api.admin.stats.subscriptions.$get());
+      } catch (err) {
+        console.warn('Failed to fetch subscriptions stats:', (err as Error).message);
+        return null;
+      }
+    },
     ...QUERY_CONFIG,
   });
 
   const revenueQuery = useQuery({
     queryKey: [...queryKeys.admin.stats, 'revenue'],
-    queryFn: () => fetchStats('revenue?months=6') as Promise<RevenueData | null>,
+    queryFn: async () => {
+      try {
+        return await parseResponse(api.api.admin.stats.revenue.$get({ query: { months: '6' } }));
+      } catch (err) {
+        console.warn('Failed to fetch revenue stats:', (err as Error).message);
+        return null;
+      }
+    },
     ...QUERY_CONFIG,
   });
 
@@ -297,12 +278,6 @@ export function AnalyticsSection() {
             </div>
           : subscriptionData ?
             <>
-              {subscriptionData.error && (
-                <div className='mb-2 flex items-center text-sm text-yellow-600'>
-                  <AlertTriangleIcon className='mr-1 size-4' />
-                  Stripe unavailable
-                </div>
-              )}
               <DoughnutChart
                 className='h-48'
                 labels={['Active', 'Trialing', 'Past Due', 'Canceled']}
@@ -360,8 +335,7 @@ export function AnalyticsSection() {
                 colors={revenueData.data.map(() => 'rgba(16, 185, 129, 0.8)')}
               />
             </>
-          : <div className='text-muted-foreground/70 flex h-48 flex-col items-center justify-center'>
-              {revenueData?.error && <AlertTriangleIcon className='mb-2 size-6 text-yellow-500' />}
+          : <div className='text-muted-foreground/70 flex h-48 items-center justify-center'>
               <span>No revenue data</span>
             </div>
           }
