@@ -43,14 +43,17 @@ export function DomainSection({
   );
 
   // A question is skippable if it's not on the active scoring path
-  // and hasn't already been answered
-  const isQuestionSkippable = useCallback(
-    (qKey: string) =>
-      requiredQuestions.size > 0 &&
-      !requiredQuestions.has(qKey) &&
-      !domainState?.answers?.[qKey]?.answer,
-    [requiredQuestions, domainState?.answers],
+  // and hasn't already been answered. Only applies once the user has
+  // started answering -- otherwise every conditional question looks optional.
+  const hasAnyAnswer = Object.values(domainState?.answers ?? {}).some(
+    (a: any) => a?.answer != null,
   );
+
+  const isQuestionSkippable = (qKey: string) =>
+    hasAnyAnswer &&
+    requiredQuestions.size > 0 &&
+    !requiredQuestions.has(qKey) &&
+    !domainState?.answers?.[qKey]?.answer;
 
   const effectiveJudgement = autoScore.judgement;
 
