@@ -118,14 +118,11 @@ export function createConnectionManager(projectId, ydoc, options) {
     }
 
     provider.on('status', ({ status }) => {
-      useProjectStore.getState().setConnectionState(projectId, {
-        connected: status === 'connected',
-        connecting: status === 'connecting',
-      });
-
-      // Reset error count on successful connection
       if (status === 'connected') {
+        useProjectStore.getState().dispatchConnectionEvent(projectId, { type: 'REMOTE_CONNECTED' });
         consecutiveErrors = 0;
+      } else if (status === 'connecting') {
+        useProjectStore.getState().dispatchConnectionEvent(projectId, { type: 'REMOTE_DISCONNECTED' });
       }
     });
 
@@ -150,10 +147,9 @@ export function createConnectionManager(projectId, ydoc, options) {
 
       // Handle project deletion - server closed connection because project was deleted
       if (reason === CLOSE_REASONS.PROJECT_DELETED) {
-        useProjectStore.getState().setConnectionState(projectId, {
-          error: 'This project has been deleted',
-          connected: false,
-          connecting: false,
+        useProjectStore.getState().dispatchConnectionEvent(projectId, {
+          type: 'ACCESS_DENIED',
+          reason: 'This project has been deleted',
         });
         provider.shouldConnect = false;
         shouldBeConnected = false;
@@ -165,10 +161,9 @@ export function createConnectionManager(projectId, ydoc, options) {
 
       // Handle membership revocation - user was removed from project while connected
       if (reason === CLOSE_REASONS.MEMBERSHIP_REVOKED) {
-        useProjectStore.getState().setConnectionState(projectId, {
-          error: 'You have been removed from this project',
-          connected: false,
-          connecting: false,
+        useProjectStore.getState().dispatchConnectionEvent(projectId, {
+          type: 'ACCESS_DENIED',
+          reason: 'You have been removed from this project',
         });
         provider.shouldConnect = false;
         shouldBeConnected = false;
@@ -184,10 +179,9 @@ export function createConnectionManager(projectId, ydoc, options) {
         reason.includes('member') ||
         reason === CLOSE_REASONS.NOT_A_MEMBER
       ) {
-        useProjectStore.getState().setConnectionState(projectId, {
-          error: 'You are not a member of this project',
-          connected: false,
-          connecting: false,
+        useProjectStore.getState().dispatchConnectionEvent(projectId, {
+          type: 'ACCESS_DENIED',
+          reason: 'You are not a member of this project',
         });
         // Prevent auto-reconnect for membership issues
         provider.shouldConnect = false;
@@ -218,11 +212,10 @@ export function createConnectionManager(projectId, ydoc, options) {
       // After too many consecutive errors, stop trying to reconnect
       // This handles cases where project was deleted or user doesn't have access
       if (consecutiveErrors >= MAX_CONSECUTIVE_ERRORS) {
-        useProjectStore.getState().setConnectionState(projectId, {
-          error:
+        useProjectStore.getState().dispatchConnectionEvent(projectId, {
+          type: 'ERROR_THRESHOLD_REACHED',
+          message:
             'Unable to connect to project. It may have been deleted or you may not have access.',
-          connected: false,
-          connecting: false,
         });
         provider.shouldConnect = false;
         shouldBeConnected = false;
@@ -232,11 +225,7 @@ export function createConnectionManager(projectId, ydoc, options) {
         return;
       }
 
-      useProjectStore.getState().setConnectionState(projectId, {
-        error: 'Connection error',
-        connected: false,
-        connecting: false,
-      });
+      useProjectStore.getState().dispatchConnectionEvent(projectId, { type: 'REMOTE_DISCONNECTED' });
     });
   }
 
@@ -246,10 +235,7 @@ export function createConnectionManager(projectId, ydoc, options) {
       provider.destroy();
       provider = null;
     }
-    useProjectStore.getState().setConnectionState(projectId, {
-      connected: false,
-      connecting: false,
-    });
+    useProjectStore.getState().dispatchConnectionEvent(projectId, { type: 'RESET' });
   }
 
   function destroy() {

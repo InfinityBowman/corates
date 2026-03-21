@@ -10,6 +10,7 @@ import * as Y from 'yjs';
 import { DexieYProvider } from 'y-dexie';
 import { shallow } from 'zustand/shallow';
 import { useProjectStore } from '@/stores/projectStore';
+import { phaseToLegacy } from '@/project/connectionReducer';
 import { queryClient } from '@/lib/queryClient';
 import { queryKeys } from '@/lib/queryKeys';
 import projectActionsStore from '@/stores/projectActionsStore';
@@ -25,9 +26,7 @@ import { createOutcomeOperations } from './outcomes.js';
 import { db, deleteProjectData } from '../db.js';
 
 const DEFAULT_CONNECTION_STATE = {
-  connected: false,
-  connecting: false,
-  synced: false,
+  phase: 'idle',
   error: null,
 };
 const EMPTY_ARRAY = [];
@@ -90,7 +89,7 @@ function releaseConnection(projectId) {
     if (entry.ydoc) entry.ydoc.destroy();
     connectionRegistry.delete(projectId);
     projectActionsStore._removeConnection(projectId);
-    useProjectStore.getState().setConnectionState(projectId, { connected: false, synced: false });
+    useProjectStore.getState().dispatchConnectionEvent(projectId, { type: 'RESET' });
   }
 }
 
@@ -115,7 +114,7 @@ export async function cleanupProjectLocalData(projectId) {
     if (entry.ydoc) entry.ydoc.destroy();
     connectionRegistry.delete(projectId);
     projectActionsStore._removeConnection(projectId);
-    useProjectStore.getState().setConnectionState(projectId, { connected: false, synced: false });
+    useProjectStore.getState().dispatchConnectionEvent(projectId, { type: 'RESET' });
   }
 
   try {
@@ -172,11 +171,11 @@ export function useProject(projectId) {
 
     const store = useProjectStore.getState();
     store.setActiveProject(projectId);
-    store.setConnectionState(projectId, { connecting: true, error: null });
+    store.dispatchConnectionEvent(projectId, { type: 'CONNECT_REQUESTED' });
 
     const { ydoc } = connectionEntry;
     const getYDoc = () => connectionEntry.ydoc;
-    const isSynced = () => useProjectStore.getState().connections[projectId]?.synced || false;
+    const isSynced = () => useProjectStore.getState().connections[projectId]?.phase === 'synced';
 
     // Initialize sync manager and domain operations
     connectionEntry.syncManager = createSyncManager(projectId, getYDoc);
@@ -288,11 +287,7 @@ export function useProject(projectId) {
         connectionEntry.syncManager.syncFromYDocImmediate();
 
         if (isLocalProject) {
-          useProjectStore.getState().setConnectionState(projectId, {
-            connecting: false,
-            connected: true,
-            synced: true,
-          });
+          useProjectStore.getState().dispatchConnectionEvent(projectId, { type: 'LOCAL_READY' });
         }
       });
     });
@@ -301,7 +296,7 @@ export function useProject(projectId) {
     if (!isLocalProject) {
       connectionEntry.connectionManager = createConnectionManager(projectId, ydoc, {
         onSync: () => {
-          useProjectStore.getState().setConnectionState(projectId, { synced: true });
+          useProjectStore.getState().dispatchConnectionEvent(projectId, { type: 'SYNC_COMPLETE' });
           connectionEntry.syncManager?.syncFromYDocImmediate();
         },
         isLocalProject: () => isLocalProject,
@@ -336,12 +331,14 @@ export function useProject(projectId) {
   // Stable operation reference getter
   const getEntry = useCallback(() => connectionEntryRef.current, []);
 
+  const legacyState = phaseToLegacy(connectionState);
+
   return {
-    // State (reactive from Zustand)
-    connected: connectionState.connected,
-    connecting: connectionState.connecting,
-    synced: connectionState.synced,
-    error: connectionState.error,
+    // State (reactive from Zustand, converted from phase enum for backward compat)
+    connected: legacyState.connected,
+    connecting: legacyState.connecting,
+    synced: legacyState.synced,
+    error: legacyState.error,
     studies,
     meta,
     members,

@@ -6,23 +6,16 @@
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate, useLocation, Outlet } from '@tanstack/react-router';
-import { useProject } from '@/primitives/useProject';
+import { useProjectStore, selectStudies, selectMeta, selectConnectionState } from '@/stores/projectStore';
 import { useProjectOrgId } from '@/hooks/useProjectOrgId';
-import {
-  useProjectStore,
-  selectStudies,
-  selectMeta,
-  selectConnectionState,
-} from '@/stores/projectStore';
 import { useAuthStore, selectUser } from '@/stores/authStore';
-import { ACCESS_DENIED_ERRORS } from '@/constants/errors';
+import { ProjectGate } from '@/project';
 import _projectActionsStore from '@/stores/projectActionsStore/index.js';
 const projectActionsStore = _projectActionsStore as any;
 import { uploadPdf, deletePdf } from '@/api/pdf-api';
 import { cachePdf } from '@/primitives/pdfCache.js';
 import { bestEffort } from '@/lib/errorLogger.js';
 import { importFromGoogleDrive } from '@/api/google-drive';
-import { showToast } from '@/components/ui/toast';
 import { Tabs, TabsContent, TabsIndicator, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   HomeIcon,
@@ -33,7 +26,6 @@ import {
 } from 'lucide-react';
 import { getChecklistCount } from '@/lib/checklist-domain.js';
 
-import { ProjectProvider } from './ProjectContext';
 import { ProjectHeader } from './ProjectHeader';
 import { PdfPreviewPanel } from './PdfPreviewPanel';
 import { SectionErrorBoundary } from './SectionErrorBoundary';
@@ -50,12 +42,26 @@ interface ProjectViewProps {
 }
 
 export function ProjectView({ projectId }: ProjectViewProps) {
+  return (
+    <ProjectGate projectId={projectId} fallback={<ProjectLoadingFallback />}>
+      <ProjectViewInner projectId={projectId} />
+    </ProjectGate>
+  );
+}
+
+function ProjectLoadingFallback() {
+  return (
+    <div className='bg-background flex min-h-screen items-center justify-center'>
+      <div className='text-muted-foreground text-sm'>Loading project...</div>
+    </div>
+  );
+}
+
+function ProjectViewInner({ projectId }: ProjectViewProps) {
   const navigate = useNavigate();
   const location = useLocation();
   const user = useAuthStore(selectUser);
-
   const orgId = useProjectOrgId(projectId);
-  const projectConnection = useProject(projectId);
 
   const isChildRoute = useMemo(() => {
     const path = location.pathname;
@@ -65,24 +71,6 @@ export function ProjectView({ projectId }: ProjectViewProps) {
   const studies = useProjectStore(s => selectStudies(s, projectId));
   const meta = useProjectStore(s => selectMeta(s, projectId));
   const connectionState = useProjectStore(s => selectConnectionState(s, projectId));
-
-  // Set active project for action store (separate from connection lifecycle)
-  useEffect(() => {
-    if (projectId && orgId) {
-      projectActionsStore._setActiveProject(projectId, orgId);
-    }
-    return () => {
-      projectActionsStore._clearActiveProject();
-    };
-  }, [projectId, orgId]);
-
-  // Access denied redirect
-  useEffect(() => {
-    if (connectionState.error && ACCESS_DENIED_ERRORS.includes(connectionState.error)) {
-      showToast.error('Access Denied', connectionState.error);
-      navigate({ to: '/dashboard', replace: true });
-    }
-  }, [connectionState.error, navigate]);
 
   // Read pending data exactly once via lazy initializer (safe for StrictMode)
   const [pendingState] = useState(() => {
@@ -286,10 +274,7 @@ export function ProjectView({ projectId }: ProjectViewProps) {
   );
 
   return (
-    <ProjectProvider
-      projectId={projectId}
-      projectOps={projectConnection as Record<string, unknown>}
-    >
+    <>
       {/* Child routes */}
       {isChildRoute && <Outlet />}
 
@@ -367,6 +352,6 @@ export function ProjectView({ projectId }: ProjectViewProps) {
       )}
 
       {!isChildRoute && <PdfPreviewPanel />}
-    </ProjectProvider>
+    </>
   );
 }

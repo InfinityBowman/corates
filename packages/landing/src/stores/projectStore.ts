@@ -7,6 +7,13 @@
 
 import { create } from 'zustand';
 import { immer } from 'zustand/middleware/immer';
+import {
+  connectionReducer,
+  phaseToLegacy,
+  INITIAL_STATE as INITIAL_CONNECTION,
+  type ConnectionEvent,
+  type ConnectionMachineState,
+} from '@/project/connectionReducer';
 
 // Temporary in-memory storage for pending uploads during project creation
 const pendingProjectData = new Map<string, unknown>();
@@ -62,7 +69,7 @@ interface ProjectData {
 interface ProjectStoreState {
   projects: Record<string, ProjectData>;
   activeProjectId: string | null;
-  connections: Record<string, ConnectionState>;
+  connections: Record<string, ConnectionMachineState>;
   projectStats: Record<string, ProjectStats>;
 }
 
@@ -70,7 +77,9 @@ interface ProjectStoreState {
 interface ProjectStoreActions {
   setActiveProject: (projectId: string | null) => void;
   setProjectData: (projectId: string, data: Partial<ProjectData>) => void;
+  /** @deprecated Use dispatchConnectionEvent instead */
   setConnectionState: (projectId: string, state: Partial<ConnectionState>) => void;
+  dispatchConnectionEvent: (projectId: string, event: ConnectionEvent) => void;
   clearProject: (projectId: string) => void;
 }
 /* eslint-enable no-unused-vars */
@@ -158,14 +167,29 @@ export const useProjectStore = create<ProjectStoreState & ProjectStoreActions>()
     setConnectionState: (projectId, connectionState) =>
       set(state => {
         if (!state.connections[projectId]) {
-          state.connections[projectId] = {
-            connected: false,
-            connecting: false,
-            synced: false,
-            error: null,
-          };
+          state.connections[projectId] = { ...INITIAL_CONNECTION };
         }
-        Object.assign(state.connections[projectId], connectionState);
+        // Legacy compat: map partial 4-boolean updates to the machine state.
+        // Callers that still use this will be migrated to dispatchConnectionEvent.
+        const current = state.connections[projectId];
+        if (connectionState.error !== undefined) {
+          current.error = connectionState.error;
+        }
+        if (connectionState.synced === true) {
+          current.phase = 'synced';
+        } else if (connectionState.connected === true) {
+          current.phase = 'connected';
+        } else if (connectionState.connecting === true) {
+          current.phase = 'connecting';
+        } else if (connectionState.connected === false && connectionState.synced === false) {
+          current.phase = current.error ? 'error' : 'idle';
+        }
+      }),
+
+    dispatchConnectionEvent: (projectId, event) =>
+      set(state => {
+        const current = state.connections[projectId] || { ...INITIAL_CONNECTION };
+        state.connections[projectId] = connectionReducer(current, event);
       }),
 
     clearProject: projectId =>
@@ -182,7 +206,7 @@ export const useProjectStore = create<ProjectStoreState & ProjectStoreActions>()
 // Stable fallback constants -- must be module-level so they're referentially equal
 // across renders. Without these, selectors return new objects/arrays on every call
 // when a project doesn't exist in the store, causing infinite re-render loops.
-const EMPTY_CONNECTION: ConnectionState = {
+const EMPTY_CONNECTION_LEGACY: ConnectionState = {
   connected: false,
   connecting: false,
   synced: false,
@@ -207,11 +231,39 @@ export function selectActiveProject(state: ProjectStoreState): ProjectData | nul
   return state.projects[state.activeProjectId] || null;
 }
 
+// Cached legacy connection states keyed by phase+error to preserve referential equality.
+// Without this, phaseToLegacy creates a new object on every selector call,
+// causing infinite re-render loops in components that use selectConnectionState.
+const legacyCache = new Map<string, ConnectionState>();
+
+function getCachedLegacy(machine: ConnectionMachineState): ConnectionState {
+  const key = `${machine.phase}:${machine.error ?? ''}`;
+  let cached = legacyCache.get(key);
+  if (!cached) {
+    cached = phaseToLegacy(machine);
+    legacyCache.set(key, cached);
+  }
+  return cached;
+}
+
+/**
+ * Returns legacy 4-boolean connection state for backward compatibility.
+ * New code should use selectConnectionPhase instead.
+ */
 export function selectConnectionState(
   state: ProjectStoreState,
   projectId: string,
 ): ConnectionState {
-  return state.connections[projectId] || EMPTY_CONNECTION;
+  const machine = state.connections[projectId];
+  if (!machine) return EMPTY_CONNECTION_LEGACY;
+  return getCachedLegacy(machine);
+}
+
+export function selectConnectionPhase(
+  state: ProjectStoreState,
+  projectId: string,
+): ConnectionMachineState {
+  return state.connections[projectId] || INITIAL_CONNECTION;
 }
 
 export function selectProjectStats(
