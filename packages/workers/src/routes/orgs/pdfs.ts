@@ -406,77 +406,77 @@ export async function generateUniqueFileName(
  */
 const orgPdfRoutes = $(base.use('*', requireAuth))
   .openapi(listPdfsRoute, async c => {
-  const membershipResponse = await runMiddleware(requireOrgMembership(), c);
-  if (membershipResponse) return membershipResponse as never;
+    const membershipResponse = await runMiddleware(requireOrgMembership(), c);
+    if (membershipResponse) return membershipResponse as never;
 
-  const projectAccessResponse = await runMiddleware(requireProjectAccess(), c);
-  if (projectAccessResponse) return projectAccessResponse as never;
+    const projectAccessResponse = await runMiddleware(requireProjectAccess(), c);
+    if (projectAccessResponse) return projectAccessResponse as never;
 
-  const { studyId, error: studyIdError } = extractStudyId(c);
-  if (studyIdError) {
-    return c.json(studyIdError, 400);
-  }
+    const { studyId, error: studyIdError } = extractStudyId(c);
+    if (studyIdError) {
+      return c.json(studyIdError, 400);
+    }
 
-  const { projectId } = getProjectContext(c);
-  if (!projectId || !studyId) {
-    const error = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
-      operation: 'list_pdfs',
-      originalError: 'Missing context',
-    });
-    return c.json(error, 500);
-  }
+    const { projectId } = getProjectContext(c);
+    if (!projectId || !studyId) {
+      const error = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
+        operation: 'list_pdfs',
+        originalError: 'Missing context',
+      });
+      return c.json(error, 500);
+    }
 
-  try {
-    const db = createDb(c.env.DB);
+    try {
+      const db = createDb(c.env.DB);
 
-    const results = await db
-      .select({
-        id: mediaFiles.id,
-        filename: mediaFiles.filename,
-        originalName: mediaFiles.originalName,
-        fileType: mediaFiles.fileType,
-        fileSize: mediaFiles.fileSize,
-        bucketKey: mediaFiles.bucketKey,
-        createdAt: mediaFiles.createdAt,
-        uploadedBy: mediaFiles.uploadedBy,
-        uploadedByName: user.name,
-        uploadedByEmail: user.email,
-        uploadedByGivenName: user.givenName,
-      })
-      .from(mediaFiles)
-      .leftJoin(user, eq(mediaFiles.uploadedBy, user.id))
-      .where(and(eq(mediaFiles.projectId, projectId), eq(mediaFiles.studyId, studyId)))
-      .orderBy(mediaFiles.createdAt);
+      const results = await db
+        .select({
+          id: mediaFiles.id,
+          filename: mediaFiles.filename,
+          originalName: mediaFiles.originalName,
+          fileType: mediaFiles.fileType,
+          fileSize: mediaFiles.fileSize,
+          bucketKey: mediaFiles.bucketKey,
+          createdAt: mediaFiles.createdAt,
+          uploadedBy: mediaFiles.uploadedBy,
+          uploadedByName: user.name,
+          uploadedByEmail: user.email,
+          uploadedByGivenName: user.givenName,
+        })
+        .from(mediaFiles)
+        .leftJoin(user, eq(mediaFiles.uploadedBy, user.id))
+        .where(and(eq(mediaFiles.projectId, projectId), eq(mediaFiles.studyId, studyId)))
+        .orderBy(mediaFiles.createdAt);
 
-    const pdfs = results.map(row => ({
-      id: row.id,
-      key: row.bucketKey,
-      fileName: row.filename,
-      originalName: row.originalName,
-      size: row.fileSize,
-      fileType: row.fileType,
-      createdAt: row.createdAt,
-      uploadedBy:
-        row.uploadedBy ?
-          {
-            id: row.uploadedBy,
-            name: row.uploadedByName,
-            email: row.uploadedByEmail,
-            givenName: row.uploadedByGivenName,
-          }
-        : null,
-    }));
+      const pdfs = results.map(row => ({
+        id: row.id,
+        key: row.bucketKey,
+        fileName: row.filename,
+        originalName: row.originalName,
+        size: row.fileSize,
+        fileType: row.fileType,
+        createdAt: row.createdAt,
+        uploadedBy:
+          row.uploadedBy ?
+            {
+              id: row.uploadedBy,
+              name: row.uploadedByName,
+              email: row.uploadedByEmail,
+              givenName: row.uploadedByGivenName,
+            }
+          : null,
+      }));
 
-    return c.json({ pdfs }, 200);
-  } catch (err) {
-    const error = err as Error;
-    console.error('PDF list error:', error);
-    const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
-      operation: 'list_pdfs',
-      originalError: error.message,
-    });
-    return c.json(dbError, 500);
-  }
+      return c.json({ pdfs }, 200);
+    } catch (err) {
+      const error = err as Error;
+      console.error('PDF list error:', error);
+      const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
+        operation: 'list_pdfs',
+        originalError: error.message,
+      });
+      return c.json(dbError, 500);
+    }
   })
 
   /**
@@ -484,94 +484,229 @@ const orgPdfRoutes = $(base.use('*', requireAuth))
    * Upload a PDF for a study
    */
   .openapi(uploadPdfRoute, async c => {
-  const membershipResponse = await runMiddleware(requireOrgMembership(), c);
-  if (membershipResponse) return membershipResponse as never;
+    const membershipResponse = await runMiddleware(requireOrgMembership(), c);
+    if (membershipResponse) return membershipResponse as never;
 
-  const writeAccessResponse = await runMiddleware(requireOrgWriteAccess(), c);
-  if (writeAccessResponse) return writeAccessResponse as never;
+    const writeAccessResponse = await runMiddleware(requireOrgWriteAccess(), c);
+    if (writeAccessResponse) return writeAccessResponse as never;
 
-  const projectAccessResponse = await runMiddleware(requireProjectAccess(), c);
-  if (projectAccessResponse) return projectAccessResponse as never;
+    const projectAccessResponse = await runMiddleware(requireProjectAccess(), c);
+    if (projectAccessResponse) return projectAccessResponse as never;
 
-  const { studyId, error: studyIdError } = extractStudyId(c);
-  if (studyIdError) {
-    return c.json(studyIdError, 400);
-  }
+    const { studyId, error: studyIdError } = extractStudyId(c);
+    if (studyIdError) {
+      return c.json(studyIdError, 400);
+    }
 
-  const { user: authUser } = getAuth(c);
-  const { projectId } = getProjectContext(c);
-  const { orgId } = getOrgContext(c);
+    const { user: authUser } = getAuth(c);
+    const { projectId } = getProjectContext(c);
+    const { orgId } = getOrgContext(c);
 
-  if (!authUser || !projectId || !studyId || !orgId) {
-    const error = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
-      operation: 'upload_pdf',
-      originalError: 'Missing context',
-    });
-    return c.json(error, 500);
-  }
+    if (!authUser || !projectId || !studyId || !orgId) {
+      const error = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
+        operation: 'upload_pdf',
+        originalError: 'Missing context',
+      });
+      return c.json(error, 500);
+    }
 
-  // Check Content-Length header first for early rejection
-  const contentLength = parseInt(c.req.header('Content-Length') || '0', 10);
-  if (contentLength > PDF_LIMITS.MAX_SIZE) {
-    const error = createDomainError(
-      FILE_ERRORS.TOO_LARGE,
-      { fileSize: contentLength, maxSize: PDF_LIMITS.MAX_SIZE },
-      `File size exceeds limit of ${formatFileSize(PDF_LIMITS.MAX_SIZE)}`,
-    );
-    return c.json(error, 413);
-  }
+    // Check Content-Length header first for early rejection
+    const contentLength = parseInt(c.req.header('Content-Length') || '0', 10);
+    if (contentLength > PDF_LIMITS.MAX_SIZE) {
+      const error = createDomainError(
+        FILE_ERRORS.TOO_LARGE,
+        { fileSize: contentLength, maxSize: PDF_LIMITS.MAX_SIZE },
+        `File size exceeds limit of ${formatFileSize(PDF_LIMITS.MAX_SIZE)}`,
+      );
+      return c.json(error, 413);
+    }
 
-  const contentType = c.req.header('Content-Type') || '';
+    const contentType = c.req.header('Content-Type') || '';
 
-  let pdfData: ArrayBuffer;
-  let fileName: string;
+    let pdfData: ArrayBuffer;
+    let fileName: string;
 
-  try {
-    if (contentType.includes('multipart/form-data')) {
-      // Handle multipart form data
-      const formData = await c.req.formData();
-      const file = formData.get('file');
+    try {
+      if (contentType.includes('multipart/form-data')) {
+        // Handle multipart form data
+        const formData = await c.req.formData();
+        const file = formData.get('file');
 
-      if (!file || !(file instanceof File)) {
+        if (!file || !(file instanceof File)) {
+          const error = createDomainError(
+            VALIDATION_ERRORS.FIELD_REQUIRED,
+            { field: 'file' },
+            'No file provided',
+          );
+          return c.json(error, 400);
+        }
+
+        // Check file size
+        if (file.size > PDF_LIMITS.MAX_SIZE) {
+          const error = createDomainError(
+            FILE_ERRORS.TOO_LARGE,
+            { fileSize: file.size, maxSize: PDF_LIMITS.MAX_SIZE },
+            `File size (${formatFileSize(file.size)}) exceeds limit of ${formatFileSize(PDF_LIMITS.MAX_SIZE)}`,
+          );
+          return c.json(error, 413);
+        }
+
+        fileName = file.name || 'document.pdf';
+        pdfData = await file.arrayBuffer();
+      } else if (contentType === 'application/pdf') {
+        // Handle raw PDF upload
+        fileName = c.req.header('X-File-Name') || 'document.pdf';
+        pdfData = await c.req.arrayBuffer();
+
+        // Check size after reading for raw uploads
+        if (pdfData.byteLength > PDF_LIMITS.MAX_SIZE) {
+          const error = createDomainError(
+            FILE_ERRORS.TOO_LARGE,
+            { fileSize: pdfData.byteLength, maxSize: PDF_LIMITS.MAX_SIZE },
+            `File size (${formatFileSize(pdfData.byteLength)}) exceeds limit of ${formatFileSize(PDF_LIMITS.MAX_SIZE)}`,
+          );
+          return c.json(error, 413);
+        }
+      } else {
         const error = createDomainError(
-          VALIDATION_ERRORS.FIELD_REQUIRED,
-          { field: 'file' },
-          'No file provided',
+          FILE_ERRORS.INVALID_TYPE,
+          { contentType },
+          'Invalid content type. Expected multipart/form-data or application/pdf',
         );
         return c.json(error, 400);
       }
 
-      // Check file size
-      if (file.size > PDF_LIMITS.MAX_SIZE) {
+      if (!isValidFileName(fileName)) {
         const error = createDomainError(
-          FILE_ERRORS.TOO_LARGE,
-          { fileSize: file.size, maxSize: PDF_LIMITS.MAX_SIZE },
-          `File size (${formatFileSize(file.size)}) exceeds limit of ${formatFileSize(PDF_LIMITS.MAX_SIZE)}`,
+          VALIDATION_ERRORS.FIELD_INVALID_FORMAT,
+          { field: 'fileName', value: fileName },
+          'Invalid file name. Avoid quotes, slashes, control characters, and very long names.',
         );
-        return c.json(error, 413);
+        return c.json(error, 400);
       }
 
-      fileName = file.name || 'document.pdf';
-      pdfData = await file.arrayBuffer();
-    } else if (contentType === 'application/pdf') {
-      // Handle raw PDF upload
-      fileName = c.req.header('X-File-Name') || 'document.pdf';
-      pdfData = await c.req.arrayBuffer();
-
-      // Check size after reading for raw uploads
-      if (pdfData.byteLength > PDF_LIMITS.MAX_SIZE) {
+      // Validate it's a PDF (check magic bytes)
+      const header = new Uint8Array(pdfData.slice(0, PDF_MAGIC_BYTES.length));
+      if (!isPdfSignature(header)) {
         const error = createDomainError(
-          FILE_ERRORS.TOO_LARGE,
-          { fileSize: pdfData.byteLength, maxSize: PDF_LIMITS.MAX_SIZE },
-          `File size (${formatFileSize(pdfData.byteLength)}) exceeds limit of ${formatFileSize(PDF_LIMITS.MAX_SIZE)}`,
+          FILE_ERRORS.INVALID_TYPE,
+          { fileType: 'unknown', expectedType: 'application/pdf' },
+          'File is not a valid PDF',
         );
-        return c.json(error, 413);
+        return c.json(error, 400);
       }
-    } else {
+
+      const originalFileName = fileName;
+      const db = createDb(c.env.DB);
+
+      // Generate unique filename (auto-rename if duplicate exists)
+      const uniqueFileName = await generateUniqueFileName(fileName, projectId, studyId, db);
+      const key = `projects/${projectId}/studies/${studyId}/${uniqueFileName}`;
+
+      // Store in R2
+      await c.env.PDF_BUCKET.put(key, pdfData, {
+        httpMetadata: {
+          contentType: 'application/pdf',
+        },
+        customMetadata: {
+          projectId,
+          studyId,
+          fileName: uniqueFileName,
+          originalFileName: originalFileName !== uniqueFileName ? originalFileName : '',
+          uploadedBy: authUser.id,
+          uploadedAt: new Date().toISOString(),
+        },
+      });
+
+      // Insert into mediaFiles table
+      const mediaFileId = crypto.randomUUID();
+      try {
+        await db.insert(mediaFiles).values({
+          id: mediaFileId,
+          filename: uniqueFileName,
+          originalName: originalFileName,
+          fileType: 'application/pdf',
+          fileSize: pdfData.byteLength,
+          uploadedBy: authUser.id,
+          bucketKey: key,
+          orgId,
+          projectId,
+          studyId,
+          createdAt: new Date(),
+        });
+      } catch (dbErr) {
+        const dbError = dbErr as Error;
+        console.error('Failed to insert mediaFiles record after R2 upload:', dbError);
+        // Clean up the R2 object since DB insert failed
+        try {
+          await c.env.PDF_BUCKET.delete(key);
+        } catch (cleanupError) {
+          console.error('Failed to cleanup R2 object after DB insert failure:', cleanupError);
+        }
+        const uploadError = createDomainError(
+          FILE_ERRORS.UPLOAD_FAILED,
+          { operation: 'upload_pdf_db_insert', originalError: dbError.message },
+          'Failed to save file metadata',
+        );
+        return c.json(uploadError, 500);
+      }
+
+      return c.json(
+        {
+          success: true,
+          id: mediaFileId,
+          key,
+          fileName: uniqueFileName,
+          originalFileName: originalFileName !== uniqueFileName ? originalFileName : undefined,
+          size: pdfData.byteLength,
+        },
+        200,
+      );
+    } catch (err) {
+      const error = err as Error;
+      console.error('PDF upload error:', error);
+      const uploadError = createDomainError(
+        FILE_ERRORS.UPLOAD_FAILED,
+        { operation: 'upload_pdf', originalError: error.message },
+        error.message,
+      );
+      return c.json(uploadError, 500);
+    }
+  })
+
+  /**
+   * GET /api/orgs/:orgId/projects/:projectId/studies/:studyId/pdfs/:fileName
+   * Download a PDF for a study
+   */
+  .openapi(downloadPdfRoute, async c => {
+    const membershipResponse = await runMiddleware(requireOrgMembership(), c);
+    if (membershipResponse) return membershipResponse as never;
+
+    const projectAccessResponse = await runMiddleware(requireProjectAccess(), c);
+    if (projectAccessResponse) return projectAccessResponse as never;
+
+    const { studyId, error: studyIdError } = extractStudyId(c);
+    if (studyIdError) {
+      return c.json(studyIdError, 400);
+    }
+
+    const { projectId } = getProjectContext(c);
+    if (!projectId || !studyId) {
+      const error = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
+        operation: 'download_pdf',
+        originalError: 'Missing context',
+      });
+      return c.json(error, 500);
+    }
+
+    const { fileName: rawFileName } = c.req.valid('param');
+    const fileName = decodeURIComponent(rawFileName);
+
+    if (!fileName) {
       const error = createDomainError(
-        FILE_ERRORS.INVALID_TYPE,
-        { contentType },
-        'Invalid content type. Expected multipart/form-data or application/pdf',
+        VALIDATION_ERRORS.FIELD_REQUIRED,
+        { field: 'fileName' },
+        'Missing file name',
       );
       return c.json(error, 400);
     }
@@ -580,175 +715,40 @@ const orgPdfRoutes = $(base.use('*', requireAuth))
       const error = createDomainError(
         VALIDATION_ERRORS.FIELD_INVALID_FORMAT,
         { field: 'fileName', value: fileName },
-        'Invalid file name. Avoid quotes, slashes, control characters, and very long names.',
+        'Invalid file name',
       );
       return c.json(error, 400);
     }
 
-    // Validate it's a PDF (check magic bytes)
-    const header = new Uint8Array(pdfData.slice(0, PDF_MAGIC_BYTES.length));
-    if (!isPdfSignature(header)) {
-      const error = createDomainError(
-        FILE_ERRORS.INVALID_TYPE,
-        { fileType: 'unknown', expectedType: 'application/pdf' },
-        'File is not a valid PDF',
-      );
-      return c.json(error, 400);
-    }
+    const key = `projects/${projectId}/studies/${studyId}/${fileName}`;
 
-    const originalFileName = fileName;
-    const db = createDb(c.env.DB);
-
-    // Generate unique filename (auto-rename if duplicate exists)
-    const uniqueFileName = await generateUniqueFileName(fileName, projectId, studyId, db);
-    const key = `projects/${projectId}/studies/${studyId}/${uniqueFileName}`;
-
-    // Store in R2
-    await c.env.PDF_BUCKET.put(key, pdfData, {
-      httpMetadata: {
-        contentType: 'application/pdf',
-      },
-      customMetadata: {
-        projectId,
-        studyId,
-        fileName: uniqueFileName,
-        originalFileName: originalFileName !== uniqueFileName ? originalFileName : '',
-        uploadedBy: authUser.id,
-        uploadedAt: new Date().toISOString(),
-      },
-    });
-
-    // Insert into mediaFiles table
-    const mediaFileId = crypto.randomUUID();
     try {
-      await db.insert(mediaFiles).values({
-        id: mediaFileId,
-        filename: uniqueFileName,
-        originalName: originalFileName,
-        fileType: 'application/pdf',
-        fileSize: pdfData.byteLength,
-        uploadedBy: authUser.id,
-        bucketKey: key,
-        orgId,
-        projectId,
-        studyId,
-        createdAt: new Date(),
-      });
-    } catch (dbErr) {
-      const dbError = dbErr as Error;
-      console.error('Failed to insert mediaFiles record after R2 upload:', dbError);
-      // Clean up the R2 object since DB insert failed
-      try {
-        await c.env.PDF_BUCKET.delete(key);
-      } catch (cleanupError) {
-        console.error('Failed to cleanup R2 object after DB insert failure:', cleanupError);
+      const object = await c.env.PDF_BUCKET.get(key);
+
+      if (!object) {
+        const error = createDomainError(FILE_ERRORS.NOT_FOUND, { fileName, key });
+        return c.json(error, 404);
       }
-      const uploadError = createDomainError(
-        FILE_ERRORS.UPLOAD_FAILED,
-        { operation: 'upload_pdf_db_insert', originalError: dbError.message },
-        'Failed to save file metadata',
+
+      return new Response(object.body, {
+        headers: {
+          'Content-Type': 'application/pdf',
+          'Content-Disposition': `inline; filename="${fileName}"; filename*=UTF-8''${encodeURIComponent(
+            fileName,
+          )}`,
+          'Cache-Control': 'private, max-age=3600',
+        },
+      });
+    } catch (err) {
+      const error = err as Error;
+      console.error('PDF download error:', error);
+      const internalError = createDomainError(
+        SYSTEM_ERRORS.INTERNAL_ERROR,
+        { operation: 'download_pdf', originalError: error.message },
+        error.message,
       );
-      return c.json(uploadError, 500);
+      return c.json(internalError, 500);
     }
-
-    return c.json(
-      {
-        success: true,
-        id: mediaFileId,
-        key,
-        fileName: uniqueFileName,
-        originalFileName: originalFileName !== uniqueFileName ? originalFileName : undefined,
-        size: pdfData.byteLength,
-      },
-      200,
-    );
-  } catch (err) {
-    const error = err as Error;
-    console.error('PDF upload error:', error);
-    const uploadError = createDomainError(
-      FILE_ERRORS.UPLOAD_FAILED,
-      { operation: 'upload_pdf', originalError: error.message },
-      error.message,
-    );
-    return c.json(uploadError, 500);
-  }
-  })
-
-  /**
-   * GET /api/orgs/:orgId/projects/:projectId/studies/:studyId/pdfs/:fileName
-   * Download a PDF for a study
-   */
-  .openapi(downloadPdfRoute, async c => {
-  const membershipResponse = await runMiddleware(requireOrgMembership(), c);
-  if (membershipResponse) return membershipResponse as never;
-
-  const projectAccessResponse = await runMiddleware(requireProjectAccess(), c);
-  if (projectAccessResponse) return projectAccessResponse as never;
-
-  const { studyId, error: studyIdError } = extractStudyId(c);
-  if (studyIdError) {
-    return c.json(studyIdError, 400);
-  }
-
-  const { projectId } = getProjectContext(c);
-  if (!projectId || !studyId) {
-    const error = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
-      operation: 'download_pdf',
-      originalError: 'Missing context',
-    });
-    return c.json(error, 500);
-  }
-
-  const { fileName: rawFileName } = c.req.valid('param');
-  const fileName = decodeURIComponent(rawFileName);
-
-  if (!fileName) {
-    const error = createDomainError(
-      VALIDATION_ERRORS.FIELD_REQUIRED,
-      { field: 'fileName' },
-      'Missing file name',
-    );
-    return c.json(error, 400);
-  }
-
-  if (!isValidFileName(fileName)) {
-    const error = createDomainError(
-      VALIDATION_ERRORS.FIELD_INVALID_FORMAT,
-      { field: 'fileName', value: fileName },
-      'Invalid file name',
-    );
-    return c.json(error, 400);
-  }
-
-  const key = `projects/${projectId}/studies/${studyId}/${fileName}`;
-
-  try {
-    const object = await c.env.PDF_BUCKET.get(key);
-
-    if (!object) {
-      const error = createDomainError(FILE_ERRORS.NOT_FOUND, { fileName, key });
-      return c.json(error, 404);
-    }
-
-    return new Response(object.body, {
-      headers: {
-        'Content-Type': 'application/pdf',
-        'Content-Disposition': `inline; filename="${fileName}"; filename*=UTF-8''${encodeURIComponent(
-          fileName,
-        )}`,
-        'Cache-Control': 'private, max-age=3600',
-      },
-    });
-  } catch (err) {
-    const error = err as Error;
-    console.error('PDF download error:', error);
-    const internalError = createDomainError(
-      SYSTEM_ERRORS.INTERNAL_ERROR,
-      { operation: 'download_pdf', originalError: error.message },
-      error.message,
-    );
-    return c.json(internalError, 500);
-  }
   })
 
   /**
@@ -756,108 +756,108 @@ const orgPdfRoutes = $(base.use('*', requireAuth))
    * Delete a PDF for a study
    */
   .openapi(deletePdfRoute, async c => {
-  const membershipResponse = await runMiddleware(requireOrgMembership(), c);
-  if (membershipResponse) return membershipResponse as never;
+    const membershipResponse = await runMiddleware(requireOrgMembership(), c);
+    if (membershipResponse) return membershipResponse as never;
 
-  const writeAccessResponse = await runMiddleware(requireOrgWriteAccess(), c);
-  if (writeAccessResponse) return writeAccessResponse as never;
+    const writeAccessResponse = await runMiddleware(requireOrgWriteAccess(), c);
+    if (writeAccessResponse) return writeAccessResponse as never;
 
-  const projectAccessResponse = await runMiddleware(requireProjectAccess(), c);
-  if (projectAccessResponse) return projectAccessResponse as never;
+    const projectAccessResponse = await runMiddleware(requireProjectAccess(), c);
+    if (projectAccessResponse) return projectAccessResponse as never;
 
-  const { studyId, error: studyIdError } = extractStudyId(c);
-  if (studyIdError) {
-    return c.json(studyIdError, 400);
-  }
+    const { studyId, error: studyIdError } = extractStudyId(c);
+    if (studyIdError) {
+      return c.json(studyIdError, 400);
+    }
 
-  const { projectId } = getProjectContext(c);
-  if (!projectId || !studyId) {
-    const error = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
-      operation: 'delete_pdf',
-      originalError: 'Missing context',
-    });
-    return c.json(error, 500);
-  }
+    const { projectId } = getProjectContext(c);
+    if (!projectId || !studyId) {
+      const error = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
+        operation: 'delete_pdf',
+        originalError: 'Missing context',
+      });
+      return c.json(error, 500);
+    }
 
-  const { fileName: rawFileName } = c.req.valid('param');
-  const fileName = decodeURIComponent(rawFileName);
+    const { fileName: rawFileName } = c.req.valid('param');
+    const fileName = decodeURIComponent(rawFileName);
 
-  if (!fileName) {
-    const error = createDomainError(
-      VALIDATION_ERRORS.FIELD_REQUIRED,
-      { field: 'fileName' },
-      'Missing file name',
-    );
-    return c.json(error, 400);
-  }
+    if (!fileName) {
+      const error = createDomainError(
+        VALIDATION_ERRORS.FIELD_REQUIRED,
+        { field: 'fileName' },
+        'Missing file name',
+      );
+      return c.json(error, 400);
+    }
 
-  if (!isValidFileName(fileName)) {
-    const error = createDomainError(
-      VALIDATION_ERRORS.FIELD_INVALID_FORMAT,
-      { field: 'fileName', value: fileName },
-      'Invalid file name',
-    );
-    return c.json(error, 400);
-  }
+    if (!isValidFileName(fileName)) {
+      const error = createDomainError(
+        VALIDATION_ERRORS.FIELD_INVALID_FORMAT,
+        { field: 'fileName', value: fileName },
+        'Invalid file name',
+      );
+      return c.json(error, 400);
+    }
 
-  const key = `projects/${projectId}/studies/${studyId}/${fileName}`;
+    const key = `projects/${projectId}/studies/${studyId}/${fileName}`;
 
-  try {
-    const db = createDb(c.env.DB);
+    try {
+      const db = createDb(c.env.DB);
 
-    // Check if record exists in database first
-    const existingRecord = await db
-      .select({ id: mediaFiles.id })
-      .from(mediaFiles)
-      .where(
-        and(
-          eq(mediaFiles.projectId, projectId),
-          eq(mediaFiles.studyId, studyId),
-          eq(mediaFiles.filename, fileName),
-        ),
-      )
-      .get();
+      // Check if record exists in database first
+      const existingRecord = await db
+        .select({ id: mediaFiles.id })
+        .from(mediaFiles)
+        .where(
+          and(
+            eq(mediaFiles.projectId, projectId),
+            eq(mediaFiles.studyId, studyId),
+            eq(mediaFiles.filename, fileName),
+          ),
+        )
+        .get();
 
-    if (!existingRecord) {
-      // Record doesn't exist in database, but try to delete from R2 anyway
+      if (!existingRecord) {
+        // Record doesn't exist in database, but try to delete from R2 anyway
+        try {
+          await c.env.PDF_BUCKET.delete(key);
+        } catch (r2Error) {
+          // R2 delete failed, but that's okay - return success since DB record doesn't exist
+          console.warn('PDF not found in database, R2 delete also failed:', r2Error);
+        }
+        return c.json({ success: true }, 200);
+      }
+
+      // Delete from mediaFiles table (database is source of truth)
+      await db
+        .delete(mediaFiles)
+        .where(
+          and(
+            eq(mediaFiles.projectId, projectId),
+            eq(mediaFiles.studyId, studyId),
+            eq(mediaFiles.filename, fileName),
+          ),
+        );
+
+      // Delete from R2 (if this fails, log but don't fail - database is source of truth)
       try {
         await c.env.PDF_BUCKET.delete(key);
       } catch (r2Error) {
-        // R2 delete failed, but that's okay - return success since DB record doesn't exist
-        console.warn('PDF not found in database, R2 delete also failed:', r2Error);
+        console.error('Failed to delete PDF from R2 after database delete:', r2Error);
+        // Continue - database is source of truth
       }
+
       return c.json({ success: true }, 200);
+    } catch (err) {
+      const error = err as Error;
+      console.error('PDF delete error:', error);
+      const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
+        operation: 'delete_pdf',
+        originalError: error.message,
+      });
+      return c.json(dbError, 500);
     }
-
-    // Delete from mediaFiles table (database is source of truth)
-    await db
-      .delete(mediaFiles)
-      .where(
-        and(
-          eq(mediaFiles.projectId, projectId),
-          eq(mediaFiles.studyId, studyId),
-          eq(mediaFiles.filename, fileName),
-        ),
-      );
-
-    // Delete from R2 (if this fails, log but don't fail - database is source of truth)
-    try {
-      await c.env.PDF_BUCKET.delete(key);
-    } catch (r2Error) {
-      console.error('Failed to delete PDF from R2 after database delete:', r2Error);
-      // Continue - database is source of truth
-    }
-
-    return c.json({ success: true }, 200);
-  } catch (err) {
-    const error = err as Error;
-    console.error('PDF delete error:', error);
-    const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
-      operation: 'delete_pdf',
-      originalError: error.message,
-    });
-    return c.json(dbError, 500);
-  }
-});
+  });
 
 export { orgPdfRoutes };

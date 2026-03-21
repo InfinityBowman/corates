@@ -81,41 +81,46 @@ const validatePlanChangeRoute = createRoute({
 });
 
 // Route handlers
-const billingValidationRoutes = $(base.use('*', requireAuth))
-  .openapi(validatePlanChangeRoute, async c => {
-  const { user, session } = getAuth(c);
+const billingValidationRoutes = $(base.use('*', requireAuth)).openapi(
+  validatePlanChangeRoute,
+  async c => {
+    const { user, session } = getAuth(c);
 
-  if (!user || !session) {
-    const error = createDomainError(AUTH_ERRORS.REQUIRED, { reason: 'no_user' });
-    return c.json(error, 403);
-  }
-
-  const db = createDb(c.env.DB);
-
-  try {
-    const { targetPlan } = c.req.valid('query');
-
-    const orgId = await resolveOrgId({ db, session, userId: user.id });
-
-    if (!orgId) {
-      const error = createDomainError(AUTH_ERRORS.FORBIDDEN, {
-        reason: 'no_org_found',
-      });
+    if (!user || !session) {
+      const error = createDomainError(AUTH_ERRORS.REQUIRED, { reason: 'no_user' });
       return c.json(error, 403);
     }
 
-    const validationResult = await validatePlanChange(db, orgId, targetPlan);
+    const db = createDb(c.env.DB);
 
-    return c.json(validationResult as unknown as z.infer<typeof PlanValidationResponseSchema>, 200);
-  } catch (err) {
-    const error = err as Error;
-    console.error('Error validating plan change:', error);
-    const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
-      operation: 'validate_plan_change',
-      originalError: error.message,
-    });
-    return c.json(dbError, 500);
-  }
-});
+    try {
+      const { targetPlan } = c.req.valid('query');
+
+      const orgId = await resolveOrgId({ db, session, userId: user.id });
+
+      if (!orgId) {
+        const error = createDomainError(AUTH_ERRORS.FORBIDDEN, {
+          reason: 'no_org_found',
+        });
+        return c.json(error, 403);
+      }
+
+      const validationResult = await validatePlanChange(db, orgId, targetPlan);
+
+      return c.json(
+        validationResult as unknown as z.infer<typeof PlanValidationResponseSchema>,
+        200,
+      );
+    } catch (err) {
+      const error = err as Error;
+      console.error('Error validating plan change:', error);
+      const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
+        operation: 'validate_plan_change',
+        originalError: error.message,
+      });
+      return c.json(dbError, 500);
+    }
+  },
+);
 
 export { billingValidationRoutes };

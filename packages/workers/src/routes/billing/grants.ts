@@ -56,8 +56,7 @@ const startTrialRoute = createRoute({
 });
 
 // Route handlers
-const billingGrantRoutes = $(base.use('*', requireAuth))
-  .openapi(startTrialRoute, async c => {
+const billingGrantRoutes = $(base.use('*', requireAuth)).openapi(startTrialRoute, async c => {
   const { user, session } = getAuth(c);
 
   if (!user || !session) {

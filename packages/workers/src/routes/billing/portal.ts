@@ -54,8 +54,7 @@ const createPortalRoute = createRoute({
 
 // Route handlers
 base.use('*', billingPortalRateLimit);
-const billingPortalRoutes = $(base.use('*', requireAuth))
-  .openapi(createPortalRoute, async c => {
+const billingPortalRoutes = $(base.use('*', requireAuth)).openapi(createPortalRoute, async c => {
   const { user, session } = getAuth(c);
 
   if (!user || !session) {

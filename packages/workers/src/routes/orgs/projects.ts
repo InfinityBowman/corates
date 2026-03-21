@@ -263,238 +263,238 @@ async function getProjectCount(c: Context): Promise<number> {
 // Route handlers
 const orgProjectRoutes = $(base.use('*', requireAuth))
   .openapi(listProjectsRoute, async c => {
-  // Run membership middleware
-  const membershipResponse = await runMiddleware(requireOrgMembership(), c);
-  if (membershipResponse) return membershipResponse as never;
+    // Run membership middleware
+    const membershipResponse = await runMiddleware(requireOrgMembership(), c);
+    if (membershipResponse) return membershipResponse as never;
 
-  const { user: authUser } = getAuth(c);
-  const { orgId } = getOrgContext(c);
+    const { user: authUser } = getAuth(c);
+    const { orgId } = getOrgContext(c);
 
-  if (!authUser || !orgId) {
-    const error = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
-      operation: 'list_org_projects',
-      originalError: 'Missing user or org context',
-    });
-    return c.json(error, 500);
-  }
+    if (!authUser || !orgId) {
+      const error = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
+        operation: 'list_org_projects',
+        originalError: 'Missing user or org context',
+      });
+      return c.json(error, 500);
+    }
 
-  const db = createDb(c.env.DB);
+    const db = createDb(c.env.DB);
 
-  try {
-    const results = await db
-      .select({
-        id: projects.id,
-        name: projects.name,
-        description: projects.description,
-        orgId: projects.orgId,
-        role: projectMembers.role,
-        createdAt: projects.createdAt,
-        updatedAt: projects.updatedAt,
-        createdBy: projects.createdBy,
-      })
-      .from(projects)
-      .innerJoin(projectMembers, eq(projects.id, projectMembers.projectId))
-      .where(and(eq(projects.orgId, orgId), eq(projectMembers.userId, authUser.id)))
-      .orderBy(desc(projects.updatedAt));
+    try {
+      const results = await db
+        .select({
+          id: projects.id,
+          name: projects.name,
+          description: projects.description,
+          orgId: projects.orgId,
+          role: projectMembers.role,
+          createdAt: projects.createdAt,
+          updatedAt: projects.updatedAt,
+          createdBy: projects.createdBy,
+        })
+        .from(projects)
+        .innerJoin(projectMembers, eq(projects.id, projectMembers.projectId))
+        .where(and(eq(projects.orgId, orgId), eq(projectMembers.userId, authUser.id)))
+        .orderBy(desc(projects.updatedAt));
 
-    return c.json(results as z.infer<typeof ProjectListSchema>, 200);
-  } catch (err) {
-    const error = err as Error;
-    console.error('Error listing org projects:', error);
-    const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
-      operation: 'list_org_projects',
-      originalError: error.message,
-    });
-    return c.json(dbError, 500);
-  }
+      return c.json(results as z.infer<typeof ProjectListSchema>, 200);
+    } catch (err) {
+      const error = err as Error;
+      console.error('Error listing org projects:', error);
+      const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
+        operation: 'list_org_projects',
+        originalError: error.message,
+      });
+      return c.json(dbError, 500);
+    }
   })
 
   .openapi(createProjectRoute, async c => {
-  const membershipResponse = await runMiddleware(requireOrgMembership(), c);
-  if (membershipResponse) return membershipResponse as never;
+    const membershipResponse = await runMiddleware(requireOrgMembership(), c);
+    if (membershipResponse) return membershipResponse as never;
 
-  const writeAccessResponse = await runMiddleware(requireOrgWriteAccess(), c);
-  if (writeAccessResponse) return writeAccessResponse as never;
+    const writeAccessResponse = await runMiddleware(requireOrgWriteAccess(), c);
+    if (writeAccessResponse) return writeAccessResponse as never;
 
-  const entitlementResponse = await runMiddleware(requireEntitlement('project.create'), c);
-  if (entitlementResponse) return entitlementResponse as never;
+    const entitlementResponse = await runMiddleware(requireEntitlement('project.create'), c);
+    if (entitlementResponse) return entitlementResponse as never;
 
-  const quotaResponse = await runMiddleware(requireQuota('projects.max', getProjectCount, 1), c);
-  if (quotaResponse) return quotaResponse as never;
+    const quotaResponse = await runMiddleware(requireQuota('projects.max', getProjectCount, 1), c);
+    if (quotaResponse) return quotaResponse as never;
 
-  const { user: authUser } = getAuth(c);
-  const { orgId } = getOrgContext(c);
+    const { user: authUser } = getAuth(c);
+    const { orgId } = getOrgContext(c);
 
-  if (!authUser || !orgId) {
-    const error = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
-      operation: 'create_project',
-      originalError: 'Missing user or org context',
-    });
-    return c.json(error, 500);
-  }
-
-  const body = c.req.valid('json');
-
-  try {
-    const { project } = await createProject(c.env, authUser, {
-      orgId,
-      name: body.name,
-      description: body.description,
-    });
-
-    return c.json(project, 201);
-  } catch (err) {
-    if (isDomainError(err)) {
-      return c.json(err, 403);
+    if (!authUser || !orgId) {
+      const error = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
+        operation: 'create_project',
+        originalError: 'Missing user or org context',
+      });
+      return c.json(error, 500);
     }
-    const error = err as Error;
-    console.error('Error creating project:', error);
-    const dbError = createDomainError(SYSTEM_ERRORS.DB_TRANSACTION_FAILED, {
-      operation: 'create_project',
-      originalError: error.message,
-    });
-    return c.json(dbError, 500);
-  }
+
+    const body = c.req.valid('json');
+
+    try {
+      const { project } = await createProject(c.env, authUser, {
+        orgId,
+        name: body.name,
+        description: body.description,
+      });
+
+      return c.json(project, 201);
+    } catch (err) {
+      if (isDomainError(err)) {
+        return c.json(err, 403);
+      }
+      const error = err as Error;
+      console.error('Error creating project:', error);
+      const dbError = createDomainError(SYSTEM_ERRORS.DB_TRANSACTION_FAILED, {
+        operation: 'create_project',
+        originalError: error.message,
+      });
+      return c.json(dbError, 500);
+    }
   })
 
   .openapi(getProjectRoute, async c => {
-  // Run membership middleware
-  const membershipResponse = await runMiddleware(requireOrgMembership(), c);
-  if (membershipResponse) return membershipResponse as never;
+    // Run membership middleware
+    const membershipResponse = await runMiddleware(requireOrgMembership(), c);
+    if (membershipResponse) return membershipResponse as never;
 
-  // Run project access middleware
-  const projectAccessResponse = await runMiddleware(requireProjectAccess(), c);
-  if (projectAccessResponse) return projectAccessResponse as never;
+    // Run project access middleware
+    const projectAccessResponse = await runMiddleware(requireProjectAccess(), c);
+    if (projectAccessResponse) return projectAccessResponse as never;
 
-  const { projectId, projectRole } = getProjectContext(c);
+    const { projectId, projectRole } = getProjectContext(c);
 
-  if (!projectId) {
-    const error = createDomainError(PROJECT_ERRORS.NOT_FOUND, { projectId: 'unknown' });
-    return c.json(error, 404);
-  }
-
-  const db = createDb(c.env.DB);
-
-  try {
-    const result = await db
-      .select({
-        id: projects.id,
-        name: projects.name,
-        description: projects.description,
-        orgId: projects.orgId,
-        createdAt: projects.createdAt,
-        updatedAt: projects.updatedAt,
-        createdBy: projects.createdBy,
-      })
-      .from(projects)
-      .where(eq(projects.id, projectId))
-      .get();
-
-    if (!result) {
-      const error = createDomainError(PROJECT_ERRORS.NOT_FOUND, { projectId });
+    if (!projectId) {
+      const error = createDomainError(PROJECT_ERRORS.NOT_FOUND, { projectId: 'unknown' });
       return c.json(error, 404);
     }
 
-    return c.json(
-      {
-        ...result,
-        role: projectRole,
-      } as z.infer<typeof ProjectSchema>,
-      200,
-    );
-  } catch (err) {
-    const error = err as Error;
-    console.error('Error fetching project:', error);
-    const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
-      operation: 'fetch_project',
-      originalError: error.message,
-    });
-    return c.json(dbError, 500);
-  }
+    const db = createDb(c.env.DB);
+
+    try {
+      const result = await db
+        .select({
+          id: projects.id,
+          name: projects.name,
+          description: projects.description,
+          orgId: projects.orgId,
+          createdAt: projects.createdAt,
+          updatedAt: projects.updatedAt,
+          createdBy: projects.createdBy,
+        })
+        .from(projects)
+        .where(eq(projects.id, projectId))
+        .get();
+
+      if (!result) {
+        const error = createDomainError(PROJECT_ERRORS.NOT_FOUND, { projectId });
+        return c.json(error, 404);
+      }
+
+      return c.json(
+        {
+          ...result,
+          role: projectRole,
+        } as z.infer<typeof ProjectSchema>,
+        200,
+      );
+    } catch (err) {
+      const error = err as Error;
+      console.error('Error fetching project:', error);
+      const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
+        operation: 'fetch_project',
+        originalError: error.message,
+      });
+      return c.json(dbError, 500);
+    }
   })
 
   .openapi(updateProjectRoute, async c => {
-  const membershipResponse = await runMiddleware(requireOrgMembership(), c);
-  if (membershipResponse) return membershipResponse as never;
+    const membershipResponse = await runMiddleware(requireOrgMembership(), c);
+    if (membershipResponse) return membershipResponse as never;
 
-  const writeAccessResponse = await runMiddleware(requireOrgWriteAccess(), c);
-  if (writeAccessResponse) return writeAccessResponse as never;
+    const writeAccessResponse = await runMiddleware(requireOrgWriteAccess(), c);
+    if (writeAccessResponse) return writeAccessResponse as never;
 
-  const projectAccessResponse = await runMiddleware(requireProjectAccess('member'), c);
-  if (projectAccessResponse) return projectAccessResponse as never;
+    const projectAccessResponse = await runMiddleware(requireProjectAccess('member'), c);
+    if (projectAccessResponse) return projectAccessResponse as never;
 
-  const { user: authUser } = getAuth(c);
-  const { projectId } = getProjectContext(c);
+    const { user: authUser } = getAuth(c);
+    const { projectId } = getProjectContext(c);
 
-  if (!authUser || !projectId) {
-    const error = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
-      operation: 'update_project',
-      originalError: 'Missing user or project context',
-    });
-    return c.json(error, 500);
-  }
-
-  const body = c.req.valid('json');
-
-  try {
-    const result = await updateProject(c.env, authUser, {
-      projectId,
-      name: body.name,
-      description: body.description,
-    });
-
-    return c.json({ success: true as const, projectId: result.projectId }, 200);
-  } catch (err) {
-    if (isDomainError(err)) {
-      return c.json(err, 403);
+    if (!authUser || !projectId) {
+      const error = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
+        operation: 'update_project',
+        originalError: 'Missing user or project context',
+      });
+      return c.json(error, 500);
     }
-    const error = err as Error;
-    console.error('Error updating project:', error);
-    const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
-      operation: 'update_project',
-      originalError: error.message,
-    });
-    return c.json(dbError, 500);
-  }
+
+    const body = c.req.valid('json');
+
+    try {
+      const result = await updateProject(c.env, authUser, {
+        projectId,
+        name: body.name,
+        description: body.description,
+      });
+
+      return c.json({ success: true as const, projectId: result.projectId }, 200);
+    } catch (err) {
+      if (isDomainError(err)) {
+        return c.json(err, 403);
+      }
+      const error = err as Error;
+      console.error('Error updating project:', error);
+      const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
+        operation: 'update_project',
+        originalError: error.message,
+      });
+      return c.json(dbError, 500);
+    }
   })
 
   .openapi(deleteProjectRoute, async c => {
-  const membershipResponse = await runMiddleware(requireOrgMembership(), c);
-  if (membershipResponse) return membershipResponse as never;
+    const membershipResponse = await runMiddleware(requireOrgMembership(), c);
+    if (membershipResponse) return membershipResponse as never;
 
-  const writeAccessResponse = await runMiddleware(requireOrgWriteAccess(), c);
-  if (writeAccessResponse) return writeAccessResponse as never;
+    const writeAccessResponse = await runMiddleware(requireOrgWriteAccess(), c);
+    if (writeAccessResponse) return writeAccessResponse as never;
 
-  const projectAccessResponse = await runMiddleware(requireProjectAccess('owner'), c);
-  if (projectAccessResponse) return projectAccessResponse as never;
+    const projectAccessResponse = await runMiddleware(requireProjectAccess('owner'), c);
+    if (projectAccessResponse) return projectAccessResponse as never;
 
-  const { user: authUser } = getAuth(c);
-  const { projectId } = getProjectContext(c);
+    const { user: authUser } = getAuth(c);
+    const { projectId } = getProjectContext(c);
 
-  if (!authUser || !projectId) {
-    const error = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
-      operation: 'delete_project',
-      originalError: 'Missing user or project context',
-    });
-    return c.json(error, 500);
-  }
-
-  try {
-    const result = await deleteProject(c.env, authUser, { projectId });
-
-    return c.json({ success: true as const, deleted: result.deleted }, 200);
-  } catch (err) {
-    if (isDomainError(err)) {
-      return c.json(err, 403);
+    if (!authUser || !projectId) {
+      const error = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
+        operation: 'delete_project',
+        originalError: 'Missing user or project context',
+      });
+      return c.json(error, 500);
     }
-    const error = err as Error;
-    console.error('Error deleting project:', error);
-    const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
-      operation: 'delete_project',
-      originalError: error.message,
-    });
-    return c.json(dbError, 500);
-  }
+
+    try {
+      const result = await deleteProject(c.env, authUser, { projectId });
+
+      return c.json({ success: true as const, deleted: result.deleted }, 200);
+    } catch (err) {
+      if (isDomainError(err)) {
+        return c.json(err, 403);
+      }
+      const error = err as Error;
+      console.error('Error deleting project:', error);
+      const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
+        operation: 'delete_project',
+        originalError: error.message,
+      });
+      return c.json(dbError, 500);
+    }
   })
 
   // Mount org-scoped project member routes

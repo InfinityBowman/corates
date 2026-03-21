@@ -64,8 +64,7 @@ const getInvoicesRoute = createRoute({
 });
 
 // Route handlers
-const billingInvoicesRoutes = $(base.use('*', requireAuth))
-  .openapi(getInvoicesRoute, async c => {
+const billingInvoicesRoutes = $(base.use('*', requireAuth)).openapi(getInvoicesRoute, async c => {
   const { user, session } = getAuth(c);
 
   if (!user || !session) {
