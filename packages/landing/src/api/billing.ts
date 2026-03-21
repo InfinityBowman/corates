@@ -3,7 +3,9 @@
  * Handles all billing-related API calls
  */
 
+import { parseResponse } from 'hono/client';
 import { apiFetch } from '@/lib/apiFetch';
+import { api } from '@/lib/rpc';
 
 interface CheckoutSession {
   url: string;
@@ -14,22 +16,10 @@ interface PortalSession {
   url: string;
 }
 
-interface MembersResponse {
-  members: Array<{ id: string; role: string; [key: string]: unknown }>;
-  count: number;
-}
-
 interface TrialResult {
   success: boolean;
   grantId: string;
   expiresAt: number;
-}
-
-interface PlanChangeValidation {
-  valid: boolean;
-  violations: Array<{ quotaKey: string; current: number; limit: number; message: string }>;
-  targetPlan: { id: string; name: string; quotas: Record<string, unknown> };
-  currentUsage: { projects: number; collaborators: number };
 }
 
 type BillingInterval = 'monthly' | 'yearly';
@@ -74,8 +64,8 @@ export async function redirectToSingleProjectCheckout(options: BillingOptions = 
   window.location.href = url;
 }
 
-export async function getMembers(): Promise<MembersResponse> {
-  return apiFetch.get<MembersResponse>('/api/billing/members', { toastMessage: false });
+export async function getMembers() {
+  return parseResponse(api.api.billing.members.$get());
 }
 
 export async function startTrial(options: BillingOptions = {}): Promise<TrialResult> {
@@ -86,9 +76,10 @@ export async function startTrial(options: BillingOptions = {}): Promise<TrialRes
   );
 }
 
-export async function validatePlanChange(targetPlan: string): Promise<PlanChangeValidation> {
-  return apiFetch.get<PlanChangeValidation>(
-    `/api/billing/validate-plan-change?targetPlan=${encodeURIComponent(targetPlan)}`,
-    { toastMessage: false },
+export async function validatePlanChange(targetPlan: string) {
+  return parseResponse(
+    api.api.billing['validate-plan-change'].$get({
+      query: { targetPlan },
+    }),
   );
 }

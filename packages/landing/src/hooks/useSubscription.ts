@@ -4,8 +4,9 @@
 
 import { useMemo } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { parseResponse, type InferResponseType } from 'hono/client';
 import { queryKeys } from '@/lib/queryKeys';
-import { apiFetch } from '@/lib/apiFetch';
+import { api } from '@/lib/rpc';
 import { hasActiveAccess as checkActiveAccess } from '@/lib/access';
 import {
   hasEntitlement as checkEntitlement,
@@ -15,14 +16,7 @@ import {
 } from '@/lib/entitlements';
 import { useAuthStore, selectIsLoggedIn } from '@/stores/authStore';
 
-export interface Subscription {
-  tier: string;
-  status: string;
-  tierInfo: { name: string; description: string };
-  stripeSubscriptionId: string | null;
-  currentPeriodEnd: number | null;
-  cancelAtPeriodEnd: boolean;
-}
+export type Subscription = InferResponseType<typeof api.api.billing.subscription.$get, 200>;
 
 const DEFAULT_SUBSCRIPTION: Subscription = {
   tier: 'free',
@@ -31,10 +25,13 @@ const DEFAULT_SUBSCRIPTION: Subscription = {
   stripeSubscriptionId: null,
   currentPeriodEnd: null,
   cancelAtPeriodEnd: false,
+  accessMode: 'none',
+  source: 'none',
+  projectCount: 0,
 };
 
 async function fetchSubscription(): Promise<Subscription> {
-  return apiFetch.get<Subscription>('/api/billing/subscription', { toastMessage: false });
+  return parseResponse(api.api.billing.subscription.$get());
 }
 
 export function useSubscription() {

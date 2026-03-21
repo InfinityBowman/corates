@@ -2,25 +2,17 @@
  * Google Drive API - Interact with user's connected Google Drive
  */
 
+import { parseResponse } from 'hono/client';
 import { apiFetch } from '@/lib/apiFetch';
-
-interface DriveStatus {
-  connected: boolean;
-  hasRefreshToken: boolean;
-}
+import { api } from '@/lib/rpc';
 
 interface DriveImportResult {
   success: boolean;
   file: Record<string, unknown>;
 }
 
-interface PickerToken {
-  accessToken: string;
-  expiresAt: string | null;
-}
-
-export async function getGoogleDriveStatus(): Promise<DriveStatus> {
-  return apiFetch.get<DriveStatus>('/api/google-drive/status');
+export async function getGoogleDriveStatus() {
+  return parseResponse(api.api['google-drive'].status.$get());
 }
 
 export async function disconnectGoogleDrive(): Promise<{ success: boolean }> {
@@ -39,8 +31,8 @@ export async function importFromGoogleDrive(
   });
 }
 
-export async function getGoogleDrivePickerToken(): Promise<PickerToken> {
-  return apiFetch.get<PickerToken>('/api/google-drive/picker-token');
+export async function getGoogleDrivePickerToken() {
+  return parseResponse(api.api['google-drive']['picker-token'].$get());
 }
 
 export async function connectGoogleAccount(callbackUrl?: string): Promise<void> {

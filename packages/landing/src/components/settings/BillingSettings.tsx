@@ -9,8 +9,9 @@ import { CheckCircleIcon, ArrowRightIcon, XCircleIcon } from 'lucide-react';
 import { Alert, AlertAction, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { useSubscription } from '@/hooks/useSubscription';
 import { useMembers } from '@/hooks/useMembers';
+import { parseResponse } from 'hono/client';
 import { redirectToPortal } from '@/api/billing';
-import { apiFetch } from '@/lib/apiFetch';
+import { api } from '@/lib/rpc';
 import { queryKeys } from '@/lib/queryKeys';
 import { Skeleton } from '@/components/ui/skeleton';
 import { SubscriptionCard } from '@/components/billing/SubscriptionCard';
@@ -60,7 +61,7 @@ export function BillingSettings() {
 
   const usageQuery = useQuery({
     queryKey: queryKeys.billing.usage,
-    queryFn: () => apiFetch.get('/api/billing/usage', { toastMessage: false }),
+    queryFn: () => parseResponse(api.api.billing.usage.$get()),
     staleTime: 1000 * 60 * 2,
     retry: 1,
   });
