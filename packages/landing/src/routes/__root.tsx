@@ -77,7 +77,7 @@ export const Route = createRootRoute({
       "default-src 'self'",
       "script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval'",
       "style-src 'self' 'unsafe-inline'",
-      "img-src 'self' data: blob:",
+      `img-src 'self' data: blob:${import.meta.env.DEV ? ' http://localhost:*' : ''}`,
       import.meta.env.DEV ?
         "connect-src 'self' http://localhost:* ws://localhost:*"
       : "connect-src 'self' wss://corates.org",
