@@ -3,7 +3,7 @@
  * Routes: /api/orgs/:orgId/projects
  */
 
-import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
+import { OpenAPIHono, createRoute, z, $ } from '@hono/zod-openapi';
 import type { Context } from 'hono';
 import { runMiddleware } from '@/lib/runMiddleware.js';
 import { createDb } from '@/db/client.js';
@@ -29,7 +29,7 @@ import { devRoutes } from './dev-routes.js';
 import type { Env } from '../../types';
 import { ErrorResponseSchema } from '@/schemas/common.js';
 
-const orgProjectRoutes = new OpenAPIHono<{ Bindings: Env }>({
+const base = new OpenAPIHono<{ Bindings: Env }>({
   defaultHook: validationHook,
 });
 
@@ -260,11 +260,9 @@ async function getProjectCount(c: Context): Promise<number> {
   return result?.count || 0;
 }
 
-// Apply auth middleware to all routes
-orgProjectRoutes.use('*', requireAuth);
-
 // Route handlers
-orgProjectRoutes.openapi(listProjectsRoute, async c => {
+const orgProjectRoutes = $(base.use('*', requireAuth))
+  .openapi(listProjectsRoute, async c => {
   // Run membership middleware
   const membershipResponse = await runMiddleware(requireOrgMembership(), c);
   if (membershipResponse) return membershipResponse as never;
@@ -309,9 +307,9 @@ orgProjectRoutes.openapi(listProjectsRoute, async c => {
     });
     return c.json(dbError, 500);
   }
-});
+  })
 
-orgProjectRoutes.openapi(createProjectRoute, async c => {
+  .openapi(createProjectRoute, async c => {
   const membershipResponse = await runMiddleware(requireOrgMembership(), c);
   if (membershipResponse) return membershipResponse as never;
 
@@ -357,9 +355,9 @@ orgProjectRoutes.openapi(createProjectRoute, async c => {
     });
     return c.json(dbError, 500);
   }
-});
+  })
 
-orgProjectRoutes.openapi(getProjectRoute, async c => {
+  .openapi(getProjectRoute, async c => {
   // Run membership middleware
   const membershipResponse = await runMiddleware(requireOrgMembership(), c);
   if (membershipResponse) return membershipResponse as never;
@@ -413,9 +411,9 @@ orgProjectRoutes.openapi(getProjectRoute, async c => {
     });
     return c.json(dbError, 500);
   }
-});
+  })
 
-orgProjectRoutes.openapi(updateProjectRoute, async c => {
+  .openapi(updateProjectRoute, async c => {
   const membershipResponse = await runMiddleware(requireOrgMembership(), c);
   if (membershipResponse) return membershipResponse as never;
 
@@ -458,9 +456,9 @@ orgProjectRoutes.openapi(updateProjectRoute, async c => {
     });
     return c.json(dbError, 500);
   }
-});
+  })
 
-orgProjectRoutes.openapi(deleteProjectRoute, async c => {
+  .openapi(deleteProjectRoute, async c => {
   const membershipResponse = await runMiddleware(requireOrgMembership(), c);
   if (membershipResponse) return membershipResponse as never;
 
@@ -497,18 +495,18 @@ orgProjectRoutes.openapi(deleteProjectRoute, async c => {
     });
     return c.json(dbError, 500);
   }
-});
+  })
 
-// Mount org-scoped project member routes
-orgProjectRoutes.route('/:projectId/members', orgProjectMemberRoutes);
+  // Mount org-scoped project member routes
+  .route('/:projectId/members', orgProjectMemberRoutes)
 
-// Mount org-scoped PDF routes
-orgProjectRoutes.route('/:projectId/studies/:studyId/pdfs', orgPdfRoutes);
+  // Mount org-scoped PDF routes
+  .route('/:projectId/studies/:studyId/pdfs', orgPdfRoutes)
 
-// Mount org-scoped invitation routes
-orgProjectRoutes.route('/:projectId/invitations', orgInvitationRoutes);
+  // Mount org-scoped invitation routes
+  .route('/:projectId/invitations', orgInvitationRoutes)
 
-// Dev routes
-orgProjectRoutes.route('/:projectId/dev', devRoutes);
+  // Dev routes
+  .route('/:projectId/dev', devRoutes);
 
 export { orgProjectRoutes };

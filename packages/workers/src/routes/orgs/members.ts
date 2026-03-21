@@ -3,7 +3,7 @@
  * Routes: /api/orgs/:orgId/projects/:projectId/members
  */
 
-import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
+import { OpenAPIHono, createRoute, z, $ } from '@hono/zod-openapi';
 import type { Context } from 'hono';
 import { runMiddleware } from '@/lib/runMiddleware.js';
 import { createDb } from '@/db/client.js';
@@ -31,12 +31,9 @@ import { requireMemberRemoval } from '@/policies';
 import type { Env } from '../../types';
 import { ErrorResponseSchema } from '@/schemas/common.js';
 
-const orgProjectMemberRoutes = new OpenAPIHono<{ Bindings: Env }>({
+const base = new OpenAPIHono<{ Bindings: Env }>({
   defaultHook: validationHook,
 });
-
-// Apply auth middleware to all routes
-orgProjectMemberRoutes.use('*', requireAuth);
 
 // Request/Response schemas
 const ProjectMemberSchema = z
@@ -369,7 +366,8 @@ const removeMemberRoute = createRoute({
  * GET /api/orgs/:orgId/projects/:projectId/members
  * List all members of a project
  */
-orgProjectMemberRoutes.openapi(listMembersRoute, async c => {
+const orgProjectMemberRoutes = $(base.use('*', requireAuth))
+  .openapi(listMembersRoute, async c => {
   const membershipResponse = await runMiddleware(requireOrgMembership(), c);
   if (membershipResponse) return membershipResponse as never;
 
@@ -415,13 +413,13 @@ orgProjectMemberRoutes.openapi(listMembersRoute, async c => {
     });
     return c.json(dbError, 500);
   }
-});
+  })
 
-/**
- * POST /api/orgs/:orgId/projects/:projectId/members
- * Add a member to the project (project owner only)
- */
-orgProjectMemberRoutes.openapi(addMemberRoute, async c => {
+  /**
+   * POST /api/orgs/:orgId/projects/:projectId/members
+   * Add a member to the project (project owner only)
+   */
+  .openapi(addMemberRoute, async c => {
   const membershipResponse = await runMiddleware(requireOrgMembership(), c);
   if (membershipResponse) return membershipResponse as never;
 
@@ -517,13 +515,13 @@ orgProjectMemberRoutes.openapi(addMemberRoute, async c => {
     });
     return c.json(dbError, 500);
   }
-});
+  })
 
-/**
- * PUT /api/orgs/:orgId/projects/:projectId/members/:userId
- * Update a member's role (project owner only)
- */
-orgProjectMemberRoutes.openapi(updateMemberRoleRoute, async c => {
+  /**
+   * PUT /api/orgs/:orgId/projects/:projectId/members/:userId
+   * Update a member's role (project owner only)
+   */
+  .openapi(updateMemberRoleRoute, async c => {
   const membershipResponse = await runMiddleware(requireOrgMembership(), c);
   if (membershipResponse) return membershipResponse as never;
 
@@ -576,13 +574,13 @@ orgProjectMemberRoutes.openapi(updateMemberRoleRoute, async c => {
     });
     return c.json(dbError, 500);
   }
-});
+  })
 
-/**
- * DELETE /api/orgs/:orgId/projects/:projectId/members/:userId
- * Remove a member from the project (project owner only, or self-removal)
- */
-orgProjectMemberRoutes.openapi(removeMemberRoute, async c => {
+  /**
+   * DELETE /api/orgs/:orgId/projects/:projectId/members/:userId
+   * Remove a member from the project (project owner only, or self-removal)
+   */
+  .openapi(removeMemberRoute, async c => {
   const membershipResponse = await runMiddleware(requireOrgMembership(), c);
   if (membershipResponse) return membershipResponse as never;
 

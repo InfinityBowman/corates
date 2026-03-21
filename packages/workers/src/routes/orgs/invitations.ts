@@ -5,7 +5,7 @@
  * Combined invite flow: accepting ensures org membership then project membership
  */
 
-import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
+import { OpenAPIHono, createRoute, z, $ } from '@hono/zod-openapi';
 import { runMiddleware } from '@/lib/runMiddleware.js';
 import { createDb } from '@/db/client.js';
 import {
@@ -39,12 +39,9 @@ import { validationHook } from '@/lib/honoValidationHook.js';
 import type { Env } from '../../types';
 import { ErrorResponseSchema } from '@/schemas/common.js';
 
-const orgInvitationRoutes = new OpenAPIHono<{ Bindings: Env }>({
+const base = new OpenAPIHono<{ Bindings: Env }>({
   defaultHook: validationHook,
 });
-
-// Apply auth middleware to all routes
-orgInvitationRoutes.use('*', requireAuth);
 
 // Response schemas
 const InvitationSchema = z
@@ -353,7 +350,8 @@ const acceptInvitationRoute = createRoute({
  * GET /api/orgs/:orgId/projects/:projectId/invitations
  * List pending invitations for a project
  */
-orgInvitationRoutes.openapi(listInvitationsRoute, async c => {
+const orgInvitationRoutes = $(base.use('*', requireAuth))
+  .openapi(listInvitationsRoute, async c => {
   const membershipResponse = await runMiddleware(requireOrgMembership(), c);
   if (membershipResponse) return membershipResponse as never;
 
@@ -396,13 +394,13 @@ orgInvitationRoutes.openapi(listInvitationsRoute, async c => {
     });
     return c.json(dbError, 500);
   }
-});
+  })
 
-/**
- * POST /api/orgs/:orgId/projects/:projectId/invitations
- * Create a new invitation (project owner only)
- */
-orgInvitationRoutes.openapi(createInvitationRoute, async c => {
+  /**
+   * POST /api/orgs/:orgId/projects/:projectId/invitations
+   * Create a new invitation (project owner only)
+   */
+  .openapi(createInvitationRoute, async c => {
   const membershipResponse = await runMiddleware(requireOrgMembership(), c);
   if (membershipResponse) return membershipResponse as never;
 
@@ -553,13 +551,13 @@ orgInvitationRoutes.openapi(createInvitationRoute, async c => {
     });
     return c.json(dbError, 500);
   }
-});
+  })
 
-/**
- * DELETE /api/orgs/:orgId/projects/:projectId/invitations/:invitationId
- * Cancel a pending invitation (project owner only)
- */
-orgInvitationRoutes.openapi(cancelInvitationRoute, async c => {
+  /**
+   * DELETE /api/orgs/:orgId/projects/:projectId/invitations/:invitationId
+   * Cancel a pending invitation (project owner only)
+   */
+  .openapi(cancelInvitationRoute, async c => {
   const membershipResponse = await runMiddleware(requireOrgMembership(), c);
   if (membershipResponse) return membershipResponse as never;
 
@@ -614,13 +612,13 @@ orgInvitationRoutes.openapi(cancelInvitationRoute, async c => {
     });
     return c.json(dbError, 500);
   }
-});
+  })
 
-/**
- * POST /api/orgs/:orgId/projects/:projectId/invitations/accept
- * Accept a project invitation by token
- */
-orgInvitationRoutes.openapi(acceptInvitationRoute, async c => {
+  /**
+   * POST /api/orgs/:orgId/projects/:projectId/invitations/accept
+   * Accept a project invitation by token
+   */
+  .openapi(acceptInvitationRoute, async c => {
   const { user: authUser } = getAuth(c);
   if (!authUser) {
     const error = createDomainError(AUTH_ERRORS.REQUIRED, { reason: 'no_user' });

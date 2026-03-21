@@ -3,7 +3,7 @@
  * Wraps Better Auth organization plugin APIs - delegates to plugin as service boundary
  */
 
-import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
+import { OpenAPIHono, createRoute, z, $ } from '@hono/zod-openapi';
 import { runMiddleware } from '@/lib/runMiddleware.js';
 import { createDb } from '@/db/client.js';
 import { projects } from '@/db/schema.js';
@@ -51,7 +51,7 @@ function getOrgApi(
   return auth.api as unknown as OrgApiMethods;
 }
 
-const orgRoutes = new OpenAPIHono<{ Bindings: Env }>({
+const base = new OpenAPIHono<{ Bindings: Env }>({
   defaultHook: validationHook,
 });
 
@@ -497,11 +497,9 @@ const setActiveOrgRoute = createRoute({
   },
 });
 
-// Apply auth middleware to all routes
-orgRoutes.use('*', requireAuth);
-
 // Route handlers
-orgRoutes.openapi(listOrgsRoute, async c => {
+const orgRoutes = $(base.use('*', requireAuth))
+  .openapi(listOrgsRoute, async c => {
   try {
     const orgApi = getOrgApi(c.env, c.executionCtx);
     const result = await orgApi.listOrganizations({
@@ -518,9 +516,9 @@ orgRoutes.openapi(listOrgsRoute, async c => {
     });
     return c.json(dbError, 500);
   }
-});
+  })
 
-orgRoutes.openapi(createOrgRoute, async c => {
+  .openapi(createOrgRoute, async c => {
   try {
     const body = c.req.valid('json');
 
@@ -558,9 +556,9 @@ orgRoutes.openapi(createOrgRoute, async c => {
     });
     return c.json(dbError, 500);
   }
-});
+  })
 
-orgRoutes.openapi(getOrgRoute, async c => {
+  .openapi(getOrgRoute, async c => {
   // Run membership middleware
   const membershipResponse = await runMiddleware(requireOrgMembership(), c);
   if (membershipResponse) return membershipResponse as never;
@@ -606,9 +604,9 @@ orgRoutes.openapi(getOrgRoute, async c => {
     });
     return c.json(dbError, 500);
   }
-});
+  })
 
-orgRoutes.openapi(updateOrgRoute, async c => {
+  .openapi(updateOrgRoute, async c => {
   // Run membership middleware (admin required)
   const membershipResponse = await runMiddleware(requireOrgMembership('admin'), c);
   if (membershipResponse) return membershipResponse as never;
@@ -652,9 +650,9 @@ orgRoutes.openapi(updateOrgRoute, async c => {
     });
     return c.json(dbError, 500);
   }
-});
+  })
 
-orgRoutes.openapi(deleteOrgRoute, async c => {
+  .openapi(deleteOrgRoute, async c => {
   // Run membership middleware (owner required)
   const membershipResponse = await runMiddleware(requireOrgMembership('owner'), c);
   if (membershipResponse) return membershipResponse as never;
@@ -684,9 +682,9 @@ orgRoutes.openapi(deleteOrgRoute, async c => {
     });
     return c.json(dbError, 500);
   }
-});
+  })
 
-orgRoutes.openapi(listMembersRoute, async c => {
+  .openapi(listMembersRoute, async c => {
   // Run membership middleware
   const membershipResponse = await runMiddleware(requireOrgMembership(), c);
   if (membershipResponse) return membershipResponse as never;
@@ -712,9 +710,9 @@ orgRoutes.openapi(listMembersRoute, async c => {
     });
     return c.json(dbError, 500);
   }
-});
+  })
 
-orgRoutes.openapi(addMemberRoute, async c => {
+  .openapi(addMemberRoute, async c => {
   // Run membership middleware (admin required)
   const membershipResponse = await runMiddleware(requireOrgMembership('admin'), c);
   if (membershipResponse) return membershipResponse as never;
@@ -754,9 +752,9 @@ orgRoutes.openapi(addMemberRoute, async c => {
     });
     return c.json(dbError, 500);
   }
-});
+  })
 
-orgRoutes.openapi(updateMemberRoleRoute, async c => {
+  .openapi(updateMemberRoleRoute, async c => {
   // Run membership middleware (admin required)
   const membershipResponse = await runMiddleware(requireOrgMembership('admin'), c);
   if (membershipResponse) return membershipResponse as never;
@@ -796,9 +794,9 @@ orgRoutes.openapi(updateMemberRoleRoute, async c => {
     });
     return c.json(dbError, 500);
   }
-});
+  })
 
-orgRoutes.openapi(removeMemberRoute, async c => {
+  .openapi(removeMemberRoute, async c => {
   // Run membership middleware
   const membershipResponse = await runMiddleware(requireOrgMembership(), c);
   if (membershipResponse) return membershipResponse as never;
@@ -863,9 +861,9 @@ orgRoutes.openapi(removeMemberRoute, async c => {
     });
     return c.json(dbError, 500);
   }
-});
+  })
 
-orgRoutes.openapi(setActiveOrgRoute, async c => {
+  .openapi(setActiveOrgRoute, async c => {
   // Run membership middleware
   const membershipResponse = await runMiddleware(requireOrgMembership(), c);
   if (membershipResponse) return membershipResponse as never;
@@ -891,9 +889,9 @@ orgRoutes.openapi(setActiveOrgRoute, async c => {
     });
     return c.json(dbError, 500);
   }
-});
+  })
 
-// Mount org-scoped project routes
-orgRoutes.route('/:orgId/projects', orgProjectRoutes);
+  // Mount org-scoped project routes
+  .route('/:orgId/projects', orgProjectRoutes);
 
 export { orgRoutes };

@@ -5,7 +5,7 @@
  * PDFs are stored with keys: projects/{projectId}/studies/{studyId}/{filename}
  */
 
-import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
+import { OpenAPIHono, createRoute, z, $ } from '@hono/zod-openapi';
 import type { Context } from 'hono';
 import { runMiddleware } from '@/lib/runMiddleware.js';
 import { requireAuth, getAuth } from '@/middleware/auth.js';
@@ -36,12 +36,9 @@ import type { Env } from '../../types';
 import type { DrizzleD1Database } from 'drizzle-orm/d1';
 import { ErrorResponseSchema } from '@/schemas/common.js';
 
-const orgPdfRoutes = new OpenAPIHono<{ Bindings: Env }>({
+const base = new OpenAPIHono<{ Bindings: Env }>({
   defaultHook: validationHook,
 });
-
-// Apply auth middleware to all routes
-orgPdfRoutes.use('*', requireAuth);
 
 // Response schemas
 const PdfUploaderSchema = z
@@ -407,7 +404,8 @@ export async function generateUniqueFileName(
  * GET /api/orgs/:orgId/projects/:projectId/studies/:studyId/pdfs
  * List PDFs for a study
  */
-orgPdfRoutes.openapi(listPdfsRoute, async c => {
+const orgPdfRoutes = $(base.use('*', requireAuth))
+  .openapi(listPdfsRoute, async c => {
   const membershipResponse = await runMiddleware(requireOrgMembership(), c);
   if (membershipResponse) return membershipResponse as never;
 
@@ -479,13 +477,13 @@ orgPdfRoutes.openapi(listPdfsRoute, async c => {
     });
     return c.json(dbError, 500);
   }
-});
+  })
 
-/**
- * POST /api/orgs/:orgId/projects/:projectId/studies/:studyId/pdfs
- * Upload a PDF for a study
- */
-orgPdfRoutes.openapi(uploadPdfRoute, async c => {
+  /**
+   * POST /api/orgs/:orgId/projects/:projectId/studies/:studyId/pdfs
+   * Upload a PDF for a study
+   */
+  .openapi(uploadPdfRoute, async c => {
   const membershipResponse = await runMiddleware(requireOrgMembership(), c);
   if (membershipResponse) return membershipResponse as never;
 
@@ -674,13 +672,13 @@ orgPdfRoutes.openapi(uploadPdfRoute, async c => {
     );
     return c.json(uploadError, 500);
   }
-});
+  })
 
-/**
- * GET /api/orgs/:orgId/projects/:projectId/studies/:studyId/pdfs/:fileName
- * Download a PDF for a study
- */
-orgPdfRoutes.openapi(downloadPdfRoute, async c => {
+  /**
+   * GET /api/orgs/:orgId/projects/:projectId/studies/:studyId/pdfs/:fileName
+   * Download a PDF for a study
+   */
+  .openapi(downloadPdfRoute, async c => {
   const membershipResponse = await runMiddleware(requireOrgMembership(), c);
   if (membershipResponse) return membershipResponse as never;
 
@@ -751,13 +749,13 @@ orgPdfRoutes.openapi(downloadPdfRoute, async c => {
     );
     return c.json(internalError, 500);
   }
-});
+  })
 
-/**
- * DELETE /api/orgs/:orgId/projects/:projectId/studies/:studyId/pdfs/:fileName
- * Delete a PDF for a study
- */
-orgPdfRoutes.openapi(deletePdfRoute, async c => {
+  /**
+   * DELETE /api/orgs/:orgId/projects/:projectId/studies/:studyId/pdfs/:fileName
+   * Delete a PDF for a study
+   */
+  .openapi(deletePdfRoute, async c => {
   const membershipResponse = await runMiddleware(requireOrgMembership(), c);
   if (membershipResponse) return membershipResponse as never;
 

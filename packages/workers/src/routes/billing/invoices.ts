@@ -2,7 +2,7 @@
  * Billing invoices routes
  * Fetches invoices from Stripe for the current org's subscription
  */
-import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
+import { OpenAPIHono, createRoute, z, $ } from '@hono/zod-openapi';
 import { requireAuth, getAuth } from '@/middleware/auth.js';
 import { createDb } from '@/db/client.js';
 import { subscription } from '@/db/schema.js';
@@ -14,7 +14,7 @@ import { validationHook } from '@/lib/honoValidationHook.js';
 import type { Env } from '../../types';
 import { ErrorResponseSchema } from '@/schemas/common.js';
 
-const billingInvoicesRoutes = new OpenAPIHono<{ Bindings: Env }>({
+const base = new OpenAPIHono<{ Bindings: Env }>({
   defaultHook: validationHook,
 });
 
@@ -64,9 +64,8 @@ const getInvoicesRoute = createRoute({
 });
 
 // Route handlers
-billingInvoicesRoutes.use('*', requireAuth);
-
-billingInvoicesRoutes.openapi(getInvoicesRoute, async c => {
+const billingInvoicesRoutes = $(base.use('*', requireAuth))
+  .openapi(getInvoicesRoute, async c => {
   const { user, session } = getAuth(c);
 
   if (!user || !session) {

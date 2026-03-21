@@ -84,7 +84,7 @@ Error handling lives in TanStack Query's global config, not in the transport lay
 ```typescript
 // lib/rpc.ts
 import { hc } from 'hono/client';
-import type { AppType } from '@workers/index';
+import type { AppType } from '@workers/rpc';
 import { API_BASE } from '@/config/api';
 
 // Pre-computed client type for IDE performance (official Hono recommendation).
@@ -326,49 +326,42 @@ Also check and convert if needed (the lint rule will catch these):
 
 **Move stop-impersonation**: Move the inline `/api/admin/stop-impersonation` handler from `index.ts` base into the chained admin routes so it's included in `AppType`.
 
-### 1c. Frontend: tsconfig path alias
+### 1c. Frontend: Type-safe AppType import via declaration generation (DONE)
 
-Add `@workers/*` alias to `packages/landing/tsconfig.json`:
+Importing workers `.ts` source directly via path alias doesn't work -- workers' internal `@/` imports conflict with landing's `@/` paths, and Cloudflare-specific types (`D1Database`, `DurableObject`, etc.) aren't available in the landing context.
 
-```json
-"paths": {
-  "@/*": ["./src/*"],
-  "@workers/*": ["../workers/src/*"]
-}
-```
+**Solution**: Workers generates declaration files (`.d.ts`) that landing imports. These are pre-compiled types that don't pull in implementation dependencies.
 
-`vite-tsconfig-paths` (already in devDependencies and configured in `vite.config.ts`) will resolve this at build time.
+1. Created `packages/workers/tsconfig.rpc.json` extending the main tsconfig with `emitDeclarationOnly: true`
+2. Added `build:rpc` script to workers package.json: `tsc -p tsconfig.rpc.json`
+3. Output goes to `packages/workers/dist/rpc/` (gitignored via root `.gitignore`)
+4. Landing tsconfig path alias: `"@workers/rpc": ["../workers/dist/rpc/index.d.ts"]`
+5. Frontend imports: `import type { AppType } from '@workers/rpc'`
 
-### 1d. Frontend: Cloudflare Env type resolution
+**Regeneration**: Run `pnpm --filter workers build:rpc` after backend route changes. This is only needed when route signatures change, not for handler logic changes.
 
-`AppType` depends on `Cloudflare.Env` from `worker-configuration.d.ts`. TypeScript needs to resolve this when type-checking `AppType` in landing. Options (test in order):
+### 1d. Frontend: Hono version alignment (DONE)
 
-1. Check if `hc<AppType>` only needs route shape and doesn't fully resolve `Env` (likely works)
-2. Add `@cloudflare/workers-types` to landing devDependencies
-3. Include workers' `worker-configuration.d.ts` in landing tsconfig `files` array
+Verified: both packages resolve to hono@4.12.5 as their direct dependency. The 4.11.4 found earlier is an isolated transitive dependency inside `@prisma/dev` and has no bearing on RPC types.
 
-### 1e. Frontend: Verify Hono version alignment
+### 1e. Frontend: Create `lib/rpc.ts` (DONE)
 
-Both packages must use identical Hono versions to avoid "Type instantiation is excessively deep" errors (official Hono docs warning). Currently both specify `"hono": "^4.12.5"` but pnpm has resolved both 4.12.5 and 4.11.4. Pin to the same exact version or ensure deduplication.
+Created typed `hc` client using the `hcWithType` pattern (official Hono recommendation for IDE performance). Uses `parseResponse` from `hono/client` for typed response extraction with error throwing.
 
-### 1f. Frontend: Create `lib/rpc.ts`
+### 1f. Frontend: Update `lib/queryClient.ts` (DONE)
 
-Create the typed `hc` client using the `hcWithType` pattern as described in the Architecture Decision section. No custom fetch or helper functions needed -- `parseResponse` from `hono/client` handles everything.
+Added global error handlers for `DetailedError` from `hono/client`:
+- Mutation `onError`: extracts domain error from `error.detail.data`, shows toast
+- Query retry: skips retries for client errors (4xx) using `error.statusCode`
+- Auth redirect: subscribes to query cache for `AUTH_REQUIRED`/`AUTH_EXPIRED`
 
-### 1g. Frontend: Update `lib/queryClient.ts`
+### 1g. Verify end-to-end (DONE)
 
-Add global error handlers for `DetailedError` from `hono/client`:
-- Mutation `onError`: extract domain error from `error.detail.data`, show toast via `getUserFriendlyMessage()`
-- Query retry: skip retries for client errors (4xx) using `error.statusCode`
-- Auth redirect: subscribe to query cache for `AUTH_REQUIRED`/`AUTH_EXPIRED`
-
-### 1h. Verify end-to-end
-
-- Run `pnpm --filter workers typecheck` after backend changes
-- Run `pnpm --filter landing typecheck` after frontend setup
-- Convert one route (billing subscription GET) as smoke test
-- Confirm inferred types match expected shape in IDE
-- Verify error responses trigger toast/redirect correctly
+- Workers typecheck: clean
+- Landing typecheck: clean
+- Smoke test: `parseResponse(api.api.billing.subscription.$get())` typechecks correctly
+- `parseResponse(api.api.contact.$post({ json: ... }))` typechecks correctly
+- Path params: `api.api.admin.users[':userId'].$get({ param: { userId: '123' } })` typechecks correctly
 
 ---
 

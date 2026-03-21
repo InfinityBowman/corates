@@ -6,7 +6,7 @@
  * Each route checks DEV_MODE at runtime.
  */
 
-import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
+import { OpenAPIHono, createRoute, z, $ } from '@hono/zod-openapi';
 import {
   requireOrgMembership,
   requireProjectAccess,
@@ -18,10 +18,10 @@ import { getProjectDocStub } from '@/lib/project-doc-id.js';
 import type { Env } from '../../types';
 import { ErrorResponseSchema } from '@/schemas/common.js';
 
-const devRoutes = new OpenAPIHono<{ Bindings: Env }>();
+const base = new OpenAPIHono<{ Bindings: Env }>();
 
 // Middleware to check DEV_MODE for all dev routes
-devRoutes.use('*', async (c, next) => {
+base.use('*', async (c, next) => {
   if (!c.env.DEV_MODE) {
     return c.json({ error: 'Dev endpoints disabled' }, 403);
   }
@@ -29,14 +29,14 @@ devRoutes.use('*', async (c, next) => {
 });
 
 // Middleware to set org context - required before requireProjectAccess
-devRoutes.use('*', requireOrgMembership());
+base.use('*', requireOrgMembership());
 
 // Apply project access middleware to all dev routes
-devRoutes.use('/templates', requireProjectAccess());
-devRoutes.use('/apply-template', requireProjectAccess());
-devRoutes.use('/export', requireProjectAccess());
-devRoutes.use('/import', requireProjectAccess());
-devRoutes.use('/reset', requireProjectAccess());
+base.use('/templates', requireProjectAccess());
+base.use('/apply-template', requireProjectAccess());
+base.use('/export', requireProjectAccess());
+base.use('/import', requireProjectAccess());
+base.use('/reset', requireProjectAccess());
 
 // Response schemas
 
@@ -271,8 +271,9 @@ const resetRoute = createRoute({
 });
 
 // GET /dev/templates
-// @ts-expect-error Dev route returns simplified error format
-devRoutes.openapi(getTemplatesRoute, async c => {
+const devRoutes = $(base)
+  // @ts-expect-error Dev route returns simplified error format
+  .openapi(getTemplatesRoute, async c => {
   const { projectId } = getProjectContext(c);
   if (!projectId) {
     return c.json({ error: 'Project ID required' }, 403);
@@ -287,11 +288,11 @@ devRoutes.openapi(getTemplatesRoute, async c => {
     console.error('[Dev] Failed to fetch templates:', error);
     return c.json({ error: error.message }, 500);
   }
-});
+  })
 
-// POST /dev/apply-template
-// @ts-expect-error Dev route returns simplified error format
-devRoutes.openapi(applyTemplateRoute, async c => {
+  // POST /dev/apply-template
+  // @ts-expect-error Dev route returns simplified error format
+  .openapi(applyTemplateRoute, async c => {
   const { projectId } = getProjectContext(c);
   if (!projectId) {
     return c.json({ error: 'Project ID required' }, 403);
@@ -314,11 +315,11 @@ devRoutes.openapi(applyTemplateRoute, async c => {
     console.error('[Dev] Failed to apply template:', error);
     return c.json({ error: error.message }, 500);
   }
-});
+  })
 
-// GET /dev/export
-// @ts-expect-error Dev route returns simplified error format
-devRoutes.openapi(exportRoute, async c => {
+  // GET /dev/export
+  // @ts-expect-error Dev route returns simplified error format
+  .openapi(exportRoute, async c => {
   const { projectId } = getProjectContext(c);
   if (!projectId) {
     return c.json({ error: 'Project ID required' }, 403);
@@ -333,11 +334,11 @@ devRoutes.openapi(exportRoute, async c => {
     console.error('[Dev] Failed to export state:', error);
     return c.json({ error: error.message }, 500);
   }
-});
+  })
 
-// POST /dev/import
-// @ts-expect-error Dev route returns simplified error format
-devRoutes.openapi(importRoute, async c => {
+  // POST /dev/import
+  // @ts-expect-error Dev route returns simplified error format
+  .openapi(importRoute, async c => {
   const { projectId } = getProjectContext(c);
   const { orgId } = getOrgContext(c);
   const { user } = getAuth(c);
@@ -365,11 +366,11 @@ devRoutes.openapi(importRoute, async c => {
     console.error('[Dev] Failed to import state:', error);
     return c.json({ error: error.message }, 500);
   }
-});
+  })
 
-// POST /dev/reset
-// @ts-expect-error Dev route returns simplified error format
-devRoutes.openapi(resetRoute, async c => {
+  // POST /dev/reset
+  // @ts-expect-error Dev route returns simplified error format
+  .openapi(resetRoute, async c => {
   const { projectId } = getProjectContext(c);
   if (!projectId) {
     return c.json({ error: 'Project ID required' }, 403);

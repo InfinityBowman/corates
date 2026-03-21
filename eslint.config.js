@@ -204,6 +204,27 @@ export default [
     },
   },
   {
+    // Workers route files - enforce chained .openapi() and .route() calls
+    // so types flow into AppType for Hono RPC. See docs/audits/hono-rpc-migration.md
+    files: ['packages/workers/src/routes/**/*.{js,ts}'],
+    ignores: ['**/__tests__/**', '**/*.test.*', '**/*.spec.*'],
+    rules: {
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector: 'ExpressionStatement > CallExpression[callee.property.name="openapi"]',
+          message:
+            'Chain .openapi() calls (assign return value) so types flow into AppType. See docs/audits/hono-rpc-migration.md',
+        },
+        {
+          selector: 'ExpressionStatement > CallExpression[callee.property.name="route"]',
+          message:
+            'Chain .route() calls (assign return value) so types flow into AppType. See docs/audits/hono-rpc-migration.md',
+        },
+      ],
+    },
+  },
+  {
     // Landing package - React with hooks linting
     files: ['packages/landing/**/*.{js,jsx,ts,tsx}'],
     plugins: {

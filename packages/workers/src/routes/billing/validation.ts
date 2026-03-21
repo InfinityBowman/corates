@@ -2,7 +2,7 @@
  * Billing plan validation routes
  * Handles plan change validation logic
  */
-import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
+import { OpenAPIHono, createRoute, z, $ } from '@hono/zod-openapi';
 import { requireAuth, getAuth } from '@/middleware/auth.js';
 import { createDb } from '@/db/client.js';
 import { validatePlanChange } from '@/lib/billingResolver.js';
@@ -12,7 +12,7 @@ import { validationHook } from '@/lib/honoValidationHook.js';
 import type { Env } from '../../types';
 import { ErrorResponseSchema } from '@/schemas/common.js';
 
-const billingValidationRoutes = new OpenAPIHono<{ Bindings: Env }>({
+const base = new OpenAPIHono<{ Bindings: Env }>({
   defaultHook: validationHook,
 });
 
@@ -81,9 +81,8 @@ const validatePlanChangeRoute = createRoute({
 });
 
 // Route handlers
-billingValidationRoutes.use('*', requireAuth);
-
-billingValidationRoutes.openapi(validatePlanChangeRoute, async c => {
+const billingValidationRoutes = $(base.use('*', requireAuth))
+  .openapi(validatePlanChangeRoute, async c => {
   const { user, session } = getAuth(c);
 
   if (!user || !session) {

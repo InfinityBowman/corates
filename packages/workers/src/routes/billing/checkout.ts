@@ -2,7 +2,7 @@
  * Billing checkout routes
  * Handles Stripe Checkout session creation for subscriptions and one-time purchases
  */
-import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
+import { OpenAPIHono, createRoute, z, $ } from '@hono/zod-openapi';
 import { requireAuth, getAuth } from '@/middleware/auth';
 import { createDb } from '@/db/client';
 import { user as userTable } from '@/db/schema';
@@ -21,7 +21,7 @@ import { validationHook } from '@/lib/honoValidationHook';
 import type { Env } from '@/types';
 import { ErrorResponseSchema } from '@/schemas/common.js';
 
-const billingCheckoutRoutes = new OpenAPIHono<{ Bindings: Env }>({
+const base = new OpenAPIHono<{ Bindings: Env }>({
   defaultHook: validationHook,
 });
 
@@ -175,11 +175,10 @@ const singleProjectCheckoutRoute = createRoute({
 });
 
 // Route handlers
-billingCheckoutRoutes.use('/checkout', billingCheckoutRateLimit);
-billingCheckoutRoutes.use('/single-project/checkout', billingCheckoutRateLimit);
-billingCheckoutRoutes.use('*', requireAuth);
-
-billingCheckoutRoutes.openapi(validateCouponRoute, async c => {
+base.use('/checkout', billingCheckoutRateLimit);
+base.use('/single-project/checkout', billingCheckoutRateLimit);
+const billingCheckoutRoutes = $(base.use('*', requireAuth))
+  .openapi(validateCouponRoute, async c => {
   const logger = createLogger({ c, service: 'billing', env: c.env });
 
   try {
@@ -239,9 +238,8 @@ billingCheckoutRoutes.openapi(validateCouponRoute, async c => {
     logger.error('validate_coupon_error', { error: truncateError(error as Error) });
     return c.json({ valid: false as const, error: 'Failed to validate promo code' });
   }
-});
-
-billingCheckoutRoutes.openapi(checkoutRoute, async c => {
+})
+  .openapi(checkoutRoute, async c => {
   const { user, session } = getAuth(c);
   const db = createDb(c.env.DB);
   const logger = createLogger({ c, service: 'billing', env: c.env });
@@ -358,9 +356,8 @@ billingCheckoutRoutes.openapi(checkoutRoute, async c => {
     });
     return c.json(systemError, 500);
   }
-});
-
-billingCheckoutRoutes.openapi(singleProjectCheckoutRoute, async c => {
+})
+  .openapi(singleProjectCheckoutRoute, async c => {
   const { user, session } = getAuth(c);
   const db = createDb(c.env.DB);
   const logger = createLogger({ c, service: 'billing', env: c.env });
