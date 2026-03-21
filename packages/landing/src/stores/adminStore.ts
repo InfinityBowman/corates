@@ -71,7 +71,11 @@ export const useAdminStore = create<AdminState & AdminActions>()(set => ({
   },
 
   impersonateUser: async userId => {
-    await apiFetch.post(`/api/admin/users/${userId}/impersonate`, { userId }, { toastMessage: false });
+    await apiFetch.post(
+      `/api/admin/users/${userId}/impersonate`,
+      { userId },
+      { toastMessage: false },
+    );
     set({ isImpersonating: true });
     window.location.href = '/';
   },

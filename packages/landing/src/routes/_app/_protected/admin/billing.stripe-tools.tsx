@@ -312,8 +312,8 @@ function StripeToolsPage() {
 
         {/* Search Error */}
         {searchError && (
-          <div className='mt-4 rounded-xl border border-warning-border bg-warning-bg p-4'>
-            <p className='text-sm text-warning-foreground'>{searchError}</p>
+          <div className='border-warning-border bg-warning-bg mt-4 rounded-xl border p-4'>
+            <p className='text-warning-foreground text-sm'>{searchError}</p>
           </div>
         )}
       </AdminBox>

@@ -35,26 +35,26 @@ Successfully verified end-to-end type inference with billing subscription routes
 
 ### By the numbers
 
-| Metric | Count |
-|--------|-------|
-| Production files importing apiFetch | 18 |
-| Total apiFetch call sites | ~70 |
-| Unique API paths | ~48 |
-| GET calls | ~30 |
-| POST calls | ~20 |
-| DELETE calls | ~12 |
-| PUT calls | 3 |
+| Metric                              | Count |
+| ----------------------------------- | ----- |
+| Production files importing apiFetch | 18    |
+| Total apiFetch call sites           | ~70   |
+| Unique API paths                    | ~48   |
+| GET calls                           | ~30   |
+| POST calls                          | ~20   |
+| DELETE calls                        | ~12   |
+| PUT calls                           | 3     |
 
 ### Routes NOT covered by RPC
 
 These are mounted on `base` (not chained into `app`) and will keep using `apiFetch`:
 
-| Route | Reason |
-|-------|--------|
-| `/api/auth/*` | Better Auth passthrough, has its own client |
-| `/api/pdf-proxy` | Inline handler on `base`, returns raw blob |
-| `/api/project-doc/:id/*` | Durable Object WebSocket proxy |
-| `/api/sessions/:id/*` | Durable Object WebSocket proxy |
+| Route                    | Reason                                      |
+| ------------------------ | ------------------------------------------- |
+| `/api/auth/*`            | Better Auth passthrough, has its own client |
+| `/api/pdf-proxy`         | Inline handler on `base`, returns raw blob  |
+| `/api/project-doc/:id/*` | Durable Object WebSocket proxy              |
+| `/api/sessions/:id/*`    | Durable Object WebSocket proxy              |
 
 The `/api/admin/stop-impersonation` endpoint is currently inline on `base` -- it should be moved into the chained admin routes so it's included in `AppType`.
 
@@ -91,8 +91,7 @@ import { API_BASE } from '@/config/api';
 // Moves type instantiation to compile time so tsserver doesn't re-compute
 // all route types on every use.
 type Client = ReturnType<typeof hc<AppType>>;
-export const hcWithType = (...args: Parameters<typeof hc>): Client =>
-  hc<typeof app>(...args);
+export const hcWithType = (...args: Parameters<typeof hc>): Client => hc<typeof app>(...args);
 
 export const api = hcWithType(API_BASE, {
   init: { credentials: 'include' },
@@ -141,7 +140,7 @@ const queryClient = new QueryClient({
       },
     },
     mutations: {
-      onError: (error) => {
+      onError: error => {
         const domainError = getDomainError(error);
         if (domainError) {
           toast.error(getUserFriendlyMessage(domainError.code));
@@ -154,7 +153,7 @@ const queryClient = new QueryClient({
 });
 
 // Global auth redirect handler
-queryClient.getQueryCache().subscribe((event) => {
+queryClient.getQueryCache().subscribe(event => {
   if (event.type === 'updated' && event.query.state.error) {
     const domainError = getDomainError(event.query.state.error);
     if (domainError?.code === 'AUTH_REQUIRED' || domainError?.code === 'AUTH_EXPIRED') {
@@ -183,7 +182,7 @@ const { data } = useQuery({
 
 // Mutations get global toast handling automatically
 const mutation = useMutation({
-  mutationFn: (data) => parseResponse(api.api.billing.checkout.$post({ json: data })),
+  mutationFn: data => parseResponse(api.api.billing.checkout.$post({ json: data })),
   // To suppress toast for a specific mutation:
   // onError: () => {},
 });
@@ -191,11 +190,11 @@ const mutation = useMutation({
 
 ### Why `parseResponse` over custom helpers?
 
-| Approach | Lines of custom code | Error handling | Type safety |
-|----------|---------------------|----------------|-------------|
-| `unwrap()` (v1) | ~20 lines + per-call options | In transport layer (wrong place) | Yes |
-| Custom fetch + `rpc()` (v2) | ~15 lines | Split transport/UI | Yes |
-| `parseResponse` (v3, chosen) | 0 lines (built into Hono) | All in TanStack Query (right place) | Yes |
+| Approach                     | Lines of custom code         | Error handling                      | Type safety |
+| ---------------------------- | ---------------------------- | ----------------------------------- | ----------- |
+| `unwrap()` (v1)              | ~20 lines + per-call options | In transport layer (wrong place)    | Yes         |
+| Custom fetch + `rpc()` (v2)  | ~15 lines                    | Split transport/UI                  | Yes         |
+| `parseResponse` (v3, chosen) | 0 lines (built into Hono)    | All in TanStack Query (right place) | Yes         |
 
 - Zero custom transport code to maintain
 - `DetailedError` is Hono's standard -- no need to define our own error type for RPC calls
@@ -268,6 +267,7 @@ Add to the workers ESLint config, scoped to route files:
 This catches any `.openapi()` or `.route()` call whose return value is discarded (an `ExpressionStatement` means the result isn't assigned to a variable). It will immediately flag all the imperative calls that need conversion.
 
 **Validation steps:**
+
 1. Add the rule
 2. Run `pnpm --filter workers lint` to confirm it catches the known violations
 3. Verify it does NOT flag already-chained routes (e.g., `routes/users.ts`)
@@ -320,6 +320,7 @@ const orgRoutes = $(base.use('*', requireAuth))
 ```
 
 Also check and convert if needed (the lint rule will catch these):
+
 - Each billing sub-router file (subscription.ts already done, check others)
 - `routes/orgs/projects.ts` (nested sub-routes)
 - `routes/admin/` sub-routers (admin/index.ts already chains `.route()`)
@@ -358,6 +359,7 @@ Create the typed `hc` client using the `hcWithType` pattern as described in the 
 ### 1g. Frontend: Update `lib/queryClient.ts`
 
 Add global error handlers for `DetailedError` from `hono/client`:
+
 - Mutation `onError`: extract domain error from `error.detail.data`, show toast via `getUserFriendlyMessage()`
 - Query retry: skip retries for client errors (4xx) using `error.statusCode`
 - Auth redirect: subscribe to query cache for `AUTH_REQUIRED`/`AUTH_EXPIRED`
@@ -376,14 +378,14 @@ Add global error handlers for `DetailedError` from `hono/client`:
 
 Lowest risk -- these are simple queryFn replacements with no mutations.
 
-| File | Calls | What changes |
-|------|-------|--------------|
-| `hooks/useSubscription.ts` | 1 GET `/api/billing/subscription` | Delete manual `Subscription` interface |
-| `components/billing/InvoicesList.tsx` | 1 GET `/api/billing/invoices` | Delete manual type |
-| `components/settings/BillingSettings.tsx` | 1 GET `/api/billing/usage` | Inline queryFn conversion |
-| `api/billing.ts` | 2 GETs (`/members`, `/validate-plan-change`) | Convert in API module |
-| `hooks/useMyProjectsList.ts` | 1 GET `/api/users/me/projects` | Simple conversion |
-| `api/google-drive.ts` | 2 GETs (`/status`, `/picker-token`) | Convert in API module |
+| File                                      | Calls                                        | What changes                           |
+| ----------------------------------------- | -------------------------------------------- | -------------------------------------- |
+| `hooks/useSubscription.ts`                | 1 GET `/api/billing/subscription`            | Delete manual `Subscription` interface |
+| `components/billing/InvoicesList.tsx`     | 1 GET `/api/billing/invoices`                | Delete manual type                     |
+| `components/settings/BillingSettings.tsx` | 1 GET `/api/billing/usage`                   | Inline queryFn conversion              |
+| `api/billing.ts`                          | 2 GETs (`/members`, `/validate-plan-change`) | Convert in API module                  |
+| `hooks/useMyProjectsList.ts`              | 1 GET `/api/users/me/projects`               | Simple conversion                      |
+| `api/google-drive.ts`                     | 2 GETs (`/status`, `/picker-token`)          | Convert in API module                  |
 
 **Pattern:**
 
@@ -405,11 +407,11 @@ const { data } = useQuery({
 
 ## Phase 3: Migrate Mutations (billing, account merge, google drive)
 
-| File | Calls | Notes |
-|------|-------|-------|
-| `api/billing.ts` | 4 POSTs (`/checkout`, `/portal`, `/trial/start`, `/single-project/checkout`) | Return redirect URLs |
-| `api/account-merge.ts` | 3 POSTs + 1 DELETE (`/initiate`, `/verify`, `/complete`, `/cancel`) | Toast handled by global mutation onError |
-| `api/google-drive.ts` | 2 POSTs + 1 DELETE (`/import`, `/disconnect`) | `/api/auth/link-social` stays as apiFetch |
+| File                   | Calls                                                                        | Notes                                     |
+| ---------------------- | ---------------------------------------------------------------------------- | ----------------------------------------- |
+| `api/billing.ts`       | 4 POSTs (`/checkout`, `/portal`, `/trial/start`, `/single-project/checkout`) | Return redirect URLs                      |
+| `api/account-merge.ts` | 3 POSTs + 1 DELETE (`/initiate`, `/verify`, `/complete`, `/cancel`)          | Toast handled by global mutation onError  |
+| `api/google-drive.ts`  | 2 POSTs + 1 DELETE (`/import`, `/disconnect`)                                | `/api/auth/link-social` stays as apiFetch |
 
 **Pattern:**
 
@@ -429,13 +431,13 @@ export async function createCheckoutSession(data: CheckoutData) {
 
 ## Phase 4: Migrate User/Project Routes
 
-| File | Calls | Notes |
-|------|-------|-------|
-| `components/project/CreateProjectModal.tsx` | 1 POST `/api/orgs/:orgId/projects` | Path param from component state |
-| `components/project/overview-tab/AddMemberModal.tsx` | 1 GET `/api/users/search`, 1 POST members | Search + add member |
-| `components/dashboard/ProjectsSection.tsx` | 1 DELETE project | Uses raw `apiFetch()` with method: DELETE |
-| `lib/syncUtils.ts` | 1 POST `/api/users/sync-profile` | Simple conversion |
-| `components/dev/DevUserMapping.tsx` | 1 GET `/api/users/search` | Dev-only, low priority |
+| File                                                 | Calls                                     | Notes                                     |
+| ---------------------------------------------------- | ----------------------------------------- | ----------------------------------------- |
+| `components/project/CreateProjectModal.tsx`          | 1 POST `/api/orgs/:orgId/projects`        | Path param from component state           |
+| `components/project/overview-tab/AddMemberModal.tsx` | 1 GET `/api/users/search`, 1 POST members | Search + add member                       |
+| `components/dashboard/ProjectsSection.tsx`           | 1 DELETE project                          | Uses raw `apiFetch()` with method: DELETE |
+| `lib/syncUtils.ts`                                   | 1 POST `/api/users/sync-profile`          | Simple conversion                         |
+| `components/dev/DevUserMapping.tsx`                  | 1 GET `/api/users/search`                 | Dev-only, low priority                    |
 
 **Pattern for path params:**
 
@@ -444,10 +446,12 @@ export async function createCheckoutSession(data: CheckoutData) {
 await apiFetch.post(`/api/orgs/${orgId}/projects`, projectData, { showToast: false });
 
 // After
-await parseResponse(api.api.orgs[':orgId'].projects.$post({
-  param: { orgId },
-  json: projectData,
-}));
+await parseResponse(
+  api.api.orgs[':orgId'].projects.$post({
+    param: { orgId },
+    json: projectData,
+  }),
+);
 ```
 
 ---
@@ -474,9 +478,11 @@ export async function fetchUsers({ page = 1, limit = 20, search = '' } = {}) {
 
 // After
 export async function fetchUsers({ page = 1, limit = 20, search = '' } = {}) {
-  return parseResponse(api.api.admin.users.$get({
-    query: { page: page.toString(), limit: limit.toString(), search },
-  }));
+  return parseResponse(
+    api.api.admin.users.$get({
+      query: { page: page.toString(), limit: limit.toString(), search },
+    }),
+  );
 }
 ```
 

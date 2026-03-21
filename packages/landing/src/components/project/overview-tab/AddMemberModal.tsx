@@ -240,7 +240,7 @@ export function AddMemberModal({
           )}
 
           {selectedUser && (
-            <div className='flex items-center justify-between rounded-lg border border-info-border bg-info-bg p-3'>
+            <div className='border-info-border bg-info-bg flex items-center justify-between rounded-lg border p-3'>
               <div className='flex items-center gap-3'>
                 <Avatar className='size-10'>
                   <AvatarImage

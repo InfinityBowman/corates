@@ -206,7 +206,7 @@ export function DevPanel() {
             </div>
             <div className='flex items-center gap-1'>
               {isProjectContext && connectionState?.connecting && (
-                <span className='text-2xs rounded bg-warning-bg px-2 py-0.5 text-warning-foreground'>
+                <span className='text-2xs bg-warning-bg text-warning-foreground rounded px-2 py-0.5'>
                   Connecting...
                 </span>
               )}

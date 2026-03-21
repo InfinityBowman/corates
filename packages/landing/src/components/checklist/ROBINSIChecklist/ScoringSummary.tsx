@@ -142,7 +142,7 @@ export function ScoringSummary({ checklistState, onDomainClick }: ScoringSummary
           <button
             type='button'
             onClick={() => setResourcesOpen(true)}
-            className='ml-2 inline-flex items-center gap-1 rounded border border-info-border bg-info-bg px-2 py-0.5 text-xs font-medium text-info transition-colors hover:bg-info-bg/80'
+            className='border-info-border bg-info-bg text-info hover:bg-info-bg/80 ml-2 inline-flex items-center gap-1 rounded border px-2 py-0.5 text-xs font-medium transition-colors'
           >
             <InfoIcon className='size-3' />
             Resources
