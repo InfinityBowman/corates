@@ -126,9 +126,7 @@ export function AnalyticsSection() {
     queryKey: [...queryKeys.admin.stats, 'revenue'],
     queryFn: async () => {
       try {
-        return await parseResponse(
-          api.api.admin.stats.revenue.$get({ query: { months: '6' } }),
-        );
+        return await parseResponse(api.api.admin.stats.revenue.$get({ query: { months: '6' } }));
       } catch (err) {
         console.warn('Failed to fetch revenue stats:', (err as Error).message);
         return null;

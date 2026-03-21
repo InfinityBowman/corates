@@ -108,9 +108,7 @@ export async function fetchUsers({ page = 1, limit = 20, search = '' } = {}) {
 }
 
 export async function fetchUserDetails(userId: string) {
-  return parseResponse(
-    api.api.admin.users[':userId'].$get({ param: { userId } }),
-  );
+  return parseResponse(api.api.admin.users[':userId'].$get({ param: { userId } }));
 }
 
 export async function banUser(userId: string, reason: string, expiresAt: string | null = null) {
@@ -123,15 +121,11 @@ export async function banUser(userId: string, reason: string, expiresAt: string 
 }
 
 export async function unbanUser(userId: string) {
-  return parseResponse(
-    api.api.admin.users[':userId'].unban.$post({ param: { userId } }),
-  );
+  return parseResponse(api.api.admin.users[':userId'].unban.$post({ param: { userId } }));
 }
 
 export async function revokeUserSessions(userId: string) {
-  return parseResponse(
-    api.api.admin.users[':userId'].sessions.$delete({ param: { userId } }),
-  );
+  return parseResponse(api.api.admin.users[':userId'].sessions.$delete({ param: { userId } }));
 }
 
 export async function revokeUserSession(userId: string, sessionId: string) {
@@ -143,9 +137,7 @@ export async function revokeUserSession(userId: string, sessionId: string) {
 }
 
 export async function deleteUser(userId: string) {
-  return parseResponse(
-    api.api.admin.users[':userId'].$delete({ param: { userId } }),
-  );
+  return parseResponse(api.api.admin.users[':userId'].$delete({ param: { userId } }));
 }
 
 export async function fetchStorageDocuments(
@@ -167,9 +159,7 @@ export async function deleteStorageDocuments(keys: string[]) {
   if (!Array.isArray(keys) || keys.length === 0) {
     throw new Error('Keys array is required');
   }
-  return parseResponse(
-    api.api.admin.storage.documents.$delete({ json: { keys } }),
-  );
+  return parseResponse(api.api.admin.storage.documents.$delete({ json: { keys } }));
 }
 
 export async function fetchStorageStats() {
@@ -186,15 +176,11 @@ export async function fetchOrgs({ page = 1, limit = 20, search = '' } = {}) {
 }
 
 export async function fetchOrgDetails(orgId: string) {
-  return parseResponse(
-    api.api.admin.orgs[':orgId'].$get({ param: { orgId } }),
-  );
+  return parseResponse(api.api.admin.orgs[':orgId'].$get({ param: { orgId } }));
 }
 
 export async function fetchOrgBilling(orgId: string) {
-  return parseResponse(
-    api.api.admin.orgs[':orgId'].billing.$get({ param: { orgId } }),
-  );
+  return parseResponse(api.api.admin.orgs[':orgId'].billing.$get({ param: { orgId } }));
 }
 
 export async function createOrgSubscription(
@@ -350,9 +336,7 @@ export async function fetchProjects({ page = 1, limit = 20, search = '', orgId =
 }
 
 export async function fetchProjectDetails(projectId: string) {
-  return parseResponse(
-    api.api.admin.projects[':projectId'].$get({ param: { projectId } }),
-  );
+  return parseResponse(api.api.admin.projects[':projectId'].$get({ param: { projectId } }));
 }
 
 export async function removeProjectMember(projectId: string, memberId: string) {
@@ -366,9 +350,7 @@ export async function removeProjectMember(projectId: string, memberId: string) {
 }
 
 export async function deleteProject(projectId: string) {
-  await parseResponse(
-    api.api.admin.projects[':projectId'].$delete({ param: { projectId } }),
-  );
+  await parseResponse(api.api.admin.projects[':projectId'].$delete({ param: { projectId } }));
   queryClient.invalidateQueries({ queryKey: queryKeys.admin.projectDetails(projectId) });
   queryClient.invalidateQueries({ queryKey: ['adminProjects'], exact: false });
 }

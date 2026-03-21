@@ -124,9 +124,10 @@ export function AddMemberModal({
       const result = await parseResponse(
         api.api.orgs[':orgId'].projects[':projectId'].members.$post({
           param: { orgId, projectId },
-          json: selectedUser ?
-            { userId: selectedUser.id, role: selectedRole }
-          : { email: searchQuery.trim(), role: selectedRole },
+          json:
+            selectedUser ?
+              { userId: selectedUser.id, role: selectedRole }
+            : { email: searchQuery.trim(), role: selectedRole },
         }),
       );
       if ((result as any).invitation) {
@@ -243,7 +244,7 @@ export function AddMemberModal({
           )}
 
           {selectedUser && (
-            <div className='flex items-center justify-between rounded-lg border border-info-border bg-info-bg p-3'>
+            <div className='border-info-border bg-info-bg flex items-center justify-between rounded-lg border p-3'>
               <div className='flex items-center gap-3'>
                 <Avatar className='size-10'>
                   <AvatarImage
@@ -277,7 +278,10 @@ export function AddMemberModal({
               <label className='text-secondary-foreground mb-1 block text-sm font-medium'>
                 Role
               </label>
-              <Select value={selectedRole} onValueChange={v => setSelectedRole(v as 'member' | 'owner')}>
+              <Select
+                value={selectedRole}
+                onValueChange={v => setSelectedRole(v as 'member' | 'owner')}
+              >
                 <SelectTrigger className='w-full'>
                   <SelectValue placeholder='Select a role' />
                 </SelectTrigger>

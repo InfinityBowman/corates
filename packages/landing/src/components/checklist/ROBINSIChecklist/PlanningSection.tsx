@@ -21,9 +21,9 @@ export function PlanningSection({ disabled, getRobinsText }: PlanningSectionProp
 
   return (
     <div className='border-border bg-card overflow-hidden rounded-lg border shadow-sm'>
-      <div className='border-b border-warning-border bg-warning-bg px-6 py-4'>
+      <div className='border-warning-border bg-warning-bg border-b px-6 py-4'>
         <h2 className='text-foreground text-lg font-bold'>{(PLANNING_SECTION as any).title}</h2>
-        <p className='mt-1 text-sm font-medium text-warning-foreground'>
+        <p className='text-warning-foreground mt-1 text-sm font-medium'>
           {(PLANNING_SECTION as any).subtitle}
         </p>
       </div>

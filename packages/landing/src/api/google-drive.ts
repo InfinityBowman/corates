@@ -14,11 +14,7 @@ export async function disconnectGoogleDrive() {
   return parseResponse(api.api['google-drive'].disconnect.$delete());
 }
 
-export async function importFromGoogleDrive(
-  fileId: string,
-  projectId: string,
-  studyId: string,
-) {
+export async function importFromGoogleDrive(fileId: string, projectId: string, studyId: string) {
   return parseResponse(
     api.api['google-drive'].import.$post({ json: { fileId, projectId, studyId } }),
   );

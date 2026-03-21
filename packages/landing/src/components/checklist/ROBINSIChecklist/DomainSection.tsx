@@ -141,7 +141,7 @@ export function DomainSection({
 
           {effectiveJudgement ?
             <div className='flex items-center gap-1.5'>
-              {isManualMode && <span className='text-xs text-warning'>Manual</span>}
+              {isManualMode && <span className='text-warning text-xs'>Manual</span>}
               <JudgementBadge judgement={effectiveJudgement} />
             </div>
           : !autoScore.isComplete && (

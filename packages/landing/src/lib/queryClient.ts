@@ -69,7 +69,7 @@ export function getQueryClient(): QueryClient {
       mutations: {
         retry: 1,
         networkMode: 'online',
-        onError: (error) => {
+        onError: error => {
           showToast.error(getFriendlyMessage(error));
         },
       },

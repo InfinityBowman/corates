@@ -30,9 +30,7 @@ export async function redirectToPortal(): Promise<void> {
 }
 
 async function createSingleProjectCheckout() {
-  return parseResponse(
-    api.api.billing['single-project'].checkout.$post({ json: {} }),
-  );
+  return parseResponse(api.api.billing['single-project'].checkout.$post({ json: {} }));
 }
 
 export async function redirectToSingleProjectCheckout(): Promise<void> {

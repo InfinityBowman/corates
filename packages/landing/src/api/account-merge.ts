@@ -8,10 +8,7 @@
 import { parseResponse } from 'hono/client';
 import { api } from '@/lib/rpc';
 
-export async function initiateMerge(
-  targetEmail: string | null,
-  targetOrcidId: string | null,
-) {
+export async function initiateMerge(targetEmail: string | null, targetOrcidId: string | null) {
   const body: Record<string, string> = {};
   if (targetEmail) {
     body.targetEmail = targetEmail;
@@ -25,19 +22,13 @@ export async function initiateMerge(
 }
 
 export async function verifyMergeCode(mergeToken: string, code: string) {
-  return parseResponse(
-    api.api.accounts.merge.verify.$post({ json: { mergeToken, code } }),
-  );
+  return parseResponse(api.api.accounts.merge.verify.$post({ json: { mergeToken, code } }));
 }
 
 export async function completeMerge(mergeToken: string) {
-  return parseResponse(
-    api.api.accounts.merge.complete.$post({ json: { mergeToken } }),
-  );
+  return parseResponse(api.api.accounts.merge.complete.$post({ json: { mergeToken } }));
 }
 
 export async function cancelMerge(mergeToken: string) {
-  return parseResponse(
-    api.api.accounts.merge.cancel.$delete({ json: { mergeToken } }),
-  );
+  return parseResponse(api.api.accounts.merge.cancel.$delete({ json: { mergeToken } }));
 }

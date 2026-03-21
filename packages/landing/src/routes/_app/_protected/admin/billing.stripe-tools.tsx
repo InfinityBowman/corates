@@ -175,13 +175,9 @@ function StripeToolsPage() {
 
     try {
       const query =
-        searchType === 'email'
-          ? { email: searchInput.trim() }
-          : { customerId: searchInput.trim() };
+        searchType === 'email' ? { email: searchInput.trim() } : { customerId: searchInput.trim() };
 
-      const data = await parseResponse(
-        api.api.admin.stripe.customer.$get({ query }),
-      );
+      const data = await parseResponse(api.api.admin.stripe.customer.$get({ query }));
       setCustomerData(data as CustomerData);
 
       if (!data.found) {
@@ -315,8 +311,8 @@ function StripeToolsPage() {
 
         {/* Search Error */}
         {searchError && (
-          <div className='mt-4 rounded-xl border border-warning-border bg-warning-bg p-4'>
-            <p className='text-sm text-warning-foreground'>{searchError}</p>
+          <div className='border-warning-border bg-warning-bg mt-4 rounded-xl border p-4'>
+            <p className='text-warning-foreground text-sm'>{searchError}</p>
           </div>
         )}
       </AdminBox>
