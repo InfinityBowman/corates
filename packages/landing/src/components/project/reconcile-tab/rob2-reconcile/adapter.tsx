@@ -233,8 +233,11 @@ function autoFillFromReviewer1(
   if (item.type === NAV_ITEM_TYPES.PRELIMINARY) {
     const value = c1?.preliminary?.[item.key];
     if (value !== undefined) {
-      updatePreliminaryField(updateChecklistAnswer, item.key, value);
-      copyPreliminaryTextToYText(getTextRef, item.key, value);
+      if (PRELIMINARY_TEXT_FIELDS.includes(item.key)) {
+        copyPreliminaryTextToYText(getTextRef, item.key, value);
+      } else {
+        updatePreliminaryField(updateChecklistAnswer, item.key, value);
+      }
     }
   } else if (item.type === NAV_ITEM_TYPES.DOMAIN_QUESTION && item.domainKey) {
     const answer = c1?.[item.domainKey]?.answers?.[item.key];
@@ -343,15 +346,24 @@ function renderPage(context: EngineContext) {
         onUseReviewer1={() => {
           const value = c1?.preliminary?.[currentItem.key];
           if (value !== undefined) {
-            updatePreliminaryField(context.updateChecklistAnswer, currentItem.key, value);
-            copyPreliminaryTextToYText(getTextRef, currentItem.key, value);
+            if (PRELIMINARY_TEXT_FIELDS.includes(currentItem.key)) {
+              // Text fields: only write Y.Text; the observer syncs back via onFinalChange.
+              // Calling updatePreliminaryField here too would re-write the Y.Text
+              // and trigger the observer again, causing an infinite loop.
+              copyPreliminaryTextToYText(getTextRef, currentItem.key, value);
+            } else {
+              updatePreliminaryField(context.updateChecklistAnswer, currentItem.key, value);
+            }
           }
         }}
         onUseReviewer2={() => {
           const value = c2?.preliminary?.[currentItem.key];
           if (value !== undefined) {
-            updatePreliminaryField(context.updateChecklistAnswer, currentItem.key, value);
-            copyPreliminaryTextToYText(getTextRef, currentItem.key, value);
+            if (PRELIMINARY_TEXT_FIELDS.includes(currentItem.key)) {
+              copyPreliminaryTextToYText(getTextRef, currentItem.key, value);
+            } else {
+              updatePreliminaryField(context.updateChecklistAnswer, currentItem.key, value);
+            }
           }
         }}
       />

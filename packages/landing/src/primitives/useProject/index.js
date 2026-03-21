@@ -285,7 +285,7 @@ export function useProject(projectId) {
         ydoc.on('update', dexieUpdateHandler);
         connectionEntry._cleanupHandlers.push(() => ydoc.off('update', dexieUpdateHandler));
 
-        connectionEntry.syncManager.syncFromYDoc();
+        connectionEntry.syncManager.syncFromYDocImmediate();
 
         if (isLocalProject) {
           useProjectStore.getState().setConnectionState(projectId, {
@@ -302,7 +302,7 @@ export function useProject(projectId) {
       connectionEntry.connectionManager = createConnectionManager(projectId, ydoc, {
         onSync: () => {
           useProjectStore.getState().setConnectionState(projectId, { synced: true });
-          connectionEntry.syncManager?.syncFromYDoc();
+          connectionEntry.syncManager?.syncFromYDocImmediate();
         },
         isLocalProject: () => isLocalProject,
         onAccessDenied: async () => {

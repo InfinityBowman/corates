@@ -175,8 +175,11 @@ export class ROB2Handler extends ChecklistHandler {
     const str = value ?? '';
     const existing = map.get(fieldKey);
     if (existing instanceof Y.Text) {
-      existing.delete(0, existing.length);
-      existing.insert(0, str);
+      if (existing.toString() === str) return;
+      existing.doc.transact(() => {
+        existing.delete(0, existing.length);
+        existing.insert(0, str);
+      });
     } else {
       const newText = new Y.Text();
       newText.insert(0, str);

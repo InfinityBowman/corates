@@ -302,27 +302,30 @@ export function PreliminaryPage({
   const isTextField = PRELIMINARY_TEXT_FIELDS.includes(fieldKey);
 
   // Sync Y.Text changes back to finalAnswers so hasNavItemAnswer detects the field as answered.
-  // Uses a re-entrancy guard to prevent a cycle.
-  const isSyncingRef = useRef(false);
+  // Uses a ref for onFinalChange to avoid re-registering the observer on every render
+  // (onFinalChange is an inline arrow that gets a new reference each render).
+  const onFinalChangeRef = useRef(onFinalChange);
+  onFinalChangeRef.current = onFinalChange;
+
   useEffect(() => {
     if (!isTextField || !getRob2Text) return;
     const yText = getRob2Text('preliminary', fieldKey);
     if (!yText) return;
+    let syncing = false;
 
     const observer = () => {
-      if (isSyncingRef.current) return;
-      isSyncingRef.current = true;
+      if (syncing) return;
+      syncing = true;
       try {
-        const text = yText.toString();
-        onFinalChange(text);
+        onFinalChangeRef.current(yText.toString());
       } finally {
-        isSyncingRef.current = false;
+        syncing = false;
       }
     };
 
     yText.observe(observer);
     return () => yText.unobserve(observer);
-  }, [isTextField, getRob2Text, fieldKey, onFinalChange]);
+  }, [isTextField, getRob2Text, fieldKey]);
 
   const fieldType = getFieldType(fieldKey);
   const options = useMemo(() => getOptions(fieldKey), [fieldKey]);

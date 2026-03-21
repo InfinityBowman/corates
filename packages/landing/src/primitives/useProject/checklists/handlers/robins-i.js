@@ -209,11 +209,12 @@ export class ROBINSIHandler extends ChecklistHandler {
     const commentStr = value ?? '';
     const existing = questionYMap.get(fieldKey);
     if (existing instanceof Y.Text) {
-      // Replace contents of existing Y.Text to preserve object identity
-      existing.delete(0, existing.length);
-      existing.insert(0, commentStr);
+      if (existing.toString() === commentStr) return;
+      existing.doc.transact(() => {
+        existing.delete(0, existing.length);
+        existing.insert(0, commentStr);
+      });
     } else {
-      // Create new Y.Text if it doesn't exist or was overwritten with a string
       const newText = new Y.Text();
       newText.insert(0, commentStr);
       questionYMap.set(fieldKey, newText);

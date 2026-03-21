@@ -150,4 +150,58 @@ test('Dual-Reviewer ROB2 Workflow', async ({ context, page }) => {
   await expect(page.getByText('Item 1 of')).toBeVisible();
   await expect(page.getByText('D1').first()).toBeVisible();
   await expect(page.getByText('D5').first()).toBeVisible();
+
+  // ================================================================
+  // Walk through reconciliation: click "Use This" on Reviewer 1 for
+  // each page, then Next. The engine auto-fills agreed items on Next.
+  // ================================================================
+  const nextBtn = page.getByRole('button', { name: /Next|Review Summary/i });
+
+  // Loop through all items until we reach the summary view
+  let safety = 0;
+  while (safety < 80) {
+    safety++;
+
+    // Click the first "Use This" button (Reviewer 1's panel).
+    // After clicking, the button text changes to "Selected", so we
+    // re-query each iteration to get only unclicked buttons.
+    const useThisBtn = page.getByRole('button', { name: 'Use This' }).first();
+    if (await useThisBtn.isVisible().catch(() => false)) {
+      await useThisBtn.click();
+      // Y.Text fields need time to propagate via observer
+      await page.waitForTimeout(500);
+    }
+
+    // Check if the Next button says "Review Summary" (last page)
+    const btnText = await nextBtn.textContent();
+    await nextBtn.click();
+    await page.waitForTimeout(500);
+
+    if (btnText?.includes('Review Summary')) break;
+  }
+
+  // ================================================================
+  // Summary view - verify and save
+  // ================================================================
+  await expect(page.getByText('Reconciliation Summary')).toBeVisible({ timeout: 5_000 });
+
+  // All items should be reconciled
+  const saveBtn = page.getByRole('button', { name: /Save Reconciled Checklist/i });
+  await expect(saveBtn).toBeEnabled({ timeout: 5_000 });
+  await saveBtn.click();
+  await page.waitForTimeout(500);
+
+  // Confirm save in the dialog
+  const finishBtn = page.getByRole('button', { name: 'Finish' });
+  await expect(finishBtn).toBeVisible({ timeout: 3_000 });
+  await finishBtn.click();
+
+  // Should navigate back to the project page
+  await expect(page).toHaveURL(/\/projects\//, { timeout: 10_000 });
+  await page.waitForTimeout(1000);
+
+  // Verify the completed tab shows the reconciled checklist
+  await page.getByRole('tab', { name: /Completed/i }).click();
+  await page.waitForTimeout(1000);
+  await expect(page.getByText(/Reconciled/i).first()).toBeVisible({ timeout: 5_000 });
 });

@@ -17,10 +17,12 @@ const getAMSTAR2Answers = amstar2.getAnswers;
  * @returns {Object} Sync utilities
  */
 export function createSyncManager(projectId, getYDoc) {
+  let pendingSync = false;
+
   /**
-   * Sync the Y.Doc state to the project store
+   * Perform a full Y.Doc -> Zustand store sync
    */
-  function syncFromYDoc() {
+  function doSync() {
     const ydoc = getYDoc();
     if (!ydoc) return;
 
@@ -69,8 +71,31 @@ export function createSyncManager(projectId, getYDoc) {
     });
   }
 
+  /**
+   * Debounced sync -- batches rapid YDoc updates (e.g., delete+insert in setYTextField)
+   * into a single store update on the next animation frame.
+   */
+  function syncFromYDoc() {
+    if (pendingSync) return;
+    pendingSync = true;
+    requestAnimationFrame(() => {
+      pendingSync = false;
+      doSync();
+    });
+  }
+
+  /**
+   * Immediate sync -- for initial load and WebSocket sync completion where
+   * the UI needs data before the next paint.
+   */
+  function syncFromYDocImmediate() {
+    pendingSync = false;
+    doSync();
+  }
+
   return {
     syncFromYDoc,
+    syncFromYDocImmediate,
   };
 }
 
@@ -332,6 +357,71 @@ function extractAnswersFromYMap(answersMap, checklistType) {
         answers[key] = sectionData;
       } else {
         answers[key] = sectionYMap.toJSON ? sectionYMap.toJSON() : sectionYMap;
+      }
+    } else if (checklistType === 'ROB2' && sectionYMap && typeof sectionYMap.get === 'function') {
+      // ROB-2: Same nested structure as ROBINS-I with Y.Text comments
+      if (key.startsWith('domain')) {
+        const sectionData = {
+          judgement: sectionYMap.get('judgement') ?? null,
+          answers: {},
+        };
+        const direction = sectionYMap.get('direction');
+        if (direction !== undefined) {
+          sectionData.direction = direction;
+        }
+        const answersNestedYMap = sectionYMap.get('answers');
+        if (answersNestedYMap && typeof answersNestedYMap.entries === 'function') {
+          for (const [qKey, questionYMap] of answersNestedYMap.entries()) {
+            if (questionYMap && typeof questionYMap.get === 'function') {
+              const commentValue = questionYMap.get('comment');
+              sectionData.answers[qKey] = {
+                answer: questionYMap.get('answer') ?? null,
+                comment:
+                  commentValue && typeof commentValue.toString === 'function' && typeof commentValue.insert === 'function'
+                    ? commentValue.toString()
+                    : commentValue ?? '',
+              };
+            } else {
+              sectionData.answers[qKey] = questionYMap;
+            }
+          }
+        }
+        answers[key] = sectionData;
+      } else if (key === 'overall') {
+        const sectionData = {
+          judgement: sectionYMap.get('judgement') ?? null,
+        };
+        const direction = sectionYMap.get('direction');
+        if (direction !== undefined) {
+          sectionData.direction = direction;
+        }
+        answers[key] = sectionData;
+      } else if (key === 'preliminary') {
+        const toStr = v =>
+          v && typeof v.toString === 'function' && typeof v.insert === 'function'
+            ? v.toString()
+            : v ?? '';
+        const sectionData = {
+          studyDesign: sectionYMap.get('studyDesign') ?? null,
+          experimental: toStr(sectionYMap.get('experimental')),
+          comparator: toStr(sectionYMap.get('comparator')),
+          numericalResult: toStr(sectionYMap.get('numericalResult')),
+          aim: sectionYMap.get('aim') ?? null,
+          deviationsToAddress: sectionYMap.get('deviationsToAddress') ?? [],
+          sources: sectionYMap.get('sources') ?? {},
+        };
+        answers[key] = sectionData;
+      } else {
+        // Other ROB-2 sections: convert Y.Text fields to strings
+        const sectionData = {};
+        for (const [fieldKey, fieldValue] of sectionYMap.entries()) {
+          if (fieldValue && typeof fieldValue.toString === 'function' && typeof fieldValue.insert === 'function') {
+            sectionData[fieldKey] = fieldValue.toString();
+          } else {
+            sectionData[fieldKey] = fieldValue;
+          }
+        }
+        answers[key] = sectionData;
       }
     } else {
       // AMSTAR2 and other types: simple toJSON conversion

@@ -121,7 +121,7 @@ export const useProjectStore = create<ProjectStoreState & ProjectStoreActions>()
         state.activeProjectId = projectId;
       }),
 
-    setProjectData: (projectId, data) =>
+    setProjectData: (projectId, data) => {
       set(state => {
         if (!state.projects[projectId]) {
           state.projects[projectId] = { meta: {}, members: [], studies: [] };
@@ -135,9 +135,13 @@ export const useProjectStore = create<ProjectStoreState & ProjectStoreActions>()
             ...stats,
             lastUpdated: Date.now(),
           };
-          persistStats(state.projectStats);
         }
-      }),
+      });
+      // Persist after produce completes to avoid passing Immer draft to JSON.stringify
+      if (data.studies !== undefined) {
+        persistStats(useProjectStore.getState().projectStats);
+      }
+    },
 
     setConnectionState: (projectId, connectionState) =>
       set(state => {
