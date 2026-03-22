@@ -5,7 +5,7 @@
 import * as Y from 'yjs';
 import { API_BASE } from '@/config/api';
 import { useProjectStore } from '@/stores/projectStore';
-import projectActionsStore from '@/stores/projectActionsStore';
+import { connectionPool } from '@/project/ConnectionPool';
 import { queryClient } from '@/lib/queryClient';
 import { queryKeys } from '@/lib/queryKeys';
 
@@ -145,7 +145,7 @@ export function createStudyOperations(projectId, getYDoc, isSynced) {
       throw new Error('Project name is required');
     }
 
-    const orgId = projectActionsStore.getActiveOrgId();
+    const orgId = connectionPool.getActiveOrgId();
     if (!orgId) {
       throw new Error('No active organization');
     }
@@ -196,7 +196,7 @@ export function createStudyOperations(projectId, getYDoc, isSynced) {
   async function updateDescription(newDescription) {
     const trimmed = (newDescription || '').trim();
 
-    const orgId = projectActionsStore.getActiveOrgId();
+    const orgId = connectionPool.getActiveOrgId();
     if (!orgId) {
       throw new Error('No active organization');
     }

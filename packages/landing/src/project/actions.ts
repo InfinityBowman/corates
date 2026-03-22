@@ -1,24 +1,64 @@
 /**
  * Typed project actions singleton.
- * Replaces the untyped `projectActionsStore as any` pattern.
+ * Components use `project.study.create(...)` for write operations.
  *
- * Components use `project.study.create(...)` instead of
- * `(projectActionsStore as any).study.create(...)`.
- *
- * Internal lifecycle methods (_setConnection, _setActiveProject, etc.)
- * are NOT exported here -- they're used only by ProjectGate and useProject.
+ * Action modules receive closures that resolve the active connection
+ * from the ConnectionPool, replacing the old projectActionsStore pattern.
  */
 
-import _store from '@/stores/projectActionsStore/index.js';
+import { useAuthStore, selectUser } from '@/stores/authStore';
 import { connectionPool } from './ConnectionPool';
+import { createStudyActions } from '@/stores/projectActionsStore/studies.js';
+import { createChecklistActions } from '@/stores/projectActionsStore/checklists.js';
+import { createPdfActions } from '@/stores/projectActionsStore/pdfs.js';
+import { createProjectActions } from '@/stores/projectActionsStore/project.js';
+import { createMemberActions } from '@/stores/projectActionsStore/members.js';
+import { createReconciliationActions } from '@/stores/projectActionsStore/reconciliation.js';
+import { createOutcomeActions } from '@/stores/projectActionsStore/outcomes.js';
 
-// The store is plain JS with no type exports. Cast once here so consumers
-// don't need to. Full TypeScript interfaces for each action module can be
-// added incrementally as the JS modules are converted to TS.
-const store = _store as any;
+function getActiveProjectId(): string {
+  const id = connectionPool.getActiveProjectId();
+  if (!id) throw new Error('No active project - are you inside a ProjectView?');
+  return id;
+}
+
+function getActiveOrgId(): string {
+  const id = connectionPool.getActiveOrgId();
+  if (!id) throw new Error('No active org - are you inside an org-scoped route?');
+  return id;
+}
+
+function getCurrentUserId(): string | null {
+  const user = selectUser(useAuthStore.getState());
+  return user?.id || null;
+}
+
+function getActiveConnection() {
+  const projectId = getActiveProjectId();
+  return connectionPool.get(projectId);
+}
+
+// Create action modules with pool-based closures
+const studyActions = createStudyActions(
+  getActiveConnection,
+  getActiveProjectId,
+  getActiveOrgId,
+  getCurrentUserId,
+);
+const checklistActions = createChecklistActions(getActiveConnection);
+const pdfActions = createPdfActions(
+  getActiveConnection,
+  getActiveProjectId,
+  getActiveOrgId,
+  getCurrentUserId,
+);
+const projectActions = createProjectActions(getActiveConnection, getActiveProjectId, getActiveOrgId);
+const memberActions = createMemberActions(getActiveProjectId, getActiveOrgId, getCurrentUserId);
+const reconciliationActions = createReconciliationActions(getActiveConnection);
+const outcomeActions = createOutcomeActions(getActiveConnection);
 
 export const project = {
-  study: store.study as {
+  study: studyActions as {
     create: (
       name: string,
       description?: string,
@@ -32,7 +72,7 @@ export const project = {
     importReferences: (references: unknown[]) => number;
   },
 
-  checklist: store.checklist as {
+  checklist: checklistActions as {
     create: (
       studyId: string,
       type: string,
@@ -65,7 +105,7 @@ export const project = {
     ) => void;
   },
 
-  pdf: store.pdf as {
+  pdf: pdfActions as {
     view: (studyId: string, pdf: Record<string, unknown>) => void;
     download: (studyId: string, pdf: Record<string, unknown>) => void;
     upload: (studyId: string, file: File, tag?: string) => Promise<string>;
@@ -76,18 +116,18 @@ export const project = {
     addToStudy: (studyId: string, pdfMeta: Record<string, unknown>, tag?: string) => void;
   },
 
-  project: store.project as {
+  project: projectActions as {
     rename: (newName: string) => Promise<void>;
     updateDescription: (newDescription: string) => Promise<void>;
     delete: () => Promise<void>;
     deleteById: (targetProjectId: string, targetOrgId?: string) => Promise<void>;
   },
 
-  member: store.member as {
+  member: memberActions as {
     remove: (memberId: string) => Promise<{ isSelf: boolean }>;
   },
 
-  reconciliation: store.reconciliation as {
+  reconciliation: reconciliationActions as {
     saveProgress: (
       studyId: string,
       c1Id: string,
@@ -107,15 +147,13 @@ export const project = {
     ) => void;
   },
 
-  outcome: store.outcome as {
+  outcome: outcomeActions as {
     create: (name: string) => string | null;
     update: (outcomeId: string, name: string) => boolean;
     delete: (outcomeId: string) => { success: boolean; error?: string };
     isInUse: (outcomeId: string) => boolean;
   },
 
-  /** Get active project ID or null */
   getActiveProjectId: () => connectionPool.getActiveProjectId(),
-  /** Get active org ID or null */
   getActiveOrgId: () => connectionPool.getActiveOrgId(),
 };

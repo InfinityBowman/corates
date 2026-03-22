@@ -1,7 +1,7 @@
 /**
  * ProjectContext - Provides project identity, user role, and Y.js operations to child components
  *
- * For actions (mutations), import projectActionsStore directly from stores.
+ * For actions (mutations), import { project } from '@/project'.
  */
 
 import { createContext, useContext, useMemo, useCallback } from 'react';
