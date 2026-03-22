@@ -206,13 +206,13 @@ function autoFillFromReviewer1(
   if (item.type === NAV_ITEM_TYPES.PRELIMINARY) {
     const value = c1?.preliminary?.[item.key];
     if (value !== undefined) {
+      // Always update finalAnswers so hasNavItemAnswer works even if page is unmounted
+      updatePreliminaryField(updateChecklistAnswer, item.key, value);
       if (PRELIMINARY_TEXT_FIELDS.includes(item.key)) {
         setTextValue?.(
           { sectionKey: 'preliminary', fieldKey: item.key },
           typeof value === 'string' ? value : '',
         );
-      } else {
-        updatePreliminaryField(updateChecklistAnswer, item.key, value);
       }
     }
   } else if (item.type === NAV_ITEM_TYPES.DOMAIN_QUESTION && item.domainKey) {
@@ -325,26 +325,29 @@ function renderPage(context: EngineContext) {
         onUseReviewer1={() => {
           const value = c1?.preliminary?.[currentItem.key];
           if (value !== undefined) {
+            // Always update finalAnswers so hasNavItemAnswer detects the field as answered
+            // even if the page unmounts before the Y.Text observer fires.
+            updatePreliminaryField(context.updateChecklistAnswer, currentItem.key, value);
             if (PRELIMINARY_TEXT_FIELDS.includes(currentItem.key)) {
+              // Also write to Y.Text for the NoteEditor. The equality check in
+              // setYTextField prevents a feedback loop (setTextValue -> updateChecklistAnswer
+              // -> setYTextField sees same value -> skips).
               context.setTextValue?.(
                 { sectionKey: 'preliminary', fieldKey: currentItem.key },
                 typeof value === 'string' ? value : '',
               );
-            } else {
-              updatePreliminaryField(context.updateChecklistAnswer, currentItem.key, value);
             }
           }
         }}
         onUseReviewer2={() => {
           const value = c2?.preliminary?.[currentItem.key];
           if (value !== undefined) {
+            updatePreliminaryField(context.updateChecklistAnswer, currentItem.key, value);
             if (PRELIMINARY_TEXT_FIELDS.includes(currentItem.key)) {
               context.setTextValue?.(
                 { sectionKey: 'preliminary', fieldKey: currentItem.key },
                 typeof value === 'string' ? value : '',
               );
-            } else {
-              updatePreliminaryField(context.updateChecklistAnswer, currentItem.key, value);
             }
           }
         }}

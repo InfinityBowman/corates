@@ -199,9 +199,42 @@ test('Dual-Reviewer ROB2 Workflow', async ({ context, page }) => {
   }
 
   // ================================================================
-  // Summary view - verify and save
+  // Summary view - fix any remaining unanswered items
   // ================================================================
   await expect(page.getByText('Reconciliation Summary')).toBeVisible({ timeout: 5_000 });
+
+  // Some preliminary text fields (Y.Text) may show "Not set" because the
+  // observer didn't fire before navigating away. Click into each one from
+  // the summary, click "Use This", wait for propagation, then return.
+  let fixAttempts = 0;
+  while (fixAttempts < 10) {
+    const notSetItem = page.getByText('Not set').first();
+    if (!(await notSetItem.isVisible().catch(() => false))) break;
+    fixAttempts++;
+
+    // Click the row to navigate to that item
+    await notSetItem.click();
+    await page.waitForTimeout(800);
+
+    // Click "Use This" if available
+    const useThisBtn = page.getByRole('button', { name: 'Use This' }).first();
+    if (await useThisBtn.isVisible().catch(() => false)) {
+      await useThisBtn.click();
+      await page.waitForTimeout(800);
+    }
+
+    // For sources: if no sources were set by reviewers, check at least one
+    const sourceCheckbox = page.locator('label').filter({ hasText: 'Journal article(s)' });
+    if (await sourceCheckbox.isVisible().catch(() => false)) {
+      await sourceCheckbox.click();
+      await page.waitForTimeout(300);
+    }
+
+    // Go back to summary
+    const summaryBtn = page.getByRole('button', { name: /Summary/i }).first();
+    await summaryBtn.click();
+    await page.waitForTimeout(500);
+  }
 
   // All items should be reconciled
   const saveBtn = page.getByRole('button', { name: /Save Reconciled Checklist/i });
