@@ -35,7 +35,7 @@ registerReconciliationAdapter('AMSTAR2', amstar2Adapter);
 registerReconciliationAdapter('ROB2', rob2Adapter);
 registerReconciliationAdapter('ROBINS_I', robinsIAdapter);
 
-const projectActionsStore = _projectActionsStore as any;
+const _internalStore = _projectActionsStore as any;
 
 interface ReconciliationWrapperProps {
   projectId: string;
@@ -90,7 +90,7 @@ export function ReconciliationWrapper({
   // Set active project for action store
   useEffect(() => {
     if (projectId && orgId) {
-      projectActionsStore._setActiveProject(projectId, orgId);
+      _internalStore._setActiveProject(projectId, orgId);
     }
   }, [projectId, orgId]);
 

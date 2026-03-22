@@ -16,7 +16,7 @@ import {
   selectMembers,
   selectConnectionState,
 } from '@/stores/projectStore';
-import _projectActionsStore from '@/stores/projectActionsStore/index.js';
+import { project } from '@/project';
 import { useProjectContext } from '../ProjectContext';
 import {
   saveFormState,
@@ -25,8 +25,6 @@ import {
   getRestoreParamsFromUrl,
   clearRestoreParamsFromUrl,
 } from '@/lib/formStatePersistence.js';
-
-const projectActionsStore = _projectActionsStore as any;
 
 export function AllStudiesTab() {
   const { projectId, getMember, isOwner } = useProjectContext();
@@ -84,11 +82,11 @@ export function AllStudiesTab() {
     isOwner && studies.length > 0 && unassignedStudies.length > 0;
 
   const handleAssignReviewers = useCallback((studyId: string, updates: any) => {
-    projectActionsStore.study.update(studyId, updates);
+    project.study.update(studyId, updates);
   }, []);
 
   const handleAddStudies = useCallback(async (studiesToAdd: any[]) => {
-    await projectActionsStore.study.addBatch(studiesToAdd);
+    await project.study.addBatch(studiesToAdd);
   }, []);
 
   const handleOpenGoogleDrive = useCallback((studyId: string) => {
@@ -100,7 +98,7 @@ export function AllStudiesTab() {
     (file: any, studyId: string) => {
       const targetStudyId = studyId || googleDriveTargetStudyId;
       if (!targetStudyId) return;
-      projectActionsStore.pdf.handleGoogleDriveImport(targetStudyId, file);
+      project.pdf.handleGoogleDriveImport(targetStudyId, file);
     },
     [googleDriveTargetStudyId],
   );
@@ -203,7 +201,7 @@ export function AllStudiesTab() {
         study={editingStudy}
         projectId={projectId}
         onSave={(studyId: string, updates: any) => {
-          projectActionsStore.study.update(studyId, updates);
+          project.study.update(studyId, updates);
         }}
       />
     </div>

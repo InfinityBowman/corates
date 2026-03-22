@@ -13,8 +13,7 @@ import {
   CheckCircleIcon,
 } from 'lucide-react';
 import { useProjectStore, selectStudies, selectMembers } from '@/stores/projectStore';
-import _projectActionsStore from '@/stores/projectActionsStore/index.js';
-const projectActionsStore = _projectActionsStore as any;
+import { project } from '@/project';
 import { useAuthStore, selectUser } from '@/stores/authStore';
 import { useProjectContext, type ProjectMember } from '../ProjectContext';
 import { showToast } from '@/components/ui/toast';
@@ -159,7 +158,7 @@ export function OverviewTab() {
   const confirmRemoveMember = useCallback(async () => {
     if (!pendingRemoveMember) return;
     try {
-      const result = await projectActionsStore.member.remove(pendingRemoveMember.memberId);
+      const result = await project.member.remove(pendingRemoveMember.memberId);
       if (result.isSelf) {
         navigate({ to: '/dashboard', replace: true });
         showToast.success('Left Project', 'You have left the project');
@@ -178,7 +177,7 @@ export function OverviewTab() {
 
   const interRaterMetrics: any = useMemo(() => {
     const getChecklistData = (studyId: string, checklistId: string) =>
-      projectActionsStore.checklist.getData(studyId, checklistId);
+      project.checklist.getData(studyId, checklistId);
     return calculateInterRaterReliability(studies, getChecklistData);
   }, [studies]);
 

@@ -16,11 +16,9 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { useProjectStore } from '@/stores/projectStore';
-import _projectActionsStore from '@/stores/projectActionsStore/index.js';
+import { project } from '@/project';
 import { useProjectContext } from '../ProjectContext';
 import { showToast } from '@/components/ui/toast';
-
-const projectActionsStore = _projectActionsStore as any;
 
 export function OutcomeManager() {
   const { projectId, isOwner } = useProjectContext();
@@ -40,7 +38,7 @@ export function OutcomeManager() {
     if (!name) return;
     setIsSaving(true);
     try {
-      const outcomeId = await projectActionsStore.outcome.create(name);
+      const outcomeId = await project.outcome.create(name);
       if (outcomeId) {
         setNewName('');
         setIsAdding(false);
@@ -61,7 +59,7 @@ export function OutcomeManager() {
       if (!name) return;
       setIsSaving(true);
       try {
-        const success = await projectActionsStore.outcome.update(outcomeId, name);
+        const success = await project.outcome.update(outcomeId, name);
         if (success) {
           setNewName('');
           setEditingId(null);
@@ -81,7 +79,7 @@ export function OutcomeManager() {
   const confirmDelete = useCallback(() => {
     if (!deleteTarget) return;
     try {
-      const result = projectActionsStore.outcome.delete(deleteTarget);
+      const result = project.outcome.delete(deleteTarget);
       if (result?.success) {
         showToast.success('Outcome deleted');
       } else {

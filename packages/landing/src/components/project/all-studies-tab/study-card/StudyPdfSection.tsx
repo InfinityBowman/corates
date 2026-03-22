@@ -1,6 +1,6 @@
 /**
  * StudyPdfSection - PDF management section within a study card
- * Uses projectActionsStore directly for all PDF operations.
+ * Uses the typed project singleton for all PDF operations.
  */
 
 import { useState, useMemo, useRef, useCallback } from 'react';
@@ -8,10 +8,8 @@ import { PlusIcon } from 'lucide-react';
 import { showToast } from '@/components/ui/toast';
 import { PdfListItem } from '@/components/pdf/PdfListItem';
 import { EditPdfMetadataModal } from '../EditPdfMetadataModal';
-import _projectActionsStore from '@/stores/projectActionsStore/index.js';
+import { project } from '@/project';
 import { validatePdfFile } from '@/lib/pdfValidation.js';
-
-const projectActionsStore = _projectActionsStore as any;
 
 /* eslint-disable no-unused-vars */
 interface StudyPdfSectionProps {
@@ -55,7 +53,7 @@ export function StudyPdfSection({ study, onOpenGoogleDrive, readOnly }: StudyPdf
 
       setUploading(true);
       try {
-        await projectActionsStore.pdf.upload(study.id, file);
+        await project.pdf.upload(study.id, file);
       } catch (err) {
         const { handleError } = await import('@/lib/error-utils');
         await handleError(err, { toastTitle: 'Upload Failed' });
@@ -108,11 +106,11 @@ export function StudyPdfSection({ study, onOpenGoogleDrive, readOnly }: StudyPdf
               <PdfListItem
                 key={pdf.id}
                 pdf={pdf}
-                onView={p => projectActionsStore.pdf.view(study.id, p)}
-                onDownload={p => projectActionsStore.pdf.download(study.id, p)}
-                onDelete={p => projectActionsStore.pdf.delete(study.id, p)}
+                onView={p => project.pdf.view(study.id, p)}
+                onDownload={p => project.pdf.download(study.id, p)}
+                onDelete={p => project.pdf.delete(study.id, p)}
                 onTagChange={(pdfId, newTag) =>
-                  projectActionsStore.pdf.updateTag(study.id, pdfId, newTag)
+                  project.pdf.updateTag(study.id, pdfId, newTag)
                 }
                 onEditMetadata={p => {
                   setEditingPdf(p);
@@ -156,7 +154,7 @@ export function StudyPdfSection({ study, onOpenGoogleDrive, readOnly }: StudyPdf
         pdf={editingPdf}
         studyId={study.id}
         onSave={(sid, pdfId, metadata) =>
-          projectActionsStore.pdf.updateMetadata(sid, pdfId, metadata)
+          project.pdf.updateMetadata(sid, pdfId, metadata)
         }
       />
     </div>

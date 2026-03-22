@@ -9,9 +9,7 @@ import { ReconcileStudyRow } from './ReconcileStudyRow';
 import { useProjectStore, selectStudies } from '@/stores/projectStore';
 import { useProjectContext } from '../ProjectContext';
 import { getStudiesForTab } from '@/lib/checklist-domain.js';
-import _projectActionsStore from '@/stores/projectActionsStore/index.js';
-
-const projectActionsStore = _projectActionsStore as any;
+import { project } from '@/project';
 
 export function ReconcileTab() {
   const { projectId, getAssigneeName, getReconcilePath } = useProjectContext();
@@ -48,8 +46,8 @@ export function ReconcileTab() {
             key={study.id}
             study={study}
             onReconcile={(c1Id, c2Id) => openReconciliation(study.id, c1Id, c2Id)}
-            onViewPdf={pdf => projectActionsStore.pdf.view(study.id, pdf)}
-            onDownloadPdf={pdf => projectActionsStore.pdf.download(study.id, pdf)}
+            onViewPdf={pdf => project.pdf.view(study.id, pdf)}
+            onDownloadPdf={pdf => project.pdf.download(study.id, pdf)}
             getAssigneeName={getAssigneeName}
             getOutcomeName={getOutcomeName}
           />

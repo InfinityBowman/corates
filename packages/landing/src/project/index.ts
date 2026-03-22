@@ -13,3 +13,4 @@ export {
 } from './connectionReducer';
 
 export { ProjectGate } from './ProjectGate';
+export { project } from './actions';

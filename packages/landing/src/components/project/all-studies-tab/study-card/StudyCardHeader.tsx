@@ -15,10 +15,8 @@ import {
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { Avatar, AvatarImage, AvatarFallback, getInitials } from '@/components/ui/avatar';
 import { type ProjectMember } from '@/components/project/ProjectContext';
-import _projectActionsStore from '@/stores/projectActionsStore/index.js';
+import { project } from '@/project';
 import { API_BASE } from '@/config/api';
-
-const projectActionsStore = _projectActionsStore as any;
 
 const AVATAR_COLORS = [
   { bg: 'bg-blue-100', text: 'text-blue-700' },
@@ -82,7 +80,7 @@ export function StudyCardHeader({
   const handleNameChange = useCallback(
     (newName: string) => {
       if (newName && newName.trim() && newName !== study.name) {
-        projectActionsStore.study.update(study.id, { name: newName.trim() });
+        project.study.update(study.id, { name: newName.trim() });
       }
     },
     [study.id, study.name],
@@ -170,7 +168,7 @@ export function StudyCardHeader({
           <DropdownMenuSeparator />
           <DropdownMenuItem
             className='text-destructive focus:text-destructive'
-            onClick={() => projectActionsStore.study.delete(study.id)}
+            onClick={() => project.study.delete(study.id)}
           >
             <Trash2Icon className='mr-2 size-4' />
             Delete Study

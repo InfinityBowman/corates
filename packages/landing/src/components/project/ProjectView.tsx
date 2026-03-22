@@ -10,8 +10,7 @@ import { useProjectStore, selectStudies, selectMeta, selectConnectionState } fro
 import { useProjectOrgId } from '@/hooks/useProjectOrgId';
 import { useAuthStore, selectUser } from '@/stores/authStore';
 import { ProjectGate } from '@/project';
-import _projectActionsStore from '@/stores/projectActionsStore/index.js';
-const projectActionsStore = _projectActionsStore as any;
+import { project } from '@/project';
 import { uploadPdf, deletePdf } from '@/api/pdf-api';
 import { cachePdf } from '@/primitives/pdfCache.js';
 import { bestEffort } from '@/lib/errorLogger.js';
@@ -105,7 +104,7 @@ function ProjectViewInner({ projectId }: ProjectViewProps) {
         doi: pdf.doi ?? pdf.metadata?.doi ?? null,
         importSource: pdf.metadata?.importSource || 'pdf',
       };
-      const studyId = projectActionsStore.study.create(
+      const studyId = project.study.create(
         studyName,
         pdf.metadata?.abstract || '',
         metadata,
@@ -122,7 +121,7 @@ function ProjectViewInner({ projectId }: ProjectViewProps) {
             });
             try {
               const pdfMetadata = pdf.metadata || {};
-              projectActionsStore.pdf.addToStudy(studyId, {
+              project.pdf.addToStudy(studyId, {
                 key: result.key,
                 fileName: result.fileName,
                 size: result.size,
@@ -160,7 +159,7 @@ function ProjectViewInner({ projectId }: ProjectViewProps) {
     const refs = pendingRefs;
     setPendingRefs(null); // eslint-disable-line react-hooks/set-state-in-effect -- one-time consumption
     for (const ref of refs) {
-      projectActionsStore.study.create(ref.title, ref.metadata?.abstract || '', ref.metadata || {});
+      project.study.create(ref.title, ref.metadata?.abstract || '', ref.metadata || {});
     }
   }, [connectionState.synced, projectId, pendingRefs]);
 
@@ -181,7 +180,7 @@ function ProjectViewInner({ projectId }: ProjectViewProps) {
         ...(file.metadata || {}),
         importSource: file.metadata?.importSource || file.importSource || 'google-drive',
       };
-      const studyId = projectActionsStore.study.create(
+      const studyId = project.study.create(
         title,
         file.metadata?.abstract || '',
         metadata,
@@ -190,7 +189,7 @@ function ProjectViewInner({ projectId }: ProjectViewProps) {
         importFromGoogleDrive(file.id, projectId, studyId)
           .then((result: any) => {
             try {
-              projectActionsStore.pdf.addToStudy(studyId, {
+              project.pdf.addToStudy(studyId, {
                 key: result.file.key,
                 fileName: result.file.fileName,
                 size: result.file.size,
@@ -288,8 +287,8 @@ function ProjectViewInner({ projectId }: ProjectViewProps) {
                 <ProjectHeader
                   name={meta?.name as string}
                   description={meta?.description as string}
-                  onRename={newName => projectActionsStore.project.rename(newName)}
-                  onUpdateDescription={desc => projectActionsStore.project.updateDescription(desc)}
+                  onRename={newName => project.project.rename(newName)}
+                  onUpdateDescription={desc => project.project.updateDescription(desc)}
                   onBack={() => navigate({ to: '/dashboard' })}
                 />
               </div>

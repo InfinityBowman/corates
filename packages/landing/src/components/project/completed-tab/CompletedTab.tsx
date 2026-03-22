@@ -9,9 +9,7 @@ import { useProjectStore, selectStudies } from '@/stores/projectStore';
 import { useProjectContext } from '../ProjectContext';
 import { getStudiesForTab, isDualReviewerStudy, getOutcomeKey } from '@/lib/checklist-domain.js';
 import { CompletedStudyRow } from './CompletedStudyRow';
-import _projectActionsStore from '@/stores/projectActionsStore/index.js';
-
-const projectActionsStore = _projectActionsStore as any;
+import { project } from '@/project';
 
 export function CompletedTab() {
   const { projectId, getAssigneeName, getChecklistPath, projectOps } = useProjectContext();
@@ -58,8 +56,8 @@ export function CompletedTab() {
             key={study.id}
             study={study}
             onOpenChecklist={checklistId => openChecklist(study.id, checklistId)}
-            onViewPdf={pdf => projectActionsStore.pdf.view(study.id, pdf)}
-            onDownloadPdf={pdf => projectActionsStore.pdf.download(study.id, pdf)}
+            onViewPdf={pdf => project.pdf.view(study.id, pdf)}
+            onDownloadPdf={pdf => project.pdf.download(study.id, pdf)}
             getReconciliationProgress={(outcomeId, type) =>
               getReconciliationProgress(study.id, outcomeId, type)
             }

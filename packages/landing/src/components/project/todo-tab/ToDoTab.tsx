@@ -15,9 +15,7 @@ import {
 import { useAuthStore, selectUser } from '@/stores/authStore';
 import { useProjectContext } from '../ProjectContext';
 import { getStudiesForTab } from '@/lib/checklist-domain.js';
-import _projectActionsStore from '@/stores/projectActionsStore/index.js';
-
-const projectActionsStore = _projectActionsStore as any;
+import { project } from '@/project';
 
 export function ToDoTab() {
   const { projectId, getChecklistPath } = useProjectContext();
@@ -50,7 +48,7 @@ export function ToDoTab() {
   const handleCreateChecklist = useCallback(
     (studyId: string, type: string, assigneeId: string, outcomeId: string | null) => {
       try {
-        const success = projectActionsStore.checklist.create(studyId, type, assigneeId, outcomeId);
+        const success = project.checklist.create(studyId, type, assigneeId, outcomeId ?? undefined);
         if (success) setShowChecklistForm(null);
       } catch (err) {
         console.error('Failed to create checklist:', err);
@@ -86,10 +84,10 @@ export function ToDoTab() {
             }
             onOpenChecklist={checklistId => openChecklist(study.id, checklistId)}
             onDeleteChecklist={checklistId =>
-              projectActionsStore.checklist.delete(study.id, checklistId)
+              project.checklist.delete(study.id, checklistId)
             }
-            onViewPdf={pdf => projectActionsStore.pdf.view(study.id, pdf)}
-            onDownloadPdf={pdf => projectActionsStore.pdf.download(study.id, pdf)}
+            onViewPdf={pdf => project.pdf.view(study.id, pdf)}
+            onDownloadPdf={pdf => project.pdf.download(study.id, pdf)}
             creatingChecklist={false}
           />
         ))
