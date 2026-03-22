@@ -6,10 +6,11 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { useProjectContext } from '@/components/project/ProjectContext';
+import { connectionPool } from '@/project/ConnectionPool';
 import {
   useProjectStore,
   selectMembers,
-  selectConnectionState,
+  selectConnectionPhase,
   selectStudy,
 } from '@/stores/projectStore';
 import { useAuthStore, selectUser } from '@/stores/authStore';
@@ -48,7 +49,7 @@ export function ReconciliationWrapper({
   checklist2Id,
 }: ReconciliationWrapperProps) {
   const navigate = useNavigate();
-  const { orgId, projectOps } = useProjectContext();
+  const { orgId } = useProjectContext();
   const user = useAuthStore(selectUser);
 
   const [error, setError] = useState<string | null>(null);
@@ -59,8 +60,9 @@ export function ReconciliationWrapper({
     closePreview();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Destructure Y.js operations from parent ProjectView's connection
-  const ops = projectOps as any;
+  // Destructure Y.js operations from connection pool
+  const ops = connectionPool.get(projectId);
+  if (!ops) throw new Error(`No connection for project ${projectId}`);
   const {
     createChecklist: createProjectChecklist,
     updateChecklistAnswer,
@@ -72,7 +74,7 @@ export function ReconciliationWrapper({
     getRob2Text,
     saveReconciliationProgress,
     getAwareness,
-  } = ops || {};
+  } = ops;
 
   // Current user for presence features
   const currentUser = useMemo(() => {
@@ -85,7 +87,7 @@ export function ReconciliationWrapper({
   }, [user]);
 
   // Read data from store (use stable selectors to avoid infinite re-render loops)
-  const connectionState = useProjectStore(s => selectConnectionState(s, projectId)) as any;
+  const connectionState = useProjectStore(s => selectConnectionPhase(s, projectId));
   const currentStudy = useProjectStore(s => selectStudy(s, projectId, studyId)) as any;
   const members = useProjectStore(s => selectMembers(s, projectId)) as any[];
 
@@ -249,7 +251,7 @@ export function ReconciliationWrapper({
   useEffect(() => {
     if (
       !currentStudy ||
-      !connectionState.synced ||
+      connectionState.phase !== 'synced' ||
       reconciledChecklistId ||
       hasCheckedForReconciled ||
       !createProjectChecklist
@@ -261,7 +263,7 @@ export function ReconciliationWrapper({
     setReconciledChecklistLoading(true);
 
     // Check if one already exists in reconciliation progress for this outcome
-    const progress = getReconciliationProgress?.(studyId, outcomeId, checklistType);
+    const progress = getReconciliationProgress(studyId, outcomeId, checklistType);
     if (
       progress &&
       progress.checklist1Id === checklist1Id &&
@@ -289,7 +291,7 @@ export function ReconciliationWrapper({
       checklistType,
     ) as Record<string, any> | null;
     if (existingReconciled && existingReconciled.status !== CHECKLIST_STATUS.FINALIZED) {
-      saveReconciliationProgress?.(studyId, outcomeId, checklistType, {
+      saveReconciliationProgress(studyId, outcomeId, checklistType, {
         checklist1Id,
         checklist2Id,
         reconciledChecklistId: existingReconciled.id,
@@ -307,12 +309,12 @@ export function ReconciliationWrapper({
       return;
     }
 
-    updateChecklist?.(studyId, newChecklistId, {
+    updateChecklist(studyId, newChecklistId, {
       status: CHECKLIST_STATUS.RECONCILING,
       title: 'Reconciled Checklist',
     });
 
-    saveReconciliationProgress?.(studyId, outcomeId, checklistType, {
+    saveReconciliationProgress(studyId, outcomeId, checklistType, {
       checklist1Id,
       checklist2Id,
       reconciledChecklistId: newChecklistId,
@@ -322,7 +324,7 @@ export function ReconciliationWrapper({
     setReconciledChecklistLoading(false);
   }, [
     currentStudy,
-    connectionState.synced,
+    connectionState.phase,
     reconciledChecklistId,
     hasCheckedForReconciled,
     studyId,
@@ -350,7 +352,7 @@ export function ReconciliationWrapper({
       const firstCreated = allReconciled[0];
 
       if (firstCreated.id !== reconciledChecklistId) {
-        saveReconciliationProgress?.(studyId, outcomeId, checklistType, {
+        saveReconciliationProgress(studyId, outcomeId, checklistType, {
           checklist1Id,
           checklist2Id,
           reconciledChecklistId: firstCreated.id,
@@ -403,7 +405,7 @@ export function ReconciliationWrapper({
         if (!reconciledChecklistId) {
           throw new Error('No reconciled checklist found');
         }
-        updateChecklist?.(studyId, reconciledChecklistId, {
+        updateChecklist(studyId, reconciledChecklistId, {
           status: CHECKLIST_STATUS.FINALIZED,
           title: reconciledName || 'Reconciled Checklist',
         });
@@ -425,13 +427,13 @@ export function ReconciliationWrapper({
   const getTextRef = useCallback(
     (...args: unknown[]) => {
       if (isRobinsI) {
-        return getRobinsText?.(studyId, reconciledChecklistId, ...args);
+        return getRobinsText(studyId, reconciledChecklistId, ...args);
       }
       if (isRob2) {
-        return getRob2Text?.(studyId, reconciledChecklistId, ...args);
+        return getRob2Text(studyId, reconciledChecklistId, ...args);
       }
       // AMSTAR2: getQuestionNote takes just the question key
-      return getQuestionNote?.(studyId, reconciledChecklistId, args[0]);
+      return getQuestionNote(studyId, reconciledChecklistId, args[0]);
     },
     [
       isRobinsI,
@@ -448,9 +450,11 @@ export function ReconciliationWrapper({
   const setTextValue = useCallback(
     (params: { sectionKey?: string; fieldKey?: string; questionKey?: string }, text: string) => {
       if (!reconciledChecklistId) return;
-      (projectOps as any)?.setTextValue?.(studyId, reconciledChecklistId, params, text);
+      const poolOps = connectionPool.get(projectId);
+      if (!poolOps) throw new Error(`No connection for project ${projectId}`);
+      poolOps.setTextValue(studyId, reconciledChecklistId, params, text);
     },
-    [studyId, reconciledChecklistId, projectOps],
+    [studyId, reconciledChecklistId, projectId],
   );
 
   // Shared props for all reconciliation types
@@ -513,7 +517,7 @@ export function ReconciliationWrapper({
       checklistType={checklistType}
       updateChecklistAnswer={(sectionKey: string, data: any) => {
         if (!reconciledChecklistId) return;
-        updateChecklistAnswer?.(studyId, reconciledChecklistId, sectionKey, data);
+        updateChecklistAnswer(studyId, reconciledChecklistId, sectionKey, data);
       }}
       getTextRef={getTextRef}
       setTextValue={setTextValue}

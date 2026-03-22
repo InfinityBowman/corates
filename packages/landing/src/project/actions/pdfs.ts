@@ -52,7 +52,7 @@ export const pdfActions = {
     if (!pdf?.fileName) return;
     const projectId = connectionPool.getActiveProjectId();
     const orgId = connectionPool.getActiveOrgId();
-    if (!projectId || !orgId) return;
+    if (!projectId || !orgId) throw new Error('No active project connection');
 
     usePdfPreviewStore.getState().openPreview(projectId, studyId, pdf as any);
 
@@ -80,7 +80,7 @@ export const pdfActions = {
     if (!pdf?.fileName) return;
     const projectId = connectionPool.getActiveProjectId();
     const orgId = connectionPool.getActiveOrgId();
-    if (!projectId || !orgId) return;
+    if (!projectId || !orgId) throw new Error('No active project connection');
 
     try {
       let data = await getCachedPdf(projectId, studyId, pdf.fileName as string);
@@ -111,8 +111,8 @@ export const pdfActions = {
     const userId = user?.id || null;
     const ops = connectionPool.getActiveOps();
 
-    if (!projectId || !orgId || !ops?.addPdfToStudy) {
-      throw new Error('Not connected to project');
+    if (!projectId || !orgId || !ops) {
+      throw new Error('No active project connection');
     }
 
     const study =
@@ -184,8 +184,8 @@ export const pdfActions = {
     const orgId = connectionPool.getActiveOrgId();
     const ops = connectionPool.getActiveOps();
 
-    if (!pdf?.fileName || !projectId || !orgId || !ops?.removePdfFromStudy) {
-      throw new Error('Not connected to project');
+    if (!pdf?.fileName || !projectId || !orgId || !ops) {
+      throw new Error('No active project connection');
     }
 
     let r2Deleted = false;
@@ -223,11 +223,15 @@ export const pdfActions = {
   },
 
   updateTag(studyId: string, pdfId: string, newTag: string): void {
-    connectionPool.getActiveOps()?.updatePdfTag?.(studyId, pdfId, newTag);
+    const ops = connectionPool.getActiveOps();
+    if (!ops) throw new Error('No active project connection');
+    ops.updatePdfTag(studyId, pdfId, newTag);
   },
 
   updateMetadata(studyId: string, pdfId: string, metadata: Record<string, unknown>): void {
-    connectionPool.getActiveOps()?.updatePdfMetadata?.(studyId, pdfId, metadata);
+    const ops = connectionPool.getActiveOps();
+    if (!ops) throw new Error('No active project connection');
+    ops.updatePdfMetadata(studyId, pdfId, metadata);
   },
 
   async handleGoogleDriveImport(studyId: string, file: any, tag = 'secondary'): Promise<void> {
@@ -237,7 +241,8 @@ export const pdfActions = {
     const userId = user?.id || null;
     const ops = connectionPool.getActiveOps();
 
-    if (!studyId || !file || !projectId || !orgId || !ops?.addPdfToStudy) return;
+    if (!studyId || !file) return;
+    if (!projectId || !orgId || !ops) throw new Error('No active project connection');
 
     const study =
       useProjectStore.getState().projects[projectId]?.studies?.find(
@@ -292,6 +297,8 @@ export const pdfActions = {
   },
 
   addToStudy(studyId: string, pdfMeta: Record<string, unknown>, tag?: string): void {
-    connectionPool.getActiveOps()?.addPdfToStudy?.(studyId, pdfMeta, tag);
+    const ops = connectionPool.getActiveOps();
+    if (!ops) throw new Error('No active project connection');
+    ops.addPdfToStudy(studyId, pdfMeta, tag);
   },
 };

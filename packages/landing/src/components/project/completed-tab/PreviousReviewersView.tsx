@@ -15,6 +15,7 @@ import {
 } from '@/components/ui/dialog';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useProjectContext } from '@/components/project/ProjectContext';
+import { connectionPool } from '@/project/ConnectionPool';
 import { getOriginalReviewerChecklists } from '@/lib/checklist-domain.js';
 import { getChecklistMetadata } from '@/checklist-registry/index';
 import { GenericChecklist } from '@/components/checklist/GenericChecklist';
@@ -32,10 +33,11 @@ export function PreviousReviewersView({
   getAssigneeName,
   onClose,
 }: PreviousReviewersViewProps) {
-  const { projectOps } = useProjectContext();
-  const ops = projectOps as any;
-  const getChecklistData = ops?.getChecklistData;
-  const getQuestionNote = ops?.getQuestionNote;
+  const { projectId } = useProjectContext();
+  const ops = connectionPool.get(projectId);
+  if (!ops) throw new Error(`No connection for project ${projectId}`);
+  const getChecklistData = ops.getChecklistData;
+  const getQuestionNote = ops.getQuestionNote;
 
   const [checklist1Data, setChecklist1Data] = useState<any>(null);
   const [checklist2Data, setChecklist2Data] = useState<any>(null);
@@ -61,9 +63,9 @@ export function PreviousReviewersView({
 
     try {
       const data1 =
-        originalChecklists[0] ? getChecklistData?.(study.id, originalChecklists[0].id) : null;
+        originalChecklists[0] ? getChecklistData(study.id, originalChecklists[0].id) : null;
       const data2 =
-        originalChecklists[1] ? getChecklistData?.(study.id, originalChecklists[1].id) : null;
+        originalChecklists[1] ? getChecklistData(study.id, originalChecklists[1].id) : null;
 
       setChecklist1Data(
         data1 ?
@@ -195,7 +197,7 @@ export function PreviousReviewersView({
                       onUpdate={() => {}}
                       getQuestionNote={(questionKey: string) => {
                         if (!currentChecklistId) return null;
-                        return getQuestionNote?.(study.id, currentChecklistId, questionKey);
+                        return getQuestionNote(study.id, currentChecklistId, questionKey);
                       }}
                     />
                   </>

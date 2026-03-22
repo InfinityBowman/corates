@@ -10,7 +10,7 @@ import {
   useProjectStore,
   selectStudies,
   selectMeta,
-  selectConnectionState,
+  selectConnectionPhase,
 } from '@/stores/projectStore';
 import { useProjectOrgId } from '@/hooks/useProjectOrgId';
 import { useAuthStore, selectUser } from '@/stores/authStore';
@@ -74,7 +74,7 @@ function ProjectViewInner({ projectId }: ProjectViewProps) {
 
   const studies = useProjectStore(s => selectStudies(s, projectId));
   const meta = useProjectStore(s => selectMeta(s, projectId));
-  const connectionState = useProjectStore(s => selectConnectionState(s, projectId));
+  const connectionState = useProjectStore(s => selectConnectionPhase(s, projectId));
 
   // Read pending data exactly once via lazy initializer (safe for StrictMode)
   const [pendingState] = useState(() => {
@@ -91,7 +91,7 @@ function ProjectViewInner({ projectId }: ProjectViewProps) {
 
   useEffect(() => {
     if (
-      !connectionState.synced ||
+      connectionState.phase !== 'synced' ||
       !projectId ||
       !orgId ||
       !Array.isArray(pendingPdfs) ||
@@ -147,11 +147,11 @@ function ProjectViewInner({ projectId }: ProjectViewProps) {
           .catch(err => console.error('Error uploading PDF for new study:', err));
       }
     }
-  }, [connectionState.synced, projectId, orgId, pendingPdfs, user?.id]);
+  }, [connectionState.phase, projectId, orgId, pendingPdfs, user?.id]);
 
   useEffect(() => {
     if (
-      !connectionState.synced ||
+      connectionState.phase !== 'synced' ||
       !projectId ||
       !Array.isArray(pendingRefs) ||
       pendingRefs.length === 0
@@ -162,11 +162,11 @@ function ProjectViewInner({ projectId }: ProjectViewProps) {
     for (const ref of refs) {
       project.study.create(ref.title, ref.metadata?.abstract || '', ref.metadata || {});
     }
-  }, [connectionState.synced, projectId, pendingRefs]);
+  }, [connectionState.phase, projectId, pendingRefs]);
 
   useEffect(() => {
     if (
-      !connectionState.synced ||
+      connectionState.phase !== 'synced' ||
       !projectId ||
       !orgId ||
       !Array.isArray(pendingDriveFiles) ||
@@ -207,7 +207,7 @@ function ProjectViewInner({ projectId }: ProjectViewProps) {
           .catch(err => console.error('Error importing Google Drive file:', err));
       }
     }
-  }, [connectionState.synced, projectId, orgId, pendingDriveFiles, user?.id]);
+  }, [connectionState.phase, projectId, orgId, pendingDriveFiles, user?.id]);
 
   // Tab helpers
   const userId = user?.id;

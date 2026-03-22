@@ -10,7 +10,7 @@
 
 import {
   useProjectStore,
-  selectConnectionState,
+  selectConnectionPhase,
   selectStudies,
   selectMembers,
   selectMeta,
@@ -39,20 +39,22 @@ export function useProjectData(projectId: string | undefined) {
   );
   const meta = useProjectStore(state => (projectId ? selectMeta(state, projectId) : EMPTY_META));
   const connectionState = useProjectStore(state =>
-    projectId ? selectConnectionState(state, projectId) : IDLE_STATE,
+    projectId ? selectConnectionPhase(state, projectId) : null,
   );
   const hasData = useProjectStore(state => (projectId ? !!state.projects[projectId] : false));
 
   if (!projectId) return IDLE_STATE;
 
+  const phase = connectionState?.phase ?? 'idle';
+
   return {
     studies,
     members,
     meta,
-    connected: connectionState.connected,
-    connecting: connectionState.connecting,
-    synced: connectionState.synced,
-    error: connectionState.error,
+    connected: phase === 'connected' || phase === 'synced',
+    connecting: phase === 'connecting',
+    synced: phase === 'synced',
+    error: connectionState?.error ?? null,
     hasData,
   };
 }

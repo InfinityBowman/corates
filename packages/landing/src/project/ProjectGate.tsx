@@ -1,15 +1,16 @@
 /**
  * ProjectGate - Declarative connection lifecycle for a project.
  *
- * Renders fallback while connecting, error UI on access denied,
- * and children + ProjectProvider when synced.
+ * Owns the connection lifecycle (acquire/release via ConnectionPool),
+ * active project tracking, and access denied handling.
+ * Renders fallback while connecting, children + ProjectProvider when synced.
  */
 
-import { useEffect } from 'react';
+import { useEffect, useLayoutEffect, useRef } from 'react';
 import { useNavigate } from '@tanstack/react-router';
-import { useProject } from '@/primitives/useProject';
-import { useProjectStore, selectConnectionState } from '@/stores/projectStore';
+import { useProjectStore, selectConnectionPhase } from '@/stores/projectStore';
 import { useProjectOrgId } from '@/hooks/useProjectOrgId';
+import { useOnlineStatus } from '@/hooks/useOnlineStatus';
 import { ACCESS_DENIED_ERRORS } from '@/constants/errors';
 import { showToast } from '@/components/ui/toast';
 import { connectionPool } from './ConnectionPool';
@@ -25,10 +26,34 @@ interface ProjectGateProps {
 export function ProjectGate({ projectId, fallback, children }: ProjectGateProps) {
   const navigate = useNavigate();
   const orgId = useProjectOrgId(projectId);
-  const projectConnection = useProject(projectId);
-  const connectionState = useProjectStore(s => selectConnectionState(s, projectId));
+  const isLocalProject = projectId ? projectId.startsWith('local-') : false;
+  const isOnline = useOnlineStatus();
+  const connectionEntryRef = useRef<any>(null);
 
-  // Set active project for the action store
+  const connectionState = useProjectStore(s => selectConnectionPhase(s, projectId));
+
+  // Connection lifecycle -- acquire on mount, release on unmount
+  useLayoutEffect(() => {
+    if (!projectId) return;
+    let cancelled = false;
+
+    const entry = connectionPool.acquire(projectId);
+    connectionEntryRef.current = entry;
+
+    if (entry && !entry.initialized) {
+      connectionPool.initializeConnection(projectId, entry, {
+        isLocal: isLocalProject,
+        cancelled: () => cancelled,
+      });
+    }
+
+    return () => {
+      cancelled = true;
+      connectionPool.release(projectId);
+    };
+  }, [projectId]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Set active project for the pool (used by project.* action modules)
   useEffect(() => {
     if (projectId && orgId) {
       connectionPool.setActiveProject(projectId, orgId);
@@ -37,6 +62,16 @@ export function ProjectGate({ projectId, fallback, children }: ProjectGateProps)
       connectionPool.clearActiveProject();
     };
   }, [projectId, orgId]);
+
+  // Reconnect on online transition
+  const wasOnlineRef = useRef(isOnline);
+  useEffect(() => {
+    const wasOffline = !wasOnlineRef.current;
+    wasOnlineRef.current = isOnline;
+    if (isOnline && wasOffline) {
+      connectionPool.reconnectIfNeeded(projectId);
+    }
+  }, [isOnline, projectId]);
 
   // Access denied redirect
   useEffect(() => {
@@ -47,20 +82,17 @@ export function ProjectGate({ projectId, fallback, children }: ProjectGateProps)
   }, [connectionState.error, navigate]);
 
   // Show fallback while connecting
-  if (!connectionState.synced && !connectionState.error) {
+  if (connectionState.phase !== 'synced' && !connectionState.error) {
     return <>{fallback || null}</>;
   }
 
-  // Error state is handled by the redirect above; render nothing while redirecting
+  // Error state handled by redirect above
   if (connectionState.error) {
     return null;
   }
 
   return (
-    <ProjectProvider
-      projectId={projectId}
-      projectOps={projectConnection as Record<string, unknown>}
-    >
+    <ProjectProvider projectId={projectId}>
       {children}
     </ProjectProvider>
   );

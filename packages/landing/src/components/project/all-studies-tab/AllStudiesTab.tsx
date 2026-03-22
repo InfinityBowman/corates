@@ -14,7 +14,7 @@ import {
   useProjectStore,
   selectStudies,
   selectMembers,
-  selectConnectionState,
+  selectConnectionPhase,
 } from '@/stores/projectStore';
 import { project } from '@/project';
 import { useProjectContext } from '../ProjectContext';
@@ -38,8 +38,8 @@ export function AllStudiesTab() {
 
   const studies = useProjectStore(s => selectStudies(s, projectId));
   const members = useProjectStore(s => selectMembers(s, projectId));
-  const connectionState = useProjectStore(s => selectConnectionState(s, projectId));
-  const hasData = connectionState.synced || studies.length > 0;
+  const connectionState = useProjectStore(s => selectConnectionPhase(s, projectId));
+  const hasData = connectionState.phase === 'synced' || studies.length > 0;
 
   // Restore state after OAuth redirect
   useEffect(() => {

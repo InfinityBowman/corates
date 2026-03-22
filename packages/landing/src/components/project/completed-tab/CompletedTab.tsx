@@ -7,14 +7,17 @@ import { useNavigate } from '@tanstack/react-router';
 import { CheckCircleIcon } from 'lucide-react';
 import { useProjectStore, selectStudies } from '@/stores/projectStore';
 import { useProjectContext } from '../ProjectContext';
+import { connectionPool } from '@/project/ConnectionPool';
 import { getStudiesForTab, isDualReviewerStudy, getOutcomeKey } from '@/lib/checklist-domain.js';
 import { CompletedStudyRow } from './CompletedStudyRow';
 import { project } from '@/project';
 
 export function CompletedTab() {
-  const { projectId, getAssigneeName, getChecklistPath, projectOps } = useProjectContext();
+  const { projectId, getAssigneeName, getChecklistPath } = useProjectContext();
   const navigate = useNavigate();
-  const getAllReconciliationProgress = (projectOps as any)?.getAllReconciliationProgress;
+  const conn = connectionPool.get(projectId);
+  if (!conn) throw new Error(`No connection for project ${projectId}`);
+  const getAllReconciliationProgress = conn.getAllReconciliationProgress;
 
   const studies = useProjectStore(s => selectStudies(s, projectId));
   const meta = useProjectStore(s => s.projects[projectId]?.meta) as any;

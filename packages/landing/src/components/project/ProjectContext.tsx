@@ -28,7 +28,6 @@ interface ProjectContextValue {
   getMember: (userId: string | null) => ProjectMember | null;
   getChecklistPath: (studyId: string, checklistId: string, tab?: string) => string;
   getReconcilePath: (studyId: string, checklist1Id: string, checklist2Id: string) => string;
-  projectOps: Record<string, unknown> | null;
 }
  
 
@@ -36,11 +35,10 @@ const ProjectCtx = createContext<ProjectContextValue | null>(null);
 
 interface ProjectProviderProps {
   projectId: string;
-  projectOps?: Record<string, unknown>;
   children: React.ReactNode;
 }
 
-export function ProjectProvider({ projectId, projectOps, children }: ProjectProviderProps) {
+export function ProjectProvider({ projectId, children }: ProjectProviderProps) {
   const user = useAuthStore(selectUser);
   const orgId = useProjectOrgId(projectId);
   const members = useProjectStore(s => selectMembers(s, projectId)) as ProjectMember[];
@@ -92,7 +90,6 @@ export function ProjectProvider({ projectId, projectOps, children }: ProjectProv
       getMember,
       getChecklistPath,
       getReconcilePath,
-      projectOps: projectOps || null,
     }),
     [
       projectId,
@@ -103,7 +100,6 @@ export function ProjectProvider({ projectId, projectOps, children }: ProjectProv
       getMember,
       getChecklistPath,
       getReconcilePath,
-      projectOps,
     ],
   );
 

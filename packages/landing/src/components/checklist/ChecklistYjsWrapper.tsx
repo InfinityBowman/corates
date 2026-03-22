@@ -8,7 +8,8 @@ import { useNavigate, useLocation } from '@tanstack/react-router';
 import { ChevronLeftIcon } from 'lucide-react';
 import { ChecklistWithPdf } from '@/components/checklist/ChecklistWithPdf';
 import { useProjectContext } from '@/components/project/ProjectContext';
-import { useProjectStore, selectConnectionState } from '@/stores/projectStore';
+import { connectionPool } from '@/project/ConnectionPool';
+import { useProjectStore, selectConnectionPhase } from '@/stores/projectStore';
 import { useAuthStore, selectUser } from '@/stores/authStore';
 import { ACCESS_DENIED_ERRORS } from '@/constants/errors.js';
 import { CHECKLIST_STATUS, isEditable } from '@/constants/checklist-status.js';
@@ -70,7 +71,7 @@ export function ChecklistYjsWrapper({ projectId, studyId, checklistId }: Checkli
   const navigate = useNavigate();
   const location = useLocation();
   const user = useAuthStore(selectUser);
-  const { orgId, projectOps } = useProjectContext();
+  const { orgId } = useProjectContext();
 
   const [completeDialogOpen, setCompleteDialogOpen] = useState(false);
   const [pdfData, setPdfData] = useState<ArrayBuffer | null>(null);
@@ -79,7 +80,8 @@ export function ChecklistYjsWrapper({ projectId, studyId, checklistId }: Checkli
   const [selectedPdfId, setSelectedPdfId] = useState<string | null>(null);
   const [attemptedPdfFile, setAttemptedPdfFile] = useState<string | null>(null);
 
-  const ops = projectOps as any;
+  const ops = connectionPool.get(projectId);
+  if (!ops) throw new Error(`No connection for project ${projectId}`);
   const {
     updateChecklistAnswer,
     updateChecklist,
@@ -91,9 +93,9 @@ export function ChecklistYjsWrapper({ projectId, studyId, checklistId }: Checkli
     addAnnotation,
     updateAnnotation,
     deleteAnnotation,
-  } = ops || {};
+  } = ops;
 
-  const connectionState = useProjectStore(s => selectConnectionState(s, projectId));
+  const connectionState = useProjectStore(s => selectConnectionPhase(s, projectId));
 
   // Access denied redirect
   useEffect(() => {
@@ -223,7 +225,7 @@ export function ChecklistYjsWrapper({ projectId, studyId, checklistId }: Checkli
   // Build checklist data for UI
   const checklistForUI = useMemo(() => {
     if (!currentChecklist) return null;
-    const data = getChecklistData?.(studyId, checklistId);
+    const data = getChecklistData(studyId, checklistId);
     if (!data) return null;
     return {
       id: currentChecklist.id,
@@ -262,7 +264,7 @@ export function ChecklistYjsWrapper({ projectId, studyId, checklistId }: Checkli
           (checklistType === 'ROBINS_I' && ROBINS_I_KEYS.has(key)) ||
           (checklistType === 'ROB2' && ROB2_KEYS.has(key));
         if (isValidKey) {
-          updateChecklistAnswer?.(studyId, checklistId, key, value);
+          updateChecklistAnswer(studyId, checklistId, key, value);
         }
       });
     },
@@ -288,7 +290,7 @@ export function ChecklistYjsWrapper({ projectId, studyId, checklistId }: Checkli
 
   const confirmMarkComplete = useCallback(() => {
     const nextStatus = getNextStatusForCompletion(currentStudy as any);
-    updateChecklist?.(studyId, checklistId, { status: nextStatus });
+    updateChecklist(studyId, checklistId, { status: nextStatus });
     const statusLabel =
       nextStatus === CHECKLIST_STATUS.FINALIZED ? 'completed' : 'awaiting reconciliation';
     showToast.success(
@@ -313,7 +315,7 @@ export function ChecklistYjsWrapper({ projectId, studyId, checklistId }: Checkli
   const handleAnnotationAdd = useCallback(
     (annotation: any) => {
       if (isReadOnly || !selectedPdfId) return;
-      addAnnotation?.(studyId, selectedPdfId, checklistId, annotation, user?.id);
+      addAnnotation(studyId, selectedPdfId, checklistId, annotation, user?.id);
     },
     [isReadOnly, selectedPdfId, addAnnotation, studyId, checklistId, user?.id],
   );
@@ -321,7 +323,7 @@ export function ChecklistYjsWrapper({ projectId, studyId, checklistId }: Checkli
   const handleAnnotationUpdate = useCallback(
     (annotation: any) => {
       if (isReadOnly) return;
-      updateAnnotation?.(studyId, checklistId, annotation.id, annotation);
+      updateAnnotation(studyId, checklistId, annotation.id, annotation);
     },
     [isReadOnly, updateAnnotation, studyId, checklistId],
   );
@@ -329,7 +331,7 @@ export function ChecklistYjsWrapper({ projectId, studyId, checklistId }: Checkli
   const handleAnnotationDelete = useCallback(
     (annotationId: string) => {
       if (isReadOnly) return;
-      deleteAnnotation?.(studyId, checklistId, annotationId);
+      deleteAnnotation(studyId, checklistId, annotationId);
     },
     [isReadOnly, deleteAnnotation, studyId, checklistId],
   );
@@ -422,7 +424,7 @@ export function ChecklistYjsWrapper({ projectId, studyId, checklistId }: Checkli
     return (
       <div className='flex min-h-screen items-center justify-center bg-blue-50'>
         <div className='text-muted-foreground'>
-          {connectionState.connecting || pdfLoading ? 'Loading...' : 'Checklist not found'}
+          {connectionState.phase === 'connecting' || pdfLoading ? 'Loading...' : 'Checklist not found'}
         </div>
       </div>
     );
@@ -444,13 +446,13 @@ export function ChecklistYjsWrapper({ projectId, studyId, checklistId }: Checkli
       selectedPdfId={selectedPdfId}
       onPdfSelect={handlePdfSelect}
       getQuestionNote={(questionKey: string) =>
-        getQuestionNote?.(studyId, checklistId, questionKey)
+        getQuestionNote(studyId, checklistId, questionKey)
       }
       getRobinsText={(sectionKey: string, fieldKey: string, questionKey?: string) =>
-        getRobinsText?.(studyId, checklistId, sectionKey, fieldKey, questionKey)
+        getRobinsText(studyId, checklistId, sectionKey, fieldKey, questionKey)
       }
       getRob2Text={(sectionKey: string, fieldKey: string, questionKey?: string) =>
-        getRob2Text?.(studyId, checklistId, sectionKey, fieldKey, questionKey)
+        getRob2Text(studyId, checklistId, sectionKey, fieldKey, questionKey)
       }
       onAnnotationAdd={handleAnnotationAdd}
       onAnnotationUpdate={handleAnnotationUpdate}

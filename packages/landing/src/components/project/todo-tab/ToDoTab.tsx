@@ -10,7 +10,7 @@ import {
   useProjectStore,
   selectStudies,
   selectMembers,
-  selectConnectionState,
+  selectConnectionPhase,
 } from '@/stores/projectStore';
 import { useAuthStore, selectUser } from '@/stores/authStore';
 import { useProjectContext } from '../ProjectContext';
@@ -36,8 +36,8 @@ export function ToDoTab() {
 
   const studies = useProjectStore(s => selectStudies(s, projectId));
   const members = useProjectStore(s => selectMembers(s, projectId));
-  const connectionState = useProjectStore(s => selectConnectionState(s, projectId));
-  const hasData = connectionState.synced || studies.length > 0;
+  const connectionState = useProjectStore(s => selectConnectionPhase(s, projectId));
+  const hasData = connectionState.phase === 'synced' || studies.length > 0;
   const currentUserId = user?.id;
 
   const myStudies = useMemo(() => {

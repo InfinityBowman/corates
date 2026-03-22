@@ -257,20 +257,13 @@ function showBatchResultToast(successCount: number, manualPdfCount: number): voi
 export const studyActions = {
   create(name: string, description = '', metadata: Record<string, unknown> = {}): string | null {
     const ops = connectionPool.getActiveOps();
-    if (!ops?.createStudy) {
-      console.error('No connection for active project');
-      return null;
-    }
+    if (!ops) throw new Error('No active project connection');
     return ops.createStudy(name, description, metadata);
   },
 
   update(studyId: string, updates: Record<string, unknown>): void {
     const ops = connectionPool.getActiveOps();
-    if (!ops?.updateStudy) {
-      console.error('No connection for active project');
-      showToast.error('Update Failed', 'Not connected to project');
-      return;
-    }
+    if (!ops) throw new Error('No active project connection');
     try {
       ops.updateStudy(studyId, updates);
     } catch (err) {
@@ -283,9 +276,8 @@ export const studyActions = {
     const projectId = connectionPool.getActiveProjectId();
     const orgId = connectionPool.getActiveOrgId();
     const ops = connectionPool.getActiveOps();
-    if (!projectId || !orgId || !ops?.deleteStudy) {
-      showToast.error('Delete Failed', 'Not connected to project');
-      return;
+    if (!projectId || !orgId || !ops) {
+      throw new Error('No active project connection');
     }
 
     try {
@@ -330,9 +322,8 @@ export const studyActions = {
     const userId = user?.id || null;
     const ops = connectionPool.getActiveOps();
 
-    if (!projectId || !orgId || !ops?.createStudy) {
-      showToast.error('Add Failed', 'Not connected to project');
-      throw new Error('Not connected to project');
+    if (!projectId || !orgId || !ops) {
+      throw new Error('No active project connection');
     }
 
     let successCount = 0;
@@ -415,10 +406,7 @@ export const studyActions = {
 
   importReferences(references: Record<string, unknown>[]): number {
     const ops = connectionPool.getActiveOps();
-    if (!ops?.createStudy) {
-      showToast.error('Import Failed', 'Not connected to project');
-      return 0;
-    }
+    if (!ops) throw new Error('No active project connection');
 
     let successCount = 0;
 

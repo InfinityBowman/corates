@@ -10,7 +10,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { XIcon, ChevronDownIcon, ChevronUpIcon, BugIcon, BracesIcon } from 'lucide-react';
-import { useProjectStore, selectConnectionState } from '@/stores/projectStore';
+import { useProjectStore, selectConnectionPhase } from '@/stores/projectStore';
 import { useProjectOrgId } from '@/hooks/useProjectOrgId';
 import { DevStateTree } from './DevStateTree';
 import { DevTemplateSelector } from './DevTemplateSelector';
@@ -54,7 +54,7 @@ export function DevPanel() {
   const projectData = useProjectStore(s => (projectId ? s.projects[projectId] || null : null));
 
   const connectionState = useProjectStore(s =>
-    projectId ? selectConnectionState(s, projectId) : null,
+    projectId ? selectConnectionPhase(s, projectId) : null,
   );
 
   const [isOpen, setIsOpen] = useState(false);
@@ -205,17 +205,17 @@ export function DevPanel() {
               }
             </div>
             <div className='flex items-center gap-1'>
-              {isProjectContext && connectionState?.connecting && (
+              {isProjectContext && connectionState?.phase === 'connecting' && (
                 <span className='text-2xs bg-warning-bg text-warning-foreground rounded px-2 py-0.5'>
                   Connecting...
                 </span>
               )}
-              {isProjectContext && connectionState?.connected && (
+              {isProjectContext && (connectionState?.phase === 'connected' || connectionState?.phase === 'synced') && (
                 <span className='text-2xs bg-success-bg text-success rounded px-2 py-0.5'>
                   Connected
                 </span>
               )}
-              {isProjectContext && !connectionState?.connected && !connectionState?.connecting && (
+              {isProjectContext && connectionState?.phase !== 'connected' && connectionState?.phase !== 'synced' && connectionState?.phase !== 'connecting' && (
                 <span className='text-2xs rounded bg-red-100 px-2 py-0.5 text-red-700'>
                   Disconnected
                 </span>

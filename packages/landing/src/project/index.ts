@@ -5,7 +5,6 @@
 
 export {
   connectionReducer,
-  phaseToLegacy,
   INITIAL_STATE,
   type ConnectionPhase,
   type ConnectionEvent,

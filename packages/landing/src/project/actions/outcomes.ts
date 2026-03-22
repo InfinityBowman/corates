@@ -8,10 +8,7 @@ import { connectionPool } from '../ConnectionPool';
 export const outcomeActions = {
   create(name: string): string | null {
     const conn = connectionPool.getActiveOps();
-    if (!conn?.createOutcome) {
-      console.error('[outcome.create] No connection');
-      return null;
-    }
+    if (!conn) throw new Error('No active project connection');
     const user = selectUser(useAuthStore.getState());
     if (!user?.id) {
       console.error('[outcome.create] No user logged in');
@@ -22,24 +19,19 @@ export const outcomeActions = {
 
   update(outcomeId: string, name: string): boolean {
     const conn = connectionPool.getActiveOps();
-    if (!conn?.updateOutcome) {
-      console.error('[outcome.update] No connection');
-      return false;
-    }
+    if (!conn) throw new Error('No active project connection');
     return conn.updateOutcome(outcomeId, name);
   },
 
   delete(outcomeId: string): { success: boolean; error?: string } {
     const conn = connectionPool.getActiveOps();
-    if (!conn?.deleteOutcome) {
-      console.error('[outcome.delete] No connection');
-      return { success: false, error: 'No connection' };
-    }
+    if (!conn) throw new Error('No active project connection');
     return conn.deleteOutcome(outcomeId);
   },
 
   isInUse(outcomeId: string): boolean {
     const conn = connectionPool.getActiveOps();
-    return conn?.isOutcomeInUse?.(outcomeId) ?? false;
+    if (!conn) throw new Error('No active project connection');
+    return conn.isOutcomeInUse(outcomeId);
   },
 };

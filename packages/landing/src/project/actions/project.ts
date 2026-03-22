@@ -11,10 +11,7 @@ import { connectionPool } from '../ConnectionPool';
 export const projectActions = {
   async rename(newName: string): Promise<void> {
     const ops = connectionPool.getActiveOps();
-    if (!ops?.renameProject) {
-      showToast.error('Rename Failed', 'Not connected to project');
-      return;
-    }
+    if (!ops) throw new Error('No active project connection');
     try {
       await ops.renameProject(newName);
     } catch (err) {
@@ -25,10 +22,7 @@ export const projectActions = {
 
   async updateDescription(newDescription: string): Promise<void> {
     const ops = connectionPool.getActiveOps();
-    if (!ops?.updateDescription) {
-      showToast.error('Update Failed', 'Not connected to project');
-      return;
-    }
+    if (!ops) throw new Error('No active project connection');
     try {
       await ops.updateDescription(newDescription);
     } catch (err) {
