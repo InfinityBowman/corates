@@ -23,7 +23,7 @@ import { Collapsible, CollapsibleContent } from '@/components/ui/collapsible';
 import { Tabs, TabsList, TabsTrigger, TabsIndicator, TabsContent } from '@/components/ui/tabs';
 import { showToast } from '@/components/ui/toast';
 import { useProjectStore } from '@/stores/projectStore';
-import { useAddStudies } from '@/hooks/useAddStudies/index.js';
+import { useAddStudies } from '@/hooks/useAddStudies';
 
 import { PdfUploadSection } from './PdfUploadSection';
 import { ReferenceImportSection } from './ReferenceImportSection';

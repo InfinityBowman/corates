@@ -72,7 +72,7 @@ export function PreviousReviewersView({
           {
             id: originalChecklists[0].id,
             name: study?.name || 'Checklist',
-            reviewerName: getAssigneeName(originalChecklists[0].assignedTo),
+            reviewerName: getAssigneeName(String(originalChecklists[0].assignedTo ?? '')),
             createdAt: originalChecklists[0].createdAt,
             type: originalChecklists[0].type,
             ...data1.answers,
@@ -85,7 +85,7 @@ export function PreviousReviewersView({
           {
             id: originalChecklists[1].id,
             name: study?.name || 'Checklist',
-            reviewerName: getAssigneeName(originalChecklists[1].assignedTo),
+            reviewerName: getAssigneeName(String(originalChecklists[1].assignedTo ?? '')),
             createdAt: originalChecklists[1].createdAt,
             type: originalChecklists[1].type,
             ...data2.answers,
@@ -107,10 +107,10 @@ export function PreviousReviewersView({
   const reviewerTabs = useMemo(() => {
     const tabs: Array<{ value: string; label: string }> = [];
     if (originalChecklists[0] && checklist1Data) {
-      tabs.push({ value: 'reviewer1', label: getAssigneeName(originalChecklists[0].assignedTo) });
+      tabs.push({ value: 'reviewer1', label: getAssigneeName(String(originalChecklists[0].assignedTo ?? '')) });
     }
     if (originalChecklists[1] && checklist2Data) {
-      tabs.push({ value: 'reviewer2', label: getAssigneeName(originalChecklists[1].assignedTo) });
+      tabs.push({ value: 'reviewer2', label: getAssigneeName(String(originalChecklists[1].assignedTo ?? '')) });
     }
     return tabs;
   }, [originalChecklists, checklist1Data, checklist2Data, getAssigneeName]);

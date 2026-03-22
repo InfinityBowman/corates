@@ -114,10 +114,10 @@ export function CompletedStudyRow({
                   {(getChecklistMetadata(firstGroup.type) as any)?.name || 'Checklist'}
                 </span>
                 <span
-                  className={`inline-flex shrink-0 rounded-full px-2.5 py-1 text-xs font-medium ${getStatusStyle(firstGroup.checklists[0]?.status)}`}
+                  className={`inline-flex shrink-0 rounded-full px-2.5 py-1 text-xs font-medium ${getStatusStyle(firstGroup.checklists[0]?.status ?? '')}`}
                   data-selectable
                 >
-                  {getStatusLabel(firstGroup.checklists[0]?.status)}
+                  {getStatusLabel(firstGroup.checklists[0]?.status ?? '')}
                 </span>
                 {hasPreviousReviewers && (
                   <button

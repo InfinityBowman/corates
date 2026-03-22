@@ -5,7 +5,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { buildDeduplicatedStudies } from '../../useAddStudies/deduplication.js';
+import { buildDeduplicatedStudies } from '../../useAddStudies/deduplication';
 
 describe('deduplication', () => {
   describe('buildDeduplicatedStudies', () => {

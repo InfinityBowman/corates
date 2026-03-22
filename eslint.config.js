@@ -33,6 +33,7 @@ export default [
         SVGGElement: 'readonly',
         SVGElement: 'readonly',
         SVGSVGElement: 'readonly',
+        DOMParser: 'readonly',
         DOMException: 'readonly',
         requestIdleCallback: 'readonly',
         cancelIdleCallback: 'readonly',

@@ -5,7 +5,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { normalizeDoi, entriesMatch, findMatchingRef } from '../../useAddStudies/matching.js';
+import { normalizeDoi, entriesMatch, findMatchingRef } from '../../useAddStudies/matching';
 
 describe('matching', () => {
   describe('normalizeDoi', () => {

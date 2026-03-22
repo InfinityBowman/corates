@@ -9,16 +9,16 @@ import { DexieYProvider } from 'y-dexie';
 import { useProjectStore } from '@/stores/projectStore';
 import { queryClient } from '@/lib/queryClient';
 import { queryKeys } from '@/lib/queryKeys';
-import { createConnectionManager } from '@/primitives/useProject/connection.js';
+import { createConnectionManager } from '@/primitives/useProject/connection';
 import { createSyncManager, type SyncManager } from '@/primitives/useProject/sync';
-import { createStudyOperations } from '@/primitives/useProject/studies.js';
+import { createStudyOperations } from '@/primitives/useProject/studies';
 import {
   createChecklistOperations,
   type ChecklistOperations,
 } from '@/primitives/useProject/checklists/index';
-import { createPdfOperations } from '@/primitives/useProject/pdfs.js';
+import { createPdfOperations } from '@/primitives/useProject/pdfs';
 import { createReconciliationOperations } from '@/primitives/useProject/reconciliation.js';
-import { createAnnotationOperations } from '@/primitives/useProject/annotations.js';
+import { createAnnotationOperations } from '@/primitives/useProject/annotations';
 import { createOutcomeOperations } from '@/primitives/useProject/outcomes.js';
 import { db, deleteProjectData } from '@/primitives/db.js';
 

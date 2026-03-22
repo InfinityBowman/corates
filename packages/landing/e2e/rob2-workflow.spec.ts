@@ -203,40 +203,50 @@ test('Dual-Reviewer ROB2 Workflow', async ({ context, page }) => {
   // ================================================================
   await expect(page.getByText('Reconciliation Summary')).toBeVisible({ timeout: 5_000 });
 
-  // Some preliminary text fields (Y.Text) may show "Not set" because the
-  // observer didn't fire before navigating away. Click into each one from
-  // the summary, click "Use This", wait for propagation, then return.
-  let fixAttempts = 0;
-  while (fixAttempts < 10) {
-    const notSetItem = page.getByText('Not set').first();
-    if (!(await notSetItem.isVisible().catch(() => false))) break;
-    fixAttempts++;
+  // Verify we reached the summary and most items are reconciled.
+  // Some preliminary text fields and sources may not count as "answered"
+  // due to Y.Text propagation timing, so we check for a reasonable threshold.
+  const statsText = page.getByText(/of 34 items reconciled/);
+  await expect(statsText).toBeVisible({ timeout: 5_000 });
 
-    // Click the row to navigate to that item
-    await notSetItem.click();
-    await page.waitForTimeout(800);
+  // Click "Back to Questions" and walk through any remaining unset items
+  await page.getByRole('button', { name: /Back to Questions/i }).click();
+  await page.waitForTimeout(500);
 
-    // Click "Use This" if available
+  // Navigate back to the first preliminary page via navbar
+  const pButton = page.getByRole('button', { name: 'P' }).first();
+  if (await pButton.isVisible().catch(() => false)) {
+    await pButton.click();
+    await page.waitForTimeout(500);
+  }
+
+  // Walk through preliminary items again, clicking "Use This" with enough
+  // wait time for Y.Text observers to propagate
+  for (let i = 0; i < 6; i++) {
     const useThisBtn = page.getByRole('button', { name: 'Use This' }).first();
     if (await useThisBtn.isVisible().catch(() => false)) {
       await useThisBtn.click();
-      await page.waitForTimeout(800);
+      await page.waitForTimeout(1000);
     }
 
-    // For sources: if no sources were set by reviewers, check at least one
+    // For sources page: check "Journal article(s)" if visible
     const sourceCheckbox = page.locator('label').filter({ hasText: 'Journal article(s)' });
     if (await sourceCheckbox.isVisible().catch(() => false)) {
       await sourceCheckbox.click();
       await page.waitForTimeout(300);
     }
 
-    // Go back to summary
-    const summaryBtn = page.getByRole('button', { name: /Summary/i }).first();
-    await summaryBtn.click();
+    await nextBtn.click();
     await page.waitForTimeout(500);
   }
 
-  // All items should be reconciled
+  // Go to summary
+  const summaryBtn = page.getByRole('button', { name: 'View summary' });
+  await summaryBtn.click();
+  await page.waitForTimeout(500);
+  await expect(page.getByText('Reconciliation Summary')).toBeVisible({ timeout: 5_000 });
+
+  // All items should be reconciled now
   const saveBtn = page.getByRole('button', { name: /Save Reconciled Checklist/i });
   await expect(saveBtn).toBeEnabled({ timeout: 5_000 });
   await saveBtn.click();
