@@ -1,4 +1,4 @@
-/* eslint-disable no-unused-vars */
+ 
 declare module 'cloudflare:test' {
   interface ProvidedEnv extends Env {}
 

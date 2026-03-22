@@ -35,7 +35,8 @@ function buildNavItems(): ReconciliationNavItem[] {
   return questionKeys.map(key => ({
     key,
     label: key.replace('q', ''),
-    section: 'questions',
+    section: 'Questions',
+    sectionKey: 'questions',
     type: isMultiPartQuestion(key) ? 'multiPart' : 'single',
     meta: { isMultiPart: isMultiPartQuestion(key) },
   }));

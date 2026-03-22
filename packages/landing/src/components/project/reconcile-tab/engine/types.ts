@@ -35,8 +35,10 @@ export interface ReconciliationNavItem {
   key: string;
   /** Display label for pills and summary rows ("1", "D2", "B3") */
   label: string;
-  /** Grouping section name for navbar and summary */
+  /** Grouping section display name for summary headers */
   section: string;
+  /** Stable section key for expand/collapse tracking (e.g. "preliminary", "domain1", "overall") */
+  sectionKey: string;
   /** Opaque to the engine, interpreted by the adapter (e.g. "preliminary", "domainQuestion") */
   type: string;
   /** ROB2/ROBINS-I domain identifier */
@@ -68,11 +70,16 @@ export interface EngineContext {
   /** Pre-computed by engine via adapter.isAgreement for current item */
   isAgreement: boolean;
   /** Raw Yjs write callback - adapter formats args for its data model */
-  updateChecklistAnswer: (_sectionKey: string, _data: unknown) => void;
+  updateChecklistAnswer: (sectionKey: string, data: unknown) => void;
   /** Raw Y.Text accessor - adapter calls with type-specific arg pattern */
-  getTextRef: ((..._args: unknown[]) => unknown) | null;
+  getTextRef: ((...args: unknown[]) => unknown) | null;
   /** Set a Y.Text field value by key path (equality-checked, transacted) */
-  setTextValue: ((_params: { sectionKey?: string; fieldKey?: string; questionKey?: string }, _text: string) => void) | null;
+  setTextValue:
+    | ((
+        params: { sectionKey?: string; fieldKey?: string; questionKey?: string },
+        text: string,
+      ) => void)
+    | null;
 }
 
 /**
@@ -187,7 +194,12 @@ export interface ReconciliationAdapter {
     checklist1: unknown,
     updateChecklistAnswer: (sectionKey: string, data: unknown) => void,
     getTextRef: ((...args: unknown[]) => unknown) | null,
-    setTextValue?: ((params: { sectionKey?: string; fieldKey?: string; questionKey?: string }, text: string) => void) | null,
+    setTextValue?:
+      | ((
+          params: { sectionKey?: string; fieldKey?: string; questionKey?: string },
+          text: string,
+        ) => void)
+      | null,
   ) => void;
 
   /** Reset all answers to empty/default state */
@@ -252,7 +264,12 @@ export interface ReconciliationEngineProps {
   onCancel: () => void;
   updateChecklistAnswer: (sectionKey: string, data: unknown) => void;
   getTextRef: ((...args: unknown[]) => unknown) | null;
-  setTextValue: ((params: { sectionKey?: string; fieldKey?: string; questionKey?: string }, text: string) => void) | null;
+  setTextValue:
+    | ((
+        params: { sectionKey?: string; fieldKey?: string; questionKey?: string },
+        text: string,
+      ) => void)
+    | null;
 
   // PDF
   pdfData: ArrayBuffer | null;

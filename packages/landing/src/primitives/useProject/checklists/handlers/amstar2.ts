@@ -78,11 +78,7 @@ export class AMSTAR2Handler extends ChecklistHandler {
   }
 
   getTextGetter(getYDoc: () => Y.Doc | null): TextGetterFn {
-    return (
-      studyId: string,
-      checklistId: string,
-      questionKey: string,
-    ): Y.Text | null => {
+    return (studyId: string, checklistId: string, questionKey: string): Y.Text | null => {
       const ydoc = getYDoc();
       if (!ydoc) return null;
 

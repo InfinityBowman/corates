@@ -1,5 +1,6 @@
 import js from '@eslint/js';
 import * as tsParser from '@typescript-eslint/parser';
+import tseslint from 'typescript-eslint';
 import reactHooks from 'eslint-plugin-react-hooks';
 import coratesRules from './eslint-rules/index.js';
 
@@ -15,6 +16,7 @@ export default [
     files: ['**/*.{js,jsx,ts,tsx}'],
     plugins: {
       corates: coratesRules,
+      '@typescript-eslint': tseslint.plugin,
     },
     languageOptions: {
       parser: tsParser,
@@ -30,6 +32,7 @@ export default [
         // Browser globals
         SVGGElement: 'readonly',
         SVGElement: 'readonly',
+        SVGSVGElement: 'readonly',
         DOMException: 'readonly',
         requestIdleCallback: 'readonly',
         cancelIdleCallback: 'readonly',
@@ -107,8 +110,9 @@ export default [
       },
     },
     rules: {
-      // Ignore unused variables that start with underscore
-      'no-unused-vars': [
+      // Use TypeScript-aware unused vars (understands interfaces, type params)
+      'no-unused-vars': 'off',
+      '@typescript-eslint/no-unused-vars': [
         'error',
         {
           argsIgnorePattern: '^_',
@@ -262,6 +266,8 @@ export default [
       'reference/**',
       '**/.localflare/**',
       '.claude/skills/**/examples/**',
+      'packages/web/**',
+      'packages/ai/**',
     ],
   },
 ];

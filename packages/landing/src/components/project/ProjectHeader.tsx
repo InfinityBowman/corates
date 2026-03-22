@@ -15,7 +15,7 @@ import {
   EditableContext,
 } from '@/components/ui/editable';
 
-/* eslint-disable no-unused-vars */
+ 
 interface ProjectHeaderProps {
   name?: string;
   description?: string;
@@ -23,7 +23,7 @@ interface ProjectHeaderProps {
   onUpdateDescription?: (desc: string) => Promise<void> | void;
   onBack?: () => void;
 }
-/* eslint-enable no-unused-vars */
+ 
 
 export function ProjectHeader({
   name,

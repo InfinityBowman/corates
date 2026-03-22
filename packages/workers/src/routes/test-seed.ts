@@ -15,7 +15,6 @@ import {
   member,
   session,
   subscription,
-  projects,
   projectMembers,
 } from '@/db/schema.js';
 import { createAuth } from '@/auth/config.js';

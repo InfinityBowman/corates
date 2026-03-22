@@ -15,10 +15,10 @@ interface ProjectTreeItemProps {
   onToggle: () => void;
   userId?: string;
   currentPath: string;
-  /* eslint-disable no-unused-vars */
+   
   isStudyExpanded: (studyId: string) => boolean;
   onToggleStudy: (studyId: string) => void;
-  /* eslint-enable no-unused-vars */
+   
 }
 
 export function ProjectTreeItem({

@@ -7,7 +7,7 @@ import { getChecklistMetadata } from '@/checklist-registry';
 import { getStatusLabel, getStatusStyle } from '@/constants/checklist-status';
 import { PreviousReviewersView } from './PreviousReviewersView';
 
-/* eslint-disable no-unused-vars */
+ 
 interface CompletedOutcomeRowProps {
   study: any;
   outcomeGroup: { outcomeId: string | null; type: string; checklists: any[] };
@@ -16,7 +16,7 @@ interface CompletedOutcomeRowProps {
   getOutcomeName: (outcomeId: string) => string | null;
   getReconciliationProgress: (outcomeId: string | null, type: string) => any;
 }
-/* eslint-enable no-unused-vars */
+ 
 
 export function CompletedOutcomeRow({
   study,

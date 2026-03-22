@@ -26,14 +26,14 @@ interface AdminState {
   impersonatedBy: string | null;
 }
 
-/* eslint-disable no-unused-vars */
+ 
 interface AdminActions {
   checkAdminStatus: () => Promise<boolean>;
   checkImpersonationStatus: () => Promise<void>;
   impersonateUser: (userId: string) => Promise<void>;
   stopImpersonation: () => Promise<void>;
 }
-/* eslint-enable no-unused-vars */
+ 
 
 export const useAdminStore = create<AdminState & AdminActions>()(set => ({
   isAdminChecked: false,

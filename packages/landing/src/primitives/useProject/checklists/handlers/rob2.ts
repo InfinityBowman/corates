@@ -214,7 +214,8 @@ export class ROB2Handler extends ChecklistHandler {
         }
       } else if (key === 'preliminary') {
         const prelimData = data as ROB2PreliminaryUpdate;
-        if (prelimData.studyDesign !== undefined) sectionYMap.set('studyDesign', prelimData.studyDesign);
+        if (prelimData.studyDesign !== undefined)
+          sectionYMap.set('studyDesign', prelimData.studyDesign);
         if (prelimData.aim !== undefined) sectionYMap.set('aim', prelimData.aim);
         if (prelimData.deviationsToAddress !== undefined)
           sectionYMap.set('deviationsToAddress', prelimData.deviationsToAddress);

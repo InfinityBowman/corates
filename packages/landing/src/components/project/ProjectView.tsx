@@ -6,7 +6,12 @@
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate, useLocation, Outlet } from '@tanstack/react-router';
-import { useProjectStore, selectStudies, selectMeta, selectConnectionState } from '@/stores/projectStore';
+import {
+  useProjectStore,
+  selectStudies,
+  selectMeta,
+  selectConnectionState,
+} from '@/stores/projectStore';
 import { useProjectOrgId } from '@/hooks/useProjectOrgId';
 import { useAuthStore, selectUser } from '@/stores/authStore';
 import { ProjectGate } from '@/project';
@@ -104,11 +109,7 @@ function ProjectViewInner({ projectId }: ProjectViewProps) {
         doi: pdf.doi ?? pdf.metadata?.doi ?? null,
         importSource: pdf.metadata?.importSource || 'pdf',
       };
-      const studyId = project.study.create(
-        studyName,
-        pdf.metadata?.abstract || '',
-        metadata,
-      );
+      const studyId = project.study.create(studyName, pdf.metadata?.abstract || '', metadata);
       if (studyId && pdf.data) {
         const arrayBuffer = new Uint8Array(pdf.data).buffer;
         uploadPdf(orgId, projectId, studyId, arrayBuffer, pdf.fileName)
@@ -180,11 +181,7 @@ function ProjectViewInner({ projectId }: ProjectViewProps) {
         ...(file.metadata || {}),
         importSource: file.metadata?.importSource || file.importSource || 'google-drive',
       };
-      const studyId = project.study.create(
-        title,
-        file.metadata?.abstract || '',
-        metadata,
-      );
+      const studyId = project.study.create(title, file.metadata?.abstract || '', metadata);
       if (studyId && file.id) {
         importFromGoogleDrive(file.id, projectId, studyId)
           .then((result: any) => {

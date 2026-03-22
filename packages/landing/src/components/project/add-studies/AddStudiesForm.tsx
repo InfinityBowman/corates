@@ -31,7 +31,7 @@ import { DoiLookupSection } from './DoiLookupSection';
 import { GoogleDriveSection } from './GoogleDriveSection';
 import { StagedStudiesSection } from './StagedStudiesSection';
 
-/* eslint-disable no-unused-vars */
+ 
 interface AddStudiesFormProps {
   projectId?: string;
   onAddStudies?: (studies: any[]) => Promise<void>;
@@ -43,7 +43,7 @@ interface AddStudiesFormProps {
   getExternalState?: () => Record<string, unknown>;
   onSaveState?: (state: any) => Promise<void>;
 }
-/* eslint-enable no-unused-vars */
+ 
 
 export function AddStudiesForm({
   projectId,

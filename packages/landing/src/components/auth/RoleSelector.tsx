@@ -36,12 +36,12 @@ export function getRoleLabel(roleId: string): string {
   return ROLES.find(r => r.id === roleId)?.label || roleId;
 }
 
-/* eslint-disable no-unused-vars */
+ 
 interface RoleSelectorProps {
   selectedRole: string;
   onSelect: (roleId: string) => void;
 }
-/* eslint-enable no-unused-vars */
+ 
 
 export function RoleSelector({ selectedRole, onSelect }: RoleSelectorProps) {
   return (

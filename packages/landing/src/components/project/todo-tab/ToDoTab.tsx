@@ -83,9 +83,7 @@ export function ToDoTab() {
               handleCreateChecklist(study.id, type, assigneeId, outcomeId)
             }
             onOpenChecklist={checklistId => openChecklist(study.id, checklistId)}
-            onDeleteChecklist={checklistId =>
-              project.checklist.delete(study.id, checklistId)
-            }
+            onDeleteChecklist={checklistId => project.checklist.delete(study.id, checklistId)}
             onViewPdf={pdf => project.pdf.view(study.id, pdf)}
             onDownloadPdf={pdf => project.pdf.download(study.id, pdf)}
             creatingChecklist={false}

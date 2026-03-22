@@ -14,7 +14,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 
-/* eslint-disable no-unused-vars */
+ 
 interface AssignReviewersModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -25,7 +25,7 @@ interface AssignReviewersModalProps {
     updates: { reviewer1: string | null; reviewer2: string | null },
   ) => void;
 }
-/* eslint-enable no-unused-vars */
+ 
 
 export function AssignReviewersModal({
   open,

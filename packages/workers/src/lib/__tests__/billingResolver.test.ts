@@ -14,7 +14,6 @@ import {
   seedProject,
 } from '@/__tests__/helpers.js';
 import { createDb } from '@/db/client.js';
-import type { Database } from '@/db/client.js';
 import { createGrant } from '@/db/orgAccessGrants.js';
 import {
   resolveOrgAccess,

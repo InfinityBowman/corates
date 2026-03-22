@@ -13,7 +13,7 @@ const SIZE_CLASSES: Record<string, string> = {
   '2xl': 'w-[48rem]',
 };
 
-/* eslint-disable no-unused-vars */
+ 
 interface SlidingPanelProps {
   open: boolean;
   onClose: () => void;

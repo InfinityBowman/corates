@@ -16,6 +16,7 @@
  */
 
 import { useAuthStore, selectUser } from '@/stores/authStore';
+import { connectionPool } from '@/project/ConnectionPool';
 import { createStudyActions } from './studies.js';
 import { createChecklistActions } from './checklists.js';
 import { createPdfActions } from './pdfs.js';
@@ -25,26 +26,6 @@ import { createReconciliationActions } from './reconciliation.js';
 import { createOutcomeActions } from './outcomes.js';
 
 function createProjectActionsStore() {
-  /**
-   * Map of projectId -> Y.js connection operations
-   * Set by useProject hook when connecting
-   * @type {Map<string, Object>}
-   */
-  const connections = new Map();
-
-  /**
-   * The currently active project ID.
-   * Set by ProjectView when a project is opened.
-   * Most methods use this automatically so components don't need to pass it.
-   */
-  let activeProjectId = null;
-
-  /**
-   * The currently active organization ID.
-   * Set alongside activeProjectId for org-scoped API calls.
-   */
-  let activeOrgId = null;
-
   // ============================================================================
   // Internal: Active Project & Org & User Access
   // ============================================================================
@@ -55,50 +36,50 @@ function createProjectActionsStore() {
    * @param {string} orgId - The organization ID (required for org-scoped APIs)
    */
   function _setActiveProject(projectId, orgId = null) {
-    activeProjectId = projectId;
-    activeOrgId = orgId;
+    connectionPool.setActiveProject(projectId, orgId);
   }
 
   /**
    * Clear the active project (called by ProjectView on unmount)
    */
   function _clearActiveProject() {
-    activeProjectId = null;
-    activeOrgId = null;
+    connectionPool.clearActiveProject();
   }
 
   /**
    * Get the active project ID, throws if none set
    */
   function getActiveProjectId() {
-    if (!activeProjectId) {
+    const id = connectionPool.getActiveProjectId();
+    if (!id) {
       throw new Error('No active project - are you inside a ProjectView?');
     }
-    return activeProjectId;
+    return id;
   }
 
   /**
    * Get active project ID or null (for components that just need to check)
    */
   function getActiveProjectIdOrNull() {
-    return activeProjectId;
+    return connectionPool.getActiveProjectId();
   }
 
   /**
    * Get the active org ID, throws if none set
    */
   function getActiveOrgId() {
-    if (!activeOrgId) {
+    const id = connectionPool.getActiveOrgId();
+    if (!id) {
       throw new Error('No active org - are you inside an org-scoped route?');
     }
-    return activeOrgId;
+    return id;
   }
 
   /**
    * Get active org ID or null (for components that just need to check)
    */
   function getActiveOrgIdOrNull() {
-    return activeOrgId;
+    return connectionPool.getActiveOrgId();
   }
 
   /**
@@ -110,27 +91,15 @@ function createProjectActionsStore() {
   }
 
   // ============================================================================
-  // Internal: Connection Management (called by useProject hook)
+  // Internal: Connection Management (delegated to ConnectionPool)
   // ============================================================================
-
-  function _setConnection(projectId, ops) {
-    connections.set(projectId, ops);
-  }
-
-  function _removeConnection(projectId) {
-    connections.delete(projectId);
-  }
-
-  function _getConnection(projectId) {
-    return connections.get(projectId);
-  }
 
   /**
    * Get connection for active project
    */
   function getActiveConnection() {
     const projectId = getActiveProjectId();
-    return connections.get(projectId);
+    return connectionPool.get(projectId);
   }
 
   // ============================================================================
@@ -160,10 +129,10 @@ function createProjectActionsStore() {
   // ============================================================================
 
   return {
-    // Internal - called by useProject hook and ProjectView
-    _setConnection,
-    _removeConnection,
-    _getConnection,
+    // Internal - kept for backward compatibility during transition
+    _setConnection: () => {}, // no-op: pool handles this
+    _removeConnection: () => {}, // no-op: pool handles this
+    _getConnection: projectId => connectionPool.get(projectId),
     _setActiveProject,
     _clearActiveProject,
 

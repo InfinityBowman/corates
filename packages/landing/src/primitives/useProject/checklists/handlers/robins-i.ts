@@ -247,8 +247,7 @@ export class ROBINSIHandler extends ChecklistHandler {
               sectionYMap!.set(subKey, questionYMap);
             }
             if (q.answer !== undefined) questionYMap.set('answer', q.answer);
-            if (q.comment !== undefined)
-              this.setYTextField(questionYMap, 'comment', q.comment);
+            if (q.comment !== undefined) this.setYTextField(questionYMap, 'comment', q.comment);
           } else {
             sectionYMap!.set(subKey, subValue);
           }

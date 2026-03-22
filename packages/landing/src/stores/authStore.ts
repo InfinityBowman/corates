@@ -50,7 +50,7 @@ interface AuthState {
   sessionRefetch: (() => Promise<void>) | null;
 }
 
-/* eslint-disable no-unused-vars */
+ 
 interface AuthActions {
   setOnline: (online: boolean) => void;
   setCachedUser: (user: AuthUser | null) => void;
@@ -89,7 +89,7 @@ interface AuthActions {
   revokeAllSessions: () => Promise<void>;
   forceRefreshSession: () => Promise<void>;
 }
-/* eslint-enable no-unused-vars */
+ 
 
 // Pure functions for localStorage cache
 

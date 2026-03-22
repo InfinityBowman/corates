@@ -41,14 +41,14 @@ function isOrcidId(input: string) {
   return /^[\dXx]{16}$/.test(normalized);
 }
 
-/* eslint-disable no-unused-vars */
+ 
 interface MergeAccountsDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   conflictProvider: string | null;
   onSuccess: () => void;
 }
-/* eslint-enable no-unused-vars */
+ 
 
 export function MergeAccountsDialog({
   open,

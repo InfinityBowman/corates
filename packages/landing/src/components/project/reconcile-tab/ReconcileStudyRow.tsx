@@ -16,7 +16,7 @@ import {
 import { PdfListItem } from '@/components/pdf/PdfListItem';
 import { ReconcileStatusTag } from './ReconcileStatusTag';
 
-/* eslint-disable no-unused-vars */
+ 
 interface ReconcileStudyRowProps {
   study: any;
   onReconcile: (checklist1Id: string, checklist2Id: string) => void;
@@ -25,7 +25,7 @@ interface ReconcileStudyRowProps {
   getAssigneeName: (userId: string) => string;
   getOutcomeName: (outcomeId: string) => string | null;
 }
-/* eslint-enable no-unused-vars */
+ 
 
 export function ReconcileStudyRow({
   study,

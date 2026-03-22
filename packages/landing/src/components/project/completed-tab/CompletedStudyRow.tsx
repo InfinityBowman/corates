@@ -14,7 +14,7 @@ import { getStatusLabel, getStatusStyle } from '@/constants/checklist-status';
 import { PreviousReviewersView } from './PreviousReviewersView';
 import { CompletedOutcomeRow } from './CompletedOutcomeRow';
 
-/* eslint-disable no-unused-vars */
+ 
 interface CompletedStudyRowProps {
   study: any;
   onOpenChecklist: (checklistId: string) => void;
@@ -24,7 +24,7 @@ interface CompletedStudyRowProps {
   getAssigneeName: (userId: string) => string;
   getOutcomeName: (outcomeId: string) => string | null;
 }
-/* eslint-enable no-unused-vars */
+ 
 
 export function CompletedStudyRow({
   study,

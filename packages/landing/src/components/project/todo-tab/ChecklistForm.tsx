@@ -20,7 +20,7 @@ import {
 import { useProjectStore } from '@/stores/projectStore';
 import { useProjectContext } from '../ProjectContext';
 
-/* eslint-disable no-unused-vars */
+ 
 interface ChecklistFormProps {
   members: any[];
   currentUserId: string;
@@ -29,7 +29,7 @@ interface ChecklistFormProps {
   onCancel: () => void;
   loading: boolean;
 }
-/* eslint-enable no-unused-vars */
+ 
 
 export function ChecklistForm({
   currentUserId,

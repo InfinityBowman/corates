@@ -9,14 +9,14 @@ import { useProjectStore, selectProjectStats } from '@/stores/projectStore';
 import { type Project } from '@/hooks/useMyProjectsList';
 import { formatRelativeTime, getAccentColors } from './utils';
 
-/* eslint-disable no-unused-vars */
+ 
 interface ProjectCardProps {
   project: Project;
   onOpen: (id: string) => void;
   onDelete?: (id: string) => void;
   style?: React.CSSProperties;
 }
-/* eslint-enable no-unused-vars */
+ 
 
 export function ProjectCard({ project, onOpen, onDelete, style }: ProjectCardProps) {
   const cachedStats = useProjectStore(state => selectProjectStats(state, project.id));

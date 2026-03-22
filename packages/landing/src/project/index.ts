@@ -14,3 +14,5 @@ export {
 
 export { ProjectGate } from './ProjectGate';
 export { project } from './actions';
+export { connectionPool, type ConnectionEntry } from './ConnectionPool';
+export { useAwareness } from './useAwareness';

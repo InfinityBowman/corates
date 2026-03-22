@@ -85,14 +85,14 @@ interface Session {
   createdAt?: string;
 }
 
-/* eslint-disable no-unused-vars */
+ 
 interface SessionCardProps {
   session: Session;
   isCurrent: boolean;
   revoking: boolean;
   onRevoke: (token: string) => void;
 }
-/* eslint-enable no-unused-vars */
+ 
 
 function SessionCard({ session, isCurrent, revoking, onRevoke }: SessionCardProps) {
   const deviceInfo = parseUserAgent(session.userAgent);

@@ -30,7 +30,7 @@ const SETTINGS_NAV_ITEMS: Array<{ id: string; label: string; icon: LucideIcon; p
   { id: 'notifications', label: 'Notifications', icon: BellIcon, path: '/settings/notifications' },
 ];
 
-/* eslint-disable no-unused-vars */
+ 
 interface SettingsSidebarProps {
   desktopMode: 'expanded' | 'collapsed';
   mobileOpen: boolean;
@@ -39,7 +39,7 @@ interface SettingsSidebarProps {
   width: number;
   onWidthChange: (width: number) => void;
 }
-/* eslint-enable no-unused-vars */
+ 
 
 export function SettingsSidebar({
   desktopMode,

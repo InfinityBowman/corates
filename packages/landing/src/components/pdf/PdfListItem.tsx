@@ -22,7 +22,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { PdfTagBadge } from './PdfTagBadge';
 
-/* eslint-disable no-unused-vars */
+ 
 interface PdfListItemProps {
   pdf: any;
   onView?: (pdf: any) => void;

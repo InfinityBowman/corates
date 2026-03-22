@@ -29,12 +29,12 @@ const requirementsList = [
   },
 ];
 
-/* eslint-disable no-unused-vars */
+ 
 interface StrengthIndicatorProps {
   password: string;
   onUnmet?: (errors: string[]) => void;
 }
-/* eslint-enable no-unused-vars */
+ 
 
 export function StrengthIndicator({ password, onUnmet }: StrengthIndicatorProps) {
   const strength = useMemo(() => {

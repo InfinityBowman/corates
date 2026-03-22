@@ -73,7 +73,7 @@ interface ProjectStoreState {
   projectStats: Record<string, ProjectStats>;
 }
 
-/* eslint-disable no-unused-vars */
+ 
 interface ProjectStoreActions {
   setActiveProject: (projectId: string | null) => void;
   setProjectData: (projectId: string, data: Partial<ProjectData>) => void;
@@ -82,7 +82,7 @@ interface ProjectStoreActions {
   dispatchConnectionEvent: (projectId: string, event: ConnectionEvent) => void;
   clearProject: (projectId: string) => void;
 }
-/* eslint-enable no-unused-vars */
+ 
 
 function loadPersistedStats(): Record<string, ProjectStats> {
   try {

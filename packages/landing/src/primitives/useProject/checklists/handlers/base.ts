@@ -33,7 +33,11 @@ export abstract class ChecklistHandler {
   abstract extractAnswersFromTemplate(template: Record<string, unknown>): Record<string, unknown>;
   abstract createAnswersYMap(answersData: Record<string, unknown>): Y.Map<unknown>;
   abstract serializeAnswers(answersMap: Y.Map<unknown>): Record<string, unknown>;
-  abstract updateAnswer(answersMap: Y.Map<unknown>, key: string, data: Record<string, unknown>): void;
+  abstract updateAnswer(
+    answersMap: Y.Map<unknown>,
+    key: string,
+    data: Record<string, unknown>,
+  ): void;
 
   getTextGetter(_getYDoc: () => Y.Doc | null): TextGetterFn | null {
     return null;

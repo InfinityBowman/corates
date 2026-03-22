@@ -10,13 +10,13 @@ import { createContext, useContext, useEffect } from 'react';
 // Module-level flag -- persists across re-renders, resets on page reload
 let hasAnimated = false;
 
-/* eslint-disable no-unused-vars */
+ 
 interface AnimationHelpers {
   shouldAnimate: boolean;
   fadeUp: (delay?: number) => React.CSSProperties;
   statRise: (delay?: number) => React.CSSProperties;
 }
-/* eslint-enable no-unused-vars */
+ 
 
 export function useInitialAnimation(): AnimationHelpers {
   const shouldAnimate = !hasAnimated;

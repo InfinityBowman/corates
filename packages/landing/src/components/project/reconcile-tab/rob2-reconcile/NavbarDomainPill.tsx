@@ -1,7 +1,6 @@
 import { useMemo } from 'react';
 import { ChevronDownIcon, ChevronRightIcon, CheckIcon } from 'lucide-react';
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
-import { Collapsible, CollapsibleContent } from '@/components/ui/collapsible';
 import {
   getSectionLabel,
   hasNavItemAnswer,
@@ -75,7 +74,7 @@ export function NavbarDomainPill({
   const items = progress?.items || [];
 
   return (
-    <Collapsible open={isExpanded} className={containerStyle}>
+    <div className={containerStyle}>
       {/* Label/collapse button */}
       <Tooltip delayDuration={300}>
         <TooltipTrigger asChild>
@@ -95,8 +94,14 @@ export function NavbarDomainPill({
         <TooltipContent>{tooltipContent}</TooltipContent>
       </Tooltip>
 
-      {/* Animated expanded question pills */}
-      <CollapsibleContent className='flex items-center overflow-visible py-1'>
+      {/* Horizontal expand/collapse for question pills */}
+      <div
+        className='flex items-center overflow-hidden py-1 transition-[max-width,opacity] duration-200 ease-out'
+        style={{
+          maxWidth: isExpanded ? `${items.length * 36}px` : '0px',
+          opacity: isExpanded ? 1 : 0,
+        }}
+      >
         {items.map((item: any, idx: number) => {
           const globalIndex = allNavItems?.indexOf(item) ?? -1;
           const itemCount = items.length;
@@ -118,8 +123,8 @@ export function NavbarDomainPill({
             />
           );
         })}
-      </CollapsibleContent>
-    </Collapsible>
+      </div>
+    </div>
   );
 }
 

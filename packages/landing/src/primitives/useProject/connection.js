@@ -122,7 +122,9 @@ export function createConnectionManager(projectId, ydoc, options) {
         useProjectStore.getState().dispatchConnectionEvent(projectId, { type: 'REMOTE_CONNECTED' });
         consecutiveErrors = 0;
       } else if (status === 'connecting') {
-        useProjectStore.getState().dispatchConnectionEvent(projectId, { type: 'REMOTE_DISCONNECTED' });
+        useProjectStore
+          .getState()
+          .dispatchConnectionEvent(projectId, { type: 'REMOTE_DISCONNECTED' });
       }
     });
 
@@ -225,7 +227,9 @@ export function createConnectionManager(projectId, ydoc, options) {
         return;
       }
 
-      useProjectStore.getState().dispatchConnectionEvent(projectId, { type: 'REMOTE_DISCONNECTED' });
+      useProjectStore
+        .getState()
+        .dispatchConnectionEvent(projectId, { type: 'REMOTE_DISCONNECTED' });
     });
   }
 

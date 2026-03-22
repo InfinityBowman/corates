@@ -6,12 +6,12 @@ import { useMemo } from 'react';
 import { CHECKLIST_STATUS } from '@/constants/checklist-status';
 import { isReconciledChecklist } from '@/lib/checklist-domain.js';
 
-/* eslint-disable no-unused-vars */
+ 
 interface ReconcileStatusTagProps {
   study: any;
   getAssigneeName: (userId: string) => string;
 }
-/* eslint-enable no-unused-vars */
+ 
 
 export function ReconcileStatusTag({ study, getAssigneeName }: ReconcileStatusTagProps) {
   const awaitingChecklists = useMemo(

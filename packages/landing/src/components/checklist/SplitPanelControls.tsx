@@ -11,7 +11,7 @@ import {
   RefreshCwIcon,
 } from 'lucide-react';
 
-/* eslint-disable no-unused-vars */
+ 
 interface SplitPanelControlsProps {
   showSecondPanel: boolean;
   onToggleSecondPanel?: () => void;
@@ -23,7 +23,7 @@ interface SplitPanelControlsProps {
   pdfUrl?: string | null;
   pdfData?: ArrayBuffer | null;
 }
-/* eslint-enable no-unused-vars */
+ 
 
 export function SplitPanelControls({
   showSecondPanel,

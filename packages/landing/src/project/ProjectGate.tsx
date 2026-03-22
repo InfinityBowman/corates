@@ -12,8 +12,7 @@ import { useProjectStore, selectConnectionState } from '@/stores/projectStore';
 import { useProjectOrgId } from '@/hooks/useProjectOrgId';
 import { ACCESS_DENIED_ERRORS } from '@/constants/errors';
 import { showToast } from '@/components/ui/toast';
-import _projectActionsStore from '@/stores/projectActionsStore/index.js';
-const projectActionsStore = _projectActionsStore as any;
+import { connectionPool } from './ConnectionPool';
 
 import { ProjectProvider } from '@/components/project/ProjectContext';
 
@@ -32,10 +31,10 @@ export function ProjectGate({ projectId, fallback, children }: ProjectGateProps)
   // Set active project for the action store
   useEffect(() => {
     if (projectId && orgId) {
-      projectActionsStore._setActiveProject(projectId, orgId);
+      connectionPool.setActiveProject(projectId, orgId);
     }
     return () => {
-      projectActionsStore._clearActiveProject();
+      connectionPool.clearActiveProject();
     };
   }, [projectId, orgId]);
 

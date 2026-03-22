@@ -30,7 +30,7 @@ interface LocalChecklistsState {
   error: string | null;
 }
 
-/* eslint-disable no-unused-vars */
+ 
 interface LocalChecklistsActions {
   init: () => Promise<void>;
   refetch: () => Promise<LocalChecklist[]>;
@@ -49,7 +49,7 @@ interface LocalChecklistsActions {
   getPdf: (checklistId: string) => Promise<LocalChecklistPdf | null>;
   deletePdf: (checklistId: string) => Promise<boolean>;
 }
-/* eslint-enable no-unused-vars */
+ 
 
 export const useLocalChecklistsStore = create<LocalChecklistsState & LocalChecklistsActions>()(
   (set, get) => ({

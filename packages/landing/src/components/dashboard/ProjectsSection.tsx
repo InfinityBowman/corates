@@ -27,14 +27,14 @@ import { useAnimation } from './useInitialAnimation';
 import { ProjectCard } from './ProjectCard';
 import { ContactPrompt } from './ContactPrompt';
 
-/* eslint-disable no-unused-vars */
+ 
 interface ProjectsSectionProps {
   showHeader?: boolean;
   createModalOpen: boolean;
   setCreateModalOpen: (open: boolean) => void;
   onCreateClick?: () => void;
 }
-/* eslint-enable no-unused-vars */
+ 
 
 export function ProjectsSection({
   showHeader = true,

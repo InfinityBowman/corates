@@ -22,7 +22,12 @@ export interface UseReconciliationEngineOptions {
   reconciledChecklist: unknown;
   updateChecklistAnswer: (sectionKey: string, data: unknown) => void;
   getTextRef: ((...args: unknown[]) => unknown) | null;
-  setTextValue: ((params: { sectionKey?: string; fieldKey?: string; questionKey?: string }, text: string) => void) | null;
+  setTextValue:
+    | ((
+        params: { sectionKey?: string; fieldKey?: string; questionKey?: string },
+        text: string,
+      ) => void)
+    | null;
   onSaveReconciled: (name?: string) => void;
   checklist1Id: string | null;
   checklist2Id: string | null;
@@ -215,8 +220,8 @@ export function useReconciliationEngine({
     if (hasAutoExpandedRef.current) return;
     if (navItems.length > 0) {
       const item = navItems[currentPage];
-      if (item?.section) {
-        setExpandedDomain(item.section);
+      if (item?.sectionKey) {
+        setExpandedDomain(item.sectionKey);
         hasAutoExpandedRef.current = true;
       }
     }
@@ -238,8 +243,8 @@ export function useReconciliationEngine({
 
       // Auto-expand domain for the target page
       const item = navItems[clamped];
-      if (item?.section) {
-        setExpandedDomain(item.section);
+      if (item?.sectionKey) {
+        setExpandedDomain(item.sectionKey);
       }
     },
     [navItems, totalPages],
@@ -253,7 +258,13 @@ export function useReconciliationEngine({
     const hasAns = adapter.hasAnswer(item, finalAnswers);
     const isAgree = adapter.isAgreement(item, comparison);
     if (!hasAns && isAgree) {
-      adapter.autoFillFromReviewer1(item, checklist1, updateChecklistAnswer, getTextRef, setTextValue);
+      adapter.autoFillFromReviewer1(
+        item,
+        checklist1,
+        updateChecklistAnswer,
+        getTextRef,
+        setTextValue,
+      );
     }
 
     if (currentPage < totalPages - 1) {
@@ -262,8 +273,8 @@ export function useReconciliationEngine({
 
       // Auto-expand domain for next page
       const nextItem = navItems[nextPage];
-      if (nextItem?.section && nextItem.section !== expandedDomain) {
-        setExpandedDomain(nextItem.section);
+      if (nextItem?.sectionKey && nextItem.sectionKey !== expandedDomain) {
+        setExpandedDomain(nextItem.sectionKey);
       }
     } else {
       setViewModeRaw('summary');
@@ -296,8 +307,8 @@ export function useReconciliationEngine({
 
       // Auto-expand domain for previous page
       const prevItem = navItems[prevPage];
-      if (prevItem?.section && prevItem.section !== expandedDomain) {
-        setExpandedDomain(prevItem.section);
+      if (prevItem?.sectionKey && prevItem.sectionKey !== expandedDomain) {
+        setExpandedDomain(prevItem.sectionKey);
       }
     }
   }, [viewMode, currentPage, navItems, expandedDomain]);

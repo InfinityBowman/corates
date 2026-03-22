@@ -176,7 +176,12 @@ test('Dual-Reviewer ROB2 Workflow', async ({ context, page }) => {
     // Direction panel if a direction radio labeled "NA" is visible and
     // not already selected.
     const naLabel = page.locator('label').filter({ hasText: /^NA$/ });
-    if (await naLabel.first().isVisible().catch(() => false)) {
+    if (
+      await naLabel
+        .first()
+        .isVisible()
+        .catch(() => false)
+    ) {
       // Only click if we're on a direction page (Final Direction panel)
       const finalDirectionHeading = page.getByText('Final Direction');
       if (await finalDirectionHeading.isVisible().catch(() => false)) {

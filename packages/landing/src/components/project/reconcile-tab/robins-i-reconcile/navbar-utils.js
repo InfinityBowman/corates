@@ -35,6 +35,7 @@ export function buildNavigationItems(isPerProtocol) {
       key,
       label: key.toUpperCase(),
       section: 'Section B',
+      sectionKey: 'sectionB',
       questionDef: SECTION_B[key],
     });
   });
@@ -56,6 +57,7 @@ export function buildNavigationItems(isPerProtocol) {
         domainKey,
         label: q.number,
         section: domain.name,
+        sectionKey: domainKey,
         questionDef: q,
       });
     });
@@ -67,6 +69,7 @@ export function buildNavigationItems(isPerProtocol) {
       domainKey,
       label: `D${domainKey.replace('domain', '').replace('a', 'A').replace('b', 'B')} Judge`,
       section: domain.name,
+      sectionKey: domainKey,
       isJudgement: true,
     });
   });
@@ -77,6 +80,7 @@ export function buildNavigationItems(isPerProtocol) {
     key: 'overall_judgement',
     label: 'Overall',
     section: 'Overall',
+    sectionKey: 'overall',
     isJudgement: true,
   });
 
@@ -308,17 +312,7 @@ export function getDomainProgress(navItems, finalAnswers, comparison) {
 
   groups.forEach(group => {
     const firstItem = group.items[0];
-    let sectionKey;
-
-    if (firstItem.type === NAV_ITEM_TYPES.SECTION_B) {
-      sectionKey = 'sectionB';
-    } else if (firstItem.type === NAV_ITEM_TYPES.OVERALL_JUDGEMENT) {
-      sectionKey = 'overall';
-    } else if (firstItem.domainKey) {
-      sectionKey = firstItem.domainKey;
-    } else {
-      sectionKey = getSectionKey(group.section);
-    }
+    const sectionKey = firstItem.sectionKey;
 
     let answered = 0;
     let hasDisagreements = false;
@@ -352,20 +346,7 @@ export function getDomainProgress(navItems, finalAnswers, comparison) {
  * @returns {string|null} The section key or null
  */
 export function getSectionKeyForPage(navItems, pageIndex) {
-  const item = navItems[pageIndex];
-  if (!item) return null;
-
-  if (item.type === NAV_ITEM_TYPES.SECTION_B) {
-    return 'sectionB';
-  }
-  if (item.type === NAV_ITEM_TYPES.OVERALL_JUDGEMENT) {
-    return 'overall';
-  }
-  if (item.domainKey) {
-    return item.domainKey;
-  }
-
-  return null;
+  return navItems[pageIndex]?.sectionKey ?? null;
 }
 
 /**

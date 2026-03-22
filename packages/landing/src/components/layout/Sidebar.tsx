@@ -38,7 +38,7 @@ import {
 import { ProjectTreeItem } from './sidebar/ProjectTreeItem';
 import { LocalChecklistItem } from './sidebar/LocalChecklistItem';
 
-/* eslint-disable no-unused-vars */
+ 
 interface SidebarProps {
   desktopMode: 'expanded' | 'collapsed';
   mobileOpen: boolean;
@@ -47,7 +47,7 @@ interface SidebarProps {
   width: number;
   onWidthChange: (width: number) => void;
 }
-/* eslint-enable no-unused-vars */
+ 
 
 export function Sidebar({
   desktopMode,

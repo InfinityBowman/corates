@@ -17,11 +17,11 @@ interface NotificationData {
   [key: string]: unknown;
 }
 
-/* eslint-disable no-unused-vars */
+ 
 interface UseNotificationsOptions {
   onNotification?: (data: NotificationData) => void;
 }
-/* eslint-enable no-unused-vars */
+ 
 
 export function useNotifications(
   userId: string | null | undefined,

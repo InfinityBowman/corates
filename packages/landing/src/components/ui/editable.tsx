@@ -47,7 +47,7 @@ const variants = {
 
 type EditableVariant = keyof typeof variants;
 
-/* eslint-disable no-unused-vars */
+ 
 interface SimpleEditableProps {
   value?: string;
   defaultValue?: string;
@@ -71,7 +71,7 @@ interface SimpleEditableProps {
   showEditIcon?: boolean;
   label?: string;
 }
-/* eslint-enable no-unused-vars */
+ 
 
 function SimpleEditable({
   value,

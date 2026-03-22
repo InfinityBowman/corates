@@ -10,6 +10,7 @@
  */
 
 import _store from '@/stores/projectActionsStore/index.js';
+import { connectionPool } from './ConnectionPool';
 
 // The store is plain JS with no type exports. Cast once here so consumers
 // don't need to. Full TypeScript interfaces for each action module can be
@@ -114,7 +115,7 @@ export const project = {
   },
 
   /** Get active project ID or null */
-  getActiveProjectId: store.getActiveProjectId as () => string | null,
+  getActiveProjectId: () => connectionPool.getActiveProjectId(),
   /** Get active org ID or null */
-  getActiveOrgId: store.getActiveOrgId as () => string | null,
+  getActiveOrgId: () => connectionPool.getActiveOrgId(),
 };

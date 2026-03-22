@@ -217,10 +217,7 @@ export function createChecklistOperations(
     }
   }
 
-  function getChecklistData(
-    studyId: string,
-    checklistId: string,
-  ): Record<string, unknown> | null {
+  function getChecklistData(studyId: string, checklistId: string): Record<string, unknown> | null {
     const result = commonOps.getChecklistYMap(studyId, checklistId);
     if (!result) return null;
 

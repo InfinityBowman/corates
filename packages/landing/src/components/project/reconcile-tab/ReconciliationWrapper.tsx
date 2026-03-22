@@ -13,7 +13,6 @@ import {
   selectStudy,
 } from '@/stores/projectStore';
 import { useAuthStore, selectUser } from '@/stores/authStore';
-import _projectActionsStore from '@/stores/projectActionsStore/index.js';
 import { ACCESS_DENIED_ERRORS } from '@/constants/errors.js';
 import { CHECKLIST_STATUS } from '@/constants/checklist-status.js';
 import {
@@ -34,8 +33,6 @@ import { robinsIAdapter } from './robins-i-reconcile/adapter';
 registerReconciliationAdapter('AMSTAR2', amstar2Adapter);
 registerReconciliationAdapter('ROB2', rob2Adapter);
 registerReconciliationAdapter('ROBINS_I', robinsIAdapter);
-
-const _internalStore = _projectActionsStore as any;
 
 interface ReconciliationWrapperProps {
   projectId: string;
@@ -86,13 +83,6 @@ export function ReconciliationWrapper({
       image: (user as any).image,
     };
   }, [user]);
-
-  // Set active project for action store
-  useEffect(() => {
-    if (projectId && orgId) {
-      _internalStore._setActiveProject(projectId, orgId);
-    }
-  }, [projectId, orgId]);
 
   // Read data from store (use stable selectors to avoid infinite re-render loops)
   const connectionState = useProjectStore(s => selectConnectionState(s, projectId)) as any;

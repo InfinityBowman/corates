@@ -227,7 +227,7 @@ export function useAddStudies(options = {}) {
     }
 
     onStudiesChangeRef.current({ pdfs, refs, lookups: [], driveFiles });
-  }, [getStudiesToSubmit, options.collectMode]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [getStudiesToSubmit, options.collectMode]);  
 
   const clearAll = useCallback(() => {
     pdfOps.clearPdfs();

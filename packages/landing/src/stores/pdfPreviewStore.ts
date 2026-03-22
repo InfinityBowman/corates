@@ -24,14 +24,14 @@ interface PdfPreviewState {
   error: string | null;
 }
 
-/* eslint-disable no-unused-vars */
+ 
 interface PdfPreviewActions {
   openPreview: (projectId: string, studyId: string, pdfInfo: PdfInfo) => void;
   closePreview: () => void;
   setData: (data: ArrayBuffer) => void;
   setError: (errorMsg: string) => void;
 }
-/* eslint-enable no-unused-vars */
+ 
 
 let closeTimeoutId: ReturnType<typeof setTimeout> | null = null;
 

@@ -49,6 +49,7 @@ export function buildNavigationItems(isAdhering) {
       key,
       label: fieldDef?.label || key,
       section: 'Preliminary',
+      sectionKey: 'preliminary',
       fieldDef,
     });
   }
@@ -72,6 +73,7 @@ export function buildNavigationItems(isAdhering) {
         domainKey,
         label: q.number || qKey,
         section: domain.name,
+        sectionKey: domainKey,
         questionDef: q,
       });
     }
@@ -84,6 +86,7 @@ export function buildNavigationItems(isAdhering) {
         domainKey,
         label: `D${domainKey.replace('domain', '').replace('a', 'A').replace('b', 'B')} Direction`,
         section: domain.name,
+        sectionKey: domainKey,
         isDirection: true,
       });
     }
@@ -95,6 +98,7 @@ export function buildNavigationItems(isAdhering) {
     key: 'overall_direction',
     label: 'Overall',
     section: 'Overall',
+    sectionKey: 'overall',
     isDirection: true,
   });
 
@@ -326,19 +330,8 @@ export function getDomainProgress(navItems, finalAnswers, comparison) {
   const groups = getGroupedNavigationItems(navItems);
 
   for (const group of groups) {
-    // Get the actual domain key from the first item in the group
     const firstItem = group.items[0];
-    let sectionKey;
-
-    if (firstItem.type === NAV_ITEM_TYPES.PRELIMINARY) {
-      sectionKey = 'preliminary';
-    } else if (firstItem.type === NAV_ITEM_TYPES.OVERALL_DIRECTION) {
-      sectionKey = 'overall';
-    } else if (firstItem.domainKey) {
-      sectionKey = firstItem.domainKey;
-    } else {
-      sectionKey = getSectionKey(group.section);
-    }
+    const sectionKey = firstItem.sectionKey;
 
     let answered = 0;
     let hasDisagreements = false;
@@ -372,20 +365,7 @@ export function getDomainProgress(navItems, finalAnswers, comparison) {
  * @returns {string|null} The section key or null
  */
 export function getSectionKeyForPage(navItems, pageIndex) {
-  const item = navItems[pageIndex];
-  if (!item) return null;
-
-  if (item.type === NAV_ITEM_TYPES.PRELIMINARY) {
-    return 'preliminary';
-  }
-  if (item.type === NAV_ITEM_TYPES.OVERALL_DIRECTION) {
-    return 'overall';
-  }
-  if (item.domainKey) {
-    return item.domainKey;
-  }
-
-  return null;
+  return navItems[pageIndex]?.sectionKey ?? null;
 }
 
 /**

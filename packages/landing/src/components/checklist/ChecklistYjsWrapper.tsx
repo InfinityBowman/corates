@@ -10,7 +10,6 @@ import { ChecklistWithPdf } from '@/components/checklist/ChecklistWithPdf';
 import { useProjectContext } from '@/components/project/ProjectContext';
 import { useProjectStore, selectConnectionState } from '@/stores/projectStore';
 import { useAuthStore, selectUser } from '@/stores/authStore';
-import _projectActionsStore from '@/stores/projectActionsStore/index.js';
 import { ACCESS_DENIED_ERRORS } from '@/constants/errors.js';
 import { CHECKLIST_STATUS, isEditable } from '@/constants/checklist-status.js';
 import { getNextStatusForCompletion } from '@/lib/checklist-domain.js';
@@ -31,8 +30,6 @@ import { ScoreTag } from '@/components/checklist/ScoreTag';
 import { isAMSTAR2Complete } from '@/components/checklist/AMSTAR2Checklist/checklist.js';
 import { isROBINSIComplete } from '@/components/checklist/ROBINSIChecklist/checklist';
 import { isROB2Complete } from '@/components/checklist/ROB2Checklist/checklist';
-
-const _internalStore = _projectActionsStore as any;
 
 // Valid answer keys for each checklist type (module-level for stable references)
 const AMSTAR2_KEY_PATTERN = /^q\d+[a-z]*$/i;
@@ -95,13 +92,6 @@ export function ChecklistYjsWrapper({ projectId, studyId, checklistId }: Checkli
     updateAnnotation,
     deleteAnnotation,
   } = ops || {};
-
-  // Set active project for action store
-  useEffect(() => {
-    if (projectId && orgId) {
-      _internalStore._setActiveProject(projectId, orgId);
-    }
-  }, [projectId, orgId]);
 
   const connectionState = useProjectStore(s => selectConnectionState(s, projectId));
 

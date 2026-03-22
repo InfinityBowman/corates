@@ -9,7 +9,7 @@ import { SimpleEditable } from '@/components/ui/editable';
 import { getChecklistMetadata } from '@/checklist-registry';
 import { formatRelativeTime } from './utils';
 
-/* eslint-disable no-unused-vars */
+ 
 interface LocalAppraisalCardProps {
   checklist: {
     id: string;
@@ -24,7 +24,7 @@ interface LocalAppraisalCardProps {
   onRename?: (name: string) => void;
   style?: React.CSSProperties;
 }
-/* eslint-enable no-unused-vars */
+ 
 
 export function LocalAppraisalCard({
   checklist,

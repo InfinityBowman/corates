@@ -78,13 +78,13 @@ function MemberPercentRow({
   );
 }
 
-/* eslint-disable no-unused-vars */
+ 
 interface ReviewerAssignmentProps {
   studies: any[];
   members: any[];
   onAssignReviewers: (studyId: string, updates: any) => void;
 }
-/* eslint-enable no-unused-vars */
+ 
 
 export function ReviewerAssignment({
   studies,

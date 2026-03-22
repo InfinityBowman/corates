@@ -26,7 +26,7 @@ import { getStatusLabel, getStatusStyle } from '@/constants/checklist-status';
 import { useProjectStore } from '@/stores/projectStore';
 import { useProjectContext } from '../ProjectContext';
 
-/* eslint-disable no-unused-vars */
+ 
 interface TodoStudyRowProps {
   study: any;
   members: any[];
@@ -42,7 +42,7 @@ interface TodoStudyRowProps {
   onDownloadPdf: (pdf: any) => void;
   creatingChecklist: boolean;
 }
-/* eslint-enable no-unused-vars */
+ 
 
 export function TodoStudyRow({
   study,

@@ -11,7 +11,7 @@ import { EditPdfMetadataModal } from '../EditPdfMetadataModal';
 import { project } from '@/project';
 import { validatePdfFile } from '@/lib/pdfValidation.js';
 
-/* eslint-disable no-unused-vars */
+ 
 interface StudyPdfSectionProps {
   study: any;
   onOpenGoogleDrive?: (studyId: string) => void;

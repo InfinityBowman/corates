@@ -31,7 +31,7 @@ function getAvatarColorClasses(name: string) {
   return AVATAR_COLORS[index];
 }
 
-/* eslint-disable no-unused-vars */
+ 
 interface StudyCardHeaderProps {
   study: any;
   expanded: boolean;

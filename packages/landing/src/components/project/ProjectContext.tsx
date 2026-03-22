@@ -18,7 +18,7 @@ export interface ProjectMember {
   image?: string | null;
 }
 
-/* eslint-disable no-unused-vars */
+ 
 interface ProjectContextValue {
   projectId: string;
   orgId: string | null;
@@ -30,7 +30,7 @@ interface ProjectContextValue {
   getReconcilePath: (studyId: string, checklist1Id: string, checklist2Id: string) => string;
   projectOps: Record<string, unknown> | null;
 }
-/* eslint-enable no-unused-vars */
+ 
 
 const ProjectCtx = createContext<ProjectContextValue | null>(null);
 

@@ -5,13 +5,13 @@
 import { useNavigate } from '@tanstack/react-router';
 import { FileCheck2Icon, TrashIcon } from 'lucide-react';
 
-/* eslint-disable no-unused-vars */
+ 
 interface LocalChecklistItemProps {
   checklist: { id: string; name?: string; updatedAt?: number; createdAt?: number };
   isSelected: boolean;
   onDelete: (e: React.MouseEvent, id: string) => void;
 }
-/* eslint-enable no-unused-vars */
+ 
 
 function formatDate(timestamp?: number): string {
   if (!timestamp) return '';
