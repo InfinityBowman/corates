@@ -3,17 +3,30 @@
  */
 
 import * as Y from 'yjs';
-import { ChecklistHandler, yTextToString } from './base.js';
+import { ChecklistHandler, yTextToString, type TextGetterFn } from './base';
+
+interface ROBINSDomainTemplate {
+  judgement?: string | null;
+  judgementSource?: string | null;
+  direction?: string | null;
+  answers?: Record<string, { answer: string | null }>;
+}
+
+interface ROBINSDomainUpdate {
+  judgement?: string | null;
+  judgementSource?: string | null;
+  direction?: string | null;
+  answers?: Record<string, { answer?: string | null; comment?: string }>;
+}
+
+interface SectionBQuestion {
+  answer?: string | null;
+  comment?: string;
+}
 
 export class ROBINSIHandler extends ChecklistHandler {
-  /**
-   * Extract answer structure from ROBINS-I checklist template
-   * @param {Object} template - The checklist template from createChecklistOfType
-   * @returns {Object} Extracted answers data structure
-   */
-  extractAnswersFromTemplate(template) {
-    const answersData = {};
-    // ROBINS-I: Extract all domain and section data
+  extractAnswersFromTemplate(template: Record<string, unknown>): Record<string, unknown> {
+    const answersData: Record<string, unknown> = {};
     const robinsKeys = [
       'planning',
       'sectionA',
@@ -38,31 +51,24 @@ export class ROBINSIHandler extends ChecklistHandler {
     return answersData;
   }
 
-  /**
-   * Create Y.Map structure for ROBINS-I answers
-   * @param {Object} answersData - The extracted answers data
-   * @returns {Y.Map} The answers Y.Map
-   */
-  createAnswersYMap(answersData) {
+  createAnswersYMap(answersData: Record<string, unknown>): Y.Map<unknown> {
     const answersYMap = new Y.Map();
 
-    // ROBINS-I: Store each section/domain as nested Y.Maps to support concurrent edits
     Object.entries(answersData).forEach(([key, value]) => {
       const sectionYMap = new Y.Map();
+      const val = value as Record<string, unknown>;
 
-      // Domain keys have nested 'answers' object with individual questions
       if (key.startsWith('domain') || key === 'overall') {
-        // Store judgement and direction at section level
-        sectionYMap.set('judgement', value.judgement ?? null);
-        sectionYMap.set('judgementSource', value.judgementSource ?? 'auto');
-        if (value.direction !== undefined) {
-          sectionYMap.set('direction', value.direction ?? null);
+        const domain = val as ROBINSDomainTemplate;
+        sectionYMap.set('judgement', domain.judgement ?? null);
+        sectionYMap.set('judgementSource', domain.judgementSource ?? 'auto');
+        if (domain.direction !== undefined) {
+          sectionYMap.set('direction', domain.direction ?? null);
         }
 
-        // Store each question as a nested Y.Map for concurrent edits
-        if (value.answers) {
+        if (domain.answers) {
           const answersNestedYMap = new Y.Map();
-          Object.entries(value.answers).forEach(([qKey, qValue]) => {
+          Object.entries(domain.answers).forEach(([qKey, qValue]) => {
             const questionYMap = new Y.Map();
             questionYMap.set('answer', qValue.answer ?? null);
             questionYMap.set('comment', new Y.Text());
@@ -71,11 +77,11 @@ export class ROBINSIHandler extends ChecklistHandler {
           sectionYMap.set('answers', answersNestedYMap);
         }
       } else if (key === 'sectionB') {
-        // Section B has individual questions (b1, b2, b3) and stopAssessment
-        Object.entries(value).forEach(([subKey, subValue]) => {
+        Object.entries(val).forEach(([subKey, subValue]) => {
           if (typeof subValue === 'object' && subValue !== null) {
             const questionYMap = new Y.Map();
-            questionYMap.set('answer', subValue.answer ?? null);
+            const q = subValue as { answer?: string | null };
+            questionYMap.set('answer', q.answer ?? null);
             questionYMap.set('comment', new Y.Text());
             sectionYMap.set(subKey, questionYMap);
           } else {
@@ -83,30 +89,27 @@ export class ROBINSIHandler extends ChecklistHandler {
           }
         });
       } else if (key === 'confoundingEvaluation') {
-        // Confounding evaluation has arrays - store as JSON for now
-        sectionYMap.set('predefined', value.predefined ?? []);
-        sectionYMap.set('additional', value.additional ?? []);
+        const ce = val as { predefined?: unknown[]; additional?: unknown[] };
+        sectionYMap.set('predefined', ce.predefined ?? []);
+        sectionYMap.set('additional', ce.additional ?? []);
       } else if (key === 'sectionD') {
-        // Section D has sources object and otherSpecify
-        sectionYMap.set('sources', value.sources ?? {});
+        const sd = val as { sources?: Record<string, boolean> };
+        sectionYMap.set('sources', sd.sources ?? {});
         sectionYMap.set('otherSpecify', new Y.Text());
       } else if (key === 'planning') {
-        // Planning section: confoundingFactors is free text
         sectionYMap.set('confoundingFactors', new Y.Text());
       } else if (key === 'sectionA') {
-        // Section A: numericalResult, furtherDetails, outcome are free text
         sectionYMap.set('numericalResult', new Y.Text());
         sectionYMap.set('furtherDetails', new Y.Text());
         sectionYMap.set('outcome', new Y.Text());
       } else if (key === 'sectionC') {
-        // Section C: participants, interventionStrategy, comparatorStrategy are free text
+        const sc = val as { isPerProtocol?: boolean };
         sectionYMap.set('participants', new Y.Text());
         sectionYMap.set('interventionStrategy', new Y.Text());
         sectionYMap.set('comparatorStrategy', new Y.Text());
-        sectionYMap.set('isPerProtocol', value.isPerProtocol ?? false);
+        sectionYMap.set('isPerProtocol', sc.isPerProtocol ?? false);
       } else {
-        // Other sections: store each field
-        Object.entries(value).forEach(([fieldKey, fieldValue]) => {
+        Object.entries(val).forEach(([fieldKey, fieldValue]) => {
           sectionYMap.set(fieldKey, fieldValue);
         });
       }
@@ -117,13 +120,8 @@ export class ROBINSIHandler extends ChecklistHandler {
     return answersYMap;
   }
 
-  /**
-   * Serialize ROBINS-I answers Y.Map to plain object
-   * @param {Y.Map} answersMap - The answers Y.Map
-   * @returns {Object} Plain object with answers
-   */
-  serializeAnswers(answersMap) {
-    const answers = {};
+  serializeAnswers(answersMap: Y.Map<unknown>): Record<string, unknown> {
+    const answers: Record<string, unknown> = {};
     for (const [key, sectionYMap] of answersMap.entries()) {
       if (!(sectionYMap instanceof Y.Map)) {
         answers[key] = sectionYMap;
@@ -131,35 +129,37 @@ export class ROBINSIHandler extends ChecklistHandler {
       }
 
       if (key.startsWith('domain')) {
-        const sectionData = {
+        const sectionData: Record<string, unknown> = {
           judgement: sectionYMap.get('judgement') ?? null,
           judgementSource: sectionYMap.get('judgementSource') ?? 'auto',
-          answers: {}, // Always initialize answers for domains
+          answers: {} as Record<string, { answer: string | null; comment: string }>,
         };
         const direction = sectionYMap.get('direction');
         if (direction !== undefined) {
           sectionData.direction = direction;
         }
 
-        // Reconstruct nested answers
         const answersNestedYMap = sectionYMap.get('answers');
         if (answersNestedYMap instanceof Y.Map) {
+          const answersObj = sectionData.answers as Record<
+            string,
+            { answer: string | null; comment: string }
+          >;
           for (const [qKey, questionYMap] of answersNestedYMap.entries()) {
             if (questionYMap instanceof Y.Map) {
               const commentValue = questionYMap.get('comment');
-              sectionData.answers[qKey] = {
-                answer: questionYMap.get('answer') ?? null,
+              answersObj[qKey] = {
+                answer: (questionYMap.get('answer') as string) ?? null,
                 comment: yTextToString(commentValue),
               };
             } else {
-              sectionData.answers[qKey] = questionYMap;
+              answersObj[qKey] = questionYMap as { answer: string | null; comment: string };
             }
           }
         }
         answers[key] = sectionData;
       } else if (key === 'overall') {
-        // Overall section has judgement and direction but no nested answers
-        const sectionData = {
+        const sectionData: Record<string, unknown> = {
           judgement: sectionYMap.get('judgement') ?? null,
           judgementSource: sectionYMap.get('judgementSource') ?? 'auto',
         };
@@ -169,7 +169,7 @@ export class ROBINSIHandler extends ChecklistHandler {
         }
         answers[key] = sectionData;
       } else if (key === 'sectionB') {
-        const sectionData = {};
+        const sectionData: Record<string, unknown> = {};
         for (const [subKey, subValue] of sectionYMap.entries()) {
           if (subValue instanceof Y.Map) {
             const commentValue = subValue.get('comment');
@@ -183,9 +183,7 @@ export class ROBINSIHandler extends ChecklistHandler {
         }
         answers[key] = sectionData;
       } else {
-        // Other sections (planning, sectionA, sectionC, sectionD): convert Y.Map to plain object
-        // Convert Y.Text fields to strings
-        const sectionData = {};
+        const sectionData: Record<string, unknown> = {};
         for (const [fieldKey, fieldValue] of sectionYMap.entries()) {
           if (fieldValue instanceof Y.Text) {
             sectionData[fieldKey] = fieldValue.toString();
@@ -199,38 +197,10 @@ export class ROBINSIHandler extends ChecklistHandler {
     return answers;
   }
 
-  /**
-   * Set a Y.Text field value, preserving the Y.Text object if it exists
-   * @param {Y.Map} questionYMap - The question Y.Map
-   * @param {string} fieldKey - The field key (e.g., 'comment')
-   * @param {string|null} value - The string value to set (null becomes empty string)
-   */
-  setYTextField(questionYMap, fieldKey, value) {
-    const commentStr = value ?? '';
-    const existing = questionYMap.get(fieldKey);
-    if (existing instanceof Y.Text) {
-      if (existing.toString() === commentStr) return;
-      existing.doc.transact(() => {
-        existing.delete(0, existing.length);
-        existing.insert(0, commentStr);
-      });
-    } else {
-      const newText = new Y.Text();
-      newText.insert(0, commentStr);
-      questionYMap.set(fieldKey, newText);
-    }
-  }
-
-  /**
-   * Update a single answer/section in ROBINS-I checklist
-   * @param {Y.Map} answersMap - The answers Y.Map
-   * @param {string} key - The section key (e.g., 'domain1a', 'sectionB')
-   * @param {Object} data - The answer data
-   */
-  updateAnswer(answersMap, key, data) {
-    const doc = answersMap.doc;
+  updateAnswer(answersMap: Y.Map<unknown>, key: string, data: Record<string, unknown>): void {
+    const doc = answersMap.doc!;
     doc.transact(() => {
-      let sectionYMap = answersMap.get(key);
+      let sectionYMap = answersMap.get(key) as Y.Map<unknown> | undefined;
 
       if (!sectionYMap || !(sectionYMap instanceof Y.Map)) {
         sectionYMap = new Y.Map();
@@ -238,28 +208,29 @@ export class ROBINSIHandler extends ChecklistHandler {
       }
 
       if (key.startsWith('domain') || key === 'overall') {
-        if (data.judgement !== undefined) {
-          sectionYMap.set('judgement', data.judgement);
+        const domainData = data as ROBINSDomainUpdate;
+        if (domainData.judgement !== undefined) {
+          sectionYMap.set('judgement', domainData.judgement);
         }
-        if (data.judgementSource !== undefined) {
-          sectionYMap.set('judgementSource', data.judgementSource);
+        if (domainData.judgementSource !== undefined) {
+          sectionYMap.set('judgementSource', domainData.judgementSource);
         }
-        if (data.direction !== undefined) {
-          sectionYMap.set('direction', data.direction);
+        if (domainData.direction !== undefined) {
+          sectionYMap.set('direction', domainData.direction);
         }
 
-        if (data.answers) {
-          let answersNestedYMap = sectionYMap.get('answers');
+        if (domainData.answers) {
+          let answersNestedYMap = sectionYMap.get('answers') as Y.Map<unknown> | undefined;
           if (!answersNestedYMap || !(answersNestedYMap instanceof Y.Map)) {
             answersNestedYMap = new Y.Map();
             sectionYMap.set('answers', answersNestedYMap);
           }
 
-          Object.entries(data.answers).forEach(([qKey, qValue]) => {
-            let questionYMap = answersNestedYMap.get(qKey);
+          Object.entries(domainData.answers).forEach(([qKey, qValue]) => {
+            let questionYMap = answersNestedYMap!.get(qKey) as Y.Map<unknown> | undefined;
             if (!questionYMap || !(questionYMap instanceof Y.Map)) {
               questionYMap = new Y.Map();
-              answersNestedYMap.set(qKey, questionYMap);
+              answersNestedYMap!.set(qKey, questionYMap);
             }
             if (qValue.answer !== undefined) questionYMap.set('answer', qValue.answer);
             if (qValue.comment !== undefined)
@@ -269,62 +240,66 @@ export class ROBINSIHandler extends ChecklistHandler {
       } else if (key === 'sectionB') {
         Object.entries(data).forEach(([subKey, subValue]) => {
           if (typeof subValue === 'object' && subValue !== null) {
-            let questionYMap = sectionYMap.get(subKey);
+            const q = subValue as SectionBQuestion;
+            let questionYMap = sectionYMap!.get(subKey) as Y.Map<unknown> | undefined;
             if (!questionYMap || !(questionYMap instanceof Y.Map)) {
               questionYMap = new Y.Map();
-              sectionYMap.set(subKey, questionYMap);
+              sectionYMap!.set(subKey, questionYMap);
             }
-            if (subValue.answer !== undefined) questionYMap.set('answer', subValue.answer);
-            if (subValue.comment !== undefined)
-              this.setYTextField(questionYMap, 'comment', subValue.comment);
+            if (q.answer !== undefined) questionYMap.set('answer', q.answer);
+            if (q.comment !== undefined)
+              this.setYTextField(questionYMap, 'comment', q.comment);
           } else {
-            sectionYMap.set(subKey, subValue);
+            sectionYMap!.set(subKey, subValue);
           }
         });
       } else if (key === 'confoundingEvaluation') {
-        if (data.predefined !== undefined) sectionYMap.set('predefined', data.predefined);
-        if (data.additional !== undefined) sectionYMap.set('additional', data.additional);
+        const ce = data as { predefined?: unknown[]; additional?: unknown[] };
+        if (ce.predefined !== undefined) sectionYMap.set('predefined', ce.predefined);
+        if (ce.additional !== undefined) sectionYMap.set('additional', ce.additional);
       } else if (key === 'sectionD') {
-        if (data.sources !== undefined) sectionYMap.set('sources', data.sources);
-        if (data.otherSpecify !== undefined) sectionYMap.set('otherSpecify', data.otherSpecify);
+        const sd = data as { sources?: Record<string, boolean>; otherSpecify?: string };
+        if (sd.sources !== undefined) sectionYMap.set('sources', sd.sources);
+        if (sd.otherSpecify !== undefined) sectionYMap.set('otherSpecify', sd.otherSpecify);
       } else {
         Object.entries(data).forEach(([fieldKey, fieldValue]) => {
-          sectionYMap.set(fieldKey, fieldValue);
+          sectionYMap!.set(fieldKey, fieldValue);
         });
       }
     });
   }
 
-  /**
-   * Get type-specific text getter function for ROBINS-I
-   * @param {Function} getYDoc - Function that returns the Y.Doc
-   * @returns {Function} getRobinsText function
-   */
-  getTextGetter(getYDoc) {
-    return (studyId, checklistId, sectionKey, fieldKey, questionKey = null) => {
+  getTextGetter(getYDoc: () => Y.Doc | null): TextGetterFn {
+    return (
+      studyId: string,
+      checklistId: string,
+      sectionKey: string,
+      fieldKey: string,
+      questionKey: string | null = null,
+    ): Y.Text | null => {
       const ydoc = getYDoc();
       if (!ydoc) return null;
 
       const studiesMap = ydoc.getMap('reviews');
-      const studyYMap = studiesMap.get(studyId);
+      const studyYMap = studiesMap.get(studyId) as Y.Map<unknown> | undefined;
       if (!studyYMap) return null;
 
-      const checklistsMap = studyYMap.get('checklists');
+      const checklistsMap = studyYMap.get('checklists') as Y.Map<unknown> | undefined;
       if (!checklistsMap) return null;
 
-      const checklistYMap = checklistsMap.get(checklistId);
+      const checklistYMap = checklistsMap.get(checklistId) as Y.Map<unknown> | undefined;
       if (!checklistYMap) return null;
 
       const checklistType = checklistYMap.get('type');
       if (checklistType !== 'ROBINS_I') return null;
 
-      const answersMap = checklistYMap.get('answers');
+      const answersMap = checklistYMap.get('answers') as Y.Map<unknown> | undefined;
       if (!answersMap) return null;
 
       const sectionYMap = answersMap.get(sectionKey);
       if (!sectionYMap || !(sectionYMap instanceof Y.Map)) return null;
 
-      // Handle domain questions (domain1a, domain1b, etc.)
+      // Handle domain questions
       if (sectionKey.startsWith('domain') && questionKey) {
         const answersNestedYMap = sectionYMap.get('answers');
         if (!answersNestedYMap || !(answersNestedYMap instanceof Y.Map)) return null;
@@ -333,39 +308,30 @@ export class ROBINSIHandler extends ChecklistHandler {
         if (!questionYMap || !(questionYMap instanceof Y.Map)) return null;
 
         const text = questionYMap.get(fieldKey);
-        if (text instanceof Y.Text) {
-          return text;
-        }
+        if (text instanceof Y.Text) return text;
 
-        // Create Y.Text if it doesn't exist
         const newText = new Y.Text();
         questionYMap.set(fieldKey, newText);
         return newText;
       }
 
-      // Handle sectionB questions (b1, b2, b3)
+      // Handle sectionB questions
       if (sectionKey === 'sectionB' && questionKey) {
         const questionYMap = sectionYMap.get(questionKey);
         if (!questionYMap || !(questionYMap instanceof Y.Map)) return null;
 
         const text = questionYMap.get(fieldKey);
-        if (text instanceof Y.Text) {
-          return text;
-        }
+        if (text instanceof Y.Text) return text;
 
-        // Create Y.Text if it doesn't exist
         const newText = new Y.Text();
         questionYMap.set(fieldKey, newText);
         return newText;
       }
 
-      // Handle section-level fields (planning, sectionA, sectionC, sectionD)
+      // Handle section-level fields
       const text = sectionYMap.get(fieldKey);
-      if (text instanceof Y.Text) {
-        return text;
-      }
+      if (text instanceof Y.Text) return text;
 
-      // Create Y.Text if it doesn't exist
       const newText = new Y.Text();
       sectionYMap.set(fieldKey, newText);
       return newText;

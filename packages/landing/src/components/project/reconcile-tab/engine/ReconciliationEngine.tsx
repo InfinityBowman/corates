@@ -154,95 +154,61 @@ export function ReconciliationEngine({
   // -----------------------------------------------------------------------
 
   const NavbarComponent = adapter.NavbarComponent;
-  const {
-    navItems,
-    currentPage,
-    viewMode,
-    finalAnswers,
-    comparison,
-    goToPage,
-    setViewMode,
-    handleReset,
-    expandedDomain,
-    setExpandedDomain,
-  } = engine;
-  const { remoteUsers, usersByPage } = presence;
 
-  const headerContent = useMemo(
-    () => (
-      <>
-        {/* Back button */}
-        <button
-          onClick={onCancel}
-          className='hover:bg-secondary shrink-0 rounded-lg p-2 transition-colors'
-          title='Go back'
-        >
-          <ArrowLeftIcon className='text-muted-foreground size-5' />
-        </button>
+  const headerContent = (
+    <>
+      {/* Back button */}
+      <button
+        onClick={onCancel}
+        className='hover:bg-secondary shrink-0 rounded-lg p-2 transition-colors'
+        title='Go back'
+      >
+        <ArrowLeftIcon className='text-muted-foreground size-5' />
+      </button>
 
-        {/* Title */}
-        <div className='shrink-0'>
-          <h1 className='text-foreground text-lg font-bold'>{adapter.title}</h1>
-          <p className='text-muted-foreground text-xs'>
-            {reviewer1Name || 'Reviewer 1'} vs {reviewer2Name || 'Reviewer 2'}
-          </p>
+      {/* Title */}
+      <div className='shrink-0'>
+        <h1 className='text-foreground text-lg font-bold'>{adapter.title}</h1>
+        <p className='text-muted-foreground text-xs'>
+          {reviewer1Name || 'Reviewer 1'} vs {reviewer2Name || 'Reviewer 2'}
+        </p>
+      </div>
+
+      <div className='bg-border h-8 w-px shrink-0' />
+
+      {/* Presence avatars */}
+      {presence.remoteUsers.length > 0 && (
+        <>
+          <PresenceAvatars
+            users={presence.remoteUsers}
+            onUserClick={(_userId, page) => {
+              engine.goToPage(page);
+            }}
+            getPageLabel={pageIndex => adapter.getPageLabel(pageIndex)}
+          />
+          <div className='bg-border h-8 w-px shrink-0' />
+        </>
+      )}
+
+      {/* Navbar */}
+      {engine.navItems.length > 0 && (
+        <div className='flex min-w-0 flex-1 items-center overflow-x-auto'>
+          <NavbarComponent
+            navItems={engine.navItems}
+            currentPage={engine.currentPage}
+            viewMode={engine.viewMode}
+            finalAnswers={engine.finalAnswers}
+            comparison={engine.comparison}
+            usersByPage={presence.usersByPage}
+            goToPage={engine.goToPage}
+            setViewMode={engine.setViewMode}
+            onReset={engine.handleReset}
+            expandedDomain={engine.expandedDomain}
+            setExpandedDomain={engine.setExpandedDomain}
+          />
         </div>
-
-        <div className='bg-border h-8 w-px shrink-0' />
-
-        {/* Presence avatars */}
-        {remoteUsers.length > 0 && (
-          <>
-            <PresenceAvatars
-              users={remoteUsers}
-              onUserClick={(_userId, page) => {
-                goToPage(page);
-              }}
-              getPageLabel={pageIndex => adapter.getPageLabel(pageIndex)}
-            />
-            <div className='bg-border h-8 w-px shrink-0' />
-          </>
-        )}
-
-        {/* Navbar */}
-        {navItems.length > 0 && (
-          <div className='flex min-w-0 flex-1 items-center overflow-x-auto'>
-            <NavbarComponent
-              navItems={navItems}
-              currentPage={currentPage}
-              viewMode={viewMode}
-              finalAnswers={finalAnswers}
-              comparison={comparison}
-              usersByPage={usersByPage}
-              goToPage={goToPage}
-              setViewMode={setViewMode}
-              onReset={handleReset}
-              expandedDomain={expandedDomain}
-              setExpandedDomain={setExpandedDomain}
-            />
-          </div>
-        )}
-      </>
-    ),
-    [
-      onCancel,
-      adapter,
-      NavbarComponent,
-      reviewer1Name,
-      reviewer2Name,
-      remoteUsers,
-      usersByPage,
-      navItems,
-      currentPage,
-      viewMode,
-      finalAnswers,
-      comparison,
-      goToPage,
-      setViewMode,
-      handleReset,
-      expandedDomain,
-      setExpandedDomain,
-    ],
+      )}
+    </>
   );
 
   // -----------------------------------------------------------------------
