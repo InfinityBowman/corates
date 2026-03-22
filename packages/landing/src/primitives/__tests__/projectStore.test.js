@@ -95,7 +95,7 @@ describe('projectStore - Project Data Management', () => {
     it('should also clear connection state', () => {
       const projectId = 'clear-with-connection';
       useProjectStore.getState().setProjectData(projectId, { meta: {} });
-      useProjectStore.getState().setConnectionState(projectId, { connected: true });
+      useProjectStore.getState().dispatchConnectionEvent(projectId, { type: 'CONNECT_REQUESTED' });
 
       useProjectStore.getState().clearProject(projectId);
 
@@ -123,34 +123,45 @@ describe('projectStore - Connection State Management', () => {
     });
   });
 
-  describe('setConnectionState', () => {
-    it('should initialize and update connection state', () => {
+  describe('dispatchConnectionEvent', () => {
+    it('should transition through connection phases', () => {
       const projectId = 'conn-test';
 
-      useProjectStore.getState().setConnectionState(projectId, { connecting: true });
+      useProjectStore.getState().dispatchConnectionEvent(projectId, { type: 'CONNECT_REQUESTED' });
       let conn = useProjectStore.getState().connections[projectId];
-      expect(conn.connecting).toBe(true);
-      expect(conn.connected).toBe(false);
+      expect(conn.phase).toBe('connecting');
 
-      useProjectStore
-        .getState()
-        .setConnectionState(projectId, { connecting: false, connected: true });
+      useProjectStore.getState().dispatchConnectionEvent(projectId, { type: 'REMOTE_CONNECTED' });
       conn = useProjectStore.getState().connections[projectId];
-      expect(conn.connecting).toBe(false);
-      expect(conn.connected).toBe(true);
+      expect(conn.phase).toBe('connected');
+
+      useProjectStore.getState().dispatchConnectionEvent(projectId, { type: 'SYNC_COMPLETE' });
+      conn = useProjectStore.getState().connections[projectId];
+      expect(conn.phase).toBe('synced');
     });
 
-    it('should set error state', () => {
+    it('should set error state on access denied', () => {
       const projectId = 'error-test';
 
-      useProjectStore.getState().setConnectionState(projectId, {
-        error: 'Connection failed',
-        connected: false,
+      useProjectStore.getState().dispatchConnectionEvent(projectId, {
+        type: 'ACCESS_DENIED',
+        reason: 'Connection failed',
       });
 
       const conn = useProjectStore.getState().connections[projectId];
+      expect(conn.phase).toBe('error');
       expect(conn.error).toBe('Connection failed');
-      expect(conn.connected).toBe(false);
+    });
+
+    it('should reset to idle', () => {
+      const projectId = 'reset-test';
+
+      useProjectStore.getState().dispatchConnectionEvent(projectId, { type: 'CONNECT_REQUESTED' });
+      useProjectStore.getState().dispatchConnectionEvent(projectId, { type: 'SYNC_COMPLETE' });
+      expect(useProjectStore.getState().connections[projectId].phase).toBe('synced');
+
+      useProjectStore.getState().dispatchConnectionEvent(projectId, { type: 'RESET' });
+      expect(useProjectStore.getState().connections[projectId].phase).toBe('idle');
     });
   });
 });

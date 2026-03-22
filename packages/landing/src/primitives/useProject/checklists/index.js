@@ -320,6 +320,52 @@ export function createChecklistOperations(_projectId, getYDoc, _isSynced) {
     return textGetter(studyId, checklistId, sectionKey, fieldKey, questionKey);
   }
 
+  /**
+   * Unified text ref getter -- works for all checklist types.
+   * @param {string} studyId
+   * @param {string} checklistId
+   * @param {Object} params - { sectionKey?, fieldKey?, questionKey? }
+   * @returns {Y.Text|null}
+   */
+  function getTextRef(studyId, checklistId, params = {}) {
+    const result = commonOps.getChecklistYMap(studyId, checklistId);
+    if (!result) return null;
+
+    const { checklistType } = result;
+    const { sectionKey, fieldKey, questionKey } = params;
+
+    if (checklistType === 'AMSTAR2') {
+      return getQuestionNote(studyId, checklistId, questionKey);
+    } else if (checklistType === 'ROBINS_I') {
+      return getRobinsText(studyId, checklistId, sectionKey, fieldKey, questionKey);
+    } else if (checklistType === 'ROB2') {
+      return getRob2Text(studyId, checklistId, sectionKey, fieldKey, questionKey);
+    }
+    return null;
+  }
+
+  /**
+   * Set a Y.Text field value by key path. Includes equality check and transaction
+   * wrapping to prevent feedback loops and redundant YDoc updates.
+   * Components should use this instead of directly manipulating Y.Text objects.
+   * @param {string} studyId
+   * @param {string} checklistId
+   * @param {Object} params - { sectionKey?, fieldKey?, questionKey? }
+   * @param {string} text - The text value to set
+   * @param {number} [maxLength=2000] - Maximum text length
+   */
+  function setTextValue(studyId, checklistId, params, text, maxLength = 2000) {
+    const yText = getTextRef(studyId, checklistId, params);
+    if (!yText) return;
+    const str = (typeof text === 'string' ? text : '').slice(0, maxLength);
+    // Equality check: skip if value hasn't changed
+    if (yText.toString() === str) return;
+    yText.doc.transact(() => {
+      yText.delete(0, yText.length);
+      yText.insert(0, str);
+    });
+  }
+
   return {
     createChecklist,
     updateChecklist: commonOps.updateChecklist,
@@ -327,8 +373,12 @@ export function createChecklistOperations(_projectId, getYDoc, _isSynced) {
     getChecklistAnswersMap: commonOps.getChecklistAnswersMap,
     getChecklistData,
     updateChecklistAnswer,
+    // Legacy per-type text getters (kept for existing leaf components)
     getQuestionNote,
     getRobinsText,
     getRob2Text,
+    // Unified API
+    getTextRef,
+    setTextValue,
   };
 }

@@ -34,40 +34,7 @@ import { OverallDirectionPage } from './pages/OverallDirectionPage';
 import { ROB2Navbar } from './ROB2Navbar';
 import { ROB2SummaryView } from './ROB2SummaryView';
 
-// ---------------------------------------------------------------------------
-// Y.Text helpers (extracted from ROB2Reconciliation.tsx)
-// ---------------------------------------------------------------------------
-
 const PRELIMINARY_TEXT_FIELDS = ['experimental', 'comparator', 'numericalResult'];
-
-function copyCommentToYText(
-  getTextRef: any,
-  sectionKey: string,
-  fieldKey: string,
-  questionKey: string,
-  commentText: string | null,
-) {
-  if (!getTextRef) return;
-  const yText = getTextRef(sectionKey, fieldKey, questionKey);
-  if (!yText) return;
-  const text = (commentText || '').slice(0, 2000);
-  yText.doc.transact(() => {
-    yText.delete(0, yText.length);
-    yText.insert(0, text);
-  });
-}
-
-function copyPreliminaryTextToYText(getTextRef: any, fieldKey: string, value: any) {
-  if (!PRELIMINARY_TEXT_FIELDS.includes(fieldKey)) return;
-  if (!getTextRef) return;
-  const yText = getTextRef('preliminary', fieldKey);
-  if (!yText) return;
-  const text = (typeof value === 'string' ? value : '').slice(0, 2000);
-  yText.doc.transact(() => {
-    yText.delete(0, yText.length);
-    yText.insert(0, text);
-  });
-}
 
 // ---------------------------------------------------------------------------
 // Update helpers
@@ -226,7 +193,8 @@ function autoFillFromReviewer1(
   item: ReconciliationNavItem,
   checklist1: unknown,
   updateChecklistAnswer: (sectionKey: string, data: unknown) => void,
-  getTextRef: ((...args: unknown[]) => unknown) | null,
+  _getTextRef: ((...args: unknown[]) => unknown) | null,
+  setTextValue?: ((params: { sectionKey?: string; fieldKey?: string; questionKey?: string }, text: string) => void) | null,
 ): void {
   const c1 = checklist1 as any;
 
@@ -234,7 +202,7 @@ function autoFillFromReviewer1(
     const value = c1?.preliminary?.[item.key];
     if (value !== undefined) {
       if (PRELIMINARY_TEXT_FIELDS.includes(item.key)) {
-        copyPreliminaryTextToYText(getTextRef, item.key, value);
+        setTextValue?.({ sectionKey: 'preliminary', fieldKey: item.key }, typeof value === 'string' ? value : '');
       } else {
         updatePreliminaryField(updateChecklistAnswer, item.key, value);
       }
@@ -243,7 +211,7 @@ function autoFillFromReviewer1(
     const answer = c1?.[item.domainKey]?.answers?.[item.key];
     if (answer) {
       updateDomainQuestionAnswer(updateChecklistAnswer, item.domainKey, item.key, answer.answer);
-      copyCommentToYText(getTextRef, item.domainKey, 'comment', item.key, answer.comment);
+      setTextValue?.({ sectionKey: item.domainKey, fieldKey: 'comment', questionKey: item.key }, answer.comment || '');
     }
   } else if (item.type === NAV_ITEM_TYPES.DOMAIN_DIRECTION && item.domainKey) {
     const direction = c1?.[item.domainKey]?.direction;
@@ -347,10 +315,7 @@ function renderPage(context: EngineContext) {
           const value = c1?.preliminary?.[currentItem.key];
           if (value !== undefined) {
             if (PRELIMINARY_TEXT_FIELDS.includes(currentItem.key)) {
-              // Text fields: only write Y.Text; the observer syncs back via onFinalChange.
-              // Calling updatePreliminaryField here too would re-write the Y.Text
-              // and trigger the observer again, causing an infinite loop.
-              copyPreliminaryTextToYText(getTextRef, currentItem.key, value);
+              context.setTextValue?.({ sectionKey: 'preliminary', fieldKey: currentItem.key }, typeof value === 'string' ? value : '');
             } else {
               updatePreliminaryField(context.updateChecklistAnswer, currentItem.key, value);
             }
@@ -360,7 +325,7 @@ function renderPage(context: EngineContext) {
           const value = c2?.preliminary?.[currentItem.key];
           if (value !== undefined) {
             if (PRELIMINARY_TEXT_FIELDS.includes(currentItem.key)) {
-              copyPreliminaryTextToYText(getTextRef, currentItem.key, value);
+              context.setTextValue?.({ sectionKey: 'preliminary', fieldKey: currentItem.key }, typeof value === 'string' ? value : '');
             } else {
               updatePreliminaryField(context.updateChecklistAnswer, currentItem.key, value);
             }
@@ -400,13 +365,7 @@ function renderPage(context: EngineContext) {
               currentItem.key,
               data.answer,
             );
-            copyCommentToYText(
-              getTextRef,
-              currentItem.domainKey!,
-              'comment',
-              currentItem.key,
-              data.comment,
-            );
+            context.setTextValue?.({ sectionKey: currentItem.domainKey!, fieldKey: 'comment', questionKey: currentItem.key }, data.comment || '');
           }
         }}
         onUseReviewer2={() => {
@@ -418,13 +377,7 @@ function renderPage(context: EngineContext) {
               currentItem.key,
               data.answer,
             );
-            copyCommentToYText(
-              getTextRef,
-              currentItem.domainKey!,
-              'comment',
-              currentItem.key,
-              data.comment,
-            );
+            context.setTextValue?.({ sectionKey: currentItem.domainKey!, fieldKey: 'comment', questionKey: currentItem.key }, data.comment || '');
           }
         }}
       />

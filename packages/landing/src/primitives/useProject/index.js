@@ -207,6 +207,8 @@ export function useProject(projectId) {
       getQuestionNote: connectionEntry.checklistOps.getQuestionNote,
       getRobinsText: connectionEntry.checklistOps.getRobinsText,
       getRob2Text: connectionEntry.checklistOps.getRob2Text,
+      getTextRef: connectionEntry.checklistOps.getTextRef,
+      setTextValue: connectionEntry.checklistOps.setTextValue,
       addPdfToStudy: connectionEntry.pdfOps.addPdfToStudy,
       removePdfFromStudy: connectionEntry.pdfOps.removePdfFromStudy,
       removePdfByFileName: connectionEntry.pdfOps.removePdfByFileName,
@@ -362,6 +364,8 @@ export function useProject(projectId) {
     getQuestionNote: (...args) => getEntry()?.checklistOps?.getQuestionNote(...args),
     getRobinsText: (...args) => getEntry()?.checklistOps?.getRobinsText(...args),
     getRob2Text: (...args) => getEntry()?.checklistOps?.getRob2Text(...args),
+    getTextRef: (...args) => getEntry()?.checklistOps?.getTextRef(...args),
+    setTextValue: (...args) => getEntry()?.checklistOps?.setTextValue(...args),
 
     // PDF operations
     addPdfToStudy: (...args) => getEntry()?.pdfOps?.addPdfToStudy(...args),

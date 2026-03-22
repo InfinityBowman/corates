@@ -50,6 +50,18 @@ export const project = {
       note?: string,
     ) => void;
     getQuestionNote: (studyId: string, checklistId: string, questionId: string) => unknown;
+    getTextRef: (
+      studyId: string,
+      checklistId: string,
+      params?: { sectionKey?: string; fieldKey?: string; questionKey?: string },
+    ) => unknown;
+    setTextValue: (
+      studyId: string,
+      checklistId: string,
+      params: { sectionKey?: string; fieldKey?: string; questionKey?: string },
+      text: string,
+      maxLength?: number,
+    ) => void;
   },
 
   pdf: store.pdf as {

@@ -454,6 +454,15 @@ export function ReconciliationWrapper({
     ],
   );
 
+  // Set a Y.Text field by key path without direct Y.Text manipulation
+  const setTextValue = useCallback(
+    (params: { sectionKey?: string; fieldKey?: string; questionKey?: string }, text: string) => {
+      if (!reconciledChecklistId) return;
+      (projectOps as any)?.setTextValue?.(studyId, reconciledChecklistId, params, text);
+    },
+    [studyId, reconciledChecklistId, projectOps],
+  );
+
   // Shared props for all reconciliation types
   const sharedProps = {
     checklist1: checklist1Data,
@@ -517,6 +526,7 @@ export function ReconciliationWrapper({
         updateChecklistAnswer?.(studyId, reconciledChecklistId, sectionKey, data);
       }}
       getTextRef={getTextRef}
+      setTextValue={setTextValue}
     />
   );
 }

@@ -68,9 +68,11 @@ export interface EngineContext {
   /** Pre-computed by engine via adapter.isAgreement for current item */
   isAgreement: boolean;
   /** Raw Yjs write callback - adapter formats args for its data model */
-  updateChecklistAnswer: (sectionKey: string, data: unknown) => void;
+  updateChecklistAnswer: (_sectionKey: string, _data: unknown) => void;
   /** Raw Y.Text accessor - adapter calls with type-specific arg pattern */
-  getTextRef: ((...args: unknown[]) => unknown) | null;
+  getTextRef: ((..._args: unknown[]) => unknown) | null;
+  /** Set a Y.Text field value by key path (equality-checked, transacted) */
+  setTextValue: ((_params: { sectionKey?: string; fieldKey?: string; questionKey?: string }, _text: string) => void) | null;
 }
 
 /**
@@ -178,13 +180,14 @@ export interface ReconciliationAdapter {
 
   /**
    * Copy reviewer1's answer for this item into the reconciled checklist.
-   * For ROB2/ROBINS-I, also copies comment text to Y.Text via getTextRef.
+   * For ROB2/ROBINS-I, also copies comment text via setTextValue.
    */
   autoFillFromReviewer1: (
     item: ReconciliationNavItem,
     checklist1: unknown,
     updateChecklistAnswer: (sectionKey: string, data: unknown) => void,
     getTextRef: ((...args: unknown[]) => unknown) | null,
+    setTextValue?: ((params: { sectionKey?: string; fieldKey?: string; questionKey?: string }, text: string) => void) | null,
   ) => void;
 
   /** Reset all answers to empty/default state */
@@ -249,6 +252,7 @@ export interface ReconciliationEngineProps {
   onCancel: () => void;
   updateChecklistAnswer: (sectionKey: string, data: unknown) => void;
   getTextRef: ((...args: unknown[]) => unknown) | null;
+  setTextValue: ((params: { sectionKey?: string; fieldKey?: string; questionKey?: string }, text: string) => void) | null;
 
   // PDF
   pdfData: ArrayBuffer | null;

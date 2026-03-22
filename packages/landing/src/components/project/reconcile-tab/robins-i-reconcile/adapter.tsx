@@ -34,27 +34,6 @@ import { RobinsINavbar } from './RobinsINavbar';
 import { RobinsISummaryView } from './RobinsISummaryView';
 
 // ---------------------------------------------------------------------------
-// Y.Text helper
-// ---------------------------------------------------------------------------
-
-function copyCommentToYText(
-  getTextRef: any,
-  sectionKey: string,
-  fieldKey: string,
-  questionKey: string,
-  commentText: string | null | undefined,
-) {
-  if (!getTextRef) return;
-  const yText = getTextRef(sectionKey, fieldKey, questionKey);
-  if (!yText) return;
-  const text = (commentText || '').slice(0, 2000);
-  yText.doc.transact(() => {
-    yText.delete(0, yText.length);
-    yText.insert(0, text);
-  });
-}
-
-// ---------------------------------------------------------------------------
 // Update helpers
 // ---------------------------------------------------------------------------
 
@@ -174,7 +153,8 @@ function autoFillFromReviewer1(
   item: ReconciliationNavItem,
   checklist1: unknown,
   updateChecklistAnswer: (sectionKey: string, data: unknown) => void,
-  getTextRef: ((...args: unknown[]) => unknown) | null,
+  _getTextRef: ((...args: unknown[]) => unknown) | null,
+  setTextValue?: ((params: { sectionKey?: string; fieldKey?: string; questionKey?: string }, text: string) => void) | null,
 ): void {
   const c1 = checklist1 as any;
 
@@ -182,13 +162,13 @@ function autoFillFromReviewer1(
     const answer = c1?.sectionB?.[item.key];
     if (answer) {
       updateSectionBAnswer(updateChecklistAnswer, item.key, answer.answer);
-      copyCommentToYText(getTextRef, 'sectionB', 'comment', item.key, answer.comment);
+      setTextValue?.({ sectionKey: 'sectionB', fieldKey: 'comment', questionKey: item.key }, answer.comment || '');
     }
   } else if (item.type === NAV_ITEM_TYPES.DOMAIN_QUESTION && item.domainKey) {
     const answer = c1?.[item.domainKey]?.answers?.[item.key];
     if (answer) {
       updateDomainQuestionAnswer(updateChecklistAnswer, item.domainKey, item.key, answer.answer);
-      copyCommentToYText(getTextRef, item.domainKey, 'comment', item.key, answer.comment);
+      setTextValue?.({ sectionKey: item.domainKey, fieldKey: 'comment', questionKey: item.key }, answer.comment || '');
     }
   } else if (item.type === NAV_ITEM_TYPES.DOMAIN_JUDGEMENT && item.domainKey) {
     const domain = c1?.[item.domainKey];
@@ -262,14 +242,14 @@ function renderPage(context: EngineContext) {
           const data = c1?.sectionB?.[currentItem.key];
           if (data) {
             updateSectionBAnswer(context.updateChecklistAnswer, currentItem.key, data.answer);
-            copyCommentToYText(getTextRef, 'sectionB', 'comment', currentItem.key, data.comment);
+            context.setTextValue?.({ sectionKey: 'sectionB', fieldKey: 'comment', questionKey: currentItem.key }, data.comment || '');
           }
         }}
         onUseReviewer2={() => {
           const data = c2?.sectionB?.[currentItem.key];
           if (data) {
             updateSectionBAnswer(context.updateChecklistAnswer, currentItem.key, data.answer);
-            copyCommentToYText(getTextRef, 'sectionB', 'comment', currentItem.key, data.comment);
+            context.setTextValue?.({ sectionKey: 'sectionB', fieldKey: 'comment', questionKey: currentItem.key }, data.comment || '');
           }
         }}
       />
@@ -305,13 +285,7 @@ function renderPage(context: EngineContext) {
               currentItem.key,
               data.answer,
             );
-            copyCommentToYText(
-              getTextRef,
-              currentItem.domainKey!,
-              'comment',
-              currentItem.key,
-              data.comment,
-            );
+            context.setTextValue?.({ sectionKey: currentItem.domainKey!, fieldKey: 'comment', questionKey: currentItem.key }, data.comment || '');
           }
         }}
         onUseReviewer2={() => {
@@ -323,13 +297,7 @@ function renderPage(context: EngineContext) {
               currentItem.key,
               data.answer,
             );
-            copyCommentToYText(
-              getTextRef,
-              currentItem.domainKey!,
-              'comment',
-              currentItem.key,
-              data.comment,
-            );
+            context.setTextValue?.({ sectionKey: currentItem.domainKey!, fieldKey: 'comment', questionKey: currentItem.key }, data.comment || '');
           }
         }}
       />

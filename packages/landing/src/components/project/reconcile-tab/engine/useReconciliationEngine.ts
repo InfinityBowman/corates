@@ -22,6 +22,7 @@ export interface UseReconciliationEngineOptions {
   reconciledChecklist: unknown;
   updateChecklistAnswer: (sectionKey: string, data: unknown) => void;
   getTextRef: ((...args: unknown[]) => unknown) | null;
+  setTextValue: ((params: { sectionKey?: string; fieldKey?: string; questionKey?: string }, text: string) => void) | null;
   onSaveReconciled: (name?: string) => void;
   checklist1Id: string | null;
   checklist2Id: string | null;
@@ -68,6 +69,7 @@ export function useReconciliationEngine({
   reconciledChecklist,
   updateChecklistAnswer,
   getTextRef,
+  setTextValue,
   onSaveReconciled,
   checklist1Id,
   checklist2Id,
@@ -251,7 +253,7 @@ export function useReconciliationEngine({
     const hasAns = adapter.hasAnswer(item, finalAnswers);
     const isAgree = adapter.isAgreement(item, comparison);
     if (!hasAns && isAgree) {
-      adapter.autoFillFromReviewer1(item, checklist1, updateChecklistAnswer, getTextRef);
+      adapter.autoFillFromReviewer1(item, checklist1, updateChecklistAnswer, getTextRef, setTextValue);
     }
 
     if (currentPage < totalPages - 1) {
@@ -279,6 +281,7 @@ export function useReconciliationEngine({
     checklist1,
     updateChecklistAnswer,
     getTextRef,
+    setTextValue,
     expandedDomain,
   ]);
 

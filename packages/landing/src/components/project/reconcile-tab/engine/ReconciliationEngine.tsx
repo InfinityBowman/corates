@@ -60,6 +60,7 @@ export function ReconciliationEngine({
   onCancel,
   updateChecklistAnswer,
   getTextRef,
+  setTextValue,
   pdfData,
   pdfFileName,
   pdfUrl,
@@ -83,6 +84,7 @@ export function ReconciliationEngine({
     reconciledChecklist,
     updateChecklistAnswer,
     getTextRef,
+    setTextValue,
     onSaveReconciled,
     checklist1Id: (checklist1 as any)?.id ?? null,
     checklist2Id: (checklist2 as any)?.id ?? null,
@@ -130,6 +132,7 @@ export function ReconciliationEngine({
       isAgreement: engine.currentIsAgreement,
       updateChecklistAnswer,
       getTextRef,
+      setTextValue,
     };
   }, [
     engine.currentItem,
@@ -143,6 +146,7 @@ export function ReconciliationEngine({
     engine.currentIsAgreement,
     updateChecklistAnswer,
     getTextRef,
+    setTextValue,
   ]);
 
   // -----------------------------------------------------------------------
@@ -150,6 +154,19 @@ export function ReconciliationEngine({
   // -----------------------------------------------------------------------
 
   const NavbarComponent = adapter.NavbarComponent;
+  const {
+    navItems,
+    currentPage,
+    viewMode,
+    finalAnswers,
+    comparison,
+    goToPage,
+    setViewMode,
+    handleReset,
+    expandedDomain,
+    setExpandedDomain,
+  } = engine;
+  const { remoteUsers, usersByPage } = presence;
 
   const headerContent = useMemo(
     () => (
@@ -174,12 +191,12 @@ export function ReconciliationEngine({
         <div className='bg-border h-8 w-px shrink-0' />
 
         {/* Presence avatars */}
-        {presence.remoteUsers.length > 0 && (
+        {remoteUsers.length > 0 && (
           <>
             <PresenceAvatars
-              users={presence.remoteUsers}
-              onUserClick={(_userId, currentPage) => {
-                engine.goToPage(currentPage);
+              users={remoteUsers}
+              onUserClick={(_userId, page) => {
+                goToPage(page);
               }}
               getPageLabel={pageIndex => adapter.getPageLabel(pageIndex)}
             />
@@ -188,20 +205,20 @@ export function ReconciliationEngine({
         )}
 
         {/* Navbar */}
-        {engine.navItems.length > 0 && (
+        {navItems.length > 0 && (
           <div className='flex min-w-0 flex-1 items-center overflow-x-auto'>
             <NavbarComponent
-              navItems={engine.navItems}
-              currentPage={engine.currentPage}
-              viewMode={engine.viewMode}
-              finalAnswers={engine.finalAnswers}
-              comparison={engine.comparison}
-              usersByPage={presence.usersByPage}
-              goToPage={engine.goToPage}
-              setViewMode={engine.setViewMode}
-              onReset={engine.handleReset}
-              expandedDomain={engine.expandedDomain}
-              setExpandedDomain={engine.setExpandedDomain}
+              navItems={navItems}
+              currentPage={currentPage}
+              viewMode={viewMode}
+              finalAnswers={finalAnswers}
+              comparison={comparison}
+              usersByPage={usersByPage}
+              goToPage={goToPage}
+              setViewMode={setViewMode}
+              onReset={handleReset}
+              expandedDomain={expandedDomain}
+              setExpandedDomain={setExpandedDomain}
             />
           </div>
         )}
@@ -213,18 +230,18 @@ export function ReconciliationEngine({
       NavbarComponent,
       reviewer1Name,
       reviewer2Name,
-      presence.remoteUsers,
-      presence.usersByPage,
-      engine.navItems,
-      engine.currentPage,
-      engine.viewMode,
-      engine.finalAnswers,
-      engine.comparison,
-      engine.goToPage,
-      engine.setViewMode,
-      engine.handleReset,
-      engine.expandedDomain,
-      engine.setExpandedDomain,
+      remoteUsers,
+      usersByPage,
+      navItems,
+      currentPage,
+      viewMode,
+      finalAnswers,
+      comparison,
+      goToPage,
+      setViewMode,
+      handleReset,
+      expandedDomain,
+      setExpandedDomain,
     ],
   );
 
