@@ -11,7 +11,6 @@ import { EditPdfMetadataModal } from '../EditPdfMetadataModal';
 import { project } from '@/project';
 import { validatePdfFile } from '@/lib/pdfValidation.js';
 
- 
 interface StudyPdfSectionProps {
   study: any;
   onOpenGoogleDrive?: (studyId: string) => void;
@@ -109,9 +108,7 @@ export function StudyPdfSection({ study, onOpenGoogleDrive, readOnly }: StudyPdf
                 onView={p => project.pdf.view(study.id, p)}
                 onDownload={p => project.pdf.download(study.id, p)}
                 onDelete={p => project.pdf.delete(study.id, p)}
-                onTagChange={(pdfId, newTag) =>
-                  project.pdf.updateTag(study.id, pdfId, newTag)
-                }
+                onTagChange={(pdfId, newTag) => project.pdf.updateTag(study.id, pdfId, newTag)}
                 onEditMetadata={p => {
                   setEditingPdf(p);
                   setMetadataModalOpen(true);
@@ -153,9 +150,7 @@ export function StudyPdfSection({ study, onOpenGoogleDrive, readOnly }: StudyPdf
         onOpenChange={setMetadataModalOpen}
         pdf={editingPdf}
         studyId={study.id}
-        onSave={(sid, pdfId, metadata) =>
-          project.pdf.updateMetadata(sid, pdfId, metadata)
-        }
+        onSave={(sid, pdfId, metadata) => project.pdf.updateMetadata(sid, pdfId, metadata)}
       />
     </div>
   );

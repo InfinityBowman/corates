@@ -65,14 +65,12 @@ interface ProjectStoreState {
   projectStats: Record<string, ProjectStats>;
 }
 
- 
 interface ProjectStoreActions {
   setActiveProject: (projectId: string | null) => void;
   setProjectData: (projectId: string, data: Partial<ProjectData>) => void;
   dispatchConnectionEvent: (projectId: string, event: ConnectionEvent) => void;
   clearProject: (projectId: string) => void;
 }
- 
 
 function loadPersistedStats(): Record<string, ProjectStats> {
   try {

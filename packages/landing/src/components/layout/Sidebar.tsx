@@ -38,7 +38,6 @@ import {
 import { ProjectTreeItem } from './sidebar/ProjectTreeItem';
 import { LocalChecklistItem } from './sidebar/LocalChecklistItem';
 
- 
 interface SidebarProps {
   desktopMode: 'expanded' | 'collapsed';
   mobileOpen: boolean;
@@ -47,7 +46,6 @@ interface SidebarProps {
   width: number;
   onWidthChange: (width: number) => void;
 }
- 
 
 export function Sidebar({
   desktopMode,

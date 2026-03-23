@@ -27,14 +27,12 @@ import { useAnimation } from './useInitialAnimation';
 import { ProjectCard } from './ProjectCard';
 import { ContactPrompt } from './ContactPrompt';
 
- 
 interface ProjectsSectionProps {
   showHeader?: boolean;
   createModalOpen: boolean;
   setCreateModalOpen: (open: boolean) => void;
   onCreateClick?: () => void;
 }
- 
 
 export function ProjectsSection({
   showHeader = true,

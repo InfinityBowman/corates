@@ -282,9 +282,9 @@ export const studyActions = {
 
     try {
       const study =
-        useProjectStore.getState().projects[projectId]?.studies?.find(
-          (s: any) => s.id === studyId,
-        ) || null;
+        useProjectStore
+          .getState()
+          .projects[projectId]?.studies?.find((s: any) => s.id === studyId) || null;
       const pdfs = (study as any)?.pdfs || [];
 
       if (pdfs.length > 0) {
@@ -362,14 +362,7 @@ export const studyActions = {
               userId,
             );
           } else if (study.googleDriveFileId) {
-            pdfAttached = await handleGoogleDrivePdf(
-              ops,
-              study,
-              studyId,
-              orgId,
-              projectId,
-              userId,
-            );
+            pdfAttached = await handleGoogleDrivePdf(ops, study, studyId, orgId, projectId, userId);
           } else if (study.pdfUrl && study.pdfAccessible) {
             const fetched = await fetchPdfFromUrl(study);
             if (fetched) {
@@ -412,8 +405,9 @@ export const studyActions = {
 
     for (const ref of references) {
       try {
-        const studyName = ref.pdfFileName
-          ? getStudyNameFromFilename(ref.pdfFileName as string)
+        const studyName =
+          ref.pdfFileName ?
+            getStudyNameFromFilename(ref.pdfFileName as string)
           : (ref.title as string) || 'Untitled Study';
 
         ops.createStudy(studyName, (ref.abstract as string) || '', {

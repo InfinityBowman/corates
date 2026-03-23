@@ -15,10 +15,9 @@ interface ProjectTreeItemProps {
   onToggle: () => void;
   userId?: string;
   currentPath: string;
-   
+
   isStudyExpanded: (studyId: string) => boolean;
   onToggleStudy: (studyId: string) => void;
-   
 }
 
 export function ProjectTreeItem({

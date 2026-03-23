@@ -30,7 +30,6 @@ interface LocalChecklistsState {
   error: string | null;
 }
 
- 
 interface LocalChecklistsActions {
   init: () => Promise<void>;
   refetch: () => Promise<LocalChecklist[]>;
@@ -49,7 +48,6 @@ interface LocalChecklistsActions {
   getPdf: (checklistId: string) => Promise<LocalChecklistPdf | null>;
   deletePdf: (checklistId: string) => Promise<boolean>;
 }
- 
 
 export const useLocalChecklistsStore = create<LocalChecklistsState & LocalChecklistsActions>()(
   (set, get) => ({

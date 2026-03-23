@@ -29,12 +29,10 @@ const requirementsList = [
   },
 ];
 
- 
 interface StrengthIndicatorProps {
   password: string;
   onUnmet?: (errors: string[]) => void;
 }
- 
 
 export function StrengthIndicator({ password, onUnmet }: StrengthIndicatorProps) {
   const strength = useMemo(() => {

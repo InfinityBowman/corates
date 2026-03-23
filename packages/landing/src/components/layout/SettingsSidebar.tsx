@@ -30,7 +30,6 @@ const SETTINGS_NAV_ITEMS: Array<{ id: string; label: string; icon: LucideIcon; p
   { id: 'notifications', label: 'Notifications', icon: BellIcon, path: '/settings/notifications' },
 ];
 
- 
 interface SettingsSidebarProps {
   desktopMode: 'expanded' | 'collapsed';
   mobileOpen: boolean;
@@ -39,7 +38,6 @@ interface SettingsSidebarProps {
   width: number;
   onWidthChange: (width: number) => void;
 }
- 
 
 export function SettingsSidebar({
   desktopMode,

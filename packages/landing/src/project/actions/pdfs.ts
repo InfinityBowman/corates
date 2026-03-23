@@ -116,9 +116,8 @@ export const pdfActions = {
     }
 
     const study =
-      useProjectStore.getState().projects[projectId]?.studies?.find(
-        (s: any) => s.id === studyId,
-      ) || null;
+      useProjectStore.getState().projects[projectId]?.studies?.find((s: any) => s.id === studyId) ||
+      null;
     const existingPdf = (study as any)?.pdfs?.find((pdf: any) => pdf.fileName === file.name);
     if (existingPdf) {
       throw new Error(`File "${file.name}" already exists. Rename or remove the existing copy.`);
@@ -245,9 +244,8 @@ export const pdfActions = {
     if (!projectId || !orgId || !ops) throw new Error('No active project connection');
 
     const study =
-      useProjectStore.getState().projects[projectId]?.studies?.find(
-        (s: any) => s.id === studyId,
-      ) || null;
+      useProjectStore.getState().projects[projectId]?.studies?.find((s: any) => s.id === studyId) ||
+      null;
     const hasPdfs = (study as any)?.pdfs?.length > 0;
     const effectiveTag = !hasPdfs ? 'primary' : tag;
 

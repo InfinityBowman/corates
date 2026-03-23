@@ -230,7 +230,6 @@ async function apiFetchImpl<T = unknown>(path: string, options: ApiFetchOptions 
 
 type ApiFetchBody = Record<string, unknown> | FormData | Blob | string | null;
 
- 
 interface ApiFetchFn {
   <T = unknown>(path: string, options?: ApiFetchOptions): Promise<T>;
   get: <T = unknown>(
@@ -254,7 +253,6 @@ interface ApiFetchFn {
   ) => Promise<T>;
   delete: <T = unknown>(path: string, options?: Omit<ApiFetchOptions, 'method'>) => Promise<T>;
 }
- 
 
 export const apiFetch: ApiFetchFn = Object.assign(apiFetchImpl, {
   get: <T = unknown>(path: string, options: Omit<ApiFetchOptions, 'method' | 'body'> = {}) =>

@@ -50,7 +50,6 @@ interface AuthState {
   sessionRefetch: (() => Promise<void>) | null;
 }
 
- 
 interface AuthActions {
   setOnline: (online: boolean) => void;
   setCachedUser: (user: AuthUser | null) => void;
@@ -89,7 +88,6 @@ interface AuthActions {
   revokeAllSessions: () => Promise<void>;
   forceRefreshSession: () => Promise<void>;
 }
- 
 
 // Pure functions for localStorage cache
 

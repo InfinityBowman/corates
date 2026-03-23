@@ -210,16 +210,20 @@ export function DevPanel() {
                   Connecting...
                 </span>
               )}
-              {isProjectContext && (connectionState?.phase === 'connected' || connectionState?.phase === 'synced') && (
-                <span className='text-2xs bg-success-bg text-success rounded px-2 py-0.5'>
-                  Connected
-                </span>
-              )}
-              {isProjectContext && connectionState?.phase !== 'connected' && connectionState?.phase !== 'synced' && connectionState?.phase !== 'connecting' && (
-                <span className='text-2xs rounded bg-red-100 px-2 py-0.5 text-red-700'>
-                  Disconnected
-                </span>
-              )}
+              {isProjectContext &&
+                (connectionState?.phase === 'connected' || connectionState?.phase === 'synced') && (
+                  <span className='text-2xs bg-success-bg text-success rounded px-2 py-0.5'>
+                    Connected
+                  </span>
+                )}
+              {isProjectContext &&
+                connectionState?.phase !== 'connected' &&
+                connectionState?.phase !== 'synced' &&
+                connectionState?.phase !== 'connecting' && (
+                  <span className='text-2xs rounded bg-red-100 px-2 py-0.5 text-red-700'>
+                    Disconnected
+                  </span>
+                )}
               <button
                 className='text-muted-foreground hover:bg-muted hover:text-muted-foreground rounded p-1'
                 onClick={() => setIsMinimized(!isMinimized)}

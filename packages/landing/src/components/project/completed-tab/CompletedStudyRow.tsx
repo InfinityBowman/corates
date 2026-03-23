@@ -14,7 +14,6 @@ import { getStatusLabel, getStatusStyle } from '@/constants/checklist-status';
 import { PreviousReviewersView } from './PreviousReviewersView';
 import { CompletedOutcomeRow } from './CompletedOutcomeRow';
 
- 
 interface CompletedStudyRowProps {
   study: any;
   onOpenChecklist: (checklistId: string) => void;
@@ -24,7 +23,6 @@ interface CompletedStudyRowProps {
   getAssigneeName: (userId: string) => string;
   getOutcomeName: (outcomeId: string) => string | null;
 }
- 
 
 export function CompletedStudyRow({
   study,

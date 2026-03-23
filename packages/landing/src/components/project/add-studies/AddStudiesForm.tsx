@@ -31,7 +31,6 @@ import { DoiLookupSection } from './DoiLookupSection';
 import { GoogleDriveSection } from './GoogleDriveSection';
 import { StagedStudiesSection } from './StagedStudiesSection';
 
- 
 interface AddStudiesFormProps {
   projectId?: string;
   onAddStudies?: (studies: any[]) => Promise<void>;
@@ -43,7 +42,6 @@ interface AddStudiesFormProps {
   getExternalState?: () => Record<string, unknown>;
   onSaveState?: (state: any) => Promise<void>;
 }
- 
 
 export function AddStudiesForm({
   projectId,

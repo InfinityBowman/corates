@@ -424,7 +424,9 @@ export function ChecklistYjsWrapper({ projectId, studyId, checklistId }: Checkli
     return (
       <div className='flex min-h-screen items-center justify-center bg-blue-50'>
         <div className='text-muted-foreground'>
-          {connectionState.phase === 'connecting' || pdfLoading ? 'Loading...' : 'Checklist not found'}
+          {connectionState.phase === 'connecting' || pdfLoading ?
+            'Loading...'
+          : 'Checklist not found'}
         </div>
       </div>
     );
@@ -445,9 +447,7 @@ export function ChecklistYjsWrapper({ projectId, studyId, checklistId }: Checkli
       pdfs={studyPdfs}
       selectedPdfId={selectedPdfId}
       onPdfSelect={handlePdfSelect}
-      getQuestionNote={(questionKey: string) =>
-        getQuestionNote(studyId, checklistId, questionKey)
-      }
+      getQuestionNote={(questionKey: string) => getQuestionNote(studyId, checklistId, questionKey)}
       getRobinsText={(sectionKey: string, fieldKey: string, questionKey?: string) =>
         getRobinsText(studyId, checklistId, sectionKey, fieldKey, questionKey)
       }

@@ -13,7 +13,7 @@ import { CHECKLIST_STATUS } from '@/constants/checklist-status.js';
 /**
  * Export an SVG element as a file (framework-agnostic utility)
  */
- 
+
 function exportChart(
   svgElement: SVGSVGElement | null,
   filename: string,

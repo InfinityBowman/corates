@@ -9,14 +9,7 @@
 import { Hono } from 'hono';
 import { drizzle } from 'drizzle-orm/d1';
 import { eq } from 'drizzle-orm';
-import {
-  user,
-  organization,
-  member,
-  session,
-  subscription,
-  projectMembers,
-} from '@/db/schema.js';
+import { user, organization, member, session, subscription, projectMembers } from '@/db/schema.js';
 import { createAuth } from '@/auth/config.js';
 import type { Env } from '../types';
 

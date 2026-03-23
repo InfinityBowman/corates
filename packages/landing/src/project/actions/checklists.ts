@@ -67,7 +67,13 @@ export const checklistActions = {
     return ops.getChecklistData(studyId, checklistId) ?? null;
   },
 
-  updateAnswer(studyId: string, checklistId: string, questionId: string, answer: unknown, note?: string): void {
+  updateAnswer(
+    studyId: string,
+    checklistId: string,
+    questionId: string,
+    answer: unknown,
+    note?: string,
+  ): void {
     const ops = connectionPool.getActiveOps();
     if (!ops) throw new Error('No active project connection');
     ops.updateChecklistAnswer(studyId, checklistId, questionId, answer, note);
