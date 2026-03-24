@@ -550,12 +550,14 @@ export async function handleDevPatch(ctx: DevContext, request: Request): Promise
               } else if (part === 'studies') {
                 target = doc.getMap('reviews');
               } else {
+                // eslint-disable-next-line corates/corates-error-helpers -- thrown as exception in dev-only code
                 throw new Error(`Unknown root path: ${part}`);
               }
             } else {
               const yMap = target as Y.Map<unknown>;
               const next = yMap.get(part);
               if (!next) {
+                // eslint-disable-next-line corates/corates-error-helpers -- thrown as exception in dev-only code
                 throw new Error(`Path not found: ${pathParts.slice(0, i + 1).join('.')}`);
               }
               target = next as Y.Map<unknown>;

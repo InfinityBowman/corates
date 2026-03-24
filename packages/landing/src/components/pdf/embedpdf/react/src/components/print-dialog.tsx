@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { usePrint } from '@embedpdf/plugin-print/react';
 import { useScroll } from '@embedpdf/plugin-scroll/react';
 import type { PdfPrintOptions } from '@embedpdf/models';
@@ -21,15 +21,17 @@ export function PrintDialog({ documentId, isOpen, onClose }: PrintDialogProps) {
   const [includeAnnotations, setIncludeAnnotations] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Reset form when dialog opens/closes
-  useEffect(() => {
+  // Reset form when dialog closes
+  const [prevIsOpen, setPrevIsOpen] = useState(isOpen);
+  if (isOpen !== prevIsOpen) {
+    setPrevIsOpen(isOpen);
     if (!isOpen) {
       setSelection('all');
       setCustomPages('');
       setIncludeAnnotations(true);
       setIsLoading(false);
     }
-  }, [isOpen]);
+  }
 
   if (!isOpen) return null;
 

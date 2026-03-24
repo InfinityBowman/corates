@@ -141,7 +141,7 @@ export function createConnectionManager(
 
     provider.connect();
 
-    provider.on('connection-close', (event: CloseEvent | null, providerInstance: WebsocketProvider) => {
+    provider.on('connection-close', (event: { reason?: string; code?: number } | null, providerInstance: WebsocketProvider) => {
       if (!event) return;
 
       const reason = event.reason || '';

@@ -100,10 +100,9 @@ const QUESTION_ORDER = [
 
 interface ChartSectionProps {
   studies: any[];
-  members?: any[];
 }
 
-export function ChartSection({ studies, members = [] }: ChartSectionProps) {
+export function ChartSection({ studies }: ChartSectionProps) {
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [customLabels, setCustomLabels] = useState<Array<{ id: string; label: string }>>([]);
   const [greyscale, setGreyscale] = useState(false);
@@ -117,15 +116,6 @@ export function ChartSection({ studies, members = [] }: ChartSectionProps) {
   const robvisSvgRef = useRef<SVGSVGElement>(null);
    
   const distributionSvgRef = useRef<SVGSVGElement>(null);
-
-  const getAssigneeName = useCallback(
-    (userId: string | null) => {
-      if (!userId) return 'Unassigned';
-      const member = members.find((m: any) => m.userId === userId);
-      return member?.name || member?.email || 'Unknown';
-    },
-    [members],
-  );
 
   // Build raw chart data from finalized AMSTAR2 checklists
   const rawChecklistData = useMemo(() => {
@@ -148,7 +138,7 @@ export function ChartSection({ studies, members = [] }: ChartSectionProps) {
       }
     }
     return data;
-  }, [studies, getAssigneeName]);
+  }, [studies]);
 
   // Sync custom labels when raw data changes
   useEffect(() => {

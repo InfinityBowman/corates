@@ -42,7 +42,7 @@ export function PageControls({ documentId }: PageControlsProps) {
         startHideTimer();
       }
     });
-  }, [viewport, startHideTimer]);
+  }, [viewport, startHideTimer, documentId]);
 
   useEffect(() => {
     return () => {
@@ -95,7 +95,7 @@ export function PageControls({ documentId }: PageControlsProps) {
     <div
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
-      className={`absolute bottom-4 left-1/2 z-[1000] -translate-x-1/2 transition-opacity duration-200 ${
+      className={`absolute bottom-4 left-1/2 z-1000 -translate-x-1/2 transition-opacity duration-200 ${
         isVisible ? 'opacity-100' : 'opacity-0'
       }`}
     >

@@ -43,7 +43,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       : null;
 
     setSessionData(user, loading, refetch);
-  }, [session.data, session.isPending, session.refetch, setSessionData]);
+  }, [session, setSessionData]);
 
   // Cache user data when session is fetched (only when online)
   useEffect(() => {

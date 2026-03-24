@@ -89,7 +89,9 @@ export function useAddStudies(options: UseAddStudiesOptions = {}) {
 
   // Stable ref for callback to avoid infinite effect loops
   const onStudiesChangeRef = useRef(options.onStudiesChange);
-  onStudiesChangeRef.current = options.onStudiesChange;
+  useEffect(() => {
+    onStudiesChangeRef.current = options.onStudiesChange;
+  });
 
   const totalStudyCount =
     pdfOps.pdfCount + refOps.refCount + lookupOps.lookupCount + driveOps.driveCount;
@@ -330,16 +332,13 @@ export function useAddStudies(options: UseAddStudiesOptions = {}) {
     [pdfOps, refOps, lookupOps, driveOps],
   );
 
-  const restoreState = useCallback(
-    (savedState: Record<string, unknown> | null) => {
-      if (!savedState) return;
-      pdfOps.restoreState(savedState.uploadedPdfs as Parameters<typeof pdfOps.restoreState>[0]);
-      refOps.restoreState(savedState as Parameters<typeof refOps.restoreState>[0]);
-      lookupOps.restoreState(savedState as Parameters<typeof lookupOps.restoreState>[0]);
-      driveOps.restoreState(savedState as Parameters<typeof driveOps.restoreState>[0]);
-    },
-    [pdfOps, refOps, lookupOps, driveOps],
-  );
+  const restoreState = (savedState: Record<string, unknown> | null) => {
+    if (!savedState) return;
+    pdfOps.restoreState(savedState.uploadedPdfs as Parameters<typeof pdfOps.restoreState>[0]);
+    refOps.restoreState(savedState as Parameters<typeof refOps.restoreState>[0]);
+    lookupOps.restoreState(savedState as Parameters<typeof lookupOps.restoreState>[0]);
+    driveOps.restoreState(savedState as Parameters<typeof driveOps.restoreState>[0]);
+  };
 
   return {
     // PDF state & handlers

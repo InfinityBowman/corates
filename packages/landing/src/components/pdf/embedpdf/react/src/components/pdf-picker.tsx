@@ -11,13 +11,9 @@ type PdfPickerProps = {
 export function PdfPicker({ pdfs, selectedPdfId, onPdfSelect }: PdfPickerProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
-  // Don't show if there's only one or no PDFs
-  if (!pdfs || pdfs.length <= 1) {
-    return null;
-  }
-
   // Sort PDFs: primary first, then protocol, then secondary
   const sortedPdfs = useMemo(() => {
+    if (!pdfs) return [];
     return [...pdfs].sort((a, b) => {
       const tagOrder = { primary: 0, protocol: 1, secondary: 2 };
       const tagA = tagOrder[a.tag as keyof typeof tagOrder] ?? 2;
@@ -25,6 +21,11 @@ export function PdfPicker({ pdfs, selectedPdfId, onPdfSelect }: PdfPickerProps) 
       return tagA - tagB;
     });
   }, [pdfs]);
+
+  // Don't show if there's only one or no PDFs
+  if (!pdfs || pdfs.length <= 1) {
+    return null;
+  }
 
   // Find the selected PDF
   const selectedPdf = sortedPdfs.find(pdf => pdf.id === selectedPdfId);

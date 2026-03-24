@@ -1,6 +1,6 @@
 import { SelectionSelectionMenuProps } from '@embedpdf/plugin-selection/react';
 import { useSelectionCapability } from '@embedpdf/plugin-selection/react';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { SquaresIcon, CheckIcon } from './icons';
 
 export interface Props extends SelectionSelectionMenuProps {
@@ -12,9 +12,11 @@ export function SelectionSelectionMenu({ rect, menuWrapperProps, placement, docu
   const [copied, setCopied] = useState(false);
 
   // Reset copied state when placement changes
-  useEffect(() => {
+  const [prevPlacement, setPrevPlacement] = useState(placement);
+  if (placement !== prevPlacement) {
+    setPrevPlacement(placement);
     setCopied(false);
-  }, [placement]);
+  }
 
   const handleCopy = () => {
     if (!selectionCapability) return;

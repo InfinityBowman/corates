@@ -163,7 +163,7 @@ export function UserTable({ users, loading }: UserTableProps) {
         ),
       },
     ],
-    [navigate],
+    [],
   );
 
   return (

@@ -308,7 +308,9 @@ export function PreliminaryPage({
 
   // Sync Y.Text changes back to finalAnswers so hasNavItemAnswer detects the field as answered
   const onFinalChangeRef = useRef(onFinalChange);
-  onFinalChangeRef.current = onFinalChange;
+  useEffect(() => {
+    onFinalChangeRef.current = onFinalChange;
+  });
 
   const isInitialMount = useRef(true);
   useEffect(() => {

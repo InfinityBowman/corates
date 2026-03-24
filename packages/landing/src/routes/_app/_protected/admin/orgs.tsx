@@ -149,7 +149,7 @@ function AdminOrgList() {
         },
       },
     ],
-    [navigate],
+    [],
   );
 
   return (

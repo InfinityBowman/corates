@@ -27,14 +27,15 @@ export function StudyPdfSection({ study, onOpenGoogleDrive, readOnly }: StudyPdf
   const pdfs = study.pdfs || [];
 
   const sortedPdfs = useMemo(() => {
-    return [...pdfs].sort((a: any, b: any) => {
+    const list = study.pdfs || [];
+    return [...list].sort((a: any, b: any) => {
       const tagOrder: Record<string, number> = { primary: 0, protocol: 1, secondary: 2 };
       const tagA = tagOrder[a.tag] ?? 2;
       const tagB = tagOrder[b.tag] ?? 2;
       if (tagA !== tagB) return tagA - tagB;
       return (b.uploadedAt || 0) - (a.uploadedAt || 0);
     });
-  }, [pdfs]);
+  }, [study.pdfs]);
 
   const hasPrimary = pdfs.some((p: any) => p.tag === 'primary');
   const hasProtocol = pdfs.some((p: any) => p.tag === 'protocol');

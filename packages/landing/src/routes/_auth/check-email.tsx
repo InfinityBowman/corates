@@ -59,7 +59,7 @@ function CheckEmailPage() {
         return false;
       }
     },
-    [forceRefreshSession, navigate],
+    [forceRefreshSession],
   );
 
   // Set up polling and visibility change listener

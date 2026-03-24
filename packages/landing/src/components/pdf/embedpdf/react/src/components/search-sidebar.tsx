@@ -72,6 +72,7 @@ export function SearchSidebar({ documentId, onClose }: SearchSidebarProps) {
     if (state.activeResultIndex !== undefined && state.activeResultIndex >= 0 && !state.loading) {
       scrollToItem(state.activeResultIndex);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- scrollToItem is a local function whose deps (state.results, scroll) are already covered
   }, [state.activeResultIndex, state.loading, state.query, state.flags]);
 
   const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {

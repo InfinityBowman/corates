@@ -1,6 +1,6 @@
 import { AnnotationTool, useAnnotationCapability } from '@embedpdf/plugin-annotation/react';
 import { useHistoryCapability } from '@embedpdf/plugin-history/react';
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useSyncExternalStore } from 'react';
 import { ToolbarButton } from './ui';
 import {
   HighlightIcon,
@@ -42,9 +42,6 @@ function extractToolColors(tools: AnnotationTool[]): ToolColors {
 export function AnnotationToolbar({ documentId }: AnnotationToolbarProps) {
   const { provides: annotationCapability } = useAnnotationCapability();
   const { provides: historyCapability } = useHistoryCapability();
-  const [activeTool, setActiveTool] = useState<AnnotationTool | null>(null);
-  const [canUndo, setCanUndo] = useState(false);
-  const [canRedo, setCanRedo] = useState(false);
 
   // Initialize tool colors synchronously to avoid flash
   const [toolColors, setToolColors] = useState<ToolColors>(() =>
@@ -63,44 +60,33 @@ export function AnnotationToolbar({ documentId }: AnnotationToolbarProps) {
     [historyCapability, documentId],
   );
 
-  useEffect(() => {
-    if (!annotationProvides) return;
-
-    // Initialize with current tool
-    setActiveTool(annotationProvides.getActiveTool());
-
-    // Subscribe to changes
-    return annotationProvides.onActiveToolChange(tool => {
-      setActiveTool(tool);
-    });
-  }, [annotationProvides]);
+  const subscribeActiveTool = (onStoreChange: () => void) => {
+    if (!annotationProvides) return () => {};
+    return annotationProvides.onActiveToolChange(() => onStoreChange());
+  };
+  const getActiveTool = () => annotationProvides?.getActiveTool() ?? null;
+  const activeTool = useSyncExternalStore(subscribeActiveTool, getActiveTool);
 
   // Subscribe to tool changes to get tool defaults (only fires when tools are updated)
   useEffect(() => {
     if (!annotationCapability) return;
-
-    // Subscribe to tool changes (only when tool defaults are updated)
     return annotationCapability.onToolsChange(event => {
       setToolColors(extractToolColors(event.tools));
     });
   }, [annotationCapability]);
 
-  // Subscribe to history state changes for this document
-  useEffect(() => {
-    if (!historyProvides) return;
-
-    // Initialize with current state
-    const state = historyProvides.getHistoryState();
-    setCanUndo(state.global.canUndo);
-    setCanRedo(state.global.canRedo);
-
-    // Subscribe to history changes
-    return historyProvides.onHistoryChange(() => {
-      const newState = historyProvides.getHistoryState();
-      setCanUndo(newState.global.canUndo);
-      setCanRedo(newState.global.canRedo);
-    });
-  }, [historyProvides]);
+  const subscribeHistory = (onStoreChange: () => void) => {
+    if (!historyProvides) return () => {};
+    return historyProvides.onHistoryChange(() => onStoreChange());
+  };
+  const canUndo = useSyncExternalStore(
+    subscribeHistory,
+    () => historyProvides?.getHistoryState()?.global?.canUndo ?? false,
+  );
+  const canRedo = useSyncExternalStore(
+    subscribeHistory,
+    () => historyProvides?.getHistoryState()?.global?.canRedo ?? false,
+  );
 
   if (!annotationProvides) return null;
 
