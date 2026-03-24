@@ -1,4 +1,5 @@
 import { useMemo, useEffect, useRef, useId, useCallback } from 'react';
+import { useYText } from '@/hooks/useYText';
 import { CheckIcon, XIcon, AlertTriangleIcon } from 'lucide-react';
 import {
   PRELIMINARY_SECTION,
@@ -301,31 +302,23 @@ export function PreliminaryPage({
   const fieldLabel = fieldDef?.label || fieldKey;
   const isTextField = PRELIMINARY_TEXT_FIELDS.includes(fieldKey);
 
-  // Sync Y.Text changes back to finalAnswers so hasNavItemAnswer detects the field as answered.
-  // Uses a ref for onFinalChange to avoid re-registering the observer on every render
-  // (onFinalChange is an inline arrow that gets a new reference each render).
+  const preliminaryYText =
+    isTextField && getRob2Text ? getRob2Text('preliminary', fieldKey) : null;
+  const preliminaryText = useYText(preliminaryYText);
+
+  // Sync Y.Text changes back to finalAnswers so hasNavItemAnswer detects the field as answered
   const onFinalChangeRef = useRef(onFinalChange);
   onFinalChangeRef.current = onFinalChange;
 
+  const isInitialMount = useRef(true);
   useEffect(() => {
-    if (!isTextField || !getRob2Text) return;
-    const yText = getRob2Text('preliminary', fieldKey);
-    if (!yText) return;
-    let syncing = false;
-
-    const observer = () => {
-      if (syncing) return;
-      syncing = true;
-      try {
-        onFinalChangeRef.current(yText.toString());
-      } finally {
-        syncing = false;
-      }
-    };
-
-    yText.observe(observer);
-    return () => yText.unobserve(observer);
-  }, [isTextField, getRob2Text, fieldKey]);
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      return;
+    }
+    if (!preliminaryYText) return;
+    onFinalChangeRef.current(preliminaryText);
+  }, [preliminaryText, preliminaryYText]);
 
   const fieldType = getFieldType(fieldKey);
   const options = useMemo(() => getOptions(fieldKey), [fieldKey]);

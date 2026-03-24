@@ -9,6 +9,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { ChevronRightIcon, BookOpenIcon } from 'lucide-react';
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/components/ui/collapsible';
+import { useYText } from '@/hooks/useYText';
 
 const MAX_HEIGHT = 300;
 
@@ -35,28 +36,8 @@ export function NoteEditor({
 }: NoteEditorProps) {
   const initialExpanded = readOnly ? true : !collapsed;
   const [expanded, setExpanded] = useState(initialExpanded);
-  const [localValue, setLocalValue] = useState('');
+  const localValue = useYText(yText);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-
-  // Sync from Y.Text and observe remote changes.
-  // setState is intentional here - syncing local display value from external Yjs CRDT.
-  useEffect(() => {
-    if (!yText) {
-      setLocalValue(''); // eslint-disable-line react-hooks/set-state-in-effect -- sync from external Y.Text
-      return;
-    }
-
-    setLocalValue(yText.toString());
-
-    const observer = () => {
-      setLocalValue(yText.toString());
-    };
-
-    yText.observe(observer);
-    return () => {
-      yText.unobserve(observer);
-    };
-  }, [yText]);
 
   // Auto-resize textarea when value or expanded state changes
   useEffect(() => {

@@ -168,24 +168,31 @@ test('Dual-Reviewer ROB2 Workflow', async ({ context, page }) => {
 
     if (hasUseThis) {
       await useThisBtn.click();
-      await page.waitForTimeout(500);
+      await page.waitForTimeout(1000);
     }
+
+    // Debug: capture page counter text
+    const counterText = await page.getByText(/Item \d+ of/).textContent().catch(() => '');
+    console.log(`Page ${safety}: ${counterText} | useThis=${hasUseThis}`);
 
     // For direction pages where reviewers didn't set a value, "Use This"
     // copies null which doesn't count as answered. Pick "NA" in the Final
-    // Direction panel if a direction radio labeled "NA" is visible and
-    // not already selected.
-    const naLabel = page.locator('label').filter({ hasText: /^NA$/ });
-    if (
-      await naLabel
-        .first()
-        .isVisible()
-        .catch(() => false)
-    ) {
-      // Only click if we're on a direction page (Final Direction panel)
-      const finalDirectionHeading = page.getByText('Final Direction');
-      if (await finalDirectionHeading.isVisible().catch(() => false)) {
+    // Direction panel if visible.
+    const finalDirectionHeading = page.getByText('Final Direction');
+    if (await finalDirectionHeading.isVisible().catch(() => false)) {
+      const naLabel = page.locator('label').filter({ hasText: /^NA$/ });
+      if (await naLabel.first().isVisible().catch(() => false)) {
         await naLabel.first().click();
+        await page.waitForTimeout(300);
+      }
+    }
+
+    // For sources page: neither reviewer selected sources, so check one
+    const sourceLabel = page.locator('label').filter({ hasText: 'Journal article(s)' });
+    if (await sourceLabel.isVisible().catch(() => false)) {
+      const finalAnswerHeading = page.getByText('Final Answer');
+      if (await finalAnswerHeading.isVisible().catch(() => false)) {
+        await sourceLabel.click();
         await page.waitForTimeout(300);
       }
     }
@@ -199,56 +206,12 @@ test('Dual-Reviewer ROB2 Workflow', async ({ context, page }) => {
   }
 
   // ================================================================
-  // Summary view - fix any remaining unanswered items
+  // Summary view - verify and save
   // ================================================================
   await expect(page.getByText('Reconciliation Summary')).toBeVisible({ timeout: 5_000 });
 
-  // Verify we reached the summary and most items are reconciled.
-  // Some preliminary text fields and sources may not count as "answered"
-  // due to Y.Text propagation timing, so we check for a reasonable threshold.
-  const statsText = page.getByText(/of 34 items reconciled/);
-  await expect(statsText).toBeVisible({ timeout: 5_000 });
-
-  // Click "Back to Questions" and walk through any remaining unset items
-  await page.getByRole('button', { name: /Back to Questions/i }).click();
-  await page.waitForTimeout(500);
-
-  // Navigate back to the first preliminary page via navbar
-  const pButton = page.getByRole('button', { name: 'P' }).first();
-  if (await pButton.isVisible().catch(() => false)) {
-    await pButton.click();
-    await page.waitForTimeout(500);
-  }
-
-  // Walk through preliminary items again, clicking "Use This" with enough
-  // wait time for Y.Text observers to propagate
-  for (let i = 0; i < 6; i++) {
-    const useThisBtn = page.getByRole('button', { name: 'Use This' }).first();
-    if (await useThisBtn.isVisible().catch(() => false)) {
-      await useThisBtn.click();
-      await page.waitForTimeout(1000);
-    }
-
-    // For sources page: check "Journal article(s)" if visible
-    const sourceCheckbox = page.locator('label').filter({ hasText: 'Journal article(s)' });
-    if (await sourceCheckbox.isVisible().catch(() => false)) {
-      await sourceCheckbox.click();
-      await page.waitForTimeout(300);
-    }
-
-    await nextBtn.click();
-    await page.waitForTimeout(500);
-  }
-
-  // Go to summary
-  const summaryBtn = page.getByRole('button', { name: 'View summary' });
-  await summaryBtn.click();
-  await page.waitForTimeout(500);
-  await expect(page.getByText('Reconciliation Summary')).toBeVisible({ timeout: 5_000 });
-
-  // All items should be reconciled now
   const saveBtn = page.getByRole('button', { name: /Save Reconciled Checklist/i });
-  await expect(saveBtn).toBeEnabled({ timeout: 5_000 });
+  await expect(saveBtn).toBeEnabled({ timeout: 10_000 });
   await saveBtn.click();
   await page.waitForTimeout(500);
 

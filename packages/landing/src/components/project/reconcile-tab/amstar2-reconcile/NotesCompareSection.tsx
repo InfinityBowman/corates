@@ -5,10 +5,11 @@
  * Supports copying reviewer notes to the final note for convenience.
  */
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { ChevronRightIcon, BookOpenIcon, ClipboardIcon } from 'lucide-react';
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/components/ui/collapsible';
 import { NoteEditor } from '@/components/checklist/common/NoteEditor';
+import { useYText } from '@/hooks/useYText';
 
 const MAX_LENGTH = 2000;
 
@@ -30,29 +31,11 @@ export function NotesCompareSection({
   collapsed = true,
 }: NotesCompareSectionProps) {
   const [expanded, setExpanded] = useState(!collapsed);
-  const [hasFinalNote, setHasFinalNote] = useState(false);
+  const finalNoteText = useYText(finalNoteYText);
 
   const hasReviewer1Note = (reviewer1Note || '').trim().length > 0;
   const hasReviewer2Note = (reviewer2Note || '').trim().length > 0;
-
-  // Track final note content reactively via Y.Text observer
-  useEffect(() => {
-    if (!finalNoteYText) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- syncing external Y.Text state
-      setHasFinalNote(false);
-      return;
-    }
-
-    setHasFinalNote(finalNoteYText.toString().trim().length > 0);
-
-    const observer = () => {
-      setHasFinalNote(finalNoteYText.toString().trim().length > 0);
-    };
-
-    finalNoteYText.observe(observer);
-    return () => finalNoteYText.unobserve(observer);
-  }, [finalNoteYText]);
-
+  const hasFinalNote = finalNoteText.trim().length > 0;
   const hasAnyNote = hasReviewer1Note || hasReviewer2Note || hasFinalNote;
 
   function copyToFinal(sourceNote: string) {

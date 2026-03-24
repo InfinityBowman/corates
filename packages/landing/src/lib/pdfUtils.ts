@@ -46,7 +46,7 @@ async function extractPdfTitleInternal(pdfData: ArrayBuffer): Promise<string | n
   // Clone ArrayBuffer since EmbedPDF may detach it
   const pdfBuffer = pdfData.slice(0);
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   let doc: any = null;
   try {
     // Open document
@@ -146,7 +146,7 @@ async function extractPdfDoiInternal(pdfData: ArrayBuffer): Promise<string | nul
   // Clone ArrayBuffer since EmbedPDF may detach it
   const pdfBuffer = pdfData.slice(0);
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   let doc: any = null;
   try {
     // Open document

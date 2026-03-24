@@ -45,11 +45,11 @@ export function AMSTARDistribution({
   greyscale = false,
   ref,
 }: AMSTARDistributionProps) {
-  const svgRef = useRef<SVGSVGElement>(null); // eslint-disable-line no-undef
+  const svgRef = useRef<SVGSVGElement>(null);  
   const containerRef = useRef<HTMLDivElement>(null);
   const [containerSize, setContainerSize] = useState({ width: 900, height: 600 });
 
-  // eslint-disable-next-line no-undef
+   
   useImperativeHandle(ref, () => svgRef.current as SVGSVGElement, []);
 
   // ResizeObserver for responsive sizing

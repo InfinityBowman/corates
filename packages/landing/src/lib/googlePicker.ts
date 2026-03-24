@@ -15,7 +15,7 @@ declare global {
         DocsView: new () => {
           setIncludeFolders: (include: boolean) => { setSelectFolderEnabled: (enabled: boolean) => { setMimeTypes: (types: string) => unknown } };
         };
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+         
         PickerBuilder: new () => any;
         Action: {
           CANCEL: string;
@@ -113,12 +113,12 @@ export async function pickGooglePdfFiles(options: PickerOptions): Promise<Picked
       .setSelectFolderEnabled(false)
       .setMimeTypes('application/pdf');
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     let builder: any = new google!.picker.PickerBuilder()
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
       .setOAuthToken(options.oauthToken)
       .setDeveloperKey(options.developerKey)
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
       .setCallback((data: any) => {
         if (data.action === google!.picker.Action.CANCEL) {
           resolve(null);
@@ -127,10 +127,10 @@ export async function pickGooglePdfFiles(options: PickerOptions): Promise<Picked
 
         if (data.action !== google!.picker.Action.PICKED) return;
 
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+         
         const docs: any[] = data.docs || [];
         const files = docs
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+           
           .map((doc: any) => {
             const id = doc.id || doc[google!.picker.Document.ID];
             const name = doc.name || doc[google!.picker.Document.NAME];

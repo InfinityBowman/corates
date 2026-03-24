@@ -46,13 +46,13 @@ export function AMSTARRobvis({
   greyscale = false,
   ref,
 }: AMSTARRobvisProps) {
-  const svgRef = useRef<SVGSVGElement>(null); // eslint-disable-line no-undef
+  const svgRef = useRef<SVGSVGElement>(null);  
   const containerRef = useRef<HTMLDivElement>(null);
   const [containerSize, setContainerSize] = useState({ width: 800, height: 500 });
   const [dynamicMarginLeft, setDynamicMarginLeft] = useState(200);
 
   // Expose SVG ref to parent for export
-  // eslint-disable-next-line no-undef
+   
   useImperativeHandle(ref, () => svgRef.current as SVGSVGElement, []);
 
   // ResizeObserver for responsive sizing

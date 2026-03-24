@@ -22,7 +22,7 @@ function exportChart(
 ) {
   if (!svgElement) return;
 
-  // eslint-disable-next-line no-undef
+   
   const clonedSvg = svgElement.cloneNode(true) as SVGSVGElement;
   clonedSvg.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
   if (transparent) clonedSvg.style.background = 'transparent';
@@ -113,9 +113,9 @@ export function ChartSection({ studies, members = [] }: ChartSectionProps) {
   );
   const [transparentExport, setTransparentExport] = useState(false);
 
-  // eslint-disable-next-line no-undef
+   
   const robvisSvgRef = useRef<SVGSVGElement>(null);
-  // eslint-disable-next-line no-undef
+   
   const distributionSvgRef = useRef<SVGSVGElement>(null);
 
   const getAssigneeName = useCallback(

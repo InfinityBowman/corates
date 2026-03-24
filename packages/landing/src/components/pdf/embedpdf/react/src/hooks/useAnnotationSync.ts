@@ -56,7 +56,7 @@ export function useAnnotationSync({
 
   // The annotation scope API may expose individual event hooks (onAnnotationCreate, etc.)
   // that are not in the base type definition. Cast to any to preserve original behavior.
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   const scopeAny = annotationScope as any;
 
   /**
