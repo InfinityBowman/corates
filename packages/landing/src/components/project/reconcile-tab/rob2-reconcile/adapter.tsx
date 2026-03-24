@@ -310,6 +310,7 @@ function renderPage(context: EngineContext) {
   if (currentItem.type === NAV_ITEM_TYPES.PRELIMINARY) {
     return (
       <PreliminaryPage
+        key={currentItem.key}
         fieldKey={currentItem.key}
         reviewer1Value={c1?.preliminary?.[currentItem.key]}
         reviewer2Value={c2?.preliminary?.[currentItem.key]}

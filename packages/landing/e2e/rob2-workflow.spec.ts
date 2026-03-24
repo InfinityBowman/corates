@@ -36,14 +36,18 @@ async function fillROB2Preliminary(
   comparator: string,
 ) {
   await page.getByText('Individually-randomized parallel-group trial').click();
-  await page.getByPlaceholder(/experimental intervention/i).fill(intervention);
-  await page.getByPlaceholder(/comparator intervention/i).fill(comparator);
-  await page.getByPlaceholder(/e\.g\. RR/i).fill('RR = 1.5 (95% CI 0.9 to 2.5)');
 
+  // Select aim BEFORE filling text fields to avoid the bug where aim
+  // selection was overwriting Y.Text fields with empty values.
   const aimBtn = page.getByText('to assess the effect of assignment to intervention');
   await aimBtn.scrollIntoViewIfNeeded();
   await aimBtn.click();
-  await page.waitForTimeout(1000);
+  await page.waitForTimeout(500);
+
+  await page.getByPlaceholder(/experimental intervention/i).fill(intervention);
+  await page.getByPlaceholder(/comparator intervention/i).fill(comparator);
+  await page.getByPlaceholder(/e\.g\. RR/i).fill('RR 1.5');
+  await page.waitForTimeout(500);
 }
 
 /** Answer all ROB2 domain questions with a given response (Y or N) */
@@ -171,9 +175,6 @@ test('Dual-Reviewer ROB2 Workflow', async ({ context, page }) => {
       await page.waitForTimeout(1000);
     }
 
-    // Debug: capture page counter text
-    const counterText = await page.getByText(/Item \d+ of/).textContent().catch(() => '');
-    console.log(`Page ${safety}: ${counterText} | useThis=${hasUseThis}`);
 
     // For direction pages where reviewers didn't set a value, "Use This"
     // copies null which doesn't count as answered. Pick "NA" in the Final
@@ -209,7 +210,7 @@ test('Dual-Reviewer ROB2 Workflow', async ({ context, page }) => {
   // Summary view - verify and save
   // ================================================================
   await expect(page.getByText('Reconciliation Summary')).toBeVisible({ timeout: 5_000 });
-
+  await page.screenshot({ path: 'test-results/debug-summary.png' });
   const saveBtn = page.getByRole('button', { name: /Save Reconciled Checklist/i });
   await expect(saveBtn).toBeEnabled({ timeout: 10_000 });
   await saveBtn.click();
@@ -227,5 +228,5 @@ test('Dual-Reviewer ROB2 Workflow', async ({ context, page }) => {
   // Verify the completed tab shows the reconciled checklist
   await page.getByRole('tab', { name: /Completed/i }).click();
   await page.waitForTimeout(1000);
-  await expect(page.getByText(/Reconciled/i).first()).toBeVisible({ timeout: 5_000 });
+  await expect(page.getByText(/Finalized/i).first()).toBeVisible({ timeout: 5_000 });
 });

@@ -26,18 +26,21 @@ export function PreliminarySection({
   disabled,
   getRob2Text,
 }: PreliminarySectionProps) {
+  // Only send the changed field to onUpdate. The ROB2 handler's updateAnswer
+  // does field-level merging, so we don't need to spread the entire state.
+  // Spreading would overwrite Y.Text fields with stale/empty values.
   const handleStudyDesignChange = useCallback(
     (value: string) => {
-      onUpdate({ ...preliminaryState, studyDesign: value });
+      onUpdate({ studyDesign: value });
     },
-    [preliminaryState, onUpdate],
+    [onUpdate],
   );
 
   const handleAimChange = useCallback(
     (aim: string) => {
-      onUpdate({ ...preliminaryState, aim: preliminaryState?.aim === aim ? null : aim });
+      onUpdate({ aim: preliminaryState?.aim === aim ? null : aim });
     },
-    [preliminaryState, onUpdate],
+    [preliminaryState?.aim, onUpdate],
   );
 
   const handleDeviationToggle = useCallback(
@@ -47,17 +50,17 @@ export function PreliminarySection({
         current.includes(deviation) ?
           current.filter((d: string) => d !== deviation)
         : [...current, deviation];
-      onUpdate({ ...preliminaryState, deviationsToAddress: updated });
+      onUpdate({ deviationsToAddress: updated });
     },
-    [preliminaryState, onUpdate],
+    [preliminaryState?.deviationsToAddress, onUpdate],
   );
 
   const handleSourceToggle = useCallback(
     (source: string) => {
       const current = preliminaryState?.sources || {};
-      onUpdate({ ...preliminaryState, sources: { ...current, [source]: !current[source] } });
+      onUpdate({ sources: { ...current, [source]: !current[source] } });
     },
-    [preliminaryState, onUpdate],
+    [preliminaryState?.sources, onUpdate],
   );
 
   const experimentalYText = useMemo(

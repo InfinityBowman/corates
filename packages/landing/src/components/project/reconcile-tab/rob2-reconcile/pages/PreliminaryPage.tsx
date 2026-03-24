@@ -1,4 +1,4 @@
-import { useMemo, useEffect, useRef, useId, useCallback } from 'react';
+import { useMemo, useEffect, useEffectEvent, useId, useCallback } from 'react';
 import { useYText } from '@/hooks/useYText';
 import { CheckIcon, XIcon, AlertTriangleIcon } from 'lucide-react';
 import {
@@ -306,20 +306,17 @@ export function PreliminaryPage({
     isTextField && getRob2Text ? getRob2Text('preliminary', fieldKey) : null;
   const preliminaryText = useYText(preliminaryYText);
 
-  // Sync Y.Text changes back to finalAnswers so hasNavItemAnswer detects the field as answered
-  const onFinalChangeRef = useRef(onFinalChange);
-  useEffect(() => {
-    onFinalChangeRef.current = onFinalChange;
+  // Sync Y.Text changes back to finalAnswers so hasNavItemAnswer detects
+  // the field as answered. useEffectEvent captures the latest onFinalChange
+  // without making it a dependency, so the effect only fires when the
+  // Y.Text content actually changes -- not when navigation swaps the closure.
+  const syncToFinalAnswers = useEffectEvent((text: string) => {
+    onFinalChange(text);
   });
 
-  const isInitialMount = useRef(true);
   useEffect(() => {
-    if (isInitialMount.current) {
-      isInitialMount.current = false;
-      return;
-    }
     if (!preliminaryYText) return;
-    onFinalChangeRef.current(preliminaryText);
+    syncToFinalAnswers(preliminaryText);
   }, [preliminaryText, preliminaryYText]);
 
   const fieldType = getFieldType(fieldKey);
