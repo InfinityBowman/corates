@@ -93,20 +93,29 @@ test.describe('Auth flows', () => {
       await cleanupByEmail(email);
     });
 
-    test('sign in with email and password', async ({ page }) => {
+    test('sign in with email and password', async ({ page, context }) => {
       // Create user via Better Auth API
       await signUpWithEmail(email, password, 'Password User');
 
       // Skip email verification and profile via test endpoint
       await verifyEmail(email, true);
 
-      // Navigate to sign-in page
+      // Clear any session from previous tests
+      await context.clearCookies();
+
+      // Navigate to sign-in page and wait for effects to settle
       await page.goto('/signin');
       await expect(page.getByText('Welcome Back')).toBeVisible({ timeout: 10_000 });
+      await page.waitForTimeout(500);
 
       // Fill the password form (default active tab)
-      await page.locator('#email-input').fill(email);
-      await page.locator('#password-input').fill(password);
+      // Scope to the password panel to avoid ambiguity with the magic link panel
+      const passwordPanel = page.locator('#panel-password');
+      await passwordPanel.locator('#email-input').click();
+      await passwordPanel.locator('#email-input').pressSequentially(email, { delay: 20 });
+      await passwordPanel.locator('#password-input').click();
+      await passwordPanel.locator('#password-input').pressSequentially(password, { delay: 20 });
+
       await page.getByRole('button', { name: /^Sign In$/i }).click();
 
       // Should redirect to dashboard
@@ -114,6 +123,10 @@ test.describe('Auth flows', () => {
     });
 
     test('reset password and sign in with new password', async ({ page, context }) => {
+      // Ensure user exists (in case this test runs independently)
+      await signUpWithEmail(email, password, 'Password User').catch(() => {});
+      await verifyEmail(email, true);
+
       // Clear session from previous test
       await context.clearCookies();
 
@@ -122,7 +135,9 @@ test.describe('Auth flows', () => {
       await expect(page.getByRole('heading', { name: 'Reset Password' })).toBeVisible({ timeout: 10_000 });
 
       // Request password reset
-      await page.locator('#email-input').fill(email);
+      const resetEmailField = page.locator('#email-input');
+      await resetEmailField.click();
+      await resetEmailField.fill(email);
       await page.getByRole('button', { name: /Send Reset Email/i }).click();
 
       // Verify success message
@@ -142,8 +157,13 @@ test.describe('Auth flows', () => {
       await expect(page.getByRole('heading', { name: 'Set New Password' })).toBeVisible({ timeout: 10_000 });
 
       // Fill and submit new password
-      await page.locator('#new-password-input').fill(newPassword);
-      await page.locator('#confirm-password-input').fill(newPassword);
+      const newPwField = page.locator('#new-password-input');
+      await newPwField.click();
+      await newPwField.fill(newPassword);
+
+      const confirmPwField = page.locator('#confirm-password-input');
+      await confirmPwField.click();
+      await confirmPwField.fill(newPassword);
       await page.getByRole('button', { name: /Set Password/i }).click();
 
       // Verify success
@@ -151,12 +171,49 @@ test.describe('Auth flows', () => {
 
       // Wait for auto-redirect to signin, then sign in with new password
       await expect(page).toHaveURL(/\/signin/, { timeout: 10_000 });
-      await page.locator('#email-input').fill(email);
-      await page.locator('#password-input').fill(newPassword);
+
+      const signinEmail = page.locator('#email-input');
+      await signinEmail.click();
+      await signinEmail.fill(email);
+
+      const signinPw = page.locator('#password-input');
+      await signinPw.click();
+      await signinPw.fill(newPassword);
+
       await page.getByRole('button', { name: /^Sign In$/i }).click();
 
       // Should redirect to dashboard
       await expect(page).toHaveURL(/\/dashboard/, { timeout: 15_000 });
+    });
+  });
+
+  test.describe('sign out', () => {
+    let scenario: DualReviewerScenario;
+
+    test.beforeAll(async () => {
+      scenario = await seedDualReviewerScenario();
+    });
+
+    test.afterAll(async () => {
+      await cleanupScenario(scenario);
+    });
+
+    test('sign out clears session and redirects', async ({ page, context }) => {
+      // Sign in via injected cookies
+      await loginAs(context, scenario.cookiesA);
+      await page.goto('/dashboard');
+      await expect(page.getByText('Welcome back,')).toBeVisible({ timeout: 15_000 });
+
+      // Open user dropdown (button in nav with user name) and click sign out
+      await page.locator('nav button', { hasText: scenario.userA.name.split(' ')[0] }).click();
+      await page.getByRole('menuitem', { name: /Sign Out/i }).click();
+
+      // Should redirect away from authenticated area
+      await page.waitForTimeout(1000);
+
+      // Verify session is gone -- protected route should redirect to signin
+      await page.goto('/settings/profile');
+      await expect(page).toHaveURL(/\/signin/, { timeout: 10_000 });
     });
   });
 });

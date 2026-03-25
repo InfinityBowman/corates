@@ -178,7 +178,10 @@ export async function getAuthUrl(
 export async function signUpWithEmail(email: string, password: string, name: string) {
   const res = await fetch(`${API_BASE}/api/auth/sign-up/email`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      Origin: 'http://localhost:3010',
+    },
     body: JSON.stringify({ email, password, name }),
   });
   if (!res.ok) {
