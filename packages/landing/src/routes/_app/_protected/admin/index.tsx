@@ -72,22 +72,22 @@ function AdminDashboard() {
             loading={statsQuery.isLoading}
           />
           <StatsCard
-            title='Organizations'
-            value={stats?.orgs ?? '-'}
+            title='Projects'
+            value={stats?.projects ?? '-'}
             icon={FolderIcon}
             color='green'
             loading={statsQuery.isLoading}
           />
           <StatsCard
-            title='Projects'
-            value={stats?.projects ?? '-'}
+            title='Active Sessions'
+            value={stats?.activeSessions ?? '-'}
             icon={ActivityIcon}
             color='purple'
             loading={statsQuery.isLoading}
           />
           <StatsCard
-            title='Checklists'
-            value={stats?.checklists ?? '-'}
+            title='New This Week'
+            value={stats?.recentSignups ?? '-'}
             icon={UserPlusIcon}
             color='orange'
             loading={statsQuery.isLoading}

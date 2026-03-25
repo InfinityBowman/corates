@@ -7,7 +7,7 @@
   "main": "src/index.js",
   "type": "module",
   "scripts": {
-    "dev": "wrangler dev",
+    "dev": "concurrently \"wrangler dev\" \"pnpm build:rpc:watch\" --names wrangler,rpc --prefix-colors blue,green",
     "deploy": "pnpm --filter shared build && wrangler deploy --env production",
     "tail": "wrangler tail",
     "test": "pnpm db:generate:test && vitest run",
@@ -28,6 +28,7 @@
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "build:rpc": "tsc -p tsconfig.rpc.json",
+    "build:rpc:watch": "tsc -p tsconfig.rpc.json --watch --preserveWatchOutput",
     "studio": "drizzle-kit studio",
     "localflare": "localflare"
   },
