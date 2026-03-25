@@ -478,6 +478,19 @@ export class ProjectDoc extends DurableObject<Env> {
     return response.json();
   }
 
+  async devAddStudy(data: unknown): Promise<unknown> {
+    await this.initializeDoc();
+    const devHandlers = await import('./dev-handlers');
+    const fakeRequest = new Request('https://internal/dev/add-study', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    const response = await devHandlers.handleDevAddStudy(this.devCtx, fakeRequest);
+    await this.schedulePersistenceIfNoConnections();
+    return response.json();
+  }
+
   // --- Y.Doc initialization and persistence ---
 
   async initializeDoc(): Promise<void> {

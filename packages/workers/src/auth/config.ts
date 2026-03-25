@@ -190,6 +190,16 @@ export function createAuth(env: Env, ctx?: ExecutionContext) {
           console.log('[Auth] Magic link URL:', url);
         }
 
+        // Store full URL for e2e test retrieval
+        if (env.DEV_MODE) {
+          const now = Math.floor(Date.now() / 1000);
+          await env.DB.prepare(
+            'INSERT INTO verification (id, identifier, value, expiresAt, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, ?)',
+          )
+            .bind(`test-${crypto.randomUUID()}`, `test-url:magic-link:${email}`, url, now + 600, now, now)
+            .run();
+        }
+
         const subject = 'Sign in to CoRATES';
         const html = getMagicLinkEmailHtml({ subject, magicLinkUrl: url });
         const text = getMagicLinkEmailText({ magicLinkUrl: url });
@@ -456,6 +466,16 @@ export function createAuth(env: Env, ctx?: ExecutionContext) {
       minPasswordLength: 8,
       // Password reset - sendResetPassword is required for requestPasswordReset to work
       sendResetPassword: async ({ user, url }: { user: BetterAuthUser; url: string }) => {
+        // Store full URL for e2e test retrieval
+        if (env.DEV_MODE) {
+          const now = Math.floor(Date.now() / 1000);
+          await env.DB.prepare(
+            'INSERT INTO verification (id, identifier, value, expiresAt, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, ?)',
+          )
+            .bind(`test-${crypto.randomUUID()}`, `test-url:reset-password:${user.email}`, url, now + 3600, now, now)
+            .run();
+        }
+
         const name = user.givenName || user.name || user.username || 'there';
         const subject = 'Reset Your Password - CoRATES';
         const html = getPasswordResetEmailHtml({ name, subject, resetUrl: url });
@@ -477,6 +497,16 @@ export function createAuth(env: Env, ctx?: ExecutionContext) {
       sendOnSignIn: true,
       autoSignInAfterVerification: true,
       sendVerificationEmail: async ({ user, url }: { user: BetterAuthUser; url: string }) => {
+        // Store full URL for e2e test retrieval
+        if (env.DEV_MODE) {
+          const now = Math.floor(Date.now() / 1000);
+          await env.DB.prepare(
+            'INSERT INTO verification (id, identifier, value, expiresAt, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, ?)',
+          )
+            .bind(`test-${crypto.randomUUID()}`, `test-url:verification:${user.email}`, url, now + 86400, now, now)
+            .run();
+        }
+
         const name = user.givenName || user.name || user.username || 'there';
         const subject = 'Verify Your Email Address - CoRATES';
         const html = getVerificationEmailHtml({ name, subject, verificationUrl: url });

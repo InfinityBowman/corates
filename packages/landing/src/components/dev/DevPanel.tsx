@@ -18,6 +18,7 @@ import { DevQuickActions } from './DevQuickActions';
 import { DevJsonEditor } from './DevJsonEditor';
 import { DevImportProject } from './DevImportProject';
 import { DevToastTester } from './DevToastTester';
+import { DevStudyGenerator } from './DevStudyGenerator';
 
 type TabId = 'import' | 'toasts' | 'tree' | 'templates' | 'json';
 
@@ -294,6 +295,7 @@ export function DevPanel() {
                 {activeTab === 'templates' && isProjectContext && (
                   <div className='flex flex-col gap-4 p-3'>
                     <DevTemplateSelector projectId={projectId} orgId={orgId} />
+                    <DevStudyGenerator projectId={projectId} orgId={orgId} />
                     <DevQuickActions projectId={projectId} orgId={orgId} />
                   </div>
                 )}

@@ -279,6 +279,7 @@ function AdminProjectList() {
               </div>
             }
             enableSorting
+            pageSize={20}
             onRowClick={(row: ProjectRow) =>
               navigate({
                 to: '/admin/projects/$projectId' as string,

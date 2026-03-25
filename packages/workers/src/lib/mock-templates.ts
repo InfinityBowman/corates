@@ -232,6 +232,186 @@ export function generateROBINSIAnswers(options: ROBINSIOptions = {}): ROBINSIAns
   return answers;
 }
 
+// ROB2 domain structure: questions per domain and their response types
+const ROB2_DOMAINS: Record<string, Array<{ id: string; responseType: 'STANDARD' | 'WITH_NA' }>> = {
+  domain1: [
+    { id: 'd1_1', responseType: 'STANDARD' },
+    { id: 'd1_2', responseType: 'STANDARD' },
+    { id: 'd1_3', responseType: 'STANDARD' },
+  ],
+  domain2a: [
+    { id: 'd2a_1', responseType: 'STANDARD' },
+    { id: 'd2a_2', responseType: 'STANDARD' },
+    { id: 'd2a_3', responseType: 'WITH_NA' },
+    { id: 'd2a_4', responseType: 'WITH_NA' },
+    { id: 'd2a_5', responseType: 'WITH_NA' },
+    { id: 'd2a_6', responseType: 'STANDARD' },
+    { id: 'd2a_7', responseType: 'WITH_NA' },
+  ],
+  domain2b: [
+    { id: 'd2b_1', responseType: 'STANDARD' },
+    { id: 'd2b_2', responseType: 'STANDARD' },
+    { id: 'd2b_3', responseType: 'WITH_NA' },
+    { id: 'd2b_4', responseType: 'WITH_NA' },
+    { id: 'd2b_5', responseType: 'WITH_NA' },
+    { id: 'd2b_6', responseType: 'WITH_NA' },
+  ],
+  domain3: [
+    { id: 'd3_1', responseType: 'STANDARD' },
+    { id: 'd3_2', responseType: 'WITH_NA' },
+    { id: 'd3_3', responseType: 'WITH_NA' },
+    { id: 'd3_4', responseType: 'WITH_NA' },
+  ],
+  domain4: [
+    { id: 'd4_1', responseType: 'STANDARD' },
+    { id: 'd4_2', responseType: 'STANDARD' },
+    { id: 'd4_3', responseType: 'WITH_NA' },
+    { id: 'd4_4', responseType: 'WITH_NA' },
+    { id: 'd4_5', responseType: 'WITH_NA' },
+  ],
+  domain5: [
+    { id: 'd5_1', responseType: 'STANDARD' },
+    { id: 'd5_2', responseType: 'STANDARD' },
+    { id: 'd5_3', responseType: 'STANDARD' },
+  ],
+};
+
+const ROB2_STANDARD_RESPONSES = ['Y', 'PY', 'PN', 'N', 'NI'] as const;
+const ROB2_WITH_NA_RESPONSES = ['NA', 'Y', 'PY', 'PN', 'N', 'NI'] as const;
+const ROB2_JUDGEMENTS = ['Low', 'Some concerns', 'High'] as const;
+const ROB2_DIRECTIONS = [
+  'NA',
+  'Favours experimental',
+  'Favours comparator',
+  'Towards null',
+  'Away from null',
+  'Unpredictable',
+] as const;
+
+const ROB2_STUDY_DESIGNS = [
+  'Individually-randomized parallel-group trial',
+  'Cluster-randomized parallel-group trial',
+  'Individually randomized cross-over (or other matched) trial',
+] as const;
+
+const ROB2_INFORMATION_SOURCES = [
+  'Journal article(s)',
+  'Trial protocol',
+  'Statistical analysis plan (SAP)',
+  'Non-commercial trial registry record (e.g. ClinicalTrials.gov record)',
+  'Company-owned trial registry record (e.g. GSK Clinical Study Register record)',
+  'Grey literature (e.g. unpublished thesis)',
+  'Conference abstract(s) about the trial',
+  'Regulatory document (e.g. Clinical Study Report, Drug Approval Package)',
+  'Research ethics application',
+  'Grant database summary (e.g. NIH RePORTER or Research Councils UK Gateway to Research)',
+  'Personal communication with trialist',
+  'Personal communication with the sponsor',
+] as const;
+
+interface ROB2Options {
+  fill?: 'empty' | 'random' | 'all-yes' | 'mixed';
+  isAdhering?: boolean;
+  seed?: number;
+}
+
+interface ROB2DomainAnswers {
+  answers: Record<string, { answer: string | null; comment: string }>;
+  judgement: string | null;
+  direction: string | null;
+}
+
+interface ROB2Answers {
+  preliminary: {
+    studyDesign: string | null;
+    experimental: string;
+    comparator: string;
+    numericalResult: string;
+    aim: 'ASSIGNMENT' | 'ADHERING';
+    deviationsToAddress: string[];
+    sources: Record<string, boolean>;
+  };
+  domain1: ROB2DomainAnswers;
+  domain2a: ROB2DomainAnswers;
+  domain2b: ROB2DomainAnswers;
+  domain3: ROB2DomainAnswers;
+  domain4: ROB2DomainAnswers;
+  domain5: ROB2DomainAnswers;
+  overall: {
+    judgement: string | null;
+    direction: string | null;
+  };
+}
+
+export function generateROB2Answers(options: ROB2Options = {}): ROB2Answers {
+  const { fill = 'empty', isAdhering = false, seed = Date.now() } = options;
+  const rng = seededRandom(seed);
+
+  const aim: 'ASSIGNMENT' | 'ADHERING' = isAdhering ? 'ADHERING' : 'ASSIGNMENT';
+
+  const sources: Record<string, boolean> = {};
+  for (const src of ROB2_INFORMATION_SOURCES) {
+    sources[src] = src === 'Journal article(s)' && fill !== 'empty';
+  }
+
+  const emptyDomain: ROB2DomainAnswers = { answers: {}, judgement: null, direction: null };
+
+  const answers: ROB2Answers = {
+    preliminary: {
+      studyDesign: fill !== 'empty' ? pickRandom(rng, [...ROB2_STUDY_DESIGNS]) : null,
+      experimental: fill !== 'empty' ? 'Experimental intervention A' : '',
+      comparator: fill !== 'empty' ? 'Standard care B' : '',
+      numericalResult: fill !== 'empty' ? 'RR = 1.52 (95% CI 0.83 to 2.77)' : '',
+      aim,
+      deviationsToAddress: isAdhering && fill !== 'empty' ? ['non-adherence to their assigned intervention regimen that could have affected participants\' outcomes'] : [],
+      sources,
+    },
+    domain1: generateROB2Domain('domain1', fill, rng),
+    domain2a: isAdhering ? emptyDomain : generateROB2Domain('domain2a', fill, rng),
+    domain2b: isAdhering ? generateROB2Domain('domain2b', fill, rng) : emptyDomain,
+    domain3: generateROB2Domain('domain3', fill, rng),
+    domain4: generateROB2Domain('domain4', fill, rng),
+    domain5: generateROB2Domain('domain5', fill, rng),
+    overall: {
+      judgement: fill !== 'empty' ? pickRandom(rng, [...ROB2_JUDGEMENTS]) : null,
+      direction: fill !== 'empty' ? pickRandom(rng, [...ROB2_DIRECTIONS]) : null,
+    },
+  };
+
+  return answers;
+}
+
+function generateROB2Domain(
+  domainKey: string,
+  fill: string,
+  rng: RngFunction,
+): ROB2DomainAnswers {
+  const questions = ROB2_DOMAINS[domainKey] || [];
+  const domainAnswers: Record<string, { answer: string | null; comment: string }> = {};
+
+  for (const q of questions) {
+    const pool =
+      q.responseType === 'WITH_NA' ? [...ROB2_WITH_NA_RESPONSES] : [...ROB2_STANDARD_RESPONSES];
+
+    let answer: string | null = null;
+    if (fill === 'random') {
+      answer = pickRandom(rng, pool);
+    } else if (fill === 'all-yes') {
+      answer = 'Y';
+    } else if (fill === 'mixed') {
+      answer = pickRandom(rng, pool);
+    }
+
+    domainAnswers[q.id] = { answer, comment: '' };
+  }
+
+  return {
+    answers: domainAnswers,
+    judgement: fill !== 'empty' ? pickRandom(rng, [...ROB2_JUDGEMENTS]) : null,
+    direction: fill !== 'empty' ? pickRandom(rng, [...ROB2_DIRECTIONS]) : null,
+  };
+}
+
 function seededRandom(seed: number): RngFunction {
   let s = seed;
   return function () {

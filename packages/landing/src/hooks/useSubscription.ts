@@ -2,13 +2,12 @@
  * useSubscription - Manages subscription state and provides permission helpers
  */
 
-import { useMemo } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { parseResponse, type InferResponseType } from 'hono/client';
 import { queryKeys } from '@/lib/queryKeys';
 import { api } from '@/lib/rpc';
-import { hasActiveAccess as checkActiveAccess } from '@/lib/access';
 import {
+  isSubscriptionActive,
   hasEntitlement as checkEntitlement,
   getEffectiveEntitlements,
   getEffectiveQuotas,
@@ -56,19 +55,18 @@ export function useSubscription() {
   const subscriptionFetchFailed = isLoggedIn && query.isError;
   const tier = subscription.tier;
   const status = subscription.status;
-  const isActive = status === 'active' || status === 'trialing';
   const willCancel = subscription.cancelAtPeriodEnd;
-  const hasActiveAccess = checkActiveAccess(subscription);
-  const entitlements = useMemo(() => getEffectiveEntitlements(subscription), [subscription]);
-  const quotas = useMemo(() => getEffectiveQuotas(subscription), [subscription]);
+  const hasActiveAccess = isSubscriptionActive(subscription);
+  const entitlements = getEffectiveEntitlements(subscription);
+  const quotas = getEffectiveQuotas(subscription);
 
-  const periodEndDate = useMemo(() => {
+  const periodEndDate = (() => {
     const endDate = subscription.currentPeriodEnd;
     if (!endDate) return null;
     const timestamp = typeof endDate === 'number' ? endDate : parseInt(String(endDate));
     const date = timestamp > 1000000000000 ? new Date(timestamp) : new Date(timestamp * 1000);
     return date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
-  }, [subscription]);
+  })();
 
   return {
     subscription,
@@ -90,7 +88,6 @@ export function useSubscription() {
     tier,
     tierInfo: subscription.tierInfo,
     status,
-    isActive,
     hasActiveAccess,
     entitlements,
     quotas,

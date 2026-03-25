@@ -37,6 +37,7 @@ base.use('/apply-template', requireProjectAccess());
 base.use('/export', requireProjectAccess());
 base.use('/import', requireProjectAccess());
 base.use('/reset', requireProjectAccess());
+base.use('/add-study', requireProjectAccess());
 
 // Response schemas
 
@@ -386,5 +387,24 @@ const devRoutes = $(base)
       return c.json({ error: error.message }, 500);
     }
   });
+
+// POST /dev/add-study (non-OpenAPI, simple handler)
+devRoutes.post('/add-study', async c => {
+  const { projectId } = getProjectContext(c);
+  if (!projectId) {
+    return c.json({ error: 'Project ID required' }, 403);
+  }
+
+  try {
+    const body = await c.req.json();
+    const projectDoc = getProjectDocStub(c.env, projectId);
+    const data = await projectDoc.devAddStudy(body);
+    return c.json(data);
+  } catch (err) {
+    const error = err as Error;
+    console.error('[Dev] Failed to add study:', error);
+    return c.json({ error: error.message }, 500);
+  }
+});
 
 export { devRoutes };

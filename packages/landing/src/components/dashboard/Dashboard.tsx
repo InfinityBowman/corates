@@ -5,7 +5,8 @@
  * enhances based on auth/subscription state.
  */
 
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
+import { useNavigate } from '@tanstack/react-router';
 import { useAuthStore, selectUser, selectIsLoggedIn } from '@/stores/authStore';
 import { useOnlineStatus } from '@/hooks/useOnlineStatus';
 import { useSubscription } from '@/hooks/useSubscription';
@@ -21,6 +22,7 @@ import { useInitialAnimation, AnimationContext } from './useInitialAnimation';
 
 export function Dashboard() {
   const animation = useInitialAnimation();
+  const navigate = useNavigate();
 
   const user = useAuthStore(selectUser);
   const isLoggedIn = useAuthStore(selectIsLoggedIn);
@@ -31,13 +33,13 @@ export function Dashboard() {
 
   const [createModalOpen, setCreateModalOpen] = useState(false);
 
-  const canCreateProject = useMemo(() => {
+  const canCreateProject = (() => {
     if (!isOnline || !isLoggedIn) return false;
     if (!hasEntitlement('project.create')) return false;
     return hasQuota('projects.max', { used: projects?.length || 0, requested: 1 });
-  }, [isOnline, isLoggedIn, projects, hasEntitlement, hasQuota]);
+  })();
 
-  const activities = useMemo(() => {
+  const activities = (() => {
     if (!projects?.length) return [];
     return [...projects]
       .sort(
@@ -52,22 +54,22 @@ export function Dashboard() {
         subtitle: 'was updated',
         timestamp: project.updatedAt || project.createdAt || 0,
       }));
-  }, [projects]);
+  })();
 
   function handleCreateProject() {
     setCreateModalOpen(true);
   }
 
   function handleStartROBINSI() {
-    window.location.href = '/checklist?type=ROBINS_I';
+    navigate({ to: '/checklist', search: () => ({ type: 'ROBINS_I' }) });
   }
 
   function handleStartAMSTAR2() {
-    window.location.href = '/checklist?type=AMSTAR2';
+    navigate({ to: '/checklist', search: () => ({ type: 'AMSTAR2' }) });
   }
 
   function handleLearnMore() {
-    window.location.href = '/resources';
+    navigate({ to: '/resources' });
   }
 
   return (

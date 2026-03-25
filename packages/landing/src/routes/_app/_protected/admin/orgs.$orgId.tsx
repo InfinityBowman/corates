@@ -183,6 +183,13 @@ function OrgDetailPage() {
     }
   };
 
+  const toDateOrNull = (val: string | number | Date | null | undefined): Date | null => {
+    if (val == null) return null;
+    if (val instanceof Date) return val;
+    if (typeof val === 'string') return new Date(val);
+    return new Date(val * 1000);
+  };
+
   const handleUpdateSubscription = async () => {
     if (!editingSubscription) return;
     setLoading(true);
@@ -253,13 +260,6 @@ function OrgDetailPage() {
     } finally {
       setLoading(false);
     }
-  };
-
-  const toDateOrNull = (val: string | number | Date | null | undefined): Date | null => {
-    if (val == null) return null;
-    if (val instanceof Date) return val;
-    if (typeof val === 'string') return new Date(val);
-    return new Date(val * 1000);
   };
 
   const handleEditSubscription = (subscription: SubscriptionRecord) => {

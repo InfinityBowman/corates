@@ -16,6 +16,8 @@ import {
   session,
   subscription,
   projectMembers,
+  verification,
+  account,
 } from '@/db/schema.js';
 import { createAuth } from '@/auth/config.js';
 import type { Env } from '../types';
@@ -199,6 +201,103 @@ testSeedRoutes.post('/cleanup', async c => {
     return c.json({ success: true });
   } catch (err) {
     console.error('[test-seed] Cleanup error:', err);
+    return c.json({ error: (err as Error).message }, 500);
+  }
+});
+
+/**
+ * GET /api/test/auth-url?email=<email>&type=<magic-link|verification|reset-password>
+ * Returns the full auth URL stored by the DEV_MODE callbacks in auth/config.ts.
+ * The URL is stored in the verification table with identifier `test-url:{type}:{email}`.
+ */
+testSeedRoutes.get('/auth-url', async c => {
+  try {
+    const db = drizzle(c.env.DB);
+    const email = c.req.query('email');
+    const type = c.req.query('type');
+
+    if (!email || !type) {
+      return c.json({ error: 'email and type query params required' }, 400);
+    }
+
+    const identifier = `test-url:${type}:${email}`;
+    const rows = await db
+      .select()
+      .from(verification)
+      .where(eq(verification.identifier, identifier))
+      .all();
+
+    if (!rows.length) {
+      return c.json({ error: `No ${type} URL found for ${email}` }, 404);
+    }
+
+    // Return the most recently created URL
+    const latest = rows.sort(
+      (a, b) => (b.createdAt?.getTime() ?? 0) - (a.createdAt?.getTime() ?? 0),
+    )[0];
+
+    return c.json({ success: true, url: latest.value });
+  } catch (err) {
+    console.error('[test-seed] Auth URL error:', err);
+    return c.json({ error: (err as Error).message }, 500);
+  }
+});
+
+/**
+ * POST /api/test/verify-email
+ * Marks a user's email as verified and optionally their profile as complete.
+ * Used in e2e tests to skip the email verification step.
+ */
+testSeedRoutes.post('/verify-email', async c => {
+  try {
+    const db = drizzle(c.env.DB);
+    const body = await c.req.json<{ email: string; completeProfile?: boolean }>();
+
+    const updates: Record<string, unknown> = {
+      emailVerified: true,
+      updatedAt: new Date(),
+    };
+    if (body.completeProfile) {
+      updates.profileCompletedAt = Math.floor(Date.now() / 1000);
+    }
+
+    await db.update(user).set(updates).where(eq(user.email, body.email));
+
+    return c.json({ success: true });
+  } catch (err) {
+    console.error('[test-seed] Verify email error:', err);
+    return c.json({ error: (err as Error).message }, 500);
+  }
+});
+
+/**
+ * POST /api/test/cleanup-user-by-email
+ * Deletes a user and related data by email. Used for auth flow tests where
+ * the user ID is not known ahead of time (created via real signup).
+ */
+testSeedRoutes.post('/cleanup-user-by-email', async c => {
+  try {
+    const db = drizzle(c.env.DB);
+    const body = await c.req.json<{ email: string }>();
+
+    const users = await db.select().from(user).where(eq(user.email, body.email)).all();
+
+    for (const u of users) {
+      await db.delete(session).where(eq(session.userId, u.id));
+      await db.delete(account).where(eq(account.userId, u.id));
+      await db.delete(member).where(eq(member.userId, u.id));
+      await db.delete(user).where(eq(user.id, u.id));
+    }
+
+    // Clean up verification tokens for this email (direct + test-url prefixed)
+    await db.delete(verification).where(eq(verification.identifier, body.email));
+    for (const prefix of ['test-url:magic-link:', 'test-url:verification:', 'test-url:reset-password:']) {
+      await db.delete(verification).where(eq(verification.identifier, `${prefix}${body.email}`));
+    }
+
+    return c.json({ success: true, deletedCount: users.length });
+  } catch (err) {
+    console.error('[test-seed] Cleanup by email error:', err);
     return c.json({ error: (err as Error).message }, 500);
   }
 });

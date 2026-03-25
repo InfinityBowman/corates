@@ -3,7 +3,15 @@
  * Dynamically imported only when DEV_MODE is enabled to keep production bundle small.
  */
 import * as Y from 'yjs';
-import { getTemplate, getTemplateNames, getTemplateDescriptions } from '../lib/mock-templates';
+import {
+  getTemplate,
+  getTemplateNames,
+  getTemplateDescriptions,
+  generateAMSTAR2Answers,
+  generateROBINSIAnswers,
+  generateROB2Answers,
+} from '../lib/mock-templates';
+import { CHECKLIST_STATUS } from '@corates/shared';
 import { buildMemberYMap } from './ProjectDoc';
 
 interface DevContext {
@@ -644,6 +652,273 @@ export async function handleDevRaw(ctx: DevContext): Promise<Response> {
       headers: { 'Content-Type': 'application/json' },
     });
   }
+}
+
+/**
+ * Add a single study with filled checklists and optional reconciliation.
+ * Generates answers using the appropriate checklist generator.
+ */
+export async function handleDevAddStudy(ctx: DevContext, request: Request): Promise<Response> {
+  const { doc } = ctx;
+
+  try {
+    const body = (await request.json()) as {
+      type: 'AMSTAR2' | 'ROB2' | 'ROBINS_I';
+      fillMode?: 'random' | 'all-yes' | 'mixed';
+      reviewer1: string;
+      reviewer2: string;
+      reconcile?: boolean;
+      outcomeId?: string | null;
+    };
+
+    const { type, fillMode = 'random', reviewer1, reviewer2, reconcile = true, outcomeId: requestedOutcomeId } = body;
+
+    if (!type || !reviewer1 || !reviewer2) {
+      return new Response(
+        JSON.stringify({ error: 'Missing required fields: type, reviewer1, reviewer2' }),
+        { status: 400, headers: { 'Content-Type': 'application/json' } },
+      );
+    }
+
+    if (reviewer1 === reviewer2) {
+      return new Response(
+        JSON.stringify({ error: 'reviewer1 and reviewer2 must be different users' }),
+        { status: 400, headers: { 'Content-Type': 'application/json' } },
+      );
+    }
+
+    const now = new Date().toISOString();
+    const seed1 = Date.now();
+    const seed2 = seed1 + 9999;
+    const studyId = `gen_${crypto.randomUUID().slice(0, 8)}`;
+    const checklist1Id = `gen_cl1_${crypto.randomUUID().slice(0, 8)}`;
+    const checklist2Id = `gen_cl2_${crypto.randomUUID().slice(0, 8)}`;
+    const reconciledChecklistId = reconcile ? `gen_rec_${crypto.randomUUID().slice(0, 8)}` : null;
+
+    // Determine outcome ID for ROB2/ROBINS_I
+    const requiresOutcome = type === 'ROB2' || type === 'ROBINS_I';
+    let outcomeId: string | null = null;
+
+    doc.transact(() => {
+      const reviewsMap = doc.getMap('reviews');
+      const metaMap = doc.getMap('meta');
+
+      // Handle outcome creation/selection for ROB2/ROBINS_I
+      if (requiresOutcome) {
+        if (requestedOutcomeId && requestedOutcomeId !== '__auto__') {
+          outcomeId = requestedOutcomeId;
+        } else {
+          // Auto-create a new outcome
+          let outcomesMap = metaMap.get('outcomes') as Y.Map<Y.Map<unknown>> | undefined;
+          if (!outcomesMap) {
+            outcomesMap = new Y.Map();
+            metaMap.set('outcomes', outcomesMap);
+          }
+          const existingCount = outcomesMap.size;
+          outcomeId = `gen_outcome_${crypto.randomUUID().slice(0, 8)}`;
+          const outcomeYMap = new Y.Map<unknown>();
+          outcomeYMap.set('name', `Generated Outcome ${existingCount + 1}`);
+          outcomeYMap.set('createdAt', now);
+          outcomesMap.set(outcomeId, outcomeYMap);
+        }
+      }
+
+      // Count existing studies for naming
+      const existingStudyCount = reviewsMap.size;
+      const studyNum = existingStudyCount + 1;
+
+      // Generate answers for both reviewers
+      const answers1 = generateChecklistAnswers(type, fillMode, seed1);
+      const answers2 = generateChecklistAnswers(type, fillMode, seed2);
+
+      // Create study Y.Map
+      const studyYMap = new Y.Map<unknown>();
+      studyYMap.set('name', `Generated Study ${studyNum}`);
+      studyYMap.set('description', `Auto-generated ${type} study`);
+      studyYMap.set('createdAt', now);
+      studyYMap.set('updatedAt', now);
+      studyYMap.set('originalTitle', `Generated Study ${studyNum}`);
+      studyYMap.set('firstAuthor', `Author${studyNum}`);
+      studyYMap.set('publicationYear', String(2020 + (studyNum % 5)));
+      studyYMap.set('authors', `Author${studyNum} A, Author${studyNum} B`);
+      studyYMap.set('journal', 'Generated Journal');
+      studyYMap.set('reviewer1', reviewer1);
+      studyYMap.set('reviewer2', reviewer2);
+
+      // Create checklists map
+      const checklistsMap = new Y.Map<Y.Map<unknown>>();
+
+      // Reviewer 1 checklist
+      const cl1YMap = buildChecklistYMap({
+        id: checklist1Id,
+        type,
+        assignedTo: reviewer1,
+        status: CHECKLIST_STATUS.REVIEWER_COMPLETED,
+        answers: answers1,
+        outcomeId,
+        now,
+      });
+      checklistsMap.set(checklist1Id, cl1YMap);
+
+      // Reviewer 2 checklist
+      const cl2YMap = buildChecklistYMap({
+        id: checklist2Id,
+        type,
+        assignedTo: reviewer2,
+        status: CHECKLIST_STATUS.REVIEWER_COMPLETED,
+        answers: answers2,
+        outcomeId,
+        now,
+      });
+      checklistsMap.set(checklist2Id, cl2YMap);
+
+      // Reconciled checklist (third checklist)
+      if (reconcile && reconciledChecklistId) {
+        const reconAnswers = generateChecklistAnswers(type, fillMode, seed1 + 5555);
+        const recYMap = buildChecklistYMap({
+          id: reconciledChecklistId,
+          type,
+          assignedTo: null,
+          status: CHECKLIST_STATUS.FINALIZED,
+          answers: reconAnswers,
+          outcomeId,
+          now,
+        });
+        recYMap.set('reviewerName', 'Consensus');
+        const sourceArr = new Y.Array<string>();
+        sourceArr.push([checklist1Id, checklist2Id]);
+        recYMap.set('sourceChecklists', sourceArr);
+        checklistsMap.set(reconciledChecklistId, recYMap);
+
+        // Create reconciliations map
+        const reconciliationsMap = new Y.Map<Y.Map<unknown>>();
+        const outcomeKey = outcomeId || `type:${type}`;
+        const progressMap = new Y.Map<unknown>();
+        progressMap.set('checklist1Id', checklist1Id);
+        progressMap.set('checklist2Id', checklist2Id);
+        progressMap.set('reconciledChecklistId', reconciledChecklistId);
+        progressMap.set('type', type);
+        progressMap.set('updatedAt', now);
+        if (outcomeId) progressMap.set('outcomeId', outcomeId);
+        reconciliationsMap.set(outcomeKey, progressMap);
+        studyYMap.set('reconciliations', reconciliationsMap);
+      }
+
+      studyYMap.set('checklists', checklistsMap);
+      reviewsMap.set(studyId, studyYMap);
+    });
+
+    return new Response(
+      JSON.stringify({
+        success: true,
+        studyId,
+        checklistIds: [checklist1Id, checklist2Id, ...(reconciledChecklistId ? [reconciledChecklistId] : [])],
+        outcomeId,
+      }),
+      { headers: { 'Content-Type': 'application/json' } },
+    );
+  } catch (error) {
+    const err = error as Error;
+    console.error('handleDevAddStudy error:', error);
+    return new Response(
+      JSON.stringify({ error: 'Add study failed', details: err.message }),
+      { status: 500, headers: { 'Content-Type': 'application/json' } },
+    );
+  }
+}
+
+function generateChecklistAnswers(
+  type: 'AMSTAR2' | 'ROB2' | 'ROBINS_I',
+  fillMode: string,
+  seed: number,
+): Record<string, unknown> {
+  if (type === 'AMSTAR2') {
+    return generateAMSTAR2Answers({ fill: fillMode as 'random' | 'all-yes' | 'mixed', seed });
+  } else if (type === 'ROB2') {
+    return { ...generateROB2Answers({ fill: fillMode as 'random' | 'all-yes' | 'mixed', seed }) };
+  } else {
+    const fill = fillMode === 'all-yes' ? 'complete' : fillMode === 'mixed' ? 'partial' : 'random';
+    return generateROBINSIAnswers({ fill: fill as 'random' | 'complete' | 'partial', seed });
+  }
+}
+
+function buildChecklistYMap(opts: {
+  id: string;
+  type: string;
+  assignedTo: string | null;
+  status: string;
+  answers: Record<string, unknown>;
+  outcomeId: string | null;
+  now: string;
+}): Y.Map<unknown> {
+  const yMap = new Y.Map<unknown>();
+  yMap.set('type', opts.type);
+  yMap.set('title', null);
+  yMap.set('assignedTo', opts.assignedTo);
+  yMap.set('status', opts.status);
+  yMap.set('createdAt', opts.now);
+  yMap.set('updatedAt', opts.now);
+  if (opts.outcomeId) {
+    yMap.set('outcomeId', opts.outcomeId);
+  }
+
+  const answersYMap = new Y.Map<unknown>();
+  const sectionKeys = new Set([
+    'overall', 'preliminary', 'planning',
+    'sectionA', 'sectionB', 'sectionC', 'sectionD',
+    'confoundingEvaluation',
+  ]);
+  for (const [key, value] of Object.entries(opts.answers)) {
+    if (sectionKeys.has(key)) {
+      // Top-level sections - store as nested Y.Map
+      if (typeof value === 'object' && value !== null) {
+        const sectionMap = new Y.Map<unknown>();
+        for (const [sk, sv] of Object.entries(value as Record<string, unknown>)) {
+          if (typeof sv === 'object' && sv !== null && !Array.isArray(sv)) {
+            const nested = new Y.Map<unknown>();
+            for (const [nk, nv] of Object.entries(sv as Record<string, unknown>)) {
+              nested.set(nk, nv);
+            }
+            sectionMap.set(sk, nested);
+          } else {
+            sectionMap.set(sk, sv);
+          }
+        }
+        answersYMap.set(key, sectionMap);
+      }
+    } else if (opts.type === 'AMSTAR2') {
+      // AMSTAR2 questions have { answers: boolean[][][], critical: boolean }
+      const qData = value as { answers: boolean[][][]; critical: boolean };
+      const questionYMap = new Y.Map<unknown>();
+      questionYMap.set('answers', qData.answers);
+      questionYMap.set('critical', qData.critical);
+      answersYMap.set(key, questionYMap);
+    } else {
+      // ROB2/ROBINS-I domains have { answers: Record<string, {answer, comment}>, judgement, direction }
+      if (typeof value === 'object' && value !== null) {
+        const domainData = value as Record<string, unknown>;
+        const domainMap = new Y.Map<unknown>();
+        if (domainData.answers && typeof domainData.answers === 'object') {
+          const domainAnswersMap = new Y.Map<unknown>();
+          for (const [qKey, qVal] of Object.entries(domainData.answers as Record<string, unknown>)) {
+            const qMap = new Y.Map<unknown>();
+            const q = qVal as Record<string, unknown>;
+            if (q.answer !== undefined) qMap.set('answer', q.answer);
+            if (q.comment !== undefined) qMap.set('comment', q.comment);
+            domainAnswersMap.set(qKey, qMap);
+          }
+          domainMap.set('answers', domainAnswersMap);
+        }
+        if (domainData.judgement !== undefined) domainMap.set('judgement', domainData.judgement);
+        if (domainData.direction !== undefined) domainMap.set('direction', domainData.direction);
+        if (domainData.judgementSource !== undefined) domainMap.set('judgementSource', domainData.judgementSource);
+        answersYMap.set(key, domainMap);
+      }
+    }
+  }
+  yMap.set('answers', answersYMap);
+
+  return yMap;
 }
 
 /**

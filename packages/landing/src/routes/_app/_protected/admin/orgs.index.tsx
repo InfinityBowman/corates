@@ -181,6 +181,7 @@ function AdminOrgList() {
           loading={orgsDataQuery.isLoading}
           emptyMessage='No organizations found'
           enableSorting
+          pageSize={20}
           onRowClick={(row: OrgRow) =>
             navigate({
               to: '/admin/orgs/$orgId' as string,

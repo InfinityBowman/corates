@@ -145,3 +145,71 @@ export async function cleanupScenario(scenario: DualReviewerScenario) {
     }),
   });
 }
+
+// --- Auth flow helpers ---
+
+/**
+ * Fetches a stored auth URL from the backend test endpoint.
+ * URLs are captured by DEV_MODE callbacks in auth/config.ts.
+ * Retries a few times since the URL may not be stored instantly.
+ */
+export async function getAuthUrl(
+  email: string,
+  type: 'magic-link' | 'verification' | 'reset-password',
+): Promise<string> {
+  for (let attempt = 0; attempt < 10; attempt++) {
+    const res = await fetch(
+      `${API_BASE}/api/test/auth-url?email=${encodeURIComponent(email)}&type=${type}`,
+    );
+    if (res.ok) {
+      const data = await res.json();
+      return data.url;
+    }
+    // URL may not be stored yet, wait and retry
+    await new Promise(r => setTimeout(r, 500));
+  }
+  throw new Error(`No ${type} URL found for ${email} after retries`);
+}
+
+/**
+ * Creates a user via Better Auth's sign-up API.
+ * Returns the response data (user may need email verification).
+ */
+export async function signUpWithEmail(email: string, password: string, name: string) {
+  const res = await fetch(`${API_BASE}/api/auth/sign-up/email`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, password, name }),
+  });
+  if (!res.ok) {
+    throw new Error(`Sign-up failed: ${res.status} ${await res.text()}`);
+  }
+  return res.json();
+}
+
+/**
+ * Marks a user's email as verified (and optionally profile as complete)
+ * via the test endpoint. Skips the email verification flow.
+ */
+export async function verifyEmail(email: string, completeProfile = false) {
+  const res = await fetch(`${API_BASE}/api/test/verify-email`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, completeProfile }),
+  });
+  if (!res.ok) {
+    throw new Error(`Verify email failed: ${res.status} ${await res.text()}`);
+  }
+}
+
+/**
+ * Cleans up a test user by email address.
+ * Removes user, account, session, member, and verification records.
+ */
+export async function cleanupByEmail(email: string) {
+  await fetch(`${API_BASE}/api/test/cleanup-user-by-email`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email }),
+  });
+}
