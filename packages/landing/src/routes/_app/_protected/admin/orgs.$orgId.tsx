@@ -12,6 +12,7 @@ import {
   FolderIcon,
   LoaderIcon,
   ShieldIcon,
+  AlertCircleIcon,
 } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAdminOrgDetails, useAdminOrgBilling } from '@/hooks/useAdminQueries';
@@ -372,15 +373,43 @@ function OrgDetailPage() {
 
   return (
     <>
+      {/* Back link (always visible) */}
+      <Link
+        to={'/admin/orgs' as string}
+        className='text-muted-foreground hover:text-secondary-foreground mb-4 inline-flex items-center text-sm'
+      >
+        <ArrowLeftIcon className='mr-1 size-4' />
+        Back to Organizations
+      </Link>
+
+      {/* Loading state */}
+      {orgDetailsQuery.isLoading && (
+        <div className='flex min-h-64 items-center justify-center'>
+          <LoaderIcon className='size-8 animate-spin text-blue-600' />
+        </div>
+      )}
+
+      {/* Error state */}
+      {orgDetailsQuery.isError && (
+        <div className='border-destructive/20 bg-destructive/10 rounded-lg border p-6 text-center'>
+          <AlertCircleIcon className='text-destructive mx-auto mb-2 size-8' />
+          <p className='text-destructive'>Failed to load organization details</p>
+          <p className='text-muted-foreground mt-1 text-sm'>
+            This organization may have been deleted.
+          </p>
+          <button
+            type='button'
+            onClick={() => orgDetailsQuery.refetch()}
+            className='text-destructive hover:text-destructive/80 mt-2 text-sm'
+          >
+            Try again
+          </button>
+        </div>
+      )}
+
       {/* Header */}
+      {orgDetails && (<>
       <div className='mb-6'>
-        <Link
-          to={'/admin/orgs' as string}
-          className='text-muted-foreground hover:text-secondary-foreground mb-4 inline-flex items-center text-sm'
-        >
-          <ArrowLeftIcon className='mr-1 size-4' />
-          Back to Organizations
-        </Link>
         <div className='flex items-center gap-3'>
           <div className='flex size-12 items-center justify-center rounded-lg bg-blue-100'>
             <HomeIcon className='size-6 text-blue-600' />
@@ -397,32 +426,30 @@ function OrgDetailPage() {
       </div>
 
       {/* Stats */}
-      {orgDetails && (
-        <div className='mb-6 grid grid-cols-1 gap-4 md:grid-cols-3'>
-          <AdminBox padding='compact'>
-            <div className='flex items-center gap-2'>
-              <UsersIcon className='text-muted-foreground/70 size-5' />
-              <div>
-                <p className='text-muted-foreground text-sm'>Members</p>
-                <p className='text-foreground text-2xl font-bold'>
-                  {orgDetails.stats?.memberCount ?? 0}
-                </p>
-              </div>
+      <div className='mb-6 grid grid-cols-1 gap-4 md:grid-cols-3'>
+        <AdminBox padding='compact'>
+          <div className='flex items-center gap-2'>
+            <UsersIcon className='text-muted-foreground/70 size-5' />
+            <div>
+              <p className='text-muted-foreground text-sm'>Members</p>
+              <p className='text-foreground text-2xl font-bold'>
+                {orgDetails.stats?.memberCount ?? 0}
+              </p>
             </div>
-          </AdminBox>
-          <AdminBox padding='compact'>
-            <div className='flex items-center gap-2'>
-              <FolderIcon className='text-muted-foreground/70 size-5' />
-              <div>
-                <p className='text-muted-foreground text-sm'>Projects</p>
-                <p className='text-foreground text-2xl font-bold'>
-                  {orgDetails.stats?.projectCount ?? 0}
-                </p>
-              </div>
+          </div>
+        </AdminBox>
+        <AdminBox padding='compact'>
+          <div className='flex items-center gap-2'>
+            <FolderIcon className='text-muted-foreground/70 size-5' />
+            <div>
+              <p className='text-muted-foreground text-sm'>Projects</p>
+              <p className='text-foreground text-2xl font-bold'>
+                {orgDetails.stats?.projectCount ?? 0}
+              </p>
             </div>
-          </AdminBox>
-        </div>
-      )}
+          </div>
+        </AdminBox>
+      </div>
 
       {/* Billing Summary */}
       <div className='mb-6'>
@@ -470,6 +497,7 @@ function OrgDetailPage() {
       <div className='mb-6'>
         <OrgBillingReconcilePanel orgId={orgId} />
       </div>
+      </>)}
 
       {/* Subscription Dialog */}
       <SubscriptionDialog

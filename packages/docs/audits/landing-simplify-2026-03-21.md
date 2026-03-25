@@ -16,6 +16,52 @@ Full review of `/packages/landing/src` (477 source files) for code reuse, qualit
 
 ---
 
+## Bugs Found and Fixed (discovered during audit work)
+
+### B1. ROB2 optional question marking too aggressive
+- **Files**: `components/checklist/ROB2Checklist/DomainSection.tsx`
+- **Problem**: Questions 4.2-4.5 showed "(Optional)" when no answers were given. `getRequiredQuestions` returns only the entry-point question with no answers, so everything else looked optional.
+- **Fix**: Added `hasAnyAnswer` guard -- questions only marked optional once the user has started answering in that domain.
+- [x] Fixed
+
+### B2. Immer stack overflow on reconciliation "Use This"
+- **Files**: `stores/projectStore.ts`, `primitives/useProject/sync.ts`
+- **Problem**: `persistStats` called `JSON.stringify` on an Immer draft proxy inside `produce`, causing stack overflow. Also ROB2 Y.Text objects leaked into Immer via `toJSON()`.
+- **Fix**: Moved `persistStats` outside Immer `produce`. Added explicit ROB2 Y.Text serialization in `sync.ts`.
+- [x] Fixed
+
+### B3. ROB2 reconciliation navbar pills not expanding
+- **Files**: `components/project/reconcile-tab/rob2-reconcile/NavbarDomainPill.tsx`, `engine/useReconciliationEngine.ts`, `engine/types.ts`, all adapter navbar-utils
+- **Problem**: Two issues: (1) Radix Collapsible only supports vertical expand, not horizontal. (2) Engine stored `item.section` (display name like "Domain 1: Bias...") but navbar compared against section keys ("domain1") -- they never matched.
+- **Fix**: Replaced Radix Collapsible with CSS `max-width` transition. Added `sectionKey` field to `ReconciliationNavItem`. All adapters and navbar-utils now use `sectionKey` consistently.
+- [x] Fixed
+
+### B4. PreliminaryPage Y.Text value bleeding between fields
+- **Files**: `components/project/reconcile-tab/rob2-reconcile/pages/PreliminaryPage.tsx`, `adapter.tsx`
+- **Problem**: When navigating between preliminary text field pages, the `onFinalChange` closure captured the new field's key but the effect fired with the old field's Y.Text value, writing it to the wrong field.
+- **Fix**: Added `key={currentItem.key}` on PreliminaryPage in the adapter (forces remount per field). Used `useEffectEvent` for the sync callback to avoid stale closures.
+- [x] Fixed
+
+### B5. Aim selection clearing text fields in ROB2 checklist
+- **Files**: `components/checklist/ROB2Checklist/PreliminarySection.tsx`
+- **Problem**: All preliminary handlers spread `...preliminaryState` when updating, overwriting Y.Text fields with stale/empty string values. Clicking the aim radio after typing text wiped the text.
+- **Fix**: Changed handlers to only send the changed field (e.g. `{ aim: value }` instead of `{ ...preliminaryState, aim: value }`). The ROB2 handler's `updateAnswer` already does field-level merging.
+- [x] Fixed
+
+### B6. Presence not working in ROB2 reconciliation
+- **Files**: `project/ConnectionPool.ts`
+- **Problem**: `getAwareness` was a method on the `ConnectionPool` class but was not included in `buildOpsMap`. `ReconciliationWrapper` destructured it from the ops map and got `undefined`.
+- **Fix**: Added `getAwareness` to the flat ops map in `buildOpsMap`.
+- [x] Fixed
+
+### B7. ROB2 e2e test only smoke-tested reconciliation
+- **Files**: `e2e/rob2-workflow.spec.ts`
+- **Problem**: Test verified reconciliation page loaded but never clicked "Use This", navigated through items, or saved. Would not have caught B2, B3, B4, or B5.
+- **Fix**: Extended test to walk through all 34 reconciliation items (clicking "Use This", selecting directions, checking sources), verify summary, save, and confirm finalization.
+- [x] Fixed
+
+---
+
 ## P0: Critical Performance
 
 ### 1. Duplicate `/api/auth/get-session` on every page load
@@ -30,14 +76,14 @@ Full review of `/packages/landing/src` (477 source files) for code reuse, qualit
 - **Files**: `stores/projectStore.ts:88-93`
 - **Problem**: `syncFromYDoc` fires on every remote Yjs operation (including keystrokes), triggering `JSON.stringify` of the entire `projectStats` record unconditionally.
 - **Fix**: Debounce `persistStats` (~500ms), or diff-check before writing.
-- [ ] Status
+- [-] Partially fixed (moved outside Immer produce in B2, but still not debounced)
 
 ### 3. Unstable `useProject` return object busts `ProjectContext` memo
 
 - **Files**: `primitives/useProject/index.js`, `components/project/ProjectContext.tsx`
 - **Problem**: Every render creates a new operations object, defeating the context value and re-rendering all consumers.
 - **Fix**: Stabilize structurally -- split context, use refs for operation forwarders, or restructure so the context value identity is stable. No `useMemo`.
-- [ ] Status
+- [-] No longer applicable -- `useProject` primitive replaced with ConnectionPool pattern
 
 ---
 
@@ -48,7 +94,7 @@ Full review of `/packages/landing/src` (477 source files) for code reuse, qualit
 - **Files**: `hooks/useOnlineStatus.ts`, `stores/authStore.ts:42,156,488-489`
 - **Problem**: Two independent event listener subscriptions for the same browser event, used by different components. Can diverge.
 - **Fix**: Remove `useOnlineStatus.ts`, use the store's `isOnline` everywhere.
-- [ ] Status
+- [ ] Status (still exists -- `useOnlineStatus.ts` used in 4 components)
 
 ### 5. `getDomainError` duplicated in `queryClient.ts` and `error-utils.ts`
 
@@ -89,12 +135,12 @@ Full review of `/packages/landing/src` (477 source files) for code reuse, qualit
 
 ## P2: Shared Utilities (extract and consolidate)
 
-### 10. `formatDate` copy-pasted in 11+ files
+### 10. `formatDate` copy-pasted in files
 
-- **Files**: 9 admin routes, `SubscriptionList.tsx`, `GrantList.tsx`, `UserTable.tsx`
-- **Problem**: Each hand-rolls its own variant with subtle differences (seconds, timestamp multiplication).
-- **Fix**: Extract `formatAdminDate(timestamp, options?)` to `lib/formatUtils.ts`.
-- [ ] Status
+- **Files**: `LocalChecklistItem.tsx`, `InvoicesList.tsx`, `SubscriptionCard.tsx`
+- **Problem**: Hand-rolled `formatDate` variants across files.
+- **Fix**: Extract shared `formatDate` utility to `lib/formatUtils.ts`.
+- [ ] Status (reduced from 11+ to 3 files -- many admin copies may have been cleaned up during JS->TS migration)
 
 ### 11. `formatCurrency` / `formatUsd` implemented 5 different ways
 

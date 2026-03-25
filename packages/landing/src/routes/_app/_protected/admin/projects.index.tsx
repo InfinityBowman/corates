@@ -56,7 +56,7 @@ const formatDate = (timestamp: string | number | Date | null | undefined): strin
   });
 };
 
-export const Route = createFileRoute('/_app/_protected/admin/projects')({
+export const Route = createFileRoute('/_app/_protected/admin/projects/')({
   component: AdminProjectList,
 });
 

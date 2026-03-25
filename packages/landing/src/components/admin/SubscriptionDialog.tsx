@@ -125,7 +125,7 @@ export function SubscriptionDialog({
                   <SelectItem value='paused'>Paused</SelectItem>
                   <SelectItem value='canceled'>Canceled</SelectItem>
                   <SelectItem value='unpaid'>Unpaid</SelectItem>
-                  <SelectItem value='incomplete'>Incomplete</SelectItem>
+                  {isEdit && <SelectItem value='incomplete'>Incomplete</SelectItem>}
                 </SelectGroup>
               </SelectContent>
             </Select>

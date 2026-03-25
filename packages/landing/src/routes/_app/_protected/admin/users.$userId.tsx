@@ -291,7 +291,7 @@ function UserDetailPage() {
 
   if (!isAdminChecked) {
     return (
-      <div className='min-h-[400px flex items-center justify-center'>
+      <div className='flex min-h-[400px] items-center justify-center'>
         <LoaderIcon className='size-8 animate-spin text-blue-600' />
       </div>
     );
@@ -299,7 +299,7 @@ function UserDetailPage() {
 
   if (!isAdmin) {
     return (
-      <div className='text-muted-foreground min-h-[400px flex flex-col items-center justify-center'>
+      <div className='text-muted-foreground flex min-h-[400px] flex-col items-center justify-center'>
         <AlertCircleIcon className='mb-4 size-12' />
         <p className='text-lg font-medium'>Access Denied</p>
         <p className='text-sm'>You do not have admin privileges.</p>
