@@ -365,6 +365,8 @@ class ConnectionPool {
       updateOutcome: (...args: any[]) => entry.outcomeOps?.updateOutcome(...args),
       deleteOutcome: (...args: any[]) => entry.outcomeOps?.deleteOutcome(...args),
       isOutcomeInUse: (...args: any[]) => entry.outcomeOps?.isOutcomeInUse(...args),
+      // Presence
+      getAwareness: () => entry.connectionManager?.getAwareness() || null,
     };
   }
 }
