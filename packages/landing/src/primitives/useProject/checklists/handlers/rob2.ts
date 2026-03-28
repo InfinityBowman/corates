@@ -208,8 +208,6 @@ export class ROB2Handler extends ChecklistHandler {
               answersNestedYMap!.set(qKey, questionYMap);
             }
             if (qValue.answer !== undefined) questionYMap.set('answer', qValue.answer);
-            if (qValue.comment !== undefined)
-              this.setYTextField(questionYMap, 'comment', qValue.comment);
           });
         }
       } else if (key === 'preliminary') {
@@ -220,12 +218,7 @@ export class ROB2Handler extends ChecklistHandler {
         if (prelimData.deviationsToAddress !== undefined)
           sectionYMap.set('deviationsToAddress', prelimData.deviationsToAddress);
         if (prelimData.sources !== undefined) sectionYMap.set('sources', prelimData.sources);
-        if (prelimData.experimental !== undefined)
-          this.setYTextField(sectionYMap, 'experimental', prelimData.experimental);
-        if (prelimData.comparator !== undefined)
-          this.setYTextField(sectionYMap, 'comparator', prelimData.comparator);
-        if (prelimData.numericalResult !== undefined)
-          this.setYTextField(sectionYMap, 'numericalResult', prelimData.numericalResult);
+        // NoteEditor manages Y.Text fields (experimental, comparator, numericalResult)
       } else {
         Object.entries(data).forEach(([fieldKey, fieldValue]) => {
           sectionYMap!.set(fieldKey, fieldValue);

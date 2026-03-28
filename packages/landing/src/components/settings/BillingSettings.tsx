@@ -22,7 +22,7 @@ import { PaymentIssueBanner } from '@/components/billing/PaymentIssueBanner';
 function SubscriptionSkeleton() {
   return (
     <div className='border-border bg-card overflow-hidden rounded-xl border'>
-      <div className='from-muted to-muted/80 h-28 bg-gradient-to-r' />
+      <div className='from-muted to-muted/80 h-28 bg-linear-to-r' />
       <div className='p-6'>
         <div className='mb-4 flex flex-col gap-3'>
           <Skeleton className='h-4 w-1/2' />
