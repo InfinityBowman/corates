@@ -7,35 +7,12 @@
 import { QueryClient } from '@tanstack/react-query';
 import { DetailedError } from 'hono/client';
 import { showToast } from '@/components/ui/toast';
-
-const USER_FRIENDLY_MESSAGES: Record<string, string> = {
-  AUTH_REQUIRED: 'Please sign in to continue',
-  AUTH_EXPIRED: 'Your session has expired. Please sign in again.',
-  AUTH_FORBIDDEN: "You don't have permission to do that",
-  SYSTEM_RATE_LIMITED: 'Too many requests. Please wait a moment and try again.',
-};
-
-/**
- * Extract our DomainError from Hono's DetailedError.
- * Backend returns { code, message, statusCode, details } as the JSON body,
- * which parseResponse puts into DetailedError.detail.data on failure.
- */
-function getDomainError(
-  error: unknown,
-): { code: string; message: string; statusCode: number; details?: unknown } | null {
-  if (error instanceof DetailedError && error.detail?.data?.code) {
-    return error.detail.data;
-  }
-  return null;
-}
+import { getDomainError, getUserFriendlyMessage } from '@/lib/error-utils';
 
 function getFriendlyMessage(error: unknown): string {
   const domainError = getDomainError(error);
-  if (domainError?.code && USER_FRIENDLY_MESSAGES[domainError.code]) {
-    return USER_FRIENDLY_MESSAGES[domainError.code];
-  }
-  if (domainError?.message) {
-    return domainError.message;
+  if (domainError) {
+    return getUserFriendlyMessage(domainError);
   }
   return 'Something went wrong. Please try again.';
 }

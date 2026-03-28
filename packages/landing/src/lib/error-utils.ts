@@ -85,7 +85,7 @@ interface ErrorHandlingOptions {
   navigate?: (_opts: { to: string; replace?: boolean }) => void;
 }
 
-function getUserFriendlyMessage(error: AppError): string {
+export function getUserFriendlyMessage(error: AppError): string {
   if (error.code && USER_FRIENDLY_MESSAGES[error.code]) {
     return USER_FRIENDLY_MESSAGES[error.code];
   }
