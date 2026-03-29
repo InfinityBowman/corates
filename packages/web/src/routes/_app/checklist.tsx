@@ -1,16 +1,14 @@
 /**
- * Local checklist create route - /checklist
- * Shows the create form for a new local (offline) checklist
+ * Local checklist layout route - /checklist
+ * Parent layout for checklist create (index) and view ($checklistId) routes.
  */
 
-import { createFileRoute } from '@tanstack/react-router';
-import { LocalChecklistView } from '@/components/checklist/LocalChecklistView';
+import { createFileRoute, Outlet } from '@tanstack/react-router';
 
 export const Route = createFileRoute('/_app/checklist')({
-  component: ChecklistCreatePage,
+  component: ChecklistLayout,
 });
 
-function ChecklistCreatePage() {
-  const search = Route.useSearch() as Record<string, string>;
-  return <LocalChecklistView searchType={search?.type} />;
+function ChecklistLayout() {
+  return <Outlet />;
 }
