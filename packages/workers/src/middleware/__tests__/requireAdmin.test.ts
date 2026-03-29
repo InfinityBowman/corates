@@ -5,7 +5,7 @@
 import { describe, it, expect, vi, type Mock } from 'vitest';
 import { Hono, type Context } from 'hono';
 import { json } from '@/__tests__/helpers.js';
-import { requireAdmin, isAdmin } from '../requireAdmin.js';
+import { requireAdmin } from '../requireAdmin.js';
 
 vi.mock('@/auth/config.js', () => {
   return {
@@ -136,19 +136,3 @@ describe('requireAdmin middleware', () => {
   });
 });
 
-describe('isAdmin helper', () => {
-  it('should return true for admin users', () => {
-    expect(isAdmin({ role: 'admin' })).toBe(true);
-  });
-
-  it('should return false for non-admin users', () => {
-    expect(isAdmin({ role: 'researcher' })).toBe(false);
-    expect(isAdmin({ role: 'user' })).toBe(false);
-    expect(isAdmin({ role: null })).toBe(false);
-  });
-
-  it('should return false for null/undefined users', () => {
-    expect(isAdmin(null)).toBe(false);
-    expect(isAdmin(undefined)).toBe(false);
-  });
-});

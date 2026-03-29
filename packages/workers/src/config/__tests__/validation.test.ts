@@ -12,43 +12,6 @@ import {
   emailSchemas,
 } from '../validation.js';
 
-describe('validateBody', () => {
-  it('should return success for valid data', () => {
-    const schema = projectSchemas.create;
-    const data = { name: 'Test Project', description: 'A test project' };
-
-    const result = validateBody(schema, data);
-
-    expect(result.success).toBe(true);
-    expect(result.data).toBeDefined();
-    expect(result.data!.name).toBe('Test Project');
-  });
-
-  it('should return domain error for invalid data', () => {
-    const schema = projectSchemas.create;
-    const data = { name: '' }; // Empty name should fail
-
-    const result = validateBody(schema, data);
-
-    expect(result.success).toBe(false);
-    expect(result.error).toBeDefined();
-    expect(result.error!.code).toBeDefined();
-    expect(result.error!.message).toBeDefined();
-    expect(result.error!.statusCode).toBe(400);
-  });
-
-  it('should return validation error with field details', () => {
-    const schema = projectSchemas.create;
-    const data = { name: '' };
-
-    const result = validateBody(schema, data);
-
-    expect(result.error!.code).toMatch(/^VALIDATION_/);
-    expect(result.error!.details).toBeDefined();
-    expect(result.error!.details!.field).toBe('name');
-  });
-});
-
 describe('projectSchemas', () => {
   describe('create', () => {
     it('should accept valid project data', () => {

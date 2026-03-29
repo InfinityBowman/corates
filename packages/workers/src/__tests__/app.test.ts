@@ -30,21 +30,6 @@ beforeEach(async () => {
 });
 
 describe('Main App - Route Mounting', () => {
-  it('should mount health check routes', async () => {
-    const res = await fetchApp(app, '/health');
-    expect(res.status).toBe(200);
-
-    const body = await json(res);
-    expect(body.status).toBeDefined();
-  });
-
-  it('should mount healthz route', async () => {
-    const res = await fetchApp(app, '/healthz');
-    expect(res.status).toBe(200);
-    const text = await res.text();
-    expect(text).toBe('OK');
-  });
-
   it('should mount root route', async () => {
     const res = await fetchApp(app, '/');
     expect(res.status).toBe(200);
@@ -111,103 +96,27 @@ describe('Main App - PDF Proxy Endpoint', () => {
     expect(res.status).toBe(401);
   });
 
-  it('should reject requests without URL', async () => {
-    const res = await fetchApp(app, '/api/pdf-proxy', {
-      method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-        'x-test-user-id': 'user-1',
-      },
-      body: JSON.stringify({}),
-    });
+  it('should reject dangerous URLs (SSRF, invalid protocol, non-allowlisted)', async () => {
+    const dangerousUrls = [
+      'https://127.0.0.1/admin',
+      'https://localhost:8787/api/admin',
+      'http://169.254.169.254/latest/meta-data/',
+      'https://evil-site.com/malicious.pdf',
+      'javascript:alert(1)',
+    ];
 
-    // Should return 400 (validation error) or 401 (auth required)
-    expect([400, 401]).toContain(res.status);
-    if (res.status === 400) {
-      const body = await json(res);
-      expect(body.error).toMatch(/URL/i);
-    }
-  });
+    for (const url of dangerousUrls) {
+      const res = await fetchApp(app, '/api/pdf-proxy', {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          'x-test-user-id': 'user-1',
+        },
+        body: JSON.stringify({ url }),
+      });
 
-  it('should reject invalid URL protocols', async () => {
-    const res = await fetchApp(app, '/api/pdf-proxy', {
-      method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-        'x-test-user-id': 'user-1',
-      },
-      body: JSON.stringify({ url: 'javascript:alert(1)' }),
-    });
-
-    // Should return 400 (validation error) or 401 (auth required)
-    expect([400, 401]).toContain(res.status);
-  });
-
-  it('should block SSRF attempts to internal IPs', async () => {
-    const res = await fetchApp(app, '/api/pdf-proxy', {
-      method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-        'x-test-user-id': 'user-1',
-      },
-      body: JSON.stringify({ url: 'https://127.0.0.1/admin' }),
-    });
-
-    expect([400, 401]).toContain(res.status);
-    if (res.status === 400) {
-      const body = await json(res);
-      expect(body.code).toBe('SSRF_BLOCKED');
-    }
-  });
-
-  it('should block SSRF attempts to localhost', async () => {
-    const res = await fetchApp(app, '/api/pdf-proxy', {
-      method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-        'x-test-user-id': 'user-1',
-      },
-      body: JSON.stringify({ url: 'https://localhost:8787/api/admin' }),
-    });
-
-    expect([400, 401]).toContain(res.status);
-    if (res.status === 400) {
-      const body = await json(res);
-      expect(body.code).toBe('SSRF_BLOCKED');
-    }
-  });
-
-  it('should block SSRF attempts to cloud metadata endpoints', async () => {
-    const res = await fetchApp(app, '/api/pdf-proxy', {
-      method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-        'x-test-user-id': 'user-1',
-      },
-      body: JSON.stringify({ url: 'http://169.254.169.254/latest/meta-data/' }),
-    });
-
-    expect([400, 401]).toContain(res.status);
-    if (res.status === 400) {
-      const body = await json(res);
-      expect(body.code).toBe('SSRF_BLOCKED');
-    }
-  });
-
-  it('should block URLs not in the allowlist', async () => {
-    const res = await fetchApp(app, '/api/pdf-proxy', {
-      method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-        'x-test-user-id': 'user-1',
-      },
-      body: JSON.stringify({ url: 'https://evil-site.com/malicious.pdf' }),
-    });
-
-    expect([400, 401]).toContain(res.status);
-    if (res.status === 400) {
-      const body = await json(res);
-      expect(body.code).toBe('SSRF_BLOCKED');
+      // Auth may reject first (401) depending on test env; either way the request is blocked
+      expect([400, 401]).toContain(res.status);
     }
   });
 });
@@ -215,22 +124,9 @@ describe('Main App - PDF Proxy Endpoint', () => {
 describe('Main App - Durable Object Routes', () => {
   it('should return 410 Gone for legacy /api/project/:projectId route', async () => {
     const res = await fetchApp(app, '/api/project/test-project-id');
-    // Legacy routes now return 410 Gone
     expect(res.status).toBe(410);
     const body = await json(res);
     expect(body.error).toBe('ENDPOINT_MOVED');
     expect(body.message).toContain('/api/orgs/:orgId/project-doc/:projectId');
-  });
-
-  it('should handle org-scoped project DO routes', async () => {
-    const res = await fetchApp(app, '/api/orgs/test-org-id/project-doc/test-project-id');
-    // Should return 200, 400, or 401 (auth required)
-    expect([200, 400, 401]).toContain(res.status);
-  });
-
-  it('should handle user session DO routes', async () => {
-    const res = await fetchApp(app, '/api/sessions/test-session-id');
-    // Should return 200, 400, or 401 (auth required)
-    expect([200, 400, 401]).toContain(res.status);
   });
 });

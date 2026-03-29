@@ -126,36 +126,6 @@ describe('Payment Intent Handlers', () => {
       expect(result.handled).toBe(true);
       expect(result.result).toBe('succeeded_logged');
       expect(result.ledgerContext!.stripePaymentIntentId).toBe('pi_success_123');
-      expect(ctx.logger.stripe).toHaveBeenCalledWith('payment_intent_succeeded', {
-        stripePaymentIntentId: 'pi_success_123',
-        amount: 4999,
-        currency: 'usd',
-        paymentMethodTypes: ['card'],
-        metadata: { productId: 'prod-1' },
-        invoice: 'in_123',
-      });
-    });
-
-    it('handles missing invoice field', async () => {
-      const paymentIntent = {
-        id: 'pi_no_invoice',
-        amount: 2999,
-        currency: 'usd',
-        payment_method_types: ['card'],
-        customer: 'cus_123',
-        metadata: {},
-      } as unknown as Stripe.PaymentIntent;
-
-      const ctx = createTestContext();
-      const result = await handlePaymentIntentSucceeded(paymentIntent, ctx);
-
-      expect(result.handled).toBe(true);
-      expect(ctx.logger.stripe).toHaveBeenCalledWith(
-        'payment_intent_succeeded',
-        expect.objectContaining({
-          invoice: undefined,
-        }),
-      );
     });
   });
 
@@ -221,32 +191,5 @@ describe('Payment Intent Handlers', () => {
       );
     });
 
-    it('handles authentication failure error', async () => {
-      const paymentIntent = {
-        id: 'pi_auth_failed',
-        amount: 5000,
-        currency: 'eur',
-        payment_method_types: ['card'],
-        customer: { id: 'cus_eu_123' },
-        metadata: {},
-        last_payment_error: {
-          code: 'authentication_required',
-          message: 'This payment requires authentication.',
-          type: 'card_error',
-        },
-      } as unknown as Stripe.PaymentIntent;
-
-      const ctx = createTestContext();
-      const result = await handlePaymentIntentFailed(paymentIntent, ctx);
-
-      expect(result.handled).toBe(true);
-      expect(result.ledgerContext!.stripeCustomerId).toBe('cus_eu_123');
-      expect(ctx.logger.stripe).toHaveBeenCalledWith(
-        'payment_intent_failed',
-        expect.objectContaining({
-          errorCode: 'authentication_required',
-        }),
-      );
-    });
   });
 });

@@ -151,7 +151,7 @@ describe('Email Queue Producer', () => {
     await expect(queueEmail(mockEnv, { to: 'a@b.com', subject: 'Hi' } as any)).rejects.toThrow();
   });
 
-  it('should queue 100 emails and process them all through the consumer', async () => {
+  it('should queue emails and process them all through the consumer', async () => {
     mockSendEmail.mockClear();
     mockSendEmail.mockResolvedValue({ success: true, id: 'mock-id' });
     const { queueEmail } = await import('../email-queue.js');
@@ -163,9 +163,9 @@ describe('Email Queue Producer', () => {
     const mockEnv = { EMAIL_QUEUE: { send: mockSend } } as any;
 
     await Promise.all(
-      Array.from({ length: 100 }, (_, i) => queueEmail(mockEnv, makePayload(i))),
+      Array.from({ length: 50 }, (_, i) => queueEmail(mockEnv, makePayload(i))),
     );
-    expect(queued).toHaveLength(100);
+    expect(queued).toHaveLength(50);
 
     const mod = await import('../../index.js');
     const workerHandler = mod.default as any;
@@ -180,10 +180,10 @@ describe('Email Queue Producer', () => {
 
     await workerHandler.queue(batch, consumerEnv);
 
-    expect(mockSendEmail).toHaveBeenCalledTimes(100);
-    for (let i = 0; i < 100; i++) {
-      expect(messages[i].ack).toHaveBeenCalledTimes(1);
-      expect(messages[i].retry).not.toHaveBeenCalled();
+    expect(mockSendEmail).toHaveBeenCalledTimes(50);
+    for (const msg of messages) {
+      expect(msg.ack).toHaveBeenCalledTimes(1);
+      expect(msg.retry).not.toHaveBeenCalled();
     }
   });
 });

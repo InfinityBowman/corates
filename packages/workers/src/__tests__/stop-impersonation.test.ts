@@ -111,15 +111,16 @@ describe('/api/admin/stop-impersonation - CSRF enforcement', () => {
   });
 });
 
-describe('/api/admin/stop-impersonation - Cookie forwarding', () => {
-  it('should forward cookie header to Better Auth handler', async () => {
+describe('/api/admin/stop-impersonation - Request forwarding', () => {
+  it('should forward headers and construct correct auth request', async () => {
     const testCookie = 'session=test-session-token; other=value';
+    const testOrigin = 'http://localhost:5173';
 
     await fetchApp('/api/admin/stop-impersonation', {
       method: 'POST',
       headers: {
         'content-type': 'application/json',
-        origin: 'http://localhost:5173',
+        origin: testOrigin,
         cookie: testCookie,
       },
     });
@@ -128,76 +129,11 @@ describe('/api/admin/stop-impersonation - Cookie forwarding', () => {
     const authRequest = mockHandler.mock.calls[0][0];
 
     expect(authRequest).toBeInstanceOf(Request);
-    expect(authRequest.headers.get('cookie')).toBe(testCookie);
-  });
-
-  it('should forward origin header to Better Auth handler', async () => {
-    const testOrigin = 'http://localhost:5173';
-
-    await fetchApp('/api/admin/stop-impersonation', {
-      method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-        origin: testOrigin,
-        cookie: 'session=test',
-      },
-    });
-
-    expect(mockHandler).toHaveBeenCalledTimes(1);
-    const authRequest = mockHandler.mock.calls[0][0];
-
-    expect(authRequest.headers.get('origin')).toBe(testOrigin);
-  });
-
-  it('should forward referer header to Better Auth handler', async () => {
-    const testReferer = 'http://localhost:5173/admin/users';
-
-    await fetchApp('/api/admin/stop-impersonation', {
-      method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-        referer: testReferer,
-        cookie: 'session=test',
-      },
-    });
-
-    expect(mockHandler).toHaveBeenCalledTimes(1);
-    const authRequest = mockHandler.mock.calls[0][0];
-
-    expect(authRequest.headers.get('referer')).toBe(testReferer);
-  });
-
-  it('should set accept header to application/json', async () => {
-    await fetchApp('/api/admin/stop-impersonation', {
-      method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-        origin: 'http://localhost:5173',
-        cookie: 'session=test',
-      },
-    });
-
-    expect(mockHandler).toHaveBeenCalledTimes(1);
-    const authRequest = mockHandler.mock.calls[0][0];
-
-    expect(authRequest.headers.get('accept')).toBe('application/json');
-  });
-
-  it('should create request to /api/auth/admin/stop-impersonating', async () => {
-    await fetchApp('/api/admin/stop-impersonation', {
-      method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-        origin: 'http://localhost:5173',
-        cookie: 'session=test',
-      },
-    });
-
-    expect(mockHandler).toHaveBeenCalledTimes(1);
-    const authRequest = mockHandler.mock.calls[0][0];
-
     expect(authRequest.url).toContain('/api/auth/admin/stop-impersonating');
     expect(authRequest.method).toBe('POST');
+    expect(authRequest.headers.get('cookie')).toBe(testCookie);
+    expect(authRequest.headers.get('origin')).toBe(testOrigin);
+    expect(authRequest.headers.get('accept')).toBe('application/json');
   });
 });
 

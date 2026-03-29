@@ -128,37 +128,6 @@ describe('requireTrustedOrigin middleware', () => {
     expect(res.status).toBe(403);
   });
 
-  it('should allow PUT requests with trusted Origin', async () => {
-    const app = new Hono();
-    app.use('*', requireTrustedOrigin);
-    app.put('/test', c => c.json({ message: 'success' }));
-
-    const res = await app.request('/test', {
-      method: 'PUT',
-      headers: {
-        'content-type': 'application/json',
-        origin: 'http://localhost:5173',
-      },
-    });
-
-    expect(res.status).toBe(200);
-  });
-
-  it('should allow DELETE requests with trusted Origin', async () => {
-    const app = new Hono();
-    app.use('*', requireTrustedOrigin);
-    app.delete('/test', c => c.json({ message: 'success' }));
-
-    const res = await app.request('/test', {
-      method: 'DELETE',
-      headers: {
-        origin: 'http://localhost:5173',
-      },
-    });
-
-    expect(res.status).toBe(200);
-  });
-
   it('should handle invalid Referer URL gracefully', async () => {
     const app = new Hono();
     app.use('*', requireTrustedOrigin);

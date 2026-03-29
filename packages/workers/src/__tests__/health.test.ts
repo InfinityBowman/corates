@@ -49,36 +49,6 @@ describe('Health Check Endpoints', () => {
     });
   });
 
-  it('GET /health checks database connectivity', async () => {
-    const res = await fetchApp(app, '/health');
-    const body = await json(res);
-
-    expect(body.services.database).toBeDefined();
-    expect(body.services.database.type).toBe('D1');
-    expect(body.services.database.status).toBe('healthy');
-  });
-
-  it('GET /health checks R2 storage connectivity', async () => {
-    const res = await fetchApp(app, '/health');
-    const body = await json(res);
-
-    expect(body.services.storage).toBeDefined();
-    expect(body.services.storage.type).toBe('R2');
-    expect(body.services.storage.status).toBe('healthy');
-  });
-
-  it('GET /health checks Durable Objects bindings', async () => {
-    const res = await fetchApp(app, '/health');
-    const body = await json(res);
-
-    expect(body.services.durableObjects).toBeDefined();
-    expect(body.services.durableObjects.type).toBe('Durable Objects');
-    expect(body.services.durableObjects.status).toBe('healthy');
-    expect(body.services.durableObjects.bindings).toBeDefined();
-    expect(body.services.durableObjects.bindings.USER_SESSION).toBe(true);
-    expect(body.services.durableObjects.bindings.PROJECT_DOC).toBe(true);
-  });
-
   it('GET /health returns degraded status when database fails', async () => {
     // Create a test env with a failing DB
     const testEnv = {

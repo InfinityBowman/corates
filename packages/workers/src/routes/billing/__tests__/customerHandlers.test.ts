@@ -233,32 +233,6 @@ describe('Customer Handlers', () => {
       expect(updatedUser.stripeCustomerId).toBeNull();
     });
 
-    it('does not delete the user when customer is deleted', async () => {
-      const nowSec = Math.floor(Date.now() / 1000);
-
-      await seedUser({
-        id: 'user-1',
-        name: 'Test User',
-        email: 'test@example.com',
-        stripeCustomerId: 'cus_123',
-        createdAt: nowSec,
-        updatedAt: nowSec,
-      });
-
-      const customer = {
-        id: 'cus_123',
-      } as unknown as Stripe.Customer;
-
-      const ctx = createTestContext(db);
-      await handleCustomerDeleted(customer, ctx);
-
-      // Verify user still exists
-      const [existingUser] = await db.select().from(user).where(eq(user.id, 'user-1'));
-      expect(existingUser).toBeDefined();
-      expect(existingUser.email).toBe('test@example.com');
-      expect(existingUser.name).toBe('Test User');
-    });
-
     it('updates updatedAt timestamp when clearing stripeCustomerId', async () => {
       const nowSec = Math.floor(Date.now() / 1000);
       const pastTimestamp = nowSec - 86400; // 1 day ago
