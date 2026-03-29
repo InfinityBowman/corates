@@ -5,9 +5,9 @@
  */
 
 // EmbedPDF libraries don't ship type declarations
- 
+
 let engineInstance: any = null;
- 
+
 let engineInitPromise: Promise<any> | null = null;
 
 // Timeout constant for engine initialization
@@ -34,7 +34,7 @@ function withTimeout<T>(promise: Promise<T>, ms: number, operationName = 'Operat
  * Initialize EmbedPDF engine lazily
  * Loads PDFium WASM and creates engine instance
  */
- 
+
 export async function initEmbedPdfEngine(): Promise<any> {
   if (engineInstance) return engineInstance;
 
@@ -77,7 +77,7 @@ export async function initEmbedPdfEngine(): Promise<any> {
       const native = new PdfiumNative(pdfiumModule, { logger: new ConsoleLogger() });
 
       // Create high-level engine (cast options due to incomplete type declarations)
-       
+
       engineInstance = new PdfEngine(native, { logger: new ConsoleLogger() } as any);
 
       return engineInstance;

@@ -576,6 +576,8 @@ export function getDomainDef(
  * Get the domain name/title
  */
 export function getDomainName(domainKey: string): string {
-  return (ROBINS_I_CHECKLIST[domainKey as keyof typeof ROBINS_I_CHECKLIST] as { name?: string })
-    ?.name || domainKey;
+  return (
+    (ROBINS_I_CHECKLIST[domainKey as keyof typeof ROBINS_I_CHECKLIST] as { name?: string })?.name ||
+    domainKey
+  );
 }

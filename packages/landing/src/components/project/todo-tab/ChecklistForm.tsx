@@ -20,7 +20,6 @@ import {
 import { useProjectStore } from '@/stores/projectStore';
 import { useProjectContext } from '../ProjectContext';
 
- 
 interface ChecklistFormProps {
   members: any[];
   currentUserId: string;
@@ -29,7 +28,6 @@ interface ChecklistFormProps {
   onCancel: () => void;
   loading: boolean;
 }
- 
 
 export function ChecklistForm({
   currentUserId,

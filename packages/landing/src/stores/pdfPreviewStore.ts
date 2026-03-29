@@ -24,14 +24,12 @@ interface PdfPreviewState {
   error: string | null;
 }
 
- 
 interface PdfPreviewActions {
   openPreview: (projectId: string, studyId: string, pdfInfo: PdfInfo) => void;
   closePreview: () => void;
   setData: (data: ArrayBuffer) => void;
   setError: (errorMsg: string) => void;
 }
- 
 
 let closeTimeoutId: ReturnType<typeof setTimeout> | null = null;
 

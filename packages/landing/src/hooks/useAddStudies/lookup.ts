@@ -150,15 +150,18 @@ export function useLookupOperations(): LookupOperations {
     setLookupErrors([]);
   }, []);
 
-  const attachPdfToLookupRef = useCallback((refId: string, fileName: string, arrayBuffer: ArrayBuffer) => {
-    setLookupRefs(prev =>
-      prev.map(ref =>
-        ref._id === refId ?
-          { ...ref, manualPdfData: arrayBuffer, manualPdfFileName: fileName }
-        : ref,
-      ),
-    );
-  }, []);
+  const attachPdfToLookupRef = useCallback(
+    (refId: string, fileName: string, arrayBuffer: ArrayBuffer) => {
+      setLookupRefs(prev =>
+        prev.map(ref =>
+          ref._id === refId ?
+            { ...ref, manualPdfData: arrayBuffer, manualPdfFileName: fileName }
+          : ref,
+        ),
+      );
+    },
+    [],
+  );
 
   const markRefMatched = useCallback((refId: string, pdfData: ArrayBuffer, pdfFileName: string) => {
     setLookupRefs(prev =>

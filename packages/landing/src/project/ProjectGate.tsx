@@ -91,9 +91,5 @@ export function ProjectGate({ projectId, fallback, children }: ProjectGateProps)
     return null;
   }
 
-  return (
-    <ProjectProvider projectId={projectId}>
-      {children}
-    </ProjectProvider>
-  );
+  return <ProjectProvider projectId={projectId}>{children}</ProjectProvider>;
 }

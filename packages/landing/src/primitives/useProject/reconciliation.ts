@@ -48,11 +48,7 @@ export interface ReconciliationOperations {
     type: string,
   ) => ReconciliationProgress | null;
   getAllReconciliationProgress: (studyId: string) => ReconciliationProgressEntry[];
-  clearReconciliationProgress: (
-    studyId: string,
-    outcomeId: string | null,
-    type: string,
-  ) => void;
+  clearReconciliationProgress: (studyId: string, outcomeId: string | null, type: string) => void;
 }
 
 export function createReconciliationOperations(
@@ -117,7 +113,9 @@ export function createReconciliationOperations(
     const studyYMap = studiesMap.get(studyId) as Y.Map<unknown> | undefined;
     if (!studyYMap) return null;
 
-    const reconciliationsMap = studyYMap.get('reconciliations') as Y.Map<Y.Map<unknown>> | undefined;
+    const reconciliationsMap = studyYMap.get('reconciliations') as
+      | Y.Map<Y.Map<unknown>>
+      | undefined;
     if (reconciliationsMap) {
       const outcomeKey = getOutcomeKey(outcomeId, type);
       const outcomeProgressMap = reconciliationsMap.get(outcomeKey) as Y.Map<unknown> | undefined;
@@ -151,8 +149,7 @@ export function createReconciliationOperations(
           checklist2Id,
           outcomeId: null,
           type: type || 'AMSTAR2',
-          reconciledChecklistId:
-            (legacyMap.get('reconciledChecklistId') as string | null) || null,
+          reconciledChecklistId: (legacyMap.get('reconciledChecklistId') as string | null) || null,
           currentPage: legacyMap.get('currentPage'),
           viewMode: legacyMap.get('viewMode'),
           updatedAt: legacyMap.get('updatedAt'),
@@ -173,7 +170,9 @@ export function createReconciliationOperations(
 
     const results: ReconciliationProgressEntry[] = [];
 
-    const reconciliationsMap = studyYMap.get('reconciliations') as Y.Map<Y.Map<unknown>> | undefined;
+    const reconciliationsMap = studyYMap.get('reconciliations') as
+      | Y.Map<Y.Map<unknown>>
+      | undefined;
     if (reconciliationsMap) {
       for (const [outcomeKey, progressMap] of reconciliationsMap.entries()) {
         const checklist1Id = progressMap.get('checklist1Id') as string | undefined;
@@ -236,7 +235,9 @@ export function createReconciliationOperations(
     const studyYMap = studiesMap.get(studyId) as Y.Map<unknown> | undefined;
     if (!studyYMap) return;
 
-    const reconciliationsMap = studyYMap.get('reconciliations') as Y.Map<Y.Map<unknown>> | undefined;
+    const reconciliationsMap = studyYMap.get('reconciliations') as
+      | Y.Map<Y.Map<unknown>>
+      | undefined;
     if (reconciliationsMap) {
       const outcomeKey = getOutcomeKey(outcomeId, type);
       reconciliationsMap.delete(outcomeKey);

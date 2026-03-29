@@ -291,7 +291,11 @@ testSeedRoutes.post('/cleanup-user-by-email', async c => {
 
     // Clean up verification tokens for this email (direct + test-url prefixed)
     await db.delete(verification).where(eq(verification.identifier, body.email));
-    for (const prefix of ['test-url:magic-link:', 'test-url:verification:', 'test-url:reset-password:']) {
+    for (const prefix of [
+      'test-url:magic-link:',
+      'test-url:verification:',
+      'test-url:reset-password:',
+    ]) {
       await db.delete(verification).where(eq(verification.identifier, `${prefix}${body.email}`));
     }
 

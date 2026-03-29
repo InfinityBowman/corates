@@ -9,7 +9,10 @@ export function cloneArrayBuffer(buffer: ArrayBuffer | null | undefined): ArrayB
   if (!buffer || !(buffer instanceof ArrayBuffer)) return null;
   try {
     // Check if buffer is detached by trying to access byteLength
-    if (buffer.byteLength === 0 && (buffer as ArrayBuffer & { maxByteLength?: number }).maxByteLength === undefined) {
+    if (
+      buffer.byteLength === 0 &&
+      (buffer as ArrayBuffer & { maxByteLength?: number }).maxByteLength === undefined
+    ) {
       return null;
     }
     // Create a new ArrayBuffer copy

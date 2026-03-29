@@ -10,13 +10,11 @@ import { createContext, useContext, useEffect } from 'react';
 // Module-level flag -- persists across re-renders, resets on page reload
 let hasAnimated = false;
 
- 
 interface AnimationHelpers {
   shouldAnimate: boolean;
   fadeUp: (delay?: number) => React.CSSProperties;
   statRise: (delay?: number) => React.CSSProperties;
 }
- 
 
 export function useInitialAnimation(): AnimationHelpers {
   const shouldAnimate = !hasAnimated;

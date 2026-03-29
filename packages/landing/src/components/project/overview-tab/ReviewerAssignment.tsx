@@ -78,13 +78,11 @@ function MemberPercentRow({
   );
 }
 
- 
 interface ReviewerAssignmentProps {
   studies: any[];
   members: any[];
   onAssignReviewers: (studyId: string, updates: any) => void;
 }
- 
 
 export function ReviewerAssignment({
   studies,

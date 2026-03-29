@@ -33,7 +33,10 @@ export interface InterRaterMetrics {
  */
 export function calculateInterRaterReliability(
   studies: Study[] | null | undefined,
-  getChecklistData: ((studyId: string, checklistId: string) => ChecklistData | null | undefined) | null | undefined,
+  getChecklistData:
+    | ((studyId: string, checklistId: string) => ChecklistData | null | undefined)
+    | null
+    | undefined,
 ): InterRaterMetrics {
   if (!studies || !Array.isArray(studies) || studies.length === 0) {
     return {

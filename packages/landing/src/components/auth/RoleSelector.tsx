@@ -36,12 +36,10 @@ export function getRoleLabel(roleId: string): string {
   return ROLES.find(r => r.id === roleId)?.label || roleId;
 }
 
- 
 interface RoleSelectorProps {
   selectedRole: string;
   onSelect: (roleId: string) => void;
 }
- 
 
 export function RoleSelector({ selectedRole, onSelect }: RoleSelectorProps) {
   return (

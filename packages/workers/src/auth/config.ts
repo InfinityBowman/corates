@@ -196,7 +196,14 @@ export function createAuth(env: Env, ctx?: ExecutionContext) {
           await env.DB.prepare(
             'INSERT INTO verification (id, identifier, value, expiresAt, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, ?)',
           )
-            .bind(`test-${crypto.randomUUID()}`, `test-url:magic-link:${email}`, url, now + 600, now, now)
+            .bind(
+              `test-${crypto.randomUUID()}`,
+              `test-url:magic-link:${email}`,
+              url,
+              now + 600,
+              now,
+              now,
+            )
             .run();
         }
 
@@ -472,7 +479,14 @@ export function createAuth(env: Env, ctx?: ExecutionContext) {
           await env.DB.prepare(
             'INSERT INTO verification (id, identifier, value, expiresAt, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, ?)',
           )
-            .bind(`test-${crypto.randomUUID()}`, `test-url:reset-password:${user.email}`, url, now + 3600, now, now)
+            .bind(
+              `test-${crypto.randomUUID()}`,
+              `test-url:reset-password:${user.email}`,
+              url,
+              now + 3600,
+              now,
+              now,
+            )
             .run();
         }
 
@@ -503,7 +517,14 @@ export function createAuth(env: Env, ctx?: ExecutionContext) {
           await env.DB.prepare(
             'INSERT INTO verification (id, identifier, value, expiresAt, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, ?)',
           )
-            .bind(`test-${crypto.randomUUID()}`, `test-url:verification:${user.email}`, url, now + 86400, now, now)
+            .bind(
+              `test-${crypto.randomUUID()}`,
+              `test-url:verification:${user.email}`,
+              url,
+              now + 86400,
+              now,
+              now,
+            )
             .run();
         }
 

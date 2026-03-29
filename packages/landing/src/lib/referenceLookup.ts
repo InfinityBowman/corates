@@ -106,7 +106,9 @@ function isPdfAccessible(location: UnpaywallLocation): boolean {
  * Check if a PDF is available via Unpaywall
  * Prioritizes repository sources that allow programmatic access
  */
-export async function checkPdfAvailability(doi: string | null | undefined): Promise<PdfAvailability> {
+export async function checkPdfAvailability(
+  doi: string | null | undefined,
+): Promise<PdfAvailability> {
   if (!doi) return { available: false, url: null, source: null, accessible: false };
 
   const cleanDoi = doi

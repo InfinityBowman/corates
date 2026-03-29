@@ -85,14 +85,12 @@ interface Session {
   createdAt?: string;
 }
 
- 
 interface SessionCardProps {
   session: Session;
   isCurrent: boolean;
   revoking: boolean;
   onRevoke: (token: string) => void;
 }
- 
 
 function SessionCard({ session, isCurrent, revoking, onRevoke }: SessionCardProps) {
   const deviceInfo = parseUserAgent(session.userAgent);

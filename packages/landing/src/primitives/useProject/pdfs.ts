@@ -177,11 +177,7 @@ export function createPdfOperations(
     }
   }
 
-  function updatePdfMetadata(
-    studyId: string,
-    pdfId: string,
-    metadata: PdfCitationMetadata,
-  ): void {
+  function updatePdfMetadata(studyId: string, pdfId: string, metadata: PdfCitationMetadata): void {
     const ydoc = getYDoc();
     if (!ydoc) return;
 

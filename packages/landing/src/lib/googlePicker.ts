@@ -13,9 +13,13 @@ declare global {
     google?: {
       picker: {
         DocsView: new () => {
-          setIncludeFolders: (include: boolean) => { setSelectFolderEnabled: (enabled: boolean) => { setMimeTypes: (types: string) => unknown } };
+          setIncludeFolders: (include: boolean) => {
+            setSelectFolderEnabled: (enabled: boolean) => {
+              setMimeTypes: (types: string) => unknown;
+            };
+          };
         };
-         
+
         PickerBuilder: new () => any;
         Action: {
           CANCEL: string;
@@ -99,7 +103,9 @@ export interface PickerOptions {
  * Opens Google Picker and resolves with selected PDFs.
  * Returns null if user cancelled/closed.
  */
-export async function pickGooglePdfFiles(options: PickerOptions): Promise<PickedDriveFile[] | null> {
+export async function pickGooglePdfFiles(
+  options: PickerOptions,
+): Promise<PickedDriveFile[] | null> {
   if (!options?.oauthToken) throw new Error('Missing oauthToken');
   if (!options?.developerKey) throw new Error('Missing developerKey');
 
@@ -113,12 +119,11 @@ export async function pickGooglePdfFiles(options: PickerOptions): Promise<Picked
       .setSelectFolderEnabled(false)
       .setMimeTypes('application/pdf');
 
-     
     let builder: any = new google!.picker.PickerBuilder()
-       
+
       .setOAuthToken(options.oauthToken)
       .setDeveloperKey(options.developerKey)
-       
+
       .setCallback((data: any) => {
         if (data.action === google!.picker.Action.CANCEL) {
           resolve(null);
@@ -127,10 +132,9 @@ export async function pickGooglePdfFiles(options: PickerOptions): Promise<Picked
 
         if (data.action !== google!.picker.Action.PICKED) return;
 
-         
         const docs: any[] = data.docs || [];
         const files = docs
-           
+
           .map((doc: any) => {
             const id = doc.id || doc[google!.picker.Document.ID];
             const name = doc.name || doc[google!.picker.Document.NAME];

@@ -80,12 +80,12 @@ export function createLocalAdapterFactories(
     if (sectionKey.startsWith('domain') && questionKey) {
       path = `${sectionKey}.${questionKey}.comment`;
       getValue = (cl): string =>
-        (
+        ((
           (cl?.[sectionKey] as Record<string, unknown>)?.answers as Record<
             string,
             Record<string, unknown>
           >
-        )?.[questionKey]?.comment as string || '';
+        )?.[questionKey]?.comment as string) || '';
       getUpdatedState = (prev, newValue) => ({
         ...prev,
         [sectionKey]: {
@@ -93,12 +93,10 @@ export function createLocalAdapterFactories(
           answers: {
             ...((prev[sectionKey] as Record<string, unknown>)?.answers as Record<string, unknown>),
             [questionKey]: {
-              ...(
-                ((prev[sectionKey] as Record<string, unknown>)?.answers as Record<
-                  string,
-                  Record<string, unknown>
-                >) ?? {}
-              )[questionKey],
+              ...(((prev[sectionKey] as Record<string, unknown>)?.answers as Record<
+                string,
+                Record<string, unknown>
+              >) ?? {})[questionKey],
               comment: newValue,
             },
           },
@@ -151,12 +149,12 @@ export function createLocalAdapterFactories(
     if (sectionKey.startsWith('domain') && questionKey) {
       path = `${sectionKey}.${questionKey}.comment`;
       getValue = (cl): string =>
-        (
+        ((
           (cl?.[sectionKey] as Record<string, unknown>)?.answers as Record<
             string,
             Record<string, unknown>
           >
-        )?.[questionKey]?.comment as string || '';
+        )?.[questionKey]?.comment as string) || '';
       getUpdatedState = (prev, newValue) => ({
         ...prev,
         [sectionKey]: {
@@ -164,12 +162,10 @@ export function createLocalAdapterFactories(
           answers: {
             ...((prev[sectionKey] as Record<string, unknown>)?.answers as Record<string, unknown>),
             [questionKey]: {
-              ...(
-                ((prev[sectionKey] as Record<string, unknown>)?.answers as Record<
-                  string,
-                  Record<string, unknown>
-                >) ?? {}
-              )[questionKey],
+              ...(((prev[sectionKey] as Record<string, unknown>)?.answers as Record<
+                string,
+                Record<string, unknown>
+              >) ?? {})[questionKey],
               comment: newValue,
             },
           },
@@ -178,13 +174,14 @@ export function createLocalAdapterFactories(
     } else if (sectionKey === 'sectionB' && questionKey) {
       path = `sectionB.${questionKey}.comment`;
       getValue = (cl): string =>
-        ((cl?.sectionB as Record<string, Record<string, unknown>>)?.[questionKey]?.comment as string) || '';
+        ((cl?.sectionB as Record<string, Record<string, unknown>>)?.[questionKey]
+          ?.comment as string) || '';
       getUpdatedState = (prev, newValue) => ({
         ...prev,
         sectionB: {
           ...(prev.sectionB as Record<string, unknown>),
           [questionKey]: {
-            ...((prev.sectionB as Record<string, Record<string, unknown>>)?.[questionKey]),
+            ...(prev.sectionB as Record<string, Record<string, unknown>>)?.[questionKey],
             comment: newValue,
           },
         },

@@ -71,10 +71,7 @@ export function ReconciliationWrapper({
     getRobinsText,
     getRob2Text,
   } = ops.checklist;
-  const {
-    getReconciliationProgress,
-    saveReconciliationProgress,
-  } = ops.reconciliation;
+  const { getReconciliationProgress, saveReconciliationProgress } = ops.reconciliation;
   const getAwareness = ops.getAwareness;
 
   // Current user for presence features
@@ -208,7 +205,7 @@ export function ReconciliationWrapper({
       name: currentStudy?.name || 'Checklist 1',
       reviewerName: getReviewerName(checklist1Meta.assignedTo),
       createdAt: checklist1Meta.createdAt,
-      ...(data.answers as Record<string, unknown> ?? {}),
+      ...((data.answers as Record<string, unknown>) ?? {}),
     };
   }, [
     checklist1Meta,
@@ -228,7 +225,7 @@ export function ReconciliationWrapper({
       name: currentStudy?.name || 'Checklist 2',
       reviewerName: getReviewerName(checklist2Meta.assignedTo),
       createdAt: checklist2Meta.createdAt,
-      ...(data.answers as Record<string, unknown> ?? {}),
+      ...((data.answers as Record<string, unknown>) ?? {}),
     };
   }, [
     checklist2Meta,
@@ -389,7 +386,7 @@ export function ReconciliationWrapper({
       name: 'Reconciled Checklist',
       reviewerName: 'Consensus',
       createdAt: reconciledChecklistMeta?.createdAt || 0,
-      ...(data.answers as Record<string, unknown> ?? {}),
+      ...((data.answers as Record<string, unknown>) ?? {}),
     };
   }, [reconciledChecklistId, getChecklistData, studyId, reconciledChecklistMeta]);
 
@@ -428,10 +425,18 @@ export function ReconciliationWrapper({
   const getTextRef = useCallback(
     (...args: unknown[]) => {
       if (isRobinsI) {
-        return getRobinsText(studyId, reconciledChecklistId as string, ...(args as [string, string, string?]));
+        return getRobinsText(
+          studyId,
+          reconciledChecklistId as string,
+          ...(args as [string, string, string?]),
+        );
       }
       if (isRob2) {
-        return getRob2Text(studyId, reconciledChecklistId as string, ...(args as [string, string, string?]));
+        return getRob2Text(
+          studyId,
+          reconciledChecklistId as string,
+          ...(args as [string, string, string?]),
+        );
       }
       // AMSTAR2: getQuestionNote takes just the question key
       return getQuestionNote(studyId, reconciledChecklistId as string, args[0] as string);

@@ -21,7 +21,11 @@ function getKey(type: FormType, projectId?: string): string {
 /**
  * Save form state to Dexie
  */
-export async function saveFormState(type: FormType, data: unknown, projectId?: string): Promise<void> {
+export async function saveFormState(
+  type: FormType,
+  data: unknown,
+  projectId?: string,
+): Promise<void> {
   const key = getKey(type, projectId);
 
   await db.formStates.put({

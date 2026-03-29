@@ -17,11 +17,9 @@ interface NotificationData {
   [key: string]: unknown;
 }
 
- 
 interface UseNotificationsOptions {
   onNotification?: (data: NotificationData) => void;
 }
- 
 
 export function useNotifications(
   userId: string | null | undefined,

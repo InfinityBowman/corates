@@ -45,11 +45,10 @@ export function AMSTARDistribution({
   greyscale = false,
   ref,
 }: AMSTARDistributionProps) {
-  const svgRef = useRef<SVGSVGElement>(null);  
+  const svgRef = useRef<SVGSVGElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [containerSize, setContainerSize] = useState({ width: 900, height: 600 });
 
-   
   useImperativeHandle(ref, () => svgRef.current as SVGSVGElement, []);
 
   // ResizeObserver for responsive sizing

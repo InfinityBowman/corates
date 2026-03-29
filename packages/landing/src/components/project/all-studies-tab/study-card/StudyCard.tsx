@@ -7,7 +7,6 @@ import { type ProjectMember } from '@/components/project/ProjectContext';
 import { StudyCardHeader } from './StudyCardHeader';
 import { StudyPdfSection } from './StudyPdfSection';
 
- 
 interface StudyCardProps {
   study: any;
   expanded: boolean;

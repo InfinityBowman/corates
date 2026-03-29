@@ -13,7 +13,7 @@ import { CHECKLIST_STATUS } from '@/constants/checklist-status.js';
 /**
  * Export an SVG element as a file (framework-agnostic utility)
  */
- 
+
 function exportChart(
   svgElement: SVGSVGElement | null,
   filename: string,
@@ -22,7 +22,6 @@ function exportChart(
 ) {
   if (!svgElement) return;
 
-   
   const clonedSvg = svgElement.cloneNode(true) as SVGSVGElement;
   clonedSvg.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
   if (transparent) clonedSvg.style.background = 'transparent';
@@ -112,9 +111,8 @@ export function ChartSection({ studies }: ChartSectionProps) {
   );
   const [transparentExport, setTransparentExport] = useState(false);
 
-   
   const robvisSvgRef = useRef<SVGSVGElement>(null);
-   
+
   const distributionSvgRef = useRef<SVGSVGElement>(null);
 
   // Build raw chart data from finalized AMSTAR2 checklists

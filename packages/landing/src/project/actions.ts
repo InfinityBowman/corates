@@ -23,7 +23,12 @@ export const project = {
       const ops = connectionPool.getActiveOps();
       if (!ops) throw new Error('No active project connection');
       try {
-        const checklistId = ops.checklist.createChecklist(studyId, type, assigneeId, outcomeId ?? null);
+        const checklistId = ops.checklist.createChecklist(
+          studyId,
+          type,
+          assigneeId,
+          outcomeId ?? null,
+        );
         if (!checklistId) {
           const requiresOutcome = type === 'ROB2' || type === 'ROBINS_I';
           if (requiresOutcome && !outcomeId) {
@@ -80,7 +85,13 @@ export const project = {
       return ops.checklist.getChecklistData(studyId, checklistId) ?? null;
     },
 
-    updateAnswer(studyId: string, checklistId: string, questionId: string, answer: unknown, note?: string): void {
+    updateAnswer(
+      studyId: string,
+      checklistId: string,
+      questionId: string,
+      answer: unknown,
+      note?: string,
+    ): void {
       const ops = connectionPool.getActiveOps();
       if (!ops) throw new Error('No active project connection');
       const data: Record<string, unknown> = { answer };
@@ -127,7 +138,12 @@ export const project = {
   },
 
   reconciliation: {
-    saveProgress(studyId: string, outcomeId: string | null, type: string, data: ReconciliationProgressData) {
+    saveProgress(
+      studyId: string,
+      outcomeId: string | null,
+      type: string,
+      data: ReconciliationProgressData,
+    ) {
       const ops = connectionPool.getActiveOps();
       if (!ops) throw new Error('No active project connection');
       return ops.reconciliation.saveReconciliationProgress(studyId, outcomeId, type, data);
@@ -139,10 +155,20 @@ export const project = {
       return ops.reconciliation.getReconciliationProgress(studyId, outcomeId, type);
     },
 
-    applyToChecklists(studyId: string, checklist1Id: string, checklist2Id: string, data: Record<string, unknown>) {
+    applyToChecklists(
+      studyId: string,
+      checklist1Id: string,
+      checklist2Id: string,
+      data: Record<string, unknown>,
+    ) {
       const ops = connectionPool.getActiveOps();
       if (!ops) throw new Error('No active project connection');
-      return (ops.reconciliation as any).applyReconciliationToChecklists(studyId, checklist1Id, checklist2Id, data);
+      return (ops.reconciliation as any).applyReconciliationToChecklists(
+        studyId,
+        checklist1Id,
+        checklist2Id,
+        data,
+      );
     },
   },
 
