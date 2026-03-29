@@ -104,7 +104,6 @@ interface MemberEntry {
 }
 
 export interface SyncManager {
-  syncFromYDoc: () => void;
   syncFromYDocImmediate: () => void;
   attach: (ydoc: Y.Doc) => void;
   detach: () => void;
@@ -211,9 +210,7 @@ export function createSyncManager(projectId: string, getYDoc: () => Y.Doc | null
         const outcomeData = ymap.toJSON ? ymap.toJSON() : (outcomeYMap as Record<string, unknown>);
         outcomesList.push({ id: outcomeId, ...outcomeData });
       }
-      outcomesList.sort(
-        (a, b) => ((a.createdAt as number) || 0) - ((b.createdAt as number) || 0),
-      );
+      outcomesList.sort((a, b) => ((a.createdAt as number) || 0) - ((b.createdAt as number) || 0));
       metaData.outcomes = outcomesList;
     } else {
       metaData.outcomes = [];
@@ -226,7 +223,11 @@ export function createSyncManager(projectId: string, getYDoc: () => Y.Doc | null
     const ydoc = getYDoc();
     if (!ydoc) return;
 
-    const updates: { studies?: StudyInfo[]; meta?: Record<string, unknown>; members?: MemberEntry[] } = {};
+    const updates: {
+      studies?: StudyInfo[];
+      meta?: Record<string, unknown>;
+      members?: MemberEntry[];
+    } = {};
 
     if (dirtySlices.studies) {
       // If the cache is empty, this is the first sync -- populate from scratch
@@ -249,7 +250,11 @@ export function createSyncManager(projectId: string, getYDoc: () => Y.Doc | null
     dirtySlices.members = false;
     dirtySlices.meta = false;
 
-    if (updates.studies !== undefined || updates.members !== undefined || updates.meta !== undefined) {
+    if (
+      updates.studies !== undefined ||
+      updates.members !== undefined ||
+      updates.meta !== undefined
+    ) {
       useProjectStore.getState().setProjectData(projectId, updates as any);
     }
   }
@@ -261,15 +266,6 @@ export function createSyncManager(projectId: string, getYDoc: () => Y.Doc | null
       pendingSync = false;
       doSync();
     });
-  }
-
-  function syncFromYDoc(): void {
-    if (paused) return;
-    // Mark all slices dirty (used by legacy callers and Dexie write-back)
-    dirtySlices.studies = true;
-    dirtySlices.members = true;
-    dirtySlices.meta = true;
-    scheduleSync();
   }
 
   function syncFromYDocImmediate(): void {
@@ -334,7 +330,7 @@ export function createSyncManager(projectId: string, getYDoc: () => Y.Doc | null
     paused = false;
   }
 
-  return { syncFromYDoc, syncFromYDocImmediate, attach, detach, pause, resume };
+  return { syncFromYDocImmediate, attach, detach, pause, resume };
 }
 
 function buildStudyFromYMap(
