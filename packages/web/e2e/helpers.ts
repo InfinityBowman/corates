@@ -3,7 +3,7 @@
  * Seed data, auth cookies, and cleanup via the backend test-seed endpoints
  */
 
-import type { BrowserContext } from '@playwright/test';
+import type { BrowserContext, Page } from '@playwright/test';
 
 const API_BASE = 'http://localhost:8787';
 
@@ -105,6 +105,26 @@ export async function loginAs(context: BrowserContext, cookies: SessionCookie[])
   await context.addCookies(cookies);
 }
 
+/**
+ * Login and set up cookie forwarding for cross-origin API requests.
+ *
+ * Chromium doesn't send cookies cross-origin from :3010 to :8787 in dev.
+ * This injects the session cookie via route interception so client-side
+ * API calls (auth checks, billing, etc.) work in _protected routes.
+ */
+export async function loginWithApiCookies(
+  context: BrowserContext,
+  page: Page,
+  cookies: SessionCookie[],
+) {
+  await context.addCookies(cookies);
+  const cookieHeader = cookies.map(c => `${c.name}=${c.value}`).join('; ');
+  await page.route(`**/${new URL(API_BASE).host}/**`, async route => {
+    const headers = { ...route.request().headers(), cookie: cookieHeader };
+    await route.continue({ headers });
+  });
+}
+
 export async function switchUser(context: BrowserContext, cookies: SessionCookie[]) {
   await context.clearCookies();
   await context.addCookies(cookies);
@@ -141,6 +161,97 @@ export async function cleanupScenario(scenario: DualReviewerScenario) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       userIds: [scenario.userA.id, scenario.userB.id],
+      orgId: scenario.orgId,
+    }),
+  });
+}
+
+// --- Billing test helpers ---
+
+export interface BillingScenario {
+  user: SeededUser;
+  orgId: string;
+  cookies: SessionCookie[];
+}
+
+export interface SubscriptionOptions {
+  plan?: string;
+  status?: string;
+  /** Unix timestamp in seconds */
+  periodEnd?: number;
+  cancelAtPeriodEnd?: boolean;
+  /** Unix timestamp in seconds */
+  trialEnd?: number;
+  seats?: number;
+}
+
+/**
+ * Seeds a single user + org with a customizable subscription.
+ * Defaults to starter_team/active if no subscription options are provided.
+ */
+export async function seedBillingScenario(
+  subscriptionOpts?: SubscriptionOptions,
+): Promise<BillingScenario> {
+  const prefix = `e2e-billing-${Date.now()}`;
+  const userId = `${prefix}-user`;
+  const orgId = `${prefix}-org`;
+
+  const seedRes = await fetch(`${API_BASE}/api/test/seed`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      users: [
+        {
+          id: userId,
+          name: 'Billing Test User',
+          email: `billing-${prefix}@test.corates.org`,
+          givenName: 'Billing',
+          familyName: 'User',
+        },
+      ],
+      org: { id: orgId, name: 'Billing Test Org', slug: `billing-org-${prefix}` },
+      orgMembers: [{ userId, role: 'owner' }],
+      subscription: subscriptionOpts,
+    }),
+  });
+
+  if (!seedRes.ok) {
+    throw new Error(`Billing seed failed: ${seedRes.status} ${await seedRes.text()}`);
+  }
+
+  const data = await seedRes.json();
+  const cookies = await getSessionCookies(userId);
+
+  return {
+    user: { id: userId, name: 'Billing Test User', email: data.users[0].email },
+    orgId,
+    cookies,
+  };
+}
+
+/**
+ * Updates subscription state for an org mid-test.
+ */
+export async function updateSubscription(
+  orgId: string,
+  opts: { plan?: string; status?: string; periodEnd?: number; cancelAtPeriodEnd?: boolean },
+) {
+  const res = await fetch(`${API_BASE}/api/test/update-subscription`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ orgId, ...opts }),
+  });
+  if (!res.ok) {
+    throw new Error(`Update subscription failed: ${res.status} ${await res.text()}`);
+  }
+}
+
+export async function cleanupBillingScenario(scenario: BillingScenario) {
+  await fetch(`${API_BASE}/api/test/cleanup`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      userIds: [scenario.user.id],
       orgId: scenario.orgId,
     }),
   });

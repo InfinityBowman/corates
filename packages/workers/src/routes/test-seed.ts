@@ -50,6 +50,14 @@ testSeedRoutes.post('/seed', async c => {
       }>;
       org: { id: string; name: string; slug?: string };
       orgMembers: Array<{ userId: string; role: string }>;
+      subscription?: {
+        plan?: string;
+        status?: string;
+        periodEnd?: number;
+        cancelAtPeriodEnd?: boolean;
+        trialEnd?: number;
+        seats?: number;
+      };
     }>();
 
     const savedUsers = [];
@@ -79,15 +87,20 @@ testSeedRoutes.post('/seed', async c => {
       createdAt: new Date(),
     });
 
-    // Create a starter_team subscription for the org so users can create projects
+    // Create subscription for the org (defaults to starter_team/active)
+    const subOpts = body.subscription ?? {};
     await db.insert(subscription).values({
       id: `${body.org.id}-sub`,
-      plan: 'starter_team',
+      plan: subOpts.plan ?? 'starter_team',
       referenceId: body.org.id,
-      status: 'active',
+      status: subOpts.status ?? 'active',
       periodStart: new Date(),
-      periodEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
-      seats: 5,
+      periodEnd: subOpts.periodEnd
+        ? new Date(subOpts.periodEnd * 1000)
+        : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+      cancelAtPeriodEnd: subOpts.cancelAtPeriodEnd ?? false,
+      trialEnd: subOpts.trialEnd ? new Date(subOpts.trialEnd * 1000) : undefined,
+      seats: subOpts.seats ?? 5,
       createdAt: new Date(),
       updatedAt: new Date(),
     });
@@ -166,6 +179,39 @@ testSeedRoutes.post('/add-project-member', async c => {
     return c.json({ success: true });
   } catch (err) {
     console.error('[test-seed] Add project member error:', err);
+    return c.json({ error: (err as Error).message }, 500);
+  }
+});
+
+/**
+ * POST /api/test/update-subscription
+ * Updates the subscription for an org. Used in billing e2e tests to change plan/status mid-test.
+ */
+testSeedRoutes.post('/update-subscription', async c => {
+  try {
+    const db = drizzle(c.env.DB);
+    const body = await c.req.json<{
+      orgId: string;
+      plan?: string;
+      status?: string;
+      periodEnd?: number;
+      cancelAtPeriodEnd?: boolean;
+    }>();
+
+    const updates: Record<string, unknown> = { updatedAt: new Date() };
+    if (body.plan !== undefined) updates.plan = body.plan;
+    if (body.status !== undefined) updates.status = body.status;
+    if (body.periodEnd !== undefined) updates.periodEnd = new Date(body.periodEnd * 1000);
+    if (body.cancelAtPeriodEnd !== undefined) updates.cancelAtPeriodEnd = body.cancelAtPeriodEnd;
+
+    await db
+      .update(subscription)
+      .set(updates)
+      .where(eq(subscription.referenceId, body.orgId));
+
+    return c.json({ success: true });
+  } catch (err) {
+    console.error('[test-seed] Update subscription error:', err);
     return c.json({ error: (err as Error).message }, 500);
   }
 });
