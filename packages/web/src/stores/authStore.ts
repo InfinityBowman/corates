@@ -12,6 +12,7 @@
 import { create } from 'zustand';
 import {
   authClient,
+  authFetch,
   listSessions as _listSessions,
   revokeSession as _revokeSession,
   revokeOtherSessions as _revokeOtherSessions,
@@ -169,13 +170,12 @@ export const useAuthStore = create<AuthState & AuthActions>()((set, get) => ({
   signup: async (email, password, name, role = null) => {
     try {
       set({ authError: null });
-      const { data, error } = await authClient.signUp.email({
+      const data = await authFetch(authClient.signUp.email({
         email,
         password,
         name,
         ...(role ? { role } : {}),
-      } as Parameters<typeof authClient.signUp.email>[0]);
-      if (error) throw new Error(error.message);
+      } as Parameters<typeof authClient.signUp.email>[0]));
 
       localStorage.setItem('pendingEmail', email);
       return data;
@@ -188,8 +188,7 @@ export const useAuthStore = create<AuthState & AuthActions>()((set, get) => ({
   signin: async (email, password) => {
     try {
       set({ authError: null });
-      const { data, error } = await authClient.signIn.email({ email, password });
-      if (error) throw new Error(error.message);
+      const data = await authFetch(authClient.signIn.email({ email, password }));
 
       if ((data as Record<string, unknown>)?.twoFactorRedirect) {
         return { twoFactorRequired: true };
@@ -215,12 +214,11 @@ export const useAuthStore = create<AuthState & AuthActions>()((set, get) => ({
 
       saveLastLoginMethod(LOGIN_METHODS.GOOGLE);
 
-      const { data, error } = await authClient.signIn.social({
+      const data = await authFetch(authClient.signIn.social({
         provider: 'google',
         callbackURL,
         errorCallbackURL: errorURL,
-      });
-      if (error) throw new Error(error.message);
+      }));
       return data;
     } catch (err) {
       set({ authError: (err as Error).message });
@@ -238,12 +236,11 @@ export const useAuthStore = create<AuthState & AuthActions>()((set, get) => ({
 
       saveLastLoginMethod(LOGIN_METHODS.ORCID);
 
-      const { data, error } = await authClient.signIn.oauth2({
+      const data = await authFetch(authClient.signIn.oauth2({
         providerId: 'orcid',
         callbackURL,
         errorCallbackURL: errorURL,
-      });
-      if (error) throw new Error(error.message);
+      }));
       return data;
     } catch (err) {
       set({ authError: (err as Error).message });
@@ -258,8 +255,7 @@ export const useAuthStore = create<AuthState & AuthActions>()((set, get) => ({
       const base = (BASEPATH || '').replace(/\/$/, '');
       const callbackURL = `${window.location.origin}${base}${path}`;
 
-      const { data, error } = await authClient.signIn.magicLink({ email, callbackURL });
-      if (error) throw new Error(error.message);
+      const data = await authFetch(authClient.signIn.magicLink({ email, callbackURL }));
 
       localStorage.setItem('pendingEmail', email);
       saveLastLoginMethod(LOGIN_METHODS.MAGIC_LINK);
@@ -273,8 +269,7 @@ export const useAuthStore = create<AuthState & AuthActions>()((set, get) => ({
   signout: async () => {
     try {
       set({ authError: null });
-      const { error } = await authClient.signOut();
-      if (error) throw new Error(error.message);
+      await authFetch(authClient.signOut());
       await performSignoutCleanup();
     } catch (err) {
       set({ authError: (err as Error).message });
@@ -285,8 +280,7 @@ export const useAuthStore = create<AuthState & AuthActions>()((set, get) => ({
   updateProfile: async data => {
     try {
       set({ authError: null });
-      const { data: updated, error } = await authClient.updateUser(data);
-      if (error) throw new Error(error.message);
+      const updated = await authFetch(authClient.updateUser(data));
       await get().sessionRefetch?.();
       return updated;
     } catch (err) {
@@ -298,8 +292,7 @@ export const useAuthStore = create<AuthState & AuthActions>()((set, get) => ({
   changePassword: async (currentPassword, newPassword) => {
     try {
       set({ authError: null });
-      const { error } = await authClient.changePassword({ currentPassword, newPassword });
-      if (error) throw new Error(error.message);
+      await authFetch(authClient.changePassword({ currentPassword, newPassword }));
     } catch (err) {
       set({ authError: (err as Error).message });
       throw err;
@@ -310,11 +303,10 @@ export const useAuthStore = create<AuthState & AuthActions>()((set, get) => ({
     try {
       set({ authError: null });
       const base = (BASEPATH || '').replace(/\/$/, '');
-      const { error } = await authClient.requestPasswordReset({
+      await authFetch(authClient.requestPasswordReset({
         email,
         redirectTo: `${window.location.origin}${base}/reset-password`,
-      });
-      if (error) throw new Error(error.message);
+      }));
     } catch (err) {
       set({ authError: (err as Error).message });
       throw err;
@@ -324,8 +316,7 @@ export const useAuthStore = create<AuthState & AuthActions>()((set, get) => ({
   confirmPasswordReset: async (token, newPassword) => {
     try {
       set({ authError: null });
-      const { error } = await authClient.resetPassword({ token, newPassword });
-      if (error) throw new Error(error.message);
+      await authFetch(authClient.resetPassword({ token, newPassword }));
     } catch (err) {
       set({ authError: (err as Error).message });
       throw err;
@@ -335,11 +326,10 @@ export const useAuthStore = create<AuthState & AuthActions>()((set, get) => ({
   resendVerificationEmail: async email => {
     try {
       set({ authError: null });
-      const { error } = await authClient.$fetch('/send-verification-email', {
+      await authFetch(authClient.$fetch('/send-verification-email', {
         method: 'POST',
         body: { email },
-      });
-      if (error) throw new Error(error.message || 'Failed to resend verification email');
+      }));
     } catch (err) {
       set({ authError: (err as Error).message || 'Failed to resend verification email' });
       throw err;
@@ -360,7 +350,7 @@ export const useAuthStore = create<AuthState & AuthActions>()((set, get) => ({
       }
 
       localStorage.removeItem('pendingEmail');
-      await authClient.signOut();
+      await authFetch(authClient.signOut());
       await performSignoutCleanup();
       return { success: true };
     } catch (err) {
@@ -374,8 +364,7 @@ export const useAuthStore = create<AuthState & AuthActions>()((set, get) => ({
   enableTwoFactor: async password => {
     try {
       set({ authError: null });
-      const { data, error } = await authClient.twoFactor.enable({ password });
-      if (error) throw new Error(error.message);
+      const data = await authFetch(authClient.twoFactor.enable({ password }));
       return data;
     } catch (err) {
       set({ authError: (err as Error).message });
@@ -386,8 +375,7 @@ export const useAuthStore = create<AuthState & AuthActions>()((set, get) => ({
   verifyTwoFactorSetup: async code => {
     try {
       set({ authError: null });
-      const { data, error } = await authClient.twoFactor.verifyTotp({ code });
-      if (error) throw new Error(error.message);
+      const data = await authFetch(authClient.twoFactor.verifyTotp({ code }));
       broadcastAuthChange();
       return data;
     } catch (err) {
@@ -399,8 +387,7 @@ export const useAuthStore = create<AuthState & AuthActions>()((set, get) => ({
   disableTwoFactor: async password => {
     try {
       set({ authError: null });
-      const { data, error } = await authClient.twoFactor.disable({ password });
-      if (error) throw new Error(error.message);
+      const data = await authFetch(authClient.twoFactor.disable({ password }));
       broadcastAuthChange();
       return data;
     } catch (err) {
@@ -412,8 +399,7 @@ export const useAuthStore = create<AuthState & AuthActions>()((set, get) => ({
   verifyTwoFactor: async code => {
     try {
       set({ authError: null });
-      const { data, error } = await authClient.twoFactor.verifyTotp({ code });
-      if (error) throw new Error(error.message);
+      const data = await authFetch(authClient.twoFactor.verifyTotp({ code }));
       broadcastAuthChange();
       return data;
     } catch (err) {
@@ -426,8 +412,8 @@ export const useAuthStore = create<AuthState & AuthActions>()((set, get) => ({
 
   listActiveSessions: async () => {
     try {
-      const result = await _listSessions();
-      return result.data || [];
+      const data = await authFetch(_listSessions());
+      return data || [];
     } catch (err) {
       set({ authError: (err as Error).message });
       throw err;
@@ -436,7 +422,7 @@ export const useAuthStore = create<AuthState & AuthActions>()((set, get) => ({
 
   revokeSessionByToken: async token => {
     try {
-      await _revokeSession({ token });
+      await authFetch(_revokeSession({ token }));
     } catch (err) {
       set({ authError: (err as Error).message });
       throw err;
@@ -445,7 +431,7 @@ export const useAuthStore = create<AuthState & AuthActions>()((set, get) => ({
 
   revokeAllOtherSessions: async () => {
     try {
-      await _revokeOtherSessions();
+      await authFetch(_revokeOtherSessions());
     } catch (err) {
       set({ authError: (err as Error).message });
       throw err;
@@ -454,7 +440,7 @@ export const useAuthStore = create<AuthState & AuthActions>()((set, get) => ({
 
   revokeAllSessions: async () => {
     try {
-      await _revokeSessions();
+      await authFetch(_revokeSessions());
       await performSignoutCleanup();
     } catch (err) {
       set({ authError: (err as Error).message });

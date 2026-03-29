@@ -29,6 +29,20 @@ export const authClient = createAuthClient({
   },
 });
 
+/**
+ * Wraps a Better Auth client call to throw on error instead of returning { data, error } tuples.
+ * Makes auth calls work naturally with try/catch and TanStack Query.
+ */
+export async function authFetch<T>(
+  call: Promise<{ data: T; error: { message?: string } | null }>,
+): Promise<T> {
+  const result = await call;
+  if (result.error) {
+    throw new Error(result.error.message || 'Auth request failed');
+  }
+  return result.data;
+}
+
 export const {
   signIn,
   signUp,

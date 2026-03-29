@@ -5,7 +5,7 @@
 
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { LinkIcon, MailIcon, InfoIcon, AlertCircleIcon } from 'lucide-react';
-import { authClient } from '@/api/auth-client';
+import { authClient, authFetch } from '@/api/auth-client';
 import { useAuthStore, selectUser } from '@/stores/authStore';
 import { useLinkedAccounts } from '@/hooks/useLinkedAccounts';
 import { showToast } from '@/components/ui/toast';
@@ -89,11 +89,11 @@ export function LinkedAccountsSection() {
         return;
       }
       sessionStorage.setItem('linkingProvider', providerId);
-      await authClient.linkSocial({
+      await authFetch(authClient.linkSocial({
         provider: providerId as 'google',
         callbackURL: window.location.href,
         errorCallbackURL: window.location.href,
-      });
+      }));
     } catch (err: any) {
       const message = getLinkErrorMessage(err.code) || err.message || 'Failed to link account';
       showToast.error('Link Failed', message);
@@ -113,7 +113,7 @@ export function LinkedAccountsSection() {
     setUnlinkingId(accountToUnlink.id);
     setUnlinkError(null);
     try {
-      await authClient.unlinkAccount({ providerId: accountToUnlink.providerId });
+      await authFetch(authClient.unlinkAccount({ providerId: accountToUnlink.providerId }));
       setUnlinkDialogOpen(false);
       showToast.success(
         'Unlinked',
@@ -149,7 +149,7 @@ export function LinkedAccountsSection() {
 
   return (
     <div className='border-border bg-card mb-6 overflow-hidden rounded-lg border shadow-sm'>
-      <div className='border-border from-muted/50 to-background border-b bg-gradient-to-r px-6 py-4'>
+      <div className='border-border from-muted/50 to-background border-b bg-linear-to-r px-6 py-4'>
         <div className='flex items-center gap-2'>
           <LinkIcon className='text-secondary-foreground size-5' />
           <h2 className='text-foreground text-lg font-medium'>Linked Accounts</h2>

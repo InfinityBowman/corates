@@ -10,6 +10,13 @@ import 'fake-indexeddb/auto';
 
 // Mock dependencies before importing the store
 vi.mock('@/api/auth-client', () => ({
+  async authFetch(call) {
+    const result = await call;
+    if (result.error) {
+      throw new Error(result.error.message || 'Auth request failed');
+    }
+    return result.data;
+  },
   authClient: {
     signUp: {
       email: vi.fn(),

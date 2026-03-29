@@ -3,13 +3,12 @@
  */
 
 import { useQuery } from '@tanstack/react-query';
-import { authClient } from '@/api/auth-client';
+import { authClient, authFetch } from '@/api/auth-client';
 import { useAuthStore, selectIsLoggedIn, selectIsAuthLoading } from '@/stores/authStore';
 import { queryKeys } from '@/lib/queryKeys';
 
 export async function fetchOrgs() {
-  const { data, error } = await authClient.organization.list();
-  if (error) throw new Error(error.message || 'Failed to fetch organizations');
+  const data = await authFetch(authClient.organization.list());
   return data || [];
 }
 

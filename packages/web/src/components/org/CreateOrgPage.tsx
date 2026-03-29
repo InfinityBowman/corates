@@ -5,11 +5,12 @@
 import { useState, useCallback } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { useQueryClient } from '@tanstack/react-query';
-import { authClient } from '@/api/auth-client';
+import { authClient, authFetch } from '@/api/auth-client';
 import { queryKeys } from '@/lib/queryKeys';
 import { showToast } from '@/components/ui/toast';
 import { Alert } from '@/components/ui/alert';
-import { setLastOrgSlug } from '@/hooks/useOrgContext';
+
+const LAST_ORG_KEY = 'corates-last-org-slug';
 
 export function CreateOrgPage() {
   const navigate = useNavigate();
@@ -55,17 +56,13 @@ export function CreateOrgPage() {
 
       setIsSubmitting(true);
       try {
-        const { error: createError } = await authClient.organization.create({
+        await authFetch(authClient.organization.create({
           name: orgName,
           slug: orgSlug,
-        });
-
-        if (createError) {
-          throw new Error(createError.message || 'Failed to create organization');
-        }
+        }));
 
         await queryClient.invalidateQueries({ queryKey: queryKeys.orgs.list });
-        setLastOrgSlug(orgSlug);
+        localStorage.setItem(LAST_ORG_KEY, orgSlug);
         showToast.success('Organization Created', `${orgName} is ready to use`);
         navigate({ to: '/dashboard', replace: true });
       } catch (err: any) {

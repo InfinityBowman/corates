@@ -4,7 +4,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { queryKeys } from '@/lib/queryKeys';
-import { authClient } from '@/api/auth-client';
+import { authClient, authFetch } from '@/api/auth-client';
 import { useAuthStore, selectIsLoggedIn } from '@/stores/authStore';
 
 export interface LinkedAccount {
@@ -15,8 +15,7 @@ export interface LinkedAccount {
 }
 
 async function fetchLinkedAccounts(): Promise<LinkedAccount[]> {
-  const { data, error } = await authClient.listAccounts();
-  if (error) throw error;
+  const data = await authFetch(authClient.listAccounts());
   return (data || []) as LinkedAccount[];
 }
 
