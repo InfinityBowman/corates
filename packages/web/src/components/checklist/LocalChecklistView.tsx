@@ -116,7 +116,22 @@ export function LocalChecklistView({ checklistId, searchType }: LocalChecklistVi
     (updates: Record<string, any>) => {
       setChecklist((prev: any) => {
         if (!prev) return prev;
-        return { ...prev, ...updates };
+        const merged = { ...prev };
+        for (const [key, value] of Object.entries(updates)) {
+          if (
+            typeof value === 'object' &&
+            value !== null &&
+            !Array.isArray(value) &&
+            typeof prev[key] === 'object' &&
+            prev[key] !== null &&
+            !Array.isArray(prev[key])
+          ) {
+            merged[key] = { ...prev[key], ...value };
+          } else {
+            merged[key] = value;
+          }
+        }
+        return merged;
       });
       clearCache();
       debouncedSave();

@@ -3,7 +3,7 @@
  */
 
 import { useMemo } from 'react';
-import { FileTextIcon, ChevronRightIcon, TrashIcon } from 'lucide-react';
+import { FileTextIcon, ChevronRightIcon, Trash2Icon } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { SimpleEditable } from '@/components/ui/editable';
 import { getChecklistMetadata } from '@/checklist-registry';
@@ -40,7 +40,7 @@ export function LocalAppraisalCard({
 
   return (
     <Card
-      className='group border-border/60 hover:border-border flex items-center gap-4 p-4 transition-all duration-200 hover:shadow-md'
+      className='group border-border/60 hover:border-border flex flex-row items-center gap-4 p-4 transition-all duration-200 hover:shadow-md'
       style={style}
     >
       <CardContent className='flex min-w-0 flex-1 items-center gap-4 p-0'>
@@ -78,10 +78,10 @@ export function LocalAppraisalCard({
                 e.stopPropagation();
                 onDelete(checklist.id);
               }}
-              className='text-muted-foreground/50 rounded-lg p-2 opacity-0 transition-all group-hover:opacity-100 hover:bg-red-50 hover:text-red-500'
+              className='text-muted-foreground hover:text-destructive rounded-lg p-2 transition-colors hover:bg-red-50'
               title='Delete appraisal'
             >
-              <TrashIcon className='size-4' />
+              <Trash2Icon className='size-4' />
             </button>
           )}
           <button
