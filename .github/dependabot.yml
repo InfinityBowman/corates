@@ -23,9 +23,9 @@ updates:
           - '*'
         dependency-type: 'development'
 
-  # Landing package
+  # Web package
   - package-ecosystem: 'npm'
-    directory: '/packages/landing'
+    directory: '/packages/web'
     schedule:
       interval: 'weekly'
       day: 'monday'
@@ -33,7 +33,7 @@ updates:
     open-pull-requests-limit: 3
     labels:
       - 'dependencies'
-      - 'landing'
+      - 'web'
     versioning-strategy: increase
     commit-message:
       prefix: 'chore'
@@ -41,11 +41,11 @@ updates:
       include: 'scope'
     rebase-strategy: 'auto'
     groups:
-      landing-dependencies:
+      web-dependencies:
         patterns:
           - '*'
         dependency-type: 'production'
-      landing-dev-dependencies:
+      web-dev-dependencies:
         patterns:
           - '*'
         dependency-type: 'development'

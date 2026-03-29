@@ -12,9 +12,8 @@ The project is organized as a monorepo with packages under `packages/`:
 
 ```
 packages/
-├── web/          # Frontend application (SolidJS)
+├── web/          # Frontend application (React/TanStack Start)
 ├── workers/      # Backend API (Cloudflare Workers)
-├── landing/      # Landing/marketing site
 ├── ui/           # Shared UI component library
 ├── shared/       # Shared TypeScript utilities
 ├── mcp/          # MCP server for development tools

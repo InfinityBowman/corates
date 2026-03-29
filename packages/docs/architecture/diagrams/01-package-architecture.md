@@ -5,10 +5,8 @@ Overview of the monorepo structure and how packages relate to each other.
 ```mermaid
 graph TB
     subgraph "Monorepo Packages"
-        landing["landing<br/>(Marketing Site)"]
-        web["web<br/>(SolidJS App)"]
+        web["web<br/>(React Frontend)"]
         workers["workers<br/>(Cloudflare Workers API)"]
-        ui["ui<br/>(Shared Components)"]
         shared["shared<br/>(Error Definitions)"]
         mcp["mcp<br/>(Dev Tooling)"]
     end
@@ -19,9 +17,7 @@ graph TB
         DO["Durable Objects"]
     end
 
-    web -->|"copied into"| landing
     web -->|"API calls"| workers
-    ui -->|"shared components"| web
     shared -->|"error utilities"| web
     shared -->|"error utilities"| workers
     workers --> D1
@@ -31,11 +27,9 @@ graph TB
 
 ## Package Details
 
-| Package   | Purpose                                | Tech                            |
-| --------- | -------------------------------------- | ------------------------------- |
-| `web`     | Main SolidJS application               | SolidJS, Vite, Tailwind         |
-| `workers` | Backend API and real-time sync         | OpenAPIHono, Cloudflare Workers |
-| `landing` | Marketing site (includes web app)      | SolidStart                      |
-| `ui`      | Shared component library               | SolidJS, Ark UI                 |
-| `shared`  | Shared error definitions and utilities | TypeScript                      |
-| `mcp`     | Development tooling (docs, linting)    | Node.js                         |
+| Package   | Purpose                                | Tech                                    |
+| --------- | -------------------------------------- | --------------------------------------- |
+| `web`     | React frontend application             | React, TanStack Start, Vite, Tailwind   |
+| `workers` | Backend API and real-time sync         | OpenAPIHono, Cloudflare Workers         |
+| `shared`  | Shared error definitions and utilities | TypeScript                              |
+| `mcp`     | Development tooling (docs, linting)    | Node.js                                 |

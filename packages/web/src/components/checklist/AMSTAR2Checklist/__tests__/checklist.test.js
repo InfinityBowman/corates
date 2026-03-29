@@ -583,4 +583,4 @@ describe('getAnswers', () => {
 });
 
 // Note: exportChecklistsToCSV tests are skipped because the function
-// has not been migrated to the landing package.
+// has not been migrated to the web package.

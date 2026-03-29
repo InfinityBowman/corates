@@ -13,7 +13,7 @@ export default withMermaid({
     // Glossary links to source files outside docs folder
     /\.\.\//,
     // Links with line numbers to source files
-    /packages\/(web|workers|shared|ui|landing|mcp)\//,
+    /packages\/(web|workers|shared|ui|mcp)\//,
     // Cursor rules folder
     /\.cursor\//,
   ],

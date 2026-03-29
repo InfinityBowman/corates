@@ -6,9 +6,9 @@ A full-codebase audit focused on identifying sources of complexity, maintenance 
 
 ## Executive Summary
 
-The codebase has solid architectural foundations -- good package boundaries, a well-structured shared package, and clean backend patterns. The SolidJS web package is being retired imminently (within the week) in favor of the React-based landing package, so frontend findings focus on the landing package and shared concerns only. The primary sources of complexity are:
+The codebase has solid architectural foundations -- good package boundaries, a well-structured shared package, and clean backend patterns. The SolidJS web package is being retired imminently (within the week) in favor of the React-based web package, so frontend findings focus on the web package and shared concerns only. The primary sources of complexity are:
 
-1. **Framework-agnostic utilities duplicated in landing** that should be extracted to `@corates/shared` before the web package is deleted (13 files)
+1. **Framework-agnostic utilities duplicated in web** that should be extracted to `@corates/shared` before the web package is deleted (13 files)
 2. **Security gaps** in the backend (CSRF, user deletion, auth bypass)
 3. **Large backend files** concentrating too many concerns
 4. **Duplicated backend patterns** (error schemas, middleware helpers, invitation logic)
@@ -73,7 +73,7 @@ Every `DB_ERROR` construction passes `originalError: error.message` unconditiona
 
 ### A1. Framework-agnostic utilities must be extracted before web package deletion
 
-The web package is being deleted within the week. 13 framework-agnostic utility files currently live as local copies in the landing package. Once web is gone, these become the only copies with no upstream reference. They should be extracted to `@corates/shared` or a new `@corates/lib` package now.
+The web package is being deleted within the week. 13 framework-agnostic utility files currently live as local copies in the web package. Once web is gone, these become the only copies with no upstream reference. They should be extracted to `@corates/shared` or a new `@corates/lib` package now.
 
 **Immediately shareable (identical or import-path-only differences):**
 
@@ -89,13 +89,13 @@ The web package is being deleted within the week. 13 framework-agnostic utility 
 
 | File                          | Issue                                                                                                                                                                                                                      |
 | ----------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `checklist-domain.js`         | Landing has more accurate JSDoc types (`string \| null` for userId) -- use landing version                                                                                                                                 |
+| `checklist-domain.js`         | Landing has more accurate JSDoc types (`string \| null` for userId) -- use web version                                                                                                                                 |
 | `checklist-registry/index.js` | Landing already imports from `@corates/shared` (correct); web still imports from component-local files                                                                                                                     |
-| `useProject/sync.js`          | Framework-specific store access (`useProjectStore.getState()` vs `projectStore`). Core sync logic (buildStudyFromYMap, etc.) is identical and extractable; store interaction stays in landing                              |
+| `useProject/sync.js`          | Framework-specific store access (`useProjectStore.getState()` vs `projectStore`). Core sync logic (buildStudyFromYMap, etc.) is identical and extractable; store interaction stays in web                              |
 | `useProject/studies.js`       | Same store access difference. CRUD logic is identical and extractable                                                                                                                                                      |
-| `useProject/annotations.js`   | Landing version is cleaner (removed debug console.logs from web). Use landing version                                                                                                                                      |
+| `useProject/annotations.js`   | Landing version is cleaner (removed debug console.logs from web). Use web version                                                                                                                                      |
 | `error-utils`                 | Most diverged file. Landing has TypeScript types, different navigate API shape (`{ to: '/signin' }` vs `('/signin')`), and different route name (`/check-email` vs `/verify-email`). Needs a navigate abstraction to share |
-| `account-merge`               | Landing has TypeScript interfaces. Runtime logic identical. Use landing `.ts` version                                                                                                                                      |
+| `account-merge`               | Landing has TypeScript interfaces. Runtime logic identical. Use web `.ts` version                                                                                                                                      |
 
 ### A2. `runMiddleware` helper duplicated in 5 backend files
 
@@ -138,9 +138,9 @@ Landing package files to watch as the migration continues:
 
 | Lines | File                                                             | Notes                                                             |
 | ----- | ---------------------------------------------------------------- | ----------------------------------------------------------------- |
-| 570   | `landing/components/FeatureShowcase.tsx`                         | Marketing component, acceptable for now                           |
-| 508   | `landing/components/billing/PricingTable.tsx`                    | Plan card, feature comparison, billing toggle could be split      |
-| 501   | `landing/components/project/overview-tab/ReviewerAssignment.tsx` | Percentage slider, preset selector, allocation logic as utilities |
+| 570   | `web/components/FeatureShowcase.tsx`                         | Marketing component, acceptable for now                           |
+| 508   | `web/components/billing/PricingTable.tsx`                    | Plan card, feature comparison, billing toggle could be split      |
+| 501   | `web/components/project/overview-tab/ReviewerAssignment.tsx` | Percentage slider, preset selector, allocation logic as utilities |
 
 ---
 
@@ -225,8 +225,8 @@ Workers pins `vitest@3.2.0` for `@cloudflare/vitest-pool-workers` compatibility.
 2. S2 -- Add CSRF protection to state-changing endpoints
 3. S3 -- Add org-level auth to Google Drive import
 
-**Short-term (before web package deletion):** 4. A1 -- Extract framework-agnostic utilities to `@corates/shared` before the web package is deleted and the landing copies become orphaned 5. S4 -- Gate error detail leaking in production
+**Short-term (before web package deletion):** 4. A1 -- Extract framework-agnostic utilities to `@corates/shared` before the web package is deleted and the web copies become orphaned 5. S4 -- Gate error detail leaking in production
 
 **Medium-term (reduce backend complexity):** 6. A2 -- Extract runMiddleware helper 7. A3 -- Unify invitation acceptance logic 8. Split the largest backend route files (orgs/index.ts, orgs/invitations.ts, orgs/pdfs.ts) 9. B1 -- Cache orgBilling resolution across middleware 10. Q2 -- Upgrade workers to vitest 4 + pool-workers 0.13.0 to unify test infrastructure
 
-**Longer-term (structural improvements):** 11. T1 -- Generate API types from OpenAPI schema for landing package 12. T3 -- Unify subscription tier naming 13. B4 -- Move rate limiting to Cloudflare's native solution 14. B5 -- Address the 106 `@ts-expect-error` comments with a route factory pattern
+**Longer-term (structural improvements):** 11. T1 -- Generate API types from OpenAPI schema for web package 12. T3 -- Unify subscription tier naming 13. B4 -- Move rate limiting to Cloudflare's native solution 14. B5 -- Address the 106 `@ts-expect-error` comments with a route factory pattern

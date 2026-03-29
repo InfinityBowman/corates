@@ -39,7 +39,7 @@ Uses existing `getActiveDomainKeys()` to determine which domain2 variant is acti
 
 ### Step 2: Wire up consolidatedAnswers for ROB2 in sync.ts
 
-**File**: `packages/landing/src/primitives/useProject/sync.ts` (line ~247)
+**File**: `packages/web/src/primitives/useProject/sync.ts` (line ~247)
 
 Add a parallel block after the AMSTAR2 consolidation:
 
@@ -51,13 +51,13 @@ if (checklistType === 'ROB2') {
 
 ### Step 3: Extract shared `exportChart` utility
 
-**File (new)**: `packages/landing/src/components/charts/export-chart.ts`
+**File (new)**: `packages/web/src/components/charts/export-chart.ts`
 
 Move the `exportChart` function from `ChartSection.tsx` into a shared utility. Update `ChartSection.tsx` to import from the new location.
 
 ### Step 4: Create `ROB2Robvis.tsx` -- Traffic light heatmap
 
-**File (new)**: `packages/landing/src/components/charts/ROB2Robvis.tsx`
+**File (new)**: `packages/web/src/components/charts/ROB2Robvis.tsx`
 
 D3-based SVG component mirroring `AMSTARRobvis.tsx` with these differences:
 
@@ -81,7 +81,7 @@ interface ROB2RobvisDataItem {
 
 ### Step 5: Create `ROB2Distribution.tsx` -- Stacked bar chart
 
-**File (new)**: `packages/landing/src/components/charts/ROB2Distribution.tsx`
+**File (new)**: `packages/web/src/components/charts/ROB2Distribution.tsx`
 
 D3-based SVG component mirroring `AMSTARDistribution.tsx` with these differences:
 
@@ -94,7 +94,7 @@ D3-based SVG component mirroring `AMSTARDistribution.tsx` with these differences
 
 ### Step 6: Create `ROB2ChartSection.tsx` -- Orchestrator
 
-**File (new)**: `packages/landing/src/components/project/overview-tab/ROB2ChartSection.tsx`
+**File (new)**: `packages/web/src/components/project/overview-tab/ROB2ChartSection.tsx`
 
 Parallel to existing `ChartSection.tsx`. Responsibilities:
 
@@ -108,7 +108,7 @@ Parallel to existing `ChartSection.tsx`. Responsibilities:
 
 ### Step 7: Integrate into OverviewTab
 
-**File**: `packages/landing/src/components/project/overview-tab/OverviewTab.tsx` (~line 374)
+**File**: `packages/web/src/components/project/overview-tab/OverviewTab.tsx` (~line 374)
 
 Add `ROB2ChartSection` alongside `ChartSection` in the Figures collapsible section. Each handles its own empty state. When both have data, they stack vertically with spacing.
 
@@ -117,17 +117,17 @@ Add `ROB2ChartSection` alongside `ChartSection` in the Figures collapsible secti
 | File                                                                        | Action                              |
 | --------------------------------------------------------------------------- | ----------------------------------- |
 | `packages/shared/src/checklists/rob2/answers.ts`                            | Add `getConsolidatedAnswers`        |
-| `packages/landing/src/primitives/useProject/sync.ts`                        | Add ROB2 consolidation block        |
-| `packages/landing/src/components/charts/export-chart.ts`                    | **New** -- extracted utility        |
-| `packages/landing/src/components/charts/ROB2Robvis.tsx`                     | **New** -- traffic light chart      |
-| `packages/landing/src/components/charts/ROB2Distribution.tsx`               | **New** -- distribution chart       |
-| `packages/landing/src/components/project/overview-tab/ROB2ChartSection.tsx` | **New** -- orchestrator             |
-| `packages/landing/src/components/project/overview-tab/OverviewTab.tsx`      | Add ROB2ChartSection                |
-| `packages/landing/src/components/project/overview-tab/ChartSection.tsx`     | Import exportChart from shared util |
+| `packages/web/src/primitives/useProject/sync.ts`                        | Add ROB2 consolidation block        |
+| `packages/web/src/components/charts/export-chart.ts`                    | **New** -- extracted utility        |
+| `packages/web/src/components/charts/ROB2Robvis.tsx`                     | **New** -- traffic light chart      |
+| `packages/web/src/components/charts/ROB2Distribution.tsx`               | **New** -- distribution chart       |
+| `packages/web/src/components/project/overview-tab/ROB2ChartSection.tsx` | **New** -- orchestrator             |
+| `packages/web/src/components/project/overview-tab/OverviewTab.tsx`      | Add ROB2ChartSection                |
+| `packages/web/src/components/project/overview-tab/ChartSection.tsx`     | Import exportChart from shared util |
 
 ## Verification
 
-1. `pnpm --filter landing build` -- confirm no type/build errors
+1. `pnpm --filter web build` -- confirm no type/build errors
 2. `pnpm typecheck` -- verify types across packages
 3. `pnpm lint` -- pass linting
 4. Manual test: open a project with finalized ROB2 checklists, expand Figures section, verify both charts render with correct domain judgments and colors

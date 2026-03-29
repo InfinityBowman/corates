@@ -68,7 +68,7 @@ Each package has its own scripts in `packages/*/package.json`:
 
 ```bash
 # From package directory
-cd packages/landing
+cd packages/web
 pnpm dev              # Start dev server for this package
 pnpm build            # Build this package
 pnpm test             # Run tests for this package
@@ -161,7 +161,7 @@ refactor: simplify error handling
 
 ### Adding a New Component
 
-1. Create component file in appropriate directory under `packages/landing/src/components/`
+1. Create component file in appropriate directory under `packages/web/src/components/`
 2. Use path aliases for imports
 3. Follow component patterns (see [Component Guide](/guides/components))
 4. Add to barrel export if in a feature directory
@@ -169,7 +169,7 @@ refactor: simplify error handling
 
 ### Adding a New Store
 
-1. Create store file in `packages/landing/src/stores/`
+1. Create store file in `packages/web/src/stores/`
 2. Create corresponding actions store if needed
 3. Export as singleton
 4. Document store structure in comments

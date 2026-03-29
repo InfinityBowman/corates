@@ -21,13 +21,13 @@ Before making changes, read these documents in order:
 
 The project is split into multiple packages under the `packages/` directory:
 
-- `/landing`: Frontend application built with React, TanStack Start, TanStack Router (deployed on Cloudflare Workers)
+- `/web`: Frontend application built with React, TanStack Start, TanStack Router (deployed on Cloudflare Workers)
 - `/workers`: Backend services, API endpoints, and database migrations
 - `/shared`: Shared TypeScript utilities and error definitions
 - `/mcp`: MCP server for development tools and documentation
 - `/docs`: Vitepress docs site containing internal documentation
 
-The landing package is the main frontend. It is deployed as a single Cloudflare Worker.
+The web package is the main frontend. It is deployed as a single Cloudflare Worker.
 
 Do not worry about migrations (client side or backend) unless specifically instructed. This project is not in production and has no users.
 
@@ -37,12 +37,12 @@ Do not worry about migrations (client side or backend) unless specifically instr
 # Development
 pnpm dev:front              # Frontend (port 3010)
 pnpm dev:workers            # Backend workers (port 8787)
-pnpm --filter landing build # Build frontend
+pnpm --filter web build # Build frontend
 
 # Testing
-pnpm --filter landing test              # Frontend unit tests
+pnpm --filter web test              # Frontend unit tests
 pnpm --filter workers test              # Backend tests only
-pnpm --filter landing test:browser      # Browser integration tests
+pnpm --filter web test:browser      # Browser integration tests
 
 # Code Quality
 pnpm lint             # ESLint check
@@ -130,14 +130,14 @@ retries += 1;
 ### React Patterns
 
 - **Import stores directly** - Use Zustand stores from `@/stores/` instead of prop-drilling shared state
-- Shared state lives in Zustand stores under `packages/landing/src/stores/`
+- Shared state lives in Zustand stores under `packages/web/src/stores/`
 - Use `useMemo` for derived values, `useCallback` for stable callbacks
 - Use `useEffect` with explicit dependency arrays (never omit deps)
 - Use `useLayoutEffect` for DOM measurements before paint
 - Use `useSyncExternalStore` for external store subscriptions (e.g., Yjs awareness)
 - Use `useId()` for unique IDs on form elements (radio buttons, checkboxes)
 - Move business logic to stores, hooks, or utilities (not components)
-- Path aliases: `@/` maps to `packages/landing/src/`
+- Path aliases: `@/` maps to `packages/web/src/`
 
 ## Documentation
 
@@ -181,7 +181,7 @@ For specific complex areas, see:
 
 - Cloudflare Pages is NOT used; only Cloudflare Workers
 - Packages are under `packages/` directory with their own dependencies
-- Path aliases: `@/` maps to `packages/landing/src/` (defined in tsconfig.json)
+- Path aliases: `@/` maps to `packages/web/src/` (defined in tsconfig.json)
 - Adjust documentation if your changes would affect any existing documentation
 
 ## Anti-Patterns (Never Do These)

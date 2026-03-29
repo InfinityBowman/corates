@@ -2,7 +2,7 @@
 
 ## Context
 
-The landing package has a comprehensive Yjs implementation for real-time collaborative research projects. Existing tests cover basic Dexie round-trips, basic sync pipeline, and basic multi-client convergence (8 tests). The domain operation layer (studies, checklists, PDFs, annotations, reconciliation, outcomes) has zero test coverage. These operations are where production bugs cause data loss.
+The web package has a comprehensive Yjs implementation for real-time collaborative research projects. Existing tests cover basic Dexie round-trips, basic sync pipeline, and basic multi-client convergence (8 tests). The domain operation layer (studies, checklists, PDFs, annotations, reconciliation, outcomes) has zero test coverage. These operations are where production bugs cause data loss.
 
 ## Approach
 
@@ -125,12 +125,12 @@ describe('Full sync pipeline')
 
 | File                                                                                            | Action                       |
 | ----------------------------------------------------------------------------------------------- | ---------------------------- |
-| `packages/landing/src/primitives/useProject/__tests__/helpers.ts`                               | Create                       |
-| `packages/landing/src/primitives/useProject/__tests__/domain-operations.browser.test.ts`        | Create                       |
-| `packages/landing/src/primitives/useProject/__tests__/checklist-handlers.browser.test.ts`       | Create                       |
-| `packages/landing/src/primitives/useProject/__tests__/reconciliation.browser.test.ts`           | Create                       |
-| `packages/landing/src/primitives/useProject/__tests__/multi-client-convergence.browser.test.ts` | Create                       |
-| `packages/landing/src/primitives/useProject/__tests__/yjs-sync.browser.test.ts`                 | Update to use shared helpers |
+| `packages/web/src/primitives/useProject/__tests__/helpers.ts`                               | Create                       |
+| `packages/web/src/primitives/useProject/__tests__/domain-operations.browser.test.ts`        | Create                       |
+| `packages/web/src/primitives/useProject/__tests__/checklist-handlers.browser.test.ts`       | Create                       |
+| `packages/web/src/primitives/useProject/__tests__/reconciliation.browser.test.ts`           | Create                       |
+| `packages/web/src/primitives/useProject/__tests__/multi-client-convergence.browser.test.ts` | Create                       |
+| `packages/web/src/primitives/useProject/__tests__/yjs-sync.browser.test.ts`                 | Update to use shared helpers |
 
 ## Key Source Files (read-only reference)
 
@@ -174,13 +174,13 @@ ydoc.destroy();
 
 ```bash
 # Run all browser tests
-pnpm --filter landing test:browser
+pnpm --filter web test:browser
 
 # Run specific file
-pnpm --filter landing test:browser -- domain-operations
+pnpm --filter web test:browser -- domain-operations
 
 # Interactive UI
-pnpm --filter landing test:browser:ui
+pnpm --filter web test:browser:ui
 ```
 
 All 8 existing tests should continue passing. New tests should add ~45 more.

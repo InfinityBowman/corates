@@ -17,7 +17,7 @@ This is a pnpm monorepo with the following packages:
 
 | Package            | Description                            |
 | ------------------ | -------------------------------------- |
-| `packages/landing` | React/TanStack Start frontend          |
+| `packages/web`     | React/TanStack Start frontend          |
 | `packages/workers` | Cloudflare Workers backend (Hono)      |
 | `packages/ui`      | Shared UI component library            |
 | `packages/shared`  | Shared error definitions and utilities |
@@ -43,7 +43,7 @@ This is a pnpm monorepo with the following packages:
 
    ```sh
    cp packages/workers/.env.example packages/workers/.env
-   cp packages/landing/.env.example packages/landing/.env
+   cp packages/web/.env.example packages/web/.env
    ```
 
 4. **Start development servers:**
@@ -173,7 +173,7 @@ pnpm run initialize-mcp
 
 | Command                                           | Description                       |
 | ------------------------------------------------- | --------------------------------- |
-| `pnpm dev:front`                                  | Start frontend (landing + web)    |
+| `pnpm dev`                                        | Start frontend dev server         |
 | `pnpm dev:workers`                                | Start backend workers             |
 | `pnpm build`                                      | Build all packages                |
 | `pnpm test`                                       | Run all tests                     |

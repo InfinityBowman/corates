@@ -43,7 +43,7 @@ TanStack Router handles all navigation internally. The test clicks links/buttons
 
 ### Step 1: Clean up old files
 
-Delete from `packages/landing/src/primitives/useProject/__tests__/`:
+Delete from `packages/web/src/primitives/useProject/__tests__/`:
 
 - `helpers.ts`
 - `domain-operations.browser.test.ts`
@@ -51,9 +51,9 @@ Delete from `packages/landing/src/primitives/useProject/__tests__/`:
 - `yjs-sync.browser.test.ts`
 - `__screenshots__/` directory
 
-Delete `packages/landing/src/__e2e__/commands.d.ts` (no longer needed).
+Delete `packages/web/src/__e2e__/commands.d.ts` (no longer needed).
 
-Keep `packages/landing/vitest.browser.config.ts` (for future data-layer tests).
+Keep `packages/web/vitest.browser.config.ts` (for future data-layer tests).
 
 ### Step 2: Add `testUtils` plugin to Better Auth config
 
@@ -80,7 +80,7 @@ Mount at `/api/test/*` in the main Hono router, gated behind `DEV_MODE`.
 
 ### Step 4: E2E test config (already created, needs minor updates)
 
-File: `packages/landing/vitest.e2e.config.ts`
+File: `packages/web/vitest.e2e.config.ts`
 
 Already created during POC with:
 
@@ -93,7 +93,7 @@ Already created during POC with:
 
 ### Step 5: Create test helpers
 
-Directory: `packages/landing/src/__e2e__/helpers/`
+Directory: `packages/web/src/__e2e__/helpers/`
 
 **`app.tsx`** -- Creates and renders the full app:
 
@@ -125,7 +125,7 @@ function createTestApp(initialPath: string) {
 
 ### Step 6: Write the main test
 
-File: `packages/landing/src/__e2e__/dual-reviewer-flow.browser.test.tsx`
+File: `packages/web/src/__e2e__/dual-reviewer-flow.browser.test.tsx`
 
 ```
 describe('Dual-Reviewer AMSTAR2 Workflow')
@@ -197,33 +197,33 @@ Discover during implementation. Likely candidates:
 | `packages/workers/src/auth/config.ts`                              | Add testUtils plugin (conditional)       |
 | `packages/workers/src/routes/test-seed.ts`                         | Create -- seed/session/cleanup endpoints |
 | `packages/workers/src/index.ts` (or router)                        | Mount test-seed routes                   |
-| `packages/landing/vitest.e2e.config.ts`                            | Already created -- minor updates         |
-| `packages/landing/src/__e2e__/helpers/app.tsx`                     | Create                                   |
-| `packages/landing/src/__e2e__/helpers/seed.ts`                     | Create                                   |
-| `packages/landing/src/__e2e__/helpers/auth.ts`                     | Create                                   |
-| `packages/landing/src/__e2e__/helpers/interactions.ts`             | Create                                   |
-| `packages/landing/src/__e2e__/dual-reviewer-flow.browser.test.tsx` | Create                                   |
+| `packages/web/vitest.e2e.config.ts`                            | Already created -- minor updates         |
+| `packages/web/src/__e2e__/helpers/app.tsx`                     | Create                                   |
+| `packages/web/src/__e2e__/helpers/seed.ts`                     | Create                                   |
+| `packages/web/src/__e2e__/helpers/auth.ts`                     | Create                                   |
+| `packages/web/src/__e2e__/helpers/interactions.ts`             | Create                                   |
+| `packages/web/src/__e2e__/dual-reviewer-flow.browser.test.tsx` | Create                                   |
 | Various components                                                 | Add data-testid as needed                |
 
 ## Key Source Files (reference)
 
 - `packages/workers/src/routes/orgs/dev-routes.ts` -- existing DEV_MODE route pattern
 - `packages/workers/src/__tests__/helpers.ts` -- seed functions
-- `packages/landing/src/routes/__root.tsx` -- RootLayout (QueryClientProvider + AuthProvider + Outlet)
-- `packages/landing/src/routeTree.gen.ts` -- generated route tree
-- `packages/landing/src/routes/_auth/signin.tsx` -- #email-input, password form
-- `packages/landing/src/stores/authStore.ts` -- auth state, cached user
-- `packages/landing/src/components/project/CreateProjectModal.tsx` -- #project-name input
-- `packages/landing/src/components/project/all-studies-tab/AllStudiesTab.tsx`
-- `packages/landing/src/components/project/all-studies-tab/AssignReviewersModal.tsx`
-- `packages/landing/src/components/project/todo-tab/ToDoTab.tsx`
-- `packages/landing/src/components/project/reconcile-tab/ReconcileTab.tsx`
-- `packages/landing/src/components/project/reconcile-tab/ReconciliationWrapper.tsx`
-- `packages/landing/src/config/api.ts` -- API_BASE, getWsBaseUrl
+- `packages/web/src/routes/__root.tsx` -- RootLayout (QueryClientProvider + AuthProvider + Outlet)
+- `packages/web/src/routeTree.gen.ts` -- generated route tree
+- `packages/web/src/routes/_auth/signin.tsx` -- #email-input, password form
+- `packages/web/src/stores/authStore.ts` -- auth state, cached user
+- `packages/web/src/components/project/CreateProjectModal.tsx` -- #project-name input
+- `packages/web/src/components/project/all-studies-tab/AllStudiesTab.tsx`
+- `packages/web/src/components/project/all-studies-tab/AssignReviewersModal.tsx`
+- `packages/web/src/components/project/todo-tab/ToDoTab.tsx`
+- `packages/web/src/components/project/reconcile-tab/ReconcileTab.tsx`
+- `packages/web/src/components/project/reconcile-tab/ReconciliationWrapper.tsx`
+- `packages/web/src/config/api.ts` -- API_BASE, getWsBaseUrl
 
 ## Bug Found During Data-Layer Testing
 
-ROBINS-I auto-fill of sectionA.outcome Y.Text fails silently because the auto-fill runs on a detached Y.Map (answersYMap not yet added to the Y.Doc). Fix: move `checklistsMap.set(checklistId, checklistYMap)` before the auto-fill block in `packages/landing/src/primitives/useProject/checklists/index.js` (line 193 should come before line 172).
+ROBINS-I auto-fill of sectionA.outcome Y.Text fails silently because the auto-fill runs on a detached Y.Map (answersYMap not yet added to the Y.Doc). Fix: move `checklistsMap.set(checklistId, checklistYMap)` before the auto-fill block in `packages/web/src/primitives/useProject/checklists/index.js` (line 193 should come before line 172).
 
 ## Verification
 
@@ -232,5 +232,5 @@ ROBINS-I auto-fill of sectionA.outcome Y.Text fails silently because the auto-fi
 pnpm dev:workers
 
 # Run e2e tests (no frontend dev server needed)
-pnpm --filter landing test:e2e
+pnpm --filter web test:e2e
 ```

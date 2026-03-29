@@ -1,6 +1,6 @@
 # Codebase Audit - 2026-03-17
 
-Comprehensive audit of the CoRATES monorepo covering the React frontend (`packages/landing`), Hono backend (`packages/workers`), and cross-cutting concerns (shared code, configuration, dependencies, documentation).
+Comprehensive audit of the CoRATES monorepo covering the React frontend (`packages/web`), Hono backend (`packages/workers`), and cross-cutting concerns (shared code, configuration, dependencies, documentation).
 
 ---
 
@@ -82,7 +82,7 @@ The Zod schema only checks `z.string().min(1)` -- no character set restriction. 
 
 ### C5. `window.location.href` navigation bypasses TanStack Router
 
-**File:** `packages/landing/src/components/dashboard/Dashboard.tsx:61, 65, 69`
+**File:** `packages/web/src/components/dashboard/Dashboard.tsx:61, 65, 69`
 
 Three navigation handlers use `window.location.href` assignments, causing full page reloads and losing scroll state, query cache, and React context:
 
@@ -100,7 +100,7 @@ function handleStartROBINSI() {
 
 **Files:** `.claude/CLAUDE.md:38`, `.github/copilot-instructions.md:38`, `package.json`
 
-Both documentation files instruct agents to run `pnpm dev:front` to start the frontend. The root `package.json` has no such script. The actual script is `pnpm dev`, which delegates to `pnpm --filter landing dev`.
+Both documentation files instruct agents to run `pnpm dev:front` to start the frontend. The root `package.json` has no such script. The actual script is `pnpm dev`, which delegates to `pnpm --filter web dev`.
 
 **Fix:** Either add a `dev:front` script or update documentation.
 
@@ -118,7 +118,7 @@ A full Sentry DSN is committed in the `vars` block. The production comment block
 
 ### C8. `SubscriptionCard` uses `subscription: any` on exported prop interface
 
-**File:** `packages/landing/src/components/billing/SubscriptionCard.tsx:53`
+**File:** `packages/web/src/components/billing/SubscriptionCard.tsx:53`
 
 The component destructures `sub.tierInfo`, `sub.status`, `sub.tier`, `sub.cancelAtPeriodEnd`, `sub.currentPeriodEnd` without any type safety. Shape changes from the subscription API will silently produce `undefined`.
 
@@ -130,7 +130,7 @@ The component destructures `sub.tierInfo`, `sub.status`, `sub.tier`, `sub.cancel
 
 ### I1. `useOAuthError` suppressed exhaustive-deps hides stale closure
 
-**File:** `packages/landing/src/hooks/useOAuthError.ts:37`
+**File:** `packages/web/src/hooks/useOAuthError.ts:37`
 
 The `useEffect` captures `location.pathname` from TanStack Router's `useLocation()` via closure but uses `[]` deps. The URL cleanup at lines 27 and 35 uses this captured value. While unlikely to manifest in practice (pathname is stable on mount), the suppressed lint rule hides a genuine dependency. Using `window.location.pathname` directly inside `cleanupUrl` would remove the closure dependency entirely.
 
@@ -233,19 +233,19 @@ Not declared in the `Env` type. The cast silences TypeScript without fixing the 
 
 ---
 
-### I10. `CHECKLIST_STATUS` duplicated between shared and landing
+### I10. `CHECKLIST_STATUS` duplicated between shared and web
 
-**Files:** `packages/landing/src/constants/checklist-status.ts`, `packages/shared/src/checklists/status.ts`
+**Files:** `packages/web/src/constants/checklist-status.ts`, `packages/shared/src/checklists/status.ts`
 
-Near-exact copy. 12 files in landing import the local copy. If values diverge, the frontend silently uses stale logic.
+Near-exact copy. 12 files in web import the local copy. If values diverge, the frontend silently uses stale logic.
 
 **Fix:** Delete the local copy and update 12 import sites to use `@corates/shared`.
 
 ---
 
-### I12. Module-level auth cache in `landing/src/lib/auth.ts` never invalidates
+### I12. Module-level auth cache in `web/src/lib/auth.ts` never invalidates
 
-**File:** `packages/landing/src/lib/auth.ts`
+**File:** `packages/web/src/lib/auth.ts`
 
 A module-level `cachedAuth` variable deduplicates session requests but is never cleared. After signout, the marketing Navbar still shows the cached session until full page reload.
 
@@ -255,7 +255,7 @@ A module-level `cachedAuth` variable deduplicates session requests but is never 
 
 ### I13. `AuthProvider` useEffect captures stale `session.refetch` reference
 
-**File:** `packages/landing/src/components/auth/AuthProvider.tsx:76-84`
+**File:** `packages/web/src/components/auth/AuthProvider.tsx:76-84`
 
 Mount-only `useEffect` closes over the initial `session.refetch` reference with exhaustive-deps disabled. If the hook returns a new reference on hydration, the stale one is used.
 
@@ -267,10 +267,10 @@ Mount-only `useEffect` closes over the initial `session.refetch` reference with 
 
 **Files:**
 
-- `packages/landing/src/components/Audience.tsx:44`
-- `packages/landing/src/components/settings/PlansSettings.tsx:173`
-- `packages/landing/src/components/HowItWorks.tsx:50`
-- `packages/landing/src/components/FeatureShowcase.tsx:513, 609`
+- `packages/web/src/components/Audience.tsx:44`
+- `packages/web/src/components/settings/PlansSettings.tsx:173`
+- `packages/web/src/components/HowItWorks.tsx:50`
+- `packages/web/src/components/FeatureShowcase.tsx:513, 609`
 
 **Fix:** Use stable identifiers (title, id) as keys.
 
@@ -278,7 +278,7 @@ Mount-only `useEffect` closes over the initial `session.refetch` reference with 
 
 ### I15. `PlansSettings` mount effect captures stale `useCallback` closures
 
-**File:** `packages/landing/src/components/settings/PlansSettings.tsx:96-98`
+**File:** `packages/web/src/components/settings/PlansSettings.tsx:96-98`
 
 `processPendingPlan` depends on `[navigate, refetch]`, but the calling `useEffect` has `[]` deps with the lint rule suppressed.
 
@@ -290,9 +290,9 @@ Mount-only `useEffect` closes over the initial `session.refetch` reference with 
 
 **Files:**
 
-- `packages/landing/src/components/checklist/ROB2Checklist/DomainSection.tsx:32`
-- `packages/landing/src/components/checklist/ROBINSIChecklist/DomainSection.tsx:34`
-- `packages/landing/src/stores/localChecklistsStore.ts:103, 117`
+- `packages/web/src/components/checklist/ROB2Checklist/DomainSection.tsx:32`
+- `packages/web/src/components/checklist/ROBINSIChecklist/DomainSection.tsx:34`
+- `packages/web/src/stores/localChecklistsStore.ts:103, 117`
 
 **Fix:** Add index signatures or union types to checklist registries; type the Dexie database properly.
 
@@ -300,7 +300,7 @@ Mount-only `useEffect` closes over the initial `session.refetch` reference with 
 
 ### I17. `renderSidebarContent` is a plain function, not a component
 
-**File:** `packages/landing/src/components/layout/Sidebar.tsx:168`
+**File:** `packages/web/src/components/layout/Sidebar.tsx:168`
 
 Defined as a bare function inside the component body, called as `{renderSidebarContent()}`. Adding hooks inside it would cause React to throw. Same pattern in `SettingsSidebar.tsx:97`.
 
@@ -310,7 +310,7 @@ Defined as a bare function inside the component body, called as `{renderSidebarC
 
 ### I18. `NotificationsSettings` toggles are non-functional stubs
 
-**File:** `packages/landing/src/components/settings/NotificationsSettings.tsx:11-13`
+**File:** `packages/web/src/components/settings/NotificationsSettings.tsx:11-13`
 
 All toggles reset to `false` on every mount. The `darkMode` switch is disabled. Users who toggle settings see no effect on reload.
 
@@ -336,13 +336,13 @@ Workers pins `"vitest": "4.1.0"` (no caret) while all other packages use `^4.x`.
 
 Returns Tailwind class strings from a shared package. The file acknowledges this may not belong here.
 
-**Fix:** Move `getStatusStyle` to a landing-side utility.
+**Fix:** Move `getStatusStyle` to a web-side utility.
 
 ---
 
 ### I22. `BillingSettings` mount effect with stale `refetch` closure
 
-**File:** `packages/landing/src/components/settings/BillingSettings.tsx:69-85`
+**File:** `packages/web/src/components/settings/BillingSettings.tsx:69-85`
 
 The checkout redirect handler at lines 69-85 calls `refetch()` (line 73) and `usageQuery.refetch()` (line 74) inside a `useEffect` with `[]` deps. Both references are captured from closures that may change identity. Same stale-closure pattern as I13 and I15.
 
@@ -352,7 +352,7 @@ The checkout redirect handler at lines 69-85 calls `refetch()` (line 73) and `us
 
 ### I23. `ActivityFeed` uses non-unique composite key
 
-**File:** `packages/landing/src/components/dashboard/ActivityFeed.tsx:72`
+**File:** `packages/web/src/components/dashboard/ActivityFeed.tsx:72`
 
 ```tsx
 key={`${activity.title}-${activity.timestamp}`}
@@ -378,7 +378,7 @@ The on-disk `.claude/CLAUDE.md` has been updated to describe a React/TanStack St
 
 **File:** `packages/docs/STATUS.md:93`
 
-Lists `@corates/ui` as a complete shared package. No such package exists in the workspace. UI components live in `packages/landing/src/components/ui/` as shadcn/ui wrappers.
+Lists `@corates/ui` as a complete shared package. No such package exists in the workspace. UI components live in `packages/web/src/components/ui/` as shadcn/ui wrappers.
 
 **Fix:** Remove the `@corates/ui` entry from STATUS.md.
 
@@ -386,7 +386,7 @@ Lists `@corates/ui` as a complete shared package. No such package exists in the 
 
 ### D3. `isEditable` type signature differs between shared and local copy
 
-The shared version accepts `ChecklistStatus | string`; the landing copy accepts only `string`. Migration to the shared import will introduce type errors for callers passing optional status fields.
+The shared version accepts `ChecklistStatus | string`; the web copy accepts only `string`. Migration to the shared import will introduce type errors for callers passing optional status fields.
 
 **Fix:** Reconcile types during the deduplication (I10).
 
