@@ -10,7 +10,7 @@ export const checklistActions = {
     const ops = connectionPool.getActiveOps();
     if (!ops) throw new Error('No active project connection');
     try {
-      const checklistId = ops.createChecklist(studyId, type, assigneeId, outcomeId ?? null);
+      const checklistId = ops.checklist.createChecklist(studyId, type, assigneeId, outcomeId ?? null);
       if (!checklistId) {
         const requiresOutcome = type === 'ROB2' || type === 'ROBINS_I';
         if (requiresOutcome && !outcomeId) {
@@ -37,7 +37,7 @@ export const checklistActions = {
     const ops = connectionPool.getActiveOps();
     if (!ops) throw new Error('No active project connection');
     try {
-      ops.updateChecklist(studyId, checklistId, updates);
+      ops.checklist.updateChecklist(studyId, checklistId, updates);
     } catch (err) {
       console.error('Error updating checklist:', err);
       showToast.error('Update Failed', 'Failed to update checklist');
@@ -48,7 +48,7 @@ export const checklistActions = {
     const ops = connectionPool.getActiveOps();
     if (!ops) throw new Error('No active project connection');
     try {
-      ops.deleteChecklist(studyId, checklistId);
+      ops.checklist.deleteChecklist(studyId, checklistId);
     } catch (err) {
       console.error('Error deleting checklist:', err);
       showToast.error('Delete Failed', 'Failed to delete checklist');
@@ -58,24 +58,26 @@ export const checklistActions = {
   getAnswersMap(studyId: string, checklistId: string): unknown {
     const ops = connectionPool.getActiveOps();
     if (!ops) throw new Error('No active project connection');
-    return ops.getChecklistAnswersMap(studyId, checklistId);
+    return ops.checklist.getChecklistAnswersMap(studyId, checklistId);
   },
 
   getData(studyId: string, checklistId: string): Record<string, unknown> | null {
     const ops = connectionPool.getActiveOps();
     if (!ops) throw new Error('No active project connection');
-    return ops.getChecklistData(studyId, checklistId) ?? null;
+    return ops.checklist.getChecklistData(studyId, checklistId) ?? null;
   },
 
   updateAnswer(studyId: string, checklistId: string, questionId: string, answer: unknown, note?: string): void {
     const ops = connectionPool.getActiveOps();
     if (!ops) throw new Error('No active project connection');
-    ops.updateChecklistAnswer(studyId, checklistId, questionId, answer, note);
+    const data: Record<string, unknown> = { answer };
+    if (note !== undefined) data.note = note;
+    ops.checklist.updateChecklistAnswer(studyId, checklistId, questionId, data);
   },
 
   getQuestionNote(studyId: string, checklistId: string, questionId: string): unknown {
     const ops = connectionPool.getActiveOps();
     if (!ops) throw new Error('No active project connection');
-    return ops.getQuestionNote(studyId, checklistId, questionId);
+    return ops.checklist.getQuestionNote(studyId, checklistId, questionId);
   },
 };

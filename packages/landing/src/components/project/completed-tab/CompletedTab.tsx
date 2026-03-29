@@ -15,9 +15,9 @@ import { project } from '@/project';
 export function CompletedTab() {
   const { projectId, getAssigneeName, getChecklistPath } = useProjectContext();
   const navigate = useNavigate();
-  const conn = connectionPool.get(projectId);
+  const conn = connectionPool.getOps(projectId);
   if (!conn) throw new Error(`No connection for project ${projectId}`);
-  const getAllReconciliationProgress = conn.getAllReconciliationProgress;
+  const getAllReconciliationProgress = conn.reconciliation.getAllReconciliationProgress;
 
   const studies = useProjectStore(s => selectStudies(s, projectId));
   const meta = useProjectStore(s => s.projects[projectId]?.meta) as any;

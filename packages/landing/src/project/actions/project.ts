@@ -13,7 +13,7 @@ export const projectActions = {
     const ops = connectionPool.getActiveOps();
     if (!ops) throw new Error('No active project connection');
     try {
-      await ops.renameProject(newName);
+      await ops.study.renameProject(newName);
     } catch (err) {
       console.error('Error renaming project:', err);
       showToast.error('Rename Failed', (err as Error).message || 'Failed to rename project');
@@ -24,7 +24,7 @@ export const projectActions = {
     const ops = connectionPool.getActiveOps();
     if (!ops) throw new Error('No active project connection');
     try {
-      await ops.updateDescription(newDescription);
+      await ops.study.updateDescription(newDescription);
     } catch (err) {
       console.error('Error updating description:', err);
       showToast.error('Update Failed', (err as Error).message || 'Failed to update description');

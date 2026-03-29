@@ -11,7 +11,9 @@ import { extractPdfDoi, extractPdfTitle } from '@/lib/pdfUtils.js';
 import { fetchFromDOI } from '@/lib/referenceLookup.js';
 import { useProjectStore } from '@/stores/projectStore';
 import { useAuthStore, selectUser } from '@/stores/authStore';
-import { connectionPool, type ConnectionOps } from '../ConnectionPool';
+import { connectionPool, type TypedProjectOps } from '../ConnectionPool';
+import type { PdfInfo, PdfTag } from '@/primitives/useProject/pdfs';
+import type { StudyMetadata } from '@/primitives/useProject/studies';
 
 // ---------------------------------------------------------------------------
 // Pure helpers (no pool dependency)
@@ -73,7 +75,7 @@ function filterDefinedUpdates(updates: Record<string, unknown>): Record<string, 
 }
 
 async function addPdfMetadataToStudy(
-  ops: ConnectionOps,
+  ops: TypedProjectOps,
   studyId: string,
   pdfInfo: Record<string, unknown>,
   orgId: string,
@@ -81,7 +83,7 @@ async function addPdfMetadataToStudy(
   tag = 'primary',
 ): Promise<boolean> {
   try {
-    ops.addPdfToStudy(studyId, pdfInfo, tag);
+    ops.pdf.addPdfToStudy(studyId, pdfInfo as unknown as PdfInfo, tag as PdfTag);
     return true;
   } catch (err) {
     console.error('Failed to add PDF metadata:', err);
@@ -96,7 +98,7 @@ async function addPdfMetadataToStudy(
 }
 
 async function handleGoogleDrivePdf(
-  ops: ConnectionOps,
+  ops: TypedProjectOps,
   study: Record<string, unknown>,
   studyId: string,
   orgId: string,
@@ -149,7 +151,7 @@ async function handleGoogleDrivePdf(
 
       const filtered = filterDefinedUpdates(metadataUpdates);
       if (Object.keys(filtered).length > 0) {
-        ops.updateStudy(studyId, filtered);
+        ops.study.updateStudy(studyId, filtered);
       }
     } catch (extractErr) {
       console.warn('Failed to extract metadata for Google Drive PDF:', extractErr);
@@ -180,7 +182,7 @@ async function fetchPdfFromUrl(
 }
 
 async function uploadAndAttachPdf(
-  ops: ConnectionOps,
+  ops: TypedProjectOps,
   pdfData: ArrayBuffer,
   pdfFileName: string,
   studyId: string,
@@ -258,14 +260,14 @@ export const studyActions = {
   create(name: string, description = '', metadata: Record<string, unknown> = {}): string | null {
     const ops = connectionPool.getActiveOps();
     if (!ops) throw new Error('No active project connection');
-    return ops.createStudy(name, description, metadata);
+    return ops.study.createStudy(name, description, metadata);
   },
 
   update(studyId: string, updates: Record<string, unknown>): void {
     const ops = connectionPool.getActiveOps();
     if (!ops) throw new Error('No active project connection');
     try {
-      ops.updateStudy(studyId, updates);
+      ops.study.updateStudy(studyId, updates);
     } catch (err) {
       console.error('Error updating study:', err);
       showToast.error('Update Failed', 'Failed to update study');
@@ -306,7 +308,7 @@ export const studyActions = {
         studyId,
       });
 
-      ops.deleteStudy(studyId);
+      ops.study.deleteStudy(studyId);
     } catch (err) {
       console.error('Error deleting study:', err);
       showToast.error('Delete Failed', 'Failed to delete study');
@@ -332,21 +334,21 @@ export const studyActions = {
     try {
       for (const study of studiesToAdd) {
         try {
-          const metadata = {
-            originalTitle: study.title || study.name || null,
-            firstAuthor: study.firstAuthor,
-            publicationYear: study.publicationYear,
-            authors: study.authors,
-            journal: study.journal,
-            doi: study.doi,
-            abstract: study.abstract,
-            importSource: study.importSource,
-            pdfUrl: study.pdfUrl,
-            pdfSource: study.pdfSource,
+          const metadata: StudyMetadata = {
+            originalTitle: (study.title as string) || (study.name as string) || undefined,
+            firstAuthor: (study.firstAuthor as string) || undefined,
+            publicationYear: (study.publicationYear as string) || undefined,
+            authors: (study.authors as string) || undefined,
+            journal: (study.journal as string) || undefined,
+            doi: (study.doi as string) || undefined,
+            abstract: (study.abstract as string) || undefined,
+            importSource: (study.importSource as string) || undefined,
+            pdfUrl: (study.pdfUrl as string) || undefined,
+            pdfSource: (study.pdfSource as string) || undefined,
           };
 
           const studyName = getStudyNameFromFilename(study.pdfFileName as string | null);
-          const studyId = ops.createStudy(studyName, (study.abstract as string) || '', metadata);
+          const studyId = ops.study.createStudy(studyName, (study.abstract as string) || '', metadata);
           if (!studyId) continue;
 
           let pdfAttached = false;
@@ -416,14 +418,14 @@ export const studyActions = {
           ? getStudyNameFromFilename(ref.pdfFileName as string)
           : (ref.title as string) || 'Untitled Study';
 
-        ops.createStudy(studyName, (ref.abstract as string) || '', {
-          originalTitle: ref.title || null,
-          firstAuthor: ref.firstAuthor,
-          publicationYear: ref.publicationYear,
-          authors: ref.authors,
-          journal: ref.journal,
-          doi: ref.doi,
-          abstract: ref.abstract,
+        ops.study.createStudy(studyName, (ref.abstract as string) || '', {
+          originalTitle: (ref.title as string) || undefined,
+          firstAuthor: (ref.firstAuthor as string) || undefined,
+          publicationYear: (ref.publicationYear as string) || undefined,
+          authors: (ref.authors as string) || undefined,
+          journal: (ref.journal as string) || undefined,
+          doi: (ref.doi as string) || undefined,
+          abstract: (ref.abstract as string) || undefined,
           importSource: 'reference-file',
         });
         successCount++;
