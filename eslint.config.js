@@ -1,7 +1,7 @@
 import js from '@eslint/js';
-import * as tsParser from '@typescript-eslint/parser';
 import tseslint from 'typescript-eslint';
 import reactHooks from 'eslint-plugin-react-hooks';
+import drizzle from 'eslint-plugin-drizzle';
 import coratesRules from './eslint-rules/index.js';
 
 export default [
@@ -19,7 +19,7 @@ export default [
       '@typescript-eslint': tseslint.plugin,
     },
     languageOptions: {
-      parser: tsParser,
+      parser: tseslint.parser,
       parserOptions: {
         ecmaVersion: 'latest',
         sourceType: 'module',
@@ -182,6 +182,9 @@ export default [
   {
     // Backend workers - enforce structured error handling
     files: ['packages/workers/src/**/*.{js,ts}'],
+    plugins: {
+      drizzle,
+    },
     languageOptions: {
       globals: {
         // Cloudflare Workers globals
@@ -206,6 +209,9 @@ export default [
     rules: {
       // Use createDomainError(), createTransportError(), or createValidationError()
       'corates/corates-error-helpers': 'warn',
+      // Prevent accidental table-wide deletes/updates without a where clause
+      'drizzle/enforce-delete-with-where': ['error', { drizzleObjectName: 'db' }],
+      'drizzle/enforce-update-with-where': ['error', { drizzleObjectName: 'db' }],
     },
   },
   {
@@ -267,7 +273,6 @@ export default [
       'reference/**',
       '**/.localflare/**',
       '.claude/skills/**/examples/**',
-      'packages/web/**',
       'packages/ai/**',
     ],
   },
