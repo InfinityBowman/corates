@@ -1,8 +1,9 @@
 /**
- * Member actions -- HTTP-only, no Y.js operations
+ * Member actions -- remove project members via RPC
  */
 
-import { API_BASE } from '@/config/api';
+import { parseResponse } from 'hono/client';
+import { api } from '@/lib/rpc';
 import { queryClient } from '@/lib/queryClient';
 import { queryKeys } from '@/lib/queryKeys';
 import { useAuthStore, selectUser } from '@/stores/authStore';
@@ -18,14 +19,11 @@ export const memberActions = {
     const user = selectUser(useAuthStore.getState());
     const isSelf = user?.id === memberId;
 
-    const response = await fetch(
-      `${API_BASE}/api/orgs/${orgId}/projects/${projectId}/members/${memberId}`,
-      { method: 'DELETE', credentials: 'include' },
+    await parseResponse(
+      api.api.orgs[':orgId'].projects[':projectId'].members[':userId'].$delete({
+        param: { orgId, projectId, userId: memberId },
+      }),
     );
-    if (!response.ok) {
-      const data = await response.json().catch(() => ({}));
-      throw new Error(data.error || 'Failed to remove member');
-    }
 
     if (isSelf) {
       queryClient.invalidateQueries({ queryKey: queryKeys.projects.byOrg(orgId) });
