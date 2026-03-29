@@ -295,7 +295,7 @@ function main() {
 
   // Per-package breakdown (only if packages directory exists)
   if (hasPackages && (!filter || filter === 'packages')) {
-    const packageDirs = ['docs', 'landing', 'mcp', 'mcp-memory', 'shared', 'ui', 'web', 'workers'];
+    const packageDirs = ['docs', 'landing', 'mcp', 'shared', 'ui', 'workers'];
     const packageStats = [];
 
     for (const pkg of packageDirs) {

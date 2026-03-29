@@ -20,7 +20,7 @@ Create SolidJS components following CoRATES patterns and conventions.
 ### File Location
 
 ```
-packages/web/src/components/
+packages/landing/src/components/
   [feature]/           # Feature directory
     ComponentName.jsx  # PascalCase naming
     index.js           # Barrel export (optional, for lazy loading)
@@ -255,7 +255,7 @@ setForm(
 For lazy-loaded routes, create index.js:
 
 ```jsx
-// packages/web/src/components/feature/index.js
+// packages/landing/src/components/feature/index.js
 export { default } from './FeatureMain.jsx';
 export { FeatureCard } from './FeatureCard.jsx';
 export { FeatureList } from './FeatureList.jsx';
@@ -265,7 +265,7 @@ export { FeatureList } from './FeatureList.jsx';
 
 When creating a component:
 
-1. Determine file location under `packages/web/src/components/`
+1. Determine file location under `packages/landing/src/components/`
 2. Identify required props (keep to 1-5 max)
 3. Identify stores to import (no prop drilling)
 4. Choose icons from solid-icons

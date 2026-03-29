@@ -17,10 +17,9 @@ This is a pnpm monorepo with the following packages:
 
 | Package            | Description                            |
 | ------------------ | -------------------------------------- |
-| `packages/web`     | Main SolidJS frontend application      |
+| `packages/landing` | React/TanStack Start frontend          |
 | `packages/workers` | Cloudflare Workers backend (Hono)      |
-| `packages/landing` | Landing/marketing site (SolidJS Start) |
-| `packages/ui`      | Shared UI component library (Zag.js)   |
+| `packages/ui`      | Shared UI component library            |
 | `packages/shared`  | Shared error definitions and utilities |
 | `packages/mcp`     | MCP server for AI agent integration    |
 
@@ -44,7 +43,6 @@ This is a pnpm monorepo with the following packages:
 
    ```sh
    cp packages/workers/.env.example packages/workers/.env
-   cp packages/web/.env.example packages/web/.env
    cp packages/landing/.env.example packages/landing/.env
    ```
 
@@ -132,7 +130,7 @@ pnpm test:ui     # Run tests with browser UI (broken sort of)
 
 Tests use Vitest. Place test files alongside source files in `__tests__/` using the pattern `*.test.{js,jsx,ts,tsx}`.
 
-See [packages/web/TESTING.md](packages/web/TESTING.md) for detailed testing guidelines.
+See `packages/docs/guides/testing.md` for detailed testing guidelines.
 
 ### Submitting Changes
 

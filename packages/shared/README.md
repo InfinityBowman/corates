@@ -4,7 +4,7 @@
 
 ## Purpose
 
-This package provides shared contracts and utilities between `@corates/workers` (backend) and `@corates/web` (frontend):
+This package provides shared contracts and utilities between `@corates/workers` (backend) and `@corates/landing` (frontend):
 
 - **Centralized error system** with type-safe domain errors
 - **Billing plan configuration** with entitlements and quotas
@@ -375,7 +375,7 @@ if (!isUnlimitedQuota(maxProjects) && currentCount >= maxProjects) {
 ## Links
 
 - **Backend Package:** [packages/workers/](../workers/)
-- **Frontend Package:** [packages/web/](../web/)
+- **Frontend Package:** [packages/landing/](../landing/)
 - **Documentation:** [packages/docs/](../docs/)
 - **Error Handling Guide:** [.cursor/rules/error-handling.mdc](../../.cursor/rules/error-handling.mdc)
 - **Billing Guide:** [packages/docs/guides/billing.md](../docs/guides/billing.md)

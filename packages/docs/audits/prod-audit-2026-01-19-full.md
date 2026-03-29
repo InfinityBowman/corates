@@ -70,10 +70,9 @@ CoRATES has solid code architecture and security fundamentals, but critical gaps
 packages/
   web/        - Frontend SolidJS application
   workers/    - Backend Hono API + Durable Objects
-  landing/    - Marketing site (embeds web at build)
+  landing/    - React/TanStack Start frontend
   shared/     - Common utilities and error definitions
   mcp/        - MCP server for development tools
-  mcp-memory/ - Persistent agent memory
   docs/       - Internal documentation
 ```
 

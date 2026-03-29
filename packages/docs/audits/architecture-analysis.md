@@ -50,13 +50,11 @@ The project uses a well-organized monorepo structure with clear package boundari
 
 ```
 packages/
-  ├── web/           # SolidJS frontend
+  ├── landing/       # React/TanStack Start frontend
   ├── workers/       # Cloudflare Workers backend
-  ├── landing/       # Marketing site
   ├── shared/        # Shared error types and utilities
   ├── docs/          # VitePress documentation
-  ├── mcp/           # Development tooling
-  └── mcp-memory/    # Agent memory system
+  └── mcp/           # Development tooling
 ```
 
 **Strengths:**

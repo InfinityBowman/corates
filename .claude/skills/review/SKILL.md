@@ -274,7 +274,7 @@ Avoid unnecessary abstractions, feature flags, and backwards-compat code.
 
 ## File-Specific Checks
 
-### Components (packages/web/src/components/)
+### Components (packages/landing/src/components/)
 
 1. Prop destructuring in function signature
 2. Props accessed via `props.field`
@@ -293,7 +293,7 @@ Avoid unnecessary abstractions, feature flags, and backwards-compat code.
 5. Context accessed via getters (`getAuth`, `getOrgContext`)
 6. Schemas defined in config/validation.js
 
-### Stores (packages/web/src/stores/)
+### Stores (packages/landing/src/stores/)
 
 1. Exports are signals/functions, not raw values
 2. State mutations through setter functions
@@ -307,7 +307,7 @@ Use these to find common issues:
 
 ```bash
 # Prop destructuring
-grep -rn "function.*({.*})" packages/web/src/components/
+grep -rn "function.*({.*})" packages/landing/src/components/
 
 # Direct c.get('user')
 grep -rn "c\.get('user')" packages/workers/src/routes/
@@ -316,13 +316,13 @@ grep -rn "c\.get('user')" packages/workers/src/routes/
 grep -rn "c\.json({ error:" packages/workers/src/routes/
 
 # Wrong Ark imports
-grep -rn "from.*components.*Dialog\|Select\|Toast" packages/web/src/
+grep -rn "from.*components.*Dialog\|Select\|Toast" packages/landing/src/
 
 # Emojis (basic check)
 grep -rPn "[\x{1F300}-\x{1F9FF}]" packages/
 
 # Relative imports
-grep -rn "from '\.\./\.\./\.\." packages/web/src/components/
+grep -rn "from '\.\./\.\./\.\." packages/landing/src/components/
 ```
 
 ---

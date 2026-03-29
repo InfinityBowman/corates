@@ -4,7 +4,7 @@ Working examples from the CoRATES codebase demonstrating best practices.
 
 ## ProjectCard Component
 
-Location: `packages/web/src/components/dashboard/ProjectCard.jsx`
+Location: `packages/landing/src/components/dashboard/ProjectCard.jsx`
 
 A card component showing project info with computed stats and conditional rendering:
 
@@ -126,7 +126,7 @@ Key patterns:
 
 ## StatsRow Component
 
-Location: `packages/web/src/components/dashboard/StatsRow.jsx`
+Location: `packages/landing/src/components/dashboard/StatsRow.jsx`
 
 A row of stat cards using context for animations:
 
@@ -203,7 +203,7 @@ Key patterns:
 
 ## Sidebar Component (Excerpt)
 
-Location: `packages/web/src/components/sidebar/Sidebar.jsx`
+Location: `packages/landing/src/components/sidebar/Sidebar.jsx`
 
 Demonstrates local state, effects, and cleanup:
 
@@ -319,7 +319,7 @@ Key patterns:
 
 ## Navbar Component (Excerpt)
 
-Location: `packages/web/src/components/Navbar.jsx`
+Location: `packages/landing/src/components/Navbar.jsx`
 
 Shows auth integration and click-outside handling:
 

@@ -243,14 +243,6 @@ Near-exact copy. 12 files in landing import the local copy. If values diverge, t
 
 ---
 
-### I11. `packages/web` (SolidJS legacy) still in workspace
-
-`packages/web` is still a workspace member. Its `build` script calls `copy-to-landing.js` which writes into landing's build output. SolidJS dependencies are still resolved by pnpm.
-
-**Fix:** Remove `packages/web` from the workspace or delete the directory.
-
----
-
 ### I12. Module-level auth cache in `landing/src/lib/auth.ts` never invalidates
 
 **File:** `packages/landing/src/lib/auth.ts`
@@ -325,12 +317,6 @@ All toggles reset to `false` on every mount. The `darkMode` switch is disabled. 
 **Fix:** Either persist via store/API or remove the page until functional.
 
 ---
-
-### I19. `better-sqlite3` major version mismatch across packages
-
-`packages/workers` uses `^12.6.2`, `packages/mcp-memory` uses `^11.10.0`.
-
-**Fix:** Align to the same major version.
 
 ---
 

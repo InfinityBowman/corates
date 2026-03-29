@@ -66,10 +66,9 @@ CoRATES is a web application designed to streamline the entire quality and risk-
 
 ### Monorepo Structure
 
-- `packages/web` - SolidJS frontend application with Vite
-- `packages/landing` - Marketing site built with SolidStart (meta-framework) and Vinxi, includes bundled web app
+- `packages/landing` - React/TanStack Start frontend (deployed on Cloudflare Workers)
 - `packages/workers` - Cloudflare Workers backend
-- `packages/ui` - Shared Ark UI component library with prestyled + primitive variants
+- `packages/ui` - Shared UI component library
 - `packages/shared` - Shared TypeScript utilities, types, and error definitions
 - `packages/docs` - Vitepress documentation and guides
 - `packages/mcp` - MCP server for development tools and documentation

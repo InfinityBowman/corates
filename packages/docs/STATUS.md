@@ -8,7 +8,7 @@ This document tracks the current implementation status of CoRATES features and s
 
 ## Current Focus
 
-**React migration complete** - The frontend was fully migrated from SolidJS to React/TanStack Start in March 2026. The `packages/landing` package is now the sole frontend. `packages/web` (SolidJS) is deprecated and pending removal. The application is feature-complete for core workflows but not yet deployed to production. No active users.
+**React migration complete** - The frontend was fully migrated from SolidJS to React/TanStack Start in March 2026. The `packages/landing` package is the sole frontend. The application is feature-complete for core workflows but not yet deployed to production. No active users.
 
 ---
 
