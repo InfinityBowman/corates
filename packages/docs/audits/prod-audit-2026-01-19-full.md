@@ -68,12 +68,10 @@ CoRATES has solid code architecture and security fundamentals, but critical gaps
 
 ```
 packages/
-  web/        - Frontend SolidJS application
+  web/        - React/TanStack Start frontend
   workers/    - Backend Hono API + Durable Objects
-  landing/    - Marketing site (embeds web at build)
   shared/     - Common utilities and error definitions
   mcp/        - MCP server for development tools
-  mcp-memory/ - Persistent agent memory
   docs/       - Internal documentation
 ```
 
@@ -241,7 +239,7 @@ Test documents that title-cleaning regex only works for prefixes, not mid-title 
 
 #### LOW: Incomplete Contact Page FAQ
 
-**Location:** `packages/landing/src/routes/contact.jsx:111`
+**Location:** `packages/web/src/routes/contact.jsx:111`
 
 ```jsx
 {
@@ -529,7 +527,7 @@ Given low traffic expectation (<100 MAU), these are acceptable risks for launch.
 
 ```bash
 # From package.json
-pnpm deploy  # runs deploy:workers && deploy:landing
+pnpm deploy  # runs deploy:workers && deploy:web
 ```
 
 Deployment via `wrangler deploy --env production`. No CI/CD pipeline.

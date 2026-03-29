@@ -95,7 +95,7 @@ CoRATES demonstrates **strong local-first fundamentals** with a sophisticated Yj
 **Application Shell:**
 
 ```javascript
-// packages/landing/src/entry-client.jsx:39-58
+// packages/web/src/entry-client.jsx:39-58
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', async () => {
     const registrations = await navigator.serviceWorker.getRegistrations();

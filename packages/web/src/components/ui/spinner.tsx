@@ -1,35 +1,6 @@
-/**
- * Spinner and loading components.
- *
- * @example
- * // Basic spinner
- * <Spinner />
- *
- * // Large spinner
- * <Spinner size="lg" />
- *
- * // White spinner (for dark backgrounds)
- * <Spinner variant="white" />
- *
- * @example
- * // Page loader (centered with min-height)
- * <PageLoader />
- *
- * @example
- * // Loading placeholder with text
- * <LoadingPlaceholder label="Loading projects..." />
- *
- * @example
- * // Button spinner (small, white)
- * <Button disabled>
- *   <ButtonSpinner />
- *   Saving...
- * </Button>
- */
-import type { Component, ComponentProps } from 'solid-js';
-import { splitProps } from 'solid-js';
+import * as React from 'react';
 import { cva, type VariantProps } from 'class-variance-authority';
-import { cn } from './cn';
+import { cn } from '@/lib/utils';
 
 const spinnerVariants = cva('inline-block animate-spin rounded-full border-transparent', {
   variants: {
@@ -40,7 +11,7 @@ const spinnerVariants = cva('inline-block animate-spin rounded-full border-trans
       xl: 'h-12 w-12 border-4',
     },
     variant: {
-      default: 'border-t-blue-600 border-r-blue-600',
+      default: 'border-t-primary border-r-primary',
       white: 'border-t-white border-r-white',
       gray: 'border-t-muted-foreground border-r-muted-foreground',
     },
@@ -51,62 +22,59 @@ const spinnerVariants = cva('inline-block animate-spin rounded-full border-trans
   },
 });
 
-type SpinnerProps = ComponentProps<'div'> &
+function Spinner({
+  className,
+  size,
+  variant,
+  label,
+  ...props
+}: React.ComponentProps<'div'> &
   VariantProps<typeof spinnerVariants> & {
     label?: string;
-  };
-
-const Spinner: Component<SpinnerProps> = props => {
-  const [local, others] = splitProps(props, ['size', 'variant', 'class', 'label']);
+  }) {
   return (
     <div
       role='status'
-      aria-label={local.label ?? 'Loading'}
-      class={cn(spinnerVariants({ size: local.size, variant: local.variant }), local.class)}
-      {...others}
+      aria-label={label ?? 'Loading'}
+      className={cn(spinnerVariants({ size, variant }), className)}
+      {...props}
     />
   );
-};
+}
 
-type PageLoaderProps = ComponentProps<'div'> & {
-  label?: string;
-};
-
-const PageLoader: Component<PageLoaderProps> = props => {
-  const [local, others] = splitProps(props, ['class', 'label']);
+function PageLoader({
+  className,
+  label,
+  ...props
+}: React.ComponentProps<'div'> & { label?: string }) {
   return (
-    <div class={cn('flex min-h-50 items-center justify-center', local.class)} {...others}>
-      <Spinner size='lg' label={local.label} />
+    <div className={cn('flex min-h-50 items-center justify-center', className)} {...props}>
+      <Spinner size='lg' label={label} />
     </div>
   );
-};
+}
 
-type LoadingPlaceholderProps = ComponentProps<'div'> & {
-  label?: string;
-};
-
-const LoadingPlaceholder: Component<LoadingPlaceholderProps> = props => {
-  const [local, others] = splitProps(props, ['class', 'label']);
+function LoadingPlaceholder({
+  className,
+  label,
+  ...props
+}: React.ComponentProps<'div'> & { label?: string }) {
   return (
     <div
-      class={cn(
+      className={cn(
         'text-muted-foreground flex flex-col items-center justify-center gap-3 py-12',
-        local.class,
+        className,
       )}
-      {...others}
+      {...props}
     >
       <Spinner size='lg' />
-      <span class='text-sm'>{local.label ?? 'Loading...'}</span>
+      <span className='text-sm'>{label ?? 'Loading...'}</span>
     </div>
   );
-};
+}
 
-type ButtonSpinnerProps = ComponentProps<'div'>;
-
-const ButtonSpinner: Component<ButtonSpinnerProps> = props => {
-  const [local, others] = splitProps(props, ['class']);
-  return <Spinner size='sm' variant='white' class={local.class} {...others} />;
-};
+function ButtonSpinner({ className, ...props }: React.ComponentProps<'div'>) {
+  return <Spinner size='sm' variant='white' className={className} {...props} />;
+}
 
 export { Spinner, PageLoader, LoadingPlaceholder, ButtonSpinner, spinnerVariants };
-export type { SpinnerProps };

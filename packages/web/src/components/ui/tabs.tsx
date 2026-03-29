@@ -1,138 +1,89 @@
-/**
- * Tabs component for tabbed interfaces.
- * Uses minimal default styles - add your own via class props.
- *
- * @example
- * // Bordered tabs (common pattern)
- * <Tabs defaultValue="account">
- *   <TabsList class="overflow-x-auto rounded-t-lg border border-border bg-card">
- *     <TabsTrigger
- *       value="account"
- *       class="border-b-2 border-transparent text-muted-foreground hover:bg-muted data-[selected]:border-primary data-[selected]:text-foreground"
- *     >
- *       Account
- *     </TabsTrigger>
- *     <TabsTrigger value="password" class="...">Password</TabsTrigger>
- *   </TabsList>
- *   <TabsContent value="account" class="rounded-b-lg border border-t-0 border-border bg-card p-6">
- *     Account settings here
- *   </TabsContent>
- * </Tabs>
- *
- * @example
- * // Controlled tabs
- * const [tab, setTab] = createSignal('account');
- * <Tabs value={tab()} onValueChange={setTab}>
- *   ...
- * </Tabs>
- */
-import type { Component, JSX } from 'solid-js';
-import { splitProps } from 'solid-js';
-import { Tabs as TabsPrimitive } from '@ark-ui/solid/tabs';
-import type {
-  TabsRootProps as ArkTabsRootProps,
-  TabListProps as ArkTabsListProps,
-  TabTriggerProps as ArkTabsTriggerProps,
-  TabContentProps as ArkTabsContentProps,
-  TabIndicatorProps as ArkTabsIndicatorProps,
-} from '@ark-ui/solid/tabs';
-import { cn } from './cn';
+import * as React from 'react';
+import { Tabs as TabsPrimitive } from 'radix-ui';
 
-type TabsProps = Omit<ArkTabsRootProps, 'onValueChange'> & {
-  class?: string;
-  children?: JSX.Element;
-  onValueChange?: (_value: string) => void;
-};
+import { cn } from '@/lib/utils';
 
-const Tabs: Component<TabsProps> = props => {
-  const [local, others] = splitProps(props, ['class', 'children', 'onValueChange']);
+function Tabs({ className, ...props }: React.ComponentProps<typeof TabsPrimitive.Root>) {
+  return <TabsPrimitive.Root data-slot='tabs' className={className} {...props} />;
+}
+
+function TabsList({ className, ...props }: React.ComponentProps<typeof TabsPrimitive.List>) {
   return (
-    <TabsPrimitive.Root
-      class={local.class}
-      onValueChange={details => local.onValueChange?.(details.value)}
-      {...others}
-    >
-      {local.children}
-    </TabsPrimitive.Root>
+    <TabsPrimitive.List
+      data-slot='tabs-list'
+      className={cn('flex items-center', className)}
+      {...props}
+    />
   );
-};
+}
 
-type TabsListProps = ArkTabsListProps & {
-  class?: string;
-  children?: JSX.Element;
-};
-
-const TabsList: Component<TabsListProps> = props => {
-  const [local, others] = splitProps(props, ['class', 'children']);
-  return (
-    <TabsPrimitive.List class={cn('flex items-center', local.class)} {...others}>
-      {local.children}
-    </TabsPrimitive.List>
-  );
-};
-
-type TabsTriggerProps = ArkTabsTriggerProps & {
-  class?: string;
-  children?: JSX.Element;
-};
-
-const TabsTrigger: Component<TabsTriggerProps> = props => {
-  const [local, others] = splitProps(props, ['class', 'children']);
+function TabsTrigger({ className, ...props }: React.ComponentProps<typeof TabsPrimitive.Trigger>) {
   return (
     <TabsPrimitive.Trigger
-      class={cn(
+      data-slot='tabs-trigger'
+      className={cn(
         'inline-flex items-center px-4 py-3 text-sm font-medium whitespace-nowrap',
         'transition-colors',
         'focus-visible:ring-ring focus-visible:ring-2 focus-visible:outline-none',
         'disabled:pointer-events-none disabled:opacity-50',
-        local.class,
+        className,
       )}
-      {...others}
-    >
-      {local.children}
-    </TabsPrimitive.Trigger>
-  );
-};
-
-type TabsContentProps = ArkTabsContentProps & {
-  class?: string;
-  children?: JSX.Element;
-};
-
-const TabsContent: Component<TabsContentProps> = props => {
-  const [local, others] = splitProps(props, ['class', 'children']);
-  return (
-    <TabsPrimitive.Content
-      class={cn(
-        'ring-offset-background mt-2',
-        'focus-visible:ring-ring focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none',
-        local.class,
-      )}
-      {...others}
-    >
-      {local.children}
-    </TabsPrimitive.Content>
-  );
-};
-
-type TabsIndicatorProps = ArkTabsIndicatorProps & {
-  class?: string;
-};
-
-const TabsIndicator: Component<TabsIndicatorProps> = props => {
-  const [local, others] = splitProps(props, ['class', 'style']);
-  return (
-    <TabsPrimitive.Indicator
-      class={cn('bg-primary absolute bottom-0', local.class)}
-      style={{
-        width: 'var(--width)',
-        left: 'var(--left)',
-        transition: 'left 200ms ease-out, width 200ms ease-out',
-        ...(typeof local.style === 'object' ? local.style : {}),
-      }}
-      {...others}
+      {...props}
     />
   );
-};
+}
 
-export { Tabs, TabsList, TabsTrigger, TabsContent, TabsIndicator };
+function TabsIndicator({ className }: { className?: string }) {
+  const ref = React.useRef<HTMLDivElement>(null);
+
+  React.useEffect(() => {
+    const indicator = ref.current;
+    if (!indicator) return;
+    const list = indicator.closest('[data-slot="tabs-list"]');
+    if (!list) return;
+
+    function update() {
+      const active = list!.querySelector<HTMLElement>('[data-state="active"]');
+      if (!active || !indicator) return;
+      const listRect = list!.getBoundingClientRect();
+      const activeRect = active.getBoundingClientRect();
+      indicator.style.left = `${activeRect.left - listRect.left}px`;
+      indicator.style.width = `${activeRect.width}px`;
+    }
+
+    update();
+
+    const observer = new MutationObserver(update);
+    observer.observe(list, { attributes: true, subtree: true, attributeFilter: ['data-state'] });
+
+    window.addEventListener('resize', update);
+    return () => {
+      observer.disconnect();
+      window.removeEventListener('resize', update);
+    };
+  }, []);
+
+  return (
+    <div
+      ref={ref}
+      className={cn('absolute bottom-0', className)}
+      style={{ transition: 'left 200ms ease-out, width 200ms ease-out' }}
+    />
+  );
+}
+
+function TabsContent({ className, ...props }: React.ComponentProps<typeof TabsPrimitive.Content>) {
+  return (
+    <TabsPrimitive.Content
+      data-slot='tabs-content'
+      className={cn(
+        'mt-2',
+        'focus-visible:ring-ring focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none',
+        className,
+      )}
+      {...props}
+    />
+  );
+}
+
+export { Tabs, TabsList, TabsTrigger, TabsIndicator, TabsContent };

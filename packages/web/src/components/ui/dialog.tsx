@@ -1,209 +1,147 @@
-/**
- * Dialog component for modal overlays.
- *
- * @example
- * <Dialog>
- *   <DialogTrigger>
- *     <Button>Open Dialog</Button>
- *   </DialogTrigger>
- *   <DialogBackdrop />
- *   <DialogPositioner>
- *     <DialogContent>
- *       <DialogHeader>
- *         <DialogTitle>Confirm Action</DialogTitle>
- *         <DialogCloseTrigger>
- *           <FiX />
- *         </DialogCloseTrigger>
- *       </DialogHeader>
- *       <DialogBody>
- *         <DialogDescription>Are you sure you want to proceed?</DialogDescription>
- *       </DialogBody>
- *       <DialogFooter>
- *         <DialogCloseTrigger>
- *           <Button variant="outline">Cancel</Button>
- *         </DialogCloseTrigger>
- *         <Button>Confirm</Button>
- *       </DialogFooter>
- *     </DialogContent>
- *   </DialogPositioner>
- * </Dialog>
- *
- * @example
- * // Controlled dialog
- * const [open, setOpen] = createSignal(false);
- * <Dialog open={open()} onOpenChange={setOpen}>
- *   ...
- * </Dialog>
- */
-import type { Component, ComponentProps, JSX } from 'solid-js';
-import { splitProps } from 'solid-js';
-import { Dialog as DialogPrimitive } from '@ark-ui/solid/dialog';
-import type {
-  DialogRootProps as ArkDialogRootProps,
-  DialogBackdropProps as ArkDialogBackdropProps,
-  DialogContentProps as ArkDialogContentProps,
-  DialogTitleProps as ArkDialogTitleProps,
-  DialogDescriptionProps as ArkDialogDescriptionProps,
-  DialogCloseTriggerProps as ArkDialogCloseTriggerProps,
-} from '@ark-ui/solid/dialog';
-import { Portal } from 'solid-js/web';
-import { cn } from './cn';
-import { Z_INDEX } from './z-index';
+import * as React from 'react';
+import { Dialog as DialogPrimitive } from 'radix-ui';
 
-type DialogProps = Omit<ArkDialogRootProps, 'onOpenChange'> & {
-  children?: JSX.Element;
-  onOpenChange?: (_open: boolean) => void;
-};
+import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
+import { XIcon } from 'lucide-react';
 
-const Dialog: Component<DialogProps> = props => {
-  const [local, others] = splitProps(props, ['children', 'onOpenChange']);
+function Dialog({ ...props }: React.ComponentProps<typeof DialogPrimitive.Root>) {
+  return <DialogPrimitive.Root data-slot='dialog' {...props} />;
+}
+
+function DialogTrigger({ ...props }: React.ComponentProps<typeof DialogPrimitive.Trigger>) {
+  return <DialogPrimitive.Trigger data-slot='dialog-trigger' {...props} />;
+}
+
+function DialogPortal({ ...props }: React.ComponentProps<typeof DialogPrimitive.Portal>) {
+  return <DialogPrimitive.Portal data-slot='dialog-portal' {...props} />;
+}
+
+function DialogClose({ ...props }: React.ComponentProps<typeof DialogPrimitive.Close>) {
+  return <DialogPrimitive.Close data-slot='dialog-close' {...props} />;
+}
+
+function DialogOverlay({
+  className,
+  ...props
+}: React.ComponentProps<typeof DialogPrimitive.Overlay>) {
   return (
-    <DialogPrimitive.Root onOpenChange={details => local.onOpenChange?.(details.open)} {...others}>
-      {local.children}
-    </DialogPrimitive.Root>
+    <DialogPrimitive.Overlay
+      data-slot='dialog-overlay'
+      className={cn(
+        'data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0 fixed inset-0 isolate z-50 bg-black/50 duration-100',
+        className,
+      )}
+      {...props}
+    />
   );
-};
+}
 
-const DialogTrigger = DialogPrimitive.Trigger;
-
-type DialogBackdropProps = ArkDialogBackdropProps & {
-  class?: string;
-};
-
-const DialogBackdrop: Component<DialogBackdropProps> = props => {
-  const [local, others] = splitProps(props, ['class']);
+function DialogContent({
+  className,
+  children,
+  showCloseButton = true,
+  ...props
+}: React.ComponentProps<typeof DialogPrimitive.Content> & {
+  showCloseButton?: boolean;
+}) {
   return (
-    <Portal>
-      <DialogPrimitive.Backdrop
-        class={cn('fixed inset-0 bg-black/50', Z_INDEX.BACKDROP, local.class)}
-        {...others}
-      />
-    </Portal>
-  );
-};
-
-type DialogPositionerProps = ComponentProps<typeof DialogPrimitive.Positioner> & {
-  class?: string;
-  children?: JSX.Element;
-};
-
-const DialogPositioner: Component<DialogPositionerProps> = props => {
-  const [local, others] = splitProps(props, ['class', 'children']);
-  return (
-    <Portal>
-      <DialogPrimitive.Positioner
-        class={cn(
-          'fixed inset-0 flex items-center justify-center overflow-y-auto p-4',
-          Z_INDEX.DIALOG,
-          local.class,
+    <DialogPortal>
+      <DialogOverlay />
+      <DialogPrimitive.Content
+        data-slot='dialog-content'
+        className={cn(
+          'bg-background ring-foreground/10 data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95 fixed top-1/2 left-1/2 z-50 grid w-full max-w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 gap-4 rounded-xl p-4 text-sm ring-1 duration-100 outline-none sm:max-w-sm',
+          className,
         )}
-        {...others}
+        {...props}
       >
-        {local.children}
-      </DialogPrimitive.Positioner>
-    </Portal>
+        {children}
+        {showCloseButton && (
+          <DialogPrimitive.Close data-slot='dialog-close' asChild>
+            <Button variant='ghost' className='absolute top-2 right-2' size='icon-sm'>
+              <XIcon />
+              <span className='sr-only'>Close</span>
+            </Button>
+          </DialogPrimitive.Close>
+        )}
+      </DialogPrimitive.Content>
+    </DialogPortal>
   );
-};
+}
 
-type DialogContentProps = ArkDialogContentProps & {
-  class?: string;
-  children?: JSX.Element;
-};
-
-const DialogContent: Component<DialogContentProps> = props => {
-  const [local, others] = splitProps(props, ['class', 'children']);
-  return (
-    <DialogPrimitive.Content
-      class={cn(
-        'border-border bg-card my-auto w-full max-w-lg rounded-lg border shadow-xl',
-        local.class,
-      )}
-      {...others}
-    >
-      {local.children}
-    </DialogPrimitive.Content>
-  );
-};
-
-type DialogTitleProps = ArkDialogTitleProps & {
-  class?: string;
-};
-
-const DialogTitle: Component<DialogTitleProps> = props => {
-  const [local, others] = splitProps(props, ['class']);
-  return (
-    <DialogPrimitive.Title
-      class={cn('text-foreground text-lg font-semibold', local.class)}
-      {...others}
-    />
-  );
-};
-
-type DialogDescriptionProps = ArkDialogDescriptionProps & {
-  class?: string;
-};
-
-const DialogDescription: Component<DialogDescriptionProps> = props => {
-  const [local, others] = splitProps(props, ['class']);
-  return (
-    <DialogPrimitive.Description
-      class={cn('text-muted-foreground mt-1 text-sm', local.class)}
-      {...others}
-    />
-  );
-};
-
-type DialogCloseTriggerProps = ArkDialogCloseTriggerProps & {
-  class?: string;
-  children?: JSX.Element;
-};
-
-const DialogCloseTrigger: Component<DialogCloseTriggerProps> = props => {
-  const [local, others] = splitProps(props, ['class', 'children']);
-  return (
-    <DialogPrimitive.CloseTrigger
-      class={cn(
-        'text-muted-foreground hover:bg-muted hover:text-foreground rounded-md p-1 transition-colors',
-        'focus:ring-ring focus:ring-2 focus:ring-offset-2 focus:outline-none',
-        local.class,
-      )}
-      {...others}
-    >
-      {local.children}
-    </DialogPrimitive.CloseTrigger>
-  );
-};
-
-const DialogHeader: Component<ComponentProps<'div'>> = props => {
-  const [local, others] = splitProps(props, ['class']);
+function DialogHeader({ className, ...props }: React.ComponentProps<'div'>) {
   return (
     <div
-      class={cn('border-border flex items-center justify-between border-b p-4', local.class)}
-      {...others}
+      data-slot='dialog-header'
+      className={cn('-mx-4 -mt-4 flex flex-col gap-2 border-b px-4 pt-4 pb-4', className)}
+      {...props}
     />
   );
-};
+}
 
-const DialogBody: Component<ComponentProps<'div'>> = props => {
-  const [local, others] = splitProps(props, ['class']);
-  return <div class={cn('p-4', local.class)} {...others} />;
-};
+function DialogFooter({
+  className,
+  showCloseButton = false,
+  children,
+  ...props
+}: React.ComponentProps<'div'> & {
+  showCloseButton?: boolean;
+}) {
+  return (
+    <div
+      data-slot='dialog-footer'
+      className={cn(
+        'bg-muted/50 -mx-4 -mb-4 flex flex-col-reverse gap-2 rounded-b-xl border-t p-4 sm:flex-row sm:justify-end',
+        className,
+      )}
+      {...props}
+    >
+      {children}
+      {showCloseButton && (
+        <DialogPrimitive.Close asChild>
+          <Button variant='outline'>Close</Button>
+        </DialogPrimitive.Close>
+      )}
+    </div>
+  );
+}
 
-const DialogFooter: Component<ComponentProps<'div'>> = props => {
-  const [local, others] = splitProps(props, ['class']);
-  return <div class={cn('bg-muted flex justify-end gap-3 px-4 py-3', local.class)} {...others} />;
-};
+function DialogTitle({ className, ...props }: React.ComponentProps<typeof DialogPrimitive.Title>) {
+  return (
+    <DialogPrimitive.Title
+      data-slot='dialog-title'
+      className={cn('text-base leading-none font-medium', className)}
+      {...props}
+    />
+  );
+}
+
+function DialogDescription({
+  className,
+  ...props
+}: React.ComponentProps<typeof DialogPrimitive.Description>) {
+  return (
+    <DialogPrimitive.Description
+      data-slot='dialog-description'
+      className={cn(
+        'text-muted-foreground *:[a]:hover:text-foreground text-sm *:[a]:underline *:[a]:underline-offset-3',
+        className,
+      )}
+      {...props}
+    />
+  );
+}
 
 export {
   Dialog,
-  DialogTrigger,
-  DialogBackdrop,
-  DialogPositioner,
+  DialogClose,
   DialogContent,
-  DialogTitle,
   DialogDescription,
-  DialogCloseTrigger,
-  DialogHeader,
-  DialogBody,
   DialogFooter,
+  DialogHeader,
+  DialogOverlay,
+  DialogPortal,
+  DialogTitle,
+  DialogTrigger,
 };

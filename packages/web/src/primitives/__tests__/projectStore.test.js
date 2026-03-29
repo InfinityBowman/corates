@@ -1,361 +1,203 @@
 /**
- * Tests for projectStore - Central store for project data
+ * Tests for projectStore - Central store for project data (Zustand)
  *
  * P0 Priority: Core state management
  * Tests the store's ability to manage project data, connection states,
- * and project list for dashboard.
+ * and active project tracking.
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { createRoot } from 'solid-js';
-
-// Reset module cache before importing to get fresh store
-let projectStore;
+import { describe, it, expect, beforeEach } from 'vitest';
+import { useProjectStore } from '@/stores/projectStore.ts';
 
 describe('projectStore - Project Data Management', () => {
-  beforeEach(async () => {
-    vi.resetModules();
-    const module = await import('../../stores/projectStore.js');
-    projectStore = module.default;
-  });
-
-  afterEach(() => {
-    vi.clearAllMocks();
-  });
-
-  describe('getProject / setProjectData', () => {
-    it('should return undefined for non-existent project', () => {
-      createRoot(dispose => {
-        const result = projectStore.getProject('non-existent');
-        expect(result).toBeUndefined();
-        dispose();
-      });
+  beforeEach(() => {
+    // Reset the store to initial state before each test
+    useProjectStore.setState({
+      projects: {},
+      activeProjectId: null,
+      connections: {},
+      projectStats: {},
     });
+  });
 
+  describe('setProjectData / getState', () => {
     it('should store and retrieve project data', () => {
-      createRoot(dispose => {
-        const projectId = 'test-project-1';
-        const data = {
-          studies: [{ id: 'study-1', name: 'Test Study' }],
-          members: [{ userId: 'user-1', role: 'owner' }],
-          meta: { name: 'Test Project', description: 'A test project' },
-        };
+      const projectId = 'test-project-1';
+      const data = {
+        studies: [{ id: 'study-1', name: 'Test Study' }],
+        members: [{ userId: 'user-1', role: 'owner' }],
+        meta: { name: 'Test Project', description: 'A test project' },
+      };
 
-        projectStore.setProjectData(projectId, data);
-        const result = projectStore.getProject(projectId);
+      useProjectStore.getState().setProjectData(projectId, data);
+      const state = useProjectStore.getState();
 
-        expect(result).toEqual(data);
-        dispose();
-      });
+      expect(state.projects[projectId]).toBeDefined();
+      expect(state.projects[projectId].studies).toEqual(data.studies);
+      expect(state.projects[projectId].members).toEqual(data.members);
+      expect(state.projects[projectId].meta).toEqual(data.meta);
     });
 
     it('should initialize project with empty arrays if not set', () => {
-      createRoot(dispose => {
-        const projectId = 'test-project-2';
-        projectStore.setProjectData(projectId, {});
+      const projectId = 'test-project-2';
+      useProjectStore.getState().setProjectData(projectId, {});
 
-        const result = projectStore.getProject(projectId);
-        expect(result.studies).toEqual([]);
-        expect(result.members).toEqual([]);
-        expect(result.meta).toEqual({});
-        dispose();
-      });
+      const project = useProjectStore.getState().projects[projectId];
+      expect(project.studies).toEqual([]);
+      expect(project.members).toEqual([]);
+      expect(project.meta).toEqual({});
     });
 
     it('should update existing project data without overwriting unset fields', () => {
-      createRoot(dispose => {
-        const projectId = 'test-project-3';
+      const projectId = 'test-project-3';
 
-        // Initial data
-        projectStore.setProjectData(projectId, {
-          studies: [{ id: 'study-1', name: 'Study 1' }],
-          members: [{ userId: 'user-1', role: 'owner' }],
-          meta: { name: 'Original Name' },
-        });
-
-        // Update only studies
-        projectStore.setProjectData(projectId, {
-          studies: [
-            { id: 'study-1', name: 'Study 1' },
-            { id: 'study-2', name: 'Study 2' },
-          ],
-        });
-
-        const result = projectStore.getProject(projectId);
-        expect(result.studies.length).toBe(2);
-        expect(result.members.length).toBe(1);
-        expect(result.meta.name).toBe('Original Name');
-        dispose();
+      useProjectStore.getState().setProjectData(projectId, {
+        studies: [{ id: 'study-1', name: 'Study 1' }],
+        members: [{ userId: 'user-1', role: 'owner' }],
+        meta: { name: 'Original Name' },
       });
-    });
-  });
 
-  describe('hasProject', () => {
-    it('should return false for non-existent project', () => {
-      createRoot(dispose => {
-        expect(projectStore.hasProject('non-existent')).toBe(false);
-        dispose();
+      // Update only studies
+      useProjectStore.getState().setProjectData(projectId, {
+        studies: [
+          { id: 'study-1', name: 'Study 1' },
+          { id: 'study-2', name: 'Study 2' },
+        ],
       });
-    });
 
-    it('should return true for existing project', () => {
-      createRoot(dispose => {
-        projectStore.setProjectData('existing-project', { meta: {} });
-        expect(projectStore.hasProject('existing-project')).toBe(true);
-        dispose();
-      });
+      const project = useProjectStore.getState().projects[projectId];
+      expect(project.studies.length).toBe(2);
+      expect(project.members.length).toBe(1);
+      expect(project.meta.name).toBe('Original Name');
     });
   });
 
   describe('clearProject', () => {
     it('should remove project from cache', () => {
-      createRoot(dispose => {
-        const projectId = 'to-clear';
-        projectStore.setProjectData(projectId, { meta: { name: 'To Clear' } });
-        expect(projectStore.hasProject(projectId)).toBe(true);
+      const projectId = 'to-clear';
+      useProjectStore.getState().setProjectData(projectId, { meta: { name: 'To Clear' } });
+      expect(useProjectStore.getState().projects[projectId]).toBeDefined();
 
-        projectStore.clearProject(projectId);
-        expect(projectStore.hasProject(projectId)).toBe(false);
-        expect(projectStore.getProject(projectId)).toBeUndefined();
-        dispose();
-      });
+      useProjectStore.getState().clearProject(projectId);
+      expect(useProjectStore.getState().projects[projectId]).toBeUndefined();
     });
 
     it('should clear active project if it matches', () => {
-      createRoot(dispose => {
-        const projectId = 'active-to-clear';
-        projectStore.setProjectData(projectId, { meta: {} });
-        projectStore.setActiveProject(projectId);
+      const projectId = 'active-to-clear';
+      useProjectStore.getState().setProjectData(projectId, { meta: {} });
+      useProjectStore.getState().setActiveProject(projectId);
 
-        projectStore.clearProject(projectId);
+      useProjectStore.getState().clearProject(projectId);
 
-        expect(projectStore.store.activeProjectId).toBeNull();
-        dispose();
-      });
+      expect(useProjectStore.getState().activeProjectId).toBeNull();
     });
 
     it('should also clear connection state', () => {
-      createRoot(dispose => {
-        const projectId = 'clear-with-connection';
-        projectStore.setProjectData(projectId, { meta: {} });
-        projectStore.setConnectionState(projectId, { connected: true });
+      const projectId = 'clear-with-connection';
+      useProjectStore.getState().setProjectData(projectId, { meta: {} });
+      useProjectStore.getState().dispatchConnectionEvent(projectId, { type: 'CONNECT_REQUESTED' });
 
-        projectStore.clearProject(projectId);
+      useProjectStore.getState().clearProject(projectId);
 
-        const connState = projectStore.getConnectionState(projectId);
-        expect(connState.connected).toBe(false);
-        dispose();
-      });
-    });
-  });
-
-  describe('getStudies / getMembers / getMeta', () => {
-    it('should return empty arrays/objects for non-existent project', () => {
-      createRoot(dispose => {
-        expect(projectStore.getStudies('none')).toEqual([]);
-        expect(projectStore.getMembers('none')).toEqual([]);
-        expect(projectStore.getMeta('none')).toEqual({});
-        dispose();
-      });
-    });
-
-    it('should return correct data for existing project', () => {
-      createRoot(dispose => {
-        const projectId = 'getter-test';
-        const studies = [{ id: 's1' }, { id: 's2' }];
-        const members = [{ userId: 'u1' }];
-        const meta = { name: 'Test' };
-
-        projectStore.setProjectData(projectId, { studies, members, meta });
-
-        expect(projectStore.getStudies(projectId)).toEqual(studies);
-        expect(projectStore.getMembers(projectId)).toEqual(members);
-        expect(projectStore.getMeta(projectId)).toEqual(meta);
-        dispose();
-      });
-    });
-  });
-
-  describe('getStudy', () => {
-    it('should return null for non-existent project', () => {
-      createRoot(dispose => {
-        expect(projectStore.getStudy('none', 'study-1')).toBeNull();
-        dispose();
-      });
-    });
-
-    it('should return null for non-existent study', () => {
-      createRoot(dispose => {
-        projectStore.setProjectData('proj', {
-          studies: [{ id: 'study-1', name: 'Study 1' }],
-        });
-
-        expect(projectStore.getStudy('proj', 'non-existent')).toBeNull();
-        dispose();
-      });
-    });
-
-    it('should return the correct study', () => {
-      createRoot(dispose => {
-        const studies = [
-          { id: 'study-1', name: 'Study 1' },
-          { id: 'study-2', name: 'Study 2' },
-        ];
-        projectStore.setProjectData('proj', { studies });
-
-        const study = projectStore.getStudy('proj', 'study-2');
-        expect(study).toEqual({ id: 'study-2', name: 'Study 2' });
-        dispose();
-      });
-    });
-  });
-
-  describe('getChecklist', () => {
-    it('should return null for non-existent study', () => {
-      createRoot(dispose => {
-        projectStore.setProjectData('proj', { studies: [] });
-        expect(projectStore.getChecklist('proj', 'study-1', 'checklist-1')).toBeNull();
-        dispose();
-      });
-    });
-
-    it('should return null for non-existent checklist', () => {
-      createRoot(dispose => {
-        projectStore.setProjectData('proj', {
-          studies: [
-            {
-              id: 'study-1',
-              checklists: [{ id: 'checklist-1', type: 'AMSTAR2' }],
-            },
-          ],
-        });
-
-        expect(projectStore.getChecklist('proj', 'study-1', 'non-existent')).toBeNull();
-        dispose();
-      });
-    });
-
-    it('should return the correct checklist', () => {
-      createRoot(dispose => {
-        const checklist = { id: 'checklist-1', type: 'AMSTAR2', status: 'pending' };
-        projectStore.setProjectData('proj', {
-          studies: [{ id: 'study-1', checklists: [checklist] }],
-        });
-
-        const result = projectStore.getChecklist('proj', 'study-1', 'checklist-1');
-        expect(result).toEqual(checklist);
-        dispose();
-      });
+      const connState = useProjectStore.getState().connections[projectId];
+      expect(connState).toBeUndefined();
     });
   });
 });
 
 describe('projectStore - Connection State Management', () => {
-  beforeEach(async () => {
-    vi.resetModules();
-    const module = await import('../../stores/projectStore.js');
-    projectStore = module.default;
+  beforeEach(() => {
+    useProjectStore.setState({
+      projects: {},
+      activeProjectId: null,
+      connections: {},
+      projectStats: {},
+    });
   });
 
-  describe('getConnectionState', () => {
+  describe('getConnectionState via selector', () => {
     it('should return default state for unknown project', () => {
-      createRoot(dispose => {
-        const state = projectStore.getConnectionState('unknown');
-        expect(state).toEqual({
-          connected: false,
-          connecting: false,
-          synced: false,
-          error: null,
-        });
-        dispose();
-      });
+      const state = useProjectStore.getState().connections['unknown'];
+      // No entry exists, should be undefined (selector handles the default)
+      expect(state).toBeUndefined();
     });
   });
 
-  describe('setConnectionState', () => {
-    it('should initialize and update connection state', () => {
-      createRoot(dispose => {
-        const projectId = 'conn-test';
+  describe('dispatchConnectionEvent', () => {
+    it('should transition through connection phases', () => {
+      const projectId = 'conn-test';
 
-        projectStore.setConnectionState(projectId, { connecting: true });
-        expect(projectStore.getConnectionState(projectId).connecting).toBe(true);
-        expect(projectStore.getConnectionState(projectId).connected).toBe(false);
+      useProjectStore.getState().dispatchConnectionEvent(projectId, { type: 'CONNECT_REQUESTED' });
+      let conn = useProjectStore.getState().connections[projectId];
+      expect(conn.phase).toBe('connecting');
 
-        projectStore.setConnectionState(projectId, { connecting: false, connected: true });
-        expect(projectStore.getConnectionState(projectId).connecting).toBe(false);
-        expect(projectStore.getConnectionState(projectId).connected).toBe(true);
-        dispose();
-      });
+      useProjectStore.getState().dispatchConnectionEvent(projectId, { type: 'REMOTE_CONNECTED' });
+      conn = useProjectStore.getState().connections[projectId];
+      expect(conn.phase).toBe('connected');
+
+      useProjectStore.getState().dispatchConnectionEvent(projectId, { type: 'SYNC_COMPLETE' });
+      conn = useProjectStore.getState().connections[projectId];
+      expect(conn.phase).toBe('synced');
     });
 
-    it('should set error state', () => {
-      createRoot(dispose => {
-        const projectId = 'error-test';
+    it('should set error state on access denied', () => {
+      const projectId = 'error-test';
 
-        projectStore.setConnectionState(projectId, {
-          error: 'Connection failed',
-          connected: false,
-        });
-
-        const state = projectStore.getConnectionState(projectId);
-        expect(state.error).toBe('Connection failed');
-        expect(state.connected).toBe(false);
-        dispose();
+      useProjectStore.getState().dispatchConnectionEvent(projectId, {
+        type: 'ACCESS_DENIED',
+        reason: 'Connection failed',
       });
+
+      const conn = useProjectStore.getState().connections[projectId];
+      expect(conn.phase).toBe('error');
+      expect(conn.error).toBe('Connection failed');
     });
 
-    it('should update synced state', () => {
-      createRoot(dispose => {
-        const projectId = 'sync-test';
+    it('should reset to idle', () => {
+      const projectId = 'reset-test';
 
-        projectStore.setConnectionState(projectId, { synced: true });
-        expect(projectStore.getConnectionState(projectId).synced).toBe(true);
-        dispose();
-      });
+      useProjectStore.getState().dispatchConnectionEvent(projectId, { type: 'CONNECT_REQUESTED' });
+      useProjectStore.getState().dispatchConnectionEvent(projectId, { type: 'SYNC_COMPLETE' });
+      expect(useProjectStore.getState().connections[projectId].phase).toBe('synced');
+
+      useProjectStore.getState().dispatchConnectionEvent(projectId, { type: 'RESET' });
+      expect(useProjectStore.getState().connections[projectId].phase).toBe('idle');
     });
   });
 });
 
 describe('projectStore - Active Project', () => {
-  beforeEach(async () => {
-    vi.resetModules();
-    const module = await import('../../stores/projectStore.js');
-    projectStore = module.default;
+  beforeEach(() => {
+    useProjectStore.setState({
+      projects: {},
+      activeProjectId: null,
+      connections: {},
+      projectStats: {},
+    });
   });
 
-  describe('setActiveProject / getActiveProject', () => {
+  describe('setActiveProject', () => {
     it('should return null when no active project', () => {
-      createRoot(dispose => {
-        expect(projectStore.getActiveProject()).toBeNull();
-        dispose();
-      });
+      expect(useProjectStore.getState().activeProjectId).toBeNull();
     });
 
-    it('should return null if active project not in cache', () => {
-      createRoot(dispose => {
-        projectStore.setActiveProject('not-cached');
-        expect(projectStore.getActiveProject()).toBeNull();
-        dispose();
-      });
+    it('should set active project ID', () => {
+      useProjectStore.getState().setActiveProject('project-123');
+      expect(useProjectStore.getState().activeProjectId).toBe('project-123');
     });
 
     it('should return active project data when cached', () => {
-      createRoot(dispose => {
-        const projectId = 'active-test';
-        projectStore.setProjectData(projectId, {
-          meta: { name: 'Active Project' },
-          studies: [],
-          members: [],
-        });
-        projectStore.setActiveProject(projectId);
-
-        const active = projectStore.getActiveProject();
-        expect(active.meta.name).toBe('Active Project');
-        dispose();
+      const projectId = 'active-test';
+      useProjectStore.getState().setProjectData(projectId, {
+        meta: { name: 'Active Project' },
+        studies: [],
+        members: [],
       });
+      useProjectStore.getState().setActiveProject(projectId);
+
+      const state = useProjectStore.getState();
+      expect(state.activeProjectId).toBe(projectId);
+      expect(state.projects[projectId].meta.name).toBe('Active Project');
     });
   });
 });
-
-// Note: Project list (dashboard) functionality is now handled by TanStack Query
-// via useProjectList and useOrgProjectList hooks. Those hooks are tested separately.

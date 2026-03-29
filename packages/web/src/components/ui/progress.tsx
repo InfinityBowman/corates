@@ -1,136 +1,29 @@
-/**
- * Progress component for displaying completion status.
- *
- * @example
- * // Basic usage
- * <Progress value={75}>
- *   <ProgressTrack>
- *     <ProgressRange />
- *   </ProgressTrack>
- * </Progress>
- *
- * @example
- * // With label and value
- * <Progress value={50}>
- *   <ProgressLabel>Loading...</ProgressLabel>
- *   <ProgressTrack>
- *     <ProgressRange />
- *   </ProgressTrack>
- *   <ProgressValueText />
- * </Progress>
- *
- * @example
- * // With variant colors
- * <Progress value={90}>
- *   <ProgressTrack>
- *     <ProgressRange class="bg-red-500" />
- *   </ProgressTrack>
- * </Progress>
- */
-import type { Component, JSX } from 'solid-js';
-import { splitProps } from 'solid-js';
-import { Progress as ProgressPrimitive } from '@ark-ui/solid/progress';
-import type {
-  ProgressRootProps as ArkProgressRootProps,
-  ProgressTrackProps as ArkProgressTrackProps,
-  ProgressRangeProps as ArkProgressRangeProps,
-  ProgressLabelProps as ArkProgressLabelProps,
-  ProgressValueTextProps as ArkProgressValueTextProps,
-} from '@ark-ui/solid/progress';
-import { cn } from './cn';
+import * as React from 'react';
+import { Progress as ProgressPrimitive } from 'radix-ui';
 
-// Re-export context directly
-const ProgressContext = ProgressPrimitive.Context;
+import { cn } from '@/lib/utils';
 
-type ProgressProps = ArkProgressRootProps & {
-  class?: string;
-  children?: JSX.Element;
-};
-
-const Progress: Component<ProgressProps> = props => {
-  const [local, others] = splitProps(props, ['class', 'children']);
+function Progress({
+  className,
+  value,
+  ...props
+}: React.ComponentProps<typeof ProgressPrimitive.Root>) {
   return (
-    <ProgressPrimitive.Root class={cn('w-full', local.class)} {...others}>
-      {local.children}
+    <ProgressPrimitive.Root
+      data-slot='progress'
+      className={cn(
+        'bg-secondary relative flex h-2 w-full items-center overflow-x-hidden rounded-full',
+        className,
+      )}
+      {...props}
+    >
+      <ProgressPrimitive.Indicator
+        data-slot='progress-indicator'
+        className='bg-primary size-full flex-1 transition-all'
+        style={{ transform: `translateX(-${100 - (value || 0)}%)` }}
+      />
     </ProgressPrimitive.Root>
   );
-};
+}
 
-type ProgressTrackProps = ArkProgressTrackProps & {
-  class?: string;
-  children?: JSX.Element;
-};
-
-const ProgressTrack: Component<ProgressTrackProps> = props => {
-  const [local, others] = splitProps(props, ['class', 'children']);
-  return (
-    <ProgressPrimitive.Track
-      class={cn('bg-secondary h-2 w-full overflow-hidden rounded-full', local.class)}
-      {...others}
-    >
-      {local.children}
-    </ProgressPrimitive.Track>
-  );
-};
-
-type ProgressRangeProps = ArkProgressRangeProps & {
-  class?: string;
-};
-
-const ProgressRange: Component<ProgressRangeProps> = props => {
-  const [local, others] = splitProps(props, ['class']);
-  return (
-    <ProgressPrimitive.Range
-      class={cn('bg-primary h-full transition-[width] duration-300 ease-in-out', local.class)}
-      {...others}
-    />
-  );
-};
-
-type ProgressLabelProps = ArkProgressLabelProps & {
-  class?: string;
-  children?: JSX.Element;
-};
-
-const ProgressLabel: Component<ProgressLabelProps> = props => {
-  const [local, others] = splitProps(props, ['class', 'children']);
-  return (
-    <ProgressPrimitive.Label
-      class={cn('text-secondary-foreground mb-1 block text-sm font-medium', local.class)}
-      {...others}
-    >
-      {local.children}
-    </ProgressPrimitive.Label>
-  );
-};
-
-type ProgressValueTextProps = ArkProgressValueTextProps & {
-  class?: string;
-};
-
-const ProgressValueText: Component<ProgressValueTextProps> = props => {
-  const [local, others] = splitProps(props, ['class']);
-  return (
-    <ProgressPrimitive.ValueText
-      class={cn('text-muted-foreground text-sm font-medium', local.class)}
-      {...others}
-    />
-  );
-};
-
-// Circular progress components
-const ProgressCircle = ProgressPrimitive.Circle;
-const ProgressCircleTrack = ProgressPrimitive.CircleTrack;
-const ProgressCircleRange = ProgressPrimitive.CircleRange;
-
-export {
-  Progress,
-  ProgressTrack,
-  ProgressRange,
-  ProgressLabel,
-  ProgressValueText,
-  ProgressContext,
-  ProgressCircle,
-  ProgressCircleTrack,
-  ProgressCircleRange,
-};
+export { Progress };

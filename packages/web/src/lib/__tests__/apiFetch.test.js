@@ -3,10 +3,10 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { apiFetch } from '../apiFetch.js';
+import { apiFetch } from '../apiFetch';
 
 // Mock dependencies
-vi.mock('@config/api.js', () => ({
+vi.mock('@config/api', () => ({
   API_BASE: 'http://localhost:8787',
 }));
 
@@ -323,95 +323,6 @@ describe('apiFetch', () => {
       mockFetch.mockRejectedValueOnce(new DOMException('Aborted', 'AbortError'));
 
       await expect(apiFetch('/api/data', { signal: controller.signal })).rejects.toThrow();
-    });
-  });
-
-  describe('retry behavior', () => {
-    it('should not retry by default (retry=0)', async () => {
-      mockFetch.mockResolvedValueOnce(
-        new Response(
-          JSON.stringify({
-            code: 'SERVER_ERROR',
-            message: 'Server error',
-            statusCode: 500,
-          }),
-          { status: 500, headers: { 'content-type': 'application/json' } },
-        ),
-      );
-
-      await expect(apiFetch('/api/data')).rejects.toBeDefined();
-
-      expect(mockFetch).toHaveBeenCalledTimes(1);
-    });
-
-    it('should retry on 5xx when retry > 0', async () => {
-      // First call fails with 500, second succeeds
-      mockFetch
-        .mockResolvedValueOnce(
-          new Response(
-            JSON.stringify({
-              code: 'SERVER_ERROR',
-              message: 'Server error',
-              statusCode: 500,
-            }),
-            { status: 500, headers: { 'content-type': 'application/json' } },
-          ),
-        )
-        .mockResolvedValueOnce(
-          new Response(JSON.stringify({ success: true }), {
-            status: 200,
-            headers: { 'content-type': 'application/json' },
-          }),
-        );
-
-      const result = await apiFetch('/api/data', {
-        retry: 1,
-        retryOptions: { baseDelayMs: 10 }, // Fast retry for tests
-      });
-
-      expect(mockFetch).toHaveBeenCalledTimes(2);
-      expect(result).toEqual({ success: true });
-    });
-
-    it('should not retry on 4xx errors', async () => {
-      mockFetch.mockResolvedValueOnce(
-        new Response(
-          JSON.stringify({
-            code: 'BAD_REQUEST',
-            message: 'Bad request',
-            statusCode: 400,
-          }),
-          { status: 400, headers: { 'content-type': 'application/json' } },
-        ),
-      );
-
-      await expect(
-        apiFetch('/api/data', { retry: 2, retryOptions: { baseDelayMs: 10 } }),
-      ).rejects.toBeDefined();
-
-      // Should only call once - no retry on 4xx
-      expect(mockFetch).toHaveBeenCalledTimes(1);
-    });
-
-    it('should respect max retries', async () => {
-      // All calls fail with 500
-      mockFetch.mockResolvedValue(
-        new Response(
-          JSON.stringify({
-            code: 'SERVER_ERROR',
-            message: 'Server error',
-            statusCode: 500,
-          }),
-          { status: 500, headers: { 'content-type': 'application/json' } },
-        ),
-      );
-
-      await expect(
-        apiFetch('/api/data', { retry: 2, retryOptions: { baseDelayMs: 10 } }),
-      ).rejects.toBeDefined();
-
-      // Initial call + 2 retries = 3 total
-      expect(mockFetch).toHaveBeenCalledTimes(3);
     });
   });
 

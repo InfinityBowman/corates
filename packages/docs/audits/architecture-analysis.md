@@ -50,13 +50,11 @@ The project uses a well-organized monorepo structure with clear package boundari
 
 ```
 packages/
-  ├── web/           # SolidJS frontend
+  ├── web/           # React/TanStack Start frontend
   ├── workers/       # Cloudflare Workers backend
-  ├── landing/       # Marketing site
   ├── shared/        # Shared error types and utilities
   ├── docs/          # VitePress documentation
-  ├── mcp/           # Development tooling
-  └── mcp-memory/    # Agent memory system
+  └── mcp/           # Development tooling
 ```
 
 **Strengths:**
@@ -73,8 +71,6 @@ shared (no dependencies)
   ↑
   ├── web (depends on shared)
   └── workers (depends on shared)
-      ↑
-      └── landing (depends on web via build artifact copy)
 ```
 
 ### 1.2 Package Boundaries
@@ -88,9 +84,8 @@ Each package has well-defined responsibilities:
 | shared  | Domain errors, types, validators    | Excellent          |
 | web     | UI components, stores, primitives   | Excellent          |
 | workers | API routes, middleware, Durable Obj | Excellent          |
-| landing | Marketing content, includes web app | Good (by design)   |
 
-**Finding:** No inappropriate cross-package dependencies detected. The `landing` package's inclusion of `web` is intentional for deployment purposes.
+**Finding:** No inappropriate cross-package dependencies detected.
 
 ### 1.3 Build and Deployment Strategy
 
@@ -98,7 +93,7 @@ Each package has well-defined responsibilities:
 
 - Independent build processes per package
 - Workers can deploy independently of frontend
-- Frontend builds copy to landing for single-worker deployment
+- Frontend deploys as a single Cloudflare Worker
 - No circular dependencies in build pipeline
 
 ---

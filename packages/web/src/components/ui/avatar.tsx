@@ -1,85 +1,95 @@
-/**
- * Avatar component for user profile images with fallback.
- *
- * @example
- * <Avatar>
- *   <AvatarImage src="/user.jpg" alt="John Doe" />
- *   <AvatarFallback>JD</AvatarFallback>
- * </Avatar>
- *
- * @example
- * // Custom size
- * <Avatar class="h-16 w-16">
- *   <AvatarImage src="/user.jpg" />
- *   <AvatarFallback>JD</AvatarFallback>
- * </Avatar>
- *
- * @example
- * // Fallback only (no image)
- * <Avatar>
- *   <AvatarFallback>AB</AvatarFallback>
- * </Avatar>
- */
-import type { Component, JSX } from 'solid-js';
-import { splitProps } from 'solid-js';
-import { Avatar as AvatarPrimitive } from '@ark-ui/solid/avatar';
-import type {
-  AvatarRootProps as ArkAvatarRootProps,
-  AvatarImageProps as ArkAvatarImageProps,
-  AvatarFallbackProps as ArkAvatarFallbackProps,
-} from '@ark-ui/solid/avatar';
-import { cn } from './cn';
+import * as React from 'react';
+import { Avatar as AvatarPrimitive } from 'radix-ui';
 
-type AvatarProps = ArkAvatarRootProps & {
-  class?: string;
-  children?: JSX.Element;
-};
+import { cn } from '@/lib/utils';
 
-const Avatar: Component<AvatarProps> = props => {
-  const [local, others] = splitProps(props, ['class', 'children']);
+function Avatar({
+  className,
+  size = 'default',
+  ...props
+}: React.ComponentProps<typeof AvatarPrimitive.Root> & {
+  size?: 'default' | 'sm' | 'lg';
+}) {
   return (
     <AvatarPrimitive.Root
-      class={cn('relative flex h-10 w-10 shrink-0 overflow-hidden rounded-full', local.class)}
-      {...others}
-    >
-      {local.children}
-    </AvatarPrimitive.Root>
-  );
-};
-
-type AvatarImageProps = ArkAvatarImageProps & {
-  class?: string;
-};
-
-const AvatarImage: Component<AvatarImageProps> = props => {
-  const [local, others] = splitProps(props, ['class']);
-  return (
-    <AvatarPrimitive.Image
-      class={cn('aspect-square h-full w-full object-cover', local.class)}
-      {...others}
+      data-slot='avatar'
+      data-size={size}
+      className={cn(
+        'group/avatar after:border-border relative flex size-8 shrink-0 rounded-full select-none after:absolute after:inset-0 after:rounded-full after:border after:mix-blend-darken data-[size=lg]:size-10 data-[size=sm]:size-6 dark:after:mix-blend-lighten',
+        className,
+      )}
+      {...props}
     />
   );
-};
+}
 
-type AvatarFallbackProps = ArkAvatarFallbackProps & {
-  class?: string;
-  children?: JSX.Element;
-};
+function AvatarImage({ className, ...props }: React.ComponentProps<typeof AvatarPrimitive.Image>) {
+  return (
+    <AvatarPrimitive.Image
+      data-slot='avatar-image'
+      className={cn('aspect-square size-full rounded-full object-cover', className)}
+      {...props}
+    />
+  );
+}
 
-const AvatarFallback: Component<AvatarFallbackProps> = props => {
-  const [local, others] = splitProps(props, ['class', 'children']);
+function AvatarFallback({
+  className,
+  ...props
+}: React.ComponentProps<typeof AvatarPrimitive.Fallback>) {
   return (
     <AvatarPrimitive.Fallback
-      class={cn(
-        'bg-secondary text-muted-foreground flex h-full w-full items-center justify-center rounded-full text-sm font-medium',
-        local.class,
+      data-slot='avatar-fallback'
+      className={cn(
+        'bg-muted text-muted-foreground flex size-full items-center justify-center rounded-full text-sm group-data-[size=sm]/avatar:text-xs',
+        className,
       )}
-      {...others}
-    >
-      {local.children}
-    </AvatarPrimitive.Fallback>
+      {...props}
+    />
   );
-};
+}
+
+function AvatarBadge({ className, ...props }: React.ComponentProps<'span'>) {
+  return (
+    <span
+      data-slot='avatar-badge'
+      className={cn(
+        'bg-primary text-primary-foreground ring-background absolute right-0 bottom-0 z-10 inline-flex items-center justify-center rounded-full bg-blend-color ring-2 select-none',
+        'group-data-[size=sm]/avatar:size-2 group-data-[size=sm]/avatar:[&>svg]:hidden',
+        'group-data-[size=default]/avatar:size-2.5 group-data-[size=default]/avatar:[&>svg]:size-2',
+        'group-data-[size=lg]/avatar:size-3 group-data-[size=lg]/avatar:[&>svg]:size-2',
+        className,
+      )}
+      {...props}
+    />
+  );
+}
+
+function AvatarGroup({ className, ...props }: React.ComponentProps<'div'>) {
+  return (
+    <div
+      data-slot='avatar-group'
+      className={cn(
+        'group/avatar-group *:data-[slot=avatar]:ring-background flex -space-x-2 *:data-[slot=avatar]:ring-2',
+        className,
+      )}
+      {...props}
+    />
+  );
+}
+
+function AvatarGroupCount({ className, ...props }: React.ComponentProps<'div'>) {
+  return (
+    <div
+      data-slot='avatar-group-count'
+      className={cn(
+        'bg-muted text-muted-foreground ring-background relative flex size-8 shrink-0 items-center justify-center rounded-full text-sm ring-2 group-has-data-[size=lg]/avatar-group:size-10 group-has-data-[size=sm]/avatar-group:size-6 [&>svg]:size-4 group-has-data-[size=lg]/avatar-group:[&>svg]:size-5 group-has-data-[size=sm]/avatar-group:[&>svg]:size-3',
+        className,
+      )}
+      {...props}
+    />
+  );
+}
 
 /**
  * Helper to generate initials from a name
@@ -92,34 +102,41 @@ function getInitials(name?: string): string {
   return ((parts[0]?.[0] ?? '') + (parts[parts.length - 1]?.[0] ?? '')).toUpperCase();
 }
 
-type UserAvatarProps = {
-  /** Image source URL */
-  src?: string;
-  /** Name for generating initials fallback */
-  name?: string;
-  /** Alt text for image */
-  alt?: string;
-  /** Additional class for root element */
-  class?: string;
-};
-
 /**
  * Convenience component for user avatars with auto-generated initials.
  *
  * @example
  * <UserAvatar src="/user.jpg" name="John Doe" />
- *
- * @example
- * // Custom size via class
- * <UserAvatar name="John Doe" class="h-8 w-8 text-xs" />
+ * <UserAvatar name="John Doe" size="lg" />
  */
-const UserAvatar: Component<UserAvatarProps> = props => {
+function UserAvatar({
+  src,
+  name,
+  alt,
+  className,
+  size,
+}: {
+  src?: string;
+  name?: string;
+  alt?: string;
+  className?: string;
+  size?: 'default' | 'sm' | 'lg';
+}) {
   return (
-    <Avatar class={props.class}>
-      <AvatarImage src={props.src} alt={props.alt || props.name || 'Avatar'} />
-      <AvatarFallback>{getInitials(props.name)}</AvatarFallback>
+    <Avatar className={className} size={size}>
+      <AvatarImage src={src} alt={alt || name || 'Avatar'} />
+      <AvatarFallback>{getInitials(name)}</AvatarFallback>
     </Avatar>
   );
-};
+}
 
-export { Avatar, AvatarImage, AvatarFallback, UserAvatar, getInitials };
+export {
+  Avatar,
+  AvatarImage,
+  AvatarFallback,
+  AvatarGroup,
+  AvatarGroupCount,
+  AvatarBadge,
+  UserAvatar,
+  getInitials,
+};

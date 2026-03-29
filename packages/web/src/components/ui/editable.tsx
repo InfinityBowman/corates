@@ -1,26 +1,15 @@
 /**
- * Editable - Inline editable text component
+ * Editable - Inline editable text component (@ark-ui/react)
  *
  * @example
- * // Basic usage
  * <SimpleEditable
- *   value={name()}
+ *   value={name}
  *   onSubmit={handleNameChange}
  *   activationMode="click"
  * />
  *
  * @example
- * // With edit icon
- * <SimpleEditable
- *   value={title()}
- *   onSubmit={handleTitleChange}
- *   showEditIcon
- *   class="text-2xl font-bold"
- * />
- *
- * @example
- * // Composable multi-line editable
- * <Editable defaultValue={description()} onValueCommit={handleSave}>
+ * <Editable defaultValue={description} onValueCommit={handleSave}>
  *   <EditableArea>
  *     <EditableTextarea rows={2} />
  *     <EditablePreview />
@@ -28,13 +17,11 @@
  * </Editable>
  */
 
-import type { Component, ComponentProps } from 'solid-js';
-import { Show, splitProps, mergeProps } from 'solid-js';
-import { Editable as EditablePrimitive } from '@ark-ui/solid/editable';
-import { FiCheck, FiX, FiEdit2 } from 'solid-icons/fi';
-import { cn } from './cn';
+import * as React from 'react';
+import { Editable as EditablePrimitive } from '@ark-ui/react/editable';
+import { CheckIcon, XIcon, PencilIcon } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
-// Variant style presets
 const variants = {
   default: {
     area: 'px-2 py-1 rounded transition-colors hover:bg-secondary focus-within:ring-1 focus-within:ring-primary focus-within:border-primary border border-transparent',
@@ -60,222 +47,149 @@ const variants = {
 
 type EditableVariant = keyof typeof variants;
 
-type SimpleEditableProps = {
-  /** The controlled value */
+interface SimpleEditableProps {
   value?: string;
-  /** The initial value (uncontrolled) */
   defaultValue?: string;
-  /** Placeholder text when empty */
   placeholder?: string;
-  /** Called when value changes (on each keystroke) */
-  onChange?: (_value: string) => void;
-  /** Called when value is committed (Enter/blur/submit button) */
-  onSubmit?: (_value: string) => void;
-  /** Called when editing is cancelled */
+  onChange?: (value: string) => void;
+  onSubmit?: (value: string) => void;
   onCancel?: () => void;
-  /** Whether the editable is disabled */
   disabled?: boolean;
-  /** Whether the editable is read-only */
   readOnly?: boolean;
-  /** Whether to auto-resize to fit content */
   autoResize?: boolean;
-  /** How to enter edit mode */
   activationMode?: 'focus' | 'dblclick' | 'click' | 'none';
-  /** What triggers submit */
   submitMode?: 'enter' | 'blur' | 'none' | 'both';
-  /** Whether to select text when focused */
   selectOnFocus?: boolean;
-  /** Maximum characters allowed */
   maxLength?: number;
-  /** Style preset */
   variant?: EditableVariant;
-  /** Additional CSS classes for the root */
-  class?: string;
-  /** Additional CSS classes for the area */
-  areaClass?: string;
-  /** Additional CSS classes for the input */
-  inputClass?: string;
-  /** Additional CSS classes for the preview */
-  previewClass?: string;
-  /** Whether to show edit/save/cancel buttons */
+  className?: string;
+  areaClassName?: string;
+  inputClassName?: string;
+  previewClassName?: string;
   showControls?: boolean;
-  /** Whether to show only an edit icon trigger */
   showEditIcon?: boolean;
-  /** Optional label text */
   label?: string;
-};
+}
 
-const SimpleEditable: Component<SimpleEditableProps> = props => {
-  const merged = mergeProps(
-    {
-      placeholder: 'Click to edit...',
-      activationMode: 'dblclick' as const,
-      submitMode: 'both' as const,
-      selectOnFocus: true,
-      autoResize: true,
-      showControls: false,
-      showEditIcon: false,
-      variant: 'default' as EditableVariant,
-    },
-    props,
-  );
-
-  const [local] = splitProps(merged, [
-    'value',
-    'defaultValue',
-    'placeholder',
-    'onChange',
-    'onSubmit',
-    'onCancel',
-    'disabled',
-    'readOnly',
-    'autoResize',
-    'activationMode',
-    'submitMode',
-    'selectOnFocus',
-    'maxLength',
-    'variant',
-    'class',
-    'areaClass',
-    'inputClass',
-    'previewClass',
-    'showControls',
-    'showEditIcon',
-    'label',
-  ]);
-
-  const variantStyles = () => variants[local.variant] || variants.default;
-
-  // Always use uncontrolled mode (defaultValue) so the component manages its own
-  // editing state. The value/defaultValue prop just initializes it.
-  // onSubmit is called when the user commits (blur/Enter).
-  const initialValue = () => local.value ?? local.defaultValue ?? '';
+function SimpleEditable({
+  value,
+  defaultValue,
+  placeholder = 'Click to edit...',
+  onChange,
+  onSubmit,
+  onCancel,
+  disabled,
+  readOnly,
+  autoResize = true,
+  activationMode = 'dblclick',
+  submitMode = 'both',
+  selectOnFocus = true,
+  maxLength,
+  variant = 'default',
+  className,
+  areaClassName,
+  inputClassName,
+  previewClassName,
+  showControls = false,
+  showEditIcon = false,
+  label,
+}: SimpleEditableProps) {
+  const variantStyles = variants[variant] || variants.default;
+  const initialValue = value ?? defaultValue ?? '';
 
   return (
     <EditablePrimitive.Root
-      defaultValue={initialValue()}
-      placeholder={local.placeholder}
-      disabled={local.disabled}
-      readOnly={local.readOnly}
-      autoResize={local.autoResize}
-      activationMode={local.activationMode}
-      submitMode={local.submitMode}
-      selectOnFocus={local.selectOnFocus}
-      maxLength={local.maxLength}
-      onValueChange={details => local.onChange?.(details.value)}
-      onValueCommit={details => local.onSubmit?.(details.value)}
-      onValueRevert={() => local.onCancel?.()}
-      class={cn('group inline-block', local.class)}
+      defaultValue={initialValue}
+      placeholder={placeholder}
+      disabled={disabled}
+      readOnly={readOnly}
+      autoResize={autoResize}
+      activationMode={activationMode}
+      submitMode={submitMode}
+      selectOnFocus={selectOnFocus}
+      maxLength={maxLength}
+      onValueChange={details => onChange?.(details.value)}
+      onValueCommit={details => onSubmit?.(details.value)}
+      onValueRevert={() => onCancel?.()}
+      className={cn('group inline-block', className)}
     >
       <EditablePrimitive.Context>
         {api => (
           <>
-            <Show when={local.label}>
-              <EditablePrimitive.Label class='text-secondary-foreground mb-1 block text-sm font-medium'>
-                {local.label}
+            {label && (
+              <EditablePrimitive.Label className='text-muted-foreground mb-1 block text-sm font-medium'>
+                {label}
               </EditablePrimitive.Label>
-            </Show>
+            )}
 
-            <div class='flex items-center gap-2'>
+            <div className='flex items-center gap-2'>
               <EditablePrimitive.Area
-                class={cn(
-                  variantStyles().area,
-                  local.disabled && 'cursor-not-allowed opacity-50',
-                  local.areaClass,
+                className={cn(
+                  variantStyles.area,
+                  disabled && 'cursor-not-allowed opacity-50',
+                  areaClassName,
                 )}
               >
-                <EditablePrimitive.Input class={cn(variantStyles().input, local.inputClass)} />
+                <EditablePrimitive.Input className={cn(variantStyles.input, inputClassName)} />
                 <EditablePrimitive.Preview
-                  class={cn(
-                    variantStyles().preview,
-                    !api().value && 'text-muted-foreground/70',
-                    local.previewClass,
+                  className={cn(
+                    variantStyles.preview,
+                    !api.value && 'text-muted-foreground/70',
+                    previewClassName,
                   )}
-                >
-                  {api().value || local.placeholder}
-                </EditablePrimitive.Preview>
+                />
               </EditablePrimitive.Area>
 
-              <Show when={local.showControls}>
-                <div class='flex items-center gap-1'>
-                  <Show
-                    when={api().editing}
-                    fallback={
-                      <EditablePrimitive.EditTrigger class='text-muted-foreground/70 hover:bg-secondary hover:text-muted-foreground rounded p-1 opacity-0 transition-colors group-hover:opacity-100'>
-                        <FiEdit2 class='h-4 w-4' />
-                      </EditablePrimitive.EditTrigger>
-                    }
-                  >
-                    <EditablePrimitive.SubmitTrigger class='rounded p-1 text-green-500 transition-colors hover:bg-green-50 hover:text-green-600'>
-                      <FiCheck class='h-4 w-4' />
-                    </EditablePrimitive.SubmitTrigger>
-                    <EditablePrimitive.CancelTrigger class='text-muted-foreground/70 hover:bg-secondary hover:text-muted-foreground rounded p-1 transition-colors'>
-                      <FiX class='h-4 w-4' />
-                    </EditablePrimitive.CancelTrigger>
-                  </Show>
+              {showControls && (
+                <div className='flex items-center gap-1'>
+                  {api.editing ?
+                    <>
+                      <EditablePrimitive.SubmitTrigger className='text-success hover:bg-success-bg hover:text-success rounded p-1 transition-colors'>
+                        <CheckIcon className='h-4 w-4' />
+                      </EditablePrimitive.SubmitTrigger>
+                      <EditablePrimitive.CancelTrigger className='text-muted-foreground/70 hover:bg-secondary hover:text-muted-foreground rounded p-1 transition-colors'>
+                        <XIcon className='h-4 w-4' />
+                      </EditablePrimitive.CancelTrigger>
+                    </>
+                  : <EditablePrimitive.EditTrigger className='text-muted-foreground/70 hover:bg-secondary hover:text-muted-foreground rounded p-1 opacity-0 transition-colors group-hover:opacity-100'>
+                      <PencilIcon className='h-4 w-4' />
+                    </EditablePrimitive.EditTrigger>
+                  }
                 </div>
-              </Show>
+              )}
 
-              <Show when={local.showEditIcon && !local.showControls && !api().editing}>
-                <EditablePrimitive.EditTrigger class='text-muted-foreground/70 hover:bg-secondary hover:text-muted-foreground rounded p-1 opacity-0 transition-colors group-hover:opacity-100'>
-                  <FiEdit2 class='h-4 w-4' />
+              {showEditIcon && !showControls && !api.editing && (
+                <EditablePrimitive.EditTrigger className='text-muted-foreground/70 hover:bg-secondary hover:text-muted-foreground rounded p-1 opacity-0 transition-colors group-hover:opacity-100'>
+                  <PencilIcon className='h-4 w-4' />
                 </EditablePrimitive.EditTrigger>
-              </Show>
+              )}
             </div>
           </>
         )}
       </EditablePrimitive.Context>
     </EditablePrimitive.Root>
   );
-};
+}
 
-// ============================================================================
-// EditableTextarea - Multi-line text input for composable usage
-// ============================================================================
-
-type EditableTextareaProps = ComponentProps<'textarea'> & {
-  class?: string;
-};
-
-/**
- * Multi-line textarea variant for Editable.
- * Use with the composable Editable primitives.
- *
- * @example
- * <Editable defaultValue={description()} onValueCommit={handleSave}>
- *   <EditableArea>
- *     <EditableTextarea rows={2} class="text-sm" />
- *     <EditablePreview />
- *   </EditableArea>
- * </Editable>
- */
-const EditableTextarea: Component<EditableTextareaProps> = props => {
-  const [local, others] = splitProps(props, ['class']);
-
+function EditableTextarea({ className, ...props }: React.ComponentProps<'textarea'>) {
   return (
-    <EditablePrimitive.Input
-      asChild={inputProps => (
-        <textarea
-          {...inputProps()}
-          class={cn(
-            'w-full resize-none bg-transparent outline-none',
-            'placeholder:text-muted-foreground/60',
-            local.class,
-          )}
-          {...others}
-        />
-      )}
-    />
+    <EditablePrimitive.Input asChild>
+      <textarea
+        className={cn(
+          'placeholder:text-muted-foreground/60 w-full resize-none bg-transparent outline-none',
+          className,
+        )}
+        {...props}
+      />
+    </EditablePrimitive.Input>
   );
-};
+}
 
-// Re-export Ark UI primitives for composable usage
 const Editable = EditablePrimitive.Root;
 const EditableArea = EditablePrimitive.Area;
 const EditableInput = EditablePrimitive.Input;
 const EditablePreview = EditablePrimitive.Preview;
 const EditableLabel = EditablePrimitive.Label;
-const EditableControl = EditablePrimitive.Control;
 const EditableEditTrigger = EditablePrimitive.EditTrigger;
 const EditableSubmitTrigger = EditablePrimitive.SubmitTrigger;
 const EditableCancelTrigger = EditablePrimitive.CancelTrigger;
@@ -289,7 +203,6 @@ export {
   EditableTextarea,
   EditablePreview,
   EditableLabel,
-  EditableControl,
   EditableEditTrigger,
   EditableSubmitTrigger,
   EditableCancelTrigger,

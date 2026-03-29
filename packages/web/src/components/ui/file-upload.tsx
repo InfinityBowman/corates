@@ -1,237 +1,153 @@
 /**
- * FileUpload component for file selection with drag-and-drop support.
+ * FileUpload component for file selection with drag-and-drop support (@ark-ui/react)
  *
  * @example
- * // Basic dropzone
- * <FileUpload
- *   accept={['application/pdf', '.pdf']}
- *   maxFiles={5}
- *   onFileAccept={details => handleFiles(details.files)}
- * >
+ * <FileUpload accept={["application/pdf"]} maxFiles={5} onFileAccept={(details) => handleFiles(details.files)}>
  *   <FileUploadDropzone>
- *     <FiUploadCloud class="h-8 w-8 text-muted-foreground/70" />
  *     <p>Click to upload or drag and drop</p>
- *     <p class="text-xs text-muted-foreground/70">PDF files only</p>
  *   </FileUploadDropzone>
  *   <FileUploadHiddenInput />
  * </FileUpload>
- *
- * @example
- * // With file list
- * <FileUpload maxFiles={5} onFileAccept={handleFiles}>
- *   <FileUploadDropzone>Drop files here</FileUploadDropzone>
- *   <FileUploadItemGroup>
- *     <FileUploadContext>
- *       {api => (
- *         <For each={api().acceptedFiles}>
- *           {file => (
- *             <FileUploadItem file={file}>
- *               <FileUploadItemName />
- *               <FileUploadItemSizeText />
- *               <FileUploadItemDeleteTrigger />
- *             </FileUploadItem>
- *           )}
- *         </For>
- *       )}
- *     </FileUploadContext>
- *   </FileUploadItemGroup>
- *   <FileUploadHiddenInput />
- * </FileUpload>
  */
-import type { Component, JSX } from 'solid-js';
-import { splitProps } from 'solid-js';
-import { FileUpload as FileUploadPrimitive } from '@ark-ui/solid/file-upload';
-import type {
-  FileUploadRootProps as ArkFileUploadRootProps,
-  FileUploadDropzoneProps as ArkFileUploadDropzoneProps,
-  FileUploadTriggerProps as ArkFileUploadTriggerProps,
-  FileUploadLabelProps as ArkFileUploadLabelProps,
-  FileUploadItemGroupProps as ArkFileUploadItemGroupProps,
-  FileUploadItemProps as ArkFileUploadItemProps,
-  FileUploadItemNameProps as ArkFileUploadItemNameProps,
-  FileUploadItemSizeTextProps as ArkFileUploadItemSizeTextProps,
-  FileUploadItemDeleteTriggerProps as ArkFileUploadItemDeleteTriggerProps,
-  FileUploadItemPreviewProps as ArkFileUploadItemPreviewProps,
-} from '@ark-ui/solid/file-upload';
-import { FiX } from 'solid-icons/fi';
-import { cn } from './cn';
 
-// Re-export context and hidden input directly
+import * as React from 'react';
+import { FileUpload as FileUploadPrimitive } from '@ark-ui/react/file-upload';
+import { XIcon } from 'lucide-react';
+import { cn } from '@/lib/utils';
+
 const FileUploadContext = FileUploadPrimitive.Context;
 const FileUploadHiddenInput = FileUploadPrimitive.HiddenInput;
 const FileUploadClearTrigger = FileUploadPrimitive.ClearTrigger;
 const FileUploadItemPreviewImage = FileUploadPrimitive.ItemPreviewImage;
 
-type FileUploadProps = ArkFileUploadRootProps & {
-  class?: string;
-  children?: JSX.Element;
-};
+function FileUpload({
+  className,
+  ...props
+}: React.ComponentProps<typeof FileUploadPrimitive.Root>) {
+  return <FileUploadPrimitive.Root className={cn('w-full', className)} {...props} />;
+}
 
-const FileUpload: Component<FileUploadProps> = props => {
-  const [local, others] = splitProps(props, ['class', 'children']);
-  return (
-    <FileUploadPrimitive.Root class={cn('w-full', local.class)} {...others}>
-      {local.children}
-    </FileUploadPrimitive.Root>
-  );
-};
-
-type FileUploadDropzoneProps = ArkFileUploadDropzoneProps & {
-  class?: string;
-  children?: JSX.Element;
-};
-
-const FileUploadDropzone: Component<FileUploadDropzoneProps> = props => {
-  const [local, others] = splitProps(props, ['class', 'children']);
+function FileUploadDropzone({
+  className,
+  ...props
+}: React.ComponentProps<typeof FileUploadPrimitive.Dropzone>) {
   return (
     <FileUploadPrimitive.Dropzone
-      class={cn(
+      className={cn(
         'border-border bg-muted/50 flex min-h-32 cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed p-6 transition-colors',
-        'hover:border-primary hover:bg-primary-subtle',
-        'data-dragging:border-primary data-dragging:bg-primary-subtle',
-        local.class,
+        'hover:border-primary hover:bg-primary/5',
+        'data-dragging:border-primary data-dragging:bg-primary/5',
+        className,
       )}
-      {...others}
-    >
-      {local.children}
-    </FileUploadPrimitive.Dropzone>
+      {...props}
+    />
   );
-};
+}
 
-type FileUploadTriggerProps = ArkFileUploadTriggerProps & {
-  class?: string;
-  children?: JSX.Element;
-};
-
-const FileUploadTrigger: Component<FileUploadTriggerProps> = props => {
-  const [local, others] = splitProps(props, ['class', 'children']);
+function FileUploadTrigger({
+  className,
+  ...props
+}: React.ComponentProps<typeof FileUploadPrimitive.Trigger>) {
   return (
     <FileUploadPrimitive.Trigger
-      class={cn(
+      className={cn(
         'bg-primary text-primary-foreground inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors',
         'hover:bg-primary/90 focus:ring-ring focus:ring-2 focus:ring-offset-2 focus:outline-none',
         'disabled:cursor-not-allowed disabled:opacity-50',
-        local.class,
+        className,
       )}
-      {...others}
-    >
-      {local.children}
-    </FileUploadPrimitive.Trigger>
+      {...props}
+    />
   );
-};
+}
 
-type FileUploadLabelProps = ArkFileUploadLabelProps & {
-  class?: string;
-  children?: JSX.Element;
-};
-
-const FileUploadLabel: Component<FileUploadLabelProps> = props => {
-  const [local, others] = splitProps(props, ['class', 'children']);
+function FileUploadLabel({
+  className,
+  ...props
+}: React.ComponentProps<typeof FileUploadPrimitive.Label>) {
   return (
     <FileUploadPrimitive.Label
-      class={cn('text-secondary-foreground mb-2 block text-sm font-medium', local.class)}
-      {...others}
-    >
-      {local.children}
-    </FileUploadPrimitive.Label>
+      className={cn('text-muted-foreground mb-2 block text-sm font-medium', className)}
+      {...props}
+    />
   );
-};
+}
 
-type FileUploadItemGroupProps = ArkFileUploadItemGroupProps & {
-  class?: string;
-  children?: JSX.Element;
-};
+function FileUploadItemGroup({
+  className,
+  ...props
+}: React.ComponentProps<typeof FileUploadPrimitive.ItemGroup>) {
+  return <FileUploadPrimitive.ItemGroup className={cn('mt-4 space-y-2', className)} {...props} />;
+}
 
-const FileUploadItemGroup: Component<FileUploadItemGroupProps> = props => {
-  const [local, others] = splitProps(props, ['class', 'children']);
-  return (
-    <FileUploadPrimitive.ItemGroup class={cn('mt-4 space-y-2', local.class)} {...others}>
-      {local.children}
-    </FileUploadPrimitive.ItemGroup>
-  );
-};
-
-type FileUploadItemProps = ArkFileUploadItemProps & {
-  class?: string;
-  children?: JSX.Element;
-};
-
-const FileUploadItem: Component<FileUploadItemProps> = props => {
-  const [local, others] = splitProps(props, ['class', 'children']);
+function FileUploadItem({
+  className,
+  ...props
+}: React.ComponentProps<typeof FileUploadPrimitive.Item>) {
   return (
     <FileUploadPrimitive.Item
-      class={cn('border-border bg-card flex items-center gap-3 rounded-lg border p-3', local.class)}
-      {...others}
-    >
-      {local.children}
-    </FileUploadPrimitive.Item>
+      className={cn(
+        'border-border bg-card flex items-center gap-3 rounded-lg border p-3',
+        className,
+      )}
+      {...props}
+    />
   );
-};
+}
 
-type FileUploadItemNameProps = ArkFileUploadItemNameProps & {
-  class?: string;
-};
-
-const FileUploadItemName: Component<FileUploadItemNameProps> = props => {
-  const [local, others] = splitProps(props, ['class']);
+function FileUploadItemName({
+  className,
+  ...props
+}: React.ComponentProps<typeof FileUploadPrimitive.ItemName>) {
   return (
     <FileUploadPrimitive.ItemName
-      class={cn('text-foreground min-w-0 flex-1 truncate text-sm font-medium', local.class)}
-      {...others}
+      className={cn('text-foreground min-w-0 flex-1 truncate text-sm font-medium', className)}
+      {...props}
     />
   );
-};
+}
 
-type FileUploadItemSizeTextProps = ArkFileUploadItemSizeTextProps & {
-  class?: string;
-};
-
-const FileUploadItemSizeText: Component<FileUploadItemSizeTextProps> = props => {
-  const [local, others] = splitProps(props, ['class']);
+function FileUploadItemSizeText({
+  className,
+  ...props
+}: React.ComponentProps<typeof FileUploadPrimitive.ItemSizeText>) {
   return (
     <FileUploadPrimitive.ItemSizeText
-      class={cn('text-muted-foreground text-xs', local.class)}
-      {...others}
+      className={cn('text-muted-foreground text-xs', className)}
+      {...props}
     />
   );
-};
+}
 
-type FileUploadItemDeleteTriggerProps = ArkFileUploadItemDeleteTriggerProps & {
-  class?: string;
-  children?: JSX.Element;
-};
-
-const FileUploadItemDeleteTrigger: Component<FileUploadItemDeleteTriggerProps> = props => {
-  const [local, others] = splitProps(props, ['class', 'children']);
+function FileUploadItemDeleteTrigger({
+  className,
+  children,
+  ...props
+}: React.ComponentProps<typeof FileUploadPrimitive.ItemDeleteTrigger>) {
   return (
     <FileUploadPrimitive.ItemDeleteTrigger
-      class={cn(
-        'text-muted-foreground hover:bg-destructive-subtle hover:text-destructive rounded p-1 transition-colors',
-        local.class,
+      className={cn(
+        'text-muted-foreground hover:bg-destructive/10 hover:text-destructive rounded p-1 transition-colors',
+        className,
       )}
-      {...others}
+      {...props}
     >
-      {local.children ?? <FiX class='h-4 w-4' />}
+      {children ?? <XIcon className='h-4 w-4' />}
     </FileUploadPrimitive.ItemDeleteTrigger>
   );
-};
+}
 
-type FileUploadItemPreviewProps = ArkFileUploadItemPreviewProps & {
-  class?: string;
-  children?: JSX.Element;
-};
-
-const FileUploadItemPreview: Component<FileUploadItemPreviewProps> = props => {
-  const [local, others] = splitProps(props, ['class', 'children']);
+function FileUploadItemPreview({
+  className,
+  ...props
+}: React.ComponentProps<typeof FileUploadPrimitive.ItemPreview>) {
   return (
     <FileUploadPrimitive.ItemPreview
-      class={cn('bg-muted flex h-10 w-10 items-center justify-center rounded', local.class)}
-      {...others}
-    >
-      {local.children}
-    </FileUploadPrimitive.ItemPreview>
+      className={cn('bg-muted flex h-10 w-10 items-center justify-center rounded', className)}
+      {...props}
+    />
   );
-};
+}
 
 export {
   FileUpload,

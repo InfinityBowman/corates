@@ -146,7 +146,7 @@ Browser background script for offline capabilities (currently disabled):
 - Enables offline UI access
 - Uses network-first strategy
 
-**Related:** Currently commented out in landing package
+**Related:** Currently commented out in web package
 
 ### Drizzle ORM
 

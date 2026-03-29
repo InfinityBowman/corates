@@ -1,200 +1,91 @@
 /**
- * Steps component for multi-step wizards and progress indicators.
+ * Steps component for multi-step wizards and progress indicators (@ark-ui/react)
  *
  * @example
  * <Steps count={3} defaultStep={0}>
  *   <StepsList>
  *     <StepsItem index={0}>
- *       <StepsTrigger>
- *         <StepsIndicator>1</StepsIndicator>
- *       </StepsTrigger>
+ *       <StepsTrigger><StepsIndicator>1</StepsIndicator></StepsTrigger>
  *       <StepsSeparator />
  *     </StepsItem>
- *     <StepsItem index={1}>
- *       <StepsTrigger>
- *         <StepsIndicator>2</StepsIndicator>
- *       </StepsTrigger>
- *       <StepsSeparator />
- *     </StepsItem>
- *     <StepsItem index={2}>
- *       <StepsTrigger>
- *         <StepsIndicator>3</StepsIndicator>
- *       </StepsTrigger>
- *     </StepsItem>
+ *     ...
  *   </StepsList>
- *
  *   <StepsContent index={0}>Step 1 content</StepsContent>
- *   <StepsContent index={1}>Step 2 content</StepsContent>
- *   <StepsContent index={2}>Step 3 content</StepsContent>
  *   <StepsCompletedContent>All done!</StepsCompletedContent>
- *
  *   <StepsPrevTrigger>Previous</StepsPrevTrigger>
  *   <StepsNextTrigger>Next</StepsNextTrigger>
  * </Steps>
- *
- * @example
- * // Controlled
- * const [step, setStep] = createSignal(0);
- * <Steps step={step()} onStepChange={details => setStep(details.step)}>
- *   ...
- * </Steps>
  */
-import type { Component, JSX } from 'solid-js';
-import { splitProps } from 'solid-js';
-import { Steps as StepsPrimitive } from '@ark-ui/solid/steps';
-import type {
-  StepsRootProps as ArkStepsRootProps,
-  StepsListProps as ArkStepsListProps,
-  StepsItemProps as ArkStepsItemProps,
-  StepsTriggerProps as ArkStepsTriggerProps,
-  StepsIndicatorProps as ArkStepsIndicatorProps,
-  StepsSeparatorProps as ArkStepsSeparatorProps,
-  StepsContentProps as ArkStepsContentProps,
-  StepsCompletedContentProps as ArkStepsCompletedContentProps,
-  StepsNextTriggerProps as ArkStepsNextTriggerProps,
-  StepsPrevTriggerProps as ArkStepsPrevTriggerProps,
-} from '@ark-ui/solid/steps';
-import { cn } from './cn';
 
-type StepsProps = ArkStepsRootProps & {
-  class?: string;
-  children?: JSX.Element;
-};
+import * as React from 'react';
+import { Steps as StepsPrimitive } from '@ark-ui/react/steps';
+import { cn } from '@/lib/utils';
 
-const Steps: Component<StepsProps> = props => {
-  const [local, others] = splitProps(props, ['class', 'children']);
-  return (
-    <StepsPrimitive.Root class={local.class} {...others}>
-      {local.children}
-    </StepsPrimitive.Root>
-  );
-};
+function Steps({ className, ...props }: React.ComponentProps<typeof StepsPrimitive.Root>) {
+  return <StepsPrimitive.Root className={className} {...props} />;
+}
 
-type StepsListProps = ArkStepsListProps & {
-  class?: string;
-  children?: JSX.Element;
-};
+function StepsList({ className, ...props }: React.ComponentProps<typeof StepsPrimitive.List>) {
+  return <StepsPrimitive.List className={cn('flex items-center gap-2', className)} {...props} />;
+}
 
-const StepsList: Component<StepsListProps> = props => {
-  const [local, others] = splitProps(props, ['class', 'children']);
-  return (
-    <StepsPrimitive.List class={cn('flex items-center gap-2', local.class)} {...others}>
-      {local.children}
-    </StepsPrimitive.List>
-  );
-};
+function StepsItem({ className, ...props }: React.ComponentProps<typeof StepsPrimitive.Item>) {
+  return <StepsPrimitive.Item className={cn('flex items-center gap-2', className)} {...props} />;
+}
 
-type StepsItemProps = ArkStepsItemProps & {
-  class?: string;
-  children?: JSX.Element;
-};
+function StepsTrigger({
+  className,
+  ...props
+}: React.ComponentProps<typeof StepsPrimitive.Trigger>) {
+  return <StepsPrimitive.Trigger className={className} {...props} />;
+}
 
-const StepsItem: Component<StepsItemProps> = props => {
-  const [local, others] = splitProps(props, ['class', 'children']);
-  return (
-    <StepsPrimitive.Item class={cn('flex items-center gap-2', local.class)} {...others}>
-      {local.children}
-    </StepsPrimitive.Item>
-  );
-};
+function StepsIndicator({
+  className,
+  ...props
+}: React.ComponentProps<typeof StepsPrimitive.Indicator>) {
+  return <StepsPrimitive.Indicator className={className} {...props} />;
+}
 
-type StepsTriggerProps = ArkStepsTriggerProps & {
-  class?: string;
-  children?: JSX.Element;
-};
-
-const StepsTrigger: Component<StepsTriggerProps> = props => {
-  const [local, others] = splitProps(props, ['class', 'children']);
-  return (
-    <StepsPrimitive.Trigger class={local.class} {...others}>
-      {local.children}
-    </StepsPrimitive.Trigger>
-  );
-};
-
-type StepsIndicatorProps = ArkStepsIndicatorProps & {
-  class?: string;
-  children?: JSX.Element;
-};
-
-const StepsIndicator: Component<StepsIndicatorProps> = props => {
-  const [local, others] = splitProps(props, ['class', 'children']);
-  return (
-    <StepsPrimitive.Indicator class={local.class} {...others}>
-      {local.children}
-    </StepsPrimitive.Indicator>
-  );
-};
-
-type StepsSeparatorProps = ArkStepsSeparatorProps & {
-  class?: string;
-};
-
-const StepsSeparator: Component<StepsSeparatorProps> = props => {
-  const [local, others] = splitProps(props, ['class']);
+function StepsSeparator({
+  className,
+  ...props
+}: React.ComponentProps<typeof StepsPrimitive.Separator>) {
   return (
     <StepsPrimitive.Separator
-      class={cn('bg-secondary h-0.5 flex-1', 'data-[complete]:bg-primary', local.class)}
-      {...others}
+      className={cn('bg-secondary data-[complete]:bg-primary h-0.5 flex-1', className)}
+      {...props}
     />
   );
-};
+}
 
-type StepsContentProps = ArkStepsContentProps & {
-  class?: string;
-  children?: JSX.Element;
-};
+function StepsContent({
+  className,
+  ...props
+}: React.ComponentProps<typeof StepsPrimitive.Content>) {
+  return <StepsPrimitive.Content className={className} {...props} />;
+}
 
-const StepsContent: Component<StepsContentProps> = props => {
-  const [local, others] = splitProps(props, ['class', 'children']);
-  return (
-    <StepsPrimitive.Content class={local.class} {...others}>
-      {local.children}
-    </StepsPrimitive.Content>
-  );
-};
+function StepsCompletedContent({
+  className,
+  ...props
+}: React.ComponentProps<typeof StepsPrimitive.CompletedContent>) {
+  return <StepsPrimitive.CompletedContent className={className} {...props} />;
+}
 
-type StepsCompletedContentProps = ArkStepsCompletedContentProps & {
-  class?: string;
-  children?: JSX.Element;
-};
+function StepsNextTrigger({
+  className,
+  ...props
+}: React.ComponentProps<typeof StepsPrimitive.NextTrigger>) {
+  return <StepsPrimitive.NextTrigger className={className} {...props} />;
+}
 
-const StepsCompletedContent: Component<StepsCompletedContentProps> = props => {
-  const [local, others] = splitProps(props, ['class', 'children']);
-  return (
-    <StepsPrimitive.CompletedContent class={local.class} {...others}>
-      {local.children}
-    </StepsPrimitive.CompletedContent>
-  );
-};
-
-type StepsNextTriggerProps = ArkStepsNextTriggerProps & {
-  class?: string;
-  children?: JSX.Element;
-};
-
-const StepsNextTrigger: Component<StepsNextTriggerProps> = props => {
-  const [local, others] = splitProps(props, ['class', 'children']);
-  return (
-    <StepsPrimitive.NextTrigger class={local.class} {...others}>
-      {local.children}
-    </StepsPrimitive.NextTrigger>
-  );
-};
-
-type StepsPrevTriggerProps = ArkStepsPrevTriggerProps & {
-  class?: string;
-  children?: JSX.Element;
-};
-
-const StepsPrevTrigger: Component<StepsPrevTriggerProps> = props => {
-  const [local, others] = splitProps(props, ['class', 'children']);
-  return (
-    <StepsPrimitive.PrevTrigger class={local.class} {...others}>
-      {local.children}
-    </StepsPrimitive.PrevTrigger>
-  );
-};
+function StepsPrevTrigger({
+  className,
+  ...props
+}: React.ComponentProps<typeof StepsPrimitive.PrevTrigger>) {
+  return <StepsPrimitive.PrevTrigger className={className} {...props} />;
+}
 
 export {
   Steps,

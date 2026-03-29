@@ -1,6 +1,6 @@
 # Landing Package Simplify Audit - 2026-03-21
 
-Full review of `/packages/landing/src` (477 source files) for code reuse, quality, and efficiency.
+Full review of `/packages/web/src` (477 source files) for code reuse, quality, and efficiency.
 
 ## Preferences
 

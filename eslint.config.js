@@ -236,8 +236,8 @@ export default [
     },
   },
   {
-    // Landing package - React with hooks linting
-    files: ['packages/landing/**/*.{js,jsx,ts,tsx}'],
+    // Web package - React with hooks linting
+    files: ['packages/web/**/*.{js,jsx,ts,tsx}'],
     plugins: {
       'react-hooks': reactHooks,
     },

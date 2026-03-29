@@ -1,8 +1,7 @@
 /**
- * PasswordInput component with visibility toggle.
+ * PasswordInput component with visibility toggle (@ark-ui/react)
  *
  * @example
- * // Basic usage
  * <PasswordInput>
  *   <PasswordInputLabel>Password</PasswordInputLabel>
  *   <PasswordInputControl>
@@ -10,128 +9,87 @@
  *     <PasswordInputVisibilityTrigger />
  *   </PasswordInputControl>
  * </PasswordInput>
- *
- * @example
- * // With controlled value
- * <PasswordInput autoComplete="current-password">
- *   <PasswordInputControl>
- *     <PasswordInputField
- *       value={password()}
- *       onInput={e => setPassword(e.target.value)}
- *     />
- *     <PasswordInputVisibilityTrigger />
- *   </PasswordInputControl>
- * </PasswordInput>
  */
-import type { Component, JSX } from 'solid-js';
-import { splitProps } from 'solid-js';
-import { PasswordInput as PasswordInputPrimitive } from '@ark-ui/solid/password-input';
-import type {
-  PasswordInputRootProps as ArkPasswordInputRootProps,
-  PasswordInputControlProps as ArkPasswordInputControlProps,
-  PasswordInputInputProps as ArkPasswordInputInputProps,
-  PasswordInputLabelProps as ArkPasswordInputLabelProps,
-  PasswordInputVisibilityTriggerProps as ArkPasswordInputVisibilityTriggerProps,
-} from '@ark-ui/solid/password-input';
-import { FiEye, FiEyeOff } from 'solid-icons/fi';
-import { cn } from './cn';
 
-// Re-export primitives directly
+import * as React from 'react';
+import { PasswordInput as PasswordInputPrimitive } from '@ark-ui/react/password-input';
+import { EyeIcon, EyeOffIcon } from 'lucide-react';
+import { cn } from '@/lib/utils';
+
 const PasswordInputIndicator = PasswordInputPrimitive.Indicator;
 const PasswordInputContext = PasswordInputPrimitive.Context;
 
-type PasswordInputProps = ArkPasswordInputRootProps & {
-  class?: string;
-  children?: JSX.Element;
-};
+function PasswordInput({
+  className,
+  ...props
+}: React.ComponentProps<typeof PasswordInputPrimitive.Root>) {
+  return <PasswordInputPrimitive.Root className={cn('w-full', className)} {...props} />;
+}
 
-const PasswordInput: Component<PasswordInputProps> = props => {
-  const [local, others] = splitProps(props, ['class', 'children']);
-  return (
-    <PasswordInputPrimitive.Root class={cn('w-full', local.class)} {...others}>
-      {local.children}
-    </PasswordInputPrimitive.Root>
-  );
-};
-
-type PasswordInputLabelProps = ArkPasswordInputLabelProps & {
-  class?: string;
-  children?: JSX.Element;
-};
-
-const PasswordInputLabel: Component<PasswordInputLabelProps> = props => {
-  const [local, others] = splitProps(props, ['class', 'children']);
+function PasswordInputLabel({
+  className,
+  ...props
+}: React.ComponentProps<typeof PasswordInputPrimitive.Label>) {
   return (
     <PasswordInputPrimitive.Label
-      class={cn('text-secondary-foreground mb-1 block text-sm font-medium', local.class)}
-      {...others}
-    >
-      {local.children}
-    </PasswordInputPrimitive.Label>
-  );
-};
-
-type PasswordInputControlProps = ArkPasswordInputControlProps & {
-  class?: string;
-  children?: JSX.Element;
-};
-
-const PasswordInputControl: Component<PasswordInputControlProps> = props => {
-  const [local, others] = splitProps(props, ['class', 'children']);
-  return (
-    <PasswordInputPrimitive.Control
-      class={cn('relative flex items-center', local.class)}
-      {...others}
-    >
-      {local.children}
-    </PasswordInputPrimitive.Control>
-  );
-};
-
-type PasswordInputFieldProps = ArkPasswordInputInputProps & {
-  class?: string;
-};
-
-const PasswordInputField: Component<PasswordInputFieldProps> = props => {
-  const [local, others] = splitProps(props, ['class']);
-  return (
-    <PasswordInputPrimitive.Input
-      class={cn(
-        'border-border w-full rounded-lg border px-3 py-2 pr-10 text-sm transition',
-        'focus:ring-primary focus:border-transparent focus:ring-2 focus:outline-none',
-        'disabled:bg-muted disabled:text-muted-foreground disabled:cursor-not-allowed',
-        local.class,
-      )}
-      {...others}
+      className={cn('text-muted-foreground mb-1 block text-sm font-medium', className)}
+      {...props}
     />
   );
-};
+}
 
-type PasswordInputVisibilityTriggerProps = ArkPasswordInputVisibilityTriggerProps & {
-  class?: string;
-  children?: JSX.Element;
-};
+function PasswordInputControl({
+  className,
+  ...props
+}: React.ComponentProps<typeof PasswordInputPrimitive.Control>) {
+  return (
+    <PasswordInputPrimitive.Control
+      className={cn('relative flex items-center', className)}
+      {...props}
+    />
+  );
+}
 
-const PasswordInputVisibilityTrigger: Component<PasswordInputVisibilityTriggerProps> = props => {
-  const [local, others] = splitProps(props, ['class', 'children']);
+function PasswordInputField({
+  className,
+  ...props
+}: React.ComponentProps<typeof PasswordInputPrimitive.Input>) {
+  return (
+    <PasswordInputPrimitive.Input
+      className={cn(
+        'border-border w-full rounded-lg border px-3 py-2 pr-10 text-sm transition',
+        'focus:ring-ring focus:border-transparent focus:ring-2 focus:outline-none',
+        'disabled:bg-muted disabled:text-muted-foreground disabled:cursor-not-allowed',
+        className,
+      )}
+      {...props}
+    />
+  );
+}
+
+function PasswordInputVisibilityTrigger({
+  className,
+  children,
+  ...props
+}: React.ComponentProps<typeof PasswordInputPrimitive.VisibilityTrigger>) {
   return (
     <PasswordInputPrimitive.VisibilityTrigger
-      class={cn(
+      className={cn(
         'text-muted-foreground/70 absolute right-3 flex items-center transition-colors',
         'hover:text-muted-foreground focus:outline-none',
         'disabled:cursor-not-allowed disabled:opacity-50',
-        local.class,
+        className,
       )}
-      {...others}
+      {...props}
     >
-      {local.children ?? (
-        <PasswordInputPrimitive.Indicator fallback={<FiEyeOff class='h-4 w-4' />}>
-          <FiEye class='h-4 w-4' />
+      {children ?? (
+        <PasswordInputPrimitive.Indicator fallback={<EyeOffIcon className='h-4 w-4' />}>
+          <EyeIcon className='h-4 w-4' />
         </PasswordInputPrimitive.Indicator>
       )}
     </PasswordInputPrimitive.VisibilityTrigger>
   );
-};
+}
 
 export {
   PasswordInput,

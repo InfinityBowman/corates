@@ -11,7 +11,7 @@ import {
   handleError,
   parseError,
   isErrorCode,
-} from '../error-utils.js';
+} from '../error-utils';
 import {
   createDomainError,
   createTransportError,
@@ -148,7 +148,7 @@ describe('handleDomainError', () => {
 
     await handleDomainError(error, { navigate, showToast: false });
 
-    expect(navigate).toHaveBeenCalledWith('/signin', { replace: true });
+    expect(navigate).toHaveBeenCalledWith({ to: '/signin', replace: true });
   });
 });
 

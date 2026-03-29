@@ -19,7 +19,7 @@ reference/
 .vinxi/
 .output/
 .astro/
-packages/landing/app.config.timestamp_*.js
+packages/web/app.config.timestamp_*.js
 
 # testing
 /coverage

@@ -1,5 +1,5 @@
 /**
- * Tests for better-auth-store - Authentication flows and state management
+ * Tests for authStore (Zustand) - Authentication flows and state management
  *
  * Note: These tests focus on the business logic and state management.
  * Better Auth client internals are mocked.
@@ -9,7 +9,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import 'fake-indexeddb/auto';
 
 // Mock dependencies before importing the store
-vi.mock('@api/auth-client.js', () => ({
+vi.mock('@/api/auth-client', () => ({
   authClient: {
     signUp: {
       email: vi.fn(),
@@ -32,27 +32,22 @@ vi.mock('@api/auth-client.js', () => ({
     },
     sendVerificationEmail: vi.fn(),
   },
-  // useSession returns a signal (function) that returns session state
-  useSession: vi.fn(() => {
-    // Return a signal function, not a plain object
-    const sessionSignal = () => ({
-      data: { user: null },
-      isPending: false,
-    });
-    sessionSignal.refetch = vi.fn();
-    return sessionSignal;
-  }),
+  listSessions: vi.fn(),
+  revokeSession: vi.fn(),
+  revokeOtherSessions: vi.fn(),
+  revokeSessions: vi.fn(),
 }));
 
-vi.mock('@primitives/useOnlineStatus.js', () => ({
-  default: () => () => true,
+vi.mock('@/lib/queryClient', () => ({
+  queryClient: { clear: vi.fn() },
 }));
 
-vi.mock('@/stores/projectStore.js', () => ({
-  default: {},
+vi.mock('@/config/api', () => ({
+  API_BASE: 'http://localhost:8787',
+  BASEPATH: '',
 }));
 
-vi.mock('@lib/lastLoginMethod.js', () => ({
+vi.mock('@/lib/lastLoginMethod', () => ({
   saveLastLoginMethod: vi.fn(),
   LOGIN_METHODS: {
     EMAIL: 'email',
@@ -60,6 +55,15 @@ vi.mock('@lib/lastLoginMethod.js', () => ({
     ORCID: 'orcid',
     MAGIC_LINK: 'magic-link',
   },
+}));
+
+vi.mock('@/primitives/avatarCache.js', () => ({
+  getCachedAvatar: vi.fn().mockResolvedValue(null),
+  pruneExpiredAvatars: vi.fn(),
+}));
+
+vi.mock('@/primitives/db.js', () => ({
+  clearAllData: vi.fn().mockResolvedValue(undefined),
 }));
 
 // Mock BroadcastChannel
@@ -88,7 +92,7 @@ const localStorageMock = {
 };
 global.localStorage = localStorageMock;
 
-describe('better-auth-store - Signup Flow', () => {
+describe('authStore - Signup Flow', () => {
   let authStore;
   let authClient;
 
@@ -96,12 +100,12 @@ describe('better-auth-store - Signup Flow', () => {
     vi.clearAllMocks();
     localStorage.clear();
 
-    // Re-import to get fresh instance
-    authClient = (await import('@api/auth-client.js')).authClient;
+    authClient = (await import('@/api/auth-client')).authClient;
+    const { useAuthStore } = await import('@/stores/authStore');
+    authStore = useAuthStore;
 
-    // Import store after mocks are set up
-    const { useBetterAuth } = await import('../better-auth-store.js');
-    authStore = useBetterAuth();
+    // Reset store state
+    authStore.setState({ authError: null });
   });
 
   it('should signup successfully with email and password', async () => {
@@ -110,7 +114,9 @@ describe('better-auth-store - Signup Flow', () => {
       error: null,
     });
 
-    const result = await authStore.signup('test@example.com', 'password123', 'Test User');
+    const result = await authStore
+      .getState()
+      .signup('test@example.com', 'password123', 'Test User');
 
     expect(authClient.signUp.email).toHaveBeenCalledWith({
       email: 'test@example.com',
@@ -128,7 +134,7 @@ describe('better-auth-store - Signup Flow', () => {
       error: null,
     });
 
-    await authStore.signup('test@example.com', 'password123', 'Test User', 'researcher');
+    await authStore.getState().signup('test@example.com', 'password123', 'Test User', 'researcher');
 
     expect(authClient.signUp.email).toHaveBeenCalledWith({
       email: 'test@example.com',
@@ -144,15 +150,15 @@ describe('better-auth-store - Signup Flow', () => {
       error: { message: 'Email already exists' },
     });
 
-    await expect(authStore.signup('test@example.com', 'password123', 'Test User')).rejects.toThrow(
-      'Email already exists',
-    );
+    await expect(
+      authStore.getState().signup('test@example.com', 'password123', 'Test User'),
+    ).rejects.toThrow('Email already exists');
 
-    expect(authStore.authError()).toBe('Email already exists');
+    expect(authStore.getState().authError).toBe('Email already exists');
   });
 });
 
-describe('better-auth-store - Signin Flow', () => {
+describe('authStore - Signin Flow', () => {
   let authStore;
   let authClient;
   let saveLastLoginMethod;
@@ -161,11 +167,12 @@ describe('better-auth-store - Signin Flow', () => {
     vi.clearAllMocks();
     localStorage.clear();
 
-    authClient = (await import('@api/auth-client.js')).authClient;
-    saveLastLoginMethod = (await import('@lib/lastLoginMethod.js')).saveLastLoginMethod;
+    authClient = (await import('@/api/auth-client')).authClient;
+    saveLastLoginMethod = (await import('@/lib/lastLoginMethod')).saveLastLoginMethod;
 
-    const { useBetterAuth } = await import('../better-auth-store.js');
-    authStore = useBetterAuth();
+    const { useAuthStore } = await import('@/stores/authStore');
+    authStore = useAuthStore;
+    authStore.setState({ authError: null });
   });
 
   it('should signin successfully with email and password', async () => {
@@ -174,10 +181,9 @@ describe('better-auth-store - Signin Flow', () => {
       error: null,
     });
 
-    // Set up pending email
     localStorage.setItem('pendingEmail', 'test@example.com');
 
-    const result = await authStore.signin('test@example.com', 'password123');
+    const result = await authStore.getState().signin('test@example.com', 'password123');
 
     expect(authClient.signIn.email).toHaveBeenCalledWith({
       email: 'test@example.com',
@@ -195,7 +201,7 @@ describe('better-auth-store - Signin Flow', () => {
       error: null,
     });
 
-    const result = await authStore.signin('test@example.com', 'password123');
+    const result = await authStore.getState().signin('test@example.com', 'password123');
 
     expect(result.twoFactorRequired).toBe(true);
   });
@@ -206,15 +212,15 @@ describe('better-auth-store - Signin Flow', () => {
       error: { message: 'Invalid credentials' },
     });
 
-    await expect(authStore.signin('test@example.com', 'wrong-password')).rejects.toThrow(
+    await expect(authStore.getState().signin('test@example.com', 'wrong-password')).rejects.toThrow(
       'Invalid credentials',
     );
 
-    expect(authStore.authError()).toBe('Invalid credentials');
+    expect(authStore.getState().authError).toBe('Invalid credentials');
   });
 });
 
-describe('better-auth-store - Social Auth', () => {
+describe('authStore - Social Auth', () => {
   let authStore;
   let authClient;
   let saveLastLoginMethod;
@@ -223,17 +229,17 @@ describe('better-auth-store - Social Auth', () => {
   beforeEach(async () => {
     vi.clearAllMocks();
 
-    authClient = (await import('@api/auth-client.js')).authClient;
-    const lastLoginModule = await import('@lib/lastLoginMethod.js');
+    authClient = (await import('@/api/auth-client')).authClient;
+    const lastLoginModule = await import('@/lib/lastLoginMethod');
     saveLastLoginMethod = lastLoginModule.saveLastLoginMethod;
     LOGIN_METHODS = lastLoginModule.LOGIN_METHODS;
 
-    // Mock window.location
     delete global.window.location;
     global.window.location = { origin: 'http://localhost:5173' };
 
-    const { useBetterAuth } = await import('../better-auth-store.js');
-    authStore = useBetterAuth();
+    const { useAuthStore } = await import('@/stores/authStore');
+    authStore = useAuthStore;
+    authStore.setState({ authError: null });
   });
 
   it('should signin with Google', async () => {
@@ -242,7 +248,7 @@ describe('better-auth-store - Social Auth', () => {
       error: null,
     });
 
-    await authStore.signinWithGoogle('/dashboard');
+    await authStore.getState().signinWithGoogle('/dashboard');
 
     expect(saveLastLoginMethod).toHaveBeenCalledWith(LOGIN_METHODS.GOOGLE);
     expect(authClient.signIn.social).toHaveBeenCalledWith({
@@ -258,7 +264,7 @@ describe('better-auth-store - Social Auth', () => {
       error: null,
     });
 
-    await authStore.signinWithOrcid('/projects');
+    await authStore.getState().signinWithOrcid('/projects');
 
     expect(saveLastLoginMethod).toHaveBeenCalledWith(LOGIN_METHODS.ORCID);
     expect(authClient.signIn.oauth2).toHaveBeenCalledWith({
@@ -274,7 +280,7 @@ describe('better-auth-store - Social Auth', () => {
       error: null,
     });
 
-    await authStore.signinWithMagicLink('test@example.com', '/verify');
+    await authStore.getState().signinWithMagicLink('test@example.com', '/verify');
 
     expect(authClient.signIn.magicLink).toHaveBeenCalledWith({
       email: 'test@example.com',
@@ -282,22 +288,22 @@ describe('better-auth-store - Social Auth', () => {
     });
 
     expect(localStorage.getItem('pendingEmail')).toBe('test@example.com');
-    expect(localStorage.getItem('magicLinkSent')).toBe('true');
     expect(saveLastLoginMethod).toHaveBeenCalledWith(LOGIN_METHODS.MAGIC_LINK);
   });
 });
 
-describe('better-auth-store - Signout', () => {
+describe('authStore - Signout', () => {
   let authStore;
   let authClient;
 
   beforeEach(async () => {
     vi.clearAllMocks();
 
-    authClient = (await import('@api/auth-client.js')).authClient;
+    authClient = (await import('@/api/auth-client')).authClient;
 
-    const { useBetterAuth } = await import('../better-auth-store.js');
-    authStore = useBetterAuth();
+    const { useAuthStore } = await import('@/stores/authStore');
+    authStore = useAuthStore;
+    authStore.setState({ authError: null, sessionRefetch: null });
   });
 
   it('should signout successfully', async () => {
@@ -305,7 +311,7 @@ describe('better-auth-store - Signout', () => {
       error: null,
     });
 
-    await authStore.signout();
+    await authStore.getState().signout();
 
     expect(authClient.signOut).toHaveBeenCalled();
   });
@@ -315,24 +321,25 @@ describe('better-auth-store - Signout', () => {
       error: { message: 'Signout failed' },
     });
 
-    await expect(authStore.signout()).rejects.toThrow('Signout failed');
-    expect(authStore.authError()).toBe('Signout failed');
+    await expect(authStore.getState().signout()).rejects.toThrow('Signout failed');
+    expect(authStore.getState().authError).toBe('Signout failed');
   });
 });
 
-describe('better-auth-store - Password Management', () => {
+describe('authStore - Password Management', () => {
   let authStore;
   let authClient;
 
   beforeEach(async () => {
     vi.clearAllMocks();
 
-    authClient = (await import('@api/auth-client.js')).authClient;
+    authClient = (await import('@/api/auth-client')).authClient;
 
     global.window.location = { origin: 'http://localhost:5173' };
 
-    const { useBetterAuth } = await import('../better-auth-store.js');
-    authStore = useBetterAuth();
+    const { useAuthStore } = await import('@/stores/authStore');
+    authStore = useAuthStore;
+    authStore.setState({ authError: null });
   });
 
   it('should change password', async () => {
@@ -340,14 +347,14 @@ describe('better-auth-store - Password Management', () => {
       error: null,
     });
 
-    await authStore.changePassword('oldPassword123', 'newPassword456');
+    await authStore.getState().changePassword('oldPassword123', 'newPassword456');
 
     expect(authClient.changePassword).toHaveBeenCalledWith({
       currentPassword: 'oldPassword123',
       newPassword: 'newPassword456',
     });
 
-    expect(authStore.authError()).toBeNull();
+    expect(authStore.getState().authError).toBeNull();
   });
 
   it('should request password reset', async () => {
@@ -355,7 +362,7 @@ describe('better-auth-store - Password Management', () => {
       error: null,
     });
 
-    await authStore.resetPassword('test@example.com');
+    await authStore.getState().resetPassword('test@example.com');
 
     expect(authClient.requestPasswordReset).toHaveBeenCalledWith({
       email: 'test@example.com',
@@ -368,7 +375,7 @@ describe('better-auth-store - Password Management', () => {
       error: null,
     });
 
-    await authStore.confirmPasswordReset('reset-token-123', 'newPassword789');
+    await authStore.getState().confirmPasswordReset('reset-token-123', 'newPassword789');
 
     expect(authClient.resetPassword).toHaveBeenCalledWith({
       token: 'reset-token-123',
@@ -381,25 +388,26 @@ describe('better-auth-store - Password Management', () => {
       error: { message: 'Current password is incorrect' },
     });
 
-    await expect(authStore.changePassword('wrong', 'new')).rejects.toThrow(
+    await expect(authStore.getState().changePassword('wrong', 'new')).rejects.toThrow(
       'Current password is incorrect',
     );
 
-    expect(authStore.authError()).toBe('Current password is incorrect');
+    expect(authStore.getState().authError).toBe('Current password is incorrect');
   });
 });
 
-describe('better-auth-store - Two-Factor Authentication', () => {
+describe('authStore - Two-Factor Authentication', () => {
   let authStore;
   let authClient;
 
   beforeEach(async () => {
     vi.clearAllMocks();
 
-    authClient = (await import('@api/auth-client.js')).authClient;
+    authClient = (await import('@/api/auth-client')).authClient;
 
-    const { useBetterAuth } = await import('../better-auth-store.js');
-    authStore = useBetterAuth();
+    const { useAuthStore } = await import('@/stores/authStore');
+    authStore = useAuthStore;
+    authStore.setState({ authError: null });
   });
 
   it('should enable 2FA with password', async () => {
@@ -412,7 +420,7 @@ describe('better-auth-store - Two-Factor Authentication', () => {
       error: null,
     });
 
-    const result = await authStore.enableTwoFactor('myPassword123');
+    const result = await authStore.getState().enableTwoFactor('myPassword123');
 
     expect(authClient.twoFactor.enable).toHaveBeenCalledWith({
       password: 'myPassword123',
@@ -429,7 +437,7 @@ describe('better-auth-store - Two-Factor Authentication', () => {
       error: null,
     });
 
-    const result = await authStore.verifyTwoFactorSetup('123456');
+    const result = await authStore.getState().verifyTwoFactorSetup('123456');
 
     expect(authClient.twoFactor.verifyTotp).toHaveBeenCalledWith({
       code: '123456',
@@ -444,7 +452,7 @@ describe('better-auth-store - Two-Factor Authentication', () => {
       error: null,
     });
 
-    const result = await authStore.disableTwoFactor('myPassword123');
+    const result = await authStore.getState().disableTwoFactor('myPassword123');
 
     expect(authClient.twoFactor.disable).toHaveBeenCalledWith({
       password: 'myPassword123',
@@ -459,7 +467,7 @@ describe('better-auth-store - Two-Factor Authentication', () => {
       error: null,
     });
 
-    const result = await authStore.verifyTwoFactor('654321');
+    const result = await authStore.getState().verifyTwoFactor('654321');
 
     expect(authClient.twoFactor.verifyTotp).toHaveBeenCalledWith({
       code: '654321',
@@ -474,22 +482,25 @@ describe('better-auth-store - Two-Factor Authentication', () => {
       error: { message: 'Invalid password' },
     });
 
-    await expect(authStore.enableTwoFactor('wrongPassword')).rejects.toThrow('Invalid password');
-    expect(authStore.authError()).toBe('Invalid password');
+    await expect(authStore.getState().enableTwoFactor('wrongPassword')).rejects.toThrow(
+      'Invalid password',
+    );
+    expect(authStore.getState().authError).toBe('Invalid password');
   });
 });
 
-describe('better-auth-store - Profile Management', () => {
+describe('authStore - Profile Management', () => {
   let authStore;
   let authClient;
 
   beforeEach(async () => {
     vi.clearAllMocks();
 
-    authClient = (await import('@api/auth-client.js')).authClient;
+    authClient = (await import('@/api/auth-client')).authClient;
 
-    const { useBetterAuth } = await import('../better-auth-store.js');
-    authStore = useBetterAuth();
+    const { useAuthStore } = await import('@/stores/authStore');
+    authStore = useAuthStore;
+    authStore.setState({ authError: null, sessionRefetch: null });
   });
 
   it('should update user profile', async () => {
@@ -498,13 +509,7 @@ describe('better-auth-store - Profile Management', () => {
       error: null,
     });
 
-    const result = await authStore.updateProfile({ name: 'New Name' }).catch(err => {
-      // Session refetch may fail in test environment, that's ok
-      if (!err.message.includes('session is not a function')) {
-        throw err;
-      }
-      return { user: { id: 'user-1', name: 'New Name' } };
-    });
+    const result = await authStore.getState().updateProfile({ name: 'New Name' });
 
     expect(authClient.updateUser).toHaveBeenCalledWith({ name: 'New Name' });
     expect(result.user.name).toBe('New Name');
@@ -516,12 +521,14 @@ describe('better-auth-store - Profile Management', () => {
       error: { message: 'Update failed' },
     });
 
-    await expect(authStore.updateProfile({ name: 'Test' })).rejects.toThrow('Update failed');
-    expect(authStore.authError()).toBe('Update failed');
+    await expect(authStore.getState().updateProfile({ name: 'Test' })).rejects.toThrow(
+      'Update failed',
+    );
+    expect(authStore.getState().authError).toBe('Update failed');
   });
 });
 
-describe('better-auth-store - Account Deletion', () => {
+describe('authStore - Account Deletion', () => {
   let authStore;
   let authClient;
 
@@ -529,13 +536,14 @@ describe('better-auth-store - Account Deletion', () => {
     vi.clearAllMocks();
     localStorage.clear();
 
-    authClient = (await import('@api/auth-client.js')).authClient;
+    authClient = (await import('@/api/auth-client')).authClient;
     authClient.signOut.mockResolvedValue({ error: null });
 
     global.fetch = vi.fn();
 
-    const { useBetterAuth } = await import('../better-auth-store.js');
-    authStore = useBetterAuth();
+    const { useAuthStore } = await import('@/stores/authStore');
+    authStore = useAuthStore;
+    authStore.setState({ authError: null, sessionRefetch: null });
   });
 
   it('should delete account successfully', async () => {
@@ -546,7 +554,7 @@ describe('better-auth-store - Account Deletion', () => {
 
     localStorage.setItem('pendingEmail', 'test@example.com');
 
-    const result = await authStore.deleteAccount();
+    const result = await authStore.getState().deleteAccount();
 
     expect(global.fetch).toHaveBeenCalledWith(
       expect.stringContaining('/api/users/me'),
@@ -567,42 +575,40 @@ describe('better-auth-store - Account Deletion', () => {
       json: async () => ({ error: 'Deletion failed' }),
     });
 
-    await expect(authStore.deleteAccount()).rejects.toThrow('Deletion failed');
-    expect(authStore.authError()).toBe('Deletion failed');
+    await expect(authStore.getState().deleteAccount()).rejects.toThrow('Deletion failed');
+    expect(authStore.getState().authError).toBe('Deletion failed');
   });
 });
 
-describe('better-auth-store - Utility Functions', () => {
+describe('authStore - Utility Functions', () => {
   let authStore;
 
   beforeEach(async () => {
     vi.clearAllMocks();
     localStorage.clear();
 
-    const { useBetterAuth } = await import('../better-auth-store.js');
-    authStore = useBetterAuth();
-  });
-
-  it('should get pending email from localStorage', () => {
-    localStorage.setItem('pendingEmail', 'test@example.com');
-
-    expect(authStore.getPendingEmail()).toBe('test@example.com');
+    const { useAuthStore } = await import('@/stores/authStore');
+    authStore = useAuthStore;
+    authStore.setState({ authError: null });
   });
 
   it('should clear auth error', async () => {
     // Trigger an error first
-    const authClient = (await import('@api/auth-client.js')).authClient;
+    const authClient = (await import('@/api/auth-client')).authClient;
     authClient.signIn.email.mockResolvedValue({
       data: null,
       error: { message: 'Test error' },
     });
 
-    await authStore.signin('test@example.com', 'wrong').catch(() => {});
+    await authStore
+      .getState()
+      .signin('test@example.com', 'wrong')
+      .catch(() => {});
 
-    expect(authStore.authError()).toBe('Test error');
+    expect(authStore.getState().authError).toBe('Test error');
 
-    authStore.clearAuthError();
+    authStore.getState().setAuthError(null);
 
-    expect(authStore.authError()).toBeNull();
+    expect(authStore.getState().authError).toBeNull();
   });
 });

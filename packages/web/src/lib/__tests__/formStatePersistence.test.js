@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import 'fake-indexeddb/auto';
-import { db } from '@primitives/db.js';
+import { db } from '@/primitives/db.js';
 import {
   saveFormState,
   getFormState,

@@ -1,111 +1,27 @@
-/**
- * Checkbox component for boolean inputs.
- *
- * @example
- * <CheckboxRoot>
- *   <CheckboxControl />
- *   <CheckboxLabel>Accept terms and conditions</CheckboxLabel>
- *   <CheckboxHiddenInput />
- * </CheckboxRoot>
- *
- * @example
- * // Controlled
- * const [checked, setChecked] = createSignal(false);
- * <CheckboxRoot
- *   checked={checked()}
- *   onCheckedChange={setChecked}
- * >
- *   <CheckboxControl />
- *   <CheckboxLabel>Remember me</CheckboxLabel>
- * </CheckboxRoot>
- *
- * @example
- * // Indeterminate state (for "select all" patterns)
- * <CheckboxRoot checked="indeterminate">
- *   <CheckboxControl />
- *   <CheckboxLabel>Select all</CheckboxLabel>
- * </CheckboxRoot>
- */
-import type { Component, JSX } from 'solid-js';
-import { splitProps } from 'solid-js';
-import { Checkbox as CheckboxPrimitive } from '@ark-ui/solid/checkbox';
-import type {
-  CheckboxRootProps as ArkCheckboxRootProps,
-  CheckboxControlProps as ArkCheckboxControlProps,
-  CheckboxLabelProps as ArkCheckboxLabelProps,
-} from '@ark-ui/solid/checkbox';
-import { BiRegularCheck, BiRegularMinus } from 'solid-icons/bi';
-import { cn } from './cn';
+import * as React from 'react';
+import { Checkbox as CheckboxPrimitive } from 'radix-ui';
 
-const Checkbox = CheckboxPrimitive.Root;
-const CheckboxHiddenInput = CheckboxPrimitive.HiddenInput;
+import { cn } from '@/lib/utils';
+import { CheckIcon } from 'lucide-react';
 
-type CheckedState = boolean | 'indeterminate';
-
-type CheckboxRootProps = Omit<ArkCheckboxRootProps, 'onCheckedChange'> & {
-  class?: string;
-  children?: JSX.Element;
-  onCheckedChange?: (_checked: CheckedState) => void;
-};
-
-const CheckboxRoot: Component<CheckboxRootProps> = props => {
-  const [local, others] = splitProps(props, ['class', 'children', 'onCheckedChange']);
+function Checkbox({ className, ...props }: React.ComponentProps<typeof CheckboxPrimitive.Root>) {
   return (
     <CheckboxPrimitive.Root
-      class={cn('flex items-center gap-2', local.class)}
-      onCheckedChange={details => local.onCheckedChange?.(details.checked)}
-      {...others}
+      data-slot='checkbox'
+      className={cn(
+        'peer border-input focus-visible:border-ring focus-visible:ring-ring/50 aria-invalid:border-destructive aria-invalid:ring-destructive/20 aria-invalid:aria-checked:border-primary dark:bg-input/30 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 data-checked:border-primary data-checked:bg-primary data-checked:text-primary-foreground dark:data-checked:bg-primary relative flex size-4 shrink-0 items-center justify-center rounded-[4px] border transition-colors outline-none group-has-disabled/field:opacity-50 after:absolute after:-inset-x-3 after:-inset-y-2 focus-visible:ring-3 disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:ring-3',
+        className,
+      )}
+      {...props}
     >
-      {local.children}
+      <CheckboxPrimitive.Indicator
+        data-slot='checkbox-indicator'
+        className='grid place-content-center text-current transition-none [&>svg]:size-3.5'
+      >
+        <CheckIcon />
+      </CheckboxPrimitive.Indicator>
     </CheckboxPrimitive.Root>
   );
-};
+}
 
-type CheckboxControlProps = ArkCheckboxControlProps & {
-  class?: string;
-};
-
-const CheckboxControl: Component<CheckboxControlProps> = props => {
-  const [local, others] = splitProps(props, ['class']);
-  return (
-    <CheckboxPrimitive.Control
-      class={cn(
-        'border-border flex h-4 w-4 shrink-0 items-center justify-center rounded border',
-        'ring-offset-background transition-colors',
-        'focus-visible:ring-ring focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none',
-        'data-disabled:cursor-not-allowed data-disabled:opacity-50',
-        'data-[state=checked]:border-primary data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground',
-        'data-[state=indeterminate]:border-primary data-[state=indeterminate]:bg-primary data-[state=indeterminate]:text-primary-foreground',
-        local.class,
-      )}
-      {...others}
-    >
-      <CheckboxPrimitive.Indicator>
-        <BiRegularCheck class='h-3.5 w-3.5' />
-      </CheckboxPrimitive.Indicator>
-      <CheckboxPrimitive.Indicator indeterminate>
-        <BiRegularMinus class='h-3.5 w-3.5' />
-      </CheckboxPrimitive.Indicator>
-    </CheckboxPrimitive.Control>
-  );
-};
-
-type CheckboxLabelProps = ArkCheckboxLabelProps & {
-  class?: string;
-};
-
-const CheckboxLabel: Component<CheckboxLabelProps> = props => {
-  const [local, others] = splitProps(props, ['class']);
-  return (
-    <CheckboxPrimitive.Label
-      class={cn(
-        'text-foreground text-sm leading-none font-medium',
-        'data-disabled:cursor-not-allowed data-disabled:opacity-70',
-        local.class,
-      )}
-      {...others}
-    />
-  );
-};
-
-export { Checkbox, CheckboxRoot, CheckboxControl, CheckboxLabel, CheckboxHiddenInput };
+export { Checkbox };

@@ -4,14 +4,6 @@
       "type": "stdio",
       "command": "node",
       "args": ["packages/mcp/dist/server.js"]
-    },
-    "corates-memory": {
-      "type": "stdio",
-      "command": "node",
-      "args": ["packages/mcp-memory/dist/server.js"],
-      "env": {
-        "MCP_MEMORY_REPO_ROOT": "."
-      }
     }
   }
 }

@@ -36,7 +36,7 @@
   // Tailwind v4 is CSS-first; point the IntelliSense extension at the CSS entrypoint.
   // This enables hover/autocomplete for class strings across the whole monorepo,
   // including workspace packages like `packages/ui`.
-  "tailwindCSS.experimental.configFile": "packages/landing/src/styles.css",
+  "tailwindCSS.experimental.configFile": "packages/web/src/styles.css",
   "files.associations": {
     "*.css": "tailwindcss"
   }

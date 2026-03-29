@@ -4,7 +4,7 @@ RFC for restructuring the Y.js-to-React data pipeline in CoRATES.
 
 **Status**: Draft
 **Date**: 2026-03-24
-**Scope**: `packages/landing` sync infrastructure, `packages/workers` ProjectDoc (minor)
+**Scope**: `packages/web` sync infrastructure, `packages/workers` ProjectDoc (minor)
 **Supersedes**: `yjs-sync-pipeline-redesign.md` (earlier draft)
 
 ---
@@ -854,7 +854,7 @@ Check whether these are still imported after the migration:
 - `y-websocket` direct imports (should only be used inside `WebSocketSyncProvider`)
 - If `zustand/middleware/immer` is no longer needed after `projectStore` shrinks, remove it
 
-Verify with: `pnpm --filter landing build` (tree-shaking will flag unused imports as errors if `verbatimModuleSyntax` is on).
+Verify with: `pnpm --filter web build` (tree-shaking will flag unused imports as errors if `verbatimModuleSyntax` is on).
 
 #### 6e: Clean Up the `primitives/useProject/` Directory
 
@@ -928,10 +928,10 @@ Before opening the PR to merge the feature branch:
 
 - [ ] `pnpm typecheck` passes with no errors
 - [ ] `pnpm lint` passes (no unused imports, no unused variables)
-- [ ] `pnpm --filter landing build` succeeds (tree-shaking catches dead code)
-- [ ] `pnpm --filter landing test` passes (unit tests)
+- [ ] `pnpm --filter web build` succeeds (tree-shaking catches dead code)
+- [ ] `pnpm --filter web test` passes (unit tests)
 - [ ] `pnpm --filter workers test` passes (ProjectDoc tests)
-- [ ] `pnpm --filter landing test:browser` passes (E2E: all checklist workflows, reconciliation, multi-user)
+- [ ] `pnpm --filter web test:browser` passes (E2E: all checklist workflows, reconciliation, multi-user)
 - [ ] `grep -r "connectionPool" src/` returns zero results (fully removed)
 - [ ] `grep -r "setProjectData" src/` returns zero results (fully removed)
 - [ ] `grep -r "selectStudies\|selectStudy\|selectChecklist\|selectMembers\|selectMeta" src/` returns zero results (all old selectors removed)

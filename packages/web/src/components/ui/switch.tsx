@@ -1,115 +1,31 @@
-/**
- * Switch component for toggle inputs.
- *
- * @example
- * <SwitchRoot>
- *   <SwitchControl>
- *     <SwitchThumb />
- *   </SwitchControl>
- *   <SwitchLabel>Enable notifications</SwitchLabel>
- *   <SwitchHiddenInput />
- * </SwitchRoot>
- *
- * @example
- * // Controlled
- * const [enabled, setEnabled] = createSignal(false);
- * <SwitchRoot
- *   checked={enabled()}
- *   onCheckedChange={setEnabled}
- * >
- *   <SwitchControl>
- *     <SwitchThumb />
- *   </SwitchControl>
- *   <SwitchLabel>Dark mode</SwitchLabel>
- * </SwitchRoot>
- */
-import type { Component, JSX } from 'solid-js';
-import { splitProps } from 'solid-js';
-import { Switch as SwitchPrimitive } from '@ark-ui/solid/switch';
-import type {
-  SwitchRootProps as ArkSwitchRootProps,
-  SwitchControlProps as ArkSwitchControlProps,
-  SwitchThumbProps as ArkSwitchThumbProps,
-  SwitchLabelProps as ArkSwitchLabelProps,
-} from '@ark-ui/solid/switch';
-import { cn } from './cn';
+import * as React from 'react';
+import { Switch as SwitchPrimitive } from 'radix-ui';
 
-const Switch = SwitchPrimitive.Root;
-const SwitchHiddenInput = SwitchPrimitive.HiddenInput;
+import { cn } from '@/lib/utils';
 
-type SwitchRootProps = Omit<ArkSwitchRootProps, 'onCheckedChange'> & {
-  class?: string;
-  children?: JSX.Element;
-  onCheckedChange?: (_checked: boolean) => void;
-};
-
-const SwitchRoot: Component<SwitchRootProps> = props => {
-  const [local, others] = splitProps(props, ['class', 'children', 'onCheckedChange']);
+function Switch({
+  className,
+  size = 'default',
+  ...props
+}: React.ComponentProps<typeof SwitchPrimitive.Root> & {
+  size?: 'sm' | 'default';
+}) {
   return (
     <SwitchPrimitive.Root
-      class={cn('flex items-center gap-2', local.class)}
-      onCheckedChange={details => local.onCheckedChange?.(details.checked)}
-      {...others}
+      data-slot='switch'
+      data-size={size}
+      className={cn(
+        'peer group/switch focus-visible:border-ring focus-visible:ring-ring/50 aria-invalid:border-destructive aria-invalid:ring-destructive/20 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 data-checked:bg-primary data-unchecked:bg-input dark:data-unchecked:bg-input/80 relative inline-flex shrink-0 items-center rounded-full border border-transparent transition-all outline-none after:absolute after:-inset-x-3 after:-inset-y-2 focus-visible:ring-3 aria-invalid:ring-3 data-disabled:cursor-not-allowed data-disabled:opacity-50 data-[size=default]:h-[18.4px] data-[size=default]:w-[32px] data-[size=sm]:h-[14px] data-[size=sm]:w-[24px]',
+        className,
+      )}
+      {...props}
     >
-      {local.children}
+      <SwitchPrimitive.Thumb
+        data-slot='switch-thumb'
+        className='bg-background dark:data-checked:bg-primary-foreground dark:data-unchecked:bg-foreground pointer-events-none block rounded-full ring-0 transition-transform group-data-[size=default]/switch:size-4 group-data-[size=sm]/switch:size-3 group-data-[size=default]/switch:data-checked:translate-x-[calc(100%-2px)] group-data-[size=sm]/switch:data-checked:translate-x-[calc(100%-2px)] group-data-[size=default]/switch:data-unchecked:translate-x-0 group-data-[size=sm]/switch:data-unchecked:translate-x-0'
+      />
     </SwitchPrimitive.Root>
   );
-};
+}
 
-type SwitchControlProps = ArkSwitchControlProps & {
-  class?: string;
-  children?: JSX.Element;
-};
-
-const SwitchControl: Component<SwitchControlProps> = props => {
-  const [local, others] = splitProps(props, ['class', 'children']);
-  return (
-    <SwitchPrimitive.Control
-      class={cn(
-        'inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent',
-        'transition-colors',
-        'focus-visible:ring-ring focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none',
-        'data-disabled:cursor-not-allowed data-disabled:opacity-50',
-        'bg-input data-[state=checked]:bg-primary',
-        local.class,
-      )}
-      {...others}
-    >
-      {local.children}
-    </SwitchPrimitive.Control>
-  );
-};
-
-type SwitchThumbProps = ArkSwitchThumbProps & {
-  class?: string;
-};
-
-const SwitchThumb: Component<SwitchThumbProps> = props => {
-  const [local, others] = splitProps(props, ['class']);
-  return (
-    <SwitchPrimitive.Thumb
-      class={cn(
-        'bg-card pointer-events-none block h-5 w-5 rounded-full shadow-lg ring-0 transition-transform',
-        'data-[state=checked]:translate-x-5 data-[state=unchecked]:translate-x-0',
-        local.class,
-      )}
-      {...others}
-    />
-  );
-};
-
-type SwitchLabelProps = ArkSwitchLabelProps & {
-  class?: string;
-};
-
-const SwitchLabel: Component<SwitchLabelProps> = props => {
-  const [local, others] = splitProps(props, ['class']);
-  return (
-    <SwitchPrimitive.Label
-      class={cn('text-foreground text-sm leading-none font-medium', local.class)}
-      {...others}
-    />
-  );
-};
-
-export { Switch, SwitchRoot, SwitchControl, SwitchThumb, SwitchLabel, SwitchHiddenInput };
+export { Switch };

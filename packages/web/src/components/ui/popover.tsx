@@ -1,207 +1,72 @@
-/**
- * Popover component for floating content panels.
- *
- * @example
- * <Popover>
- *   <PopoverTrigger>
- *     <Button>Open Popover</Button>
- *   </PopoverTrigger>
- *   <PopoverPositioner>
- *     <PopoverContent>
- *       <PopoverTitle>Settings</PopoverTitle>
- *       <PopoverDescription>Adjust your preferences below.</PopoverDescription>
- *       <PopoverCloseTrigger>
- *         <FiX />
- *       </PopoverCloseTrigger>
- *     </PopoverContent>
- *   </PopoverPositioner>
- * </Popover>
- *
- * @example
- * // Inside a Dialog (prevents portal z-index issues)
- * <PopoverPositioner inDialog>
- *   <PopoverContent>...</PopoverContent>
- * </PopoverPositioner>
- *
- * @example
- * // With arrow
- * <PopoverContent>
- *   <PopoverArrow>
- *     <PopoverArrowTip />
- *   </PopoverArrow>
- *   Content here
- * </PopoverContent>
- */
-import type { Component, JSX } from 'solid-js';
-import { Show, splitProps } from 'solid-js';
-import { Popover as PopoverPrimitive } from '@ark-ui/solid/popover';
-import type {
-  PopoverRootProps as ArkPopoverRootProps,
-  PopoverContentProps as ArkPopoverContentProps,
-  PopoverTriggerProps as ArkPopoverTriggerProps,
-  PopoverTitleProps as ArkPopoverTitleProps,
-  PopoverDescriptionProps as ArkPopoverDescriptionProps,
-  PopoverCloseTriggerProps as ArkPopoverCloseTriggerProps,
-  PopoverArrowProps as ArkPopoverArrowProps,
-  PopoverArrowTipProps as ArkPopoverArrowTipProps,
-} from '@ark-ui/solid/popover';
-import { Portal } from 'solid-js/web';
-import { cn } from './cn';
-import { Z_INDEX } from './z-index';
+import * as React from 'react';
+import { Popover as PopoverPrimitive } from 'radix-ui';
 
-type PopoverProps = Omit<ArkPopoverRootProps, 'onOpenChange'> & {
-  children?: JSX.Element;
-  onOpenChange?: (_open: boolean) => void;
-};
+import { cn } from '@/lib/utils';
 
-const Popover: Component<PopoverProps> = props => {
-  const [local, others] = splitProps(props, ['children', 'onOpenChange']);
+function Popover({ ...props }: React.ComponentProps<typeof PopoverPrimitive.Root>) {
+  return <PopoverPrimitive.Root data-slot='popover' {...props} />;
+}
+
+function PopoverTrigger({ ...props }: React.ComponentProps<typeof PopoverPrimitive.Trigger>) {
+  return <PopoverPrimitive.Trigger data-slot='popover-trigger' {...props} />;
+}
+
+function PopoverContent({
+  className,
+  align = 'center',
+  sideOffset = 4,
+  ...props
+}: React.ComponentProps<typeof PopoverPrimitive.Content>) {
   return (
-    <PopoverPrimitive.Root onOpenChange={details => local.onOpenChange?.(details.open)} {...others}>
-      {local.children}
-    </PopoverPrimitive.Root>
+    <PopoverPrimitive.Portal>
+      <PopoverPrimitive.Content
+        data-slot='popover-content'
+        align={align}
+        sideOffset={sideOffset}
+        className={cn(
+          'bg-popover text-popover-foreground ring-foreground/10 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95 z-50 flex w-72 origin-(--radix-popover-content-transform-origin) flex-col gap-2.5 rounded-lg p-2.5 text-sm shadow-md ring-1 outline-hidden duration-100',
+          className,
+        )}
+        {...props}
+      />
+    </PopoverPrimitive.Portal>
   );
-};
+}
 
-const PopoverAnchor = PopoverPrimitive.Anchor;
+function PopoverAnchor({ ...props }: React.ComponentProps<typeof PopoverPrimitive.Anchor>) {
+  return <PopoverPrimitive.Anchor data-slot='popover-anchor' {...props} />;
+}
 
-type PopoverTriggerProps = ArkPopoverTriggerProps & {
-  class?: string;
-  children?: JSX.Element;
-};
-
-const PopoverTrigger: Component<PopoverTriggerProps> = props => {
-  const [local, others] = splitProps(props, ['class', 'children']);
+function PopoverHeader({ className, ...props }: React.ComponentProps<'div'>) {
   return (
-    <PopoverPrimitive.Trigger class={local.class} {...others}>
-      {local.children}
-    </PopoverPrimitive.Trigger>
-  );
-};
-
-type PopoverPositionerProps = {
-  class?: string;
-  children?: JSX.Element;
-  inDialog?: boolean;
-};
-
-const PopoverPositioner: Component<PopoverPositionerProps> = props => {
-  const [local, others] = splitProps(props, ['class', 'children', 'inDialog']);
-
-  const positioner = (
-    <PopoverPrimitive.Positioner class={local.class} {...others}>
-      {local.children}
-    </PopoverPrimitive.Positioner>
-  );
-
-  return (
-    <Show when={!local.inDialog} fallback={positioner}>
-      <Portal>{positioner}</Portal>
-    </Show>
-  );
-};
-
-type PopoverContentProps = ArkPopoverContentProps & {
-  class?: string;
-  children?: JSX.Element;
-};
-
-const PopoverContent: Component<PopoverContentProps> = props => {
-  const [local, others] = splitProps(props, ['class', 'children']);
-  return (
-    <PopoverPrimitive.Content
-      class={cn(
-        'border-border bg-popover w-72 rounded-md border p-4 shadow-md outline-none',
-        Z_INDEX.POPOVER,
-        local.class,
-      )}
-      {...others}
-    >
-      {local.children}
-    </PopoverPrimitive.Content>
-  );
-};
-
-type PopoverTitleProps = ArkPopoverTitleProps & {
-  class?: string;
-};
-
-const PopoverTitle: Component<PopoverTitleProps> = props => {
-  const [local, others] = splitProps(props, ['class']);
-  return (
-    <PopoverPrimitive.Title
-      class={cn('text-popover-foreground text-sm font-medium', local.class)}
-      {...others}
+    <div
+      data-slot='popover-header'
+      className={cn('flex flex-col gap-0.5 text-sm', className)}
+      {...props}
     />
   );
-};
+}
 
-type PopoverDescriptionProps = ArkPopoverDescriptionProps & {
-  class?: string;
-};
+function PopoverTitle({ className, ...props }: React.ComponentProps<'h2'>) {
+  return <div data-slot='popover-title' className={cn('font-medium', className)} {...props} />;
+}
 
-const PopoverDescription: Component<PopoverDescriptionProps> = props => {
-  const [local, others] = splitProps(props, ['class']);
+function PopoverDescription({ className, ...props }: React.ComponentProps<'p'>) {
   return (
-    <PopoverPrimitive.Description
-      class={cn('text-muted-foreground mt-1 text-sm', local.class)}
-      {...others}
+    <p
+      data-slot='popover-description'
+      className={cn('text-muted-foreground', className)}
+      {...props}
     />
   );
-};
-
-type PopoverCloseTriggerProps = ArkPopoverCloseTriggerProps & {
-  class?: string;
-  children?: JSX.Element;
-};
-
-const PopoverCloseTrigger: Component<PopoverCloseTriggerProps> = props => {
-  const [local, others] = splitProps(props, ['class', 'children']);
-  return (
-    <PopoverPrimitive.CloseTrigger
-      class={cn(
-        'text-muted-foreground hover:bg-muted hover:text-foreground absolute top-2 right-2 rounded-md p-1',
-        local.class,
-      )}
-      {...others}
-    >
-      {local.children}
-    </PopoverPrimitive.CloseTrigger>
-  );
-};
-
-type PopoverArrowProps = ArkPopoverArrowProps & {
-  class?: string;
-};
-
-const PopoverArrow: Component<PopoverArrowProps> = props => {
-  const [local, others] = splitProps(props, ['class']);
-  return <PopoverPrimitive.Arrow class={local.class} {...others} />;
-};
-
-type PopoverArrowTipProps = ArkPopoverArrowTipProps & {
-  class?: string;
-};
-
-const PopoverArrowTip: Component<PopoverArrowTipProps> = props => {
-  const [local, others] = splitProps(props, ['class']);
-  return (
-    <PopoverPrimitive.ArrowTip
-      class={cn('border-border bg-popover border-t border-l', local.class)}
-      {...others}
-    />
-  );
-};
+}
 
 export {
   Popover,
   PopoverAnchor,
-  PopoverTrigger,
-  PopoverPositioner,
   PopoverContent,
-  PopoverTitle,
   PopoverDescription,
-  PopoverCloseTrigger,
-  PopoverArrow,
-  PopoverArrowTip,
+  PopoverHeader,
+  PopoverTitle,
+  PopoverTrigger,
 };

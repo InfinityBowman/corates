@@ -22,11 +22,12 @@ CoRATES is a web application designed to streamline the entire quality and risk-
 
 ### Frontend
 
-- **Framework**: SolidJS with @solidjs/router for client-side routing and SolidStart for landing page
-- **Build**: Vite with vite-plugin-solid (web package) / SolidStart with Vinxi (landing package)
+- **Framework**: React 19 with TanStack Start and TanStack Router
+- **Build**: Vite with TanStack Start
 - **Styling**: Tailwind CSS v4 with @tailwindcss/vite
-- **UI Components**: Ark UI (via @corates/ui package) + solid-icons
-- **Data Fetching**: TanStack SolidQuery (reactive server state management)
+- **UI Components**: shadcn/ui (Radix-based) + lucide-react
+- **Data Fetching**: TanStack Query (server state management)
+- **Client State**: Zustand
 - **Tables**: TanStack Solid Table
 - **Charts**: D3 for most user charts and Chart.js + solid-chartjs for admin
 - **PDF Viewer**: EmbedPDF with plugin ecosystem
@@ -66,10 +67,9 @@ CoRATES is a web application designed to streamline the entire quality and risk-
 
 ### Monorepo Structure
 
-- `packages/web` - SolidJS frontend application with Vite
-- `packages/landing` - Marketing site built with SolidStart (meta-framework) and Vinxi, includes bundled web app
+- `packages/web` - React/TanStack Start frontend (deployed on Cloudflare Workers)
 - `packages/workers` - Cloudflare Workers backend
-- `packages/ui` - Shared Ark UI component library with prestyled + primitive variants
+- `packages/ui` - Shared UI component library
 - `packages/shared` - Shared TypeScript utilities, types, and error definitions
 - `packages/docs` - Vitepress documentation and guides
 - `packages/mcp` - MCP server for development tools and documentation

@@ -1,38 +1,26 @@
 {
+  "include": ["**/*.ts", "**/*.tsx", "eslint.config.js", "prettier.config.js", "vite.config.ts"],
   "compilerOptions": {
-    "target": "ESNext",
+    "target": "ES2022",
+    "jsx": "react-jsx",
     "module": "ESNext",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "types": ["vite/client"],
     "moduleResolution": "bundler",
     "allowImportingTsExtensions": true,
-    "resolveJsonModule": true,
-    "isolatedModules": true,
-    "noEmit": true,
-    "jsx": "preserve",
-    "jsxImportSource": "solid-js",
-    "strict": false,
-    "skipLibCheck": true,
     "allowJs": true,
-    "checkJs": false,
-    "esModuleInterop": true,
-    "allowSyntheticDefaultImports": true,
-    "forceConsistentCasingInFileNames": true,
+    "verbatimModuleSyntax": false,
+    "noEmit": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUncheckedSideEffectImports": true,
     "baseUrl": ".",
     "paths": {
-      "@/*": ["src/*"],
-      "@components/*": ["src/components/*"],
-      "@auth/*": ["src/components/auth/*"],
-      "@checklist/*": ["src/components/checklist/*"],
-      "@pdf/*": ["src/components/pdf/*"],
-      "@project/*": ["src/components/project/*"],
-      "@routes/*": ["src/routes/*"],
-      "@primitives/*": ["src/primitives/*"],
-      "@offline/*": ["src/offline/*"],
-      "@api/*": ["src/api/*"],
-      "@config/*": ["src/config/*"],
-      "@lib/*": ["src/lib/*"]
-    },
-    "types": ["vite/client"]
-  },
-  "include": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.js", "src/**/*.jsx"],
-  "exclude": ["node_modules", "dist", "src/components/pdf/embedpdf/preact"]
+      "@/*": ["./src/*"],
+      "@workers/rpc": ["../workers/dist/rpc/index.d.ts"]
+    }
+  }
 }

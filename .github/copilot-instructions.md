@@ -19,15 +19,13 @@ Before making changes, read these documents in order:
 
 The project is split into multiple packages under the `packages/` directory:
 
-- `/landing`: Frontend application built with React, TanStack Start, TanStack Router (deployed on Cloudflare Workers)
+- `/web`: Frontend application built with React, TanStack Start, TanStack Router (deployed on Cloudflare Workers)
 - `/workers`: Backend services, API endpoints, and database migrations
-- `/web`: Legacy SolidJS frontend (being removed -- all features migrated to landing)
 - `/shared`: Shared TypeScript utilities and error definitions
 - `/mcp`: MCP server for development tools and documentation
-- `/mcp-memory`: Persistent agent memory system
 - `/docs`: Vitepress docs site containing internal documentation
 
-The landing package is the main frontend. It is deployed as a single Cloudflare Worker.
+The web package is the main frontend. It is deployed as a single Cloudflare Worker.
 
 Do not worry about migrations (client side or backend) unless specifically instructed. This project is not in production and has no users.
 
@@ -37,12 +35,12 @@ Do not worry about migrations (client side or backend) unless specifically instr
 # Development
 pnpm dev:front              # Frontend (port 3010)
 pnpm dev:workers            # Backend workers (port 8787)
-pnpm --filter landing build # Build frontend
+pnpm --filter web build # Build frontend
 
 # Testing
-pnpm --filter landing test              # Frontend unit tests
+pnpm --filter web test              # Frontend unit tests
 pnpm --filter workers test              # Backend tests only
-pnpm --filter landing test:browser      # Browser integration tests
+pnpm --filter web test:browser      # Browser integration tests
 
 # Code Quality
 pnpm lint             # ESLint check
@@ -130,14 +128,14 @@ retries += 1;
 ### React Patterns
 
 - **Import stores directly** - Use Zustand stores from `@/stores/` instead of prop-drilling shared state
-- Shared state lives in Zustand stores under `packages/landing/src/stores/`
+- Shared state lives in Zustand stores under `packages/web/src/stores/`
 - Use `useMemo` for derived values, `useCallback` for stable callbacks
 - Use `useEffect` with explicit dependency arrays (never omit deps)
 - Use `useLayoutEffect` for DOM measurements before paint
 - Use `useSyncExternalStore` for external store subscriptions (e.g., Yjs awareness)
 - Use `useId()` for unique IDs on form elements (radio buttons, checkboxes)
 - Move business logic to stores, hooks, or utilities (not components)
-- Path aliases: `@/` maps to `packages/landing/src/`
+- Path aliases: `@/` maps to `packages/web/src/`
 
 ## Documentation
 
@@ -179,7 +177,7 @@ For specific complex areas, see:
 
 - Cloudflare Pages is NOT used; only Cloudflare Workers
 - Packages are under `packages/` directory with their own dependencies
-- Path aliases: `@/` maps to `packages/landing/src/` (defined in tsconfig.json)
+- Path aliases: `@/` maps to `packages/web/src/` (defined in tsconfig.json)
 - Adjust documentation if your changes would affect any existing documentation
 
 ## Anti-Patterns (Never Do These)
@@ -216,94 +214,3 @@ Core workflow:
 2. `agent-browser snapshot -i` - Get interactive elements with refs (@e1, @e2)
 3. `agent-browser click @e1` / `fill @e2 "text"` - Interact using refs
 4. Re-snapshot after page changes
-
-## Agent Memory System
-
-This repository has a persistent memory system (`@corates/mcp-memory`) that stores durable knowledge across sessions. Memory is stored in `.mcp/memory.db` and shared via git.
-
-### When to Search Memory
-
-**Always search memory before:**
-
-- Starting complex or multi-step tasks
-- Making architectural decisions
-- Working in unfamiliar areas of the codebase
-- Implementing patterns that might already exist
-
-**Example searches:**
-
-- "authentication patterns" before working on auth
-- "error handling" before adding try/catch blocks
-- "database migrations" before schema changes
-- "React patterns" before creating components
-
-### When to Write Memory
-
-**Propose memory writes when you discover:**
-
-- A non-obvious fact about the codebase
-- The rationale behind an architectural decision
-- A multi-step procedure that will be repeated
-- A pattern that should be followed consistently
-
-**Do NOT write:**
-
-- Task-specific context (what you're currently working on)
-- Temporary workarounds or debugging notes
-- Information already in documentation
-- Opinions without decisions
-
-### When to Update Memory
-
-**Use `propose_memory_update` when:**
-
-- Existing knowledge is outdated or incorrect
-- You have additional context to add
-- A decision has changed with new rationale
-- A procedure needs correction
-
-**Update Actions:**
-
-- `refine` - Update in-place, keeps same ID, increments version
-- `supersede` - Create new entry, mark old as replaced (use for major changes)
-
-### Knowledge Types
-
-| Type        | When to Use                          |
-| ----------- | ------------------------------------ |
-| `fact`      | Objective, verifiable information    |
-| `decision`  | Choice with rationale (why X over Y) |
-| `procedure` | Step-by-step instructions            |
-| `pattern`   | Repeated structure to follow         |
-
-### Memory Tool Usage
-
-```
-# Before starting work
-search_memory({ query: "relevant topic" })
-
-# After discovering durable knowledge
-propose_memory_write({
-  type: "decision",
-  title: "Concise title",
-  content: "Detailed explanation with rationale",
-  tags: ["relevant", "tags"]
-})
-
-# To update existing knowledge
-propose_memory_update({
-  target_id: "uuid-from-search",
-  action: "refine",
-  content: "Updated content with corrections",
-  justification: "Why this update is needed"
-})
-
-# To replace outdated knowledge
-propose_memory_update({
-  target_id: "uuid-from-search",
-  action: "supersede",
-  title: "New title for replacement",
-  content: "Completely revised content",
-  justification: "Original was incorrect because..."
-})
-```
