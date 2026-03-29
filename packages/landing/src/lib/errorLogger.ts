@@ -59,7 +59,8 @@ function formatErrorData(error: unknown): ErrorData {
   return {
     code: normalized.code || 'UNKNOWN',
     message: normalized.message || String(error),
-    statusCode: 'statusCode' in normalized ? (normalized.statusCode as number | undefined) : undefined,
+    statusCode:
+      'statusCode' in normalized ? (normalized.statusCode as number | undefined) : undefined,
     details: normalized.details,
     stack: error instanceof Error ? error.stack : undefined,
   };
@@ -143,7 +144,10 @@ export function logInfo(message: string, context: LogContext = {}): void {
  * Use for cleanup operations, cache updates, and other non-critical tasks
  * where failure shouldn't break the user experience.
  */
-export function bestEffort<T>(promise: Promise<T>, context: LogContext = {}): Promise<T | undefined> {
+export function bestEffort<T>(
+  promise: Promise<T>,
+  context: LogContext = {},
+): Promise<T | undefined> {
   return promise.catch(error => {
     logWarning(`Best-effort operation failed: ${context.operation || 'unknown'}`, {
       ...context,

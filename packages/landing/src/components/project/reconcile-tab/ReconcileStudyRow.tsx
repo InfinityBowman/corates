@@ -16,7 +16,6 @@ import {
 import { PdfListItem } from '@/components/pdf/PdfListItem';
 import { ReconcileStatusTag } from './ReconcileStatusTag';
 
- 
 interface ReconcileStudyRowProps {
   study: any;
   onReconcile: (checklist1Id: string, checklist2Id: string) => void;
@@ -25,7 +24,6 @@ interface ReconcileStudyRowProps {
   getAssigneeName: (userId: string) => string;
   getOutcomeName: (outcomeId: string) => string | null;
 }
- 
 
 export function ReconcileStudyRow({
   study,

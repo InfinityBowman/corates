@@ -671,7 +671,14 @@ export async function handleDevAddStudy(ctx: DevContext, request: Request): Prom
       outcomeId?: string | null;
     };
 
-    const { type, fillMode = 'random', reviewer1, reviewer2, reconcile = true, outcomeId: requestedOutcomeId } = body;
+    const {
+      type,
+      fillMode = 'random',
+      reviewer1,
+      reviewer2,
+      reconcile = true,
+      outcomeId: requestedOutcomeId,
+    } = body;
 
     if (!type || !reviewer1 || !reviewer2) {
       return new Response(
@@ -812,7 +819,11 @@ export async function handleDevAddStudy(ctx: DevContext, request: Request): Prom
       JSON.stringify({
         success: true,
         studyId,
-        checklistIds: [checklist1Id, checklist2Id, ...(reconciledChecklistId ? [reconciledChecklistId] : [])],
+        checklistIds: [
+          checklist1Id,
+          checklist2Id,
+          ...(reconciledChecklistId ? [reconciledChecklistId] : []),
+        ],
         outcomeId,
       }),
       { headers: { 'Content-Type': 'application/json' } },
@@ -820,10 +831,10 @@ export async function handleDevAddStudy(ctx: DevContext, request: Request): Prom
   } catch (error) {
     const err = error as Error;
     console.error('handleDevAddStudy error:', error);
-    return new Response(
-      JSON.stringify({ error: 'Add study failed', details: err.message }),
-      { status: 500, headers: { 'Content-Type': 'application/json' } },
-    );
+    return new Response(JSON.stringify({ error: 'Add study failed', details: err.message }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' },
+    });
   }
 }
 
@@ -837,7 +848,10 @@ function generateChecklistAnswers(
   } else if (type === 'ROB2') {
     return { ...generateROB2Answers({ fill: fillMode as 'random' | 'all-yes' | 'mixed', seed }) };
   } else {
-    const fill = fillMode === 'all-yes' ? 'complete' : fillMode === 'mixed' ? 'partial' : 'random';
+    const fill =
+      fillMode === 'all-yes' ? 'complete'
+      : fillMode === 'mixed' ? 'partial'
+      : 'random';
     return generateROBINSIAnswers({ fill: fill as 'random' | 'complete' | 'partial', seed });
   }
 }
@@ -864,8 +878,13 @@ function buildChecklistYMap(opts: {
 
   const answersYMap = new Y.Map<unknown>();
   const sectionKeys = new Set([
-    'overall', 'preliminary', 'planning',
-    'sectionA', 'sectionB', 'sectionC', 'sectionD',
+    'overall',
+    'preliminary',
+    'planning',
+    'sectionA',
+    'sectionB',
+    'sectionC',
+    'sectionD',
     'confoundingEvaluation',
   ]);
   for (const [key, value] of Object.entries(opts.answers)) {
@@ -900,7 +919,9 @@ function buildChecklistYMap(opts: {
         const domainMap = new Y.Map<unknown>();
         if (domainData.answers && typeof domainData.answers === 'object') {
           const domainAnswersMap = new Y.Map<unknown>();
-          for (const [qKey, qVal] of Object.entries(domainData.answers as Record<string, unknown>)) {
+          for (const [qKey, qVal] of Object.entries(
+            domainData.answers as Record<string, unknown>,
+          )) {
             const qMap = new Y.Map<unknown>();
             const q = qVal as Record<string, unknown>;
             if (q.answer !== undefined) qMap.set('answer', q.answer);
@@ -911,7 +932,8 @@ function buildChecklistYMap(opts: {
         }
         if (domainData.judgement !== undefined) domainMap.set('judgement', domainData.judgement);
         if (domainData.direction !== undefined) domainMap.set('direction', domainData.direction);
-        if (domainData.judgementSource !== undefined) domainMap.set('judgementSource', domainData.judgementSource);
+        if (domainData.judgementSource !== undefined)
+          domainMap.set('judgementSource', domainData.judgementSource);
         answersYMap.set(key, domainMap);
       }
     }

@@ -6,7 +6,6 @@ import { useState, useEffect, useCallback } from 'react';
 import { showToast } from '@/components/ui/toast';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
- 
 interface EditPdfMetadataModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;

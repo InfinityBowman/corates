@@ -11,7 +11,6 @@ import {
   RefreshCwIcon,
 } from 'lucide-react';
 
- 
 interface SplitPanelControlsProps {
   showSecondPanel: boolean;
   onToggleSecondPanel?: () => void;
@@ -23,7 +22,6 @@ interface SplitPanelControlsProps {
   pdfUrl?: string | null;
   pdfData?: ArrayBuffer | null;
 }
- 
 
 export function SplitPanelControls({
   showSecondPanel,

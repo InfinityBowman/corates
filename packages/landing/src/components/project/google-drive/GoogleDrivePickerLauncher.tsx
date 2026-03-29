@@ -15,7 +15,6 @@ import { GOOGLE_PICKER_API_KEY, GOOGLE_PICKER_APP_ID } from '@/config/google';
 import { pickGooglePdfFiles } from '@/lib/googlePicker.js';
 import { buildRestoreCallbackUrl } from '@/lib/formStatePersistence.js';
 
- 
 interface GoogleDrivePickerLauncherProps {
   active?: boolean;
   multiselect?: boolean;
@@ -28,7 +27,6 @@ interface GoogleDrivePickerLauncherProps {
   studyId?: string;
   onSaveFormState?: () => Promise<void>;
 }
- 
 
 export function GoogleDrivePickerLauncher({
   active = true,

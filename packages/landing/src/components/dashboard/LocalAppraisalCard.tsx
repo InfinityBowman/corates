@@ -9,7 +9,6 @@ import { SimpleEditable } from '@/components/ui/editable';
 import { getChecklistMetadata } from '@/checklist-registry';
 import { formatRelativeTime } from './utils';
 
- 
 interface LocalAppraisalCardProps {
   checklist: {
     id: string;
@@ -24,7 +23,6 @@ interface LocalAppraisalCardProps {
   onRename?: (name: string) => void;
   style?: React.CSSProperties;
 }
- 
 
 export function LocalAppraisalCard({
   checklist,

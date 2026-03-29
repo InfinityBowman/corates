@@ -175,14 +175,18 @@ test('Dual-Reviewer ROB2 Workflow', async ({ context, page }) => {
       await page.waitForTimeout(1000);
     }
 
-
     // For direction pages where reviewers didn't set a value, "Use This"
     // copies null which doesn't count as answered. Pick "NA" in the Final
     // Direction panel if visible.
     const finalDirectionHeading = page.getByText('Final Direction');
     if (await finalDirectionHeading.isVisible().catch(() => false)) {
       const naLabel = page.locator('label').filter({ hasText: /^NA$/ });
-      if (await naLabel.first().isVisible().catch(() => false)) {
+      if (
+        await naLabel
+          .first()
+          .isVisible()
+          .catch(() => false)
+      ) {
         await naLabel.first().click();
         await page.waitForTimeout(300);
       }

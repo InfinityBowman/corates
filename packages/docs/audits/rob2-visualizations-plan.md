@@ -5,18 +5,19 @@
 The project has AMSTAR2 visualizations (traffic light heatmap + distribution stacked bar chart) but no ROB2 equivalents. ROB2 assessments are fully functional (checklist, scoring, reconciliation) but there's no way to visualize finalized ROB2 results at the project overview level.
 
 Standard robvis-style ROB2 visualizations show:
+
 - **Traffic light plot**: rows = studies, columns = 5 bias domains + Overall
 - **Summary plot**: horizontal stacked bars showing % Low / Some concerns / High per domain
 
 ## Data Differences: ROB2 vs AMSTAR2
 
-| Aspect | AMSTAR2 | ROB2 |
-|--------|---------|------|
-| Columns | 16 flat questions (Q1-Q16) | 5 domains + Overall (6 columns) |
-| Values | yes, partial yes, no, no ma | Low, Some concerns, High |
-| Legend items | 4 | 3 |
-| Branching | None | Domain 2a vs 2b based on aim |
-| consolidatedAnswers | Set in sync.ts via `getAMSTAR2Answers()` | **Not currently set** |
+| Aspect              | AMSTAR2                                  | ROB2                            |
+| ------------------- | ---------------------------------------- | ------------------------------- |
+| Columns             | 16 flat questions (Q1-Q16)               | 5 domains + Overall (6 columns) |
+| Values              | yes, partial yes, no, no ma              | Low, Some concerns, High        |
+| Legend items        | 4                                        | 3                               |
+| Branching           | None                                     | Domain 2a vs 2b based on aim    |
+| consolidatedAnswers | Set in sync.ts via `getAMSTAR2Answers()` | **Not currently set**           |
 
 ## Implementation Plan
 
@@ -30,7 +31,7 @@ Add a new function that extracts domain-level judgments into a chart-friendly fo
 export interface ROB2ConsolidatedAnswers {
   aim: 'ASSIGNMENT' | 'ADHERING' | null;
   domain2Variant: '2a' | '2b';
-  judgments: (string | null)[];  // [D1, D2, D3, D4, D5, Overall] -- 6 entries
+  judgments: (string | null)[]; // [D1, D2, D3, D4, D5, Overall] -- 6 entries
 }
 ```
 
@@ -59,6 +60,7 @@ Move the `exportChart` function from `ChartSection.tsx` into a shared utility. U
 **File (new)**: `packages/landing/src/components/charts/ROB2Robvis.tsx`
 
 D3-based SVG component mirroring `AMSTARRobvis.tsx` with these differences:
+
 - **6 columns**: D1, D2, D3, D4, D5, Overall (instead of 16)
 - **Color map**: `{ low: '#10b981', 'some concerns': '#facc15', high: '#ef4444' }`
 - **Greyscale map**: `{ low: '#1b1b1b', 'some concerns': '#484848', high: '#727272' }`
@@ -69,10 +71,11 @@ D3-based SVG component mirroring `AMSTARRobvis.tsx` with these differences:
 - Same patterns: `useImperativeHandle`, `ResizeObserver`, `useLayoutEffect` for label width, D3 imperative draw
 
 Data interface:
+
 ```typescript
 interface ROB2RobvisDataItem {
   label: string;
-  judgments: (string | null)[];  // 6 entries
+  judgments: (string | null)[]; // 6 entries
 }
 ```
 
@@ -81,6 +84,7 @@ interface ROB2RobvisDataItem {
 **File (new)**: `packages/landing/src/components/charts/ROB2Distribution.tsx`
 
 D3-based SVG component mirroring `AMSTARDistribution.tsx` with these differences:
+
 - **6 bars** (D1-D5 + Overall) instead of 16
 - **3 stacked categories** (Low, Some concerns, High) instead of 4
 - Same color/greyscale maps as ROB2Robvis
@@ -93,6 +97,7 @@ D3-based SVG component mirroring `AMSTARDistribution.tsx` with these differences
 **File (new)**: `packages/landing/src/components/project/overview-tab/ROB2ChartSection.tsx`
 
 Parallel to existing `ChartSection.tsx`. Responsibilities:
+
 - Filter studies for finalized ROB2 checklists (`type === 'ROB2'`, `status === CHECKLIST_STATUS.FINALIZED`)
 - Extract `consolidatedAnswers.judgments` from each
 - Manage state: custom labels, greyscale, titles, transparent export, settings modal
@@ -109,16 +114,16 @@ Add `ROB2ChartSection` alongside `ChartSection` in the Figures collapsible secti
 
 ## Files Modified (summary)
 
-| File | Action |
-|------|--------|
-| `packages/shared/src/checklists/rob2/answers.ts` | Add `getConsolidatedAnswers` |
-| `packages/landing/src/primitives/useProject/sync.ts` | Add ROB2 consolidation block |
-| `packages/landing/src/components/charts/export-chart.ts` | **New** -- extracted utility |
-| `packages/landing/src/components/charts/ROB2Robvis.tsx` | **New** -- traffic light chart |
-| `packages/landing/src/components/charts/ROB2Distribution.tsx` | **New** -- distribution chart |
-| `packages/landing/src/components/project/overview-tab/ROB2ChartSection.tsx` | **New** -- orchestrator |
-| `packages/landing/src/components/project/overview-tab/OverviewTab.tsx` | Add ROB2ChartSection |
-| `packages/landing/src/components/project/overview-tab/ChartSection.tsx` | Import exportChart from shared util |
+| File                                                                        | Action                              |
+| --------------------------------------------------------------------------- | ----------------------------------- |
+| `packages/shared/src/checklists/rob2/answers.ts`                            | Add `getConsolidatedAnswers`        |
+| `packages/landing/src/primitives/useProject/sync.ts`                        | Add ROB2 consolidation block        |
+| `packages/landing/src/components/charts/export-chart.ts`                    | **New** -- extracted utility        |
+| `packages/landing/src/components/charts/ROB2Robvis.tsx`                     | **New** -- traffic light chart      |
+| `packages/landing/src/components/charts/ROB2Distribution.tsx`               | **New** -- distribution chart       |
+| `packages/landing/src/components/project/overview-tab/ROB2ChartSection.tsx` | **New** -- orchestrator             |
+| `packages/landing/src/components/project/overview-tab/OverviewTab.tsx`      | Add ROB2ChartSection                |
+| `packages/landing/src/components/project/overview-tab/ChartSection.tsx`     | Import exportChart from shared util |
 
 ## Verification
 

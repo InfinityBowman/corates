@@ -141,58 +141,61 @@ export function createConnectionManager(
 
     provider.connect();
 
-    provider.on('connection-close', (event: { reason?: string; code?: number } | null, providerInstance: WebsocketProvider) => {
-      if (!event) return;
+    provider.on(
+      'connection-close',
+      (event: { reason?: string; code?: number } | null, providerInstance: WebsocketProvider) => {
+        if (!event) return;
 
-      const reason = event.reason || '';
+        const reason = event.reason || '';
 
-      if (reason === CLOSE_REASONS.PROJECT_DELETED) {
-        useProjectStore.getState().dispatchConnectionEvent(projectId, {
-          type: 'ACCESS_DENIED',
-          reason: 'This project has been deleted',
-        });
-        providerInstance.shouldConnect = false;
-        shouldBeConnected = false;
-        if (onAccessDenied) {
-          onAccessDenied({ reason: CLOSE_REASONS.PROJECT_DELETED });
+        if (reason === CLOSE_REASONS.PROJECT_DELETED) {
+          useProjectStore.getState().dispatchConnectionEvent(projectId, {
+            type: 'ACCESS_DENIED',
+            reason: 'This project has been deleted',
+          });
+          providerInstance.shouldConnect = false;
+          shouldBeConnected = false;
+          if (onAccessDenied) {
+            onAccessDenied({ reason: CLOSE_REASONS.PROJECT_DELETED });
+          }
+          return;
         }
-        return;
-      }
 
-      if (reason === CLOSE_REASONS.MEMBERSHIP_REVOKED) {
-        useProjectStore.getState().dispatchConnectionEvent(projectId, {
-          type: 'ACCESS_DENIED',
-          reason: 'You have been removed from this project',
-        });
-        providerInstance.shouldConnect = false;
-        shouldBeConnected = false;
-        if (onAccessDenied) {
-          onAccessDenied({ reason: CLOSE_REASONS.MEMBERSHIP_REVOKED });
+        if (reason === CLOSE_REASONS.MEMBERSHIP_REVOKED) {
+          useProjectStore.getState().dispatchConnectionEvent(projectId, {
+            type: 'ACCESS_DENIED',
+            reason: 'You have been removed from this project',
+          });
+          providerInstance.shouldConnect = false;
+          shouldBeConnected = false;
+          if (onAccessDenied) {
+            onAccessDenied({ reason: CLOSE_REASONS.MEMBERSHIP_REVOKED });
+          }
+          return;
         }
-        return;
-      }
 
-      if (
-        event.code === 1008 ||
-        reason.includes('member') ||
-        reason === CLOSE_REASONS.NOT_A_MEMBER
-      ) {
-        useProjectStore.getState().dispatchConnectionEvent(projectId, {
-          type: 'ACCESS_DENIED',
-          reason: 'You are not a member of this project',
-        });
-        providerInstance.shouldConnect = false;
-        shouldBeConnected = false;
-        if (onAccessDenied) {
-          onAccessDenied({ reason: CLOSE_REASONS.NOT_A_MEMBER });
+        if (
+          event.code === 1008 ||
+          reason.includes('member') ||
+          reason === CLOSE_REASONS.NOT_A_MEMBER
+        ) {
+          useProjectStore.getState().dispatchConnectionEvent(projectId, {
+            type: 'ACCESS_DENIED',
+            reason: 'You are not a member of this project',
+          });
+          providerInstance.shouldConnect = false;
+          shouldBeConnected = false;
+          if (onAccessDenied) {
+            onAccessDenied({ reason: CLOSE_REASONS.NOT_A_MEMBER });
+          }
+          return;
         }
-        return;
-      }
 
-      if (!navigator.onLine) {
-        providerInstance.shouldConnect = false;
-      }
-    });
+        if (!navigator.onLine) {
+          providerInstance.shouldConnect = false;
+        }
+      },
+    );
 
     provider.on('connection-error', () => {
       if (!navigator.onLine) {

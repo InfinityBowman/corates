@@ -71,11 +71,15 @@ test.describe('Auth flows', () => {
       await page.getByRole('button', { name: 'Next' }).click();
 
       // Step 2: Institution - skip
-      await expect(page.getByRole('heading', { name: 'Institution Details' })).toBeVisible({ timeout: 5_000 });
+      await expect(page.getByRole('heading', { name: 'Institution Details' })).toBeVisible({
+        timeout: 5_000,
+      });
       await page.getByRole('button', { name: /Skip for now/i }).click();
 
       // Step 3: Role - select Researcher
-      await expect(page.getByRole('heading', { name: /What best describes you/i })).toBeVisible({ timeout: 5_000 });
+      await expect(page.getByRole('heading', { name: /What best describes you/i })).toBeVisible({
+        timeout: 5_000,
+      });
       await page.getByText('Researcher').click();
       await page.getByRole('button', { name: /Finish Setup/i }).click();
 
@@ -132,7 +136,9 @@ test.describe('Auth flows', () => {
 
       // Navigate to reset password page
       await page.goto('/reset-password');
-      await expect(page.getByRole('heading', { name: 'Reset Password' })).toBeVisible({ timeout: 10_000 });
+      await expect(page.getByRole('heading', { name: 'Reset Password' })).toBeVisible({
+        timeout: 10_000,
+      });
 
       // Request password reset
       const resetEmailField = page.locator('#email-input');
@@ -154,7 +160,9 @@ test.describe('Auth flows', () => {
 
       // Navigate to the frontend reset page with the token
       await page.goto(`/reset-password?token=${token}`);
-      await expect(page.getByRole('heading', { name: 'Set New Password' })).toBeVisible({ timeout: 10_000 });
+      await expect(page.getByRole('heading', { name: 'Set New Password' })).toBeVisible({
+        timeout: 10_000,
+      });
 
       // Fill and submit new password
       const newPwField = page.locator('#new-password-input');

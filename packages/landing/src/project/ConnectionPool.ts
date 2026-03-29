@@ -11,10 +11,7 @@ import { queryClient } from '@/lib/queryClient';
 import { queryKeys } from '@/lib/queryKeys';
 import { createConnectionManager } from '@/primitives/useProject/connection';
 import { createSyncManager, type SyncManager } from '@/primitives/useProject/sync';
-import {
-  createStudyOperations,
-  type StudyOperations,
-} from '@/primitives/useProject/studies';
+import { createStudyOperations, type StudyOperations } from '@/primitives/useProject/studies';
 import {
   createChecklistOperations,
   type ChecklistOperations,
@@ -212,8 +209,15 @@ class ConnectionPool {
    */
   getOps(projectId: string): TypedProjectOps | null {
     const entry = this.registry.get(projectId);
-    if (!entry?.initialized || !entry.studyOps || !entry.checklistOps || !entry.pdfOps ||
-        !entry.reconciliationOps || !entry.annotationOps || !entry.outcomeOps) {
+    if (
+      !entry?.initialized ||
+      !entry.studyOps ||
+      !entry.checklistOps ||
+      !entry.pdfOps ||
+      !entry.reconciliationOps ||
+      !entry.annotationOps ||
+      !entry.outcomeOps
+    ) {
       return null;
     }
     return {

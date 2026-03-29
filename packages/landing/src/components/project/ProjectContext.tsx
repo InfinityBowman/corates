@@ -18,7 +18,6 @@ export interface ProjectMember {
   image?: string | null;
 }
 
- 
 interface ProjectContextValue {
   projectId: string;
   orgId: string | null;
@@ -29,7 +28,6 @@ interface ProjectContextValue {
   getChecklistPath: (studyId: string, checklistId: string, tab?: string) => string;
   getReconcilePath: (studyId: string, checklist1Id: string, checklist2Id: string) => string;
 }
- 
 
 const ProjectCtx = createContext<ProjectContextValue | null>(null);
 

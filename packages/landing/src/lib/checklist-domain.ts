@@ -48,7 +48,10 @@ export function isReconciledChecklist(checklist: Checklist | null | undefined): 
 /**
  * Gets checklists for the todo tab (assigned to user, not finalized or reviewer-completed)
  */
-export function getTodoChecklists(study: Study | null | undefined, userId: string | null): Checklist[] {
+export function getTodoChecklists(
+  study: Study | null | undefined,
+  userId: string | null,
+): Checklist[] {
   if (!study || !userId) return [];
   const checklists = study.checklists || [];
   return checklists.filter(
@@ -137,7 +140,10 @@ export function shouldShowInTab(
       if (awaitingReconcile.length === 0) return false;
 
       // Group by outcomeId (or type for AMSTAR2)
-      const groups = new Map<string, { checklists: Checklist[]; outcomeId: string | null; type: string }>();
+      const groups = new Map<
+        string,
+        { checklists: Checklist[]; outcomeId: string | null; type: string }
+      >();
       for (const checklist of awaitingReconcile) {
         const groupKey = checklist.outcomeId || `type:${checklist.type}`;
         if (!groups.has(groupKey)) {
@@ -310,7 +316,9 @@ export function getOriginalReviewerChecklists(
 /**
  * Groups reconciliation-eligible checklists by outcome (or by type for AMSTAR2)
  */
-export function getReconciliationChecklistsByOutcome(study: Study | null | undefined): ChecklistGroup[] {
+export function getReconciliationChecklistsByOutcome(
+  study: Study | null | undefined,
+): ChecklistGroup[] {
   if (!study) return [];
 
   const checklists = study.checklists || [];

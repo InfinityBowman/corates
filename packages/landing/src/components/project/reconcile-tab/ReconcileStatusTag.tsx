@@ -6,12 +6,10 @@ import { useMemo } from 'react';
 import { CHECKLIST_STATUS } from '@/constants/checklist-status';
 import { isReconciledChecklist } from '@/lib/checklist-domain.js';
 
- 
 interface ReconcileStatusTagProps {
   study: any;
   getAssigneeName: (userId: string) => string;
 }
- 
 
 export function ReconcileStatusTag({ study, getAssigneeName }: ReconcileStatusTagProps) {
   const awaitingChecklists = useMemo(

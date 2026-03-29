@@ -67,8 +67,9 @@ export function createOutcomeOperations(
     const outcomeYMap = outcomesMap.get(outcomeId) as Y.Map<unknown> | undefined;
     if (!outcomeYMap) return null;
 
-    const outcomeData = (outcomeYMap as Y.Map<unknown> & { toJSON?: () => Record<string, unknown> }).toJSON
-      ? (outcomeYMap as Y.Map<unknown> & { toJSON: () => Record<string, unknown> }).toJSON()
+    const outcomeData =
+      (outcomeYMap as Y.Map<unknown> & { toJSON?: () => Record<string, unknown> }).toJSON ?
+        (outcomeYMap as Y.Map<unknown> & { toJSON: () => Record<string, unknown> }).toJSON()
       : outcomeYMap;
     return {
       id: outcomeId,

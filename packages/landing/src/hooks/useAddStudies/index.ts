@@ -16,7 +16,15 @@ import { buildDeduplicatedStudies } from './deduplication';
 import type { MergedStudy } from './deduplication';
 import { findMatchingRef } from './matching';
 
-export type { MergedStudy, StudySource, UploadedPdf, ImportedRef, LookupRef, DriveFile, StudyMetadata } from './deduplication';
+export type {
+  MergedStudy,
+  StudySource,
+  UploadedPdf,
+  ImportedRef,
+  LookupRef,
+  DriveFile,
+  StudyMetadata,
+} from './deduplication';
 export type { RefPdfFile } from './references';
 
 interface CollectedPdf {

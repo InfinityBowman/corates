@@ -302,8 +302,7 @@ export function PreliminaryPage({
   const fieldLabel = fieldDef?.label || fieldKey;
   const isTextField = PRELIMINARY_TEXT_FIELDS.includes(fieldKey);
 
-  const preliminaryYText =
-    isTextField && getRob2Text ? getRob2Text('preliminary', fieldKey) : null;
+  const preliminaryYText = isTextField && getRob2Text ? getRob2Text('preliminary', fieldKey) : null;
   const preliminaryText = useYText(preliminaryYText);
 
   // Sync Y.Text changes back to finalAnswers so hasNavItemAnswer detects

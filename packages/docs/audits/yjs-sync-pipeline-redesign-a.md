@@ -90,14 +90,14 @@ Zustand notifies all subscribers -> React re-renders
 
 ### File Inventory
 
-| File | Lines | Responsibility |
-|------|-------|---------------|
-| `ConnectionPool.ts` | 373 | God object: lifecycle, ops, persistence, WebSocket, cleanup |
-| `connection.ts` | 286 | WebSocket management wrapping y-websocket |
-| `sync.ts` | 505 | Full-tree Y.Doc-to-plain-JS extraction |
-| `connectionReducer.ts` | 124 | Connection state machine |
-| `projectStore.ts` | 274 | Zustand store: projects, connections, selectors |
-| `ProjectDoc.ts` | 812 | Server-side Durable Object |
+| File                   | Lines | Responsibility                                              |
+| ---------------------- | ----- | ----------------------------------------------------------- |
+| `ConnectionPool.ts`    | 373   | God object: lifecycle, ops, persistence, WebSocket, cleanup |
+| `connection.ts`        | 286   | WebSocket management wrapping y-websocket                   |
+| `sync.ts`              | 505   | Full-tree Y.Doc-to-plain-JS extraction                      |
+| `connectionReducer.ts` | 124   | Connection state machine                                    |
+| `projectStore.ts`      | 274   | Zustand store: projects, connections, selectors             |
+| `ProjectDoc.ts`        | 812   | Server-side Durable Object                                  |
 
 ### Data Consumption Patterns
 
@@ -124,6 +124,7 @@ Four systems were studied for transferable patterns: TanStack DB, Zero (Rocicorp
 **Model**: Client-side normalized collections with live queries. Two-layer state (synced + optimistic). SQL-like query expressions compiled to an IVM (Incremental View Maintenance) pipeline.
 
 **Transferable patterns**:
+
 - `useLiveQuery` ergonomics for declarative reactive subscriptions
 - `$synced` virtual property on rows to track sync status
 - Transaction-based mutation batching
@@ -136,6 +137,7 @@ Four systems were studied for transferable patterns: TanStack DB, Zero (Rocicorp
 **Model**: Local-first reactive database backed by PostgreSQL. Queries compiled to IVM operator pipeline on the client. Server maintains Client View Records (CVR) tracking what each client has seen.
 
 **Transferable patterns**:
+
 - IVM principle: don't recompute everything when one thing changes
 - The split between "what queries are subscribed" vs "what data exists"
 - Generator-based streaming for responsiveness
@@ -147,6 +149,7 @@ Four systems were studied for transferable patterns: TanStack DB, Zero (Rocicorp
 **Model**: Server-driven reactive database. Clients subscribe to query functions. Server re-executes queries when underlying data changes and pushes new results via Transitions.
 
 **Transferable patterns**:
+
 - Three-tier API layering: Base client -> Framework-agnostic -> React hooks
 - Optimistic updates with replay semantics
 - Version-tracked subscription invalidation
@@ -162,6 +165,7 @@ Four systems were studied for transferable patterns: TanStack DB, Zero (Rocicorp
 **Why this does not directly apply to CoRATES**: CoRATES puts structured data (checklist answers, study metadata, member lists, PDF references, annotations, reconciliation progress) in Y.Doc -- not just editor content. Outline avoids this problem entirely by keeping all non-editor data in MobX. CoRATES cannot adopt this approach without losing real-time collaboration on checklists.
 
 **Transferable patterns**:
+
 - Direct binding to Y.Text for collaborative text fields (notes, comments)
 - Being intentional about what goes in Y.Doc and using the right observation strategy for each data category
 
@@ -176,6 +180,7 @@ Y.js already has the mechanism: `Y.Map.observeDeep()` fires once per transaction
 ### Should CoRATES restructure data as a relational store?
 
 No. Y.js is a document CRDT. Making it act like a relational store would mean fighting its core abstraction:
+
 - Y.js has no concept of tables, foreign keys, or joins
 - Simulating relations with top-level Y.Maps would require manual referential integrity
 - Y.Text collaborative editing requires a parent Y.Doc -- normalizing answers into flat "tables" breaks Y.Text's natural home in the document tree
@@ -314,18 +319,18 @@ function ChecklistScore({ studyId, checklistId }) {
 
 With the three-category model, most of the current extraction becomes unnecessary:
 
-| Data | Current | Still Needed? | New Approach |
-|------|---------|---------------|-------------|
-| Study name, description | Full extraction every time | Only for study list | Category 2: StudiesCollection, incremental |
-| Checklist answers | Full extraction every time | Only for active checklist | Category 2: per-checklist snapshot, on demand |
-| Checklist status, assignee | Full extraction every time | Only for study table | Category 2: StudiesCollection, shallow only |
-| Checklist score | Computed during extraction | Only for finalized | Category 3: derived lazily in component |
-| PDF list | Full extraction every time | Only for PDF panel | Category 2: per-study, on demand |
-| Annotations | Full extraction every time | Only for annotation layer | Category 2: per-checklist, on demand |
-| Members | Full extraction every time | Only for member list | Category 2: MembersCollection |
-| Meta | Full extraction every time | Only for project header | Category 2: MetaCollection |
-| Reconciliation | Full extraction every time | Only for reconcile tab | Category 2: on demand |
-| Y.Text content | Extracted as strings | No | Category 1: direct Y.Text binding |
+| Data                       | Current                    | Still Needed?             | New Approach                                  |
+| -------------------------- | -------------------------- | ------------------------- | --------------------------------------------- |
+| Study name, description    | Full extraction every time | Only for study list       | Category 2: StudiesCollection, incremental    |
+| Checklist answers          | Full extraction every time | Only for active checklist | Category 2: per-checklist snapshot, on demand |
+| Checklist status, assignee | Full extraction every time | Only for study table      | Category 2: StudiesCollection, shallow only   |
+| Checklist score            | Computed during extraction | Only for finalized        | Category 3: derived lazily in component       |
+| PDF list                   | Full extraction every time | Only for PDF panel        | Category 2: per-study, on demand              |
+| Annotations                | Full extraction every time | Only for annotation layer | Category 2: per-checklist, on demand          |
+| Members                    | Full extraction every time | Only for member list      | Category 2: MembersCollection                 |
+| Meta                       | Full extraction every time | Only for project header   | Category 2: MetaCollection                    |
+| Reconciliation             | Full extraction every time | Only for reconcile tab    | Category 2: on demand                         |
+| Y.Text content             | Extracted as strings       | No                        | Category 1: direct Y.Text binding             |
 
 The entire `extractAnswersFromYMap()` function (120+ lines of type-specific extraction) moves into the checklist type handlers where it belongs. It only runs when building a specific checklist's snapshot, not on every Y.Doc change.
 
@@ -352,7 +357,7 @@ class StudiesCollection {
     }
 
     // Incremental updates via observeDeep
-    reviewsMap.observeDeep((events) => {
+    reviewsMap.observeDeep(events => {
       let changed = false;
 
       for (const event of events) {
@@ -392,8 +397,7 @@ class StudiesCollection {
 
   getSnapshot(): StudySnapshot[] {
     if (!this.sortedList) {
-      this.sortedList = [...this.snapshots.values()]
-        .sort((a, b) => a.createdAt - b.createdAt);
+      this.sortedList = [...this.snapshots.values()].sort((a, b) => a.createdAt - b.createdAt);
     }
     return this.sortedList; // same array ref if nothing changed
   }
@@ -412,6 +416,7 @@ class StudiesCollection {
 **Key behavior**: `buildStudySnapshot` replaces the per-study portion of `sync.ts:buildStudyFromYMap`. Checklist-type-specific answer extraction moves into the checklist type handlers (AMSTAR2Handler, ROB2Handler, etc.), called by `buildStudySnapshot` only when building that study's snapshot.
 
 **observeDeep guarantees** (verified in Y.js source):
+
 - Events are batched within a Y.Doc transaction -- single callback per transaction
 - `event.path` tells you which subtree changed (computed lazily via parent pointers)
 - `event.keys` (on YMapEvent) tells you which keys were added/updated/deleted
@@ -681,11 +686,7 @@ const diff = compareChecklists(c1.answers, c2.answers, reconciled?.answers);
 const h1 = useChecklistHandle(studyId, checklist1Id);
 const h2 = useChecklistHandle(studyId, checklist2Id);
 const hr = useChecklistHandle(studyId, reconciledId);
-const diff = compareChecklists(
-  h1?.snapshot().answers,
-  h2?.snapshot().answers,
-  hr?.snapshot().answers,
-);
+const diff = compareChecklists(h1?.snapshot().answers, h2?.snapshot().answers, hr?.snapshot().answers);
 ```
 
 The comparison functions remain unchanged -- they still receive plain objects. The difference is that each handle's `snapshot()` is incrementally maintained and cached, not re-extracted from the full tree on every change.
@@ -702,35 +703,35 @@ const { phase, error } = useConnectionState();
 
 ### What Dies
 
-| Current Code | Replacement |
-|---|---|
-| `sync.ts` (505 lines) | Domain collections with observeDeep. `doSync()`, `buildStudyFromYMap()`, `extractAnswersFromYMap()` all eliminated. Per-entity snapshot building lives in collections and type handlers. |
-| `projectStore.projects` map | Eliminated. React reads from collection snapshots via `useSyncExternalStore`. |
-| `projectStore.setProjectData()` | Eliminated. No centralized data setter. |
-| `JSON.stringify` equality checks | Replaced by reference equality on per-entity snapshots. |
-| `buildOpsMap` + `ConnectionOps` | Replaced by typed handles (`ChecklistHandle`, `StudyHandle`, etc.). |
-| `requestAnimationFrame` debounce in SyncManager | `observeDeep` fires once per Y.Doc transaction -- natural batching. |
-| All `select*` functions in projectStore | Replaced by collection hooks (`useStudies()`, `useMembers()`, etc.). |
+| Current Code                                    | Replacement                                                                                                                                                                              |
+| ----------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `sync.ts` (505 lines)                           | Domain collections with observeDeep. `doSync()`, `buildStudyFromYMap()`, `extractAnswersFromYMap()` all eliminated. Per-entity snapshot building lives in collections and type handlers. |
+| `projectStore.projects` map                     | Eliminated. React reads from collection snapshots via `useSyncExternalStore`.                                                                                                            |
+| `projectStore.setProjectData()`                 | Eliminated. No centralized data setter.                                                                                                                                                  |
+| `JSON.stringify` equality checks                | Replaced by reference equality on per-entity snapshots.                                                                                                                                  |
+| `buildOpsMap` + `ConnectionOps`                 | Replaced by typed handles (`ChecklistHandle`, `StudyHandle`, etc.).                                                                                                                      |
+| `requestAnimationFrame` debounce in SyncManager | `observeDeep` fires once per Y.Doc transaction -- natural batching.                                                                                                                      |
+| All `select*` functions in projectStore         | Replaced by collection hooks (`useStudies()`, `useMembers()`, etc.).                                                                                                                     |
 
 ### What Survives
 
-| Current Code | Status |
-|---|---|
-| `connectionReducer.ts` | Stays. Clean state machine, moves into Session layer. |
-| `ProjectDoc.ts` (Durable Object) | Stays with minor improvements (alarm-based persistence). |
-| y-websocket connection logic | Stays, wrapped in `WebSocketSyncProvider`. |
-| y-dexie persistence | Stays, wrapped in `IndexedDBProvider`. |
-| Checklist operation factories | Stays, accessed via typed handles instead of flat ops map. |
-| Awareness protocol | Stays, wrapped in `AwarenessManager`. |
+| Current Code                                                | Status                                                                                                      |
+| ----------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| `connectionReducer.ts`                                      | Stays. Clean state machine, moves into Session layer.                                                       |
+| `ProjectDoc.ts` (Durable Object)                            | Stays with minor improvements (alarm-based persistence).                                                    |
+| y-websocket connection logic                                | Stays, wrapped in `WebSocketSyncProvider`.                                                                  |
+| y-dexie persistence                                         | Stays, wrapped in `IndexedDBProvider`.                                                                      |
+| Checklist operation factories                               | Stays, accessed via typed handles instead of flat ops map.                                                  |
+| Awareness protocol                                          | Stays, wrapped in `AwarenessManager`.                                                                       |
 | Checklist type handlers (AMSTAR2Handler, ROB2Handler, etc.) | Stays. Answer serialization moves from sync.ts into these handlers, called by collection snapshot builders. |
 
 ### What Shrinks
 
-| Current Code | Change |
-|---|---|
-| `ConnectionPool.ts` (373 lines) | Replaced by `SessionManager` (~50 lines) + `ProjectSession` (~100 lines). Lifecycle, ops, and persistence concerns separated. |
-| `projectStore.ts` (274 lines) | Shrinks to ~40 lines. Only holds `activeProjectId`, `connections` (state machine), and `projectStats` (localStorage-persisted). No more `projects` map or selectors. |
-| `connection.ts` (286 lines) | Stays roughly the same size but encapsulated as `WebSocketSyncProvider`. |
+| Current Code                    | Change                                                                                                                                                               |
+| ------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `ConnectionPool.ts` (373 lines) | Replaced by `SessionManager` (~50 lines) + `ProjectSession` (~100 lines). Lifecycle, ops, and persistence concerns separated.                                        |
+| `projectStore.ts` (274 lines)   | Shrinks to ~40 lines. Only holds `activeProjectId`, `connections` (state machine), and `projectStats` (localStorage-persisted). No more `projects` map or selectors. |
+| `connection.ts` (286 lines)     | Stays roughly the same size but encapsulated as `WebSocketSyncProvider`.                                                                                             |
 
 ---
 
@@ -815,10 +816,10 @@ Since this work happens on a feature branch, Phase 6 is the gate before merge. E
 
 These files should be fully removable after Phase 4:
 
-| File | Condition for Deletion |
-|---|---|
-| `src/primitives/useProject/sync.ts` | No imports remain. `SyncManager` type not referenced. |
-| `src/project/ConnectionPool.ts` | Replaced by `SessionManager`. No imports remain. |
+| File                                      | Condition for Deletion                                       |
+| ----------------------------------------- | ------------------------------------------------------------ |
+| `src/primitives/useProject/sync.ts`       | No imports remain. `SyncManager` type not referenced.        |
+| `src/project/ConnectionPool.ts`           | Replaced by `SessionManager`. No imports remain.             |
 | `src/primitives/useProject/connection.ts` | Logic moved into `WebSocketSyncProvider`. No imports remain. |
 
 Verify with: `grep -r "from.*sync" src/ --include="*.ts" --include="*.tsx"` (and equivalent for each file).
@@ -835,6 +836,7 @@ After all consumers migrate, these exports become unused:
 - `setPendingProjectData`, `getPendingProjectData`
 
 What remains in `projectStore.ts`:
+
 - `activeProjectId` + `setActiveProject`
 - `connections` map + `dispatchConnectionEvent` (state machine)
 - `projectStats` + `selectProjectStats` (localStorage-persisted, used by dashboard)
@@ -858,19 +860,19 @@ Verify with: `pnpm --filter landing build` (tree-shaking will flag unused import
 
 After migration, this directory's contents change significantly:
 
-| Current | After |
-|---|---|
-| `sync.ts` | Deleted |
-| `connection.ts` | Deleted (logic in `WebSocketSyncProvider`) |
-| `studies.ts` | Stays, but accessed via `StudyHandle` instead of flat ops |
-| `checklists/index.ts` | Stays, but accessed via `ChecklistHandle` |
-| `checklists/AMSTAR2Handler.ts` | Stays, gains `readAnswers()` from old sync.ts extraction |
-| `checklists/ROB2Handler.ts` | Same |
-| `checklists/ROBINSIHandler.ts` | Same |
-| `pdfs.ts` | Stays, accessed via handle |
-| `reconciliation.ts` | Stays, accessed via handle |
-| `annotations.ts` | Stays, accessed via handle |
-| `outcomes.ts` | Stays, accessed via handle |
+| Current                        | After                                                     |
+| ------------------------------ | --------------------------------------------------------- |
+| `sync.ts`                      | Deleted                                                   |
+| `connection.ts`                | Deleted (logic in `WebSocketSyncProvider`)                |
+| `studies.ts`                   | Stays, but accessed via `StudyHandle` instead of flat ops |
+| `checklists/index.ts`          | Stays, but accessed via `ChecklistHandle`                 |
+| `checklists/AMSTAR2Handler.ts` | Stays, gains `readAnswers()` from old sync.ts extraction  |
+| `checklists/ROB2Handler.ts`    | Same                                                      |
+| `checklists/ROBINSIHandler.ts` | Same                                                      |
+| `pdfs.ts`                      | Stays, accessed via handle                                |
+| `reconciliation.ts`            | Stays, accessed via handle                                |
+| `annotations.ts`               | Stays, accessed via handle                                |
+| `outcomes.ts`                  | Stays, accessed via handle                                |
 
 Consider reorganizing the directory to reflect the new structure:
 
@@ -909,16 +911,16 @@ src/project/
 
 #### 6f: Update Documentation
 
-| Document | Changes Needed |
-|---|---|
-| `packages/docs/guides/state-management.md` | Remove projectStore data flow, document collection + handle pattern |
-| `packages/docs/guides/components.md` | Update data access examples |
-| `packages/docs/audits/project-sync-behavior-spec.md` | Rewrite to reflect new architecture |
-| `.claude/yjs-sync.mdc` | Update sync pipeline description, remove SyncManager references |
-| `.claude/durable-objects.mdc` | Add alarm-based persistence, incremental updates |
-| `.claude/reconciliation.mdc` | Update to reference typed handles instead of connectionPool ops |
-| `.claude/checklist-operations.mdc` | Update to reference ChecklistHandle API |
-| `CLAUDE.md` | Update if any top-level patterns changed |
+| Document                                             | Changes Needed                                                      |
+| ---------------------------------------------------- | ------------------------------------------------------------------- |
+| `packages/docs/guides/state-management.md`           | Remove projectStore data flow, document collection + handle pattern |
+| `packages/docs/guides/components.md`                 | Update data access examples                                         |
+| `packages/docs/audits/project-sync-behavior-spec.md` | Rewrite to reflect new architecture                                 |
+| `.claude/yjs-sync.mdc`                               | Update sync pipeline description, remove SyncManager references     |
+| `.claude/durable-objects.mdc`                        | Add alarm-based persistence, incremental updates                    |
+| `.claude/reconciliation.mdc`                         | Update to reference typed handles instead of connectionPool ops     |
+| `.claude/checklist-operations.mdc`                   | Update to reference ChecklistHandle API                             |
+| `CLAUDE.md`                                          | Update if any top-level patterns changed                            |
 
 #### 6g: Pre-Merge Checklist
 
@@ -943,15 +945,15 @@ Before opening the PR to merge the feature branch:
 
 ## Risk Assessment
 
-| Risk | Severity | Mitigation |
-|---|---|---|
-| Regression in real-time sync | High | Dual-path during phases 1-3. Both systems read from same Y.Doc. E2E tests catch regressions early. |
-| observeDeep performance | Medium | Profile in phase 1 with large projects (50+ studies). Lazy path computation is the main cost, but eliminates full tree walk. Net positive expected. Benchmark before committing to phase 2. |
-| Snapshot staleness | Low | observeDeep fires synchronously at end of Y.Doc transaction. Snapshots are always consistent with current Y.Doc state. No async gap between mutation and observation. |
-| Reconciliation comparison breaks | High | Comparison functions receive the same plain objects as today. Only the source changes (collection snapshot vs sync.ts extraction). E2E reconciliation workflows are the primary gate. |
-| observeDeep event.path assumptions | Medium | Must handle top-level changes (study added/removed) where path.length === 0 separately from nested changes. Verified in Y.js source: YMapEvent.keys provides add/update/delete info at each level. Must extract event data inside callback (stale after return). |
-| Migration stalls mid-way | Medium | Each phase is independently valuable. Phase 2 alone (incremental snapshots) eliminates the biggest performance problem. Phase 3 alone (typed handles) eliminates type erasure. Neither depends on the other being complete. |
-| Memory overhead from snapshot cache | Low | Current system already holds the full extracted state in Zustand. New system holds per-entity snapshots in collection Maps. Total memory roughly equivalent, possibly lower since unchanged entities share references. |
+| Risk                                | Severity | Mitigation                                                                                                                                                                                                                                                       |
+| ----------------------------------- | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Regression in real-time sync        | High     | Dual-path during phases 1-3. Both systems read from same Y.Doc. E2E tests catch regressions early.                                                                                                                                                               |
+| observeDeep performance             | Medium   | Profile in phase 1 with large projects (50+ studies). Lazy path computation is the main cost, but eliminates full tree walk. Net positive expected. Benchmark before committing to phase 2.                                                                      |
+| Snapshot staleness                  | Low      | observeDeep fires synchronously at end of Y.Doc transaction. Snapshots are always consistent with current Y.Doc state. No async gap between mutation and observation.                                                                                            |
+| Reconciliation comparison breaks    | High     | Comparison functions receive the same plain objects as today. Only the source changes (collection snapshot vs sync.ts extraction). E2E reconciliation workflows are the primary gate.                                                                            |
+| observeDeep event.path assumptions  | Medium   | Must handle top-level changes (study added/removed) where path.length === 0 separately from nested changes. Verified in Y.js source: YMapEvent.keys provides add/update/delete info at each level. Must extract event data inside callback (stale after return). |
+| Migration stalls mid-way            | Medium   | Each phase is independently valuable. Phase 2 alone (incremental snapshots) eliminates the biggest performance problem. Phase 3 alone (typed handles) eliminates type erasure. Neither depends on the other being complete.                                      |
+| Memory overhead from snapshot cache | Low      | Current system already holds the full extracted state in Zustand. New system holds per-entity snapshots in collection Maps. Total memory roughly equivalent, possibly lower since unchanged entities share references.                                           |
 
 ---
 
@@ -959,28 +961,28 @@ Before opening the PR to merge the feature branch:
 
 ### Display Components (10) -- Migrate in Phase 2
 
-| Component | Current Store Access | New Access |
-|---|---|---|
-| ProjectView | selectStudies, selectMeta, selectConnectionPhase | useStudies, useMeta, useConnectionState |
-| OverviewTab | selectStudies, selectMembers | useStudies, useMembers |
-| AllStudiesTab | selectStudies, selectMembers, selectConnectionPhase | useStudies, useMembers, useConnectionState |
-| TodoTab | selectStudies, selectMembers, selectConnectionPhase | useStudies, useMembers, useConnectionState |
-| ReconcileTab | selectStudies, selectMeta | useStudies, useMeta |
-| CompletedTab | selectStudies, meta | useStudies, useMeta |
-| ProjectCard | selectProjectStats | Derived from useStudies |
-| TodoStudyRow | meta (outcomes) | useMeta |
-| AssignReviewersModal | selectMembers, selectStudies | useMembers, useStudies |
-| PreviousReviewersView | getChecklistData (read-only) | useChecklistHandle.snapshot() |
+| Component             | Current Store Access                                | New Access                                 |
+| --------------------- | --------------------------------------------------- | ------------------------------------------ |
+| ProjectView           | selectStudies, selectMeta, selectConnectionPhase    | useStudies, useMeta, useConnectionState    |
+| OverviewTab           | selectStudies, selectMembers                        | useStudies, useMembers                     |
+| AllStudiesTab         | selectStudies, selectMembers, selectConnectionPhase | useStudies, useMembers, useConnectionState |
+| TodoTab               | selectStudies, selectMembers, selectConnectionPhase | useStudies, useMembers, useConnectionState |
+| ReconcileTab          | selectStudies, selectMeta                           | useStudies, useMeta                        |
+| CompletedTab          | selectStudies, meta                                 | useStudies, useMeta                        |
+| ProjectCard           | selectProjectStats                                  | Derived from useStudies                    |
+| TodoStudyRow          | meta (outcomes)                                     | useMeta                                    |
+| AssignReviewersModal  | selectMembers, selectStudies                        | useMembers, useStudies                     |
+| PreviousReviewersView | getChecklistData (read-only)                        | useChecklistHandle.snapshot()              |
 
 ### Editor Components (5 primary) -- Migrate in Phase 3
 
-| Component | Current Access | New Access |
-|---|---|---|
-| ChecklistYjsWrapper | connectionPool.get(): getChecklistData, updateChecklistAnswer, getQuestionNote, getRobinsText, getRob2Text, addAnnotation, updateAnnotation, deleteAnnotation | useChecklistHandle: snapshot(), setAnswer(), textRef(). Annotation handle for PDF operations. |
-| ReconciliationWrapper | connectionPool.get(): getChecklistData (x3), updateChecklistAnswer, saveReconciliationProgress, getReconciliationProgress | useChecklistHandle (x3): snapshot(), setAnswer(). useReconciliationHandle: save(), load(). |
-| ReconciliationEngine | Operations passed via props | Handles passed via props |
-| ROB2/ROBINS-I/AMSTAR2 Adapters | updateChecklistAnswer, getChecklistData | handle.setAnswer(), handle.snapshot() |
-| OutcomeManager | meta (outcomes) | useMeta, outcome handle |
+| Component                      | Current Access                                                                                                                                                | New Access                                                                                    |
+| ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
+| ChecklistYjsWrapper            | connectionPool.get(): getChecklistData, updateChecklistAnswer, getQuestionNote, getRobinsText, getRob2Text, addAnnotation, updateAnnotation, deleteAnnotation | useChecklistHandle: snapshot(), setAnswer(), textRef(). Annotation handle for PDF operations. |
+| ReconciliationWrapper          | connectionPool.get(): getChecklistData (x3), updateChecklistAnswer, saveReconciliationProgress, getReconciliationProgress                                     | useChecklistHandle (x3): snapshot(), setAnswer(). useReconciliationHandle: save(), load().    |
+| ReconciliationEngine           | Operations passed via props                                                                                                                                   | Handles passed via props                                                                      |
+| ROB2/ROBINS-I/AMSTAR2 Adapters | updateChecklistAnswer, getChecklistData                                                                                                                       | handle.setAnswer(), handle.snapshot()                                                         |
+| OutcomeManager                 | meta (outcomes)                                                                                                                                               | useMeta, outcome handle                                                                       |
 
 ### Prop-Driven Components (20+) -- No Migration Needed
 
@@ -992,11 +994,11 @@ All components reading `selectConnectionPhase` switch to `useConnectionState()`.
 
 ### Dependency Counts
 
-| Import | File Count |
-|---|---|
-| `useProjectStore` + selectors | 21 files |
-| `connectionPool` | 15 files |
-| `sync.ts` (SyncManager) | 1 file (ConnectionPool only) |
-| `connectionReducer` | 2 files (projectStore, ConnectionPool) |
+| Import                        | File Count                             |
+| ----------------------------- | -------------------------------------- |
+| `useProjectStore` + selectors | 21 files                               |
+| `connectionPool`              | 15 files                               |
+| `sync.ts` (SyncManager)       | 1 file (ConnectionPool only)           |
+| `connectionReducer`           | 2 files (projectStore, ConnectionPool) |
 
 No circular dependencies. `sync.ts` is only imported by `ConnectionPool`, making it the easiest to remove once collections replace its role.

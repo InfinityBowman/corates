@@ -13,7 +13,11 @@ const PDF_EXTRACT_TIMEOUT = 10000; // 10 seconds for title/DOI extraction
 /**
  * Wrap a promise with a timeout
  */
-export function withTimeout<T>(promise: Promise<T>, ms: number, operationName = 'Operation'): Promise<T> {
+export function withTimeout<T>(
+  promise: Promise<T>,
+  ms: number,
+  operationName = 'Operation',
+): Promise<T> {
   let timeoutId: ReturnType<typeof setTimeout>;
   const timeoutPromise = new Promise<T>((_, reject) => {
     timeoutId = setTimeout(() => {
@@ -46,7 +50,6 @@ async function extractPdfTitleInternal(pdfData: ArrayBuffer): Promise<string | n
   // Clone ArrayBuffer since EmbedPDF may detach it
   const pdfBuffer = pdfData.slice(0);
 
-   
   let doc: any = null;
   try {
     // Open document
@@ -146,7 +149,6 @@ async function extractPdfDoiInternal(pdfData: ArrayBuffer): Promise<string | nul
   // Clone ArrayBuffer since EmbedPDF may detach it
   const pdfBuffer = pdfData.slice(0);
 
-   
   let doc: any = null;
   try {
     // Open document

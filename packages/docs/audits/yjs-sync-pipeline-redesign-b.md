@@ -52,13 +52,13 @@ But the proposed solution -- domain collections, typed handles, a three-layer ar
 
 Instead of replacing the architecture, fix the four specific bottlenecks:
 
-| Problem | Fix | Files Touched |
-|---------|-----|---------------|
-| Full-tree extraction on every change | Scoped `observeDeep` per top-level Y.Map | `sync.ts`, `ConnectionPool.ts` |
-| O(n) rebuild within `doSync` | Per-study snapshot cache with dirty tracking | `sync.ts` |
-| `JSON.stringify` equality | Reference equality via cached snapshots | `projectStore.ts` |
-| Type erasure in `buildOpsMap` | Delete `buildOpsMap`, expose typed ops directly | `ConnectionPool.ts`, consumers of `.get()` |
-| Unnecessary indirection layers | Delete thin action wrappers, delete handles | Action modules, handle files |
+| Problem                              | Fix                                             | Files Touched                              |
+| ------------------------------------ | ----------------------------------------------- | ------------------------------------------ |
+| Full-tree extraction on every change | Scoped `observeDeep` per top-level Y.Map        | `sync.ts`, `ConnectionPool.ts`             |
+| O(n) rebuild within `doSync`         | Per-study snapshot cache with dirty tracking    | `sync.ts`                                  |
+| `JSON.stringify` equality            | Reference equality via cached snapshots         | `projectStore.ts`                          |
+| Type erasure in `buildOpsMap`        | Delete `buildOpsMap`, expose typed ops directly | `ConnectionPool.ts`, consumers of `.get()` |
+| Unnecessary indirection layers       | Delete thin action wrappers, delete handles     | Action modules, handle files               |
 
 Total: ~5 files significantly changed, ~5 thin files deleted. Zero component API changes for the performance fixes. Typed ops require updating consumers of `connectionPool.get()` (15 files, mechanical find-and-replace).
 
@@ -110,7 +110,7 @@ export function createSyncManager(projectId: string, getYDoc: () => Y.Doc | null
     };
 
     reviewsMap.observeDeep(onReviews);
-    membersMap.observe(onMembers);       // flat, no need for observeDeep
+    membersMap.observe(onMembers); // flat, no need for observeDeep
     metaMap.observeDeep(onMeta);
 
     return [
@@ -197,7 +197,7 @@ function handleReviewsEvents(events: Y.YEvent<any>[]): void {
   if (!reviewsMap) return;
 
   const dirtyStudyIds = new Set<string>();
-  let structuralChange = false;   // study added or removed
+  let structuralChange = false; // study added or removed
 
   for (const event of events) {
     if (event.path.length === 0 && 'keys' in event) {
@@ -234,8 +234,7 @@ function handleReviewsEvents(events: Y.YEvent<any>[]): void {
 
   // Rebuild sorted array only if something changed
   if (dirtyStudyIds.size > 0 || structuralChange) {
-    sortedStudies = [...studyCache.values()]
-      .sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));
+    sortedStudies = [...studyCache.values()].sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));
   }
 }
 
@@ -248,8 +247,7 @@ function syncStudies(ydoc: Y.Doc): StudyInfo[] {
       const studyData = ymap.toJSON ? ymap.toJSON() : {};
       studyCache.set(studyId, buildStudyFromYMap(studyId, studyData, ymap));
     }
-    sortedStudies = [...studyCache.values()]
-      .sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));
+    sortedStudies = [...studyCache.values()].sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));
   }
   return sortedStudies;
 }
@@ -271,6 +269,7 @@ More precisely:
 ### Reference equality follows naturally
 
 When study-123's checklist answer changes:
+
 - `buildStudyFromYMap` creates a new `StudyInfo` object for study-123
 - `studyCache.get('study-456')` returns the exact same object reference as before
 - `sortedStudies` is a new array (unavoidable), but the individual study objects inside it have stable references for unchanged studies
@@ -283,6 +282,7 @@ This is the same granularity the redesign RFC claims, without collections, witho
 The `sortedStudies` array is a new reference on every change. Components that call `selectStudies` and iterate the array will re-render. This is the same as today.
 
 Two mitigations, both optional:
+
 1. Components that render individual studies should use `selectStudy(state, projectId, studyId)` instead of mapping over `selectStudies`. This already works with the current selector.
 2. If array stability becomes a measured problem, the store setter can check whether the array contents actually changed (shallow element comparison, not `JSON.stringify`).
 
@@ -441,15 +441,15 @@ Component
 
 ### Which action modules to delete
 
-| Module | Lines | Real Logic? | Verdict |
-|--------|-------|-------------|---------|
-| `checklists.ts` | 82 | No. Try/catch + toast only. | Delete. |
-| `outcomes.ts` | ~40 | No. Same pattern. | Delete. |
-| `reconciliation.ts` | ~30 | No. Same pattern. | Delete. |
-| `members.ts` | ~30 | No. Same pattern. | Delete. |
-| `project.ts` | ~30 | No. Forwards to studyOps rename/description. | Delete. |
-| `pdfs.ts` | ~60 | Minor. Wraps upload + R2 delete. | Keep or inline. |
-| `studies.ts` | 443 | Yes. Batch import, PDF upload, Google Drive import, metadata extraction. | Keep. Real domain logic. |
+| Module              | Lines | Real Logic?                                                              | Verdict                  |
+| ------------------- | ----- | ------------------------------------------------------------------------ | ------------------------ |
+| `checklists.ts`     | 82    | No. Try/catch + toast only.                                              | Delete.                  |
+| `outcomes.ts`       | ~40   | No. Same pattern.                                                        | Delete.                  |
+| `reconciliation.ts` | ~30   | No. Same pattern.                                                        | Delete.                  |
+| `members.ts`        | ~30   | No. Same pattern.                                                        | Delete.                  |
+| `project.ts`        | ~30   | No. Forwards to studyOps rename/description.                             | Delete.                  |
+| `pdfs.ts`           | ~60   | Minor. Wraps upload + R2 delete.                                         | Keep or inline.          |
+| `studies.ts`        | 443   | Yes. Batch import, PDF upload, Google Drive import, metadata extraction. | Keep. Real domain logic. |
 
 `studies.ts` is the only action module with logic worth keeping. The rest are forwarding functions. Their error handling (try/catch + toast) can either move to the component or to a thin shared utility if the pattern is common enough.
 
@@ -461,20 +461,20 @@ The staged files on the current branch (`handles/ChecklistHandle.ts`, `handles/A
 
 ## What Does Not Change
 
-| Component | Status |
-|-----------|--------|
-| `ConnectionPool.ts` | Stays. Loses `buildOpsMap` and `opsRegistry` (~60 lines). Gains `getOps()` returning typed interface (~15 lines). Net reduction. |
-| `connectionReducer.ts` | Unchanged. Clean state machine. |
-| `connection.ts` | Unchanged. WebSocket management. |
-| `projectStore.ts` selectors | Unchanged. `selectStudies`, `selectStudy`, `selectMembers`, `selectMeta`, `selectConnectionPhase` all continue to work. |
-| `projectStore.ts` shape | Unchanged. `projects` map, `connections`, `projectStats` all stay. |
-| Component data access (reads) | Unchanged. Components still call `useProjectStore(s => selectStudies(s, projectId))`. |
-| Operation factories | Unchanged. `createChecklistOperations`, etc. remain the logic layer. |
-| Checklist type handlers | Unchanged. `AMSTAR2Handler`, `ROB2Handler`, `ROBINSIHandler` remain. |
-| `extractAnswersFromYMap` | Stays in `sync.ts`. Called per-study now instead of for all studies, but the function itself does not change. |
-| Y.Doc structure | Unchanged. Same maps, same nesting. |
-| ProjectDoc (Durable Object) | Unchanged. Server-side improvements (alarm-based persistence, incremental updates) are orthogonal and can be done independently. |
-| Zustand as the React integration | Stays. No `useSyncExternalStore`, no React context for session. Components subscribe to the same store with the same selectors. |
+| Component                        | Status                                                                                                                           |
+| -------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| `ConnectionPool.ts`              | Stays. Loses `buildOpsMap` and `opsRegistry` (~60 lines). Gains `getOps()` returning typed interface (~15 lines). Net reduction. |
+| `connectionReducer.ts`           | Unchanged. Clean state machine.                                                                                                  |
+| `connection.ts`                  | Unchanged. WebSocket management.                                                                                                 |
+| `projectStore.ts` selectors      | Unchanged. `selectStudies`, `selectStudy`, `selectMembers`, `selectMeta`, `selectConnectionPhase` all continue to work.          |
+| `projectStore.ts` shape          | Unchanged. `projects` map, `connections`, `projectStats` all stay.                                                               |
+| Component data access (reads)    | Unchanged. Components still call `useProjectStore(s => selectStudies(s, projectId))`.                                            |
+| Operation factories              | Unchanged. `createChecklistOperations`, etc. remain the logic layer.                                                             |
+| Checklist type handlers          | Unchanged. `AMSTAR2Handler`, `ROB2Handler`, `ROBINSIHandler` remain.                                                             |
+| `extractAnswersFromYMap`         | Stays in `sync.ts`. Called per-study now instead of for all studies, but the function itself does not change.                    |
+| Y.Doc structure                  | Unchanged. Same maps, same nesting.                                                                                              |
+| ProjectDoc (Durable Object)      | Unchanged. Server-side improvements (alarm-based persistence, incremental updates) are orthogonal and can be done independently. |
+| Zustand as the React integration | Stays. No `useSyncExternalStore`, no React context for session. Components subscribe to the same store with the same selectors.  |
 
 ---
 
@@ -509,6 +509,7 @@ Three phases, each independently shippable. Each phase is a single PR. No coexis
 **Files changed**: `sync.ts` (bulk of changes), `ConnectionPool.ts` (~5 lines), `projectStore.ts` (~6 lines).
 
 **Validation**:
+
 - `pnpm --filter landing test` (unit tests)
 - `pnpm --filter landing test:browser` (E2E)
 - Manual: open a 20+ study project, edit a checklist answer, verify via React DevTools that only the edited study's component subtree re-renders
@@ -540,6 +541,7 @@ Three phases, each independently shippable. Each phase is a single PR. No coexis
 **Files changed**: `ConnectionPool.ts`, ~15 consumer files (action modules + components that access ops directly).
 
 **Validation**:
+
 - `pnpm typecheck` (primary gate -- type errors reveal any missed call site)
 - `pnpm --filter landing test`
 - `pnpm --filter landing test:browser`
@@ -559,10 +561,12 @@ Three phases, each independently shippable. Each phase is a single PR. No coexis
 3. Keep `studies.ts` -- update it to use `TypedProjectOps`.
 
 4. If the try/catch + toast pattern repeats at 3+ call sites for the same operation, extract a utility:
+
    ```typescript
    function withToast<T>(fn: () => T, errorTitle: string): T | null {
-     try { return fn(); }
-     catch (err) {
+     try {
+       return fn();
+     } catch (err) {
        console.error(err);
        showToast.error(errorTitle, (err as Error).message);
        return null;
@@ -575,6 +579,7 @@ Three phases, each independently shippable. Each phase is a single PR. No coexis
 **Files changed**: 5 action modules deleted, ~10 consumer files updated.
 
 **Validation**:
+
 - `pnpm typecheck`
 - `pnpm --filter landing test`
 - `pnpm --filter landing test:browser`
@@ -586,27 +591,27 @@ Three phases, each independently shippable. Each phase is a single PR. No coexis
 
 ## Risk Assessment
 
-| Risk | Severity | Mitigation |
-|------|----------|------------|
-| `observeDeep` event path incorrect for some Y.Doc structure | Medium | Unit test: create Y.Doc, mutate a nested key, assert `event.path[0]` is the study ID. Y.js source confirms this behavior for nested Y.Maps. |
-| Study cache gets stale (snapshot diverges from Y.Doc) | Medium | Cache is populated inside the `observeDeep` callback, which fires synchronously at end of Y.Doc transaction. No async gap. Also: `syncFromYDocImmediate()` can clear the cache and rebuild from scratch as a safety valve. |
-| `requestAnimationFrame` batching drops events | Low | `observeDeep` fires with accumulated events per transaction. The RAF deduplication only affects the store write, not the event collection. Dirty study IDs accumulate across RAF frames via the study cache (which is updated synchronously in the callback). |
-| Consumers missed during `get()` to `getOps()` migration | None | `pnpm typecheck` catches every call site. `get()` is deleted, so any unconverted call is a compile error. |
-| Performance regression from `observeDeep` overhead | Low | `observeDeep` is how Y.js recommends observing nested changes. The overhead is lazy path computation, which is far cheaper than the current full-tree `toJSON()` + `JSON.stringify` comparison. Profile in Phase 1 validation. |
+| Risk                                                        | Severity | Mitigation                                                                                                                                                                                                                                                    |
+| ----------------------------------------------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `observeDeep` event path incorrect for some Y.Doc structure | Medium   | Unit test: create Y.Doc, mutate a nested key, assert `event.path[0]` is the study ID. Y.js source confirms this behavior for nested Y.Maps.                                                                                                                   |
+| Study cache gets stale (snapshot diverges from Y.Doc)       | Medium   | Cache is populated inside the `observeDeep` callback, which fires synchronously at end of Y.Doc transaction. No async gap. Also: `syncFromYDocImmediate()` can clear the cache and rebuild from scratch as a safety valve.                                    |
+| `requestAnimationFrame` batching drops events               | Low      | `observeDeep` fires with accumulated events per transaction. The RAF deduplication only affects the store write, not the event collection. Dirty study IDs accumulate across RAF frames via the study cache (which is updated synchronously in the callback). |
+| Consumers missed during `get()` to `getOps()` migration     | None     | `pnpm typecheck` catches every call site. `get()` is deleted, so any unconverted call is a compile error.                                                                                                                                                     |
+| Performance regression from `observeDeep` overhead          | Low      | `observeDeep` is how Y.js recommends observing nested changes. The overhead is lazy path computation, which is far cheaper than the current full-tree `toJSON()` + `JSON.stringify` comparison. Profile in Phase 1 validation.                                |
 
 ---
 
 ## Comparison with Redesign RFC
 
-| | Redesign RFC (A) | Targeted Fixes (B) |
-|---|---|---|
-| Files significantly changed | 36+ across 6 phases | ~8 across 3 phases |
-| Component API changes | 73 components migrate to new hooks | Zero for Phase 1. 15 files for Phase 2 (mechanical namespace change). |
-| New abstractions introduced | Collections, Handles, Sessions, SessionManager, Providers, SessionContext | None |
-| Abstractions removed | sync.ts, projectStore selectors, ConnectionPool, action modules | buildOpsMap, opsRegistry, ConnectionOps type, thin action modules |
-| Coexistence period | Months (dual-path reads through Phases 1-3) | None. Each phase replaces in-place. |
-| Performance improvement | O(1 study) per change | O(1 study) per change |
-| Type safety improvement | Handles with `Record<string, unknown>` snapshots | Typed ops with full `ChecklistOperations` etc. signatures |
-| Risk of stalling mid-migration | High (Phase 3 is indirection until Phase 4 absorbs factories) | Low (each phase is independently complete) |
-| Total lines added (estimated) | 1500+ (new abstractions) | ~200 (cache logic in sync.ts, typed interface) |
-| Total lines removed (estimated) | 1200 (after full 6-phase migration) | ~400 (buildOpsMap, thin wrappers, JSON.stringify checks) |
+|                                 | Redesign RFC (A)                                                          | Targeted Fixes (B)                                                    |
+| ------------------------------- | ------------------------------------------------------------------------- | --------------------------------------------------------------------- |
+| Files significantly changed     | 36+ across 6 phases                                                       | ~8 across 3 phases                                                    |
+| Component API changes           | 73 components migrate to new hooks                                        | Zero for Phase 1. 15 files for Phase 2 (mechanical namespace change). |
+| New abstractions introduced     | Collections, Handles, Sessions, SessionManager, Providers, SessionContext | None                                                                  |
+| Abstractions removed            | sync.ts, projectStore selectors, ConnectionPool, action modules           | buildOpsMap, opsRegistry, ConnectionOps type, thin action modules     |
+| Coexistence period              | Months (dual-path reads through Phases 1-3)                               | None. Each phase replaces in-place.                                   |
+| Performance improvement         | O(1 study) per change                                                     | O(1 study) per change                                                 |
+| Type safety improvement         | Handles with `Record<string, unknown>` snapshots                          | Typed ops with full `ChecklistOperations` etc. signatures             |
+| Risk of stalling mid-migration  | High (Phase 3 is indirection until Phase 4 absorbs factories)             | Low (each phase is independently complete)                            |
+| Total lines added (estimated)   | 1500+ (new abstractions)                                                  | ~200 (cache logic in sync.ts, typed interface)                        |
+| Total lines removed (estimated) | 1200 (after full 6-phase migration)                                       | ~400 (buildOpsMap, thin wrappers, JSON.stringify checks)              |

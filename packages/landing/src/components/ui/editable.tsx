@@ -47,7 +47,6 @@ const variants = {
 
 type EditableVariant = keyof typeof variants;
 
- 
 interface SimpleEditableProps {
   value?: string;
   defaultValue?: string;
@@ -71,7 +70,6 @@ interface SimpleEditableProps {
   showEditIcon?: boolean;
   label?: string;
 }
- 
 
 function SimpleEditable({
   value,

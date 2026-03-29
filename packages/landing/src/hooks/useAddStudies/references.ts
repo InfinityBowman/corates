@@ -233,11 +233,13 @@ export function useReferenceOperations(): ReferenceOperations {
           return;
         }
 
-        const refsWithIds: ImportedRef[] = (refs as Record<string, unknown>[]).map((ref, index: number) => ({
-          ...ref,
-          _id: `ref-${index}`,
-          title: (ref.title as string) || 'Untitled',
-        })) as ImportedRef[];
+        const refsWithIds: ImportedRef[] = (refs as Record<string, unknown>[]).map(
+          (ref, index: number) => ({
+            ...ref,
+            _id: `ref-${index}`,
+            title: (ref.title as string) || 'Untitled',
+          }),
+        ) as ImportedRef[];
         setImportedRefs(refsWithIds);
         setSelectedRefIds(new Set(refsWithIds.map(r => r._id)));
 

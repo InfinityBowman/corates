@@ -22,7 +22,6 @@ import {
 } from '@/components/ui/alert-dialog';
 import { PdfTagBadge } from './PdfTagBadge';
 
- 
 interface PdfListItemProps {
   pdf: any;
   onView?: (pdf: any) => void;

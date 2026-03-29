@@ -26,7 +26,6 @@ import { getStatusLabel, getStatusStyle } from '@/constants/checklist-status';
 import { useProjectStore } from '@/stores/projectStore';
 import { useProjectContext } from '../ProjectContext';
 
- 
 interface TodoStudyRowProps {
   study: any;
   members: any[];
@@ -42,7 +41,6 @@ interface TodoStudyRowProps {
   onDownloadPdf: (pdf: any) => void;
   creatingChecklist: boolean;
 }
- 
 
 export function TodoStudyRow({
   study,

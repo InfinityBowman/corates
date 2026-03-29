@@ -94,4 +94,3 @@ export function connectionReducer(
 }
 
 export { INITIAL_STATE };
-
