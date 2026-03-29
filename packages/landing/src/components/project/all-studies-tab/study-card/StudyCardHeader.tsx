@@ -31,7 +31,6 @@ function getAvatarColorClasses(name: string) {
   return AVATAR_COLORS[index];
 }
 
- 
 interface StudyCardHeaderProps {
   study: any;
   expanded: boolean;

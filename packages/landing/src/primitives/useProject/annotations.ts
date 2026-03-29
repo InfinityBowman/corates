@@ -57,11 +57,12 @@ export interface AnnotationOperations {
     annotationData: AnnotationData,
   ) => void;
   deleteAnnotation: (studyId: string, checklistId: string, annotationId: string) => void;
-  getAnnotations: (studyId: string, pdfId: string | undefined, checklistId: string) => ParsedAnnotation[];
-  getAllAnnotationsForPdf: (
+  getAnnotations: (
     studyId: string,
-    pdfId: string,
-  ) => Record<string, ParsedAnnotation[]>;
+    pdfId: string | undefined,
+    checklistId: string,
+  ) => ParsedAnnotation[];
+  getAllAnnotationsForPdf: (studyId: string, pdfId: string) => Record<string, ParsedAnnotation[]>;
   clearAnnotationsForChecklist: (studyId: string, checklistId: string) => void;
   mergeAnnotations: (
     studyId: string,

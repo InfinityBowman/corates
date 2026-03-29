@@ -9,14 +9,12 @@ import { useProjectStore, selectProjectStats } from '@/stores/projectStore';
 import { type Project } from '@/hooks/useMyProjectsList';
 import { formatRelativeTime, getAccentColors } from './utils';
 
- 
 interface ProjectCardProps {
   project: Project;
   onOpen: (id: string) => void;
   onDelete?: (id: string) => void;
   style?: React.CSSProperties;
 }
- 
 
 export function ProjectCard({ project, onOpen, onDelete, style }: ProjectCardProps) {
   const cachedStats = useProjectStore(state => selectProjectStats(state, project.id));

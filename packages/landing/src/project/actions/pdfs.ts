@@ -11,6 +11,7 @@ import { useProjectStore } from '@/stores/projectStore';
 import { usePdfPreviewStore } from '@/stores/pdfPreviewStore';
 import { useAuthStore, selectUser } from '@/stores/authStore';
 import { connectionPool } from '../ConnectionPool';
+import type { PdfInfo, PdfTag } from '@/primitives/useProject/pdfs';
 
 async function extractPdfMetadata(
   arrayBuffer: ArrayBuffer | null,
@@ -116,9 +117,8 @@ export const pdfActions = {
     }
 
     const study =
-      useProjectStore.getState().projects[projectId]?.studies?.find(
-        (s: any) => s.id === studyId,
-      ) || null;
+      useProjectStore.getState().projects[projectId]?.studies?.find((s: any) => s.id === studyId) ||
+      null;
     const existingPdf = (study as any)?.pdfs?.find((pdf: any) => pdf.fileName === file.name);
     if (existingPdf) {
       throw new Error(`File "${file.name}" already exists. Rename or remove the existing copy.`);
@@ -138,33 +138,35 @@ export const pdfActions = {
       } catch (err) {
         console.warn('Failed to convert file to ArrayBuffer:', (err as Error).message);
       }
-      bestEffort(cachePdf(projectId, studyId, uploadResult.fileName, arrayBuffer!), {
-        operation: 'cachePdf (upload)',
-        projectId,
-        studyId,
-        fileName: uploadResult.fileName,
-      });
+      if (arrayBuffer) {
+        bestEffort(cachePdf(projectId, studyId, uploadResult.fileName, arrayBuffer), {
+          operation: 'cachePdf (upload)',
+          projectId,
+          studyId,
+          fileName: uploadResult.fileName,
+        });
+      }
 
       const pdfMetadata = await extractPdfMetadata(arrayBuffer);
 
-      const pdfId = ops.addPdfToStudy(
+      const pdfId = ops.pdf.addPdfToStudy(
         studyId,
         {
           key: uploadResult.key,
           fileName: uploadResult.fileName,
           size: uploadResult.size,
-          uploadedBy: userId,
+          uploadedBy: userId ?? '',
           uploadedAt: Date.now(),
-          title: (pdfMetadata.title as string) || null,
-          firstAuthor: (pdfMetadata.firstAuthor as string) || null,
-          publicationYear: (pdfMetadata.publicationYear as string) || null,
-          journal: (pdfMetadata.journal as string) || null,
-          doi: (pdfMetadata.doi as string) || null,
+          title: (pdfMetadata.title as string) || undefined,
+          firstAuthor: (pdfMetadata.firstAuthor as string) || undefined,
+          publicationYear: (pdfMetadata.publicationYear as string) || undefined,
+          journal: (pdfMetadata.journal as string) || undefined,
+          doi: (pdfMetadata.doi as string) || undefined,
         },
-        effectiveTag,
+        effectiveTag as PdfTag,
       );
 
-      return pdfId;
+      return pdfId!;
     } catch (err) {
       console.error('Error uploading PDF:', err);
       if (uploadResult?.fileName) {
@@ -206,7 +208,7 @@ export const pdfActions = {
 
       if (r2Deleted) {
         try {
-          ops.removePdfFromStudy(studyId, (pdf as any).id);
+          ops.pdf.removePdfFromStudy(studyId, (pdf as any).id);
         } catch (yjsErr) {
           console.error('Failed to remove PDF from Y.js:', yjsErr);
           throw new Error('PDF deleted from R2 but failed to remove from study');
@@ -225,13 +227,13 @@ export const pdfActions = {
   updateTag(studyId: string, pdfId: string, newTag: string): void {
     const ops = connectionPool.getActiveOps();
     if (!ops) throw new Error('No active project connection');
-    ops.updatePdfTag(studyId, pdfId, newTag);
+    ops.pdf.updatePdfTag(studyId, pdfId, newTag as PdfTag);
   },
 
   updateMetadata(studyId: string, pdfId: string, metadata: Record<string, unknown>): void {
     const ops = connectionPool.getActiveOps();
     if (!ops) throw new Error('No active project connection');
-    ops.updatePdfMetadata(studyId, pdfId, metadata);
+    ops.pdf.updatePdfMetadata(studyId, pdfId, metadata);
   },
 
   async handleGoogleDriveImport(studyId: string, file: any, tag = 'secondary'): Promise<void> {
@@ -245,9 +247,8 @@ export const pdfActions = {
     if (!projectId || !orgId || !ops) throw new Error('No active project connection');
 
     const study =
-      useProjectStore.getState().projects[projectId]?.studies?.find(
-        (s: any) => s.id === studyId,
-      ) || null;
+      useProjectStore.getState().projects[projectId]?.studies?.find((s: any) => s.id === studyId) ||
+      null;
     const hasPdfs = (study as any)?.pdfs?.length > 0;
     const effectiveTag = !hasPdfs ? 'primary' : tag;
 
@@ -267,22 +268,21 @@ export const pdfActions = {
 
       const pdfMetadata = await extractPdfMetadata(arrayBuffer);
 
-      ops.addPdfToStudy(
+      ops.pdf.addPdfToStudy(
         studyId,
         {
           key: file.key,
           fileName: file.fileName,
           size: file.size,
-          uploadedBy: userId,
+          uploadedBy: userId ?? '',
           uploadedAt: Date.now(),
-          source: 'google-drive',
-          title: (pdfMetadata.title as string) || null,
-          firstAuthor: (pdfMetadata.firstAuthor as string) || null,
-          publicationYear: (pdfMetadata.publicationYear as string) || null,
-          journal: (pdfMetadata.journal as string) || null,
-          doi: (pdfMetadata.doi as string) || null,
-        },
-        effectiveTag,
+          title: (pdfMetadata.title as string) || undefined,
+          firstAuthor: (pdfMetadata.firstAuthor as string) || undefined,
+          publicationYear: (pdfMetadata.publicationYear as string) || undefined,
+          journal: (pdfMetadata.journal as string) || undefined,
+          doi: (pdfMetadata.doi as string) || undefined,
+        } as PdfInfo,
+        effectiveTag as PdfTag,
       );
     } catch (err) {
       console.error('Failed to add Google Drive PDF metadata:', err);
@@ -299,6 +299,6 @@ export const pdfActions = {
   addToStudy(studyId: string, pdfMeta: Record<string, unknown>, tag?: string): void {
     const ops = connectionPool.getActiveOps();
     if (!ops) throw new Error('No active project connection');
-    ops.addPdfToStudy(studyId, pdfMeta, tag);
+    ops.pdf.addPdfToStudy(studyId, pdfMeta as unknown as PdfInfo, tag as PdfTag);
   },
 };

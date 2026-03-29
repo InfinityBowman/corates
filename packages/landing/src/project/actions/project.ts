@@ -2,8 +2,9 @@
  * Project-level actions -- rename, delete, update description
  */
 
+import { parseResponse } from 'hono/client';
+import { api } from '@/lib/rpc';
 import { showToast } from '@/components/ui/toast';
-import { API_BASE } from '@/config/api';
 import { queryClient } from '@/lib/queryClient';
 import { queryKeys } from '@/lib/queryKeys';
 import { connectionPool } from '../ConnectionPool';
@@ -13,7 +14,7 @@ export const projectActions = {
     const ops = connectionPool.getActiveOps();
     if (!ops) throw new Error('No active project connection');
     try {
-      await ops.renameProject(newName);
+      await ops.study.renameProject(newName);
     } catch (err) {
       console.error('Error renaming project:', err);
       showToast.error('Rename Failed', (err as Error).message || 'Failed to rename project');
@@ -24,7 +25,7 @@ export const projectActions = {
     const ops = connectionPool.getActiveOps();
     if (!ops) throw new Error('No active project connection');
     try {
-      await ops.updateDescription(newDescription);
+      await ops.study.updateDescription(newDescription);
     } catch (err) {
       console.error('Error updating description:', err);
       showToast.error('Update Failed', (err as Error).message || 'Failed to update description');
@@ -35,14 +36,12 @@ export const projectActions = {
     const orgId = targetOrgId || connectionPool.getActiveOrgId();
     if (!orgId) throw new Error('No active org');
 
-    const response = await fetch(`${API_BASE}/api/orgs/${orgId}/projects/${targetProjectId}`, {
-      method: 'DELETE',
-      credentials: 'include',
-    });
-    if (!response.ok) {
-      const data = await response.json().catch(() => ({}));
-      throw new Error(data.error || 'Failed to delete project');
-    }
+    await parseResponse(
+      api.api.orgs[':orgId'].projects[':projectId'].$delete({
+        param: { orgId, projectId: targetProjectId },
+      }),
+    );
+
     queryClient.invalidateQueries({ queryKey: queryKeys.projects.all });
     queryClient.invalidateQueries({ queryKey: queryKeys.projects.byOrg(orgId) });
   },

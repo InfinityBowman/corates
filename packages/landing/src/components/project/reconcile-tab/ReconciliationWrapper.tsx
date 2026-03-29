@@ -60,21 +60,19 @@ export function ReconciliationWrapper({
     closePreview();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Destructure Y.js operations from connection pool
-  const ops = connectionPool.get(projectId);
+  const ops = connectionPool.getOps(projectId);
   if (!ops) throw new Error(`No connection for project ${projectId}`);
   const {
     createChecklist: createProjectChecklist,
     updateChecklistAnswer,
     updateChecklist,
     getChecklistData,
-    getReconciliationProgress,
     getQuestionNote,
     getRobinsText,
     getRob2Text,
-    saveReconciliationProgress,
-    getAwareness,
-  } = ops;
+  } = ops.checklist;
+  const { getReconciliationProgress, saveReconciliationProgress } = ops.reconciliation;
+  const getAwareness = ops.getAwareness;
 
   // Current user for presence features
   const currentUser = useMemo(() => {
@@ -207,7 +205,7 @@ export function ReconciliationWrapper({
       name: currentStudy?.name || 'Checklist 1',
       reviewerName: getReviewerName(checklist1Meta.assignedTo),
       createdAt: checklist1Meta.createdAt,
-      ...data.answers,
+      ...((data.answers as Record<string, unknown>) ?? {}),
     };
   }, [
     checklist1Meta,
@@ -227,7 +225,7 @@ export function ReconciliationWrapper({
       name: currentStudy?.name || 'Checklist 2',
       reviewerName: getReviewerName(checklist2Meta.assignedTo),
       createdAt: checklist2Meta.createdAt,
-      ...data.answers,
+      ...((data.answers as Record<string, unknown>) ?? {}),
     };
   }, [
     checklist2Meta,
@@ -388,7 +386,7 @@ export function ReconciliationWrapper({
       name: 'Reconciled Checklist',
       reviewerName: 'Consensus',
       createdAt: reconciledChecklistMeta?.createdAt || 0,
-      ...data.answers,
+      ...((data.answers as Record<string, unknown>) ?? {}),
     };
   }, [reconciledChecklistId, getChecklistData, studyId, reconciledChecklistMeta]);
 
@@ -427,13 +425,21 @@ export function ReconciliationWrapper({
   const getTextRef = useCallback(
     (...args: unknown[]) => {
       if (isRobinsI) {
-        return getRobinsText(studyId, reconciledChecklistId, ...args);
+        return getRobinsText(
+          studyId,
+          reconciledChecklistId as string,
+          ...(args as [string, string, string?]),
+        );
       }
       if (isRob2) {
-        return getRob2Text(studyId, reconciledChecklistId, ...args);
+        return getRob2Text(
+          studyId,
+          reconciledChecklistId as string,
+          ...(args as [string, string, string?]),
+        );
       }
       // AMSTAR2: getQuestionNote takes just the question key
-      return getQuestionNote(studyId, reconciledChecklistId, args[0]);
+      return getQuestionNote(studyId, reconciledChecklistId as string, args[0] as string);
     },
     [
       isRobinsI,
@@ -450,9 +456,9 @@ export function ReconciliationWrapper({
   const setTextValue = useCallback(
     (params: { sectionKey?: string; fieldKey?: string; questionKey?: string }, text: string) => {
       if (!reconciledChecklistId) return;
-      const poolOps = connectionPool.get(projectId);
+      const poolOps = connectionPool.getOps(projectId);
       if (!poolOps) throw new Error(`No connection for project ${projectId}`);
-      poolOps.setTextValue(studyId, reconciledChecklistId, params, text);
+      poolOps.checklist.setTextValue(studyId, reconciledChecklistId, params, text);
     },
     [studyId, reconciledChecklistId, projectId],
   );

@@ -94,30 +94,3 @@ export function connectionReducer(
 }
 
 export { INITIAL_STATE };
-
-/**
- * Map the new phase enum to the legacy 4-boolean shape for backward compatibility.
- * Remove once all consumers are migrated to check `phase` directly.
- */
-export function phaseToLegacy(state: ConnectionMachineState): {
-  connected: boolean;
-  connecting: boolean;
-  synced: boolean;
-  error: string | null;
-} {
-  switch (state.phase) {
-    case 'idle':
-      return { connected: false, connecting: false, synced: false, error: null };
-    case 'loading':
-    case 'connecting':
-      return { connected: false, connecting: true, synced: false, error: null };
-    case 'connected':
-      return { connected: true, connecting: false, synced: false, error: null };
-    case 'synced':
-      return { connected: true, connecting: false, synced: true, error: null };
-    case 'offline':
-      return { connected: false, connecting: false, synced: false, error: null };
-    case 'error':
-      return { connected: false, connecting: false, synced: false, error: state.error };
-  }
-}

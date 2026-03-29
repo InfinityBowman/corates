@@ -41,14 +41,12 @@ function isOrcidId(input: string) {
   return /^[\dXx]{16}$/.test(normalized);
 }
 
- 
 interface MergeAccountsDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   conflictProvider: string | null;
   onSuccess: () => void;
 }
- 
 
 export function MergeAccountsDialog({
   open,

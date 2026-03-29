@@ -26,14 +26,12 @@ interface AdminState {
   impersonatedBy: string | null;
 }
 
- 
 interface AdminActions {
   checkAdminStatus: () => Promise<boolean>;
   checkImpersonationStatus: () => Promise<void>;
   impersonateUser: (userId: string) => Promise<void>;
   stopImpersonation: () => Promise<void>;
 }
- 
 
 export const useAdminStore = create<AdminState & AdminActions>()(set => ({
   isAdminChecked: false,

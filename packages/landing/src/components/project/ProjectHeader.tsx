@@ -15,7 +15,6 @@ import {
   EditableContext,
 } from '@/components/ui/editable';
 
- 
 interface ProjectHeaderProps {
   name?: string;
   description?: string;
@@ -23,7 +22,6 @@ interface ProjectHeaderProps {
   onUpdateDescription?: (desc: string) => Promise<void> | void;
   onBack?: () => void;
 }
- 
 
 export function ProjectHeader({
   name,

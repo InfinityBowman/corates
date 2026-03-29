@@ -2,7 +2,9 @@ import * as Y from 'yjs';
 
 type YjsPrimitive = string | number | boolean | null | undefined;
 type PlainValue = YjsPrimitive | PlainObject | PlainArray;
-interface PlainObject { [key: string]: PlainValue }
+interface PlainObject {
+  [key: string]: PlainValue;
+}
 type PlainArray = PlainValue[];
 
 // Convert a Y.Map or Y.Array into a plain JS structure recursively
@@ -25,14 +27,18 @@ export function yToPlain(value: unknown): PlainValue {
   if (Array.isArray(value)) return value.map(v => yToPlain(v));
   if (value && typeof value === 'object') {
     const obj: PlainObject = {};
-    for (const k of Object.keys(value as Record<string, unknown>)) obj[k] = yToPlain((value as Record<string, unknown>)[k]);
+    for (const k of Object.keys(value as Record<string, unknown>))
+      obj[k] = yToPlain((value as Record<string, unknown>)[k]);
     return obj;
   }
   return value as YjsPrimitive;
 }
 
 // Ensure JS object becomes Y.Map/Y.Array structure inside target Y.Map
-export function applyObjectToYMap(target: Y.Map<unknown>, obj: Record<string, unknown> | null | undefined): void {
+export function applyObjectToYMap(
+  target: Y.Map<unknown>,
+  obj: Record<string, unknown> | null | undefined,
+): void {
   if (!(target instanceof Y.Map)) throw new Error('target must be a Y.Map');
 
   Object.entries(obj || {}).forEach(([key, val]) => {

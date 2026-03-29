@@ -14,7 +14,6 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 
- 
 interface AssignReviewersModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -25,7 +24,6 @@ interface AssignReviewersModalProps {
     updates: { reviewer1: string | null; reviewer2: string | null },
   ) => void;
 }
- 
 
 export function AssignReviewersModal({
   open,

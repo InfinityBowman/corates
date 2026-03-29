@@ -56,7 +56,7 @@ export function useAnnotationSync({
 
   // The annotation scope API may expose individual event hooks (onAnnotationCreate, etc.)
   // that are not in the base type definition. Cast to any to preserve original behavior.
-   
+
   const scopeAny = annotationScope as any;
 
   /**
@@ -156,17 +156,19 @@ export function useAnnotationSync({
     });
 
     // Subscribe to annotation deletion
-    const unsubDelete = scopeAny.onAnnotationDelete?.((event: { annotationId?: string; id?: string }) => {
-      if (isApplyingRef.current) return;
+    const unsubDelete = scopeAny.onAnnotationDelete?.(
+      (event: { annotationId?: string; id?: string }) => {
+        if (isApplyingRef.current) return;
 
-      const annotationId = (event.annotationId || event.id)!;
+        const annotationId = (event.annotationId || event.id)!;
 
-      annotationMapRef.current.delete(annotationId);
+        annotationMapRef.current.delete(annotationId);
 
-      if (onAnnotationDelete) {
-        onAnnotationDelete(annotationId);
-      }
-    });
+        if (onAnnotationDelete) {
+          onAnnotationDelete(annotationId);
+        }
+      },
+    );
 
     return () => {
       unsubCreate?.();

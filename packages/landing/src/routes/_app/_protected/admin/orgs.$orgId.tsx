@@ -408,96 +408,98 @@ function OrgDetailPage() {
       )}
 
       {/* Header */}
-      {orgDetails && (<>
-      <div className='mb-6'>
-        <div className='flex items-center gap-3'>
-          <div className='flex size-12 items-center justify-center rounded-lg bg-blue-100'>
-            <HomeIcon className='size-6 text-blue-600' />
-          </div>
-          <div>
-            <h1 className='text-foreground text-2xl font-bold'>
-              {orgDetails?.org?.name || 'Organization'}
-            </h1>
-            <p className='text-muted-foreground text-sm'>
-              <code>{orgDetails?.org?.slug || ''}</code>
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* Stats */}
-      <div className='mb-6 grid grid-cols-1 gap-4 md:grid-cols-3'>
-        <AdminBox padding='compact'>
-          <div className='flex items-center gap-2'>
-            <UsersIcon className='text-muted-foreground/70 size-5' />
-            <div>
-              <p className='text-muted-foreground text-sm'>Members</p>
-              <p className='text-foreground text-2xl font-bold'>
-                {orgDetails.stats?.memberCount ?? 0}
-              </p>
+      {orgDetails && (
+        <>
+          <div className='mb-6'>
+            <div className='flex items-center gap-3'>
+              <div className='flex size-12 items-center justify-center rounded-lg bg-blue-100'>
+                <HomeIcon className='size-6 text-blue-600' />
+              </div>
+              <div>
+                <h1 className='text-foreground text-2xl font-bold'>
+                  {orgDetails?.org?.name || 'Organization'}
+                </h1>
+                <p className='text-muted-foreground text-sm'>
+                  <code>{orgDetails?.org?.slug || ''}</code>
+                </p>
+              </div>
             </div>
           </div>
-        </AdminBox>
-        <AdminBox padding='compact'>
-          <div className='flex items-center gap-2'>
-            <FolderIcon className='text-muted-foreground/70 size-5' />
-            <div>
-              <p className='text-muted-foreground text-sm'>Projects</p>
-              <p className='text-foreground text-2xl font-bold'>
-                {orgDetails.stats?.projectCount ?? 0}
-              </p>
-            </div>
+
+          {/* Stats */}
+          <div className='mb-6 grid grid-cols-1 gap-4 md:grid-cols-3'>
+            <AdminBox padding='compact'>
+              <div className='flex items-center gap-2'>
+                <UsersIcon className='text-muted-foreground/70 size-5' />
+                <div>
+                  <p className='text-muted-foreground text-sm'>Members</p>
+                  <p className='text-foreground text-2xl font-bold'>
+                    {orgDetails.stats?.memberCount ?? 0}
+                  </p>
+                </div>
+              </div>
+            </AdminBox>
+            <AdminBox padding='compact'>
+              <div className='flex items-center gap-2'>
+                <FolderIcon className='text-muted-foreground/70 size-5' />
+                <div>
+                  <p className='text-muted-foreground text-sm'>Projects</p>
+                  <p className='text-foreground text-2xl font-bold'>
+                    {orgDetails.stats?.projectCount ?? 0}
+                  </p>
+                </div>
+              </div>
+            </AdminBox>
           </div>
-        </AdminBox>
-      </div>
 
-      {/* Billing Summary */}
-      <div className='mb-6'>
-        <OrgBillingSummary billing={billingData ?? null} />
-      </div>
+          {/* Billing Summary */}
+          <div className='mb-6'>
+            <OrgBillingSummary billing={billingData ?? null} />
+          </div>
 
-      {/* Quick Actions */}
-      <div className='mb-6'>
-        <OrgQuickActions
-          loading={loading}
-          onGrantTrial={handleQuickTrial}
-          onGrantSingleProject={handleQuickSingleProject}
-          onCreateSubscription={handleOpenSubscriptionDialog}
-          onCreateGrant={handleOpenGrantDialog}
-        />
-      </div>
+          {/* Quick Actions */}
+          <div className='mb-6'>
+            <OrgQuickActions
+              loading={loading}
+              onGrantTrial={handleQuickTrial}
+              onGrantSingleProject={handleQuickSingleProject}
+              onCreateSubscription={handleOpenSubscriptionDialog}
+              onCreateGrant={handleOpenGrantDialog}
+            />
+          </div>
 
-      {/* Subscriptions */}
-      <div className='mb-6'>
-        <SubscriptionList
-          subscriptions={billing?.subscriptions}
-          effectiveSubscriptionId={billingData?.subscription?.id}
-          loading={loading}
-          isLoading={billingQuery.isLoading}
-          onCancel={(_subscriptionId: string) =>
-            setConfirmDialog({ type: 'cancel-subscription', subscriptionId: _subscriptionId })
-          }
-          onEdit={handleEditSubscription}
-        />
-      </div>
+          {/* Subscriptions */}
+          <div className='mb-6'>
+            <SubscriptionList
+              subscriptions={billing?.subscriptions}
+              effectiveSubscriptionId={billingData?.subscription?.id}
+              loading={loading}
+              isLoading={billingQuery.isLoading}
+              onCancel={(_subscriptionId: string) =>
+                setConfirmDialog({ type: 'cancel-subscription', subscriptionId: _subscriptionId })
+              }
+              onEdit={handleEditSubscription}
+            />
+          </div>
 
-      {/* Grants */}
-      <div className='mb-6'>
-        <GrantList
-          grants={billing?.grants ?? []}
-          loading={loading}
-          isLoading={billingQuery.isLoading}
-          onRevoke={(_grantId: string) =>
-            setConfirmDialog({ type: 'revoke-grant', grantId: _grantId })
-          }
-        />
-      </div>
+          {/* Grants */}
+          <div className='mb-6'>
+            <GrantList
+              grants={billing?.grants ?? []}
+              loading={loading}
+              isLoading={billingQuery.isLoading}
+              onRevoke={(_grantId: string) =>
+                setConfirmDialog({ type: 'revoke-grant', grantId: _grantId })
+              }
+            />
+          </div>
 
-      {/* Billing Reconciliation */}
-      <div className='mb-6'>
-        <OrgBillingReconcilePanel orgId={orgId} />
-      </div>
-      </>)}
+          {/* Billing Reconciliation */}
+          <div className='mb-6'>
+            <OrgBillingReconcilePanel orgId={orgId} />
+          </div>
+        </>
+      )}
 
       {/* Subscription Dialog */}
       <SubscriptionDialog

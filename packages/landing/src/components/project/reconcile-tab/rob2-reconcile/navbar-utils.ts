@@ -187,7 +187,10 @@ export function hasPreliminaryAnswer(key: string, finalAnswers: FinalAnswers): b
     return Array.isArray(value) && value.length > 0;
   }
   if (key === 'sources') {
-    return typeof value === 'object' && Object.values((value as Record<string, unknown>) || {}).some(v => v);
+    return (
+      typeof value === 'object' &&
+      Object.values((value as Record<string, unknown>) || {}).some(v => v)
+    );
   }
   return value != null && value !== '';
 }
@@ -279,8 +282,8 @@ export function getNavItemPillStyle(
   if (isCurrentPage) {
     return 'bg-blue-600 text-white ring-2 ring-inset ring-blue-300';
   }
-  return isAgreement
-    ? 'bg-green-100 text-green-700 hover:bg-green-200'
+  return isAgreement ?
+      'bg-green-100 text-green-700 hover:bg-green-200'
     : 'bg-amber-100 text-amber-700 hover:bg-amber-200';
 }
 

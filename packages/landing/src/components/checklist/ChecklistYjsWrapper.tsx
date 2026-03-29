@@ -80,20 +80,18 @@ export function ChecklistYjsWrapper({ projectId, studyId, checklistId }: Checkli
   const [selectedPdfId, setSelectedPdfId] = useState<string | null>(null);
   const [attemptedPdfFile, setAttemptedPdfFile] = useState<string | null>(null);
 
-  const ops = connectionPool.get(projectId);
+  const ops = connectionPool.getOps(projectId);
   if (!ops) throw new Error(`No connection for project ${projectId}`);
   const {
     updateChecklistAnswer,
     updateChecklist,
     getChecklistData,
-    addPdfToStudy,
     getQuestionNote,
     getRobinsText,
     getRob2Text,
-    addAnnotation,
-    updateAnnotation,
-    deleteAnnotation,
-  } = ops;
+  } = ops.checklist;
+  const { addPdfToStudy } = ops.pdf;
+  const { addAnnotation, updateAnnotation, deleteAnnotation } = ops.annotation;
 
   const connectionState = useProjectStore(s => selectConnectionPhase(s, projectId));
 
@@ -198,7 +196,7 @@ export function ChecklistYjsWrapper({ projectId, studyId, checklistId }: Checkli
             key: uploadResult.key,
             fileName: uploadResult.fileName,
             size: uploadResult.size,
-            uploadedBy: user?.id,
+            uploadedBy: user?.id ?? '',
             uploadedAt: Date.now(),
           },
           tag,
@@ -232,7 +230,7 @@ export function ChecklistYjsWrapper({ projectId, studyId, checklistId }: Checkli
       name: currentStudy?.name || 'Checklist',
       reviewerName: '',
       createdAt: currentChecklist.createdAt,
-      ...data.answers,
+      ...((data.answers as Record<string, unknown>) ?? {}),
     };
   }, [currentChecklist, currentStudy, getChecklistData, studyId, checklistId]);
 
@@ -249,9 +247,9 @@ export function ChecklistYjsWrapper({ projectId, studyId, checklistId }: Checkli
 
   const isChecklistValid = useMemo(() => {
     if (!checklistForUI) return false;
-    if (checklistType === 'AMSTAR2') return isAMSTAR2Complete(checklistForUI);
-    if (checklistType === 'ROBINS_I') return isROBINSIComplete(checklistForUI);
-    if (checklistType === 'ROB2') return isROB2Complete(checklistForUI);
+    if (checklistType === 'AMSTAR2') return isAMSTAR2Complete(checklistForUI as any);
+    if (checklistType === 'ROBINS_I') return isROBINSIComplete(checklistForUI as any);
+    if (checklistType === 'ROB2') return isROB2Complete(checklistForUI as any);
     return true;
   }, [checklistForUI, checklistType]);
 
@@ -424,7 +422,9 @@ export function ChecklistYjsWrapper({ projectId, studyId, checklistId }: Checkli
     return (
       <div className='flex min-h-screen items-center justify-center bg-blue-50'>
         <div className='text-muted-foreground'>
-          {connectionState.phase === 'connecting' || pdfLoading ? 'Loading...' : 'Checklist not found'}
+          {connectionState.phase === 'connecting' || pdfLoading ?
+            'Loading...'
+          : 'Checklist not found'}
         </div>
       </div>
     );
@@ -445,9 +445,7 @@ export function ChecklistYjsWrapper({ projectId, studyId, checklistId }: Checkli
       pdfs={studyPdfs}
       selectedPdfId={selectedPdfId}
       onPdfSelect={handlePdfSelect}
-      getQuestionNote={(questionKey: string) =>
-        getQuestionNote(studyId, checklistId, questionKey)
-      }
+      getQuestionNote={(questionKey: string) => getQuestionNote(studyId, checklistId, questionKey)}
       getRobinsText={(sectionKey: string, fieldKey: string, questionKey?: string) =>
         getRobinsText(studyId, checklistId, sectionKey, fieldKey, questionKey)
       }

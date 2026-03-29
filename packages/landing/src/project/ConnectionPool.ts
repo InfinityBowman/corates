@@ -11,40 +11,54 @@ import { queryClient } from '@/lib/queryClient';
 import { queryKeys } from '@/lib/queryKeys';
 import { createConnectionManager } from '@/primitives/useProject/connection';
 import { createSyncManager, type SyncManager } from '@/primitives/useProject/sync';
-import { createStudyOperations } from '@/primitives/useProject/studies';
+import { createStudyOperations, type StudyOperations } from '@/primitives/useProject/studies';
 import {
   createChecklistOperations,
   type ChecklistOperations,
 } from '@/primitives/useProject/checklists/index';
-import { createPdfOperations } from '@/primitives/useProject/pdfs';
-import { createReconciliationOperations } from '@/primitives/useProject/reconciliation.js';
-import { createAnnotationOperations } from '@/primitives/useProject/annotations';
-import { createOutcomeOperations } from '@/primitives/useProject/outcomes.js';
+import { createPdfOperations, type PdfOperations } from '@/primitives/useProject/pdfs';
+import {
+  createReconciliationOperations,
+  type ReconciliationOperations,
+} from '@/primitives/useProject/reconciliation.js';
+import {
+  createAnnotationOperations,
+  type AnnotationOperations,
+} from '@/primitives/useProject/annotations';
+import {
+  createOutcomeOperations,
+  type OutcomeOperations,
+} from '@/primitives/useProject/outcomes.js';
 import { db, deleteProjectData } from '@/primitives/db.js';
+
+export interface TypedProjectOps {
+  study: StudyOperations;
+  checklist: ChecklistOperations;
+  pdf: PdfOperations;
+  reconciliation: ReconciliationOperations;
+  annotation: AnnotationOperations;
+  outcome: OutcomeOperations;
+  getAwareness: () => unknown;
+}
 
 export interface ConnectionEntry {
   ydoc: Y.Doc;
   dexieProvider: any;
   connectionManager: any;
   syncManager: SyncManager | null;
-  studyOps: any;
+  studyOps: StudyOperations | null;
   checklistOps: ChecklistOperations | null;
-  pdfOps: any;
-  reconciliationOps: any;
-  annotationOps: any;
-  outcomeOps: any;
+  pdfOps: PdfOperations | null;
+  reconciliationOps: ReconciliationOperations | null;
+  annotationOps: AnnotationOperations | null;
+  outcomeOps: OutcomeOperations | null;
   refCount: number;
   initialized: boolean;
-  isLoadingPersistedState: boolean;
   _cleanupHandlers: (() => void)[];
 }
 
-/** Flat operations object registered for a connection */
-export type ConnectionOps = Record<string, (...args: any[]) => any>;
-
 class ConnectionPool {
   private registry = new Map<string, ConnectionEntry>();
-  private opsRegistry = new Map<string, ConnectionOps>();
   private _activeProjectId: string | null = null;
   private _activeOrgId: string | null = null;
 
@@ -74,7 +88,6 @@ class ConnectionPool {
       outcomeOps: null,
       refCount: 1,
       initialized: false,
-      isLoadingPersistedState: false,
       _cleanupHandlers: [],
     };
 
@@ -112,17 +125,9 @@ class ConnectionPool {
     entry.annotationOps = createAnnotationOperations(projectId, getYDoc, isSynced);
     entry.outcomeOps = createOutcomeOperations(projectId, getYDoc, isSynced);
 
-    // Build flat operations map
-    this.opsRegistry.set(projectId, this.buildOpsMap(entry));
-
-    // YDoc update handler (debounced sync to Zustand store)
-    const syncUpdateHandler = () => {
-      if (!entry.isLoadingPersistedState) {
-        entry.syncManager?.syncFromYDoc();
-      }
-    };
-    ydoc.on('update', syncUpdateHandler);
-    entry._cleanupHandlers.push(() => ydoc.off('update', syncUpdateHandler));
+    // Scoped Y.Map observers (reviews, members, meta) for incremental sync
+    entry.syncManager.attach(ydoc);
+    entry._cleanupHandlers.push(() => entry.syncManager?.detach());
 
     // Dexie persistence (async)
     (db.projects as any).get(projectId).then(async (existingProject: any) => {
@@ -141,7 +146,7 @@ class ConnectionPool {
       entry.dexieProvider.whenLoaded.then(() => {
         if (cancelled()) return;
 
-        entry.isLoadingPersistedState = true;
+        entry.syncManager?.pause();
         try {
           const persistedState = Y.encodeStateAsUpdate(project.ydoc);
           Y.applyUpdate(ydoc, persistedState);
@@ -149,7 +154,7 @@ class ConnectionPool {
           console.error('Corrupted persisted state, clearing local data:', err);
           deleteProjectData(projectId).catch(() => {});
         } finally {
-          entry.isLoadingPersistedState = false;
+          entry.syncManager?.resume();
         }
 
         // Dexie write-back handler
@@ -200,25 +205,45 @@ class ConnectionPool {
   }
 
   /**
-   * Get the flat operations map for a project connection.
+   * Get typed operations for a project connection.
    */
-  get(projectId: string): ConnectionOps | null {
-    return this.opsRegistry.get(projectId) || null;
+  getOps(projectId: string): TypedProjectOps | null {
+    const entry = this.registry.get(projectId);
+    if (
+      !entry?.initialized ||
+      !entry.studyOps ||
+      !entry.checklistOps ||
+      !entry.pdfOps ||
+      !entry.reconciliationOps ||
+      !entry.annotationOps ||
+      !entry.outcomeOps
+    ) {
+      return null;
+    }
+    return {
+      study: entry.studyOps,
+      checklist: entry.checklistOps,
+      pdf: entry.pdfOps,
+      reconciliation: entry.reconciliationOps,
+      annotation: entry.annotationOps,
+      outcome: entry.outcomeOps,
+      getAwareness: () => entry.connectionManager?.getAwareness() || null,
+    };
   }
 
   /**
-   * Get the raw ConnectionEntry for a project (for direct ops access).
+   * Get the raw ConnectionEntry for a project (for direct entry access).
    */
   getEntry(projectId: string): ConnectionEntry | null {
     return this.registry.get(projectId) || null;
   }
 
   /**
-   * Get operations for the currently active project.
+   * Get typed operations for the currently active project.
    */
-  getActiveOps(): ConnectionOps | null {
+  getActiveOps(): TypedProjectOps | null {
     if (!this._activeProjectId) return null;
-    return this.get(this._activeProjectId);
+    return this.getOps(this._activeProjectId);
   }
 
   /**
@@ -303,71 +328,7 @@ class ConnectionPool {
     if (entry.ydoc) entry.ydoc.destroy();
 
     this.registry.delete(projectId);
-    this.opsRegistry.delete(projectId);
     useProjectStore.getState().dispatchConnectionEvent(projectId, { type: 'RESET' });
-  }
-
-  private buildOpsMap(entry: ConnectionEntry): ConnectionOps {
-    // Cast typed ops to any for the flat map -- callers already treat these as untyped
-    const chk = entry.checklistOps as any;
-    return {
-      // Study
-      createStudy: (...args: any[]) => entry.studyOps?.createStudy(...args),
-      updateStudy: (...args: any[]) => entry.studyOps?.updateStudy(...args),
-      deleteStudy: (...args: any[]) => entry.studyOps?.deleteStudy(...args),
-      renameProject: (...args: any[]) => entry.studyOps?.renameProject(...args),
-      updateDescription: (...args: any[]) => entry.studyOps?.updateDescription(...args),
-      updateProjectSettings: (...args: any[]) => entry.studyOps?.updateProjectSettings(...args),
-      // Checklist
-      createChecklist: (...args: any[]) => chk?.createChecklist(...args),
-      updateChecklist: (...args: any[]) => chk?.updateChecklist(...args),
-      deleteChecklist: (...args: any[]) => chk?.deleteChecklist(...args),
-      getChecklistAnswersMap: (...args: any[]) => chk?.getChecklistAnswersMap(...args),
-      getChecklistData: (...args: any[]) => chk?.getChecklistData(...args),
-      updateChecklistAnswer: (...args: any[]) => chk?.updateChecklistAnswer(...args),
-      getQuestionNote: (...args: any[]) => chk?.getQuestionNote(...args),
-      getRobinsText: (...args: any[]) => chk?.getRobinsText(...args),
-      getRob2Text: (...args: any[]) => chk?.getRob2Text(...args),
-      getTextRef: (...args: any[]) => chk?.getTextRef(...args),
-      setTextValue: (...args: any[]) => chk?.setTextValue(...args),
-      // PDF
-      addPdfToStudy: (...args: any[]) => entry.pdfOps?.addPdfToStudy(...args),
-      removePdfFromStudy: (...args: any[]) => entry.pdfOps?.removePdfFromStudy(...args),
-      removePdfByFileName: (...args: any[]) => entry.pdfOps?.removePdfByFileName(...args),
-      updatePdfTag: (...args: any[]) => entry.pdfOps?.updatePdfTag(...args),
-      updatePdfMetadata: (...args: any[]) => entry.pdfOps?.updatePdfMetadata(...args),
-      setPdfAsPrimary: (...args: any[]) => entry.pdfOps?.setPdfAsPrimary(...args),
-      setPdfAsProtocol: (...args: any[]) => entry.pdfOps?.setPdfAsProtocol(...args),
-      // Reconciliation
-      saveReconciliationProgress: (...args: any[]) =>
-        entry.reconciliationOps?.saveReconciliationProgress(...args),
-      getReconciliationProgress: (...args: any[]) =>
-        entry.reconciliationOps?.getReconciliationProgress(...args),
-      getAllReconciliationProgress: (...args: any[]) =>
-        entry.reconciliationOps?.getAllReconciliationProgress(...args),
-      clearReconciliationProgress: (...args: any[]) =>
-        entry.reconciliationOps?.clearReconciliationProgress(...args),
-      // Annotations
-      addAnnotation: (...args: any[]) => entry.annotationOps?.addAnnotation(...args),
-      addAnnotations: (...args: any[]) => entry.annotationOps?.addAnnotations(...args),
-      updateAnnotation: (...args: any[]) => entry.annotationOps?.updateAnnotation(...args),
-      deleteAnnotation: (...args: any[]) => entry.annotationOps?.deleteAnnotation(...args),
-      getAnnotations: (...args: any[]) => entry.annotationOps?.getAnnotations(...args),
-      getAllAnnotationsForPdf: (...args: any[]) =>
-        entry.annotationOps?.getAllAnnotationsForPdf(...args),
-      clearAnnotationsForChecklist: (...args: any[]) =>
-        entry.annotationOps?.clearAnnotationsForChecklist(...args),
-      mergeAnnotations: (...args: any[]) => entry.annotationOps?.mergeAnnotations(...args),
-      // Outcomes
-      getOutcomes: () => entry.outcomeOps?.getOutcomes() || [],
-      getOutcome: (...args: any[]) => entry.outcomeOps?.getOutcome(...args),
-      createOutcome: (...args: any[]) => entry.outcomeOps?.createOutcome(...args),
-      updateOutcome: (...args: any[]) => entry.outcomeOps?.updateOutcome(...args),
-      deleteOutcome: (...args: any[]) => entry.outcomeOps?.deleteOutcome(...args),
-      isOutcomeInUse: (...args: any[]) => entry.outcomeOps?.isOutcomeInUse(...args),
-      // Presence
-      getAwareness: () => entry.connectionManager?.getAwareness() || null,
-    };
   }
 }
 

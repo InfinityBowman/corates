@@ -34,10 +34,10 @@ export function PreviousReviewersView({
   onClose,
 }: PreviousReviewersViewProps) {
   const { projectId } = useProjectContext();
-  const ops = connectionPool.get(projectId);
+  const ops = connectionPool.getOps(projectId);
   if (!ops) throw new Error(`No connection for project ${projectId}`);
-  const getChecklistData = ops.getChecklistData;
-  const getQuestionNote = ops.getQuestionNote;
+  const getChecklistData = ops.checklist.getChecklistData;
+  const getQuestionNote = ops.checklist.getQuestionNote;
 
   const [checklist1Data, setChecklist1Data] = useState<any>(null);
   const [checklist2Data, setChecklist2Data] = useState<any>(null);
@@ -75,7 +75,7 @@ export function PreviousReviewersView({
             reviewerName: getAssigneeName(String(originalChecklists[0].assignedTo ?? '')),
             createdAt: originalChecklists[0].createdAt,
             type: originalChecklists[0].type,
-            ...data1.answers,
+            ...((data1.answers as Record<string, unknown>) ?? {}),
           }
         : null,
       );
@@ -88,7 +88,7 @@ export function PreviousReviewersView({
             reviewerName: getAssigneeName(String(originalChecklists[1].assignedTo ?? '')),
             createdAt: originalChecklists[1].createdAt,
             type: originalChecklists[1].type,
-            ...data2.answers,
+            ...((data2.answers as Record<string, unknown>) ?? {}),
           }
         : null,
       );
@@ -107,10 +107,16 @@ export function PreviousReviewersView({
   const reviewerTabs = useMemo(() => {
     const tabs: Array<{ value: string; label: string }> = [];
     if (originalChecklists[0] && checklist1Data) {
-      tabs.push({ value: 'reviewer1', label: getAssigneeName(String(originalChecklists[0].assignedTo ?? '')) });
+      tabs.push({
+        value: 'reviewer1',
+        label: getAssigneeName(String(originalChecklists[0].assignedTo ?? '')),
+      });
     }
     if (originalChecklists[1] && checklist2Data) {
-      tabs.push({ value: 'reviewer2', label: getAssigneeName(String(originalChecklists[1].assignedTo ?? '')) });
+      tabs.push({
+        value: 'reviewer2',
+        label: getAssigneeName(String(originalChecklists[1].assignedTo ?? '')),
+      });
     }
     return tabs;
   }, [originalChecklists, checklist1Data, checklist2Data, getAssigneeName]);

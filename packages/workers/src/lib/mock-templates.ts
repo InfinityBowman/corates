@@ -363,7 +363,12 @@ export function generateROB2Answers(options: ROB2Options = {}): ROB2Answers {
       comparator: fill !== 'empty' ? 'Standard care B' : '',
       numericalResult: fill !== 'empty' ? 'RR = 1.52 (95% CI 0.83 to 2.77)' : '',
       aim,
-      deviationsToAddress: isAdhering && fill !== 'empty' ? ['non-adherence to their assigned intervention regimen that could have affected participants\' outcomes'] : [],
+      deviationsToAddress:
+        isAdhering && fill !== 'empty' ?
+          [
+            "non-adherence to their assigned intervention regimen that could have affected participants' outcomes",
+          ]
+        : [],
       sources,
     },
     domain1: generateROB2Domain('domain1', fill, rng),
@@ -381,11 +386,7 @@ export function generateROB2Answers(options: ROB2Options = {}): ROB2Answers {
   return answers;
 }
 
-function generateROB2Domain(
-  domainKey: string,
-  fill: string,
-  rng: RngFunction,
-): ROB2DomainAnswers {
+function generateROB2Domain(domainKey: string, fill: string, rng: RngFunction): ROB2DomainAnswers {
   const questions = ROB2_DOMAINS[domainKey] || [];
   const domainAnswers: Record<string, { answer: string | null; comment: string }> = {};
 
