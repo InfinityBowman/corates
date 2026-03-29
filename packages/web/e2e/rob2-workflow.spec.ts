@@ -59,7 +59,6 @@ async function answerAllROB2Domains(page: import('@playwright/test').Page, answe
     const buttons = page.getByRole('button', { name: answer, exact: true });
     const count = await buttons.count();
     for (let i = 0; i < count; i++) {
-      await buttons.nth(i).scrollIntoViewIfNeeded();
       await buttons.nth(i).click();
       await page.waitForTimeout(100);
     }
