@@ -4,26 +4,9 @@
  */
 
 import { OpenAPIHono, createRoute, z, $ } from '@hono/zod-openapi';
-
-import { createDb } from '@/db/client.js';
-import {
-  projectInvitations,
-  projectMembers,
-  projects,
-  user,
-  member,
-  organization,
-} from '@/db/schema.js';
-import { eq, and } from 'drizzle-orm';
 import { requireAuth, getAuth } from '@/middleware/auth.js';
-import {
-  createDomainError,
-  PROJECT_ERRORS,
-  AUTH_ERRORS,
-  SYSTEM_ERRORS,
-  VALIDATION_ERRORS,
-} from '@corates/shared';
-import { syncMemberToDO } from '@/lib/project-sync.js';
+import { createDomainError, isDomainError, AUTH_ERRORS, SYSTEM_ERRORS } from '@corates/shared';
+import { acceptInvitation } from '@/commands/invitations/index.js';
 import { validationHook } from '@/lib/honoValidationHook.js';
 import type { Env } from '../types';
 import { ErrorResponseSchema } from '@/schemas/common.js';
@@ -32,14 +15,12 @@ const base = new OpenAPIHono<{ Bindings: Env }>({
   defaultHook: validationHook,
 });
 
-// Request schema
 const AcceptInvitationRequestSchema = z
   .object({
     token: z.string().min(1).openapi({ example: 'abc123token' }),
   })
   .openapi('AcceptInvitationRequest');
 
-// Response schemas
 const AcceptInvitationSuccessSchema = z
   .object({
     success: z.literal(true),
@@ -52,7 +33,6 @@ const AcceptInvitationSuccessSchema = z
   })
   .openapi('AcceptInvitationSuccess');
 
-// Route definitions
 const acceptInvitationRoute = createRoute({
   method: 'post',
   path: '/accept',
@@ -72,11 +52,7 @@ const acceptInvitationRoute = createRoute({
   },
   responses: {
     200: {
-      content: {
-        'application/json': {
-          schema: AcceptInvitationSuccessSchema,
-        },
-      },
+      content: { 'application/json': { schema: AcceptInvitationSuccessSchema } },
       description: 'Invitation accepted successfully',
     },
     400: {
@@ -85,7 +61,7 @@ const acceptInvitationRoute = createRoute({
     },
     403: {
       content: { 'application/json': { schema: ErrorResponseSchema } },
-      description: 'Email mismatch or already a member',
+      description: 'Email mismatch or quota exceeded',
     },
     500: {
       content: { 'application/json': { schema: ErrorResponseSchema } },
@@ -94,238 +70,38 @@ const acceptInvitationRoute = createRoute({
   },
 });
 
-// Route handlers - chained for RPC type inference
 const invitationRoutes = $(base.use('*', requireAuth)).openapi(acceptInvitationRoute, async c => {
   const { user: authUser } = getAuth(c);
   if (!authUser) {
     const error = createDomainError(AUTH_ERRORS.REQUIRED, { reason: 'no_user' });
     return c.json(error, 403);
   }
-  const db = createDb(c.env.DB);
-  const { token } = c.req.valid('json');
 
   try {
-    // Find invitation by token
-    const invitation = await db
-      .select({
-        id: projectInvitations.id,
-        orgId: projectInvitations.orgId,
-        projectId: projectInvitations.projectId,
-        email: projectInvitations.email,
-        role: projectInvitations.role,
-        orgRole: projectInvitations.orgRole,
-        expiresAt: projectInvitations.expiresAt,
-        acceptedAt: projectInvitations.acceptedAt,
-      })
-      .from(projectInvitations)
-      .where(eq(projectInvitations.token, token))
-      .get();
-
-    if (!invitation) {
-      const error = createDomainError(VALIDATION_ERRORS.FIELD_INVALID_FORMAT, {
-        field: 'token',
-        value: token,
-      });
-      return c.json(error, 400);
-    }
-
-    // Check if invitation has expired
-    const now = Date.now();
-    const expiresAt = invitation.expiresAt.getTime();
-    if (now > expiresAt) {
-      const error = createDomainError(VALIDATION_ERRORS.FIELD_INVALID_FORMAT, {
-        field: 'token',
-        value: 'expired',
-      });
-      return c.json(error, 400);
-    }
-
-    // Check if invitation already accepted
-    if (invitation.acceptedAt) {
-      const error = createDomainError(PROJECT_ERRORS.MEMBER_ALREADY_EXISTS, {
-        projectId: invitation.projectId,
-      });
-      return c.json(error, 400);
-    }
-
-    // Verify user email matches invitation email
-    const currentUser = await db
-      .select({
-        email: user.email,
-        name: user.name,
-        givenName: user.givenName,
-        familyName: user.familyName,
-        image: user.image,
-      })
-      .from(user)
-      .where(eq(user.id, authUser.id))
-      .get();
-
-    if (!currentUser) {
-      const error = createDomainError(AUTH_ERRORS.FORBIDDEN, {
-        reason: 'user_not_found',
-      });
-      return c.json(error, 403);
-    }
-
-    const normalizedUserEmail = (currentUser.email || '').trim().toLowerCase();
-    const normalizedInvitationEmail = (invitation.email || '').trim().toLowerCase();
-
-    if (normalizedUserEmail !== normalizedInvitationEmail) {
-      console.error(
-        `[Invitation] Email mismatch: user email="${currentUser.email}" (normalized="${normalizedUserEmail}"), invitation email="${invitation.email}" (normalized="${normalizedInvitationEmail}")`,
-      );
-      const error = createDomainError(AUTH_ERRORS.FORBIDDEN, {
-        reason: 'email_mismatch',
-        userEmail: currentUser.email,
-        invitationEmail: invitation.email,
-      });
-      return c.json(error, 403);
-    }
-
-    // Check if user is already a member
-    const existingMember = await db
-      .select({ id: projectMembers.id })
-      .from(projectMembers)
-      .where(
-        and(
-          eq(projectMembers.projectId, invitation.projectId),
-          eq(projectMembers.userId, authUser.id),
-        ),
-      )
-      .get();
-
-    if (existingMember) {
-      await db
-        .update(projectInvitations)
-        .set({ acceptedAt: new Date() })
-        .where(eq(projectInvitations.id, invitation.id));
-
-      const project = await db
-        .select({ name: projects.name })
-        .from(projects)
-        .where(eq(projects.id, invitation.projectId))
-        .get();
-
-      return c.json(
-        {
-          success: true as const,
-          projectId: invitation.projectId,
-          projectName: project?.name || 'Unknown Project',
-          alreadyMember: true,
-        } as z.infer<typeof AcceptInvitationSuccessSchema>,
-        200,
-      );
-    }
-
-    // Combined flow: ensure org membership, then add project membership
-    const nowDate = new Date();
-    const batchOps = [];
-
-    if (invitation.orgId) {
-      const existingOrgMembership = await db
-        .select({ id: member.id })
-        .from(member)
-        .where(and(eq(member.organizationId, invitation.orgId), eq(member.userId, authUser.id)))
-        .get();
-
-      if (!existingOrgMembership) {
-        batchOps.push(
-          db.insert(member).values({
-            id: crypto.randomUUID(),
-            userId: authUser.id,
-            organizationId: invitation.orgId,
-            role: invitation.orgRole || 'member',
-            createdAt: nowDate,
-          }),
-        );
-      }
-    }
-
-    batchOps.push(
-      db.insert(projectMembers).values({
-        id: crypto.randomUUID(),
-        projectId: invitation.projectId,
-        userId: authUser.id,
-        role: invitation.role,
-        joinedAt: nowDate,
-      }),
-    );
-
-    batchOps.push(
-      db
-        .update(projectInvitations)
-        .set({ acceptedAt: nowDate })
-        .where(eq(projectInvitations.id, invitation.id)),
-    );
-
-    // Type assertion needed because TypeScript can't infer the array always has elements
-    await db.batch(batchOps as [(typeof batchOps)[0], ...typeof batchOps]);
-
-    const project = await db
-      .select({ name: projects.name })
-      .from(projects)
-      .where(eq(projects.id, invitation.projectId))
-      .get();
-
-    let orgSlug: string | null = null;
-    if (invitation.orgId) {
-      const org = await db
-        .select({ slug: organization.slug })
-        .from(organization)
-        .where(eq(organization.id, invitation.orgId))
-        .get();
-      orgSlug = org?.slug || null;
-    }
-
-    // Send notification
-    try {
-      const userSessionId = c.env.USER_SESSION.idFromName(authUser.id);
-      const userSession = c.env.USER_SESSION.get(userSessionId);
-      await userSession.notify({
-        type: 'project-invite',
-        projectId: invitation.projectId,
-        projectName: project?.name || 'Unknown Project',
-        role: invitation.role,
-        timestamp: Date.now(),
-      });
-    } catch (err) {
-      console.error('Failed to send project invite notification:', err);
-    }
-
-    // Sync member to DO
-    try {
-      await syncMemberToDO(c.env, invitation.projectId, 'add', {
-        userId: authUser.id,
-        role: invitation.role ?? undefined,
-        joinedAt: nowDate.getTime(),
-        name: currentUser.name,
-        email: currentUser.email,
-        givenName: currentUser.givenName,
-        familyName: currentUser.familyName,
-        image: currentUser.image,
-      });
-    } catch (err) {
-      console.error('Failed to sync member to DO:', err);
-    }
+    const { token } = c.req.valid('json');
+    const result = await acceptInvitation(c.env, { id: authUser.id }, { token });
 
     return c.json(
       {
         success: true as const,
-        orgId: invitation.orgId,
-        orgSlug: orgSlug ?? undefined,
-        projectId: invitation.projectId,
-        projectName: project?.name || 'Unknown Project',
-        role: invitation.role ?? undefined,
+        orgId: result.orgId,
+        orgSlug: result.orgSlug ?? undefined,
+        projectId: result.projectId,
+        projectName: result.projectName,
+        role: result.role ?? undefined,
+        alreadyMember: result.alreadyMember || undefined,
       } as z.infer<typeof AcceptInvitationSuccessSchema>,
       200,
     );
-  } catch (error) {
-    console.error('Error accepting invitation:', error);
-    const err = error as Error;
+  } catch (err) {
+    if (isDomainError(err)) {
+      const status = err.code === 'FORBIDDEN' || err.code === 'EMAIL_MISMATCH' ? 403 : 400;
+      return c.json(err, status);
+    }
+    console.error('Error accepting invitation:', err);
     const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
       operation: 'accept_invitation',
-      originalError: err.message,
+      originalError: (err as Error).message,
     });
     return c.json(dbError, 500);
   }

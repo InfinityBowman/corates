@@ -4,11 +4,10 @@
  */
 
 import { OpenAPIHono, createRoute, z, $ } from '@hono/zod-openapi';
-import type { Context } from 'hono';
 import { runMiddleware } from '@/lib/runMiddleware.js';
 import { createDb } from '@/db/client.js';
-import { projectMembers, user, projects, projectInvitations } from '@/db/schema.js';
-import { eq, and } from 'drizzle-orm';
+import { projectMembers, user } from '@/db/schema.js';
+import { eq } from 'drizzle-orm';
 import { requireAuth, getAuth } from '@/middleware/auth.js';
 import {
   requireOrgMembership,
@@ -17,16 +16,15 @@ import {
   getProjectContext,
 } from '@/middleware/requireOrg.js';
 import { requireOrgWriteAccess } from '@/middleware/requireOrgWriteAccess.js';
-import { TIME_DURATIONS } from '@/config/constants.js';
 import {
   createDomainError,
   isDomainError,
   SYSTEM_ERRORS,
   USER_ERRORS,
-  PROJECT_ERRORS,
 } from '@corates/shared';
 import { validationHook } from '@/lib/honoValidationHook.js';
 import { addMember, updateMemberRole, removeMember } from '@/commands/members/index.js';
+import { createInvitation } from '@/commands/invitations/index.js';
 import { requireMemberRemoval } from '@/policies';
 import type { Env } from '../../types';
 import { ErrorResponseSchema } from '@/schemas/common.js';
@@ -478,7 +476,41 @@ const orgProjectMemberRoutes = $(base.use('*', requireAuth))
 
       // If user doesn't exist and email was provided, create an invitation
       if (!userToAdd && email) {
-        return (await handleInvitation(c, { orgId, projectId, email, role })) as never;
+        const { user: authUser } = getAuth(c);
+        if (!authUser) {
+          const error = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
+            operation: 'handle_invitation',
+            originalError: 'Missing auth user',
+          });
+          return c.json(error, 500);
+        }
+
+        try {
+          const result = await createInvitation(c.env, { id: authUser.id }, {
+            orgId,
+            projectId,
+            email,
+            role,
+          });
+
+          return c.json(
+            {
+              success: true,
+              invitation: true,
+              message:
+                result.emailQueued
+                  ? 'Invitation sent successfully'
+                  : 'Invitation created but email delivery may be delayed',
+              email,
+            },
+            201,
+          ) as never;
+        } catch (err) {
+          if (isDomainError(err)) {
+            return c.json(err, 409) as never;
+          }
+          throw err;
+        }
       }
 
       if (!userToAdd) {
@@ -638,131 +670,5 @@ const orgProjectMemberRoutes = $(base.use('*', requireAuth))
       return c.json(dbError, 500);
     }
   });
-
-interface InvitationParams {
-  orgId: string;
-  projectId: string;
-  email: string;
-  role: string;
-}
-
-/**
- * Handle invitation for users who don't have accounts yet
- */
-async function handleInvitation(
-  c: Context<{ Bindings: Env }>,
-  { orgId, projectId, email, role }: InvitationParams,
-): Promise<Response> {
-  const { user: authUser } = getAuth(c);
-  if (!authUser) {
-    const error = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
-      operation: 'handle_invitation',
-      originalError: 'Missing auth user',
-    });
-    return c.json(error, 500);
-  }
-
-  const db = createDb(c.env.DB);
-
-  // Check for existing pending invitation
-  const existingInvitation = await db
-    .select({
-      id: projectInvitations.id,
-      token: projectInvitations.token,
-      acceptedAt: projectInvitations.acceptedAt,
-    })
-    .from(projectInvitations)
-    .where(
-      and(
-        eq(projectInvitations.projectId, projectId),
-        eq(projectInvitations.email, email.toLowerCase()),
-      ),
-    )
-    .get();
-
-  let token: string;
-  let invitationId: string;
-
-  if (existingInvitation && !existingInvitation.acceptedAt) {
-    // Resend existing invitation
-    invitationId = existingInvitation.id;
-    token = existingInvitation.token;
-    const expiresAt = new Date(Date.now() + TIME_DURATIONS.INVITATION_EXPIRY_MS);
-
-    await db
-      .update(projectInvitations)
-      .set({ role, expiresAt })
-      .where(eq(projectInvitations.id, existingInvitation.id));
-  } else if (existingInvitation && existingInvitation.acceptedAt) {
-    const error = createDomainError(PROJECT_ERRORS.INVITATION_ALREADY_ACCEPTED, {
-      invitationId: existingInvitation.id,
-    });
-    return c.json(error, 409);
-  } else {
-    // Create new invitation with orgId
-    invitationId = crypto.randomUUID();
-    token = crypto.randomUUID();
-    const expiresAt = new Date(Date.now() + TIME_DURATIONS.INVITATION_EXPIRY_MS);
-
-    await db.insert(projectInvitations).values({
-      id: invitationId,
-      orgId,
-      projectId,
-      email: email.toLowerCase(),
-      role,
-      orgRole: 'member',
-      token,
-      invitedBy: authUser.id,
-      expiresAt,
-      createdAt: new Date(),
-    });
-  }
-
-  // Get project and inviter info for email
-  const project = await db
-    .select({ name: projects.name })
-    .from(projects)
-    .where(eq(projects.id, projectId))
-    .get();
-
-  const inviter = await db
-    .select({ name: user.name, givenName: user.givenName, email: user.email })
-    .from(user)
-    .where(eq(user.id, authUser.id))
-    .get();
-
-  // Send invitation email
-  const projectName = project?.name || 'Unknown Project';
-  const inviterName = inviter?.givenName || inviter?.name || inviter?.email || 'Someone';
-
-  let emailQueued = false;
-  try {
-    const { sendInvitationEmail } = await import('@/lib/send-invitation-email.js');
-    const result = await sendInvitationEmail({
-      env: c.env,
-      email,
-      token,
-      projectName,
-      inviterName,
-      role,
-    });
-    emailQueued = result.emailQueued;
-  } catch (err) {
-    console.error('[Invitation] Magic link generation failed:', err);
-  }
-
-  return c.json(
-    {
-      success: true,
-      invitation: true,
-      message:
-        emailQueued ?
-          'Invitation sent successfully'
-        : 'Invitation created but email delivery may be delayed',
-      email,
-    },
-    201,
-  );
-}
 
 export { orgProjectMemberRoutes };
