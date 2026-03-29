@@ -138,12 +138,14 @@ export const pdfActions = {
       } catch (err) {
         console.warn('Failed to convert file to ArrayBuffer:', (err as Error).message);
       }
-      bestEffort(cachePdf(projectId, studyId, uploadResult.fileName, arrayBuffer!), {
-        operation: 'cachePdf (upload)',
-        projectId,
-        studyId,
-        fileName: uploadResult.fileName,
-      });
+      if (arrayBuffer) {
+        bestEffort(cachePdf(projectId, studyId, uploadResult.fileName, arrayBuffer), {
+          operation: 'cachePdf (upload)',
+          projectId,
+          studyId,
+          fileName: uploadResult.fileName,
+        });
+      }
 
       const pdfMetadata = await extractPdfMetadata(arrayBuffer);
 

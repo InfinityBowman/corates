@@ -154,22 +154,6 @@ export const project = {
       if (!ops) throw new Error('No active project connection');
       return ops.reconciliation.getReconciliationProgress(studyId, outcomeId, type);
     },
-
-    applyToChecklists(
-      studyId: string,
-      checklist1Id: string,
-      checklist2Id: string,
-      data: Record<string, unknown>,
-    ) {
-      const ops = connectionPool.getActiveOps();
-      if (!ops) throw new Error('No active project connection');
-      return (ops.reconciliation as any).applyReconciliationToChecklists(
-        studyId,
-        checklist1Id,
-        checklist2Id,
-        data,
-      );
-    },
   },
 
   getActiveProjectId: () => connectionPool.getActiveProjectId(),
