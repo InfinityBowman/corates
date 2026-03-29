@@ -106,27 +106,100 @@ interface MemberEntry {
 export interface SyncManager {
   syncFromYDoc: () => void;
   syncFromYDocImmediate: () => void;
+  attach: (ydoc: Y.Doc) => void;
+  detach: () => void;
+  pause: () => void;
+  resume: () => void;
 }
 
 export function createSyncManager(projectId: string, getYDoc: () => Y.Doc | null): SyncManager {
   let pendingSync = false;
+  let paused = false;
+  const cleanupHandlers: (() => void)[] = [];
 
-  function doSync(): void {
+  // Per-slice dirty flags -- set by scoped observers, consumed by doSync
+  const dirtySlices = { studies: false, members: false, meta: false };
+
+  // Per-study snapshot cache -- dirty studies get rebuilt, clean studies keep their reference
+  const studyCache = new Map<string, StudyInfo>();
+  let sortedStudies: StudyInfo[] = [];
+
+  function handleReviewsEvents(events: Y.YEvent<any>[]): void {
+    if (paused) return;
+
+    const reviewsMap = getYDoc()?.getMap('reviews');
+    if (!reviewsMap) return;
+
+    const dirtyStudyIds = new Set<string>();
+    let structuralChange = false;
+
+    for (const event of events) {
+      if (event.path.length === 0 && 'keys' in event) {
+        // Top-level: studies added or removed from the reviews map
+        structuralChange = true;
+        for (const [key] of (event as Y.YMapEvent<unknown>).keys) {
+          dirtyStudyIds.add(key);
+        }
+      } else if (event.path.length > 0) {
+        // Nested: something inside a specific study changed
+        dirtyStudyIds.add(String(event.path[0]));
+      }
+    }
+
+    // Rebuild only dirty studies
+    for (const studyId of dirtyStudyIds) {
+      const studyYMap = reviewsMap.get(studyId) as Y.Map<unknown> | undefined;
+      if (studyYMap) {
+        const studyData = studyYMap.toJSON ? studyYMap.toJSON() : {};
+        studyCache.set(
+          studyId,
+          buildStudyFromYMap(studyId, studyData as Record<string, unknown>, studyYMap),
+        );
+      } else {
+        studyCache.delete(studyId);
+      }
+    }
+
+    // Clean up entries for studies that no longer exist in the Y.Map
+    if (structuralChange) {
+      for (const cachedId of studyCache.keys()) {
+        if (!reviewsMap.has(cachedId)) {
+          studyCache.delete(cachedId);
+        }
+      }
+    }
+
+    if (dirtyStudyIds.size > 0 || structuralChange) {
+      sortedStudies = [...studyCache.values()].sort(
+        (a, b) => (a.createdAt || 0) - (b.createdAt || 0),
+      );
+      dirtySlices.studies = true;
+      scheduleSync();
+    }
+  }
+
+  function rebuildAllStudies(): void {
     const ydoc = getYDoc();
     if (!ydoc) return;
 
-    const studiesMap = ydoc.getMap('reviews');
-    const studiesList: StudyInfo[] = [];
+    const reviewsMap = ydoc.getMap('reviews');
+    studyCache.clear();
 
-    for (const [studyId, studyYMap] of studiesMap.entries()) {
+    for (const [studyId, studyYMap] of reviewsMap.entries()) {
       const ymap = studyYMap as Y.Map<unknown>;
-      const studyData = ymap.toJSON ? ymap.toJSON() : (studyYMap as Record<string, unknown>);
-      const study = buildStudyFromYMap(studyId, studyData as Record<string, unknown>, ymap);
-      studiesList.push(study);
+      const studyData = ymap.toJSON ? ymap.toJSON() : {};
+      studyCache.set(
+        studyId,
+        buildStudyFromYMap(studyId, studyData as Record<string, unknown>, ymap),
+      );
     }
 
-    studiesList.sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));
+    sortedStudies = [...studyCache.values()].sort(
+      (a, b) => (a.createdAt || 0) - (b.createdAt || 0),
+    );
+  }
 
+  function buildMetaData(ydoc: Y.Doc): Record<string, unknown> {
     const metaMap = ydoc.getMap('meta');
     const metaData = metaMap.toJSON ? metaMap.toJSON() : ({} as Record<string, unknown>);
 
@@ -138,23 +211,50 @@ export function createSyncManager(projectId: string, getYDoc: () => Y.Doc | null
         const outcomeData = ymap.toJSON ? ymap.toJSON() : (outcomeYMap as Record<string, unknown>);
         outcomesList.push({ id: outcomeId, ...outcomeData });
       }
-      outcomesList.sort((a, b) => ((a.createdAt as number) || 0) - ((b.createdAt as number) || 0));
+      outcomesList.sort(
+        (a, b) => ((a.createdAt as number) || 0) - ((b.createdAt as number) || 0),
+      );
       metaData.outcomes = outcomesList;
     } else {
       metaData.outcomes = [];
     }
 
-    const membersMap = ydoc.getMap('members');
-    const membersList = buildMembersList(membersMap);
-
-    useProjectStore.getState().setProjectData(projectId, {
-      studies: studiesList as any,
-      meta: metaData,
-      members: membersList,
-    });
+    return metaData;
   }
 
-  function syncFromYDoc(): void {
+  function doSync(): void {
+    const ydoc = getYDoc();
+    if (!ydoc) return;
+
+    const updates: { studies?: StudyInfo[]; meta?: Record<string, unknown>; members?: MemberEntry[] } = {};
+
+    if (dirtySlices.studies) {
+      // If the cache is empty, this is the first sync -- populate from scratch
+      if (studyCache.size === 0) {
+        rebuildAllStudies();
+      }
+      updates.studies = sortedStudies;
+    }
+
+    if (dirtySlices.members) {
+      updates.members = buildMembersList(ydoc.getMap('members'));
+    }
+
+    if (dirtySlices.meta) {
+      updates.meta = buildMetaData(ydoc);
+    }
+
+    // Reset dirty flags before store update
+    dirtySlices.studies = false;
+    dirtySlices.members = false;
+    dirtySlices.meta = false;
+
+    if (updates.studies !== undefined || updates.members !== undefined || updates.meta !== undefined) {
+      useProjectStore.getState().setProjectData(projectId, updates as any);
+    }
+  }
+
+  function scheduleSync(): void {
     if (pendingSync) return;
     pendingSync = true;
     requestAnimationFrame(() => {
@@ -163,12 +263,78 @@ export function createSyncManager(projectId: string, getYDoc: () => Y.Doc | null
     });
   }
 
+  function syncFromYDoc(): void {
+    if (paused) return;
+    // Mark all slices dirty (used by legacy callers and Dexie write-back)
+    dirtySlices.studies = true;
+    dirtySlices.members = true;
+    dirtySlices.meta = true;
+    scheduleSync();
+  }
+
   function syncFromYDocImmediate(): void {
     pendingSync = false;
+    // Full rebuild: clear cache so doSync repopulates from scratch
+    studyCache.clear();
+    sortedStudies = [];
+    dirtySlices.studies = true;
+    dirtySlices.members = true;
+    dirtySlices.meta = true;
     doSync();
   }
 
-  return { syncFromYDoc, syncFromYDocImmediate };
+  function attach(ydoc: Y.Doc): void {
+    const reviewsMap = ydoc.getMap('reviews');
+    const membersMap = ydoc.getMap('members');
+    const metaMap = ydoc.getMap('meta');
+
+    const onReviews = (events: Y.YEvent<any>[]) => {
+      handleReviewsEvents(events);
+    };
+    const onMembers = () => {
+      if (paused) return;
+      dirtySlices.members = true;
+      scheduleSync();
+    };
+    const onMeta = () => {
+      if (paused) return;
+      dirtySlices.meta = true;
+      scheduleSync();
+    };
+
+    reviewsMap.observeDeep(onReviews);
+    membersMap.observe(onMembers);
+    metaMap.observeDeep(onMeta);
+
+    cleanupHandlers.push(
+      () => reviewsMap.unobserveDeep(onReviews),
+      () => membersMap.unobserve(onMembers),
+      () => metaMap.unobserveDeep(onMeta),
+    );
+  }
+
+  function detach(): void {
+    for (const cleanup of cleanupHandlers) {
+      try {
+        cleanup();
+      } catch (_) {
+        /* ignore */
+      }
+    }
+    cleanupHandlers.length = 0;
+    studyCache.clear();
+    sortedStudies = [];
+  }
+
+  function pause(): void {
+    paused = true;
+  }
+
+  function resume(): void {
+    paused = false;
+  }
+
+  return { syncFromYDoc, syncFromYDocImmediate, attach, detach, pause, resume };
 }
 
 function buildStudyFromYMap(

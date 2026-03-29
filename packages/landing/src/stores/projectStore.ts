@@ -128,25 +128,19 @@ export const useProjectStore = create<ProjectStoreState & ProjectStoreActions>()
         }
         const project = state.projects[projectId];
         if (data.meta !== undefined) {
-          if (JSON.stringify(project.meta) !== JSON.stringify(data.meta)) {
-            project.meta = data.meta;
-          }
+          project.meta = data.meta;
         }
         if (data.members !== undefined) {
-          if (JSON.stringify(project.members) !== JSON.stringify(data.members)) {
-            project.members = data.members;
-          }
+          project.members = data.members;
         }
         if (data.studies !== undefined) {
-          if (JSON.stringify(project.studies) !== JSON.stringify(data.studies)) {
-            project.studies = data.studies;
-            const stats = computeProjectStats(data.studies);
-            state.projectStats[projectId] = {
-              ...stats,
-              lastUpdated: Date.now(),
-            };
-            studiesChanged = true;
-          }
+          project.studies = data.studies;
+          const stats = computeProjectStats(data.studies);
+          state.projectStats[projectId] = {
+            ...stats,
+            lastUpdated: Date.now(),
+          };
+          studiesChanged = true;
         }
       });
       if (studiesChanged) {

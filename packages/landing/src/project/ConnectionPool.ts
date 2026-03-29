@@ -35,7 +35,6 @@ export interface ConnectionEntry {
   outcomeOps: any;
   refCount: number;
   initialized: boolean;
-  isLoadingPersistedState: boolean;
   _cleanupHandlers: (() => void)[];
 }
 
@@ -74,7 +73,6 @@ class ConnectionPool {
       outcomeOps: null,
       refCount: 1,
       initialized: false,
-      isLoadingPersistedState: false,
       _cleanupHandlers: [],
     };
 
@@ -115,14 +113,9 @@ class ConnectionPool {
     // Build flat operations map
     this.opsRegistry.set(projectId, this.buildOpsMap(entry));
 
-    // YDoc update handler (debounced sync to Zustand store)
-    const syncUpdateHandler = () => {
-      if (!entry.isLoadingPersistedState) {
-        entry.syncManager?.syncFromYDoc();
-      }
-    };
-    ydoc.on('update', syncUpdateHandler);
-    entry._cleanupHandlers.push(() => ydoc.off('update', syncUpdateHandler));
+    // Scoped Y.Map observers (reviews, members, meta) for incremental sync
+    entry.syncManager.attach(ydoc);
+    entry._cleanupHandlers.push(() => entry.syncManager?.detach());
 
     // Dexie persistence (async)
     (db.projects as any).get(projectId).then(async (existingProject: any) => {
@@ -141,7 +134,7 @@ class ConnectionPool {
       entry.dexieProvider.whenLoaded.then(() => {
         if (cancelled()) return;
 
-        entry.isLoadingPersistedState = true;
+        entry.syncManager?.pause();
         try {
           const persistedState = Y.encodeStateAsUpdate(project.ydoc);
           Y.applyUpdate(ydoc, persistedState);
@@ -149,7 +142,7 @@ class ConnectionPool {
           console.error('Corrupted persisted state, clearing local data:', err);
           deleteProjectData(projectId).catch(() => {});
         } finally {
-          entry.isLoadingPersistedState = false;
+          entry.syncManager?.resume();
         }
 
         // Dexie write-back handler
