@@ -45,8 +45,7 @@ test.describe('Auth flows', () => {
       // Fill magic link form and submit
       const emailInput = page.locator('#magic-link-email');
       await emailInput.click();
-      await emailInput.fill(email);
-      await expect(emailInput).toHaveValue(email);
+      await emailInput.pressSequentially(email, { delay: 20 });
       await page.getByRole('button', { name: /Continue with Email/i }).click();
 
       // Verify "check your email" state appears
@@ -65,9 +64,11 @@ test.describe('Auth flows', () => {
       await expect(page.getByText('Complete Your Profile')).toBeVisible({ timeout: 10_000 });
 
       // Step 1: Name (first name may be auto-filled with email from pendingName)
-      await page.locator('#first-name-input').clear();
-      await page.locator('#first-name-input').fill('Test');
-      await page.locator('#last-name-input').fill('User');
+      const firstNameInput = page.locator('#first-name-input');
+      await firstNameInput.click({ clickCount: 3 });
+      await firstNameInput.pressSequentially('Test', { delay: 20 });
+      await page.locator('#last-name-input').click();
+      await page.locator('#last-name-input').pressSequentially('User', { delay: 20 });
       await page.getByRole('button', { name: 'Next' }).click();
 
       // Step 2: Institution - skip
@@ -143,7 +144,7 @@ test.describe('Auth flows', () => {
       // Request password reset
       const resetEmailField = page.locator('#email-input');
       await resetEmailField.click();
-      await resetEmailField.fill(email);
+      await resetEmailField.pressSequentially(email, { delay: 20 });
       await page.getByRole('button', { name: /Send Reset Email/i }).click();
 
       // Verify success message
