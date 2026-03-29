@@ -89,13 +89,13 @@ The web package is being deleted within the week. 13 framework-agnostic utility 
 
 | File                          | Issue                                                                                                                                                                                                                      |
 | ----------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `checklist-domain.js`         | Landing has more accurate JSDoc types (`string \| null` for userId) -- use web version                                                                                                                                 |
+| `checklist-domain.js`         | Landing has more accurate JSDoc types (`string \| null` for userId) -- use web version                                                                                                                                     |
 | `checklist-registry/index.js` | Landing already imports from `@corates/shared` (correct); web still imports from component-local files                                                                                                                     |
-| `useProject/sync.js`          | Framework-specific store access (`useProjectStore.getState()` vs `projectStore`). Core sync logic (buildStudyFromYMap, etc.) is identical and extractable; store interaction stays in web                              |
+| `useProject/sync.js`          | Framework-specific store access (`useProjectStore.getState()` vs `projectStore`). Core sync logic (buildStudyFromYMap, etc.) is identical and extractable; store interaction stays in web                                  |
 | `useProject/studies.js`       | Same store access difference. CRUD logic is identical and extractable                                                                                                                                                      |
-| `useProject/annotations.js`   | Landing version is cleaner (removed debug console.logs from web). Use web version                                                                                                                                      |
+| `useProject/annotations.js`   | Landing version is cleaner (removed debug console.logs from web). Use web version                                                                                                                                          |
 | `error-utils`                 | Most diverged file. Landing has TypeScript types, different navigate API shape (`{ to: '/signin' }` vs `('/signin')`), and different route name (`/check-email` vs `/verify-email`). Needs a navigate abstraction to share |
-| `account-merge`               | Landing has TypeScript interfaces. Runtime logic identical. Use web `.ts` version                                                                                                                                      |
+| `account-merge`               | Landing has TypeScript interfaces. Runtime logic identical. Use web `.ts` version                                                                                                                                          |
 
 ### A2. `runMiddleware` helper duplicated in 5 backend files
 
@@ -136,8 +136,8 @@ Backend files over 500 lines that should be split:
 
 Landing package files to watch as the migration continues:
 
-| Lines | File                                                             | Notes                                                             |
-| ----- | ---------------------------------------------------------------- | ----------------------------------------------------------------- |
+| Lines | File                                                         | Notes                                                             |
+| ----- | ------------------------------------------------------------ | ----------------------------------------------------------------- |
 | 570   | `web/components/FeatureShowcase.tsx`                         | Marketing component, acceptable for now                           |
 | 508   | `web/components/billing/PricingTable.tsx`                    | Plan card, feature comparison, billing toggle could be split      |
 | 501   | `web/components/project/overview-tab/ReviewerAssignment.tsx` | Percentage slider, preset selector, allocation logic as utilities |

@@ -123,8 +123,8 @@ describe('Full sync pipeline')
 
 ## Files to Modify/Create
 
-| File                                                                                            | Action                       |
-| ----------------------------------------------------------------------------------------------- | ---------------------------- |
+| File                                                                                        | Action                       |
+| ------------------------------------------------------------------------------------------- | ---------------------------- |
 | `packages/web/src/primitives/useProject/__tests__/helpers.ts`                               | Create                       |
 | `packages/web/src/primitives/useProject/__tests__/domain-operations.browser.test.ts`        | Create                       |
 | `packages/web/src/primitives/useProject/__tests__/checklist-handlers.browser.test.ts`       | Create                       |

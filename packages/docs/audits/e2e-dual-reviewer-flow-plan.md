@@ -192,18 +192,18 @@ Discover during implementation. Likely candidates:
 
 ## Files to Create/Modify
 
-| File                                                               | Action                                   |
-| ------------------------------------------------------------------ | ---------------------------------------- |
-| `packages/workers/src/auth/config.ts`                              | Add testUtils plugin (conditional)       |
-| `packages/workers/src/routes/test-seed.ts`                         | Create -- seed/session/cleanup endpoints |
-| `packages/workers/src/index.ts` (or router)                        | Mount test-seed routes                   |
+| File                                                           | Action                                   |
+| -------------------------------------------------------------- | ---------------------------------------- |
+| `packages/workers/src/auth/config.ts`                          | Add testUtils plugin (conditional)       |
+| `packages/workers/src/routes/test-seed.ts`                     | Create -- seed/session/cleanup endpoints |
+| `packages/workers/src/index.ts` (or router)                    | Mount test-seed routes                   |
 | `packages/web/vitest.e2e.config.ts`                            | Already created -- minor updates         |
 | `packages/web/src/__e2e__/helpers/app.tsx`                     | Create                                   |
 | `packages/web/src/__e2e__/helpers/seed.ts`                     | Create                                   |
 | `packages/web/src/__e2e__/helpers/auth.ts`                     | Create                                   |
 | `packages/web/src/__e2e__/helpers/interactions.ts`             | Create                                   |
 | `packages/web/src/__e2e__/dual-reviewer-flow.browser.test.tsx` | Create                                   |
-| Various components                                                 | Add data-testid as needed                |
+| Various components                                             | Add data-testid as needed                |
 
 ## Key Source Files (reference)
 

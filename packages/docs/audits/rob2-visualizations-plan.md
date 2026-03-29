@@ -114,9 +114,9 @@ Add `ROB2ChartSection` alongside `ChartSection` in the Figures collapsible secti
 
 ## Files Modified (summary)
 
-| File                                                                        | Action                              |
-| --------------------------------------------------------------------------- | ----------------------------------- |
-| `packages/shared/src/checklists/rob2/answers.ts`                            | Add `getConsolidatedAnswers`        |
+| File                                                                    | Action                              |
+| ----------------------------------------------------------------------- | ----------------------------------- |
+| `packages/shared/src/checklists/rob2/answers.ts`                        | Add `getConsolidatedAnswers`        |
 | `packages/web/src/primitives/useProject/sync.ts`                        | Add ROB2 consolidation block        |
 | `packages/web/src/components/charts/export-chart.ts`                    | **New** -- extracted utility        |
 | `packages/web/src/components/charts/ROB2Robvis.tsx`                     | **New** -- traffic light chart      |
