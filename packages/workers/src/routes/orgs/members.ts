@@ -16,12 +16,7 @@ import {
   getProjectContext,
 } from '@/middleware/requireOrg.js';
 import { requireOrgWriteAccess } from '@/middleware/requireOrgWriteAccess.js';
-import {
-  createDomainError,
-  isDomainError,
-  SYSTEM_ERRORS,
-  USER_ERRORS,
-} from '@corates/shared';
+import { createDomainError, isDomainError, SYSTEM_ERRORS, USER_ERRORS } from '@corates/shared';
 import { validationHook } from '@/lib/honoValidationHook.js';
 import { addMember, updateMemberRole, removeMember } from '@/commands/members/index.js';
 import { createInvitation } from '@/commands/invitations/index.js';
@@ -486,21 +481,25 @@ const orgProjectMemberRoutes = $(base.use('*', requireAuth))
         }
 
         try {
-          const result = await createInvitation(c.env, { id: authUser.id }, {
-            orgId,
-            projectId,
-            email,
-            role,
-          });
+          const result = await createInvitation(
+            c.env,
+            { id: authUser.id },
+            {
+              orgId,
+              projectId,
+              email,
+              role,
+            },
+          );
 
           return c.json(
             {
               success: true,
               invitation: true,
               message:
-                result.emailQueued
-                  ? 'Invitation sent successfully'
-                  : 'Invitation created but email delivery may be delayed',
+                result.emailQueued ?
+                  'Invitation sent successfully'
+                : 'Invitation created but email delivery may be delayed',
               email,
             },
             201,

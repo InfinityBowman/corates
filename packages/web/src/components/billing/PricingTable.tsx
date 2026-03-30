@@ -389,8 +389,7 @@ export function PricingTable({
                   Processing...
                 </span>
               : getButtonText(plan)}
-            </button>
-          )}
+            </button>)}
 
         <div className='flex-1'>
           <p className='text-muted-foreground mb-3 text-xs font-semibold tracking-wide uppercase'>
