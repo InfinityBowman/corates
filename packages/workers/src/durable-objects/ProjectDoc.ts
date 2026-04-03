@@ -498,9 +498,14 @@ export class ProjectDoc extends DurableObject<Env> {
       this.doc = new Y.Doc();
       this.awareness = new awarenessProtocol.Awareness(this.doc);
 
-      const persistedState = await this.ctx.storage.get<number[]>('yjs-state');
+      const persistedState = await this.ctx.storage.get('yjs-state');
       if (persistedState) {
-        Y.applyUpdate(this.doc, new Uint8Array(persistedState));
+        // Handle both legacy number[] format and new Uint8Array format
+        const update =
+          persistedState instanceof Uint8Array ?
+            persistedState
+          : new Uint8Array(persistedState as number[]);
+        Y.applyUpdate(this.doc, update);
       }
 
       // On doc update: broadcast immediately, debounce persistence
@@ -547,7 +552,9 @@ export class ProjectDoc extends DurableObject<Env> {
       clearTimeout(this.persistTimer);
     }
     this.persistTimer = setTimeout(() => {
-      this.flushPersistence();
+      this.flushPersistence().catch(err => {
+        console.error('Debounced persistence failed:', err);
+      });
     }, PERSIST_DEBOUNCE_MS);
   }
 
@@ -562,7 +569,9 @@ export class ProjectDoc extends DurableObject<Env> {
   }
 
   /**
-   * Write full Y.Doc state to storage
+   * Write full Y.Doc state to storage.
+   * Uses Uint8Array directly for compact storage (regular Arrays inflate 3-4x
+   * and can exceed the 128 KiB per-value DO storage limit on larger projects).
    */
   private async flushPersistence(): Promise<void> {
     if (this.persistTimer) {
@@ -570,9 +579,15 @@ export class ProjectDoc extends DurableObject<Env> {
       this.persistTimer = null;
     }
     if (!this.doc) return;
-    this.persistPending = false;
     const fullState = Y.encodeStateAsUpdate(this.doc);
-    await this.ctx.storage.put('yjs-state', Array.from(fullState));
+    try {
+      await this.ctx.storage.put('yjs-state', fullState);
+      this.persistPending = false;
+    } catch (err) {
+      console.error('Failed to persist Y.Doc state:', err);
+      // Keep persistPending true so the next flush attempt retries
+      this.persistPending = true;
+    }
   }
 
   // --- WebSocket handling (Hibernatable API) ---
