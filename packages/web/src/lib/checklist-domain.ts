@@ -166,7 +166,7 @@ export function shouldShowInTab(
               isReconciledChecklist(c) &&
               c.status === CHECKLIST_STATUS.FINALIZED &&
               c.type === group.type &&
-              c.outcomeId === group.outcomeId,
+              (c.outcomeId ?? null) === group.outcomeId,
           );
           if (!hasFinalized) return true;
         }

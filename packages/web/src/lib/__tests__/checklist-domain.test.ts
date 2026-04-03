@@ -18,12 +18,15 @@ import {
   getNextStatusForCompletion,
   findReconciledChecklist,
   isDualReviewerStudy,
+  getReconciliationChecklistsByOutcome,
+  getReadyReconciliationPairs,
 } from '../checklist-domain.js';
 import { CHECKLIST_STATUS } from '@/constants/checklist-status';
 
 // Test fixtures
 const createChecklist = (overrides = {}) => ({
   id: 'cl-1',
+  type: 'AMSTAR2',
   status: CHECKLIST_STATUS.PENDING,
   assignedTo: 'user-1',
   ...overrides,
@@ -307,7 +310,7 @@ describe('checklist-domain', () => {
         expect(shouldShowInTab(study, 'reconcile', userId)).toBe(false);
       });
 
-      it('hides study with finalized reconciled checklist', () => {
+      it('hides study when only reconciled checklist exists (no reviewer-completed)', () => {
         const study = createStudy({
           reviewer1: 'user-1',
           reviewer2: 'user-2',
@@ -315,6 +318,34 @@ describe('checklist-domain', () => {
             createChecklist({
               id: 'cl-1',
               assignedTo: null, // Reconciled
+              status: CHECKLIST_STATUS.FINALIZED,
+            }),
+          ],
+        });
+        expect(shouldShowInTab(study, 'reconcile', userId)).toBe(false);
+      });
+
+      it('hides study when reviewer-completed checklists exist but reconciled is already finalized', () => {
+        const study = createStudy({
+          reviewer1: 'user-1',
+          reviewer2: 'user-2',
+          checklists: [
+            createChecklist({
+              id: 'cl-1',
+              type: 'AMSTAR2',
+              assignedTo: 'user-1',
+              status: CHECKLIST_STATUS.REVIEWER_COMPLETED,
+            }),
+            createChecklist({
+              id: 'cl-2',
+              type: 'AMSTAR2',
+              assignedTo: 'user-2',
+              status: CHECKLIST_STATUS.REVIEWER_COMPLETED,
+            }),
+            createChecklist({
+              id: 'cl-reconciled',
+              type: 'AMSTAR2',
+              assignedTo: null,
               status: CHECKLIST_STATUS.FINALIZED,
             }),
           ],
@@ -466,5 +497,235 @@ describe('checklist-domain', () => {
     it('returns 0 for empty array', () => {
       expect(getChecklistCount([], 'todo', userId)).toBe(0);
     });
+  });
+
+  describe('reconcile tab - multi-outcome studies', () => {
+    it('shows study when multiple outcomes each have 2 reviewer-completed checklists', () => {
+      const study = createStudy({
+        reviewer1: 'user-1',
+        reviewer2: 'user-2',
+        checklists: [
+          createChecklist({
+            id: 'cl-1',
+            type: 'ROB2',
+            outcomeId: 'outcome-1',
+            assignedTo: 'user-1',
+            status: CHECKLIST_STATUS.REVIEWER_COMPLETED,
+          }),
+          createChecklist({
+            id: 'cl-2',
+            type: 'ROB2',
+            outcomeId: 'outcome-1',
+            assignedTo: 'user-2',
+            status: CHECKLIST_STATUS.REVIEWER_COMPLETED,
+          }),
+          createChecklist({
+            id: 'cl-3',
+            type: 'ROB2',
+            outcomeId: 'outcome-2',
+            assignedTo: 'user-1',
+            status: CHECKLIST_STATUS.REVIEWER_COMPLETED,
+          }),
+          createChecklist({
+            id: 'cl-4',
+            type: 'ROB2',
+            outcomeId: 'outcome-2',
+            assignedTo: 'user-2',
+            status: CHECKLIST_STATUS.REVIEWER_COMPLETED,
+          }),
+        ],
+      });
+      expect(shouldShowInTab(study, 'reconcile', null)).toBe(true);
+    });
+
+    it('groups reconciliation checklists by outcome correctly', () => {
+      const study = createStudy({
+        reviewer1: 'user-1',
+        reviewer2: 'user-2',
+        checklists: [
+          createChecklist({
+            id: 'cl-1',
+            type: 'ROB2',
+            outcomeId: 'outcome-1',
+            assignedTo: 'user-1',
+            status: CHECKLIST_STATUS.REVIEWER_COMPLETED,
+          }),
+          createChecklist({
+            id: 'cl-2',
+            type: 'ROB2',
+            outcomeId: 'outcome-1',
+            assignedTo: 'user-2',
+            status: CHECKLIST_STATUS.REVIEWER_COMPLETED,
+          }),
+          createChecklist({
+            id: 'cl-3',
+            type: 'ROB2',
+            outcomeId: 'outcome-2',
+            assignedTo: 'user-1',
+            status: CHECKLIST_STATUS.REVIEWER_COMPLETED,
+          }),
+        ],
+      });
+      const groups = getReconciliationChecklistsByOutcome(study);
+      expect(groups).toHaveLength(2);
+      const outcome1 = groups.find(g => g.outcomeId === 'outcome-1');
+      const outcome2 = groups.find(g => g.outcomeId === 'outcome-2');
+      expect(outcome1!.checklists).toHaveLength(2);
+      expect(outcome2!.checklists).toHaveLength(1);
+    });
+
+    it('returns ready pairs only for outcomes with exactly 2 checklists', () => {
+      const study = createStudy({
+        reviewer1: 'user-1',
+        reviewer2: 'user-2',
+        checklists: [
+          createChecklist({
+            id: 'cl-1',
+            type: 'ROB2',
+            outcomeId: 'outcome-1',
+            assignedTo: 'user-1',
+            status: CHECKLIST_STATUS.REVIEWER_COMPLETED,
+          }),
+          createChecklist({
+            id: 'cl-2',
+            type: 'ROB2',
+            outcomeId: 'outcome-1',
+            assignedTo: 'user-2',
+            status: CHECKLIST_STATUS.REVIEWER_COMPLETED,
+          }),
+          createChecklist({
+            id: 'cl-3',
+            type: 'ROB2',
+            outcomeId: 'outcome-2',
+            assignedTo: 'user-1',
+            status: CHECKLIST_STATUS.REVIEWER_COMPLETED,
+          }),
+        ],
+      });
+      const readyPairs = getReadyReconciliationPairs(study);
+      expect(readyPairs).toHaveLength(1);
+      expect(readyPairs[0].outcomeId).toBe('outcome-1');
+    });
+
+    it('hides reconciled outcome but shows remaining unreconciled outcomes', () => {
+      const study = createStudy({
+        reviewer1: 'user-1',
+        reviewer2: 'user-2',
+        checklists: [
+          // outcome-1: both reviewers done, AND already has finalized reconciled checklist
+          createChecklist({
+            id: 'cl-1',
+            type: 'ROB2',
+            outcomeId: 'outcome-1',
+            assignedTo: 'user-1',
+            status: CHECKLIST_STATUS.REVIEWER_COMPLETED,
+          }),
+          createChecklist({
+            id: 'cl-2',
+            type: 'ROB2',
+            outcomeId: 'outcome-1',
+            assignedTo: 'user-2',
+            status: CHECKLIST_STATUS.REVIEWER_COMPLETED,
+          }),
+          createChecklist({
+            id: 'cl-reconciled-1',
+            type: 'ROB2',
+            outcomeId: 'outcome-1',
+            assignedTo: null,
+            status: CHECKLIST_STATUS.FINALIZED,
+          }),
+          // outcome-2: both reviewers done, no reconciled checklist yet
+          createChecklist({
+            id: 'cl-3',
+            type: 'ROB2',
+            outcomeId: 'outcome-2',
+            assignedTo: 'user-1',
+            status: CHECKLIST_STATUS.REVIEWER_COMPLETED,
+          }),
+          createChecklist({
+            id: 'cl-4',
+            type: 'ROB2',
+            outcomeId: 'outcome-2',
+            assignedTo: 'user-2',
+            status: CHECKLIST_STATUS.REVIEWER_COMPLETED,
+          }),
+        ],
+      });
+      // Study should still show because outcome-2 needs reconciliation
+      expect(shouldShowInTab(study, 'reconcile', null)).toBe(true);
+    });
+
+    it('shows "waiting" state when only one reviewer has completed for an outcome', () => {
+      const study = createStudy({
+        reviewer1: 'user-1',
+        reviewer2: 'user-2',
+        checklists: [
+          createChecklist({
+            id: 'cl-1',
+            type: 'ROB2',
+            outcomeId: 'outcome-1',
+            assignedTo: 'user-1',
+            status: CHECKLIST_STATUS.REVIEWER_COMPLETED,
+          }),
+        ],
+      });
+      // Should show in reconcile tab with "waiting" state
+      expect(shouldShowInTab(study, 'reconcile', null)).toBe(true);
+      const groups = getReconciliationChecklistsByOutcome(study);
+      expect(groups).toHaveLength(1);
+      expect(groups[0].checklists).toHaveLength(1);
+    });
+  });
+
+});
+
+describe('computeProjectStats - status matching', () => {
+  it('should count studies with finalized checklists as completed', () => {
+    const studies = [
+      {
+        id: 'study-1',
+        name: 'Test Study',
+        checklists: [
+          { id: 'cl-1', type: 'AMSTAR2', status: CHECKLIST_STATUS.FINALIZED },
+        ],
+      },
+    ];
+
+    // Mirrors the logic in projectStore.ts computeProjectStats
+    let completedCount = 0;
+    for (const study of studies) {
+      const hasCompletedChecklist = study.checklists?.some(
+        c => c.status === CHECKLIST_STATUS.FINALIZED,
+      );
+      if (hasCompletedChecklist) {
+        completedCount++;
+      }
+    }
+
+    expect(completedCount).toBe(1);
+  });
+
+  it('should not count non-finalized studies as completed', () => {
+    const studies = [
+      {
+        id: 'study-1',
+        name: 'Test Study',
+        checklists: [
+          { id: 'cl-1', type: 'AMSTAR2', status: CHECKLIST_STATUS.IN_PROGRESS },
+        ],
+      },
+    ];
+
+    let completedCount = 0;
+    for (const study of studies) {
+      const hasCompletedChecklist = study.checklists?.some(
+        c => c.status === CHECKLIST_STATUS.FINALIZED,
+      );
+      if (hasCompletedChecklist) {
+        completedCount++;
+      }
+    }
+
+    expect(completedCount).toBe(0);
   });
 });

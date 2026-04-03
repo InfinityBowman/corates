@@ -33,7 +33,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { API_BASE } from '@/config/api';
 import { CHECKLIST_STATUS } from '@/constants/checklist-status';
-import { shouldShowInTab, isReconciledChecklist } from '@/lib/checklist-domain.js';
+import { shouldShowInTab, getReadyReconciliationPairs } from '@/lib/checklist-domain.js';
 import {
   calculateInterRaterReliability,
   getKappaInterpretation,
@@ -87,13 +87,7 @@ export function OverviewTab() {
 
   const readyToReconcile = useMemo(
     () =>
-      studies.filter((s: any) => {
-        const checklists = s.checklists || [];
-        const awaitingReconcile = checklists.filter(
-          (c: any) => !isReconciledChecklist(c) && c.status === CHECKLIST_STATUS.REVIEWER_COMPLETED,
-        );
-        return awaitingReconcile.length === 2;
-      }).length,
+      studies.filter((s: any) => getReadyReconciliationPairs(s).length > 0).length,
     [studies],
   );
 

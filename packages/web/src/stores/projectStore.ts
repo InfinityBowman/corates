@@ -13,6 +13,7 @@ import {
   type ConnectionEvent,
   type ConnectionMachineState,
 } from '@/project/connectionReducer';
+import { CHECKLIST_STATUS } from '@/constants/checklist-status';
 
 // Temporary in-memory storage for pending uploads during project creation
 const pendingProjectData = new Map<string, unknown>();
@@ -96,7 +97,9 @@ function computeProjectStats(studies: StudyInfo[]): { studyCount: number; comple
 
   if (studies) {
     for (const study of studies) {
-      const hasCompletedChecklist = study.checklists?.some(c => c.status === 'completed');
+      const hasCompletedChecklist = study.checklists?.some(
+        c => c.status === CHECKLIST_STATUS.FINALIZED,
+      );
       if (hasCompletedChecklist) {
         completedCount++;
       }
