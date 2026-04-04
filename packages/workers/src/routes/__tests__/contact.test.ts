@@ -234,7 +234,7 @@ describe('Contact Routes - POST /api/contact', () => {
       }),
     });
 
-    expect(res.status).toBe(500);
+    expect(res.status).toBe(503);
     const body = await json(res);
     expect(body.code).toBeDefined();
     expect(body.code).toMatch(/SYSTEM_EMAIL_SEND_FAILED/);

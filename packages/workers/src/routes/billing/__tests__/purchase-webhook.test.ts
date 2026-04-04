@@ -60,7 +60,7 @@ async function createWebhookRequest(
 
   // Ensure the Stripe constructor returns an object that uses our controllable mock.
   // This must be set per request because other tests may configure Stripe differently.
-  (Stripe as unknown as ReturnType<typeof vi.fn>).mockImplementation(() => {
+  (Stripe as unknown as ReturnType<typeof vi.fn>).mockImplementation(function () {
     return {
       webhooks: {
         constructEventAsync: mockStripeWebhooksConstructEvent,

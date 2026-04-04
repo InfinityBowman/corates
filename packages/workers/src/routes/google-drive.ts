@@ -439,7 +439,7 @@ const googleDriveRoutes = $(base.use('*', requireAuth))
           maxSize: maxSize,
           fileSize: parseInt(fileMeta.size, 10),
         });
-        return c.json(error, 400);
+        return c.json(error, 413);
       }
 
       // Download the file content

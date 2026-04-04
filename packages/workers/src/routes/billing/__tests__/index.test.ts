@@ -66,18 +66,20 @@ const mockStripeBillingPortalSessionsCreate = vi.fn(async () => ({
 
 vi.mock('stripe', () => {
   return {
-    default: vi.fn(() => ({
-      checkout: {
-        sessions: {
-          create: mockStripeCheckoutSessionsCreate,
+    default: vi.fn(function () {
+      return {
+        checkout: {
+          sessions: {
+            create: mockStripeCheckoutSessionsCreate,
+          },
         },
-      },
-      billingPortal: {
-        sessions: {
-          create: mockStripeBillingPortalSessionsCreate,
+        billingPortal: {
+          sessions: {
+            create: mockStripeBillingPortalSessionsCreate,
+          },
         },
-      },
-    })),
+      };
+    }),
   };
 });
 

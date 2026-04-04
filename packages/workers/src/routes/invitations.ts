@@ -5,7 +5,8 @@
 
 import { OpenAPIHono, createRoute, z, $ } from '@hono/zod-openapi';
 import { requireAuth, getAuth } from '@/middleware/auth.js';
-import { createDomainError, isDomainError, AUTH_ERRORS, SYSTEM_ERRORS } from '@corates/shared';
+import { createDomainError, isDomainError, AUTH_ERRORS, SYSTEM_ERRORS, type DomainError } from '@corates/shared';
+import type { ContentfulStatusCode } from 'hono/utils/http-status';
 import { acceptInvitation } from '@/commands/invitations/index.js';
 import { validationHook } from '@/lib/honoValidationHook.js';
 import type { Env } from '../types';
@@ -95,8 +96,7 @@ const invitationRoutes = $(base.use('*', requireAuth)).openapi(acceptInvitationR
     );
   } catch (err) {
     if (isDomainError(err)) {
-      const status = err.code === 'FORBIDDEN' || err.code === 'EMAIL_MISMATCH' ? 403 : 400;
-      return c.json(err, status);
+      return c.json(err, (err as DomainError).statusCode as ContentfulStatusCode);
     }
     console.error('Error accepting invitation:', err);
     const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {

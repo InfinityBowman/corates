@@ -24,7 +24,9 @@ import {
   PROJECT_ERRORS,
   SYSTEM_ERRORS,
   VALIDATION_ERRORS,
+  type DomainError,
 } from '@corates/shared';
+import type { ContentfulStatusCode } from 'hono/utils/http-status';
 import { requireOrgWriteAccess } from '@/middleware/requireOrgWriteAccess.js';
 import { createInvitation } from '@/commands/invitations/index.js';
 import { validationHook } from '@/lib/honoValidationHook.js';
@@ -358,7 +360,7 @@ const orgInvitationRoutes = $(base.use('*', requireAuth))
       );
     } catch (err) {
       if (isDomainError(err)) {
-        return c.json(err, 409);
+        return c.json(err, (err as DomainError).statusCode as ContentfulStatusCode);
       }
       const error = err as Error;
       console.error('Error creating invitation:', error);
@@ -414,7 +416,7 @@ const orgInvitationRoutes = $(base.use('*', requireAuth))
         const error = createDomainError(PROJECT_ERRORS.INVITATION_ALREADY_ACCEPTED, {
           invitationId,
         });
-        return c.json(error, 409);
+        return c.json(error, PROJECT_ERRORS.INVITATION_ALREADY_ACCEPTED.statusCode);
       }
 
       await db.delete(projectInvitations).where(eq(projectInvitations.id, invitationId));

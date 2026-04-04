@@ -248,11 +248,13 @@ describe('Admin billing observability - GET /api/admin/orgs/:orgId/billing/recon
       status: 'active',
     }));
 
-    (Stripe as unknown as Mock).mockImplementation(() => ({
-      subscriptions: {
-        retrieve: mockStripeRetrieve,
-      },
-    }));
+    (Stripe as unknown as Mock).mockImplementation(function () {
+      return {
+        subscriptions: {
+          retrieve: mockStripeRetrieve,
+        },
+      };
+    });
 
     await seedSubscription({
       id: 'sub-1',

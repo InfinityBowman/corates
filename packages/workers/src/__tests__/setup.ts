@@ -25,29 +25,33 @@ vi.mock('postmark', () => {
 });
 
 // Mock Stripe globally (tests can override with specific mocks if needed)
+// Must use `function` (not arrow) so `new Stripe(...)` works -- arrow functions
+// lack [[Construct]] and throw "is not a constructor".
 vi.mock('stripe', () => {
   return {
-    default: vi.fn(() => ({
-      checkout: {
-        sessions: {
-          create: vi.fn(() =>
-            Promise.resolve({ id: 'cs_test', url: 'https://checkout.stripe.com/test' }),
+    default: vi.fn(function () {
+      return {
+        checkout: {
+          sessions: {
+            create: vi.fn(() =>
+              Promise.resolve({ id: 'cs_test', url: 'https://checkout.stripe.com/test' }),
+            ),
+          },
+        },
+        billingPortal: {
+          sessions: {
+            create: vi.fn(() => Promise.resolve({ url: 'https://billing.stripe.com/test' })),
+          },
+        },
+        webhooks: {
+          constructEventAsync: vi.fn(() =>
+            Promise.resolve({ type: 'test.event', data: { object: {} } }),
           ),
         },
-      },
-      billingPortal: {
-        sessions: {
-          create: vi.fn(() => Promise.resolve({ url: 'https://billing.stripe.com/test' })),
+        subscriptions: {
+          retrieve: vi.fn(() => Promise.resolve({ id: 'sub_test', status: 'active' })),
         },
-      },
-      webhooks: {
-        constructEventAsync: vi.fn(() =>
-          Promise.resolve({ type: 'test.event', data: { object: {} } }),
-        ),
-      },
-      subscriptions: {
-        retrieve: vi.fn(() => Promise.resolve({ id: 'sub_test', status: 'active' })),
-      },
-    })),
+      };
+    }),
   };
 });

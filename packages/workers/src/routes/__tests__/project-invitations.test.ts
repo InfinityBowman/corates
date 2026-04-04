@@ -80,8 +80,10 @@ let mockSyncMemberToDO: Mock;
 
 beforeAll(async () => {
   const { orgInvitationRoutes } = await import('../orgs/invitations.js');
+  const { invitationRoutes } = await import('../invitations.js');
   app = new Hono();
   app.route('/api/orgs/:orgId/projects/:projectId/invitations', orgInvitationRoutes);
+  app.route('/api/invitations', invitationRoutes);
 });
 
 beforeEach(async () => {
@@ -153,6 +155,40 @@ async function fetchInvitations(orgId: string, projectId: string, path = '', ini
       },
     },
   );
+  const res = await app.fetch(req, testEnv, ctx);
+  await waitOnExecutionContext(ctx);
+  return res;
+}
+
+async function fetchAcceptInvitation(init: FetchInit = {}) {
+  const testEnv = {
+    ...env,
+    APP_URL: 'http://localhost:5173',
+    AUTH_BASE_URL: 'http://localhost:8787',
+    AUTH_SECRET: 'test-secret',
+    SECRET: 'test-secret',
+    EMAIL_QUEUE: {
+      send: vi.fn(async () => {}),
+      sendBatch: vi.fn(async () => {}),
+    },
+    USER_SESSION: {
+      idFromName: (userId: string) => ({ toString: () => `user-session-${userId}` }),
+      get: () => ({
+        fetch: mockUserSessionFetch,
+        notify: mockUserSessionFetch,
+      }),
+    },
+  };
+
+  const ctx = createExecutionContext();
+  const req = new Request('http://localhost/api/invitations/accept', {
+    ...init,
+    headers: {
+      'x-test-user-id': 'user-1',
+      'x-test-user-email': 'user1@example.com',
+      ...init.headers,
+    },
+  });
   const res = await app.fetch(req, testEnv, ctx);
   await waitOnExecutionContext(ctx);
   return res;
@@ -387,7 +423,7 @@ describe('Project Invitation Routes - POST /api/orgs/:orgId/projects/:projectId/
       status: 'pending',
     });
 
-    const res = await fetchInvitations(org.id, project.id, '/accept', {
+    const res = await fetchAcceptInvitation({
       method: 'POST',
       headers: {
         'content-type': 'application/json',
@@ -452,7 +488,7 @@ describe('Project Invitation Routes - POST /api/orgs/:orgId/projects/:projectId/
   it('should return error for invalid token', async () => {
     const { project, org, owner } = await buildProject();
 
-    const res = await fetchInvitations(org.id, project.id, '/accept', {
+    const res = await fetchAcceptInvitation({
       method: 'POST',
       headers: { 'content-type': 'application/json', 'x-test-user-id': owner.id },
       body: JSON.stringify({ token: 'invalid-token' }),
@@ -477,7 +513,7 @@ describe('Project Invitation Routes - POST /api/orgs/:orgId/projects/:projectId/
       status: 'expired',
     });
 
-    const res = await fetchInvitations(org.id, project.id, '/accept', {
+    const res = await fetchAcceptInvitation({
       method: 'POST',
       headers: {
         'content-type': 'application/json',
@@ -507,7 +543,7 @@ describe('Project Invitation Routes - POST /api/orgs/:orgId/projects/:projectId/
       status: 'pending',
     });
 
-    const res = await fetchInvitations(org.id, project.id, '/accept', {
+    const res = await fetchAcceptInvitation({
       method: 'POST',
       headers: {
         'content-type': 'application/json',
@@ -537,7 +573,7 @@ describe('Project Invitation Routes - POST /api/orgs/:orgId/projects/:projectId/
       status: 'pending',
     });
 
-    const res = await fetchInvitations(org.id, project.id, '/accept', {
+    const res = await fetchAcceptInvitation({
       method: 'POST',
       headers: {
         'content-type': 'application/json',
@@ -597,7 +633,7 @@ describe('Project Invitation Routes - POST /api/orgs/:orgId/projects/:projectId/
       entitlements: {},
     });
 
-    const res = await fetchInvitations(org.id, project.id, '/accept', {
+    const res = await fetchAcceptInvitation({
       method: 'POST',
       headers: {
         'content-type': 'application/json',

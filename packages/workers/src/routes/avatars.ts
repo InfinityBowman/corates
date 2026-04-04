@@ -229,7 +229,7 @@ const avatarRoutes = $(base.use('*', requireAuth))
         { fileSize: contentLength, maxSize: FILE_SIZE_LIMITS.AVATAR },
         `Avatar size exceeds limit of ${FILE_SIZE_LIMITS.AVATAR / (1024 * 1024)}MB`,
       );
-      return c.json(error, 400);
+      return c.json(error, 413);
     }
 
     try {
@@ -263,7 +263,7 @@ const avatarRoutes = $(base.use('*', requireAuth))
             { fileSize: file.size, maxSize: FILE_SIZE_LIMITS.AVATAR },
             `Avatar size exceeds limit of ${FILE_SIZE_LIMITS.AVATAR / (1024 * 1024)}MB`,
           );
-          return c.json(error, 400);
+          return c.json(error, 413);
         }
 
         const ext = file.type.split('/')[1] || 'jpg';
