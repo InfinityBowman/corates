@@ -135,4 +135,3 @@ describe('requireAdmin middleware', () => {
     expect(body.code).toBe('AUTH_REQUIRED');
   });
 });
-

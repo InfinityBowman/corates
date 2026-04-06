@@ -502,9 +502,9 @@ export class ProjectDoc extends DurableObject<Env> {
       if (persistedState) {
         // Handle both legacy number[] format and new Uint8Array format
         const update =
-          persistedState instanceof Uint8Array ?
-            persistedState
-          : new Uint8Array(persistedState as number[]);
+          persistedState instanceof Uint8Array ? persistedState : (
+            new Uint8Array(persistedState as number[])
+          );
         Y.applyUpdate(this.doc, update);
       }
 

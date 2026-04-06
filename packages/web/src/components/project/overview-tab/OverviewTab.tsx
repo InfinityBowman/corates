@@ -86,8 +86,7 @@ export function OverviewTab() {
   }, [isOwner, hasQuota, nonOwnerOrgMemberCount]);
 
   const readyToReconcile = useMemo(
-    () =>
-      studies.filter((s: any) => getReadyReconciliationPairs(s).length > 0).length,
+    () => studies.filter((s: any) => getReadyReconciliationPairs(s).length > 0).length,
     [studies],
   );
 

@@ -162,9 +162,7 @@ describe('Email Queue Producer', () => {
     });
     const mockEnv = { EMAIL_QUEUE: { send: mockSend } } as any;
 
-    await Promise.all(
-      Array.from({ length: 50 }, (_, i) => queueEmail(mockEnv, makePayload(i))),
-    );
+    await Promise.all(Array.from({ length: 50 }, (_, i) => queueEmail(mockEnv, makePayload(i))));
     expect(queued).toHaveLength(50);
 
     const mod = await import('../../index.js');
