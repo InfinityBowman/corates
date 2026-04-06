@@ -479,4 +479,3 @@ describe('Production Scenario: New User Joins Project', () => {
     expect(clientDoc.getMap('members').has('new-member-id')).toBe(true);
   });
 });
-
