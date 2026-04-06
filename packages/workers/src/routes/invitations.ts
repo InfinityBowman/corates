@@ -5,7 +5,13 @@
 
 import { OpenAPIHono, createRoute, z, $ } from '@hono/zod-openapi';
 import { requireAuth, getAuth } from '@/middleware/auth.js';
-import { createDomainError, isDomainError, AUTH_ERRORS, SYSTEM_ERRORS, type DomainError } from '@corates/shared';
+import {
+  createDomainError,
+  isDomainError,
+  AUTH_ERRORS,
+  SYSTEM_ERRORS,
+  type DomainError,
+} from '@corates/shared';
 import type { ContentfulStatusCode } from 'hono/utils/http-status';
 import { acceptInvitation } from '@/commands/invitations/index.js';
 import { validationHook } from '@/lib/honoValidationHook.js';
