@@ -95,8 +95,9 @@ testSeedRoutes.post('/seed', async c => {
       referenceId: body.org.id,
       status: subOpts.status ?? 'active',
       periodStart: new Date(),
-      periodEnd: subOpts.periodEnd
-        ? new Date(subOpts.periodEnd * 1000)
+      periodEnd:
+        subOpts.periodEnd ?
+          new Date(subOpts.periodEnd * 1000)
         : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
       cancelAtPeriodEnd: subOpts.cancelAtPeriodEnd ?? false,
       trialEnd: subOpts.trialEnd ? new Date(subOpts.trialEnd * 1000) : undefined,
@@ -204,10 +205,7 @@ testSeedRoutes.post('/update-subscription', async c => {
     if (body.periodEnd !== undefined) updates.periodEnd = new Date(body.periodEnd * 1000);
     if (body.cancelAtPeriodEnd !== undefined) updates.cancelAtPeriodEnd = body.cancelAtPeriodEnd;
 
-    await db
-      .update(subscription)
-      .set(updates)
-      .where(eq(subscription.referenceId, body.orgId));
+    await db.update(subscription).set(updates).where(eq(subscription.referenceId, body.orgId));
 
     return c.json({ success: true });
   } catch (err) {

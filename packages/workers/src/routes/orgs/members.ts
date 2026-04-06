@@ -488,21 +488,25 @@ const orgProjectMemberRoutes = $(base.use('*', requireAuth))
         }
 
         try {
-          const result = await createInvitation(c.env, { id: authUser.id }, {
-            orgId,
-            projectId,
-            email,
-            role,
-          });
+          const result = await createInvitation(
+            c.env,
+            { id: authUser.id },
+            {
+              orgId,
+              projectId,
+              email,
+              role,
+            },
+          );
 
           return c.json(
             {
               success: true,
               invitation: true,
               message:
-                result.emailQueued
-                  ? 'Invitation sent successfully'
-                  : 'Invitation created but email delivery may be delayed',
+                result.emailQueued ?
+                  'Invitation sent successfully'
+                : 'Invitation created but email delivery may be delayed',
               email,
             },
             201,

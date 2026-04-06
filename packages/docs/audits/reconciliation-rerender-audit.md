@@ -36,6 +36,7 @@ Every Yjs change to the study -- even an unrelated field -- triggers this entire
 ### 1. Unconditional `setLocalFinal` on every `finalAnswers` reference change
 
 **Files:**
+
 - `packages/web/src/components/project/reconcile-tab/amstar2-reconcile/ReconciliationQuestionPage.tsx:89-104`
 - `packages/web/src/components/project/reconcile-tab/amstar2-reconcile/MultiPartQuestionPage.tsx:80-103`
 
@@ -46,10 +47,10 @@ The "Initialize from props" effect runs whenever the `finalAnswers` prop changes
 ```js
 // ReconciliationQuestionPage.tsx:89
 useEffect(() => {
-    if (finalAnswers) {
-      setLocalFinal(JSON.parse(JSON.stringify(finalAnswers))); // always sets state
-      // ... selectedSource logic
-    }
+  if (finalAnswers) {
+    setLocalFinal(JSON.parse(JSON.stringify(finalAnswers))); // always sets state
+    // ... selectedSource logic
+  }
 }, [finalAnswers, reviewer1Answers, reviewer2Answers]);
 ```
 
@@ -59,12 +60,12 @@ useEffect(() => {
 
 ```js
 useEffect(() => {
-    if (finalAnswers) {
-      if (!answersEqual(localFinal, finalAnswers)) {
-        setLocalFinal(JSON.parse(JSON.stringify(finalAnswers)));
-      }
-      // ... selectedSource logic (also guard with comparison)
+  if (finalAnswers) {
+    if (!answersEqual(localFinal, finalAnswers)) {
+      setLocalFinal(JSON.parse(JSON.stringify(finalAnswers)));
     }
+    // ... selectedSource logic (also guard with comparison)
+  }
 }, [finalAnswers, reviewer1Answers, reviewer2Answers]);
 ```
 
@@ -81,13 +82,13 @@ The `answersEqual` function already exists in the same file. For `MultiPartQuest
 The clamp logic is a `useEffect`, which runs after the render commits. When `navItems` shrinks (ROB2 aim change synced from the other user), there is one render frame where `currentPage` exceeds `navItems.length - 1`:
 
 ```js
-const currentItem = navItems[currentPage] ?? null;  // null for one frame
+const currentItem = navItems[currentPage] ?? null; // null for one frame
 
 useEffect(() => {
-    const clamped = Math.max(0, Math.min(currentPage, totalPages - 1));
-    if (clamped !== currentPage) {
-      setCurrentPage(clamped);  // fires after render
-    }
+  const clamped = Math.max(0, Math.min(currentPage, totalPages - 1));
+  if (clamped !== currentPage) {
+    setCurrentPage(clamped); // fires after render
+  }
 }, [totalPages, currentPage]);
 ```
 
@@ -98,15 +99,13 @@ This is not infinite (the auto-fill write does not change `navItems` length), bu
 **Fix:** Derive the effective page synchronously so `currentItem` is never null due to a stale `currentPage`:
 
 ```js
-const effectivePage = totalPages > 0
-    ? Math.max(0, Math.min(currentPage, totalPages - 1))
-    : currentPage;
+const effectivePage = totalPages > 0 ? Math.max(0, Math.min(currentPage, totalPages - 1)) : currentPage;
 
 // Persist the clamped value to state (for localStorage, awareness, etc.)
 useEffect(() => {
-    if (totalPages > 0 && effectivePage !== currentPage) {
-      setCurrentPage(effectivePage);
-    }
+  if (totalPages > 0 && effectivePage !== currentPage) {
+    setCurrentPage(effectivePage);
+  }
 }, [totalPages, effectivePage, currentPage]);
 
 const currentItem = navItems[effectivePage] ?? null;
@@ -126,15 +125,15 @@ A `setInterval` calls `setRefreshTick(Date.now())` every 1000ms, which forces `u
 
 ```js
 useEffect(() => {
-    const intervalId = setInterval(() => {
-      setRefreshTick(Date.now());
-    }, 1000);
-    return () => clearInterval(intervalId);
+  const intervalId = setInterval(() => {
+    setRefreshTick(Date.now());
+  }, 1000);
+  return () => clearInterval(intervalId);
 }, []);
 
 const usersWithCursors = useMemo(() => {
-    void refreshTick; // force re-eval
-    return remoteUsers.filter(user => user.cursor != null && user.currentPage === getCurrentPage);
+  void refreshTick; // force re-eval
+  return remoteUsers.filter(user => user.cursor != null && user.currentPage === getCurrentPage);
 }, [remoteUsers, getCurrentPage, refreshTick]);
 ```
 
@@ -142,16 +141,16 @@ const usersWithCursors = useMemo(() => {
 
 ```js
 function buildRemoteUsers(aw, currentUserRef, checklistTypeRef) {
-    const STALE_CURSOR_MS = 5000;
-    const now = Date.now();
-    // ... existing logic, then:
-    const cursor = state.cursor;
-    const isStaleCursor = cursor && (now - cursor.timestamp) > STALE_CURSOR_MS;
+  const STALE_CURSOR_MS = 5000;
+  const now = Date.now();
+  // ... existing logic, then:
+  const cursor = state.cursor;
+  const isStaleCursor = cursor && now - cursor.timestamp > STALE_CURSOR_MS;
 
-    states.push({
-      // ...
-      cursor: isStaleCursor ? null : cursor,
-    });
+  states.push({
+    // ...
+    cursor: isStaleCursor ? null : cursor,
+  });
 }
 ```
 
@@ -159,7 +158,7 @@ Then `usersWithCursors` can drop the `refreshTick` dependency:
 
 ```js
 const usersWithCursors = useMemo(() => {
-    return remoteUsers.filter(user => user.cursor != null && user.currentPage === getCurrentPage);
+  return remoteUsers.filter(user => user.cursor != null && user.currentPage === getCurrentPage);
 }, [remoteUsers, getCurrentPage]);
 ```
 
@@ -176,6 +175,7 @@ Remove the `refreshTick` state and the `setInterval` entirely.
 The sync manager replaces `project.studies` with a new array on every Yjs change. `selectStudy` does `studies.find(...)` which returns a new object even if the study data is structurally identical. This is the root amplifier: one Yjs change to one field invalidates every memo that depends on `currentStudy` in `ReconciliationWrapper`.
 
 The store already acknowledges this risk at line 169-171:
+
 ```js
 // Stable fallback constants -- must be module-level so they're referentially equal
 // across renders. Without these, selectors return new objects/arrays on every call
@@ -194,14 +194,20 @@ import { useShallow } from 'zustand/react/shallow';
 
 // Subscribe to just what you need:
 const checklist1Meta = useProjectStore(
-    useShallow(s => {
-      const study = selectStudy(s, projectId, studyId);
-      if (!study?.checklists) return null;
-      const c = study.checklists.find(c => c.id === checklist1Id);
-      if (!c) return null;
-      return { id: c.id, type: c.type, status: c.status, assignedTo: c.assignedTo,
-               outcomeId: c.outcomeId, createdAt: c.createdAt };
-    })
+  useShallow(s => {
+    const study = selectStudy(s, projectId, studyId);
+    if (!study?.checklists) return null;
+    const c = study.checklists.find(c => c.id === checklist1Id);
+    if (!c) return null;
+    return {
+      id: c.id,
+      type: c.type,
+      status: c.status,
+      assignedTo: c.assignedTo,
+      outcomeId: c.outcomeId,
+      createdAt: c.createdAt,
+    };
+  }),
 );
 ```
 
