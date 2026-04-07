@@ -33,11 +33,7 @@ const config: KnipConfig = {
       ],
     },
     'packages/workers': {
-      entry: [
-        'src/index.ts',
-        'src/db/migrations/**/*.ts',
-        'vitest.config.ts',
-      ],
+      entry: ['src/index.ts', 'src/db/migrations/**/*.ts', 'vitest.config.ts'],
       project: ['src/**/*.ts'],
       ignoreDependencies: ['wrangler', 'cloudflare'],
     },
@@ -53,17 +49,8 @@ const config: KnipConfig = {
       ignore: ['**/*'],
     },
   },
-  ignore: [
-    '**/routeTree.gen.ts',
-    '**/*.config.{ts,js}',
-    '.claude/**',
-  ],
-  ignoreDependencies: [
-    'agent-browser',
-    'dotenv',
-    'turbo',
-    'wrangler',
-  ],
+  ignore: ['**/routeTree.gen.ts', '**/*.config.{ts,js}', '.claude/**'],
+  ignoreDependencies: ['agent-browser', 'dotenv', 'turbo', 'wrangler'],
   ignoreBinaries: ['hono', 'agent-browser'],
 };
 

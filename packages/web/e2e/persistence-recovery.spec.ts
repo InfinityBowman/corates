@@ -17,11 +17,7 @@
  */
 
 import { test, expect } from '@playwright/test';
-import {
-  seedDualReviewerScenario,
-  cleanupScenario,
-  type DualReviewerScenario,
-} from './helpers';
+import { seedDualReviewerScenario, cleanupScenario, type DualReviewerScenario } from './helpers';
 import { setupProjectWithStudy } from './shared-steps';
 
 let scenario: DualReviewerScenario;

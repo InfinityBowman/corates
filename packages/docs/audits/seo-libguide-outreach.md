@@ -105,6 +105,7 @@ Approximately 220 words. Long enough to establish credibility, short enough
 that a busy librarian will read it.
 
 Design rationale:
+
 - Names them, names their guide, names a tool they already list. Proves
   you actually looked at their page, which separates this from spam.
 - One factual sentence on what CoRATES is, no marketing language.
@@ -156,6 +157,7 @@ Body:
     [ORIGINAL EMAIL QUOTED BELOW]
 
 Design rationale:
+
 - Acknowledges they may have skipped the first email without guilt-tripping.
 - Reduces friction further by providing the actual draft text inline.
 - Quotes the original below so they don't have to dig for context.
@@ -218,6 +220,7 @@ Body:
     jacob@corates.org   |   https://corates.org
 
 Design rationale:
+
 - Acknowledges they are peers, not customers.
 - Asks for their feedback, not their listing. "Would you be open to a
   link" gives them an out.
@@ -237,23 +240,23 @@ recipient to reply. Do not follow up aggressively.
 These are guides that already list multiple appraisal tools and are
 maintained by named librarians. Start here.
 
-| Institution | Guide URL |
-|---|---|
-| WashU Becker Medical Library | `beckerguides.wustl.edu/SystematicReviews/riskofbias` |
-| GWU Himmelfarb | `guides.himmelfarb.gwu.edu/systematic_review/reporting-quality-risk-of-bias` |
-| Harvard Countway | `guides.library.harvard.edu/meta-analysis/countwayRoB` |
-| Mayo Clinic Libraries | `libraryguides.mayo.edu/evidencesynthesis/criticalappraisal` |
-| Duke Medical Center Library | `guides.mclibrary.duke.edu/sysreview/assess` |
-| University of Minnesota | `libguides.umn.edu/c.php?g=1264119&p=9285838` |
-| Weill Cornell Medical College | `med.cornell.libguides.com/systematicreviews/riskofbias` |
-| Imperial College London | `library-guides.imperial.ac.uk/systematic-review/critical_appraisal` |
-| NYU Health Sciences | `hslguides.med.nyu.edu/systematicreviews/criticalappraisal` |
-| Anglia Ruskin University | `anglia.libguides.com/criticalappraisal/tools` |
-| Emory University Libraries | `guides.libraries.emory.edu/SRs/qa_tools` |
-| Virginia Tech | `guides.lib.vt.edu/SRMA/appraisal` |
-| Rutgers (Social Sciences) | `libguides.rutgers.edu/es_social/criticalappraisal` |
-| Colorado State | `libguides.colostate.edu/sres/Tools` |
-| MUSC | `musc.libguides.com/ebp/appraisal` |
+| Institution                   | Guide URL                                                                    |
+| ----------------------------- | ---------------------------------------------------------------------------- |
+| WashU Becker Medical Library  | `beckerguides.wustl.edu/SystematicReviews/riskofbias`                        |
+| GWU Himmelfarb                | `guides.himmelfarb.gwu.edu/systematic_review/reporting-quality-risk-of-bias` |
+| Harvard Countway              | `guides.library.harvard.edu/meta-analysis/countwayRoB`                       |
+| Mayo Clinic Libraries         | `libraryguides.mayo.edu/evidencesynthesis/criticalappraisal`                 |
+| Duke Medical Center Library   | `guides.mclibrary.duke.edu/sysreview/assess`                                 |
+| University of Minnesota       | `libguides.umn.edu/c.php?g=1264119&p=9285838`                                |
+| Weill Cornell Medical College | `med.cornell.libguides.com/systematicreviews/riskofbias`                     |
+| Imperial College London       | `library-guides.imperial.ac.uk/systematic-review/critical_appraisal`         |
+| NYU Health Sciences           | `hslguides.med.nyu.edu/systematicreviews/criticalappraisal`                  |
+| Anglia Ruskin University      | `anglia.libguides.com/criticalappraisal/tools`                               |
+| Emory University Libraries    | `guides.libraries.emory.edu/SRs/qa_tools`                                    |
+| Virginia Tech                 | `guides.lib.vt.edu/SRMA/appraisal`                                           |
+| Rutgers (Social Sciences)     | `libguides.rutgers.edu/es_social/criticalappraisal`                          |
+| Colorado State                | `libguides.colostate.edu/sres/Tools`                                         |
+| MUSC                          | `musc.libguides.com/ebp/appraisal`                                           |
 
 Rutgers Social Sciences is worth particular attention: it expands reach
 beyond medical libraries, where CoRATES has a potential audience that
@@ -261,14 +264,14 @@ most competitors do not target.
 
 ## Tier 2 target list: methods groups and aggregators (use email 3 variant)
 
-| Group | URL |
-|---|---|
-| Cochrane Bias Methods Group | `methods.cochrane.org/bias` |
-| riskofbias.info | `riskofbias.info` |
-| JBI | `jbi.global/critical-appraisal-tools` |
-| Centre for Evidence-Based Medicine (Oxford) | `cebm.ox.ac.uk` |
-| Latitudes Network | `latitudes-network.org` |
-| NCCMT (Canada) | `nccmt.ca` |
+| Group                                       | URL                                   |
+| ------------------------------------------- | ------------------------------------- |
+| Cochrane Bias Methods Group                 | `methods.cochrane.org/bias`           |
+| riskofbias.info                             | `riskofbias.info`                     |
+| JBI                                         | `jbi.global/critical-appraisal-tools` |
+| Centre for Evidence-Based Medicine (Oxford) | `cebm.ox.ac.uk`                       |
+| Latitudes Network                           | `latitudes-network.org`               |
+| NCCMT (Canada)                              | `nccmt.ca`                            |
 
 Do NOT cold-email these groups until you have at least 3-5 tier-1 listings
 live. You want to show them you are already in the ecosystem when you
@@ -285,6 +288,7 @@ name, a photo, and a contact form or email link. Email that person
 directly.
 
 If no name is shown:
+
 1. Search the institution's library directory for "systematic review",
    "evidence synthesis", or "research methods" librarian.
 2. Use the subject librarian for health sciences, nursing, or medicine,

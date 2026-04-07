@@ -676,7 +676,6 @@ describe('checklist-domain', () => {
       expect(groups[0].checklists).toHaveLength(1);
     });
   });
-
 });
 
 describe('computeProjectStats - status matching', () => {
@@ -685,9 +684,7 @@ describe('computeProjectStats - status matching', () => {
       {
         id: 'study-1',
         name: 'Test Study',
-        checklists: [
-          { id: 'cl-1', type: 'AMSTAR2', status: CHECKLIST_STATUS.FINALIZED },
-        ],
+        checklists: [{ id: 'cl-1', type: 'AMSTAR2', status: CHECKLIST_STATUS.FINALIZED }],
       },
     ];
 
@@ -710,9 +707,7 @@ describe('computeProjectStats - status matching', () => {
       {
         id: 'study-1',
         name: 'Test Study',
-        checklists: [
-          { id: 'cl-1', type: 'AMSTAR2', status: CHECKLIST_STATUS.IN_PROGRESS },
-        ],
+        checklists: [{ id: 'cl-1', type: 'AMSTAR2', status: CHECKLIST_STATUS.IN_PROGRESS }],
       },
     ];
 

@@ -218,9 +218,7 @@ function ToolContentView({ tool }: { tool: ToolContent }) {
           <div className='flex flex-col gap-8 leading-relaxed text-gray-700'>
             <div>
               <h2 className='mb-4 text-2xl font-semibold text-gray-900'>{tool.name}</h2>
-              {tool.fullName && (
-                <p className='mb-3 text-sm text-gray-500'>{tool.fullName}</p>
-              )}
+              {tool.fullName && <p className='mb-3 text-sm text-gray-500'>{tool.fullName}</p>}
               <p className='mb-6 text-gray-600'>{tool.description}</p>
               {tool.versionNote && (
                 <p className='rounded-lg border border-blue-100 bg-blue-50 p-4 text-sm text-blue-900'>

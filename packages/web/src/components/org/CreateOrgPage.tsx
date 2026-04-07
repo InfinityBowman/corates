@@ -56,10 +56,12 @@ export function CreateOrgPage() {
 
       setIsSubmitting(true);
       try {
-        await authFetch(authClient.organization.create({
-          name: orgName,
-          slug: orgSlug,
-        }));
+        await authFetch(
+          authClient.organization.create({
+            name: orgName,
+            slug: orgSlug,
+          }),
+        );
 
         await queryClient.invalidateQueries({ queryKey: queryKeys.orgs.list });
         localStorage.setItem(LAST_ORG_KEY, orgSlug);

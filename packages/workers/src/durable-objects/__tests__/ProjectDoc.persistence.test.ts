@@ -100,9 +100,7 @@ function loadDocFromTable(state: DurableObjectState): Y.Doc {
 }
 
 function countRows(state: DurableObjectState): number {
-  return state.storage.sql
-    .exec<{ n: number }>('SELECT COUNT(*) AS n FROM yjs_updates')
-    .one().n;
+  return state.storage.sql.exec<{ n: number }>('SELECT COUNT(*) AS n FROM yjs_updates').one().n;
 }
 
 describe('ProjectDoc Persistence', () => {
@@ -348,9 +346,9 @@ describe('ProjectDoc Persistence', () => {
 
       await runInDurableObject(stub, async (_instance, state) => {
         const rows = state.storage.sql
-          .exec<{ name: string }>(
-            "SELECT name FROM sqlite_master WHERE type='table' AND name='yjs_updates'",
-          )
+          .exec<{
+            name: string;
+          }>("SELECT name FROM sqlite_master WHERE type='table' AND name='yjs_updates'")
           .toArray();
         expect(rows).toHaveLength(1);
       });
@@ -362,9 +360,7 @@ describe('ProjectDoc Persistence', () => {
 
       await runInDurableObject(stub, async (_instance, state) => {
         const cols = state.storage.sql
-          .exec<{ name: string; type: string }>(
-            'PRAGMA table_info(yjs_updates)',
-          )
+          .exec<{ name: string; type: string }>('PRAGMA table_info(yjs_updates)')
           .toArray();
         const byName = new Map(cols.map(c => [c.name, c.type]));
         expect(byName.get('seq')).toBe('INTEGER');
@@ -630,9 +626,10 @@ describe('ProjectDoc Persistence', () => {
         (instance as unknown as { compact(): void }).compact();
 
         const rows = state.storage.sql
-          .exec<{ kind: string; size: number }>(
-            'SELECT kind, LENGTH(payload) AS size FROM yjs_updates ORDER BY seq',
-          )
+          .exec<{
+            kind: string;
+            size: number;
+          }>('SELECT kind, LENGTH(payload) AS size FROM yjs_updates ORDER BY seq')
           .toArray();
 
         // Expect at least 2 snapshot chunk rows because the encoded state
@@ -1040,9 +1037,10 @@ describe('ProjectDoc Persistence', () => {
         // The migrated bytes should now live in multiple snapshot rows,
         // each under the chunk size cap.
         const rows = state.storage.sql
-          .exec<{ kind: string; size: number }>(
-            'SELECT kind, LENGTH(payload) AS size FROM yjs_updates ORDER BY seq',
-          )
+          .exec<{
+            kind: string;
+            size: number;
+          }>('SELECT kind, LENGTH(payload) AS size FROM yjs_updates ORDER BY seq')
           .toArray();
         expect(rows.length).toBeGreaterThan(1);
         expect(rows.every(r => r.kind === 'snapshot')).toBe(true);
@@ -1093,9 +1091,9 @@ describe('ProjectDoc Persistence', () => {
         // into the code path this assertion catches it because the inflated
         // form would be ~3-4x larger than the raw Yjs encoding.
         const totalBytes = state.storage.sql
-          .exec<{ total: number }>(
-            'SELECT COALESCE(SUM(LENGTH(payload)), 0) AS total FROM yjs_updates',
-          )
+          .exec<{
+            total: number;
+          }>('SELECT COALESCE(SUM(LENGTH(payload)), 0) AS total FROM yjs_updates')
           .one().total;
 
         const fullState = Y.encodeStateAsUpdate(doc);

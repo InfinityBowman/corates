@@ -89,11 +89,13 @@ export function LinkedAccountsSection() {
         return;
       }
       sessionStorage.setItem('linkingProvider', providerId);
-      await authFetch(authClient.linkSocial({
-        provider: providerId as 'google',
-        callbackURL: window.location.href,
-        errorCallbackURL: window.location.href,
-      }));
+      await authFetch(
+        authClient.linkSocial({
+          provider: providerId as 'google',
+          callbackURL: window.location.href,
+          errorCallbackURL: window.location.href,
+        }),
+      );
     } catch (err: any) {
       const message = getLinkErrorMessage(err.code) || err.message || 'Failed to link account';
       showToast.error('Link Failed', message);

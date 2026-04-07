@@ -167,10 +167,10 @@ export const TOOL_CONTENT: Record<string, ToolContent> = {
       'CoRATES presents AMSTAR 2 as a structured digital workflow rather than a paper checklist or spreadsheet. Each of the 16 items is rendered with its response options in context, and the seven critical items are clearly distinguished from the nine non-critical items so reviewers know which weaknesses carry the most weight. Reviewers can attach rationale and direct quotes from the source review to each judgement. As items are completed, CoRATES applies the published decision rules to derive the overall confidence rating and updates it in real time. Multiple reviewers can complete independent AMSTAR 2 appraisals of the same review in parallel, and CoRATES surfaces disagreements in a side-by-side reconciliation view so they can be resolved before locking the appraisal. Completed appraisals can be exported as publication-ready summaries.',
     commonPitfalls: [
       'Treating AMSTAR 2 as a scoring system. The original authors are explicit that AMSTAR 2 is not designed to produce a numerical score; presenting a result as "13 out of 16" or as a percentage is a misuse of the tool. Report the overall confidence rating instead.',
-      'Failing to distinguish critical from non-critical items. The seven critical items are designed to carry disproportionate weight in the overall judgement; treating all 16 items as equal will misrepresent the review\'s actual quality.',
+      "Failing to distinguish critical from non-critical items. The seven critical items are designed to carry disproportionate weight in the overall judgement; treating all 16 items as equal will misrepresent the review's actual quality.",
       'Applying AMSTAR 2 to primary studies instead of systematic reviews. AMSTAR 2 appraises reviews; for individual randomized trials use RoB 2 and for non-randomized cohort studies use ROBINS-I V2.',
       'Using AMSTAR 2 for non-intervention reviews. The tool is scoped to reviews of healthcare interventions. Reviews of diagnostic test accuracy, prognostic factors, or epidemiological exposures should be appraised with tools designed for those study types.',
-      'Single-reviewer appraisal. AMSTAR 2 appraisals should be carried out by at least two independent reviewers with disagreements resolved through discussion. Single-reviewer appraisals risk introducing the appraiser\'s own biases into the result.',
+      "Single-reviewer appraisal. AMSTAR 2 appraisals should be carried out by at least two independent reviewers with disagreements resolved through discussion. Single-reviewer appraisals risk introducing the appraiser's own biases into the result.",
       'Neglecting the publication bias item. Item 15 is one of the seven critical items but is often overlooked in practice because publication bias assessment is technically demanding. A review that does not adequately investigate publication bias should not receive a "high" confidence rating.',
       'Confusing AMSTAR 2 with ROBIS. Both are appraisal tools for systematic reviews but they take different perspectives. AMSTAR 2 emphasises overall methodological quality while ROBIS focuses more directly on bias domains.',
     ],
@@ -188,7 +188,7 @@ export const TOOL_CONTENT: Record<string, ToolContent> = {
       {
         question: 'How many items does AMSTAR 2 have?',
         answer:
-          'AMSTAR 2 has 16 items in total. Seven of these are designated as critical domains because weaknesses in those items can substantially undermine confidence in a review\'s conclusions. The remaining nine items are non-critical: they affect quality but not as severely as the critical items.',
+          "AMSTAR 2 has 16 items in total. Seven of these are designated as critical domains because weaknesses in those items can substantially undermine confidence in a review's conclusions. The remaining nine items are non-critical: they affect quality but not as severely as the critical items.",
       },
       {
         question: 'Does AMSTAR 2 produce a score?',
@@ -242,7 +242,8 @@ export const TOOL_CONTENT: Record<string, ToolContent> = {
       {
         authors: 'Shea BJ, Grimshaw JM, Wells GA, et al.',
         year: '2007',
-        title: 'Development of AMSTAR: a measurement tool to assess the methodological quality of systematic reviews',
+        title:
+          'Development of AMSTAR: a measurement tool to assess the methodological quality of systematic reviews',
         source: 'BMC Medical Research Methodology, 7, 10',
         url: 'https://doi.org/10.1186/1471-2288-7-10',
       },
@@ -597,7 +598,7 @@ export const TOOL_CONTENT: Record<string, ToolContent> = {
       {
         authors: 'Higgins JPT, Altman DG, Gotzsche PC, et al.',
         year: '2011',
-        title: 'The Cochrane Collaboration\'s tool for assessing risk of bias in randomised trials',
+        title: "The Cochrane Collaboration's tool for assessing risk of bias in randomised trials",
         source: 'BMJ 2011;343:d5928',
         url: 'https://www.bmj.com/content/343/bmj.d5928',
       },

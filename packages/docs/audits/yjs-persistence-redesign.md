@@ -87,10 +87,10 @@ This redesign replaces the entire persistence layer with an incremental-update +
 
 ### Storage limits (verified against Cloudflare docs)
 
-| Backend | Per key+value combined | Per SQL row | Per DO total |
-|---|---|---|---|
-| **SQLite-backed (our case)** | **2 MB** | **2 MB** | **10 GB** |
-| KV-backed (legacy, not us) | 128 KiB | n/a | unlimited |
+| Backend                      | Per key+value combined | Per SQL row | Per DO total |
+| ---------------------------- | ---------------------- | ----------- | ------------ |
+| **SQLite-backed (our case)** | **2 MB**               | **2 MB**    | **10 GB**    |
+| KV-backed (legacy, not us)   | 128 KiB                | n/a         | unlimited    |
 
 The 2 MB limit is **per row**, not per cell. This is subtle but important: a row
 with `(seq, kind, payload, created_at)` has the payload BLOB competing with the
@@ -103,6 +103,7 @@ single row. A document larger than 2 MB must be split across multiple rows
 (see "Snapshot chunking" below).
 
 Sources:
+
 - [SQLite-backed Durable Objects general limits](https://developers.cloudflare.com/durable-objects/platform/limits/)
 - [Access Durable Objects Storage](https://developers.cloudflare.com/durable-objects/best-practices/access-durable-objects-storage/)
 - [SQLite Storage API](https://developers.cloudflare.com/durable-objects/api/sqlite-storage-api/)
@@ -179,12 +180,13 @@ CREATE TABLE IF NOT EXISTS yjs_updates (
 ```
 
 `kind` is one of:
+
 - `'update'`: an independent Y.Doc update from `doc.on('update')`. Each row is a self-contained, individually-applyable update.
 - `'snapshot'`: a slice of a larger encoded snapshot from `Y.encodeStateAsUpdate(doc)`. A contiguous run of `'snapshot'` rows must be concatenated into one buffer before applying. Used during compaction (Decision 3) and migration (Decision 5) to handle documents that exceed the 2 MB per-row limit.
 
 ### Rationale
 
-- **Yjs treats incrementals and full snapshots as the same byte format.** `Y.encodeStateAsUpdate(doc)` returns the same kind of bytes as a small diff. We exploit this for the load path: any single row can be applied with `Y.applyUpdate` directly, *unless* it's a snapshot chunk.
+- **Yjs treats incrementals and full snapshots as the same byte format.** `Y.encodeStateAsUpdate(doc)` returns the same kind of bytes as a small diff. We exploit this for the load path: any single row can be applied with `Y.applyUpdate` directly, _unless_ it's a snapshot chunk.
 - **Compaction is `DELETE then INSERT N rows`** in one table within `transactionSync`. Partial failure rolls back cleanly.
 - **The load path is one query plus a small state machine** that gathers consecutive snapshot chunks. ~30 lines of straightforward code.
 - **It mirrors the partykit pattern** (key-prefix range scan + concatenate), adapted for a SQL backend.
@@ -197,7 +199,7 @@ column. That design works only when an entire compacted snapshot fits in a
 single 2 MB row. For projects with ~100+ rich-comment checklists (~5 MB
 encoded), compaction would silently fail every time, and we'd accumulate
 unbounded `kind='update'` rows. Adding the `kind` column lets compaction
-*always* succeed regardless of snapshot size, at the cost of one TEXT column
+_always_ succeed regardless of snapshot size, at the cost of one TEXT column
 per row (negligible).
 
 ### Binding Uint8Array to BLOB columns
@@ -295,6 +297,7 @@ private loadUpdatesIntoDoc(): void {
 ```
 
 The load path walks rows in `seq` order:
+
 - `'update'` rows are applied individually
 - Contiguous runs of `'snapshot'` rows are gathered and applied as one update after the run ends
 
@@ -328,8 +331,8 @@ buffer + one applyUpdate per snapshot + one applyUpdate per remaining update.
 ### Constants
 
 ```typescript
-const COMPACTION_ROW_THRESHOLD = 500;       // primary trigger
-const OPPORTUNISTIC_COMPACTION_MIN = 50;    // secondary trigger floor
+const COMPACTION_ROW_THRESHOLD = 500; // primary trigger
+const OPPORTUNISTIC_COMPACTION_MIN = 50; // secondary trigger floor
 ```
 
 ### Rationale
@@ -369,7 +372,7 @@ this.doc.on('update', (update: Uint8Array, origin: unknown) => {
   try {
     this.ctx.storage.sql.exec(
       'INSERT INTO yjs_updates (update, created_at) VALUES (?, ?)',
-      uint8ArrayToBuffer(update),  // SqlStorageValue requires ArrayBuffer
+      uint8ArrayToBuffer(update), // SqlStorageValue requires ArrayBuffer
       Date.now(),
     );
     this.maybeCompact();
@@ -502,11 +505,11 @@ private async migrateLegacyState(): Promise<void> {
 
 The user explicitly asked to know when migration fails and which project ID it failed on. Three distinct failure paths each get their own log entry with project ID:
 
-| Failure | Behavior | Log | Legacy key |
-|---|---|---|---|
-| Validation (Y.applyUpdate to probe doc throws) | Throw, fail connection | `logger.error('migration_legacy_state_corrupt', { projectId, ... })` | **Preserved** for forensics |
-| INSERT into `yjs_updates` fails | Throw, fail connection | `logger.error('migration_insert_failed', { projectId, ... })` | **Preserved**, retried next wake |
-| DELETE of legacy key fails | Log warning, continue | `logger.warn('migration_legacy_delete_failed', { projectId, ... })` | Stale key, retried next wake |
+| Failure                                        | Behavior               | Log                                                                  | Legacy key                       |
+| ---------------------------------------------- | ---------------------- | -------------------------------------------------------------------- | -------------------------------- |
+| Validation (Y.applyUpdate to probe doc throws) | Throw, fail connection | `logger.error('migration_legacy_state_corrupt', { projectId, ... })` | **Preserved** for forensics      |
+| INSERT into `yjs_updates` fails                | Throw, fail connection | `logger.error('migration_insert_failed', { projectId, ... })`        | **Preserved**, retried next wake |
+| DELETE of legacy key fails                     | Log warning, continue  | `logger.warn('migration_legacy_delete_failed', { projectId, ... })`  | Stale key, retried next wake     |
 
 All three log lines include the project ID so the affected project is always identifiable via `wrangler tail` or the persisted production logs. When DO-wide Sentry instrumentation lands as a follow-up, these same log lines will automatically become Sentry events without any change to the migration code.
 
@@ -520,14 +523,14 @@ All three log lines include the project ID so the affected project is always ide
 
 All "log" entries route through the injectable `PersistenceLogger` (see below), which delegates to `console.error`/`console.warn` in production. Those surface in `wrangler tail` and persisted production logs (`wrangler.jsonc:124-129`). Sentry reporting for DO errors is not currently wired — see the Verification Summary at the top. A separate follow-up should address DO-wide Sentry instrumentation.
 
-| Failure | Response | Log level | Continues serving? | Recovery path |
-|---|---|---|---|---|
-| INSERT on update | Log + continue | `error` | Yes | Client re-syncs on reconnect |
-| SELECT on init | Throw, fail connection | `error` | No (this load) | Client retries |
-| Compaction transaction | Wrap in `transactionSync`; on failure, log + skip compaction | `error` | Yes (with un-compacted state) | Retried next threshold trigger |
-| Migration: validate fail | Throw, fail connection, **keep legacy key** | `error` (includes project ID) | No, until manually fixed |
-| Migration: insert fail | Throw, fail connection, **keep legacy key** | `error` (includes project ID) | No, until next wake |
-| Migration: delete fail | Continue | `warn` (includes project ID) | Yes |
+| Failure                  | Response                                                     | Log level                     | Continues serving?            | Recovery path                  |
+| ------------------------ | ------------------------------------------------------------ | ----------------------------- | ----------------------------- | ------------------------------ |
+| INSERT on update         | Log + continue                                               | `error`                       | Yes                           | Client re-syncs on reconnect   |
+| SELECT on init           | Throw, fail connection                                       | `error`                       | No (this load)                | Client retries                 |
+| Compaction transaction   | Wrap in `transactionSync`; on failure, log + skip compaction | `error`                       | Yes (with un-compacted state) | Retried next threshold trigger |
+| Migration: validate fail | Throw, fail connection, **keep legacy key**                  | `error` (includes project ID) | No, until manually fixed      |
+| Migration: insert fail   | Throw, fail connection, **keep legacy key**                  | `error` (includes project ID) | No, until next wake           |
+| Migration: delete fail   | Continue                                                     | `warn` (includes project ID)  | Yes                           |
 
 ### Compaction must be transactional
 
@@ -591,7 +594,7 @@ The interface exists for three reasons: (1) keeps test assertions clean without 
 Exactly two things:
 
 1. **The injectable `PersistenceLogger` interface** — so we can assert warnings and errors without coupling tests to the Sentry SDK.
-2. *Nothing else.*
+2. _Nothing else._
 
 ### Failure injection without mocks
 
@@ -625,27 +628,32 @@ packages/workers/src/durable-objects/__tests__/
 ### `ProjectDoc.persistence.test.ts` — coverage outline
 
 **Schema**
+
 - Creates `yjs_updates` table on first init
 - `CREATE TABLE IF NOT EXISTS` is idempotent across reloads
 
 **Write path**
+
 - A single Y.Doc update inserts one row
 - Multiple updates create multiple rows with monotonically increasing `seq`
 - INSERT failure (real SQL trigger) logs to the injected logger and does not throw
 
 **Cold load path**
+
 - Empty table produces a fresh empty Y.Doc
 - Single row reconstructs state correctly
 - Many rows applied in `seq` order produce the same final state as applying them in real time
 - SELECT failure throws and fails the connection
 
 **Compaction**
+
 - Triggers at the row threshold (configurable for tests, e.g. 5 instead of 500)
 - After compaction: row count is 1, document state is preserved
 - **Compaction is transactional**: install a fail-on-INSERT trigger after seeding rows, force compaction, assert all original rows still exist (rollback worked)
 - Opportunistic compaction in `webSocketClose` when count exceeds the secondary threshold
 
 **Migration**
+
 - Legacy `Uint8Array` state migrates correctly
 - Legacy `number[]` state (original `Array.from` format) migrates correctly
 - Idempotent: running migration twice does not duplicate rows
@@ -656,6 +664,7 @@ packages/workers/src/durable-objects/__tests__/
 - Empty state (no legacy key, empty table) → no-op
 
 **Regression**
+
 - Build a Y.Doc with realistic CoRATES content (50 studies, AMSTAR2 checklist with all 52 questions answered each), persist via the new path, verify cold load reconstructs identically. Sanity-check storage size to catch any future regression that re-introduces inflation like the original `Array.from` bug.
 
 ### Existing test updates
@@ -675,9 +684,7 @@ function decodeYDocFromStorage(storedState: unknown) {
 ```typescript
 function decodeYDocFromStorage(state: DurableObjectState) {
   const doc = new Y.Doc();
-  const cursor = state.storage.sql.exec<{ update: ArrayBuffer }>(
-    'SELECT update FROM yjs_updates ORDER BY seq',
-  );
+  const cursor = state.storage.sql.exec<{ update: ArrayBuffer }>('SELECT update FROM yjs_updates ORDER BY seq');
   for (const row of cursor) {
     // BLOB columns return ArrayBuffer; wrap before applying
     Y.applyUpdate(doc, new Uint8Array(row.update));
@@ -699,9 +706,7 @@ Minimum scenario:
 ```typescript
 test('Project state survives refresh after edits', async ({ context, page }) => {
   const scenario = await seedSingleReviewerScenario();
-  const projectId = await setupProjectWithStudy(
-    context, page, scenario, 'Persistence E2E',
-  );
+  const projectId = await setupProjectWithStudy(context, page, scenario, 'Persistence E2E');
 
   // Make real edits: add a study, open a checklist,
   // answer several questions, leave half-finished.
@@ -722,7 +727,7 @@ If a second e2e test is worth adding, it would be a migration scenario specifica
 
 ### What we will not test
 
-- **Exact compaction timing.** Test the *condition* (compaction reduces row count to 1) and the *trigger* (compaction is invoked when count exceeds threshold), not the precise interleaving.
+- **Exact compaction timing.** Test the _condition_ (compaction reduces row count to 1) and the _trigger_ (compaction is invoked when count exceeds threshold), not the precise interleaving.
 - **Sentry call signatures.** Mock the logger interface, not Sentry itself.
 - **Y.Doc internals.** Yjs has its own test suite.
 - **Real DO hibernation.** The `cloudflare:test` framework cannot simulate true hibernation. We can simulate "fresh DO instance" by creating a new stub, which is the closest equivalent.
@@ -819,7 +824,7 @@ These contribute to the same user-visible symptom ("refresh and stuff disappears
 
 ## Out of Scope
 
-The following are explicitly *not* part of this work, even though they are related:
+The following are explicitly _not_ part of this work, even though they are related:
 
 1. **Removing the migration code.** That is a future cleanup once we are confident every active project has been migrated. For now the migration code lives in `initializeDoc` permanently as a cheap probe.
 

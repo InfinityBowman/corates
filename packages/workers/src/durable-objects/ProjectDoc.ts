@@ -298,7 +298,6 @@ export class ProjectDoc extends DurableObject<Env> {
         }
       });
     }
-
   }
 
   /**
@@ -334,7 +333,6 @@ export class ProjectDoc extends DurableObject<Env> {
       membersMap.delete(member.userId);
       this.disconnectUser(member.userId, 'membership-revoked');
     }
-
   }
 
   /**
@@ -630,9 +628,7 @@ export class ProjectDoc extends DurableObject<Env> {
     if (!legacyState) return;
 
     const legacyBytes =
-      legacyState instanceof Uint8Array
-        ? legacyState
-        : new Uint8Array(legacyState as number[]);
+      legacyState instanceof Uint8Array ? legacyState : new Uint8Array(legacyState as number[]);
 
     // Validate the legacy bytes are decodable before inserting. We'd rather
     // surface corruption here, where we have full context, than later in a
@@ -654,9 +650,7 @@ export class ProjectDoc extends DurableObject<Env> {
       // failure that propagates through the DO runtime, not an HTTP response
       // payload, and we want a real Error stack trace for debugging.
       // eslint-disable-next-line corates/corates-error-helpers
-      throw new Error(
-        `ProjectDoc migration failed for project ${projectId}: legacy state corrupt`,
-      );
+      throw new Error(`ProjectDoc migration failed for project ${projectId}: legacy state corrupt`);
     }
 
     // Write the legacy snapshot via the chunking helper so oversized blobs
