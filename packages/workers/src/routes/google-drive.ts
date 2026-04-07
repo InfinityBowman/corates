@@ -272,6 +272,10 @@ const importRoute = createRoute({
       content: { 'application/json': { schema: ErrorResponseSchema } },
       description: 'File not found',
     },
+    413: {
+      content: { 'application/json': { schema: ErrorResponseSchema } },
+      description: 'File exceeds maximum size',
+    },
     500: {
       content: { 'application/json': { schema: ErrorResponseSchema } },
       description: 'Internal server error',

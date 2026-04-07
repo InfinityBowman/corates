@@ -23,7 +23,6 @@ import {
   USER_ERRORS,
   type DomainError,
 } from '@corates/shared';
-import type { ContentfulStatusCode } from 'hono/utils/http-status';
 import { validationHook } from '@/lib/honoValidationHook.js';
 import { addMember, updateMemberRole, removeMember } from '@/commands/members/index.js';
 import { createInvitation } from '@/commands/invitations/index.js';
@@ -539,7 +538,7 @@ const orgProjectMemberRoutes = $(base.use('*', requireAuth))
       return c.json(addedMember as z.infer<typeof MemberAddedSchema>, 201);
     } catch (err) {
       if (isDomainError(err)) {
-        return c.json(err, (err as DomainError).statusCode as ContentfulStatusCode);
+        return c.json(err, (err as DomainError).statusCode as 400 | 401 | 403 | 404 | 409 | 500);
       }
       const error = err as Error;
       console.error('Error adding project member:', error);
@@ -645,7 +644,7 @@ const orgProjectMemberRoutes = $(base.use('*', requireAuth))
       await requireMemberRemoval(db, authUser.id, projectId, memberId);
     } catch (err) {
       if (isDomainError(err)) {
-        return c.json(err, (err as DomainError).statusCode as ContentfulStatusCode);
+        return c.json(err, (err as DomainError).statusCode as 400 | 401 | 403 | 404 | 500);
       }
       throw err;
     }
@@ -661,7 +660,7 @@ const orgProjectMemberRoutes = $(base.use('*', requireAuth))
       return c.json({ success: true, removed: result.removed }, 200);
     } catch (err) {
       if (isDomainError(err)) {
-        return c.json(err, (err as DomainError).statusCode as ContentfulStatusCode);
+        return c.json(err, (err as DomainError).statusCode as 400 | 401 | 403 | 404 | 500);
       }
       const error = err as Error;
       console.error('Error removing project member:', error);
