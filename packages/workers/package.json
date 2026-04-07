@@ -33,16 +33,16 @@
     "localflare": "localflare"
   },
   "dependencies": {
-    "@better-auth/stripe": "^1.5.6",
+    "@better-auth/stripe": "^1.6.0",
     "@corates/shared": "workspace:*",
     "@hono/zod-openapi": "^1.2.4",
     "@sentry/cloudflare": "^10.47.0",
-    "better-auth": "^1.5.6",
+    "better-auth": "^1.6.0",
     "drizzle-orm": "^0.45.2",
     "hono": "^4.12.12",
     "lib0": "^0.2.117",
     "postmark": "^4.0.7",
-    "stripe": "^20.4.1",
+    "stripe": "^22.0.0",
     "y-protocols": "^1.0.7",
     "yjs": "^13.6.30",
     "zod": "^4.3.6"
