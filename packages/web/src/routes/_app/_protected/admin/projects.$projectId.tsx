@@ -21,9 +21,11 @@ import {
   CopyIcon,
   HardDriveIcon,
   UserMinusIcon,
+  DatabaseIcon,
+  RefreshCwIcon,
 } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
-import { useAdminProjectDetails } from '@/hooks/useAdminQueries';
+import { useAdminProjectDetails, useAdminProjectDocStats } from '@/hooks/useAdminQueries';
 import { useAdminStore, removeProjectMember, deleteProject } from '@/stores/adminStore';
 import { showToast } from '@/components/ui/toast';
 import { UserAvatar } from '@/components/ui/avatar';
@@ -173,6 +175,27 @@ function ProjectDetailPage() {
 
   const projectQuery = useAdminProjectDetails(projectId);
   const projectData = projectQuery.data as ProjectData | undefined;
+
+  // DO storage stats are fetched separately because they route through the
+  // ProjectDoc DO and are slower than the D1 details query. Loading them as
+  // a sibling query lets the rest of the page render immediately.
+  const docStatsQuery = useAdminProjectDocStats(projectId);
+  const docStats = docStatsQuery.data as
+    | {
+        rows: {
+          total: number;
+          snapshot: number;
+          update: number;
+          snapshotBytes: number;
+          updateBytes: number;
+          totalBytes: number;
+        };
+        encodedSnapshotBytes: number;
+        memoryUsagePercent: number;
+        content: { members: number; studies: number; checklists: number; pdfs: number };
+        timestamps: { oldestRowAt: number | null; newestRowAt: number | null };
+      }
+    | undefined;
 
   const [confirmDialog, setConfirmDialog] = useState<{
     type: 'delete-project' | 'remove-member';
@@ -388,6 +411,160 @@ function ProjectDetailPage() {
                 </dd>
               </div>
             </dl>
+          </AdminBox>
+
+          {/* Y.Doc Storage Section
+           *
+           * Shows the live state of the project's Yjs document in the
+           * ProjectDoc DO. Most important number is `encodedSnapshotBytes`
+           * because that's the value that binds against the 128 MB DO
+           * isolate memory limit. Row counts show the on-disk shape (how
+           * many snapshot chunks vs incremental update rows). Logical
+           * counts give a feel for what's actually in the project. */}
+          <AdminBox className='mb-6'>
+            <div className='mb-4 flex items-center justify-between'>
+              <h2 className='text-foreground flex items-center text-lg font-semibold'>
+                <DatabaseIcon className='text-muted-foreground/70 mr-2 size-5' />
+                Y.Doc Storage
+              </h2>
+              <button
+                type='button'
+                onClick={() => docStatsQuery.refetch()}
+                disabled={docStatsQuery.isFetching}
+                className='text-muted-foreground hover:text-foreground inline-flex items-center text-sm disabled:opacity-50'
+                title='Refresh stats (wakes the DO if hibernating)'
+              >
+                <RefreshCwIcon
+                  className={`mr-1 size-4 ${docStatsQuery.isFetching ? 'animate-spin' : ''}`}
+                />
+                Refresh
+              </button>
+            </div>
+
+            {docStatsQuery.isLoading ?
+              <div className='text-muted-foreground flex items-center text-sm'>
+                <LoaderIcon className='mr-2 size-4 animate-spin' />
+                Loading storage stats...
+              </div>
+            : docStatsQuery.isError ?
+              <div className='flex items-center text-sm text-red-600'>
+                <AlertCircleIcon className='mr-2 size-4' />
+                Failed to load storage stats. The DO may be unreachable.
+              </div>
+            : docStats ?
+              <div className='space-y-6'>
+                {/* Headline: encoded size + memory usage */}
+                <div className='grid grid-cols-1 gap-4 md:grid-cols-3'>
+                  <div className='bg-muted/40 rounded-md p-4'>
+                    <dt className='text-muted-foreground text-xs font-medium tracking-wide uppercase'>
+                      Encoded Snapshot
+                    </dt>
+                    <dd className='text-foreground mt-1 text-2xl font-semibold'>
+                      {formatBytes(docStats.encodedSnapshotBytes)}
+                    </dd>
+                    <dd className='text-muted-foreground mt-1 text-xs'>
+                      Live `Y.encodeStateAsUpdate(doc)` size
+                    </dd>
+                  </div>
+                  <div className='bg-muted/40 rounded-md p-4'>
+                    <dt className='text-muted-foreground text-xs font-medium tracking-wide uppercase'>
+                      Memory Usage
+                    </dt>
+                    <dd
+                      className={`mt-1 text-2xl font-semibold ${
+                        docStats.memoryUsagePercent > 50 ? 'text-red-600'
+                        : docStats.memoryUsagePercent > 20 ? 'text-amber-600'
+                        : 'text-foreground'
+                      }`}
+                    >
+                      {docStats.memoryUsagePercent < 0.01 ?
+                        '< 0.01%'
+                      : `${docStats.memoryUsagePercent.toFixed(2)}%`}
+                    </dd>
+                    <dd className='text-muted-foreground mt-1 text-xs'>
+                      of 128 MB DO isolate limit
+                    </dd>
+                  </div>
+                  <div className='bg-muted/40 rounded-md p-4'>
+                    <dt className='text-muted-foreground text-xs font-medium tracking-wide uppercase'>
+                      On-Disk Total
+                    </dt>
+                    <dd className='text-foreground mt-1 text-2xl font-semibold'>
+                      {formatBytes(docStats.rows.totalBytes)}
+                    </dd>
+                    <dd className='text-muted-foreground mt-1 text-xs'>
+                      {docStats.rows.total} row{docStats.rows.total === 1 ? '' : 's'} in yjs_updates
+                    </dd>
+                  </div>
+                </div>
+
+                {/* Row breakdown by kind */}
+                <div>
+                  <h3 className='text-foreground mb-2 text-sm font-medium'>Row Breakdown</h3>
+                  <dl className='grid grid-cols-2 gap-4 md:grid-cols-4'>
+                    <div>
+                      <dt className='text-muted-foreground text-xs'>Snapshot Rows</dt>
+                      <dd className='text-foreground mt-1 text-sm font-medium'>
+                        {docStats.rows.snapshot} ({formatBytes(docStats.rows.snapshotBytes)})
+                      </dd>
+                    </div>
+                    <div>
+                      <dt className='text-muted-foreground text-xs'>Update Rows</dt>
+                      <dd className='text-foreground mt-1 text-sm font-medium'>
+                        {docStats.rows.update} ({formatBytes(docStats.rows.updateBytes)})
+                      </dd>
+                    </div>
+                    <div>
+                      <dt className='text-muted-foreground text-xs'>Oldest Row</dt>
+                      <dd className='text-foreground mt-1 text-sm font-medium'>
+                        {docStats.timestamps.oldestRowAt ?
+                          formatDate(new Date(docStats.timestamps.oldestRowAt))
+                        : '-'}
+                      </dd>
+                    </div>
+                    <div>
+                      <dt className='text-muted-foreground text-xs'>Newest Row</dt>
+                      <dd className='text-foreground mt-1 text-sm font-medium'>
+                        {docStats.timestamps.newestRowAt ?
+                          formatDate(new Date(docStats.timestamps.newestRowAt))
+                        : '-'}
+                      </dd>
+                    </div>
+                  </dl>
+                </div>
+
+                {/* Logical content counts */}
+                <div>
+                  <h3 className='text-foreground mb-2 text-sm font-medium'>Logical Content</h3>
+                  <dl className='grid grid-cols-2 gap-4 md:grid-cols-4'>
+                    <div>
+                      <dt className='text-muted-foreground text-xs'>Members</dt>
+                      <dd className='text-foreground mt-1 text-sm font-medium'>
+                        {docStats.content.members}
+                      </dd>
+                    </div>
+                    <div>
+                      <dt className='text-muted-foreground text-xs'>Studies</dt>
+                      <dd className='text-foreground mt-1 text-sm font-medium'>
+                        {docStats.content.studies}
+                      </dd>
+                    </div>
+                    <div>
+                      <dt className='text-muted-foreground text-xs'>Checklists</dt>
+                      <dd className='text-foreground mt-1 text-sm font-medium'>
+                        {docStats.content.checklists}
+                      </dd>
+                    </div>
+                    <div>
+                      <dt className='text-muted-foreground text-xs'>PDFs</dt>
+                      <dd className='text-foreground mt-1 text-sm font-medium'>
+                        {docStats.content.pdfs}
+                      </dd>
+                    </div>
+                  </dl>
+                </div>
+              </div>
+            : null}
           </AdminBox>
 
           {/* Members Section */}

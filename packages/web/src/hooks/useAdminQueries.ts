@@ -92,6 +92,20 @@ export function useAdminProjectDetails(projectId: string | null | undefined) {
   });
 }
 
+export function useAdminProjectDocStats(projectId: string | null | undefined) {
+  return useQuery({
+    queryKey: queryKeys.admin.projectDocStats(projectId),
+    queryFn: () =>
+      parseResponse(
+        api.api.admin.projects[':projectId']['doc-stats'].$get({
+          param: { projectId: projectId! },
+        }),
+      ),
+    enabled: !!projectId,
+    ...ADMIN_QUERY_CONFIG,
+  });
+}
+
 export function useStorageDocuments(
   params: { cursor?: string | null; limit?: number; prefix?: string; search?: string } = {},
 ) {

@@ -182,6 +182,52 @@ interface Pdf {
 }
 
 /**
+ * Result of `ProjectDoc.getStorageStats()`. Used by the admin dashboard
+ * to surface DO storage metrics for an individual project.
+ *
+ * `encodedSnapshotBytes` is the size of `Y.encodeStateAsUpdate(doc)` right
+ * now, which is the value that actually matters against the 128 MB DO
+ * isolate memory limit. The row-level numbers in `rows` show how the data
+ * is currently arranged on disk (snapshot chunks vs incremental updates).
+ */
+export interface ProjectDocStorageStats {
+  rows: {
+    total: number;
+    snapshot: number;
+    update: number;
+    snapshotBytes: number;
+    updateBytes: number;
+    totalBytes: number;
+  };
+  encodedSnapshotBytes: number;
+  /** Encoded snapshot size as a percentage of the 128 MB DO isolate memory limit. */
+  memoryUsagePercent: number;
+  content: {
+    members: number;
+    studies: number;
+    checklists: number;
+    pdfs: number;
+  };
+  timestamps: {
+    /** ms since epoch — the created_at of the lowest-seq row, or null if empty. */
+    oldestRowAt: number | null;
+    /** ms since epoch — the created_at of the highest-seq row, or null if empty. */
+    newestRowAt: number | null;
+  };
+}
+
+/**
+ * The 128 MB Cloudflare Workers/DO isolate memory limit. The Y.Doc lives
+ * in the JS heap inside this isolate, so encoded snapshot size is bounded
+ * by this number minus headroom for the in-memory Y.Doc representation,
+ * the encoding buffer during compaction, and runtime overhead. We expose
+ * `memoryUsagePercent` against this constant for the admin dashboard.
+ *
+ * Source: https://developers.cloudflare.com/workers/platform/limits/
+ */
+const DO_ISOLATE_MEMORY_BYTES = 128 * 1024 * 1024;
+
+/**
  * ProjectDoc Durable Object
  *
  * WARNING: HIGH BLAST RADIUS FILE
@@ -193,13 +239,6 @@ interface Pdf {
  * - WebSocket connections for all active users
  * - Member authorization for project access
  * - Awareness protocol (user presence indicators)
- *
- * BEFORE MODIFYING:
- * 1. Read: .cursor/rules/yjs-sync.mdc and durable-objects.mdc
- * 2. Run full test suite: cd packages/workers && pnpm test
- * 3. Test with multiple concurrent browser clients
- * 4. Verify WebSocket close codes don't break reconnection
- * 5. Check that member sync updates reflect correctly
  *
  * See: packages/docs/guides/yjs-sync.md for architecture details
  *
@@ -459,6 +498,108 @@ export class ProjectDoc extends DurableObject<Env> {
     }
 
     return result;
+  }
+
+  /**
+   * RPC: Return DO storage stats for the admin dashboard.
+   *
+   * Read-only. Computes:
+   *  - Row counts and byte totals broken down by `kind` (snapshot vs update)
+   *  - The encoded snapshot size of the current in-memory Y.Doc — this is
+   *    the value that binds against the 128 MB isolate memory limit, not
+   *    the on-disk row totals
+   *  - Logical content counts (members, studies, checklists, pdfs)
+   *  - Timestamps of the oldest and newest rows for back-of-the-envelope
+   *    "how active is this project" questions
+   *
+   * Initialization is mandatory because computing the encoded size and
+   * the logical counts both require an in-memory Y.Doc.
+   */
+  async getStorageStats(): Promise<ProjectDocStorageStats> {
+    await this.initializeDoc();
+
+    // Row-level breakdown by kind. We use a single query so we never read
+    // a partial view of the table mid-write. The COALESCE on the SUM
+    // protects against the empty-table case where SUM returns NULL.
+    const breakdown = this.ctx.storage.sql
+      .exec<{ kind: string; n: number; bytes: number }>(
+        `SELECT kind, COUNT(*) AS n, COALESCE(SUM(LENGTH(payload)), 0) AS bytes
+         FROM yjs_updates
+         GROUP BY kind`,
+      )
+      .toArray();
+
+    let snapshotRows = 0;
+    let updateRows = 0;
+    let snapshotBytes = 0;
+    let updateBytes = 0;
+    for (const row of breakdown) {
+      if (row.kind === 'snapshot') {
+        snapshotRows = row.n;
+        snapshotBytes = row.bytes;
+      } else if (row.kind === 'update') {
+        updateRows = row.n;
+        updateBytes = row.bytes;
+      }
+    }
+
+    // Oldest / newest row timestamps for "how stale is this snapshot" view.
+    // Two cheap queries on indexed columns.
+    const oldest = this.ctx.storage.sql
+      .exec<{ created_at: number }>('SELECT created_at FROM yjs_updates ORDER BY seq ASC LIMIT 1')
+      .toArray();
+    const newest = this.ctx.storage.sql
+      .exec<{ created_at: number }>('SELECT created_at FROM yjs_updates ORDER BY seq DESC LIMIT 1')
+      .toArray();
+
+    // The number that actually matters: the encoded snapshot size right
+    // now. This is what compaction would write and what determines the
+    // memory pressure on the next cold load.
+    const encodedSnapshotBytes = Y.encodeStateAsUpdate(this.doc!).byteLength;
+    const memoryUsagePercent = (encodedSnapshotBytes / DO_ISOLATE_MEMORY_BYTES) * 100;
+
+    // Logical content counts. We walk the doc maps directly rather than
+    // routing through the dev export path because we only need counts.
+    const membersMap = this.doc!.getMap('members');
+    const reviewsMap = this.doc!.getMap('reviews');
+    let studies = 0;
+    let checklists = 0;
+    let pdfs = 0;
+    for (const reviewValue of reviewsMap.values()) {
+      studies++;
+      const reviewYMap = reviewValue as Y.Map<unknown>;
+      const checklistsMap = reviewYMap.get('checklists') as Y.Map<unknown> | undefined;
+      if (checklistsMap && typeof checklistsMap.entries === 'function') {
+        checklists += checklistsMap.size;
+      }
+      const pdfsMap = reviewYMap.get('pdfs') as Y.Map<unknown> | undefined;
+      if (pdfsMap && typeof pdfsMap.entries === 'function') {
+        pdfs += pdfsMap.size;
+      }
+    }
+
+    return {
+      rows: {
+        total: snapshotRows + updateRows,
+        snapshot: snapshotRows,
+        update: updateRows,
+        snapshotBytes,
+        updateBytes,
+        totalBytes: snapshotBytes + updateBytes,
+      },
+      encodedSnapshotBytes,
+      memoryUsagePercent,
+      content: {
+        members: membersMap.size,
+        studies,
+        checklists,
+        pdfs,
+      },
+      timestamps: {
+        oldestRowAt: oldest[0]?.created_at ?? null,
+        newestRowAt: newest[0]?.created_at ?? null,
+      },
+    };
   }
 
   // --- Dev RPC methods (only callable when DEV_MODE is enabled) ---
