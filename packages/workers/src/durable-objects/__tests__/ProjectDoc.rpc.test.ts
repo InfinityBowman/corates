@@ -1,8 +1,15 @@
 /**
- * Regression tests for ProjectDoc RPC methods
+ * Regression tests for ProjectDoc RPC methods.
  *
- * C1: schedulePersistenceIfNoConnections must await flushPersistence
- * I1: syncProject member replacement must be transactional (no partial state)
+ * C1: RPC mutations must be durable immediately (no debouncing window).
+ *     Now satisfied by synchronous SQL INSERT in the doc.on('update') handler
+ *     -- every Y.Doc mutation, including those from RPC methods, persists
+ *     inline before the RPC call returns.
+ *
+ * I1: syncProject member replacement must be transactional (no partial state).
+ *     This is a Y.Doc-level transaction, not a SQL transaction -- the Yjs
+ *     `doc.transact(...)` call in syncProject ensures all member deletes +
+ *     inserts fire as a single observable change.
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
@@ -36,9 +43,19 @@ describe('ProjectDoc RPC Persistence', () => {
     return env.PROJECT_DOC.get(id);
   }
 
-  function decodeYDocFromStorage(storedState: unknown) {
+  /**
+   * Rebuild a Y.Doc by reading all rows from the `yjs_updates` table in seq
+   * order and applying each one. BLOB columns come back as ArrayBuffer and
+   * must be wrapped with `new Uint8Array(...)` before handing to Yjs.
+   */
+  function decodeYDocFromStorage(state: DurableObjectState): Y.Doc {
     const doc = new Y.Doc();
-    Y.applyUpdate(doc, new Uint8Array(storedState as ArrayLike<number>));
+    const cursor = state.storage.sql.exec<{ payload: ArrayBuffer }>(
+      'SELECT payload FROM yjs_updates ORDER BY seq',
+    );
+    for (const row of cursor) {
+      Y.applyUpdate(doc, new Uint8Array(row.payload));
+    }
     return doc;
   }
 
@@ -59,10 +76,7 @@ describe('ProjectDoc RPC Persistence', () => {
 
       // Verify the state was persisted to storage
       await runInDurableObject(stub, async (_instance: ProjectDoc, state: DurableObjectState) => {
-        const storedState = await state.storage.get('yjs-state');
-        expect(storedState).toBeDefined();
-
-        const doc = decodeYDocFromStorage(storedState);
+        const doc = decodeYDocFromStorage(state);
         const membersMap = doc.getMap('members');
         const member = membersMap.get('member-1') as Y.Map<unknown>;
         expect(member).toBeDefined();
@@ -88,10 +102,7 @@ describe('ProjectDoc RPC Persistence', () => {
       });
 
       await runInDurableObject(stub, async (_instance: ProjectDoc, state: DurableObjectState) => {
-        const storedState = await state.storage.get('yjs-state');
-        expect(storedState).toBeDefined();
-
-        const doc = decodeYDocFromStorage(storedState);
+        const doc = decodeYDocFromStorage(state);
         const meta = doc.getMap('meta');
         expect(meta.get('name')).toBe('Test Project');
 
@@ -117,10 +128,7 @@ describe('ProjectDoc RPC Persistence', () => {
       });
 
       await runInDurableObject(stub, async (_instance: ProjectDoc, state: DurableObjectState) => {
-        const storedState = await state.storage.get('yjs-state');
-        expect(storedState).toBeDefined();
-
-        const doc = decodeYDocFromStorage(storedState);
+        const doc = decodeYDocFromStorage(state);
         const reviews = doc.getMap('reviews');
         const study = reviews.get('study-1') as Y.Map<unknown>;
         expect(study).toBeDefined();
@@ -173,10 +181,7 @@ describe('ProjectDoc RPC Persistence', () => {
       });
 
       await runInDurableObject(stub, async (_instance: ProjectDoc, state: DurableObjectState) => {
-        const storedState = await state.storage.get('yjs-state');
-        expect(storedState).toBeDefined();
-
-        const doc = decodeYDocFromStorage(storedState);
+        const doc = decodeYDocFromStorage(state);
         const members = doc.getMap('members');
 
         // Old members must be gone
@@ -212,8 +217,7 @@ describe('ProjectDoc RPC Persistence', () => {
       await stub.syncProject({ members: [] });
 
       await runInDurableObject(stub, async (_instance: ProjectDoc, state: DurableObjectState) => {
-        const storedState = await state.storage.get('yjs-state');
-        const doc = decodeYDocFromStorage(storedState);
+        const doc = decodeYDocFromStorage(state);
         const members = doc.getMap('members');
         expect(members.size).toBe(0);
       });

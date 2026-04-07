@@ -1,9 +1,29 @@
 # Yjs Persistence Redesign — ProjectDoc Storage
 
-**Status:** Planning complete, verification done, ready for implementation
-**Date:** 2026-04-04
+**Status:** Implemented, tests green, lint/typecheck clean
+**Date:** 2026-04-04, revised 2026-04-07 with chunked-snapshot design
 **Scope:** `packages/workers/src/durable-objects/ProjectDoc.ts` and its test suite
 **Related:** `yjs-sync-pipeline-redesign-a.md` (supersedes the persistence section)
+
+## Revision — 2026-04-07
+
+The original design (single compacted row) hit a ceiling at the 2 MB per-row
+DO SQLite limit, which meant projects with > ~100 rich-comment checklists
+would fail to compact and eventually brick. Research into partykit's
+production Yjs-on-DO implementation revealed the fix: **chunk snapshots
+across multiple rows** using a `kind` column and a contiguous-run load
+pattern. Decision 2 has been updated; a new "Snapshot chunking" subsection
+describes the write and load paths; the Cloudflare limits section now notes
+that 2 MB is per-row not per-cell.
+
+We also considered migrating to `y-partyserver` (the Cloudflare-maintained
+successor to `y-partykit`) instead of extending our own code. The conclusion
+was to stay with our own DO for now — y-partyserver doesn't ship built-in
+persistence so we'd still write the chunking layer, `partyserver` is still
+pre-1.0 with active breaking changes, and the migration cost (splitting
+auth between worker and DO, rewriting tests, ~225 lines of DO code changes)
+is not justified right now. A follow-up migration should be revisited once
+`partyserver` hits 1.0 or we have non-feature bandwidth.
 
 ## Verification Summary
 
@@ -11,7 +31,7 @@ All pre-implementation checks have been run against the actual codebase on branc
 
 - **Sentry is NOT wired into Durable Objects.** `Sentry.withSentry` in `packages/workers/src/index.ts:397` only wraps the fetch handler. All DO code (`ProjectDoc.ts`, `UserSession.ts`) uses plain `console.error`. The plan originally promised "Sentry alerts on persistence failures" — that promise has been removed. Persistence errors log via an injectable `PersistenceLogger` that delegates to `console.error`/`console.warn`, which surface in `wrangler tail` and production log persistence. Wiring DO-wide Sentry instrumentation is a separate follow-up that should touch all existing `console.error` calls in DOs uniformly, not just persistence.
 
-- **`ctx.storage.transactionSync` and `ctx.storage.sql` are confirmed** in the workers-types definitions (`experimental/index.d.ts:759,761`). Signature: `transactionSync<T>(closure: () => T): T`. Synchronous callback only — no `await` inside the transaction closure. Throws propagate up and roll back. Compaction must therefore be fully synchronous (it already is — just SQL ops and a `Y.mergeUpdates` call).
+- **`ctx.storage.transactionSync` and `ctx.storage.sql` are confirmed** in the workers-types definitions (`experimental/index.d.ts:759,761`). Signature: `transactionSync<T>(closure: () => T): T`. Synchronous callback only — no `await` inside the transaction closure. Throws propagate up and roll back. Compaction must therefore be fully synchronous: in the chunked-snapshot design (post-revision) compaction is just `Y.encodeStateAsUpdate(doc)` followed by N synchronous SQL `INSERT`s wrapped in a single `transactionSync`.
 
 - **`SqlStorageValue = ArrayBuffer | string | number | null`** — no `Uint8Array` in the valid binding types. Yjs updates (which are `Uint8Array`) must be converted to `ArrayBuffer` at the bind site. Reads come back as `ArrayBuffer` and must be wrapped with `new Uint8Array(ab)` before passing to `Y.applyUpdate` or `Y.mergeUpdates`. See the binding helper in Decision 2.
 
@@ -72,11 +92,40 @@ This redesign replaces the entire persistence layer with an incremental-update +
 | **SQLite-backed (our case)** | **2 MB** | **2 MB** | **10 GB** |
 | KV-backed (legacy, not us) | 128 KiB | n/a | unlimited |
 
+The 2 MB limit is **per row**, not per cell. This is subtle but important: a row
+with `(seq, kind, payload, created_at)` has the payload BLOB competing with the
+other columns for the same 2 MB budget. In practice the other columns are tens
+of bytes so effective payload headroom is ~1.99 MB, but the design must assume
+per-row not per-cell.
+
+The full 10 GB per DO is real and usable — the 2 MB limit only applies to a
+single row. A document larger than 2 MB must be split across multiple rows
+(see "Snapshot chunking" below).
+
 Sources:
 - [SQLite-backed Durable Objects general limits](https://developers.cloudflare.com/durable-objects/platform/limits/)
 - [Access Durable Objects Storage](https://developers.cloudflare.com/durable-objects/best-practices/access-durable-objects-storage/)
 - [SQLite Storage API](https://developers.cloudflare.com/durable-objects/api/sqlite-storage-api/)
 - [Zero-latency SQLite in Durable Objects](https://blog.cloudflare.com/sqlite-in-durable-objects/)
+
+### Prior art: PartyKit / y-partyserver
+
+PartyKit (now owned by Cloudflare as `cloudflare/partykit`) hit this exact
+problem and solved it with fixed-size value chunking at the storage primitive
+layer. Their `y-partykit/src/storage.ts` `levelPut` slices every value into
+128 KiB chunks under keys like `prefix#000`, `prefix#001`, ...; `levelGet`
+does a range scan and concatenates.
+
+The chunked-snapshot design below is the same pattern adapted for a
+SQL-backed DO: we use a `kind` column + `seq` ordering instead of a
+key-suffix scheme, but the shape is identical — one logical snapshot
+becomes N consecutive rows at the storage layer, and the load path
+reassembles them transparently.
+
+Source: [`packages/y-partykit/src/storage.ts`](https://raw.githubusercontent.com/partykit/partykit/main/packages/y-partykit/src/storage.ts)
+(in the `partykit/partykit` repo; the newer `cloudflare/partykit`
+`y-partyserver` package intentionally leaves persistence to the user and
+does not ship built-in storage).
 
 ### Cost model
 
@@ -118,23 +167,38 @@ This is the canonical Yjs persistence pattern (`y-leveldb`, `y-redis`, `y-sqlite
 - **B. Separate snapshot + updates tables.** Explicit separation between the snapshot and unsnapshotted increments.
 - **C. Single table with a `type` column** distinguishing snapshots from updates.
 
-### Decision: **A — Single table, uniform rows**
+### Decision: **A + C hybrid — Single table with a `kind` column**
 
 ```sql
 CREATE TABLE IF NOT EXISTS yjs_updates (
   seq        INTEGER PRIMARY KEY AUTOINCREMENT,
-  update     BLOB NOT NULL,
+  kind       TEXT NOT NULL DEFAULT 'update',
+  payload    BLOB NOT NULL,
   created_at INTEGER NOT NULL
 );
 ```
 
+`kind` is one of:
+- `'update'`: an independent Y.Doc update from `doc.on('update')`. Each row is a self-contained, individually-applyable update.
+- `'snapshot'`: a slice of a larger encoded snapshot from `Y.encodeStateAsUpdate(doc)`. A contiguous run of `'snapshot'` rows must be concatenated into one buffer before applying. Used during compaction (Decision 3) and migration (Decision 5) to handle documents that exceed the 2 MB per-row limit.
+
 ### Rationale
 
-- **Yjs treats them the same.** `Y.encodeStateAsUpdate(doc)` returns the same kind of bytes as a small diff. The CRDT does not care which is which, so the schema should not either.
-- **Compaction is just `DELETE then INSERT`** in one table. With option B you have to coordinate two tables and worry about ordering.
-- **It is how `y-leveldb` works.** Battle-tested across the Yjs ecosystem.
-- **Simpler load path:** one query, one loop.
+- **Yjs treats incrementals and full snapshots as the same byte format.** `Y.encodeStateAsUpdate(doc)` returns the same kind of bytes as a small diff. We exploit this for the load path: any single row can be applied with `Y.applyUpdate` directly, *unless* it's a snapshot chunk.
+- **Compaction is `DELETE then INSERT N rows`** in one table within `transactionSync`. Partial failure rolls back cleanly.
+- **The load path is one query plus a small state machine** that gathers consecutive snapshot chunks. ~30 lines of straightforward code.
+- **It mirrors the partykit pattern** (key-prefix range scan + concatenate), adapted for a SQL backend.
 - **`created_at` is cheap and useful** for debugging, time-based queries, and "last edit" diagnostics.
+
+### Why we did NOT use the original "uniform rows" approach (option A alone)
+
+The original design treated snapshots and updates identically, with no `kind`
+column. That design works only when an entire compacted snapshot fits in a
+single 2 MB row. For projects with ~100+ rich-comment checklists (~5 MB
+encoded), compaction would silently fail every time, and we'd accumulate
+unbounded `kind='update'` rows. Adding the `kind` column lets compaction
+*always* succeed regardless of snapshot size, at the cost of one TEXT column
+per row (negligible).
 
 ### Binding Uint8Array to BLOB columns
 
@@ -158,6 +222,89 @@ Reads return `ArrayBuffer` from BLOB columns; wrap with `new Uint8Array(ab)` bef
 - **No separate metadata table.** Anything we need (row count, last compaction, oldest row) is one cheap aggregate query against `yjs_updates`.
 - **No additional indexes.** `seq` is the primary key so ordering is already indexed.
 - **No `id` UUID column.** `seq` is monotonic and unique by definition.
+
+### Snapshot chunking
+
+Because a single SQL row is capped at 2 MB, an encoded snapshot that exceeds
+that size must be split across multiple rows. Chunk size is a constant:
+
+```typescript
+const SNAPSHOT_CHUNK_SIZE = 512 * 1024; // 512 KiB
+```
+
+512 KiB is well under the 2 MB cell limit (leaves ample headroom for the
+`kind`, `seq`, `created_at` columns). It's bigger than partykit's 128 KiB
+because SQL rows have lower per-row overhead than KV entries, and larger
+chunks mean fewer rows to scan during cold load.
+
+**Compaction path:**
+
+```typescript
+private writeSnapshotChunked(snapshot: Uint8Array): void {
+  const chunks = this.chunkSnapshot(snapshot); // slice by SNAPSHOT_CHUNK_SIZE
+  const now = Date.now();
+  this.ctx.storage.transactionSync(() => {
+    this.ctx.storage.sql.exec('DELETE FROM yjs_updates');
+    for (const chunk of chunks) {
+      this.ctx.storage.sql.exec(
+        "INSERT INTO yjs_updates (kind, payload, created_at) VALUES ('snapshot', ?, ?)",
+        uint8ArrayToBuffer(chunk),
+        now,
+      );
+    }
+  });
+}
+```
+
+Both DELETE and the N INSERTs happen in a single `transactionSync`. If any
+INSERT fails (e.g. a forced-failure test trigger), the whole transaction
+rolls back and the pre-compaction rows remain intact — the load path can
+still reconstruct the doc from the original updates.
+
+**Load path:**
+
+```typescript
+private loadUpdatesIntoDoc(): void {
+  const cursor = this.ctx.storage.sql.exec<{ kind: string; payload: ArrayBuffer }>(
+    'SELECT kind, payload FROM yjs_updates ORDER BY seq',
+  );
+
+  let snapshotChunks: Uint8Array[] = [];
+  const flushSnapshot = () => {
+    if (snapshotChunks.length === 0) return;
+    // Concatenate the chunks and apply as one update. Yjs guarantees this
+    // works because encodeStateAsUpdate produces a contiguous byte blob
+    // with no internal offsets, so slicing and reconcatenating preserves
+    // byte identity.
+    const combined = concat(snapshotChunks);
+    Y.applyUpdate(this.doc!, combined);
+    snapshotChunks = [];
+  };
+
+  for (const row of cursor) {
+    const bytes = new Uint8Array(row.payload);
+    if (row.kind === 'snapshot') {
+      snapshotChunks.push(bytes);
+    } else {
+      flushSnapshot();
+      Y.applyUpdate(this.doc!, bytes);
+    }
+  }
+  flushSnapshot();
+}
+```
+
+The load path walks rows in `seq` order:
+- `'update'` rows are applied individually
+- Contiguous runs of `'snapshot'` rows are gathered and applied as one update after the run ends
+
+The "contiguous run" design matters because after compaction, the table
+has the form `[snapshot, snapshot, ..., snapshot, update, update, ...]` —
+all snapshot chunks at the lowest seq values, all new incremental updates
+after. The load state machine naturally handles that shape with one
+buffer + one applyUpdate per snapshot + one applyUpdate per remaining update.
+
+**Foundation: byte-identical slice/concat.** This design relies on `Y.applyUpdate(concat(slice(encodeStateAsUpdate(doc), N, M) for each chunk))` producing the original doc. Verified directly against Yjs source in `src/utils/encoding.js` and covered by a foundation unit test ("Yjs encoding: slice/concat round-trip") that tests chunk sizes down to 1 byte to prove the varint decoder survives any boundary position.
 
 ---
 

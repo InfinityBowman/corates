@@ -486,7 +486,7 @@ describe('Project Invitation Routes - POST /api/orgs/:orgId/projects/:projectId/
   });
 
   it('should return error for invalid token', async () => {
-    const { project, org, owner } = await buildProject();
+    const { owner } = await buildProject();
 
     const res = await fetchAcceptInvitation({
       method: 'POST',
