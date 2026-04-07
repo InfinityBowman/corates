@@ -316,9 +316,7 @@ describe('ProjectDoc RPC Persistence', () => {
       // Timestamps populated
       expect(stats.timestamps.oldestRowAt).not.toBeNull();
       expect(stats.timestamps.newestRowAt).not.toBeNull();
-      expect(stats.timestamps.newestRowAt!).toBeGreaterThanOrEqual(
-        stats.timestamps.oldestRowAt!,
-      );
+      expect(stats.timestamps.newestRowAt!).toBeGreaterThanOrEqual(stats.timestamps.oldestRowAt!);
     });
 
     it('reports row breakdown by kind correctly after compaction', async () => {

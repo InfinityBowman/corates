@@ -456,7 +456,7 @@ function ProjectDetailPage() {
                 {/* Headline: encoded size + memory usage */}
                 <div className='grid grid-cols-1 gap-4 md:grid-cols-3'>
                   <div className='bg-muted/40 rounded-md p-4'>
-                    <dt className='text-muted-foreground text-xs font-medium uppercase tracking-wide'>
+                    <dt className='text-muted-foreground text-xs font-medium tracking-wide uppercase'>
                       Encoded Snapshot
                     </dt>
                     <dd className='text-foreground mt-1 text-2xl font-semibold'>
@@ -467,7 +467,7 @@ function ProjectDetailPage() {
                     </dd>
                   </div>
                   <div className='bg-muted/40 rounded-md p-4'>
-                    <dt className='text-muted-foreground text-xs font-medium uppercase tracking-wide'>
+                    <dt className='text-muted-foreground text-xs font-medium tracking-wide uppercase'>
                       Memory Usage
                     </dt>
                     <dd
@@ -486,15 +486,14 @@ function ProjectDetailPage() {
                     </dd>
                   </div>
                   <div className='bg-muted/40 rounded-md p-4'>
-                    <dt className='text-muted-foreground text-xs font-medium uppercase tracking-wide'>
+                    <dt className='text-muted-foreground text-xs font-medium tracking-wide uppercase'>
                       On-Disk Total
                     </dt>
                     <dd className='text-foreground mt-1 text-2xl font-semibold'>
                       {formatBytes(docStats.rows.totalBytes)}
                     </dd>
                     <dd className='text-muted-foreground mt-1 text-xs'>
-                      {docStats.rows.total} row{docStats.rows.total === 1 ? '' : 's'} in
-                      yjs_updates
+                      {docStats.rows.total} row{docStats.rows.total === 1 ? '' : 's'} in yjs_updates
                     </dd>
                   </div>
                 </div>
