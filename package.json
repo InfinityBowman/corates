@@ -26,7 +26,6 @@
     "format": "prettier --write .",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
-    "initialize-mcp": "pnpm --filter mcp run scrape:all",
     "test:ui": "pnpm --filter web test",
     "test": "pnpm --recursive run test",
     "typecheck": "pnpm --recursive run typecheck",

@@ -24,7 +24,6 @@ The project is split into multiple packages under the `packages/` directory:
 - `/web`: Frontend application built with React, TanStack Start, TanStack Router (deployed on Cloudflare Workers)
 - `/workers`: Backend services, API endpoints, and database migrations
 - `/shared`: Shared TypeScript utilities and error definitions
-- `/mcp`: MCP server for development tools and documentation
 - `/docs`: Vitepress docs site containing internal documentation
 
 The web package is the main frontend. It is deployed as a single Cloudflare Worker.
@@ -151,7 +150,7 @@ retries += 1;
 ## Documentation
 
 - **Primary source**: Comprehensive guides are in the docs site (`packages/docs/`) - run `pnpm docs` to view
-- **ALWAYS use Corates MCP tools or other MCP** for Better-Auth, Drizzle, Icons, and linting
+- **External library docs**: Prefer reading source from cloned upstream repos in the `reference/` directory over ad-hoc web fetches. If a library isn't there yet and you need its source, clone it in with `git clone --depth 20 https://github.com/owner/repo.git reference/repo`. This works better than MCP-style doc fetchers for deep questions.
 - **TanStack documentation**: Use the TanStack CLI: `npx @tanstack/cli search-docs "<query>" --library <router|start|query> --framework react --json`
 - **Hono documentation**: Use the `hono` CLI for Hono docs. Run `hono docs [path]` to view docs, `hono search <query>` to fuzzy search, or `hono --help` for all commands
 - **For comprehensive documentation**, see the docs site guides in `packages/docs/guides/`:

@@ -54,7 +54,6 @@ CoRATES is a web application designed to streamline the entire quality and risk-
 - **Build Orchestration**: Turbo
 - **Linting**: ESLint with custom CoRATES rules
 - **Code Format**: Prettier
-- **CoRATES MCP**: Custom MCP server for CoRATES specific AI tooling
 - **AI Compatible**: Claude plugins and skills, Cursor rules, and VS Code instructions
 - **Type Safety**: TypeScript with tsconfig.json path aliases
 
@@ -72,7 +71,6 @@ CoRATES is a web application designed to streamline the entire quality and risk-
 - `packages/ui` - Shared UI component library
 - `packages/shared` - Shared TypeScript utilities, types, and error definitions
 - `packages/docs` - Vitepress documentation and guides
-- `packages/mcp` - MCP server for development tools and documentation
 - `packages/stripe-dev` - Stripe setup for Turbo
 
 ## License

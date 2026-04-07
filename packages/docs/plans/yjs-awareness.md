@@ -75,4 +75,3 @@ Shows other users' cursor positions in shared editors.
 - [y-protocols sync](https://github.com/yjs/y-protocols/blob/master/sync.js)
 - [y-protocols awareness](https://github.com/yjs/y-protocols/blob/master/awareness.js)
 - [Yjs docs - Providers](https://docs.yjs.dev/ecosystem/connection-provider)
-- Use the CoRATES MCP tools for Yjs docs
