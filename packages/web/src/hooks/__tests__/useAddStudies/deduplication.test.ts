@@ -32,12 +32,8 @@ function nextId(prefix: string) {
 
 function buildDeduplicatedStudies(sources: PartialSources): MergedStudy[] {
   const filled = {
-    uploadedPdfs: sources.uploadedPdfs.map(
-      pdf => ({ id: nextId('pdf'), ...pdf }) as UploadedPdf,
-    ),
-    selectedRefs: sources.selectedRefs.map(
-      ref => ({ _id: nextId('ref'), ...ref }) as ImportedRef,
-    ),
+    uploadedPdfs: sources.uploadedPdfs.map(pdf => ({ id: nextId('pdf'), ...pdf }) as UploadedPdf),
+    selectedRefs: sources.selectedRefs.map(ref => ({ _id: nextId('ref'), ...ref }) as ImportedRef),
     selectedLookups: sources.selectedLookups.map(
       lookup => ({ _id: nextId('lookup'), ...lookup }) as LookupRef,
     ),
