@@ -223,4 +223,148 @@ describe('ProjectDoc RPC Persistence', () => {
       });
     });
   });
+
+  // ---------------------------------------------------------------------------
+  // getStorageStats: read-only RPC used by the admin dashboard
+  // ---------------------------------------------------------------------------
+  describe('getStorageStats', () => {
+    // Use a fresh project ID per test so we can assert exact row counts and
+    // content totals without bleed-over from sibling tests in the same file.
+    let statsProjectIdCounter = 0;
+
+    function getStatsStub() {
+      statsProjectIdCounter++;
+      const doName = `project:stats-test-${statsProjectIdCounter}`;
+      const id = env.PROJECT_DOC.idFromName(doName);
+      return env.PROJECT_DOC.get(id);
+    }
+
+    it('returns zero counts and zero bytes for an empty doc', async () => {
+      const stub = getStatsStub();
+      // Trigger initialization without making any logical changes. We call
+      // syncProject with an empty members list so the doc is initialised but
+      // no content lives inside it.
+      await stub.syncProject({ members: [] });
+
+      const stats = await stub.getStorageStats();
+
+      expect(stats.content.members).toBe(0);
+      expect(stats.content.studies).toBe(0);
+      expect(stats.content.checklists).toBe(0);
+      expect(stats.content.pdfs).toBe(0);
+      // The encoded snapshot of an "empty" doc is non-zero (it carries
+      // a state vector header) but it's tiny.
+      expect(stats.encodedSnapshotBytes).toBeGreaterThanOrEqual(0);
+      expect(stats.encodedSnapshotBytes).toBeLessThan(1024);
+      expect(stats.memoryUsagePercent).toBeLessThan(0.01);
+    });
+
+    it('returns correct content counts for a populated doc', async () => {
+      const stub = getStatsStub();
+
+      // Seed members
+      await stub.syncProject({
+        meta: { name: 'stats-populated' },
+        members: [
+          { userId: 'u1', role: 'owner', name: 'Owner', email: 'o@test.com' },
+          { userId: 'u2', role: 'member', name: 'Member 1', email: 'm1@test.com' },
+          { userId: 'u3', role: 'member', name: 'Member 2', email: 'm2@test.com' },
+        ],
+      });
+
+      // Seed two studies, each with a PDF
+      await stub.syncPdf({
+        action: 'add',
+        studyId: 'study-1',
+        studyName: 'Study 1',
+        pdf: {
+          key: 'r2-1',
+          fileName: 'paper-1.pdf',
+          size: 1024,
+          uploadedBy: 'u1',
+          uploadedAt: new Date().toISOString(),
+        },
+      });
+      await stub.syncPdf({
+        action: 'add',
+        studyId: 'study-2',
+        studyName: 'Study 2',
+        pdf: {
+          key: 'r2-2',
+          fileName: 'paper-2.pdf',
+          size: 2048,
+          uploadedBy: 'u1',
+          uploadedAt: new Date().toISOString(),
+        },
+      });
+
+      const stats = await stub.getStorageStats();
+
+      expect(stats.content.members).toBe(3);
+      expect(stats.content.studies).toBe(2);
+      expect(stats.content.pdfs).toBe(2);
+      // No checklists were added — syncPdf only creates the study + pdfs
+      expect(stats.content.checklists).toBe(0);
+
+      // Row totals should match what's in the table
+      expect(stats.rows.total).toBeGreaterThan(0);
+      expect(stats.rows.totalBytes).toBe(stats.rows.snapshotBytes + stats.rows.updateBytes);
+
+      // Encoded snapshot should be non-trivial since we have real content
+      expect(stats.encodedSnapshotBytes).toBeGreaterThan(50);
+
+      // Timestamps populated
+      expect(stats.timestamps.oldestRowAt).not.toBeNull();
+      expect(stats.timestamps.newestRowAt).not.toBeNull();
+      expect(stats.timestamps.newestRowAt!).toBeGreaterThanOrEqual(
+        stats.timestamps.oldestRowAt!,
+      );
+    });
+
+    it('reports row breakdown by kind correctly after compaction', async () => {
+      const stub = getStatsStub();
+
+      // Force a few rows to accumulate
+      for (let i = 0; i < 5; i++) {
+        await stub.syncMember('add', {
+          userId: `c${i}`,
+          role: 'member',
+          name: `C${i}`,
+          email: `c${i}@test.com`,
+        });
+      }
+
+      // Stats before compaction: should be all update rows
+      const beforeStats = await stub.getStorageStats();
+      expect(beforeStats.rows.update).toBeGreaterThan(0);
+      expect(beforeStats.rows.snapshot).toBe(0);
+
+      // Manually compact to produce snapshot rows
+      await runInDurableObject(stub, async (instance: ProjectDoc, _state) => {
+        (instance as unknown as { compact(): void }).compact();
+      });
+
+      const afterStats = await stub.getStorageStats();
+      expect(afterStats.rows.snapshot).toBeGreaterThan(0);
+      expect(afterStats.rows.update).toBe(0);
+      expect(afterStats.rows.total).toBe(afterStats.rows.snapshot);
+      // Content counts unchanged by compaction (compaction doesn't lose data)
+      expect(afterStats.content.members).toBe(beforeStats.content.members);
+    });
+
+    it('memoryUsagePercent is encoded size as a percentage of 128 MB', async () => {
+      const stub = getStatsStub();
+      await stub.syncMember('add', {
+        userId: 'mem-pct',
+        role: 'owner',
+        name: 'Pct Test',
+        email: 'p@test.com',
+      });
+
+      const stats = await stub.getStorageStats();
+      const expected = (stats.encodedSnapshotBytes / (128 * 1024 * 1024)) * 100;
+      // Allow tiny floating-point drift
+      expect(Math.abs(stats.memoryUsagePercent - expected)).toBeLessThan(1e-9);
+    });
+  });
 });

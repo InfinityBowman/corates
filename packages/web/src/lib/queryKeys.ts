@@ -64,6 +64,8 @@ export const queryKeys = {
       ['adminProjects', page, limit, search, orgId] as const,
     projectDetails: (projectId: string | null | undefined) =>
       ['adminProjectDetails', projectId] as const,
+    projectDocStats: (projectId: string | null | undefined) =>
+      ['adminProjectDocStats', projectId] as const,
     storageDocuments: (cursor: string | null, limit: number, prefix: string, search: string) =>
       ['storageDocuments', cursor, limit, prefix, search] as const,
     storageStats: ['storageStats'] as const,

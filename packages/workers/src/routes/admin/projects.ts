@@ -141,6 +141,35 @@ const SuccessResponseSchema = z
   })
   .openapi('AdminProjectSuccessResponse');
 
+// Mirrors `ProjectDocStorageStats` from ProjectDoc.ts. We define the
+// schema here rather than importing the type so this route file owns its
+// own contract — the underlying RPC method can return additional fields
+// without breaking the API surface, and Zod validation catches any drift.
+const ProjectDocStatsResponseSchema = z
+  .object({
+    rows: z.object({
+      total: z.number(),
+      snapshot: z.number(),
+      update: z.number(),
+      snapshotBytes: z.number(),
+      updateBytes: z.number(),
+      totalBytes: z.number(),
+    }),
+    encodedSnapshotBytes: z.number(),
+    memoryUsagePercent: z.number(),
+    content: z.object({
+      members: z.number(),
+      studies: z.number(),
+      checklists: z.number(),
+      pdfs: z.number(),
+    }),
+    timestamps: z.object({
+      oldestRowAt: z.number().nullable(),
+      newestRowAt: z.number().nullable(),
+    }),
+  })
+  .openapi('AdminProjectDocStatsResponse');
+
 // Route definitions
 const listProjectsRoute = createRoute({
   method: 'get',
@@ -231,6 +260,46 @@ const getProjectDetailsRoute = createRoute({
     },
     500: {
       description: 'Database error',
+      content: {
+        'application/json': {
+          schema: ErrorResponseSchema,
+        },
+      },
+    },
+  },
+});
+
+const getProjectDocStatsRoute = createRoute({
+  method: 'get',
+  path: '/projects/{projectId}/doc-stats',
+  tags: ['Admin - Projects'],
+  summary: 'Get project Y.Doc storage stats',
+  description:
+    'Returns DO SQLite row counts, byte totals, encoded snapshot size, and logical content counts for a single project. Used by the admin dashboard to surface storage growth and memory pressure. Admin only.',
+  request: {
+    params: z.object({
+      projectId: z.string().openapi({ description: 'Project ID', example: 'proj-123' }),
+    }),
+  },
+  responses: {
+    200: {
+      description: 'Project doc storage stats',
+      content: {
+        'application/json': {
+          schema: ProjectDocStatsResponseSchema,
+        },
+      },
+    },
+    404: {
+      description: 'Project not found',
+      content: {
+        'application/json': {
+          schema: ErrorResponseSchema,
+        },
+      },
+    },
+    500: {
+      description: 'Internal error',
       content: {
         'application/json': {
           schema: ErrorResponseSchema,
@@ -582,6 +651,48 @@ const projectRoutes = base
     } catch (err) {
       const error = err as Error;
       console.error('Error fetching admin project detail:', error);
+      const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
+        message: error.message,
+      });
+      return c.json(dbError, 500);
+    }
+  })
+
+  /**
+   * GET /api/admin/projects/:projectId/doc-stats
+   * Return DO storage stats (rows, byte totals, encoded snapshot size,
+   * memory usage %, and logical content counts) for a single project.
+   *
+   * This routes to the ProjectDoc DO and reads its in-memory state, so the
+   * DO is woken if it was hibernating. The 404 path checks D1 first to
+   * avoid waking a DO for a project that doesn't exist.
+   */
+  .openapi(getProjectDocStatsRoute, async c => {
+    const { projectId } = c.req.valid('param');
+    const db = createDb(c.env.DB);
+
+    try {
+      // Verify the project exists in D1 before touching the DO. Without
+      // this we'd wake a stub for any random ID and the DO would happily
+      // initialize an empty doc.
+      const [project] = await db
+        .select({ id: projects.id })
+        .from(projects)
+        .where(eq(projects.id, projectId))
+        .limit(1);
+
+      if (!project) {
+        const error = createDomainError(PROJECT_ERRORS.NOT_FOUND, { projectId });
+        return c.json(error, 404);
+      }
+
+      const { getProjectDocStub } = await import('@/lib/project-doc-id.js');
+      const projectDoc = getProjectDocStub(c.env, projectId);
+      const stats = await projectDoc.getStorageStats();
+      return c.json(stats, 200);
+    } catch (err) {
+      const error = err as Error;
+      console.error('Error fetching project doc stats:', error);
       const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
         message: error.message,
       });
