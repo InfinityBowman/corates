@@ -5,10 +5,27 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import * as Y from 'yjs';
 import 'fake-indexeddb/auto';
+import type * as DbModule from '../db.js';
+import type { ProjectRow } from '../db.js';
 
 // Reset the database before importing to get a fresh instance
-let db, deleteProjectData, clearAllData;
+let db: typeof DbModule.db;
+let deleteProjectData: typeof DbModule.deleteProjectData;
+let clearAllData: typeof DbModule.clearAllData;
+
+// ProjectRow requires a ydoc; tests only care about id/orgId/updatedAt,
+// so stub a fresh Y.Doc for each fixture.
+function projectFixture(overrides: Partial<ProjectRow>): ProjectRow {
+  return {
+    id: 'proj',
+    orgId: 'org',
+    updatedAt: Date.now(),
+    ydoc: new Y.Doc(),
+    ...overrides,
+  };
+}
 
 describe('db.js - Unified Dexie Database', () => {
   beforeEach(async () => {
@@ -62,24 +79,20 @@ describe('db.js - Unified Dexie Database', () => {
 
   describe('Projects Table', () => {
     it('should add and retrieve a project', async () => {
-      const project = {
-        id: 'proj-123',
-        orgId: 'org-456',
-        updatedAt: Date.now(),
-      };
+      const project = projectFixture({ id: 'proj-123', orgId: 'org-456' });
 
       await db.projects.add(project);
       const retrieved = await db.projects.get('proj-123');
 
-      expect(retrieved.id).toBe('proj-123');
-      expect(retrieved.orgId).toBe('org-456');
+      expect(retrieved?.id).toBe('proj-123');
+      expect(retrieved?.orgId).toBe('org-456');
     });
 
     it('should query projects by orgId', async () => {
       await db.projects.bulkAdd([
-        { id: 'proj-1', orgId: 'org-A', updatedAt: 1 },
-        { id: 'proj-2', orgId: 'org-A', updatedAt: 2 },
-        { id: 'proj-3', orgId: 'org-B', updatedAt: 3 },
+        projectFixture({ id: 'proj-1', orgId: 'org-A', updatedAt: 1 }),
+        projectFixture({ id: 'proj-2', orgId: 'org-A', updatedAt: 2 }),
+        projectFixture({ id: 'proj-3', orgId: 'org-B', updatedAt: 3 }),
       ]);
 
       const orgAProjects = await db.projects.where('orgId').equals('org-A').toArray();
@@ -104,10 +117,10 @@ describe('db.js - Unified Dexie Database', () => {
       await db.pdfs.add(pdfEntry);
       const retrieved = await db.pdfs.get('proj-1:study-1:test.pdf');
 
-      expect(retrieved.projectId).toBe('proj-1');
-      expect(retrieved.studyId).toBe('study-1');
-      expect(retrieved.fileName).toBe('test.pdf');
-      expect(retrieved.size).toBe(100);
+      expect(retrieved?.projectId).toBe('proj-1');
+      expect(retrieved?.studyId).toBe('study-1');
+      expect(retrieved?.fileName).toBe('test.pdf');
+      expect(retrieved?.size).toBe(100);
     });
 
     it('should query PDFs by projectId', async () => {
@@ -186,8 +199,8 @@ describe('db.js - Unified Dexie Database', () => {
 
   describe('deleteProjectData', () => {
     it('should delete project and associated PDFs', async () => {
-      await db.projects.add({ id: 'proj-to-delete', orgId: 'org-1', updatedAt: 1 });
-      await db.projects.add({ id: 'proj-to-keep', orgId: 'org-1', updatedAt: 2 });
+      await db.projects.add(projectFixture({ id: 'proj-to-delete', orgId: 'org-1', updatedAt: 1 }));
+      await db.projects.add(projectFixture({ id: 'proj-to-keep', orgId: 'org-1', updatedAt: 2 }));
 
       await db.pdfs.bulkAdd([
         {
@@ -233,7 +246,7 @@ describe('db.js - Unified Dexie Database', () => {
 
   describe('clearAllData', () => {
     it('should clear all session tables', async () => {
-      await db.projects.add({ id: 'p1', orgId: 'o1', updatedAt: 1 });
+      await db.projects.add(projectFixture({ id: 'p1', orgId: 'o1', updatedAt: 1 }));
       await db.pdfs.add({
         id: 'p1:s1:a.pdf',
         projectId: 'p1',

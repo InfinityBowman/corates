@@ -7,7 +7,16 @@
  */
 
 import { describe, it, expect, vi } from 'vitest';
-import { handleFormError, createFormErrorState } from '../form-errors.js';
+import { handleFormError as handleFormErrorStrict, createFormErrorState } from '../form-errors.js';
+
+// handleFormError only inspects `code`, `message`, and `details` at runtime.
+// Tests pass DomainError/TransportError/{} shapes; re-alias with an unknown
+// input to accept all of them without casting at each call site.
+const handleFormError = handleFormErrorStrict as (
+  error: unknown,
+  setFieldError: (field: string, message: string) => void,
+  setGlobalError: (message: string) => void,
+) => boolean;
 import {
   createDomainError,
   createValidationError,

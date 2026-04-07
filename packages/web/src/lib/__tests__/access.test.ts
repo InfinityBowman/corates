@@ -6,7 +6,15 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { isSubscriptionActive } from '../entitlements';
+import { isSubscriptionActive as isSubscriptionActiveStrict } from '../entitlements';
+import type { Subscription } from '@/hooks/useSubscription';
+
+// Tests deliberately pass partial subscription fixtures (and undefined) to
+// exercise defensive handling. The function only reads `status` and
+// `currentPeriodEnd`, so looser-typed access is safe within these tests.
+const isSubscriptionActive = isSubscriptionActiveStrict as (
+  subscription: Partial<Subscription> | null | undefined,
+) => boolean;
 
 describe('isSubscriptionActive', () => {
   beforeEach(() => {

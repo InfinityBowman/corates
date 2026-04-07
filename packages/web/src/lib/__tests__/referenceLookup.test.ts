@@ -19,10 +19,10 @@ global.fetch = mockFetch;
 
 // Mock DOMParser for PubMed XML parsing
 class MockDOMParser {
-  parseFromString(xmlText) {
+  parseFromString(xmlText: string) {
     // Simple mock that extracts some data from the XML
     const mockDoc = {
-      querySelector: vi.fn(selector => {
+      querySelector: vi.fn((selector: string) => {
         if (selector.includes('error') || selector.includes('ERROR')) {
           return null;
         }
@@ -42,7 +42,7 @@ class MockDOMParser {
     return mockDoc;
   }
 }
-global.DOMParser = MockDOMParser;
+global.DOMParser = MockDOMParser as unknown as typeof DOMParser;
 
 describe('parseIdentifiers', () => {
   it('should parse single identifier', () => {

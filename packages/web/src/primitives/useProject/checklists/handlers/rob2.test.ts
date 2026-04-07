@@ -41,9 +41,16 @@ function createMinimalTemplate() {
 }
 
 describe('ROB2Handler - answer changes should preserve Y.Text comments', () => {
-  let handler;
-  let doc;
-  let answersYMap;
+  let handler: ROB2Handler;
+  let doc: Y.Doc;
+  // Nested Y.Map with heterogeneous values (domain maps -> answer maps ->
+  // Y.Text fields). serializeAnswers() returns Record<string, unknown>; the
+  // tests mutate nested dynamic fields, so we interact via any inside the
+  // describe block.
+  let answersYMap: any;
+  // serializeAnswers's dynamic Record<string, unknown> return walks nested
+  // schema; tests reach into it by path, so mutations go through a cast.
+  type SerializedAnswers = Record<string, any>;
 
   beforeEach(() => {
     handler = new ROB2Handler();
@@ -59,7 +66,7 @@ describe('ROB2Handler - answer changes should preserve Y.Text comments', () => {
   });
 
   /** Get the Y.Text for a question's comment field */
-  function getCommentYText(domainKey, questionKey) {
+  function getCommentYText(domainKey: string, questionKey: string) {
     const domainMap = answersYMap.get(domainKey);
     const answersMap = domainMap.get('answers');
     const questionMap = answersMap.get(questionKey);
@@ -68,7 +75,7 @@ describe('ROB2Handler - answer changes should preserve Y.Text comments', () => {
 
   it('changing a different question answer should not wipe comments', () => {
     // Step 1: Serialize the initial state (this is what React state would hold)
-    const serialized = handler.serializeAnswers(answersYMap);
+    const serialized = handler.serializeAnswers(answersYMap) as SerializedAnswers;
     // serialized.domain1.answers.d1_1.comment === ''
 
     // Step 2: User types a comment on d1_1 via NoteEditor (directly modifies Y.Text)
@@ -95,7 +102,7 @@ describe('ROB2Handler - answer changes should preserve Y.Text comments', () => {
     });
 
     // Step 2: Serialize state (React snapshot: d1_1.answer='Y', d1_1.comment='')
-    const serialized = handler.serializeAnswers(answersYMap);
+    const serialized = handler.serializeAnswers(answersYMap) as SerializedAnswers;
 
     // Step 3: User types a comment on d1_1 via NoteEditor
     const d1_1Comment = getCommentYText('domain1', 'd1_1');
@@ -115,7 +122,7 @@ describe('ROB2Handler - answer changes should preserve Y.Text comments', () => {
 
   it('changing aim should not wipe preliminary text fields', () => {
     // Step 1: Serialize initial state (experimental = '')
-    const serialized = handler.serializeAnswers(answersYMap);
+    const serialized = handler.serializeAnswers(answersYMap) as SerializedAnswers;
 
     // Step 2: User types into the experimental field via NoteEditor
     const prelimMap = answersYMap.get('preliminary');

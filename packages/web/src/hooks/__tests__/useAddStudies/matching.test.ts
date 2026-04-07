@@ -177,14 +177,14 @@ describe('matching', () => {
         const entry = { doi: '10.1234/test2' };
         const result = findMatchingRef(entry, references);
         expect(result).toBeDefined();
-        expect(result.id).toBe('ref-2');
+        expect(result!.id).toBe('ref-2');
       });
 
       it('finds reference with matching DOI URL', () => {
         const entry = { doi: 'https://doi.org/10.1234/test1' };
         const result = findMatchingRef(entry, references);
         expect(result).toBeDefined();
-        expect(result.id).toBe('ref-1');
+        expect(result!.id).toBe('ref-1');
       });
 
       it('returns null when no DOI matches', () => {
@@ -199,14 +199,14 @@ describe('matching', () => {
         const entry = { title: 'Title Three' };
         const result = findMatchingRef(entry, references);
         expect(result).toBeDefined();
-        expect(result.id).toBe('ref-3');
+        expect(result!.id).toBe('ref-3');
       });
 
       it('finds reference with case-insensitive title match', () => {
         const entry = { title: 'TITLE ONE' };
         const result = findMatchingRef(entry, references);
         expect(result).toBeDefined();
-        expect(result.id).toBe('ref-1');
+        expect(result!.id).toBe('ref-1');
       });
 
       it('returns null when no title matches', () => {
@@ -230,7 +230,7 @@ describe('matching', () => {
         ];
         const entry = { doi: '10.1234/same' };
         const result = findMatchingRef(entry, duplicateRefs);
-        expect(result.id).toBe('ref-a');
+        expect(result!.id).toBe('ref-a');
       });
 
       it('respects filter parameter', () => {
@@ -249,7 +249,7 @@ describe('matching', () => {
         };
         const result = findMatchingRef(pdfMetadata, references);
         expect(result).toBeDefined();
-        expect(result.id).toBe('ref-4');
+        expect(result!.id).toBe('ref-4');
       });
 
       it('matches user input to reference library', () => {
@@ -259,7 +259,7 @@ describe('matching', () => {
         };
         const result = findMatchingRef(userInput, references);
         expect(result).toBeDefined();
-        expect(result.id).toBe('ref-2');
+        expect(result!.id).toBe('ref-2');
       });
     });
   });

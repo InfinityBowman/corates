@@ -5,7 +5,46 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { buildDeduplicatedStudies } from '../../useAddStudies/deduplication';
+import {
+  buildDeduplicatedStudies as buildDeduplicatedStudiesTyped,
+  type ImportedRef,
+  type LookupRef,
+  type UploadedPdf,
+  type DriveFile,
+  type MergedStudy,
+} from '../../useAddStudies/deduplication';
+
+// Test fixtures omit id/_id (not read by the deduplication logic) and pass
+// pdf data as strings for identity comparisons. This helper fills in the
+// required identifier fields and narrows back to the strict signature.
+interface PartialSources {
+  uploadedPdfs: Array<Partial<Omit<UploadedPdf, 'data'>> & { data?: unknown }>;
+  selectedRefs: Array<Partial<ImportedRef>>;
+  selectedLookups: Array<Partial<LookupRef>>;
+  driveFiles: DriveFile[];
+}
+
+let fixtureIdCounter = 0;
+function nextId(prefix: string) {
+  fixtureIdCounter += 1;
+  return `${prefix}-${fixtureIdCounter}`;
+}
+
+function buildDeduplicatedStudies(sources: PartialSources): MergedStudy[] {
+  const filled = {
+    uploadedPdfs: sources.uploadedPdfs.map(
+      pdf => ({ id: nextId('pdf'), ...pdf }) as UploadedPdf,
+    ),
+    selectedRefs: sources.selectedRefs.map(
+      ref => ({ _id: nextId('ref'), ...ref }) as ImportedRef,
+    ),
+    selectedLookups: sources.selectedLookups.map(
+      lookup => ({ _id: nextId('lookup'), ...lookup }) as LookupRef,
+    ),
+    driveFiles: sources.driveFiles,
+  };
+  return buildDeduplicatedStudiesTyped(filled);
+}
 
 describe('deduplication', () => {
   describe('buildDeduplicatedStudies', () => {

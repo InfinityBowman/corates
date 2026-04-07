@@ -5,12 +5,36 @@
  * Better Auth client internals are mocked.
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, vi, type Mock } from 'vitest';
 import 'fake-indexeddb/auto';
+import type { useAuthStore as UseAuthStore } from '@/stores/authStore';
+
+type AuthStore = typeof UseAuthStore;
+
+// better-auth's real authClient has ~50 generic-heavy methods (organizations,
+// admin, etc.); the vi.mock below only provides the handful the store touches.
+// Rather than recreate the full generic surface, tests work with this narrow
+// mock view of the client and use an `as unknown` cast at the assignment site
+// to bridge real-module types to mock surface.
+interface MockedAuthClient {
+  signUp: { email: Mock };
+  signIn: { email: Mock; social: Mock; oauth2: Mock; magicLink: Mock };
+  signOut: Mock;
+  updateUser: Mock;
+  changePassword: Mock;
+  requestPasswordReset: Mock;
+  resetPassword: Mock;
+  twoFactor: { enable: Mock; verifyTotp: Mock; disable: Mock };
+  sendVerificationEmail: Mock;
+}
+async function loadMockedAuthClient(): Promise<MockedAuthClient> {
+  const mod = await import('@/api/auth-client');
+  return mod.authClient as unknown as MockedAuthClient;
+}
 
 // Mock dependencies before importing the store
 vi.mock('@/api/auth-client', () => ({
-  async authFetch(call) {
+  async authFetch(call: Promise<{ data: unknown; error: { message?: string } | null }>) {
     const result = await call;
     if (result.error) {
       throw new Error(result.error.message || 'Auth request failed');
@@ -74,40 +98,47 @@ vi.mock('@/primitives/db.js', () => ({
 }));
 
 // Mock BroadcastChannel
-global.BroadcastChannel = vi.fn(function () {
-  this.postMessage = vi.fn();
-  this.addEventListener = vi.fn();
-  this.removeEventListener = vi.fn();
-  this.close = vi.fn();
-});
+class MockBroadcastChannel {
+  postMessage = vi.fn();
+  addEventListener = vi.fn();
+  removeEventListener = vi.fn();
+  close = vi.fn();
+}
+global.BroadcastChannel = MockBroadcastChannel as unknown as typeof BroadcastChannel;
 
 // Mock localStorage
 const localStorageMock = {
-  store: {},
-  getItem(key) {
-    return this.store[key] || null;
+  store: {} as Record<string, string>,
+  get length() {
+    return Object.keys(this.store).length;
   },
-  setItem(key, value) {
+  key(index: number): string | null {
+    return Object.keys(this.store)[index] ?? null;
+  },
+  getItem(key: string): string | null {
+    return this.store[key] ?? null;
+  },
+  setItem(key: string, value: string): void {
     this.store[key] = value.toString();
   },
-  removeItem(key) {
+  removeItem(key: string): void {
     delete this.store[key];
   },
-  clear() {
+  clear(): void {
     this.store = {};
   },
 };
 global.localStorage = localStorageMock;
 
 describe('authStore - Signup Flow', () => {
-  let authStore;
-  let authClient;
+  let authStore: AuthStore;
+  let authClient: MockedAuthClient;
 
   beforeEach(async () => {
     vi.clearAllMocks();
     localStorage.clear();
 
-    authClient = (await import('@/api/auth-client')).authClient;
+    authClient = await loadMockedAuthClient();
     const { useAuthStore } = await import('@/stores/authStore');
     authStore = useAuthStore;
 
@@ -166,16 +197,16 @@ describe('authStore - Signup Flow', () => {
 });
 
 describe('authStore - Signin Flow', () => {
-  let authStore;
-  let authClient;
-  let saveLastLoginMethod;
+  let authStore: AuthStore;
+  let authClient: MockedAuthClient;
+  let saveLastLoginMethod: ReturnType<typeof vi.mocked<(method: string) => void>>;
 
   beforeEach(async () => {
     vi.clearAllMocks();
     localStorage.clear();
 
-    authClient = (await import('@/api/auth-client')).authClient;
-    saveLastLoginMethod = (await import('@/lib/lastLoginMethod')).saveLastLoginMethod;
+    authClient = await loadMockedAuthClient();
+    saveLastLoginMethod = vi.mocked((await import('@/lib/lastLoginMethod')).saveLastLoginMethod);
 
     const { useAuthStore } = await import('@/stores/authStore');
     authStore = useAuthStore;
@@ -208,7 +239,9 @@ describe('authStore - Signin Flow', () => {
       error: null,
     });
 
-    const result = await authStore.getState().signin('test@example.com', 'password123');
+    const result = (await authStore.getState().signin('test@example.com', 'password123')) as {
+      twoFactorRequired: boolean;
+    };
 
     expect(result.twoFactorRequired).toBe(true);
   });
@@ -228,21 +261,25 @@ describe('authStore - Signin Flow', () => {
 });
 
 describe('authStore - Social Auth', () => {
-  let authStore;
-  let authClient;
-  let saveLastLoginMethod;
-  let LOGIN_METHODS;
+  let authStore: AuthStore;
+  let authClient: MockedAuthClient;
+  let saveLastLoginMethod: ReturnType<typeof vi.mocked<(method: string) => void>>;
+  let LOGIN_METHODS: typeof import('@/lib/lastLoginMethod').LOGIN_METHODS;
 
   beforeEach(async () => {
     vi.clearAllMocks();
 
-    authClient = (await import('@/api/auth-client')).authClient;
+    authClient = await loadMockedAuthClient();
     const lastLoginModule = await import('@/lib/lastLoginMethod');
-    saveLastLoginMethod = lastLoginModule.saveLastLoginMethod;
+    saveLastLoginMethod = vi.mocked(lastLoginModule.saveLastLoginMethod);
     LOGIN_METHODS = lastLoginModule.LOGIN_METHODS;
 
-    delete global.window.location;
-    global.window.location = { origin: 'http://localhost:5173' };
+    // window.location is read-only in the DOM lib types; casting is required
+    // to replace it with a minimal stub under jsdom.
+    delete (global.window as { location?: unknown }).location;
+    (global.window as { location: { origin: string } }).location = {
+      origin: 'http://localhost:5173',
+    };
 
     const { useAuthStore } = await import('@/stores/authStore');
     authStore = useAuthStore;
@@ -300,13 +337,13 @@ describe('authStore - Social Auth', () => {
 });
 
 describe('authStore - Signout', () => {
-  let authStore;
-  let authClient;
+  let authStore: AuthStore;
+  let authClient: MockedAuthClient;
 
   beforeEach(async () => {
     vi.clearAllMocks();
 
-    authClient = (await import('@/api/auth-client')).authClient;
+    authClient = await loadMockedAuthClient();
 
     const { useAuthStore } = await import('@/stores/authStore');
     authStore = useAuthStore;
@@ -334,15 +371,17 @@ describe('authStore - Signout', () => {
 });
 
 describe('authStore - Password Management', () => {
-  let authStore;
-  let authClient;
+  let authStore: AuthStore;
+  let authClient: MockedAuthClient;
 
   beforeEach(async () => {
     vi.clearAllMocks();
 
-    authClient = (await import('@/api/auth-client')).authClient;
+    authClient = await loadMockedAuthClient();
 
-    global.window.location = { origin: 'http://localhost:5173' };
+    (global.window as { location: { origin: string } }).location = {
+      origin: 'http://localhost:5173',
+    };
 
     const { useAuthStore } = await import('@/stores/authStore');
     authStore = useAuthStore;
@@ -404,13 +443,13 @@ describe('authStore - Password Management', () => {
 });
 
 describe('authStore - Two-Factor Authentication', () => {
-  let authStore;
-  let authClient;
+  let authStore: AuthStore;
+  let authClient: MockedAuthClient;
 
   beforeEach(async () => {
     vi.clearAllMocks();
 
-    authClient = (await import('@/api/auth-client')).authClient;
+    authClient = await loadMockedAuthClient();
 
     const { useAuthStore } = await import('@/stores/authStore');
     authStore = useAuthStore;
@@ -427,7 +466,11 @@ describe('authStore - Two-Factor Authentication', () => {
       error: null,
     });
 
-    const result = await authStore.getState().enableTwoFactor('myPassword123');
+    const result = (await authStore.getState().enableTwoFactor('myPassword123')) as {
+      totpURI: string;
+      secret: string;
+      backupCodes: string[];
+    };
 
     expect(authClient.twoFactor.enable).toHaveBeenCalledWith({
       password: 'myPassword123',
@@ -474,7 +517,9 @@ describe('authStore - Two-Factor Authentication', () => {
       error: null,
     });
 
-    const result = await authStore.getState().verifyTwoFactor('654321');
+    const result = (await authStore.getState().verifyTwoFactor('654321')) as {
+      user: { id: string; email: string };
+    };
 
     expect(authClient.twoFactor.verifyTotp).toHaveBeenCalledWith({
       code: '654321',
@@ -497,13 +542,13 @@ describe('authStore - Two-Factor Authentication', () => {
 });
 
 describe('authStore - Profile Management', () => {
-  let authStore;
-  let authClient;
+  let authStore: AuthStore;
+  let authClient: MockedAuthClient;
 
   beforeEach(async () => {
     vi.clearAllMocks();
 
-    authClient = (await import('@/api/auth-client')).authClient;
+    authClient = await loadMockedAuthClient();
 
     const { useAuthStore } = await import('@/stores/authStore');
     authStore = useAuthStore;
@@ -516,7 +561,9 @@ describe('authStore - Profile Management', () => {
       error: null,
     });
 
-    const result = await authStore.getState().updateProfile({ name: 'New Name' });
+    const result = (await authStore.getState().updateProfile({ name: 'New Name' })) as {
+      user: { id: string; name: string };
+    };
 
     expect(authClient.updateUser).toHaveBeenCalledWith({ name: 'New Name' });
     expect(result.user.name).toBe('New Name');
@@ -536,17 +583,17 @@ describe('authStore - Profile Management', () => {
 });
 
 describe('authStore - Account Deletion', () => {
-  let authStore;
-  let authClient;
+  let authStore: AuthStore;
+  let authClient: MockedAuthClient;
 
   beforeEach(async () => {
     vi.clearAllMocks();
     localStorage.clear();
 
-    authClient = (await import('@/api/auth-client')).authClient;
+    authClient = await loadMockedAuthClient();
     authClient.signOut.mockResolvedValue({ error: null });
 
-    global.fetch = vi.fn();
+    global.fetch = vi.fn() as unknown as typeof fetch;
 
     const { useAuthStore } = await import('@/stores/authStore');
     authStore = useAuthStore;
@@ -554,10 +601,10 @@ describe('authStore - Account Deletion', () => {
   });
 
   it('should delete account successfully', async () => {
-    global.fetch.mockResolvedValue({
+    vi.mocked(global.fetch).mockResolvedValue({
       ok: true,
       json: async () => ({ success: true }),
-    });
+    } as Response);
 
     localStorage.setItem('pendingEmail', 'test@example.com');
 
@@ -577,10 +624,10 @@ describe('authStore - Account Deletion', () => {
   });
 
   it('should handle account deletion errors', async () => {
-    global.fetch.mockResolvedValue({
+    vi.mocked(global.fetch).mockResolvedValue({
       ok: false,
       json: async () => ({ error: 'Deletion failed' }),
-    });
+    } as Response);
 
     await expect(authStore.getState().deleteAccount()).rejects.toThrow('Deletion failed');
     expect(authStore.getState().authError).toBe('Deletion failed');
@@ -588,7 +635,7 @@ describe('authStore - Account Deletion', () => {
 });
 
 describe('authStore - Utility Functions', () => {
-  let authStore;
+  let authStore: AuthStore;
 
   beforeEach(async () => {
     vi.clearAllMocks();
@@ -601,7 +648,7 @@ describe('authStore - Utility Functions', () => {
 
   it('should clear auth error', async () => {
     // Trigger an error first
-    const authClient = (await import('@/api/auth-client')).authClient;
+    const authClient = await loadMockedAuthClient();
     authClient.signIn.email.mockResolvedValue({
       data: null,
       error: { message: 'Test error' },

@@ -14,12 +14,18 @@
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
+import type { AMSTAR2Checklist, AMSTAR2Question } from '@corates/shared';
 import { createChecklist, scoreChecklist, getAnswers } from '../checklist.js';
+
+// AMSTAR2Checklist has a fixed keyset (q1..q16 plus q9a/b/q11a/b); the test
+// loops over question keys as strings, so treat the checklist as a keyed
+// record of AMSTAR2Question for those accesses.
+type KeyedChecklist = AMSTAR2Checklist & Record<string, AMSTAR2Question>;
 
 describe('createChecklist', () => {
   describe('validation', () => {
     it('should throw error when id is missing', () => {
-      expect(() => createChecklist({ name: 'Test' })).toThrow(
+      expect(() => createChecklist({ name: 'Test' } as any)).toThrow(
         'AMSTAR2Checklist requires a non-empty string id.',
       );
     });
@@ -37,7 +43,7 @@ describe('createChecklist', () => {
     });
 
     it('should throw error when name is missing', () => {
-      expect(() => createChecklist({ id: 'test-id' })).toThrow(
+      expect(() => createChecklist({ id: 'test-id' } as any)).toThrow(
         'AMSTAR2Checklist requires a non-empty string name.',
       );
     });
@@ -55,16 +61,16 @@ describe('createChecklist', () => {
     });
 
     it('should throw error when id is not a string', () => {
-      expect(() => createChecklist({ id: 123, name: 'Test' })).toThrow();
+      expect(() => createChecklist({ id: 123 as any, name: 'Test' })).toThrow();
     });
 
     it('should throw error when name is not a string', () => {
-      expect(() => createChecklist({ id: 'test-id', name: 123 })).toThrow();
+      expect(() => createChecklist({ id: 'test-id', name: 123 as any })).toThrow();
     });
   });
 
   describe('checklist structure', () => {
-    let checklist;
+    let checklist: AMSTAR2Checklist;
 
     beforeEach(() => {
       checklist = createChecklist({
@@ -128,10 +134,11 @@ describe('createChecklist', () => {
 
     expectedQuestions.forEach(q => {
       it(`should include question ${q}`, () => {
-        expect(checklist[q]).toBeDefined();
-        expect(checklist[q]).toHaveProperty('answers');
-        expect(checklist[q]).toHaveProperty('critical');
-        expect(Array.isArray(checklist[q].answers)).toBe(true);
+        const cl = checklist as KeyedChecklist;
+        expect(cl[q]).toBeDefined();
+        expect(cl[q]).toHaveProperty('answers');
+        expect(cl[q]).toHaveProperty('critical');
+        expect(Array.isArray(cl[q].answers)).toBe(true);
       });
     });
 
@@ -141,24 +148,24 @@ describe('createChecklist', () => {
 
     criticalQuestions.forEach(q => {
       it(`should mark ${q} as critical`, () => {
-        expect(checklist[q].critical).toBe(true);
+        expect((checklist as KeyedChecklist)[q].critical).toBe(true);
       });
     });
 
     nonCriticalQuestions.forEach(q => {
       it(`should mark ${q} as non-critical`, () => {
-        expect(checklist[q].critical).toBe(false);
+        expect((checklist as KeyedChecklist)[q].critical).toBe(false);
       });
     });
 
     it('should initialize all answers to false (no selection)', () => {
       // Check that answers are arrays of arrays with all false values
       // All answers should be initialized to false (no default selection)
+      const cl = checklist as KeyedChecklist;
       Object.keys(checklist).forEach(key => {
         if (!/^q\d+[a-z]*$/i.test(key)) return;
-        const question = checklist[key];
-        question.answers.forEach((col, _colIdx) => {
-          // All columns should have all false values by default
+        const question = cl[key];
+        question.answers.forEach(col => {
           const allFalse = col.every(v => v === false);
           expect(allFalse).toBe(true);
         });
@@ -169,14 +176,15 @@ describe('createChecklist', () => {
 
 describe('scoreChecklist', () => {
   // Helper to create a checklist with specific answers selected
-  function createScoredChecklist(selections) {
+  function createScoredChecklist(selections: Record<string, string>): AMSTAR2Checklist {
     const checklist = createChecklist({ id: 'test', name: 'Test' });
+    const cl = checklist as KeyedChecklist;
 
     // Apply selections - format: { q1: 'Yes', q2: 'No', ... }
     Object.entries(selections).forEach(([question, answer]) => {
-      if (!checklist[question]) return;
+      if (!cl[question]) return;
 
-      const answers = checklist[question].answers;
+      const answers = cl[question].answers;
       const lastCol = answers[answers.length - 1];
 
       // Reset last column to all false
@@ -184,7 +192,7 @@ describe('scoreChecklist', () => {
 
       // Set the appropriate answer
       // Most questions have [Yes, Partial Yes, No, No MA] or [Yes, No]
-      const answerMap = {
+      const answerMap: Record<string, number> = {
         Yes: 0,
         'Partial Yes': 1,
         No: lastCol.length === 2 ? 1 : 2,
@@ -203,15 +211,15 @@ describe('scoreChecklist', () => {
   }
 
   it('should return "Error" for null input', () => {
-    expect(scoreChecklist(null)).toBe('Error');
+    expect(scoreChecklist(null as unknown as AMSTAR2Checklist)).toBe('Error');
   });
 
   it('should return "Error" for undefined input', () => {
-    expect(scoreChecklist(undefined)).toBe('Error');
+    expect(scoreChecklist(undefined as unknown as AMSTAR2Checklist)).toBe('Error');
   });
 
   it('should return "Error" for non-object input', () => {
-    expect(scoreChecklist('not an object')).toBe('Error');
+    expect(scoreChecklist('not an object' as unknown as AMSTAR2Checklist)).toBe('Error');
   });
 
   it('should return "High" when all questions are Yes or Partial Yes', () => {
@@ -424,8 +432,9 @@ describe('scoreChecklist', () => {
       'q15',
       'q16',
     ];
+    const cl = checklist as KeyedChecklist;
     for (const q of otherQuestions) {
-      const lastCol = checklist[q].answers[checklist[q].answers.length - 1];
+      const lastCol = cl[q].answers[cl[q].answers.length - 1];
       lastCol.fill(false);
       lastCol[0] = true; // Yes
     }
@@ -459,8 +468,9 @@ describe('scoreChecklist', () => {
       'q15',
       'q16',
     ];
+    const cl = checklist as KeyedChecklist;
     for (const q of otherQuestions) {
-      const lastCol = checklist[q].answers[checklist[q].answers.length - 1];
+      const lastCol = cl[q].answers[cl[q].answers.length - 1];
       lastCol.fill(false);
       lastCol[0] = true; // Yes
     }
@@ -472,11 +482,11 @@ describe('scoreChecklist', () => {
 
 describe('getAnswers', () => {
   it('should return null for null input', () => {
-    expect(getAnswers(null)).toBe(null);
+    expect(getAnswers(null as unknown as AMSTAR2Checklist)).toBe(null);
   });
 
   it('should return null for non-object input', () => {
-    expect(getAnswers('string')).toBe(null);
+    expect(getAnswers('string' as unknown as AMSTAR2Checklist)).toBe(null);
   });
 
   it('should extract selected answers from all questions', () => {
@@ -489,7 +499,7 @@ describe('getAnswers', () => {
 
   it('should consolidate q9a and q9b into q9', () => {
     const checklist = createChecklist({ id: 'test', name: 'Test' });
-    const answers = getAnswers(checklist);
+    const answers = getAnswers(checklist)!;
 
     expect(answers.q9).toBeDefined();
     expect(answers.q9a).toBeUndefined();
@@ -498,7 +508,7 @@ describe('getAnswers', () => {
 
   it('should consolidate q11a and q11b into q11', () => {
     const checklist = createChecklist({ id: 'test', name: 'Test' });
-    const answers = getAnswers(checklist);
+    const answers = getAnswers(checklist)!;
 
     expect(answers.q11).toBeDefined();
     expect(answers.q11a).toBeUndefined();
@@ -514,7 +524,7 @@ describe('getAnswers', () => {
     // Set q9b to No (index 2 in last column for 4-option columns)
     checklist.q9b.answers[2] = [false, false, true, false];
 
-    const answers = getAnswers(checklist);
+    const answers = getAnswers(checklist)!;
     expect(answers.q9).toBe('No');
   });
 
@@ -525,7 +535,7 @@ describe('getAnswers', () => {
     checklist.q9a.answers[2] = [false, false, false, true];
     checklist.q9b.answers[2] = [false, false, false, true];
 
-    const answers = getAnswers(checklist);
+    const answers = getAnswers(checklist)!;
     expect(answers.q9).toBe('No MA');
   });
 
@@ -536,7 +546,7 @@ describe('getAnswers', () => {
     checklist.q9a.answers[2] = [true, false, false, false];
     checklist.q9b.answers[2] = [true, false, false, false];
 
-    const answers = getAnswers(checklist);
+    const answers = getAnswers(checklist)!;
     expect(answers.q9).toBe('Yes');
   });
 
@@ -547,7 +557,7 @@ describe('getAnswers', () => {
     checklist.q11a.answers[1] = [false, false, true]; // No MA
     checklist.q11b.answers[1] = [false, false, true]; // No MA
 
-    const answers = getAnswers(checklist);
+    const answers = getAnswers(checklist)!;
     expect(answers.q11).toBe('No MA');
   });
 
@@ -557,7 +567,7 @@ describe('getAnswers', () => {
     checklist.q11a.answers[1] = [false, true, false]; // No
     checklist.q11b.answers[1] = [true, false, false]; // Yes
 
-    const answers = getAnswers(checklist);
+    const answers = getAnswers(checklist)!;
     expect(answers.q11).toBe('No');
   });
 
@@ -567,7 +577,7 @@ describe('getAnswers', () => {
     checklist.q11a.answers[1] = [true, false, false]; // Yes
     checklist.q11b.answers[1] = [false, true, false]; // No
 
-    const answers = getAnswers(checklist);
+    const answers = getAnswers(checklist)!;
     expect(answers.q11).toBe('No');
   });
 
@@ -577,7 +587,7 @@ describe('getAnswers', () => {
     checklist.q11a.answers[1] = [true, false, false]; // Yes
     checklist.q11b.answers[1] = [true, false, false]; // Yes
 
-    const answers = getAnswers(checklist);
+    const answers = getAnswers(checklist)!;
     expect(answers.q11).toBe('Yes');
   });
 });

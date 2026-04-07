@@ -29,7 +29,7 @@ vi.mock('../embedPdfEngine.js', () => ({
 import { readFileAsArrayBuffer, extractPdfTitle, extractPdfDoi } from '../pdfUtils';
 
 // Recreate internal function for testing since it's not exported
-function cleanTitle(title) {
+function cleanTitle(title: string): string {
   return (
     title
       // Remove excessive whitespace
@@ -151,15 +151,17 @@ describe('readFileAsArrayBuffer', () => {
     const originalFileReader = globalThis.FileReader;
 
     class MockFileReader {
+      error: Error | null = null;
+      onerror: (() => void) | null = null;
       readAsArrayBuffer() {
         setTimeout(() => {
           this.error = new Error('Read failed');
-          this.onerror();
+          this.onerror?.();
         }, 0);
       }
     }
 
-    globalThis.FileReader = MockFileReader;
+    globalThis.FileReader = MockFileReader as unknown as typeof FileReader;
 
     const file = new File(['test'], 'test.txt');
 
