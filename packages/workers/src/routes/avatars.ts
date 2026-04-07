@@ -119,6 +119,14 @@ const uploadAvatarRoute = createRoute({
       },
       description: 'Unauthorized',
     },
+    413: {
+      content: {
+        'application/json': {
+          schema: ErrorResponseSchema,
+        },
+      },
+      description: 'Avatar exceeds maximum file size',
+    },
     500: {
       content: {
         'application/json': {

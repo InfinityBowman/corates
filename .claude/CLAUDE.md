@@ -81,6 +81,15 @@ pnpm logs             # View production worker logs
 - Each file should handle one coherent responsibility
 - Group related components in subdirectories with barrel exports
 
+### Static Assets and Edge Configuration
+
+Two files in `packages/web/public/` are consumed by Cloudflare Workers Static Assets at deploy time. They follow the Cloudflare Pages convention and are easy to miss because they are not TypeScript:
+
+- **`packages/web/public/_headers`** - Cache-Control rules and security headers (CSP, X-Frame-Options, Referrer-Policy, Permissions-Policy) applied to static responses. Update this when adding a new external domain (CSP `connect-src` / `script-src` / `img-src` / `font-src` / `style-src`), introducing a new asset type with custom cache requirements, or relaxing/tightening any security header. Test changes locally with `pnpm --filter web build && pnpm --filter web preview` before deploying.
+- **`packages/web/public/_redirects`** - 301 redirects for trailing-slash canonicalization on public routes. **When you add a new public marketing, legal, auth, or resources route, add a `/route/ /route 301` entry here.** Cloudflare Workers Static Assets emits a 307 (temporary) for trailing-slash variants by default, which causes search engines to repeatedly probe the slashed form and report it under "Page with redirect" in Google Search Console. The 301 rules in `_redirects` override that behavior so the slashed variant is permanently canonicalized.
+
+Both files are copied verbatim from `public/` to the build output by Vite. The build log will show `Parsed N valid redirect rules` and `Parsed N valid header rules` to confirm they were picked up.
+
 ### Libraries (MUST USE)
 
 - **Zod**: Schema and input validation (backend)
@@ -116,7 +125,7 @@ retries += 1;
 
 **When Not to Comment:**
 
-- Don't narrate what the code is doing — the code already says that
+- Don't narrate what the code is doing - the code already says that
 - Don't duplicate function or variable names in plain English
 - Don't leave stale comments that contradict the code
 - Don't reference removed or obsolete code paths (e.g. "No longer uses X format")

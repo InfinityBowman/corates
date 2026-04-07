@@ -19,12 +19,7 @@ import {
   organization,
 } from '@/db/schema';
 import { eq, and } from 'drizzle-orm';
-import {
-  createDomainError,
-  PROJECT_ERRORS,
-  AUTH_ERRORS,
-  VALIDATION_ERRORS,
-} from '@corates/shared';
+import { createDomainError, PROJECT_ERRORS, AUTH_ERRORS, VALIDATION_ERRORS } from '@corates/shared';
 import { syncMemberToDO } from '@/lib/project-sync';
 import { checkCollaboratorQuota } from '@/lib/quotaTransaction';
 import type { Env } from '@/types';
@@ -126,10 +121,7 @@ export async function acceptInvitation(
     .select({ id: projectMembers.id })
     .from(projectMembers)
     .where(
-      and(
-        eq(projectMembers.projectId, invitation.projectId),
-        eq(projectMembers.userId, actor.id),
-      ),
+      and(eq(projectMembers.projectId, invitation.projectId), eq(projectMembers.userId, actor.id)),
     )
     .get();
 
@@ -220,7 +212,10 @@ export async function acceptInvitation(
   // Post-insert quota race condition detection
   if (invitation.orgId) {
     const postInsertQuotaResult = await checkCollaboratorQuota(db, invitation.orgId);
-    if (!postInsertQuotaResult.allowed && postInsertQuotaResult.used > postInsertQuotaResult.limit) {
+    if (
+      !postInsertQuotaResult.allowed &&
+      postInsertQuotaResult.used > postInsertQuotaResult.limit
+    ) {
       console.warn(
         `[Invitation] Race condition detected: collaborator quota exceeded for org ${invitation.orgId}. ` +
           `Count: ${postInsertQuotaResult.used}, Limit: ${postInsertQuotaResult.limit}. ` +

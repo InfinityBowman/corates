@@ -170,12 +170,14 @@ export const useAuthStore = create<AuthState & AuthActions>()((set, get) => ({
   signup: async (email, password, name, role = null) => {
     try {
       set({ authError: null });
-      const data = await authFetch(authClient.signUp.email({
-        email,
-        password,
-        name,
-        ...(role ? { role } : {}),
-      } as Parameters<typeof authClient.signUp.email>[0]));
+      const data = await authFetch(
+        authClient.signUp.email({
+          email,
+          password,
+          name,
+          ...(role ? { role } : {}),
+        } as Parameters<typeof authClient.signUp.email>[0]),
+      );
 
       localStorage.setItem('pendingEmail', email);
       return data;
@@ -214,11 +216,13 @@ export const useAuthStore = create<AuthState & AuthActions>()((set, get) => ({
 
       saveLastLoginMethod(LOGIN_METHODS.GOOGLE);
 
-      const data = await authFetch(authClient.signIn.social({
-        provider: 'google',
-        callbackURL,
-        errorCallbackURL: errorURL,
-      }));
+      const data = await authFetch(
+        authClient.signIn.social({
+          provider: 'google',
+          callbackURL,
+          errorCallbackURL: errorURL,
+        }),
+      );
       return data;
     } catch (err) {
       set({ authError: (err as Error).message });
@@ -236,11 +240,13 @@ export const useAuthStore = create<AuthState & AuthActions>()((set, get) => ({
 
       saveLastLoginMethod(LOGIN_METHODS.ORCID);
 
-      const data = await authFetch(authClient.signIn.oauth2({
-        providerId: 'orcid',
-        callbackURL,
-        errorCallbackURL: errorURL,
-      }));
+      const data = await authFetch(
+        authClient.signIn.oauth2({
+          providerId: 'orcid',
+          callbackURL,
+          errorCallbackURL: errorURL,
+        }),
+      );
       return data;
     } catch (err) {
       set({ authError: (err as Error).message });
@@ -303,10 +309,12 @@ export const useAuthStore = create<AuthState & AuthActions>()((set, get) => ({
     try {
       set({ authError: null });
       const base = (BASEPATH || '').replace(/\/$/, '');
-      await authFetch(authClient.requestPasswordReset({
-        email,
-        redirectTo: `${window.location.origin}${base}/reset-password`,
-      }));
+      await authFetch(
+        authClient.requestPasswordReset({
+          email,
+          redirectTo: `${window.location.origin}${base}/reset-password`,
+        }),
+      );
     } catch (err) {
       set({ authError: (err as Error).message });
       throw err;
@@ -326,10 +334,12 @@ export const useAuthStore = create<AuthState & AuthActions>()((set, get) => ({
   resendVerificationEmail: async email => {
     try {
       set({ authError: null });
-      await authFetch(authClient.$fetch('/send-verification-email', {
-        method: 'POST',
-        body: { email },
-      }));
+      await authFetch(
+        authClient.$fetch('/send-verification-email', {
+          method: 'POST',
+          body: { email },
+        }),
+      );
     } catch (err) {
       set({ authError: (err as Error).message || 'Failed to resend verification email' });
       throw err;

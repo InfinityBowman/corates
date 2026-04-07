@@ -190,6 +190,5 @@ describe('Payment Intent Handlers', () => {
         }),
       );
     });
-
   });
 });

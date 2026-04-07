@@ -1,0 +1,29 @@
+# Trailing-slash 301 redirects for SEO canonicalization.
+#
+# Cloudflare Workers Static Assets emits HTTP 307 for trailing-slash redirects
+# (both via html_handling: drop-trailing-slash on prerendered routes and via
+# the SSR fall-through on dynamic routes). Search engines treat 307 as
+# "temporary, keep checking the original URL" and repeatedly probe the
+# slashed variant, surfacing it under "Page with redirect" in GSC.
+#
+# These rules force 301 (permanent) so search engines collapse the slashed
+# form into the canonical no-slash form and stop revisiting it.
+#
+# This list mirrors the public marketing, legal, auth, and resources routes.
+# Authenticated app routes are intentionally omitted: they should be noindex'd
+# and the 307 there has no SEO impact.
+#
+# When adding a new public route, add the trailing-slash entry here too.
+
+/about/                /about                 301
+/contact/              /contact               301
+/pricing/              /pricing               301
+/privacy/              /privacy               301
+/resources/            /resources             301
+/resources/amstar2/    /resources/amstar2     301
+/resources/rob2/       /resources/rob2        301
+/resources/robins-i/   /resources/robins-i    301
+/security/             /security              301
+/signin/               /signin                301
+/signup/               /signup                301
+/terms/                /terms                 301
