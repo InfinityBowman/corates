@@ -5,8 +5,15 @@
 import { describe, it, expect } from 'vitest';
 import { validatePdfFile, PDF_LIMITS, formatFileSize } from '../pdfValidation.js';
 
+interface MockFileOptions {
+  name?: string;
+  type?: string;
+  size?: number;
+  content?: string | null;
+}
+
 // Helper to create a mock File with specific properties
-function createMockFile(options = {}) {
+function createMockFile(options: MockFileOptions = {}): File {
   const { name = 'test.pdf', type = 'application/pdf', size = 1024, content = null } = options;
 
   // Create actual PDF-like content or custom content
@@ -160,7 +167,9 @@ describe('validatePdfFile', () => {
 
       const result = await validatePdfFile(file);
       expect(result.valid).toBe(false);
-      expect(result.error).toBe('INVALID_PDF_SIGNATURE');
+      if (!result.valid) {
+        expect(result.error).toBe('INVALID_PDF_SIGNATURE');
+      }
     });
   });
 

@@ -29,8 +29,8 @@ describe('avatarCache', () => {
     });
 
     it('returns null for null/undefined userId', async () => {
-      expect(await getCachedAvatar(null)).toBeNull();
-      expect(await getCachedAvatar(undefined)).toBeNull();
+      expect(await getCachedAvatar(null as unknown as string)).toBeNull();
+      expect(await getCachedAvatar(undefined as unknown as string)).toBeNull();
     });
 
     it('overwrites existing avatar', async () => {

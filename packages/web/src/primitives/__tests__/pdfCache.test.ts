@@ -25,8 +25,8 @@ describe('pdfCache', () => {
 
       const retrieved = await getCachedPdf('project-1', 'study-1', 'test.pdf');
       expect(retrieved).not.toBeNull();
-      expect(retrieved.byteLength).toBe(100);
-      expect(new Uint8Array(retrieved)[0]).toBe(42);
+      expect(retrieved!.byteLength).toBe(100);
+      expect(new Uint8Array(retrieved!)[0]).toBe(42);
     });
 
     it('returns null for non-existent cache entry', async () => {
@@ -45,8 +45,8 @@ describe('pdfCache', () => {
       await cachePdf('project-1', 'study-1', 'test.pdf', data2);
 
       const retrieved = await getCachedPdf('project-1', 'study-1', 'test.pdf');
-      expect(retrieved.byteLength).toBe(200);
-      expect(new Uint8Array(retrieved)[0]).toBe(2);
+      expect(retrieved!.byteLength).toBe(200);
+      expect(new Uint8Array(retrieved!)[0]).toBe(2);
     });
 
     it('rejects files exceeding single file limit', async () => {

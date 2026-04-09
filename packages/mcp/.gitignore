@@ -1,6 +1,0 @@
-dist/
-node_modules/
-*.tsbuildinfo
-zag-docs
-icon-manifest.json
-zag-manifest.json

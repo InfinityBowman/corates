@@ -12,15 +12,53 @@
 
 import { describe, it, expect } from 'vitest';
 import {
-  compareChecklists,
+  compareChecklists as compareChecklistsStrict,
   compareQuestion,
-  getFinalAnswer,
-  answersMatch,
-  createReconciledChecklist,
-  getReconciliationSummary,
+  getFinalAnswer as getFinalAnswerStrict,
+  answersMatch as answersMatchStrict,
+  createReconciledChecklist as createReconciledChecklistStrict,
+  getReconciliationSummary as getReconciliationSummaryStrict,
   getQuestionKeys,
 } from '../checklist-compare.js';
 import { createChecklist } from '../checklist.js';
+import type { AMSTAR2Checklist } from '@corates/shared';
+
+// Tests pass null inputs and partial ComparisonResult fixtures to verify
+// defensive handling; rather than fabricate full typed fixtures, re-alias
+// the functions with looser input types that cover the test cases.
+// getReconciliationSummary only reads `disagreements[*].reviewer{1,2}.critical`
+// and lengths, so we can pass a trimmed-down shape.
+interface LooseComparison {
+  agreements: Array<{ key: string }>;
+  disagreements: Array<{
+    key: string;
+    reviewer1?: { critical?: boolean };
+    reviewer2?: { critical?: boolean };
+  }>;
+  stats: { total: number; agreed: number; disagreed: number; agreementRate: number };
+}
+
+const compareChecklists = compareChecklistsStrict as (
+  c1: AMSTAR2Checklist | null,
+  c2: AMSTAR2Checklist | null,
+) => ReturnType<typeof compareChecklistsStrict>;
+const getFinalAnswer = getFinalAnswerStrict as (
+  answers: boolean[][] | null,
+  questionKey: string,
+) => ReturnType<typeof getFinalAnswerStrict>;
+const answersMatch = answersMatchStrict as (
+  a1: boolean[][] | null,
+  a2: boolean[][] | null,
+) => boolean;
+const createReconciledChecklist = createReconciledChecklistStrict as (
+  c1: AMSTAR2Checklist,
+  c2: AMSTAR2Checklist,
+  selections: Record<string, 'reviewer1' | 'reviewer2'>,
+  opts?: { name?: string; id?: string; reviewerName?: string; createdAt?: string },
+) => AMSTAR2Checklist & { sourceChecklists: string[] };
+const getReconciliationSummary = getReconciliationSummaryStrict as (
+  comparison: LooseComparison,
+) => ReturnType<typeof getReconciliationSummaryStrict>;
 
 describe('getQuestionKeys', () => {
   it('should return all question keys from the checklist map', () => {
@@ -239,8 +277,8 @@ describe('createReconciledChecklist', () => {
     cl2.q1.answers[2] = [false, true]; // No
 
     const selections = {
-      q1: 'reviewer2', // Use reviewer 2's answer for q1
-      q2: 'reviewer1', // Use reviewer 1's answer for q2
+      q1: 'reviewer2' as const, // Use reviewer 2's answer for q1
+      q2: 'reviewer1' as const, // Use reviewer 1's answer for q2
     };
 
     const reconciled = createReconciledChecklist(cl1, cl2, selections, {

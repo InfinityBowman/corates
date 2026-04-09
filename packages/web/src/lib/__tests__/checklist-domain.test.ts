@@ -158,7 +158,7 @@ describe('checklist-domain', () => {
         ],
       });
       const result = getFinalizedChecklist(study);
-      expect(result.id).toBe('cl-2');
+      expect(result!.id).toBe('cl-2');
     });
 
     it('returns any finalized checklist if no reconciled', () => {
@@ -172,7 +172,7 @@ describe('checklist-domain', () => {
         ],
       });
       const result = getFinalizedChecklist(study);
-      expect(result.id).toBe('cl-1');
+      expect(result!.id).toBe('cl-1');
     });
 
     it('returns null when no finalized checklist exists', () => {
@@ -452,7 +452,7 @@ describe('checklist-domain', () => {
         ],
       });
       const result = findReconciledChecklist(study);
-      expect(result.id).toBe('cl-2');
+      expect(result!.id).toBe('cl-2');
     });
 
     it('excludes specified checklist id', () => {
@@ -463,7 +463,7 @@ describe('checklist-domain', () => {
         ],
       });
       const result = findReconciledChecklist(study, 'cl-1');
-      expect(result.id).toBe('cl-2');
+      expect(result!.id).toBe('cl-2');
     });
 
     it('returns null when no reconciled checklist exists', () => {
@@ -707,7 +707,9 @@ describe('computeProjectStats - status matching', () => {
       {
         id: 'study-1',
         name: 'Test Study',
-        checklists: [{ id: 'cl-1', type: 'AMSTAR2', status: CHECKLIST_STATUS.IN_PROGRESS }],
+        checklists: [
+          { id: 'cl-1', type: 'AMSTAR2', status: CHECKLIST_STATUS.IN_PROGRESS as string },
+        ],
       },
     ];
 

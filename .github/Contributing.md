@@ -21,7 +21,6 @@ This is a pnpm monorepo with the following packages:
 | `packages/workers` | Cloudflare Workers backend (Hono)      |
 | `packages/ui`      | Shared UI component library            |
 | `packages/shared`  | Shared error definitions and utilities |
-| `packages/mcp`     | MCP server for AI agent integration    |
 
 ## Quick Start
 
@@ -149,25 +148,10 @@ pnpm openapi
 
 For secured endpoints, sign in via the frontend first (http://localhost:3010). The API docs will use your authenticated session.
 
-## MCP Server (AI Agent Integration)
+## AI Agent Integration
 
 This repository is optimized for AI agent workflows. It includes copilot-instructions, claude instructions, and cursor instructions.
-If asked to create a plan file, agents will create them in docs/plans
-This project includes a custom MCP server for AI agent context:
-
-```sh
-pnpm run initialize-mcp
-
-# In VS Code:
-# 1. Press Cmd+Shift+P or Ctrl+Shift+P
-# 2. Type "MCP: List Servers"
-# 3. Find 'corates' and start it
-
-# In Cursor:
-# 1. Press Cmd+Shift+P or Ctrl+Shift+P
-# 2. Type "Open MCP Settings"
-# 3. Find 'corates' and start it if it has not been found and started already
-```
+If asked to create a plan file, agents will create them in `packages/docs/audits`.
 
 ## Useful Commands
 

@@ -7,9 +7,14 @@ import {
   JUDGEMENTS,
 } from '../scoring/robins-scoring.js';
 
+// Judgement is the typeof values in JUDGEMENTS (not exported from the web
+// re-export wrapper, but derivable here).
+type Judgement = (typeof JUDGEMENTS)[keyof typeof JUDGEMENTS];
+
 // Helper to create answer objects
-const ans = answer => ({ answer, comment: '' });
-const answers = obj => Object.fromEntries(Object.entries(obj).map(([k, v]) => [k, ans(v)]));
+const ans = (answer: string | null) => ({ answer, comment: '' });
+const answers = (obj: Record<string, string | null>) =>
+  Object.fromEntries(Object.entries(obj).map(([k, v]) => [k, ans(v)]));
 
 describe('scoreRobinsDomain', () => {
   describe('Domain 1A (ITT - Confounding)', () => {
@@ -853,22 +858,29 @@ describe('scoreRobinsDomain', () => {
 });
 
 describe('getEffectiveDomainJudgement', () => {
+  // Helper: fill in the boilerplate ScoringResult fields not exercised here.
+  const score = (judgement: Judgement) => ({ judgement, isComplete: true, ruleId: null });
+
   it('returns auto judgement when source is auto', () => {
-    const domainState = { judgementSource: 'auto', judgement: null };
-    const autoScore = { judgement: JUDGEMENTS.MODERATE };
-    expect(getEffectiveDomainJudgement(domainState, autoScore)).toBe(JUDGEMENTS.MODERATE);
+    const domainState = { judgementSource: 'auto' as const, judgement: null };
+    expect(getEffectiveDomainJudgement(domainState, score(JUDGEMENTS.MODERATE))).toBe(
+      JUDGEMENTS.MODERATE,
+    );
   });
 
   it('returns manual judgement when source is manual and judgement exists', () => {
-    const domainState = { judgementSource: 'manual', judgement: JUDGEMENTS.SERIOUS };
-    const autoScore = { judgement: JUDGEMENTS.LOW };
-    expect(getEffectiveDomainJudgement(domainState, autoScore)).toBe(JUDGEMENTS.SERIOUS);
+    const domainState = {
+      judgementSource: 'manual' as const,
+      judgement: JUDGEMENTS.SERIOUS,
+    };
+    expect(getEffectiveDomainJudgement(domainState, score(JUDGEMENTS.LOW))).toBe(
+      JUDGEMENTS.SERIOUS,
+    );
   });
 
   it('falls back to auto when manual but no judgement set', () => {
-    const domainState = { judgementSource: 'manual', judgement: null };
-    const autoScore = { judgement: JUDGEMENTS.LOW };
-    expect(getEffectiveDomainJudgement(domainState, autoScore)).toBe(JUDGEMENTS.LOW);
+    const domainState = { judgementSource: 'manual' as const, judgement: null };
+    expect(getEffectiveDomainJudgement(domainState, score(JUDGEMENTS.LOW))).toBe(JUDGEMENTS.LOW);
   });
 });
 

@@ -50,33 +50,6 @@ updates:
           - '*'
         dependency-type: 'development'
 
-  # MCP package
-  - package-ecosystem: 'npm'
-    directory: '/packages/mcp'
-    schedule:
-      interval: 'weekly'
-      day: 'monday'
-      time: '09:00'
-    open-pull-requests-limit: 3
-    labels:
-      - 'dependencies'
-      - 'mcp'
-    versioning-strategy: increase
-    commit-message:
-      prefix: 'chore'
-      prefix-development: 'chore'
-      include: 'scope'
-    rebase-strategy: 'auto'
-    groups:
-      mcp-dependencies:
-        patterns:
-          - '*'
-        dependency-type: 'production'
-      mcp-dev-dependencies:
-        patterns:
-          - '*'
-        dependency-type: 'development'
-
   # Shared package
   - package-ecosystem: 'npm'
     directory: '/packages/shared'

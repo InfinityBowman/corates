@@ -92,7 +92,6 @@ This document tracks the current implementation status of CoRATES features and s
 | --------------- | -------- | ----------------------------- |
 | @corates/ui     | Complete | Ark UI wrappers (re-exports)  |
 | @corates/shared | Complete | Error types, plan definitions |
-| @corates/mcp    | Complete | Development MCP tools         |
 
 ---
 

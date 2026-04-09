@@ -7,8 +7,8 @@ import * as Y from 'yjs';
 import { ROBINSIHandler } from './robins-i.js';
 
 describe('ROBINSIHandler - comment field Y.Text handling', () => {
-  let handler;
-  let doc;
+  let handler: ROBINSIHandler;
+  let doc: Y.Doc;
 
   beforeEach(() => {
     handler = new ROBINSIHandler();
@@ -20,7 +20,7 @@ describe('ROBINSIHandler - comment field Y.Text handling', () => {
       const questionYMap = doc.getMap('question');
       handler.setYTextField(questionYMap, 'comment', 'New comment');
 
-      const comment = questionYMap.get('comment');
+      const comment = questionYMap.get('comment') as Y.Text;
       expect(comment).toBeInstanceOf(Y.Text);
       expect(comment.toString()).toBe('New comment');
     });
@@ -33,7 +33,7 @@ describe('ROBINSIHandler - comment field Y.Text handling', () => {
 
       handler.setYTextField(questionYMap, 'comment', 'Updated comment');
 
-      const comment = questionYMap.get('comment');
+      const comment = questionYMap.get('comment') as Y.Text;
       expect(comment).toBe(existingText);
       expect(comment.toString()).toBe('Updated comment');
     });
@@ -44,7 +44,7 @@ describe('ROBINSIHandler - comment field Y.Text handling', () => {
 
       handler.setYTextField(questionYMap, 'comment', 'New comment');
 
-      const comment = questionYMap.get('comment');
+      const comment = questionYMap.get('comment') as Y.Text;
       expect(comment).toBeInstanceOf(Y.Text);
       expect(comment.toString()).toBe('New comment');
     });
@@ -57,7 +57,7 @@ describe('ROBINSIHandler - comment field Y.Text handling', () => {
 
       handler.setYTextField(questionYMap, 'comment', null);
 
-      const comment = questionYMap.get('comment');
+      const comment = questionYMap.get('comment') as Y.Text;
       expect(comment).toBeInstanceOf(Y.Text);
       expect(comment.toString()).toBe('');
       expect(comment).toBe(existingText);

@@ -1,9 +1,0 @@
-{
-  "mcpServers": {
-    "corates": {
-      "type": "stdio",
-      "command": "node",
-      "args": ["packages/mcp/dist/server.js"]
-    }
-  }
-}

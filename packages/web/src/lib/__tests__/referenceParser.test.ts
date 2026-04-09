@@ -3,7 +3,13 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { parseRIS, parseBibTeX, parseReferences, getRefDisplayName } from '../referenceParser.js';
+import {
+  parseRIS,
+  parseBibTeX,
+  parseReferences,
+  getRefDisplayName,
+  type NormalizedReference,
+} from '../referenceParser.js';
 
 describe('referenceParser', () => {
   describe('parseRIS', () => {
@@ -147,23 +153,25 @@ ER  - `;
   });
 
   describe('getRefDisplayName', () => {
+    // getRefDisplayName only reads firstAuthor/publicationYear; partial fixtures
+    // are fine in tests — cast to satisfy the strict NormalizedReference contract.
     it('formats author and year correctly', () => {
-      const ref = { firstAuthor: 'Smith', publicationYear: 2023 };
+      const ref = { firstAuthor: 'Smith', publicationYear: 2023 } as unknown as NormalizedReference;
       expect(getRefDisplayName(ref)).toBe('Smith (2023)');
     });
 
     it('handles missing author', () => {
-      const ref = { firstAuthor: null, publicationYear: 2023 };
+      const ref = { firstAuthor: null, publicationYear: 2023 } as unknown as NormalizedReference;
       expect(getRefDisplayName(ref)).toBe('Unknown (2023)');
     });
 
     it('handles missing year', () => {
-      const ref = { firstAuthor: 'Smith', publicationYear: null };
+      const ref = { firstAuthor: 'Smith', publicationYear: null } as unknown as NormalizedReference;
       expect(getRefDisplayName(ref)).toBe('Smith (n.d.)');
     });
 
     it('handles both missing', () => {
-      const ref = {};
+      const ref = {} as unknown as NormalizedReference;
       expect(getRefDisplayName(ref)).toBe('Unknown (n.d.)');
     });
   });

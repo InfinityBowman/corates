@@ -6,13 +6,39 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import {
-  isSubscriptionActive,
-  getEffectiveEntitlements,
-  getEffectiveQuotas,
-  hasEntitlement,
-  hasQuota,
-} from '../entitlements';
+import * as entitlementsModule from '../entitlements';
+import type { Subscription } from '@/hooks/useSubscription';
+
+// Tests deliberately pass partial subscription fixtures (and undefined) to
+// exercise defensive handling. The production functions only read `status`
+// and `currentPeriodEnd` off the subscription, so we re-alias them here with
+// a looser input type rather than sprinkling casts across every call site.
+// currentPeriodEnd is widened to string|number to cover the "handles string
+// timestamp conversion" test case.
+type PartialSubscription =
+  | (Omit<Partial<Subscription>, 'currentPeriodEnd'> & {
+      currentPeriodEnd?: number | string | null;
+    })
+  | null
+  | undefined;
+const isSubscriptionActive = entitlementsModule.isSubscriptionActive as (
+  subscription: PartialSubscription,
+) => boolean;
+const getEffectiveEntitlements = entitlementsModule.getEffectiveEntitlements as (
+  subscription: PartialSubscription,
+) => ReturnType<typeof entitlementsModule.getEffectiveEntitlements>;
+const getEffectiveQuotas = entitlementsModule.getEffectiveQuotas as (
+  subscription: PartialSubscription,
+) => ReturnType<typeof entitlementsModule.getEffectiveQuotas>;
+const hasEntitlement = entitlementsModule.hasEntitlement as (
+  subscription: PartialSubscription,
+  entitlement: string,
+) => boolean;
+const hasQuota = entitlementsModule.hasQuota as (
+  subscription: PartialSubscription,
+  quotaKey: string,
+  usage: { used: number; requested?: number },
+) => boolean;
 
 describe('entitlements', () => {
   beforeEach(() => {
