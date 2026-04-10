@@ -155,6 +155,46 @@ export async function addProjectMember(
   }
 }
 
+/**
+ * Bulk-populate a project with studies via the dev/add-study endpoint.
+ * Each call creates one study with 2 filled checklists (one per reviewer).
+ * Requires DEV_MODE=true on the workers backend.
+ */
+export async function seedStudies(
+  orgId: string,
+  projectId: string,
+  sessionCookies: SessionCookie[],
+  reviewer1Id: string,
+  reviewer2Id: string,
+  count: number,
+  opts: { type?: string; fillMode?: string; reconcile?: boolean } = {},
+) {
+  const cookieHeader = sessionCookies.map(c => `${c.name}=${c.value}`).join('; ');
+  const type = opts.type ?? 'AMSTAR2';
+  const fillMode = opts.fillMode ?? 'random';
+  const reconcile = opts.reconcile ?? false;
+
+  for (let i = 0; i < count; i++) {
+    const res = await fetch(
+      `${API_BASE}/api/orgs/${orgId}/projects/${projectId}/dev/add-study`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Cookie: cookieHeader },
+        body: JSON.stringify({
+          type,
+          fillMode,
+          reconcile,
+          reviewer1: reviewer1Id,
+          reviewer2: reviewer2Id,
+        }),
+      },
+    );
+    if (!res.ok) {
+      throw new Error(`seedStudies failed on study ${i + 1}: ${res.status} ${await res.text()}`);
+    }
+  }
+}
+
 export async function cleanupScenario(scenario: DualReviewerScenario) {
   await fetch(`${API_BASE}/api/test/cleanup`, {
     method: 'POST',
