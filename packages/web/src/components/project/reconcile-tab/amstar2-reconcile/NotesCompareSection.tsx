@@ -9,7 +9,7 @@ import { useState } from 'react';
 import { ChevronRightIcon, BookOpenIcon, ClipboardIcon } from 'lucide-react';
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/components/ui/collapsible';
 import { NoteEditor } from '@/components/checklist/common/NoteEditor';
-import { useYText } from '@/hooks/useYText';
+import { useYText, applyYTextDiff } from '@/hooks/useYText';
 
 const MAX_LENGTH = 2000;
 
@@ -41,10 +41,7 @@ export function NotesCompareSection({
   function copyToFinal(sourceNote: string) {
     if (!finalNoteYText || !sourceNote) return;
     const text = sourceNote.slice(0, MAX_LENGTH);
-    finalNoteYText.doc.transact(() => {
-      finalNoteYText.delete(0, finalNoteYText.length);
-      finalNoteYText.insert(0, text);
-    });
+    applyYTextDiff(finalNoteYText, finalNoteYText.toString(), text);
   }
 
   function mergeToFinal() {
@@ -57,10 +54,7 @@ export function NotesCompareSection({
       parts.push(`[${reviewer2Name || 'Reviewer 2'}]\n${reviewer2Note}`);
     }
     const merged = parts.join('\n\n').slice(0, MAX_LENGTH);
-    finalNoteYText.doc.transact(() => {
-      finalNoteYText.delete(0, finalNoteYText.length);
-      finalNoteYText.insert(0, merged);
-    });
+    applyYTextDiff(finalNoteYText, finalNoteYText.toString(), merged);
   }
 
   return (

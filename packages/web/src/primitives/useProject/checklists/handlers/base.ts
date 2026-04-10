@@ -3,6 +3,7 @@
  */
 
 import * as Y from 'yjs';
+import { applyYTextDiff } from '@/hooks/useYText';
 
 export type TextGetterFn = (
   studyId: string,
@@ -31,10 +32,7 @@ export abstract class ChecklistHandler {
     const existing = map.get(fieldKey);
     if (existing instanceof Y.Text) {
       if (existing.toString() === str) return;
-      existing.doc!.transact(() => {
-        existing.delete(0, existing.length);
-        existing.insert(0, str);
-      });
+      applyYTextDiff(existing, existing.toString(), str);
     } else {
       const newText = new Y.Text();
       newText.insert(0, str);

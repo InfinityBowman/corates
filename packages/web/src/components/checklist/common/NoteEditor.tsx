@@ -9,7 +9,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { ChevronRightIcon, BookOpenIcon } from 'lucide-react';
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/components/ui/collapsible';
-import { useYText } from '@/hooks/useYText';
+import { useYText, applyYTextDiff } from '@/hooks/useYText';
 
 const MAX_HEIGHT = 300;
 
@@ -63,11 +63,7 @@ export function NoteEditor({
 
       if (!yText || readOnly) return;
 
-      // Update Y.Text in a transaction to avoid intermediate empty states
-      yText.doc.transact(() => {
-        yText.delete(0, yText.length);
-        yText.insert(0, newValue);
-      });
+      applyYTextDiff(yText, yText.toString(), newValue);
     },
     [yText, readOnly, maxLength],
   );

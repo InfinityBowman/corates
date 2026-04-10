@@ -11,6 +11,7 @@ import { AMSTAR2Handler } from './handlers/amstar2';
 import { ROBINSIHandler } from './handlers/robins-i';
 import { ROB2Handler } from './handlers/rob2';
 import type { ChecklistHandler } from './handlers/base';
+import { applyYTextDiff } from '@/hooks/useYText';
 
 interface TextRefParams {
   sectionKey?: string;
@@ -340,10 +341,7 @@ export function createChecklistOperations(
     if (!yText) return;
     const str = (typeof text === 'string' ? text : '').slice(0, maxLength);
     if (yText.toString() === str) return;
-    yText.doc!.transact(() => {
-      yText.delete(0, yText.length);
-      yText.insert(0, str);
-    });
+    applyYTextDiff(yText, yText.toString(), str);
   }
 
   return {

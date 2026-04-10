@@ -22,3 +22,38 @@ export function useYText(yText: any): string {
 
   return value;
 }
+
+/**
+ * Apply the minimal diff between `oldValue` and `newValue` to a Y.Text
+ * instance. Only the characters that actually changed are deleted/inserted,
+ * giving Yjs the positional information it needs to merge concurrent edits
+ * in non-overlapping regions.
+ *
+ * Works with both real Y.Text instances and LocalTextAdapter.
+ */
+export function applyYTextDiff(yText: any, oldValue: string, newValue: string): void {
+  if (oldValue === newValue) return;
+
+  let prefixLen = 0;
+  const minLen = Math.min(oldValue.length, newValue.length);
+  while (prefixLen < minLen && oldValue[prefixLen] === newValue[prefixLen]) {
+    prefixLen++;
+  }
+
+  let suffixLen = 0;
+  const maxSuffix = minLen - prefixLen;
+  while (
+    suffixLen < maxSuffix &&
+    oldValue[oldValue.length - 1 - suffixLen] === newValue[newValue.length - 1 - suffixLen]
+  ) {
+    suffixLen++;
+  }
+
+  const deleteCount = oldValue.length - prefixLen - suffixLen;
+  const insertText = newValue.slice(prefixLen, newValue.length - suffixLen || undefined);
+
+  yText.doc.transact(() => {
+    if (deleteCount > 0) yText.delete(prefixLen, deleteCount);
+    if (insertText.length > 0) yText.insert(prefixLen, insertText);
+  });
+}
