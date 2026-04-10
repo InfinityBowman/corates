@@ -15,9 +15,6 @@ import {
 } from '@/project/connectionReducer';
 import { CHECKLIST_STATUS } from '@/constants/checklist-status';
 
-// Temporary in-memory storage for pending uploads during project creation
-const pendingProjectData = new Map<string, unknown>();
-
 // localStorage key for persisted project stats
 const PROJECT_STATS_KEY = 'corates:projectStats';
 
@@ -172,21 +169,8 @@ export const useProjectStore = create<ProjectStoreState & ProjectStoreActions>()
 const EMPTY_STUDIES: StudyInfo[] = [];
 const EMPTY_MEMBERS: unknown[] = [];
 const EMPTY_META: Record<string, unknown> = {};
-const EMPTY_PDFS: PdfInfo[] = [];
 
 // Selectors (pure functions, not hooks -- can be used with useProjectStore(selector))
-
-export function selectProject(
-  state: ProjectStoreState,
-  projectId: string,
-): ProjectData | undefined {
-  return state.projects[projectId];
-}
-
-export function selectActiveProject(state: ProjectStoreState): ProjectData | null {
-  if (!state.activeProjectId) return null;
-  return state.projects[state.activeProjectId] || null;
-}
 
 export function selectConnectionPhase(
   state: ProjectStoreState,
@@ -222,47 +206,4 @@ export function selectStudy(
   const studies = state.projects[projectId]?.studies;
   if (!studies) return null;
   return studies.find(s => s.id === studyId) || null;
-}
-
-export function selectChecklist(
-  state: ProjectStoreState,
-  projectId: string,
-  studyId: string,
-  checklistId: string,
-): ChecklistInfo | null {
-  const study = selectStudy(state, projectId, studyId);
-  if (!study?.checklists) return null;
-  return study.checklists.find(c => c.id === checklistId) || null;
-}
-
-export function selectStudyPdfs(
-  state: ProjectStoreState,
-  projectId: string,
-  studyId: string,
-): PdfInfo[] {
-  const study = selectStudy(state, projectId, studyId);
-  return study?.pdfs || EMPTY_PDFS;
-}
-
-export function selectPrimaryPdf(
-  state: ProjectStoreState,
-  projectId: string,
-  studyId: string,
-): PdfInfo | null {
-  const pdfs = selectStudyPdfs(state, projectId, studyId);
-  return pdfs.find(pdf => pdf.tag === 'primary') || null;
-}
-
-// Pending project data (in-memory only, not in store)
-
-export function setPendingProjectData(projectId: string, data: unknown) {
-  pendingProjectData.set(projectId, data);
-}
-
-export function getPendingProjectData(projectId: string): unknown {
-  const data = pendingProjectData.get(projectId);
-  if (data) {
-    pendingProjectData.delete(projectId);
-  }
-  return data;
 }

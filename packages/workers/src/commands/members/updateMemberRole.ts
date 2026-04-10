@@ -14,18 +14,18 @@ import { createDomainError, SYSTEM_ERRORS } from '@corates/shared';
 import type { Env } from '@/types';
 import type { ProjectRole } from '@/policies/lib/roles';
 
-export interface UpdateMemberRoleActor {
+interface UpdateMemberRoleActor {
   id: string;
 }
 
-export interface UpdateMemberRoleParams {
+interface UpdateMemberRoleParams {
   orgId: string;
   projectId: string;
   userId: string;
   role: ProjectRole;
 }
 
-export interface UpdateMemberRoleResult {
+interface UpdateMemberRoleResult {
   userId: string;
   role: ProjectRole;
 }

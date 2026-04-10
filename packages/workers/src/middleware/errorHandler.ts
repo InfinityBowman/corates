@@ -111,5 +111,3 @@ export function asyncHandler<T>(
 ): (_c: Context, _next: () => Promise<void>) => Promise<T> {
   return (c, next) => fn(c, next);
 }
-
-export default errorHandler;

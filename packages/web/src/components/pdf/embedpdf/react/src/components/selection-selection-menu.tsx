@@ -3,7 +3,7 @@ import { useSelectionCapability } from '@embedpdf/plugin-selection/react';
 import { useState } from 'react';
 import { SquaresIcon, CheckIcon } from './icons';
 
-export interface Props extends SelectionSelectionMenuProps {
+interface Props extends SelectionSelectionMenuProps {
   documentId: string;
 }
 

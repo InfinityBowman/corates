@@ -55,30 +55,3 @@ export function getStatusStyle(status: string): string {
       return 'bg-gray-100 text-gray-800';
   }
 }
-
-export function canTransitionTo(currentStatus: string, newStatus: string): boolean {
-  if (currentStatus === newStatus) return true;
-
-  if (currentStatus === CHECKLIST_STATUS.PENDING && newStatus === CHECKLIST_STATUS.IN_PROGRESS) {
-    return true;
-  }
-
-  if (currentStatus === CHECKLIST_STATUS.IN_PROGRESS) {
-    return (
-      newStatus === CHECKLIST_STATUS.REVIEWER_COMPLETED || newStatus === CHECKLIST_STATUS.FINALIZED
-    );
-  }
-
-  if (currentStatus === CHECKLIST_STATUS.RECONCILING && newStatus === CHECKLIST_STATUS.FINALIZED) {
-    return true;
-  }
-
-  if (
-    currentStatus === CHECKLIST_STATUS.FINALIZED ||
-    currentStatus === CHECKLIST_STATUS.REVIEWER_COMPLETED
-  ) {
-    return false;
-  }
-
-  return false;
-}

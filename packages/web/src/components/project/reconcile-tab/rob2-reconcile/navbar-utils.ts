@@ -19,9 +19,9 @@ export const NAV_ITEM_TYPES = {
   OVERALL_DIRECTION: 'overallDirection',
 } as const;
 
-export type NavItemType = (typeof NAV_ITEM_TYPES)[keyof typeof NAV_ITEM_TYPES];
+type NavItemType = (typeof NAV_ITEM_TYPES)[keyof typeof NAV_ITEM_TYPES];
 
-export interface NavItem {
+interface NavItem {
   type: NavItemType;
   key: string;
   label: string;
@@ -33,12 +33,12 @@ export interface NavItem {
   isDirection?: boolean;
 }
 
-export interface NavGroup {
+interface NavGroup {
   section: string;
   items: NavItem[];
 }
 
-export interface SectionProgress {
+interface SectionProgress {
   answered: number;
   total: number;
   hasDisagreements: boolean;
@@ -180,7 +180,7 @@ export function getGroupedNavigationItems(navItems: NavItem[]): NavGroup[] {
 /**
  * Check if a preliminary field has been answered in the final answers
  */
-export function hasPreliminaryAnswer(key: string, finalAnswers: FinalAnswers): boolean {
+function hasPreliminaryAnswer(key: string, finalAnswers: FinalAnswers): boolean {
   const preliminary = finalAnswers?.preliminary as Record<string, unknown> | undefined;
   const value = preliminary?.[key];
   if (key === 'deviationsToAddress') {
@@ -198,7 +198,7 @@ export function hasPreliminaryAnswer(key: string, finalAnswers: FinalAnswers): b
 /**
  * Check if a domain question has been answered in the final answers
  */
-export function hasDomainQuestionAnswer(
+function hasDomainQuestionAnswer(
   domainKey: string,
   questionKey: string,
   finalAnswers: FinalAnswers,
@@ -211,7 +211,7 @@ export function hasDomainQuestionAnswer(
 /**
  * Check if a domain direction has been set
  */
-export function hasDomainDirection(domainKey: string, finalAnswers: FinalAnswers): boolean {
+function hasDomainDirection(domainKey: string, finalAnswers: FinalAnswers): boolean {
   const domain = finalAnswers?.[domainKey] as Record<string, unknown> | undefined;
   return domain?.direction != null;
 }
@@ -219,7 +219,7 @@ export function hasDomainDirection(domainKey: string, finalAnswers: FinalAnswers
 /**
  * Check if overall direction has been set
  */
-export function hasOverallDirection(finalAnswers: FinalAnswers): boolean {
+function hasOverallDirection(finalAnswers: FinalAnswers): boolean {
   const overall = finalAnswers?.overall as Record<string, unknown> | undefined;
   return overall?.direction != null;
 }
@@ -285,59 +285,6 @@ export function getNavItemPillStyle(
   return isAgreement ?
       'bg-green-100 text-green-700 hover:bg-green-200'
     : 'bg-amber-100 text-amber-700 hover:bg-amber-200';
-}
-
-/**
- * Generate descriptive tooltip for a navigation pill
- */
-export function getNavItemTooltip(
-  navItem: NavItem,
-  hasAnswer: boolean,
-  isAgreement: boolean,
-): string {
-  const label = navItem.label;
-
-  if (hasAnswer) {
-    return `${label} - Reconciled`;
-  }
-  if (isAgreement) {
-    return `${label} - Reviewers agreed`;
-  }
-  return `${label} - Reviewers disagree`;
-}
-
-/**
- * Get the count of answered items
- */
-export function getAnsweredCount(navItems: NavItem[], finalAnswers: FinalAnswers): number {
-  return navItems.filter(item => hasNavItemAnswer(item, finalAnswers)).length;
-}
-
-/**
- * Get domain display number from domain key
- */
-export function getDomainDisplayNumber(domainKey: string): string {
-  return domainKey.replace('domain', '').replace('a', 'A').replace('b', 'B');
-}
-
-/**
- * Get section key from section name (for grouping)
- */
-export function getSectionKey(sectionName: string): string {
-  if (sectionName === 'Preliminary') return 'preliminary';
-  if (sectionName === 'Overall') return 'overall';
-
-  // Domain names like "Domain 1: Bias arising from the randomization process"
-  const domainMatch = sectionName.match(/Domain (\d+)/);
-  if (domainMatch) {
-    const domainNum = domainMatch[1];
-    if (domainNum === '2') {
-      return 'domain2';
-    }
-    return `domain${domainNum}`;
-  }
-
-  return sectionName;
 }
 
 /**

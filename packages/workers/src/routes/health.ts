@@ -165,4 +165,3 @@ const healthRoutes = new OpenAPIHono<{ Bindings: Env }>()
   });
 
 export { healthRoutes };
-export type HealthRoutes = typeof healthRoutes;

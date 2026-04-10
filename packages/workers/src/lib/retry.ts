@@ -7,7 +7,7 @@
 
 import type { Logger } from './observability/logger';
 
-export interface RetryOptions<T> {
+interface RetryOptions<T> {
   /** The async operation to retry */
   operation: () => Promise<T>;
   /** Maximum number of attempts (default: 3) */
@@ -26,7 +26,7 @@ export interface RetryOptions<T> {
   operationName?: string;
 }
 
-export interface RetryResult<T> {
+interface RetryResult<T> {
   /** Whether the operation succeeded */
   success: boolean;
   /** The returned value on success */

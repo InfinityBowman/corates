@@ -305,4 +305,3 @@ const billingSubscriptionRoutes = $(base.use('*', requireAuth))
   });
 
 export { billingSubscriptionRoutes };
-export type BillingSubscriptionRoutes = typeof billingSubscriptionRoutes;

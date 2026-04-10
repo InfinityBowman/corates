@@ -3,7 +3,7 @@ import { verifyAuth } from '../auth/config';
 import { getAccessControlOrigin } from '../config/origins';
 import type { Env } from '../types';
 
-export interface Notification {
+interface Notification {
   type: string;
   timestamp?: number;
   [key: string]: unknown;

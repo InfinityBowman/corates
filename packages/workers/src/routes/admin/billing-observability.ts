@@ -786,4 +786,3 @@ const billingObservabilityRoutes = base
   });
 
 export { billingObservabilityRoutes };
-export type BillingObservabilityRoutes = typeof billingObservabilityRoutes;

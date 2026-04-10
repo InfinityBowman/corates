@@ -208,4 +208,3 @@ const contactRoutes = $(base.use('*', contactRateLimit)).openapi(submitContactRo
 });
 
 export { contactRoutes };
-export type ContactRoutes = typeof contactRoutes;

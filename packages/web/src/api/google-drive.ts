@@ -36,18 +36,3 @@ export async function connectGoogleAccount(callbackUrl?: string): Promise<void> 
     throw new Error('No redirect URL received from auth server');
   }
 }
-
-export function formatFileSize(bytes: number | null | undefined): string {
-  if (!bytes) return 'Unknown size';
-
-  const units = ['B', 'KB', 'MB', 'GB'];
-  let size = bytes;
-  let unitIndex = 0;
-
-  while (size >= 1024 && unitIndex < units.length - 1) {
-    size /= 1024;
-    unitIndex++;
-  }
-
-  return `${size.toFixed(1)} ${units[unitIndex]}`;
-}

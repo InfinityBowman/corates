@@ -24,7 +24,7 @@ interface EmailResult {
   error?: string;
 }
 
-export interface EmailService {
+interface EmailService {
   sendEmail: (_params: SendEmailParams) => Promise<EmailResult>;
   isProduction: boolean;
 }

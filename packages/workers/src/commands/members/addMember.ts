@@ -15,11 +15,11 @@ import { checkCollaboratorQuota } from '@/lib/quotaTransaction';
 import type { Env } from '@/types';
 import type { ProjectRole } from '@/policies/lib/roles';
 
-export interface AddMemberActor {
+interface AddMemberActor {
   id: string;
 }
 
-export interface UserToAdd {
+interface UserToAdd {
   id: string;
   name: string | null;
   email: string | null;
@@ -29,14 +29,14 @@ export interface UserToAdd {
   image?: string | null;
 }
 
-export interface AddMemberParams {
+interface AddMemberParams {
   orgId: string;
   projectId: string;
   userToAdd: UserToAdd;
   role: ProjectRole;
 }
 
-export interface AddMemberResult {
+interface AddMemberResult {
   member: {
     userId: string;
     name: string | null;

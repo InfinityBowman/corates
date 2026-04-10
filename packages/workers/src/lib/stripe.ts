@@ -43,19 +43,3 @@ export function createStripeClient(env: Env): Stripe {
 export function isStripeConfigured(env: Env): boolean {
   return !!env.STRIPE_SECRET_KEY;
 }
-
-/**
- * Get Stripe client only if configured, returns null otherwise
- * Useful when Stripe is optional for a code path
- * @param env - Environment bindings
- * @returns Stripe client or null
- */
-export function getStripeClientIfConfigured(env: Env): Stripe | null {
-  if (!env.STRIPE_SECRET_KEY) {
-    return null;
-  }
-
-  return new Stripe(env.STRIPE_SECRET_KEY, {
-    apiVersion: STRIPE_API_VERSION,
-  });
-}

@@ -5,13 +5,11 @@
  *
  * Usage in routes:
  *
- *   import { requireProjectEdit, canRemoveMember } from '@/policies';
+ *   import { requireProjectEdit, requireMemberRemoval } from '@/policies';
  *
  *   // Assertion style (throws on failure)
  *   await requireProjectEdit(db, user.id, projectId);
- *
- *   // Check style (returns boolean)
- *   if (await canRemoveMember(db, user.id, projectId, targetId)) { ... }
+ *   await requireMemberRemoval(db, user.id, projectId, targetId);
  *
  * Policy Naming Conventions:
  * - can*: Returns boolean, for conditional logic
@@ -22,80 +20,31 @@
  */
 
 // Role utilities
-export {
-  ORG_ROLES,
-  PROJECT_ROLES,
-  hasMinRole,
-  hasOrgRole,
-  hasProjectRole,
-  isOrgOwner,
-  isOrgAdmin,
-  isProjectOwner,
-  isTopRole,
-} from './lib/roles';
-
-export type { OrgRole, ProjectRole } from './lib/roles';
+export { hasOrgRole, hasProjectRole, isOrgOwner, isProjectOwner } from './lib/roles';
 
 // Project policies
 export {
   // Data fetching
   getProjectMembership,
 
-  // Boolean checks
-  canReadProject,
-  canEditProject,
-  canDeleteProject,
-  canManageMembers,
-  canRemoveMember,
-  canChangeRole,
-  canRemoveWithoutOrphaning,
-
   // Assertions (throw on failure)
-  requireProjectRead,
   requireProjectEdit,
-  requireProjectDelete,
-  requireMemberManagement,
   requireMemberRemoval,
   requireSafeRoleChange,
   requireSafeRemoval,
 } from './projects';
-
-export type { ProjectMembership } from './projects';
 
 // Organization policies
 export {
   // Data fetching
   getOrgMembership,
 
-  // Boolean checks
-  isOrgMember,
-  canReadOrg,
-  canUpdateOrg,
-  canDeleteOrg,
-  canManageOrgMembers,
-  canRemoveOrgMember,
-  canChangeOrgRole,
-  canRemoveOrgMemberWithoutOrphaning,
-
   // Assertions (throw on failure)
-  requireOrgAccess,
-  requireOrgMemberManagement,
-  requireOrgDelete,
   requireOrgMemberRemoval,
-  requireSafeOrgRoleChange,
-  requireSafeOrgMemberRemoval,
 } from './orgs';
-
-export type { OrgMembership } from './orgs';
 
 // Billing policies
 export {
-  // Boolean checks
-  canManageBilling,
-  canViewBilling,
-
   // Assertions (throw on failure)
   requireOrgOwner,
-  requireBillingManagement,
-  requireBillingView,
 } from './billing';

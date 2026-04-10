@@ -149,5 +149,3 @@ export const apiFetch: ApiFetchFn = Object.assign(apiFetchImpl, {
   delete: <T = unknown>(path: string, options: Omit<ApiFetchOptions, 'method'> = {}) =>
     apiFetchImpl<T>(path, { ...options, method: 'DELETE' }),
 });
-
-export default apiFetch;

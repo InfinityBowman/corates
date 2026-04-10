@@ -15,17 +15,17 @@ import { createValidationError, VALIDATION_ERRORS } from '@corates/shared';
 import type { Env } from '@/types';
 import type { ProjectRole } from '@/policies/lib/roles';
 
-export interface CreateProjectActor {
+interface CreateProjectActor {
   id: string;
 }
 
-export interface CreateProjectParams {
+interface CreateProjectParams {
   orgId: string;
   name: string;
   description?: string;
 }
 
-export interface CreateProjectResult {
+interface CreateProjectResult {
   project: {
     id: string;
     name: string;

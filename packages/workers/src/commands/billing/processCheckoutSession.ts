@@ -16,7 +16,7 @@ import {
 import type { Database } from '@/db/client';
 import type Stripe from 'stripe';
 
-export interface CheckoutSessionResult {
+interface CheckoutSessionResult {
   handled: boolean;
   result: string;
   ledgerContext?: Record<string, unknown>;

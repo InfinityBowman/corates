@@ -48,7 +48,7 @@ export interface NormalizedReference {
   [key: string]: unknown;
 }
 
-export interface SupportedFormat {
+interface SupportedFormat {
   extension: string;
   name: string;
   description: string;
@@ -401,11 +401,6 @@ export const SUPPORTED_FORMATS: SupportedFormat[] = [
 ];
 
 /**
- * Get accept string for file input (reference files only, no PDFs)
- */
-export const REFERENCE_FILE_ACCEPT = '.ris,.enw,.bib,.bibtex';
-
-/**
  * Get accept string for mixed import (reference files + PDFs)
  */
 export const MIXED_IMPORT_ACCEPT = '.ris,.enw,.bib,.bibtex,.pdf,application/pdf';
@@ -413,7 +408,7 @@ export const MIXED_IMPORT_ACCEPT = '.ris,.enw,.bib,.bibtex,.pdf,application/pdf'
 /**
  * Check if a file is a reference file (RIS, BibTeX, etc.)
  */
-export function isReferenceFile(file: File): boolean {
+function isReferenceFile(file: File): boolean {
   const ext = file.name.toLowerCase().split('.').pop();
   return ['ris', 'enw', 'bib', 'bibtex'].includes(ext || '');
 }
@@ -421,7 +416,7 @@ export function isReferenceFile(file: File): boolean {
 /**
  * Check if a file is a PDF
  */
-export function isPdfFile(file: File): boolean {
+function isPdfFile(file: File): boolean {
   return file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
 }
 

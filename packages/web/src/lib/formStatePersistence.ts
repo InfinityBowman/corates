@@ -93,7 +93,7 @@ export function buildRestoreCallbackUrl(type: FormType, projectId?: string): str
   return url.toString();
 }
 
-export interface RestoreParams {
+interface RestoreParams {
   type: string;
   projectId: string | null;
 }

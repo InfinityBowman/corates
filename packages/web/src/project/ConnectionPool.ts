@@ -41,7 +41,7 @@ export interface TypedProjectOps {
   getAwareness: () => unknown;
 }
 
-export interface ConnectionEntry {
+interface ConnectionEntry {
   ydoc: Y.Doc;
   dexieProvider: any;
   connectionManager: any;

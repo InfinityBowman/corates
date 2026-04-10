@@ -6,7 +6,7 @@
  * since D1 is the source of truth and DO state will eventually sync on reconnect.
  */
 
-import { syncMemberToDO, syncProjectToDO } from './project-sync';
+import { syncMemberToDO } from './project-sync';
 import { withRetry } from './retry';
 import { createLogger, type Logger } from './observability/logger';
 import type { Env } from '../types';
@@ -20,20 +20,6 @@ interface MemberData {
   givenName?: string | null;
   familyName?: string | null;
   image?: string | null;
-  [key: string]: unknown;
-}
-
-interface ProjectMeta {
-  name?: string;
-  description?: string | null;
-  updatedAt?: number;
-  createdAt?: number;
-  [key: string]: unknown;
-}
-
-interface ProjectMember {
-  userId: string;
-  role: string;
   [key: string]: unknown;
 }
 
@@ -88,42 +74,6 @@ export async function syncMemberWithRetry(
     // Log final failure but don't throw - D1 is source of truth
     // DO will sync on next client connection
     syncLogger.error('DO member sync exhausted all retries', {
-      attempts: result.attempts,
-      finalError: result.error instanceof Error ? result.error.message : String(result.error),
-    });
-  }
-}
-
-/**
- * Sync project metadata and members to Durable Object with automatic retry
- *
- * Similar to `syncMemberWithRetry` but for full project sync operations.
- * Used when creating projects or performing bulk updates.
- */
-export async function syncProjectWithRetry(
-  env: Env,
-  projectId: string,
-  meta: ProjectMeta | null,
-  members: ProjectMember[] | null,
-  logger?: Logger,
-): Promise<void> {
-  const log = logger || createLogger({ service: 'sync-project', env });
-
-  const syncLogger = log.child({
-    projectId,
-    operation: 'project-sync',
-  });
-
-  const result = await withRetry({
-    operation: () => syncProjectToDO(env, projectId, meta, members),
-    ...DO_SYNC_RETRY_CONFIG,
-    shouldRetry: shouldRetryDOSync,
-    logger: syncLogger,
-    operationName: 'DO sync-project',
-  });
-
-  if (!result.success) {
-    syncLogger.error('DO project sync exhausted all retries', {
       attempts: result.attempts,
       finalError: result.error instanceof Error ? result.error.message : String(result.error),
     });

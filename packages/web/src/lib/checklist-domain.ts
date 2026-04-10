@@ -24,12 +24,12 @@ export interface Study {
   [key: string]: unknown;
 }
 
-export interface ReconciliationProgress {
+interface ReconciliationProgress {
   checklist1Id: string | null;
   checklist2Id: string | null;
 }
 
-export interface ChecklistGroup {
+interface ChecklistGroup {
   outcomeId: string | null;
   type: string;
   checklists: Checklist[];

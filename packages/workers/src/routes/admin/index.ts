@@ -32,4 +32,3 @@ const adminRoutes = $(_adminBase.use('*', requireAdmin).use('*', requireTrustedO
   .route('/stats', statsRoutes);
 
 export { adminRoutes };
-export type AdminRoutes = typeof adminRoutes;

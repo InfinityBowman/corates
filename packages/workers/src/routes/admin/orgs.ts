@@ -391,4 +391,3 @@ const orgRoutes = base
   });
 
 export { orgRoutes };
-export type OrgRoutes = typeof orgRoutes;

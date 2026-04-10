@@ -4,23 +4,6 @@
 
 import * as Y from 'yjs';
 
-export interface AnswerTemplate {
-  [key: string]: unknown;
-}
-
-export interface QuestionAnswer {
-  answer: string | null;
-  comment?: string;
-}
-
-export interface DomainData {
-  judgement?: string | null;
-  judgementSource?: string | null;
-  direction?: string | null;
-  answers?: Record<string, QuestionAnswer>;
-  [key: string]: unknown;
-}
-
 export type TextGetterFn = (
   studyId: string,
   checklistId: string,

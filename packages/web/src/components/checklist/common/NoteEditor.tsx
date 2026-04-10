@@ -122,22 +122,3 @@ export function NoteEditor({
     </div>
   );
 }
-
-/**
- * Read-only note display for reconciliation view
- */
-export function NoteDisplay({ content }: { content?: string }) {
-  const hasContent = (content || '').trim().length > 0;
-
-  if (!hasContent) return null;
-
-  return (
-    <div className='border-border/50 bg-muted mt-2 rounded-lg border p-2'>
-      <div className='text-muted-foreground mb-1 flex items-center gap-1.5 text-xs'>
-        <BookOpenIcon className='size-3' />
-        <span>Notes</span>
-      </div>
-      <p className='text-secondary-foreground text-sm whitespace-pre-wrap'>{content}</p>
-    </div>
-  );
-}

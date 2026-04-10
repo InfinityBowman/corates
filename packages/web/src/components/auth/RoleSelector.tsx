@@ -8,11 +8,6 @@ export const TITLE_OPTIONS = [
   { value: 'other', label: 'Other' },
 ];
 
-export function getTitleLabel(titleValue?: string | null): string | null {
-  if (titleValue == null) return null;
-  return TITLE_OPTIONS.find(t => t.value === titleValue)?.label || titleValue;
-}
-
 interface RoleOption {
   id: string;
   label: string;

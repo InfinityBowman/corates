@@ -24,15 +24,15 @@ import { syncMemberToDO } from '@/lib/project-sync';
 import { checkCollaboratorQuota } from '@/lib/quotaTransaction';
 import type { Env } from '@/types';
 
-export interface AcceptInvitationActor {
+interface AcceptInvitationActor {
   id: string;
 }
 
-export interface AcceptInvitationParams {
+interface AcceptInvitationParams {
   token: string;
 }
 
-export interface AcceptInvitationResult {
+interface AcceptInvitationResult {
   orgId: string | null;
   orgSlug: string | null;
   projectId: string;

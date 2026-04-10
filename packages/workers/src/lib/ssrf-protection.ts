@@ -1,5 +1,3 @@
-import { createDomainError, VALIDATION_ERRORS } from '@corates/shared';
-
 const PRIVATE_IP_PATTERNS = [
   /^127\./,
   /^10\./,
@@ -126,18 +124,18 @@ function isAllowedPdfDomain(hostname: string): boolean {
   return false;
 }
 
-export interface SSRFValidationOptions {
+interface SSRFValidationOptions {
   requireAllowlist?: boolean;
   allowHttp?: boolean;
 }
 
-export interface SSRFValidationResult {
+interface SSRFValidationResult {
   valid: boolean;
   error?: string;
   hostname?: string;
 }
 
-export function validateUrlForSSRF(
+function validateUrlForSSRF(
   url: string,
   options: SSRFValidationOptions = {},
 ): SSRFValidationResult {
@@ -194,8 +192,4 @@ export function validatePdfProxyUrl(url: string): SSRFValidationResult {
     requireAllowlist: true,
     allowHttp: false,
   });
-}
-
-export function createSsrfError(message: string) {
-  return createDomainError(VALIDATION_ERRORS.INVALID_INPUT, { reason: 'ssrf_protection' }, message);
 }

@@ -33,9 +33,3 @@ export type State = GlobalStoreState<{
   [PAN_PLUGIN_ID]: PanState;
   [UI_PLUGIN_ID]: UIState;
 }>;
-
-// Type for tracking sidebar state per document
-export type SidebarState = {
-  search: boolean;
-  thumbnails: boolean;
-};

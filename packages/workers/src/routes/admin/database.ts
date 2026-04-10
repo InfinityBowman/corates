@@ -995,4 +995,3 @@ const databaseRoutes = _databaseBase
   });
 
 export { databaseRoutes };
-export type DatabaseRoutes = typeof databaseRoutes;

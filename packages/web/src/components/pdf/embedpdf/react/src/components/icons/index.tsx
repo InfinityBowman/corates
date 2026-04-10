@@ -47,24 +47,6 @@ export function CloseIcon({ className, title }: IconProps) {
   );
 }
 
-export function PlusIcon({ className, title }: IconProps) {
-  return (
-    <svg
-      className={className}
-      fill='none'
-      stroke='currentColor'
-      viewBox='0 0 24 24'
-      aria-hidden={!title}
-      role={title ? 'img' : 'presentation'}
-    >
-      {title ?
-        <title>{title}</title>
-      : null}
-      <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M12 4v16m8-8H4' />
-    </svg>
-  );
-}
-
 export function HandIcon({ className, title }: IconProps) {
   return (
     <svg
@@ -154,31 +136,6 @@ export function ChevronDownIcon({ className, title }: IconProps) {
         <title>{title}</title>
       : null}
       <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M19 9l-7 7-7-7' />
-    </svg>
-  );
-}
-
-export function ZoomChevronDownIcon({ className, title }: IconProps) {
-  return (
-    <svg
-      xmlns='http://www.w3.org/2000/svg'
-      width='14'
-      height='14'
-      viewBox='0 0 24 24'
-      fill='none'
-      stroke='currentColor'
-      strokeWidth='2'
-      strokeLinecap='round'
-      strokeLinejoin='round'
-      className={className}
-      aria-hidden={!title}
-      role={title ? 'img' : 'presentation'}
-    >
-      {title ?
-        <title>{title}</title>
-      : null}
-      <path stroke='none' d='M0 0h24v24H0z' fill='none' />
-      <path d='M6 9l6 6l6 -6' />
     </svg>
   );
 }
@@ -566,30 +523,6 @@ export function MenuIcon({ className, title }: IconProps) {
   );
 }
 
-export function MenuDotsIcon({ className, title }: IconProps) {
-  return (
-    <svg
-      className={className}
-      fill='none'
-      stroke='currentColor'
-      viewBox='0 0 24 24'
-      strokeWidth={2}
-      strokeLinecap='round'
-      strokeLinejoin='round'
-      aria-hidden={!title}
-      role={title ? 'img' : 'presentation'}
-    >
-      {title ?
-        <title>{title}</title>
-      : null}
-      <path stroke='none' d='M0 0h24v24H0z' fill='none' />
-      <path d='M5 12m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0' />
-      <path d='M12 12m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0' />
-      <path d='M19 12m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0' />
-    </svg>
-  );
-}
-
 export function AlertIcon({ className, title }: IconProps) {
   return (
     <svg
@@ -608,29 +541,6 @@ export function AlertIcon({ className, title }: IconProps) {
         strokeLinejoin='round'
         strokeWidth={2}
         d='M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z'
-      />
-    </svg>
-  );
-}
-
-export function RefreshIcon({ className, title }: IconProps) {
-  return (
-    <svg
-      className={className}
-      fill='none'
-      stroke='currentColor'
-      viewBox='0 0 24 24'
-      aria-hidden={!title}
-      role={title ? 'img' : 'presentation'}
-    >
-      {title ?
-        <title>{title}</title>
-      : null}
-      <path
-        strokeLinecap='round'
-        strokeLinejoin='round'
-        strokeWidth={2}
-        d='M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15'
       />
     </svg>
   );
@@ -1001,7 +911,7 @@ export function UnderlineIcon({ className, title, style }: IconProps) {
   );
 }
 
-export function ZigzagIcon({ className, title, style }: IconProps) {
+function ZigzagIcon({ className, title, style }: IconProps) {
   return (
     <svg
       className={className}
@@ -1027,28 +937,6 @@ export function ZigzagIcon({ className, title, style }: IconProps) {
 
 export function PolylineIcon({ className, title, style }: IconProps) {
   return <ZigzagIcon className={className} title={title} style={style} />;
-}
-
-export function ItalicIcon({ className, title }: IconProps) {
-  return (
-    <svg
-      className={className}
-      fill='none'
-      stroke='currentColor'
-      viewBox='0 0 24 24'
-      strokeWidth={2}
-      aria-hidden={!title}
-      role={title ? 'img' : 'presentation'}
-    >
-      {title ?
-        <title>{title}</title>
-      : null}
-      <path stroke='none' d='M0 0h24v24H0z' fill='none' />
-      <path d='M11 5l6 0' />
-      <path d='M7 19l6 0' />
-      <path d='M14 5l-4 14' />
-    </svg>
-  );
 }
 
 export function SquaresIcon({ className, title }: IconProps) {
@@ -1220,171 +1108,6 @@ export function RedactAreaIcon({ className, title }: IconProps) {
         <path d='M14 24l15 -15' />
         <path d='M18 24l15 -15' />
       </g>
-    </svg>
-  );
-}
-
-export function PhotoIcon({ className, title }: IconProps) {
-  return (
-    <svg
-      className={className}
-      fill='none'
-      stroke='currentColor'
-      viewBox='0 0 24 24'
-      strokeWidth={2}
-      strokeLinecap='round'
-      strokeLinejoin='round'
-      aria-hidden={!title}
-      role={title ? 'img' : 'presentation'}
-    >
-      {title ?
-        <title>{title}</title>
-      : null}
-      <path stroke='none' d='M0 0h24v24H0z' fill='none' />
-      <path d='M15 8h.01' />
-      <path d='M3 6a3 3 0 0 1 3 -3h12a3 3 0 0 1 3 3v12a3 3 0 0 1 -3 3h-12a3 3 0 0 1 -3 -3v-12z' />
-      <path d='M3 16l5 -5c.928 -.893 2.072 -.893 3 0l5 5' />
-      <path d='M14 14l1 -1c.928 -.893 2.072 -.893 3 0l3 3' />
-    </svg>
-  );
-}
-
-export function ArrowBackUpIcon({ className, title }: IconProps) {
-  return (
-    <svg
-      className={className}
-      fill='none'
-      stroke='currentColor'
-      viewBox='0 0 24 24'
-      strokeWidth={2}
-      strokeLinecap='round'
-      strokeLinejoin='round'
-      aria-hidden={!title}
-      role={title ? 'img' : 'presentation'}
-    >
-      {title ?
-        <title>{title}</title>
-      : null}
-      <path stroke='none' d='M0 0h24v24H0z' fill='none' />
-      <path d='M9 14l-4 -4l4 -4' />
-      <path d='M5 10h11a4 4 0 1 1 0 8h-1' />
-    </svg>
-  );
-}
-
-export function ArrowForwardUpIcon({ className, title }: IconProps) {
-  return (
-    <svg
-      className={className}
-      fill='none'
-      stroke='currentColor'
-      viewBox='0 0 24 24'
-      strokeWidth={2}
-      strokeLinecap='round'
-      strokeLinejoin='round'
-      aria-hidden={!title}
-      role={title ? 'img' : 'presentation'}
-    >
-      {title ?
-        <title>{title}</title>
-      : null}
-      <path stroke='none' d='M0 0h24v24H0z' fill='none' />
-      <path d='M15 14l4 -4l-4 -4' />
-      <path d='M19 10h-11a4 4 0 1 0 0 8h1' />
-    </svg>
-  );
-}
-
-export function PointerIcon({ className, title }: IconProps) {
-  return (
-    <svg
-      className={className}
-      fill='none'
-      stroke='currentColor'
-      viewBox='0 0 24 24'
-      strokeWidth={2}
-      strokeLinecap='round'
-      strokeLinejoin='round'
-      aria-hidden={!title}
-      role={title ? 'img' : 'presentation'}
-    >
-      {title ?
-        <title>{title}</title>
-      : null}
-      <path stroke='none' d='M0 0h24v24H0z' fill='none' />
-      <path d='M7.904 17.563a1.2 1.2 0 0 0 2.228 .308l2.09 -3.093l4.907 4.907a1.067 1.067 0 0 0 1.509 0l1.047 -1.047a1.067 1.067 0 0 0 0 -1.509l-4.907 -4.907l3.113 -2.09a1.2 1.2 0 0 0 -.309 -2.228l-13.582 -3.904l3.904 13.563z' />
-    </svg>
-  );
-}
-
-export function SidebarIcon({ className, title }: IconProps) {
-  return (
-    <svg
-      className={className}
-      fill='none'
-      stroke='currentColor'
-      viewBox='0 0 24 24'
-      strokeWidth={2}
-      strokeLinecap='round'
-      strokeLinejoin='round'
-      aria-hidden={!title}
-      role={title ? 'img' : 'presentation'}
-      style={{ transform: 'scaleX(-1)' }}
-    >
-      {title ?
-        <title>{title}</title>
-      : null}
-      <path stroke='none' d='M0 0h24v24H0z' fill='none' />
-      <path d='M4 18v-12a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2z' />
-      <path d='M14 18v-12a2 2 0 0 0 -2 -2h-6a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2h6a2 2 0 0 0 2 -2z' />
-    </svg>
-  );
-}
-
-export function CommentIcon({ className, title }: IconProps) {
-  return (
-    <svg
-      className={className}
-      fill='none'
-      stroke='currentColor'
-      viewBox='0 0 24 24'
-      strokeWidth={2}
-      strokeLinecap='round'
-      strokeLinejoin='round'
-      aria-hidden={!title}
-      role={title ? 'img' : 'presentation'}
-    >
-      {title ?
-        <title>{title}</title>
-      : null}
-      <path stroke='none' d='M0 0h24v24H0z' fill='none' />
-      <path d='M12 11v.01' />
-      <path d='M8 11v.01' />
-      <path d='M16 11v.01' />
-      <path d='M18 4a3 3 0 0 1 3 3v8a3 3 0 0 1 -3 3h-5l-5 3v-3h-2a3 3 0 0 1 -3 -3v-8a3 3 0 0 1 3 -3z' />
-    </svg>
-  );
-}
-
-export function CopyIcon({ className, title }: IconProps) {
-  return (
-    <svg
-      className={className}
-      fill='none'
-      stroke='currentColor'
-      viewBox='0 0 24 24'
-      strokeWidth={2}
-      strokeLinecap='round'
-      strokeLinejoin='round'
-      aria-hidden={!title}
-      role={title ? 'img' : 'presentation'}
-    >
-      {title ?
-        <title>{title}</title>
-      : null}
-      <path stroke='none' d='M0 0h24v24H0z' fill='none' />
-      <path d='M7 7m0 2.667a2.667 2.667 0 0 1 2.667 -2.667h8.666a2.667 2.667 0 0 1 2.667 2.667v8.666a2.667 2.667 0 0 1 -2.667 2.667h-8.666a2.667 2.667 0 0 1 -2.667 -2.667z' />
-      <path d='M4.012 16.737a2.005 2.005 0 0 1 -1.012 -1.737v-10c0 -1.1 .9 -2 2 -2h10c.75 0 1.158 .385 1.5 1' />
     </svg>
   );
 }

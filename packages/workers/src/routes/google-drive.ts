@@ -563,4 +563,3 @@ const googleDriveRoutes = $(base.use('*', requireAuth))
   });
 
 export { googleDriveRoutes };
-export type GoogleDriveRoutes = typeof googleDriveRoutes;

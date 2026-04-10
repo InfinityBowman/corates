@@ -1,7 +1,7 @@
 import type { Context } from 'hono';
 import type { Env } from '../../types';
 
-export const LogLevel = {
+const LogLevel = {
   DEBUG: 'debug',
   INFO: 'info',
   WARN: 'warn',
@@ -198,7 +198,7 @@ export function createLogger({ c, service, env }: LoggerOptions): Logger {
   return logger;
 }
 
-export function getOrCreateRequestId(c?: Context): string {
+function getOrCreateRequestId(c?: Context): string {
   const existingId = c?.req?.header('x-request-id');
   if (existingId) {
     return existingId;

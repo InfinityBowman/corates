@@ -19,7 +19,7 @@ function getFriendlyMessage(error: unknown): string {
 
 let queryClientInstance: QueryClient | null = null;
 
-export function getQueryClient(): QueryClient {
+function getQueryClient(): QueryClient {
   if (queryClientInstance) {
     return queryClientInstance;
   }

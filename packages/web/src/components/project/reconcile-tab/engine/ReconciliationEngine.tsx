@@ -37,7 +37,7 @@ export function registerReconciliationAdapter(
   adapterRegistry.set(checklistType, adapter);
 }
 
-export function getReconciliationAdapter(checklistType: string): ReconciliationAdapter {
+function getReconciliationAdapter(checklistType: string): ReconciliationAdapter {
   const adapter = adapterRegistry.get(checklistType);
   if (!adapter) {
     throw new Error(

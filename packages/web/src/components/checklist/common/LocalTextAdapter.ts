@@ -16,7 +16,7 @@ type StateUpdateGetter = (
   newValue: string,
 ) => Record<string, unknown>;
 
-export interface LocalAdapterFactories {
+interface LocalAdapterFactories {
   getRob2Text: (
     sectionKey: string,
     fieldKey: string,
@@ -216,7 +216,7 @@ export function createLocalAdapterFactories(
   };
 }
 
-export class LocalTextAdapter {
+class LocalTextAdapter {
   private _value: string;
   private _onUpdate: UpdateCallback | undefined;
   private _observers: Set<ObserverCallback>;

@@ -4,8 +4,6 @@ import { isAdminUser } from '../auth/admin';
 import { createDomainError, AUTH_ERRORS } from '@corates/shared';
 import type { AppContext, AuthUser } from '../types';
 
-export const isAdmin = isAdminUser;
-
 export const requireAdmin: MiddlewareHandler = async (c, next) => {
   try {
     const auth = createAuth((c as AppContext).env);

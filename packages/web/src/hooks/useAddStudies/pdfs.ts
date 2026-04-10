@@ -30,7 +30,7 @@ interface SerializedPdf {
   fileSize: number | null;
 }
 
-export interface PdfOperations {
+interface PdfOperations {
   uploadedPdfs: UploadedPdf[];
   pdfCount: number;
   handlePdfSelect: (files: File[]) => Promise<void>;

@@ -26,7 +26,7 @@ const ALLOWED_CONTENT_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/we
 
 const MAX_AVATAR_SIZE = 5 * 1024 * 1024; // 5MB
 
-export interface AvatarCopyResult {
+interface AvatarCopyResult {
   success: boolean;
   url?: string;
   key?: string;

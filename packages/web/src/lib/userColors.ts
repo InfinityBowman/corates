@@ -3,7 +3,7 @@
  * Generates stable, distinguishable colors for user identification
  */
 
-export interface PresenceColor {
+interface PresenceColor {
   name: string;
   ring: string;
   bg: string;
@@ -13,7 +13,7 @@ export interface PresenceColor {
 
 // Color palette optimized for presence indicators
 // Uses colors that work well as rings, cursors, and avatars
-export const PRESENCE_COLORS: PresenceColor[] = [
+const PRESENCE_COLORS: PresenceColor[] = [
   { name: 'blue', ring: 'ring-blue-400', bg: 'bg-blue-500', text: 'text-blue-500', hex: '#3b82f6' },
   {
     name: 'emerald',
@@ -72,11 +72,4 @@ export function getUserColor(userId: string | null | undefined): PresenceColor {
   if (!userId) return PRESENCE_COLORS[0];
   const index = hashString(userId) % PRESENCE_COLORS.length;
   return PRESENCE_COLORS[index];
-}
-
-/**
- * Get just the hex color for a user (for inline styles)
- */
-export function getUserHexColor(userId: string | null | undefined): string {
-  return getUserColor(userId).hex;
 }

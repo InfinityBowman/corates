@@ -392,4 +392,3 @@ const avatarRoutes = $(base.use('*', requireAuth))
   });
 
 export { avatarRoutes };
-export type AvatarRoutes = typeof avatarRoutes;

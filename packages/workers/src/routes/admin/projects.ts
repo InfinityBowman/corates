@@ -770,4 +770,3 @@ const projectRoutes = base
   });
 
 export { projectRoutes };
-export type ProjectRoutes = typeof projectRoutes;

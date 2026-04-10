@@ -16,9 +16,9 @@ export const NotificationTypes = {
   PROJECT_MEMBERSHIP_REMOVED: 'project-membership-removed',
 } as const;
 
-export type NotificationType = (typeof NotificationTypes)[keyof typeof NotificationTypes];
+type NotificationType = (typeof NotificationTypes)[keyof typeof NotificationTypes];
 
-export interface Notification {
+interface Notification {
   type: NotificationType | string;
   [key: string]: unknown;
 }

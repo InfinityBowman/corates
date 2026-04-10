@@ -5,7 +5,7 @@
  * Common codes: account_already_linked_to_different_user, email_doesn't_match, etc.
  */
 
-export const LINK_ERROR_MESSAGES: Record<string, string | null> = {
+const LINK_ERROR_MESSAGES: Record<string, string | null> = {
   // Account already linked to a different user - security safeguard
   ACCOUNT_ALREADY_LINKED:
     'This account is already linked to another CoRATES account. Unlink it from the other account first, or use a different account.',
@@ -57,7 +57,7 @@ export function getLinkErrorMessage(code: string): string | null {
   return 'An unexpected error occurred. Please try again.';
 }
 
-export interface ParsedOAuthError {
+interface ParsedOAuthError {
   code: string;
   message: string | null;
 }

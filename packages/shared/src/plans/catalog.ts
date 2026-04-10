@@ -21,7 +21,7 @@ import { getPlan, getGrantPlan } from './plans.js';
 export type BillingCatalogTier = PlanId | GrantType;
 export type BillingCatalogCTA = 'subscribe' | 'buy_single_project' | 'start_trial' | 'none';
 
-export interface BillingCatalogOneTimePricing {
+interface BillingCatalogOneTimePricing {
   amount: number;
   durationMonths: number;
 }

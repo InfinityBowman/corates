@@ -67,7 +67,7 @@ export interface ToolContent {
   citations?: Citation[];
 }
 
-export const TOOL_CONTENT: Record<string, ToolContent> = {
+const TOOL_CONTENT: Record<string, ToolContent> = {
   amstar2: {
     id: 'amstar2',
     name: 'AMSTAR 2',

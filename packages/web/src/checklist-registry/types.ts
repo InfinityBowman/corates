@@ -10,14 +10,12 @@ export const CHECKLIST_TYPES = {
   ROB2: 'ROB2',
 } as const;
 
-export type ChecklistType = (typeof CHECKLIST_TYPES)[keyof typeof CHECKLIST_TYPES];
-
 interface ScoreColorConfig {
   bg: string;
   text: string;
 }
 
-export interface ChecklistMetadata {
+interface ChecklistMetadata {
   name: string;
   shortName: string;
   description: string;
@@ -27,7 +25,7 @@ export interface ChecklistMetadata {
   scoreColors: Record<string, ScoreColorConfig>;
 }
 
-export const CHECKLIST_METADATA: Record<string, ChecklistMetadata> = {
+const CHECKLIST_METADATA: Record<string, ChecklistMetadata> = {
   [CHECKLIST_TYPES.AMSTAR2]: {
     name: 'AMSTAR 2',
     shortName: 'AMSTAR 2',

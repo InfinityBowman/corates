@@ -15,7 +15,7 @@ import type {
   ReconciliationSummaryStats,
 } from './types';
 
-export interface UseReconciliationEngineOptions {
+interface UseReconciliationEngineOptions {
   adapter: ReconciliationAdapter;
   checklist1: unknown;
   checklist2: unknown;
@@ -33,7 +33,7 @@ export interface UseReconciliationEngineOptions {
   checklist2Id: string | null;
 }
 
-export interface UseReconciliationEngineResult {
+interface UseReconciliationEngineResult {
   // Navigation
   currentPage: number;
   viewMode: 'questions' | 'summary';

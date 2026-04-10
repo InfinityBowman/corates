@@ -12,17 +12,17 @@ import { disconnectAllFromProject, cleanupProjectStorage } from '@/commands/lib/
 import { notifyUsers, NotificationTypes } from '@/commands/lib/notifications';
 import type { Env } from '@/types';
 
-export interface DeleteProjectActor {
+interface DeleteProjectActor {
   id: string;
   name?: string | null;
   email?: string | null;
 }
 
-export interface DeleteProjectParams {
+interface DeleteProjectParams {
   projectId: string;
 }
 
-export interface DeleteProjectResult {
+interface DeleteProjectResult {
   deleted: string;
   notifiedCount: number;
 }

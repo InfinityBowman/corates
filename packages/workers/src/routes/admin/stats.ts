@@ -663,4 +663,3 @@ const statsRoutes = _statsBase
   });
 
 export { statsRoutes };
-export type StatsRoutes = typeof statsRoutes;

@@ -10,7 +10,7 @@ import { checkPdfAvailability } from '@/lib/referenceLookup.js';
 import { cloneArrayBuffer } from './serialization';
 import type { ImportedRef } from './deduplication';
 
-export interface RefPdfFile {
+interface RefPdfFile {
   id: string;
   file?: { name: string; type?: string; size?: number } | null;
   fileName: string;
@@ -64,7 +64,7 @@ interface RefRestorable {
   refPdfFiles?: SerializedRefPdf[];
 }
 
-export interface ReferenceOperations {
+interface ReferenceOperations {
   importedRefs: ImportedRef[];
   selectedRefIds: Set<string>;
   refFileName: string;

@@ -5,7 +5,7 @@ export const STATIC_ORIGINS: readonly string[] = [
   'https://corates.org',
 ];
 
-export const ORIGIN_PATTERNS: readonly RegExp[] = [
+const ORIGIN_PATTERNS: readonly RegExp[] = [
   /^https:\/\/[a-z0-9-]+-corates\.jacobamaynard\.workers\.dev$/,
   /^https:\/\/corates\.jacobamaynard\.workers\.dev$/,
   /^http:\/\/localhost:\d+$/, // Any localhost port (dev + Vitest browser tests)

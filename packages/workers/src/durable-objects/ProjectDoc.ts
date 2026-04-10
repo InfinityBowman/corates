@@ -85,7 +85,7 @@ interface WebSocketAttachment {
   awarenessClientId: number | null;
 }
 
-export interface SyncRequestBody {
+interface SyncRequestBody {
   meta?: Record<string, unknown>;
   members?: Array<{
     userId: string;
@@ -99,7 +99,7 @@ export interface SyncRequestBody {
   }>;
 }
 
-export interface SyncMemberBody {
+interface SyncMemberBody {
   userId: string;
   role?: string;
   joinedAt?: string | number;
@@ -110,7 +110,7 @@ export interface SyncMemberBody {
   image?: string | null;
 }
 
-export interface SyncPdfBody {
+interface SyncPdfBody {
   action: 'add' | 'remove';
   studyId: string;
   studyName?: string;
@@ -124,7 +124,7 @@ export interface SyncPdfBody {
   fileName?: string;
 }
 
-export interface MemberYMapFields {
+interface MemberYMapFields {
   role?: string | null;
   joinedAt?: string | number;
   name?: string | null;
@@ -190,7 +190,7 @@ interface Pdf {
  * isolate memory limit. The row-level numbers in `rows` show how the data
  * is currently arranged on disk (snapshot chunks vs incremental updates).
  */
-export interface ProjectDocStorageStats {
+interface ProjectDocStorageStats {
   rows: {
     total: number;
     snapshot: number;

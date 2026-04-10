@@ -21,9 +21,7 @@ export const NAV_ITEM_TYPES = {
   OVERALL_JUDGEMENT: 'overallJudgement',
 } as const;
 
-export type NavItemType = (typeof NAV_ITEM_TYPES)[keyof typeof NAV_ITEM_TYPES];
-
-export interface NavItem {
+interface NavItem {
   type: string;
   key: string;
   label: string;
@@ -35,12 +33,12 @@ export interface NavItem {
   [key: string]: unknown;
 }
 
-export interface NavGroup {
+interface NavGroup {
   section: string;
   items: NavItem[];
 }
 
-export interface SectionProgress {
+interface SectionProgress {
   answered: number;
   total: number;
   hasDisagreements: boolean;
@@ -163,7 +161,7 @@ export function getGroupedNavigationItems(navItems: NavItem[]): NavGroup[] {
 /**
  * Check if a Section B question has been answered in the final answers
  */
-export function hasSectionBAnswer(key: string, finalAnswers: FinalAnswers): boolean {
+function hasSectionBAnswer(key: string, finalAnswers: FinalAnswers): boolean {
   const sectionB = finalAnswers?.sectionB as Record<string, Record<string, unknown>> | undefined;
   return sectionB?.[key]?.answer != null;
 }
@@ -171,7 +169,7 @@ export function hasSectionBAnswer(key: string, finalAnswers: FinalAnswers): bool
 /**
  * Check if a domain question has been answered in the final answers
  */
-export function hasDomainQuestionAnswer(
+function hasDomainQuestionAnswer(
   domainKey: string,
   questionKey: string,
   finalAnswers: FinalAnswers,
@@ -184,7 +182,7 @@ export function hasDomainQuestionAnswer(
 /**
  * Check if a domain judgement has been set
  */
-export function hasDomainJudgement(domainKey: string, finalAnswers: FinalAnswers): boolean {
+function hasDomainJudgement(domainKey: string, finalAnswers: FinalAnswers): boolean {
   const domain = finalAnswers?.[domainKey] as Record<string, unknown> | undefined;
   return domain?.judgement != null;
 }
@@ -192,7 +190,7 @@ export function hasDomainJudgement(domainKey: string, finalAnswers: FinalAnswers
 /**
  * Check if overall judgement has been set
  */
-export function hasOverallJudgement(finalAnswers: FinalAnswers): boolean {
+function hasOverallJudgement(finalAnswers: FinalAnswers): boolean {
   const overall = finalAnswers?.overall as Record<string, unknown> | undefined;
   return overall?.judgement != null;
 }
@@ -280,13 +278,6 @@ export function getNavItemTooltip(
 }
 
 /**
- * Get the count of answered items
- */
-export function getAnsweredCount(navItems: NavItem[], finalAnswers: FinalAnswers): number {
-  return navItems.filter(item => hasNavItemAnswer(item, finalAnswers)).length;
-}
-
-/**
  * Check if Section B indicates critical risk (B2 or B3 = Y/PY)
  */
 export function isSectionBCritical(
@@ -295,30 +286,6 @@ export function isSectionBCritical(
   const b2Answer = sectionB?.b2?.answer;
   const b3Answer = sectionB?.b3?.answer;
   return ['Y', 'PY'].includes(b2Answer!) || ['Y', 'PY'].includes(b3Answer!);
-}
-
-/**
- * Get domain display number from domain key
- */
-export function getDomainDisplayNumber(domainKey: string): string {
-  return domainKey.replace('domain', '').replace('a', 'A').replace('b', 'B');
-}
-
-/**
- * Get section key from section name (for grouping)
- */
-export function getSectionKey(sectionName: string): string {
-  if (sectionName === 'Section B') return 'sectionB';
-  if (sectionName === 'Overall') return 'overall';
-
-  const domainMatch = sectionName.match(/Domain (\d+)/);
-  if (domainMatch) {
-    const domainNum = domainMatch[1];
-    if (domainNum === '1') return 'domain1';
-    return `domain${domainNum}`;
-  }
-
-  return sectionName;
 }
 
 /**

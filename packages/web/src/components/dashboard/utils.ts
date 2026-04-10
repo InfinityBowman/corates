@@ -57,7 +57,7 @@ const ACCENT_COLORS = [
   },
 ];
 
-export function hashToColorIndex(id: string): number {
+function hashToColorIndex(id: string): number {
   if (!id) return 0;
   let hash = 0;
   for (let i = 0; i < id.length; i++) {

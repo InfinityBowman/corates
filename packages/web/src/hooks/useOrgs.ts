@@ -7,7 +7,7 @@ import { authClient, authFetch } from '@/api/auth-client';
 import { useAuthStore, selectIsLoggedIn, selectIsAuthLoading } from '@/stores/authStore';
 import { queryKeys } from '@/lib/queryKeys';
 
-export async function fetchOrgs() {
+async function fetchOrgs() {
   const data = await authFetch(authClient.organization.list());
   return data || [];
 }
