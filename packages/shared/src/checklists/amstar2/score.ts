@@ -134,6 +134,3 @@ export function getScoreBreakdown(checklist: AMSTAR2Checklist): {
     score: scoreAMSTAR2Checklist(checklist),
   };
 }
-
-// Legacy export for backwards compatibility
-export const scoreChecklist = scoreAMSTAR2Checklist;

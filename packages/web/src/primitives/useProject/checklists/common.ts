@@ -4,12 +4,12 @@
 
 import * as Y from 'yjs';
 
-export interface ChecklistYMapResult {
+interface ChecklistYMapResult {
   checklistYMap: Y.Map<unknown>;
   checklistType: string;
 }
 
-export interface CommonOperations {
+interface CommonOperations {
   updateChecklist: (studyId: string, checklistId: string, updates: Record<string, unknown>) => void;
   deleteChecklist: (studyId: string, checklistId: string) => void;
   getChecklistAnswersMap: (studyId: string, checklistId: string) => Y.Map<unknown> | null;

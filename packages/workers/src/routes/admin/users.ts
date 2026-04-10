@@ -1090,4 +1090,3 @@ const userRoutes = base
   });
 
 export { userRoutes };
-export type UserRoutes = typeof userRoutes;

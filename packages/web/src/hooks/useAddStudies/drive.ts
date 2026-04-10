@@ -9,7 +9,7 @@ interface DriveSerializableState {
   selectedDriveFiles: DriveFile[];
 }
 
-export interface DriveOperations {
+interface DriveOperations {
   selectedDriveFiles: DriveFile[];
   driveCount: number;
   toggleDriveFile: (file: DriveFile) => void;

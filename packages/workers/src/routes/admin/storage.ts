@@ -523,4 +523,3 @@ const storageRoutes = _storageBase
   });
 
 export { storageRoutes };
-export type StorageRoutes = typeof storageRoutes;

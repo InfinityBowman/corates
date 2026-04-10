@@ -5,7 +5,7 @@
 
 import { normalizeTitle } from '@/lib/pdfUtils.js';
 
-export interface Matchable {
+interface Matchable {
   doi?: string | null;
   title?: string | null;
 }

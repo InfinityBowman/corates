@@ -11,17 +11,17 @@ import { createDomainError, SYSTEM_ERRORS } from '@corates/shared';
 import { syncProjectToDO } from '@/commands/lib/doSync';
 import type { Env } from '@/types';
 
-export interface UpdateProjectActor {
+interface UpdateProjectActor {
   id: string;
 }
 
-export interface UpdateProjectParams {
+interface UpdateProjectParams {
   projectId: string;
   name?: string;
   description?: string;
 }
 
-export interface UpdateProjectResult {
+interface UpdateProjectResult {
   projectId: string;
   updated: true;
 }

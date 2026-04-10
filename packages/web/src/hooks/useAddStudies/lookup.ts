@@ -41,7 +41,7 @@ interface LookupRestorable {
   selectedLookupIds?: string[];
 }
 
-export interface LookupOperations {
+interface LookupOperations {
   identifierInput: string;
   setIdentifierInput: (value: string) => void;
   lookupRefs: LookupRef[];

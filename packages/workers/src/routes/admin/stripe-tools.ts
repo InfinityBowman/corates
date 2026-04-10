@@ -806,4 +806,3 @@ const stripeToolsRoutes = _stripeToolsBase
   });
 
 export { stripeToolsRoutes };
-export type StripeToolsRoutes = typeof stripeToolsRoutes;

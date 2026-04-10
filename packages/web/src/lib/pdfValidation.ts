@@ -8,17 +8,17 @@ import { PDF_LIMITS, isValidPdfFilename, isPdfSignature, formatFileSize } from '
 // Re-export for convenience
 export { PDF_LIMITS, formatFileSize };
 
-export interface ValidationSuccess {
+interface ValidationSuccess {
   valid: true;
 }
 
-export interface ValidationFailure {
+interface ValidationFailure {
   valid: false;
   error: string;
   details: { message: string; [key: string]: unknown };
 }
 
-export type ValidationResult = ValidationSuccess | ValidationFailure;
+type ValidationResult = ValidationSuccess | ValidationFailure;
 
 /**
  * Validate a PDF file before upload

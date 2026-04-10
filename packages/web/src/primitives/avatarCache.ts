@@ -123,36 +123,6 @@ export async function fetchAndCacheAvatar(
 }
 
 /**
- * Get avatar with automatic caching
- * Returns cached version if available and offline, otherwise fetches and caches
- */
-export async function getAvatarWithCache(
-  userId: string,
-  imageUrl?: string,
-): Promise<string | null> {
-  if (!userId) return null;
-
-  // If no image URL, just check cache (for offline scenarios)
-  if (!imageUrl) {
-    return getCachedAvatar(userId);
-  }
-
-  // If offline, return cached version
-  if (!navigator.onLine) {
-    return getCachedAvatar(userId);
-  }
-
-  // Online: fetch and cache, falling back to cache on error
-  try {
-    const dataUrl = await fetchAndCacheAvatar(userId, imageUrl);
-    return dataUrl;
-  } catch (err) {
-    console.warn('Failed to fetch avatar, using cache:', (err as Error).message);
-    return getCachedAvatar(userId);
-  }
-}
-
-/**
  * Prune expired avatar cache entries (older than 30 days)
  * Should be called periodically (e.g., on app startup)
  */

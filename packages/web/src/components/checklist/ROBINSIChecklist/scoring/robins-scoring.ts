@@ -9,8 +9,6 @@ import { robinsI } from '@corates/shared';
 
 // Re-export all scoring functions and constants
 export const JUDGEMENTS = robinsI.JUDGEMENTS;
-export const OVERALL_DISPLAY = robinsI.OVERALL_DISPLAY;
-
 // Main scoring functions
 export const scoreRobinsDomain = robinsI.scoreRobinsDomain;
 export const scoreAllDomains = robinsI.scoreAllDomains;

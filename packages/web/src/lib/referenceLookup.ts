@@ -30,14 +30,14 @@ interface UnpaywallLocation {
   host_type?: string;
 }
 
-export interface PdfAvailability {
+interface PdfAvailability {
   available: boolean;
   url: string | null;
   source: string | null;
   accessible: boolean;
 }
 
-export interface ReferenceMetadata {
+interface ReferenceMetadata {
   title: string;
   firstAuthor: string | null;
   publicationYear: number | null;
@@ -288,7 +288,7 @@ function normalizeCrossRefWork(work: CrossRefWork): ReferenceMetadata {
 /**
  * Fetch reference metadata from a PubMed ID using NCBI E-utilities API
  */
-export async function fetchFromPMID(pmid: string): Promise<ReferenceMetadata> {
+async function fetchFromPMID(pmid: string): Promise<ReferenceMetadata> {
   // Clean up PMID - extract just the number
   const cleanPmid = pmid
     .replace(/^pmid:/i, '')

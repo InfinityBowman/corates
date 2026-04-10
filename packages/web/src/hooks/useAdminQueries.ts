@@ -126,14 +126,6 @@ export function useStorageDocuments(
   });
 }
 
-export function useStorageStats() {
-  return useQuery({
-    queryKey: queryKeys.admin.storageStats,
-    queryFn: () => parseResponse(api.api.admin.storage.stats.$get()),
-    ...ADMIN_QUERY_CONFIG,
-  });
-}
-
 export function useAdminOrgs(params: { page?: number; limit?: number; search?: string } = {}) {
   const page = params.page ?? 1;
   const limit = params.limit ?? 20;

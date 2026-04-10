@@ -6,7 +6,7 @@
 const DEFAULT_MAX_SIZE = 256; // Max width/height in pixels
 const DEFAULT_QUALITY = 0.85; // JPEG quality (0-1)
 
-export interface CompressOptions {
+interface CompressOptions {
   maxSize?: number;
   quality?: number;
 }

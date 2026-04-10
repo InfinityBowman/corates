@@ -176,4 +176,3 @@ const dbRoutes = $(base)
   });
 
 export { dbRoutes };
-export type DbRoutes = typeof dbRoutes;

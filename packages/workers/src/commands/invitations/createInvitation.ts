@@ -13,18 +13,18 @@ import { createDomainError, PROJECT_ERRORS } from '@corates/shared';
 import { TIME_DURATIONS } from '@/config/constants';
 import type { Env } from '@/types';
 
-export interface CreateInvitationActor {
+interface CreateInvitationActor {
   id: string;
 }
 
-export interface CreateInvitationParams {
+interface CreateInvitationParams {
   orgId: string;
   projectId: string;
   email: string;
   role: string;
 }
 
-export interface CreateInvitationResult {
+interface CreateInvitationResult {
   invitationId: string;
   emailQueued: boolean;
 }

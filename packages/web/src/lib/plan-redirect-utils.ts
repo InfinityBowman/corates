@@ -35,9 +35,9 @@ interface PlanRedirectResult {
   error: PlanRedirectError | null;
 }
 
-export const DEFAULT_INTERVAL: BillingInterval = 'monthly';
+const DEFAULT_INTERVAL: BillingInterval = 'monthly';
 
-export const STORAGE_KEYS = {
+const STORAGE_KEYS = {
   PENDING_PLAN: 'pendingPlan',
   PENDING_INTERVAL: 'pendingInterval',
 } as const;
@@ -65,7 +65,7 @@ export const BILLING_MESSAGES = {
   },
 } as const;
 
-export function validateInterval(interval: string | null): BillingInterval {
+function validateInterval(interval: string | null): BillingInterval {
   return interval === 'yearly' ? 'yearly' : DEFAULT_INTERVAL;
 }
 
@@ -90,7 +90,7 @@ export function capturePlanParams(urlParams: URLSearchParams): boolean {
   return false;
 }
 
-export function getPendingPlan(): { plan: string | null; interval: BillingInterval } {
+function getPendingPlan(): { plan: string | null; interval: BillingInterval } {
   try {
     const plan = localStorage.getItem(STORAGE_KEYS.PENDING_PLAN);
     const rawInterval = localStorage.getItem(STORAGE_KEYS.PENDING_INTERVAL);

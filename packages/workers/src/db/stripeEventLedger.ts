@@ -1,9 +1,9 @@
-import { eq, desc, and, isNull } from 'drizzle-orm';
+import { eq, desc } from 'drizzle-orm';
 import { stripeEventLedger } from './schema';
 import type { Database } from './client';
 import type { InferSelectModel } from 'drizzle-orm';
 
-export type StripeEventLedgerEntry = InferSelectModel<typeof stripeEventLedger>;
+type StripeEventLedgerEntry = InferSelectModel<typeof stripeEventLedger>;
 
 export const LedgerStatus = {
   RECEIVED: 'received',
@@ -14,9 +14,9 @@ export const LedgerStatus = {
   IGNORED_TEST_MODE: 'ignored_test_mode',
 } as const;
 
-export type LedgerStatusType = (typeof LedgerStatus)[keyof typeof LedgerStatus];
+type LedgerStatusType = (typeof LedgerStatus)[keyof typeof LedgerStatus];
 
-export interface InsertLedgerEntryData {
+interface InsertLedgerEntryData {
   id: string;
   payloadHash: string;
   signaturePresent: boolean;
@@ -27,7 +27,7 @@ export interface InsertLedgerEntryData {
   httpStatus?: number | null;
 }
 
-export interface UpdateLedgerVerifiedFieldsData {
+interface UpdateLedgerVerifiedFieldsData {
   stripeEventId: string | null;
   type: string | null;
   livemode: boolean | null;
@@ -42,13 +42,13 @@ export interface UpdateLedgerVerifiedFieldsData {
   stripeCheckoutSessionId?: string | null;
 }
 
-export interface UpdateLedgerStatusData {
+interface UpdateLedgerStatusData {
   status: LedgerStatusType;
   error?: string | null;
   httpStatus?: number | null;
 }
 
-export interface QueryOptions {
+interface QueryOptions {
   limit?: number;
   since?: Date;
 }
@@ -196,19 +196,6 @@ export async function getLedgerByStripeEventId(
   return result ?? null;
 }
 
-export async function getLedgerById(
-  db: Database,
-  id: string,
-): Promise<StripeEventLedgerEntry | null> {
-  const result = await db
-    .select()
-    .from(stripeEventLedger)
-    .where(eq(stripeEventLedger.id, id))
-    .get();
-
-  return result ?? null;
-}
-
 export async function getLedgerEntriesByOrgId(
   db: Database,
   orgId: string,
@@ -221,65 +208,6 @@ export async function getLedgerEntriesByOrgId(
     .from(stripeEventLedger)
     .where(eq(stripeEventLedger.orgId, orgId))
     .orderBy(desc(stripeEventLedger.receivedAt))
-    .limit(limit)
-    .all();
-
-  return results;
-}
-
-export async function getLedgerEntriesByType(
-  db: Database,
-  type: string,
-  options: QueryOptions = {},
-): Promise<StripeEventLedgerEntry[]> {
-  const { limit = 50 } = options;
-
-  const results = await db
-    .select()
-    .from(stripeEventLedger)
-    .where(eq(stripeEventLedger.type, type))
-    .orderBy(stripeEventLedger.receivedAt)
-    .limit(limit)
-    .all();
-
-  return results;
-}
-
-export async function getLedgerEntriesByStatus(
-  db: Database,
-  status: string,
-  options: QueryOptions = {},
-): Promise<StripeEventLedgerEntry[]> {
-  const { limit = 100 } = options;
-
-  const results = await db
-    .select()
-    .from(stripeEventLedger)
-    .where(eq(stripeEventLedger.status, status))
-    .orderBy(stripeEventLedger.receivedAt)
-    .limit(limit)
-    .all();
-
-  return results;
-}
-
-export async function getProcessedCheckoutSessionsWithoutSubscription(
-  db: Database,
-  options: QueryOptions = {},
-): Promise<StripeEventLedgerEntry[]> {
-  const { limit = 50 } = options;
-
-  const results = await db
-    .select()
-    .from(stripeEventLedger)
-    .where(
-      and(
-        eq(stripeEventLedger.type, 'checkout.session.completed'),
-        eq(stripeEventLedger.status, LedgerStatus.PROCESSED),
-        isNull(stripeEventLedger.stripeSubscriptionId),
-      ),
-    )
-    .orderBy(stripeEventLedger.receivedAt)
     .limit(limit)
     .all();
 

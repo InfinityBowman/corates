@@ -14,20 +14,20 @@ import { notifyUser, NotificationTypes } from '@/commands/lib/notifications';
 import { getProjectMembership, requireSafeRemoval } from '@/policies';
 import type { Env } from '@/types';
 
-export interface RemoveMemberActor {
+interface RemoveMemberActor {
   id: string;
   name?: string | null;
   email?: string | null;
 }
 
-export interface RemoveMemberParams {
+interface RemoveMemberParams {
   orgId: string;
   projectId: string;
   userId: string;
   isSelfRemoval: boolean;
 }
 
-export interface RemoveMemberResult {
+interface RemoveMemberResult {
   removed: string;
 }
 

@@ -256,7 +256,7 @@ function CompleteProfilePage() {
     }
   }
 
-  if (isAuthLoading) {
+  if (isAuthLoading || user?.profileCompletedAt || !user) {
     return <Spinner size='lg' label='Loading profile' />;
   }
 

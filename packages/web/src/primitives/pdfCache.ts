@@ -174,12 +174,3 @@ export async function getCacheSize(): Promise<number> {
     return 0;
   }
 }
-
-export default {
-  getCachedPdf,
-  cachePdf,
-  removeCachedPdf,
-  clearStudyCache,
-  clearProjectCache,
-  getCacheSize,
-};

@@ -13,7 +13,7 @@ export interface BuiltOrg {
   createdAt: number;
 }
 
-export interface BuiltOrgMembership {
+interface BuiltOrgMembership {
   id: string;
   organizationId: string;
   userId: string;

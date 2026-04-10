@@ -511,7 +511,7 @@ interface MockProjectData {
 
 type TemplateFunction = () => MockProjectData;
 
-export const MOCK_TEMPLATES: Record<string, TemplateFunction> = {
+const MOCK_TEMPLATES: Record<string, TemplateFunction> = {
   empty: () => ({
     version: 1,
     meta: {

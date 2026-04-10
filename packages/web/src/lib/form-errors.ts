@@ -62,7 +62,7 @@ export function handleFormError(
   return true;
 }
 
-export interface FormErrorState {
+interface FormErrorState {
   setFieldError(field: string, message: string): void;
   getFieldError(field: string): string | undefined;
   clearFieldError(field: string): void;

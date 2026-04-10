@@ -46,7 +46,6 @@
     "@embedpdf/plugin-thumbnail": "^2.14.0",
     "@embedpdf/plugin-tiling": "^2.14.0",
     "@embedpdf/plugin-ui": "^2.14.0",
-    "@embedpdf/plugin-view-manager": "^2.14.0",
     "@embedpdf/plugin-viewport": "^2.14.0",
     "@embedpdf/plugin-zoom": "^2.14.0",
     "@fontsource-variable/geist": "^5.2.8",

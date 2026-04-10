@@ -13,16 +13,16 @@ import { createDomainError, SYSTEM_ERRORS } from '@corates/shared';
 import { createStripeClient } from '@/lib/stripe.js';
 import type { Env } from '@/types';
 
-export interface CreateSingleProjectCheckoutParams {
+interface CreateSingleProjectCheckoutParams {
   orgId: string;
 }
 
-export interface CreateSingleProjectCheckoutResult {
+interface CreateSingleProjectCheckoutResult {
   url: string;
   sessionId: string;
 }
 
-export interface SingleProjectCheckoutActor {
+interface SingleProjectCheckoutActor {
   id: string;
   stripeCustomerId: string | null;
 }

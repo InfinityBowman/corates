@@ -92,7 +92,7 @@ interface AuthActions {
 
 // Pure functions for localStorage cache
 
-export function loadCachedAuth(): AuthUser | null {
+function loadCachedAuth(): AuthUser | null {
   if (typeof window === 'undefined') return null;
   try {
     const cached = localStorage.getItem(AUTH_CACHE_KEY);

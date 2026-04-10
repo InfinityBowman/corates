@@ -87,12 +87,12 @@ async function loadGooglePicker(): Promise<void> {
   }
 }
 
-export interface PickedDriveFile {
+interface PickedDriveFile {
   id: string;
   name: string;
 }
 
-export interface PickerOptions {
+interface PickerOptions {
   oauthToken: string;
   developerKey: string;
   appId?: string | null;

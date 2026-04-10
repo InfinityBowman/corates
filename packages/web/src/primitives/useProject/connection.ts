@@ -25,19 +25,19 @@ function throttle<T extends (...args: unknown[]) => void>(fn: T, ms: number): T 
  * Close reason codes for WebSocket disconnection
  * These match the reasons sent by the backend ProjectDoc DO
  */
-export const CLOSE_REASONS = {
+const CLOSE_REASONS = {
   PROJECT_DELETED: 'project-deleted',
   MEMBERSHIP_REVOKED: 'membership-revoked',
   NOT_A_MEMBER: 'not-a-member',
 } as const;
 
-export interface ConnectionManagerOptions {
+interface ConnectionManagerOptions {
   onSync: () => void;
   isLocalProject: () => boolean;
   onAccessDenied: (info: { reason: string }) => Promise<void> | void;
 }
 
-export interface ConnectionManager {
+interface ConnectionManager {
   connect: () => void;
   disconnect: () => void;
   destroy: () => void;

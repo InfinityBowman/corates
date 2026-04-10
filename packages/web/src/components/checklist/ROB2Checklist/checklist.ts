@@ -9,25 +9,19 @@ import { rob2 } from '@corates/shared/checklists';
 import type { Judgement, ChecklistState } from '@corates/shared/checklists/rob2';
 
 // Re-export functions from shared package with original names for registry compatibility
-export const createChecklist = rob2.createROB2Checklist;
-export const scoreChecklist = rob2.scoreROB2Checklist;
 export const isROB2Complete = rob2.isROB2Complete;
-export const getAnswers = rob2.getAnswers;
-export const getSelectedAnswer = rob2.getSelectedAnswer;
-export const getDomainSummary = rob2.getDomainSummary;
 export const scoreRob2Domain = rob2.scoreRob2Domain;
 export const getRequiredQuestions = rob2.getRequiredQuestions;
-export const scoreAllDomains = rob2.scoreAllDomains;
-export const createROB2Checklist = rob2.createROB2Checklist;
+const scoreAllDomains = rob2.scoreAllDomains;
 
-export interface SmartScoringDomain {
+interface SmartScoringDomain {
   auto: Judgement | null;
   effective: Judgement | null;
   source: string;
   isOverridden: boolean;
 }
 
-export interface SmartScoringResult {
+interface SmartScoringResult {
   domains: Record<string, SmartScoringDomain>;
   overall: Judgement | null;
   isComplete: boolean;

@@ -24,7 +24,7 @@ export interface BuiltProjectMembership {
   joinedAt: number;
 }
 
-export interface BuiltProjectInvitation {
+interface BuiltProjectInvitation {
   id: string;
   orgId: string;
   projectId: string;
@@ -108,8 +108,6 @@ export async function buildProject(options: BuildProjectOptions = {}): Promise<B
     membership: membershipData,
   };
 }
-
-export const buildProjectWithOwner = buildProject;
 
 interface BuildProjectMemberOptions {
   projectId: string;

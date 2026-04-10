@@ -21,11 +21,7 @@ interface NotifyOrgOptions {
   excludeUserIds?: string[];
 }
 
-export async function notifyUser(
-  env: Env,
-  userId: string,
-  event: NotifyEvent,
-): Promise<NotifyResult> {
+async function notifyUser(env: Env, userId: string, event: NotifyEvent): Promise<NotifyResult> {
   if (!env.USER_SESSION) {
     console.warn('[notify] USER_SESSION binding not available');
     return { success: false, delivered: false };

@@ -31,7 +31,7 @@ function getClientIdentifier(c: Context): string {
   );
 }
 
-export interface RateLimitOptions {
+interface RateLimitOptions {
   limit?: number;
   windowMs?: number;
   keyPrefix?: string;
@@ -132,12 +132,6 @@ export const contactRateLimit = rateLimit({
   limit: 5,
   windowMs: 15 * 60 * 1000,
   keyPrefix: 'contact',
-});
-
-export const apiRateLimit = rateLimit({
-  limit: 100,
-  windowMs: 60 * 1000,
-  keyPrefix: 'api',
 });
 
 export const billingCheckoutRateLimit = rateLimit({

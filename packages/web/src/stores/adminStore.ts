@@ -92,23 +92,6 @@ export const useAdminStore = create<AdminState & AdminActions>()(set => ({
 
 // Admin API functions (plain async, no store state needed)
 
-export async function fetchStats() {
-  return parseResponse(api.api.admin.stats.$get());
-}
-
-export async function fetchUsers({ page = 1, limit = 20, search = '' } = {}) {
-  const query: Record<string, string> = {
-    page: page.toString(),
-    limit: limit.toString(),
-  };
-  if (search) query.search = search;
-  return parseResponse(api.api.admin.users.$get({ query }));
-}
-
-export async function fetchUserDetails(userId: string) {
-  return parseResponse(api.api.admin.users[':userId'].$get({ param: { userId } }));
-}
-
 export async function banUser(userId: string, reason: string, expiresAt: string | null = null) {
   return parseResponse(
     api.api.admin.users[':userId'].ban.$post({
@@ -138,30 +121,11 @@ export async function deleteUser(userId: string) {
   return parseResponse(api.api.admin.users[':userId'].$delete({ param: { userId } }));
 }
 
-export async function fetchStorageDocuments(
-  { cursor, limit = 50, prefix = '', search = '' } = {} as {
-    cursor?: string;
-    limit?: number;
-    prefix?: string;
-    search?: string;
-  },
-) {
-  const query: Record<string, string> = { limit: limit.toString() };
-  if (cursor) query.cursor = cursor;
-  if (prefix) query.prefix = prefix;
-  if (search) query.search = search;
-  return parseResponse(api.api.admin.storage.documents.$get({ query }));
-}
-
 export async function deleteStorageDocuments(keys: string[]) {
   if (!Array.isArray(keys) || keys.length === 0) {
     throw new Error('Keys array is required');
   }
   return parseResponse(api.api.admin.storage.documents.$delete({ json: { keys } }));
-}
-
-export async function fetchStorageStats() {
-  return parseResponse(api.api.admin.storage.stats.$get());
 }
 
 export async function fetchOrgs({ page = 1, limit = 20, search = '' } = {}) {
@@ -228,22 +192,6 @@ export async function createOrgGrant(orgId: string, grantData: Record<string, un
     api.api.admin.orgs[':orgId'].grants.$post({
       param: { orgId },
       json: grantData as never,
-    }),
-  );
-  queryClient.invalidateQueries({ queryKey: queryKeys.admin.orgDetails(orgId) });
-  queryClient.invalidateQueries({ queryKey: queryKeys.admin.orgBilling(orgId) });
-  return result;
-}
-
-export async function updateOrgGrant(
-  orgId: string,
-  grantId: string,
-  updateData: Record<string, unknown>,
-) {
-  const result = await parseResponse(
-    api.api.admin.orgs[':orgId'].grants[':grantId'].$put({
-      param: { orgId, grantId },
-      json: updateData as never,
     }),
   );
   queryClient.invalidateQueries({ queryKey: queryKeys.admin.orgDetails(orgId) });
@@ -321,20 +269,6 @@ export async function fetchOrgBillingReconcile(
       query,
     }),
   );
-}
-
-export async function fetchProjects({ page = 1, limit = 20, search = '', orgId = '' } = {}) {
-  const query: Record<string, string> = {
-    page: page.toString(),
-    limit: limit.toString(),
-  };
-  if (search) query.search = search;
-  if (orgId) query.orgId = orgId;
-  return parseResponse(api.api.admin.projects.$get({ query }));
-}
-
-export async function fetchProjectDetails(projectId: string) {
-  return parseResponse(api.api.admin.projects[':projectId'].$get({ param: { projectId } }));
 }
 
 export async function removeProjectMember(projectId: string, memberId: string) {

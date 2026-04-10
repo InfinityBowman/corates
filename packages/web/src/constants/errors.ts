@@ -4,11 +4,7 @@
  * This file provides frontend-specific utilities and constants
  */
 
-import { getErrorMessage as getSharedErrorMessage, PROJECT_ERRORS } from '@corates/shared';
-
-export function getErrorMessage(errorCode: string): string {
-  return getSharedErrorMessage(errorCode);
-}
+import { PROJECT_ERRORS } from '@corates/shared';
 
 /**
  * Error messages that indicate access to a project has been denied.

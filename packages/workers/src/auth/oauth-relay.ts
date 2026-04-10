@@ -23,7 +23,7 @@ import { symmetricDecrypt, symmetricEncrypt } from 'better-auth/crypto';
 import { handleOAuthUserInfo } from 'better-auth/oauth2';
 import { z } from 'zod';
 
-export interface OAuthRelayOptions {
+interface OAuthRelayOptions {
   /**
    * The production URL that handles OAuth callbacks from providers.
    * On localhost, OAuth will redirect through production.

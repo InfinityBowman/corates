@@ -810,4 +810,3 @@ const accountMergeRoutes = $(base.use('*', requireAuth))
   });
 
 export { accountMergeRoutes };
-export type AccountMergeRoutes = typeof accountMergeRoutes;

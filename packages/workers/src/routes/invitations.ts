@@ -113,4 +113,3 @@ const invitationRoutes = $(base.use('*', requireAuth)).openapi(acceptInvitationR
 });
 
 export { invitationRoutes };
-export type InvitationRoutes = typeof invitationRoutes;

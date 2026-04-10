@@ -19,7 +19,7 @@ export interface ProjectRow {
   ydoc: YDoc;
 }
 
-export interface PdfCacheRow {
+interface PdfCacheRow {
   id: string;
   projectId: string;
   studyId: string;
@@ -29,14 +29,14 @@ export interface PdfCacheRow {
   cachedAt: number;
 }
 
-export interface AvatarRow {
+interface AvatarRow {
   userId: string;
   dataUrl: string;
   sourceUrl?: string;
   cachedAt: number;
 }
 
-export interface FormStateRow {
+interface FormStateRow {
   key: string;
   type: 'createProject' | 'addStudies';
   projectId: string | null;
@@ -44,7 +44,7 @@ export interface FormStateRow {
   timestamp: number;
 }
 
-export interface LocalChecklistRow {
+interface LocalChecklistRow {
   id: string;
   name: string;
   type: string;
@@ -53,7 +53,7 @@ export interface LocalChecklistRow {
   updatedAt: number;
 }
 
-export interface LocalChecklistPdfRow {
+interface LocalChecklistPdfRow {
   checklistId: string;
   data: ArrayBuffer;
   fileName: string;

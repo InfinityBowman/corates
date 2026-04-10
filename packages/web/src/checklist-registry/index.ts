@@ -26,7 +26,7 @@ interface ChecklistConfig {
   getAnswers: (_state: any) => any;
 }
 
-export const CHECKLIST_REGISTRY: Record<string, ChecklistConfig> = {
+const CHECKLIST_REGISTRY: Record<string, ChecklistConfig> = {
   [CHECKLIST_TYPES.AMSTAR2]: {
     createChecklist: createAMSTAR2,
     scoreChecklist: scoreAMSTAR2,
@@ -46,7 +46,7 @@ export const CHECKLIST_REGISTRY: Record<string, ChecklistConfig> = {
   },
 };
 
-export function getChecklistConfig(type: string): ChecklistConfig {
+function getChecklistConfig(type: string): ChecklistConfig {
   const config = CHECKLIST_REGISTRY[type];
   if (!config) {
     console.warn(`Unknown checklist type: ${type}, falling back to ${DEFAULT_CHECKLIST_TYPE}`);
@@ -82,4 +82,3 @@ export {
   getChecklistTypeOptions,
   getChecklistMetadata,
 } from './types';
-export type { ChecklistType, ChecklistMetadata } from './types';

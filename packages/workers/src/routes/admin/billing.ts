@@ -1193,4 +1193,3 @@ const billingRoutes = base
   });
 
 export { billingRoutes };
-export type BillingRoutes = typeof billingRoutes;

@@ -38,10 +38,6 @@ export function useInitialAnimation(): AnimationHelpers {
   return { shouldAnimate, fadeUp, statRise };
 }
 
-export function resetAnimationState() {
-  hasAnimated = false;
-}
-
 // Context to share animation helpers down the component tree
 export const AnimationContext = createContext<AnimationHelpers>({
   shouldAnimate: false,

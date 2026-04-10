@@ -1,7 +1,7 @@
 import { ReactNode, useEffect, useRef } from 'react';
 import { CloseIcon } from '../icons';
 
-export interface DialogProps {
+interface DialogProps {
   /** Controlled visibility — `true` shows, `false` hides */
   open: boolean;
   /** Dialog title */

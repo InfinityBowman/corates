@@ -323,4 +323,4 @@ export function useReconciliationPresence({
   };
 }
 
-export type { RemoteUser, CursorData, PresenceUser };
+export type { RemoteUser };

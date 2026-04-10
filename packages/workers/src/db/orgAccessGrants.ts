@@ -3,9 +3,9 @@ import { orgAccessGrants } from './schema';
 import type { Database } from './client';
 import type { InferSelectModel } from 'drizzle-orm';
 
-export type OrgAccessGrant = InferSelectModel<typeof orgAccessGrants>;
+type OrgAccessGrant = InferSelectModel<typeof orgAccessGrants>;
 
-export interface CreateGrantData {
+interface CreateGrantData {
   id: string;
   orgId: string;
   type: string;

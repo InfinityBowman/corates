@@ -6,13 +6,7 @@
  * integration with monitoring services in the future.
  *
  * Usage:
- *   import { logError, logWarning, bestEffort } from '@/lib/errorLogger.js';
- *
- *   // Log an error with context
- *   logError(error, { component: 'ProjectView', action: 'loadProject' });
- *
- *   // Log a warning for non-fatal issues
- *   logWarning('Cache miss for user avatar', { userId: '123' });
+ *   import { bestEffort } from '@/lib/errorLogger.js';
  *
  *   // Wrap best-effort operations that can fail silently
  *   bestEffort(clearFormState(type), { operation: 'clearFormState' });
@@ -106,35 +100,11 @@ function log(level: LogLevelValue, message: string, context: LogContext = {}): v
 }
 
 /**
- * Log an error with context
- * Use this for caught exceptions and error boundary errors
- */
-export function logError(error: unknown, context: LogContext = {}): void {
-  const errorData = formatErrorData(error);
-  const message = context.action ? `${context.action}: ${errorData.message}` : errorData.message;
-
-  log(LogLevel.ERROR, message, {
-    ...context,
-    error: errorData,
-    // Pass original error for Sentry stack trace
-    originalError: error instanceof Error ? error : new Error(errorData.message),
-  });
-}
-
-/**
  * Log a warning for non-fatal issues
  * Use this for degraded functionality, cache misses, etc.
  */
-export function logWarning(message: string, context: LogContext = {}): void {
+function logWarning(message: string, context: LogContext = {}): void {
   log(LogLevel.WARNING, message, context);
-}
-
-/**
- * Log informational messages
- * Use sparingly - mainly for important state transitions
- */
-export function logInfo(message: string, context: LogContext = {}): void {
-  log(LogLevel.INFO, message, context);
 }
 
 /**
@@ -155,36 +125,4 @@ export function bestEffort<T>(
     });
     return undefined;
   });
-}
-
-/**
- * Create a logging wrapper for async functions
- * Catches errors, logs them, and rethrows
- */
-export function withErrorLogging(
-  component: string,
-  action: string,
-): <T>(fn: () => Promise<T>) => Promise<T> {
-  return async <T>(fn: () => Promise<T>): Promise<T> => {
-    try {
-      return await fn();
-    } catch (error) {
-      logError(error, { component, action });
-      throw error;
-    }
-  };
-}
-
-/**
- * Log error and rethrow - for catch blocks that need to log but propagate
- */
-export function logAndRethrow(
-  component: string,
-  action: string,
-  metadata: Record<string, unknown> = {},
-): (error: unknown) => never {
-  return (error: unknown): never => {
-    logError(error, { component, action, ...metadata });
-    throw error;
-  };
 }
