@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import { createFileRoute, useNavigate } from '@tanstack/react-router';
+import { createFileRoute, redirect, useNavigate } from '@tanstack/react-router';
 import { CheckIcon } from 'lucide-react';
 import { useAuthStore, selectUser, selectIsAuthLoading } from '@/stores/authStore';
 import { parseResponse } from 'hono/client';
@@ -33,7 +33,6 @@ import {
 import { ErrorMessage } from '@/components/auth/ErrorMessage';
 import { PrimaryButton } from '@/components/auth/AuthButtons';
 import { RoleSelector, TITLE_OPTIONS } from '@/components/auth/RoleSelector';
-import { Spinner } from '@/components/ui/spinner';
 
 const STEPS_CONFIG = [
   { title: 'Your Name', description: 'Basic information' },
@@ -42,6 +41,20 @@ const STEPS_CONFIG = [
 ];
 
 export const Route = createFileRoute('/_auth/complete-profile')({
+  ssr: false,
+  beforeLoad: () => {
+    const state = useAuthStore.getState();
+    const user = selectUser(state);
+
+    // Synchronous check: if we already know the profile is complete, redirect
+    // immediately without mounting the component. This covers the common case
+    // of an existing user signing in (cached or session user is available).
+    if (user?.profileCompletedAt) {
+      throw redirect({
+        to: hasPendingPlan() ? '/settings/plans' : '/dashboard',
+      });
+    }
+  },
   component: CompleteProfilePage,
 });
 
@@ -64,31 +77,27 @@ function CompleteProfilePage() {
   const isAuthLoading = useAuthStore(selectIsAuthLoading);
   const updateProfile = useAuthStore(s => s.updateProfile);
 
+  // Handles cases beforeLoad couldn't catch synchronously (session was still
+  // loading, no cached user yet). Once auth resolves, redirect as needed.
+  useEffect(() => {
+    if (isAuthLoading) return;
+
+    if (user?.profileCompletedAt) {
+      navigate({
+        to: hasPendingPlan() ? '/settings/plans' : '/dashboard',
+        replace: true,
+      });
+    } else if (!user) {
+      navigate({ to: '/signup', replace: true });
+    }
+  }, [user, isAuthLoading, navigate]);
+
   const title = useMemo(() => {
     if (titleSelection === 'other') return customTitle.trim();
     return titleSelection || '';
   }, [titleSelection, customTitle]);
 
   const isCustomTitle = titleSelection === 'other';
-
-  // Redirect if already completed onboarding
-  useEffect(() => {
-    if (isAuthLoading) return;
-
-    if (user?.profileCompletedAt) {
-      if (hasPendingPlan()) {
-        navigate({ to: '/settings/plans', replace: true });
-      } else {
-        navigate({ to: '/dashboard', replace: true });
-      }
-      return;
-    }
-
-    // Redirect if not authenticated
-    if (!user) {
-      navigate({ to: '/signup', replace: true });
-    }
-  }, [user, isAuthLoading, navigate]);
 
   // Pre-fill name from OAuth session or magic link pending data
   useEffect(() => {
@@ -256,8 +265,12 @@ function CompleteProfilePage() {
     }
   }
 
-  if (isAuthLoading || user?.profileCompletedAt || !user) {
-    return <Spinner size='lg' label='Loading profile' />;
+  // Don't render the form while auth is loading or if the user shouldn't be
+  // here (profile already complete / not logged in). The useEffect above
+  // handles the redirect; returning null keeps the auth layout background
+  // visible with no flash of the form.
+  if (isAuthLoading || !user || user.profileCompletedAt) {
+    return null;
   }
 
   return (
