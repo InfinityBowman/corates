@@ -39,6 +39,7 @@
   "vars": {
     "ENVIRONMENT": "test",
     "AUTH_BASE_URL": "http://localhost:3010",
-    "APP_URL": "http://localhost:3010"
+    "APP_URL": "http://localhost:3010",
+    "DEV_MODE": true
   }
 }
