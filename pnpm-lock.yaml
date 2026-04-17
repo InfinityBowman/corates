@@ -115,6 +115,9 @@ importers:
       '@ark-ui/react':
         specifier: ^5.35.0
         version: 5.35.0(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+      '@corates/db':
+        specifier: workspace:*
+        version: link:../db
       '@corates/shared':
         specifier: workspace:*
         version: link:../shared
@@ -238,6 +241,9 @@ importers:
       dexie:
         specifier: ^4.4.2
         version: 4.4.2
+      drizzle-orm:
+        specifier: ^0.45.2
+        version: 0.45.2(@cloudflare/workers-types@4.20260405.1)(@electric-sql/pglite@0.3.15)(@opentelemetry/api@1.9.1)(@prisma/client@7.4.2(prisma@7.4.2(@types/react@19.2.14)(better-sqlite3@12.8.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@5.9.3))(typescript@5.9.3))(@types/better-sqlite3@7.6.13)(better-sqlite3@12.8.0)(gel@2.2.0)(kysely@0.28.15)(mysql2@3.15.3)(postgres@3.4.7)(prisma@7.4.2(@types/react@19.2.14)(better-sqlite3@12.8.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@5.9.3))
       hono:
         specifier: ^4.12.12
         version: 4.12.12

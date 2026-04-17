@@ -2,7 +2,7 @@
  * Auth Layout Route - minimal layout for authentication pages
  *
  * No sidebar/navbar. Guest guard redirects logged-in users to /dashboard.
- * Prerenderable -- localStorage/cookie interactions only happen in useEffect/handlers.
+ * Client-only -- auth forms are interactive and touch localStorage/cookies freely.
  *
  * Providers (QueryClientProvider, AuthProvider, Toaster) are in __root.tsx.
  *
@@ -14,9 +14,7 @@ import { createFileRoute, Outlet, redirect } from '@tanstack/react-router';
 import { useAuthStore, selectIsLoggedIn } from '@/stores/authStore';
 
 export const Route = createFileRoute('/_auth')({
-  headers: () => ({
-    'Cache-Control': 'public, s-maxage=3600, stale-while-revalidate=86400',
-  }),
+  ssr: false,
   beforeLoad: ({ location }) => {
     // Allow logged-in users through to these pages:
     // reset-password: they may have a token link

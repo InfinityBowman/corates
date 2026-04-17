@@ -10,6 +10,10 @@
     ".": {
       "types": "./types.d.ts",
       "default": "./src/index.ts"
+    },
+    "./auth": {
+      "types": "./auth.d.ts",
+      "default": "./src/auth/session-helper.ts"
     }
   },
   "scripts": {

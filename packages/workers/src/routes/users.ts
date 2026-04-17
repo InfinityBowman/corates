@@ -128,33 +128,6 @@ const searchUsersRoute = createRoute({
   },
 });
 
-const getMyProjectsRoute = createRoute({
-  method: 'get',
-  path: '/me/projects',
-  tags: ['Users'],
-  summary: 'Get my projects',
-  description: 'Get all projects for the current authenticated user',
-  security: [{ cookieAuth: [] }],
-  responses: {
-    200: {
-      content: {
-        'application/json': {
-          schema: z.array(UserProjectSchema),
-        },
-      },
-      description: 'User projects',
-    },
-    401: {
-      content: { 'application/json': { schema: ErrorResponseSchema } },
-      description: 'Unauthorized',
-    },
-    500: {
-      content: { 'application/json': { schema: ErrorResponseSchema } },
-      description: 'Database error',
-    },
-  },
-});
-
 const getUserProjectsRoute = createRoute({
   method: 'get',
   path: '/{userId}/projects',
@@ -314,43 +287,6 @@ const userRoutes = $(base)
       console.error('Error searching users:', error);
       const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
         operation: 'search_users',
-        originalError: error.message,
-      });
-      return c.json(dbError, 500);
-    }
-  })
-
-  .openapi(getMyProjectsRoute, async c => {
-    const { user: authUser } = getAuth(c);
-    if (!authUser) {
-      const error = createDomainError(AUTH_ERRORS.REQUIRED, { reason: 'no_user' });
-      return c.json(error, 401);
-    }
-
-    const db = createDb(c.env.DB);
-
-    try {
-      const results = await db
-        .select({
-          id: projects.id,
-          name: projects.name,
-          description: projects.description,
-          orgId: projects.orgId,
-          role: projectMembers.role,
-          createdAt: projects.createdAt,
-          updatedAt: projects.updatedAt,
-        })
-        .from(projects)
-        .innerJoin(projectMembers, eq(projects.id, projectMembers.projectId))
-        .where(eq(projectMembers.userId, authUser.id))
-        .orderBy(desc(projects.updatedAt));
-
-      return c.json(results as unknown as z.infer<typeof UserProjectSchema>[], 200);
-    } catch (err) {
-      const error = err as Error;
-      console.error('Error fetching user projects:', error);
-      const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
-        operation: 'fetch_user_projects',
         originalError: error.message,
       });
       return c.json(dbError, 500);

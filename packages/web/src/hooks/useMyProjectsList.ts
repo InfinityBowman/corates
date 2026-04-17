@@ -3,14 +3,22 @@
  */
 
 import { useQuery } from '@tanstack/react-query';
-import { parseResponse, type InferResponseType } from 'hono/client';
 import { queryKeys } from '@/lib/queryKeys';
-import { api } from '@/lib/rpc';
+import { API_BASE } from '@/config/api';
 import { useAuthStore, selectIsLoggedIn, selectIsAuthLoading } from '@/stores/authStore';
 
-// Base type from backend Zod schema. The extra fields (studyCount, etc.) are
-// returned at runtime but not declared in the schema -- backend should add them.
-type ProjectBase = InferResponseType<typeof api.api.users.me.projects.$get, 200>[number];
+// Shape returned by GET /api/users/me/projects (TanStack Start file route).
+// Extra fields (studyCount, etc.) are added downstream at runtime.
+interface ProjectBase {
+  id: string;
+  name: string;
+  description: string | null;
+  orgId: string;
+  role: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export type Project = ProjectBase & {
   studyCount?: number;
   completedCount?: number;
@@ -18,8 +26,14 @@ export type Project = ProjectBase & {
   members?: unknown[];
 };
 
-async function fetchMyProjects() {
-  return parseResponse(api.api.users.me.projects.$get());
+async function fetchMyProjects(): Promise<ProjectBase[]> {
+  const res = await fetch(`${API_BASE}/api/users/me/projects`, {
+    credentials: 'include',
+  });
+  if (!res.ok) {
+    throw new Error(`Failed to fetch projects: ${res.status}`);
+  }
+  return res.json() as Promise<ProjectBase[]>;
 }
 
 export function useMyProjectsList(options: { enabled?: boolean } = {}) {
