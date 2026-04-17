@@ -1,7 +1,7 @@
 /**
  * Health check endpoint integration tests
  *
- * Tests the /health and /healthz endpoints with real Cloudflare bindings
+ * Tests the /health endpoint with real Cloudflare bindings
  */
 
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -95,14 +95,6 @@ describe('Health Check Endpoints', () => {
     expect(body.status).toBe('degraded');
     expect(body.services.storage.status).toBe('unhealthy');
     expect(body.services.storage.error).toBeDefined();
-  });
-
-  it('GET /healthz returns OK text', async () => {
-    const res = await fetchApp(app, '/healthz');
-    expect(res.status).toBe(200);
-
-    const text = await res.text();
-    expect(text).toBe('OK');
   });
 
   it('GET /health includes ISO timestamp', async () => {

@@ -55,9 +55,6 @@ base.use('*', securityHeaders());
 // Mount health routes
 base.route('/health', healthRoutes);
 
-// Simple liveness probe (for load balancers) - keep at root for backwards compatibility
-base.get('/healthz', c => c.text('OK'));
-
 // Root endpoint - redirect browsers to frontend, return text for API clients
 base.get('/', c => {
   const accept = c.req.header('Accept') || '';
