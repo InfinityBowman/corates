@@ -193,7 +193,7 @@ function MappingRow({ originalId, mappedTo, currentUser, projectId, onSelect }: 
     >
       {/* Original ID */}
       <div className='min-w-0 shrink-0'>
-        <code className='bg-muted text-muted-foreground rounded px-1.5 py-0.5 text-2xs'>
+        <code className='bg-muted text-muted-foreground text-2xs rounded px-1.5 py-0.5'>
           {originalId}
         </code>
       </div>

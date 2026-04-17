@@ -1,9 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { resetTestDatabase, clearProjectDOs } from '@/__tests__/server/helpers';
 import {
-  resetTestDatabase,
-  clearProjectDOs,
-} from '@/__tests__/server/helpers';
-import { buildUser, buildProject, buildProjectMember, resetCounter } from '@/__tests__/server/factories';
+  buildUser,
+  buildProject,
+  buildProjectMember,
+  resetCounter,
+} from '@/__tests__/server/factories';
 import { handler } from '../search';
 
 let currentUser = { id: 'user-1', email: 'user1@example.com' };
