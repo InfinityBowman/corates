@@ -29,7 +29,6 @@ import { billingRoutes } from './routes/billing/index';
 import { googleDriveRoutes } from './routes/google-drive';
 import { avatarRoutes } from './routes/avatars';
 import { adminRoutes } from './routes/admin/index';
-import { accountMergeRoutes } from './routes/account-merge';
 import { invitationRoutes } from './routes/invitations';
 import { testSeedRoutes } from './routes/test-seed';
 
@@ -134,7 +133,6 @@ const app = $(base)
   .route('/api/billing', billingRoutes)
   .route('/api/db', dbRoutes)
   .route('/api/users/avatar', avatarRoutes)
-  .route('/api/accounts/merge', accountMergeRoutes)
   .route('/api/invitations', invitationRoutes)
   .route('/api/orgs', orgRoutes)
   .route('/api/google-drive', googleDriveRoutes);

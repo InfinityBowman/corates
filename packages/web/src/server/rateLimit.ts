@@ -51,6 +51,7 @@ export function checkRateLimit(
   request: Request,
   env: RateLimitEnv,
   options: RateLimitOptions,
+  identifierOverride?: string,
 ): RateLimitResult {
   if (env?.ENVIRONMENT !== 'production') {
     return { blocked: null, headers: {} };
@@ -58,7 +59,7 @@ export function checkRateLimit(
 
   cleanupExpiredEntries();
 
-  const identifier = getClientIdentifier(request);
+  const identifier = identifierOverride ?? getClientIdentifier(request);
   const key = `${options.keyPrefix}:${identifier}`;
   const now = Date.now();
   let record = rateLimitStore.get(key);
@@ -109,4 +110,16 @@ export const SEARCH_RATE_LIMIT: RateLimitOptions = {
   limit: 30,
   windowMs: 60 * 1000,
   keyPrefix: 'search',
+};
+
+export const MERGE_INITIATE_RATE_LIMIT: RateLimitOptions = {
+  limit: 3,
+  windowMs: 15 * 60 * 1000,
+  keyPrefix: 'merge-initiate',
+};
+
+export const MERGE_VERIFY_RATE_LIMIT: RateLimitOptions = {
+  limit: 5,
+  windowMs: 15 * 60 * 1000,
+  keyPrefix: 'merge-verify',
 };
