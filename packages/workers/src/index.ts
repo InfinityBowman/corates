@@ -24,7 +24,6 @@ import type { Env } from './types';
 import { auth } from './auth/routes';
 import { healthRoutes } from './routes/health';
 import { orgRoutes } from './routes/orgs/index';
-import { dbRoutes } from './routes/database';
 import { billingRoutes } from './routes/billing/index';
 import { googleDriveRoutes } from './routes/google-drive';
 import { avatarRoutes } from './routes/avatars';
@@ -131,7 +130,6 @@ base.post('/api/admin/stop-impersonation', async c => {
 const app = $(base)
   .route('/api/admin', adminRoutes)
   .route('/api/billing', billingRoutes)
-  .route('/api/db', dbRoutes)
   .route('/api/users/avatar', avatarRoutes)
   .route('/api/invitations', invitationRoutes)
   .route('/api/orgs', orgRoutes)

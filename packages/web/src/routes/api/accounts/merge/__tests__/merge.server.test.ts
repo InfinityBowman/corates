@@ -183,7 +183,12 @@ describe('POST /api/accounts/merge/verify', () => {
     const user1 = await buildUser({ email: 'user1@example.com' });
     const user2 = await buildUser({ email: 'user2@example.com' });
     const mergeToken = 'test-token-123';
-    await seedMergeRequest({ userId: user1.id, targetId: user2.id, token: mergeToken, code: '123456' });
+    await seedMergeRequest({
+      userId: user1.id,
+      targetId: user2.id,
+      token: mergeToken,
+      code: '123456',
+    });
     currentUser = { id: user1.id, email: user1.email };
 
     const res = await verifyHandler({

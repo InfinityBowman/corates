@@ -16,10 +16,7 @@ import {
   getAccountMergeEmailHtml,
   getAccountMergeEmailText,
 } from '@corates/workers/email-templates';
-import {
-  checkRateLimit,
-  MERGE_INITIATE_RATE_LIMIT,
-} from '@/server/rateLimit';
+import { checkRateLimit, MERGE_INITIATE_RATE_LIMIT } from '@/server/rateLimit';
 
 function generateCode(): string {
   const array = new Uint32Array(1);
@@ -180,7 +177,10 @@ export const handler = async ({ request }: { request: Request }) => {
       .select({ providerId: account.providerId })
       .from(account)
       .where(eq(account.userId, currentUser.id)),
-    db.select({ providerId: account.providerId }).from(account).where(eq(account.userId, targetUser.id)),
+    db
+      .select({ providerId: account.providerId })
+      .from(account)
+      .where(eq(account.userId, targetUser.id)),
   ]);
 
   await db.delete(verification).where(like(verification.identifier, `merge:${currentUser.id}:%`));
