@@ -70,7 +70,7 @@ describe('requireTrustedOrigin middleware', () => {
       method: 'POST',
       headers: {
         'content-type': 'application/json',
-        origin: 'http://localhost:5173',
+        origin: 'http://localhost:3010',
       },
     });
 
@@ -86,7 +86,7 @@ describe('requireTrustedOrigin middleware', () => {
       method: 'POST',
       headers: {
         'content-type': 'application/json',
-        referer: 'http://localhost:5173/some-page',
+        referer: 'http://localhost:3010/some-page',
       },
     });
 
@@ -144,28 +144,4 @@ describe('requireTrustedOrigin middleware', () => {
     expect(res.status).toBe(403);
   });
 
-  it('should respect env ALLOWED_ORIGINS', async () => {
-    const app = new Hono();
-    // Create middleware with custom env
-    const customEnv = { ALLOWED_ORIGINS: 'https://custom.com' };
-    app.use('*', (c, next) => {
-      // Temporarily override env for this request
-      const originalEnv = c.env;
-      c.env = { ...(c.env as Record<string, unknown>), ...customEnv };
-      return requireTrustedOrigin(c, next).finally(() => {
-        c.env = originalEnv;
-      });
-    });
-    app.post('/test', c => c.json({ message: 'success' }));
-
-    const res = await app.request('/test', {
-      method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-        origin: 'https://custom.com',
-      },
-    });
-
-    expect(res.status).toBe(200);
-  });
 });

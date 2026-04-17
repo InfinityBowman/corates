@@ -622,7 +622,7 @@ export function createAuth(env: Env, ctx?: ExecutionContext) {
     baseURL: env.AUTH_BASE_URL || 'http://localhost:8787',
 
     // Use centralized origin configuration
-    trustedOrigins: getAllowedOrigins(env),
+    trustedOrigins: [...getAllowedOrigins()],
 
     secret: getAuthSecret(env),
 

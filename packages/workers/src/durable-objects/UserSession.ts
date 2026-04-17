@@ -17,7 +17,7 @@ export class UserSession extends DurableObject<Env> {
   async fetch(request: Request): Promise<Response> {
     const requestOrigin = request.headers.get('Origin');
     const corsHeaders: Record<string, string> = {
-      'Access-Control-Allow-Origin': getAccessControlOrigin(requestOrigin, this.env),
+      'Access-Control-Allow-Origin': getAccessControlOrigin(requestOrigin),
       'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
       'Access-Control-Allow-Headers': 'Content-Type, Authorization, User-Agent',
       'Access-Control-Allow-Credentials': 'true',

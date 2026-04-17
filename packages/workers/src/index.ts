@@ -43,11 +43,8 @@ export { UserSession, ProjectDoc };
 // API sub-routers are chained on app for RPC type inference
 const base = new OpenAPIHono<{ Bindings: Env }>();
 
-// Apply CORS middleware globally (needs env, so we do it per-request)
-base.use('*', async (c, next) => {
-  const corsMiddleware = createCorsMiddleware(c.env);
-  return corsMiddleware(c, next);
-});
+// Apply CORS middleware globally
+base.use('*', createCorsMiddleware());
 
 // Apply security headers to all responses
 base.use('*', securityHeaders());
