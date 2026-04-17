@@ -16,10 +16,7 @@ export const handler = async ({ request }: { request: Request }) => {
     const type = url.searchParams.get('type');
 
     if (!email || !type) {
-      return Response.json(
-        { error: 'email and type query params required' },
-        { status: 400 },
-      );
+      return Response.json({ error: 'email and type query params required' }, { status: 400 });
     }
 
     const identifier = `test-url:${type}:${email}`;

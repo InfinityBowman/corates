@@ -10,7 +10,13 @@ export const handler = async ({ request }: { request: Request }) => {
   try {
     const auth = createAuth(env);
     const ctx = await auth.$context;
-    const test = (ctx as unknown as { test?: { login: (args: { userId: string }) => Promise<{ token: string; cookies: unknown }> } }).test;
+    const test = (
+      ctx as unknown as {
+        test?: {
+          login: (args: { userId: string }) => Promise<{ token: string; cookies: unknown }>;
+        };
+      }
+    ).test;
 
     if (!test) {
       return Response.json({ error: 'testUtils plugin not available' }, { status: 500 });
