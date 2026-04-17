@@ -1,5 +1,6 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
+  "account_id": "2ab59c3eb44887bfa2bac00afd32290a",
   // Matches packages/workers' script name so the Phase 3 deploy replaces the
   // existing worker in-place — preserving DO namespace state (UserSession,
   // ProjectDoc) that survives across deploys for the same script.

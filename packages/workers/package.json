@@ -14,7 +14,7 @@
   },
   "scripts": {
     "dev": "concurrently \"wrangler dev\" \"pnpm build:rpc:watch\" --names wrangler,rpc --prefix-colors blue,green",
-    "deploy": "pnpm --filter shared build && wrangler deploy --env production",
+    "deploy": "echo 'This package is retired. Deploy from packages/web (now corates-workers-prod).' && exit 1",
     "tail": "wrangler tail",
     "test": "pnpm db:generate:test && vitest run",
     "test:watch": "vitest",

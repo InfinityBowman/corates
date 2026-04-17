@@ -82,6 +82,7 @@ pnpm lint             # ESLint check
 pnpm lint:fix         # Auto-fix lint issues
 pnpm format           # Prettier format
 pnpm typecheck        # TypeScript check
+pnpm run deploy       # pnpm deploy is reserved so use 'run', always ask user before running a deploy command
 ```
 
 ## Critical Rules
