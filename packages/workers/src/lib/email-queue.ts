@@ -23,5 +23,6 @@ export async function queueEmail(env: Env, payload: EmailPayload): Promise<void>
       'Email payload requires to, subject, and html or text',
     );
   }
+
   await env.EMAIL_QUEUE.send(payload);
 }

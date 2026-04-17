@@ -1,6 +1,4 @@
 export const STATIC_ORIGINS: readonly string[] = [
-  'http://localhost:5173',
-  'http://localhost:8787',
   'http://localhost:3010',
   'https://corates.org',
 ];

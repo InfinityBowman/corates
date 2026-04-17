@@ -49,7 +49,10 @@ export function createEmailService(env: Env): EmailService {
     replyTo,
   }: SendEmailParams): Promise<EmailResult> {
     if (env.SEND_EMAILS_IN_DEV !== 'true' && !isProduction) {
-      console.log('[Email] Development environment - email sending is DISABLED');
+      const urls = (text ?? html).match(/https?:\/\/\S+/g) ?? [];
+      console.log(
+        `[Email:dev] to=${to} subject="${subject}"${urls.length ? `\n  links:\n    ${urls.join('\n    ')}` : ''}`,
+      );
       return { success: true, id: 'dev-id' };
     }
 

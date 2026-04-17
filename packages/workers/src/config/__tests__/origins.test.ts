@@ -48,7 +48,7 @@ describe('getAllowedOrigins', () => {
   it('should return static origins when no env provided', () => {
     const origins = getAllowedOrigins();
 
-    expect(origins).toContain('http://localhost:5173');
+    expect(origins).toContain('http://localhost:3010');
     expect(origins).toContain('https://corates.org');
     expect(origins.length).toBe(STATIC_ORIGINS.length);
   });
@@ -69,10 +69,10 @@ describe('getAllowedOrigins', () => {
   });
 
   it('should not duplicate origins', () => {
-    const env = { ALLOWED_ORIGINS: 'http://localhost:5173' }; // Already in STATIC_ORIGINS
+    const env = { ALLOWED_ORIGINS: 'http://localhost:3010' }; // Already in STATIC_ORIGINS
     const origins = getAllowedOrigins(env);
 
-    const count = origins.filter(o => o === 'http://localhost:5173').length;
+    const count = origins.filter(o => o === 'http://localhost:3010').length;
     expect(count).toBe(1);
   });
 
@@ -105,7 +105,7 @@ describe('getAllowedOrigins', () => {
 
 describe('isOriginAllowed', () => {
   it('should allow static origins', () => {
-    expect(isOriginAllowed('http://localhost:5173')).toBe(true);
+    expect(isOriginAllowed('http://localhost:3010')).toBe(true);
     expect(isOriginAllowed('https://corates.org')).toBe(true);
   });
 

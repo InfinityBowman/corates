@@ -357,7 +357,7 @@ base.onError(errorHandler);
 const workerHandler = {
   fetch: app.fetch,
 
-  async queue(batch: MessageBatch<any>, env: Env): Promise<void> {
+  async queue(batch: MessageBatch<any>, env: Env, _ctx?: ExecutionContext): Promise<void> {
     const emailService = createEmailService(env);
     const messages = batch.messages as Message<EmailPayload>[];
 
