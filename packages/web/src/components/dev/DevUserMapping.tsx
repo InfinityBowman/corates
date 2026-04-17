@@ -7,8 +7,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { SearchIcon, XIcon, UserIcon } from 'lucide-react';
-import { parseResponse } from 'hono/client';
-import { api } from '@/lib/rpc';
+import { API_BASE } from '@/config/api';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { useAuthStore, selectUser } from '@/stores/authStore';
 
@@ -129,12 +128,14 @@ function MappingRow({ originalId, mappedTo, currentUser, projectId, onSelect }: 
     (async () => {
       setSearching(true);
       try {
-        const data = await parseResponse(
-          api.api.users.search.$get({
-            query: { q: debouncedQuery, ...(projectId ? { projectId } : {}) },
-          }),
-        );
-        if (!cancelled) setResults(data as SearchResult[]);
+        const qs = new URLSearchParams({ q: debouncedQuery });
+        if (projectId) qs.set('projectId', projectId);
+        const res = await fetch(`${API_BASE}/api/users/search?${qs}`, {
+          credentials: 'include',
+        });
+        if (!res.ok) throw new Error(`search failed: ${res.status}`);
+        const data = (await res.json()) as SearchResult[];
+        if (!cancelled) setResults(data);
       } catch {
         if (!cancelled) setResults([]);
       } finally {
@@ -191,8 +192,8 @@ function MappingRow({ originalId, mappedTo, currentUser, projectId, onSelect }: 
       ref={containerRef}
     >
       {/* Original ID */}
-      <div className='min-w-0 flex-shrink-0'>
-        <code className='bg-muted text-muted-foreground rounded px-1.5 py-0.5 text-[10px]'>
+      <div className='min-w-0 shrink-0'>
+        <code className='bg-muted text-muted-foreground rounded px-1.5 py-0.5 text-2xs'>
           {originalId}
         </code>
       </div>

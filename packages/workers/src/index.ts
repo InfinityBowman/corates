@@ -24,7 +24,6 @@ import type { Env } from './types';
 import { auth } from './auth/routes';
 import { healthRoutes } from './routes/health';
 import { orgRoutes } from './routes/orgs/index';
-import { userRoutes } from './routes/users';
 import { dbRoutes } from './routes/database';
 import { billingRoutes } from './routes/billing/index';
 import { googleDriveRoutes } from './routes/google-drive';
@@ -134,7 +133,6 @@ const app = $(base)
   .route('/api/admin', adminRoutes)
   .route('/api/billing', billingRoutes)
   .route('/api/db', dbRoutes)
-  .route('/api/users', userRoutes)
   .route('/api/users/avatar', avatarRoutes)
   .route('/api/accounts/merge', accountMergeRoutes)
   .route('/api/invitations', invitationRoutes)

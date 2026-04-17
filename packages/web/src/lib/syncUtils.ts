@@ -2,12 +2,17 @@
  * Profile sync utility - fire-and-forget sync of profile changes to all projects
  */
 
-import { parseResponse } from 'hono/client';
-import { api } from '@/lib/rpc';
+import { API_BASE } from '@/config/api';
 
 export async function syncProfileToProjects() {
   try {
-    await parseResponse(api.api.users['sync-profile'].$post({}));
+    const res = await fetch(`${API_BASE}/api/users/sync-profile`, {
+      method: 'POST',
+      credentials: 'include',
+    });
+    if (!res.ok) {
+      throw new Error(`sync-profile failed: ${res.status}`);
+    }
   } catch (err) {
     console.warn('Failed to sync profile to projects:', err);
   }

@@ -26,6 +26,7 @@ import {
 } from '@/components/ui/select';
 import { parseResponse } from 'hono/client';
 import { api } from '@/lib/rpc';
+import { API_BASE } from '@/config/api';
 import { isUnlimitedQuota } from '@corates/shared/plans';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 
@@ -76,12 +77,17 @@ export function AddMemberModal({
       if (cancelled) return;
       setSearching(true);
       try {
-        const results = await parseResponse(
-          api.api.users.search.$get({
-            query: { q: debouncedQuery, projectId },
-          }),
-        );
-        if (!cancelled) setSearchResults(results as any[]);
+        const qs = new URLSearchParams({ q: debouncedQuery });
+        if (projectId) qs.set('projectId', projectId);
+        const res = await fetch(`${API_BASE}/api/users/search?${qs}`, {
+          credentials: 'include',
+        });
+        if (!res.ok) {
+          const data = (await res.json().catch(() => ({}))) as { message?: string };
+          throw new Error(data.message || `Search failed: ${res.status}`);
+        }
+        const results = (await res.json()) as any[];
+        if (!cancelled) setSearchResults(results);
       } catch (err: any) {
         if (!cancelled) setError(err.message || 'Search failed');
       } finally {

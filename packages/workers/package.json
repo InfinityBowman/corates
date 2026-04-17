@@ -14,7 +14,9 @@
     "./auth": {
       "types": "./auth.d.ts",
       "default": "./src/auth/session-helper.ts"
-    }
+    },
+    "./project-sync": "./src/lib/project-sync.ts",
+    "./project-doc-id": "./src/lib/project-doc-id.ts"
   },
   "scripts": {
     "dev": "concurrently \"wrangler dev\" \"pnpm build:rpc:watch\" --names wrangler,rpc --prefix-colors blue,green",
