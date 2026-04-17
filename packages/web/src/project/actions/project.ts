@@ -35,10 +35,10 @@ export const projectActions = {
     const orgId = targetOrgId || connectionPool.getActiveOrgId();
     if (!orgId) throw new Error('No active org');
 
-    const res = await fetch(
-      `${API_BASE}/api/orgs/${orgId}/projects/${targetProjectId}`,
-      { method: 'DELETE', credentials: 'include' },
-    );
+    const res = await fetch(`${API_BASE}/api/orgs/${orgId}/projects/${targetProjectId}`, {
+      method: 'DELETE',
+      credentials: 'include',
+    });
     if (!res.ok) {
       const data = (await res.json().catch(() => ({}))) as { message?: string; code?: string };
       throw new Error(data.message || data.code || `Delete failed: ${res.status}`);

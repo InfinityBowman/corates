@@ -96,12 +96,16 @@ export const handlePost = async ({ request, params }: HandlerArgs) => {
   }
   if (body.name.length > 255) {
     return Response.json(
-      createValidationError('name', VALIDATION_ERRORS.INVALID_INPUT.code, body.name, 'max_length_255'),
+      createValidationError(
+        'name',
+        VALIDATION_ERRORS.INVALID_INPUT.code,
+        body.name,
+        'max_length_255',
+      ),
       { status: 400 },
     );
   }
-  const description =
-    typeof body.description === 'string' ? body.description : undefined;
+  const description = typeof body.description === 'string' ? body.description : undefined;
   if (description && description.length > 2000) {
     return Response.json(
       createValidationError(

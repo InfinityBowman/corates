@@ -180,9 +180,7 @@ describe('DELETE /api/google-drive/disconnect', () => {
     const body = (await res.json()) as { success: boolean };
     expect(body.success).toBe(true);
 
-    const acct = await env.DB.prepare(
-      'SELECT * FROM account WHERE userId = ?1 AND providerId = ?2',
-    )
+    const acct = await env.DB.prepare('SELECT * FROM account WHERE userId = ?1 AND providerId = ?2')
       .bind(user.id, 'google')
       .first();
     expect(acct).toBeNull();
@@ -246,8 +244,7 @@ describe('POST /api/google-drive/import', () => {
       json: async () => ({
         id: 'file-123',
         name: 'document.docx',
-        mimeType:
-          'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
         size: '1024',
       }),
     } as unknown as Response);

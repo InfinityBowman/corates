@@ -78,10 +78,9 @@ export const handlePost = async ({ request, params }: HandlerArgs) => {
     const error = err as Error;
     console.error('Error adding org member:', error);
     if (error.message?.includes('already') || error.message?.includes('member')) {
-      return Response.json(
-        createDomainError(AUTH_ERRORS.FORBIDDEN, { reason: 'already_member' }),
-        { status: 403 },
-      );
+      return Response.json(createDomainError(AUTH_ERRORS.FORBIDDEN, { reason: 'already_member' }), {
+        status: 403,
+      });
     }
     return Response.json(
       createDomainError(SYSTEM_ERRORS.DB_ERROR, {

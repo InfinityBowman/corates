@@ -10,10 +10,7 @@ import {
   resetCounter,
 } from '@/__tests__/server/factories';
 import { handleGet as listHandler, handlePost as addHandler } from '../members';
-import {
-  handlePut as updateRoleHandler,
-  handleDelete as removeHandler,
-} from '../members/$userId';
+import { handlePut as updateRoleHandler, handleDelete as removeHandler } from '../members/$userId';
 
 let currentUser: { id: string; email: string } = { id: 'user-1', email: 'user1@example.com' };
 
@@ -239,11 +236,9 @@ describe('PUT /api/orgs/:orgId/projects/:projectId/members/:userId', () => {
     currentUser = { id: owner.id, email: owner.email };
 
     const res = await updateRoleHandler({
-      request: jsonReq(
-        `/api/orgs/${org.id}/projects/${project.id}/members/${owner.id}`,
-        'PUT',
-        { role: 'member' },
-      ),
+      request: jsonReq(`/api/orgs/${org.id}/projects/${project.id}/members/${owner.id}`, 'PUT', {
+        role: 'member',
+      }),
       params: { orgId: org.id, projectId: project.id, userId: owner.id },
     });
     expect(res.status).toBe(400);
@@ -256,11 +251,9 @@ describe('PUT /api/orgs/:orgId/projects/:projectId/members/:userId', () => {
     currentUser = { id: owner2.id, email: owner2.email };
 
     const res = await updateRoleHandler({
-      request: jsonReq(
-        `/api/orgs/${org.id}/projects/${project.id}/members/${owner1.id}`,
-        'PUT',
-        { role: 'member' },
-      ),
+      request: jsonReq(`/api/orgs/${org.id}/projects/${project.id}/members/${owner1.id}`, 'PUT', {
+        role: 'member',
+      }),
       params: { orgId: org.id, projectId: project.id, userId: owner1.id },
     });
     expect(res.status).toBe(200);
@@ -305,10 +298,7 @@ describe('DELETE /api/orgs/:orgId/projects/:projectId/members/:userId', () => {
     currentUser = { id: owner.id, email: owner.email };
 
     const res = await removeHandler({
-      request: jsonReq(
-        `/api/orgs/${org.id}/projects/${project.id}/members/${owner.id}`,
-        'DELETE',
-      ),
+      request: jsonReq(`/api/orgs/${org.id}/projects/${project.id}/members/${owner.id}`, 'DELETE'),
       params: { orgId: org.id, projectId: project.id, userId: owner.id },
     });
     expect(res.status).toBe(400);

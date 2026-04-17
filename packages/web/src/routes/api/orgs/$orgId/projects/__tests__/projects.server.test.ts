@@ -58,7 +58,12 @@ describe('GET /api/orgs/:orgId/projects/:id', () => {
     });
     expect(res.status).toBe(200);
 
-    const body = (await res.json()) as { id: string; name: string; role: string; createdBy: string };
+    const body = (await res.json()) as {
+      id: string;
+      name: string;
+      role: string;
+      createdBy: string;
+    };
     expect(body.id).toBe(project.id);
     expect(body.name).toBe(project.name);
     expect(body.role).toBe('owner');

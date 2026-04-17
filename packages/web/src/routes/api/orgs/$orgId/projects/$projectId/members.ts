@@ -67,13 +67,7 @@ export const handlePost = async ({ request, params }: HandlerArgs) => {
   const writeAccess = await requireOrgWriteAccess(request.method, env, params.orgId);
   if (!writeAccess.ok) return writeAccess.response;
 
-  const access = await requireProjectAccess(
-    request,
-    env,
-    params.orgId,
-    params.projectId,
-    'owner',
-  );
+  const access = await requireProjectAccess(request, env, params.orgId, params.projectId, 'owner');
   if (!access.ok) return access.response;
 
   let body: { userId?: unknown; email?: unknown; role?: unknown };
@@ -90,7 +84,12 @@ export const handlePost = async ({ request, params }: HandlerArgs) => {
   const roleInput = typeof body.role === 'string' ? body.role : 'member';
   if (roleInput !== 'owner' && roleInput !== 'member') {
     return Response.json(
-      createValidationError('role', VALIDATION_ERRORS.INVALID_INPUT.code, roleInput, 'invalid_enum'),
+      createValidationError(
+        'role',
+        VALIDATION_ERRORS.INVALID_INPUT.code,
+        roleInput,
+        'invalid_enum',
+      ),
       { status: 400 },
     );
   }

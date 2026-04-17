@@ -21,10 +21,7 @@ export const handler = async ({ request }: { request: Request }) => {
 
     const validation = validatePdfProxyUrl(url);
     if (!validation.valid) {
-      return Response.json(
-        { error: validation.error, code: 'SSRF_BLOCKED' },
-        { status: 400 },
-      );
+      return Response.json({ error: validation.error, code: 'SSRF_BLOCKED' }, { status: 400 });
     }
 
     let response: Response | undefined;

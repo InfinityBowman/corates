@@ -69,13 +69,7 @@ export const handlePut = async ({ request, params }: HandlerArgs) => {
   const writeAccess = await requireOrgWriteAccess(request.method, env, params.orgId);
   if (!writeAccess.ok) return writeAccess.response;
 
-  const access = await requireProjectAccess(
-    request,
-    env,
-    params.orgId,
-    params.projectId,
-    'member',
-  );
+  const access = await requireProjectAccess(request, env, params.orgId, params.projectId, 'member');
   if (!access.ok) return access.response;
 
   let body: { name?: unknown; description?: unknown };

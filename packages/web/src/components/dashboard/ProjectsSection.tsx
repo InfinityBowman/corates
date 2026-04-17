@@ -103,10 +103,10 @@ export function ProjectsSection({
     setDeleteLoading(true);
     try {
       const { API_BASE } = await import('@/config/api');
-      const res = await fetch(
-        `${API_BASE}/api/orgs/${project.orgId}/projects/${pendingDeleteId}`,
-        { method: 'DELETE', credentials: 'include' },
-      );
+      const res = await fetch(`${API_BASE}/api/orgs/${project.orgId}/projects/${pendingDeleteId}`, {
+        method: 'DELETE',
+        credentials: 'include',
+      });
       if (!res.ok) {
         const data = (await res.json().catch(() => ({}))) as { message?: string; code?: string };
         throw new Error(data.message || data.code || `Delete failed: ${res.status}`);

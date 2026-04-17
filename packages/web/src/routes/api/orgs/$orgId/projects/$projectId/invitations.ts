@@ -68,13 +68,7 @@ export const handlePost = async ({ request, params }: HandlerArgs) => {
   const writeAccess = await requireOrgWriteAccess(request.method, env, params.orgId);
   if (!writeAccess.ok) return writeAccess.response;
 
-  const access = await requireProjectAccess(
-    request,
-    env,
-    params.orgId,
-    params.projectId,
-    'owner',
-  );
+  const access = await requireProjectAccess(request, env, params.orgId, params.projectId, 'owner');
   if (!access.ok) return access.response;
 
   let body: { email?: unknown; role?: unknown };
@@ -89,7 +83,12 @@ export const handlePost = async ({ request, params }: HandlerArgs) => {
   const email = typeof body.email === 'string' ? body.email : undefined;
   if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     return Response.json(
-      createValidationError('email', VALIDATION_ERRORS.INVALID_INPUT.code, email ?? null, 'invalid_email'),
+      createValidationError(
+        'email',
+        VALIDATION_ERRORS.INVALID_INPUT.code,
+        email ?? null,
+        'invalid_email',
+      ),
       { status: 400 },
     );
   }

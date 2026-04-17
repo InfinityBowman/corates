@@ -5,7 +5,10 @@ import { createDomainError, SYSTEM_ERRORS } from '@corates/shared';
 import { requireOrgMembership } from '@/server/guards/requireOrgMembership';
 
 interface OrgApiMethods {
-  setActiveOrganization: (req: { headers: Headers; body: Record<string, unknown> }) => Promise<unknown>;
+  setActiveOrganization: (req: {
+    headers: Headers;
+    body: Record<string, unknown>;
+  }) => Promise<unknown>;
 }
 
 function getOrgApi(): OrgApiMethods {

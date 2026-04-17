@@ -14,9 +14,7 @@ export interface OrgContext {
   orgSlug: string | null;
 }
 
-export type OrgGuardResult =
-  | { ok: true; context: OrgContext }
-  | { ok: false; response: Response };
+export type OrgGuardResult = { ok: true; context: OrgContext } | { ok: false; response: Response };
 
 export async function requireOrgMembership(
   request: Request,

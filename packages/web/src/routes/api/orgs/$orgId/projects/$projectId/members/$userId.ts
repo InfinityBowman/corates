@@ -27,13 +27,7 @@ export const handlePut = async ({ request, params }: HandlerArgs) => {
   const writeAccess = await requireOrgWriteAccess(request.method, env, params.orgId);
   if (!writeAccess.ok) return writeAccess.response;
 
-  const access = await requireProjectAccess(
-    request,
-    env,
-    params.orgId,
-    params.projectId,
-    'owner',
-  );
+  const access = await requireProjectAccess(request, env, params.orgId, params.projectId, 'owner');
   if (!access.ok) return access.response;
 
   let body: { role?: unknown };
@@ -69,7 +63,10 @@ export const handlePut = async ({ request, params }: HandlerArgs) => {
         role: roleInput,
       },
     );
-    return Response.json({ success: true, userId: result.userId, role: result.role }, { status: 200 });
+    return Response.json(
+      { success: true, userId: result.userId, role: result.role },
+      { status: 200 },
+    );
   } catch (err) {
     if (isDomainError(err)) {
       return Response.json(err, { status: 400 });

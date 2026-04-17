@@ -9,9 +9,18 @@ import { requireOrgMembership } from '@/server/guards/requireOrgMembership';
 import { requireOrgWriteAccess } from '@/server/guards/requireOrgWriteAccess';
 
 interface OrgApiMethods {
-  getFullOrganization: (req: { headers: Headers; query: Record<string, string> }) => Promise<unknown>;
-  updateOrganization: (req: { headers: Headers; body: Record<string, unknown> }) => Promise<unknown>;
-  deleteOrganization: (req: { headers: Headers; body: Record<string, unknown> }) => Promise<unknown>;
+  getFullOrganization: (req: {
+    headers: Headers;
+    query: Record<string, string>;
+  }) => Promise<unknown>;
+  updateOrganization: (req: {
+    headers: Headers;
+    body: Record<string, unknown>;
+  }) => Promise<unknown>;
+  deleteOrganization: (req: {
+    headers: Headers;
+    body: Record<string, unknown>;
+  }) => Promise<unknown>;
 }
 
 function getOrgApi(): OrgApiMethods {
@@ -47,10 +56,7 @@ export const handleGet = async ({ request, params }: HandlerArgs) => {
       .from(projects)
       .where(eq(projects.orgId, params.orgId));
 
-    return Response.json(
-      { ...result, projectCount: projectCount?.count || 0 },
-      { status: 200 },
-    );
+    return Response.json({ ...result, projectCount: projectCount?.count || 0 }, { status: 200 });
   } catch (err) {
     const error = err as Error;
     console.error('Error fetching organization:', error);
@@ -101,10 +107,9 @@ export const handlePut = async ({ request, params }: HandlerArgs) => {
     const error = err as Error;
     console.error('Error updating organization:', error);
     if (error.message?.includes('slug')) {
-      return Response.json(
-        createDomainError(AUTH_ERRORS.FORBIDDEN, { reason: 'slug_taken' }),
-        { status: 403 },
-      );
+      return Response.json(createDomainError(AUTH_ERRORS.FORBIDDEN, { reason: 'slug_taken' }), {
+        status: 403,
+      });
     }
     return Response.json(
       createDomainError(SYSTEM_ERRORS.DB_ERROR, {

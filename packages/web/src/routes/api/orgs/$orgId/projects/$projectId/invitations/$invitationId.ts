@@ -25,13 +25,7 @@ export const handleDelete = async ({ request, params }: HandlerArgs) => {
   const writeAccess = await requireOrgWriteAccess(request.method, env, params.orgId);
   if (!writeAccess.ok) return writeAccess.response;
 
-  const access = await requireProjectAccess(
-    request,
-    env,
-    params.orgId,
-    params.projectId,
-    'owner',
-  );
+  const access = await requireProjectAccess(request, env, params.orgId, params.projectId, 'owner');
   if (!access.ok) return access.response;
 
   const db = createDb(env.DB);

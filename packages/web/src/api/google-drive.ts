@@ -5,10 +5,7 @@
 import { apiFetch } from '@/lib/apiFetch';
 import { API_BASE } from '@/config/api';
 
-async function request<T>(
-  path: string,
-  init: RequestInit = {},
-): Promise<T> {
+async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   const res = await fetch(`${API_BASE}${path}`, {
     credentials: 'include',
     headers: { 'Content-Type': 'application/json', ...(init.headers || {}) },
@@ -17,7 +14,8 @@ async function request<T>(
   const data = (await res.json().catch(() => ({}))) as T & { message?: string; code?: string };
   if (!res.ok) {
     const err = new Error(
-      (data && (data.message || data.code)) || `${init.method || 'GET'} ${path} failed: ${res.status}`,
+      (data && (data.message || data.code)) ||
+        `${init.method || 'GET'} ${path} failed: ${res.status}`,
     );
     (err as unknown as { response?: unknown }).response = data;
     throw err;

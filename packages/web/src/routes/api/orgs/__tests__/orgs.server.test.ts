@@ -2,14 +2,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { resetTestDatabase } from '@/__tests__/server/helpers';
 import { buildUser, buildOrg, buildOrgMember, resetCounter } from '@/__tests__/server/factories';
 import { handleGet as listOrgsHandler, handlePost as createOrgHandler } from '../../orgs';
-import {
-  handlePut as updateOrgHandler,
-  handleDelete as deleteOrgHandler,
-} from '../$orgId';
-import {
-  handleGet as listMembersHandler,
-  handlePost as addMemberHandler,
-} from '../$orgId/members';
+import { handlePut as updateOrgHandler, handleDelete as deleteOrgHandler } from '../$orgId';
+import { handleGet as listMembersHandler, handlePost as addMemberHandler } from '../$orgId/members';
 import {
   handlePut as updateMemberRoleHandler,
   handleDelete as removeMemberHandler,

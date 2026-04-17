@@ -2,12 +2,7 @@ import { createDb } from '@corates/db/client';
 import { projects, projectMembers } from '@corates/db/schema';
 import { and, eq } from 'drizzle-orm';
 import { hasProjectRole } from '@corates/workers/policies';
-import {
-  createDomainError,
-  AUTH_ERRORS,
-  PROJECT_ERRORS,
-  SYSTEM_ERRORS,
-} from '@corates/shared';
+import { createDomainError, AUTH_ERRORS, PROJECT_ERRORS, SYSTEM_ERRORS } from '@corates/shared';
 import { getSession } from '@corates/workers/auth';
 
 export interface ProjectContext {
@@ -111,7 +106,9 @@ export async function requireProjectAccess(
     projectMembership = await db
       .select({ role: projectMembers.role })
       .from(projectMembers)
-      .where(and(eq(projectMembers.projectId, projectId), eq(projectMembers.userId, session.user.id)))
+      .where(
+        and(eq(projectMembers.projectId, projectId), eq(projectMembers.userId, session.user.id)),
+      )
       .get();
   } catch (err) {
     return {

@@ -150,10 +150,7 @@ export const handleDelete = async ({ request }: { request: Request }) => {
     for (const obj of listed.objects) {
       await env.PDF_BUCKET.delete(obj.key);
     }
-    return Response.json(
-      { success: true as const, message: 'Avatar deleted' },
-      { status: 200 },
-    );
+    return Response.json({ success: true as const, message: 'Avatar deleted' }, { status: 200 });
   } catch (err) {
     const error = err as Error;
     console.error('Avatar delete error:', error);

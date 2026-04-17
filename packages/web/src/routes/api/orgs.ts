@@ -12,7 +12,10 @@ import {
 
 interface OrgApiMethods {
   listOrganizations: (req: { headers: Headers }) => Promise<unknown>;
-  createOrganization: (req: { headers: Headers; body: Record<string, unknown> }) => Promise<unknown>;
+  createOrganization: (req: {
+    headers: Headers;
+    body: Record<string, unknown>;
+  }) => Promise<unknown>;
 }
 
 function getOrgApi(): OrgApiMethods {
@@ -64,10 +67,9 @@ export const handlePost = async ({ request }: { request: Request }) => {
     }
 
     if (!body.name.trim()) {
-      return Response.json(
-        createDomainError(AUTH_ERRORS.FORBIDDEN, { reason: 'name_required' }),
-        { status: 403 },
-      );
+      return Response.json(createDomainError(AUTH_ERRORS.FORBIDDEN, { reason: 'name_required' }), {
+        status: 403,
+      });
     }
 
     const orgApi = getOrgApi();
@@ -86,10 +88,9 @@ export const handlePost = async ({ request }: { request: Request }) => {
     const error = err as Error;
     console.error('Error creating organization:', error);
     if (error.message?.includes('slug')) {
-      return Response.json(
-        createDomainError(AUTH_ERRORS.FORBIDDEN, { reason: 'slug_taken' }),
-        { status: 403 },
-      );
+      return Response.json(createDomainError(AUTH_ERRORS.FORBIDDEN, { reason: 'slug_taken' }), {
+        status: 403,
+      });
     }
     return Response.json(
       createDomainError(SYSTEM_ERRORS.DB_ERROR, {

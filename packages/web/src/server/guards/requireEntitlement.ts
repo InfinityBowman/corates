@@ -1,11 +1,6 @@
 import { createDb } from '@corates/db/client';
 import { resolveOrgAccess } from '@corates/workers/billing-resolver';
-import {
-  createDomainError,
-  isDomainError,
-  AUTH_ERRORS,
-  SYSTEM_ERRORS,
-} from '@corates/shared';
+import { createDomainError, isDomainError, AUTH_ERRORS, SYSTEM_ERRORS } from '@corates/shared';
 
 export type EntitlementGuardResult =
   | { ok: true; orgBilling: Awaited<ReturnType<typeof resolveOrgAccess>> }
