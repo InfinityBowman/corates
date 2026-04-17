@@ -16,7 +16,12 @@ export default {
     if (upgrade === 'websocket') {
       return workerHandler.fetch(request, env as never, ctx);
     }
-    return startFetch(request);
+    // Forward the Worker's ExecutionContext through TanStack Start so file
+    // routes (e.g. routes/api/$.ts) can pass it into honoApp.fetch — Hono's
+    // c.executionCtx throws "This context has no ExecutionContext" otherwise.
+    // Cast: createStartHandler's RequestOptions.context defaults to a narrow
+    // BaseContext until we register a project-wide requestContext type.
+    return startFetch(request, { context: { cloudflareCtx: ctx } } as never);
   },
 
   async queue(batch: MessageBatch<unknown>, env: unknown): Promise<void> {

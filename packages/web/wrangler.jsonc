@@ -1,6 +1,9 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "corates",
+  // Matches packages/workers' script name so the Phase 3 deploy replaces the
+  // existing worker in-place — preserving DO namespace state (UserSession,
+  // ProjectDoc) that survives across deploys for the same script.
+  "name": "corates-workers",
   "compatibility_date": "2025-12-01",
   "compatibility_flags": ["nodejs_compat"],
   "main": "./src/server.ts",
@@ -26,12 +29,15 @@
   ],
 
   // Shared with packages/workers during the Phase 2 "build alongside" window.
-  // DO NOT run migrations from this package — packages/workers still owns schema.
+  // Schema migrations still live in packages/workers/migrations; we point at
+  // them so `wrangler d1 migrations apply` from this package keeps web's local
+  // D1 state in sync for smoke testing.
   "d1_databases": [
     {
       "binding": "DB",
       "database_name": "corates-db",
-      "database_id": "7ac6d425-2a7c-4087-9f42-0cd1a2ab367b"
+      "database_id": "7ac6d425-2a7c-4087-9f42-0cd1a2ab367b",
+      "migrations_dir": "../workers/migrations"
     }
   ],
 
@@ -80,7 +86,7 @@
 
   "env": {
     "production": {
-      "name": "corates-prod",
+      "name": "corates-workers-prod",
       "workers_dev": false,
       "preview_urls": false,
       // No production routes yet — Phase 3 cutover assigns corates.org/*.
