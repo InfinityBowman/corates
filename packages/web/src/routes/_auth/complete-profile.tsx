@@ -2,9 +2,8 @@ import { useState, useEffect, useMemo, useCallback } from 'react';
 import { createFileRoute, redirect, useNavigate } from '@tanstack/react-router';
 import { CheckIcon } from 'lucide-react';
 import { useAuthStore, selectUser, selectIsAuthLoading } from '@/stores/authStore';
-import { parseResponse } from 'hono/client';
 import { handleError } from '@/lib/error-utils';
-import { api } from '@/lib/rpc';
+import { API_BASE } from '@/config/api';
 import { showToast } from '@/components/ui/toast';
 import {
   hasPendingPlan,
@@ -221,9 +220,21 @@ function CompleteProfilePage() {
 
       if (invitationToken) {
         try {
-          const result = await parseResponse(
-            api.api.invitations.accept.$post({ json: { token: invitationToken } }),
-          );
+          const res = await fetch(`${API_BASE}/api/invitations/accept`, {
+            method: 'POST',
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ token: invitationToken }),
+          });
+          const result = (await res.json()) as {
+            projectId?: string;
+            projectName?: string;
+            code?: string;
+            message?: string;
+          };
+          if (!res.ok) {
+            throw new Error(result.message || result.code || `Accept failed: ${res.status}`);
+          }
           localStorage.removeItem('pendingInvitationToken');
 
           if (result.projectId) {

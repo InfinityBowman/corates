@@ -18,7 +18,9 @@
     "./project-sync": "./src/lib/project-sync.ts",
     "./project-doc-id": "./src/lib/project-doc-id.ts",
     "./email-templates": "./src/auth/emailTemplates.ts",
-    "./auth-config": "./src/auth/config.ts"
+    "./auth-config": "./src/auth/config.ts",
+    "./commands/invitations": "./src/commands/invitations/index.ts",
+    "./billing-resolver": "./src/lib/billingResolver.ts"
   },
   "scripts": {
     "dev": "concurrently \"wrangler dev\" \"pnpm build:rpc:watch\" --names wrangler,rpc --prefix-colors blue,green",

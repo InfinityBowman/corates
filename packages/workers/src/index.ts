@@ -28,7 +28,6 @@ import { billingRoutes } from './routes/billing/index';
 import { googleDriveRoutes } from './routes/google-drive';
 import { avatarRoutes } from './routes/avatars';
 import { adminRoutes } from './routes/admin/index';
-import { invitationRoutes } from './routes/invitations';
 
 // Export Durable Objects
 export { UserSession, ProjectDoc };
@@ -127,7 +126,6 @@ const app = $(base)
   .route('/api/admin', adminRoutes)
   .route('/api/billing', billingRoutes)
   .route('/api/users/avatar', avatarRoutes)
-  .route('/api/invitations', invitationRoutes)
   .route('/api/orgs', orgRoutes)
   .route('/api/google-drive', googleDriveRoutes);
 
