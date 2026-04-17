@@ -13,7 +13,7 @@
   "author": "Jacob Maynard",
   "type": "module",
   "scripts": {
-    "kill-ports": "for port in 5173 8787 3010 8080; do lsof -ti:$port | xargs kill -9 2>/dev/null; done || true",
+    "kill-ports": "for port in 5173 8787 8788 3010 8080 9229 9230 9231; do lsof -ti:$port | xargs kill -9 2>/dev/null; done || true",
     "dev": "pnpm --filter web dev",
     "dev:workers": "pnpm --filter workers dev",
     "build": "pnpm --recursive run build",
