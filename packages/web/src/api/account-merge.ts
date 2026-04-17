@@ -7,7 +7,11 @@
 
 import { API_BASE } from '@/config/api';
 
-async function postJson<T>(path: string, body: unknown, method: 'POST' | 'DELETE' = 'POST'): Promise<T> {
+async function postJson<T>(
+  path: string,
+  body: unknown,
+  method: 'POST' | 'DELETE' = 'POST',
+): Promise<T> {
   const res = await fetch(`${API_BASE}${path}`, {
     method,
     credentials: 'include',

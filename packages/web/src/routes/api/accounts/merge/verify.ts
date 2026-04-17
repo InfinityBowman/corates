@@ -79,7 +79,12 @@ export const handler = async ({ request }: { request: Request }) => {
 
   if (mergeRequest.expiresAt < new Date()) {
     await db.delete(verification).where(eq(verification.id, mergeRequest.id));
-    const error = createValidationError('code', VALIDATION_ERRORS.INVALID_INPUT.code, null, 'expired');
+    const error = createValidationError(
+      'code',
+      VALIDATION_ERRORS.INVALID_INPUT.code,
+      null,
+      'expired',
+    );
     return Response.json(error, { status: 400 });
   }
 
