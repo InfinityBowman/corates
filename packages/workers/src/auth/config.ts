@@ -84,9 +84,7 @@ interface OrcidProfile {
   email?: string;
 }
 
-// Explicit `any` return type — better-auth's inferred return references
-// internal .pnpm paths, which breaks portable declaration emission.
-export function createAuth(env: Env, ctx?: ExecutionContext): any {
+export function createAuth(env: Env, ctx?: ExecutionContext) {
   // Initialize Drizzle with D1
   const db = drizzle(env.DB, { schema });
 

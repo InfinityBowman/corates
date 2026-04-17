@@ -8,7 +8,7 @@
   "type": "module",
   "exports": {
     ".": {
-      "types": "./src/index.ts",
+      "types": "./types.d.ts",
       "default": "./src/index.ts"
     }
   },
