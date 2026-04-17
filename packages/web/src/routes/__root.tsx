@@ -79,8 +79,8 @@ export const Route = createRootRoute({
       "style-src 'self' 'unsafe-inline'",
       `img-src 'self' data: blob:${import.meta.env.DEV ? ' http://localhost:*' : ''}`,
       import.meta.env.DEV ?
-        "connect-src 'self' http://localhost:* ws://localhost:*"
-      : "connect-src 'self' wss://corates.org",
+        "connect-src 'self' http://localhost:* ws://localhost:* https://api.crossref.org https://eutils.ncbi.nlm.nih.gov"
+      : "connect-src 'self' wss://corates.org https://api.crossref.org https://eutils.ncbi.nlm.nih.gov",
       "worker-src 'self' blob:",
       "font-src 'self'",
       "frame-ancestors 'none'",
