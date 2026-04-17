@@ -24,9 +24,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { parseResponse } from 'hono/client';
 import { showToast } from '@/components/ui/toast';
-import { api } from '@/lib/rpc';
+import { API_BASE } from '@/config/api';
 import { useOrgs } from '@/hooks/useOrgs';
 import { queryKeys } from '@/lib/queryKeys';
 import { handleError, isErrorCode, getDomainError } from '@/lib/error-utils';
@@ -87,15 +86,26 @@ export function CreateProjectModal({ open, onOpenChange }: CreateProjectModalPro
 
       setIsSubmitting(true);
       try {
-        const newProject = await parseResponse(
-          api.api.orgs[':orgId'].projects.$post({
-            param: { orgId },
-            json: {
-              name: projectName.trim(),
-              description: projectDescription.trim() || undefined,
-            },
+        const res = await fetch(`${API_BASE}/api/orgs/${orgId}/projects`, {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: projectName.trim(),
+            description: projectDescription.trim() || undefined,
           }),
-        );
+        });
+        const data = (await res.json()) as {
+          id?: string;
+          message?: string;
+          code?: string;
+          details?: Record<string, unknown>;
+          statusCode?: number;
+        };
+        if (!res.ok) {
+          throw data;
+        }
+        const newProject = data as { id: string };
 
         queryClient.invalidateQueries({ queryKey: queryKeys.projects.all });
         onOpenChange(false);

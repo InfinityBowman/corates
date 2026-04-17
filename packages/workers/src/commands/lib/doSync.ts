@@ -30,11 +30,12 @@ export async function cleanupProjectStorage(env: Env, projectId: string): Promis
   let deletedCount = 0;
 
   do {
-    const listed = await env.PDF_BUCKET.list({ prefix, cursor });
+    const listed: { objects: Array<{ key: string }>; truncated: boolean; cursor?: string } =
+      await env.PDF_BUCKET.list({ prefix, cursor });
 
     if (listed.objects.length > 0) {
-      const keysToDelete = listed.objects.map(obj => obj.key);
-      await Promise.all(keysToDelete.map(key => env.PDF_BUCKET.delete(key)));
+      const keysToDelete = listed.objects.map((obj: { key: string }) => obj.key);
+      await Promise.all(keysToDelete.map((key: string) => env.PDF_BUCKET.delete(key)));
       deletedCount += keysToDelete.length;
     }
 

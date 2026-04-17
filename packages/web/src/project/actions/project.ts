@@ -2,8 +2,7 @@
  * Project-level actions -- rename, delete, update description
  */
 
-import { parseResponse } from 'hono/client';
-import { api } from '@/lib/rpc';
+import { API_BASE } from '@/config/api';
 import { showToast } from '@/components/ui/toast';
 import { queryClient } from '@/lib/queryClient';
 import { queryKeys } from '@/lib/queryKeys';
@@ -36,11 +35,14 @@ export const projectActions = {
     const orgId = targetOrgId || connectionPool.getActiveOrgId();
     if (!orgId) throw new Error('No active org');
 
-    await parseResponse(
-      api.api.orgs[':orgId'].projects[':projectId'].$delete({
-        param: { orgId, projectId: targetProjectId },
-      }),
+    const res = await fetch(
+      `${API_BASE}/api/orgs/${orgId}/projects/${targetProjectId}`,
+      { method: 'DELETE', credentials: 'include' },
     );
+    if (!res.ok) {
+      const data = (await res.json().catch(() => ({}))) as { message?: string; code?: string };
+      throw new Error(data.message || data.code || `Delete failed: ${res.status}`);
+    }
 
     queryClient.invalidateQueries({ queryKey: queryKeys.projects.all });
     queryClient.invalidateQueries({ queryKey: queryKeys.projects.byOrg(orgId) });

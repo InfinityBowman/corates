@@ -24,8 +24,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { parseResponse } from 'hono/client';
-import { api } from '@/lib/rpc';
 import { API_BASE } from '@/config/api';
 import { isUnlimitedQuota } from '@corates/shared/plans';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
@@ -127,20 +125,27 @@ export function AddMemberModal({
     setAdding(true);
     setError(null);
     try {
-      const result = await parseResponse(
-        api.api.orgs[':orgId'].projects[':projectId'].members.$post({
-          param: { orgId, projectId },
-          json:
-            selectedUser ?
-              { userId: selectedUser.id, role: selectedRole }
-            : { email: searchQuery.trim(), role: selectedRole },
-        }),
-      );
-      if ((result as any).invitation) {
-        showToast.success(
-          'Invitation Sent',
-          `Invitation sent to ${(result as any).email || searchQuery}`,
-        );
+      const res = await fetch(`${API_BASE}/api/orgs/${orgId}/projects/${projectId}/members`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(
+          selectedUser ?
+            { userId: selectedUser.id, role: selectedRole }
+          : { email: searchQuery.trim(), role: selectedRole },
+        ),
+      });
+      const result = (await res.json()) as {
+        invitation?: boolean;
+        email?: string;
+        message?: string;
+        code?: string;
+      };
+      if (!res.ok) {
+        throw new Error(result.message || result.code || `Add failed: ${res.status}`);
+      }
+      if (result.invitation) {
+        showToast.success('Invitation Sent', `Invitation sent to ${result.email || searchQuery}`);
       }
       handleClose();
     } catch (err: any) {
