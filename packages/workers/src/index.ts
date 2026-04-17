@@ -26,7 +26,6 @@ import { healthRoutes } from './routes/health';
 import { orgRoutes } from './routes/orgs/index';
 import { billingRoutes } from './routes/billing/index';
 import { googleDriveRoutes } from './routes/google-drive';
-import { avatarRoutes } from './routes/avatars';
 import { adminRoutes } from './routes/admin/index';
 
 // Export Durable Objects
@@ -125,7 +124,6 @@ base.post('/api/admin/stop-impersonation', async c => {
 const app = $(base)
   .route('/api/admin', adminRoutes)
   .route('/api/billing', billingRoutes)
-  .route('/api/users/avatar', avatarRoutes)
   .route('/api/orgs', orgRoutes)
   .route('/api/google-drive', googleDriveRoutes);
 
