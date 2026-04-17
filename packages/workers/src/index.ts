@@ -12,7 +12,6 @@ import { UserSession } from './durable-objects/UserSession';
 import { ProjectDoc } from './durable-objects/ProjectDoc';
 import { createCorsMiddleware } from './middleware/cors';
 import { securityHeaders } from './middleware/securityHeaders';
-import { requireAuth } from './middleware/auth';
 import { requireTrustedOrigin } from './middleware/csrf';
 import { errorHandler } from './middleware/errorHandler';
 import { createDomainError, SYSTEM_ERRORS } from '@corates/shared';
@@ -25,7 +24,6 @@ import { auth } from './auth/routes';
 import { healthRoutes } from './routes/health';
 import { orgRoutes } from './routes/orgs/index';
 import { billingRoutes } from './routes/billing/index';
-import { googleDriveRoutes } from './routes/google-drive';
 import { adminRoutes } from './routes/admin/index';
 
 // Export Durable Objects
@@ -124,126 +122,7 @@ base.post('/api/admin/stop-impersonation', async c => {
 const app = $(base)
   .route('/api/admin', adminRoutes)
   .route('/api/billing', billingRoutes)
-  .route('/api/orgs', orgRoutes)
-  .route('/api/google-drive', googleDriveRoutes);
-
-// PDF proxy endpoint - fetches external PDFs to avoid CORS issues
-// Only requires authentication, not project membership
-base.post('/api/pdf-proxy', requireAuth, async c => {
-  try {
-    const body = await c.req.json<{ url?: string }>();
-    const { url } = body;
-
-    if (!url) {
-      return c.json({ error: 'URL is required' }, 400);
-    }
-
-    const { validatePdfProxyUrl } = await import('./lib/ssrf-protection');
-
-    // SSRF protection - validate URL against allowlist
-    const validation = validatePdfProxyUrl(url);
-    if (!validation.valid) {
-      return c.json({ error: validation.error, code: 'SSRF_BLOCKED' }, 400);
-    }
-
-    // Fetch the PDF with manual redirect handling to detect auth loops
-    let response: Response | undefined;
-    let redirectCount = 0;
-    const maxRedirects = 5;
-    let currentUrl = url;
-
-    while (redirectCount < maxRedirects) {
-      response = await fetch(currentUrl, {
-        headers: {
-          'User-Agent': 'CoRATES/1.0 (Research Tool; mailto:support@corates.app)',
-          Accept: 'application/pdf,*/*',
-        },
-        redirect: 'manual',
-      });
-
-      if (![301, 302, 303, 307, 308].includes(response.status)) {
-        break;
-      }
-
-      const location = response.headers.get('location');
-      if (!location) {
-        return c.json({ error: 'Redirect without location header' }, 502);
-      }
-
-      // Detect auth/login redirects (common patterns)
-      if (
-        location.includes('/login') ||
-        location.includes('/auth') ||
-        location.includes('/signin') ||
-        location.includes('authorization.oauth2') ||
-        location.includes('idp.') ||
-        location.includes('/sso/')
-      ) {
-        return c.json(
-          {
-            error: 'PDF requires authentication - this article may not be truly open access',
-            code: 'AUTH_REQUIRED',
-          },
-          403,
-        );
-      }
-
-      const redirectUrl = new URL(location, currentUrl);
-
-      // Validate redirect URL for SSRF protection
-      const redirectValidation = validatePdfProxyUrl(redirectUrl.href);
-      if (!redirectValidation.valid) {
-        return c.json(
-          { error: `Redirect blocked: ${redirectValidation.error}`, code: 'SSRF_BLOCKED' },
-          400,
-        );
-      }
-
-      currentUrl = redirectUrl.href;
-      redirectCount++;
-    }
-
-    if (redirectCount >= maxRedirects) {
-      return c.json({ error: 'Too many redirects - PDF may require authentication' }, 502);
-    }
-
-    if (!response || !response.ok) {
-      return c.json(
-        { error: `Failed to fetch PDF: ${response?.status} ${response?.statusText}` },
-        (response?.status || 500) as ContentfulStatusCode,
-      );
-    }
-
-    // Check content type
-    const contentType = response.headers.get('content-type') || '';
-    if (!contentType.includes('pdf') && !contentType.includes('octet-stream')) {
-      if (contentType.includes('html')) {
-        return c.json(
-          {
-            error: 'PDF requires authentication - received login page instead',
-            code: 'AUTH_REQUIRED',
-          },
-          403,
-        );
-      }
-      return c.json({ error: 'URL did not return a PDF' }, 400);
-    }
-
-    // Return the PDF data
-    const pdfData = await response.arrayBuffer();
-
-    return new Response(pdfData, {
-      headers: {
-        'Content-Type': 'application/pdf',
-        'Content-Length': pdfData.byteLength.toString(),
-      },
-    });
-  } catch (error) {
-    console.error('PDF proxy error:', error);
-    const message = error instanceof Error ? error.message : 'Failed to fetch PDF';
-    return c.json({ error: message }, 500);
-  }
-});
+  .route('/api/orgs', orgRoutes);
 
 // Project-scoped Project Document Durable Object routes
 // DO instance is project-scoped (project:${projectId})

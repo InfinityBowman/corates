@@ -33,7 +33,6 @@ import { mediaFiles, user } from '@corates/db/schema';
 import { eq, and } from 'drizzle-orm';
 import { validationHook } from '../../lib/honoValidationHook.js';
 import type { Env } from '../../types';
-import type { DrizzleD1Database } from 'drizzle-orm/d1';
 import { ErrorResponseSchema } from '../../schemas/common.js';
 
 const base = new OpenAPIHono<{ Bindings: Env }>({
@@ -334,71 +333,8 @@ function isValidFileName(fileName: string): boolean {
   return isValidPdfFilename(fileName);
 }
 
-/**
- * Generate a unique filename by auto-renaming if duplicate exists
- */
-export async function generateUniqueFileName(
-  fileName: string,
-  projectId: string,
-  studyId: string,
-  db: DrizzleD1Database<Record<string, unknown>>,
-): Promise<string> {
-  // Check if original filename is available
-  const existing = await db
-    .select({ id: mediaFiles.id })
-    .from(mediaFiles)
-    .where(
-      and(
-        eq(mediaFiles.projectId, projectId),
-        eq(mediaFiles.studyId, studyId),
-        eq(mediaFiles.filename, fileName),
-      ),
-    )
-    .get();
-
-  if (!existing) {
-    return fileName;
-  }
-
-  // Extract name and extension
-  const lastDot = fileName.lastIndexOf('.');
-  const nameWithoutExt = lastDot > 0 ? fileName.slice(0, lastDot) : fileName;
-  const ext = lastDot > 0 ? fileName.slice(lastDot) : '';
-
-  // Try numbered versions: "file (1).pdf", "file (2).pdf", etc.
-  let counter = 1;
-  let uniqueFileName = fileName;
-  let found = true;
-
-  while (found && counter < 1000) {
-    uniqueFileName = `${nameWithoutExt} (${counter})${ext}`;
-    const duplicate = await db
-      .select({ id: mediaFiles.id })
-      .from(mediaFiles)
-      .where(
-        and(
-          eq(mediaFiles.projectId, projectId),
-          eq(mediaFiles.studyId, studyId),
-          eq(mediaFiles.filename, uniqueFileName),
-        ),
-      )
-      .get();
-
-    if (!duplicate) {
-      found = false;
-    } else {
-      counter++;
-    }
-  }
-
-  if (found) {
-    // Fallback: use timestamp if we hit the limit
-    const timestamp = Date.now();
-    uniqueFileName = `${nameWithoutExt}_${timestamp}${ext}`;
-  }
-
-  return uniqueFileName;
-}
+import { generateUniqueFileName } from '../../lib/media-files.js';
+export { generateUniqueFileName };
 
 /**
  * GET /api/orgs/:orgId/projects/:projectId/studies/:studyId/pdfs
