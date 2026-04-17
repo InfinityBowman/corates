@@ -1,34 +1,17 @@
 /**
  * Billing routes for Hono
- * Handles org-scoped billing status (adapter for frontend compatibility)
- * Stripe subscription management is handled by Better Auth Stripe plugin
  *
- * WARNING: HIGH BLAST RADIUS FILE
+ * Handles org-scoped billing status, checkout session creation, and invoices.
  *
- * This file controls ALL payment and access features.
- * Changes here impact:
- * - Stripe payment processing (subscriptions + one-time purchases)
- * - User access to paid features (entitlements, quotas)
- * - Webhook idempotency and event processing
- * - Organization billing status and plan resolution
- * - Trial and grant-based access
+ * Webhook processing does NOT live here:
+ * - Subscription webhooks → Better Auth stripe plugin at /api/auth/stripe/webhook
+ * - One-time purchase webhooks → @corates/stripe-purchases worker at /api/billing/purchases/webhook
  *
- * BEFORE MODIFYING:
- * 1. Read: packages/docs/guides/billing.md
- * 2. Understand the two-phase webhook verification pattern (see webhooks.js)
- * 3. Run billing tests: cd packages/workers && pnpm test billing
- * 4. Test with Stripe CLI: stripe listen --forward-to localhost:8787/api/billing/webhook/purchases
- * 5. Verify idempotency (webhooks can be delivered multiple times)
- * 6. NEVER skip signature verification
- * 7. Test both test mode and live mode scenarios
+ * The subscription table has a single writer (Better Auth). Grants table is
+ * written only by the stripe-purchases worker (idempotent via unique
+ * checkoutSessionId + stripeEventLedger).
  *
- * CRITICAL PATTERNS:
- * - Webhook ledger prevents duplicate processing (payloadHash + stripeEventId)
- * - orgAccessGrants has unique constraint on checkoutSessionId
- * - Plan resolution respects subscription > grant precedence (see billingResolver.js)
- * - Price IDs must match environment variables exactly
- *
- * See: packages/docs/guides/billing.md for detailed architecture
+ * See: packages/docs/guides/billing.md
  */
 
 import { $, OpenAPIHono } from '@hono/zod-openapi';
@@ -37,22 +20,19 @@ import { billingValidationRoutes } from './validation.js';
 import { billingPortalRoutes } from './portal.js';
 import { billingGrantRoutes } from './grants.js';
 import { billingCheckoutRoutes } from './checkout';
-import { billingWebhookRoutes } from './webhooks.js';
 import { billingInvoicesRoutes } from './invoices.js';
+import { billingSyncRoutes } from './sync.js';
 import type { Env } from '../../types';
 
 const base = new OpenAPIHono<{ Bindings: Env }>();
 
-// Mount all routes at root level
-// Each sub-router handles its full path (e.g., /subscription, /members, /checkout, etc.)
-// Webhook routes mounted FIRST since they don't require auth middleware
 const billingRoutes = $(base)
-  .route('/', billingWebhookRoutes)
   .route('/', billingSubscriptionRoutes)
   .route('/', billingValidationRoutes)
   .route('/', billingPortalRoutes)
   .route('/', billingCheckoutRoutes)
   .route('/', billingGrantRoutes)
-  .route('/', billingInvoicesRoutes);
+  .route('/', billingInvoicesRoutes)
+  .route('/', billingSyncRoutes);
 
 export { billingRoutes };
