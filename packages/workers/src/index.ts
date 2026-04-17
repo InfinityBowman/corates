@@ -31,7 +31,6 @@ import { googleDriveRoutes } from './routes/google-drive';
 import { avatarRoutes } from './routes/avatars';
 import { adminRoutes } from './routes/admin/index';
 import { accountMergeRoutes } from './routes/account-merge';
-import { contactRoutes } from './routes/contact';
 import { invitationRoutes } from './routes/invitations';
 import { testSeedRoutes } from './routes/test-seed';
 
@@ -133,7 +132,6 @@ base.post('/api/admin/stop-impersonation', async c => {
 // Chain API sub-routers for RPC type inference
 const app = $(base)
   .route('/api/admin', adminRoutes)
-  .route('/api/contact', contactRoutes)
   .route('/api/billing', billingRoutes)
   .route('/api/db', dbRoutes)
   .route('/api/users', userRoutes)
