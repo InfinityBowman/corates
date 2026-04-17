@@ -4,7 +4,7 @@ import { member, organization, projects, projectMembers } from '@corates/db/sche
 import { eq, and } from 'drizzle-orm';
 import { getAuth } from './auth';
 import { createDomainError, AUTH_ERRORS, PROJECT_ERRORS, SYSTEM_ERRORS } from '@corates/shared';
-import { hasOrgRole, hasProjectRole } from '@/policies';
+import { hasOrgRole, hasProjectRole } from '../policies';
 import type { AppContext, OrgContext, ProjectContext } from '../types';
 
 export function requireOrgMembership(minRole?: string): MiddlewareHandler {

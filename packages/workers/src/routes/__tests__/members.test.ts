@@ -6,7 +6,7 @@
 import { beforeAll, beforeEach, describe, expect, it, vi, type Mock } from 'vitest';
 import { Hono, type Context } from 'hono';
 import { env, createExecutionContext, waitOnExecutionContext } from 'cloudflare:test';
-import { resetTestDatabase, clearProjectDOs, json } from '@/__tests__/helpers.js';
+import { resetTestDatabase, clearProjectDOs, json } from '../../__tests__/helpers.js';
 import {
   buildProjectWithMembers,
   buildProject,
@@ -15,7 +15,7 @@ import {
   buildUser,
   buildOrgMember,
   resetCounter,
-} from '@/__tests__/factories';
+} from '../../__tests__/factories';
 
 // Mock postmark
 vi.mock('postmark', () => {
@@ -85,10 +85,10 @@ beforeEach(async () => {
   resetCounter();
 
   // Get the mocked functions
-  const billingResolver = await import('@/lib/billingResolver.js');
+  const billingResolver = await import('../../lib/billingResolver.js');
   mockResolveOrgAccess = billingResolver.resolveOrgAccess as unknown as Mock;
 
-  const quotaTransaction = await import('@/lib/quotaTransaction.js');
+  const quotaTransaction = await import('../../lib/quotaTransaction.js');
   mockCheckCollaboratorQuota = quotaTransaction.checkCollaboratorQuota as unknown as Mock;
 
   // Setup default billing resolver mock (unlimited quota)

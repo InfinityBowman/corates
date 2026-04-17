@@ -51,7 +51,7 @@ export async function sendInvitationEmail(
   const { drizzleAdapter } = await import('better-auth/adapters/drizzle');
   const { drizzle } = await import('drizzle-orm/d1');
   const schema = await import('@corates/db/schema');
-  const { MAGIC_LINK_EXPIRY_MINUTES } = await import('@/auth/emailTemplates.js');
+  const { MAGIC_LINK_EXPIRY_MINUTES } = await import('../auth/emailTemplates.js');
 
   const authSecret = env.AUTH_SECRET || (envRecord.SECRET as string | undefined);
   if (!authSecret) {
@@ -112,8 +112,8 @@ export async function sendInvitationEmail(
   }
 
   const { getProjectInvitationEmailHtml, getProjectInvitationEmailText } =
-    await import('@/auth/emailTemplates.js');
-  const { sanitizeEmailSubject } = await import('@/lib/escapeHtml.js');
+    await import('../auth/emailTemplates.js');
+  const { sanitizeEmailSubject } = await import('./escapeHtml.js');
 
   const emailHtml = getProjectInvitationEmailHtml({
     projectName,

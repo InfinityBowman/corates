@@ -10,10 +10,10 @@ import { user, organization, subscription } from '@corates/db/schema';
 import { eq } from 'drizzle-orm';
 import { createDomainError, SYSTEM_ERRORS, VALIDATION_ERRORS } from '@corates/shared';
 import type Stripe from 'stripe';
-import { createStripeClient } from '@/lib/stripe.js';
-import { validationHook } from '@/lib/honoValidationHook.js';
+import { createStripeClient } from '../../lib/stripe.js';
+import { validationHook } from '../../lib/honoValidationHook.js';
 import type { Env } from '../../types';
-import { ErrorResponseSchema } from '@/schemas/common.js';
+import { ErrorResponseSchema } from '../../schemas/common.js';
 
 const _stripeToolsBase = new OpenAPIHono<{ Bindings: Env }>({
   defaultHook: validationHook,

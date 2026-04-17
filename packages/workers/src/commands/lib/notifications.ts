@@ -4,7 +4,7 @@
  * Consolidates user notification operations used across commands.
  */
 
-import type { Env } from '@/types';
+import type { Env } from '../../types';
 
 /**
  * Notification type constants

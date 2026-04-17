@@ -3,15 +3,15 @@
  * Handles org-scoped billing status and member info (read-only endpoints)
  */
 import { OpenAPIHono, createRoute, z, $ } from '@hono/zod-openapi';
-import { requireAuth, getAuth } from '@/middleware/auth.js';
+import { requireAuth, getAuth } from '../../middleware/auth.js';
 import { createDb } from '@corates/db/client';
-import { resolveOrgAccess } from '@/lib/billingResolver.js';
+import { resolveOrgAccess } from '../../lib/billingResolver.js';
 import { getPlan, getGrantPlan, type GrantType } from '@corates/shared/plans';
 import { createDomainError, SYSTEM_ERRORS, AUTH_ERRORS } from '@corates/shared';
 import { resolveOrgId } from './helpers/orgContext.js';
-import { validationHook } from '@/lib/honoValidationHook.js';
+import { validationHook } from '../../lib/honoValidationHook.js';
 import type { Env } from '../../types';
-import { ErrorResponseSchema } from '@/schemas/common.js';
+import { ErrorResponseSchema } from '../../schemas/common.js';
 
 const base = new OpenAPIHono<{ Bindings: Env }>({
   defaultHook: validationHook,
@@ -159,7 +159,7 @@ const billingSubscriptionRoutes = $(base.use('*', requireAuth))
         return c.json(error, 403);
       }
 
-      const { getOrgResourceUsage } = await import('@/lib/billingResolver.js');
+      const { getOrgResourceUsage } = await import('../../lib/billingResolver.js');
       const usage = await getOrgResourceUsage(db, orgId);
 
       return c.json(
@@ -270,7 +270,7 @@ const billingSubscriptionRoutes = $(base.use('*', requireAuth))
         return c.json(error, 403);
       }
 
-      const { createAuth } = await import('@/auth/config.js');
+      const { createAuth } = await import('../../auth/config.js');
       const auth = createAuth(c.env, c.executionCtx);
       const listMembersApi = auth.api as unknown as {
         listMembers: (_req: {

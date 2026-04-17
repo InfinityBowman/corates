@@ -17,7 +17,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { env, runInDurableObject } from 'cloudflare:test';
 import * as Y from 'yjs';
-import { clearProjectDOs } from '@/__tests__/helpers.js';
+import { clearProjectDOs } from '../../__tests__/helpers.js';
 import type { ProjectDoc, PersistenceLogger } from '../ProjectDoc.js';
 
 vi.mock('@/auth/config.js', () => {

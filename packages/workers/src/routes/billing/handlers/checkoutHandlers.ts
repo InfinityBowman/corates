@@ -5,7 +5,7 @@
  * Delegates to the processCheckoutSession command for business logic.
  */
 import type Stripe from 'stripe';
-import { processCheckoutSession } from '@/commands';
+import { processCheckoutSession } from '../../../commands';
 import type { WebhookContext, WebhookResult } from './types.js';
 import type { Database } from '@corates/db/client';
 

@@ -5,29 +5,29 @@
 
 import { OpenAPIHono, createRoute, z, $ } from '@hono/zod-openapi';
 import type { Context } from 'hono';
-import { runMiddleware } from '@/lib/runMiddleware.js';
+import { runMiddleware } from '../../lib/runMiddleware.js';
 import { createDb } from '@corates/db/client';
 import { projects, projectMembers } from '@corates/db/schema';
 import { eq, and, count, desc } from 'drizzle-orm';
-import { requireAuth, getAuth } from '@/middleware/auth.js';
+import { requireAuth, getAuth } from '../../middleware/auth.js';
 import {
   requireOrgMembership,
   requireProjectAccess,
   getOrgContext,
   getProjectContext,
-} from '@/middleware/requireOrg.js';
-import { requireEntitlement } from '@/middleware/requireEntitlement.js';
-import { requireQuota } from '@/middleware/requireQuota.js';
-import { requireOrgWriteAccess } from '@/middleware/requireOrgWriteAccess.js';
+} from '../../middleware/requireOrg.js';
+import { requireEntitlement } from '../../middleware/requireEntitlement.js';
+import { requireQuota } from '../../middleware/requireQuota.js';
+import { requireOrgWriteAccess } from '../../middleware/requireOrgWriteAccess.js';
 import { createDomainError, isDomainError, PROJECT_ERRORS, SYSTEM_ERRORS } from '@corates/shared';
-import { validationHook } from '@/lib/honoValidationHook.js';
-import { createProject, updateProject, deleteProject } from '@/commands/projects/index.js';
+import { validationHook } from '../../lib/honoValidationHook.js';
+import { createProject, updateProject, deleteProject } from '../../commands/projects/index.js';
 import { orgProjectMemberRoutes } from './members.js';
 import { orgPdfRoutes } from './pdfs.js';
 import { orgInvitationRoutes } from './invitations.js';
 import { devRoutes } from './dev-routes.js';
 import type { Env } from '../../types';
-import { ErrorResponseSchema } from '@/schemas/common.js';
+import { ErrorResponseSchema } from '../../schemas/common.js';
 
 const base = new OpenAPIHono<{ Bindings: Env }>({
   defaultHook: validationHook,

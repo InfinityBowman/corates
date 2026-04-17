@@ -7,16 +7,16 @@
 
 import { OpenAPIHono, createRoute, z, $ } from '@hono/zod-openapi';
 
-import { requireAuth, getAuth } from '@/middleware/auth';
+import { requireAuth, getAuth } from '../middleware/auth';
 import { createDomainError, FILE_ERRORS, SYSTEM_ERRORS, VALIDATION_ERRORS } from '@corates/shared';
-import { FILE_SIZE_LIMITS } from '@/config/constants';
+import { FILE_SIZE_LIMITS } from '../config/constants';
 import { createDb } from '@corates/db/client';
 import { projectMembers, projects } from '@corates/db/schema';
 import { eq } from 'drizzle-orm';
-import { getProjectDocStub } from '@/lib/project-doc-id';
-import { validationHook } from '@/lib/honoValidationHook';
+import { getProjectDocStub } from '../lib/project-doc-id';
+import { validationHook } from '../lib/honoValidationHook';
 import type { Env } from '../types';
-import { ErrorResponseSchema } from '@/schemas/common.js';
+import { ErrorResponseSchema } from '../schemas/common.js';
 
 const base = new OpenAPIHono<{ Bindings: Env }>({
   defaultHook: validationHook,

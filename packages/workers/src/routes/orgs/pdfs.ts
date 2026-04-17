@@ -7,15 +7,15 @@
 
 import { OpenAPIHono, createRoute, z, $ } from '@hono/zod-openapi';
 import type { Context } from 'hono';
-import { runMiddleware } from '@/lib/runMiddleware.js';
-import { requireAuth, getAuth } from '@/middleware/auth.js';
+import { runMiddleware } from '../../lib/runMiddleware.js';
+import { requireAuth, getAuth } from '../../middleware/auth.js';
 import {
   requireOrgMembership,
   requireProjectAccess,
   getProjectContext,
   getOrgContext,
-} from '@/middleware/requireOrg.js';
-import { requireOrgWriteAccess } from '@/middleware/requireOrgWriteAccess.js';
+} from '../../middleware/requireOrg.js';
+import { requireOrgWriteAccess } from '../../middleware/requireOrgWriteAccess.js';
 import {
   createDomainError,
   FILE_ERRORS,
@@ -31,10 +31,10 @@ import {
 import { createDb } from '@corates/db/client';
 import { mediaFiles, user } from '@corates/db/schema';
 import { eq, and } from 'drizzle-orm';
-import { validationHook } from '@/lib/honoValidationHook.js';
+import { validationHook } from '../../lib/honoValidationHook.js';
 import type { Env } from '../../types';
 import type { DrizzleD1Database } from 'drizzle-orm/d1';
-import { ErrorResponseSchema } from '@/schemas/common.js';
+import { ErrorResponseSchema } from '../../schemas/common.js';
 
 const base = new OpenAPIHono<{ Bindings: Env }>({
   defaultHook: validationHook,

@@ -6,17 +6,17 @@
  */
 
 import { OpenAPIHono, createRoute, z, $ } from '@hono/zod-openapi';
-import { runMiddleware } from '@/lib/runMiddleware.js';
+import { runMiddleware } from '../../lib/runMiddleware.js';
 import { createDb } from '@corates/db/client';
 import { projectInvitations } from '@corates/db/schema';
 import { eq, and, desc, isNull } from 'drizzle-orm';
-import { requireAuth, getAuth } from '@/middleware/auth.js';
+import { requireAuth, getAuth } from '../../middleware/auth.js';
 import {
   requireOrgMembership,
   requireProjectAccess,
   getOrgContext,
   getProjectContext,
-} from '@/middleware/requireOrg.js';
+} from '../../middleware/requireOrg.js';
 import {
   createDomainError,
   isDomainError,
@@ -26,11 +26,11 @@ import {
   VALIDATION_ERRORS,
   type DomainError,
 } from '@corates/shared';
-import { requireOrgWriteAccess } from '@/middleware/requireOrgWriteAccess.js';
-import { createInvitation } from '@/commands/invitations/index.js';
-import { validationHook } from '@/lib/honoValidationHook.js';
+import { requireOrgWriteAccess } from '../../middleware/requireOrgWriteAccess.js';
+import { createInvitation } from '../../commands/invitations/index.js';
+import { validationHook } from '../../lib/honoValidationHook.js';
 import type { Env } from '../../types';
-import { ErrorResponseSchema } from '@/schemas/common.js';
+import { ErrorResponseSchema } from '../../schemas/common.js';
 
 const base = new OpenAPIHono<{ Bindings: Env }>({
   defaultHook: validationHook,

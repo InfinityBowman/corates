@@ -20,9 +20,9 @@ import {
 } from '@corates/db/schema';
 import { eq, and } from 'drizzle-orm';
 import { createDomainError, PROJECT_ERRORS, AUTH_ERRORS, VALIDATION_ERRORS } from '@corates/shared';
-import { syncMemberToDO } from '@/lib/project-sync';
-import { checkCollaboratorQuota } from '@/lib/quotaTransaction';
-import type { Env } from '@/types';
+import { syncMemberToDO } from '../../lib/project-sync';
+import { checkCollaboratorQuota } from '../../lib/quotaTransaction';
+import type { Env } from '../../types';
 
 interface AcceptInvitationActor {
   id: string;

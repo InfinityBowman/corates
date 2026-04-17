@@ -12,7 +12,7 @@ import {
   seedOrganization,
   seedOrgMember,
   json,
-} from '@/__tests__/helpers.js';
+} from '../../../__tests__/helpers.js';
 import { createDb } from '@corates/db/client';
 import { getGrantByStripeCheckoutSessionId, getGrantByOrgIdAndType } from '@corates/db/org-access-grants';
 

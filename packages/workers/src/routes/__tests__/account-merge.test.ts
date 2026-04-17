@@ -6,7 +6,7 @@
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { Hono, type Context } from 'hono';
 import { env, createExecutionContext, waitOnExecutionContext } from 'cloudflare:test';
-import { resetTestDatabase, json } from '@/__tests__/helpers.js';
+import { resetTestDatabase, json } from '../../__tests__/helpers.js';
 import {
   buildUser,
   buildOrg,
@@ -14,7 +14,7 @@ import {
   buildProject,
   buildProjectMember,
   resetCounter,
-} from '@/__tests__/factories';
+} from '../../__tests__/factories';
 
 // Mock postmark
 vi.mock('postmark', () => {

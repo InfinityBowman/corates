@@ -10,8 +10,8 @@
  */
 
 import { createDomainError, SYSTEM_ERRORS } from '@corates/shared';
-import { createStripeClient } from '@/lib/stripe.js';
-import type { Env } from '@/types';
+import { createStripeClient } from '../../lib/stripe.js';
+import type { Env } from '../../types';
 
 interface CreateSingleProjectCheckoutParams {
   orgId: string;

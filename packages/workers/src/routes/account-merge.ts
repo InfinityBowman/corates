@@ -18,10 +18,10 @@ import { OpenAPIHono, createRoute, z, $ } from '@hono/zod-openapi';
 import { createDb } from '@corates/db/client';
 import { user, account, projects, projectMembers, mediaFiles, verification } from '@corates/db/schema';
 import { eq, sql, like, and } from 'drizzle-orm';
-import { requireAuth, getAuth } from '@/middleware/auth.js';
-import { rateLimit } from '@/middleware/rateLimit.js';
-import { getAccountMergeEmailHtml, getAccountMergeEmailText } from '@/auth/emailTemplates.js';
-import { queueEmail } from '@/lib/email-queue.js';
+import { requireAuth, getAuth } from '../middleware/auth.js';
+import { rateLimit } from '../middleware/rateLimit.js';
+import { getAccountMergeEmailHtml, getAccountMergeEmailText } from '../auth/emailTemplates.js';
+import { queueEmail } from '../lib/email-queue.js';
 import {
   createDomainError,
   createValidationError,
@@ -29,9 +29,9 @@ import {
   USER_ERRORS,
   SYSTEM_ERRORS,
 } from '@corates/shared';
-import { validationHook } from '@/lib/honoValidationHook.js';
+import { validationHook } from '../lib/honoValidationHook.js';
 import type { Env } from '../types';
-import { ErrorResponseSchema } from '@/schemas/common.js';
+import { ErrorResponseSchema } from '../schemas/common.js';
 
 type Variables = {
   mergeInitiateKey: string;

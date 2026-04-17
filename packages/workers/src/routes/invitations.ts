@@ -4,7 +4,7 @@
  */
 
 import { OpenAPIHono, createRoute, z, $ } from '@hono/zod-openapi';
-import { requireAuth, getAuth } from '@/middleware/auth.js';
+import { requireAuth, getAuth } from '../middleware/auth.js';
 import {
   createDomainError,
   isDomainError,
@@ -12,10 +12,10 @@ import {
   SYSTEM_ERRORS,
   type DomainError,
 } from '@corates/shared';
-import { acceptInvitation } from '@/commands/invitations/index.js';
-import { validationHook } from '@/lib/honoValidationHook.js';
+import { acceptInvitation } from '../commands/invitations/index.js';
+import { validationHook } from '../lib/honoValidationHook.js';
 import type { Env } from '../types';
-import { ErrorResponseSchema } from '@/schemas/common.js';
+import { ErrorResponseSchema } from '../schemas/common.js';
 
 const base = new OpenAPIHono<{ Bindings: Env }>({
   defaultHook: validationHook,

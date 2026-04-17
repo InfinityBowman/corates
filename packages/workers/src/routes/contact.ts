@@ -5,7 +5,7 @@
 
 import { OpenAPIHono, createRoute, z, $ } from '@hono/zod-openapi';
 
-import { contactRateLimit } from '@/middleware/rateLimit';
+import { contactRateLimit } from '../middleware/rateLimit';
 import {
   createDomainError,
   createValidationError,
@@ -13,10 +13,10 @@ import {
   VALIDATION_ERRORS,
 } from '@corates/shared';
 import type { ValidationErrorCode } from '@corates/shared';
-import { escapeHtml } from '@/lib/escapeHtml';
-import { queueEmail } from '@/lib/email-queue';
+import { escapeHtml } from '../lib/escapeHtml';
+import { queueEmail } from '../lib/email-queue';
 import type { Env } from '../types';
-import { ErrorResponseSchema } from '@/schemas/common.js';
+import { ErrorResponseSchema } from '../schemas/common.js';
 
 const base = new OpenAPIHono<{ Bindings: Env }>({
   defaultHook: (result, c) => {

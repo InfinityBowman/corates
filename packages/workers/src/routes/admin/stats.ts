@@ -9,10 +9,10 @@ import { createDb } from '@corates/db/client';
 import { user, organization, stripeEventLedger, projects } from '@corates/db/schema';
 import { sql, count, gte } from 'drizzle-orm';
 import { createDomainError, SYSTEM_ERRORS } from '@corates/shared';
-import { createStripeClient } from '@/lib/stripe.js';
-import { validationHook } from '@/lib/honoValidationHook.js';
+import { createStripeClient } from '../../lib/stripe.js';
+import { validationHook } from '../../lib/honoValidationHook.js';
 import type { Env } from '../../types';
-import { ErrorResponseSchema } from '@/schemas/common.js';
+import { ErrorResponseSchema } from '../../schemas/common.js';
 
 const _statsBase = new OpenAPIHono<{ Bindings: Env }>({
   defaultHook: validationHook,

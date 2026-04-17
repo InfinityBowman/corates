@@ -12,7 +12,7 @@ import {
 import { oAuthRelay } from './oauth-relay';
 import { stripe } from '@better-auth/stripe';
 import Stripe from 'stripe';
-import { STRIPE_API_VERSION } from '@/lib/stripe.js';
+import { STRIPE_API_VERSION } from '../lib/stripe.js';
 import { drizzle } from 'drizzle-orm/d1';
 import { eq, and } from 'drizzle-orm';
 import * as schema from '@corates/db/schema';
@@ -84,7 +84,9 @@ interface OrcidProfile {
   email?: string;
 }
 
-export function createAuth(env: Env, ctx?: ExecutionContext) {
+// Explicit `any` return type — better-auth's inferred return references
+// internal .pnpm paths, which breaks portable declaration emission.
+export function createAuth(env: Env, ctx?: ExecutionContext): any {
   // Initialize Drizzle with D1
   const db = drizzle(env.DB, { schema });
 

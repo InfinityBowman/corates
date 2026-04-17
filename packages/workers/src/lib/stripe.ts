@@ -6,7 +6,7 @@
 
 import Stripe from 'stripe';
 import { createDomainError, SYSTEM_ERRORS } from '@corates/shared';
-import type { Env } from '@/types';
+import type { Env } from '../types';
 
 /**
  * Stripe API version used across the application

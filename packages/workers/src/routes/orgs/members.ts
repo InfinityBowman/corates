@@ -4,18 +4,18 @@
  */
 
 import { OpenAPIHono, createRoute, z, $ } from '@hono/zod-openapi';
-import { runMiddleware } from '@/lib/runMiddleware.js';
+import { runMiddleware } from '../../lib/runMiddleware.js';
 import { createDb } from '@corates/db/client';
 import { projectMembers, user } from '@corates/db/schema';
 import { eq } from 'drizzle-orm';
-import { requireAuth, getAuth } from '@/middleware/auth.js';
+import { requireAuth, getAuth } from '../../middleware/auth.js';
 import {
   requireOrgMembership,
   requireProjectAccess,
   getOrgContext,
   getProjectContext,
-} from '@/middleware/requireOrg.js';
-import { requireOrgWriteAccess } from '@/middleware/requireOrgWriteAccess.js';
+} from '../../middleware/requireOrg.js';
+import { requireOrgWriteAccess } from '../../middleware/requireOrgWriteAccess.js';
 import {
   createDomainError,
   isDomainError,
@@ -23,12 +23,12 @@ import {
   USER_ERRORS,
   type DomainError,
 } from '@corates/shared';
-import { validationHook } from '@/lib/honoValidationHook.js';
-import { addMember, updateMemberRole, removeMember } from '@/commands/members/index.js';
-import { createInvitation } from '@/commands/invitations/index.js';
-import { requireMemberRemoval } from '@/policies';
+import { validationHook } from '../../lib/honoValidationHook.js';
+import { addMember, updateMemberRole, removeMember } from '../../commands/members/index.js';
+import { createInvitation } from '../../commands/invitations/index.js';
+import { requireMemberRemoval } from '../../policies';
 import type { Env } from '../../types';
-import { ErrorResponseSchema } from '@/schemas/common.js';
+import { ErrorResponseSchema } from '../../schemas/common.js';
 
 const base = new OpenAPIHono<{ Bindings: Env }>({
   defaultHook: validationHook,

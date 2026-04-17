@@ -12,16 +12,16 @@ import {
   seedOrgMember,
   seedSubscription,
   seedProject,
-} from '@/__tests__/helpers.js';
+} from '../../__tests__/helpers.js';
 import { createDb } from '@corates/db/client';
 import { createGrant } from '@corates/db/org-access-grants';
 import {
   resolveOrgAccess,
   validatePlanChange,
   getOrgResourceUsage,
-} from '@/lib/billingResolver.js';
-import { isSubscriptionActive } from '@/lib/subscriptionStatus';
-import type { SubscriptionStatusInput, IsActiveOptions } from '@/lib/subscriptionStatus';
+} from '../billingResolver.js';
+import { isSubscriptionActive } from '../subscriptionStatus';
+import type { SubscriptionStatusInput, IsActiveOptions } from '../subscriptionStatus';
 
 beforeEach(async () => {
   await resetTestDatabase();

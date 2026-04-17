@@ -9,11 +9,11 @@ import { createDb } from '@corates/db/client';
 import { projectMembers, projects, member } from '@corates/db/schema';
 import { eq, and } from 'drizzle-orm';
 import { createDomainError, PROJECT_ERRORS } from '@corates/shared';
-import { syncMemberWithRetry } from '@/lib/syncWithRetry';
-import { notifyUser, NotificationTypes } from '@/commands/lib/notifications';
-import { checkCollaboratorQuota } from '@/lib/quotaTransaction';
-import type { Env } from '@/types';
-import type { ProjectRole } from '@/policies/lib/roles';
+import { syncMemberWithRetry } from '../../lib/syncWithRetry';
+import { notifyUser, NotificationTypes } from '../lib/notifications';
+import { checkCollaboratorQuota } from '../../lib/quotaTransaction';
+import type { Env } from '../../types';
+import type { ProjectRole } from '../../policies/lib/roles';
 
 interface AddMemberActor {
   id: string;

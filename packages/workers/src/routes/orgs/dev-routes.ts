@@ -12,11 +12,11 @@ import {
   requireProjectAccess,
   getProjectContext,
   getOrgContext,
-} from '@/middleware/requireOrg.js';
-import { getAuth } from '@/middleware/auth.js';
-import { getProjectDocStub } from '@/lib/project-doc-id.js';
+} from '../../middleware/requireOrg.js';
+import { getAuth } from '../../middleware/auth.js';
+import { getProjectDocStub } from '../../lib/project-doc-id.js';
 import type { Env } from '../../types';
-import { ErrorResponseSchema } from '@/schemas/common.js';
+import { ErrorResponseSchema } from '../../schemas/common.js';
 
 const base = new OpenAPIHono<{ Bindings: Env }>();
 

@@ -4,7 +4,7 @@
 
 import { describe, it, expect } from 'vitest';
 import { Hono } from 'hono';
-import { json } from '@/__tests__/helpers.js';
+import { json } from '../../__tests__/helpers.js';
 import { requireTrustedOrigin } from '../csrf.js';
 
 describe('requireTrustedOrigin middleware', () => {

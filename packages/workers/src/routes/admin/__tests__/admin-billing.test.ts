@@ -11,7 +11,7 @@ import {
   seedOrganization,
   seedSubscription,
   json,
-} from '@/__tests__/helpers.js';
+} from '../../../__tests__/helpers.js';
 import { createDb } from '@corates/db/client';
 import { subscription } from '@corates/db/schema';
 import { eq } from 'drizzle-orm';

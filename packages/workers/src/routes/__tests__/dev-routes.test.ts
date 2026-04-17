@@ -16,7 +16,7 @@ import {
   seedProject,
   seedProjectMember,
   json,
-} from '@/__tests__/helpers.js';
+} from '../../__tests__/helpers.js';
 
 // Mock postmark (required by transitive email imports)
 vi.mock('postmark', () => {
@@ -75,7 +75,7 @@ describe('I5: apply-template missing template param', () => {
 
   beforeAll(async () => {
     // Dynamic import after mocks are set up
-    const module = await import('@/index.js');
+    const module = await import('../../index.js');
     app = module.default;
   });
 

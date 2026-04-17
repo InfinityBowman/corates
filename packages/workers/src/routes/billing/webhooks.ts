@@ -29,8 +29,8 @@ import type { ContentfulStatusCode } from 'hono/utils/http-status';
 import { createDb } from '@corates/db/client';
 import { createDomainError, SYSTEM_ERRORS, AUTH_ERRORS, VALIDATION_ERRORS } from '@corates/shared';
 import type Stripe from 'stripe';
-import { createStripeClient, isStripeConfigured } from '@/lib/stripe.js';
-import { createLogger, sha256, truncateError } from '@/lib/observability/logger.js';
+import { createStripeClient, isStripeConfigured } from '../../lib/stripe.js';
+import { createLogger, sha256, truncateError } from '../../lib/observability/logger.js';
 import {
   insertLedgerEntry,
   updateLedgerWithVerifiedFields,

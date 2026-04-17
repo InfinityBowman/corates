@@ -12,7 +12,7 @@ import {
   seedOrganization,
   seedOrgMember,
   json,
-} from '@/__tests__/helpers.js';
+} from '../../__tests__/helpers.js';
 import { requireEntitlement } from '../requireEntitlement.js';
 import { requireOrgMembership } from '../requireOrg.js';
 import { requireAuth } from '../auth.js';
@@ -83,7 +83,7 @@ let mockResolveOrgAccess: Mock;
 
 beforeEach(async () => {
   await resetTestDatabase();
-  const billingResolver = await import('@/lib/billingResolver.js');
+  const billingResolver = await import('../../lib/billingResolver.js');
   mockResolveOrgAccess = billingResolver.resolveOrgAccess as Mock;
   mockResolveOrgAccess.mockClear();
 });

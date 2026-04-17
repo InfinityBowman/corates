@@ -8,8 +8,8 @@ import { createDb } from '@corates/db/client';
 import { projects } from '@corates/db/schema';
 import { eq } from 'drizzle-orm';
 import { createDomainError, SYSTEM_ERRORS } from '@corates/shared';
-import { syncProjectToDO } from '@/commands/lib/doSync';
-import type { Env } from '@/types';
+import { syncProjectToDO } from '../lib/doSync';
+import type { Env } from '../../types';
 
 interface UpdateProjectActor {
   id: string;

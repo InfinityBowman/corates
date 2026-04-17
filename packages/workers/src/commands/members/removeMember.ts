@@ -9,10 +9,10 @@ import { createDb } from '@corates/db/client';
 import { projectMembers, projects } from '@corates/db/schema';
 import { eq, and } from 'drizzle-orm';
 import { createDomainError, PROJECT_ERRORS } from '@corates/shared';
-import { syncMemberWithRetry } from '@/lib/syncWithRetry';
-import { notifyUser, NotificationTypes } from '@/commands/lib/notifications';
-import { getProjectMembership, requireSafeRemoval } from '@/policies';
-import type { Env } from '@/types';
+import { syncMemberWithRetry } from '../../lib/syncWithRetry';
+import { notifyUser, NotificationTypes } from '../lib/notifications';
+import { getProjectMembership, requireSafeRemoval } from '../../policies';
+import type { Env } from '../../types';
 
 interface RemoveMemberActor {
   id: string;

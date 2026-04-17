@@ -8,7 +8,7 @@
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { type Context } from 'hono';
 import { env, createExecutionContext, waitOnExecutionContext } from 'cloudflare:test';
-import { resetTestDatabase, clearProjectDOs, json } from '@/__tests__/helpers.js';
+import { resetTestDatabase, clearProjectDOs, json } from '../../__tests__/helpers.js';
 import {
   buildUser,
   buildOrg,
@@ -16,7 +16,7 @@ import {
   buildProject,
   buildProjectMember,
   resetCounter,
-} from '@/__tests__/factories';
+} from '../../__tests__/factories';
 
 // Mock postmark
 vi.mock('postmark', () => {
@@ -65,7 +65,7 @@ vi.mock('@/middleware/auth.js', () => {
 });
 
 beforeAll(async () => {
-  const indexModule = await import('@/index.js');
+  const indexModule = await import('../../index.js');
   app = indexModule.default;
 });
 

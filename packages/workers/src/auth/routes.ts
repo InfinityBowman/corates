@@ -10,8 +10,8 @@ import {
   getEmailVerificationFailurePage,
   getEmailVerificationErrorPage,
 } from './templates';
-import { authRateLimit, sessionRateLimit } from '@/middleware/rateLimit';
-import { createLogger, sha256, truncateError } from '@/lib/observability/logger';
+import { authRateLimit, sessionRateLimit } from '../middleware/rateLimit';
+import { createLogger, sha256, truncateError } from '../lib/observability/logger';
 import { createDb } from '@corates/db/client';
 import {
   insertLedgerEntry,

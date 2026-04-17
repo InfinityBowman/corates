@@ -17,14 +17,14 @@ import {
   mediaFiles,
 } from '@corates/db/schema';
 import { eq, desc, or, like, sql } from 'drizzle-orm';
-import { requireAuth, getAuth } from '@/middleware/auth';
-import { searchRateLimit } from '@/middleware/rateLimit';
+import { requireAuth, getAuth } from '../middleware/auth';
+import { searchRateLimit } from '../middleware/rateLimit';
 import { createDomainError, AUTH_ERRORS, USER_ERRORS, SYSTEM_ERRORS } from '@corates/shared';
-import { syncMemberToDO } from '@/lib/project-sync';
-import { getProjectDocStub } from '@/lib/project-doc-id';
-import { validationHook } from '@/lib/honoValidationHook';
+import { syncMemberToDO } from '../lib/project-sync';
+import { getProjectDocStub } from '../lib/project-doc-id';
+import { validationHook } from '../lib/honoValidationHook';
 import type { Env } from '../types';
-import { ErrorResponseSchema } from '@/schemas/common.js';
+import { ErrorResponseSchema } from '../schemas/common.js';
 
 const base = new OpenAPIHono<{ Bindings: Env }>({
   defaultHook: validationHook,

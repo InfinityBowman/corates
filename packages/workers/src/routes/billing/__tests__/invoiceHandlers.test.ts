@@ -5,7 +5,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { env } from 'cloudflare:test';
 import type Stripe from 'stripe';
-import { resetTestDatabase, seedUser, seedSubscription } from '@/__tests__/helpers.js';
+import { resetTestDatabase, seedUser, seedSubscription } from '../../../__tests__/helpers.js';
 import { createDb } from '@corates/db/client';
 import type { Database } from '@corates/db/client';
 import {

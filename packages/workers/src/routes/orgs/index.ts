@@ -4,20 +4,20 @@
  */
 
 import { OpenAPIHono, createRoute, z, $ } from '@hono/zod-openapi';
-import { runMiddleware } from '@/lib/runMiddleware.js';
+import { runMiddleware } from '../../lib/runMiddleware.js';
 import { createDb } from '@corates/db/client';
 import { projects } from '@corates/db/schema';
 import { eq, count } from 'drizzle-orm';
-import { requireAuth, getAuth } from '@/middleware/auth.js';
-import { requireOrgMembership } from '@/middleware/requireOrg.js';
-import { requireOrgWriteAccess } from '@/middleware/requireOrgWriteAccess.js';
+import { requireAuth, getAuth } from '../../middleware/auth.js';
+import { requireOrgMembership } from '../../middleware/requireOrg.js';
+import { requireOrgWriteAccess } from '../../middleware/requireOrgWriteAccess.js';
 import { createDomainError, isDomainError, AUTH_ERRORS, SYSTEM_ERRORS } from '@corates/shared';
-import { createAuth } from '@/auth/config.js';
+import { createAuth } from '../../auth/config.js';
 import { orgProjectRoutes } from './projects.js';
-import { requireOrgMemberRemoval } from '@/policies';
-import { validationHook } from '@/lib/honoValidationHook.js';
+import { requireOrgMemberRemoval } from '../../policies';
+import { validationHook } from '../../lib/honoValidationHook.js';
 import type { Env } from '../../types';
-import { ErrorResponseSchema } from '@/schemas/common.js';
+import { ErrorResponseSchema } from '../../schemas/common.js';
 
 // Type definitions for Better Auth organization plugin API methods
 // These are provided by the organization plugin but TypeScript can't infer them

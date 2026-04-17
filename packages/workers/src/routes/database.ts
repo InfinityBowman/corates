@@ -8,7 +8,7 @@ import { OpenAPIHono, createRoute, z, $ } from '@hono/zod-openapi';
 import { createDb } from '@corates/db/client';
 import { user } from '@corates/db/schema';
 import { desc } from 'drizzle-orm';
-import { requireAuth } from '@/middleware/auth.js';
+import { requireAuth } from '../middleware/auth.js';
 import {
   createDomainError,
   createValidationError,
@@ -16,7 +16,7 @@ import {
   SYSTEM_ERRORS,
 } from '@corates/shared';
 import type { Env } from '../types';
-import { ErrorResponseSchema } from '@/schemas/common.js';
+import { ErrorResponseSchema } from '../schemas/common.js';
 
 const base = new OpenAPIHono<{ Bindings: Env }>();
 

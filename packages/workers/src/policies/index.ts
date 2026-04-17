@@ -5,7 +5,7 @@
  *
  * Usage in routes:
  *
- *   import { requireProjectEdit, requireMemberRemoval } from '@/policies';
+ *   import { requireProjectEdit, requireMemberRemoval } from './';
  *
  *   // Assertion style (throws on failure)
  *   await requireProjectEdit(db, user.id, projectId);

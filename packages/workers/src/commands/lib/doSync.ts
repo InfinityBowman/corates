@@ -5,11 +5,11 @@
  * Re-exports from project-sync.ts and adds additional helpers.
  */
 
-import { getProjectDocStub } from '@/lib/project-doc-id';
-import type { Env } from '@/types';
+import { getProjectDocStub } from '../../lib/project-doc-id';
+import type { Env } from '../../types';
 
 // Re-export existing sync functions
-export { syncProjectToDO } from '@/lib/project-sync';
+export { syncProjectToDO } from '../../lib/project-sync';
 
 /**
  * Disconnect all connected users from a ProjectDoc Durable Object

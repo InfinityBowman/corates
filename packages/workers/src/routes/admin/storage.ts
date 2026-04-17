@@ -8,9 +8,9 @@ import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
 import { createDb } from '@corates/db/client';
 import { mediaFiles } from '@corates/db/schema';
 import { createDomainError, SYSTEM_ERRORS } from '@corates/shared';
-import { validationHook } from '@/lib/honoValidationHook.js';
+import { validationHook } from '../../lib/honoValidationHook.js';
 import type { Env } from '../../types';
-import { ErrorResponseSchema } from '@/schemas/common.js';
+import { ErrorResponseSchema } from '../../schemas/common.js';
 
 const _storageBase = new OpenAPIHono<{ Bindings: Env }>({
   defaultHook: validationHook,

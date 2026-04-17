@@ -12,7 +12,7 @@ import {
   seedSubscription,
   seedStripeEventLedger,
   json,
-} from '@/__tests__/helpers.js';
+} from '../../../__tests__/helpers.js';
 import Stripe from 'stripe';
 
 vi.mock('@/middleware/requireAdmin.js', () => {

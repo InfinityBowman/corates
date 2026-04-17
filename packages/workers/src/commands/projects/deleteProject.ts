@@ -8,9 +8,9 @@ import { createDb } from '@corates/db/client';
 import { projects, projectMembers } from '@corates/db/schema';
 import { eq } from 'drizzle-orm';
 import { createDomainError, SYSTEM_ERRORS } from '@corates/shared';
-import { disconnectAllFromProject, cleanupProjectStorage } from '@/commands/lib/doSync';
-import { notifyUsers, NotificationTypes } from '@/commands/lib/notifications';
-import type { Env } from '@/types';
+import { disconnectAllFromProject, cleanupProjectStorage } from '../lib/doSync';
+import { notifyUsers, NotificationTypes } from '../lib/notifications';
+import type { Env } from '../../types';
 
 interface DeleteProjectActor {
   id: string;

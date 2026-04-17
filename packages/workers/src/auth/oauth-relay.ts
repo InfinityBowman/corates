@@ -84,7 +84,8 @@ function stripTrailingSlash(url: string | undefined): string {
   return url.replace(/\/+$/, '');
 }
 
-export const oAuthRelay = (opts: OAuthRelayOptions) => {
+// Explicit `any` return type — see createAuth comment.
+export const oAuthRelay = (opts: OAuthRelayOptions): any => {
   const maxAge = opts.maxAge ?? 120;
   const productionOrigin = getOrigin(opts.productionURL);
 

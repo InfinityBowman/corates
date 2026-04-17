@@ -5,7 +5,7 @@
 import { beforeAll, beforeEach, describe, expect, it, vi, type Mock } from 'vitest';
 import { Hono } from 'hono';
 import { env, createExecutionContext, waitOnExecutionContext } from 'cloudflare:test';
-import { json } from '@/__tests__/helpers.js';
+import { json } from '../../__tests__/helpers.js';
 
 // Mock Postmark (still needed since email-queue module may import it transitively)
 vi.mock('postmark', () => {

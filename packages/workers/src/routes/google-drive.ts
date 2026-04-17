@@ -5,7 +5,7 @@
 
 import { OpenAPIHono, createRoute, z, $ } from '@hono/zod-openapi';
 
-import { requireAuth, getAuth } from '@/middleware/auth.js';
+import { requireAuth, getAuth } from '../middleware/auth.js';
 import { createDb } from '@corates/db/client';
 import { account, projects, mediaFiles } from '@corates/db/schema';
 import { eq, and } from 'drizzle-orm';
@@ -19,10 +19,10 @@ import {
   isPdfSignature,
   PDF_MAGIC_BYTES,
 } from '@corates/shared';
-import { validationHook } from '@/lib/honoValidationHook.js';
-import { requireProjectEdit } from '@/policies/projects.js';
+import { validationHook } from '../lib/honoValidationHook.js';
+import { requireProjectEdit } from '../policies/projects.js';
 import type { Env } from '../types';
-import { ErrorResponseSchema } from '@/schemas/common.js';
+import { ErrorResponseSchema } from '../schemas/common.js';
 
 const base = new OpenAPIHono<{ Bindings: Env }>({
   defaultHook: validationHook,

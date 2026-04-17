@@ -393,6 +393,10 @@ const isTest = typeof import.meta !== 'undefined' && import.meta.env?.MODE === '
 
 export type AppType = typeof app;
 
+// Named exports for cross-package consumption (packages/web mounts this worker
+// during the Phase 2 "build alongside" window and in the consolidated state).
+export { app, workerHandler };
+
 export default isTest ? workerHandler : (
   Sentry.withSentry(
     (env: Env) => ({

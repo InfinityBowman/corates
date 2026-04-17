@@ -21,6 +21,7 @@
   "dependencies": {
     "@ark-ui/react": "^5.35.0",
     "@corates/shared": "workspace:*",
+    "@corates/workers": "workspace:*",
     "@embedpdf/core": "^2.14.0",
     "@embedpdf/engines": "^2.14.0",
     "@embedpdf/models": "^2.14.0",
@@ -79,6 +80,7 @@
   },
   "devDependencies": {
     "@cloudflare/vite-plugin": "^1.31.1",
+    "@cloudflare/workers-types": "^4.20260405.1",
     "@playwright/test": "^1.59.1",
     "@tailwindcss/vite": "^4.2.2",
     "@tanstack/eslint-config": "^0.4.0",

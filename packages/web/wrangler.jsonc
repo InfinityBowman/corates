@@ -3,12 +3,62 @@
   "name": "corates",
   "compatibility_date": "2025-12-01",
   "compatibility_flags": ["nodejs_compat"],
-  "main": "./server-entry.ts",
+  "main": "./src/server.ts",
   "routes": [{ "pattern": "corates.org/*", "zone_name": "corates.org" }],
   "assets": {
     "binding": "ASSETS",
     "html_handling": "drop-trailing-slash"
   },
+
+  // DO bindings reference classes re-exported from src/server.ts. Migration tags
+  // MUST match packages/workers/wrangler.jsonc verbatim for the Phase 3 cutover.
+  "durable_objects": {
+    "bindings": [
+      { "name": "USER_SESSION", "class_name": "UserSession" },
+      { "name": "PROJECT_DOC", "class_name": "ProjectDoc" }
+    ]
+  },
+
+  "migrations": [
+    { "tag": "v1", "new_sqlite_classes": ["UserSession", "ProjectDoc"] },
+    { "tag": "v2", "new_sqlite_classes": ["EmailQueue"] },
+    { "tag": "v3", "deleted_classes": ["EmailQueue"] }
+  ],
+
+  // Shared with packages/workers during the Phase 2 "build alongside" window.
+  // DO NOT run migrations from this package — packages/workers still owns schema.
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "corates-db",
+      "database_id": "7ac6d425-2a7c-4087-9f42-0cd1a2ab367b"
+    }
+  ],
+
+  "r2_buckets": [
+    {
+      "binding": "PDF_BUCKET",
+      "bucket_name": "corates-pdfs"
+    }
+  ],
+
+  "queues": {
+    "producers": [
+      {
+        "queue": "corates-emails",
+        "binding": "EMAIL_QUEUE"
+      }
+    ],
+    "consumers": [
+      {
+        "queue": "corates-emails",
+        "max_batch_size": 10,
+        "max_retries": 3,
+        "dead_letter_queue": "corates-emails-dlq"
+      }
+    ]
+  },
+
   "observability": {
     "logs": {
       "enabled": true,
@@ -17,8 +67,78 @@
       "persist": true
     }
   },
+
   "vars": {
+    "ENVIRONMENT": "development",
+    "DEV_MODE": true,
     "VITE_PUBLIC_APP_URL": "https://corates.org",
-    "VITE_API_URL": "https://corates.org"
+    "VITE_API_URL": "https://corates.org",
+    "APP_URL": "http://localhost:3010",
+    "AUTH_BASE_URL": "http://localhost:8787",
+    "SENTRY_DSN": "https://3ddf61abb06680bffc1ebc7f540f05de@o4510738063818752.ingest.us.sentry.io/4510738126274560"
+  },
+
+  "env": {
+    "production": {
+      "name": "corates-prod",
+      "workers_dev": false,
+      "preview_urls": false,
+      // No production routes yet — Phase 3 cutover assigns corates.org/*.
+      "durable_objects": {
+        "bindings": [
+          { "name": "USER_SESSION", "class_name": "UserSession" },
+          { "name": "PROJECT_DOC", "class_name": "ProjectDoc" }
+        ]
+      },
+      "migrations": [
+        { "tag": "v1", "new_sqlite_classes": ["UserSession", "ProjectDoc"] },
+        { "tag": "v2", "new_sqlite_classes": ["EmailQueue"] },
+        { "tag": "v3", "deleted_classes": ["EmailQueue"] }
+      ],
+      "d1_databases": [
+        {
+          "binding": "DB",
+          "database_name": "corates-db-prod",
+          "database_id": "bd15994e-1308-41b3-a91c-e30ab6c947da"
+        }
+      ],
+      "r2_buckets": [
+        {
+          "binding": "PDF_BUCKET",
+          "bucket_name": "corates-pdfs-prod"
+        }
+      ],
+      "queues": {
+        "producers": [
+          {
+            "queue": "corates-emails-prod",
+            "binding": "EMAIL_QUEUE"
+          }
+        ],
+        "consumers": [
+          {
+            "queue": "corates-emails-prod",
+            "max_batch_size": 10,
+            "max_retries": 3,
+            "dead_letter_queue": "corates-emails-prod-dlq"
+          }
+        ]
+      },
+      "observability": {
+        "logs": {
+          "enabled": true,
+          "head_sampling_rate": 1,
+          "invocation_logs": true,
+          "persist": true
+        }
+      },
+      "vars": {
+        "ENVIRONMENT": "production",
+        "VITE_PUBLIC_APP_URL": "https://corates.org",
+        "VITE_API_URL": "https://corates.org",
+        "APP_URL": "https://corates.org",
+        "AUTH_BASE_URL": "https://corates.org"
+      }
+    }
   }
 }

@@ -6,14 +6,14 @@
 import { beforeAll, beforeEach, describe, expect, it, vi, type Mock } from 'vitest';
 import { Hono, type Context } from 'hono';
 import { env, createExecutionContext, waitOnExecutionContext } from 'cloudflare:test';
-import { resetTestDatabase, clearProjectDOs, json } from '@/__tests__/helpers.js';
+import { resetTestDatabase, clearProjectDOs, json } from '../../__tests__/helpers.js';
 import {
   buildProject,
   buildProjectWithMembers,
   buildProjectInvitation,
   buildUser,
   resetCounter,
-} from '@/__tests__/factories';
+} from '../../__tests__/factories';
 import { createDb } from '@corates/db/client';
 import { projectInvitations, projectMembers, member } from '@corates/db/schema';
 import { eq, and } from 'drizzle-orm';
@@ -93,10 +93,10 @@ beforeEach(async () => {
   vi.clearAllMocks();
 
   // Get the mocked functions
-  const billingResolver = await import('@/lib/billingResolver.js');
+  const billingResolver = await import('../../lib/billingResolver.js');
   mockResolveOrgAccess = billingResolver.resolveOrgAccess as unknown as Mock;
 
-  const projectSync = await import('@/lib/project-sync.js');
+  const projectSync = await import('../../lib/project-sync.js');
   mockSyncMemberToDO = projectSync.syncMemberToDO as unknown as Mock;
 
   // Setup default billing resolver mock (unlimited quota)

@@ -11,7 +11,7 @@ import {
   seedOrganization,
   seedOrgMember,
   json,
-} from '@/__tests__/helpers.js';
+} from '../../../__tests__/helpers.js';
 import { createDb } from '@corates/db/client';
 import { createGrant } from '@corates/db/org-access-grants';
 import { session } from '@corates/db/schema';

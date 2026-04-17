@@ -19,7 +19,7 @@ import {
   verification,
   account,
 } from '@corates/db/schema';
-import { createAuth } from '@/auth/config.js';
+import { createAuth } from '../auth/config.js';
 import type { Env } from '../types';
 
 const testSeedRoutes = new Hono<{ Bindings: Env }>();

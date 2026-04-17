@@ -9,11 +9,11 @@ import { createDb } from '@corates/db/client';
 import { organization, member, projects } from '@corates/db/schema';
 import { eq, count, desc, like, or, sql } from 'drizzle-orm';
 import { createDomainError, SYSTEM_ERRORS, AUTH_ERRORS } from '@corates/shared';
-import { resolveOrgAccess } from '@/lib/billingResolver.js';
+import { resolveOrgAccess } from '../../lib/billingResolver.js';
 import { getPlan, getGrantPlan, type GrantType } from '@corates/shared/plans';
-import { validationHook } from '@/lib/honoValidationHook.js';
+import { validationHook } from '../../lib/honoValidationHook.js';
 import type { Env } from '../../types';
-import { ErrorResponseSchema } from '@/schemas/common.js';
+import { ErrorResponseSchema } from '../../schemas/common.js';
 
 const base = new OpenAPIHono<{ Bindings: Env }>({
   defaultHook: validationHook,
