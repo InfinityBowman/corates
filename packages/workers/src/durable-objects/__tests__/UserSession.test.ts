@@ -7,6 +7,9 @@ import { describe, it, expect, beforeEach, vi, type Mock } from 'vitest';
 import { env, runInDurableObject } from 'cloudflare:test';
 import { verifyAuth } from '../../auth/config.js';
 import type { UserSession } from '../UserSession.js';
+import { STATIC_ORIGINS } from '../../config/origins';
+
+const TRUSTED_ORIGIN = STATIC_ORIGINS[0];
 
 // Mock auth
 vi.mock('@/auth/config.js', () => {
@@ -48,7 +51,7 @@ describe('UserSession Durable Object', () => {
         method: 'GET',
         headers: {
           Cookie: 'better-auth.session_token=test-token',
-          Origin: 'http://localhost:5173',
+          Origin: TRUSTED_ORIGIN,
         },
       });
 
@@ -65,7 +68,7 @@ describe('UserSession Durable Object', () => {
         method: 'OPTIONS',
         headers: {
           Cookie: 'better-auth.session_token=test-token',
-          Origin: 'http://localhost:5173',
+          Origin: TRUSTED_ORIGIN,
         },
       });
 

@@ -6,6 +6,9 @@ import { describe, it, expect } from 'vitest';
 import { Hono } from 'hono';
 import { json } from '../../__tests__/helpers.js';
 import { requireTrustedOrigin } from '../csrf.js';
+import { STATIC_ORIGINS } from '../../config/origins';
+
+const TRUSTED_ORIGIN = STATIC_ORIGINS[0];
 
 describe('requireTrustedOrigin middleware', () => {
   it('should allow GET requests without origin check', async () => {
@@ -70,7 +73,7 @@ describe('requireTrustedOrigin middleware', () => {
       method: 'POST',
       headers: {
         'content-type': 'application/json',
-        origin: 'http://localhost:3010',
+        origin: TRUSTED_ORIGIN,
       },
     });
 
@@ -86,7 +89,7 @@ describe('requireTrustedOrigin middleware', () => {
       method: 'POST',
       headers: {
         'content-type': 'application/json',
-        referer: 'http://localhost:3010/some-page',
+        referer: `${TRUSTED_ORIGIN}/some-page`,
       },
     });
 

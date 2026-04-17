@@ -228,7 +228,45 @@ Env bindings: `DB`, `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET_PURCHASES`, `ENV
 
 21. Delete `packages/workers/`.
 22. Simplify `turbo.json` — one less `dev` task, simpler DAG.
-23. Optionally: start migrating Hono routes to native TanStack Start server handlers, a few at a time. Not required for the consolidation to be "done."
+23. Optionally: start migrating Hono routes to native TanStack Start server handlers, a few at a time. Not required for the consolidation to be "done." See the recommended order below.
+
+## Hono → TanStack Start route migration order
+
+Already ported (on `migrate-backend`): `healthz`, `/api/users/me/projects`.
+
+Migrate in tiers of increasing complexity so patterns harden on low-risk routes first. The pattern established by `/api/users/me/projects`: `createFileRoute` from `@tanstack/react-router`, `server.handlers` per method, `env` from `cloudflare:workers`, session via `getSession(request, env)` from `@corates/workers/auth`, db via `createDb(env.DB)` from `@corates/db`, errors via `createDomainError` + `Response.json`.
+
+### Tier 1 — pattern-solidifying (low risk, mostly solo auth+db)
+
+1. `/api/contact` — single POST, external API call, no membership checks
+2. Remaining `/api/users/*` (non-`me/projects`)
+3. `/api/accounts/merge`
+4. `/api/db` — diagnostics, read-only
+5. `/api/test` (test-seed) — dev-only, safe to break
+
+### Tier 2 — CRUD with membership/auth layers
+
+6. `/api/users/avatar` — R2 upload, contained
+7. `/api/invitations`
+8. `/api/orgs/*` — biggest chunk; port sub-routers one at a time (members, invitations, projects, pdfs)
+9. `/api/google-drive` — external API wrapper
+10. `/api/pdf-proxy` — self-contained, SSRF logic lifts cleanly
+
+### Tier 3 — defer until patterns are mature
+
+11. `/api/admin/*` — role-check middleware + 7 sub-routers; port the middleware helper first
+12. `/api/billing/*` (non-webhook) — Stripe client setup; purchase webhook already extracted to `corates-stripe-purchases`
+
+### Leave for last (or never)
+
+- `/api/auth/*` — better-auth owns its handler; a catch-all `routes/api/auth/$.ts` forwarding to `auth.handler(request)` is simpler than re-expressing it.
+- DO routes (`/api/project-doc/*`, `/api/sessions/*`) — WS path already bypasses TanStack Start in `src/server.ts`; HTTP paths are thin DO stubs, port whenever.
+
+### Rationale
+
+Tier 1 establishes the session/db/error-shape pattern on endpoints where mistakes are cheap. Tier 2 forces reusable helpers for membership/role checks that Tier 3 then consumes. Leaving better-auth behind a catch-all avoids fighting its internal router.
+
+Tradeoff: to delete the Hono catch-all sooner, migrate whole path prefixes at a time (all of `/api/orgs` before moving on) so `honoApp`'s mounted routers shrink in parallel. To minimize per-PR risk, migrate leaf-by-leaf regardless of prefix.
 
 ## Hazards & mitigations
 

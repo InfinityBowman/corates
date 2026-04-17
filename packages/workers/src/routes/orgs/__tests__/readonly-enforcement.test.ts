@@ -15,6 +15,9 @@ import {
 import { createDb } from '@corates/db/client';
 import { createGrant } from '@corates/db/org-access-grants';
 import { session } from '@corates/db/schema';
+import { STATIC_ORIGINS } from '../../../config/origins';
+
+const TRUSTED_ORIGIN = STATIC_ORIGINS[0];
 
 // Mock auth middleware
 vi.mock('@/middleware/auth.js', () => {
@@ -110,7 +113,7 @@ describe('Read-only access enforcement', () => {
 
     const testEnv = {
       ...env,
-      APP_URL: 'http://localhost:5173',
+      APP_URL: TRUSTED_ORIGIN,
     };
 
     const ctx = createExecutionContext();
@@ -141,7 +144,7 @@ describe('Read-only access enforcement', () => {
 
     const testEnv = {
       ...env,
-      APP_URL: 'http://localhost:5173',
+      APP_URL: TRUSTED_ORIGIN,
     };
 
     const ctx = createExecutionContext();

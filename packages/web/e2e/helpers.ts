@@ -4,8 +4,9 @@
  */
 
 import type { BrowserContext, Page } from '@playwright/test';
+import { BASE_URL } from './constants';
 
-const API_BASE = 'http://localhost:3010';
+const API_BASE = BASE_URL;
 
 export interface SeededUser {
   id: string;

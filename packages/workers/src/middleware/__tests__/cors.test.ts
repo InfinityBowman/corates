@@ -5,6 +5,9 @@
 import { describe, it, expect } from 'vitest';
 import { Hono } from 'hono';
 import { createCorsMiddleware } from '../cors.js';
+import { STATIC_ORIGINS } from '../../config/origins';
+
+const TRUSTED_ORIGIN = STATIC_ORIGINS[0];
 
 describe('CORS middleware', () => {
   it('should allow requests from static origins', async () => {
@@ -14,12 +17,12 @@ describe('CORS middleware', () => {
 
     const res = await app.request('/test', {
       headers: {
-        origin: 'http://localhost:3010',
+        origin: TRUSTED_ORIGIN,
       },
     });
 
     expect(res.status).toBe(200);
-    expect(res.headers.get('Access-Control-Allow-Origin')).toBe('http://localhost:3010');
+    expect(res.headers.get('Access-Control-Allow-Origin')).toBe(TRUSTED_ORIGIN);
     expect(res.headers.get('Access-Control-Allow-Credentials')).toBe('true');
   });
 
@@ -31,7 +34,7 @@ describe('CORS middleware', () => {
     const res = await app.request('/test', {
       method: 'OPTIONS',
       headers: {
-        origin: 'http://localhost:3010',
+        origin: TRUSTED_ORIGIN,
         'access-control-request-method': 'POST',
       },
     });
@@ -54,7 +57,7 @@ describe('CORS middleware', () => {
     });
 
     expect(res.status).toBe(200);
-    expect(res.headers.get('Access-Control-Allow-Origin')).toBe('http://localhost:3010');
+    expect(res.headers.get('Access-Control-Allow-Origin')).toBe(TRUSTED_ORIGIN);
   });
 
   it('should include credentials header in preflight requests', async () => {
@@ -65,7 +68,7 @@ describe('CORS middleware', () => {
     const res = await app.request('/test', {
       method: 'OPTIONS',
       headers: {
-        origin: 'http://localhost:3010',
+        origin: TRUSTED_ORIGIN,
         'access-control-request-method': 'POST',
       },
     });
@@ -81,7 +84,7 @@ describe('CORS middleware', () => {
     const res = await app.request('/test', {
       method: 'OPTIONS',
       headers: {
-        origin: 'http://localhost:3010',
+        origin: TRUSTED_ORIGIN,
         'access-control-request-headers': 'Content-Type, Authorization',
       },
     });

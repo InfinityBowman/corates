@@ -14,6 +14,9 @@ import {
 } from '../../../__tests__/helpers.js';
 import { createDb } from '@corates/db/client';
 import { subscription } from '@corates/db/schema';
+import { STATIC_ORIGINS } from '../../../config/origins';
+
+const TRUSTED_ORIGIN = STATIC_ORIGINS[0];
 
 const mockAuthUpgradeSubscription = vi.fn(async () => ({
   url: 'https://checkout.stripe.com/test',
@@ -125,7 +128,7 @@ async function fetchBilling(path: string, init: FetchInit = {}): Promise<Respons
   const testEnv = {
     ...env,
     STRIPE_SECRET_KEY: 'sk_test_123',
-    APP_URL: 'http://localhost:5173',
+    APP_URL: TRUSTED_ORIGIN,
   };
 
   const ctx = createExecutionContext();
@@ -494,7 +497,7 @@ describe('Billing Routes - POST /api/billing/single-project/checkout', () => {
       ...env,
       STRIPE_SECRET_KEY: 'sk_test_123',
       STRIPE_PRICE_ID_SINGLE_PROJECT: 'price_single_project_test',
-      APP_URL: 'http://localhost:5173',
+      APP_URL: TRUSTED_ORIGIN,
     };
 
     const ctx = createExecutionContext();
@@ -565,7 +568,7 @@ describe('Billing Routes - POST /api/billing/single-project/checkout', () => {
       ...env,
       STRIPE_SECRET_KEY: 'sk_test_123',
       STRIPE_PRICE_ID_SINGLE_PROJECT: 'price_single_project_test',
-      APP_URL: 'http://localhost:5173',
+      APP_URL: TRUSTED_ORIGIN,
     };
 
     const ctx = createExecutionContext();

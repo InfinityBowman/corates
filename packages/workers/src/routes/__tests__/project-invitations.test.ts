@@ -17,6 +17,9 @@ import {
 import { createDb } from '@corates/db/client';
 import { projectInvitations, projectMembers, member } from '@corates/db/schema';
 import { eq, and } from 'drizzle-orm';
+import { STATIC_ORIGINS } from '../../config/origins';
+
+const TRUSTED_ORIGIN = STATIC_ORIGINS[0];
 
 // Mock postmark
 vi.mock('postmark', () => {
@@ -126,8 +129,8 @@ interface FetchInit extends RequestInit {
 async function fetchInvitations(orgId: string, projectId: string, path = '', init: FetchInit = {}) {
   const testEnv = {
     ...env,
-    APP_URL: 'http://localhost:5173',
-    AUTH_BASE_URL: 'http://localhost:8787',
+    APP_URL: TRUSTED_ORIGIN,
+    AUTH_BASE_URL: TRUSTED_ORIGIN,
     AUTH_SECRET: 'test-secret',
     SECRET: 'test-secret',
     EMAIL_QUEUE: {
@@ -163,8 +166,8 @@ async function fetchInvitations(orgId: string, projectId: string, path = '', ini
 async function fetchAcceptInvitation(init: FetchInit = {}) {
   const testEnv = {
     ...env,
-    APP_URL: 'http://localhost:5173',
-    AUTH_BASE_URL: 'http://localhost:8787',
+    APP_URL: TRUSTED_ORIGIN,
+    AUTH_BASE_URL: TRUSTED_ORIGIN,
     AUTH_SECRET: 'test-secret',
     SECRET: 'test-secret',
     EMAIL_QUEUE: {

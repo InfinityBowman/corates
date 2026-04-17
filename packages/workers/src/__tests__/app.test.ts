@@ -5,6 +5,9 @@
 
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { resetTestDatabase, json, fetchApp } from './helpers.js';
+import { STATIC_ORIGINS } from '../config/origins';
+
+const TRUSTED_ORIGIN = STATIC_ORIGINS[0];
 
 // Mock postmark
 vi.mock('postmark', () => {
@@ -42,11 +45,11 @@ describe('Main App - Middleware Chain', () => {
   it('should apply CORS middleware', async () => {
     const res = await fetchApp(app, '/health', {
       headers: {
-        origin: 'http://localhost:5173',
+        origin: TRUSTED_ORIGIN,
       },
     });
 
-    expect(res.headers.get('Access-Control-Allow-Origin')).toBe('http://localhost:5173');
+    expect(res.headers.get('Access-Control-Allow-Origin')).toBe(TRUSTED_ORIGIN);
     expect(res.headers.get('Access-Control-Allow-Credentials')).toBe('true');
   });
 
@@ -63,7 +66,7 @@ describe('Main App - Middleware Chain', () => {
     const res = await fetchApp(app, '/health', {
       method: 'OPTIONS',
       headers: {
-        origin: 'http://localhost:5173',
+        origin: TRUSTED_ORIGIN,
         'access-control-request-method': 'POST',
       },
     });

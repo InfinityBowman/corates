@@ -31,6 +31,9 @@ import {
   seedProjectMember,
   seedSession,
 } from './helpers.js';
+import { STATIC_ORIGINS } from '../config/origins';
+
+const TRUSTED_ORIGIN = STATIC_ORIGINS[0];
 
 // Mock admin auth middleware so we can focus on admin route behavior.
 // We still test CSRF/trusted-origin behavior using the real middleware.
@@ -320,7 +323,7 @@ describe('Admin API routes', () => {
       method: 'POST',
       headers: {
         'content-type': 'application/json',
-        origin: 'http://localhost:5173',
+        origin: TRUSTED_ORIGIN,
       },
       body: JSON.stringify({ reason: 'Abuse' }),
     });
@@ -355,7 +358,7 @@ describe('Admin API routes', () => {
       method: 'POST',
       headers: {
         'content-type': 'application/json',
-        origin: 'http://localhost:5173',
+        origin: TRUSTED_ORIGIN,
         'x-test-admin-id': 'self',
       },
       body: JSON.stringify({ reason: 'Nope' }),
@@ -421,14 +424,14 @@ describe('Admin API routes', () => {
     // Self-delete blocked
     const selfDelete = await fetchApp('/api/admin/users/admin-user', {
       method: 'DELETE',
-      headers: { origin: 'http://localhost:5173' },
+      headers: { origin: TRUSTED_ORIGIN },
     });
     expect(selfDelete.status).toBe(400);
 
     // Delete target
     const del = await fetchApp('/api/admin/users/u1', {
       method: 'DELETE',
-      headers: { origin: 'http://localhost:5173' },
+      headers: { origin: TRUSTED_ORIGIN },
     });
     expect(del.status).toBe(200);
     const delBody = await json(del);
@@ -498,7 +501,7 @@ describe('Admin API routes', () => {
 
     const del = await fetchApp('/api/admin/users/u1', {
       method: 'DELETE',
-      headers: { origin: 'http://localhost:5173' },
+      headers: { origin: TRUSTED_ORIGIN },
     });
     expect(del.status).toBe(200);
 

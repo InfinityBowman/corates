@@ -14,6 +14,9 @@ import {
   seedMediaFile,
   json,
 } from '../../../__tests__/helpers.js';
+import { STATIC_ORIGINS } from '../../../config/origins';
+
+const TRUSTED_ORIGIN = STATIC_ORIGINS[0];
 
 vi.mock('@/middleware/requireAdmin.js', () => {
   return {
@@ -51,7 +54,7 @@ async function fetchApp(
   const req = new Request(`http://localhost${path}`, {
     ...init,
     headers: {
-      origin: 'http://localhost:5173',
+      origin: TRUSTED_ORIGIN,
       ...init.headers,
     },
   });
