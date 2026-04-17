@@ -10,8 +10,7 @@
  * packages/workers/src/durable-objects/__tests__/ProjectDoc.persistence.test.ts.
  *
  * Prerequisites:
- *   pnpm dev:workers  (localhost:8787, DEV_MODE=true)
- *   pnpm dev          (localhost:3010)
+ *   pnpm --filter web dev  (localhost:3010, DEV_MODE=true)
  *
  * See: packages/docs/audits/yjs-persistence-redesign.md
  */

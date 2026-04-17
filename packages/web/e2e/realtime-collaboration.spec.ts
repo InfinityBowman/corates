@@ -17,8 +17,7 @@
  *   4. Verify text editing in the Final Note syncs via Y.Text
  *
  * Prerequisites:
- *   pnpm dev:workers  (localhost:8787, DEV_MODE=true)
- *   pnpm dev          (localhost:3010)
+ *   pnpm --filter web dev  (localhost:3010, DEV_MODE=true)
  */
 
 import { test, expect, type Page } from '@playwright/test';

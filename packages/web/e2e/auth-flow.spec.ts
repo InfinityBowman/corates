@@ -5,8 +5,7 @@
  * magic link, password reset, profile onboarding, and sign out.
  *
  * Requires:
- *   - Backend workers running: pnpm dev:workers (DEV_MODE=true)
- *   - Frontend dev server running: pnpm dev:front
+ *   - Dev server running: pnpm --filter web dev (localhost:3010, DEV_MODE=true)
  */
 
 import { test, expect } from '@playwright/test';

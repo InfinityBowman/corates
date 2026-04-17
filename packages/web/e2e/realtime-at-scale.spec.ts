@@ -9,8 +9,7 @@
  *   - Text editing sync latency between two users
  *
  * Prerequisites:
- *   pnpm dev:workers  (localhost:8787, DEV_MODE=true)
- *   pnpm dev          (localhost:3010)
+ *   pnpm --filter web dev  (localhost:3010, DEV_MODE=true)
  */
 
 import { test, expect } from '@playwright/test';
