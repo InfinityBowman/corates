@@ -4,7 +4,10 @@ import { buildUser, resetCounter } from '@/__tests__/server/factories';
 import { handleGet, handlePost } from '../users';
 import { handler as migrateHandler } from '../migrate';
 
-let currentUser: { id: string; email: string } | null = { id: 'user-1', email: 'user1@example.com' };
+let currentUser: { id: string; email: string } | null = {
+  id: 'user-1',
+  email: 'user1@example.com',
+};
 
 vi.mock('@corates/workers/auth', () => ({
   getSession: async () =>
