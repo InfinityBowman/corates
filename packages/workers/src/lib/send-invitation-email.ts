@@ -50,7 +50,7 @@ export async function sendInvitationEmail(
   const { magicLink } = await import('better-auth/plugins');
   const { drizzleAdapter } = await import('better-auth/adapters/drizzle');
   const { drizzle } = await import('drizzle-orm/d1');
-  const schema = await import('@/db/schema.js');
+  const schema = await import('@corates/db/schema');
   const { MAGIC_LINK_EXPIRY_MINUTES } = await import('@/auth/emailTemplates.js');
 
   const authSecret = env.AUTH_SECRET || (envRecord.SECRET as string | undefined);

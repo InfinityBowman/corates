@@ -5,7 +5,7 @@
 
 import { OpenAPIHono, createRoute, z, $ } from '@hono/zod-openapi';
 
-import { createDb } from '@/db/client';
+import { createDb } from '@corates/db/client';
 import {
   projects,
   projectMembers,
@@ -15,7 +15,7 @@ import {
   verification,
   twoFactor,
   mediaFiles,
-} from '@/db/schema';
+} from '@corates/db/schema';
 import { eq, desc, or, like, sql } from 'drizzle-orm';
 import { requireAuth, getAuth } from '@/middleware/auth';
 import { searchRateLimit } from '@/middleware/rateLimit';

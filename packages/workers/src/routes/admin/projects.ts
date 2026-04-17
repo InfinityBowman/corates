@@ -5,7 +5,7 @@
 
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
 
-import { createDb } from '@/db/client.js';
+import { createDb } from '@corates/db/client';
 import {
   projects,
   projectMembers,
@@ -13,7 +13,7 @@ import {
   mediaFiles,
   organization,
   user,
-} from '@/db/schema.js';
+} from '@corates/db/schema';
 import { eq, count, desc, like, sql, and } from 'drizzle-orm';
 import { createDomainError, SYSTEM_ERRORS, PROJECT_ERRORS } from '@corates/shared';
 import { validationHook } from '@/lib/honoValidationHook.js';

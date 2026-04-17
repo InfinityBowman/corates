@@ -5,8 +5,8 @@
 
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
 
-import { createDb } from '@/db/client.js';
-import { mediaFiles } from '@/db/schema.js';
+import { createDb } from '@corates/db/client';
+import { mediaFiles } from '@corates/db/schema';
 import { createDomainError, SYSTEM_ERRORS } from '@corates/shared';
 import { validationHook } from '@/lib/honoValidationHook.js';
 import type { Env } from '../../types';

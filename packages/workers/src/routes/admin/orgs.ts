@@ -5,8 +5,8 @@
 
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
 
-import { createDb } from '@/db/client.js';
-import { organization, member, projects } from '@/db/schema.js';
+import { createDb } from '@corates/db/client';
+import { organization, member, projects } from '@corates/db/schema';
 import { eq, count, desc, like, or, sql } from 'drizzle-orm';
 import { createDomainError, SYSTEM_ERRORS, AUTH_ERRORS } from '@corates/shared';
 import { resolveOrgAccess } from '@/lib/billingResolver.js';

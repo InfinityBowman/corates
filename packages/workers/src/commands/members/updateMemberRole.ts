@@ -4,8 +4,8 @@
  * @throws DomainError LAST_OWNER if demoting the last owner
  */
 
-import { createDb } from '@/db/client';
-import { projectMembers } from '@/db/schema';
+import { createDb } from '@corates/db/client';
+import { projectMembers } from '@corates/db/schema';
 import { eq, and } from 'drizzle-orm';
 import { syncMemberWithRetry } from '@/lib/syncWithRetry';
 import { notifyUser, NotificationTypes } from '@/commands/lib/notifications';

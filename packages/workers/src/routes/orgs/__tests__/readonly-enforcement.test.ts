@@ -12,9 +12,9 @@ import {
   seedOrgMember,
   json,
 } from '@/__tests__/helpers.js';
-import { createDb } from '@/db/client.js';
-import { createGrant } from '@/db/orgAccessGrants.js';
-import { session } from '@/db/schema.js';
+import { createDb } from '@corates/db/client';
+import { createGrant } from '@corates/db/org-access-grants';
+import { session } from '@corates/db/schema';
 
 // Mock auth middleware
 vi.mock('@/middleware/auth.js', () => {

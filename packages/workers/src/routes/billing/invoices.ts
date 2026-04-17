@@ -4,8 +4,8 @@
  */
 import { OpenAPIHono, createRoute, z, $ } from '@hono/zod-openapi';
 import { requireAuth, getAuth } from '@/middleware/auth.js';
-import { createDb } from '@/db/client.js';
-import { subscription } from '@/db/schema.js';
+import { createDb } from '@corates/db/client';
+import { subscription } from '@corates/db/schema';
 import { createDomainError, SYSTEM_ERRORS, AUTH_ERRORS } from '@corates/shared';
 import { resolveOrgId } from './helpers/orgContext.js';
 import { eq, desc, and, or } from 'drizzle-orm';

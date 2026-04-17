@@ -12,8 +12,8 @@ import {
   getGrantByOrgIdAndType,
   createGrant,
   updateGrantExpiresAt,
-} from '@/db/orgAccessGrants';
-import type { Database } from '@/db/client';
+} from '@corates/db/org-access-grants';
+import type { Database } from '@corates/db/client';
 import type Stripe from 'stripe';
 
 interface CheckoutSessionResult {

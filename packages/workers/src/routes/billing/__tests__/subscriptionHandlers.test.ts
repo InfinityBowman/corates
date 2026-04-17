@@ -6,8 +6,8 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { env } from 'cloudflare:test';
 import type Stripe from 'stripe';
 import { resetTestDatabase } from '@/__tests__/helpers.js';
-import { createDb } from '@/db/client.js';
-import type { Database } from '@/db/client.js';
+import { createDb } from '@corates/db/client';
+import type { Database } from '@corates/db/client';
 import {
   handleSubscriptionCreated,
   handleSubscriptionUpdated,
@@ -15,7 +15,7 @@ import {
   handleSubscriptionPaused,
   handleSubscriptionResumed,
 } from '../handlers/subscriptionHandlers.js';
-import { subscription } from '@/db/schema.js';
+import { subscription } from '@corates/db/schema';
 import { eq } from 'drizzle-orm';
 import type { WebhookContext } from '../handlers/types.js';
 

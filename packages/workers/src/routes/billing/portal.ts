@@ -4,7 +4,7 @@
  */
 import { OpenAPIHono, createRoute, z, $ } from '@hono/zod-openapi';
 import { requireAuth, getAuth } from '@/middleware/auth.js';
-import { createDb } from '@/db/client.js';
+import { createDb } from '@corates/db/client';
 import { createDomainError, SYSTEM_ERRORS, AUTH_ERRORS } from '@corates/shared';
 import { billingPortalRateLimit } from '@/middleware/rateLimit.js';
 import { resolveOrgIdWithRole } from './helpers/orgContext.js';

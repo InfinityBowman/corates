@@ -6,8 +6,8 @@
  * @throws DomainError INVITATION_ALREADY_ACCEPTED if invitation was already accepted
  */
 
-import { createDb } from '@/db/client';
-import { projectInvitations, projects, user } from '@/db/schema';
+import { createDb } from '@corates/db/client';
+import { projectInvitations, projects, user } from '@corates/db/schema';
 import { eq, and } from 'drizzle-orm';
 import { createDomainError, PROJECT_ERRORS } from '@corates/shared';
 import { TIME_DURATIONS } from '@/config/constants';

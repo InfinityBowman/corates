@@ -26,7 +26,7 @@
  */
 import { Hono } from 'hono';
 import type { ContentfulStatusCode } from 'hono/utils/http-status';
-import { createDb } from '@/db/client.js';
+import { createDb } from '@corates/db/client';
 import { createDomainError, SYSTEM_ERRORS, AUTH_ERRORS, VALIDATION_ERRORS } from '@corates/shared';
 import type Stripe from 'stripe';
 import { createStripeClient, isStripeConfigured } from '@/lib/stripe.js';
@@ -38,7 +38,7 @@ import {
   getLedgerByPayloadHash,
   getLedgerByStripeEventId,
   LedgerStatus,
-} from '@/db/stripeEventLedger.js';
+} from '@corates/db/stripe-event-ledger';
 import { routeStripeEvent, extractLedgerContext } from './webhookRouter.js';
 import type { Env } from '../../types';
 

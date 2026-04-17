@@ -12,14 +12,14 @@ import {
 } from './templates';
 import { authRateLimit, sessionRateLimit } from '@/middleware/rateLimit';
 import { createLogger, sha256, truncateError } from '@/lib/observability/logger';
-import { createDb } from '@/db/client';
+import { createDb } from '@corates/db/client';
 import {
   insertLedgerEntry,
   updateLedgerWithVerifiedFields,
   updateLedgerStatus,
   getLedgerByPayloadHash,
   LedgerStatus,
-} from '@/db/stripeEventLedger';
+} from '@corates/db/stripe-event-ledger';
 import type { Env } from '../types';
 
 interface StripeEvent {

@@ -5,7 +5,7 @@
 
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
 
-import { createDb } from '@/db/client.js';
+import { createDb } from '@corates/db/client';
 import {
   user,
   session,
@@ -17,7 +17,7 @@ import {
   mediaFiles,
   member,
   organization,
-} from '@/db/schema.js';
+} from '@corates/db/schema';
 import { eq, desc, sql, like, or, count } from 'drizzle-orm';
 import { resolveOrgAccess } from '@/lib/billingResolver.js';
 import { getPlan, getGrantPlan, type GrantType } from '@corates/shared/plans';

@@ -6,8 +6,8 @@
  * @throws DomainError DB_TRANSACTION_FAILED on database error
  */
 
-import { createDb } from '@/db/client';
-import { projects, projectMembers, user } from '@/db/schema';
+import { createDb } from '@corates/db/client';
+import { projects, projectMembers, user } from '@corates/db/schema';
 import { eq } from 'drizzle-orm';
 import { insertWithQuotaCheck, type InsertRollbackMeta } from '@/lib/quotaTransaction';
 import { syncProjectToDO } from '@/commands/lib/doSync';

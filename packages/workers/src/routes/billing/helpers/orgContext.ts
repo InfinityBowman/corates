@@ -3,7 +3,7 @@
  * Extracts repeated pattern used across billing endpoints
  */
 import type { DrizzleD1Database } from 'drizzle-orm/d1';
-import type * as schema from '@/db/schema.js';
+import type * as schema from '@corates/db/schema';
 import { createDomainError, SYSTEM_ERRORS } from '@corates/shared';
 
 interface Session {
@@ -30,7 +30,7 @@ export async function resolveOrgId({
   session,
   userId,
 }: ResolveOrgParams): Promise<string | null> {
-  const { member } = await import('@/db/schema.js');
+  const { member } = await import('@corates/db/schema');
   const { eq, and } = await import('drizzle-orm');
 
   const activeOrgId = session?.activeOrganizationId;
@@ -76,7 +76,7 @@ export async function resolveOrgIdWithRole({
   let role: string | null = null;
 
   if (!orgId) {
-    const { member } = await import('@/db/schema.js');
+    const { member } = await import('@corates/db/schema');
     const { eq } = await import('drizzle-orm');
     const firstMembership = await db
       .select({ organizationId: member.organizationId, role: member.role })
@@ -88,7 +88,7 @@ export async function resolveOrgIdWithRole({
     role = firstMembership?.role || null;
   } else {
     // Get role for active org
-    const { member } = await import('@/db/schema.js');
+    const { member } = await import('@corates/db/schema');
     const { eq, and } = await import('drizzle-orm');
     const membership = await db
       .select({ role: member.role })

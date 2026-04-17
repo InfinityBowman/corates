@@ -5,8 +5,8 @@
 
 import { OpenAPIHono, createRoute, z, $ } from '@hono/zod-openapi';
 import { runMiddleware } from '@/lib/runMiddleware.js';
-import { createDb } from '@/db/client.js';
-import { projectMembers, user } from '@/db/schema.js';
+import { createDb } from '@corates/db/client';
+import { projectMembers, user } from '@corates/db/schema';
 import { eq } from 'drizzle-orm';
 import { requireAuth, getAuth } from '@/middleware/auth.js';
 import {

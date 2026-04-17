@@ -9,7 +9,7 @@
  * @throws DomainError AUTH_FORBIDDEN if email mismatch or quota exceeded
  */
 
-import { createDb } from '@/db/client';
+import { createDb } from '@corates/db/client';
 import {
   projectInvitations,
   projectMembers,
@@ -17,7 +17,7 @@ import {
   user,
   member,
   organization,
-} from '@/db/schema';
+} from '@corates/db/schema';
 import { eq, and } from 'drizzle-orm';
 import { createDomainError, PROJECT_ERRORS, AUTH_ERRORS, VALIDATION_ERRORS } from '@corates/shared';
 import { syncMemberToDO } from '@/lib/project-sync';

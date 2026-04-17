@@ -18,7 +18,7 @@ import {
   projectMembers,
   verification,
   account,
-} from '@/db/schema.js';
+} from '@corates/db/schema';
 import { createAuth } from '@/auth/config.js';
 import type { Env } from '../types';
 

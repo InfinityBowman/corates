@@ -186,7 +186,7 @@ Env bindings: `DB`, `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET_PURCHASES`, `ENV
 **Decision gate before Phase 1:** Confirm Stripe dashboard event-type routing (finding #3). This changes whether the purchases worker carries the full 14-event router or a trimmed subset.
 
 ### Phase 1 — Stand up the separate Stripe webhook worker first
-4. Create `packages/stripe-purchases/` with its own `wrangler.jsonc`, `src/index.ts`, and `.dev.vars`.
+4. Create `packages/stripe-purchases/` with its own `wrangler.jsonc`, `src/index.ts`, and `.env`.
 5. Extract the purchase webhook route + its D1 access (`stripeEventLedger.ts`) + minimal Drizzle setup (D1 binding only, same DB IDs as main app).
 6. Bindings: D1 (`corates-db`/`corates-db-prod`), `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET_PURCHASES`.
 7. Route: `corates.org/api/billing/purchases/webhook` (more specific than `corates.org/*`, so it wins over `corates-app`'s catch-all).
@@ -200,7 +200,7 @@ Env bindings: `DB`, `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET_PURCHASES`, `ENV
 13. Mount the existing Hono app under `src/routes/api/$.ts` via the catch-all pattern shown above. Zero route rewrites required at this stage.
 14. Move the queue consumer (`queue()` handler) into `src/server.ts`.
 15. Move the Drizzle schema from `packages/workers/src/db/` to `packages/web/src/server/db/` (or `@corates/shared` if you want the purchases worker to share imports — recommended).
-16. Merge `.dev.vars` from `packages/workers` into `packages/web/.dev.vars`.
+16. Merge `.env` from `packages/workers` into `packages/web/.env`.
 
 ### Phase 3 — Cutover
 17. Update the frontend: change `VITE_API_URL` default from `http://localhost:8787` to `http://localhost:3010` (or whatever the TanStack Start dev port is), and consider changing `apiFetch.ts` to use relative URLs (`/api/...`) now that everything is same-origin.

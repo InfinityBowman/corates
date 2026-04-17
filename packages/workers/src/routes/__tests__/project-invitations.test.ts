@@ -14,8 +14,8 @@ import {
   buildUser,
   resetCounter,
 } from '@/__tests__/factories';
-import { createDb } from '@/db/client.js';
-import { projectInvitations, projectMembers, member } from '@/db/schema.js';
+import { createDb } from '@corates/db/client';
+import { projectInvitations, projectMembers, member } from '@corates/db/schema';
 import { eq, and } from 'drizzle-orm';
 
 // Mock postmark

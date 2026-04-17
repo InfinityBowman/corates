@@ -5,8 +5,8 @@
  * @throws DomainError LAST_OWNER if removing the last owner
  */
 
-import { createDb } from '@/db/client';
-import { projectMembers, projects } from '@/db/schema';
+import { createDb } from '@corates/db/client';
+import { projectMembers, projects } from '@corates/db/schema';
 import { eq, and } from 'drizzle-orm';
 import { createDomainError, PROJECT_ERRORS } from '@corates/shared';
 import { syncMemberWithRetry } from '@/lib/syncWithRetry';

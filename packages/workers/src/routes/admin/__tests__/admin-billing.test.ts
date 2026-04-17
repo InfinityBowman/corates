@@ -12,8 +12,8 @@ import {
   seedSubscription,
   json,
 } from '@/__tests__/helpers.js';
-import { createDb } from '@/db/client.js';
-import { subscription } from '@/db/schema.js';
+import { createDb } from '@corates/db/client';
+import { subscription } from '@corates/db/schema';
 import { eq } from 'drizzle-orm';
 
 vi.mock('@/middleware/requireAdmin.js', () => {
@@ -251,7 +251,7 @@ describe('Admin billing routes - POST /api/admin/orgs/:orgId/grant-trial', () =>
     });
 
     const db = createDb(env.DB);
-    const { createGrant } = await import('@/db/orgAccessGrants.js');
+    const { createGrant } = await import('@corates/db/org-access-grants');
     const now = new Date();
     const expiresAt = new Date(now);
     expiresAt.setDate(expiresAt.getDate() + 14);
@@ -310,7 +310,7 @@ describe('Admin billing routes - POST /api/admin/orgs/:orgId/grant-single-projec
     });
 
     const db = createDb(env.DB);
-    const { createGrant } = await import('@/db/orgAccessGrants.js');
+    const { createGrant } = await import('@corates/db/org-access-grants');
     const now = new Date();
     const expiresAt = new Date(now);
     expiresAt.setMonth(expiresAt.getMonth() + 6);
@@ -370,7 +370,7 @@ describe('Admin billing routes - PUT /api/admin/orgs/:orgId/grants/:grantId', ()
     });
 
     const db = createDb(env.DB);
-    const { createGrant } = await import('@/db/orgAccessGrants.js');
+    const { createGrant } = await import('@corates/db/org-access-grants');
     const now = new Date();
     const expiresAt = new Date(now);
     expiresAt.setDate(expiresAt.getDate() + 14);
@@ -405,7 +405,7 @@ describe('Admin billing routes - PUT /api/admin/orgs/:orgId/grants/:grantId', ()
     });
 
     const db = createDb(env.DB);
-    const { createGrant } = await import('@/db/orgAccessGrants.js');
+    const { createGrant } = await import('@corates/db/org-access-grants');
     const now = new Date();
     const expiresAt = new Date(now);
     expiresAt.setDate(expiresAt.getDate() + 14);

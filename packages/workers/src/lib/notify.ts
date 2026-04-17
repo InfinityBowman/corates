@@ -1,5 +1,5 @@
 import type { Env } from '../types';
-import type { Database } from '../db/client';
+import type { Database } from '@corates/db/client';
 
 interface NotifyEvent {
   type: string;
@@ -58,7 +58,7 @@ export async function notifyOrgMembers(
   const { excludeUserIds = [] } = options;
 
   try {
-    const { member } = await import('../db/schema');
+    const { member } = await import('@corates/db/schema');
     const { eq } = await import('drizzle-orm');
 
     const members = await db

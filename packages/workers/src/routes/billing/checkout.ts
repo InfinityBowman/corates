@@ -4,8 +4,8 @@
  */
 import { OpenAPIHono, createRoute, z, $ } from '@hono/zod-openapi';
 import { requireAuth, getAuth } from '@/middleware/auth';
-import { createDb } from '@/db/client';
-import { user as userTable } from '@/db/schema';
+import { createDb } from '@corates/db/client';
+import { user as userTable } from '@corates/db/schema';
 import { eq } from 'drizzle-orm';
 import { validatePlanChange, resolveOrgAccess } from '@/lib/billingResolver';
 import { DEFAULT_PLAN } from '@corates/shared/plans';

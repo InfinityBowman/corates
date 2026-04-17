@@ -5,8 +5,8 @@ import * as awarenessProtocol from 'y-protocols/awareness';
 import * as encoding from 'lib0/encoding';
 import * as decoding from 'lib0/decoding';
 import { verifyAuth } from '../auth/config';
-import { createDb } from '../db/client';
-import { projectMembers, projects } from '../db/schema';
+import { createDb } from '@corates/db/client';
+import { projectMembers, projects } from '@corates/db/schema';
 import { eq, and } from 'drizzle-orm';
 import type { Env } from '../types';
 

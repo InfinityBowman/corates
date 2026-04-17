@@ -6,8 +6,8 @@
 import { OpenAPIHono, createRoute, z, $ } from '@hono/zod-openapi';
 
 import { requireAuth, getAuth } from '@/middleware/auth.js';
-import { createDb } from '@/db/client.js';
-import { account, projects, mediaFiles } from '@/db/schema.js';
+import { createDb } from '@corates/db/client';
+import { account, projects, mediaFiles } from '@corates/db/schema';
 import { eq, and } from 'drizzle-orm';
 import { generateUniqueFileName } from './orgs/pdfs.js';
 import {

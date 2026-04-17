@@ -1,10 +1,10 @@
 import { eq, and, desc, isNull, ne, count } from 'drizzle-orm';
-import { subscription, orgAccessGrants, projects, member } from '@/db/schema';
-import { getActiveGrantsByOrgId } from '@/db/orgAccessGrants';
+import { subscription, orgAccessGrants, projects, member } from '@corates/db/schema';
+import { getActiveGrantsByOrgId } from '@corates/db/org-access-grants';
 import { getPlan, DEFAULT_PLAN, getGrantPlan, isUnlimitedQuota } from '@corates/shared/plans';
 import { isSubscriptionActive } from './subscriptionStatus';
 import type { GrantType, Quotas } from '@corates/shared/plans';
-import type { Database } from '../db/client';
+import type { Database } from '@corates/db/client';
 import type { OrgBilling } from '../types';
 
 interface SubscriptionRecord {

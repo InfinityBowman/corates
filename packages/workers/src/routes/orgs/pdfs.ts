@@ -28,8 +28,8 @@ import {
   formatFileSize,
   type DomainError,
 } from '@corates/shared';
-import { createDb } from '@/db/client.js';
-import { mediaFiles, user } from '@/db/schema.js';
+import { createDb } from '@corates/db/client';
+import { mediaFiles, user } from '@corates/db/schema';
 import { eq, and } from 'drizzle-orm';
 import { validationHook } from '@/lib/honoValidationHook.js';
 import type { Env } from '../../types';

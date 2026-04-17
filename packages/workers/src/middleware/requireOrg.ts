@@ -1,6 +1,6 @@
 import type { Context, MiddlewareHandler } from 'hono';
-import { createDb } from '../db/client';
-import { member, organization, projects, projectMembers } from '../db/schema';
+import { createDb } from '@corates/db/client';
+import { member, organization, projects, projectMembers } from '@corates/db/schema';
 import { eq, and } from 'drizzle-orm';
 import { getAuth } from './auth';
 import { createDomainError, AUTH_ERRORS, PROJECT_ERRORS, SYSTEM_ERRORS } from '@corates/shared';

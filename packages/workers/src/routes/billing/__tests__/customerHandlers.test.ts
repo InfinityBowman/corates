@@ -6,10 +6,10 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { env } from 'cloudflare:test';
 import type Stripe from 'stripe';
 import { resetTestDatabase, seedUser } from '@/__tests__/helpers.js';
-import { createDb } from '@/db/client.js';
-import type { Database } from '@/db/client.js';
+import { createDb } from '@corates/db/client';
+import type { Database } from '@corates/db/client';
 import { handleCustomerUpdated, handleCustomerDeleted } from '../handlers/customerHandlers.js';
-import { user } from '@/db/schema.js';
+import { user } from '@corates/db/schema';
 import { eq } from 'drizzle-orm';
 import type { WebhookContext } from '../handlers/types.js';
 

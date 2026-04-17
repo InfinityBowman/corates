@@ -12,8 +12,8 @@ import {
   seedOrgMember,
   json,
 } from '@/__tests__/helpers.js';
-import { createDb } from '@/db/client.js';
-import { subscription } from '@/db/schema.js';
+import { createDb } from '@corates/db/client';
+import { subscription } from '@corates/db/schema';
 
 const mockAuthUpgradeSubscription = vi.fn(async () => ({
   url: 'https://checkout.stripe.com/test',
@@ -173,7 +173,7 @@ describe('Billing Routes - GET /api/billing/subscription', () => {
 
     // Set activeOrganizationId in session
     const db = createDb(env.DB);
-    const { session: sessionTable } = await import('@/db/schema.js');
+    const { session: sessionTable } = await import('@corates/db/schema');
     await db.insert(sessionTable).values({
       id: 'test-session',
       userId,
@@ -225,7 +225,7 @@ describe('Billing Routes - GET /api/billing/subscription', () => {
 
     // Create org-scoped subscription
     const db = createDb(env.DB);
-    const { session: sessionTable } = await import('@/db/schema.js');
+    const { session: sessionTable } = await import('@corates/db/schema');
     await db.insert(sessionTable).values({
       id: 'test-session',
       userId,
@@ -293,7 +293,7 @@ describe('Billing Routes - POST /api/billing/checkout', () => {
 
     // Set activeOrganizationId in session
     const db = createDb(env.DB);
-    const { session: sessionTable } = await import('@/db/schema.js');
+    const { session: sessionTable } = await import('@corates/db/schema');
     await db.insert(sessionTable).values({
       id: 'test-session',
       userId,
@@ -479,7 +479,7 @@ describe('Billing Routes - POST /api/billing/single-project/checkout', () => {
 
     // Set activeOrganizationId in session
     const db = createDb(env.DB);
-    const { session: sessionTable } = await import('@/db/schema.js');
+    const { session: sessionTable } = await import('@corates/db/schema');
     await db.insert(sessionTable).values({
       id: 'test-session',
       userId,
@@ -550,7 +550,7 @@ describe('Billing Routes - POST /api/billing/single-project/checkout', () => {
 
     // Set activeOrganizationId in session
     const db = createDb(env.DB);
-    const { session: sessionTable } = await import('@/db/schema.js');
+    const { session: sessionTable } = await import('@corates/db/schema');
     await db.insert(sessionTable).values({
       id: 'test-session',
       userId,
@@ -618,7 +618,7 @@ describe('Billing Routes - POST /api/billing/portal', () => {
 
     // Set activeOrganizationId in session
     const db = createDb(env.DB);
-    const { session: sessionTable } = await import('@/db/schema.js');
+    const { session: sessionTable } = await import('@corates/db/schema');
     await db.insert(sessionTable).values({
       id: 'test-session',
       userId,
@@ -686,7 +686,7 @@ describe('Billing Routes - GET /api/billing/validate-plan-change', () => {
 
     // Set activeOrganizationId in session
     const db = createDb(env.DB);
-    const { session: sessionTable } = await import('@/db/schema.js');
+    const { session: sessionTable } = await import('@corates/db/schema');
     await db.insert(sessionTable).values({
       id: 'test-session',
       userId,
@@ -736,7 +736,7 @@ describe('Billing Routes - GET /api/billing/validate-plan-change', () => {
 
     // Create 5 projects (exceeds starter_team limit of 3)
     const db = createDb(env.DB);
-    const { projects } = await import('@/db/schema.js');
+    const { projects } = await import('@corates/db/schema');
     for (let i = 1; i <= 5; i++) {
       await db.insert(projects).values({
         id: `project-${i}`,
@@ -749,7 +749,7 @@ describe('Billing Routes - GET /api/billing/validate-plan-change', () => {
     }
 
     // Set activeOrganizationId in session
-    const { session: sessionTable } = await import('@/db/schema.js');
+    const { session: sessionTable } = await import('@corates/db/schema');
     await db.insert(sessionTable).values({
       id: 'test-session',
       userId,
@@ -822,7 +822,7 @@ describe('Billing Routes - POST /api/billing/checkout (downgrade validation)', (
 
     // Create 5 projects (exceeds starter_team limit of 3)
     const db = createDb(env.DB);
-    const { projects } = await import('@/db/schema.js');
+    const { projects } = await import('@corates/db/schema');
     for (let i = 1; i <= 5; i++) {
       await db.insert(projects).values({
         id: `project-${i}`,
@@ -835,7 +835,7 @@ describe('Billing Routes - POST /api/billing/checkout (downgrade validation)', (
     }
 
     // Set activeOrganizationId in session
-    const { session: sessionTable } = await import('@/db/schema.js');
+    const { session: sessionTable } = await import('@corates/db/schema');
     await db.insert(sessionTable).values({
       id: 'test-session',
       userId,
@@ -893,7 +893,7 @@ describe('Billing Routes - POST /api/billing/checkout (downgrade validation)', (
 
     // Create many projects
     const db = createDb(env.DB);
-    const { projects } = await import('@/db/schema.js');
+    const { projects } = await import('@corates/db/schema');
     for (let i = 1; i <= 10; i++) {
       await db.insert(projects).values({
         id: `project-${i}`,
@@ -906,7 +906,7 @@ describe('Billing Routes - POST /api/billing/checkout (downgrade validation)', (
     }
 
     // Set activeOrganizationId in session
-    const { session: sessionTable } = await import('@/db/schema.js');
+    const { session: sessionTable } = await import('@corates/db/schema');
     await db.insert(sessionTable).values({
       id: 'test-session',
       userId,

@@ -42,6 +42,19 @@ importers:
         specifier: ^4.81.0
         version: 4.81.0(@cloudflare/workers-types@4.20260405.1)
 
+  packages/db:
+    dependencies:
+      drizzle-orm:
+        specifier: ^0.45.2
+        version: 0.45.2(@cloudflare/workers-types@4.20260405.1)(@electric-sql/pglite@0.3.15)(@opentelemetry/api@1.9.1)(@prisma/client@7.4.2(prisma@7.4.2(@types/react@19.2.14)(better-sqlite3@12.8.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@5.9.3))(typescript@5.9.3))(@types/better-sqlite3@7.6.13)(better-sqlite3@12.8.0)(gel@2.2.0)(kysely@0.28.15)(mysql2@3.15.3)(postgres@3.4.7)(prisma@7.4.2(@types/react@19.2.14)(better-sqlite3@12.8.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@5.9.3))
+    devDependencies:
+      '@cloudflare/workers-types':
+        specifier: ^4.20260405.1
+        version: 4.20260405.1
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+
   packages/docs:
     devDependencies:
       mermaid:
@@ -71,6 +84,9 @@ importers:
 
   packages/stripe-purchases:
     dependencies:
+      '@corates/db':
+        specifier: workspace:*
+        version: link:../db
       '@corates/shared':
         specifier: workspace:*
         version: link:../shared
@@ -337,6 +353,9 @@ importers:
       '@better-auth/stripe':
         specifier: ^1.6.0
         version: 1.6.0(@better-auth/core@1.6.0(@better-auth/utils@0.4.0)(@better-fetch/fetch@1.1.21)(@cloudflare/workers-types@4.20260405.1)(@opentelemetry/api@1.9.1)(better-call@1.3.5(zod@4.3.6))(jose@6.2.2)(kysely@0.28.15)(nanostores@1.2.0))(better-auth@1.6.0(3bc514177adaf7d26594405f762542d5))(better-call@1.3.5(zod@4.3.6))(stripe@20.4.1(@types/node@25.5.2))
+      '@corates/db':
+        specifier: workspace:*
+        version: link:../db
       '@corates/shared':
         specifier: workspace:*
         version: link:../shared

@@ -4,7 +4,7 @@
  */
 import { OpenAPIHono, createRoute, z, $ } from '@hono/zod-openapi';
 import { requireAuth, getAuth } from '@/middleware/auth.js';
-import { createDb } from '@/db/client.js';
+import { createDb } from '@corates/db/client';
 import { resolveOrgAccess } from '@/lib/billingResolver.js';
 import { getPlan, getGrantPlan, type GrantType } from '@corates/shared/plans';
 import { createDomainError, SYSTEM_ERRORS, AUTH_ERRORS } from '@corates/shared';
@@ -202,7 +202,7 @@ const billingSubscriptionRoutes = $(base.use('*', requireAuth))
 
       const orgBilling = await resolveOrgAccess(db, orgId);
 
-      const { projects } = await import('@/db/schema.js');
+      const { projects } = await import('@corates/db/schema');
       const { eq, count } = await import('drizzle-orm');
       const [projectCountResult] = await db
         .select({ count: count() })

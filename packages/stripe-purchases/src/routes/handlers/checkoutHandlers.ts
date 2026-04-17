@@ -7,7 +7,7 @@
 import type Stripe from 'stripe';
 import { processCheckoutSession } from '../processCheckoutSession';
 import type { WebhookContext, WebhookResult } from './types.js';
-import type { Database } from '../../db/client';
+import type { Database } from '@corates/db/client';
 
 interface ProcessCheckoutContext {
   db: Database;

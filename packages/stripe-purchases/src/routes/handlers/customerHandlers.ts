@@ -6,9 +6,9 @@
  */
 import type Stripe from 'stripe';
 import { eq } from 'drizzle-orm';
-import { user } from '../../db/schema.js';
+import { user } from '@corates/db/schema';
 import type { WebhookContext, WebhookResult } from './types.js';
-import { createDb } from '../../db/client.js';
+import { createDb } from '@corates/db/client';
 
 // Helper to get typed db from context
 function getDb(ctx: WebhookContext) {

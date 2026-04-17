@@ -15,7 +15,7 @@ import Stripe from 'stripe';
 import { STRIPE_API_VERSION } from '@/lib/stripe.js';
 import { drizzle } from 'drizzle-orm/d1';
 import { eq, and } from 'drizzle-orm';
-import * as schema from '../db/schema';
+import * as schema from '@corates/db/schema';
 import { getAllowedOrigins } from '../config/origins';
 import { isAdminUser } from './admin';
 import {

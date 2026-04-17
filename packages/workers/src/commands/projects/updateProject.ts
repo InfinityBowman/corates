@@ -4,8 +4,8 @@
  * @throws DomainError DB_ERROR on database error
  */
 
-import { createDb } from '@/db/client';
-import { projects } from '@/db/schema';
+import { createDb } from '@corates/db/client';
+import { projects } from '@corates/db/schema';
 import { eq } from 'drizzle-orm';
 import { createDomainError, SYSTEM_ERRORS } from '@corates/shared';
 import { syncProjectToDO } from '@/commands/lib/doSync';

@@ -4,7 +4,7 @@ import {
   waitOnExecutionContext,
   runInDurableObject,
 } from 'cloudflare:test';
-import { createDb } from '@/db/client.js';
+import { createDb } from '@corates/db/client';
 import {
   user,
   projects,
@@ -16,7 +16,7 @@ import {
   mediaFiles,
   projectInvitations,
   stripeEventLedger,
-} from '@/db/schema.js';
+} from '@corates/db/schema';
 import {
   seedUserSchema,
   seedProjectSchema,

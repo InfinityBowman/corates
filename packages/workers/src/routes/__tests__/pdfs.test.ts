@@ -8,8 +8,8 @@ import { Hono, type Context } from 'hono';
 import { env, createExecutionContext, waitOnExecutionContext } from 'cloudflare:test';
 import { resetTestDatabase, seedMediaFile, json } from '@/__tests__/helpers.js';
 import { buildUser, buildProject, buildOrgMember, resetCounter } from '@/__tests__/factories';
-import { createDb } from '@/db/client.js';
-import { mediaFiles } from '@/db/schema.js';
+import { createDb } from '@corates/db/client';
+import { mediaFiles } from '@corates/db/schema';
 import { eq, and } from 'drizzle-orm';
 import { FILE_SIZE_LIMITS } from '@/config/constants.js';
 

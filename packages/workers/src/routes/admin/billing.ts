@@ -6,8 +6,8 @@
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
 import type { Context } from 'hono';
 
-import { createDb } from '@/db/client.js';
-import { subscription, orgAccessGrants, organization } from '@/db/schema.js';
+import { createDb } from '@corates/db/client';
+import { subscription, orgAccessGrants, organization } from '@corates/db/schema';
 import { eq, and, desc } from 'drizzle-orm';
 import { createDomainError, SYSTEM_ERRORS, VALIDATION_ERRORS } from '@corates/shared';
 import { resolveOrgAccess } from '@/lib/billingResolver.js';
@@ -18,13 +18,13 @@ import {
   updateGrantExpiresAt,
   revokeGrant,
   getGrantsByOrgId,
-} from '@/db/orgAccessGrants.js';
+} from '@corates/db/org-access-grants';
 import { getPlan, getGrantPlan, type GrantType } from '@corates/shared/plans';
 import { notifyOrgMembers, EventTypes } from '@/lib/notify.js';
 import { validationHook } from '@/lib/honoValidationHook.js';
 import type { Env, AppVariables } from '../../types';
 import type { DrizzleD1Database } from 'drizzle-orm/d1';
-import type * as schema from '@/db/schema.js';
+import type * as schema from '@corates/db/schema';
 import { ErrorResponseSchema } from '@/schemas/common.js';
 
 type Database = DrizzleD1Database<typeof schema>;
