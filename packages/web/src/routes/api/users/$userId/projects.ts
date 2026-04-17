@@ -16,7 +16,7 @@ interface UserProject {
   updatedAt: string;
 }
 
-const handler = async ({
+export const handler = async ({
   request,
   params,
 }: {

@@ -70,7 +70,7 @@ function invalidJsonError(): Response {
   return Response.json(error, { status: 400 });
 }
 
-const handler = async ({ request }: { request: Request }) => {
+export const handler = async ({ request }: { request: Request }) => {
   const rate = checkRateLimit(request, env, CONTACT_RATE_LIMIT);
   if (rate.blocked) return rate.blocked;
 

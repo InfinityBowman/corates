@@ -17,6 +17,10 @@ export default defineConfig({
     viteTsConfigPaths({ projects: ['./tsconfig.json'] }),
     tailwindcss(),
     tanstackStart({
+      router: {
+        // Exclude server test files + tests/helper dirs from route generation.
+        routeFileIgnorePattern: '(__tests__/|\\.test\\.|\\.spec\\.|server/)',
+      },
       prerender: {
         enabled: true,
         crawlLinks: false,

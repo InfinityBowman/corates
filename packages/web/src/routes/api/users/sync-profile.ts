@@ -7,7 +7,7 @@ import { projects, projectMembers, user } from '@corates/db/schema';
 import { eq } from 'drizzle-orm';
 import { createDomainError, AUTH_ERRORS, USER_ERRORS, SYSTEM_ERRORS } from '@corates/shared';
 
-const handler = async ({ request }: { request: Request }) => {
+export const handler = async ({ request }: { request: Request }) => {
   const auth = await getSession(request, env);
   if (!auth) {
     const error = createDomainError(AUTH_ERRORS.REQUIRED, { reason: 'no_user' });

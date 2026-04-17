@@ -31,7 +31,7 @@ function maskEmail(email: string | null): string | null {
   return `${masked}@${domain}`;
 }
 
-const handler = async ({ request }: { request: Request }) => {
+export const handler = async ({ request }: { request: Request }) => {
   const rate = checkRateLimit(request, env, SEARCH_RATE_LIMIT);
   if (rate.blocked) return rate.blocked;
 

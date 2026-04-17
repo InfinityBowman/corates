@@ -16,7 +16,7 @@ import { eq } from 'drizzle-orm';
 import { syncMemberToDO } from '@corates/workers/project-sync';
 import { createDomainError, AUTH_ERRORS, SYSTEM_ERRORS } from '@corates/shared';
 
-const handleDelete = async ({ request }: { request: Request }) => {
+export const handleDelete = async ({ request }: { request: Request }) => {
   const auth = await getSession(request, env);
   if (!auth) {
     const error = createDomainError(AUTH_ERRORS.REQUIRED, { reason: 'no_user' });
