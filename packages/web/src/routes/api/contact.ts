@@ -12,7 +12,11 @@ import { escapeHtml } from '@/server/escapeHtml';
 import { checkRateLimit, CONTACT_RATE_LIMIT } from '@/server/rateLimit';
 
 const ContactRequestSchema = z.object({
-  name: z.string().trim().min(1, 'Name is required').max(100, 'Name must be 100 characters or less'),
+  name: z
+    .string()
+    .trim()
+    .min(1, 'Name is required')
+    .max(100, 'Name must be 100 characters or less'),
   email: z
     .string()
     .trim()

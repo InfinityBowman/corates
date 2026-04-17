@@ -33,9 +33,7 @@ describe('DELETE /api/users/me', () => {
     const body = (await res.json()) as any;
     expect(body.success).toBe(true);
 
-    const userRow = await env.DB.prepare('SELECT * FROM user WHERE id = ?1')
-      .bind(owner.id)
-      .first();
+    const userRow = await env.DB.prepare('SELECT * FROM user WHERE id = ?1').bind(owner.id).first();
     expect(userRow).toBeNull();
 
     const members = await env.DB.prepare('SELECT * FROM project_members WHERE userId = ?1')
