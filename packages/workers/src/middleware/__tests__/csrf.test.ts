@@ -146,5 +146,4 @@ describe('requireTrustedOrigin middleware', () => {
 
     expect(res.status).toBe(403);
   });
-
 });

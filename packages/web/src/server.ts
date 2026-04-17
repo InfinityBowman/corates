@@ -24,11 +24,7 @@ export default {
     return startFetch(request, { context: { cloudflareCtx: ctx } } as never);
   },
 
-  async queue(
-    batch: MessageBatch<unknown>,
-    env: unknown,
-    ctx: ExecutionContext,
-  ): Promise<void> {
+  async queue(batch: MessageBatch<unknown>, env: unknown, ctx: ExecutionContext): Promise<void> {
     return workerHandler.queue(batch, env as never, ctx);
   },
 };

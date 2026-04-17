@@ -1,7 +1,4 @@
-export const STATIC_ORIGINS: readonly string[] = [
-  'http://localhost:3010',
-  'https://corates.org',
-];
+export const STATIC_ORIGINS: readonly string[] = ['http://localhost:3010', 'https://corates.org'];
 
 export function getAllowedOrigins(): readonly string[] {
   return STATIC_ORIGINS;

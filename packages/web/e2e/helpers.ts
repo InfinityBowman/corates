@@ -168,20 +168,17 @@ export async function seedStudies(
   const reconcile = opts.reconcile ?? false;
 
   for (let i = 0; i < count; i++) {
-    const res = await fetch(
-      `${API_BASE}/api/orgs/${orgId}/projects/${projectId}/dev/add-study`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Cookie: cookieHeader },
-        body: JSON.stringify({
-          type,
-          fillMode,
-          reconcile,
-          reviewer1: reviewer1Id,
-          reviewer2: reviewer2Id,
-        }),
-      },
-    );
+    const res = await fetch(`${API_BASE}/api/orgs/${orgId}/projects/${projectId}/dev/add-study`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Cookie: cookieHeader },
+      body: JSON.stringify({
+        type,
+        fillMode,
+        reconcile,
+        reviewer1: reviewer1Id,
+        reviewer2: reviewer2Id,
+      }),
+    });
     if (!res.ok) {
       throw new Error(`seedStudies failed on study ${i + 1}: ${res.status} ${await res.text()}`);
     }

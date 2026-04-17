@@ -20,12 +20,7 @@ export declare class UserSession {
 export declare class ProjectDoc {
   fetch(request: Request): Promise<Response>;
   webSocketMessage(ws: WebSocket, message: string | ArrayBuffer): Promise<void>;
-  webSocketClose(
-    ws: WebSocket,
-    code: number,
-    reason: string,
-    wasClean: boolean,
-  ): Promise<void>;
+  webSocketClose(ws: WebSocket, code: number, reason: string, wasClean: boolean): Promise<void>;
 }
 
 export declare const app: {

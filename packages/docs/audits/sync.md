@@ -106,7 +106,6 @@ Operational transforms — complex, what Google Docs does
 CRDTs — merge-friendly data structures, what TinyBase does
 Optimistic with server reconciliation — client applies optimistically, server may send a correction
 
-
 The honest matrix:
 RequirementComplexity addedWhole DB sync, always onlineTrivialOffline queuingLowDelta sync on reconnectMedium — need a WALConcurrent conflict resolutionHigh — need a strategy
 The good news is that for most apps, last-write-wins plus a WAL gets you 90% of the way there with maybe 20% of the complexity of a full CRDT engine. You only need CRDTs if you have genuinely collaborative real-time editing of the same fields simultaneously — like Google Docs. For most app data (todos, settings, records), LWW with a sequence log is totally fine and what most production systems actually use under the hood.
@@ -121,12 +120,12 @@ On connect: client sends last known sequence number, DO replays log from there
 If sequence is 0 or missing: send full snapshot
 
 sqlCREATE TABLE mutations (
-  seq     INTEGER PRIMARY KEY AUTOINCREMENT,
-  table   TEXT,
-  row_id  TEXT,
-  op      TEXT, -- 'set' | 'delete'
-  data    JSON,
-  ts      INTEGER
+seq INTEGER PRIMARY KEY AUTOINCREMENT,
+table TEXT,
+row_id TEXT,
+op TEXT, -- 'set' | 'delete'
+data JSON,
+ts INTEGER
 );
 Client (wa-sqlite or OPFS):
 
@@ -140,19 +139,18 @@ Transport:
 WebSocket for live mutations
 Single HTTP endpoint for initial snapshot if needed
 
-
 The flow:
 Online write:
-  Client mutates locally → sends to DO → DO writes + broadcasts
-  Other clients receive broadcast → apply locally
+Client mutates locally → sends to DO → DO writes + broadcasts
+Other clients receive broadcast → apply locally
 
 Offline write:
-  Client mutates locally → queues mutation
+Client mutates locally → queues mutation
 
 Reconnect:
-  Client sends queued mutations → DO applies LWW
-  Client sends last_seq → DO streams delta back
-  Client applies delta (LWW, so server wins on conflict)
+Client sends queued mutations → DO applies LWW
+Client sends last_seq → DO streams delta back
+Client applies delta (LWW, so server wins on conflict)
 
 What you actually need to build:
 
@@ -226,14 +224,14 @@ The hybrid approach:
 For regular fields (strings, numbers, booleans) — your existing LWW SQLite sync works fine. For rich text fields that need collaborative editing — you store the Yjs or OT document separately and sync it differently, then write the final value back to SQLite when it settles.
 Concrete architecture:
 SQLite (DO)
-├── records table        ← LWW synced normally
-│   ├── id
-│   ├── title           ← plain text, LWW fine
-│   ├── status          ← LWW fine  
-│   └── body_doc_id     ← foreign key to a collab doc
-└── collab_docs table   ← stores Yjs binary snapshots
-    ├── id
-    └── snapshot        ← BLOB, the Y.Doc state vector
+├── records table ← LWW synced normally
+│ ├── id
+│ ├── title ← plain text, LWW fine
+│ ├── status ← LWW fine  
+│ └── body_doc_id ← foreign key to a collab doc
+└── collab_docs table ← stores Yjs binary snapshots
+├── id
+└── snapshot ← BLOB, the Y.Doc state vector
 The Yjs updates flow separately over WebSocket, the DO merges them into its Y.Doc in memory, and periodically flushes the snapshot blob back to SQLite. When a client connects, they get the SQLite snapshot for the record fields plus the Y.Doc snapshot for the rich text.
 Simpler option — ProseMirror + server OT:
 If you don't want Yjs at all, ShareDB is the classic choice:
@@ -246,12 +244,12 @@ Final text value written back to SQLite periodically
 ShareDB was built for exactly this — a central server serializing OT operations — and a DO is a perfect host for it since it's single-writer by design.
 Simplest option — TipTap/ProseMirror with Yjs, stored as blob:
 User edits in TipTap
-  → Yjs update generated
-  → sent to DO over WebSocket
-  → DO applies to in-memory Y.Doc
-  → broadcasts to other clients
-  → every N seconds: DO serializes Y.Doc → stores blob in SQLite
-  → on connect: client gets blob, reconstructs Y.Doc locally
+→ Yjs update generated
+→ sent to DO over WebSocket
+→ DO applies to in-memory Y.Doc
+→ broadcasts to other clients
+→ every N seconds: DO serializes Y.Doc → stores blob in SQLite
+→ on connect: client gets blob, reconstructs Y.Doc locally
 This is basically what Notion does. The rich text is a CRDT document, SQLite just stores snapshots of it. You get collaborative editing without giving up SQLite as your source of truth.
 My recommendation:
 If you want the least complexity, go with TipTap + Yjs just for rich text fields, stored as blobs in your DO's SQLite. Everything else stays LWW. The boundary between "CRDT field" and "LWW field" is just a column type in your schema — your sync engine treats blob columns as opaque and routes their updates through a Y.Doc instead of LWW.
@@ -264,10 +262,10 @@ What you actually need:
 Just a way to express "insert X at position Y" and "delete N chars at position Z" as operations, and a way to apply them to the server's canonical text and broadcast the result.
 The naive version:
 Client types "hello" at position 5
-  → sends { op: 'insert', pos: 5, text: 'hello' }
-  → DO applies to its canonical text
-  → DO broadcasts the updated full text to all clients
-  → Clients replace their local copy
+→ sends { op: 'insert', pos: 5, text: 'hello' }
+→ DO applies to its canonical text
+→ DO broadcasts the updated full text to all clients
+→ Clients replace their local copy
 That's it. No CRDT, no OT. Works fine as long as you're okay with:
 
 Occasional cursor jumping (when someone else's op shifts your position)
@@ -276,13 +274,13 @@ Full text replacement on each broadcast (fine for moderate sized documents)
 Where it breaks down:
 The only remaining problem is cursor positions. If user A is at position 50 and user B inserts 10 chars at position 20, user A's cursor is now wrong — it should be at position 60. This is the only thing you need positional awareness for, and it's much simpler than full OT:
 javascriptfunction adjustCursor(cursorPos, op) {
-  if (op.type === 'insert' && op.pos <= cursorPos) {
-    return cursorPos + op.text.length
-  }
-  if (op.type === 'delete' && op.pos < cursorPos) {
-    return cursorPos - Math.min(op.length, cursorPos - op.pos)
-  }
-  return cursorPos
+if (op.type === 'insert' && op.pos <= cursorPos) {
+return cursorPos + op.text.length
+}
+if (op.type === 'delete' && op.pos < cursorPos) {
+return cursorPos - Math.min(op.length, cursorPos - op.pos)
+}
+return cursorPos
 }
 That's basically 90% of what OT does, just for cursor positions rather than arbitrary document transforms.
 So the full simple stack:
@@ -325,7 +323,6 @@ Ops sent as structured mutations { table, rowId, field, op, pos, content }
 DO applies sequentially (linearizable by nature), broadcasts result
 Simple cursor position adjustment on clients — no CRDT needed
 
-
 Libraries to study as inspiration:
 LibraryWhat to stealPowerSyncOverall architecture, mutation queue design, checkpoint/sequence system, client SDK shapewa-sqliteClient SQLite WASM + OPFS VFS implementationtldraw-syncDO + WebSocket room pattern, snapshot on connectLiveStoreEvent log as source of truth, Cloudflare adapterReplicacheOffline mutation queue, optimistic apply + server reconciliation pattern
 
@@ -348,10 +345,10 @@ Much simpler
 
 The difference is subtle but important:
 Event sourcing:
-  state = replay(all_events_since_beginning)
+state = replay(all_events_since_beginning)
 
 Mutation log for sync:
-  state = sqlite_rows (the log just helps clients catch up)
+state = sqlite_rows (the log just helps clients catch up)
 PowerSync's approach is the second one — they maintain an ops log (ps_oplog) on the client as a sync mechanism, not as the source of truth. The actual data lives in regular SQLite tables. PowerSync
 LiveStore does true event sourcing — the log is canonical and state is derived. That's why it's more complex and has the one-user-one-DB limitation.
 

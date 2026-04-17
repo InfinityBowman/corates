@@ -15,11 +15,7 @@ import {
 } from '../../__tests__/helpers.js';
 import { createDb } from '@corates/db/client';
 import { createGrant } from '@corates/db/org-access-grants';
-import {
-  resolveOrgAccess,
-  validatePlanChange,
-  getOrgResourceUsage,
-} from '../billingResolver.js';
+import { resolveOrgAccess, validatePlanChange, getOrgResourceUsage } from '../billingResolver.js';
 import { isSubscriptionActive } from '../subscriptionStatus';
 import type { SubscriptionStatusInput, IsActiveOptions } from '../subscriptionStatus';
 
