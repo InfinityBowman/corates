@@ -29,7 +29,6 @@ import { googleDriveRoutes } from './routes/google-drive';
 import { avatarRoutes } from './routes/avatars';
 import { adminRoutes } from './routes/admin/index';
 import { invitationRoutes } from './routes/invitations';
-import { testSeedRoutes } from './routes/test-seed';
 
 // Export Durable Objects
 export { UserSession, ProjectDoc };
@@ -84,9 +83,6 @@ base.get('/openapi.json', c => {
     ],
   });
 });
-
-// Mount test seed routes (dev only, gated inside the route handler)
-base.route('/api/test', testSeedRoutes);
 
 // Mount auth routes
 base.route('/api/auth', auth);
