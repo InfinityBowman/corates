@@ -24,7 +24,8 @@
     "./constants": "./src/config/constants.ts",
     "./ssrf-protection": "./src/lib/ssrf-protection.ts",
     "./media-files": "./src/lib/media-files.ts",
-    "./policies/projects": "./src/policies/projects.ts"
+    "./policies/projects": "./src/policies/projects.ts",
+    "./policies": "./src/policies/index.ts"
   },
   "scripts": {
     "dev": "concurrently \"wrangler dev\" \"pnpm build:rpc:watch\" --names wrangler,rpc --prefix-colors blue,green",
