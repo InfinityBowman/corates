@@ -10,13 +10,9 @@
 
 import type Stripe from 'stripe';
 import { handleCheckoutSessionCompleted } from './handlers/checkoutHandlers.js';
-import {
-  handleSubscriptionCreated,
-  handleSubscriptionUpdated,
-  handleSubscriptionDeleted,
-  handleSubscriptionPaused,
-  handleSubscriptionResumed,
-} from './handlers/subscriptionHandlers.js';
+// Note: customer.subscription.* events are owned by better-auth's stripe plugin
+// (packages/workers /api/auth/stripe/webhook). This worker intentionally ignores
+// them so the subscription table has a single writer.
 import {
   handleInvoicePaymentSucceeded,
   handleInvoicePaymentFailed,
@@ -64,18 +60,6 @@ export async function routeStripeEvent(
     // Checkout events
     case 'checkout.session.completed':
       return handleCheckoutSessionCompleted(data.object as Stripe.Checkout.Session, ctx);
-
-    // Subscription lifecycle
-    case 'customer.subscription.created':
-      return handleSubscriptionCreated(data.object as Stripe.Subscription, ctx);
-    case 'customer.subscription.updated':
-      return handleSubscriptionUpdated(data.object as Stripe.Subscription, ctx);
-    case 'customer.subscription.deleted':
-      return handleSubscriptionDeleted(data.object as Stripe.Subscription, ctx);
-    case 'customer.subscription.paused':
-      return handleSubscriptionPaused(data.object as Stripe.Subscription, ctx);
-    case 'customer.subscription.resumed':
-      return handleSubscriptionResumed(data.object as Stripe.Subscription, ctx);
 
     // Invoice events
     case 'invoice.payment_succeeded':
