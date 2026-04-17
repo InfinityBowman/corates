@@ -3,6 +3,7 @@
  */
 
 import { Component, ErrorInfo, ReactNode } from 'react';
+import { captureException } from '@/config/sentry';
 
 interface Props {
   name: string;
@@ -26,6 +27,12 @@ export class SectionErrorBoundary extends Component<Props, State> {
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error(`Error in ${this.props.name}:`, error, errorInfo);
+    captureException(error, {
+      component: 'SectionErrorBoundary',
+      action: 'render',
+      section: this.props.name,
+      componentStack: errorInfo.componentStack,
+    });
   }
 
   render() {

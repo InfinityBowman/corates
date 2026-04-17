@@ -15,6 +15,26 @@ interface CaptureContext {
 }
 
 /**
+ * Initialize Sentry on the browser. Safe to call multiple times; subsequent
+ * calls are ignored if Sentry is already initialized.
+ */
+export function initSentry(): void {
+  if (!SENTRY_DSN) {
+    return;
+  }
+  if (Sentry.getClient()) {
+    return;
+  }
+
+  Sentry.init({
+    dsn: SENTRY_DSN,
+    environment: import.meta.env.MODE,
+    tracesSampleRate: import.meta.env.DEV ? 1.0 : 0.1,
+    sendDefaultPii: true,
+  });
+}
+
+/**
  * Capture an exception with optional context
  */
 export function captureException(error: unknown, context: CaptureContext = {}): void {

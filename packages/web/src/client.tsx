@@ -4,5 +4,8 @@
 // before the re-mount can reclaim them.
 import { StartClient } from '@tanstack/react-start/client';
 import { hydrateRoot } from 'react-dom/client';
+import { initSentry } from '@/config/sentry';
+
+initSentry();
 
 hydrateRoot(document, <StartClient />);
