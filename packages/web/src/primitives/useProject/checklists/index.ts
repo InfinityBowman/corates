@@ -38,21 +38,6 @@ export interface ChecklistOperations {
     key: string,
     data: Record<string, unknown>,
   ) => void;
-  getQuestionNote: (studyId: string, checklistId: string, questionKey: string) => Y.Text | null;
-  getRobinsText: (
-    studyId: string,
-    checklistId: string,
-    sectionKey: string,
-    fieldKey: string,
-    questionKey?: string | null,
-  ) => Y.Text | null;
-  getRob2Text: (
-    studyId: string,
-    checklistId: string,
-    sectionKey: string,
-    fieldKey: string,
-    questionKey?: string | null,
-  ) => Y.Text | null;
   getTextRef: (studyId: string, checklistId: string, ref: TextRef) => Y.Text | null;
   setTextValue: (
     studyId: string,
@@ -299,60 +284,35 @@ export function createChecklistOperations(
     checklistYMap.set('updatedAt', Date.now());
   }
 
-  function getQuestionNote(
-    studyId: string,
-    checklistId: string,
-    questionKey: string,
-  ): Y.Text | null {
-    const textGetter = amstar2Handler.getTextGetter(getYDoc);
-    if (!textGetter) return null;
-    return textGetter(studyId, checklistId, questionKey, '', null);
-  }
-
-  function getRobinsText(
-    studyId: string,
-    checklistId: string,
-    sectionKey: string,
-    fieldKey: string,
-    questionKey: string | null = null,
-  ): Y.Text | null {
-    const textGetter = robinsIHandler.getTextGetter(getYDoc);
-    if (!textGetter) return null;
-    return textGetter(studyId, checklistId, sectionKey, fieldKey, questionKey);
-  }
-
-  function getRob2Text(
-    studyId: string,
-    checklistId: string,
-    sectionKey: string,
-    fieldKey: string,
-    questionKey: string | null = null,
-  ): Y.Text | null {
-    const textGetter = rob2Handler.getTextGetter(getYDoc);
-    if (!textGetter) return null;
-    return textGetter(studyId, checklistId, sectionKey, fieldKey, questionKey);
-  }
-
   function getTextRef(studyId: string, checklistId: string, ref: TextRef): Y.Text | null {
     switch (ref.type) {
-      case 'AMSTAR2':
-        return getQuestionNote(studyId, checklistId, ref.questionKey);
-      case 'ROBINS_I':
-        return getRobinsText(
+      case 'AMSTAR2': {
+        const textGetter = amstar2Handler.getTextGetter(getYDoc);
+        if (!textGetter) return null;
+        return textGetter(studyId, checklistId, ref.questionKey, '', null);
+      }
+      case 'ROBINS_I': {
+        const textGetter = robinsIHandler.getTextGetter(getYDoc);
+        if (!textGetter) return null;
+        return textGetter(
           studyId,
           checklistId,
           ref.sectionKey,
           ref.fieldKey,
           ref.questionKey ?? null,
         );
-      case 'ROB2':
-        return getRob2Text(
+      }
+      case 'ROB2': {
+        const textGetter = rob2Handler.getTextGetter(getYDoc);
+        if (!textGetter) return null;
+        return textGetter(
           studyId,
           checklistId,
           ref.sectionKey,
           ref.fieldKey,
           ref.questionKey ?? null,
         );
+      }
     }
   }
 
@@ -377,9 +337,6 @@ export function createChecklistOperations(
     getChecklistAnswersMap: commonOps.getChecklistAnswersMap,
     getChecklistData,
     updateChecklistAnswer,
-    getQuestionNote,
-    getRobinsText,
-    getRob2Text,
     getTextRef,
     setTextValue,
   };
