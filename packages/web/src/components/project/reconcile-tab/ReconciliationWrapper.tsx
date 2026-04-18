@@ -7,6 +7,7 @@ import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { useProjectContext } from '@/components/project/ProjectContext';
 import { connectionPool } from '@/project/ConnectionPool';
+import type { TextRef } from '@/primitives/useProject/checklists';
 import {
   useProjectStore,
   selectMembers,
@@ -452,15 +453,32 @@ export function ReconciliationWrapper({
     ],
   );
 
-  // Set a Y.Text field by key path without direct Y.Text manipulation
+  // Set a Y.Text field by key path without direct Y.Text manipulation.
+  // Bridges the legacy loose-params shape used by reconciliation adapters into
+  // the primitive's typed TextRef. Will be replaced when adapters migrate.
   const setTextValue = useCallback(
     (params: { sectionKey?: string; fieldKey?: string; questionKey?: string }, text: string) => {
       if (!reconciledChecklistId) return;
       const poolOps = connectionPool.getOps(projectId);
       if (!poolOps) throw new Error(`No connection for project ${projectId}`);
-      poolOps.checklist.setTextValue(studyId, reconciledChecklistId, params, text);
+      const ref: TextRef = isRobinsI
+        ? {
+            type: 'ROBINS_I',
+            sectionKey: params.sectionKey ?? '',
+            fieldKey: params.fieldKey ?? '',
+            questionKey: params.questionKey ?? null,
+          }
+        : isRob2
+          ? {
+              type: 'ROB2',
+              sectionKey: params.sectionKey ?? '',
+              fieldKey: params.fieldKey ?? '',
+              questionKey: params.questionKey ?? null,
+            }
+          : { type: 'AMSTAR2', questionKey: params.questionKey ?? '' };
+      poolOps.checklist.setTextValue(studyId, reconciledChecklistId, ref, text);
     },
-    [studyId, reconciledChecklistId, projectId],
+    [studyId, reconciledChecklistId, projectId, isRobinsI, isRob2],
   );
 
   // Shared props for all reconciliation types

@@ -16,11 +16,10 @@ import { ROB2Handler } from './handlers/rob2';
 import type { ChecklistHandler } from './handlers/base';
 import { applyYTextDiff } from '@/hooks/useYText';
 
-interface TextRefParams {
-  sectionKey?: string;
-  fieldKey?: string;
-  questionKey?: string;
-}
+export type TextRef =
+  | { type: 'AMSTAR2'; questionKey: string }
+  | { type: 'ROBINS_I'; sectionKey: string; fieldKey: string; questionKey?: string | null }
+  | { type: 'ROB2'; sectionKey: string; fieldKey: string; questionKey?: string | null };
 
 export interface ChecklistOperations {
   createChecklist: (
@@ -54,11 +53,11 @@ export interface ChecklistOperations {
     fieldKey: string,
     questionKey?: string | null,
   ) => Y.Text | null;
-  getTextRef: (studyId: string, checklistId: string, params?: TextRefParams) => Y.Text | null;
+  getTextRef: (studyId: string, checklistId: string, ref: TextRef) => Y.Text | null;
   setTextValue: (
     studyId: string,
     checklistId: string,
-    params: TextRefParams,
+    ref: TextRef,
     text: string,
     maxLength?: number,
   ) => void;
@@ -334,35 +333,37 @@ export function createChecklistOperations(
     return textGetter(studyId, checklistId, sectionKey, fieldKey, questionKey);
   }
 
-  function getTextRef(
-    studyId: string,
-    checklistId: string,
-    params: TextRefParams = {},
-  ): Y.Text | null {
-    const result = commonOps.getChecklistYMap(studyId, checklistId);
-    if (!result) return null;
-
-    const { checklistType } = result;
-    const { sectionKey, fieldKey, questionKey } = params;
-
-    if (checklistType === 'AMSTAR2') {
-      return getQuestionNote(studyId, checklistId, questionKey || '');
-    } else if (checklistType === 'ROBINS_I') {
-      return getRobinsText(studyId, checklistId, sectionKey || '', fieldKey || '', questionKey);
-    } else if (checklistType === 'ROB2') {
-      return getRob2Text(studyId, checklistId, sectionKey || '', fieldKey || '', questionKey);
+  function getTextRef(studyId: string, checklistId: string, ref: TextRef): Y.Text | null {
+    switch (ref.type) {
+      case 'AMSTAR2':
+        return getQuestionNote(studyId, checklistId, ref.questionKey);
+      case 'ROBINS_I':
+        return getRobinsText(
+          studyId,
+          checklistId,
+          ref.sectionKey,
+          ref.fieldKey,
+          ref.questionKey ?? null,
+        );
+      case 'ROB2':
+        return getRob2Text(
+          studyId,
+          checklistId,
+          ref.sectionKey,
+          ref.fieldKey,
+          ref.questionKey ?? null,
+        );
     }
-    return null;
   }
 
   function setTextValue(
     studyId: string,
     checklistId: string,
-    params: TextRefParams,
+    ref: TextRef,
     text: string,
     maxLength = 2000,
   ): void {
-    const yText = getTextRef(studyId, checklistId, params);
+    const yText = getTextRef(studyId, checklistId, ref);
     if (!yText) return;
     const str = (typeof text === 'string' ? text : '').slice(0, maxLength);
     if (yText.toString() === str) return;
