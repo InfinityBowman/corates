@@ -3,14 +3,23 @@
  * Handles all billing-related API calls
  */
 
-import { parseResponse } from 'hono/client';
-import { api } from '@/lib/rpc';
 import { API_BASE } from '@/config/api';
 
 type BillingInterval = 'monthly' | 'yearly';
 
-async function createCheckoutSession(tier: string, interval: BillingInterval = 'monthly') {
-  return parseResponse(api.api.billing.checkout.$post({ json: { tier, interval } }));
+async function createCheckoutSession(
+  tier: string,
+  interval: BillingInterval = 'monthly',
+): Promise<{ url: string }> {
+  const res = await fetch(`${API_BASE}/api/billing/checkout`, {
+    method: 'POST',
+    credentials: 'include',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ tier, interval }),
+  });
+  const data = (await res.json()) as { url?: string; code?: string; statusCode?: number };
+  if (!res.ok) throw data;
+  return data as { url: string };
 }
 
 async function createPortalSession(): Promise<{ url: string }> {
@@ -36,8 +45,19 @@ export async function redirectToPortal(): Promise<void> {
   window.location.href = url;
 }
 
-async function createSingleProjectCheckout() {
-  return parseResponse(api.api.billing['single-project'].checkout.$post({ json: {} }));
+async function createSingleProjectCheckout(): Promise<{ url: string; sessionId: string }> {
+  const res = await fetch(`${API_BASE}/api/billing/single-project/checkout`, {
+    method: 'POST',
+    credentials: 'include',
+  });
+  const data = (await res.json()) as {
+    url?: string;
+    sessionId?: string;
+    code?: string;
+    statusCode?: number;
+  };
+  if (!res.ok) throw data;
+  return data as { url: string; sessionId: string };
 }
 
 export async function redirectToSingleProjectCheckout(): Promise<void> {
