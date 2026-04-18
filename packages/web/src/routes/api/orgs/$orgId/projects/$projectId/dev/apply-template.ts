@@ -26,7 +26,9 @@ export const handlePost = async ({ request, params }: HandlerArgs) => {
   }
 
   try {
-    const body = (await request.json().catch(() => ({}))) as { userMapping?: Record<string, string> };
+    const body = (await request.json().catch(() => ({}))) as {
+      userMapping?: Record<string, string>;
+    };
     const projectDoc = getProjectDocStub(env, params.projectId);
     const data = await projectDoc.devApplyTemplate(template, mode, body.userMapping);
     return Response.json(data);

@@ -69,10 +69,9 @@ export const handleGet = async ({ request, params }: HandlerArgs) => {
     const object = await env.PDF_BUCKET.get(key);
 
     if (!object) {
-      return Response.json(
-        createDomainError(FILE_ERRORS.NOT_FOUND, { fileName, key }),
-        { status: 404 },
-      );
+      return Response.json(createDomainError(FILE_ERRORS.NOT_FOUND, { fileName, key }), {
+        status: 404,
+      });
     }
 
     return new Response(object.body, {
