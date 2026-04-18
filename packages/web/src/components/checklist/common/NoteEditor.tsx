@@ -1,8 +1,8 @@
 /**
  * NoteEditor - Y.Text-bound textarea for editing notes
  *
- * Binds directly to a Y.Text instance (or LocalTextAdapter) for real-time
- * collaborative editing. Changes sync automatically via Yjs.
+ * Binds directly to a Y.Text instance for real-time collaborative editing.
+ * Changes sync automatically via Yjs.
  * Supports two modes: collapsible (AMSTAR2 per-question notes) and inline (ROB2/ROBINS-I comments).
  */
 

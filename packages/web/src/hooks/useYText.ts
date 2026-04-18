@@ -28,8 +28,6 @@ export function useYText(yText: any): string {
  * instance. Only the characters that actually changed are deleted/inserted,
  * giving Yjs the positional information it needs to merge concurrent edits
  * in non-overlapping regions.
- *
- * Works with both real Y.Text instances and LocalTextAdapter.
  */
 export function applyYTextDiff(yText: any, oldValue: string, newValue: string): void {
   if (oldValue === newValue) return;
