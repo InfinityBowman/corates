@@ -9,6 +9,7 @@ import { ChevronLeftIcon } from 'lucide-react';
 import { ChecklistWithPdf } from '@/components/checklist/ChecklistWithPdf';
 import { useProjectContext } from '@/components/project/ProjectContext';
 import { connectionPool } from '@/project/ConnectionPool';
+import { useChecklistAnswers } from '@/primitives/useProject/checklists/useChecklistAnswers';
 import { useProjectStore, selectConnectionPhase } from '@/stores/projectStore';
 import { useAuthStore, selectUser } from '@/stores/authStore';
 import { ACCESS_DENIED_ERRORS } from '@/constants/errors.js';
@@ -82,14 +83,8 @@ export function ChecklistYjsWrapper({ projectId, studyId, checklistId }: Checkli
 
   const ops = connectionPool.getOps(projectId);
   if (!ops) throw new Error(`No connection for project ${projectId}`);
-  const {
-    updateChecklistAnswer,
-    updateChecklist,
-    getChecklistData,
-    getQuestionNote,
-    getRobinsText,
-    getRob2Text,
-  } = ops.checklist;
+  const { updateChecklistAnswer, updateChecklist, getQuestionNote, getRobinsText, getRob2Text } =
+    ops.checklist;
   const { addPdfToStudy } = ops.pdf;
   const { addAnnotation, updateAnnotation, deleteAnnotation } = ops.annotation;
 
@@ -220,19 +215,18 @@ export function ChecklistYjsWrapper({ projectId, studyId, checklistId }: Checkli
     [orgId, projectId, studyId, studyPdfs, user?.id, addPdfToStudy],
   );
 
-  // Build checklist data for UI
+  const answers = useChecklistAnswers(projectId, studyId, checklistId);
+
   const checklistForUI = useMemo(() => {
-    if (!currentChecklist) return null;
-    const data = getChecklistData(studyId, checklistId);
-    if (!data) return null;
+    if (!currentChecklist || !answers) return null;
     return {
       id: currentChecklist.id,
       name: currentStudy?.name || 'Checklist',
       reviewerName: '',
       createdAt: currentChecklist.createdAt,
-      ...((data.answers as Record<string, unknown>) ?? {}),
+      ...answers,
     };
-  }, [currentChecklist, currentStudy, getChecklistData, studyId, checklistId]);
+  }, [currentChecklist, currentStudy, answers]);
 
   const checklistType = useMemo(() => {
     if (currentChecklist?.type) return currentChecklist.type;
