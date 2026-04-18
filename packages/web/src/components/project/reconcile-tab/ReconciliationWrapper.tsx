@@ -461,21 +461,22 @@ export function ReconciliationWrapper({
       if (!reconciledChecklistId) return;
       const poolOps = connectionPool.getOps(projectId);
       if (!poolOps) throw new Error(`No connection for project ${projectId}`);
-      const ref: TextRef = isRobinsI
-        ? {
+      const ref: TextRef =
+        isRobinsI ?
+          {
             type: 'ROBINS_I',
             sectionKey: params.sectionKey ?? '',
             fieldKey: params.fieldKey ?? '',
             questionKey: params.questionKey ?? null,
           }
-        : isRob2
-          ? {
-              type: 'ROB2',
-              sectionKey: params.sectionKey ?? '',
-              fieldKey: params.fieldKey ?? '',
-              questionKey: params.questionKey ?? null,
-            }
-          : { type: 'AMSTAR2', questionKey: params.questionKey ?? '' };
+        : isRob2 ?
+          {
+            type: 'ROB2',
+            sectionKey: params.sectionKey ?? '',
+            fieldKey: params.fieldKey ?? '',
+            questionKey: params.questionKey ?? null,
+          }
+        : { type: 'AMSTAR2', questionKey: params.questionKey ?? '' };
       poolOps.checklist.setTextValue(studyId, reconciledChecklistId, ref, text);
     },
     [studyId, reconciledChecklistId, projectId, isRobinsI, isRob2],
