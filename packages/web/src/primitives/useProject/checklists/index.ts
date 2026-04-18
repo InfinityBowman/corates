@@ -4,6 +4,11 @@
  */
 
 import * as Y from 'yjs';
+import {
+  AMSTAR2_KEY_SCHEMAS,
+  isAmstar2Key,
+  type Amstar2Key,
+} from '@corates/shared/checklists/amstar2';
 import { createChecklistOfType, CHECKLIST_TYPES } from '@/checklist-registry';
 import { CHECKLIST_STATUS } from '@/constants/checklist-status';
 import { createCommonOperations } from './common';
@@ -262,7 +267,15 @@ export function createChecklistOperations(
 
     const handler = getHandler(checklistType);
     if (handler) {
-      handler.updateAnswer(answersMap, key, data);
+      if (checklistType === CHECKLIST_TYPES.AMSTAR2) {
+        if (!isAmstar2Key(key)) {
+          throw new Error(`[updateChecklistAnswer] Invalid AMSTAR2 key: ${key}`);
+        }
+        const parsed = AMSTAR2_KEY_SCHEMAS[key as Amstar2Key].parse(data);
+        (handler as AMSTAR2Handler).updateAnswer(answersMap, key, parsed);
+      } else {
+        handler.updateAnswer(answersMap, key, data);
+      }
     } else {
       answersMap.set(key, data);
     }

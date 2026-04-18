@@ -13,6 +13,9 @@
 // Schema (checklist map and question definitions)
 export * from './schema.js';
 
+// Answer-payload schemas (Zod runtime validation for updateAnswer data)
+export * from './answers-schema.js';
+
 // Checklist creation
 export * from './create.js';
 
