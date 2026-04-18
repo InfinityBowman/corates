@@ -5,6 +5,7 @@
 
 import { parseResponse } from 'hono/client';
 import { api } from '@/lib/rpc';
+import { API_BASE } from '@/config/api';
 
 type BillingInterval = 'monthly' | 'yearly';
 
@@ -12,8 +13,14 @@ async function createCheckoutSession(tier: string, interval: BillingInterval = '
   return parseResponse(api.api.billing.checkout.$post({ json: { tier, interval } }));
 }
 
-async function createPortalSession() {
-  return parseResponse(api.api.billing.portal.$post({}));
+async function createPortalSession(): Promise<{ url: string }> {
+  const res = await fetch(`${API_BASE}/api/billing/portal`, {
+    method: 'POST',
+    credentials: 'include',
+  });
+  const data = (await res.json()) as { url?: string; code?: string; statusCode?: number };
+  if (!res.ok) throw data;
+  return data as { url: string };
 }
 
 export async function redirectToCheckout(
