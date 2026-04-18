@@ -2,7 +2,7 @@
 
 Handoff doc. Migration consolidates two Cloudflare Workers (`packages/workers` + `packages/web`) into one: the TanStack Start app in `packages/web` takes over every route that used to live in the Hono app.
 
-Branches: `migrate-backend` (Passes 0-5, merged), `migrate-billing-routes` (Passes 6-12, [#484](https://github.com/InfinityBowman/corates/issues/484), merged via PR #487), `migrate-admin-routes` (Passes 13-21, [#485](https://github.com/InfinityBowman/corates/issues/485), merged via PR #488), `retire-hono-app` (Passes 22-26, [#486](https://github.com/InfinityBowman/corates/issues/486), complete as of 2026-04-17 — Hono fully removed; admin CSRF restored in Pass 26).
+Branches: `migrate-backend` (Passes 0-5, merged), `migrate-billing-routes` (Passes 6-12, [#484](https://github.com/InfinityBowman/corates/issues/484), merged via PR #487), `migrate-admin-routes` (Passes 13-21, [#485](https://github.com/InfinityBowman/corates/issues/485), merged via PR #488), `retire-hono-app` (Passes 22-27, [#486](https://github.com/InfinityBowman/corates/issues/486), complete as of 2026-04-17 — Hono fully removed; admin CSRF restored Pass 26; library dead-code sweep Pass 27).
 
 ## What's migrated
 
@@ -46,6 +46,13 @@ Tier 3 admin (in progress, issue [#485](https://github.com/InfinityBowman/corate
 **Admin tier complete.** All admin routes are TanStack. Every route a regular user or admin hits is now on TanStack. Hono still serves `/api/auth/*` (better-auth catch-all), Stripe webhooks, and DO WebSocket upgrades — that's it.
 
 Tier 4 (in progress, issue [#486](https://github.com/InfinityBowman/corates/issues/486)):
+
+- **Pass 27** — Library-only dead-code sweep. Walked the dependency graph from each `@corates/workers/*` subpath export and the `test-worker.ts` entry; identified 4 orphans:
+  - `src/commands/index.ts` — barrel re-export never imported (web pulls from `./commands/{invitations,projects,members,billing}` subpaths directly).
+  - `src/config/validation.ts` + `src/config/__tests__/validation.test.ts` — Zod schemas built for the deleted Hono routes; only consumer is the test file itself.
+  - `src/docs.ts` — HTML for the deleted `/docs` Hono route.
+
+  Verified `lib/send-invitation-email.ts`, `durable-objects/dev-handlers.ts`, `lib/escapeHtml.ts`, `lib/mock-templates.ts`, `lib/avatar-copy.ts`, `lib/subscriptionStatus.ts`, `lib/email-queue.ts`, `auth/oauth-relay.ts`, `policies/{billing,orgs,lib/roles}.ts` all reachable (some via dynamic `await import(...)`). Workers tests **141 → 113** (-28 from `validation.test.ts`); typechecks still clean.
 
 - **Pass 26** — Restore admin CSRF protection. Audited the admin TanStack tier and confirmed the `requireTrustedOrigin` guard never propagated from the Hono umbrella mount during Passes 13-21 — only `stop-impersonation.ts` (Pass 23) carried it. 16 mutating admin routes (POST/PUT/DELETE) were exposed. Folded the CSRF check into `requireAdmin` itself instead of duplicating the call across every route — admin gate is now CSRF (mutations only) → session present → role admin. Internal short-circuit on GET/HEAD/OPTIONS keeps admin reads unaffected. Updated 5 admin test files (`users`, `billing`, `projects`, `storage`, `stripe-tools`) to send `origin: http://localhost:3010` on every mutating request — added the header inline on raw `new Request(...)` calls and to centralized `jsonReq`/`deleteReq` helpers where they exist. Added 2 new tests in `users.server.test.ts` that assert both `missing_origin` and `untrusted_origin` are rejected with 403 / `AUTH_FORBIDDEN` before the admin role check fires. Net: **all admin mutations are now CSRF-protected again**; web tests **402 → 404** (+2 CSRF guard tests, no test deletions).
 
@@ -265,7 +272,7 @@ Most components already used plain `fetch`, so no code changes were needed for P
 ## Test counts (2026-04-17)
 
 - Web server tests: **404 passing** across 39 files (Pass 26: +2 CSRF guard tests in `users.server.test.ts`)
-- Workers tests: **141 passing** across 10 files (Pass 25 deleted 9 obsolete test files / 76 tests covering routes & middleware that all now live in TanStack)
+- Workers tests: **113 passing** across 9 files (Pass 27 deleted `config/__tests__/validation.test.ts` — 28 tests, schemas were orphaned)
 - Web typecheck: clean modulo 2 pre-existing e2e errors (`timeout` in TestDetails, unused `loginWithApiCookies`). The third pre-existing `src/server.ts` queue() arity error was fixed in Pass 25 by rewriting the queue handler to call `handleEmailQueue(batch, env)` (2 args, matching the new signature).
 - Workers typecheck: clean
 
