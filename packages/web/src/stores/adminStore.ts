@@ -244,21 +244,28 @@ export async function grantOrgSingleProject(orgId: string) {
 export async function fetchBillingLedger(
   { limit = 50, status, type } = {} as { limit?: number; status?: string; type?: string },
 ) {
-  const query: Record<string, string> = { limit: limit.toString() };
-  if (status) query.status = status;
-  if (type) query.type = type;
-  return parseResponse(api.api.admin.billing.ledger.$get({ query }));
+  const params = new URLSearchParams({ limit: limit.toString() });
+  if (status) params.set('status', status);
+  if (type) params.set('type', type);
+  const res = await fetch(`/api/admin/billing/ledger?${params.toString()}`, {
+    credentials: 'include',
+  });
+  const data = (await res.json()) as Record<string, unknown>;
+  if (!res.ok) throw data;
+  return data;
 }
 
 export async function fetchBillingStuckStates({ incompleteThreshold = 30, limit = 50 } = {}) {
-  return parseResponse(
-    api.api.admin.billing['stuck-states'].$get({
-      query: {
-        incompleteThreshold: incompleteThreshold.toString(),
-        limit: limit.toString(),
-      },
-    }),
-  );
+  const params = new URLSearchParams({
+    incompleteThreshold: incompleteThreshold.toString(),
+    limit: limit.toString(),
+  });
+  const res = await fetch(`/api/admin/billing/stuck-states?${params.toString()}`, {
+    credentials: 'include',
+  });
+  const data = (await res.json()) as Record<string, unknown>;
+  if (!res.ok) throw data;
+  return data;
 }
 
 export async function fetchOrgBillingReconcile(
@@ -270,18 +277,19 @@ export async function fetchOrgBillingReconcile(
     processingLagThreshold = 5,
   } = {},
 ) {
-  const query: Record<string, string> = {
+  const params = new URLSearchParams({
     incompleteThreshold: incompleteThreshold.toString(),
     checkoutNoSubThreshold: checkoutNoSubThreshold.toString(),
     processingLagThreshold: processingLagThreshold.toString(),
-  };
-  if (checkStripe) query.checkStripe = 'true';
-  return parseResponse(
-    api.api.admin.orgs[':orgId'].billing.reconcile.$get({
-      param: { orgId },
-      query,
-    }),
+  });
+  if (checkStripe) params.set('checkStripe', 'true');
+  const res = await fetch(
+    `/api/admin/orgs/${encodeURIComponent(orgId)}/billing/reconcile?${params.toString()}`,
+    { credentials: 'include' },
   );
+  const data = (await res.json()) as Record<string, unknown>;
+  if (!res.ok) throw data;
+  return data;
 }
 
 export async function removeProjectMember(projectId: string, memberId: string) {
