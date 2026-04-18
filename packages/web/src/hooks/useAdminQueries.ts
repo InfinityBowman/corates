@@ -233,7 +233,12 @@ export function useAdminOrgBillingReconcile(
 export function useAdminDatabaseTables() {
   return useQuery({
     queryKey: queryKeys.admin.databaseTables,
-    queryFn: () => parseResponse(api.api.admin.database.tables.$get()),
+    queryFn: async () => {
+      const res = await fetch('/api/admin/database/tables', { credentials: 'include' });
+      const data = (await res.json()) as Record<string, unknown>;
+      if (!res.ok) throw data;
+      return data;
+    },
     ...ADMIN_QUERY_CONFIG,
   });
 }
@@ -241,12 +246,15 @@ export function useAdminDatabaseTables() {
 export function useAdminTableSchema(tableName: string | null | undefined) {
   return useQuery({
     queryKey: queryKeys.admin.tableSchema(tableName),
-    queryFn: () =>
-      parseResponse(
-        api.api.admin.database.tables[':tableName'].schema.$get({
-          param: { tableName: tableName! },
-        }),
-      ),
+    queryFn: async () => {
+      const res = await fetch(
+        `/api/admin/database/tables/${encodeURIComponent(tableName!)}/schema`,
+        { credentials: 'include' },
+      );
+      const data = (await res.json()) as Record<string, unknown>;
+      if (!res.ok) throw data;
+      return data;
+    },
     enabled: !!tableName,
     staleTime: 1000 * 60 * 10,
     gcTime: 1000 * 60 * 30,
@@ -282,23 +290,24 @@ export function useAdminTableRows(
       filterBy,
       filterValue,
     ),
-    queryFn: () => {
-      const query: Record<string, string> = {
+    queryFn: async () => {
+      const qs = new URLSearchParams({
         page: page.toString(),
         limit: limit.toString(),
         orderBy,
         order,
-      };
+      });
       if (filterBy && filterValue) {
-        query.filterBy = filterBy;
-        query.filterValue = filterValue;
+        qs.set('filterBy', filterBy);
+        qs.set('filterValue', filterValue);
       }
-      return parseResponse(
-        api.api.admin.database.tables[':tableName'].rows.$get({
-          param: { tableName: tableName! },
-          query,
-        }),
+      const res = await fetch(
+        `/api/admin/database/tables/${encodeURIComponent(tableName!)}/rows?${qs.toString()}`,
+        { credentials: 'include' },
       );
+      const data = (await res.json()) as Record<string, unknown>;
+      if (!res.ok) throw data;
+      return data;
     },
     enabled: !!tableName,
     ...ADMIN_QUERY_CONFIG,

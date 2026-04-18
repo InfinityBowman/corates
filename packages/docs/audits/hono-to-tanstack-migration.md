@@ -39,6 +39,7 @@ Tier 3 admin (in progress, issue [#485](https://github.com/InfinityBowman/corate
 - **Pass 16** — admin projects: `/api/admin/projects` (GET list), `/api/admin/projects/$projectId` (GET details + DELETE), `/api/admin/projects/$projectId/doc-stats` (GET; wakes ProjectDoc DO via `getProjectDocStub`), `/api/admin/projects/$projectId/members/$memberId` (DELETE). Four route files. The `doc-stats` route uses `@corates/workers/project-doc-id` (already a subpath export, also used by sync-profile and dev routes) and checks D1 first to avoid waking a DO for non-existent IDs. Migrated `useAdminProjects`/`useAdminProjectDetails`/`useAdminProjectDocStats` (in `useAdminQueries.ts`) and `removeProjectMember`/`deleteProject` (in `adminStore.ts`) from Hono RPC to plain fetch. Replaced the prior Hono test (which only covered `doc-stats`) with full coverage of all 4 routes.
 - **Pass 17** — admin billing observability: `/api/admin/orgs/$orgId/billing/reconcile` (GET, deeply nested under admin/orgs), `/api/admin/billing/stuck-states` (GET global), `/api/admin/billing/ledger` (GET global). Three route files. Reconcile uses `getLedgerEntriesByOrgId` + `LedgerStatus` from `@corates/db/stripe-event-ledger` (already exported) and `createStripeClient` from `@corates/workers/stripe`. Stripe path mocks `@corates/workers/stripe` for the `checkStripe=true` case. Migrated `fetchBillingLedger`/`fetchBillingStuckStates`/`fetchOrgBillingReconcile` (in `adminStore.ts`) from Hono RPC to plain fetch.
 - **Pass 18** — admin Stripe tools: `/api/admin/stripe/customer` (GET lookup by email|customerId), `/api/admin/stripe/portal-link` (POST), `/api/admin/stripe/customer/$customerId/{invoices,payment-methods,subscriptions}` (3 GETs). Five route files. All routes mock `@corates/workers/stripe`'s `createStripeClient` and exercise the customer-lookup → linked-org join via D1. No prior Hono test file existed. Migrated all 5 RPC callers in `routes/_app/_protected/admin/billing.stripe-tools.tsx` to plain fetch and dropped its `parseResponse`/`api` imports.
+- **Pass 19** — admin database viewer: `/api/admin/database/tables` (GET list), `/api/admin/database/tables/$tableName/schema` (GET), `/api/admin/database/tables/$tableName/rows` (GET — mediaFiles takes a dedicated path that joins org/project/user), `/api/admin/database/analytics/{pdfs-by-org,pdfs-by-user,pdfs-by-project,recent-uploads}` (4 GETs). Seven route files. Extracted `ALLOWED_TABLES` whitelist + `isAllowedTable` helper to `packages/web/src/server/lib/dbTables.ts` (used by both schema and rows routes). Migrated `useAdminDatabaseTables`/`useAdminTableSchema`/`useAdminTableRows` (in `useAdminQueries.ts`) from Hono RPC to plain fetch. The 4 analytics endpoints had no frontend caller (dead in the typed RPC client); preserved the endpoints anyway. No prior Hono test file existed.
 
 Every route a regular user hits is now on TanStack. Hono still serves `/api/auth/*` (better-auth catch-all), most of `/api/admin/*`, Stripe webhooks, and DO WebSocket upgrades.
 
@@ -52,7 +53,7 @@ Tracking issues:
 
 Tier 3:
 
-- `packages/workers/src/routes/admin/*` — 4 files remaining (~3,300 lines). Pass 13-18 stripped `orgs.ts`, `storage.ts`, `stats.ts`, `projects.ts`, `billing-observability.ts`, `stripe-tools.ts`. Largest individual files left: `billing.ts` (1,195), `users.ts` (1,092), `database.ts` (997)
+- `packages/workers/src/routes/admin/*` — 3 files remaining (~2,300 lines). Pass 13-19 stripped `orgs.ts`, `storage.ts`, `stats.ts`, `projects.ts`, `billing-observability.ts`, `stripe-tools.ts`, `database.ts`. Largest individual files left: `billing.ts` (1,195), `users.ts` (1,092), `index.ts` (34, router wiring)
 - `packages/workers/src/routes/billing/*` — fully migrated. All 7 files stripped to stubs. Order: `sync.ts` (Pass 6), `portal.ts` (Pass 7), `validation.ts` (Pass 8), `grants.ts` (Pass 9), `invoices.ts` (Pass 10), `subscription.ts` 3 routes (Pass 11), `checkout.ts` 3 routes (Pass 12).
 
 Must stay on Hono indefinitely:
@@ -246,8 +247,8 @@ Most components already used plain `fetch`, so no code changes were needed for P
 
 ## Test counts (2026-04-17)
 
-- Web server tests: **298 passing** across 33 files (Pass 18: +14 tests, +1 file)
-- Workers tests: **237 passing** across 22 files (no prior Hono stripe-tools test existed to delete)
+- Web server tests: **312 passing** across 34 files (Pass 19: +14 tests, +1 file)
+- Workers tests: **237 passing** across 22 files (no prior Hono database test existed to delete)
 - Web typecheck: clean modulo 3 pre-existing errors (e2e `timeout` in TestDetails, unused `loginWithApiCookies`, `src/server.ts:28` queue() arity)
 - Workers typecheck: clean
 
@@ -270,7 +271,7 @@ Never start dev servers — the user does that.
 ## Recommended Tier 3 order
 
 1. ~~**Billing non-webhook first** ([#484](https://github.com/InfinityBowman/corates/issues/484)). Done — Passes 6-12.~~
-2. **Admin** ([#485](https://github.com/InfinityBowman/corates/issues/485)). ~7.2k lines, in progress on `migrate-admin-routes`. Mostly read-only dashboards, so faster per-line than billing. Order: ~~`orgs.ts` (393, Pass 13)~~, ~~`storage.ts` (525, Pass 14)~~, ~~`stats.ts` (665, Pass 15)~~, ~~`projects.ts` (772, Pass 16)~~, ~~`billing-observability.ts` (788, Pass 17)~~, ~~`stripe-tools.ts` (808, Pass 18)~~, `database.ts` (997), `users.ts` (1,092), `billing.ts` (1,195).
+2. **Admin** ([#485](https://github.com/InfinityBowman/corates/issues/485)). ~7.2k lines, in progress on `migrate-admin-routes`. Mostly read-only dashboards, so faster per-line than billing. Order: ~~`orgs.ts` (393, Pass 13)~~, ~~`storage.ts` (525, Pass 14)~~, ~~`stats.ts` (665, Pass 15)~~, ~~`projects.ts` (772, Pass 16)~~, ~~`billing-observability.ts` (788, Pass 17)~~, ~~`stripe-tools.ts` (808, Pass 18)~~, ~~`database.ts` (997, Pass 19)~~, `users.ts` (1,092), `billing.ts` (1,195).
 3. **Retire Hono app** ([#486](https://github.com/InfinityBowman/corates/issues/486)). Port `/api/auth/*` and Stripe webhooks, then strip workers to library-only.
 
 Stripe webhooks stay on Hono. The `/api/auth/*` catch-all stays on Hono (better-auth).
