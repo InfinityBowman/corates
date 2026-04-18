@@ -1,4 +1,5 @@
 import { createStartHandler, defaultStreamHandler } from '@tanstack/react-start/server';
+import * as Sentry from '@sentry/cloudflare';
 import { handleEmailQueue } from '@corates/workers/queue';
 import { getProjectDocStub } from '@corates/workers/project-doc-id';
 
@@ -24,7 +25,13 @@ interface DOEnv {
   };
 }
 
-export default {
+interface SentryEnv {
+  SENTRY_DSN?: string;
+  ENVIRONMENT?: string;
+  CF_VERSION_METADATA?: { id?: string };
+}
+
+const workerHandler = {
   async fetch(request: Request, env: unknown, ctx: ExecutionContext): Promise<Response> {
     const url = new URL(request.url);
 
@@ -59,3 +66,19 @@ export default {
     return handleEmailQueue(batch, env as never);
   },
 };
+
+// Wrap with Sentry for error monitoring. `Sentry.withSentry` proxies fetch +
+// queue and uses `ctx.waitUntil` for transport — that's available in the
+// production Worker runtime but not in the vitest pool, so the test entry
+// (`src/__tests__/server/test-worker.ts`) bypasses this wrapper entirely by
+// being a separate `main` in `wrangler.test.jsonc`.
+export default Sentry.withSentry((env: SentryEnv) => {
+  return {
+    dsn: env.SENTRY_DSN ?? '',
+    release: env.CF_VERSION_METADATA?.id,
+    environment: env.ENVIRONMENT,
+    enabled: !!env.SENTRY_DSN,
+    tracesSampleRate: env.ENVIRONMENT === 'production' ? 0.1 : 1.0,
+    sendDefaultPii: true,
+  };
+}, workerHandler);

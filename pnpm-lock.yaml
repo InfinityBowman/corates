@@ -208,6 +208,9 @@ importers:
       '@fontsource-variable/geist':
         specifier: ^5.2.8
         version: 5.2.8
+      '@sentry/cloudflare':
+        specifier: ^10.47.0
+        version: 10.49.0(@cloudflare/workers-types@4.20260405.1)
       '@sentry/react':
         specifier: ^10.47.0
         version: 10.47.0(react@19.2.4)
@@ -3245,8 +3248,21 @@ packages:
     resolution: {integrity: sha512-rC0agZdxKA5XWfL4VwPOr/rJMogXDqZgnVzr93YWpFn9DMZT/7LzxSJVPIJwRUjx3bFEby3PcTa3YaX7pxm1AA==}
     engines: {node: '>=18'}
 
+  '@sentry/cloudflare@10.49.0':
+    resolution: {integrity: sha512-kHNIwJ6SX39R5TRoW/Bf25rgrBwXBbD44fEK9+hkJ3IdGBLktXG2+T7mNGjpvR98TWxQDhcvs8WLfFw/SsDGrA==}
+    engines: {node: '>=18'}
+    peerDependencies:
+      '@cloudflare/workers-types': ^4.x
+    peerDependenciesMeta:
+      '@cloudflare/workers-types':
+        optional: true
+
   '@sentry/core@10.47.0':
     resolution: {integrity: sha512-nsYRAx3EWezDut+Zl+UwwP07thh9uY7CfSAi2whTdcJl5hu1nSp2z8bba7Vq/MGbNLnazkd3A+GITBEML924JA==}
+    engines: {node: '>=18'}
+
+  '@sentry/core@10.49.0':
+    resolution: {integrity: sha512-UaFeum3LUM1mB0d67jvKnqId1yWQjyqmaDV6kWngG03x+jqXb08tJdGpSoxjXZe13jFBbiBL/wKDDYIK7rCK4g==}
     engines: {node: '>=18'}
 
   '@sentry/react@10.47.0':
@@ -10921,7 +10937,16 @@ snapshots:
       '@sentry-internal/replay-canvas': 10.47.0
       '@sentry/core': 10.47.0
 
+  '@sentry/cloudflare@10.49.0(@cloudflare/workers-types@4.20260405.1)':
+    dependencies:
+      '@opentelemetry/api': 1.9.1
+      '@sentry/core': 10.49.0
+    optionalDependencies:
+      '@cloudflare/workers-types': 4.20260405.1
+
   '@sentry/core@10.47.0': {}
+
+  '@sentry/core@10.49.0': {}
 
   '@sentry/react@10.47.0(react@19.2.4)':
     dependencies:
