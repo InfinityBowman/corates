@@ -24,8 +24,7 @@ interface ChecklistWithPdfProps {
   pdfs?: any[];
   selectedPdfId?: string | null;
   onPdfSelect?: (_pdfId: string) => void;
-  getTextRef?: (_ref: TextRef) => Y.Text | null;
-  getRobinsText?: (_sectionKey: string, _fieldKey: string, _questionKey?: string) => any;
+  getTextRef: (_ref: TextRef) => Y.Text | null;
   getRob2Text?: (_sectionKey: string, _fieldKey: string, _questionKey?: string) => any;
   pdfUrl?: string | null;
   onAnnotationAdd?: (_annotation: any) => void;
@@ -49,7 +48,6 @@ export function ChecklistWithPdf({
   selectedPdfId,
   onPdfSelect,
   getTextRef,
-  getRobinsText,
   getRob2Text,
   pdfUrl,
   onAnnotationAdd,
@@ -77,7 +75,6 @@ export function ChecklistWithPdf({
           onUpdate={onUpdate}
           readOnly={readOnly}
           getTextRef={getTextRef}
-          getRobinsText={getRobinsText}
           getRob2Text={getRob2Text}
         />
 

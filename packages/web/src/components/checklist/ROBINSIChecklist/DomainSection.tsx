@@ -5,10 +5,12 @@
  */
 
 import { useMemo, useCallback } from 'react';
+import type * as Y from 'yjs';
 import { ROBINS_I_CHECKLIST, getDomainQuestions } from './checklist-map';
 import { SignallingQuestion } from './SignallingQuestion';
 import { DomainJudgement, JudgementBadge } from './DomainJudgement';
 import { scoreRobinsDomain, getEffectiveDomainJudgement } from './scoring/robins-scoring.js';
+import type { TextRef } from '@/primitives/useProject/checklists';
 
 interface DomainSectionProps {
   domainKey: string;
@@ -18,7 +20,7 @@ interface DomainSectionProps {
   showComments?: boolean;
   collapsed?: boolean;
   onToggleCollapse?: () => void;
-  getRobinsText?: (_sectionKey: string, _fieldKey: string, _questionKey?: string) => any;
+  getTextRef: (_ref: TextRef) => Y.Text | null;
 }
 
 export function DomainSection({
@@ -29,7 +31,7 @@ export function DomainSection({
   showComments,
   collapsed,
   onToggleCollapse,
-  getRobinsText,
+  getTextRef,
 }: DomainSectionProps) {
   const domain = (ROBINS_I_CHECKLIST as any)[domainKey];
   const questions = useMemo(() => getDomainQuestions(domainKey), [domainKey]);
@@ -114,7 +116,7 @@ export function DomainSection({
         showComment={showComments}
         domainKey={domainKey}
         questionKey={qKey}
-        getRobinsText={getRobinsText}
+        getTextRef={getTextRef}
         isSkippable={isQuestionSkippable(qKey)}
       />
     ));

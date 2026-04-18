@@ -22,8 +22,7 @@ interface GenericChecklistProps {
   checklist: any;
   onUpdate: (_patch: Record<string, any>) => void;
   readOnly?: boolean;
-  getTextRef?: (_ref: TextRef) => Y.Text | null;
-  getRobinsText?: (_sectionKey: string, _fieldKey: string, _questionKey?: string) => any;
+  getTextRef: (_ref: TextRef) => Y.Text | null;
   getRob2Text?: (_sectionKey: string, _fieldKey: string, _questionKey?: string) => any;
 }
 
@@ -33,7 +32,6 @@ export function GenericChecklist({
   onUpdate,
   readOnly,
   getTextRef,
-  getRobinsText,
   getRob2Text,
 }: GenericChecklistProps) {
   const checklistType = useMemo(() => {
@@ -59,7 +57,7 @@ export function GenericChecklist({
           showComments={true}
           showLegend={true}
           readOnly={readOnly}
-          getRobinsText={getRobinsText}
+          getTextRef={getTextRef}
         />
       )}
       {checklistType === CHECKLIST_TYPES.ROB2 && (

@@ -83,8 +83,7 @@ export function ChecklistYjsWrapper({ projectId, studyId, checklistId }: Checkli
 
   const ops = connectionPool.getOps(projectId);
   if (!ops) throw new Error(`No connection for project ${projectId}`);
-  const { updateChecklistAnswer, updateChecklist, getTextRef, getRobinsText, getRob2Text } =
-    ops.checklist;
+  const { updateChecklistAnswer, updateChecklist, getTextRef, getRob2Text } = ops.checklist;
   const { addPdfToStudy } = ops.pdf;
   const { addAnnotation, updateAnnotation, deleteAnnotation } = ops.annotation;
 
@@ -440,9 +439,6 @@ export function ChecklistYjsWrapper({ projectId, studyId, checklistId }: Checkli
       selectedPdfId={selectedPdfId}
       onPdfSelect={handlePdfSelect}
       getTextRef={ref => getTextRef(studyId, checklistId, ref)}
-      getRobinsText={(sectionKey: string, fieldKey: string, questionKey?: string) =>
-        getRobinsText(studyId, checklistId, sectionKey, fieldKey, questionKey)
-      }
       getRob2Text={(sectionKey: string, fieldKey: string, questionKey?: string) =>
         getRob2Text(studyId, checklistId, sectionKey, fieldKey, questionKey)
       }

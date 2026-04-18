@@ -3,17 +3,19 @@
  */
 
 import { useCallback, useMemo } from 'react';
+import type * as Y from 'yjs';
 import { INFORMATION_SOURCES, SECTION_D } from './checklist-map';
 import { NoteEditor } from '@/components/checklist/common/NoteEditor';
+import type { TextRef } from '@/primitives/useProject/checklists';
 
 interface SectionDProps {
   sectionDState: any;
   onUpdate: (_newState: any) => void;
   disabled?: boolean;
-  getRobinsText?: (_sectionKey: string, _fieldKey: string) => any;
+  getTextRef: (_ref: TextRef) => Y.Text | null;
 }
 
-export function SectionD({ sectionDState, onUpdate, disabled, getRobinsText }: SectionDProps) {
+export function SectionD({ sectionDState, onUpdate, disabled, getTextRef }: SectionDProps) {
   const handleSourceToggle = useCallback(
     (sourceName: string) => {
       const newSources = {
@@ -26,8 +28,8 @@ export function SectionD({ sectionDState, onUpdate, disabled, getRobinsText }: S
   );
 
   const otherSpecifyYText = useMemo(
-    () => (getRobinsText ? getRobinsText('sectionD', 'otherSpecify') : null),
-    [getRobinsText],
+    () => getTextRef({ type: 'ROBINS_I', sectionKey: 'sectionD', fieldKey: 'otherSpecify' }),
+    [getTextRef],
   );
 
   return (
