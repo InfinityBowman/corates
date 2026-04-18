@@ -23,9 +23,18 @@ const ADMIN_QUERY_CONFIG = {
 };
 
 export function useAdminStats() {
+  // TODO(agent): GET /api/admin/stats was never implemented backend-side; the
+  // statsRoutes mount only handles /signups, /organizations, /projects,
+  // /webhooks, /subscriptions, /revenue. This hook has been returning a 404
+  // for as long as it's existed. Either delete it or wire it to a real
+  // aggregate endpoint.
   return useQuery({
     queryKey: queryKeys.admin.stats,
-    queryFn: () => parseResponse(api.api.admin.stats.$get()),
+    queryFn: async () => {
+      const res = await fetch('/api/admin/stats', { credentials: 'include' });
+      if (!res.ok) return null;
+      return res.json();
+    },
     ...ADMIN_QUERY_CONFIG,
   });
 }
