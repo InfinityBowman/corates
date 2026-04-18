@@ -160,11 +160,7 @@ export class ROB2Handler extends ChecklistHandler {
     return answers;
   }
 
-  updateAnswer<K extends Rob2Key>(
-    answersMap: Y.Map<unknown>,
-    key: K,
-    data: Rob2Answers[K],
-  ): void {
+  updateAnswer<K extends Rob2Key>(answersMap: Y.Map<unknown>, key: K, data: Rob2Answers[K]): void {
     const doc = answersMap.doc!;
     doc.transact(() => {
       let sectionYMap = answersMap.get(key) as Y.Map<unknown> | undefined;

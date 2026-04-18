@@ -28,9 +28,7 @@ describe('RoB2 answer-payload schemas', () => {
   });
 
   it('rejects unknown keys on domain update (strict)', () => {
-    expect(() =>
-      Rob2DomainUpdateSchema.parse({ judgement: 'Low', foo: 1 } as unknown),
-    ).toThrow();
+    expect(() => Rob2DomainUpdateSchema.parse({ judgement: 'Low', foo: 1 } as unknown)).toThrow();
   });
 
   it('accepts overall update', () => {

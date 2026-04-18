@@ -34,9 +34,7 @@ describe('Amstar2 answer-payload schemas', () => {
   });
 
   it('rejects missing answers field', () => {
-    expect(() =>
-      Amstar2QuestionAnswerSchema.parse({ critical: false } as unknown),
-    ).toThrow();
+    expect(() => Amstar2QuestionAnswerSchema.parse({ critical: false } as unknown)).toThrow();
   });
 
   it('isAmstar2Key narrows known and rejects unknown keys', () => {
