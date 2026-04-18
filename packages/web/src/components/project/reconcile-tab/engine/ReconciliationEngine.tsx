@@ -83,7 +83,6 @@ export function ReconciliationEngine({
     checklist2,
     reconciledChecklist,
     updateChecklistAnswer,
-    getTextRef,
     setTextValue,
     onSaveReconciled,
     checklist1Id: (checklist1 as any)?.id ?? null,

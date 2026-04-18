@@ -14,6 +14,7 @@ import type {
   NavbarContext,
   SummaryContext,
 } from '../engine/types';
+import type { TextRef } from '@/primitives/useProject/checklists';
 import {
   compareChecklists,
   getSectionBKeys,
@@ -153,13 +154,7 @@ function autoFillFromReviewer1(
   item: ReconciliationNavItem,
   checklist1: unknown,
   updateChecklistAnswer: (sectionKey: string, data: unknown) => void,
-  _getTextRef: ((...args: unknown[]) => unknown) | null,
-  setTextValue?:
-    | ((
-        params: { sectionKey?: string; fieldKey?: string; questionKey?: string },
-        text: string,
-      ) => void)
-    | null,
+  setTextValue: (ref: TextRef, text: string) => void,
 ): void {
   const c1 = checklist1 as any;
 
@@ -167,8 +162,13 @@ function autoFillFromReviewer1(
     const answer = c1?.sectionB?.[item.key];
     if (answer) {
       updateSectionBAnswer(updateChecklistAnswer, item.key, answer.answer);
-      setTextValue?.(
-        { sectionKey: 'sectionB', fieldKey: 'comment', questionKey: item.key },
+      setTextValue(
+        {
+          type: 'ROBINS_I',
+          sectionKey: 'sectionB',
+          fieldKey: 'comment',
+          questionKey: item.key,
+        },
         answer.comment || '',
       );
     }
@@ -176,8 +176,13 @@ function autoFillFromReviewer1(
     const answer = c1?.[item.domainKey]?.answers?.[item.key];
     if (answer) {
       updateDomainQuestionAnswer(updateChecklistAnswer, item.domainKey, item.key, answer.answer);
-      setTextValue?.(
-        { sectionKey: item.domainKey, fieldKey: 'comment', questionKey: item.key },
+      setTextValue(
+        {
+          type: 'ROBINS_I',
+          sectionKey: item.domainKey,
+          fieldKey: 'comment',
+          questionKey: item.key,
+        },
         answer.comment || '',
       );
     }
@@ -242,7 +247,12 @@ function renderPage(context: EngineContext) {
         reviewer1Data={c1?.sectionB?.[currentItem.key]}
         reviewer2Data={c2?.sectionB?.[currentItem.key]}
         finalData={fa.sectionB?.[currentItem.key]}
-        finalCommentYText={getTextRef?.('sectionB', 'comment', currentItem.key)}
+        finalCommentYText={getTextRef({
+          type: 'ROBINS_I',
+          sectionKey: 'sectionB',
+          fieldKey: 'comment',
+          questionKey: currentItem.key,
+        })}
         reviewer1Name={context.reviewer1Name || 'Reviewer 1'}
         reviewer2Name={context.reviewer2Name || 'Reviewer 2'}
         isAgreement={context.isAgreement}
@@ -253,8 +263,13 @@ function renderPage(context: EngineContext) {
           const data = c1?.sectionB?.[currentItem.key];
           if (data) {
             updateSectionBAnswer(context.updateChecklistAnswer, currentItem.key, data.answer);
-            context.setTextValue?.(
-              { sectionKey: 'sectionB', fieldKey: 'comment', questionKey: currentItem.key },
+            context.setTextValue(
+              {
+                type: 'ROBINS_I',
+                sectionKey: 'sectionB',
+                fieldKey: 'comment',
+                questionKey: currentItem.key,
+              },
               data.comment || '',
             );
           }
@@ -263,8 +278,13 @@ function renderPage(context: EngineContext) {
           const data = c2?.sectionB?.[currentItem.key];
           if (data) {
             updateSectionBAnswer(context.updateChecklistAnswer, currentItem.key, data.answer);
-            context.setTextValue?.(
-              { sectionKey: 'sectionB', fieldKey: 'comment', questionKey: currentItem.key },
+            context.setTextValue(
+              {
+                type: 'ROBINS_I',
+                sectionKey: 'sectionB',
+                fieldKey: 'comment',
+                questionKey: currentItem.key,
+              },
               data.comment || '',
             );
           }
@@ -281,7 +301,12 @@ function renderPage(context: EngineContext) {
         reviewer1Data={c1?.[currentItem.domainKey]?.answers?.[currentItem.key]}
         reviewer2Data={c2?.[currentItem.domainKey]?.answers?.[currentItem.key]}
         finalData={fa[currentItem.domainKey]?.answers?.[currentItem.key]}
-        finalCommentYText={getTextRef?.(currentItem.domainKey, 'comment', currentItem.key)}
+        finalCommentYText={getTextRef({
+          type: 'ROBINS_I',
+          sectionKey: currentItem.domainKey,
+          fieldKey: 'comment',
+          questionKey: currentItem.key,
+        })}
         reviewer1Name={context.reviewer1Name || 'Reviewer 1'}
         reviewer2Name={context.reviewer2Name || 'Reviewer 2'}
         isAgreement={context.isAgreement}
@@ -302,8 +327,9 @@ function renderPage(context: EngineContext) {
               currentItem.key,
               data.answer,
             );
-            context.setTextValue?.(
+            context.setTextValue(
               {
+                type: 'ROBINS_I',
                 sectionKey: currentItem.domainKey!,
                 fieldKey: 'comment',
                 questionKey: currentItem.key,
@@ -321,8 +347,9 @@ function renderPage(context: EngineContext) {
               currentItem.key,
               data.answer,
             );
-            context.setTextValue?.(
+            context.setTextValue(
               {
+                type: 'ROBINS_I',
                 sectionKey: currentItem.domainKey!,
                 fieldKey: 'comment',
                 questionKey: currentItem.key,

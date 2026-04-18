@@ -14,6 +14,7 @@ import type {
   NavbarContext,
   SummaryContext,
 } from '../engine/types';
+import type { TextRef } from '@/primitives/useProject/checklists';
 import {
   compareChecklists,
   hasAimMismatch,
@@ -193,13 +194,7 @@ function autoFillFromReviewer1(
   item: ReconciliationNavItem,
   checklist1: unknown,
   updateChecklistAnswer: (sectionKey: string, data: unknown) => void,
-  _getTextRef: ((...args: unknown[]) => unknown) | null,
-  setTextValue?:
-    | ((
-        params: { sectionKey?: string; fieldKey?: string; questionKey?: string },
-        text: string,
-      ) => void)
-    | null,
+  setTextValue: (ref: TextRef, text: string) => void,
 ): void {
   const c1 = checklist1 as any;
 
@@ -209,8 +204,8 @@ function autoFillFromReviewer1(
       // Always update finalAnswers so hasNavItemAnswer works even if page is unmounted
       updatePreliminaryField(updateChecklistAnswer, item.key, value);
       if (PRELIMINARY_TEXT_FIELDS.includes(item.key)) {
-        setTextValue?.(
-          { sectionKey: 'preliminary', fieldKey: item.key },
+        setTextValue(
+          { type: 'ROB2', sectionKey: 'preliminary', fieldKey: item.key },
           typeof value === 'string' ? value : '',
         );
       }
@@ -219,8 +214,13 @@ function autoFillFromReviewer1(
     const answer = c1?.[item.domainKey]?.answers?.[item.key];
     if (answer) {
       updateDomainQuestionAnswer(updateChecklistAnswer, item.domainKey, item.key, answer.answer);
-      setTextValue?.(
-        { sectionKey: item.domainKey, fieldKey: 'comment', questionKey: item.key },
+      setTextValue(
+        {
+          type: 'ROB2',
+          sectionKey: item.domainKey,
+          fieldKey: 'comment',
+          questionKey: item.key,
+        },
         answer.comment || '',
       );
     }
@@ -322,7 +322,7 @@ function renderPage(context: EngineContext) {
         onFinalChange={(value: any) =>
           updatePreliminaryField(context.updateChecklistAnswer, currentItem.key, value)
         }
-        getRob2Text={getTextRef as any}
+        getTextRef={getTextRef}
         onUseReviewer1={() => {
           const value = c1?.preliminary?.[currentItem.key];
           if (value !== undefined) {
@@ -333,8 +333,8 @@ function renderPage(context: EngineContext) {
               // Also write to Y.Text for the NoteEditor. The equality check in
               // setYTextField prevents a feedback loop (setTextValue -> updateChecklistAnswer
               // -> setYTextField sees same value -> skips).
-              context.setTextValue?.(
-                { sectionKey: 'preliminary', fieldKey: currentItem.key },
+              context.setTextValue(
+                { type: 'ROB2', sectionKey: 'preliminary', fieldKey: currentItem.key },
                 typeof value === 'string' ? value : '',
               );
             }
@@ -345,8 +345,8 @@ function renderPage(context: EngineContext) {
           if (value !== undefined) {
             updatePreliminaryField(context.updateChecklistAnswer, currentItem.key, value);
             if (PRELIMINARY_TEXT_FIELDS.includes(currentItem.key)) {
-              context.setTextValue?.(
-                { sectionKey: 'preliminary', fieldKey: currentItem.key },
+              context.setTextValue(
+                { type: 'ROB2', sectionKey: 'preliminary', fieldKey: currentItem.key },
                 typeof value === 'string' ? value : '',
               );
             }
@@ -364,7 +364,12 @@ function renderPage(context: EngineContext) {
         reviewer1Data={c1?.[currentItem.domainKey!]?.answers?.[currentItem.key]}
         reviewer2Data={c2?.[currentItem.domainKey!]?.answers?.[currentItem.key]}
         finalData={fa[currentItem.domainKey!]?.answers?.[currentItem.key]}
-        finalCommentYText={getTextRef?.(currentItem.domainKey!, 'comment', currentItem.key)}
+        finalCommentYText={getTextRef({
+          type: 'ROB2',
+          sectionKey: currentItem.domainKey!,
+          fieldKey: 'comment',
+          questionKey: currentItem.key,
+        })}
         reviewer1Name={context.reviewer1Name || 'Reviewer 1'}
         reviewer2Name={context.reviewer2Name || 'Reviewer 2'}
         isAgreement={context.isAgreement}
@@ -386,8 +391,9 @@ function renderPage(context: EngineContext) {
               currentItem.key,
               data.answer,
             );
-            context.setTextValue?.(
+            context.setTextValue(
               {
+                type: 'ROB2',
                 sectionKey: currentItem.domainKey!,
                 fieldKey: 'comment',
                 questionKey: currentItem.key,
@@ -405,8 +411,9 @@ function renderPage(context: EngineContext) {
               currentItem.key,
               data.answer,
             );
-            context.setTextValue?.(
+            context.setTextValue(
               {
+                type: 'ROB2',
                 sectionKey: currentItem.domainKey!,
                 fieldKey: 'comment',
                 questionKey: currentItem.key,

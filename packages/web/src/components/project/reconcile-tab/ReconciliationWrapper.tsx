@@ -24,7 +24,6 @@ import {
 import { downloadPdf, getPdfUrl } from '@/api/pdf-api';
 import { getCachedPdf, cachePdf } from '@/primitives/pdfCache.js';
 import { showToast } from '@/components/ui/toast';
-import { CHECKLIST_TYPES } from '@/checklist-registry/types';
 import { usePdfPreviewStore } from '@/stores/pdfPreviewStore';
 import { ReconciliationEngine, registerReconciliationAdapter } from './engine';
 import { amstar2Adapter } from './amstar2-reconcile/adapter';
@@ -68,9 +67,8 @@ export function ReconciliationWrapper({
     updateChecklistAnswer,
     updateChecklist,
     getChecklistData,
-    getQuestionNote,
-    getRobinsText,
-    getRob2Text,
+    getTextRef: opsGetTextRef,
+    setTextValue: opsSetTextValue,
   } = ops.checklist;
   const { getReconciliationProgress, saveReconciliationProgress } = ops.reconciliation;
   const getAwareness = ops.getAwareness;
@@ -391,9 +389,6 @@ export function ReconciliationWrapper({
     };
   }, [reconciledChecklistId, getChecklistData, studyId, reconciledChecklistMeta]);
 
-  const isRobinsI = checklistType === CHECKLIST_TYPES.ROBINS_I || checklistType === 'ROBINS_I';
-  const isRob2 = checklistType === CHECKLIST_TYPES.ROB2 || checklistType === 'ROB2';
-
   // Build project path
   const getProjectPath = useCallback(() => `/projects/${projectId}`, [projectId]);
 
@@ -422,64 +417,15 @@ export function ReconciliationWrapper({
     navigate({ to: `${getProjectPath()}?tab=reconcile` as string });
   }, [navigate, getProjectPath]);
 
-  // Unified getTextRef that routes to the correct Yjs text accessor per type
   const getTextRef = useCallback(
-    (...args: unknown[]) => {
-      if (isRobinsI) {
-        return getRobinsText(
-          studyId,
-          reconciledChecklistId as string,
-          ...(args as [string, string, string?]),
-        );
-      }
-      if (isRob2) {
-        return getRob2Text(
-          studyId,
-          reconciledChecklistId as string,
-          ...(args as [string, string, string?]),
-        );
-      }
-      // AMSTAR2: getQuestionNote takes just the question key
-      return getQuestionNote(studyId, reconciledChecklistId as string, args[0] as string);
-    },
-    [
-      isRobinsI,
-      isRob2,
-      studyId,
-      reconciledChecklistId,
-      getRobinsText,
-      getRob2Text,
-      getQuestionNote,
-    ],
+    (ref: TextRef) => opsGetTextRef(studyId, reconciledChecklistId as string, ref),
+    [opsGetTextRef, studyId, reconciledChecklistId],
   );
 
-  // Set a Y.Text field by key path without direct Y.Text manipulation.
-  // Bridges the legacy loose-params shape used by reconciliation adapters into
-  // the primitive's typed TextRef. Will be replaced when adapters migrate.
   const setTextValue = useCallback(
-    (params: { sectionKey?: string; fieldKey?: string; questionKey?: string }, text: string) => {
-      if (!reconciledChecklistId) return;
-      const poolOps = connectionPool.getOps(projectId);
-      if (!poolOps) throw new Error(`No connection for project ${projectId}`);
-      const ref: TextRef =
-        isRobinsI ?
-          {
-            type: 'ROBINS_I',
-            sectionKey: params.sectionKey ?? '',
-            fieldKey: params.fieldKey ?? '',
-            questionKey: params.questionKey ?? null,
-          }
-        : isRob2 ?
-          {
-            type: 'ROB2',
-            sectionKey: params.sectionKey ?? '',
-            fieldKey: params.fieldKey ?? '',
-            questionKey: params.questionKey ?? null,
-          }
-        : { type: 'AMSTAR2', questionKey: params.questionKey ?? '' };
-      poolOps.checklist.setTextValue(studyId, reconciledChecklistId, ref, text);
-    },
-    [studyId, reconciledChecklistId, projectId, isRobinsI, isRob2],
+    (ref: TextRef, text: string) =>
+      opsSetTextValue(studyId, reconciledChecklistId as string, ref, text),
+    [opsSetTextValue, studyId, reconciledChecklistId],
   );
 
   // Shared props for all reconciliation types
