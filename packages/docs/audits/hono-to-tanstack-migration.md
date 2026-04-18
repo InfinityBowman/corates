@@ -25,6 +25,12 @@ Every route a regular user hits is now on TanStack. Hono still serves `/api/auth
 
 ## What's left
 
+Tracking issues:
+
+- [#484](https://github.com/InfinityBowman/corates/issues/484) — Migrate billing (non-webhook) routes
+- [#485](https://github.com/InfinityBowman/corates/issues/485) — Migrate admin routes
+- [#486](https://github.com/InfinityBowman/corates/issues/486) — Retire `packages/workers` Hono app
+
 Tier 3:
 
 - `packages/workers/src/routes/admin/*` — 10 files, ~7,200 lines total. Largest individual files: `billing.ts` (1,195), `users.ts` (1,092), `database.ts` (997), `stripe-tools.ts` (808), `billing-observability.ts` (788), `projects.ts` (772), `stats.ts` (665), `storage.ts` (525), `orgs.ts` (393)
@@ -239,10 +245,36 @@ Never start dev servers — the user does that.
 
 ## Recommended Tier 3 order
 
-1. **Billing non-webhook first.** Smaller (1.4k lines), higher-risk (money), worth doing alone with careful review. Tackle in this order: `portal.ts` (108, simplest), `grants.ts` (135), `sync.ts` (80), `validation.ts` (126), `invoices.ts` (149), `subscription.ts` (307), `checkout.ts` (431). Each is its own pass.
-2. **Admin last.** ~7.2k lines. Mostly read-only dashboards, so faster per-line than billing. Suggested order by size/complexity: `orgs.ts` (393), `storage.ts` (525), `stats.ts` (665), `projects.ts` (772), `billing-observability.ts` (788), `stripe-tools.ts` (808), `database.ts` (997), `users.ts` (1,092), `billing.ts` (1,195).
+1. **Billing non-webhook first** ([#484](https://github.com/InfinityBowman/corates/issues/484)). Smaller (1.4k lines), higher-risk (money), worth doing alone with careful review. Tackle in this order: `sync.ts` (80), `portal.ts` (108), `validation.ts` (126), `grants.ts` (135), `invoices.ts` (149), `subscription.ts` (307), `checkout.ts` (431). Each is its own pass.
+2. **Admin** ([#485](https://github.com/InfinityBowman/corates/issues/485)). ~7.2k lines. Mostly read-only dashboards, so faster per-line than billing. Suggested order by size: `orgs.ts` (393), `storage.ts` (525), `stats.ts` (665), `projects.ts` (772), `billing-observability.ts` (788), `stripe-tools.ts` (808), `database.ts` (997), `users.ts` (1,092), `billing.ts` (1,195).
+3. **Retire Hono app** ([#486](https://github.com/InfinityBowman/corates/issues/486)). Port `/api/auth/*` and Stripe webhooks, then strip workers to library-only.
 
 Stripe webhooks stay on Hono. The `/api/auth/*` catch-all stays on Hono (better-auth).
+
+## End state: retiring `packages/workers`
+
+The workers package is already non-deploying (its `deploy` script errors out with "This package is retired. Deploy from packages/web"). After Tier 3, the Hono app will be an empty shell — every route stubbed. At that point there are three remaining pieces of Hono surface to unwind:
+
+- `/api/auth/*` — better-auth handler. It's just a fetch handler; port to a TanStack catch-all route file.
+- Stripe webhooks — need raw body for signature verification. Port to a TanStack handler that reads `request.clone().text()` before parsing.
+- `packages/workers/src/index.ts` + middleware plumbing — deleted once nothing mounts Hono.
+
+### What stays valuable in `packages/workers`
+
+Even after the Hono app is gone, these modules remain useful and are already consumed by web via subpath exports:
+
+- DO classes: `UserSession`, `ProjectDoc` (web's `wrangler.jsonc` references them by class name; web's `src/server.ts` re-exports them for the Worker runtime)
+- Commands: `createInvitation`, `createProject`, `createMember`, etc.
+- Shared lib: `billingResolver`, `quotaTransaction`, `policies`, `media-files`, `project-doc-id`, `ssrf-protection`, `constants`
+- Auth: `auth-config`, `email-templates`, session helper
+
+### End state options
+
+1. **Keep `packages/workers` as a library-only workspace.** Delete `src/routes/`, `src/middleware/`, `src/index.ts`, `src/__tests__/test-worker.ts` (if still present). Remove the `main` field and `deploy` script from `package.json`. Web continues to import DOs and commands via `@corates/workers/*` exports exactly as it does today. Simplest landing.
+
+2. **Fold everything into `packages/web`** (or a new `packages/core`). Move DO classes, commands, policies, and lib into web's source tree. Delete `packages/workers` entirely. Touches every `@corates/workers/*` import site. A separate refactor; doesn't block anything.
+
+Option 1 is the natural follow-up after Tier 3 lands. Option 2 is optional cleanup.
 
 ## If you pick this up cold
 
