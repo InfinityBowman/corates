@@ -12,7 +12,6 @@ import { UserSession } from './durable-objects/UserSession';
 import { ProjectDoc } from './durable-objects/ProjectDoc';
 import { createCorsMiddleware } from './middleware/cors';
 import { securityHeaders } from './middleware/securityHeaders';
-import { requireTrustedOrigin } from './middleware/csrf';
 import { errorHandler } from './middleware/errorHandler';
 import { createDomainError, SYSTEM_ERRORS } from '@corates/shared';
 import { createEmailService } from './auth/email';
@@ -82,41 +81,6 @@ base.get('/openapi.json', c => {
 
 // Mount auth routes
 base.route('/api/auth', auth);
-
-// CSRF guard for stop-impersonation (cookie-authenticated POST)
-base.use('/api/admin/stop-impersonation', requireTrustedOrigin);
-
-// Stop impersonation route - separate from admin routes as it doesn't require admin role
-// (the impersonated user won't have admin role)
-base.post('/api/admin/stop-impersonation', async c => {
-  try {
-    const { createAuth } = await import('./auth/config');
-    const authInstance = createAuth(c.env, c.executionCtx);
-    const url = new URL(c.req.url);
-
-    // Create a request to Better Auth's stop impersonation endpoint
-    const authUrl = new URL('/api/auth/admin/stop-impersonating', url.origin);
-    const cookie = c.req.raw.headers.get('cookie');
-    const origin = c.req.raw.headers.get('origin');
-    const referer = c.req.raw.headers.get('referer');
-    const headers = new Headers();
-    if (cookie) headers.set('cookie', cookie);
-    if (origin) headers.set('origin', origin);
-    if (referer) headers.set('referer', referer);
-    headers.set('accept', 'application/json');
-    const authRequest = new Request(authUrl.toString(), {
-      method: 'POST',
-      headers,
-    });
-
-    // Let Better Auth handle the request (this properly sets cookies)
-    const response = await authInstance.handler(authRequest);
-    return response;
-  } catch (error) {
-    console.error('Error stopping impersonation:', error);
-    return c.json({ error: 'Failed to stop impersonation' }, 500);
-  }
-});
 
 // Chain API sub-routers for RPC type inference
 const app = $(base)
