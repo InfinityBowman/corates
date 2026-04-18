@@ -9,9 +9,8 @@ import { CheckCircleIcon, ArrowRightIcon, XCircleIcon } from 'lucide-react';
 import { Alert, AlertAction, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { useSubscription } from '@/hooks/useSubscription';
 import { useMembers } from '@/hooks/useMembers';
-import { parseResponse } from 'hono/client';
 import { redirectToPortal } from '@/api/billing';
-import { api } from '@/lib/rpc';
+import { API_BASE } from '@/config/api';
 import { queryKeys } from '@/lib/queryKeys';
 import { Skeleton } from '@/components/ui/skeleton';
 import { SubscriptionCard } from '@/components/billing/SubscriptionCard';
@@ -61,7 +60,11 @@ export function BillingSettings() {
 
   const usageQuery = useQuery({
     queryKey: queryKeys.billing.usage,
-    queryFn: () => parseResponse(api.api.billing.usage.$get()),
+    queryFn: async () => {
+      const res = await fetch(`${API_BASE}/api/billing/usage`, { credentials: 'include' });
+      if (!res.ok) throw await res.json();
+      return (await res.json()) as { projects: number; collaborators: number };
+    },
     staleTime: 1000 * 60 * 2,
     retry: 1,
   });
@@ -76,8 +79,10 @@ export function BillingSettings() {
       // Beat the webhook race: pull canonical subscription state from Stripe
       // before reading it from the DB. Failure is non-fatal — the webhook will
       // reconcile eventually.
-      api.api.billing['sync-after-success']
-        .$post()
+      fetch(`${API_BASE}/api/billing/sync-after-success`, {
+        method: 'POST',
+        credentials: 'include',
+      })
         .catch(() => {})
         .finally(() => {
           refetch();

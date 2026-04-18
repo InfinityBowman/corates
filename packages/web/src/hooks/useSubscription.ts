@@ -3,9 +3,8 @@
  */
 
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { parseResponse, type InferResponseType } from 'hono/client';
 import { queryKeys } from '@/lib/queryKeys';
-import { api } from '@/lib/rpc';
+import { API_BASE } from '@/config/api';
 import {
   isSubscriptionActive,
   hasEntitlement as checkEntitlement,
@@ -15,7 +14,17 @@ import {
 } from '@/lib/entitlements';
 import { useAuthStore, selectIsLoggedIn } from '@/stores/authStore';
 
-export type Subscription = InferResponseType<typeof api.api.billing.subscription.$get, 200>;
+export interface Subscription {
+  tier: string;
+  status: string;
+  tierInfo: { name: string; description: string };
+  stripeSubscriptionId: string | null;
+  currentPeriodEnd: number | null;
+  cancelAtPeriodEnd: boolean;
+  accessMode: string;
+  source: string;
+  projectCount: number;
+}
 
 const DEFAULT_SUBSCRIPTION: Subscription = {
   tier: 'free',
@@ -30,7 +39,9 @@ const DEFAULT_SUBSCRIPTION: Subscription = {
 };
 
 async function fetchSubscription(): Promise<Subscription> {
-  return parseResponse(api.api.billing.subscription.$get());
+  const res = await fetch(`${API_BASE}/api/billing/subscription`, { credentials: 'include' });
+  if (!res.ok) throw await res.json();
+  return (await res.json()) as Subscription;
 }
 
 export function useSubscription() {

@@ -22,6 +22,8 @@
     "./commands/invitations": "./src/commands/invitations/index.ts",
     "./commands/projects": "./src/commands/projects/index.ts",
     "./commands/members": "./src/commands/members/index.ts",
+    "./commands/billing": "./src/commands/billing/index.ts",
+    "./stripe": "./src/lib/stripe.ts",
     "./billing-resolver": "./src/lib/billingResolver.ts",
     "./quota-transaction": "./src/lib/quotaTransaction.ts",
     "./constants": "./src/config/constants.ts",

@@ -123,3 +123,15 @@ export const MERGE_VERIFY_RATE_LIMIT: RateLimitOptions = {
   windowMs: 15 * 60 * 1000,
   keyPrefix: 'merge-verify',
 };
+
+export const BILLING_PORTAL_RATE_LIMIT: RateLimitOptions = {
+  limit: 20,
+  windowMs: 15 * 60 * 1000,
+  keyPrefix: 'billing-portal',
+};
+
+export const BILLING_CHECKOUT_RATE_LIMIT: RateLimitOptions = {
+  limit: 10,
+  windowMs: 15 * 60 * 1000,
+  keyPrefix: 'billing-checkout',
+};
