@@ -129,16 +129,21 @@ export async function deleteStorageDocuments(keys: string[]) {
 }
 
 export async function fetchOrgs({ page = 1, limit = 20, search = '' } = {}) {
-  const query: Record<string, string> = {
-    page: page.toString(),
-    limit: limit.toString(),
-  };
-  if (search) query.search = search;
-  return parseResponse(api.api.admin.orgs.$get({ query }));
+  const params = new URLSearchParams({ page: page.toString(), limit: limit.toString() });
+  if (search) params.set('search', search);
+  const res = await fetch(`/api/admin/orgs?${params.toString()}`, { credentials: 'include' });
+  const data = (await res.json()) as Record<string, unknown>;
+  if (!res.ok) throw data;
+  return data;
 }
 
 export async function fetchOrgDetails(orgId: string) {
-  return parseResponse(api.api.admin.orgs[':orgId'].$get({ param: { orgId } }));
+  const res = await fetch(`/api/admin/orgs/${encodeURIComponent(orgId)}`, {
+    credentials: 'include',
+  });
+  const data = (await res.json()) as Record<string, unknown>;
+  if (!res.ok) throw data;
+  return data;
 }
 
 export async function fetchOrgBilling(orgId: string) {
