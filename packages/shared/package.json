@@ -28,6 +28,10 @@
       "types": "./dist/checklists/amstar2/index.d.ts",
       "import": "./dist/checklists/amstar2/index.js"
     },
+    "./checklists/robins-i": {
+      "types": "./dist/checklists/robins-i/index.d.ts",
+      "import": "./dist/checklists/robins-i/index.js"
+    },
     "./checklists/rob2": {
       "types": "./dist/checklists/rob2/index.d.ts",
       "import": "./dist/checklists/rob2/index.js"

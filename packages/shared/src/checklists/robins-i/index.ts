@@ -16,3 +16,6 @@ export * from './create.js';
 
 // Answer manipulation
 export * from './answers.js';
+
+// Answer-payload schemas (Zod runtime validation for updateAnswer data)
+export * from './answers-schema.js';

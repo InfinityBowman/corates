@@ -3,6 +3,7 @@
  */
 
 import * as Y from 'yjs';
+import type { RobinsIAnswers, RobinsIKey } from '@corates/shared/checklists/robins-i';
 import { ChecklistHandler, yTextToString, type TextGetterFn } from './base';
 
 interface ROBINSDomainTemplate {
@@ -10,18 +11,6 @@ interface ROBINSDomainTemplate {
   judgementSource?: string | null;
   direction?: string | null;
   answers?: Record<string, { answer: string | null }>;
-}
-
-interface ROBINSDomainUpdate {
-  judgement?: string | null;
-  judgementSource?: string | null;
-  direction?: string | null;
-  answers?: Record<string, { answer?: string | null; comment?: string }>;
-}
-
-interface SectionBQuestion {
-  answer?: string | null;
-  comment?: string;
 }
 
 export class ROBINSIHandler extends ChecklistHandler {
@@ -197,7 +186,11 @@ export class ROBINSIHandler extends ChecklistHandler {
     return answers;
   }
 
-  updateAnswer(answersMap: Y.Map<unknown>, key: string, data: Record<string, unknown>): void {
+  updateAnswer<K extends RobinsIKey>(
+    answersMap: Y.Map<unknown>,
+    key: K,
+    data: RobinsIAnswers[K],
+  ): void {
     const doc = answersMap.doc!;
     doc.transact(() => {
       let sectionYMap = answersMap.get(key) as Y.Map<unknown> | undefined;
@@ -208,7 +201,7 @@ export class ROBINSIHandler extends ChecklistHandler {
       }
 
       if (key.startsWith('domain') || key === 'overall') {
-        const domainData = data as ROBINSDomainUpdate;
+        const domainData = data as RobinsIAnswers['domain1a'];
         if (domainData.judgement !== undefined) {
           sectionYMap.set('judgement', domainData.judgement);
         }
@@ -238,30 +231,31 @@ export class ROBINSIHandler extends ChecklistHandler {
           });
         }
       } else if (key === 'sectionB') {
-        Object.entries(data).forEach(([subKey, subValue]) => {
+        const sb = data as RobinsIAnswers['sectionB'];
+        Object.entries(sb).forEach(([subKey, subValue]) => {
           if (typeof subValue === 'object' && subValue !== null) {
-            const q = subValue as SectionBQuestion;
             let questionYMap = sectionYMap!.get(subKey) as Y.Map<unknown> | undefined;
             if (!questionYMap || !(questionYMap instanceof Y.Map)) {
               questionYMap = new Y.Map();
               sectionYMap!.set(subKey, questionYMap);
             }
-            if (q.answer !== undefined) questionYMap.set('answer', q.answer);
-            if (q.comment !== undefined) this.setYTextField(questionYMap, 'comment', q.comment);
+            if (subValue.answer !== undefined) questionYMap.set('answer', subValue.answer);
+            if (subValue.comment !== undefined)
+              this.setYTextField(questionYMap, 'comment', subValue.comment);
           } else {
             sectionYMap!.set(subKey, subValue);
           }
         });
       } else if (key === 'confoundingEvaluation') {
-        const ce = data as { predefined?: unknown[]; additional?: unknown[] };
+        const ce = data as RobinsIAnswers['confoundingEvaluation'];
         if (ce.predefined !== undefined) sectionYMap.set('predefined', ce.predefined);
         if (ce.additional !== undefined) sectionYMap.set('additional', ce.additional);
       } else if (key === 'sectionD') {
-        const sd = data as { sources?: Record<string, boolean>; otherSpecify?: string };
+        const sd = data as RobinsIAnswers['sectionD'];
         if (sd.sources !== undefined) sectionYMap.set('sources', sd.sources);
         if (sd.otherSpecify !== undefined) sectionYMap.set('otherSpecify', sd.otherSpecify);
       } else {
-        Object.entries(data).forEach(([fieldKey, fieldValue]) => {
+        Object.entries(data as Record<string, unknown>).forEach(([fieldKey, fieldValue]) => {
           sectionYMap!.set(fieldKey, fieldValue);
         });
       }

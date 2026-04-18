@@ -62,17 +62,14 @@ export class AMSTAR2Handler extends ChecklistHandler {
     answersMap: Y.Map<unknown>,
     key: K,
     data: Amstar2Answers[K],
-  ): void;
-  updateAnswer(answersMap: Y.Map<unknown>, key: string, data: unknown): void;
-  updateAnswer(answersMap: Y.Map<unknown>, key: string, data: unknown): void {
-    const typed = data as Amstar2Answers[Amstar2Key];
+  ): void {
     let questionYMap = answersMap.get(key) as Y.Map<unknown> | undefined;
     if (!questionYMap || !(questionYMap instanceof Y.Map)) {
       questionYMap = new Y.Map();
       answersMap.set(key, questionYMap);
     }
-    questionYMap.set('answers', typed.answers);
-    questionYMap.set('critical', typed.critical ?? false);
+    questionYMap.set('answers', data.answers);
+    questionYMap.set('critical', data.critical ?? false);
     if (!questionYMap.get('note')) {
       questionYMap.set('note', new Y.Text());
     }

@@ -4,11 +4,9 @@
  */
 
 import * as Y from 'yjs';
-import {
-  AMSTAR2_KEY_SCHEMAS,
-  isAmstar2Key,
-  type Amstar2Key,
-} from '@corates/shared/checklists/amstar2';
+import { AMSTAR2_KEY_SCHEMAS, isAmstar2Key } from '@corates/shared/checklists/amstar2';
+import { ROBINS_I_KEY_SCHEMAS, isRobinsIKey } from '@corates/shared/checklists/robins-i';
+import { ROB2_KEY_SCHEMAS, isRob2Key } from '@corates/shared/checklists/rob2';
 import { createChecklistOfType, CHECKLIST_TYPES } from '@/checklist-registry';
 import { CHECKLIST_STATUS } from '@/constants/checklist-status';
 import { createCommonOperations } from './common';
@@ -265,19 +263,33 @@ export function createChecklistOperations(
       checklistYMap.set('answers', answersMap);
     }
 
-    const handler = getHandler(checklistType);
-    if (handler) {
-      if (checklistType === CHECKLIST_TYPES.AMSTAR2) {
+    switch (checklistType) {
+      case CHECKLIST_TYPES.AMSTAR2: {
         if (!isAmstar2Key(key)) {
           throw new Error(`[updateChecklistAnswer] Invalid AMSTAR2 key: ${key}`);
         }
-        const parsed = AMSTAR2_KEY_SCHEMAS[key as Amstar2Key].parse(data);
-        (handler as AMSTAR2Handler).updateAnswer(answersMap, key, parsed);
-      } else {
-        handler.updateAnswer(answersMap, key, data);
+        const parsed = AMSTAR2_KEY_SCHEMAS[key].parse(data);
+        amstar2Handler.updateAnswer(answersMap, key, parsed);
+        break;
       }
-    } else {
-      answersMap.set(key, data);
+      case CHECKLIST_TYPES.ROBINS_I: {
+        if (!isRobinsIKey(key)) {
+          throw new Error(`[updateChecklistAnswer] Invalid ROBINS-I key: ${key}`);
+        }
+        const parsed = ROBINS_I_KEY_SCHEMAS[key].parse(data);
+        robinsIHandler.updateAnswer(answersMap, key, parsed);
+        break;
+      }
+      case CHECKLIST_TYPES.ROB2: {
+        if (!isRob2Key(key)) {
+          throw new Error(`[updateChecklistAnswer] Invalid ROB2 key: ${key}`);
+        }
+        const parsed = ROB2_KEY_SCHEMAS[key].parse(data);
+        rob2Handler.updateAnswer(answersMap, key, parsed);
+        break;
+      }
+      default:
+        throw new Error(`[updateChecklistAnswer] Unknown checklist type: ${checklistType}`);
     }
 
     const currentStatus = checklistYMap.get('status');
