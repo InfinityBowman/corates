@@ -108,7 +108,7 @@ function getSkippableQuestions(
 
   const skippable = new Set<string>();
   for (const domainKey of earlyCompleteDomains) {
-    const domainAnswers = finalAnswers[domainKey]?.answers || {};
+    const domainAnswers = finalAnswers[domainKey].answers;
     const items = navItems.filter(
       (item: any) => item.type === NAV_ITEM_TYPES.DOMAIN_QUESTION && item.domainKey === domainKey,
     );
@@ -315,8 +315,8 @@ function renderPage(context: EngineContext) {
         reviewer1Value={c1?.preliminary?.[currentItem.key]}
         reviewer2Value={c2?.preliminary?.[currentItem.key]}
         finalValue={fa.preliminary?.[currentItem.key]}
-        reviewer1Name={context.reviewer1Name || 'Reviewer 1'}
-        reviewer2Name={context.reviewer2Name || 'Reviewer 2'}
+        reviewer1Name={context.reviewer1Name}
+        reviewer2Name={context.reviewer2Name}
         isAgreement={context.isAgreement}
         isAimMismatch={currentItem.key === 'aim' && hasAimMismatch(c1, c2) && !fa?.preliminary?.aim}
         onFinalChange={(value: any) =>
@@ -370,8 +370,8 @@ function renderPage(context: EngineContext) {
           fieldKey: 'comment',
           questionKey: currentItem.key,
         })}
-        reviewer1Name={context.reviewer1Name || 'Reviewer 1'}
-        reviewer2Name={context.reviewer2Name || 'Reviewer 2'}
+        reviewer1Name={context.reviewer1Name}
+        reviewer2Name={context.reviewer2Name}
         isAgreement={context.isAgreement}
         isSkipped={skippable.has(currentItem.key)}
         onFinalAnswerChange={(answer: string) =>
@@ -436,8 +436,8 @@ function renderPage(context: EngineContext) {
         reviewer1Direction={c1?.[currentItem.domainKey!]?.direction}
         reviewer2Direction={c2?.[currentItem.domainKey!]?.direction}
         finalDirection={fa[currentItem.domainKey!]?.direction}
-        reviewer1Name={context.reviewer1Name || 'Reviewer 1'}
-        reviewer2Name={context.reviewer2Name || 'Reviewer 2'}
+        reviewer1Name={context.reviewer1Name}
+        reviewer2Name={context.reviewer2Name}
         directionMatch={itemComparison?.directionMatch}
         onFinalDirectionChange={(direction: string) =>
           updateDomainDirection(context.updateChecklistAnswer, currentItem.domainKey!, direction)
@@ -467,8 +467,8 @@ function renderPage(context: EngineContext) {
         reviewer1Direction={c1?.overall?.direction}
         reviewer2Direction={c2?.overall?.direction}
         finalDirection={fa.overall?.direction}
-        reviewer1Name={context.reviewer1Name || 'Reviewer 1'}
-        reviewer2Name={context.reviewer2Name || 'Reviewer 2'}
+        reviewer1Name={context.reviewer1Name}
+        reviewer2Name={context.reviewer2Name}
         directionMatch={itemComparison?.directionMatch}
         onFinalDirectionChange={(direction: string) =>
           updateOverallDirection(context.updateChecklistAnswer, direction)

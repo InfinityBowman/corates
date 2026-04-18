@@ -194,7 +194,7 @@ function SingleQuestionPage({
       {/* Three Column Layout */}
       <div className='divide-border grid grid-cols-3 divide-x'>
         <AnswerPanel
-          title={reviewer1Name || 'Reviewer 1'}
+          title={reviewer1Name}
           answers={reviewer1Answers}
           questionKey={questionKey}
           finalAnswer={reviewer1FinalAnswer}
@@ -205,7 +205,7 @@ function SingleQuestionPage({
           hideSelectButtons={reviewersAgree}
         />
         <AnswerPanel
-          title={reviewer2Name || 'Reviewer 2'}
+          title={reviewer2Name}
           answers={reviewer2Answers}
           questionKey={questionKey}
           finalAnswer={reviewer2FinalAnswer}

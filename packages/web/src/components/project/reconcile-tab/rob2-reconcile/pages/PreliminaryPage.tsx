@@ -430,7 +430,7 @@ export function PreliminaryPage({
         {/* Reviewer 1 */}
         <div className={`p-4 ${getPanelBackground('reviewer1')}`}>
           <div className='mb-4 flex items-center justify-between'>
-            <h3 className='text-foreground font-semibold'>{reviewer1Name || 'Reviewer 1'}</h3>
+            <h3 className='text-foreground font-semibold'>{reviewer1Name}</h3>
             <button
               onClick={() => onUseReviewer1?.()}
               className='bg-secondary text-secondary-foreground rounded-lg px-3 py-1.5 text-xs font-medium transition-colors hover:bg-blue-100 hover:text-blue-700'
@@ -444,7 +444,7 @@ export function PreliminaryPage({
         {/* Reviewer 2 */}
         <div className={`p-4 ${getPanelBackground('reviewer2')}`}>
           <div className='mb-4 flex items-center justify-between'>
-            <h3 className='text-foreground font-semibold'>{reviewer2Name || 'Reviewer 2'}</h3>
+            <h3 className='text-foreground font-semibold'>{reviewer2Name}</h3>
             <button
               onClick={() => onUseReviewer2?.()}
               className='bg-secondary text-secondary-foreground rounded-lg px-3 py-1.5 text-xs font-medium transition-colors hover:bg-blue-100 hover:text-blue-700'

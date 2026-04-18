@@ -169,7 +169,7 @@ export function ReconciliationEngine({
       <div className='shrink-0'>
         <h1 className='text-foreground text-lg font-bold'>{adapter.title}</h1>
         <p className='text-muted-foreground text-xs'>
-          {reviewer1Name || 'Reviewer 1'} vs {reviewer2Name || 'Reviewer 2'}
+          {reviewer1Name} vs {reviewer2Name}
         </p>
       </div>
 

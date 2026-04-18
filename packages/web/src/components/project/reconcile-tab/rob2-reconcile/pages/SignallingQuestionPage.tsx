@@ -102,7 +102,7 @@ export function SignallingQuestionPage({
       <div className={`grid grid-cols-3 divide-x ${isSkipped ? 'opacity-60' : ''}`}>
         {/* Reviewer 1 */}
         <ROB2AnswerPanel
-          title={reviewer1Name || 'Reviewer 1'}
+          title={reviewer1Name}
           panelType='reviewer1'
           answer={reviewer1Data?.answer}
           comment={reviewer1Data?.comment}
@@ -113,7 +113,7 @@ export function SignallingQuestionPage({
 
         {/* Reviewer 2 */}
         <ROB2AnswerPanel
-          title={reviewer2Name || 'Reviewer 2'}
+          title={reviewer2Name}
           panelType='reviewer2'
           answer={reviewer2Data?.answer}
           comment={reviewer2Data?.comment}

@@ -102,13 +102,13 @@ export function OverallDirectionPage({
 
         <div className='grid grid-cols-3 divide-x rounded-lg border'>
           <JudgementPanel
-            title={reviewer1Name || 'Reviewer 1'}
+            title={reviewer1Name}
             panelType='reviewer1'
             judgement={reviewer1Scoring.overall}
             isComplete={reviewer1Scoring.isComplete}
           />
           <JudgementPanel
-            title={reviewer2Name || 'Reviewer 2'}
+            title={reviewer2Name}
             panelType='reviewer2'
             judgement={reviewer2Scoring.overall}
             isComplete={reviewer2Scoring.isComplete}
@@ -140,14 +140,14 @@ export function OverallDirectionPage({
 
         <div className='grid grid-cols-3 divide-x rounded-lg border'>
           <DirectionPanel
-            title={reviewer1Name || 'Reviewer 1'}
+            title={reviewer1Name}
             panelType='reviewer1'
             direction={reviewer1Direction}
             readOnly={true}
             onUseThis={onUseReviewer1}
           />
           <DirectionPanel
-            title={reviewer2Name || 'Reviewer 2'}
+            title={reviewer2Name}
             panelType='reviewer2'
             direction={reviewer2Direction}
             readOnly={true}
