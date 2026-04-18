@@ -1,6 +1,6 @@
 # Post-migration regressions — what the Hono retirement actually lost
 
-The Hono → TanStack Start migration ([#484](https://github.com/InfinityBowman/corates/issues/484), [#485](https://github.com/InfinityBowman/corates/issues/485), [#486](https://github.com/InfinityBowman/corates/issues/486)) ported every route. After verifying claim-by-claim against current code, the genuine regressions are smaller than they first appeared.
+The Hono → TanStack Start migration ([#484](https://github.com/InfinityBowman/corates/issues/484), [#485](https://github.com/InfinityBowman/corates/issues/485), [#486](https://github.com/InfinityBowman/corates/issues/486)) ported every route. After verifying claim-by-claim against current code, the genuine regressions are smaller than they first appeared, and the merge-prep pass closed the operational ones.
 
 Severity legend:
 
@@ -14,44 +14,32 @@ Severity legend:
 
 Initial audit flagged security headers and CSRF as blockers. Both turned out to be already-handled or already-fixed:
 
-- **Security headers (HTML + static assets):** `packages/web/src/routes/__root.tsx` sets `X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy`, and CSP on every TanStack-served HTML response. `packages/web/public/_headers` (Cloudflare Pages-style static asset config) sets the same on every static response. The Hono middleware was redundant for the SPA's HTML.
-- **Admin CSRF:** restored Pass 26 by folding `requireTrustedOrigin` into `requireAdmin`. Verified by tests in `users.server.test.ts`.
+- **Security headers (HTML + static assets):** `packages/web/src/routes/__root.tsx` sets `X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy`, and CSP on every TanStack-served HTML response. `packages/web/public/_headers` sets the same on every static response. The Hono middleware was redundant for the SPA's HTML.
+- **Admin CSRF:** restored Pass 26 by folding `requireTrustedOrigin` into `requireAdmin`.
 
 Nothing is a hard merge blocker.
 
 ---
 
+## Resolved during merge prep
+
+Three small fixes landed before merging the `retire-hono-app` branch:
+
+### HSTS header — restored
+
+Added `Strict-Transport-Security: max-age=15552000; includeSubDomains` to both `__root.tsx` (TanStack HTML responses) and `public/_headers` (static asset responses). Mirrors the original Hono header on every HTTPS response.
+
+### `/api/$.ts` JSON 404 — restored
+
+`routes/api/$.ts` returns the `SYSTEM_ROUTE_NOT_FOUND` JSON (with the requested path in `details.path`) for every method. TanStack's specificity sort guarantees it only fires for paths no concrete API route claims. Two tests in `routes/api/__tests__/not-found.server.test.ts`.
+
+### Health deep-check endpoint — restored
+
+`routes/health.ts` re-exposes the original Hono `/health` shape: D1 `SELECT 1`, R2 `list({ limit: 1 })`, DO bindings present. Returns 503 with per-service status when anything degrades. The plain `OK` liveness probe stays at `/healthz`.
+
+---
+
 ## soon — operational gaps
-
-### Health deep-check endpoint — gone
-
-**What we had.** `routes/health.ts` exposed two endpoints:
-- `/health` — JSON deep check: D1 `SELECT 1`, R2 `list({ limit: 1 })`, DO bindings present. Returned 503 if any failed.
-- `/health/live` — plain `OK` text liveness probe.
-
-**What's now there.** `packages/web/src/routes/healthz.ts` returns `OK` (text) — covers liveness at a different path.
-
-**Gap.** Deep dependency check is gone. If anything monitors `/health` (uptime services, CF health checks, dashboards), the URL now 404s. The path renamed from `/health/live` to `/healthz` may also break monitors.
-
-**Fix.** Add `routes/api/health.ts` with the deep check (same JSON shape as before), and either keep `/healthz` or alias it. Bindings (`env.DB`, `env.PDF_BUCKET`, `env.USER_SESSION`, `env.PROJECT_DOC`) are all available.
-
-### `/api/$.ts` JSON 404 — gone
-
-**What we had.** Hono's global `notFound` returned `SYSTEM_ROUTE_NOT_FOUND` JSON for any unmatched path under `/api/*`. Pass 25 deleted both the `/api/$.ts` Hono forwarder and its 404 fallback.
-
-**What's now there.** TanStack's root `notFoundComponent` renders the React 404 page (HTML, status 404). An API client hitting `/api/typo` gets HTML back instead of the documented JSON shape — content-type wrong, body un-parseable.
-
-**Fix.** Add `routes/api/$.ts` returning the `SYSTEM_ROUTE_NOT_FOUND` JSON for any method. TanStack's specificity sort puts splats last, so it only catches truly unmatched API paths.
-
-### HSTS header — gone
-
-**What we had.** Hono's `securityHeaders` middleware set `Strict-Transport-Security: max-age=15552000; includeSubDomains` on every HTTPS response.
-
-**What's now there.** Neither `__root.tsx` nor `_headers` sets it. Cloudflare doesn't add HSTS automatically — it has to be enabled per zone in the dashboard's "Edge Certificates → HSTS Settings" or via this header.
-
-**Gap.** First-visit downgrade attacks possible until the browser learns the host is HTTPS-only via some other means.
-
-**Fix.** Add `Strict-Transport-Security` to both `_headers` (catches static asset responses) and the `headers` block in `__root.tsx` (catches TanStack-served HTML). Or enable HSTS at the CF zone level — that covers everything including API responses.
 
 ### CORS — gone, but not currently breaking anything
 
@@ -72,6 +60,7 @@ Nothing is a hard merge blocker.
 ### Centralized error handler — degraded but not broken
 
 **What we had.** `packages/workers/src/middleware/errorHandler.ts` (`base.onError`) caught every uncaught error in route handlers and converted:
+
 - Zod errors → `VALIDATION_ERROR` JSON with field paths
 - D1 errors (`D1_*` prefix) → `DB_ERROR` with operation context
 - `UNIQUE constraint failed` → 409 with friendly message
@@ -137,7 +126,7 @@ Nothing is a hard merge blocker.
 
 ## Out of scope — already removed deliberately
 
-- `/api/$.ts` Hono catch-all forwarder (Pass 25)
+- `/api/$.ts` Hono catch-all forwarder (Pass 25; replaced with the JSON 404 catch-all above)
 - 410 legacy endpoints (`/api/orgs/$orgId/project-doc/$projectId`, `/api/project/$projectId`)
 - Hono RPC client (`packages/web/src/lib/rpc.ts`) and `DetailedError` instance checks (Pass 25)
 
@@ -147,11 +136,13 @@ Nothing is a hard merge blocker.
 
 Audited and confirmed in current code:
 
-- Security headers on **HTML responses** — `__root.tsx`'s `headers()` callback sets X-Frame-Options, X-Content-Type-Options, Referrer-Policy, Permissions-Policy, CSP
-- Security headers on **static assets** — `public/_headers` sets the same five
+- Security headers on **HTML responses** — `__root.tsx`'s `headers()` callback sets HSTS, X-Frame-Options, X-Content-Type-Options, Referrer-Policy, Permissions-Policy, CSP
+- Security headers on **static assets** — `public/_headers` sets the same six
 - Admin CSRF — `requireAdmin` runs `requireTrustedOrigin` first (Pass 26)
 - Liveness probe — `/healthz` returns "OK"
-- Sentry server-side error monitoring — `Sentry.withSentry` wraps the worker default export (added during this audit)
+- Health deep-check — `/health` returns JSON with D1/R2/DO status (restored during merge prep)
+- API JSON 404 — `routes/api/$.ts` returns `SYSTEM_ROUTE_NOT_FOUND` for unmatched paths (restored during merge prep)
+- Sentry server-side error monitoring — `Sentry.withSentry` wraps the worker default export
 - Sentry client-side — `packages/web/src/config/sentry.ts` initialises `@sentry/react`
 - All API routes from the original Hono app (auth, billing, admin, orgs, projects, users, PDF, dev, Google Drive, invitations) are migrated and tested
 
@@ -159,9 +150,9 @@ Audited and confirmed in current code:
 
 ## Suggested order for an "ops" follow-up branch
 
-1. HSTS header — one-line addition to `_headers` and `__root.tsx`.
-2. Health deep-check endpoint at `/api/health` — one route file.
-3. `/api/$.ts` JSON 404 — one route file.
-4. Centralized error wrapper (`wrapHandler` helper) — retrofit one route at a time.
-5. Validation helper for the 4 lazy admin routes.
-6. Request-ID propagation, rate-limit refund, CORS, OpenAPI — as needed.
+1. Centralized error wrapper (`wrapHandler` helper) — retrofit one route at a time.
+2. Validation helper for the 4 lazy admin routes.
+3. Request-ID propagation in `server.ts` + handler context.
+4. Auth rate-limit refund.
+5. CORS — only when we move off pure same-origin.
+6. OpenAPI — only if something automated wants the spec.
