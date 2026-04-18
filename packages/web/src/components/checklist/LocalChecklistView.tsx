@@ -16,7 +16,10 @@ import { connectionPool } from '@/project/ConnectionPool';
 import { LOCAL_PROJECT_ID } from '@/project/localProject';
 import { useProjectStore, selectConnectionPhase } from '@/stores/projectStore';
 import { useChecklistViewModel } from '@/primitives/useProject/checklists/useChecklistViewModel';
-import type { TextRef } from '@/primitives/useProject/checklists';
+import {
+  buildChecklistAnswerInput,
+  type TextRef,
+} from '@/primitives/useProject/checklists';
 import { db } from '@/primitives/db';
 import { ScoreTag } from '@/components/checklist/ScoreTag';
 
@@ -114,17 +117,14 @@ function LocalChecklistEditor({ checklistId }: { checklistId: string }) {
   const handlePartialUpdate = useCallback(
     (patch: Record<string, any>) => {
       const ops = connectionPool.getOps(LOCAL_PROJECT_ID);
-      if (!ops) return;
+      if (!ops || !checklistType) return;
       Object.entries(patch).forEach(([key, value]) => {
-        ops.checklist.updateChecklistAnswer(
-          checklistId,
-          checklistId,
-          key,
-          value as Record<string, unknown>,
-        );
+        const input = buildChecklistAnswerInput(checklistType, key, value);
+        if (!input) return;
+        ops.checklist.updateChecklistAnswer(checklistId, checklistId, input);
       });
     },
-    [checklistId],
+    [checklistId, checklistType],
   );
 
   const getTextRef = useCallback(

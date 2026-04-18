@@ -5,8 +5,11 @@
 
 import * as Y from 'yjs';
 import { AMSTAR2_KEY_SCHEMAS, isAmstar2Key } from '@corates/shared/checklists/amstar2';
+import type { Amstar2Key, Amstar2Answers } from '@corates/shared/checklists/amstar2';
 import { ROBINS_I_KEY_SCHEMAS, isRobinsIKey } from '@corates/shared/checklists/robins-i';
+import type { RobinsIKey, RobinsIAnswers } from '@corates/shared/checklists/robins-i';
 import { ROB2_KEY_SCHEMAS, isRob2Key } from '@corates/shared/checklists/rob2';
+import type { Rob2Key, Rob2Answers } from '@corates/shared/checklists/rob2';
 import { createChecklistOfType, CHECKLIST_TYPES } from '@/checklist-registry';
 import { CHECKLIST_STATUS } from '@/constants/checklist-status';
 import { createCommonOperations } from './common';
@@ -20,6 +23,47 @@ export type TextRef =
   | { type: 'AMSTAR2'; questionKey: string }
   | { type: 'ROBINS_I'; sectionKey: string; fieldKey: string; questionKey?: string | null }
   | { type: 'ROB2'; sectionKey: string; fieldKey: string; questionKey?: string | null };
+
+/**
+ * Discriminated input for `updateChecklistAnswer`. Each variant ties the
+ * `key` to the per-checklist key union and `data` to that key's answer
+ * payload type, so callers can't pass mismatched (type, key, data) triples.
+ */
+export type ChecklistAnswerInput =
+  | { [K in Amstar2Key]: { type: 'AMSTAR2'; key: K; data: Amstar2Answers[K] } }[Amstar2Key]
+  | { [K in RobinsIKey]: { type: 'ROBINS_I'; key: K; data: RobinsIAnswers[K] } }[RobinsIKey]
+  | { [K in Rob2Key]: { type: 'ROB2'; key: K; data: Rob2Answers[K] } }[Rob2Key];
+
+/**
+ * Narrow a (checklistType, key, data) triple coming from a dynamic patch into
+ * a typed `ChecklistAnswerInput`. Returns null when the key is not valid for
+ * the given checklist type. Data is asserted via `as` because patches arrive
+ * as `unknown` from React event handlers; the dispatcher's Zod parse catches
+ * any shape mismatch at runtime.
+ */
+export function buildChecklistAnswerInput(
+  checklistType: string,
+  key: string,
+  data: unknown,
+): ChecklistAnswerInput | null {
+  // The (key, data) correlation is a runtime fact; widening through the
+  // narrowed `key` would require a per-variant branch for every key. Cast
+  // through the variant once — the dispatcher's Zod parse validates `data`
+  // matches the schema for `key` at runtime.
+  switch (checklistType) {
+    case CHECKLIST_TYPES.AMSTAR2:
+      if (!isAmstar2Key(key)) return null;
+      return { type: 'AMSTAR2', key, data } as ChecklistAnswerInput;
+    case CHECKLIST_TYPES.ROBINS_I:
+      if (!isRobinsIKey(key)) return null;
+      return { type: 'ROBINS_I', key, data } as ChecklistAnswerInput;
+    case CHECKLIST_TYPES.ROB2:
+      if (!isRob2Key(key)) return null;
+      return { type: 'ROB2', key, data } as ChecklistAnswerInput;
+    default:
+      return null;
+  }
+}
 
 export interface ChecklistOperations {
   createChecklist: (
@@ -35,8 +79,7 @@ export interface ChecklistOperations {
   updateChecklistAnswer: (
     studyId: string,
     checklistId: string,
-    key: string,
-    data: Record<string, unknown>,
+    input: ChecklistAnswerInput,
   ) => void;
   getTextRef: (studyId: string, checklistId: string, ref: TextRef) => Y.Text | null;
   setTextValue: (
@@ -233,13 +276,17 @@ export function createChecklistOperations(
   function updateChecklistAnswer(
     studyId: string,
     checklistId: string,
-    key: string,
-    data: Record<string, unknown>,
+    input: ChecklistAnswerInput,
   ): void {
     const result = commonOps.getChecklistYMap(studyId, checklistId);
     if (!result) return;
 
     const { checklistYMap, checklistType } = result;
+    if (checklistType !== input.type) {
+      throw new Error(
+        `[updateChecklistAnswer] checklist ${checklistId} is type ${checklistType} but input was ${input.type}`,
+      );
+    }
 
     let answersMap = checklistYMap.get('answers') as Y.Map<unknown> | undefined;
     if (!answersMap) {
@@ -247,33 +294,25 @@ export function createChecklistOperations(
       checklistYMap.set('answers', answersMap);
     }
 
-    switch (checklistType) {
+    // The discriminated input pins (key, data) to the checklist type at the
+    // type level, but we still parse with Zod to catch external callers that
+    // bypass the type system with `as` casts.
+    switch (input.type) {
       case CHECKLIST_TYPES.AMSTAR2: {
-        if (!isAmstar2Key(key)) {
-          throw new Error(`[updateChecklistAnswer] Invalid AMSTAR2 key: ${key}`);
-        }
-        const parsed = AMSTAR2_KEY_SCHEMAS[key].parse(data);
-        amstar2Handler.updateAnswer(answersMap, key, parsed);
+        const parsed = AMSTAR2_KEY_SCHEMAS[input.key].parse(input.data);
+        amstar2Handler.updateAnswer(answersMap, input.key, parsed);
         break;
       }
       case CHECKLIST_TYPES.ROBINS_I: {
-        if (!isRobinsIKey(key)) {
-          throw new Error(`[updateChecklistAnswer] Invalid ROBINS-I key: ${key}`);
-        }
-        const parsed = ROBINS_I_KEY_SCHEMAS[key].parse(data);
-        robinsIHandler.updateAnswer(answersMap, key, parsed);
+        const parsed = ROBINS_I_KEY_SCHEMAS[input.key].parse(input.data);
+        robinsIHandler.updateAnswer(answersMap, input.key, parsed as RobinsIAnswers[RobinsIKey]);
         break;
       }
       case CHECKLIST_TYPES.ROB2: {
-        if (!isRob2Key(key)) {
-          throw new Error(`[updateChecklistAnswer] Invalid ROB2 key: ${key}`);
-        }
-        const parsed = ROB2_KEY_SCHEMAS[key].parse(data);
-        rob2Handler.updateAnswer(answersMap, key, parsed);
+        const parsed = ROB2_KEY_SCHEMAS[input.key].parse(input.data);
+        rob2Handler.updateAnswer(answersMap, input.key, parsed as Rob2Answers[Rob2Key]);
         break;
       }
-      default:
-        throw new Error(`[updateChecklistAnswer] Unknown checklist type: ${checklistType}`);
     }
 
     const currentStatus = checklistYMap.get('status');

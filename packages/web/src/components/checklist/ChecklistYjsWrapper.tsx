@@ -10,6 +10,7 @@ import { ChecklistWithPdf } from '@/components/checklist/ChecklistWithPdf';
 import { useProjectContext } from '@/components/project/ProjectContext';
 import { connectionPool } from '@/project/ConnectionPool';
 import { useChecklistViewModel } from '@/primitives/useProject/checklists/useChecklistViewModel';
+import { buildChecklistAnswerInput } from '@/primitives/useProject/checklists';
 import { useProjectStore, selectConnectionPhase } from '@/stores/projectStore';
 import { useAuthStore, selectUser } from '@/stores/authStore';
 import { ACCESS_DENIED_ERRORS } from '@/constants/errors.js';
@@ -31,35 +32,6 @@ import { ScoreTag } from '@/components/checklist/ScoreTag';
 import { isAMSTAR2Complete } from '@/components/checklist/AMSTAR2Checklist/checklist.js';
 import { isROBINSIComplete } from '@/components/checklist/ROBINSIChecklist/checklist';
 import { isROB2Complete } from '@/components/checklist/ROB2Checklist/checklist';
-
-// Valid answer keys for each checklist type (module-level for stable references)
-const AMSTAR2_KEY_PATTERN = /^q\d+[a-z]*$/i;
-const ROBINS_I_KEYS = new Set([
-  'planning',
-  'sectionA',
-  'sectionB',
-  'sectionC',
-  'sectionD',
-  'confoundingEvaluation',
-  'domain1a',
-  'domain1b',
-  'domain2',
-  'domain3',
-  'domain4',
-  'domain5',
-  'domain6',
-  'overall',
-]);
-const ROB2_KEYS = new Set([
-  'preliminary',
-  'domain1',
-  'domain2a',
-  'domain2b',
-  'domain3',
-  'domain4',
-  'domain5',
-  'overall',
-]);
 
 interface ChecklistYjsWrapperProps {
   projectId: string;
@@ -216,15 +188,11 @@ export function ChecklistYjsWrapper({ projectId, studyId, checklistId }: Checkli
 
   const handlePartialUpdate = useCallback(
     (patch: Record<string, any>) => {
-      if (isReadOnly) return;
+      if (isReadOnly || !checklistType) return;
       Object.entries(patch).forEach(([key, value]) => {
-        const isValidKey =
-          (checklistType === 'AMSTAR2' && AMSTAR2_KEY_PATTERN.test(key)) ||
-          (checklistType === 'ROBINS_I' && ROBINS_I_KEYS.has(key)) ||
-          (checklistType === 'ROB2' && ROB2_KEYS.has(key));
-        if (isValidKey) {
-          updateChecklistAnswer(studyId, checklistId, key, value);
-        }
+        const input = buildChecklistAnswerInput(checklistType, key, value);
+        if (!input) return;
+        updateChecklistAnswer(studyId, checklistId, input);
       });
     },
     [isReadOnly, checklistType, updateChecklistAnswer, studyId, checklistId],

@@ -7,7 +7,10 @@ import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { useProjectContext } from '@/components/project/ProjectContext';
 import { connectionPool } from '@/project/ConnectionPool';
-import type { TextRef } from '@/primitives/useProject/checklists';
+import {
+  buildChecklistAnswerInput,
+  type TextRef,
+} from '@/primitives/useProject/checklists';
 import {
   useProjectStore,
   selectMembers,
@@ -486,9 +489,11 @@ export function ReconciliationWrapper({
     <ReconciliationEngine
       {...sharedProps}
       checklistType={checklistType}
-      updateChecklistAnswer={(sectionKey: string, data: any) => {
+      updateChecklistAnswer={(sectionKey: string, data: unknown) => {
         if (!reconciledChecklistId) return;
-        updateChecklistAnswer(studyId, reconciledChecklistId, sectionKey, data);
+        const input = buildChecklistAnswerInput(checklistType, sectionKey, data);
+        if (!input) return;
+        updateChecklistAnswer(studyId, reconciledChecklistId, input);
       }}
       getTextRef={getTextRef}
       setTextValue={setTextValue}
