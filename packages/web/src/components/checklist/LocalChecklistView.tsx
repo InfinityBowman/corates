@@ -16,10 +16,7 @@ import { connectionPool } from '@/project/ConnectionPool';
 import { LOCAL_PROJECT_ID } from '@/project/localProject';
 import { useProjectStore, selectConnectionPhase } from '@/stores/projectStore';
 import { useChecklistViewModel } from '@/primitives/useProject/checklists/useChecklistViewModel';
-import {
-  buildChecklistAnswerInput,
-  type TextRef,
-} from '@/primitives/useProject/checklists';
+import { buildChecklistAnswerInput, type TextRef } from '@/primitives/useProject/checklists';
 import { db } from '@/primitives/db';
 import { ScoreTag } from '@/components/checklist/ScoreTag';
 

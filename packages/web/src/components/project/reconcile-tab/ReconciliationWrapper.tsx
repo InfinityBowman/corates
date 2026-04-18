@@ -7,10 +7,7 @@ import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { useProjectContext } from '@/components/project/ProjectContext';
 import { connectionPool } from '@/project/ConnectionPool';
-import {
-  buildChecklistAnswerInput,
-  type TextRef,
-} from '@/primitives/useProject/checklists';
+import { buildChecklistAnswerInput, type TextRef } from '@/primitives/useProject/checklists';
 import {
   useProjectStore,
   selectMembers,
