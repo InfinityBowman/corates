@@ -46,7 +46,10 @@ export async function redirectToSingleProjectCheckout(): Promise<void> {
 }
 
 export async function getMembers() {
-  return parseResponse(api.api.billing.members.$get());
+  const res = await fetch(`${API_BASE}/api/billing/members`, { credentials: 'include' });
+  const data = (await res.json()) as { members?: unknown[]; count?: number };
+  if (!res.ok) throw data;
+  return { members: data.members ?? [], count: data.count ?? 0 };
 }
 
 export async function startTrial() {
