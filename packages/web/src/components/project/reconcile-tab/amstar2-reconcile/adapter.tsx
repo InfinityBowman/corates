@@ -264,8 +264,6 @@ function Amstar2SummaryAdapter(summaryContext: SummaryContext) {
       allAnswered={summaryContext.allAnswered}
       saving={summaryContext.saving}
       summary={summary}
-      reviewer1Name=''
-      reviewer2Name=''
     />
   );
 }

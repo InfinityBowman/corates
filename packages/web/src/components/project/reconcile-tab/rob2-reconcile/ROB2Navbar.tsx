@@ -37,14 +37,14 @@ interface ROB2NavbarProps {
  */
 export function ROB2Navbar({ store }: ROB2NavbarProps) {
   const domainProgress = useMemo(
-    () => getDomainProgress(store.navItems || [], store.finalAnswers, store.comparison),
+    () => getDomainProgress(store.navItems, store.finalAnswers, store.comparison),
     [store.navItems, store.finalAnswers, store.comparison],
   );
 
   const sectionKeys = useMemo(() => Object.keys(domainProgress), [domainProgress]);
 
   const currentSectionKey = useMemo(
-    () => getSectionKeyForPage(store.navItems || [], store.currentPage),
+    () => getSectionKeyForPage(store.navItems, store.currentPage),
     [store.navItems, store.currentPage],
   );
 
@@ -75,7 +75,7 @@ export function ROB2Navbar({ store }: ROB2NavbarProps) {
 
   const handleGoToPage = useCallback(
     (pageIndex: number) => {
-      const sectionKey = getSectionKeyForPage(store.navItems || [], pageIndex);
+      const sectionKey = getSectionKeyForPage(store.navItems, pageIndex);
       if (sectionKey && sectionKey !== store.expandedDomain) {
         store.setExpandedDomain?.(sectionKey);
       }

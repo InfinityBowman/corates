@@ -75,7 +75,7 @@ export function DomainQuestionPage({
       {/* Three Column Layout */}
       <div className='divide-border grid grid-cols-3 divide-x'>
         <RobinsAnswerPanel
-          title={reviewer1Name || 'Reviewer 1'}
+          title={reviewer1Name}
           panelType='reviewer1'
           answer={reviewer1Data?.answer}
           comment={reviewer1Data?.comment}
@@ -87,7 +87,7 @@ export function DomainQuestionPage({
         />
 
         <RobinsAnswerPanel
-          title={reviewer2Name || 'Reviewer 2'}
+          title={reviewer2Name}
           panelType='reviewer2'
           answer={reviewer2Data?.answer}
           comment={reviewer2Data?.comment}

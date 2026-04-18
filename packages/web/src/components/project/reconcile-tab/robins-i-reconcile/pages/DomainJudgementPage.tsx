@@ -80,7 +80,7 @@ export function DomainJudgementPage({
 
         <div className='divide-border grid grid-cols-3 divide-x'>
           <JudgementPanel
-            title={reviewer1Name || 'Reviewer 1'}
+            title={reviewer1Name}
             panelType='reviewer1'
             judgement={reviewer1Data?.judgement}
             judgementOptions={ROB_JUDGEMENTS}
@@ -91,7 +91,7 @@ export function DomainJudgementPage({
           />
 
           <JudgementPanel
-            title={reviewer2Name || 'Reviewer 2'}
+            title={reviewer2Name}
             panelType='reviewer2'
             judgement={reviewer2Data?.judgement}
             judgementOptions={ROB_JUDGEMENTS}
@@ -135,7 +135,7 @@ export function DomainJudgementPage({
 
           <div className='divide-border grid grid-cols-3 divide-x'>
             <DirectionPanel
-              title={reviewer1Name || 'Reviewer 1'}
+              title={reviewer1Name}
               panelType='reviewer1'
               direction={reviewer1Data?.direction}
               directionOptions={directionOptions}
@@ -146,7 +146,7 @@ export function DomainJudgementPage({
             />
 
             <DirectionPanel
-              title={reviewer2Name || 'Reviewer 2'}
+              title={reviewer2Name}
               panelType='reviewer2'
               direction={reviewer2Data?.direction}
               directionOptions={directionOptions}

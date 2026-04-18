@@ -21,8 +21,6 @@ interface SummaryViewProps {
   allAnswered: boolean;
   saving: boolean;
   summary: any;
-  reviewer1Name: string;
-  reviewer2Name: string;
 }
 
 export function SummaryView({

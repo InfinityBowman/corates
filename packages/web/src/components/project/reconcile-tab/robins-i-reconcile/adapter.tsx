@@ -253,8 +253,8 @@ function renderPage(context: EngineContext) {
           fieldKey: 'comment',
           questionKey: currentItem.key,
         })}
-        reviewer1Name={context.reviewer1Name || 'Reviewer 1'}
-        reviewer2Name={context.reviewer2Name || 'Reviewer 2'}
+        reviewer1Name={context.reviewer1Name}
+        reviewer2Name={context.reviewer2Name}
         isAgreement={context.isAgreement}
         onFinalAnswerChange={answer =>
           updateSectionBAnswer(context.updateChecklistAnswer, currentItem.key, answer)
@@ -307,8 +307,8 @@ function renderPage(context: EngineContext) {
           fieldKey: 'comment',
           questionKey: currentItem.key,
         })}
-        reviewer1Name={context.reviewer1Name || 'Reviewer 1'}
-        reviewer2Name={context.reviewer2Name || 'Reviewer 2'}
+        reviewer1Name={context.reviewer1Name}
+        reviewer2Name={context.reviewer2Name}
         isAgreement={context.isAgreement}
         onFinalAnswerChange={answer =>
           updateDomainQuestionAnswer(
@@ -369,8 +369,8 @@ function renderPage(context: EngineContext) {
         reviewer1Data={c1?.[currentItem.domainKey]}
         reviewer2Data={c2?.[currentItem.domainKey]}
         finalData={fa[currentItem.domainKey]}
-        reviewer1Name={context.reviewer1Name || 'Reviewer 1'}
-        reviewer2Name={context.reviewer2Name || 'Reviewer 2'}
+        reviewer1Name={context.reviewer1Name}
+        reviewer2Name={context.reviewer2Name}
         judgementMatch={itemComparison?.judgementMatch}
         directionMatch={itemComparison?.directionMatch}
         onFinalJudgementChange={judgement =>
@@ -439,8 +439,8 @@ function renderPage(context: EngineContext) {
         reviewer1Data={c1?.overall}
         reviewer2Data={c2?.overall}
         finalData={fa.overall}
-        reviewer1Name={context.reviewer1Name || 'Reviewer 1'}
-        reviewer2Name={context.reviewer2Name || 'Reviewer 2'}
+        reviewer1Name={context.reviewer1Name}
+        reviewer2Name={context.reviewer2Name}
         judgementMatch={itemComparison?.judgementMatch}
         directionMatch={itemComparison?.directionMatch}
         onFinalJudgementChange={judgement =>

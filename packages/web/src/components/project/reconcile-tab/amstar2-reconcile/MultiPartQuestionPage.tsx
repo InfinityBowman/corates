@@ -214,7 +214,7 @@ export function MultiPartQuestionPage({
         {/* Reviewer 1 Panel */}
         <div className='p-4'>
           <div className='mb-4 flex items-center justify-between'>
-            <h3 className='text-foreground font-semibold'>{reviewer1Name || 'Reviewer 1'}</h3>
+            <h3 className='text-foreground font-semibold'>{reviewer1Name}</h3>
             {!reviewersAgree && (
               <button
                 onClick={useReviewer1}
@@ -255,7 +255,7 @@ export function MultiPartQuestionPage({
         {/* Reviewer 2 Panel */}
         <div className='p-4'>
           <div className='mb-4 flex items-center justify-between'>
-            <h3 className='text-foreground font-semibold'>{reviewer2Name || 'Reviewer 2'}</h3>
+            <h3 className='text-foreground font-semibold'>{reviewer2Name}</h3>
             {!reviewersAgree && (
               <button
                 onClick={useReviewer2}

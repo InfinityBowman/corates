@@ -101,14 +101,14 @@ export function DomainDirectionPage({
 
         <div className='grid grid-cols-3 divide-x rounded-lg border'>
           <JudgementPanel
-            title={reviewer1Name || 'Reviewer 1'}
+            title={reviewer1Name}
             panelType='reviewer1'
             judgement={reviewer1Scoring.judgement}
             ruleId={reviewer1Scoring.ruleId}
             isComplete={reviewer1Scoring.isComplete}
           />
           <JudgementPanel
-            title={reviewer2Name || 'Reviewer 2'}
+            title={reviewer2Name}
             panelType='reviewer2'
             judgement={reviewer2Scoring.judgement}
             ruleId={reviewer2Scoring.ruleId}
@@ -142,14 +142,14 @@ export function DomainDirectionPage({
 
         <div className='grid grid-cols-3 divide-x rounded-lg border'>
           <DirectionPanel
-            title={reviewer1Name || 'Reviewer 1'}
+            title={reviewer1Name}
             panelType='reviewer1'
             direction={reviewer1Direction}
             readOnly={true}
             onUseThis={onUseReviewer1}
           />
           <DirectionPanel
-            title={reviewer2Name || 'Reviewer 2'}
+            title={reviewer2Name}
             panelType='reviewer2'
             direction={reviewer2Direction}
             readOnly={true}

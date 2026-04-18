@@ -48,10 +48,10 @@ export function NotesCompareSection({
     if (!finalNoteYText) return;
     const parts: string[] = [];
     if (hasReviewer1Note) {
-      parts.push(`[${reviewer1Name || 'Reviewer 1'}]\n${reviewer1Note}`);
+      parts.push(`[${reviewer1Name}]\n${reviewer1Note}`);
     }
     if (hasReviewer2Note) {
-      parts.push(`[${reviewer2Name || 'Reviewer 2'}]\n${reviewer2Note}`);
+      parts.push(`[${reviewer2Name}]\n${reviewer2Note}`);
     }
     const merged = parts.join('\n\n').slice(0, MAX_LENGTH);
     applyYTextDiff(finalNoteYText, finalNoteYText.toString(), merged);
@@ -85,7 +85,7 @@ export function NotesCompareSection({
               <div className='bg-muted rounded-lg p-3'>
                 <div className='mb-2 flex items-center justify-between'>
                   <h4 className='text-secondary-foreground text-xs font-semibold'>
-                    {reviewer1Name || 'Reviewer 1'}
+                    {reviewer1Name}
                   </h4>
                   {hasReviewer1Note && (
                     <button
@@ -109,7 +109,7 @@ export function NotesCompareSection({
               <div className='bg-muted rounded-lg p-3'>
                 <div className='mb-2 flex items-center justify-between'>
                   <h4 className='text-secondary-foreground text-xs font-semibold'>
-                    {reviewer2Name || 'Reviewer 2'}
+                    {reviewer2Name}
                   </h4>
                   {hasReviewer2Note && (
                     <button

@@ -25,7 +25,6 @@ import {
   seedDualReviewerScenario,
   cleanupScenario,
   loginAs,
-  loginWithApiCookies,
   switchUser,
   addProjectMember,
   type DualReviewerScenario,
