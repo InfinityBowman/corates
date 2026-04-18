@@ -1,135 +1,14 @@
 /**
- * Billing grants routes
- * Handles trial and access grant management
+ * Stripped — POST /api/billing/trial/start migrated to TanStack Start.
+ * See packages/web/src/routes/api/billing/trial/start.ts.
+ *
+ * Router file kept so packages/workers/src/routes/billing/index.ts can still mount it.
  */
-import { OpenAPIHono, createRoute, z, $ } from '@hono/zod-openapi';
-import { requireAuth, getAuth } from '../../middleware/auth.js';
-import { createDb } from '@corates/db/client';
-import { createDomainError, SYSTEM_ERRORS, VALIDATION_ERRORS, AUTH_ERRORS } from '@corates/shared';
-import { GRANT_CONFIG } from '../../config/constants.js';
-import { resolveOrgIdWithRole } from './helpers/orgContext.js';
-import { requireOrgOwner } from '../../policies';
+import { OpenAPIHono, $ } from '@hono/zod-openapi';
+import { requireAuth } from '../../middleware/auth.js';
 import { validationHook } from '../../lib/honoValidationHook.js';
 import type { Env } from '../../types';
-import { ErrorResponseSchema } from '../../schemas/common.js';
 
-const base = new OpenAPIHono<{ Bindings: Env }>({
-  defaultHook: validationHook,
-});
-
-// Response schemas
-const TrialStartSuccessSchema = z
-  .object({
-    success: z.literal(true),
-    grantId: z.string(),
-    expiresAt: z.number(),
-  })
-  .openapi('TrialStartSuccess');
-
-// Route definitions
-const startTrialRoute = createRoute({
-  method: 'post',
-  path: '/trial/start',
-  tags: ['Billing'],
-  summary: 'Start trial grant',
-  description:
-    'Start a trial grant for the current org (owner-only). Each organization can only have one trial grant.',
-  security: [{ cookieAuth: [] }],
-  responses: {
-    200: {
-      content: { 'application/json': { schema: TrialStartSuccessSchema } },
-      description: 'Trial started successfully',
-    },
-    400: {
-      content: { 'application/json': { schema: ErrorResponseSchema } },
-      description: 'Trial already exists',
-    },
-    403: {
-      content: { 'application/json': { schema: ErrorResponseSchema } },
-      description: 'Not org owner',
-    },
-    500: {
-      content: { 'application/json': { schema: ErrorResponseSchema } },
-      description: 'Internal error',
-    },
-  },
-});
-
-// Route handlers
-const billingGrantRoutes = $(base.use('*', requireAuth)).openapi(startTrialRoute, async c => {
-  const { user, session } = getAuth(c);
-
-  if (!user || !session) {
-    const error = createDomainError(AUTH_ERRORS.REQUIRED, { reason: 'no_user' });
-    return c.json(error, 403);
-  }
-
-  const db = createDb(c.env.DB);
-
-  try {
-    const { orgId, role } = await resolveOrgIdWithRole({ db, session, userId: user.id });
-
-    if (!orgId) {
-      const error = createDomainError(AUTH_ERRORS.FORBIDDEN, { reason: 'no_org_found' });
-      return c.json(error, 403);
-    }
-
-    // Verify user is org owner
-    requireOrgOwner({ orgId, role });
-
-    const { getGrantByOrgIdAndType, createGrant } = await import('@corates/db/org-access-grants');
-
-    // Check if trial grant already exists (uniqueness requirement)
-    const existingTrial = await getGrantByOrgIdAndType(db, orgId, 'trial');
-    if (existingTrial) {
-      const error = createDomainError(
-        VALIDATION_ERRORS.INVALID_INPUT,
-        {
-          field: 'trial',
-          value: 'already_exists',
-        },
-        'Trial grant already exists for this organization. Each organization can only have one trial grant.',
-      );
-      return c.json(error, 400);
-    }
-
-    // Create trial grant (configured trial days from now)
-    const now = new Date();
-    const expiresAt = new Date(now);
-    expiresAt.setDate(expiresAt.getDate() + GRANT_CONFIG.TRIAL_DAYS);
-
-    const grantId = crypto.randomUUID();
-    await createGrant(db, {
-      id: grantId,
-      orgId,
-      type: 'trial',
-      startsAt: now,
-      expiresAt,
-    });
-
-    return c.json(
-      {
-        success: true as const,
-        grantId,
-        expiresAt: Math.floor(expiresAt.getTime() / 1000),
-      },
-      200,
-    );
-  } catch (err) {
-    const error = err as Error & { code?: string; statusCode?: number };
-    console.error('Error starting trial:', error);
-
-    // If error is already a domain error, return it as-is
-    if (error.code && error.statusCode) {
-      return c.json(error as z.infer<typeof ErrorResponseSchema>, 403);
-    }
-
-    const systemError = createDomainError(SYSTEM_ERRORS.INTERNAL_ERROR, {
-      operation: 'start_trial',
-      originalError: error.message,
-    });
-    return c.json(systemError, 500);
-  }
-});
-
+const base = new OpenAPIHono<{ Bindings: Env }>({ defaultHook: validationHook });
+const billingGrantRoutes = $(base.use('*', requireAuth));
 export { billingGrantRoutes };

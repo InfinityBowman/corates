@@ -50,7 +50,13 @@ export async function getMembers() {
 }
 
 export async function startTrial() {
-  return parseResponse(api.api.billing.trial.start.$post({ json: {} }));
+  const res = await fetch(`${API_BASE}/api/billing/trial/start`, {
+    method: 'POST',
+    credentials: 'include',
+  });
+  const data = (await res.json()) as Record<string, unknown>;
+  if (!res.ok) throw data;
+  return data;
 }
 
 export async function validatePlanChange(targetPlan: string) {
