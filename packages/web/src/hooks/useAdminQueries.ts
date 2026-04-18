@@ -115,12 +115,17 @@ export function useStorageDocuments(
   const search = params.search ?? '';
   return useQuery({
     queryKey: queryKeys.admin.storageDocuments(cursor, limit, prefix, search),
-    queryFn: () => {
-      const query: Record<string, string> = { limit: limit.toString() };
-      if (cursor) query.cursor = cursor;
-      if (prefix) query.prefix = prefix;
-      if (search) query.search = search;
-      return parseResponse(api.api.admin.storage.documents.$get({ query }));
+    queryFn: async () => {
+      const params = new URLSearchParams({ limit: limit.toString() });
+      if (cursor) params.set('cursor', cursor);
+      if (prefix) params.set('prefix', prefix);
+      if (search) params.set('search', search);
+      const res = await fetch(`/api/admin/storage/documents?${params.toString()}`, {
+        credentials: 'include',
+      });
+      const data = (await res.json()) as Record<string, unknown>;
+      if (!res.ok) throw data;
+      return data;
     },
     ...ADMIN_QUERY_CONFIG,
   });

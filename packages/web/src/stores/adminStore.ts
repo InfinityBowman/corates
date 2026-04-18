@@ -125,7 +125,15 @@ export async function deleteStorageDocuments(keys: string[]) {
   if (!Array.isArray(keys) || keys.length === 0) {
     throw new Error('Keys array is required');
   }
-  return parseResponse(api.api.admin.storage.documents.$delete({ json: { keys } }));
+  const res = await fetch('/api/admin/storage/documents', {
+    method: 'DELETE',
+    credentials: 'include',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ keys }),
+  });
+  const data = (await res.json()) as Record<string, unknown>;
+  if (!res.ok) throw data;
+  return data;
 }
 
 export async function fetchOrgs({ page = 1, limit = 20, search = '' } = {}) {

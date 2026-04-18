@@ -34,6 +34,7 @@ Tier 3 (in progress, issue [#484](https://github.com/InfinityBowman/corates/issu
 Tier 3 admin (in progress, issue [#485](https://github.com/InfinityBowman/corates/issues/485)):
 
 - **Pass 13** — admin orgs: `/api/admin/orgs` (GET list), `/api/admin/orgs/$orgId` (GET details). Two route files. Created `packages/web/src/server/guards/requireAdmin.ts` (session check + `isAdminUser` role check, returns discriminated union like other guards). Added `@corates/workers/auth-admin` subpath export so the guard can reuse `isAdminUser`. Both routes are GET-only, so no CSRF/`requireTrustedOrigin` equivalent needed yet. Migrated `fetchOrgs`/`fetchOrgDetails` in `stores/adminStore.ts` from Hono RPC to plain fetch.
+- **Pass 14** — admin storage: `/api/admin/storage/documents` (GET list, DELETE bulk), `/api/admin/storage/stats` (GET). Two route files (`storage/documents.ts`, `storage/stats.ts`). Tests use real R2 via `cloudflare:test`'s `env.PDF_BUCKET` (puts and lists actual objects) instead of mocking — same pattern as the PDFs route tests. `clearR2('projects/')` runs in `beforeEach`. The `stats.ts` R2 list call needs an explicit cast — `as { objects, truncated, cursor? }` — because web env doesn't pull in `@cloudflare/workers-types` (already documented in the gotchas). Migrated `useStorageDocuments` (in `useAdminQueries.ts`) and `deleteStorageDocuments` (in `adminStore.ts`) from Hono RPC to plain fetch.
 
 Every route a regular user hits is now on TanStack. Hono still serves `/api/auth/*` (better-auth catch-all), most of `/api/admin/*`, Stripe webhooks, and DO WebSocket upgrades.
 
@@ -47,7 +48,7 @@ Tracking issues:
 
 Tier 3:
 
-- `packages/workers/src/routes/admin/*` — 9 files remaining (~6,800 lines). `orgs.ts` stripped in Pass 13. Largest individual files left: `billing.ts` (1,195), `users.ts` (1,092), `database.ts` (997), `stripe-tools.ts` (808), `billing-observability.ts` (788), `projects.ts` (772), `stats.ts` (665), `storage.ts` (525)
+- `packages/workers/src/routes/admin/*` — 8 files remaining (~6,300 lines). `orgs.ts` stripped in Pass 13, `storage.ts` in Pass 14. Largest individual files left: `billing.ts` (1,195), `users.ts` (1,092), `database.ts` (997), `stripe-tools.ts` (808), `billing-observability.ts` (788), `projects.ts` (772), `stats.ts` (665)
 - `packages/workers/src/routes/billing/*` — fully migrated. All 7 files stripped to stubs. Order: `sync.ts` (Pass 6), `portal.ts` (Pass 7), `validation.ts` (Pass 8), `grants.ts` (Pass 9), `invoices.ts` (Pass 10), `subscription.ts` 3 routes (Pass 11), `checkout.ts` 3 routes (Pass 12).
 
 Must stay on Hono indefinitely:
@@ -241,8 +242,8 @@ Most components already used plain `fetch`, so no code changes were needed for P
 
 ## Test counts (2026-04-17)
 
-- Web server tests: **228 passing** across 28 files (Pass 13: +10 tests, +1 file)
-- Workers tests: **258 passing** across 25 files (Pass 13: -6 tests, -1 file from deleted `admin-orgs.test.ts`)
+- Web server tests: **243 passing** across 29 files (Pass 14: +15 tests, +1 file)
+- Workers tests: **248 passing** across 24 files (Pass 14: -10 tests, -1 file from deleted `admin-storage.test.ts`)
 - Web typecheck: clean modulo 3 pre-existing errors (e2e `timeout` in TestDetails, unused `loginWithApiCookies`, `src/server.ts:28` queue() arity)
 - Workers typecheck: clean
 
@@ -265,7 +266,7 @@ Never start dev servers — the user does that.
 ## Recommended Tier 3 order
 
 1. ~~**Billing non-webhook first** ([#484](https://github.com/InfinityBowman/corates/issues/484)). Done — Passes 6-12.~~
-2. **Admin** ([#485](https://github.com/InfinityBowman/corates/issues/485)). ~7.2k lines, in progress on `migrate-admin-routes`. Mostly read-only dashboards, so faster per-line than billing. Order: ~~`orgs.ts` (393, Pass 13)~~, `storage.ts` (525), `stats.ts` (665), `projects.ts` (772), `billing-observability.ts` (788), `stripe-tools.ts` (808), `database.ts` (997), `users.ts` (1,092), `billing.ts` (1,195).
+2. **Admin** ([#485](https://github.com/InfinityBowman/corates/issues/485)). ~7.2k lines, in progress on `migrate-admin-routes`. Mostly read-only dashboards, so faster per-line than billing. Order: ~~`orgs.ts` (393, Pass 13)~~, ~~`storage.ts` (525, Pass 14)~~, `stats.ts` (665), `projects.ts` (772), `billing-observability.ts` (788), `stripe-tools.ts` (808), `database.ts` (997), `users.ts` (1,092), `billing.ts` (1,195).
 3. **Retire Hono app** ([#486](https://github.com/InfinityBowman/corates/issues/486)). Port `/api/auth/*` and Stripe webhooks, then strip workers to library-only.
 
 Stripe webhooks stay on Hono. The `/api/auth/*` catch-all stays on Hono (better-auth).
