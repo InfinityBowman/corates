@@ -18,8 +18,7 @@
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true,
     "paths": {
-      "@/*": ["./src/*"],
-      "@workers/rpc": ["../workers/dist/rpc/index.d.ts"]
+      "@/*": ["./src/*"]
     }
   }
 }

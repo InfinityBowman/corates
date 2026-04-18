@@ -2,7 +2,7 @@
 
 Handoff doc. Migration consolidates two Cloudflare Workers (`packages/workers` + `packages/web`) into one: the TanStack Start app in `packages/web` takes over every route that used to live in the Hono app.
 
-Branches: `migrate-backend` (Passes 0-5, merged), `migrate-billing-routes` (Passes 6-12, [#484](https://github.com/InfinityBowman/corates/issues/484), merged via PR #487), `migrate-admin-routes` (Passes 13-21, [#485](https://github.com/InfinityBowman/corates/issues/485), merged via PR #488), `retire-hono-app` (Passes 22+, [#486](https://github.com/InfinityBowman/corates/issues/486), in progress as of 2026-04-17).
+Branches: `migrate-backend` (Passes 0-5, merged), `migrate-billing-routes` (Passes 6-12, [#484](https://github.com/InfinityBowman/corates/issues/484), merged via PR #487), `migrate-admin-routes` (Passes 13-21, [#485](https://github.com/InfinityBowman/corates/issues/485), merged via PR #488), `retire-hono-app` (Passes 22-25, [#486](https://github.com/InfinityBowman/corates/issues/486), complete as of 2026-04-17 — Hono fully removed).
 
 ## What's migrated
 
@@ -47,6 +47,10 @@ Tier 3 admin (in progress, issue [#485](https://github.com/InfinityBowman/corate
 
 Tier 4 (in progress, issue [#486](https://github.com/InfinityBowman/corates/issues/486)):
 
+- **Pass 25** — Strip `packages/workers` to a library workspace. Deleted `src/index.ts` (Hono entry), `src/auth/routes.ts` (last empty stub), `src/routes/` (admin + billing + orgs stubs and `health.ts`, all migrated), `src/middleware/` (every Hono middleware + their tests), `src/lib/honoValidationHook.ts`, `src/lib/runMiddleware.ts`, `src/lib/observability/logger.ts`, `src/types/context.ts`, `src/schemas/common.ts`, `src/__tests__/{app,health}.test.ts`. New `src/queue.ts` re-houses the email-queue consumer (no Hono deps); new `src/durable-objects/index.ts` re-exports `UserSession` + `ProjectDoc`; new `src/test-worker.ts` is the wrangler `main` for the test pool only (re-exports DOs, returns 404 for any fetch — tests call helpers directly). Inlined `OrgBilling` into `lib/billingResolver.ts` (its only consumer) since `types/context.ts` is gone. Replaced `Logger` references in `lib/retry.ts` and `lib/syncWithRetry.ts` with `console.warn`/`console.error` + a `logContext` field on retry options (Pass 12 / Pass 22 precedent). `package.json`: dropped `main`, `.` export, `dev`/`tail`/`logs`/`clear-workers`/`build:rpc(:watch)` scripts, and `hono` / `@hono/zod-openapi` / `@sentry/cloudflare` deps. Added subpath exports `./durable-objects` (with hand-written `durable-objects.d.ts` firewall stub) and `./queue` (with `queue.d.ts`). Repointed `wrangler.jsonc`'s `main` to `src/test-worker.ts` and re-ran `wrangler types` to refresh `worker-configuration.d.ts`. Web side: deleted `src/routes/api/$.ts` (Hono catch-all forwarder) and `src/lib/rpc.ts` (unused Hono RPC client); dropped `hono` from `web/package.json`, dropped the `@workers/rpc` path alias from `web/tsconfig.json`, removed `packages/workers/dist/`, replaced `DetailedError`-based branches in `lib/queryClient.ts` and `lib/error-utils.ts` with plain shape checks (parsed-JSON throws, no Hono RPC anymore). Workers tests: 217 → 141 (76 lost across 9 deleted middleware/app/health test files; all those routes have TanStack equivalents in web). Web tests unchanged at 402. **The Hono dependency is fully gone from the runtime path** — `pnpm --filter web build` produces a worker that does not import `hono`.
+
+- **Pass 24** — WebSocket DO upgrades into the worker entry: `/api/project-doc/<projectId>(/<...>)?` and `/api/sessions/<sessionId>(/<...>)?` now route via two regex matches at the top of `packages/web/src/server.ts`'s `fetch` handler, before TanStack Start. ProjectDoc uses `getProjectDocStub(env, projectId).fetch(request)`; UserSession uses `env.USER_SESSION.idFromName(sessionId).get(...).fetch(request)` directly. Forwarding the original `Request` preserves WS upgrade headers. Removed the WS-only fallback that previously sent every `upgrade: websocket` request to `workerHandler.fetch`. The Hono mounts in `packages/workers/src/index.ts` (`base.all('/api/project-doc/...')` etc.) become dead code since they're shadowed by the new top-level match — kept until Pass 25 deletes the file. Legacy 410 endpoints (`/api/orgs/$orgId/project-doc/$projectId`, `/api/project/$projectId`) still answer through the existing `/api/$.ts` Hono catch-all and will be addressed when that catch-all is dropped in Pass 25. No tests added — `server.ts` is the entry point, not a route handler, and the regex matching is exercised the moment any WS client connects.
+
 - **Pass 23** — admin stop-impersonation: `POST /api/admin/stop-impersonation`. One route file. CSRF-guarded (Origin/Referer must match a trusted origin) but bypasses the `requireAdmin` umbrella because the impersonated user does not carry the admin role — only better-auth's session check applies downstream. Created `packages/web/src/server/guards/requireTrustedOrigin.ts` (Hono-shape error: `AUTH_FORBIDDEN` with `details.reason: missing_origin | untrusted_origin`). Added `@corates/workers/config/origins` subpath export so the guard reuses `isOriginAllowed`/`STATIC_ORIGINS` (still authoritative for both packages until workers retires). Forwards cookie/origin/referer + `accept: application/json` to `/api/auth/admin/stop-impersonating` via `auth.handler`. Stripped the inline POST handler (and the `requireTrustedOrigin` middleware mount) from `packages/workers/src/index.ts`; deleted `packages/workers/src/__tests__/stop-impersonation.test.ts` (8 tests, all replaced). 7 new tests covering CSRF (4) + forwarding (2) + error path (1). Note: the broader admin tier (`requireAdmin` umbrella) does not currently apply CSRF in TanStack — `requireTrustedOrigin` was a Hono mount-time concern that didn't propagate during Passes 13-21. Worth a follow-up audit but out of scope for this pass.
 
 - **Pass 22** — `/api/auth/*` + Stripe webhook: `/api/auth/session` (custom WebSocket session payload, GET), `/api/auth/verify-email` (branded HTML wrapper around better-auth's verification, GET), `/api/auth/stripe/webhook` (POST, two-phase ledger trust model), `/api/auth/$` (catch-all that proxies to better-auth's `auth.handler`). Four route files. Migrated together because the catch-all would otherwise shadow the webhook — TanStack's specificity sort (Index → Static most-specific → Dynamic longest → Splat) puts `stripe/webhook.ts` ahead of `$.ts`, and the same rule lets `session.ts`/`verify-email.ts` win against the splat. Added `AUTH_RATE_LIMIT` and `SESSION_RATE_LIMIT` to `server/rateLimit.ts`. The catch-all rate-limits the same paths the Hono mount did: `/api/auth/get-session` (session), and `/api/auth/{sign-in,sign-up,forget-password,reset-password,magic-link}/*` (auth). Moved `auth/templates.ts` into `packages/web/src/server/lib/authHtmlPages.ts` (only consumed by `verify-email.ts`). The Stripe webhook ports the two-phase trust model verbatim (Phase 1: signature presence + payload-hash dedupe + early reject for missing signature / unreadable body / `livemode=false` in production; Phase 2: forward raw body to better-auth, classify response into `processed` / `ignored_unverified` / `failed` and update ledger row accordingly). Replaced `createLogger`/`sha256`/`truncateError` from `lib/observability/logger.ts` with inline `console.info`/`console.error` plus 5-line local `sha256`/`truncate` helpers (same observability event names, Pass 12 precedent). Stripped Hono `auth/routes.ts` to an empty router, deleted `auth/templates.ts`. No prior Hono tests covered the webhook (`__tests__/app.test.ts` had 4 unrelated tests; nothing for the catch-all or webhook). 18 new tests across 2 files (`webhook.server.test.ts` 8, `auth.server.test.ts` 10).
@@ -55,20 +59,17 @@ Tier 4 (in progress, issue [#486](https://github.com/InfinityBowman/corates/issu
 
 Tracking issues:
 
-- [#484](https://github.com/InfinityBowman/corates/issues/484) — Migrate billing (non-webhook) routes
-- [#485](https://github.com/InfinityBowman/corates/issues/485) — Migrate admin routes
-- [#486](https://github.com/InfinityBowman/corates/issues/486) — Retire `packages/workers` Hono app
+- [#484](https://github.com/InfinityBowman/corates/issues/484) — Migrate billing (non-webhook) routes — **done**
+- [#485](https://github.com/InfinityBowman/corates/issues/485) — Migrate admin routes — **done**
+- [#486](https://github.com/InfinityBowman/corates/issues/486) — Retire `packages/workers` Hono app — **done**
 
-Tier 3:
+The migration is complete. `packages/workers` is now a library workspace (DOs + commands + lib helpers + auth/email + queue consumer); every route runs in `packages/web` on TanStack Start; Hono is gone from both runtime and build dependencies.
 
-- `packages/workers/src/routes/admin/*` — fully migrated. All 9 files stripped to stubs (Pass 13-21). `index.ts` (34) still mounts the empty stubs and applies `requireAdmin` + `requireTrustedOrigin`; once the Hono app retires (#486) this whole tree goes away.
-- `packages/workers/src/routes/billing/*` — fully migrated. All 7 files stripped to stubs. Order: `sync.ts` (Pass 6), `portal.ts` (Pass 7), `validation.ts` (Pass 8), `grants.ts` (Pass 9), `invoices.ts` (Pass 10), `subscription.ts` 3 routes (Pass 11), `checkout.ts` 3 routes (Pass 12).
+Optional follow-ups (not blocking):
 
-Must stay on Hono indefinitely:
-
-- `/api/auth/*` — better-auth catch-all
-- Stripe webhooks — specialized middleware for raw-body signature verification
-- DO WebSocket upgrade paths
+- The admin TanStack routes never re-applied the `requireTrustedOrigin` CSRF guard — only `stop-impersonation.ts` carries it (Pass 23). Worth auditing whether mutating admin routes need it, since the Hono mount used to apply it umbrella-wide.
+- The catch-all 410 endpoints (`/api/orgs/$orgId/project-doc/$projectId`, `/api/project/$projectId`) are gone with the Hono app — anyone still hitting them gets a 404 instead of a 410 with a "moved" message. Add TanStack routes if telemetry shows callers.
+- Option 2 from the prior end-state notes (folding `packages/workers` into `packages/web` or a new `packages/core`) is still available; the subpath imports are clean enough that the move is mechanical.
 
 ## Migration pattern (the recipe)
 
@@ -263,9 +264,9 @@ Most components already used plain `fetch`, so no code changes were needed for P
 
 ## Test counts (2026-04-17)
 
-- Web server tests: **402 passing** across 39 files (Pass 23: +7 tests, +1 file)
-- Workers tests: **211 passing** across 19 files (Pass 23 deleted `__tests__/stop-impersonation.test.ts` — 6 tests, all routes migrated)
-- Web typecheck: clean modulo 3 pre-existing errors (e2e `timeout` in TestDetails, unused `loginWithApiCookies`, `src/server.ts:28` queue() arity)
+- Web server tests: **402 passing** across 39 files
+- Workers tests: **141 passing** across 10 files (Pass 25 deleted 9 obsolete test files / 76 tests covering routes & middleware that all now live in TanStack)
+- Web typecheck: clean modulo 2 pre-existing e2e errors (`timeout` in TestDetails, unused `loginWithApiCookies`). The third pre-existing `src/server.ts` queue() arity error was fixed in Pass 25 by rewriting the queue handler to call `handleEmailQueue(batch, env)` (2 args, matching the new signature).
 - Workers typecheck: clean
 
 ## How to run

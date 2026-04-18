@@ -2,18 +2,21 @@
   "name": "@corates/workers",
   "version": "0.0.1",
   "private": true,
-  "description": "Cloudflare Workers with Durable Objects",
+  "description": "Library workspace: Durable Objects, commands, and lib helpers consumed by packages/web. No longer deploys.",
   "license": "PolyForm-Noncommercial-1.0.0",
-  "main": "src/index.ts",
   "type": "module",
   "exports": {
-    ".": {
-      "types": "./types.d.ts",
-      "default": "./src/index.ts"
-    },
     "./auth": {
       "types": "./auth.d.ts",
       "default": "./src/auth/session-helper.ts"
+    },
+    "./durable-objects": {
+      "types": "./durable-objects.d.ts",
+      "default": "./src/durable-objects/index.ts"
+    },
+    "./queue": {
+      "types": "./queue.d.ts",
+      "default": "./src/queue.ts"
     },
     "./project-sync": "./src/lib/project-sync.ts",
     "./project-doc-id": "./src/lib/project-doc-id.ts",
@@ -36,14 +39,9 @@
     "./config/origins": "./src/config/origins.ts"
   },
   "scripts": {
-    "dev": "concurrently \"wrangler dev\" \"pnpm build:rpc:watch\" --names wrangler,rpc --prefix-colors blue,green",
-    "deploy": "echo 'This package is retired. Deploy from packages/web (now corates-workers-prod).' && exit 1",
-    "tail": "wrangler tail",
     "test": "pnpm db:generate:test && vitest run",
     "test:watch": "vitest",
     "build": "pnpm --filter @corates/shared build",
-    "logs": "pnpm wrangler tail corates-workers-prod",
-    "clear-workers": "rm -rf .wrangler/state && pnpm run db:migrate",
     "db:generate": "drizzle-kit generate",
     "db:generate:test": "node ./scripts/generate-test-sql.mjs",
     "db:migrate": "y | wrangler d1 migrations apply corates-db --local",
@@ -56,8 +54,6 @@
     "stripe:setup": "node ./scripts/setup-stripe-test.mjs",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "build:rpc": "tsc -p tsconfig.rpc.json",
-    "build:rpc:watch": "tsc -p tsconfig.rpc.json --watch --preserveWatchOutput",
     "studio": "drizzle-kit studio",
     "localflare": "localflare"
   },
@@ -65,11 +61,8 @@
     "@better-auth/stripe": "^1.6.0",
     "@corates/db": "workspace:*",
     "@corates/shared": "workspace:*",
-    "@hono/zod-openapi": "^1.2.4",
-    "@sentry/cloudflare": "^10.47.0",
     "better-auth": "^1.6.0",
     "drizzle-orm": "^0.45.2",
-    "hono": "^4.12.12",
     "lib0": "^0.2.117",
     "postmark": "^4.0.7",
     "stripe": "^20.4.1",

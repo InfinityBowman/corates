@@ -59,14 +59,14 @@ describe('Email Queue Consumer', () => {
     ENVIRONMENT: 'test',
     POSTMARK_SERVER_TOKEN: 'test-token',
     EMAIL_FROM: 'noreply@test.com',
-  };
+  } as never;
 
   beforeEach(async () => {
     vi.clearAllMocks();
     mockSendEmail.mockResolvedValue({ success: true, id: 'mock-id' });
 
-    const mod = await import('../../index.js');
-    workerHandler = mod.default as any;
+    const mod = await import('../../queue.js');
+    workerHandler = { queue: mod.handleEmailQueue };
   });
 
   it('should process 100 emails and ack all of them', async () => {
@@ -165,13 +165,13 @@ describe('Email Queue Producer', () => {
     await Promise.all(Array.from({ length: 50 }, (_, i) => queueEmail(mockEnv, makePayload(i))));
     expect(queued).toHaveLength(50);
 
-    const mod = await import('../../index.js');
-    const workerHandler = mod.default as any;
+    const mod = await import('../../queue.js');
+    const workerHandler = { queue: mod.handleEmailQueue };
     const consumerEnv = {
       ENVIRONMENT: 'test',
       POSTMARK_SERVER_TOKEN: 'test-token',
       EMAIL_FROM: 'noreply@test.com',
-    };
+    } as never;
 
     const messages = queued.map(payload => createMockMessage(payload));
     const batch = createMockBatch(messages);

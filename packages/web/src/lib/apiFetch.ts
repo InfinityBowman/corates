@@ -1,11 +1,11 @@
 /**
  * API Fetch Wrapper
  *
- * Thin fetch wrapper for endpoints not on the typed Hono RPC router:
+ * Thin fetch wrapper used by:
  * - Better Auth endpoints (/api/auth/*)
  * - Binary uploads/downloads (FormData, raw Response)
  *
- * For typed JSON endpoints, use the RPC client from '@/lib/rpc' instead.
+ * Plain JSON endpoints call `fetch` directly and parse the response.
  */
 
 import { API_BASE } from '@/config/api';
