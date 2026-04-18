@@ -73,12 +73,16 @@ export const useAdminStore = create<AdminState & AdminActions>()(set => ({
   },
 
   impersonateUser: async userId => {
-    await parseResponse(
-      api.api.admin.users[':userId'].impersonate.$post({
-        param: { userId },
-        json: { userId },
-      }),
-    );
+    const res = await fetch(`/api/admin/users/${encodeURIComponent(userId)}/impersonate`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId }),
+    });
+    if (!res.ok) {
+      const data = (await res.json().catch(() => ({}))) as Record<string, unknown>;
+      throw data;
+    }
     set({ isImpersonating: true });
     window.location.href = '/';
   },
@@ -93,32 +97,55 @@ export const useAdminStore = create<AdminState & AdminActions>()(set => ({
 // Admin API functions (plain async, no store state needed)
 
 export async function banUser(userId: string, reason: string, expiresAt: string | null = null) {
-  return parseResponse(
-    api.api.admin.users[':userId'].ban.$post({
-      param: { userId },
-      json: { reason, expiresAt },
-    }),
-  );
+  const res = await fetch(`/api/admin/users/${encodeURIComponent(userId)}/ban`, {
+    method: 'POST',
+    credentials: 'include',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ reason, expiresAt }),
+  });
+  const data = (await res.json()) as Record<string, unknown>;
+  if (!res.ok) throw data;
+  return data;
 }
 
 export async function unbanUser(userId: string) {
-  return parseResponse(api.api.admin.users[':userId'].unban.$post({ param: { userId } }));
+  const res = await fetch(`/api/admin/users/${encodeURIComponent(userId)}/unban`, {
+    method: 'POST',
+    credentials: 'include',
+  });
+  const data = (await res.json()) as Record<string, unknown>;
+  if (!res.ok) throw data;
+  return data;
 }
 
 export async function revokeUserSessions(userId: string) {
-  return parseResponse(api.api.admin.users[':userId'].sessions.$delete({ param: { userId } }));
+  const res = await fetch(`/api/admin/users/${encodeURIComponent(userId)}/sessions`, {
+    method: 'DELETE',
+    credentials: 'include',
+  });
+  const data = (await res.json()) as Record<string, unknown>;
+  if (!res.ok) throw data;
+  return data;
 }
 
 export async function revokeUserSession(userId: string, sessionId: string) {
-  return parseResponse(
-    api.api.admin.users[':userId'].sessions[':sessionId'].$delete({
-      param: { userId, sessionId },
-    }),
+  const res = await fetch(
+    `/api/admin/users/${encodeURIComponent(userId)}/sessions/${encodeURIComponent(sessionId)}`,
+    { method: 'DELETE', credentials: 'include' },
   );
+  const data = (await res.json()) as Record<string, unknown>;
+  if (!res.ok) throw data;
+  return data;
 }
 
 export async function deleteUser(userId: string) {
-  return parseResponse(api.api.admin.users[':userId'].$delete({ param: { userId } }));
+  const res = await fetch(`/api/admin/users/${encodeURIComponent(userId)}`, {
+    method: 'DELETE',
+    credentials: 'include',
+  });
+  const data = (await res.json()) as Record<string, unknown>;
+  if (!res.ok) throw data;
+  return data;
 }
 
 export async function deleteStorageDocuments(keys: string[]) {

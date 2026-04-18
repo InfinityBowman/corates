@@ -4,8 +4,6 @@
  */
 
 import { useQuery } from '@tanstack/react-query';
-import { parseResponse } from 'hono/client';
-import { api } from '@/lib/rpc';
 import { queryKeys } from '@/lib/queryKeys';
 import {
   fetchOrgs,
@@ -23,17 +21,13 @@ const ADMIN_QUERY_CONFIG = {
 };
 
 export function useAdminStats() {
-  // TODO(agent): GET /api/admin/stats was never implemented backend-side; the
-  // statsRoutes mount only handles /signups, /organizations, /projects,
-  // /webhooks, /subscriptions, /revenue. This hook has been returning a 404
-  // for as long as it's existed. Either delete it or wire it to a real
-  // aggregate endpoint.
   return useQuery({
     queryKey: queryKeys.admin.stats,
     queryFn: async () => {
       const res = await fetch('/api/admin/stats', { credentials: 'include' });
-      if (!res.ok) return null;
-      return res.json();
+      const data = (await res.json()) as Record<string, unknown>;
+      if (!res.ok) throw data;
+      return data;
     },
     ...ADMIN_QUERY_CONFIG,
   });
@@ -45,13 +39,13 @@ export function useAdminUsers(params: { page?: number; limit?: number; search?: 
   const search = params.search ?? '';
   return useQuery({
     queryKey: queryKeys.admin.users(page, limit, search),
-    queryFn: () => {
-      const query: Record<string, string> = {
-        page: page.toString(),
-        limit: limit.toString(),
-      };
-      if (search) query.search = search;
-      return parseResponse(api.api.admin.users.$get({ query }));
+    queryFn: async () => {
+      const qs = new URLSearchParams({ page: page.toString(), limit: limit.toString() });
+      if (search) qs.set('search', search);
+      const res = await fetch(`/api/admin/users?${qs.toString()}`, { credentials: 'include' });
+      const data = (await res.json()) as Record<string, unknown>;
+      if (!res.ok) throw data;
+      return data;
     },
     ...ADMIN_QUERY_CONFIG,
   });
@@ -60,8 +54,14 @@ export function useAdminUsers(params: { page?: number; limit?: number; search?: 
 export function useAdminUserDetails(userId: string | null | undefined) {
   return useQuery({
     queryKey: queryKeys.admin.userDetails(userId),
-    queryFn: () =>
-      parseResponse(api.api.admin.users[':userId'].$get({ param: { userId: userId! } })),
+    queryFn: async () => {
+      const res = await fetch(`/api/admin/users/${encodeURIComponent(userId!)}`, {
+        credentials: 'include',
+      });
+      const data = (await res.json()) as Record<string, unknown>;
+      if (!res.ok) throw data;
+      return data;
+    },
     enabled: !!userId,
     ...ADMIN_QUERY_CONFIG,
   });
