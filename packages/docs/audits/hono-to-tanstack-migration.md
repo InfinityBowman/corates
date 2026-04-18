@@ -2,7 +2,7 @@
 
 Handoff doc. Migration consolidates two Cloudflare Workers (`packages/workers` + `packages/web`) into one: the TanStack Start app in `packages/web` takes over every route that used to live in the Hono app.
 
-Branch: `migrate-backend`. Passes 0-5 complete and uncommitted as of 2026-04-17.
+Branch: `migrate-backend`. Passes 0-6 complete and uncommitted as of 2026-04-17.
 
 ## What's migrated
 
@@ -21,7 +21,11 @@ Tier 2 (this session, Passes 1-5):
 - **Pass 4** — invitations: `/api/orgs/$orgId/projects/$projectId/invitations` (list/create) + `$invitationId` (cancel)
 - **Pass 5** — PDFs + dev: `.../studies/$studyId/pdfs` + `pdfs/$fileName`, and `.../dev/{templates,apply-template,export,import,reset,add-study}`
 
-Every route a regular user hits is now on TanStack. Hono still serves `/api/auth/*` (better-auth catch-all), `/api/admin/*`, `/api/billing/*`, Stripe webhooks, and DO WebSocket upgrades.
+Tier 3 (in progress, issue [#484](https://github.com/InfinityBowman/corates/issues/484)):
+
+- **Pass 6** — billing sync: `/api/billing/sync-after-success` (POST). Added `@corates/workers/commands/billing` subpath export. Updated `BillingSettings.tsx` from Hono RPC to plain fetch.
+
+Every route a regular user hits is now on TanStack. Hono still serves `/api/auth/*` (better-auth catch-all), `/api/admin/*`, the remaining `/api/billing/*` routes, Stripe webhooks, and DO WebSocket upgrades.
 
 ## What's left
 
@@ -34,7 +38,7 @@ Tracking issues:
 Tier 3:
 
 - `packages/workers/src/routes/admin/*` — 10 files, ~7,200 lines total. Largest individual files: `billing.ts` (1,195), `users.ts` (1,092), `database.ts` (997), `stripe-tools.ts` (808), `billing-observability.ts` (788), `projects.ts` (772), `stats.ts` (665), `storage.ts` (525), `orgs.ts` (393)
-- `packages/workers/src/routes/billing/*` — 7 files, ~1,400 lines non-webhook. `checkout.ts` (431), `subscription.ts` (307), `invoices.ts` (149), `grants.ts` (135), `validation.ts` (126), `portal.ts` (108), `sync.ts` (80)
+- `packages/workers/src/routes/billing/*` — 6 files remaining, ~1,320 lines non-webhook. `checkout.ts` (431), `subscription.ts` (307), `invoices.ts` (149), `grants.ts` (135), `validation.ts` (126), `portal.ts` (108). `sync.ts` (80) migrated in Pass 6.
 
 Must stay on Hono indefinitely:
 
@@ -167,6 +171,7 @@ Mock `@corates/workers/auth.getSession` to impersonate users. Mock `@corates/wor
 "./commands/invitations": "./src/commands/invitations/index.ts",
 "./commands/projects": "./src/commands/projects/index.ts",
 "./commands/members": "./src/commands/members/index.ts",
+"./commands/billing": "./src/commands/billing/index.ts",
 "./billing-resolver": "./src/lib/billingResolver.ts",
 "./quota-transaction": "./src/lib/quotaTransaction.ts",
 "./constants": "./src/config/constants.ts",
@@ -222,7 +227,7 @@ Most components already used plain `fetch`, so no code changes were needed for P
 
 ## Test counts (2026-04-17)
 
-- Web server tests: **165 passing** across 16 files
+- Web server tests: **169 passing** across 17 files
 - Workers tests: **278 passing** across 27 files
 - Web typecheck: clean modulo 3 pre-existing errors (e2e `timeout` in TestDetails, unused `loginWithApiCookies`, `src/server.ts:28` queue() arity)
 - Workers typecheck: clean
@@ -245,7 +250,7 @@ Never start dev servers — the user does that.
 
 ## Recommended Tier 3 order
 
-1. **Billing non-webhook first** ([#484](https://github.com/InfinityBowman/corates/issues/484)). Smaller (1.4k lines), higher-risk (money), worth doing alone with careful review. Tackle in this order: `sync.ts` (80), `portal.ts` (108), `validation.ts` (126), `grants.ts` (135), `invoices.ts` (149), `subscription.ts` (307), `checkout.ts` (431). Each is its own pass.
+1. **Billing non-webhook first** ([#484](https://github.com/InfinityBowman/corates/issues/484)). Smaller (1.4k lines), higher-risk (money), worth doing alone with careful review. Order: ~~`sync.ts` (80, Pass 6 done)~~, `portal.ts` (108), `validation.ts` (126), `grants.ts` (135), `invoices.ts` (149), `subscription.ts` (307), `checkout.ts` (431). Each is its own pass.
 2. **Admin** ([#485](https://github.com/InfinityBowman/corates/issues/485)). ~7.2k lines. Mostly read-only dashboards, so faster per-line than billing. Suggested order by size: `orgs.ts` (393), `storage.ts` (525), `stats.ts` (665), `projects.ts` (772), `billing-observability.ts` (788), `stripe-tools.ts` (808), `database.ts` (997), `users.ts` (1,092), `billing.ts` (1,195).
 3. **Retire Hono app** ([#486](https://github.com/InfinityBowman/corates/issues/486)). Port `/api/auth/*` and Stripe webhooks, then strip workers to library-only.
 
