@@ -1,5 +1,6 @@
 /**
- * HTML templates for authentication pages
+ * HTML pages served by /api/auth/verify-email after better-auth's verification
+ * step. Inlined here so the auth route file owns its own response surface.
  */
 
 export function getEmailVerificationSuccessPage(): string {
@@ -88,12 +89,10 @@ export function getEmailVerificationSuccessPage(): string {
         <button class="close-button" onclick="window.close()">Close This Page</button>
       </div>
       <script>
-        // Auto-close after 5 seconds if window.close() doesn't work
         setTimeout(() => {
           try {
             window.close();
           } catch (e) {
-            // If can't close, show a message
             document.querySelector('.close-button').textContent = 'You can close this page manually';
           }
         }, 5000);

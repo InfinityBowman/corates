@@ -2,7 +2,7 @@
 
 Handoff doc. Migration consolidates two Cloudflare Workers (`packages/workers` + `packages/web`) into one: the TanStack Start app in `packages/web` takes over every route that used to live in the Hono app.
 
-Branches: `migrate-backend` (Passes 0-5, merged), `migrate-billing-routes` (Passes 6-12, [#484](https://github.com/InfinityBowman/corates/issues/484), merged via PR #487), `migrate-admin-routes` (Passes 13-21, [#485](https://github.com/InfinityBowman/corates/issues/485), complete as of 2026-04-17 — admin tier fully on TanStack).
+Branches: `migrate-backend` (Passes 0-5, merged), `migrate-billing-routes` (Passes 6-12, [#484](https://github.com/InfinityBowman/corates/issues/484), merged via PR #487), `migrate-admin-routes` (Passes 13-21, [#485](https://github.com/InfinityBowman/corates/issues/485), merged via PR #488), `retire-hono-app` (Passes 22+, [#486](https://github.com/InfinityBowman/corates/issues/486), in progress as of 2026-04-17).
 
 ## What's migrated
 
@@ -44,6 +44,10 @@ Tier 3 admin (in progress, issue [#485](https://github.com/InfinityBowman/corate
 - **Pass 21** — admin billing (org subscriptions + grants): `/api/admin/orgs/$orgId/billing` (GET full billing snapshot), `/api/admin/orgs/$orgId/subscriptions` (POST create), `/api/admin/orgs/$orgId/subscriptions/$subscriptionId` (PUT update / DELETE soft-cancel), `/api/admin/orgs/$orgId/grants` (POST create with trial-uniqueness + `expiresAt > startsAt` validation), `/api/admin/orgs/$orgId/grants/$grantId` (PUT update — `expiresAt` extends or `revokedAt` revokes/unrevokes / DELETE revokes), `/api/admin/orgs/$orgId/grant-trial` (POST 14-day convenience), `/api/admin/orgs/$orgId/grant-single-project` (POST 6-month, extends existing non-revoked grant by 6 months from `max(now, expiresAt)` returning `action: 'extended'` 200, otherwise `action: 'created'` 201). Seven route files. Added `@corates/workers/notify` subpath export so the subscription mutation routes can re-use `notifyOrgMembers`/`EventTypes`. Notification dispatch uses a small `dispatchSubscriptionNotify` helper exported from `subscriptions.ts` and re-imported by the `$subscriptionId.ts` PUT/DELETE — it uses `cloudflareCtx.waitUntil` when the TanStack handler receives `context?.cloudflareCtx`, otherwise awaits inline (test-friendly). The same `HandlerArgs` extension pattern (`context?: { cloudflareCtx?: ExecutionContext }`) is the recommended way to thread `waitUntil` into TanStack routes — first instance in the codebase. Deleted Hono `packages/workers/src/routes/admin/__tests__/admin-billing.test.ts` (12 tests, all covered routes migrated here). Migrated `fetchOrgBilling`/`createOrgSubscription`/`updateOrgSubscription`/`cancelOrgSubscription`/`createOrgGrant`/`revokeOrgGrant`/`grantOrgTrial`/`grantOrgSingleProject` (in `adminStore.ts`) from Hono RPC to plain fetch via a tiny `adminBillingMutate` helper that handles invalidation. **`adminStore.ts` no longer imports `parseResponse` or `api`** — admin tier is fully on TanStack from the client side too.
 
 **Admin tier complete.** All admin routes are TanStack. Every route a regular user or admin hits is now on TanStack. Hono still serves `/api/auth/*` (better-auth catch-all), Stripe webhooks, and DO WebSocket upgrades — that's it.
+
+Tier 4 (in progress, issue [#486](https://github.com/InfinityBowman/corates/issues/486)):
+
+- **Pass 22** — `/api/auth/*` + Stripe webhook: `/api/auth/session` (custom WebSocket session payload, GET), `/api/auth/verify-email` (branded HTML wrapper around better-auth's verification, GET), `/api/auth/stripe/webhook` (POST, two-phase ledger trust model), `/api/auth/$` (catch-all that proxies to better-auth's `auth.handler`). Four route files. Migrated together because the catch-all would otherwise shadow the webhook — TanStack's specificity sort (Index → Static most-specific → Dynamic longest → Splat) puts `stripe/webhook.ts` ahead of `$.ts`, and the same rule lets `session.ts`/`verify-email.ts` win against the splat. Added `AUTH_RATE_LIMIT` and `SESSION_RATE_LIMIT` to `server/rateLimit.ts`. The catch-all rate-limits the same paths the Hono mount did: `/api/auth/get-session` (session), and `/api/auth/{sign-in,sign-up,forget-password,reset-password,magic-link}/*` (auth). Moved `auth/templates.ts` into `packages/web/src/server/lib/authHtmlPages.ts` (only consumed by `verify-email.ts`). The Stripe webhook ports the two-phase trust model verbatim (Phase 1: signature presence + payload-hash dedupe + early reject for missing signature / unreadable body / `livemode=false` in production; Phase 2: forward raw body to better-auth, classify response into `processed` / `ignored_unverified` / `failed` and update ledger row accordingly). Replaced `createLogger`/`sha256`/`truncateError` from `lib/observability/logger.ts` with inline `console.info`/`console.error` plus 5-line local `sha256`/`truncate` helpers (same observability event names, Pass 12 precedent). Stripped Hono `auth/routes.ts` to an empty router, deleted `auth/templates.ts`. No prior Hono tests covered the webhook (`__tests__/app.test.ts` had 4 unrelated tests; nothing for the catch-all or webhook). 18 new tests across 2 files (`webhook.server.test.ts` 8, `auth.server.test.ts` 10).
 
 ## What's left
 
@@ -237,6 +241,10 @@ Delete the corresponding Hono test file (`packages/workers/src/routes/__tests__/
 
 **Threading `waitUntil` into TanStack handlers.** `src/server.ts` injects `cloudflareCtx` into every TanStack request via `context: { cloudflareCtx: ctx }`. Routes that want fire-and-forget work (notifications, async logging) extend their handler args with `context?: { cloudflareCtx?: ExecutionContext }` and check `context?.cloudflareCtx?.waitUntil` at runtime. When absent (tests, fallback) the work is awaited inline. `routes/api/admin/orgs/$orgId/subscriptions.ts` exports a reusable `dispatchSubscriptionNotify` helper that does this.
 
+**TanStack file-route specificity wins over splats.** From the Route Matching docs: routes are sorted Index → Static (most-specific first) → Dynamic (longest first) → Splat. This is why the Pass 22 catch-all `routes/api/auth/$.ts` does not shadow sibling exact files like `routes/api/auth/session.ts` or the deeper `routes/api/auth/stripe/webhook.ts`, and the existing `/api/$.ts` Hono catch-all hasn't shadowed any of the migrated tiers either. The order routes are defined or codegened doesn't matter — TanStack re-sorts.
+
+**Catch-all handlers must be exported when tested.** TanStack types `server.handlers` as a function (not a record), so accessing `Route.options.server!.handlers!.POST` from tests fails to typecheck even though it works at runtime. Export the handler function (e.g. `export const handle = ...`) and import it directly into tests, same as the named `handleGet`/`handlePost` pattern.
+
 ## Client caller translation
 
 Client callers that were using Hono RPC (`honoClient.api.orgs[':orgId'].$get(...)`) were rewritten to plain `fetch(\`\${API_BASE}/api/orgs/\${orgId}\`, {...})`. The URLs are identical; the TanStack routes serve the same paths. Completed updates:
@@ -253,8 +261,8 @@ Most components already used plain `fetch`, so no code changes were needed for P
 
 ## Test counts (2026-04-17)
 
-- Web server tests: **377 passing** across 36 files (Pass 21: +28 tests, +1 file)
-- Workers tests: **217 passing** across 20 files (Pass 21 deleted `routes/admin/__tests__/admin-billing.test.ts` — 12 tests, all covered routes migrated here)
+- Web server tests: **395 passing** across 38 files (Pass 22: +18 tests, +2 files)
+- Workers tests: **217 passing** across 20 files (Pass 22 only stripped `auth/routes.ts` and deleted `auth/templates.ts`; no Hono test deletions yet)
 - Web typecheck: clean modulo 3 pre-existing errors (e2e `timeout` in TestDetails, unused `loginWithApiCookies`, `src/server.ts:28` queue() arity)
 - Workers typecheck: clean
 
