@@ -3,20 +3,22 @@
  */
 
 import { useMemo } from 'react';
+import type * as Y from 'yjs';
 import { PLANNING_SECTION } from './checklist-map';
 import { NoteEditor } from '@/components/checklist/common/NoteEditor';
+import type { TextRef } from '@/primitives/useProject/checklists';
 
 interface PlanningSectionProps {
   disabled?: boolean;
-  getRobinsText?: (_sectionKey: string, _fieldKey: string) => any;
+  getTextRef: (_ref: TextRef) => Y.Text | null;
 }
 
-export function PlanningSection({ disabled, getRobinsText }: PlanningSectionProps) {
+export function PlanningSection({ disabled, getTextRef }: PlanningSectionProps) {
   const p1Field = (PLANNING_SECTION as any).p1;
 
   const yText = useMemo(
-    () => (getRobinsText ? getRobinsText('planning', 'confoundingFactors') : null),
-    [getRobinsText],
+    () => getTextRef({ type: 'ROBINS_I', sectionKey: 'planning', fieldKey: 'confoundingFactors' }),
+    [getTextRef],
   );
 
   return (

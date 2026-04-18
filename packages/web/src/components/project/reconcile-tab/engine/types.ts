@@ -1,5 +1,7 @@
 import type { ReactNode } from 'react';
+import type * as Y from 'yjs';
 import type { getUserColor } from '@/lib/userColors.js';
+import type { TextRef } from '@/primitives/useProject/checklists';
 
 // ---------------------------------------------------------------------------
 // Presence types (mirrored from useReconciliationPresence to avoid
@@ -71,15 +73,10 @@ export interface EngineContext {
   isAgreement: boolean;
   /** Raw Yjs write callback - adapter formats args for its data model */
   updateChecklistAnswer: (sectionKey: string, data: unknown) => void;
-  /** Raw Y.Text accessor - adapter calls with type-specific arg pattern */
-  getTextRef: ((...args: unknown[]) => unknown) | null;
-  /** Set a Y.Text field value by key path (equality-checked, transacted) */
-  setTextValue:
-    | ((
-        params: { sectionKey?: string; fieldKey?: string; questionKey?: string },
-        text: string,
-      ) => void)
-    | null;
+  /** Y.Text accessor for collaborative comment/note fields */
+  getTextRef: (ref: TextRef) => Y.Text | null;
+  /** Set a Y.Text field value (equality-checked, transacted) */
+  setTextValue: (ref: TextRef, text: string) => void;
 }
 
 /**
@@ -193,13 +190,7 @@ export interface ReconciliationAdapter {
     item: ReconciliationNavItem,
     checklist1: unknown,
     updateChecklistAnswer: (sectionKey: string, data: unknown) => void,
-    getTextRef: ((...args: unknown[]) => unknown) | null,
-    setTextValue?:
-      | ((
-          params: { sectionKey?: string; fieldKey?: string; questionKey?: string },
-          text: string,
-        ) => void)
-      | null,
+    setTextValue: (ref: TextRef, text: string) => void,
   ) => void;
 
   /** Reset all answers to empty/default state */
@@ -263,13 +254,8 @@ export interface ReconciliationEngineProps {
   onSaveReconciled: (name?: string) => void;
   onCancel: () => void;
   updateChecklistAnswer: (sectionKey: string, data: unknown) => void;
-  getTextRef: ((...args: unknown[]) => unknown) | null;
-  setTextValue:
-    | ((
-        params: { sectionKey?: string; fieldKey?: string; questionKey?: string },
-        text: string,
-      ) => void)
-    | null;
+  getTextRef: (ref: TextRef) => Y.Text | null;
+  setTextValue: (ref: TextRef, text: string) => void;
 
   // PDF
   pdfData: ArrayBuffer | null;

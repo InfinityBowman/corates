@@ -7,7 +7,9 @@
  */
 
 import { useState, useMemo, useCallback, useRef, useEffect } from 'react';
+import type * as Y from 'yjs';
 import { getActiveDomainKeys } from './checklist-map';
+import type { TextRef } from '@/primitives/useProject/checklists';
 import { shouldStopAssessment } from './checklist.js';
 import { PlanningSection } from './PlanningSection';
 import { SectionA } from './SectionA';
@@ -25,7 +27,7 @@ interface ROBINSIChecklistProps {
   showComments?: boolean;
   showLegend?: boolean;
   readOnly?: boolean;
-  getRobinsText?: (_sectionKey: string, _fieldKey: string, _questionKey?: string) => any;
+  getTextRef: (_ref: TextRef) => Y.Text | null;
 }
 
 export function ROBINSIChecklist({
@@ -34,7 +36,7 @@ export function ROBINSIChecklist({
   showComments,
   showLegend,
   readOnly,
-  getRobinsText,
+  getTextRef,
 }: ROBINSIChecklistProps) {
   const isReadOnly = !!readOnly;
   const [collapsedDomains, setCollapsedDomains] = useState<Record<string, boolean>>({});
@@ -104,7 +106,7 @@ export function ROBINSIChecklist({
         {showLegend !== false && <ResponseLegend />}
 
         {/* Planning Stage */}
-        <PlanningSection disabled={isReadOnly} getRobinsText={getRobinsText} />
+        <PlanningSection disabled={isReadOnly} getTextRef={getTextRef} />
 
         {/* Preliminary Considerations Header */}
         <div className='rounded-lg border border-blue-200 bg-blue-100 px-6 py-4'>
@@ -113,27 +115,27 @@ export function ROBINSIChecklist({
           </h2>
         </div>
 
-        <SectionA disabled={isReadOnly} getRobinsText={getRobinsText} />
+        <SectionA disabled={isReadOnly} getTextRef={getTextRef} />
 
         <SectionB
           sectionBState={checklistState?.sectionB}
           onUpdate={handleSectionBUpdate}
           disabled={isReadOnly}
-          getRobinsText={getRobinsText}
+          getTextRef={getTextRef}
         />
 
         <SectionC
           sectionCState={checklistState?.sectionC}
           onUpdate={handleSectionCUpdate}
           disabled={isReadOnly}
-          getRobinsText={getRobinsText}
+          getTextRef={getTextRef}
         />
 
         <SectionD
           sectionDState={checklistState?.sectionD}
           onUpdate={handleSectionDUpdate}
           disabled={isReadOnly}
-          getRobinsText={getRobinsText}
+          getTextRef={getTextRef}
         />
 
         {/* Domain sections - hidden if assessment stopped */}
@@ -157,7 +159,7 @@ export function ROBINSIChecklist({
                     showComments={showComments}
                     collapsed={collapsedDomains[domainKey]}
                     onToggleCollapse={() => toggleDomainCollapse(domainKey)}
-                    getRobinsText={getRobinsText}
+                    getTextRef={getTextRef}
                   />
                 </div>
               ))}

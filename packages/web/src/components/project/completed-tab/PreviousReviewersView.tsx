@@ -37,7 +37,7 @@ export function PreviousReviewersView({
   const ops = connectionPool.getOps(projectId);
   if (!ops) throw new Error(`No connection for project ${projectId}`);
   const getChecklistData = ops.checklist.getChecklistData;
-  const getQuestionNote = ops.checklist.getQuestionNote;
+  const getTextRef = ops.checklist.getTextRef;
 
   const [checklist1Data, setChecklist1Data] = useState<any>(null);
   const [checklist2Data, setChecklist2Data] = useState<any>(null);
@@ -201,9 +201,9 @@ export function PreviousReviewersView({
                       checklistType={currentChecklistType ?? undefined}
                       readOnly={true}
                       onUpdate={() => {}}
-                      getQuestionNote={(questionKey: string) => {
+                      getTextRef={ref => {
                         if (!currentChecklistId) return null;
-                        return getQuestionNote(study.id, currentChecklistId, questionKey);
+                        return getTextRef(study.id, currentChecklistId, ref);
                       }}
                     />
                   </>

@@ -6,8 +6,10 @@
  */
 
 import { lazy, Suspense } from 'react';
+import type * as Y from 'yjs';
 import { GenericChecklist } from '@/components/checklist/GenericChecklist';
 import { SplitScreenLayout } from '@/components/checklist/SplitScreenLayout';
+import type { TextRef } from '@/primitives/useProject/checklists';
 
 const EmbedPdfViewer = lazy(() => import('@/components/pdf/EmbedPdfViewer'));
 
@@ -22,9 +24,7 @@ interface ChecklistWithPdfProps {
   pdfs?: any[];
   selectedPdfId?: string | null;
   onPdfSelect?: (_pdfId: string) => void;
-  getQuestionNote?: (_questionKey: string) => any;
-  getRobinsText?: (_sectionKey: string, _fieldKey: string, _questionKey?: string) => any;
-  getRob2Text?: (_sectionKey: string, _fieldKey: string, _questionKey?: string) => any;
+  getTextRef: (_ref: TextRef) => Y.Text | null;
   pdfUrl?: string | null;
   onAnnotationAdd?: (_annotation: any) => void;
   onAnnotationUpdate?: (_annotation: any) => void;
@@ -46,9 +46,7 @@ export function ChecklistWithPdf({
   pdfs,
   selectedPdfId,
   onPdfSelect,
-  getQuestionNote,
-  getRobinsText,
-  getRob2Text,
+  getTextRef,
   pdfUrl,
   onAnnotationAdd,
   onAnnotationUpdate,
@@ -68,15 +66,13 @@ export function ChecklistWithPdf({
         pdfUrl={pdfUrl}
         pdfData={pdfData}
       >
-        {/* First panel: Checklist (type-aware) */}
+        {/* First panel: Checklist */}
         <GenericChecklist
           checklistType={checklistType}
           checklist={checklist}
           onUpdate={onUpdate}
           readOnly={readOnly}
-          getQuestionNote={getQuestionNote}
-          getRobinsText={getRobinsText}
-          getRob2Text={getRob2Text}
+          getTextRef={getTextRef}
         />
 
         {/* Second panel: PDF Viewer */}

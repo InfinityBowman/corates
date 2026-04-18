@@ -4,6 +4,7 @@
  */
 
 import { useMemo, useCallback } from 'react';
+import type * as Y from 'yjs';
 import {
   PRELIMINARY_SECTION,
   STUDY_DESIGNS,
@@ -12,19 +13,20 @@ import {
   INFORMATION_SOURCES,
 } from './checklist-map';
 import { NoteEditor } from '@/components/checklist/common/NoteEditor';
+import type { TextRef } from '@/primitives/useProject/checklists';
 
 interface PreliminarySectionProps {
   preliminaryState: any;
   onUpdate: (_newState: any) => void;
   disabled?: boolean;
-  getRob2Text?: (_sectionKey: string, _fieldKey: string, _questionKey?: string) => any;
+  getTextRef: (_ref: TextRef) => Y.Text | null;
 }
 
 export function PreliminarySection({
   preliminaryState,
   onUpdate,
   disabled,
-  getRob2Text,
+  getTextRef,
 }: PreliminarySectionProps) {
   // Only send the changed field to onUpdate. The ROB2 handler's updateAnswer
   // does field-level merging, so we don't need to spread the entire state.
@@ -64,16 +66,16 @@ export function PreliminarySection({
   );
 
   const experimentalYText = useMemo(
-    () => getRob2Text?.('preliminary', 'experimental') ?? null,
-    [getRob2Text],
+    () => getTextRef({ type: 'ROB2', sectionKey: 'preliminary', fieldKey: 'experimental' }),
+    [getTextRef],
   );
   const comparatorYText = useMemo(
-    () => getRob2Text?.('preliminary', 'comparator') ?? null,
-    [getRob2Text],
+    () => getTextRef({ type: 'ROB2', sectionKey: 'preliminary', fieldKey: 'comparator' }),
+    [getTextRef],
   );
   const numericalResultYText = useMemo(
-    () => getRob2Text?.('preliminary', 'numericalResult') ?? null,
-    [getRob2Text],
+    () => getTextRef({ type: 'ROB2', sectionKey: 'preliminary', fieldKey: 'numericalResult' }),
+    [getTextRef],
   );
 
   return (

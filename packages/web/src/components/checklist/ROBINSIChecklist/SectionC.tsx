@@ -4,17 +4,19 @@
  */
 
 import { useMemo, useCallback, useId } from 'react';
+import type * as Y from 'yjs';
 import { SECTION_C } from './checklist-map';
 import { NoteEditor } from '@/components/checklist/common/NoteEditor';
+import type { TextRef } from '@/primitives/useProject/checklists';
 
 interface SectionCProps {
   sectionCState: any;
   onUpdate: (_newState: any) => void;
   disabled?: boolean;
-  getRobinsText?: (_sectionKey: string, _fieldKey: string) => any;
+  getTextRef: (_ref: TextRef) => Y.Text | null;
 }
 
-export function SectionC({ sectionCState, onUpdate, disabled, getRobinsText }: SectionCProps) {
+export function SectionC({ sectionCState, onUpdate, disabled, getTextRef }: SectionCProps) {
   const uniqueId = useId();
   const textFields = useMemo(
     () =>
@@ -53,7 +55,11 @@ export function SectionC({ sectionCState, onUpdate, disabled, getRobinsText }: S
               </span>
               <div className='mt-2'>
                 <NoteEditor
-                  yText={getRobinsText ? getRobinsText('sectionC', field.stateKey) : null}
+                  yText={getTextRef({
+                    type: 'ROBINS_I',
+                    sectionKey: 'sectionC',
+                    fieldKey: field.stateKey,
+                  })}
                   placeholder={field.placeholder}
                   readOnly={disabled}
                   inline={true}

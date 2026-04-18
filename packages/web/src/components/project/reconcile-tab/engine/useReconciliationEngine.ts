@@ -14,6 +14,7 @@ import type {
   ReconciliationNavItem,
   ReconciliationSummaryStats,
 } from './types';
+import type { TextRef } from '@/primitives/useProject/checklists';
 
 interface UseReconciliationEngineOptions {
   adapter: ReconciliationAdapter;
@@ -21,13 +22,7 @@ interface UseReconciliationEngineOptions {
   checklist2: unknown;
   reconciledChecklist: unknown;
   updateChecklistAnswer: (sectionKey: string, data: unknown) => void;
-  getTextRef: ((...args: unknown[]) => unknown) | null;
-  setTextValue:
-    | ((
-        params: { sectionKey?: string; fieldKey?: string; questionKey?: string },
-        text: string,
-      ) => void)
-    | null;
+  setTextValue: (ref: TextRef, text: string) => void;
   onSaveReconciled: (name?: string) => void;
   checklist1Id: string | null;
   checklist2Id: string | null;
@@ -73,7 +68,6 @@ export function useReconciliationEngine({
   checklist2,
   reconciledChecklist,
   updateChecklistAnswer,
-  getTextRef,
   setTextValue,
   onSaveReconciled,
   checklist1Id,
@@ -258,13 +252,7 @@ export function useReconciliationEngine({
     const hasAns = adapter.hasAnswer(item, finalAnswers);
     const isAgree = adapter.isAgreement(item, comparison);
     if (!hasAns && isAgree) {
-      adapter.autoFillFromReviewer1(
-        item,
-        checklist1,
-        updateChecklistAnswer,
-        getTextRef,
-        setTextValue,
-      );
+      adapter.autoFillFromReviewer1(item, checklist1, updateChecklistAnswer, setTextValue);
     }
 
     if (currentPage < totalPages - 1) {
@@ -291,7 +279,6 @@ export function useReconciliationEngine({
     comparison,
     checklist1,
     updateChecklistAnswer,
-    getTextRef,
     setTextValue,
     expandedDomain,
   ]);

@@ -16,11 +16,10 @@ import { ROB2Handler } from './handlers/rob2';
 import type { ChecklistHandler } from './handlers/base';
 import { applyYTextDiff } from '@/hooks/useYText';
 
-interface TextRefParams {
-  sectionKey?: string;
-  fieldKey?: string;
-  questionKey?: string;
-}
+export type TextRef =
+  | { type: 'AMSTAR2'; questionKey: string }
+  | { type: 'ROBINS_I'; sectionKey: string; fieldKey: string; questionKey?: string | null }
+  | { type: 'ROB2'; sectionKey: string; fieldKey: string; questionKey?: string | null };
 
 export interface ChecklistOperations {
   createChecklist: (
@@ -39,26 +38,11 @@ export interface ChecklistOperations {
     key: string,
     data: Record<string, unknown>,
   ) => void;
-  getQuestionNote: (studyId: string, checklistId: string, questionKey: string) => Y.Text | null;
-  getRobinsText: (
-    studyId: string,
-    checklistId: string,
-    sectionKey: string,
-    fieldKey: string,
-    questionKey?: string | null,
-  ) => Y.Text | null;
-  getRob2Text: (
-    studyId: string,
-    checklistId: string,
-    sectionKey: string,
-    fieldKey: string,
-    questionKey?: string | null,
-  ) => Y.Text | null;
-  getTextRef: (studyId: string, checklistId: string, params?: TextRefParams) => Y.Text | null;
+  getTextRef: (studyId: string, checklistId: string, ref: TextRef) => Y.Text | null;
   setTextValue: (
     studyId: string,
     checklistId: string,
-    params: TextRefParams,
+    ref: TextRef,
     text: string,
     maxLength?: number,
   ) => void;
@@ -300,69 +284,46 @@ export function createChecklistOperations(
     checklistYMap.set('updatedAt', Date.now());
   }
 
-  function getQuestionNote(
-    studyId: string,
-    checklistId: string,
-    questionKey: string,
-  ): Y.Text | null {
-    const textGetter = amstar2Handler.getTextGetter(getYDoc);
-    if (!textGetter) return null;
-    return textGetter(studyId, checklistId, questionKey, '', null);
-  }
-
-  function getRobinsText(
-    studyId: string,
-    checklistId: string,
-    sectionKey: string,
-    fieldKey: string,
-    questionKey: string | null = null,
-  ): Y.Text | null {
-    const textGetter = robinsIHandler.getTextGetter(getYDoc);
-    if (!textGetter) return null;
-    return textGetter(studyId, checklistId, sectionKey, fieldKey, questionKey);
-  }
-
-  function getRob2Text(
-    studyId: string,
-    checklistId: string,
-    sectionKey: string,
-    fieldKey: string,
-    questionKey: string | null = null,
-  ): Y.Text | null {
-    const textGetter = rob2Handler.getTextGetter(getYDoc);
-    if (!textGetter) return null;
-    return textGetter(studyId, checklistId, sectionKey, fieldKey, questionKey);
-  }
-
-  function getTextRef(
-    studyId: string,
-    checklistId: string,
-    params: TextRefParams = {},
-  ): Y.Text | null {
-    const result = commonOps.getChecklistYMap(studyId, checklistId);
-    if (!result) return null;
-
-    const { checklistType } = result;
-    const { sectionKey, fieldKey, questionKey } = params;
-
-    if (checklistType === 'AMSTAR2') {
-      return getQuestionNote(studyId, checklistId, questionKey || '');
-    } else if (checklistType === 'ROBINS_I') {
-      return getRobinsText(studyId, checklistId, sectionKey || '', fieldKey || '', questionKey);
-    } else if (checklistType === 'ROB2') {
-      return getRob2Text(studyId, checklistId, sectionKey || '', fieldKey || '', questionKey);
+  function getTextRef(studyId: string, checklistId: string, ref: TextRef): Y.Text | null {
+    switch (ref.type) {
+      case 'AMSTAR2': {
+        const textGetter = amstar2Handler.getTextGetter(getYDoc);
+        if (!textGetter) return null;
+        return textGetter(studyId, checklistId, ref.questionKey, '', null);
+      }
+      case 'ROBINS_I': {
+        const textGetter = robinsIHandler.getTextGetter(getYDoc);
+        if (!textGetter) return null;
+        return textGetter(
+          studyId,
+          checklistId,
+          ref.sectionKey,
+          ref.fieldKey,
+          ref.questionKey ?? null,
+        );
+      }
+      case 'ROB2': {
+        const textGetter = rob2Handler.getTextGetter(getYDoc);
+        if (!textGetter) return null;
+        return textGetter(
+          studyId,
+          checklistId,
+          ref.sectionKey,
+          ref.fieldKey,
+          ref.questionKey ?? null,
+        );
+      }
     }
-    return null;
   }
 
   function setTextValue(
     studyId: string,
     checklistId: string,
-    params: TextRefParams,
+    ref: TextRef,
     text: string,
     maxLength = 2000,
   ): void {
-    const yText = getTextRef(studyId, checklistId, params);
+    const yText = getTextRef(studyId, checklistId, ref);
     if (!yText) return;
     const str = (typeof text === 'string' ? text : '').slice(0, maxLength);
     if (yText.toString() === str) return;
@@ -376,9 +337,6 @@ export function createChecklistOperations(
     getChecklistAnswersMap: commonOps.getChecklistAnswersMap,
     getChecklistData,
     updateChecklistAnswer,
-    getQuestionNote,
-    getRobinsText,
-    getRob2Text,
     getTextRef,
     setTextValue,
   };

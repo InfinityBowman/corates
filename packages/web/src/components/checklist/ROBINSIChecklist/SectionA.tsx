@@ -2,15 +2,17 @@
  * SectionA - ROBINS-I Part A: Specify the result being assessed
  */
 
+import type * as Y from 'yjs';
 import { SECTION_A } from './checklist-map';
 import { NoteEditor } from '@/components/checklist/common/NoteEditor';
+import type { TextRef } from '@/primitives/useProject/checklists';
 
 interface SectionAProps {
   disabled?: boolean;
-  getRobinsText?: (_sectionKey: string, _fieldKey: string) => any;
+  getTextRef: (_ref: TextRef) => Y.Text | null;
 }
 
-export function SectionA({ disabled, getRobinsText }: SectionAProps) {
+export function SectionA({ disabled, getTextRef }: SectionAProps) {
   return (
     <div className='border-border bg-card overflow-hidden rounded-lg border shadow-sm'>
       <div className='border-border bg-muted border-b px-6 py-4'>
@@ -35,7 +37,11 @@ export function SectionA({ disabled, getRobinsText }: SectionAProps) {
               </span>
               <div className='mt-2'>
                 <NoteEditor
-                  yText={getRobinsText ? getRobinsText('sectionA', field.stateKey) : null}
+                  yText={getTextRef({
+                    type: 'ROBINS_I',
+                    sectionKey: 'sectionA',
+                    fieldKey: field.stateKey,
+                  })}
                   placeholder={field.placeholder}
                   readOnly={disabled}
                   inline={true}

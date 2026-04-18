@@ -10,11 +10,13 @@
  */
 
 import { useState, useCallback, useMemo } from 'react';
+import type * as Y from 'yjs';
 import { InfoIcon } from 'lucide-react';
 import { AMSTAR_CHECKLIST } from './checklist-map';
 import { createChecklist as createAMSTAR2Checklist } from './checklist.js';
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { NoteEditor } from '@/components/checklist/common/NoteEditor';
+import type { TextRef } from '@/primitives/useProject/checklists';
 
 // -- Shared internal components --
 
@@ -130,7 +132,7 @@ function StandardQuestion({
   question,
   handleChange,
   onUpdate,
-  getQuestionNote,
+  getTextRef,
   readOnly,
   width,
 }: {
@@ -138,20 +140,19 @@ function StandardQuestion({
   question: any;
   handleChange: (_colIdx: number, _optIdx: number) => void;
   onUpdate: (_newState: any) => void;
-  getQuestionNote?: (_questionKey: string) => any;
+  getTextRef: (_ref: TextRef) => Y.Text | null;
   readOnly?: boolean;
   width?: string;
 }) {
   const questionKey = useMemo(() => {
-    const text = question?.text || '';
-    const match = text.match(/^(\d+[a-z]?)\./);
-    return match ? `q${match[1]}` : null;
+    const match = question.text.match(/^(\d+[a-z]?)\./);
+    return `q${match[1]}`;
   }, [question]);
 
-  const noteYText = useMemo(() => {
-    if (!questionKey || !getQuestionNote) return null;
-    return getQuestionNote(questionKey);
-  }, [questionKey, getQuestionNote]);
+  const noteYText = useMemo(
+    () => getTextRef({ type: 'AMSTAR2', questionKey }),
+    [questionKey, getTextRef],
+  );
 
   return (
     <div className='bg-card relative rounded-lg p-7 pb-3 shadow-md'>
@@ -167,7 +168,7 @@ function StandardQuestion({
         handleChange={handleChange}
         width={width}
       />
-      {getQuestionNote && <NoteEditor yText={noteYText} readOnly={readOnly} collapsed={true} />}
+      <NoteEditor yText={noteYText} readOnly={readOnly} collapsed={true} />
     </div>
   );
 }
@@ -344,12 +345,12 @@ const QUESTION_CONFIGS: QuestionConfig[] = [
 function Question9({
   checklist,
   onUpdate,
-  getQuestionNote,
+  getTextRef,
   readOnly,
 }: {
   checklist: any;
   onUpdate: (_patch: Record<string, any>) => void;
-  getQuestionNote?: (_key: string) => any;
+  getTextRef: (_ref: TextRef) => Y.Text | null;
   readOnly?: boolean;
 }) {
   const stateA = checklist.q9a;
@@ -416,10 +417,7 @@ function Question9({
     [stateA, stateB, onUpdate],
   );
 
-  const noteYText = useMemo(
-    () => (getQuestionNote ? getQuestionNote('q9') : null),
-    [getQuestionNote],
-  );
+  const noteYText = useMemo(() => getTextRef({ type: 'AMSTAR2', questionKey: 'q9' }), [getTextRef]);
 
   return (
     <div className='bg-card relative rounded-lg p-7 pb-3 text-sm shadow-md'>
@@ -442,7 +440,7 @@ function Question9({
         columns={question.columns2}
         handleChange={handleChangeB}
       />
-      {getQuestionNote && <NoteEditor yText={noteYText} readOnly={readOnly} collapsed={true} />}
+      <NoteEditor yText={noteYText} readOnly={readOnly} collapsed={true} />
     </div>
   );
 }
@@ -451,12 +449,12 @@ function Question9({
 function Question11({
   checklist,
   onUpdate,
-  getQuestionNote,
+  getTextRef,
   readOnly,
 }: {
   checklist: any;
   onUpdate: (_patch: Record<string, any>) => void;
-  getQuestionNote?: (_key: string) => any;
+  getTextRef: (_ref: TextRef) => Y.Text | null;
   readOnly?: boolean;
 }) {
   const stateA = checklist.q11a;
@@ -519,8 +517,8 @@ function Question11({
   );
 
   const noteYText = useMemo(
-    () => (getQuestionNote ? getQuestionNote('q11') : null),
-    [getQuestionNote],
+    () => getTextRef({ type: 'AMSTAR2', questionKey: 'q11' }),
+    [getTextRef],
   );
 
   return (
@@ -546,7 +544,7 @@ function Question11({
         handleChange={handleChangeB}
         width='w-48'
       />
-      {getQuestionNote && <NoteEditor yText={noteYText} readOnly={readOnly} collapsed={true} />}
+      <NoteEditor yText={noteYText} readOnly={readOnly} collapsed={true} />
     </div>
   );
 }
@@ -557,14 +555,14 @@ interface AMSTAR2ChecklistProps {
   externalChecklist?: any;
   onExternalUpdate?: (_patch: Record<string, any>) => void;
   readOnly?: boolean;
-  getQuestionNote?: (_questionKey: string) => any;
+  getTextRef: (_ref: TextRef) => Y.Text | null;
 }
 
 export function AMSTAR2Checklist({
   externalChecklist,
   onExternalUpdate,
   readOnly,
-  getQuestionNote,
+  getTextRef,
 }: AMSTAR2ChecklistProps) {
   // Local fallback state for standalone mode (no Yjs)
   const [localChecklist, setLocalChecklist] = useState<any>(() => {
@@ -621,7 +619,7 @@ export function AMSTAR2Checklist({
                 handleChecklistChange({ q1: { ...state, answers: newAnswers } });
               }}
               onUpdate={(newQ: any) => handleChecklistChange({ q1: newQ })}
-              getQuestionNote={getQuestionNote}
+              getTextRef={getTextRef}
               readOnly={readOnly}
             />
 
@@ -636,7 +634,7 @@ export function AMSTAR2Checklist({
                   handleChecklistChange({ [cfg.qKey]: newQ });
                 }}
                 onUpdate={(newQ: any) => handleChecklistChange({ [cfg.qKey]: newQ })}
-                getQuestionNote={getQuestionNote}
+                getTextRef={getTextRef}
                 readOnly={readOnly}
                 width={cfg.width}
               />
@@ -646,7 +644,7 @@ export function AMSTAR2Checklist({
             <Question9
               checklist={checklist}
               onUpdate={handleChecklistChange}
-              getQuestionNote={getQuestionNote}
+              getTextRef={getTextRef}
               readOnly={readOnly}
             />
 
@@ -659,7 +657,7 @@ export function AMSTAR2Checklist({
                 handleChecklistChange({ q10: newQ });
               }}
               onUpdate={(newQ: any) => handleChecklistChange({ q10: newQ })}
-              getQuestionNote={getQuestionNote}
+              getTextRef={getTextRef}
               readOnly={readOnly}
             />
 
@@ -667,7 +665,7 @@ export function AMSTAR2Checklist({
             <Question11
               checklist={checklist}
               onUpdate={handleChecklistChange}
-              getQuestionNote={getQuestionNote}
+              getTextRef={getTextRef}
               readOnly={readOnly}
             />
 
@@ -682,7 +680,7 @@ export function AMSTAR2Checklist({
                   handleChecklistChange({ [cfg.qKey]: newQ });
                 }}
                 onUpdate={(newQ: any) => handleChecklistChange({ [cfg.qKey]: newQ })}
-                getQuestionNote={getQuestionNote}
+                getTextRef={getTextRef}
                 readOnly={readOnly}
                 width={cfg.width}
               />

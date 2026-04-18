@@ -1,4 +1,5 @@
 import { useMemo, useEffect, useEffectEvent, useId, useCallback } from 'react';
+import type * as Y from 'yjs';
 import { useYText } from '@/hooks/useYText';
 import { CheckIcon, XIcon, AlertTriangleIcon } from 'lucide-react';
 import {
@@ -9,6 +10,7 @@ import {
   INFORMATION_SOURCES,
 } from '@corates/shared/checklists/rob2';
 import { NoteEditor } from '@/components/checklist/common/NoteEditor';
+import type { TextRef } from '@/primitives/useProject/checklists';
 
 const PRELIMINARY_TEXT_FIELDS = ['experimental', 'comparator', 'numericalResult'];
 
@@ -255,7 +257,7 @@ interface PreliminaryPageProps {
   isAgreement: boolean;
   isAimMismatch: boolean;
   onFinalChange: (_value: any) => void;
-  getRob2Text: ((_sectionKey: string, _fieldKey: string) => any) | null;
+  getTextRef: (_ref: TextRef) => Y.Text | null;
   onUseReviewer1: () => void;
   onUseReviewer2: () => void;
 }
@@ -294,7 +296,7 @@ export function PreliminaryPage({
   isAgreement,
   isAimMismatch,
   onFinalChange,
-  getRob2Text,
+  getTextRef,
   onUseReviewer1,
   onUseReviewer2,
 }: PreliminaryPageProps) {
@@ -302,7 +304,8 @@ export function PreliminaryPage({
   const fieldLabel = fieldDef?.label || fieldKey;
   const isTextField = PRELIMINARY_TEXT_FIELDS.includes(fieldKey);
 
-  const preliminaryYText = isTextField && getRob2Text ? getRob2Text('preliminary', fieldKey) : null;
+  const preliminaryYText =
+    isTextField ? getTextRef({ type: 'ROB2', sectionKey: 'preliminary', fieldKey }) : null;
   const preliminaryText = useYText(preliminaryYText);
 
   // Sync Y.Text changes back to finalAnswers so hasNavItemAnswer detects
@@ -366,10 +369,10 @@ export function PreliminaryPage({
         );
       default:
         // Text fields use NoteEditor with Y.Text
-        if (isTextField && getRob2Text) {
+        if (isTextField) {
           return (
             <NoteEditor
-              yText={getRob2Text('preliminary', fieldKey)}
+              yText={getTextRef({ type: 'ROB2', sectionKey: 'preliminary', fieldKey })}
               placeholder={fieldDef?.placeholder}
               readOnly={false}
               inline={true}

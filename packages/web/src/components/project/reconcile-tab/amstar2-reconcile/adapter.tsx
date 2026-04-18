@@ -215,7 +215,7 @@ function renderPage(context: EngineContext) {
       isMultiPart={!!currentItem.meta?.isMultiPart}
       reviewer1Note={getReviewerNote(checklist1, key)}
       reviewer2Note={getReviewerNote(checklist2, key)}
-      finalNoteYText={getTextRef?.(key)}
+      finalNoteYText={getTextRef({ type: 'AMSTAR2', questionKey: key })}
     />
   );
 }

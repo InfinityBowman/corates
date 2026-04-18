@@ -4,19 +4,21 @@
  */
 
 import { useMemo, useCallback, useId } from 'react';
+import type * as Y from 'yjs';
 import { AlertCircleIcon } from 'lucide-react';
 import { SECTION_B, RESPONSE_LABELS } from './checklist-map';
 import { shouldStopAssessment } from './checklist.js';
 import { NoteEditor } from '@/components/checklist/common/NoteEditor';
+import type { TextRef } from '@/primitives/useProject/checklists';
 
 interface SectionBProps {
   sectionBState: any;
   onUpdate: (_newState: any) => void;
   disabled?: boolean;
-  getRobinsText?: (_sectionKey: string, _fieldKey: string, _questionKey?: string) => any;
+  getTextRef: (_ref: TextRef) => Y.Text | null;
 }
 
-export function SectionB({ sectionBState, onUpdate, disabled, getRobinsText }: SectionBProps) {
+export function SectionB({ sectionBState, onUpdate, disabled, getTextRef }: SectionBProps) {
   const uniqueId = useId();
   const stopAssessment = useMemo(() => shouldStopAssessment(sectionBState), [sectionBState]);
 
@@ -89,7 +91,12 @@ export function SectionB({ sectionBState, onUpdate, disabled, getRobinsText }: S
 
               <div className='mt-2'>
                 <NoteEditor
-                  yText={getRobinsText ? getRobinsText('sectionB', 'comment', key) : null}
+                  yText={getTextRef({
+                    type: 'ROBINS_I',
+                    sectionKey: 'sectionB',
+                    fieldKey: 'comment',
+                    questionKey: key,
+                  })}
                   placeholder='Comment (optional)'
                   readOnly={disabled}
                   inline={true}
