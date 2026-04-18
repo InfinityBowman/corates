@@ -54,9 +54,11 @@ export async function startTrial() {
 }
 
 export async function validatePlanChange(targetPlan: string) {
-  return parseResponse(
-    api.api.billing['validate-plan-change'].$get({
-      query: { targetPlan },
-    }),
+  const res = await fetch(
+    `${API_BASE}/api/billing/validate-plan-change?targetPlan=${encodeURIComponent(targetPlan)}`,
+    { credentials: 'include' },
   );
+  const data = (await res.json()) as Record<string, unknown>;
+  if (!res.ok) throw data;
+  return data;
 }
