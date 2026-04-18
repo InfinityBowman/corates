@@ -111,10 +111,9 @@ export function useAdminProjectDocStats(projectId: string | null | undefined) {
   return useQuery({
     queryKey: queryKeys.admin.projectDocStats(projectId),
     queryFn: async () => {
-      const res = await fetch(
-        `/api/admin/projects/${encodeURIComponent(projectId!)}/doc-stats`,
-        { credentials: 'include' },
-      );
+      const res = await fetch(`/api/admin/projects/${encodeURIComponent(projectId!)}/doc-stats`, {
+        credentials: 'include',
+      });
       const data = (await res.json()) as Record<string, unknown>;
       if (!res.ok) throw data;
       return data;

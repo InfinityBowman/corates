@@ -287,9 +287,7 @@ describe('GET /api/admin/stripe/customer/:customerId/payment-methods', () => {
       ],
     });
     const res = await customerPaymentMethods({
-      request: new Request(
-        'http://localhost/api/admin/stripe/customer/cus_x/payment-methods',
-      ),
+      request: new Request('http://localhost/api/admin/stripe/customer/cus_x/payment-methods'),
       params: { customerId: 'cus_x' },
     });
     expect(res.status).toBe(200);

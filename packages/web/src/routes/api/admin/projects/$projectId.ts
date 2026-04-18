@@ -131,10 +131,9 @@ export const handleGet = async ({ request, params }: HandlerArgs) => {
   } catch (err) {
     const error = err as Error;
     console.error('Error fetching admin project detail:', error);
-    return Response.json(
-      createDomainError(SYSTEM_ERRORS.DB_ERROR, { message: error.message }),
-      { status: 500 },
-    );
+    return Response.json(createDomainError(SYSTEM_ERRORS.DB_ERROR, { message: error.message }), {
+      status: 500,
+    });
   }
 };
 
@@ -164,10 +163,9 @@ export const handleDelete = async ({ request, params }: HandlerArgs) => {
   } catch (err) {
     const error = err as Error;
     console.error('Error deleting project:', error);
-    return Response.json(
-      createDomainError(SYSTEM_ERRORS.DB_ERROR, { message: error.message }),
-      { status: 500 },
-    );
+    return Response.json(createDomainError(SYSTEM_ERRORS.DB_ERROR, { message: error.message }), {
+      status: 500,
+    });
   }
 };
 

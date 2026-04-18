@@ -76,8 +76,7 @@ export const handlePut = async ({ request, params, context }: HandlerArgs) => {
     if (body.status !== undefined) updateData.status = body.status;
     if (body.periodStart !== undefined) updateData.periodStart = body.periodStart;
     if (body.periodEnd !== undefined) updateData.periodEnd = body.periodEnd;
-    if (body.cancelAtPeriodEnd !== undefined)
-      updateData.cancelAtPeriodEnd = body.cancelAtPeriodEnd;
+    if (body.cancelAtPeriodEnd !== undefined) updateData.cancelAtPeriodEnd = body.cancelAtPeriodEnd;
     if (body.canceledAt !== undefined) updateData.canceledAt = body.canceledAt;
     if (body.endedAt !== undefined) updateData.endedAt = body.endedAt;
 

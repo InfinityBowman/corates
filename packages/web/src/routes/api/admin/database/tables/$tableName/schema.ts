@@ -80,9 +80,7 @@ export const handleGet = async ({ request, params }: HandlerArgs) => {
       try {
         const refColumn = refFn();
         if (refColumn?.table) {
-          const refTableName = Object.entries(dbSchema).find(
-            ([, t]) => t === refColumn.table,
-          )?.[0];
+          const refTableName = Object.entries(dbSchema).find(([, t]) => t === refColumn.table)?.[0];
           if (refTableName && (ALLOWED_TABLES as readonly string[]).includes(refTableName)) {
             info.foreignKey = { table: refTableName, column: refColumn.name || '' };
           }

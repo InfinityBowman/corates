@@ -249,10 +249,9 @@ describe('DELETE /api/admin/projects/:projectId/members/:memberId', () => {
     });
 
     const res = await removeMember({
-      request: new Request(
-        `http://localhost/api/admin/projects/${project.id}/members/${pm.id}`,
-        { method: 'DELETE' },
-      ),
+      request: new Request(`http://localhost/api/admin/projects/${project.id}/members/${pm.id}`, {
+        method: 'DELETE',
+      }),
       params: { projectId: project.id, memberId: pm.id },
     });
     expect(res.status).toBe(200);

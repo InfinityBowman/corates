@@ -134,10 +134,9 @@ export const handleGet = async ({ request }: { request: Request }) => {
   } catch (err) {
     const error = err as Error;
     console.error('Error fetching admin projects:', error);
-    return Response.json(
-      createDomainError(SYSTEM_ERRORS.DB_ERROR, { message: error.message }),
-      { status: 500 },
-    );
+    return Response.json(createDomainError(SYSTEM_ERRORS.DB_ERROR, { message: error.message }), {
+      status: 500,
+    });
   }
 };
 

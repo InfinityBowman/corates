@@ -3,11 +3,7 @@ import { env } from 'cloudflare:test';
 import { resetTestDatabase } from '@/__tests__/server/helpers';
 import { buildAdminUser, buildOrg, buildUser, resetCounter } from '@/__tests__/server/factories';
 import { createDb } from '@corates/db/client';
-import {
-  orgAccessGrants as grantsTable,
-  organization,
-  subscription,
-} from '@corates/db/schema';
+import { orgAccessGrants as grantsTable, organization, subscription } from '@corates/db/schema';
 import { eq } from 'drizzle-orm';
 import { handleGet as billingHandler } from '../orgs/$orgId/billing';
 import { handlePost as createSubscriptionHandler } from '../orgs/$orgId/subscriptions';
@@ -218,7 +214,10 @@ describe('POST /api/admin/orgs/:orgId/subscriptions', () => {
     expect(mockNotifyOrgMembers).toHaveBeenCalledTimes(1);
 
     const db = createDb(env.DB);
-    const rows = await db.select().from(subscription).where(eq(subscription.id, body.subscription.id));
+    const rows = await db
+      .select()
+      .from(subscription)
+      .where(eq(subscription.id, body.subscription.id));
     expect(rows.length).toBe(1);
   });
 });

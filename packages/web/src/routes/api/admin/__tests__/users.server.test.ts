@@ -13,7 +13,10 @@ import { account, session, user } from '@corates/db/schema';
 import { eq } from 'drizzle-orm';
 import { handleGet as statsHandler } from '../stats';
 import { handleGet as listUsersHandler } from '../users';
-import { handleGet as userDetailsHandler, handleDelete as deleteUserHandler } from '../users/$userId';
+import {
+  handleGet as userDetailsHandler,
+  handleDelete as deleteUserHandler,
+} from '../users/$userId';
 import { handlePost as banHandler } from '../users/$userId/ban';
 import { handlePost as unbanHandler } from '../users/$userId/unban';
 import { handlePost as impersonateHandler } from '../users/$userId/impersonate';
@@ -31,9 +34,7 @@ vi.mock('@corates/workers/auth', () => ({
 
 const { mockSyncMemberToDO, mockAuthHandler } = vi.hoisted(() => ({
   mockSyncMemberToDO: vi.fn(async () => {}),
-  mockAuthHandler: vi.fn(
-    async () => new Response(JSON.stringify({ ok: true }), { status: 200 }),
-  ),
+  mockAuthHandler: vi.fn(async () => new Response(JSON.stringify({ ok: true }), { status: 200 })),
 }));
 
 vi.mock('@corates/workers/project-sync', () => ({
@@ -612,7 +613,9 @@ describe('DELETE /api/admin/users/:userId', () => {
     });
     expect(res.status).toBe(200);
 
-    expect(mockSyncMemberToDO).toHaveBeenCalledWith(env, project.id, 'remove', { userId: owner.id });
+    expect(mockSyncMemberToDO).toHaveBeenCalledWith(env, project.id, 'remove', {
+      userId: owner.id,
+    });
 
     const db = createDb(env.DB);
     const [u] = await db.select().from(user).where(eq(user.id, owner.id));

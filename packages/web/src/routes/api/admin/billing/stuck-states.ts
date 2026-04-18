@@ -64,9 +64,7 @@ export const handleGet = async ({ request }: { request: Request }) => {
     for (const sub of incompleteSubscriptions) {
       if (!sub.createdAt) continue;
       const createdAtTimestamp =
-        sub.createdAt instanceof Date ?
-          Math.floor(sub.createdAt.getTime() / 1000)
-        : sub.createdAt;
+        sub.createdAt instanceof Date ? Math.floor(sub.createdAt.getTime() / 1000) : sub.createdAt;
 
       if (createdAtTimestamp < thresholdTimestamp) {
         stuckOrgs.push({

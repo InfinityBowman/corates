@@ -13,11 +13,7 @@ import { orgAccessGrants } from '@corates/db/schema';
 import { eq } from 'drizzle-orm';
 import { z } from 'zod';
 import { createDomainError, SYSTEM_ERRORS, VALIDATION_ERRORS } from '@corates/shared';
-import {
-  getGrantById,
-  revokeGrant,
-  updateGrantExpiresAt,
-} from '@corates/db/org-access-grants';
+import { getGrantById, revokeGrant, updateGrantExpiresAt } from '@corates/db/org-access-grants';
 import { requireAdmin } from '@/server/guards/requireAdmin';
 
 const UpdateGrantBodySchema = z.object({

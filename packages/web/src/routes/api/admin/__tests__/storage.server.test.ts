@@ -227,7 +227,9 @@ describe('DELETE /api/admin/storage/documents', () => {
 
 describe('GET /api/admin/storage/stats', () => {
   it('returns 401 when no session', async () => {
-    const res = await getStats({ request: new Request('http://localhost/api/admin/storage/stats') });
+    const res = await getStats({
+      request: new Request('http://localhost/api/admin/storage/stats'),
+    });
     expect(res.status).toBe(401);
   });
 
@@ -237,7 +239,9 @@ describe('GET /api/admin/storage/stats', () => {
       user: { id: user.id, email: user.email, name: user.name, role: 'user' },
       session: { id: 'sess', userId: user.id, activeOrganizationId: null },
     };
-    const res = await getStats({ request: new Request('http://localhost/api/admin/storage/stats') });
+    const res = await getStats({
+      request: new Request('http://localhost/api/admin/storage/stats'),
+    });
     expect(res.status).toBe(403);
   });
 

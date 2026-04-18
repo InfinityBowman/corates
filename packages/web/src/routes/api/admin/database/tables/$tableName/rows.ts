@@ -161,7 +161,10 @@ export const handleGet = async ({ request, params }: HandlerArgs) => {
   const { tableName } = params;
   const url = new URL(request.url);
   const page = parseInt(url.searchParams.get('page') || '1', 10) || 1;
-  const limit = Math.min(Math.max(parseInt(url.searchParams.get('limit') || '50', 10) || 50, 1), 100);
+  const limit = Math.min(
+    Math.max(parseInt(url.searchParams.get('limit') || '50', 10) || 50, 1),
+    100,
+  );
   const orderByParam = url.searchParams.get('orderBy')?.trim() || '';
   const orderRaw = url.searchParams.get('order') || 'desc';
   const order: 'asc' | 'desc' = orderRaw === 'asc' ? 'asc' : 'desc';
