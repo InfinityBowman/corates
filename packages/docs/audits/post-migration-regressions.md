@@ -61,7 +61,6 @@ Added `Strict-Transport-Security: max-age=15552000; includeSubDomains` to both `
 
 **What we had.** `packages/workers/src/middleware/errorHandler.ts` (`base.onError`) caught every uncaught error in route handlers and converted:
 
-
 - Zod errors → `VALIDATION_ERROR` JSON with field paths
 - D1 errors (`D1_*` prefix) → `DB_ERROR` with operation context
 - `UNIQUE constraint failed` → 409 with friendly message

@@ -36,7 +36,7 @@ No. The only thing #480 removed from `ChecklistYjsWrapper` is the `getChecklistD
 - Shape: reads two completed-reviewer checklists in `useEffect` on dialog open, stashes them in local state, renders read-only.
 - Target checklists have status `REVIEWER_COMPLETED` or later — editing is locked by `isEditable()`.
 - **Migrate to `useChecklistAnswers` eventually, low priority.** No correctness bug today (the checklists are locked, so the one-shot read is accurate). Migration value is consistency and killing one more `useEffect` that syncs Y.Doc → local state.
-- Blocker: the component reads *two* checklists. Calling the hook twice conditionally would violate Rules of Hooks. Solution: either (a) always call it twice with `null`-safe IDs, or (b) pass `checklistId` as an argument and split into `<ReviewerPanel checklistId=... />` children so each panel calls the hook once. (b) is cleaner.
+- Blocker: the component reads _two_ checklists. Calling the hook twice conditionally would violate Rules of Hooks. Solution: either (a) always call it twice with `null`-safe IDs, or (b) pass `checklistId` as an argument and split into `<ReviewerPanel checklistId=... />` children so each panel calls the hook once. (b) is cleaner.
 
 ### 5. `ReconciliationWrapper`
 
@@ -49,13 +49,13 @@ No. The only thing #480 removed from `ChecklistYjsWrapper` is the `getChecklistD
 
 ## Summary table
 
-| Caller | Keep `getChecklistData`? | Reason |
-|---|---|---|
-| `project.checklist.getData()` | Yes | Imperative facade for one-shot reads |
-| `calculateInterRaterReliability` | Yes | Cross-checklist aggregation; hook doesn't fit |
-| `OverviewTab` | Yes | Thin wrapper over the above |
-| `PreviousReviewersView` | Migrate (low priority) | Locked data, but consistency + removes effect |
-| `ReconciliationWrapper` | Migrate (medium priority) | Reconciled checklist is live-edited; reactivity matters |
+| Caller                           | Keep `getChecklistData`?  | Reason                                                  |
+| -------------------------------- | ------------------------- | ------------------------------------------------------- |
+| `project.checklist.getData()`    | Yes                       | Imperative facade for one-shot reads                    |
+| `calculateInterRaterReliability` | Yes                       | Cross-checklist aggregation; hook doesn't fit           |
+| `OverviewTab`                    | Yes                       | Thin wrapper over the above                             |
+| `PreviousReviewersView`          | Migrate (low priority)    | Locked data, but consistency + removes effect           |
+| `ReconciliationWrapper`          | Migrate (medium priority) | Reconciled checklist is live-edited; reactivity matters |
 
 `getChecklistData` stays in the surface area indefinitely — the imperative path is legitimate. The hook is the right default for reactive components, not a total replacement.
 
