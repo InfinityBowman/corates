@@ -7,7 +7,9 @@ import { eq } from 'drizzle-orm';
 import { handlePost } from '../stripe/webhook';
 
 const { mockAuthHandler } = vi.hoisted(() => ({
-  mockAuthHandler: vi.fn(async () => new Response(JSON.stringify({ received: true }), { status: 200 })),
+  mockAuthHandler: vi.fn(
+    async () => new Response(JSON.stringify({ received: true }), { status: 200 }),
+  ),
 }));
 
 vi.mock('@corates/workers/auth-config', () => ({

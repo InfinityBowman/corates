@@ -18,7 +18,10 @@ const PROJECT_DOC_PATH = /^\/api\/project-doc\/([^/]+)(?:\/.*)?$/;
 const SESSION_PATH = /^\/api\/sessions\/([^/]+)(?:\/.*)?$/;
 
 interface DOEnv {
-  USER_SESSION: { idFromName(name: string): unknown; get(id: unknown): { fetch(req: Request): Promise<Response> } };
+  USER_SESSION: {
+    idFromName(name: string): unknown;
+    get(id: unknown): { fetch(req: Request): Promise<Response> };
+  };
 }
 
 export default {

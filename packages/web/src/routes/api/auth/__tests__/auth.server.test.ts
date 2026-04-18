@@ -156,10 +156,9 @@ describe('catch-all /api/auth/$', () => {
 
   it('preserves the query string when forwarding', async () => {
     await catchAllHandler({
-      request: new Request(
-        'http://localhost/api/auth/callback/google?state=abc&code=xyz',
-        { method: 'GET' },
-      ),
+      request: new Request('http://localhost/api/auth/callback/google?state=abc&code=xyz', {
+        method: 'GET',
+      }),
     });
     const forwarded = mockAuthHandler.mock.calls[0][0]!;
     const fwdUrl = new URL(forwarded.url);

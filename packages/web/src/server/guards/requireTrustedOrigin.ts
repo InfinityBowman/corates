@@ -48,9 +48,12 @@ export function requireTrustedOrigin(
     }
     return {
       ok: false,
-      response: Response.json(createDomainError(AUTH_ERRORS.FORBIDDEN, { reason: 'missing_origin' }), {
-        status: 403,
-      }),
+      response: Response.json(
+        createDomainError(AUTH_ERRORS.FORBIDDEN, { reason: 'missing_origin' }),
+        {
+          status: 403,
+        },
+      ),
     };
   }
 
