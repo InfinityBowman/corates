@@ -6,8 +6,10 @@
  */
 
 import { lazy, Suspense } from 'react';
+import type * as Y from 'yjs';
 import { GenericChecklist } from '@/components/checklist/GenericChecklist';
 import { SplitScreenLayout } from '@/components/checklist/SplitScreenLayout';
+import type { TextRef } from '@/primitives/useProject/checklists';
 
 const EmbedPdfViewer = lazy(() => import('@/components/pdf/EmbedPdfViewer'));
 
@@ -22,7 +24,7 @@ interface ChecklistWithPdfProps {
   pdfs?: any[];
   selectedPdfId?: string | null;
   onPdfSelect?: (_pdfId: string) => void;
-  getQuestionNote?: (_questionKey: string) => any;
+  getTextRef?: (_ref: TextRef) => Y.Text | null;
   getRobinsText?: (_sectionKey: string, _fieldKey: string, _questionKey?: string) => any;
   getRob2Text?: (_sectionKey: string, _fieldKey: string, _questionKey?: string) => any;
   pdfUrl?: string | null;
@@ -46,7 +48,7 @@ export function ChecklistWithPdf({
   pdfs,
   selectedPdfId,
   onPdfSelect,
-  getQuestionNote,
+  getTextRef,
   getRobinsText,
   getRob2Text,
   pdfUrl,
@@ -74,7 +76,7 @@ export function ChecklistWithPdf({
           checklist={checklist}
           onUpdate={onUpdate}
           readOnly={readOnly}
-          getQuestionNote={getQuestionNote}
+          getTextRef={getTextRef}
           getRobinsText={getRobinsText}
           getRob2Text={getRob2Text}
         />

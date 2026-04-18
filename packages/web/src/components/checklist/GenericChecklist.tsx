@@ -6,6 +6,7 @@
  */
 
 import { useMemo } from 'react';
+import type * as Y from 'yjs';
 import {
   getChecklistTypeFromState,
   DEFAULT_CHECKLIST_TYPE,
@@ -14,13 +15,14 @@ import {
 import { AMSTAR2Checklist } from '@/components/checklist/AMSTAR2Checklist/AMSTAR2Checklist';
 import { ROBINSIChecklist } from '@/components/checklist/ROBINSIChecklist/ROBINSIChecklist';
 import { ROB2Checklist } from '@/components/checklist/ROB2Checklist/ROB2Checklist';
+import type { TextRef } from '@/primitives/useProject/checklists';
 
 interface GenericChecklistProps {
   checklistType?: string;
   checklist: any;
   onUpdate: (_patch: Record<string, any>) => void;
   readOnly?: boolean;
-  getQuestionNote?: (_questionKey: string) => any;
+  getTextRef?: (_ref: TextRef) => Y.Text | null;
   getRobinsText?: (_sectionKey: string, _fieldKey: string, _questionKey?: string) => any;
   getRob2Text?: (_sectionKey: string, _fieldKey: string, _questionKey?: string) => any;
 }
@@ -30,7 +32,7 @@ export function GenericChecklist({
   checklist,
   onUpdate,
   readOnly,
-  getQuestionNote,
+  getTextRef,
   getRobinsText,
   getRob2Text,
 }: GenericChecklistProps) {
@@ -47,7 +49,7 @@ export function GenericChecklist({
           externalChecklist={checklist}
           onExternalUpdate={onUpdate}
           readOnly={readOnly}
-          getQuestionNote={getQuestionNote}
+          getTextRef={getTextRef}
         />
       )}
       {checklistType === CHECKLIST_TYPES.ROBINS_I && (
