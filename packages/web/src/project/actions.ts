@@ -11,6 +11,7 @@ import { pdfActions } from './actions/pdfs';
 import { projectActions } from './actions/project';
 import { memberActions } from './actions/members';
 import type { ReconciliationProgressData } from '@/primitives/useProject/reconciliation.js';
+import type { TextRef } from '@/primitives/useProject/checklists';
 
 export const project = {
   study: studyActions,
@@ -99,10 +100,22 @@ export const project = {
       ops.checklist.updateChecklistAnswer(studyId, checklistId, questionId, data);
     },
 
-    getQuestionNote(studyId: string, checklistId: string, questionId: string): unknown {
+    getTextRef(studyId: string, checklistId: string, ref: TextRef) {
       const ops = connectionPool.getActiveOps();
       if (!ops) throw new Error('No active project connection');
-      return ops.checklist.getQuestionNote(studyId, checklistId, questionId);
+      return ops.checklist.getTextRef(studyId, checklistId, ref);
+    },
+
+    setTextValue(
+      studyId: string,
+      checklistId: string,
+      ref: TextRef,
+      text: string,
+      maxLength?: number,
+    ): void {
+      const ops = connectionPool.getActiveOps();
+      if (!ops) throw new Error('No active project connection');
+      ops.checklist.setTextValue(studyId, checklistId, ref, text, maxLength);
     },
   },
 
