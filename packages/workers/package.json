@@ -19,6 +19,7 @@
     "./project-doc-id": "./src/lib/project-doc-id.ts",
     "./email-templates": "./src/auth/emailTemplates.ts",
     "./auth-config": "./src/auth/config.ts",
+    "./auth-admin": "./src/auth/admin.ts",
     "./commands/invitations": "./src/commands/invitations/index.ts",
     "./commands/projects": "./src/commands/projects/index.ts",
     "./commands/members": "./src/commands/members/index.ts",
@@ -30,7 +31,8 @@
     "./ssrf-protection": "./src/lib/ssrf-protection.ts",
     "./media-files": "./src/lib/media-files.ts",
     "./policies/projects": "./src/policies/projects.ts",
-    "./policies": "./src/policies/index.ts"
+    "./policies": "./src/policies/index.ts",
+    "./notify": "./src/lib/notify.ts"
   },
   "scripts": {
     "dev": "concurrently \"wrangler dev\" \"pnpm build:rpc:watch\" --names wrangler,rpc --prefix-colors blue,green",

@@ -14,9 +14,14 @@ import {
   HomeIcon,
   DollarSignIcon,
 } from 'lucide-react';
-import { parseResponse } from 'hono/client';
-import { api } from '@/lib/rpc';
 import { queryKeys } from '@/lib/queryKeys';
+
+async function fetchStats<T>(path: string): Promise<T> {
+  const res = await fetch(path, { credentials: 'include' });
+  const data = (await res.json()) as T;
+  if (!res.ok) throw data;
+  return data;
+}
 import { LineChart, BarChart, DoughnutChart } from '@/components/admin/charts';
 import { AdminBox } from '@/components/admin/ui';
 
@@ -49,13 +54,35 @@ export function AnalyticsSection() {
   const [signupDays, setSignupDays] = useState(30);
   const [webhookDays, setWebhookDays] = useState(7);
 
+  interface DailyCountSeries {
+    data: { date: string; count: number }[];
+    total: number;
+    days: number;
+  }
+  interface WebhookSeries {
+    data: { date: string; success: number; failed: number; pending: number }[];
+    totals: { success: number; failed: number; pending: number };
+    days: number;
+  }
+  interface SubscriptionStats {
+    active: number;
+    trialing: number;
+    pastDue: number;
+    canceled: number;
+    hasMore: boolean;
+  }
+  interface RevenueStats {
+    data: { month: string; label: string; revenue: number }[];
+    total: number;
+    currency: string;
+    months: number;
+  }
+
   const signupQuery = useQuery({
     queryKey: [...queryKeys.admin.stats, 'signups', signupDays],
     queryFn: async () => {
       try {
-        return await parseResponse(
-          api.api.admin.stats.signups.$get({ query: { days: signupDays.toString() } }),
-        );
+        return await fetchStats<DailyCountSeries>(`/api/admin/stats/signups?days=${signupDays}`);
       } catch (err) {
         console.warn('Failed to fetch signups stats:', (err as Error).message);
         return null;
@@ -68,8 +95,8 @@ export function AnalyticsSection() {
     queryKey: [...queryKeys.admin.stats, 'organizations', signupDays],
     queryFn: async () => {
       try {
-        return await parseResponse(
-          api.api.admin.stats.organizations.$get({ query: { days: signupDays.toString() } }),
+        return await fetchStats<DailyCountSeries>(
+          `/api/admin/stats/organizations?days=${signupDays}`,
         );
       } catch (err) {
         console.warn('Failed to fetch organizations stats:', (err as Error).message);
@@ -83,9 +110,7 @@ export function AnalyticsSection() {
     queryKey: [...queryKeys.admin.stats, 'projects', signupDays],
     queryFn: async () => {
       try {
-        return await parseResponse(
-          api.api.admin.stats.projects.$get({ query: { days: signupDays.toString() } }),
-        );
+        return await fetchStats<DailyCountSeries>(`/api/admin/stats/projects?days=${signupDays}`);
       } catch (err) {
         console.warn('Failed to fetch projects stats:', (err as Error).message);
         return null;
@@ -98,9 +123,7 @@ export function AnalyticsSection() {
     queryKey: [...queryKeys.admin.stats, 'webhooks', webhookDays],
     queryFn: async () => {
       try {
-        return await parseResponse(
-          api.api.admin.stats.webhooks.$get({ query: { days: webhookDays.toString() } }),
-        );
+        return await fetchStats<WebhookSeries>(`/api/admin/stats/webhooks?days=${webhookDays}`);
       } catch (err) {
         console.warn('Failed to fetch webhooks stats:', (err as Error).message);
         return null;
@@ -113,7 +136,7 @@ export function AnalyticsSection() {
     queryKey: [...queryKeys.admin.stats, 'subscriptions'],
     queryFn: async () => {
       try {
-        return await parseResponse(api.api.admin.stats.subscriptions.$get());
+        return await fetchStats<SubscriptionStats>('/api/admin/stats/subscriptions');
       } catch (err) {
         console.warn('Failed to fetch subscriptions stats:', (err as Error).message);
         return null;
@@ -126,7 +149,7 @@ export function AnalyticsSection() {
     queryKey: [...queryKeys.admin.stats, 'revenue'],
     queryFn: async () => {
       try {
-        return await parseResponse(api.api.admin.stats.revenue.$get({ query: { months: '6' } }));
+        return await fetchStats<RevenueStats>('/api/admin/stats/revenue?months=6');
       } catch (err) {
         console.warn('Failed to fetch revenue stats:', (err as Error).message);
         return null;

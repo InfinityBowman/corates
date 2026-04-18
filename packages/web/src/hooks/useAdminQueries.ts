@@ -4,8 +4,6 @@
  */
 
 import { useQuery } from '@tanstack/react-query';
-import { parseResponse } from 'hono/client';
-import { api } from '@/lib/rpc';
 import { queryKeys } from '@/lib/queryKeys';
 import {
   fetchOrgs,
@@ -25,7 +23,12 @@ const ADMIN_QUERY_CONFIG = {
 export function useAdminStats() {
   return useQuery({
     queryKey: queryKeys.admin.stats,
-    queryFn: () => parseResponse(api.api.admin.stats.$get()),
+    queryFn: async () => {
+      const res = await fetch('/api/admin/stats', { credentials: 'include' });
+      const data = (await res.json()) as Record<string, unknown>;
+      if (!res.ok) throw data;
+      return data;
+    },
     ...ADMIN_QUERY_CONFIG,
   });
 }
@@ -36,13 +39,13 @@ export function useAdminUsers(params: { page?: number; limit?: number; search?: 
   const search = params.search ?? '';
   return useQuery({
     queryKey: queryKeys.admin.users(page, limit, search),
-    queryFn: () => {
-      const query: Record<string, string> = {
-        page: page.toString(),
-        limit: limit.toString(),
-      };
-      if (search) query.search = search;
-      return parseResponse(api.api.admin.users.$get({ query }));
+    queryFn: async () => {
+      const qs = new URLSearchParams({ page: page.toString(), limit: limit.toString() });
+      if (search) qs.set('search', search);
+      const res = await fetch(`/api/admin/users?${qs.toString()}`, { credentials: 'include' });
+      const data = (await res.json()) as Record<string, unknown>;
+      if (!res.ok) throw data;
+      return data;
     },
     ...ADMIN_QUERY_CONFIG,
   });
@@ -51,8 +54,14 @@ export function useAdminUsers(params: { page?: number; limit?: number; search?: 
 export function useAdminUserDetails(userId: string | null | undefined) {
   return useQuery({
     queryKey: queryKeys.admin.userDetails(userId),
-    queryFn: () =>
-      parseResponse(api.api.admin.users[':userId'].$get({ param: { userId: userId! } })),
+    queryFn: async () => {
+      const res = await fetch(`/api/admin/users/${encodeURIComponent(userId!)}`, {
+        credentials: 'include',
+      });
+      const data = (await res.json()) as Record<string, unknown>;
+      if (!res.ok) throw data;
+      return data;
+    },
     enabled: !!userId,
     ...ADMIN_QUERY_CONFIG,
   });
@@ -67,14 +76,16 @@ export function useAdminProjects(
   const orgId = params.orgId ?? '';
   return useQuery({
     queryKey: queryKeys.admin.projects(page, limit, search, orgId),
-    queryFn: () => {
-      const query: Record<string, string> = {
-        page: page.toString(),
-        limit: limit.toString(),
-      };
-      if (search) query.search = search;
-      if (orgId) query.orgId = orgId;
-      return parseResponse(api.api.admin.projects.$get({ query }));
+    queryFn: async () => {
+      const qs = new URLSearchParams({ page: page.toString(), limit: limit.toString() });
+      if (search) qs.set('search', search);
+      if (orgId) qs.set('orgId', orgId);
+      const res = await fetch(`/api/admin/projects?${qs.toString()}`, {
+        credentials: 'include',
+      });
+      const data = (await res.json()) as Record<string, unknown>;
+      if (!res.ok) throw data;
+      return data;
     },
     ...ADMIN_QUERY_CONFIG,
   });
@@ -83,10 +94,14 @@ export function useAdminProjects(
 export function useAdminProjectDetails(projectId: string | null | undefined) {
   return useQuery({
     queryKey: queryKeys.admin.projectDetails(projectId),
-    queryFn: () =>
-      parseResponse(
-        api.api.admin.projects[':projectId'].$get({ param: { projectId: projectId! } }),
-      ),
+    queryFn: async () => {
+      const res = await fetch(`/api/admin/projects/${encodeURIComponent(projectId!)}`, {
+        credentials: 'include',
+      });
+      const data = (await res.json()) as Record<string, unknown>;
+      if (!res.ok) throw data;
+      return data;
+    },
     enabled: !!projectId,
     ...ADMIN_QUERY_CONFIG,
   });
@@ -95,12 +110,14 @@ export function useAdminProjectDetails(projectId: string | null | undefined) {
 export function useAdminProjectDocStats(projectId: string | null | undefined) {
   return useQuery({
     queryKey: queryKeys.admin.projectDocStats(projectId),
-    queryFn: () =>
-      parseResponse(
-        api.api.admin.projects[':projectId']['doc-stats'].$get({
-          param: { projectId: projectId! },
-        }),
-      ),
+    queryFn: async () => {
+      const res = await fetch(`/api/admin/projects/${encodeURIComponent(projectId!)}/doc-stats`, {
+        credentials: 'include',
+      });
+      const data = (await res.json()) as Record<string, unknown>;
+      if (!res.ok) throw data;
+      return data;
+    },
     enabled: !!projectId,
     ...ADMIN_QUERY_CONFIG,
   });
@@ -115,12 +132,17 @@ export function useStorageDocuments(
   const search = params.search ?? '';
   return useQuery({
     queryKey: queryKeys.admin.storageDocuments(cursor, limit, prefix, search),
-    queryFn: () => {
-      const query: Record<string, string> = { limit: limit.toString() };
-      if (cursor) query.cursor = cursor;
-      if (prefix) query.prefix = prefix;
-      if (search) query.search = search;
-      return parseResponse(api.api.admin.storage.documents.$get({ query }));
+    queryFn: async () => {
+      const params = new URLSearchParams({ limit: limit.toString() });
+      if (cursor) params.set('cursor', cursor);
+      if (prefix) params.set('prefix', prefix);
+      if (search) params.set('search', search);
+      const res = await fetch(`/api/admin/storage/documents?${params.toString()}`, {
+        credentials: 'include',
+      });
+      const data = (await res.json()) as Record<string, unknown>;
+      if (!res.ok) throw data;
+      return data;
     },
     ...ADMIN_QUERY_CONFIG,
   });
@@ -210,7 +232,12 @@ export function useAdminOrgBillingReconcile(
 export function useAdminDatabaseTables() {
   return useQuery({
     queryKey: queryKeys.admin.databaseTables,
-    queryFn: () => parseResponse(api.api.admin.database.tables.$get()),
+    queryFn: async () => {
+      const res = await fetch('/api/admin/database/tables', { credentials: 'include' });
+      const data = (await res.json()) as Record<string, unknown>;
+      if (!res.ok) throw data;
+      return data;
+    },
     ...ADMIN_QUERY_CONFIG,
   });
 }
@@ -218,12 +245,15 @@ export function useAdminDatabaseTables() {
 export function useAdminTableSchema(tableName: string | null | undefined) {
   return useQuery({
     queryKey: queryKeys.admin.tableSchema(tableName),
-    queryFn: () =>
-      parseResponse(
-        api.api.admin.database.tables[':tableName'].schema.$get({
-          param: { tableName: tableName! },
-        }),
-      ),
+    queryFn: async () => {
+      const res = await fetch(
+        `/api/admin/database/tables/${encodeURIComponent(tableName!)}/schema`,
+        { credentials: 'include' },
+      );
+      const data = (await res.json()) as Record<string, unknown>;
+      if (!res.ok) throw data;
+      return data;
+    },
     enabled: !!tableName,
     staleTime: 1000 * 60 * 10,
     gcTime: 1000 * 60 * 30,
@@ -259,23 +289,24 @@ export function useAdminTableRows(
       filterBy,
       filterValue,
     ),
-    queryFn: () => {
-      const query: Record<string, string> = {
+    queryFn: async () => {
+      const qs = new URLSearchParams({
         page: page.toString(),
         limit: limit.toString(),
         orderBy,
         order,
-      };
+      });
       if (filterBy && filterValue) {
-        query.filterBy = filterBy;
-        query.filterValue = filterValue;
+        qs.set('filterBy', filterBy);
+        qs.set('filterValue', filterValue);
       }
-      return parseResponse(
-        api.api.admin.database.tables[':tableName'].rows.$get({
-          param: { tableName: tableName! },
-          query,
-        }),
+      const res = await fetch(
+        `/api/admin/database/tables/${encodeURIComponent(tableName!)}/rows?${qs.toString()}`,
+        { credentials: 'include' },
       );
+      const data = (await res.json()) as Record<string, unknown>;
+      if (!res.ok) throw data;
+      return data;
     },
     enabled: !!tableName,
     ...ADMIN_QUERY_CONFIG,

@@ -26,8 +26,6 @@ import {
   TableHead,
   TableCell,
 } from '@/components/ui/table';
-import { parseResponse } from 'hono/client';
-import { api } from '@/lib/rpc';
 import { showToast } from '@/components/ui/toast';
 import { DashboardHeader, AdminBox } from '@/components/admin/ui';
 import { Input } from '@/components/ui/input';
@@ -177,8 +175,15 @@ function StripeToolsPage() {
       const query =
         searchType === 'email' ? { email: searchInput.trim() } : { customerId: searchInput.trim() };
 
-      const data = await parseResponse(api.api.admin.stripe.customer.$get({ query }));
-      setCustomerData(data as CustomerData);
+      const params = new URLSearchParams();
+      if ('email' in query && query.email) params.set('email', query.email);
+      if ('customerId' in query && query.customerId) params.set('customerId', query.customerId);
+      const res = await fetch(`/api/admin/stripe/customer?${params.toString()}`, {
+        credentials: 'include',
+      });
+      const data = (await res.json()) as CustomerData;
+      if (!res.ok) throw data;
+      setCustomerData(data);
 
       if (!data.found) {
         setSearchError(data.message || 'Customer not found');
@@ -197,13 +202,13 @@ function StripeToolsPage() {
 
     setLoadingInvoices(true);
     try {
-      const data = await parseResponse(
-        api.api.admin.stripe.customer[':customerId'].invoices.$get({
-          param: { customerId: customerData.customer.id },
-          query: {},
-        }),
+      const res = await fetch(
+        `/api/admin/stripe/customer/${encodeURIComponent(customerData.customer.id)}/invoices`,
+        { credentials: 'include' },
       );
-      setInvoices(data.invoices as StripeInvoice[]);
+      const data = (await res.json()) as { invoices: StripeInvoice[] };
+      if (!res.ok) throw data;
+      setInvoices(data.invoices);
     } catch (error) {
       showToast.error('Failed to load invoices', (error as Error).message);
     } finally {
@@ -216,12 +221,15 @@ function StripeToolsPage() {
 
     setLoadingPaymentMethods(true);
     try {
-      const data = await parseResponse(
-        api.api.admin.stripe.customer[':customerId']['payment-methods'].$get({
-          param: { customerId: customerData.customer.id },
-        }),
+      const res = await fetch(
+        `/api/admin/stripe/customer/${encodeURIComponent(
+          customerData.customer.id,
+        )}/payment-methods`,
+        { credentials: 'include' },
       );
-      setPaymentMethods(data.paymentMethods as StripePaymentMethod[]);
+      const data = (await res.json()) as { paymentMethods: StripePaymentMethod[] };
+      if (!res.ok) throw data;
+      setPaymentMethods(data.paymentMethods);
     } catch (error) {
       showToast.error('Failed to load payment methods', (error as Error).message);
     } finally {
@@ -234,12 +242,13 @@ function StripeToolsPage() {
 
     setLoadingSubscriptions(true);
     try {
-      const data = await parseResponse(
-        api.api.admin.stripe.customer[':customerId'].subscriptions.$get({
-          param: { customerId: customerData.customer.id },
-        }),
+      const res = await fetch(
+        `/api/admin/stripe/customer/${encodeURIComponent(customerData.customer.id)}/subscriptions`,
+        { credentials: 'include' },
       );
-      setSubscriptions(data.subscriptions as StripeSubscription[]);
+      const data = (await res.json()) as { subscriptions: StripeSubscription[] };
+      if (!res.ok) throw data;
+      setSubscriptions(data.subscriptions);
     } catch (error) {
       showToast.error('Failed to load subscriptions', (error as Error).message);
     } finally {
@@ -252,11 +261,14 @@ function StripeToolsPage() {
 
     setGeneratingPortal(true);
     try {
-      const data = await parseResponse(
-        api.api.admin.stripe['portal-link'].$post({
-          json: { customerId: customerData.customer.id },
-        }),
-      );
+      const res = await fetch('/api/admin/stripe/portal-link', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ customerId: customerData.customer.id }),
+      });
+      const data = (await res.json()) as { url: string };
+      if (!res.ok) throw data;
       setPortalUrl(data.url);
       showToast.success('Success', 'Portal link generated');
     } catch (error) {
