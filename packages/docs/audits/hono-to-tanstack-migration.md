@@ -6,7 +6,7 @@ The Hono app in `packages/workers` was migrated to TanStack Start file routes in
 
 - **API routes** live in `packages/web/src/routes/api/**` as TanStack file routes.
 - **`packages/workers`** is now a library workspace (Durable Objects, commands, lib helpers, auth/email, queue consumer) consumed via subpath exports declared in `packages/workers/package.json`. It no longer deploys.
-- **`packages/web/src/server.ts`** is the worker entry. It (1) routes WebSocket-DO paths (`/api/project-doc/*`, `/api/sessions/*`) to DO stubs *before* TanStack — TanStack Start can't pass WS upgrades through, (2) calls `createStartHandler(defaultStreamHandler)` for everything else, threading `cloudflareCtx` through `context` so handlers can `waitUntil`, (3) wraps the whole thing in `Sentry.withSentry`, (4) delegates queue consumption to `handleEmailQueue` from `@corates/workers/queue`.
+- **`packages/web/src/server.ts`** is the worker entry. It (1) routes WebSocket-DO paths (`/api/project-doc/*`, `/api/sessions/*`) to DO stubs _before_ TanStack — TanStack Start can't pass WS upgrades through, (2) calls `createStartHandler(defaultStreamHandler)` for everything else, threading `cloudflareCtx` through `context` so handlers can `waitUntil`, (3) wraps the whole thing in `Sentry.withSentry`, (4) delegates queue consumption to `handleEmailQueue` from `@corates/workers/queue`.
 
 ## Adding a route
 
@@ -56,7 +56,10 @@ import { env } from 'cloudflare:test';
 import { handleGet } from '../some-route';
 
 vi.mock('@corates/workers/auth', () => ({
-  getSession: async () => ({ user: { id: 'u1', email: 'u1@example.com', name: 'U1' }, session: { id: 'sess', userId: 'u1' } }),
+  getSession: async () => ({
+    user: { id: 'u1', email: 'u1@example.com', name: 'U1' },
+    session: { id: 'sess', userId: 'u1' },
+  }),
 }));
 ```
 
