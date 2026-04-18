@@ -170,7 +170,7 @@ describe('POST /api/admin/stripe/portal-link', () => {
     const res = await portalLink({
       request: new Request('http://localhost/api/admin/stripe/portal-link', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', origin: 'http://localhost:3010' },
         body: JSON.stringify({}),
       }),
     });
@@ -186,7 +186,7 @@ describe('POST /api/admin/stripe/portal-link', () => {
     const res = await portalLink({
       request: new Request('http://localhost/api/admin/stripe/portal-link', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', origin: 'http://localhost:3010' },
         body: JSON.stringify({ customerId: 'cus_admin' }),
       }),
     });

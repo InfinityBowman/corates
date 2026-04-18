@@ -232,6 +232,7 @@ describe('DELETE /api/admin/projects/:projectId/members/:memberId', () => {
     const res = await removeMember({
       request: new Request('http://localhost/api/admin/projects/p1/members/m1', {
         method: 'DELETE',
+        headers: { origin: 'http://localhost:3010' },
       }),
       params: { projectId: 'p1', memberId: 'm1' },
     });
@@ -251,6 +252,7 @@ describe('DELETE /api/admin/projects/:projectId/members/:memberId', () => {
     const res = await removeMember({
       request: new Request(`http://localhost/api/admin/projects/${project.id}/members/${pm.id}`, {
         method: 'DELETE',
+        headers: { origin: 'http://localhost:3010' },
       }),
       params: { projectId: project.id, memberId: pm.id },
     });
@@ -273,7 +275,10 @@ describe('DELETE /api/admin/projects/:projectId', () => {
   it('returns 404 when project missing', async () => {
     await asAdmin();
     const res = await deleteProject({
-      request: new Request('http://localhost/api/admin/projects/nope', { method: 'DELETE' }),
+      request: new Request('http://localhost/api/admin/projects/nope', {
+        method: 'DELETE',
+        headers: { origin: 'http://localhost:3010' },
+      }),
       params: { projectId: 'nope' },
     });
     expect(res.status).toBe(404);
@@ -285,6 +290,7 @@ describe('DELETE /api/admin/projects/:projectId', () => {
     const res = await deleteProject({
       request: new Request(`http://localhost/api/admin/projects/${project.id}`, {
         method: 'DELETE',
+        headers: { origin: 'http://localhost:3010' },
       }),
       params: { projectId: project.id },
     });
