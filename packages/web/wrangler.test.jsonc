@@ -1,0 +1,45 @@
+// Test-only wrangler config consumed by @cloudflare/vitest-pool-workers.
+// Mirrors packages/workers/wrangler.jsonc (the pre-consolidation test config)
+// so server tests in packages/web run with the same bindings the routes expect.
+// Kept separate from wrangler.jsonc because the pool does not need assets,
+// routes, or observability — and must not have them.
+{
+  "name": "corates-web-test",
+  "main": "src/__tests__/server/test-worker.ts",
+  "compatibility_date": "2025-12-01",
+  "compatibility_flags": ["nodejs_compat"],
+
+  "migrations": [
+    { "tag": "v1", "new_sqlite_classes": ["UserSession", "ProjectDoc"] },
+    { "tag": "v2", "new_sqlite_classes": ["EmailQueue"] },
+    { "tag": "v3", "deleted_classes": ["EmailQueue"] }
+  ],
+
+  "durable_objects": {
+    "bindings": [
+      { "name": "USER_SESSION", "class_name": "UserSession" },
+      { "name": "PROJECT_DOC", "class_name": "ProjectDoc" }
+    ]
+  },
+
+  "queues": {
+    "producers": [{ "queue": "corates-emails", "binding": "EMAIL_QUEUE" }]
+  },
+
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "corates-db",
+      "database_id": "7ac6d425-2a7c-4087-9f42-0cd1a2ab367b"
+    }
+  ],
+
+  "r2_buckets": [{ "binding": "PDF_BUCKET", "bucket_name": "corates-pdfs" }],
+
+  "vars": {
+    "ENVIRONMENT": "test",
+    "AUTH_BASE_URL": "http://localhost:3010",
+    "APP_URL": "http://localhost:3010",
+    "DEV_MODE": true
+  }
+}

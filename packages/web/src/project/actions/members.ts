@@ -2,8 +2,7 @@
  * Member actions -- remove project members via RPC
  */
 
-import { parseResponse } from 'hono/client';
-import { api } from '@/lib/rpc';
+import { API_BASE } from '@/config/api';
 import { queryClient } from '@/lib/queryClient';
 import { queryKeys } from '@/lib/queryKeys';
 import { useAuthStore, selectUser } from '@/stores/authStore';
@@ -19,11 +18,14 @@ export const memberActions = {
     const user = selectUser(useAuthStore.getState());
     const isSelf = user?.id === memberId;
 
-    await parseResponse(
-      api.api.orgs[':orgId'].projects[':projectId'].members[':userId'].$delete({
-        param: { orgId, projectId, userId: memberId },
-      }),
+    const res = await fetch(
+      `${API_BASE}/api/orgs/${orgId}/projects/${projectId}/members/${memberId}`,
+      { method: 'DELETE', credentials: 'include' },
     );
+    if (!res.ok) {
+      const data = (await res.json().catch(() => ({}))) as { message?: string; code?: string };
+      throw new Error(data.message || data.code || `Remove failed: ${res.status}`);
+    }
 
     if (isSelf) {
       queryClient.invalidateQueries({ queryKey: queryKeys.projects.byOrg(orgId) });

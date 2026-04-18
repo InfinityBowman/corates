@@ -4,8 +4,8 @@
  */
 
 import { $, OpenAPIHono } from '@hono/zod-openapi';
-import { requireAdmin } from '@/middleware/requireAdmin';
-import { requireTrustedOrigin } from '@/middleware/csrf';
+import { requireAdmin } from '../../middleware/requireAdmin';
+import { requireTrustedOrigin } from '../../middleware/csrf';
 import { userRoutes } from './users.js';
 import { storageRoutes } from './storage.js';
 import { billingRoutes } from './billing.js';

@@ -3,15 +3,15 @@
  * Handles trial and access grant management
  */
 import { OpenAPIHono, createRoute, z, $ } from '@hono/zod-openapi';
-import { requireAuth, getAuth } from '@/middleware/auth.js';
-import { createDb } from '@/db/client.js';
+import { requireAuth, getAuth } from '../../middleware/auth.js';
+import { createDb } from '@corates/db/client';
 import { createDomainError, SYSTEM_ERRORS, VALIDATION_ERRORS, AUTH_ERRORS } from '@corates/shared';
-import { GRANT_CONFIG } from '@/config/constants.js';
+import { GRANT_CONFIG } from '../../config/constants.js';
 import { resolveOrgIdWithRole } from './helpers/orgContext.js';
-import { requireOrgOwner } from '@/policies';
-import { validationHook } from '@/lib/honoValidationHook.js';
+import { requireOrgOwner } from '../../policies';
+import { validationHook } from '../../lib/honoValidationHook.js';
 import type { Env } from '../../types';
-import { ErrorResponseSchema } from '@/schemas/common.js';
+import { ErrorResponseSchema } from '../../schemas/common.js';
 
 const base = new OpenAPIHono<{ Bindings: Env }>({
   defaultHook: validationHook,
@@ -77,7 +77,7 @@ const billingGrantRoutes = $(base.use('*', requireAuth)).openapi(startTrialRoute
     // Verify user is org owner
     requireOrgOwner({ orgId, role });
 
-    const { getGrantByOrgIdAndType, createGrant } = await import('@/db/orgAccessGrants.js');
+    const { getGrantByOrgIdAndType, createGrant } = await import('@corates/db/org-access-grants');
 
     // Check if trial grant already exists (uniqueness requirement)
     const existingTrial = await getGrantByOrgIdAndType(db, orgId, 'trial');

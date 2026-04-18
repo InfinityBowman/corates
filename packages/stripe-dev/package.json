@@ -6,7 +6,7 @@
   "license": "PolyForm-Noncommercial-1.0.0",
   "type": "module",
   "scripts": {
-    "dev": "concurrently -k -n auth,purchases -c yellow,blue \"stripe listen --forward-to http://localhost:8787/api/auth/stripe/webhook\" \"stripe listen --forward-to http://localhost:8787/api/billing/purchases/webhook\""
+    "dev": "concurrently -k -n auth,purchases -c yellow,blue \"stripe listen --forward-to http://localhost:8787/api/auth/stripe/webhook\" \"stripe listen --forward-to http://localhost:8788/api/billing/purchases/webhook\""
   },
   "devDependencies": {
     "concurrently": "^9.2.1"

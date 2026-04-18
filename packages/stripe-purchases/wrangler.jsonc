@@ -1,0 +1,89 @@
+{
+  "name": "corates-stripe-purchases",
+  "main": "src/index.ts",
+  "compatibility_date": "2025-12-01",
+  "compatibility_flags": ["nodejs_compat"],
+
+  // Shares the same corates-db D1 as the main app worker.
+  // DO NOT run migrations from this package — the main app owns schema migrations.
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "corates-db",
+      "database_id": "7ac6d425-2a7c-4087-9f42-0cd1a2ab367b"
+    }
+  ],
+
+  // Producer only — the main app (currently packages/workers) consumes this queue.
+  // Dunning emails are queued from the invoice handler.
+  "queues": {
+    "producers": [
+      {
+        "queue": "corates-emails",
+        "binding": "EMAIL_QUEUE"
+      }
+    ]
+  },
+
+  "vars": {
+    "ENVIRONMENT": "development"
+  },
+
+  "observability": {
+    "enabled": true,
+    "head_sampling_rate": 1,
+    "logs": {
+      "enabled": true,
+      "head_sampling_rate": 1,
+      "persist": true,
+      "invocation_logs": true
+    }
+  },
+
+  "env": {
+    "production": {
+      "name": "corates-stripe-purchases-prod",
+      "workers_dev": false,
+      "preview_urls": false,
+      // Exact path route — Cloudflare picks the most-specific pattern, so this
+      // wins over packages/workers' corates.org/api/* during the migration window.
+      "routes": [
+        {
+          "pattern": "corates.org/api/billing/purchases/webhook",
+          "zone_name": "corates.org"
+        }
+      ],
+      "d1_databases": [
+        {
+          "binding": "DB",
+          "database_name": "corates-db-prod",
+          "database_id": "bd15994e-1308-41b3-a91c-e30ab6c947da"
+        }
+      ],
+      "queues": {
+        "producers": [
+          {
+            "queue": "corates-emails-prod",
+            "binding": "EMAIL_QUEUE"
+          }
+        ]
+      },
+      "vars": {
+        "ENVIRONMENT": "production"
+      },
+      // Production secrets — set via `wrangler secret put ... --env production`:
+      //   wrangler secret put STRIPE_SECRET_KEY --env production
+      //   wrangler secret put STRIPE_WEBHOOK_SECRET_PURCHASES --env production
+      "observability": {
+        "enabled": true,
+        "head_sampling_rate": 1,
+        "logs": {
+          "enabled": true,
+          "head_sampling_rate": 1,
+          "persist": true,
+          "invocation_logs": true
+        }
+      }
+    }
+  }
+}

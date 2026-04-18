@@ -4,7 +4,8 @@
  */
 
 function getApiBase(): string {
-  return import.meta.env.VITE_API_URL || 'http://localhost:8787';
+  // Post-consolidation: same-origin as the TanStack Start worker.
+  return import.meta.env.VITE_API_URL || 'http://localhost:3010';
 }
 
 export const API_BASE = getApiBase();

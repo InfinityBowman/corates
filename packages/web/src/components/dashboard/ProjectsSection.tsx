@@ -102,13 +102,15 @@ export function ProjectsSection({
 
     setDeleteLoading(true);
     try {
-      const { parseResponse } = await import('hono/client');
-      const { api } = await import('@/lib/rpc');
-      await parseResponse(
-        api.api.orgs[':orgId'].projects[':projectId'].$delete({
-          param: { orgId: project.orgId, projectId: pendingDeleteId },
-        }),
-      );
+      const { API_BASE } = await import('@/config/api');
+      const res = await fetch(`${API_BASE}/api/orgs/${project.orgId}/projects/${pendingDeleteId}`, {
+        method: 'DELETE',
+        credentials: 'include',
+      });
+      if (!res.ok) {
+        const data = (await res.json().catch(() => ({}))) as { message?: string; code?: string };
+        throw new Error(data.message || data.code || `Delete failed: ${res.status}`);
+      }
 
       queryClient.invalidateQueries({ queryKey: queryKeys.projects.all });
       showToast.success('Project Deleted', 'The project has been deleted successfully');

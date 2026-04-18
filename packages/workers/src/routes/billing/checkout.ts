@@ -3,23 +3,23 @@
  * Handles Stripe Checkout session creation for subscriptions and one-time purchases
  */
 import { OpenAPIHono, createRoute, z, $ } from '@hono/zod-openapi';
-import { requireAuth, getAuth } from '@/middleware/auth';
-import { createDb } from '@/db/client';
-import { user as userTable } from '@/db/schema';
+import { requireAuth, getAuth } from '../../middleware/auth';
+import { createDb } from '@corates/db/client';
+import { user as userTable } from '@corates/db/schema';
 import { eq } from 'drizzle-orm';
-import { validatePlanChange, resolveOrgAccess } from '@/lib/billingResolver';
+import { validatePlanChange, resolveOrgAccess } from '../../lib/billingResolver';
 import { DEFAULT_PLAN } from '@corates/shared/plans';
 import { createDomainError, SYSTEM_ERRORS, VALIDATION_ERRORS } from '@corates/shared';
 import type Stripe from 'stripe';
-import { createStripeClient, isStripeConfigured } from '@/lib/stripe.js';
-import { createLogger, truncateError, withTiming } from '@/lib/observability/logger';
-import { billingCheckoutRateLimit } from '@/middleware/rateLimit';
+import { createStripeClient, isStripeConfigured } from '../../lib/stripe.js';
+import { createLogger, truncateError, withTiming } from '../../lib/observability/logger';
+import { billingCheckoutRateLimit } from '../../middleware/rateLimit';
 import { resolveOrgIdWithRole } from './helpers/orgContext';
-import { requireOrgOwner } from '@/policies';
-import { createSingleProjectCheckout } from '@/commands';
-import { validationHook } from '@/lib/honoValidationHook';
-import type { Env } from '@/types';
-import { ErrorResponseSchema } from '@/schemas/common.js';
+import { requireOrgOwner } from '../../policies';
+import { createSingleProjectCheckout } from '../../commands';
+import { validationHook } from '../../lib/honoValidationHook';
+import type { Env } from '../../types';
+import { ErrorResponseSchema } from '../../schemas/common.js';
 
 const base = new OpenAPIHono<{ Bindings: Env }>({
   defaultHook: validationHook,
@@ -305,7 +305,7 @@ const billingCheckoutRoutes = $(base.use('*', requireAuth))
       });
 
       // Delegate to Better Auth Stripe plugin
-      const { createAuth } = await import('@/auth/config');
+      const { createAuth } = await import('../../auth/config');
       const auth = createAuth(c.env, c.executionCtx);
 
       const { result, durationMs } = await withTiming(async () => {

@@ -5,11 +5,11 @@
  * Re-exports from project-sync.ts and adds additional helpers.
  */
 
-import { getProjectDocStub } from '@/lib/project-doc-id';
-import type { Env } from '@/types';
+import { getProjectDocStub } from '../../lib/project-doc-id';
+import type { Env } from '../../types';
 
 // Re-export existing sync functions
-export { syncProjectToDO } from '@/lib/project-sync';
+export { syncProjectToDO } from '../../lib/project-sync';
 
 /**
  * Disconnect all connected users from a ProjectDoc Durable Object
@@ -30,11 +30,12 @@ export async function cleanupProjectStorage(env: Env, projectId: string): Promis
   let deletedCount = 0;
 
   do {
-    const listed = await env.PDF_BUCKET.list({ prefix, cursor });
+    const listed: { objects: Array<{ key: string }>; truncated: boolean; cursor?: string } =
+      await env.PDF_BUCKET.list({ prefix, cursor });
 
     if (listed.objects.length > 0) {
-      const keysToDelete = listed.objects.map(obj => obj.key);
-      await Promise.all(keysToDelete.map(key => env.PDF_BUCKET.delete(key)));
+      const keysToDelete = listed.objects.map((obj: { key: string }) => obj.key);
+      await Promise.all(keysToDelete.map((key: string) => env.PDF_BUCKET.delete(key)));
       deletedCount += keysToDelete.length;
     }
 

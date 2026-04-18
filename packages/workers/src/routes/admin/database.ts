@@ -6,13 +6,13 @@
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
 import type { Context } from 'hono';
 
-import { createDb } from '@/db/client.js';
-import { dbSchema, mediaFiles, organization, projects, user } from '@/db/schema.js';
+import { createDb } from '@corates/db/client';
+import { dbSchema, mediaFiles, organization, projects, user } from '@corates/db/schema';
 import { count, desc, asc, eq, and, sum } from 'drizzle-orm';
 import { createDomainError, SYSTEM_ERRORS, VALIDATION_ERRORS } from '@corates/shared';
-import { validationHook } from '@/lib/honoValidationHook.js';
+import { validationHook } from '../../lib/honoValidationHook.js';
 import type { Env } from '../../types';
-import { ErrorResponseSchema } from '@/schemas/common.js';
+import { ErrorResponseSchema } from '../../schemas/common.js';
 
 const _databaseBase = new OpenAPIHono<{ Bindings: Env }>({
   defaultHook: validationHook,

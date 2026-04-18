@@ -2,7 +2,7 @@ import { count, eq } from 'drizzle-orm';
 import { resolveOrgAccess } from './billingResolver';
 import { isUnlimitedQuota } from '@corates/shared/plans';
 import { createDomainError, AUTH_ERRORS, SYSTEM_ERRORS } from '@corates/shared';
-import type { Database } from '../db/client';
+import type { Database } from '@corates/db/client';
 import type { SQLiteTable, SQLiteColumn } from 'drizzle-orm/sqlite-core';
 import type { SQL } from 'drizzle-orm';
 
@@ -288,7 +288,7 @@ export async function checkCollaboratorQuota(
   db: Database,
   orgId: string,
 ): Promise<QuotaCheckResult> {
-  const { member } = await import('../db/schema');
+  const { member } = await import('@corates/db/schema');
   const { and, ne } = await import('drizzle-orm');
 
   let orgBilling;

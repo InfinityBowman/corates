@@ -4,14 +4,8 @@
  * Tests the end-to-end billing experience: checkout redirect handling
  * and payment failure states.
  *
- * Auth note: /settings/billing is a _protected route. In dev, Chromium
- * doesn't send cookies cross-origin (:3010 -> :8787). We navigate to
- * /dashboard first to hydrate auth via SSR, then to billing. Route
- * interception injects the session cookie on client-side API requests.
- *
  * Requires:
- *   - Backend workers running: pnpm dev:workers (DEV_MODE=true)
- *   - Frontend dev server running: pnpm dev:front
+ *   - Dev server running: pnpm --filter web dev (localhost:3010, DEV_MODE=true)
  */
 
 import { test, expect, type Page, type BrowserContext } from '@playwright/test';

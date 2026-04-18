@@ -5,7 +5,7 @@
 
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
 
-import { createDb } from '@/db/client.js';
+import { createDb } from '@corates/db/client';
 import {
   user,
   session,
@@ -17,11 +17,11 @@ import {
   mediaFiles,
   member,
   organization,
-} from '@/db/schema.js';
+} from '@corates/db/schema';
 import { eq, desc, sql, like, or, count } from 'drizzle-orm';
-import { resolveOrgAccess } from '@/lib/billingResolver.js';
+import { resolveOrgAccess } from '../../lib/billingResolver.js';
 import { getPlan, getGrantPlan, type GrantType } from '@corates/shared/plans';
-import { createAuth } from '@/auth/config.js';
+import { createAuth } from '../../auth/config.js';
 import {
   createDomainError,
   createValidationError,
@@ -29,11 +29,11 @@ import {
   SYSTEM_ERRORS,
   VALIDATION_ERRORS,
 } from '@corates/shared';
-import { TIME_DURATIONS } from '@/config/constants.js';
-import { syncMemberToDO } from '@/lib/project-sync.js';
-import { validationHook } from '@/lib/honoValidationHook.js';
+import { TIME_DURATIONS } from '../../config/constants.js';
+import { syncMemberToDO } from '../../lib/project-sync.js';
+import { validationHook } from '../../lib/honoValidationHook.js';
 import type { Env, AuthUser, AppVariables } from '../../types';
-import { ErrorResponseSchema } from '@/schemas/common.js';
+import { ErrorResponseSchema } from '../../schemas/common.js';
 
 const base = new OpenAPIHono<{ Bindings: Env; Variables: AppVariables }>({
   defaultHook: validationHook,

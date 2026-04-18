@@ -12,7 +12,7 @@ export default defineConfig({
     globals: true,
     setupFiles: ['./src/__tests__/setup.ts'],
     include: ['src/**/*.{test,spec}.{js,jsx,ts,tsx}'],
-    exclude: ['src/**/*.browser.test.{ts,tsx}'],
+    exclude: ['src/**/*.browser.test.{ts,tsx}', 'src/**/*.server.test.ts'],
     testTimeout: 10000,
   },
 });

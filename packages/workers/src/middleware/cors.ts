@@ -1,12 +1,11 @@
 import type { MiddlewareHandler } from 'hono';
 import { cors } from 'hono/cors';
 import { isOriginAllowed, STATIC_ORIGINS } from '../config/origins';
-import type { Env } from '../types/env';
 
-export function createCorsMiddleware(env: Env): MiddlewareHandler {
+export function createCorsMiddleware(): MiddlewareHandler {
   const corsHandler = cors({
     origin: origin => {
-      if (isOriginAllowed(origin, env)) {
+      if (isOriginAllowed(origin)) {
         return origin;
       }
       return STATIC_ORIGINS[0];

@@ -32,7 +32,7 @@ export const requireTrustedOrigin: MiddlewareHandler = async (c, next) => {
     return c.json(error, error.statusCode as 403);
   }
 
-  if (!isOriginAllowed(requestOrigin, c.env)) {
+  if (!isOriginAllowed(requestOrigin)) {
     if (c.env?.ENVIRONMENT !== 'production') {
       console.log('[CSRF] Blocked untrusted origin', {
         method,

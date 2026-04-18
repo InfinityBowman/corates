@@ -10,11 +10,11 @@
  * - manage_members: Add/remove/update member roles
  */
 
-import { member } from '@/db/schema';
+import { member } from '@corates/db/schema';
 import { eq, and } from 'drizzle-orm';
 import { createDomainError, AUTH_ERRORS } from '@corates/shared';
 import { hasOrgRole } from './lib/roles';
-import type { Database } from '@/db/client';
+import type { Database } from '@corates/db/client';
 
 // Return types for membership queries
 interface OrgMembership {

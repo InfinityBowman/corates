@@ -5,8 +5,7 @@
  * has domain sections (D1-D6), and requires an explicit overall judgement.
  *
  * Prerequisites:
- *   pnpm dev:workers  (localhost:8787, DEV_MODE=true)
- *   pnpm dev          (localhost:3010)
+ *   pnpm --filter web dev  (localhost:3010, DEV_MODE=true)
  */
 
 import { test, expect } from '@playwright/test';

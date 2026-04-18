@@ -4,8 +4,9 @@
  */
 
 import type { BrowserContext, Page } from '@playwright/test';
+import { BASE_URL } from './constants';
 
-const API_BASE = 'http://localhost:8787';
+const API_BASE = BASE_URL;
 
 export interface SeededUser {
   id: string;
@@ -106,23 +107,15 @@ export async function loginAs(context: BrowserContext, cookies: SessionCookie[])
 }
 
 /**
- * Login and set up cookie forwarding for cross-origin API requests.
- *
- * Chromium doesn't send cookies cross-origin from :3010 to :8787 in dev.
- * This injects the session cookie via route interception so client-side
- * API calls (auth checks, billing, etc.) work in _protected routes.
+ * Login helper kept for API compatibility with callers from the split-worker era.
+ * API and web now share :3010, so same-origin cookies work without forwarding.
  */
 export async function loginWithApiCookies(
   context: BrowserContext,
-  page: Page,
+  _page: Page,
   cookies: SessionCookie[],
 ) {
   await context.addCookies(cookies);
-  const cookieHeader = cookies.map(c => `${c.name}=${c.value}`).join('; ');
-  await page.route(`**/${new URL(API_BASE).host}/**`, async route => {
-    const headers = { ...route.request().headers(), cookie: cookieHeader };
-    await route.continue({ headers });
-  });
 }
 
 export async function switchUser(context: BrowserContext, cookies: SessionCookie[]) {
@@ -175,20 +168,17 @@ export async function seedStudies(
   const reconcile = opts.reconcile ?? false;
 
   for (let i = 0; i < count; i++) {
-    const res = await fetch(
-      `${API_BASE}/api/orgs/${orgId}/projects/${projectId}/dev/add-study`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Cookie: cookieHeader },
-        body: JSON.stringify({
-          type,
-          fillMode,
-          reconcile,
-          reviewer1: reviewer1Id,
-          reviewer2: reviewer2Id,
-        }),
-      },
-    );
+    const res = await fetch(`${API_BASE}/api/orgs/${orgId}/projects/${projectId}/dev/add-study`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Cookie: cookieHeader },
+      body: JSON.stringify({
+        type,
+        fillMode,
+        reconcile,
+        reviewer1: reviewer1Id,
+        reviewer2: reviewer2Id,
+      }),
+    });
     if (!res.ok) {
       throw new Error(`seedStudies failed on study ${i + 1}: ${res.status} ${await res.text()}`);
     }

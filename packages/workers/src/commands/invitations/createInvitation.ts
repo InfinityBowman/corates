@@ -6,12 +6,12 @@
  * @throws DomainError INVITATION_ALREADY_ACCEPTED if invitation was already accepted
  */
 
-import { createDb } from '@/db/client';
-import { projectInvitations, projects, user } from '@/db/schema';
+import { createDb } from '@corates/db/client';
+import { projectInvitations, projects, user } from '@corates/db/schema';
 import { eq, and } from 'drizzle-orm';
 import { createDomainError, PROJECT_ERRORS } from '@corates/shared';
-import { TIME_DURATIONS } from '@/config/constants';
-import type { Env } from '@/types';
+import { TIME_DURATIONS } from '../../config/constants';
+import type { Env } from '../../types';
 
 interface CreateInvitationActor {
   id: string;
@@ -114,7 +114,7 @@ export async function createInvitation(
 
   let emailQueued = false;
   try {
-    const { sendInvitationEmail } = await import('@/lib/send-invitation-email.js');
+    const { sendInvitationEmail } = await import('../../lib/send-invitation-email.js');
     const result = await sendInvitationEmail({
       env,
       email,

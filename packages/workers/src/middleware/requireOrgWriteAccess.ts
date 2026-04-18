@@ -1,7 +1,7 @@
 import type { MiddlewareHandler } from 'hono';
 import { getOrgContext } from './requireOrg';
 import { resolveOrgAccess } from '../lib/billingResolver';
-import { createDb } from '../db/client';
+import { createDb } from '@corates/db/client';
 import { createDomainError, AUTH_ERRORS, SYSTEM_ERRORS, isDomainError } from '@corates/shared';
 import type { AppContext, OrgBilling } from '../types';
 

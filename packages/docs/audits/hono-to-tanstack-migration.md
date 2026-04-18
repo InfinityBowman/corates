@@ -1,0 +1,253 @@
+# Hono → TanStack Start backend migration
+
+Handoff doc. Migration consolidates two Cloudflare Workers (`packages/workers` + `packages/web`) into one: the TanStack Start app in `packages/web` takes over every route that used to live in the Hono app.
+
+Branch: `migrate-backend`. Passes 0-5 complete and uncommitted as of 2026-04-17.
+
+## What's migrated
+
+Tier 1 (prior sessions):
+
+- `/api/invitations/accept`
+- `/api/users/avatar` + `/api/users/avatar/:userId`
+- `/api/pdf-proxy`
+- `/api/google-drive/*` (4 files: status, picker-token, disconnect, import)
+
+Tier 2 (this session, Passes 1-5):
+
+- **Pass 1** — org CRUD: `/api/orgs` (list/create), `/api/orgs/$orgId` (get/update/delete), `/api/orgs/$orgId/set-active`
+- **Pass 2** — org members: `/api/orgs/$orgId/members` (list/add), `/api/orgs/$orgId/members/$memberId` (update/remove)
+- **Pass 3** — projects: `/api/orgs/$orgId/projects` (list/create), `/api/orgs/$orgId/projects/$projectId` (get/update/delete), `/api/orgs/$orgId/projects/$projectId/members` + `$userId`
+- **Pass 4** — invitations: `/api/orgs/$orgId/projects/$projectId/invitations` (list/create) + `$invitationId` (cancel)
+- **Pass 5** — PDFs + dev: `.../studies/$studyId/pdfs` + `pdfs/$fileName`, and `.../dev/{templates,apply-template,export,import,reset,add-study}`
+
+Every route a regular user hits is now on TanStack. Hono still serves `/api/auth/*` (better-auth catch-all), `/api/admin/*`, `/api/billing/*`, Stripe webhooks, and DO WebSocket upgrades.
+
+## What's left
+
+Tier 3:
+
+- `packages/workers/src/routes/admin/*` — 10 files, ~7,200 lines total. Largest individual files: `billing.ts` (1,195), `users.ts` (1,092), `database.ts` (997), `stripe-tools.ts` (808), `billing-observability.ts` (788), `projects.ts` (772), `stats.ts` (665), `storage.ts` (525), `orgs.ts` (393)
+- `packages/workers/src/routes/billing/*` — 7 files, ~1,400 lines non-webhook. `checkout.ts` (431), `subscription.ts` (307), `invoices.ts` (149), `grants.ts` (135), `validation.ts` (126), `portal.ts` (108), `sync.ts` (80)
+
+Must stay on Hono indefinitely:
+
+- `/api/auth/*` — better-auth catch-all
+- Stripe webhooks — specialized middleware for raw-body signature verification
+- DO WebSocket upgrade paths
+
+## Migration pattern (the recipe)
+
+### File layout
+
+One TanStack file per route key. Shared path prefixes become directories.
+
+```
+packages/web/src/routes/api/orgs/$orgId/projects/$projectId/
+├── invitations.ts                 # GET list, POST create
+├── invitations/
+│   └── $invitationId.ts           # DELETE cancel
+├── members.ts                     # GET list, POST add
+├── members/
+│   └── $userId.ts                 # PUT update, DELETE remove
+└── __tests__/
+    ├── invitations.server.test.ts
+    └── members.server.test.ts
+```
+
+TanStack's codegen regenerates `packages/web/src/routeTree.gen.ts` on file changes (gitignored). Sometimes needs a save-trigger or a `pnpm --filter web build` to pick up new files.
+
+### Handler shape
+
+```ts
+import { createFileRoute } from '@tanstack/react-router';
+import { env } from 'cloudflare:workers';
+import { requireOrgMembership } from '@/server/guards/requireOrgMembership';
+import { requireProjectAccess } from '@/server/guards/requireProjectAccess';
+import { requireOrgWriteAccess } from '@/server/guards/requireOrgWriteAccess';
+
+type HandlerArgs = { request: Request; params: { orgId: string; projectId: string } };
+
+export const handleGet = async ({ request, params }: HandlerArgs) => {
+  const orgMembership = await requireOrgMembership(request, env, params.orgId);
+  if (!orgMembership.ok) return orgMembership.response;
+
+  const access = await requireProjectAccess(request, env, params.orgId, params.projectId);
+  if (!access.ok) return access.response;
+
+  // ... business logic, return Response.json(...)
+};
+
+export const Route = createFileRoute('/api/orgs/$orgId/projects/$projectId/some-path')({
+  server: { handlers: { GET: handleGet, POST: handlePost } },
+});
+```
+
+Every handler takes `HandlerArgs`. Export `handleGet`/`handlePost`/`handlePut`/`handleDelete` named so tests can import directly without going through the router.
+
+### Guards
+
+Hono middleware → sync guard functions returning a discriminated union:
+
+```ts
+type Result = { ok: true; context: {...} } | { ok: false; response: Response };
+```
+
+Live in `packages/web/src/server/guards/`:
+
+- `requireOrgMembership(request, env, orgId, minRole?)` — session + org member lookup, optional role check
+- `requireProjectAccess(request, env, orgId, projectId, minRole?)` — validates project exists, belongs to orgId, user is project member, optional role
+- `requireOrgWriteAccess(method, env, orgId)` — early-returns for GET/HEAD/OPTIONS; otherwise checks `accessMode !== 'readOnly'`
+- `requireEntitlement(env, orgId, key)` — checks `orgBilling.entitlements[key]`
+- `requireQuota(env, orgId, getUsage, requested?)` — checks `used + requested <= limit` (unlimited via `isUnlimitedQuota`)
+
+Call order for write routes: `requireOrgMembership` → `requireOrgWriteAccess` → `requireProjectAccess`.
+
+For project sub-routes (members, invitations, PDFs etc.), you typically want `requireOrgMembership` first so the caller gets `not_org_member` rather than `project_access_denied` when they're a total stranger.
+
+### Test shape
+
+```ts
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { env } from 'cloudflare:test';
+import { resetTestDatabase, clearProjectDOs } from '@/__tests__/server/helpers';
+import { buildProject, resetCounter } from '@/__tests__/server/factories';
+import { handleGet, handlePost } from '../some-route';
+
+let currentUser = { id: 'user-1', email: 'user1@example.com' };
+
+vi.mock('@corates/workers/auth', () => ({
+  getSession: async () => ({
+    user: { id: currentUser.id, email: currentUser.email, name: 'Test User' },
+    session: { id: 'test-session', userId: currentUser.id },
+  }),
+}));
+
+vi.mock('@corates/workers/billing-resolver', () => ({
+  resolveOrgAccess: vi.fn(async () => ({
+    accessMode: 'write',
+    source: 'free',
+    quotas: { 'projects.max': 10, 'collaborators.org.max': -1 },
+    entitlements: { 'project.create': true },
+  })),
+}));
+
+beforeEach(async () => {
+  await resetTestDatabase();
+  await clearProjectDOs(['project-1']);
+  vi.clearAllMocks();
+  resetCounter();
+  currentUser = { id: 'user-1', email: 'user1@example.com' };
+});
+
+function jsonReq(path: string, method: string, body?: unknown): Request {
+  return new Request(`http://localhost${path}`, {
+    method,
+    headers: { 'Content-Type': 'application/json' },
+    body: body !== undefined ? JSON.stringify(body) : undefined,
+  });
+}
+```
+
+Tests call handlers directly — no routing, no Hono, no `app.fetch`. Use `env` from `cloudflare:test` for R2/DB. Real R2 binding works in vitest-pool-workers (see avatar and PDF tests).
+
+Mock `@corates/workers/auth.getSession` to impersonate users. Mock `@corates/workers/billing-resolver.resolveOrgAccess` for quota/entitlement paths. Postmark mock only needed if the route sends email.
+
+## Subtleties and gotchas
+
+**Workers subpath exports.** When the web route needs a workers-side command/helper, export it from `packages/workers/package.json`:
+
+```json
+"./commands/invitations": "./src/commands/invitations/index.ts",
+"./commands/projects": "./src/commands/projects/index.ts",
+"./commands/members": "./src/commands/members/index.ts",
+"./billing-resolver": "./src/lib/billingResolver.ts",
+"./quota-transaction": "./src/lib/quotaTransaction.ts",
+"./constants": "./src/config/constants.ts",
+"./ssrf-protection": "./src/lib/ssrf-protection.ts",
+"./media-files": "./src/lib/media-files.ts",
+"./policies/projects": "./src/policies/projects.ts",
+"./policies": "./src/policies/index.ts",
+"./project-doc-id": "./src/lib/project-doc-id.ts"
+```
+
+**Web env has stricter types.** `@cloudflare/workers-types` isn't pulled in. When web transitively compiles workers code, R2 types can come back as `unknown`. Fix with explicit annotations at the boundary — see `packages/workers/src/commands/lib/doSync.ts` where the R2 `list()` return is typed inline.
+
+**Catch-all `/api/$.ts`.** TanStack file routes take priority; anything unmatched forwards to the Hono app. That's why partial migrations don't break other endpoints. Keep the mount intact until all Hono routes are gone.
+
+**Hono stub pattern when stripping.** Don't delete the Hono router file — the parent mount still imports from it. Strip to an empty router:
+
+```ts
+import { OpenAPIHono, $ } from '@hono/zod-openapi';
+import { requireAuth } from '../../middleware/auth.js';
+import { validationHook } from '../../lib/honoValidationHook.js';
+import type { Env } from '../../types';
+
+const base = new OpenAPIHono<{ Bindings: Env }>({ defaultHook: validationHook });
+const orgInvitationRoutes = $(base.use('*', requireAuth));
+export { orgInvitationRoutes };
+```
+
+Delete the corresponding Hono test file (`packages/workers/src/routes/__tests__/*.test.ts`).
+
+**`createInvitation` always sets `grantOrgMembership: true`.** The Hono schema accepted `grantOrgMembership` as optional, but the command hard-codes true. Tests rely on this.
+
+**Validation error codes are picky.** Missing required field = `createValidationError(field, VALIDATION_ERRORS.FIELD_REQUIRED.code, null, 'required')` with 400. Blank-but-present can map to a different error (see POST `/api/orgs` where missing `name` is 400/VALIDATION but blank `name` is 403/AUTH_FORBIDDEN `name_required`).
+
+**`getDomainError` on the client.** The client `apiFetch` throws parsed domain errors. When rejecting from the catch, `throw data` directly (if data already has `code` + `statusCode`) rather than wrapping in an Error with `.response`.
+
+**`DEV_MODE` in tests.** For dev routes, added `"DEV_MODE": true` to `packages/web/wrangler.test.jsonc` vars. Don't try `vi.mock('cloudflare:workers')` — it hangs the pool.
+
+**Linter collapses multi-line call expressions.** Prettier collapses guards like `requireProjectAccess(request, env, params.orgId, params.projectId, 'owner')` to one line on save. Expected, don't fight it.
+
+## Client caller translation
+
+Client callers that were using Hono RPC (`honoClient.api.orgs[':orgId'].$get(...)`) were rewritten to plain `fetch(\`\${API_BASE}/api/orgs/\${orgId}\`, {...})`. The URLs are identical; the TanStack routes serve the same paths. Completed updates:
+
+- `project/actions/project.ts`
+- `project/actions/members.ts`
+- `components/dashboard/ProjectsSection.tsx`
+- `components/project/CreateProjectModal.tsx`
+- `components/project/overview-tab/AddMemberModal.tsx`
+- `api/google-drive.ts`
+- `routes/_auth/complete-profile.tsx`
+
+Most components already used plain `fetch`, so no code changes were needed for PDFs (`api/pdf-api.ts`), avatar (`components/settings/ProfileInfoSection.tsx`), or dev routes (`components/dev/*`).
+
+## Test counts (2026-04-17)
+
+- Web server tests: **165 passing** across 16 files
+- Workers tests: **278 passing** across 27 files
+- Web typecheck: clean modulo 3 pre-existing errors (e2e `timeout` in TestDetails, unused `loginWithApiCookies`, `src/server.ts:28` queue() arity)
+- Workers typecheck: clean
+
+## How to run
+
+```bash
+cd packages/web
+pnpm exec vitest run --config vitest.server.config.ts                           # all web server tests
+pnpm exec vitest run --config vitest.server.config.ts path/to/test.server.test.ts  # single file
+
+cd packages/workers
+pnpm test                                                                        # all workers tests
+
+pnpm --filter web typecheck
+pnpm --filter workers typecheck
+```
+
+Never start dev servers — the user does that.
+
+## Recommended Tier 3 order
+
+1. **Billing non-webhook first.** Smaller (1.4k lines), higher-risk (money), worth doing alone with careful review. Tackle in this order: `portal.ts` (108, simplest), `grants.ts` (135), `sync.ts` (80), `validation.ts` (126), `invoices.ts` (149), `subscription.ts` (307), `checkout.ts` (431). Each is its own pass.
+2. **Admin last.** ~7.2k lines. Mostly read-only dashboards, so faster per-line than billing. Suggested order by size/complexity: `orgs.ts` (393), `storage.ts` (525), `stats.ts` (665), `projects.ts` (772), `billing-observability.ts` (788), `stripe-tools.ts` (808), `database.ts` (997), `users.ts` (1,092), `billing.ts` (1,195).
+
+Stripe webhooks stay on Hono. The `/api/auth/*` catch-all stays on Hono (better-auth).
+
+## If you pick this up cold
+
+1. Read the current status: `git status`, `git log --oneline -10` on `migrate-backend`.
+2. Confirm tests still green: `pnpm --filter web test` + `pnpm --filter workers test`.
+3. Pick the smallest Tier 3 file. Read the Hono route + its test file.
+4. Clone the pattern: guards → handler → test → strip Hono to stub → delete Hono test → run both suites.
+5. Each migration is its own pass. Don't batch.

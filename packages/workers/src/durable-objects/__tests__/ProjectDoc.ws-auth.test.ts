@@ -15,7 +15,7 @@ import {
   seedProject,
   seedProjectMember,
   clearProjectDOs,
-} from '@/__tests__/helpers.js';
+} from '../../__tests__/helpers.js';
 
 vi.mock('@/auth/config.js', () => {
   const mockVerifyAuth = vi.fn(async () => ({

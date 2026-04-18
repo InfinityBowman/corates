@@ -4,7 +4,7 @@
  * This ensures all avatars are served from our own storage, avoiding external URL issues
  */
 
-import type { Env } from '@/types/env';
+import type { Env } from '../types/env';
 import {
   createDomainError,
   FILE_ERRORS,

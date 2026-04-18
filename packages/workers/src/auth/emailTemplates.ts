@@ -1,6 +1,6 @@
 // Email HTML and text templates for BetterAuth
 
-import { escapeHtml } from '@/lib/escapeHtml';
+import { escapeHtml } from '../lib/escapeHtml';
 
 interface VerificationEmailParams {
   name: string;

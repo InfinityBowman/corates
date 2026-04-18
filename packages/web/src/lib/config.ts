@@ -1,6 +1,6 @@
 export const config = {
   appUrl: import.meta.env.VITE_PUBLIC_APP_URL || 'http://localhost:3010',
-  apiUrl: import.meta.env.VITE_API_URL || 'http://localhost:8787',
+  apiUrl: import.meta.env.VITE_API_URL || 'http://localhost:3010',
 };
 
 export const urls = {

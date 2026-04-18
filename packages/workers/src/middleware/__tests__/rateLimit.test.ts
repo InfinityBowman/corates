@@ -4,7 +4,7 @@
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { Hono } from 'hono';
-import { json } from '@/__tests__/helpers.js';
+import { json } from '../../__tests__/helpers.js';
 import { rateLimit, searchRateLimit, emailRateLimit, clearRateLimitStore } from '../rateLimit.js';
 
 describe('rateLimit middleware', () => {

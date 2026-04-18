@@ -1,0 +1,28 @@
+{
+  "name": "@corates/stripe-purchases",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Isolated Stripe purchases webhook worker (deploy-cadence isolation from main app)",
+  "license": "PolyForm-Noncommercial-1.0.0",
+  "type": "module",
+  "main": "src/index.ts",
+  "scripts": {
+    "dev": "wrangler dev --port 8788 --inspector-port 9230 --persist-to ../workers/.wrangler/state",
+    "deploy": "pnpm --filter @corates/shared build && wrangler deploy --env production",
+    "tail": "wrangler tail corates-stripe-purchases-prod",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint ."
+  },
+  "dependencies": {
+    "@corates/db": "workspace:*",
+    "@corates/shared": "workspace:*",
+    "drizzle-orm": "^0.45.2",
+    "hono": "^4.12.12",
+    "stripe": "^20.4.1"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20260405.1",
+    "typescript": "^5.9.3",
+    "wrangler": "^4.81.0"
+  }
+}

@@ -10,11 +10,11 @@
  * - manage: Manage members (add/remove/update roles)
  */
 
-import { projectMembers } from '@/db/schema';
+import { projectMembers } from '@corates/db/schema';
 import { eq, and, count } from 'drizzle-orm';
 import { createDomainError, PROJECT_ERRORS, AUTH_ERRORS } from '@corates/shared';
 import { isProjectOwner } from './lib/roles';
-import type { Database } from '@/db/client';
+import type { Database } from '@corates/db/client';
 import type { ProjectRole } from './lib/roles';
 
 // Return types for membership queries

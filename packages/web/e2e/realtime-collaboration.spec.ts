@@ -17,8 +17,7 @@
  *   4. Verify text editing in the Final Note syncs via Y.Text
  *
  * Prerequisites:
- *   pnpm dev:workers  (localhost:8787, DEV_MODE=true)
- *   pnpm dev          (localhost:3010)
+ *   pnpm --filter web dev  (localhost:3010, DEV_MODE=true)
  */
 
 import { test, expect, type Page } from '@playwright/test';
@@ -234,16 +233,12 @@ test('Presence avatars, cursor sync, and text editing sync during reconciliation
     await pageB.waitForTimeout(500);
 
     // User A fills the Final Note
-    const finalNoteA = pageA.locator(
-      'textarea[placeholder="Add the final reconciled note..."]',
-    );
+    const finalNoteA = pageA.locator('textarea[placeholder="Add the final reconciled note..."]');
     await finalNoteA.fill('Agreed to use conservative estimate');
     await pageA.waitForTimeout(1000);
 
     // User B should see the same text via Y.Text sync
-    const finalNoteB = pageB.locator(
-      'textarea[placeholder="Add the final reconciled note..."]',
-    );
+    const finalNoteB = pageB.locator('textarea[placeholder="Add the final reconciled note..."]');
     await expect(finalNoteB).toHaveValue('Agreed to use conservative estimate', {
       timeout: 15_000,
     });

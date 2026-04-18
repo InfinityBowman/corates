@@ -5,9 +5,6 @@
       "dependsOn": ["^build"],
       "outputs": ["dist/**", ".output/**", ".vinxi/**", ".vitepress/**"]
     },
-    "@corates/workers#build": {
-      "outputs": []
-    },
     "test": {
       "dependsOn": ["^build"]
     },

@@ -12,16 +12,12 @@ import {
   seedOrgMember,
   seedSubscription,
   seedProject,
-} from '@/__tests__/helpers.js';
-import { createDb } from '@/db/client.js';
-import { createGrant } from '@/db/orgAccessGrants.js';
-import {
-  resolveOrgAccess,
-  validatePlanChange,
-  getOrgResourceUsage,
-} from '@/lib/billingResolver.js';
-import { isSubscriptionActive } from '@/lib/subscriptionStatus';
-import type { SubscriptionStatusInput, IsActiveOptions } from '@/lib/subscriptionStatus';
+} from '../../__tests__/helpers.js';
+import { createDb } from '@corates/db/client';
+import { createGrant } from '@corates/db/org-access-grants';
+import { resolveOrgAccess, validatePlanChange, getOrgResourceUsage } from '../billingResolver.js';
+import { isSubscriptionActive } from '../subscriptionStatus';
+import type { SubscriptionStatusInput, IsActiveOptions } from '../subscriptionStatus';
 
 beforeEach(async () => {
   await resetTestDatabase();
@@ -351,7 +347,7 @@ describe('resolveOrgAccess', () => {
     it('should ignore revoked grants', async () => {
       const { nowSec, orgId } = await createTestOrg();
       const db = createDb(env.DB);
-      const { orgAccessGrants } = await import('@/db/schema.js');
+      const { orgAccessGrants } = await import('@corates/db/schema');
 
       // Create grant and then revoke it
       await createGrant(db, {

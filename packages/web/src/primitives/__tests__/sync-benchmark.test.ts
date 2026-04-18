@@ -120,10 +120,7 @@ function buildProject(doc: Y.Doc, studyCount: number, checklistsPerStudy: number
             const question = new Y.Map();
             question.set('answer', q % 2 === 0 ? 'Y' : 'PY');
             const comment = new Y.Text();
-            comment.insert(
-              0,
-              `Domain ${d} Q${q}: Reviewer assessment notes for study ${s + 1}.`,
-            );
+            comment.insert(0, `Domain ${d} Q${q}: Reviewer assessment notes for study ${s + 1}.`);
             question.set('comment', comment);
             domainAnswers.set(`${d}.${q}`, question);
           }

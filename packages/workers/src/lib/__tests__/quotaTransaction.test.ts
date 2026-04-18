@@ -10,14 +10,14 @@ import {
   seedOrganization,
   seedOrgMember,
   seedSubscription,
-} from '@/__tests__/helpers.js';
-import { createDb } from '@/db/client.js';
-import { projects } from '@/db/schema.js';
+} from '../../__tests__/helpers.js';
+import { createDb } from '@corates/db/client';
+import { projects } from '@corates/db/schema';
 import {
   checkQuotaForInsert,
   insertWithQuotaCheck,
   checkCollaboratorQuota,
-} from '@/lib/quotaTransaction.js';
+} from '../quotaTransaction.js';
 
 beforeEach(async () => {
   await resetTestDatabase();

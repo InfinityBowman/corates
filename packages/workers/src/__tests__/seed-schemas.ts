@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { PROJECT_ROLES } from '@/config/constants.js';
+import { PROJECT_ROLES } from '../config/constants.js';
 
 const dateOrTimestampToNumber = z.union([z.date(), z.number().int()]).transform(val => {
   if (val instanceof Date) {

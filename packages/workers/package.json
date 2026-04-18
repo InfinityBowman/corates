@@ -4,11 +4,35 @@
   "private": true,
   "description": "Cloudflare Workers with Durable Objects",
   "license": "PolyForm-Noncommercial-1.0.0",
-  "main": "src/index.js",
+  "main": "src/index.ts",
   "type": "module",
+  "exports": {
+    ".": {
+      "types": "./types.d.ts",
+      "default": "./src/index.ts"
+    },
+    "./auth": {
+      "types": "./auth.d.ts",
+      "default": "./src/auth/session-helper.ts"
+    },
+    "./project-sync": "./src/lib/project-sync.ts",
+    "./project-doc-id": "./src/lib/project-doc-id.ts",
+    "./email-templates": "./src/auth/emailTemplates.ts",
+    "./auth-config": "./src/auth/config.ts",
+    "./commands/invitations": "./src/commands/invitations/index.ts",
+    "./commands/projects": "./src/commands/projects/index.ts",
+    "./commands/members": "./src/commands/members/index.ts",
+    "./billing-resolver": "./src/lib/billingResolver.ts",
+    "./quota-transaction": "./src/lib/quotaTransaction.ts",
+    "./constants": "./src/config/constants.ts",
+    "./ssrf-protection": "./src/lib/ssrf-protection.ts",
+    "./media-files": "./src/lib/media-files.ts",
+    "./policies/projects": "./src/policies/projects.ts",
+    "./policies": "./src/policies/index.ts"
+  },
   "scripts": {
     "dev": "concurrently \"wrangler dev\" \"pnpm build:rpc:watch\" --names wrangler,rpc --prefix-colors blue,green",
-    "deploy": "pnpm --filter shared build && wrangler deploy --env production",
+    "deploy": "echo 'This package is retired. Deploy from packages/web (now corates-workers-prod).' && exit 1",
     "tail": "wrangler tail",
     "test": "pnpm db:generate:test && vitest run",
     "test:watch": "vitest",
@@ -34,6 +58,7 @@
   },
   "dependencies": {
     "@better-auth/stripe": "^1.6.0",
+    "@corates/db": "workspace:*",
     "@corates/shared": "workspace:*",
     "@hono/zod-openapi": "^1.2.4",
     "@sentry/cloudflare": "^10.47.0",

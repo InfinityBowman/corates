@@ -11,10 +11,13 @@ import {
   seedOrganization,
   seedSubscription,
   json,
-} from '@/__tests__/helpers.js';
-import { createDb } from '@/db/client.js';
-import { subscription } from '@/db/schema.js';
+} from '../../../__tests__/helpers.js';
+import { createDb } from '@corates/db/client';
+import { subscription } from '@corates/db/schema';
 import { eq } from 'drizzle-orm';
+import { STATIC_ORIGINS } from '../../../config/origins';
+
+const TRUSTED_ORIGIN = STATIC_ORIGINS[0];
 
 vi.mock('@/middleware/requireAdmin.js', () => {
   return {
@@ -44,7 +47,7 @@ async function fetchApp(path: string, init: FetchInit = {}) {
   const req = new Request(`http://localhost${path}`, {
     ...init,
     headers: {
-      origin: 'http://localhost:5173',
+      origin: TRUSTED_ORIGIN,
       'content-type': 'application/json',
       ...init.headers,
     },
@@ -251,7 +254,7 @@ describe('Admin billing routes - POST /api/admin/orgs/:orgId/grant-trial', () =>
     });
 
     const db = createDb(env.DB);
-    const { createGrant } = await import('@/db/orgAccessGrants.js');
+    const { createGrant } = await import('@corates/db/org-access-grants');
     const now = new Date();
     const expiresAt = new Date(now);
     expiresAt.setDate(expiresAt.getDate() + 14);
@@ -310,7 +313,7 @@ describe('Admin billing routes - POST /api/admin/orgs/:orgId/grant-single-projec
     });
 
     const db = createDb(env.DB);
-    const { createGrant } = await import('@/db/orgAccessGrants.js');
+    const { createGrant } = await import('@corates/db/org-access-grants');
     const now = new Date();
     const expiresAt = new Date(now);
     expiresAt.setMonth(expiresAt.getMonth() + 6);
@@ -370,7 +373,7 @@ describe('Admin billing routes - PUT /api/admin/orgs/:orgId/grants/:grantId', ()
     });
 
     const db = createDb(env.DB);
-    const { createGrant } = await import('@/db/orgAccessGrants.js');
+    const { createGrant } = await import('@corates/db/org-access-grants');
     const now = new Date();
     const expiresAt = new Date(now);
     expiresAt.setDate(expiresAt.getDate() + 14);
@@ -405,7 +408,7 @@ describe('Admin billing routes - PUT /api/admin/orgs/:orgId/grants/:grantId', ()
     });
 
     const db = createDb(env.DB);
-    const { createGrant } = await import('@/db/orgAccessGrants.js');
+    const { createGrant } = await import('@corates/db/org-access-grants');
     const now = new Date();
     const expiresAt = new Date(now);
     expiresAt.setDate(expiresAt.getDate() + 14);

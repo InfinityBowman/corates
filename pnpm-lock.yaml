@@ -42,6 +42,19 @@ importers:
         specifier: ^4.81.0
         version: 4.81.0(@cloudflare/workers-types@4.20260405.1)
 
+  packages/db:
+    dependencies:
+      drizzle-orm:
+        specifier: ^0.45.2
+        version: 0.45.2(@cloudflare/workers-types@4.20260405.1)(@electric-sql/pglite@0.3.15)(@opentelemetry/api@1.9.1)(@prisma/client@7.4.2(prisma@7.4.2(@types/react@19.2.14)(better-sqlite3@12.8.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@5.9.3))(typescript@5.9.3))(@types/better-sqlite3@7.6.13)(better-sqlite3@12.8.0)(gel@2.2.0)(kysely@0.28.15)(mysql2@3.15.3)(postgres@3.4.7)(prisma@7.4.2(@types/react@19.2.14)(better-sqlite3@12.8.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@5.9.3))
+    devDependencies:
+      '@cloudflare/workers-types':
+        specifier: ^4.20260405.1
+        version: 4.20260405.1
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+
   packages/docs:
     devDependencies:
       mermaid:
@@ -69,14 +82,48 @@ importers:
         specifier: ^9.2.1
         version: 9.2.1
 
+  packages/stripe-purchases:
+    dependencies:
+      '@corates/db':
+        specifier: workspace:*
+        version: link:../db
+      '@corates/shared':
+        specifier: workspace:*
+        version: link:../shared
+      drizzle-orm:
+        specifier: ^0.45.2
+        version: 0.45.2(@cloudflare/workers-types@4.20260405.1)(@electric-sql/pglite@0.3.15)(@opentelemetry/api@1.9.1)(@prisma/client@7.4.2(prisma@7.4.2(@types/react@19.2.14)(better-sqlite3@12.8.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@5.9.3))(typescript@5.9.3))(@types/better-sqlite3@7.6.13)(better-sqlite3@12.8.0)(gel@2.2.0)(kysely@0.28.15)(mysql2@3.15.3)(postgres@3.4.7)(prisma@7.4.2(@types/react@19.2.14)(better-sqlite3@12.8.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@5.9.3))
+      hono:
+        specifier: ^4.12.12
+        version: 4.12.12
+      stripe:
+        specifier: ^20.4.1
+        version: 20.4.1(@types/node@25.5.2)
+    devDependencies:
+      '@cloudflare/workers-types':
+        specifier: ^4.20260405.1
+        version: 4.20260405.1
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+      wrangler:
+        specifier: ^4.81.0
+        version: 4.81.0(@cloudflare/workers-types@4.20260405.1)
+
   packages/web:
     dependencies:
       '@ark-ui/react':
         specifier: ^5.35.0
         version: 5.35.0(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+      '@corates/db':
+        specifier: workspace:*
+        version: link:../db
       '@corates/shared':
         specifier: workspace:*
         version: link:../shared
+      '@corates/workers':
+        specifier: workspace:*
+        version: link:../workers
       '@embedpdf/core':
         specifier: ^2.14.0
         version: 2.14.0(preact@10.28.4)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.46.1)(vue@3.5.29(typescript@5.9.3))
@@ -194,6 +241,9 @@ importers:
       dexie:
         specifier: ^4.4.2
         version: 4.4.2
+      drizzle-orm:
+        specifier: ^0.45.2
+        version: 0.45.2(@cloudflare/workers-types@4.20260405.1)(@electric-sql/pglite@0.3.15)(@opentelemetry/api@1.9.1)(@prisma/client@7.4.2(prisma@7.4.2(@types/react@19.2.14)(better-sqlite3@12.8.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@5.9.3))(typescript@5.9.3))(@types/better-sqlite3@7.6.13)(better-sqlite3@12.8.0)(gel@2.2.0)(kysely@0.28.15)(mysql2@3.15.3)(postgres@3.4.7)(prisma@7.4.2(@types/react@19.2.14)(better-sqlite3@12.8.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@5.9.3))
       hono:
         specifier: ^4.12.12
         version: 4.12.12
@@ -239,6 +289,9 @@ importers:
       yjs:
         specifier: ^13.6.30
         version: 13.6.30
+      zod:
+        specifier: ^4.3.6
+        version: 4.3.6
       zustand:
         specifier: ^5.0.12
         version: 5.0.12(@types/react@19.2.14)(immer@11.1.4)(react@19.2.4)(use-sync-external-store@1.6.0(react@19.2.4))
@@ -246,6 +299,12 @@ importers:
       '@cloudflare/vite-plugin':
         specifier: ^1.31.1
         version: 1.31.1(vite@7.3.1(@types/node@25.5.2)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.2))(workerd@1.20260405.1)(wrangler@4.81.0(@cloudflare/workers-types@4.20260405.1))
+      '@cloudflare/vitest-pool-workers':
+        specifier: ^0.14.2
+        version: 0.14.2(@cloudflare/workers-types@4.20260405.1)(@vitest/runner@4.1.3)(@vitest/snapshot@4.1.3)(vitest@4.1.3)
+      '@cloudflare/workers-types':
+        specifier: ^4.20260405.1
+        version: 4.20260405.1
       '@playwright/test':
         specifier: ^1.59.1
         version: 1.59.1
@@ -312,6 +371,9 @@ importers:
       '@better-auth/stripe':
         specifier: ^1.6.0
         version: 1.6.0(@better-auth/core@1.6.0(@better-auth/utils@0.4.0)(@better-fetch/fetch@1.1.21)(@cloudflare/workers-types@4.20260405.1)(@opentelemetry/api@1.9.1)(better-call@1.3.5(zod@4.3.6))(jose@6.2.2)(kysely@0.28.15)(nanostores@1.2.0))(better-auth@1.6.0(3bc514177adaf7d26594405f762542d5))(better-call@1.3.5(zod@4.3.6))(stripe@20.4.1(@types/node@25.5.2))
+      '@corates/db':
+        specifier: workspace:*
+        version: link:../db
       '@corates/shared':
         specifier: workspace:*
         version: link:../shared
@@ -8656,7 +8718,7 @@ snapshots:
       '@opentelemetry/api': 1.9.1
       '@opentelemetry/semantic-conventions': 1.40.0
       '@standard-schema/spec': 1.1.0
-      better-call: 1.3.5(zod@3.25.76)
+      better-call: 1.3.5(zod@4.3.6)
       jose: 6.2.2
       kysely: 0.28.15
       nanostores: 1.2.0
@@ -8793,6 +8855,21 @@ snapshots:
       esbuild: 0.27.3
       miniflare: 4.20260405.0
       vitest: 4.1.2(@opentelemetry/api@1.9.1)(@types/node@25.5.2)(@vitest/browser-playwright@4.1.2)(jsdom@29.0.2(@noble/hashes@2.0.1))(msw@2.12.10(@types/node@25.5.2)(typescript@5.9.3))(vite@7.3.1(@types/node@25.5.2)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.2))
+      wrangler: 4.81.0(@cloudflare/workers-types@4.20260405.1)
+      zod: 3.25.76
+    transitivePeerDependencies:
+      - '@cloudflare/workers-types'
+      - bufferutil
+      - utf-8-validate
+
+  '@cloudflare/vitest-pool-workers@0.14.2(@cloudflare/workers-types@4.20260405.1)(@vitest/runner@4.1.3)(@vitest/snapshot@4.1.3)(vitest@4.1.3)':
+    dependencies:
+      '@vitest/runner': 4.1.3
+      '@vitest/snapshot': 4.1.3
+      cjs-module-lexer: 1.4.3
+      esbuild: 0.27.3
+      miniflare: 4.20260405.0
+      vitest: 4.1.3(@opentelemetry/api@1.9.1)(@types/node@25.5.2)(@vitest/browser-playwright@4.1.3)(jsdom@29.0.2(@noble/hashes@2.0.1))(msw@2.12.10(@types/node@25.5.2)(typescript@5.9.3))(vite@7.3.1(@types/node@25.5.2)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.2))
       wrangler: 4.81.0(@cloudflare/workers-types@4.20260405.1)
       zod: 3.25.76
     transitivePeerDependencies:
@@ -12784,7 +12861,7 @@ snapshots:
       '@better-fetch/fetch': 1.1.21
       '@noble/ciphers': 2.1.1
       '@noble/hashes': 2.0.1
-      better-call: 1.3.5(zod@3.25.76)
+      better-call: 1.3.5(zod@4.3.6)
       defu: 6.1.7
       jose: 6.2.2
       kysely: 0.28.15
@@ -12808,15 +12885,6 @@ snapshots:
     transitivePeerDependencies:
       - '@cloudflare/workers-types'
       - '@opentelemetry/api'
-
-  better-call@1.3.5(zod@3.25.76):
-    dependencies:
-      '@better-auth/utils': 0.4.0
-      '@better-fetch/fetch': 1.1.21
-      rou3: 0.7.12
-      set-cookie-parser: 3.1.0
-    optionalDependencies:
-      zod: 3.25.76
 
   better-call@1.3.5(zod@4.3.6):
     dependencies:

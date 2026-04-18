@@ -1,3 +1,2 @@
 export { createSingleProjectCheckout } from './createSingleProjectCheckout';
-
-export { processCheckoutSession } from './processCheckoutSession';
+export { syncStripeSubscription } from './syncStripeSubscription';

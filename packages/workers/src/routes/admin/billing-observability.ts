@@ -5,15 +5,15 @@
 
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
 
-import { createDb } from '@/db/client.js';
-import { subscription, organization, stripeEventLedger } from '@/db/schema.js';
+import { createDb } from '@corates/db/client';
+import { subscription, organization, stripeEventLedger } from '@corates/db/schema';
 import { eq, and, desc } from 'drizzle-orm';
 import { createDomainError, SYSTEM_ERRORS, VALIDATION_ERRORS } from '@corates/shared';
-import { getLedgerEntriesByOrgId, LedgerStatus } from '@/db/stripeEventLedger.js';
-import { createStripeClient } from '@/lib/stripe.js';
-import { validationHook } from '@/lib/honoValidationHook.js';
+import { getLedgerEntriesByOrgId, LedgerStatus } from '@corates/db/stripe-event-ledger';
+import { createStripeClient } from '../../lib/stripe.js';
+import { validationHook } from '../../lib/honoValidationHook.js';
 import type { Env } from '../../types';
-import { ErrorResponseSchema } from '@/schemas/common.js';
+import { ErrorResponseSchema } from '../../schemas/common.js';
 
 const base = new OpenAPIHono<{ Bindings: Env }>({
   defaultHook: validationHook,

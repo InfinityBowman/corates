@@ -4,8 +4,11 @@
 
 import { describe, it, expect } from 'vitest';
 import { Hono } from 'hono';
-import { json } from '@/__tests__/helpers.js';
+import { json } from '../../__tests__/helpers.js';
 import { requireTrustedOrigin } from '../csrf.js';
+import { STATIC_ORIGINS } from '../../config/origins';
+
+const TRUSTED_ORIGIN = STATIC_ORIGINS[0];
 
 describe('requireTrustedOrigin middleware', () => {
   it('should allow GET requests without origin check', async () => {
@@ -70,7 +73,7 @@ describe('requireTrustedOrigin middleware', () => {
       method: 'POST',
       headers: {
         'content-type': 'application/json',
-        origin: 'http://localhost:5173',
+        origin: TRUSTED_ORIGIN,
       },
     });
 
@@ -86,7 +89,7 @@ describe('requireTrustedOrigin middleware', () => {
       method: 'POST',
       headers: {
         'content-type': 'application/json',
-        referer: 'http://localhost:5173/some-page',
+        referer: `${TRUSTED_ORIGIN}/some-page`,
       },
     });
 
@@ -142,30 +145,5 @@ describe('requireTrustedOrigin middleware', () => {
     });
 
     expect(res.status).toBe(403);
-  });
-
-  it('should respect env ALLOWED_ORIGINS', async () => {
-    const app = new Hono();
-    // Create middleware with custom env
-    const customEnv = { ALLOWED_ORIGINS: 'https://custom.com' };
-    app.use('*', (c, next) => {
-      // Temporarily override env for this request
-      const originalEnv = c.env;
-      c.env = { ...(c.env as Record<string, unknown>), ...customEnv };
-      return requireTrustedOrigin(c, next).finally(() => {
-        c.env = originalEnv;
-      });
-    });
-    app.post('/test', c => c.json({ message: 'success' }));
-
-    const res = await app.request('/test', {
-      method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-        origin: 'https://custom.com',
-      },
-    });
-
-    expect(res.status).toBe(200);
   });
 });

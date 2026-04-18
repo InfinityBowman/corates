@@ -12,10 +12,10 @@ import {
 import { oAuthRelay } from './oauth-relay';
 import { stripe } from '@better-auth/stripe';
 import Stripe from 'stripe';
-import { STRIPE_API_VERSION } from '@/lib/stripe.js';
+import { STRIPE_API_VERSION } from '../lib/stripe.js';
 import { drizzle } from 'drizzle-orm/d1';
 import { eq, and } from 'drizzle-orm';
-import * as schema from '../db/schema';
+import * as schema from '@corates/db/schema';
 import { getAllowedOrigins } from '../config/origins';
 import { isAdminUser } from './admin';
 import {
@@ -622,7 +622,7 @@ export function createAuth(env: Env, ctx?: ExecutionContext) {
     baseURL: env.AUTH_BASE_URL || 'http://localhost:8787',
 
     // Use centralized origin configuration
-    trustedOrigins: getAllowedOrigins(env),
+    trustedOrigins: [...getAllowedOrigins()],
 
     secret: getAuthSecret(env),
 

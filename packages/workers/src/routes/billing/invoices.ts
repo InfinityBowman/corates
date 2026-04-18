@@ -3,16 +3,16 @@
  * Fetches invoices from Stripe for the current org's subscription
  */
 import { OpenAPIHono, createRoute, z, $ } from '@hono/zod-openapi';
-import { requireAuth, getAuth } from '@/middleware/auth.js';
-import { createDb } from '@/db/client.js';
-import { subscription } from '@/db/schema.js';
+import { requireAuth, getAuth } from '../../middleware/auth.js';
+import { createDb } from '@corates/db/client';
+import { subscription } from '@corates/db/schema';
 import { createDomainError, SYSTEM_ERRORS, AUTH_ERRORS } from '@corates/shared';
 import { resolveOrgId } from './helpers/orgContext.js';
 import { eq, desc, and, or } from 'drizzle-orm';
-import { createStripeClient } from '@/lib/stripe.js';
-import { validationHook } from '@/lib/honoValidationHook.js';
+import { createStripeClient } from '../../lib/stripe.js';
+import { validationHook } from '../../lib/honoValidationHook.js';
 import type { Env } from '../../types';
-import { ErrorResponseSchema } from '@/schemas/common.js';
+import { ErrorResponseSchema } from '../../schemas/common.js';
 
 const base = new OpenAPIHono<{ Bindings: Env }>({
   defaultHook: validationHook,

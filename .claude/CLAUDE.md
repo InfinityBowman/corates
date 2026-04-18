@@ -1,63 +1,93 @@
 # Agent Instructions
 
-NEVER commit anything, the user will decide what and when to commit, you may request the user commit if you have a strong desire for something to be committed
+NEVER commit anything, the user will decide what and when to commit, you may request the user commit if you have a need for something to be committed
 
 This file contains critical instructions for Agents. For detailed patterns, see specialized rule files in this directory.
 
 This project is CoRATES (Collaborative Research Appraisal Tool for Evidence Synthesis), a React/TanStack Start web application deployed on Cloudflare Workers.
 
-## Reading Order
+**Source of Truth Policy**: If code conflicts with documentation, inform the user and either fix the code or update the documentation - never leave them out of sync.
 
-Before making changes, read these documents in order:
+## 1. Think Before Coding
 
-1. **This file** - Core coding standards and critical rules
-2. **STATUS.md** (packages/docs/STATUS.md) - Current implementation state and known gaps
-3. **AGENTS.md** (root) - Quick orientation and success criteria
-4. **Relevant guide** from `packages/docs/guides/` for your task
+**Don't assume. Don't hide confusion. Surface tradeoffs.**
 
-**Source of Truth Policy**: Documentation is authoritative. If code conflicts with documentation, either fix the code or update the documentation - never leave them out of sync.
+Before implementing:
 
-## Package Structure
+- State your assumptions explicitly. If uncertain, ask.
+- If multiple interpretations exist, present them - don't pick silently.
+- If a simpler approach exists, say so. Push back when warranted.
+- If something is unclear, stop. Name what's confusing. Ask.
 
-The project is split into multiple packages under the `packages/` directory:
+## 2. Simplicity First
 
-- `/web`: Frontend application built with React, TanStack Start, TanStack Router (deployed on Cloudflare Workers)
-- `/workers`: Backend services, API endpoints, and database migrations
-- `/shared`: Shared TypeScript utilities and error definitions
-- `/docs`: Vitepress docs site containing internal documentation
+**Minimum code that solves the problem. Nothing speculative.**
 
-The web package is the main frontend. It is deployed as a single Cloudflare Worker.
+- No features beyond what was asked.
+- No abstractions for single-use code.
+- No "flexibility" or "configurability" that wasn't requested.
+- No error handling for impossible scenarios.
+- If you write 200 lines and it could be 50, rewrite it.
 
-Do not worry about migrations (client side or backend) unless specifically instructed. This project is not in production and has no users.
+Ask yourself: "Would a senior engineer say this is overcomplicated?" If yes, simplify.
+
+## 3. Surgical Changes
+
+**Touch only what you must. Clean up only your own mess.**
+
+When editing existing code:
+
+- Don't "improve" adjacent code, comments, or formatting.
+- Don't refactor things that aren't broken.
+- Match existing style, even if you'd do it differently.
+- If you notice unrelated dead code, mention it - don't delete it.
+
+When your changes create orphans:
+
+- Remove imports/variables/functions that YOUR changes made unused.
+- Don't remove pre-existing dead code unless asked.
+
+The test: Every changed line should trace directly to the user's request.
+
+## 4. Goal-Driven Execution
+
+**Define success criteria. Loop until verified.**
+
+Transform tasks into verifiable goals:
+
+- "Add validation" → "Write tests for invalid inputs, then make them pass"
+- "Fix the bug" → "Write a test that reproduces it, then make it pass"
+- "Refactor X" → "Ensure tests pass before and after"
+
+For multi-step tasks, state a brief plan:
+
+```
+1. [Step] → verify: [check]
+2. [Step] → verify: [check]
+3. [Step] → verify: [check]
+```
+
+Strong success criteria let you loop independently. Weak criteria ("make it work") require constant clarification.
 
 ## Build Commands
 
+NEVER START ANY DEV SERVERS
+
 ```bash
 # Development
-pnpm dev:front              # Frontend (port 3010)
-pnpm dev:workers            # Backend workers (port 8787)
 pnpm --filter web build # Build frontend
 
 # Testing
 pnpm --filter web test              # Frontend unit tests
 pnpm --filter workers test              # Backend tests only
-pnpm --filter web test:browser      # Browser integration tests
+pnpm --filter web test:e2e      # e2e tests, ask user to make sure dev server is running first
 
 # Code Quality
 pnpm lint             # ESLint check
 pnpm lint:fix         # Auto-fix lint issues
 pnpm format           # Prettier format
 pnpm typecheck        # TypeScript check
-
-# Database (workers package)
-pnpm --filter workers db:generate    # Generate Drizzle migrations
-pnpm --filter workers db:migrate     # Apply migrations locally
-
-# Other
-pnpm build            # Build all packages
-pnpm docs             # View docs site (port 8080)
-pnpm openapi          # Generate OpenAPI schema
-pnpm logs             # View production worker logs
+pnpm run deploy       # pnpm deploy is reserved so use 'run', always ask user before running a deploy command
 ```
 
 ## Critical Rules
@@ -67,27 +97,20 @@ pnpm logs             # View production worker logs
 - **NEVER use emojis anywhere** - Not in code, comments, documentation, plan files, commit messages, or examples
 - This includes unicode symbols, DO NOT USE unicode symbols or emojis anywhere
 - For UI icons, use `lucide-react` library or SVGs only (never emojis)
-- Prefer modern ES6+ syntax and features
-- Use import aliases from jsconfig.json (see ui-components.mdc)
+- Use import aliases from tsconfig.json
 - Prefer config files over hardcoding values
 - Place plans/audits in `packages/docs/audits/` directory
 - Ensure browser compatibility (Safari is usually problematic)
 
-### File Organization
-
 - Keep files small, focused, and modular
 - Extract large files into sub-modules or separate utilities
 - Each file should handle one coherent responsibility
-- Group related components in subdirectories with barrel exports
+- Group related components
+- CLoudflare recommend .env over .dev.vars
 
 ### Static Assets and Edge Configuration
 
-Two files in `packages/web/public/` are consumed by Cloudflare Workers Static Assets at deploy time. They follow the Cloudflare Pages convention and are easy to miss because they are not TypeScript:
-
-- **`packages/web/public/_headers`** - Cache-Control rules and security headers (CSP, X-Frame-Options, Referrer-Policy, Permissions-Policy) applied to static responses. Update this when adding a new external domain (CSP `connect-src` / `script-src` / `img-src` / `font-src` / `style-src`), introducing a new asset type with custom cache requirements, or relaxing/tightening any security header. Test changes locally with `pnpm --filter web build && pnpm --filter web preview` before deploying.
-- **`packages/web/public/_redirects`** - 301 redirects for trailing-slash canonicalization on public routes. **When you add a new public marketing, legal, auth, or resources route, add a `/route/ /route 301` entry here.** Cloudflare Workers Static Assets emits a 307 (temporary) for trailing-slash variants by default, which causes search engines to repeatedly probe the slashed form and report it under "Page with redirect" in Google Search Console. The 301 rules in `_redirects` override that behavior so the slashed variant is permanently canonicalized.
-
-Both files are copied verbatim from `public/` to the build output by Vite. The build log will show `Parsed N valid redirect rules` and `Parsed N valid header rules` to confirm they were picked up.
+Two files in `packages/web/public/` are consumed by Cloudflare Workers Static Assets at deploy time. They follow the Cloudflare Pages convention and are easy to miss because they are not TypeScript. See `docs/guides/seo.md` for more.
 
 ### Libraries (MUST USE)
 
@@ -129,12 +152,6 @@ retries += 1;
 - Don't leave stale comments that contradict the code
 - Don't reference removed or obsolete code paths (e.g. "No longer uses X format")
 
-### Database Migrations
-
-- Use DrizzleKit to generate new migrations when necessary
-- Do NOT create separate migration files manually (0002_xxx.sql, etc.)
-- You must use DrizzleKit, the workers package has a script to generate migrations
-
 ### React Patterns
 
 - **Import stores directly** - Use Zustand stores from `@/stores/` instead of prop-drilling shared state
@@ -149,48 +166,9 @@ retries += 1;
 
 ## Documentation
 
-- **Primary source**: Comprehensive guides are in the docs site (`packages/docs/`) - run `pnpm docs` to view
 - **External library docs**: Prefer reading source from cloned upstream repos in the `reference/` directory over ad-hoc web fetches. If a library isn't there yet and you need its source, clone it in with `git clone --depth 20 https://github.com/owner/repo.git reference/repo`. This works better than MCP-style doc fetchers for deep questions.
 - **TanStack documentation**: Use the TanStack CLI: `npx @tanstack/cli search-docs "<query>" --library <router|start|query> --framework react --json`
 - **Hono documentation**: Use the `hono` CLI for Hono docs. Run `hono docs [path]` to view docs, `hono search <query>` to fuzzy search, or `hono --help` for all commands
-- **For comprehensive documentation**, see the docs site guides in `packages/docs/guides/`:
-  - testing.md - Frontend and backend testing patterns, setup, and best practices
-  - authentication.md - Setup, configuration, API endpoints, and usage patterns
-  - database.md - Schema management, Drizzle ORM patterns, migrations, and test helpers
-  - state-management.md - Zustand store patterns
-  - primitives.md - Reusable hooks and primitives
-  - components.md - Component development patterns
-  - api-development.md - Backend API route patterns
-  - error-handling.md - Error handling patterns
-  - style-guide.md - UI styling guidelines
-  - configuration.md - Configuration files and environment variables
-  - development-workflow.md - Getting started and common tasks
-
-## Specialized Rule Files
-
-For detailed patterns, see:
-
-- `api-routes.mdc` - API route patterns, validation, database operations
-- `error-handling.mdc` - Error handling patterns (frontend + backend)
-- `workers.mdc` - Workers package specific patterns
-
-### Complex Area Rules
-
-For specific complex areas, see:
-
-- `yjs-sync.mdc` - Yjs synchronization, connection management, sync operations
-- `reconciliation.mdc` - Checklist reconciliation, multi-part questions, comparison logic
-- `pdf-handling.mdc` - PDF upload, caching, Google Drive integration
-- `form-state.mdc` - Form state persistence across OAuth redirects
-- `durable-objects.mdc` - Durable Objects patterns for Yjs and WebSocket handling
-- `checklist-operations.mdc` - Checklist-specific patterns (AMSTAR2, ROBINS-I)
-
-## Additional Notes
-
-- Cloudflare Pages is NOT used; only Cloudflare Workers
-- Packages are under `packages/` directory with their own dependencies
-- Path aliases: `@/` maps to `packages/web/src/` (defined in tsconfig.json)
-- Adjust documentation if your changes would affect any existing documentation
 
 ## Anti-Patterns (Never Do These)
 

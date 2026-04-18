@@ -6,6 +6,9 @@
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { env, createExecutionContext, waitOnExecutionContext } from 'cloudflare:test';
 import { resetTestDatabase } from './helpers.js';
+import { STATIC_ORIGINS } from '../config/origins';
+
+const TRUSTED_ORIGIN = STATIC_ORIGINS[0];
 
 // Mock postmark
 vi.mock('postmark', () => {
@@ -87,7 +90,7 @@ describe('/api/admin/stop-impersonation - CSRF enforcement', () => {
       method: 'POST',
       headers: {
         'content-type': 'application/json',
-        origin: 'http://localhost:5173',
+        origin: TRUSTED_ORIGIN,
         cookie: 'session=test-cookie',
       },
     });
@@ -101,7 +104,7 @@ describe('/api/admin/stop-impersonation - CSRF enforcement', () => {
       method: 'POST',
       headers: {
         'content-type': 'application/json',
-        referer: 'http://localhost:5173/admin',
+        referer: `${TRUSTED_ORIGIN}/admin`,
         cookie: 'session=test-cookie',
       },
     });
@@ -114,7 +117,7 @@ describe('/api/admin/stop-impersonation - CSRF enforcement', () => {
 describe('/api/admin/stop-impersonation - Request forwarding', () => {
   it('should forward headers and construct correct auth request', async () => {
     const testCookie = 'session=test-session-token; other=value';
-    const testOrigin = 'http://localhost:5173';
+    const testOrigin = TRUSTED_ORIGIN;
 
     await fetchApp('/api/admin/stop-impersonation', {
       method: 'POST',
@@ -145,7 +148,7 @@ describe('/api/admin/stop-impersonation - Error handling', () => {
       method: 'POST',
       headers: {
         'content-type': 'application/json',
-        origin: 'http://localhost:5173',
+        origin: TRUSTED_ORIGIN,
         cookie: 'session=test',
       },
     });
@@ -169,7 +172,7 @@ describe('/api/admin/stop-impersonation - Error handling', () => {
       method: 'POST',
       headers: {
         'content-type': 'application/json',
-        origin: 'http://localhost:5173',
+        origin: TRUSTED_ORIGIN,
         cookie: 'session=test',
       },
     });

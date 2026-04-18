@@ -5,6 +5,9 @@
 
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { resetTestDatabase, json, fetchApp } from './helpers.js';
+import { STATIC_ORIGINS } from '../config/origins';
+
+const TRUSTED_ORIGIN = STATIC_ORIGINS[0];
 
 // Mock postmark
 vi.mock('postmark', () => {
@@ -42,11 +45,11 @@ describe('Main App - Middleware Chain', () => {
   it('should apply CORS middleware', async () => {
     const res = await fetchApp(app, '/health', {
       headers: {
-        origin: 'http://localhost:5173',
+        origin: TRUSTED_ORIGIN,
       },
     });
 
-    expect(res.headers.get('Access-Control-Allow-Origin')).toBe('http://localhost:5173');
+    expect(res.headers.get('Access-Control-Allow-Origin')).toBe(TRUSTED_ORIGIN);
     expect(res.headers.get('Access-Control-Allow-Credentials')).toBe('true');
   });
 
@@ -63,7 +66,7 @@ describe('Main App - Middleware Chain', () => {
     const res = await fetchApp(app, '/health', {
       method: 'OPTIONS',
       headers: {
-        origin: 'http://localhost:5173',
+        origin: TRUSTED_ORIGIN,
         'access-control-request-method': 'POST',
       },
     });
@@ -82,42 +85,6 @@ describe('Main App - Error Handling', () => {
     const body = await json(res);
     expect(body.code).toBe('SYSTEM_ROUTE_NOT_FOUND');
     expect(body.message).toBe('Route not found');
-  });
-});
-
-describe('Main App - PDF Proxy Endpoint', () => {
-  it('should require authentication', async () => {
-    const res = await fetchApp(app, '/api/pdf-proxy', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ url: 'https://arxiv.org/pdf/1234.5678.pdf' }),
-    });
-
-    expect(res.status).toBe(401);
-  });
-
-  it('should reject dangerous URLs (SSRF, invalid protocol, non-allowlisted)', async () => {
-    const dangerousUrls = [
-      'https://127.0.0.1/admin',
-      'https://localhost:8787/api/admin',
-      'http://169.254.169.254/latest/meta-data/',
-      'https://evil-site.com/malicious.pdf',
-      'javascript:alert(1)',
-    ];
-
-    for (const url of dangerousUrls) {
-      const res = await fetchApp(app, '/api/pdf-proxy', {
-        method: 'POST',
-        headers: {
-          'content-type': 'application/json',
-          'x-test-user-id': 'user-1',
-        },
-        body: JSON.stringify({ url }),
-      });
-
-      // Auth may reject first (401) depending on test env; either way the request is blocked
-      expect([400, 401]).toContain(res.status);
-    }
   });
 });
 

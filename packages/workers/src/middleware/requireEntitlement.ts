@@ -1,5 +1,5 @@
 import type { MiddlewareHandler } from 'hono';
-import { createDb } from '../db/client';
+import { createDb } from '@corates/db/client';
 import { getAuth } from './auth';
 import { getOrgContext } from './requireOrg';
 import { resolveOrgAccess } from '../lib/billingResolver';

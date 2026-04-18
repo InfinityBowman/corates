@@ -1,0 +1,46 @@
+{
+  "name": "@corates/db",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Shared Drizzle schema and D1 helpers for CoRATES workers",
+  "license": "PolyForm-Noncommercial-1.0.0",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./schema": {
+      "types": "./dist/schema.d.ts",
+      "import": "./dist/schema.js"
+    },
+    "./client": {
+      "types": "./dist/client.d.ts",
+      "import": "./dist/client.js"
+    },
+    "./stripe-event-ledger": {
+      "types": "./dist/stripeEventLedger.d.ts",
+      "import": "./dist/stripeEventLedger.js"
+    },
+    "./org-access-grants": {
+      "types": "./dist/orgAccessGrants.d.ts",
+      "import": "./dist/orgAccessGrants.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "drizzle-orm": "^0.45.2"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20260405.1",
+    "typescript": "^5.9.3"
+  }
+}

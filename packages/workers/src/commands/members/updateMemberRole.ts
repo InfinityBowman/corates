@@ -4,15 +4,15 @@
  * @throws DomainError LAST_OWNER if demoting the last owner
  */
 
-import { createDb } from '@/db/client';
-import { projectMembers } from '@/db/schema';
+import { createDb } from '@corates/db/client';
+import { projectMembers } from '@corates/db/schema';
 import { eq, and } from 'drizzle-orm';
-import { syncMemberWithRetry } from '@/lib/syncWithRetry';
-import { notifyUser, NotificationTypes } from '@/commands/lib/notifications';
-import { requireSafeRoleChange } from '@/policies';
+import { syncMemberWithRetry } from '../../lib/syncWithRetry';
+import { notifyUser, NotificationTypes } from '../lib/notifications';
+import { requireSafeRoleChange } from '../../policies';
 import { createDomainError, SYSTEM_ERRORS } from '@corates/shared';
-import type { Env } from '@/types';
-import type { ProjectRole } from '@/policies/lib/roles';
+import type { Env } from '../../types';
+import type { ProjectRole } from '../../policies/lib/roles';
 
 interface UpdateMemberRoleActor {
   id: string;
