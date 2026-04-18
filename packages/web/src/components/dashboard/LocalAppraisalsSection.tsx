@@ -2,10 +2,13 @@
  * LocalAppraisalsSection - Device-local appraisals with delete/rename
  */
 
-import { useState, useCallback } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { PlusIcon, FileTextIcon, LogInIcon, TriangleAlertIcon } from 'lucide-react';
-import { useLocalChecklistsStore } from '@/stores/localChecklistsStore';
+import { useProjectStore, selectStudies } from '@/stores/projectStore';
+import { connectionPool } from '@/project/ConnectionPool';
+import { LOCAL_PROJECT_ID } from '@/project/localProject';
+import { db } from '@/primitives/db';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -25,18 +28,41 @@ interface LocalAppraisalsSectionProps {
   showSignInPrompt?: boolean;
 }
 
+interface AppraisalCardData {
+  id: string;
+  name: string;
+  type?: string;
+  updatedAt?: number;
+  createdAt?: number;
+}
+
 export function LocalAppraisalsSection({
   showHeader = true,
   showSignInPrompt,
 }: LocalAppraisalsSectionProps) {
   const navigate = useNavigate();
   const animation = useAnimation();
-  const checklists = useLocalChecklistsStore(s => s.checklists);
-  const deleteChecklist = useLocalChecklistsStore(s => s.deleteChecklist);
-  const updateChecklist = useLocalChecklistsStore(s => s.updateChecklist);
+  const studies = useProjectStore(s => selectStudies(s, LOCAL_PROJECT_ID));
 
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
+
+  const appraisals = useMemo<AppraisalCardData[]>(() => {
+    const out: AppraisalCardData[] = [];
+    for (const study of studies) {
+      const checklist = (study.checklists || [])[0];
+      if (!checklist) continue;
+      out.push({
+        id: study.id,
+        name: study.name || 'Untitled Checklist',
+        type: checklist.type,
+        updatedAt: (checklist.updatedAt ?? study.updatedAt) as number | undefined,
+        createdAt: (checklist.createdAt ?? study.createdAt) as number | undefined,
+      });
+    }
+    out.sort((a, b) => (b.updatedAt ?? 0) - (a.updatedAt ?? 0));
+    return out;
+  }, [studies]);
 
   const handleOpen = useCallback(
     (checklistId: string) => {
@@ -51,23 +77,32 @@ export function LocalAppraisalsSection({
   }, []);
 
   const confirmDelete = useCallback(async () => {
-    if (pendingDeleteId) await deleteChecklist(pendingDeleteId);
-    setDeleteDialogOpen(false);
-    setPendingDeleteId(null);
-  }, [pendingDeleteId, deleteChecklist]);
+    if (!pendingDeleteId) {
+      setDeleteDialogOpen(false);
+      return;
+    }
+    try {
+      const ops = connectionPool.getOps(LOCAL_PROJECT_ID);
+      ops?.study.deleteStudy(pendingDeleteId);
+      // PDFs live outside the Y.Doc; clean up the side table.
+      await db.localChecklistPdfs.delete(pendingDeleteId);
+    } finally {
+      setDeleteDialogOpen(false);
+      setPendingDeleteId(null);
+    }
+  }, [pendingDeleteId]);
 
-  const handleRename = useCallback(
-    async (checklistId: string, newName: string) => {
-      await updateChecklist(checklistId, { name: newName });
-    },
-    [updateChecklist],
-  );
+  const handleRename = useCallback(async (studyId: string, newName: string) => {
+    const ops = connectionPool.getOps(LOCAL_PROJECT_ID);
+    ops?.study.updateStudy(studyId, { name: newName });
+    ops?.checklist.updateChecklist(studyId, studyId, { title: newName });
+  }, []);
 
   const handleCreate = useCallback(() => {
     navigate({ to: '/checklist' as string });
   }, [navigate]);
 
-  const hasChecklists = checklists?.length > 0;
+  const hasChecklists = appraisals.length > 0;
 
   return (
     <section style={animation.fadeUp(300)}>
@@ -137,22 +172,13 @@ export function LocalAppraisalsSection({
           </div>
         )}
 
-        {(
-          checklists as Array<{
-            id: string;
-            name?: string;
-            type?: string;
-            checklistType?: string;
-            updatedAt?: number;
-            createdAt?: number;
-          }>
-        )?.map((checklist, index) => (
+        {appraisals.map((appraisal, index) => (
           <LocalAppraisalCard
-            key={checklist.id}
-            checklist={checklist}
+            key={appraisal.id}
+            checklist={appraisal}
             onOpen={handleOpen}
             onDelete={handleDelete}
-            onRename={newName => handleRename(checklist.id, newName)}
+            onRename={newName => handleRename(appraisal.id, newName)}
             style={animation.statRise(index * 50)}
           />
         ))}

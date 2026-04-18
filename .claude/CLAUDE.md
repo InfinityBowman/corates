@@ -6,6 +6,8 @@ This file contains critical instructions for Agents. For detailed patterns, see 
 
 This project is CoRATES (Collaborative Research Appraisal Tool for Evidence Synthesis), a React/TanStack Start web application deployed on Cloudflare Workers.
 
+When making breaking changes inform the user so we can decide if migration/bridge code is necessary or not.
+
 **Source of Truth Policy**: If code conflicts with documentation, inform the user and either fix the code or update the documentation - never leave them out of sync.
 
 ## 1. Think Before Coding

@@ -30,6 +30,7 @@ import {
   type OutcomeOperations,
 } from '@/primitives/useProject/outcomes.js';
 import { db, deleteProjectData } from '@/primitives/db.js';
+import { migrateLocalChecklistsToYDoc } from './localProject';
 
 export interface TypedProjectOps {
   study: StudyOperations;
@@ -109,7 +110,9 @@ class ConnectionPool {
 
     const { isLocal, cancelled } = options;
     const store = useProjectStore.getState();
-    store.setActiveProject(projectId);
+    // Local project is a passive singleton — don't clobber the currently-
+    // active real project when the local bootstrap runs.
+    if (!isLocal) store.setActiveProject(projectId);
     store.dispatchConnectionEvent(projectId, { type: 'CONNECT_REQUESTED' });
 
     const { ydoc } = entry;
@@ -169,7 +172,17 @@ class ConnectionPool {
         entry.syncManager!.syncFromYDocImmediate();
 
         if (isLocal) {
-          useProjectStore.getState().dispatchConnectionEvent(projectId, { type: 'LOCAL_READY' });
+          // Run the one-shot import from legacy `localChecklists` Dexie rows
+          // after the Y.Doc's persisted state has been applied, so the
+          // migration flag is already visible and we don't re-import.
+          migrateLocalChecklistsToYDoc(ydoc)
+            .catch(err => console.error('Local checklists migration failed:', err))
+            .finally(() => {
+              if (cancelled()) return;
+              useProjectStore
+                .getState()
+                .dispatchConnectionEvent(projectId, { type: 'LOCAL_READY' });
+            });
         }
       });
     });

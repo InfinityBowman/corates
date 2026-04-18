@@ -6,7 +6,9 @@
 import { useState, useCallback } from 'react';
 import { useNavigate, useSearch, Link } from '@tanstack/react-router';
 import { FileTextIcon, XIcon, CloudUploadIcon } from 'lucide-react';
-import { useLocalChecklistsStore } from '@/stores/localChecklistsStore';
+import { connectionPool } from '@/project/ConnectionPool';
+import { LOCAL_PROJECT_ID, createLocalAppraisal } from '@/project/localProject';
+import { db } from '@/primitives/db';
 import { Alert } from '@/components/ui/alert';
 import { FileUpload, FileUploadDropzone, FileUploadHiddenInput } from '@/components/ui/file-upload';
 import { LANDING_URL } from '@/config/api.js';
@@ -16,7 +18,6 @@ import { validatePdfFile } from '@/lib/pdfValidation.js';
 export function CreateLocalChecklist({ type: typeParam }: { type?: string }) {
   const navigate = useNavigate();
   const search = useSearch({ strict: false }) as Record<string, string>;
-  const getStoreActions = () => useLocalChecklistsStore.getState() as any;
 
   const [name, setName] = useState('');
   const [checklistType, setChecklistType] = useState(
@@ -55,16 +56,30 @@ export function CreateLocalChecklist({ type: typeParam }: { type?: string }) {
       setCreating(true);
 
       try {
+        const entry = connectionPool.getEntry(LOCAL_PROJECT_ID);
+        if (!entry) {
+          throw new Error('Local project not ready — reload the page and try again.');
+        }
         const checklistName = name.trim() || 'Untitled Checklist';
-        const actions = getStoreActions();
-        const checklist = await actions.createChecklist(checklistName, checklistType);
+        const id = createLocalAppraisal(entry.ydoc, {
+          name: checklistName,
+          type: checklistType,
+        });
+        if (!id) {
+          throw new Error(`Unsupported checklist type: ${checklistType}`);
+        }
 
         if (pdfFile) {
           const arrayBuffer = await pdfFile.arrayBuffer();
-          await actions.savePdf(checklist.id, arrayBuffer, pdfFile.name);
+          await db.localChecklistPdfs.put({
+            checklistId: id,
+            data: arrayBuffer,
+            fileName: pdfFile.name,
+            updatedAt: Date.now(),
+          });
         }
 
-        navigate({ to: `/checklist/${checklist.id}` as string });
+        navigate({ to: `/checklist/${id}` as string });
       } catch (err) {
         const { handleError } = await import('@/lib/error-utils.js');
         await handleError(err, { setError, showToast: false });

@@ -1,18 +1,24 @@
 /**
- * LocalChecklistView - Wrapper for viewing/editing local checklists
- * Loads checklist from IndexedDB and saves changes back via debounced writes.
- * Shows create form when no checklistId is provided.
+ * LocalChecklistView - Viewer/editor for a local (offline) appraisal.
+ *
+ * Answers live in the local-practice Y.Doc and are read via useChecklistAnswers
+ * for reactive updates. PDFs stay in the `localChecklistPdfs` Dexie table —
+ * they don't benefit from CRDT storage and would bloat the Y.Doc.
  */
 
-import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { ChevronLeftIcon } from 'lucide-react';
+import * as Y from 'yjs';
 import { ChecklistWithPdf } from '@/components/checklist/ChecklistWithPdf';
 import { CreateLocalChecklist } from '@/components/checklist/CreateLocalChecklist';
-import { useLocalChecklistsStore } from '@/stores/localChecklistsStore';
+import { connectionPool } from '@/project/ConnectionPool';
+import { LOCAL_PROJECT_ID } from '@/project/localProject';
+import { useProjectStore, selectConnectionPhase, selectStudies } from '@/stores/projectStore';
+import { useChecklistAnswers } from '@/primitives/useProject/checklists/useChecklistAnswers';
+import { db } from '@/primitives/db';
 import { getChecklistTypeFromState, scoreChecklistOfType } from '@/checklist-registry/index';
 import { ScoreTag } from '@/components/checklist/ScoreTag';
-import { createLocalAdapterFactories } from '@/components/checklist/common/LocalTextAdapter.js';
 
 interface LocalChecklistViewProps {
   checklistId?: string;
@@ -20,132 +26,82 @@ interface LocalChecklistViewProps {
 }
 
 export function LocalChecklistView({ checklistId, searchType }: LocalChecklistViewProps) {
+  if (!checklistId) {
+    return <CreateLocalChecklist type={searchType} />;
+  }
+  return <LocalChecklistEditor checklistId={checklistId} />;
+}
+
+function LocalChecklistEditor({ checklistId }: { checklistId: string }) {
   const navigate = useNavigate();
-  // Access store methods at call sites via getState() to avoid stale references
-  const getStoreActions = () => useLocalChecklistsStore.getState() as any;
 
-  const [checklist, setChecklist] = useState<any>(null);
-  const [pdfData, setPdfData] = useState<ArrayBuffer | null>(null);
-  const [pdfFileName, setPdfFileName] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const phase = useProjectStore(s => selectConnectionPhase(s, LOCAL_PROJECT_ID));
+  const studies = useProjectStore(s => selectStudies(s, LOCAL_PROJECT_ID));
 
-  // Debounced save - reads current checklist from ref when it fires
-  const checklistRef = useRef<any>(null);
-  checklistRef.current = checklist;
-  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  const debouncedSave = useCallback(() => {
-    if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
-    saveTimerRef.current = setTimeout(async () => {
-      try {
-        const current = checklistRef.current;
-        if (current && checklistId) {
-          await getStoreActions().updateChecklist(checklistId, current);
-        }
-      } catch (err) {
-        console.error('Error saving checklist:', err);
-      }
-    }, 500);
-  }, [checklistId]);
-
-  // Create adapter factories for text fields (local mode Y.Text shim)
-  const { getRob2Text, getQuestionNote, getRobinsText, clearCache } = useMemo(
-    () =>
-      (createLocalAdapterFactories as any)(() => checklistRef.current, setChecklist, debouncedSave),
-    [debouncedSave],
+  const currentStudy = useMemo(
+    () => studies.find(st => st.id === checklistId) || null,
+    [studies, checklistId],
+  );
+  const currentChecklist = useMemo(
+    () => (currentStudy?.checklists || []).find(c => c.id === checklistId) || null,
+    [currentStudy, checklistId],
   );
 
-  // Load checklist and PDF on mount
+  const answers = useChecklistAnswers(LOCAL_PROJECT_ID, checklistId, checklistId);
+
+  const [pdfState, setPdfState] = useState<{
+    loading: boolean;
+    data: ArrayBuffer | null;
+    fileName: string | null;
+    forChecklistId: string | null;
+  }>({ loading: true, data: null, fileName: null, forChecklistId: null });
+
+  // When checklistId changes we'd prefer to flip `loading` synchronously here,
+  // but that violates react-hooks/set-state-in-effect. Instead the load effect
+  // keys off checklistId and we render "Loading..." while forChecklistId !==
+  // current checklistId OR the record hasn't resolved yet.
   useEffect(() => {
-    if (!checklistId) {
-      setLoading(false);
-      return;
-    }
-
     let cancelled = false;
-
-    (async () => {
-      try {
-        setLoading(true);
-        const actions = getStoreActions();
-        const [loaded, pdfRecord] = await Promise.all([
-          actions.getChecklist(checklistId),
-          actions.getPdf(checklistId),
-        ]);
-
+    db.localChecklistPdfs
+      .get(checklistId)
+      .then(record => {
         if (cancelled) return;
-
-        if (!loaded) {
-          setError('Checklist not found');
-          setLoading(false);
-          return;
-        }
-
-        clearCache();
-        setChecklist(loaded);
-
-        if (pdfRecord) {
-          setPdfData(pdfRecord.data);
-          setPdfFileName(pdfRecord.fileName);
-        }
-
-        setLoading(false);
-      } catch (err) {
+        setPdfState({
+          loading: false,
+          data: record?.data ?? null,
+          fileName: record?.fileName ?? null,
+          forChecklistId: checklistId,
+        });
+      })
+      .catch(err => {
+        console.error('Failed to load local PDF:', err);
         if (cancelled) return;
-        const { handleError } = await import('@/lib/error-utils.js');
-        await handleError(err, { setError, showToast: false });
-        setLoading(false);
-      }
-    })();
-
+        setPdfState({
+          loading: false,
+          data: null,
+          fileName: null,
+          forChecklistId: checklistId,
+        });
+      });
     return () => {
       cancelled = true;
     };
-  }, [checklistId, clearCache]);
+  }, [checklistId]);
 
-  // Cleanup debounce timer on unmount
-  useEffect(() => {
-    return () => {
-      if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
-      clearCache();
-    };
-  }, [clearCache]);
-
-  const handleUpdate = useCallback(
-    (updates: Record<string, any>) => {
-      setChecklist((prev: any) => {
-        if (!prev) return prev;
-        const merged = { ...prev };
-        for (const [key, value] of Object.entries(updates)) {
-          if (
-            typeof value === 'object' &&
-            value !== null &&
-            !Array.isArray(value) &&
-            typeof prev[key] === 'object' &&
-            prev[key] !== null &&
-            !Array.isArray(prev[key])
-          ) {
-            merged[key] = { ...prev[key], ...value };
-          } else {
-            merged[key] = value;
-          }
-        }
-        return merged;
-      });
-      clearCache();
-      debouncedSave();
-    },
-    [clearCache, debouncedSave],
-  );
+  const pdfData = pdfState.forChecklistId === checklistId ? pdfState.data : null;
+  const pdfFileName = pdfState.forChecklistId === checklistId ? pdfState.fileName : null;
+  const pdfLoading = pdfState.loading || pdfState.forChecklistId !== checklistId;
 
   const handlePdfChange = useCallback(
     async (data: ArrayBuffer, fileName: string) => {
-      if (!checklistId) return;
-      setPdfData(data);
-      setPdfFileName(fileName);
+      setPdfState({ loading: false, data, fileName, forChecklistId: checklistId });
       try {
-        await getStoreActions().savePdf(checklistId, data, fileName);
+        await db.localChecklistPdfs.put({
+          checklistId,
+          data,
+          fileName,
+          updatedAt: Date.now(),
+        });
       } catch (err) {
         console.error('Error saving PDF:', err);
       }
@@ -154,27 +110,96 @@ export function LocalChecklistView({ checklistId, searchType }: LocalChecklistVi
   );
 
   const handlePdfClear = useCallback(async () => {
-    if (!checklistId) return;
-    setPdfData(null);
-    setPdfFileName(null);
+    setPdfState({ loading: false, data: null, fileName: null, forChecklistId: checklistId });
     try {
-      await getStoreActions().deletePdf(checklistId);
+      await db.localChecklistPdfs.delete(checklistId);
     } catch (err) {
       console.error('Error deleting PDF:', err);
     }
   }, [checklistId]);
 
+  const handlePartialUpdate = useCallback(
+    (patch: Record<string, any>) => {
+      const ops = connectionPool.getOps(LOCAL_PROJECT_ID);
+      if (!ops) return;
+      Object.entries(patch).forEach(([key, value]) => {
+        ops.checklist.updateChecklistAnswer(
+          checklistId,
+          checklistId,
+          key,
+          value as Record<string, unknown>,
+        );
+      });
+    },
+    [checklistId],
+  );
+
+  const getQuestionNote = useCallback(
+    (questionKey: string): Y.Text | null => {
+      const ops = connectionPool.getOps(LOCAL_PROJECT_ID);
+      return ops?.checklist.getQuestionNote(checklistId, checklistId, questionKey) ?? null;
+    },
+    [checklistId],
+  );
+
+  const getRobinsText = useCallback(
+    (sectionKey: string, fieldKey: string, questionKey?: string): Y.Text | null => {
+      const ops = connectionPool.getOps(LOCAL_PROJECT_ID);
+      return (
+        ops?.checklist.getRobinsText(
+          checklistId,
+          checklistId,
+          sectionKey,
+          fieldKey,
+          questionKey ?? null,
+        ) ?? null
+      );
+    },
+    [checklistId],
+  );
+
+  const getRob2Text = useCallback(
+    (sectionKey: string, fieldKey: string, questionKey?: string): Y.Text | null => {
+      const ops = connectionPool.getOps(LOCAL_PROJECT_ID);
+      return (
+        ops?.checklist.getRob2Text(
+          checklistId,
+          checklistId,
+          sectionKey,
+          fieldKey,
+          questionKey ?? null,
+        ) ?? null
+      );
+    },
+    [checklistId],
+  );
+
+  const checklistForUI = useMemo(() => {
+    if (!currentChecklist || !answers) return null;
+    return {
+      id: checklistId,
+      name: currentStudy?.name || 'Checklist',
+      reviewerName: '',
+      createdAt: currentChecklist.createdAt as number | undefined,
+      ...answers,
+    };
+  }, [currentChecklist, answers, checklistId, currentStudy?.name]);
+
+  const checklistType = useMemo(() => {
+    if (currentChecklist?.type) return currentChecklist.type;
+    if (checklistForUI) return getChecklistTypeFromState(checklistForUI);
+    return null;
+  }, [currentChecklist, checklistForUI]);
+
+  const currentScore = useMemo(() => {
+    if (!checklistForUI || !checklistType) return null;
+    return scoreChecklistOfType(checklistType, checklistForUI);
+  }, [checklistForUI, checklistType]);
+
   const handleBack = useCallback(() => {
     navigate({ to: '/dashboard' });
   }, [navigate]);
 
-  const checklistType = checklist ? getChecklistTypeFromState(checklist) : null;
-  const currentScore = useMemo(
-    () => (checklist && checklistType ? scoreChecklistOfType(checklistType, checklist) : null),
-    [checklist, checklistType],
-  );
-
-  // Header content for the toolbar
   const headerContent = (
     <>
       <button
@@ -192,12 +217,7 @@ export function LocalChecklistView({ checklistId, searchType }: LocalChecklistVi
     </>
   );
 
-  // No checklistId - show creation form
-  if (!checklistId) {
-    return <CreateLocalChecklist type={searchType} />;
-  }
-
-  if (loading) {
+  if (phase.phase !== 'synced' || pdfLoading) {
     return (
       <div className='flex min-h-screen items-center justify-center bg-blue-50'>
         <div className='text-muted-foreground'>Loading checklist...</div>
@@ -205,10 +225,10 @@ export function LocalChecklistView({ checklistId, searchType }: LocalChecklistVi
     );
   }
 
-  if (error) {
+  if (!currentChecklist || !checklistForUI) {
     return (
       <div className='flex min-h-screen flex-col items-center justify-center gap-4 bg-blue-50'>
-        <div className='text-destructive'>{error}</div>
+        <div className='text-destructive'>Checklist not found</div>
         <button
           onClick={handleBack}
           className='rounded-lg bg-blue-600 px-4 py-2 text-white transition-colors hover:bg-blue-700'
@@ -219,13 +239,11 @@ export function LocalChecklistView({ checklistId, searchType }: LocalChecklistVi
     );
   }
 
-  if (!checklist) return null;
-
   return (
     <ChecklistWithPdf
       checklistType={checklistType || undefined}
-      checklist={checklist}
-      onUpdate={handleUpdate}
+      checklist={checklistForUI}
+      onUpdate={handlePartialUpdate}
       headerContent={headerContent}
       pdfData={pdfData}
       pdfFileName={pdfFileName}
@@ -233,8 +251,8 @@ export function LocalChecklistView({ checklistId, searchType }: LocalChecklistVi
       onPdfClear={handlePdfClear}
       allowDelete={true}
       getQuestionNote={getQuestionNote}
-      getRob2Text={getRob2Text}
       getRobinsText={getRobinsText}
+      getRob2Text={getRob2Text}
     />
   );
 }

@@ -12,6 +12,10 @@ import Dexie, { type Table } from 'dexie';
 import yDexie from 'y-dexie';
 import type { Doc as YDoc } from 'yjs';
 
+// Duplicated from @/project/localProject to avoid a circular import
+// (localProject imports from this module).
+const LOCAL_PROJECT_ID = 'local-practice';
+
 export interface ProjectRow {
   id: string;
   orgId: string;
@@ -106,11 +110,12 @@ export async function deleteProjectData(projectId: string): Promise<void> {
 /**
  * Clear all local data (e.g., on logout)
  * Note: localChecklists and localChecklistPdfs are intentionally NOT cleared
- * as they are user's local practice data not tied to authentication
+ * as they are user's local practice data not tied to authentication.
+ * The local-practice Y.Doc row in `projects` is preserved for the same reason.
  */
 export async function clearAllData(): Promise<void> {
   await db.transaction('rw', [db.projects, db.pdfs, db.avatars, db.formStates], async () => {
-    await db.projects.clear();
+    await db.projects.where('id').notEqual(LOCAL_PROJECT_ID).delete();
     await db.pdfs.clear();
     await db.avatars.clear();
     await db.formStates.clear();

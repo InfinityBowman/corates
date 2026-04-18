@@ -6,7 +6,7 @@
  * Content is shared via SidebarContent to avoid duplication.
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate, useLocation } from '@tanstack/react-router';
 import { createPortal } from 'react-dom';
 import {
@@ -20,7 +20,10 @@ import {
   TriangleAlertIcon,
 } from 'lucide-react';
 import { useAuthStore, selectUser, selectIsLoggedIn } from '@/stores/authStore';
-import { useLocalChecklistsStore } from '@/stores/localChecklistsStore';
+import { useProjectStore, selectStudies } from '@/stores/projectStore';
+import { connectionPool } from '@/project/ConnectionPool';
+import { LOCAL_PROJECT_ID } from '@/project/localProject';
+import { db } from '@/primitives/db';
 import { useMyProjectsList } from '@/hooks/useMyProjectsList';
 import { showToast } from '@/components/ui/toast';
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
@@ -59,8 +62,28 @@ export function Sidebar({
   const location = useLocation();
   const user = useAuthStore(selectUser);
   const isLoggedIn = useAuthStore(selectIsLoggedIn);
-  const checklists = useLocalChecklistsStore(s => s.checklists);
-  const deleteChecklist = useLocalChecklistsStore(s => s.deleteChecklist);
+  interface LocalChecklistSummary {
+    id: string;
+    name: string;
+    updatedAt?: number;
+    createdAt?: number;
+  }
+  const localStudies = useProjectStore(s => selectStudies(s, LOCAL_PROJECT_ID));
+  const checklists = useMemo<LocalChecklistSummary[]>(() => {
+    const out: LocalChecklistSummary[] = [];
+    for (const study of localStudies) {
+      const checklist = (study.checklists || [])[0];
+      if (!checklist) continue;
+      out.push({
+        id: study.id,
+        name: study.name,
+        updatedAt: (checklist.updatedAt ?? study.updatedAt) as number | undefined,
+        createdAt: (checklist.createdAt ?? study.createdAt) as number | undefined,
+      });
+    }
+    out.sort((a, b) => (b.updatedAt ?? 0) - (a.updatedAt ?? 0));
+    return out;
+  }, [localStudies]);
 
   const currentUserId = user?.id;
 
@@ -137,7 +160,9 @@ export function Sidebar({
       return;
     }
     try {
-      await deleteChecklist(pendingDeleteId);
+      const ops = connectionPool.getOps(LOCAL_PROJECT_ID);
+      ops?.study.deleteStudy(pendingDeleteId);
+      await db.localChecklistPdfs.delete(pendingDeleteId);
     } catch (err) {
       console.error('Failed to delete checklist:', err);
       showToast.error('Delete Failed', 'Could not delete the checklist. Please try again.');
@@ -145,7 +170,7 @@ export function Sidebar({
       setDeleteDialogOpen(false);
       setPendingDeleteId(null);
     }
-  }, [pendingDeleteId, deleteChecklist]);
+  }, [pendingDeleteId]);
 
   // Close mobile on escape
   useEffect(() => {
@@ -230,24 +255,15 @@ export function Sidebar({
           </h3>
         </div>
         <div className='flex flex-col gap-0.5 px-2'>
-          {checklists?.length > 0 ?
-            checklists
-              .filter((c: { id?: string }) => c?.id)
-              .map(
-                (checklist: {
-                  id: string;
-                  name?: string;
-                  updatedAt?: number;
-                  createdAt?: number;
-                }) => (
-                  <LocalChecklistItem
-                    key={checklist.id}
-                    checklist={checklist}
-                    isSelected={currentPath === `/checklist/${checklist.id}`}
-                    onDelete={handleDeleteLocalChecklist}
-                  />
-                ),
-              )
+          {checklists.length > 0 ?
+            checklists.map(checklist => (
+              <LocalChecklistItem
+                key={checklist.id}
+                checklist={checklist}
+                isSelected={currentPath === `/checklist/${checklist.id}`}
+                onDelete={handleDeleteLocalChecklist}
+              />
+            ))
           : <div className='px-2 py-4 text-center'>
               <div className='bg-secondary mx-auto mb-2 flex size-8 items-center justify-center rounded-lg'>
                 <FileCheck2Icon className='text-muted-foreground/70 size-4' />

@@ -5,10 +5,12 @@
  * Hides sidebar on /admin and /settings routes (they have their own sidebars).
  */
 
-import { useState, useCallback, lazy, Suspense } from 'react';
+import { useState, useCallback, useEffect, lazy, Suspense } from 'react';
 import { Outlet, useLocation } from '@tanstack/react-router';
 import { useAdminStore } from '@/stores/adminStore';
 import { useMembershipSync } from '@/hooks/useMembershipSync';
+import { connectionPool } from '@/project/ConnectionPool';
+import { LOCAL_PROJECT_ID } from '@/project/localProject';
 import { AppNavbar } from './AppNavbar';
 import { Sidebar } from './Sidebar';
 
@@ -26,6 +28,20 @@ const ImpersonationBanner = lazy(() =>
 export function AppLayout() {
   // Real-time membership sync via WebSocket
   useMembershipSync();
+
+  // Acquire the local-practice Y.Doc once for the app session. Kept refcounted
+  // so the Y.Doc persists across route changes; never released.
+  useEffect(() => {
+    const existing = connectionPool.getEntry(LOCAL_PROJECT_ID);
+    if (existing?.initialized) return;
+    const entry = connectionPool.acquire(LOCAL_PROJECT_ID);
+    if (entry && !entry.initialized) {
+      connectionPool.initializeConnection(LOCAL_PROJECT_ID, entry, {
+        isLocal: true,
+        cancelled: () => false,
+      });
+    }
+  }, []);
 
   const location = useLocation();
   const isImpersonating = useAdminStore(s => s.isImpersonating);
