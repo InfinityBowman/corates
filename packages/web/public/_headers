@@ -30,6 +30,7 @@
 
 # Security headers on all static responses
 /*
+  Strict-Transport-Security: max-age=15552000; includeSubDomains
   X-Frame-Options: DENY
   X-Content-Type-Options: nosniff
   Referrer-Policy: strict-origin-when-cross-origin
