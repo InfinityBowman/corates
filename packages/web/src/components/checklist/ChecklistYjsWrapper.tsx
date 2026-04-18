@@ -9,7 +9,7 @@ import { ChevronLeftIcon } from 'lucide-react';
 import { ChecklistWithPdf } from '@/components/checklist/ChecklistWithPdf';
 import { useProjectContext } from '@/components/project/ProjectContext';
 import { connectionPool } from '@/project/ConnectionPool';
-import { useChecklistAnswers } from '@/primitives/useProject/checklists/useChecklistAnswers';
+import { useChecklistViewModel } from '@/primitives/useProject/checklists/useChecklistViewModel';
 import { useProjectStore, selectConnectionPhase } from '@/stores/projectStore';
 import { useAuthStore, selectUser } from '@/stores/authStore';
 import { ACCESS_DENIED_ERRORS } from '@/constants/errors.js';
@@ -27,7 +27,6 @@ import {
   AlertDialogFooter,
   AlertDialogAction,
 } from '@/components/ui/alert-dialog';
-import { getChecklistTypeFromState, scoreChecklistOfType } from '@/checklist-registry/index';
 import { ScoreTag } from '@/components/checklist/ScoreTag';
 import { isAMSTAR2Complete } from '@/components/checklist/AMSTAR2Checklist/checklist.js';
 import { isROBINSIComplete } from '@/components/checklist/ROBINSIChecklist/checklist';
@@ -97,15 +96,8 @@ export function ChecklistYjsWrapper({ projectId, studyId, checklistId }: Checkli
     }
   }, [connectionState.error, navigate]);
 
-  const currentStudy = useProjectStore(s => {
-    const studies = s.projects[projectId]?.studies || [];
-    return studies.find((st: any) => st.id === studyId) || null;
-  });
-
-  const currentChecklist = useMemo(() => {
-    if (!currentStudy) return null;
-    return currentStudy.checklists?.find((c: any) => c.id === checklistId) || null;
-  }, [currentStudy, checklistId]);
+  const { currentStudy, currentChecklist, checklistForUI, checklistType, currentScore } =
+    useChecklistViewModel(projectId, studyId, checklistId);
 
   const isReadOnly = currentChecklist?.status ? !isEditable(currentChecklist.status) : false;
 
@@ -213,30 +205,6 @@ export function ChecklistYjsWrapper({ projectId, studyId, checklistId }: Checkli
     },
     [orgId, projectId, studyId, studyPdfs, user?.id, addPdfToStudy],
   );
-
-  const answers = useChecklistAnswers(projectId, studyId, checklistId);
-
-  const checklistForUI = useMemo(() => {
-    if (!currentChecklist || !answers) return null;
-    return {
-      id: currentChecklist.id,
-      name: currentStudy?.name || 'Checklist',
-      reviewerName: '',
-      createdAt: currentChecklist.createdAt,
-      ...answers,
-    };
-  }, [currentChecklist, currentStudy, answers]);
-
-  const checklistType = useMemo(() => {
-    if (currentChecklist?.type) return currentChecklist.type;
-    if (checklistForUI) return getChecklistTypeFromState(checklistForUI);
-    return 'AMSTAR2';
-  }, [currentChecklist, checklistForUI]);
-
-  const currentScore = useMemo(() => {
-    if (!checklistForUI || !checklistType) return null;
-    return scoreChecklistOfType(checklistType, checklistForUI);
-  }, [checklistForUI, checklistType]);
 
   const isChecklistValid = useMemo(() => {
     if (!checklistForUI) return false;
@@ -374,7 +342,7 @@ export function ChecklistYjsWrapper({ projectId, studyId, checklistId }: Checkli
         </span>
       </div>
       <div className='ml-auto flex items-center gap-3'>
-        <ScoreTag currentScore={currentScore} checklistType={checklistType} />
+        <ScoreTag currentScore={currentScore} checklistType={checklistType ?? undefined} />
         {!isReadOnly ?
           <button
             onClick={handleToggleComplete}
@@ -425,7 +393,7 @@ export function ChecklistYjsWrapper({ projectId, studyId, checklistId }: Checkli
 
   return (
     <ChecklistWithPdf
-      checklistType={checklistType}
+      checklistType={checklistType ?? undefined}
       checklist={checklistForUI}
       onUpdate={handlePartialUpdate}
       headerContent={headerContent}

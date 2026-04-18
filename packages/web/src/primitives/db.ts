@@ -69,6 +69,10 @@ class CoratesDB extends Dexie {
   pdfs!: Table<PdfCacheRow, string>;
   avatars!: Table<AvatarRow, string>;
   formStates!: Table<FormStateRow, string>;
+  // TODO(agent): legacy table — kept for one release after the local-practice
+  // Y.Doc migration shipped on 2026-04-18 to give all devices a chance to run
+  // `migrateLocalChecklistsToYDoc`. Drop the table + the `LocalChecklistRow`
+  // type + `migrateLocalChecklistsToYDoc` once the rollback window has passed.
   localChecklists!: Table<LocalChecklistRow, string>;
   localChecklistPdfs!: Table<LocalChecklistPdfRow, string>;
 
