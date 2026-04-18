@@ -24,12 +24,7 @@ export const handleGet = async ({ request }: { request: Request }) => {
 
   if (!targetPlan) {
     return Response.json(
-      createValidationError(
-        'targetPlan',
-        VALIDATION_ERRORS.FIELD_REQUIRED.code,
-        null,
-        'required',
-      ),
+      createValidationError('targetPlan', VALIDATION_ERRORS.FIELD_REQUIRED.code, null, 'required'),
       { status: 400 },
     );
   }

@@ -27,10 +27,7 @@ export const handlePost = async ({ request }: { request: Request }) => {
   try {
     body = (await request.json()) as CouponBody;
   } catch {
-    return Response.json(
-      { valid: false as const, error: 'Invalid request body' },
-      { status: 200 },
-    );
+    return Response.json({ valid: false as const, error: 'Invalid request body' }, { status: 200 });
   }
 
   const code = typeof body.code === 'string' ? body.code.trim() : '';

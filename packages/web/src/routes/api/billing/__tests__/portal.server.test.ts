@@ -84,7 +84,9 @@ describe('POST /api/billing/portal', () => {
     expect(body.url).toBe('https://stripe.example/portal/abc');
 
     expect(createBillingPortalMock).toHaveBeenCalledTimes(1);
-    const callArg = createBillingPortalMock.mock.calls[0][0] as { body: { referenceId: string; returnUrl: string } };
+    const callArg = createBillingPortalMock.mock.calls[0][0] as {
+      body: { referenceId: string; returnUrl: string };
+    };
     expect(callArg.body.referenceId).toBe(org.id);
     expect(callArg.body.returnUrl).toContain('/settings/billing');
   });

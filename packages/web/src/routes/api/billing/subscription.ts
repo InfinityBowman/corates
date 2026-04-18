@@ -44,13 +44,14 @@ export const handleGet = async ({ request }: { request: Request }) => {
       .where(eq(projects.orgId, orgId));
 
     const effectivePlan =
-      orgBilling.source === 'grant'
-        ? getGrantPlan(orgBilling.effectivePlanId as GrantType)
-        : getPlan(orgBilling.effectivePlanId);
+      orgBilling.source === 'grant' ?
+        getGrantPlan(orgBilling.effectivePlanId as GrantType)
+      : getPlan(orgBilling.effectivePlanId);
 
-    const currentPeriodEnd = orgBilling.subscription?.periodEnd
-      ? orgBilling.subscription.periodEnd instanceof Date
-        ? Math.floor(orgBilling.subscription.periodEnd.getTime() / 1000)
+    const currentPeriodEnd =
+      orgBilling.subscription?.periodEnd ?
+        orgBilling.subscription.periodEnd instanceof Date ?
+          Math.floor(orgBilling.subscription.periodEnd.getTime() / 1000)
         : orgBilling.subscription.periodEnd
       : null;
 
@@ -58,8 +59,7 @@ export const handleGet = async ({ request }: { request: Request }) => {
       {
         tier: orgBilling.effectivePlanId,
         status:
-          orgBilling.subscription?.status ||
-          (orgBilling.source === 'free' ? 'inactive' : 'active'),
+          orgBilling.subscription?.status || (orgBilling.source === 'free' ? 'inactive' : 'active'),
         tierInfo: {
           name: effectivePlan.name,
           description: `Plan: ${effectivePlan.name}`,

@@ -76,9 +76,7 @@ describe('POST /api/billing/trial/start', () => {
     expect(body.grantId).toBeDefined();
     expect(body.expiresAt).toBeGreaterThan(Math.floor(Date.now() / 1000));
 
-    const row = await env.DB.prepare(
-      'SELECT * FROM org_access_grants WHERE id = ?1',
-    )
+    const row = await env.DB.prepare('SELECT * FROM org_access_grants WHERE id = ?1')
       .bind(body.grantId)
       .first<{ orgId: string; type: string }>();
     expect(row).not.toBeNull();

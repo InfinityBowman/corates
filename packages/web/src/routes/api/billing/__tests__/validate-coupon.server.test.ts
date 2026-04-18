@@ -3,7 +3,10 @@ import { resetTestDatabase, clearProjectDOs } from '@/__tests__/server/helpers';
 import { resetCounter } from '@/__tests__/server/factories';
 import { handlePost } from '../validate-coupon';
 
-let sessionResult: { user: { id: string; email: string; name: string }; session: { id: string; userId: string } } | null = null;
+let sessionResult: {
+  user: { id: string; email: string; name: string };
+  session: { id: string; userId: string };
+} | null = null;
 
 vi.mock('@corates/workers/auth', () => ({
   getSession: async () => sessionResult,

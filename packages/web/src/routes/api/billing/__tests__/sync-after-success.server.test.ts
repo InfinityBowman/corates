@@ -9,7 +9,10 @@ let currentUser: {
   stripeCustomerId: string | null;
 } = { id: 'user-1', email: 'user1@example.com', stripeCustomerId: 'cus_test_user-1' };
 
-let sessionResult: { user: { id: string; email: string; name: string; stripeCustomerId: string | null }; session: { id: string; userId: string } } | null = null;
+let sessionResult: {
+  user: { id: string; email: string; name: string; stripeCustomerId: string | null };
+  session: { id: string; userId: string };
+} | null = null;
 
 vi.mock('@corates/workers/auth', () => ({
   getSession: async () => sessionResult,
@@ -28,7 +31,12 @@ beforeEach(async () => {
   resetCounter();
   currentUser = { id: 'user-1', email: 'user1@example.com', stripeCustomerId: 'cus_test_user-1' };
   sessionResult = {
-    user: { id: currentUser.id, email: currentUser.email, name: 'Test User', stripeCustomerId: currentUser.stripeCustomerId },
+    user: {
+      id: currentUser.id,
+      email: currentUser.email,
+      name: 'Test User',
+      stripeCustomerId: currentUser.stripeCustomerId,
+    },
     session: { id: 'test-session', userId: currentUser.id },
   };
 });
