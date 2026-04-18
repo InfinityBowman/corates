@@ -3,12 +3,8 @@
  */
 
 import * as Y from 'yjs';
+import type { Amstar2Answers, Amstar2Key } from '@corates/shared/checklists/amstar2';
 import { ChecklistHandler, type TextGetterFn } from './base';
-
-interface AMSTAR2QuestionData {
-  answers: boolean[][];
-  critical: boolean;
-}
 
 export class AMSTAR2Handler extends ChecklistHandler {
   extractAnswersFromTemplate(template: Record<string, unknown>): Record<string, unknown> {
@@ -29,10 +25,10 @@ export class AMSTAR2Handler extends ChecklistHandler {
     const addedKeys = new Set<string>();
 
     Object.entries(answersData).forEach(([questionKey, questionData]) => {
-      const qd = questionData as AMSTAR2QuestionData;
+      const qd = questionData as Amstar2Answers[Amstar2Key];
       const questionYMap = new Y.Map();
       questionYMap.set('answers', qd.answers);
-      questionYMap.set('critical', qd.critical);
+      questionYMap.set('critical', qd.critical ?? false);
 
       if (!subQuestionPattern.test(questionKey)) {
         questionYMap.set('note', new Y.Text());
@@ -62,18 +58,20 @@ export class AMSTAR2Handler extends ChecklistHandler {
     return answers;
   }
 
-  updateAnswer(answersMap: Y.Map<unknown>, key: string, data: Record<string, unknown>): void {
-    if (data.answers !== undefined) {
-      let questionYMap = answersMap.get(key) as Y.Map<unknown> | undefined;
-      if (!questionYMap || !(questionYMap instanceof Y.Map)) {
-        questionYMap = new Y.Map();
-        answersMap.set(key, questionYMap);
-      }
-      questionYMap.set('answers', data.answers);
-      questionYMap.set('critical', data.critical);
-      if (!questionYMap.get('note')) {
-        questionYMap.set('note', new Y.Text());
-      }
+  updateAnswer<K extends Amstar2Key>(
+    answersMap: Y.Map<unknown>,
+    key: K,
+    data: Amstar2Answers[K],
+  ): void {
+    let questionYMap = answersMap.get(key) as Y.Map<unknown> | undefined;
+    if (!questionYMap || !(questionYMap instanceof Y.Map)) {
+      questionYMap = new Y.Map();
+      answersMap.set(key, questionYMap);
+    }
+    questionYMap.set('answers', data.answers);
+    questionYMap.set('critical', data.critical ?? false);
+    if (!questionYMap.get('note')) {
+      questionYMap.set('note', new Y.Text());
     }
   }
 

@@ -3,6 +3,7 @@
  */
 
 import * as Y from 'yjs';
+import type { Rob2Answers, Rob2Key } from '@corates/shared/checklists/rob2';
 import { ChecklistHandler, yTextToString, type TextGetterFn } from './base';
 
 interface ROB2DomainTemplate {
@@ -16,22 +17,6 @@ interface ROB2PreliminaryTemplate {
   aim?: string | null;
   deviationsToAddress?: string[];
   sources?: Record<string, boolean>;
-}
-
-interface ROB2DomainUpdate {
-  judgement?: string | null;
-  direction?: string | null;
-  answers?: Record<string, { answer?: string | null; comment?: string }>;
-}
-
-interface ROB2PreliminaryUpdate {
-  studyDesign?: string | null;
-  aim?: string | null;
-  deviationsToAddress?: string[];
-  sources?: Record<string, boolean>;
-  experimental?: string;
-  comparator?: string;
-  numericalResult?: string;
 }
 
 export class ROB2Handler extends ChecklistHandler {
@@ -175,7 +160,7 @@ export class ROB2Handler extends ChecklistHandler {
     return answers;
   }
 
-  updateAnswer(answersMap: Y.Map<unknown>, key: string, data: Record<string, unknown>): void {
+  updateAnswer<K extends Rob2Key>(answersMap: Y.Map<unknown>, key: K, data: Rob2Answers[K]): void {
     const doc = answersMap.doc!;
     doc.transact(() => {
       let sectionYMap = answersMap.get(key) as Y.Map<unknown> | undefined;
@@ -186,7 +171,7 @@ export class ROB2Handler extends ChecklistHandler {
       }
 
       if (key.startsWith('domain') || key === 'overall') {
-        const domainData = data as ROB2DomainUpdate;
+        const domainData = data as Rob2Answers['domain1'];
         if (domainData.judgement !== undefined) {
           sectionYMap.set('judgement', domainData.judgement);
         }
@@ -211,7 +196,7 @@ export class ROB2Handler extends ChecklistHandler {
           });
         }
       } else if (key === 'preliminary') {
-        const prelimData = data as ROB2PreliminaryUpdate;
+        const prelimData = data as Rob2Answers['preliminary'];
         if (prelimData.studyDesign !== undefined)
           sectionYMap.set('studyDesign', prelimData.studyDesign);
         if (prelimData.aim !== undefined) sectionYMap.set('aim', prelimData.aim);
@@ -219,10 +204,6 @@ export class ROB2Handler extends ChecklistHandler {
           sectionYMap.set('deviationsToAddress', prelimData.deviationsToAddress);
         if (prelimData.sources !== undefined) sectionYMap.set('sources', prelimData.sources);
         // NoteEditor manages Y.Text fields (experimental, comparator, numericalResult)
-      } else {
-        Object.entries(data).forEach(([fieldKey, fieldValue]) => {
-          sectionYMap!.set(fieldKey, fieldValue);
-        });
       }
     });
   }
