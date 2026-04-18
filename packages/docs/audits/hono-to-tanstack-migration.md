@@ -36,6 +36,7 @@ Tier 3 admin (in progress, issue [#485](https://github.com/InfinityBowman/corate
 - **Pass 13** — admin orgs: `/api/admin/orgs` (GET list), `/api/admin/orgs/$orgId` (GET details). Two route files. Created `packages/web/src/server/guards/requireAdmin.ts` (session check + `isAdminUser` role check, returns discriminated union like other guards). Added `@corates/workers/auth-admin` subpath export so the guard can reuse `isAdminUser`. Both routes are GET-only, so no CSRF/`requireTrustedOrigin` equivalent needed yet. Migrated `fetchOrgs`/`fetchOrgDetails` in `stores/adminStore.ts` from Hono RPC to plain fetch.
 - **Pass 14** — admin storage: `/api/admin/storage/documents` (GET list, DELETE bulk), `/api/admin/storage/stats` (GET). Two route files (`storage/documents.ts`, `storage/stats.ts`). Tests use real R2 via `cloudflare:test`'s `env.PDF_BUCKET` (puts and lists actual objects) instead of mocking — same pattern as the PDFs route tests. `clearR2('projects/')` runs in `beforeEach`. The `stats.ts` R2 list call needs an explicit cast — `as { objects, truncated, cursor? }` — because web env doesn't pull in `@cloudflare/workers-types` (already documented in the gotchas). Migrated `useStorageDocuments` (in `useAdminQueries.ts`) and `deleteStorageDocuments` (in `adminStore.ts`) from Hono RPC to plain fetch.
 - **Pass 15** — admin stats: `/api/admin/stats/{signups,organizations,projects,webhooks,subscriptions,revenue}` (6 GET routes). Six separate route files in `routes/api/admin/stats/`. Extracted shared `fillMissingDays` helper to `packages/web/src/server/lib/fillMissingDays.ts` (used by signups/organizations/projects). Stripe routes (subscriptions, revenue) mock `@corates/workers/stripe`'s `createStripeClient`. Migrated all 6 RPC callers in `components/admin/AnalyticsSection.tsx` to plain fetch via a tiny `fetchStats<T>` helper. Tagged `useAdminStats` with `TODO(agent)` — that hook calls `GET /api/admin/stats` which has never had a backend endpoint (statsRoutes only mounts the 6 sub-paths above), kept it converted to plain fetch with the same dead URL to preserve runtime behavior. No prior Hono test file existed for stats.
+- **Pass 16** — admin projects: `/api/admin/projects` (GET list), `/api/admin/projects/$projectId` (GET details + DELETE), `/api/admin/projects/$projectId/doc-stats` (GET; wakes ProjectDoc DO via `getProjectDocStub`), `/api/admin/projects/$projectId/members/$memberId` (DELETE). Four route files. The `doc-stats` route uses `@corates/workers/project-doc-id` (already a subpath export, also used by sync-profile and dev routes) and checks D1 first to avoid waking a DO for non-existent IDs. Migrated `useAdminProjects`/`useAdminProjectDetails`/`useAdminProjectDocStats` (in `useAdminQueries.ts`) and `removeProjectMember`/`deleteProject` (in `adminStore.ts`) from Hono RPC to plain fetch. Replaced the prior Hono test (which only covered `doc-stats`) with full coverage of all 4 routes.
 
 Every route a regular user hits is now on TanStack. Hono still serves `/api/auth/*` (better-auth catch-all), most of `/api/admin/*`, Stripe webhooks, and DO WebSocket upgrades.
 
@@ -49,7 +50,7 @@ Tracking issues:
 
 Tier 3:
 
-- `packages/workers/src/routes/admin/*` — 7 files remaining (~5,600 lines). `orgs.ts` stripped in Pass 13, `storage.ts` in Pass 14, `stats.ts` in Pass 15. Largest individual files left: `billing.ts` (1,195), `users.ts` (1,092), `database.ts` (997), `stripe-tools.ts` (808), `billing-observability.ts` (788), `projects.ts` (772)
+- `packages/workers/src/routes/admin/*` — 6 files remaining (~4,900 lines). `orgs.ts` stripped in Pass 13, `storage.ts` in Pass 14, `stats.ts` in Pass 15, `projects.ts` in Pass 16. Largest individual files left: `billing.ts` (1,195), `users.ts` (1,092), `database.ts` (997), `stripe-tools.ts` (808), `billing-observability.ts` (788)
 - `packages/workers/src/routes/billing/*` — fully migrated. All 7 files stripped to stubs. Order: `sync.ts` (Pass 6), `portal.ts` (Pass 7), `validation.ts` (Pass 8), `grants.ts` (Pass 9), `invoices.ts` (Pass 10), `subscription.ts` 3 routes (Pass 11), `checkout.ts` 3 routes (Pass 12).
 
 Must stay on Hono indefinitely:
@@ -243,8 +244,8 @@ Most components already used plain `fetch`, so no code changes were needed for P
 
 ## Test counts (2026-04-17)
 
-- Web server tests: **255 passing** across 30 files (Pass 15: +12 tests, +1 file)
-- Workers tests: **248 passing** across 24 files (no Hono stats test existed to delete)
+- Web server tests: **270 passing** across 31 files (Pass 16: +15 tests, +1 file)
+- Workers tests: **246 passing** across 23 files (Pass 16: -2 tests, -1 file from deleted `admin-projects.test.ts`)
 - Web typecheck: clean modulo 3 pre-existing errors (e2e `timeout` in TestDetails, unused `loginWithApiCookies`, `src/server.ts:28` queue() arity)
 - Workers typecheck: clean
 
@@ -267,7 +268,7 @@ Never start dev servers — the user does that.
 ## Recommended Tier 3 order
 
 1. ~~**Billing non-webhook first** ([#484](https://github.com/InfinityBowman/corates/issues/484)). Done — Passes 6-12.~~
-2. **Admin** ([#485](https://github.com/InfinityBowman/corates/issues/485)). ~7.2k lines, in progress on `migrate-admin-routes`. Mostly read-only dashboards, so faster per-line than billing. Order: ~~`orgs.ts` (393, Pass 13)~~, ~~`storage.ts` (525, Pass 14)~~, ~~`stats.ts` (665, Pass 15)~~, `projects.ts` (772), `billing-observability.ts` (788), `stripe-tools.ts` (808), `database.ts` (997), `users.ts` (1,092), `billing.ts` (1,195).
+2. **Admin** ([#485](https://github.com/InfinityBowman/corates/issues/485)). ~7.2k lines, in progress on `migrate-admin-routes`. Mostly read-only dashboards, so faster per-line than billing. Order: ~~`orgs.ts` (393, Pass 13)~~, ~~`storage.ts` (525, Pass 14)~~, ~~`stats.ts` (665, Pass 15)~~, ~~`projects.ts` (772, Pass 16)~~, `billing-observability.ts` (788), `stripe-tools.ts` (808), `database.ts` (997), `users.ts` (1,092), `billing.ts` (1,195).
 3. **Retire Hono app** ([#486](https://github.com/InfinityBowman/corates/issues/486)). Port `/api/auth/*` and Stripe webhooks, then strip workers to library-only.
 
 Stripe webhooks stay on Hono. The `/api/auth/*` catch-all stays on Hono (better-auth).

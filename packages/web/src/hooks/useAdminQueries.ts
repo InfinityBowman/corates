@@ -76,14 +76,16 @@ export function useAdminProjects(
   const orgId = params.orgId ?? '';
   return useQuery({
     queryKey: queryKeys.admin.projects(page, limit, search, orgId),
-    queryFn: () => {
-      const query: Record<string, string> = {
-        page: page.toString(),
-        limit: limit.toString(),
-      };
-      if (search) query.search = search;
-      if (orgId) query.orgId = orgId;
-      return parseResponse(api.api.admin.projects.$get({ query }));
+    queryFn: async () => {
+      const qs = new URLSearchParams({ page: page.toString(), limit: limit.toString() });
+      if (search) qs.set('search', search);
+      if (orgId) qs.set('orgId', orgId);
+      const res = await fetch(`/api/admin/projects?${qs.toString()}`, {
+        credentials: 'include',
+      });
+      const data = (await res.json()) as Record<string, unknown>;
+      if (!res.ok) throw data;
+      return data;
     },
     ...ADMIN_QUERY_CONFIG,
   });
@@ -92,10 +94,14 @@ export function useAdminProjects(
 export function useAdminProjectDetails(projectId: string | null | undefined) {
   return useQuery({
     queryKey: queryKeys.admin.projectDetails(projectId),
-    queryFn: () =>
-      parseResponse(
-        api.api.admin.projects[':projectId'].$get({ param: { projectId: projectId! } }),
-      ),
+    queryFn: async () => {
+      const res = await fetch(`/api/admin/projects/${encodeURIComponent(projectId!)}`, {
+        credentials: 'include',
+      });
+      const data = (await res.json()) as Record<string, unknown>;
+      if (!res.ok) throw data;
+      return data;
+    },
     enabled: !!projectId,
     ...ADMIN_QUERY_CONFIG,
   });
@@ -104,12 +110,15 @@ export function useAdminProjectDetails(projectId: string | null | undefined) {
 export function useAdminProjectDocStats(projectId: string | null | undefined) {
   return useQuery({
     queryKey: queryKeys.admin.projectDocStats(projectId),
-    queryFn: () =>
-      parseResponse(
-        api.api.admin.projects[':projectId']['doc-stats'].$get({
-          param: { projectId: projectId! },
-        }),
-      ),
+    queryFn: async () => {
+      const res = await fetch(
+        `/api/admin/projects/${encodeURIComponent(projectId!)}/doc-stats`,
+        { credentials: 'include' },
+      );
+      const data = (await res.json()) as Record<string, unknown>;
+      if (!res.ok) throw data;
+      return data;
+    },
     enabled: !!projectId,
     ...ADMIN_QUERY_CONFIG,
   });

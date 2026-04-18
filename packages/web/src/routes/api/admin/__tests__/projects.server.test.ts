@@ -1,0 +1,304 @@
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { env } from 'cloudflare:test';
+import { resetTestDatabase, clearProjectDOs, seedMediaFile } from '@/__tests__/server/helpers';
+import {
+  buildAdminUser,
+  buildOrg,
+  buildOrgMember,
+  buildProject,
+  buildProjectMember,
+  buildUser,
+  resetCounter,
+} from '@/__tests__/server/factories';
+import { handleGet as listProjects } from '../projects';
+import { handleGet as projectDetails, handleDelete as deleteProject } from '../projects/$projectId';
+import { handleGet as docStats } from '../projects/$projectId/doc-stats';
+import { handleDelete as removeMember } from '../projects/$projectId/members/$memberId';
+
+let sessionResult: {
+  user: { id: string; email: string; name: string; role?: string };
+  session: { id: string; userId: string; activeOrganizationId: string | null };
+} | null = null;
+
+vi.mock('@corates/workers/auth', () => ({
+  getSession: async () => sessionResult,
+}));
+
+beforeEach(async () => {
+  await resetTestDatabase();
+  await clearProjectDOs(['admin-doc-stats-project']);
+  vi.clearAllMocks();
+  resetCounter();
+  sessionResult = null;
+});
+
+async function asAdmin() {
+  const admin = await buildAdminUser();
+  sessionResult = {
+    user: { id: admin.id, email: admin.email, name: admin.name, role: 'admin' },
+    session: { id: 'admin-sess', userId: admin.id, activeOrganizationId: null },
+  };
+  return admin;
+}
+
+function listReq(path = '/api/admin/projects'): Request {
+  return new Request(`http://localhost${path}`);
+}
+
+describe('GET /api/admin/projects', () => {
+  it('returns 401 when no session', async () => {
+    const res = await listProjects({ request: listReq() });
+    expect(res.status).toBe(401);
+  });
+
+  it('returns 403 when caller is not admin', async () => {
+    const u = await buildUser();
+    sessionResult = {
+      user: { id: u.id, email: u.email, name: u.name, role: 'user' },
+      session: { id: 'sess', userId: u.id, activeOrganizationId: null },
+    };
+    const res = await listProjects({ request: listReq() });
+    expect(res.status).toBe(403);
+  });
+
+  it('returns paginated projects with org/creator info', async () => {
+    await asAdmin();
+    await buildProject();
+    await buildProject();
+    await buildProject();
+
+    const res = await listProjects({ request: listReq('/api/admin/projects?page=1&limit=2') });
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as {
+      projects: { id: string; orgName: string | null; creatorEmail: string | null }[];
+      pagination: { total: number; totalPages: number };
+    };
+    expect(body.projects.length).toBe(2);
+    expect(body.pagination.total).toBe(3);
+    expect(body.pagination.totalPages).toBe(2);
+    expect(body.projects[0].orgName).toBeDefined();
+    expect(body.projects[0].creatorEmail).toBeDefined();
+  });
+
+  it('searches projects by name (case-insensitive)', async () => {
+    await asAdmin();
+    const { org, owner } = await buildOrg();
+    await buildProject({ org, owner, project: { id: 'p-amphi', name: 'Amphibian Census' } });
+    await buildProject({ org, owner, project: { id: 'p-other', name: 'Other Topic' } });
+
+    const res = await listProjects({ request: listReq('/api/admin/projects?search=amphi') });
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as { projects: { name: string }[] };
+    expect(body.projects.length).toBe(1);
+    expect(body.projects[0].name).toBe('Amphibian Census');
+  });
+
+  it('filters by orgId', async () => {
+    await asAdmin();
+    const { org: org1 } = await buildOrg();
+    const { org: org2 } = await buildOrg();
+    await buildProject({ org: org1 });
+    await buildProject({ org: org2 });
+
+    const res = await listProjects({
+      request: listReq(`/api/admin/projects?orgId=${encodeURIComponent(org1.id)}`),
+    });
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as { projects: { orgId: string }[] };
+    expect(body.projects.length).toBe(1);
+    expect(body.projects[0].orgId).toBe(org1.id);
+  });
+
+  it('includes member and file counts', async () => {
+    const admin = await asAdmin();
+    const { project, org } = await buildProject();
+    const { user: extra } = await buildOrgMember({ orgId: org.id });
+    await buildProjectMember({ projectId: project.id, orgId: org.id, user: extra });
+    await seedMediaFile({
+      id: 'mf-1',
+      filename: 'a.pdf',
+      bucketKey: `projects/${project.id}/studies/s1/a.pdf`,
+      orgId: org.id,
+      projectId: project.id,
+      studyId: 's1',
+      uploadedBy: admin.id,
+      createdAt: Math.floor(Date.now() / 1000),
+    });
+
+    const res = await listProjects({ request: listReq() });
+    const body = (await res.json()) as {
+      projects: { id: string; memberCount: number; fileCount: number }[];
+    };
+    const found = body.projects.find(p => p.id === project.id)!;
+    expect(found.memberCount).toBeGreaterThanOrEqual(1);
+    expect(found.fileCount).toBe(1);
+  });
+});
+
+describe('GET /api/admin/projects/:projectId', () => {
+  it('returns 401 when no session', async () => {
+    const res = await projectDetails({
+      request: new Request('http://localhost/api/admin/projects/x'),
+      params: { projectId: 'x' },
+    });
+    expect(res.status).toBe(401);
+  });
+
+  it('returns 404 when project not found', async () => {
+    await asAdmin();
+    const res = await projectDetails({
+      request: new Request('http://localhost/api/admin/projects/nope'),
+      params: { projectId: 'nope' },
+    });
+    expect(res.status).toBe(404);
+  });
+
+  it('returns project with members, files, invitations, stats', async () => {
+    const admin = await asAdmin();
+    const { project, org, owner } = await buildProject();
+    const { user: extra } = await buildOrgMember({ orgId: org.id });
+    await buildProjectMember({ projectId: project.id, orgId: org.id, user: extra });
+    await seedMediaFile({
+      id: 'mf-detail',
+      filename: 'doc.pdf',
+      fileSize: 4096,
+      bucketKey: `projects/${project.id}/studies/s1/doc.pdf`,
+      orgId: org.id,
+      projectId: project.id,
+      studyId: 's1',
+      uploadedBy: owner.id,
+      createdAt: Math.floor(Date.now() / 1000),
+    });
+
+    const res = await projectDetails({
+      request: new Request(`http://localhost/api/admin/projects/${project.id}`),
+      params: { projectId: project.id },
+    });
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as {
+      project: { id: string };
+      members: unknown[];
+      files: { fileSize: number | null }[];
+      invitations: unknown[];
+      stats: { memberCount: number; fileCount: number; totalStorageBytes: number };
+    };
+    expect(body.project.id).toBe(project.id);
+    expect(body.stats.memberCount).toBe(body.members.length);
+    expect(body.stats.fileCount).toBe(1);
+    expect(body.stats.totalStorageBytes).toBe(4096);
+    void admin;
+  });
+});
+
+describe('GET /api/admin/projects/:projectId/doc-stats', () => {
+  it('returns 404 without waking the DO when project missing in D1', async () => {
+    await asAdmin();
+    const res = await docStats({
+      request: new Request('http://localhost/api/admin/projects/no-such/doc-stats'),
+      params: { projectId: 'no-such' },
+    });
+    expect(res.status).toBe(404);
+  });
+
+  it('returns stat shape for an existing empty project', async () => {
+    await asAdmin();
+    const { org, owner } = await buildOrg();
+    const { project } = await buildProject({
+      org,
+      owner,
+      project: { id: 'admin-doc-stats-project', name: 'Stats' },
+    });
+
+    const res = await docStats({
+      request: new Request(`http://localhost/api/admin/projects/${project.id}/doc-stats`),
+      params: { projectId: project.id },
+    });
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as {
+      rows: { total: number; totalBytes: number; snapshotBytes: number; updateBytes: number };
+      content: { members: number; studies: number; checklists: number; pdfs: number };
+      memoryUsagePercent: number;
+    };
+    expect(typeof body.rows.total).toBe('number');
+    expect(body.content.studies).toBe(0);
+    expect(body.memoryUsagePercent).toBeLessThan(0.01);
+    expect(body.rows.totalBytes).toBe(body.rows.snapshotBytes + body.rows.updateBytes);
+  });
+});
+
+describe('DELETE /api/admin/projects/:projectId/members/:memberId', () => {
+  it('returns 404 when member not found', async () => {
+    await asAdmin();
+    const res = await removeMember({
+      request: new Request('http://localhost/api/admin/projects/p1/members/m1', {
+        method: 'DELETE',
+      }),
+      params: { projectId: 'p1', memberId: 'm1' },
+    });
+    expect(res.status).toBe(404);
+  });
+
+  it('removes a member that belongs to the project', async () => {
+    await asAdmin();
+    const { project, org } = await buildProject();
+    const { user: u, membership } = await buildOrgMember({ orgId: org.id });
+    const { membership: pm } = await buildProjectMember({
+      projectId: project.id,
+      orgId: org.id,
+      user: u,
+    });
+
+    const res = await removeMember({
+      request: new Request(
+        `http://localhost/api/admin/projects/${project.id}/members/${pm.id}`,
+        { method: 'DELETE' },
+      ),
+      params: { projectId: project.id, memberId: pm.id },
+    });
+    expect(res.status).toBe(200);
+
+    const { projectMembers } = await import('@corates/db/schema');
+    const { createDb } = await import('@corates/db/client');
+    const { eq } = await import('drizzle-orm');
+    const db = createDb(env.DB);
+    const remaining = await db
+      .select({ id: projectMembers.id })
+      .from(projectMembers)
+      .where(eq(projectMembers.id, pm.id));
+    expect(remaining.length).toBe(0);
+    void membership;
+  });
+});
+
+describe('DELETE /api/admin/projects/:projectId', () => {
+  it('returns 404 when project missing', async () => {
+    await asAdmin();
+    const res = await deleteProject({
+      request: new Request('http://localhost/api/admin/projects/nope', { method: 'DELETE' }),
+      params: { projectId: 'nope' },
+    });
+    expect(res.status).toBe(404);
+  });
+
+  it('deletes existing project', async () => {
+    await asAdmin();
+    const { project } = await buildProject();
+    const res = await deleteProject({
+      request: new Request(`http://localhost/api/admin/projects/${project.id}`, {
+        method: 'DELETE',
+      }),
+      params: { projectId: project.id },
+    });
+    expect(res.status).toBe(200);
+
+    const { projects } = await import('@corates/db/schema');
+    const { createDb } = await import('@corates/db/client');
+    const { eq } = await import('drizzle-orm');
+    const db = createDb(env.DB);
+    const remaining = await db
+      .select({ id: projects.id })
+      .from(projects)
+      .where(eq(projects.id, project.id));
+    expect(remaining.length).toBe(0);
+  });
+});

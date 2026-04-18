@@ -285,17 +285,23 @@ export async function fetchOrgBillingReconcile(
 }
 
 export async function removeProjectMember(projectId: string, memberId: string) {
-  await parseResponse(
-    api.api.admin.projects[':projectId'].members[':memberId'].$delete({
-      param: { projectId, memberId },
-    }),
+  const res = await fetch(
+    `/api/admin/projects/${encodeURIComponent(projectId)}/members/${encodeURIComponent(memberId)}`,
+    { method: 'DELETE', credentials: 'include' },
   );
+  const data = (await res.json()) as Record<string, unknown>;
+  if (!res.ok) throw data;
   queryClient.invalidateQueries({ queryKey: queryKeys.admin.projectDetails(projectId) });
   queryClient.invalidateQueries({ queryKey: ['adminProjects'], exact: false });
 }
 
 export async function deleteProject(projectId: string) {
-  await parseResponse(api.api.admin.projects[':projectId'].$delete({ param: { projectId } }));
+  const res = await fetch(`/api/admin/projects/${encodeURIComponent(projectId)}`, {
+    method: 'DELETE',
+    credentials: 'include',
+  });
+  const data = (await res.json()) as Record<string, unknown>;
+  if (!res.ok) throw data;
   queryClient.invalidateQueries({ queryKey: queryKeys.admin.projectDetails(projectId) });
   queryClient.invalidateQueries({ queryKey: ['adminProjects'], exact: false });
 }
