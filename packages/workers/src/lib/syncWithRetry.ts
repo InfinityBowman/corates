@@ -1,14 +1,11 @@
 /**
- * Retry wrappers for Durable Object sync operations
+ * Retry wrapper around `syncMemberToDO`.
  *
- * These functions wrap the DO sync calls with automatic retry logic.
- * They handle transient failures gracefully without blocking the main operation,
- * since D1 is the source of truth and DO state will eventually sync on reconnect.
+ * D1 is the source of truth; if every retry fails the error is logged and
+ * swallowed — the DO will resync on the next client connection.
  */
-
 import { syncMemberToDO } from './project-sync';
 import { withRetry } from './retry';
-import { createLogger, type Logger } from './observability/logger';
 import type { Env } from '../types';
 
 interface MemberData {
@@ -23,7 +20,6 @@ interface MemberData {
   [key: string]: unknown;
 }
 
-/** Retry configuration for DO sync operations */
 const DO_SYNC_RETRY_CONFIG = {
   maxAttempts: 3,
   initialDelayMs: 100,
@@ -31,49 +27,25 @@ const DO_SYNC_RETRY_CONFIG = {
   backoffMultiplier: 2,
 } as const;
 
-/**
- * Sync member to Durable Object with automatic retry
- *
- * This function wraps `syncMemberToDO` with retry logic. If all retries fail,
- * the error is logged but not thrown - the D1 write has already succeeded
- * and the DO will sync on next client connection.
- *
- * @example
- * ```typescript
- * await syncMemberWithRetry(env, projectId, 'add', {
- *   userId: user.id,
- *   role: 'member',
- *   joinedAt: Date.now(),
- * });
- * ```
- */
 export async function syncMemberWithRetry(
   env: Env,
   projectId: string,
   action: 'add' | 'update' | 'remove',
   memberData: MemberData,
-  logger?: Logger,
 ): Promise<void> {
-  const log = logger || createLogger({ service: 'sync-member', env });
-
-  const syncLogger = log.child({
-    projectId,
-    operation: `member-${action}`,
-    userId: memberData.userId,
-  });
+  const logContext = { projectId, operation: `member-${action}`, userId: memberData.userId };
 
   const result = await withRetry({
     operation: () => syncMemberToDO(env, projectId, action, memberData),
     ...DO_SYNC_RETRY_CONFIG,
     shouldRetry: shouldRetryDOSync,
-    logger: syncLogger,
+    logContext,
     operationName: `DO sync-member (${action})`,
   });
 
   if (!result.success) {
-    // Log final failure but don't throw - D1 is source of truth
-    // DO will sync on next client connection
-    syncLogger.error('DO member sync exhausted all retries', {
+    console.error('[sync-member] DO member sync exhausted all retries', {
+      ...logContext,
       attempts: result.attempts,
       finalError: result.error instanceof Error ? result.error.message : String(result.error),
     });
@@ -81,31 +53,18 @@ export async function syncMemberWithRetry(
 }
 
 /**
- * Determine if a DO sync error should be retried
- *
- * Only retries on server errors (5xx) and network errors.
- * Does NOT retry on client errors (4xx) as those indicate bugs in our code.
+ * Retry only on 5xx / network errors. 4xx indicates a bug in our code, not a
+ * transient failure, so we surface those immediately.
  */
 function shouldRetryDOSync(error: unknown, _attempt: number): boolean {
-  if (!(error instanceof Error)) {
-    // Unknown error type - retry as it might be transient
-    return true;
-  }
+  if (!(error instanceof Error)) return true;
 
-  const message = error.message;
-
-  // Extract status code from sync error messages
-  // Format: "[ProjectSync] sync-member failed for project xxx: 503 ..."
-  const statusMatch = message.match(/:\s*(\d{3})\s/);
+  // Sync error format: "[ProjectSync] sync-member failed for project xxx: 503 ..."
+  const statusMatch = error.message.match(/:\s*(\d{3})\s/);
   if (statusMatch) {
     const status = parseInt(statusMatch[1], 10);
-
-    // Only retry 5xx errors (server/DO errors)
-    // Don't retry 4xx (client errors - indicates bug in our code)
     return status >= 500 && status < 600;
   }
 
-  // For network errors, timeouts, etc. - retry
-  // These typically don't have HTTP status codes in the message
   return true;
 }

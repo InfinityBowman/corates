@@ -1,30 +1,84 @@
 import { createStartHandler, defaultStreamHandler } from '@tanstack/react-start/server';
-import { workerHandler } from '@corates/workers';
+import * as Sentry from '@sentry/cloudflare';
+import { handleEmailQueue } from '@corates/workers/queue';
+import { getProjectDocStub } from '@corates/workers/project-doc-id';
 
 // Re-export DOs so wrangler DO bindings in wrangler.jsonc resolve against this
 // worker's main module. The class implementations live in @corates/workers.
-export { UserSession, ProjectDoc } from '@corates/workers';
+export { UserSession, ProjectDoc } from '@corates/workers/durable-objects';
 
 const startFetch = createStartHandler(defaultStreamHandler);
 
-export default {
+// `/api/project-doc/<projectId>(/<...>)?` — y-websocket appends the room as
+// the trailing segment; we route by path prefix and forward the original
+// Request (including upgrade headers) to the project-scoped DO.
+const PROJECT_DOC_PATH = /^\/api\/project-doc\/([^/]+)(?:\/.*)?$/;
+
+// `/api/sessions/<sessionId>(/<...>)?` — UserSession DO for per-user
+// notification fan-out. WebSocket upgrades only.
+const SESSION_PATH = /^\/api\/sessions\/([^/]+)(?:\/.*)?$/;
+
+interface DOEnv {
+  USER_SESSION: {
+    idFromName(name: string): unknown;
+    get(id: unknown): { fetch(req: Request): Promise<Response> };
+  };
+}
+
+interface SentryEnv {
+  SENTRY_DSN?: string;
+  ENVIRONMENT?: string;
+  CF_VERSION_METADATA?: { id?: string };
+}
+
+const workerHandler = {
   async fetch(request: Request, env: unknown, ctx: ExecutionContext): Promise<Response> {
-    // WebSocket upgrades must be handled before TanStack Start (which can't pass
-    // them through). The Hono app in @corates/workers already routes
-    // /api/project-doc/* and /api/sessions/* to the DOs.
-    const upgrade = request.headers.get('upgrade')?.toLowerCase();
-    if (upgrade === 'websocket') {
-      return workerHandler.fetch(request, env as never, ctx);
+    const url = new URL(request.url);
+
+    // DO routes must be handled before TanStack Start (which can't pass
+    // WebSocket upgrades through). Same Request is forwarded as-is so the
+    // upgrade handshake reaches the DO.
+    const projectMatch = url.pathname.match(PROJECT_DOC_PATH);
+    if (projectMatch) {
+      const projectId = projectMatch[1];
+      const stub = getProjectDocStub(env as never, projectId);
+      return stub.fetch(request);
     }
+
+    const sessionMatch = url.pathname.match(SESSION_PATH);
+    if (sessionMatch) {
+      const sessionId = sessionMatch[1];
+      const ns = (env as DOEnv).USER_SESSION;
+      const id = ns.idFromName(sessionId);
+      const stub = ns.get(id);
+      return stub.fetch(request);
+    }
+
     // Forward the Worker's ExecutionContext through TanStack Start so file
-    // routes (e.g. routes/api/$.ts) can pass it into honoApp.fetch — Hono's
-    // c.executionCtx throws "This context has no ExecutionContext" otherwise.
+    // routes can pass it into route handlers (waitUntil for fire-and-forget
+    // work like Stripe webhook ledger updates and notification fan-out).
     // Cast: createStartHandler's RequestOptions.context defaults to a narrow
     // BaseContext until we register a project-wide requestContext type.
     return startFetch(request, { context: { cloudflareCtx: ctx } } as never);
   },
 
-  async queue(batch: MessageBatch<unknown>, env: unknown, ctx: ExecutionContext): Promise<void> {
-    return workerHandler.queue(batch, env as never, ctx);
+  async queue(batch: MessageBatch<unknown>, env: unknown): Promise<void> {
+    return handleEmailQueue(batch, env as never);
   },
 };
+
+// Wrap with Sentry for error monitoring. `Sentry.withSentry` proxies fetch +
+// queue and uses `ctx.waitUntil` for transport — that's available in the
+// production Worker runtime but not in the vitest pool, so the test entry
+// (`src/__tests__/server/test-worker.ts`) bypasses this wrapper entirely by
+// being a separate `main` in `wrangler.test.jsonc`.
+export default Sentry.withSentry((env: SentryEnv) => {
+  return {
+    dsn: env.SENTRY_DSN ?? '',
+    release: env.CF_VERSION_METADATA?.id,
+    environment: env.ENVIRONMENT,
+    enabled: !!env.SENTRY_DSN,
+    tracesSampleRate: env.ENVIRONMENT === 'production' ? 0.1 : 1.0,
+    sendDefaultPii: true,
+  };
+}, workerHandler);

@@ -68,7 +68,7 @@ async function asUser() {
 function jsonReq(path: string, method: string, body?: unknown): Request {
   return new Request(`http://localhost${path}`, {
     method,
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', origin: 'http://localhost:3010' },
     body: body !== undefined ? JSON.stringify(body) : undefined,
   });
 }
@@ -275,6 +275,7 @@ describe('DELETE /api/admin/orgs/:orgId/subscriptions/:subscriptionId', () => {
     const res = await deleteSubscriptionHandler({
       request: new Request(`http://localhost/api/admin/orgs/${org.id}/subscriptions/nope`, {
         method: 'DELETE',
+        headers: { origin: 'http://localhost:3010' },
       }),
       params: { orgId: org.id, subscriptionId: 'nope' },
     });
@@ -300,6 +301,7 @@ describe('DELETE /api/admin/orgs/:orgId/subscriptions/:subscriptionId', () => {
     const res = await deleteSubscriptionHandler({
       request: new Request(`http://localhost/api/admin/orgs/${org.id}/subscriptions/sub-del`, {
         method: 'DELETE',
+        headers: { origin: 'http://localhost:3010' },
       }),
       params: { orgId: org.id, subscriptionId: 'sub-del' },
     });
@@ -489,6 +491,7 @@ describe('DELETE /api/admin/orgs/:orgId/grants/:grantId', () => {
     const res = await deleteGrantHandler({
       request: new Request(`http://localhost/api/admin/orgs/${org.id}/grants/nope`, {
         method: 'DELETE',
+        headers: { origin: 'http://localhost:3010' },
       }),
       params: { orgId: org.id, grantId: 'nope' },
     });
@@ -514,6 +517,7 @@ describe('DELETE /api/admin/orgs/:orgId/grants/:grantId', () => {
     const res = await deleteGrantHandler({
       request: new Request(`http://localhost/api/admin/orgs/${org.id}/grants/gr-del`, {
         method: 'DELETE',
+        headers: { origin: 'http://localhost:3010' },
       }),
       params: { orgId: org.id, grantId: 'gr-del' },
     });
@@ -532,6 +536,7 @@ describe('POST /api/admin/orgs/:orgId/grant-trial', () => {
     const res = await grantTrialHandler({
       request: new Request('http://localhost/api/admin/orgs/missing/grant-trial', {
         method: 'POST',
+        headers: { origin: 'http://localhost:3010' },
       }),
       params: { orgId: 'missing' },
     });
@@ -544,6 +549,7 @@ describe('POST /api/admin/orgs/:orgId/grant-trial', () => {
     const res = await grantTrialHandler({
       request: new Request(`http://localhost/api/admin/orgs/${org.id}/grant-trial`, {
         method: 'POST',
+        headers: { origin: 'http://localhost:3010' },
       }),
       params: { orgId: org.id },
     });
@@ -559,6 +565,7 @@ describe('POST /api/admin/orgs/:orgId/grant-trial', () => {
     const first = await grantTrialHandler({
       request: new Request(`http://localhost/api/admin/orgs/${org.id}/grant-trial`, {
         method: 'POST',
+        headers: { origin: 'http://localhost:3010' },
       }),
       params: { orgId: org.id },
     });
@@ -567,6 +574,7 @@ describe('POST /api/admin/orgs/:orgId/grant-trial', () => {
     const second = await grantTrialHandler({
       request: new Request(`http://localhost/api/admin/orgs/${org.id}/grant-trial`, {
         method: 'POST',
+        headers: { origin: 'http://localhost:3010' },
       }),
       params: { orgId: org.id },
     });
@@ -580,6 +588,7 @@ describe('POST /api/admin/orgs/:orgId/grant-single-project', () => {
     const res = await grantSingleProjectHandler({
       request: new Request('http://localhost/api/admin/orgs/missing/grant-single-project', {
         method: 'POST',
+        headers: { origin: 'http://localhost:3010' },
       }),
       params: { orgId: 'missing' },
     });
@@ -592,6 +601,7 @@ describe('POST /api/admin/orgs/:orgId/grant-single-project', () => {
     const res = await grantSingleProjectHandler({
       request: new Request(`http://localhost/api/admin/orgs/${org.id}/grant-single-project`, {
         method: 'POST',
+        headers: { origin: 'http://localhost:3010' },
       }),
       params: { orgId: org.id },
     });
@@ -621,6 +631,7 @@ describe('POST /api/admin/orgs/:orgId/grant-single-project', () => {
     const res = await grantSingleProjectHandler({
       request: new Request(`http://localhost/api/admin/orgs/${org.id}/grant-single-project`, {
         method: 'POST',
+        headers: { origin: 'http://localhost:3010' },
       }),
       params: { orgId: org.id },
     });

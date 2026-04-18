@@ -1,6 +1,6 @@
 {
   "name": "corates-workers",
-  "main": "src/index.ts",
+  "main": "src/test-worker.ts",
   "compatibility_date": "2025-12-01",
   "compatibility_flags": ["nodejs_compat"],
 

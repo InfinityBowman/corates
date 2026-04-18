@@ -1,11 +1,9 @@
 /**
- * TanStack Query Client Configuration
- * Configured with offline-first defaults.
- * Global error handlers for Hono RPC DetailedError (see docs/audits/hono-rpc-migration.md).
+ * TanStack Query Client Configuration. Offline-first defaults plus an auth
+ * redirect on AUTH_REQUIRED / AUTH_EXPIRED domain errors.
  */
 
 import { QueryClient } from '@tanstack/react-query';
-import { DetailedError } from 'hono/client';
 import { showToast } from '@/components/ui/toast';
 import { getDomainError, getUserFriendlyMessage } from '@/lib/error-utils';
 
@@ -33,8 +31,10 @@ function getQueryClient(): QueryClient {
         staleTime: isDevelopment ? 0 : 1000 * 60 * 5,
         gcTime: isDevelopment ? 0 : 1000 * 60 * 10,
         retry: (failureCount, error) => {
-          // Don't retry auth or other client errors
-          if (error instanceof DetailedError && error.statusCode && error.statusCode < 500) {
+          // Don't retry 4xx — handlers throw the parsed domain-error JSON
+          // directly, so `statusCode` is a plain field on the error object.
+          const status = (error as { statusCode?: unknown })?.statusCode;
+          if (typeof status === 'number' && status < 500) {
             return false;
           }
           return failureCount < 3;
@@ -53,7 +53,7 @@ function getQueryClient(): QueryClient {
     },
   });
 
-  // Auth redirect handler for RPC errors
+  // Auth redirect handler — applies to any thrown domain error
   queryClientInstance.getQueryCache().subscribe(event => {
     if (event.type === 'updated' && event.query.state.error) {
       const domainError = getDomainError(event.query.state.error);

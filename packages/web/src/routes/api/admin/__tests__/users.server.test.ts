@@ -254,9 +254,39 @@ describe('GET /api/admin/users/:userId', () => {
 });
 
 describe('POST /api/admin/users/:userId/ban', () => {
-  it('returns 401 when no session', async () => {
+  it('returns 403 with missing_origin when no Origin/Referer (CSRF)', async () => {
+    await asAdmin();
     const res = await banHandler({
       request: new Request('http://localhost/api/admin/users/u/ban', { method: 'POST' }),
+      params: { userId: 'u' },
+    });
+    expect(res.status).toBe(403);
+    const body = (await res.json()) as { code: string; details?: { reason?: string } };
+    expect(body.code).toBe('AUTH_FORBIDDEN');
+    expect(body.details?.reason).toBe('missing_origin');
+  });
+
+  it('returns 403 with untrusted_origin when Origin is not allowed (CSRF)', async () => {
+    await asAdmin();
+    const res = await banHandler({
+      request: new Request('http://localhost/api/admin/users/u/ban', {
+        method: 'POST',
+        headers: { origin: 'https://evil.example.com' },
+      }),
+      params: { userId: 'u' },
+    });
+    expect(res.status).toBe(403);
+    const body = (await res.json()) as { code: string; details?: { reason?: string } };
+    expect(body.code).toBe('AUTH_FORBIDDEN');
+    expect(body.details?.reason).toBe('untrusted_origin');
+  });
+
+  it('returns 401 when no session', async () => {
+    const res = await banHandler({
+      request: new Request('http://localhost/api/admin/users/u/ban', {
+        method: 'POST',
+        headers: { origin: 'http://localhost:3010' },
+      }),
       params: { userId: 'u' },
     });
     expect(res.status).toBe(401);
@@ -265,7 +295,10 @@ describe('POST /api/admin/users/:userId/ban', () => {
   it('returns 403 for non-admin', async () => {
     await asUser();
     const res = await banHandler({
-      request: new Request('http://localhost/api/admin/users/u/ban', { method: 'POST' }),
+      request: new Request('http://localhost/api/admin/users/u/ban', {
+        method: 'POST',
+        headers: { origin: 'http://localhost:3010' },
+      }),
       params: { userId: 'u' },
     });
     expect(res.status).toBe(403);
@@ -274,7 +307,10 @@ describe('POST /api/admin/users/:userId/ban', () => {
   it('rejects self-ban with 400', async () => {
     const admin = await asAdmin();
     const res = await banHandler({
-      request: new Request(`http://localhost/api/admin/users/${admin.id}/ban`, { method: 'POST' }),
+      request: new Request(`http://localhost/api/admin/users/${admin.id}/ban`, {
+        method: 'POST',
+        headers: { origin: 'http://localhost:3010' },
+      }),
       params: { userId: admin.id },
     });
     expect(res.status).toBe(400);
@@ -292,7 +328,7 @@ describe('POST /api/admin/users/:userId/ban', () => {
     const res = await banHandler({
       request: new Request(`http://localhost/api/admin/users/${target.id}/ban`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', origin: 'http://localhost:3010' },
         body: JSON.stringify({ reason: 'Spam', expiresAt }),
       }),
       params: { userId: target.id },
@@ -316,7 +352,10 @@ describe('POST /api/admin/users/:userId/ban', () => {
     await asAdmin();
     const target = await buildUser();
     const res = await banHandler({
-      request: new Request(`http://localhost/api/admin/users/${target.id}/ban`, { method: 'POST' }),
+      request: new Request(`http://localhost/api/admin/users/${target.id}/ban`, {
+        method: 'POST',
+        headers: { origin: 'http://localhost:3010' },
+      }),
       params: { userId: target.id },
     });
     expect(res.status).toBe(200);
@@ -334,7 +373,10 @@ describe('POST /api/admin/users/:userId/ban', () => {
 describe('POST /api/admin/users/:userId/unban', () => {
   it('returns 401 when no session', async () => {
     const res = await unbanHandler({
-      request: new Request('http://localhost/api/admin/users/u/unban', { method: 'POST' }),
+      request: new Request('http://localhost/api/admin/users/u/unban', {
+        method: 'POST',
+        headers: { origin: 'http://localhost:3010' },
+      }),
       params: { userId: 'u' },
     });
     expect(res.status).toBe(401);
@@ -343,7 +385,10 @@ describe('POST /api/admin/users/:userId/unban', () => {
   it('returns 403 for non-admin', async () => {
     await asUser();
     const res = await unbanHandler({
-      request: new Request('http://localhost/api/admin/users/u/unban', { method: 'POST' }),
+      request: new Request('http://localhost/api/admin/users/u/unban', {
+        method: 'POST',
+        headers: { origin: 'http://localhost:3010' },
+      }),
       params: { userId: 'u' },
     });
     expect(res.status).toBe(403);
@@ -360,6 +405,7 @@ describe('POST /api/admin/users/:userId/unban', () => {
     const res = await unbanHandler({
       request: new Request(`http://localhost/api/admin/users/${target.id}/unban`, {
         method: 'POST',
+        headers: { origin: 'http://localhost:3010' },
       }),
       params: { userId: target.id },
     });
@@ -381,6 +427,7 @@ describe('POST /api/admin/users/:userId/impersonate', () => {
     const res = await impersonateHandler({
       request: new Request('http://localhost/api/admin/users/u/impersonate', {
         method: 'POST',
+        headers: { origin: 'http://localhost:3010' },
         body: JSON.stringify({ userId: 'u' }),
       }),
       params: { userId: 'u' },
@@ -393,6 +440,7 @@ describe('POST /api/admin/users/:userId/impersonate', () => {
     const res = await impersonateHandler({
       request: new Request('http://localhost/api/admin/users/u/impersonate', {
         method: 'POST',
+        headers: { origin: 'http://localhost:3010' },
         body: JSON.stringify({ userId: 'u' }),
       }),
       params: { userId: 'u' },
@@ -405,6 +453,7 @@ describe('POST /api/admin/users/:userId/impersonate', () => {
     const res = await impersonateHandler({
       request: new Request(`http://localhost/api/admin/users/${admin.id}/impersonate`, {
         method: 'POST',
+        headers: { origin: 'http://localhost:3010' },
         body: JSON.stringify({ userId: admin.id }),
       }),
       params: { userId: admin.id },
@@ -420,6 +469,7 @@ describe('POST /api/admin/users/:userId/impersonate', () => {
     const res = await impersonateHandler({
       request: new Request(`http://localhost/api/admin/users/${target.id}/impersonate`, {
         method: 'POST',
+        headers: { origin: 'http://localhost:3010' },
         body: JSON.stringify({}),
       }),
       params: { userId: target.id },
@@ -441,7 +491,11 @@ describe('POST /api/admin/users/:userId/impersonate', () => {
     const res = await impersonateHandler({
       request: new Request(`http://localhost/api/admin/users/${target.id}/impersonate`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', cookie: 'session=abc' },
+        headers: {
+          'Content-Type': 'application/json',
+          cookie: 'session=abc',
+          origin: 'http://localhost:3010',
+        },
         body: JSON.stringify({ userId: target.id }),
       }),
       params: { userId: target.id },
@@ -459,7 +513,10 @@ describe('POST /api/admin/users/:userId/impersonate', () => {
 describe('DELETE /api/admin/users/:userId/sessions', () => {
   it('returns 401 when no session', async () => {
     const res = await revokeAllSessionsHandler({
-      request: new Request('http://localhost/api/admin/users/u/sessions', { method: 'DELETE' }),
+      request: new Request('http://localhost/api/admin/users/u/sessions', {
+        method: 'DELETE',
+        headers: { origin: 'http://localhost:3010' },
+      }),
       params: { userId: 'u' },
     });
     expect(res.status).toBe(401);
@@ -468,7 +525,10 @@ describe('DELETE /api/admin/users/:userId/sessions', () => {
   it('returns 403 for non-admin', async () => {
     await asUser();
     const res = await revokeAllSessionsHandler({
-      request: new Request('http://localhost/api/admin/users/u/sessions', { method: 'DELETE' }),
+      request: new Request('http://localhost/api/admin/users/u/sessions', {
+        method: 'DELETE',
+        headers: { origin: 'http://localhost:3010' },
+      }),
       params: { userId: 'u' },
     });
     expect(res.status).toBe(403);
@@ -485,6 +545,7 @@ describe('DELETE /api/admin/users/:userId/sessions', () => {
     const res = await revokeAllSessionsHandler({
       request: new Request(`http://localhost/api/admin/users/${target.id}/sessions`, {
         method: 'DELETE',
+        headers: { origin: 'http://localhost:3010' },
       }),
       params: { userId: target.id },
     });
@@ -501,7 +562,10 @@ describe('DELETE /api/admin/users/:userId/sessions', () => {
 describe('DELETE /api/admin/users/:userId/sessions/:sessionId', () => {
   it('returns 401 when no session', async () => {
     const res = await revokeSessionHandler({
-      request: new Request('http://localhost/api/admin/users/u/sessions/s', { method: 'DELETE' }),
+      request: new Request('http://localhost/api/admin/users/u/sessions/s', {
+        method: 'DELETE',
+        headers: { origin: 'http://localhost:3010' },
+      }),
       params: { userId: 'u', sessionId: 's' },
     });
     expect(res.status).toBe(401);
@@ -510,7 +574,10 @@ describe('DELETE /api/admin/users/:userId/sessions/:sessionId', () => {
   it('returns 403 for non-admin', async () => {
     await asUser();
     const res = await revokeSessionHandler({
-      request: new Request('http://localhost/api/admin/users/u/sessions/s', { method: 'DELETE' }),
+      request: new Request('http://localhost/api/admin/users/u/sessions/s', {
+        method: 'DELETE',
+        headers: { origin: 'http://localhost:3010' },
+      }),
       params: { userId: 'u', sessionId: 's' },
     });
     expect(res.status).toBe(403);
@@ -522,6 +589,7 @@ describe('DELETE /api/admin/users/:userId/sessions/:sessionId', () => {
     const res = await revokeSessionHandler({
       request: new Request(`http://localhost/api/admin/users/${target.id}/sessions/missing`, {
         method: 'DELETE',
+        headers: { origin: 'http://localhost:3010' },
       }),
       params: { userId: target.id, sessionId: 'missing' },
     });
@@ -537,6 +605,7 @@ describe('DELETE /api/admin/users/:userId/sessions/:sessionId', () => {
     const res = await revokeSessionHandler({
       request: new Request(`http://localhost/api/admin/users/${target.id}/sessions/s-other`, {
         method: 'DELETE',
+        headers: { origin: 'http://localhost:3010' },
       }),
       params: { userId: target.id, sessionId: 's-other' },
     });
@@ -552,6 +621,7 @@ describe('DELETE /api/admin/users/:userId/sessions/:sessionId', () => {
     const res = await revokeSessionHandler({
       request: new Request(`http://localhost/api/admin/users/${target.id}/sessions/s-drop`, {
         method: 'DELETE',
+        headers: { origin: 'http://localhost:3010' },
       }),
       params: { userId: target.id, sessionId: 's-drop' },
     });
@@ -566,7 +636,10 @@ describe('DELETE /api/admin/users/:userId/sessions/:sessionId', () => {
 describe('DELETE /api/admin/users/:userId', () => {
   it('returns 401 when no session', async () => {
     const res = await deleteUserHandler({
-      request: new Request('http://localhost/api/admin/users/u', { method: 'DELETE' }),
+      request: new Request('http://localhost/api/admin/users/u', {
+        method: 'DELETE',
+        headers: { origin: 'http://localhost:3010' },
+      }),
       params: { userId: 'u' },
     });
     expect(res.status).toBe(401);
@@ -575,7 +648,10 @@ describe('DELETE /api/admin/users/:userId', () => {
   it('returns 403 for non-admin', async () => {
     await asUser();
     const res = await deleteUserHandler({
-      request: new Request('http://localhost/api/admin/users/u', { method: 'DELETE' }),
+      request: new Request('http://localhost/api/admin/users/u', {
+        method: 'DELETE',
+        headers: { origin: 'http://localhost:3010' },
+      }),
       params: { userId: 'u' },
     });
     expect(res.status).toBe(403);
@@ -584,7 +660,10 @@ describe('DELETE /api/admin/users/:userId', () => {
   it('rejects self-delete with 400', async () => {
     const admin = await asAdmin();
     const res = await deleteUserHandler({
-      request: new Request(`http://localhost/api/admin/users/${admin.id}`, { method: 'DELETE' }),
+      request: new Request(`http://localhost/api/admin/users/${admin.id}`, {
+        method: 'DELETE',
+        headers: { origin: 'http://localhost:3010' },
+      }),
       params: { userId: admin.id },
     });
     expect(res.status).toBe(400);
@@ -595,7 +674,10 @@ describe('DELETE /api/admin/users/:userId', () => {
   it('returns 404 for non-existent user', async () => {
     await asAdmin();
     const res = await deleteUserHandler({
-      request: new Request('http://localhost/api/admin/users/missing', { method: 'DELETE' }),
+      request: new Request('http://localhost/api/admin/users/missing', {
+        method: 'DELETE',
+        headers: { origin: 'http://localhost:3010' },
+      }),
       params: { userId: 'missing' },
     });
     expect(res.status).toBe(404);
@@ -608,7 +690,10 @@ describe('DELETE /api/admin/users/:userId', () => {
     await seedAccountRow('del-a', owner.id, 'credential');
 
     const res = await deleteUserHandler({
-      request: new Request(`http://localhost/api/admin/users/${owner.id}`, { method: 'DELETE' }),
+      request: new Request(`http://localhost/api/admin/users/${owner.id}`, {
+        method: 'DELETE',
+        headers: { origin: 'http://localhost:3010' },
+      }),
       params: { userId: owner.id },
     });
     expect(res.status).toBe(200);

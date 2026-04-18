@@ -3,9 +3,27 @@ import { subscription, orgAccessGrants, projects, member } from '@corates/db/sch
 import { getActiveGrantsByOrgId } from '@corates/db/org-access-grants';
 import { getPlan, DEFAULT_PLAN, getGrantPlan, isUnlimitedQuota } from '@corates/shared/plans';
 import { isSubscriptionActive } from './subscriptionStatus';
-import type { GrantType, Quotas } from '@corates/shared/plans';
+import type { Entitlements, GrantType, Quotas } from '@corates/shared/plans';
 import type { Database } from '@corates/db/client';
-import type { OrgBilling } from '../types';
+
+export interface OrgBilling {
+  effectivePlanId: string;
+  source: 'subscription' | 'grant' | 'free';
+  accessMode: 'full' | 'readOnly' | 'free';
+  entitlements: Entitlements;
+  quotas: Quotas;
+  subscription: {
+    id: string;
+    status: string;
+    periodEnd: Date | number | null;
+    cancelAtPeriodEnd: boolean | null;
+  } | null;
+  grant: {
+    id: string;
+    type: GrantType;
+    expiresAt: Date | number | null;
+  } | null;
+}
 
 interface SubscriptionRecord {
   id: string;

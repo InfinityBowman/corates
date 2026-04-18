@@ -1,18 +1,24 @@
+/**
+ * Catch-all 404 for unmatched /api/* paths.
+ *
+ * TanStack's specificity sort puts splats last, so this only fires for paths
+ * that no concrete API route claims. Returns the documented
+ * `SYSTEM_ROUTE_NOT_FOUND` JSON shape so API clients see a parseable error
+ * instead of the SPA HTML shell.
+ */
 import { createFileRoute } from '@tanstack/react-router';
-import { env } from 'cloudflare:workers';
-import { app as honoApp } from '@corates/workers';
+import { createDomainError, SYSTEM_ERRORS } from '@corates/shared';
 
-// Catch-all mount: all /api/* requests flow into the Hono app from @corates/workers.
-// This lets us consolidate onto one worker without rewriting 66 routes. WebSocket
-// upgrades are intercepted earlier in src/server.ts and don't reach this handler.
-// cloudflareCtx is injected by src/server.ts so Hono's c.executionCtx resolves.
-const handle = ({
-  request,
-  context,
-}: {
-  request: Request;
-  context?: { cloudflareCtx?: ExecutionContext };
-}) => honoApp.fetch(request, env, context?.cloudflareCtx);
+const handle = ({ request }: { request: Request }) => {
+  const path = (() => {
+    try {
+      return new URL(request.url).pathname;
+    } catch {
+      return request.url;
+    }
+  })();
+  return Response.json(createDomainError(SYSTEM_ERRORS.ROUTE_NOT_FOUND, { path }), { status: 404 });
+};
 
 export const Route = createFileRoute('/api/$')({
   server: {
@@ -23,6 +29,7 @@ export const Route = createFileRoute('/api/$')({
       PATCH: handle,
       DELETE: handle,
       OPTIONS: handle,
+      HEAD: handle,
     },
   },
 });

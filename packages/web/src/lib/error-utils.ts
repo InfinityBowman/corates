@@ -14,7 +14,6 @@ import {
   type DomainError,
   type TransportError,
 } from '@corates/shared';
-import { DetailedError } from 'hono/client';
 import { showToast } from '@/components/ui/toast';
 
 /**
@@ -241,15 +240,10 @@ export function isErrorCode(error: AppError | null | undefined, code: string): b
 }
 
 /**
- * Extract a DomainError from either a DetailedError (thrown by parseResponse)
- * or a raw DomainError. Returns null if the error is neither.
+ * Returns the error iff it has the DomainError shape, otherwise null.
+ * After the Hono RPC retirement, callers throw the parsed JSON directly,
+ * so this is a plain shape check.
  */
 export function getDomainError(error: unknown): DomainError | null {
-  if (error instanceof DetailedError && error.detail?.data?.code) {
-    return error.detail.data as DomainError;
-  }
-  if (isDomainError(error)) {
-    return error;
-  }
-  return null;
+  return isDomainError(error) ? error : null;
 }

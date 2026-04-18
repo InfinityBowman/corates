@@ -50,7 +50,7 @@ function listReq(path = '/api/admin/storage/documents'): Request {
 function deleteReq(body: unknown): Request {
   return new Request('http://localhost/api/admin/storage/documents', {
     method: 'DELETE',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', origin: 'http://localhost:3010' },
     body: body !== undefined ? JSON.stringify(body) : undefined,
   });
 }
