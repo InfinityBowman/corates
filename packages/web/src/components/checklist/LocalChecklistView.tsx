@@ -143,22 +143,6 @@ function LocalChecklistEditor({ checklistId }: { checklistId: string }) {
     [checklistId],
   );
 
-  const getRob2Text = useCallback(
-    (sectionKey: string, fieldKey: string, questionKey?: string): Y.Text | null => {
-      const ops = connectionPool.getOps(LOCAL_PROJECT_ID);
-      return (
-        ops?.checklist.getRob2Text(
-          checklistId,
-          checklistId,
-          sectionKey,
-          fieldKey,
-          questionKey ?? null,
-        ) ?? null
-      );
-    },
-    [checklistId],
-  );
-
   const checklistForUI = useMemo(() => {
     if (!currentChecklist || !answers) return null;
     return {
@@ -236,7 +220,6 @@ function LocalChecklistEditor({ checklistId }: { checklistId: string }) {
       onPdfClear={handlePdfClear}
       allowDelete={true}
       getTextRef={getTextRef}
-      getRob2Text={getRob2Text}
     />
   );
 }

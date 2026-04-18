@@ -4,8 +4,10 @@
  */
 
 import { useEffect, useMemo, useCallback } from 'react';
+import type * as Y from 'yjs';
 import { RESPONSE_LABELS, getResponseOptions } from './checklist-map';
 import { NoteEditor } from '@/components/checklist/common/NoteEditor';
+import type { TextRef } from '@/primitives/useProject/checklists';
 
 interface SignallingQuestionProps {
   question: any;
@@ -13,9 +15,9 @@ interface SignallingQuestionProps {
   onUpdate: (_newAnswer: any) => void;
   disabled?: boolean;
   showComment?: boolean;
-  domainKey?: string;
-  questionKey?: string;
-  getRob2Text?: (_sectionKey: string, _fieldKey: string, _questionKey?: string) => any;
+  domainKey: string;
+  questionKey: string;
+  getTextRef: (_ref: TextRef) => Y.Text | null;
   isSkippable?: boolean;
 }
 
@@ -27,7 +29,7 @@ export function SignallingQuestion({
   showComment,
   domainKey,
   questionKey,
-  getRob2Text,
+  getTextRef,
   isSkippable,
 }: SignallingQuestionProps) {
   const options = useMemo(() => getResponseOptions(question.responseType), [question.responseType]);
@@ -48,10 +50,13 @@ export function SignallingQuestion({
     [answer, onUpdate],
   );
 
-  const commentYText = useMemo(() => {
-    if (!showComment || !getRob2Text || !domainKey || !questionKey) return null;
-    return getRob2Text(domainKey, 'comment', questionKey);
-  }, [showComment, getRob2Text, domainKey, questionKey]);
+  const commentYText = useMemo(
+    () =>
+      showComment ?
+        getTextRef({ type: 'ROB2', sectionKey: domainKey, fieldKey: 'comment', questionKey })
+      : null,
+    [showComment, getTextRef, domainKey, questionKey],
+  );
 
   return (
     <div

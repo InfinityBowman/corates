@@ -6,12 +6,14 @@
  */
 
 import { useState, useMemo, useCallback, useRef, useEffect } from 'react';
+import type * as Y from 'yjs';
 import { getActiveDomainKeys } from './checklist-map';
 import { PreliminarySection } from './PreliminarySection';
 import { DomainSection } from './DomainSection';
 import { OverallSection } from './OverallSection';
 import { ResponseLegend } from './SignallingQuestion';
 import { ScoringSummary } from './ScoringSummary';
+import type { TextRef } from '@/primitives/useProject/checklists';
 
 interface ROB2ChecklistProps {
   checklistState: any;
@@ -19,7 +21,7 @@ interface ROB2ChecklistProps {
   showComments?: boolean;
   showLegend?: boolean;
   readOnly?: boolean;
-  getRob2Text?: (_sectionKey: string, _fieldKey: string, _questionKey?: string) => any;
+  getTextRef: (_ref: TextRef) => Y.Text | null;
 }
 
 export function ROB2Checklist({
@@ -28,7 +30,7 @@ export function ROB2Checklist({
   showComments,
   showLegend,
   readOnly,
-  getRob2Text,
+  getTextRef,
 }: ROB2ChecklistProps) {
   const isReadOnly = !!readOnly;
   const [collapsedDomains, setCollapsedDomains] = useState<Record<string, boolean>>({});
@@ -104,7 +106,7 @@ export function ROB2Checklist({
           preliminaryState={checklistState?.preliminary}
           onUpdate={handlePreliminaryUpdate}
           disabled={isReadOnly}
-          getRob2Text={getRob2Text}
+          getTextRef={getTextRef}
         />
 
         {/* Message when aim not selected */}
@@ -141,7 +143,7 @@ export function ROB2Checklist({
                     showComments={showComments}
                     collapsed={collapsedDomains[domainKey]}
                     onToggleCollapse={() => toggleDomainCollapse(domainKey)}
-                    getRob2Text={getRob2Text}
+                    getTextRef={getTextRef}
                   />
                 </div>
               ))}
