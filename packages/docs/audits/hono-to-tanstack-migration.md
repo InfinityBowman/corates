@@ -2,7 +2,7 @@
 
 Handoff doc. Migration consolidates two Cloudflare Workers (`packages/workers` + `packages/web`) into one: the TanStack Start app in `packages/web` takes over every route that used to live in the Hono app.
 
-Branches: `migrate-backend` (Passes 0-5, merged), `migrate-billing-routes` (Passes 6-12, [#484](https://github.com/InfinityBowman/corates/issues/484), merged via PR #487), `migrate-admin-routes` (Pass 13+, [#485](https://github.com/InfinityBowman/corates/issues/485), in progress as of 2026-04-17).
+Branches: `migrate-backend` (Passes 0-5, merged), `migrate-billing-routes` (Passes 6-12, [#484](https://github.com/InfinityBowman/corates/issues/484), merged via PR #487), `migrate-admin-routes` (Passes 13-21, [#485](https://github.com/InfinityBowman/corates/issues/485), complete as of 2026-04-17 — admin tier fully on TanStack).
 
 ## What's migrated
 
@@ -41,8 +41,9 @@ Tier 3 admin (in progress, issue [#485](https://github.com/InfinityBowman/corate
 - **Pass 18** — admin Stripe tools: `/api/admin/stripe/customer` (GET lookup by email|customerId), `/api/admin/stripe/portal-link` (POST), `/api/admin/stripe/customer/$customerId/{invoices,payment-methods,subscriptions}` (3 GETs). Five route files. All routes mock `@corates/workers/stripe`'s `createStripeClient` and exercise the customer-lookup → linked-org join via D1. No prior Hono test file existed. Migrated all 5 RPC callers in `routes/_app/_protected/admin/billing.stripe-tools.tsx` to plain fetch and dropped its `parseResponse`/`api` imports.
 - **Pass 19** — admin database viewer: `/api/admin/database/tables` (GET list), `/api/admin/database/tables/$tableName/schema` (GET), `/api/admin/database/tables/$tableName/rows` (GET — mediaFiles takes a dedicated path that joins org/project/user), `/api/admin/database/analytics/{pdfs-by-org,pdfs-by-user,pdfs-by-project,recent-uploads}` (4 GETs). Seven route files. Extracted `ALLOWED_TABLES` whitelist + `isAllowedTable` helper to `packages/web/src/server/lib/dbTables.ts` (used by both schema and rows routes). Migrated `useAdminDatabaseTables`/`useAdminTableSchema`/`useAdminTableRows` (in `useAdminQueries.ts`) from Hono RPC to plain fetch. The 4 analytics endpoints had no frontend caller (dead in the typed RPC client); preserved the endpoints anyway. No prior Hono test file existed.
 - **Pass 20** — admin users: `/api/admin/stats` (GET dashboard counts), `/api/admin/users` (GET list with pagination/search + provider join), `/api/admin/users/$userId` (GET details with projects/sessions/accounts/orgs+billing, DELETE with DO sync), `/api/admin/users/$userId/{ban,unban,impersonate}` (POST), `/api/admin/users/$userId/sessions` (DELETE all), `/api/admin/users/$userId/sessions/$sessionId` (DELETE one). Eight route files (stats split into its own file alongside the existing `stats/*` sub-routes — TanStack flat names handle parent + nested children fine). Self-ban/self-impersonate/self-delete return 400 with `details.constraint` (not `details.reason`) — that's how `createValidationError` shapes its details. Impersonate proxies to better-auth's `/api/auth/admin/impersonate-user` via `createAuth(env).handler(authRequest)`; tests mock `@corates/workers/auth-config` to return `{ handler: vi.fn() }`. Deleted Hono `packages/workers/src/__tests__/admin.test.ts` (8 tests, all covered the 4 routes migrated here). Reverted the wrong Pass 15 `useAdminStats` TODO — the `/api/admin/stats` endpoint was real (mounted by `userRoutes` in Hono); the hook now points to the new TanStack handler. Migrated `useAdminUsers`/`useAdminUserDetails` (in `useAdminQueries.ts`) and `impersonateUser`/`banUser`/`unbanUser`/`revokeUserSessions`/`revokeUserSession`/`deleteUser` (in `adminStore.ts`) from Hono RPC to plain fetch — `adminStore.ts` no longer references the typed `api.admin.users.*` client.
+- **Pass 21** — admin billing (org subscriptions + grants): `/api/admin/orgs/$orgId/billing` (GET full billing snapshot), `/api/admin/orgs/$orgId/subscriptions` (POST create), `/api/admin/orgs/$orgId/subscriptions/$subscriptionId` (PUT update / DELETE soft-cancel), `/api/admin/orgs/$orgId/grants` (POST create with trial-uniqueness + `expiresAt > startsAt` validation), `/api/admin/orgs/$orgId/grants/$grantId` (PUT update — `expiresAt` extends or `revokedAt` revokes/unrevokes / DELETE revokes), `/api/admin/orgs/$orgId/grant-trial` (POST 14-day convenience), `/api/admin/orgs/$orgId/grant-single-project` (POST 6-month, extends existing non-revoked grant by 6 months from `max(now, expiresAt)` returning `action: 'extended'` 200, otherwise `action: 'created'` 201). Seven route files. Added `@corates/workers/notify` subpath export so the subscription mutation routes can re-use `notifyOrgMembers`/`EventTypes`. Notification dispatch uses a small `dispatchSubscriptionNotify` helper exported from `subscriptions.ts` and re-imported by the `$subscriptionId.ts` PUT/DELETE — it uses `cloudflareCtx.waitUntil` when the TanStack handler receives `context?.cloudflareCtx`, otherwise awaits inline (test-friendly). The same `HandlerArgs` extension pattern (`context?: { cloudflareCtx?: ExecutionContext }`) is the recommended way to thread `waitUntil` into TanStack routes — first instance in the codebase. Deleted Hono `packages/workers/src/routes/admin/__tests__/admin-billing.test.ts` (12 tests, all covered routes migrated here). Migrated `fetchOrgBilling`/`createOrgSubscription`/`updateOrgSubscription`/`cancelOrgSubscription`/`createOrgGrant`/`revokeOrgGrant`/`grantOrgTrial`/`grantOrgSingleProject` (in `adminStore.ts`) from Hono RPC to plain fetch via a tiny `adminBillingMutate` helper that handles invalidation. **`adminStore.ts` no longer imports `parseResponse` or `api`** — admin tier is fully on TanStack from the client side too.
 
-Every route a regular user hits is now on TanStack. Hono still serves `/api/auth/*` (better-auth catch-all), Stripe webhooks, the remaining admin billing routes, and DO WebSocket upgrades.
+**Admin tier complete.** All admin routes are TanStack. Every route a regular user or admin hits is now on TanStack. Hono still serves `/api/auth/*` (better-auth catch-all), Stripe webhooks, and DO WebSocket upgrades — that's it.
 
 ## What's left
 
@@ -54,7 +55,7 @@ Tracking issues:
 
 Tier 3:
 
-- `packages/workers/src/routes/admin/*` — 2 files remaining (~1,200 lines). Pass 13-20 stripped `orgs.ts`, `storage.ts`, `stats.ts`, `projects.ts`, `billing-observability.ts`, `stripe-tools.ts`, `database.ts`, `users.ts`. Largest individual file left: `billing.ts` (1,195). `index.ts` (34) is just router wiring.
+- `packages/workers/src/routes/admin/*` — fully migrated. All 9 files stripped to stubs (Pass 13-21). `index.ts` (34) still mounts the empty stubs and applies `requireAdmin` + `requireTrustedOrigin`; once the Hono app retires (#486) this whole tree goes away.
 - `packages/workers/src/routes/billing/*` — fully migrated. All 7 files stripped to stubs. Order: `sync.ts` (Pass 6), `portal.ts` (Pass 7), `validation.ts` (Pass 8), `grants.ts` (Pass 9), `invoices.ts` (Pass 10), `subscription.ts` 3 routes (Pass 11), `checkout.ts` 3 routes (Pass 12).
 
 Must stay on Hono indefinitely:
@@ -234,6 +235,8 @@ Delete the corresponding Hono test file (`packages/workers/src/routes/__tests__/
 
 **`vi.mock` factories can't reference module-scoped variables.** `vi.mock` is hoisted above all imports, so a factory referencing a top-level `const mockFn = vi.fn()` throws `Cannot access 'mockFn' before initialization`. Use `const { mockFn } = vi.hoisted(() => ({ mockFn: vi.fn() }))` when the test body needs to inspect the mock (e.g. asserting `toHaveBeenCalledWith` on `syncMemberToDO` or `auth.handler`).
 
+**Threading `waitUntil` into TanStack handlers.** `src/server.ts` injects `cloudflareCtx` into every TanStack request via `context: { cloudflareCtx: ctx }`. Routes that want fire-and-forget work (notifications, async logging) extend their handler args with `context?: { cloudflareCtx?: ExecutionContext }` and check `context?.cloudflareCtx?.waitUntil` at runtime. When absent (tests, fallback) the work is awaited inline. `routes/api/admin/orgs/$orgId/subscriptions.ts` exports a reusable `dispatchSubscriptionNotify` helper that does this.
+
 ## Client caller translation
 
 Client callers that were using Hono RPC (`honoClient.api.orgs[':orgId'].$get(...)`) were rewritten to plain `fetch(\`\${API_BASE}/api/orgs/\${orgId}\`, {...})`. The URLs are identical; the TanStack routes serve the same paths. Completed updates:
@@ -250,8 +253,8 @@ Most components already used plain `fetch`, so no code changes were needed for P
 
 ## Test counts (2026-04-17)
 
-- Web server tests: **349 passing** across 35 files (Pass 20: +37 tests, +1 file)
-- Workers tests: **229 passing** across 21 files (Pass 20 deleted `src/__tests__/admin.test.ts` — 8 tests, all covered routes migrated here)
+- Web server tests: **377 passing** across 36 files (Pass 21: +28 tests, +1 file)
+- Workers tests: **217 passing** across 20 files (Pass 21 deleted `routes/admin/__tests__/admin-billing.test.ts` — 12 tests, all covered routes migrated here)
 - Web typecheck: clean modulo 3 pre-existing errors (e2e `timeout` in TestDetails, unused `loginWithApiCookies`, `src/server.ts:28` queue() arity)
 - Workers typecheck: clean
 
@@ -274,7 +277,7 @@ Never start dev servers — the user does that.
 ## Recommended Tier 3 order
 
 1. ~~**Billing non-webhook first** ([#484](https://github.com/InfinityBowman/corates/issues/484)). Done — Passes 6-12.~~
-2. **Admin** ([#485](https://github.com/InfinityBowman/corates/issues/485)). ~7.2k lines, in progress on `migrate-admin-routes`. Mostly read-only dashboards, so faster per-line than billing. Order: ~~`orgs.ts` (393, Pass 13)~~, ~~`storage.ts` (525, Pass 14)~~, ~~`stats.ts` (665, Pass 15)~~, ~~`projects.ts` (772, Pass 16)~~, ~~`billing-observability.ts` (788, Pass 17)~~, ~~`stripe-tools.ts` (808, Pass 18)~~, ~~`database.ts` (997, Pass 19)~~, ~~`users.ts` (1,092, Pass 20)~~, `billing.ts` (1,195).
+2. ~~**Admin**~~ ([#485](https://github.com/InfinityBowman/corates/issues/485)). Done — Passes 13-21. ~~`orgs.ts` (393, Pass 13)~~, ~~`storage.ts` (525, Pass 14)~~, ~~`stats.ts` (665, Pass 15)~~, ~~`projects.ts` (772, Pass 16)~~, ~~`billing-observability.ts` (788, Pass 17)~~, ~~`stripe-tools.ts` (808, Pass 18)~~, ~~`database.ts` (997, Pass 19)~~, ~~`users.ts` (1,092, Pass 20)~~, ~~`billing.ts` (1,195, Pass 21)~~.
 3. **Retire Hono app** ([#486](https://github.com/InfinityBowman/corates/issues/486)). Port `/api/auth/*` and Stripe webhooks, then strip workers to library-only.
 
 Stripe webhooks stay on Hono. The `/api/auth/*` catch-all stays on Hono (better-auth).

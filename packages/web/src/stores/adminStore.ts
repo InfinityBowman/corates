@@ -8,8 +8,6 @@
  */
 
 import { create } from 'zustand';
-import { parseResponse } from 'hono/client';
-import { api } from '@/lib/rpc';
 import { apiFetch } from '@/lib/apiFetch';
 import { queryClient } from '@/lib/queryClient';
 import { queryKeys } from '@/lib/queryKeys';
@@ -182,22 +180,43 @@ export async function fetchOrgDetails(orgId: string) {
 }
 
 export async function fetchOrgBilling(orgId: string) {
-  return parseResponse(api.api.admin.orgs[':orgId'].billing.$get({ param: { orgId } }));
+  const res = await fetch(`/api/admin/orgs/${encodeURIComponent(orgId)}/billing`, {
+    credentials: 'include',
+  });
+  const data = (await res.json()) as Record<string, unknown>;
+  if (!res.ok) throw data;
+  return data;
+}
+
+async function adminBillingMutate(
+  url: string,
+  method: 'POST' | 'PUT' | 'DELETE',
+  orgId: string,
+  body?: Record<string, unknown>,
+) {
+  const init: RequestInit = { method, credentials: 'include' };
+  if (body !== undefined) {
+    init.headers = { 'Content-Type': 'application/json' };
+    init.body = JSON.stringify(body);
+  }
+  const res = await fetch(url, init);
+  const data = (await res.json()) as Record<string, unknown>;
+  if (!res.ok) throw data;
+  queryClient.invalidateQueries({ queryKey: queryKeys.admin.orgDetails(orgId) });
+  queryClient.invalidateQueries({ queryKey: queryKeys.admin.orgBilling(orgId) });
+  return data;
 }
 
 export async function createOrgSubscription(
   orgId: string,
   subscriptionData: Record<string, unknown>,
 ) {
-  const result = await parseResponse(
-    api.api.admin.orgs[':orgId'].subscriptions.$post({
-      param: { orgId },
-      json: subscriptionData as never,
-    }),
+  return adminBillingMutate(
+    `/api/admin/orgs/${encodeURIComponent(orgId)}/subscriptions`,
+    'POST',
+    orgId,
+    subscriptionData,
   );
-  queryClient.invalidateQueries({ queryKey: queryKeys.admin.orgDetails(orgId) });
-  queryClient.invalidateQueries({ queryKey: queryKeys.admin.orgBilling(orgId) });
-  return result;
 }
 
 export async function updateOrgSubscription(
@@ -205,67 +224,53 @@ export async function updateOrgSubscription(
   subscriptionId: string,
   updateData: Record<string, unknown>,
 ) {
-  const result = await parseResponse(
-    api.api.admin.orgs[':orgId'].subscriptions[':subscriptionId'].$put({
-      param: { orgId, subscriptionId },
-      json: updateData as never,
-    }),
+  return adminBillingMutate(
+    `/api/admin/orgs/${encodeURIComponent(orgId)}/subscriptions/${encodeURIComponent(subscriptionId)}`,
+    'PUT',
+    orgId,
+    updateData,
   );
-  queryClient.invalidateQueries({ queryKey: queryKeys.admin.orgDetails(orgId) });
-  queryClient.invalidateQueries({ queryKey: queryKeys.admin.orgBilling(orgId) });
-  return result;
 }
 
 export async function cancelOrgSubscription(orgId: string, subscriptionId: string) {
-  const result = await parseResponse(
-    api.api.admin.orgs[':orgId'].subscriptions[':subscriptionId'].$delete({
-      param: { orgId, subscriptionId },
-    }),
+  return adminBillingMutate(
+    `/api/admin/orgs/${encodeURIComponent(orgId)}/subscriptions/${encodeURIComponent(subscriptionId)}`,
+    'DELETE',
+    orgId,
   );
-  queryClient.invalidateQueries({ queryKey: queryKeys.admin.orgDetails(orgId) });
-  queryClient.invalidateQueries({ queryKey: queryKeys.admin.orgBilling(orgId) });
-  return result;
 }
 
 export async function createOrgGrant(orgId: string, grantData: Record<string, unknown>) {
-  const result = await parseResponse(
-    api.api.admin.orgs[':orgId'].grants.$post({
-      param: { orgId },
-      json: grantData as never,
-    }),
+  return adminBillingMutate(
+    `/api/admin/orgs/${encodeURIComponent(orgId)}/grants`,
+    'POST',
+    orgId,
+    grantData,
   );
-  queryClient.invalidateQueries({ queryKey: queryKeys.admin.orgDetails(orgId) });
-  queryClient.invalidateQueries({ queryKey: queryKeys.admin.orgBilling(orgId) });
-  return result;
 }
 
 export async function revokeOrgGrant(orgId: string, grantId: string) {
-  const result = await parseResponse(
-    api.api.admin.orgs[':orgId'].grants[':grantId'].$delete({
-      param: { orgId, grantId },
-    }),
+  return adminBillingMutate(
+    `/api/admin/orgs/${encodeURIComponent(orgId)}/grants/${encodeURIComponent(grantId)}`,
+    'DELETE',
+    orgId,
   );
-  queryClient.invalidateQueries({ queryKey: queryKeys.admin.orgDetails(orgId) });
-  queryClient.invalidateQueries({ queryKey: queryKeys.admin.orgBilling(orgId) });
-  return result;
 }
 
 export async function grantOrgTrial(orgId: string) {
-  const result = await parseResponse(
-    api.api.admin.orgs[':orgId']['grant-trial'].$post({ param: { orgId } }),
+  return adminBillingMutate(
+    `/api/admin/orgs/${encodeURIComponent(orgId)}/grant-trial`,
+    'POST',
+    orgId,
   );
-  queryClient.invalidateQueries({ queryKey: queryKeys.admin.orgDetails(orgId) });
-  queryClient.invalidateQueries({ queryKey: queryKeys.admin.orgBilling(orgId) });
-  return result;
 }
 
 export async function grantOrgSingleProject(orgId: string) {
-  const result = await parseResponse(
-    api.api.admin.orgs[':orgId']['grant-single-project'].$post({ param: { orgId } }),
+  return adminBillingMutate(
+    `/api/admin/orgs/${encodeURIComponent(orgId)}/grant-single-project`,
+    'POST',
+    orgId,
   );
-  queryClient.invalidateQueries({ queryKey: queryKeys.admin.orgDetails(orgId) });
-  queryClient.invalidateQueries({ queryKey: queryKeys.admin.orgBilling(orgId) });
-  return result;
 }
 
 export async function fetchBillingLedger(
