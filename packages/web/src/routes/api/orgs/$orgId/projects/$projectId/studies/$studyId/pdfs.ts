@@ -49,7 +49,9 @@ export const handleGet = async ({ request, params }: HandlerArgs) => {
       })
       .from(mediaFiles)
       .leftJoin(user, eq(mediaFiles.uploadedBy, user.id))
-      .where(and(eq(mediaFiles.projectId, params.projectId), eq(mediaFiles.studyId, params.studyId)))
+      .where(
+        and(eq(mediaFiles.projectId, params.projectId), eq(mediaFiles.studyId, params.studyId)),
+      )
       .orderBy(mediaFiles.createdAt);
 
     const pdfs = results.map(row => ({
@@ -270,9 +272,7 @@ export const handlePost = async ({ request, params }: HandlerArgs) => {
   }
 };
 
-export const Route = createFileRoute(
-  '/api/orgs/$orgId/projects/$projectId/studies/$studyId/pdfs',
-)({
+export const Route = createFileRoute('/api/orgs/$orgId/projects/$projectId/studies/$studyId/pdfs')({
   server: {
     handlers: {
       GET: handleGet,

@@ -4,12 +4,14 @@ import { and, eq } from 'drizzle-orm';
 import { createDb } from '@corates/db/client';
 import { mediaFiles } from '@corates/db/schema';
 import { resetTestDatabase, seedMediaFile } from '@/__tests__/server/helpers';
-import { buildProject, buildUser, buildOrgMember, resetCounter } from '@/__tests__/server/factories';
-import { handleGet as listHandler, handlePost as uploadHandler } from '../pdfs';
 import {
-  handleGet as downloadHandler,
-  handleDelete as deleteHandler,
-} from '../pdfs/$fileName';
+  buildProject,
+  buildUser,
+  buildOrgMember,
+  resetCounter,
+} from '@/__tests__/server/factories';
+import { handleGet as listHandler, handlePost as uploadHandler } from '../pdfs';
+import { handleGet as downloadHandler, handleDelete as deleteHandler } from '../pdfs/$fileName';
 import { PDF_LIMITS } from '@corates/shared';
 
 let currentUser: { id: string; email: string } = { id: 'user-1', email: 'user1@example.com' };
@@ -71,10 +73,7 @@ describe('GET /api/orgs/:orgId/projects/:projectId/studies/:studyId/pdfs', () =>
     });
 
     const res = await listHandler({
-      request: req(
-        `/api/orgs/${org.id}/projects/${project.id}/studies/study-1/pdfs`,
-        'GET',
-      ),
+      request: req(`/api/orgs/${org.id}/projects/${project.id}/studies/study-1/pdfs`, 'GET'),
       params: { orgId: org.id, projectId: project.id, studyId: 'study-1' },
     });
 
@@ -95,10 +94,7 @@ describe('GET /api/orgs/:orgId/projects/:projectId/studies/:studyId/pdfs', () =>
     currentUser = { id: nonMember.id, email: nonMember.email };
 
     const res = await listHandler({
-      request: req(
-        `/api/orgs/${org.id}/projects/${project.id}/studies/study-1/pdfs`,
-        'GET',
-      ),
+      request: req(`/api/orgs/${org.id}/projects/${project.id}/studies/study-1/pdfs`, 'GET'),
       params: { orgId: org.id, projectId: project.id, studyId: 'study-1' },
     });
 
@@ -118,16 +114,19 @@ describe('POST /api/orgs/:orgId/projects/:projectId/studies/:studyId/pdfs', () =
     formData.append('file', file);
 
     const res = await uploadHandler({
-      request: req(
-        `/api/orgs/${org.id}/projects/${project.id}/studies/study-1/pdfs`,
-        'POST',
-        { body: formData },
-      ),
+      request: req(`/api/orgs/${org.id}/projects/${project.id}/studies/study-1/pdfs`, 'POST', {
+        body: formData,
+      }),
       params: { orgId: org.id, projectId: project.id, studyId: 'study-1' },
     });
 
     expect(res.status).toBe(200);
-    const body = (await res.json()) as { success: boolean; id: string; fileName: string; key: string };
+    const body = (await res.json()) as {
+      success: boolean;
+      id: string;
+      fileName: string;
+      key: string;
+    };
     expect(body.success).toBe(true);
     expect(body.fileName).toBe('document.pdf');
     expect(body.key).toBe(`projects/${project.id}/studies/study-1/document.pdf`);
@@ -160,14 +159,10 @@ describe('POST /api/orgs/:orgId/projects/:projectId/studies/:studyId/pdfs', () =
     formData.append('file', new File([PDF_MAGIC], 'small.pdf', { type: 'application/pdf' }));
 
     const res = await uploadHandler({
-      request: req(
-        `/api/orgs/${org.id}/projects/${project.id}/studies/study-1/pdfs`,
-        'POST',
-        {
-          body: formData,
-          headers: { 'Content-Length': String(PDF_LIMITS.MAX_SIZE + 1) },
-        },
-      ),
+      request: req(`/api/orgs/${org.id}/projects/${project.id}/studies/study-1/pdfs`, 'POST', {
+        body: formData,
+        headers: { 'Content-Length': String(PDF_LIMITS.MAX_SIZE + 1) },
+      }),
       params: { orgId: org.id, projectId: project.id, studyId: 'study-1' },
     });
 
@@ -185,11 +180,9 @@ describe('POST /api/orgs/:orgId/projects/:projectId/studies/:studyId/pdfs', () =
     formData.append('file', file);
 
     const res = await uploadHandler({
-      request: req(
-        `/api/orgs/${org.id}/projects/${project.id}/studies/study-1/pdfs`,
-        'POST',
-        { body: formData },
-      ),
+      request: req(`/api/orgs/${org.id}/projects/${project.id}/studies/study-1/pdfs`, 'POST', {
+        body: formData,
+      }),
       params: { orgId: org.id, projectId: project.id, studyId: 'study-1' },
     });
 
@@ -221,11 +214,9 @@ describe('POST /api/orgs/:orgId/projects/:projectId/studies/:studyId/pdfs', () =
     formData.append('file', file);
 
     const res = await uploadHandler({
-      request: req(
-        `/api/orgs/${org.id}/projects/${project.id}/studies/study-1/pdfs`,
-        'POST',
-        { body: formData },
-      ),
+      request: req(`/api/orgs/${org.id}/projects/${project.id}/studies/study-1/pdfs`, 'POST', {
+        body: formData,
+      }),
       params: { orgId: org.id, projectId: project.id, studyId: 'study-1' },
     });
 
@@ -241,17 +232,13 @@ describe('POST /api/orgs/:orgId/projects/:projectId/studies/:studyId/pdfs', () =
     currentUser = { id: owner.id, email: owner.email };
 
     const res = await uploadHandler({
-      request: req(
-        `/api/orgs/${org.id}/projects/${project.id}/studies/study-1/pdfs`,
-        'POST',
-        {
-          body: PDF_MAGIC,
-          headers: {
-            'Content-Type': 'application/pdf',
-            'X-File-Name': 'raw-document.pdf',
-          },
+      request: req(`/api/orgs/${org.id}/projects/${project.id}/studies/study-1/pdfs`, 'POST', {
+        body: PDF_MAGIC,
+        headers: {
+          'Content-Type': 'application/pdf',
+          'X-File-Name': 'raw-document.pdf',
         },
-      ),
+      }),
       params: { orgId: org.id, projectId: project.id, studyId: 'study-1' },
     });
 
