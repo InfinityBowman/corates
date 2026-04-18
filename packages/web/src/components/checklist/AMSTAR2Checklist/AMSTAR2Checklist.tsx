@@ -417,10 +417,7 @@ function Question9({
     [stateA, stateB, onUpdate],
   );
 
-  const noteYText = useMemo(
-    () => getTextRef({ type: 'AMSTAR2', questionKey: 'q9' }),
-    [getTextRef],
-  );
+  const noteYText = useMemo(() => getTextRef({ type: 'AMSTAR2', questionKey: 'q9' }), [getTextRef]);
 
   return (
     <div className='bg-card relative rounded-lg p-7 pb-3 text-sm shadow-md'>

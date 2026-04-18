@@ -17,8 +17,7 @@ export function PlanningSection({ disabled, getTextRef }: PlanningSectionProps) 
   const p1Field = (PLANNING_SECTION as any).p1;
 
   const yText = useMemo(
-    () =>
-      getTextRef({ type: 'ROBINS_I', sectionKey: 'planning', fieldKey: 'confoundingFactors' }),
+    () => getTextRef({ type: 'ROBINS_I', sectionKey: 'planning', fieldKey: 'confoundingFactors' }),
     [getTextRef],
   );
 
