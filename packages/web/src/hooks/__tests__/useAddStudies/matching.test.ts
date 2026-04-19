@@ -21,7 +21,7 @@ describe('matching', () => {
       expect(normalizeDoi(input)).toBe(expected);
     });
 
-    it.each([null, undefined, ''])('returns null for %s', (input) => {
+    it.each([null, undefined, ''])('returns null for %s', input => {
       expect(normalizeDoi(input)).toBeNull();
     });
   });
@@ -92,7 +92,6 @@ describe('matching', () => {
         expect(entriesMatch(entry1, entry2)).toBe(false);
       });
     });
-
   });
 
   describe('findMatchingRef', () => {
@@ -171,6 +170,5 @@ describe('matching', () => {
         expect(result).toBeNull();
       });
     });
-
   });
 });

@@ -1,9 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import {
-  isEditable,
-  getStatusLabel,
-  canTransitionTo,
-} from '../status.js';
+import { isEditable, getStatusLabel, canTransitionTo } from '../status.js';
 
 describe('Checklist Status', () => {
   describe('isEditable', () => {
@@ -81,5 +77,4 @@ describe('Checklist Status', () => {
       expect(canTransitionTo('pending', 'finalized')).toBe(false);
     });
   });
-
 });
