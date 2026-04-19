@@ -123,14 +123,6 @@ export default [
       ],
       // Prevent throwing literals - must throw Error objects
       'no-throw-literal': 'error',
-
-      // Ensure correct usage of @corates/ui prestyled vs primitive components
-      // Prestyled (Dialog) should not be used with .Root, .Content patterns
-      // Use DialogPrimitive for primitive patterns
-      'corates/corates-ui-imports': 'error',
-
-      // Prevent Outlet usage - use props.children for nested routes
-      'corates/no-outlet': 'error',
     },
   },
   {
@@ -253,8 +245,6 @@ export default [
     },
     rules: {
       ...reactHooks.configs.recommended.rules,
-      'corates/corates-ui-imports': 'off',
-      'corates/no-outlet': 'off',
     },
   },
   {
