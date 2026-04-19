@@ -26,10 +26,6 @@ export const LOCAL_PROJECT_ID = 'local-practice';
 // an optimization to skip the Dexie read on subsequent loads.
 const MIGRATION_FLAG = 'localMigrated';
 
-export function isLocalProjectId(id: string | null | undefined): boolean {
-  return !!id && id.startsWith('local-');
-}
-
 const HANDLERS: Record<string, ChecklistHandler> = {
   [CHECKLIST_TYPES.AMSTAR2]: new AMSTAR2Handler(),
   [CHECKLIST_TYPES.ROBINS_I]: new ROBINSIHandler(),

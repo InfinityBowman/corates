@@ -34,7 +34,6 @@
     "@embedpdf/pdfium": "^2.14.0",
     "@embedpdf/plugin-annotation": "^2.14.0",
     "@embedpdf/plugin-capture": "^2.14.0",
-    "@embedpdf/plugin-commands": "^2.14.0",
     "@embedpdf/plugin-document-manager": "^2.14.0",
     "@embedpdf/plugin-export": "^2.14.0",
     "@embedpdf/plugin-fullscreen": "^2.14.0",
