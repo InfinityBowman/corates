@@ -9,7 +9,8 @@ import { ChevronLeftIcon } from 'lucide-react';
 import { ChecklistWithPdf } from '@/components/checklist/ChecklistWithPdf';
 import { useProjectContext } from '@/components/project/ProjectContext';
 import { connectionPool } from '@/project/ConnectionPool';
-import { useChecklistAnswers } from '@/primitives/useProject/checklists/useChecklistAnswers';
+import { useChecklistViewModel } from '@/primitives/useProject/checklists/useChecklistViewModel';
+import { buildChecklistAnswerInput } from '@/primitives/useProject/checklists';
 import { useProjectStore, selectConnectionPhase } from '@/stores/projectStore';
 import { useAuthStore, selectUser } from '@/stores/authStore';
 import { ACCESS_DENIED_ERRORS } from '@/constants/errors.js';
@@ -27,40 +28,10 @@ import {
   AlertDialogFooter,
   AlertDialogAction,
 } from '@/components/ui/alert-dialog';
-import { getChecklistTypeFromState, scoreChecklistOfType } from '@/checklist-registry/index';
 import { ScoreTag } from '@/components/checklist/ScoreTag';
 import { isAMSTAR2Complete } from '@/components/checklist/AMSTAR2Checklist/checklist.js';
 import { isROBINSIComplete } from '@/components/checklist/ROBINSIChecklist/checklist';
 import { isROB2Complete } from '@/components/checklist/ROB2Checklist/checklist';
-
-// Valid answer keys for each checklist type (module-level for stable references)
-const AMSTAR2_KEY_PATTERN = /^q\d+[a-z]*$/i;
-const ROBINS_I_KEYS = new Set([
-  'planning',
-  'sectionA',
-  'sectionB',
-  'sectionC',
-  'sectionD',
-  'confoundingEvaluation',
-  'domain1a',
-  'domain1b',
-  'domain2',
-  'domain3',
-  'domain4',
-  'domain5',
-  'domain6',
-  'overall',
-]);
-const ROB2_KEYS = new Set([
-  'preliminary',
-  'domain1',
-  'domain2a',
-  'domain2b',
-  'domain3',
-  'domain4',
-  'domain5',
-  'overall',
-]);
 
 interface ChecklistYjsWrapperProps {
   projectId: string;
@@ -97,15 +68,8 @@ export function ChecklistYjsWrapper({ projectId, studyId, checklistId }: Checkli
     }
   }, [connectionState.error, navigate]);
 
-  const currentStudy = useProjectStore(s => {
-    const studies = s.projects[projectId]?.studies || [];
-    return studies.find((st: any) => st.id === studyId) || null;
-  });
-
-  const currentChecklist = useMemo(() => {
-    if (!currentStudy) return null;
-    return currentStudy.checklists?.find((c: any) => c.id === checklistId) || null;
-  }, [currentStudy, checklistId]);
+  const { currentStudy, currentChecklist, checklistForUI, checklistType, currentScore } =
+    useChecklistViewModel(projectId, studyId, checklistId);
 
   const isReadOnly = currentChecklist?.status ? !isEditable(currentChecklist.status) : false;
 
@@ -214,30 +178,6 @@ export function ChecklistYjsWrapper({ projectId, studyId, checklistId }: Checkli
     [orgId, projectId, studyId, studyPdfs, user?.id, addPdfToStudy],
   );
 
-  const answers = useChecklistAnswers(projectId, studyId, checklistId);
-
-  const checklistForUI = useMemo(() => {
-    if (!currentChecklist || !answers) return null;
-    return {
-      id: currentChecklist.id,
-      name: currentStudy?.name || 'Checklist',
-      reviewerName: '',
-      createdAt: currentChecklist.createdAt,
-      ...answers,
-    };
-  }, [currentChecklist, currentStudy, answers]);
-
-  const checklistType = useMemo(() => {
-    if (currentChecklist?.type) return currentChecklist.type;
-    if (checklistForUI) return getChecklistTypeFromState(checklistForUI);
-    return 'AMSTAR2';
-  }, [currentChecklist, checklistForUI]);
-
-  const currentScore = useMemo(() => {
-    if (!checklistForUI || !checklistType) return null;
-    return scoreChecklistOfType(checklistType, checklistForUI);
-  }, [checklistForUI, checklistType]);
-
   const isChecklistValid = useMemo(() => {
     if (!checklistForUI) return false;
     if (checklistType === 'AMSTAR2') return isAMSTAR2Complete(checklistForUI as any);
@@ -248,15 +188,11 @@ export function ChecklistYjsWrapper({ projectId, studyId, checklistId }: Checkli
 
   const handlePartialUpdate = useCallback(
     (patch: Record<string, any>) => {
-      if (isReadOnly) return;
+      if (isReadOnly || !checklistType) return;
       Object.entries(patch).forEach(([key, value]) => {
-        const isValidKey =
-          (checklistType === 'AMSTAR2' && AMSTAR2_KEY_PATTERN.test(key)) ||
-          (checklistType === 'ROBINS_I' && ROBINS_I_KEYS.has(key)) ||
-          (checklistType === 'ROB2' && ROB2_KEYS.has(key));
-        if (isValidKey) {
-          updateChecklistAnswer(studyId, checklistId, key, value);
-        }
+        const input = buildChecklistAnswerInput(checklistType, key, value);
+        if (!input) return;
+        updateChecklistAnswer(studyId, checklistId, input);
       });
     },
     [isReadOnly, checklistType, updateChecklistAnswer, studyId, checklistId],
@@ -374,7 +310,7 @@ export function ChecklistYjsWrapper({ projectId, studyId, checklistId }: Checkli
         </span>
       </div>
       <div className='ml-auto flex items-center gap-3'>
-        <ScoreTag currentScore={currentScore} checklistType={checklistType} />
+        <ScoreTag currentScore={currentScore} checklistType={checklistType ?? undefined} />
         {!isReadOnly ?
           <button
             onClick={handleToggleComplete}
@@ -425,7 +361,7 @@ export function ChecklistYjsWrapper({ projectId, studyId, checklistId }: Checkli
 
   return (
     <ChecklistWithPdf
-      checklistType={checklistType}
+      checklistType={checklistType ?? undefined}
       checklist={checklistForUI}
       onUpdate={handlePartialUpdate}
       headerContent={headerContent}

@@ -86,20 +86,6 @@ export const project = {
       return ops.checklist.getChecklistData(studyId, checklistId) ?? null;
     },
 
-    updateAnswer(
-      studyId: string,
-      checklistId: string,
-      questionId: string,
-      answer: unknown,
-      note?: string,
-    ): void {
-      const ops = connectionPool.getActiveOps();
-      if (!ops) throw new Error('No active project connection');
-      const data: Record<string, unknown> = { answer };
-      if (note !== undefined) data.note = note;
-      ops.checklist.updateChecklistAnswer(studyId, checklistId, questionId, data);
-    },
-
     getTextRef(studyId: string, checklistId: string, ref: TextRef) {
       const ops = connectionPool.getActiveOps();
       if (!ops) throw new Error('No active project connection');

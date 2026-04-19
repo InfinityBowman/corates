@@ -6,7 +6,7 @@
  * they don't benefit from CRDT storage and would bloat the Y.Doc.
  */
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { ChevronLeftIcon } from 'lucide-react';
 import * as Y from 'yjs';
@@ -14,11 +14,10 @@ import { ChecklistWithPdf } from '@/components/checklist/ChecklistWithPdf';
 import { CreateLocalChecklist } from '@/components/checklist/CreateLocalChecklist';
 import { connectionPool } from '@/project/ConnectionPool';
 import { LOCAL_PROJECT_ID } from '@/project/localProject';
-import { useProjectStore, selectConnectionPhase, selectStudies } from '@/stores/projectStore';
-import { useChecklistAnswers } from '@/primitives/useProject/checklists/useChecklistAnswers';
-import type { TextRef } from '@/primitives/useProject/checklists';
+import { useProjectStore, selectConnectionPhase } from '@/stores/projectStore';
+import { useChecklistViewModel } from '@/primitives/useProject/checklists/useChecklistViewModel';
+import { buildChecklistAnswerInput, type TextRef } from '@/primitives/useProject/checklists';
 import { db } from '@/primitives/db';
-import { getChecklistTypeFromState, scoreChecklistOfType } from '@/checklist-registry/index';
 import { ScoreTag } from '@/components/checklist/ScoreTag';
 
 interface LocalChecklistViewProps {
@@ -37,18 +36,11 @@ function LocalChecklistEditor({ checklistId }: { checklistId: string }) {
   const navigate = useNavigate();
 
   const phase = useProjectStore(s => selectConnectionPhase(s, LOCAL_PROJECT_ID));
-  const studies = useProjectStore(s => selectStudies(s, LOCAL_PROJECT_ID));
-
-  const currentStudy = useMemo(
-    () => studies.find(st => st.id === checklistId) || null,
-    [studies, checklistId],
+  const { currentChecklist, checklistForUI, checklistType, currentScore } = useChecklistViewModel(
+    LOCAL_PROJECT_ID,
+    checklistId,
+    checklistId,
   );
-  const currentChecklist = useMemo(
-    () => (currentStudy?.checklists || []).find(c => c.id === checklistId) || null,
-    [currentStudy, checklistId],
-  );
-
-  const answers = useChecklistAnswers(LOCAL_PROJECT_ID, checklistId, checklistId);
 
   const [pdfState, setPdfState] = useState<{
     loading: boolean;
@@ -122,17 +114,14 @@ function LocalChecklistEditor({ checklistId }: { checklistId: string }) {
   const handlePartialUpdate = useCallback(
     (patch: Record<string, any>) => {
       const ops = connectionPool.getOps(LOCAL_PROJECT_ID);
-      if (!ops) return;
+      if (!ops || !checklistType) return;
       Object.entries(patch).forEach(([key, value]) => {
-        ops.checklist.updateChecklistAnswer(
-          checklistId,
-          checklistId,
-          key,
-          value as Record<string, unknown>,
-        );
+        const input = buildChecklistAnswerInput(checklistType, key, value);
+        if (!input) return;
+        ops.checklist.updateChecklistAnswer(checklistId, checklistId, input);
       });
     },
-    [checklistId],
+    [checklistId, checklistType],
   );
 
   const getTextRef = useCallback(
@@ -142,28 +131,6 @@ function LocalChecklistEditor({ checklistId }: { checklistId: string }) {
     },
     [checklistId],
   );
-
-  const checklistForUI = useMemo(() => {
-    if (!currentChecklist || !answers) return null;
-    return {
-      id: checklistId,
-      name: currentStudy?.name || 'Checklist',
-      reviewerName: '',
-      createdAt: currentChecklist.createdAt as number | undefined,
-      ...answers,
-    };
-  }, [currentChecklist, answers, checklistId, currentStudy?.name]);
-
-  const checklistType = useMemo(() => {
-    if (currentChecklist?.type) return currentChecklist.type;
-    if (checklistForUI) return getChecklistTypeFromState(checklistForUI);
-    return null;
-  }, [currentChecklist, checklistForUI]);
-
-  const currentScore = useMemo(() => {
-    if (!checklistForUI || !checklistType) return null;
-    return scoreChecklistOfType(checklistType, checklistForUI);
-  }, [checklistForUI, checklistType]);
 
   const handleBack = useCallback(() => {
     navigate({ to: '/dashboard' });

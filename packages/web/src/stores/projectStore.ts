@@ -31,7 +31,7 @@ interface PdfInfo {
   [key: string]: unknown;
 }
 
-interface ChecklistInfo {
+export interface ChecklistInfo {
   id: string;
   type: string;
   status?: string;
@@ -42,7 +42,7 @@ interface ChecklistInfo {
   [key: string]: unknown;
 }
 
-interface StudyInfo {
+export interface StudyInfo {
   id: string;
   name: string;
   checklists?: ChecklistInfo[];
