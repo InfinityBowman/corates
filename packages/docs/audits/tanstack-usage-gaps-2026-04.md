@@ -120,6 +120,26 @@ This pattern is hand-rolled middleware. Repeats across every admin handler.
 
 **Impact:** highest of any item in this audit — collapses G3 and G6 below into the same pattern.
 
+#### Status (2026-04-19): pilot complete, sweep ready
+
+`adminMiddleware` is implemented in `packages/web/src/server/middleware/admin.ts` and applied to `routes/api/admin/projects/$projectId.ts`. The pilot validated that:
+
+- `createMiddleware().server({ next, context })` propagates typed context to handlers — no annotations needed at the handler.
+- The composition `adminMiddleware.middleware([authMiddleware])` resolves session in auth, then layers CSRF + role check on top.
+- All behavior parity with the prior `requireAdmin(request, env)` is preserved (auth, CSRF, admin role).
+
+The pilot **also surfaced a test-infrastructure gap**: existing `*.server.test.ts` files call handlers directly (`handleGet({ request, params })`), which bypasses middleware. After migration, those tests would silently false-pass for auth scenarios. Initially this looked like a multi-day blocker.
+
+**Resolution:** the test-worker now mounts `createStartHandler(defaultStreamHandler)` and tests can use `SELF.fetch(new Request(...))` for true end-to-end route invocation. Cost was ~30 LOC of test infrastructure (vitest config aliases for the three `#tanstack-*` virtual modules + two stand-in files). See `packages/docs/guides/testing.md` § "End-to-end route tests" for the canonical pattern, and `packages/web/src/routes/api/admin/__tests__/projects-self.server.test.ts` for a worked example.
+
+**The sweep is now ready.** For each remaining admin route:
+
+1. Replace `await requireAdmin(request, env)` calls in handlers with `[adminMiddleware]` on the route's `server.middleware`.
+2. Migrate auth-failure tests from handler-direct calls (`handleGet({ request, params })`) to `SELF.fetch`. Happy-path / business-logic tests can stay handler-direct or move to SELF as needed.
+3. Confirm the route is covered — if you add a new admin route without `[adminMiddleware]`, the SELF tests for that route will catch the regression.
+
+Estimated remaining cost: 1–2 days of mechanical sweep across ~30 admin routes, plus a similar pattern for non-admin auth-required routes (org membership, project access).
+
 ---
 
 ### G3. No path-param validation
