@@ -28,25 +28,26 @@ CoRATES is a web application designed to streamline the entire quality and risk-
 - **UI Components**: shadcn/ui (Radix-based) + lucide-react
 - **Data Fetching**: TanStack Query (server state management)
 - **Client State**: Zustand
-- **Tables**: TanStack Solid Table
-- **Charts**: D3 for most user charts and Chart.js + solid-chartjs for admin
+- **Tables**: TanStack React Table
+- **Charts**: D3 for user-facing charts, Recharts for admin dashboards
 - **PDF Viewer**: EmbedPDF with plugin ecosystem
 - **Local Storage**: Dexie (IndexedDB wrapper) with y-dexie for Yjs persistence
 - **Forms & Validation**: Zod (schema validation)
-- **Testing**: Vitest + @solidjs/testing-library + jsdom
+- **Testing**: Vitest (unit + `@testing-library/react` + jsdom), vitest-browser-react for browser component tests, Playwright for e2e
 
 ### Backend
 
 - **Runtime**: Cloudflare Workers (serverless edge compute)
+- **API**: TanStack Start file-based server routes (in `packages/web/src/routes/api/`) served from the main app Worker
+- **Stripe Webhook Worker**: Separate Hono-based Worker (`packages/stripe-purchases`) that receives and verifies Stripe webhooks, isolated from the main app for deploy-cadence reasons
 - **Real-time**: Durable Objects (stateful computing for WebSocket connections)
-- **Framework**: Hono (lightweight web framework for Workers) with OpenAPI
 - **Database**: Cloudflare D1 (serverless SQLite)
 - **ORM**: Drizzle ORM with automatic migration generation (drizzle-kit)
 - **Storage**: Cloudflare R2 (S3-compatible object storage for PDFs)
 - **Auth**: Better Auth with org, admin, and Stripe integration for payments
 - **Email**: Postmark for transactional emails
-- **Validation**: Zod
-- **Testing**: Vitest with @cloudflare/vitest-pool-workers
+- **Validation**: Zod (for schema-heavy routes), ad-hoc type checks elsewhere
+- **Testing**: Vitest with `@cloudflare/vitest-pool-workers` for server tests (real D1 + bindings)
 
 ### Monorepo & Tooling
 
@@ -66,12 +67,14 @@ CoRATES is a web application designed to streamline the entire quality and risk-
 
 ### Monorepo Structure
 
-- `packages/web` - React/TanStack Start frontend (deployed on Cloudflare Workers)
-- `packages/workers` - Cloudflare Workers backend
-- `packages/ui` - Shared UI component library
-- `packages/shared` - Shared TypeScript utilities, types, and error definitions
-- `packages/docs` - Vitepress documentation and guides
-- `packages/stripe-dev` - Stripe setup for Turbo
+- `packages/web` - React 19 / TanStack Start app, deployed as the main Cloudflare Worker (serves both the SPA and all `/api/*` routes)
+- `packages/workers` - Shared backend library (auth, policies, billing resolvers, Durable Objects) imported by `packages/web`
+- `packages/stripe-purchases` - Isolated Hono-based Cloudflare Worker for Stripe purchase webhooks
+- `packages/db` - Drizzle schema, client, and typed helpers
+- `packages/shared` - Shared TypeScript utilities, types, and domain error definitions
+- `packages/ai` - AI-adjacent utilities
+- `packages/docs` - VitePress documentation and guides
+- `packages/stripe-dev` - Local Stripe listener setup for Turbo
 
 ## License
 

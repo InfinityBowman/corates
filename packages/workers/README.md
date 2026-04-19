@@ -1,213 +1,169 @@
 # @corates/workers
 
-**Backend API for CoRATES** - Cloudflare Workers serverless backend providing REST API, WebSocket sync, and Durable Objects for real-time collaboration.
+**Shared backend library for CoRATES.** This package no longer deploys as its own Worker -- it is consumed by `packages/web` (the main TanStack Start app) and by `packages/stripe-purchases` (the isolated Stripe webhook Worker). It holds everything the backend needs but that is not route-specific: Durable Objects, auth configuration, authorization policies, billing resolvers, commands, and shared lib helpers.
 
 ## Purpose
 
-This package implements the entire backend infrastructure for CoRATES, including:
+This package provides:
 
-- **REST API** for project/study/checklist management
-- **Real-time collaboration** via Yjs + Durable Objects
-- **Authentication** via Better Auth with multi-provider support
-- **Billing integration** with Stripe for subscriptions and one-time purchases
-- **File storage** via Cloudflare R2 for PDFs
-- **Multi-tenancy** with organization and project-level access control
+- **Durable Objects** (`ProjectDoc`, `UserSession`) that the main app Worker registers and routes to.
+- **Authentication** configuration and session helpers for Better Auth (multi-provider, admin, organization, Stripe plugins).
+- **Authorization policies** (`requireOrgOwner`, project/billing policies) used by API route handlers.
+- **Billing resolvers** and plan-change validation used by billing routes and webhook handlers.
+- **Commands** -- domain-level operations (invitations, projects, members, billing) that compose DB work + notifications + policy checks.
+- **Lib helpers** -- Stripe client, SSRF protection, media file handling, sync-with-retry, Yjs project sync helpers.
+- **Queue handler** -- Cloudflare Queue consumer for async email delivery via Postmark.
 
-## Tech Stack
+The actual HTTP routes live in `packages/web/src/routes/api/` (TanStack Start) and `packages/stripe-purchases/src/routes/` (Hono, webhooks only).
 
-- **Runtime:** Cloudflare Workers (V8 isolates, edge computing)
-- **Framework:** Hono.js (lightweight web framework)
-- **Database:** Cloudflare D1 (SQLite at the edge)
-- **ORM:** Drizzle ORM with type-safe queries
-- **Real-time:** Y.js CRDT + Durable Objects
-- **Auth:** Better Auth v1.4+ with Drizzle adapter
-- **Payments:** Stripe SDK v20+
+## Entry points
 
-## Key Entry Points
+The package exposes subpath exports (see `package.json`):
 
-| File                                 | Purpose                                  |
-| ------------------------------------ | ---------------------------------------- |
-| `src/index.js`                       | Main Hono app with route mounting        |
-| `src/routes/`                        | API route handlers (REST endpoints)      |
-| `src/durable-objects/ProjectDoc.js`  | ⚠️ Yjs document sync (HIGH BLAST RADIUS) |
-| `src/durable-objects/UserSession.js` | User presence tracking                   |
-| `src/auth/config.js`                 | Better Auth configuration                |
-| `src/middleware/`                    | Auth, CORS, CSRF, rate limiting, etc.    |
-| `src/db/schema.js`                   | Database schema (Drizzle)                |
-
-## Key Exports
-
-This package is deployed as a Cloudflare Worker and doesn't export modules. Instead, it exposes HTTP endpoints:
-
-### Public API Endpoints
-
-```
-POST   /api/auth/*                    # Better Auth endpoints
-GET    /api/users/:userId/projects    # User's projects
-GET    /api/orgs/:orgId/projects      # Org projects
-POST   /api/orgs/:orgId/projects      # Create project
-GET    /api/billing/subscription      # Current subscription
-POST   /api/billing/checkout          # Stripe checkout
-WebSocket /api/project-doc/:projectId # Yjs sync
-```
+| Import                                         | What it provides                                                 |
+| ---------------------------------------------- | ---------------------------------------------------------------- |
+| `@corates/workers/auth`                        | `getSession(request, env)` session helper                        |
+| `@corates/workers/auth-config`                 | `createAuth(env)` -- Better Auth instance                        |
+| `@corates/workers/auth-admin`                  | Admin plugin helpers                                             |
+| `@corates/workers/durable-objects`             | `ProjectDoc`, `UserSession` classes (registered by `packages/web`)|
+| `@corates/workers/policies`                    | Authorization policies                                           |
+| `@corates/workers/billing-resolver`            | `resolveOrgAccess`, `validatePlanChange`                         |
+| `@corates/workers/commands/invitations`        | Invitation create/accept/resend commands                         |
+| `@corates/workers/commands/projects`           | Project create/update commands                                   |
+| `@corates/workers/commands/members`            | Member add/remove commands                                       |
+| `@corates/workers/commands/billing`            | Billing-related commands (grant handling, etc.)                  |
+| `@corates/workers/stripe`                      | Stripe client factory and helpers                                |
+| `@corates/workers/queue`                       | Queue consumer for email delivery                                |
+| `@corates/workers/project-sync`                | Yjs project sync utilities                                       |
+| `@corates/workers/project-doc-id`              | Project DO ID derivation                                         |
+| `@corates/workers/notify`                      | Notification dispatch (to `UserSession` DOs)                     |
+| `@corates/workers/media-files`                 | R2 media file helpers                                            |
+| `@corates/workers/ssrf-protection`             | SSRF protection for outbound fetches                             |
+| `@corates/workers/quota-transaction`           | Transactional quota checks                                       |
+| `@corates/workers/constants`                   | Shared backend constants                                         |
+| `@corates/workers/email-templates`             | Email template rendering                                         |
+| `@corates/workers/config/origins`              | Allowed origins config                                           |
 
 ## Development
 
 ```bash
-# Install dependencies
-pnpm install
+# Type-check
+pnpm --filter @corates/workers typecheck
 
-# Run development server (with wrangler)
-pnpm dev
+# Lint
+pnpm --filter @corates/workers lint
 
-# Run tests
-pnpm test
+# Run tests (regenerates test SQL first)
+pnpm --filter @corates/workers test
 
-# Run tests in watch mode
-pnpm test:watch
+# Watch mode
+pnpm --filter @corates/workers test:watch
 
-# Deploy to Cloudflare (production)
-pnpm deploy
+# Drizzle Studio
+pnpm --filter @corates/workers studio
 ```
 
-## Configuration
+This package does not have a `dev` script and does not deploy. Run `pnpm --filter web dev` for the main app Worker.
 
-### Environment Variables
+## Database
 
-Required secrets (set via `wrangler secret`):
+D1 schema lives in **`@corates/db`**, not here. Migrations are generated against the workspace schema via `drizzle-kit`. The scripts in this package wrap the common operations:
+
+- `pnpm db:generate` -- generate a new migration file
+- `pnpm db:generate:test` -- regenerate the test SQL used by server tests
+- `pnpm db:migrate` -- apply migrations to the local D1
+- `pnpm db:migrate:prod` -- apply migrations to production (requires confirmation; ask before running)
+
+Bindings used across the codebase:
+
+- D1: `corates-db` (local), `corates-db-prod` (production)
+- R2: `corates-storage` (PDFs and media)
+- Durable Objects: `PROJECT_DOC`, `USER_SESSION`
+
+## Testing
+
+`*.test.ts` files colocated with source under `__tests__/`. Tests run under `@cloudflare/vitest-pool-workers` so Durable Objects, D1, and R2 all behave like the real runtime.
 
 ```bash
-AUTH_SECRET                 # BetterAuth session secret (64+ chars)
-STRIPE_SECRET_KEY           # Stripe API key
-STRIPE_WEBHOOK_SECRET_AUTH  # Stripe webhook secret (subscriptions)
-STRIPE_WEBHOOK_SECRET_PURCHASES # Stripe webhook secret (purchases)
-GOOGLE_CLIENT_ID            # OAuth client ID
-GOOGLE_CLIENT_SECRET        # OAuth client secret
-POSTMARK_SERVER_TOKEN       # Email delivery token
+pnpm --filter @corates/workers test
 ```
 
-See `.env.example` for all variables.
+Integration-style tests for HTTP behavior live in `packages/web` (`*.server.test.ts`) -- this package's tests focus on pure logic (billing resolvers, policies, commands) and Durable Object protocol.
 
-### Databases
-
-- **D1 (SQLite):** `corates-db` (local), `corates-db-prod` (production)
-- **R2 (Object Storage):** `corates-storage` (PDFs and media files)
-- **Durable Objects:** `PROJECT_DOC` (Yjs documents), `USER_SESSION` (presence)
-
-## Architecture
-
-### Multi-Tenancy Model
+## Multi-tenancy model
 
 ```
 Organization
   ├─ Members (Better Auth org membership)
-  ├─ Subscription (Stripe or access grant)
+  ├─ Subscription (Stripe) or Access Grant (trial / single-project)
   └─ Projects
       ├─ Project Members (project-level access)
       ├─ Studies
       │   ├─ Checklists (AMSTAR2, ROBINS-I, etc.)
       │   └─ PDFs (stored in R2)
-      └─ Y.js Document (real-time sync via Durable Object)
+      └─ Yjs Document (real-time sync via ProjectDoc Durable Object)
 ```
 
-### Middleware Stack
+## Billing model
 
-Routes compose middleware for authorization and validation:
+- **Org-scoped:** One active subscription or grant per organization.
+- **Access hierarchy:** Subscription > Access Grant > Free tier.
+- **Access grants:** Trial (14 days) or Single Project (6 months).
+- **Webhook processing:** Two-phase verification with ledger (signature check, then idempotent application). The subscription webhook is handled by the main app; the one-time purchase webhook is handled by `packages/stripe-purchases`.
 
-```javascript
-projectRoutes.post(
-  '/',
-  requireAuth, // Must be logged in
-  requireOrgMembership(), // Must be org member
-  requireEntitlement('project.create'), // Plan allows feature
-  requireQuota('projects.max', fn, 1), // Under quota
-  validateRequest(schema), // Valid input
-  async c => {
-    /* handler */
-  },
-);
-```
+## Important patterns
 
-### Billing Model
-
-- **Org-scoped:** One subscription per organization
-- **Plan hierarchy:** Subscription > Grant > Free
-- **Access grants:** Trial (14 days) or Single Project (6 months)
-- **Webhook processing:** Two-phase verification with ledger (see `routes/billing/index.js`)
-
-## Testing
-
-```bash
-# Run all tests
-pnpm test
-
-# Run specific test file
-pnpm test members
-
-# Run with coverage
-pnpm test:coverage
-```
-
-Test files are colocated with source in `__tests__/` directories.
-
-### Testing Patterns
-
-- **Unit tests:** Pure function tests (e.g., `billingResolver.test.js`)
-- **Integration tests:** Route handlers with mock DB (e.g., `members.test.js`)
-- **Durable Object tests:** WebSocket protocol tests (e.g., `ProjectDoc.ws-auth.test.js`)
-
-## Important Patterns
-
-### Error Handling
+### Error handling
 
 Always use domain errors from `@corates/shared`:
 
-```javascript
+```ts
 import { createDomainError, PROJECT_ERRORS } from '@corates/shared';
 
 if (!project) {
-  const error = createDomainError(PROJECT_ERRORS.NOT_FOUND, { projectId });
-  return c.json(error, error.statusCode);
+  throw createDomainError(PROJECT_ERRORS.NOT_FOUND, { projectId });
 }
 ```
 
-### Database Access
+Route handlers in `packages/web` catch these, narrow with `isDomainError`, and return them as JSON.
 
-```javascript
-import { createDb } from '../db/client.js';
+### Database access
 
-const db = createDb(c.env.DB);
-const projects = await db.select().from(projects).where(eq(projects.orgId, orgId));
+Always go through Drizzle via `@corates/db/client`:
+
+```ts
+import { createDb } from '@corates/db/client';
+import { projects } from '@corates/db/schema';
+import { eq } from 'drizzle-orm';
+
+const db = createDb(env.DB);
+const row = await db.select().from(projects).where(eq(projects.id, projectId)).get();
 ```
 
-### Validation
+### Policies
 
-All schemas centralized in `src/config/validation.js`:
+Policy functions throw domain errors on denial. Call them from route handlers inside `try/catch` and return the thrown error as JSON.
 
-```javascript
-import { validateRequest } from '../middleware/validateRequest.js';
-import { projectSchemas } from '../config/validation.js';
+```ts
+import { requireOrgOwner } from '@corates/workers/policies';
 
-projectRoutes.post('/', validateRequest(projectSchemas.create), async c => {
-  const body = c.req.valid('json'); // Pre-validated
-});
+await requireOrgOwner(db, session.user.id, orgId);
 ```
 
 ## Links
 
-- **Documentation:** [packages/docs/](../docs/)
-- **Cursor Rules:** [.cursor/rules/](../../.cursor/rules/)
-- **API Development Guide:** [packages/docs/guides/api-development.md](../docs/guides/api-development.md)
-- **Billing Guide:** [packages/docs/guides/billing.md](../docs/guides/billing.md)
-- **Yjs Sync Guide:** [packages/docs/guides/yjs-sync.md](../docs/guides/yjs-sync.md)
+- [API Development Guide](../docs/guides/api-development.md)
+- [Authentication Guide](../docs/guides/authentication.md)
+- [Yjs Sync Guide](../docs/guides/yjs-sync.md)
+- [Billing Guide](../docs/guides/billing.md)
 
-## Safety Notes
+## High blast radius
 
-⚠️ **High Blast Radius Files** - Extra caution required:
+Extra caution required when modifying:
 
-- `src/durable-objects/ProjectDoc.js` - All real-time collaboration
-- `src/routes/billing/index.js` - All payment processing
-- `src/auth/config.js` - Authentication configuration
-- `src/middleware/requireOrg.js` - Authorization logic
+- `src/durable-objects/ProjectDoc.ts` -- all real-time collaboration flows through here.
+- `src/lib/billingResolver.ts` -- determines access for every org request.
+- `src/auth/config.ts` -- authentication configuration for the whole app.
+- `src/policies/` -- authorization decisions.
 
-Read the file header warnings before modifying these files.
+Read file header warnings before modifying. Webhook processing for one-time purchases lives in `packages/stripe-purchases/src/routes/webhook.ts` -- it is in a separate worker for deploy isolation.
