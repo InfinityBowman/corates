@@ -6,6 +6,54 @@ import path from 'node:path';
 import { expect, type Page, type BrowserContext } from '@playwright/test';
 import { loginAs, addProjectMember, type DualReviewerScenario } from './helpers';
 
+/** Click every radio on the AMSTAR2 checklist editor matching the given answer (e.g. "Yes", "No"). */
+export async function answerAllAMSTAR2(page: Page, answer: 'Yes' | 'No' | 'Partial Yes') {
+  const radios = page.getByRole('radio', { name: answer });
+  const count = await radios.count();
+  for (let i = 0; i < count; i++) {
+    await radios.nth(i).click();
+  }
+  await page.waitForTimeout(1000);
+}
+
+/** Fill the ROB2 preliminary section: study design, aim, interventions, numerical result. */
+export async function fillROB2Preliminary(
+  page: Page,
+  intervention: string,
+  comparator: string,
+  numericalResult = 'RR 1.5',
+) {
+  await page.getByText('Individually-randomized parallel-group trial').click();
+
+  // Select aim BEFORE filling text fields to avoid the bug where aim
+  // selection was overwriting Y.Text fields with empty values.
+  const aimBtn = page.getByText('to assess the effect of assignment to intervention');
+  await aimBtn.scrollIntoViewIfNeeded();
+  await aimBtn.click();
+  await page.waitForTimeout(500);
+
+  await page.getByPlaceholder(/experimental intervention/i).fill(intervention);
+  await page.getByPlaceholder(/comparator intervention/i).fill(comparator);
+  await page.getByPlaceholder(/e\.g\. RR/i).fill(numericalResult);
+  await page.waitForTimeout(500);
+}
+
+/** Answer every ROB2 domain signalling question with a given response (Y, N, PY, PN, NI). */
+export async function answerAllROB2Domains(page: Page, answer: string) {
+  for (const domain of ['D1', 'D2', 'D3', 'D4', 'D5']) {
+    await page.getByRole('button', { name: domain, exact: true }).click();
+    await page.waitForTimeout(500);
+
+    const buttons = page.getByRole('button', { name: answer, exact: true });
+    const count = await buttons.count();
+    for (let i = 0; i < count; i++) {
+      await buttons.nth(i).click();
+      await page.waitForTimeout(100);
+    }
+    await page.waitForTimeout(300);
+  }
+}
+
 const FIXTURES_DIR = path.join(import.meta.dirname, 'fixtures');
 
 /**

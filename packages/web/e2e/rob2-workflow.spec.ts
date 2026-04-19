@@ -16,7 +16,13 @@ import {
   switchUser,
   type DualReviewerScenario,
 } from './helpers';
-import { setupProjectWithStudy, addOutcome, markChecklistComplete } from './shared-steps';
+import {
+  setupProjectWithStudy,
+  addOutcome,
+  markChecklistComplete,
+  fillROB2Preliminary,
+  answerAllROB2Domains,
+} from './shared-steps';
 
 let scenario: DualReviewerScenario;
 
@@ -27,43 +33,6 @@ test.beforeAll(async () => {
 test.afterAll(async () => {
   if (scenario) await cleanupScenario(scenario);
 });
-
-/** Fill the ROB2 preliminary section and select assessment aim */
-async function fillROB2Preliminary(
-  page: import('@playwright/test').Page,
-  intervention: string,
-  comparator: string,
-) {
-  await page.getByText('Individually-randomized parallel-group trial').click();
-
-  // Select aim BEFORE filling text fields to avoid the bug where aim
-  // selection was overwriting Y.Text fields with empty values.
-  const aimBtn = page.getByText('to assess the effect of assignment to intervention');
-  await aimBtn.scrollIntoViewIfNeeded();
-  await aimBtn.click();
-  await page.waitForTimeout(500);
-
-  await page.getByPlaceholder(/experimental intervention/i).fill(intervention);
-  await page.getByPlaceholder(/comparator intervention/i).fill(comparator);
-  await page.getByPlaceholder(/e\.g\. RR/i).fill('RR 1.5');
-  await page.waitForTimeout(500);
-}
-
-/** Answer all ROB2 domain questions with a given response (Y or N) */
-async function answerAllROB2Domains(page: import('@playwright/test').Page, answer: string) {
-  for (const domain of ['D1', 'D2', 'D3', 'D4', 'D5']) {
-    await page.getByRole('button', { name: domain, exact: true }).click();
-    await page.waitForTimeout(500);
-
-    const buttons = page.getByRole('button', { name: answer, exact: true });
-    const count = await buttons.count();
-    for (let i = 0; i < count; i++) {
-      await buttons.nth(i).click();
-      await page.waitForTimeout(100);
-    }
-    await page.waitForTimeout(300);
-  }
-}
 
 test('Dual-Reviewer ROB2 Workflow', async ({ context, page }) => {
   const projectId = await setupProjectWithStudy(context, page, scenario, 'ROB2 E2E Test');

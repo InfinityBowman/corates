@@ -15,7 +15,7 @@ import {
   switchUser,
   type DualReviewerScenario,
 } from './helpers';
-import { setupProjectWithStudy, markChecklistComplete } from './shared-steps';
+import { setupProjectWithStudy, markChecklistComplete, answerAllAMSTAR2 } from './shared-steps';
 
 let scenario: DualReviewerScenario;
 
@@ -43,13 +43,7 @@ test('Dual-Reviewer AMSTAR2 Workflow', async ({ context, page }) => {
   await expect(page).toHaveURL(/\/checklists\//, { timeout: 10_000 });
   await page.waitForTimeout(2000);
 
-  // Answer all questions "Yes"
-  const yesRadios = page.getByRole('radio', { name: 'Yes' });
-  const count = await yesRadios.count();
-  for (let i = 0; i < count; i++) {
-    await yesRadios.nth(i).click();
-  }
-  await page.waitForTimeout(1000);
+  await answerAllAMSTAR2(page, 'Yes');
 
   await markChecklistComplete(page);
   await page.goto(`/projects/${projectId}`);
@@ -87,13 +81,7 @@ test('Dual-Reviewer AMSTAR2 Workflow', async ({ context, page }) => {
     await page.waitForTimeout(2000);
   }
 
-  // Answer all questions "No"
-  const noRadios = page.getByRole('radio', { name: 'No' });
-  const noCount = await noRadios.count();
-  for (let i = 0; i < noCount; i++) {
-    await noRadios.nth(i).click();
-  }
-  await page.waitForTimeout(1000);
+  await answerAllAMSTAR2(page, 'No');
 
   await markChecklistComplete(page);
   await page.goto(`/projects/${projectId}`);
