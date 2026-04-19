@@ -213,9 +213,9 @@ Section labels use uppercase tracking:
 <input class='border-input bg-card focus:border-ring focus:ring-ring/20 block w-full rounded-lg border px-3 py-2 text-sm shadow-sm transition-colors focus:ring-2 focus:outline-none' />
 ```
 
-#### Select (Ark UI)
+#### Select
 
-Uses the `@/components/ui/select` component with `createListCollection`.
+Uses the `@/components/ui/select` shadcn component (built on Radix's Select primitive).
 
 #### Label
 
@@ -527,15 +527,17 @@ focus:ring-2 focus:ring-ring/20 focus:outline-none
 
 - Minimum touch target: 44px for mobile
 - Clear visual feedback for all interactive states
-- Proper ARIA labels via Ark UI components
+- Proper ARIA labels via Radix primitives (wrapped by shadcn/ui)
 
 ## Implementation Notes
 
 ### Framework
 
-- Built with **SolidJS** and **Tailwind CSS v4**
-- UI components from **Ark UI** (`@ark-ui/solid`)
-- Icons from **solid-icons** (fi, bi, ai, cg prefixes)
+- Built with **React 19** and **Tailwind CSS v4**
+- UI components from **shadcn/ui** (`@/components/ui/`), which wraps Radix primitives
+- Icons from **lucide-react**
+
+> Many JSX examples in this guide still use SolidJS-style `class=` attributes from a previous version of the codebase. In React, the attribute is `className=`. The CSS classes and design tokens they reference are current; only the attribute name is wrong. Treat the examples as reference for styling, not for JSX syntax.
 
 ### Component Library
 

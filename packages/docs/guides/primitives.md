@@ -1,589 +1,123 @@
-# Primitives Guide
+# Hooks Guide
 
-This guide explains the primitives (hooks) pattern in CoRATES, when to create primitives, and how to structure them.
+Custom React hooks in CoRATES live in `packages/web/src/hooks/`. They wrap server-state queries, auth-aware conditional queries, and cross-cutting behaviors (online status, debounced values, presence). A smaller set of non-hook helpers -- IndexedDB wrappers, avatar caches, PDF caches -- live under `packages/web/src/primitives/` and keep that name for historical reasons.
 
-## Overview
+> Naming note: the `primitives/` folder predates the React migration (the codebase used to be SolidJS, where "primitive" was the idiomatic term for `useX`). New hooks go in `hooks/`. Do not create new files under `primitives/` unless they are non-hook utilities.
 
-Primitives are reusable SolidJS hooks that encapsulate business logic, state management, and side effects. They keep components lean by moving logic out of components into reusable functions.
+## When to write a hook
 
-## What Are Primitives?
+Write a hook when:
 
-Primitives are similar to React hooks - they're functions that:
+- Multiple components need the same fetch + derived state (`useOrgs`, `useProjectData`, `useSubscription`).
+- You're wrapping TanStack Query with auth- or route-dependent `enabled` logic that would be ugly inline.
+- You're subscribing to a non-React external source and exposing it as React state (`useYText`, `useOnlineStatus`, `useReconciliationPresence`).
+- You're coordinating effects with cleanup that multiple callsites would otherwise duplicate.
 
-- Start with `use` (e.g., `useProject`, `useSubscription`)
-- Use SolidJS reactive primitives (`createSignal`, `createStore`, `createMemo`, `createEffect`)
-- Return reactive values and helper functions
-- Can be composed together
-- Handle their own cleanup
+Skip a hook and keep logic in the component when:
 
-## When to Create a Primitive
+- It's only used once.
+- It's a pure function -- put it in `@/lib/` instead.
+- It's global state that outlives the component -- put it in a Zustand store under `@/stores/` instead.
 
-### Create a Primitive When
+## Canonical shape
 
-1. **Logic is reused** - Multiple components need the same logic
-2. **Complex state/effects** - Managing connections, subscriptions, or complex state
-3. **Business logic** - Domain-specific operations (e.g., project operations, auth)
-4. **Side effects** - API calls, WebSocket connections, event listeners
+Most hooks in the repo follow this pattern: wrap TanStack Query, gate `enabled` on auth readiness, normalize the return shape.
 
-### Use a Component When
+```ts
+// hooks/useOrgs.ts
+import { useQuery } from '@tanstack/react-query';
+import { authClient, authFetch } from '@/api/auth-client';
+import { useAuthStore, selectIsLoggedIn, selectIsAuthLoading } from '@/stores/authStore';
+import { queryKeys } from '@/lib/queryKeys';
 
-1. **UI-only** - Pure rendering with no business logic
-2. **Component-specific** - Logic that only applies to one component
+async function fetchOrgs() {
+  const data = await authFetch(authClient.organization.list());
+  return data || [];
+}
 
-### Use a Utility When
+export function useOrgs() {
+  const isLoggedIn = useAuthStore(selectIsLoggedIn);
+  const isAuthLoading = useAuthStore(selectIsAuthLoading);
 
-1. **Pure functions** - No state or side effects
-2. **Stateless operations** - Data transformations, validations
-
-### Use a Store When
-
-1. **Global state** - Shared across many components/features
-2. **Persistent state** - Needs to survive navigation
-
-### Decision Tree
-
-```
-Is this logic reusable across multiple components?
-├─ YES → Does it manage state or side effects?
-│   ├─ YES → Create a primitive (hook)
-│   └─ NO → Create a utility function
-│
-└─ NO → Is it business logic or state management?
-    ├─ YES → Consider if it should be a store (if global) or primitive (if scoped)
-    └─ NO → Keep in component
-```
-
-## Primitive Structure
-
-### Basic Primitive Pattern
-
-```js
-import { createSignal, createEffect, onCleanup } from 'solid-js';
-
-export function useMyPrimitive(options = {}) {
-  // Internal state
-  const [value, setValue] = createSignal(null);
-  const [loading, setLoading] = createSignal(false);
-  const [error, setError] = createSignal(null);
-
-  // Side effects
-  createEffect(() => {
-    // React to changes
-    const someValue = options.someProp?.();
-    if (someValue) {
-      // Do something
-    }
+  const orgsQuery = useQuery({
+    queryKey: queryKeys.orgs.list,
+    queryFn: fetchOrgs,
+    enabled: isLoggedIn && !isAuthLoading,
+    staleTime: 1000 * 60 * 5,
+    gcTime: 1000 * 60 * 10,
   });
 
-  // Cleanup
-  onCleanup(() => {
-    // Clean up subscriptions, timers, etc.
-  });
-
-  // Helper functions
-  async function doSomething() {
-    setLoading(true);
-    try {
-      // Perform operation
-      setValue(result);
-    } catch (err) {
-      setError(err);
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  // Return reactive values and helpers
   return {
-    value,
-    loading,
-    error,
-    doSomething,
+    orgs: orgsQuery.data ?? [],
+    isLoading: isAuthLoading || orgsQuery.isLoading,
+    isError: orgsQuery.isError,
+    error: orgsQuery.error,
+    refetch: orgsQuery.refetch,
   };
 }
 ```
 
-### Primitive with Store Integration
+Rules this example demonstrates:
 
-Primitives often interact with stores:
+- **`enabled` is gated on auth state.** Queries that need a session should not fire until `isLoggedIn && !isAuthLoading`.
+- **`queryKey` comes from `@/lib/queryKeys`.** Do not inline string keys; centralize them so invalidation is unambiguous.
+- **The returned object reshapes the query.** Callers don't see `data` -- they see `orgs`. This keeps domain vocabulary in the hook, not in every consumer.
+- **`isLoading` merges auth loading and query loading.** The consumer should not have to reason about auth separately.
 
-```js
-import projectStore from '@/stores/projectStore.js';
-import projectActionsStore from '@/stores/projectActionsStore';
+## Mutation hooks
 
-export function useProjectData(projectId) {
-  // Read from store reactively
-  const project = () => projectStore.getProject(projectId);
-  const studies = () => projectStore.getStudies(projectId);
-  const connectionState = () => projectStore.getConnectionState(projectId);
+Mutation hooks follow the same pattern with `useMutation` and `queryClient.invalidateQueries`. Keep the invalidation logic inside the hook so consumers don't need to know which query keys are affected.
 
-  // Helper to check if connected
-  const isConnected = () => connectionState().connected;
+```ts
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { queryKeys } from '@/lib/queryKeys';
 
-  return {
-    project,
-    studies,
-    isConnected,
-    connectionState,
-  };
-}
-```
-
-## Primitive Examples
-
-### useProject - Complex Connection Management
-
-The `useProject` primitive manages Yjs connections, sync, and project operations using a connection registry pattern and y-dexie for persistence:
-
-```js
-import { DexieYProvider } from 'y-dexie';
-import { db } from '../db.js';
-
-/**
- * Global connection registry to prevent multiple connections to the same project.
- * Each project ID maps to a connection instance with reference counting.
- */
-const connectionRegistry = new Map();
-
-export function useProject(projectId) {
-  const isOnline = useOnlineStatus();
-  const isLocalProject = () => projectId && projectId.startsWith('local-');
-
-  // Get or create a shared connection for this project
-  const connectionEntry = getOrCreateConnection(projectId);
-
-  function connect() {
-    const { ydoc } = connectionEntry;
-
-    // Set up Dexie persistence using y-dexie
-    db.projects.get(projectId).then(async existingProject => {
-      if (!existingProject) {
-        await db.projects.put({ id: projectId, updatedAt: Date.now() });
-      }
-
-      const project = await db.projects.get(projectId);
-      connectionEntry.dexieProvider = DexieYProvider.load(project.ydoc);
-
-      connectionEntry.dexieProvider.whenLoaded.then(() => {
-        // Apply persisted state from Dexie
-        const persistedState = Y.encodeStateAsUpdate(project.ydoc);
-        Y.applyUpdate(ydoc, persistedState);
-      });
-    });
-  }
-}
-```
-
-This primitive:
-
-- Uses a connection registry with reference counting
-- Manages WebSocket connections to Durable Objects
-- Handles y-dexie persistence for offline support
-- Coordinates sync between Yjs and the store
-- Provides operations for studies, checklists, PDFs, reconciliation
-- Handles cleanup on disconnect
-
-### useSubscription - Resource-Based Primitive
-
-The `useSubscription` primitive uses `createResource` for async data:
-
-```js
-export function useSubscription() {
-  const { isLoggedIn } = useBetterAuth();
-
-  // Only fetch subscription when user is logged in
-  const [subscription, { refetch, mutate }] = createResource(() => (isLoggedIn() ? getSubscriptionSafe() : null), {
-    initialValue: DEFAULT_SUBSCRIPTION,
+export function useCreateOrg() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: { name: string }) => {
+      return authFetch(authClient.organization.create(input));
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.orgs.list });
+    },
   });
-
-  const tier = createMemo(() => subscription()?.tier ?? 'free');
-  // ... permission helpers
 }
 ```
 
-This primitive:
+## Subscribing to external sources
 
-- Uses `createResource` for async data fetching
-- Provides memoized computed values
-- Handles loading and error states
-- Returns permission helpers
+For non-React sources (Yjs docs, `BroadcastChannel`, custom event buses), use `useSyncExternalStore`. Do not reach for `useState` + `useEffect` to emulate it -- the behavior is different under concurrent rendering.
 
-### useProjectData - Lightweight Store Wrapper
-
-The `useProjectData` primitive provides a lightweight way to read project data:
-
-```js
-export function useProjectData(projectId, options = {}) {
-  const { autoConnect = true } = options;
-
-  // If autoConnect is enabled and we don't have a connection, establish one
-  let projectHook = null;
-  if (autoConnect) {
-    const connectionState = () => projectStore.getConnectionState(projectId);
-    const needsConnection = () => !connectionState().connected && !connectionState().connecting;
-
-    if (needsConnection()) {
-      projectHook = useProject(projectId);
-    }
-  }
-
-  // Return reactive getters that read from the store
-  return {
-    studies: () => projectStore.getStudies(projectId),
-    members: () => projectStore.getMembers(projectId),
-    meta: () => projectStore.getMeta(projectId),
-    connected: () => projectStore.getConnectionState(projectId).connected,
-    // ... other helpers
-  };
-}
-```
-
-This primitive:
-
-- Provides reactive getters from the store
-- Optionally establishes connections
-- Keeps components simple when only reading data
-
-### useOnlineStatus - Simple Signal Primitive
-
-Simple primitives can just wrap browser APIs:
-
-```js
-import { createSignal, onMount, onCleanup } from 'solid-js';
+```ts
+import { useSyncExternalStore } from 'react';
 
 export function useOnlineStatus() {
-  const [isOnline, setIsOnline] = createSignal(typeof navigator !== 'undefined' ? navigator.onLine : true);
-
-  onMount(() => {
-    const handleOnline = () => setIsOnline(true);
-    const handleOffline = () => setIsOnline(false);
-
-    window.addEventListener('online', handleOnline);
-    window.addEventListener('offline', handleOffline);
-
-    onCleanup(() => {
-      window.removeEventListener('online', handleOnline);
-      window.removeEventListener('offline', handleOffline);
-    });
-  });
-
-  return isOnline;
-}
-```
-
-This primitive:
-
-- Wraps browser API in a reactive signal
-- Handles event listener cleanup
-- Works in SSR contexts (checks for `navigator`)
-
-## Primitive Composition
-
-Primitives can use other primitives:
-
-```js
-import useOnlineStatus from '../useOnlineStatus.js';
-import projectStore from '@/stores/projectStore.js';
-
-export function useProject(projectId) {
-  // Use another primitive
-  const isOnline = useOnlineStatus();
-
-  // Use store
-  const connectionState = () => projectStore.getConnectionState(projectId);
-
-  // Combine primitives
-  const canSync = () => isOnline() && connectionState().connected;
-
-  return {
-    isOnline,
-    connectionState,
-    canSync,
-  };
-}
-```
-
-## Using Primitives in Components
-
-Import and use primitives directly in components:
-
-```js
-import { useProjectData } from '@/primitives/useProjectData.js';
-
-function MyComponent(props) {
-  // Use the primitive
-  const { studies, isConnected } = useProjectData(props.projectId);
-
-  return (
-    <div>
-      <Show when={isConnected()}>
-        <For each={studies()}>{study => <StudyCard study={study} />}</For>
-      </Show>
-    </div>
-  );
-}
-```
-
-## Primitive Lifecycle
-
-### Initialization
-
-Primitives are called during component render:
-
-```js
-function MyComponent() {
-  // Primitive is initialized here
-  const data = useMyPrimitive();
-
-  // Use the primitive's return values
-  return <div>{data.value()}</div>;
-}
-```
-
-### Cleanup
-
-Use `onCleanup` for cleanup logic:
-
-```js
-export function useMyPrimitive() {
-  createEffect(() => {
-    const interval = setInterval(() => {
-      // Do something
-    }, 1000);
-
-    onCleanup(() => {
-      clearInterval(interval);
-    });
-  });
-}
-```
-
-### Multiple Instances
-
-Each component call creates a new primitive instance:
-
-```js
-function Component() {
-  // These are separate instances
-  const project1 = useProject('project-1');
-  const project2 = useProject('project-2');
-
-  // Each manages its own state
-}
-```
-
-## Best Practices
-
-### DO
-
-- Use `use` prefix for primitives
-- Return reactive values (signals, memos)
-- Handle cleanup with `onCleanup`
-- Compose primitives together
-- Keep primitives focused on one concern
-- Use stores for shared state, primitives for component-scoped state
-
-### DON'T
-
-- Don't call primitives conditionally
-- Don't use primitives for pure utilities
-- Don't expose raw setters from stores (use action stores)
-- Don't create primitives that duplicate store functionality
-- Don't forget cleanup for subscriptions/timers
-
-## Testing Primitives
-
-Test primitives by rendering them in a test component:
-
-```js
-import { describe, it, expect } from 'vitest';
-import { createRoot } from 'solid-js';
-import useOnlineStatus from '../useOnlineStatus';
-
-describe('useOnlineStatus', () => {
-  it('should return online status', () => {
-    let result;
-    createRoot(dispose => {
-      result = useOnlineStatus();
-      dispose();
-    });
-    expect(result()).toBe(navigator.onLine);
-  });
-});
-```
-
-## Common Patterns
-
-### Pattern: Resource Fetching
-
-```js
-import { createResource } from 'solid-js';
-
-export function useData(id) {
-  const [data, { refetch }] = createResource(
-    () => id(),
-    async id => {
-      const response = await fetch(`/api/data/${id}`);
-      return response.json();
+  return useSyncExternalStore(
+    cb => {
+      window.addEventListener('online', cb);
+      window.addEventListener('offline', cb);
+      return () => {
+        window.removeEventListener('online', cb);
+        window.removeEventListener('offline', cb);
+      };
     },
-  );
-
-  return {
-    data,
-    loading: () => data.loading,
-    error: () => data.error,
-    refetch,
-  };
-}
-```
-
-### Pattern: Store Integration
-
-```js
-import myStore from '@/stores/myStore.js';
-
-export function useMyData(id) {
-  // Read from store reactively
-  const item = () => myStore.getItem(id());
-
-  // Memoized computed value
-  const displayName = createMemo(() => {
-    const i = item();
-    return i ? `${i.name} (${i.status})` : 'Loading...';
-  });
-
-  return {
-    item,
-    displayName,
-  };
-}
-```
-
-### Pattern: Connection Management
-
-```js
-export function useConnection(url) {
-  const [connected, setConnected] = createSignal(false);
-  let ws = null;
-
-  createEffect(() => {
-    const urlValue = url();
-    if (!urlValue) return;
-
-    ws = new WebSocket(urlValue);
-    ws.onopen = () => setConnected(true);
-    ws.onclose = () => setConnected(false);
-
-    onCleanup(() => {
-      ws?.close();
-      setConnected(false);
-    });
-  });
-
-  return {
-    connected,
-    send: data => ws?.send(JSON.stringify(data)),
-  };
-}
-```
-
-## Organization Context Primitives
-
-CoRATES uses organization-scoped routing. Two primitives help manage org and project context from URL params.
-
-### useOrgContext
-
-Resolves the current organization from URL params (`orgSlug`):
-
-```js
-import { useOrgContext } from '@primitives/useOrgContext.js';
-
-function MyOrgComponent() {
-  const {
-    // Data
-    orgSlug, // () => string - slug from URL
-    currentOrg, // () => org object or null
-    orgs, // () => array of user's orgs
-    orgId, // () => string - resolved org ID
-    orgName, // () => string - org name
-
-    // Guard states
-    isLoading, // () => boolean
-    isError, // () => boolean
-    hasNoOrgs, // () => boolean - user has no orgs
-    orgNotFound, // () => boolean - slug doesn't match any org
-
-    // Actions
-    refetchOrgs, // () => void
-  } = useOrgContext();
-
-  return (
-    <Show when={!isLoading() && !orgNotFound()}>
-      <div>Current org: {orgName()}</div>
-    </Show>
+    () => navigator.onLine,
+    () => true, // SSR fallback
   );
 }
 ```
 
-### useOrgProjectContext
+## File and naming conventions
 
-Combines org context with project context for project-level routes:
+- File name matches the hook: `useOrgs.ts` exports `useOrgs`.
+- One primary hook per file. Secondary helpers (fetchers, selectors) stay colocated in the same file unless they're reused elsewhere.
+- Name hooks after the domain noun, not the implementation (`useOrgs`, not `useOrgsQuery`).
+- Hooks that return queries should expose `isLoading`, `isError`, `error`, `refetch` in addition to the domain data -- matches what the rest of the codebase expects.
 
-```js
-import { useOrgProjectContext } from '@primitives/useOrgProjectContext.js';
+## What doesn't belong in a hook
 
-function ProjectComponent() {
-  const {
-    // From org context
-    orgSlug,
-    orgId,
-    orgName,
-    currentOrg,
-    isLoadingOrg,
-    orgNotFound,
-    hasNoOrgs,
-
-    // Project context
-    projectId, // () => string from URL
-    basePath, // () => string - /orgs/:slug/projects/:id
-    projectIdMissing, // () => boolean
-
-    // Combined state
-    isReady, // () => boolean - org resolved and project ID exists
-
-    // Path builders
-    getStudyPath, // (studyId) => string
-    getChecklistPath, // (studyId, checklistId) => string
-    getReconcilePath, // (studyId, c1Id, c2Id) => string
-  } = useOrgProjectContext();
-
-  return (
-    <Show when={isReady()}>
-      <a href={getStudyPath('study-123')}>View Study</a>
-    </Show>
-  );
-}
-```
-
-### Path Builder Utilities
-
-Build org-scoped URLs outside components:
-
-```js
-import { buildOrgProjectPath, buildStudyPath, buildChecklistPath } from '@primitives/useOrgProjectContext.js';
-
-// /orgs/my-lab/projects/proj-123
-buildOrgProjectPath('my-lab', 'proj-123');
-
-// /orgs/my-lab/projects/proj-123/studies/study-456
-buildStudyPath('my-lab', 'proj-123', 'study-456');
-```
-
-See the [Organizations Guide](/guides/organizations) for the complete org model.
-
-## Related Guides
-
-- [Organizations Guide](/guides/organizations) - For org model and routing patterns
-- [State Management Guide](/guides/state-management) - For understanding stores vs primitives
-- [Component Development Guide](/guides/components) - For using primitives in components
-- [Yjs Sync Guide](/guides/yjs-sync) - For understanding `useProject` primitive
+- Global state that needs to be read from outside React -- use a Zustand store.
+- Pure data transforms -- put them in `@/lib/`.
+- IndexedDB, cache, or persistence plumbing -- put it in `@/primitives/` alongside `db.ts` and `avatarCache.ts`.
+- Fetch logic that isn't wrapped in TanStack Query -- if you're doing raw `fetch` inside `useEffect`, you're almost certainly reinventing Query badly.

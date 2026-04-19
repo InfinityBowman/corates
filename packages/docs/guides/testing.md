@@ -1,444 +1,256 @@
 # Testing Guide
 
-This guide covers testing philosophy, patterns, and best practices for both frontend and backend testing in CoRATES.
+CoRATES uses Vitest for unit and server tests, and Playwright for end-to-end tests. This guide covers the three test layers, when to use each, and the conventions they follow.
 
-## Overview
+## Test layers
 
-CoRATES uses Vitest for testing with different configurations for frontend (SolidJS) and backend (Cloudflare Workers). Tests follow a behavior-driven approach, focusing on intended behavior rather than implementation details.
+| Layer | Runs in | Config | File pattern | Purpose |
+| --- | --- | --- | --- | --- |
+| Unit | jsdom | `vitest.config.ts` | `*.test.ts[x]` | Pure functions, hooks, Zustand stores, React components |
+| Server | Workers pool | `vitest.server.config.ts` | `*.server.test.ts` | TanStack Start route handlers against a real D1 + bindings |
+| Browser | real browser (vitest-browser-react) | `vitest.browser.config.ts` | `*.browser.test.tsx` | Component tests needing real layout/IO |
+| E2E | Playwright | `playwright.config.ts` | `*.spec.ts` (under `tests/e2e/`) | Full user flows against a running dev server |
 
-## Testing Philosophy
+The unit config explicitly **excludes** `*.server.test.ts` and `*.browser.test.tsx`, so all three can coexist without cross-contamination.
 
-### Behavior-Driven Testing
-
-Tests should validate **intended behavior**, not implementation details. The current implementation may contain bugs, so tests should be written based on:
-
-1. Function/component names and their semantic meaning
-2. JSDoc comments and inline documentation
-3. Domain conventions (AMSTAR-2 methodology, systematic review practices)
-4. Expected UX patterns
-
-### Test Structure
-
-Follow the AAA pattern:
-
-- **Arrange**: Set up test data and conditions
-- **Act**: Execute the code being tested
-- **Assert**: Verify the expected outcomes
-
-## Frontend Testing
-
-### Test Stack
-
-- **Test Runner**: [Vitest](https://vitest.dev/) - Fast, Vite-native testing framework
-- **Component Testing**: [@solidjs/testing-library](https://github.com/solidjs/solid-testing-library) - Testing utilities for SolidJS
-- **DOM Environment**: [jsdom](https://github.com/jsdom/jsdom) - JavaScript implementation of web standards for Node.js
-
-### Running Tests
+## Commands
 
 ```bash
-# Run tests with UI
-pnpm test
+# Unit + server (full test suite)
+pnpm --filter web test
 
-# Run tests in watch mode (headless)
-pnpm vitest
+# Unit only, in watch mode
+pnpm --filter web test:watch
 
-# Run tests once (CI mode)
-pnpm vitest run
+# Server only (spins up wrangler test database first)
+pnpm --filter web test:server
 
-# Run tests with coverage
-pnpm vitest run --coverage
+# E2E (ask the user to confirm dev server is running first)
+pnpm --filter web test:e2e
 ```
 
-### Directory Structure
+## Philosophy
 
-```
-src/
-  __tests__/           # Global test utilities and setup
-    setup.js           # Test setup file
-  config/
-    __tests__/         # Tests for config modules
-  primitives/
-    __tests__/         # Tests for hooks/primitives
-  lib/
-    __tests__/         # Tests for utility functions
-  AMSTAR2/
-    __tests__/         # Tests for AMSTAR2 logic
-  components/
-    __tests__/         # Tests for shared components
-    auth-ui/
-      __tests__/       # Tests for auth components
-    project-ui/
-      __tests__/       # Tests for project components
-    checklist-ui/
-      __tests__/       # Tests for checklist components
-```
+Tests validate **intended behavior**, not implementation details. Prefer asserting on:
 
-### Testing Pure Functions
+1. Function / component names and their semantic meaning.
+2. JSDoc comments and inline documentation of intent.
+3. Domain conventions (AMSTAR-2 methodology, systematic review practices).
+4. Expected UX patterns.
 
-For pure utility functions, test input/output relationships:
+Use the AAA structure: **Arrange**, **Act**, **Assert**. A test that names its phases is usually a test that knows what it's testing.
 
-```js
+When you discover a bug while writing a test, write the test for the *intended* behavior and add a `// BUG:` comment explaining the divergence. The failing test is the bug report.
+
+## Unit tests (jsdom)
+
+### Pure functions
+
+Straightforward input / output assertions.
+
+```ts
 import { describe, it, expect } from 'vitest';
 import { formatDate } from '../dateUtils';
 
 describe('formatDate', () => {
-  it('should format ISO date strings correctly', () => {
+  it('formats ISO date strings', () => {
     expect(formatDate('2025-01-15T10:30:00Z')).toBe('1/15/2025');
   });
 
-  it('should handle Unix timestamps in seconds', () => {
-    expect(formatDate(1705312200)).toBe('1/15/2024');
-  });
-
-  it('should return empty string for invalid input', () => {
+  it('returns empty string for invalid input', () => {
     expect(formatDate(null)).toBe('');
-    expect(formatDate(undefined)).toBe('');
   });
 });
 ```
 
-### Testing SolidJS Components
+### Zustand stores
 
-Use `@solidjs/testing-library` for component testing:
+Reset store state between tests with `setState`, then drive the store via its actions and assert via selectors.
 
-```js
+```ts
+import { describe, it, expect, beforeEach } from 'vitest';
+import { useProjectStore } from '@/stores/projectStore';
+
+beforeEach(() => {
+  useProjectStore.setState({ projects: {}, activeProjectId: null, connections: {} });
+});
+
+it('setProjectData hydrates a project entry', () => {
+  useProjectStore.getState().setProjectData('p1', { studies: [] });
+  expect(useProjectStore.getState().projects.p1).toBeDefined();
+});
+```
+
+### React components
+
+Use `@testing-library/react` with the `@testing-library/jest-dom` matchers.
+
+```tsx
 import { describe, it, expect } from 'vitest';
-import { render, screen } from '@solidjs/testing-library';
-import MyComponent from '../MyComponent';
+import { render, screen } from '@testing-library/react';
+import { MyComponent } from '../MyComponent';
 
 describe('MyComponent', () => {
-  it('should render the title', () => {
-    render(() => <MyComponent title='Hello' />);
+  it('renders the title', () => {
+    render(<MyComponent title="Hello" />);
     expect(screen.getByText('Hello')).toBeInTheDocument();
   });
 });
 ```
 
-### Testing SolidJS Primitives (Hooks)
+For components that depend on TanStack Query, wrap with a fresh `QueryClientProvider`. For components that depend on `useAuthStore`, pre-seed the store in `beforeEach` rather than mocking the module.
 
-Test primitives by rendering them in a test component:
+### Hooks
 
-```js
-import { describe, it, expect } from 'vitest';
-import { createRoot } from 'solid-js';
-import useOnlineStatus from '../useOnlineStatus';
+For hooks with no rendering requirements, use `renderHook` from `@testing-library/react`.
 
-describe('useOnlineStatus', () => {
-  it('should return true when browser is online', () => {
-    let result;
-    createRoot(dispose => {
-      result = useOnlineStatus();
-      dispose();
-    });
-    expect(result()).toBe(navigator.onLine);
+```tsx
+import { renderHook } from '@testing-library/react';
+import { useDebouncedValue } from '../useDebouncedValue';
+
+it('debounces the value', () => {
+  const { result, rerender } = renderHook(({ v }) => useDebouncedValue(v, 100), {
+    initialProps: { v: 'a' },
   });
+  // ...
 });
 ```
 
-### Mocking
+For hooks that fetch, provide a `QueryClientProvider` wrapper.
 
-#### Mocking Browser APIs
+### Mocking modules
 
-```js
+```ts
 import { vi } from 'vitest';
 
-// Mock navigator.onLine
-Object.defineProperty(navigator, 'onLine', {
-  value: true,
-  writable: true,
-});
-
-// Mock IndexedDB
-const mockIndexedDB = {
-  open: vi.fn(),
-};
-global.indexedDB = mockIndexedDB;
-```
-
-#### Mocking Modules
-
-```js
-import { vi } from 'vitest';
-
-vi.mock('@api/better-auth-store', () => ({
-  useBetterAuth: () => ({
-    user: () => ({ id: 'test-user', name: 'Test' }),
-    isLoggedIn: () => true,
-  }),
+vi.mock('@/api/auth-client', () => ({
+  authClient: { organization: { list: vi.fn() } },
+  authFetch: vi.fn(),
 }));
 ```
 
-## Backend Testing
+Prefer pre-seeding stores and query caches over mocking the modules that consume them -- mocks drift; state snapshots don't.
 
-### Test Environment Configuration
+### Browser APIs
 
-The test suite uses Vitest with the `@cloudflare/vitest-pool-workers` pool to run tests in a Workers-like environment.
-
-**Key Configuration (`vitest.config.js`):**
-
-- `singleWorker: true` - Runs tests serially in a single worker process to avoid network address conflicts
-- `isolatedStorage: false` - Disabled to avoid Durable Object cleanup issues (tests use database resets for isolation instead)
-- `testTimeout: 10000` - Increased timeout for Durable Object operations
-- `setupFiles: ['./src/__tests__/setup.js']` - Global setup file that mocks external dependencies
-
-### Global Test Setup
-
-The `src/__tests__/setup.js` file runs before all tests and provides:
-
-- **Postmark Mock**: Prevents syntax errors from loading the postmark library
-- **Stripe Mock**: Provides default Stripe mocks (tests can override with specific mocks)
-
-### Test Isolation
-
-Tests are isolated through:
-
-1. **Database Resets**: Each test file should call `resetTestDatabase()` in `beforeEach` to ensure a clean database state
-2. **Mock Clearing**: Use `vi.clearAllMocks()` in `beforeEach` to reset mock state
-3. **Unique Test Data**: Use unique IDs for test data to avoid conflicts between tests
-
-### Running Tests
-
-```bash
-# Run all tests
-pnpm test
-
-# Run tests in watch mode
-pnpm test:watch
-
-# Run specific test file
-pnpm test src/routes/__tests__/projects.test.js
-
-# Run tests matching a pattern
-pnpm test -t "should create"
+```ts
+Object.defineProperty(navigator, 'onLine', { value: true, writable: true });
 ```
 
-### Test Utilities
+`localStorage`, `indexedDB`, `BroadcastChannel`, and `crypto.subtle` are all available under jsdom.
 
-#### Database Helpers (`src/__tests__/helpers.js`)
+## Server tests
 
-- `resetTestDatabase()` - Drops and recreates all tables for a clean state
-- `seedUser()`, `seedProject()`, `seedProjectMember()`, etc. - Helper functions to insert test data
-- `createTestEnv()` - Creates a mocked `env` object with all necessary bindings
-- `json()` - Helper to parse JSON responses
-- `fetchApp()` - Helper to make requests against a Hono app in the test environment
+Server tests live next to the route file under `__tests__/` with the `*.server.test.ts` suffix. They import the route's named handler directly and call it with a synthesized `Request`.
 
-#### Database Helpers Usage
+```ts
+import { describe, expect, it } from 'vitest';
+import { handleGet } from '../health';
 
-```js
-import { resetTestDatabase, seedUser, seedProject } from './helpers.js';
-
-beforeEach(async () => {
-  await resetTestDatabase();
-  vi.clearAllMocks();
-});
-
-it('should create a project', async () => {
-  const user = await seedUser({ id: 'user-1', email: 'test@example.com' });
-  const project = await seedProject({ id: 'proj-1', createdBy: user.id });
-  // Test project creation
+describe('GET /health', () => {
+  it('returns 200 + healthy when all dependencies respond', async () => {
+    const res = await handleGet();
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.status).toBe('healthy');
+  });
 });
 ```
 
-#### Route Testing
+For handlers that take `{ request }`:
 
-```js
-import { fetchApp } from './helpers.js';
-import app from '../../index.js';
-
-it('should create a project', async () => {
-  const response = await fetchApp(app, '/api/projects', {
+```ts
+const res = await handlePost({
+  request: new Request('https://x/api/billing/checkout', {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-test-user-id': 'user-1',
-    },
-    body: JSON.stringify({ name: 'Test Project' }),
-  });
-
-  expect(response.status).toBe(201);
-  const data = await response.json();
-  expect(data.name).toBe('Test Project');
+    headers: { 'content-type': 'application/json', cookie: 'session=...' },
+    body: JSON.stringify({ tier: 'pro', interval: 'monthly' }),
+  }),
 });
 ```
 
-#### Testing Routes with Authentication
+The server config runs in the Cloudflare Workers pool, so `env.DB`, R2, Durable Object bindings, and `cloudflare:workers` imports all resolve against a test D1 database prepared by `pnpm db:generate:test`.
 
-```js
-// Mock auth middleware
-vi.mock('../../middleware/auth.js', () => {
-  return {
-    requireAuth: async (c, next) => {
-      const userId = c.req.raw.headers.get('x-test-user-id') || 'user-1';
-      c.set('user', { id: userId, email: 'test@example.com' });
-      await next();
-    },
-  };
+### Database isolation
+
+Server tests share the test D1. Each test file that mutates data should reset the DB in `beforeEach` via the shared helpers, or scope its assertions to unique IDs. Do not rely on cross-file ordering.
+
+### Mocking external services
+
+Postmark and Stripe are mocked globally in the server setup file to avoid hitting real services or triggering startup failures in the test Worker. Individual tests can override these mocks per-test with `vi.mocked(...).mockReturnValueOnce(...)`.
+
+## Browser tests
+
+`*.browser.test.tsx` files run under `vitest-browser-react` against a real browser (Playwright-controlled). Use these only when jsdom cannot represent the behavior -- real layout measurements, pointer events on shadcn popovers, IntersectionObserver, etc.
+
+## E2E tests
+
+Playwright specs live under `packages/web/tests/e2e/`. They run against a dev server the user starts manually (`pnpm --filter web dev`). Ask the user to confirm the server is running before invoking `test:e2e`.
+
+Prefer e2e coverage on:
+
+- Sign-in / sign-up flows.
+- Stripe checkout and subscription state transitions.
+- Collaborative editing (two browser contexts against the same project).
+
+Do not use e2e for what a unit or server test can cover. They are the slowest and most brittle layer.
+
+## Common patterns
+
+### Async
+
+```ts
+it('handles async operations', async () => {
+  const result = await someAsyncFunction();
+  expect(result).toBeDefined();
 });
 ```
 
-### Testing with Durable Objects
+### Errors
 
-When testing routes that interact with Durable Objects:
+```ts
+it('throws on invalid input', () => {
+  expect(() => validateInput(null)).toThrow('Input required');
+});
 
-- Ensure all Durable Object operations are properly awaited
-- Mock Durable Object bindings in test helpers if needed
-- Be aware that Durable Objects persist across tests when `isolatedStorage: false`
-
-### Testing Database Operations
-
-Always use Drizzle queries in tests (matching production code):
-
-```js
-import { createDb } from '../../../db/client.js';
-import { getSubscriptionByStripeSubscriptionId } from '../../../db/subscriptions.js';
-
-const db = createDb(env.DB);
-const subscription = await getSubscriptionByStripeSubscriptionId(db, 'sub-id');
-```
-
-### Known Issues and Solutions
-
-#### EADDRNOTAVAIL Errors
-
-**Problem**: Network address conflicts when multiple test processes try to bind to ports.
-
-**Solution**: Set `singleWorker: true` in vitest config to run tests serially.
-
-#### Isolated Storage Failed
-
-**Problem**: Durable Objects storage not being cleaned up properly between tests.
-
-**Solution**: Set `isolatedStorage: false` and rely on database resets for test isolation.
-
-#### Postmark Syntax Errors
-
-**Problem**: Postmark library causes syntax errors when loaded in test environment.
-
-**Solution**: Mock postmark globally in `src/__tests__/setup.js`.
-
-#### Database Updates Not Persisting
-
-**Problem**: Updates made through Drizzle aren't visible in subsequent queries.
-
-**Solution**:
-
-- Ensure all database operations are properly awaited
-- Use Drizzle queries consistently (don't mix raw D1 queries with Drizzle)
-- Query the database using the same Drizzle instance that performed the update
-
-### Test File Structure
-
-```
-src/
-  __tests__/
-    setup.js          # Global test setup
-    helpers.js        # Shared test utilities
-    *.test.js         # Test files
-  routes/
-    __tests__/
-      *.test.js       # Route-specific tests
-  middleware/
-    __tests__/
-      *.test.js       # Middleware tests
-```
-
-## Common Patterns
-
-### Testing Async Operations
-
-```js
-import { describe, it, expect, vi } from 'vitest';
-
-describe('async function', () => {
-  it('should handle async operations', async () => {
-    const result = await someAsyncFunction();
-    expect(result).toBeDefined();
-  });
+it('rejects with the right error', async () => {
+  await expect(asyncFn()).rejects.toThrow('Expected error');
 });
 ```
 
-### Testing Error States
+### DOM events
 
-```js
-describe('error handling', () => {
-  it('should throw on invalid input', () => {
-    expect(() => validateInput(null)).toThrow('Input required');
-  });
+```tsx
+import { render, screen, fireEvent } from '@testing-library/react';
 
-  it('should handle rejected promises', async () => {
-    await expect(asyncFn()).rejects.toThrow('Expected error');
-  });
-});
-```
-
-### Testing DOM Events
-
-```js
-import { fireEvent } from '@solidjs/testing-library';
-
-it('should handle click events', async () => {
+it('handles click events', () => {
   const handleClick = vi.fn();
-  render(() => <Button onClick={handleClick}>Click me</Button>);
-
+  render(<Button onClick={handleClick}>Click me</Button>);
   fireEvent.click(screen.getByText('Click me'));
   expect(handleClick).toHaveBeenCalledOnce();
 });
 ```
 
-## Flags for Potential Bugs
+For more realistic user interaction (focus, typing, scroll), prefer `userEvent` from `@testing-library/user-event`.
 
-When writing tests, if you discover behavior that conflicts with the expected/intended behavior:
+## Don'ts
 
-1. Write the test for the **intended** behavior
-2. Add a comment like `// BUG: Current implementation does X, but should do Y`
-3. The test will fail, highlighting the bug for fixing
-
-## Best Practices
-
-### DO
-
-- Write tests for intended behavior, not implementation
-- Use AAA pattern (Arrange, Act, Assert)
-- Test edge cases and error conditions
-- Mock external dependencies
-- Keep tests isolated and independent
-- Use descriptive test names
-- Reset database state between tests (backend)
-- Always reset the database in `beforeEach` hooks (backend)
-- Use unique test data (unique IDs, emails, etc.) to avoid conflicts (backend)
-- Mock external dependencies (Postmark, Stripe, etc.) at the test file level or globally (backend)
-- Await all async operations to ensure proper cleanup (backend)
-- Use Drizzle queries in tests to match production code behavior (backend)
-- Test in isolation - each test should be independent and not rely on other tests (backend)
-
-### DON'T
-
-- Don't test implementation details
-- Don't create tests that depend on other tests
-- Don't forget to clean up (database, mocks)
-- Don't use real external services in tests
-- Don't skip error handling tests
+- Don't test implementation details (internal function calls, props shape beyond what's publicly documented).
+- Don't create tests that depend on the order of other tests.
+- Don't use real external services (Stripe live mode, Postmark). Mock them.
+- Don't leave the DB dirty between tests without a good reason.
+- Don't write an e2e test for behavior a unit or server test could cover.
+- Don't mix raw `env.DB.prepare(...)` with Drizzle queries in a test -- use Drizzle consistently.
 
 ## Resources
 
-### Official Documentation
-
 - [Vitest Documentation](https://vitest.dev/guide/)
-- [SolidJS Testing Library](https://github.com/solidjs/solid-testing-library)
-- [Testing Library Queries](https://testing-library.com/docs/queries/about)
-- [Vitest Mocking](https://vitest.dev/guide/mocking.html)
-
-### SolidJS-Specific Testing
-
-- [SolidJS Testing Best Practices](https://www.solidjs.com/guides/testing)
-- [Testing Reactive Primitives](https://github.com/solidjs/solid-testing-library#primitives)
-
-### AMSTAR-2 Domain Knowledge
-
-- [AMSTAR 2 Official Website](https://amstar.ca/Amstar-2.php)
-- [AMSTAR 2 Checklist PDF](https://amstar.ca/Amstar_Checklist.php)
+- [Testing Library (React)](https://testing-library.com/docs/react-testing-library/intro)
+- [Playwright](https://playwright.dev/docs/intro)
+- [AMSTAR 2 Official Website](https://amstar.ca/Amstar-2.php) (domain reference)
 
 ## Related Guides
 
-- [API Development Guide](/guides/api-development) - For backend patterns
-- [Component Development Guide](/guides/components) - For frontend patterns
+- [API Development Guide](/guides/api-development)
+- [Components Guide](/guides/components)
+- [State Management Guide](/guides/state-management)

@@ -6,8 +6,8 @@ Practical guides for common development tasks and patterns in CoRATES.
 
 ### Core Development
 
-- [State Management](/guides/state-management) - Managing application state with SolidJS stores
-- [Primitives](/guides/primitives) - Reusable hooks and primitives for SolidJS
+- [State Management](/guides/state-management) - Managing client state with Zustand stores
+- [Primitives](/guides/primitives) - Reusable React hooks and non-hook utilities
 - [Components](/guides/components) - Component development patterns and best practices
 - [API Development](/guides/api-development) - Backend API route development patterns
 

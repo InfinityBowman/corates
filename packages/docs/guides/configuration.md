@@ -202,44 +202,54 @@ If you prefer to set up manually:
 
 ## Package-Specific Configuration
 
-### Web Package
+### Web Package (`packages/web`)
 
+- **Framework**: React 19 + TanStack Start (SSR + file-based routing)
 - **Build tool**: Vite
-- **Framework**: SolidJS + SolidStart
 - **Styling**: Tailwind CSS
-- **Type checking**: TypeScript (via JSDoc comments)
+- **UI primitives**: shadcn/ui (colocated under `@/components/ui/`)
+- **Icons**: lucide-react
+- **Client state**: Zustand
+- **Server state**: TanStack Query
+- **Type checking**: TypeScript (strict)
 
-### Workers Package
+### Workers Package (`packages/workers`)
 
 - **Runtime**: Cloudflare Workers
+- **Role**: Shared backend library -- auth, policies, billing resolvers, Durable Objects
 - **Database**: Cloudflare D1 (SQLite)
 - **ORM**: Drizzle ORM
 - **Auth**: Better Auth
 - **Storage**: Cloudflare R2
 
-### UI Package
+The main app Worker is `packages/web`; `packages/workers` is imported as a library.
 
-- **Components**: Ark UI
-- **Icons**: solid-icons
-- **TypeScript**: Full TypeScript support
+### Stripe Purchases Worker (`packages/stripe-purchases`)
+
+- **Runtime**: Cloudflare Workers
+- **Framework**: Hono
+- **Role**: Isolated Stripe webhook receiver, deployed separately from the main app
 
 ## Import Patterns
 
 ### UI Components
 
-Always import from `@corates/ui`:
+Import from the colocated shadcn/ui primitives under `@/components/ui/`:
 
-```js
-import { Dialog, Select, Toast } from '@corates/ui';
+```tsx
+import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { showToast } from '@/components/ui/toast';
 ```
+
+There is no external `@corates/ui` package -- shadcn components are copy-pasted into the repo so they can be modified directly.
 
 ### Icons
 
-Import from `solid-icons`:
+Import from `lucide-react`:
 
-```js
-import { BiRegularHome } from 'solid-icons/bi';
-import { FiUsers } from 'solid-icons/fi';
+```tsx
+import { FolderIcon, PlusIcon } from 'lucide-react';
 ```
 
 ### Internal Packages

@@ -1,638 +1,227 @@
 # Component Development Guide
 
-This guide covers component structure, props patterns, composition, and best practices for building components in CoRATES.
+Components in CoRATES are React 19 function components, written in TypeScript, and use TanStack Router for navigation, Zustand for shared client state, and shadcn/ui primitives (under `@/components/ui/`).
 
-## Overview
+## Structure
 
-Components in CoRATES are built with SolidJS and follow patterns that maintain reactivity while keeping components lean and focused on rendering.
+A typical component lives under `packages/web/src/components/<feature>/` and imports via the `@/` path alias (`@/*` -> `packages/web/src/*`). There is only one alias -- no per-feature aliases.
 
-## Component Structure
-
-### Basic Component Pattern
-
-```jsx
-import { createSignal, Show, For } from 'solid-js';
-import projectStore from '@/stores/projectStore.js';
-
-export default function MyComponent(props) {
-  // Local state (only for UI state)
-  const [isOpen, setIsOpen] = createSignal(false);
-
-  // Read from stores (reactive)
-  const projects = () => projectStore.getProjectList();
-
-  // Computed values
-  const projectCount = () => projects().length;
-
-  return (
-    <div>
-      <Show when={isOpen()}>
-        <For each={projects()}>{project => <ProjectCard project={project} />}</For>
-      </Show>
-    </div>
-  );
-}
-```
-
-## Props Patterns
-
-### Critical: Never Destructure Props
-
-**Destructuring breaks reactivity in SolidJS:**
-
-```jsx
-// WRONG - breaks reactivity
-function MyComponent(props) {
-  const { name, age } = props;
-  return (
-    <div>
-      {name} is {age}
-    </div>
-  ); // Won't update when props change
-}
-
-// WRONG - another example
-function MyComponent(props) {
-  const name = props.name;
-  return <div>{name}</div>; // Won't update
-}
-
-// CORRECT - access directly
-function MyComponent(props) {
-  return (
-    <div>
-      {props.name} is {props.age}
-    </div>
-  ); // Maintains reactivity
-}
-
-// CORRECT - wrap in function for computed access
-function MyComponent(props) {
-  const name = () => props.name;
-  return <div>{name()}</div>; // Maintains reactivity
-}
-```
-
-### Props Best Practices
-
-```jsx
-// Good: Direct prop access
-function ProjectCard(props) {
-  return (
-    <div>
-      <h3>{props.project.name}</h3>
-      <p>{props.project.description}</p>
-    </div>
-  );
-}
-
-// Good: Memoized prop access for derived values
-function ProjectCard(props) {
-  const displayName = createMemo(() => {
-    return `${props.project.name} (${props.project.status})`;
-  });
-
-  return <h3>{displayName()}</h3>;
-}
-```
-
-## Component Organization
-
-### File Structure
-
-Components are organized by feature:
-
-```
-src/components/
-├── project-ui/          # Project-related components
-│   ├── ProjectView.jsx
-│   ├── ProjectCard.jsx
-│   └── CreateProjectForm.jsx
-├── checklist-ui/        # Checklist-related components
-│   ├── AMSTAR2Checklist.jsx
-│   └── ChecklistYjsWrapper.jsx
-├── auth-ui/             # Auth-related components
-│   ├── SignIn.jsx
-│   └── SignUp.jsx
-└── common/              # Shared components
-    └── NoteEditor.jsx
-```
-
-### Component Size
-
-Keep components focused and small:
-
-```jsx
-// GOOD - Focused component
-function ProjectCard(props) {
-  const project = () => props.project;
-
-  return (
-    <div class='project-card'>
-      <h3>{project().name}</h3>
-      <ProjectActions projectId={project().id} />
-    </div>
-  );
-}
-
-// BAD - Too much logic in component
-function ProjectCard(props) {
-  // Don't put API calls, complex logic, etc. in components
-  const [data, setData] = createSignal(null);
-
-  fetch('/api/project/' + props.project.id)
-    .then(res => res.json())
-    .then(setData);
-
-  // Move this to a store or primitive instead
-}
-```
-
-## State Management in Components
-
-### When to Use createSignal
-
-Use `createSignal` for **local UI state only**:
-
-```jsx
-function MyComponent() {
-  // Good: UI state (modal open/closed, form field values)
-  const [isOpen, setIsOpen] = createSignal(false);
-  const [inputValue, setInputValue] = createSignal('');
-
-  // Bad: Application state (should be in store)
-  // const [projects, setProjects] = createSignal([]);
-}
-```
-
-### When to Use Stores
-
-Use stores for **shared/cross-feature state**:
-
-```jsx
-import projectStore from '@/stores/projectStore.js';
-
-function MyComponent() {
-  // Good: Read from store
-  const projects = () => projectStore.getProjectList();
-
-  // Bad: Local state for shared data
-  // const [projects, setProjects] = createSignal([]);
-}
-```
-
-### When to Use Primitives
-
-Use primitives for **reusable business logic**:
-
-```jsx
-import { useProjectData } from '@/primitives/useProjectData.js';
-
-function MyComponent(props) {
-  // Good: Use primitive for project operations
-  const { studies, isConnected } = useProjectData(props.projectId);
-
-  // Bad: Duplicate logic in component
-  // const [studies, setStudies] = createSignal([]);
-  // useEffect(() => { /* fetch studies */ });
-}
-```
-
-## Component Composition
-
-### Passing Props vs Store Access
-
-**Prefer store access over prop drilling:**
-
-```jsx
-// BAD - Prop drilling
-function App() {
-  const projects = () => projectStore.getProjectList();
-  return <ProjectList projects={projects()} />;
-}
-
-function ProjectList({ projects }) {
-  return <ProjectDashboard projects={projects} />;
-}
-
-function ProjectDashboard({ projects }) {
-  return <div>{projects.length} projects</div>;
-}
-
-// GOOD - Direct store access
-function App() {
-  return <ProjectList />;
-}
-
-function ProjectList() {
-  return <ProjectDashboard />;
-}
-
-function ProjectDashboard() {
-  const projects = () => projectStore.getProjectList();
-  return <div>{projects().length} projects</div>;
-}
-```
-
-### Component Props Limit
-
-Components should receive **at most 1-5 props** (for local configuration only):
-
-```jsx
-// GOOD - Few props for configuration
-function ProjectCard(props) {
-  // props.projectId, props.showActions, props.onClick - all configuration
-  const project = () => projectStore.getProject(props.projectId);
-  return <div>...</div>;
-}
-
-// BAD - Too many props (should use store or context)
-function ProjectCard(props) {
-  // 10+ props means you're prop drilling
-  // Move shared state to a store instead
-}
-```
-
-## Import Aliases
-
-Use import aliases from `jsconfig.json`:
-
-```jsx
-// GOOD - Use aliases
-import projectStore from '@/stores/projectStore.js';
-import { handleError } from '@/lib/error-utils.js';
-import SignIn from '@auth-ui/SignIn.jsx';
-import ChecklistWrapper from '@checklist-ui/ChecklistYjsWrapper.jsx';
-
-// BAD - Relative paths when alias available
-import projectStore from '../../stores/projectStore.js';
-```
-
-### Available Aliases
-
-- `@/*` → `src/*`
-- `@components/*` → `src/components/*`
-- `@auth-ui/*` → `src/components/auth-ui/*`
-- `@checklist-ui/*` → `src/components/checklist-ui/*`
-- `@project-ui/*` → `src/components/project-ui/*`
-- `@routes/*` → `src/routes/*`
-- `@primitives/*` → `src/primitives/*`
-- `@api/*` → `src/api/*`
-- `@config/*` → `src/config/*`
-- `@lib/*` → `src/lib/*`
-
-## UI Component Library
-
-### Ark UI Components
-
-**Always import from `@corates/ui`, not local components:**
-
-```jsx
-// GOOD - Import from @corates/ui
-import { Dialog, Select, Toast, showToast, Avatar } from '@corates/ui';
-
-// BAD - Don't import from local components
-import { Dialog } from '@/components/zag/Dialog.jsx';
-```
-
-### Common Components
-
-```jsx
+```tsx
+import { useState, useMemo, useEffect } from 'react';
+import { useNavigate } from '@tanstack/react-router';
+import { FolderIcon } from 'lucide-react';
 import {
   Dialog,
-  ConfirmDialog,
-  useConfirmDialog,
-  Select,
-  Combobox,
-  Toast,
-  showToast,
-  Avatar,
-  Tabs,
-  Checkbox,
-  Switch,
-  RadioGroup,
-  Tooltip,
-  Popover,
-  Menu,
-  FileUpload,
-  PasswordInput,
-} from '@corates/ui';
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { useOrgs } from '@/hooks/useOrgs';
+import { handleError } from '@/lib/error-utils';
 
-function MyComponent() {
-  const confirmDialog = useConfirmDialog();
+interface CreateProjectModalProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}
 
-  const handleDelete = async () => {
-    const confirmed = await confirmDialog.confirm({
-      title: 'Delete Project?',
-      message: 'This action cannot be undone.',
-    });
-
-    if (confirmed) {
-      // Delete logic
-      showToast.success('Project deleted');
-    }
-  };
-
-  return <Dialog>{/* Dialog content */}</Dialog>;
+export function CreateProjectModal({ open, onOpenChange }: CreateProjectModalProps) {
+  const navigate = useNavigate();
+  const [projectName, setProjectName] = useState('');
+  const { orgs } = useOrgs();
+  // ...
 }
 ```
+
+Export components as **named exports**. Default exports are reserved for route modules (`createFileRoute`) and a few legacy files.
+
+## Feature folders
+
+`packages/web/src/components/` is organized by feature, not by component type:
+
+```
+components/
+  admin/
+  auth/
+  billing/
+  charts/
+  checklist/
+  dashboard/
+  layout/
+  org/
+  pdf/
+  project/
+  resources/
+  settings/
+  ui/           <- shadcn/ui primitives
+```
+
+Keep related components, hooks, and helpers colocated inside the feature folder. Only components used across features belong higher up in the tree.
+
+## Props
+
+Props are plain destructured parameters, typed with an inline or colocated interface. There is no reactivity concern -- destructure freely, this is React 19, not SolidJS.
+
+```tsx
+interface ProjectCardProps {
+  projectId: string;
+  showActions?: boolean;
+  onSelect?: (id: string) => void;
+}
+
+export function ProjectCard({ projectId, showActions = true, onSelect }: ProjectCardProps) {
+  // ...
+}
+```
+
+For handler props, prefix underscore-ignored parameters with `_` to satisfy `noUnusedParameters`:
+
+```tsx
+onOpenChange: (_open: boolean) => void;
+```
+
+## Reading state
+
+Read Zustand stores via selector functions. Subscribe to one slice per call:
+
+```tsx
+import { useAuthStore } from '@/stores/authStore';
+
+const signin = useAuthStore(s => s.signin);
+const authError = useAuthStore(s => s.authError);
+```
+
+Read server state via TanStack Query hooks, usually wrapped in a feature hook (`useOrgs`, `useProjectList`, etc.) under `@/hooks/` or inside the feature folder.
+
+```tsx
+const { data: orgs, isLoading } = useOrgs();
+```
+
+Do not prop-drill shared state. Import the store or hook where you need it.
+
+## Derived values and callbacks
+
+Use `useMemo` for non-trivial derived values, `useCallback` for callbacks passed to memoized children or used in effect dependency lists.
+
+```tsx
+const resolvedOrgId = useMemo(() => {
+  if (orgs.length === 1) return orgs[0].id;
+  return selectedOrgId;
+}, [orgs, selectedOrgId]);
+```
+
+For trivial expressions, an inline calculation is clearer than a memo.
+
+## Effects
+
+Use `useEffect` with an explicit dependency array. Never omit the array.
+
+```tsx
+useEffect(() => {
+  if (orgs.length > 1 && !selectedOrgId) {
+    setSelectedOrgId(orgs[0].id);
+  }
+}, [orgs, selectedOrgId]);
+```
+
+Use `useLayoutEffect` only when a DOM measurement must happen before paint. Use `useSyncExternalStore` when subscribing to a non-React external source (e.g. Yjs awareness); never wrap `useState` + `useEffect` to emulate it.
 
 ## Icons
 
-**Always use `solid-icons` library, NEVER use emojis:**
+Use `lucide-react` exclusively. No emoji, no unicode symbols, anywhere.
 
-```jsx
-// GOOD - Import from solid-icons
-import { BiRegularHome, BiRegularCheck } from 'solid-icons/bi';
-import { FiUsers } from 'solid-icons/fi';
-import { AiFillCheckCircle } from 'solid-icons/ai';
+```tsx
+import { FolderIcon, PlusIcon, TriangleAlertIcon } from 'lucide-react';
 
-function MyComponent() {
-  return (
-    <div>
-      <BiRegularHome />
-      <FiUsers />
-    </div>
-  );
-}
-
-// BAD - Don't use emojis
-function MyComponent() {
-  return <span>🏠 Home</span>; // Use icon component instead
-}
+<Button>
+  <PlusIcon className="size-4" />
+  New project
+</Button>
 ```
 
-### Icon Packages
+For icons lucide doesn't provide, inline an SVG component.
 
-- `solid-icons/bi` - BoxIcons Regular
-- `solid-icons/bx` - BoxIcons
-- `solid-icons/fi` - Feather Icons
-- `solid-icons/ai` - Ant Design Icons
+## UI primitives
 
-Use the icon search MCP tool to find icons by name.
+Use shadcn/ui components from `@/components/ui/`. They are first-party -- copy-pasted into the repo, not imported from an external package.
 
-## Conditional Rendering
-
-### Show Component
-
-```jsx
-import { Show } from 'solid-js';
-
-<Show when={loading()} fallback={<div>Loading...</div>}>
-  <Content />
-</Show>
-
-<Show when={error()}>
-  <ErrorMessage error={error()} />
-</Show>
+```tsx
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { showToast } from '@/components/ui/toast';
 ```
 
-### Switch/Match
-
-```jsx
-import { Switch, Match } from 'solid-js';
-
-<Switch>
-  <Match when={status() === 'loading'}>
-    <Spinner />
-  </Match>
-  <Match when={status() === 'error'}>
-    <ErrorMessage />
-  </Match>
-  <Match when={status() === 'success'}>
-    <Content />
-  </Match>
-</Switch>;
-```
-
-## Lists
-
-### For Component
-
-```jsx
-import { For } from 'solid-js';
-
-<For each={items()}>
-  {(item, index) => (
-    <ItemCard item={item} index={index()} />
-  )}
-</For>
-
-// With fallback
-<For each={items()} fallback={<div>No items</div>}>
-  {item => <ItemCard item={item} />}
-</For>
-```
-
-## Effects and Lifecycle
-
-### createEffect
-
-Use effects sparingly (prefer derived values with `createMemo`):
-
-```jsx
-import { createEffect, onCleanup } from 'solid-js';
-
-function MyComponent(props) {
-  createEffect(() => {
-    const id = props.id();
-
-    // Setup
-    const subscription = subscribe(id);
-
-    // Cleanup
-    onCleanup(() => {
-      subscription.unsubscribe();
-    });
-  });
-}
-```
-
-### onMount / onCleanup
-
-```jsx
-import { onMount, onCleanup } from 'solid-js';
-
-function MyComponent() {
-  onMount(() => {
-    // Component mounted
-  });
-
-  onCleanup(() => {
-    // Component will unmount - cleanup
-  });
-}
-```
-
-## Error Handling in Components
-
-### Error Boundaries
-
-Use error boundaries for rendering errors:
-
-```jsx
-import AppErrorBoundary from '@/components/ErrorBoundary.jsx';
-
-function App() {
-  return (
-    <AppErrorBoundary>
-      <YourComponent />
-    </AppErrorBoundary>
-  );
-}
-```
-
-### API Error Handling
-
-Use `handleFetchError` for API calls:
-
-```jsx
-import { handleFetchError } from '@/lib/error-utils.js';
-
-async function handleSubmit() {
-  try {
-    const response = await handleFetchError(
-      fetch('/api/projects', {
-        method: 'POST',
-        body: JSON.stringify(data),
-      }),
-      { showToast: true },
-    );
-    // Success
-  } catch (error) {
-    // Error already handled (toast shown)
-  }
-}
-```
-
-### Form Error Handling
-
-Use form error signals:
-
-```jsx
-import { createFormErrorSignals } from '@/lib/form-errors.js';
-import { createSignal } from 'solid-js';
-
-function MyForm() {
-  const errors = createFormErrorSignals(createSignal);
-
-  async function handleSubmit() {
-    try {
-      // Submit form
-    } catch (error) {
-      errors.handleError(error); // Handles field-level and global errors
-    }
-  }
-
-  return (
-    <form>
-      <input name='email' />
-      {errors.fieldErrors().email && <span class='error'>{errors.fieldErrors().email}</span>}
-      {errors.globalError() && <div class='error'>{errors.globalError()}</div>}
-    </form>
-  );
-}
-```
+Do not import UI from external packages (no Ark UI, no Radix directly -- shadcn wraps Radix internally).
 
 ## Styling
 
-Use Tailwind CSS classes (see [Style Guide](/guides/style-guide)):
+Tailwind CSS for everything. Use `className`, not `class`.
 
-```jsx
-function MyComponent() {
-  return (
-    <div class='rounded-lg border border-gray-200 bg-white p-6 shadow-sm'>
-      <h3 class='text-lg font-semibold text-gray-900'>Title</h3>
-      <p class='text-sm text-gray-600'>Description</p>
-    </div>
-  );
-}
+```tsx
+<div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+  <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
+</div>
 ```
 
-## Best Practices
+shadcn components accept `className` and merge it correctly via `cn()` (from `@/lib/utils`).
 
-### DO
+## Error handling
 
-- Keep components lean and focused on rendering
-- Move business logic to stores, primitives, or utilities
-- Access props directly (never destructure)
-- Use store imports instead of prop drilling
-- Use import aliases
-- Use Ark UI components from `@corates/ui`
-- Use `solid-icons` for icons
-- Handle errors appropriately
-- Use Tailwind CSS for styling
+For API calls, use the shared error helpers from `@/lib/error-utils` and `@/lib/form-errors`. They understand the `@corates/shared` domain error schema.
 
-### DON'T
+```tsx
+import { handleError, isErrorCode, getDomainError } from '@/lib/error-utils';
+import { AUTH_ERRORS } from '@corates/shared';
 
-- Don't destructure props
-- Don't prop-drill application state
-- Don't put business logic in components
-- Don't use emojis (use icons)
-- Don't import UI components from local files (use `@corates/ui`)
-- Don't create "God components" that do too much
-- Don't use more than 5 props (consider store or context)
-
-## Component Examples
-
-### Simple Component
-
-```jsx
-import { Show } from 'solid-js';
-import projectStore from '@/stores/projectStore.js';
-
-export default function ProjectList() {
-  const projects = () => projectStore.getProjectList();
-  const loading = () => projectStore.isProjectListLoading();
-
-  return (
-    <div class='space-y-4'>
-      <Show when={loading()} fallback={<div>Loading...</div>}>
-        <For each={projects()}>{project => <ProjectCard project={project} />}</For>
-      </Show>
-    </div>
-  );
-}
-```
-
-### Form Component
-
-```jsx
-import { createSignal } from 'solid-js';
-import { createFormErrorSignals } from '@/lib/form-errors.js';
-import { handleFetchError } from '@/lib/error-utils.js';
-import projectActionsStore from '@/stores/projectActionsStore';
-
-export default function CreateProjectForm(props) {
-  const [name, setName] = createSignal('');
-  const errors = createFormErrorSignals(createSignal);
-
-  async function handleSubmit(e) {
-    e.preventDefault();
-
-    try {
-      await projectActionsStore.createProject({
-        name: name(),
-      });
-      props.onSuccess?.();
-    } catch (error) {
-      errors.handleError(error);
+async function handleSubmit() {
+  setIsSubmitting(true);
+  try {
+    const res = await fetch('/api/projects', { method: 'POST', body: JSON.stringify(data) });
+    if (!res.ok) throw await getDomainError(res);
+    // ...
+  } catch (err) {
+    if (isErrorCode(err, AUTH_ERRORS.UNAUTHORIZED)) {
+      navigate({ to: '/signin' });
+      return;
     }
+    handleError(err, { showToast: true });
+  } finally {
+    setIsSubmitting(false);
   }
-
-  return (
-    <form onSubmit={handleSubmit}>
-      <input value={name()} onInput={e => setName(e.target.value)} class='rounded border px-3 py-2' />
-      {errors.fieldErrors().name && <span class='text-red-600'>{errors.fieldErrors().name}</span>}
-      <button type='submit'>Create</button>
-    </form>
-  );
 }
 ```
 
-## Related Guides
+For forms with field-level validation errors, use `createFormErrorState` / `handleFormError` from `@/lib/form-errors`.
 
-- [State Management Guide](/guides/state-management) - For store patterns
-- [Primitives Guide](/guides/primitives) - For reusable logic patterns
-- [Style Guide](/guides/style-guide) - For UI/UX guidelines
-- [Error Handling Guide](/guides/error-handling) - For error handling patterns
+For render-time errors, wrap at route boundaries with an error boundary component; routes can also declare an `errorComponent` in `createFileRoute`.
+
+## Unique IDs
+
+Use `useId()` for form element IDs (radio buttons, checkboxes, label-input pairs). Don't hand-generate them.
+
+```tsx
+const id = useId();
+return (
+  <>
+    <label htmlFor={id}>Email</label>
+    <input id={id} type="email" />
+  </>
+);
+```
+
+## What does not belong in a component
+
+- Fetch/mutation logic -- move to a TanStack Query hook or a Zustand action.
+- localStorage access without a `typeof window !== 'undefined'` guard -- breaks SSR.
+- Direct Yjs document writes -- go through the project store or a sync helper.
+- Global side effects at module scope. A component file that is imported should have no observable effect until the component is rendered.
+
+## Don'ts
+
+- Don't default-export non-route components.
+- Don't use `class=` (SolidJS holdover) -- it's `className`.
+- Don't import UI primitives from external packages.
+- Don't add emoji or unicode symbols anywhere.
+- Don't omit the `useEffect` dependency array.
+- Don't prop-drill shared state; import the store/hook directly.

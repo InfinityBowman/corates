@@ -188,8 +188,9 @@ refactor: simplify error handling
 #### Frontend Debugging
 
 - Use browser DevTools
-- Check SolidJS DevTools extension
-- Inspect store state in console
+- React DevTools extension for component tree inspection
+- TanStack Query DevTools (already wired up in dev) for inspecting queries and cache
+- Inspect Zustand store state in console via `useAuthStore.getState()` (or other stores)
 - Use `console.log` for debugging (remove before commit)
 
 #### Backend Debugging
@@ -251,7 +252,6 @@ pnpm install
 - Don't skip tests
 - Don't ignore linting errors
 - Don't prop-drill state (use stores)
-- Don't destructure props in SolidJS components
 - Don't use raw SQL (use Drizzle ORM)
 - Don't create circular dependencies
 

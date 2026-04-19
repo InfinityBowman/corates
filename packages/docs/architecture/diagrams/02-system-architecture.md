@@ -4,16 +4,17 @@ How the frontend, backend, and storage layers connect.
 
 ```mermaid
 flowchart TB
-    subgraph Client["Browser (SolidJS)"]
-        UI[UI Components]
-        Stores[Stores<br/>projectStore, adminStore]
+    subgraph Client["Browser (React 19)"]
+        UI[shadcn/ui Components]
+        Stores[Zustand Stores<br/>authStore, projectStore, adminStore]
+        Query[TanStack Query Cache]
         YjsClient[Yjs Client]
-        Dexie[(Dexie/y-dexie<br/>Unified IndexedDB)]
+        IDB[(IndexedDB<br/>y-indexeddb + app caches)]
     end
 
-    subgraph CF["Cloudflare Workers"]
-        Hono[Hono API]
-        Auth[BetterAuth]
+    subgraph MainWorker["App Worker (TanStack Start)"]
+        Routes[File-based API Routes<br/>/api/*]
+        Auth[Better Auth]
 
         subgraph DurableObjects["Durable Objects"]
             ProjectDoc[ProjectDoc<br/>One per project<br/>Yjs sync & content]
@@ -22,37 +23,51 @@ flowchart TB
         EmailQueue[Cloudflare Queue<br/>Email delivery]
     end
 
+    subgraph StripeWorker["Stripe Purchases Worker (Hono)"]
+        StripeWebhook[POST /api/billing/purchases/webhook]
+    end
+
     subgraph Storage["Cloudflare Storage"]
-        D1[(D1<br/>Users, Project Metadata<br/>& Access Control)]
+        D1[(D1<br/>Users, Orgs, Projects<br/>& Access Control)]
         R2[(R2<br/>PDF Documents)]
     end
 
     UI --> Stores
+    UI --> Query
     Stores --> YjsClient
     YjsClient <-->|"WebSocket<br/>Yjs sync"| ProjectDoc
     YjsClient <--> IDB
     UI <-->|"WebSocket<br/>Notifications"| UserSession
-    UI -->|"REST API"| Hono
-    Hono --> Auth
-    Hono --> D1
-    Hono --> R2
-    Hono -->|"send notification"| UserSession
+    Query -->|"REST"| Routes
+    Routes --> Auth
+    Routes --> D1
+    Routes --> R2
+    Routes -->|"send notification"| UserSession
+    StripeWebhook -->|"verifies + writes"| D1
     ProjectDoc -->|"reads access control"| D1
 ```
 
 ## Key Components
 
-### Frontend (SolidJS)
+### Frontend (React 19)
 
-- **UI Components**: Ark UI-based accessible components
-- **Stores**: Centralized state management (no prop drilling)
-- **Yjs Client**: CRDT sync with Dexie/y-dexie persistence for project content
+- **UI**: shadcn/ui primitives colocated under `@/components/ui/`, styled with Tailwind v4
+- **Routing**: TanStack Router file-based routes under `packages/web/src/routes/`
+- **Client state**: Zustand stores in `@/stores/` (authStore, projectStore, adminStore, pdfPreviewStore)
+- **Server state**: TanStack Query, with hooks in `@/hooks/`
+- **Yjs Client**: CRDT sync with `y-indexeddb` for project content
 - **Notification WebSocket**: Real-time connection to UserSession for user-level notifications (project invites, etc.)
 
 ### Backend (Cloudflare Workers)
 
-- **Hono API**: REST endpoints for CRUD operations
-- **BetterAuth**: Authentication and session management
+Two Workers are deployed:
+
+- **App Worker (`packages/web`)**: TanStack Start -- serves the SPA and all `/api/*` routes. Shared backend logic lives in `@corates/workers` (imported as a library).
+- **Stripe Purchases Worker (`packages/stripe-purchases`)**: Hono-based, isolated for deploy-cadence. Receives Stripe webhooks, verifies signatures, writes to the same D1 database.
+
+Both Workers share:
+
+- **Better Auth**: Authentication and session management (in the main app Worker; the Stripe worker does not authenticate user sessions)
 - **Durable Objects**:
   - **ProjectDoc**: One per project, holds Yjs document for real-time collaboration and content storage
   - **UserSession**: One per user, manages WebSocket connections for real-time notifications (e.g., project invites)

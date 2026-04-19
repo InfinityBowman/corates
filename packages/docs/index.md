@@ -10,12 +10,13 @@ CoRATES is a web application designed to streamline the entire quality and risk-
 
 ## Tech Stack
 
-- **Frontend**: SolidJS, SolidStart, Tailwind CSS, Vite, Ark UI
-- **Backend**: Cloudflare Workers, Durable Objects
-- **Database**: Cloudflare D1 (SQLite)
+- **Frontend**: React 19, TanStack Start, TanStack Router, TanStack Query, Zustand, Tailwind CSS, Vite, shadcn/ui
+- **Backend**: TanStack Start server routes on Cloudflare Workers, Durable Objects
+- **Database**: Cloudflare D1 (SQLite) via Drizzle ORM
 - **Storage**: Cloudflare R2 (PDF documents)
 - **Sync**: Yjs (CRDT), y-indexeddb for local persistence
-- **Auth**: BetterAuth
+- **Auth**: Better Auth
+- **Payments**: Stripe (isolated `stripe-purchases` Worker using Hono for webhook delivery)
 
 ## Documentation Sections
 

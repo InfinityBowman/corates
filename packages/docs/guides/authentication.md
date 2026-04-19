@@ -4,9 +4,9 @@ This guide covers authentication setup, configuration, usage patterns, and code 
 
 ## Overview
 
-CoRATES uses Better Auth for authentication, providing email/password, magic links, OAuth (Google, ORCID), and two-factor authentication. Authentication state is managed on both the backend (Workers) and frontend (SolidJS).
+CoRATES uses Better Auth for authentication, providing email/password, magic links, OAuth (Google, ORCID), and two-factor authentication. Authentication state is managed on the server (via `getSession` in TanStack Start route handlers) and on the React client (via `useAuthStore`, a Zustand store that mirrors Better Auth's session for use outside React).
 
-This setup provides comprehensive user authentication using Better Auth with multiple authentication methods, storing users in Cloudflare D1 database, and protecting all Workers endpoints.
+This setup provides comprehensive user authentication using Better Auth with multiple authentication methods, storing users in Cloudflare D1 database, and protecting all API endpoints.
 
 ## Features
 
@@ -26,34 +26,7 @@ This setup provides comprehensive user authentication using Better Auth with mul
 
 ### Backend Configuration
 
-Better Auth is configured in `packages/workers/src/auth/config.js`:
-
-```11:34:packages/workers/src/auth/config.js
-export function createAuth(env, ctx) {
-  // Initialize Drizzle with D1
-  const db = drizzle(env.DB, { schema });
-
-  // Create email service
-  const emailService = createEmailService(env);
-
-  // Build social providers config if credentials are present
-  const socialProviders = {};
-
-  if (env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET) {
-    socialProviders.google = {
-      clientId: env.GOOGLE_CLIENT_ID,
-      clientSecret: env.GOOGLE_CLIENT_SECRET,
-      // Required so Google issues a refresh token (needed for Drive access when access tokens expire)
-      accessType: 'offline',
-      // Request Drive read-only access for PDF import
-      scope: ['openid', 'email', 'profile', 'https://www.googleapis.com/auth/drive.readonly'],
-    };
-  } else {
-    console.error(
-      '[Auth] Google OAuth NOT configured - missing GOOGLE_CLIENT_ID or GOOGLE_CLIENT_SECRET',
-    );
-  }
-```
+Better Auth is configured in `packages/workers/src/auth/config.ts` and exposed via `createAuth(env)`. Route handlers import it from `@corates/workers/auth-config`. It wires up Drizzle + D1, the Postmark email service, and the social providers conditionally based on which credentials are present in the environment.
 
 ### Authentication Methods
 
@@ -120,162 +93,134 @@ See the [Organizations Guide](/guides/organizations) for detailed org/project ro
 
 ### Auth Client
 
-The frontend uses Better Auth's SolidJS client:
+The React client is configured in `packages/web/src/api/auth-client.ts`:
 
-```1:41:packages/web/src/api/auth-client.js
-import { createAuthClient } from 'better-auth/solid';
+```ts
+import { createAuthClient } from 'better-auth/react';
 import {
   genericOAuthClient,
   magicLinkClient,
   twoFactorClient,
   adminClient,
+  organizationClient,
 } from 'better-auth/client/plugins';
-import { API_BASE } from '@config/api.js';
-import { parseError } from '@/lib/error-utils.js';
+import { API_BASE } from '@/config/api';
+import { parseError } from '@/lib/error-utils';
 
 export const authClient = createAuthClient({
   baseURL: API_BASE,
-
-  plugins: [genericOAuthClient(), magicLinkClient(), twoFactorClient(), adminClient()],
-
+  plugins: [
+    genericOAuthClient(),
+    magicLinkClient(),
+    twoFactorClient(),
+    adminClient(),
+    organizationClient(),
+  ],
   fetchOptions: {
     credentials: 'include',
     onError(error) {
       const parsedError = parseError(error);
       console.error('Auth error:', parsedError.code, parsedError.message);
     },
-    onSuccess() {
-      // Auth action successful
-    },
   },
 });
-
-// Export Better Auth methods for easy access
-export const {
-  signIn,
-  signUp
 ```
+
+`authFetch` (exported from the same file) wraps Better Auth's `{ data, error }` return shape and throws on error so calls compose naturally with `try/catch` and TanStack Query.
 
 ### Auth Store
 
-The auth store wraps Better Auth with caching and offline support:
+`useAuthStore` (Zustand, at `packages/web/src/stores/authStore.ts`) holds auth state that must be accessible from outside React -- Yjs callbacks, API interceptors, cross-tab broadcasts. `AuthProvider` syncs Better Auth's `useSession()` into the store.
 
-```18:65:packages/web/src/api/better-auth-store.js
-function createBetterAuthStore() {
-  // Track online status without reactive primitives (for singleton context)
-  const [isOnline, setIsOnline] = createSignal(navigator.onLine);
+Key fields:
 
-  // Listen for online/offline events
-  if (typeof window !== 'undefined') {
-    window.addEventListener('online', () => setIsOnline(true));
-    window.addEventListener('offline', () => setIsOnline(false));
-  }
+- `sessionUser` / `sessionLoading` -- mirror Better Auth's current session.
+- `cachedUser` -- last-known user from localStorage, used for offline and first-paint UX.
+- `isOnline` -- toggled by `online` / `offline` window events.
 
-  function loadCachedAuth() {
-    if (typeof window === 'undefined') return null;
-    try {
-      const cached = localStorage.getItem(AUTH_CACHE_KEY);
-      const timestamp = localStorage.getItem(AUTH_CACHE_TIMESTAMP_KEY);
-      if (!cached || !timestamp) return null;
+Selectors compose these into derived state:
 
-      const age = Date.now() - parseInt(timestamp, 10);
-      if (age > AUTH_CACHE_MAX_AGE) {
-        localStorage.removeItem(AUTH_CACHE_KEY);
-        localStorage.removeItem(AUTH_CACHE_TIMESTAMP_KEY);
-        return null;
-      }
+```ts
+import { useAuthStore, selectIsLoggedIn, selectUser } from '@/stores/authStore';
 
-      return JSON.parse(cached);
-    } catch (err) {
-      console.error('Error loading cached auth:', err);
-      return null;
-    }
-  }
-
-  // Save auth data to localStorage
-  function saveCachedAuth(userData) {
-    if (typeof window === 'undefined') return;
-    try {
-      if (userData) {
-        localStorage.setItem(AUTH_CACHE_KEY, JSON.stringify(userData));
-        localStorage.setItem(AUTH_CACHE_TIMESTAMP_KEY, Date.now().toString());
-      } else {
-        localStorage.removeItem(AUTH_CACHE_KEY);
-        localStorage.removeItem(AUTH_CACHE_TIMESTAMP_KEY);
-      }
-    } catch (err) {
-      console.error('Error saving cached auth:', err);
-    }
-  }
+const isLoggedIn = useAuthStore(selectIsLoggedIn);
+const user = useAuthStore(selectUser);
 ```
 
-### Using Auth in Components
+`selectIsLoggedIn` returns `true` when a cached user exists and the session is still loading, so protected routes don't flash a redirect on reload.
 
-```js
-import { useBetterAuth } from '@/api/better-auth-store.js';
+### Auth actions
 
-function MyComponent() {
-  const auth = useBetterAuth();
+All sign-in / sign-out / OAuth helpers are actions on `useAuthStore`:
 
-  // Reactive values
-  const user = () => auth.user();
-  const isLoggedIn = () => auth.isLoggedIn();
-  const isLoading = () => auth.authLoading();
+```tsx
+const signin = useAuthStore(s => s.signin);
+const signinWithGoogle = useAuthStore(s => s.signinWithGoogle);
+const authError = useAuthStore(s => s.authError);
 
-  return (
-    <Show when={isLoggedIn()}>
-      <div>Welcome, {user()?.name}</div>
-    </Show>
-  );
-}
+await signin(email, password);
 ```
+
+See [State Management Guide](/guides/state-management) for the store pattern more broadly.
 
 ## Protected Routes
 
 ### Backend Protection
 
-Use `requireAuth` middleware to protect routes:
+API route handlers guard themselves with `getSession`. There is no Hono-style middleware layer -- each handler does its own check. This keeps auth policy explicit at the route.
 
-```35:56:packages/workers/src/middleware/auth.js
-export async function requireAuth(c, next) {
-  try {
-    const auth = createAuth(c.env);
-    const session = await auth.api.getSession({
-      headers: c.req.raw.headers,
-    });
+```ts
+import { getSession } from '@corates/workers/auth';
+import { env } from 'cloudflare:workers';
+import { createDomainError, AUTH_ERRORS } from '@corates/shared';
 
-    if (!session?.user) {
-      const error = createDomainError(AUTH_ERRORS.REQUIRED);
-      return c.json(error, error.statusCode);
-    }
-
-    c.set('user', session.user);
-    c.set('session', session.session);
-
-    await next();
-  } catch (error) {
-    console.error('Auth verification error:', error);
-    const authError = createDomainError(AUTH_ERRORS.REQUIRED);
-    return c.json(authError, authError.statusCode);
+export const handleGet = async ({ request }: { request: Request }) => {
+  const session = await getSession(request, env);
+  if (!session) {
+    return Response.json(createDomainError(AUTH_ERRORS.REQUIRED), { status: 401 });
   }
-}
+
+  // session.user, session.session available here
+};
 ```
+
+For finer-grained checks (org ownership, project membership, admin role), use the policies from `@corates/workers/policies` or the guard helpers under `@/server/guards/`.
 
 ### Frontend Protection
 
-Use `ProtectedGuard` component:
+Protected route trees use TanStack Router's `beforeLoad` hook, reading from `useAuthStore` synchronously (the store hydrates from the localStorage cache at module load, so this check works even before the session resolves).
 
-```js
-import ProtectedGuard from '@auth-ui/ProtectedGuard.jsx';
+```tsx
+// routes/_app/_protected.tsx
+import { createFileRoute, Outlet, redirect, useNavigate } from '@tanstack/react-router';
+import { useAuthStore, selectIsLoggedIn, selectIsAuthLoading } from '@/stores/authStore';
 
-function App() {
-  return (
-    <ProtectedGuard>
-      <YourProtectedComponent />
-    </ProtectedGuard>
-  );
+export const Route = createFileRoute('/_app/_protected')({
+  beforeLoad: () => {
+    const state = useAuthStore.getState();
+    if (!selectIsLoggedIn(state)) {
+      throw redirect({ to: '/signin' });
+    }
+  },
+  component: ProtectedLayout,
+});
+
+function ProtectedLayout() {
+  const isLoading = useAuthStore(selectIsAuthLoading);
+  const isLoggedIn = useAuthStore(selectIsLoggedIn);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!isLoading && !isLoggedIn) {
+      navigate({ to: '/signin', replace: true });
+    }
+  }, [isLoading, isLoggedIn, navigate]);
+
+  return isLoading ? <PageLoader /> : <Outlet />;
 }
 ```
+
+Any route segment under `_protected` is now guarded. Do not re-guard inside child routes unless they require stricter policy (e.g. admin only).
 
 ## Usage Examples
 
@@ -329,18 +274,18 @@ Sessions are managed with secure cookies (7-day expiry by default). Session data
 
 ### Session Access
 
-**Backend:**
+**Backend (inside a route handler):**
 
-```js
-const { user, session } = getAuth(c);
+```ts
+const session = await getSession(request, env);
+const { user, session: sessionRow } = session ?? {};
 ```
 
 **Frontend:**
 
-```js
-const auth = useBetterAuth();
-const user = () => auth.user();
-const session = () => auth.session();
+```tsx
+const user = useAuthStore(selectUser);
+const isLoggedIn = useAuthStore(selectIsLoggedIn);
 ```
 
 ## Admin Features
@@ -653,8 +598,9 @@ Google OAuth is used to allow users to connect their Google account and access t
 
 ### DO
 
-- Always use `requireAuth` middleware on protected routes
-- Use `useBetterAuth` hook in components for auth state
+- Call `getSession(request, env)` at the top of every protected route handler
+- Read auth state in components via `useAuthStore` selectors (`selectIsLoggedIn`, `selectUser`)
+- Guard protected route trees with `beforeLoad` + redirect, not ad-hoc component checks
 - Cache auth state in localStorage for offline support
 - Handle auth errors gracefully
 - Verify email addresses

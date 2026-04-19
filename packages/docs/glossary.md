@@ -263,11 +263,11 @@ Design pattern prioritizing local data and offline functionality:
 
 UI components that provide behavior/state without styling:
 
-- Ark UI primitives provide accessibility and state
+- Radix UI primitives (wrapped by shadcn/ui) provide accessibility and state
 - Tailwind CSS for styling
-- Full customization control
+- Full customization control -- shadcn components live in the repo under `@/components/ui/` and can be edited directly
 
-**Related:** [@corates/ui](../ui/)
+**Related:** `packages/web/src/components/ui/`
 
 ---
 
