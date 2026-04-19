@@ -33,7 +33,7 @@ describe('isValidPdfFilename', () => {
     ['file"name.pdf', 'quotes'],
     ['file\x00name.pdf', 'control character'],
     ['a'.repeat(201) + '.pdf', 'exceeds max length'],
-  ])('rejects invalid filename (%s): %s', (name) => {
+  ])('rejects invalid filename: %s', (name, _label) => {
     expect(isValidPdfFilename(name)).toBe(false);
   });
 });
