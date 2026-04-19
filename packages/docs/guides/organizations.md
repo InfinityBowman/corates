@@ -1,488 +1,228 @@
 # Organizations Guide
 
-This guide covers the organization (workspace) model in CoRATES, including data architecture, API routes, role hierarchies, and frontend routing patterns.
+This guide covers the organization (workspace) model in CoRATES: how orgs, projects, members, and invitations fit together, and the actual route and guard patterns used in the codebase today.
 
 ## Overview
 
-CoRATES uses a multi-tenant organization model where:
+CoRATES is multi-tenant:
 
-- **Organizations** (workspaces) are the top-level container for collaboration
-- **Projects** belong to organizations and contain research data
-- **Users** can belong to multiple organizations with different roles
-- **Invitations** grant both org and project membership in a combined flow
+- **Organizations** are the top-level container. Billing attaches here.
+- **Projects** belong to exactly one organization.
+- **Users** can belong to multiple organizations with different roles.
+- **Invitations** grant project membership, and optionally org membership in the same flow.
 
-This architecture enables team collaboration while maintaining clear access boundaries.
+Project membership is independent of org membership by default -- a user can be a member of a project without being in its org. This is deliberate: outside reviewers/collaborators often don't need org-level access.
 
 ## Data Model
 
-### Entity Hierarchy
+| Entity               | Storage           | Source of truth for        |
+| -------------------- | ----------------- | -------------------------- |
+| Organizations        | D1 (Better Auth)  | Org metadata, billing      |
+| Org Members          | D1 (Better Auth)  | Org-level access + role    |
+| Projects             | D1                | Project metadata           |
+| Project Members      | D1                | Project-level access + role|
+| Project Invitations  | D1                | Pending invites + tokens   |
+| Studies / Checklists | Durable Object    | Real-time collaborative content (Yjs) |
+| PDFs                 | R2                | Binary uploads             |
 
-```
-Organization
-    |
-    +-- Projects (owned by org)
-    |       |
-    |       +-- Studies (in Durable Objects)
-    |       |       |
-    |       |       +-- Checklists
-    |       |               |
-    |       |               +-- Answers
-    |       |
-    |       +-- Project Members (access control)
-    |
-    +-- Org Members (org-level access)
-```
+### Key tables
 
-### Storage Split
+Schema lives in `packages/db/src/schema.ts` -- the canonical reference. Relevant tables:
 
-| Entity                       | Storage               | Purpose                          |
-| ---------------------------- | --------------------- | -------------------------------- |
-| Organizations                | D1 (SQLite)           | Org metadata, Better Auth plugin |
-| Org Members                  | D1 (SQLite)           | Org membership, roles            |
-| Projects (metadata)          | D1 (SQLite)           | Project info, access control     |
-| Project Members              | D1 (SQLite)           | Project-level access control     |
-| Project Invitations          | D1 (SQLite)           | Pending invitations with tokens  |
-| Studies, Checklists, Answers | Durable Objects (Yjs) | Real-time collaborative content  |
-| PDFs                         | R2                    | Large binary files               |
+- `organization`, `member`, `invitation` -- Better Auth organization plugin. `member.role`: `owner | admin | member`.
+- `projects` -- `id`, `name`, `description`, `orgId` (FK, cascade), `createdBy`.
+- `projectMembers` -- `projectId` (FK), `userId` (FK), `role` (`owner | member`), `joinedAt`.
+- `projectInvitations` -- `orgId`, `projectId`, `email`, `role`, `orgRole`, `grantOrgMembership`, `token` (unique), `expiresAt`, `acceptedAt`.
 
-### Database Schema
-
-#### Organization Table
-
-```js
-export const organization = sqliteTable('organization', {
-  id: text('id').primaryKey(),
-  name: text('name').notNull(),
-  slug: text('slug').unique(),
-  logo: text('logo'),
-  metadata: text('metadata'), // JSON string
-  createdAt: integer('createdAt', { mode: 'timestamp' }),
-});
-```
-
-#### Org Member Table
-
-```js
-export const member = sqliteTable('member', {
-  id: text('id').primaryKey(),
-  userId: text('userId')
-    .notNull()
-    .references(() => user.id),
-  organizationId: text('organizationId')
-    .notNull()
-    .references(() => organization.id),
-  role: text('role').notNull().default('member'), // owner, admin, member
-  createdAt: integer('createdAt', { mode: 'timestamp' }),
-});
-```
-
-#### Projects Table
-
-```js
-export const projects = sqliteTable('projects', {
-  id: text('id').primaryKey(),
-  name: text('name').notNull(),
-  description: text('description'),
-  orgId: text('orgId')
-    .notNull()
-    .references(() => organization.id, { onDelete: 'cascade' }),
-  createdBy: text('createdBy')
-    .notNull()
-    .references(() => user.id),
-  createdAt: integer('createdAt', { mode: 'timestamp' }),
-  updatedAt: integer('updatedAt', { mode: 'timestamp' }),
-});
-```
-
-#### Project Invitations Table
-
-```js
-export const projectInvitations = sqliteTable('project_invitations', {
-  id: text('id').primaryKey(),
-  orgId: text('orgId')
-    .notNull()
-    .references(() => organization.id, { onDelete: 'cascade' }),
-  projectId: text('projectId')
-    .notNull()
-    .references(() => projects.id, { onDelete: 'cascade' }),
-  email: text('email').notNull(),
-  role: text('role').default('member'), // project role to assign
-  orgRole: text('orgRole').default('member'), // org role if grantOrgMembership is true
-  grantOrgMembership: integer('grantOrgMembership', { mode: 'boolean' }).default(false).notNull(),
-  token: text('token').notNull().unique(),
-  invitedBy: text('invitedBy')
-    .notNull()
-    .references(() => user.id, { onDelete: 'cascade' }),
-  expiresAt: integer('expiresAt', { mode: 'timestamp' }).notNull(),
-  acceptedAt: integer('acceptedAt', { mode: 'timestamp' }),
-  createdAt: integer('createdAt', { mode: 'timestamp' }),
-});
-```
-
-**Note:** Projects are always invite-only. By default, accepting an invitation grants project membership only. The `grantOrgMembership` field can be set to `true` by org admins/owners to also grant organization membership (for governance/billing purposes).
+The `grantOrgMembership` flag on an invitation says "also add this user to the org at `orgRole` when they accept." Defaults to `false`; only org admins/owners can set it to `true`.
 
 ## Role Hierarchies
 
-### Organization Roles
+### Organization
 
-| Role     | Permissions                                                   |
-| -------- | ------------------------------------------------------------- |
-| `owner`  | Full control: delete org, manage all members, change any role |
-| `admin`  | Manage members (except owners), update org settings           |
-| `member` | View org, access assigned projects, create projects           |
+| Role     | What it grants                                                 |
+| -------- | -------------------------------------------------------------- |
+| `owner`  | Full control: delete org, manage billing, any member action    |
+| `admin`  | Manage members (except owners), update org settings            |
+| `member` | View org, access assigned projects, create projects            |
 
-**Hierarchy:** `owner > admin > member`
+Hierarchy: `owner > admin > member`. Use `hasOrgRole(actual, minRole)` from `@corates/workers/policies`.
 
-### Project Roles
+### Project
 
-| Role     | Permissions                                      |
-| -------- | ------------------------------------------------ |
-| `owner`  | Full control: delete project, manage all members |
-| `member` | Edit project content, upload PDFs                |
+| Role     | What it grants                                       |
+| -------- | ---------------------------------------------------- |
+| `owner`  | Full control: delete project, manage project members |
+| `member` | Edit project content, upload PDFs                    |
 
-**Hierarchy:** `owner > member`
+Hierarchy: `owner > member`. Use `hasProjectRole(actual, minRole)` from `@corates/workers/policies`.
 
 ## API Routes
 
-### URL Structure
+All org-scoped API routes follow `/api/orgs/:orgId/...`. The backend always uses `orgId`; slugs are not routed.
 
-All org-scoped routes follow this pattern:
+### Organization routes (`/api/orgs/*`)
 
+| Method | Endpoint                      | Auth                            |
+| ------ | ----------------------------- | ------------------------------- |
+| GET    | `/api/orgs`                   | Authenticated                   |
+| POST   | `/api/orgs`                   | Authenticated                   |
+| GET    | `/api/orgs/:orgId`            | Org member                      |
+| PUT    | `/api/orgs/:orgId`            | Org admin                       |
+| DELETE | `/api/orgs/:orgId`            | Org owner                       |
+| POST   | `/api/orgs/:orgId/set-active` | Org member                      |
+
+### Org member routes (`/api/orgs/:orgId/members`)
+
+Member mutations are delegated to Better Auth's `organization` plugin (`createAuth(env).api.addMember`, etc.).
+
+### Project routes (`/api/orgs/:orgId/projects/*`)
+
+| Method | Endpoint                                       | Auth                                           |
+| ------ | ---------------------------------------------- | ---------------------------------------------- |
+| GET    | `/api/orgs/:orgId/projects`                    | Org member                                     |
+| POST   | `/api/orgs/:orgId/projects`                    | Org member + entitlement (`project.create`)    |
+| GET    | `/api/orgs/:orgId/projects/:projectId`         | Project member                                 |
+| PUT    | `/api/orgs/:orgId/projects/:projectId`         | Project member                                 |
+| DELETE | `/api/orgs/:orgId/projects/:projectId`         | Project owner                                  |
+
+### Project member + invitation routes
+
+| Method | Endpoint                                                           | Auth           |
+| ------ | ------------------------------------------------------------------ | -------------- |
+| GET    | `/api/orgs/:orgId/projects/:projectId/members`                     | Project member |
+| POST   | `/api/orgs/:orgId/projects/:projectId/members`                     | Project owner  |
+| DELETE | `/api/orgs/:orgId/projects/:projectId/members/:userId`             | Project owner  |
+| GET    | `/api/orgs/:orgId/projects/:projectId/invitations`                 | Project member |
+| POST   | `/api/orgs/:orgId/projects/:projectId/invitations`                 | Project owner  |
+| DELETE | `/api/orgs/:orgId/projects/:projectId/invitations/:invitationId`   | Project owner  |
+| POST   | `/api/invitations/accept`                                          | Authenticated  |
+
+## Server guards
+
+Route handlers gate themselves with **guard functions** that return a tagged `{ ok, context | response }` union rather than throwing. Each guard lives in `packages/web/src/server/guards/`.
+
+| Guard                        | Signature                                                                  | Purpose                                      |
+| ---------------------------- | -------------------------------------------------------------------------- | -------------------------------------------- |
+| `requireOrgMembership`       | `(request, env, orgId, minRole?)`                                          | Ensure caller is an org member, optional role|
+| `requireProjectAccess`       | `(request, env, orgId, projectId, minRole?)`                               | Ensure caller is a project member + role     |
+| `requireOrgWriteAccess`      | `(request, env, orgId)`                                                    | Billing-aware write gate                     |
+| `requireEntitlement`         | `(...)`                                                                    | Plan/feature entitlement check               |
+| `requireQuota`               | `(...)`                                                                    | Quota bookkeeping                            |
+| `requireAdmin`                | `(request, env)`                                                          | Admin-only routes                            |
+| `requireTrustedOrigin`       | `(request)`                                                                | CSRF / origin check                          |
+
+All guards return:
+
+```ts
+type GuardResult<T> = { ok: true; context: T } | { ok: false; response: Response };
 ```
-/api/orgs/:orgId/...
+
+### Canonical usage
+
+```ts
+import { createFileRoute } from '@tanstack/react-router';
+import { env } from 'cloudflare:workers';
+import { requireOrgMembership } from '@/server/guards/requireOrgMembership';
+import { requireProjectAccess } from '@/server/guards/requireProjectAccess';
+
+type HandlerArgs = { request: Request; params: { orgId: string; projectId: string } };
+
+export const handleGet = async ({ request, params }: HandlerArgs) => {
+  const orgMembership = await requireOrgMembership(request, env, params.orgId);
+  if (!orgMembership.ok) return orgMembership.response;
+
+  const access = await requireProjectAccess(request, env, params.orgId, params.projectId);
+  if (!access.ok) return access.response;
+
+  // access.context: { userId, userEmail, orgId, projectId, projectName, projectRole }
+  // ... handler work ...
+};
+
+export const Route = createFileRoute('/api/orgs/$orgId/projects/$projectId/members')({
+  server: { handlers: { GET: handleGet } },
+});
 ```
 
-The frontend uses `orgSlug` in URLs for readability, but the API uses `orgId` for consistency.
+Order matters: run `requireOrgMembership` before `requireProjectAccess` so that a user without org membership gets the org-scoped error rather than a project-not-found error.
 
-### Organization Routes
+For mutations that affect billing, add `requireOrgWriteAccess` and / or `requireQuota` after the access check.
 
-| Method   | Endpoint                      | Description               | Required Role |
-| -------- | ----------------------------- | ------------------------- | ------------- |
-| `GET`    | `/api/orgs`                   | List user's organizations | Auth          |
-| `POST`   | `/api/orgs`                   | Create organization       | Auth          |
-| `GET`    | `/api/orgs/:orgId`            | Get org details           | Org member    |
-| `PUT`    | `/api/orgs/:orgId`            | Update org                | Org admin     |
-| `DELETE` | `/api/orgs/:orgId`            | Delete org                | Org owner     |
-| `POST`   | `/api/orgs/:orgId/set-active` | Set active org            | Org member    |
+## Frontend routing
 
-### Organization Member Routes
+Frontend routes are **project-centric**, not org-slug-centric. There is no `:orgSlug` in URLs; projects know their org via the store and query cache.
 
-| Method   | Endpoint                             | Description      | Required Role       |
-| -------- | ------------------------------------ | ---------------- | ------------------- |
-| `GET`    | `/api/orgs/:orgId/members`           | List org members | Org member          |
-| `POST`   | `/api/orgs/:orgId/members`           | Add member       | Org admin           |
-| `PUT`    | `/api/orgs/:orgId/members/:memberId` | Update role      | Org admin           |
-| `DELETE` | `/api/orgs/:orgId/members/:memberId` | Remove member    | Org admin (or self) |
+| Route pattern                                                      | Purpose                 |
+| ------------------------------------------------------------------ | ----------------------- |
+| `/dashboard`                                                       | Project list (user's)   |
+| `/orgs/new`                                                        | Create a new org        |
+| `/projects/:projectId`                                             | Project overview        |
+| `/projects/:projectId/studies/:studyId/checklists/:checklistId`    | Checklist editor        |
+| `/projects/:projectId/studies/:studyId/reconcile/:c1Id/:c2Id`      | Checklist reconciliation|
+| `/settings/*`                                                      | User settings / billing |
+| `/admin/*`                                                         | Admin-only              |
 
-### Project Routes (Org-Scoped)
+Route files live under `packages/web/src/routes/_app/_protected/` (authenticated layout).
 
-| Method   | Endpoint                               | Description    | Required Role            |
-| -------- | -------------------------------------- | -------------- | ------------------------ |
-| `GET`    | `/api/orgs/:orgId/projects`            | List projects  | Org member               |
-| `POST`   | `/api/orgs/:orgId/projects`            | Create project | Org member + entitlement |
-| `GET`    | `/api/orgs/:orgId/projects/:projectId` | Get project    | Project member           |
-| `PUT`    | `/api/orgs/:orgId/projects/:projectId` | Update project | Project member           |
-| `DELETE` | `/api/orgs/:orgId/projects/:projectId` | Delete project | Project owner            |
+### Resolving orgId from a project
 
-### Project Member Routes
+Use `useProjectOrgId(projectId)` from `@/hooks/useProjectOrgId`:
 
-| Method   | Endpoint                                               | Description   | Required Role  |
-| -------- | ------------------------------------------------------ | ------------- | -------------- |
-| `GET`    | `/api/orgs/:orgId/projects/:projectId/members`         | List members  | Project member |
-| `POST`   | `/api/orgs/:orgId/projects/:projectId/members`         | Add member    | Project owner  |
-| `PATCH`  | `/api/orgs/:orgId/projects/:projectId/members/:userId` | Update role   | Project owner  |
-| `DELETE` | `/api/orgs/:orgId/projects/:projectId/members/:userId` | Remove member | Project owner  |
+```ts
+import { useProjectOrgId } from '@/hooks/useProjectOrgId';
 
-### Project Invitation Routes
-
-| Method   | Endpoint                                               | Description       | Required Role  |
-| -------- | ------------------------------------------------------ | ----------------- | -------------- |
-| `GET`    | `/api/orgs/:orgId/projects/:projectId/invitations`     | List invitations  | Project member |
-| `POST`   | `/api/orgs/:orgId/projects/:projectId/invitations`     | Create invitation | Project owner  |
-| `DELETE` | `/api/orgs/:orgId/projects/:projectId/invitations/:id` | Cancel invitation | Project owner  |
-
-### PDF Routes (Org-Scoped)
-
-| Method   | Endpoint                                                               | Description  | Required Role  |
-| -------- | ---------------------------------------------------------------------- | ------------ | -------------- |
-| `GET`    | `/api/orgs/:orgId/projects/:projectId/studies/:studyId/pdfs`           | List PDFs    | Project member |
-| `POST`   | `/api/orgs/:orgId/projects/:projectId/studies/:studyId/pdfs`           | Upload PDF   | Project member |
-| `GET`    | `/api/orgs/:orgId/projects/:projectId/studies/:studyId/pdfs/:fileName` | Download PDF | Project member |
-| `DELETE` | `/api/orgs/:orgId/projects/:projectId/studies/:studyId/pdfs/:fileName` | Delete PDF   | Project member |
-
-## Backend Middleware
-
-### requireOrgMembership
-
-Verifies the user is a member of the organization specified in the URL:
-
-```js
-import { requireOrgMembership, getOrgContext } from '../middleware/requireOrg.js';
-
-// Basic usage - any org member
-orgRoutes.get('/:orgId', requireOrgMembership(), async c => {
-  const { orgId, orgRole, org } = getOrgContext(c);
+function ProjectHeader({ projectId }: { projectId: string }) {
+  const orgId = useProjectOrgId(projectId);
   // ...
-});
-
-// With minimum role requirement
-orgRoutes.put('/:orgId', requireOrgMembership('admin'), async c => {
-  // Only org admins and owners can access
-});
-```
-
-### requireProjectAccess
-
-Verifies the user has access to the project. Must be used **after** `requireOrgMembership`:
-
-```js
-import { requireOrgMembership, requireProjectAccess, getProjectContext } from '../middleware/requireOrg.js';
-
-// Basic usage - any project member
-projectRoutes.get('/:projectId', requireOrgMembership(), requireProjectAccess(), async c => {
-  const { projectId, projectRole, project } = getProjectContext(c);
-  // ...
-});
-
-// With minimum role requirement
-projectRoutes.put('/:projectId', requireOrgMembership(), requireProjectAccess('member'), async c => {
-  // Only project members and owners can access
-});
-```
-
-### Middleware Chain Order
-
-```js
-routes.post(
-  '/',
-  requireAuth, // 1. Verify logged in
-  requireOrgMembership('admin'), // 2. Check org membership + role
-  requireProjectAccess('owner'), // 3. Check project access + role
-  requireEntitlement('project.update'), // 4. Check subscription entitlement
-  validateRequest(projectSchemas.update), // 5. Validate request body
-  async c => {
-    /* handler */
-  },
-);
-```
-
-## Frontend Routing
-
-### URL Structure
-
-Frontend routes use `orgSlug` for human-readable URLs:
-
-```
-/orgs/:orgSlug/...
-```
-
-| Route                                                                         | Component             | Purpose                              |
-| ----------------------------------------------------------------------------- | --------------------- | ------------------------------------ |
-| `/orgs/new`                                                                   | CreateOrgPage         | Create new organization              |
-| `/orgs/:orgSlug`                                                              | OrgProjectsPage       | Organization dashboard, project list |
-| `/orgs/:orgSlug/projects/:projectId`                                          | ProjectView           | Project overview                     |
-| `/orgs/:orgSlug/projects/:projectId/studies/:studyId/checklists/:checklistId` | ChecklistYjsWrapper   | Checklist editor                     |
-| `/orgs/:orgSlug/projects/:projectId/studies/:studyId/reconcile/:c1/:c2`       | ReconciliationWrapper | Compare checklists                   |
-
-### useOrgContext Primitive
-
-Resolves the current organization from URL params:
-
-```js
-import { useOrgContext } from '@primitives/useOrgContext.js';
-
-function MyComponent() {
-  const {
-    // Data
-    orgSlug, // () => string - slug from URL
-    currentOrg, // () => org object or null
-    orgs, // () => array of user's orgs
-    orgId, // () => string - resolved org ID
-    orgName, // () => string - org name
-
-    // Guard states
-    isLoading, // () => boolean
-    isError, // () => boolean
-    hasNoOrgs, // () => boolean - user has no orgs
-    orgNotFound, // () => boolean - slug doesn't match any org
-
-    // Actions
-    refetchOrgs, // () => void
-  } = useOrgContext();
-
-  return (
-    <Show when={!isLoading() && !orgNotFound()}>
-      <div>Current org: {orgName()}</div>
-    </Show>
-  );
 }
 ```
 
-### useOrgProjectContext Primitive
+It resolves in this order: Yjs-synced project meta (`useProjectStore`), then the TanStack Query project-list cache. Returns `null` if neither is populated yet.
 
-Combines org context with project context for project-level routes:
+### Listing the user's orgs
 
-```js
-import { useOrgProjectContext } from '@primitives/useOrgProjectContext.js';
+Use `useOrgs()` from `@/hooks/useOrgs`:
 
-function ProjectComponent() {
-  const {
-    // From org context
-    orgSlug,
-    orgId,
-    orgName,
-    currentOrg,
-    isLoadingOrg,
-    orgNotFound,
-    hasNoOrgs,
-
-    // Project context
-    projectId, // () => string from URL
-    basePath, // () => string - /orgs/:slug/projects/:id
-    projectIdMissing, // () => boolean
-
-    // Combined state
-    isReady, // () => boolean - org resolved and project ID exists
-
-    // Path builders
-    getStudyPath, // (studyId) => string
-    getChecklistPath, // (studyId, checklistId) => string
-    getReconcilePath, // (studyId, c1Id, c2Id) => string
-  } = useOrgProjectContext();
-
-  return (
-    <Show when={isReady()}>
-      <a href={getStudyPath('study-123')}>View Study</a>
-    </Show>
-  );
-}
+```ts
+const { orgs, isLoading, refetch } = useOrgs();
 ```
 
-### Path Builder Utilities
-
-For building org-scoped URLs outside of components:
-
-```js
-import {
-  buildOrgProjectPath,
-  buildStudyPath,
-  buildChecklistPath,
-  buildReconcilePath,
-} from '@primitives/useOrgProjectContext.js';
-
-// /orgs/my-lab/projects/proj-123
-buildOrgProjectPath('my-lab', 'proj-123');
-
-// /orgs/my-lab/projects/proj-123/studies/study-456
-buildStudyPath('my-lab', 'proj-123', 'study-456');
-
-// /orgs/my-lab/projects/proj-123/studies/study-456/checklists/check-789
-buildChecklistPath('my-lab', 'proj-123', 'study-456', 'check-789');
-```
+Backed by Better Auth's `authClient.organization.list()` plus auth-aware `enabled` gating.
 
 ## Invitation Flow
 
-Project invitations support optional organization membership granting:
+Project invitations use Better Auth's magic-link infrastructure and always run through `POST /api/invitations/accept`.
 
-### Creating an Invitation
-
-1. Project owner calls `POST /api/orgs/:orgId/projects/:projectId/invitations`
-2. Server creates invitation with:
-   - `orgId`, `projectId`
-   - `role` (project role to assign)
-   - `orgRole` (org role if `grantOrgMembership` is true)
-   - `grantOrgMembership` (boolean, default false)
-3. Magic link email is sent to invitee
-
-### Accepting an Invitation
-
-1. User clicks magic link, lands on `/complete-profile?invitation=TOKEN`
-2. Frontend calls `POST /api/invitations/accept` with token
-3. Server validates:
-   - Token exists and hasn't expired
-   - Email matches authenticated user (case-insensitive, trimmed)
-   - Invitation hasn't been accepted
-4. If `grantOrgMembership` is true:
-   - Server adds org membership with `orgRole` (if not already a member)
-5. Server adds project membership with `role`
-6. User is redirected to the project
-
-### Flow Diagram
-
-```
-Inviter                    Server                    Invitee
-   |                          |                          |
-   |-- POST invitations -->   |                          |
-   |                          |-- Send magic link -----> |
-   |                          |                          |
-   |                          |   <-- Click link --------|
-   |                          |   <-- POST accept -------|
-   |                          |                          |
-   |                          |-- Validate token         |
-   |                          |-- Check email match      |
-   |                          |-- Add org member (if grantOrgMembership)
-   |                          |-- Add project member     |
-   |                          |-- Return success ------> |
-   |                          |                          |
-```
-
-### Invitation Types
-
-| grantOrgMembership | Behavior                                                                                                                                                  |
-| ------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `false` (default)  | Only grants project membership. User can access this project but is not an org member.                                                                    |
-| `true`             | Grants both org membership (with `orgRole`) and project membership. Use for team members who need org-level access (governance, billing, other projects). |
+1. Project owner calls `POST /api/orgs/:orgId/projects/:projectId/invitations` with `{ email, role, grantOrgMembership?, orgRole? }`.
+2. Server creates a `projectInvitations` row with a unique token and sends a magic link.
+3. Invitee clicks the link, lands on `/complete-profile?invitation=TOKEN`, completes profile if needed.
+4. Frontend calls `POST /api/invitations/accept` with the token.
+5. Server validates: token exists, not expired, not accepted, authenticated user's email matches invitation email (case-insensitive, trimmed).
+6. If `grantOrgMembership === true`, the server adds org membership with `orgRole` (if the user isn't already a member).
+7. Server adds `projectMembers` with `role`.
+8. Frontend redirects to the project.
 
 ## Active Organization
 
-Better Auth tracks the user's "active" organization in the session:
-
-```js
-// Set active org
-await authClient.organization.setActive({ organizationId: orgId });
-
-// Or via API
-POST /api/orgs/:orgId/set-active
-```
-
-The `session.activeOrganizationId` is used by Better Auth for default organization context. The frontend uses URL-based routing (`/orgs/:orgSlug/...`) as the primary source of truth for current org.
+Better Auth tracks an `activeOrganizationId` on the session. The `POST /api/orgs/:orgId/set-active` endpoint updates it. The frontend does not currently use this as the primary source of truth for the "current org" -- project routes derive org from the project itself via `useProjectOrgId`. `activeOrganizationId` is still useful for billing and for some Better Auth plugin behaviors (subscriptions).
 
 ## Best Practices
 
 ### Backend
 
-- **Always use middleware** - Don't manually check org/project membership in handlers
-- **Chain middleware correctly** - `requireAuth` -> `requireOrgMembership` -> `requireProjectAccess`
-- **Use minimum roles** - Pass role to middleware: `requireOrgMembership('admin')`
-- **Use context helpers** - `getOrgContext(c)` and `getProjectContext(c)` for clean access
+- **Use the guard functions**, not ad-hoc session + membership checks.
+- **Check `result.ok` and return `result.response` on failure** -- the guards package up domain errors and status codes for you.
+- **Order guards outside-in**: auth → org → project → entitlement → quota → handler.
+- **Keep per-route rate limits colocated** in `@/server/rateLimit` and call `checkRateLimit` before the guards for routes that deserve it.
 
 ### Frontend
 
-- **Use primitives** - `useOrgContext` and `useOrgProjectContext` handle loading/error states
-- **Check guard states** - Always check `isLoading()`, `orgNotFound()`, etc. before rendering
-- **Use path builders** - Don't hardcode org-scoped URLs
-- **Store last org** - Use `setLastOrgSlug()` to remember user's last org for redirect
-
-### API Calls
-
-```js
-// Fetch projects for current org
-const response = await fetch(`${API_BASE}/api/orgs/${orgId()}/projects`, {
-  credentials: 'include',
-});
-
-// Create project in org
-const response = await fetch(`${API_BASE}/api/orgs/${orgId()}/projects`, {
-  method: 'POST',
-  credentials: 'include',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({ name, description }),
-});
-```
+- **Don't route with org slugs** -- the URL contract is project-centric.
+- **Use `useOrgs` / `useProjectOrgId`** rather than reading from Better Auth or fetching directly.
+- **Gate UI on plan entitlement** via `@corates/shared/plans` helpers (e.g., `isUnlimitedQuota`) so billed features show disabled states rather than failing mid-flow.
 
 ## Related Guides
 
-- [Authentication Guide](/guides/authentication) - Better Auth setup and org plugin
-- [API Development Guide](/guides/api-development) - Route patterns with org middleware
-- [Database Guide](/guides/database) - Schema details and relationships
-- [Primitives Guide](/guides/primitives) - Using org context primitives
+- [Authentication Guide](/guides/authentication) -- session, Better Auth setup, auth-store.
+- [API Development Guide](/guides/api-development) -- handler layout, error handling, bindings.
+- [Database Guide](/guides/database) -- schema and migrations.
