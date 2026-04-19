@@ -48,10 +48,9 @@ export const handleGet = async ({ request }: { request: Request }) => {
   const url = new URL(request.url);
   const targetPlan = url.searchParams.get('targetPlan');
   if (!targetPlan) {
-    return Response.json(
-      createValidationError('targetPlan', VALIDATION_ERRORS.FIELD_REQUIRED.code, null, 'required'),
-      { status: 400 },
-    );
+    return Response.json(createValidationError('targetPlan', VALIDATION_ERRORS.FIELD_REQUIRED.code, null, 'required'), {
+      status: 400,
+    });
   }
 
   const db = createDb(env.DB);
@@ -121,7 +120,7 @@ Policy checks live in `@corates/workers/policies`. The real policy functions are
 
 Each throws a domain error when denied; route handlers catch and return them as JSON.
 
-Policy call shapes vary -- check each before using. `requireOrgOwner` is *not* a DB lookup; it validates a role you already resolved (usually via `resolveOrgIdWithRole` from `@/server/billing-context`). `requireProjectEdit` does its own DB lookup.
+Policy call shapes vary -- check each before using. `requireOrgOwner` is _not_ a DB lookup; it validates a role you already resolved (usually via `resolveOrgIdWithRole` from `@/server/billing-context`). `requireProjectEdit` does its own DB lookup.
 
 ```ts
 import { requireOrgOwner } from '@corates/workers/policies';
@@ -178,10 +177,9 @@ interface CheckoutBody {
 const body = (await request.json()) as CheckoutBody;
 
 if (typeof body.tier !== 'string') {
-  return Response.json(
-    createValidationError('tier', VALIDATION_ERRORS.FIELD_REQUIRED.code, null, 'required'),
-    { status: 400 },
-  );
+  return Response.json(createValidationError('tier', VALIDATION_ERRORS.FIELD_REQUIRED.code, null, 'required'), {
+    status: 400,
+  });
 }
 ```
 

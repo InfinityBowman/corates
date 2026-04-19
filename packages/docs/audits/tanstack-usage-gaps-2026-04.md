@@ -31,6 +31,7 @@ The biggest user-visible win is **adopting route `loader`s** for the SSR data-pr
 **Doc:** `reference/tanstack-router/docs/router/guide/search-params.md` (~line 145)
 
 The official Zod pattern is:
+
 ```ts
 const schema = z.object({
   page: z.number().catch(1),
@@ -42,15 +43,18 @@ export const Route = createFileRoute('/shop/products')({
   validateSearch: schema, // accepts anything with .parse
 });
 ```
+
 Use `.catch(default)` for graceful fallback, `.default()` to surface validation errors via `errorComponent`.
 
 **CoRATES:** `routes/_auth/check-email.tsx:15-17` and `routes/_auth/reset-password.tsx:20-22`:
+
 ```ts
 validateSearch: (search: Record<string, unknown>) => ({
   email: (search.email as string) || '',
 }),
 ```
-The `as string` cast inside what is literally called a *validator* is the wrong pattern. There's no validation here.
+
+The `as string` cast inside what is literally called a _validator_ is the wrong pattern. There's no validation here.
 
 **Fix:** one line per file. Define a `z.object({ email: z.string().email().catch('') })` (or `.default('')`) and pass the schema directly.
 
@@ -61,17 +65,20 @@ The `as string` cast inside what is literally called a *validator* is the wrong 
 ### G2. `createMiddleware` is the right answer for `requireAdmin`
 
 **Docs:**
+
 - `reference/tanstack-router/docs/start/framework/react/guide/middleware.md`
 - `reference/tanstack-router/docs/start/framework/react/guide/server-routes.md` (lines ~163-220)
 
 Two patterns CoRATES is missing:
 
 **Whole-route guard** (applies to all handlers in a route):
+
 ```ts
 server: { middleware: [authMiddleware], handlers: { GET: handleGet } }
 ```
 
 **Per-verb guard** (different middleware per HTTP method):
+
 ```ts
 server: {
   handlers: ({ createHandlers }) =>
@@ -83,6 +90,7 @@ server: {
 ```
 
 `createMiddleware()` itself is composable:
+
 ```ts
 import { createMiddleware } from '@tanstack/react-start';
 
@@ -101,6 +109,7 @@ const adminMiddleware = createMiddleware()
 ```
 
 **CoRATES:** `routes/api/admin/projects/$projectId.ts:25-26` (representative of all admin routes):
+
 ```ts
 export const handleGet = async ({ request, params }) => {
   const guard = await requireAdmin(request, env);
@@ -108,9 +117,11 @@ export const handleGet = async ({ request, params }) => {
   // ...handler...
 };
 ```
+
 This pattern is hand-rolled middleware. Repeats across every admin handler.
 
 **What you gain by switching:**
+
 - Auth check happens once per route definition, not once per handler
 - `context.session` is **typed** in the handler (currently the handler has no idea the auth check ran or what user it produced — they re-call `getSession`)
 - Composable across server functions if you ever add them
@@ -149,6 +160,7 @@ Estimated remaining cost: 1–2 days of mechanical sweep across ~30 admin routes
 **CoRATES:** 30+ `$projectId`, `$orgId`, `$userId`, `$studyId`, etc. routes. Sample: `routes/api/admin/projects/$projectId.ts:22` types `params: { projectId: string }` with no format check. Malformed IDs surface as DB query failures instead of 400s.
 
 **Fix shape:** ride on the middleware from G2. A `requireValidParams(schema)` middleware factory keeps the validation declarative at the route level:
+
 ```ts
 const projectIdMiddleware = createParamsMiddleware(z.object({ projectId: z.string().uuid() }));
 
@@ -162,15 +174,16 @@ server: { middleware: [authMiddleware, projectIdMiddleware], handlers: { GET: ha
 ### G4. No `loader` for SSR data prefetch — every page does its own client `useQuery`
 
 **Docs:**
+
 - `reference/tanstack-router/docs/router/guide/data-loading.md`
 - `reference/tanstack-router/docs/router/guide/external-data-loading.md`
 
 Recommended pattern:
+
 ```ts
 // route file
 export const Route = createFileRoute('/projects/$projectId')({
-  loader: ({ context, params }) =>
-    context.queryClient.ensureQueryData(projectQueryOptions(params.projectId)),
+  loader: ({ context, params }) => context.queryClient.ensureQueryData(projectQueryOptions(params.projectId)),
   component: ProjectPage,
 });
 
@@ -197,12 +210,14 @@ function ProjectPage() {
 ### G5. Authenticated layout reads from a global store instead of router context
 
 **Docs:**
+
 - `reference/tanstack-router/docs/router/guide/authenticated-routes.md`
 - `reference/tanstack-router/docs/router/guide/router-context.md`
 
 Recommended pattern: declare auth on `createRouter({ context: { auth: undefined! } })`, inject at provider, read in `beforeLoad: ({ context }) => { ... }`.
 
 **CoRATES:** `routes/_auth.tsx:26`:
+
 ```ts
 beforeLoad: ({ location }) => {
   // ...
@@ -212,9 +227,10 @@ beforeLoad: ({ location }) => {
 },
 ```
 
-**Important clarification:** `useAuthStore.getState()` is Zustand's vanilla-store getter, **not** the React `useAuthStore()` hook — calling it outside a component is the *correct* Zustand pattern, not a hooks-rules violation. The earlier draft of this audit got that wrong.
+**Important clarification:** `useAuthStore.getState()` is Zustand's vanilla-store getter, **not** the React `useAuthStore()` hook — calling it outside a component is the _correct_ Zustand pattern, not a hooks-rules violation. The earlier draft of this audit got that wrong.
 
 **Why router context is still better:**
+
 1. **Testability** — can inject a fake auth context per test instead of mutating a module-level store.
 2. **SSR safety** — global module-level state shared between concurrent requests on a Cloudflare Worker is a real bug risk; per-request context is not.
 3. **Type-safety** — `context.auth` is typed at every `beforeLoad` call site without imports.
@@ -236,15 +252,17 @@ beforeLoad: ({ location }) => {
 ### G7. `.server.ts` / `.functions.ts` file naming not used
 
 **Docs:**
+
 - `reference/tanstack-router/docs/start/framework/react/guide/code-execution-patterns.md`
 - `reference/tanstack-router/docs/start/framework/react/guide/import-protection.md`
 
 The Start compiler uses naming conventions to guarantee server-only code stays out of the client bundle:
+
 - `*.functions.ts` — `createServerFn` wrappers, safe to import anywhere
 - `*.server.ts` — server-only code, only safe inside server function handlers
 - `*.ts` (no suffix) — client-safe (types, schemas, constants)
 
-**CoRATES:** API routes live in `routes/api/**/*.ts` and rely on TanStack Start to strip server code by file location. This works *for the routes themselves*, but if anyone imports a non-route file that contains server code (e.g. importing a constant from `server/billing-context.ts` into a component), the server code can leak into the client bundle.
+**CoRATES:** API routes live in `routes/api/**/*.ts` and rely on TanStack Start to strip server code by file location. This works _for the routes themselves_, but if anyone imports a non-route file that contains server code (e.g. importing a constant from `server/billing-context.ts` into a component), the server code can leak into the client bundle.
 
 **Action:** quick grep audit of imports from `server/` and `routes/api/` into non-route TS files; rename any found offenders to `.server.ts`.
 
@@ -256,7 +274,7 @@ The Start compiler uses naming conventions to guarantee server-only code stays o
 
 ### G8. `verbatimModuleSyntax: false` in `packages/web/tsconfig.json`
 
-Modern TanStack/Vite projects set this `true`. Forces explicit `import type { ... }` for type-only imports. Pairs with G7 — explicit type imports make accidental *runtime* imports of server-only modules visible at the import site.
+Modern TanStack/Vite projects set this `true`. Forces explicit `import type { ... }` for type-only imports. Pairs with G7 — explicit type imports make accidental _runtime_ imports of server-only modules visible at the import site.
 
 **Cost:** one-time autofixable cleanup pass via `eslint --fix` with the right rule.
 
@@ -264,17 +282,17 @@ Modern TanStack/Vite projects set this `true`. Forces explicit `import type { ..
 
 ## Suggested order of attack
 
-| # | Change | Cost | Why now |
-|---|---|---:|---|
-| 1 | Fix the 2 broken `validateSearch` calls (G1) | 10 min | Free. Removes a clearly-wrong pattern. |
-| 2 | **Pilot:** build `authMiddleware` via `createMiddleware`, apply to **one** admin route (G2) | half day | Confirm typed context propagation works on Cloudflare Workers before committing to a sweep. |
-| 3 | If pilot succeeds: add `dbMiddleware`, compose `apiAuthMiddleware = [auth, db]`, sweep admin routes (G2 + G6) | 2–3 days | Highest-leverage cleanup. Sets up G3 to ride on the same middleware. |
-| 4 | **Pilot:** add `loader` + `useSuspenseQuery` to **one** page route (G4) | half day | Confirm SSR prefetch works in the worker setup before sweeping. |
-| 5 | If pilot succeeds: incremental loader adoption, page by page | ongoing | Biggest user-visible win. |
-| 6 | Path-param Zod via param middleware (G3) | 1–2 days | Rides on G2's middleware system. |
-| 7 | Router context for auth (G5) | 1–2 hr | Separate refactor; don't bundle. |
-| 8 | `.server.ts` audit (G7) | 1–2 hr | One-time cleanup. |
-| 9 | `verbatimModuleSyntax: true` (G8) | 1–2 hr (mostly autofix) | One-time cleanup. |
+| #   | Change                                                                                                        |                    Cost | Why now                                                                                     |
+| --- | ------------------------------------------------------------------------------------------------------------- | ----------------------: | ------------------------------------------------------------------------------------------- |
+| 1   | Fix the 2 broken `validateSearch` calls (G1)                                                                  |                  10 min | Free. Removes a clearly-wrong pattern.                                                      |
+| 2   | **Pilot:** build `authMiddleware` via `createMiddleware`, apply to **one** admin route (G2)                   |                half day | Confirm typed context propagation works on Cloudflare Workers before committing to a sweep. |
+| 3   | If pilot succeeds: add `dbMiddleware`, compose `apiAuthMiddleware = [auth, db]`, sweep admin routes (G2 + G6) |                2–3 days | Highest-leverage cleanup. Sets up G3 to ride on the same middleware.                        |
+| 4   | **Pilot:** add `loader` + `useSuspenseQuery` to **one** page route (G4)                                       |                half day | Confirm SSR prefetch works in the worker setup before sweeping.                             |
+| 5   | If pilot succeeds: incremental loader adoption, page by page                                                  |                 ongoing | Biggest user-visible win.                                                                   |
+| 6   | Path-param Zod via param middleware (G3)                                                                      |                1–2 days | Rides on G2's middleware system.                                                            |
+| 7   | Router context for auth (G5)                                                                                  |                  1–2 hr | Separate refactor; don't bundle.                                                            |
+| 8   | `.server.ts` audit (G7)                                                                                       |                  1–2 hr | One-time cleanup.                                                                           |
+| 9   | `verbatimModuleSyntax: true` (G8)                                                                             | 1–2 hr (mostly autofix) | One-time cleanup.                                                                           |
 
 The two **pilots** in items 2 and 4 are deliberately scoped to one route each. Both are pattern shifts that interact with TanStack Start's Cloudflare Workers integration in ways the docs don't fully cover — better to confirm they work than to do a sweep and discover a problem on route #28.
 

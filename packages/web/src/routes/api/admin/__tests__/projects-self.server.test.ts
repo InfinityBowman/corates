@@ -8,12 +8,10 @@ import { SELF } from 'cloudflare:test';
 import { resetTestDatabase } from '@/__tests__/server/helpers';
 import { buildAdminUser, buildProject, resetCounter } from '@/__tests__/server/factories';
 
-let sessionResult:
-  | {
-      user: { id: string; email: string; name: string; role?: string };
-      session: { id: string; userId: string; activeOrganizationId: string | null };
-    }
-  | null = null;
+let sessionResult: {
+  user: { id: string; email: string; name: string; role?: string };
+  session: { id: string; userId: string; activeOrganizationId: string | null };
+} | null = null;
 
 vi.mock('@corates/workers/auth', () => ({
   getSession: async () => sessionResult,
