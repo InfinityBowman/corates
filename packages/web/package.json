@@ -7,7 +7,7 @@
   "scripts": {
     "dev": "vite dev --port 3010",
     "build": "vite build",
-    "build:prod": "pnpm --filter @corates/shared build && CLOUDFLARE_ENV=production pnpm run build",
+    "build:prod": "pnpm --filter @corates/shared --filter @corates/db build && CLOUDFLARE_ENV=production pnpm run build",
     "preview": "vite preview",
     "deploy": "CLOUDFLARE_ENV=production pnpm run build:prod && wrangler deploy",
     "lint": "eslint",
