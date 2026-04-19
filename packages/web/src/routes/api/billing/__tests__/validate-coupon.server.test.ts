@@ -3,15 +3,6 @@ import { resetTestDatabase, clearProjectDOs } from '@/__tests__/server/helpers';
 import { resetCounter } from '@/__tests__/server/factories';
 import { handlePost } from '../validate-coupon';
 
-let sessionResult: {
-  user: { id: string; email: string; name: string };
-  session: { id: string; userId: string };
-} | null = null;
-
-vi.mock('@corates/workers/auth', () => ({
-  getSession: async () => sessionResult,
-}));
-
 const promoCodesListMock = vi.fn();
 let stripeConfigured = true;
 
@@ -28,10 +19,6 @@ beforeEach(async () => {
   vi.clearAllMocks();
   resetCounter();
   stripeConfigured = true;
-  sessionResult = {
-    user: { id: 'user-1', email: 'u@example.com', name: 'U' },
-    session: { id: 'sess-1', userId: 'user-1' },
-  };
 });
 
 function couponReq(body: unknown): Request {
@@ -43,12 +30,6 @@ function couponReq(body: unknown): Request {
 }
 
 describe('POST /api/billing/validate-coupon', () => {
-  it('returns 401 when no session', async () => {
-    sessionResult = null;
-    const res = await handlePost({ request: couponReq({ code: 'X' }) });
-    expect(res.status).toBe(401);
-  });
-
   it('returns invalid when code is missing', async () => {
     const res = await handlePost({ request: couponReq({}) });
     expect(res.status).toBe(200);

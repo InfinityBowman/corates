@@ -17,7 +17,8 @@ function mockSession(overrides?: {
       id: overrides?.userId ?? 'user-1',
       email: overrides?.email ?? 'user1@example.com',
       name: overrides?.name ?? 'Test User',
-      stripeCustomerId: overrides?.stripeCustomerId ?? 'cus_test_user-1',
+      stripeCustomerId:
+        overrides?.stripeCustomerId === undefined ? 'cus_test_user-1' : overrides.stripeCustomerId,
     },
     session: {
       id: 'test-session',

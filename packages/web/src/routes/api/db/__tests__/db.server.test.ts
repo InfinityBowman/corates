@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { env } from 'cloudflare:test';
 import { createDb } from '@corates/db/client';
 import { resetTestDatabase, clearProjectDOs } from '@/__tests__/server/helpers';
@@ -6,42 +6,16 @@ import { buildUser, resetCounter } from '@/__tests__/server/factories';
 import { handleGet, handlePost } from '../users';
 import { handler as migrateHandler } from '../migrate';
 
-let currentUser: { id: string; email: string } | null = {
-  id: 'user-1',
-  email: 'user1@example.com',
-};
-
-vi.mock('@corates/workers/auth', () => ({
-  getSession: async () =>
-    currentUser ?
-      {
-        user: { id: currentUser.id, email: currentUser.email, name: 'Test User' },
-        session: { id: 'test-session', userId: currentUser.id },
-      }
-    : null,
-}));
-
 beforeEach(async () => {
   await resetTestDatabase();
   resetCounter();
   await clearProjectDOs(['project-1']);
-  currentUser = { id: 'user-1', email: 'user1@example.com' };
 });
 
 describe('GET /api/db/users', () => {
-  it('returns 401 when unauthenticated', async () => {
-    currentUser = null;
-    const res = await handleGet({
-      request: new Request('http://localhost/api/db/users'),
-      context: { db: createDb(env.DB) },
-    });
-    expect(res.status).toBe(401);
-  });
-
   it('returns list of users', async () => {
-    const u1 = await buildUser({ email: 'user1@example.com' });
+    await buildUser({ email: 'user1@example.com' });
     await buildUser({ email: 'user2@example.com' });
-    currentUser = { id: u1.id, email: u1.email };
 
     const res = await handleGet({
       request: new Request('http://localhost/api/db/users'),

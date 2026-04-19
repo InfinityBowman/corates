@@ -1,26 +1,7 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { handler as pdfProxyHandler } from '../pdf-proxy';
 
-let currentUser: { id: string; email: string } | null = {
-  id: 'user-1',
-  email: 'user1@example.com',
-};
-
-vi.mock('@corates/workers/auth', () => ({
-  getSession: async () =>
-    currentUser ?
-      {
-        user: { id: currentUser.id, email: currentUser.email, name: 'Test User' },
-        session: { id: 'test-session', userId: currentUser.id },
-      }
-    : null,
-}));
-
 const originalFetch = globalThis.fetch;
-
-beforeEach(() => {
-  currentUser = { id: 'user-1', email: 'user1@example.com' };
-});
 
 afterEach(() => {
   globalThis.fetch = originalFetch;
@@ -36,14 +17,6 @@ function jsonReq(body: unknown): Request {
 }
 
 describe('POST /api/pdf-proxy', () => {
-  it('returns 401 when unauthenticated', async () => {
-    currentUser = null;
-    const res = await pdfProxyHandler({
-      request: jsonReq({ url: 'https://arxiv.org/pdf/1234.5678.pdf' }),
-    });
-    expect(res.status).toBe(401);
-  });
-
   it('returns 400 when url is missing', async () => {
     const res = await pdfProxyHandler({ request: jsonReq({}) });
     expect(res.status).toBe(400);

@@ -1,21 +1,14 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { env } from 'cloudflare:workers';
-import { getSession } from '@corates/workers/auth';
-import { createDomainError, AUTH_ERRORS, FILE_ERRORS, SYSTEM_ERRORS } from '@corates/shared';
+import { createDomainError, FILE_ERRORS, SYSTEM_ERRORS } from '@corates/shared';
+import { authMiddleware } from '@/server/middleware/auth';
 
 export const handler = async ({
-  request,
   params,
 }: {
   request: Request;
   params: { userId: string };
 }) => {
-  const session = await getSession(request, env);
-  if (!session) {
-    const error = createDomainError(AUTH_ERRORS.REQUIRED, { reason: 'no_user' });
-    return Response.json(error, { status: 401 });
-  }
-
   const { userId } = params;
 
   try {
@@ -52,6 +45,7 @@ export const handler = async ({
 
 export const Route = createFileRoute('/api/users/avatar/$userId')({
   server: {
+    middleware: [authMiddleware],
     handlers: {
       GET: handler,
     },
