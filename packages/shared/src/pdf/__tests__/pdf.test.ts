@@ -17,7 +17,7 @@ describe('isValidPdfFilename', () => {
     'file-with-dashes_and_underscores.pdf',
     'UPPERCASE.PDF',
     'a'.repeat(196) + '.pdf',
-  ])('accepts valid filename: %s', (name) => {
+  ])('accepts valid filename: %s', name => {
     expect(isValidPdfFilename(name)).toBe(true);
   });
 
