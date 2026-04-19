@@ -14,6 +14,7 @@ import {
   isPdfSignature,
   formatFileSize,
 } from '@corates/shared';
+import type { OrgId, ProjectId, StudyId } from '@corates/shared/ids';
 import { generateUniqueFileName } from '@corates/workers/media-files';
 import { requireOrgMembership } from '@/server/guards/requireOrgMembership';
 import { requireProjectAccess } from '@/server/guards/requireProjectAccess';
@@ -21,7 +22,7 @@ import { requireOrgWriteAccess } from '@/server/guards/requireOrgWriteAccess';
 
 type HandlerArgs = {
   request: Request;
-  params: { orgId: string; projectId: string; studyId: string };
+  params: { orgId: OrgId; projectId: ProjectId; studyId: StudyId };
 };
 
 export const handleGet = async ({ request, params }: HandlerArgs) => {

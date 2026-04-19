@@ -1,10 +1,11 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { env } from 'cloudflare:workers';
+import type { OrgId, ProjectId } from '@corates/shared/ids';
 import { getProjectDocStub } from '@corates/workers/project-doc-id';
 import { requireOrgMembership } from '@/server/guards/requireOrgMembership';
 import { requireProjectAccess } from '@/server/guards/requireProjectAccess';
 
-type HandlerArgs = { request: Request; params: { orgId: string; projectId: string } };
+type HandlerArgs = { request: Request; params: { orgId: OrgId; projectId: ProjectId } };
 
 export const handlePost = async ({ request, params }: HandlerArgs) => {
   if (!env.DEV_MODE) {

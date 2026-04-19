@@ -6,6 +6,7 @@ import {
   buildAdminUser,
   buildUser,
   resetCounter,
+  asOrgId,
 } from '@/__tests__/server/factories';
 import { handleGet as handleListOrgs } from '../orgs';
 import { handleGet as handleOrgDetails } from '../orgs/$orgId';
@@ -142,7 +143,7 @@ describe('GET /api/admin/orgs/:orgId', () => {
   it('returns 401 when no session', async () => {
     const res = await handleOrgDetails({
       request: detailsReq('org-1'),
-      params: { orgId: 'org-1' },
+      params: { orgId: asOrgId('org-1') },
     });
     expect(res.status).toBe(401);
   });
@@ -155,7 +156,7 @@ describe('GET /api/admin/orgs/:orgId', () => {
     };
     const res = await handleOrgDetails({
       request: detailsReq('org-1'),
-      params: { orgId: 'org-1' },
+      params: { orgId: asOrgId('org-1') },
     });
     expect(res.status).toBe(403);
   });
@@ -164,7 +165,7 @@ describe('GET /api/admin/orgs/:orgId', () => {
     await asAdmin();
     const res = await handleOrgDetails({
       request: detailsReq('does-not-exist'),
-      params: { orgId: 'does-not-exist' },
+      params: { orgId: asOrgId('does-not-exist') },
     });
     expect(res.status).toBe(403);
     const body = (await res.json()) as { details?: { reason?: string } };

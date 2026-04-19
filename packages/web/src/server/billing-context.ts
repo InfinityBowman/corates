@@ -10,9 +10,10 @@ import { createDb } from '@corates/db/client';
 import { member } from '@corates/db/schema';
 import { and, eq } from 'drizzle-orm';
 import { createDomainError, SYSTEM_ERRORS } from '@corates/shared';
+import type { OrgId, UserId } from '@corates/shared/ids';
 
 interface SessionLike {
-  activeOrganizationId?: string | null;
+  activeOrganizationId?: OrgId | null;
   [key: string]: unknown;
 }
 
@@ -26,14 +27,14 @@ export async function resolveOrgId({
   db,
   session,
   userId,
-}: ResolveOrgIdParams): Promise<string | null> {
+}: ResolveOrgIdParams): Promise<OrgId | null> {
   const activeOrgId = session?.activeOrganizationId;
   try {
     if (activeOrgId) {
       const membership = await db
         .select({ organizationId: member.organizationId })
         .from(member)
-        .where(and(eq(member.organizationId, activeOrgId), eq(member.userId, userId)))
+        .where(and(eq(member.organizationId, activeOrgId), eq(member.userId, userId as UserId)))
         .get();
       if (membership) return activeOrgId;
     }
@@ -41,7 +42,7 @@ export async function resolveOrgId({
     const firstMembership = await db
       .select({ organizationId: member.organizationId })
       .from(member)
-      .where(eq(member.userId, userId))
+      .where(eq(member.userId, userId as UserId))
       .limit(1)
       .get();
 
@@ -55,7 +56,7 @@ export async function resolveOrgIdWithRole({
   db,
   session,
   userId,
-}: ResolveOrgIdParams): Promise<{ orgId: string | null; role: string | null }> {
+}: ResolveOrgIdParams): Promise<{ orgId: OrgId | null; role: string | null }> {
   let orgId = session?.activeOrganizationId ?? null;
   let role: string | null = null;
 
@@ -63,7 +64,7 @@ export async function resolveOrgIdWithRole({
     const firstMembership = await db
       .select({ organizationId: member.organizationId, role: member.role })
       .from(member)
-      .where(eq(member.userId, userId))
+      .where(eq(member.userId, userId as UserId))
       .limit(1)
       .get();
     orgId = firstMembership?.organizationId ?? null;
@@ -72,7 +73,7 @@ export async function resolveOrgIdWithRole({
     const membership = await db
       .select({ role: member.role })
       .from(member)
-      .where(and(eq(member.organizationId, orgId), eq(member.userId, userId)))
+      .where(and(eq(member.organizationId, orgId), eq(member.userId, userId as UserId)))
       .get();
     role = membership?.role ?? null;
   }

@@ -3,13 +3,14 @@ import { projects, projectMembers } from '@corates/db/schema';
 import { and, eq } from 'drizzle-orm';
 import { hasProjectRole } from '@corates/workers/policies';
 import { createDomainError, AUTH_ERRORS, PROJECT_ERRORS, SYSTEM_ERRORS } from '@corates/shared';
+import type { OrgId, ProjectId, UserId } from '@corates/shared/ids';
 import { getSession } from '@corates/workers/auth';
 
 export interface ProjectContext {
-  userId: string;
+  userId: UserId;
   userEmail: string;
-  orgId: string;
-  projectId: string;
+  orgId: OrgId;
+  projectId: ProjectId;
   projectName: string;
   projectRole: string;
 }
@@ -21,8 +22,8 @@ export type ProjectGuardResult =
 export async function requireProjectAccess(
   request: Request,
   env: Env,
-  orgId: string,
-  projectId: string,
+  orgId: OrgId,
+  projectId: ProjectId,
   minRole?: string,
 ): Promise<ProjectGuardResult> {
   const session = await getSession(request, env);
@@ -70,7 +71,7 @@ export async function requireProjectAccess(
           operation: 'fetch_project_for_access_check',
           projectId,
           orgId,
-          userId: session.user.id,
+          userId: session.user.id as UserId,
           originalError: err instanceof Error ? err.message : String(err),
         }),
         { status: 500 },
@@ -107,7 +108,7 @@ export async function requireProjectAccess(
       .select({ role: projectMembers.role })
       .from(projectMembers)
       .where(
-        and(eq(projectMembers.projectId, projectId), eq(projectMembers.userId, session.user.id)),
+        and(eq(projectMembers.projectId, projectId), eq(projectMembers.userId, session.user.id as UserId)),
       )
       .get();
   } catch (err) {
@@ -118,7 +119,7 @@ export async function requireProjectAccess(
           operation: 'check_project_membership',
           projectId,
           orgId,
-          userId: session.user.id,
+          userId: session.user.id as UserId,
           originalError: err instanceof Error ? err.message : String(err),
         }),
         { status: 500 },
@@ -155,7 +156,7 @@ export async function requireProjectAccess(
   return {
     ok: true,
     context: {
-      userId: session.user.id,
+      userId: session.user.id as UserId,
       userEmail: session.user.email,
       orgId,
       projectId,

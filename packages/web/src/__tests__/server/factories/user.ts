@@ -1,9 +1,10 @@
+import type { UserId } from '@corates/shared/ids';
 import type { SeedUserInput } from '../seed-schemas.js';
 import { seedUser } from '../helpers.js';
-import { generateId, nowSec, withDefaults, emailFromId, nextCounter } from './utils.js';
+import { generateId, nowSec, withDefaults, emailFromId, nextCounter, asUserId } from './utils.js';
 
 export interface BuiltUser {
-  id: string;
+  id: UserId;
   name: string;
   email: string;
   givenName: string | null;
@@ -21,7 +22,7 @@ export interface BuiltUser {
 
 export async function buildUser(overrides: Partial<SeedUserInput> = {}): Promise<BuiltUser> {
   const n = nextCounter();
-  const id = overrides.id || generateId('user');
+  const id = asUserId(overrides.id || generateId('user'));
   const ts = nowSec();
 
   const defaults = {

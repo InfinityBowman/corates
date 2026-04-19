@@ -8,6 +8,7 @@ import {
   buildUser,
   buildOrgMember,
   resetCounter,
+  asUserId,
 } from '@/__tests__/server/factories';
 import { handleGet as listHandler, handlePost as addHandler } from '../members';
 import { handlePut as updateRoleHandler, handleDelete as removeHandler } from '../members/$userId';
@@ -315,7 +316,7 @@ describe('DELETE /api/orgs/:orgId/projects/:projectId/members/:userId', () => {
         `/api/orgs/${org.id}/projects/${project.id}/members/nonexistent-user`,
         'DELETE',
       ),
-      params: { orgId: org.id, projectId: project.id, userId: 'nonexistent-user' },
+      params: { orgId: org.id, projectId: project.id, userId: asUserId('nonexistent-user') },
     });
     expect(res.status).toBe(404);
   });

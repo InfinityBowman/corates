@@ -11,12 +11,13 @@ import {
   VALIDATION_ERRORS,
 } from '@corates/shared';
 import { createProject } from '@corates/workers/commands/projects';
+import type { OrgId } from '@corates/shared/ids';
 import { requireOrgMembership } from '@/server/guards/requireOrgMembership';
 import { requireOrgWriteAccess } from '@/server/guards/requireOrgWriteAccess';
 import { requireEntitlement } from '@/server/guards/requireEntitlement';
 import { requireQuota } from '@/server/guards/requireQuota';
 
-type HandlerArgs = { request: Request; params: { orgId: string } };
+type HandlerArgs = { request: Request; params: { orgId: OrgId } };
 
 export const handleGet = async ({ request, params }: HandlerArgs) => {
   const membership = await requireOrgMembership(request, env, params.orgId);

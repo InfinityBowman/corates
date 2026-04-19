@@ -1,6 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { resetTestDatabase } from '@/__tests__/server/helpers';
-import { buildUser, buildOrg, buildOrgMember, resetCounter } from '@/__tests__/server/factories';
+import {
+  buildUser,
+  buildOrg,
+  buildOrgMember,
+  resetCounter,
+  asUserId,
+} from '@/__tests__/server/factories';
 import { handleGet as listOrgsHandler, handlePost as createOrgHandler } from '../../orgs';
 import { handlePut as updateOrgHandler, handleDelete as deleteOrgHandler } from '../$orgId';
 import { handleGet as listMembersHandler, handlePost as addMemberHandler } from '../$orgId/members';
@@ -374,7 +380,7 @@ describe('PUT /api/orgs/:orgId/members/:memberId', () => {
 
     const res = await updateMemberRoleHandler({
       request: jsonReq(`/api/orgs/${org.id}/members/member-2`, 'PUT', { role: 'admin' }),
-      params: { orgId: org.id, memberId: 'member-2' },
+      params: { orgId: org.id, memberId: asUserId('member-2') },
     });
 
     expect(res.status).toBe(403);
@@ -388,7 +394,7 @@ describe('PUT /api/orgs/:orgId/members/:memberId', () => {
 
     const res = await updateMemberRoleHandler({
       request: jsonReq(`/api/orgs/${org.id}/members/member-2`, 'PUT', {}),
-      params: { orgId: org.id, memberId: 'member-2' },
+      params: { orgId: org.id, memberId: asUserId('member-2') },
     });
 
     expect(res.status).toBe(400);
@@ -406,13 +412,13 @@ describe('PUT /api/orgs/:orgId/members/:memberId', () => {
 
     const res = await updateMemberRoleHandler({
       request: jsonReq(`/api/orgs/${org.id}/members/member-2`, 'PUT', { role: 'admin' }),
-      params: { orgId: org.id, memberId: 'member-2' },
+      params: { orgId: org.id, memberId: asUserId('member-2') },
     });
 
     expect(res.status).toBe(200);
     expect(mockUpdateMemberRole).toHaveBeenCalledWith({
       headers: expect.any(Headers),
-      body: { organizationId: org.id, memberId: 'member-2', role: 'admin' },
+      body: { organizationId: org.id, memberId: asUserId('member-2'), role: 'admin' },
     });
   });
 
@@ -425,7 +431,7 @@ describe('PUT /api/orgs/:orgId/members/:memberId', () => {
 
     const res = await updateMemberRoleHandler({
       request: jsonReq(`/api/orgs/${org.id}/members/member-2`, 'PUT', { role: 'owner' }),
-      params: { orgId: org.id, memberId: 'member-2' },
+      params: { orgId: org.id, memberId: asUserId('member-2') },
     });
 
     expect(res.status).toBe(403);
@@ -443,7 +449,7 @@ describe('DELETE /api/orgs/:orgId/members/:memberId', () => {
 
     const res = await removeMemberHandler({
       request: jsonReq(`/api/orgs/${org.id}/members/member-2`, 'DELETE'),
-      params: { orgId: org.id, memberId: 'member-2' },
+      params: { orgId: org.id, memberId: asUserId('member-2') },
     });
 
     expect(res.status).toBe(403);
@@ -487,7 +493,7 @@ describe('DELETE /api/orgs/:orgId/members/:memberId', () => {
 
     const res = await removeMemberHandler({
       request: jsonReq(`/api/orgs/${org.id}/members/member-2`, 'DELETE'),
-      params: { orgId: org.id, memberId: 'member-2' },
+      params: { orgId: org.id, memberId: asUserId('member-2') },
     });
 
     expect(res.status).toBe(200);

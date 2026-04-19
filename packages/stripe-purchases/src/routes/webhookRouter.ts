@@ -9,6 +9,7 @@
  */
 
 import type Stripe from 'stripe';
+import type { OrgId } from '@corates/shared/ids';
 import { handleCheckoutSessionCompleted } from './handlers/checkoutHandlers.js';
 // Note: customer.subscription.* events are owned by better-auth's stripe plugin
 // (packages/workers /api/auth/stripe/webhook). This worker intentionally ignores
@@ -43,7 +44,7 @@ interface LedgerContext {
   stripeCustomerId?: string;
   stripeSubscriptionId?: string;
   stripeCheckoutSessionId?: string;
-  orgId?: string;
+  orgId?: OrgId;
 }
 
 /**
@@ -115,7 +116,7 @@ export function extractLedgerContext(event: Stripe.Event): LedgerContext {
     context.stripeSubscriptionId = obj.id as string;
   }
   if ((obj.metadata as Record<string, string>)?.orgId) {
-    context.orgId = (obj.metadata as Record<string, string>).orgId;
+    context.orgId = (obj.metadata as Record<string, string>).orgId as OrgId;
   }
 
   return context;

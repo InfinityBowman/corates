@@ -1,6 +1,7 @@
 import { createDb } from '@corates/db/client';
 import { resolveOrgAccess } from '@corates/workers/billing-resolver';
 import { createDomainError, isDomainError, AUTH_ERRORS, SYSTEM_ERRORS } from '@corates/shared';
+import type { OrgId } from '@corates/shared/ids';
 
 export interface WriteAccessResult {
   ok: true;
@@ -12,7 +13,7 @@ export type OrgWriteAccessGuardResult = WriteAccessResult | { ok: false; respons
 export async function requireOrgWriteAccess(
   method: string,
   env: Env,
-  orgId: string,
+  orgId: OrgId,
 ): Promise<OrgWriteAccessGuardResult> {
   if (method === 'GET' || method === 'HEAD' || method === 'OPTIONS') {
     const db = createDb(env.DB);

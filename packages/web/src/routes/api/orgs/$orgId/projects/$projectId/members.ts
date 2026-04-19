@@ -12,13 +12,14 @@ import {
   VALIDATION_ERRORS,
   type DomainError,
 } from '@corates/shared';
+import type { OrgId, ProjectId } from '@corates/shared/ids';
 import { addMember } from '@corates/workers/commands/members';
 import { createInvitation } from '@corates/workers/commands/invitations';
 import { requireOrgMembership } from '@/server/guards/requireOrgMembership';
 import { requireProjectAccess } from '@/server/guards/requireProjectAccess';
 import { requireOrgWriteAccess } from '@/server/guards/requireOrgWriteAccess';
 
-type HandlerArgs = { request: Request; params: { orgId: string; projectId: string } };
+type HandlerArgs = { request: Request; params: { orgId: OrgId; projectId: ProjectId } };
 
 export const handleGet = async ({ request, params }: HandlerArgs) => {
   const orgMembership = await requireOrgMembership(request, env, params.orgId);

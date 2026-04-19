@@ -15,6 +15,7 @@ import {
 } from '../../__tests__/helpers.js';
 import { createDb } from '@corates/db/client';
 import { createGrant } from '@corates/db/org-access-grants';
+import type { OrgId, UserId, OrgAccessGrantId } from '@corates/shared/ids';
 import { resolveOrgAccess, validatePlanChange, getOrgResourceUsage } from '../billingResolver.js';
 import { isSubscriptionActive } from '../subscriptionStatus';
 import type { SubscriptionStatusInput, IsActiveOptions } from '../subscriptionStatus';
@@ -26,7 +27,7 @@ beforeEach(async () => {
 /**
  * Helper to create standard test org setup
  */
-async function createTestOrg(orgId = 'org-1', userId = 'user-1') {
+async function createTestOrg(orgId: OrgId = 'org-1' as OrgId, userId: UserId = 'user-1' as UserId) {
   const nowSec = Math.floor(Date.now() / 1000);
 
   await seedUser({
@@ -173,7 +174,7 @@ describe('resolveOrgAccess', () => {
 
       // Create active trial grant (should be ignored)
       await createGrant(db, {
-        id: 'grant-1',
+        id: 'grant-1' as OrgAccessGrantId,
         orgId,
         type: 'trial',
         startsAt: new Date(nowSec * 1000),
@@ -253,7 +254,7 @@ describe('resolveOrgAccess', () => {
       const db = createDb(env.DB);
 
       await createGrant(db, {
-        id: 'grant-1',
+        id: 'grant-1' as OrgAccessGrantId,
         orgId,
         type: 'trial',
         startsAt: new Date(nowSec * 1000),
@@ -274,7 +275,7 @@ describe('resolveOrgAccess', () => {
 
       // Create single_project grant first
       await createGrant(db, {
-        id: 'grant-1',
+        id: 'grant-1' as OrgAccessGrantId,
         orgId,
         type: 'single_project',
         startsAt: new Date(nowSec * 1000),
@@ -283,7 +284,7 @@ describe('resolveOrgAccess', () => {
 
       // Create trial grant
       await createGrant(db, {
-        id: 'grant-2',
+        id: 'grant-2' as OrgAccessGrantId,
         orgId,
         type: 'trial',
         startsAt: new Date(nowSec * 1000),
@@ -304,7 +305,7 @@ describe('resolveOrgAccess', () => {
 
       // Create two trial grants with different expiry
       await createGrant(db, {
-        id: 'grant-1',
+        id: 'grant-1' as OrgAccessGrantId,
         orgId,
         type: 'trial',
         startsAt: new Date(nowSec * 1000),
@@ -312,7 +313,7 @@ describe('resolveOrgAccess', () => {
       });
 
       await createGrant(db, {
-        id: 'grant-2',
+        id: 'grant-2' as OrgAccessGrantId,
         orgId,
         type: 'trial',
         startsAt: new Date(nowSec * 1000),
@@ -330,7 +331,7 @@ describe('resolveOrgAccess', () => {
 
       // Create grant that starts tomorrow
       await createGrant(db, {
-        id: 'grant-1',
+        id: 'grant-1' as OrgAccessGrantId,
         orgId,
         type: 'trial',
         startsAt: new Date((nowSec + 86400) * 1000), // Tomorrow
@@ -351,7 +352,7 @@ describe('resolveOrgAccess', () => {
 
       // Create grant and then revoke it
       await createGrant(db, {
-        id: 'grant-1',
+        id: 'grant-1' as OrgAccessGrantId,
         orgId,
         type: 'trial',
         startsAt: new Date(nowSec * 1000),
@@ -379,7 +380,7 @@ describe('resolveOrgAccess', () => {
 
       // Create expired grant
       await createGrant(db, {
-        id: 'grant-1',
+        id: 'grant-1' as OrgAccessGrantId,
         orgId,
         type: 'trial',
         startsAt: new Date((nowSec - 86400 * 20) * 1000), // Started 20 days ago
@@ -400,7 +401,7 @@ describe('resolveOrgAccess', () => {
 
       // Create two expired grants
       await createGrant(db, {
-        id: 'grant-1',
+        id: 'grant-1' as OrgAccessGrantId,
         orgId,
         type: 'trial',
         startsAt: new Date((nowSec - 86400 * 30) * 1000),
@@ -408,7 +409,7 @@ describe('resolveOrgAccess', () => {
       });
 
       await createGrant(db, {
-        id: 'grant-2',
+        id: 'grant-2' as OrgAccessGrantId,
         orgId,
         type: 'single_project',
         startsAt: new Date((nowSec - 86400 * 20) * 1000),
@@ -464,7 +465,7 @@ describe('getOrgResourceUsage', () => {
   });
 
   it('should count collaborators correctly (excluding owner)', async () => {
-    const { nowSec, orgId } = await createTestOrg('org-1', 'owner-1');
+    const { nowSec, orgId } = await createTestOrg('org-1' as OrgId, 'owner-1' as UserId);
     const db = createDb(env.DB);
 
     // Add more members (collaborators)
@@ -565,7 +566,7 @@ describe('validatePlanChange', () => {
   });
 
   it('should block downgrade when collaborators exceed limit', async () => {
-    const { nowSec, orgId } = await createTestOrg('org-1', 'owner-1');
+    const { nowSec, orgId } = await createTestOrg('org-1' as OrgId, 'owner-1' as UserId);
     const db = createDb(env.DB);
 
     // Add 6 members (exceeds starter_team limit of 5 collaborators)
@@ -598,7 +599,7 @@ describe('validatePlanChange', () => {
   });
 
   it('should report multiple violations when both quotas exceeded', async () => {
-    const { nowSec, orgId, userId } = await createTestOrg('org-1', 'owner-1');
+    const { nowSec, orgId, userId } = await createTestOrg('org-1' as OrgId, 'owner-1' as UserId);
     const db = createDb(env.DB);
 
     // Create 5 projects (exceeds starter_team limit of 3)
@@ -641,7 +642,7 @@ describe('validatePlanChange', () => {
   });
 
   it('should allow any usage for unlimited_team plan', async () => {
-    const { nowSec, orgId, userId } = await createTestOrg('org-1', 'owner-1');
+    const { nowSec, orgId, userId } = await createTestOrg('org-1' as OrgId, 'owner-1' as UserId);
     const db = createDb(env.DB);
 
     // Create many projects

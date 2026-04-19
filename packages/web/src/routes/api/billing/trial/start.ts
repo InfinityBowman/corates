@@ -19,6 +19,7 @@ import {
   VALIDATION_ERRORS,
   type DomainError,
 } from '@corates/shared';
+import type { OrgId, OrgAccessGrantId } from '@corates/shared/ids';
 import { resolveOrgIdWithRole } from '@/server/billing-context';
 
 export const handlePost = async ({ request }: { request: Request }) => {
@@ -39,7 +40,7 @@ export const handlePost = async ({ request }: { request: Request }) => {
 
     requireOrgOwner({ orgId, role });
 
-    const existingTrial = await getGrantByOrgIdAndType(db, orgId as string, 'trial');
+    const existingTrial = await getGrantByOrgIdAndType(db, orgId as OrgId, 'trial');
     if (existingTrial) {
       const error = createDomainError(
         VALIDATION_ERRORS.INVALID_INPUT,
@@ -53,10 +54,10 @@ export const handlePost = async ({ request }: { request: Request }) => {
     const expiresAt = new Date(now);
     expiresAt.setDate(expiresAt.getDate() + GRANT_CONFIG.TRIAL_DAYS);
 
-    const grantId = crypto.randomUUID();
+    const grantId = crypto.randomUUID() as OrgAccessGrantId;
     await createGrant(db, {
       id: grantId,
-      orgId: orgId as string,
+      orgId: orgId as OrgId,
       type: 'trial',
       startsAt: now,
       expiresAt,

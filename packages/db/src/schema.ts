@@ -1,9 +1,22 @@
 import { sqliteTable, text, integer } from 'drizzle-orm/sqlite-core';
 import { sql } from 'drizzle-orm';
+import type {
+  UserId,
+  OrgId,
+  ProjectId,
+  MediaFileId,
+  StudyId,
+  MemberId,
+  ProjectMemberId,
+  ProjectInvitationId,
+  OrgInvitationId,
+  SubscriptionId,
+  OrgAccessGrantId,
+} from '@corates/shared/ids';
 
 // Users table
 export const user = sqliteTable('user', {
-  id: text('id').primaryKey(),
+  id: text('id').primaryKey().$type<UserId>(),
   name: text('name').notNull(),
   givenName: text('givenName'), // First name / given name (from OAuth or user input)
   familyName: text('familyName'), // Last name / family name (from OAuth or user input)
@@ -39,7 +52,7 @@ export const user = sqliteTable('user', {
 
 // Organizations table (Better Auth organization plugin)
 export const organization = sqliteTable('organization', {
-  id: text('id').primaryKey(),
+  id: text('id').primaryKey().$type<OrgId>(),
   name: text('name').notNull(),
   slug: text('slug').unique(),
   logo: text('logo'),
@@ -49,12 +62,14 @@ export const organization = sqliteTable('organization', {
 
 // Organization members table (Better Auth organization plugin)
 export const member = sqliteTable('member', {
-  id: text('id').primaryKey(),
+  id: text('id').primaryKey().$type<MemberId>(),
   userId: text('userId')
     .notNull()
+    .$type<UserId>()
     .references(() => user.id, { onDelete: 'cascade' }),
   organizationId: text('organizationId')
     .notNull()
+    .$type<OrgId>()
     .references(() => organization.id, { onDelete: 'cascade' }),
   role: text('role').notNull().default('member'), // owner, admin, member
   createdAt: integer('createdAt', { mode: 'timestamp' }).default(sql`(unixepoch())`),
@@ -62,13 +77,15 @@ export const member = sqliteTable('member', {
 
 // Organization invitations table (Better Auth organization plugin)
 export const invitation = sqliteTable('invitation', {
-  id: text('id').primaryKey(),
+  id: text('id').primaryKey().$type<OrgInvitationId>(),
   email: text('email').notNull(),
   inviterId: text('inviterId')
     .notNull()
+    .$type<UserId>()
     .references(() => user.id, { onDelete: 'cascade' }),
   organizationId: text('organizationId')
     .notNull()
+    .$type<OrgId>()
     .references(() => organization.id, { onDelete: 'cascade' }),
   role: text('role').notNull().default('member'),
   status: text('status').notNull().default('pending'), // pending, accepted, rejected, canceled
@@ -87,10 +104,11 @@ export const session = sqliteTable('session', {
   userAgent: text('userAgent'),
   userId: text('userId')
     .notNull()
+    .$type<UserId>()
     .references(() => user.id, { onDelete: 'cascade' }),
-  impersonatedBy: text('impersonatedBy').references(() => user.id, { onDelete: 'set null' }),
+  impersonatedBy: text('impersonatedBy').$type<UserId>().references(() => user.id, { onDelete: 'set null' }),
   // Organization plugin field - tracks user's active organization
-  activeOrganizationId: text('activeOrganizationId').references(() => organization.id, {
+  activeOrganizationId: text('activeOrganizationId').$type<OrgId>().references(() => organization.id, {
     onDelete: 'set null',
   }),
 });
@@ -102,6 +120,7 @@ export const account = sqliteTable('account', {
   providerId: text('providerId').notNull(),
   userId: text('userId')
     .notNull()
+    .$type<UserId>()
     .references(() => user.id, { onDelete: 'cascade' }),
   accessToken: text('accessToken'),
   refreshToken: text('refreshToken'),
@@ -128,15 +147,17 @@ export const verification = sqliteTable('verification', {
 
 // Projects table (for user's research projects)
 export const projects = sqliteTable('projects', {
-  id: text('id').primaryKey(),
+  id: text('id').primaryKey().$type<ProjectId>(),
   name: text('name').notNull(),
   description: text('description'),
   // Organization that owns this project
   orgId: text('orgId')
     .notNull()
+    .$type<OrgId>()
     .references(() => organization.id, { onDelete: 'cascade' }),
   createdBy: text('createdBy')
     .notNull()
+    .$type<UserId>()
     .references(() => user.id, { onDelete: 'cascade' }),
   createdAt: integer('createdAt', { mode: 'timestamp' }).default(sql`(unixepoch())`),
   updatedAt: integer('updatedAt', { mode: 'timestamp' }).default(sql`(unixepoch())`),
@@ -144,38 +165,42 @@ export const projects = sqliteTable('projects', {
 
 // Project membership table (which users have access to which projects)
 export const projectMembers = sqliteTable('project_members', {
-  id: text('id').primaryKey(),
+  id: text('id').primaryKey().$type<ProjectMemberId>(),
   projectId: text('projectId')
     .notNull()
+    .$type<ProjectId>()
     .references(() => projects.id, { onDelete: 'cascade' }),
   userId: text('userId')
     .notNull()
+    .$type<UserId>()
     .references(() => user.id, { onDelete: 'cascade' }),
   role: text('role').default('member'), // owner, member
   joinedAt: integer('joinedAt', { mode: 'timestamp' }).default(sql`(unixepoch())`),
 });
 
 export const mediaFiles = sqliteTable('mediaFiles', {
-  id: text('id').primaryKey(),
+  id: text('id').primaryKey().$type<MediaFileId>(),
   filename: text('filename').notNull(),
   originalName: text('originalName'),
   fileType: text('fileType'),
   fileSize: integer('fileSize'),
-  uploadedBy: text('uploadedBy').references(() => user.id, { onDelete: 'set null' }),
+  uploadedBy: text('uploadedBy').$type<UserId>().references(() => user.id, { onDelete: 'set null' }),
   bucketKey: text('bucketKey').notNull(),
   orgId: text('orgId')
     .notNull()
+    .$type<OrgId>()
     .references(() => organization.id, { onDelete: 'cascade' }),
   projectId: text('projectId')
     .notNull()
+    .$type<ProjectId>()
     .references(() => projects.id, { onDelete: 'cascade' }),
-  studyId: text('studyId'),
+  studyId: text('studyId').$type<StudyId>(),
   createdAt: integer('createdAt', { mode: 'timestamp' }).default(sql`(unixepoch())`),
 });
 
 // Better Auth Stripe subscription table
 export const subscription = sqliteTable('subscription', {
-  id: text('id').primaryKey(),
+  id: text('id').primaryKey().$type<SubscriptionId>(),
   plan: text('plan').notNull(), // Plan name (e.g., 'starter_team', 'team', 'unlimited_team')
   referenceId: text('referenceId').notNull(), // Org ID (orgId) for org-scoped billing
   stripeCustomerId: text('stripeCustomerId'),
@@ -196,9 +221,10 @@ export const subscription = sqliteTable('subscription', {
 
 // Org access grants table (for trial and single_project grants)
 export const orgAccessGrants = sqliteTable('org_access_grants', {
-  id: text('id').primaryKey(),
+  id: text('id').primaryKey().$type<OrgAccessGrantId>(),
   orgId: text('orgId')
     .notNull()
+    .$type<OrgId>()
     .references(() => organization.id, { onDelete: 'cascade' }),
   type: text('type').notNull(), // 'trial' | 'single_project'
   startsAt: integer('startsAt', { mode: 'timestamp' }).notNull(),
@@ -215,6 +241,7 @@ export const twoFactor = sqliteTable('twoFactor', {
   id: text('id').primaryKey(),
   userId: text('userId')
     .notNull()
+    .$type<UserId>()
     .references(() => user.id, { onDelete: 'cascade' }),
   secret: text('secret').notNull(),
   backupCodes: text('backupCodes').notNull(), // JSON array of backup codes
@@ -245,7 +272,7 @@ export const stripeEventLedger = sqliteTable('stripe_event_ledger', {
   created: integer('created', { mode: 'timestamp' }), // Stripe event created timestamp
   processedAt: integer('processedAt', { mode: 'timestamp' }),
   // Optional linking fields (populated if determinable from verified event data)
-  orgId: text('orgId'),
+  orgId: text('orgId').$type<OrgId>(),
   stripeCustomerId: text('stripeCustomerId'),
   stripeSubscriptionId: text('stripeSubscriptionId'),
   stripeCheckoutSessionId: text('stripeCheckoutSessionId'),
@@ -255,13 +282,15 @@ export const stripeEventLedger = sqliteTable('stripe_event_ledger', {
 // Projects are always invite-only: accepting grants project membership only by default.
 // Optional: grantOrgMembership can be set to true by org admins/owners for governance/billing.
 export const projectInvitations = sqliteTable('project_invitations', {
-  id: text('id').primaryKey(),
+  id: text('id').primaryKey().$type<ProjectInvitationId>(),
   // Organization for this project invitation
   orgId: text('orgId')
     .notNull()
+    .$type<OrgId>()
     .references(() => organization.id, { onDelete: 'cascade' }),
   projectId: text('projectId')
     .notNull()
+    .$type<ProjectId>()
     .references(() => projects.id, { onDelete: 'cascade' }),
   email: text('email').notNull(),
   role: text('role').default('member'), // project role
@@ -270,6 +299,7 @@ export const projectInvitations = sqliteTable('project_invitations', {
   token: text('token').notNull().unique(),
   invitedBy: text('invitedBy')
     .notNull()
+    .$type<UserId>()
     .references(() => user.id, { onDelete: 'cascade' }),
   expiresAt: integer('expiresAt', { mode: 'timestamp' }).notNull(),
   acceptedAt: integer('acceptedAt', { mode: 'timestamp' }),

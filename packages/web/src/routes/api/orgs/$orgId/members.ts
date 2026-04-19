@@ -8,6 +8,7 @@ import {
   SYSTEM_ERRORS,
   VALIDATION_ERRORS,
 } from '@corates/shared';
+import type { OrgId } from '@corates/shared/ids';
 import { requireOrgMembership } from '@/server/guards/requireOrgMembership';
 import { requireOrgWriteAccess } from '@/server/guards/requireOrgWriteAccess';
 
@@ -20,7 +21,7 @@ function getOrgApi(): OrgApiMethods {
   return createAuth(env).api as unknown as OrgApiMethods;
 }
 
-type HandlerArgs = { request: Request; params: { orgId: string } };
+type HandlerArgs = { request: Request; params: { orgId: OrgId } };
 
 export const handleGet = async ({ request, params }: HandlerArgs) => {
   const membership = await requireOrgMembership(request, env, params.orgId);

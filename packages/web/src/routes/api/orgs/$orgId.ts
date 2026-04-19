@@ -1,5 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { env } from 'cloudflare:workers';
+import type { OrgId } from '@corates/shared/ids';
 import { createAuth } from '@corates/workers/auth-config';
 import { createDb } from '@corates/db/client';
 import { projects } from '@corates/db/schema';
@@ -27,7 +28,7 @@ function getOrgApi(): OrgApiMethods {
   return createAuth(env).api as unknown as OrgApiMethods;
 }
 
-type HandlerArgs = { request: Request; params: { orgId: string } };
+type HandlerArgs = { request: Request; params: { orgId: OrgId } };
 
 export const handleGet = async ({ request, params }: HandlerArgs) => {
   const guard = await requireOrgMembership(request, env, params.orgId);

@@ -9,13 +9,14 @@ import {
   SYSTEM_ERRORS,
   VALIDATION_ERRORS,
 } from '@corates/shared';
+import type { OrgId, ProjectId, ProjectInvitationId } from '@corates/shared/ids';
 import { requireOrgMembership } from '@/server/guards/requireOrgMembership';
 import { requireProjectAccess } from '@/server/guards/requireProjectAccess';
 import { requireOrgWriteAccess } from '@/server/guards/requireOrgWriteAccess';
 
 type HandlerArgs = {
   request: Request;
-  params: { orgId: string; projectId: string; invitationId: string };
+  params: { orgId: OrgId; projectId: ProjectId; invitationId: ProjectInvitationId };
 };
 
 export const handleDelete = async ({ request, params }: HandlerArgs) => {

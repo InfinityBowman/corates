@@ -13,6 +13,7 @@ import {
 } from '../../__tests__/helpers.js';
 import { createDb } from '@corates/db/client';
 import { projects } from '@corates/db/schema';
+import type { OrgId } from '@corates/shared/ids';
 import {
   checkQuotaForInsert,
   insertWithQuotaCheck,
@@ -26,7 +27,7 @@ beforeEach(async () => {
 describe('checkQuotaForInsert', () => {
   it('should allow insert when under quota', async () => {
     const nowSec = Math.floor(Date.now() / 1000);
-    const orgId = 'org-1';
+    const orgId = 'org-1' as OrgId;
     const userId = 'user-1';
 
     await seedUser({
@@ -74,7 +75,7 @@ describe('checkQuotaForInsert', () => {
 
   it('should block insert when at quota limit', async () => {
     const nowSec = Math.floor(Date.now() / 1000);
-    const orgId = 'org-1';
+    const orgId = 'org-1' as OrgId;
     const userId = 'user-1';
 
     await seedUser({
@@ -136,7 +137,7 @@ describe('checkQuotaForInsert', () => {
 
   it('should allow unlimited quota', async () => {
     const nowSec = Math.floor(Date.now() / 1000);
-    const orgId = 'org-1';
+    const orgId = 'org-1' as OrgId;
     const userId = 'user-1';
 
     await seedUser({
@@ -185,7 +186,7 @@ describe('checkQuotaForInsert', () => {
 describe('insertWithQuotaCheck', () => {
   it('should execute inserts when quota allows', async () => {
     const nowSec = Math.floor(Date.now() / 1000);
-    const orgId = 'org-1';
+    const orgId = 'org-1' as OrgId;
     const userId = 'user-1';
 
     await seedUser({
@@ -257,7 +258,7 @@ describe('insertWithQuotaCheck', () => {
 
   it('should reject insert when quota exceeded', async () => {
     const nowSec = Math.floor(Date.now() / 1000);
-    const orgId = 'org-1';
+    const orgId = 'org-1' as OrgId;
     const userId = 'user-1';
 
     await seedUser({
@@ -343,7 +344,7 @@ describe('insertWithQuotaCheck', () => {
 describe('checkCollaboratorQuota', () => {
   it('should count non-owner members correctly', async () => {
     const nowSec = Math.floor(Date.now() / 1000);
-    const orgId = 'org-1';
+    const orgId = 'org-1' as OrgId;
 
     await seedOrganization({
       id: orgId,
@@ -409,7 +410,7 @@ describe('checkCollaboratorQuota', () => {
 
   it('should block when collaborator limit reached', async () => {
     const nowSec = Math.floor(Date.now() / 1000);
-    const orgId = 'org-1';
+    const orgId = 'org-1' as OrgId;
 
     await seedOrganization({
       id: orgId,

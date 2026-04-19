@@ -1,11 +1,20 @@
+import type { OrgId, MemberId, UserId } from '@corates/shared/ids';
 import type { SeedOrganizationInput } from '../seed-schemas.js';
 import { seedOrganization, seedOrgMember } from '../helpers.js';
-import { generateId, nowSec, withDefaults, slugify, nextCounter } from './utils.js';
+import {
+  generateId,
+  nowSec,
+  withDefaults,
+  slugify,
+  nextCounter,
+  asOrgId,
+  asMemberId,
+} from './utils.js';
 import { buildUser } from './user.js';
 import type { BuiltUser } from './user.js';
 
 export interface BuiltOrg {
-  id: string;
+  id: OrgId;
   name: string;
   slug: string | null;
   logo: string | null;
@@ -14,9 +23,9 @@ export interface BuiltOrg {
 }
 
 interface BuiltOrgMembership {
-  id: string;
-  organizationId: string;
-  userId: string;
+  id: MemberId;
+  organizationId: OrgId;
+  userId: UserId;
   role: 'owner' | 'admin' | 'member';
   createdAt: number;
 }
@@ -39,7 +48,7 @@ export async function buildOrg(options: BuildOrgOptions = {}): Promise<BuildOrgR
 
   const owner = options.owner || (await buildUser());
 
-  const orgId = options.org?.id || generateId('org');
+  const orgId = asOrgId(options.org?.id || generateId('org'));
   const orgName = options.org?.name || `Test Org ${n}`;
 
   const orgDefaults = {
@@ -54,7 +63,7 @@ export async function buildOrg(options: BuildOrgOptions = {}): Promise<BuildOrgR
   const orgData = withDefaults(orgDefaults, options.org);
   await seedOrganization(orgData);
 
-  const membershipId = generateId('om');
+  const membershipId = asMemberId(generateId('om'));
   const membershipData: BuiltOrgMembership = {
     id: membershipId,
     organizationId: orgId,
@@ -72,7 +81,7 @@ export async function buildOrg(options: BuildOrgOptions = {}): Promise<BuildOrgR
 }
 
 interface BuildOrgMemberOptions {
-  orgId: string;
+  orgId: OrgId;
   user?: BuiltUser;
   role?: 'owner' | 'admin' | 'member';
 }
@@ -91,7 +100,7 @@ export async function buildOrgMember(
   const user = options.user || (await buildUser());
 
   const membershipData: BuiltOrgMembership = {
-    id: generateId('om'),
+    id: asMemberId(generateId('om')),
     organizationId: orgId,
     userId: user.id,
     role,

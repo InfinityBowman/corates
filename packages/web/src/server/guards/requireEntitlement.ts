@@ -1,6 +1,7 @@
 import { createDb } from '@corates/db/client';
 import { resolveOrgAccess } from '@corates/workers/billing-resolver';
 import { createDomainError, isDomainError, AUTH_ERRORS, SYSTEM_ERRORS } from '@corates/shared';
+import type { OrgId } from '@corates/shared/ids';
 
 export type EntitlementGuardResult =
   | { ok: true; orgBilling: Awaited<ReturnType<typeof resolveOrgAccess>> }
@@ -8,7 +9,7 @@ export type EntitlementGuardResult =
 
 export async function requireEntitlement(
   env: Env,
-  orgId: string,
+  orgId: OrgId,
   entitlement: string,
 ): Promise<EntitlementGuardResult> {
   if (!orgId) {

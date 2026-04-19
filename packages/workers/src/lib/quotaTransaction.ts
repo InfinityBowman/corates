@@ -2,6 +2,7 @@ import { count, eq } from 'drizzle-orm';
 import { resolveOrgAccess } from './billingResolver';
 import { isUnlimitedQuota } from '@corates/shared/plans';
 import { createDomainError, AUTH_ERRORS, SYSTEM_ERRORS } from '@corates/shared';
+import type { OrgId } from '@corates/shared/ids';
 import type { Database } from '@corates/db/client';
 import type { SQLiteTable, SQLiteColumn } from 'drizzle-orm/sqlite-core';
 import type { SQL } from 'drizzle-orm';
@@ -15,7 +16,7 @@ interface QuotaCheckResult {
 
 export async function checkQuotaForInsert(
   db: Database,
-  orgId: string,
+  orgId: OrgId,
   quotaKey: string,
   table: SQLiteTable,
   whereColumn: SQLiteColumn,
@@ -103,7 +104,7 @@ export interface InsertRollbackMeta {
 }
 
 interface InsertWithQuotaOptions {
-  orgId: string;
+  orgId: OrgId;
   quotaKey: string;
   countTable: SQLiteTable;
   countColumn: SQLiteColumn;
@@ -286,7 +287,7 @@ export async function insertWithQuotaCheck(
 
 export async function checkCollaboratorQuota(
   db: Database,
-  orgId: string,
+  orgId: OrgId,
 ): Promise<QuotaCheckResult> {
   const { member } = await import('@corates/db/schema');
   const { and, ne } = await import('drizzle-orm');

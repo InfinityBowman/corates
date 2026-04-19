@@ -1,39 +1,54 @@
+import type {
+  OrgId,
+  ProjectId,
+  ProjectMemberId,
+  ProjectInvitationId,
+  UserId,
+} from '@corates/shared/ids';
 import type { SeedProjectInput } from '../seed-schemas.js';
 import { seedProject, seedProjectMember, seedProjectInvitation } from '../helpers.js';
-import { generateId, nowSec, withDefaults, nextCounter } from './utils.js';
+import {
+  generateId,
+  nowSec,
+  withDefaults,
+  nextCounter,
+  asProjectId,
+  asProjectMemberId,
+  asProjectInvitationId,
+} from './utils.js';
 import { buildUser } from './user.js';
 import type { BuiltUser } from './user.js';
 import { buildOrg, buildOrgMember } from './org.js';
 import type { BuiltOrg } from './org.js';
 
 export interface BuiltProject {
-  id: string;
+  id: ProjectId;
   name: string;
   description: string | null;
-  orgId: string | null;
-  createdBy: string;
+  orgId: OrgId | null;
+  createdBy: UserId;
   createdAt: number;
   updatedAt: number;
 }
 
 export interface BuiltProjectMembership {
-  id: string;
-  projectId: string;
-  userId: string;
+  id: ProjectMemberId;
+  projectId: ProjectId;
+  userId: UserId;
   role: 'owner' | 'member';
   joinedAt: number;
 }
 
 interface BuiltProjectInvitation {
-  id: string;
-  orgId: string;
-  projectId: string;
+  id: ProjectInvitationId;
+  orgId: OrgId;
+  projectId: ProjectId;
   email: string;
   role: 'owner' | 'member';
   orgRole: 'owner' | 'admin' | 'member';
   grantOrgMembership: number;
   token: string;
-  invitedBy: string;
+  invitedBy: UserId;
   expiresAt: number;
   acceptedAt: number | null;
   createdAt: number;
@@ -75,7 +90,7 @@ export async function buildProject(options: BuildProjectOptions = {}): Promise<B
     owner = orgResult.owner;
   }
 
-  const projectId = options.project?.id || generateId('proj');
+  const projectId = asProjectId(options.project?.id || generateId('proj'));
   const projectName = options.project?.name || `Test Project ${n}`;
 
   const projectDefaults = {
@@ -91,7 +106,7 @@ export async function buildProject(options: BuildProjectOptions = {}): Promise<B
   const projectData = withDefaults(projectDefaults, options.project);
   await seedProject(projectData);
 
-  const membershipId = generateId('pm');
+  const membershipId = asProjectMemberId(generateId('pm'));
   const membershipData: BuiltProjectMembership = {
     id: membershipId,
     projectId: projectId,
@@ -110,8 +125,8 @@ export async function buildProject(options: BuildProjectOptions = {}): Promise<B
 }
 
 interface BuildProjectMemberOptions {
-  projectId: string;
-  orgId: string;
+  projectId: ProjectId;
+  orgId: OrgId;
   user?: BuiltUser;
   role?: 'owner' | 'member';
   skipOrgMembership?: boolean;
@@ -139,7 +154,7 @@ export async function buildProjectMember(
   }
 
   const membershipData: BuiltProjectMembership = {
-    id: generateId('pm'),
+    id: asProjectMemberId(generateId('pm')),
     projectId,
     userId: user.id,
     role,
@@ -192,9 +207,9 @@ export async function buildProjectWithMembers(
 }
 
 interface BuildProjectInvitationOptions {
-  orgId: string;
-  projectId: string;
-  invitedBy: string;
+  orgId: OrgId;
+  projectId: ProjectId;
+  invitedBy: UserId;
   id?: string;
   email?: string;
   role?: 'owner' | 'member';
@@ -239,7 +254,7 @@ export async function buildProjectInvitation(
   }
 
   const invitationData: BuiltProjectInvitation = {
-    id: options.id || generateId('inv'),
+    id: asProjectInvitationId(options.id || generateId('inv')),
     orgId,
     projectId,
     email,

@@ -5,7 +5,7 @@ import {
   seedSubscription,
   seedStripeEventLedger,
 } from '@/__tests__/server/helpers';
-import { buildAdminUser, buildUser, resetCounter } from '@/__tests__/server/factories';
+import { buildAdminUser, buildUser, resetCounter, asOrgId } from '@/__tests__/server/factories';
 import { handleGet as reconcile } from '../orgs/$orgId/billing/reconcile';
 import { handleGet as stuckStates } from '../billing/stuck-states';
 import { handleGet as ledger } from '../billing/ledger';
@@ -56,7 +56,7 @@ function stuckReq(qs = ''): Request {
 
 describe('GET /api/admin/orgs/:orgId/billing/reconcile', () => {
   it('returns 401 when no session', async () => {
-    const res = await reconcile({ request: reconcileReq('x'), params: { orgId: 'x' } });
+    const res = await reconcile({ request: reconcileReq('x'), params: { orgId: asOrgId('x') } });
     expect(res.status).toBe(401);
   });
 
@@ -66,7 +66,7 @@ describe('GET /api/admin/orgs/:orgId/billing/reconcile', () => {
       user: { id: u.id, email: u.email, name: u.name, role: 'user' },
       session: { id: 'sess', userId: u.id, activeOrganizationId: null },
     };
-    const res = await reconcile({ request: reconcileReq('x'), params: { orgId: 'x' } });
+    const res = await reconcile({ request: reconcileReq('x'), params: { orgId: asOrgId('x') } });
     expect(res.status).toBe(403);
   });
 
@@ -74,7 +74,7 @@ describe('GET /api/admin/orgs/:orgId/billing/reconcile', () => {
     await asAdmin();
     const res = await reconcile({
       request: reconcileReq('nope'),
-      params: { orgId: 'nope' },
+      params: { orgId: asOrgId('nope') },
     });
     expect(res.status).toBe(400);
   });
@@ -82,7 +82,7 @@ describe('GET /api/admin/orgs/:orgId/billing/reconcile', () => {
   it('detects incomplete subscription older than threshold', async () => {
     await asAdmin();
     const nowSec = Math.floor(Date.now() / 1000);
-    const orgId = 'org-recon-1';
+    const orgId = asOrgId('org-recon-1');
     await seedOrganization({ id: orgId, name: 'Recon', slug: 'recon', createdAt: nowSec });
 
     const thresholdMinutes = 30;
@@ -110,7 +110,7 @@ describe('GET /api/admin/orgs/:orgId/billing/reconcile', () => {
   it('detects checkout completed without subscription', async () => {
     await asAdmin();
     const nowSec = Math.floor(Date.now() / 1000);
-    const orgId = 'org-recon-2';
+    const orgId = asOrgId('org-recon-2');
     await seedOrganization({ id: orgId, name: 'Recon2', slug: 'recon2', createdAt: nowSec });
 
     const thresholdMinutes = 15;
@@ -143,7 +143,7 @@ describe('GET /api/admin/orgs/:orgId/billing/reconcile', () => {
   it('detects repeated webhook failures', async () => {
     await asAdmin();
     const nowSec = Math.floor(Date.now() / 1000);
-    const orgId = 'org-recon-3';
+    const orgId = asOrgId('org-recon-3');
     await seedOrganization({ id: orgId, name: 'Recon3', slug: 'recon3', createdAt: nowSec });
 
     for (let i = 0; i < 4; i++) {
@@ -171,7 +171,7 @@ describe('GET /api/admin/orgs/:orgId/billing/reconcile', () => {
   it('compares with Stripe when checkStripe=true', async () => {
     await asAdmin();
     const nowSec = Math.floor(Date.now() / 1000);
-    const orgId = 'org-recon-4';
+    const orgId = asOrgId('org-recon-4');
     await seedOrganization({ id: orgId, name: 'Recon4', slug: 'recon4', createdAt: nowSec });
     await seedSubscription({
       id: 'sub-active',
@@ -301,7 +301,7 @@ describe('GET /api/admin/billing/stuck-states', () => {
   it('flags incomplete subscriptions older than threshold', async () => {
     await asAdmin();
     const nowSec = Math.floor(Date.now() / 1000);
-    const orgId = 'org-stuck-1';
+    const orgId = asOrgId('org-stuck-1');
     await seedOrganization({ id: orgId, name: 'Stuck', slug: 'stuck', createdAt: nowSec });
     await seedSubscription({
       id: 'sub-stuck',
@@ -323,7 +323,7 @@ describe('GET /api/admin/billing/stuck-states', () => {
   it('flags orgs with repeated webhook failures', async () => {
     await asAdmin();
     const nowSec = Math.floor(Date.now() / 1000);
-    const orgId = 'org-stuck-2';
+    const orgId = asOrgId('org-stuck-2');
     await seedOrganization({ id: orgId, name: 'Stuck2', slug: 'stuck2', createdAt: nowSec });
     for (let i = 0; i < 4; i++) {
       await seedStripeEventLedger({

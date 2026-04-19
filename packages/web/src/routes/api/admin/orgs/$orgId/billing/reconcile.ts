@@ -17,6 +17,7 @@ import {
   SYSTEM_ERRORS,
   VALIDATION_ERRORS,
 } from '@corates/shared';
+import type { OrgId } from '@corates/shared/ids';
 import { getLedgerEntriesByOrgId, LedgerStatus } from '@corates/db/stripe-event-ledger';
 import { createStripeClient } from '@corates/workers/stripe';
 import { requireAdmin } from '@/server/guards/requireAdmin';
@@ -43,7 +44,7 @@ interface StuckState {
   stripeStatus?: string;
 }
 
-type HandlerArgs = { request: Request; params: { orgId: string } };
+type HandlerArgs = { request: Request; params: { orgId: OrgId } };
 
 export const handleGet = async ({ request, params }: HandlerArgs) => {
   const guard = await requireAdmin(request, env);

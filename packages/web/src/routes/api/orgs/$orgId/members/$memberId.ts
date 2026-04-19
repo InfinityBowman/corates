@@ -11,6 +11,7 @@ import {
   SYSTEM_ERRORS,
   VALIDATION_ERRORS,
 } from '@corates/shared';
+import type { OrgId, UserId } from '@corates/shared/ids';
 import { requireOrgMembership } from '@/server/guards/requireOrgMembership';
 import { requireOrgWriteAccess } from '@/server/guards/requireOrgWriteAccess';
 
@@ -24,7 +25,11 @@ function getOrgApi(): OrgApiMethods {
   return createAuth(env).api as unknown as OrgApiMethods;
 }
 
-type HandlerArgs = { request: Request; params: { orgId: string; memberId: string } };
+// `memberId` in the URL is actually a user ID — better-auth's organization
+// plugin removeMember endpoint accepts a userId, not a member-row id, and the
+// downstream `requireOrgMemberRemoval` policy treats it as targetUserId. The
+// path slug name is historical.
+type HandlerArgs = { request: Request; params: { orgId: OrgId; memberId: UserId } };
 
 export const handlePut = async ({ request, params }: HandlerArgs) => {
   const membership = await requireOrgMembership(request, env, params.orgId, 'admin');

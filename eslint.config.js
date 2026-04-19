@@ -172,6 +172,25 @@ export default [
     },
   },
   {
+    // Other server packages that depend on Cloudflare Workers ambient types
+    // (db client, stripe-purchases worker). These don't share workers' rule
+    // set but need the same globals.
+    files: ['packages/db/**/*.{js,ts}', 'packages/stripe-purchases/**/*.{js,ts}'],
+    languageOptions: {
+      globals: {
+        D1Database: 'readonly',
+        Queue: 'readonly',
+        Cloudflare: 'readonly',
+        Env: 'readonly',
+        Fetcher: 'readonly',
+        ExecutionContext: 'readonly',
+        DurableObjectNamespace: 'readonly',
+        R2Bucket: 'readonly',
+        KVNamespace: 'readonly',
+      },
+    },
+  },
+  {
     // Backend workers - enforce structured error handling
     files: ['packages/workers/src/**/*.{js,ts}'],
     plugins: {
@@ -241,6 +260,23 @@ export default [
         HTMLAnchorElement: 'readonly',
         Node: 'readonly',
         NodeJS: 'readonly',
+        // Cloudflare Workers ambient types (web package now mounts a
+        // TanStack Start handler on Workers, so server-only files reference
+        // these the same way packages/workers does).
+        Env: 'readonly',
+        Cloudflare: 'readonly',
+        WorkerVersionMetadata: 'readonly',
+        D1Database: 'readonly',
+        DurableObject: 'readonly',
+        DurableObjectState: 'readonly',
+        DurableObjectNamespace: 'readonly',
+        DurableObjectStub: 'readonly',
+        R2Bucket: 'readonly',
+        KVNamespace: 'readonly',
+        ExecutionContext: 'readonly',
+        Fetcher: 'readonly',
+        MessageBatch: 'readonly',
+        ScheduledController: 'readonly',
       },
     },
     rules: {

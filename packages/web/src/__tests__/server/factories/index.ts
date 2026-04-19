@@ -1,5 +1,20 @@
 // Utilities
-export { generateId, nowSec, nowDate, resetCounter } from './utils.js';
+export {
+  generateId,
+  nowSec,
+  nowDate,
+  resetCounter,
+  asOrgId,
+  asUserId,
+  asProjectId,
+  asMediaFileId,
+  asStudyId,
+  asGrantId,
+  asSubscriptionId,
+  asProjectInvitationId,
+  asProjectMemberId,
+  asMemberId,
+} from './utils.js';
 
 // User factories
 export { buildUser, buildAdminUser, buildBannedUser } from './user.js';

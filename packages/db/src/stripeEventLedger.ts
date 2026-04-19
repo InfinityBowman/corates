@@ -1,4 +1,5 @@
 import { eq, desc } from 'drizzle-orm';
+import type { OrgId } from '@corates/shared/ids';
 import { stripeEventLedger, type StripeEventLedgerEntry } from './schema';
 import type { Database } from './client';
 
@@ -33,7 +34,7 @@ interface UpdateLedgerVerifiedFieldsData {
   status: LedgerStatusType;
   httpStatus?: number;
   error?: string | null;
-  orgId?: string | null;
+  orgId?: OrgId | null;
   stripeCustomerId?: string | null;
   stripeSubscriptionId?: string | null;
   stripeCheckoutSessionId?: string | null;
@@ -195,7 +196,7 @@ export async function getLedgerByStripeEventId(
 
 export async function getLedgerEntriesByOrgId(
   db: Database,
-  orgId: string,
+  orgId: OrgId,
   options: QueryOptions = {},
 ): Promise<StripeEventLedgerEntry[]> {
   const { limit = 50 } = options;

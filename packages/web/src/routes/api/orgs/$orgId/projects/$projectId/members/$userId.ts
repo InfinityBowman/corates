@@ -9,6 +9,7 @@ import {
   VALIDATION_ERRORS,
   type DomainError,
 } from '@corates/shared';
+import type { OrgId, ProjectId, UserId } from '@corates/shared/ids';
 import { updateMemberRole, removeMember } from '@corates/workers/commands/members';
 import { requireMemberRemoval } from '@corates/workers/policies';
 import { requireOrgMembership } from '@/server/guards/requireOrgMembership';
@@ -17,7 +18,7 @@ import { requireOrgWriteAccess } from '@/server/guards/requireOrgWriteAccess';
 
 type HandlerArgs = {
   request: Request;
-  params: { orgId: string; projectId: string; userId: string };
+  params: { orgId: OrgId; projectId: ProjectId; userId: UserId };
 };
 
 export const handlePut = async ({ request, params }: HandlerArgs) => {

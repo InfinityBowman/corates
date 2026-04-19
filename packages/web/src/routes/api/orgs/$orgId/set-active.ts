@@ -2,6 +2,7 @@ import { createFileRoute } from '@tanstack/react-router';
 import { env } from 'cloudflare:workers';
 import { createAuth } from '@corates/workers/auth-config';
 import { createDomainError, SYSTEM_ERRORS } from '@corates/shared';
+import type { OrgId } from '@corates/shared/ids';
 import { requireOrgMembership } from '@/server/guards/requireOrgMembership';
 
 interface OrgApiMethods {
@@ -20,7 +21,7 @@ export const handler = async ({
   params,
 }: {
   request: Request;
-  params: { orgId: string };
+  params: { orgId: OrgId };
 }) => {
   const guard = await requireOrgMembership(request, env, params.orgId);
   if (!guard.ok) return guard.response;

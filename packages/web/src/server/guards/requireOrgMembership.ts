@@ -3,12 +3,13 @@ import { member, organization } from '@corates/db/schema';
 import { and, eq } from 'drizzle-orm';
 import { hasOrgRole } from '@corates/workers/policies';
 import { createDomainError, AUTH_ERRORS } from '@corates/shared';
+import type { OrgId, UserId } from '@corates/shared/ids';
 import { getSession } from '@corates/workers/auth';
 
 export interface OrgContext {
-  userId: string;
+  userId: UserId;
   userEmail: string;
-  orgId: string;
+  orgId: OrgId;
   orgRole: string;
   orgName: string;
   orgSlug: string | null;
@@ -19,7 +20,7 @@ export type OrgGuardResult = { ok: true; context: OrgContext } | { ok: false; re
 export async function requireOrgMembership(
   request: Request,
   env: Env,
-  orgId: string,
+  orgId: OrgId,
   minRole?: string,
 ): Promise<OrgGuardResult> {
   const session = await getSession(request, env);
@@ -50,7 +51,7 @@ export async function requireOrgMembership(
     })
     .from(member)
     .innerJoin(organization, eq(member.organizationId, organization.id))
-    .where(and(eq(member.organizationId, orgId), eq(member.userId, session.user.id)))
+    .where(and(eq(member.organizationId, orgId), eq(member.userId, session.user.id as UserId)))
     .get();
 
   if (!membership) {
@@ -80,7 +81,7 @@ export async function requireOrgMembership(
   return {
     ok: true,
     context: {
-      userId: session.user.id,
+      userId: session.user.id as UserId,
       userEmail: session.user.email,
       orgId,
       orgRole: membership.role,

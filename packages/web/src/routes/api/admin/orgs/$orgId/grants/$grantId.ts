@@ -13,6 +13,7 @@ import { orgAccessGrants } from '@corates/db/schema';
 import { eq } from 'drizzle-orm';
 import { z } from 'zod';
 import { createDomainError, SYSTEM_ERRORS, VALIDATION_ERRORS } from '@corates/shared';
+import type { OrgId, OrgAccessGrantId } from '@corates/shared/ids';
 import { getGrantById, revokeGrant, updateGrantExpiresAt } from '@corates/db/org-access-grants';
 import { requireAdmin } from '@/server/guards/requireAdmin';
 
@@ -21,7 +22,7 @@ const UpdateGrantBodySchema = z.object({
   revokedAt: z.coerce.date().optional().nullable(),
 });
 
-type HandlerArgs = { request: Request; params: { orgId: string; grantId: string } };
+type HandlerArgs = { request: Request; params: { orgId: OrgId; grantId: OrgAccessGrantId } };
 
 export const handlePut = async ({ request, params }: HandlerArgs) => {
   const guard = await requireAdmin(request, env);

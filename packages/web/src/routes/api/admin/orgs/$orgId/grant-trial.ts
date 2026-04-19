@@ -10,10 +10,11 @@ import { createDb } from '@corates/db/client';
 import { organization } from '@corates/db/schema';
 import { eq } from 'drizzle-orm';
 import { createDomainError, SYSTEM_ERRORS, VALIDATION_ERRORS } from '@corates/shared';
+import type { OrgId, OrgAccessGrantId } from '@corates/shared/ids';
 import { createGrant, getGrantByOrgIdAndType } from '@corates/db/org-access-grants';
 import { requireAdmin } from '@/server/guards/requireAdmin';
 
-type HandlerArgs = { request: Request; params: { orgId: string } };
+type HandlerArgs = { request: Request; params: { orgId: OrgId } };
 
 export const handlePost = async ({ request, params }: HandlerArgs) => {
   const guard = await requireAdmin(request, env);
@@ -50,7 +51,7 @@ export const handlePost = async ({ request, params }: HandlerArgs) => {
     const expiresAt = new Date(now);
     expiresAt.setDate(expiresAt.getDate() + 14);
 
-    const grantId = crypto.randomUUID();
+    const grantId = crypto.randomUUID() as OrgAccessGrantId;
     const created = await createGrant(db, {
       id: grantId,
       orgId,

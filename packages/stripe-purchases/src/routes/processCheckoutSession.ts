@@ -14,6 +14,7 @@ import {
   updateGrantExpiresAt,
 } from '@corates/db/org-access-grants';
 import type { Database } from '@corates/db/client';
+import type { OrgId, OrgAccessGrantId } from '@corates/shared/ids';
 import type Stripe from 'stripe';
 
 interface CheckoutSessionResult {
@@ -60,7 +61,7 @@ export async function processCheckoutSession(
   }
 
   // Verify metadata contains required fields
-  const orgId = session.metadata?.orgId;
+  const orgId = session.metadata?.orgId as OrgId | undefined;
   const grantType = session.metadata?.grantType;
 
   if (!orgId || grantType !== 'single_project') {
@@ -162,7 +163,7 @@ export async function processCheckoutSession(
   const expiresAt = new Date(now);
   expiresAt.setMonth(expiresAt.getMonth() + 6);
 
-  const grantId = crypto.randomUUID();
+  const grantId = crypto.randomUUID() as OrgAccessGrantId;
   await createGrant(db, {
     id: grantId,
     orgId,

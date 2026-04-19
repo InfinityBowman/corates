@@ -10,13 +10,14 @@ import {
   SYSTEM_ERRORS,
   isValidPdfFilename,
 } from '@corates/shared';
+import type { OrgId, ProjectId, StudyId } from '@corates/shared/ids';
 import { requireOrgMembership } from '@/server/guards/requireOrgMembership';
 import { requireProjectAccess } from '@/server/guards/requireProjectAccess';
 import { requireOrgWriteAccess } from '@/server/guards/requireOrgWriteAccess';
 
 type HandlerArgs = {
   request: Request;
-  params: { orgId: string; projectId: string; studyId: string; fileName: string };
+  params: { orgId: OrgId; projectId: ProjectId; studyId: StudyId; fileName: string };
 };
 
 function validateFileName(raw: string): { fileName: string; error?: Response } {

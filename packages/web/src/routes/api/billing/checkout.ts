@@ -10,6 +10,7 @@ import { env } from 'cloudflare:workers';
 import { getSession } from '@corates/workers/auth';
 import { createAuth } from '@corates/workers/auth-config';
 import { createDb } from '@corates/db/client';
+import type { OrgId } from '@corates/shared/ids';
 import { resolveOrgAccess, validatePlanChange } from '@corates/workers/billing-resolver';
 import { requireOrgOwner } from '@corates/workers/policies';
 import { DEFAULT_PLAN } from '@corates/shared/plans';
@@ -85,7 +86,7 @@ export const handlePost = async ({ request }: { request: Request }) => {
       );
     }
 
-    const currentBilling = await resolveOrgAccess(db, orgId as string);
+    const currentBilling = await resolveOrgAccess(db, orgId as OrgId);
     if (currentBilling.source === 'subscription' && currentBilling.effectivePlanId === tier) {
       return Response.json(
         createDomainError(

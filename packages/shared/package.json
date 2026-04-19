@@ -35,6 +35,10 @@
     "./checklists/rob2": {
       "types": "./dist/checklists/rob2/index.d.ts",
       "import": "./dist/checklists/rob2/index.js"
+    },
+    "./ids": {
+      "types": "./dist/ids.d.ts",
+      "import": "./dist/ids.js"
     }
   },
   "scripts": {

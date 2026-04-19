@@ -1,10 +1,11 @@
 import { eq, and, isNull, desc } from 'drizzle-orm';
+import type { OrgId, OrgAccessGrantId } from '@corates/shared/ids';
 import { orgAccessGrants, type OrgAccessGrant } from './schema';
 import type { Database } from './client';
 
 interface CreateGrantData {
-  id: string;
-  orgId: string;
+  id: OrgAccessGrantId;
+  orgId: OrgId;
   type: string;
   startsAt: Date;
   expiresAt: Date;
@@ -12,7 +13,7 @@ interface CreateGrantData {
   metadata?: Record<string, unknown> | null;
 }
 
-export async function getGrantsByOrgId(db: Database, orgId: string): Promise<OrgAccessGrant[]> {
+export async function getGrantsByOrgId(db: Database, orgId: OrgId): Promise<OrgAccessGrant[]> {
   const results = await db
     .select()
     .from(orgAccessGrants)
@@ -25,7 +26,7 @@ export async function getGrantsByOrgId(db: Database, orgId: string): Promise<Org
 
 export async function getActiveGrantsByOrgId(
   db: Database,
-  orgId: string,
+  orgId: OrgId,
   now: Date | number,
 ): Promise<OrgAccessGrant[]> {
   const nowTimestamp = now instanceof Date ? Math.floor(now.getTime() / 1000) : now;
@@ -47,7 +48,10 @@ export async function getActiveGrantsByOrgId(
   });
 }
 
-export async function getGrantById(db: Database, grantId: string): Promise<OrgAccessGrant | null> {
+export async function getGrantById(
+  db: Database,
+  grantId: OrgAccessGrantId,
+): Promise<OrgAccessGrant | null> {
   const result = await db
     .select()
     .from(orgAccessGrants)
@@ -88,7 +92,7 @@ export async function createGrant(db: Database, data: CreateGrantData): Promise<
 
 export async function updateGrantExpiresAt(
   db: Database,
-  grantId: string,
+  grantId: OrgAccessGrantId,
   newExpiresAt: Date,
 ): Promise<OrgAccessGrant | null> {
   const result = await db
@@ -103,7 +107,10 @@ export async function updateGrantExpiresAt(
   return result ?? null;
 }
 
-export async function revokeGrant(db: Database, grantId: string): Promise<OrgAccessGrant | null> {
+export async function revokeGrant(
+  db: Database,
+  grantId: OrgAccessGrantId,
+): Promise<OrgAccessGrant | null> {
   const result = await db
     .update(orgAccessGrants)
     .set({
@@ -118,7 +125,7 @@ export async function revokeGrant(db: Database, grantId: string): Promise<OrgAcc
 
 export async function getGrantByOrgIdAndType(
   db: Database,
-  orgId: string,
+  orgId: OrgId,
   type: string,
 ): Promise<OrgAccessGrant | null> {
   const result = await db

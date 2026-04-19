@@ -1,7 +1,14 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { env } from 'cloudflare:test';
 import { resetTestDatabase } from '@/__tests__/server/helpers';
-import { buildAdminUser, buildOrg, buildUser, resetCounter } from '@/__tests__/server/factories';
+import {
+  buildAdminUser,
+  buildOrg,
+  buildUser,
+  resetCounter,
+  asOrgId,
+  asGrantId,
+} from '@/__tests__/server/factories';
 import { createDb } from '@corates/db/client';
 import { orgAccessGrants as grantsTable, organization, subscription } from '@corates/db/schema';
 import { eq } from 'drizzle-orm';
@@ -77,7 +84,7 @@ describe('GET /api/admin/orgs/:orgId/billing', () => {
   it('returns 401 when no session', async () => {
     const res = await billingHandler({
       request: new Request('http://localhost/api/admin/orgs/org-x/billing'),
-      params: { orgId: 'org-x' },
+      params: { orgId: asOrgId('org-x') },
     });
     expect(res.status).toBe(401);
   });
@@ -86,7 +93,7 @@ describe('GET /api/admin/orgs/:orgId/billing', () => {
     await asUser();
     const res = await billingHandler({
       request: new Request('http://localhost/api/admin/orgs/org-x/billing'),
-      params: { orgId: 'org-x' },
+      params: { orgId: asOrgId('org-x') },
     });
     expect(res.status).toBe(403);
   });
@@ -95,7 +102,7 @@ describe('GET /api/admin/orgs/:orgId/billing', () => {
     await asAdmin();
     const res = await billingHandler({
       request: new Request('http://localhost/api/admin/orgs/missing/billing'),
-      params: { orgId: 'missing' },
+      params: { orgId: asOrgId('missing') },
     });
     expect(res.status).toBe(400);
   });
@@ -151,7 +158,7 @@ describe('POST /api/admin/orgs/:orgId/subscriptions', () => {
   it('returns 401 when no session', async () => {
     const res = await createSubscriptionHandler({
       request: jsonReq('/api/admin/orgs/org-x/subscriptions', 'POST', {}),
-      params: { orgId: 'org-x' },
+      params: { orgId: asOrgId('org-x') },
     });
     expect(res.status).toBe(401);
   });
@@ -163,7 +170,7 @@ describe('POST /api/admin/orgs/:orgId/subscriptions', () => {
         plan: 'team',
         status: 'active',
       }),
-      params: { orgId: 'org-x' },
+      params: { orgId: asOrgId('org-x') },
     });
     expect(res.status).toBe(403);
   });
@@ -188,7 +195,7 @@ describe('POST /api/admin/orgs/:orgId/subscriptions', () => {
         plan: 'team',
         status: 'active',
       }),
-      params: { orgId: 'missing' },
+      params: { orgId: asOrgId('missing') },
     });
     expect(res.status).toBe(400);
   });
@@ -327,7 +334,7 @@ describe('POST /api/admin/orgs/:orgId/grants', () => {
         startsAt,
         expiresAt,
       }),
-      params: { orgId: 'missing' },
+      params: { orgId: asOrgId('missing') },
     });
     expect(res.status).toBe(400);
   });
@@ -412,7 +419,7 @@ describe('PUT /api/admin/orgs/:orgId/grants/:grantId', () => {
 
     const res = await updateGrantHandler({
       request: jsonReq(`/api/admin/orgs/${org.id}/grants/gr-empty`, 'PUT', {}),
-      params: { orgId: org.id, grantId: 'gr-empty' },
+      params: { orgId: org.id, grantId: asGrantId('gr-empty') },
     });
     expect(res.status).toBe(400);
   });
@@ -437,7 +444,7 @@ describe('PUT /api/admin/orgs/:orgId/grants/:grantId', () => {
       request: jsonReq(`/api/admin/orgs/${org.id}/grants/gr-ext`, 'PUT', {
         expiresAt: newExpires,
       }),
-      params: { orgId: org.id, grantId: 'gr-ext' },
+      params: { orgId: org.id, grantId: asGrantId('gr-ext') },
     });
     expect(res.status).toBe(200);
   });
@@ -462,7 +469,7 @@ describe('PUT /api/admin/orgs/:orgId/grants/:grantId', () => {
       request: jsonReq(`/api/admin/orgs/${org.id}/grants/gr-rev`, 'PUT', {
         revokedAt: new Date(),
       }),
-      params: { orgId: org.id, grantId: 'gr-rev' },
+      params: { orgId: org.id, grantId: asGrantId('gr-rev') },
     });
     expect(revRes.status).toBe(200);
     const [revoked] = await db
@@ -473,7 +480,7 @@ describe('PUT /api/admin/orgs/:orgId/grants/:grantId', () => {
 
     const unrevRes = await updateGrantHandler({
       request: jsonReq(`/api/admin/orgs/${org.id}/grants/gr-rev`, 'PUT', { revokedAt: null }),
-      params: { orgId: org.id, grantId: 'gr-rev' },
+      params: { orgId: org.id, grantId: asGrantId('gr-rev') },
     });
     expect(unrevRes.status).toBe(200);
     const [unrevoked] = await db
@@ -493,7 +500,7 @@ describe('DELETE /api/admin/orgs/:orgId/grants/:grantId', () => {
         method: 'DELETE',
         headers: { origin: 'http://localhost:3010' },
       }),
-      params: { orgId: org.id, grantId: 'nope' },
+      params: { orgId: org.id, grantId: asGrantId('nope') },
     });
     expect(res.status).toBe(400);
   });
@@ -519,7 +526,7 @@ describe('DELETE /api/admin/orgs/:orgId/grants/:grantId', () => {
         method: 'DELETE',
         headers: { origin: 'http://localhost:3010' },
       }),
-      params: { orgId: org.id, grantId: 'gr-del' },
+      params: { orgId: org.id, grantId: asGrantId('gr-del') },
     });
     expect(res.status).toBe(200);
     const [row] = await db
@@ -538,7 +545,7 @@ describe('POST /api/admin/orgs/:orgId/grant-trial', () => {
         method: 'POST',
         headers: { origin: 'http://localhost:3010' },
       }),
-      params: { orgId: 'missing' },
+      params: { orgId: asOrgId('missing') },
     });
     expect(res.status).toBe(400);
   });
@@ -590,7 +597,7 @@ describe('POST /api/admin/orgs/:orgId/grant-single-project', () => {
         method: 'POST',
         headers: { origin: 'http://localhost:3010' },
       }),
-      params: { orgId: 'missing' },
+      params: { orgId: asOrgId('missing') },
     });
     expect(res.status).toBe(400);
   });

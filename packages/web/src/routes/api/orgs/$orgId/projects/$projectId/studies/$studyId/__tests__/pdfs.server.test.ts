@@ -9,6 +9,7 @@ import {
   buildUser,
   buildOrgMember,
   resetCounter,
+  asStudyId,
 } from '@/__tests__/server/factories';
 import { handleGet as listHandler, handlePost as uploadHandler } from '../pdfs';
 import { handleGet as downloadHandler, handleDelete as deleteHandler } from '../pdfs/$fileName';
@@ -68,13 +69,13 @@ describe('GET /api/orgs/:orgId/projects/:projectId/studies/:studyId/pdfs', () =>
       bucketKey: `projects/${project.id}/studies/study-1/document.pdf`,
       orgId: org.id,
       projectId: project.id,
-      studyId: 'study-1',
+      studyId: asStudyId('study-1'),
       createdAt: Math.floor(Date.now() / 1000),
     });
 
     const res = await listHandler({
       request: req(`/api/orgs/${org.id}/projects/${project.id}/studies/study-1/pdfs`, 'GET'),
-      params: { orgId: org.id, projectId: project.id, studyId: 'study-1' },
+      params: { orgId: org.id, projectId: project.id, studyId: asStudyId('study-1') },
     });
 
     expect(res.status).toBe(200);
@@ -95,7 +96,7 @@ describe('GET /api/orgs/:orgId/projects/:projectId/studies/:studyId/pdfs', () =>
 
     const res = await listHandler({
       request: req(`/api/orgs/${org.id}/projects/${project.id}/studies/study-1/pdfs`, 'GET'),
-      params: { orgId: org.id, projectId: project.id, studyId: 'study-1' },
+      params: { orgId: org.id, projectId: project.id, studyId: asStudyId('study-1') },
     });
 
     expect(res.status).toBe(403);
@@ -117,7 +118,7 @@ describe('POST /api/orgs/:orgId/projects/:projectId/studies/:studyId/pdfs', () =
       request: req(`/api/orgs/${org.id}/projects/${project.id}/studies/study-1/pdfs`, 'POST', {
         body: formData,
       }),
-      params: { orgId: org.id, projectId: project.id, studyId: 'study-1' },
+      params: { orgId: org.id, projectId: project.id, studyId: asStudyId('study-1') },
     });
 
     expect(res.status).toBe(200);
@@ -163,7 +164,7 @@ describe('POST /api/orgs/:orgId/projects/:projectId/studies/:studyId/pdfs', () =
         body: formData,
         headers: { 'Content-Length': String(PDF_LIMITS.MAX_SIZE + 1) },
       }),
-      params: { orgId: org.id, projectId: project.id, studyId: 'study-1' },
+      params: { orgId: org.id, projectId: project.id, studyId: asStudyId('study-1') },
     });
 
     expect(res.status).toBe(413);
@@ -183,7 +184,7 @@ describe('POST /api/orgs/:orgId/projects/:projectId/studies/:studyId/pdfs', () =
       request: req(`/api/orgs/${org.id}/projects/${project.id}/studies/study-1/pdfs`, 'POST', {
         body: formData,
       }),
-      params: { orgId: org.id, projectId: project.id, studyId: 'study-1' },
+      params: { orgId: org.id, projectId: project.id, studyId: asStudyId('study-1') },
     });
 
     expect(res.status).toBe(400);
@@ -205,7 +206,7 @@ describe('POST /api/orgs/:orgId/projects/:projectId/studies/:studyId/pdfs', () =
       bucketKey: `projects/${project.id}/studies/study-1/document.pdf`,
       orgId: org.id,
       projectId: project.id,
-      studyId: 'study-1',
+      studyId: asStudyId('study-1'),
       createdAt: Math.floor(Date.now() / 1000),
     });
 
@@ -217,7 +218,7 @@ describe('POST /api/orgs/:orgId/projects/:projectId/studies/:studyId/pdfs', () =
       request: req(`/api/orgs/${org.id}/projects/${project.id}/studies/study-1/pdfs`, 'POST', {
         body: formData,
       }),
-      params: { orgId: org.id, projectId: project.id, studyId: 'study-1' },
+      params: { orgId: org.id, projectId: project.id, studyId: asStudyId('study-1') },
     });
 
     expect(res.status).toBe(200);
@@ -239,7 +240,7 @@ describe('POST /api/orgs/:orgId/projects/:projectId/studies/:studyId/pdfs', () =
           'X-File-Name': 'raw-document.pdf',
         },
       }),
-      params: { orgId: org.id, projectId: project.id, studyId: 'study-1' },
+      params: { orgId: org.id, projectId: project.id, studyId: asStudyId('study-1') },
     });
 
     expect(res.status).toBe(200);
@@ -267,7 +268,7 @@ describe('GET /api/orgs/:orgId/projects/:projectId/studies/:studyId/pdfs/:fileNa
       params: {
         orgId: org.id,
         projectId: project.id,
-        studyId: 'study-1',
+        studyId: asStudyId('study-1'),
         fileName: 'document.pdf',
       },
     });
@@ -291,7 +292,7 @@ describe('GET /api/orgs/:orgId/projects/:projectId/studies/:studyId/pdfs/:fileNa
       params: {
         orgId: org.id,
         projectId: project.id,
-        studyId: 'study-1',
+        studyId: asStudyId('study-1'),
         fileName: 'nonexistent.pdf',
       },
     });
@@ -317,7 +318,7 @@ describe('DELETE /api/orgs/:orgId/projects/:projectId/studies/:studyId/pdfs/:fil
       bucketKey: `projects/${project.id}/studies/study-1/document.pdf`,
       orgId: org.id,
       projectId: project.id,
-      studyId: 'study-1',
+      studyId: asStudyId('study-1'),
       createdAt: Math.floor(Date.now() / 1000),
     });
 
@@ -334,7 +335,7 @@ describe('DELETE /api/orgs/:orgId/projects/:projectId/studies/:studyId/pdfs/:fil
       params: {
         orgId: org.id,
         projectId: project.id,
-        studyId: 'study-1',
+        studyId: asStudyId('study-1'),
         fileName: 'document.pdf',
       },
     });

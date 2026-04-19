@@ -9,6 +9,8 @@ import {
   buildOrgMember,
   buildUser,
   resetCounter,
+  asGrantId,
+  asProjectId,
 } from '@/__tests__/server/factories';
 import { createDb } from '@corates/db/client';
 import { projects as projectsTable } from '@corates/db/schema';
@@ -76,7 +78,7 @@ describe('GET /api/orgs/:orgId/projects/:id', () => {
 
     const res = await getHandler({
       request: jsonReq(`/api/orgs/${org.id}/projects/nonexistent`, 'GET'),
-      params: { orgId: org.id, projectId: 'nonexistent' },
+      params: { orgId: org.id, projectId: asProjectId('nonexistent') },
     });
     expect(res.status).toBe(404);
     const body = (await res.json()) as { code: string };
@@ -399,7 +401,7 @@ describe('Org authorization edge cases', () => {
 
     const res = await getHandler({
       request: jsonReq(`/api/orgs/${org.id}/projects/nonexistent-project`, 'GET'),
-      params: { orgId: org.id, projectId: 'nonexistent-project' },
+      params: { orgId: org.id, projectId: asProjectId('nonexistent-project') },
     });
     expect(res.status).toBe(404);
     const body = (await res.json()) as { code: string };
@@ -416,7 +418,7 @@ describe('Read-only access enforcement', () => {
     expiredDate.setMonth(expiredDate.getMonth() - 1);
 
     await createGrant(db, {
-      id: 'grant-expired',
+      id: asGrantId('grant-expired'),
       orgId: org.id,
       type: 'single_project',
       startsAt: new Date(expiredDate.getTime() - 6 * 30 * 24 * 60 * 60 * 1000),

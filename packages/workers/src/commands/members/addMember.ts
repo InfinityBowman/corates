@@ -9,6 +9,7 @@ import { createDb } from '@corates/db/client';
 import { projectMembers, projects, member } from '@corates/db/schema';
 import { eq, and } from 'drizzle-orm';
 import { createDomainError, PROJECT_ERRORS } from '@corates/shared';
+import type { OrgId, ProjectId, UserId } from '@corates/shared/ids';
 import { syncMemberWithRetry } from '../../lib/syncWithRetry';
 import { notifyUser, NotificationTypes } from '../lib/notifications';
 import { checkCollaboratorQuota } from '../../lib/quotaTransaction';
@@ -16,11 +17,11 @@ import type { Env } from '../../types';
 import type { ProjectRole } from '../../policies/lib/roles';
 
 interface AddMemberActor {
-  id: string;
+  id: UserId;
 }
 
 interface UserToAdd {
-  id: string;
+  id: UserId;
   name: string | null;
   email: string | null;
   username?: string | null;
@@ -30,8 +31,8 @@ interface UserToAdd {
 }
 
 interface AddMemberParams {
-  orgId: string;
-  projectId: string;
+  orgId: OrgId;
+  projectId: ProjectId;
   userToAdd: UserToAdd;
   role: ProjectRole;
 }

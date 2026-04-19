@@ -1,4 +1,5 @@
 import { eq, and, desc, isNull, ne, count } from 'drizzle-orm';
+import type { OrgId } from '@corates/shared/ids';
 import { subscription, orgAccessGrants, projects, member } from '@corates/db/schema';
 import { getActiveGrantsByOrgId } from '@corates/db/org-access-grants';
 import { getPlan, DEFAULT_PLAN, getGrantPlan, isUnlimitedQuota } from '@corates/shared/plans';
@@ -55,7 +56,7 @@ function isSubscriptionActiveForBilling(
 
 async function getActiveSubscription(
   db: Database,
-  orgId: string,
+  orgId: OrgId,
   now: number,
 ): Promise<SubscriptionRecord | null> {
   const subscriptions = await db
@@ -89,7 +90,7 @@ async function getActiveSubscription(
 
 export async function resolveOrgAccess(
   db: Database,
-  orgId: string,
+  orgId: OrgId,
   now: Date | number = new Date(),
 ): Promise<OrgBilling> {
   const nowDate = now instanceof Date ? now : new Date(now * 1000);

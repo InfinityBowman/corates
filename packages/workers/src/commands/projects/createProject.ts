@@ -12,15 +12,16 @@ import { eq } from 'drizzle-orm';
 import { insertWithQuotaCheck, type InsertRollbackMeta } from '../../lib/quotaTransaction';
 import { syncProjectToDO } from '../lib/doSync';
 import { createValidationError, VALIDATION_ERRORS } from '@corates/shared';
+import type { OrgId, ProjectId, ProjectMemberId, UserId } from '@corates/shared/ids';
 import type { Env } from '../../types';
 import type { ProjectRole } from '../../policies/lib/roles';
 
 interface CreateProjectActor {
-  id: string;
+  id: UserId;
 }
 
 interface CreateProjectParams {
-  orgId: string;
+  orgId: OrgId;
   name: string;
   description?: string;
 }
@@ -45,8 +46,8 @@ export async function createProject(
 ): Promise<CreateProjectResult> {
   const db = createDb(env.DB);
 
-  const projectId = crypto.randomUUID();
-  const memberId = crypto.randomUUID();
+  const projectId = crypto.randomUUID() as ProjectId;
+  const memberId = crypto.randomUUID() as ProjectMemberId;
   const now = new Date();
   const trimmedName = name?.trim() || '';
   const trimmedDescription = description?.trim() || null;

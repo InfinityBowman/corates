@@ -20,6 +20,7 @@ import {
   getLedgerByPayloadHash,
   LedgerStatus,
 } from '@corates/db/stripe-event-ledger';
+import type { OrgId } from '@corates/shared/ids';
 
 interface StripeEvent {
   id?: string;
@@ -183,7 +184,7 @@ export const handlePost = async ({ request, context }: HandlerArgs) => {
       let livemode: boolean | null = null;
       let apiVersion: string | null = null;
       let created: Date | null = null;
-      let orgId: string | null = null;
+      let orgId: OrgId | null = null;
       let stripeCustomerId: string | null = null;
       let stripeSubscriptionId: string | null = null;
       let stripeCheckoutSessionId: string | null = null;
@@ -198,7 +199,10 @@ export const handlePost = async ({ request, context }: HandlerArgs) => {
 
         const eventData = event.data?.object;
         if (eventData) {
-          orgId = eventData.metadata?.referenceId ?? eventData.metadata?.orgId ?? null;
+          orgId =
+            (eventData.metadata?.referenceId as OrgId | undefined) ??
+            (eventData.metadata?.orgId as OrgId | undefined) ??
+            null;
           stripeCustomerId = eventData.customer ?? null;
           stripeSubscriptionId = eventData.subscription ?? eventData.id ?? null;
           if (eventType === 'checkout.session.completed') {

@@ -2,6 +2,7 @@ import { createDb } from '@corates/db/client';
 import { resolveOrgAccess } from '@corates/workers/billing-resolver';
 import { isUnlimitedQuota } from '@corates/shared/plans';
 import { createDomainError, AUTH_ERRORS, SYSTEM_ERRORS } from '@corates/shared';
+import type { OrgId } from '@corates/shared/ids';
 
 export type QuotaGuardResult =
   | { ok: true; orgBilling: Awaited<ReturnType<typeof resolveOrgAccess>> }
@@ -9,7 +10,7 @@ export type QuotaGuardResult =
 
 export async function requireQuota(
   env: Env,
-  orgId: string,
+  orgId: OrgId,
   quotaKey: string,
   getUsage: () => Promise<number>,
   requested: number = 1,
