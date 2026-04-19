@@ -58,15 +58,15 @@ export interface ReconciliationNavItem {
  * The adapter uses these raw materials to slice reviewer data,
  * build write callbacks, and compose existing page components.
  */
-export interface EngineContext {
+export interface EngineContext<TChecklist, TFinalAnswers, TComparison> {
   currentItem: ReconciliationNavItem;
   navItems: ReconciliationNavItem[];
-  checklist1: unknown;
-  checklist2: unknown;
+  checklist1: TChecklist;
+  checklist2: TChecklist;
   /** Derived via adapter.deriveFinalAnswers */
-  finalAnswers: unknown;
+  finalAnswers: TFinalAnswers;
   /** From adapter.compare */
-  comparison: unknown;
+  comparison: TComparison;
   reviewer1Name: string;
   reviewer2Name: string;
   /** Pre-computed by engine via adapter.isAgreement for current item */
@@ -83,12 +83,12 @@ export interface EngineContext {
  * Passed to adapter.NavbarComponent.
  * The engine provides all navigation state; the navbar renders type-specific UI.
  */
-export interface NavbarContext {
+export interface NavbarContext<TFinalAnswers, TComparison> {
   navItems: ReconciliationNavItem[];
   currentPage: number;
   viewMode: 'questions' | 'summary';
-  finalAnswers: unknown;
-  comparison: unknown;
+  finalAnswers: TFinalAnswers;
+  comparison: TComparison;
   /** Per-page presence: Map<pageIndex, RemoteUser[]> */
   usersByPage: Map<number, RemoteUser[]>;
 
@@ -105,10 +105,10 @@ export interface NavbarContext {
 /**
  * Passed to adapter.SummaryComponent.
  */
-export interface SummaryContext {
+export interface SummaryContext<TFinalAnswers, TComparison> {
   navItems: ReconciliationNavItem[];
-  finalAnswers: unknown;
-  comparison: unknown;
+  finalAnswers: TFinalAnswers;
+  comparison: TComparison;
   summaryStats: ReconciliationSummaryStats;
   allAnswered: boolean;
   saving: boolean;
@@ -137,7 +137,11 @@ export interface ReconciliationSummaryStats {
  * behavior: data derivation, answer checking, write operations, and rendering.
  * Registered in the CHECKLIST_REGISTRY under a `reconciliation` key.
  */
-export interface ReconciliationAdapter {
+export interface ReconciliationAdapter<
+  TChecklist,
+  TFinalAnswers = TChecklist,
+  TComparison = unknown,
+> {
   // --- Identity ---
 
   checklistType: string;
@@ -156,29 +160,33 @@ export interface ReconciliationAdapter {
    * ROBINS-I: reads sectionC.isPerProtocol to determine domain 1A/1B.
    * AMSTAR2: static list from getQuestionKeys().
    */
-  buildNavItems: (reconciledChecklist: unknown) => ReconciliationNavItem[];
+  buildNavItems: (reconciledChecklist: TChecklist) => ReconciliationNavItem[];
 
   /**
    * Derive the finalAnswers object from reconciledChecklist.
    * AMSTAR2: filters by questionKeys, groups multi-part questions.
    * ROB2/ROBINS-I: returns reconciledChecklist || {} (direct pass-through).
    */
-  deriveFinalAnswers: (reconciledChecklist: unknown) => unknown;
+  deriveFinalAnswers: (reconciledChecklist: TChecklist) => TFinalAnswers;
 
   /**
    * Run the type-specific comparison algorithm.
    * The engine stores the result and passes it to isAgreement, renderPage,
    * NavbarComponent, and SummaryComponent.
    */
-  compare: (checklist1: unknown, checklist2: unknown, reconciledChecklist: unknown) => unknown;
+  compare: (
+    checklist1: TChecklist,
+    checklist2: TChecklist,
+    reconciledChecklist: TChecklist,
+  ) => TComparison;
 
   // --- Answer checking (pure functions) ---
 
   /** Whether this nav item has a committed final answer */
-  hasAnswer: (item: ReconciliationNavItem, finalAnswers: unknown) => boolean;
+  hasAnswer: (item: ReconciliationNavItem, finalAnswers: TFinalAnswers) => boolean;
 
   /** Whether reviewers agreed on this nav item */
-  isAgreement: (item: ReconciliationNavItem, comparison: unknown) => boolean;
+  isAgreement: (item: ReconciliationNavItem, comparison: TComparison) => boolean;
 
   // --- Write operations ---
 
@@ -188,7 +196,7 @@ export interface ReconciliationAdapter {
    */
   autoFillFromReviewer1: (
     item: ReconciliationNavItem,
-    checklist1: unknown,
+    checklist1: TChecklist,
     updateChecklistAnswer: (sectionKey: string, data: unknown) => void,
     setTextValue: (ref: TextRef, text: string) => void,
   ) => void;
@@ -203,7 +211,7 @@ export interface ReconciliationAdapter {
    */
   onAfterNavigate?: (
     navItems: ReconciliationNavItem[],
-    finalAnswers: unknown,
+    finalAnswers: TFinalAnswers,
     updateChecklistAnswer: (sectionKey: string, data: unknown) => void,
   ) => void;
 
@@ -214,28 +222,28 @@ export interface ReconciliationAdapter {
    * The adapter slices reviewer data from raw checklists, builds write
    * callbacks, and composes the existing page components.
    */
-  renderPage: (context: EngineContext) => ReactNode;
+  renderPage: (context: EngineContext<TChecklist, TFinalAnswers, TComparison>) => ReactNode;
 
   /**
    * Type-specific navbar component.
    * AMSTAR2: flat question pills. ROB2/ROBINS-I: grouped domain pills.
    */
-  NavbarComponent: React.ComponentType<NavbarContext>;
+  NavbarComponent: React.ComponentType<NavbarContext<TFinalAnswers, TComparison>>;
 
   /**
    * Type-specific summary view.
    * AMSTAR2's includes a reconciledName input field.
    */
-  SummaryComponent: React.ComponentType<SummaryContext>;
+  SummaryComponent: React.ComponentType<SummaryContext<TFinalAnswers, TComparison>>;
 
   /**
    * Optional: warning banner above the page content.
    * ROB2: aim mismatch warning. ROBINS-I: section B critical risk.
    */
   renderWarningBanner?: (
-    checklist1: unknown,
-    checklist2: unknown,
-    reconciledChecklist: unknown,
+    checklist1: TChecklist,
+    checklist2: TChecklist,
+    reconciledChecklist: TChecklist,
   ) => ReactNode | null;
 }
 

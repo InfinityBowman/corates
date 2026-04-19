@@ -21,6 +21,7 @@ import {
   getActiveDomainKeys,
   getDomainQuestions,
   scoreRob2Domain,
+  type ComparisonResult,
 } from '@corates/shared/checklists/rob2';
 import {
   buildNavigationItems,
@@ -82,7 +83,7 @@ function updateOverallDirection(
 function getSkippableQuestions(
   finalAnswers: any,
   isAdhering: boolean,
-  navItems: any[],
+  navItems: ReconciliationNavItem[],
 ): Set<string> {
   const activeDomains = getActiveDomainKeys(isAdhering);
   const earlyCompleteDomains = new Set<string>();
@@ -94,9 +95,9 @@ function getSkippableQuestions(
     const scoring = scoreRob2Domain(domainKey, domainAnswers);
     if (scoring.isComplete && scoring.judgement !== null) {
       const items = navItems.filter(
-        (item: any) => item.type === NAV_ITEM_TYPES.DOMAIN_QUESTION && item.domainKey === domainKey,
+        item => item.type === NAV_ITEM_TYPES.DOMAIN_QUESTION && item.domainKey === domainKey,
       );
-      const hasSkippedQuestion = items.some((item: any) => {
+      const hasSkippedQuestion = items.some(item => {
         const answer = domainAnswers[item.key]?.answer;
         return !answer || answer === 'NA';
       });
@@ -110,7 +111,7 @@ function getSkippableQuestions(
   for (const domainKey of earlyCompleteDomains) {
     const domainAnswers = finalAnswers[domainKey].answers;
     const items = navItems.filter(
-      (item: any) => item.type === NAV_ITEM_TYPES.DOMAIN_QUESTION && item.domainKey === domainKey,
+      item => item.type === NAV_ITEM_TYPES.DOMAIN_QUESTION && item.domainKey === domainKey,
     );
     for (const item of items) {
       const answer = domainAnswers[item.key]?.answer;
@@ -127,22 +128,22 @@ function getSkippableQuestions(
 // Comparison helpers
 // ---------------------------------------------------------------------------
 
-function getCurrentItemComparison(item: any, comparison: any): any {
+function getCurrentItemComparison(
+  item: ReconciliationNavItem | null,
+  comparison: ComparisonResult | null,
+): any {
   if (!item || !comparison) return null;
 
   if (item.type === NAV_ITEM_TYPES.PRELIMINARY) {
-    return comparison.preliminary?.fields?.find((f: any) => f.key === item.key);
+    return comparison.preliminary?.fields?.find(f => f.key === item.key);
   }
-  if (item.type === NAV_ITEM_TYPES.DOMAIN_QUESTION) {
+  if (item.type === NAV_ITEM_TYPES.DOMAIN_QUESTION && item.domainKey) {
     const domain = comparison.domains?.[item.domainKey];
     if (!domain) return null;
-    const allItems = [
-      ...(domain.questions?.agreements || []),
-      ...(domain.questions?.disagreements || []),
-    ];
-    return allItems.find((c: any) => c.key === item.key);
+    const allItems = [...domain.questions.agreements, ...domain.questions.disagreements];
+    return allItems.find(c => c.key === item.key);
   }
-  if (item.type === NAV_ITEM_TYPES.DOMAIN_DIRECTION) {
+  if (item.type === NAV_ITEM_TYPES.DOMAIN_DIRECTION && item.domainKey) {
     return comparison.domains?.[item.domainKey];
   }
   if (item.type === NAV_ITEM_TYPES.OVERALL_DIRECTION) {
@@ -155,35 +156,38 @@ function getCurrentItemComparison(item: any, comparison: any): any {
 // Adapter: data derivation
 // ---------------------------------------------------------------------------
 
-function buildNavItems(reconciledChecklist: unknown): ReconciliationNavItem[] {
-  const rc = reconciledChecklist as any;
-  const isAdhering = rc?.preliminary?.aim === 'ADHERING';
+function buildNavItems(reconciledChecklist: any): ReconciliationNavItem[] {
+  const isAdhering = reconciledChecklist?.preliminary?.aim === 'ADHERING';
   const items = buildNavigationItems(isAdhering);
   // The existing buildNavigationItems already returns objects with type, key, label,
   // section, domainKey - which map directly to ReconciliationNavItem
   return items as ReconciliationNavItem[];
 }
 
-function deriveFinalAnswers(reconciledChecklist: unknown): unknown {
+function deriveFinalAnswers(reconciledChecklist: any): any {
   return reconciledChecklist || {};
 }
 
-function compare(checklist1: unknown, checklist2: unknown, reconciledChecklist: unknown): unknown {
+function compare(
+  checklist1: any,
+  checklist2: any,
+  reconciledChecklist: any,
+): ComparisonResult | null {
   if (!checklist1 || !checklist2) return null;
-  const reconciledAim = (reconciledChecklist as any)?.preliminary?.aim;
-  return compareChecklists(checklist1 as any, checklist2 as any, reconciledAim);
+  const reconciledAim = reconciledChecklist?.preliminary?.aim;
+  return compareChecklists(checklist1, checklist2, reconciledAim);
 }
 
 // ---------------------------------------------------------------------------
 // Adapter: answer checking
 // ---------------------------------------------------------------------------
 
-function hasAnswer(item: ReconciliationNavItem, finalAnswers: unknown): boolean {
-  return rob2HasNavItemAnswer(item as any, finalAnswers as any);
+function hasAnswer(item: ReconciliationNavItem, finalAnswers: any): boolean {
+  return rob2HasNavItemAnswer(item as any, finalAnswers);
 }
 
-function isAgreement(item: ReconciliationNavItem, comparison: unknown): boolean {
-  return rob2IsNavItemAgreement(item as any, comparison as any);
+function isAgreement(item: ReconciliationNavItem, comparison: ComparisonResult | null): boolean {
+  return rob2IsNavItemAgreement(item as any, comparison);
 }
 
 // ---------------------------------------------------------------------------
@@ -192,11 +196,11 @@ function isAgreement(item: ReconciliationNavItem, comparison: unknown): boolean 
 
 function autoFillFromReviewer1(
   item: ReconciliationNavItem,
-  checklist1: unknown,
+  checklist1: any,
   updateChecklistAnswer: (sectionKey: string, data: unknown) => void,
   setTextValue: (ref: TextRef, text: string) => void,
 ): void {
-  const c1 = checklist1 as any;
+  const c1 = checklist1;
 
   if (item.type === NAV_ITEM_TYPES.PRELIMINARY) {
     const value = c1?.preliminary?.[item.key];
@@ -274,12 +278,11 @@ function resetAllAnswers(updateChecklistAnswer: (sectionKey: string, data: unkno
 
 function onAfterNavigate(
   navItems: ReconciliationNavItem[],
-  finalAnswers: unknown,
+  finalAnswers: any,
   updateChecklistAnswer: (sectionKey: string, data: unknown) => void,
 ): void {
-  const fa = finalAnswers as any;
-  const isAdhering = fa?.preliminary?.aim === 'ADHERING';
-  const skippable = getSkippableQuestions(fa, isAdhering, navItems as any[]);
+  const isAdhering = finalAnswers?.preliminary?.aim === 'ADHERING';
+  const skippable = getSkippableQuestions(finalAnswers, isAdhering, navItems);
 
   if (skippable.size === 0) return;
 
@@ -287,7 +290,7 @@ function onAfterNavigate(
     const item = navItems.find(i => i.type === NAV_ITEM_TYPES.DOMAIN_QUESTION && i.key === qKey);
     if (!item) continue;
 
-    const currentAnswer = fa[item.domainKey!]?.answers?.[qKey]?.answer;
+    const currentAnswer = finalAnswers[item.domainKey!]?.answers?.[qKey]?.answer;
     if (currentAnswer == null) {
       updateDomainQuestionAnswer(updateChecklistAnswer, item.domainKey!, qKey, 'NA');
     }
@@ -298,14 +301,18 @@ function onAfterNavigate(
 // Adapter: renderPage
 // ---------------------------------------------------------------------------
 
-function renderPage(context: EngineContext) {
-  const { currentItem, checklist1, checklist2, finalAnswers, comparison, getTextRef } = context;
-  const c1 = checklist1 as any;
-  const c2 = checklist2 as any;
-  const fa = finalAnswers as any;
+function renderPage(context: EngineContext<any, any, ComparisonResult | null>) {
+  const {
+    currentItem,
+    checklist1: c1,
+    checklist2: c2,
+    finalAnswers: fa,
+    comparison,
+    getTextRef,
+  } = context;
   const itemComparison = getCurrentItemComparison(currentItem, comparison);
   const isAdhering = fa?.preliminary?.aim === 'ADHERING';
-  const skippable = getSkippableQuestions(fa, isAdhering, context.navItems as any[]);
+  const skippable = getSkippableQuestions(fa, isAdhering, context.navItems);
 
   if (currentItem.type === NAV_ITEM_TYPES.PRELIMINARY) {
     return (
@@ -496,15 +503,15 @@ function renderPage(context: EngineContext) {
 // Adapter: NavbarComponent wrapper
 // ---------------------------------------------------------------------------
 
-function Rob2NavbarAdapter(navbarContext: NavbarContext) {
-  const fa = navbarContext.finalAnswers as any;
+function Rob2NavbarAdapter(navbarContext: NavbarContext<any, ComparisonResult | null>) {
+  const fa = navbarContext.finalAnswers;
   const isAdhering = fa?.preliminary?.aim === 'ADHERING';
-  const skippable = getSkippableQuestions(fa, isAdhering, navbarContext.navItems as any[]);
+  const skippable = getSkippableQuestions(fa, isAdhering, navbarContext.navItems);
 
   // Derive aimMismatch from comparison data (the comparison already knows if reviewers
   // disagree on aim) and finalAnswers (mismatch is resolved once a final aim is set)
-  const comp = navbarContext.comparison as any;
-  const aimField = comp?.preliminary?.fields?.find((f: any) => f.key === 'aim');
+  const comp = navbarContext.comparison;
+  const aimField = comp?.preliminary?.fields?.find(f => f.key === 'aim');
   const aimMismatch = aimField ? !aimField.isAgreement && !fa?.preliminary?.aim : false;
 
   const store = {
@@ -529,7 +536,7 @@ function Rob2NavbarAdapter(navbarContext: NavbarContext) {
 // Adapter: SummaryComponent wrapper
 // ---------------------------------------------------------------------------
 
-function Rob2SummaryAdapter(summaryContext: SummaryContext) {
+function Rob2SummaryAdapter(summaryContext: SummaryContext<any, ComparisonResult | null>) {
   return (
     <ROB2SummaryView
       navItems={summaryContext.navItems}
@@ -549,17 +556,11 @@ function Rob2SummaryAdapter(summaryContext: SummaryContext) {
 // Adapter: Warning banner
 // ---------------------------------------------------------------------------
 
-function renderWarningBanner(
-  checklist1: unknown,
-  checklist2: unknown,
-  reconciledChecklist: unknown,
-) {
-  const c1 = checklist1 as any;
-  const c2 = checklist2 as any;
-  const reviewersMismatch = hasAimMismatch(c1, c2);
+function renderWarningBanner(checklist1: any, checklist2: any, reconciledChecklist: any) {
+  const reviewersMismatch = hasAimMismatch(checklist1, checklist2);
   if (!reviewersMismatch) return null;
 
-  const finalAim = (reconciledChecklist as any)?.preliminary?.aim;
+  const finalAim = reconciledChecklist?.preliminary?.aim;
   if (finalAim) return null;
 
   return (
@@ -577,7 +578,7 @@ function renderWarningBanner(
 // Export adapter
 // ---------------------------------------------------------------------------
 
-export const rob2Adapter: ReconciliationAdapter = {
+export const rob2Adapter: ReconciliationAdapter<any, any, ComparisonResult | null> = {
   checklistType: 'ROB2',
   title: 'ROB-2 Reconciliation',
   pageCounterLabel: 'Item',

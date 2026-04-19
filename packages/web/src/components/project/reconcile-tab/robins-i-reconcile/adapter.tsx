@@ -19,6 +19,7 @@ import {
   compareChecklists,
   getSectionBKeys,
   getDomainKeysForComparison,
+  type ComparisonResult,
 } from '@/components/checklist/ROBINSIChecklist/checklist-compare.js';
 import {
   buildNavigationItems,
@@ -84,26 +85,23 @@ function updateOverallJudgement(
 // Comparison helper
 // ---------------------------------------------------------------------------
 
-function getCurrentItemComparison(item: any, comparison: any): any {
+function getCurrentItemComparison(
+  item: ReconciliationNavItem | null,
+  comparison: ComparisonResult | null,
+): any {
   if (!item || !comparison) return null;
 
   if (item.type === NAV_ITEM_TYPES.SECTION_B) {
-    const allItems = [
-      ...(comparison.sectionB?.agreements || []),
-      ...(comparison.sectionB?.disagreements || []),
-    ];
-    return allItems.find((c: any) => c.key === item.key);
+    const allItems = [...comparison.sectionB.agreements, ...comparison.sectionB.disagreements];
+    return allItems.find(c => c.key === item.key);
   }
-  if (item.type === NAV_ITEM_TYPES.DOMAIN_QUESTION) {
+  if (item.type === NAV_ITEM_TYPES.DOMAIN_QUESTION && item.domainKey) {
     const domain = comparison.domains?.[item.domainKey];
     if (!domain) return null;
-    const allItems = [
-      ...(domain.questions?.agreements || []),
-      ...(domain.questions?.disagreements || []),
-    ];
-    return allItems.find((c: any) => c.key === item.key);
+    const allItems = [...domain.questions.agreements, ...domain.questions.disagreements];
+    return allItems.find(c => c.key === item.key);
   }
-  if (item.type === NAV_ITEM_TYPES.DOMAIN_JUDGEMENT) {
+  if (item.type === NAV_ITEM_TYPES.DOMAIN_JUDGEMENT && item.domainKey) {
     return comparison.domains?.[item.domainKey];
   }
   if (item.type === NAV_ITEM_TYPES.OVERALL_JUDGEMENT) {
@@ -116,33 +114,32 @@ function getCurrentItemComparison(item: any, comparison: any): any {
 // Adapter: data derivation
 // ---------------------------------------------------------------------------
 
-function buildNavItems(reconciledChecklist: unknown): ReconciliationNavItem[] {
+function buildNavItems(reconciledChecklist: any): ReconciliationNavItem[] {
   // ROBINS-I uses checklist1's sectionC to determine per-protocol, but
   // reconciledChecklist may inherit it. For now use false as default.
   // The engine passes reconciledChecklist; we check sectionC if available.
-  const rc = reconciledChecklist as any;
-  const isPerProtocol = rc?.sectionC?.isPerProtocol || false;
+  const isPerProtocol = reconciledChecklist?.sectionC?.isPerProtocol || false;
   return buildNavigationItems(isPerProtocol) as ReconciliationNavItem[];
 }
 
-function deriveFinalAnswers(reconciledChecklist: unknown): unknown {
+function deriveFinalAnswers(reconciledChecklist: any): any {
   return reconciledChecklist || {};
 }
 
-function compare(checklist1: unknown, checklist2: unknown): unknown {
+function compare(checklist1: any, checklist2: any): ComparisonResult | null {
   if (!checklist1 || !checklist2) return null;
-  return compareChecklists(checklist1 as any, checklist2 as any);
+  return compareChecklists(checklist1, checklist2);
 }
 
 // ---------------------------------------------------------------------------
 // Adapter: answer checking
 // ---------------------------------------------------------------------------
 
-function hasAnswer(item: ReconciliationNavItem, finalAnswers: unknown): boolean {
-  return robinsHasNavItemAnswer(item as any, finalAnswers as any);
+function hasAnswer(item: ReconciliationNavItem, finalAnswers: any): boolean {
+  return robinsHasNavItemAnswer(item as any, finalAnswers);
 }
 
-function isAgreement(item: ReconciliationNavItem, comparison: unknown): boolean {
+function isAgreement(item: ReconciliationNavItem, comparison: ComparisonResult | null): boolean {
   return robinsIsNavItemAgreement(item as any, comparison as any);
 }
 
@@ -152,11 +149,11 @@ function isAgreement(item: ReconciliationNavItem, comparison: unknown): boolean 
 
 function autoFillFromReviewer1(
   item: ReconciliationNavItem,
-  checklist1: unknown,
+  checklist1: any,
   updateChecklistAnswer: (sectionKey: string, data: unknown) => void,
   setTextValue: (ref: TextRef, text: string) => void,
 ): void {
-  const c1 = checklist1 as any;
+  const c1 = checklist1;
 
   if (item.type === NAV_ITEM_TYPES.SECTION_B) {
     const answer = c1?.sectionB?.[item.key];
@@ -233,11 +230,15 @@ function resetAllAnswers(updateChecklistAnswer: (sectionKey: string, data: unkno
 // Adapter: renderPage
 // ---------------------------------------------------------------------------
 
-function renderPage(context: EngineContext) {
-  const { currentItem, checklist1, checklist2, finalAnswers, comparison, getTextRef } = context;
-  const c1 = checklist1 as any;
-  const c2 = checklist2 as any;
-  const fa = finalAnswers as any;
+function renderPage(context: EngineContext<any, any, ComparisonResult | null>) {
+  const {
+    currentItem,
+    checklist1: c1,
+    checklist2: c2,
+    finalAnswers: fa,
+    comparison,
+    getTextRef,
+  } = context;
   const itemComparison = getCurrentItemComparison(currentItem, comparison);
 
   if (currentItem.type === NAV_ITEM_TYPES.SECTION_B) {
@@ -496,10 +497,9 @@ function renderPage(context: EngineContext) {
 // Adapter: NavbarComponent wrapper
 // ---------------------------------------------------------------------------
 
-function RobinsINavbarAdapter(navbarContext: NavbarContext) {
+function RobinsINavbarAdapter(navbarContext: NavbarContext<any, ComparisonResult | null>) {
   // Recompute sectionBCritical from finalAnswers
-  const fa = navbarContext.finalAnswers as any;
-  const sectionBCrit = isSectionBCritical(fa?.sectionB);
+  const sectionBCrit = isSectionBCritical(navbarContext.finalAnswers?.sectionB);
 
   const store = {
     navItems: navbarContext.navItems,
@@ -522,7 +522,7 @@ function RobinsINavbarAdapter(navbarContext: NavbarContext) {
 // Adapter: SummaryComponent wrapper
 // ---------------------------------------------------------------------------
 
-function RobinsISummaryAdapter(summaryContext: SummaryContext) {
+function RobinsISummaryAdapter(summaryContext: SummaryContext<any, ComparisonResult | null>) {
   return (
     <RobinsISummaryView
       navItems={summaryContext.navItems}
@@ -542,11 +542,9 @@ function RobinsISummaryAdapter(summaryContext: SummaryContext) {
 // Adapter: Warning banner
 // ---------------------------------------------------------------------------
 
-function renderWarningBanner(checklist1: unknown, checklist2: unknown) {
-  const c1 = checklist1 as any;
-  const c2 = checklist2 as any;
-  const critical1 = isSectionBCritical(c1?.sectionB);
-  const critical2 = isSectionBCritical(c2?.sectionB);
+function renderWarningBanner(checklist1: any, checklist2: any) {
+  const critical1 = isSectionBCritical(checklist1?.sectionB);
+  const critical2 = isSectionBCritical(checklist2?.sectionB);
 
   if (!critical1 && !critical2) return null;
 
@@ -565,7 +563,7 @@ function renderWarningBanner(checklist1: unknown, checklist2: unknown) {
 // Export adapter
 // ---------------------------------------------------------------------------
 
-export const robinsIAdapter: ReconciliationAdapter = {
+export const robinsIAdapter: ReconciliationAdapter<any, any, ComparisonResult | null> = {
   checklistType: 'ROBINS_I',
   title: 'ROBINS-I Reconciliation',
   pageCounterLabel: 'Item',

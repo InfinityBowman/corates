@@ -8,7 +8,7 @@ import type { AMSTAR2Checklist, AMSTAR2Question } from '../types.js';
 import { AMSTAR_CHECKLIST, AMSTAR2_QUESTION_KEYS } from './schema.js';
 import { getFinalAnswer, answersMatch } from './answers.js';
 
-interface QuestionComparison {
+export interface QuestionComparison {
   isAgreement: boolean;
   finalMatch: boolean;
   criticalMatch: boolean;
@@ -25,7 +25,7 @@ interface QuestionComparison {
   };
 }
 
-interface MultiPartComparison {
+export interface MultiPartComparison {
   isAgreement: boolean;
   isMultiPart: true;
   parts: Array<{
@@ -41,7 +41,7 @@ interface MultiPartComparison {
   reviewer2Answer: AMSTAR2Question[];
 }
 
-interface ComparisonResult {
+export interface ComparisonResult {
   agreements: Array<{ key: string } & (QuestionComparison | MultiPartComparison)>;
   disagreements: Array<{ key: string } & (QuestionComparison | MultiPartComparison)>;
   stats: {

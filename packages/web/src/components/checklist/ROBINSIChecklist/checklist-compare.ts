@@ -87,7 +87,7 @@ interface ComparisonStats {
   agreementRate?: number;
 }
 
-interface ComparisonResult {
+export interface ComparisonResult {
   sectionB: SectionBComparison;
   domains: Record<string, DomainComparison>;
   overall: OverallComparison;
