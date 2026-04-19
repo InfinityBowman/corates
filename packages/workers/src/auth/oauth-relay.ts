@@ -87,6 +87,7 @@ function stripTrailingSlash(url: string | undefined): string {
 export const oAuthRelay = (opts: OAuthRelayOptions) => {
   const maxAge = opts.maxAge ?? 120;
   const productionOrigin = getOrigin(opts.productionURL);
+  const relayOrigins = new WeakMap<object, string>();
 
   return {
     id: 'oauth-relay',
@@ -184,8 +185,7 @@ export const oAuthRelay = (opts: OAuthRelayOptions) => {
               return;
             }
 
-            // Mark this request for relay by storing the origin in context
-            (ctx.context as any)._relayOrigin = currentOrigin;
+            relayOrigins.set(ctx.context, currentOrigin);
 
             // Override baseURL to production so the OAuth redirect_uri points to production
             const productionBaseURL = `${stripTrailingSlash(opts.productionURL)}${ctx.context.options.basePath || '/api/auth'}`;
@@ -354,7 +354,7 @@ export const oAuthRelay = (opts: OAuthRelayOptions) => {
             );
           },
           handler: createAuthMiddleware(async ctx => {
-            const relayOrigin = (ctx.context as any)._relayOrigin;
+            const relayOrigin = relayOrigins.get(ctx.context);
             if (!relayOrigin) return;
 
             // Only process in stateless (cookie) mode

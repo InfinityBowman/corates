@@ -1,3 +1,4 @@
+import { z } from 'zod';
 import { createAuth } from './config';
 import type { Env } from '../types';
 
@@ -14,6 +15,17 @@ export interface AuthSession {
   [key: string]: unknown;
 }
 
+const authUserSchema = z.looseObject({
+  id: z.string(),
+  email: z.string(),
+  name: z.string().nullable(),
+});
+
+const authSessionSchema = z.looseObject({
+  id: z.string(),
+  userId: z.string(),
+});
+
 export async function getSession(
   request: Request,
   env: Env,
@@ -22,7 +34,7 @@ export async function getSession(
   const result = await auth.api.getSession({ headers: request.headers });
   if (!result?.user) return null;
   return {
-    user: result.user as unknown as AuthUser,
-    session: result.session as unknown as AuthSession,
+    user: authUserSchema.parse(result.user) as AuthUser,
+    session: authSessionSchema.parse(result.session) as AuthSession,
   };
 }
