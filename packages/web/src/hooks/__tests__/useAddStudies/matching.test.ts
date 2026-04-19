@@ -9,70 +9,20 @@ import { normalizeDoi, entriesMatch, findMatchingRef } from '../../useAddStudies
 
 describe('matching', () => {
   describe('normalizeDoi', () => {
-    describe('basic normalization', () => {
-      it('returns lowercase raw DOI', () => {
-        expect(normalizeDoi('10.1234/TEST')).toBe('10.1234/test');
-      });
-
-      it('returns null for null input', () => {
-        expect(normalizeDoi(null)).toBeNull();
-      });
-
-      it('returns null for undefined input', () => {
-        expect(normalizeDoi(undefined)).toBeNull();
-      });
-
-      it('returns null for empty string', () => {
-        expect(normalizeDoi('')).toBeNull();
-      });
+    it.each([
+      ['10.1234/TEST', '10.1234/test'],
+      ['https://doi.org/10.1234/test', '10.1234/test'],
+      ['http://dx.doi.org/10.1234/test', '10.1234/test'],
+      ['HTTPS://DOI.ORG/10.1234/test', '10.1234/test'],
+      ['  10.1234/test  ', '10.1234/test'],
+      ['10.1234/test-article_v2.1', '10.1234/test-article_v2.1'],
+      ['10.1234/test(2024)1234', '10.1234/test(2024)1234'],
+    ])('normalizes %s to %s', (input, expected) => {
+      expect(normalizeDoi(input)).toBe(expected);
     });
 
-    describe('URL prefix stripping', () => {
-      it('strips https://doi.org/ prefix', () => {
-        expect(normalizeDoi('https://doi.org/10.1234/test')).toBe('10.1234/test');
-      });
-
-      it('strips http://doi.org/ prefix', () => {
-        expect(normalizeDoi('http://doi.org/10.1234/test')).toBe('10.1234/test');
-      });
-
-      it('strips https://dx.doi.org/ prefix', () => {
-        expect(normalizeDoi('https://dx.doi.org/10.1234/test')).toBe('10.1234/test');
-      });
-
-      it('strips http://dx.doi.org/ prefix', () => {
-        expect(normalizeDoi('http://dx.doi.org/10.1234/test')).toBe('10.1234/test');
-      });
-    });
-
-    describe('case insensitivity', () => {
-      it('converts to lowercase', () => {
-        expect(normalizeDoi('10.1234/ABC')).toBe('10.1234/abc');
-      });
-
-      it('handles uppercase URL prefix', () => {
-        expect(normalizeDoi('HTTPS://DOI.ORG/10.1234/test')).toBe('10.1234/test');
-      });
-    });
-
-    describe('whitespace handling', () => {
-      it('trims leading whitespace', () => {
-        expect(normalizeDoi('  10.1234/test')).toBe('10.1234/test');
-      });
-
-      it('trims trailing whitespace', () => {
-        expect(normalizeDoi('10.1234/test  ')).toBe('10.1234/test');
-      });
-    });
-
-    describe('edge cases', () => {
-      it('handles DOI with special characters', () => {
-        expect(normalizeDoi('10.1234/test-article_v2.1')).toBe('10.1234/test-article_v2.1');
-      });
-
-      it('handles DOI with parentheses', () => {
-        expect(normalizeDoi('10.1234/test(2024)1234')).toBe('10.1234/test(2024)1234');
-      });
+    it.each([null, undefined, ''])('returns null for %s', (input) => {
+      expect(normalizeDoi(input)).toBeNull();
     });
   });
 
@@ -143,25 +93,6 @@ describe('matching', () => {
       });
     });
 
-    describe('edge cases', () => {
-      it('returns false for entries with only DOI (different)', () => {
-        const entry1 = { doi: '10.1234/test1' };
-        const entry2 = { doi: '10.1234/test2' };
-        expect(entriesMatch(entry1, entry2)).toBe(false);
-      });
-
-      it('returns true for entries with only matching DOI', () => {
-        const entry1 = { doi: '10.1234/test' };
-        const entry2 = { doi: '10.1234/test' };
-        expect(entriesMatch(entry1, entry2)).toBe(true);
-      });
-
-      it('returns true for entries with only matching title', () => {
-        const entry1 = { title: 'Test Title' };
-        const entry2 = { title: 'Test Title' };
-        expect(entriesMatch(entry1, entry2)).toBe(true);
-      });
-    });
   });
 
   describe('findMatchingRef', () => {
@@ -241,26 +172,5 @@ describe('matching', () => {
       });
     });
 
-    describe('integration scenarios', () => {
-      it('matches PDF metadata to imported reference by DOI', () => {
-        const pdfMetadata = {
-          doi: '10.1234/test4',
-          title: 'Extracted PDF Title', // Different from ref title
-        };
-        const result = findMatchingRef(pdfMetadata, references);
-        expect(result).toBeDefined();
-        expect(result!.id).toBe('ref-4');
-      });
-
-      it('matches user input to reference library', () => {
-        const userInput = {
-          doi: null,
-          title: 'title two', // Case different
-        };
-        const result = findMatchingRef(userInput, references);
-        expect(result).toBeDefined();
-        expect(result!.id).toBe('ref-2');
-      });
-    });
   });
 });

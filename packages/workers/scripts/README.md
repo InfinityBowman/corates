@@ -223,14 +223,14 @@ pnpm user:create-orcid:local -- --email test@example.com --orcid-id 0000-0001-23
 
 - **Name**: `corates-db`
 - **Location**: `.wrangler/state/v3/d1/miniflare-D1DatabaseObject/`
-- **Binding**: `DB` (in `wrangler.jsonc`)
+- **Binding**: `DB` (in `wrangler.test.jsonc` here, `wrangler.jsonc` in `packages/web`)
 - **Database ID**: `7ac6d425-2a7c-4087-9f42-0cd1a2ab367b`
 
 ### Production Database
 
 - **Name**: `corates-db-prod`
 - **Location**: Cloudflare D1 (remote)
-- **Binding**: `DB` (in `wrangler.jsonc` production env)
+- **Binding**: `DB` (in `packages/web/wrangler.jsonc` `env.production`)
 - **Database ID**: `bd15994e-1308-41b3-a91c-e30ab6c947da`
 
 ## Migration Workflow
@@ -325,7 +325,7 @@ This usually means migrations were partially applied. Options:
 
 - Ensure you're authenticated with Cloudflare: `wrangler login`
 - Verify database exists in Cloudflare dashboard
-- Check `wrangler.jsonc` has correct database configuration
+- Check `packages/web/wrangler.jsonc` (`env.production`) has correct database configuration
 
 ### Script fails with authentication error
 
@@ -339,7 +339,7 @@ This usually means migrations were partially applied. Options:
 
 If you see errors about wrong database names:
 
-- Check `wrangler.jsonc` has correct database names
+- Check `wrangler.test.jsonc` (here) and `packages/web/wrangler.jsonc` have correct database names
 - Local: `corates-db`
 - Production: `corates-db-prod`
 - Verify script uses correct database name

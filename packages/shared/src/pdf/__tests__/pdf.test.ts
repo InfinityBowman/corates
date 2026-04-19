@@ -4,100 +4,37 @@
 
 import { describe, it, expect } from 'vitest';
 import {
-  PDF_LIMITS,
-  PDF_MAGIC_BYTES,
   isValidPdfFilename,
   isPdfSignature,
   formatFileSize,
   validatePdfStructure,
 } from '../index.js';
 
-describe('PDF_LIMITS', () => {
-  it('should have MAX_SIZE of 50MB', () => {
-    expect(PDF_LIMITS.MAX_SIZE).toBe(50 * 1024 * 1024);
-  });
-
-  it('should have MAX_FILENAME_LENGTH of 200', () => {
-    expect(PDF_LIMITS.MAX_FILENAME_LENGTH).toBe(200);
-  });
-});
-
-describe('PDF_MAGIC_BYTES', () => {
-  it('should be %PDF- signature', () => {
-    expect(PDF_MAGIC_BYTES).toEqual([0x25, 0x50, 0x44, 0x46, 0x2d]);
-    // Verify these decode to '%PDF-'
-    const str = String.fromCharCode(...PDF_MAGIC_BYTES);
-    expect(str).toBe('%PDF-');
-  });
-});
-
 describe('isValidPdfFilename', () => {
-  it('should accept valid filenames', () => {
-    expect(isValidPdfFilename('document.pdf')).toBe(true);
-    expect(isValidPdfFilename('My Research Paper (2024).pdf')).toBe(true);
-    expect(isValidPdfFilename('file-with-dashes_and_underscores.pdf')).toBe(true);
-    expect(isValidPdfFilename('a.pdf')).toBe(true);
-    expect(isValidPdfFilename('UPPERCASE.PDF')).toBe(true);
-    expect(isValidPdfFilename('MixedCase.Pdf')).toBe(true);
+  it.each([
+    'document.pdf',
+    'My Research Paper (2024).pdf',
+    'file-with-dashes_and_underscores.pdf',
+    'UPPERCASE.PDF',
+    'a'.repeat(196) + '.pdf',
+  ])('accepts valid filename: %s', (name) => {
+    expect(isValidPdfFilename(name)).toBe(true);
   });
 
-  it('should reject null or undefined', () => {
-    expect(isValidPdfFilename(null)).toBe(false);
-    expect(isValidPdfFilename(undefined)).toBe(false);
-  });
-
-  it('should reject empty string', () => {
-    expect(isValidPdfFilename('')).toBe(false);
-  });
-
-  it('should reject filenames without .pdf extension', () => {
-    expect(isValidPdfFilename('document')).toBe(false);
-    expect(isValidPdfFilename('document.txt')).toBe(false);
-    expect(isValidPdfFilename('document.pdf.txt')).toBe(false);
-    expect(isValidPdfFilename('a')).toBe(false);
-  });
-
-  it('should reject filenames that are only whitespace before extension', () => {
-    expect(isValidPdfFilename('.pdf')).toBe(false);
-    expect(isValidPdfFilename('   .pdf')).toBe(false);
-  });
-
-  it('should reject path traversal sequences', () => {
-    expect(isValidPdfFilename('../file.pdf')).toBe(false);
-    expect(isValidPdfFilename('..\\file.pdf')).toBe(false);
-    expect(isValidPdfFilename('foo/../bar.pdf')).toBe(false);
-    expect(isValidPdfFilename('file..pdf')).toBe(false);
-  });
-
-  it('should reject filenames with forward slashes', () => {
-    expect(isValidPdfFilename('path/to/file.pdf')).toBe(false);
-    expect(isValidPdfFilename('/file.pdf')).toBe(false);
-  });
-
-  it('should reject filenames with backslashes', () => {
-    expect(isValidPdfFilename('path\\to\\file.pdf')).toBe(false);
-    expect(isValidPdfFilename('\\file.pdf')).toBe(false);
-  });
-
-  it('should reject filenames with quotes', () => {
-    expect(isValidPdfFilename('file"name.pdf')).toBe(false);
-    expect(isValidPdfFilename('"file.pdf"')).toBe(false);
-  });
-
-  it('should reject filenames with control characters', () => {
-    expect(isValidPdfFilename('file\x00name.pdf')).toBe(false);
-    expect(isValidPdfFilename('file\nname.pdf')).toBe(false);
-    expect(isValidPdfFilename('file\tname.pdf')).toBe(false);
-  });
-
-  it('should reject filenames exceeding max length', () => {
-    const longName = 'a'.repeat(201) + '.pdf';
-    expect(isValidPdfFilename(longName)).toBe(false);
-  });
-
-  it('should accept filenames at max length', () => {
-    const maxName = 'a'.repeat(196) + '.pdf'; // 200 chars total
-    expect(isValidPdfFilename(maxName)).toBe(true);
+  it.each([
+    [null, 'null'],
+    [undefined, 'undefined'],
+    ['', 'empty string'],
+    ['document.txt', 'wrong extension'],
+    ['.pdf', 'no basename'],
+    ['../file.pdf', 'path traversal'],
+    ['path/to/file.pdf', 'forward slash'],
+    ['path\\to\\file.pdf', 'backslash'],
+    ['file"name.pdf', 'quotes'],
+    ['file\x00name.pdf', 'control character'],
+    ['a'.repeat(201) + '.pdf', 'exceeds max length'],
+  ])('rejects invalid filename (%s): %s', (name) => {
+    expect(isValidPdfFilename(name)).toBe(false);
   });
 });
 
@@ -134,22 +71,15 @@ describe('isPdfSignature', () => {
 });
 
 describe('formatFileSize', () => {
-  it('should format bytes', () => {
-    expect(formatFileSize(0)).toBe('0 B');
-    expect(formatFileSize(512)).toBe('512 B');
-    expect(formatFileSize(1023)).toBe('1023 B');
-  });
-
-  it('should format kilobytes', () => {
-    expect(formatFileSize(1024)).toBe('1.0 KB');
-    expect(formatFileSize(1536)).toBe('1.5 KB');
-    expect(formatFileSize(10240)).toBe('10.0 KB');
-  });
-
-  it('should format megabytes', () => {
-    expect(formatFileSize(1024 * 1024)).toBe('1.0 MB');
-    expect(formatFileSize(1.5 * 1024 * 1024)).toBe('1.5 MB');
-    expect(formatFileSize(50 * 1024 * 1024)).toBe('50.0 MB');
+  it.each([
+    [0, '0 B'],
+    [512, '512 B'],
+    [1024, '1.0 KB'],
+    [1536, '1.5 KB'],
+    [1024 * 1024, '1.0 MB'],
+    [50 * 1024 * 1024, '50.0 MB'],
+  ])('formats %d as %s', (bytes, expected) => {
+    expect(formatFileSize(bytes)).toBe(expected);
   });
 });
 

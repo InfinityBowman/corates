@@ -36,9 +36,6 @@ export {
 
 // Organization policies
 export {
-  // Data fetching
-  getOrgMembership,
-
   // Assertions (throw on failure)
   requireOrgMemberRemoval,
 } from './orgs';
