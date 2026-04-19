@@ -4,8 +4,9 @@
  * Provides ban/unban, impersonate, revoke sessions, and delete actions.
  */
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, Suspense } from 'react';
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router';
+import type { ErrorComponentProps } from '@tanstack/react-router';
 import {
   ArrowLeftIcon,
   MailIcon,
@@ -25,8 +26,9 @@ import {
   CopyIcon,
   ExternalLinkIcon,
 } from 'lucide-react';
-import { useQueryClient } from '@tanstack/react-query';
-import { useAdminUserDetails } from '@/hooks/useAdminQueries';
+import { useQueryClient, useSuspenseQuery } from '@tanstack/react-query';
+import { adminUserDetailsQueryOptions } from '@/hooks/useAdminQueries';
+import { queryClient } from '@/lib/queryClient';
 import {
   useAdminStore,
   banUser,
@@ -68,8 +70,28 @@ import {
 } from '@/components/ui/table';
 import { queryKeys } from '@/lib/queryKeys';
 export const Route = createFileRoute('/_app/_protected/admin/users/$userId')({
+  loader: async ({ params: { userId } }) => {
+    await queryClient.prefetchQuery(adminUserDetailsQueryOptions(userId));
+  },
   component: UserDetailPage,
+  errorComponent: UserDetailError,
 });
+
+function UserDetailError({ reset }: ErrorComponentProps) {
+  return (
+    <div className='border-destructive/20 bg-destructive/10 rounded-lg border p-6 text-center'>
+      <AlertCircleIcon className='text-destructive mx-auto mb-2 size-8' />
+      <p className='text-destructive'>Failed to load user details</p>
+      <button
+        type='button'
+        onClick={reset}
+        className='text-destructive hover:text-destructive/80 mt-2 text-sm'
+      >
+        Try again
+      </button>
+    </div>
+  );
+}
 
 interface UserAccount {
   providerId: string;
@@ -178,13 +200,46 @@ const getStripeCustomerUrl = (customerId: string | undefined): string | null => 
 };
 
 function UserDetailPage() {
-  const { userId } = Route.useParams();
-  const navigate = useNavigate();
-  const queryClient = useQueryClient();
   const { isAdmin, isAdminChecked } = useAdminStore();
 
-  const userDetailsQuery = useAdminUserDetails(userId);
-  const userData = userDetailsQuery.data as UserData | undefined;
+  if (!isAdminChecked) {
+    return (
+      <div className='flex min-h-100 items-center justify-center'>
+        <LoaderIcon className='size-8 animate-spin text-blue-600' />
+      </div>
+    );
+  }
+
+  if (!isAdmin) {
+    return (
+      <div className='text-muted-foreground flex min-h-100 flex-col items-center justify-center'>
+        <AlertCircleIcon className='mb-4 size-12' />
+        <p className='text-lg font-medium'>Access Denied</p>
+        <p className='text-sm'>You do not have admin privileges.</p>
+      </div>
+    );
+  }
+
+  return (
+    <Suspense
+      fallback={
+        <div className='flex min-h-64 items-center justify-center'>
+          <LoaderIcon className='size-8 animate-spin text-blue-600' />
+        </div>
+      }
+    >
+      <UserDetailContent />
+    </Suspense>
+  );
+}
+
+function UserDetailContent() {
+  const { userId } = Route.useParams();
+  const navigate = useNavigate();
+  const qc = useQueryClient();
+
+  const { data } = useSuspenseQuery(adminUserDetailsQueryOptions(userId));
+  const userData = data as unknown as UserData;
 
   const [confirmDialog, setConfirmDialog] = useState<{
     type: 'delete' | 'revoke-all';
@@ -195,8 +250,8 @@ function UserDetailPage() {
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
   const invalidateUserQueries = useCallback(() => {
-    queryClient.invalidateQueries({ queryKey: queryKeys.admin.userDetails(userId) });
-  }, [queryClient, userId]);
+    qc.invalidateQueries({ queryKey: queryKeys.admin.userDetails(userId) });
+  }, [qc, userId]);
 
   const handleCopy = async (text: string, label: string) => {
     try {
@@ -289,24 +344,6 @@ function UserDetailPage() {
     }
   };
 
-  if (!isAdminChecked) {
-    return (
-      <div className='flex min-h-[400px] items-center justify-center'>
-        <LoaderIcon className='size-8 animate-spin text-blue-600' />
-      </div>
-    );
-  }
-
-  if (!isAdmin) {
-    return (
-      <div className='text-muted-foreground flex min-h-[400px] flex-col items-center justify-center'>
-        <AlertCircleIcon className='mb-4 size-12' />
-        <p className='text-lg font-medium'>Access Denied</p>
-        <p className='text-sm'>You do not have admin privileges.</p>
-      </div>
-    );
-  }
-
   return (
     <>
       {/* Back link */}
@@ -317,32 +354,6 @@ function UserDetailPage() {
         <ArrowLeftIcon className='mr-2 size-4' />
         Back to Admin Dashboard
       </Link>
-
-      {/* Loading state */}
-      {userDetailsQuery.isLoading && (
-        <div className='flex min-h-64 items-center justify-center'>
-          <LoaderIcon className='size-8 animate-spin text-blue-600' />
-        </div>
-      )}
-
-      {/* Error state */}
-      {userDetailsQuery.isError && (
-        <div className='border-destructive/20 bg-destructive/10 rounded-lg border p-6 text-center'>
-          <AlertCircleIcon className='text-destructive mx-auto mb-2 size-8' />
-          <p className='text-destructive'>Failed to load user details</p>
-          <button
-            type='button'
-            onClick={() => userDetailsQuery.refetch()}
-            className='text-destructive hover:text-destructive/80 mt-2 text-sm'
-          >
-            Try again
-          </button>
-        </div>
-      )}
-
-      {/* User details */}
-      {userData?.user && (
-        <>
           {/* Header */}
           <div className='mb-8 flex items-start justify-between'>
             <div className='flex items-center gap-4'>
@@ -721,8 +732,6 @@ function UserDetailPage() {
               </div>
             : <p className='text-muted-foreground text-sm'>No active sessions</p>}
           </AdminBox>
-        </>
-      )}
 
       {/* Ban Dialog */}
       <Dialog open={banDialogOpen} onOpenChange={setBanDialogOpen}>

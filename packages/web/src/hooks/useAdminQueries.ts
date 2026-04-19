@@ -3,7 +3,7 @@
  * Provides hooks for admin dashboard data fetching
  */
 
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, queryOptions } from '@tanstack/react-query';
 import { queryKeys } from '@/lib/queryKeys';
 import {
   fetchOrgs,
@@ -51,18 +51,17 @@ export function useAdminUsers(params: { page?: number; limit?: number; search?: 
   });
 }
 
-export function useAdminUserDetails(userId: string | null | undefined) {
-  return useQuery({
+export function adminUserDetailsQueryOptions(userId: string) {
+  return queryOptions({
     queryKey: queryKeys.admin.userDetails(userId),
     queryFn: async () => {
-      const res = await fetch(`/api/admin/users/${encodeURIComponent(userId!)}`, {
+      const res = await fetch(`/api/admin/users/${encodeURIComponent(userId)}`, {
         credentials: 'include',
       });
       const data = (await res.json()) as Record<string, unknown>;
       if (!res.ok) throw data;
       return data;
     },
-    enabled: !!userId,
     ...ADMIN_QUERY_CONFIG,
   });
 }

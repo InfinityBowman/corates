@@ -13,7 +13,7 @@ The codebase is on a current TanStack Start version. `adminMiddleware` via `crea
 ## Verified facts (counts)
 
 - **0** uses of `createServerFn`
-- **0** uses of `loader:` in any page route
+- **1** page route uses `loader:` (`admin/users.$userId.tsx` -- pilot)
 - **44** admin routes using `middleware: [adminMiddleware]` (DONE)
 - **57** `$projectId`/`$orgId`/`$userId` route files with no path-param validation
 - **0** handlers calling `createDb(env.DB)` (was 182; all routes now use `context.db` via `dbMiddleware`)
@@ -65,11 +65,11 @@ function ProjectPage() {
 }
 ```
 
-**CoRATES:** **0 page routes use `loader:`.** Every page mounts, fires `useQuery`, shows a spinner, data arrives.
+**CoRATES:** Pilot implemented on `admin/users.$userId.tsx`. Pattern: `queryOptions()` factory in `useAdminQueries.ts`, `loader` calls `queryClient.prefetchQuery()`, component uses `useSuspenseQuery()` with a `Suspense` boundary. Route-level `errorComponent` handles fetch failures. Remaining page routes still use client-side `useQuery` with spinners.
 
-**Why this matters here:** the project pays for SSR (Cloudflare Workers running TanStack Start) but throws away the data-prefetch portion of it. This is a real user-visible TTFB regression vs what the framework supports — the HTML arrives, then the JS hydrates, then the queries fire, then the data shows. With loaders, the data is in the HTML.
+**Why this matters here:** the project pays for SSR (Cloudflare Workers running TanStack Start) but throws away the data-prefetch portion of it. This is a real user-visible TTFB regression vs what the framework supports -- the HTML arrives, then the JS hydrates, then the queries fire, then the data shows. With loaders, the data is in the HTML.
 
-**Cost:** half-day pilot on one high-traffic page route to confirm the SSR pipe works end-to-end with this codebase's setup, then incremental adoption per page.
+**Next:** confirm the pilot works end-to-end in the deployed worker (SSR prefetch, client-side navigation, error handling), then incrementally adopt the pattern across remaining page routes.
 
 **Impact:** biggest user-visible win in this audit.
 
@@ -155,7 +155,7 @@ Modern TanStack/Vite projects set this `true`. Forces explicit `import type { ..
 | #   | Change                                                                           |                    Cost | Why now                                                                              |
 | --- | -------------------------------------------------------------------------------- | ----------------------: | ------------------------------------------------------------------------------------ |
 | 1   | ~~`dbMiddleware` across all routes, eliminate `createDb(env.DB)` (G6)~~ DONE |           -- | Zero `createDb` calls remain in source files.                                       |
-| 2   | **Pilot:** add `loader` + `useSuspenseQuery` to **one** page route (G4)          |                half day | Confirm SSR prefetch works in the worker setup before sweeping.                      |
+| 2   | ~~**Pilot:** add `loader` + `useSuspenseQuery` to **one** page route (G4)~~ DONE |                      -- | Pilot on `admin/users.$userId.tsx`. Needs end-to-end verification in deployed worker.|
 | 3   | If pilot succeeds: incremental loader adoption, page by page                     |                 ongoing | Biggest user-visible win.                                                            |
 | 4   | Path-param Zod via param middleware (G3)                                         |                1–2 days | Rides on the existing middleware system.                                             |
 | 5   | Router context for auth (G5)                                                     |                  1–2 hr | Separate refactor; don't bundle.                                                     |
