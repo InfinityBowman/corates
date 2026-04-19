@@ -1,637 +1,241 @@
 # State Management Guide
 
-This guide explains how state management works in CoRATES, covering the store architecture pattern, when to use stores vs props, and implementation patterns.
+CoRATES uses [Zustand](https://github.com/pmndrs/zustand) for client state. Stores live in `packages/web/src/stores/` and are imported directly by components (no prop drilling) and by non-component code (Yjs callbacks, API interceptors, etc.).
 
-## Overview
+## When to use a store
 
-CoRATES uses a centralized store architecture built on SolidJS's `createStore` for managing application state. The pattern separates **read operations** (data stores) from **write operations** (action stores), providing clear boundaries and eliminating prop drilling.
+Use a Zustand store for:
 
-## Store Architecture Pattern
+- Shared state across multiple components or routes
+- State that needs to be read or written from outside React (Yjs callbacks, `queryClient` interceptors, `authFetch` helpers)
+- Cached API data that should survive navigation
+- Local persistence via `localStorage` + cross-tab sync
 
-### Read Stores vs Action Stores
+Use local React state (`useState`, `useReducer`) for:
 
-The codebase uses a separation pattern:
+- UI state scoped to a single component (open/close, form drafts)
+- Values that don't need to be read from non-component code
 
-- **Read Stores** (`*Store.js`) - Hold cached data and provide getters/selectors
-- **Action Stores** (`*ActionsStore.js`) - Manage write operations and mutations
+Use TanStack Query for server state that is *only* read from components. The Zustand project store exists because Yjs and the sync layer write to it from outside React.
 
-```js
-// Read from store
-import projectStore from '@/stores/projectStore.js';
-const projects = () => projectStore.getProjectList();
+## Current stores
 
-// Write via actions store
-import projectActionsStore from '@/stores/projectActionsStore';
-projectActionsStore.createProject({ name: 'New Project' });
-```
+| Store | File | Middleware |
+| --- | --- | --- |
+| `useAuthStore` | `stores/authStore.ts` | none |
+| `useProjectStore` | `stores/projectStore.ts` | `immer` |
+| `useAdminStore` | `stores/adminStore.ts` | none |
+| `usePdfPreviewStore` | `stores/pdfPreviewStore.ts` | none |
 
-### Key Benefits
+## Store shape
 
-- **No prop drilling** - Components import stores directly
-- **Single source of truth** - Data lives in one place
-- **Clear separation** - Reads vs writes are explicit
-- **Reactive updates** - SolidJS store updates trigger UI re-renders
-- **Offline support** - Stores handle caching and persistence
+State and actions are co-located in a single `create<State & Actions>()` call. Actions read via `get()` and write via `set()`.
 
-## When to Use Stores
+```ts
+import { create } from 'zustand';
 
-### Use Stores For
-
-1. **Shared/cross-feature state** - Data used across multiple components/features
-2. **Persistent data** - Data that should survive navigation
-3. **Cached API data** - Data fetched from APIs that should be cached
-4. **Connection state** - WebSocket/Yjs connection status
-5. **User session** - Authentication state and user data
-
-### Use Props For
-
-1. **Local component configuration** - Settings specific to one component
-2. **Parent-child communication** - Data passed directly from parent
-3. **UI state only** - Modal open/close, form field values (unless shared)
-
-### Use Context For
-
-1. **Feature-scoped state** - State that only matters within a feature tree
-2. **Avoid if possible** - Prefer stores for shared state
-
-### Decision Tree
-
-```
-Is this state shared across multiple components/features?
-├─ YES → Use a store
-│   └─ Does it need write operations?
-│       ├─ YES → Create both *Store.js and *ActionsStore.js
-│       └─ NO → Create just *Store.js
-│
-└─ NO → Is it configuration for a single component?
-    ├─ YES → Use props
-    └─ NO → Use createSignal or createStore (local state)
-```
-
-## Store Implementation Patterns
-
-### Creating a Read Store
-
-Read stores use SolidJS `createStore` for reactive state management:
-
-```js
-import { createStore, produce } from 'solid-js/store';
-
-function createMyStore() {
-  const [store, setStore] = createStore({
-    items: [],
-    loading: false,
-    error: null,
-  });
-
-  // Getters
-  function getItems() {
-    return store.items;
-  }
-
-  function getItem(id) {
-    return store.items.find(item => item.id === id);
-  }
-
-  // Setters (internal use only, prefer action stores for mutations)
-  function setItems(items) {
-    setStore('items', items);
-  }
-
-  // Complex updates using produce
-  function updateItem(id, updates) {
-    setStore(
-      produce(s => {
-        const item = s.items.find(item => item.id === id);
-        if (item) {
-          Object.assign(item, updates);
-        }
-      }),
-    );
-  }
-
-  return {
-    store, // Expose raw store for reactive access
-    getItems,
-    getItem,
-    setItems,
-    updateItem,
-  };
+interface State {
+  count: number;
+  error: string | null;
 }
 
-// Create singleton
-const myStore = createMyStore();
-export default myStore;
-```
-
-### Creating an Action Store
-
-Action stores manage write operations and coordinate with read stores:
-
-```js
-import myStore from '@/stores/myStore.js';
-import { handleFetchError } from '@/lib/error-utils.js';
-import { showToast } from '@corates/ui';
-import { API_BASE } from '@config/api.js';
-
-function createMyActionsStore() {
-  async function createItem(data) {
-    try {
-      const response = await handleFetchError(
-        fetch(`${API_BASE}/api/items`, {
-          method: 'POST',
-          body: JSON.stringify(data),
-          credentials: 'include',
-        }),
-        { showToast: true },
-      );
-
-      const newItem = await response.json();
-
-      // Update read store
-      const currentItems = myStore.getItems();
-      myStore.setItems([...currentItems, newItem]);
-
-      showToast.success('Item created');
-      return newItem;
-    } catch (error) {
-      // Error already handled by handleFetchError
-      throw error;
-    }
-  }
-
-  async function updateItem(id, updates) {
-    try {
-      const response = await handleFetchError(
-        fetch(`${API_BASE}/api/items/${id}`, {
-          method: 'PATCH',
-          body: JSON.stringify(updates),
-          credentials: 'include',
-        }),
-        { showToast: true },
-      );
-
-      const updatedItem = await response.json();
-
-      // Update read store
-      myStore.updateItem(id, updatedItem);
-
-      showToast.success('Item updated');
-      return updatedItem;
-    } catch (error) {
-      throw error;
-    }
-  }
-
-  return {
-    createItem,
-    updateItem,
-  };
+interface Actions {
+  increment: () => void;
+  setError: (error: string | null) => void;
+  loadRemote: () => Promise<void>;
 }
 
-const myActionsStore = createMyActionsStore();
-export default myActionsStore;
-```
+export const useExampleStore = create<State & Actions>()((set, get) => ({
+  count: 0,
+  error: null,
 
-### Store with localStorage Caching
+  increment: () => set({ count: get().count + 1 }),
+  setError: error => set({ error }),
 
-Stores can cache data in localStorage for offline support:
-
-```88:97:packages/web/src/stores/projectStore.js
-  const [store, setStore] = createStore({
-    // Cached project data by projectId (Y.js data: studies, members, meta)
-    projects: {},
-    // Currently active project
-    activeProjectId: null,
-    // Connection states by projectId
-    connections: {},
-    // Project list from API (for dashboard)
-    projectList: initialProjectList,
-  });
-```
-
-Example caching pattern:
-
-```26:49:packages/web/src/stores/projectStore.js
-  function loadCachedProjectList() {
-    if (typeof window === 'undefined') return null;
+  loadRemote: async () => {
     try {
-      const cached = localStorage.getItem(PROJECT_LIST_CACHE_KEY);
-      const timestamp = localStorage.getItem(PROJECT_LIST_CACHE_TIMESTAMP_KEY);
-      const cachedUserId = localStorage.getItem(PROJECT_LIST_CACHE_USER_ID_KEY);
-      if (!cached || !timestamp) return null;
-
-      const age = Date.now() - parseInt(timestamp, 10);
-      if (age > PROJECT_LIST_CACHE_MAX_AGE) {
-        // Cache expired, clear it
-        localStorage.removeItem(PROJECT_LIST_CACHE_KEY);
-        localStorage.removeItem(PROJECT_LIST_CACHE_TIMESTAMP_KEY);
-        localStorage.removeItem(PROJECT_LIST_CACHE_USER_ID_KEY);
-        return null;
-      }
-
-      return { projects: JSON.parse(cached), userId: cachedUserId };
+      const response = await fetch('/api/count');
+      const { count } = await response.json();
+      set({ count, error: null });
     } catch (err) {
-      console.error('Error loading cached project list:', err);
-      return null;
+      set({ error: (err as Error).message });
     }
-  }
+  },
+}));
 ```
 
-## Using Stores in Components
+## Reading from a store in a component
 
-### Reading from Stores
+Subscribe to a single slice per `useStore` call. Zustand re-renders the component only when the selected value changes by reference.
 
-Import the store directly and use getters:
+```tsx
+import { useAuthStore } from '@/stores/authStore';
 
-```js
-import projectStore from '@/stores/projectStore.js';
-
-function MyComponent() {
-  // Reactive getter - updates when store changes
-  const projects = () => projectStore.getProjectList();
-
-  // Direct access to store (if needed)
-  const activeProjectId = () => projectStore.store.activeProjectId;
-
-  return (
-    <div>
-      <For each={projects()}>{project => <ProjectCard project={project} />}</For>
-    </div>
-  );
-}
-```
-
-### Writing via Action Stores
-
-Import the action store and call mutation methods:
-
-```js
-import projectActionsStore from '@/stores/projectActionsStore';
-
-function CreateProjectForm() {
-  async function handleSubmit(e) {
-    e.preventDefault();
-    const formData = new FormData(e.target);
-
-    await projectActionsStore.createProject({
-      name: formData.get('name'),
-      description: formData.get('description'),
-    });
-    // Store updates automatically, UI re-renders
-  }
-
-  return <form onSubmit={handleSubmit}>{/* form fields */}</form>;
-}
-```
-
-### Never Prop-Drill Store Data
-
-```js
-// WRONG - prop drilling
-function App() {
-  const projects = () => projectStore.getProjectList();
-  return <ProjectList projects={projects()} />;
-}
-
-function ProjectList({ projects }) {
-  return <ProjectDashboard projects={projects} />;
-}
-
-// CORRECT - import store directly
-function ProjectList() {
-  const projects = () => projectStore.getProjectList();
-  return <ProjectDashboard />;
-}
-
-function ProjectDashboard() {
-  // Import store directly, no props needed
-  const projects = () => projectStore.getProjectList();
+function SignInForm() {
+  const signin = useAuthStore(s => s.signin);
+  const authError = useAuthStore(s => s.authError);
   // ...
 }
 ```
 
-## Store Examples
+Do not destructure the whole state (`const { signin, authError } = useAuthStore()`) -- that subscribes to every field and re-renders on any change.
 
-### Project Store
+## Reading selectors
 
-The project store manages project data, connection states, and caching:
+Selectors are exported from the store file as **plain functions of state**, not hooks. They are called by passing them to `useStore`.
 
-```99:112:packages/web/src/stores/projectStore.js
-  function getProject(projectId) {
-    return store.projects[projectId];
+```ts
+// stores/authStore.ts
+export function selectIsLoggedIn(state: AuthState): boolean {
+  if (state.isOnline) {
+    if (state.sessionLoading && state.cachedUser) return true;
+    return !!state.sessionUser;
   }
-
-  /**
-   * Get active project data
-   */
-  function getActiveProject() {
-    if (!store.activeProjectId) return null;
-    return store.projects[store.activeProjectId] || null;
-  }
-
-  /**
-   * Set the active project
-   */
-  function setActiveProject(projectId) {
-    setStore('activeProjectId', projectId);
-  }
+  return !!state.cachedUser;
+}
 ```
 
-### Project Actions Store
+```tsx
+import { useAuthStore, selectIsLoggedIn } from '@/stores/authStore';
 
-The actions store manages all write operations:
-
-```26:67:packages/web/src/stores/projectActionsStore/index.js
-function createProjectActionsStore() {
-  /**
-   * Map of projectId -> Y.js connection operations
-   * Set by useProject hook when connecting
-   * @type {Map<string, Object>}
-   */
-  const connections = new Map();
-
-  /**
-   * The currently active project ID.
-   * Set by ProjectView when a project is opened.
-   * Most methods use this automatically so components don't need to pass it.
-   */
-  let activeProjectId = null;
-
-  // ============================================================================
-  // Internal: Active Project & User Access
-  // ============================================================================
-
-  /**
-   * Set the active project (called by ProjectView on mount)
-   */
-  function _setActiveProject(projectId) {
-    activeProjectId = projectId;
-  }
-
-  /**
-   * Clear the active project (called by ProjectView on unmount)
-   */
-  function _clearActiveProject() {
-    activeProjectId = null;
-  }
-
-  /**
-   * Get the active project ID, throws if none set
-   */
-  function getActiveProjectId() {
-    if (!activeProjectId) {
-      throw new Error('No active project - are you inside a ProjectView?');
-    }
-    return activeProjectId;
-  }
-
-  /**
-   * Get active project ID or null (for components that just need to check)
-   */
-  function getActiveProjectIdOrNull() {
-    return activeProjectId;
-  }
-
-  /**
-   * Get current user ID from auth store
-   */
-  function getCurrentUserId() {
-    const auth = useBetterAuth();
-    return auth.user()?.id || null;
-  }
+function Nav() {
+  const isLoggedIn = useAuthStore(selectIsLoggedIn);
+  // ...
+}
 ```
 
-### Better Auth Store
+Selectors that need parameters take them after `state` and are bound in the component:
 
-The auth store wraps Better Auth with caching and offline support:
+```ts
+// stores/projectStore.ts
+export function selectStudies(state: ProjectStoreState, projectId: string): StudyInfo[] {
+  return state.projects[projectId]?.studies || EMPTY_STUDIES;
+}
+```
 
-```18:65:packages/web/src/api/better-auth-store.js
-function createBetterAuthStore() {
-  // Track online status without reactive primitives (for singleton context)
-  const [isOnline, setIsOnline] = createSignal(navigator.onLine);
+```tsx
+const studies = useProjectStore(s => selectStudies(s, projectId));
+```
 
-  // Listen for online/offline events
-  if (typeof window !== 'undefined') {
-    window.addEventListener('online', () => setIsOnline(true));
-    window.addEventListener('offline', () => setIsOnline(false));
-  }
+## Stable fallback references
 
-  function loadCachedAuth() {
-    if (typeof window === 'undefined') return null;
-    try {
-      const cached = localStorage.getItem(AUTH_CACHE_KEY);
-      const timestamp = localStorage.getItem(AUTH_CACHE_TIMESTAMP_KEY);
-      if (!cached || !timestamp) return null;
+Selectors must return a referentially-stable value when data is missing, or the `useSyncExternalStore` semantics underlying Zustand will trigger infinite re-render loops. Declare empty fallbacks at module scope, never inline.
 
-      const age = Date.now() - parseInt(timestamp, 10);
-      if (age > AUTH_CACHE_MAX_AGE) {
-        localStorage.removeItem(AUTH_CACHE_KEY);
-        localStorage.removeItem(AUTH_CACHE_TIMESTAMP_KEY);
-        return null;
-      }
+```ts
+// stores/projectStore.ts
+const EMPTY_STUDIES: StudyInfo[] = [];
+const EMPTY_MEMBERS: unknown[] = [];
+const EMPTY_META: Record<string, unknown> = {};
 
-      return JSON.parse(cached);
-    } catch (err) {
-      console.error('Error loading cached auth:', err);
+export function selectStudies(state: ProjectStoreState, projectId: string): StudyInfo[] {
+  return state.projects[projectId]?.studies || EMPTY_STUDIES;
+}
+```
+
+`return []` or `return {}` inside the selector produces a new reference every call.
+
+## Reading from outside React
+
+Any code that runs outside the React render cycle uses `getState()` / `setState()` directly.
+
+```ts
+import { useAuthStore } from '@/stores/authStore';
+
+async function performSignoutCleanup() {
+  const state = useAuthStore.getState();
+  state.setCachedUser(null);
+  await state.sessionRefetch?.();
+}
+```
+
+This is the whole reason auth state lives in Zustand rather than only in Better Auth's `useSession()` -- the Yjs layer, `authFetch`, and the query client all need access from outside components.
+
+## Immer middleware for nested updates
+
+Use `zustand/middleware/immer` when the state has nested records and updates would otherwise require spread gymnastics. `useProjectStore` is the canonical example.
+
+```ts
+import { create } from 'zustand';
+import { immer } from 'zustand/middleware/immer';
+
+export const useProjectStore = create<State & Actions>()(
+  immer(set => ({
+    projects: {},
+
+    setProjectData: (projectId, data) =>
+      set(state => {
+        if (!state.projects[projectId]) {
+          state.projects[projectId] = { meta: {}, members: [], studies: [] };
+        }
+        if (data.studies !== undefined) {
+          state.projects[projectId].studies = data.studies;
+        }
+      }),
+  })),
+);
+```
+
+Inside `set(state => { ... })`, mutate `state` directly -- Immer produces the new immutable snapshot.
+
+## localStorage caching
+
+Stores that cache server data to `localStorage` use plain module-level helpers, not middleware. Hydrate from cache in the initial state, persist from inside actions.
+
+```ts
+const AUTH_CACHE_KEY = 'corates-auth-cache';
+const AUTH_CACHE_MAX_AGE = 7 * 24 * 60 * 60 * 1000;
+
+function loadCachedAuth(): AuthUser | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    const cached = localStorage.getItem(AUTH_CACHE_KEY);
+    const timestamp = localStorage.getItem(`${AUTH_CACHE_KEY}-ts`);
+    if (!cached || !timestamp) return null;
+    if (Date.now() - parseInt(timestamp, 10) > AUTH_CACHE_MAX_AGE) {
+      localStorage.removeItem(AUTH_CACHE_KEY);
       return null;
     }
+    return JSON.parse(cached);
+  } catch {
+    return null;
   }
+}
 
-  // Save auth data to localStorage
-  function saveCachedAuth(userData) {
-    if (typeof window === 'undefined') return;
-    try {
-      if (userData) {
-        localStorage.setItem(AUTH_CACHE_KEY, JSON.stringify(userData));
-        localStorage.setItem(AUTH_CACHE_TIMESTAMP_KEY, Date.now().toString());
-      } else {
-        localStorage.removeItem(AUTH_CACHE_KEY);
-        localStorage.removeItem(AUTH_CACHE_TIMESTAMP_KEY);
-      }
-    } catch (err) {
-      console.error('Error saving cached auth:', err);
+export const useAuthStore = create<State & Actions>()((set, get) => ({
+  cachedUser: loadCachedAuth(),
+  // ...
+}));
+```
+
+The `typeof window === 'undefined'` guard matters because the app is SSR'd by TanStack Start. Stores are imported during server rendering; any direct `localStorage` access there throws.
+
+## Cross-tab sync
+
+`useAuthStore` uses `BroadcastChannel` to sync sign-in/out across tabs. When one tab signs out, every other tab refetches its session.
+
+```ts
+const authChannel =
+  typeof BroadcastChannel !== 'undefined' ? new BroadcastChannel('corates-auth') : null;
+
+function broadcastAuthChange() {
+  authChannel?.postMessage({ type: 'auth-changed', timestamp: Date.now() });
+}
+
+if (typeof window !== 'undefined' && authChannel) {
+  authChannel.addEventListener('message', event => {
+    if (event.data?.type === 'auth-changed') {
+      useAuthStore.getState().sessionRefetch?.();
     }
-  }
+  });
+}
 ```
 
-## Store Lifecycle and Cleanup
+Add a broadcast only when state changes must be observable from another browser tab. Most stores do not need this.
 
-### Initialization
+## Don'ts
 
-Stores are singletons created at module load time:
-
-```604:607:packages/web/src/stores/projectStore.js
-// Create singleton store without createRoot
-// createStore doesn't need a reactive owner/root context
-const projectStore = createProjectStore();
-
-export default projectStore;
-```
-
-### Cache Validation
-
-Stores should validate cached data when appropriate:
-
-```498:534:packages/web/src/stores/projectStore.js
-  function validateProjectListCache(currentUserId) {
-    if (!currentUserId) {
-      // No user ID, clear the cache
-      setStore('projectList', {
-        items: [],
-        loaded: false,
-        loading: false,
-        error: null,
-        cachedUserId: null,
-      });
-      // Clear localStorage cache
-      localStorage.removeItem(PROJECT_LIST_CACHE_KEY);
-      localStorage.removeItem(PROJECT_LIST_CACHE_TIMESTAMP_KEY);
-      localStorage.removeItem(PROJECT_LIST_CACHE_USER_ID_KEY);
-      return;
-    }
-
-    const cachedUserId = store.projectList.cachedUserId;
-
-    // If cached user ID doesn't match current user, clear the cache
-    if (cachedUserId && cachedUserId !== currentUserId) {
-      console.log(
-        '[projectStore] Cached project list belongs to different user, clearing cache',
-      );
-      setStore('projectList', {
-        items: [],
-        loaded: false,
-        loading: false,
-        error: null,
-        cachedUserId: null,
-      });
-      // Clear localStorage cache
-      localStorage.removeItem(PROJECT_LIST_CACHE_KEY);
-      localStorage.removeItem(PROJECT_LIST_CACHE_TIMESTAMP_KEY);
-      localStorage.removeItem(PROJECT_LIST_CACHE_USER_ID_KEY);
-    }
-  }
-```
-
-## Derive Instead of Sync
-
-One of the most important SolidJS patterns is **deriving values instead of synchronizing state**. When you need a value that depends on other reactive values, derive it rather than syncing it with effects.
-
-### Anti-Pattern: Syncing with Effects
-
-```js
-// WRONG - Using effect to keep signals in sync
-const [items, setItems] = createSignal([]);
-const [filtered, setFiltered] = createSignal([]);
-
-createEffect(() => {
-  setFiltered(items().filter(i => i.active));
-});
-```
-
-Problems with this approach:
-
-- Hidden dependency relationship
-- Extra signal that needs to be managed
-- Potential race conditions
-- Effect runs after render, causing unnecessary updates
-
-### Correct Pattern: Derive with createMemo
-
-```js
-// CORRECT - Derive the value
-const [items, setItems] = createSignal([]);
-const filtered = createMemo(() => items().filter(i => i.active));
-```
-
-Benefits:
-
-- Declarative relationship between values
-- Automatic re-computation when dependencies change
-- No race conditions
-- Single source of truth
-
-### When to Use Each Pattern
-
-| Pattern          | Use Case                                                    |
-| ---------------- | ----------------------------------------------------------- |
-| `createMemo`     | Derived values from other reactive sources                  |
-| `createEffect`   | Side effects (DOM, localStorage, external APIs)             |
-| Function wrapper | Lightweight derivation: `const doubled = () => count() * 2` |
-
-### Function Wrappers vs createMemo
-
-Both work for derived values, but have different performance characteristics:
-
-```js
-// Function wrapper - re-evaluates on every access
-const doubled = () => count() * 2;
-
-// createMemo - caches result, only re-evaluates when count changes
-const doubled = createMemo(() => count() * 2);
-```
-
-Use `createMemo` when:
-
-- The computation is expensive
-- The value is accessed multiple times per render cycle
-- You need referential stability (same object identity)
-
-Use function wrappers when:
-
-- The computation is trivial
-- The value is only accessed once per render
-- You want to avoid the memo overhead
-
-### Legitimate Uses of createEffect
-
-Effects should be reserved for actual side effects:
-
-```js
-// DOM manipulation
-createEffect(() => {
-  document.title = `${count()} items`;
-});
-
-// localStorage persistence
-createEffect(() => {
-  localStorage.setItem('count', count().toString());
-});
-
-// External library integration
-createEffect(() => {
-  chart.update(data());
-});
-
-// Controlled component initialization (mutable local state from props)
-createEffect(() => {
-  if (props.initialValue !== undefined) {
-    setLocalValue(props.initialValue);
-  }
-});
-```
-
-## Best Practices
-
-### DO
-
-- Separate read stores from action stores
-- Use `produce` for complex nested updates
-- Cache data in localStorage for offline support
-- Validate cached data (expiry, user matching, etc.)
-- Use getters/selectors instead of exposing raw store
-- Import stores directly in components (no prop drilling)
-
-### DON'T
-
-- Don't prop-drill store data
-- Don't mutate store directly (use setters or action stores)
-- Don't expose raw `setStore` from read stores
-- Don't create stores for local component state
-- Don't forget to handle cache invalidation
-
-## Related Guides
-
-- [Primitives Guide](/guides/primitives) - For store-like patterns that are component-scoped
-- [Component Development Guide](/guides/components) - For component state patterns
-- [Yjs Sync Guide](/guides/yjs-sync) - For understanding how Yjs updates stores
+- Don't prop-drill store data. Import the store where you need it.
+- Don't destructure the whole store (`const { a, b } = useStore()`) -- subscribe to each slice separately.
+- Don't return inline empty arrays/objects from selectors.
+- Don't access `localStorage` or `navigator` at module scope without a `typeof window !== 'undefined'` guard -- it breaks SSR.
+- Don't put server state in Zustand if it's only read by components. Use TanStack Query.
