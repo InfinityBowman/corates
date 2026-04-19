@@ -40,7 +40,10 @@ function checkoutReq(body: unknown): Request {
 
 describe('POST /api/billing/checkout', () => {
   it('returns 401 when no session', async () => {
-    const res = await handlePost({ request: checkoutReq({ tier: 'team' }), context: { db: createDb(env.DB) } });
+    const res = await handlePost({
+      request: checkoutReq({ tier: 'team' }),
+      context: { db: createDb(env.DB) },
+    });
     expect(res.status).toBe(401);
     expect(upgradeSubscriptionMock).not.toHaveBeenCalled();
   });
@@ -50,7 +53,10 @@ describe('POST /api/billing/checkout', () => {
       user: { id: 'u1', email: 'u@example.com', name: 'U' },
       session: { id: 'sess', userId: 'u1', activeOrganizationId: null },
     };
-    const res = await handlePost({ request: checkoutReq({ interval: 'monthly' }), context: { db: createDb(env.DB) } });
+    const res = await handlePost({
+      request: checkoutReq({ interval: 'monthly' }),
+      context: { db: createDb(env.DB) },
+    });
     expect(res.status).toBe(400);
     const body = (await res.json()) as { code: string };
     expect(body.code).toMatch(/VALIDATION/);
@@ -62,7 +68,10 @@ describe('POST /api/billing/checkout', () => {
       user: { id: owner.id, email: owner.email, name: owner.name },
       session: { id: 'sess', userId: owner.id, activeOrganizationId: org.id },
     };
-    const res = await handlePost({ request: checkoutReq({ tier: 'free' }), context: { db: createDb(env.DB) } });
+    const res = await handlePost({
+      request: checkoutReq({ tier: 'free' }),
+      context: { db: createDb(env.DB) },
+    });
     expect(res.status).toBe(400);
     const body = (await res.json()) as { code: string };
     expect(body.code).toMatch(/VALIDATION/);
@@ -76,7 +85,10 @@ describe('POST /api/billing/checkout', () => {
       user: { id: memberUser.id, email: memberUser.email, name: memberUser.name },
       session: { id: 'sess', userId: memberUser.id, activeOrganizationId: org.id },
     };
-    const res = await handlePost({ request: checkoutReq({ tier: 'team' }), context: { db: createDb(env.DB) } });
+    const res = await handlePost({
+      request: checkoutReq({ tier: 'team' }),
+      context: { db: createDb(env.DB) },
+    });
     expect(res.status).toBe(403);
     expect(upgradeSubscriptionMock).not.toHaveBeenCalled();
   });
@@ -102,7 +114,10 @@ describe('POST /api/billing/checkout', () => {
       user: { id: owner.id, email: owner.email, name: owner.name },
       session: { id: 'sess', userId: owner.id, activeOrganizationId: org.id },
     };
-    const res = await handlePost({ request: checkoutReq({ tier: 'starter_team' }), context: { db: createDb(env.DB) } });
+    const res = await handlePost({
+      request: checkoutReq({ tier: 'starter_team' }),
+      context: { db: createDb(env.DB) },
+    });
     expect(res.status).toBe(400);
     const body = (await res.json()) as { code: string; details?: { reason?: string } };
     expect(body.details?.reason).toBe('downgrade_exceeds_quotas');
@@ -117,7 +132,10 @@ describe('POST /api/billing/checkout', () => {
     };
     upgradeSubscriptionMock.mockResolvedValueOnce({ url: 'https://checkout.stripe/test' });
 
-    const res = await handlePost({ request: checkoutReq({ tier: 'team', interval: 'monthly' }), context: { db: createDb(env.DB) } });
+    const res = await handlePost({
+      request: checkoutReq({ tier: 'team', interval: 'monthly' }),
+      context: { db: createDb(env.DB) },
+    });
     expect(res.status).toBe(200);
     const body = (await res.json()) as { url: string };
     expect(body.url).toBe('https://checkout.stripe/test');
@@ -138,7 +156,10 @@ describe('POST /api/billing/checkout', () => {
     };
     upgradeSubscriptionMock.mockRejectedValueOnce(new Error('Stripe API error'));
 
-    const res = await handlePost({ request: checkoutReq({ tier: 'team' }), context: { db: createDb(env.DB) } });
+    const res = await handlePost({
+      request: checkoutReq({ tier: 'team' }),
+      context: { db: createDb(env.DB) },
+    });
     expect(res.status).toBe(500);
     const body = (await res.json()) as { code: string };
     expect(body.code).toBe('SYSTEM_INTERNAL_ERROR');

@@ -150,12 +150,7 @@ test.describe('Auth flows', () => {
         expect(newUserId).toBeTruthy();
 
         // Add the new user to the org and project via the owner's session
-        await addProjectMember(
-          ownerScenario.orgId,
-          projectId,
-          newUserId,
-          ownerScenario.cookiesA,
-        );
+        await addProjectMember(ownerScenario.orgId, projectId, newUserId, ownerScenario.cookiesA);
 
         // Deep-link directly to the project page
         await p.goto(`/projects/${projectId}`);

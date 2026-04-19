@@ -67,7 +67,10 @@ describe('GET /api/admin/stats/signups', () => {
       updatedAt: todaySec,
     });
 
-    const res = await signupsGet({ request: req('/api/admin/stats/signups?days=7'), context: { db: createDb(env.DB) } });
+    const res = await signupsGet({
+      request: req('/api/admin/stats/signups?days=7'),
+      context: { db: createDb(env.DB) },
+    });
     expect(res.status).toBe(200);
     const body = (await res.json()) as {
       data: { date: string; count: number }[];
@@ -81,7 +84,10 @@ describe('GET /api/admin/stats/signups', () => {
 
   it('caps days at 90', async () => {
     await asAdmin();
-    const res = await signupsGet({ request: req('/api/admin/stats/signups?days=500'), context: { db: createDb(env.DB) } });
+    const res = await signupsGet({
+      request: req('/api/admin/stats/signups?days=500'),
+      context: { db: createDb(env.DB) },
+    });
     expect(res.status).toBe(200);
     const body = (await res.json()) as { days: number; data: unknown[] };
     expect(body.days).toBe(90);
@@ -100,7 +106,10 @@ describe('GET /api/admin/stats/organizations', () => {
       createdAt: todaySec,
     });
 
-    const res = await orgsGet({ request: req('/api/admin/stats/organizations?days=5'), context: { db: createDb(env.DB) } });
+    const res = await orgsGet({
+      request: req('/api/admin/stats/organizations?days=5'),
+      context: { db: createDb(env.DB) },
+    });
     expect(res.status).toBe(200);
     const body = (await res.json()) as { data: unknown[]; total: number; days: number };
     expect(body.days).toBe(5);
@@ -128,7 +137,10 @@ describe('GET /api/admin/stats/projects', () => {
       updatedAt: todaySec,
     });
 
-    const res = await projectsGet({ request: req('/api/admin/stats/projects?days=3'), context: { db: createDb(env.DB) } });
+    const res = await projectsGet({
+      request: req('/api/admin/stats/projects?days=3'),
+      context: { db: createDb(env.DB) },
+    });
     expect(res.status).toBe(200);
     const body = (await res.json()) as { data: unknown[]; total: number };
     expect(body.data.length).toBe(3);
@@ -174,7 +186,10 @@ describe('GET /api/admin/stats/webhooks', () => {
       type: 'customer.created',
     });
 
-    const res = await webhooksGet({ request: req('/api/admin/stats/webhooks?days=3'), context: { db: createDb(env.DB) } });
+    const res = await webhooksGet({
+      request: req('/api/admin/stats/webhooks?days=3'),
+      context: { db: createDb(env.DB) },
+    });
     expect(res.status).toBe(200);
     const body = (await res.json()) as {
       data: { success: number; failed: number; pending: number }[];
@@ -189,7 +204,10 @@ describe('GET /api/admin/stats/webhooks', () => {
 
   it('caps days at 30', async () => {
     await asAdmin();
-    const res = await webhooksGet({ request: req('/api/admin/stats/webhooks?days=200'), context: { db: createDb(env.DB) } });
+    const res = await webhooksGet({
+      request: req('/api/admin/stats/webhooks?days=200'),
+      context: { db: createDb(env.DB) },
+    });
     expect(res.status).toBe(200);
     const body = (await res.json()) as { days: number; data: unknown[] };
     expect(body.days).toBe(30);

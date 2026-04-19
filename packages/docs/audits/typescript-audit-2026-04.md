@@ -19,18 +19,18 @@ Order-of-attack is at the bottom.
 
 ## Verified counts
 
-| Signal                                          |   Count | Where                                                               |
-| ----------------------------------------------- | ------: | ------------------------------------------------------------------- |
-| `as Record<string, unknown>`                    |     115 | `packages/web/src` (29 files)                                       |
-| `as any`                                        |     298 | all packages (54 files)                                             |
-| `@ts-ignore` / `@ts-expect-error`               |       3 | 2 in d3 charts, 1 in workers `types.d.ts`                          |
-| `satisfies`                                     |       4 | `UserSession.ts`, `stripeEventLedger.ts`, `oauth-relay.ts`, +1     |
-| `assertNever`                                   |       6 | `assert-never.ts`, rob2 adapter, robins-i adapter (DONE)           |
-| `validateSearch` / TanStack Router `validator:`  |       2 | both now use Zod `.catch('')` (DONE)                                |
-| Brand types (Zod `.brand<>`)                    |      11 | `shared/src/ids.ts`, adopted in 49 files (DONE)                    |
-| Type tests (`expectTypeOf`, tsd, `assertType`)  |       0 | none                                                                |
-| `createServerFn` (TanStack Start typed RPC)     |       0 | not used                                                            |
-| `$inferSelect` / `$inferInsert` / `Infer*Model` | 2 files | `db/schema.ts` (30 exports), `db/stripeEventLedger.ts` (DONE)      |
+| Signal                                          |   Count | Where                                                          |
+| ----------------------------------------------- | ------: | -------------------------------------------------------------- |
+| `as Record<string, unknown>`                    |     115 | `packages/web/src` (29 files)                                  |
+| `as any`                                        |     298 | all packages (54 files)                                        |
+| `@ts-ignore` / `@ts-expect-error`               |       3 | 2 in d3 charts, 1 in workers `types.d.ts`                      |
+| `satisfies`                                     |       4 | `UserSession.ts`, `stripeEventLedger.ts`, `oauth-relay.ts`, +1 |
+| `assertNever`                                   |       6 | `assert-never.ts`, rob2 adapter, robins-i adapter (DONE)       |
+| `validateSearch` / TanStack Router `validator:` |       2 | both now use Zod `.catch('')` (DONE)                           |
+| Brand types (Zod `.brand<>`)                    |      11 | `shared/src/ids.ts`, adopted in 49 files (DONE)                |
+| Type tests (`expectTypeOf`, tsd, `assertType`)  |       0 | none                                                           |
+| `createServerFn` (TanStack Start typed RPC)     |       0 | not used                                                       |
+| `$inferSelect` / `$inferInsert` / `Infer*Model` | 2 files | `db/schema.ts` (30 exports), `db/stripeEventLedger.ts` (DONE)  |
 
 ---
 
@@ -350,15 +350,15 @@ Move all `as Record<string, unknown>` and `as ProjectMeta` casts into the façad
 
 ## Suggested order of attack (revised)
 
-| #   | Change                                                                         |                   Effort | Why now                                                                                                        |
-| --- | ------------------------------------------------------------------------------ | -----------------------: | -------------------------------------------------------------------------------------------------------------- |
-| 1   | Auth `as unknown as` → Zod parse (H2); oauth-relay module augmentation (H6)    |                   1–2 hr | Closes the two highest-trust auth bypasses.                                                                    |
-| 2   | Pick 3–5 hot endpoints, apply C1 Option A (`export type` from route)           |                 half day | Kills a chunk of `as Record<string, unknown>` with minimal ceremony. Use Option B (Zod) only for billing/auth. |
-| 3   | Checklist registry → discriminated map + `satisfies` (H1 + G4)                 |                   2–3 hr | Removes the most concentrated `any` cluster.                                                                   |
-| 4   | Add Vitest type tests for `ReconciliationAdapter` (G1)                         |                   1–2 hr | Cheaper than the C2 full refactor; catches future regressions.                                                 |
-| 5   | `@types/google.picker` install + single-guard cleanup (H3)                     |                   30 min | Quick win.                                                                                                     |
-| 6   | `verbatimModuleSyntax: true` in web tsconfig (G5)                              |  1–2 hr (mostly autofix) | One-time cleanup; pays off in build cleanliness.                                                               |
-| 7   | `server.ts` env typing (H4); Yjs facade extraction                            |                    1 day | Lower priority — current state isn't actively dangerous.                                                       |
+| #   | Change                                                                      |                  Effort | Why now                                                                                                        |
+| --- | --------------------------------------------------------------------------- | ----------------------: | -------------------------------------------------------------------------------------------------------------- |
+| 1   | Auth `as unknown as` → Zod parse (H2); oauth-relay module augmentation (H6) |                  1–2 hr | Closes the two highest-trust auth bypasses.                                                                    |
+| 2   | Pick 3–5 hot endpoints, apply C1 Option A (`export type` from route)        |                half day | Kills a chunk of `as Record<string, unknown>` with minimal ceremony. Use Option B (Zod) only for billing/auth. |
+| 3   | Checklist registry → discriminated map + `satisfies` (H1 + G4)              |                  2–3 hr | Removes the most concentrated `any` cluster.                                                                   |
+| 4   | Add Vitest type tests for `ReconciliationAdapter` (G1)                      |                  1–2 hr | Cheaper than the C2 full refactor; catches future regressions.                                                 |
+| 5   | `@types/google.picker` install + single-guard cleanup (H3)                  |                  30 min | Quick win.                                                                                                     |
+| 6   | `verbatimModuleSyntax: true` in web tsconfig (G5)                           | 1–2 hr (mostly autofix) | One-time cleanup; pays off in build cleanliness.                                                               |
+| 7   | `server.ts` env typing (H4); Yjs facade extraction                          |                   1 day | Lower priority — current state isn't actively dangerous.                                                       |
 
 Item 1 is the highest leverage. Items 2–4 are the type-safety substance. Items 5–7 are polish.
 

@@ -29,14 +29,7 @@ interface MediaFilesQueryOptions {
 
 async function handleMediaFilesQuery(
   db: Database,
-  {
-    page,
-    limit,
-    orderBy: orderByParam,
-    order,
-    filterBy,
-    filterValue,
-  }: MediaFilesQueryOptions,
+  { page, limit, orderBy: orderByParam, order, filterBy, filterValue }: MediaFilesQueryOptions,
 ): Promise<Response> {
   try {
     const offset = (page - 1) * limit;

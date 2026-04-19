@@ -46,7 +46,10 @@ function syncReq(): Request {
 describe('POST /api/billing/sync-after-success', () => {
   it('returns no-op when user has no stripeCustomerId', async () => {
     const session = mockSession({ stripeCustomerId: null });
-    const res = await handlePost({ request: syncReq(), context: { db: createDb(env.DB), session } });
+    const res = await handlePost({
+      request: syncReq(),
+      context: { db: createDb(env.DB), session },
+    });
     expect(res.status).toBe(200);
     const body = (await res.json()) as { status: string; stripeSubscriptionId: string | null };
     expect(body).toEqual({ status: 'none', stripeSubscriptionId: null });
@@ -56,7 +59,10 @@ describe('POST /api/billing/sync-after-success', () => {
   it('calls syncStripeSubscription and returns its result', async () => {
     const session = mockSession();
     syncMock.mockResolvedValueOnce({ status: 'active', stripeSubscriptionId: 'sub_123' });
-    const res = await handlePost({ request: syncReq(), context: { db: createDb(env.DB), session } });
+    const res = await handlePost({
+      request: syncReq(),
+      context: { db: createDb(env.DB), session },
+    });
     expect(res.status).toBe(200);
     const body = (await res.json()) as { status: string; stripeSubscriptionId: string | null };
     expect(body).toEqual({ status: 'active', stripeSubscriptionId: 'sub_123' });
@@ -68,7 +74,10 @@ describe('POST /api/billing/sync-after-success', () => {
   it('returns 500 when syncStripeSubscription throws', async () => {
     const session = mockSession();
     syncMock.mockRejectedValueOnce(new Error('stripe down'));
-    const res = await handlePost({ request: syncReq(), context: { db: createDb(env.DB), session } });
+    const res = await handlePost({
+      request: syncReq(),
+      context: { db: createDb(env.DB), session },
+    });
     expect(res.status).toBe(500);
     const body = (await res.json()) as { code: string; details?: { operation: string } };
     expect(body.code).toBeDefined();

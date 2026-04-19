@@ -182,7 +182,6 @@ describe('POST /api/users/avatar', () => {
       }),
     );
   });
-
 });
 
 describe('GET /api/users/avatar/:userId', () => {

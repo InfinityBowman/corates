@@ -29,7 +29,10 @@ describe('GET /api/billing/validate-plan-change', () => {
       user: { id: 'any', email: 'any@example.com', name: 'Any' },
       session: { id: 'sess-1', userId: 'any', activeOrganizationId: null },
     };
-    const res = await handleGet({ request: validateReq(''), context: { db: createDb(env.DB), session: sessionResult } });
+    const res = await handleGet({
+      request: validateReq(''),
+      context: { db: createDb(env.DB), session: sessionResult },
+    });
     expect(res.status).toBe(400);
     const body = (await res.json()) as { code: string };
     expect(body.code).toMatch(/VALIDATION_FIELD_REQUIRED/);
@@ -40,7 +43,10 @@ describe('GET /api/billing/validate-plan-change', () => {
       user: { id: 'orphan-user', email: 'orphan@example.com', name: 'Orphan' },
       session: { id: 'sess-1', userId: 'orphan-user', activeOrganizationId: null },
     };
-    const res = await handleGet({ request: validateReq('?targetPlan=starter_team'), context: { db: createDb(env.DB), session: sessionResult } });
+    const res = await handleGet({
+      request: validateReq('?targetPlan=starter_team'),
+      context: { db: createDb(env.DB), session: sessionResult },
+    });
     expect(res.status).toBe(403);
     const body = (await res.json()) as { code: string; details?: { reason?: string } };
     expect(body.code).toBe('AUTH_FORBIDDEN');
@@ -53,7 +59,10 @@ describe('GET /api/billing/validate-plan-change', () => {
       user: { id: owner.id, email: owner.email, name: owner.name },
       session: { id: 'sess-1', userId: owner.id, activeOrganizationId: org.id },
     };
-    const res = await handleGet({ request: validateReq('?targetPlan=starter_team'), context: { db: createDb(env.DB), session: sessionResult! } });
+    const res = await handleGet({
+      request: validateReq('?targetPlan=starter_team'),
+      context: { db: createDb(env.DB), session: sessionResult! },
+    });
     expect(res.status).toBe(200);
     const body = (await res.json()) as {
       valid: boolean;
@@ -86,7 +95,10 @@ describe('GET /api/billing/validate-plan-change', () => {
       user: { id: owner.id, email: owner.email, name: owner.name },
       session: { id: 'sess-1', userId: owner.id, activeOrganizationId: org.id },
     };
-    const res = await handleGet({ request: validateReq('?targetPlan=starter_team'), context: { db: createDb(env.DB), session: sessionResult! } });
+    const res = await handleGet({
+      request: validateReq('?targetPlan=starter_team'),
+      context: { db: createDb(env.DB), session: sessionResult! },
+    });
     expect(res.status).toBe(200);
     const body = (await res.json()) as {
       valid: boolean;

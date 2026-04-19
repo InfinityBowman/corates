@@ -30,7 +30,14 @@ export const handlePut = async ({ request, params, context: { db } }: HandlerArg
   const writeAccess = await requireOrgWriteAccess(request.method, db, params.orgId);
   if (!writeAccess.ok) return writeAccess.response;
 
-  const access = await requireProjectAccess(request, env, db, params.orgId, params.projectId, 'owner');
+  const access = await requireProjectAccess(
+    request,
+    env,
+    db,
+    params.orgId,
+    params.projectId,
+    'owner',
+  );
   if (!access.ok) return access.response;
 
   let body: { role?: unknown };

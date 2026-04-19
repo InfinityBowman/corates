@@ -11,7 +11,11 @@ import { eq } from 'drizzle-orm';
 import { createDomainError, SYSTEM_ERRORS, USER_ERRORS } from '@corates/shared';
 import { adminMiddleware } from '@/server/middleware/admin';
 
-type HandlerArgs = { request: Request; params: { userId: string; sessionId: string }; context: { db: Database } };
+type HandlerArgs = {
+  request: Request;
+  params: { userId: string; sessionId: string };
+  context: { db: Database };
+};
 
 export const handleDelete = async ({ params, context: { db } }: HandlerArgs) => {
   const { userId, sessionId } = params;

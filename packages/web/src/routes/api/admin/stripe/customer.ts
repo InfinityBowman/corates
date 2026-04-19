@@ -34,7 +34,13 @@ interface LinkedOrg {
   slug: string | null;
 }
 
-export const handleGet = async ({ request, context: { db } }: { request: Request; context: { db: Database } }) => {
+export const handleGet = async ({
+  request,
+  context: { db },
+}: {
+  request: Request;
+  context: { db: Database };
+}) => {
   const url = new URL(request.url);
   const email = url.searchParams.get('email') || undefined;
   const customerId = url.searchParams.get('customerId') || undefined;

@@ -11,7 +11,13 @@ import { desc, eq } from 'drizzle-orm';
 import { createDomainError, SYSTEM_ERRORS } from '@corates/shared';
 import { adminMiddleware } from '@/server/middleware/admin';
 
-export const handleGet = async ({ request, context: { db } }: { request: Request; context: { db: Database } }) => {
+export const handleGet = async ({
+  request,
+  context: { db },
+}: {
+  request: Request;
+  context: { db: Database };
+}) => {
   try {
     const url = new URL(request.url);
     const limit = Math.min(

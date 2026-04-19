@@ -16,7 +16,13 @@ interface ProjectStats {
   fileCount: number;
 }
 
-export const handleGet = async ({ request, context: { db } }: { request: Request; context: { db: Database } }) => {
+export const handleGet = async ({
+  request,
+  context: { db },
+}: {
+  request: Request;
+  context: { db: Database };
+}) => {
   try {
     const url = new URL(request.url);
     const page = parseInt(url.searchParams.get('page') || '1', 10);

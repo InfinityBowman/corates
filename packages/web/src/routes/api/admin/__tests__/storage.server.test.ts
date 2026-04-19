@@ -63,7 +63,10 @@ describe('GET /api/admin/storage/documents', () => {
     await putR2('projects/p1/studies/s1/file2.pdf', 'b'.repeat(200));
     await putR2('projects/p1/studies/s2/file3.pdf', 'c'.repeat(300));
 
-    const res = await listDocs({ request: listReq('/api/admin/storage/documents?limit=2'), context: { db: createDb(env.DB) } });
+    const res = await listDocs({
+      request: listReq('/api/admin/storage/documents?limit=2'),
+      context: { db: createDb(env.DB) },
+    });
     expect(res.status).toBe(200);
     const body = (await res.json()) as {
       documents: { fileName: string }[];
@@ -76,9 +79,15 @@ describe('GET /api/admin/storage/documents', () => {
 
   it('rejects invalid limit values', async () => {
     await asAdmin();
-    const res1 = await listDocs({ request: listReq('/api/admin/storage/documents?limit=0'), context: { db: createDb(env.DB) } });
+    const res1 = await listDocs({
+      request: listReq('/api/admin/storage/documents?limit=0'),
+      context: { db: createDb(env.DB) },
+    });
     expect(res1.status).toBe(400);
-    const res2 = await listDocs({ request: listReq('/api/admin/storage/documents?limit=99999'), context: { db: createDb(env.DB) } });
+    const res2 = await listDocs({
+      request: listReq('/api/admin/storage/documents?limit=99999'),
+      context: { db: createDb(env.DB) },
+    });
     expect(res2.status).toBe(400);
   });
 
@@ -103,7 +112,10 @@ describe('GET /api/admin/storage/documents', () => {
     await putR2('projects/p1/studies/s2/file2.pdf', 'b'.repeat(300));
     await env.PDF_BUCKET.put('invalid-key', 'c'.repeat(50));
 
-    const res = await listDocs({ request: listReq('/api/admin/storage/documents?limit=10'), context: { db: createDb(env.DB) } });
+    const res = await listDocs({
+      request: listReq('/api/admin/storage/documents?limit=10'),
+      context: { db: createDb(env.DB) },
+    });
     expect(res.status).toBe(200);
     const body = (await res.json()) as { documents: { projectId: string; studyId: string }[] };
     expect(body.documents.length).toBe(2);
@@ -154,7 +166,10 @@ describe('GET /api/admin/storage/documents', () => {
     await putR2(`projects/${projectId1}/studies/s1/file1.pdf`, 'a'.repeat(100));
     await putR2(`projects/${projectId2}/studies/s1/file2.pdf`, 'b'.repeat(200));
 
-    const res = await listDocs({ request: listReq('/api/admin/storage/documents?limit=10'), context: { db: createDb(env.DB) } });
+    const res = await listDocs({
+      request: listReq('/api/admin/storage/documents?limit=10'),
+      context: { db: createDb(env.DB) },
+    });
     expect(res.status).toBe(200);
     const body = (await res.json()) as { documents: { projectId: string; orphaned: boolean }[] };
     const doc1 = body.documents.find(d => d.projectId === projectId1);

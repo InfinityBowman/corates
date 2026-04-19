@@ -25,7 +25,13 @@ interface WebhookRow {
   count: number;
 }
 
-export const handleGet = async ({ request, context: { db } }: { request: Request; context: { db: Database } }) => {
+export const handleGet = async ({
+  request,
+  context: { db },
+}: {
+  request: Request;
+  context: { db: Database };
+}) => {
   const url = new URL(request.url);
   const days = Math.min(parseInt(url.searchParams.get('days') || '7', 10) || 7, 30);
 

@@ -52,7 +52,10 @@ describe('GET /api/admin/projects', () => {
     await buildProject();
     await buildProject();
 
-    const res = await listProjects({ request: listReq('/api/admin/projects?page=1&limit=2'), context: { db: createDb(env.DB) } });
+    const res = await listProjects({
+      request: listReq('/api/admin/projects?page=1&limit=2'),
+      context: { db: createDb(env.DB) },
+    });
     expect(res.status).toBe(200);
     const body = (await res.json()) as {
       projects: { id: string; orgName: string | null; creatorEmail: string | null }[];
@@ -71,7 +74,10 @@ describe('GET /api/admin/projects', () => {
     await buildProject({ org, owner, project: { id: 'p-amphi', name: 'Amphibian Census' } });
     await buildProject({ org, owner, project: { id: 'p-other', name: 'Other Topic' } });
 
-    const res = await listProjects({ request: listReq('/api/admin/projects?search=amphi'), context: { db: createDb(env.DB) } });
+    const res = await listProjects({
+      request: listReq('/api/admin/projects?search=amphi'),
+      context: { db: createDb(env.DB) },
+    });
     expect(res.status).toBe(200);
     const body = (await res.json()) as { projects: { name: string }[] };
     expect(body.projects.length).toBe(1);

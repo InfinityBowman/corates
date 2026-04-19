@@ -21,7 +21,11 @@ const UpdateGrantBodySchema = z.object({
   revokedAt: z.coerce.date().optional().nullable(),
 });
 
-type HandlerArgs = { request: Request; params: { orgId: OrgId; grantId: OrgAccessGrantId }; context: { db: Database } };
+type HandlerArgs = {
+  request: Request;
+  params: { orgId: OrgId; grantId: OrgAccessGrantId };
+  context: { db: Database };
+};
 
 export const handlePut = async ({ request, params, context: { db } }: HandlerArgs) => {
   const { orgId, grantId } = params;

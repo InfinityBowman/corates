@@ -5,17 +5,16 @@ import { projectMembers, projects } from '@corates/db/schema';
 import { eq } from 'drizzle-orm';
 import { getProjectDocStub } from '@corates/workers/project-doc-id';
 import { FILE_SIZE_LIMITS } from '@corates/workers/constants';
-import {
-  createDomainError,
-  FILE_ERRORS,
-  SYSTEM_ERRORS,
-  VALIDATION_ERRORS,
-} from '@corates/shared';
+import { createDomainError, FILE_ERRORS, SYSTEM_ERRORS, VALIDATION_ERRORS } from '@corates/shared';
 import { authMiddleware, type Session } from '@/server/middleware/auth';
 
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
 
-async function syncAvatarToProjects(db: Database, userId: string, avatarUrl: string): Promise<void> {
+async function syncAvatarToProjects(
+  db: Database,
+  userId: string,
+  avatarUrl: string,
+): Promise<void> {
   try {
     const memberships = await db
       .select({ projectId: projectMembers.projectId, orgId: projects.orgId })

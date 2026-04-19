@@ -15,7 +15,6 @@ import { TIME_DURATIONS } from '@corates/workers/constants';
 import { adminMiddleware } from '@/server/middleware/admin';
 
 export const handleGet = async ({ context: { db } }: { context: { db: Database } }) => {
-
   try {
     const [userCount, projectCount, sessionCount] = await Promise.all([
       db.select({ count: count() }).from(user),

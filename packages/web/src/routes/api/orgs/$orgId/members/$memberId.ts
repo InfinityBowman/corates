@@ -30,7 +30,11 @@ function getOrgApi(): OrgApiMethods {
 // plugin removeMember endpoint accepts a userId, not a member-row id, and the
 // downstream `requireOrgMemberRemoval` policy treats it as targetUserId. The
 // path slug name is historical.
-type HandlerArgs = { request: Request; params: { orgId: OrgId; memberId: UserId }; context: { db: Database } };
+type HandlerArgs = {
+  request: Request;
+  params: { orgId: OrgId; memberId: UserId };
+  context: { db: Database };
+};
 
 export const handlePut = async ({ request, params, context: { db } }: HandlerArgs) => {
   const membership = await requireOrgMembership(request, env, db, params.orgId, 'admin');

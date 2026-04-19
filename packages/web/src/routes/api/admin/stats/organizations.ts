@@ -11,7 +11,13 @@ import { createDomainError, SYSTEM_ERRORS } from '@corates/shared';
 import { adminMiddleware } from '@/server/middleware/admin';
 import { fillMissingDays } from '@/server/lib/fillMissingDays';
 
-export const handleGet = async ({ request, context: { db } }: { request: Request; context: { db: Database } }) => {
+export const handleGet = async ({
+  request,
+  context: { db },
+}: {
+  request: Request;
+  context: { db: Database };
+}) => {
   const url = new URL(request.url);
   const days = Math.min(parseInt(url.searchParams.get('days') || '30', 10) || 30, 90);
 

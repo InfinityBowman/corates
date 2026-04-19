@@ -48,7 +48,10 @@ function membersReq(): Request {
 describe('GET /api/billing/members', () => {
   it('returns 403 when caller has no org', async () => {
     const session = mockSession({ userId: 'orphan', email: 'o@example.com', name: 'O' });
-    const res = await handleGet({ request: membersReq(), context: { db: createDb(env.DB), session } });
+    const res = await handleGet({
+      request: membersReq(),
+      context: { db: createDb(env.DB), session },
+    });
     expect(res.status).toBe(403);
     expect(listMembersMock).not.toHaveBeenCalled();
   });
@@ -68,7 +71,10 @@ describe('GET /api/billing/members', () => {
       ],
     });
 
-    const res = await handleGet({ request: membersReq(), context: { db: createDb(env.DB), session } });
+    const res = await handleGet({
+      request: membersReq(),
+      context: { db: createDb(env.DB), session },
+    });
     expect(res.status).toBe(200);
     const body = (await res.json()) as { members: unknown[]; count: number };
     expect(body.count).toBe(2);
@@ -88,7 +94,10 @@ describe('GET /api/billing/members', () => {
     });
     listMembersMock.mockResolvedValueOnce({});
 
-    const res = await handleGet({ request: membersReq(), context: { db: createDb(env.DB), session } });
+    const res = await handleGet({
+      request: membersReq(),
+      context: { db: createDb(env.DB), session },
+    });
     expect(res.status).toBe(200);
     const body = (await res.json()) as { members: unknown[]; count: number };
     expect(body.count).toBe(0);

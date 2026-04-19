@@ -66,8 +66,15 @@ async function seedSubscription(orgId: string, customerId: string, status = 'act
 
 describe('GET /api/billing/invoices', () => {
   it('returns 403 when caller has no org', async () => {
-    const session = mockSession({ userId: 'orphan-user', email: 'orphan@example.com', name: 'Orphan' });
-    const res = await handleGet({ request: invoicesReq(), context: { db: createDb(env.DB), session } });
+    const session = mockSession({
+      userId: 'orphan-user',
+      email: 'orphan@example.com',
+      name: 'Orphan',
+    });
+    const res = await handleGet({
+      request: invoicesReq(),
+      context: { db: createDb(env.DB), session },
+    });
     expect(res.status).toBe(403);
     const body = (await res.json()) as { code: string; details?: { reason?: string } };
     expect(body.code).toBe('AUTH_FORBIDDEN');
@@ -82,7 +89,10 @@ describe('GET /api/billing/invoices', () => {
       name: owner.name,
       activeOrganizationId: org.id,
     });
-    const res = await handleGet({ request: invoicesReq(), context: { db: createDb(env.DB), session } });
+    const res = await handleGet({
+      request: invoicesReq(),
+      context: { db: createDb(env.DB), session },
+    });
     expect(res.status).toBe(200);
     const body = (await res.json()) as { invoices: unknown[] };
     expect(body.invoices).toEqual([]);
@@ -115,7 +125,10 @@ describe('GET /api/billing/invoices', () => {
       ],
     });
 
-    const res = await handleGet({ request: invoicesReq(), context: { db: createDb(env.DB), session } });
+    const res = await handleGet({
+      request: invoicesReq(),
+      context: { db: createDb(env.DB), session },
+    });
     expect(res.status).toBe(200);
     const body = (await res.json()) as {
       invoices: Array<{
@@ -149,7 +162,10 @@ describe('GET /api/billing/invoices', () => {
     });
     invoicesListMock.mockRejectedValueOnce(new Error('stripe down'));
 
-    const res = await handleGet({ request: invoicesReq(), context: { db: createDb(env.DB), session } });
+    const res = await handleGet({
+      request: invoicesReq(),
+      context: { db: createDb(env.DB), session },
+    });
     expect(res.status).toBe(500);
     const body = (await res.json()) as { code: string; details?: { operation?: string } };
     expect(body.code).toBe('SYSTEM_INTERNAL_ERROR');

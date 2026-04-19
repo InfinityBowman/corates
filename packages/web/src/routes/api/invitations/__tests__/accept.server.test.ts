@@ -83,7 +83,10 @@ describe('POST /api/invitations/accept', () => {
 
     currentUser = { id: invitee.id, email: invitee.email };
 
-    const res = await acceptHandler({ request: jsonReq({ token }), context: { session: mockSession() } });
+    const res = await acceptHandler({
+      request: jsonReq({ token }),
+      context: { session: mockSession() },
+    });
 
     expect(res.status).toBe(200);
     const body = (await res.json()) as {
@@ -133,7 +136,10 @@ describe('POST /api/invitations/accept', () => {
     const { owner } = await buildProject();
     currentUser = { id: owner.id, email: owner.email };
 
-    const res = await acceptHandler({ request: jsonReq({ token: 'invalid-token' }), context: { session: mockSession() } });
+    const res = await acceptHandler({
+      request: jsonReq({ token: 'invalid-token' }),
+      context: { session: mockSession() },
+    });
 
     expect(res.status).toBe(400);
     const body = (await res.json()) as { code: string };
@@ -156,7 +162,10 @@ describe('POST /api/invitations/accept', () => {
 
     currentUser = { id: invitee.id, email: invitee.email };
 
-    const res = await acceptHandler({ request: jsonReq({ token }), context: { session: mockSession() } });
+    const res = await acceptHandler({
+      request: jsonReq({ token }),
+      context: { session: mockSession() },
+    });
 
     expect(res.status).toBe(400);
     const body = (await res.json()) as { code: string; details?: { value?: string } };
@@ -180,7 +189,10 @@ describe('POST /api/invitations/accept', () => {
 
     currentUser = { id: differentUser.id, email: differentUser.email };
 
-    const res = await acceptHandler({ request: jsonReq({ token }), context: { session: mockSession() } });
+    const res = await acceptHandler({
+      request: jsonReq({ token }),
+      context: { session: mockSession() },
+    });
 
     expect(res.status).toBe(403);
     const body = (await res.json()) as { code: string; details?: { reason?: string } };
@@ -204,7 +216,10 @@ describe('POST /api/invitations/accept', () => {
 
     currentUser = { id: existingMember.id, email: existingMember.email };
 
-    const res = await acceptHandler({ request: jsonReq({ token }), context: { session: mockSession() } });
+    const res = await acceptHandler({
+      request: jsonReq({ token }),
+      context: { session: mockSession() },
+    });
 
     expect(res.status).toBe(200);
     const body = (await res.json()) as { success: boolean; alreadyMember: boolean };
@@ -251,7 +266,10 @@ describe('POST /api/invitations/accept', () => {
 
     currentUser = { id: invitee.id, email: invitee.email };
 
-    const res = await acceptHandler({ request: jsonReq({ token }), context: { session: mockSession() } });
+    const res = await acceptHandler({
+      request: jsonReq({ token }),
+      context: { session: mockSession() },
+    });
 
     expect(res.status).toBe(403);
     const body = (await res.json()) as { code: string; details?: { reason?: string } };

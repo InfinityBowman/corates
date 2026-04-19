@@ -41,7 +41,13 @@ interface StorageDoc {
   etag: string;
 }
 
-export const handleGet = async ({ request, context: { db } }: { request: Request; context: { db: Database } }) => {
+export const handleGet = async ({
+  request,
+  context: { db },
+}: {
+  request: Request;
+  context: { db: Database };
+}) => {
   try {
     const url = new URL(request.url);
     const requestCursor = url.searchParams.get('cursor')?.trim() || undefined;

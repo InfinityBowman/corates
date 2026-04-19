@@ -152,15 +152,15 @@ Modern TanStack/Vite projects set this `true`. Forces explicit `import type { ..
 
 ## Suggested order of attack
 
-| #   | Change                                                                           |                    Cost | Why now                                                                              |
-| --- | -------------------------------------------------------------------------------- | ----------------------: | ------------------------------------------------------------------------------------ |
-| 1   | ~~`dbMiddleware` across all routes, eliminate `createDb(env.DB)` (G6)~~ DONE |           -- | Zero `createDb` calls remain in source files.                                       |
-| 2   | ~~**Pilot:** add `loader` + `useSuspenseQuery` to **one** page route (G4)~~ DONE |                      -- | Pilot on `admin/users.$userId.tsx`. Needs end-to-end verification in deployed worker.|
-| 3   | If pilot succeeds: incremental loader adoption, page by page                     |                 ongoing | Biggest user-visible win.                                                            |
-| 4   | Path-param Zod via param middleware (G3)                                         |                1–2 days | Rides on the existing middleware system.                                             |
-| 5   | Router context for auth (G5)                                                     |                  1–2 hr | Separate refactor; don't bundle.                                                     |
-| 6   | `.server.ts` audit (G7)                                                          |                  1–2 hr | One-time cleanup.                                                                    |
-| 7   | `verbatimModuleSyntax: true` (G8)                                                | 1–2 hr (mostly autofix) | One-time cleanup.                                                                    |
+| #   | Change                                                                           |                    Cost | Why now                                                                               |
+| --- | -------------------------------------------------------------------------------- | ----------------------: | ------------------------------------------------------------------------------------- |
+| 1   | ~~`dbMiddleware` across all routes, eliminate `createDb(env.DB)` (G6)~~ DONE     |                      -- | Zero `createDb` calls remain in source files.                                         |
+| 2   | ~~**Pilot:** add `loader` + `useSuspenseQuery` to **one** page route (G4)~~ DONE |                      -- | Pilot on `admin/users.$userId.tsx`. Needs end-to-end verification in deployed worker. |
+| 3   | If pilot succeeds: incremental loader adoption, page by page                     |                 ongoing | Biggest user-visible win.                                                             |
+| 4   | Path-param Zod via param middleware (G3)                                         |                1–2 days | Rides on the existing middleware system.                                              |
+| 5   | Router context for auth (G5)                                                     |                  1–2 hr | Separate refactor; don't bundle.                                                      |
+| 6   | `.server.ts` audit (G7)                                                          |                  1–2 hr | One-time cleanup.                                                                     |
+| 7   | `verbatimModuleSyntax: true` (G8)                                                | 1–2 hr (mostly autofix) | One-time cleanup.                                                                     |
 
 The **loader pilot** in item 2 is deliberately scoped to one route — it's a pattern shift that interacts with TanStack Start's Cloudflare Workers integration in ways the docs don't fully cover.
 

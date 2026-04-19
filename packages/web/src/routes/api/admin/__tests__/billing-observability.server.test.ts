@@ -150,7 +150,11 @@ describe('GET /api/admin/orgs/:orgId/billing/reconcile', () => {
       });
     }
 
-    const res = await reconcile({ request: reconcileReq(orgId), params: { orgId }, context: { db: createDb(env.DB) } });
+    const res = await reconcile({
+      request: reconcileReq(orgId),
+      params: { orgId },
+      context: { db: createDb(env.DB) },
+    });
     expect(res.status).toBe(200);
     const body = (await res.json()) as { stuckStates: Record<string, unknown>[] };
     const failure = body.stuckStates.find(s => s.type === 'repeated_webhook_failures');
@@ -218,7 +222,10 @@ describe('GET /api/admin/billing/ledger', () => {
       type: 'customer.subscription.updated',
     });
 
-    const res = await ledger({ request: ledgerReq('?limit=50'), context: { db: createDb(env.DB) } });
+    const res = await ledger({
+      request: ledgerReq('?limit=50'),
+      context: { db: createDb(env.DB) },
+    });
     expect(res.status).toBe(200);
     const body = (await res.json()) as {
       stats: { total: number; byStatus: Record<string, number>; byType: Record<string, number> };
@@ -248,7 +255,10 @@ describe('GET /api/admin/billing/ledger', () => {
       status: 'failed',
     });
 
-    const res = await ledger({ request: ledgerReq('?status=failed&limit=50'), context: { db: createDb(env.DB) } });
+    const res = await ledger({
+      request: ledgerReq('?status=failed&limit=50'),
+      context: { db: createDb(env.DB) },
+    });
     expect(res.status).toBe(200);
     const body = (await res.json()) as { entries: { status: string }[] };
     expect(body.entries.length).toBeGreaterThan(0);
@@ -294,7 +304,10 @@ describe('GET /api/admin/billing/stuck-states', () => {
       updatedAt: nowSec - 60 * 60,
     });
 
-    const res = await stuckStates({ request: stuckReq('?incompleteThreshold=30'), context: { db: createDb(env.DB) } });
+    const res = await stuckStates({
+      request: stuckReq('?incompleteThreshold=30'),
+      context: { db: createDb(env.DB) },
+    });
     expect(res.status).toBe(200);
     const body = (await res.json()) as { stuckOrgs: Record<string, unknown>[] };
     const found = body.stuckOrgs.find(s => s.subscriptionId === 'sub-stuck');

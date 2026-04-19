@@ -39,7 +39,10 @@ async function readLedger() {
 
 describe('Stripe webhook - phase 1 rejections', () => {
   it('returns 403 and writes ignored_unverified row when stripe-signature header is missing', async () => {
-    const res = await handlePost({ request: webhookReq('{"id":"evt_1"}'), context: { db: createDb(env.DB) } });
+    const res = await handlePost({
+      request: webhookReq('{"id":"evt_1"}'),
+      context: { db: createDb(env.DB) },
+    });
 
     expect(res.status).toBe(403);
     const body = (await res.json()) as { error: string };
@@ -58,10 +61,16 @@ describe('Stripe webhook - phase 1 rejections', () => {
     const body = JSON.stringify({ id: 'evt_dup', type: 'checkout.session.completed' });
     const headers = { 'stripe-signature': 'sig=1' };
 
-    const first = await handlePost({ request: webhookReq(body, headers), context: { db: createDb(env.DB) } });
+    const first = await handlePost({
+      request: webhookReq(body, headers),
+      context: { db: createDb(env.DB) },
+    });
     expect(first.status).toBe(200);
 
-    const second = await handlePost({ request: webhookReq(body, headers), context: { db: createDb(env.DB) } });
+    const second = await handlePost({
+      request: webhookReq(body, headers),
+      context: { db: createDb(env.DB) },
+    });
     expect(second.status).toBe(200);
     const json = (await second.json()) as { skipped?: string };
     expect(json.skipped).toBe('duplicate_payload');

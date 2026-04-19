@@ -27,7 +27,10 @@ describe('GET /api/billing/usage', () => {
       user: { id: 'orphan', email: 'o@example.com', name: 'O' },
       session: { id: 'sess', userId: 'orphan', activeOrganizationId: null },
     };
-    const res = await handleGet({ request: usageReq(), context: { db: createDb(env.DB), session: sessionResult } });
+    const res = await handleGet({
+      request: usageReq(),
+      context: { db: createDb(env.DB), session: sessionResult },
+    });
     expect(res.status).toBe(403);
     const body = (await res.json()) as { details?: { reason?: string } };
     expect(body.details?.reason).toBe('no_org_found');
@@ -56,7 +59,10 @@ describe('GET /api/billing/usage', () => {
       user: { id: owner.id, email: owner.email, name: owner.name },
       session: { id: 'sess', userId: owner.id, activeOrganizationId: org.id },
     };
-    const res = await handleGet({ request: usageReq(), context: { db: createDb(env.DB), session: sessionResult! } });
+    const res = await handleGet({
+      request: usageReq(),
+      context: { db: createDb(env.DB), session: sessionResult! },
+    });
     expect(res.status).toBe(200);
     const body = (await res.json()) as { projects: number; collaborators: number };
     expect(body.projects).toBe(3);

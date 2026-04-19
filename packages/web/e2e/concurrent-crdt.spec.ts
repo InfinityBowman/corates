@@ -166,10 +166,7 @@ async function runConcurrentEditCycle(
     await pageB.waitForTimeout(2000);
 
     // ---- Round 1: concurrent edits ----
-    await Promise.all([
-      opts.clickA(pageA, opts.round1Count),
-      opts.clickB(pageB, opts.round1Count),
-    ]);
+    await Promise.all([opts.clickA(pageA, opts.round1Count), opts.clickB(pageB, opts.round1Count)]);
 
     await pageA.waitForTimeout(3000);
     await pageB.waitForTimeout(3000);
@@ -195,10 +192,7 @@ async function runConcurrentEditCycle(
     expect(await opts.countB(pageB)).toBe(countB1);
 
     // ---- Round 2: post-cold-load concurrent edits ----
-    await Promise.all([
-      opts.clickA(pageA, opts.round2Count),
-      opts.clickB(pageB, opts.round2Count),
-    ]);
+    await Promise.all([opts.clickA(pageA, opts.round2Count), opts.clickB(pageB, opts.round2Count)]);
 
     await pageA.waitForTimeout(3000);
     await pageB.waitForTimeout(3000);
@@ -295,8 +289,8 @@ test.describe('Concurrent CRDT: AMSTAR2', () => {
       loadedSelector: 'AMSTAR2 Checklist',
       clickA: (page, count) => clickUncheckedCheckboxes(page, count),
       clickB: (page, count) => clickUncheckedCheckboxes(page, count),
-      countA: (page) => countCheckedCheckboxes(page),
-      countB: (page) => countCheckedCheckboxes(page),
+      countA: page => countCheckedCheckboxes(page),
+      countB: page => countCheckedCheckboxes(page),
       round1Count: 5,
       round2Count: 3,
     });
@@ -399,8 +393,8 @@ test.describe('Concurrent CRDT: ROB2', () => {
         await page.waitForTimeout(500);
         return clickROB2Buttons(page, 'N', count);
       },
-      countA: (page) => countSelectedROB2Buttons(page, 'Y'),
-      countB: (page) => countSelectedROB2Buttons(page, 'N'),
+      countA: page => countSelectedROB2Buttons(page, 'Y'),
+      countB: page => countSelectedROB2Buttons(page, 'N'),
       round1Count: 3,
       round2Count: 2,
     });

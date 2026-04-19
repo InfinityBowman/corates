@@ -26,7 +26,13 @@ interface StuckOrg {
   failedCount?: number;
 }
 
-export const handleGet = async ({ request, context: { db } }: { request: Request; context: { db: Database } }) => {
+export const handleGet = async ({
+  request,
+  context: { db },
+}: {
+  request: Request;
+  context: { db: Database };
+}) => {
   const url = new URL(request.url);
   const incompleteThresholdMinutes = parseInt(
     url.searchParams.get('incompleteThreshold') || '30',

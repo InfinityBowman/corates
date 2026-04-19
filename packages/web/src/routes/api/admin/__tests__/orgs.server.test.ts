@@ -53,7 +53,10 @@ describe('GET /api/admin/orgs', () => {
     await buildOrg({ org: { id: 'org-b', name: 'Org B', slug: 'org-b' } });
     await buildOrg({ org: { id: 'org-c', name: 'Org C', slug: 'org-c' } });
 
-    const res = await handleListOrgs({ request: listReq('/api/admin/orgs?page=1&limit=2'), context: { db: createDb(env.DB) } });
+    const res = await handleListOrgs({
+      request: listReq('/api/admin/orgs?page=1&limit=2'),
+      context: { db: createDb(env.DB) },
+    });
     expect(res.status).toBe(200);
     const body = (await res.json()) as {
       orgs: unknown[];
@@ -71,7 +74,10 @@ describe('GET /api/admin/orgs', () => {
     await buildOrg({ org: { id: 'org-a', name: 'Acme Corporation', slug: 'acme' } });
     await buildOrg({ org: { id: 'org-b', name: 'Beta Industries', slug: 'beta' } });
 
-    const res = await handleListOrgs({ request: listReq('/api/admin/orgs?search=acme'), context: { db: createDb(env.DB) } });
+    const res = await handleListOrgs({
+      request: listReq('/api/admin/orgs?search=acme'),
+      context: { db: createDb(env.DB) },
+    });
     expect(res.status).toBe(200);
     const body = (await res.json()) as {
       orgs: { name: string }[];
@@ -87,7 +93,10 @@ describe('GET /api/admin/orgs', () => {
     await buildOrg({ org: { id: 'org-a', name: 'Acme', slug: 'acme-corp' } });
     await buildOrg({ org: { id: 'org-b', name: 'Beta', slug: 'beta-industries' } });
 
-    const res = await handleListOrgs({ request: listReq('/api/admin/orgs?search=BETA'), context: { db: createDb(env.DB) } });
+    const res = await handleListOrgs({
+      request: listReq('/api/admin/orgs?search=BETA'),
+      context: { db: createDb(env.DB) },
+    });
     expect(res.status).toBe(200);
     const body = (await res.json()) as { orgs: { slug: string }[] };
     expect(body.orgs.length).toBe(1);

@@ -20,7 +20,11 @@ import { requireProjectAccess } from '@/server/guards/requireProjectAccess';
 import { requireOrgWriteAccess } from '@/server/guards/requireOrgWriteAccess';
 import { dbMiddleware } from '@/server/middleware/db';
 
-type HandlerArgs = { request: Request; params: { orgId: OrgId; projectId: ProjectId }; context: { db: Database } };
+type HandlerArgs = {
+  request: Request;
+  params: { orgId: OrgId; projectId: ProjectId };
+  context: { db: Database };
+};
 
 export const handleGet = async ({ request, params, context: { db } }: HandlerArgs) => {
   const orgMembership = await requireOrgMembership(request, env, db, params.orgId);
@@ -68,7 +72,14 @@ export const handlePost = async ({ request, params, context: { db } }: HandlerAr
   const writeAccess = await requireOrgWriteAccess(request.method, db, params.orgId);
   if (!writeAccess.ok) return writeAccess.response;
 
-  const access = await requireProjectAccess(request, env, db, params.orgId, params.projectId, 'owner');
+  const access = await requireProjectAccess(
+    request,
+    env,
+    db,
+    params.orgId,
+    params.projectId,
+    'owner',
+  );
   if (!access.ok) return access.response;
 
   let body: { userId?: unknown; email?: unknown; role?: unknown };
