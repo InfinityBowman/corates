@@ -14,6 +14,7 @@ import type {
   SummaryContext,
 } from '../engine/types';
 import type { TextRef } from '@/primitives/useProject/checklists';
+import { assertNever } from '@corates/shared';
 import {
   compareChecklists,
   getSectionBKeys,
@@ -475,7 +476,7 @@ function renderPage(context: EngineContext<any, any, ComparisonResult | null, Ro
     );
   }
 
-  return <div className='py-12 text-center'>Unknown item type</div>;
+  return assertNever(currentItem);
 }
 
 // ---------------------------------------------------------------------------
