@@ -16,7 +16,7 @@ import {
   SYSTEM_ERRORS,
   VALIDATION_ERRORS,
 } from '@corates/shared';
-import { requireAdmin } from '@/server/guards/requireAdmin';
+import { adminMiddleware } from '@/server/middleware/admin';
 import { isAllowedTable, type AllowedTableName } from '@/server/lib/dbTables';
 
 interface MediaFilesQueryOptions {
@@ -155,9 +155,6 @@ async function handleMediaFilesQuery({
 type HandlerArgs = { request: Request; params: { tableName: string } };
 
 export const handleGet = async ({ request, params }: HandlerArgs) => {
-  const guard = await requireAdmin(request, env);
-  if (!guard.ok) return guard.response;
-
   const { tableName } = params;
   const url = new URL(request.url);
   const page = parseInt(url.searchParams.get('page') || '1', 10) || 1;
@@ -280,5 +277,8 @@ export const handleGet = async ({ request, params }: HandlerArgs) => {
 };
 
 export const Route = createFileRoute('/api/admin/database/tables/$tableName/rows')({
-  server: { handlers: { GET: handleGet } },
+  server: {
+    middleware: [adminMiddleware],
+    handlers: { GET: handleGet },
+  },
 });

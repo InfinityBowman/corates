@@ -13,12 +13,9 @@ import {
   VALIDATION_ERRORS,
 } from '@corates/shared';
 import { createStripeClient } from '@corates/workers/stripe';
-import { requireAdmin } from '@/server/guards/requireAdmin';
+import { adminMiddleware } from '@/server/middleware/admin';
 
 export const handlePost = async ({ request }: { request: Request }) => {
-  const guard = await requireAdmin(request, env);
-  if (!guard.ok) return guard.response;
-
   let body: { customerId?: string; returnUrl?: string };
   try {
     body = (await request.json()) as { customerId?: string; returnUrl?: string };
@@ -76,5 +73,8 @@ export const handlePost = async ({ request }: { request: Request }) => {
 };
 
 export const Route = createFileRoute('/api/admin/stripe/portal-link')({
-  server: { handlers: { POST: handlePost } },
+  server: {
+    middleware: [adminMiddleware],
+    handlers: { POST: handlePost },
+  },
 });

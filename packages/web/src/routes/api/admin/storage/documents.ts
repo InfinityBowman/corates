@@ -15,7 +15,7 @@ import {
   SYSTEM_ERRORS,
   VALIDATION_ERRORS,
 } from '@corates/shared';
-import { requireAdmin } from '@/server/guards/requireAdmin';
+import { adminMiddleware } from '@/server/middleware/admin';
 
 const R2_KEY_PATTERN = /^projects\/[^/]+\/studies\/[^/]+\/.+$/;
 
@@ -42,9 +42,6 @@ interface StorageDoc {
 }
 
 export const handleGet = async ({ request }: { request: Request }) => {
-  const guard = await requireAdmin(request, env);
-  if (!guard.ok) return guard.response;
-
   try {
     const url = new URL(request.url);
     const requestCursor = url.searchParams.get('cursor')?.trim() || undefined;
@@ -179,9 +176,6 @@ export const handleGet = async ({ request }: { request: Request }) => {
 };
 
 export const handleDelete = async ({ request }: { request: Request }) => {
-  const guard = await requireAdmin(request, env);
-  if (!guard.ok) return guard.response;
-
   let body: { keys?: unknown };
   try {
     body = (await request.json()) as { keys?: unknown };
@@ -244,5 +238,8 @@ export const handleDelete = async ({ request }: { request: Request }) => {
 };
 
 export const Route = createFileRoute('/api/admin/storage/documents')({
-  server: { handlers: { GET: handleGet, DELETE: handleDelete } },
+  server: {
+    middleware: [adminMiddleware],
+    handlers: { GET: handleGet, DELETE: handleDelete },
+  },
 });

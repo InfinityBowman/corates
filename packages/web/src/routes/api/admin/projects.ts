@@ -10,7 +10,7 @@ import { createDb } from '@corates/db/client';
 import { projects, projectMembers, mediaFiles, organization, user } from '@corates/db/schema';
 import { and, count, desc, eq, like, sql } from 'drizzle-orm';
 import { createDomainError, SYSTEM_ERRORS } from '@corates/shared';
-import { requireAdmin } from '@/server/guards/requireAdmin';
+import { adminMiddleware } from '@/server/middleware/admin';
 
 interface ProjectStats {
   memberCount: number;
@@ -18,9 +18,6 @@ interface ProjectStats {
 }
 
 export const handleGet = async ({ request }: { request: Request }) => {
-  const guard = await requireAdmin(request, env);
-  if (!guard.ok) return guard.response;
-
   const db = createDb(env.DB);
 
   try {
@@ -141,5 +138,8 @@ export const handleGet = async ({ request }: { request: Request }) => {
 };
 
 export const Route = createFileRoute('/api/admin/projects')({
-  server: { handlers: { GET: handleGet } },
+  server: {
+    middleware: [adminMiddleware],
+    handlers: { GET: handleGet },
+  },
 });

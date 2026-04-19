@@ -14,7 +14,7 @@ import { z } from 'zod';
 import { createDomainError, SYSTEM_ERRORS, VALIDATION_ERRORS } from '@corates/shared';
 import type { OrgId, OrgAccessGrantId } from '@corates/shared/ids';
 import { createGrant, getGrantByOrgIdAndType } from '@corates/db/org-access-grants';
-import { requireAdmin } from '@/server/guards/requireAdmin';
+import { adminMiddleware } from '@/server/middleware/admin';
 
 const CreateGrantBodySchema = z.object({
   type: z.enum(['trial', 'single_project']),
@@ -26,9 +26,6 @@ const CreateGrantBodySchema = z.object({
 type HandlerArgs = { request: Request; params: { orgId: OrgId } };
 
 export const handlePost = async ({ request, params }: HandlerArgs) => {
-  const guard = await requireAdmin(request, env);
-  if (!guard.ok) return guard.response;
-
   const { orgId } = params;
   const db = createDb(env.DB);
 
@@ -107,5 +104,8 @@ export const handlePost = async ({ request, params }: HandlerArgs) => {
 };
 
 export const Route = createFileRoute('/api/admin/orgs/$orgId/grants')({
-  server: { handlers: { POST: handlePost } },
+  server: {
+    middleware: [adminMiddleware],
+    handlers: { POST: handlePost },
+  },
 });

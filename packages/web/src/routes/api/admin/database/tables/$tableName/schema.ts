@@ -5,10 +5,9 @@
  * key references for a whitelisted table. Reads Drizzle's runtime column shape.
  */
 import { createFileRoute } from '@tanstack/react-router';
-import { env } from 'cloudflare:workers';
 import { dbSchema } from '@corates/db/schema';
 import { createValidationError, VALIDATION_ERRORS } from '@corates/shared';
-import { requireAdmin } from '@/server/guards/requireAdmin';
+import { adminMiddleware } from '@/server/middleware/admin';
 import { ALLOWED_TABLES, isAllowedTable, type AllowedTableName } from '@/server/lib/dbTables';
 
 interface ColumnInfo {
@@ -32,10 +31,7 @@ interface DrizzleColumn {
 
 type HandlerArgs = { request: Request; params: { tableName: string } };
 
-export const handleGet = async ({ request, params }: HandlerArgs) => {
-  const guard = await requireAdmin(request, env);
-  if (!guard.ok) return guard.response;
-
+export const handleGet = async ({ params }: HandlerArgs) => {
   const { tableName } = params;
 
   if (!isAllowedTable(tableName)) {
@@ -97,5 +93,8 @@ export const handleGet = async ({ request, params }: HandlerArgs) => {
 };
 
 export const Route = createFileRoute('/api/admin/database/tables/$tableName/schema')({
-  server: { handlers: { GET: handleGet } },
+  server: {
+    middleware: [adminMiddleware],
+    handlers: { GET: handleGet },
+  },
 });

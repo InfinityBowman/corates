@@ -13,7 +13,7 @@ import { subscription } from '@corates/db/schema';
 import { and, eq } from 'drizzle-orm';
 import { z } from 'zod';
 import { createDomainError, SYSTEM_ERRORS, VALIDATION_ERRORS } from '@corates/shared';
-import { requireAdmin } from '@/server/guards/requireAdmin';
+import { adminMiddleware } from '@/server/middleware/admin';
 import { dispatchSubscriptionNotify } from '../subscriptions';
 
 const UpdateSubscriptionBodySchema = z.object({
@@ -31,13 +31,9 @@ const UpdateSubscriptionBodySchema = z.object({
 type HandlerArgs = {
   request: Request;
   params: { orgId: string; subscriptionId: string };
-  context?: { cloudflareCtx?: ExecutionContext };
 };
 
-export const handlePut = async ({ request, params, context }: HandlerArgs) => {
-  const guard = await requireAdmin(request, env);
-  if (!guard.ok) return guard.response;
-
+export const handlePut = async ({ request, params }: HandlerArgs) => {
   const { orgId, subscriptionId } = params;
   const db = createDb(env.DB);
 
@@ -87,7 +83,7 @@ export const handlePut = async ({ request, params, context }: HandlerArgs) => {
       .returning()
       .get();
 
-    await dispatchSubscriptionNotify(context, db, orgId, 'update', {
+    await dispatchSubscriptionNotify(db, orgId, 'update', {
       subscriptionId: updated.id,
       tier: updated.plan,
       status: updated.status,
@@ -109,10 +105,7 @@ export const handlePut = async ({ request, params, context }: HandlerArgs) => {
   }
 };
 
-export const handleDelete = async ({ request, params, context }: HandlerArgs) => {
-  const guard = await requireAdmin(request, env);
-  if (!guard.ok) return guard.response;
-
+export const handleDelete = async ({ params }: HandlerArgs) => {
   const { orgId, subscriptionId } = params;
   const db = createDb(env.DB);
 
@@ -140,7 +133,7 @@ export const handleDelete = async ({ request, params, context }: HandlerArgs) =>
       .returning()
       .get();
 
-    await dispatchSubscriptionNotify(context, db, orgId, 'cancellation', {
+    await dispatchSubscriptionNotify(db, orgId, 'cancellation', {
       subscriptionId,
       tier: canceled.plan,
       status: 'canceled',
@@ -163,5 +156,8 @@ export const handleDelete = async ({ request, params, context }: HandlerArgs) =>
 };
 
 export const Route = createFileRoute('/api/admin/orgs/$orgId/subscriptions/$subscriptionId')({
-  server: { handlers: { PUT: handlePut, DELETE: handleDelete } },
+  server: {
+    middleware: [adminMiddleware],
+    handlers: { PUT: handlePut, DELETE: handleDelete },
+  },
 });

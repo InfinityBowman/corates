@@ -18,14 +18,11 @@ import {
   getGrantByOrgIdAndType,
   updateGrantExpiresAt,
 } from '@corates/db/org-access-grants';
-import { requireAdmin } from '@/server/guards/requireAdmin';
+import { adminMiddleware } from '@/server/middleware/admin';
 
 type HandlerArgs = { request: Request; params: { orgId: OrgId } };
 
-export const handlePost = async ({ request, params }: HandlerArgs) => {
-  const guard = await requireAdmin(request, env);
-  if (!guard.ok) return guard.response;
-
+export const handlePost = async ({ params }: HandlerArgs) => {
   const { orgId } = params;
   const db = createDb(env.DB);
 
@@ -92,5 +89,8 @@ export const handlePost = async ({ request, params }: HandlerArgs) => {
 };
 
 export const Route = createFileRoute('/api/admin/orgs/$orgId/grant-single-project')({
-  server: { handlers: { POST: handlePost } },
+  server: {
+    middleware: [adminMiddleware],
+    handlers: { POST: handlePost },
+  },
 });

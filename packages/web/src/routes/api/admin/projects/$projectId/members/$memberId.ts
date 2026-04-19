@@ -10,14 +10,11 @@ import { createDb } from '@corates/db/client';
 import { projectMembers } from '@corates/db/schema';
 import { and, eq } from 'drizzle-orm';
 import { createDomainError, PROJECT_ERRORS, SYSTEM_ERRORS } from '@corates/shared';
-import { requireAdmin } from '@/server/guards/requireAdmin';
+import { adminMiddleware } from '@/server/middleware/admin';
 
 type HandlerArgs = { request: Request; params: { projectId: string; memberId: string } };
 
-export const handleDelete = async ({ request, params }: HandlerArgs) => {
-  const guard = await requireAdmin(request, env);
-  if (!guard.ok) return guard.response;
-
+export const handleDelete = async ({ params }: HandlerArgs) => {
   const { projectId, memberId } = params;
   const db = createDb(env.DB);
 
@@ -50,5 +47,8 @@ export const handleDelete = async ({ request, params }: HandlerArgs) => {
 };
 
 export const Route = createFileRoute('/api/admin/projects/$projectId/members/$memberId')({
-  server: { handlers: { DELETE: handleDelete } },
+  server: {
+    middleware: [adminMiddleware],
+    handlers: { DELETE: handleDelete },
+  },
 });

@@ -10,12 +10,9 @@ import { createDb } from '@corates/db/client';
 import { stripeEventLedger } from '@corates/db/schema';
 import { and, desc, eq } from 'drizzle-orm';
 import { createDomainError, SYSTEM_ERRORS } from '@corates/shared';
-import { requireAdmin } from '@/server/guards/requireAdmin';
+import { adminMiddleware } from '@/server/middleware/admin';
 
 export const handleGet = async ({ request }: { request: Request }) => {
-  const guard = await requireAdmin(request, env);
-  if (!guard.ok) return guard.response;
-
   const url = new URL(request.url);
   const limit = parseInt(url.searchParams.get('limit') || '50', 10);
   const status = url.searchParams.get('status') || undefined;
@@ -103,5 +100,8 @@ export const handleGet = async ({ request }: { request: Request }) => {
 };
 
 export const Route = createFileRoute('/api/admin/billing/ledger')({
-  server: { handlers: { GET: handleGet } },
+  server: {
+    middleware: [adminMiddleware],
+    handlers: { GET: handleGet },
+  },
 });

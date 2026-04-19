@@ -14,17 +14,18 @@ import {
   SYSTEM_ERRORS,
   VALIDATION_ERRORS,
 } from '@corates/shared';
-import { requireAdmin } from '@/server/guards/requireAdmin';
+import { adminMiddleware, type AdminContext } from '@/server/middleware/admin';
 
-type HandlerArgs = { request: Request; params: { userId: string } };
+type HandlerArgs = {
+  request: Request;
+  params: { userId: string };
+  context: { admin: AdminContext };
+};
 
-export const handlePost = async ({ request, params }: HandlerArgs) => {
-  const guard = await requireAdmin(request, env);
-  if (!guard.ok) return guard.response;
-
+export const handlePost = async ({ request, params, context }: HandlerArgs) => {
   const { userId } = params;
 
-  if (guard.context.userId === userId) {
+  if (context.admin.userId === userId) {
     return Response.json(
       createValidationError(
         'userId',
@@ -96,5 +97,8 @@ export const handlePost = async ({ request, params }: HandlerArgs) => {
 };
 
 export const Route = createFileRoute('/api/admin/users/$userId/impersonate')({
-  server: { handlers: { POST: handlePost } },
+  server: {
+    middleware: [adminMiddleware],
+    handlers: { POST: handlePost },
+  },
 });
