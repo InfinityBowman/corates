@@ -16,7 +16,7 @@ import {
   buildUser,
   resetCounter,
 } from '@/__tests__/server/factories';
-import { createDb } from '@corates/db/client';
+import { createDb, type Database } from '@corates/db/client';
 import { account, session, user } from '@corates/db/schema';
 import { eq } from 'drizzle-orm';
 import type { AdminContext } from '@/server/middleware/admin';
@@ -54,7 +54,7 @@ beforeEach(async () => {
   );
 });
 
-function adminCtx(adminUserId = 'admin-id'): { admin: AdminContext } {
+function adminCtx(adminUserId = 'admin-id'): { admin: AdminContext; db: Database } {
   return {
     admin: {
       userId: adminUserId,
@@ -62,6 +62,7 @@ function adminCtx(adminUserId = 'admin-id'): { admin: AdminContext } {
       userName: 'Admin',
       sessionId: 'admin-sess',
     },
+    db: createDb(env.DB),
   };
 }
 
@@ -104,7 +105,7 @@ describe('GET /api/admin/stats', () => {
     await buildProject({ owner: u });
     await seedSessionRow('s-1', u.id);
 
-    const res = await statsHandler();
+    const res = await statsHandler({ context: { db: createDb(env.DB) } });
     expect(res.status).toBe(200);
     const body = (await res.json()) as {
       users: number;
@@ -131,6 +132,7 @@ describe('GET /api/admin/users', () => {
 
     const res = await listUsersHandler({
       request: new Request('http://localhost/api/admin/users?page=1&limit=10'),
+      context: { db: createDb(env.DB) },
     });
     expect(res.status).toBe(200);
     const body = (await res.json()) as {
@@ -151,6 +153,7 @@ describe('GET /api/admin/users', () => {
 
     const res = await listUsersHandler({
       request: new Request('http://localhost/api/admin/users?search=SEARCHABLE'),
+      context: { db: createDb(env.DB) },
     });
     expect(res.status).toBe(200);
     const body = (await res.json()) as { users: { id: string }[]; pagination: { total: number } };
@@ -287,6 +290,7 @@ describe('POST /api/admin/users/:userId/unban', () => {
         headers: { origin: 'http://localhost:3010' },
       }),
       params: { userId: target.id },
+      context: { db: createDb(env.DB) },
     });
     expect(res.status).toBe(200);
 
@@ -381,6 +385,7 @@ describe('DELETE /api/admin/users/:userId/sessions', () => {
         headers: { origin: 'http://localhost:3010' },
       }),
       params: { userId: target.id },
+      context: { db: createDb(env.DB) },
     });
     expect(res.status).toBe(200);
 
@@ -401,6 +406,7 @@ describe('DELETE /api/admin/users/:userId/sessions/:sessionId', () => {
         headers: { origin: 'http://localhost:3010' },
       }),
       params: { userId: target.id, sessionId: 'missing' },
+      context: { db: createDb(env.DB) },
     });
     expect(res.status).toBe(404);
   });
@@ -416,6 +422,7 @@ describe('DELETE /api/admin/users/:userId/sessions/:sessionId', () => {
         headers: { origin: 'http://localhost:3010' },
       }),
       params: { userId: target.id, sessionId: 's-other' },
+      context: { db: createDb(env.DB) },
     });
     expect(res.status).toBe(404);
   });
@@ -431,6 +438,7 @@ describe('DELETE /api/admin/users/:userId/sessions/:sessionId', () => {
         headers: { origin: 'http://localhost:3010' },
       }),
       params: { userId: target.id, sessionId: 's-drop' },
+      context: { db: createDb(env.DB) },
     });
     expect(res.status).toBe(200);
 

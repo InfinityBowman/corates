@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { env } from 'cloudflare:test';
+import { createDb } from '@corates/db/client';
 import { resetTestDatabase, seedSubscription } from '@/__tests__/server/helpers';
 import { buildAdminUser, buildOrg, resetCounter } from '@/__tests__/server/factories';
 import { handleGet as customerLookup } from '../stripe/customer';
@@ -60,6 +61,7 @@ describe('GET /api/admin/stripe/customer', () => {
     await asAdmin();
     const res = await customerLookup({
       request: new Request('http://localhost/api/admin/stripe/customer'),
+      context: { db: createDb(env.DB) },
     });
     expect(res.status).toBe(400);
   });
@@ -69,6 +71,7 @@ describe('GET /api/admin/stripe/customer', () => {
     customersRetrieveMock.mockResolvedValueOnce({ id: 'cus_x', deleted: true });
     const res = await customerLookup({
       request: new Request('http://localhost/api/admin/stripe/customer?customerId=cus_x'),
+      context: { db: createDb(env.DB) },
     });
     expect(res.status).toBe(200);
     const body = (await res.json()) as { found: boolean; message: string };
@@ -83,6 +86,7 @@ describe('GET /api/admin/stripe/customer', () => {
     );
     const res = await customerLookup({
       request: new Request('http://localhost/api/admin/stripe/customer?customerId=cus_missing'),
+      context: { db: createDb(env.DB) },
     });
     expect(res.status).toBe(200);
     const body = (await res.json()) as { found: boolean };
@@ -94,6 +98,7 @@ describe('GET /api/admin/stripe/customer', () => {
     customersListMock.mockResolvedValueOnce({ data: [] });
     const res = await customerLookup({
       request: new Request('http://localhost/api/admin/stripe/customer?email=nobody@example.com'),
+      context: { db: createDb(env.DB) },
     });
     expect(res.status).toBe(200);
     const body = (await res.json()) as { found: boolean };
@@ -130,6 +135,7 @@ describe('GET /api/admin/stripe/customer', () => {
 
     const res = await customerLookup({
       request: new Request('http://localhost/api/admin/stripe/customer?customerId=cus_linked'),
+      context: { db: createDb(env.DB) },
     });
     expect(res.status).toBe(200);
     const body = (await res.json()) as {

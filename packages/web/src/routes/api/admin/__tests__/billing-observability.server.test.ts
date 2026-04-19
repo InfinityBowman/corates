@@ -6,6 +6,8 @@ import {
   seedStripeEventLedger,
 } from '@/__tests__/server/helpers';
 import { buildAdminUser, resetCounter, asOrgId } from '@/__tests__/server/factories';
+import { createDb } from '@corates/db/client';
+import { env } from 'cloudflare:test';
 import { handleGet as reconcile } from '../orgs/$orgId/billing/reconcile';
 import { handleGet as stuckStates } from '../billing/stuck-states';
 import { handleGet as ledger } from '../billing/ledger';
@@ -60,6 +62,7 @@ describe('GET /api/admin/orgs/:orgId/billing/reconcile', () => {
     const res = await reconcile({
       request: reconcileReq('nope'),
       params: { orgId: asOrgId('nope') },
+      context: { db: createDb(env.DB) },
     });
     expect(res.status).toBe(400);
   });
@@ -83,6 +86,7 @@ describe('GET /api/admin/orgs/:orgId/billing/reconcile', () => {
     const res = await reconcile({
       request: reconcileReq(orgId, `?incompleteThreshold=${thresholdMinutes}`),
       params: { orgId },
+      context: { db: createDb(env.DB) },
     });
     expect(res.status).toBe(200);
     const body = (await res.json()) as { stuckStates: Record<string, unknown>[] };
@@ -116,6 +120,7 @@ describe('GET /api/admin/orgs/:orgId/billing/reconcile', () => {
     const res = await reconcile({
       request: reconcileReq(orgId, `?checkoutNoSubThreshold=${thresholdMinutes}`),
       params: { orgId },
+      context: { db: createDb(env.DB) },
     });
     expect(res.status).toBe(200);
     const body = (await res.json()) as { stuckStates: Record<string, unknown>[] };
@@ -145,7 +150,7 @@ describe('GET /api/admin/orgs/:orgId/billing/reconcile', () => {
       });
     }
 
-    const res = await reconcile({ request: reconcileReq(orgId), params: { orgId } });
+    const res = await reconcile({ request: reconcileReq(orgId), params: { orgId }, context: { db: createDb(env.DB) } });
     expect(res.status).toBe(200);
     const body = (await res.json()) as { stuckStates: Record<string, unknown>[] };
     const failure = body.stuckStates.find(s => s.type === 'repeated_webhook_failures');
@@ -174,6 +179,7 @@ describe('GET /api/admin/orgs/:orgId/billing/reconcile', () => {
         `http://localhost/api/admin/orgs/${orgId}/billing/reconcile?checkStripe=true`,
       ),
       params: { orgId },
+      context: { db: createDb(env.DB) },
     });
     expect(res.status).toBe(200);
     const body = (await res.json()) as {
@@ -212,7 +218,7 @@ describe('GET /api/admin/billing/ledger', () => {
       type: 'customer.subscription.updated',
     });
 
-    const res = await ledger({ request: ledgerReq('?limit=50') });
+    const res = await ledger({ request: ledgerReq('?limit=50'), context: { db: createDb(env.DB) } });
     expect(res.status).toBe(200);
     const body = (await res.json()) as {
       stats: { total: number; byStatus: Record<string, number>; byType: Record<string, number> };
@@ -242,7 +248,7 @@ describe('GET /api/admin/billing/ledger', () => {
       status: 'failed',
     });
 
-    const res = await ledger({ request: ledgerReq('?status=failed&limit=50') });
+    const res = await ledger({ request: ledgerReq('?status=failed&limit=50'), context: { db: createDb(env.DB) } });
     expect(res.status).toBe(200);
     const body = (await res.json()) as { entries: { status: string }[] };
     expect(body.entries.length).toBeGreaterThan(0);
@@ -264,6 +270,7 @@ describe('GET /api/admin/billing/ledger', () => {
 
     const res = await ledger({
       request: ledgerReq('?type=checkout.session.completed&limit=50'),
+      context: { db: createDb(env.DB) },
     });
     expect(res.status).toBe(200);
     const body = (await res.json()) as { entries: { type: string | null }[] };
@@ -287,7 +294,7 @@ describe('GET /api/admin/billing/stuck-states', () => {
       updatedAt: nowSec - 60 * 60,
     });
 
-    const res = await stuckStates({ request: stuckReq('?incompleteThreshold=30') });
+    const res = await stuckStates({ request: stuckReq('?incompleteThreshold=30'), context: { db: createDb(env.DB) } });
     expect(res.status).toBe(200);
     const body = (await res.json()) as { stuckOrgs: Record<string, unknown>[] };
     const found = body.stuckOrgs.find(s => s.subscriptionId === 'sub-stuck');
@@ -313,7 +320,7 @@ describe('GET /api/admin/billing/stuck-states', () => {
       });
     }
 
-    const res = await stuckStates({ request: stuckReq() });
+    const res = await stuckStates({ request: stuckReq(), context: { db: createDb(env.DB) } });
     expect(res.status).toBe(200);
     const body = (await res.json()) as { stuckOrgs: Record<string, unknown>[] };
     const found = body.stuckOrgs.find(s => s.type === 'repeated_failures' && s.orgId === orgId);

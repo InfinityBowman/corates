@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { env } from 'cloudflare:test';
+import { createDb } from '@corates/db/client';
 import { resetTestDatabase, seedMediaFile } from '@/__tests__/server/helpers';
 import {
   buildAdminUser,
@@ -43,7 +44,7 @@ async function asAdmin() {
 describe('GET /api/admin/database/tables', () => {
   it('returns row counts for whitelisted tables', async () => {
     await asAdmin();
-    const res = await listTables();
+    const res = await listTables({ context: { db: createDb(env.DB) } });
     expect(res.status).toBe(200);
     const body = (await res.json()) as { tables: { name: string; rowCount: number }[] };
     expect(body.tables.length).toBeGreaterThan(0);
@@ -102,6 +103,7 @@ describe('GET /api/admin/database/tables/:tableName/rows', () => {
     const res = await tableRows({
       request: new Request('http://localhost/api/admin/database/tables/sqlite_master/rows'),
       params: { tableName: 'sqlite_master' },
+      context: { db: createDb(env.DB) },
     });
     expect(res.status).toBe(400);
   });
@@ -113,6 +115,7 @@ describe('GET /api/admin/database/tables/:tableName/rows', () => {
     const res = await tableRows({
       request: new Request('http://localhost/api/admin/database/tables/user/rows?page=1&limit=2'),
       params: { tableName: 'user' },
+      context: { db: createDb(env.DB) },
     });
     expect(res.status).toBe(200);
     const body = (await res.json()) as {
@@ -145,6 +148,7 @@ describe('GET /api/admin/database/tables/:tableName/rows', () => {
         `http://localhost/api/admin/database/tables/mediaFiles/rows?filterBy=orgId&filterValue=${org.id}`,
       ),
       params: { tableName: 'mediaFiles' },
+      context: { db: createDb(env.DB) },
     });
     expect(res.status).toBe(200);
     const body = (await res.json()) as {
@@ -163,6 +167,7 @@ describe('GET /api/admin/database/tables/:tableName/rows', () => {
         'http://localhost/api/admin/database/tables/mediaFiles/rows?filterBy=orgSlug&filterValue=nonexistent',
       ),
       params: { tableName: 'mediaFiles' },
+      context: { db: createDb(env.DB) },
     });
     expect(res.status).toBe(200);
     const body = (await res.json()) as {
@@ -201,7 +206,7 @@ describe('GET /api/admin/database/analytics/*', () => {
       createdAt: Math.floor(Date.now() / 1000),
     });
 
-    const res = await pdfsByOrg();
+    const res = await pdfsByOrg({ context: { db: createDb(env.DB) } });
     expect(res.status).toBe(200);
     const body = (await res.json()) as {
       analytics: { orgId: string; pdfCount: number; totalStorage: number }[];
@@ -225,7 +230,7 @@ describe('GET /api/admin/database/analytics/*', () => {
       createdAt: Math.floor(Date.now() / 1000),
     });
 
-    const res = await pdfsByUser();
+    const res = await pdfsByUser({ context: { db: createDb(env.DB) } });
     expect(res.status).toBe(200);
     const body = (await res.json()) as {
       analytics: { userId: string; pdfCount: number }[];
@@ -248,7 +253,7 @@ describe('GET /api/admin/database/analytics/*', () => {
       createdAt: Math.floor(Date.now() / 1000),
     });
 
-    const res = await pdfsByProject();
+    const res = await pdfsByProject({ context: { db: createDb(env.DB) } });
     expect(res.status).toBe(200);
     const body = (await res.json()) as {
       analytics: { projectId: string; orgId: string; pdfCount: number }[];
@@ -285,6 +290,7 @@ describe('GET /api/admin/database/analytics/*', () => {
 
     const res = await recentUploads({
       request: new Request('http://localhost/api/admin/database/analytics/recent-uploads?limit=10'),
+      context: { db: createDb(env.DB) },
     });
     expect(res.status).toBe(200);
     const body = (await res.json()) as {

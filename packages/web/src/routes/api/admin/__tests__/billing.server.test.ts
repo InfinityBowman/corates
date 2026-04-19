@@ -76,6 +76,7 @@ describe('GET /api/admin/orgs/:orgId/billing', () => {
     const res = await billingHandler({
       request: new Request('http://localhost/api/admin/orgs/missing/billing'),
       params: { orgId: asOrgId('missing') },
+      context: { db: createDb(env.DB) },
     });
     expect(res.status).toBe(400);
   });
@@ -112,6 +113,7 @@ describe('GET /api/admin/orgs/:orgId/billing', () => {
     const res = await billingHandler({
       request: new Request(`http://localhost/api/admin/orgs/${org.id}/billing`),
       params: { orgId: org.id },
+      context: { db: createDb(env.DB) },
     });
     expect(res.status).toBe(200);
     const body = (await res.json()) as {
@@ -137,6 +139,7 @@ describe('POST /api/admin/orgs/:orgId/subscriptions', () => {
         status: 'active',
       }),
       params: { orgId: org.id },
+      context: { db: createDb(env.DB) },
     });
     expect(res.status).toBe(400);
   });
@@ -149,6 +152,7 @@ describe('POST /api/admin/orgs/:orgId/subscriptions', () => {
         status: 'active',
       }),
       params: { orgId: asOrgId('missing') },
+      context: { db: createDb(env.DB) },
     });
     expect(res.status).toBe(400);
   });
@@ -163,6 +167,7 @@ describe('POST /api/admin/orgs/:orgId/subscriptions', () => {
         stripeCustomerId: 'cus_1',
       }),
       params: { orgId: org.id },
+      context: { db: createDb(env.DB) },
     });
     expect(res.status).toBe(201);
     const body = (await res.json()) as {
@@ -189,6 +194,7 @@ describe('PUT /api/admin/orgs/:orgId/subscriptions/:subscriptionId', () => {
     const res = await updateSubscriptionHandler({
       request: jsonReq(`/api/admin/orgs/${org.id}/subscriptions/nope`, 'PUT', { status: 'paused' }),
       params: { orgId: org.id, subscriptionId: 'nope' },
+      context: { db: createDb(env.DB) },
     });
     expect(res.status).toBe(400);
   });
@@ -216,6 +222,7 @@ describe('PUT /api/admin/orgs/:orgId/subscriptions/:subscriptionId', () => {
         cancelAtPeriodEnd: true,
       }),
       params: { orgId: org.id, subscriptionId: 'sub-upd' },
+      context: { db: createDb(env.DB) },
     });
     expect(res.status).toBe(200);
     const body = (await res.json()) as {
@@ -238,6 +245,7 @@ describe('DELETE /api/admin/orgs/:orgId/subscriptions/:subscriptionId', () => {
         headers: { origin: 'http://localhost:3010' },
       }),
       params: { orgId: org.id, subscriptionId: 'nope' },
+      context: { db: createDb(env.DB) },
     });
     expect(res.status).toBe(400);
   });
@@ -264,6 +272,7 @@ describe('DELETE /api/admin/orgs/:orgId/subscriptions/:subscriptionId', () => {
         headers: { origin: 'http://localhost:3010' },
       }),
       params: { orgId: org.id, subscriptionId: 'sub-del' },
+      context: { db: createDb(env.DB) },
     });
     expect(res.status).toBe(200);
     const [row] = await db
@@ -288,6 +297,7 @@ describe('POST /api/admin/orgs/:orgId/grants', () => {
         expiresAt,
       }),
       params: { orgId: asOrgId('missing') },
+      context: { db: createDb(env.DB) },
     });
     expect(res.status).toBe(400);
   });
@@ -304,6 +314,7 @@ describe('POST /api/admin/orgs/:orgId/grants', () => {
         expiresAt,
       }),
       params: { orgId: org.id },
+      context: { db: createDb(env.DB) },
     });
     expect(first.status).toBe(201);
 
@@ -314,6 +325,7 @@ describe('POST /api/admin/orgs/:orgId/grants', () => {
         expiresAt,
       }),
       params: { orgId: org.id },
+      context: { db: createDb(env.DB) },
     });
     expect(second.status).toBe(400);
   });
@@ -329,6 +341,7 @@ describe('POST /api/admin/orgs/:orgId/grants', () => {
         expiresAt: ts,
       }),
       params: { orgId: org.id },
+      context: { db: createDb(env.DB) },
     });
     expect(res.status).toBe(400);
   });
@@ -345,6 +358,7 @@ describe('POST /api/admin/orgs/:orgId/grants', () => {
         expiresAt,
       }),
       params: { orgId: org.id },
+      context: { db: createDb(env.DB) },
     });
     expect(res.status).toBe(201);
     const body = (await res.json()) as { grant: { id: string; type: string; orgId: string } };
@@ -373,6 +387,7 @@ describe('PUT /api/admin/orgs/:orgId/grants/:grantId', () => {
     const res = await updateGrantHandler({
       request: jsonReq(`/api/admin/orgs/${org.id}/grants/gr-empty`, 'PUT', {}),
       params: { orgId: org.id, grantId: asGrantId('gr-empty') },
+      context: { db: createDb(env.DB) },
     });
     expect(res.status).toBe(400);
   });
@@ -398,6 +413,7 @@ describe('PUT /api/admin/orgs/:orgId/grants/:grantId', () => {
         expiresAt: newExpires,
       }),
       params: { orgId: org.id, grantId: asGrantId('gr-ext') },
+      context: { db: createDb(env.DB) },
     });
     expect(res.status).toBe(200);
   });
@@ -423,6 +439,7 @@ describe('PUT /api/admin/orgs/:orgId/grants/:grantId', () => {
         revokedAt: new Date(),
       }),
       params: { orgId: org.id, grantId: asGrantId('gr-rev') },
+      context: { db: createDb(env.DB) },
     });
     expect(revRes.status).toBe(200);
     const [revoked] = await db
@@ -434,6 +451,7 @@ describe('PUT /api/admin/orgs/:orgId/grants/:grantId', () => {
     const unrevRes = await updateGrantHandler({
       request: jsonReq(`/api/admin/orgs/${org.id}/grants/gr-rev`, 'PUT', { revokedAt: null }),
       params: { orgId: org.id, grantId: asGrantId('gr-rev') },
+      context: { db: createDb(env.DB) },
     });
     expect(unrevRes.status).toBe(200);
     const [unrevoked] = await db
@@ -454,6 +472,7 @@ describe('DELETE /api/admin/orgs/:orgId/grants/:grantId', () => {
         headers: { origin: 'http://localhost:3010' },
       }),
       params: { orgId: org.id, grantId: asGrantId('nope') },
+      context: { db: createDb(env.DB) },
     });
     expect(res.status).toBe(400);
   });
@@ -480,6 +499,7 @@ describe('DELETE /api/admin/orgs/:orgId/grants/:grantId', () => {
         headers: { origin: 'http://localhost:3010' },
       }),
       params: { orgId: org.id, grantId: asGrantId('gr-del') },
+      context: { db: createDb(env.DB) },
     });
     expect(res.status).toBe(200);
     const [row] = await db
@@ -499,6 +519,7 @@ describe('POST /api/admin/orgs/:orgId/grant-trial', () => {
         headers: { origin: 'http://localhost:3010' },
       }),
       params: { orgId: asOrgId('missing') },
+      context: { db: createDb(env.DB) },
     });
     expect(res.status).toBe(400);
   });
@@ -512,6 +533,7 @@ describe('POST /api/admin/orgs/:orgId/grant-trial', () => {
         headers: { origin: 'http://localhost:3010' },
       }),
       params: { orgId: org.id },
+      context: { db: createDb(env.DB) },
     });
     expect(res.status).toBe(201);
     const body = (await res.json()) as { grant: { type: string; orgId: string } };
@@ -528,6 +550,7 @@ describe('POST /api/admin/orgs/:orgId/grant-trial', () => {
         headers: { origin: 'http://localhost:3010' },
       }),
       params: { orgId: org.id },
+      context: { db: createDb(env.DB) },
     });
     expect(first.status).toBe(201);
 
@@ -537,6 +560,7 @@ describe('POST /api/admin/orgs/:orgId/grant-trial', () => {
         headers: { origin: 'http://localhost:3010' },
       }),
       params: { orgId: org.id },
+      context: { db: createDb(env.DB) },
     });
     expect(second.status).toBe(400);
   });
@@ -551,6 +575,7 @@ describe('POST /api/admin/orgs/:orgId/grant-single-project', () => {
         headers: { origin: 'http://localhost:3010' },
       }),
       params: { orgId: asOrgId('missing') },
+      context: { db: createDb(env.DB) },
     });
     expect(res.status).toBe(400);
   });
@@ -564,6 +589,7 @@ describe('POST /api/admin/orgs/:orgId/grant-single-project', () => {
         headers: { origin: 'http://localhost:3010' },
       }),
       params: { orgId: org.id },
+      context: { db: createDb(env.DB) },
     });
     expect(res.status).toBe(201);
     const body = (await res.json()) as { action: string; grant: { type: string } };
@@ -594,6 +620,7 @@ describe('POST /api/admin/orgs/:orgId/grant-single-project', () => {
         headers: { origin: 'http://localhost:3010' },
       }),
       params: { orgId: org.id },
+      context: { db: createDb(env.DB) },
     });
     expect(res.status).toBe(200);
     const body = (await res.json()) as { action: string; grant: { id: string } };

@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { env } from 'cloudflare:test';
+import { createDb } from '@corates/db/client';
 import { resetTestDatabase, clearProjectDOs, seedMediaFile } from '@/__tests__/server/helpers';
 import {
   buildAdminUser,
@@ -51,7 +52,7 @@ describe('GET /api/admin/projects', () => {
     await buildProject();
     await buildProject();
 
-    const res = await listProjects({ request: listReq('/api/admin/projects?page=1&limit=2') });
+    const res = await listProjects({ request: listReq('/api/admin/projects?page=1&limit=2'), context: { db: createDb(env.DB) } });
     expect(res.status).toBe(200);
     const body = (await res.json()) as {
       projects: { id: string; orgName: string | null; creatorEmail: string | null }[];
@@ -70,7 +71,7 @@ describe('GET /api/admin/projects', () => {
     await buildProject({ org, owner, project: { id: 'p-amphi', name: 'Amphibian Census' } });
     await buildProject({ org, owner, project: { id: 'p-other', name: 'Other Topic' } });
 
-    const res = await listProjects({ request: listReq('/api/admin/projects?search=amphi') });
+    const res = await listProjects({ request: listReq('/api/admin/projects?search=amphi'), context: { db: createDb(env.DB) } });
     expect(res.status).toBe(200);
     const body = (await res.json()) as { projects: { name: string }[] };
     expect(body.projects.length).toBe(1);
@@ -86,6 +87,7 @@ describe('GET /api/admin/projects', () => {
 
     const res = await listProjects({
       request: listReq(`/api/admin/projects?orgId=${encodeURIComponent(org1.id)}`),
+      context: { db: createDb(env.DB) },
     });
     expect(res.status).toBe(200);
     const body = (await res.json()) as { projects: { orgId: string }[] };
@@ -109,7 +111,7 @@ describe('GET /api/admin/projects', () => {
       createdAt: Math.floor(Date.now() / 1000),
     });
 
-    const res = await listProjects({ request: listReq() });
+    const res = await listProjects({ request: listReq(), context: { db: createDb(env.DB) } });
     const body = (await res.json()) as {
       projects: { id: string; memberCount: number; fileCount: number }[];
     };
@@ -130,6 +132,7 @@ describe('GET /api/admin/projects/:projectId', () => {
     const res = await projectDetails({
       request: new Request('http://localhost/api/admin/projects/nope'),
       params: { projectId: 'nope' },
+      context: { db: createDb(env.DB) },
     });
     expect(res.status).toBe(404);
   });
@@ -154,6 +157,7 @@ describe('GET /api/admin/projects/:projectId', () => {
     const res = await projectDetails({
       request: new Request(`http://localhost/api/admin/projects/${project.id}`),
       params: { projectId: project.id },
+      context: { db: createDb(env.DB) },
     });
     expect(res.status).toBe(200);
     const body = (await res.json()) as {
@@ -177,6 +181,7 @@ describe('GET /api/admin/projects/:projectId/doc-stats', () => {
     const res = await docStats({
       request: new Request('http://localhost/api/admin/projects/no-such/doc-stats'),
       params: { projectId: 'no-such' },
+      context: { db: createDb(env.DB) },
     });
     expect(res.status).toBe(404);
   });
@@ -193,6 +198,7 @@ describe('GET /api/admin/projects/:projectId/doc-stats', () => {
     const res = await docStats({
       request: new Request(`http://localhost/api/admin/projects/${project.id}/doc-stats`),
       params: { projectId: project.id },
+      context: { db: createDb(env.DB) },
     });
     expect(res.status).toBe(200);
     const body = (await res.json()) as {
@@ -216,6 +222,7 @@ describe('DELETE /api/admin/projects/:projectId/members/:memberId', () => {
         headers: { origin: 'http://localhost:3010' },
       }),
       params: { projectId: 'p1', memberId: 'm1' },
+      context: { db: createDb(env.DB) },
     });
     expect(res.status).toBe(404);
   });
@@ -236,11 +243,11 @@ describe('DELETE /api/admin/projects/:projectId/members/:memberId', () => {
         headers: { origin: 'http://localhost:3010' },
       }),
       params: { projectId: project.id, memberId: pm.id },
+      context: { db: createDb(env.DB) },
     });
     expect(res.status).toBe(200);
 
     const { projectMembers } = await import('@corates/db/schema');
-    const { createDb } = await import('@corates/db/client');
     const { eq } = await import('drizzle-orm');
     const db = createDb(env.DB);
     const remaining = await db
@@ -261,6 +268,7 @@ describe('DELETE /api/admin/projects/:projectId', () => {
         headers: { origin: 'http://localhost:3010' },
       }),
       params: { projectId: 'nope' },
+      context: { db: createDb(env.DB) },
     });
     expect(res.status).toBe(404);
   });
@@ -274,11 +282,11 @@ describe('DELETE /api/admin/projects/:projectId', () => {
         headers: { origin: 'http://localhost:3010' },
       }),
       params: { projectId: project.id },
+      context: { db: createDb(env.DB) },
     });
     expect(res.status).toBe(200);
 
     const { projects } = await import('@corates/db/schema');
-    const { createDb } = await import('@corates/db/client');
     const { eq } = await import('drizzle-orm');
     const db = createDb(env.DB);
     const remaining = await db
