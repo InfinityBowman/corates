@@ -8,7 +8,7 @@ Companion to `typescript-audit-2026-04.md` — that audit covered language-level
 
 ## TL;DR
 
-The codebase is on a current TanStack Start version. `adminMiddleware` via `createMiddleware` is fully adopted across all admin routes. The remaining framework-level gaps are: no `loader`s (biggest user-visible win), no `dbMiddleware` (182 repeated `createDb` calls), no path-param validation, and no `createServerFn` usage.
+The codebase is on a current TanStack Start version. `adminMiddleware` via `createMiddleware` is fully adopted across all admin routes. `dbMiddleware` is composed into the admin middleware chain; all 62 admin-route `createDb` calls have been replaced with `context.db`. The remaining framework-level gaps are: no `loader`s (biggest user-visible win), 45 non-admin `createDb` calls still to migrate, no path-param validation, and no `createServerFn` usage.
 
 ## Verified facts (counts)
 
@@ -16,7 +16,7 @@ The codebase is on a current TanStack Start version. `adminMiddleware` via `crea
 - **0** uses of `loader:` in any page route
 - **44** admin routes using `middleware: [adminMiddleware]` (DONE)
 - **57** `$projectId`/`$orgId`/`$userId` route files with no path-param validation
-- **182** handlers calling `createDb(env.DB)` at the top of the function
+- **45** non-admin handlers still calling `createDb(env.DB)` (was 182; admin routes now use `context.db` via `dbMiddleware`)
 - `verbatimModuleSyntax: false` in `packages/web/tsconfig.json`
 
 ---
@@ -113,9 +113,11 @@ beforeLoad: ({ location }) => {
 
 **Doc:** `databases.md` + `middleware.md` together imply the pattern: create the DB client in middleware, attach to `context`, every handler reads `context.db`.
 
-**CoRATES:** `createDb(env.DB)` appears at the top of **182** route handlers across the codebase (62 in admin routes alone).
+**CoRATES:** Originally 182 handlers called `createDb(env.DB)`. Admin routes (62 calls across 35 files) have been migrated to `context.db` via `dbMiddleware` composed into `adminMiddleware`. **45 calls remain** in non-admin routes and guards.
 
-**Fix:** a `dbMiddleware` that attaches `context.db`, composed into `adminMiddleware` and any future auth middleware. Now that `adminMiddleware` is adopted across all admin routes, adding `context.db` is a single change in the middleware + a sweep to remove `createDb(env.DB)` from each handler.
+**Done (admin):** `dbMiddleware` in `src/server/middleware/db.ts` creates the Drizzle client and attaches `context.db`. It is composed into `authMiddleware` which feeds `adminMiddleware`. All 35 admin route files now read `db` from context.
+
+**Remaining:** Non-admin routes (billing, orgs, users, google-drive, accounts) and guards (`requireOrgMembership`, `requireProjectAccess`, etc.) still call `createDb(env.DB)` directly. These need their own auth middleware chain or direct `dbMiddleware` composition.
 
 ---
 
@@ -154,7 +156,7 @@ Modern TanStack/Vite projects set this `true`. Forces explicit `import type { ..
 
 | #   | Change                                                                           |                    Cost | Why now                                                                              |
 | --- | -------------------------------------------------------------------------------- | ----------------------: | ------------------------------------------------------------------------------------ |
-| 1   | Add `dbMiddleware`, compose into `adminMiddleware`, sweep `createDb` calls (G6)  |                    1 day | Admin middleware is in place; adding `context.db` is a single middleware change.     |
+| 1   | ~~Add `dbMiddleware`, compose into `adminMiddleware`, sweep admin `createDb` calls (G6)~~ DONE |           -- | Admin routes now use `context.db`; 45 non-admin calls remain for future sweep.     |
 | 2   | **Pilot:** add `loader` + `useSuspenseQuery` to **one** page route (G4)          |                half day | Confirm SSR prefetch works in the worker setup before sweeping.                      |
 | 3   | If pilot succeeds: incremental loader adoption, page by page                     |                 ongoing | Biggest user-visible win.                                                            |
 | 4   | Path-param Zod via param middleware (G3)                                         |                1–2 days | Rides on the existing middleware system.                                             |
