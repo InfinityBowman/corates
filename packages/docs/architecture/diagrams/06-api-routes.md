@@ -1,12 +1,12 @@
 # API Routes Overview
 
-Backend API structure with organization-scoped routes and middleware.
+Backend API structure. All `/api/*` routes are TanStack Start file-based server routes under `packages/web/src/routes/api/`. The Stripe purchases webhook is a separate Hono-based worker (`packages/stripe-purchases`).
 
 ```mermaid
 flowchart LR
-    subgraph API["OpenAPIHono API (/api)"]
+    subgraph API["TanStack Start API (packages/web/src/routes/api/)"]
         direction TB
-        auth["/auth/*<br/>BetterAuth"]
+        auth["/auth/*<br/>Better Auth"]
         orgs["/orgs/*"]
         orgprojects["/orgs/:orgId/projects/*"]
         orgmembers["/orgs/:orgId/members/*"]
@@ -19,34 +19,38 @@ flowchart LR
         inviteaccept["/invitations/accept"]
     end
 
-    subgraph Middleware
-        CORS
-        SecurityHeaders
-        requireAuth
-        requireOrgMembership
-        requireProjectAccess
-        CSRF[requireTrustedOrigin]
+    subgraph StripeWorker["Stripe Purchases Worker (Hono)"]
+        purchasewebhook["/api/billing/purchases/webhook"]
     end
 
-    Client -->|"Request"| Middleware
-    Middleware --> API
+    subgraph GuardsPolicies["Per-route guards & policies"]
+        getSession
+        requireOrgOwner
+        requireProjectAccess
+        rateLimit
+    end
+
+    Client -->|"Request"| API
+    API --> GuardsPolicies
 
     orgprojects --> ProjectDoc
     pdfs --> R2[(R2 Storage)]
     auth --> D1[(D1 Database)]
     orgs --> D1
+    purchasewebhook --> D1
 ```
 
-## Middleware Stack
+## Authz building blocks
 
-| Middleware             | Purpose                         |
-| ---------------------- | ------------------------------- |
-| `CORS`                 | Cross-origin request handling   |
-| `securityHeaders`      | Security headers (CSP, etc.)    |
-| `requireAuth`          | Session validation              |
-| `requireOrgMembership` | Org membership + role check     |
-| `requireProjectAccess` | Project membership + role check |
-| `requireTrustedOrigin` | CSRF protection                 |
+Each handler composes checks explicitly -- there is no single middleware pipeline. Common ingredients:
+
+| Helper                  | From                                   | Purpose                         |
+| ----------------------- | -------------------------------------- | ------------------------------- |
+| `getSession`            | `@corates/workers/auth`                | Resolves the Better Auth session |
+| `requireOrgOwner`       | `@corates/workers/policies`            | Enforces org owner role         |
+| `requireProjectAccess`  | `@corates/workers/policies`            | Enforces project membership/role|
+| `checkRateLimit`        | `@/server/rateLimit`                   | Per-endpoint rate limits        |
+| `resolveOrgAccess`      | `@corates/workers/billing-resolver`    | Plan-aware org access check     |
 
 ## API Endpoints
 
@@ -122,12 +126,13 @@ Project management (requires org membership):
 
 ### Billing (`/api/billing/*`)
 
-Stripe integration for subscriptions and payments:
+Stripe integration for subscriptions and payments (main app Worker):
 
-- `GET /api/billing/subscription` - Get user subscription
+- `GET /api/billing/subscription` - Get org subscription
 - `POST /api/billing/checkout` - Create Stripe checkout session
 - `POST /api/billing/portal` - Create Stripe customer portal session
-- `POST /api/billing/webhooks` - Stripe webhook handler
+
+One-time purchase webhooks are handled by the isolated `packages/stripe-purchases` Worker at `POST /api/billing/purchases/webhook`. That Worker uses Hono and is deployed separately for isolation.
 
 ### Admin (`/api/admin/*`)
 
@@ -144,12 +149,19 @@ These routes connect to Durable Objects directly:
 - `/api/project/:projectId` - ProjectDoc WebSocket connection for Yjs sync
 - `/api/sessions/:sessionId` - UserSession WebSocket connection
 
-## Middleware Chain Order
+## Typical handler ordering
 
-For org-scoped routes:
+For an org-scoped route in a TanStack Start handler:
 
+```ts
+const limit = checkRateLimit(request, env, LIMIT);
+if (limit.blocked) return limit.blocked;
+
+const session = await getSession(request, env);
+if (!session) return Response.json(createDomainError(AUTH_ERRORS.REQUIRED), { status: 401 });
+
+await requireProjectAccess(db, session.user.id, orgId, projectId, 'member');
+// ... handler work ...
 ```
-requireAuth -> requireOrgMembership(minRole) -> requireProjectAccess(minRole) -> handler
-```
 
-See the [Organizations Guide](/guides/organizations) for middleware usage patterns.
+See the [Organizations Guide](/guides/organizations) for patterns.

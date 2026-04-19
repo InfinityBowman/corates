@@ -127,37 +127,88 @@ try {
 
 ### Form Error Handling
 
-```javascript
-// packages/web/src/lib/form-errors.js
-import { createFormErrorSignals, handleFormError } from '@/lib/form-errors.js';
-import { createSignal } from 'solid-js';
+Most forms in the codebase use a simple pattern: one `error` useState for a general message, set via `handleError` from `@/lib/error-utils`. Fine-grained field-level errors are only needed for forms with structured validation (admin mutations, contact form); those use `handleFormError` + `createFormErrorState` from `@/lib/form-errors`.
+
+**Simple form (most common pattern):**
+
+```tsx
+import { useState } from 'react';
+import { handleError } from '@/lib/error-utils';
+import { useNavigate } from '@tanstack/react-router';
 
 function MyForm() {
-  const errors = createFormErrorSignals(createSignal);
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
-  async function handleSubmit() {
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setError('');
+    setLoading(true);
     try {
-      const response = await fetch('/api/projects', { ... });
-      // ...
-    } catch (error) {
-      // Handle validation errors with field details
-      errors.handleError(error);
+      const res = await fetch('/api/projects', { method: 'POST', body });
+      if (!res.ok) throw await res.json();
+      navigate({ to: '/dashboard' });
+    } catch (err) {
+      await handleError(err, { setError, showToast: false, navigate });
+    } finally {
+      setLoading(false);
     }
   }
 
   return (
-    <form>
+    <form onSubmit={handleSubmit}>
       <input name="email" />
-      {errors.fieldErrors().email && (
-        <span class="error">{errors.fieldErrors().email}</span>
-      )}
-      {errors.globalError() && (
-        <div class="error">{errors.globalError()}</div>
-      )}
+      {error && <div className="text-red-600 text-sm">{error}</div>}
+      <button type="submit" disabled={loading}>Submit</button>
     </form>
   );
 }
 ```
+
+**Field-level errors (when the API returns `details.field` or `details.fields`):**
+
+```tsx
+import { useMemo, useState } from 'react';
+import { handleFormError, createFormErrorState } from '@/lib/form-errors';
+
+function MyForm() {
+  const fieldState = useMemo(() => createFormErrorState(), []);
+  const [, forceRender] = useState(0);
+  const [globalError, setGlobalError] = useState('');
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    fieldState.clearAll();
+    setGlobalError('');
+    try {
+      const res = await fetch('/api/contact', { method: 'POST', body });
+      if (!res.ok) throw await res.json();
+    } catch (err) {
+      handleFormError(
+        err as Parameters<typeof handleFormError>[0],
+        (field, message) => {
+          fieldState.setFieldError(field, message);
+          forceRender(n => n + 1);
+        },
+        setGlobalError,
+      );
+    }
+  }
+
+  return (
+    <form onSubmit={handleSubmit}>
+      <input name="email" />
+      {fieldState.getFieldError('email') && (
+        <span className="text-red-600 text-sm">{fieldState.getFieldError('email')}</span>
+      )}
+      {globalError && <div className="text-red-600 text-sm">{globalError}</div>}
+    </form>
+  );
+}
+```
+
+The `handleFormError(error, setFieldError, setGlobalError)` signature is two callbacks -- one invoked per field error (possibly multiple times for multi-field validation errors), one for top-level errors.
 
 ### Error Boundaries
 
