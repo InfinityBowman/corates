@@ -8,17 +8,10 @@ import {
   getNavItemPillStyle,
   getNavItemTooltip,
   NAV_ITEM_TYPES,
+  type RobinsINavItem,
 } from './navbar-utils.js';
 
-interface NavItem {
-  type: string;
-  key: string;
-  label: string;
-  section: string;
-  domainKey?: string;
-  isJudgement?: boolean;
-  [key: string]: any;
-}
+type NavItem = RobinsINavItem;
 
 interface ProgressInfo {
   answered: number;
@@ -165,20 +158,17 @@ function QuestionPill({
   const tooltip = getNavItemTooltip(item, hasAnswer, isAgreement);
 
   const displayLabel = (() => {
-    if (item.type === NAV_ITEM_TYPES.SECTION_B) {
-      return item.key.replace('b', '');
+    switch (item.type) {
+      case NAV_ITEM_TYPES.SECTION_B:
+        return item.key.replace('b', '');
+      case NAV_ITEM_TYPES.DOMAIN_QUESTION: {
+        const parts = item.label.split('.');
+        return parts.length > 1 ? parts[1] : item.label;
+      }
+      case NAV_ITEM_TYPES.DOMAIN_JUDGEMENT:
+      case NAV_ITEM_TYPES.OVERALL_JUDGEMENT:
+        return 'J';
     }
-    if (item.type === NAV_ITEM_TYPES.DOMAIN_QUESTION) {
-      const parts = item.label.split('.');
-      return parts.length > 1 ? parts[1] : item.label;
-    }
-    if (item.type === NAV_ITEM_TYPES.DOMAIN_JUDGEMENT) {
-      return 'J';
-    }
-    if (item.type === NAV_ITEM_TYPES.OVERALL_JUDGEMENT) {
-      return 'J';
-    }
-    return item.label;
   })();
 
   const isJudgement =

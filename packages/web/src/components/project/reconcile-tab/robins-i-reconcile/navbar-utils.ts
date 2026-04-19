@@ -21,17 +21,34 @@ export const NAV_ITEM_TYPES = {
   OVERALL_JUDGEMENT: 'overallJudgement',
 } as const;
 
-interface NavItem {
-  type: string;
+interface NavItemBase {
   key: string;
   label: string;
   section: string;
-  sectionKey?: string;
-  domainKey?: string;
-  questionDef?: ROBINSQuestion | Record<string, unknown>;
-  isJudgement?: boolean;
-  [key: string]: unknown;
+  sectionKey: string;
 }
+
+export type RobinsINavItem =
+  | (NavItemBase & {
+      type: typeof NAV_ITEM_TYPES.SECTION_B;
+      questionDef?: ROBINSQuestion | Record<string, unknown>;
+    })
+  | (NavItemBase & {
+      type: typeof NAV_ITEM_TYPES.DOMAIN_QUESTION;
+      domainKey: string;
+      questionDef?: ROBINSQuestion | Record<string, unknown>;
+    })
+  | (NavItemBase & {
+      type: typeof NAV_ITEM_TYPES.DOMAIN_JUDGEMENT;
+      domainKey: string;
+      isJudgement: true;
+    })
+  | (NavItemBase & {
+      type: typeof NAV_ITEM_TYPES.OVERALL_JUDGEMENT;
+      isJudgement: true;
+    });
+
+type NavItem = RobinsINavItem;
 
 interface NavGroup {
   section: string;
@@ -203,13 +220,11 @@ export function hasNavItemAnswer(navItem: NavItem, finalAnswers: FinalAnswers): 
     case NAV_ITEM_TYPES.SECTION_B:
       return hasSectionBAnswer(navItem.key, finalAnswers);
     case NAV_ITEM_TYPES.DOMAIN_QUESTION:
-      return hasDomainQuestionAnswer(navItem.domainKey!, navItem.key, finalAnswers);
+      return hasDomainQuestionAnswer(navItem.domainKey, navItem.key, finalAnswers);
     case NAV_ITEM_TYPES.DOMAIN_JUDGEMENT:
-      return hasDomainJudgement(navItem.domainKey!, finalAnswers);
+      return hasDomainJudgement(navItem.domainKey, finalAnswers);
     case NAV_ITEM_TYPES.OVERALL_JUDGEMENT:
       return hasOverallJudgement(finalAnswers);
-    default:
-      return false;
   }
 }
 
@@ -225,20 +240,18 @@ export function isNavItemAgreement(navItem: NavItem, comparison: Comparison | nu
       return !!found;
     }
     case NAV_ITEM_TYPES.DOMAIN_QUESTION: {
-      const domain = comparison.domains?.[navItem.domainKey!];
+      const domain = comparison.domains?.[navItem.domainKey];
       if (!domain) return false;
       const found = domain.questions?.agreements?.find(a => a.key === navItem.key);
       return !!found;
     }
     case NAV_ITEM_TYPES.DOMAIN_JUDGEMENT: {
-      const domain = comparison.domains?.[navItem.domainKey!];
+      const domain = comparison.domains?.[navItem.domainKey];
       return !!(domain?.judgementMatch && domain?.directionMatch);
     }
     case NAV_ITEM_TYPES.OVERALL_JUDGEMENT: {
       return !!(comparison.overall?.judgementMatch && comparison.overall?.directionMatch);
     }
-    default:
-      return false;
   }
 }
 

@@ -58,9 +58,14 @@ export interface ReconciliationNavItem {
  * The adapter uses these raw materials to slice reviewer data,
  * build write callbacks, and compose existing page components.
  */
-export interface EngineContext<TChecklist, TFinalAnswers, TComparison> {
-  currentItem: ReconciliationNavItem;
-  navItems: ReconciliationNavItem[];
+export interface EngineContext<
+  TChecklist,
+  TFinalAnswers,
+  TComparison,
+  TNavItem extends ReconciliationNavItem = ReconciliationNavItem,
+> {
+  currentItem: TNavItem;
+  navItems: TNavItem[];
   checklist1: TChecklist;
   checklist2: TChecklist;
   /** Derived via adapter.deriveFinalAnswers */
@@ -83,8 +88,12 @@ export interface EngineContext<TChecklist, TFinalAnswers, TComparison> {
  * Passed to adapter.NavbarComponent.
  * The engine provides all navigation state; the navbar renders type-specific UI.
  */
-export interface NavbarContext<TFinalAnswers, TComparison> {
-  navItems: ReconciliationNavItem[];
+export interface NavbarContext<
+  TFinalAnswers,
+  TComparison,
+  TNavItem extends ReconciliationNavItem = ReconciliationNavItem,
+> {
+  navItems: TNavItem[];
   currentPage: number;
   viewMode: 'questions' | 'summary';
   finalAnswers: TFinalAnswers;
@@ -105,8 +114,12 @@ export interface NavbarContext<TFinalAnswers, TComparison> {
 /**
  * Passed to adapter.SummaryComponent.
  */
-export interface SummaryContext<TFinalAnswers, TComparison> {
-  navItems: ReconciliationNavItem[];
+export interface SummaryContext<
+  TFinalAnswers,
+  TComparison,
+  TNavItem extends ReconciliationNavItem = ReconciliationNavItem,
+> {
+  navItems: TNavItem[];
   finalAnswers: TFinalAnswers;
   comparison: TComparison;
   summaryStats: ReconciliationSummaryStats;
@@ -141,6 +154,7 @@ export interface ReconciliationAdapter<
   TChecklist,
   TFinalAnswers = TChecklist,
   TComparison = unknown,
+  TNavItem extends ReconciliationNavItem = ReconciliationNavItem,
 > {
   // --- Identity ---
 
@@ -160,7 +174,7 @@ export interface ReconciliationAdapter<
    * ROBINS-I: reads sectionC.isPerProtocol to determine domain 1A/1B.
    * AMSTAR2: static list from getQuestionKeys().
    */
-  buildNavItems: (reconciledChecklist: TChecklist) => ReconciliationNavItem[];
+  buildNavItems: (reconciledChecklist: TChecklist) => TNavItem[];
 
   /**
    * Derive the finalAnswers object from reconciledChecklist.
@@ -183,10 +197,10 @@ export interface ReconciliationAdapter<
   // --- Answer checking (pure functions) ---
 
   /** Whether this nav item has a committed final answer */
-  hasAnswer: (item: ReconciliationNavItem, finalAnswers: TFinalAnswers) => boolean;
+  hasAnswer: (item: TNavItem, finalAnswers: TFinalAnswers) => boolean;
 
   /** Whether reviewers agreed on this nav item */
-  isAgreement: (item: ReconciliationNavItem, comparison: TComparison) => boolean;
+  isAgreement: (item: TNavItem, comparison: TComparison) => boolean;
 
   // --- Write operations ---
 
@@ -195,7 +209,7 @@ export interface ReconciliationAdapter<
    * For ROB2/ROBINS-I, also copies comment text via setTextValue.
    */
   autoFillFromReviewer1: (
-    item: ReconciliationNavItem,
+    item: TNavItem,
     checklist1: TChecklist,
     updateChecklistAnswer: (sectionKey: string, data: unknown) => void,
     setTextValue: (ref: TextRef, text: string) => void,
@@ -210,7 +224,7 @@ export interface ReconciliationAdapter<
    * ROBINS-I will use this when scoring-based skip detection is added.
    */
   onAfterNavigate?: (
-    navItems: ReconciliationNavItem[],
+    navItems: TNavItem[],
     finalAnswers: TFinalAnswers,
     updateChecklistAnswer: (sectionKey: string, data: unknown) => void,
   ) => void;
@@ -222,19 +236,21 @@ export interface ReconciliationAdapter<
    * The adapter slices reviewer data from raw checklists, builds write
    * callbacks, and composes the existing page components.
    */
-  renderPage: (context: EngineContext<TChecklist, TFinalAnswers, TComparison>) => ReactNode;
+  renderPage: (
+    context: EngineContext<TChecklist, TFinalAnswers, TComparison, TNavItem>,
+  ) => ReactNode;
 
   /**
    * Type-specific navbar component.
    * AMSTAR2: flat question pills. ROB2/ROBINS-I: grouped domain pills.
    */
-  NavbarComponent: React.ComponentType<NavbarContext<TFinalAnswers, TComparison>>;
+  NavbarComponent: React.ComponentType<NavbarContext<TFinalAnswers, TComparison, TNavItem>>;
 
   /**
    * Type-specific summary view.
    * AMSTAR2's includes a reconciledName input field.
    */
-  SummaryComponent: React.ComponentType<SummaryContext<TFinalAnswers, TComparison>>;
+  SummaryComponent: React.ComponentType<SummaryContext<TFinalAnswers, TComparison, TNavItem>>;
 
   /**
    * Optional: warning banner above the page content.

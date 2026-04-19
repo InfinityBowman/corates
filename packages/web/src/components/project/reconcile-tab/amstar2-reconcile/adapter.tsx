@@ -7,11 +7,19 @@
 
 import type {
   ReconciliationAdapter,
-  ReconciliationNavItem,
   EngineContext,
   NavbarContext,
   SummaryContext,
 } from '../engine/types';
+
+export interface Amstar2NavItem {
+  key: string;
+  label: string;
+  section: string;
+  sectionKey: string;
+  type: 'single' | 'multiPart';
+  meta: { isMultiPart: boolean };
+}
 import {
   compareChecklists,
   getReconciliationSummary,
@@ -32,7 +40,7 @@ import { SummaryView } from './SummaryView';
 
 const questionKeys: string[] = getQuestionKeys();
 
-function buildNavItems(): ReconciliationNavItem[] {
+function buildNavItems(): Amstar2NavItem[] {
   return questionKeys.map(key => ({
     key,
     label: key.replace('q', ''),
@@ -97,11 +105,11 @@ function buildComparisonByQuestion(comparison: ComparisonResult | null): Record<
 // Answer checking
 // ---------------------------------------------------------------------------
 
-function hasAnswer(item: ReconciliationNavItem, finalAnswers: Record<string, any>): boolean {
+function hasAnswer(item: Amstar2NavItem, finalAnswers: Record<string, any>): boolean {
   return hasQuestionAnswer(item.key, finalAnswers);
 }
 
-function isAgreement(item: ReconciliationNavItem, comparison: ComparisonResult | null): boolean {
+function isAgreement(item: Amstar2NavItem, comparison: ComparisonResult | null): boolean {
   const map = buildComparisonByQuestion(comparison);
   return map[item.key]?.isAgreement ?? true;
 }
@@ -139,7 +147,7 @@ function writeAnswer(
 }
 
 function autoFillFromReviewer1(
-  item: ReconciliationNavItem,
+  item: Amstar2NavItem,
   checklist1: any,
   updateChecklistAnswer: (sectionKey: string, data: unknown) => void,
 ): void {
@@ -176,7 +184,9 @@ function getReviewerNote(checklist: any, questionKey: string): string {
   return '';
 }
 
-function renderPage(context: EngineContext<any, Record<string, any>, ComparisonResult | null>) {
+function renderPage(
+  context: EngineContext<any, Record<string, any>, ComparisonResult | null, Amstar2NavItem>,
+) {
   const {
     currentItem,
     checklist1,
@@ -231,7 +241,7 @@ function renderPage(context: EngineContext<any, Record<string, any>, ComparisonR
 // ---------------------------------------------------------------------------
 
 function Amstar2NavbarAdapter(
-  navbarContext: NavbarContext<Record<string, any>, ComparisonResult | null>,
+  navbarContext: NavbarContext<Record<string, any>, ComparisonResult | null, Amstar2NavItem>,
 ) {
   // Map NavbarContext to the shape the existing Navbar component expects
   const comparisonByQuestion = buildComparisonByQuestion(navbarContext.comparison);
@@ -255,7 +265,7 @@ function Amstar2NavbarAdapter(
 // ---------------------------------------------------------------------------
 
 function Amstar2SummaryAdapter(
-  summaryContext: SummaryContext<Record<string, any>, ComparisonResult | null>,
+  summaryContext: SummaryContext<Record<string, any>, ComparisonResult | null, Amstar2NavItem>,
 ) {
   const comparison = summaryContext.comparison;
   const summary = comparison ? getReconciliationSummary(comparison) : null;
@@ -285,7 +295,8 @@ function Amstar2SummaryAdapter(
 export const amstar2Adapter: ReconciliationAdapter<
   any,
   Record<string, any>,
-  ComparisonResult | null
+  ComparisonResult | null,
+  Amstar2NavItem
 > = {
   checklistType: 'AMSTAR2',
   title: 'Reconciliation',

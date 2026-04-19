@@ -17,7 +17,7 @@ import type {
 import type { TextRef } from '@/primitives/useProject/checklists';
 
 interface UseReconciliationEngineOptions {
-  adapter: ReconciliationAdapter<any, any, any>;
+  adapter: ReconciliationAdapter<any, any, any, any>;
   checklist1: unknown;
   checklist2: unknown;
   reconciledChecklist: unknown;
