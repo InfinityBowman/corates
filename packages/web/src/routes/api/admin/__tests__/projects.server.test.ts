@@ -136,13 +136,10 @@ describe('GET /api/admin/projects', () => {
 });
 
 describe('GET /api/admin/projects/:projectId', () => {
-  it('returns 401 when no session', async () => {
-    const res = await projectDetails({
-      request: new Request('http://localhost/api/admin/projects/x'),
-      params: { projectId: 'x' },
-    });
-    expect(res.status).toBe(401);
-  });
+  // Auth-bypass cases (no session, wrong role, CSRF) are covered by the
+  // SELF.fetch tests in projects-self.server.test.ts. Those exercise the
+  // adminMiddleware that this route now relies on; calling the handler
+  // directly would skip the middleware and silently false-pass.
 
   it('returns 404 when project not found', async () => {
     await asAdmin();

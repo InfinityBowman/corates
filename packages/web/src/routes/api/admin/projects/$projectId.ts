@@ -3,6 +3,10 @@
  *
  * GET /api/admin/projects/:projectId — project with org, creator, members,
  * files, and recent invitations. DELETE removes the project and cascades.
+ *
+ * Auth + admin role + CSRF are enforced via `adminMiddleware` on the route's
+ * `server.middleware`. Handlers receive a typed `context.admin` and
+ * `context.session` and don't call `requireAdmin` themselves.
  */
 import { createFileRoute } from '@tanstack/react-router';
 import { env } from 'cloudflare:workers';
@@ -17,14 +21,11 @@ import {
 } from '@corates/db/schema';
 import { desc, eq } from 'drizzle-orm';
 import { createDomainError, PROJECT_ERRORS, SYSTEM_ERRORS } from '@corates/shared';
-import { requireAdmin } from '@/server/guards/requireAdmin';
+import { adminMiddleware } from '@/server/middleware/admin';
 
 type HandlerArgs = { request: Request; params: { projectId: string } };
 
-export const handleGet = async ({ request, params }: HandlerArgs) => {
-  const guard = await requireAdmin(request, env);
-  if (!guard.ok) return guard.response;
-
+export const handleGet = async ({ params }: HandlerArgs) => {
   const { projectId } = params;
   const db = createDb(env.DB);
 
@@ -137,10 +138,7 @@ export const handleGet = async ({ request, params }: HandlerArgs) => {
   }
 };
 
-export const handleDelete = async ({ request, params }: HandlerArgs) => {
-  const guard = await requireAdmin(request, env);
-  if (!guard.ok) return guard.response;
-
+export const handleDelete = async ({ params }: HandlerArgs) => {
   const { projectId } = params;
   const db = createDb(env.DB);
 
@@ -170,5 +168,8 @@ export const handleDelete = async ({ request, params }: HandlerArgs) => {
 };
 
 export const Route = createFileRoute('/api/admin/projects/$projectId')({
-  server: { handlers: { GET: handleGet, DELETE: handleDelete } },
+  server: {
+    middleware: [adminMiddleware],
+    handlers: { GET: handleGet, DELETE: handleDelete },
+  },
 });
