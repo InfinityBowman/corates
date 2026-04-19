@@ -4,12 +4,12 @@ CoRATES uses Vitest for unit and server tests, and Playwright for end-to-end tes
 
 ## Test layers
 
-| Layer | Runs in | Config | File pattern | Purpose |
-| --- | --- | --- | --- | --- |
-| Unit | jsdom | `vitest.config.ts` | `*.test.ts[x]` | Pure functions, hooks, Zustand stores, React components |
-| Server | Workers pool | `vitest.server.config.ts` | `*.server.test.ts` | TanStack Start route handlers against a real D1 + bindings |
-| Browser | real browser (vitest-browser-react) | `vitest.browser.config.ts` | `*.browser.test.tsx` | Component tests needing real layout/IO |
-| E2E | Playwright | `playwright.config.ts` | `*.spec.ts` (under `tests/e2e/`) | Full user flows against a running dev server |
+| Layer   | Runs in                             | Config                     | File pattern                     | Purpose                                                    |
+| ------- | ----------------------------------- | -------------------------- | -------------------------------- | ---------------------------------------------------------- |
+| Unit    | jsdom                               | `vitest.config.ts`         | `*.test.ts[x]`                   | Pure functions, hooks, Zustand stores, React components    |
+| Server  | Workers pool                        | `vitest.server.config.ts`  | `*.server.test.ts`               | TanStack Start route handlers against a real D1 + bindings |
+| Browser | real browser (vitest-browser-react) | `vitest.browser.config.ts` | `*.browser.test.tsx`             | Component tests needing real layout/IO                     |
+| E2E     | Playwright                          | `playwright.config.ts`     | `*.spec.ts` (under `tests/e2e/`) | Full user flows against a running dev server               |
 
 The unit config explicitly **excludes** `*.server.test.ts` and `*.browser.test.tsx`, so all three can coexist without cross-contamination.
 
@@ -40,7 +40,7 @@ Tests validate **intended behavior**, not implementation details. Prefer asserti
 
 Use the AAA structure: **Arrange**, **Act**, **Assert**. A test that names its phases is usually a test that knows what it's testing.
 
-When you discover a bug while writing a test, write the test for the *intended* behavior and add a `// BUG:` comment explaining the divergence. The failing test is the bug report.
+When you discover a bug while writing a test, write the test for the _intended_ behavior and add a `// BUG:` comment explaining the divergence. The failing test is the bug report.
 
 ## Unit tests (jsdom)
 
@@ -92,7 +92,7 @@ import { MyComponent } from '../MyComponent';
 
 describe('MyComponent', () => {
   it('renders the title', () => {
-    render(<MyComponent title="Hello" />);
+    render(<MyComponent title='Hello' />);
     expect(screen.getByText('Hello')).toBeInTheDocument();
   });
 });
@@ -145,9 +145,9 @@ Server tests live next to the route file under `__tests__/` with the `*.server.t
 
 There are **two patterns**, picked per test based on what's being exercised:
 
-| Pattern | When to use | Cost |
-| --- | --- | --- |
-| Handler-direct | Business logic, happy paths, routes without middleware | Fast (~ms per test) |
+| Pattern                   | When to use                                                              | Cost                                                 |
+| ------------------------- | ------------------------------------------------------------------------ | ---------------------------------------------------- |
+| Handler-direct            | Business logic, happy paths, routes without middleware                   | Fast (~ms per test)                                  |
 | `SELF.fetch` (end-to-end) | Anything that depends on route-level middleware (auth, CSRF, validation) | Worker boots once per file (~10s), then ~ms per test |
 
 ### Pattern 1 — Handler-direct

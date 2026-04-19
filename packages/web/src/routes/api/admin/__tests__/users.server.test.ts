@@ -9,7 +9,13 @@
 import { beforeEach, describe, expect, it, vi, type Mock } from 'vitest';
 import { env } from 'cloudflare:test';
 import { resetTestDatabase } from '@/__tests__/server/helpers';
-import { buildAdminUser, buildOrg, buildProject, buildUser, resetCounter } from '@/__tests__/server/factories';
+import {
+  buildAdminUser,
+  buildOrg,
+  buildProject,
+  buildUser,
+  resetCounter,
+} from '@/__tests__/server/factories';
 import { createDb } from '@corates/db/client';
 import { account, session, user } from '@corates/db/schema';
 import { eq } from 'drizzle-orm';

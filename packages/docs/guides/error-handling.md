@@ -72,10 +72,7 @@ export const handleGet = async ({ params }: { params: { projectId: string } }) =
   const project = await db.select().from(projects).where(eq(projects.id, params.projectId)).get();
 
   if (!project) {
-    return Response.json(
-      createDomainError(PROJECT_ERRORS.NOT_FOUND, { projectId: params.projectId }),
-      { status: 404 },
-    );
+    return Response.json(createDomainError(PROJECT_ERRORS.NOT_FOUND, { projectId: params.projectId }), { status: 404 });
   }
 
   return Response.json(project);
@@ -160,9 +157,11 @@ function MyForm() {
 
   return (
     <form onSubmit={handleSubmit}>
-      <input name="email" />
-      {error && <div className="text-red-600 text-sm">{error}</div>}
-      <button type="submit" disabled={loading}>Submit</button>
+      <input name='email' />
+      {error && <div className='text-sm text-red-600'>{error}</div>}
+      <button type='submit' disabled={loading}>
+        Submit
+      </button>
     </form>
   );
 }
@@ -200,11 +199,11 @@ function MyForm() {
 
   return (
     <form onSubmit={handleSubmit}>
-      <input name="email" />
+      <input name='email' />
       {fieldState.getFieldError('email') && (
-        <span className="text-red-600 text-sm">{fieldState.getFieldError('email')}</span>
+        <span className='text-sm text-red-600'>{fieldState.getFieldError('email')}</span>
       )}
-      {globalError && <div className="text-red-600 text-sm">{globalError}</div>}
+      {globalError && <div className='text-sm text-red-600'>{globalError}</div>}
     </form>
   );
 }

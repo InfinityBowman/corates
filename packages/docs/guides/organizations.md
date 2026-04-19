@@ -15,15 +15,15 @@ Project membership is independent of org membership by default -- a user can be 
 
 ## Data Model
 
-| Entity               | Storage           | Source of truth for        |
-| -------------------- | ----------------- | -------------------------- |
-| Organizations        | D1 (Better Auth)  | Org metadata, billing      |
-| Org Members          | D1 (Better Auth)  | Org-level access + role    |
-| Projects             | D1                | Project metadata           |
-| Project Members      | D1                | Project-level access + role|
-| Project Invitations  | D1                | Pending invites + tokens   |
-| Studies / Checklists | Durable Object    | Real-time collaborative content (Yjs) |
-| PDFs                 | R2                | Binary uploads             |
+| Entity               | Storage          | Source of truth for                   |
+| -------------------- | ---------------- | ------------------------------------- |
+| Organizations        | D1 (Better Auth) | Org metadata, billing                 |
+| Org Members          | D1 (Better Auth) | Org-level access + role               |
+| Projects             | D1               | Project metadata                      |
+| Project Members      | D1               | Project-level access + role           |
+| Project Invitations  | D1               | Pending invites + tokens              |
+| Studies / Checklists | Durable Object   | Real-time collaborative content (Yjs) |
+| PDFs                 | R2               | Binary uploads                        |
 
 ### Key tables
 
@@ -40,11 +40,11 @@ The `grantOrgMembership` flag on an invitation says "also add this user to the o
 
 ### Organization
 
-| Role     | What it grants                                                 |
-| -------- | -------------------------------------------------------------- |
-| `owner`  | Full control: delete org, manage billing, any member action    |
-| `admin`  | Manage members (except owners), update org settings            |
-| `member` | View org, access assigned projects, create projects            |
+| Role     | What it grants                                              |
+| -------- | ----------------------------------------------------------- |
+| `owner`  | Full control: delete org, manage billing, any member action |
+| `admin`  | Manage members (except owners), update org settings         |
+| `member` | View org, access assigned projects, create projects         |
 
 Hierarchy: `owner > admin > member`. Use `hasOrgRole(actual, minRole)` from `@corates/workers/policies`.
 
@@ -63,14 +63,14 @@ All org-scoped API routes follow `/api/orgs/:orgId/...`. The backend always uses
 
 ### Organization routes (`/api/orgs/*`)
 
-| Method | Endpoint                      | Auth                            |
-| ------ | ----------------------------- | ------------------------------- |
-| GET    | `/api/orgs`                   | Authenticated                   |
-| POST   | `/api/orgs`                   | Authenticated                   |
-| GET    | `/api/orgs/:orgId`            | Org member                      |
-| PUT    | `/api/orgs/:orgId`            | Org admin                       |
-| DELETE | `/api/orgs/:orgId`            | Org owner                       |
-| POST   | `/api/orgs/:orgId/set-active` | Org member                      |
+| Method | Endpoint                      | Auth          |
+| ------ | ----------------------------- | ------------- |
+| GET    | `/api/orgs`                   | Authenticated |
+| POST   | `/api/orgs`                   | Authenticated |
+| GET    | `/api/orgs/:orgId`            | Org member    |
+| PUT    | `/api/orgs/:orgId`            | Org admin     |
+| DELETE | `/api/orgs/:orgId`            | Org owner     |
+| POST   | `/api/orgs/:orgId/set-active` | Org member    |
 
 ### Org member routes (`/api/orgs/:orgId/members`)
 
@@ -78,39 +78,39 @@ Member mutations are delegated to Better Auth's `organization` plugin (`createAu
 
 ### Project routes (`/api/orgs/:orgId/projects/*`)
 
-| Method | Endpoint                                       | Auth                                           |
-| ------ | ---------------------------------------------- | ---------------------------------------------- |
-| GET    | `/api/orgs/:orgId/projects`                    | Org member                                     |
-| POST   | `/api/orgs/:orgId/projects`                    | Org member + entitlement (`project.create`)    |
-| GET    | `/api/orgs/:orgId/projects/:projectId`         | Project member                                 |
-| PUT    | `/api/orgs/:orgId/projects/:projectId`         | Project member                                 |
-| DELETE | `/api/orgs/:orgId/projects/:projectId`         | Project owner                                  |
+| Method | Endpoint                               | Auth                                        |
+| ------ | -------------------------------------- | ------------------------------------------- |
+| GET    | `/api/orgs/:orgId/projects`            | Org member                                  |
+| POST   | `/api/orgs/:orgId/projects`            | Org member + entitlement (`project.create`) |
+| GET    | `/api/orgs/:orgId/projects/:projectId` | Project member                              |
+| PUT    | `/api/orgs/:orgId/projects/:projectId` | Project member                              |
+| DELETE | `/api/orgs/:orgId/projects/:projectId` | Project owner                               |
 
 ### Project member + invitation routes
 
-| Method | Endpoint                                                           | Auth           |
-| ------ | ------------------------------------------------------------------ | -------------- |
-| GET    | `/api/orgs/:orgId/projects/:projectId/members`                     | Project member |
-| POST   | `/api/orgs/:orgId/projects/:projectId/members`                     | Project owner  |
-| DELETE | `/api/orgs/:orgId/projects/:projectId/members/:userId`             | Project owner  |
-| GET    | `/api/orgs/:orgId/projects/:projectId/invitations`                 | Project member |
-| POST   | `/api/orgs/:orgId/projects/:projectId/invitations`                 | Project owner  |
-| DELETE | `/api/orgs/:orgId/projects/:projectId/invitations/:invitationId`   | Project owner  |
-| POST   | `/api/invitations/accept`                                          | Authenticated  |
+| Method | Endpoint                                                         | Auth           |
+| ------ | ---------------------------------------------------------------- | -------------- |
+| GET    | `/api/orgs/:orgId/projects/:projectId/members`                   | Project member |
+| POST   | `/api/orgs/:orgId/projects/:projectId/members`                   | Project owner  |
+| DELETE | `/api/orgs/:orgId/projects/:projectId/members/:userId`           | Project owner  |
+| GET    | `/api/orgs/:orgId/projects/:projectId/invitations`               | Project member |
+| POST   | `/api/orgs/:orgId/projects/:projectId/invitations`               | Project owner  |
+| DELETE | `/api/orgs/:orgId/projects/:projectId/invitations/:invitationId` | Project owner  |
+| POST   | `/api/invitations/accept`                                        | Authenticated  |
 
 ## Server guards
 
 Route handlers gate themselves with **guard functions** that return a tagged `{ ok, context | response }` union rather than throwing. Each guard lives in `packages/web/src/server/guards/`.
 
-| Guard                        | Signature                                                                  | Purpose                                      |
-| ---------------------------- | -------------------------------------------------------------------------- | -------------------------------------------- |
-| `requireOrgMembership`       | `(request, env, orgId, minRole?)`                                          | Ensure caller is an org member, optional role|
-| `requireProjectAccess`       | `(request, env, orgId, projectId, minRole?)`                               | Ensure caller is a project member + role     |
-| `requireOrgWriteAccess`      | `(request, env, orgId)`                                                    | Billing-aware write gate                     |
-| `requireEntitlement`         | `(...)`                                                                    | Plan/feature entitlement check               |
-| `requireQuota`               | `(...)`                                                                    | Quota bookkeeping                            |
-| `requireAdmin`                | `(request, env)`                                                          | Admin-only routes                            |
-| `requireTrustedOrigin`       | `(request)`                                                                | CSRF / origin check                          |
+| Guard                   | Signature                                    | Purpose                                       |
+| ----------------------- | -------------------------------------------- | --------------------------------------------- |
+| `requireOrgMembership`  | `(request, env, orgId, minRole?)`            | Ensure caller is an org member, optional role |
+| `requireProjectAccess`  | `(request, env, orgId, projectId, minRole?)` | Ensure caller is a project member + role      |
+| `requireOrgWriteAccess` | `(request, env, orgId)`                      | Billing-aware write gate                      |
+| `requireEntitlement`    | `(...)`                                      | Plan/feature entitlement check                |
+| `requireQuota`          | `(...)`                                      | Quota bookkeeping                             |
+| `requireAdmin`          | `(request, env)`                             | Admin-only routes                             |
+| `requireTrustedOrigin`  | `(request)`                                  | CSRF / origin check                           |
 
 All guards return:
 
@@ -152,15 +152,15 @@ For mutations that affect billing, add `requireOrgWriteAccess` and / or `require
 
 Frontend routes are **project-centric**, not org-slug-centric. There is no `:orgSlug` in URLs; projects know their org via the store and query cache.
 
-| Route pattern                                                      | Purpose                 |
-| ------------------------------------------------------------------ | ----------------------- |
-| `/dashboard`                                                       | Project list (user's)   |
-| `/orgs/new`                                                        | Create a new org        |
-| `/projects/:projectId`                                             | Project overview        |
-| `/projects/:projectId/studies/:studyId/checklists/:checklistId`    | Checklist editor        |
-| `/projects/:projectId/studies/:studyId/reconcile/:c1Id/:c2Id`      | Checklist reconciliation|
-| `/settings/*`                                                      | User settings / billing |
-| `/admin/*`                                                         | Admin-only              |
+| Route pattern                                                   | Purpose                  |
+| --------------------------------------------------------------- | ------------------------ |
+| `/dashboard`                                                    | Project list (user's)    |
+| `/orgs/new`                                                     | Create a new org         |
+| `/projects/:projectId`                                          | Project overview         |
+| `/projects/:projectId/studies/:studyId/checklists/:checklistId` | Checklist editor         |
+| `/projects/:projectId/studies/:studyId/reconcile/:c1Id/:c2Id`   | Checklist reconciliation |
+| `/settings/*`                                                   | User settings / billing  |
+| `/admin/*`                                                      | Admin-only               |
 
 Route files live under `packages/web/src/routes/_app/_protected/` (authenticated layout).
 

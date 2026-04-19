@@ -108,7 +108,10 @@ export async function requireProjectAccess(
       .select({ role: projectMembers.role })
       .from(projectMembers)
       .where(
-        and(eq(projectMembers.projectId, projectId), eq(projectMembers.userId, session.user.id as UserId)),
+        and(
+          eq(projectMembers.projectId, projectId),
+          eq(projectMembers.userId, session.user.id as UserId),
+        ),
       )
       .get();
   } catch (err) {
