@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { env } from 'cloudflare:test';
 import { resetTestDatabase, seedMediaFile } from '@/__tests__/server/helpers';
-import { buildAdminUser, buildUser, resetCounter } from '@/__tests__/server/factories';
+import { buildAdminUser, resetCounter } from '@/__tests__/server/factories';
 import { handleGet as listDocs, handleDelete as deleteDocs } from '../storage/documents';
 import { handleGet as getStats } from '../storage/stats';
 
@@ -56,21 +56,6 @@ function deleteReq(body: unknown): Request {
 }
 
 describe('GET /api/admin/storage/documents', () => {
-  it('returns 401 when no session', async () => {
-    const res = await listDocs({ request: listReq() });
-    expect(res.status).toBe(401);
-  });
-
-  it('returns 403 when caller is not admin', async () => {
-    const user = await buildUser();
-    sessionResult = {
-      user: { id: user.id, email: user.email, name: user.name, role: 'user' },
-      session: { id: 'sess', userId: user.id, activeOrganizationId: null },
-    };
-    const res = await listDocs({ request: listReq() });
-    expect(res.status).toBe(403);
-  });
-
   it('returns paginated documents', async () => {
     await asAdmin();
     await putR2('projects/p1/studies/s1/file1.pdf', 'a'.repeat(100));
@@ -178,21 +163,6 @@ describe('GET /api/admin/storage/documents', () => {
 });
 
 describe('DELETE /api/admin/storage/documents', () => {
-  it('returns 401 when no session', async () => {
-    const res = await deleteDocs({ request: deleteReq({ keys: ['projects/p/studies/s/f.pdf'] }) });
-    expect(res.status).toBe(401);
-  });
-
-  it('returns 403 when caller is not admin', async () => {
-    const user = await buildUser();
-    sessionResult = {
-      user: { id: user.id, email: user.email, name: user.name, role: 'user' },
-      session: { id: 'sess', userId: user.id, activeOrganizationId: null },
-    };
-    const res = await deleteDocs({ request: deleteReq({ keys: ['projects/p/studies/s/f.pdf'] }) });
-    expect(res.status).toBe(403);
-  });
-
   it('rejects invalid key pattern', async () => {
     await asAdmin();
     const res = await deleteDocs({ request: deleteReq({ keys: ['invalid-key'] }) });
@@ -226,34 +196,13 @@ describe('DELETE /api/admin/storage/documents', () => {
 });
 
 describe('GET /api/admin/storage/stats', () => {
-  it('returns 401 when no session', async () => {
-    const res = await getStats({
-      request: new Request('http://localhost/api/admin/storage/stats'),
-    });
-    expect(res.status).toBe(401);
-  });
-
-  it('returns 403 when caller is not admin', async () => {
-    const user = await buildUser();
-    sessionResult = {
-      user: { id: user.id, email: user.email, name: user.name, role: 'user' },
-      session: { id: 'sess', userId: user.id, activeOrganizationId: null },
-    };
-    const res = await getStats({
-      request: new Request('http://localhost/api/admin/storage/stats'),
-    });
-    expect(res.status).toBe(403);
-  });
-
   it('returns storage statistics aggregated from R2', async () => {
     await asAdmin();
     await putR2('projects/p1/studies/s1/file1.pdf', 'a'.repeat(100));
     await putR2('projects/p1/studies/s1/file2.pdf', 'b'.repeat(200));
     await putR2('projects/p2/studies/s1/file3.pdf', 'c'.repeat(300));
 
-    const res = await getStats({
-      request: new Request('http://localhost/api/admin/storage/stats'),
-    });
+    const res = await getStats();
     expect(res.status).toBe(200);
     const body = (await res.json()) as {
       totalFiles: number;

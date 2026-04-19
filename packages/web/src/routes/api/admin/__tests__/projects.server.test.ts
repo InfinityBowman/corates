@@ -7,7 +7,6 @@ import {
   buildOrgMember,
   buildProject,
   buildProjectMember,
-  buildUser,
   resetCounter,
 } from '@/__tests__/server/factories';
 import { handleGet as listProjects } from '../projects';
@@ -46,21 +45,6 @@ function listReq(path = '/api/admin/projects'): Request {
 }
 
 describe('GET /api/admin/projects', () => {
-  it('returns 401 when no session', async () => {
-    const res = await listProjects({ request: listReq() });
-    expect(res.status).toBe(401);
-  });
-
-  it('returns 403 when caller is not admin', async () => {
-    const u = await buildUser();
-    sessionResult = {
-      user: { id: u.id, email: u.email, name: u.name, role: 'user' },
-      session: { id: 'sess', userId: u.id, activeOrganizationId: null },
-    };
-    const res = await listProjects({ request: listReq() });
-    expect(res.status).toBe(403);
-  });
-
   it('returns paginated projects with org/creator info', async () => {
     await asAdmin();
     await buildProject();

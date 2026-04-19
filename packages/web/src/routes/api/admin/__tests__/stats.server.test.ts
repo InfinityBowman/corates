@@ -6,7 +6,7 @@ import {
   seedProject,
   seedStripeEventLedger,
 } from '@/__tests__/server/helpers';
-import { buildAdminUser, buildUser, resetCounter } from '@/__tests__/server/factories';
+import { buildAdminUser, resetCounter } from '@/__tests__/server/factories';
 import { handleGet as signupsGet } from '../stats/signups';
 import { handleGet as orgsGet } from '../stats/organizations';
 import { handleGet as projectsGet } from '../stats/projects';
@@ -54,21 +54,6 @@ function req(path: string): Request {
 }
 
 describe('GET /api/admin/stats/signups', () => {
-  it('returns 401 when no session', async () => {
-    const res = await signupsGet({ request: req('/api/admin/stats/signups') });
-    expect(res.status).toBe(401);
-  });
-
-  it('returns 403 when caller is not admin', async () => {
-    const u = await buildUser();
-    sessionResult = {
-      user: { id: u.id, email: u.email, name: u.name, role: 'user' },
-      session: { id: 'sess', userId: u.id, activeOrganizationId: null },
-    };
-    const res = await signupsGet({ request: req('/api/admin/stats/signups') });
-    expect(res.status).toBe(403);
-  });
-
   it('returns daily counts with zero-fill', async () => {
     await asAdmin();
     const todaySec = Math.floor(Date.now() / 1000);
@@ -219,7 +204,7 @@ describe('GET /api/admin/stats/subscriptions', () => {
       .mockResolvedValueOnce({ data: [], has_more: false })
       .mockResolvedValueOnce({ data: [{}, {}], has_more: true });
 
-    const res = await subsGet({ request: req('/api/admin/stats/subscriptions') });
+    const res = await subsGet();
     expect(res.status).toBe(200);
     const body = (await res.json()) as {
       active: number;
@@ -238,7 +223,7 @@ describe('GET /api/admin/stats/subscriptions', () => {
   it('returns 500 when Stripe throws', async () => {
     await asAdmin();
     subscriptionsSearchMock.mockRejectedValueOnce(new Error('stripe down'));
-    const res = await subsGet({ request: req('/api/admin/stats/subscriptions') });
+    const res = await subsGet();
     expect(res.status).toBe(500);
   });
 });

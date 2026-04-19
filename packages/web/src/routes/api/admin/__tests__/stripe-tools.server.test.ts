@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { env } from 'cloudflare:test';
 import { resetTestDatabase, seedSubscription } from '@/__tests__/server/helpers';
-import { buildAdminUser, buildOrg, buildUser, resetCounter } from '@/__tests__/server/factories';
+import { buildAdminUser, buildOrg, resetCounter } from '@/__tests__/server/factories';
 import { handleGet as customerLookup } from '../stripe/customer';
 import { handlePost as portalLink } from '../stripe/portal-link';
 import { handleGet as customerInvoices } from '../stripe/customer/$customerId/invoices';
@@ -56,25 +56,6 @@ async function asAdmin() {
 }
 
 describe('GET /api/admin/stripe/customer', () => {
-  it('returns 401 when no session', async () => {
-    const res = await customerLookup({
-      request: new Request('http://localhost/api/admin/stripe/customer?email=a@b.com'),
-    });
-    expect(res.status).toBe(401);
-  });
-
-  it('returns 403 when caller is not admin', async () => {
-    const u = await buildUser();
-    sessionResult = {
-      user: { id: u.id, email: u.email, name: u.name, role: 'user' },
-      session: { id: 's', userId: u.id, activeOrganizationId: null },
-    };
-    const res = await customerLookup({
-      request: new Request('http://localhost/api/admin/stripe/customer?email=a@b.com'),
-    });
-    expect(res.status).toBe(403);
-  });
-
   it('returns 400 when neither email nor customerId provided', async () => {
     await asAdmin();
     const res = await customerLookup({
@@ -203,14 +184,6 @@ describe('POST /api/admin/stripe/portal-link', () => {
 });
 
 describe('GET /api/admin/stripe/customer/:customerId/invoices', () => {
-  it('returns 401 when no session', async () => {
-    const res = await customerInvoices({
-      request: new Request('http://localhost/api/admin/stripe/customer/cus_x/invoices'),
-      params: { customerId: 'cus_x' },
-    });
-    expect(res.status).toBe(401);
-  });
-
   it('returns invoice list mapped to API shape', async () => {
     await asAdmin();
     invoicesListMock.mockResolvedValueOnce({
