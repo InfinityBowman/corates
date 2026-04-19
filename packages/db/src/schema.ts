@@ -294,3 +294,50 @@ export const dbSchema = {
   stripeEventLedger,
   projectInvitations,
 };
+
+// Inferred row + insert types per table. Prefer these over hand-written
+// shadow interfaces; they stay in sync with the schema automatically.
+export type User = typeof user.$inferSelect;
+export type NewUser = typeof user.$inferInsert;
+
+export type Session = typeof session.$inferSelect;
+export type NewSession = typeof session.$inferInsert;
+
+export type Account = typeof account.$inferSelect;
+export type NewAccount = typeof account.$inferInsert;
+
+export type Verification = typeof verification.$inferSelect;
+export type NewVerification = typeof verification.$inferInsert;
+
+export type TwoFactor = typeof twoFactor.$inferSelect;
+export type NewTwoFactor = typeof twoFactor.$inferInsert;
+
+export type Organization = typeof organization.$inferSelect;
+export type NewOrganization = typeof organization.$inferInsert;
+
+export type Member = typeof member.$inferSelect;
+export type NewMember = typeof member.$inferInsert;
+
+export type Invitation = typeof invitation.$inferSelect;
+export type NewInvitation = typeof invitation.$inferInsert;
+
+export type Project = typeof projects.$inferSelect;
+export type NewProject = typeof projects.$inferInsert;
+
+export type ProjectMember = typeof projectMembers.$inferSelect;
+export type NewProjectMember = typeof projectMembers.$inferInsert;
+
+export type MediaFile = typeof mediaFiles.$inferSelect;
+export type NewMediaFile = typeof mediaFiles.$inferInsert;
+
+export type Subscription = typeof subscription.$inferSelect;
+export type NewSubscription = typeof subscription.$inferInsert;
+
+export type OrgAccessGrant = typeof orgAccessGrants.$inferSelect;
+export type NewOrgAccessGrant = typeof orgAccessGrants.$inferInsert;
+
+export type StripeEventLedgerEntry = typeof stripeEventLedger.$inferSelect;
+export type NewStripeEventLedgerEntry = typeof stripeEventLedger.$inferInsert;
+
+export type ProjectInvitation = typeof projectInvitations.$inferSelect;
+export type NewProjectInvitation = typeof projectInvitations.$inferInsert;

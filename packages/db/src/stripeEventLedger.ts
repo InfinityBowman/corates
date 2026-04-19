@@ -1,9 +1,6 @@
 import { eq, desc } from 'drizzle-orm';
-import { stripeEventLedger } from './schema';
+import { stripeEventLedger, type StripeEventLedgerEntry } from './schema';
 import type { Database } from './client';
-import type { InferSelectModel } from 'drizzle-orm';
-
-type StripeEventLedgerEntry = InferSelectModel<typeof stripeEventLedger>;
 
 export const LedgerStatus = {
   RECEIVED: 'received',
@@ -117,7 +114,7 @@ export async function updateLedgerWithVerifiedFields(
     stripeCheckoutSessionId = null,
   } = data;
 
-  const updateData: Record<string, unknown> = {
+  const updateData: Partial<typeof stripeEventLedger.$inferInsert> = {
     processedAt: new Date(),
     status,
     ...(httpStatus !== undefined && { httpStatus }),
@@ -135,7 +132,7 @@ export async function updateLedgerWithVerifiedFields(
       stripeCustomerId,
       stripeSubscriptionId,
       stripeCheckoutSessionId,
-    });
+    } satisfies Partial<typeof stripeEventLedger.$inferInsert>);
   }
 
   const result = await db

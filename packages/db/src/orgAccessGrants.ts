@@ -1,9 +1,6 @@
 import { eq, and, isNull, desc } from 'drizzle-orm';
-import { orgAccessGrants } from './schema';
+import { orgAccessGrants, type OrgAccessGrant } from './schema';
 import type { Database } from './client';
-import type { InferSelectModel } from 'drizzle-orm';
-
-type OrgAccessGrant = InferSelectModel<typeof orgAccessGrants>;
 
 interface CreateGrantData {
   id: string;
