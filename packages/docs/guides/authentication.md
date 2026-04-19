@@ -109,13 +109,7 @@ import { parseError } from '@/lib/error-utils';
 
 export const authClient = createAuthClient({
   baseURL: API_BASE,
-  plugins: [
-    genericOAuthClient(),
-    magicLinkClient(),
-    twoFactorClient(),
-    adminClient(),
-    organizationClient(),
-  ],
+  plugins: [genericOAuthClient(), magicLinkClient(), twoFactorClient(), adminClient(), organizationClient()],
   fetchOptions: {
     credentials: 'include',
     onError(error) {

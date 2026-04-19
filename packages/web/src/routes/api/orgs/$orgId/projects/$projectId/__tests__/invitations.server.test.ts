@@ -258,7 +258,11 @@ describe('DELETE /api/orgs/:orgId/projects/:projectId/invitations/:invitationId'
         `/api/orgs/${org.id}/projects/${project.id}/invitations/nonexistent`,
         'DELETE',
       ),
-      params: { orgId: org.id, projectId: project.id, invitationId: asProjectInvitationId('nonexistent') },
+      params: {
+        orgId: org.id,
+        projectId: project.id,
+        invitationId: asProjectInvitationId('nonexistent'),
+      },
     });
 
     expect(res.status).toBe(400);

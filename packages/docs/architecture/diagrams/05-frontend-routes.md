@@ -38,38 +38,38 @@ flowchart TD
 
 TanStack file-based conventions: an underscore prefix (`_app`, `_auth`) denotes a layout that wraps its children without contributing a path segment.
 
-| Layout            | File                              | Purpose                                               |
-| ----------------- | --------------------------------- | ----------------------------------------------------- |
-| `_auth`           | `routes/_auth.tsx`                | Public flows; redirects to `/dashboard` if logged in  |
-| `_app`            | `routes/_app.tsx`                 | Top-level app chrome                                  |
-| `_app/_protected` | `routes/_app/_protected.tsx`      | Auth guard via `beforeLoad` + `selectIsLoggedIn`      |
+| Layout            | File                         | Purpose                                              |
+| ----------------- | ---------------------------- | ---------------------------------------------------- |
+| `_auth`           | `routes/_auth.tsx`           | Public flows; redirects to `/dashboard` if logged in |
+| `_app`            | `routes/_app.tsx`            | Top-level app chrome                                 |
+| `_app/_protected` | `routes/_app/_protected.tsx` | Auth guard via `beforeLoad` + `selectIsLoggedIn`     |
 
 ## Public routes (`_auth`)
 
-| Route                 | File                                   | Purpose                   |
-| --------------------- | -------------------------------------- | ------------------------- |
-| `/signin`             | `routes/_auth/signin.tsx`              | Email/password + OAuth    |
-| `/signup`             | `routes/_auth/signup.tsx`              | New account               |
-| `/check-email`        | `routes/_auth/check-email.tsx`         | Email verification prompt |
-| `/complete-profile`   | `routes/_auth/complete-profile.tsx`    | Post-signup + invitations |
-| `/reset-password`     | `routes/_auth/reset-password.tsx`      | Password recovery         |
+| Route               | File                                | Purpose                   |
+| ------------------- | ----------------------------------- | ------------------------- |
+| `/signin`           | `routes/_auth/signin.tsx`           | Email/password + OAuth    |
+| `/signup`           | `routes/_auth/signup.tsx`           | New account               |
+| `/check-email`      | `routes/_auth/check-email.tsx`      | Email verification prompt |
+| `/complete-profile` | `routes/_auth/complete-profile.tsx` | Post-signup + invitations |
+| `/reset-password`   | `routes/_auth/reset-password.tsx`   | Password recovery         |
 
 ## Authenticated routes (`_app/_protected`)
 
-| Route                                                                    | Purpose                                 |
-| ------------------------------------------------------------------------ | --------------------------------------- |
-| `/dashboard`                                                             | Project list                            |
-| `/orgs/new`                                                              | Create a new organization               |
-| `/projects/:projectId`                                                   | Project overview (studies, members)     |
-| `/projects/:projectId/studies/:studyId/checklists/:checklistId`          | Checklist assessment                    |
-| `/projects/:projectId/studies/:studyId/reconcile/:c1Id/:c2Id`            | Reconcile two reviewers' checklists     |
-| `/settings/*`                                                            | Profile, billing, plans, notifications, 2FA  |
-| `/admin/*`                                                               | Admin-only dashboards and tools         |
+| Route                                                           | Purpose                                     |
+| --------------------------------------------------------------- | ------------------------------------------- |
+| `/dashboard`                                                    | Project list                                |
+| `/orgs/new`                                                     | Create a new organization                   |
+| `/projects/:projectId`                                          | Project overview (studies, members)         |
+| `/projects/:projectId/studies/:studyId/checklists/:checklistId` | Checklist assessment                        |
+| `/projects/:projectId/studies/:studyId/reconcile/:c1Id/:c2Id`   | Reconcile two reviewers' checklists         |
+| `/settings/*`                                                   | Profile, billing, plans, notifications, 2FA |
+| `/admin/*`                                                      | Admin-only dashboards and tools             |
 
 ## Local-only routes
 
-| Route                     | File                                   | Purpose                              |
-| ------------------------- | -------------------------------------- | ------------------------------------ |
+| Route                     | File                                     | Purpose                                                                  |
+| ------------------------- | ---------------------------------------- | ------------------------------------------------------------------------ |
 | `/checklist/:checklistId` | `routes/_app/checklist.$checklistId.tsx` | Local-only demo checklist, stored in Dexie/IndexedDB -- no auth required |
 
 ## URL contract

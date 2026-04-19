@@ -10,12 +10,7 @@ A typical component lives under `packages/web/src/components/<feature>/` and imp
 import { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { FolderIcon } from 'lucide-react';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { useOrgs } from '@/hooks/useOrgs';
 import { handleError } from '@/lib/error-utils';
@@ -134,9 +129,9 @@ Use `lucide-react` exclusively. No emoji, no unicode symbols, anywhere.
 import { FolderIcon, PlusIcon, TriangleAlertIcon } from 'lucide-react';
 
 <Button>
-  <PlusIcon className="size-4" />
+  <PlusIcon className='size-4' />
   New project
-</Button>
+</Button>;
 ```
 
 For icons lucide doesn't provide, inline an SVG component.
@@ -159,8 +154,8 @@ Always import from `@/components/ui/*`, not from `@radix-ui/*` or `@ark-ui/react
 Tailwind CSS for everything. Use `className`, not `class`.
 
 ```tsx
-<div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-  <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
+<div className='rounded-lg border border-gray-200 bg-white p-6 shadow-sm'>
+  <h3 className='text-lg font-semibold text-gray-900'>{title}</h3>
 </div>
 ```
 
@@ -205,7 +200,7 @@ const id = useId();
 return (
   <>
     <label htmlFor={id}>Email</label>
-    <input id={id} type="email" />
+    <input id={id} type='email' />
   </>
 );
 ```
