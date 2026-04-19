@@ -1,6 +1,6 @@
 # TanStack Usage Gaps in CoRATES
 
-Date: 2026-04-19
+Date: 2026-04-19 (updated 2026-04-19)
 Scope: `packages/web` against TanStack Router 1.168 / Start 1.167 / Query 5.96
 Method: Read official docs from `reference/tanstack-router/docs/{router,start}/...` and compared against the live codebase. Findings below were each verified against the source doc and the cited file:line.
 
@@ -8,150 +8,20 @@ Companion to `typescript-audit-2026-04.md` — that audit covered language-level
 
 ## TL;DR
 
-The codebase is on a current TanStack Start version but uses very few of the framework's structural patterns. Most notably, **the entire `createMiddleware` system is unused** — every admin route hand-rolls a guard call. That single pattern, properly adopted, collapses three other gaps in this audit (auth, db client, path-param validation) into one place.
-
-The biggest user-visible win is **adopting route `loader`s** for the SSR data-prefetch pipe — currently every page mounts → fires `useQuery` → spinner → data arrives, even though the project pays for SSR on Cloudflare Workers.
+The codebase is on a current TanStack Start version. `adminMiddleware` via `createMiddleware` is fully adopted across all admin routes. The remaining framework-level gaps are: no `loader`s (biggest user-visible win), no `dbMiddleware` (182 repeated `createDb` calls), no path-param validation, and no `createServerFn` usage.
 
 ## Verified facts (counts)
 
 - **0** uses of `createServerFn`
 - **0** uses of `loader:` in any page route
-- **0** uses of `createMiddleware` (every admin route hand-rolls `await requireAdmin(request, env)`)
-- **2** routes use `validateSearch`, both with `as string` casts inside the validator
-- **30+** `$projectId`/`$orgId`/`$userId` routes with no path-param validation
-- **~100** handlers calling `createDb(env.DB)` at the top of the function
+- **44** admin routes using `middleware: [adminMiddleware]` (DONE)
+- **57** `$projectId`/`$orgId`/`$userId` route files with no path-param validation
+- **182** handlers calling `createDb(env.DB)` at the top of the function
 - `verbatimModuleSyntax: false` in `packages/web/tsconfig.json`
 
 ---
 
 ## High impact
-
-### G1. `validateSearch` is misused in the only 2 routes that use it
-
-**Doc:** `reference/tanstack-router/docs/router/guide/search-params.md` (~line 145)
-
-The official Zod pattern is:
-
-```ts
-const schema = z.object({
-  page: z.number().catch(1),
-  filter: z.string().catch(''),
-  sort: z.enum(['newest', 'oldest', 'price']).catch('newest'),
-});
-
-export const Route = createFileRoute('/shop/products')({
-  validateSearch: schema, // accepts anything with .parse
-});
-```
-
-Use `.catch(default)` for graceful fallback, `.default()` to surface validation errors via `errorComponent`.
-
-**CoRATES:** `routes/_auth/check-email.tsx:15-17` and `routes/_auth/reset-password.tsx:20-22`:
-
-```ts
-validateSearch: (search: Record<string, unknown>) => ({
-  email: (search.email as string) || '',
-}),
-```
-
-The `as string` cast inside what is literally called a _validator_ is the wrong pattern. There's no validation here.
-
-**Fix:** one line per file. Define a `z.object({ email: z.string().email().catch('') })` (or `.default('')`) and pass the schema directly.
-
-**Cost:** 10 minutes total.
-
----
-
-### G2. `createMiddleware` is the right answer for `requireAdmin`
-
-**Docs:**
-
-- `reference/tanstack-router/docs/start/framework/react/guide/middleware.md`
-- `reference/tanstack-router/docs/start/framework/react/guide/server-routes.md` (lines ~163-220)
-
-Two patterns CoRATES is missing:
-
-**Whole-route guard** (applies to all handlers in a route):
-
-```ts
-server: { middleware: [authMiddleware], handlers: { GET: handleGet } }
-```
-
-**Per-verb guard** (different middleware per HTTP method):
-
-```ts
-server: {
-  handlers: ({ createHandlers }) =>
-    createHandlers({
-      GET: handleGet,
-      POST: { middleware: [validation], handler: handlePost },
-    }),
-}
-```
-
-`createMiddleware()` itself is composable:
-
-```ts
-import { createMiddleware } from '@tanstack/react-start';
-
-const authMiddleware = createMiddleware().server(async ({ next, request }) => {
-  const session = await getSession(request, env);
-  if (!session) throw new Response(null, { status: 401 });
-  return next({ context: { session } }); // typed context propagates to handler
-});
-
-const adminMiddleware = createMiddleware()
-  .middleware([authMiddleware])
-  .server(async ({ next, context }) => {
-    if (context.session.user.role !== 'admin') throw new Response(null, { status: 403 });
-    return next();
-  });
-```
-
-**CoRATES:** `routes/api/admin/projects/$projectId.ts:25-26` (representative of all admin routes):
-
-```ts
-export const handleGet = async ({ request, params }) => {
-  const guard = await requireAdmin(request, env);
-  if (!guard.ok) return guard.response;
-  // ...handler...
-};
-```
-
-This pattern is hand-rolled middleware. Repeats across every admin handler.
-
-**What you gain by switching:**
-
-- Auth check happens once per route definition, not once per handler
-- `context.session` is **typed** in the handler (currently the handler has no idea the auth check ran or what user it produced — they re-call `getSession`)
-- Composable across server functions if you ever add them
-- One file to change for cross-cutting concerns (logging, observability, rate limits)
-
-**Cost:** half-day pilot on one route to confirm typed context propagation works on Cloudflare Workers; then sweep admin routes (~30 files) over a couple of days.
-
-**Impact:** highest of any item in this audit — collapses G3 and G6 below into the same pattern.
-
-#### Status (2026-04-19): pilot complete, sweep ready
-
-`adminMiddleware` is implemented in `packages/web/src/server/middleware/admin.ts` and applied to `routes/api/admin/projects/$projectId.ts`. The pilot validated that:
-
-- `createMiddleware().server({ next, context })` propagates typed context to handlers — no annotations needed at the handler.
-- The composition `adminMiddleware.middleware([authMiddleware])` resolves session in auth, then layers CSRF + role check on top.
-- All behavior parity with the prior `requireAdmin(request, env)` is preserved (auth, CSRF, admin role).
-
-The pilot **also surfaced a test-infrastructure gap**: existing `*.server.test.ts` files call handlers directly (`handleGet({ request, params })`), which bypasses middleware. After migration, those tests would silently false-pass for auth scenarios. Initially this looked like a multi-day blocker.
-
-**Resolution:** the test-worker now mounts `createStartHandler(defaultStreamHandler)` and tests can use `SELF.fetch(new Request(...))` for true end-to-end route invocation. Cost was ~30 LOC of test infrastructure (vitest config aliases for the three `#tanstack-*` virtual modules + two stand-in files). See `packages/docs/guides/testing.md` § "End-to-end route tests" for the canonical pattern, and `packages/web/src/routes/api/admin/__tests__/projects-self.server.test.ts` for a worked example.
-
-**The sweep is now ready.** For each remaining admin route:
-
-1. Replace `await requireAdmin(request, env)` calls in handlers with `[adminMiddleware]` on the route's `server.middleware`.
-2. Migrate auth-failure tests from handler-direct calls (`handleGet({ request, params })`) to `SELF.fetch`. Happy-path / business-logic tests can stay handler-direct or move to SELF as needed.
-3. Confirm the route is covered — if you add a new admin route without `[adminMiddleware]`, the SELF tests for that route will catch the regression.
-
-Estimated remaining cost: 1–2 days of mechanical sweep across ~30 admin routes, plus a similar pattern for non-admin auth-required routes (org membership, project access).
-
----
 
 ### G3. No path-param validation
 
@@ -243,9 +113,9 @@ beforeLoad: ({ location }) => {
 
 **Doc:** `databases.md` + `middleware.md` together imply the pattern: create the DB client in middleware, attach to `context`, every handler reads `context.db`.
 
-**CoRATES:** `createDb(env.DB)` appears at the top of ~100 route handlers.
+**CoRATES:** `createDb(env.DB)` appears at the top of **182** route handlers across the codebase (62 in admin routes alone).
 
-**Fix:** rolls into G2's middleware work — one `dbMiddleware` adds `context.db` for every downstream handler.
+**Fix:** a `dbMiddleware` that attaches `context.db`, composed into `adminMiddleware` and any future auth middleware. Now that `adminMiddleware` is adopted across all admin routes, adding `context.db` is a single change in the middleware + a sweep to remove `createDb(env.DB)` from each handler.
 
 ---
 
@@ -282,19 +152,17 @@ Modern TanStack/Vite projects set this `true`. Forces explicit `import type { ..
 
 ## Suggested order of attack
 
-| #   | Change                                                                                                        |                    Cost | Why now                                                                                     |
-| --- | ------------------------------------------------------------------------------------------------------------- | ----------------------: | ------------------------------------------------------------------------------------------- |
-| 1   | Fix the 2 broken `validateSearch` calls (G1)                                                                  |                  10 min | Free. Removes a clearly-wrong pattern.                                                      |
-| 2   | **Pilot:** build `authMiddleware` via `createMiddleware`, apply to **one** admin route (G2)                   |                half day | Confirm typed context propagation works on Cloudflare Workers before committing to a sweep. |
-| 3   | If pilot succeeds: add `dbMiddleware`, compose `apiAuthMiddleware = [auth, db]`, sweep admin routes (G2 + G6) |                2–3 days | Highest-leverage cleanup. Sets up G3 to ride on the same middleware.                        |
-| 4   | **Pilot:** add `loader` + `useSuspenseQuery` to **one** page route (G4)                                       |                half day | Confirm SSR prefetch works in the worker setup before sweeping.                             |
-| 5   | If pilot succeeds: incremental loader adoption, page by page                                                  |                 ongoing | Biggest user-visible win.                                                                   |
-| 6   | Path-param Zod via param middleware (G3)                                                                      |                1–2 days | Rides on G2's middleware system.                                                            |
-| 7   | Router context for auth (G5)                                                                                  |                  1–2 hr | Separate refactor; don't bundle.                                                            |
-| 8   | `.server.ts` audit (G7)                                                                                       |                  1–2 hr | One-time cleanup.                                                                           |
-| 9   | `verbatimModuleSyntax: true` (G8)                                                                             | 1–2 hr (mostly autofix) | One-time cleanup.                                                                           |
+| #   | Change                                                                           |                    Cost | Why now                                                                              |
+| --- | -------------------------------------------------------------------------------- | ----------------------: | ------------------------------------------------------------------------------------ |
+| 1   | Add `dbMiddleware`, compose into `adminMiddleware`, sweep `createDb` calls (G6)  |                    1 day | Admin middleware is in place; adding `context.db` is a single middleware change.     |
+| 2   | **Pilot:** add `loader` + `useSuspenseQuery` to **one** page route (G4)          |                half day | Confirm SSR prefetch works in the worker setup before sweeping.                      |
+| 3   | If pilot succeeds: incremental loader adoption, page by page                     |                 ongoing | Biggest user-visible win.                                                            |
+| 4   | Path-param Zod via param middleware (G3)                                         |                1–2 days | Rides on the existing middleware system.                                             |
+| 5   | Router context for auth (G5)                                                     |                  1–2 hr | Separate refactor; don't bundle.                                                     |
+| 6   | `.server.ts` audit (G7)                                                          |                  1–2 hr | One-time cleanup.                                                                    |
+| 7   | `verbatimModuleSyntax: true` (G8)                                                | 1–2 hr (mostly autofix) | One-time cleanup.                                                                    |
 
-The two **pilots** in items 2 and 4 are deliberately scoped to one route each. Both are pattern shifts that interact with TanStack Start's Cloudflare Workers integration in ways the docs don't fully cover — better to confirm they work than to do a sweep and discover a problem on route #28.
+The **loader pilot** in item 2 is deliberately scoped to one route — it's a pattern shift that interacts with TanStack Start's Cloudflare Workers integration in ways the docs don't fully cover.
 
 ---
 

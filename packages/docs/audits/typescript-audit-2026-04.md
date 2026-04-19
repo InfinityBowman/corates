@@ -1,6 +1,6 @@
 # TypeScript Audit — CoRATES
 
-Date: 2026-04-18 (revised after self-review)
+Date: 2026-04-18 (revised after self-review, updated 2026-04-19)
 Scope: `packages/web`, `packages/workers`, `packages/shared`, `packages/db`
 Excludes: `node_modules`, `dist`, `.tanstack`, `reference/`, `packages/stripe-purchases` (separate Hono workspace), `packages/stripe-dev`, `packages/ai`
 
@@ -8,34 +8,29 @@ Excludes: `node_modules`, `dist`, `.tanstack`, `reference/`, `packages/stripe-pu
 
 Strict mode is on across all four packages — solid baseline. The big wins are not language-feature obscurities; they're the patterns a 2026-vintage TS codebase should reach for and largely doesn't:
 
-1. **Branded IDs are absent.** Every `userId`/`orgId`/`projectId` is a raw `string`. In a multi-entity domain this is the highest-leverage missing pattern.
-2. **TanStack Router validators are essentially unused** — only 2 routes have `validateSearch`, and even those use `as string` casts inside the validator (defeating the point).
-3. **API route response types aren't exported** — every TanStack Start file route returns `Response.json({...})` and every consumer in `hooks/`/`api/` re-types the payload by hand (115 `as Record<string, unknown>` casts in `packages/web/src`).
-4. **Engine adapter contract isn't honored** by its consumers — well-designed 4-param generic, but `EngineContext<any, any, …>` at the call sites.
-5. **`satisfies` is used 3 times in the entire repo** — strong signal of underuse.
-6. **Zero `assertNever` / exhaustiveness guards** anywhere.
-7. **No type tests** — for a codebase with custom generics like the reconcile engine, this means contract regressions ship silently.
+1. **API route response types aren't exported** — every TanStack Start file route returns `Response.json({...})` and every consumer in `hooks/`/`api/` re-types the payload by hand (115 `as Record<string, unknown>` casts in `packages/web/src`).
+2. **Engine adapter contract isn't honored** by its consumers — well-designed 4-param generic, but `EngineContext<any, any, …>` at the call sites.
+3. **`satisfies` is used 4 times in the entire repo** — strong signal of underuse.
+4. **No type tests** — for a codebase with custom generics like the reconcile engine, this means contract regressions ship silently.
 
-Order-of-attack is at the bottom. The single highest safety/cost change is `assertNever`. The single highest leverage change is **branded IDs**.
+Order-of-attack is at the bottom.
 
 ---
 
 ## Verified counts
 
-| Signal                                               |   Count | Where                                               |
-| ---------------------------------------------------- | ------: | --------------------------------------------------- |
-| `as Record<string, unknown>`                         |     115 | `packages/web/src` (29 files)                       |
-| `as any`                                             |     144 | all packages (55 files)                             |
-| `: any` / `<any>` / `as any` (broad)                 |     427 | `packages/web/src` (98 files)                       |
-| `@ts-ignore` / `@ts-expect-error`                    |       3 | 2 in d3 charts, 1 in workers `types.d.ts`           |
-| `satisfies`                                          |       3 | only in `workers/durable-objects` and `oauth-relay` |
-| `assertNever` / `: never =>` exhaustiveness fallback |       0 | nowhere                                             |
-| `validateSearch` / TanStack Router `validator:`      |       2 | both use `as string` inside the validator           |
-| Brand types (`__brand`, `Brand<…>`)                  |       0 | none                                                |
-| Type tests (`expectTypeOf`, tsd, `assertType`)       |       0 | none                                                |
-| `createServerFn` (TanStack Start typed RPC)          |       0 | not used                                            |
-| `hc<…>` Hono RPC                                     |       0 | N/A — no Hono in web/workers                        |
-| `$inferSelect` / `$inferInsert` / `Infer*Model`      | 2 files | `db/orgAccessGrants.ts`, `db/stripeEventLedger.ts`  |
+| Signal                                          |   Count | Where                                                               |
+| ----------------------------------------------- | ------: | ------------------------------------------------------------------- |
+| `as Record<string, unknown>`                    |     115 | `packages/web/src` (29 files)                                       |
+| `as any`                                        |     298 | all packages (54 files)                                             |
+| `@ts-ignore` / `@ts-expect-error`               |       3 | 2 in d3 charts, 1 in workers `types.d.ts`                          |
+| `satisfies`                                     |       4 | `UserSession.ts`, `stripeEventLedger.ts`, `oauth-relay.ts`, +1     |
+| `assertNever`                                   |       6 | `assert-never.ts`, rob2 adapter, robins-i adapter (DONE)           |
+| `validateSearch` / TanStack Router `validator:`  |       2 | both now use Zod `.catch('')` (DONE)                                |
+| Brand types (Zod `.brand<>`)                    |      11 | `shared/src/ids.ts`, adopted in 49 files (DONE)                    |
+| Type tests (`expectTypeOf`, tsd, `assertType`)  |       0 | none                                                                |
+| `createServerFn` (TanStack Start typed RPC)     |       0 | not used                                                            |
+| `$inferSelect` / `$inferInsert` / `Infer*Model` | 2 files | `db/schema.ts` (30 exports), `db/stripeEventLedger.ts` (DONE)      |
 
 ---
 
@@ -118,36 +113,7 @@ TanStack Start's blessed RPC. Full end-to-end inference, no hand-rolled types, n
 
 Earlier I recommended a phantom-typed `TypedResponse<T>` wrapper. Withdrawn — it's just `as` with extra steps.
 
-### C2. Drizzle inference is barely used
-
-Only `packages/db/src/orgAccessGrants.ts:6` and `stripeEventLedger.ts` use `InferSelectModel`. `packages/db/src/schema.ts` (50+ tables) exports raw Drizzle definitions but never `typeof user.$inferSelect`.
-
-Worse, `orgAccessGrants.ts:8-16` hand-writes `CreateGrantData`:
-
-```ts
-interface CreateGrantData {
-  id: string;
-  orgId: string;
-  type: string;
-  startsAt: Date;
-  expiresAt: Date;
-  stripeCheckoutSessionId?: string | null;
-  metadata?: Record<string, unknown> | null;
-}
-```
-
-This duplicates the schema. Use `typeof orgAccessGrants.$inferInsert`.
-
-**Fix**: in each schema module, append:
-
-```ts
-export type User = typeof user.$inferSelect;
-export type NewUser = typeof user.$inferInsert;
-```
-
-Re-export from `packages/db/src/index.ts`. Delete shadow interfaces in callers.
-
-### C3. Engine adapters don't honor their own contract
+### C2. Engine adapters don't honor their own contract
 
 `packages/web/src/components/project/reconcile-tab/engine/types.ts:153-264` defines a clean 4-param generic `ReconciliationAdapter<TChecklist, TFinalAnswers, TComparison, TNavItem>`.
 
@@ -274,8 +240,6 @@ Use TypeScript module augmentation against better-auth's context type. A 6-line 
 
 ## Missing patterns (what an expert would expect to see)
 
-This section was added during self-review. These are absent from the codebase entirely.
-
 ### G1. No type tests
 
 Zero `expectTypeOf`/`tsd`/`assertType` calls anywhere. For a codebase that ships a custom generic like `ReconciliationAdapter<TChecklist, TFinalAnswers, TComparison, TNavItem>`, type tests catch contract regressions like C3 at PR time.
@@ -294,45 +258,6 @@ expectTypeOf(rob2Adapter).toMatchTypeOf<ReconciliationAdapter<ROB2Checklist, any
 ```
 
 A few well-placed type tests are worth more than blanket annotation rules.
-
-### G2. Branded IDs
-
-Every entity ID is a raw `string`. In a domain with `userId`, `orgId`, `projectId`, `studyId`, `mediaFileId`, `grantId`, `subscriptionId`, `invitationId` — no brand, no compile-time prevention of "passed projectId where userId was expected." This is a recurring real-bug class in multi-entity systems.
-
-Lightest version with Zod (you already use Zod):
-
-```ts
-// packages/shared/src/ids.ts
-export const UserId = z.string().brand<'UserId'>();
-export type UserId = z.infer<typeof UserId>;
-export const OrgId = z.string().brand<'OrgId'>();
-export type OrgId = z.infer<typeof OrgId>;
-export const ProjectId = z.string().brand<'ProjectId'>();
-export type ProjectId = z.infer<typeof ProjectId>;
-// ... etc
-```
-
-Then types like `getProjectById(id: ProjectId)` reject a raw `string` _and_ reject an `OrgId`. Drizzle integration via `.$type<ProjectId>()` on the column. Cost: a few hours to introduce, plus a knock-on pass to update signatures. Highest leverage missing pattern in this repo.
-
-### G3. TanStack Router validators are essentially unused
-
-Only `_auth/check-email.tsx:15` and `_auth/reset-password.tsx:20` define `validateSearch`. And both look like:
-
-```ts
-validateSearch: (search: Record<string, unknown>) => ({
-  email: (search.email as string) || '',
-}),
-```
-
-The `as string` cast inside a validator defeats the entire point — there's no actual validation. Every `$projectId`, `$orgId`, `$userId` route accepts whatever string comes in.
-
-Replace with Zod (you already have it):
-
-```ts
-validateSearch: z.object({ email: z.string().email() }).parse,
-```
-
-For path params, use TanStack Router's `params: { parse }` config with `z.string().uuid()` (or branded IDs from G2). This gives typed _and_ runtime-valid params at the route level — currently 0% of routes do this.
 
 ### G4. `satisfies` operator is used 3 times in the whole repo
 
@@ -368,24 +293,6 @@ Modern TanStack/Vite projects ship with this on. Flipping it would surface a one
 ---
 
 ## Medium (pattern hygiene)
-
-### M1. No exhaustiveness guards anywhere
-
-Zero matches for `assertNever` or equivalent fallback. The reconcile adapters all have `if (currentItem.type === ...)` chains ending in:
-
-```ts
-return <div className='py-12 text-center'>Unknown item type</div>;  // adapter.tsx:480
-```
-
-Add to `packages/shared`:
-
-```ts
-export const assertNever = (x: never): never => {
-  throw new Error(`Unhandled variant: ${JSON.stringify(x)}`);
-};
-```
-
-Apply to the rob2/robins adapter switches. Converts "added a new nav item type" from a runtime UI bug into a compile error. **Single highest safety/cost ratio change in this audit.**
 
 ### M2. `FinalAnswers = Record<string, unknown>` is too loose
 
@@ -435,26 +342,25 @@ Move all `as Record<string, unknown>` and `as ProjectMeta` casts into the façad
 - **`apiFetch` per-verb overloads** with `Omit<…, 'method' | 'body'>` — correct way to model HTTP method overloads.
 - **`withRetry<T>`** in `packages/workers/src/lib/retry.ts:32-95` — properly carries `T` through `RetryResult<T>` without leaking.
 - **Limited `@ts-expect-error` use** — only 3 instances total, all justified.
+- **`assertNever` helper** added and applied to rob2/robins-i reconcile adapters — exhaustiveness guards now in place.
+- **Drizzle `$inferSelect`/`$inferInsert`** — 15 tables now export inferred types from `schema.ts`.
+- **Branded IDs** — 11 Zod-branded ID types in `shared/src/ids.ts`, adopted across 49 files with Drizzle `.$type<>()` integration.
 
 ---
 
 ## Suggested order of attack (revised)
 
-| #   | Change                                                                                                        |                   Effort | Why now                                                                                                        |
-| --- | ------------------------------------------------------------------------------------------------------------- | -----------------------: | -------------------------------------------------------------------------------------------------------------- |
-| 1   | `assertNever` helper + apply to reconcile adapters                                                            |                   30 min | Free safety. Closes M1.                                                                                        |
-| 2   | `$inferSelect`/`$inferInsert` re-exports from db schema, delete shadow interfaces                             |                   1–2 hr | Closes C2. Removes a duplication source.                                                                       |
-| 3   | **Branded IDs** (G2): introduce `UserId`/`OrgId`/`ProjectId` etc., adopt incrementally at function signatures | 3–5 hr initial + ongoing | Highest leverage missing pattern. Pays off forever.                                                            |
-| 4   | Auth `as unknown as` → Zod parse (H2); oauth-relay module augmentation (H6)                                   |                   1–2 hr | Closes the two highest-trust auth bypasses.                                                                    |
-| 5   | Pick 3–5 hot endpoints, apply C1 Option A (`export type` from route)                                          |                 half day | Kills a chunk of `as Record<string, unknown>` with minimal ceremony. Use Option B (Zod) only for billing/auth. |
-| 6   | Checklist registry → discriminated map + `satisfies` (H1 + G4)                                                |                   2–3 hr | Removes the most concentrated `any` cluster.                                                                   |
-| 7   | Add Vitest type tests for `ReconciliationAdapter` (G1)                                                        |                   1–2 hr | Cheaper than the C3 full refactor; catches future regressions.                                                 |
-| 8   | `@types/google.picker` install + single-guard cleanup (H3)                                                    |                   30 min | Quick win.                                                                                                     |
-| 9   | TanStack Router validators with Zod for top routes (G3)                                                       |                 half day | Validates path/search params at route boundary.                                                                |
-| 10  | `verbatimModuleSyntax: true` in web tsconfig (G5)                                                             |  1–2 hr (mostly autofix) | One-time cleanup; pays off in build cleanliness.                                                               |
-| 11  | `server.ts` env typing (H4); Yjs façade extraction                                                            |                    1 day | Lower priority — current state isn't actively dangerous.                                                       |
+| #   | Change                                                                         |                   Effort | Why now                                                                                                        |
+| --- | ------------------------------------------------------------------------------ | -----------------------: | -------------------------------------------------------------------------------------------------------------- |
+| 1   | Auth `as unknown as` → Zod parse (H2); oauth-relay module augmentation (H6)    |                   1–2 hr | Closes the two highest-trust auth bypasses.                                                                    |
+| 2   | Pick 3–5 hot endpoints, apply C1 Option A (`export type` from route)           |                 half day | Kills a chunk of `as Record<string, unknown>` with minimal ceremony. Use Option B (Zod) only for billing/auth. |
+| 3   | Checklist registry → discriminated map + `satisfies` (H1 + G4)                 |                   2–3 hr | Removes the most concentrated `any` cluster.                                                                   |
+| 4   | Add Vitest type tests for `ReconciliationAdapter` (G1)                         |                   1–2 hr | Cheaper than the C2 full refactor; catches future regressions.                                                 |
+| 5   | `@types/google.picker` install + single-guard cleanup (H3)                     |                   30 min | Quick win.                                                                                                     |
+| 6   | `verbatimModuleSyntax: true` in web tsconfig (G5)                              |  1–2 hr (mostly autofix) | One-time cleanup; pays off in build cleanliness.                                                               |
+| 7   | `server.ts` env typing (H4); Yjs facade extraction                            |                    1 day | Lower priority — current state isn't actively dangerous.                                                       |
 
-Items 1–3 are the highest leverage. Items 4–7 are the type-safety substance. Items 8–11 are polish.
+Item 1 is the highest leverage. Items 2–4 are the type-safety substance. Items 5–7 are polish.
 
 ---
 
