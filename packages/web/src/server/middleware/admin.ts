@@ -1,12 +1,7 @@
 /**
  * Admin route middleware.
  *
- * Pilot replacement for the hand-rolled `requireAdmin(request, env)` guard
- * called at the top of every admin handler. Composes:
- *
- *   dbMiddleware     — creates Drizzle client, attaches `context.db`
- *   authMiddleware   — session present, attaches `context.session`
- *   adminMiddleware  — CSRF (mutations only) + admin role, attaches `context.admin`
+ * Composes authMiddleware (log + db + session) with admin-role + CSRF checks.
  *
  * Apply to a route via:
  *   server: { middleware: [adminMiddleware], handlers: { GET: handleGet } }
@@ -15,13 +10,10 @@
  */
 import { createMiddleware } from '@tanstack/react-start';
 import { env } from 'cloudflare:workers';
-import { getSession } from '@corates/workers/auth';
 import { isAdminUser } from '@corates/workers/auth-admin';
-import { identifyUser } from '@corates/workers/logger';
 import { createDomainError, AUTH_ERRORS } from '@corates/shared';
 import { requireTrustedOrigin } from '@/server/guards/requireTrustedOrigin';
-import { logMiddleware } from './log';
-import { dbMiddleware } from './db';
+import { authMiddleware } from './auth';
 
 export interface AdminContext {
   userId: string;
@@ -29,17 +21,6 @@ export interface AdminContext {
   userName: string | null;
   sessionId: string;
 }
-
-const authMiddleware = createMiddleware()
-  .middleware([logMiddleware, dbMiddleware])
-  .server(async ({ next, request, context }) => {
-    const session = await getSession(request, env);
-    if (!session) {
-      throw Response.json(createDomainError(AUTH_ERRORS.REQUIRED), { status: 401 });
-    }
-    identifyUser(context.log, session, { maskEmail: true });
-    return next({ context: { session } });
-  });
 
 export const adminMiddleware = createMiddleware()
   .middleware([authMiddleware])
