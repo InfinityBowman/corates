@@ -6,6 +6,9 @@ import { createDomainError, AUTH_ERRORS } from '@corates/shared';
 import { logMiddleware } from './log';
 import { dbMiddleware } from './db';
 
+export type { AuthUser, AuthSession } from '@corates/workers/auth';
+export type Session = NonNullable<Awaited<ReturnType<typeof getSession>>>;
+
 export const authMiddleware = createMiddleware()
   .middleware([logMiddleware, dbMiddleware])
   .server(async ({ next, request, context }) => {

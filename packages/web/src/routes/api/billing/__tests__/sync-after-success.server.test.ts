@@ -4,21 +4,27 @@ import { createDb } from '@corates/db/client';
 import { resetTestDatabase, clearProjectDOs } from '@/__tests__/server/helpers';
 import { resetCounter } from '@/__tests__/server/factories';
 import { handlePost } from '../sync-after-success';
+import type { Session } from '@/server/middleware/auth';
 
-let currentUser: {
-  id: string;
-  email: string;
-  stripeCustomerId: string | null;
-} = { id: 'user-1', email: 'user1@example.com', stripeCustomerId: 'cus_test_user-1' };
-
-let sessionResult: {
-  user: { id: string; email: string; name: string; stripeCustomerId: string | null };
-  session: { id: string; userId: string };
-} | null = null;
-
-vi.mock('@corates/workers/auth', () => ({
-  getSession: async () => sessionResult,
-}));
+function mockSession(overrides?: {
+  userId?: string;
+  email?: string;
+  name?: string;
+  stripeCustomerId?: string | null;
+}): Session {
+  return {
+    user: {
+      id: overrides?.userId ?? 'user-1',
+      email: overrides?.email ?? 'user1@example.com',
+      name: overrides?.name ?? 'Test User',
+      stripeCustomerId: overrides?.stripeCustomerId ?? 'cus_test_user-1',
+    },
+    session: {
+      id: 'test-session',
+      userId: overrides?.userId ?? 'user-1',
+    },
+  } as Session;
+}
 
 const syncMock = vi.fn();
 
@@ -31,16 +37,6 @@ beforeEach(async () => {
   await clearProjectDOs([]);
   vi.clearAllMocks();
   resetCounter();
-  currentUser = { id: 'user-1', email: 'user1@example.com', stripeCustomerId: 'cus_test_user-1' };
-  sessionResult = {
-    user: {
-      id: currentUser.id,
-      email: currentUser.email,
-      name: 'Test User',
-      stripeCustomerId: currentUser.stripeCustomerId,
-    },
-    session: { id: 'test-session', userId: currentUser.id },
-  };
 });
 
 function syncReq(): Request {
@@ -48,18 +44,9 @@ function syncReq(): Request {
 }
 
 describe('POST /api/billing/sync-after-success', () => {
-  it('returns 401 when no session', async () => {
-    sessionResult = null;
-    const res = await handlePost({ request: syncReq(), context: { db: createDb(env.DB) } });
-    expect(res.status).toBe(401);
-    const body = (await res.json()) as { code: string };
-    expect(body.code).toBeDefined();
-    expect(syncMock).not.toHaveBeenCalled();
-  });
-
   it('returns no-op when user has no stripeCustomerId', async () => {
-    sessionResult!.user.stripeCustomerId = null;
-    const res = await handlePost({ request: syncReq(), context: { db: createDb(env.DB) } });
+    const session = mockSession({ stripeCustomerId: null });
+    const res = await handlePost({ request: syncReq(), context: { db: createDb(env.DB), session } });
     expect(res.status).toBe(200);
     const body = (await res.json()) as { status: string; stripeSubscriptionId: string | null };
     expect(body).toEqual({ status: 'none', stripeSubscriptionId: null });
@@ -67,8 +54,9 @@ describe('POST /api/billing/sync-after-success', () => {
   });
 
   it('calls syncStripeSubscription and returns its result', async () => {
+    const session = mockSession();
     syncMock.mockResolvedValueOnce({ status: 'active', stripeSubscriptionId: 'sub_123' });
-    const res = await handlePost({ request: syncReq(), context: { db: createDb(env.DB) } });
+    const res = await handlePost({ request: syncReq(), context: { db: createDb(env.DB), session } });
     expect(res.status).toBe(200);
     const body = (await res.json()) as { status: string; stripeSubscriptionId: string | null };
     expect(body).toEqual({ status: 'active', stripeSubscriptionId: 'sub_123' });
@@ -78,8 +66,9 @@ describe('POST /api/billing/sync-after-success', () => {
   });
 
   it('returns 500 when syncStripeSubscription throws', async () => {
+    const session = mockSession();
     syncMock.mockRejectedValueOnce(new Error('stripe down'));
-    const res = await handlePost({ request: syncReq(), context: { db: createDb(env.DB) } });
+    const res = await handlePost({ request: syncReq(), context: { db: createDb(env.DB), session } });
     expect(res.status).toBe(500);
     const body = (await res.json()) as { code: string; details?: { operation: string } };
     expect(body.code).toBeDefined();

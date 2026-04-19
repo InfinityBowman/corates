@@ -8,21 +8,14 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { env } from 'cloudflare:workers';
 import type Stripe from 'stripe';
-import { getSession } from '@corates/workers/auth';
 import { createStripeClient, isStripeConfigured } from '@corates/workers/stripe';
-import { createDomainError, AUTH_ERRORS } from '@corates/shared';
+import { authMiddleware } from '@/server/middleware/auth';
 
 interface CouponBody {
   code?: unknown;
 }
 
 export const handlePost = async ({ request }: { request: Request }) => {
-  const session = await getSession(request, env);
-  if (!session) {
-    const error = createDomainError(AUTH_ERRORS.REQUIRED, { reason: 'no_user' });
-    return Response.json(error, { status: 401 });
-  }
-
   let body: CouponBody = {};
   try {
     body = (await request.json()) as CouponBody;
@@ -97,5 +90,5 @@ export const handlePost = async ({ request }: { request: Request }) => {
 };
 
 export const Route = createFileRoute('/api/billing/validate-coupon')({
-  server: { handlers: { POST: handlePost } },
+  server: { middleware: [authMiddleware], handlers: { POST: handlePost } },
 });

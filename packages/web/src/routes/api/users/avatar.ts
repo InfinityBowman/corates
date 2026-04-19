@@ -1,6 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { env } from 'cloudflare:workers';
-import { getSession } from '@corates/workers/auth';
 import type { Database } from '@corates/db/client';
 import { projectMembers, projects } from '@corates/db/schema';
 import { eq } from 'drizzle-orm';
@@ -8,12 +7,11 @@ import { getProjectDocStub } from '@corates/workers/project-doc-id';
 import { FILE_SIZE_LIMITS } from '@corates/workers/constants';
 import {
   createDomainError,
-  AUTH_ERRORS,
   FILE_ERRORS,
   SYSTEM_ERRORS,
   VALIDATION_ERRORS,
 } from '@corates/shared';
-import { dbMiddleware } from '@/server/middleware/db';
+import { authMiddleware, type Session } from '@/server/middleware/auth';
 
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
 
@@ -40,16 +38,11 @@ async function syncAvatarToProjects(db: Database, userId: string, avatarUrl: str
 
 export const handlePost = async ({
   request,
-  context: { db },
+  context: { db, session },
 }: {
   request: Request;
-  context: { db: Database };
+  context: { db: Database; session: Session };
 }) => {
-  const session = await getSession(request, env);
-  if (!session) {
-    const error = createDomainError(AUTH_ERRORS.REQUIRED, { reason: 'no_user' });
-    return Response.json(error, { status: 401 });
-  }
   const userId = session.user.id;
 
   const contentLength = parseInt(request.headers.get('Content-Length') || '0', 10);
@@ -143,12 +136,12 @@ export const handlePost = async ({
   }
 };
 
-export const handleDelete = async ({ request }: { request: Request }) => {
-  const session = await getSession(request, env);
-  if (!session) {
-    const error = createDomainError(AUTH_ERRORS.REQUIRED, { reason: 'no_user' });
-    return Response.json(error, { status: 401 });
-  }
+export const handleDelete = async ({
+  context: { session },
+}: {
+  request: Request;
+  context: { session: Session };
+}) => {
   const userId = session.user.id;
 
   try {
@@ -170,7 +163,7 @@ export const handleDelete = async ({ request }: { request: Request }) => {
 
 export const Route = createFileRoute('/api/users/avatar')({
   server: {
-    middleware: [dbMiddleware],
+    middleware: [authMiddleware],
     handlers: {
       POST: handlePost,
       DELETE: handleDelete,

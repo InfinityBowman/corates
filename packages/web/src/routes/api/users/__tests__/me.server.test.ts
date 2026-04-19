@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { env } from 'cloudflare:test';
 import { createDb } from '@corates/db/client';
 import { resetTestDatabase, clearProjectDOs } from '@/__tests__/server/helpers';
@@ -7,12 +7,12 @@ import { handleDelete } from '../me';
 
 let currentUser = { id: 'user-1', email: 'user1@example.com' };
 
-vi.mock('@corates/workers/auth', () => ({
-  getSession: async () => ({
+function mockSession() {
+  return {
     user: { id: currentUser.id, email: currentUser.email, name: 'Test User' },
     session: { id: 'test-session', userId: currentUser.id },
-  }),
-}));
+  };
+}
 
 beforeEach(async () => {
   await resetTestDatabase();
@@ -28,7 +28,7 @@ describe('DELETE /api/users/me', () => {
 
     const res = await handleDelete({
       request: new Request('http://localhost/api/users/me', { method: 'DELETE' }),
-      context: { db: createDb(env.DB) },
+      context: { db: createDb(env.DB), session: mockSession() },
     });
 
     expect(res.status).toBe(200);
@@ -59,7 +59,7 @@ describe('DELETE /api/users/me', () => {
 
     const res = await handleDelete({
       request: new Request('http://localhost/api/users/me', { method: 'DELETE' }),
-      context: { db: createDb(env.DB) },
+      context: { db: createDb(env.DB), session: mockSession() },
     });
     expect(res.status).toBe(200);
 

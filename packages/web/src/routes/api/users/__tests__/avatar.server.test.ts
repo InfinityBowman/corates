@@ -6,20 +6,17 @@ import { buildUser, buildProject, resetCounter } from '@/__tests__/server/factor
 import { handlePost, handleDelete } from '../avatar';
 import { handler as getHandler } from '../avatar/$userId';
 
-let currentUser: { id: string; email: string } | null = {
+let currentUser: { id: string; email: string } = {
   id: 'user-1',
   email: 'user1@example.com',
 };
 
-vi.mock('@corates/workers/auth', () => ({
-  getSession: async () =>
-    currentUser ?
-      {
-        user: { id: currentUser.id, email: currentUser.email, name: 'Test User' },
-        session: { id: 'test-session', userId: currentUser.id },
-      }
-    : null,
-}));
+function mockSession() {
+  return {
+    user: { id: currentUser.id, email: currentUser.email, name: 'Test User' },
+    session: { id: 'test-session', userId: currentUser.id },
+  };
+}
 
 vi.mock('@corates/workers/project-doc-id', () => ({
   getProjectDocStub: vi.fn(() => ({
@@ -67,7 +64,7 @@ describe('POST /api/users/avatar', () => {
 
     const res = await handlePost({
       request: req('/api/users/avatar', { method: 'POST', body: formData }),
-      context: { db: createDb(env.DB) },
+      context: { db: createDb(env.DB), session: mockSession() },
     });
 
     expect(res.status).toBe(200);
@@ -93,7 +90,7 @@ describe('POST /api/users/avatar', () => {
         headers: { 'Content-Length': String(3 * 1024 * 1024) },
         body: formData,
       }),
-      context: { db: createDb(env.DB) },
+      context: { db: createDb(env.DB), session: mockSession() },
     });
 
     expect(res.status).toBe(413);
@@ -111,7 +108,7 @@ describe('POST /api/users/avatar', () => {
 
     const res = await handlePost({
       request: req('/api/users/avatar', { method: 'POST', body: formData }),
-      context: { db: createDb(env.DB) },
+      context: { db: createDb(env.DB), session: mockSession() },
     });
 
     expect(res.status).toBe(400);
@@ -130,7 +127,7 @@ describe('POST /api/users/avatar', () => {
 
     const res1 = await handlePost({
       request: req('/api/users/avatar', { method: 'POST', body: formData1 }),
-      context: { db: createDb(env.DB) },
+      context: { db: createDb(env.DB), session: mockSession() },
     });
     expect(res1.status).toBe(200);
     const body1 = (await res1.json()) as { key: string };
@@ -146,7 +143,7 @@ describe('POST /api/users/avatar', () => {
 
     const res2 = await handlePost({
       request: req('/api/users/avatar', { method: 'POST', body: formData2 }),
-      context: { db: createDb(env.DB) },
+      context: { db: createDb(env.DB), session: mockSession() },
     });
     expect(res2.status).toBe(200);
 
@@ -172,7 +169,7 @@ describe('POST /api/users/avatar', () => {
 
     const res = await handlePost({
       request: req('/api/users/avatar', { method: 'POST', body: formData }),
-      context: { db: createDb(env.DB) },
+      context: { db: createDb(env.DB), session: mockSession() },
     });
 
     expect(res.status).toBe(200);
@@ -186,21 +183,6 @@ describe('POST /api/users/avatar', () => {
     );
   });
 
-  it('returns 401 when unauthenticated', async () => {
-    currentUser = null;
-
-    const imageData = new Uint8Array([0xff, 0xd8, 0xff, 0xe0]);
-    const file = new File([imageData], 'avatar.jpg', { type: 'image/jpeg' });
-    const formData = new FormData();
-    formData.append('avatar', file);
-
-    const res = await handlePost({
-      request: req('/api/users/avatar', { method: 'POST', body: formData }),
-      context: { db: createDb(env.DB) },
-    });
-
-    expect(res.status).toBe(401);
-  });
 });
 
 describe('GET /api/users/avatar/:userId', () => {
@@ -252,6 +234,7 @@ describe('DELETE /api/users/avatar', () => {
 
     const res = await handleDelete({
       request: req('/api/users/avatar', { method: 'DELETE' }),
+      context: { session: mockSession() },
     });
 
     expect(res.status).toBe(200);
@@ -268,6 +251,7 @@ describe('DELETE /api/users/avatar', () => {
 
     const res = await handleDelete({
       request: req('/api/users/avatar', { method: 'DELETE' }),
+      context: { session: mockSession() },
     });
 
     expect(res.status).toBe(200);

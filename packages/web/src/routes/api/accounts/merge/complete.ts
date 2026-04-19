@@ -1,6 +1,4 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { env } from 'cloudflare:workers';
-import { getSession } from '@corates/workers/auth';
 import type { Database } from '@corates/db/client';
 import {
   user,
@@ -17,22 +15,16 @@ import {
   VALIDATION_ERRORS,
   USER_ERRORS,
   SYSTEM_ERRORS,
-  AUTH_ERRORS,
 } from '@corates/shared';
-import { dbMiddleware } from '@/server/middleware/db';
+import { authMiddleware, type Session } from '@/server/middleware/auth';
 
 export const handler = async ({
   request,
-  context: { db },
+  context: { db, session },
 }: {
   request: Request;
-  context: { db: Database };
+  context: { db: Database; session: Session };
 }) => {
-  const session = await getSession(request, env);
-  if (!session) {
-    const error = createDomainError(AUTH_ERRORS.REQUIRED, { reason: 'no_user' });
-    return Response.json(error, { status: 401 });
-  }
   const currentUser = session.user;
 
   let body: { mergeToken?: string };
@@ -199,7 +191,7 @@ export const handler = async ({
 
 export const Route = createFileRoute('/api/accounts/merge/complete')({
   server: {
-    middleware: [dbMiddleware],
+    middleware: [authMiddleware],
     handlers: {
       POST: handler,
     },

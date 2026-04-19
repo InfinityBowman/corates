@@ -1,18 +1,16 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { env } from 'cloudflare:workers';
-import { getSession } from '@corates/workers/auth';
 import type { Database } from '@corates/db/client';
 import { user, projectMembers } from '@corates/db/schema';
 import { eq, or, like, sql } from 'drizzle-orm';
 import {
   createDomainError,
   createValidationError,
-  AUTH_ERRORS,
   SYSTEM_ERRORS,
   VALIDATION_ERRORS,
 } from '@corates/shared';
 import { checkRateLimit, SEARCH_RATE_LIMIT } from '@/server/rateLimit';
-import { dbMiddleware } from '@/server/middleware/db';
+import { authMiddleware, type Session } from '@/server/middleware/auth';
 
 interface UserSearchResult {
   id: string;
@@ -34,19 +32,13 @@ function maskEmail(email: string | null): string | null {
 
 export const handler = async ({
   request,
-  context: { db },
+  context: { db, session },
 }: {
   request: Request;
-  context: { db: Database };
+  context: { db: Database; session: Session };
 }) => {
   const rate = checkRateLimit(request, env, SEARCH_RATE_LIMIT);
   if (rate.blocked) return rate.blocked;
-
-  const session = await getSession(request, env);
-  if (!session) {
-    const error = createDomainError(AUTH_ERRORS.REQUIRED, { reason: 'no_user' });
-    return Response.json(error, { status: 401 });
-  }
 
   const url = new URL(request.url);
   const q = url.searchParams.get('q');
@@ -122,7 +114,7 @@ export const handler = async ({
 
 export const Route = createFileRoute('/api/users/search')({
   server: {
-    middleware: [dbMiddleware],
+    middleware: [authMiddleware],
     handlers: {
       GET: handler,
     },

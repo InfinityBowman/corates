@@ -8,25 +8,17 @@
  */
 import { createFileRoute } from '@tanstack/react-router';
 import { env } from 'cloudflare:workers';
-import { getSession } from '@corates/workers/auth';
 import type { Database } from '@corates/db/client';
 import { syncStripeSubscription } from '@corates/workers/commands/billing';
-import { createDomainError, AUTH_ERRORS, SYSTEM_ERRORS } from '@corates/shared';
-import { dbMiddleware } from '@/server/middleware/db';
+import { createDomainError, SYSTEM_ERRORS } from '@corates/shared';
+import { authMiddleware, type Session } from '@/server/middleware/auth';
 
 export const handlePost = async ({
-  request,
-  context: { db },
+  context: { db, session },
 }: {
   request: Request;
-  context: { db: Database };
+  context: { db: Database; session: Session };
 }) => {
-  const session = await getSession(request, env);
-  if (!session) {
-    const error = createDomainError(AUTH_ERRORS.REQUIRED, { reason: 'no_user' });
-    return Response.json(error, { status: 401 });
-  }
-
   const stripeCustomerId = session.user.stripeCustomerId as string | null | undefined;
   if (!stripeCustomerId) {
     return Response.json({ status: 'none', stripeSubscriptionId: null }, { status: 200 });
@@ -47,5 +39,5 @@ export const handlePost = async ({
 };
 
 export const Route = createFileRoute('/api/billing/sync-after-success')({
-  server: { middleware: [dbMiddleware], handlers: { POST: handlePost } },
+  server: { middleware: [authMiddleware], handlers: { POST: handlePost } },
 });

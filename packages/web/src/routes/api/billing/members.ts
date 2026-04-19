@@ -6,12 +6,11 @@
  */
 import { createFileRoute } from '@tanstack/react-router';
 import { env } from 'cloudflare:workers';
-import { getSession } from '@corates/workers/auth';
 import { createAuth } from '@corates/workers/auth-config';
 import type { Database } from '@corates/db/client';
 import { createDomainError, AUTH_ERRORS, SYSTEM_ERRORS } from '@corates/shared';
 import { resolveOrgId } from '@/server/billing-context';
-import { dbMiddleware } from '@/server/middleware/db';
+import { authMiddleware, type Session } from '@/server/middleware/auth';
 
 interface ListMembersApi {
   listMembers: (req: {
@@ -22,17 +21,11 @@ interface ListMembersApi {
 
 export const handleGet = async ({
   request,
-  context: { db },
+  context: { db, session },
 }: {
   request: Request;
-  context: { db: Database };
+  context: { db: Database; session: Session };
 }) => {
-  const session = await getSession(request, env);
-  if (!session) {
-    const error = createDomainError(AUTH_ERRORS.REQUIRED, { reason: 'no_user' });
-    return Response.json(error, { status: 401 });
-  }
-
   try {
     const orgId = await resolveOrgId({
       db,
@@ -66,5 +59,5 @@ export const handleGet = async ({
 };
 
 export const Route = createFileRoute('/api/billing/members')({
-  server: { middleware: [dbMiddleware], handlers: { GET: handleGet } },
+  server: { middleware: [authMiddleware], handlers: { GET: handleGet } },
 });

@@ -75,13 +75,20 @@ function req(path: string, init: RequestInit = {}): Request {
   return new Request(`http://localhost${path}`, init);
 }
 
+function mockSession() {
+  return {
+    user: { id: currentUser.id, email: currentUser.email, name: 'Test User' },
+    session: { id: 'test-session', userId: currentUser.id },
+  };
+}
+
 describe('GET /api/google-drive/status', () => {
   it('returns connected status when Google account is linked', async () => {
     const user = await buildUser({ email: 'user1@example.com' });
     await seedGoogleAccount(user.id);
     currentUser = { id: user.id, email: user.email };
 
-    const res = await statusHandler({ request: req('/api/google-drive/status'), context: { db: createDb(env.DB) } });
+    const res = await statusHandler({ request: req('/api/google-drive/status'), context: { db: createDb(env.DB), session: mockSession() } });
 
     expect(res.status).toBe(200);
     const body = (await res.json()) as { connected: boolean; hasRefreshToken: boolean };
@@ -93,7 +100,7 @@ describe('GET /api/google-drive/status', () => {
     const user = await buildUser({ email: 'user1@example.com' });
     currentUser = { id: user.id, email: user.email };
 
-    const res = await statusHandler({ request: req('/api/google-drive/status'), context: { db: createDb(env.DB) } });
+    const res = await statusHandler({ request: req('/api/google-drive/status'), context: { db: createDb(env.DB), session: mockSession() } });
 
     expect(res.status).toBe(200);
     const body = (await res.json()) as { connected: boolean; hasRefreshToken: boolean };
@@ -108,7 +115,7 @@ describe('GET /api/google-drive/picker-token', () => {
     await seedGoogleAccount(user.id, 'token-123', 'refresh-123');
     currentUser = { id: user.id, email: user.email };
 
-    const res = await pickerTokenHandler({ request: req('/api/google-drive/picker-token'), context: { db: createDb(env.DB) } });
+    const res = await pickerTokenHandler({ request: req('/api/google-drive/picker-token'), context: { db: createDb(env.DB), session: mockSession() } });
 
     expect(res.status).toBe(200);
     const body = (await res.json()) as { accessToken: string; expiresAt: string };
@@ -120,7 +127,7 @@ describe('GET /api/google-drive/picker-token', () => {
     const user = await buildUser({ email: 'user1@example.com' });
     currentUser = { id: user.id, email: user.email };
 
-    const res = await pickerTokenHandler({ request: req('/api/google-drive/picker-token'), context: { db: createDb(env.DB) } });
+    const res = await pickerTokenHandler({ request: req('/api/google-drive/picker-token'), context: { db: createDb(env.DB), session: mockSession() } });
 
     expect(res.status).toBe(401);
     const body = (await res.json()) as { code: string };
@@ -155,7 +162,7 @@ describe('GET /api/google-drive/picker-token', () => {
       json: async () => ({ access_token: 'new-token-456', expires_in: 3600 }),
     } as unknown as Response);
 
-    const res = await pickerTokenHandler({ request: req('/api/google-drive/picker-token'), context: { db: createDb(env.DB) } });
+    const res = await pickerTokenHandler({ request: req('/api/google-drive/picker-token'), context: { db: createDb(env.DB), session: mockSession() } });
 
     expect(res.status).toBe(200);
     const body = (await res.json()) as { accessToken: string };
@@ -175,7 +182,7 @@ describe('DELETE /api/google-drive/disconnect', () => {
 
     const res = await disconnectHandler({
       request: req('/api/google-drive/disconnect', { method: 'DELETE' }),
-      context: { db: createDb(env.DB) },
+      context: { db: createDb(env.DB), session: mockSession() },
     });
 
     expect(res.status).toBe(200);

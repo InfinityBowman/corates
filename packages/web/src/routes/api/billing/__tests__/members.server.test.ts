@@ -4,15 +4,27 @@ import { createDb } from '@corates/db/client';
 import { resetTestDatabase, clearProjectDOs } from '@/__tests__/server/helpers';
 import { buildOrg, resetCounter } from '@/__tests__/server/factories';
 import { handleGet } from '../members';
+import type { Session } from '@/server/middleware/auth';
 
-let sessionResult: {
-  user: { id: string; email: string; name: string };
-  session: { id: string; userId: string; activeOrganizationId: string | null };
-} | null = null;
-
-vi.mock('@corates/workers/auth', () => ({
-  getSession: async () => sessionResult,
-}));
+function mockSession(overrides?: {
+  userId?: string;
+  email?: string;
+  name?: string;
+  activeOrganizationId?: string | null;
+}): Session {
+  return {
+    user: {
+      id: overrides?.userId ?? 'user-1',
+      email: overrides?.email ?? 'user@example.com',
+      name: overrides?.name ?? 'Test User',
+    },
+    session: {
+      id: 'sess-1',
+      userId: overrides?.userId ?? 'user-1',
+      activeOrganizationId: overrides?.activeOrganizationId ?? null,
+    },
+  } as Session;
+}
 
 const listMembersMock = vi.fn();
 
@@ -27,7 +39,6 @@ beforeEach(async () => {
   await clearProjectDOs([]);
   vi.clearAllMocks();
   resetCounter();
-  sessionResult = null;
 });
 
 function membersReq(): Request {
@@ -35,28 +46,21 @@ function membersReq(): Request {
 }
 
 describe('GET /api/billing/members', () => {
-  it('returns 401 when no session', async () => {
-    const res = await handleGet({ request: membersReq(), context: { db: createDb(env.DB) } });
-    expect(res.status).toBe(401);
-    expect(listMembersMock).not.toHaveBeenCalled();
-  });
-
   it('returns 403 when caller has no org', async () => {
-    sessionResult = {
-      user: { id: 'orphan', email: 'o@example.com', name: 'O' },
-      session: { id: 'sess', userId: 'orphan', activeOrganizationId: null },
-    };
-    const res = await handleGet({ request: membersReq(), context: { db: createDb(env.DB) } });
+    const session = mockSession({ userId: 'orphan', email: 'o@example.com', name: 'O' });
+    const res = await handleGet({ request: membersReq(), context: { db: createDb(env.DB), session } });
     expect(res.status).toBe(403);
     expect(listMembersMock).not.toHaveBeenCalled();
   });
 
   it('returns members from better-auth listMembers', async () => {
     const { org, owner } = await buildOrg();
-    sessionResult = {
-      user: { id: owner.id, email: owner.email, name: owner.name },
-      session: { id: 'sess', userId: owner.id, activeOrganizationId: org.id },
-    };
+    const session = mockSession({
+      userId: owner.id,
+      email: owner.email,
+      name: owner.name,
+      activeOrganizationId: org.id,
+    });
     listMembersMock.mockResolvedValueOnce({
       members: [
         { id: 'm1', userId: owner.id, organizationId: org.id, role: 'owner' },
@@ -64,7 +68,7 @@ describe('GET /api/billing/members', () => {
       ],
     });
 
-    const res = await handleGet({ request: membersReq(), context: { db: createDb(env.DB) } });
+    const res = await handleGet({ request: membersReq(), context: { db: createDb(env.DB), session } });
     expect(res.status).toBe(200);
     const body = (await res.json()) as { members: unknown[]; count: number };
     expect(body.count).toBe(2);
@@ -76,13 +80,15 @@ describe('GET /api/billing/members', () => {
 
   it('returns empty list when listMembers returns no members', async () => {
     const { org, owner } = await buildOrg();
-    sessionResult = {
-      user: { id: owner.id, email: owner.email, name: owner.name },
-      session: { id: 'sess', userId: owner.id, activeOrganizationId: org.id },
-    };
+    const session = mockSession({
+      userId: owner.id,
+      email: owner.email,
+      name: owner.name,
+      activeOrganizationId: org.id,
+    });
     listMembersMock.mockResolvedValueOnce({});
 
-    const res = await handleGet({ request: membersReq(), context: { db: createDb(env.DB) } });
+    const res = await handleGet({ request: membersReq(), context: { db: createDb(env.DB), session } });
     expect(res.status).toBe(200);
     const body = (await res.json()) as { members: unknown[]; count: number };
     expect(body.count).toBe(0);

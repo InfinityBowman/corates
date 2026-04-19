@@ -5,8 +5,6 @@
  * Used before plan downgrades — returns whether current usage fits the target plan.
  */
 import { createFileRoute } from '@tanstack/react-router';
-import { env } from 'cloudflare:workers';
-import { getSession } from '@corates/workers/auth';
 import type { Database } from '@corates/db/client';
 import { validatePlanChange } from '@corates/workers/billing-resolver';
 import {
@@ -17,14 +15,14 @@ import {
   VALIDATION_ERRORS,
 } from '@corates/shared';
 import { resolveOrgId } from '@/server/billing-context';
-import { dbMiddleware } from '@/server/middleware/db';
+import { authMiddleware, type Session } from '@/server/middleware/auth';
 
 export const handleGet = async ({
   request,
-  context: { db },
+  context: { db, session },
 }: {
   request: Request;
-  context: { db: Database };
+  context: { db: Database; session: Session };
 }) => {
   const url = new URL(request.url);
   const targetPlan = url.searchParams.get('targetPlan');
@@ -34,12 +32,6 @@ export const handleGet = async ({
       createValidationError('targetPlan', VALIDATION_ERRORS.FIELD_REQUIRED.code, null, 'required'),
       { status: 400 },
     );
-  }
-
-  const session = await getSession(request, env);
-  if (!session) {
-    const error = createDomainError(AUTH_ERRORS.REQUIRED, { reason: 'no_user' });
-    return Response.json(error, { status: 401 });
   }
 
   try {
@@ -68,5 +60,5 @@ export const handleGet = async ({
 };
 
 export const Route = createFileRoute('/api/billing/validate-plan-change')({
-  server: { middleware: [dbMiddleware], handlers: { GET: handleGet } },
+  server: { middleware: [authMiddleware], handlers: { GET: handleGet } },
 });

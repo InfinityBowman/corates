@@ -1,6 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { env } from 'cloudflare:workers';
-import { getSession } from '@corates/workers/auth';
 import { createAuth } from '@corates/workers/auth-config';
 import {
   createDomainError,
@@ -9,6 +8,7 @@ import {
   SYSTEM_ERRORS,
   VALIDATION_ERRORS,
 } from '@corates/shared';
+import { authMiddleware } from '@/server/middleware/auth';
 
 interface OrgApiMethods {
   listOrganizations: (req: { headers: Headers }) => Promise<unknown>;
@@ -23,11 +23,6 @@ function getOrgApi(): OrgApiMethods {
 }
 
 export const handleGet = async ({ request }: { request: Request }) => {
-  const session = await getSession(request, env);
-  if (!session) {
-    return Response.json(createDomainError(AUTH_ERRORS.REQUIRED), { status: 401 });
-  }
-
   try {
     const orgApi = getOrgApi();
     const result = await orgApi.listOrganizations({ headers: request.headers });
@@ -46,11 +41,6 @@ export const handleGet = async ({ request }: { request: Request }) => {
 };
 
 export const handlePost = async ({ request }: { request: Request }) => {
-  const session = await getSession(request, env);
-  if (!session) {
-    return Response.json(createDomainError(AUTH_ERRORS.REQUIRED), { status: 401 });
-  }
-
   try {
     const body = (await request.json()) as {
       name?: string;
@@ -104,6 +94,7 @@ export const handlePost = async ({ request }: { request: Request }) => {
 
 export const Route = createFileRoute('/api/orgs')({
   server: {
+    middleware: [authMiddleware],
     handlers: {
       GET: handleGet,
       POST: handlePost,

@@ -1,24 +1,23 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { env } from 'cloudflare:workers';
-import { getSession } from '@corates/workers/auth';
 import { acceptInvitation } from '@corates/workers/commands/invitations';
 import {
   createDomainError,
   createValidationError,
   isDomainError,
-  AUTH_ERRORS,
   SYSTEM_ERRORS,
   VALIDATION_ERRORS,
   type DomainError,
 } from '@corates/shared';
+import { authMiddleware, type Session } from '@/server/middleware/auth';
 
-export const handler = async ({ request }: { request: Request }) => {
-  const session = await getSession(request, env);
-  if (!session) {
-    const error = createDomainError(AUTH_ERRORS.REQUIRED, { reason: 'no_user' });
-    return Response.json(error, { status: 401 });
-  }
-
+export const handler = async ({
+  request,
+  context: { session },
+}: {
+  request: Request;
+  context: { session: Session };
+}) => {
   let body: { token?: unknown };
   try {
     body = (await request.json()) as { token?: unknown };
@@ -69,6 +68,7 @@ export const handler = async ({ request }: { request: Request }) => {
 
 export const Route = createFileRoute('/api/invitations/accept')({
   server: {
+    middleware: [authMiddleware],
     handlers: {
       POST: handler,
     },

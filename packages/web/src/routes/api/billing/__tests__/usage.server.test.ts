@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { env } from 'cloudflare:test';
 import { createDb } from '@corates/db/client';
 import { resetTestDatabase, clearProjectDOs } from '@/__tests__/server/helpers';
@@ -10,14 +10,9 @@ let sessionResult: {
   session: { id: string; userId: string; activeOrganizationId: string | null };
 } | null = null;
 
-vi.mock('@corates/workers/auth', () => ({
-  getSession: async () => sessionResult,
-}));
-
 beforeEach(async () => {
   await resetTestDatabase();
   await clearProjectDOs([]);
-  vi.clearAllMocks();
   resetCounter();
   sessionResult = null;
 });
@@ -27,17 +22,12 @@ function usageReq(): Request {
 }
 
 describe('GET /api/billing/usage', () => {
-  it('returns 401 when no session', async () => {
-    const res = await handleGet({ request: usageReq(), context: { db: createDb(env.DB) } });
-    expect(res.status).toBe(401);
-  });
-
   it('returns 403 when caller has no org', async () => {
     sessionResult = {
       user: { id: 'orphan', email: 'o@example.com', name: 'O' },
       session: { id: 'sess', userId: 'orphan', activeOrganizationId: null },
     };
-    const res = await handleGet({ request: usageReq(), context: { db: createDb(env.DB) } });
+    const res = await handleGet({ request: usageReq(), context: { db: createDb(env.DB), session: sessionResult } });
     expect(res.status).toBe(403);
     const body = (await res.json()) as { details?: { reason?: string } };
     expect(body.details?.reason).toBe('no_org_found');
@@ -66,7 +56,7 @@ describe('GET /api/billing/usage', () => {
       user: { id: owner.id, email: owner.email, name: owner.name },
       session: { id: 'sess', userId: owner.id, activeOrganizationId: org.id },
     };
-    const res = await handleGet({ request: usageReq(), context: { db: createDb(env.DB) } });
+    const res = await handleGet({ request: usageReq(), context: { db: createDb(env.DB), session: sessionResult! } });
     expect(res.status).toBe(200);
     const body = (await res.json()) as { projects: number; collaborators: number };
     expect(body.projects).toBe(3);

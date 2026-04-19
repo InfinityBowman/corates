@@ -1,16 +1,8 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { env } from 'cloudflare:workers';
-import { getSession } from '@corates/workers/auth';
 import { validatePdfProxyUrl } from '@corates/workers/ssrf-protection';
-import { createDomainError, AUTH_ERRORS } from '@corates/shared';
+import { authMiddleware } from '@/server/middleware/auth';
 
 export const handler = async ({ request }: { request: Request }) => {
-  const session = await getSession(request, env);
-  if (!session) {
-    const error = createDomainError(AUTH_ERRORS.REQUIRED, { reason: 'no_user' });
-    return Response.json(error, { status: 401 });
-  }
-
   try {
     const body = (await request.json()) as { url?: string };
     const { url } = body;
@@ -123,6 +115,7 @@ export const handler = async ({ request }: { request: Request }) => {
 
 export const Route = createFileRoute('/api/pdf-proxy')({
   server: {
+    middleware: [authMiddleware],
     handlers: {
       POST: handler,
     },

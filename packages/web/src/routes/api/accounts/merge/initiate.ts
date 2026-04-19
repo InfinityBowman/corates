@@ -1,6 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { env } from 'cloudflare:workers';
-import { getSession } from '@corates/workers/auth';
 import type { Database } from '@corates/db/client';
 import { user, account, verification } from '@corates/db/schema';
 import { eq, sql, like, and } from 'drizzle-orm';
@@ -10,14 +9,13 @@ import {
   VALIDATION_ERRORS,
   USER_ERRORS,
   SYSTEM_ERRORS,
-  AUTH_ERRORS,
 } from '@corates/shared';
 import {
   getAccountMergeEmailHtml,
   getAccountMergeEmailText,
 } from '@corates/workers/email-templates';
 import { checkRateLimit, MERGE_INITIATE_RATE_LIMIT } from '@/server/rateLimit';
-import { dbMiddleware } from '@/server/middleware/db';
+import { authMiddleware, type Session } from '@/server/middleware/auth';
 
 function generateCode(): string {
   const array = new Uint32Array(1);
@@ -43,16 +41,11 @@ function formatOrcidId(orcidId: string | undefined | null): string {
 
 export const handler = async ({
   request,
-  context: { db },
+  context: { db, session },
 }: {
   request: Request;
-  context: { db: Database };
+  context: { db: Database; session: Session };
 }) => {
-  const session = await getSession(request, env);
-  if (!session) {
-    const error = createDomainError(AUTH_ERRORS.REQUIRED, { reason: 'no_user' });
-    return Response.json(error, { status: 401 });
-  }
   const currentUser = session.user;
 
   let body: { targetEmail?: string; targetOrcidId?: string };
@@ -269,7 +262,7 @@ export const handler = async ({
 
 export const Route = createFileRoute('/api/accounts/merge/initiate')({
   server: {
-    middleware: [dbMiddleware],
+    middleware: [authMiddleware],
     handlers: {
       POST: handler,
     },

@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { env } from 'cloudflare:test';
 import { createDb } from '@corates/db/client';
 import { resetTestDatabase, clearProjectDOs } from '@/__tests__/server/helpers';
@@ -10,14 +10,9 @@ let sessionResult: {
   session: { id: string; userId: string; activeOrganizationId: string | null };
 } | null = null;
 
-vi.mock('@corates/workers/auth', () => ({
-  getSession: async () => sessionResult,
-}));
-
 beforeEach(async () => {
   await resetTestDatabase();
   await clearProjectDOs([]);
-  vi.clearAllMocks();
   resetCounter();
   sessionResult = null;
 });
@@ -30,18 +25,14 @@ function validateReq(query: string): Request {
 
 describe('GET /api/billing/validate-plan-change', () => {
   it('returns 400 when targetPlan is missing', async () => {
-    const res = await handleGet({ request: validateReq(''), context: { db: createDb(env.DB) } });
+    sessionResult = {
+      user: { id: 'any', email: 'any@example.com', name: 'Any' },
+      session: { id: 'sess-1', userId: 'any', activeOrganizationId: null },
+    };
+    const res = await handleGet({ request: validateReq(''), context: { db: createDb(env.DB), session: sessionResult } });
     expect(res.status).toBe(400);
     const body = (await res.json()) as { code: string };
     expect(body.code).toMatch(/VALIDATION_FIELD_REQUIRED/);
-  });
-
-  it('returns 401 when no session', async () => {
-    sessionResult = null;
-    const res = await handleGet({ request: validateReq('?targetPlan=starter_team'), context: { db: createDb(env.DB) } });
-    expect(res.status).toBe(401);
-    const body = (await res.json()) as { code: string };
-    expect(body.code).toBe('AUTH_REQUIRED');
   });
 
   it('returns 403 when caller has no org', async () => {
@@ -49,7 +40,7 @@ describe('GET /api/billing/validate-plan-change', () => {
       user: { id: 'orphan-user', email: 'orphan@example.com', name: 'Orphan' },
       session: { id: 'sess-1', userId: 'orphan-user', activeOrganizationId: null },
     };
-    const res = await handleGet({ request: validateReq('?targetPlan=starter_team'), context: { db: createDb(env.DB) } });
+    const res = await handleGet({ request: validateReq('?targetPlan=starter_team'), context: { db: createDb(env.DB), session: sessionResult } });
     expect(res.status).toBe(403);
     const body = (await res.json()) as { code: string; details?: { reason?: string } };
     expect(body.code).toBe('AUTH_FORBIDDEN');
@@ -62,7 +53,7 @@ describe('GET /api/billing/validate-plan-change', () => {
       user: { id: owner.id, email: owner.email, name: owner.name },
       session: { id: 'sess-1', userId: owner.id, activeOrganizationId: org.id },
     };
-    const res = await handleGet({ request: validateReq('?targetPlan=starter_team'), context: { db: createDb(env.DB) } });
+    const res = await handleGet({ request: validateReq('?targetPlan=starter_team'), context: { db: createDb(env.DB), session: sessionResult! } });
     expect(res.status).toBe(200);
     const body = (await res.json()) as {
       valid: boolean;
@@ -95,7 +86,7 @@ describe('GET /api/billing/validate-plan-change', () => {
       user: { id: owner.id, email: owner.email, name: owner.name },
       session: { id: 'sess-1', userId: owner.id, activeOrganizationId: org.id },
     };
-    const res = await handleGet({ request: validateReq('?targetPlan=starter_team'), context: { db: createDb(env.DB) } });
+    const res = await handleGet({ request: validateReq('?targetPlan=starter_team'), context: { db: createDb(env.DB), session: sessionResult! } });
     expect(res.status).toBe(200);
     const body = (await res.json()) as {
       valid: boolean;

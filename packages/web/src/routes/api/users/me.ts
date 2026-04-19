@@ -1,6 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { env } from 'cloudflare:workers';
-import { getSession } from '@corates/workers/auth';
 import type { Database } from '@corates/db/client';
 import {
   projects,
@@ -14,23 +13,16 @@ import {
 } from '@corates/db/schema';
 import { eq } from 'drizzle-orm';
 import { syncMemberToDO } from '@corates/workers/project-sync';
-import { createDomainError, AUTH_ERRORS, SYSTEM_ERRORS } from '@corates/shared';
-import { dbMiddleware } from '@/server/middleware/db';
+import { createDomainError, SYSTEM_ERRORS } from '@corates/shared';
+import { authMiddleware, type Session } from '@/server/middleware/auth';
 
 export const handleDelete = async ({
-  request,
-  context: { db },
+  context: { db, session },
 }: {
   request: Request;
-  context: { db: Database };
+  context: { db: Database; session: Session };
 }) => {
-  const auth = await getSession(request, env);
-  if (!auth) {
-    const error = createDomainError(AUTH_ERRORS.REQUIRED, { reason: 'no_user' });
-    return Response.json(error, { status: 401 });
-  }
-
-  const userId = auth.user.id;
+  const userId = session.user.id;
 
   try {
     const userProjects = await db
@@ -50,7 +42,7 @@ export const handleDelete = async ({
       db.delete(twoFactor).where(eq(twoFactor.userId, userId)),
       db.delete(sessionTable).where(eq(sessionTable.userId, userId)),
       db.delete(account).where(eq(account.userId, userId)),
-      db.delete(verification).where(eq(verification.identifier, auth.user.email)),
+      db.delete(verification).where(eq(verification.identifier, session.user.email)),
       db.delete(user).where(eq(user.id, userId)),
     ]);
 
@@ -70,7 +62,7 @@ export const handleDelete = async ({
 
 export const Route = createFileRoute('/api/users/me')({
   server: {
-    middleware: [dbMiddleware],
+    middleware: [authMiddleware],
     handlers: {
       DELETE: handleDelete,
     },
