@@ -8,11 +8,7 @@ import { handlePost } from '../single-project/checkout';
 let sessionResult: {
   user: { id: string; email: string; name: string };
   session: { id: string; userId: string; activeOrganizationId: string | null };
-} | null = null;
-
-vi.mock('@corates/workers/auth', () => ({
-  getSession: async () => sessionResult,
-}));
+};
 
 const createSingleProjectCheckoutMock = vi.fn();
 
@@ -25,7 +21,6 @@ beforeEach(async () => {
   await clearProjectDOs([]);
   vi.clearAllMocks();
   resetCounter();
-  sessionResult = null;
 });
 
 function spReq(): Request {
@@ -33,12 +28,6 @@ function spReq(): Request {
 }
 
 describe('POST /api/billing/single-project/checkout', () => {
-  it('returns 401 when no session', async () => {
-    const res = await handlePost({ request: spReq(), context: { db: createDb(env.DB) } });
-    expect(res.status).toBe(401);
-    expect(createSingleProjectCheckoutMock).not.toHaveBeenCalled();
-  });
-
   it('returns 403 when caller is not org owner', async () => {
     const { org } = await buildOrg();
     const { user: memberUser } = await buildOrgMember({ orgId: org.id, role: 'member' });
@@ -46,7 +35,10 @@ describe('POST /api/billing/single-project/checkout', () => {
       user: { id: memberUser.id, email: memberUser.email, name: memberUser.name },
       session: { id: 'sess', userId: memberUser.id, activeOrganizationId: org.id },
     };
-    const res = await handlePost({ request: spReq(), context: { db: createDb(env.DB) } });
+    const res = await handlePost({
+      request: spReq(),
+      context: { db: createDb(env.DB), session: sessionResult },
+    });
     expect(res.status).toBe(403);
     expect(createSingleProjectCheckoutMock).not.toHaveBeenCalled();
   });
@@ -62,7 +54,10 @@ describe('POST /api/billing/single-project/checkout', () => {
       sessionId: 'cs_sp_1',
     });
 
-    const res = await handlePost({ request: spReq(), context: { db: createDb(env.DB) } });
+    const res = await handlePost({
+      request: spReq(),
+      context: { db: createDb(env.DB), session: sessionResult },
+    });
     expect(res.status).toBe(200);
     const body = (await res.json()) as { url: string; sessionId: string };
     expect(body.url).toBe('https://checkout.stripe/sp');
@@ -82,7 +77,10 @@ describe('POST /api/billing/single-project/checkout', () => {
     };
     createSingleProjectCheckoutMock.mockRejectedValueOnce(new Error('stripe down'));
 
-    const res = await handlePost({ request: spReq(), context: { db: createDb(env.DB) } });
+    const res = await handlePost({
+      request: spReq(),
+      context: { db: createDb(env.DB), session: sessionResult },
+    });
     expect(res.status).toBe(500);
     const body = (await res.json()) as { code: string };
     expect(body.code).toBe('SYSTEM_INTERNAL_ERROR');

@@ -19,7 +19,7 @@ import { generateUniqueFileName } from '@corates/workers/media-files';
 import { requireOrgMembership } from '@/server/guards/requireOrgMembership';
 import { requireProjectAccess } from '@/server/guards/requireProjectAccess';
 import { requireOrgWriteAccess } from '@/server/guards/requireOrgWriteAccess';
-import { dbMiddleware } from '@/server/middleware/db';
+import { authMiddleware } from '@/server/middleware/auth';
 
 type HandlerArgs = {
   request: Request;
@@ -275,7 +275,7 @@ export const handlePost = async ({ request, params, context: { db } }: HandlerAr
 
 export const Route = createFileRoute('/api/orgs/$orgId/projects/$projectId/studies/$studyId/pdfs')({
   server: {
-    middleware: [dbMiddleware],
+    middleware: [authMiddleware],
     handlers: {
       GET: handleGet,
       POST: handlePost,

@@ -8,7 +8,7 @@ import { count, eq } from 'drizzle-orm';
 import { createDomainError, AUTH_ERRORS, SYSTEM_ERRORS } from '@corates/shared';
 import { requireOrgMembership } from '@/server/guards/requireOrgMembership';
 import { requireOrgWriteAccess } from '@/server/guards/requireOrgWriteAccess';
-import { dbMiddleware } from '@/server/middleware/db';
+import { authMiddleware } from '@/server/middleware/auth';
 
 interface OrgApiMethods {
   getFullOrganization: (req: {
@@ -152,7 +152,7 @@ export const handleDelete = async ({ request, params, context: { db } }: Handler
 
 export const Route = createFileRoute('/api/orgs/$orgId')({
   server: {
-    middleware: [dbMiddleware],
+    middleware: [authMiddleware],
     handlers: {
       GET: handleGet,
       PUT: handlePut,

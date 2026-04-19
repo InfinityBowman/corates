@@ -5,7 +5,7 @@ import type { OrgId, ProjectId } from '@corates/shared/ids';
 import { getProjectDocStub } from '@corates/workers/project-doc-id';
 import { requireOrgMembership } from '@/server/guards/requireOrgMembership';
 import { requireProjectAccess } from '@/server/guards/requireProjectAccess';
-import { dbMiddleware } from '@/server/middleware/db';
+import { authMiddleware } from '@/server/middleware/auth';
 
 type HandlerArgs = {
   request: Request;
@@ -37,7 +37,7 @@ export const handleGet = async ({ request, params, context: { db } }: HandlerArg
 
 export const Route = createFileRoute('/api/orgs/$orgId/projects/$projectId/dev/export')({
   server: {
-    middleware: [dbMiddleware],
+    middleware: [authMiddleware],
     handlers: {
       GET: handleGet,
     },

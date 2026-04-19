@@ -6,38 +6,25 @@
  */
 import { createFileRoute } from '@tanstack/react-router';
 import { env } from 'cloudflare:workers';
-import { getSession } from '@corates/workers/auth';
 import type { Database } from '@corates/db/client';
 import { user as userTable } from '@corates/db/schema';
 import { eq } from 'drizzle-orm';
 import { createSingleProjectCheckout } from '@corates/workers/commands/billing';
 import { requireOrgOwner } from '@corates/workers/policies';
-import {
-  createDomainError,
-  isDomainError,
-  AUTH_ERRORS,
-  SYSTEM_ERRORS,
-  type DomainError,
-} from '@corates/shared';
+import { createDomainError, isDomainError, SYSTEM_ERRORS, type DomainError } from '@corates/shared';
 import { resolveOrgIdWithRole } from '@/server/billing-context';
 import { BILLING_CHECKOUT_RATE_LIMIT, checkRateLimit } from '@/server/rateLimit';
-import { dbMiddleware } from '@/server/middleware/db';
+import { authMiddleware, type Session } from '@/server/middleware/auth';
 
 export const handlePost = async ({
   request,
-  context: { db },
+  context: { db, session },
 }: {
   request: Request;
-  context: { db: Database };
+  context: { db: Database; session: Session };
 }) => {
   const limit = checkRateLimit(request, env, BILLING_CHECKOUT_RATE_LIMIT);
   if (limit.blocked) return limit.blocked;
-
-  const session = await getSession(request, env);
-  if (!session) {
-    const error = createDomainError(AUTH_ERRORS.REQUIRED, { reason: 'no_user' });
-    return Response.json(error, { status: 401, headers: limit.headers });
-  }
 
   try {
     const { orgId, role } = await resolveOrgIdWithRole({
@@ -88,5 +75,5 @@ export const handlePost = async ({
 };
 
 export const Route = createFileRoute('/api/billing/single-project/checkout')({
-  server: { middleware: [dbMiddleware], handlers: { POST: handlePost } },
+  server: { middleware: [authMiddleware], handlers: { POST: handlePost } },
 });

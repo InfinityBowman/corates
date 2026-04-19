@@ -8,11 +8,7 @@ import { handlePost } from '../portal';
 let sessionResult: {
   user: { id: string; email: string; name: string };
   session: { id: string; userId: string; activeOrganizationId: string | null };
-} | null = null;
-
-vi.mock('@corates/workers/auth', () => ({
-  getSession: async () => sessionResult,
-}));
+};
 
 const createBillingPortalMock = vi.fn();
 
@@ -27,7 +23,6 @@ beforeEach(async () => {
   await clearProjectDOs([]);
   vi.clearAllMocks();
   resetCounter();
-  sessionResult = null;
 });
 
 function portalReq(): Request {
@@ -35,21 +30,15 @@ function portalReq(): Request {
 }
 
 describe('POST /api/billing/portal', () => {
-  it('returns 401 when no session', async () => {
-    sessionResult = null;
-    const res = await handlePost({ request: portalReq(), context: { db: createDb(env.DB) } });
-    expect(res.status).toBe(401);
-    const body = (await res.json()) as { code: string };
-    expect(body.code).toBe('AUTH_REQUIRED');
-    expect(createBillingPortalMock).not.toHaveBeenCalled();
-  });
-
   it('returns 403 when user has no org membership', async () => {
     sessionResult = {
       user: { id: 'orphan-user', email: 'orphan@example.com', name: 'Orphan' },
       session: { id: 'sess-1', userId: 'orphan-user', activeOrganizationId: null },
     };
-    const res = await handlePost({ request: portalReq(), context: { db: createDb(env.DB) } });
+    const res = await handlePost({
+      request: portalReq(),
+      context: { db: createDb(env.DB), session: sessionResult },
+    });
     expect(res.status).toBe(403);
     const body = (await res.json()) as { code: string; details?: { reason?: string } };
     expect(body.code).toBe('AUTH_FORBIDDEN');
@@ -64,7 +53,10 @@ describe('POST /api/billing/portal', () => {
       user: { id: memberUser.id, email: memberUser.email, name: memberUser.name },
       session: { id: 'sess-1', userId: memberUser.id, activeOrganizationId: org.id },
     };
-    const res = await handlePost({ request: portalReq(), context: { db: createDb(env.DB) } });
+    const res = await handlePost({
+      request: portalReq(),
+      context: { db: createDb(env.DB), session: sessionResult },
+    });
     expect(res.status).toBe(403);
     const body = (await res.json()) as { code: string; details?: { reason?: string } };
     expect(body.code).toBe('AUTH_FORBIDDEN');
@@ -80,7 +72,10 @@ describe('POST /api/billing/portal', () => {
     };
     createBillingPortalMock.mockResolvedValueOnce({ url: 'https://stripe.example/portal/abc' });
 
-    const res = await handlePost({ request: portalReq(), context: { db: createDb(env.DB) } });
+    const res = await handlePost({
+      request: portalReq(),
+      context: { db: createDb(env.DB), session: sessionResult },
+    });
     expect(res.status).toBe(200);
     const body = (await res.json()) as { url: string };
     expect(body.url).toBe('https://stripe.example/portal/abc');
@@ -101,7 +96,10 @@ describe('POST /api/billing/portal', () => {
     };
     createBillingPortalMock.mockResolvedValueOnce({ url: 'https://stripe.example/portal/xyz' });
 
-    const res = await handlePost({ request: portalReq(), context: { db: createDb(env.DB) } });
+    const res = await handlePost({
+      request: portalReq(),
+      context: { db: createDb(env.DB), session: sessionResult },
+    });
     expect(res.status).toBe(200);
     const callArg = createBillingPortalMock.mock.calls[0][0] as { body: { referenceId: string } };
     expect(callArg.body.referenceId).toBe(org.id);
@@ -115,7 +113,10 @@ describe('POST /api/billing/portal', () => {
     };
     createBillingPortalMock.mockRejectedValueOnce(new Error('stripe down'));
 
-    const res = await handlePost({ request: portalReq(), context: { db: createDb(env.DB) } });
+    const res = await handlePost({
+      request: portalReq(),
+      context: { db: createDb(env.DB), session: sessionResult },
+    });
     expect(res.status).toBe(500);
     const body = (await res.json()) as { code: string; details?: { operation?: string } };
     expect(body.code).toBe('SYSTEM_INTERNAL_ERROR');

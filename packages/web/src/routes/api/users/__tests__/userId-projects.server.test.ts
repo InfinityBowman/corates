@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { env } from 'cloudflare:test';
 import { createDb } from '@corates/db/client';
 import { resetTestDatabase, clearProjectDOs } from '@/__tests__/server/helpers';
@@ -7,12 +7,12 @@ import { handler } from '../$userId/projects';
 
 let currentUser = { id: 'user-1', email: 'user1@example.com' };
 
-vi.mock('@corates/workers/auth', () => ({
-  getSession: async () => ({
+function mockSession() {
+  return {
     user: { id: currentUser.id, email: currentUser.email, name: 'Test User' },
     session: { id: 'test-session', userId: currentUser.id },
-  }),
-}));
+  };
+}
 
 beforeEach(async () => {
   await resetTestDatabase();
@@ -30,7 +30,7 @@ describe('GET /api/users/:userId/projects', () => {
     const res = await handler({
       request: new Request(`http://localhost/api/users/${owner.id}/projects`),
       params: { userId: owner.id },
-      context: { db: createDb(env.DB) },
+      context: { db: createDb(env.DB), session: mockSession() },
     });
     expect(res.status).toBe(200);
     const body = (await res.json()) as any[];
@@ -48,7 +48,7 @@ describe('GET /api/users/:userId/projects', () => {
     const res = await handler({
       request: new Request(`http://localhost/api/users/${other.id}/projects`),
       params: { userId: other.id },
-      context: { db: createDb(env.DB) },
+      context: { db: createDb(env.DB), session: mockSession() },
     });
     expect(res.status).toBe(403);
     const body = (await res.json()) as any;

@@ -14,7 +14,7 @@ import {
 import type { OrgId, UserId } from '@corates/shared/ids';
 import { requireOrgMembership } from '@/server/guards/requireOrgMembership';
 import { requireOrgWriteAccess } from '@/server/guards/requireOrgWriteAccess';
-import { dbMiddleware } from '@/server/middleware/db';
+import { authMiddleware } from '@/server/middleware/auth';
 
 interface OrgApiMethods {
   updateMemberRole: (req: { headers: Headers; body: Record<string, unknown> }) => Promise<unknown>;
@@ -148,7 +148,7 @@ export const handleDelete = async ({ request, params, context: { db } }: Handler
 
 export const Route = createFileRoute('/api/orgs/$orgId/members/$memberId')({
   server: {
-    middleware: [dbMiddleware],
+    middleware: [authMiddleware],
     handlers: {
       PUT: handlePut,
       DELETE: handleDelete,

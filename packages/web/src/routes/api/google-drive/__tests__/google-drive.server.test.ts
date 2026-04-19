@@ -10,13 +10,6 @@ import { handler as importHandler } from '../import';
 
 let currentUser: { id: string; email: string } = { id: 'user-1', email: 'user1@example.com' };
 
-vi.mock('@corates/workers/auth', () => ({
-  getSession: async () => ({
-    user: { id: currentUser.id, email: currentUser.email, name: 'Test User' },
-    session: { id: 'test-session', userId: currentUser.id },
-  }),
-}));
-
 const originalFetch = globalThis.fetch;
 let mockFetch: Mock;
 
@@ -246,7 +239,7 @@ describe('POST /api/google-drive/import', () => {
 
     const res = await importHandler({
       request: importReq({ fileId: 'file-123', projectId: project.id, studyId: 'study-1' }),
-      context: { db: createDb(env.DB) },
+      context: { db: createDb(env.DB), session: mockSession() },
     });
 
     expect(res.status).toBe(200);
@@ -276,7 +269,7 @@ describe('POST /api/google-drive/import', () => {
 
     const res = await importHandler({
       request: importReq({ fileId: 'file-123', projectId: project.id, studyId: 'study-1' }),
-      context: { db: createDb(env.DB) },
+      context: { db: createDb(env.DB), session: mockSession() },
     });
 
     expect(res.status).toBe(400);
@@ -301,7 +294,7 @@ describe('POST /api/google-drive/import', () => {
 
     const res = await importHandler({
       request: importReq({ fileId: 'file-123', projectId: project.id, studyId: 'study-1' }),
-      context: { db: createDb(env.DB) },
+      context: { db: createDb(env.DB), session: mockSession() },
     });
 
     expect(res.status).toBe(413);
@@ -315,7 +308,7 @@ describe('POST /api/google-drive/import', () => {
 
     const res = await importHandler({
       request: importReq({ fileId: 'file-123', projectId: project.id, studyId: 'study-1' }),
-      context: { db: createDb(env.DB) },
+      context: { db: createDb(env.DB), session: mockSession() },
     });
 
     expect(res.status).toBe(401);
@@ -330,7 +323,7 @@ describe('POST /api/google-drive/import', () => {
 
     const res = await importHandler({
       request: importReq({ fileId: 'file-123' }),
-      context: { db: createDb(env.DB) },
+      context: { db: createDb(env.DB), session: mockSession() },
     });
 
     expect(res.status).toBe(400);

@@ -8,11 +8,7 @@ import { handlePost } from '../checkout';
 let sessionResult: {
   user: { id: string; email: string; name: string };
   session: { id: string; userId: string; activeOrganizationId: string | null };
-} | null = null;
-
-vi.mock('@corates/workers/auth', () => ({
-  getSession: async () => sessionResult,
-}));
+};
 
 const upgradeSubscriptionMock = vi.fn();
 
@@ -27,7 +23,6 @@ beforeEach(async () => {
   await clearProjectDOs([]);
   vi.clearAllMocks();
   resetCounter();
-  sessionResult = null;
 });
 
 function checkoutReq(body: unknown): Request {
@@ -39,15 +34,6 @@ function checkoutReq(body: unknown): Request {
 }
 
 describe('POST /api/billing/checkout', () => {
-  it('returns 401 when no session', async () => {
-    const res = await handlePost({
-      request: checkoutReq({ tier: 'team' }),
-      context: { db: createDb(env.DB) },
-    });
-    expect(res.status).toBe(401);
-    expect(upgradeSubscriptionMock).not.toHaveBeenCalled();
-  });
-
   it('returns 400 when tier is missing', async () => {
     sessionResult = {
       user: { id: 'u1', email: 'u@example.com', name: 'U' },
@@ -55,7 +41,7 @@ describe('POST /api/billing/checkout', () => {
     };
     const res = await handlePost({
       request: checkoutReq({ interval: 'monthly' }),
-      context: { db: createDb(env.DB) },
+      context: { db: createDb(env.DB), session: sessionResult },
     });
     expect(res.status).toBe(400);
     const body = (await res.json()) as { code: string };
@@ -70,7 +56,7 @@ describe('POST /api/billing/checkout', () => {
     };
     const res = await handlePost({
       request: checkoutReq({ tier: 'free' }),
-      context: { db: createDb(env.DB) },
+      context: { db: createDb(env.DB), session: sessionResult },
     });
     expect(res.status).toBe(400);
     const body = (await res.json()) as { code: string };
@@ -87,7 +73,7 @@ describe('POST /api/billing/checkout', () => {
     };
     const res = await handlePost({
       request: checkoutReq({ tier: 'team' }),
-      context: { db: createDb(env.DB) },
+      context: { db: createDb(env.DB), session: sessionResult },
     });
     expect(res.status).toBe(403);
     expect(upgradeSubscriptionMock).not.toHaveBeenCalled();
@@ -116,7 +102,7 @@ describe('POST /api/billing/checkout', () => {
     };
     const res = await handlePost({
       request: checkoutReq({ tier: 'starter_team' }),
-      context: { db: createDb(env.DB) },
+      context: { db: createDb(env.DB), session: sessionResult },
     });
     expect(res.status).toBe(400);
     const body = (await res.json()) as { code: string; details?: { reason?: string } };
@@ -134,7 +120,7 @@ describe('POST /api/billing/checkout', () => {
 
     const res = await handlePost({
       request: checkoutReq({ tier: 'team', interval: 'monthly' }),
-      context: { db: createDb(env.DB) },
+      context: { db: createDb(env.DB), session: sessionResult },
     });
     expect(res.status).toBe(200);
     const body = (await res.json()) as { url: string };
@@ -158,7 +144,7 @@ describe('POST /api/billing/checkout', () => {
 
     const res = await handlePost({
       request: checkoutReq({ tier: 'team' }),
-      context: { db: createDb(env.DB) },
+      context: { db: createDb(env.DB), session: sessionResult },
     });
     expect(res.status).toBe(500);
     const body = (await res.json()) as { code: string };

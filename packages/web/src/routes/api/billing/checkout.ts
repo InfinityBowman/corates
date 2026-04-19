@@ -7,7 +7,6 @@
  */
 import { createFileRoute } from '@tanstack/react-router';
 import { env } from 'cloudflare:workers';
-import { getSession } from '@corates/workers/auth';
 import { createAuth } from '@corates/workers/auth-config';
 import type { Database } from '@corates/db/client';
 import type { OrgId } from '@corates/shared/ids';
@@ -17,14 +16,13 @@ import { DEFAULT_PLAN } from '@corates/shared/plans';
 import {
   createDomainError,
   isDomainError,
-  AUTH_ERRORS,
   SYSTEM_ERRORS,
   VALIDATION_ERRORS,
   type DomainError,
 } from '@corates/shared';
 import { resolveOrgIdWithRole } from '@/server/billing-context';
 import { BILLING_CHECKOUT_RATE_LIMIT, checkRateLimit } from '@/server/rateLimit';
-import { dbMiddleware } from '@/server/middleware/db';
+import { authMiddleware, type Session } from '@/server/middleware/auth';
 
 interface CheckoutBody {
   tier?: unknown;
@@ -40,19 +38,13 @@ interface UpgradeApi {
 
 export const handlePost = async ({
   request,
-  context: { db },
+  context: { db, session },
 }: {
   request: Request;
-  context: { db: Database };
+  context: { db: Database; session: Session };
 }) => {
   const limit = checkRateLimit(request, env, BILLING_CHECKOUT_RATE_LIMIT);
   if (limit.blocked) return limit.blocked;
-
-  const session = await getSession(request, env);
-  if (!session) {
-    const error = createDomainError(AUTH_ERRORS.REQUIRED, { reason: 'no_user' });
-    return Response.json(error, { status: 401, headers: limit.headers });
-  }
 
   let body: CheckoutBody = {};
   try {
@@ -156,5 +148,5 @@ export const handlePost = async ({
 };
 
 export const Route = createFileRoute('/api/billing/checkout')({
-  server: { middleware: [dbMiddleware], handlers: { POST: handlePost } },
+  server: { middleware: [authMiddleware], handlers: { POST: handlePost } },
 });

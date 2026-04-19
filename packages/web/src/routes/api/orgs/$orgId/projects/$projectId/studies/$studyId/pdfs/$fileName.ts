@@ -14,7 +14,7 @@ import type { OrgId, ProjectId, StudyId } from '@corates/shared/ids';
 import { requireOrgMembership } from '@/server/guards/requireOrgMembership';
 import { requireProjectAccess } from '@/server/guards/requireProjectAccess';
 import { requireOrgWriteAccess } from '@/server/guards/requireOrgWriteAccess';
-import { dbMiddleware } from '@/server/middleware/db';
+import { authMiddleware } from '@/server/middleware/auth';
 
 type HandlerArgs = {
   request: Request;
@@ -171,7 +171,7 @@ export const Route = createFileRoute(
   '/api/orgs/$orgId/projects/$projectId/studies/$studyId/pdfs/$fileName',
 )({
   server: {
-    middleware: [dbMiddleware],
+    middleware: [authMiddleware],
     handlers: {
       GET: handleGet,
       DELETE: handleDelete,

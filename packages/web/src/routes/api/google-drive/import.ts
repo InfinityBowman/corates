@@ -1,6 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { env } from 'cloudflare:workers';
-import { getSession } from '@corates/workers/auth';
 import type { Database } from '@corates/db/client';
 import { projects, mediaFiles } from '@corates/db/schema';
 import { eq } from 'drizzle-orm';
@@ -18,21 +17,15 @@ import {
 import { requireProjectEdit } from '@corates/workers/policies/projects';
 import { generateUniqueFileName } from '@corates/workers/media-files';
 import { getGoogleTokens, getValidAccessToken } from '@/server/googleTokens';
-import { dbMiddleware } from '@/server/middleware/db';
+import { authMiddleware, type Session } from '@/server/middleware/auth';
 
 export const handler = async ({
   request,
-  context: { db },
+  context: { db, session },
 }: {
   request: Request;
-  context: { db: Database };
+  context: { db: Database; session: Session };
 }) => {
-  const session = await getSession(request, env);
-  if (!session) {
-    const error = createDomainError(AUTH_ERRORS.REQUIRED, { reason: 'no_user' });
-    return Response.json(error, { status: 401 });
-  }
-
   let body: { fileId?: unknown; projectId?: unknown; studyId?: unknown };
   try {
     body = (await request.json()) as typeof body;
@@ -232,7 +225,7 @@ export const handler = async ({
 
 export const Route = createFileRoute('/api/google-drive/import')({
   server: {
-    middleware: [dbMiddleware],
+    middleware: [authMiddleware],
     handlers: {
       POST: handler,
     },

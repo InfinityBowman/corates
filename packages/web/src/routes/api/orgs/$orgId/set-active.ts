@@ -5,7 +5,7 @@ import type { Database } from '@corates/db/client';
 import { createDomainError, SYSTEM_ERRORS } from '@corates/shared';
 import type { OrgId } from '@corates/shared/ids';
 import { requireOrgMembership } from '@/server/guards/requireOrgMembership';
-import { dbMiddleware } from '@/server/middleware/db';
+import { authMiddleware } from '@/server/middleware/auth';
 
 interface OrgApiMethods {
   setActiveOrganization: (req: {
@@ -56,7 +56,7 @@ export const handler = async ({
 
 export const Route = createFileRoute('/api/orgs/$orgId/set-active')({
   server: {
-    middleware: [dbMiddleware],
+    middleware: [authMiddleware],
     handlers: {
       POST: handler,
     },

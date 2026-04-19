@@ -5,8 +5,6 @@
  * the active org. Each org gets at most one trial.
  */
 import { createFileRoute } from '@tanstack/react-router';
-import { env } from 'cloudflare:workers';
-import { getSession } from '@corates/workers/auth';
 import type { Database } from '@corates/db/client';
 import { createGrant, getGrantByOrgIdAndType } from '@corates/db/org-access-grants';
 import { requireOrgOwner } from '@corates/workers/policies';
@@ -14,28 +12,20 @@ import { GRANT_CONFIG } from '@corates/workers/constants';
 import {
   createDomainError,
   isDomainError,
-  AUTH_ERRORS,
   SYSTEM_ERRORS,
   VALIDATION_ERRORS,
   type DomainError,
 } from '@corates/shared';
 import type { OrgId, OrgAccessGrantId } from '@corates/shared/ids';
 import { resolveOrgIdWithRole } from '@/server/billing-context';
-import { dbMiddleware } from '@/server/middleware/db';
+import { authMiddleware, type Session } from '@/server/middleware/auth';
 
 export const handlePost = async ({
-  request,
-  context: { db },
+  context: { db, session },
 }: {
   request: Request;
-  context: { db: Database };
+  context: { db: Database; session: Session };
 }) => {
-  const session = await getSession(request, env);
-  if (!session) {
-    const error = createDomainError(AUTH_ERRORS.REQUIRED, { reason: 'no_user' });
-    return Response.json(error, { status: 401 });
-  }
-
   try {
     const { orgId, role } = await resolveOrgIdWithRole({
       db,
@@ -92,5 +82,5 @@ export const handlePost = async ({
 };
 
 export const Route = createFileRoute('/api/billing/trial/start')({
-  server: { middleware: [dbMiddleware], handlers: { POST: handlePost } },
+  server: { middleware: [authMiddleware], handlers: { POST: handlePost } },
 });

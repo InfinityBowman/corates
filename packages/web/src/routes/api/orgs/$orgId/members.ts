@@ -2,7 +2,7 @@ import { createFileRoute } from '@tanstack/react-router';
 import { env } from 'cloudflare:workers';
 import { createAuth } from '@corates/workers/auth-config';
 import type { Database } from '@corates/db/client';
-import { dbMiddleware } from '@/server/middleware/db';
+import { authMiddleware } from '@/server/middleware/auth';
 import {
   createDomainError,
   createValidationError,
@@ -97,7 +97,7 @@ export const handlePost = async ({ request, params, context: { db } }: HandlerAr
 
 export const Route = createFileRoute('/api/orgs/$orgId/members')({
   server: {
-    middleware: [dbMiddleware],
+    middleware: [authMiddleware],
     handlers: {
       GET: handleGet,
       POST: handlePost,
