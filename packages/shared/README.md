@@ -156,10 +156,7 @@ import { createDomainError, AUTH_ERRORS } from '@corates/shared';
 const plan = getPlan(org.planId); // e.g., 'team'
 
 if (!plan.entitlements['project.create']) {
-  return Response.json(
-    createDomainError(AUTH_ERRORS.FORBIDDEN, { reason: 'missing_entitlement' }),
-    { status: 403 },
-  );
+  return Response.json(createDomainError(AUTH_ERRORS.FORBIDDEN, { reason: 'missing_entitlement' }), { status: 403 });
 }
 
 const maxProjects = plan.quotas['projects.max']; // e.g., 10

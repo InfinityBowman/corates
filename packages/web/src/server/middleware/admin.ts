@@ -41,10 +41,9 @@ export const adminMiddleware = createMiddleware()
     if (!csrf.ok) throw csrf.response;
 
     if (!isAdminUser(context.session.user as { role?: string | null })) {
-      throw Response.json(
-        createDomainError(AUTH_ERRORS.FORBIDDEN, { reason: 'admin_required' }),
-        { status: 403 },
-      );
+      throw Response.json(createDomainError(AUTH_ERRORS.FORBIDDEN, { reason: 'admin_required' }), {
+        status: 403,
+      });
     }
 
     const admin: AdminContext = {
