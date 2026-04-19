@@ -11,6 +11,7 @@ interface SeedBody {
     email: string;
     givenName?: string;
     familyName?: string;
+    role?: string;
   }>;
   org: { id: string; name: string; slug?: string };
   orgMembers: Array<{ userId: string; role: string }>;
@@ -41,6 +42,7 @@ export const handler = async ({ request }: { request: Request }) => {
         email: u.email,
         givenName: u.givenName || null,
         familyName: u.familyName || null,
+        role: u.role || 'user',
         emailVerified: true,
         profileCompletedAt: Math.floor(Date.now() / 1000),
         createdAt: new Date(),

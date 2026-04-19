@@ -2,6 +2,7 @@ import { createStartHandler, defaultStreamHandler } from '@tanstack/react-start/
 import * as Sentry from '@sentry/cloudflare';
 import { handleEmailQueue } from '@corates/workers/queue';
 import { getProjectDocStub } from '@corates/workers/project-doc-id';
+import { ensureWorkersLog } from '@corates/workers/logger';
 
 // Re-export DOs so wrangler DO bindings in wrangler.jsonc resolve against this
 // worker's main module. The class implementations live in @corates/workers.
@@ -33,6 +34,11 @@ interface SentryEnv {
 
 const workerHandler = {
   async fetch(request: Request, env: unknown, ctx: ExecutionContext): Promise<Response> {
+    ensureWorkersLog({
+      service: 'web',
+      environment: (env as SentryEnv).ENVIRONMENT,
+    });
+
     const url = new URL(request.url);
 
     // DO routes must be handled before TanStack Start (which can't pass

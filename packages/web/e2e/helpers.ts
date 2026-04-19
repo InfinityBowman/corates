@@ -196,6 +196,79 @@ export async function cleanupScenario(scenario: DualReviewerScenario) {
   });
 }
 
+// --- Admin test helpers ---
+
+export interface AdminScenario {
+  admin: SeededUser;
+  regularUser: SeededUser;
+  orgId: string;
+  adminCookies: SessionCookie[];
+  regularCookies: SessionCookie[];
+}
+
+export async function seedAdminScenario(): Promise<AdminScenario> {
+  const prefix = `e2e-admin-${Date.now()}`;
+  const adminId = `${prefix}-admin`;
+  const regularId = `${prefix}-user`;
+  const orgId = `${prefix}-org`;
+
+  const seedRes = await fetch(`${API_BASE}/api/test/seed`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      users: [
+        {
+          id: adminId,
+          name: 'Admin User',
+          email: `admin-${prefix}@test.corates.org`,
+          givenName: 'Admin',
+          familyName: 'User',
+          role: 'admin',
+        },
+        {
+          id: regularId,
+          name: 'Regular User',
+          email: `regular-${prefix}@test.corates.org`,
+          givenName: 'Regular',
+          familyName: 'User',
+        },
+      ],
+      org: { id: orgId, name: 'Admin Test Org', slug: `admin-org-${prefix}` },
+      orgMembers: [
+        { userId: adminId, role: 'owner' },
+        { userId: regularId, role: 'member' },
+      ],
+    }),
+  });
+
+  if (!seedRes.ok) {
+    throw new Error(`Admin seed failed: ${seedRes.status} ${await seedRes.text()}`);
+  }
+
+  const data = await seedRes.json();
+  const adminCookies = await getSessionCookies(adminId);
+  const regularCookies = await getSessionCookies(regularId);
+
+  return {
+    admin: { id: adminId, name: 'Admin User', email: data.users[0].email },
+    regularUser: { id: regularId, name: 'Regular User', email: data.users[1].email },
+    orgId,
+    adminCookies,
+    regularCookies,
+  };
+}
+
+export async function cleanupAdminScenario(scenario: AdminScenario) {
+  await fetch(`${API_BASE}/api/test/cleanup`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      userIds: [scenario.admin.id, scenario.regularUser.id],
+      orgId: scenario.orgId,
+    }),
+  });
+}
+
 // --- Billing test helpers ---
 
 export interface BillingScenario {

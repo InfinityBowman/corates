@@ -36,7 +36,8 @@
     "./policies/projects": "./src/policies/projects.ts",
     "./policies": "./src/policies/index.ts",
     "./notify": "./src/lib/notify.ts",
-    "./config/origins": "./src/config/origins.ts"
+    "./config/origins": "./src/config/origins.ts",
+    "./logger": "./src/lib/logger.ts"
   },
   "scripts": {
     "test": "pnpm db:generate:test && vitest run",
@@ -63,6 +64,7 @@
     "@corates/shared": "workspace:*",
     "better-auth": "^1.6.0",
     "drizzle-orm": "^0.45.2",
+    "evlog": "^2.13.0",
     "lib0": "^0.2.117",
     "postmark": "^4.0.7",
     "stripe": "^20.4.1",
