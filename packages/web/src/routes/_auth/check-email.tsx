@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { createFileRoute, useNavigate, useSearch } from '@tanstack/react-router';
+import { z } from 'zod';
 import { Loader2Icon, MailIcon } from 'lucide-react';
 import { useAuthStore, selectUser } from '@/stores/authStore';
 import { Alert } from '@/components/ui/alert';
@@ -10,11 +11,13 @@ const POLL_INTERVAL_MS = 3000;
 const REDIRECT_DELAY_MS = 1000;
 const RESENT_TIMEOUT_MS = 5000;
 
+const checkEmailSearch = z.object({
+  email: z.string().catch(''),
+});
+
 export const Route = createFileRoute('/_auth/check-email')({
   component: CheckEmailPage,
-  validateSearch: (search: Record<string, unknown>) => ({
-    email: (search.email as string) || '',
-  }),
+  validateSearch: checkEmailSearch,
 });
 
 function CheckEmailPage() {

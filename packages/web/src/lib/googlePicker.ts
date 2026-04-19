@@ -1,38 +1,25 @@
+/// <reference types="google.picker" />
+/* global google */
 /**
  * Minimal Google Picker helper.
  *
  * Loads https://apis.google.com/js/api.js and opens a DocsView filtered to PDFs.
+ *
+ * Picker types come from `@types/google.picker` (declares the global
+ * `google.picker` namespace, opted into via the reference directive above —
+ * the project tsconfig pins `types: ["vite/client"]` so we don't pollute the
+ * global type space project-wide). `gapi.load` isn't covered by that package
+ * and is the only other Google API we use, so it gets a small stub here
+ * rather than pulling in `@types/gapi`.
  */
 
-// Google API types are not available as declarations
 declare global {
   interface Window {
     gapi?: {
       load: (library: string, options: { callback: () => void }) => void;
     };
     google?: {
-      picker: {
-        DocsView: new () => {
-          setIncludeFolders: (include: boolean) => {
-            setSelectFolderEnabled: (enabled: boolean) => {
-              setMimeTypes: (types: string) => unknown;
-            };
-          };
-        };
-
-        PickerBuilder: new () => any;
-        Action: {
-          CANCEL: string;
-          PICKED: string;
-        };
-        Feature: {
-          MULTISELECT_ENABLED: string;
-        };
-        Document: {
-          ID: string;
-          NAME: string;
-        };
-      };
+      picker: typeof google.picker;
     };
   }
 }
@@ -48,7 +35,6 @@ function loadGoogleApiScript(): Promise<void> {
       return;
     }
 
-    // Already loaded
     if (window.gapi && window.google?.picker) {
       resolve();
       return;
@@ -66,10 +52,10 @@ function loadGoogleApiScript(): Promise<void> {
   return googleApiScriptPromise;
 }
 
-async function loadGooglePicker(): Promise<void> {
+async function loadGooglePicker(): Promise<typeof google.picker> {
   await loadGoogleApiScript();
 
-  if (window.google?.picker) return;
+  if (window.google?.picker) return window.google.picker;
   if (!window.gapi?.load) {
     throw new Error('Google API did not initialize correctly');
   }
@@ -85,6 +71,7 @@ async function loadGooglePicker(): Promise<void> {
   if (!window.google?.picker) {
     throw new Error('Google Picker failed to load');
   }
+  return window.google.picker;
 }
 
 interface PickedDriveFile {
@@ -109,39 +96,34 @@ export async function pickGooglePdfFiles(
   if (!options?.oauthToken) throw new Error('Missing oauthToken');
   if (!options?.developerKey) throw new Error('Missing developerKey');
 
-  await loadGooglePicker();
-
-  const { google } = window;
+  const picker = await loadGooglePicker();
 
   return new Promise(resolve => {
-    const docsView = new google!.picker.DocsView()
+    const docsView = new picker.DocsView()
       .setIncludeFolders(true)
       .setSelectFolderEnabled(false)
       .setMimeTypes('application/pdf');
 
-    let builder: any = new google!.picker.PickerBuilder()
-
+    let builder = new picker.PickerBuilder()
       .setOAuthToken(options.oauthToken)
       .setDeveloperKey(options.developerKey)
-
-      .setCallback((data: any) => {
-        if (data.action === google!.picker.Action.CANCEL) {
+      .setCallback((data: google.picker.ResponseObject) => {
+        if (data.action === picker.Action.CANCEL) {
           resolve(null);
           return;
         }
 
-        if (data.action !== google!.picker.Action.PICKED) return;
+        if (data.action !== picker.Action.PICKED) return;
 
-        const docs: any[] = data.docs || [];
+        const docs = data.docs ?? [];
         const files = docs
-
-          .map((doc: any) => {
-            const id = doc.id || doc[google!.picker.Document.ID];
-            const name = doc.name || doc[google!.picker.Document.NAME];
+          .map((doc): PickedDriveFile | null => {
+            const id = doc.id;
+            const name = doc.name;
             if (!id || !name) return null;
             return { id, name };
           })
-          .filter(Boolean) as PickedDriveFile[];
+          .filter((f): f is PickedDriveFile => f !== null);
 
         resolve(files);
       })
@@ -149,14 +131,13 @@ export async function pickGooglePdfFiles(
       .setOrigin(window.location.origin);
 
     if (options.multiselect) {
-      builder = builder.enableFeature(google!.picker.Feature.MULTISELECT_ENABLED);
+      builder = builder.enableFeature(picker.Feature.MULTISELECT_ENABLED);
     }
 
     if (options.appId) {
       builder = builder.setAppId(String(options.appId));
     }
 
-    const picker = builder.build();
-    picker.setVisible(true);
+    builder.build().setVisible(true);
   });
 }

@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { createFileRoute, useNavigate, useSearch } from '@tanstack/react-router';
+import { z } from 'zod';
 import { useAuthStore } from '@/stores/authStore';
 import { handleError } from '@/lib/error-utils';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
@@ -15,11 +16,13 @@ import { StrengthIndicator } from '@/components/auth/StrengthIndicator';
 
 const REDIRECT_DELAY_MS = 3000;
 
+const resetPasswordSearch = z.object({
+  token: z.string().catch(''),
+});
+
 export const Route = createFileRoute('/_auth/reset-password')({
   component: ResetPasswordPage,
-  validateSearch: (search: Record<string, unknown>) => ({
-    token: (search.token as string) || '',
-  }),
+  validateSearch: resetPasswordSearch,
 });
 
 function ResetPasswordPage() {
