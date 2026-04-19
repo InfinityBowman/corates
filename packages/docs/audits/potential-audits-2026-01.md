@@ -12,7 +12,7 @@
 
 **Technical Debt Audit** - Grep for TODO, FIXME, HACK comments and prioritize them. I noticed several TODOs in your codebase (e.g., Sentry integration, error monitoring).
 
-**API Consistency Audit** - Review endpoint naming conventions, response shapes, error formats, and pagination patterns across your Hono routes.
+**API Consistency Audit** - Review endpoint naming conventions, response shapes, error formats, and pagination patterns across the TanStack Start API routes in `packages/web/src/routes/api/`.
 
 **Offline/Sync Audit** - Document Yjs conflict resolution behavior, IndexedDB persistence reliability, and edge cases when users go offline mid-operation.
 

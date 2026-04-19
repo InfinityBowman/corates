@@ -2,6 +2,10 @@
 
 Comprehensive diagrams showing all actions that can be performed on projects, studies, and checklists, including all failure points and error conditions.
 
+> **Route path note.** The diagrams below use abbreviated paths like `POST /api/projects` and `DELETE /api/projects/:id/members/:userId` for readability. In the current codebase these are all org-scoped -- real paths are `POST /api/orgs/:orgId/projects`, `DELETE /api/orgs/:orgId/projects/:projectId/members/:userId`, etc. The **control flow** shown (guard order, error codes, Y.js side-effects) is accurate; the URLs are elided for diagram clarity.
+>
+> Role note: the current project role hierarchy is `owner > member`. Older diagrams may reference "collaborator" -- read that as `member`.
+
 ## Overview
 
 This document visualizes the complete API surface for the three main entities in CoRATES:

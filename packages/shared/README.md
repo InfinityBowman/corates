@@ -117,12 +117,10 @@ pnpm clean
 ```typescript
 import { createDomainError, PROJECT_ERRORS } from '@corates/shared';
 
-// In API route handler
+// In a TanStack Start route handler
 if (!project) {
-  const error = createDomainError(PROJECT_ERRORS.NOT_FOUND, {
-    projectId,
-  });
-  return c.json(error, error.statusCode); // 404
+  const error = createDomainError(PROJECT_ERRORS.NOT_FOUND, { projectId });
+  return Response.json(error, { status: error.statusCode }); // 404
 }
 ```
 
@@ -153,11 +151,15 @@ try {
 
 ```typescript
 import { getPlan } from '@corates/shared/plans';
+import { createDomainError, AUTH_ERRORS } from '@corates/shared';
 
 const plan = getPlan(org.planId); // e.g., 'team'
 
 if (!plan.entitlements['project.create']) {
-  return c.json({ error: 'Plan does not allow project creation' }, 403);
+  return Response.json(
+    createDomainError(AUTH_ERRORS.FORBIDDEN, { reason: 'missing_entitlement' }),
+    { status: 403 },
+  );
 }
 
 const maxProjects = plan.quotas['projects.max']; // e.g., 10
@@ -322,14 +324,14 @@ Test coverage includes:
 ❌ **Bad - Magic strings:**
 
 ```typescript
-return c.json({ error: 'Project not found' }, 404);
+return Response.json({ error: 'Project not found' }, { status: 404 });
 ```
 
 ✅ **Good - Type-safe domain errors:**
 
 ```typescript
 const error = createDomainError(PROJECT_ERRORS.NOT_FOUND, { projectId });
-return c.json(error, error.statusCode);
+return Response.json(error, { status: error.statusCode });
 ```
 
 ### Normalize Errors at Transport Boundaries

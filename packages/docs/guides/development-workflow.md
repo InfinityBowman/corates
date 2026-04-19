@@ -153,31 +153,31 @@ refactor: simplify error handling
 
 ### Adding a New API Route
 
-1. Create route file in `packages/workers/src/routes/`
-2. Add validation schema in `packages/workers/src/config/validation.js`
-3. Add route to main app in `packages/workers/src/index.js`
-4. Write tests in `packages/workers/src/routes/__tests__/`
-5. Update API documentation if needed
+1. Create route file under `packages/web/src/routes/api/<path>.ts` mirroring the URL structure (use `$param` for dynamic segments)
+2. Export `handleGet`/`handlePost`/etc. handlers that take `{ request, params }` and return `Response.json(...)`
+3. Wire handlers into `export const Route = createFileRoute('/api/<path>')({ server: { handlers: { METHOD: handler } } })`
+4. Add guards (`requireOrgMembership`, `requireProjectAccess`, etc.) from `@/server/guards/`
+5. Write tests in `__tests__/<name>.server.test.ts` adjacent to the route (runs in Cloudflare Workers pool)
 
 ### Adding a New Component
 
-1. Create component file in appropriate directory under `packages/web/src/components/`
-2. Use path aliases for imports
+1. Create component file under `packages/web/src/components/<feature>/`
+2. Import via `@/*` path alias
 3. Follow component patterns (see [Component Guide](/guides/components))
-4. Add to barrel export if in a feature directory
+4. Use shadcn primitives from `@/components/ui/` and `lucide-react` icons
 5. Write tests if component has complex logic
 
 ### Adding a New Store
 
-1. Create store file in `packages/web/src/stores/`
-2. Create corresponding actions store if needed
-3. Export as singleton
-4. Document store structure in comments
-5. Use in components via direct imports
+1. Create store file in `packages/web/src/stores/` using `create<State & Actions>()(...)` from Zustand
+2. Co-locate state and actions in the same store
+3. Export selectors as plain functions of state (use stable module-level fallback constants)
+4. Document store purpose in a file-level comment
+5. Read via `useStore(selector)` in components; `useStore.getState()` outside React
 
 ### Adding Database Schema Changes
 
-1. Update schema in `packages/workers/src/db/schema.js`
+1. Update schema in `packages/db/src/schema.ts`
 2. Generate migrations: `pnpm db:generate` (creates new migration files)
 3. Regenerate test SQL: `pnpm db:generate:test`
 4. Run migrations locally: `pnpm db:migrate`
@@ -222,7 +222,7 @@ beforeEach(async () => {
 
 ### Issue: CORS errors in development
 
-**Solution:** Check CORS middleware configuration in `packages/workers/src/index.js`
+**Solution:** Check CORS configuration in the main app Worker config and `@/server/guards/requireTrustedOrigin.ts`
 
 ### Issue: Build errors after dependency updates
 

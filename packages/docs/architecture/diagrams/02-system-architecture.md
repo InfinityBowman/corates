@@ -85,7 +85,7 @@ Both Workers share:
 
 The `UserSession` Durable Object enables real-time, user-level notifications:
 
-1. **When events occur** (e.g., user added to project), the Hono API sends a notification to that user's UserSession DO
+1. **When events occur** (e.g., user added to project), the main app API sends a notification to that user's UserSession DO via `notify` helpers from `@corates/workers/notify`
 2. **If the user is connected** via WebSocket, the notification is immediately delivered
 3. **If the user is offline**, the notification is stored as "pending" and delivered when they reconnect
 4. **Frontend connects** to `/api/sessions/:userId` via WebSocket to receive notifications in real-time

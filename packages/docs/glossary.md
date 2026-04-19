@@ -24,7 +24,7 @@ A top-level tenant entity representing a research group, institution, or team. O
 - Are billed as a unit (org-scoped billing)
 - Can have one active subscription or access grant
 
-**Related:** [src/db/schema.js:orgs](../workers/src/db/schema.js), Billing Model
+**Related:** `packages/db/src/schema.ts` (orgs table), Billing Model
 
 ### Project
 
@@ -36,7 +36,7 @@ A systematic review project containing studies, checklists, and PDFs. Projects:
 - Store data in a Durable Object (ProjectDoc)
 - Have a unique `projectId` (UUID)
 
-**Related:** [ProjectDoc.js](../workers/src/durable-objects/ProjectDoc.js), Yjs Sync
+**Related:** `packages/workers/src/durable-objects/ProjectDoc.ts`, Yjs Sync
 
 ### Study
 
@@ -69,7 +69,7 @@ The process of resolving disagreements between multiple reviewers' checklist ass
 - Calculates inter-rater reliability (Cohen's kappa, percent agreement)
 - Creates a final reconciled checklist
 
-**Related:** [ReconciliationWrapper.jsx](../web/src/components/project/reconcile-tab/amstar2-reconcile/ReconciliationWrapper.jsx)
+**Related:** `packages/web/src/components/project/reconcile-tab/ReconciliationWrapper.tsx`
 
 ---
 
@@ -85,7 +85,7 @@ A CRDT (Conflict-free Replicated Data Type) library for real-time collaborative 
 - **provider** - WebSocket connection to sync ydoc with backend
 - **awareness** - User presence protocol (who's online, cursor positions)
 
-**Related:** [Yjs Sync Guide](guides/yjs-sync.md), [ProjectDoc.js](../workers/src/durable-objects/ProjectDoc.js)
+**Related:** [Yjs Sync Guide](guides/yjs-sync.md), `packages/workers/src/durable-objects/ProjectDoc.ts`
 
 ### Durable Objects (DO)
 
@@ -112,7 +112,7 @@ Browser-based persistent storage used for offline-first capabilities:
   - `localChecklistPdfs` - PDFs for local checklists
   - `ops` - Operation queue for offline mutations (future)
 
-**Related:** [Offline/Local-First Audit](audits/offline-local-first-audit-2026-01.md), [db.js](../web/src/primitives/db.js)
+**Related:** `packages/web/src/primitives/db.ts`
 
 ### TanStack Query (React Query)
 
@@ -123,7 +123,7 @@ Data fetching and caching library used in CoRATES for:
 - Cache invalidation via query keys
 - Offline persistence with IndexedDB persister
 
-**Related:** [queryClient.js](../web/src/lib/queryClient.js), [queryKeys.js](../web/src/lib/queryKeys.js)
+**Related:** `packages/web/src/lib/queryClient.ts`, `packages/web/src/lib/queryKeys.ts`
 
 ### Better Auth
 
@@ -135,7 +135,7 @@ Authentication library (v1.4.10) providing:
 - Organization membership
 - Session management with httpOnly cookies
 
-**Related:** [better-auth-store.js](../web/src/api/better-auth-store.js), [auth/config.js](../workers/src/auth/config.js)
+**Related:** `packages/web/src/stores/authStore.ts`, `packages/workers/src/auth/config.ts`
 
 ### Service Worker
 
@@ -157,18 +157,23 @@ TypeScript ORM used for database access:
 - Migrations support
 - Used with Cloudflare D1 (SQLite)
 
-**Related:** [db/schema.js](../workers/src/db/schema.js)
+**Related:** `packages/db/src/schema.ts`
 
-### Hono.js
+### TanStack Start
 
-Lightweight web framework for Cloudflare Workers:
+Full-stack React framework with file-based server routing, used for the main app Worker:
 
-- Express-like API
-- Middleware support
-- Type-safe routing with context
-- Used for all backend API routes
+- Same Worker serves the SPA and `/api/*` routes
+- Route files under `packages/web/src/routes/api/` export `handleGet`/`handlePost` etc.
+- Handlers take `{ request, params }`, return `Response.json(...)`
 
-**Related:** [index.js](../workers/src/index.js)
+**Related:** `packages/web/src/routes/api/`
+
+### Hono (Stripe purchases only)
+
+Lightweight Workers framework used exclusively by the `packages/stripe-purchases` Worker for Stripe one-time-purchase webhooks. Kept isolated for deploy-cadence so frontend changes don't disturb payment retry windows.
+
+**Related:** `packages/stripe-purchases/src/routes/webhook.ts`
 
 ---
 
@@ -186,7 +191,7 @@ Lightweight web framework for Cloudflare Workers:
 
 Inter-rater reliability statistic measuring agreement between two reviewers beyond chance. Range: -1 to 1 (>0.8 = excellent agreement).
 
-**Related:** [inter-rater-reliability.js](../web/src/lib/inter-rater-reliability.js)
+**Related:** `packages/web/src/lib/inter-rater-reliability.ts`
 
 ### Systematic Review
 
@@ -210,23 +215,23 @@ Centralized error system from `@corates/shared`:
 
 **Related:** [@corates/shared/errors](../shared/src/errors/), [error-handling.mdc](../../.cursor/rules/error-handling.mdc)
 
-### Middleware Stack
+### Route Guards
 
-Composable request processing pipeline:
+Composable authorization checks called at the top of each API handler. Guards return a tagged union (`{ ok: true, context }` or `{ ok: false, response }`) -- callers bail early on `!result.ok`:
 
-```javascript
-route.post(
-  '/',
-  requireAuth, // Authentication
-  requireOrgMembership(), // Organization access
-  requireEntitlement('project.create'), // Feature flag
-  requireQuota('projects.max', fn, 1), // Quota check
-  validateRequest(schema), // Input validation
-  handler, // Business logic
-);
+```ts
+export const handlePost = async ({ request, params }) => {
+  const orgMembership = await requireOrgMembership(request, env, params.orgId);
+  if (!orgMembership.ok) return orgMembership.response;
+
+  const access = await requireProjectAccess(request, env, params.orgId, params.projectId);
+  if (!access.ok) return access.response;
+
+  // ... handler work ...
+};
 ```
 
-**Related:** [middleware/](../workers/src/middleware/)
+**Related:** `packages/web/src/server/guards/`
 
 ### Query Key Factory
 
@@ -236,7 +241,7 @@ Centralized function for generating TanStack Query cache keys:
 - Type-safe with TypeScript
 - Namespaced by domain (projects, orgs, admin, etc.)
 
-**Related:** [queryKeys.js](../web/src/lib/queryKeys.js)
+**Related:** `packages/web/src/lib/queryKeys.ts`
 
 ### Optimistic Updates
 
@@ -304,7 +309,7 @@ Stripe subscription providing ongoing access:
 - Synced via Stripe webhooks
 - Stored in `orgSubscriptions` table
 
-**Related:** [routes/billing/](../workers/src/routes/billing/)
+**Related:** `packages/web/src/routes/api/billing/`
 
 ### Entitlement
 
@@ -339,7 +344,7 @@ Idempotency tracking for Stripe webhooks:
 - Prevents duplicate processing
 - Two-phase verification pattern (verify signature, then check ledger)
 
-**Related:** [routes/billing/index.js](../workers/src/routes/billing/index.js)
+**Related:** `packages/web/src/routes/api/billing/*` (main app), `packages/stripe-purchases/src/routes/webhook.ts` (webhook worker)
 
 ### Billing Resolver
 

@@ -59,30 +59,32 @@ const multiError = createMultiFieldValidationError([
 
 ### Creating Domain Errors
 
-```javascript
-// packages/workers/src/routes/projects.js
+```ts
+// packages/web/src/routes/api/orgs/$orgId/projects/$projectId.ts
+import { env } from 'cloudflare:workers';
+import { createDb } from '@corates/db/client';
+import { projects } from '@corates/db/schema';
+import { eq } from 'drizzle-orm';
 import { createDomainError, PROJECT_ERRORS } from '@corates/shared';
 
-export async function getProject(c) {
-  const project = await db.getProject(c.req.param('id'));
+export const handleGet = async ({ params }: { params: { projectId: string } }) => {
+  const db = createDb(env.DB);
+  const project = await db.select().from(projects).where(eq(projects.id, params.projectId)).get();
 
   if (!project) {
-    return c.json(createDomainError(PROJECT_ERRORS.NOT_FOUND, { projectId: c.req.param('id') }), 404);
+    return Response.json(
+      createDomainError(PROJECT_ERRORS.NOT_FOUND, { projectId: params.projectId }),
+      { status: 404 },
+    );
   }
 
-  return c.json(project);
-}
+  return Response.json(project);
+};
 ```
 
-### Validation Middleware
+### Validation errors
 
-The validation middleware automatically creates validation errors:
-
-```javascript
-// packages/workers/src/config/validation.js
-// Already configured to use shared error system
-// Returns DomainError objects with validation details
-```
+Validation is done ad-hoc against typed body interfaces; richer routes use Zod. In both cases, return a `createValidationError(...)` response rather than throwing. See the [API Development Guide](/guides/api-development#validation) for examples.
 
 ## Frontend Usage
 

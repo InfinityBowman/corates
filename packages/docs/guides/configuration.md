@@ -24,52 +24,27 @@ packages/
 
 ### Frontend (Web Package)
 
-Path aliases are defined in `packages/web/jsconfig.json`:
+`packages/web/tsconfig.json` defines one path alias:
 
-```1:20:packages/web/jsconfig.json
+```json
 {
   "compilerOptions": {
-    "baseUrl": ".",
     "paths": {
-      "@/*": ["src/*"],
-      "@components/*": ["src/components/*"],
-      "@auth-ui/*": ["src/components/auth-ui/*"],
-      "@checklist-ui/*": ["src/components/checklist-ui/*"],
-      "@project-ui/*": ["src/components/project-ui/*"],
-      "@routes/*": ["src/routes/*"],
-      "@primitives/*": ["src/primitives/*"],
-      "@auth/*": ["src/components/auth-ui/*"],
-      "@offline/*": ["src/offline/*"],
-      "@api/*": ["src/api/*"],
-      "@config/*": ["src/config/*"],
-      "@lib/*": ["src/lib/*"]
+      "@/*": ["./src/*"]
     }
-  },
-  "exclude": ["node_modules", "dist"]
+  }
 }
 ```
 
 **Usage:**
 
-```js
-// Use aliases instead of relative paths
-import projectStore from '@/stores/projectStore.js';
-import SignIn from '@auth-ui/SignIn.jsx';
-import { useProject } from '@primitives/useProject/index.js';
+```tsx
+import { useAuthStore } from '@/stores/authStore';
+import { Button } from '@/components/ui/button';
+import { useOrgs } from '@/hooks/useOrgs';
 ```
 
-**Available Aliases:**
-
-- `@/*` → `src/*`
-- `@components/*` → `src/components/*`
-- `@auth-ui/*` → `src/components/auth-ui/*`
-- `@checklist-ui/*` → `src/components/checklist-ui/*`
-- `@project-ui/*` → `src/components/project-ui/*`
-- `@routes/*` → `src/routes/*`
-- `@primitives/*` → `src/primitives/*`
-- `@api/*` → `src/api/*`
-- `@config/*` → `src/config/*`
-- `@lib/*` → `src/lib/*`
+There are no per-feature aliases (`@auth-ui`, `@project-ui`, etc.) -- those were removed in the React migration. Everything goes through `@/*`.
 
 ## Environment Variables
 
