@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { env } from 'cloudflare:test';
+import { createDb } from '@corates/db/client';
 import { resetTestDatabase, clearProjectDOs } from '@/__tests__/server/helpers';
 import { buildOrg, buildOrgMember, resetCounter } from '@/__tests__/server/factories';
 import { handleGet } from '../usage';
@@ -27,7 +28,7 @@ function usageReq(): Request {
 
 describe('GET /api/billing/usage', () => {
   it('returns 401 when no session', async () => {
-    const res = await handleGet({ request: usageReq() });
+    const res = await handleGet({ request: usageReq(), context: { db: createDb(env.DB) } });
     expect(res.status).toBe(401);
   });
 
@@ -36,7 +37,7 @@ describe('GET /api/billing/usage', () => {
       user: { id: 'orphan', email: 'o@example.com', name: 'O' },
       session: { id: 'sess', userId: 'orphan', activeOrganizationId: null },
     };
-    const res = await handleGet({ request: usageReq() });
+    const res = await handleGet({ request: usageReq(), context: { db: createDb(env.DB) } });
     expect(res.status).toBe(403);
     const body = (await res.json()) as { details?: { reason?: string } };
     expect(body.details?.reason).toBe('no_org_found');
@@ -65,7 +66,7 @@ describe('GET /api/billing/usage', () => {
       user: { id: owner.id, email: owner.email, name: owner.name },
       session: { id: 'sess', userId: owner.id, activeOrganizationId: org.id },
     };
-    const res = await handleGet({ request: usageReq() });
+    const res = await handleGet({ request: usageReq(), context: { db: createDb(env.DB) } });
     expect(res.status).toBe(200);
     const body = (await res.json()) as { projects: number; collaborators: number };
     expect(body.projects).toBe(3);

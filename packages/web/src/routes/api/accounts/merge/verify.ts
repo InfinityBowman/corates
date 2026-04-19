@@ -1,7 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { env } from 'cloudflare:workers';
 import { getSession } from '@corates/workers/auth';
-import { createDb } from '@corates/db/client';
+import type { Database } from '@corates/db/client';
 import { account, verification } from '@corates/db/schema';
 import { eq, like } from 'drizzle-orm';
 import {
@@ -12,8 +12,15 @@ import {
   AUTH_ERRORS,
 } from '@corates/shared';
 import { checkRateLimit, MERGE_VERIFY_RATE_LIMIT } from '@/server/rateLimit';
+import { dbMiddleware } from '@/server/middleware/db';
 
-export const handler = async ({ request }: { request: Request }) => {
+export const handler = async ({
+  request,
+  context: { db },
+}: {
+  request: Request;
+  context: { db: Database };
+}) => {
   const session = await getSession(request, env);
   if (!session) {
     const error = createDomainError(AUTH_ERRORS.REQUIRED, { reason: 'no_user' });
@@ -43,8 +50,6 @@ export const handler = async ({ request }: { request: Request }) => {
 
   const rate = checkRateLimit(request, env, MERGE_VERIFY_RATE_LIMIT, mergeToken);
   if (rate.blocked) return rate.blocked;
-
-  const db = createDb(env.DB);
 
   const mergeRequests = await db
     .select()
@@ -138,6 +143,7 @@ export const handler = async ({ request }: { request: Request }) => {
 
 export const Route = createFileRoute('/api/accounts/merge/verify')({
   server: {
+    middleware: [dbMiddleware],
     handlers: {
       POST: handler,
     },

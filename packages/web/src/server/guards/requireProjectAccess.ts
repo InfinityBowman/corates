@@ -1,4 +1,4 @@
-import { createDb } from '@corates/db/client';
+import type { Database } from '@corates/db/client';
 import { projects, projectMembers } from '@corates/db/schema';
 import { and, eq } from 'drizzle-orm';
 import { hasProjectRole } from '@corates/workers/policies';
@@ -22,6 +22,7 @@ export type ProjectGuardResult =
 export async function requireProjectAccess(
   request: Request,
   env: Env,
+  db: Database,
   orgId: OrgId,
   projectId: ProjectId,
   minRole?: string,
@@ -53,8 +54,6 @@ export async function requireProjectAccess(
       ),
     };
   }
-
-  const db = createDb(env.DB);
 
   let projectData;
   try {

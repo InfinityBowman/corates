@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { env } from 'cloudflare:workers';
-import { createDb } from '@corates/db/client';
+import type { Database } from '@corates/db/client';
 import { mediaFiles } from '@corates/db/schema';
 import { and, eq } from 'drizzle-orm';
 import {
@@ -14,10 +14,12 @@ import type { OrgId, ProjectId, StudyId } from '@corates/shared/ids';
 import { requireOrgMembership } from '@/server/guards/requireOrgMembership';
 import { requireProjectAccess } from '@/server/guards/requireProjectAccess';
 import { requireOrgWriteAccess } from '@/server/guards/requireOrgWriteAccess';
+import { dbMiddleware } from '@/server/middleware/db';
 
 type HandlerArgs = {
   request: Request;
   params: { orgId: OrgId; projectId: ProjectId; studyId: StudyId; fileName: string };
+  context: { db: Database };
 };
 
 function validateFileName(raw: string): { fileName: string; error?: Response } {
@@ -54,11 +56,11 @@ function validateFileName(raw: string): { fileName: string; error?: Response } {
   return { fileName };
 }
 
-export const handleGet = async ({ request, params }: HandlerArgs) => {
-  const orgMembership = await requireOrgMembership(request, env, params.orgId);
+export const handleGet = async ({ request, params, context: { db } }: HandlerArgs) => {
+  const orgMembership = await requireOrgMembership(request, env, db, params.orgId);
   if (!orgMembership.ok) return orgMembership.response;
 
-  const access = await requireProjectAccess(request, env, params.orgId, params.projectId);
+  const access = await requireProjectAccess(request, env, db, params.orgId, params.projectId);
   if (!access.ok) return access.response;
 
   const { fileName, error: nameError } = validateFileName(params.fileName);
@@ -98,14 +100,14 @@ export const handleGet = async ({ request, params }: HandlerArgs) => {
   }
 };
 
-export const handleDelete = async ({ request, params }: HandlerArgs) => {
-  const orgMembership = await requireOrgMembership(request, env, params.orgId);
+export const handleDelete = async ({ request, params, context: { db } }: HandlerArgs) => {
+  const orgMembership = await requireOrgMembership(request, env, db, params.orgId);
   if (!orgMembership.ok) return orgMembership.response;
 
-  const writeAccess = await requireOrgWriteAccess(request.method, env, params.orgId);
+  const writeAccess = await requireOrgWriteAccess(request.method, db, params.orgId);
   if (!writeAccess.ok) return writeAccess.response;
 
-  const access = await requireProjectAccess(request, env, params.orgId, params.projectId);
+  const access = await requireProjectAccess(request, env, db, params.orgId, params.projectId);
   if (!access.ok) return access.response;
 
   const { fileName, error: nameError } = validateFileName(params.fileName);
@@ -114,8 +116,6 @@ export const handleDelete = async ({ request, params }: HandlerArgs) => {
   const key = `projects/${params.projectId}/studies/${params.studyId}/${fileName}`;
 
   try {
-    const db = createDb(env.DB);
-
     const existingRecord = await db
       .select({ id: mediaFiles.id })
       .from(mediaFiles)
@@ -171,6 +171,7 @@ export const Route = createFileRoute(
   '/api/orgs/$orgId/projects/$projectId/studies/$studyId/pdfs/$fileName',
 )({
   server: {
+    middleware: [dbMiddleware],
     handlers: {
       GET: handleGet,
       DELETE: handleDelete,

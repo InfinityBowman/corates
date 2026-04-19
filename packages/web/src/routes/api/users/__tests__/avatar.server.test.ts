@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi, type Mock } from 'vitest';
 import { env } from 'cloudflare:test';
+import { createDb } from '@corates/db/client';
 import { resetTestDatabase, clearProjectDOs } from '@/__tests__/server/helpers';
 import { buildUser, buildProject, resetCounter } from '@/__tests__/server/factories';
 import { handlePost, handleDelete } from '../avatar';
@@ -66,6 +67,7 @@ describe('POST /api/users/avatar', () => {
 
     const res = await handlePost({
       request: req('/api/users/avatar', { method: 'POST', body: formData }),
+      context: { db: createDb(env.DB) },
     });
 
     expect(res.status).toBe(200);
@@ -91,6 +93,7 @@ describe('POST /api/users/avatar', () => {
         headers: { 'Content-Length': String(3 * 1024 * 1024) },
         body: formData,
       }),
+      context: { db: createDb(env.DB) },
     });
 
     expect(res.status).toBe(413);
@@ -108,6 +111,7 @@ describe('POST /api/users/avatar', () => {
 
     const res = await handlePost({
       request: req('/api/users/avatar', { method: 'POST', body: formData }),
+      context: { db: createDb(env.DB) },
     });
 
     expect(res.status).toBe(400);
@@ -126,6 +130,7 @@ describe('POST /api/users/avatar', () => {
 
     const res1 = await handlePost({
       request: req('/api/users/avatar', { method: 'POST', body: formData1 }),
+      context: { db: createDb(env.DB) },
     });
     expect(res1.status).toBe(200);
     const body1 = (await res1.json()) as { key: string };
@@ -141,6 +146,7 @@ describe('POST /api/users/avatar', () => {
 
     const res2 = await handlePost({
       request: req('/api/users/avatar', { method: 'POST', body: formData2 }),
+      context: { db: createDb(env.DB) },
     });
     expect(res2.status).toBe(200);
 
@@ -166,6 +172,7 @@ describe('POST /api/users/avatar', () => {
 
     const res = await handlePost({
       request: req('/api/users/avatar', { method: 'POST', body: formData }),
+      context: { db: createDb(env.DB) },
     });
 
     expect(res.status).toBe(200);
@@ -189,6 +196,7 @@ describe('POST /api/users/avatar', () => {
 
     const res = await handlePost({
       request: req('/api/users/avatar', { method: 'POST', body: formData }),
+      context: { db: createDb(env.DB) },
     });
 
     expect(res.status).toBe(401);

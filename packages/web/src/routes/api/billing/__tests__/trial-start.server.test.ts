@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { env } from 'cloudflare:test';
+import { createDb } from '@corates/db/client';
 import { resetTestDatabase, clearProjectDOs } from '@/__tests__/server/helpers';
 import { buildOrg, buildOrgMember, resetCounter } from '@/__tests__/server/factories';
 import { handlePost } from '../trial/start';
@@ -27,7 +28,7 @@ function trialReq(): Request {
 
 describe('POST /api/billing/trial/start', () => {
   it('returns 401 when no session', async () => {
-    const res = await handlePost({ request: trialReq() });
+    const res = await handlePost({ request: trialReq(), context: { db: createDb(env.DB) } });
     expect(res.status).toBe(401);
     const body = (await res.json()) as { code: string };
     expect(body.code).toBe('AUTH_REQUIRED');
@@ -38,7 +39,7 @@ describe('POST /api/billing/trial/start', () => {
       user: { id: 'orphan-user', email: 'orphan@example.com', name: 'Orphan' },
       session: { id: 'sess-1', userId: 'orphan-user', activeOrganizationId: null },
     };
-    const res = await handlePost({ request: trialReq() });
+    const res = await handlePost({ request: trialReq(), context: { db: createDb(env.DB) } });
     expect(res.status).toBe(403);
     const body = (await res.json()) as { code: string; details?: { reason?: string } };
     expect(body.code).toBe('AUTH_FORBIDDEN');
@@ -52,7 +53,7 @@ describe('POST /api/billing/trial/start', () => {
       user: { id: memberUser.id, email: memberUser.email, name: memberUser.name },
       session: { id: 'sess-1', userId: memberUser.id, activeOrganizationId: org.id },
     };
-    const res = await handlePost({ request: trialReq() });
+    const res = await handlePost({ request: trialReq(), context: { db: createDb(env.DB) } });
     expect(res.status).toBe(403);
     const body = (await res.json()) as { code: string; details?: { reason?: string } };
     expect(body.code).toBe('AUTH_FORBIDDEN');
@@ -65,7 +66,7 @@ describe('POST /api/billing/trial/start', () => {
       user: { id: owner.id, email: owner.email, name: owner.name },
       session: { id: 'sess-1', userId: owner.id, activeOrganizationId: org.id },
     };
-    const res = await handlePost({ request: trialReq() });
+    const res = await handlePost({ request: trialReq(), context: { db: createDb(env.DB) } });
     expect(res.status).toBe(200);
     const body = (await res.json()) as {
       success: boolean;
@@ -90,10 +91,10 @@ describe('POST /api/billing/trial/start', () => {
       user: { id: owner.id, email: owner.email, name: owner.name },
       session: { id: 'sess-1', userId: owner.id, activeOrganizationId: org.id },
     };
-    const first = await handlePost({ request: trialReq() });
+    const first = await handlePost({ request: trialReq(), context: { db: createDb(env.DB) } });
     expect(first.status).toBe(200);
 
-    const second = await handlePost({ request: trialReq() });
+    const second = await handlePost({ request: trialReq(), context: { db: createDb(env.DB) } });
     expect(second.status).toBe(400);
     const body = (await second.json()) as { code: string };
     expect(body.code).toBe('VALIDATION_INVALID_INPUT');

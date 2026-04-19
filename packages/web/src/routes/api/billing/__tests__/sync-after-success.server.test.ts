@@ -1,4 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { env } from 'cloudflare:test';
+import { createDb } from '@corates/db/client';
 import { resetTestDatabase, clearProjectDOs } from '@/__tests__/server/helpers';
 import { resetCounter } from '@/__tests__/server/factories';
 import { handlePost } from '../sync-after-success';
@@ -48,7 +50,7 @@ function syncReq(): Request {
 describe('POST /api/billing/sync-after-success', () => {
   it('returns 401 when no session', async () => {
     sessionResult = null;
-    const res = await handlePost({ request: syncReq() });
+    const res = await handlePost({ request: syncReq(), context: { db: createDb(env.DB) } });
     expect(res.status).toBe(401);
     const body = (await res.json()) as { code: string };
     expect(body.code).toBeDefined();
@@ -57,7 +59,7 @@ describe('POST /api/billing/sync-after-success', () => {
 
   it('returns no-op when user has no stripeCustomerId', async () => {
     sessionResult!.user.stripeCustomerId = null;
-    const res = await handlePost({ request: syncReq() });
+    const res = await handlePost({ request: syncReq(), context: { db: createDb(env.DB) } });
     expect(res.status).toBe(200);
     const body = (await res.json()) as { status: string; stripeSubscriptionId: string | null };
     expect(body).toEqual({ status: 'none', stripeSubscriptionId: null });
@@ -66,7 +68,7 @@ describe('POST /api/billing/sync-after-success', () => {
 
   it('calls syncStripeSubscription and returns its result', async () => {
     syncMock.mockResolvedValueOnce({ status: 'active', stripeSubscriptionId: 'sub_123' });
-    const res = await handlePost({ request: syncReq() });
+    const res = await handlePost({ request: syncReq(), context: { db: createDb(env.DB) } });
     expect(res.status).toBe(200);
     const body = (await res.json()) as { status: string; stripeSubscriptionId: string | null };
     expect(body).toEqual({ status: 'active', stripeSubscriptionId: 'sub_123' });
@@ -77,7 +79,7 @@ describe('POST /api/billing/sync-after-success', () => {
 
   it('returns 500 when syncStripeSubscription throws', async () => {
     syncMock.mockRejectedValueOnce(new Error('stripe down'));
-    const res = await handlePost({ request: syncReq() });
+    const res = await handlePost({ request: syncReq(), context: { db: createDb(env.DB) } });
     expect(res.status).toBe(500);
     const body = (await res.json()) as { code: string; details?: { operation: string } };
     expect(body.code).toBeDefined();

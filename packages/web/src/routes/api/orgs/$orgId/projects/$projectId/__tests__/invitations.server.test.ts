@@ -67,6 +67,7 @@ describe('POST /api/orgs/:orgId/projects/:projectId/invitations', () => {
         role: 'member',
       }),
       params: { orgId: org.id, projectId: project.id },
+      context: { db: createDb(env.DB) },
     });
 
     expect(res.status).toBe(201);
@@ -101,6 +102,7 @@ describe('POST /api/orgs/:orgId/projects/:projectId/invitations', () => {
         role: 'member',
       }),
       params: { orgId: org.id, projectId: project.id },
+      context: { db: createDb(env.DB) },
     });
 
     expect(res.status).toBe(201);
@@ -136,6 +138,7 @@ describe('POST /api/orgs/:orgId/projects/:projectId/invitations', () => {
         role: 'owner',
       }),
       params: { orgId: org.id, projectId: project.id },
+      context: { db: createDb(env.DB) },
     });
 
     expect(res.status).toBe(201);
@@ -172,6 +175,7 @@ describe('POST /api/orgs/:orgId/projects/:projectId/invitations', () => {
         role: 'member',
       }),
       params: { orgId: org.id, projectId: project.id },
+      context: { db: createDb(env.DB) },
     });
 
     expect(res.status).toBe(400);
@@ -189,6 +193,7 @@ describe('POST /api/orgs/:orgId/projects/:projectId/invitations', () => {
         role: 'member',
       }),
       params: { orgId: org.id, projectId: project.id },
+      context: { db: createDb(env.DB) },
     });
 
     expect(res.status).toBe(400);
@@ -206,6 +211,7 @@ describe('POST /api/orgs/:orgId/projects/:projectId/invitations', () => {
         role: 'admin',
       }),
       params: { orgId: org.id, projectId: project.id },
+      context: { db: createDb(env.DB) },
     });
 
     expect(res.status).toBe(400);
@@ -239,6 +245,7 @@ describe('GET /api/orgs/:orgId/projects/:projectId/invitations', () => {
     const res = await listHandler({
       request: jsonReq(`/api/orgs/${org.id}/projects/${project.id}/invitations`, 'GET'),
       params: { orgId: org.id, projectId: project.id },
+      context: { db: createDb(env.DB) },
     });
 
     expect(res.status).toBe(200);
@@ -263,6 +270,7 @@ describe('DELETE /api/orgs/:orgId/projects/:projectId/invitations/:invitationId'
         projectId: project.id,
         invitationId: asProjectInvitationId('nonexistent'),
       },
+      context: { db: createDb(env.DB) },
     });
 
     expect(res.status).toBe(400);
@@ -289,6 +297,7 @@ describe('DELETE /api/orgs/:orgId/projects/:projectId/invitations/:invitationId'
         'DELETE',
       ),
       params: { orgId: org.id, projectId: project.id, invitationId: invitation.id },
+      context: { db: createDb(env.DB) },
     });
 
     expect(res.status).toBe(400);
@@ -315,6 +324,7 @@ describe('DELETE /api/orgs/:orgId/projects/:projectId/invitations/:invitationId'
         'DELETE',
       ),
       params: { orgId: org.id, projectId: project.id, invitationId: invitation.id },
+      context: { db: createDb(env.DB) },
     });
 
     expect(res.status).toBe(200);

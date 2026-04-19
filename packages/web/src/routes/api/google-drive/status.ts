@@ -1,19 +1,25 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { env } from 'cloudflare:workers';
 import { getSession } from '@corates/workers/auth';
-import { createDb } from '@corates/db/client';
+import type { Database } from '@corates/db/client';
 import { account } from '@corates/db/schema';
 import { eq, and } from 'drizzle-orm';
 import { createDomainError, AUTH_ERRORS } from '@corates/shared';
+import { dbMiddleware } from '@/server/middleware/db';
 
-export const handler = async ({ request }: { request: Request }) => {
+export const handler = async ({
+  request,
+  context: { db },
+}: {
+  request: Request;
+  context: { db: Database };
+}) => {
   const session = await getSession(request, env);
   if (!session) {
     const error = createDomainError(AUTH_ERRORS.REQUIRED, { reason: 'no_user' });
     return Response.json(error, { status: 401 });
   }
 
-  const db = createDb(env.DB);
   const googleAccount = await db
     .select({
       accessToken: account.accessToken,
@@ -31,6 +37,7 @@ export const handler = async ({ request }: { request: Request }) => {
 
 export const Route = createFileRoute('/api/google-drive/status')({
   server: {
+    middleware: [dbMiddleware],
     handlers: {
       GET: handler,
     },

@@ -9,7 +9,7 @@ import { createFileRoute } from '@tanstack/react-router';
 import { env } from 'cloudflare:workers';
 import { getSession } from '@corates/workers/auth';
 import { createAuth } from '@corates/workers/auth-config';
-import { createDb } from '@corates/db/client';
+import type { Database } from '@corates/db/client';
 import type { OrgId } from '@corates/shared/ids';
 import { resolveOrgAccess, validatePlanChange } from '@corates/workers/billing-resolver';
 import { requireOrgOwner } from '@corates/workers/policies';
@@ -24,6 +24,7 @@ import {
 } from '@corates/shared';
 import { resolveOrgIdWithRole } from '@/server/billing-context';
 import { BILLING_CHECKOUT_RATE_LIMIT, checkRateLimit } from '@/server/rateLimit';
+import { dbMiddleware } from '@/server/middleware/db';
 
 interface CheckoutBody {
   tier?: unknown;
@@ -37,7 +38,13 @@ interface UpgradeApi {
   }) => Promise<{ url?: string }>;
 }
 
-export const handlePost = async ({ request }: { request: Request }) => {
+export const handlePost = async ({
+  request,
+  context: { db },
+}: {
+  request: Request;
+  context: { db: Database };
+}) => {
   const limit = checkRateLimit(request, env, BILLING_CHECKOUT_RATE_LIMIT);
   if (limit.blocked) return limit.blocked;
 
@@ -67,8 +74,6 @@ export const handlePost = async ({ request }: { request: Request }) => {
       { status: 400, headers: limit.headers },
     );
   }
-
-  const db = createDb(env.DB);
 
   try {
     const { orgId, role } = await resolveOrgIdWithRole({
@@ -151,5 +156,5 @@ export const handlePost = async ({ request }: { request: Request }) => {
 };
 
 export const Route = createFileRoute('/api/billing/checkout')({
-  server: { handlers: { POST: handlePost } },
+  server: { middleware: [dbMiddleware], handlers: { POST: handlePost } },
 });

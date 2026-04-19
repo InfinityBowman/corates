@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { env } from 'cloudflare:workers';
-import { createDb } from '@corates/db/client';
+import type { Database } from '@corates/db/client';
 import { projects, projectMembers } from '@corates/db/schema';
 import { eq, and, count, desc } from 'drizzle-orm';
 import {
@@ -16,14 +16,14 @@ import { requireOrgMembership } from '@/server/guards/requireOrgMembership';
 import { requireOrgWriteAccess } from '@/server/guards/requireOrgWriteAccess';
 import { requireEntitlement } from '@/server/guards/requireEntitlement';
 import { requireQuota } from '@/server/guards/requireQuota';
+import { dbMiddleware } from '@/server/middleware/db';
 
-type HandlerArgs = { request: Request; params: { orgId: OrgId } };
+type HandlerArgs = { request: Request; params: { orgId: OrgId }; context: { db: Database } };
 
-export const handleGet = async ({ request, params }: HandlerArgs) => {
-  const membership = await requireOrgMembership(request, env, params.orgId);
+export const handleGet = async ({ request, params, context: { db } }: HandlerArgs) => {
+  const membership = await requireOrgMembership(request, env, db, params.orgId);
   if (!membership.ok) return membership.response;
 
-  const db = createDb(env.DB);
   try {
     const results = await db
       .select({
@@ -57,18 +57,17 @@ export const handleGet = async ({ request, params }: HandlerArgs) => {
   }
 };
 
-export const handlePost = async ({ request, params }: HandlerArgs) => {
-  const membership = await requireOrgMembership(request, env, params.orgId);
+export const handlePost = async ({ request, params, context: { db } }: HandlerArgs) => {
+  const membership = await requireOrgMembership(request, env, db, params.orgId);
   if (!membership.ok) return membership.response;
 
-  const writeAccess = await requireOrgWriteAccess(request.method, env, params.orgId);
+  const writeAccess = await requireOrgWriteAccess(request.method, db, params.orgId);
   if (!writeAccess.ok) return writeAccess.response;
 
-  const entitlement = await requireEntitlement(env, params.orgId, 'project.create');
+  const entitlement = await requireEntitlement(db, params.orgId, 'project.create');
   if (!entitlement.ok) return entitlement.response;
 
   const getProjectCount = async () => {
-    const db = createDb(env.DB);
     const result = await db
       .select({ count: count() })
       .from(projects)
@@ -77,7 +76,7 @@ export const handlePost = async ({ request, params }: HandlerArgs) => {
     return result?.count || 0;
   };
 
-  const quota = await requireQuota(env, params.orgId, 'projects.max', getProjectCount, 1);
+  const quota = await requireQuota(db, params.orgId, 'projects.max', getProjectCount, 1);
   if (!quota.ok) return quota.response;
 
   let body: { name?: unknown; description?: unknown };
@@ -149,6 +148,7 @@ export const handlePost = async ({ request, params }: HandlerArgs) => {
 
 export const Route = createFileRoute('/api/orgs/$orgId/projects')({
   server: {
+    middleware: [dbMiddleware],
     handlers: {
       GET: handleGet,
       POST: handlePost,

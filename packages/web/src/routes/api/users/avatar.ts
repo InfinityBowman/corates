@@ -1,7 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { env } from 'cloudflare:workers';
 import { getSession } from '@corates/workers/auth';
-import { createDb } from '@corates/db/client';
+import type { Database } from '@corates/db/client';
 import { projectMembers, projects } from '@corates/db/schema';
 import { eq } from 'drizzle-orm';
 import { getProjectDocStub } from '@corates/workers/project-doc-id';
@@ -13,12 +13,12 @@ import {
   SYSTEM_ERRORS,
   VALIDATION_ERRORS,
 } from '@corates/shared';
+import { dbMiddleware } from '@/server/middleware/db';
 
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
 
-async function syncAvatarToProjects(userId: string, avatarUrl: string): Promise<void> {
+async function syncAvatarToProjects(db: Database, userId: string, avatarUrl: string): Promise<void> {
   try {
-    const db = createDb(env.DB);
     const memberships = await db
       .select({ projectId: projectMembers.projectId, orgId: projects.orgId })
       .from(projectMembers)
@@ -38,7 +38,13 @@ async function syncAvatarToProjects(userId: string, avatarUrl: string): Promise<
   }
 }
 
-export const handlePost = async ({ request }: { request: Request }) => {
+export const handlePost = async ({
+  request,
+  context: { db },
+}: {
+  request: Request;
+  context: { db: Database };
+}) => {
   const session = await getSession(request, env);
   if (!session) {
     const error = createDomainError(AUTH_ERRORS.REQUIRED, { reason: 'no_user' });
@@ -123,7 +129,7 @@ export const handlePost = async ({ request }: { request: Request }) => {
     });
 
     const avatarUrl = `/api/users/avatar/${userId}?t=${timestamp}`;
-    await syncAvatarToProjects(userId, avatarUrl);
+    await syncAvatarToProjects(db, userId, avatarUrl);
 
     return Response.json({ success: true as const, url: avatarUrl, key }, { status: 200 });
   } catch (err) {
@@ -164,6 +170,7 @@ export const handleDelete = async ({ request }: { request: Request }) => {
 
 export const Route = createFileRoute('/api/users/avatar')({
   server: {
+    middleware: [dbMiddleware],
     handlers: {
       POST: handlePost,
       DELETE: handleDelete,

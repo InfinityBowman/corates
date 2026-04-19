@@ -1,6 +1,8 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { env } from 'cloudflare:workers';
 import { createAuth } from '@corates/workers/auth-config';
+import type { Database } from '@corates/db/client';
+import { dbMiddleware } from '@/server/middleware/db';
 import {
   createDomainError,
   createValidationError,
@@ -21,10 +23,10 @@ function getOrgApi(): OrgApiMethods {
   return createAuth(env).api as unknown as OrgApiMethods;
 }
 
-type HandlerArgs = { request: Request; params: { orgId: OrgId } };
+type HandlerArgs = { request: Request; params: { orgId: OrgId }; context: { db: Database } };
 
-export const handleGet = async ({ request, params }: HandlerArgs) => {
-  const membership = await requireOrgMembership(request, env, params.orgId);
+export const handleGet = async ({ request, params, context: { db } }: HandlerArgs) => {
+  const membership = await requireOrgMembership(request, env, db, params.orgId);
   if (!membership.ok) return membership.response;
 
   try {
@@ -47,11 +49,11 @@ export const handleGet = async ({ request, params }: HandlerArgs) => {
   }
 };
 
-export const handlePost = async ({ request, params }: HandlerArgs) => {
-  const membership = await requireOrgMembership(request, env, params.orgId, 'admin');
+export const handlePost = async ({ request, params, context: { db } }: HandlerArgs) => {
+  const membership = await requireOrgMembership(request, env, db, params.orgId, 'admin');
   if (!membership.ok) return membership.response;
 
-  const writeAccess = await requireOrgWriteAccess(request.method, env, params.orgId);
+  const writeAccess = await requireOrgWriteAccess(request.method, db, params.orgId);
   if (!writeAccess.ok) return writeAccess.response;
 
   try {
@@ -95,6 +97,7 @@ export const handlePost = async ({ request, params }: HandlerArgs) => {
 
 export const Route = createFileRoute('/api/orgs/$orgId/members')({
   server: {
+    middleware: [dbMiddleware],
     handlers: {
       GET: handleGet,
       POST: handlePost,

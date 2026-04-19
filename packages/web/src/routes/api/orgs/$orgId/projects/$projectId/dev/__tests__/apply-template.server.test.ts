@@ -1,4 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { env } from 'cloudflare:test';
+import { createDb } from '@corates/db/client';
 import { resetTestDatabase, clearProjectDOs } from '@/__tests__/server/helpers';
 import { buildProject, resetCounter } from '@/__tests__/server/factories';
 import { handlePost as applyTemplateHandler } from '../apply-template';
@@ -31,6 +33,7 @@ describe('POST /api/orgs/:orgId/projects/:projectId/dev/apply-template', () => {
         { method: 'POST' },
       ),
       params: { orgId: org.id, projectId: project.id },
+      context: { db: createDb(env.DB) },
     });
 
     expect(res.status).toBe(400);

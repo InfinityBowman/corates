@@ -1,7 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { env } from 'cloudflare:workers';
 import { getSession } from '@corates/workers/auth';
-import { createDb } from '@corates/db/client';
+import type { Database } from '@corates/db/client';
 import { user } from '@corates/db/schema';
 import { desc } from 'drizzle-orm';
 import {
@@ -11,15 +11,20 @@ import {
   SYSTEM_ERRORS,
   VALIDATION_ERRORS,
 } from '@corates/shared';
+import { dbMiddleware } from '@/server/middleware/db';
 
-export const handleGet = async ({ request }: { request: Request }) => {
+export const handleGet = async ({
+  request,
+  context: { db },
+}: {
+  request: Request;
+  context: { db: Database };
+}) => {
   const session = await getSession(request, env);
   if (!session) {
     const error = createDomainError(AUTH_ERRORS.REQUIRED, { reason: 'no_user' });
     return Response.json(error, { status: 401 });
   }
-
-  const db = createDb(env.DB);
 
   try {
     const results = await db
@@ -59,6 +64,7 @@ export const handlePost = async () => {
 
 export const Route = createFileRoute('/api/db/users')({
   server: {
+    middleware: [dbMiddleware],
     handlers: {
       GET: handleGet,
       POST: handlePost,

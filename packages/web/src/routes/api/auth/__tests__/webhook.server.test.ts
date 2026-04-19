@@ -39,7 +39,7 @@ async function readLedger() {
 
 describe('Stripe webhook - phase 1 rejections', () => {
   it('returns 403 and writes ignored_unverified row when stripe-signature header is missing', async () => {
-    const res = await handlePost({ request: webhookReq('{"id":"evt_1"}') });
+    const res = await handlePost({ request: webhookReq('{"id":"evt_1"}'), context: { db: createDb(env.DB) } });
 
     expect(res.status).toBe(403);
     const body = (await res.json()) as { error: string };
@@ -58,10 +58,10 @@ describe('Stripe webhook - phase 1 rejections', () => {
     const body = JSON.stringify({ id: 'evt_dup', type: 'checkout.session.completed' });
     const headers = { 'stripe-signature': 'sig=1' };
 
-    const first = await handlePost({ request: webhookReq(body, headers) });
+    const first = await handlePost({ request: webhookReq(body, headers), context: { db: createDb(env.DB) } });
     expect(first.status).toBe(200);
 
-    const second = await handlePost({ request: webhookReq(body, headers) });
+    const second = await handlePost({ request: webhookReq(body, headers), context: { db: createDb(env.DB) } });
     expect(second.status).toBe(200);
     const json = (await second.json()) as { skipped?: string };
     expect(json.skipped).toBe('duplicate_payload');
@@ -84,6 +84,7 @@ describe('Stripe webhook - phase 1 rejections', () => {
 
       const res = await handlePost({
         request: webhookReq(body, { 'stripe-signature': 'sig=1' }),
+        context: { db: createDb(env.DB) },
       });
       expect(res.status).toBe(200);
       const json = (await res.json()) as { skipped?: string };
@@ -120,6 +121,7 @@ describe('Stripe webhook - phase 2 verified processing', () => {
 
     const res = await handlePost({
       request: webhookReq(body, { 'stripe-signature': 'sig=ok' }),
+      context: { db: createDb(env.DB) },
     });
     expect(res.status).toBe(200);
     expect(mockAuthHandler).toHaveBeenCalledTimes(1);
@@ -154,6 +156,7 @@ describe('Stripe webhook - phase 2 verified processing', () => {
 
     const res = await handlePost({
       request: webhookReq(body, { 'stripe-signature': 'sig=ok' }),
+      context: { db: createDb(env.DB) },
     });
     expect(res.status).toBe(200);
 
@@ -168,6 +171,7 @@ describe('Stripe webhook - phase 2 verified processing', () => {
 
     const res = await handlePost({
       request: webhookReq('{"id":"evt_bad"}', { 'stripe-signature': 'sig=bogus' }),
+      context: { db: createDb(env.DB) },
     });
     expect(res.status).toBe(401);
 
@@ -185,6 +189,7 @@ describe('Stripe webhook - phase 2 verified processing', () => {
 
     const res = await handlePost({
       request: webhookReq('{"id":"evt_fail"}', { 'stripe-signature': 'sig=ok' }),
+      context: { db: createDb(env.DB) },
     });
     expect(res.status).toBe(500);
 
@@ -201,6 +206,7 @@ describe('Stripe webhook - error path', () => {
 
     const res = await handlePost({
       request: webhookReq('{"id":"evt_throw"}', { 'stripe-signature': 'sig=ok' }),
+      context: { db: createDb(env.DB) },
     });
     expect(res.status).toBe(500);
     const body = (await res.json()) as { error: string };

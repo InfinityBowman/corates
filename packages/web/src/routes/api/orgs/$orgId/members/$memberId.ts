@@ -1,7 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { env } from 'cloudflare:workers';
 import { createAuth } from '@corates/workers/auth-config';
-import { createDb } from '@corates/db/client';
+import type { Database } from '@corates/db/client';
 import { requireOrgMemberRemoval } from '@corates/workers/policies';
 import {
   createDomainError,
@@ -14,6 +14,7 @@ import {
 import type { OrgId, UserId } from '@corates/shared/ids';
 import { requireOrgMembership } from '@/server/guards/requireOrgMembership';
 import { requireOrgWriteAccess } from '@/server/guards/requireOrgWriteAccess';
+import { dbMiddleware } from '@/server/middleware/db';
 
 interface OrgApiMethods {
   updateMemberRole: (req: { headers: Headers; body: Record<string, unknown> }) => Promise<unknown>;
@@ -29,13 +30,13 @@ function getOrgApi(): OrgApiMethods {
 // plugin removeMember endpoint accepts a userId, not a member-row id, and the
 // downstream `requireOrgMemberRemoval` policy treats it as targetUserId. The
 // path slug name is historical.
-type HandlerArgs = { request: Request; params: { orgId: OrgId; memberId: UserId } };
+type HandlerArgs = { request: Request; params: { orgId: OrgId; memberId: UserId }; context: { db: Database } };
 
-export const handlePut = async ({ request, params }: HandlerArgs) => {
-  const membership = await requireOrgMembership(request, env, params.orgId, 'admin');
+export const handlePut = async ({ request, params, context: { db } }: HandlerArgs) => {
+  const membership = await requireOrgMembership(request, env, db, params.orgId, 'admin');
   if (!membership.ok) return membership.response;
 
-  const writeAccess = await requireOrgWriteAccess(request.method, env, params.orgId);
+  const writeAccess = await requireOrgWriteAccess(request.method, db, params.orgId);
   if (!writeAccess.ok) return writeAccess.response;
 
   try {
@@ -83,15 +84,14 @@ export const handlePut = async ({ request, params }: HandlerArgs) => {
   }
 };
 
-export const handleDelete = async ({ request, params }: HandlerArgs) => {
-  const membership = await requireOrgMembership(request, env, params.orgId);
+export const handleDelete = async ({ request, params, context: { db } }: HandlerArgs) => {
+  const membership = await requireOrgMembership(request, env, db, params.orgId);
   if (!membership.ok) return membership.response;
 
-  const writeAccess = await requireOrgWriteAccess(request.method, env, params.orgId);
+  const writeAccess = await requireOrgWriteAccess(request.method, db, params.orgId);
   if (!writeAccess.ok) return writeAccess.response;
 
   const isSelf = params.memberId === membership.context.userId;
-  const db = createDb(env.DB);
 
   try {
     await requireOrgMemberRemoval(db, membership.context.userId, params.orgId, params.memberId);
@@ -144,6 +144,7 @@ export const handleDelete = async ({ request, params }: HandlerArgs) => {
 
 export const Route = createFileRoute('/api/orgs/$orgId/members/$memberId')({
   server: {
+    middleware: [dbMiddleware],
     handlers: {
       PUT: handlePut,
       DELETE: handleDelete,

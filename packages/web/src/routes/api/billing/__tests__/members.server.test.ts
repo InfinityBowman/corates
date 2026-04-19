@@ -1,4 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { env } from 'cloudflare:test';
+import { createDb } from '@corates/db/client';
 import { resetTestDatabase, clearProjectDOs } from '@/__tests__/server/helpers';
 import { buildOrg, resetCounter } from '@/__tests__/server/factories';
 import { handleGet } from '../members';
@@ -34,7 +36,7 @@ function membersReq(): Request {
 
 describe('GET /api/billing/members', () => {
   it('returns 401 when no session', async () => {
-    const res = await handleGet({ request: membersReq() });
+    const res = await handleGet({ request: membersReq(), context: { db: createDb(env.DB) } });
     expect(res.status).toBe(401);
     expect(listMembersMock).not.toHaveBeenCalled();
   });
@@ -44,7 +46,7 @@ describe('GET /api/billing/members', () => {
       user: { id: 'orphan', email: 'o@example.com', name: 'O' },
       session: { id: 'sess', userId: 'orphan', activeOrganizationId: null },
     };
-    const res = await handleGet({ request: membersReq() });
+    const res = await handleGet({ request: membersReq(), context: { db: createDb(env.DB) } });
     expect(res.status).toBe(403);
     expect(listMembersMock).not.toHaveBeenCalled();
   });
@@ -62,7 +64,7 @@ describe('GET /api/billing/members', () => {
       ],
     });
 
-    const res = await handleGet({ request: membersReq() });
+    const res = await handleGet({ request: membersReq(), context: { db: createDb(env.DB) } });
     expect(res.status).toBe(200);
     const body = (await res.json()) as { members: unknown[]; count: number };
     expect(body.count).toBe(2);
@@ -80,7 +82,7 @@ describe('GET /api/billing/members', () => {
     };
     listMembersMock.mockResolvedValueOnce({});
 
-    const res = await handleGet({ request: membersReq() });
+    const res = await handleGet({ request: membersReq(), context: { db: createDb(env.DB) } });
     expect(res.status).toBe(200);
     const body = (await res.json()) as { members: unknown[]; count: number };
     expect(body.count).toBe(0);

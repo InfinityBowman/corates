@@ -1,4 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { env } from 'cloudflare:test';
+import { createDb } from '@corates/db/client';
 import { resetTestDatabase, clearProjectDOs } from '@/__tests__/server/helpers';
 import { buildOrg, buildOrgMember, resetCounter } from '@/__tests__/server/factories';
 import { handlePost } from '../portal';
@@ -35,7 +37,7 @@ function portalReq(): Request {
 describe('POST /api/billing/portal', () => {
   it('returns 401 when no session', async () => {
     sessionResult = null;
-    const res = await handlePost({ request: portalReq() });
+    const res = await handlePost({ request: portalReq(), context: { db: createDb(env.DB) } });
     expect(res.status).toBe(401);
     const body = (await res.json()) as { code: string };
     expect(body.code).toBe('AUTH_REQUIRED');
@@ -47,7 +49,7 @@ describe('POST /api/billing/portal', () => {
       user: { id: 'orphan-user', email: 'orphan@example.com', name: 'Orphan' },
       session: { id: 'sess-1', userId: 'orphan-user', activeOrganizationId: null },
     };
-    const res = await handlePost({ request: portalReq() });
+    const res = await handlePost({ request: portalReq(), context: { db: createDb(env.DB) } });
     expect(res.status).toBe(403);
     const body = (await res.json()) as { code: string; details?: { reason?: string } };
     expect(body.code).toBe('AUTH_FORBIDDEN');
@@ -62,7 +64,7 @@ describe('POST /api/billing/portal', () => {
       user: { id: memberUser.id, email: memberUser.email, name: memberUser.name },
       session: { id: 'sess-1', userId: memberUser.id, activeOrganizationId: org.id },
     };
-    const res = await handlePost({ request: portalReq() });
+    const res = await handlePost({ request: portalReq(), context: { db: createDb(env.DB) } });
     expect(res.status).toBe(403);
     const body = (await res.json()) as { code: string; details?: { reason?: string } };
     expect(body.code).toBe('AUTH_FORBIDDEN');
@@ -78,7 +80,7 @@ describe('POST /api/billing/portal', () => {
     };
     createBillingPortalMock.mockResolvedValueOnce({ url: 'https://stripe.example/portal/abc' });
 
-    const res = await handlePost({ request: portalReq() });
+    const res = await handlePost({ request: portalReq(), context: { db: createDb(env.DB) } });
     expect(res.status).toBe(200);
     const body = (await res.json()) as { url: string };
     expect(body.url).toBe('https://stripe.example/portal/abc');
@@ -99,7 +101,7 @@ describe('POST /api/billing/portal', () => {
     };
     createBillingPortalMock.mockResolvedValueOnce({ url: 'https://stripe.example/portal/xyz' });
 
-    const res = await handlePost({ request: portalReq() });
+    const res = await handlePost({ request: portalReq(), context: { db: createDb(env.DB) } });
     expect(res.status).toBe(200);
     const callArg = createBillingPortalMock.mock.calls[0][0] as { body: { referenceId: string } };
     expect(callArg.body.referenceId).toBe(org.id);
@@ -113,7 +115,7 @@ describe('POST /api/billing/portal', () => {
     };
     createBillingPortalMock.mockRejectedValueOnce(new Error('stripe down'));
 
-    const res = await handlePost({ request: portalReq() });
+    const res = await handlePost({ request: portalReq(), context: { db: createDb(env.DB) } });
     expect(res.status).toBe(500);
     const body = (await res.json()) as { code: string; details?: { operation?: string } };
     expect(body.code).toBe('SYSTEM_INTERNAL_ERROR');

@@ -1,7 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { env } from 'cloudflare:workers';
 import { getSession } from '@corates/workers/auth';
-import { createDb } from '@corates/db/client';
+import type { Database } from '@corates/db/client';
 import {
   user,
   account,
@@ -19,8 +19,15 @@ import {
   SYSTEM_ERRORS,
   AUTH_ERRORS,
 } from '@corates/shared';
+import { dbMiddleware } from '@/server/middleware/db';
 
-export const handler = async ({ request }: { request: Request }) => {
+export const handler = async ({
+  request,
+  context: { db },
+}: {
+  request: Request;
+  context: { db: Database };
+}) => {
   const session = await getSession(request, env);
   if (!session) {
     const error = createDomainError(AUTH_ERRORS.REQUIRED, { reason: 'no_user' });
@@ -42,8 +49,6 @@ export const handler = async ({ request }: { request: Request }) => {
     const error = createValidationError('mergeToken', VALIDATION_ERRORS.FIELD_REQUIRED.code, null);
     return Response.json(error, { status: 400 });
   }
-
-  const db = createDb(env.DB);
 
   const mergeRequests = await db
     .select()
@@ -194,6 +199,7 @@ export const handler = async ({ request }: { request: Request }) => {
 
 export const Route = createFileRoute('/api/accounts/merge/complete')({
   server: {
+    middleware: [dbMiddleware],
     handlers: {
       POST: handler,
     },

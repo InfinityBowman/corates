@@ -1,18 +1,24 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { env } from 'cloudflare:workers';
 import { getSession } from '@corates/workers/auth';
-import { createDb } from '@corates/db/client';
+import type { Database } from '@corates/db/client';
 import { createDomainError, isDomainError, AUTH_ERRORS, SYSTEM_ERRORS } from '@corates/shared';
 import { getGoogleTokens, getValidAccessToken } from '@/server/googleTokens';
+import { dbMiddleware } from '@/server/middleware/db';
 
-export const handler = async ({ request }: { request: Request }) => {
+export const handler = async ({
+  request,
+  context: { db },
+}: {
+  request: Request;
+  context: { db: Database };
+}) => {
   const session = await getSession(request, env);
   if (!session) {
     const error = createDomainError(AUTH_ERRORS.REQUIRED, { reason: 'no_user' });
     return Response.json(error, { status: 401 });
   }
 
-  const db = createDb(env.DB);
   const tokens = await getGoogleTokens(db, session.user.id);
 
   if (!tokens?.accessToken) {
@@ -61,6 +67,7 @@ export const handler = async ({ request }: { request: Request }) => {
 
 export const Route = createFileRoute('/api/google-drive/picker-token')({
   server: {
+    middleware: [dbMiddleware],
     handlers: {
       GET: handler,
     },

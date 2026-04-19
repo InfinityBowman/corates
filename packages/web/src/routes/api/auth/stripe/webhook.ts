@@ -12,7 +12,7 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { env } from 'cloudflare:workers';
 import { createAuth } from '@corates/workers/auth-config';
-import { createDb } from '@corates/db/client';
+import type { Database } from '@corates/db/client';
 import {
   insertLedgerEntry,
   updateLedgerWithVerifiedFields,
@@ -21,6 +21,7 @@ import {
   LedgerStatus,
 } from '@corates/db/stripe-event-ledger';
 import type { OrgId } from '@corates/shared/ids';
+import { dbMiddleware } from '@/server/middleware/db';
 
 interface StripeEvent {
   id?: string;
@@ -39,7 +40,10 @@ interface StripeEvent {
   };
 }
 
-type HandlerArgs = { request: Request; context?: { cloudflareCtx?: ExecutionContext } };
+type HandlerArgs = {
+  request: Request;
+  context: { db: Database; cloudflareCtx?: ExecutionContext };
+};
 
 const ROUTE = '/api/auth/stripe/webhook';
 
@@ -67,7 +71,7 @@ function truncate(value: unknown, max = 500): string | null {
 }
 
 export const handlePost = async ({ request, context }: HandlerArgs) => {
-  const db = createDb(env.DB);
+  const { db } = context;
   const requestId = request.headers.get('x-request-id') ?? crypto.randomUUID();
 
   let rawBody: string | undefined;
@@ -166,7 +170,7 @@ export const handlePost = async ({ request, context }: HandlerArgs) => {
       }
     }
 
-    const auth = createAuth(env, context?.cloudflareCtx);
+    const auth = createAuth(env, context.cloudflareCtx);
     const url = new URL(request.url);
     const authUrl = new URL(ROUTE, url.origin);
     const authRequest = new Request(authUrl.toString(), {
@@ -293,5 +297,5 @@ export const handlePost = async ({ request, context }: HandlerArgs) => {
 };
 
 export const Route = createFileRoute('/api/auth/stripe/webhook')({
-  server: { handlers: { POST: handlePost } },
+  server: { middleware: [dbMiddleware], handlers: { POST: handlePost } },
 });

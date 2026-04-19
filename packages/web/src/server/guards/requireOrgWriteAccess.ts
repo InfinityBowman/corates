@@ -1,4 +1,4 @@
-import { createDb } from '@corates/db/client';
+import type { Database } from '@corates/db/client';
 import { resolveOrgAccess } from '@corates/workers/billing-resolver';
 import { createDomainError, isDomainError, AUTH_ERRORS, SYSTEM_ERRORS } from '@corates/shared';
 import type { OrgId } from '@corates/shared/ids';
@@ -12,11 +12,10 @@ export type OrgWriteAccessGuardResult = WriteAccessResult | { ok: false; respons
 
 export async function requireOrgWriteAccess(
   method: string,
-  env: Env,
+  db: Database,
   orgId: OrgId,
 ): Promise<OrgWriteAccessGuardResult> {
   if (method === 'GET' || method === 'HEAD' || method === 'OPTIONS') {
-    const db = createDb(env.DB);
     const orgBilling = await resolveOrgAccess(db, orgId);
     return { ok: true, orgBilling };
   }
@@ -30,8 +29,6 @@ export async function requireOrgWriteAccess(
       ),
     };
   }
-
-  const db = createDb(env.DB);
 
   let orgBilling;
   try {

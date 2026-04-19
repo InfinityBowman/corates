@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { env } from 'cloudflare:test';
+import { createDb } from '@corates/db/client';
 import { resetTestDatabase, clearProjectDOs } from '@/__tests__/server/helpers';
 import { buildOrg, resetCounter } from '@/__tests__/server/factories';
 import { handleGet } from '../subscription';
@@ -27,7 +28,7 @@ function subReq(): Request {
 
 describe('GET /api/billing/subscription', () => {
   it('returns 401 when no session', async () => {
-    const res = await handleGet({ request: subReq() });
+    const res = await handleGet({ request: subReq(), context: { db: createDb(env.DB) } });
     expect(res.status).toBe(401);
   });
 
@@ -36,7 +37,7 @@ describe('GET /api/billing/subscription', () => {
       user: { id: 'orphan', email: 'o@example.com', name: 'O' },
       session: { id: 'sess', userId: 'orphan', activeOrganizationId: null },
     };
-    const res = await handleGet({ request: subReq() });
+    const res = await handleGet({ request: subReq(), context: { db: createDb(env.DB) } });
     expect(res.status).toBe(403);
   });
 
@@ -46,7 +47,7 @@ describe('GET /api/billing/subscription', () => {
       user: { id: owner.id, email: owner.email, name: owner.name },
       session: { id: 'sess', userId: owner.id, activeOrganizationId: org.id },
     };
-    const res = await handleGet({ request: subReq() });
+    const res = await handleGet({ request: subReq(), context: { db: createDb(env.DB) } });
     expect(res.status).toBe(200);
     const body = (await res.json()) as {
       tier: string;
@@ -97,7 +98,7 @@ describe('GET /api/billing/subscription', () => {
       user: { id: owner.id, email: owner.email, name: owner.name },
       session: { id: 'sess', userId: owner.id, activeOrganizationId: org.id },
     };
-    const res = await handleGet({ request: subReq() });
+    const res = await handleGet({ request: subReq(), context: { db: createDb(env.DB) } });
     expect(res.status).toBe(200);
     const body = (await res.json()) as {
       tier: string;

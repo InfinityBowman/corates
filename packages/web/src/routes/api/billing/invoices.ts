@@ -9,7 +9,7 @@ import { createFileRoute } from '@tanstack/react-router';
 import { env } from 'cloudflare:workers';
 import { getSession } from '@corates/workers/auth';
 import { createStripeClient } from '@corates/workers/stripe';
-import { createDb } from '@corates/db/client';
+import type { Database } from '@corates/db/client';
 import { subscription } from '@corates/db/schema';
 import { and, desc, eq, or } from 'drizzle-orm';
 import {
@@ -20,15 +20,20 @@ import {
   type DomainError,
 } from '@corates/shared';
 import { resolveOrgId } from '@/server/billing-context';
+import { dbMiddleware } from '@/server/middleware/db';
 
-export const handleGet = async ({ request }: { request: Request }) => {
+export const handleGet = async ({
+  request,
+  context: { db },
+}: {
+  request: Request;
+  context: { db: Database };
+}) => {
   const session = await getSession(request, env);
   if (!session) {
     const error = createDomainError(AUTH_ERRORS.REQUIRED, { reason: 'no_user' });
     return Response.json(error, { status: 401 });
   }
-
-  const db = createDb(env.DB);
 
   try {
     const orgId = await resolveOrgId({
@@ -97,5 +102,5 @@ export const handleGet = async ({ request }: { request: Request }) => {
 };
 
 export const Route = createFileRoute('/api/billing/invoices')({
-  server: { handlers: { GET: handleGet } },
+  server: { middleware: [dbMiddleware], handlers: { GET: handleGet } },
 });

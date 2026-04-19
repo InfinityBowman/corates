@@ -1,4 +1,4 @@
-import { createDb } from '@corates/db/client';
+import type { Database } from '@corates/db/client';
 import { resolveOrgAccess } from '@corates/workers/billing-resolver';
 import { createDomainError, isDomainError, AUTH_ERRORS, SYSTEM_ERRORS } from '@corates/shared';
 import type { OrgId } from '@corates/shared/ids';
@@ -8,7 +8,7 @@ export type EntitlementGuardResult =
   | { ok: false; response: Response };
 
 export async function requireEntitlement(
-  env: Env,
+  db: Database,
   orgId: OrgId,
   entitlement: string,
 ): Promise<EntitlementGuardResult> {
@@ -22,7 +22,6 @@ export async function requireEntitlement(
     };
   }
 
-  const db = createDb(env.DB);
   let orgBilling;
   try {
     orgBilling = await resolveOrgAccess(db, orgId);

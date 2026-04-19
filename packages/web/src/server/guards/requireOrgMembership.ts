@@ -1,4 +1,4 @@
-import { createDb } from '@corates/db/client';
+import type { Database } from '@corates/db/client';
 import { member, organization } from '@corates/db/schema';
 import { and, eq } from 'drizzle-orm';
 import { hasOrgRole } from '@corates/workers/policies';
@@ -20,6 +20,7 @@ export type OrgGuardResult = { ok: true; context: OrgContext } | { ok: false; re
 export async function requireOrgMembership(
   request: Request,
   env: Env,
+  db: Database,
   orgId: OrgId,
   minRole?: string,
 ): Promise<OrgGuardResult> {
@@ -41,7 +42,6 @@ export async function requireOrgMembership(
     };
   }
 
-  const db = createDb(env.DB);
   const membership = await db
     .select({
       id: member.id,

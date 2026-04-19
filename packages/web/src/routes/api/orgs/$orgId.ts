@@ -2,12 +2,13 @@ import { createFileRoute } from '@tanstack/react-router';
 import { env } from 'cloudflare:workers';
 import type { OrgId } from '@corates/shared/ids';
 import { createAuth } from '@corates/workers/auth-config';
-import { createDb } from '@corates/db/client';
+import type { Database } from '@corates/db/client';
 import { projects } from '@corates/db/schema';
 import { count, eq } from 'drizzle-orm';
 import { createDomainError, AUTH_ERRORS, SYSTEM_ERRORS } from '@corates/shared';
 import { requireOrgMembership } from '@/server/guards/requireOrgMembership';
 import { requireOrgWriteAccess } from '@/server/guards/requireOrgWriteAccess';
+import { dbMiddleware } from '@/server/middleware/db';
 
 interface OrgApiMethods {
   getFullOrganization: (req: {
@@ -28,10 +29,10 @@ function getOrgApi(): OrgApiMethods {
   return createAuth(env).api as unknown as OrgApiMethods;
 }
 
-type HandlerArgs = { request: Request; params: { orgId: OrgId } };
+type HandlerArgs = { request: Request; params: { orgId: OrgId }; context: { db: Database } };
 
-export const handleGet = async ({ request, params }: HandlerArgs) => {
-  const guard = await requireOrgMembership(request, env, params.orgId);
+export const handleGet = async ({ request, params, context: { db } }: HandlerArgs) => {
+  const guard = await requireOrgMembership(request, env, db, params.orgId);
   if (!guard.ok) return guard.response;
 
   try {
@@ -51,7 +52,6 @@ export const handleGet = async ({ request, params }: HandlerArgs) => {
       );
     }
 
-    const db = createDb(env.DB);
     const [projectCount] = await db
       .select({ count: count() })
       .from(projects)
@@ -71,11 +71,11 @@ export const handleGet = async ({ request, params }: HandlerArgs) => {
   }
 };
 
-export const handlePut = async ({ request, params }: HandlerArgs) => {
-  const membership = await requireOrgMembership(request, env, params.orgId, 'admin');
+export const handlePut = async ({ request, params, context: { db } }: HandlerArgs) => {
+  const membership = await requireOrgMembership(request, env, db, params.orgId, 'admin');
   if (!membership.ok) return membership.response;
 
-  const writeAccess = await requireOrgWriteAccess(request.method, env, params.orgId);
+  const writeAccess = await requireOrgWriteAccess(request.method, db, params.orgId);
   if (!writeAccess.ok) return writeAccess.response;
 
   try {
@@ -122,11 +122,11 @@ export const handlePut = async ({ request, params }: HandlerArgs) => {
   }
 };
 
-export const handleDelete = async ({ request, params }: HandlerArgs) => {
-  const membership = await requireOrgMembership(request, env, params.orgId, 'owner');
+export const handleDelete = async ({ request, params, context: { db } }: HandlerArgs) => {
+  const membership = await requireOrgMembership(request, env, db, params.orgId, 'owner');
   if (!membership.ok) return membership.response;
 
-  const writeAccess = await requireOrgWriteAccess(request.method, env, params.orgId);
+  const writeAccess = await requireOrgWriteAccess(request.method, db, params.orgId);
   if (!writeAccess.ok) return writeAccess.response;
 
   try {
@@ -152,6 +152,7 @@ export const handleDelete = async ({ request, params }: HandlerArgs) => {
 
 export const Route = createFileRoute('/api/orgs/$orgId')({
   server: {
+    middleware: [dbMiddleware],
     handlers: {
       GET: handleGet,
       PUT: handlePut,

@@ -1,4 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { env } from 'cloudflare:test';
+import { createDb } from '@corates/db/client';
 import { resetTestDatabase, clearProjectDOs } from '@/__tests__/server/helpers';
 import { buildUser, resetCounter } from '@/__tests__/server/factories';
 import { handleGet, handlePost } from '../users';
@@ -31,6 +33,7 @@ describe('GET /api/db/users', () => {
     currentUser = null;
     const res = await handleGet({
       request: new Request('http://localhost/api/db/users'),
+      context: { db: createDb(env.DB) },
     });
     expect(res.status).toBe(401);
   });
@@ -42,6 +45,7 @@ describe('GET /api/db/users', () => {
 
     const res = await handleGet({
       request: new Request('http://localhost/api/db/users'),
+      context: { db: createDb(env.DB) },
     });
     expect(res.status).toBe(200);
     const body = (await res.json()) as { users: Array<{ id: string; email: string }> };

@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { env } from 'cloudflare:test';
+import { createDb } from '@corates/db/client';
 import { resetTestDatabase, clearProjectDOs } from '@/__tests__/server/helpers';
 import { buildUser, buildProject, resetCounter } from '@/__tests__/server/factories';
 import { handleDelete } from '../me';
@@ -27,6 +28,7 @@ describe('DELETE /api/users/me', () => {
 
     const res = await handleDelete({
       request: new Request('http://localhost/api/users/me', { method: 'DELETE' }),
+      context: { db: createDb(env.DB) },
     });
 
     expect(res.status).toBe(200);
@@ -57,6 +59,7 @@ describe('DELETE /api/users/me', () => {
 
     const res = await handleDelete({
       request: new Request('http://localhost/api/users/me', { method: 'DELETE' }),
+      context: { db: createDb(env.DB) },
     });
     expect(res.status).toBe(200);
 

@@ -9,11 +9,18 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { env } from 'cloudflare:workers';
 import { getSession } from '@corates/workers/auth';
-import { createDb } from '@corates/db/client';
+import type { Database } from '@corates/db/client';
 import { syncStripeSubscription } from '@corates/workers/commands/billing';
 import { createDomainError, AUTH_ERRORS, SYSTEM_ERRORS } from '@corates/shared';
+import { dbMiddleware } from '@/server/middleware/db';
 
-export const handlePost = async ({ request }: { request: Request }) => {
+export const handlePost = async ({
+  request,
+  context: { db },
+}: {
+  request: Request;
+  context: { db: Database };
+}) => {
   const session = await getSession(request, env);
   if (!session) {
     const error = createDomainError(AUTH_ERRORS.REQUIRED, { reason: 'no_user' });
@@ -26,7 +33,6 @@ export const handlePost = async ({ request }: { request: Request }) => {
   }
 
   try {
-    const db = createDb(env.DB);
     const result = await syncStripeSubscription(env, db, stripeCustomerId);
     return Response.json(result, { status: 200 });
   } catch (err) {
@@ -41,5 +47,5 @@ export const handlePost = async ({ request }: { request: Request }) => {
 };
 
 export const Route = createFileRoute('/api/billing/sync-after-success')({
-  server: { handlers: { POST: handlePost } },
+  server: { middleware: [dbMiddleware], handlers: { POST: handlePost } },
 });

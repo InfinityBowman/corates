@@ -1,4 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { env } from 'cloudflare:test';
+import { createDb } from '@corates/db/client';
 import { resetTestDatabase, clearProjectDOs } from '@/__tests__/server/helpers';
 import {
   buildUser,
@@ -35,7 +37,7 @@ describe('GET /api/users/search', () => {
     await buildUser({ email: 'user3@example.com' });
     currentUser = { id: me.id, email: me.email };
 
-    const res = await handler({ request: get('/api/users/search?q=user2') });
+    const res = await handler({ request: get('/api/users/search?q=user2'), context: { db: createDb(env.DB) } });
     expect(res.status).toBe(200);
     const body = (await res.json()) as any[];
     expect(body).toHaveLength(1);
@@ -47,7 +49,7 @@ describe('GET /api/users/search', () => {
     const user2 = await buildUser({ email: 'user2@example.com' });
     currentUser = { id: me.id, email: me.email };
 
-    const res = await handler({ request: get('/api/users/search?q=user') });
+    const res = await handler({ request: get('/api/users/search?q=user'), context: { db: createDb(env.DB) } });
     expect(res.status).toBe(200);
     const body = (await res.json()) as any[];
     const u = body.find(x => x.id === user2.id);
@@ -62,6 +64,7 @@ describe('GET /api/users/search', () => {
 
     const res = await handler({
       request: get('/api/users/search?q=user2@example.com'),
+      context: { db: createDb(env.DB) },
     });
     expect(res.status).toBe(200);
     const body = (await res.json()) as any[];
@@ -70,7 +73,7 @@ describe('GET /api/users/search', () => {
   });
 
   it('rejects query shorter than 2 characters', async () => {
-    const res = await handler({ request: get('/api/users/search?q=a') });
+    const res = await handler({ request: get('/api/users/search?q=a'), context: { db: createDb(env.DB) } });
     expect(res.status).toBe(400);
     const body = (await res.json()) as any;
     expect(body.code).toMatch(/VALIDATION/);
@@ -86,6 +89,7 @@ describe('GET /api/users/search', () => {
 
     const res = await handler({
       request: get('/api/users/search?q=searchuser&limit=100'),
+      context: { db: createDb(env.DB) },
     });
     expect(res.status).toBe(200);
     const body = (await res.json()) as any[];
@@ -97,7 +101,7 @@ describe('GET /api/users/search', () => {
     const other = await buildUser({ name: 'Other User', email: 'user2@example.com' });
     currentUser = { id: me.id, email: me.email };
 
-    const res = await handler({ request: get('/api/users/search?q=user') });
+    const res = await handler({ request: get('/api/users/search?q=user'), context: { db: createDb(env.DB) } });
     expect(res.status).toBe(200);
     const body = (await res.json()) as any[];
     expect(body.find(u => u.id === me.id)).toBeUndefined();
@@ -116,6 +120,7 @@ describe('GET /api/users/search', () => {
 
     const res = await handler({
       request: get(`/api/users/search?q=user&projectId=${project.id}`),
+      context: { db: createDb(env.DB) },
     });
     expect(res.status).toBe(200);
     const body = (await res.json()) as any[];
@@ -128,7 +133,7 @@ describe('GET /api/users/search', () => {
     const john = await buildUser({ name: 'John Doe', email: 'john@example.com' });
     currentUser = { id: me.id, email: me.email };
 
-    const res = await handler({ request: get('/api/users/search?q=john') });
+    const res = await handler({ request: get('/api/users/search?q=john'), context: { db: createDb(env.DB) } });
     expect(res.status).toBe(200);
     const body = (await res.json()) as any[];
     expect(body).toHaveLength(1);
@@ -140,7 +145,7 @@ describe('GET /api/users/search', () => {
     const johnny = await buildUser({ givenName: 'Johnny', email: 'user2@example.com' });
     currentUser = { id: me.id, email: me.email };
 
-    const res = await handler({ request: get('/api/users/search?q=johnny') });
+    const res = await handler({ request: get('/api/users/search?q=johnny'), context: { db: createDb(env.DB) } });
     expect(res.status).toBe(200);
     const body = (await res.json()) as any[];
     expect(body).toHaveLength(1);
@@ -152,7 +157,7 @@ describe('GET /api/users/search', () => {
     const johndoe = await buildUser({ username: 'johndoe', email: 'user2@example.com' });
     currentUser = { id: me.id, email: me.email };
 
-    const res = await handler({ request: get('/api/users/search?q=johndoe') });
+    const res = await handler({ request: get('/api/users/search?q=johndoe'), context: { db: createDb(env.DB) } });
     expect(res.status).toBe(200);
     const body = (await res.json()) as any[];
     expect(body).toHaveLength(1);
@@ -164,7 +169,7 @@ describe('GET /api/users/search', () => {
     const john = await buildUser({ name: 'John Doe', email: 'john@example.com' });
     currentUser = { id: me.id, email: me.email };
 
-    const res = await handler({ request: get('/api/users/search?q=JOHN') });
+    const res = await handler({ request: get('/api/users/search?q=JOHN'), context: { db: createDb(env.DB) } });
     expect(res.status).toBe(200);
     const body = (await res.json()) as any[];
     expect(body).toHaveLength(1);

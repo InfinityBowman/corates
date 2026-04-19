@@ -1,7 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { env } from 'cloudflare:workers';
 import { getSession } from '@corates/workers/auth';
-import { createDb } from '@corates/db/client';
+import type { Database } from '@corates/db/client';
 import { user, projectMembers } from '@corates/db/schema';
 import { eq, or, like, sql } from 'drizzle-orm';
 import {
@@ -12,6 +12,7 @@ import {
   VALIDATION_ERRORS,
 } from '@corates/shared';
 import { checkRateLimit, SEARCH_RATE_LIMIT } from '@/server/rateLimit';
+import { dbMiddleware } from '@/server/middleware/db';
 
 interface UserSearchResult {
   id: string;
@@ -31,7 +32,13 @@ function maskEmail(email: string | null): string | null {
   return `${masked}@${domain}`;
 }
 
-export const handler = async ({ request }: { request: Request }) => {
+export const handler = async ({
+  request,
+  context: { db },
+}: {
+  request: Request;
+  context: { db: Database };
+}) => {
   const rate = checkRateLimit(request, env, SEARCH_RATE_LIMIT);
   if (rate.blocked) return rate.blocked;
 
@@ -55,7 +62,6 @@ export const handler = async ({ request }: { request: Request }) => {
   const parsedLimit = rawLimit ? Number(rawLimit) : 10;
   const limit = Math.min(Number.isFinite(parsedLimit) ? parsedLimit : 10, 20);
 
-  const db = createDb(env.DB);
   const searchPattern = `%${q.toLowerCase()}%`;
 
   try {
@@ -116,6 +122,7 @@ export const handler = async ({ request }: { request: Request }) => {
 
 export const Route = createFileRoute('/api/users/search')({
   server: {
+    middleware: [dbMiddleware],
     handlers: {
       GET: handler,
     },

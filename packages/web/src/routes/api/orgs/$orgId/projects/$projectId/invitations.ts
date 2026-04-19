@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { env } from 'cloudflare:workers';
-import { createDb } from '@corates/db/client';
+import type { Database } from '@corates/db/client';
 import { projectInvitations } from '@corates/db/schema';
 import { and, eq, desc, isNull } from 'drizzle-orm';
 import {
@@ -16,17 +16,17 @@ import { createInvitation } from '@corates/workers/commands/invitations';
 import { requireOrgMembership } from '@/server/guards/requireOrgMembership';
 import { requireProjectAccess } from '@/server/guards/requireProjectAccess';
 import { requireOrgWriteAccess } from '@/server/guards/requireOrgWriteAccess';
+import { dbMiddleware } from '@/server/middleware/db';
 
-type HandlerArgs = { request: Request; params: { orgId: OrgId; projectId: ProjectId } };
+type HandlerArgs = { request: Request; params: { orgId: OrgId; projectId: ProjectId }; context: { db: Database } };
 
-export const handleGet = async ({ request, params }: HandlerArgs) => {
-  const orgMembership = await requireOrgMembership(request, env, params.orgId);
+export const handleGet = async ({ request, params, context: { db } }: HandlerArgs) => {
+  const orgMembership = await requireOrgMembership(request, env, db, params.orgId);
   if (!orgMembership.ok) return orgMembership.response;
 
-  const access = await requireProjectAccess(request, env, params.orgId, params.projectId);
+  const access = await requireProjectAccess(request, env, db, params.orgId, params.projectId);
   if (!access.ok) return access.response;
 
-  const db = createDb(env.DB);
   try {
     const invitations = await db
       .select({
@@ -62,14 +62,14 @@ export const handleGet = async ({ request, params }: HandlerArgs) => {
   }
 };
 
-export const handlePost = async ({ request, params }: HandlerArgs) => {
-  const orgMembership = await requireOrgMembership(request, env, params.orgId);
+export const handlePost = async ({ request, params, context: { db } }: HandlerArgs) => {
+  const orgMembership = await requireOrgMembership(request, env, db, params.orgId);
   if (!orgMembership.ok) return orgMembership.response;
 
-  const writeAccess = await requireOrgWriteAccess(request.method, env, params.orgId);
+  const writeAccess = await requireOrgWriteAccess(request.method, db, params.orgId);
   if (!writeAccess.ok) return writeAccess.response;
 
-  const access = await requireProjectAccess(request, env, params.orgId, params.projectId, 'owner');
+  const access = await requireProjectAccess(request, env, db, params.orgId, params.projectId, 'owner');
   if (!access.ok) return access.response;
 
   let body: { email?: unknown; role?: unknown };
@@ -144,6 +144,7 @@ export const handlePost = async ({ request, params }: HandlerArgs) => {
 
 export const Route = createFileRoute('/api/orgs/$orgId/projects/$projectId/invitations')({
   server: {
+    middleware: [dbMiddleware],
     handlers: {
       GET: handleGet,
       POST: handlePost,

@@ -1,21 +1,27 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { env } from 'cloudflare:workers';
+import type { Database } from '@corates/db/client';
 import type { OrgId, ProjectId } from '@corates/shared/ids';
 import { getProjectDocStub } from '@corates/workers/project-doc-id';
 import { requireOrgMembership } from '@/server/guards/requireOrgMembership';
 import { requireProjectAccess } from '@/server/guards/requireProjectAccess';
+import { dbMiddleware } from '@/server/middleware/db';
 
-type HandlerArgs = { request: Request; params: { orgId: OrgId; projectId: ProjectId } };
+type HandlerArgs = {
+  request: Request;
+  params: { orgId: OrgId; projectId: ProjectId };
+  context: { db: Database };
+};
 
-export const handlePost = async ({ request, params }: HandlerArgs) => {
+export const handlePost = async ({ request, params, context: { db } }: HandlerArgs) => {
   if (!env.DEV_MODE) {
     return Response.json({ error: 'Dev endpoints disabled' }, { status: 403 });
   }
 
-  const orgMembership = await requireOrgMembership(request, env, params.orgId);
+  const orgMembership = await requireOrgMembership(request, env, db, params.orgId);
   if (!orgMembership.ok) return orgMembership.response;
 
-  const access = await requireProjectAccess(request, env, params.orgId, params.projectId);
+  const access = await requireProjectAccess(request, env, db, params.orgId, params.projectId);
   if (!access.ok) return access.response;
 
   const url = new URL(request.url);
@@ -42,6 +48,7 @@ export const handlePost = async ({ request, params }: HandlerArgs) => {
 
 export const Route = createFileRoute('/api/orgs/$orgId/projects/$projectId/dev/apply-template')({
   server: {
+    middleware: [dbMiddleware],
     handlers: {
       POST: handlePost,
     },

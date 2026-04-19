@@ -1,4 +1,6 @@
 import { beforeEach, describe, expect, it, vi, type Mock } from 'vitest';
+import { env } from 'cloudflare:test';
+import { createDb } from '@corates/db/client';
 import { resetTestDatabase, clearProjectDOs } from '@/__tests__/server/helpers';
 import {
   buildProjectWithMembers,
@@ -64,6 +66,7 @@ describe('GET /api/orgs/:orgId/projects/:projectId/members', () => {
     const res = await listHandler({
       request: jsonReq(`/api/orgs/${org.id}/projects/${project.id}/members`, 'GET'),
       params: { orgId: org.id, projectId: project.id },
+      context: { db: createDb(env.DB) },
     });
     expect(res.status).toBe(200);
     const body = (await res.json()) as Array<{ userId: string; role: string; name: string }>;
@@ -82,6 +85,7 @@ describe('GET /api/orgs/:orgId/projects/:projectId/members', () => {
     const res = await listHandler({
       request: jsonReq(`/api/orgs/${org.id}/projects/${project.id}/members`, 'GET'),
       params: { orgId: org.id, projectId: project.id },
+      context: { db: createDb(env.DB) },
     });
     expect(res.status).toBe(403);
     const body = (await res.json()) as { code: string };
@@ -101,6 +105,7 @@ describe('POST /api/orgs/:orgId/projects/:projectId/members', () => {
         role: 'member',
       }),
       params: { orgId: org.id, projectId: project.id },
+      context: { db: createDb(env.DB) },
     });
     expect(res.status).toBe(201);
     const body = (await res.json()) as { userId: string; role: string; name: string };
@@ -119,6 +124,7 @@ describe('POST /api/orgs/:orgId/projects/:projectId/members', () => {
         role: 'member',
       }),
       params: { orgId: org.id, projectId: project.id },
+      context: { db: createDb(env.DB) },
     });
     expect(res.status).toBe(201);
     const body = (await res.json()) as { userId: string; email: string };
@@ -137,6 +143,7 @@ describe('POST /api/orgs/:orgId/projects/:projectId/members', () => {
         role: 'member',
       }),
       params: { orgId: org.id, projectId: project.id },
+      context: { db: createDb(env.DB) },
     });
     expect(res.status).toBe(201);
     const body = (await res.json()) as { email: string };
@@ -153,6 +160,7 @@ describe('POST /api/orgs/:orgId/projects/:projectId/members', () => {
         role: 'member',
       }),
       params: { orgId: org.id, projectId: project.id },
+      context: { db: createDb(env.DB) },
     });
     expect(res.status).toBe(201);
     const body = (await res.json()) as { success: boolean; invitation: boolean };
@@ -171,6 +179,7 @@ describe('POST /api/orgs/:orgId/projects/:projectId/members', () => {
         role: 'member',
       }),
       params: { orgId: org.id, projectId: project.id },
+      context: { db: createDb(env.DB) },
     });
     expect(res.status).toBe(409);
     const body = (await res.json()) as { code: string };
@@ -189,6 +198,7 @@ describe('POST /api/orgs/:orgId/projects/:projectId/members', () => {
         role: 'member',
       }),
       params: { orgId: org.id, projectId: project.id },
+      context: { db: createDb(env.DB) },
     });
     expect(res.status).toBe(403);
     const body = (await res.json()) as { code: string };
@@ -205,6 +215,7 @@ describe('POST /api/orgs/:orgId/projects/:projectId/members', () => {
         userId: newMember.id,
       }),
       params: { orgId: org.id, projectId: project.id },
+      context: { db: createDb(env.DB) },
     });
     expect(res.status).toBe(201);
     const body = (await res.json()) as { role: string };
@@ -225,6 +236,7 @@ describe('PUT /api/orgs/:orgId/projects/:projectId/members/:userId', () => {
         { role: 'member' },
       ),
       params: { orgId: org.id, projectId: project.id, userId: memberToUpdate.id },
+      context: { db: createDb(env.DB) },
     });
     expect(res.status).toBe(200);
     const body = (await res.json()) as { success: boolean; role: string };
@@ -241,6 +253,7 @@ describe('PUT /api/orgs/:orgId/projects/:projectId/members/:userId', () => {
         role: 'member',
       }),
       params: { orgId: org.id, projectId: project.id, userId: owner.id },
+      context: { db: createDb(env.DB) },
     });
     expect(res.status).toBe(400);
     const body = (await res.json()) as { code: string };
@@ -256,6 +269,7 @@ describe('PUT /api/orgs/:orgId/projects/:projectId/members/:userId', () => {
         role: 'member',
       }),
       params: { orgId: org.id, projectId: project.id, userId: owner1.id },
+      context: { db: createDb(env.DB) },
     });
     expect(res.status).toBe(200);
   });
@@ -273,6 +287,7 @@ describe('DELETE /api/orgs/:orgId/projects/:projectId/members/:userId', () => {
         'DELETE',
       ),
       params: { orgId: org.id, projectId: project.id, userId: memberToRemove.id },
+      context: { db: createDb(env.DB) },
     });
     expect(res.status).toBe(200);
     const body = (await res.json()) as { success: boolean; removed: string };
@@ -290,6 +305,7 @@ describe('DELETE /api/orgs/:orgId/projects/:projectId/members/:userId', () => {
         'DELETE',
       ),
       params: { orgId: org.id, projectId: project.id, userId: selfRemover.id },
+      context: { db: createDb(env.DB) },
     });
     expect(res.status).toBe(200);
   });
@@ -301,6 +317,7 @@ describe('DELETE /api/orgs/:orgId/projects/:projectId/members/:userId', () => {
     const res = await removeHandler({
       request: jsonReq(`/api/orgs/${org.id}/projects/${project.id}/members/${owner.id}`, 'DELETE'),
       params: { orgId: org.id, projectId: project.id, userId: owner.id },
+      context: { db: createDb(env.DB) },
     });
     expect(res.status).toBe(400);
     const body = (await res.json()) as { code: string };
@@ -317,6 +334,7 @@ describe('DELETE /api/orgs/:orgId/projects/:projectId/members/:userId', () => {
         'DELETE',
       ),
       params: { orgId: org.id, projectId: project.id, userId: asUserId('nonexistent-user') },
+      context: { db: createDb(env.DB) },
     });
     expect(res.status).toBe(404);
   });
@@ -352,6 +370,7 @@ describe('Collaborator Quota Enforcement', () => {
         role: 'member',
       }),
       params: { orgId: org.id, projectId: project.id },
+      context: { db: createDb(env.DB) },
     });
     expect(res.status).toBe(403);
     const body = (await res.json()) as {
@@ -374,6 +393,7 @@ describe('Collaborator Quota Enforcement', () => {
         role: 'member',
       }),
       params: { orgId: org.id, projectId: project.id },
+      context: { db: createDb(env.DB) },
     });
     expect(res.status).toBe(201);
     const body = (await res.json()) as { userId: string };

@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { env } from 'cloudflare:test';
+import { createDb } from '@corates/db/client';
 import { resetTestDatabase, clearProjectDOs } from '@/__tests__/server/helpers';
 import { buildOrg, resetCounter } from '@/__tests__/server/factories';
 import { handleGet } from '../validate-plan-change';
@@ -29,7 +30,7 @@ function validateReq(query: string): Request {
 
 describe('GET /api/billing/validate-plan-change', () => {
   it('returns 400 when targetPlan is missing', async () => {
-    const res = await handleGet({ request: validateReq('') });
+    const res = await handleGet({ request: validateReq(''), context: { db: createDb(env.DB) } });
     expect(res.status).toBe(400);
     const body = (await res.json()) as { code: string };
     expect(body.code).toMatch(/VALIDATION_FIELD_REQUIRED/);
@@ -37,7 +38,7 @@ describe('GET /api/billing/validate-plan-change', () => {
 
   it('returns 401 when no session', async () => {
     sessionResult = null;
-    const res = await handleGet({ request: validateReq('?targetPlan=starter_team') });
+    const res = await handleGet({ request: validateReq('?targetPlan=starter_team'), context: { db: createDb(env.DB) } });
     expect(res.status).toBe(401);
     const body = (await res.json()) as { code: string };
     expect(body.code).toBe('AUTH_REQUIRED');
@@ -48,7 +49,7 @@ describe('GET /api/billing/validate-plan-change', () => {
       user: { id: 'orphan-user', email: 'orphan@example.com', name: 'Orphan' },
       session: { id: 'sess-1', userId: 'orphan-user', activeOrganizationId: null },
     };
-    const res = await handleGet({ request: validateReq('?targetPlan=starter_team') });
+    const res = await handleGet({ request: validateReq('?targetPlan=starter_team'), context: { db: createDb(env.DB) } });
     expect(res.status).toBe(403);
     const body = (await res.json()) as { code: string; details?: { reason?: string } };
     expect(body.code).toBe('AUTH_FORBIDDEN');
@@ -61,7 +62,7 @@ describe('GET /api/billing/validate-plan-change', () => {
       user: { id: owner.id, email: owner.email, name: owner.name },
       session: { id: 'sess-1', userId: owner.id, activeOrganizationId: org.id },
     };
-    const res = await handleGet({ request: validateReq('?targetPlan=starter_team') });
+    const res = await handleGet({ request: validateReq('?targetPlan=starter_team'), context: { db: createDb(env.DB) } });
     expect(res.status).toBe(200);
     const body = (await res.json()) as {
       valid: boolean;
@@ -94,7 +95,7 @@ describe('GET /api/billing/validate-plan-change', () => {
       user: { id: owner.id, email: owner.email, name: owner.name },
       session: { id: 'sess-1', userId: owner.id, activeOrganizationId: org.id },
     };
-    const res = await handleGet({ request: validateReq('?targetPlan=starter_team') });
+    const res = await handleGet({ request: validateReq('?targetPlan=starter_team'), context: { db: createDb(env.DB) } });
     expect(res.status).toBe(200);
     const body = (await res.json()) as {
       valid: boolean;

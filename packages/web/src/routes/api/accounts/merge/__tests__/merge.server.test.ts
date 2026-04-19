@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { env } from 'cloudflare:test';
+import { createDb } from '@corates/db/client';
 import { resetTestDatabase, clearProjectDOs } from '@/__tests__/server/helpers';
 import {
   buildUser,
@@ -98,6 +99,7 @@ describe('POST /api/accounts/merge/initiate', () => {
 
     const res = await initiateHandler({
       request: jsonReq('/api/accounts/merge/initiate', 'POST', { targetEmail: user2.email }),
+      context: { db: createDb(env.DB) },
     });
 
     expect(res.status).toBe(200);
@@ -114,6 +116,7 @@ describe('POST /api/accounts/merge/initiate', () => {
 
     const res = await initiateHandler({
       request: jsonReq('/api/accounts/merge/initiate', 'POST', { targetEmail: user1.email }),
+      context: { db: createDb(env.DB) },
     });
 
     expect(res.status).toBe(400);
@@ -129,6 +132,7 @@ describe('POST /api/accounts/merge/initiate', () => {
       request: jsonReq('/api/accounts/merge/initiate', 'POST', {
         targetEmail: 'nonexistent@example.com',
       }),
+      context: { db: createDb(env.DB) },
     });
 
     expect(res.status).toBe(404);
@@ -139,6 +143,7 @@ describe('POST /api/accounts/merge/initiate', () => {
   it('returns 400 when neither targetEmail nor targetOrcidId is provided', async () => {
     const res = await initiateHandler({
       request: jsonReq('/api/accounts/merge/initiate', 'POST', {}),
+      context: { db: createDb(env.DB) },
     });
 
     expect(res.status).toBe(400);
@@ -153,6 +158,7 @@ describe('POST /api/accounts/merge/initiate', () => {
         headers: { 'Content-Type': 'application/json' },
         body: '{not-json',
       }),
+      context: { db: createDb(env.DB) },
     });
     expect(res.status).toBe(400);
     const body = (await res.json()) as any;
@@ -171,6 +177,7 @@ describe('POST /api/accounts/merge/verify', () => {
 
     const res = await verifyHandler({
       request: jsonReq('/api/accounts/merge/verify', 'POST', { mergeToken, code }),
+      context: { db: createDb(env.DB) },
     });
 
     expect(res.status).toBe(200);
@@ -193,6 +200,7 @@ describe('POST /api/accounts/merge/verify', () => {
 
     const res = await verifyHandler({
       request: jsonReq('/api/accounts/merge/verify', 'POST', { mergeToken, code: 'wrong-code' }),
+      context: { db: createDb(env.DB) },
     });
 
     expect(res.status).toBe(400);
@@ -215,6 +223,7 @@ describe('POST /api/accounts/merge/verify', () => {
 
     const res = await verifyHandler({
       request: jsonReq('/api/accounts/merge/verify', 'POST', { mergeToken, code: '123456' }),
+      context: { db: createDb(env.DB) },
     });
 
     expect(res.status).toBe(400);
@@ -231,6 +240,7 @@ describe('POST /api/accounts/merge/verify', () => {
         mergeToken: 'token',
         code: '123456',
       }),
+      context: { db: createDb(env.DB) },
     });
     expect(res.status).toBe(404);
     const body = (await res.json()) as any;
@@ -262,6 +272,7 @@ describe('POST /api/accounts/merge/complete', () => {
 
     const res = await completeHandler({
       request: jsonReq('/api/accounts/merge/complete', 'POST', { mergeToken }),
+      context: { db: createDb(env.DB) },
     });
 
     expect(res.status).toBe(200);
@@ -295,6 +306,7 @@ describe('POST /api/accounts/merge/complete', () => {
 
     const res = await completeHandler({
       request: jsonReq('/api/accounts/merge/complete', 'POST', { mergeToken }),
+      context: { db: createDb(env.DB) },
     });
 
     expect(res.status).toBe(400);
@@ -318,6 +330,7 @@ describe('DELETE /api/accounts/merge/cancel', () => {
 
     const res = await cancelHandler({
       request: jsonReq('/api/accounts/merge/cancel', 'DELETE', { mergeToken }),
+      context: { db: createDb(env.DB) },
     });
 
     expect(res.status).toBe(200);
@@ -336,6 +349,7 @@ describe('DELETE /api/accounts/merge/cancel', () => {
 
     const res = await cancelHandler({
       request: jsonReq('/api/accounts/merge/cancel', 'DELETE', { mergeToken: 'any' }),
+      context: { db: createDb(env.DB) },
     });
 
     expect(res.status).toBe(200);
@@ -356,6 +370,7 @@ describe('DELETE /api/accounts/merge/cancel', () => {
 
     const res = await cancelHandler({
       request: jsonReq('/api/accounts/merge/cancel', 'DELETE', { mergeToken: 'wrong-token' }),
+      context: { db: createDb(env.DB) },
     });
 
     expect(res.status).toBe(400);

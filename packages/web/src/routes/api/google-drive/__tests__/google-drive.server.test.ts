@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi, type Mock } from 'vitest';
 import { env } from 'cloudflare:test';
+import { createDb } from '@corates/db/client';
 import { resetTestDatabase, clearProjectDOs } from '@/__tests__/server/helpers';
 import { buildUser, buildProject, resetCounter } from '@/__tests__/server/factories';
 import { handler as statusHandler } from '../status';
@@ -80,7 +81,7 @@ describe('GET /api/google-drive/status', () => {
     await seedGoogleAccount(user.id);
     currentUser = { id: user.id, email: user.email };
 
-    const res = await statusHandler({ request: req('/api/google-drive/status') });
+    const res = await statusHandler({ request: req('/api/google-drive/status'), context: { db: createDb(env.DB) } });
 
     expect(res.status).toBe(200);
     const body = (await res.json()) as { connected: boolean; hasRefreshToken: boolean };
@@ -92,7 +93,7 @@ describe('GET /api/google-drive/status', () => {
     const user = await buildUser({ email: 'user1@example.com' });
     currentUser = { id: user.id, email: user.email };
 
-    const res = await statusHandler({ request: req('/api/google-drive/status') });
+    const res = await statusHandler({ request: req('/api/google-drive/status'), context: { db: createDb(env.DB) } });
 
     expect(res.status).toBe(200);
     const body = (await res.json()) as { connected: boolean; hasRefreshToken: boolean };
@@ -107,7 +108,7 @@ describe('GET /api/google-drive/picker-token', () => {
     await seedGoogleAccount(user.id, 'token-123', 'refresh-123');
     currentUser = { id: user.id, email: user.email };
 
-    const res = await pickerTokenHandler({ request: req('/api/google-drive/picker-token') });
+    const res = await pickerTokenHandler({ request: req('/api/google-drive/picker-token'), context: { db: createDb(env.DB) } });
 
     expect(res.status).toBe(200);
     const body = (await res.json()) as { accessToken: string; expiresAt: string };
@@ -119,7 +120,7 @@ describe('GET /api/google-drive/picker-token', () => {
     const user = await buildUser({ email: 'user1@example.com' });
     currentUser = { id: user.id, email: user.email };
 
-    const res = await pickerTokenHandler({ request: req('/api/google-drive/picker-token') });
+    const res = await pickerTokenHandler({ request: req('/api/google-drive/picker-token'), context: { db: createDb(env.DB) } });
 
     expect(res.status).toBe(401);
     const body = (await res.json()) as { code: string };
@@ -154,7 +155,7 @@ describe('GET /api/google-drive/picker-token', () => {
       json: async () => ({ access_token: 'new-token-456', expires_in: 3600 }),
     } as unknown as Response);
 
-    const res = await pickerTokenHandler({ request: req('/api/google-drive/picker-token') });
+    const res = await pickerTokenHandler({ request: req('/api/google-drive/picker-token'), context: { db: createDb(env.DB) } });
 
     expect(res.status).toBe(200);
     const body = (await res.json()) as { accessToken: string };
@@ -174,6 +175,7 @@ describe('DELETE /api/google-drive/disconnect', () => {
 
     const res = await disconnectHandler({
       request: req('/api/google-drive/disconnect', { method: 'DELETE' }),
+      context: { db: createDb(env.DB) },
     });
 
     expect(res.status).toBe(200);
@@ -222,6 +224,7 @@ describe('POST /api/google-drive/import', () => {
 
     const res = await importHandler({
       request: importReq({ fileId: 'file-123', projectId: project.id, studyId: 'study-1' }),
+      context: { db: createDb(env.DB) },
     });
 
     expect(res.status).toBe(200);
@@ -251,6 +254,7 @@ describe('POST /api/google-drive/import', () => {
 
     const res = await importHandler({
       request: importReq({ fileId: 'file-123', projectId: project.id, studyId: 'study-1' }),
+      context: { db: createDb(env.DB) },
     });
 
     expect(res.status).toBe(400);
@@ -275,6 +279,7 @@ describe('POST /api/google-drive/import', () => {
 
     const res = await importHandler({
       request: importReq({ fileId: 'file-123', projectId: project.id, studyId: 'study-1' }),
+      context: { db: createDb(env.DB) },
     });
 
     expect(res.status).toBe(413);
@@ -288,6 +293,7 @@ describe('POST /api/google-drive/import', () => {
 
     const res = await importHandler({
       request: importReq({ fileId: 'file-123', projectId: project.id, studyId: 'study-1' }),
+      context: { db: createDb(env.DB) },
     });
 
     expect(res.status).toBe(401);
@@ -302,6 +308,7 @@ describe('POST /api/google-drive/import', () => {
 
     const res = await importHandler({
       request: importReq({ fileId: 'file-123' }),
+      context: { db: createDb(env.DB) },
     });
 
     expect(res.status).toBe(400);

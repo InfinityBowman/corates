@@ -1,7 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { env } from 'cloudflare:workers';
 import { getSession } from '@corates/workers/auth';
-import { createDb } from '@corates/db/client';
+import type { Database } from '@corates/db/client';
 import { user, account, verification } from '@corates/db/schema';
 import { eq, sql, like, and } from 'drizzle-orm';
 import {
@@ -17,6 +17,7 @@ import {
   getAccountMergeEmailText,
 } from '@corates/workers/email-templates';
 import { checkRateLimit, MERGE_INITIATE_RATE_LIMIT } from '@/server/rateLimit';
+import { dbMiddleware } from '@/server/middleware/db';
 
 function generateCode(): string {
   const array = new Uint32Array(1);
@@ -40,7 +41,13 @@ function formatOrcidId(orcidId: string | undefined | null): string {
   return cleaned;
 }
 
-export const handler = async ({ request }: { request: Request }) => {
+export const handler = async ({
+  request,
+  context: { db },
+}: {
+  request: Request;
+  context: { db: Database };
+}) => {
   const session = await getSession(request, env);
   if (!session) {
     const error = createDomainError(AUTH_ERRORS.REQUIRED, { reason: 'no_user' });
@@ -81,7 +88,6 @@ export const handler = async ({ request }: { request: Request }) => {
     return Response.json(error, { status: 400 });
   }
 
-  const db = createDb(env.DB);
   let targetUser: { id: string; email: string; name: string | null } | null = null;
   let targetOrcidAccount: { accountId: string; userId: string } | null = null;
   let lookupMethod = 'email';
@@ -263,6 +269,7 @@ export const handler = async ({ request }: { request: Request }) => {
 
 export const Route = createFileRoute('/api/accounts/merge/initiate')({
   server: {
+    middleware: [dbMiddleware],
     handlers: {
       POST: handler,
     },

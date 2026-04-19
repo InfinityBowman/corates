@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { env } from 'cloudflare:workers';
-import { createDb } from '@corates/db/client';
+import type { Database } from '@corates/db/client';
 import {
   createDomainError,
   createValidationError,
@@ -15,20 +15,22 @@ import { requireMemberRemoval } from '@corates/workers/policies';
 import { requireOrgMembership } from '@/server/guards/requireOrgMembership';
 import { requireProjectAccess } from '@/server/guards/requireProjectAccess';
 import { requireOrgWriteAccess } from '@/server/guards/requireOrgWriteAccess';
+import { dbMiddleware } from '@/server/middleware/db';
 
 type HandlerArgs = {
   request: Request;
   params: { orgId: OrgId; projectId: ProjectId; userId: UserId };
+  context: { db: Database };
 };
 
-export const handlePut = async ({ request, params }: HandlerArgs) => {
-  const orgMembership = await requireOrgMembership(request, env, params.orgId);
+export const handlePut = async ({ request, params, context: { db } }: HandlerArgs) => {
+  const orgMembership = await requireOrgMembership(request, env, db, params.orgId);
   if (!orgMembership.ok) return orgMembership.response;
 
-  const writeAccess = await requireOrgWriteAccess(request.method, env, params.orgId);
+  const writeAccess = await requireOrgWriteAccess(request.method, db, params.orgId);
   if (!writeAccess.ok) return writeAccess.response;
 
-  const access = await requireProjectAccess(request, env, params.orgId, params.projectId, 'owner');
+  const access = await requireProjectAccess(request, env, db, params.orgId, params.projectId, 'owner');
   if (!access.ok) return access.response;
 
   let body: { role?: unknown };
@@ -84,17 +86,16 @@ export const handlePut = async ({ request, params }: HandlerArgs) => {
   }
 };
 
-export const handleDelete = async ({ request, params }: HandlerArgs) => {
-  const orgMembership = await requireOrgMembership(request, env, params.orgId);
+export const handleDelete = async ({ request, params, context: { db } }: HandlerArgs) => {
+  const orgMembership = await requireOrgMembership(request, env, db, params.orgId);
   if (!orgMembership.ok) return orgMembership.response;
 
-  const writeAccess = await requireOrgWriteAccess(request.method, env, params.orgId);
+  const writeAccess = await requireOrgWriteAccess(request.method, db, params.orgId);
   if (!writeAccess.ok) return writeAccess.response;
 
-  const access = await requireProjectAccess(request, env, params.orgId, params.projectId);
+  const access = await requireProjectAccess(request, env, db, params.orgId, params.projectId);
   if (!access.ok) return access.response;
 
-  const db = createDb(env.DB);
   const isSelf = params.userId === access.context.userId;
 
   try {
@@ -136,6 +137,7 @@ export const handleDelete = async ({ request, params }: HandlerArgs) => {
 
 export const Route = createFileRoute('/api/orgs/$orgId/projects/$projectId/members/$userId')({
   server: {
+    middleware: [dbMiddleware],
     handlers: {
       PUT: handlePut,
       DELETE: handleDelete,
