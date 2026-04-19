@@ -7,8 +7,7 @@
  * fresh and returns 201.
  */
 import { createFileRoute } from '@tanstack/react-router';
-import { env } from 'cloudflare:workers';
-import { createDb } from '@corates/db/client';
+import type { Database } from '@corates/db/client';
 import { organization } from '@corates/db/schema';
 import { eq } from 'drizzle-orm';
 import { createDomainError, SYSTEM_ERRORS, VALIDATION_ERRORS } from '@corates/shared';
@@ -20,11 +19,10 @@ import {
 } from '@corates/db/org-access-grants';
 import { adminMiddleware } from '@/server/middleware/admin';
 
-type HandlerArgs = { request: Request; params: { orgId: OrgId } };
+type HandlerArgs = { request: Request; params: { orgId: OrgId }; context: { db: Database } };
 
-export const handlePost = async ({ params }: HandlerArgs) => {
+export const handlePost = async ({ params, context: { db } }: HandlerArgs) => {
   const { orgId } = params;
-  const db = createDb(env.DB);
 
   try {
     const org = await db.select().from(organization).where(eq(organization.id, orgId)).get();

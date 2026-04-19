@@ -5,18 +5,16 @@
  * belongs to the user before deleting; returns 404 otherwise.
  */
 import { createFileRoute } from '@tanstack/react-router';
-import { env } from 'cloudflare:workers';
-import { createDb } from '@corates/db/client';
+import type { Database } from '@corates/db/client';
 import { session } from '@corates/db/schema';
 import { eq } from 'drizzle-orm';
 import { createDomainError, SYSTEM_ERRORS, USER_ERRORS } from '@corates/shared';
 import { adminMiddleware } from '@/server/middleware/admin';
 
-type HandlerArgs = { request: Request; params: { userId: string; sessionId: string } };
+type HandlerArgs = { request: Request; params: { userId: string; sessionId: string }; context: { db: Database } };
 
-export const handleDelete = async ({ params }: HandlerArgs) => {
+export const handleDelete = async ({ params, context: { db } }: HandlerArgs) => {
   const { userId, sessionId } = params;
-  const db = createDb(env.DB);
 
   try {
     const [existingSession] = await db

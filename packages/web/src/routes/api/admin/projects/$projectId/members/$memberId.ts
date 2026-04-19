@@ -5,18 +5,16 @@
  * row from a project. Admin only.
  */
 import { createFileRoute } from '@tanstack/react-router';
-import { env } from 'cloudflare:workers';
-import { createDb } from '@corates/db/client';
+import type { Database } from '@corates/db/client';
 import { projectMembers } from '@corates/db/schema';
 import { and, eq } from 'drizzle-orm';
 import { createDomainError, PROJECT_ERRORS, SYSTEM_ERRORS } from '@corates/shared';
 import { adminMiddleware } from '@/server/middleware/admin';
 
-type HandlerArgs = { request: Request; params: { projectId: string; memberId: string } };
+type HandlerArgs = { request: Request; params: { projectId: string; memberId: string }; context: { db: Database } };
 
-export const handleDelete = async ({ params }: HandlerArgs) => {
+export const handleDelete = async ({ params, context: { db } }: HandlerArgs) => {
   const { projectId, memberId } = params;
-  const db = createDb(env.DB);
 
   try {
     const [existingMember] = await db

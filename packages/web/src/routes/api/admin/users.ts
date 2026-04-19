@@ -6,14 +6,13 @@
  * the providerIds of their linked auth accounts.
  */
 import { createFileRoute } from '@tanstack/react-router';
-import { env } from 'cloudflare:workers';
-import { createDb } from '@corates/db/client';
+import type { Database } from '@corates/db/client';
 import { user, account } from '@corates/db/schema';
 import { count, desc, like, or, sql } from 'drizzle-orm';
 import { createDomainError, SYSTEM_ERRORS } from '@corates/shared';
 import { adminMiddleware } from '@/server/middleware/admin';
 
-export const handleGet = async ({ request }: { request: Request }) => {
+export const handleGet = async ({ request, context: { db } }: { request: Request; context: { db: Database } }) => {
   try {
     const url = new URL(request.url);
     const page = Math.max(1, parseInt(url.searchParams.get('page') || '1', 10) || 1);
@@ -23,8 +22,6 @@ export const handleGet = async ({ request }: { request: Request }) => {
     );
     const search = url.searchParams.get('search')?.trim() || undefined;
     const offset = (page - 1) * limit;
-
-    const db = createDb(env.DB);
 
     const searchCondition =
       search ?

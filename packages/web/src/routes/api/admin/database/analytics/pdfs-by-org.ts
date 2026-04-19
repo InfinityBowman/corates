@@ -5,16 +5,14 @@
  * mediaFiles rows grouped by org (left-joined for org name/slug).
  */
 import { createFileRoute } from '@tanstack/react-router';
-import { env } from 'cloudflare:workers';
-import { createDb } from '@corates/db/client';
+import type { Database } from '@corates/db/client';
 import { mediaFiles, organization } from '@corates/db/schema';
 import { count, desc, eq, sum } from 'drizzle-orm';
 import { createDomainError, SYSTEM_ERRORS } from '@corates/shared';
 import { adminMiddleware } from '@/server/middleware/admin';
 
-export const handleGet = async () => {
+export const handleGet = async ({ context: { db } }: { context: { db: Database } }) => {
   try {
-    const db = createDb(env.DB);
     const results = await db
       .select({
         orgId: mediaFiles.orgId,

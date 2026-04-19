@@ -6,8 +6,7 @@
  * days, max 30.
  */
 import { createFileRoute } from '@tanstack/react-router';
-import { env } from 'cloudflare:workers';
-import { createDb } from '@corates/db/client';
+import type { Database } from '@corates/db/client';
 import { stripeEventLedger } from '@corates/db/schema';
 import { count, gte, sql } from 'drizzle-orm';
 import { createDomainError, SYSTEM_ERRORS } from '@corates/shared';
@@ -26,7 +25,7 @@ interface WebhookRow {
   count: number;
 }
 
-export const handleGet = async ({ request }: { request: Request }) => {
+export const handleGet = async ({ request, context: { db } }: { request: Request; context: { db: Database } }) => {
   const url = new URL(request.url);
   const days = Math.min(parseInt(url.searchParams.get('days') || '7', 10) || 7, 30);
 
@@ -35,7 +34,6 @@ export const handleGet = async ({ request }: { request: Request }) => {
     startDate.setDate(startDate.getDate() - days);
     startDate.setHours(0, 0, 0, 0);
 
-    const db = createDb(env.DB);
     const results = await db
       .select({
         date: sql<string>`date(${stripeEventLedger.processedAt}, 'unixepoch')`.as('date'),

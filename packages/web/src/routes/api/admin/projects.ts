@@ -5,8 +5,7 @@
  * creator, member, and file count. Optional `?orgId=` filter. Admin only.
  */
 import { createFileRoute } from '@tanstack/react-router';
-import { env } from 'cloudflare:workers';
-import { createDb } from '@corates/db/client';
+import type { Database } from '@corates/db/client';
 import { projects, projectMembers, mediaFiles, organization, user } from '@corates/db/schema';
 import { and, count, desc, eq, like, sql } from 'drizzle-orm';
 import { createDomainError, SYSTEM_ERRORS } from '@corates/shared';
@@ -17,9 +16,7 @@ interface ProjectStats {
   fileCount: number;
 }
 
-export const handleGet = async ({ request }: { request: Request }) => {
-  const db = createDb(env.DB);
-
+export const handleGet = async ({ request, context: { db } }: { request: Request; context: { db: Database } }) => {
   try {
     const url = new URL(request.url);
     const page = parseInt(url.searchParams.get('page') || '1', 10);

@@ -7,8 +7,7 @@
  * Both notify org members of the change.
  */
 import { createFileRoute } from '@tanstack/react-router';
-import { env } from 'cloudflare:workers';
-import { createDb } from '@corates/db/client';
+import type { Database } from '@corates/db/client';
 import { subscription } from '@corates/db/schema';
 import { and, eq } from 'drizzle-orm';
 import { z } from 'zod';
@@ -31,11 +30,11 @@ const UpdateSubscriptionBodySchema = z.object({
 type HandlerArgs = {
   request: Request;
   params: { orgId: string; subscriptionId: string };
+  context: { db: Database };
 };
 
-export const handlePut = async ({ request, params }: HandlerArgs) => {
+export const handlePut = async ({ request, params, context: { db } }: HandlerArgs) => {
   const { orgId, subscriptionId } = params;
-  const db = createDb(env.DB);
 
   let body: z.infer<typeof UpdateSubscriptionBodySchema>;
   try {
@@ -105,9 +104,8 @@ export const handlePut = async ({ request, params }: HandlerArgs) => {
   }
 };
 
-export const handleDelete = async ({ params }: HandlerArgs) => {
+export const handleDelete = async ({ params, context: { db } }: HandlerArgs) => {
   const { orgId, subscriptionId } = params;
-  const db = createDb(env.DB);
 
   try {
     const existing = await db

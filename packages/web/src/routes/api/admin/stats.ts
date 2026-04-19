@@ -7,16 +7,14 @@
  * route files.
  */
 import { createFileRoute } from '@tanstack/react-router';
-import { env } from 'cloudflare:workers';
-import { createDb } from '@corates/db/client';
+import type { Database } from '@corates/db/client';
 import { user, projects, session } from '@corates/db/schema';
 import { count, sql } from 'drizzle-orm';
 import { createDomainError, SYSTEM_ERRORS } from '@corates/shared';
 import { TIME_DURATIONS } from '@corates/workers/constants';
 import { adminMiddleware } from '@/server/middleware/admin';
 
-export const handleGet = async () => {
-  const db = createDb(env.DB);
+export const handleGet = async ({ context: { db } }: { context: { db: Database } }) => {
 
   try {
     const [userCount, projectCount, sessionCount] = await Promise.all([

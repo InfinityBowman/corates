@@ -6,8 +6,7 @@
  * checkouts without a subscription row, repeated webhook failures).
  */
 import { createFileRoute } from '@tanstack/react-router';
-import { env } from 'cloudflare:workers';
-import { createDb } from '@corates/db/client';
+import type { Database } from '@corates/db/client';
 import { stripeEventLedger, subscription } from '@corates/db/schema';
 import { desc, eq } from 'drizzle-orm';
 import { createDomainError, SYSTEM_ERRORS } from '@corates/shared';
@@ -27,15 +26,13 @@ interface StuckOrg {
   failedCount?: number;
 }
 
-export const handleGet = async ({ request }: { request: Request }) => {
+export const handleGet = async ({ request, context: { db } }: { request: Request; context: { db: Database } }) => {
   const url = new URL(request.url);
   const incompleteThresholdMinutes = parseInt(
     url.searchParams.get('incompleteThreshold') || '30',
     10,
   );
   const limit = parseInt(url.searchParams.get('limit') || '50', 10);
-
-  const db = createDb(env.DB);
 
   try {
     const now = new Date();

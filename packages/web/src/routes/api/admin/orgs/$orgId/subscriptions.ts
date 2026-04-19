@@ -7,7 +7,7 @@
  */
 import { createFileRoute } from '@tanstack/react-router';
 import { env } from 'cloudflare:workers';
-import { createDb } from '@corates/db/client';
+import type { Database } from '@corates/db/client';
 import { organization, subscription } from '@corates/db/schema';
 import { eq } from 'drizzle-orm';
 import { z } from 'zod';
@@ -28,11 +28,11 @@ const CreateSubscriptionBodySchema = z.object({
 type HandlerArgs = {
   request: Request;
   params: { orgId: string };
+  context: { db: Database };
 };
 
-export const handlePost = async ({ request, params }: HandlerArgs) => {
+export const handlePost = async ({ request, params, context: { db } }: HandlerArgs) => {
   const { orgId } = params;
-  const db = createDb(env.DB);
 
   let body: z.infer<typeof CreateSubscriptionBodySchema>;
   try {
@@ -120,7 +120,7 @@ interface NotifyData {
 }
 
 export async function dispatchSubscriptionNotify(
-  db: ReturnType<typeof createDb>,
+  db: Database,
   orgId: string,
   action: string,
   data: NotifyData,

@@ -8,7 +8,7 @@
  */
 import { createFileRoute } from '@tanstack/react-router';
 import { env } from 'cloudflare:workers';
-import { createDb } from '@corates/db/client';
+import type { Database } from '@corates/db/client';
 import {
   user,
   session,
@@ -39,12 +39,12 @@ import { adminMiddleware, type AdminContext } from '@/server/middleware/admin';
 type HandlerArgs = {
   request: Request;
   params: { userId: string };
-  context: { admin: AdminContext };
+  context: { admin: AdminContext; db: Database };
 };
 
-export const handleGet = async ({ params }: HandlerArgs) => {
+export const handleGet = async ({ params, context }: HandlerArgs) => {
   const { userId } = params;
-  const db = createDb(env.DB);
+  const { db } = context;
 
   try {
     const [userData] = await db.select().from(user).where(eq(user.id, userId)).limit(1);
@@ -148,10 +148,10 @@ export const handleGet = async ({ params }: HandlerArgs) => {
 
 export const handleDelete = async ({ params, context }: HandlerArgs) => {
   const { userId } = params;
-  const db = createDb(env.DB);
+  const { admin, db } = context;
 
   try {
-    if (context.admin.userId === userId) {
+    if (admin.userId === userId) {
       return Response.json(
         createValidationError(
           'userId',

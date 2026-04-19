@@ -4,15 +4,14 @@
  * GET /api/admin/stats/projects?days=N — daily project creation counts.
  */
 import { createFileRoute } from '@tanstack/react-router';
-import { env } from 'cloudflare:workers';
-import { createDb } from '@corates/db/client';
+import type { Database } from '@corates/db/client';
 import { projects } from '@corates/db/schema';
 import { count, gte, sql } from 'drizzle-orm';
 import { createDomainError, SYSTEM_ERRORS } from '@corates/shared';
 import { adminMiddleware } from '@/server/middleware/admin';
 import { fillMissingDays } from '@/server/lib/fillMissingDays';
 
-export const handleGet = async ({ request }: { request: Request }) => {
+export const handleGet = async ({ request, context: { db } }: { request: Request; context: { db: Database } }) => {
   const url = new URL(request.url);
   const days = Math.min(parseInt(url.searchParams.get('days') || '30', 10) || 30, 90);
 
@@ -21,7 +20,6 @@ export const handleGet = async ({ request }: { request: Request }) => {
     startDate.setDate(startDate.getDate() - days);
     startDate.setHours(0, 0, 0, 0);
 
-    const db = createDb(env.DB);
     const results = await db
       .select({
         date: sql<string>`date(${projects.createdAt}, 'unixepoch')`.as('date'),

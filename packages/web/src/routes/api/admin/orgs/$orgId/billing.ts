@@ -6,8 +6,7 @@
  * subscription rows, and all access grants (revoked or not).
  */
 import { createFileRoute } from '@tanstack/react-router';
-import { env } from 'cloudflare:workers';
-import { createDb } from '@corates/db/client';
+import type { Database } from '@corates/db/client';
 import { organization, subscription } from '@corates/db/schema';
 import { desc, eq } from 'drizzle-orm';
 import {
@@ -23,11 +22,10 @@ import { resolveOrgAccess } from '@corates/workers/billing-resolver';
 import { getGrantsByOrgId } from '@corates/db/org-access-grants';
 import { adminMiddleware } from '@/server/middleware/admin';
 
-type HandlerArgs = { request: Request; params: { orgId: OrgId } };
+type HandlerArgs = { request: Request; params: { orgId: OrgId }; context: { db: Database } };
 
-export const handleGet = async ({ params }: HandlerArgs) => {
+export const handleGet = async ({ params, context: { db } }: HandlerArgs) => {
   const { orgId } = params;
-  const db = createDb(env.DB);
 
   try {
     const org = await db.select().from(organization).where(eq(organization.id, orgId)).get();

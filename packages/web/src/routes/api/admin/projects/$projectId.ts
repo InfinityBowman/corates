@@ -9,8 +9,7 @@
  * `context.session` and don't call `requireAdmin` themselves.
  */
 import { createFileRoute } from '@tanstack/react-router';
-import { env } from 'cloudflare:workers';
-import { createDb } from '@corates/db/client';
+import type { Database } from '@corates/db/client';
 import {
   projects,
   projectMembers,
@@ -23,11 +22,10 @@ import { desc, eq } from 'drizzle-orm';
 import { createDomainError, PROJECT_ERRORS, SYSTEM_ERRORS } from '@corates/shared';
 import { adminMiddleware } from '@/server/middleware/admin';
 
-type HandlerArgs = { request: Request; params: { projectId: string } };
+type HandlerArgs = { request: Request; params: { projectId: string }; context: { db: Database } };
 
-export const handleGet = async ({ params }: HandlerArgs) => {
+export const handleGet = async ({ params, context: { db } }: HandlerArgs) => {
   const { projectId } = params;
-  const db = createDb(env.DB);
 
   try {
     const [project] = await db
@@ -138,9 +136,8 @@ export const handleGet = async ({ params }: HandlerArgs) => {
   }
 };
 
-export const handleDelete = async ({ params }: HandlerArgs) => {
+export const handleDelete = async ({ params, context: { db } }: HandlerArgs) => {
   const { projectId } = params;
-  const db = createDb(env.DB);
 
   try {
     const [existingProject] = await db

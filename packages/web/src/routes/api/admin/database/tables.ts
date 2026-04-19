@@ -5,18 +5,15 @@
  * by the admin database viewer.
  */
 import { createFileRoute } from '@tanstack/react-router';
-import { env } from 'cloudflare:workers';
-import { createDb } from '@corates/db/client';
+import type { Database } from '@corates/db/client';
 import { dbSchema } from '@corates/db/schema';
 import { count } from 'drizzle-orm';
 import { createDomainError, SYSTEM_ERRORS } from '@corates/shared';
 import { adminMiddleware } from '@/server/middleware/admin';
 import { ALLOWED_TABLES, type AllowedTableName } from '@/server/lib/dbTables';
 
-export const handleGet = async () => {
+export const handleGet = async ({ context: { db } }: { context: { db: Database } }) => {
   try {
-    const db = createDb(env.DB);
-
     const tables = await Promise.all(
       ALLOWED_TABLES.map(async tableName => {
         const table = dbSchema[tableName as AllowedTableName];

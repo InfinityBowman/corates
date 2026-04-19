@@ -5,22 +5,19 @@
  * rows with org/project/uploader joins (default 50, max 100).
  */
 import { createFileRoute } from '@tanstack/react-router';
-import { env } from 'cloudflare:workers';
-import { createDb } from '@corates/db/client';
+import type { Database } from '@corates/db/client';
 import { mediaFiles, organization, projects, user } from '@corates/db/schema';
 import { desc, eq } from 'drizzle-orm';
 import { createDomainError, SYSTEM_ERRORS } from '@corates/shared';
 import { adminMiddleware } from '@/server/middleware/admin';
 
-export const handleGet = async ({ request }: { request: Request }) => {
+export const handleGet = async ({ request, context: { db } }: { request: Request; context: { db: Database } }) => {
   try {
     const url = new URL(request.url);
     const limit = Math.min(
       Math.max(parseInt(url.searchParams.get('limit') || '50', 10) || 50, 1),
       100,
     );
-    const db = createDb(env.DB);
-
     const results = await db
       .select({
         id: mediaFiles.id,

@@ -4,16 +4,14 @@
  * GET /api/admin/database/analytics/pdfs-by-user — uploads grouped by uploader.
  */
 import { createFileRoute } from '@tanstack/react-router';
-import { env } from 'cloudflare:workers';
-import { createDb } from '@corates/db/client';
+import type { Database } from '@corates/db/client';
 import { mediaFiles, user } from '@corates/db/schema';
 import { count, desc, eq, sum } from 'drizzle-orm';
 import { createDomainError, SYSTEM_ERRORS } from '@corates/shared';
 import { adminMiddleware } from '@/server/middleware/admin';
 
-export const handleGet = async () => {
+export const handleGet = async ({ context: { db } }: { context: { db: Database } }) => {
   try {
-    const db = createDb(env.DB);
     const results = await db
       .select({
         userId: mediaFiles.uploadedBy,

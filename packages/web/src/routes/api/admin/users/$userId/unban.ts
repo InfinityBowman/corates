@@ -4,18 +4,16 @@
  * POST /api/admin/users/:userId/unban — clears banned/banReason/banExpires.
  */
 import { createFileRoute } from '@tanstack/react-router';
-import { env } from 'cloudflare:workers';
-import { createDb } from '@corates/db/client';
+import type { Database } from '@corates/db/client';
 import { user } from '@corates/db/schema';
 import { eq } from 'drizzle-orm';
 import { createDomainError, SYSTEM_ERRORS } from '@corates/shared';
 import { adminMiddleware } from '@/server/middleware/admin';
 
-type HandlerArgs = { request: Request; params: { userId: string } };
+type HandlerArgs = { request: Request; params: { userId: string }; context: { db: Database } };
 
-export const handlePost = async ({ params }: HandlerArgs) => {
+export const handlePost = async ({ params, context: { db } }: HandlerArgs) => {
   const { userId } = params;
-  const db = createDb(env.DB);
 
   try {
     await db

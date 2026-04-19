@@ -7,7 +7,7 @@
  */
 import { createFileRoute } from '@tanstack/react-router';
 import { env } from 'cloudflare:workers';
-import { createDb } from '@corates/db/client';
+import type { Database } from '@corates/db/client';
 import { mediaFiles } from '@corates/db/schema';
 import {
   createDomainError,
@@ -41,7 +41,7 @@ interface StorageDoc {
   etag: string;
 }
 
-export const handleGet = async ({ request }: { request: Request }) => {
+export const handleGet = async ({ request, context: { db } }: { request: Request; context: { db: Database } }) => {
   try {
     const url = new URL(request.url);
     const requestCursor = url.searchParams.get('cursor')?.trim() || undefined;
@@ -129,7 +129,6 @@ export const handleGet = async ({ request }: { request: Request }) => {
     skipCount = Math.min(skipCount, matchingObjects.length);
     const paginatedObjects = matchingObjects.slice(skipCount, skipCount + limit);
 
-    const db = createDb(env.DB);
     const trackedKeys = await db.select({ bucketKey: mediaFiles.bucketKey }).from(mediaFiles);
     const trackedKeysSet = new Set(trackedKeys.map(row => row.bucketKey));
 

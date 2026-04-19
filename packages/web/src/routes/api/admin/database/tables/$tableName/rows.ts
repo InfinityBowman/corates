@@ -6,8 +6,7 @@
  * dedicated path that joins org/project/user for readability.
  */
 import { createFileRoute } from '@tanstack/react-router';
-import { env } from 'cloudflare:workers';
-import { createDb } from '@corates/db/client';
+import type { Database } from '@corates/db/client';
 import { dbSchema, mediaFiles, organization, projects, user } from '@corates/db/schema';
 import { and, asc, count, desc, eq } from 'drizzle-orm';
 import {
@@ -28,16 +27,18 @@ interface MediaFilesQueryOptions {
   filterValue?: string;
 }
 
-async function handleMediaFilesQuery({
-  page,
-  limit,
-  orderBy: orderByParam,
-  order,
-  filterBy,
-  filterValue,
-}: MediaFilesQueryOptions): Promise<Response> {
+async function handleMediaFilesQuery(
+  db: Database,
+  {
+    page,
+    limit,
+    orderBy: orderByParam,
+    order,
+    filterBy,
+    filterValue,
+  }: MediaFilesQueryOptions,
+): Promise<Response> {
   try {
-    const db = createDb(env.DB);
     const offset = (page - 1) * limit;
     const whereConditions = [];
 
@@ -152,9 +153,9 @@ async function handleMediaFilesQuery({
   }
 }
 
-type HandlerArgs = { request: Request; params: { tableName: string } };
+type HandlerArgs = { request: Request; params: { tableName: string }; context: { db: Database } };
 
-export const handleGet = async ({ request, params }: HandlerArgs) => {
+export const handleGet = async ({ request, params, context: { db } }: HandlerArgs) => {
   const { tableName } = params;
   const url = new URL(request.url);
   const page = parseInt(url.searchParams.get('page') || '1', 10) || 1;
@@ -194,7 +195,7 @@ export const handleGet = async ({ request, params }: HandlerArgs) => {
   }
 
   if (tableName === 'mediaFiles') {
-    return handleMediaFilesQuery({
+    return handleMediaFilesQuery(db, {
       page,
       limit,
       orderBy: orderByParam,
@@ -205,7 +206,6 @@ export const handleGet = async ({ request, params }: HandlerArgs) => {
   }
 
   try {
-    const db = createDb(env.DB);
     const offset = (page - 1) * limit;
     const whereConditions = [];
     const tableRecord = table as unknown as Record<string, unknown>;

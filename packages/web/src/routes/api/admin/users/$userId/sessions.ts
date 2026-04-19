@@ -4,18 +4,16 @@
  * DELETE /api/admin/users/:userId/sessions
  */
 import { createFileRoute } from '@tanstack/react-router';
-import { env } from 'cloudflare:workers';
-import { createDb } from '@corates/db/client';
+import type { Database } from '@corates/db/client';
 import { session } from '@corates/db/schema';
 import { eq } from 'drizzle-orm';
 import { createDomainError, SYSTEM_ERRORS } from '@corates/shared';
 import { adminMiddleware } from '@/server/middleware/admin';
 
-type HandlerArgs = { request: Request; params: { userId: string } };
+type HandlerArgs = { request: Request; params: { userId: string }; context: { db: Database } };
 
-export const handleDelete = async ({ params }: HandlerArgs) => {
+export const handleDelete = async ({ params, context: { db } }: HandlerArgs) => {
   const { userId } = params;
-  const db = createDb(env.DB);
 
   try {
     await db.delete(session).where(eq(session.userId, userId));

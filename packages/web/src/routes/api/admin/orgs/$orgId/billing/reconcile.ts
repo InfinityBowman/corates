@@ -8,7 +8,7 @@
  */
 import { createFileRoute } from '@tanstack/react-router';
 import { env } from 'cloudflare:workers';
-import { createDb } from '@corates/db/client';
+import type { Database } from '@corates/db/client';
 import { organization, subscription } from '@corates/db/schema';
 import { desc, eq } from 'drizzle-orm';
 import {
@@ -44,9 +44,9 @@ interface StuckState {
   stripeStatus?: string;
 }
 
-type HandlerArgs = { request: Request; params: { orgId: OrgId } };
+type HandlerArgs = { request: Request; params: { orgId: OrgId }; context: { db: Database } };
 
-export const handleGet = async ({ request, params }: HandlerArgs) => {
+export const handleGet = async ({ request, params, context: { db } }: HandlerArgs) => {
   const { orgId } = params;
   const url = new URL(request.url);
   const checkStripe = url.searchParams.get('checkStripe') === 'true';
@@ -62,8 +62,6 @@ export const handleGet = async ({ request, params }: HandlerArgs) => {
     url.searchParams.get('processingLagThreshold') || '5',
     10,
   );
-
-  const db = createDb(env.DB);
 
   try {
     const org = await db.select().from(organization).where(eq(organization.id, orgId)).get();

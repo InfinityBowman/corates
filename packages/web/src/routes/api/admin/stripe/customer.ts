@@ -7,7 +7,7 @@
  */
 import { createFileRoute } from '@tanstack/react-router';
 import { env } from 'cloudflare:workers';
-import { createDb } from '@corates/db/client';
+import type { Database } from '@corates/db/client';
 import { organization, subscription, user } from '@corates/db/schema';
 import { eq } from 'drizzle-orm';
 import {
@@ -34,7 +34,7 @@ interface LinkedOrg {
   slug: string | null;
 }
 
-export const handleGet = async ({ request }: { request: Request }) => {
+export const handleGet = async ({ request, context: { db } }: { request: Request; context: { db: Database } }) => {
   const url = new URL(request.url);
   const email = url.searchParams.get('email') || undefined;
   const customerId = url.searchParams.get('customerId') || undefined;
@@ -92,8 +92,6 @@ export const handleGet = async ({ request }: { request: Request }) => {
     if (!customer) {
       return Response.json({ found: false, message: 'Customer not found' }, { status: 200 });
     }
-
-    const db = createDb(env.DB);
 
     let linkedUser: LinkedUser | null = null;
     let linkedOrg: LinkedOrg | null = null;

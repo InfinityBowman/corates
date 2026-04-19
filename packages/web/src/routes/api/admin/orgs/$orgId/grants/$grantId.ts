@@ -7,8 +7,7 @@
  * DELETE — revokes the grant via `revokeGrant`.
  */
 import { createFileRoute } from '@tanstack/react-router';
-import { env } from 'cloudflare:workers';
-import { createDb } from '@corates/db/client';
+import type { Database } from '@corates/db/client';
 import { orgAccessGrants } from '@corates/db/schema';
 import { eq } from 'drizzle-orm';
 import { z } from 'zod';
@@ -22,11 +21,10 @@ const UpdateGrantBodySchema = z.object({
   revokedAt: z.coerce.date().optional().nullable(),
 });
 
-type HandlerArgs = { request: Request; params: { orgId: OrgId; grantId: OrgAccessGrantId } };
+type HandlerArgs = { request: Request; params: { orgId: OrgId; grantId: OrgAccessGrantId }; context: { db: Database } };
 
-export const handlePut = async ({ request, params }: HandlerArgs) => {
+export const handlePut = async ({ request, params, context: { db } }: HandlerArgs) => {
   const { orgId, grantId } = params;
-  const db = createDb(env.DB);
 
   let body: z.infer<typeof UpdateGrantBodySchema>;
   try {
@@ -93,9 +91,8 @@ export const handlePut = async ({ request, params }: HandlerArgs) => {
   }
 };
 
-export const handleDelete = async ({ params }: HandlerArgs) => {
+export const handleDelete = async ({ params, context: { db } }: HandlerArgs) => {
   const { orgId, grantId } = params;
-  const db = createDb(env.DB);
 
   try {
     const existing = await getGrantById(db, grantId);

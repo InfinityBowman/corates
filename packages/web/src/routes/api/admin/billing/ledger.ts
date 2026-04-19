@@ -5,20 +5,17 @@
  * status/type filters and per-status / per-type counts.
  */
 import { createFileRoute } from '@tanstack/react-router';
-import { env } from 'cloudflare:workers';
-import { createDb } from '@corates/db/client';
+import type { Database } from '@corates/db/client';
 import { stripeEventLedger } from '@corates/db/schema';
 import { and, desc, eq } from 'drizzle-orm';
 import { createDomainError, SYSTEM_ERRORS } from '@corates/shared';
 import { adminMiddleware } from '@/server/middleware/admin';
 
-export const handleGet = async ({ request }: { request: Request }) => {
+export const handleGet = async ({ request, context: { db } }: { request: Request; context: { db: Database } }) => {
   const url = new URL(request.url);
   const limit = parseInt(url.searchParams.get('limit') || '50', 10);
   const status = url.searchParams.get('status') || undefined;
   const eventType = url.searchParams.get('type') || undefined;
-
-  const db = createDb(env.DB);
 
   try {
     const conditions = [];

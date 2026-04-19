@@ -6,8 +6,7 @@
  * supports `{ reason?, expiresAt? }` (ISO datetime).
  */
 import { createFileRoute } from '@tanstack/react-router';
-import { env } from 'cloudflare:workers';
-import { createDb } from '@corates/db/client';
+import type { Database } from '@corates/db/client';
 import { user, session } from '@corates/db/schema';
 import { eq } from 'drizzle-orm';
 import {
@@ -21,7 +20,7 @@ import { adminMiddleware, type AdminContext } from '@/server/middleware/admin';
 type HandlerArgs = {
   request: Request;
   params: { userId: string };
-  context: { admin: AdminContext };
+  context: { admin: AdminContext; db: Database };
 };
 
 export const handlePost = async ({ request, params, context }: HandlerArgs) => {
@@ -39,6 +38,8 @@ export const handlePost = async ({ request, params, context }: HandlerArgs) => {
     );
   }
 
+  const { db } = context;
+
   let reason: string | undefined;
   let expiresAt: Date | null = null;
   try {
@@ -48,8 +49,6 @@ export const handlePost = async ({ request, params, context }: HandlerArgs) => {
   } catch {
     // No body provided, use defaults
   }
-
-  const db = createDb(env.DB);
 
   try {
     await db.batch([

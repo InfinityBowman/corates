@@ -5,8 +5,7 @@
  * billing summary (effective plan, source, subscription/grant). Admin only.
  */
 import { createFileRoute } from '@tanstack/react-router';
-import { env } from 'cloudflare:workers';
-import { createDb } from '@corates/db/client';
+import type { Database } from '@corates/db/client';
 import { organization, member, projects } from '@corates/db/schema';
 import { count, eq } from 'drizzle-orm';
 import {
@@ -21,11 +20,10 @@ import type { OrgId } from '@corates/shared/ids';
 import { resolveOrgAccess } from '@corates/workers/billing-resolver';
 import { adminMiddleware } from '@/server/middleware/admin';
 
-type HandlerArgs = { request: Request; params: { orgId: OrgId } };
+type HandlerArgs = { request: Request; params: { orgId: OrgId }; context: { db: Database } };
 
-export const handleGet = async ({ params }: HandlerArgs) => {
+export const handleGet = async ({ params, context: { db } }: HandlerArgs) => {
   const { orgId } = params;
-  const db = createDb(env.DB);
 
   try {
     const org = await db.select().from(organization).where(eq(organization.id, orgId)).get();
