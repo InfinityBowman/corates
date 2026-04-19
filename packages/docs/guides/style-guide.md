@@ -534,7 +534,7 @@ focus:ring-2 focus:ring-ring/20 focus:outline-none
 ### Framework
 
 - Built with **React 19** and **Tailwind CSS v4**
-- UI components from **shadcn/ui** (`@/components/ui/`), which wraps Radix primitives
+- UI components from **shadcn/ui** (`@/components/ui/`) -- most wrap Radix; a handful wrap `@ark-ui/react` where Radix has no primitive (editable, steps, qr-code, password-input, file-upload)
 - Icons from **lucide-react**
 
 > Many JSX examples in this guide still use SolidJS-style `class=` attributes from a previous version of the codebase. In React, the attribute is `className=`. The CSS classes and design tokens they reference are current; only the attribute name is wrong. Treat the examples as reference for styling, not for JSX syntax.

@@ -111,20 +111,43 @@ const result = await orgApi.listOrganizations({ headers: request.headers });
 
 ## Authorization
 
-Policy checks live in `@corates/workers/policies` (`requireOrgOwner`, `requireOrgMember`, etc.) and in `@/server/guards/`. They throw domain errors when denied.
+Policy checks live in `@corates/workers/policies`. The real policy functions are:
+
+- `requireOrgOwner` -- enforce org owner role (billing operations)
+- `getOrgMembership` / `requireOrgMemberRemoval` -- org membership checks and removal safety
+- `getProjectMembership` -- project membership lookup
+- `requireProjectEdit` -- enforce project edit permission
+- `requireMemberRemoval` / `requireSafeRemoval` / `requireSafeRoleChange` -- project member management safety
+
+Each throws a domain error when denied; route handlers catch and return them as JSON.
+
+Policy call shapes vary -- check each before using. `requireOrgOwner` is *not* a DB lookup; it validates a role you already resolved (usually via `resolveOrgIdWithRole` from `@/server/billing-context`). `requireProjectEdit` does its own DB lookup.
 
 ```ts
 import { requireOrgOwner } from '@corates/workers/policies';
+import { requireProjectEdit } from '@corates/workers/policies/projects';
+import { resolveOrgIdWithRole } from '@/server/billing-context';
+import { isDomainError } from '@corates/shared';
 
+// Billing-style: resolve role first, then validate
+const { orgId, role } = await resolveOrgIdWithRole({ db, session: session.session, userId: session.user.id });
 try {
-  await requireOrgOwner(db, session.user.id, orgId);
+  requireOrgOwner({ orgId, role });
 } catch (err) {
-  if (isDomainError(err)) {
-    return Response.json(err, { status: err.statusCode });
-  }
+  if (isDomainError(err)) return Response.json(err, { status: err.statusCode });
+  throw err;
+}
+
+// Project-style: positional args, policy does its own lookup
+try {
+  await requireProjectEdit(db, session.user.id, projectId);
+} catch (err) {
+  if (isDomainError(err)) return Response.json(err, { status: err.statusCode });
   throw err;
 }
 ```
+
+Additional guards live under `@/server/guards/` -- these are route-specific wrappers (e.g., `requireQuota`) that compose the policy primitives.
 
 ## Rate limiting
 

@@ -143,7 +143,7 @@ For icons lucide doesn't provide, inline an SVG component.
 
 ## UI primitives
 
-Use shadcn/ui components from `@/components/ui/`. They are first-party -- copy-pasted into the repo, not imported from an external package.
+Use the components under `@/components/ui/`. They are first-party -- copy-pasted into the repo so you can edit them directly. Most wrap **Radix** (via shadcn); a few wrap **`@ark-ui/react`** where Radix doesn't provide a primitive (currently `editable`, `steps`, `qr-code`, `password-input`, `file-upload`).
 
 ```tsx
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -152,7 +152,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { showToast } from '@/components/ui/toast';
 ```
 
-Do not import UI from external packages (no Ark UI, no Radix directly -- shadcn wraps Radix internally).
+Always import from `@/components/ui/*`, not from `@radix-ui/*` or `@ark-ui/react` directly -- the wrappers apply project-specific styling and defaults. If you need a primitive that doesn't exist yet, add a new file under `@/components/ui/` rather than importing the primitive at the call site.
 
 ## Styling
 

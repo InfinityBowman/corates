@@ -263,9 +263,10 @@ Design pattern prioritizing local data and offline functionality:
 
 UI components that provide behavior/state without styling:
 
-- Radix UI primitives (wrapped by shadcn/ui) provide accessibility and state
+- Radix UI primitives (wrapped by shadcn/ui) provide accessibility and state for most components
+- `@ark-ui/react` primitives fill the gaps Radix doesn't cover (editable text, steps wizard, QR code, password input, file upload)
 - Tailwind CSS for styling
-- Full customization control -- shadcn components live in the repo under `@/components/ui/` and can be edited directly
+- Full customization control -- wrappers live in the repo under `@/components/ui/` and can be edited directly
 
 **Related:** `packages/web/src/components/ui/`
 

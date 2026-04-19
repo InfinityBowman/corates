@@ -26,7 +26,8 @@ flowchart LR
     subgraph GuardsPolicies["Per-route guards & policies"]
         getSession
         requireOrgOwner
-        requireProjectAccess
+        requireProjectEdit
+        getProjectMembership
         rateLimit
     end
 
@@ -44,13 +45,15 @@ flowchart LR
 
 Each handler composes checks explicitly -- there is no single middleware pipeline. Common ingredients:
 
-| Helper                  | From                                   | Purpose                         |
-| ----------------------- | -------------------------------------- | ------------------------------- |
-| `getSession`            | `@corates/workers/auth`                | Resolves the Better Auth session |
-| `requireOrgOwner`       | `@corates/workers/policies`            | Enforces org owner role         |
-| `requireProjectAccess`  | `@corates/workers/policies`            | Enforces project membership/role|
-| `checkRateLimit`        | `@/server/rateLimit`                   | Per-endpoint rate limits        |
-| `resolveOrgAccess`      | `@corates/workers/billing-resolver`    | Plan-aware org access check     |
+| Helper                   | From                                   | Purpose                          |
+| ------------------------ | -------------------------------------- | -------------------------------- |
+| `getSession`             | `@corates/workers/auth`                | Resolves the Better Auth session |
+| `requireOrgOwner`        | `@corates/workers/policies`            | Enforces org owner role          |
+| `requireProjectEdit`     | `@corates/workers/policies`            | Enforces project edit permission |
+| `getProjectMembership`   | `@corates/workers/policies`            | Looks up project role            |
+| `requireMemberRemoval` / `requireSafeRoleChange` | `@corates/workers/policies` | Member management safety |
+| `checkRateLimit`         | `@/server/rateLimit`                   | Per-endpoint rate limits         |
+| `resolveOrgAccess`       | `@corates/workers/billing-resolver`    | Plan-aware org access check      |
 
 ## API Endpoints
 
@@ -160,7 +163,7 @@ if (limit.blocked) return limit.blocked;
 const session = await getSession(request, env);
 if (!session) return Response.json(createDomainError(AUTH_ERRORS.REQUIRED), { status: 401 });
 
-await requireProjectAccess(db, session.user.id, orgId, projectId, 'member');
+await requireProjectEdit(db, session.user.id, projectId);
 // ... handler work ...
 ```
 

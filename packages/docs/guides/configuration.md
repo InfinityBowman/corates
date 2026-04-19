@@ -207,7 +207,7 @@ If you prefer to set up manually:
 - **Framework**: React 19 + TanStack Start (SSR + file-based routing)
 - **Build tool**: Vite
 - **Styling**: Tailwind CSS
-- **UI primitives**: shadcn/ui (colocated under `@/components/ui/`)
+- **UI primitives**: shadcn/ui wrappers under `@/components/ui/` (Radix under the hood, with `@ark-ui/react` for a handful of components Radix doesn't cover)
 - **Icons**: lucide-react
 - **Client state**: Zustand
 - **Server state**: TanStack Query
@@ -242,7 +242,7 @@ import { Button } from '@/components/ui/button';
 import { showToast } from '@/components/ui/toast';
 ```
 
-There is no external `@corates/ui` package -- shadcn components are copy-pasted into the repo so they can be modified directly.
+There is no external `@corates/ui` package -- these components live in the repo so they can be modified directly. Under the hood they wrap Radix (most) and `@ark-ui/react` (editable, steps, qr-code, password-input, file-upload).
 
 ### Icons
 

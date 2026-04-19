@@ -25,7 +25,7 @@ CoRATES is a web application designed to streamline the entire quality and risk-
 - **Framework**: React 19 with TanStack Start and TanStack Router
 - **Build**: Vite with TanStack Start
 - **Styling**: Tailwind CSS v4 with @tailwindcss/vite
-- **UI Components**: shadcn/ui (Radix-based) + lucide-react
+- **UI Components**: shadcn/ui (Radix-based) with `@ark-ui/react` for primitives Radix doesn't cover (editable, steps, qr-code, password-input, file-upload); lucide-react for icons
 - **Data Fetching**: TanStack Query (server state management)
 - **Client State**: Zustand
 - **Tables**: TanStack React Table

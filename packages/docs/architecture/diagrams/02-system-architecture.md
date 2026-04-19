@@ -9,7 +9,7 @@ flowchart TB
         Stores[Zustand Stores<br/>authStore, projectStore, adminStore]
         Query[TanStack Query Cache]
         YjsClient[Yjs Client]
-        IDB[(IndexedDB<br/>y-indexeddb + app caches)]
+        IDB[(IndexedDB<br/>y-dexie + app caches)]
     end
 
     subgraph MainWorker["App Worker (TanStack Start)"]
@@ -55,7 +55,7 @@ flowchart TB
 - **Routing**: TanStack Router file-based routes under `packages/web/src/routes/`
 - **Client state**: Zustand stores in `@/stores/` (authStore, projectStore, adminStore, pdfPreviewStore)
 - **Server state**: TanStack Query, with hooks in `@/hooks/`
-- **Yjs Client**: CRDT sync with `y-indexeddb` for project content
+- **Yjs Client**: CRDT sync with `y-dexie` for project content, alongside other app data in a single IndexedDB
 - **Notification WebSocket**: Real-time connection to UserSession for user-level notifications (project invites, etc.)
 
 ### Backend (Cloudflare Workers)
