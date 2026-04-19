@@ -15,10 +15,12 @@ import {
   verifyEmail,
   cleanupByEmail,
   loginAs,
+  addProjectMember,
   seedDualReviewerScenario,
   cleanupScenario,
   type DualReviewerScenario,
 } from './helpers';
+import { createProject } from './shared-steps';
 
 const TEST_PREFIX = `auth-e2e-${Date.now()}`;
 
@@ -85,6 +87,91 @@ test.describe('Auth flows', () => {
 
       // Should arrive at dashboard
       await expect(page).toHaveURL(/\/dashboard/, { timeout: 15_000 });
+    });
+
+    test('fresh session can deep-link to a project with WebSocket auth', async ({ browser }) => {
+      // Seed an owner with an org and project for the magic-link user to join
+      const ownerScenario = await seedDualReviewerScenario();
+      const wsEmail = `${TEST_PREFIX}-ws@test.corates.org`;
+
+      try {
+        // Log in as the owner and create a project
+        const ownerCtx = await browser.newContext();
+        const ownerPage = await ownerCtx.newPage();
+        await loginAs(ownerCtx, ownerScenario.cookiesA);
+        await ownerPage.goto('/dashboard');
+        await expect(ownerPage.getByText('Welcome back,')).toBeVisible({ timeout: 15_000 });
+        const projectId = await createProject(ownerPage, 'WebSocket Auth Test');
+        await ownerCtx.close();
+
+        // Fresh context for the magic-link user (no cached auth state)
+        const freshCtx = await browser.newContext();
+        const p = await freshCtx.newPage();
+
+        await p.goto('/signup');
+        await expect(p.getByText('Create an Account')).toBeVisible({ timeout: 10_000 });
+
+        const emailInput = p.locator('#magic-link-email');
+        await emailInput.click();
+        await emailInput.pressSequentially(wsEmail, { delay: 20 });
+        await p.getByRole('button', { name: /Continue with Email/i }).click();
+        await expect(p.getByText('Check your email')).toBeVisible({ timeout: 10_000 });
+
+        const magicLinkUrl = await getAuthUrl(wsEmail, 'magic-link');
+        await p.goto(magicLinkUrl);
+        await expect(p).toHaveURL(/\/complete-profile/, { timeout: 15_000 });
+
+        const firstNameInput = p.locator('#first-name-input');
+        await firstNameInput.click({ clickCount: 3 });
+        await firstNameInput.pressSequentially('WebSocket', { delay: 20 });
+        await p.locator('#last-name-input').click();
+        await p.locator('#last-name-input').pressSequentially('Tester', { delay: 20 });
+        await p.getByRole('button', { name: 'Next' }).click();
+
+        await expect(p.getByRole('heading', { name: 'Institution Details' })).toBeVisible({
+          timeout: 5_000,
+        });
+        await p.getByRole('button', { name: /Skip for now/i }).click();
+
+        await expect(p.getByRole('heading', { name: /What best describes you/i })).toBeVisible({
+          timeout: 5_000,
+        });
+        await p.getByText('Researcher').click();
+        await p.getByRole('button', { name: /Finish Setup/i }).click();
+
+        await expect(p).toHaveURL(/\/dashboard/, { timeout: 15_000 });
+
+        // Get the new user's ID from the session API
+        const sessionData = await p.evaluate(async () => {
+          const res = await fetch('/api/auth/get-session', { credentials: 'include' });
+          return res.json();
+        });
+        const newUserId = sessionData?.user?.id;
+        expect(newUserId).toBeTruthy();
+
+        // Add the new user to the org and project via the owner's session
+        await addProjectMember(
+          ownerScenario.orgId,
+          projectId,
+          newUserId,
+          ownerScenario.cookiesA,
+        );
+
+        // Deep-link directly to the project page
+        await p.goto(`/projects/${projectId}`);
+
+        // The project page renders tabs only after the Yjs Y.Doc syncs
+        // over WebSocket. Seeing these tabs proves the WS auth upgrade
+        // succeeded with the fresh magic-link session cookie.
+        await expect(p.getByRole('tab', { name: /All Studies/i })).toBeVisible({
+          timeout: 15_000,
+        });
+
+        await freshCtx.close();
+      } finally {
+        await cleanupByEmail(wsEmail);
+        await cleanupScenario(ownerScenario);
+      }
     });
   });
 
