@@ -1,0 +1,85 @@
+// Test-only wrangler config.
+//
+// `packages/workers` is a library consumed by `packages/web` — it does NOT
+// deploy. This config exists for `@cloudflare/vitest-pool-workers` (see
+// vitest.config.ts) and ad-hoc local D1 / DO scripts. Production worker
+// configuration lives in packages/web/wrangler.jsonc.
+{
+  "name": "corates-workers",
+  "main": "src/test-worker.ts",
+  "compatibility_date": "2025-12-01",
+  "compatibility_flags": ["nodejs_compat"],
+
+  "version_metadata": {
+    "binding": "CF_VERSION_METADATA"
+  },
+
+  "migrations": [
+    { "tag": "v1", "new_sqlite_classes": ["UserSession", "ProjectDoc"] },
+    { "tag": "v2", "new_sqlite_classes": ["EmailQueue"] },
+    { "tag": "v3", "deleted_classes": ["EmailQueue"] }
+  ],
+
+  "durable_objects": {
+    "bindings": [
+      { "name": "USER_SESSION", "class_name": "UserSession" },
+      { "name": "PROJECT_DOC", "class_name": "ProjectDoc" }
+    ]
+  },
+
+  "queues": {
+    "producers": [
+      {
+        "queue": "corates-emails",
+        "binding": "EMAIL_QUEUE"
+      }
+    ],
+    "consumers": [
+      {
+        "queue": "corates-emails",
+        "max_batch_size": 10,
+        "max_retries": 3,
+        "dead_letter_queue": "corates-emails-dlq"
+      }
+    ]
+  },
+
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "corates-db",
+      "database_id": "7ac6d425-2a7c-4087-9f42-0cd1a2ab367b"
+    }
+  ],
+
+  "r2_buckets": [
+    {
+      "binding": "PDF_BUCKET",
+      "bucket_name": "corates-pdfs"
+    }
+  ],
+
+  "vars": {
+    "ENVIRONMENT": "development",
+    "DEV_MODE": true,
+    "AUTH_BASE_URL": "http://localhost:8787",
+    "APP_URL": "http://localhost:3010",
+    "SENTRY_DSN": "https://3ddf61abb06680bffc1ebc7f540f05de@o4510738063818752.ingest.us.sentry.io/4510738126274560"
+  },
+
+  "observability": {
+    "enabled": true,
+    "head_sampling_rate": 1,
+    "logs": {
+      "enabled": true,
+      "head_sampling_rate": 1,
+      "persist": true,
+      "invocation_logs": true
+    },
+    "traces": {
+      "enabled": false,
+      "persist": true,
+      "head_sampling_rate": 1
+    }
+  }
+}

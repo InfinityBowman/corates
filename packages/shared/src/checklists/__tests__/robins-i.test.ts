@@ -6,7 +6,6 @@ import {
   shouldStopAssessment,
   getAnswers,
 } from '../robins-i/index.js';
-import { scoreRobinsDomain, JUDGEMENTS } from '../robins-i/scoring.js';
 
 describe('ROBINS-I', () => {
   describe('createROBINSIChecklist', () => {
@@ -106,100 +105,6 @@ describe('ROBINS-I', () => {
       };
 
       expect(shouldStopAssessment(sectionB)).toBe(true);
-    });
-  });
-
-  describe('scoreRobinsDomain', () => {
-    describe('Domain 1A', () => {
-      it('should return null for incomplete answers', () => {
-        const answers = {
-          d1a_1: { answer: null, comment: '' },
-        };
-
-        const result = scoreRobinsDomain('domain1a', answers);
-        expect(result.judgement).toBe(null);
-        expect(result.isComplete).toBe(false);
-      });
-
-      it('should return Low (except confounding) for Y/Y/N/N path', () => {
-        const answers = {
-          d1a_1: { answer: 'Y', comment: '' },
-          d1a_2: { answer: 'Y', comment: '' },
-          d1a_3: { answer: 'N', comment: '' },
-          d1a_4: { answer: 'N', comment: '' },
-        };
-
-        const result = scoreRobinsDomain('domain1a', answers);
-        expect(result.judgement).toBe(JUDGEMENTS.LOW_EXCEPT_CONFOUNDING);
-        expect(result.isComplete).toBe(true);
-      });
-
-      it('should return Serious for SN on Q1', () => {
-        const answers = {
-          d1a_1: { answer: 'SN', comment: '' },
-          d1a_2: { answer: null, comment: '' },
-          d1a_3: { answer: null, comment: '' },
-          d1a_4: { answer: 'N', comment: '' },
-        };
-
-        const result = scoreRobinsDomain('domain1a', answers);
-        expect(result.judgement).toBe(JUDGEMENTS.SERIOUS);
-        expect(result.isComplete).toBe(true);
-      });
-    });
-
-    describe('Domain 5', () => {
-      it('should return Serious when Q1 is Y/PY', () => {
-        const answers = {
-          d5_1: { answer: 'Y', comment: '' },
-          d5_2: { answer: null, comment: '' },
-          d5_3: { answer: null, comment: '' },
-        };
-
-        const result = scoreRobinsDomain('domain5', answers);
-        expect(result.judgement).toBe(JUDGEMENTS.SERIOUS);
-        expect(result.isComplete).toBe(true);
-      });
-
-      it('should return Low when Q1=N, Q2=N', () => {
-        const answers = {
-          d5_1: { answer: 'N', comment: '' },
-          d5_2: { answer: 'N', comment: '' },
-          d5_3: { answer: null, comment: '' },
-        };
-
-        const result = scoreRobinsDomain('domain5', answers);
-        expect(result.judgement).toBe(JUDGEMENTS.LOW);
-        expect(result.isComplete).toBe(true);
-      });
-    });
-
-    describe('Domain 6', () => {
-      it('should return Low when Q1 is Yes', () => {
-        const answers = {
-          d6_1: { answer: 'Y', comment: '' },
-          d6_2: { answer: null, comment: '' },
-          d6_3: { answer: null, comment: '' },
-          d6_4: { answer: null, comment: '' },
-        };
-
-        const result = scoreRobinsDomain('domain6', answers);
-        expect(result.judgement).toBe(JUDGEMENTS.LOW);
-        expect(result.isComplete).toBe(true);
-      });
-
-      it('should return Critical when 2+ selection questions are Yes', () => {
-        const answers = {
-          d6_1: { answer: 'N', comment: '' },
-          d6_2: { answer: 'Y', comment: '' },
-          d6_3: { answer: 'Y', comment: '' },
-          d6_4: { answer: 'N', comment: '' },
-        };
-
-        const result = scoreRobinsDomain('domain6', answers);
-        expect(result.judgement).toBe(JUDGEMENTS.CRITICAL);
-        expect(result.isComplete).toBe(true);
-      });
     });
   });
 

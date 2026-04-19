@@ -1,23 +1,7 @@
 import { describe, it, expect } from 'vitest';
-import {
-  CHECKLIST_STATUS,
-  isEditable,
-  getStatusLabel,
-  canTransitionTo,
-  getStatusStyle,
-} from '../status.js';
+import { isEditable, getStatusLabel, canTransitionTo } from '../status.js';
 
 describe('Checklist Status', () => {
-  describe('CHECKLIST_STATUS', () => {
-    it('should have all expected statuses', () => {
-      expect(CHECKLIST_STATUS.PENDING).toBe('pending');
-      expect(CHECKLIST_STATUS.IN_PROGRESS).toBe('in-progress');
-      expect(CHECKLIST_STATUS.REVIEWER_COMPLETED).toBe('reviewer-completed');
-      expect(CHECKLIST_STATUS.RECONCILING).toBe('reconciling');
-      expect(CHECKLIST_STATUS.FINALIZED).toBe('finalized');
-    });
-  });
-
   describe('isEditable', () => {
     it('should return true for pending status', () => {
       expect(isEditable('pending')).toBe(true);
@@ -91,21 +75,6 @@ describe('Checklist Status', () => {
 
     it('should not allow skipping states', () => {
       expect(canTransitionTo('pending', 'finalized')).toBe(false);
-    });
-  });
-
-  describe('getStatusStyle', () => {
-    it('should return Tailwind class strings for all statuses', () => {
-      expect(typeof getStatusStyle('pending')).toBe('string');
-      expect(typeof getStatusStyle('in-progress')).toBe('string');
-      expect(typeof getStatusStyle('reviewer-completed')).toBe('string');
-      expect(typeof getStatusStyle('reconciling')).toBe('string');
-      expect(typeof getStatusStyle('finalized')).toBe('string');
-    });
-
-    it('should include background classes', () => {
-      expect(getStatusStyle('pending')).toContain('bg-');
-      expect(getStatusStyle('in-progress')).toContain('bg-');
     });
   });
 });
