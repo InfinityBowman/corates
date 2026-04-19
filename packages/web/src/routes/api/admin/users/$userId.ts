@@ -34,14 +34,15 @@ import {
 } from '@corates/shared';
 import { resolveOrgAccess } from '@corates/workers/billing-resolver';
 import { syncMemberToDO } from '@corates/workers/project-sync';
-import { requireAdmin } from '@/server/guards/requireAdmin';
+import { adminMiddleware, type AdminContext } from '@/server/middleware/admin';
 
-type HandlerArgs = { request: Request; params: { userId: string } };
+type HandlerArgs = {
+  request: Request;
+  params: { userId: string };
+  context: { admin: AdminContext };
+};
 
-export const handleGet = async ({ request, params }: HandlerArgs) => {
-  const guard = await requireAdmin(request, env);
-  if (!guard.ok) return guard.response;
-
+export const handleGet = async ({ params }: HandlerArgs) => {
   const { userId } = params;
   const db = createDb(env.DB);
 
@@ -145,15 +146,12 @@ export const handleGet = async ({ request, params }: HandlerArgs) => {
   }
 };
 
-export const handleDelete = async ({ request, params }: HandlerArgs) => {
-  const guard = await requireAdmin(request, env);
-  if (!guard.ok) return guard.response;
-
+export const handleDelete = async ({ params, context }: HandlerArgs) => {
   const { userId } = params;
   const db = createDb(env.DB);
 
   try {
-    if (guard.context.userId === userId) {
+    if (context.admin.userId === userId) {
       return Response.json(
         createValidationError(
           'userId',
@@ -209,5 +207,8 @@ export const handleDelete = async ({ request, params }: HandlerArgs) => {
 };
 
 export const Route = createFileRoute('/api/admin/users/$userId')({
-  server: { handlers: { GET: handleGet, DELETE: handleDelete } },
+  server: {
+    middleware: [adminMiddleware],
+    handlers: { GET: handleGet, DELETE: handleDelete },
+  },
 });

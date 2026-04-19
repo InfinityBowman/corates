@@ -13,7 +13,7 @@ import { eq } from 'drizzle-orm';
 import { z } from 'zod';
 import { createDomainError, SYSTEM_ERRORS, VALIDATION_ERRORS, getPlan } from '@corates/shared';
 import { notifyOrgMembers, EventTypes } from '@corates/workers/notify';
-import { requireAdmin } from '@/server/guards/requireAdmin';
+import { adminMiddleware } from '@/server/middleware/admin';
 
 const CreateSubscriptionBodySchema = z.object({
   plan: z.enum(['starter_team', 'team', 'unlimited_team']),
@@ -28,13 +28,9 @@ const CreateSubscriptionBodySchema = z.object({
 type HandlerArgs = {
   request: Request;
   params: { orgId: string };
-  context?: { cloudflareCtx?: ExecutionContext };
 };
 
-export const handlePost = async ({ request, params, context }: HandlerArgs) => {
-  const guard = await requireAdmin(request, env);
-  if (!guard.ok) return guard.response;
-
+export const handlePost = async ({ request, params }: HandlerArgs) => {
   const { orgId } = params;
   const db = createDb(env.DB);
 
@@ -93,7 +89,7 @@ export const handlePost = async ({ request, params, context }: HandlerArgs) => {
       .returning()
       .get();
 
-    await dispatchSubscriptionNotify(context, db, orgId, 'creation', {
+    await dispatchSubscriptionNotify(db, orgId, 'creation', {
       subscriptionId: created.id,
       tier: created.plan,
       status: created.status,
@@ -124,41 +120,34 @@ interface NotifyData {
 }
 
 export async function dispatchSubscriptionNotify(
-  context: { cloudflareCtx?: ExecutionContext } | undefined,
   db: ReturnType<typeof createDb>,
   orgId: string,
   action: string,
   data: NotifyData,
 ): Promise<void> {
-  const work = (async () => {
-    try {
-      const result = await notifyOrgMembers(env, db, orgId, {
-        type: EventTypes.SUBSCRIPTION_UPDATED,
-        data: data as Record<string, unknown>,
-      });
-      console.log(`[Admin] Subscription ${action} notification sent:`, {
-        orgId,
-        subscriptionId: data.subscriptionId || data.tier,
-        notified: result.notified,
-        failed: result.failed,
-      });
-    } catch (err) {
-      const error = err as Error;
-      console.error(`[Admin] Subscription ${action} notification error:`, {
-        orgId,
-        error: error.message,
-      });
-    }
-  })();
-
-  const cfCtx = context?.cloudflareCtx;
-  if (cfCtx?.waitUntil) {
-    cfCtx.waitUntil(work);
-  } else {
-    await work;
+  try {
+    const result = await notifyOrgMembers(env, db, orgId, {
+      type: EventTypes.SUBSCRIPTION_UPDATED,
+      data: data as Record<string, unknown>,
+    });
+    console.log(`[Admin] Subscription ${action} notification sent:`, {
+      orgId,
+      subscriptionId: data.subscriptionId || data.tier,
+      notified: result.notified,
+      failed: result.failed,
+    });
+  } catch (err) {
+    const error = err as Error;
+    console.error(`[Admin] Subscription ${action} notification error:`, {
+      orgId,
+      error: error.message,
+    });
   }
 }
 
 export const Route = createFileRoute('/api/admin/orgs/$orgId/subscriptions')({
-  server: { handlers: { POST: handlePost } },
+  server: {
+    middleware: [adminMiddleware],
+    handlers: { POST: handlePost },
+  },
 });

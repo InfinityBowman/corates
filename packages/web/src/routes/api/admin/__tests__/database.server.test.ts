@@ -41,30 +41,9 @@ async function asAdmin() {
 }
 
 describe('GET /api/admin/database/tables', () => {
-  it('returns 401 when no session', async () => {
-    const res = await listTables({
-      request: new Request('http://localhost/api/admin/database/tables'),
-    });
-    expect(res.status).toBe(401);
-  });
-
-  it('returns 403 for non-admin', async () => {
-    const u = await buildUser();
-    sessionResult = {
-      user: { id: u.id, email: u.email, name: u.name, role: 'user' },
-      session: { id: 's', userId: u.id, activeOrganizationId: null },
-    };
-    const res = await listTables({
-      request: new Request('http://localhost/api/admin/database/tables'),
-    });
-    expect(res.status).toBe(403);
-  });
-
   it('returns row counts for whitelisted tables', async () => {
     await asAdmin();
-    const res = await listTables({
-      request: new Request('http://localhost/api/admin/database/tables'),
-    });
+    const res = await listTables();
     expect(res.status).toBe(200);
     const body = (await res.json()) as { tables: { name: string; rowCount: number }[] };
     expect(body.tables.length).toBeGreaterThan(0);
@@ -222,9 +201,7 @@ describe('GET /api/admin/database/analytics/*', () => {
       createdAt: Math.floor(Date.now() / 1000),
     });
 
-    const res = await pdfsByOrg({
-      request: new Request('http://localhost/api/admin/database/analytics/pdfs-by-org'),
-    });
+    const res = await pdfsByOrg();
     expect(res.status).toBe(200);
     const body = (await res.json()) as {
       analytics: { orgId: string; pdfCount: number; totalStorage: number }[];
@@ -248,9 +225,7 @@ describe('GET /api/admin/database/analytics/*', () => {
       createdAt: Math.floor(Date.now() / 1000),
     });
 
-    const res = await pdfsByUser({
-      request: new Request('http://localhost/api/admin/database/analytics/pdfs-by-user'),
-    });
+    const res = await pdfsByUser();
     expect(res.status).toBe(200);
     const body = (await res.json()) as {
       analytics: { userId: string; pdfCount: number }[];
@@ -273,9 +248,7 @@ describe('GET /api/admin/database/analytics/*', () => {
       createdAt: Math.floor(Date.now() / 1000),
     });
 
-    const res = await pdfsByProject({
-      request: new Request('http://localhost/api/admin/database/analytics/pdfs-by-project'),
-    });
+    const res = await pdfsByProject();
     expect(res.status).toBe(200);
     const body = (await res.json()) as {
       analytics: { projectId: string; orgId: string; pdfCount: number }[];

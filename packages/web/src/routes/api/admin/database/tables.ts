@@ -10,13 +10,10 @@ import { createDb } from '@corates/db/client';
 import { dbSchema } from '@corates/db/schema';
 import { count } from 'drizzle-orm';
 import { createDomainError, SYSTEM_ERRORS } from '@corates/shared';
-import { requireAdmin } from '@/server/guards/requireAdmin';
+import { adminMiddleware } from '@/server/middleware/admin';
 import { ALLOWED_TABLES, type AllowedTableName } from '@/server/lib/dbTables';
 
-export const handleGet = async ({ request }: { request: Request }) => {
-  const guard = await requireAdmin(request, env);
-  if (!guard.ok) return guard.response;
-
+export const handleGet = async () => {
   try {
     const db = createDb(env.DB);
 
@@ -49,5 +46,8 @@ export const handleGet = async ({ request }: { request: Request }) => {
 };
 
 export const Route = createFileRoute('/api/admin/database/tables')({
-  server: { handlers: { GET: handleGet } },
+  server: {
+    middleware: [adminMiddleware],
+    handlers: { GET: handleGet },
+  },
 });

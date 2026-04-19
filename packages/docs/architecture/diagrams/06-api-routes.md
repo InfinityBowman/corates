@@ -45,15 +45,15 @@ flowchart LR
 
 Each handler composes checks explicitly -- there is no single middleware pipeline. Common ingredients:
 
-| Helper                   | From                                   | Purpose                          |
-| ------------------------ | -------------------------------------- | -------------------------------- |
-| `getSession`             | `@corates/workers/auth`                | Resolves the Better Auth session |
-| `requireOrgOwner`        | `@corates/workers/policies`            | Enforces org owner role          |
-| `requireProjectEdit`     | `@corates/workers/policies`            | Enforces project edit permission |
-| `getProjectMembership`   | `@corates/workers/policies`            | Looks up project role            |
-| `requireMemberRemoval` / `requireSafeRoleChange` | `@corates/workers/policies` | Member management safety |
-| `checkRateLimit`         | `@/server/rateLimit`                   | Per-endpoint rate limits         |
-| `resolveOrgAccess`       | `@corates/workers/billing-resolver`    | Plan-aware org access check      |
+| Helper                                           | From                                | Purpose                          |
+| ------------------------------------------------ | ----------------------------------- | -------------------------------- |
+| `getSession`                                     | `@corates/workers/auth`             | Resolves the Better Auth session |
+| `requireOrgOwner`                                | `@corates/workers/policies`         | Enforces org owner role          |
+| `requireProjectEdit`                             | `@corates/workers/policies`         | Enforces project edit permission |
+| `getProjectMembership`                           | `@corates/workers/policies`         | Looks up project role            |
+| `requireMemberRemoval` / `requireSafeRoleChange` | `@corates/workers/policies`         | Member management safety         |
+| `checkRateLimit`                                 | `@/server/rateLimit`                | Per-endpoint rate limits         |
+| `resolveOrgAccess`                               | `@corates/workers/billing-resolver` | Plan-aware org access check      |
 
 ## API Endpoints
 

@@ -5,7 +5,7 @@ import {
   seedSubscription,
   seedStripeEventLedger,
 } from '@/__tests__/server/helpers';
-import { buildAdminUser, buildUser, resetCounter, asOrgId } from '@/__tests__/server/factories';
+import { buildAdminUser, resetCounter, asOrgId } from '@/__tests__/server/factories';
 import { handleGet as reconcile } from '../orgs/$orgId/billing/reconcile';
 import { handleGet as stuckStates } from '../billing/stuck-states';
 import { handleGet as ledger } from '../billing/ledger';
@@ -55,21 +55,6 @@ function stuckReq(qs = ''): Request {
 }
 
 describe('GET /api/admin/orgs/:orgId/billing/reconcile', () => {
-  it('returns 401 when no session', async () => {
-    const res = await reconcile({ request: reconcileReq('x'), params: { orgId: asOrgId('x') } });
-    expect(res.status).toBe(401);
-  });
-
-  it('returns 403 when caller is not admin', async () => {
-    const u = await buildUser();
-    sessionResult = {
-      user: { id: u.id, email: u.email, name: u.name, role: 'user' },
-      session: { id: 'sess', userId: u.id, activeOrganizationId: null },
-    };
-    const res = await reconcile({ request: reconcileReq('x'), params: { orgId: asOrgId('x') } });
-    expect(res.status).toBe(403);
-  });
-
   it('returns 400 for unknown org', async () => {
     await asAdmin();
     const res = await reconcile({
@@ -205,11 +190,6 @@ describe('GET /api/admin/orgs/:orgId/billing/reconcile', () => {
 });
 
 describe('GET /api/admin/billing/ledger', () => {
-  it('returns 401 when no session', async () => {
-    const res = await ledger({ request: ledgerReq() });
-    expect(res.status).toBe(401);
-  });
-
   it('returns ledger entries with stats', async () => {
     await asAdmin();
     const nowSec = Math.floor(Date.now() / 1000);
@@ -293,11 +273,6 @@ describe('GET /api/admin/billing/ledger', () => {
 });
 
 describe('GET /api/admin/billing/stuck-states', () => {
-  it('returns 401 when no session', async () => {
-    const res = await stuckStates({ request: stuckReq() });
-    expect(res.status).toBe(401);
-  });
-
   it('flags incomplete subscriptions older than threshold', async () => {
     await asAdmin();
     const nowSec = Math.floor(Date.now() / 1000);

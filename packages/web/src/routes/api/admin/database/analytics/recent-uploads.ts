@@ -10,12 +10,9 @@ import { createDb } from '@corates/db/client';
 import { mediaFiles, organization, projects, user } from '@corates/db/schema';
 import { desc, eq } from 'drizzle-orm';
 import { createDomainError, SYSTEM_ERRORS } from '@corates/shared';
-import { requireAdmin } from '@/server/guards/requireAdmin';
+import { adminMiddleware } from '@/server/middleware/admin';
 
 export const handleGet = async ({ request }: { request: Request }) => {
-  const guard = await requireAdmin(request, env);
-  if (!guard.ok) return guard.response;
-
   try {
     const url = new URL(request.url);
     const limit = Math.min(
@@ -82,5 +79,8 @@ export const handleGet = async ({ request }: { request: Request }) => {
 };
 
 export const Route = createFileRoute('/api/admin/database/analytics/recent-uploads')({
-  server: { handlers: { GET: handleGet } },
+  server: {
+    middleware: [adminMiddleware],
+    handlers: { GET: handleGet },
+  },
 });

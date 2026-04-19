@@ -19,14 +19,11 @@ import {
 } from '@corates/shared';
 import type { OrgId } from '@corates/shared/ids';
 import { resolveOrgAccess } from '@corates/workers/billing-resolver';
-import { requireAdmin } from '@/server/guards/requireAdmin';
+import { adminMiddleware } from '@/server/middleware/admin';
 
 type HandlerArgs = { request: Request; params: { orgId: OrgId } };
 
-export const handleGet = async ({ request, params }: HandlerArgs) => {
-  const guard = await requireAdmin(request, env);
-  if (!guard.ok) return guard.response;
-
+export const handleGet = async ({ params }: HandlerArgs) => {
   const { orgId } = params;
   const db = createDb(env.DB);
 
@@ -92,5 +89,8 @@ export const handleGet = async ({ request, params }: HandlerArgs) => {
 };
 
 export const Route = createFileRoute('/api/admin/orgs/$orgId')({
-  server: { handlers: { GET: handleGet } },
+  server: {
+    middleware: [adminMiddleware],
+    handlers: { GET: handleGet },
+  },
 });

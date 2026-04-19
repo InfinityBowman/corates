@@ -15,7 +15,7 @@ import { z } from 'zod';
 import { createDomainError, SYSTEM_ERRORS, VALIDATION_ERRORS } from '@corates/shared';
 import type { OrgId, OrgAccessGrantId } from '@corates/shared/ids';
 import { getGrantById, revokeGrant, updateGrantExpiresAt } from '@corates/db/org-access-grants';
-import { requireAdmin } from '@/server/guards/requireAdmin';
+import { adminMiddleware } from '@/server/middleware/admin';
 
 const UpdateGrantBodySchema = z.object({
   expiresAt: z.coerce.date().optional(),
@@ -25,9 +25,6 @@ const UpdateGrantBodySchema = z.object({
 type HandlerArgs = { request: Request; params: { orgId: OrgId; grantId: OrgAccessGrantId } };
 
 export const handlePut = async ({ request, params }: HandlerArgs) => {
-  const guard = await requireAdmin(request, env);
-  if (!guard.ok) return guard.response;
-
   const { orgId, grantId } = params;
   const db = createDb(env.DB);
 
@@ -96,10 +93,7 @@ export const handlePut = async ({ request, params }: HandlerArgs) => {
   }
 };
 
-export const handleDelete = async ({ request, params }: HandlerArgs) => {
-  const guard = await requireAdmin(request, env);
-  if (!guard.ok) return guard.response;
-
+export const handleDelete = async ({ params }: HandlerArgs) => {
   const { orgId, grantId } = params;
   const db = createDb(env.DB);
 
@@ -132,5 +126,8 @@ export const handleDelete = async ({ request, params }: HandlerArgs) => {
 };
 
 export const Route = createFileRoute('/api/admin/orgs/$orgId/grants/$grantId')({
-  server: { handlers: { PUT: handlePut, DELETE: handleDelete } },
+  server: {
+    middleware: [adminMiddleware],
+    handlers: { PUT: handlePut, DELETE: handleDelete },
+  },
 });

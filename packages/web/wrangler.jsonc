@@ -81,11 +81,12 @@
     }
   },
 
+  // VITE_* vars are inlined into the client bundle by Vite at build time
+  // (read from `import.meta.env`), not from this file. They live in
+  // .env.production locally and as Workers Builds env vars in CI.
   "vars": {
     "ENVIRONMENT": "development",
     "DEV_MODE": true,
-    "VITE_PUBLIC_APP_URL": "https://corates.org",
-    "VITE_API_URL": "https://corates.org",
     "APP_URL": "http://localhost:3010",
     "AUTH_BASE_URL": "http://localhost:3010",
     "SENTRY_DSN": "https://3ddf61abb06680bffc1ebc7f540f05de@o4510738063818752.ingest.us.sentry.io/4510738126274560"
@@ -153,10 +154,10 @@
       },
       "vars": {
         "ENVIRONMENT": "production",
-        "VITE_PUBLIC_APP_URL": "https://corates.org",
-        "VITE_API_URL": "https://corates.org",
+        "DEV_MODE": false,
         "APP_URL": "https://corates.org",
-        "AUTH_BASE_URL": "https://corates.org"
+        "AUTH_BASE_URL": "https://corates.org",
+        "SENTRY_DSN": "https://3ddf61abb06680bffc1ebc7f540f05de@o4510738063818752.ingest.us.sentry.io/4510738126274560"
       }
     }
   }

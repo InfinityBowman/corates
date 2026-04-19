@@ -8,14 +8,11 @@ import { createFileRoute } from '@tanstack/react-router';
 import { env } from 'cloudflare:workers';
 import { createDomainError, SYSTEM_ERRORS } from '@corates/shared';
 import { createStripeClient } from '@corates/workers/stripe';
-import { requireAdmin } from '@/server/guards/requireAdmin';
+import { adminMiddleware } from '@/server/middleware/admin';
 
 type HandlerArgs = { request: Request; params: { customerId: string } };
 
-export const handleGet = async ({ request, params }: HandlerArgs) => {
-  const guard = await requireAdmin(request, env);
-  if (!guard.ok) return guard.response;
-
+export const handleGet = async ({ params }: HandlerArgs) => {
   const { customerId } = params;
 
   if (!env.STRIPE_SECRET_KEY) {
@@ -69,5 +66,8 @@ export const handleGet = async ({ request, params }: HandlerArgs) => {
 };
 
 export const Route = createFileRoute('/api/admin/stripe/customer/$customerId/payment-methods')({
-  server: { handlers: { GET: handleGet } },
+  server: {
+    middleware: [adminMiddleware],
+    handlers: { GET: handleGet },
+  },
 });

@@ -12,7 +12,7 @@ import { stripeEventLedger, subscription } from '@corates/db/schema';
 import { desc, eq } from 'drizzle-orm';
 import { createDomainError, SYSTEM_ERRORS } from '@corates/shared';
 import { LedgerStatus } from '@corates/db/stripe-event-ledger';
-import { requireAdmin } from '@/server/guards/requireAdmin';
+import { adminMiddleware } from '@/server/middleware/admin';
 
 interface StuckOrg {
   type: string;
@@ -28,9 +28,6 @@ interface StuckOrg {
 }
 
 export const handleGet = async ({ request }: { request: Request }) => {
-  const guard = await requireAdmin(request, env);
-  if (!guard.ok) return guard.response;
-
   const url = new URL(request.url);
   const incompleteThresholdMinutes = parseInt(
     url.searchParams.get('incompleteThreshold') || '30',
@@ -162,5 +159,8 @@ export const handleGet = async ({ request }: { request: Request }) => {
 };
 
 export const Route = createFileRoute('/api/admin/billing/stuck-states')({
-  server: { handlers: { GET: handleGet } },
+  server: {
+    middleware: [adminMiddleware],
+    handlers: { GET: handleGet },
+  },
 });

@@ -9,13 +9,10 @@ import { createDb } from '@corates/db/client';
 import { projects } from '@corates/db/schema';
 import { count, gte, sql } from 'drizzle-orm';
 import { createDomainError, SYSTEM_ERRORS } from '@corates/shared';
-import { requireAdmin } from '@/server/guards/requireAdmin';
+import { adminMiddleware } from '@/server/middleware/admin';
 import { fillMissingDays } from '@/server/lib/fillMissingDays';
 
 export const handleGet = async ({ request }: { request: Request }) => {
-  const guard = await requireAdmin(request, env);
-  if (!guard.ok) return guard.response;
-
   const url = new URL(request.url);
   const days = Math.min(parseInt(url.searchParams.get('days') || '30', 10) || 30, 90);
 
@@ -59,5 +56,8 @@ export const handleGet = async ({ request }: { request: Request }) => {
 };
 
 export const Route = createFileRoute('/api/admin/stats/projects')({
-  server: { handlers: { GET: handleGet } },
+  server: {
+    middleware: [adminMiddleware],
+    handlers: { GET: handleGet },
+  },
 });

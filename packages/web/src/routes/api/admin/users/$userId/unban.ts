@@ -9,14 +9,11 @@ import { createDb } from '@corates/db/client';
 import { user } from '@corates/db/schema';
 import { eq } from 'drizzle-orm';
 import { createDomainError, SYSTEM_ERRORS } from '@corates/shared';
-import { requireAdmin } from '@/server/guards/requireAdmin';
+import { adminMiddleware } from '@/server/middleware/admin';
 
 type HandlerArgs = { request: Request; params: { userId: string } };
 
-export const handlePost = async ({ request, params }: HandlerArgs) => {
-  const guard = await requireAdmin(request, env);
-  if (!guard.ok) return guard.response;
-
+export const handlePost = async ({ params }: HandlerArgs) => {
   const { userId } = params;
   const db = createDb(env.DB);
 
@@ -46,5 +43,8 @@ export const handlePost = async ({ request, params }: HandlerArgs) => {
 };
 
 export const Route = createFileRoute('/api/admin/users/$userId/unban')({
-  server: { handlers: { POST: handlePost } },
+  server: {
+    middleware: [adminMiddleware],
+    handlers: { POST: handlePost },
+  },
 });

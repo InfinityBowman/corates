@@ -4,7 +4,6 @@ import { resetTestDatabase } from '@/__tests__/server/helpers';
 import {
   buildAdminUser,
   buildOrg,
-  buildUser,
   resetCounter,
   asOrgId,
   asGrantId,
@@ -63,15 +62,6 @@ async function asAdmin() {
   return admin;
 }
 
-async function asUser() {
-  const u = await buildUser();
-  sessionResult = {
-    user: { id: u.id, email: u.email, name: u.name, role: 'user' },
-    session: { id: 'sess', userId: u.id, activeOrganizationId: null },
-  };
-  return u;
-}
-
 function jsonReq(path: string, method: string, body?: unknown): Request {
   return new Request(`http://localhost${path}`, {
     method,
@@ -81,23 +71,6 @@ function jsonReq(path: string, method: string, body?: unknown): Request {
 }
 
 describe('GET /api/admin/orgs/:orgId/billing', () => {
-  it('returns 401 when no session', async () => {
-    const res = await billingHandler({
-      request: new Request('http://localhost/api/admin/orgs/org-x/billing'),
-      params: { orgId: asOrgId('org-x') },
-    });
-    expect(res.status).toBe(401);
-  });
-
-  it('returns 403 for non-admin', async () => {
-    await asUser();
-    const res = await billingHandler({
-      request: new Request('http://localhost/api/admin/orgs/org-x/billing'),
-      params: { orgId: asOrgId('org-x') },
-    });
-    expect(res.status).toBe(403);
-  });
-
   it('returns 400 for non-existent org', async () => {
     await asAdmin();
     const res = await billingHandler({
@@ -155,26 +128,6 @@ describe('GET /api/admin/orgs/:orgId/billing', () => {
 });
 
 describe('POST /api/admin/orgs/:orgId/subscriptions', () => {
-  it('returns 401 when no session', async () => {
-    const res = await createSubscriptionHandler({
-      request: jsonReq('/api/admin/orgs/org-x/subscriptions', 'POST', {}),
-      params: { orgId: asOrgId('org-x') },
-    });
-    expect(res.status).toBe(401);
-  });
-
-  it('returns 403 for non-admin', async () => {
-    await asUser();
-    const res = await createSubscriptionHandler({
-      request: jsonReq('/api/admin/orgs/org-x/subscriptions', 'POST', {
-        plan: 'team',
-        status: 'active',
-      }),
-      params: { orgId: asOrgId('org-x') },
-    });
-    expect(res.status).toBe(403);
-  });
-
   it('returns 400 for invalid plan enum', async () => {
     await asAdmin();
     const { org } = await buildOrg();

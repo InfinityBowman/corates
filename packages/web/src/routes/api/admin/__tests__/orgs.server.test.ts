@@ -4,7 +4,6 @@ import {
   buildOrg,
   buildOrgMember,
   buildAdminUser,
-  buildUser,
   resetCounter,
   asOrgId,
 } from '@/__tests__/server/factories';
@@ -46,23 +45,6 @@ async function asAdmin() {
 }
 
 describe('GET /api/admin/orgs', () => {
-  it('returns 401 when no session', async () => {
-    const res = await handleListOrgs({ request: listReq() });
-    expect(res.status).toBe(401);
-  });
-
-  it('returns 403 when caller is not admin', async () => {
-    const user = await buildUser();
-    sessionResult = {
-      user: { id: user.id, email: user.email, name: user.name, role: 'user' },
-      session: { id: 'sess', userId: user.id, activeOrganizationId: null },
-    };
-    const res = await handleListOrgs({ request: listReq() });
-    expect(res.status).toBe(403);
-    const body = (await res.json()) as { details?: { reason?: string } };
-    expect(body.details?.reason).toBe('admin_required');
-  });
-
   it('returns paginated orgs', async () => {
     await asAdmin();
     await buildOrg({ org: { id: 'org-a', name: 'Org A', slug: 'org-a' } });
@@ -140,27 +122,6 @@ describe('GET /api/admin/orgs', () => {
 });
 
 describe('GET /api/admin/orgs/:orgId', () => {
-  it('returns 401 when no session', async () => {
-    const res = await handleOrgDetails({
-      request: detailsReq('org-1'),
-      params: { orgId: asOrgId('org-1') },
-    });
-    expect(res.status).toBe(401);
-  });
-
-  it('returns 403 when caller is not admin', async () => {
-    const user = await buildUser();
-    sessionResult = {
-      user: { id: user.id, email: user.email, name: user.name, role: 'user' },
-      session: { id: 'sess', userId: user.id, activeOrganizationId: null },
-    };
-    const res = await handleOrgDetails({
-      request: detailsReq('org-1'),
-      params: { orgId: asOrgId('org-1') },
-    });
-    expect(res.status).toBe(403);
-  });
-
   it('returns 403 for non-existent orgId', async () => {
     await asAdmin();
     const res = await handleOrgDetails({

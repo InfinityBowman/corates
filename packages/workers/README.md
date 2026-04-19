@@ -20,29 +20,29 @@ The actual HTTP routes live in `packages/web/src/routes/api/` (TanStack Start) a
 
 The package exposes subpath exports (see `package.json`):
 
-| Import                                         | What it provides                                                 |
-| ---------------------------------------------- | ---------------------------------------------------------------- |
-| `@corates/workers/auth`                        | `getSession(request, env)` session helper                        |
-| `@corates/workers/auth-config`                 | `createAuth(env)` -- Better Auth instance                        |
-| `@corates/workers/auth-admin`                  | Admin plugin helpers                                             |
-| `@corates/workers/durable-objects`             | `ProjectDoc`, `UserSession` classes (registered by `packages/web`)|
-| `@corates/workers/policies`                    | Authorization policies                                           |
-| `@corates/workers/billing-resolver`            | `resolveOrgAccess`, `validatePlanChange`                         |
-| `@corates/workers/commands/invitations`        | Invitation create/accept/resend commands                         |
-| `@corates/workers/commands/projects`           | Project create/update commands                                   |
-| `@corates/workers/commands/members`            | Member add/remove commands                                       |
-| `@corates/workers/commands/billing`            | Billing-related commands (grant handling, etc.)                  |
-| `@corates/workers/stripe`                      | Stripe client factory and helpers                                |
-| `@corates/workers/queue`                       | Queue consumer for email delivery                                |
-| `@corates/workers/project-sync`                | Yjs project sync utilities                                       |
-| `@corates/workers/project-doc-id`              | Project DO ID derivation                                         |
-| `@corates/workers/notify`                      | Notification dispatch (to `UserSession` DOs)                     |
-| `@corates/workers/media-files`                 | R2 media file helpers                                            |
-| `@corates/workers/ssrf-protection`             | SSRF protection for outbound fetches                             |
-| `@corates/workers/quota-transaction`           | Transactional quota checks                                       |
-| `@corates/workers/constants`                   | Shared backend constants                                         |
-| `@corates/workers/email-templates`             | Email template rendering                                         |
-| `@corates/workers/config/origins`              | Allowed origins config                                           |
+| Import                                  | What it provides                                                   |
+| --------------------------------------- | ------------------------------------------------------------------ |
+| `@corates/workers/auth`                 | `getSession(request, env)` session helper                          |
+| `@corates/workers/auth-config`          | `createAuth(env)` -- Better Auth instance                          |
+| `@corates/workers/auth-admin`           | Admin plugin helpers                                               |
+| `@corates/workers/durable-objects`      | `ProjectDoc`, `UserSession` classes (registered by `packages/web`) |
+| `@corates/workers/policies`             | Authorization policies                                             |
+| `@corates/workers/billing-resolver`     | `resolveOrgAccess`, `validatePlanChange`                           |
+| `@corates/workers/commands/invitations` | Invitation create/accept/resend commands                           |
+| `@corates/workers/commands/projects`    | Project create/update commands                                     |
+| `@corates/workers/commands/members`     | Member add/remove commands                                         |
+| `@corates/workers/commands/billing`     | Billing-related commands (grant handling, etc.)                    |
+| `@corates/workers/stripe`               | Stripe client factory and helpers                                  |
+| `@corates/workers/queue`                | Queue consumer for email delivery                                  |
+| `@corates/workers/project-sync`         | Yjs project sync utilities                                         |
+| `@corates/workers/project-doc-id`       | Project DO ID derivation                                           |
+| `@corates/workers/notify`               | Notification dispatch (to `UserSession` DOs)                       |
+| `@corates/workers/media-files`          | R2 media file helpers                                              |
+| `@corates/workers/ssrf-protection`      | SSRF protection for outbound fetches                               |
+| `@corates/workers/quota-transaction`    | Transactional quota checks                                         |
+| `@corates/workers/constants`            | Shared backend constants                                           |
+| `@corates/workers/email-templates`      | Email template rendering                                           |
+| `@corates/workers/config/origins`       | Allowed origins config                                             |
 
 ## Development
 

@@ -9,7 +9,7 @@ import { env } from 'cloudflare:workers';
 import { createDomainError, SYSTEM_ERRORS } from '@corates/shared';
 import { createStripeClient } from '@corates/workers/stripe';
 import type Stripe from 'stripe';
-import { requireAdmin } from '@/server/guards/requireAdmin';
+import { adminMiddleware } from '@/server/middleware/admin';
 
 interface InvoiceWithSubscription extends Stripe.Invoice {
   subscription?: string | Stripe.Subscription | null;
@@ -18,9 +18,6 @@ interface InvoiceWithSubscription extends Stripe.Invoice {
 type HandlerArgs = { request: Request; params: { customerId: string } };
 
 export const handleGet = async ({ request, params }: HandlerArgs) => {
-  const guard = await requireAdmin(request, env);
-  if (!guard.ok) return guard.response;
-
   const { customerId } = params;
   const url = new URL(request.url);
   const parsedLimit = parseInt(url.searchParams.get('limit') || '10', 10);
@@ -84,5 +81,8 @@ export const handleGet = async ({ request, params }: HandlerArgs) => {
 };
 
 export const Route = createFileRoute('/api/admin/stripe/customer/$customerId/invoices')({
-  server: { handlers: { GET: handleGet } },
+  server: {
+    middleware: [adminMiddleware],
+    handlers: { GET: handleGet },
+  },
 });

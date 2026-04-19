@@ -13,14 +13,11 @@ import { projects } from '@corates/db/schema';
 import { eq } from 'drizzle-orm';
 import { createDomainError, PROJECT_ERRORS, SYSTEM_ERRORS } from '@corates/shared';
 import { getProjectDocStub } from '@corates/workers/project-doc-id';
-import { requireAdmin } from '@/server/guards/requireAdmin';
+import { adminMiddleware } from '@/server/middleware/admin';
 
 type HandlerArgs = { request: Request; params: { projectId: string } };
 
-export const handleGet = async ({ request, params }: HandlerArgs) => {
-  const guard = await requireAdmin(request, env);
-  if (!guard.ok) return guard.response;
-
+export const handleGet = async ({ params }: HandlerArgs) => {
   const { projectId } = params;
   const db = createDb(env.DB);
 
@@ -50,5 +47,8 @@ export const handleGet = async ({ request, params }: HandlerArgs) => {
 };
 
 export const Route = createFileRoute('/api/admin/projects/$projectId/doc-stats')({
-  server: { handlers: { GET: handleGet } },
+  server: {
+    middleware: [adminMiddleware],
+    handlers: { GET: handleGet },
+  },
 });

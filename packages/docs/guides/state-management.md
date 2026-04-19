@@ -16,16 +16,16 @@ Use local React state (`useState`, `useReducer`) for:
 - UI state scoped to a single component (open/close, form drafts)
 - Values that don't need to be read from non-component code
 
-Use TanStack Query for server state that is *only* read from components. The Zustand project store exists because Yjs and the sync layer write to it from outside React.
+Use TanStack Query for server state that is _only_ read from components. The Zustand project store exists because Yjs and the sync layer write to it from outside React.
 
 ## Current stores
 
-| Store | File | Middleware |
-| --- | --- | --- |
-| `useAuthStore` | `stores/authStore.ts` | none |
-| `useProjectStore` | `stores/projectStore.ts` | `immer` |
-| `useAdminStore` | `stores/adminStore.ts` | none |
-| `usePdfPreviewStore` | `stores/pdfPreviewStore.ts` | none |
+| Store                | File                        | Middleware |
+| -------------------- | --------------------------- | ---------- |
+| `useAuthStore`       | `stores/authStore.ts`       | none       |
+| `useProjectStore`    | `stores/projectStore.ts`    | `immer`    |
+| `useAdminStore`      | `stores/adminStore.ts`      | none       |
+| `usePdfPreviewStore` | `stores/pdfPreviewStore.ts` | none       |
 
 ## Store shape
 
@@ -214,8 +214,7 @@ The `typeof window === 'undefined'` guard matters because the app is SSR'd by Ta
 `useAuthStore` uses `BroadcastChannel` to sync sign-in/out across tabs. When one tab signs out, every other tab refetches its session.
 
 ```ts
-const authChannel =
-  typeof BroadcastChannel !== 'undefined' ? new BroadcastChannel('corates-auth') : null;
+const authChannel = typeof BroadcastChannel !== 'undefined' ? new BroadcastChannel('corates-auth') : null;
 
 function broadcastAuthChange() {
   authChannel?.postMessage({ type: 'auth-changed', timestamp: Date.now() });

@@ -106,11 +106,15 @@ export const session = sqliteTable('session', {
     .notNull()
     .$type<UserId>()
     .references(() => user.id, { onDelete: 'cascade' }),
-  impersonatedBy: text('impersonatedBy').$type<UserId>().references(() => user.id, { onDelete: 'set null' }),
+  impersonatedBy: text('impersonatedBy')
+    .$type<UserId>()
+    .references(() => user.id, { onDelete: 'set null' }),
   // Organization plugin field - tracks user's active organization
-  activeOrganizationId: text('activeOrganizationId').$type<OrgId>().references(() => organization.id, {
-    onDelete: 'set null',
-  }),
+  activeOrganizationId: text('activeOrganizationId')
+    .$type<OrgId>()
+    .references(() => organization.id, {
+      onDelete: 'set null',
+    }),
 });
 
 // Accounts table (for OAuth)
@@ -184,7 +188,9 @@ export const mediaFiles = sqliteTable('mediaFiles', {
   originalName: text('originalName'),
   fileType: text('fileType'),
   fileSize: integer('fileSize'),
-  uploadedBy: text('uploadedBy').$type<UserId>().references(() => user.id, { onDelete: 'set null' }),
+  uploadedBy: text('uploadedBy')
+    .$type<UserId>()
+    .references(() => user.id, { onDelete: 'set null' }),
   bucketKey: text('bucketKey').notNull(),
   orgId: text('orgId')
     .notNull()

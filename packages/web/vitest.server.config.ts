@@ -18,10 +18,7 @@ export default defineConfig({
       // let createStartHandler boot inside the test-worker so SELF.fetch can
       // exercise the real route -> middleware -> handler chain.
       '#tanstack-router-entry': resolve(__dirname, 'src/router.tsx'),
-      '#tanstack-start-entry': resolve(
-        __dirname,
-        'src/__tests__/server/tanstack-start-entry.ts',
-      ),
+      '#tanstack-start-entry': resolve(__dirname, 'src/__tests__/server/tanstack-start-entry.ts'),
       '#tanstack-start-plugin-adapters': resolve(
         __dirname,
         'src/__tests__/server/tanstack-start-plugin-adapters.ts',

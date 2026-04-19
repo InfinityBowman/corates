@@ -20,7 +20,7 @@ import {
 import type { OrgId } from '@corates/shared/ids';
 import { getLedgerEntriesByOrgId, LedgerStatus } from '@corates/db/stripe-event-ledger';
 import { createStripeClient } from '@corates/workers/stripe';
-import { requireAdmin } from '@/server/guards/requireAdmin';
+import { adminMiddleware } from '@/server/middleware/admin';
 
 interface StuckState {
   type: string;
@@ -47,9 +47,6 @@ interface StuckState {
 type HandlerArgs = { request: Request; params: { orgId: OrgId } };
 
 export const handleGet = async ({ request, params }: HandlerArgs) => {
-  const guard = await requireAdmin(request, env);
-  if (!guard.ok) return guard.response;
-
   const { orgId } = params;
   const url = new URL(request.url);
   const checkStripe = url.searchParams.get('checkStripe') === 'true';
@@ -295,5 +292,8 @@ export const handleGet = async ({ request, params }: HandlerArgs) => {
 };
 
 export const Route = createFileRoute('/api/admin/orgs/$orgId/billing/reconcile')({
-  server: { handlers: { GET: handleGet } },
+  server: {
+    middleware: [adminMiddleware],
+    handlers: { GET: handleGet },
+  },
 });

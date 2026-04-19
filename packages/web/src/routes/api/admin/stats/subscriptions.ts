@@ -8,12 +8,9 @@ import { createFileRoute } from '@tanstack/react-router';
 import { env } from 'cloudflare:workers';
 import { createStripeClient } from '@corates/workers/stripe';
 import { createDomainError, SYSTEM_ERRORS } from '@corates/shared';
-import { requireAdmin } from '@/server/guards/requireAdmin';
+import { adminMiddleware } from '@/server/middleware/admin';
 
-export const handleGet = async ({ request }: { request: Request }) => {
-  const guard = await requireAdmin(request, env);
-  if (!guard.ok) return guard.response;
-
+export const handleGet = async () => {
   try {
     const stripe = createStripeClient(env);
     const statusCounts = await Promise.all([
@@ -47,5 +44,8 @@ export const handleGet = async ({ request }: { request: Request }) => {
 };
 
 export const Route = createFileRoute('/api/admin/stats/subscriptions')({
-  server: { handlers: { GET: handleGet } },
+  server: {
+    middleware: [adminMiddleware],
+    handlers: { GET: handleGet },
+  },
 });

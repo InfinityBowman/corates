@@ -7,17 +7,14 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { env } from 'cloudflare:workers';
 import { createDomainError, SYSTEM_ERRORS } from '@corates/shared';
-import { requireAdmin } from '@/server/guards/requireAdmin';
+import { adminMiddleware } from '@/server/middleware/admin';
 
 function parseProjectId(key: string): string | null {
   const match = key.match(/^projects\/([^/]+)\/studies\/[^/]+\/.+$/);
   return match?.[1] ?? null;
 }
 
-export const handleGet = async ({ request }: { request: Request }) => {
-  const guard = await requireAdmin(request, env);
-  if (!guard.ok) return guard.response;
-
+export const handleGet = async () => {
   try {
     let cursor: string | undefined = undefined;
     let totalFiles = 0;
@@ -74,5 +71,8 @@ export const handleGet = async ({ request }: { request: Request }) => {
 };
 
 export const Route = createFileRoute('/api/admin/storage/stats')({
-  server: { handlers: { GET: handleGet } },
+  server: {
+    middleware: [adminMiddleware],
+    handlers: { GET: handleGet },
+  },
 });

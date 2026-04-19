@@ -10,12 +10,9 @@ import { createDb } from '@corates/db/client';
 import { mediaFiles, organization } from '@corates/db/schema';
 import { count, desc, eq, sum } from 'drizzle-orm';
 import { createDomainError, SYSTEM_ERRORS } from '@corates/shared';
-import { requireAdmin } from '@/server/guards/requireAdmin';
+import { adminMiddleware } from '@/server/middleware/admin';
 
-export const handleGet = async ({ request }: { request: Request }) => {
-  const guard = await requireAdmin(request, env);
-  if (!guard.ok) return guard.response;
-
+export const handleGet = async () => {
   try {
     const db = createDb(env.DB);
     const results = await db
@@ -54,5 +51,8 @@ export const handleGet = async ({ request }: { request: Request }) => {
 };
 
 export const Route = createFileRoute('/api/admin/database/analytics/pdfs-by-org')({
-  server: { handlers: { GET: handleGet } },
+  server: {
+    middleware: [adminMiddleware],
+    handlers: { GET: handleGet },
+  },
 });
