@@ -1,4 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router';
+import { logMiddleware } from '@/server/middleware/log';
 import { env } from 'cloudflare:workers';
 import { createDomainError, SYSTEM_ERRORS } from '@corates/shared';
 
@@ -29,6 +30,7 @@ export const handler = async () => {
 
 export const Route = createFileRoute('/api/db/migrate')({
   server: {
+    middleware: [logMiddleware],
     handlers: {
       POST: handler,
     },

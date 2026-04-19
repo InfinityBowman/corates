@@ -7,6 +7,7 @@
  * while preserving any Set-Cookie headers (auto-sign-in after verification).
  */
 import { createFileRoute } from '@tanstack/react-router';
+import { logMiddleware, type RequestLogger } from '@/server/middleware/log';
 import { env } from 'cloudflare:workers';
 import { createAuth } from '@corates/workers/auth-config';
 import {
@@ -15,7 +16,7 @@ import {
   getEmailVerificationErrorPage,
 } from '@/server/lib/authHtmlPages';
 
-type HandlerArgs = { request: Request; context?: { cloudflareCtx?: ExecutionContext } };
+type HandlerArgs = { request: Request; context: { log: RequestLogger; cloudflareCtx?: ExecutionContext } };
 
 export const handleGet = async ({ request, context }: HandlerArgs) => {
   try {
@@ -57,5 +58,5 @@ export const handleGet = async ({ request, context }: HandlerArgs) => {
 };
 
 export const Route = createFileRoute('/api/auth/verify-email')({
-  server: { handlers: { GET: handleGet } },
+  server: { middleware: [logMiddleware], handlers: { GET: handleGet } },
 });

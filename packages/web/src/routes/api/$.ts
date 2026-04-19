@@ -8,6 +8,7 @@
  */
 import { createFileRoute } from '@tanstack/react-router';
 import { createDomainError, SYSTEM_ERRORS } from '@corates/shared';
+import { logMiddleware } from '@/server/middleware/log';
 
 const handle = ({ request }: { request: Request }) => {
   const path = (() => {
@@ -22,6 +23,7 @@ const handle = ({ request }: { request: Request }) => {
 
 export const Route = createFileRoute('/api/$')({
   server: {
+    middleware: [logMiddleware],
     handlers: {
       GET: handle,
       POST: handle,

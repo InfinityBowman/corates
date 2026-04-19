@@ -10,11 +10,12 @@
  * properly rotate the session cookie back to the original admin.
  */
 import { createFileRoute } from '@tanstack/react-router';
+import { logMiddleware, type RequestLogger } from '@/server/middleware/log';
 import { env } from 'cloudflare:workers';
 import { createAuth } from '@corates/workers/auth-config';
 import { requireTrustedOrigin } from '@/server/guards/requireTrustedOrigin';
 
-type HandlerArgs = { request: Request; context?: { cloudflareCtx?: ExecutionContext } };
+type HandlerArgs = { request: Request; context: { log: RequestLogger; cloudflareCtx?: ExecutionContext } };
 
 export const handlePost = async ({ request, context }: HandlerArgs) => {
   const csrf = requireTrustedOrigin(request, { isProduction: env.ENVIRONMENT === 'production' });
@@ -45,5 +46,5 @@ export const handlePost = async ({ request, context }: HandlerArgs) => {
 };
 
 export const Route = createFileRoute('/api/admin/stop-impersonation')({
-  server: { handlers: { POST: handlePost } },
+  server: { middleware: [logMiddleware], handlers: { POST: handlePost } },
 });

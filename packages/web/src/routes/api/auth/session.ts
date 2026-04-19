@@ -6,11 +6,12 @@
  * the WS connect logic can fall back to anonymous mode without throwing.
  */
 import { createFileRoute } from '@tanstack/react-router';
+import { logMiddleware, type RequestLogger } from '@/server/middleware/log';
 import { env } from 'cloudflare:workers';
 import { createAuth } from '@corates/workers/auth-config';
 import { checkRateLimit, SESSION_RATE_LIMIT } from '@/server/rateLimit';
 
-type HandlerArgs = { request: Request; context?: { cloudflareCtx?: ExecutionContext } };
+type HandlerArgs = { request: Request; context: { log: RequestLogger; cloudflareCtx?: ExecutionContext } };
 
 export const handleGet = async ({ request, context }: HandlerArgs) => {
   const rate = checkRateLimit(request, env, SESSION_RATE_LIMIT);
@@ -35,5 +36,5 @@ export const handleGet = async ({ request, context }: HandlerArgs) => {
 };
 
 export const Route = createFileRoute('/api/auth/session')({
-  server: { handlers: { GET: handleGet } },
+  server: { middleware: [logMiddleware], handlers: { GET: handleGet } },
 });

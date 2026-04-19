@@ -2,6 +2,11 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { handleGet as sessionHandler } from '../session';
 import { handleGet as verifyEmailHandler } from '../verify-email';
 import { handle as catchAllHandler } from '../$';
+import type { RequestLogger } from '@/server/middleware/log';
+
+function mockCtx() {
+  return { log: {} as RequestLogger };
+}
 
 const { mockAuthHandler, mockGetSession } = vi.hoisted(() => ({
   mockAuthHandler: vi.fn(
@@ -34,6 +39,7 @@ describe('GET /api/auth/session', () => {
 
     const res = await sessionHandler({
       request: new Request('http://localhost/api/auth/session', { method: 'GET' }),
+      context: mockCtx(),
     });
     expect(res.status).toBe(200);
     const body = (await res.json()) as {
@@ -49,6 +55,7 @@ describe('GET /api/auth/session', () => {
   it('returns nulls (200) when no session is present', async () => {
     const res = await sessionHandler({
       request: new Request('http://localhost/api/auth/session', { method: 'GET' }),
+      context: mockCtx(),
     });
     expect(res.status).toBe(200);
     const body = (await res.json()) as { user: null; session: null; sessionToken: null };
@@ -62,6 +69,7 @@ describe('GET /api/auth/session', () => {
 
     const res = await sessionHandler({
       request: new Request('http://localhost/api/auth/session', { method: 'GET' }),
+      context: mockCtx(),
     });
     expect(res.status).toBe(200);
     const body = (await res.json()) as { user: null; session: null };
@@ -79,6 +87,7 @@ describe('GET /api/auth/verify-email', () => {
 
     const res = await verifyEmailHandler({
       request: new Request('http://localhost/api/auth/verify-email?token=abc', { method: 'GET' }),
+      context: mockCtx(),
     });
     expect(res.status).toBe(200);
     expect(res.headers.get('content-type')).toContain('text/html');
@@ -97,6 +106,7 @@ describe('GET /api/auth/verify-email', () => {
       request: new Request('http://localhost/api/auth/verify-email?token=expired', {
         method: 'GET',
       }),
+      context: mockCtx(),
     });
     expect(res.status).toBe(400);
     expect(res.headers.get('content-type')).toContain('text/html');
@@ -109,6 +119,7 @@ describe('GET /api/auth/verify-email', () => {
 
     const res = await verifyEmailHandler({
       request: new Request('http://localhost/api/auth/verify-email?token=x', { method: 'GET' }),
+      context: mockCtx(),
     });
     expect(res.status).toBe(500);
     const html = await res.text();
@@ -120,6 +131,7 @@ describe('GET /api/auth/verify-email', () => {
       request: new Request('http://localhost/api/auth/verify-email?token=abc&callbackURL=%2Fhome', {
         method: 'GET',
       }),
+      context: mockCtx(),
     });
     expect(mockAuthHandler).toHaveBeenCalledTimes(1);
     const forwarded = mockAuthHandler.mock.calls[0][0]!;
@@ -145,6 +157,7 @@ describe('catch-all /api/auth/$', () => {
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ email: 'a@b.com', password: 'pw' }),
       }),
+      context: mockCtx(),
     });
     expect(res.status).toBe(200);
     expect(mockAuthHandler).toHaveBeenCalledTimes(1);
@@ -159,6 +172,7 @@ describe('catch-all /api/auth/$', () => {
       request: new Request('http://localhost/api/auth/callback/google?state=abc&code=xyz', {
         method: 'GET',
       }),
+      context: mockCtx(),
     });
     const forwarded = mockAuthHandler.mock.calls[0][0]!;
     const fwdUrl = new URL(forwarded.url);
@@ -176,6 +190,7 @@ describe('catch-all /api/auth/$', () => {
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ email: 'x@y.com', password: 'pw' }),
       }),
+      context: mockCtx(),
     });
     expect(res.status).toBe(500);
     const body = (await res.json()) as { error: string; details: string };

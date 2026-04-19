@@ -1,6 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { STATIC_ORIGINS } from '@corates/workers/config/origins';
 import { handlePost } from '../stop-impersonation';
+import type { RequestLogger } from '@/server/middleware/log';
+
+function mockCtx() {
+  return { log: {} as RequestLogger };
+}
 
 const TRUSTED_ORIGIN = STATIC_ORIGINS[0];
 
@@ -42,7 +47,7 @@ async function readJson(res: Response): Promise<Record<string, unknown>> {
 
 describe('POST /api/admin/stop-impersonation - CSRF', () => {
   it('rejects with 403 + AUTH_FORBIDDEN/missing_origin when no Origin or Referer', async () => {
-    const res = await handlePost({ request: req({ cookie: 'session=token' }) });
+    const res = await handlePost({ request: req({ cookie: 'session=token' }), context: mockCtx() });
     expect(res.status).toBe(403);
     const body = await readJson(res);
     expect(body.code).toBe('AUTH_FORBIDDEN');
@@ -53,6 +58,7 @@ describe('POST /api/admin/stop-impersonation - CSRF', () => {
   it('rejects with 403 + AUTH_FORBIDDEN/untrusted_origin when Origin is not allowed', async () => {
     const res = await handlePost({
       request: req({ cookie: 'session=token', origin: 'https://evil.example.com' }),
+      context: mockCtx(),
     });
     expect(res.status).toBe(403);
     const body = await readJson(res);
@@ -66,6 +72,7 @@ describe('POST /api/admin/stop-impersonation - CSRF', () => {
   it('accepts when Origin is trusted', async () => {
     const res = await handlePost({
       request: req({ cookie: 'session=token', origin: TRUSTED_ORIGIN }),
+      context: mockCtx(),
     });
     expect(res.status).toBe(200);
     expect(mockAuthHandler).toHaveBeenCalledTimes(1);
@@ -74,6 +81,7 @@ describe('POST /api/admin/stop-impersonation - CSRF', () => {
   it('accepts when only Referer is trusted (no Origin)', async () => {
     const res = await handlePost({
       request: req({ cookie: 'session=token', referer: `${TRUSTED_ORIGIN}/admin` }),
+      context: mockCtx(),
     });
     expect(res.status).toBe(200);
     expect(mockAuthHandler).toHaveBeenCalledTimes(1);
@@ -85,6 +93,7 @@ describe('POST /api/admin/stop-impersonation - request forwarding', () => {
     const cookie = 'session=test-token; other=value';
     await handlePost({
       request: req({ cookie, origin: TRUSTED_ORIGIN, referer: `${TRUSTED_ORIGIN}/x` }),
+      context: mockCtx(),
     });
 
     expect(mockAuthHandler).toHaveBeenCalledTimes(1);
@@ -109,6 +118,7 @@ describe('POST /api/admin/stop-impersonation - request forwarding', () => {
 
     const res = await handlePost({
       request: req({ cookie: 'session=t', origin: TRUSTED_ORIGIN }),
+      context: mockCtx(),
     });
     expect(res.status).toBe(200);
     const body = await readJson(res);
@@ -123,6 +133,7 @@ describe('POST /api/admin/stop-impersonation - error path', () => {
 
     const res = await handlePost({
       request: req({ cookie: 'session=t', origin: TRUSTED_ORIGIN }),
+      context: mockCtx(),
     });
     expect(res.status).toBe(500);
     const body = await readJson(res);

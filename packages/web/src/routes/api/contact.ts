@@ -1,4 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router';
+import { logMiddleware } from '@/server/middleware/log';
 import { env } from 'cloudflare:workers';
 import { z } from 'zod';
 import {
@@ -143,6 +144,7 @@ export const handler = async ({ request }: { request: Request }) => {
 
 export const Route = createFileRoute('/api/contact')({
   server: {
+    middleware: [logMiddleware],
     handlers: {
       POST: handler,
     },
