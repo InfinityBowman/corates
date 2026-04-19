@@ -19,19 +19,34 @@ export const NAV_ITEM_TYPES = {
   OVERALL_DIRECTION: 'overallDirection',
 } as const;
 
-type NavItemType = (typeof NAV_ITEM_TYPES)[keyof typeof NAV_ITEM_TYPES];
-
-interface NavItem {
-  type: NavItemType;
+interface NavItemBase {
   key: string;
   label: string;
   section: string;
   sectionKey: string;
-  domainKey?: string;
-  fieldDef?: (typeof PRELIMINARY_SECTION)[keyof typeof PRELIMINARY_SECTION];
-  questionDef?: Record<string, unknown>;
-  isDirection?: boolean;
 }
+
+export type Rob2NavItem =
+  | (NavItemBase & {
+      type: typeof NAV_ITEM_TYPES.PRELIMINARY;
+      fieldDef?: (typeof PRELIMINARY_SECTION)[keyof typeof PRELIMINARY_SECTION];
+    })
+  | (NavItemBase & {
+      type: typeof NAV_ITEM_TYPES.DOMAIN_QUESTION;
+      domainKey: string;
+      questionDef?: Record<string, unknown>;
+    })
+  | (NavItemBase & {
+      type: typeof NAV_ITEM_TYPES.DOMAIN_DIRECTION;
+      domainKey: string;
+      isDirection: true;
+    })
+  | (NavItemBase & {
+      type: typeof NAV_ITEM_TYPES.OVERALL_DIRECTION;
+      isDirection: true;
+    });
+
+type NavItem = Rob2NavItem;
 
 interface NavGroup {
   section: string;
@@ -232,13 +247,11 @@ export function hasNavItemAnswer(navItem: NavItem, finalAnswers: FinalAnswers): 
     case NAV_ITEM_TYPES.PRELIMINARY:
       return hasPreliminaryAnswer(navItem.key, finalAnswers);
     case NAV_ITEM_TYPES.DOMAIN_QUESTION:
-      return hasDomainQuestionAnswer(navItem.domainKey!, navItem.key, finalAnswers);
+      return hasDomainQuestionAnswer(navItem.domainKey, navItem.key, finalAnswers);
     case NAV_ITEM_TYPES.DOMAIN_DIRECTION:
-      return hasDomainDirection(navItem.domainKey!, finalAnswers);
+      return hasDomainDirection(navItem.domainKey, finalAnswers);
     case NAV_ITEM_TYPES.OVERALL_DIRECTION:
       return hasOverallDirection(finalAnswers);
-    default:
-      return false;
   }
 }
 
@@ -254,20 +267,18 @@ export function isNavItemAgreement(navItem: NavItem, comparison: Comparison | nu
       return field?.isAgreement ?? false;
     }
     case NAV_ITEM_TYPES.DOMAIN_QUESTION: {
-      const domain = comparison.domains?.[navItem.domainKey!];
+      const domain = comparison.domains?.[navItem.domainKey];
       if (!domain) return false;
       const found = domain.questions?.agreements?.find(a => a.key === navItem.key);
       return !!found;
     }
     case NAV_ITEM_TYPES.DOMAIN_DIRECTION: {
-      const domain = comparison.domains?.[navItem.domainKey!];
+      const domain = comparison.domains?.[navItem.domainKey];
       return domain?.directionMatch ?? false;
     }
     case NAV_ITEM_TYPES.OVERALL_DIRECTION: {
       return comparison.overall?.directionMatch ?? false;
     }
-    default:
-      return false;
   }
 }
 

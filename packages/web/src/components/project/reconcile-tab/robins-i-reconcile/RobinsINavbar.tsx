@@ -6,20 +6,11 @@ import {
   getDomainProgress,
   getSectionKeyForPage,
   getFirstUnansweredInSection,
+  type RobinsINavItem,
 } from './navbar-utils.js';
 
-interface NavItem {
-  type: string;
-  key: string;
-  label: string;
-  section: string;
-  domainKey?: string;
-  isJudgement?: boolean;
-  [key: string]: any;
-}
-
 interface NavbarStore {
-  navItems: NavItem[];
+  navItems: RobinsINavItem[];
   viewMode: string;
   currentPage: number;
   comparison: any;

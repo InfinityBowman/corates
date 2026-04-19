@@ -9,7 +9,6 @@
 import { AlertTriangleIcon } from 'lucide-react';
 import type {
   ReconciliationAdapter,
-  ReconciliationNavItem,
   EngineContext,
   NavbarContext,
   SummaryContext,
@@ -19,6 +18,7 @@ import {
   compareChecklists,
   getSectionBKeys,
   getDomainKeysForComparison,
+  type ComparisonResult,
 } from '@/components/checklist/ROBINSIChecklist/checklist-compare.js';
 import {
   buildNavigationItems,
@@ -26,6 +26,7 @@ import {
   isNavItemAgreement as robinsIsNavItemAgreement,
   isSectionBCritical,
   NAV_ITEM_TYPES,
+  type RobinsINavItem,
 } from './navbar-utils.js';
 import { SectionBQuestionPage } from './pages/SectionBQuestionPage';
 import { DomainQuestionPage } from './pages/DomainQuestionPage';
@@ -84,66 +85,62 @@ function updateOverallJudgement(
 // Comparison helper
 // ---------------------------------------------------------------------------
 
-function getCurrentItemComparison(item: any, comparison: any): any {
+function getCurrentItemComparison(
+  item: RobinsINavItem | null,
+  comparison: ComparisonResult | null,
+): any {
   if (!item || !comparison) return null;
 
-  if (item.type === NAV_ITEM_TYPES.SECTION_B) {
-    const allItems = [
-      ...(comparison.sectionB?.agreements || []),
-      ...(comparison.sectionB?.disagreements || []),
-    ];
-    return allItems.find((c: any) => c.key === item.key);
+  switch (item.type) {
+    case NAV_ITEM_TYPES.SECTION_B:
+      return [...comparison.sectionB.agreements, ...comparison.sectionB.disagreements].find(
+        c => c.key === item.key,
+      );
+    case NAV_ITEM_TYPES.DOMAIN_QUESTION: {
+      const domain = comparison.domains?.[item.domainKey];
+      if (!domain) return null;
+      return [...domain.questions.agreements, ...domain.questions.disagreements].find(
+        c => c.key === item.key,
+      );
+    }
+    case NAV_ITEM_TYPES.DOMAIN_JUDGEMENT:
+      return comparison.domains?.[item.domainKey];
+    case NAV_ITEM_TYPES.OVERALL_JUDGEMENT:
+      return comparison.overall;
   }
-  if (item.type === NAV_ITEM_TYPES.DOMAIN_QUESTION) {
-    const domain = comparison.domains?.[item.domainKey];
-    if (!domain) return null;
-    const allItems = [
-      ...(domain.questions?.agreements || []),
-      ...(domain.questions?.disagreements || []),
-    ];
-    return allItems.find((c: any) => c.key === item.key);
-  }
-  if (item.type === NAV_ITEM_TYPES.DOMAIN_JUDGEMENT) {
-    return comparison.domains?.[item.domainKey];
-  }
-  if (item.type === NAV_ITEM_TYPES.OVERALL_JUDGEMENT) {
-    return comparison.overall;
-  }
-  return null;
 }
 
 // ---------------------------------------------------------------------------
 // Adapter: data derivation
 // ---------------------------------------------------------------------------
 
-function buildNavItems(reconciledChecklist: unknown): ReconciliationNavItem[] {
+function buildNavItems(reconciledChecklist: any): RobinsINavItem[] {
   // ROBINS-I uses checklist1's sectionC to determine per-protocol, but
   // reconciledChecklist may inherit it. For now use false as default.
   // The engine passes reconciledChecklist; we check sectionC if available.
-  const rc = reconciledChecklist as any;
-  const isPerProtocol = rc?.sectionC?.isPerProtocol || false;
-  return buildNavigationItems(isPerProtocol) as ReconciliationNavItem[];
+  const isPerProtocol = reconciledChecklist?.sectionC?.isPerProtocol || false;
+  return buildNavigationItems(isPerProtocol);
 }
 
-function deriveFinalAnswers(reconciledChecklist: unknown): unknown {
+function deriveFinalAnswers(reconciledChecklist: any): any {
   return reconciledChecklist || {};
 }
 
-function compare(checklist1: unknown, checklist2: unknown): unknown {
+function compare(checklist1: any, checklist2: any): ComparisonResult | null {
   if (!checklist1 || !checklist2) return null;
-  return compareChecklists(checklist1 as any, checklist2 as any);
+  return compareChecklists(checklist1, checklist2);
 }
 
 // ---------------------------------------------------------------------------
 // Adapter: answer checking
 // ---------------------------------------------------------------------------
 
-function hasAnswer(item: ReconciliationNavItem, finalAnswers: unknown): boolean {
-  return robinsHasNavItemAnswer(item as any, finalAnswers as any);
+function hasAnswer(item: RobinsINavItem, finalAnswers: any): boolean {
+  return robinsHasNavItemAnswer(item, finalAnswers);
 }
 
-function isAgreement(item: ReconciliationNavItem, comparison: unknown): boolean {
-  return robinsIsNavItemAgreement(item as any, comparison as any);
+function isAgreement(item: RobinsINavItem, comparison: ComparisonResult | null): boolean {
+  return robinsIsNavItemAgreement(item, comparison as any);
 }
 
 // ---------------------------------------------------------------------------
@@ -151,30 +148,25 @@ function isAgreement(item: ReconciliationNavItem, comparison: unknown): boolean 
 // ---------------------------------------------------------------------------
 
 function autoFillFromReviewer1(
-  item: ReconciliationNavItem,
-  checklist1: unknown,
+  item: RobinsINavItem,
+  checklist1: any,
   updateChecklistAnswer: (sectionKey: string, data: unknown) => void,
   setTextValue: (ref: TextRef, text: string) => void,
 ): void {
-  const c1 = checklist1 as any;
-
-  if (item.type === NAV_ITEM_TYPES.SECTION_B) {
-    const answer = c1?.sectionB?.[item.key];
-    if (answer) {
+  switch (item.type) {
+    case NAV_ITEM_TYPES.SECTION_B: {
+      const answer = checklist1?.sectionB?.[item.key];
+      if (!answer) return;
       updateSectionBAnswer(updateChecklistAnswer, item.key, answer.answer);
       setTextValue(
-        {
-          type: 'ROBINS_I',
-          sectionKey: 'sectionB',
-          fieldKey: 'comment',
-          questionKey: item.key,
-        },
+        { type: 'ROBINS_I', sectionKey: 'sectionB', fieldKey: 'comment', questionKey: item.key },
         answer.comment || '',
       );
+      return;
     }
-  } else if (item.type === NAV_ITEM_TYPES.DOMAIN_QUESTION && item.domainKey) {
-    const answer = c1?.[item.domainKey]?.answers?.[item.key];
-    if (answer) {
+    case NAV_ITEM_TYPES.DOMAIN_QUESTION: {
+      const answer = checklist1?.[item.domainKey]?.answers?.[item.key];
+      if (!answer) return;
       updateDomainQuestionAnswer(updateChecklistAnswer, item.domainKey, item.key, answer.answer);
       setTextValue(
         {
@@ -185,21 +177,26 @@ function autoFillFromReviewer1(
         },
         answer.comment || '',
       );
+      return;
     }
-  } else if (item.type === NAV_ITEM_TYPES.DOMAIN_JUDGEMENT && item.domainKey) {
-    const domain = c1?.[item.domainKey];
-    if (domain?.judgement) {
-      updateDomainJudgement(
-        updateChecklistAnswer,
-        item.domainKey,
-        domain.judgement,
-        domain.direction,
-      );
+    case NAV_ITEM_TYPES.DOMAIN_JUDGEMENT: {
+      const domain = checklist1?.[item.domainKey];
+      if (domain?.judgement) {
+        updateDomainJudgement(
+          updateChecklistAnswer,
+          item.domainKey,
+          domain.judgement,
+          domain.direction,
+        );
+      }
+      return;
     }
-  } else if (item.type === NAV_ITEM_TYPES.OVERALL_JUDGEMENT) {
-    const overall = c1?.overall;
-    if (overall?.judgement) {
-      updateOverallJudgement(updateChecklistAnswer, overall.judgement, overall.direction);
+    case NAV_ITEM_TYPES.OVERALL_JUDGEMENT: {
+      const overall = checklist1?.overall;
+      if (overall?.judgement) {
+        updateOverallJudgement(updateChecklistAnswer, overall.judgement, overall.direction);
+      }
+      return;
     }
   }
 }
@@ -233,11 +230,15 @@ function resetAllAnswers(updateChecklistAnswer: (sectionKey: string, data: unkno
 // Adapter: renderPage
 // ---------------------------------------------------------------------------
 
-function renderPage(context: EngineContext) {
-  const { currentItem, checklist1, checklist2, finalAnswers, comparison, getTextRef } = context;
-  const c1 = checklist1 as any;
-  const c2 = checklist2 as any;
-  const fa = finalAnswers as any;
+function renderPage(context: EngineContext<any, any, ComparisonResult | null, RobinsINavItem>) {
+  const {
+    currentItem,
+    checklist1: c1,
+    checklist2: c2,
+    finalAnswers: fa,
+    comparison,
+    getTextRef,
+  } = context;
   const itemComparison = getCurrentItemComparison(currentItem, comparison);
 
   if (currentItem.type === NAV_ITEM_TYPES.SECTION_B) {
@@ -293,82 +294,67 @@ function renderPage(context: EngineContext) {
     );
   }
 
-  if (currentItem.type === NAV_ITEM_TYPES.DOMAIN_QUESTION && currentItem.domainKey) {
+  if (currentItem.type === NAV_ITEM_TYPES.DOMAIN_QUESTION) {
+    const { domainKey, key: questionKey } = currentItem;
     return (
       <DomainQuestionPage
-        domainKey={currentItem.domainKey}
-        questionKey={currentItem.key}
-        reviewer1Data={c1?.[currentItem.domainKey]?.answers?.[currentItem.key]}
-        reviewer2Data={c2?.[currentItem.domainKey]?.answers?.[currentItem.key]}
-        finalData={fa[currentItem.domainKey]?.answers?.[currentItem.key]}
+        domainKey={domainKey}
+        questionKey={questionKey}
+        reviewer1Data={c1?.[domainKey]?.answers?.[questionKey]}
+        reviewer2Data={c2?.[domainKey]?.answers?.[questionKey]}
+        finalData={fa[domainKey]?.answers?.[questionKey]}
         finalCommentYText={getTextRef({
           type: 'ROBINS_I',
-          sectionKey: currentItem.domainKey,
+          sectionKey: domainKey,
           fieldKey: 'comment',
-          questionKey: currentItem.key,
+          questionKey,
         })}
         reviewer1Name={context.reviewer1Name}
         reviewer2Name={context.reviewer2Name}
         isAgreement={context.isAgreement}
         onFinalAnswerChange={answer =>
-          updateDomainQuestionAnswer(
-            context.updateChecklistAnswer,
-            currentItem.domainKey!,
-            currentItem.key,
-            answer,
-          )
+          updateDomainQuestionAnswer(context.updateChecklistAnswer, domainKey, questionKey, answer)
         }
         onUseReviewer1={() => {
-          const data = c1?.[currentItem.domainKey!]?.answers?.[currentItem.key];
-          if (data) {
-            updateDomainQuestionAnswer(
-              context.updateChecklistAnswer,
-              currentItem.domainKey!,
-              currentItem.key,
-              data.answer,
-            );
-            context.setTextValue(
-              {
-                type: 'ROBINS_I',
-                sectionKey: currentItem.domainKey!,
-                fieldKey: 'comment',
-                questionKey: currentItem.key,
-              },
-              data.comment || '',
-            );
-          }
+          const data = c1?.[domainKey]?.answers?.[questionKey];
+          if (!data) return;
+          updateDomainQuestionAnswer(
+            context.updateChecklistAnswer,
+            domainKey,
+            questionKey,
+            data.answer,
+          );
+          context.setTextValue(
+            { type: 'ROBINS_I', sectionKey: domainKey, fieldKey: 'comment', questionKey },
+            data.comment || '',
+          );
         }}
         onUseReviewer2={() => {
-          const data = c2?.[currentItem.domainKey!]?.answers?.[currentItem.key];
-          if (data) {
-            updateDomainQuestionAnswer(
-              context.updateChecklistAnswer,
-              currentItem.domainKey!,
-              currentItem.key,
-              data.answer,
-            );
-            context.setTextValue(
-              {
-                type: 'ROBINS_I',
-                sectionKey: currentItem.domainKey!,
-                fieldKey: 'comment',
-                questionKey: currentItem.key,
-              },
-              data.comment || '',
-            );
-          }
+          const data = c2?.[domainKey]?.answers?.[questionKey];
+          if (!data) return;
+          updateDomainQuestionAnswer(
+            context.updateChecklistAnswer,
+            domainKey,
+            questionKey,
+            data.answer,
+          );
+          context.setTextValue(
+            { type: 'ROBINS_I', sectionKey: domainKey, fieldKey: 'comment', questionKey },
+            data.comment || '',
+          );
         }}
       />
     );
   }
 
-  if (currentItem.type === NAV_ITEM_TYPES.DOMAIN_JUDGEMENT && currentItem.domainKey) {
+  if (currentItem.type === NAV_ITEM_TYPES.DOMAIN_JUDGEMENT) {
+    const { domainKey } = currentItem;
     return (
       <DomainJudgementPage
-        domainKey={currentItem.domainKey}
-        reviewer1Data={c1?.[currentItem.domainKey]}
-        reviewer2Data={c2?.[currentItem.domainKey]}
-        finalData={fa[currentItem.domainKey]}
+        domainKey={domainKey}
+        reviewer1Data={c1?.[domainKey]}
+        reviewer2Data={c2?.[domainKey]}
+        finalData={fa[domainKey]}
         reviewer1Name={context.reviewer1Name}
         reviewer2Name={context.reviewer2Name}
         judgementMatch={itemComparison?.judgementMatch}
@@ -376,56 +362,56 @@ function renderPage(context: EngineContext) {
         onFinalJudgementChange={judgement =>
           updateDomainJudgement(
             context.updateChecklistAnswer,
-            currentItem.domainKey!,
+            domainKey,
             judgement,
-            fa[currentItem.domainKey!]?.direction,
+            fa[domainKey]?.direction,
           )
         }
         onFinalDirectionChange={direction =>
           updateDomainJudgement(
             context.updateChecklistAnswer,
-            currentItem.domainKey!,
-            fa[currentItem.domainKey!]?.judgement,
+            domainKey,
+            fa[domainKey]?.judgement,
             direction,
           )
         }
         onUseReviewer1Judgement={() => {
-          const data = c1?.[currentItem.domainKey!];
+          const data = c1?.[domainKey];
           if (data)
             updateDomainJudgement(
               context.updateChecklistAnswer,
-              currentItem.domainKey!,
+              domainKey,
               data.judgement,
-              fa[currentItem.domainKey!]?.direction,
+              fa[domainKey]?.direction,
             );
         }}
         onUseReviewer2Judgement={() => {
-          const data = c2?.[currentItem.domainKey!];
+          const data = c2?.[domainKey];
           if (data)
             updateDomainJudgement(
               context.updateChecklistAnswer,
-              currentItem.domainKey!,
+              domainKey,
               data.judgement,
-              fa[currentItem.domainKey!]?.direction,
+              fa[domainKey]?.direction,
             );
         }}
         onUseReviewer1Direction={() => {
-          const data = c1?.[currentItem.domainKey!];
+          const data = c1?.[domainKey];
           if (data)
             updateDomainJudgement(
               context.updateChecklistAnswer,
-              currentItem.domainKey!,
-              fa[currentItem.domainKey!]?.judgement,
+              domainKey,
+              fa[domainKey]?.judgement,
               data.direction,
             );
         }}
         onUseReviewer2Direction={() => {
-          const data = c2?.[currentItem.domainKey!];
+          const data = c2?.[domainKey];
           if (data)
             updateDomainJudgement(
               context.updateChecklistAnswer,
-              currentItem.domainKey!,
-              fa[currentItem.domainKey!]?.judgement,
+              domainKey,
+              fa[domainKey]?.judgement,
               data.direction,
             );
         }}
@@ -496,10 +482,11 @@ function renderPage(context: EngineContext) {
 // Adapter: NavbarComponent wrapper
 // ---------------------------------------------------------------------------
 
-function RobinsINavbarAdapter(navbarContext: NavbarContext) {
+function RobinsINavbarAdapter(
+  navbarContext: NavbarContext<any, ComparisonResult | null, RobinsINavItem>,
+) {
   // Recompute sectionBCritical from finalAnswers
-  const fa = navbarContext.finalAnswers as any;
-  const sectionBCrit = isSectionBCritical(fa?.sectionB);
+  const sectionBCrit = isSectionBCritical(navbarContext.finalAnswers?.sectionB);
 
   const store = {
     navItems: navbarContext.navItems,
@@ -522,7 +509,9 @@ function RobinsINavbarAdapter(navbarContext: NavbarContext) {
 // Adapter: SummaryComponent wrapper
 // ---------------------------------------------------------------------------
 
-function RobinsISummaryAdapter(summaryContext: SummaryContext) {
+function RobinsISummaryAdapter(
+  summaryContext: SummaryContext<any, ComparisonResult | null, RobinsINavItem>,
+) {
   return (
     <RobinsISummaryView
       navItems={summaryContext.navItems}
@@ -542,11 +531,9 @@ function RobinsISummaryAdapter(summaryContext: SummaryContext) {
 // Adapter: Warning banner
 // ---------------------------------------------------------------------------
 
-function renderWarningBanner(checklist1: unknown, checklist2: unknown) {
-  const c1 = checklist1 as any;
-  const c2 = checklist2 as any;
-  const critical1 = isSectionBCritical(c1?.sectionB);
-  const critical2 = isSectionBCritical(c2?.sectionB);
+function renderWarningBanner(checklist1: any, checklist2: any) {
+  const critical1 = isSectionBCritical(checklist1?.sectionB);
+  const critical2 = isSectionBCritical(checklist2?.sectionB);
 
   if (!critical1 && !critical2) return null;
 
@@ -565,7 +552,12 @@ function renderWarningBanner(checklist1: unknown, checklist2: unknown) {
 // Export adapter
 // ---------------------------------------------------------------------------
 
-export const robinsIAdapter: ReconciliationAdapter = {
+export const robinsIAdapter: ReconciliationAdapter<
+  any,
+  any,
+  ComparisonResult | null,
+  RobinsINavItem
+> = {
   checklistType: 'ROBINS_I',
   title: 'ROBINS-I Reconciliation',
   pageCounterLabel: 'Item',

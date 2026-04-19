@@ -28,16 +28,18 @@ import type { ReconciliationAdapter, ReconciliationEngineProps, EngineContext } 
 const EmbedPdfViewer = lazy(() => import('@/components/pdf/EmbedPdfViewer'));
 
 // Adapter registry - adapters register themselves here via registerReconciliationAdapter
-const adapterRegistry = new Map<string, ReconciliationAdapter>();
+const adapterRegistry = new Map<string, ReconciliationAdapter<any, any, any, any>>();
 
 export function registerReconciliationAdapter(
   checklistType: string,
-  adapter: ReconciliationAdapter,
+  adapter: ReconciliationAdapter<any, any, any, any>,
 ) {
   adapterRegistry.set(checklistType, adapter);
 }
 
-function getReconciliationAdapter(checklistType: string): ReconciliationAdapter {
+function getReconciliationAdapter(
+  checklistType: string,
+): ReconciliationAdapter<any, any, any, any> {
   const adapter = adapterRegistry.get(checklistType);
   if (!adapter) {
     throw new Error(
@@ -117,7 +119,7 @@ export function ReconciliationEngine({
   // Build EngineContext for renderPage
   // -----------------------------------------------------------------------
 
-  const engineContext: EngineContext | null = useMemo(() => {
+  const engineContext: EngineContext<unknown, unknown, unknown> | null = useMemo(() => {
     if (!engine.currentItem) return null;
     return {
       currentItem: engine.currentItem,
