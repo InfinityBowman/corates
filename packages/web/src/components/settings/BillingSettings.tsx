@@ -12,6 +12,7 @@ import { useMembers } from '@/hooks/useMembers';
 import { redirectToPortal } from '@/api/billing';
 import { API_BASE } from '@/config/api';
 import { queryKeys } from '@/lib/queryKeys';
+import type { UsageResponse } from '@/routes/api/billing/usage';
 import { Skeleton } from '@/components/ui/skeleton';
 import { SubscriptionCard } from '@/components/billing/SubscriptionCard';
 import { UsageCard } from '@/components/billing/UsageCard';
@@ -63,7 +64,7 @@ export function BillingSettings() {
     queryFn: async () => {
       const res = await fetch(`${API_BASE}/api/billing/usage`, { credentials: 'include' });
       if (!res.ok) throw await res.json();
-      return (await res.json()) as { projects: number; collaborators: number };
+      return (await res.json()) as UsageResponse;
     },
     staleTime: 1000 * 60 * 2,
     retry: 1,

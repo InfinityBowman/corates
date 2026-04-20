@@ -12,7 +12,7 @@ import {
 import { checkRateLimit, SEARCH_RATE_LIMIT } from '@/server/rateLimit';
 import { authMiddleware, type Session } from '@/server/middleware/auth';
 
-interface UserSearchResult {
+export interface UserSearchResult {
   id: string;
   name: string | null;
   givenName: string | null;

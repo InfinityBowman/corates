@@ -10,6 +10,8 @@ import { createDomainError, AUTH_ERRORS, SYSTEM_ERRORS } from '@corates/shared';
 import { resolveOrgId } from '@/server/billing-context';
 import { authMiddleware, type Session } from '@/server/middleware/auth';
 
+export type UsageResponse = { projects: number; collaborators: number };
+
 export const handleGet = async ({
   context: { db, session },
 }: {
@@ -29,10 +31,8 @@ export const handleGet = async ({
     }
 
     const usage = await getOrgResourceUsage(db, orgId);
-    return Response.json(
-      { projects: usage.projects, collaborators: usage.collaborators },
-      { status: 200 },
-    );
+    const payload: UsageResponse = { projects: usage.projects, collaborators: usage.collaborators };
+    return Response.json(payload, { status: 200 });
   } catch (err) {
     const error = err as Error;
     console.error('Error fetching org usage:', error);

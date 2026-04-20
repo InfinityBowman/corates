@@ -279,12 +279,14 @@ The right pattern is a typed _facade_ over the Y.Doc that exposes typed read/wri
 
 | #   | Change                                                                       |                  Effort | Why now                                                                                                        |
 | --- | ---------------------------------------------------------------------------- | ----------------------: | -------------------------------------------------------------------------------------------------------------- |
-| 1   | Pick 3-5 hot endpoints, apply C1 Option A (`export type` from route)         |                half day | Kills a chunk of `as Record<string, unknown>` with minimal ceremony. Use Option B (Zod) only for billing/auth. |
-| 2   | Checklist registry -- discriminated map + `satisfies` (H1 + G4)              |                  2-3 hr | Removes the most concentrated `any` cluster.                                                                   |
-| 3   | Add Vitest type tests for `ReconciliationAdapter` (G1)                       |                  1-2 hr | Cheaper than the C2 full refactor; catches future regressions.                                                 |
-| 4   | `@types/google.picker` install + single-guard cleanup (H3)                   |                  30 min | Quick win.                                                                                                     |
-| 5   | `verbatimModuleSyntax: true` in web tsconfig (G5)                            | 1-2 hr (mostly autofix) | One-time cleanup; pays off in build cleanliness.                                                               |
-| 6   | `server.ts` env typing (H4); Yjs facade extraction                           |                   1 day | Lower priority -- current state isn't actively dangerous.                                                      |
-| 7   | `errorMessage(e: unknown)` helper + codemod ~100 catch blocks (H5)           |                  2-3 hr | Mechanical but pervasive; eliminates the most common unsafe cast pattern in API routes.                        |
+| 1   | ~~Auth `as unknown as` -> Zod parse (H2); oauth-relay WeakMap (H6)~~ DONE   |                      -- | Both fixed: Zod parse in session-helper, WeakMap in oauth-relay.                                               |
+| 2   | ~~C1 first pass: 5 hot endpoints (subscription, invoices, usage, users/me/projects, users/search)~~ DONE | -- | Response types exported from route files; consumers import instead of hand-rolling. Also fixed latent bugs in InvoicesList (wrong field names hidden by `any`). |
+| 3   | C1 continued: admin endpoints, billing helpers (checkout, portal, members)   |                half day | adminStore.ts and useAdminQueries.ts still have 26+ `as Record<string, unknown>` casts.                       |
+| 4   | Checklist registry -- discriminated map + `satisfies` (H1 + G4)             |                  2-3 hr | Removes the most concentrated `any` cluster.                                                                   |
+| 5   | Add Vitest type tests for `ReconciliationAdapter` (G1)                       |                  1-2 hr | Cheaper than the C2 full refactor; catches future regressions.                                                 |
+| 6   | `@types/google.picker` install + single-guard cleanup (H3)                   |                  30 min | Quick win.                                                                                                     |
+| 7   | `verbatimModuleSyntax: true` in web tsconfig (G5)                            | 1-2 hr (mostly autofix) | One-time cleanup; pays off in build cleanliness.                                                               |
+| 8   | `server.ts` env typing (H4); Yjs facade extraction                           |                   1 day | Lower priority -- current state isn't actively dangerous.                                                      |
+| 9   | `errorMessage(e: unknown)` helper + codemod ~100 catch blocks (H5)           |                  2-3 hr | Mechanical but pervasive; eliminates the most common unsafe cast pattern in API routes.                        |
 
-Item 1 is the highest leverage. Items 2-3 are the type-safety substance. Items 4-7 are polish.
+Item 3 continues the C1 pattern to admin/billing endpoints. Items 4-5 are the type-safety substance. Items 6-9 are polish.

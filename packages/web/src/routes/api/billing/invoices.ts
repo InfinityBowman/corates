@@ -21,6 +21,21 @@ import {
 import { resolveOrgId } from '@/server/billing-context';
 import { authMiddleware, type Session } from '@/server/middleware/auth';
 
+export type Invoice = {
+  id: string;
+  number: string | null;
+  amount: number;
+  currency: string;
+  status: string | null;
+  created: number;
+  periodStart: number;
+  periodEnd: number;
+  pdfUrl: string | null;
+  hostedUrl: string | null;
+};
+
+export type InvoicesResponse = { invoices: Invoice[] };
+
 export const handleGet = async ({
   context: { db, session },
 }: {
@@ -64,7 +79,7 @@ export const handleGet = async ({
       limit: 10,
     });
 
-    const invoices = stripeInvoices.data.map(invoice => ({
+    const invoices: Invoice[] = stripeInvoices.data.map(invoice => ({
       id: invoice.id,
       number: invoice.number,
       amount: invoice.amount_paid / 100,

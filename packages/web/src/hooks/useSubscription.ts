@@ -13,18 +13,9 @@ import {
   hasQuota as checkQuota,
 } from '@/lib/entitlements';
 import { useAuthStore, selectIsLoggedIn } from '@/stores/authStore';
+import type { SubscriptionResponse } from '@/routes/api/billing/subscription';
 
-export interface Subscription {
-  tier: string;
-  status: string;
-  tierInfo: { name: string; description: string };
-  stripeSubscriptionId: string | null;
-  currentPeriodEnd: number | null;
-  cancelAtPeriodEnd: boolean;
-  accessMode: string;
-  source: string;
-  projectCount: number;
-}
+export type Subscription = SubscriptionResponse;
 
 const DEFAULT_SUBSCRIPTION: Subscription = {
   tier: 'free',

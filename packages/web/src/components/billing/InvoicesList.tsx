@@ -9,25 +9,13 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { API_BASE } from '@/config/api';
 import { queryKeys } from '@/lib/queryKeys';
+import type { Invoice, InvoicesResponse } from '@/routes/api/billing/invoices';
 
-interface Invoice {
-  id: string;
-  number: string | null;
-  amount: number;
-  currency: string;
-  status: string | null;
-  created: number;
-  periodStart: number;
-  periodEnd: number;
-  pdfUrl: string | null;
-  hostedUrl: string | null;
-}
-
-async function fetchInvoices(): Promise<{ invoices: Invoice[] }> {
+async function fetchInvoices(): Promise<InvoicesResponse> {
   try {
     const res = await fetch(`${API_BASE}/api/billing/invoices`, { credentials: 'include' });
     if (!res.ok) return { invoices: [] };
-    return (await res.json()) as { invoices: Invoice[] };
+    return (await res.json()) as InvoicesResponse;
   } catch (err) {
     console.warn('Failed to fetch invoices:', (err as Error).message);
     return { invoices: [] };
@@ -105,7 +93,7 @@ export function InvoicesList() {
           </div>
         : invoices.length > 0 ?
           <div className='divide-border divide-y'>
-            {invoices.map((invoice: any) => (
+            {invoices.map((invoice: Invoice) => (
               <div
                 key={invoice.id}
                 className='hover:bg-muted/50 flex items-center justify-between px-6 py-4 transition-colors'
@@ -116,31 +104,31 @@ export function InvoicesList() {
                   </div>
                   <div>
                     <p className='text-foreground font-medium'>
-                      {invoice.description || `Invoice #${invoice.number || invoice.id}`}
+                      {`Invoice #${invoice.number || invoice.id}`}
                     </p>
-                    <p className='text-muted-foreground text-sm'>{formatDate(invoice.date)}</p>
+                    <p className='text-muted-foreground text-sm'>{formatDate(invoice.created)}</p>
                   </div>
                 </div>
                 <div className='flex items-center gap-4'>
                   <span className='text-foreground text-sm font-semibold'>
                     {formatAmount(invoice.amount)}
                   </span>
-                  <Badge variant={STATUS_VARIANTS[invoice.status] || 'success'}>
-                    {STATUS_LABELS[invoice.status] || 'Paid'}
+                  <Badge variant={STATUS_VARIANTS[invoice.status ?? ''] || 'success'}>
+                    {STATUS_LABELS[invoice.status ?? ''] || 'Paid'}
                   </Badge>
                   {invoice.pdfUrl && (
                     <button
                       type='button'
                       className='text-muted-foreground hover:bg-muted hover:text-foreground rounded-lg p-2 transition-colors'
-                      onClick={() => window.open(invoice.pdfUrl, '_blank')}
+                      onClick={() => window.open(invoice.pdfUrl!, '_blank')}
                       title='Download invoice'
                     >
                       <DownloadIcon className='size-4' />
                     </button>
                   )}
-                  {invoice.hostedInvoiceUrl && (
+                  {invoice.hostedUrl && (
                     <a
-                      href={invoice.hostedInvoiceUrl}
+                      href={invoice.hostedUrl}
                       target='_blank'
                       rel='noopener noreferrer'
                       className='text-muted-foreground hover:bg-muted hover:text-foreground rounded-lg p-2 transition-colors'

@@ -6,34 +6,23 @@ import { useQuery } from '@tanstack/react-query';
 import { queryKeys } from '@/lib/queryKeys';
 import { API_BASE } from '@/config/api';
 import { useAuthStore, selectIsLoggedIn, selectIsAuthLoading } from '@/stores/authStore';
+import type { UserProject } from '@/routes/api/users/me/projects';
 
-// Shape returned by GET /api/users/me/projects (TanStack Start file route).
-// Extra fields (studyCount, etc.) are added downstream at runtime.
-interface ProjectBase {
-  id: string;
-  name: string;
-  description: string | null;
-  orgId: string;
-  role: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export type Project = ProjectBase & {
+export type Project = UserProject & {
   studyCount?: number;
   completedCount?: number;
   memberCount?: number;
   members?: unknown[];
 };
 
-async function fetchMyProjects(): Promise<ProjectBase[]> {
+async function fetchMyProjects(): Promise<UserProject[]> {
   const res = await fetch(`${API_BASE}/api/users/me/projects`, {
     credentials: 'include',
   });
   if (!res.ok) {
     throw new Error(`Failed to fetch projects: ${res.status}`);
   }
-  return res.json() as Promise<ProjectBase[]>;
+  return res.json() as Promise<UserProject[]>;
 }
 
 export function useMyProjectsList(options: { enabled?: boolean } = {}) {

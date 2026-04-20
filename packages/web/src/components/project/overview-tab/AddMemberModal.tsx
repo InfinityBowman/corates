@@ -27,6 +27,7 @@ import {
 import { API_BASE } from '@/config/api';
 import { isUnlimitedQuota } from '@corates/shared/plans';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
+import type { UserSearchResult } from '@/routes/api/users/search';
 
 interface AddMemberModalProps {
   isOpen: boolean;
@@ -44,9 +45,9 @@ export function AddMemberModal({
   quotaInfo,
 }: AddMemberModalProps) {
   const [searchQuery, setSearchQuery] = useState('');
-  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [searchResults, setSearchResults] = useState<UserSearchResult[]>([]);
   const [searching, setSearching] = useState(false);
-  const [selectedUser, setSelectedUser] = useState<any>(null);
+  const [selectedUser, setSelectedUser] = useState<UserSearchResult | null>(null);
   const [selectedRole, setSelectedRole] = useState<'member' | 'owner'>('member');
   const [adding, setAdding] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -84,7 +85,7 @@ export function AddMemberModal({
           const data = (await res.json().catch(() => ({}))) as { message?: string };
           throw new Error(data.message || `Search failed: ${res.status}`);
         }
-        const results = (await res.json()) as any[];
+        const results = (await res.json()) as UserSearchResult[];
         if (!cancelled) setSearchResults(results);
       } catch (err: any) {
         if (!cancelled) setError(err.message || 'Search failed');
@@ -100,9 +101,9 @@ export function AddMemberModal({
   const isValidEmail = (str: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(str.trim());
   const canAddByEmail = !selectedUser && isValidEmail(searchQuery) && searchQuery.length >= 3;
 
-  const handleSelectUser = useCallback((user: any) => {
+  const handleSelectUser = useCallback((user: UserSearchResult) => {
     setSelectedUser(user);
-    setSearchQuery(user.name || user.email);
+    setSearchQuery(user.name || user.email || '');
     setSearchResults([]);
   }, []);
 
@@ -204,7 +205,7 @@ export function AddMemberModal({
 
             {searchResults.length > 0 && !selectedUser && (
               <div className='border-border bg-card absolute z-10 mt-1 max-h-48 w-full overflow-y-auto rounded-lg border shadow-lg'>
-                {searchResults.map((user: any) => (
+                {searchResults.map((user: UserSearchResult) => (
                   <button
                     key={user.id}
                     type='button'
@@ -212,9 +213,9 @@ export function AddMemberModal({
                     className='flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-blue-50'
                   >
                     <Avatar className='size-8 shrink-0'>
-                      <AvatarImage src={user.image} alt={user.name || user.email} />
+                      <AvatarImage src={user.image ?? undefined} alt={user.name || user.email || undefined} />
                       <AvatarFallback className='bg-primary text-sm text-white'>
-                        {getInitials(user.name || user.email)}
+                        {getInitials(user.name || user.email || undefined)}
                       </AvatarFallback>
                     </Avatar>
                     <div className='min-w-0'>
@@ -259,11 +260,11 @@ export function AddMemberModal({
               <div className='flex items-center gap-3'>
                 <Avatar className='size-10'>
                   <AvatarImage
-                    src={selectedUser.image}
-                    alt={selectedUser.name || selectedUser.email}
+                    src={selectedUser.image ?? undefined}
+                    alt={selectedUser.name || selectedUser.email || undefined}
                   />
                   <AvatarFallback className='bg-primary text-white'>
-                    {getInitials(selectedUser.name || selectedUser.email)}
+                    {getInitials(selectedUser.name || selectedUser.email || undefined)}
                   </AvatarFallback>
                 </Avatar>
                 <div>

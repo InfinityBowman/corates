@@ -14,6 +14,18 @@ import { createDomainError, AUTH_ERRORS, SYSTEM_ERRORS } from '@corates/shared';
 import { resolveOrgId } from '@/server/billing-context';
 import { authMiddleware, type Session } from '@/server/middleware/auth';
 
+export type SubscriptionResponse = {
+  tier: string;
+  status: string;
+  tierInfo: { name: string; description: string };
+  stripeSubscriptionId: string | null;
+  currentPeriodEnd: number | null;
+  cancelAtPeriodEnd: boolean;
+  accessMode: string;
+  source: string;
+  projectCount: number;
+};
+
 export const handleGet = async ({
   context: { db, session },
 }: {
@@ -51,24 +63,23 @@ export const handleGet = async ({
         : orgBilling.subscription.periodEnd
       : null;
 
-    return Response.json(
-      {
-        tier: orgBilling.effectivePlanId,
-        status:
-          orgBilling.subscription?.status || (orgBilling.source === 'free' ? 'inactive' : 'active'),
-        tierInfo: {
-          name: effectivePlan.name,
-          description: `Plan: ${effectivePlan.name}`,
-        },
-        stripeSubscriptionId: orgBilling.subscription?.id || null,
-        currentPeriodEnd,
-        cancelAtPeriodEnd: orgBilling.subscription?.cancelAtPeriodEnd || false,
-        accessMode: orgBilling.accessMode,
-        source: orgBilling.source,
-        projectCount: projectCountResult?.count || 0,
+    const payload: SubscriptionResponse = {
+      tier: orgBilling.effectivePlanId,
+      status:
+        orgBilling.subscription?.status || (orgBilling.source === 'free' ? 'inactive' : 'active'),
+      tierInfo: {
+        name: effectivePlan.name,
+        description: `Plan: ${effectivePlan.name}`,
       },
-      { status: 200 },
-    );
+      stripeSubscriptionId: orgBilling.subscription?.id || null,
+      currentPeriodEnd,
+      cancelAtPeriodEnd: orgBilling.subscription?.cancelAtPeriodEnd || false,
+      accessMode: orgBilling.accessMode,
+      source: orgBilling.source,
+      projectCount: projectCountResult?.count || 0,
+    };
+
+    return Response.json(payload, { status: 200 });
   } catch (err) {
     const error = err as Error;
     console.error('Error fetching org billing:', error);
