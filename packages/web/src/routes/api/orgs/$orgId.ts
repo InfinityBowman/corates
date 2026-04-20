@@ -8,7 +8,7 @@ import { count, eq } from 'drizzle-orm';
 import { createDomainError, AUTH_ERRORS, SYSTEM_ERRORS } from '@corates/shared';
 import { requireOrgMembership } from '@/server/guards/requireOrgMembership';
 import { requireOrgWriteAccess } from '@/server/guards/requireOrgWriteAccess';
-import { authMiddleware } from '@/server/middleware/auth';
+import { authMiddleware, type Session } from '@/server/middleware/auth';
 
 interface OrgApiMethods {
   getFullOrganization: (req: {
@@ -29,10 +29,10 @@ function getOrgApi(): OrgApiMethods {
   return createAuth(env).api as unknown as OrgApiMethods;
 }
 
-type HandlerArgs = { request: Request; params: { orgId: OrgId }; context: { db: Database } };
+type HandlerArgs = { request: Request; params: { orgId: OrgId }; context: { db: Database; session: Session } };
 
-export const handleGet = async ({ request, params, context: { db } }: HandlerArgs) => {
-  const guard = await requireOrgMembership(request, env, db, params.orgId);
+export const handleGet = async ({ request, params, context: { db, session } }: HandlerArgs) => {
+  const guard = await requireOrgMembership(session, db, params.orgId);
   if (!guard.ok) return guard.response;
 
   try {
@@ -71,8 +71,8 @@ export const handleGet = async ({ request, params, context: { db } }: HandlerArg
   }
 };
 
-export const handlePut = async ({ request, params, context: { db } }: HandlerArgs) => {
-  const membership = await requireOrgMembership(request, env, db, params.orgId, 'admin');
+export const handlePut = async ({ request, params, context: { db, session } }: HandlerArgs) => {
+  const membership = await requireOrgMembership(session, db, params.orgId, 'admin');
   if (!membership.ok) return membership.response;
 
   const writeAccess = await requireOrgWriteAccess(request.method, db, params.orgId);
@@ -122,8 +122,8 @@ export const handlePut = async ({ request, params, context: { db } }: HandlerArg
   }
 };
 
-export const handleDelete = async ({ request, params, context: { db } }: HandlerArgs) => {
-  const membership = await requireOrgMembership(request, env, db, params.orgId, 'owner');
+export const handleDelete = async ({ request, params, context: { db, session } }: HandlerArgs) => {
+  const membership = await requireOrgMembership(session, db, params.orgId, 'owner');
   if (!membership.ok) return membership.response;
 
   const writeAccess = await requireOrgWriteAccess(request.method, db, params.orgId);

@@ -14,7 +14,7 @@ import {
 import type { OrgId, UserId } from '@corates/shared/ids';
 import { requireOrgMembership } from '@/server/guards/requireOrgMembership';
 import { requireOrgWriteAccess } from '@/server/guards/requireOrgWriteAccess';
-import { authMiddleware } from '@/server/middleware/auth';
+import { authMiddleware, type Session } from '@/server/middleware/auth';
 
 interface OrgApiMethods {
   updateMemberRole: (req: { headers: Headers; body: Record<string, unknown> }) => Promise<unknown>;
@@ -33,11 +33,11 @@ function getOrgApi(): OrgApiMethods {
 type HandlerArgs = {
   request: Request;
   params: { orgId: OrgId; memberId: UserId };
-  context: { db: Database };
+  context: { db: Database; session: Session };
 };
 
-export const handlePut = async ({ request, params, context: { db } }: HandlerArgs) => {
-  const membership = await requireOrgMembership(request, env, db, params.orgId, 'admin');
+export const handlePut = async ({ request, params, context: { db, session } }: HandlerArgs) => {
+  const membership = await requireOrgMembership(session, db, params.orgId, 'admin');
   if (!membership.ok) return membership.response;
 
   const writeAccess = await requireOrgWriteAccess(request.method, db, params.orgId);
@@ -88,8 +88,8 @@ export const handlePut = async ({ request, params, context: { db } }: HandlerArg
   }
 };
 
-export const handleDelete = async ({ request, params, context: { db } }: HandlerArgs) => {
-  const membership = await requireOrgMembership(request, env, db, params.orgId);
+export const handleDelete = async ({ request, params, context: { db, session } }: HandlerArgs) => {
+  const membership = await requireOrgMembership(session, db, params.orgId);
   if (!membership.ok) return membership.response;
 
   const writeAccess = await requireOrgWriteAccess(request.method, db, params.orgId);

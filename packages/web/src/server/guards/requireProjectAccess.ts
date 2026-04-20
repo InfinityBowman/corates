@@ -4,7 +4,7 @@ import { and, eq } from 'drizzle-orm';
 import { hasProjectRole } from '@corates/workers/policies';
 import { createDomainError, AUTH_ERRORS, PROJECT_ERRORS, SYSTEM_ERRORS } from '@corates/shared';
 import type { OrgId, ProjectId, UserId } from '@corates/shared/ids';
-import { getSession } from '@corates/workers/auth';
+import type { Session } from '@/server/middleware/auth';
 
 export interface ProjectContext {
   userId: UserId;
@@ -20,21 +20,12 @@ export type ProjectGuardResult =
   | { ok: false; response: Response };
 
 export async function requireProjectAccess(
-  request: Request,
-  env: Env,
+  session: Session,
   db: Database,
   orgId: OrgId,
   projectId: ProjectId,
   minRole?: string,
 ): Promise<ProjectGuardResult> {
-  const session = await getSession(request, env);
-  if (!session) {
-    return {
-      ok: false,
-      response: Response.json(createDomainError(AUTH_ERRORS.REQUIRED), { status: 401 }),
-    };
-  }
-
   if (!orgId) {
     return {
       ok: false,

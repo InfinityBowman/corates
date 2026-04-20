@@ -19,19 +19,19 @@ import { generateUniqueFileName } from '@corates/workers/media-files';
 import { requireOrgMembership } from '@/server/guards/requireOrgMembership';
 import { requireProjectAccess } from '@/server/guards/requireProjectAccess';
 import { requireOrgWriteAccess } from '@/server/guards/requireOrgWriteAccess';
-import { authMiddleware } from '@/server/middleware/auth';
+import { authMiddleware, type Session } from '@/server/middleware/auth';
 
 type HandlerArgs = {
   request: Request;
   params: { orgId: OrgId; projectId: ProjectId; studyId: StudyId };
-  context: { db: Database };
+  context: { db: Database; session: Session };
 };
 
-export const handleGet = async ({ request, params, context: { db } }: HandlerArgs) => {
-  const orgMembership = await requireOrgMembership(request, env, db, params.orgId);
+export const handleGet = async ({ params, context: { db, session } }: HandlerArgs) => {
+  const orgMembership = await requireOrgMembership(session, db, params.orgId);
   if (!orgMembership.ok) return orgMembership.response;
 
-  const access = await requireProjectAccess(request, env, db, params.orgId, params.projectId);
+  const access = await requireProjectAccess(session, db, params.orgId, params.projectId);
   if (!access.ok) return access.response;
 
   try {
@@ -89,14 +89,14 @@ export const handleGet = async ({ request, params, context: { db } }: HandlerArg
   }
 };
 
-export const handlePost = async ({ request, params, context: { db } }: HandlerArgs) => {
-  const orgMembership = await requireOrgMembership(request, env, db, params.orgId);
+export const handlePost = async ({ request, params, context: { db, session } }: HandlerArgs) => {
+  const orgMembership = await requireOrgMembership(session, db, params.orgId);
   if (!orgMembership.ok) return orgMembership.response;
 
   const writeAccess = await requireOrgWriteAccess(request.method, db, params.orgId);
   if (!writeAccess.ok) return writeAccess.response;
 
-  const access = await requireProjectAccess(request, env, db, params.orgId, params.projectId);
+  const access = await requireProjectAccess(session, db, params.orgId, params.projectId);
   if (!access.ok) return access.response;
 
   const contentLength = parseInt(request.headers.get('Content-Length') || '0', 10);

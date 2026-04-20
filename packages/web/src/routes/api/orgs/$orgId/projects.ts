@@ -16,12 +16,12 @@ import { requireOrgMembership } from '@/server/guards/requireOrgMembership';
 import { requireOrgWriteAccess } from '@/server/guards/requireOrgWriteAccess';
 import { requireEntitlement } from '@/server/guards/requireEntitlement';
 import { requireQuota } from '@/server/guards/requireQuota';
-import { authMiddleware } from '@/server/middleware/auth';
+import { authMiddleware, type Session } from '@/server/middleware/auth';
 
-type HandlerArgs = { request: Request; params: { orgId: OrgId }; context: { db: Database } };
+type HandlerArgs = { request: Request; params: { orgId: OrgId }; context: { db: Database; session: Session } };
 
-export const handleGet = async ({ request, params, context: { db } }: HandlerArgs) => {
-  const membership = await requireOrgMembership(request, env, db, params.orgId);
+export const handleGet = async ({ params, context: { db, session } }: HandlerArgs) => {
+  const membership = await requireOrgMembership(session, db, params.orgId);
   if (!membership.ok) return membership.response;
 
   try {
@@ -57,8 +57,8 @@ export const handleGet = async ({ request, params, context: { db } }: HandlerArg
   }
 };
 
-export const handlePost = async ({ request, params, context: { db } }: HandlerArgs) => {
-  const membership = await requireOrgMembership(request, env, db, params.orgId);
+export const handlePost = async ({ request, params, context: { db, session } }: HandlerArgs) => {
+  const membership = await requireOrgMembership(session, db, params.orgId);
   if (!membership.ok) return membership.response;
 
   const writeAccess = await requireOrgWriteAccess(request.method, db, params.orgId);

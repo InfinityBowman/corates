@@ -5,23 +5,23 @@ import type { OrgId, ProjectId } from '@corates/shared/ids';
 import { getProjectDocStub } from '@corates/workers/project-doc-id';
 import { requireOrgMembership } from '@/server/guards/requireOrgMembership';
 import { requireProjectAccess } from '@/server/guards/requireProjectAccess';
-import { authMiddleware } from '@/server/middleware/auth';
+import { authMiddleware, type Session } from '@/server/middleware/auth';
 
 type HandlerArgs = {
   request: Request;
   params: { orgId: OrgId; projectId: ProjectId };
-  context: { db: Database };
+  context: { db: Database; session: Session };
 };
 
-export const handleGet = async ({ request, params, context: { db } }: HandlerArgs) => {
+export const handleGet = async ({ params, context: { db, session } }: HandlerArgs) => {
   if (!env.DEV_MODE) {
     return Response.json({ error: 'Dev endpoints disabled' }, { status: 403 });
   }
 
-  const orgMembership = await requireOrgMembership(request, env, db, params.orgId);
+  const orgMembership = await requireOrgMembership(session, db, params.orgId);
   if (!orgMembership.ok) return orgMembership.response;
 
-  const access = await requireProjectAccess(request, env, db, params.orgId, params.projectId);
+  const access = await requireProjectAccess(session, db, params.orgId, params.projectId);
   if (!access.ok) return access.response;
 
   try {

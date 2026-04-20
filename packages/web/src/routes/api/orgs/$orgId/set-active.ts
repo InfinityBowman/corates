@@ -5,7 +5,7 @@ import type { Database } from '@corates/db/client';
 import { createDomainError, SYSTEM_ERRORS } from '@corates/shared';
 import type { OrgId } from '@corates/shared/ids';
 import { requireOrgMembership } from '@/server/guards/requireOrgMembership';
-import { authMiddleware } from '@/server/middleware/auth';
+import { authMiddleware, type Session } from '@/server/middleware/auth';
 
 interface OrgApiMethods {
   setActiveOrganization: (req: {
@@ -21,13 +21,13 @@ function getOrgApi(): OrgApiMethods {
 export const handler = async ({
   request,
   params,
-  context: { db },
+  context: { db, session },
 }: {
   request: Request;
   params: { orgId: OrgId };
-  context: { db: Database };
+  context: { db: Database; session: Session };
 }) => {
-  const guard = await requireOrgMembership(request, env, db, params.orgId);
+  const guard = await requireOrgMembership(session, db, params.orgId);
   if (!guard.ok) return guard.response;
 
   try {

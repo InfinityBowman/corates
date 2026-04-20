@@ -9,6 +9,7 @@ import {
   resetCounter,
   asUserId,
 } from '@/__tests__/server/factories';
+import type { Session } from '@/server/middleware/auth';
 import { handleGet as listOrgsHandler, handlePost as createOrgHandler } from '../../orgs';
 import { handlePut as updateOrgHandler, handleDelete as deleteOrgHandler } from '../$orgId';
 import { handleGet as listMembersHandler, handlePost as addMemberHandler } from '../$orgId/members';
@@ -20,12 +21,19 @@ import { handler as setActiveHandler } from '../$orgId/set-active';
 
 let currentUser: { id: string; email: string } = { id: 'user-1', email: 'user1@example.com' };
 
-vi.mock('@corates/workers/auth', () => ({
-  getSession: async () => ({
-    user: { id: currentUser.id, email: currentUser.email, name: 'Test User' },
-    session: { id: 'test-session', userId: currentUser.id },
-  }),
-}));
+function mockSession(overrides?: { userId?: string; email?: string }): Session {
+  return {
+    user: {
+      id: overrides?.userId ?? currentUser.id,
+      email: overrides?.email ?? currentUser.email,
+      name: 'Test User',
+    },
+    session: {
+      id: 'test-session',
+      userId: overrides?.userId ?? currentUser.id,
+    },
+  } as Session;
+}
 
 const mockCreateOrganization = vi.fn();
 const mockGetFullOrganization = vi.fn();
@@ -160,7 +168,7 @@ describe('PUT /api/orgs/:orgId', () => {
     const res = await updateOrgHandler({
       request: jsonReq(`/api/orgs/${org.id}`, 'PUT', { name: 'Updated Org' }),
       params: { orgId: org.id },
-      context: { db: createDb(env.DB) },
+      context: { db: createDb(env.DB), session: mockSession() },
     });
 
     expect(res.status).toBe(403);
@@ -175,7 +183,7 @@ describe('PUT /api/orgs/:orgId', () => {
     const res = await updateOrgHandler({
       request: jsonReq(`/api/orgs/${org.id}`, 'PUT', { name: 'Updated Org' }),
       params: { orgId: org.id },
-      context: { db: createDb(env.DB) },
+      context: { db: createDb(env.DB), session: mockSession() },
     });
 
     expect(res.status).toBe(403);
@@ -196,7 +204,7 @@ describe('PUT /api/orgs/:orgId', () => {
     const res = await updateOrgHandler({
       request: jsonReq(`/api/orgs/${org.id}`, 'PUT', { name: 'Updated Org', slug: 'test-org' }),
       params: { orgId: org.id },
-      context: { db: createDb(env.DB) },
+      context: { db: createDb(env.DB), session: mockSession() },
     });
 
     expect(res.status).toBe(200);
@@ -219,7 +227,7 @@ describe('PUT /api/orgs/:orgId', () => {
     const res = await updateOrgHandler({
       request: jsonReq(`/api/orgs/${org.id}`, 'PUT', { name: 'Updated Org', slug: 'taken-slug' }),
       params: { orgId: org.id },
-      context: { db: createDb(env.DB) },
+      context: { db: createDb(env.DB), session: mockSession() },
     });
 
     expect(res.status).toBe(403);
@@ -238,7 +246,7 @@ describe('DELETE /api/orgs/:orgId', () => {
     const res = await deleteOrgHandler({
       request: jsonReq(`/api/orgs/${org.id}`, 'DELETE'),
       params: { orgId: org.id },
-      context: { db: createDb(env.DB) },
+      context: { db: createDb(env.DB), session: mockSession() },
     });
 
     expect(res.status).toBe(403);
@@ -254,7 +262,7 @@ describe('DELETE /api/orgs/:orgId', () => {
     const res = await deleteOrgHandler({
       request: jsonReq(`/api/orgs/${org.id}`, 'DELETE'),
       params: { orgId: org.id },
-      context: { db: createDb(env.DB) },
+      context: { db: createDb(env.DB), session: mockSession() },
     });
 
     expect(res.status).toBe(200);
@@ -277,7 +285,7 @@ describe('GET /api/orgs/:orgId/members', () => {
     const res = await listMembersHandler({
       request: jsonReq(`/api/orgs/${org.id}/members`, 'GET'),
       params: { orgId: org.id },
-      context: { db: createDb(env.DB) },
+      context: { db: createDb(env.DB), session: mockSession() },
     });
 
     expect(res.status).toBe(403);
@@ -296,7 +304,7 @@ describe('GET /api/orgs/:orgId/members', () => {
     const res = await listMembersHandler({
       request: jsonReq(`/api/orgs/${org.id}/members`, 'GET'),
       params: { orgId: org.id },
-      context: { db: createDb(env.DB) },
+      context: { db: createDb(env.DB), session: mockSession() },
     });
 
     expect(res.status).toBe(200);
@@ -316,7 +324,7 @@ describe('POST /api/orgs/:orgId/members', () => {
     const res = await addMemberHandler({
       request: jsonReq(`/api/orgs/${org.id}/members`, 'POST', { userId: 'user-2', role: 'member' }),
       params: { orgId: org.id },
-      context: { db: createDb(env.DB) },
+      context: { db: createDb(env.DB), session: mockSession() },
     });
 
     expect(res.status).toBe(403);
@@ -331,7 +339,7 @@ describe('POST /api/orgs/:orgId/members', () => {
     const res = await addMemberHandler({
       request: jsonReq(`/api/orgs/${org.id}/members`, 'POST', { role: 'member' }),
       params: { orgId: org.id },
-      context: { db: createDb(env.DB) },
+      context: { db: createDb(env.DB), session: mockSession() },
     });
 
     expect(res.status).toBe(400);
@@ -356,7 +364,7 @@ describe('POST /api/orgs/:orgId/members', () => {
         role: 'member',
       }),
       params: { orgId: org.id },
-      context: { db: createDb(env.DB) },
+      context: { db: createDb(env.DB), session: mockSession() },
     });
 
     expect(res.status).toBe(201);
@@ -376,7 +384,7 @@ describe('POST /api/orgs/:orgId/members', () => {
     const res = await addMemberHandler({
       request: jsonReq(`/api/orgs/${org.id}/members`, 'POST', { userId: 'user-2', role: 'member' }),
       params: { orgId: org.id },
-      context: { db: createDb(env.DB) },
+      context: { db: createDb(env.DB), session: mockSession() },
     });
 
     expect(res.status).toBe(403);
@@ -395,7 +403,7 @@ describe('PUT /api/orgs/:orgId/members/:memberId', () => {
     const res = await updateMemberRoleHandler({
       request: jsonReq(`/api/orgs/${org.id}/members/member-2`, 'PUT', { role: 'admin' }),
       params: { orgId: org.id, memberId: asUserId('member-2') },
-      context: { db: createDb(env.DB) },
+      context: { db: createDb(env.DB), session: mockSession() },
     });
 
     expect(res.status).toBe(403);
@@ -410,7 +418,7 @@ describe('PUT /api/orgs/:orgId/members/:memberId', () => {
     const res = await updateMemberRoleHandler({
       request: jsonReq(`/api/orgs/${org.id}/members/member-2`, 'PUT', {}),
       params: { orgId: org.id, memberId: asUserId('member-2') },
-      context: { db: createDb(env.DB) },
+      context: { db: createDb(env.DB), session: mockSession() },
     });
 
     expect(res.status).toBe(400);
@@ -429,7 +437,7 @@ describe('PUT /api/orgs/:orgId/members/:memberId', () => {
     const res = await updateMemberRoleHandler({
       request: jsonReq(`/api/orgs/${org.id}/members/member-2`, 'PUT', { role: 'admin' }),
       params: { orgId: org.id, memberId: asUserId('member-2') },
-      context: { db: createDb(env.DB) },
+      context: { db: createDb(env.DB), session: mockSession() },
     });
 
     expect(res.status).toBe(200);
@@ -449,7 +457,7 @@ describe('PUT /api/orgs/:orgId/members/:memberId', () => {
     const res = await updateMemberRoleHandler({
       request: jsonReq(`/api/orgs/${org.id}/members/member-2`, 'PUT', { role: 'owner' }),
       params: { orgId: org.id, memberId: asUserId('member-2') },
-      context: { db: createDb(env.DB) },
+      context: { db: createDb(env.DB), session: mockSession() },
     });
 
     expect(res.status).toBe(403);
@@ -468,7 +476,7 @@ describe('DELETE /api/orgs/:orgId/members/:memberId', () => {
     const res = await removeMemberHandler({
       request: jsonReq(`/api/orgs/${org.id}/members/member-2`, 'DELETE'),
       params: { orgId: org.id, memberId: asUserId('member-2') },
-      context: { db: createDb(env.DB) },
+      context: { db: createDb(env.DB), session: mockSession() },
     });
 
     expect(res.status).toBe(403);
@@ -489,7 +497,7 @@ describe('DELETE /api/orgs/:orgId/members/:memberId', () => {
     const res = await removeMemberHandler({
       request: jsonReq(`/api/orgs/${org.id}/members/${member.id}`, 'DELETE'),
       params: { orgId: org.id, memberId: member.id },
-      context: { db: createDb(env.DB) },
+      context: { db: createDb(env.DB), session: mockSession() },
     });
 
     expect(res.status).toBe(200);
@@ -514,7 +522,7 @@ describe('DELETE /api/orgs/:orgId/members/:memberId', () => {
     const res = await removeMemberHandler({
       request: jsonReq(`/api/orgs/${org.id}/members/member-2`, 'DELETE'),
       params: { orgId: org.id, memberId: asUserId('member-2') },
-      context: { db: createDb(env.DB) },
+      context: { db: createDb(env.DB), session: mockSession() },
     });
 
     expect(res.status).toBe(200);
@@ -538,7 +546,7 @@ describe('DELETE /api/orgs/:orgId/members/:memberId', () => {
     const res = await removeMemberHandler({
       request: jsonReq(`/api/orgs/${org.id}/members/${owner.id}`, 'DELETE'),
       params: { orgId: org.id, memberId: owner.id },
-      context: { db: createDb(env.DB) },
+      context: { db: createDb(env.DB), session: mockSession() },
     });
 
     expect(res.status).toBe(403);
@@ -557,7 +565,7 @@ describe('POST /api/orgs/:orgId/set-active', () => {
     const res = await setActiveHandler({
       request: jsonReq(`/api/orgs/${org.id}/set-active`, 'POST'),
       params: { orgId: org.id },
-      context: { db: createDb(env.DB) },
+      context: { db: createDb(env.DB), session: mockSession() },
     });
 
     expect(res.status).toBe(403);
@@ -574,7 +582,7 @@ describe('POST /api/orgs/:orgId/set-active', () => {
     const res = await setActiveHandler({
       request: jsonReq(`/api/orgs/${org.id}/set-active`, 'POST'),
       params: { orgId: org.id },
-      context: { db: createDb(env.DB) },
+      context: { db: createDb(env.DB), session: mockSession() },
     });
 
     expect(res.status).toBe(200);

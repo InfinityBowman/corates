@@ -4,7 +4,7 @@ import { and, eq } from 'drizzle-orm';
 import { hasOrgRole } from '@corates/workers/policies';
 import { createDomainError, AUTH_ERRORS } from '@corates/shared';
 import type { OrgId, UserId } from '@corates/shared/ids';
-import { getSession } from '@corates/workers/auth';
+import type { Session } from '@/server/middleware/auth';
 
 export interface OrgContext {
   userId: UserId;
@@ -18,20 +18,11 @@ export interface OrgContext {
 export type OrgGuardResult = { ok: true; context: OrgContext } | { ok: false; response: Response };
 
 export async function requireOrgMembership(
-  request: Request,
-  env: Env,
+  session: Session,
   db: Database,
   orgId: OrgId,
   minRole?: string,
 ): Promise<OrgGuardResult> {
-  const session = await getSession(request, env);
-  if (!session) {
-    return {
-      ok: false,
-      response: Response.json(createDomainError(AUTH_ERRORS.REQUIRED), { status: 401 }),
-    };
-  }
-
   if (!orgId) {
     return {
       ok: false,
