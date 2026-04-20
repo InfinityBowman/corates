@@ -5,7 +5,7 @@
   "license": "PolyForm-Noncommercial-1.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite dev --port 3010",
+    "dev": "portless corates vite dev",
     "build": "NODE_OPTIONS='--max-old-space-size=6144' vite build",
     "build:prod": "pnpm --filter @corates/shared --filter @corates/db build && CLOUDFLARE_ENV=production pnpm run build",
     "preview": "vite preview",
