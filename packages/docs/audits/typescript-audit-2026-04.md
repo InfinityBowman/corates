@@ -1,17 +1,17 @@
-# TypeScript Audit — CoRATES
+# TypeScript Audit -- CoRATES
 
-Date: 2026-04-18 (revised after self-review, updated 2026-04-19)
+Date: 2026-04-18 (revised after self-review, updated 2026-04-20)
 Scope: `packages/web`, `packages/workers`, `packages/shared`, `packages/db`
 Excludes: `node_modules`, `dist`, `.tanstack`, `reference/`, `packages/stripe-purchases` (separate Hono workspace), `packages/stripe-dev`, `packages/ai`
 
 ## TL;DR
 
-Strict mode is on across all four packages — solid baseline. The big wins are not language-feature obscurities; they're the patterns a 2026-vintage TS codebase should reach for and largely doesn't:
+Strict mode is on across all four packages -- solid baseline. The big wins are not language-feature obscurities; they're the patterns a 2026-vintage TS codebase should reach for and largely doesn't:
 
-1. **API route response types aren't exported** — every TanStack Start file route returns `Response.json({...})` and every consumer in `hooks/`/`api/` re-types the payload by hand (115 `as Record<string, unknown>` casts in `packages/web/src`).
-2. **Engine adapter contract isn't honored** by its consumers — well-designed 4-param generic, but `EngineContext<any, any, …>` at the call sites.
-3. **`satisfies` is used 4 times in the entire repo** — strong signal of underuse.
-4. **No type tests** — for a codebase with custom generics like the reconcile engine, this means contract regressions ship silently.
+1. **API route response types aren't exported** -- every TanStack Start file route returns `Response.json({...})` and every consumer in `hooks/`/`api/` re-types the payload by hand (115 `as Record<string, unknown>` casts in `packages/web/src`).
+2. **Engine adapter contract isn't honored** by its consumers -- well-designed 4-param generic, but `EngineContext<any, any, ...>` at the call sites.
+3. **`satisfies` is used 4 times in the entire repo** -- strong signal of underuse.
+4. **No type tests** -- for a codebase with custom generics like the reconcile engine, this means contract regressions ship silently.
 
 Order-of-attack is at the bottom.
 
@@ -19,18 +19,14 @@ Order-of-attack is at the bottom.
 
 ## Verified counts
 
-| Signal                                          |   Count | Where                                                          |
-| ----------------------------------------------- | ------: | -------------------------------------------------------------- |
-| `as Record<string, unknown>`                    |     115 | `packages/web/src` (29 files)                                  |
-| `as any`                                        |     298 | all packages (54 files)                                        |
-| `@ts-ignore` / `@ts-expect-error`               |       3 | 2 in d3 charts, 1 in workers `types.d.ts`                      |
-| `satisfies`                                     |       4 | `UserSession.ts`, `stripeEventLedger.ts`, `oauth-relay.ts`, +1 |
-| `assertNever`                                   |       6 | `assert-never.ts`, rob2 adapter, robins-i adapter (DONE)       |
-| `validateSearch` / TanStack Router `validator:` |       2 | both now use Zod `.catch('')` (DONE)                           |
-| Brand types (Zod `.brand<>`)                    |      11 | `shared/src/ids.ts`, adopted in 49 files (DONE)                |
-| Type tests (`expectTypeOf`, tsd, `assertType`)  |       0 | none                                                           |
-| `createServerFn` (TanStack Start typed RPC)     |       0 | not used                                                       |
-| `$inferSelect` / `$inferInsert` / `Infer*Model` | 2 files | `db/schema.ts` (30 exports), `db/stripeEventLedger.ts` (DONE)  |
+| Signal                                          |   Count | Where                                         |
+| ----------------------------------------------- | ------: | --------------------------------------------- |
+| `as Record<string, unknown>`                    |     115 | `packages/web/src` (29 files)                 |
+| `as any`                                        |    ~144 | all packages (54 files); down from 298        |
+| `@ts-ignore` / `@ts-expect-error`               |       3 | 2 in d3 charts, 1 in workers `types.d.ts`     |
+| `satisfies`                                     |       4 | `UserSession.ts`, `stripeEventLedger.ts`, +2  |
+| Type tests (`expectTypeOf`, tsd, `assertType`)  |       0 | none                                          |
+| `createServerFn` (TanStack Start typed RPC)     |       0 | not used                                      |
 
 ---
 
@@ -73,7 +69,7 @@ Repeated across `useAdminQueries.ts` (10+ endpoints), `api/billing.ts`, `useMyPr
 
 **There are three honest options here. Pick one per endpoint, not all three:**
 
-**Option A — Just export the response type from the route file (lowest cost).**
+**Option A -- Just export the response type from the route file (lowest cost).**
 
 ```ts
 // route file
@@ -92,7 +88,7 @@ const data = (await res.json()) as SubscriptionResponse;
 
 Same trust level as today (still a runtime cast in the consumer), but adding/removing fields on the server breaks the consumer at compile time. Zero machinery, zero runtime cost.
 
-**Option B — Zod-parse at the boundary (real safety).**
+**Option B -- Zod-parse at the boundary (real safety).**
 
 ```ts
 // shared schema
@@ -108,10 +104,8 @@ return SubscriptionSchema.parse(await res.json());
 
 Costs a bundle-size hit and a parse pass per request, but you get genuine runtime guarantees in both directions. Right call for high-stakes endpoints (billing, auth, admin); overkill for static reads.
 
-**Option C — Migrate hot endpoints to `createServerFn`.**
+**Option C -- Migrate hot endpoints to `createServerFn`.**
 TanStack Start's blessed RPC. Full end-to-end inference, no hand-rolled types, no `Response.json` parse. Currently used in zero endpoints in this repo. Right answer for _new_ endpoints; per-endpoint migration cost for existing routes.
-
-Earlier I recommended a phantom-typed `TypedResponse<T>` wrapper. Withdrawn — it's just `as` with extra steps.
 
 ### C2. Engine adapters don't honor their own contract
 
@@ -124,25 +118,12 @@ function renderPage(context: EngineContext<any, any, ComparisonResult | null, Ro
 function Rob2NavbarAdapter(navbarContext: NavbarContext<any, ComparisonResult | null, Rob2NavItem>) { ... }
 ```
 
-Two of four type parameters are `any`. And `ReconciliationEngineProps` (lines 270-296) uses `checklist1: unknown`, `checklist2: unknown` — the public boundary erases generics entirely.
+Two of four type parameters are `any`. And `ReconciliationEngineProps` (lines 270-296) uses `checklist1: unknown`, `checklist2: unknown` -- the public boundary erases generics entirely.
 
-**Honest assessment of the fix cost:** This is _not_ a "just pipe TChecklist through" change. The reason `any` slipped in is that `renderPage` does `c1?.preliminary?.[currentItem.key]` — index access on a generic with a runtime-discovered key. To make that typed, `Rob2NavItem` variants would need to carry their own typed accessor functions:
-
-```ts
-type Rob2NavItem =
-  | {
-      type: 'preliminary';
-      key: keyof ROB2Checklist['preliminary'];
-      getValue: (c: ROB2Checklist) => string | undefined;
-    }
-  | { type: 'domainQuestion'; domainKey: keyof ROB2Checklist['domains']; ... }
-  | ...;
-```
-
-That's a real refactor with judgment calls (where do the accessors live? do they replace the existing `meta` field or supplement it?). Two paths:
+**Honest assessment of the fix cost:** This is _not_ a "just pipe TChecklist through" change. The reason `any` slipped in is that `renderPage` does `c1?.preliminary?.[currentItem.key]` -- index access on a generic with a runtime-discovered key. Two paths:
 
 1. **Minimal**: just type `ReconciliationEngineProps` so callers pass typed checklists; leave the adapter internals as `any` for now. Catches the _external_ contract violation without touching the adapter body.
-2. **Full**: redesign nav items to carry typed accessors. Larger change; would close C3 properly but might be a 1–2 day refactor.
+2. **Full**: redesign nav items to carry typed accessors. Larger change; would close this properly but might be a 1-2 day refactor.
 
 A type test (see G1 below) would have caught this regression at PR time without requiring the full refactor.
 
@@ -160,8 +141,8 @@ interface ChecklistConfig {
   scoreChecklist: (_state: any) => string;
   getAnswers: (_state: any) => any;
 }
-export function createChecklistOfType(type: string, options: Record<string, unknown>): any { … }
-export function scoreChecklistOfType(type: string, state: any): string { … }
+export function createChecklistOfType(type: string, options: Record<string, unknown>): any { ... }
+export function scoreChecklistOfType(type: string, state: any): string { ... }
 ```
 
 `AMSTAR2Checklist | ROB2Checklist | ROBINSIChecklist` already exist as concrete types. Convert to a discriminated map:
@@ -185,22 +166,9 @@ const REGISTRY = {
 } satisfies { [K in ChecklistKind]: ChecklistConfig<K> };
 ```
 
-Note: callers passing a `string`-typed kind still need to narrow at runtime to get a specific type — the registry doesn't _eliminate_ the dispatch, it just makes it type-safe.
+Note: callers passing a `string`-typed kind still need to narrow at runtime to get a specific type -- the registry doesn't _eliminate_ the dispatch, it just makes it type-safe.
 
-### H2. `as unknown as AuthUser` double-cast
-
-`packages/workers/src/auth/session-helper.ts:25-26`:
-
-```ts
-return {
-  user: result.user as unknown as AuthUser,
-  session: result.session as unknown as AuthSession,
-};
-```
-
-`as unknown as X` is the strongest "trust me" cast in the language. Better-auth's user shape can drift between versions. Replace with a Zod parse at the session boundary.
-
-### H3. Google Picker — install `@types/google.picker`
+### H3. Google Picker -- install `@types/google.picker`
 
 `packages/web/src/lib/googlePicker.ts:79, 117, 122, 127-152` has 7 `google!` non-null assertions plus `(data: any)`, `let builder: any`, `const docs: any[]`, `(doc: any)`, with hand-rolled stubs at the top.
 
@@ -221,20 +189,9 @@ async fetch(request: Request, env: unknown, ctx: ExecutionContext): Promise<Resp
 
 Casting _to_ `never` is a smell that the binding type is too narrow at the source. The handler is typed `env: unknown` precisely so it has to be cast every time. Since `packages/workers/tsconfig.json` already includes `worker-configuration.d.ts`, prefer the typed `env` import from `cloudflare:workers` (already used on line 8) over the parameter, and define a proper `Env` type for the handler signature.
 
-### H5. `error as Error` in catch blocks
+### H5. `error as Error` / `const error = err as Error` in catch blocks
 
-At least 3 sites: `routes/api/billing/subscription.ts:77`, `routes/api/admin/projects/$projectId.ts:132,165`, `routes/api/google-drive/import.ts:219`. With `useUnknownInCatchVariables` (TS 4.4+ default in strict), use `instanceof Error` narrowing. A 5-line helper `errorMessage(e: unknown): string` would centralize this.
-
-### H6. OAuth relay context augmentation via `as any`
-
-`packages/workers/src/auth/oauth-relay.ts:188, 357`:
-
-```ts
-(ctx.context as any)._relayOrigin = currentOrigin;
-const relayOrigin = (ctx.context as any)._relayOrigin;
-```
-
-Use TypeScript module augmentation against better-auth's context type. A 6-line `declare module` block removes both `any` casts permanently.
+Pervasive: ~100 occurrences across API route files. Nearly every catch block in `routes/api/` uses `const error = err as Error;`. With `useUnknownInCatchVariables` (TS 4.4+ default in strict), use `instanceof Error` narrowing. A 5-line helper `errorMessage(e: unknown): string` would centralize this and allow a codemod-style cleanup pass.
 
 ---
 
@@ -242,7 +199,7 @@ Use TypeScript module augmentation against better-auth's context type. A 6-line 
 
 ### G1. No type tests
 
-Zero `expectTypeOf`/`tsd`/`assertType` calls anywhere. For a codebase that ships a custom generic like `ReconciliationAdapter<TChecklist, TFinalAnswers, TComparison, TNavItem>`, type tests catch contract regressions like C3 at PR time.
+Zero `expectTypeOf`/`tsd`/`assertType` calls anywhere. For a codebase that ships a custom generic like `ReconciliationAdapter<TChecklist, TFinalAnswers, TComparison, TNavItem>`, type tests catch contract regressions at PR time.
 
 Vitest already supports type tests via `expectTypeOf`. Suggested setup:
 
@@ -253,17 +210,15 @@ import type { ReconciliationAdapter } from '../engine/types';
 import { rob2Adapter } from '../rob2-reconcile/adapter';
 import type { ROB2Checklist } from '@corates/shared';
 
-// Catches the C3 regression: adapter must use ROB2Checklist, not any
+// Catches the C2 regression: adapter must use ROB2Checklist, not any
 expectTypeOf(rob2Adapter).toMatchTypeOf<ReconciliationAdapter<ROB2Checklist, any, any, any>>();
 ```
 
-A few well-placed type tests are worth more than blanket annotation rules.
-
-### G4. `satisfies` operator is used 3 times in the whole repo
+### G4. `satisfies` operator is used 4 times in the whole repo
 
 `satisfies` lets you constrain a value to a type without widening the inferred literal type. In a 2026 TS codebase this should be doing real work in registry objects, route configs, plan definitions, theme objects, etc.
 
-Concrete example here — the checklist registry at `packages/web/src/checklist-registry/index.ts:29`:
+Concrete example -- the checklist registry at `packages/web/src/checklist-registry/index.ts:29`:
 
 ```ts
 const CHECKLIST_REGISTRY: Record<string, ChecklistConfig> = { ... };
@@ -279,7 +234,7 @@ const CHECKLIST_REGISTRY = {
 } satisfies { [K in ChecklistKind]: ChecklistConfig<K> };
 ```
 
-Keys stay narrow, values get checked. This pattern applies in many places — plan definitions in `packages/shared/src/plans`, query keys in `packages/web/src/lib/queryKeys`, etc.
+Keys stay narrow, values get checked. This pattern applies in many places -- plan definitions in `packages/shared/src/plans`, query keys in `packages/web/src/lib/queryKeys`, etc.
 
 ### G5. `verbatimModuleSyntax: false` in `packages/web/tsconfig.json`
 
@@ -300,82 +255,36 @@ Modern TanStack/Vite projects ship with this on. Flipping it would surface a one
 
 ### M3. Correlated optional fields instead of discriminated structure
 
-`adapter.tsx:39, 339, 354` — `PRELIMINARY_TEXT_FIELDS.includes(currentItem.key)` is a runtime check selecting which preliminary fields need Y.Text sync. Promote the field union into the type system: `type TextFieldKey = 'experimental' | 'comparator' | 'sources' | …` and key the field map by it. The runtime `.includes()` becomes a compile-time guarantee.
+`adapter.tsx:39, 339, 354` -- `PRELIMINARY_TEXT_FIELDS.includes(currentItem.key)` is a runtime check selecting which preliminary fields need Y.Text sync. Promote the field union into the type system: `type TextFieldKey = 'experimental' | 'comparator' | 'sources' | ...` and key the field map by it. The runtime `.includes()` becomes a compile-time guarantee.
 
 ### M4. `ChecklistHandler` not generic over its answers
 
-`packages/web/src/primitives/useProject/checklists/handlers/base.ts:16-36` returns `Record<string, unknown>`. Each subclass already knows its answer shape — make the abstract class `ChecklistHandler<TAnswers>` and the concrete subclasses pin `TAnswers`.
+`packages/web/src/primitives/useProject/checklists/handlers/base.ts:16-36` returns `Record<string, unknown>`. Each subclass already knows its answer shape -- make the abstract class `ChecklistHandler<TAnswers>` and the concrete subclasses pin `TAnswers`.
 
 ### M5. `apiFetch` `<T>` defaults to `unknown` but never validates
 
-`packages/web/src/lib/apiFetch.ts:93, 98, 102` — `return (await response.json()) as T;`. The wrapper shape is well-thought-through (good `Omit` use on per-verb overloads at lines 107-128). Rather than baking validation into the fetcher, just compose Zod parsing at the call site for boundary-critical endpoints — it stays explicit and the fetcher stays simple.
+`packages/web/src/lib/apiFetch.ts:93, 98, 102` -- `return (await response.json()) as T;`. The wrapper shape is well-thought-through (good `Omit` use on per-verb overloads at lines 107-128). Rather than baking validation into the fetcher, just compose Zod parsing at the call site for boundary-critical endpoints -- it stays explicit and the fetcher stays simple.
 
 ---
 
 ## Yjs ceiling (clarification)
 
-`packages/workers/src/durable-objects/ProjectDoc.ts` uses `Y.Map<unknown>()` and `?: unknown` fields heavily. **Yjs's API genuinely cannot give you better runtime typing** — Y.Map values are dynamically typed at the protocol level. Don't try to "fix" this directly.
+`packages/workers/src/durable-objects/ProjectDoc.ts` uses `Y.Map<unknown>()` and `?: unknown` fields heavily. **Yjs's API genuinely cannot give you better runtime typing** -- Y.Map values are dynamically typed at the protocol level. Don't try to "fix" this directly.
 
-The right pattern is a typed _façade_ over the Y.Doc that exposes typed read/write methods:
-
-```ts
-class TypedProjectDoc {
-  constructor(private doc: Y.Doc) {}
-  getMeta(): ProjectMeta {
-    return this.yMapToPlain(this.doc.getMap('meta'));
-  }
-  setTitle(title: string) {
-    this.doc.getMap('meta').set('title', title);
-  }
-}
-```
-
-Move all `as Record<string, unknown>` and `as ProjectMeta` casts into the façade methods. Consumers get typed access; the façade isolates the Yjs trust boundary to one file. This is the right shape — not removing the casts, but containing them.
+The right pattern is a typed _facade_ over the Y.Doc that exposes typed read/write methods. Move all `as Record<string, unknown>` and `as ProjectMeta` casts into the facade methods. Consumers get typed access; the facade isolates the Yjs trust boundary to one file.
 
 ---
 
-## What to keep doing (already good)
+## Suggested order of attack
 
-- **Strict mode + `noUnusedLocals` + `noUnusedParameters` + `noFallthroughCasesInSwitch`** across all packages.
-- **`Rob2NavItem` discriminated union** (`navbar-utils.ts:29-47`) — textbook. Drives clean narrowing in `hasNavItemAnswer`/`isNavItemAgreement`.
-- **`ReconciliationAdapter` interface design** (`engine/types.ts:153-264`) — well-constrained 4-param generic with sensible defaults and a `TNavItem extends ReconciliationNavItem` constraint. The implementation just doesn't honor it (see C3).
-- **`apiFetch` per-verb overloads** with `Omit<…, 'method' | 'body'>` — correct way to model HTTP method overloads.
-- **`withRetry<T>`** in `packages/workers/src/lib/retry.ts:32-95` — properly carries `T` through `RetryResult<T>` without leaking.
-- **Limited `@ts-expect-error` use** — only 3 instances total, all justified.
-- **`assertNever` helper** added and applied to rob2/robins-i reconcile adapters — exhaustiveness guards now in place.
-- **Drizzle `$inferSelect`/`$inferInsert`** — 15 tables now export inferred types from `schema.ts`.
-- **Branded IDs** — 11 Zod-branded ID types in `shared/src/ids.ts`, adopted across 49 files with Drizzle `.$type<>()` integration.
+| #   | Change                                                                       |                  Effort | Why now                                                                                                        |
+| --- | ---------------------------------------------------------------------------- | ----------------------: | -------------------------------------------------------------------------------------------------------------- |
+| 1   | Pick 3-5 hot endpoints, apply C1 Option A (`export type` from route)         |                half day | Kills a chunk of `as Record<string, unknown>` with minimal ceremony. Use Option B (Zod) only for billing/auth. |
+| 2   | Checklist registry -- discriminated map + `satisfies` (H1 + G4)              |                  2-3 hr | Removes the most concentrated `any` cluster.                                                                   |
+| 3   | Add Vitest type tests for `ReconciliationAdapter` (G1)                       |                  1-2 hr | Cheaper than the C2 full refactor; catches future regressions.                                                 |
+| 4   | `@types/google.picker` install + single-guard cleanup (H3)                   |                  30 min | Quick win.                                                                                                     |
+| 5   | `verbatimModuleSyntax: true` in web tsconfig (G5)                            | 1-2 hr (mostly autofix) | One-time cleanup; pays off in build cleanliness.                                                               |
+| 6   | `server.ts` env typing (H4); Yjs facade extraction                           |                   1 day | Lower priority -- current state isn't actively dangerous.                                                      |
+| 7   | `errorMessage(e: unknown)` helper + codemod ~100 catch blocks (H5)           |                  2-3 hr | Mechanical but pervasive; eliminates the most common unsafe cast pattern in API routes.                        |
 
----
-
-## Suggested order of attack (revised)
-
-| #   | Change                                                                      |                  Effort | Why now                                                                                                        |
-| --- | --------------------------------------------------------------------------- | ----------------------: | -------------------------------------------------------------------------------------------------------------- |
-| 1   | Auth `as unknown as` → Zod parse (H2); oauth-relay module augmentation (H6) |                  1–2 hr | Closes the two highest-trust auth bypasses.                                                                    |
-| 2   | Pick 3–5 hot endpoints, apply C1 Option A (`export type` from route)        |                half day | Kills a chunk of `as Record<string, unknown>` with minimal ceremony. Use Option B (Zod) only for billing/auth. |
-| 3   | Checklist registry → discriminated map + `satisfies` (H1 + G4)              |                  2–3 hr | Removes the most concentrated `any` cluster.                                                                   |
-| 4   | Add Vitest type tests for `ReconciliationAdapter` (G1)                      |                  1–2 hr | Cheaper than the C2 full refactor; catches future regressions.                                                 |
-| 5   | `@types/google.picker` install + single-guard cleanup (H3)                  |                  30 min | Quick win.                                                                                                     |
-| 6   | `verbatimModuleSyntax: true` in web tsconfig (G5)                           | 1–2 hr (mostly autofix) | One-time cleanup; pays off in build cleanliness.                                                               |
-| 7   | `server.ts` env typing (H4); Yjs facade extraction                          |                   1 day | Lower priority — current state isn't actively dangerous.                                                       |
-
-Item 1 is the highest leverage. Items 2–4 are the type-safety substance. Items 5–7 are polish.
-
----
-
-## What was deliberately removed during self-review
-
-For transparency:
-
-- **Earlier phantom-typed `json<T>()` wrapper recommendation in C1.** Withdrawn — it's `as` with extra steps. Replaced with three honest options.
-- **Earlier "pipe TChecklist through ReconciliationEngineProps" in C3.** Reframed — it's not that simple, the index access pattern is the actual blocker, and the realistic minimal fix is just typing the public boundary.
-- **Earlier "mapped checklist type `ChecklistWithQuestions<TKeys>`" recommendation.** Removed — wrong. AMSTAR2/ROB2/ROBINS-I have structurally different shapes (flat questions vs domains+signaling vs sections), not just different keys. A unifying mapped type would lose information.
-- **Earlier "explicit return type on `compareChecklists`" recommendation.** Removed — style preference, not correctness. Many top-tier TS codebases (tRPC, TanStack, Effect) deliberately rely on inference for internal functions to avoid annotation rot.
-- **Earlier "Hono RPC client" recommendation.** Already withdrawn in v1 — there's no Hono in `packages/web`/`packages/workers`. The `packages/stripe-purchases` Hono workspace is separate.
-
-## Methodology notes
-
-- All findings were verified by reading cited files at cited line numbers.
-- "212 `as Record<string, unknown>`" from initial exploration was an overcount; verified count is **115** in `packages/web/src` (29 files).
-- The audit was reviewed for expert plausibility after the first draft and revised — the `## What was deliberately removed` section above lists what changed and why.
+Item 1 is the highest leverage. Items 2-3 are the type-safety substance. Items 4-7 are polish.
