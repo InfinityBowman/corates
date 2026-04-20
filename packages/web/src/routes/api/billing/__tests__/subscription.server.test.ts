@@ -3,7 +3,7 @@ import { env } from 'cloudflare:test';
 import { createDb } from '@corates/db/client';
 import { resetTestDatabase, clearProjectDOs } from '@/__tests__/server/helpers';
 import { buildOrg, resetCounter } from '@/__tests__/server/factories';
-import { handleGet } from '../subscription';
+import { fetchSubscription } from '@/server/functions/billing.server';
 import type { Session } from '@/server/middleware/auth';
 
 function mockSession(overrides?: {
@@ -32,15 +32,15 @@ beforeEach(async () => {
   resetCounter();
 });
 
-function subReq(): Request {
-  return new Request('http://localhost/api/billing/subscription', { method: 'GET' });
-}
-
-describe('GET /api/billing/subscription', () => {
-  it('returns 403 when caller has no org', async () => {
+describe('fetchSubscription', () => {
+  it('throws 403 when caller has no org', async () => {
     const session = mockSession({ userId: 'orphan', email: 'o@example.com', name: 'O' });
-    const res = await handleGet({ request: subReq(), context: { db: createDb(env.DB), session } });
-    expect(res.status).toBe(403);
+    try {
+      await fetchSubscription(createDb(env.DB), session);
+      expect.fail('should have thrown');
+    } catch (res) {
+      expect((res as Response).status).toBe(403);
+    }
   });
 
   it('returns free tier when no subscription exists', async () => {
@@ -51,28 +51,18 @@ describe('GET /api/billing/subscription', () => {
       name: owner.name,
       activeOrganizationId: org.id,
     });
-    const res = await handleGet({ request: subReq(), context: { db: createDb(env.DB), session } });
-    expect(res.status).toBe(200);
-    const body = (await res.json()) as {
-      tier: string;
-      status: string;
-      stripeSubscriptionId: string | null;
-      source: string;
-      accessMode: string;
-      projectCount: number;
-    };
-    expect(body.tier).toBe('free');
-    expect(body.status).toBe('inactive');
-    expect(body.stripeSubscriptionId).toBeNull();
-    expect(body.source).toBe('free');
-    expect(body.accessMode).toBe('free');
-    expect(body.projectCount).toBe(0);
+    const result = await fetchSubscription(createDb(env.DB), session);
+    expect(result.tier).toBe('free');
+    expect(result.status).toBe('inactive');
+    expect(result.stripeSubscriptionId).toBeNull();
+    expect(result.source).toBe('free');
+    expect(result.accessMode).toBe('free');
+    expect(result.projectCount).toBe(0);
   });
 
   it('returns active subscription when one exists', async () => {
     const { org, owner } = await buildOrg();
     const { subscription, projects } = await import('@corates/db/schema');
-    const { createDb } = await import('@corates/db/client');
     const db = createDb(env.DB);
 
     const nowSec = Math.floor(Date.now() / 1000);
@@ -104,23 +94,13 @@ describe('GET /api/billing/subscription', () => {
       name: owner.name,
       activeOrganizationId: org.id,
     });
-    const res = await handleGet({ request: subReq(), context: { db: createDb(env.DB), session } });
-    expect(res.status).toBe(200);
-    const body = (await res.json()) as {
-      tier: string;
-      status: string;
-      stripeSubscriptionId: string | null;
-      source: string;
-      accessMode: string;
-      projectCount: number;
-      currentPeriodEnd: number | null;
-    };
-    expect(body.tier).toBe('team');
-    expect(body.status).toBe('active');
-    expect(body.stripeSubscriptionId).toBe('sub-1');
-    expect(body.source).toBe('subscription');
-    expect(body.accessMode).toBe('full');
-    expect(body.projectCount).toBe(1);
-    expect(body.currentPeriodEnd).toBeGreaterThan(nowSec);
+    const result = await fetchSubscription(createDb(env.DB), session);
+    expect(result.tier).toBe('team');
+    expect(result.status).toBe('active');
+    expect(result.stripeSubscriptionId).toBe('sub-1');
+    expect(result.source).toBe('subscription');
+    expect(result.accessMode).toBe('full');
+    expect(result.projectCount).toBe(1);
+    expect(result.currentPeriodEnd).toBeGreaterThan(nowSec);
   });
 });

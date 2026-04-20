@@ -4,7 +4,6 @@
 
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { queryKeys } from '@/lib/queryKeys';
-import { API_BASE } from '@/config/api';
 import {
   isSubscriptionActive,
   hasEntitlement as checkEntitlement,
@@ -13,27 +12,21 @@ import {
   hasQuota as checkQuota,
 } from '@/lib/entitlements';
 import { useAuthStore, selectIsLoggedIn } from '@/stores/authStore';
-import type { SubscriptionResponse } from '@/routes/api/billing/subscription';
+import { getSubscription } from '@/server/functions/billing.functions';
 
-export type Subscription = SubscriptionResponse;
+export type Subscription = Awaited<ReturnType<typeof getSubscription>>;
 
 const DEFAULT_SUBSCRIPTION: Subscription = {
   tier: 'free',
   status: 'active',
-  tierInfo: { name: 'Free', description: 'For individuals getting started' },
+  tierInfo: { name: 'Free', description: 'Plan: Free' },
   stripeSubscriptionId: null,
   currentPeriodEnd: null,
   cancelAtPeriodEnd: false,
-  accessMode: 'none',
-  source: 'none',
+  accessMode: 'free',
+  source: 'free',
   projectCount: 0,
 };
-
-async function fetchSubscription(): Promise<Subscription> {
-  const res = await fetch(`${API_BASE}/api/billing/subscription`, { credentials: 'include' });
-  if (!res.ok) throw await res.json();
-  return (await res.json()) as Subscription;
-}
 
 export function useSubscription() {
   const isLoggedIn = useAuthStore(selectIsLoggedIn);
@@ -41,7 +34,7 @@ export function useSubscription() {
 
   const query = useQuery({
     queryKey: queryKeys.subscription.current,
-    queryFn: fetchSubscription,
+    queryFn: () => getSubscription(),
     enabled: isLoggedIn,
     staleTime: 1000 * 60 * 2,
     gcTime: 1000 * 60 * 30,

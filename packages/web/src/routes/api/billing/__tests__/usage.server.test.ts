@@ -3,37 +3,46 @@ import { env } from 'cloudflare:test';
 import { createDb } from '@corates/db/client';
 import { resetTestDatabase, clearProjectDOs } from '@/__tests__/server/helpers';
 import { buildOrg, buildOrgMember, resetCounter } from '@/__tests__/server/factories';
-import { handleGet } from '../usage';
-
-let sessionResult: {
-  user: { id: string; email: string; name: string };
-  session: { id: string; userId: string; activeOrganizationId: string | null };
-} | null = null;
+import { fetchUsage } from '@/server/functions/billing.server';
+import type { Session } from '@/server/middleware/auth';
 
 beforeEach(async () => {
   await resetTestDatabase();
   await clearProjectDOs([]);
   resetCounter();
-  sessionResult = null;
 });
 
-function usageReq(): Request {
-  return new Request('http://localhost/api/billing/usage', { method: 'GET' });
+function mockSession(overrides?: {
+  userId?: string;
+  email?: string;
+  name?: string;
+  activeOrganizationId?: string | null;
+}): Session {
+  return {
+    user: {
+      id: overrides?.userId ?? 'user-1',
+      email: overrides?.email ?? 'user@example.com',
+      name: overrides?.name ?? 'Test User',
+    },
+    session: {
+      id: 'sess-1',
+      userId: overrides?.userId ?? 'user-1',
+      activeOrganizationId: overrides?.activeOrganizationId ?? null,
+    },
+  } as Session;
 }
 
-describe('GET /api/billing/usage', () => {
-  it('returns 403 when caller has no org', async () => {
-    sessionResult = {
-      user: { id: 'orphan', email: 'o@example.com', name: 'O' },
-      session: { id: 'sess', userId: 'orphan', activeOrganizationId: null },
-    };
-    const res = await handleGet({
-      request: usageReq(),
-      context: { db: createDb(env.DB), session: sessionResult },
-    });
-    expect(res.status).toBe(403);
-    const body = (await res.json()) as { details?: { reason?: string } };
-    expect(body.details?.reason).toBe('no_org_found');
+describe('fetchUsage', () => {
+  it('throws 403 when caller has no org', async () => {
+    const session = mockSession({ userId: 'orphan', email: 'o@example.com', name: 'O' });
+    try {
+      await fetchUsage(createDb(env.DB), session);
+      expect.fail('should have thrown');
+    } catch (res) {
+      expect((res as Response).status).toBe(403);
+      const body = (await (res as Response).json()) as { details?: { reason?: string } };
+      expect(body.details?.reason).toBe('no_org_found');
+    }
   });
 
   it('returns project + collaborator counts', async () => {
@@ -42,7 +51,6 @@ describe('GET /api/billing/usage', () => {
     await buildOrgMember({ orgId: org.id, role: 'admin' });
 
     const { projects } = await import('@corates/db/schema');
-    const { createDb } = await import('@corates/db/client');
     const db = createDb(env.DB);
     for (let i = 1; i <= 3; i++) {
       await db.insert(projects).values({
@@ -55,18 +63,14 @@ describe('GET /api/billing/usage', () => {
       });
     }
 
-    sessionResult = {
-      user: { id: owner.id, email: owner.email, name: owner.name },
-      session: { id: 'sess', userId: owner.id, activeOrganizationId: org.id },
-    };
-    const res = await handleGet({
-      request: usageReq(),
-      context: { db: createDb(env.DB), session: sessionResult! },
+    const session = mockSession({
+      userId: owner.id,
+      email: owner.email,
+      name: owner.name,
+      activeOrganizationId: org.id,
     });
-    expect(res.status).toBe(200);
-    const body = (await res.json()) as { projects: number; collaborators: number };
-    expect(body.projects).toBe(3);
-    // 1 owner is excluded; 1 member + 1 admin = 2 collaborators
-    expect(body.collaborators).toBe(2);
+    const result = await fetchUsage(createDb(env.DB), session);
+    expect(result.projects).toBe(3);
+    expect(result.collaborators).toBe(2);
   });
 });
