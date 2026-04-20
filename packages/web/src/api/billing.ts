@@ -65,13 +65,6 @@ export async function redirectToSingleProjectCheckout(): Promise<void> {
   window.location.href = url;
 }
 
-export async function getMembers() {
-  const res = await fetch(`${API_BASE}/api/billing/members`, { credentials: 'include' });
-  const data = (await res.json()) as { members?: unknown[]; count?: number };
-  if (!res.ok) throw data;
-  return { members: data.members ?? [], count: data.count ?? 0 };
-}
-
 export async function startTrial() {
   const res = await fetch(`${API_BASE}/api/billing/trial/start`, {
     method: 'POST',
@@ -82,12 +75,3 @@ export async function startTrial() {
   return data;
 }
 
-export async function validatePlanChange(targetPlan: string) {
-  const res = await fetch(
-    `${API_BASE}/api/billing/validate-plan-change?targetPlan=${encodeURIComponent(targetPlan)}`,
-    { credentials: 'include' },
-  );
-  const data = (await res.json()) as Record<string, unknown>;
-  if (!res.ok) throw data;
-  return data;
-}

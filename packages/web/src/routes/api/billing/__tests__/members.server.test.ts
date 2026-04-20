@@ -3,7 +3,7 @@ import { env } from 'cloudflare:test';
 import { createDb } from '@corates/db/client';
 import { resetTestDatabase, clearProjectDOs } from '@/__tests__/server/helpers';
 import { buildOrg, resetCounter } from '@/__tests__/server/factories';
-import { handleGet } from '../members';
+import { fetchMembers } from '@/server/functions/billing.server';
 import type { Session } from '@/server/middleware/auth';
 
 function mockSession(overrides?: {
@@ -41,18 +41,19 @@ beforeEach(async () => {
   resetCounter();
 });
 
-function membersReq(): Request {
-  return new Request('http://localhost/api/billing/members', { method: 'GET' });
+function mockHeaders(): Headers {
+  return new Headers();
 }
 
-describe('GET /api/billing/members', () => {
-  it('returns 403 when caller has no org', async () => {
+describe('fetchMembers', () => {
+  it('throws 403 when caller has no org', async () => {
     const session = mockSession({ userId: 'orphan', email: 'o@example.com', name: 'O' });
-    const res = await handleGet({
-      request: membersReq(),
-      context: { db: createDb(env.DB), session },
-    });
-    expect(res.status).toBe(403);
+    try {
+      await fetchMembers(createDb(env.DB), session, mockHeaders());
+      expect.fail('should have thrown');
+    } catch (res) {
+      expect((res as Response).status).toBe(403);
+    }
     expect(listMembersMock).not.toHaveBeenCalled();
   });
 
@@ -71,14 +72,9 @@ describe('GET /api/billing/members', () => {
       ],
     });
 
-    const res = await handleGet({
-      request: membersReq(),
-      context: { db: createDb(env.DB), session },
-    });
-    expect(res.status).toBe(200);
-    const body = (await res.json()) as { members: unknown[]; count: number };
-    expect(body.count).toBe(2);
-    expect(body.members).toHaveLength(2);
+    const result = await fetchMembers(createDb(env.DB), session, mockHeaders());
+    expect(result.count).toBe(2);
+    expect(result.members).toHaveLength(2);
 
     const callArg = listMembersMock.mock.calls[0][0] as { query: { organizationId: string } };
     expect(callArg.query.organizationId).toBe(org.id);
@@ -94,13 +90,8 @@ describe('GET /api/billing/members', () => {
     });
     listMembersMock.mockResolvedValueOnce({});
 
-    const res = await handleGet({
-      request: membersReq(),
-      context: { db: createDb(env.DB), session },
-    });
-    expect(res.status).toBe(200);
-    const body = (await res.json()) as { members: unknown[]; count: number };
-    expect(body.count).toBe(0);
-    expect(body.members).toEqual([]);
+    const result = await fetchMembers(createDb(env.DB), session, mockHeaders());
+    expect(result.count).toBe(0);
+    expect(result.members).toEqual([]);
   });
 });

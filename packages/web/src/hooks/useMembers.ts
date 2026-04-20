@@ -4,7 +4,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { queryKeys } from '@/lib/queryKeys';
-import { getMembers } from '@/api/billing';
+import { getMembers } from '@/server/functions/billing.functions';
 import { useAuthStore, selectIsLoggedIn } from '@/stores/authStore';
 
 export function useMembers() {
@@ -12,7 +12,7 @@ export function useMembers() {
 
   const query = useQuery({
     queryKey: queryKeys.members.current,
-    queryFn: getMembers,
+    queryFn: () => getMembers(),
     enabled: isLoggedIn,
     staleTime: 1000 * 60 * 5,
     gcTime: 1000 * 60 * 10,

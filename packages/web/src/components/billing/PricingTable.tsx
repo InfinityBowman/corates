@@ -29,12 +29,8 @@ import {
   DialogTitle,
   DialogDescription,
 } from '@/components/ui/dialog';
-import {
-  redirectToCheckout,
-  redirectToSingleProjectCheckout,
-  startTrial,
-  validatePlanChange,
-} from '@/api/billing';
+import { redirectToCheckout, redirectToSingleProjectCheckout, startTrial } from '@/api/billing';
+import { checkPlanChange } from '@/server/functions/billing.functions';
 import { useSubscription } from '@/hooks/useSubscription';
 import { getBillingPlanCatalog } from '@corates/shared/plans';
 import { formatUsd, getAnnualSavings } from './utils';
@@ -104,7 +100,7 @@ export function PricingTable({
     async (plan: any) => {
       setLoadingTier(plan.tier);
       try {
-        const validation = await validatePlanChange(plan.tier);
+        const validation = await checkPlanChange({ data: { targetPlan: plan.tier } });
         if (!validation.valid) {
           setValidationError(validation);
           setLoadingTier(null);

@@ -16,6 +16,19 @@ import { createStripeClient } from '../../lib/stripe.js';
 import type { createDb } from '@corates/db/client';
 import type { Env } from '../../types';
 
+function resolvePlanFromPriceId(env: Env, priceId: string | null | undefined): string | null {
+  if (!priceId) return null;
+  const mapping: Record<string, string> = {
+    [env.STRIPE_PRICE_ID_STARTER_TEAM_MONTHLY]: 'starter_team',
+    [env.STRIPE_PRICE_ID_STARTER_TEAM_YEARLY]: 'starter_team',
+    [env.STRIPE_PRICE_ID_TEAM_MONTHLY]: 'team',
+    [env.STRIPE_PRICE_ID_TEAM_YEARLY]: 'team',
+    [env.STRIPE_PRICE_ID_UNLIMITED_TEAM_MONTHLY]: 'unlimited_team',
+    [env.STRIPE_PRICE_ID_UNLIMITED_TEAM_YEARLY]: 'unlimited_team',
+  };
+  return mapping[priceId] ?? null;
+}
+
 type Database = ReturnType<typeof createDb>;
 
 export interface SyncStripeSubscriptionResult {
@@ -62,7 +75,12 @@ export async function syncStripeSubscription(
   }
 
   const values = {
-    plan: item?.price?.lookup_key ?? existing?.plan ?? 'unknown',
+    plan:
+      item?.price?.lookup_key ??
+      resolvePlanFromPriceId(env, item?.price?.id) ??
+      (sub.metadata as Record<string, string> | undefined)?.plan ??
+      existing?.plan ??
+      'UNRESOLVED_PLAN_CHECK_STRIPE_PRICE_CONFIG',
     referenceId: orgId,
     stripeCustomerId: customerId,
     stripeSubscriptionId: sub.id,

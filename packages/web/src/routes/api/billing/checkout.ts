@@ -124,7 +124,7 @@ export const handlePost = async ({
         referenceId: orgId,
         successUrl: `${env.APP_URL || 'https://corates.org'}/settings/billing?success=true`,
         cancelUrl: `${env.APP_URL || 'https://corates.org'}/settings/billing?canceled=true`,
-        returnUrl: `${env.APP_URL || 'https://corates.org'}/settings/billing`,
+        returnUrl: `${env.APP_URL || 'https://corates.org'}/settings/billing?success=true`,
       },
     });
 

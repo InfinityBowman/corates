@@ -17,5 +17,5 @@ export const authMiddleware = createMiddleware()
       throw Response.json(createDomainError(AUTH_ERRORS.REQUIRED), { status: 401 });
     }
     identifyUser(context.log, session, { maskEmail: true });
-    return next({ context: { session } });
+    return next({ context: { session, request } });
   });

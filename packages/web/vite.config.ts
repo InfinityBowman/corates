@@ -11,6 +11,7 @@ export default defineConfig({
     alias: {
       '@/': path.resolve(import.meta.dirname, 'src') + '/',
     },
+    dedupe: ['yjs'],
   },
   plugins: [
     cloudflare({ viteEnvironment: { name: 'ssr' } }),

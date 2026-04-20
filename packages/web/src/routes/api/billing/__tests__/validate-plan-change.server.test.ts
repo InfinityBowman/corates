@@ -3,75 +3,61 @@ import { env } from 'cloudflare:test';
 import { createDb } from '@corates/db/client';
 import { resetTestDatabase, clearProjectDOs } from '@/__tests__/server/helpers';
 import { buildOrg, resetCounter } from '@/__tests__/server/factories';
-import { handleGet } from '../validate-plan-change';
+import { fetchPlanValidation } from '@/server/functions/billing.server';
+import type { Session } from '@/server/middleware/auth';
 
-let sessionResult: {
-  user: { id: string; email: string; name: string };
-  session: { id: string; userId: string; activeOrganizationId: string | null };
-} | null = null;
+function mockSession(overrides?: {
+  userId?: string;
+  email?: string;
+  name?: string;
+  activeOrganizationId?: string | null;
+}): Session {
+  return {
+    user: {
+      id: overrides?.userId ?? 'user-1',
+      email: overrides?.email ?? 'user@example.com',
+      name: overrides?.name ?? 'Test User',
+    },
+    session: {
+      id: 'sess-1',
+      userId: overrides?.userId ?? 'user-1',
+      activeOrganizationId: overrides?.activeOrganizationId ?? null,
+    },
+  } as Session;
+}
 
 beforeEach(async () => {
   await resetTestDatabase();
   await clearProjectDOs([]);
   resetCounter();
-  sessionResult = null;
 });
 
-function validateReq(query: string): Request {
-  return new Request(`http://localhost/api/billing/validate-plan-change${query}`, {
-    method: 'GET',
-  });
-}
-
-describe('GET /api/billing/validate-plan-change', () => {
-  it('returns 400 when targetPlan is missing', async () => {
-    sessionResult = {
-      user: { id: 'any', email: 'any@example.com', name: 'Any' },
-      session: { id: 'sess-1', userId: 'any', activeOrganizationId: null },
-    };
-    const res = await handleGet({
-      request: validateReq(''),
-      context: { db: createDb(env.DB), session: sessionResult },
-    });
-    expect(res.status).toBe(400);
-    const body = (await res.json()) as { code: string };
-    expect(body.code).toMatch(/VALIDATION_FIELD_REQUIRED/);
-  });
-
-  it('returns 403 when caller has no org', async () => {
-    sessionResult = {
-      user: { id: 'orphan-user', email: 'orphan@example.com', name: 'Orphan' },
-      session: { id: 'sess-1', userId: 'orphan-user', activeOrganizationId: null },
-    };
-    const res = await handleGet({
-      request: validateReq('?targetPlan=starter_team'),
-      context: { db: createDb(env.DB), session: sessionResult },
-    });
-    expect(res.status).toBe(403);
-    const body = (await res.json()) as { code: string; details?: { reason?: string } };
-    expect(body.code).toBe('AUTH_FORBIDDEN');
-    expect(body.details?.reason).toBe('no_org_found');
+describe('fetchPlanValidation', () => {
+  it('throws 403 when caller has no org', async () => {
+    const session = mockSession({ userId: 'orphan', email: 'o@example.com', name: 'O' });
+    try {
+      await fetchPlanValidation(createDb(env.DB), session, 'starter_team');
+      expect.fail('should have thrown');
+    } catch (res) {
+      expect((res as Response).status).toBe(403);
+      const body = (await (res as Response).json()) as { code: string; details?: { reason?: string } };
+      expect(body.code).toBe('AUTH_FORBIDDEN');
+      expect(body.details?.reason).toBe('no_org_found');
+    }
   });
 
   it('returns valid=true when usage fits target plan', async () => {
     const { org, owner } = await buildOrg();
-    sessionResult = {
-      user: { id: owner.id, email: owner.email, name: owner.name },
-      session: { id: 'sess-1', userId: owner.id, activeOrganizationId: org.id },
-    };
-    const res = await handleGet({
-      request: validateReq('?targetPlan=starter_team'),
-      context: { db: createDb(env.DB), session: sessionResult! },
+    const session = mockSession({
+      userId: owner.id,
+      email: owner.email,
+      name: owner.name,
+      activeOrganizationId: org.id,
     });
-    expect(res.status).toBe(200);
-    const body = (await res.json()) as {
-      valid: boolean;
-      violations: unknown[];
-      targetPlan: { id: string };
-    };
-    expect(body.valid).toBe(true);
-    expect(body.violations).toHaveLength(0);
-    expect(body.targetPlan.id).toBe('starter_team');
+    const result = await fetchPlanValidation(createDb(env.DB), session, 'starter_team');
+    expect(result.valid).toBe(true);
+    expect(result.violations).toHaveLength(0);
+    expect(result.targetPlan.id).toBe('starter_team');
   });
 
   it('returns valid=false with violations when usage exceeds limits', async () => {
@@ -91,23 +77,17 @@ describe('GET /api/billing/validate-plan-change', () => {
       });
     }
 
-    sessionResult = {
-      user: { id: owner.id, email: owner.email, name: owner.name },
-      session: { id: 'sess-1', userId: owner.id, activeOrganizationId: org.id },
-    };
-    const res = await handleGet({
-      request: validateReq('?targetPlan=starter_team'),
-      context: { db: createDb(env.DB), session: sessionResult! },
+    const session = mockSession({
+      userId: owner.id,
+      email: owner.email,
+      name: owner.name,
+      activeOrganizationId: org.id,
     });
-    expect(res.status).toBe(200);
-    const body = (await res.json()) as {
-      valid: boolean;
-      violations: Array<{ quotaKey: string; used: number; limit: number }>;
-    };
-    expect(body.valid).toBe(false);
-    expect(body.violations.length).toBeGreaterThan(0);
-    expect(body.violations[0].quotaKey).toBe('projects.max');
-    expect(body.violations[0].used).toBe(5);
-    expect(body.violations[0].limit).toBe(3);
+    const result = await fetchPlanValidation(createDb(env.DB), session, 'starter_team');
+    expect(result.valid).toBe(false);
+    expect(result.violations.length).toBeGreaterThan(0);
+    expect(result.violations[0].quotaKey).toBe('projects.max');
+    expect(result.violations[0].used).toBe(5);
+    expect(result.violations[0].limit).toBe(3);
   });
 });
