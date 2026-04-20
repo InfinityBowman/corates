@@ -4,7 +4,7 @@
 
 import path from 'node:path';
 import { expect, type Page, type BrowserContext } from '@playwright/test';
-import { loginAs, addProjectMember, type DualReviewerScenario } from './helpers';
+import { loginAs, type DualReviewerScenario } from './helpers';
 
 /** Click every radio on the AMSTAR2 checklist editor matching the given answer (e.g. "Yes", "No"). */
 export async function answerAllAMSTAR2(page: Page, answer: 'Yes' | 'No' | 'Partial Yes') {
@@ -52,6 +52,30 @@ export async function answerAllROB2Domains(page: Page, answer: string) {
     }
     await page.waitForTimeout(300);
   }
+}
+
+/**
+ * Adds a member to the current project via the Invite UI on the Overview tab.
+ * Assumes the page is already on the project page as an owner.
+ */
+export async function addProjectMemberViaUI(page: Page, memberName: string, memberEmail: string) {
+  await page.getByRole('tab', { name: /Overview/i }).click();
+  await page.getByRole('button', { name: /Invite/i }).click();
+
+  const dialog = page.getByRole('dialog');
+  await expect(dialog).toBeVisible({ timeout: 5_000 });
+
+  await dialog.getByPlaceholder('Type at least 2 characters...').fill(memberEmail);
+
+  // Wait for search dropdown and click the matching user
+  const searchResult = dialog.locator('button').filter({ hasText: memberName }).first();
+  await expect(searchResult).toBeVisible({ timeout: 5_000 });
+  await searchResult.click();
+
+  // Click the footer "Add Member" button (not the dialog title)
+  await dialog.getByRole('button', { name: 'Add Member', exact: true }).click();
+
+  await expect(dialog).toBeHidden({ timeout: 5_000 });
 }
 
 const FIXTURES_DIR = path.join(import.meta.dirname, 'fixtures');
@@ -168,8 +192,11 @@ export async function setupProjectWithStudy(
   await expect(page.getByText('Welcome back,')).toBeVisible({ timeout: 15_000 });
 
   const projectId = await createProject(page, projectName);
-  await addProjectMember(scenario.orgId, projectId, scenario.userB.id, scenario.cookiesA);
-  await page.waitForTimeout(2000);
+  await addProjectMemberViaUI(page, scenario.userB.name, scenario.userB.email);
+
+  // Verify the member appears in the team list before continuing
+  await expect(page.getByText(scenario.userB.name)).toBeVisible({ timeout: 5_000 });
+  await page.waitForTimeout(1000);
 
   await addStudyViaPdf(page);
   await assignReviewers(page);
