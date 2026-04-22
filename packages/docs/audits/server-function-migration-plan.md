@@ -68,18 +68,18 @@ Extends: `billing.server.ts`, `billing.functions.ts`
 Tests: `checkout.server.test.ts`, `invoices.server.test.ts`, `portal.server.test.ts`, `single-project-checkout.server.test.ts`, `trial-start.server.test.ts`, `sync-after-success.server.test.ts`
 Client file: `api/billing.ts` (updated to call server functions)
 
-## Batch 4: Google Drive + Account Merge (8 routes)
+## Batch 4: Google Drive + Account Merge (8 routes) -- DONE
 
 New files: `google-drive.server.ts`, `google-drive.functions.ts`, `account-merge.server.ts`, `account-merge.functions.ts`
 
-- [ ] `google-drive/status.ts` (GET - connection status)
-- [ ] `google-drive/disconnect.ts` (POST - disconnect)
-- [ ] `google-drive/picker-token.ts` (GET - picker token)
-- [ ] `google-drive/import.ts` (POST - import PDFs)
-- [ ] `accounts/merge/initiate.ts` (POST - send verification code)
-- [ ] `accounts/merge/verify.ts` (POST - verify code)
-- [ ] `accounts/merge/complete.ts` (POST - complete merge)
-- [ ] `accounts/merge/cancel.ts` (DELETE - cancel merge)
+- [x] `google-drive/status.ts` (GET - connection status)
+- [x] `google-drive/disconnect.ts` (POST - disconnect)
+- [x] `google-drive/picker-token.ts` (GET - picker token)
+- [x] `google-drive/import.ts` (POST - import PDFs)
+- [x] `accounts/merge/initiate.ts` (POST - send verification code)
+- [x] `accounts/merge/verify.ts` (POST - verify code)
+- [x] `accounts/merge/complete.ts` (POST - complete merge)
+- [x] `accounts/merge/cancel.ts` (DELETE - cancel merge)
 
 Tests: `google-drive.server.test.ts`, `merge.server.test.ts`
 Client files: `api/google-drive.ts`, `api/account-merge.ts`
@@ -213,7 +213,7 @@ Tests: `billing-observability.server.test.ts`, `stripe-tools.server.test.ts`, `d
 | Cannot migrate | ~13 | Stay as HTTP |
 | Batch 2: Users | 5 (1 stays HTTP) | Done |
 | Batch 3: Billing | 6 | Done |
-| Batch 4: Google Drive + Merge | 8 | Pending |
+| Batch 4: Google Drive + Merge | 8 | Done |
 | Batch 5: Misc | 3 | Pending |
 | Batch 6: Orgs Core | 5 | Pending |
 | Batch 7: Orgs Projects | 6 | Pending |

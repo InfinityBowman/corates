@@ -1,27 +1,10 @@
-/**
- * Google Drive API - Interact with user's connected Google Drive
- */
-
 import { apiFetch } from '@/lib/apiFetch';
-import { API_BASE } from '@/config/api';
-
-async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
-  const res = await fetch(`${API_BASE}${path}`, {
-    credentials: 'include',
-    headers: { 'Content-Type': 'application/json', ...(init.headers || {}) },
-    ...init,
-  });
-  const data = (await res.json().catch(() => ({}))) as T & { message?: string; code?: string };
-  if (!res.ok) {
-    const err = new Error(
-      (data && (data.message || data.code)) ||
-        `${init.method || 'GET'} ${path} failed: ${res.status}`,
-    );
-    (err as unknown as { response?: unknown }).response = data;
-    throw err;
-  }
-  return data;
-}
+import {
+  getDriveStatus,
+  disconnectDrive,
+  getDrivePickerToken,
+  importFromDriveAction,
+} from '@/server/functions/google-drive.functions';
 
 interface DriveStatus {
   connected: boolean;
@@ -51,22 +34,21 @@ interface ImportSuccess {
 }
 
 export async function getGoogleDriveStatus() {
-  return request<DriveStatus>('/api/google-drive/status');
+  return getDriveStatus() as Promise<DriveStatus>;
 }
 
 export async function disconnectGoogleDrive() {
-  return request<DisconnectSuccess>('/api/google-drive/disconnect', { method: 'DELETE' });
+  return disconnectDrive() as Promise<DisconnectSuccess>;
 }
 
 export async function importFromGoogleDrive(fileId: string, projectId: string, studyId: string) {
-  return request<ImportSuccess>('/api/google-drive/import', {
-    method: 'POST',
-    body: JSON.stringify({ fileId, projectId, studyId }),
-  });
+  return importFromDriveAction({
+    data: { fileId, projectId, studyId },
+  }) as Promise<ImportSuccess>;
 }
 
 export async function getGoogleDrivePickerToken() {
-  return request<PickerToken>('/api/google-drive/picker-token');
+  return getDrivePickerToken() as Promise<PickerToken>;
 }
 
 export async function connectGoogleAccount(callbackUrl?: string): Promise<void> {

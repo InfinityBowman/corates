@@ -10,19 +10,24 @@ import {
   buildProjectMember,
   resetCounter,
 } from '@/__tests__/server/factories';
-import { handler as initiateHandler } from '../initiate';
-import { handler as verifyHandler } from '../verify';
-import { handler as completeHandler } from '../complete';
-import { handler as cancelHandler } from '../cancel';
+import {
+  initiateMergeRequest,
+  verifyMerge,
+  completeMergeRequest,
+  cancelMergeRequest,
+} from '@/server/functions/account-merge.server';
+import type { Session } from '@/server/middleware/auth';
 
 let currentUser = { id: 'user-1', email: 'user1@example.com' };
 
-function mockSession() {
+function mockSession(): Session {
   return {
     user: { id: currentUser.id, email: currentUser.email, name: 'Test User' },
     session: { id: 'test-session', userId: currentUser.id },
-  };
+  } as Session;
 }
+
+const dummyRequest = new Request('http://localhost/api/accounts/merge', { method: 'POST' });
 
 beforeEach(async () => {
   await resetTestDatabase();
@@ -46,14 +51,6 @@ async function seedAccount(userId: string, providerId = 'google') {
       nowSec,
     )
     .run();
-}
-
-function jsonReq(path: string, method: string, body?: unknown): Request {
-  return new Request(`http://localhost${path}`, {
-    method,
-    headers: { 'Content-Type': 'application/json' },
-    body: body !== undefined ? JSON.stringify(body) : undefined,
-  });
 }
 
 async function seedMergeRequest(opts: {
@@ -90,83 +87,71 @@ async function seedMergeRequest(opts: {
     .run();
 }
 
-describe('POST /api/accounts/merge/initiate', () => {
+describe('initiateMergeRequest', () => {
   it('initiates merge request and queues email', async () => {
     const user1 = await buildUser({ email: 'user1@example.com' });
     const user2 = await buildUser({ email: 'user2@example.com' });
     await seedAccount(user1.id, 'google');
     currentUser = { id: user1.id, email: user1.email };
 
-    const res = await initiateHandler({
-      request: jsonReq('/api/accounts/merge/initiate', 'POST', { targetEmail: user2.email }),
-      context: { db: createDb(env.DB), session: mockSession() },
+    const result = await initiateMergeRequest(createDb(env.DB), mockSession(), dummyRequest, {
+      targetEmail: user2.email,
     });
 
-    expect(res.status).toBe(200);
-    const body = (await res.json()) as any;
-    expect(body.success).toBe(true);
-    expect(body.mergeToken).toBeDefined();
-    expect(body.targetEmail).toBe(user2.email);
-    expect(body.preview.currentProviders).toContain('google');
+    expect(result.success).toBe(true);
+    expect(result.mergeToken).toBeDefined();
+    expect(result.targetEmail).toBe(user2.email);
+    expect(result.preview.currentProviders).toContain('google');
   });
 
-  it('rejects merging with self', async () => {
+  it('throws 400 when merging with self', async () => {
     const user1 = await buildUser({ email: 'user1@example.com' });
     currentUser = { id: user1.id, email: user1.email };
 
-    const res = await initiateHandler({
-      request: jsonReq('/api/accounts/merge/initiate', 'POST', { targetEmail: user1.email }),
-      context: { db: createDb(env.DB), session: mockSession() },
-    });
-
-    expect(res.status).toBe(400);
-    const body = (await res.json()) as any;
-    expect(body.code).toBe('VALIDATION_INVALID_INPUT');
+    try {
+      await initiateMergeRequest(createDb(env.DB), mockSession(), dummyRequest, {
+        targetEmail: user1.email,
+      });
+      expect.unreachable('should have thrown');
+    } catch (err) {
+      const res = err as Response;
+      expect(res.status).toBe(400);
+      const body = (await res.json()) as { code: string };
+      expect(body.code).toBe('VALIDATION_INVALID_INPUT');
+    }
   });
 
-  it('returns 404 when target user does not exist', async () => {
+  it('throws 404 when target user does not exist', async () => {
     const user1 = await buildUser({ email: 'user1@example.com' });
     currentUser = { id: user1.id, email: user1.email };
 
-    const res = await initiateHandler({
-      request: jsonReq('/api/accounts/merge/initiate', 'POST', {
+    try {
+      await initiateMergeRequest(createDb(env.DB), mockSession(), dummyRequest, {
         targetEmail: 'nonexistent@example.com',
-      }),
-      context: { db: createDb(env.DB), session: mockSession() },
-    });
-
-    expect(res.status).toBe(404);
-    const body = (await res.json()) as any;
-    expect(body.code).toBe('USER_NOT_FOUND');
+      });
+      expect.unreachable('should have thrown');
+    } catch (err) {
+      const res = err as Response;
+      expect(res.status).toBe(404);
+      const body = (await res.json()) as { code: string };
+      expect(body.code).toBe('USER_NOT_FOUND');
+    }
   });
 
-  it('returns 400 when neither targetEmail nor targetOrcidId is provided', async () => {
-    const res = await initiateHandler({
-      request: jsonReq('/api/accounts/merge/initiate', 'POST', {}),
-      context: { db: createDb(env.DB), session: mockSession() },
-    });
-
-    expect(res.status).toBe(400);
-    const body = (await res.json()) as any;
-    expect(body.code).toBe('VALIDATION_FIELD_REQUIRED');
-  });
-
-  it('returns 400 when invalid JSON is submitted', async () => {
-    const res = await initiateHandler({
-      request: new Request('http://localhost/api/accounts/merge/initiate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: '{not-json',
-      }),
-      context: { db: createDb(env.DB), session: mockSession() },
-    });
-    expect(res.status).toBe(400);
-    const body = (await res.json()) as any;
-    expect(body.code).toBe('VALIDATION_INVALID_INPUT');
+  it('throws 400 when neither targetEmail nor targetOrcidId is provided', async () => {
+    try {
+      await initiateMergeRequest(createDb(env.DB), mockSession(), dummyRequest, {});
+      expect.unreachable('should have thrown');
+    } catch (err) {
+      const res = err as Response;
+      expect(res.status).toBe(400);
+      const body = (await res.json()) as { code: string };
+      expect(body.code).toBe('VALIDATION_FIELD_REQUIRED');
+    }
   });
 });
 
-describe('POST /api/accounts/merge/verify', () => {
+describe('verifyMerge', () => {
   it('verifies code successfully', async () => {
     const user1 = await buildUser({ email: 'user1@example.com' });
     const user2 = await buildUser({ email: 'user2@example.com' });
@@ -175,18 +160,16 @@ describe('POST /api/accounts/merge/verify', () => {
     await seedMergeRequest({ userId: user1.id, targetId: user2.id, token: mergeToken, code });
     currentUser = { id: user1.id, email: user1.email };
 
-    const res = await verifyHandler({
-      request: jsonReq('/api/accounts/merge/verify', 'POST', { mergeToken, code }),
-      context: { db: createDb(env.DB), session: mockSession() },
+    const result = await verifyMerge(createDb(env.DB), mockSession(), dummyRequest, {
+      mergeToken,
+      code,
     });
 
-    expect(res.status).toBe(200);
-    const body = (await res.json()) as any;
-    expect(body.success).toBe(true);
-    expect(body.message).toContain('verified');
+    expect(result.success).toBe(true);
+    expect(result.message).toContain('verified');
   });
 
-  it('rejects invalid code', async () => {
+  it('throws 400 for invalid code', async () => {
     const user1 = await buildUser({ email: 'user1@example.com' });
     const user2 = await buildUser({ email: 'user2@example.com' });
     const mergeToken = 'test-token-123';
@@ -198,17 +181,21 @@ describe('POST /api/accounts/merge/verify', () => {
     });
     currentUser = { id: user1.id, email: user1.email };
 
-    const res = await verifyHandler({
-      request: jsonReq('/api/accounts/merge/verify', 'POST', { mergeToken, code: 'wrong-code' }),
-      context: { db: createDb(env.DB), session: mockSession() },
-    });
-
-    expect(res.status).toBe(400);
-    const body = (await res.json()) as any;
-    expect(body.code).toBe('VALIDATION_INVALID_INPUT');
+    try {
+      await verifyMerge(createDb(env.DB), mockSession(), dummyRequest, {
+        mergeToken,
+        code: 'wrong-code',
+      });
+      expect.unreachable('should have thrown');
+    } catch (err) {
+      const res = err as Response;
+      expect(res.status).toBe(400);
+      const body = (await res.json()) as { code: string };
+      expect(body.code).toBe('VALIDATION_INVALID_INPUT');
+    }
   });
 
-  it('rejects expired merge request', async () => {
+  it('throws 400 for expired merge request', async () => {
     const user1 = await buildUser({ email: 'user1@example.com' });
     const user2 = await buildUser({ email: 'user2@example.com' });
     const mergeToken = 'test-token-123';
@@ -221,34 +208,40 @@ describe('POST /api/accounts/merge/verify', () => {
     });
     currentUser = { id: user1.id, email: user1.email };
 
-    const res = await verifyHandler({
-      request: jsonReq('/api/accounts/merge/verify', 'POST', { mergeToken, code: '123456' }),
-      context: { db: createDb(env.DB), session: mockSession() },
-    });
-
-    expect(res.status).toBe(400);
-    const body = (await res.json()) as any;
-    expect(body.code).toBe('VALIDATION_INVALID_INPUT');
+    try {
+      await verifyMerge(createDb(env.DB), mockSession(), dummyRequest, {
+        mergeToken,
+        code: '123456',
+      });
+      expect.unreachable('should have thrown');
+    } catch (err) {
+      const res = err as Response;
+      expect(res.status).toBe(400);
+      const body = (await res.json()) as { code: string };
+      expect(body.code).toBe('VALIDATION_INVALID_INPUT');
+    }
   });
 
-  it('returns 404 when no merge request exists', async () => {
+  it('throws 404 when no merge request exists', async () => {
     const user1 = await buildUser({ email: 'user1@example.com' });
     currentUser = { id: user1.id, email: user1.email };
 
-    const res = await verifyHandler({
-      request: jsonReq('/api/accounts/merge/verify', 'POST', {
+    try {
+      await verifyMerge(createDb(env.DB), mockSession(), dummyRequest, {
         mergeToken: 'token',
         code: '123456',
-      }),
-      context: { db: createDb(env.DB), session: mockSession() },
-    });
-    expect(res.status).toBe(404);
-    const body = (await res.json()) as any;
-    expect(body.code).toBe('USER_NOT_FOUND');
+      });
+      expect.unreachable('should have thrown');
+    } catch (err) {
+      const res = err as Response;
+      expect(res.status).toBe(404);
+      const body = (await res.json()) as { code: string };
+      expect(body.code).toBe('USER_NOT_FOUND');
+    }
   });
 });
 
-describe('POST /api/accounts/merge/complete', () => {
+describe('completeMergeRequest', () => {
   it('completes merge, transfers projects, deletes secondary user', async () => {
     const user1 = await buildUser({ email: 'user1@example.com' });
     const user2 = await buildUser({ email: 'user2@example.com' });
@@ -270,15 +263,10 @@ describe('POST /api/accounts/merge/complete', () => {
     });
     currentUser = { id: user1.id, email: user1.email };
 
-    const res = await completeHandler({
-      request: jsonReq('/api/accounts/merge/complete', 'POST', { mergeToken }),
-      context: { db: createDb(env.DB), session: mockSession() },
-    });
+    const result = await completeMergeRequest(createDb(env.DB), mockSession(), mergeToken);
 
-    expect(res.status).toBe(200);
-    const body = (await res.json()) as any;
-    expect(body.success).toBe(true);
-    expect(body.mergedProviders).toContain('github');
+    expect(result.success).toBe(true);
+    expect(result.mergedProviders).toContain('github');
 
     const deletedUser = await env.DB.prepare('SELECT * FROM user WHERE id = ?1')
       .bind(user2.id)
@@ -291,7 +279,7 @@ describe('POST /api/accounts/merge/complete', () => {
     expect(updatedProject!.createdBy).toBe(user1.id);
   });
 
-  it('rejects unverified merge request', async () => {
+  it('throws 400 for unverified merge request', async () => {
     const user1 = await buildUser({ email: 'user1@example.com' });
     const user2 = await buildUser({ email: 'user2@example.com' });
     const mergeToken = 'test-token-123';
@@ -304,18 +292,19 @@ describe('POST /api/accounts/merge/complete', () => {
     });
     currentUser = { id: user1.id, email: user1.email };
 
-    const res = await completeHandler({
-      request: jsonReq('/api/accounts/merge/complete', 'POST', { mergeToken }),
-      context: { db: createDb(env.DB), session: mockSession() },
-    });
-
-    expect(res.status).toBe(400);
-    const body = (await res.json()) as any;
-    expect(body.code).toBe('VALIDATION_INVALID_INPUT');
+    try {
+      await completeMergeRequest(createDb(env.DB), mockSession(), mergeToken);
+      expect.unreachable('should have thrown');
+    } catch (err) {
+      const res = err as Response;
+      expect(res.status).toBe(400);
+      const body = (await res.json()) as { code: string };
+      expect(body.code).toBe('VALIDATION_INVALID_INPUT');
+    }
   });
 });
 
-describe('DELETE /api/accounts/merge/cancel', () => {
+describe('cancelMergeRequest', () => {
   it('cancels merge request', async () => {
     const user1 = await buildUser({ email: 'user1@example.com' });
     const user2 = await buildUser({ email: 'user2@example.com' });
@@ -328,14 +317,8 @@ describe('DELETE /api/accounts/merge/cancel', () => {
     });
     currentUser = { id: user1.id, email: user1.email };
 
-    const res = await cancelHandler({
-      request: jsonReq('/api/accounts/merge/cancel', 'DELETE', { mergeToken }),
-      context: { db: createDb(env.DB), session: mockSession() },
-    });
-
-    expect(res.status).toBe(200);
-    const body = (await res.json()) as any;
-    expect(body.success).toBe(true);
+    const result = await cancelMergeRequest(createDb(env.DB), mockSession(), mergeToken);
+    expect(result.success).toBe(true);
 
     const row = await env.DB.prepare('SELECT * FROM verification WHERE identifier = ?1')
       .bind(`merge:${user1.id}:${user2.id}`)
@@ -347,17 +330,11 @@ describe('DELETE /api/accounts/merge/cancel', () => {
     const user1 = await buildUser({ email: 'user1@example.com' });
     currentUser = { id: user1.id, email: user1.email };
 
-    const res = await cancelHandler({
-      request: jsonReq('/api/accounts/merge/cancel', 'DELETE', { mergeToken: 'any' }),
-      context: { db: createDb(env.DB), session: mockSession() },
-    });
-
-    expect(res.status).toBe(200);
-    const body = (await res.json()) as any;
-    expect(body.success).toBe(true);
+    const result = await cancelMergeRequest(createDb(env.DB), mockSession(), 'any');
+    expect(result.success).toBe(true);
   });
 
-  it('rejects invalid token', async () => {
+  it('throws 400 for invalid token', async () => {
     const user1 = await buildUser({ email: 'user1@example.com' });
     const user2 = await buildUser({ email: 'user2@example.com' });
     await seedMergeRequest({
@@ -368,13 +345,14 @@ describe('DELETE /api/accounts/merge/cancel', () => {
     });
     currentUser = { id: user1.id, email: user1.email };
 
-    const res = await cancelHandler({
-      request: jsonReq('/api/accounts/merge/cancel', 'DELETE', { mergeToken: 'wrong-token' }),
-      context: { db: createDb(env.DB), session: mockSession() },
-    });
-
-    expect(res.status).toBe(400);
-    const body = (await res.json()) as any;
-    expect(body.code).toBe('VALIDATION_INVALID_INPUT');
+    try {
+      await cancelMergeRequest(createDb(env.DB), mockSession(), 'wrong-token');
+      expect.unreachable('should have thrown');
+    } catch (err) {
+      const res = err as Response;
+      expect(res.status).toBe(400);
+      const body = (await res.json()) as { code: string };
+      expect(body.code).toBe('VALIDATION_INVALID_INPUT');
+    }
   });
 });

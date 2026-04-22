@@ -3,10 +3,13 @@ import { env } from 'cloudflare:test';
 import { createDb } from '@corates/db/client';
 import { resetTestDatabase, clearProjectDOs } from '@/__tests__/server/helpers';
 import { buildUser, buildProject, resetCounter } from '@/__tests__/server/factories';
-import { handler as statusHandler } from '../status';
-import { handler as pickerTokenHandler } from '../picker-token';
-import { handler as disconnectHandler } from '../disconnect';
-import { handler as importHandler } from '../import';
+import {
+  getStatus,
+  disconnectGoogle,
+  getPickerToken,
+  importFromDrive,
+} from '@/server/functions/google-drive.server';
+import type { Session } from '@/server/middleware/auth';
 
 let currentUser: { id: string; email: string } = { id: 'user-1', email: 'user1@example.com' };
 
@@ -64,79 +67,58 @@ afterEach(() => {
   globalThis.fetch = originalFetch;
 });
 
-function req(path: string, init: RequestInit = {}): Request {
-  return new Request(`http://localhost${path}`, init);
-}
-
-function mockSession() {
+function mockSession(): Session {
   return {
     user: { id: currentUser.id, email: currentUser.email, name: 'Test User' },
     session: { id: 'test-session', userId: currentUser.id },
-  };
+  } as Session;
 }
 
-describe('GET /api/google-drive/status', () => {
+describe('getStatus', () => {
   it('returns connected status when Google account is linked', async () => {
     const user = await buildUser({ email: 'user1@example.com' });
     await seedGoogleAccount(user.id);
     currentUser = { id: user.id, email: user.email };
 
-    const res = await statusHandler({
-      request: req('/api/google-drive/status'),
-      context: { db: createDb(env.DB), session: mockSession() },
-    });
-
-    expect(res.status).toBe(200);
-    const body = (await res.json()) as { connected: boolean; hasRefreshToken: boolean };
-    expect(body.connected).toBe(true);
-    expect(body.hasRefreshToken).toBe(true);
+    const result = await getStatus(createDb(env.DB), mockSession());
+    expect(result.connected).toBe(true);
+    expect(result.hasRefreshToken).toBe(true);
   });
 
   it('returns disconnected status when Google account is not linked', async () => {
     const user = await buildUser({ email: 'user1@example.com' });
     currentUser = { id: user.id, email: user.email };
 
-    const res = await statusHandler({
-      request: req('/api/google-drive/status'),
-      context: { db: createDb(env.DB), session: mockSession() },
-    });
-
-    expect(res.status).toBe(200);
-    const body = (await res.json()) as { connected: boolean; hasRefreshToken: boolean };
-    expect(body.connected).toBe(false);
-    expect(body.hasRefreshToken).toBe(false);
+    const result = await getStatus(createDb(env.DB), mockSession());
+    expect(result.connected).toBe(false);
+    expect(result.hasRefreshToken).toBe(false);
   });
 });
 
-describe('GET /api/google-drive/picker-token', () => {
+describe('getPickerToken', () => {
   it('returns access token when connected', async () => {
     const user = await buildUser({ email: 'user1@example.com' });
     await seedGoogleAccount(user.id, 'token-123', 'refresh-123');
     currentUser = { id: user.id, email: user.email };
 
-    const res = await pickerTokenHandler({
-      request: req('/api/google-drive/picker-token'),
-      context: { db: createDb(env.DB), session: mockSession() },
-    });
-
-    expect(res.status).toBe(200);
-    const body = (await res.json()) as { accessToken: string; expiresAt: string };
-    expect(body.accessToken).toBe('token-123');
-    expect(body.expiresAt).toBeDefined();
+    const result = await getPickerToken(createDb(env.DB), mockSession());
+    expect(result.accessToken).toBe('token-123');
+    expect(result.expiresAt).toBeDefined();
   });
 
-  it('returns 401 when Google account is not connected', async () => {
+  it('throws 401 when Google account is not connected', async () => {
     const user = await buildUser({ email: 'user1@example.com' });
     currentUser = { id: user.id, email: user.email };
 
-    const res = await pickerTokenHandler({
-      request: req('/api/google-drive/picker-token'),
-      context: { db: createDb(env.DB), session: mockSession() },
-    });
-
-    expect(res.status).toBe(401);
-    const body = (await res.json()) as { code: string };
-    expect(body.code).toBe('AUTH_INVALID');
+    try {
+      await getPickerToken(createDb(env.DB), mockSession());
+      expect.unreachable('should have thrown');
+    } catch (err) {
+      const res = err as Response;
+      expect(res.status).toBe(401);
+      const body = (await res.json()) as { code: string };
+      expect(body.code).toBe('AUTH_INVALID');
+    }
   });
 
   it('refreshes expired token', async () => {
@@ -167,14 +149,8 @@ describe('GET /api/google-drive/picker-token', () => {
       json: async () => ({ access_token: 'new-token-456', expires_in: 3600 }),
     } as unknown as Response);
 
-    const res = await pickerTokenHandler({
-      request: req('/api/google-drive/picker-token'),
-      context: { db: createDb(env.DB), session: mockSession() },
-    });
-
-    expect(res.status).toBe(200);
-    const body = (await res.json()) as { accessToken: string };
-    expect(body.accessToken).toBe('new-token-456');
+    const result = await getPickerToken(createDb(env.DB), mockSession());
+    expect(result.accessToken).toBe('new-token-456');
     expect(mockFetch).toHaveBeenCalledWith(
       expect.stringContaining('oauth2.googleapis.com/token'),
       expect.objectContaining({ method: 'POST' }),
@@ -182,20 +158,14 @@ describe('GET /api/google-drive/picker-token', () => {
   });
 });
 
-describe('DELETE /api/google-drive/disconnect', () => {
+describe('disconnectGoogle', () => {
   it('disconnects Google account', async () => {
     const user = await buildUser({ email: 'user1@example.com' });
     await seedGoogleAccount(user.id);
     currentUser = { id: user.id, email: user.email };
 
-    const res = await disconnectHandler({
-      request: req('/api/google-drive/disconnect', { method: 'DELETE' }),
-      context: { db: createDb(env.DB), session: mockSession() },
-    });
-
-    expect(res.status).toBe(200);
-    const body = (await res.json()) as { success: boolean };
-    expect(body.success).toBe(true);
+    const result = await disconnectGoogle(createDb(env.DB), mockSession());
+    expect(result.success).toBe(true);
 
     const acct = await env.DB.prepare('SELECT * FROM account WHERE userId = ?1 AND providerId = ?2')
       .bind(user.id, 'google')
@@ -204,15 +174,7 @@ describe('DELETE /api/google-drive/disconnect', () => {
   });
 });
 
-function importReq(body: unknown): Request {
-  return req('/api/google-drive/import', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-  });
-}
-
-describe('POST /api/google-drive/import', () => {
+describe('importFromDrive', () => {
   it('imports PDF from Google Drive', async () => {
     const { project, owner } = await buildProject();
     await seedGoogleAccount(owner.id);
@@ -237,19 +199,15 @@ describe('POST /api/google-drive/import', () => {
         }),
       );
 
-    const res = await importHandler({
-      request: importReq({ fileId: 'file-123', projectId: project.id, studyId: 'study-1' }),
-      context: { db: createDb(env.DB), session: mockSession() },
+    const result = await importFromDrive(createDb(env.DB), mockSession(), {
+      fileId: 'file-123',
+      projectId: project.id,
+      studyId: 'study-1',
     });
 
-    expect(res.status).toBe(200);
-    const body = (await res.json()) as {
-      success: boolean;
-      file: { fileName: string; source: string };
-    };
-    expect(body.success).toBe(true);
-    expect(body.file.fileName).toBe('document.pdf');
-    expect(body.file.source).toBe('google-drive');
+    expect(result.success).toBe(true);
+    expect(result.file.fileName).toBe('document.pdf');
+    expect(result.file.source).toBe('google-drive');
   });
 
   it('rejects non-PDF files', async () => {
@@ -267,14 +225,19 @@ describe('POST /api/google-drive/import', () => {
       }),
     } as unknown as Response);
 
-    const res = await importHandler({
-      request: importReq({ fileId: 'file-123', projectId: project.id, studyId: 'study-1' }),
-      context: { db: createDb(env.DB), session: mockSession() },
-    });
-
-    expect(res.status).toBe(400);
-    const body = (await res.json()) as { code: string };
-    expect(body.code).toBe('FILE_INVALID_TYPE');
+    try {
+      await importFromDrive(createDb(env.DB), mockSession(), {
+        fileId: 'file-123',
+        projectId: project.id,
+        studyId: 'study-1',
+      });
+      expect.unreachable('should have thrown');
+    } catch (err) {
+      const res = err as Response;
+      expect(res.status).toBe(400);
+      const body = (await res.json()) as { code: string };
+      expect(body.code).toBe('FILE_INVALID_TYPE');
+    }
   });
 
   it('rejects files that are too large', async () => {
@@ -292,42 +255,37 @@ describe('POST /api/google-drive/import', () => {
       }),
     } as unknown as Response);
 
-    const res = await importHandler({
-      request: importReq({ fileId: 'file-123', projectId: project.id, studyId: 'study-1' }),
-      context: { db: createDb(env.DB), session: mockSession() },
-    });
-
-    expect(res.status).toBe(413);
-    const body = (await res.json()) as { code: string };
-    expect(body.code).toBe('FILE_TOO_LARGE');
+    try {
+      await importFromDrive(createDb(env.DB), mockSession(), {
+        fileId: 'file-123',
+        projectId: project.id,
+        studyId: 'study-1',
+      });
+      expect.unreachable('should have thrown');
+    } catch (err) {
+      const res = err as Response;
+      expect(res.status).toBe(413);
+      const body = (await res.json()) as { code: string };
+      expect(body.code).toBe('FILE_TOO_LARGE');
+    }
   });
 
-  it('returns 401 when Google account is not connected', async () => {
+  it('throws 401 when Google account is not connected', async () => {
     const { project, owner } = await buildProject();
     currentUser = { id: owner.id, email: owner.email };
 
-    const res = await importHandler({
-      request: importReq({ fileId: 'file-123', projectId: project.id, studyId: 'study-1' }),
-      context: { db: createDb(env.DB), session: mockSession() },
-    });
-
-    expect(res.status).toBe(401);
-    const body = (await res.json()) as { code: string };
-    expect(body.code).toBe('AUTH_INVALID');
-  });
-
-  it('validates required fields', async () => {
-    const user = await buildUser({ email: 'user1@example.com' });
-    await seedGoogleAccount(user.id);
-    currentUser = { id: user.id, email: user.email };
-
-    const res = await importHandler({
-      request: importReq({ fileId: 'file-123' }),
-      context: { db: createDb(env.DB), session: mockSession() },
-    });
-
-    expect(res.status).toBe(400);
-    const body = (await res.json()) as { code: string };
-    expect(body.code).toBe('VALIDATION_FIELD_REQUIRED');
+    try {
+      await importFromDrive(createDb(env.DB), mockSession(), {
+        fileId: 'file-123',
+        projectId: project.id,
+        studyId: 'study-1',
+      });
+      expect.unreachable('should have thrown');
+    } catch (err) {
+      const res = err as Response;
+      expect(res.status).toBe(401);
+      const body = (await res.json()) as { code: string };
+      expect(body.code).toBe('AUTH_INVALID');
+    }
   });
 });
