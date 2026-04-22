@@ -3,7 +3,7 @@ import { env } from 'cloudflare:test';
 import { createDb } from '@corates/db/client';
 import { resetTestDatabase, clearProjectDOs } from '@/__tests__/server/helpers';
 import { buildUser, buildProject, resetCounter } from '@/__tests__/server/factories';
-import { handleDelete } from '../me';
+import { deleteAccount } from '@/server/functions/users.server';
 
 let currentUser = { id: 'user-1', email: 'user1@example.com' };
 
@@ -26,14 +26,9 @@ describe('DELETE /api/users/me', () => {
     const { owner } = await buildProject();
     currentUser = { id: owner.id, email: owner.email };
 
-    const res = await handleDelete({
-      request: new Request('http://localhost/api/users/me', { method: 'DELETE' }),
-      context: { db: createDb(env.DB), session: mockSession() },
-    });
+    const result = await deleteAccount(createDb(env.DB), mockSession());
 
-    expect(res.status).toBe(200);
-    const body = (await res.json()) as any;
-    expect(body.success).toBe(true);
+    expect(result.success).toBe(true);
 
     const userRow = await env.DB.prepare('SELECT * FROM user WHERE id = ?1').bind(owner.id).first();
     expect(userRow).toBeNull();
@@ -57,11 +52,8 @@ describe('DELETE /api/users/me', () => {
 
     currentUser = { id: userToDelete.id, email: userToDelete.email };
 
-    const res = await handleDelete({
-      request: new Request('http://localhost/api/users/me', { method: 'DELETE' }),
-      context: { db: createDb(env.DB), session: mockSession() },
-    });
-    expect(res.status).toBe(200);
+    const result = await deleteAccount(createDb(env.DB), mockSession());
+    expect(result.success).toBe(true);
 
     const mediaFile = await env.DB.prepare('SELECT * FROM mediaFiles WHERE id = ?1')
       .bind('media-1')

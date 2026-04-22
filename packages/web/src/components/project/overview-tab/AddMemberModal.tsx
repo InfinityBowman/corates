@@ -27,7 +27,8 @@ import {
 import { API_BASE } from '@/config/api';
 import { isUnlimitedQuota } from '@corates/shared/plans';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
-import type { UserSearchResult } from '@/routes/api/users/search';
+import { searchUsersQuery } from '@/server/functions/users.functions';
+import type { UserSearchResult } from '@/server/functions/users.server';
 
 interface AddMemberModalProps {
   isOpen: boolean;
@@ -76,16 +77,9 @@ export function AddMemberModal({
       if (cancelled) return;
       setSearching(true);
       try {
-        const qs = new URLSearchParams({ q: debouncedQuery });
-        if (projectId) qs.set('projectId', projectId);
-        const res = await fetch(`${API_BASE}/api/users/search?${qs}`, {
-          credentials: 'include',
+        const results = await searchUsersQuery({
+          data: { q: debouncedQuery, projectId: projectId || undefined },
         });
-        if (!res.ok) {
-          const data = (await res.json().catch(() => ({}))) as { message?: string };
-          throw new Error(data.message || `Search failed: ${res.status}`);
-        }
-        const results = (await res.json()) as UserSearchResult[];
         if (!cancelled) setSearchResults(results);
       } catch (err: any) {
         if (!cancelled) setError(err.message || 'Search failed');

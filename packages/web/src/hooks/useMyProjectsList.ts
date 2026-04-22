@@ -4,9 +4,9 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { queryKeys } from '@/lib/queryKeys';
-import { API_BASE } from '@/config/api';
 import { useAuthStore, selectIsLoggedIn, selectIsAuthLoading } from '@/stores/authStore';
-import type { UserProject } from '@/routes/api/users/me/projects';
+import { getMyProjects } from '@/server/functions/users.functions';
+import type { UserProject } from '@/server/functions/users.server';
 
 export type Project = UserProject & {
   studyCount?: number;
@@ -15,23 +15,13 @@ export type Project = UserProject & {
   members?: unknown[];
 };
 
-async function fetchMyProjects(): Promise<UserProject[]> {
-  const res = await fetch(`${API_BASE}/api/users/me/projects`, {
-    credentials: 'include',
-  });
-  if (!res.ok) {
-    throw new Error(`Failed to fetch projects: ${res.status}`);
-  }
-  return res.json() as Promise<UserProject[]>;
-}
-
 export function useMyProjectsList(options: { enabled?: boolean } = {}) {
   const isLoggedIn = useAuthStore(selectIsLoggedIn);
   const isAuthLoading = useAuthStore(selectIsAuthLoading);
 
   const query = useQuery({
     queryKey: queryKeys.projects.all,
-    queryFn: fetchMyProjects,
+    queryFn: () => getMyProjects(),
     enabled: options.enabled !== false && isLoggedIn && !isAuthLoading,
     staleTime: 1000 * 60 * 5,
     gcTime: 1000 * 60 * 10,

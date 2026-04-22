@@ -18,8 +18,9 @@ import {
   revokeOtherSessions as _revokeOtherSessions,
   revokeSessions as _revokeSessions,
 } from '@/api/auth-client';
+import { deleteMyAccount } from '@/server/functions/users.functions';
 import { queryClient } from '@/lib/queryClient';
-import { API_BASE, BASEPATH } from '@/config/api';
+import { BASEPATH } from '@/config/api';
 import { saveLastLoginMethod, LOGIN_METHODS } from '@/lib/lastLoginMethod';
 import { getCachedAvatar, pruneExpiredAvatars } from '@/primitives/avatarCache.js';
 import { clearAllData } from '@/primitives/db.js';
@@ -349,22 +350,14 @@ export const useAuthStore = create<AuthState & AuthActions>()((set, get) => ({
   deleteAccount: async () => {
     try {
       set({ authError: null });
-      const response = await fetch(`${API_BASE}/api/users/me`, {
-        method: 'DELETE',
-        credentials: 'include',
-      });
-
-      if (!response.ok) {
-        const data = await response.json().catch(() => ({}));
-        throw new Error(data.error || 'Failed to delete account');
-      }
-
+      await deleteMyAccount();
       localStorage.removeItem('pendingEmail');
       await authFetch(authClient.signOut());
       await performSignoutCleanup();
       return { success: true };
     } catch (err) {
-      set({ authError: (err as Error).message });
+      const message = err instanceof Error ? err.message : 'Failed to delete account';
+      set({ authError: message });
       throw err;
     }
   },
