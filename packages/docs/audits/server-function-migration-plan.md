@@ -40,33 +40,33 @@ These routes need stable URLs, serve binary/HTML content, or are called by exter
 
 ---
 
-## Batch 2: Users (6 routes)
+## Batch 2: Users (6 routes) -- DONE
 
 New files: `users.server.ts`, `users.functions.ts`
 
-- [ ] `users/me.ts` (DELETE - delete current user account)
-- [ ] `users/me/projects.ts` (GET - current user's projects)
-- [ ] `users/$userId/projects.ts` (GET - specific user's projects)
-- [ ] `users/search.ts` (GET - search users by email/name)
-- [ ] `users/avatar.ts` (POST - upload avatar)
-- [ ] `users/sync-profile.ts` (POST - sync profile from auth provider)
+- [x] `users/me.ts` (DELETE - delete current user account)
+- [x] `users/me/projects.ts` (GET - current user's projects)
+- [x] `users/$userId/projects.ts` (GET - specific user's projects)
+- [x] `users/search.ts` (GET - search users by email/name)
+- [ ] `users/avatar.ts` (POST - upload avatar) -- stays as HTTP (FormData)
+- [x] `users/sync-profile.ts` (POST - sync profile from auth provider)
 
 Tests: `me.server.test.ts`, `avatar.server.test.ts`, `search.server.test.ts`, `userId-projects.server.test.ts`
 Client file: none (consumers call fetch directly or use hooks)
 
-## Batch 3: Remaining Billing (6 routes)
+## Batch 3: Remaining Billing (6 routes) -- DONE
 
 Extends: `billing.server.ts`, `billing.functions.ts`
 
-- [ ] `billing/checkout.ts` (POST - create Stripe checkout session)
-- [ ] `billing/invoices.ts` (GET - fetch org invoices)
-- [ ] `billing/portal.ts` (POST - create Stripe portal session)
-- [ ] `billing/single-project/checkout.ts` (POST - single-project checkout)
-- [ ] `billing/trial/start.ts` (POST - start trial)
-- [ ] `billing/sync-after-success.ts` (GET - sync subscription post-checkout)
+- [x] `billing/checkout.ts` (POST - create Stripe checkout session)
+- [x] `billing/invoices.ts` (GET - fetch org invoices)
+- [x] `billing/portal.ts` (POST - create Stripe portal session)
+- [x] `billing/single-project/checkout.ts` (POST - single-project checkout)
+- [x] `billing/trial/start.ts` (POST - start trial)
+- [x] `billing/sync-after-success.ts` (POST - sync subscription post-checkout)
 
 Tests: `checkout.server.test.ts`, `invoices.server.test.ts`, `portal.server.test.ts`, `single-project-checkout.server.test.ts`, `trial-start.server.test.ts`, `sync-after-success.server.test.ts`
-Client file: `api/billing.ts` (remaining functions: `redirectToCheckout`, `redirectToPortal`, `redirectToSingleProjectCheckout`, `startTrial`)
+Client file: `api/billing.ts` (updated to call server functions)
 
 ## Batch 4: Google Drive + Account Merge (8 routes)
 
@@ -211,8 +211,8 @@ Tests: `billing-observability.server.test.ts`, `stripe-tools.server.test.ts`, `d
 |----------|--------|--------|
 | Already migrated | 5 | Done |
 | Cannot migrate | ~13 | Stay as HTTP |
-| Batch 2: Users | 6 | Pending |
-| Batch 3: Billing | 6 | Pending |
+| Batch 2: Users | 5 (1 stays HTTP) | Done |
+| Batch 3: Billing | 6 | Done |
 | Batch 4: Google Drive + Merge | 8 | Pending |
 | Batch 5: Misc | 3 | Pending |
 | Batch 6: Orgs Core | 5 | Pending |

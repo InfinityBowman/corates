@@ -3,7 +3,7 @@ import { env } from 'cloudflare:test';
 import { createDb } from '@corates/db/client';
 import { resetTestDatabase, clearProjectDOs } from '@/__tests__/server/helpers';
 import { buildOrg, resetCounter } from '@/__tests__/server/factories';
-import { handleGet } from '../invoices';
+import { fetchInvoices } from '@/server/functions/billing.server';
 import type { Session } from '@/server/middleware/auth';
 
 function mockSession(overrides?: {
@@ -41,10 +41,6 @@ beforeEach(async () => {
   resetCounter();
 });
 
-function invoicesReq(): Request {
-  return new Request('http://localhost/api/billing/invoices', { method: 'GET' });
-}
-
 async function seedSubscription(orgId: string, customerId: string, status = 'active') {
   const { subscription } = await import('@corates/db/schema');
   const { createDb } = await import('@corates/db/client');
@@ -64,21 +60,23 @@ async function seedSubscription(orgId: string, customerId: string, status = 'act
   });
 }
 
-describe('GET /api/billing/invoices', () => {
-  it('returns 403 when caller has no org', async () => {
+describe('fetchInvoices', () => {
+  it('throws 403 when caller has no org', async () => {
     const session = mockSession({
       userId: 'orphan-user',
       email: 'orphan@example.com',
       name: 'Orphan',
     });
-    const res = await handleGet({
-      request: invoicesReq(),
-      context: { db: createDb(env.DB), session },
-    });
-    expect(res.status).toBe(403);
-    const body = (await res.json()) as { code: string; details?: { reason?: string } };
-    expect(body.code).toBe('AUTH_FORBIDDEN');
-    expect(body.details?.reason).toBe('no_org_found');
+    try {
+      await fetchInvoices(createDb(env.DB), session);
+      expect.unreachable('should have thrown');
+    } catch (err) {
+      const res = err as Response;
+      expect(res.status).toBe(403);
+      const body = (await res.json()) as { code: string; details?: { reason?: string } };
+      expect(body.code).toBe('AUTH_FORBIDDEN');
+      expect(body.details?.reason).toBe('no_org_found');
+    }
   });
 
   it('returns empty invoices when org has no active subscription', async () => {
@@ -89,13 +87,8 @@ describe('GET /api/billing/invoices', () => {
       name: owner.name,
       activeOrganizationId: org.id,
     });
-    const res = await handleGet({
-      request: invoicesReq(),
-      context: { db: createDb(env.DB), session },
-    });
-    expect(res.status).toBe(200);
-    const body = (await res.json()) as { invoices: unknown[] };
-    expect(body.invoices).toEqual([]);
+    const result = await fetchInvoices(createDb(env.DB), session);
+    expect(result.invoices).toEqual([]);
     expect(invoicesListMock).not.toHaveBeenCalled();
   });
 
@@ -125,25 +118,12 @@ describe('GET /api/billing/invoices', () => {
       ],
     });
 
-    const res = await handleGet({
-      request: invoicesReq(),
-      context: { db: createDb(env.DB), session },
-    });
-    expect(res.status).toBe(200);
-    const body = (await res.json()) as {
-      invoices: Array<{
-        id: string;
-        number: string | null;
-        amount: number;
-        status: string | null;
-        pdfUrl: string | null;
-      }>;
-    };
-    expect(body.invoices).toHaveLength(1);
-    expect(body.invoices[0].id).toBe('in_1');
-    expect(body.invoices[0].amount).toBe(29);
-    expect(body.invoices[0].status).toBe('paid');
-    expect(body.invoices[0].pdfUrl).toBe('https://stripe.example/in_1.pdf');
+    const result = await fetchInvoices(createDb(env.DB), session);
+    expect(result.invoices).toHaveLength(1);
+    expect(result.invoices[0].id).toBe('in_1');
+    expect(result.invoices[0].amount).toBe(29);
+    expect(result.invoices[0].status).toBe('paid');
+    expect(result.invoices[0].pdfUrl).toBe('https://stripe.example/in_1.pdf');
 
     expect(invoicesListMock).toHaveBeenCalledTimes(1);
     const callArg = invoicesListMock.mock.calls[0][0] as { customer: string; limit: number };
@@ -151,7 +131,7 @@ describe('GET /api/billing/invoices', () => {
     expect(callArg.limit).toBe(10);
   });
 
-  it('returns 500 when stripe.invoices.list throws', async () => {
+  it('propagates error when stripe.invoices.list throws', async () => {
     const { org, owner } = await buildOrg();
     await seedSubscription(org.id, 'cus_real');
     const session = mockSession({
@@ -162,13 +142,6 @@ describe('GET /api/billing/invoices', () => {
     });
     invoicesListMock.mockRejectedValueOnce(new Error('stripe down'));
 
-    const res = await handleGet({
-      request: invoicesReq(),
-      context: { db: createDb(env.DB), session },
-    });
-    expect(res.status).toBe(500);
-    const body = (await res.json()) as { code: string; details?: { operation?: string } };
-    expect(body.code).toBe('SYSTEM_INTERNAL_ERROR');
-    expect(body.details?.operation).toBe('fetch_invoices');
+    await expect(fetchInvoices(createDb(env.DB), session)).rejects.toThrow('stripe down');
   });
 });

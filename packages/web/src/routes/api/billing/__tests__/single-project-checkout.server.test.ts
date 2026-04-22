@@ -3,12 +3,24 @@ import { env } from 'cloudflare:test';
 import { createDb } from '@corates/db/client';
 import { resetTestDatabase, clearProjectDOs } from '@/__tests__/server/helpers';
 import { buildOrg, buildOrgMember, resetCounter } from '@/__tests__/server/factories';
-import { handlePost } from '../single-project/checkout';
+import { createSPCheckout } from '@/server/functions/billing.server';
+import type { Session } from '@/server/middleware/auth';
 
-let sessionResult: {
-  user: { id: string; email: string; name: string };
-  session: { id: string; userId: string; activeOrganizationId: string | null };
-};
+function mockSession(overrides: {
+  userId: string;
+  email: string;
+  name: string;
+  activeOrganizationId?: string | null;
+}): Session {
+  return {
+    user: { id: overrides.userId, email: overrides.email, name: overrides.name },
+    session: {
+      id: 'sess',
+      userId: overrides.userId,
+      activeOrganizationId: overrides.activeOrganizationId ?? null,
+    },
+  } as Session;
+}
 
 const createSingleProjectCheckoutMock = vi.fn();
 
@@ -23,45 +35,46 @@ beforeEach(async () => {
   resetCounter();
 });
 
-function spReq(): Request {
-  return new Request('http://localhost/api/billing/single-project/checkout', { method: 'POST' });
-}
+const dummyRequest = new Request('http://localhost/api/billing/single-project/checkout', {
+  method: 'POST',
+});
 
-describe('POST /api/billing/single-project/checkout', () => {
-  it('returns 403 when caller is not org owner', async () => {
+describe('createSPCheckout', () => {
+  it('throws 403 when caller is not org owner', async () => {
     const { org } = await buildOrg();
     const { user: memberUser } = await buildOrgMember({ orgId: org.id, role: 'member' });
-    sessionResult = {
-      user: { id: memberUser.id, email: memberUser.email, name: memberUser.name },
-      session: { id: 'sess', userId: memberUser.id, activeOrganizationId: org.id },
-    };
-    const res = await handlePost({
-      request: spReq(),
-      context: { db: createDb(env.DB), session: sessionResult },
+    const session = mockSession({
+      userId: memberUser.id,
+      email: memberUser.email,
+      name: memberUser.name,
+      activeOrganizationId: org.id,
     });
-    expect(res.status).toBe(403);
+    try {
+      await createSPCheckout(createDb(env.DB), session, dummyRequest);
+      expect.unreachable('should have thrown');
+    } catch (err) {
+      const res = err as Response;
+      expect(res.status).toBe(403);
+    }
     expect(createSingleProjectCheckoutMock).not.toHaveBeenCalled();
   });
 
   it('creates checkout session for org owner', async () => {
     const { org, owner } = await buildOrg();
-    sessionResult = {
-      user: { id: owner.id, email: owner.email, name: owner.name },
-      session: { id: 'sess', userId: owner.id, activeOrganizationId: org.id },
-    };
+    const session = mockSession({
+      userId: owner.id,
+      email: owner.email,
+      name: owner.name,
+      activeOrganizationId: org.id,
+    });
     createSingleProjectCheckoutMock.mockResolvedValueOnce({
       url: 'https://checkout.stripe/sp',
       sessionId: 'cs_sp_1',
     });
 
-    const res = await handlePost({
-      request: spReq(),
-      context: { db: createDb(env.DB), session: sessionResult },
-    });
-    expect(res.status).toBe(200);
-    const body = (await res.json()) as { url: string; sessionId: string };
-    expect(body.url).toBe('https://checkout.stripe/sp');
-    expect(body.sessionId).toBe('cs_sp_1');
+    const result = await createSPCheckout(createDb(env.DB), session, dummyRequest);
+    expect((result as { url: string }).url).toBe('https://checkout.stripe/sp');
+    expect((result as { sessionId: string }).sessionId).toBe('cs_sp_1');
 
     expect(createSingleProjectCheckoutMock).toHaveBeenCalledTimes(1);
     const args = createSingleProjectCheckoutMock.mock.calls[0];
@@ -69,20 +82,18 @@ describe('POST /api/billing/single-project/checkout', () => {
     expect(args[2]).toEqual({ orgId: org.id });
   });
 
-  it('returns 500 when command throws non-domain error', async () => {
+  it('propagates error when command throws', async () => {
     const { org, owner } = await buildOrg();
-    sessionResult = {
-      user: { id: owner.id, email: owner.email, name: owner.name },
-      session: { id: 'sess', userId: owner.id, activeOrganizationId: org.id },
-    };
+    const session = mockSession({
+      userId: owner.id,
+      email: owner.email,
+      name: owner.name,
+      activeOrganizationId: org.id,
+    });
     createSingleProjectCheckoutMock.mockRejectedValueOnce(new Error('stripe down'));
 
-    const res = await handlePost({
-      request: spReq(),
-      context: { db: createDb(env.DB), session: sessionResult },
-    });
-    expect(res.status).toBe(500);
-    const body = (await res.json()) as { code: string };
-    expect(body.code).toBe('SYSTEM_INTERNAL_ERROR');
+    await expect(
+      createSPCheckout(createDb(env.DB), session, dummyRequest),
+    ).rejects.toThrow('stripe down');
   });
 });
