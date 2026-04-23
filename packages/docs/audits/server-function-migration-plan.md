@@ -92,15 +92,15 @@ Client files: `api/google-drive.ts`, `api/account-merge.ts`
 
 Tests: `accept.server.test.ts`, `contact.server.test.ts`, `db.server.test.ts`
 
-## Batch 6: Orgs Core (5 routes)
+## Batch 6: Orgs Core (5 routes) -- DONE
 
 New files: `orgs.server.ts`, `orgs.functions.ts`
 
-- [ ] `orgs.ts` (POST - create organization)
-- [ ] `orgs/$orgId.ts` (GET/PUT/DELETE - org CRUD)
-- [ ] `orgs/$orgId/members.ts` (GET/POST - list/add members)
-- [ ] `orgs/$orgId/members/$memberId.ts` (GET/PUT/DELETE - manage member)
-- [ ] `orgs/$orgId/set-active.ts` (POST - set active org)
+- [x] `orgs.ts` (POST - create organization)
+- [x] `orgs/$orgId.ts` (GET/PUT/DELETE - org CRUD)
+- [x] `orgs/$orgId/members.ts` (GET/POST - list/add members)
+- [x] `orgs/$orgId/members/$memberId.ts` (GET/PUT/DELETE - manage member)
+- [x] `orgs/$orgId/set-active.ts` (POST - set active org)
 
 Tests: `orgs.server.test.ts`
 
@@ -215,7 +215,7 @@ Tests: `billing-observability.server.test.ts`, `stripe-tools.server.test.ts`, `d
 | Batch 3: Billing | 6 | Done |
 | Batch 4: Google Drive + Merge | 8 | Done |
 | Batch 5: Misc | 3 | Done |
-| Batch 6: Orgs Core | 5 | Pending |
+| Batch 6: Orgs Core | 5 | Done |
 | Batch 7: Orgs Projects | 6 | Pending |
 | Batch 8: Orgs Dev + Studies | 7 | Pending |
 | Batch 9: Admin Users | 8 | Pending |
