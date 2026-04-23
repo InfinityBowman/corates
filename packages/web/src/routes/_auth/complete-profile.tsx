@@ -3,7 +3,7 @@ import { createFileRoute, redirect, useNavigate } from '@tanstack/react-router';
 import { CheckIcon } from 'lucide-react';
 import { useAuthStore, selectUser, selectIsAuthLoading } from '@/stores/authStore';
 import { handleError } from '@/lib/error-utils';
-import { API_BASE } from '@/config/api';
+import { acceptInvitationAction } from '@/server/functions/invitations.functions';
 import { showToast } from '@/components/ui/toast';
 import {
   hasPendingPlan,
@@ -220,21 +220,7 @@ function CompleteProfilePage() {
 
       if (invitationToken) {
         try {
-          const res = await fetch(`${API_BASE}/api/invitations/accept`, {
-            method: 'POST',
-            credentials: 'include',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ token: invitationToken }),
-          });
-          const result = (await res.json()) as {
-            projectId?: string;
-            projectName?: string;
-            code?: string;
-            message?: string;
-          };
-          if (!res.ok) {
-            throw new Error(result.message || result.code || `Accept failed: ${res.status}`);
-          }
+          const result = await acceptInvitationAction({ data: { token: invitationToken } });
           localStorage.removeItem('pendingInvitationToken');
 
           if (result.projectId) {

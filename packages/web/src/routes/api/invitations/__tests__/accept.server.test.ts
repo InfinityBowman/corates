@@ -11,15 +11,16 @@ import {
 import { createDb } from '@corates/db/client';
 import { projectInvitations, projectMembers, member } from '@corates/db/schema';
 import { eq, and } from 'drizzle-orm';
-import { handler as acceptHandler } from '../accept';
+import { handleAcceptInvitation } from '@/server/functions/invitations.server';
+import type { Session } from '@/server/middleware/auth';
 
 let currentUser: { id: string; email: string } = { id: 'user-1', email: 'user1@example.com' };
 
-function mockSession() {
+function mockSession(): Session {
   return {
     user: { id: currentUser.id, email: currentUser.email, name: 'Test User' },
     session: { id: 'test-session', userId: currentUser.id },
-  };
+  } as Session;
 }
 
 vi.mock('@corates/workers/project-sync', () => ({
@@ -58,21 +59,13 @@ beforeEach(async () => {
   mockSyncMemberToDO.mockResolvedValue(undefined);
 });
 
-function jsonReq(body?: unknown): Request {
-  return new Request('http://localhost/api/invitations/accept', {
-    method: 'POST',
-    headers: { 'content-type': 'application/json' },
-    body: body !== undefined ? JSON.stringify(body) : undefined,
-  });
-}
-
-describe('POST /api/invitations/accept', () => {
-  it('should accept invitation and add user to org and project', async () => {
+describe('handleAcceptInvitation', () => {
+  it('accepts invitation and adds user to org and project', async () => {
     const { project, org, owner } = await buildProject();
     const invitee = await buildUser({ email: 'invitee@example.com' });
     const token = 'accept-token';
 
-    const invitation = await buildProjectInvitation({
+    await buildProjectInvitation({
       orgId: org.id,
       projectId: project.id,
       email: invitee.email,
@@ -83,22 +76,12 @@ describe('POST /api/invitations/accept', () => {
 
     currentUser = { id: invitee.id, email: invitee.email };
 
-    const res = await acceptHandler({
-      request: jsonReq({ token }),
-      context: { session: mockSession() },
-    });
+    const result = await handleAcceptInvitation(mockSession(), { token });
 
-    expect(res.status).toBe(200);
-    const body = (await res.json()) as {
-      success: boolean;
-      orgId: string;
-      projectId: string;
-      role: string;
-    };
-    expect(body.success).toBe(true);
-    expect(body.orgId).toBe(org.id);
-    expect(body.projectId).toBe(project.id);
-    expect(body.role).toBe('member');
+    expect(result.success).toBe(true);
+    expect(result.orgId).toBe(org.id);
+    expect(result.projectId).toBe(project.id);
+    expect(result.role).toBe('member');
 
     const db = createDb(env.DB);
     const orgMember = await db
@@ -120,7 +103,7 @@ describe('POST /api/invitations/accept', () => {
     const dbInvitation = await db
       .select()
       .from(projectInvitations)
-      .where(eq(projectInvitations.id, invitation.id))
+      .where(eq(projectInvitations.id, (await db.select().from(projectInvitations).get())!.id))
       .get();
     expect(dbInvitation!.acceptedAt).not.toBeNull();
 
@@ -132,21 +115,22 @@ describe('POST /api/invitations/accept', () => {
     );
   });
 
-  it('should return error for invalid token', async () => {
+  it('throws for invalid token', async () => {
     const { owner } = await buildProject();
     currentUser = { id: owner.id, email: owner.email };
 
-    const res = await acceptHandler({
-      request: jsonReq({ token: 'invalid-token' }),
-      context: { session: mockSession() },
-    });
-
-    expect(res.status).toBe(400);
-    const body = (await res.json()) as { code: string };
-    expect(body.code).toMatch(/FIELD_INVALID_FORMAT/);
+    try {
+      await handleAcceptInvitation(mockSession(), { token: 'invalid-token' });
+      expect.unreachable('should have thrown');
+    } catch (err) {
+      const res = err as Response;
+      expect(res.status).toBe(400);
+      const body = (await res.json()) as { code: string };
+      expect(body.code).toMatch(/FIELD_INVALID_FORMAT/);
+    }
   });
 
-  it('should return error for expired invitation', async () => {
+  it('throws for expired invitation', async () => {
     const { project, org, owner } = await buildProject();
     const invitee = await buildUser({ email: 'invitee@example.com' });
     const token = 'expired-token';
@@ -162,18 +146,19 @@ describe('POST /api/invitations/accept', () => {
 
     currentUser = { id: invitee.id, email: invitee.email };
 
-    const res = await acceptHandler({
-      request: jsonReq({ token }),
-      context: { session: mockSession() },
-    });
-
-    expect(res.status).toBe(400);
-    const body = (await res.json()) as { code: string; details?: { value?: string } };
-    expect(body.code).toMatch(/FIELD_INVALID_FORMAT/);
-    expect(body.details?.value).toBe('expired');
+    try {
+      await handleAcceptInvitation(mockSession(), { token });
+      expect.unreachable('should have thrown');
+    } catch (err) {
+      const res = err as Response;
+      expect(res.status).toBe(400);
+      const body = (await res.json()) as { code: string; details?: { value?: string } };
+      expect(body.code).toMatch(/FIELD_INVALID_FORMAT/);
+      expect(body.details?.value).toBe('expired');
+    }
   });
 
-  it('should return error for email mismatch', async () => {
+  it('throws for email mismatch', async () => {
     const { project, org, owner } = await buildProject();
     const differentUser = await buildUser({ email: 'different@example.com' });
     const token = 'token-1';
@@ -189,23 +174,24 @@ describe('POST /api/invitations/accept', () => {
 
     currentUser = { id: differentUser.id, email: differentUser.email };
 
-    const res = await acceptHandler({
-      request: jsonReq({ token }),
-      context: { session: mockSession() },
-    });
-
-    expect(res.status).toBe(403);
-    const body = (await res.json()) as { code: string; details?: { reason?: string } };
-    expect(body.code).toBe('AUTH_FORBIDDEN');
-    expect(body.details?.reason).toBe('email_mismatch');
+    try {
+      await handleAcceptInvitation(mockSession(), { token });
+      expect.unreachable('should have thrown');
+    } catch (err) {
+      const res = err as Response;
+      expect(res.status).toBe(403);
+      const body = (await res.json()) as { code: string; details?: { reason?: string } };
+      expect(body.code).toBe('AUTH_FORBIDDEN');
+      expect(body.details?.reason).toBe('email_mismatch');
+    }
   });
 
-  it('should mark invitation as accepted if user is already project member', async () => {
+  it('marks invitation as accepted if user is already project member', async () => {
     const { project, org, owner, members } = await buildProjectWithMembers({ memberCount: 1 });
     const existingMember = members[1].user;
     const token = 'token-1';
 
-    const invitation = await buildProjectInvitation({
+    await buildProjectInvitation({
       orgId: org.id,
       projectId: project.id,
       email: existingMember.email,
@@ -216,21 +202,16 @@ describe('POST /api/invitations/accept', () => {
 
     currentUser = { id: existingMember.id, email: existingMember.email };
 
-    const res = await acceptHandler({
-      request: jsonReq({ token }),
-      context: { session: mockSession() },
-    });
+    const result = await handleAcceptInvitation(mockSession(), { token });
 
-    expect(res.status).toBe(200);
-    const body = (await res.json()) as { success: boolean; alreadyMember: boolean };
-    expect(body.success).toBe(true);
-    expect(body.alreadyMember).toBe(true);
+    expect(result.success).toBe(true);
+    expect(result.alreadyMember).toBe(true);
 
     const db = createDb(env.DB);
     const dbInvitation = await db
       .select()
       .from(projectInvitations)
-      .where(eq(projectInvitations.id, invitation.id))
+      .where(eq(projectInvitations.token, token))
       .get();
     expect(dbInvitation!.acceptedAt).not.toBeNull();
 
@@ -244,7 +225,7 @@ describe('POST /api/invitations/accept', () => {
     expect(projectMembersList).toHaveLength(1);
   });
 
-  it('should return error when quota exceeded', async () => {
+  it('throws when quota exceeded', async () => {
     const { project, org, owner } = await buildProject();
     const invitee = await buildUser({ email: 'invitee@example.com' });
     const token = 'token-1';
@@ -266,15 +247,16 @@ describe('POST /api/invitations/accept', () => {
 
     currentUser = { id: invitee.id, email: invitee.email };
 
-    const res = await acceptHandler({
-      request: jsonReq({ token }),
-      context: { session: mockSession() },
-    });
-
-    expect(res.status).toBe(403);
-    const body = (await res.json()) as { code: string; details?: { reason?: string } };
-    expect(body.code).toBe('AUTH_FORBIDDEN');
-    expect(body.details?.reason).toBe('quota_exceeded');
+    try {
+      await handleAcceptInvitation(mockSession(), { token });
+      expect.unreachable('should have thrown');
+    } catch (err) {
+      const res = err as Response;
+      expect(res.status).toBe(403);
+      const body = (await res.json()) as { code: string; details?: { reason?: string } };
+      expect(body.code).toBe('AUTH_FORBIDDEN');
+      expect(body.details?.reason).toBe('quota_exceeded');
+    }
 
     const db = createDb(env.DB);
     const orgMember = await db

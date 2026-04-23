@@ -3,7 +3,7 @@ import { env } from 'cloudflare:test';
 import { createDb } from '@corates/db/client';
 import { resetTestDatabase, clearProjectDOs } from '@/__tests__/server/helpers';
 import { buildUser, resetCounter } from '@/__tests__/server/factories';
-import { handleGet, handlePost } from '../users';
+import { listUsers, usersPostDeprecated } from '@/server/functions/db-users.server';
 import { handler as migrateHandler } from '../migrate';
 
 beforeEach(async () => {
@@ -12,28 +12,28 @@ beforeEach(async () => {
   await clearProjectDOs(['project-1']);
 });
 
-describe('GET /api/db/users', () => {
+describe('listUsers', () => {
   it('returns list of users', async () => {
     await buildUser({ email: 'user1@example.com' });
     await buildUser({ email: 'user2@example.com' });
 
-    const res = await handleGet({
-      request: new Request('http://localhost/api/db/users'),
-      context: { db: createDb(env.DB) },
-    });
-    expect(res.status).toBe(200);
-    const body = (await res.json()) as { users: Array<{ id: string; email: string }> };
-    expect(body.users.length).toBeGreaterThanOrEqual(2);
-    expect(body.users[0].email).toBeDefined();
+    const result = await listUsers(createDb(env.DB));
+    expect(result.users.length).toBeGreaterThanOrEqual(2);
+    expect(result.users[0].email).toBeDefined();
   });
 });
 
-describe('POST /api/db/users', () => {
-  it('returns deprecation error', async () => {
-    const res = await handlePost();
-    expect(res.status).toBe(400);
-    const body = (await res.json()) as { code: string };
-    expect(body.code).toBe('VALIDATION_INVALID_INPUT');
+describe('usersPostDeprecated', () => {
+  it('throws deprecation error', async () => {
+    try {
+      usersPostDeprecated();
+      expect.unreachable('should have thrown');
+    } catch (err) {
+      const res = err as Response;
+      expect(res.status).toBe(400);
+      const body = (await res.json()) as { code: string };
+      expect(body.code).toBe('VALIDATION_INVALID_INPUT');
+    }
   });
 });
 

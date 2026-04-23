@@ -84,11 +84,11 @@ New files: `google-drive.server.ts`, `google-drive.functions.ts`, `account-merge
 Tests: `google-drive.server.test.ts`, `merge.server.test.ts`
 Client files: `api/google-drive.ts`, `api/account-merge.ts`
 
-## Batch 5: Misc (3 routes)
+## Batch 5: Misc (3 routes) -- DONE
 
-- [ ] `invitations/accept.ts` (POST - accept invitation)
-- [ ] `contact.ts` (POST - send contact form email)
-- [ ] `db/users.ts` (GET - user list)
+- [x] `invitations/accept.ts` (POST - accept invitation)
+- [x] `contact.ts` (POST - send contact form email)
+- [x] `db/users.ts` (GET - user list)
 
 Tests: `accept.server.test.ts`, `contact.server.test.ts`, `db.server.test.ts`
 
@@ -214,7 +214,7 @@ Tests: `billing-observability.server.test.ts`, `stripe-tools.server.test.ts`, `d
 | Batch 2: Users | 5 (1 stays HTTP) | Done |
 | Batch 3: Billing | 6 | Done |
 | Batch 4: Google Drive + Merge | 8 | Done |
-| Batch 5: Misc | 3 | Pending |
+| Batch 5: Misc | 3 | Done |
 | Batch 6: Orgs Core | 5 | Pending |
 | Batch 7: Orgs Projects | 6 | Pending |
 | Batch 8: Orgs Dev + Studies | 7 | Pending |
