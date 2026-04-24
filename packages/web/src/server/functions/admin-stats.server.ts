@@ -17,10 +17,9 @@ import type { Session } from '@/server/middleware/auth';
 
 function assertAdmin(session: Session) {
   if (!isAdminUser(session.user as { role?: string | null })) {
-    throw Response.json(
-      createDomainError(AUTH_ERRORS.FORBIDDEN, { reason: 'admin_required' }),
-      { status: 403 },
-    );
+    throw Response.json(createDomainError(AUTH_ERRORS.FORBIDDEN, { reason: 'admin_required' }), {
+      status: 403,
+    });
   }
 }
 
@@ -78,11 +77,7 @@ export async function getAdminSignupStats(
   };
 }
 
-export async function getAdminOrgStats(
-  session: Session,
-  db: Database,
-  params: { days?: number },
-) {
+export async function getAdminOrgStats(session: Session, db: Database, params: { days?: number }) {
   assertAdmin(session);
   const days = Math.min(params.days ?? 30, 90);
 
@@ -222,10 +217,7 @@ export async function getAdminSubscriptionStats(session: Session) {
   };
 }
 
-export async function getAdminRevenueStats(
-  session: Session,
-  params: { months?: number },
-) {
+export async function getAdminRevenueStats(session: Session, params: { months?: number }) {
   assertAdmin(session);
   const months = Math.min(params.months ?? 6, 12);
 
