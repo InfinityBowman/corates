@@ -1,3 +1,8 @@
+/**
+ * Admin database browser tests.
+ *
+ * Tests invoke the pure business logic functions in admin-database.server.ts.
+ */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { env } from 'cloudflare:test';
 import { createDb } from '@corates/db/client';
@@ -8,129 +13,93 @@ import {
   buildUser,
   resetCounter,
 } from '@/__tests__/server/factories';
-import { handleGet as listTables } from '../database/tables';
-import { handleGet as tableSchema } from '../database/tables/$tableName/schema';
-import { handleGet as tableRows } from '../database/tables/$tableName/rows';
-import { handleGet as pdfsByOrg } from '../database/analytics/pdfs-by-org';
-import { handleGet as pdfsByUser } from '../database/analytics/pdfs-by-user';
-import { handleGet as pdfsByProject } from '../database/analytics/pdfs-by-project';
-import { handleGet as recentUploads } from '../database/analytics/recent-uploads';
-
-let sessionResult: {
-  user: { id: string; email: string; name: string; role?: string };
-  session: { id: string; userId: string; activeOrganizationId: string | null };
-} | null = null;
-
-vi.mock('@corates/workers/auth', () => ({
-  getSession: async () => sessionResult,
-}));
+import type { Session } from '@/server/middleware/auth';
+import {
+  listAdminDatabaseTables,
+  getAdminTableSchema,
+  getAdminTableRows,
+  getAdminPdfsByOrg,
+  getAdminPdfsByUser,
+  getAdminPdfsByProject,
+  getAdminRecentUploads,
+} from '@/server/functions/admin-database.server';
 
 beforeEach(async () => {
   await resetTestDatabase();
   vi.clearAllMocks();
   resetCounter();
-  sessionResult = null;
 });
 
-async function asAdmin() {
-  const admin = await buildAdminUser();
-  sessionResult = {
-    user: { id: admin.id, email: admin.email, name: admin.name, role: 'admin' },
-    session: { id: 'admin-sess', userId: admin.id, activeOrganizationId: null },
-  };
-  return admin;
+function mockAdminSession(): Session {
+  return {
+    user: { id: 'admin-id', email: 'admin@example.com', name: 'Admin', role: 'admin' },
+    session: { id: 'admin-sess', userId: 'admin-id' },
+  } as Session;
 }
 
-describe('GET /api/admin/database/tables', () => {
+describe('listAdminDatabaseTables', () => {
   it('returns row counts for whitelisted tables', async () => {
-    await asAdmin();
-    const res = await listTables({ context: { db: createDb(env.DB) } });
-    expect(res.status).toBe(200);
-    const body = (await res.json()) as { tables: { name: string; rowCount: number }[] };
-    expect(body.tables.length).toBeGreaterThan(0);
-    const userTable = body.tables.find(t => t.name === 'user');
+    await buildAdminUser();
+    const result = await listAdminDatabaseTables(mockAdminSession(), createDb(env.DB));
+    expect(result.tables.length).toBeGreaterThan(0);
+    const userTable = result.tables.find(t => t.name === 'user');
     expect(userTable).toBeDefined();
     expect(userTable!.rowCount).toBeGreaterThanOrEqual(1);
   });
 });
 
-describe('GET /api/admin/database/tables/:tableName/schema', () => {
-  it('returns 400 for non-whitelisted table', async () => {
-    await asAdmin();
-    const res = await tableSchema({
-      request: new Request('http://localhost/api/admin/database/tables/sqlite_master/schema'),
-      params: { tableName: 'sqlite_master' },
-    });
-    expect(res.status).toBe(400);
+describe('getAdminTableSchema', () => {
+  it('throws 400 for non-whitelisted table', () => {
+    try {
+      getAdminTableSchema(mockAdminSession(), 'sqlite_master');
+      expect.unreachable('should have thrown');
+    } catch (err) {
+      expect((err as Response).status).toBe(400);
+    }
   });
 
-  it('returns column metadata for user table', async () => {
-    await asAdmin();
-    const res = await tableSchema({
-      request: new Request('http://localhost/api/admin/database/tables/user/schema'),
-      params: { tableName: 'user' },
-    });
-    expect(res.status).toBe(200);
-    const body = (await res.json()) as {
-      tableName: string;
-      columns: { name: string; type: string }[];
-    };
-    expect(body.tableName).toBe('user');
-    expect(body.columns.length).toBeGreaterThan(0);
-    const idCol = body.columns.find(c => c.name === 'id');
+  it('returns column metadata for user table', () => {
+    const result = getAdminTableSchema(mockAdminSession(), 'user');
+    expect(result.tableName).toBe('user');
+    expect(result.columns.length).toBeGreaterThan(0);
+    const idCol = result.columns.find(c => c.name === 'id');
     expect(idCol).toBeDefined();
   });
 
-  it('returns column metadata for projects table', async () => {
-    await asAdmin();
-    const res = await tableSchema({
-      request: new Request('http://localhost/api/admin/database/tables/projects/schema'),
-      params: { tableName: 'projects' },
-    });
-    expect(res.status).toBe(200);
-    const body = (await res.json()) as {
-      columns: { name: string; foreignKey?: { table: string } }[];
-    };
-    const orgIdCol = body.columns.find(c => c.name === 'orgId');
+  it('returns column metadata for projects table', () => {
+    const result = getAdminTableSchema(mockAdminSession(), 'projects');
+    const orgIdCol = result.columns.find(c => c.name === 'orgId');
     expect(orgIdCol).toBeDefined();
     expect(orgIdCol?.name).toBe('orgId');
   });
 });
 
-describe('GET /api/admin/database/tables/:tableName/rows', () => {
-  it('returns 400 for non-whitelisted table', async () => {
-    await asAdmin();
-    const res = await tableRows({
-      request: new Request('http://localhost/api/admin/database/tables/sqlite_master/rows'),
-      params: { tableName: 'sqlite_master' },
-      context: { db: createDb(env.DB) },
-    });
-    expect(res.status).toBe(400);
+describe('getAdminTableRows', () => {
+  it('throws 400 for non-whitelisted table', async () => {
+    try {
+      await getAdminTableRows(mockAdminSession(), createDb(env.DB), 'sqlite_master', {});
+      expect.unreachable('should have thrown');
+    } catch (err) {
+      expect((err as Response).status).toBe(400);
+    }
   });
 
   it('returns paginated rows', async () => {
-    await asAdmin();
+    await buildAdminUser();
     await buildUser();
     await buildUser();
-    const res = await tableRows({
-      request: new Request('http://localhost/api/admin/database/tables/user/rows?page=1&limit=2'),
-      params: { tableName: 'user' },
-      context: { db: createDb(env.DB) },
+    const result = await getAdminTableRows(mockAdminSession(), createDb(env.DB), 'user', {
+      page: 1,
+      limit: 2,
     });
-    expect(res.status).toBe(200);
-    const body = (await res.json()) as {
-      tableName: string;
-      rows: unknown[];
-      pagination: { totalRows: number; page: number; limit: number };
-    };
-    expect(body.tableName).toBe('user');
-    expect(body.rows.length).toBeGreaterThan(0);
-    expect(body.pagination.totalRows).toBeGreaterThanOrEqual(2);
-    expect(body.pagination.limit).toBe(2);
+    expect(result.tableName).toBe('user');
+    expect(result.rows.length).toBeGreaterThan(0);
+    expect(result.pagination.totalRows).toBeGreaterThanOrEqual(2);
+    expect(result.pagination.limit).toBe(2);
   });
 
   it('mediaFiles path joins org/project/user', async () => {
-    const admin = await asAdmin();
+    const admin = await buildAdminUser();
     const { project, org } = await buildProject();
     await seedMediaFile({
       id: 'mf-rows-1',
@@ -143,45 +112,30 @@ describe('GET /api/admin/database/tables/:tableName/rows', () => {
       createdAt: Math.floor(Date.now() / 1000),
     });
 
-    const res = await tableRows({
-      request: new Request(
-        `http://localhost/api/admin/database/tables/mediaFiles/rows?filterBy=orgId&filterValue=${org.id}`,
-      ),
-      params: { tableName: 'mediaFiles' },
-      context: { db: createDb(env.DB) },
+    const result = await getAdminTableRows(mockAdminSession(), createDb(env.DB), 'mediaFiles', {
+      filterBy: 'orgId',
+      filterValue: org.id,
     });
-    expect(res.status).toBe(200);
-    const body = (await res.json()) as {
-      rows: { orgName: string | null; projectName: string | null }[];
-      pagination: { totalRows: number };
-    };
-    expect(body.pagination.totalRows).toBe(1);
-    expect(body.rows[0].orgName).toBe(org.name);
-    expect(body.rows[0].projectName).toBe(project.name);
+    expect(result.pagination.totalRows).toBe(1);
+    const rows = result.rows as Array<{ orgName: string | null; projectName: string | null }>;
+    expect(rows[0].orgName).toBe(org.name);
+    expect(rows[0].projectName).toBe(project.name);
   });
 
   it('mediaFiles orgSlug filter returns empty rows when slug missing', async () => {
-    await asAdmin();
-    const res = await tableRows({
-      request: new Request(
-        'http://localhost/api/admin/database/tables/mediaFiles/rows?filterBy=orgSlug&filterValue=nonexistent',
-      ),
-      params: { tableName: 'mediaFiles' },
-      context: { db: createDb(env.DB) },
+    await buildAdminUser();
+    const result = await getAdminTableRows(mockAdminSession(), createDb(env.DB), 'mediaFiles', {
+      filterBy: 'orgSlug',
+      filterValue: 'nonexistent',
     });
-    expect(res.status).toBe(200);
-    const body = (await res.json()) as {
-      rows: unknown[];
-      pagination: { totalRows: number };
-    };
-    expect(body.rows.length).toBe(0);
-    expect(body.pagination.totalRows).toBe(0);
+    expect(result.rows.length).toBe(0);
+    expect(result.pagination.totalRows).toBe(0);
   });
 });
 
-describe('GET /api/admin/database/analytics/*', () => {
+describe('analytics', () => {
   it('pdfs-by-org returns count + total bytes per org', async () => {
-    const admin = await asAdmin();
+    const admin = await buildAdminUser();
     const { project, org } = await buildProject();
     await seedMediaFile({
       id: 'mf-an-1',
@@ -206,18 +160,14 @@ describe('GET /api/admin/database/analytics/*', () => {
       createdAt: Math.floor(Date.now() / 1000),
     });
 
-    const res = await pdfsByOrg({ context: { db: createDb(env.DB) } });
-    expect(res.status).toBe(200);
-    const body = (await res.json()) as {
-      analytics: { orgId: string; pdfCount: number; totalStorage: number }[];
-    };
-    const found = body.analytics.find(a => a.orgId === org.id);
+    const result = await getAdminPdfsByOrg(mockAdminSession(), createDb(env.DB));
+    const found = result.analytics.find(a => a.orgId === org.id);
     expect(found?.pdfCount).toBe(2);
     expect(found?.totalStorage).toBe(3500);
   });
 
   it('pdfs-by-user filters out null uploaders', async () => {
-    const admin = await asAdmin();
+    const admin = await buildAdminUser();
     const { project, org } = await buildProject();
     await seedMediaFile({
       id: 'mf-an-u',
@@ -230,17 +180,13 @@ describe('GET /api/admin/database/analytics/*', () => {
       createdAt: Math.floor(Date.now() / 1000),
     });
 
-    const res = await pdfsByUser({ context: { db: createDb(env.DB) } });
-    expect(res.status).toBe(200);
-    const body = (await res.json()) as {
-      analytics: { userId: string; pdfCount: number }[];
-    };
-    expect(body.analytics.length).toBeGreaterThanOrEqual(1);
-    body.analytics.forEach(a => expect(a.userId).toBeDefined());
+    const result = await getAdminPdfsByUser(mockAdminSession(), createDb(env.DB));
+    expect(result.analytics.length).toBeGreaterThanOrEqual(1);
+    result.analytics.forEach(a => expect(a.userId).toBeDefined());
   });
 
   it('pdfs-by-project groups counts by project', async () => {
-    const admin = await asAdmin();
+    const admin = await buildAdminUser();
     const { project, org } = await buildProject();
     await seedMediaFile({
       id: 'mf-an-p',
@@ -253,18 +199,14 @@ describe('GET /api/admin/database/analytics/*', () => {
       createdAt: Math.floor(Date.now() / 1000),
     });
 
-    const res = await pdfsByProject({ context: { db: createDb(env.DB) } });
-    expect(res.status).toBe(200);
-    const body = (await res.json()) as {
-      analytics: { projectId: string; orgId: string; pdfCount: number }[];
-    };
-    const found = body.analytics.find(a => a.projectId === project.id);
+    const result = await getAdminPdfsByProject(mockAdminSession(), createDb(env.DB));
+    const found = result.analytics.find(a => a.projectId === project.id);
     expect(found?.pdfCount).toBe(1);
     expect(found?.orgId).toBe(org.id);
   });
 
   it('recent-uploads returns newest first with org/project/user join', async () => {
-    const admin = await asAdmin();
+    const admin = await buildAdminUser();
     const { project, org } = await buildProject();
     const base = Math.floor(Date.now() / 1000);
     await seedMediaFile({
@@ -288,22 +230,10 @@ describe('GET /api/admin/database/analytics/*', () => {
       createdAt: base,
     });
 
-    const res = await recentUploads({
-      request: new Request('http://localhost/api/admin/database/analytics/recent-uploads?limit=10'),
-      context: { db: createDb(env.DB) },
-    });
-    expect(res.status).toBe(200);
-    const body = (await res.json()) as {
-      uploads: {
-        filename: string;
-        org: { id: string };
-        project: { id: string };
-        uploadedBy: { id: string } | null;
-      }[];
-    };
-    const filenames = body.uploads.map(u => u.filename);
+    const result = await getAdminRecentUploads(mockAdminSession(), createDb(env.DB), { limit: 10 });
+    const filenames = result.uploads.map(u => u.filename);
     expect(filenames.indexOf('new.pdf')).toBeLessThan(filenames.indexOf('old.pdf'));
-    const newUpload = body.uploads.find(u => u.filename === 'new.pdf')!;
+    const newUpload = result.uploads.find(u => u.filename === 'new.pdf')!;
     expect(newUpload.org.id).toBe(org.id);
     expect(newUpload.project.id).toBe(project.id);
     expect(newUpload.uploadedBy?.id).toBe(admin.id);

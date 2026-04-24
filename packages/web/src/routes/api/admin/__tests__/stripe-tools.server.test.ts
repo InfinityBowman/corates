@@ -1,22 +1,21 @@
+/**
+ * Admin Stripe tools tests.
+ *
+ * Tests invoke the pure business logic functions in admin-stripe.server.ts.
+ */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { env } from 'cloudflare:test';
 import { createDb } from '@corates/db/client';
 import { resetTestDatabase, seedSubscription } from '@/__tests__/server/helpers';
-import { buildAdminUser, buildOrg, resetCounter } from '@/__tests__/server/factories';
-import { handleGet as customerLookup } from '../stripe/customer';
-import { handlePost as portalLink } from '../stripe/portal-link';
-import { handleGet as customerInvoices } from '../stripe/customer/$customerId/invoices';
-import { handleGet as customerPaymentMethods } from '../stripe/customer/$customerId/payment-methods';
-import { handleGet as customerSubscriptions } from '../stripe/customer/$customerId/subscriptions';
-
-let sessionResult: {
-  user: { id: string; email: string; name: string; role?: string };
-  session: { id: string; userId: string; activeOrganizationId: string | null };
-} | null = null;
-
-vi.mock('@corates/workers/auth', () => ({
-  getSession: async () => sessionResult,
-}));
+import { buildOrg, resetCounter } from '@/__tests__/server/factories';
+import type { Session } from '@/server/middleware/auth';
+import {
+  lookupAdminStripeCustomer,
+  createAdminStripePortalLink,
+  getAdminStripeCustomerInvoices,
+  getAdminStripeCustomerPaymentMethods,
+  getAdminStripeCustomerSubscriptions,
+} from '@/server/functions/admin-stripe.server';
 
 const customersRetrieveMock = vi.fn();
 const customersListMock = vi.fn();
@@ -44,69 +43,53 @@ beforeEach(async () => {
   await resetTestDatabase();
   vi.clearAllMocks();
   resetCounter();
-  sessionResult = null;
 });
 
-async function asAdmin() {
-  const admin = await buildAdminUser();
-  sessionResult = {
-    user: { id: admin.id, email: admin.email, name: admin.name, role: 'admin' },
-    session: { id: 'admin-sess', userId: admin.id, activeOrganizationId: null },
-  };
-  return admin;
+function mockAdminSession(): Session {
+  return {
+    user: { id: 'admin-id', email: 'admin@example.com', name: 'Admin', role: 'admin' },
+    session: { id: 'admin-sess', userId: 'admin-id' },
+  } as Session;
 }
 
-describe('GET /api/admin/stripe/customer', () => {
-  it('returns 400 when neither email nor customerId provided', async () => {
-    await asAdmin();
-    const res = await customerLookup({
-      request: new Request('http://localhost/api/admin/stripe/customer'),
-      context: { db: createDb(env.DB) },
-    });
-    expect(res.status).toBe(400);
+describe('lookupAdminStripeCustomer', () => {
+  it('throws 400 when neither email nor customerId provided', async () => {
+    try {
+      await lookupAdminStripeCustomer(mockAdminSession(), createDb(env.DB), {});
+      expect.unreachable('should have thrown');
+    } catch (err) {
+      expect((err as Response).status).toBe(400);
+    }
   });
 
   it('returns found:false for deleted customer', async () => {
-    await asAdmin();
     customersRetrieveMock.mockResolvedValueOnce({ id: 'cus_x', deleted: true });
-    const res = await customerLookup({
-      request: new Request('http://localhost/api/admin/stripe/customer?customerId=cus_x'),
-      context: { db: createDb(env.DB) },
+    const result = await lookupAdminStripeCustomer(mockAdminSession(), createDb(env.DB), {
+      customerId: 'cus_x',
     });
-    expect(res.status).toBe(200);
-    const body = (await res.json()) as { found: boolean; message: string };
-    expect(body.found).toBe(false);
-    expect(body.message).toMatch(/deleted/i);
+    expect(result.found).toBe(false);
+    expect(result.message).toMatch(/deleted/i);
   });
 
   it('returns found:false for missing customer id', async () => {
-    await asAdmin();
     customersRetrieveMock.mockRejectedValueOnce(
       Object.assign(new Error('not found'), { code: 'resource_missing' }),
     );
-    const res = await customerLookup({
-      request: new Request('http://localhost/api/admin/stripe/customer?customerId=cus_missing'),
-      context: { db: createDb(env.DB) },
+    const result = await lookupAdminStripeCustomer(mockAdminSession(), createDb(env.DB), {
+      customerId: 'cus_missing',
     });
-    expect(res.status).toBe(200);
-    const body = (await res.json()) as { found: boolean };
-    expect(body.found).toBe(false);
+    expect(result.found).toBe(false);
   });
 
   it('returns found:false when email has no Stripe match', async () => {
-    await asAdmin();
     customersListMock.mockResolvedValueOnce({ data: [] });
-    const res = await customerLookup({
-      request: new Request('http://localhost/api/admin/stripe/customer?email=nobody@example.com'),
-      context: { db: createDb(env.DB) },
+    const result = await lookupAdminStripeCustomer(mockAdminSession(), createDb(env.DB), {
+      email: 'nobody@example.com',
     });
-    expect(res.status).toBe(200);
-    const body = (await res.json()) as { found: boolean };
-    expect(body.found).toBe(false);
+    expect(result.found).toBe(false);
   });
 
   it('returns customer with linked org from subscription table', async () => {
-    await asAdmin();
     const { org } = await buildOrg();
     await seedSubscription({
       id: 'sub-link',
@@ -133,55 +116,30 @@ describe('GET /api/admin/stripe/customer', () => {
       livemode: false,
     });
 
-    const res = await customerLookup({
-      request: new Request('http://localhost/api/admin/stripe/customer?customerId=cus_linked'),
-      context: { db: createDb(env.DB) },
+    const result = await lookupAdminStripeCustomer(mockAdminSession(), createDb(env.DB), {
+      customerId: 'cus_linked',
     });
-    expect(res.status).toBe(200);
-    const body = (await res.json()) as {
-      found: boolean;
-      customer: { id: string };
-      linkedOrg: { id: string } | null;
-      stripeDashboardUrl: string;
-    };
-    expect(body.found).toBe(true);
-    expect(body.customer.id).toBe('cus_linked');
-    expect(body.linkedOrg?.id).toBe(org.id);
-    expect(body.stripeDashboardUrl).toContain('cus_linked');
+    expect(result.found).toBe(true);
+    if (result.found) {
+      expect(result.customer.id).toBe('cus_linked');
+      expect(result.linkedOrg?.id).toBe(org.id);
+      expect(result.stripeDashboardUrl).toContain('cus_linked');
+    }
   });
 });
 
-describe('POST /api/admin/stripe/portal-link', () => {
-  it('returns 400 when customerId missing', async () => {
-    await asAdmin();
-    const res = await portalLink({
-      request: new Request('http://localhost/api/admin/stripe/portal-link', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', origin: 'http://localhost:3010' },
-        body: JSON.stringify({}),
-      }),
-    });
-    expect(res.status).toBe(400);
-  });
-
+describe('createAdminStripePortalLink', () => {
   it('creates a portal session and returns URL', async () => {
-    await asAdmin();
     portalSessionsCreateMock.mockResolvedValueOnce({
       url: 'https://billing.stripe.com/sess_admin',
       created: 1700000000,
     });
-    const res = await portalLink({
-      request: new Request('http://localhost/api/admin/stripe/portal-link', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', origin: 'http://localhost:3010' },
-        body: JSON.stringify({ customerId: 'cus_admin' }),
-      }),
+    const result = await createAdminStripePortalLink(mockAdminSession(), {
+      customerId: 'cus_admin',
     });
-    expect(res.status).toBe(200);
-    const body = (await res.json()) as { url: string; success: boolean; expiresAt: number };
-    expect(body.success).toBe(true);
-    expect(body.url).toBe('https://billing.stripe.com/sess_admin');
-    expect(body.expiresAt).toBe(1700000000 + 300);
+    expect(result.success).toBe(true);
+    expect(result.url).toBe('https://billing.stripe.com/sess_admin');
+    expect(result.expiresAt).toBe(1700000000 + 300);
     expect(portalSessionsCreateMock).toHaveBeenCalledWith({
       customer: 'cus_admin',
       return_url: expect.any(String),
@@ -189,9 +147,8 @@ describe('POST /api/admin/stripe/portal-link', () => {
   });
 });
 
-describe('GET /api/admin/stripe/customer/:customerId/invoices', () => {
+describe('getAdminStripeCustomerInvoices', () => {
   it('returns invoice list mapped to API shape', async () => {
-    await asAdmin();
     invoicesListMock.mockResolvedValueOnce({
       data: [
         {
@@ -216,38 +173,27 @@ describe('GET /api/admin/stripe/customer/:customerId/invoices', () => {
       ],
       has_more: false,
     });
-    const res = await customerInvoices({
-      request: new Request('http://localhost/api/admin/stripe/customer/cus_x/invoices?limit=5'),
-      params: { customerId: 'cus_x' },
+    const result = await getAdminStripeCustomerInvoices(mockAdminSession(), {
+      customerId: 'cus_x',
+      limit: 5,
     });
-    expect(res.status).toBe(200);
-    const body = (await res.json()) as {
-      customerId: string;
-      invoices: { id: string; subscriptionId: string | null }[];
-      hasMore: boolean;
-    };
-    expect(body.customerId).toBe('cus_x');
-    expect(body.invoices.length).toBe(1);
-    expect(body.invoices[0].id).toBe('in_1');
-    expect(body.invoices[0].subscriptionId).toBe('sub_1');
-    expect(body.hasMore).toBe(false);
+    expect(result.customerId).toBe('cus_x');
+    expect(result.invoices.length).toBe(1);
+    expect(result.invoices[0].id).toBe('in_1');
+    expect(result.invoices[0].subscriptionId).toBe('sub_1');
+    expect(result.hasMore).toBe(false);
     expect(invoicesListMock).toHaveBeenCalledWith({ customer: 'cus_x', limit: 5 });
   });
 
   it('caps limit at 50', async () => {
-    await asAdmin();
     invoicesListMock.mockResolvedValueOnce({ data: [], has_more: false });
-    await customerInvoices({
-      request: new Request('http://localhost/api/admin/stripe/customer/cus_x/invoices?limit=999'),
-      params: { customerId: 'cus_x' },
-    });
+    await getAdminStripeCustomerInvoices(mockAdminSession(), { customerId: 'cus_x', limit: 999 });
     expect(invoicesListMock).toHaveBeenCalledWith({ customer: 'cus_x', limit: 50 });
   });
 });
 
-describe('GET /api/admin/stripe/customer/:customerId/payment-methods', () => {
+describe('getAdminStripeCustomerPaymentMethods', () => {
   it('returns mapped card payment methods', async () => {
-    await asAdmin();
     paymentMethodsListMock.mockResolvedValueOnce({
       data: [
         {
@@ -265,22 +211,16 @@ describe('GET /api/admin/stripe/customer/:customerId/payment-methods', () => {
         },
       ],
     });
-    const res = await customerPaymentMethods({
-      request: new Request('http://localhost/api/admin/stripe/customer/cus_x/payment-methods'),
-      params: { customerId: 'cus_x' },
+    const result = await getAdminStripeCustomerPaymentMethods(mockAdminSession(), {
+      customerId: 'cus_x',
     });
-    expect(res.status).toBe(200);
-    const body = (await res.json()) as {
-      paymentMethods: { id: string; card: { last4: string } | null }[];
-    };
-    expect(body.paymentMethods.length).toBe(1);
-    expect(body.paymentMethods[0].card?.last4).toBe('4242');
+    expect(result.paymentMethods.length).toBe(1);
+    expect(result.paymentMethods[0].card?.last4).toBe('4242');
   });
 });
 
-describe('GET /api/admin/stripe/customer/:customerId/subscriptions', () => {
+describe('getAdminStripeCustomerSubscriptions', () => {
   it('returns mapped subscription list', async () => {
-    await asAdmin();
     subscriptionsListMock.mockResolvedValueOnce({
       data: [
         {
@@ -317,16 +257,11 @@ describe('GET /api/admin/stripe/customer/:customerId/subscriptions', () => {
       ],
       has_more: false,
     });
-    const res = await customerSubscriptions({
-      request: new Request('http://localhost/api/admin/stripe/customer/cus_x/subscriptions'),
-      params: { customerId: 'cus_x' },
+    const result = await getAdminStripeCustomerSubscriptions(mockAdminSession(), {
+      customerId: 'cus_x',
     });
-    expect(res.status).toBe(200);
-    const body = (await res.json()) as {
-      subscriptions: { id: string; items: { priceId: string }[] }[];
-    };
-    expect(body.subscriptions.length).toBe(1);
-    expect(body.subscriptions[0].items[0].priceId).toBe('price_1');
+    expect(result.subscriptions.length).toBe(1);
+    expect(result.subscriptions[0].items[0].priceId).toBe('price_1');
     expect(subscriptionsListMock).toHaveBeenCalledWith({
       customer: 'cus_x',
       status: 'all',

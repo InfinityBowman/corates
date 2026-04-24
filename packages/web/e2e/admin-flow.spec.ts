@@ -116,11 +116,4 @@ test('Admin dashboard, user detail (loader pilot), and access control', async ({
 
   // Admin layout redirects non-admins to /dashboard
   await expect(page).toHaveURL(/\/dashboard/, { timeout: 15_000 });
-
-  // API layer also blocks non-admin requests
-  const res = await page.evaluate(async () => {
-    const response = await fetch('/api/admin/billing/ledger', { credentials: 'include' });
-    return { status: response.status };
-  });
-  expect(res.status).toBe(403);
 });

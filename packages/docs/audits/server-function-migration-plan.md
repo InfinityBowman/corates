@@ -188,28 +188,30 @@ Tests: `projects.server.test.ts`, `stats.server.test.ts` (rewritten). `projects-
 
 Note: `AnalyticsSection.tsx` updated -- 6 inline fetch queries replaced with server function actions. `session` schema table aliased as `sessionTable` in admin-stats.server.ts to avoid naming conflict with Session parameter.
 
-## Batch 12: Admin Billing + Stripe + Database + Storage (16 routes)
+## Batch 12: Admin Billing + Stripe + Database + Storage (16 routes) -- DONE
 
-New files: `admin/billing.server.ts`, `admin/billing.functions.ts`, `admin/database.server.ts`, `admin/database.functions.ts`
+New files: `admin-billing.server.ts`, `admin-billing.functions.ts`, `admin-stripe.server.ts`, `admin-stripe.functions.ts`, `admin-database.server.ts`, `admin-database.functions.ts`, `admin-storage.server.ts`, `admin-storage.functions.ts`
 
-- [ ] `admin/billing/ledger.ts` (GET - Stripe event ledger)
-- [ ] `admin/billing/stuck-states.ts` (GET - stuck billing states)
-- [ ] `admin/stripe/customer.ts` (GET - Stripe customer details)
-- [ ] `admin/stripe/portal-link.ts` (POST - create portal link)
-- [ ] `admin/stripe/customer/$customerId/invoices.ts` (GET - customer invoices)
-- [ ] `admin/stripe/customer/$customerId/payment-methods.ts` (GET - payment methods)
-- [ ] `admin/stripe/customer/$customerId/subscriptions.ts` (GET - subscriptions)
-- [ ] `admin/database/tables.ts` (GET - list tables)
-- [ ] `admin/database/tables/$tableName/schema.ts` (GET - table schema)
-- [ ] `admin/database/tables/$tableName/rows.ts` (GET - table rows)
-- [ ] `admin/database/analytics/pdfs-by-org.ts` (GET - PDF usage by org)
-- [ ] `admin/database/analytics/pdfs-by-project.ts` (GET - PDF usage by project)
-- [ ] `admin/database/analytics/pdfs-by-user.ts` (GET - PDF usage by user)
-- [ ] `admin/database/analytics/recent-uploads.ts` (GET - recent uploads)
-- [ ] `admin/storage/stats.ts` (GET - storage stats)
-- [ ] `admin/storage/documents.ts` (GET - list documents)
+- [x] `admin/billing/ledger.ts` (GET - Stripe event ledger)
+- [x] `admin/billing/stuck-states.ts` (GET - stuck billing states)
+- [x] `admin/stripe/customer.ts` (GET - Stripe customer details)
+- [x] `admin/stripe/portal-link.ts` (POST - create portal link)
+- [x] `admin/stripe/customer/$customerId/invoices.ts` (GET - customer invoices)
+- [x] `admin/stripe/customer/$customerId/payment-methods.ts` (GET - payment methods)
+- [x] `admin/stripe/customer/$customerId/subscriptions.ts` (GET - subscriptions)
+- [x] `admin/database/tables.ts` (GET - list tables)
+- [x] `admin/database/tables/$tableName/schema.ts` (GET - table schema)
+- [x] `admin/database/tables/$tableName/rows.ts` (GET - table rows)
+- [x] `admin/database/analytics/pdfs-by-org.ts` (GET - PDF usage by org)
+- [x] `admin/database/analytics/pdfs-by-project.ts` (GET - PDF usage by project)
+- [x] `admin/database/analytics/pdfs-by-user.ts` (GET - PDF usage by user)
+- [x] `admin/database/analytics/recent-uploads.ts` (GET - recent uploads)
+- [x] `admin/storage/stats.ts` (GET - storage stats)
+- [x] `admin/storage/documents.ts` (GET/DELETE - list/delete documents)
 
-Tests: `billing-observability.server.test.ts`, `stripe-tools.server.test.ts`, `database.server.test.ts`, `storage.server.test.ts`
+Tests: `billing-observability.server.test.ts` (rewritten), `stripe-tools.server.test.ts` (rewritten), `database.server.test.ts` (rewritten), `storage.server.test.ts` (rewritten)
+
+Note: 8 new files (4 `.server.ts` + 4 `.functions.ts`). `billing.stripe-tools.tsx` updated -- 5 inline fetch calls replaced with server function actions. `admin-flow.spec.ts` -- removed admin API fetch test since all admin HTTP routes are now deleted; non-admin redirect test retained. `fetchBillingLedger`/`fetchBillingStuckStates` removed from `adminStore.ts`.
 
 ---
 
@@ -229,5 +231,5 @@ Tests: `billing-observability.server.test.ts`, `stripe-tools.server.test.ts`, `d
 | Batch 9: Admin Users                   | 8                                      | Done         |
 | Batch 10: Admin Orgs                   | 10                                     | Done         |
 | Batch 11: Admin Projects + Stats       | 11                                     | Done         |
-| Batch 12: Admin Billing + DB + Storage | 16                                     | Pending      |
+| Batch 12: Admin Billing + DB + Storage | 16                                     | Done         |
 | **Total migratable**                   | **~85**                                |              |

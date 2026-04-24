@@ -33,6 +33,9 @@ import {
   removeAdminProjectMemberAction,
   deleteAdminProjectAction,
 } from '@/server/functions/admin-projects.functions';
+import {
+  deleteAdminStorageDocumentsAction,
+} from '@/server/functions/admin-storage.functions';
 
 interface SessionResponse {
   user?: { role?: string; [key: string]: unknown };
@@ -131,15 +134,7 @@ export async function deleteStorageDocuments(keys: string[]) {
   if (!Array.isArray(keys) || keys.length === 0) {
     throw new Error('Keys array is required');
   }
-  const res = await fetch('/api/admin/storage/documents', {
-    method: 'DELETE',
-    credentials: 'include',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ keys }),
-  });
-  const data = (await res.json()) as Record<string, unknown>;
-  if (!res.ok) throw data;
-  return data;
+  return deleteAdminStorageDocumentsAction({ data: { keys } });
 }
 
 export async function createOrgSubscription(
@@ -206,33 +201,6 @@ export async function grantOrgSingleProject(orgId: string) {
   queryClient.invalidateQueries({ queryKey: queryKeys.admin.orgDetails(orgId) });
   queryClient.invalidateQueries({ queryKey: queryKeys.admin.orgBilling(orgId) });
   return result;
-}
-
-export async function fetchBillingLedger(
-  { limit = 50, status, type } = {} as { limit?: number; status?: string; type?: string },
-) {
-  const params = new URLSearchParams({ limit: limit.toString() });
-  if (status) params.set('status', status);
-  if (type) params.set('type', type);
-  const res = await fetch(`/api/admin/billing/ledger?${params.toString()}`, {
-    credentials: 'include',
-  });
-  const data = (await res.json()) as Record<string, unknown>;
-  if (!res.ok) throw data;
-  return data;
-}
-
-export async function fetchBillingStuckStates({ incompleteThreshold = 30, limit = 50 } = {}) {
-  const params = new URLSearchParams({
-    incompleteThreshold: incompleteThreshold.toString(),
-    limit: limit.toString(),
-  });
-  const res = await fetch(`/api/admin/billing/stuck-states?${params.toString()}`, {
-    credentials: 'include',
-  });
-  const data = (await res.json()) as Record<string, unknown>;
-  if (!res.ok) throw data;
-  return data;
 }
 
 export async function fetchOrgBillingReconcile(

@@ -5,11 +5,7 @@
 
 import { useQuery, queryOptions } from '@tanstack/react-query';
 import { queryKeys } from '@/lib/queryKeys';
-import {
-  fetchBillingLedger,
-  fetchBillingStuckStates,
-  fetchOrgBillingReconcile,
-} from '@/stores/adminStore';
+import { fetchOrgBillingReconcile } from '@/stores/adminStore';
 import {
   getAdminUsersAction,
   getAdminUserDetailsAction,
@@ -25,6 +21,18 @@ import {
   getAdminProjectDocStatsAction,
 } from '@/server/functions/admin-projects.functions';
 import { getAdminStatsAction } from '@/server/functions/admin-stats.functions';
+import {
+  getAdminBillingLedgerAction,
+  getAdminBillingStuckStatesAction,
+} from '@/server/functions/admin-billing.functions';
+import {
+  listAdminStorageDocumentsAction,
+} from '@/server/functions/admin-storage.functions';
+import {
+  listAdminDatabaseTablesAction,
+  getAdminTableSchemaAction,
+  getAdminTableRowsAction,
+} from '@/server/functions/admin-database.functions';
 
 const ADMIN_QUERY_CONFIG = {
   staleTime: 0,
@@ -106,18 +114,15 @@ export function useStorageDocuments(
   const search = params.search ?? '';
   return useQuery({
     queryKey: queryKeys.admin.storageDocuments(cursor, limit, prefix, search),
-    queryFn: async () => {
-      const params = new URLSearchParams({ limit: limit.toString() });
-      if (cursor) params.set('cursor', cursor);
-      if (prefix) params.set('prefix', prefix);
-      if (search) params.set('search', search);
-      const res = await fetch(`/api/admin/storage/documents?${params.toString()}`, {
-        credentials: 'include',
-      });
-      const data = (await res.json()) as Record<string, unknown>;
-      if (!res.ok) throw data;
-      return data;
-    },
+    queryFn: () =>
+      listAdminStorageDocumentsAction({
+        data: {
+          ...(cursor ? { cursor } : {}),
+          limit,
+          ...(prefix ? { prefix } : {}),
+          ...(search ? { search } : {}),
+        },
+      }),
     ...ADMIN_QUERY_CONFIG,
   });
 }
@@ -161,7 +166,7 @@ export function useAdminBillingLedger(
   };
   return useQuery({
     queryKey: queryKeys.admin.billingLedger(queryParams),
-    queryFn: () => fetchBillingLedger(queryParams),
+    queryFn: () => getAdminBillingLedgerAction({ data: queryParams }),
     ...ADMIN_QUERY_CONFIG,
   });
 }
@@ -175,7 +180,7 @@ export function useAdminBillingStuckStates(
   };
   return useQuery({
     queryKey: queryKeys.admin.billingStuckStates(queryParams),
-    queryFn: () => fetchBillingStuckStates(queryParams),
+    queryFn: () => getAdminBillingStuckStatesAction({ data: queryParams }),
     ...ADMIN_QUERY_CONFIG,
   });
 }
@@ -206,12 +211,7 @@ export function useAdminOrgBillingReconcile(
 export function useAdminDatabaseTables() {
   return useQuery({
     queryKey: queryKeys.admin.databaseTables,
-    queryFn: async () => {
-      const res = await fetch('/api/admin/database/tables', { credentials: 'include' });
-      const data = (await res.json()) as Record<string, unknown>;
-      if (!res.ok) throw data;
-      return data;
-    },
+    queryFn: () => listAdminDatabaseTablesAction(),
     ...ADMIN_QUERY_CONFIG,
   });
 }
@@ -219,15 +219,7 @@ export function useAdminDatabaseTables() {
 export function useAdminTableSchema(tableName: string | null | undefined) {
   return useQuery({
     queryKey: queryKeys.admin.tableSchema(tableName),
-    queryFn: async () => {
-      const res = await fetch(
-        `/api/admin/database/tables/${encodeURIComponent(tableName!)}/schema`,
-        { credentials: 'include' },
-      );
-      const data = (await res.json()) as Record<string, unknown>;
-      if (!res.ok) throw data;
-      return data;
-    },
+    queryFn: () => getAdminTableSchemaAction({ data: { tableName: tableName! } }),
     enabled: !!tableName,
     staleTime: 1000 * 60 * 10,
     gcTime: 1000 * 60 * 30,
@@ -263,25 +255,17 @@ export function useAdminTableRows(
       filterBy,
       filterValue,
     ),
-    queryFn: async () => {
-      const qs = new URLSearchParams({
-        page: page.toString(),
-        limit: limit.toString(),
-        orderBy,
-        order,
-      });
-      if (filterBy && filterValue) {
-        qs.set('filterBy', filterBy);
-        qs.set('filterValue', filterValue);
-      }
-      const res = await fetch(
-        `/api/admin/database/tables/${encodeURIComponent(tableName!)}/rows?${qs.toString()}`,
-        { credentials: 'include' },
-      );
-      const data = (await res.json()) as Record<string, unknown>;
-      if (!res.ok) throw data;
-      return data;
-    },
+    queryFn: () =>
+      getAdminTableRowsAction({
+        data: {
+          tableName: tableName!,
+          page,
+          limit,
+          orderBy,
+          order,
+          ...(filterBy && filterValue ? { filterBy, filterValue } : {}),
+        },
+      }),
     enabled: !!tableName,
     ...ADMIN_QUERY_CONFIG,
   });

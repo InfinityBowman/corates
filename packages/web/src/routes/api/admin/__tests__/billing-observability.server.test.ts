@@ -1,3 +1,9 @@
+/**
+ * Admin billing observability tests.
+ *
+ * Tests invoke the pure business logic functions in admin-billing.server.ts
+ * and admin-orgs.server.ts (reconcile).
+ */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   resetTestDatabase,
@@ -5,23 +11,16 @@ import {
   seedSubscription,
   seedStripeEventLedger,
 } from '@/__tests__/server/helpers';
-import { buildAdminUser, resetCounter, asOrgId } from '@/__tests__/server/factories';
+import { resetCounter, asOrgId } from '@/__tests__/server/factories';
 import { createDb } from '@corates/db/client';
 import { env } from 'cloudflare:test';
 import type { OrgId } from '@corates/shared/ids';
 import type { Session } from '@/server/middleware/auth';
 import { reconcileAdminOrgBilling } from '@/server/functions/admin-orgs.server';
-import { handleGet as stuckStates } from '../billing/stuck-states';
-import { handleGet as ledger } from '../billing/ledger';
-
-let sessionResult: {
-  user: { id: string; email: string; name: string; role?: string };
-  session: { id: string; userId: string; activeOrganizationId: string | null };
-} | null = null;
-
-vi.mock('@corates/workers/auth', () => ({
-  getSession: async () => sessionResult,
-}));
+import {
+  getAdminBillingLedger,
+  getAdminBillingStuckStates,
+} from '@/server/functions/admin-billing.server';
 
 const stripeRetrieveMock = vi.fn();
 vi.mock('@corates/workers/stripe', () => ({
@@ -34,17 +33,7 @@ beforeEach(async () => {
   await resetTestDatabase();
   vi.clearAllMocks();
   resetCounter();
-  sessionResult = null;
 });
-
-async function asAdmin() {
-  const admin = await buildAdminUser();
-  sessionResult = {
-    user: { id: admin.id, email: admin.email, name: admin.name, role: 'admin' },
-    session: { id: 'admin-sess', userId: admin.id, activeOrganizationId: null },
-  };
-  return admin;
-}
 
 function mockAdminSession(): Session {
   return {
@@ -53,15 +42,7 @@ function mockAdminSession(): Session {
   } as Session;
 }
 
-function ledgerReq(qs = ''): Request {
-  return new Request(`http://localhost/api/admin/billing/ledger${qs}`);
-}
-
-function stuckReq(qs = ''): Request {
-  return new Request(`http://localhost/api/admin/billing/stuck-states${qs}`);
-}
-
-describe('GET /api/admin/orgs/:orgId/billing/reconcile', () => {
+describe('reconcileAdminOrgBilling', () => {
   it('throws 400 for unknown org', async () => {
     try {
       await reconcileAdminOrgBilling(mockAdminSession(), createDb(env.DB), 'nope' as OrgId, {});
@@ -192,9 +173,8 @@ describe('GET /api/admin/orgs/:orgId/billing/reconcile', () => {
   });
 });
 
-describe('GET /api/admin/billing/ledger', () => {
+describe('getAdminBillingLedger', () => {
   it('returns ledger entries with stats', async () => {
-    await asAdmin();
     const nowSec = Math.floor(Date.now() / 1000);
     await seedStripeEventLedger({
       id: 'l1',
@@ -215,21 +195,12 @@ describe('GET /api/admin/billing/ledger', () => {
       type: 'customer.subscription.updated',
     });
 
-    const res = await ledger({
-      request: ledgerReq('?limit=50'),
-      context: { db: createDb(env.DB) },
-    });
-    expect(res.status).toBe(200);
-    const body = (await res.json()) as {
-      stats: { total: number; byStatus: Record<string, number>; byType: Record<string, number> };
-      entries: { status: string }[];
-    };
-    expect(body.stats.total).toBeGreaterThanOrEqual(2);
-    expect(body.entries.length).toBeGreaterThanOrEqual(2);
+    const result = await getAdminBillingLedger(mockAdminSession(), createDb(env.DB), { limit: 50 });
+    expect(result.stats.total).toBeGreaterThanOrEqual(2);
+    expect(result.entries.length).toBeGreaterThanOrEqual(2);
   });
 
   it('filters by status', async () => {
-    await asAdmin();
     const nowSec = Math.floor(Date.now() / 1000);
     await seedStripeEventLedger({
       id: 'lp',
@@ -248,18 +219,15 @@ describe('GET /api/admin/billing/ledger', () => {
       status: 'failed',
     });
 
-    const res = await ledger({
-      request: ledgerReq('?status=failed&limit=50'),
-      context: { db: createDb(env.DB) },
+    const result = await getAdminBillingLedger(mockAdminSession(), createDb(env.DB), {
+      status: 'failed',
+      limit: 50,
     });
-    expect(res.status).toBe(200);
-    const body = (await res.json()) as { entries: { status: string }[] };
-    expect(body.entries.length).toBeGreaterThan(0);
-    body.entries.forEach(e => expect(e.status).toBe('failed'));
+    expect(result.entries.length).toBeGreaterThan(0);
+    result.entries.forEach(e => expect(e.status).toBe('failed'));
   });
 
   it('filters by type', async () => {
-    await asAdmin();
     const nowSec = Math.floor(Date.now() / 1000);
     await seedStripeEventLedger({
       id: 'lc',
@@ -271,20 +239,17 @@ describe('GET /api/admin/billing/ledger', () => {
       type: 'checkout.session.completed',
     });
 
-    const res = await ledger({
-      request: ledgerReq('?type=checkout.session.completed&limit=50'),
-      context: { db: createDb(env.DB) },
+    const result = await getAdminBillingLedger(mockAdminSession(), createDb(env.DB), {
+      type: 'checkout.session.completed',
+      limit: 50,
     });
-    expect(res.status).toBe(200);
-    const body = (await res.json()) as { entries: { type: string | null }[] };
-    expect(body.entries.length).toBeGreaterThan(0);
-    body.entries.forEach(e => expect(e.type).toBe('checkout.session.completed'));
+    expect(result.entries.length).toBeGreaterThan(0);
+    result.entries.forEach(e => expect(e.type).toBe('checkout.session.completed'));
   });
 });
 
-describe('GET /api/admin/billing/stuck-states', () => {
+describe('getAdminBillingStuckStates', () => {
   it('flags incomplete subscriptions older than threshold', async () => {
-    await asAdmin();
     const nowSec = Math.floor(Date.now() / 1000);
     const orgId = asOrgId('org-stuck-1');
     await seedOrganization({ id: orgId, name: 'Stuck', slug: 'stuck', createdAt: nowSec });
@@ -297,19 +262,17 @@ describe('GET /api/admin/billing/stuck-states', () => {
       updatedAt: nowSec - 60 * 60,
     });
 
-    const res = await stuckStates({
-      request: stuckReq('?incompleteThreshold=30'),
-      context: { db: createDb(env.DB) },
+    const result = await getAdminBillingStuckStates(mockAdminSession(), createDb(env.DB), {
+      incompleteThreshold: 30,
     });
-    expect(res.status).toBe(200);
-    const body = (await res.json()) as { stuckOrgs: Record<string, unknown>[] };
-    const found = body.stuckOrgs.find(s => s.subscriptionId === 'sub-stuck');
+    const found = result.stuckOrgs.find(
+      (s: { subscriptionId?: string }) => s.subscriptionId === 'sub-stuck',
+    );
     expect(found).toBeDefined();
     expect(found?.type).toBe('incomplete_subscription');
   });
 
   it('flags orgs with repeated webhook failures', async () => {
-    await asAdmin();
     const nowSec = Math.floor(Date.now() / 1000);
     const orgId = asOrgId('org-stuck-2');
     await seedOrganization({ id: orgId, name: 'Stuck2', slug: 'stuck2', createdAt: nowSec });
@@ -326,10 +289,10 @@ describe('GET /api/admin/billing/stuck-states', () => {
       });
     }
 
-    const res = await stuckStates({ request: stuckReq(), context: { db: createDb(env.DB) } });
-    expect(res.status).toBe(200);
-    const body = (await res.json()) as { stuckOrgs: Record<string, unknown>[] };
-    const found = body.stuckOrgs.find(s => s.type === 'repeated_failures' && s.orgId === orgId);
+    const result = await getAdminBillingStuckStates(mockAdminSession(), createDb(env.DB), {});
+    const found = result.stuckOrgs.find(
+      (s: { type: string; orgId?: string }) => s.type === 'repeated_failures' && s.orgId === orgId,
+    );
     expect(found).toBeDefined();
     expect(found?.failedCount).toBeGreaterThanOrEqual(3);
   });
