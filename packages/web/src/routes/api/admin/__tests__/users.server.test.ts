@@ -1,10 +1,9 @@
 /**
  * Admin /users handler-logic tests.
  *
- * These directly invoke the route handlers with a stand-in admin context.
- * Auth/CSRF/admin-role enforcement is now in `adminMiddleware` and validated
- * once in `projects-self.server.test.ts` via `SELF.fetch`. We intentionally
- * skip per-route 401/403 tests to avoid duplicating that coverage.
+ * Tests invoke the pure business logic functions in admin-users.server.ts.
+ * Auth/CSRF/admin-role enforcement is validated once in `projects-self.server.test.ts`.
+ * Impersonation tests call the server function directly since it returns a Response.
  */
 import { beforeEach, describe, expect, it, vi, type Mock } from 'vitest';
 import { env } from 'cloudflare:test';
@@ -16,21 +15,21 @@ import {
   buildUser,
   resetCounter,
 } from '@/__tests__/server/factories';
-import { createDb, type Database } from '@corates/db/client';
+import { createDb } from '@corates/db/client';
 import { account, session, user } from '@corates/db/schema';
 import { eq } from 'drizzle-orm';
-import type { AdminContext } from '@/server/middleware/admin';
+import type { Session } from '@/server/middleware/auth';
 import { handleGet as statsHandler } from '../stats';
-import { handleGet as listUsersHandler } from '../users';
 import {
-  handleGet as userDetailsHandler,
-  handleDelete as deleteUserHandler,
-} from '../users/$userId';
-import { handlePost as banHandler } from '../users/$userId/ban';
-import { handlePost as unbanHandler } from '../users/$userId/unban';
-import { handlePost as impersonateHandler } from '../users/$userId/impersonate';
-import { handleDelete as revokeAllSessionsHandler } from '../users/$userId/sessions';
-import { handleDelete as revokeSessionHandler } from '../users/$userId/sessions/$sessionId';
+  listAdminUsers,
+  getAdminUserDetails,
+  deleteAdminUser,
+  banAdminUser,
+  unbanAdminUser,
+  revokeAllAdminSessions,
+  revokeAdminSession,
+  impersonateAdminUser,
+} from '@/server/functions/admin-users.server';
 
 const { mockSyncMemberToDO, mockAuthHandler } = vi.hoisted(() => ({
   mockSyncMemberToDO: vi.fn(async () => {}),
@@ -54,16 +53,19 @@ beforeEach(async () => {
   );
 });
 
-function adminCtx(adminUserId = 'admin-id'): { admin: AdminContext; db: Database } {
+function mockAdminSession(overrides?: { userId?: string }): Session {
   return {
-    admin: {
-      userId: adminUserId,
-      userEmail: 'admin@example.com',
-      userName: 'Admin',
-      sessionId: 'admin-sess',
+    user: {
+      id: overrides?.userId ?? 'admin-id',
+      email: 'admin@example.com',
+      name: 'Admin',
+      role: 'admin',
     },
-    db: createDb(env.DB),
-  };
+    session: {
+      id: 'admin-sess',
+      userId: overrides?.userId ?? 'admin-id',
+    },
+  } as Session;
 }
 
 async function seedSessionRow(id: string, userId: string, opts: Partial<{ ip: string }> = {}) {
@@ -130,15 +132,10 @@ describe('GET /api/admin/users', () => {
     await seedAccountRow('a-2', u1.id, 'github');
     await seedAccountRow('a-3', admin.id, 'credential');
 
-    const res = await listUsersHandler({
-      request: new Request('http://localhost/api/admin/users?page=1&limit=10'),
-      context: { db: createDb(env.DB) },
+    const body = await listAdminUsers(mockAdminSession({ userId: admin.id }), createDb(env.DB), {
+      page: 1,
+      limit: 10,
     });
-    expect(res.status).toBe(200);
-    const body = (await res.json()) as {
-      users: { id: string; providers: string[] }[];
-      pagination: { page: number; limit: number; total: number; totalPages: number };
-    };
     expect(body.pagination.total).toBeGreaterThanOrEqual(3);
     expect(body.pagination.page).toBe(1);
     expect(body.pagination.limit).toBe(10);
@@ -151,12 +148,9 @@ describe('GET /api/admin/users', () => {
     const u = await buildUser({ email: 'searchable.user@example.com', name: 'Searchy' });
     await buildUser({ email: 'other@example.com' });
 
-    const res = await listUsersHandler({
-      request: new Request('http://localhost/api/admin/users?search=SEARCHABLE'),
-      context: { db: createDb(env.DB) },
+    const body = await listAdminUsers(mockAdminSession(), createDb(env.DB), {
+      search: 'SEARCHABLE',
     });
-    expect(res.status).toBe(200);
-    const body = (await res.json()) as { users: { id: string }[]; pagination: { total: number } };
     expect(body.pagination.total).toBe(1);
     expect(body.users[0].id).toBe(u.id);
   });
@@ -165,12 +159,12 @@ describe('GET /api/admin/users', () => {
 describe('GET /api/admin/users/:userId', () => {
   it('returns 404 when user does not exist', async () => {
     const admin = await buildAdminUser();
-    const res = await userDetailsHandler({
-      request: new Request('http://localhost/api/admin/users/missing'),
-      params: { userId: 'missing' },
-      context: adminCtx(admin.id),
-    });
-    expect(res.status).toBe(404);
+    try {
+      await getAdminUserDetails(mockAdminSession({ userId: admin.id }), createDb(env.DB), 'missing');
+      expect.unreachable('should have thrown');
+    } catch (err) {
+      expect((err as Response).status).toBe(404);
+    }
   });
 
   it('returns full details with projects/sessions/accounts/orgs+billing', async () => {
@@ -179,22 +173,11 @@ describe('GET /api/admin/users/:userId', () => {
     await seedSessionRow('s-detail', owner.id, { ip: '1.2.3.4' });
     await seedAccountRow('a-detail', owner.id, 'google');
 
-    const res = await userDetailsHandler({
-      request: new Request(`http://localhost/api/admin/users/${owner.id}`),
-      params: { userId: owner.id },
-      context: adminCtx(admin.id),
-    });
-    expect(res.status).toBe(200);
-    const body = (await res.json()) as {
-      user: { id: string; email: string };
-      projects: { id: string }[];
-      sessions: { id: string; ipAddress: string | null }[];
-      accounts: { providerId: string }[];
-      orgs: {
-        orgId: string;
-        billing: { effectivePlanId: string; source: string; planName: string };
-      }[];
-    };
+    const body = await getAdminUserDetails(
+      mockAdminSession({ userId: admin.id }),
+      createDb(env.DB),
+      owner.id,
+    );
     expect(body.user.id).toBe(owner.id);
     expect(body.projects.find(p => p.id === project.id)).toBeDefined();
     expect(body.sessions.find(s => s.id === 's-detail')?.ipAddress).toBe('1.2.3.4');
@@ -209,17 +192,15 @@ describe('GET /api/admin/users/:userId', () => {
 describe('POST /api/admin/users/:userId/ban', () => {
   it('rejects self-ban with 400', async () => {
     const admin = await buildAdminUser();
-    const res = await banHandler({
-      request: new Request(`http://localhost/api/admin/users/${admin.id}/ban`, {
-        method: 'POST',
-        headers: { origin: 'http://localhost:3010' },
-      }),
-      params: { userId: admin.id },
-      context: adminCtx(admin.id),
-    });
-    expect(res.status).toBe(400);
-    const body = (await res.json()) as { details?: { constraint?: string } };
-    expect(body.details?.constraint).toBe('cannot_ban_self');
+    try {
+      await banAdminUser(mockAdminSession({ userId: admin.id }), createDb(env.DB), admin.id, {});
+      expect.unreachable('should have thrown');
+    } catch (err) {
+      const res = err as Response;
+      expect(res.status).toBe(400);
+      const body = (await res.json()) as { details?: { constraint?: string } };
+      expect(body.details?.constraint).toBe('cannot_ban_self');
+    }
   });
 
   it('bans the user and revokes their sessions', async () => {
@@ -229,16 +210,10 @@ describe('POST /api/admin/users/:userId/ban', () => {
     await seedSessionRow('s-ban-2', target.id);
 
     const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
-    const res = await banHandler({
-      request: new Request(`http://localhost/api/admin/users/${target.id}/ban`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', origin: 'http://localhost:3010' },
-        body: JSON.stringify({ reason: 'Spam', expiresAt }),
-      }),
-      params: { userId: target.id },
-      context: adminCtx(admin.id),
+    await banAdminUser(mockAdminSession({ userId: admin.id }), createDb(env.DB), target.id, {
+      reason: 'Spam',
+      expiresAt,
     });
-    expect(res.status).toBe(200);
 
     const db = createDb(env.DB);
     const [row] = await db
@@ -256,15 +231,7 @@ describe('POST /api/admin/users/:userId/ban', () => {
   it('uses defaults when no body is provided', async () => {
     const admin = await buildAdminUser();
     const target = await buildUser();
-    const res = await banHandler({
-      request: new Request(`http://localhost/api/admin/users/${target.id}/ban`, {
-        method: 'POST',
-        headers: { origin: 'http://localhost:3010' },
-      }),
-      params: { userId: target.id },
-      context: adminCtx(admin.id),
-    });
-    expect(res.status).toBe(200);
+    await banAdminUser(mockAdminSession({ userId: admin.id }), createDb(env.DB), target.id, {});
 
     const db = createDb(env.DB);
     const [row] = await db
@@ -284,15 +251,7 @@ describe('POST /api/admin/users/:userId/unban', () => {
       banExpires: Math.floor(Date.now() / 1000) + 86400,
     });
 
-    const res = await unbanHandler({
-      request: new Request(`http://localhost/api/admin/users/${target.id}/unban`, {
-        method: 'POST',
-        headers: { origin: 'http://localhost:3010' },
-      }),
-      params: { userId: target.id },
-      context: { db: createDb(env.DB) },
-    });
-    expect(res.status).toBe(200);
+    await unbanAdminUser(mockAdminSession(), createDb(env.DB), target.id);
 
     const db = createDb(env.DB);
     const [row] = await db
@@ -308,33 +267,20 @@ describe('POST /api/admin/users/:userId/unban', () => {
 describe('POST /api/admin/users/:userId/impersonate', () => {
   it('rejects self-impersonation with 400', async () => {
     const admin = await buildAdminUser();
-    const res = await impersonateHandler({
-      request: new Request(`http://localhost/api/admin/users/${admin.id}/impersonate`, {
-        method: 'POST',
-        headers: { origin: 'http://localhost:3010' },
-        body: JSON.stringify({ userId: admin.id }),
-      }),
-      params: { userId: admin.id },
-      context: adminCtx(admin.id),
+    const request = new Request('http://localhost/api/admin/users/impersonate', {
+      method: 'POST',
+      headers: { cookie: 'session=abc', origin: 'http://localhost:3010' },
     });
-    expect(res.status).toBe(400);
-    const body = (await res.json()) as { details?: { constraint?: string } };
-    expect(body.details?.constraint).toBe('cannot_impersonate_self');
-  });
 
-  it('returns 400 when body.userId is missing', async () => {
-    const admin = await buildAdminUser();
-    const target = await buildUser();
-    const res = await impersonateHandler({
-      request: new Request(`http://localhost/api/admin/users/${target.id}/impersonate`, {
-        method: 'POST',
-        headers: { origin: 'http://localhost:3010' },
-        body: JSON.stringify({}),
-      }),
-      params: { userId: target.id },
-      context: adminCtx(admin.id),
-    });
-    expect(res.status).toBe(400);
+    try {
+      await impersonateAdminUser(mockAdminSession({ userId: admin.id }), request, admin.id);
+      expect.unreachable('should have thrown');
+    } catch (err) {
+      const res = err as Response;
+      expect(res.status).toBe(400);
+      const body = (await res.json()) as { details?: { constraint?: string } };
+      expect(body.details?.constraint).toBe('cannot_impersonate_self');
+    }
   });
 
   it('proxies to better-auth handler and returns its response', async () => {
@@ -348,19 +294,20 @@ describe('POST /api/admin/users/:userId/impersonate', () => {
         }),
     );
 
-    const res = await impersonateHandler({
-      request: new Request(`http://localhost/api/admin/users/${target.id}/impersonate`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          cookie: 'session=abc',
-          origin: 'http://localhost:3010',
-        },
-        body: JSON.stringify({ userId: target.id }),
-      }),
-      params: { userId: target.id },
-      context: adminCtx(admin.id),
+    const request = new Request('http://localhost/api/admin/users/impersonate', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        cookie: 'session=abc',
+        origin: 'http://localhost:3010',
+      },
     });
+
+    const res = await impersonateAdminUser(
+      mockAdminSession({ userId: admin.id }),
+      request,
+      target.id,
+    );
     expect(res.status).toBe(200);
     expect(mockAuthHandler).toHaveBeenCalledTimes(1);
     const forwardedReq = (mockAuthHandler as Mock).mock.calls[0][0] as Request;
@@ -379,15 +326,7 @@ describe('DELETE /api/admin/users/:userId/sessions', () => {
     await seedSessionRow('rs-2', target.id);
     await seedSessionRow('rs-other', other.id);
 
-    const res = await revokeAllSessionsHandler({
-      request: new Request(`http://localhost/api/admin/users/${target.id}/sessions`, {
-        method: 'DELETE',
-        headers: { origin: 'http://localhost:3010' },
-      }),
-      params: { userId: target.id },
-      context: { db: createDb(env.DB) },
-    });
-    expect(res.status).toBe(200);
+    await revokeAllAdminSessions(mockAdminSession(), createDb(env.DB), target.id);
 
     const db = createDb(env.DB);
     const remaining = await db.select().from(session).where(eq(session.userId, target.id));
@@ -400,15 +339,12 @@ describe('DELETE /api/admin/users/:userId/sessions', () => {
 describe('DELETE /api/admin/users/:userId/sessions/:sessionId', () => {
   it('returns 404 for non-existent session', async () => {
     const target = await buildUser();
-    const res = await revokeSessionHandler({
-      request: new Request(`http://localhost/api/admin/users/${target.id}/sessions/missing`, {
-        method: 'DELETE',
-        headers: { origin: 'http://localhost:3010' },
-      }),
-      params: { userId: target.id, sessionId: 'missing' },
-      context: { db: createDb(env.DB) },
-    });
-    expect(res.status).toBe(404);
+    try {
+      await revokeAdminSession(mockAdminSession(), createDb(env.DB), target.id, 'missing');
+      expect.unreachable('should have thrown');
+    } catch (err) {
+      expect((err as Response).status).toBe(404);
+    }
   });
 
   it('returns 404 when session belongs to a different user', async () => {
@@ -416,15 +352,12 @@ describe('DELETE /api/admin/users/:userId/sessions/:sessionId', () => {
     const other = await buildUser();
     await seedSessionRow('s-other', other.id);
 
-    const res = await revokeSessionHandler({
-      request: new Request(`http://localhost/api/admin/users/${target.id}/sessions/s-other`, {
-        method: 'DELETE',
-        headers: { origin: 'http://localhost:3010' },
-      }),
-      params: { userId: target.id, sessionId: 's-other' },
-      context: { db: createDb(env.DB) },
-    });
-    expect(res.status).toBe(404);
+    try {
+      await revokeAdminSession(mockAdminSession(), createDb(env.DB), target.id, 's-other');
+      expect.unreachable('should have thrown');
+    } catch (err) {
+      expect((err as Response).status).toBe(404);
+    }
   });
 
   it('deletes a single matching session', async () => {
@@ -432,15 +365,7 @@ describe('DELETE /api/admin/users/:userId/sessions/:sessionId', () => {
     await seedSessionRow('s-keep', target.id);
     await seedSessionRow('s-drop', target.id);
 
-    const res = await revokeSessionHandler({
-      request: new Request(`http://localhost/api/admin/users/${target.id}/sessions/s-drop`, {
-        method: 'DELETE',
-        headers: { origin: 'http://localhost:3010' },
-      }),
-      params: { userId: target.id, sessionId: 's-drop' },
-      context: { db: createDb(env.DB) },
-    });
-    expect(res.status).toBe(200);
+    await revokeAdminSession(mockAdminSession(), createDb(env.DB), target.id, 's-drop');
 
     const db = createDb(env.DB);
     const remaining = await db.select().from(session).where(eq(session.userId, target.id));
@@ -451,30 +376,25 @@ describe('DELETE /api/admin/users/:userId/sessions/:sessionId', () => {
 describe('DELETE /api/admin/users/:userId', () => {
   it('rejects self-delete with 400', async () => {
     const admin = await buildAdminUser();
-    const res = await deleteUserHandler({
-      request: new Request(`http://localhost/api/admin/users/${admin.id}`, {
-        method: 'DELETE',
-        headers: { origin: 'http://localhost:3010' },
-      }),
-      params: { userId: admin.id },
-      context: adminCtx(admin.id),
-    });
-    expect(res.status).toBe(400);
-    const body = (await res.json()) as { details?: { constraint?: string } };
-    expect(body.details?.constraint).toBe('cannot_delete_self');
+    try {
+      await deleteAdminUser(mockAdminSession({ userId: admin.id }), createDb(env.DB), admin.id);
+      expect.unreachable('should have thrown');
+    } catch (err) {
+      const res = err as Response;
+      expect(res.status).toBe(400);
+      const body = (await res.json()) as { details?: { constraint?: string } };
+      expect(body.details?.constraint).toBe('cannot_delete_self');
+    }
   });
 
   it('returns 404 for non-existent user', async () => {
     const admin = await buildAdminUser();
-    const res = await deleteUserHandler({
-      request: new Request('http://localhost/api/admin/users/missing', {
-        method: 'DELETE',
-        headers: { origin: 'http://localhost:3010' },
-      }),
-      params: { userId: 'missing' },
-      context: adminCtx(admin.id),
-    });
-    expect(res.status).toBe(404);
+    try {
+      await deleteAdminUser(mockAdminSession({ userId: admin.id }), createDb(env.DB), 'missing');
+      expect.unreachable('should have thrown');
+    } catch (err) {
+      expect((err as Response).status).toBe(404);
+    }
   });
 
   it('cascades delete: syncs DOs, deletes user + related rows', async () => {
@@ -483,15 +403,7 @@ describe('DELETE /api/admin/users/:userId', () => {
     await seedSessionRow('del-s', owner.id);
     await seedAccountRow('del-a', owner.id, 'credential');
 
-    const res = await deleteUserHandler({
-      request: new Request(`http://localhost/api/admin/users/${owner.id}`, {
-        method: 'DELETE',
-        headers: { origin: 'http://localhost:3010' },
-      }),
-      params: { userId: owner.id },
-      context: adminCtx(admin.id),
-    });
-    expect(res.status).toBe(200);
+    await deleteAdminUser(mockAdminSession({ userId: admin.id }), createDb(env.DB), owner.id);
 
     expect(mockSyncMemberToDO).toHaveBeenCalledWith(env, project.id, 'remove', {
       userId: owner.id,

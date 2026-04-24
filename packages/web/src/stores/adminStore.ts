@@ -1,9 +1,8 @@
 /**
  * Admin store for managing admin state and API calls (Zustand)
  *
- * The API functions are plain async functions that use Hono RPC directly.
  * Only the 4 reactive state values are in the Zustand store.
- * checkAdminStatus, checkImpersonationStatus, and stopImpersonation use apiFetch
+ * checkAdminStatus and checkImpersonationStatus use apiFetch
  * because their endpoints are not on the typed app router.
  */
 
@@ -11,6 +10,15 @@ import { create } from 'zustand';
 import { apiFetch } from '@/lib/apiFetch';
 import { queryClient } from '@/lib/queryClient';
 import { queryKeys } from '@/lib/queryKeys';
+import {
+  banUserAction,
+  unbanUserAction,
+  revokeAllSessionsAction,
+  revokeSessionAction,
+  deleteUserAction,
+  impersonateUserAction,
+  stopImpersonationAction,
+} from '@/server/functions/admin-users.functions';
 
 interface SessionResponse {
   user?: { role?: string; [key: string]: unknown };
@@ -71,22 +79,13 @@ export const useAdminStore = create<AdminState & AdminActions>()(set => ({
   },
 
   impersonateUser: async userId => {
-    const res = await fetch(`/api/admin/users/${encodeURIComponent(userId)}/impersonate`, {
-      method: 'POST',
-      credentials: 'include',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ userId }),
-    });
-    if (!res.ok) {
-      const data = (await res.json().catch(() => ({}))) as Record<string, unknown>;
-      throw data;
-    }
+    await impersonateUserAction({ data: { userId } });
     set({ isImpersonating: true });
     window.location.href = '/';
   },
 
   stopImpersonation: async () => {
-    await apiFetch.post('/api/admin/stop-impersonation', null, { toastMessage: false });
+    await stopImpersonationAction();
     set({ isImpersonating: false });
     window.location.href = '/admin';
   },
@@ -95,55 +94,23 @@ export const useAdminStore = create<AdminState & AdminActions>()(set => ({
 // Admin API functions (plain async, no store state needed)
 
 export async function banUser(userId: string, reason: string, expiresAt: string | null = null) {
-  const res = await fetch(`/api/admin/users/${encodeURIComponent(userId)}/ban`, {
-    method: 'POST',
-    credentials: 'include',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ reason, expiresAt }),
-  });
-  const data = (await res.json()) as Record<string, unknown>;
-  if (!res.ok) throw data;
-  return data;
+  return banUserAction({ data: { userId, reason, expiresAt } });
 }
 
 export async function unbanUser(userId: string) {
-  const res = await fetch(`/api/admin/users/${encodeURIComponent(userId)}/unban`, {
-    method: 'POST',
-    credentials: 'include',
-  });
-  const data = (await res.json()) as Record<string, unknown>;
-  if (!res.ok) throw data;
-  return data;
+  return unbanUserAction({ data: { userId } });
 }
 
 export async function revokeUserSessions(userId: string) {
-  const res = await fetch(`/api/admin/users/${encodeURIComponent(userId)}/sessions`, {
-    method: 'DELETE',
-    credentials: 'include',
-  });
-  const data = (await res.json()) as Record<string, unknown>;
-  if (!res.ok) throw data;
-  return data;
+  return revokeAllSessionsAction({ data: { userId } });
 }
 
 export async function revokeUserSession(userId: string, sessionId: string) {
-  const res = await fetch(
-    `/api/admin/users/${encodeURIComponent(userId)}/sessions/${encodeURIComponent(sessionId)}`,
-    { method: 'DELETE', credentials: 'include' },
-  );
-  const data = (await res.json()) as Record<string, unknown>;
-  if (!res.ok) throw data;
-  return data;
+  return revokeSessionAction({ data: { userId, sessionId } });
 }
 
 export async function deleteUser(userId: string) {
-  const res = await fetch(`/api/admin/users/${encodeURIComponent(userId)}`, {
-    method: 'DELETE',
-    credentials: 'include',
-  });
-  const data = (await res.json()) as Record<string, unknown>;
-  if (!res.ok) throw data;
-  return data;
+  return deleteUserAction({ data: { userId } });
 }
 
 export async function deleteStorageDocuments(keys: string[]) {

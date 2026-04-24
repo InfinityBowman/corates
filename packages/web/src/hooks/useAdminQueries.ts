@@ -13,6 +13,10 @@ import {
   fetchBillingStuckStates,
   fetchOrgBillingReconcile,
 } from '@/stores/adminStore';
+import {
+  getAdminUsersAction,
+  getAdminUserDetailsAction,
+} from '@/server/functions/admin-users.functions';
 
 const ADMIN_QUERY_CONFIG = {
   staleTime: 0,
@@ -39,14 +43,10 @@ export function useAdminUsers(params: { page?: number; limit?: number; search?: 
   const search = params.search ?? '';
   return useQuery({
     queryKey: queryKeys.admin.users(page, limit, search),
-    queryFn: async () => {
-      const qs = new URLSearchParams({ page: page.toString(), limit: limit.toString() });
-      if (search) qs.set('search', search);
-      const res = await fetch(`/api/admin/users?${qs.toString()}`, { credentials: 'include' });
-      const data = (await res.json()) as Record<string, unknown>;
-      if (!res.ok) throw data;
-      return data;
-    },
+    queryFn: () =>
+      getAdminUsersAction({
+        data: { page, limit, ...(search ? { search } : {}) },
+      }),
     ...ADMIN_QUERY_CONFIG,
   });
 }
@@ -54,14 +54,7 @@ export function useAdminUsers(params: { page?: number; limit?: number; search?: 
 export function adminUserDetailsQueryOptions(userId: string) {
   return queryOptions({
     queryKey: queryKeys.admin.userDetails(userId),
-    queryFn: async () => {
-      const res = await fetch(`/api/admin/users/${encodeURIComponent(userId)}`, {
-        credentials: 'include',
-      });
-      const data = (await res.json()) as Record<string, unknown>;
-      if (!res.ok) throw data;
-      return data;
-    },
+    queryFn: () => getAdminUserDetailsAction({ data: { userId } }),
     ...ADMIN_QUERY_CONFIG,
   });
 }

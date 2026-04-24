@@ -132,20 +132,22 @@ Tests: `apply-template.server.test.ts` removed (Zod handles validation). `pdfs.s
 
 Note: `dev/export.ts` stays as HTTP route (binary download). `pdfs/$fileName.ts` stays as HTTP route (serves PDF files). `dev/add-study.ts` route kept alongside server function because e2e `seedStudies` helper calls it via HTTP.
 
-## Batch 9: Admin Users (8 routes)
+## Batch 9: Admin Users (8 routes) -- DONE
 
-New files: `admin/users.server.ts`, `admin/users.functions.ts`
+New files: `admin-users.server.ts`, `admin-users.functions.ts`
 
-- [ ] `admin/users.ts` (GET - list users with search/pagination)
-- [ ] `admin/users/$userId.ts` (GET/DELETE - user details)
-- [ ] `admin/users/$userId/ban.ts` (POST - ban user)
-- [ ] `admin/users/$userId/unban.ts` (POST - unban user)
-- [ ] `admin/users/$userId/impersonate.ts` (POST - start impersonation)
-- [ ] `admin/users/$userId/sessions.ts` (GET - list sessions)
-- [ ] `admin/users/$userId/sessions/$sessionId.ts` (DELETE - revoke session)
-- [ ] `admin/stop-impersonation.ts` (POST - end impersonation)
+- [x] `admin/users.ts` (GET - list users with search/pagination)
+- [x] `admin/users/$userId.ts` (GET/DELETE - user details)
+- [x] `admin/users/$userId/ban.ts` (POST - ban user)
+- [x] `admin/users/$userId/unban.ts` (POST - unban user)
+- [x] `admin/users/$userId/impersonate.ts` (POST - start impersonation)
+- [x] `admin/users/$userId/sessions.ts` (DELETE - revoke all sessions)
+- [x] `admin/users/$userId/sessions/$sessionId.ts` (DELETE - revoke session)
+- [x] `admin/stop-impersonation.ts` (POST - end impersonation)
 
-Tests: `users.server.test.ts`, `stop-impersonation.server.test.ts`
+Tests: `users.server.test.ts`, `stop-impersonation.server.test.ts` (CSRF tests removed, now handled by framework)
+
+Note: Impersonate and stop-impersonation proxy to better-auth. Cookie forwarding handled via `getResponse().headers.append()` in the `.functions.ts` wrapper.
 
 ## Batch 10: Admin Orgs (9 routes)
 
@@ -220,7 +222,7 @@ Tests: `billing-observability.server.test.ts`, `stripe-tools.server.test.ts`, `d
 | Batch 6: Orgs Core | 5 | Done |
 | Batch 7: Orgs Projects | 6 | Done |
 | Batch 8: Orgs Dev + Studies | 5 migrated, 1 kept (e2e), 1 stays HTTP | Done |
-| Batch 9: Admin Users | 8 | Pending |
+| Batch 9: Admin Users | 8 | Done |
 | Batch 10: Admin Orgs | 9-10 | Pending |
 | Batch 11: Admin Projects + Stats | 10-11 | Pending |
 | Batch 12: Admin Billing + DB + Storage | 16 | Pending |
