@@ -7,6 +7,7 @@ import {
   applyDevTemplate,
   devImportState,
   devResetState,
+  devExportState,
   devAddStudy,
 } from './dev-tools.server';
 
@@ -54,6 +55,13 @@ export const resetState = createServerFn({ method: 'POST' })
   .inputValidator(z.object({ orgId: z.string(), projectId: z.string() }))
   .handler(async ({ data, context: { session, db } }) =>
     devResetState(session, db, data.orgId as OrgId, data.projectId as ProjectId),
+  );
+
+export const exportState = createServerFn({ method: 'GET' })
+  .middleware([authMiddleware])
+  .inputValidator(z.object({ orgId: z.string(), projectId: z.string() }))
+  .handler(async ({ data, context: { session, db } }) =>
+    devExportState(session, db, data.orgId as OrgId, data.projectId as ProjectId),
   );
 
 export const addStudyAction = createServerFn({ method: 'POST' })

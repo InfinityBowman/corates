@@ -36,7 +36,7 @@ These routes need stable URLs, serve binary/HTML content, or are called by exter
 | `orgs/.../pdfs/$fileName.ts` | PDF viewer URLs                 |
 | `orgs/.../dev/export.ts`     | Binary download                 |
 
-**Needs assessment:** `pdf-proxy.ts` -- depends on whether clients need a URL or use fetch().
+**Assessed and migrated:** `pdf-proxy.ts` -- only consumed via fetch(), migrated to `pdf-proxy.server.ts` + `pdf-proxy.functions.ts`. Binary data returned as base64-encoded JSON since `createServerFn` requires serializable returns.
 
 ---
 

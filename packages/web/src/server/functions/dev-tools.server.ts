@@ -95,6 +95,24 @@ export async function devResetState(
   return projectDoc.devReset();
 }
 
+export async function devExportState(
+  session: Session,
+  db: Database,
+  orgId: OrgId,
+  projectId: ProjectId,
+) {
+  assertDevMode();
+
+  const membership = await requireOrgMembership(session, db, orgId);
+  if (!membership.ok) throw membership.response;
+
+  const access = await requireProjectAccess(session, db, orgId, projectId);
+  if (!access.ok) throw access.response;
+
+  const projectDoc = getProjectDocStub(env, projectId);
+  return projectDoc.devExport();
+}
+
 export async function devAddStudy(
   session: Session,
   db: Database,
