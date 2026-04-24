@@ -12,6 +12,7 @@ import { UploadIcon, CheckIcon, AlertCircleIcon, ArrowLeftIcon } from 'lucide-re
 import { useNavigate } from '@tanstack/react-router';
 import { useQueryClient } from '@tanstack/react-query';
 import { API_BASE } from '@/config/api';
+import { createProject } from '@/server/functions/org-projects.functions';
 import { useOrgs } from '@/hooks/useOrgs';
 import { queryKeys } from '@/lib/queryKeys';
 import { DevUserMapping, extractUserIds } from './DevUserMapping';
@@ -87,22 +88,13 @@ export function DevImportProject() {
       const projectName = (data.meta as Record<string, unknown>)?.name || 'Imported Project';
 
       // Step 1: Create the project
-      const createRes = await fetch(`${API_BASE}/api/orgs/${resolvedOrgId}/projects`, {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: projectName,
-          description: (data.meta as Record<string, unknown>)?.description || '',
-        }),
-      });
-
-      if (!createRes.ok) {
-        const err = await createRes.json().catch(() => ({}));
-        throw new Error(err.error || 'Failed to create project');
-      }
-
-      const newProject = await createRes.json();
+      const newProject = await createProject({
+        data: {
+          orgId: resolvedOrgId,
+          name: projectName as string,
+          description: ((data.meta as Record<string, unknown>)?.description as string) || undefined,
+        },
+      }) as { id: string };
       console.log('[DevPanel] Created project:', newProject.id);
 
       // Step 2: Import data to the new project

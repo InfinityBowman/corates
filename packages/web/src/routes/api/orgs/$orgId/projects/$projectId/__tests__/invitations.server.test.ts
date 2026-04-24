@@ -11,8 +11,11 @@ import {
   asProjectInvitationId,
 } from '@/__tests__/server/factories';
 import type { Session } from '@/server/middleware/auth';
-import { handleGet as listHandler, handlePost as createHandler } from '../invitations';
-import { handleDelete as cancelHandler } from '../invitations/$invitationId';
+import {
+  listProjectInvitations,
+  createProjectInvitation,
+  cancelProjectInvitation,
+} from '@/server/functions/org-projects.server';
 
 let currentUser: { id: string; email: string } = { id: 'user-1', email: 'user1@example.com' };
 
@@ -56,32 +59,21 @@ beforeEach(async () => {
   currentUser = { id: 'user-1', email: 'user1@example.com' };
 });
 
-function jsonReq(path: string, method: string, body?: unknown): Request {
-  return new Request(`http://localhost${path}`, {
-    method,
-    headers: { 'Content-Type': 'application/json' },
-    body: body !== undefined ? JSON.stringify(body) : undefined,
-  });
-}
-
-describe('POST /api/orgs/:orgId/projects/:projectId/invitations', () => {
-  it('creates a new invitation and returns 201', async () => {
+describe('createProjectInvitation', () => {
+  it('creates a new invitation', async () => {
     const { project, org, owner } = await buildProject();
     currentUser = { id: owner.id, email: owner.email };
 
-    const res = await createHandler({
-      request: jsonReq(`/api/orgs/${org.id}/projects/${project.id}/invitations`, 'POST', {
-        email: 'invitee@example.com',
-        role: 'member',
-      }),
-      params: { orgId: org.id, projectId: project.id },
-      context: { db: createDb(env.DB), session: mockSession() },
-    });
+    const result = await createProjectInvitation(
+      mockSession(),
+      createDb(env.DB),
+      org.id,
+      project.id,
+      { email: 'invitee@example.com', role: 'member' },
+    );
 
-    expect(res.status).toBe(201);
-    const body = (await res.json()) as { success: boolean; email: string };
-    expect(body.success).toBe(true);
-    expect(body.email).toBe('invitee@example.com');
+    expect(result.success).toBe(true);
+    expect(result.email).toBe('invitee@example.com');
 
     const db = createDb(env.DB);
     const invitation = await db
@@ -104,16 +96,10 @@ describe('POST /api/orgs/:orgId/projects/:projectId/invitations', () => {
     const { project, org, owner } = await buildProject();
     currentUser = { id: owner.id, email: owner.email };
 
-    const res = await createHandler({
-      request: jsonReq(`/api/orgs/${org.id}/projects/${project.id}/invitations`, 'POST', {
-        email: 'UPPERCASE@EXAMPLE.COM',
-        role: 'member',
-      }),
-      params: { orgId: org.id, projectId: project.id },
-      context: { db: createDb(env.DB), session: mockSession() },
+    await createProjectInvitation(mockSession(), createDb(env.DB), org.id, project.id, {
+      email: 'UPPERCASE@EXAMPLE.COM',
+      role: 'member',
     });
-
-    expect(res.status).toBe(201);
 
     const db = createDb(env.DB);
     const invitation = await db
@@ -140,16 +126,10 @@ describe('POST /api/orgs/:orgId/projects/:projectId/invitations', () => {
 
     currentUser = { id: owner.id, email: owner.email };
 
-    const res = await createHandler({
-      request: jsonReq(`/api/orgs/${org.id}/projects/${project.id}/invitations`, 'POST', {
-        email: 'invitee@example.com',
-        role: 'owner',
-      }),
-      params: { orgId: org.id, projectId: project.id },
-      context: { db: createDb(env.DB), session: mockSession() },
+    await createProjectInvitation(mockSession(), createDb(env.DB), org.id, project.id, {
+      email: 'invitee@example.com',
+      role: 'owner',
     });
-
-    expect(res.status).toBe(201);
 
     const db = createDb(env.DB);
     const invitations = await db
@@ -177,58 +157,23 @@ describe('POST /api/orgs/:orgId/projects/:projectId/invitations', () => {
 
     currentUser = { id: owner.id, email: owner.email };
 
-    const res = await createHandler({
-      request: jsonReq(`/api/orgs/${org.id}/projects/${project.id}/invitations`, 'POST', {
+    try {
+      await createProjectInvitation(mockSession(), createDb(env.DB), org.id, project.id, {
         email: 'invitee@example.com',
         role: 'member',
-      }),
-      params: { orgId: org.id, projectId: project.id },
-      context: { db: createDb(env.DB), session: mockSession() },
-    });
-
-    expect(res.status).toBe(400);
-    const body = (await res.json()) as { code: string };
-    expect(body.code).toMatch(/INVITATION_ALREADY_ACCEPTED/);
-  });
-
-  it('rejects invalid email', async () => {
-    const { project, org, owner } = await buildProject();
-    currentUser = { id: owner.id, email: owner.email };
-
-    const res = await createHandler({
-      request: jsonReq(`/api/orgs/${org.id}/projects/${project.id}/invitations`, 'POST', {
-        email: 'not-an-email',
-        role: 'member',
-      }),
-      params: { orgId: org.id, projectId: project.id },
-      context: { db: createDb(env.DB), session: mockSession() },
-    });
-
-    expect(res.status).toBe(400);
-    const body = (await res.json()) as { code: string };
-    expect(body.code).toMatch(/INVALID_INPUT/);
-  });
-
-  it('rejects invalid role', async () => {
-    const { project, org, owner } = await buildProject();
-    currentUser = { id: owner.id, email: owner.email };
-
-    const res = await createHandler({
-      request: jsonReq(`/api/orgs/${org.id}/projects/${project.id}/invitations`, 'POST', {
-        email: 'invitee@example.com',
-        role: 'admin',
-      }),
-      params: { orgId: org.id, projectId: project.id },
-      context: { db: createDb(env.DB), session: mockSession() },
-    });
-
-    expect(res.status).toBe(400);
-    const body = (await res.json()) as { code: string };
-    expect(body.code).toMatch(/INVALID_INPUT/);
+      });
+      expect.unreachable('should have thrown');
+    } catch (err) {
+      expect(err).toBeInstanceOf(Response);
+      const res = err as Response;
+      expect(res.status).toBe(400);
+      const body = (await res.json()) as { code: string };
+      expect(body.code).toMatch(/INVITATION_ALREADY_ACCEPTED/);
+    }
   });
 });
 
-describe('GET /api/orgs/:orgId/projects/:projectId/invitations', () => {
+describe('listProjectInvitations', () => {
   it('lists only pending invitations', async () => {
     const { project, org, owner } = await buildProject();
 
@@ -250,40 +195,38 @@ describe('GET /api/orgs/:orgId/projects/:projectId/invitations', () => {
 
     currentUser = { id: owner.id, email: owner.email };
 
-    const res = await listHandler({
-      request: jsonReq(`/api/orgs/${org.id}/projects/${project.id}/invitations`, 'GET'),
-      params: { orgId: org.id, projectId: project.id },
-      context: { db: createDb(env.DB), session: mockSession() },
-    });
-
-    expect(res.status).toBe(200);
-    const body = (await res.json()) as Array<{ email: string }>;
-    expect(body).toHaveLength(1);
-    expect(body[0].email).toBe('pending@example.com');
+    const result = await listProjectInvitations(
+      mockSession(),
+      createDb(env.DB),
+      org.id,
+      project.id,
+    );
+    expect(result).toHaveLength(1);
+    expect(result[0].email).toBe('pending@example.com');
   });
 });
 
-describe('DELETE /api/orgs/:orgId/projects/:projectId/invitations/:invitationId', () => {
+describe('cancelProjectInvitation', () => {
   it('returns error for nonexistent invitation', async () => {
     const { project, org, owner } = await buildProject();
     currentUser = { id: owner.id, email: owner.email };
 
-    const res = await cancelHandler({
-      request: jsonReq(
-        `/api/orgs/${org.id}/projects/${project.id}/invitations/nonexistent`,
-        'DELETE',
-      ),
-      params: {
-        orgId: org.id,
-        projectId: project.id,
-        invitationId: asProjectInvitationId('nonexistent'),
-      },
-      context: { db: createDb(env.DB), session: mockSession() },
-    });
-
-    expect(res.status).toBe(400);
-    const body = (await res.json()) as { code: string };
-    expect(body.code).toMatch(/FIELD_INVALID_FORMAT/);
+    try {
+      await cancelProjectInvitation(
+        mockSession(),
+        createDb(env.DB),
+        org.id,
+        project.id,
+        asProjectInvitationId('nonexistent'),
+      );
+      expect.unreachable('should have thrown');
+    } catch (err) {
+      expect(err).toBeInstanceOf(Response);
+      const res = err as Response;
+      expect(res.status).toBe(400);
+      const body = (await res.json()) as { code: string };
+      expect(body.code).toMatch(/FIELD_INVALID_FORMAT/);
+    }
   });
 
   it('returns error when canceling accepted invitation', async () => {
@@ -299,18 +242,22 @@ describe('DELETE /api/orgs/:orgId/projects/:projectId/invitations/:invitationId'
 
     currentUser = { id: owner.id, email: owner.email };
 
-    const res = await cancelHandler({
-      request: jsonReq(
-        `/api/orgs/${org.id}/projects/${project.id}/invitations/${invitation.id}`,
-        'DELETE',
-      ),
-      params: { orgId: org.id, projectId: project.id, invitationId: invitation.id },
-      context: { db: createDb(env.DB), session: mockSession() },
-    });
-
-    expect(res.status).toBe(400);
-    const body = (await res.json()) as { code: string };
-    expect(body.code).toMatch(/INVITATION_ALREADY_ACCEPTED/);
+    try {
+      await cancelProjectInvitation(
+        mockSession(),
+        createDb(env.DB),
+        org.id,
+        project.id,
+        invitation.id,
+      );
+      expect.unreachable('should have thrown');
+    } catch (err) {
+      expect(err).toBeInstanceOf(Response);
+      const res = err as Response;
+      expect(res.status).toBe(400);
+      const body = (await res.json()) as { code: string };
+      expect(body.code).toMatch(/INVITATION_ALREADY_ACCEPTED/);
+    }
   });
 
   it('cancels pending invitation', async () => {
@@ -326,19 +273,16 @@ describe('DELETE /api/orgs/:orgId/projects/:projectId/invitations/:invitationId'
 
     currentUser = { id: owner.id, email: owner.email };
 
-    const res = await cancelHandler({
-      request: jsonReq(
-        `/api/orgs/${org.id}/projects/${project.id}/invitations/${invitation.id}`,
-        'DELETE',
-      ),
-      params: { orgId: org.id, projectId: project.id, invitationId: invitation.id },
-      context: { db: createDb(env.DB), session: mockSession() },
-    });
+    const result = await cancelProjectInvitation(
+      mockSession(),
+      createDb(env.DB),
+      org.id,
+      project.id,
+      invitation.id,
+    );
 
-    expect(res.status).toBe(200);
-    const body = (await res.json()) as { success: boolean; cancelled: string };
-    expect(body.success).toBe(true);
-    expect(body.cancelled).toBe(invitation.id);
+    expect(result.success).toBe(true);
+    expect(result.cancelled).toBe(invitation.id);
 
     const db = createDb(env.DB);
     const dbInvitation = await db

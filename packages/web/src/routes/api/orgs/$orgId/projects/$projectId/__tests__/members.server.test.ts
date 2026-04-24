@@ -13,8 +13,12 @@ import {
   asUserId,
 } from '@/__tests__/server/factories';
 import type { Session } from '@/server/middleware/auth';
-import { handleGet as listHandler, handlePost as addHandler } from '../members';
-import { handlePut as updateRoleHandler, handleDelete as removeHandler } from '../members/$userId';
+import {
+  listProjectMembers,
+  addProjectMember,
+  updateProjectMemberRole,
+  removeProjectMember,
+} from '@/server/functions/org-projects.server';
 
 let currentUser: { id: string; email: string } = { id: 'user-1', email: 'user1@example.com' };
 
@@ -58,31 +62,17 @@ beforeEach(async () => {
   mockCheckCollaboratorQuota.mockResolvedValue({ allowed: true, used: 0, limit: -1 });
 });
 
-function jsonReq(path: string, method: string, body?: unknown): Request {
-  return new Request(`http://localhost${path}`, {
-    method,
-    headers: { 'Content-Type': 'application/json' },
-    body: body !== undefined ? JSON.stringify(body) : undefined,
-  });
-}
-
-describe('GET /api/orgs/:orgId/projects/:projectId/members', () => {
+describe('listProjectMembers', () => {
   it('lists all members of a project', async () => {
     const { project, org, owner, members } = await buildProjectWithMembers({ memberCount: 1 });
     currentUser = { id: owner.id, email: owner.email };
 
-    const res = await listHandler({
-      request: jsonReq(`/api/orgs/${org.id}/projects/${project.id}/members`, 'GET'),
-      params: { orgId: org.id, projectId: project.id },
-      context: { db: createDb(env.DB), session: mockSession() },
-    });
-    expect(res.status).toBe(200);
-    const body = (await res.json()) as Array<{ userId: string; role: string; name: string }>;
-    expect(body).toHaveLength(2);
-    expect(body[0].userId).toBe(owner.id);
-    expect(body[0].role).toBe('owner');
-    expect(body[1].userId).toBe(members[1].user.id);
-    expect(body[1].role).toBe('member');
+    const result = await listProjectMembers(mockSession(), createDb(env.DB), org.id, project.id);
+    expect(result).toHaveLength(2);
+    expect(result[0].userId).toBe(owner.id);
+    expect(result[0].role).toBe('owner');
+    expect(result[1].userId).toBe(members[1].user.id);
+    expect(result[1].role).toBe('member');
   });
 
   it('returns 403 for org-only member trying to view project members', async () => {
@@ -90,35 +80,31 @@ describe('GET /api/orgs/:orgId/projects/:projectId/members', () => {
     const { user: orgOnlyMember } = await buildOrgMember({ orgId: org.id, role: 'member' });
     currentUser = { id: orgOnlyMember.id, email: orgOnlyMember.email };
 
-    const res = await listHandler({
-      request: jsonReq(`/api/orgs/${org.id}/projects/${project.id}/members`, 'GET'),
-      params: { orgId: org.id, projectId: project.id },
-      context: { db: createDb(env.DB), session: mockSession() },
-    });
-    expect(res.status).toBe(403);
-    const body = (await res.json()) as { code: string };
-    expect(body.code).toBe('PROJECT_ACCESS_DENIED');
+    try {
+      await listProjectMembers(mockSession(), createDb(env.DB), org.id, project.id);
+      expect.unreachable('should have thrown');
+    } catch (err) {
+      expect(err).toBeInstanceOf(Response);
+      const res = err as Response;
+      expect(res.status).toBe(403);
+      const body = (await res.json()) as { code: string };
+      expect(body.code).toBe('PROJECT_ACCESS_DENIED');
+    }
   });
 });
 
-describe('POST /api/orgs/:orgId/projects/:projectId/members', () => {
+describe('addProjectMember', () => {
   it('allows owner to add member by userId', async () => {
     const { project, org, owner } = await buildProject();
     const { user: newMember } = await buildOrgMember({ orgId: org.id, role: 'member' });
     currentUser = { id: owner.id, email: owner.email };
 
-    const res = await addHandler({
-      request: jsonReq(`/api/orgs/${org.id}/projects/${project.id}/members`, 'POST', {
-        userId: newMember.id,
-        role: 'member',
-      }),
-      params: { orgId: org.id, projectId: project.id },
-      context: { db: createDb(env.DB), session: mockSession() },
-    });
-    expect(res.status).toBe(201);
-    const body = (await res.json()) as { userId: string; role: string; name: string };
-    expect(body.userId).toBe(newMember.id);
-    expect(body.role).toBe('member');
+    const result = await addProjectMember(mockSession(), createDb(env.DB), org.id, project.id, {
+      userId: newMember.id,
+      role: 'member',
+    }) as { userId: string; role: string };
+    expect(result.userId).toBe(newMember.id);
+    expect(result.role).toBe('member');
   });
 
   it('allows owner to add member by email', async () => {
@@ -126,18 +112,12 @@ describe('POST /api/orgs/:orgId/projects/:projectId/members', () => {
     const { user: newMember } = await buildOrgMember({ orgId: org.id, role: 'member' });
     currentUser = { id: owner.id, email: owner.email };
 
-    const res = await addHandler({
-      request: jsonReq(`/api/orgs/${org.id}/projects/${project.id}/members`, 'POST', {
-        email: newMember.email,
-        role: 'member',
-      }),
-      params: { orgId: org.id, projectId: project.id },
-      context: { db: createDb(env.DB), session: mockSession() },
-    });
-    expect(res.status).toBe(201);
-    const body = (await res.json()) as { userId: string; email: string };
-    expect(body.userId).toBe(newMember.id);
-    expect(body.email).toBe(newMember.email);
+    const result = await addProjectMember(mockSession(), createDb(env.DB), org.id, project.id, {
+      email: newMember.email,
+      role: 'member',
+    }) as { userId: string; email: string };
+    expect(result.userId).toBe(newMember.id);
+    expect(result.email).toBe(newMember.email);
   });
 
   it('normalizes email to lowercase', async () => {
@@ -145,35 +125,23 @@ describe('POST /api/orgs/:orgId/projects/:projectId/members', () => {
     const { user: newMember } = await buildOrgMember({ orgId: org.id, role: 'member' });
     currentUser = { id: owner.id, email: owner.email };
 
-    const res = await addHandler({
-      request: jsonReq(`/api/orgs/${org.id}/projects/${project.id}/members`, 'POST', {
-        email: newMember.email.toUpperCase(),
-        role: 'member',
-      }),
-      params: { orgId: org.id, projectId: project.id },
-      context: { db: createDb(env.DB), session: mockSession() },
-    });
-    expect(res.status).toBe(201);
-    const body = (await res.json()) as { email: string };
-    expect(body.email).toBe(newMember.email);
+    const result = await addProjectMember(mockSession(), createDb(env.DB), org.id, project.id, {
+      email: newMember.email.toUpperCase(),
+      role: 'member',
+    }) as { email: string };
+    expect(result.email).toBe(newMember.email);
   });
 
   it('creates invitation when user not found', async () => {
     const { project, org, owner } = await buildProject();
     currentUser = { id: owner.id, email: owner.email };
 
-    const res = await addHandler({
-      request: jsonReq(`/api/orgs/${org.id}/projects/${project.id}/members`, 'POST', {
-        email: 'nonexistent@example.com',
-        role: 'member',
-      }),
-      params: { orgId: org.id, projectId: project.id },
-      context: { db: createDb(env.DB), session: mockSession() },
-    });
-    expect(res.status).toBe(201);
-    const body = (await res.json()) as { success: boolean; invitation: boolean };
-    expect(body.success).toBe(true);
-    expect(body.invitation).toBe(true);
+    const result = await addProjectMember(mockSession(), createDb(env.DB), org.id, project.id, {
+      email: 'nonexistent@example.com',
+      role: 'member',
+    }) as { success: boolean; invitation: boolean };
+    expect(result.success).toBe(true);
+    expect(result.invitation).toBe(true);
   });
 
   it('returns 409 if user is already a member', async () => {
@@ -181,17 +149,19 @@ describe('POST /api/orgs/:orgId/projects/:projectId/members', () => {
     const existingMember = members[1].user;
     currentUser = { id: owner.id, email: owner.email };
 
-    const res = await addHandler({
-      request: jsonReq(`/api/orgs/${org.id}/projects/${project.id}/members`, 'POST', {
+    try {
+      await addProjectMember(mockSession(), createDb(env.DB), org.id, project.id, {
         userId: existingMember.id,
         role: 'member',
-      }),
-      params: { orgId: org.id, projectId: project.id },
-      context: { db: createDb(env.DB), session: mockSession() },
-    });
-    expect(res.status).toBe(409);
-    const body = (await res.json()) as { code: string };
-    expect(body.code).toMatch(/MEMBER_ALREADY_EXISTS/);
+      });
+      expect.unreachable('should have thrown');
+    } catch (err) {
+      expect(err).toBeInstanceOf(Response);
+      const res = err as Response;
+      expect(res.status).toBe(409);
+      const body = (await res.json()) as { code: string };
+      expect(body.code).toMatch(/MEMBER_ALREADY_EXISTS/);
+    }
   });
 
   it('denies non-owner from adding members', async () => {
@@ -200,17 +170,19 @@ describe('POST /api/orgs/:orgId/projects/:projectId/members', () => {
     const { user: newUser } = await buildOrgMember({ orgId: org.id, role: 'member' });
     currentUser = { id: regularMember.id, email: regularMember.email };
 
-    const res = await addHandler({
-      request: jsonReq(`/api/orgs/${org.id}/projects/${project.id}/members`, 'POST', {
+    try {
+      await addProjectMember(mockSession(), createDb(env.DB), org.id, project.id, {
         userId: newUser.id,
         role: 'member',
-      }),
-      params: { orgId: org.id, projectId: project.id },
-      context: { db: createDb(env.DB), session: mockSession() },
-    });
-    expect(res.status).toBe(403);
-    const body = (await res.json()) as { code: string };
-    expect(body.code).toMatch(/FORBIDDEN/);
+      });
+      expect.unreachable('should have thrown');
+    } catch (err) {
+      expect(err).toBeInstanceOf(Response);
+      const res = err as Response;
+      expect(res.status).toBe(403);
+      const body = (await res.json()) as { code: string };
+      expect(body.code).toMatch(/FORBIDDEN/);
+    }
   });
 
   it('defaults role to member', async () => {
@@ -218,133 +190,134 @@ describe('POST /api/orgs/:orgId/projects/:projectId/members', () => {
     const { user: newMember } = await buildOrgMember({ orgId: org.id, role: 'member' });
     currentUser = { id: owner.id, email: owner.email };
 
-    const res = await addHandler({
-      request: jsonReq(`/api/orgs/${org.id}/projects/${project.id}/members`, 'POST', {
-        userId: newMember.id,
-      }),
-      params: { orgId: org.id, projectId: project.id },
-      context: { db: createDb(env.DB), session: mockSession() },
-    });
-    expect(res.status).toBe(201);
-    const body = (await res.json()) as { role: string };
-    expect(body.role).toBe('member');
+    const result = await addProjectMember(mockSession(), createDb(env.DB), org.id, project.id, {
+      userId: newMember.id,
+    }) as { role: string };
+    expect(result.role).toBe('member');
   });
 });
 
-describe('PUT /api/orgs/:orgId/projects/:projectId/members/:userId', () => {
+describe('updateProjectMemberRole', () => {
   it('allows owner to update member role', async () => {
     const { project, org, owner, members } = await buildProjectWithMembers({ memberCount: 1 });
     const memberToUpdate = members[1].user;
     currentUser = { id: owner.id, email: owner.email };
 
-    const res = await updateRoleHandler({
-      request: jsonReq(
-        `/api/orgs/${org.id}/projects/${project.id}/members/${memberToUpdate.id}`,
-        'PUT',
-        { role: 'member' },
-      ),
-      params: { orgId: org.id, projectId: project.id, userId: memberToUpdate.id },
-      context: { db: createDb(env.DB), session: mockSession() },
-    });
-    expect(res.status).toBe(200);
-    const body = (await res.json()) as { success: boolean; role: string };
-    expect(body.success).toBe(true);
-    expect(body.role).toBe('member');
+    const result = await updateProjectMemberRole(
+      mockSession(),
+      createDb(env.DB),
+      org.id,
+      project.id,
+      memberToUpdate.id,
+      { role: 'member' },
+    );
+    expect(result.success).toBe(true);
+    expect(result.role).toBe('member');
   });
 
   it('prevents removing the last owner', async () => {
     const { project, org, owner } = await buildProject();
     currentUser = { id: owner.id, email: owner.email };
 
-    const res = await updateRoleHandler({
-      request: jsonReq(`/api/orgs/${org.id}/projects/${project.id}/members/${owner.id}`, 'PUT', {
-        role: 'member',
-      }),
-      params: { orgId: org.id, projectId: project.id, userId: owner.id },
-      context: { db: createDb(env.DB), session: mockSession() },
-    });
-    expect(res.status).toBe(400);
-    const body = (await res.json()) as { code: string };
-    expect(body.code).toMatch(/LAST_OWNER/);
+    try {
+      await updateProjectMemberRole(
+        mockSession(),
+        createDb(env.DB),
+        org.id,
+        project.id,
+        owner.id,
+        { role: 'member' },
+      );
+      expect.unreachable('should have thrown');
+    } catch (err) {
+      expect(err).toBeInstanceOf(Response);
+      const res = err as Response;
+      expect(res.status).toBe(400);
+      const body = (await res.json()) as { code: string };
+      expect(body.code).toMatch(/LAST_OWNER/);
+    }
   });
 
   it('allows demoting owner if multiple owners exist', async () => {
     const { project, org, owner1, owner2 } = await buildMultipleOwnersScenario();
     currentUser = { id: owner2.id, email: owner2.email };
 
-    const res = await updateRoleHandler({
-      request: jsonReq(`/api/orgs/${org.id}/projects/${project.id}/members/${owner1.id}`, 'PUT', {
-        role: 'member',
-      }),
-      params: { orgId: org.id, projectId: project.id, userId: owner1.id },
-      context: { db: createDb(env.DB), session: mockSession() },
-    });
-    expect(res.status).toBe(200);
+    const result = await updateProjectMemberRole(
+      mockSession(),
+      createDb(env.DB),
+      org.id,
+      project.id,
+      owner1.id,
+      { role: 'member' },
+    );
+    expect(result.success).toBe(true);
   });
 });
 
-describe('DELETE /api/orgs/:orgId/projects/:projectId/members/:userId', () => {
+describe('removeProjectMember', () => {
   it('allows owner to remove member', async () => {
     const { project, org, owner, members } = await buildProjectWithMembers({ memberCount: 1 });
     const memberToRemove = members[1].user;
     currentUser = { id: owner.id, email: owner.email };
 
-    const res = await removeHandler({
-      request: jsonReq(
-        `/api/orgs/${org.id}/projects/${project.id}/members/${memberToRemove.id}`,
-        'DELETE',
-      ),
-      params: { orgId: org.id, projectId: project.id, userId: memberToRemove.id },
-      context: { db: createDb(env.DB), session: mockSession() },
-    });
-    expect(res.status).toBe(200);
-    const body = (await res.json()) as { success: boolean; removed: string };
-    expect(body.success).toBe(true);
-    expect(body.removed).toBe(memberToRemove.id);
+    const result = await removeProjectMember(
+      mockSession(),
+      createDb(env.DB),
+      org.id,
+      project.id,
+      memberToRemove.id,
+    );
+    expect(result.success).toBe(true);
+    expect(result.removed).toBe(memberToRemove.id);
   });
 
   it('allows member to remove themselves', async () => {
     const { project, org, selfRemover } = await buildSelfRemovalScenario();
     currentUser = { id: selfRemover.id, email: selfRemover.email };
 
-    const res = await removeHandler({
-      request: jsonReq(
-        `/api/orgs/${org.id}/projects/${project.id}/members/${selfRemover.id}`,
-        'DELETE',
-      ),
-      params: { orgId: org.id, projectId: project.id, userId: selfRemover.id },
-      context: { db: createDb(env.DB), session: mockSession() },
-    });
-    expect(res.status).toBe(200);
+    const result = await removeProjectMember(
+      mockSession(),
+      createDb(env.DB),
+      org.id,
+      project.id,
+      selfRemover.id,
+    );
+    expect(result.success).toBe(true);
   });
 
   it('prevents removing the last owner', async () => {
     const { project, org, owner } = await buildProject();
     currentUser = { id: owner.id, email: owner.email };
 
-    const res = await removeHandler({
-      request: jsonReq(`/api/orgs/${org.id}/projects/${project.id}/members/${owner.id}`, 'DELETE'),
-      params: { orgId: org.id, projectId: project.id, userId: owner.id },
-      context: { db: createDb(env.DB), session: mockSession() },
-    });
-    expect(res.status).toBe(400);
-    const body = (await res.json()) as { code: string };
-    expect(body.code).toMatch(/LAST_OWNER/);
+    try {
+      await removeProjectMember(mockSession(), createDb(env.DB), org.id, project.id, owner.id);
+      expect.unreachable('should have thrown');
+    } catch (err) {
+      expect(err).toBeInstanceOf(Response);
+      const res = err as Response;
+      expect(res.status).toBe(400);
+      const body = (await res.json()) as { code: string };
+      expect(body.code).toMatch(/LAST_OWNER/);
+    }
   });
 
   it('returns 404 if member not found', async () => {
     const { project, org, owner } = await buildProject();
     currentUser = { id: owner.id, email: owner.email };
 
-    const res = await removeHandler({
-      request: jsonReq(
-        `/api/orgs/${org.id}/projects/${project.id}/members/nonexistent-user`,
-        'DELETE',
-      ),
-      params: { orgId: org.id, projectId: project.id, userId: asUserId('nonexistent-user') },
-      context: { db: createDb(env.DB), session: mockSession() },
-    });
-    expect(res.status).toBe(404);
+    try {
+      await removeProjectMember(
+        mockSession(),
+        createDb(env.DB),
+        org.id,
+        project.id,
+        asUserId('nonexistent-user'),
+      );
+      expect.unreachable('should have thrown');
+    } catch (err) {
+      expect(err).toBeInstanceOf(Response);
+      expect((err as Response).status).toBe(404);
+    }
   });
 });
 
@@ -372,22 +345,24 @@ describe('Collaborator Quota Enforcement', () => {
       ),
     });
 
-    const res = await addHandler({
-      request: jsonReq(`/api/orgs/${org.id}/projects/${project.id}/members`, 'POST', {
+    try {
+      await addProjectMember(mockSession(), createDb(env.DB), org.id, project.id, {
         userId: newUser.id,
         role: 'member',
-      }),
-      params: { orgId: org.id, projectId: project.id },
-      context: { db: createDb(env.DB), session: mockSession() },
-    });
-    expect(res.status).toBe(403);
-    const body = (await res.json()) as {
-      code: string;
-      details?: { reason?: string; quotaKey?: string };
-    };
-    expect(body.code).toBe('AUTH_FORBIDDEN');
-    expect(body.details?.reason).toBe('quota_exceeded');
-    expect(body.details?.quotaKey).toBe('collaborators.org.max');
+      });
+      expect.unreachable('should have thrown');
+    } catch (err) {
+      expect(err).toBeInstanceOf(Response);
+      const res = err as Response;
+      expect(res.status).toBe(403);
+      const body = (await res.json()) as {
+        code: string;
+        details?: { reason?: string; quotaKey?: string };
+      };
+      expect(body.code).toBe('AUTH_FORBIDDEN');
+      expect(body.details?.reason).toBe('quota_exceeded');
+      expect(body.details?.quotaKey).toBe('collaborators.org.max');
+    }
   });
 
   it('allows adding existing org member without quota check', async () => {
@@ -395,16 +370,10 @@ describe('Collaborator Quota Enforcement', () => {
     const { user: existingOrgMember } = await buildOrgMember({ orgId: org.id, role: 'member' });
     currentUser = { id: owner.id, email: owner.email };
 
-    const res = await addHandler({
-      request: jsonReq(`/api/orgs/${org.id}/projects/${project.id}/members`, 'POST', {
-        userId: existingOrgMember.id,
-        role: 'member',
-      }),
-      params: { orgId: org.id, projectId: project.id },
-      context: { db: createDb(env.DB), session: mockSession() },
-    });
-    expect(res.status).toBe(201);
-    const body = (await res.json()) as { userId: string };
-    expect(body.userId).toBe(existingOrgMember.id);
+    const result = await addProjectMember(mockSession(), createDb(env.DB), org.id, project.id, {
+      userId: existingOrgMember.id,
+      role: 'member',
+    }) as { userId: string };
+    expect(result.userId).toBe(existingOrgMember.id);
   });
 });

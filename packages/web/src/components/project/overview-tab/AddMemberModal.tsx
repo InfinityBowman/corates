@@ -24,10 +24,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { API_BASE } from '@/config/api';
 import { isUnlimitedQuota } from '@corates/shared/plans';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { searchUsersQuery } from '@/server/functions/users.functions';
+import { addMemberToProject } from '@/server/functions/org-projects.functions';
 import type { UserSearchResult } from '@/server/functions/users.server';
 
 interface AddMemberModalProps {
@@ -120,25 +120,15 @@ export function AddMemberModal({
     setAdding(true);
     setError(null);
     try {
-      const res = await fetch(`${API_BASE}/api/orgs/${orgId}/projects/${projectId}/members`, {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(
-          selectedUser ?
+      const result = await addMemberToProject({
+        data: {
+          orgId,
+          projectId,
+          ...(selectedUser ?
             { userId: selectedUser.id, role: selectedRole }
-          : { email: searchQuery.trim(), role: selectedRole },
-        ),
-      });
-      const result = (await res.json()) as {
-        invitation?: boolean;
-        email?: string;
-        message?: string;
-        code?: string;
-      };
-      if (!res.ok) {
-        throw new Error(result.message || result.code || `Add failed: ${res.status}`);
-      }
+          : { email: searchQuery.trim(), role: selectedRole }),
+        },
+      }) as { invitation?: boolean; email?: string };
       if (result.invitation) {
         showToast.success('Invitation Sent', `Invitation sent to ${result.email || searchQuery}`);
       }

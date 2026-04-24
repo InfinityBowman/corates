@@ -104,16 +104,16 @@ New files: `orgs.server.ts`, `orgs.functions.ts`
 
 Tests: `orgs.server.test.ts`
 
-## Batch 7: Orgs Projects + Members + Invitations (6 routes)
+## Batch 7: Orgs Projects + Members + Invitations (6 routes) -- DONE
 
-Extends: `orgs.server.ts`, `orgs.functions.ts` (or new `org-projects.server.ts`)
+New files: `org-projects.server.ts`, `org-projects.functions.ts`
 
-- [ ] `orgs/$orgId/projects.ts` (GET - list projects)
-- [ ] `orgs/$orgId/projects/$projectId.ts` (GET/PUT/DELETE - project CRUD)
-- [ ] `orgs/$orgId/projects/$projectId/members.ts` (GET/POST - project members)
-- [ ] `orgs/$orgId/projects/$projectId/members/$userId.ts` (DELETE - remove member)
-- [ ] `orgs/$orgId/projects/$projectId/invitations.ts` (GET/POST - invitations)
-- [ ] `orgs/$orgId/projects/$projectId/invitations/$invitationId.ts` (PATCH/DELETE - manage invitation)
+- [x] `orgs/$orgId/projects.ts` (GET - list projects)
+- [x] `orgs/$orgId/projects/$projectId.ts` (GET/PUT/DELETE - project CRUD)
+- [x] `orgs/$orgId/projects/$projectId/members.ts` (GET/POST - project members)
+- [x] `orgs/$orgId/projects/$projectId/members/$userId.ts` (PUT/DELETE - manage member)
+- [x] `orgs/$orgId/projects/$projectId/invitations.ts` (GET/POST - invitations)
+- [x] `orgs/$orgId/projects/$projectId/invitations/$invitationId.ts` (DELETE - cancel invitation)
 
 Tests: `projects.server.test.ts`, `members.server.test.ts`, `invitations.server.test.ts`
 
@@ -216,7 +216,7 @@ Tests: `billing-observability.server.test.ts`, `stripe-tools.server.test.ts`, `d
 | Batch 4: Google Drive + Merge | 8 | Done |
 | Batch 5: Misc | 3 | Done |
 | Batch 6: Orgs Core | 5 | Done |
-| Batch 7: Orgs Projects | 6 | Pending |
+| Batch 7: Orgs Projects | 6 | Done |
 | Batch 8: Orgs Dev + Studies | 7 | Pending |
 | Batch 9: Admin Users | 8 | Pending |
 | Batch 10: Admin Orgs | 9-10 | Pending |
