@@ -6,7 +6,7 @@
 
 import { API_BASE } from '@/config/api';
 import { apiFetch } from '@/lib/apiFetch';
-import { proxyPdfFetchAction } from '@/server/functions/pdf-proxy.functions';
+import { proxyPdfFetch } from '@/server/functions/pdf-proxy.functions';
 
 interface PdfUploadResponse {
   success: boolean;
@@ -16,7 +16,7 @@ interface PdfUploadResponse {
 }
 
 export async function fetchPdfViaProxy(url: string): Promise<ArrayBuffer> {
-  const { data } = await proxyPdfFetchAction({ data: { url } });
+  const { data } = await proxyPdfFetch({ data: { url } });
   const binary = atob(data);
   const bytes = new Uint8Array(binary.length);
   for (let i = 0; i < binary.length; i++) {

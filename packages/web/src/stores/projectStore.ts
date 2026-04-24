@@ -13,7 +13,7 @@ import {
   type ConnectionEvent,
   type ConnectionMachineState,
 } from '@/project/connectionReducer';
-import { CHECKLIST_STATUS } from '@/constants/checklist-status';
+import { CHECKLIST_STATUS } from '@corates/shared/checklists';
 
 // localStorage key for persisted project stats
 const PROJECT_STATS_KEY = 'corates:projectStats';

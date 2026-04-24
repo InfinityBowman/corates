@@ -8,7 +8,7 @@ import { CheckCircleIcon } from 'lucide-react';
 import { useProjectStore, selectStudies } from '@/stores/projectStore';
 import { useProjectContext } from '../ProjectContext';
 import { connectionPool } from '@/project/ConnectionPool';
-import { getStudiesForTab, isDualReviewerStudy, getOutcomeKey } from '@/lib/checklist-domain.js';
+import { getStudiesForTab, isDualReviewerStudy, getOutcomeKey } from '@corates/shared/checklists';
 import { CompletedStudyRow } from './CompletedStudyRow';
 import { project } from '@/project';
 

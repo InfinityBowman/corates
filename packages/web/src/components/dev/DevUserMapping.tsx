@@ -9,7 +9,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { SearchIcon, XIcon, UserIcon } from 'lucide-react';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { useAuthStore, selectUser } from '@/stores/authStore';
-import { searchUsersQuery } from '@/server/functions/users.functions';
+import { searchUsers } from '@/server/functions/users.functions';
 
 interface SearchResult {
   id: string;
@@ -128,7 +128,7 @@ function MappingRow({ originalId, mappedTo, currentUser, projectId, onSelect }: 
     (async () => {
       setSearching(true);
       try {
-        const data = await searchUsersQuery({
+        const data = await searchUsers({
           data: { q: debouncedQuery, projectId: projectId || undefined },
         });
         if (!cancelled) setResults(data as SearchResult[]);

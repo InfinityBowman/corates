@@ -50,7 +50,7 @@ export function ProjectsSection({
   const [deleteLoading, setDeleteLoading] = useState(false);
 
   const { projects } = useMyProjectsList();
-  const { hasEntitlement, hasQuota, quotas, loading: subscriptionLoading } = useSubscription();
+  const { hasEntitlement, hasQuota, quotas, isLoading: subscriptionLoading } = useSubscription();
 
   const projectCount = projects?.length || 0;
 

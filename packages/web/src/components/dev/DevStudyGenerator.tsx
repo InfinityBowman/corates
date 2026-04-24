@@ -8,7 +8,7 @@
 import { useState } from 'react';
 import { PlusIcon, CheckIcon, AlertCircleIcon } from 'lucide-react';
 import { useProjectStore } from '@/stores/projectStore';
-import { addStudyAction } from '@/server/functions/dev-tools.functions';
+import { addStudy } from '@/server/functions/dev-tools.functions';
 
 interface ActionResult {
   success: boolean;
@@ -75,7 +75,7 @@ export function DevStudyGenerator({ projectId, orgId }: DevStudyGeneratorProps) 
     setResult(null);
 
     try {
-      const data = (await addStudyAction({
+      const data = (await addStudy({
         data: {
           orgId,
           projectId,

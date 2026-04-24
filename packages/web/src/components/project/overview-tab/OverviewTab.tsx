@@ -32,8 +32,11 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { API_BASE } from '@/config/api';
-import { CHECKLIST_STATUS } from '@/constants/checklist-status';
-import { shouldShowInTab, getReadyReconciliationPairs } from '@/lib/checklist-domain.js';
+import {
+  CHECKLIST_STATUS,
+  shouldShowInTab,
+  getReadyReconciliationPairs,
+} from '@corates/shared/checklists';
 import {
   calculateInterRaterReliability,
   getKappaInterpretation,

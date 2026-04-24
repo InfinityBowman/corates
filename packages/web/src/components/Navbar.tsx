@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link } from '@tanstack/react-router';
 import { MenuIcon, XIcon } from 'lucide-react';
 
-import { useAuth } from '../lib/auth';
+import { useAuth } from '@/lib/auth';
 import EarlyAccessBanner from './EarlyAccessBanner';
 
 const navLinks = [

@@ -7,12 +7,12 @@ import { useState, useMemo, useCallback } from 'react';
 import { ChevronRightIcon, GitCompareArrowsIcon } from 'lucide-react';
 import { Collapsible, CollapsibleContent } from '@/components/ui/collapsible';
 import { sortStudyPdfs, getCitationLine } from '../study-utils';
-import { CHECKLIST_STATUS } from '@/constants/checklist-status';
-import { getChecklistMetadata } from '@/checklist-registry';
 import {
+  CHECKLIST_STATUS,
   isReconciledChecklist,
   getReconciliationChecklistsByOutcome,
-} from '@/lib/checklist-domain.js';
+} from '@corates/shared/checklists';
+import { getChecklistMetadata } from '@/checklist-registry';
 import { PdfListItem } from '@/components/pdf/PdfListItem';
 import { ReconcileStatusTag } from './ReconcileStatusTag';
 

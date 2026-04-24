@@ -4,6 +4,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { queryKeys } from '@/lib/queryKeys';
+import { QUERY_STABLE } from '@/lib/queryPresets';
 import { getMembers } from '@/server/functions/billing.functions';
 import { useAuthStore, selectIsLoggedIn } from '@/stores/authStore';
 
@@ -14,15 +15,13 @@ export function useMembers() {
     queryKey: queryKeys.members.current,
     queryFn: () => getMembers(),
     enabled: isLoggedIn,
-    staleTime: 1000 * 60 * 5,
-    gcTime: 1000 * 60 * 10,
-    retry: 1,
+    ...QUERY_STABLE,
   });
 
   return {
     members: query.data?.members ?? [],
     memberCount: query.data?.count ?? 0,
-    loading: query.isLoading || query.isFetching,
+    isLoading: query.isLoading || query.isFetching,
     error: query.error,
     refetch: query.refetch,
   };

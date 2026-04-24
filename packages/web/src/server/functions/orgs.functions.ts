@@ -9,7 +9,7 @@ import {
   updateOrganization,
   deleteOrganization,
   listOrgMembers,
-  addOrgMember,
+  addOrgMember as addOrgMemberImpl,
   updateMemberRole,
   removeMember,
   setActiveOrg,
@@ -61,14 +61,14 @@ export const deleteOrg = createServerFn({ method: 'POST' })
     deleteOrganization(session, db, request, data.orgId as OrgId),
   );
 
-export const getOrgMembersQuery = createServerFn({ method: 'GET' })
+export const getOrgMembers = createServerFn({ method: 'GET' })
   .middleware([authMiddleware])
   .inputValidator(z.object({ orgId: z.string() }))
   .handler(async ({ data, context: { session, db, request } }) =>
     listOrgMembers(session, db, request, data.orgId as OrgId),
   );
 
-export const addOrgMemberAction = createServerFn({ method: 'POST' })
+export const addOrgMember = createServerFn({ method: 'POST' })
   .middleware([authMiddleware])
   .inputValidator(
     z.object({
@@ -79,7 +79,7 @@ export const addOrgMemberAction = createServerFn({ method: 'POST' })
   )
   .handler(async ({ data, context: { session, db, request } }) => {
     const { orgId, ...memberData } = data;
-    return addOrgMember(session, db, request, orgId as OrgId, memberData);
+    return addOrgMemberImpl(session, db, request, orgId as OrgId, memberData);
   });
 
 export const updateOrgMemberRole = createServerFn({ method: 'POST' })

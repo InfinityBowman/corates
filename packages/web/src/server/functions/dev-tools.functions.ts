@@ -64,7 +64,7 @@ export const exportState = createServerFn({ method: 'GET' })
     devExportState(session, db, data.orgId as OrgId, data.projectId as ProjectId),
   );
 
-export const addStudyAction = createServerFn({ method: 'POST' })
+export const addStudy = createServerFn({ method: 'POST' })
   .middleware([authMiddleware])
   .inputValidator(
     z.object({

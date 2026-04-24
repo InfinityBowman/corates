@@ -4,6 +4,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { queryKeys } from '@/lib/queryKeys';
+import { QUERY_STABLE } from '@/lib/queryPresets';
 import { useAuthStore, selectIsLoggedIn, selectIsAuthLoading } from '@/stores/authStore';
 import { getMyProjects } from '@/server/functions/users.functions';
 import type { UserProject } from '@/server/functions/users.server';
@@ -23,8 +24,7 @@ export function useMyProjectsList(options: { enabled?: boolean } = {}) {
     queryKey: queryKeys.projects.all,
     queryFn: () => getMyProjects(),
     enabled: options.enabled !== false && isLoggedIn && !isAuthLoading,
-    staleTime: 1000 * 60 * 5,
-    gcTime: 1000 * 60 * 10,
+    ...QUERY_STABLE,
     refetchOnMount: 'always' as const,
   });
 

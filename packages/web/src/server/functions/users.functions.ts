@@ -5,7 +5,7 @@ import {
   deleteAccount,
   fetchMyProjects,
   fetchUserProjects,
-  searchUsers,
+  searchUsers as searchUsersImpl,
   syncProfile,
 } from './users.server';
 
@@ -24,7 +24,7 @@ export const getUserProjects = createServerFn({ method: 'GET' })
     fetchUserProjects(db, session, data.userId),
   );
 
-export const searchUsersQuery = createServerFn({ method: 'GET' })
+export const searchUsers = createServerFn({ method: 'GET' })
   .middleware([authMiddleware])
   .inputValidator(
     z.object({
@@ -34,7 +34,7 @@ export const searchUsersQuery = createServerFn({ method: 'GET' })
     }),
   )
   .handler(async ({ data, context: { db, session, request } }) =>
-    searchUsers(db, session, request, data),
+    searchUsersImpl(db, session, request, data),
   );
 
 export const syncUserProfile = createServerFn({ method: 'POST' })

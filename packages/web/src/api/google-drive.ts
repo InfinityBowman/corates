@@ -3,7 +3,7 @@ import {
   getDriveStatus,
   disconnectDrive,
   getDrivePickerToken,
-  importFromDriveAction,
+  importFromDrive,
 } from '@/server/functions/google-drive.functions';
 
 interface DriveStatus {
@@ -42,7 +42,7 @@ export async function disconnectGoogleDrive() {
 }
 
 export async function importFromGoogleDrive(fileId: string, projectId: string, studyId: string) {
-  return importFromDriveAction({
+  return importFromDrive({
     data: { fileId, projectId, studyId },
   }) as Promise<ImportSuccess>;
 }

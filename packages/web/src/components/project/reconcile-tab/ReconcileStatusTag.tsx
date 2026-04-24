@@ -3,8 +3,7 @@
  */
 
 import { useMemo } from 'react';
-import { CHECKLIST_STATUS } from '@/constants/checklist-status';
-import { isReconciledChecklist } from '@/lib/checklist-domain.js';
+import { CHECKLIST_STATUS, isReconciledChecklist } from '@corates/shared/checklists';
 
 interface ReconcileStatusTagProps {
   study: any;

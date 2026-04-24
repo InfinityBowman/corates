@@ -28,7 +28,7 @@ import {
   ArrowRightLeftIcon,
   CheckCircleIcon,
 } from 'lucide-react';
-import { getChecklistCount } from '@/lib/checklist-domain.js';
+import { getChecklistCount } from '@corates/shared/checklists';
 
 import { ProjectHeader } from './ProjectHeader';
 import { PdfPreviewPanel } from './PdfPreviewPanel';

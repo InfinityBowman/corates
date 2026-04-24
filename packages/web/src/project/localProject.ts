@@ -12,7 +12,7 @@
 
 import * as Y from 'yjs';
 import { createChecklistOfType, CHECKLIST_TYPES } from '@/checklist-registry';
-import { CHECKLIST_STATUS } from '@/constants/checklist-status';
+import { CHECKLIST_STATUS } from '@corates/shared/checklists';
 import { AMSTAR2Handler } from '@/primitives/useProject/checklists/handlers/amstar2';
 import { ROBINSIHandler } from '@/primitives/useProject/checklists/handlers/robins-i';
 import { ROB2Handler } from '@/primitives/useProject/checklists/handlers/rob2';

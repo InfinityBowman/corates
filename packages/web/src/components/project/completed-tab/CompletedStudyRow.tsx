@@ -9,8 +9,11 @@ import { Collapsible, CollapsibleContent } from '@/components/ui/collapsible';
 import { sortStudyPdfs, getCitationLine } from '../study-utils';
 import { getChecklistMetadata } from '@/checklist-registry';
 import { PdfListItem } from '@/components/pdf/PdfListItem';
-import { getCompletedChecklistsByOutcome } from '@/lib/checklist-domain.js';
-import { getStatusLabel, getStatusStyle } from '@/constants/checklist-status';
+import {
+  getCompletedChecklistsByOutcome,
+  getStatusLabel,
+  getStatusStyle,
+} from '@corates/shared/checklists';
 import { PreviousReviewersView } from './PreviousReviewersView';
 import { CompletedOutcomeRow } from './CompletedOutcomeRow';
 

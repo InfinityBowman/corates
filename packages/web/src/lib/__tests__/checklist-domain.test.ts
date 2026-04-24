@@ -20,8 +20,8 @@ import {
   isDualReviewerStudy,
   getReconciliationChecklistsByOutcome,
   getReadyReconciliationPairs,
-} from '../checklist-domain.js';
-import { CHECKLIST_STATUS } from '@/constants/checklist-status';
+  CHECKLIST_STATUS,
+} from '@corates/shared/checklists';
 
 // Test fixtures
 const createChecklist = (overrides = {}) => ({

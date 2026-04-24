@@ -4,7 +4,7 @@
 
 import { useState, useMemo } from 'react';
 import { getChecklistMetadata } from '@/checklist-registry';
-import { getStatusLabel, getStatusStyle } from '@/constants/checklist-status';
+import { getStatusLabel, getStatusStyle } from '@corates/shared/checklists';
 import { PreviousReviewersView } from './PreviousReviewersView';
 
 interface CompletedOutcomeRowProps {

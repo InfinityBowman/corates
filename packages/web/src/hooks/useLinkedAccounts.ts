@@ -4,6 +4,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { queryKeys } from '@/lib/queryKeys';
+import { QUERY_STABLE } from '@/lib/queryPresets';
 import { authClient, authFetch } from '@/api/auth-client';
 import { useAuthStore, selectIsLoggedIn } from '@/stores/authStore';
 
@@ -26,9 +27,7 @@ export function useLinkedAccounts() {
     queryKey: queryKeys.accounts.linked,
     queryFn: fetchLinkedAccounts,
     enabled: isLoggedIn,
-    staleTime: 1000 * 60 * 5,
-    gcTime: 1000 * 60 * 30,
-    retry: 1,
+    ...QUERY_STABLE,
   });
 
   return {

@@ -1,7 +1,7 @@
 import { createServerFn } from '@tanstack/react-start';
 import { z } from 'zod';
 import { authMiddleware } from '@/server/middleware/auth';
-import { proxyPdfFetch } from './pdf-proxy.server';
+import { proxyPdfFetch as proxyPdfFetchImpl } from './pdf-proxy.server';
 
 function arrayBufferToBase64(buffer: ArrayBuffer): string {
   const bytes = new Uint8Array(buffer);
@@ -12,10 +12,10 @@ function arrayBufferToBase64(buffer: ArrayBuffer): string {
   return btoa(binary);
 }
 
-export const proxyPdfFetchAction = createServerFn({ method: 'POST' })
+export const proxyPdfFetch = createServerFn({ method: 'POST' })
   .middleware([authMiddleware])
   .inputValidator(z.object({ url: z.string().url() }))
   .handler(async ({ data, context: { session } }) => {
-    const buffer = await proxyPdfFetch(session, data);
+    const buffer = await proxyPdfFetchImpl(session, data);
     return { data: arrayBufferToBase64(buffer), byteLength: buffer.byteLength };
   });

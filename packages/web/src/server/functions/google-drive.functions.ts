@@ -5,7 +5,7 @@ import {
   getStatus,
   disconnectGoogle,
   getPickerToken,
-  importFromDrive,
+  importFromDrive as importFromDriveImpl,
 } from './google-drive.server';
 
 export const getDriveStatus = createServerFn({ method: 'GET' })
@@ -20,7 +20,7 @@ export const getDrivePickerToken = createServerFn({ method: 'GET' })
   .middleware([authMiddleware])
   .handler(async ({ context: { db, session } }) => getPickerToken(db, session));
 
-export const importFromDriveAction = createServerFn({ method: 'POST' })
+export const importFromDrive = createServerFn({ method: 'POST' })
   .middleware([authMiddleware])
   .inputValidator(
     z.object({
@@ -29,4 +29,4 @@ export const importFromDriveAction = createServerFn({ method: 'POST' })
       studyId: z.string().min(1),
     }),
   )
-  .handler(async ({ data, context: { db, session } }) => importFromDrive(db, session, data));
+  .handler(async ({ data, context: { db, session } }) => importFromDriveImpl(db, session, data));

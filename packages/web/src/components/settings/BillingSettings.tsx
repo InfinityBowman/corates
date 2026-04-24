@@ -54,7 +54,7 @@ function UsageSkeleton() {
 }
 
 export function BillingSettings() {
-  const { subscription, loading, refetch, quotas } = useSubscription();
+  const { subscription, isLoading: loading, refetch, quotas } = useSubscription();
   useMembers();
   const [portalLoading, setPortalLoading] = useState(false);
 

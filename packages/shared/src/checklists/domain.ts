@@ -8,6 +8,12 @@
 import { CHECKLIST_STATUS } from './status.js';
 import type { Study, ChecklistMetadata } from './types.js';
 
+export interface ChecklistGroup {
+  outcomeId: string | null;
+  type: string;
+  checklists: ChecklistMetadata[];
+}
+
 /**
  * Checks if a checklist is a reconciled checklist
  * Reconciled checklists are identified by having no assignedTo (null) since they represent consensus
@@ -118,19 +124,52 @@ export function shouldShowInTab(
 
       const checklists = study.checklists || [];
 
-      // If there's a finalized reconciled checklist, reconciliation is complete - don't show in reconcile tab
-      const hasFinalizedReconciled = checklists.some(
-        c => isReconciledChecklist(c) && c.status === CHECKLIST_STATUS.FINALIZED,
-      );
-      if (hasFinalizedReconciled) return false;
-
-      // Check for individual reviewer checklists awaiting reconciliation
       const awaitingReconcile = checklists.filter(
         c => !isReconciledChecklist(c) && c.status === CHECKLIST_STATUS.REVIEWER_COMPLETED,
       );
 
-      // Show if there are 1 or 2 individual checklists awaiting reconciliation
-      return awaitingReconcile.length >= 1 && awaitingReconcile.length <= 2;
+      if (awaitingReconcile.length === 0) return false;
+
+      // Group by outcomeId (for ROB2/ROBINS_I) or by type (for AMSTAR2)
+      const groups = new Map<
+        string,
+        { checklists: ChecklistMetadata[]; outcomeId: string | null; type: string }
+      >();
+      for (const checklist of awaitingReconcile) {
+        const groupKey = checklist.outcomeId || `type:${checklist.type}`;
+        if (!groups.has(groupKey)) {
+          groups.set(groupKey, {
+            checklists: [],
+            outcomeId: checklist.outcomeId ?? null,
+            type: checklist.type,
+          });
+        }
+        groups.get(groupKey)!.checklists.push(checklist);
+      }
+
+      // Check if any group has a pair ready for reconciliation
+      // AND doesn't already have a finalized reconciled checklist for that outcome
+      for (const group of groups.values()) {
+        if (group.checklists.length === 2) {
+          const hasFinalized = checklists.some(
+            c =>
+              isReconciledChecklist(c) &&
+              c.status === CHECKLIST_STATUS.FINALIZED &&
+              c.type === group.type &&
+              (c.outcomeId ?? null) === group.outcomeId,
+          );
+          if (!hasFinalized) return true;
+        }
+      }
+
+      // Also show if any group has 1 checklist waiting (waiting for second reviewer)
+      for (const group of groups.values()) {
+        if (group.checklists.length === 1) {
+          return true;
+        }
+      }
+
+      return false;
     }
 
     case 'completed': {
@@ -280,4 +319,103 @@ export function getOriginalReviewerChecklists(
   if (checklist2) result.push(checklist2);
 
   return result;
+}
+
+/**
+ * Groups reconciliation-eligible checklists by outcome (or by type for AMSTAR2)
+ */
+export function getReconciliationChecklistsByOutcome(
+  study: Study | null | undefined,
+): ChecklistGroup[] {
+  if (!study) return [];
+
+  const checklists = study.checklists || [];
+
+  const awaitingReconcile = checklists.filter(
+    c => !isReconciledChecklist(c) && c.status === CHECKLIST_STATUS.REVIEWER_COMPLETED,
+  );
+
+  const groups = new Map<string, ChecklistGroup>();
+
+  for (const checklist of awaitingReconcile) {
+    const groupKey = checklist.outcomeId || `type:${checklist.type}`;
+
+    if (!groups.has(groupKey)) {
+      groups.set(groupKey, {
+        outcomeId: checklist.outcomeId || null,
+        type: checklist.type,
+        checklists: [],
+      });
+    }
+
+    groups.get(groupKey)!.checklists.push(checklist);
+  }
+
+  return Array.from(groups.values());
+}
+
+/**
+ * Gets reconciliation pairs that are ready (have exactly 2 checklists)
+ */
+export function getReadyReconciliationPairs(study: Study | null | undefined): ChecklistGroup[] {
+  const groups = getReconciliationChecklistsByOutcome(study);
+  return groups.filter(g => g.checklists.length === 2);
+}
+
+/**
+ * Finds a reconciled checklist for a specific outcome
+ */
+export function findReconciledChecklistForOutcome(
+  study: Study | null | undefined,
+  outcomeId: string | null,
+  type: string,
+  excludeId: string | null = null,
+): ChecklistMetadata | null {
+  if (!study || !study.checklists) return null;
+
+  return (
+    study.checklists.find(c => {
+      if (!isReconciledChecklist(c)) return false;
+      if (excludeId && c.id === excludeId) return false;
+      if (c.type !== type) return false;
+      return c.outcomeId === outcomeId;
+    }) || null
+  );
+}
+
+/**
+ * Derives a consistent key for outcome-based grouping
+ */
+export function getOutcomeKey(outcomeId: string | null | undefined, type: string): string {
+  return outcomeId || `type:${type}`;
+}
+
+/**
+ * Groups completed checklists by outcome
+ */
+export function getCompletedChecklistsByOutcome(study: Study | null | undefined): ChecklistGroup[] {
+  if (!study) return [];
+
+  const checklists = study.checklists || [];
+  const completed = checklists.filter(c => c.status === CHECKLIST_STATUS.FINALIZED);
+
+  if (completed.length === 0) return [];
+
+  const groups = new Map<string, ChecklistGroup>();
+
+  for (const checklist of completed) {
+    const groupKey = getOutcomeKey(checklist.outcomeId, checklist.type);
+
+    if (!groups.has(groupKey)) {
+      groups.set(groupKey, {
+        outcomeId: checklist.outcomeId || null,
+        type: checklist.type,
+        checklists: [],
+      });
+    }
+
+    groups.get(groupKey)!.checklists.push(checklist);
+  }
+
+  return Array.from(groups.values());
 }

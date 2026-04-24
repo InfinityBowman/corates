@@ -10,7 +10,7 @@
  */
 
 import * as Y from 'yjs';
-import { getOutcomeKey } from '@/lib/checklist-domain.js';
+import { getOutcomeKey } from '@corates/shared/checklists';
 
 export interface ReconciliationProgressData {
   checklist1Id: string;

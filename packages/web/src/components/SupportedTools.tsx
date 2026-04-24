@@ -1,5 +1,5 @@
 import { Link } from '@tanstack/react-router';
-import { getAllTools } from '../lib/tool-content';
+import { getAllTools } from '@/lib/tool-content';
 
 export default function SupportedTools() {
   const tools = getAllTools().map(tool => ({

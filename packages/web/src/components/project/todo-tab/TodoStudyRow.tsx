@@ -22,7 +22,7 @@ import {
 import { getChecklistMetadata, CHECKLIST_TYPES } from '@/checklist-registry';
 import { PdfListItem } from '@/components/pdf/PdfListItem';
 import { ChecklistForm } from './ChecklistForm';
-import { getStatusLabel, getStatusStyle } from '@/constants/checklist-status';
+import { getStatusLabel, getStatusStyle } from '@corates/shared/checklists';
 import { useProjectStore } from '@/stores/projectStore';
 import { useProjectContext } from '../ProjectContext';
 

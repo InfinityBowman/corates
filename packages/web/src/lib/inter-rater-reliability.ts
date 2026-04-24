@@ -5,10 +5,10 @@
  * across dual-reviewer studies.
  */
 
-import { CHECKLIST_STATUS } from '@/constants/checklist-status';
+import { CHECKLIST_STATUS } from '@corates/shared/checklists';
+import type { Study } from '@corates/shared/checklists';
 import { getAnswers } from '@/components/checklist/AMSTAR2Checklist/checklist.js';
 import { getQuestionKeys } from '@/components/checklist/AMSTAR2Checklist/checklist-compare.js';
-import type { Study } from '@/lib/checklist-domain';
 
 interface ChecklistData {
   answers?: Record<string, unknown>;

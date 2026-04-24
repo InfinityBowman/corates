@@ -11,7 +11,7 @@ import type { RobinsIKey, RobinsIAnswers } from '@corates/shared/checklists/robi
 import { ROB2_KEY_SCHEMAS, isRob2Key } from '@corates/shared/checklists/rob2';
 import type { Rob2Key, Rob2Answers } from '@corates/shared/checklists/rob2';
 import { createChecklistOfType, CHECKLIST_TYPES } from '@/checklist-registry';
-import { CHECKLIST_STATUS } from '@/constants/checklist-status';
+import { CHECKLIST_STATUS } from '@corates/shared/checklists';
 import { createCommonOperations } from './common';
 import { AMSTAR2Handler } from './handlers/amstar2';
 import { ROBINSIHandler } from './handlers/robins-i';

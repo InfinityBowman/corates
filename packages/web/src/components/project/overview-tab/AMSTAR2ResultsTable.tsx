@@ -3,7 +3,7 @@
  */
 
 import { useMemo } from 'react';
-import { CHECKLIST_STATUS } from '@/constants/checklist-status.js';
+import { CHECKLIST_STATUS } from '@corates/shared/checklists';
 import { ScoreTag, ScoreTooltip } from '@/components/checklist/ScoreTag';
 
 interface AMSTAR2ResultsTableProps {

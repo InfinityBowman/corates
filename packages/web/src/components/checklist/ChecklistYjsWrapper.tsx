@@ -14,8 +14,11 @@ import { buildChecklistAnswerInput } from '@/primitives/useProject/checklists';
 import { useProjectStore, selectConnectionPhase } from '@/stores/projectStore';
 import { useAuthStore, selectUser } from '@/stores/authStore';
 import { ACCESS_DENIED_ERRORS } from '@/constants/errors.js';
-import { CHECKLIST_STATUS, isEditable } from '@/constants/checklist-status.js';
-import { getNextStatusForCompletion } from '@/lib/checklist-domain.js';
+import {
+  CHECKLIST_STATUS,
+  isEditable,
+  getNextStatusForCompletion,
+} from '@corates/shared/checklists';
 import { downloadPdf, uploadPdf, deletePdf, getPdfUrl } from '@/api/pdf-api';
 import { getCachedPdf, cachePdf } from '@/primitives/pdfCache.js';
 import { showToast } from '@/components/ui/toast';

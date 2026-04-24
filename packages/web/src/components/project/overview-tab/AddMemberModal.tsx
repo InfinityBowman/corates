@@ -26,7 +26,7 @@ import {
 } from '@/components/ui/select';
 import { isUnlimitedQuota } from '@corates/shared/plans';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
-import { searchUsersQuery } from '@/server/functions/users.functions';
+import { searchUsers } from '@/server/functions/users.functions';
 import { addMemberToProject } from '@/server/functions/org-projects.functions';
 import type { UserSearchResult } from '@/server/functions/users.server';
 
@@ -77,7 +77,7 @@ export function AddMemberModal({
       if (cancelled) return;
       setSearching(true);
       try {
-        const results = await searchUsersQuery({
+        const results = await searchUsers({
           data: { q: debouncedQuery, projectId: projectId || undefined },
         });
         if (!cancelled) setSearchResults(results);

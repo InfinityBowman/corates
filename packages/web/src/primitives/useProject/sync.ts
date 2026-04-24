@@ -7,7 +7,7 @@ import * as Y from 'yjs';
 import { useProjectStore } from '@/stores/projectStore';
 import { scoreChecklistOfType } from '@/checklist-registry/index';
 import { amstar2 } from '@corates/shared';
-import { CHECKLIST_STATUS } from '@/constants/checklist-status';
+import { CHECKLIST_STATUS } from '@corates/shared/checklists';
 
 const getAMSTAR2Answers = amstar2.getAnswers;
 

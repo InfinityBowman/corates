@@ -8,7 +8,7 @@ import { ArrowRightLeftIcon } from 'lucide-react';
 import { ReconcileStudyRow } from './ReconcileStudyRow';
 import { useProjectStore, selectStudies } from '@/stores/projectStore';
 import { useProjectContext } from '../ProjectContext';
-import { getStudiesForTab } from '@/lib/checklist-domain.js';
+import { getStudiesForTab } from '@corates/shared/checklists';
 import { project } from '@/project';
 
 export function ReconcileTab() {

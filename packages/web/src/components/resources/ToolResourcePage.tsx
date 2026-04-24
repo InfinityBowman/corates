@@ -14,8 +14,8 @@ import {
   QuoteIcon,
   GitBranchIcon,
 } from 'lucide-react';
-import { config } from '../../lib/config';
-import type { ToolContent, ScoreLevel, DomainSummary, FaqEntry } from '../../lib/tool-content';
+import { config } from '@/lib/config';
+import type { ToolContent, ScoreLevel, DomainSummary, FaqEntry } from '@/lib/tool-content';
 
 const COLOR_CONFIG = {
   green: {

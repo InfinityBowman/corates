@@ -143,7 +143,7 @@ export const getInvitations = createServerFn({ method: 'GET' })
     listProjectInvitations(session, db, data.orgId as OrgId, data.projectId as ProjectId),
   );
 
-export const createInvitationAction = createServerFn({ method: 'POST' })
+export const createInvitation = createServerFn({ method: 'POST' })
   .middleware([authMiddleware])
   .inputValidator(
     z.object({

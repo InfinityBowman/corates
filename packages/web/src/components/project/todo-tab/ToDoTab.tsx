@@ -14,7 +14,7 @@ import {
 } from '@/stores/projectStore';
 import { useAuthStore, selectUser } from '@/stores/authStore';
 import { useProjectContext } from '../ProjectContext';
-import { getStudiesForTab } from '@/lib/checklist-domain.js';
+import { getStudiesForTab } from '@corates/shared/checklists';
 import { project } from '@/project';
 
 export function ToDoTab() {

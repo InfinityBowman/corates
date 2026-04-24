@@ -8,7 +8,7 @@ import { SettingsIcon } from 'lucide-react';
 import { AMSTARRobvis } from '@/components/charts/AMSTARRobvis';
 import { AMSTARDistribution } from '@/components/charts/AMSTARDistribution';
 import { ChartSettingsModal } from '@/components/charts/ChartSettingsModal';
-import { CHECKLIST_STATUS } from '@/constants/checklist-status.js';
+import { CHECKLIST_STATUS } from '@corates/shared/checklists';
 
 /**
  * Export an SVG element as a file (framework-agnostic utility)

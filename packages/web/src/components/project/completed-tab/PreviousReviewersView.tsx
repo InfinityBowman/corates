@@ -16,7 +16,7 @@ import {
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useProjectContext } from '@/components/project/ProjectContext';
 import { connectionPool } from '@/project/ConnectionPool';
-import { getOriginalReviewerChecklists } from '@/lib/checklist-domain.js';
+import { getOriginalReviewerChecklists } from '@corates/shared/checklists';
 import { getChecklistMetadata } from '@/checklist-registry/index';
 import { GenericChecklist } from '@/components/checklist/GenericChecklist';
 

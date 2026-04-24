@@ -4,6 +4,7 @@
 
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { queryKeys } from '@/lib/queryKeys';
+import { QUERY_FRESH } from '@/lib/queryPresets';
 import {
   isSubscriptionActive,
   hasEntitlement as checkEntitlement,
@@ -36,11 +37,7 @@ export function useSubscription() {
     queryKey: queryKeys.subscription.current,
     queryFn: () => getSubscription(),
     enabled: isLoggedIn,
-    staleTime: 1000 * 60 * 2,
-    gcTime: 1000 * 60 * 30,
-    retry: 1,
-    refetchOnWindowFocus: true,
-    refetchOnReconnect: true,
+    ...QUERY_FRESH,
   });
 
   // refetchOnWindowFocus: true (above) handles visibility change refetching natively
@@ -65,7 +62,7 @@ export function useSubscription() {
 
   return {
     subscription,
-    loading: query.isPending && !query.data,
+    isLoading: query.isPending && !query.data,
     isFetching: query.isFetching,
     error: query.error,
     subscriptionFetchFailed,
