@@ -172,7 +172,6 @@ describe('sync manager benchmark', () => {
     sm.syncFromYDocImmediate();
     const ms = performance.now() - start;
 
-    // eslint-disable-next-line no-console
     console.log(`Full rebuild (20 studies, 40 checklists): ${ms.toFixed(2)}ms`);
     expect(ms).toBeLessThan(200);
 
@@ -198,7 +197,6 @@ describe('sync manager benchmark', () => {
     domain1.set('judgement', 'High');
     const ms = performance.now() - start;
 
-    // eslint-disable-next-line no-console
     console.log(`Incremental sync (1 edit, 20-study project): ${ms.toFixed(2)}ms`);
     expect(ms).toBeLessThan(50);
 
@@ -226,7 +224,6 @@ describe('sync manager benchmark', () => {
     }
     const ms = performance.now() - start;
 
-    // eslint-disable-next-line no-console
     console.log(`Rapid edits (5 studies touched, 20-study project): ${ms.toFixed(2)}ms`);
     expect(ms).toBeLessThan(100);
 

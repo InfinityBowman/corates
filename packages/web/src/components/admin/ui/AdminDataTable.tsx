@@ -54,6 +54,7 @@ export function AdminDataTable<T>({
 }: AdminDataTableProps<T>) {
   const [sorting, setSorting] = useState<SortingState>([]);
 
+  // eslint-disable-next-line react-hooks/incompatible-library -- TanStack Table is not compatible with React Compiler memoization
   const table = useReactTable({
     data: data || [],
     columns: columns || [],

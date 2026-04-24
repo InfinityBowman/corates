@@ -249,6 +249,7 @@ export default [
   {
     // Web package - React with hooks linting
     files: ['packages/web/**/*.{js,jsx,ts,tsx}'],
+    ignores: ['packages/web/e2e/**'],
     plugins: {
       'react-hooks': reactHooks,
     },
@@ -300,6 +301,7 @@ export default [
       '**/.localflare/**',
       '.claude/skills/**/examples/**',
       'packages/ai/**',
+      '**/worker-configuration.d.ts',
     ],
   },
 ];
