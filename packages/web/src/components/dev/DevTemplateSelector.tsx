@@ -7,7 +7,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { DownloadIcon, CheckIcon, AlertCircleIcon, ArrowLeftIcon } from 'lucide-react';
-import { API_BASE } from '@/config/api';
+import { getDevTemplates, applyTemplate } from '@/server/functions/dev-tools.functions';
 import { DevUserMapping, TEMPLATE_USER_IDS } from './DevUserMapping';
 
 interface ActionResult {
@@ -49,27 +49,14 @@ export function DevTemplateSelector({ projectId, orgId }: DevTemplateSelectorPro
     setTemplatesLoading(true);
     setTemplatesError(null);
 
-    const url = `${API_BASE}/api/orgs/${orgId}/projects/${projectId}/dev/templates`;
-    console.log('[DevPanel] Fetching templates from:', url);
-
-    fetch(url, { credentials: 'include' })
-      .then(async res => {
-        if (!res.ok) {
-          const errorText = await res.text();
-          console.error('[DevPanel] Templates fetch failed:', res.status, errorText);
-          throw new Error(`Failed to fetch templates: ${res.status}`);
-        }
-        return res.json();
-      })
-      .then((data: TemplatesData) => {
+    getDevTemplates({ data: { orgId, projectId } })
+      .then((data) => {
         if (!cancelled) {
-          console.log('[DevPanel] Templates loaded:', data);
-          setTemplates(data);
+          setTemplates(data as TemplatesData);
         }
       })
       .catch((err: Error) => {
         if (!cancelled) {
-          console.error('[DevPanel] Templates fetch error:', err);
           setTemplatesError(err.message);
         }
       })
@@ -112,39 +99,19 @@ export function DevTemplateSelector({ projectId, orgId }: DevTemplateSelectorPro
       setResult(null);
 
       try {
-        const url = new URL(
-          `${API_BASE}/api/orgs/${orgId}/projects/${projectId}/dev/apply-template`,
-        );
-        url.searchParams.set('template', template);
-        url.searchParams.set('mode', applyMode);
-
-        console.log('[DevPanel] Applying template:', url.toString());
-
-        const body: Record<string, unknown> = {};
-        if (userMapping && Object.keys(userMapping).length > 0) {
-          body.userMapping = userMapping;
-        }
-
-        const res = await fetch(url.toString(), {
-          method: 'POST',
-          credentials: 'include',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(body),
+        await applyTemplate({
+          data: {
+            orgId,
+            projectId,
+            template,
+            mode: applyMode,
+            ...(userMapping && Object.keys(userMapping).length > 0 ? { userMapping } : {}),
+          },
         });
-
-        if (!res.ok) {
-          const err = await res.json();
-          console.error('[DevPanel] Apply template failed:', err);
-          throw new Error(err.error || 'Failed to apply template');
-        }
-
-        const data = await res.json();
-        console.log('[DevPanel] Template applied:', data);
         setResult({ success: true, message: `Applied "${template}" template` });
         setSelectedTemplate('');
         setStep('select');
       } catch (err) {
-        console.error('[DevPanel] Apply template error:', err);
         setResult({ success: false, message: (err as Error).message });
       } finally {
         setIsApplying(false);

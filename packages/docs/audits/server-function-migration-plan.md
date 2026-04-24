@@ -117,18 +117,20 @@ New files: `org-projects.server.ts`, `org-projects.functions.ts`
 
 Tests: `projects.server.test.ts`, `members.server.test.ts`, `invitations.server.test.ts`
 
-## Batch 8: Orgs Dev Tools + Studies (7 routes)
+## Batch 8: Orgs Dev Tools + Studies (7 routes) -- DONE
 
-- [ ] `orgs/$orgId/projects/$projectId/dev/templates.ts` (GET - list templates)
-- [ ] `orgs/$orgId/projects/$projectId/dev/apply-template.ts` (POST - apply template)
-- [ ] `orgs/$orgId/projects/$projectId/dev/import.ts` (POST - import project data)
-- [ ] `orgs/$orgId/projects/$projectId/dev/reset.ts` (POST - reset project)
-- [ ] `orgs/$orgId/projects/$projectId/dev/add-study.ts` (POST - add study)
-- [ ] `orgs/$orgId/projects/$projectId/studies/$studyId/pdfs.ts` (GET/POST - list/upload PDFs)
+New files: `dev-tools.server.ts`, `dev-tools.functions.ts`
 
-Tests: `apply-template.server.test.ts`, `pdfs.server.test.ts`
+- [x] `orgs/$orgId/projects/$projectId/dev/templates.ts` (GET - list templates)
+- [x] `orgs/$orgId/projects/$projectId/dev/apply-template.ts` (POST - apply template)
+- [x] `orgs/$orgId/projects/$projectId/dev/import.ts` (POST - import project data)
+- [x] `orgs/$orgId/projects/$projectId/dev/reset.ts` (POST - reset project)
+- [x] `orgs/$orgId/projects/$projectId/dev/add-study.ts` (POST - add study) -- route kept for e2e helpers
+- [ ] `orgs/$orgId/projects/$projectId/studies/$studyId/pdfs.ts` (GET/POST - list/upload PDFs) -- stays as HTTP (FormData upload, no frontend GET consumer)
 
-Note: `dev/export.ts` stays as HTTP route (binary download). `pdfs/$fileName.ts` stays as HTTP route (serves PDF files).
+Tests: `apply-template.server.test.ts` removed (Zod handles validation). `pdfs.server.test.ts` unchanged.
+
+Note: `dev/export.ts` stays as HTTP route (binary download). `pdfs/$fileName.ts` stays as HTTP route (serves PDF files). `dev/add-study.ts` route kept alongside server function because e2e `seedStudies` helper calls it via HTTP.
 
 ## Batch 9: Admin Users (8 routes)
 
@@ -217,7 +219,7 @@ Tests: `billing-observability.server.test.ts`, `stripe-tools.server.test.ts`, `d
 | Batch 5: Misc | 3 | Done |
 | Batch 6: Orgs Core | 5 | Done |
 | Batch 7: Orgs Projects | 6 | Done |
-| Batch 8: Orgs Dev + Studies | 7 | Pending |
+| Batch 8: Orgs Dev + Studies | 5 migrated, 1 kept (e2e), 1 stays HTTP | Done |
 | Batch 9: Admin Users | 8 | Pending |
 | Batch 10: Admin Orgs | 9-10 | Pending |
 | Batch 11: Admin Projects + Stats | 10-11 | Pending |

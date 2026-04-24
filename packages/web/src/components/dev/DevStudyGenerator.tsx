@@ -8,7 +8,7 @@
 import { useState } from 'react';
 import { PlusIcon, CheckIcon, AlertCircleIcon } from 'lucide-react';
 import { useProjectStore } from '@/stores/projectStore';
-import { API_BASE } from '@/config/api';
+import { addStudyAction } from '@/server/functions/dev-tools.functions';
 
 interface ActionResult {
   success: boolean;
@@ -75,31 +75,20 @@ export function DevStudyGenerator({ projectId, orgId }: DevStudyGeneratorProps) 
     setResult(null);
 
     try {
-      const url = `${API_BASE}/api/orgs/${orgId}/projects/${projectId}/dev/add-study`;
-      const payload: Record<string, unknown> = {
-        type,
-        fillMode,
-        reviewer1,
-        reviewer2,
-        reconcile,
-      };
-      if (requiresOutcome) {
-        payload.outcomeId = outcomeId === '__auto__' ? null : outcomeId;
-      }
-
-      const res = await fetch(url, {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.error || `Failed (${res.status})`);
-      }
-
-      const data = await res.json();
+      const data = (await addStudyAction({
+        data: {
+          orgId,
+          projectId,
+          type,
+          fillMode,
+          reviewer1,
+          reviewer2,
+          reconcile,
+          ...(requiresOutcome
+            ? { outcomeId: outcomeId === '__auto__' ? null : outcomeId }
+            : {}),
+        },
+      })) as { checklistIds?: string[]; outcomeId?: string };
       const checklistCount = data.checklistIds?.length || 0;
       setResult({
         success: true,
