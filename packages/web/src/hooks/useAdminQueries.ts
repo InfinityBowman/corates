@@ -25,9 +25,7 @@ import {
   getAdminBillingLedgerAction,
   getAdminBillingStuckStatesAction,
 } from '@/server/functions/admin-billing.functions';
-import {
-  listAdminStorageDocumentsAction,
-} from '@/server/functions/admin-storage.functions';
+import { listAdminStorageDocumentsAction } from '@/server/functions/admin-storage.functions';
 import {
   listAdminDatabaseTablesAction,
   getAdminTableSchemaAction,

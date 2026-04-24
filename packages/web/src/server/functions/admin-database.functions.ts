@@ -18,9 +18,7 @@ export const listAdminDatabaseTablesAction = createServerFn({ method: 'GET' })
 export const getAdminTableSchemaAction = createServerFn({ method: 'GET' })
   .middleware([authMiddleware])
   .inputValidator(z.object({ tableName: z.string() }))
-  .handler(async ({ data, context: { session } }) =>
-    getAdminTableSchema(session, data.tableName),
-  );
+  .handler(async ({ data, context: { session } }) => getAdminTableSchema(session, data.tableName));
 
 export const getAdminTableRowsAction = createServerFn({ method: 'GET' })
   .middleware([authMiddleware])
@@ -55,6 +53,4 @@ export const getAdminPdfsByUserAction = createServerFn({ method: 'GET' })
 export const getAdminRecentUploadsAction = createServerFn({ method: 'GET' })
   .middleware([authMiddleware])
   .inputValidator(z.object({ limit: z.number().optional() }))
-  .handler(async ({ data, context: { session, db } }) =>
-    getAdminRecentUploads(session, db, data),
-  );
+  .handler(async ({ data, context: { session, db } }) => getAdminRecentUploads(session, db, data));

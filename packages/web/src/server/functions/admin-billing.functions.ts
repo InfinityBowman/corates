@@ -12,9 +12,7 @@ export const getAdminBillingLedgerAction = createServerFn({ method: 'GET' })
       type: z.string().optional(),
     }),
   )
-  .handler(async ({ data, context: { session, db } }) =>
-    getAdminBillingLedger(session, db, data),
-  );
+  .handler(async ({ data, context: { session, db } }) => getAdminBillingLedger(session, db, data));
 
 export const getAdminBillingStuckStatesAction = createServerFn({ method: 'GET' })
   .middleware([authMiddleware])

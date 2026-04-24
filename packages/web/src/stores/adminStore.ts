@@ -33,9 +33,7 @@ import {
   removeAdminProjectMemberAction,
   deleteAdminProjectAction,
 } from '@/server/functions/admin-projects.functions';
-import {
-  deleteAdminStorageDocumentsAction,
-} from '@/server/functions/admin-storage.functions';
+import { deleteAdminStorageDocumentsAction } from '@/server/functions/admin-storage.functions';
 
 interface SessionResponse {
   user?: { role?: string; [key: string]: unknown };

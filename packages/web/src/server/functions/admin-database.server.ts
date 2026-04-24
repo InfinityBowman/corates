@@ -8,10 +8,9 @@ import type { Session } from '@/server/middleware/auth';
 
 function assertAdmin(session: Session) {
   if (!isAdminUser(session.user as { role?: string | null })) {
-    throw Response.json(
-      createDomainError(AUTH_ERRORS.FORBIDDEN, { reason: 'admin_required' }),
-      { status: 403 },
-    );
+    throw Response.json(createDomainError(AUTH_ERRORS.FORBIDDEN, { reason: 'admin_required' }), {
+      status: 403,
+    });
   }
 }
 
@@ -48,18 +47,16 @@ export function getAdminTableSchema(session: Session, tableName: string) {
   assertAdmin(session);
 
   if (!isAllowedTable(tableName)) {
-    throw Response.json(
-      createDomainError(AUTH_ERRORS.FORBIDDEN, { reason: 'table_not_allowed' }),
-      { status: 400 },
-    );
+    throw Response.json(createDomainError(AUTH_ERRORS.FORBIDDEN, { reason: 'table_not_allowed' }), {
+      status: 400,
+    });
   }
 
   const table = dbSchema[tableName as AllowedTableName];
   if (!table) {
-    throw Response.json(
-      createDomainError(AUTH_ERRORS.FORBIDDEN, { reason: 'table_not_found' }),
-      { status: 400 },
-    );
+    throw Response.json(createDomainError(AUTH_ERRORS.FORBIDDEN, { reason: 'table_not_found' }), {
+      status: 400,
+    });
   }
 
   const columns = Object.entries(table as unknown as Record<string, DrizzleColumn>).map(
@@ -243,22 +240,27 @@ export async function getAdminTableRows(
   const filterValue = params.filterValue?.trim() || undefined;
 
   if (!isAllowedTable(tableName)) {
-    throw Response.json(
-      createDomainError(AUTH_ERRORS.FORBIDDEN, { reason: 'table_not_allowed' }),
-      { status: 400 },
-    );
+    throw Response.json(createDomainError(AUTH_ERRORS.FORBIDDEN, { reason: 'table_not_allowed' }), {
+      status: 400,
+    });
   }
 
   const table = dbSchema[tableName as AllowedTableName];
   if (!table) {
-    throw Response.json(
-      createDomainError(AUTH_ERRORS.FORBIDDEN, { reason: 'table_not_found' }),
-      { status: 400 },
-    );
+    throw Response.json(createDomainError(AUTH_ERRORS.FORBIDDEN, { reason: 'table_not_found' }), {
+      status: 400,
+    });
   }
 
   if (tableName === 'mediaFiles') {
-    return handleMediaFilesQuery(db, { page, limit, orderBy: orderByParam, order, filterBy, filterValue });
+    return handleMediaFilesQuery(db, {
+      page,
+      limit,
+      orderBy: orderByParam,
+      order,
+      filterBy,
+      filterValue,
+    });
   }
 
   const offset = (page - 1) * limit;

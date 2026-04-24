@@ -28,6 +28,4 @@ export const listAdminStorageDocumentsAction = createServerFn({ method: 'GET' })
 export const deleteAdminStorageDocumentsAction = createServerFn({ method: 'POST' })
   .middleware([authMiddleware])
   .inputValidator(z.object({ keys: z.array(z.string()) }))
-  .handler(async ({ data, context: { session } }) =>
-    deleteAdminStorageDocuments(session, data),
-  );
+  .handler(async ({ data, context: { session } }) => deleteAdminStorageDocuments(session, data));

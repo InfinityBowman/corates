@@ -10,10 +10,9 @@ import type { Session } from '@/server/middleware/auth';
 
 function assertAdmin(session: Session) {
   if (!isAdminUser(session.user as { role?: string | null })) {
-    throw Response.json(
-      createDomainError(AUTH_ERRORS.FORBIDDEN, { reason: 'admin_required' }),
-      { status: 403 },
-    );
+    throw Response.json(createDomainError(AUTH_ERRORS.FORBIDDEN, { reason: 'admin_required' }), {
+      status: 403,
+    });
   }
 }
 
@@ -50,7 +49,11 @@ export async function lookupAdminStripeCustomer(
     try {
       const retrieved = await stripe.customers.retrieve(customerId);
       if ((retrieved as Stripe.DeletedCustomer).deleted) {
-        return { found: false as const, message: 'Customer has been deleted in Stripe', customerId };
+        return {
+          found: false as const,
+          message: 'Customer has been deleted in Stripe',
+          customerId,
+        };
       }
       customer = retrieved as Stripe.Customer;
     } catch (err) {
@@ -134,8 +137,7 @@ export async function lookupAdminStripeCustomer(
       phone: customer.phone,
       created: customer.created,
       currency: customer.currency,
-      defaultSource:
-        typeof customer.default_source === 'string' ? customer.default_source : null,
+      defaultSource: typeof customer.default_source === 'string' ? customer.default_source : null,
       invoicePrefix: customer.invoice_prefix,
       balance: customer.balance,
       delinquent: customer.delinquent ?? false,

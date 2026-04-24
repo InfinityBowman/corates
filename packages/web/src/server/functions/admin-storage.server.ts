@@ -7,10 +7,9 @@ import type { Session } from '@/server/middleware/auth';
 
 function assertAdmin(session: Session) {
   if (!isAdminUser(session.user as { role?: string | null })) {
-    throw Response.json(
-      createDomainError(AUTH_ERRORS.FORBIDDEN, { reason: 'admin_required' }),
-      { status: 403 },
-    );
+    throw Response.json(createDomainError(AUTH_ERRORS.FORBIDDEN, { reason: 'admin_required' }), {
+      status: 403,
+    });
   }
 }
 
@@ -85,10 +84,9 @@ export async function listAdminStorageDocuments(
   const requestCursor = params.cursor?.trim() || undefined;
   const rawLimit = params.limit ?? 50;
   if (rawLimit < 1 || rawLimit > 1000) {
-    throw Response.json(
-      createDomainError(AUTH_ERRORS.FORBIDDEN, { reason: 'invalid_limit' }),
-      { status: 400 },
-    );
+    throw Response.json(createDomainError(AUTH_ERRORS.FORBIDDEN, { reason: 'invalid_limit' }), {
+      status: 400,
+    });
   }
   const limit = Math.min(Math.max(rawLimit, 1), 1000);
   const prefix = params.prefix?.trim() || '';
@@ -198,19 +196,15 @@ export async function listAdminStorageDocuments(
   return response;
 }
 
-export async function deleteAdminStorageDocuments(
-  session: Session,
-  params: { keys: string[] },
-) {
+export async function deleteAdminStorageDocuments(session: Session, params: { keys: string[] }) {
   assertAdmin(session);
 
   const { keys } = params;
 
   if (!Array.isArray(keys) || keys.length === 0) {
-    throw Response.json(
-      createDomainError(AUTH_ERRORS.FORBIDDEN, { reason: 'keys_required' }),
-      { status: 400 },
-    );
+    throw Response.json(createDomainError(AUTH_ERRORS.FORBIDDEN, { reason: 'keys_required' }), {
+      status: 400,
+    });
   }
 
   for (const k of keys) {

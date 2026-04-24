@@ -182,7 +182,7 @@ function StripeToolsPage() {
       const query =
         searchType === 'email' ? { email: searchInput.trim() } : { customerId: searchInput.trim() };
 
-      const data = await lookupAdminStripeCustomerAction({ data: query }) as CustomerData;
+      const data = (await lookupAdminStripeCustomerAction({ data: query })) as CustomerData;
       setCustomerData(data);
 
       if (!data.found) {

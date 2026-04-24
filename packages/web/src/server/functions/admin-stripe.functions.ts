@@ -29,9 +29,7 @@ export const createAdminStripePortalLinkAction = createServerFn({ method: 'POST'
       returnUrl: z.string().optional(),
     }),
   )
-  .handler(async ({ data, context: { session } }) =>
-    createAdminStripePortalLink(session, data),
-  );
+  .handler(async ({ data, context: { session } }) => createAdminStripePortalLink(session, data));
 
 export const getAdminStripeCustomerInvoicesAction = createServerFn({ method: 'GET' })
   .middleware([authMiddleware])
@@ -41,9 +39,7 @@ export const getAdminStripeCustomerInvoicesAction = createServerFn({ method: 'GE
       limit: z.number().optional(),
     }),
   )
-  .handler(async ({ data, context: { session } }) =>
-    getAdminStripeCustomerInvoices(session, data),
-  );
+  .handler(async ({ data, context: { session } }) => getAdminStripeCustomerInvoices(session, data));
 
 export const getAdminStripeCustomerPaymentMethodsAction = createServerFn({ method: 'GET' })
   .middleware([authMiddleware])
