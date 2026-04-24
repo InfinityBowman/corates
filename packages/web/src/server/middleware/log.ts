@@ -6,11 +6,10 @@ import type { RequestLogger } from '@corates/workers/logger';
 export type { RequestLogger };
 
 export const logMiddleware = createMiddleware().server(async ({ next, request }) => {
-  const enableStructuredLogs =
-    (env as Record<string, string | undefined>).STRUCTURED_LOGS !== 'false';
+  const enableStructuredLogs = env.STRUCTURED_LOGS !== 'false';
   ensureWorkersLog({
     service: 'web',
-    environment: (env as Record<string, string | undefined>).ENVIRONMENT,
+    environment: env.ENVIRONMENT,
     enabled: enableStructuredLogs,
   });
   const log = createWorkersLogger(request);

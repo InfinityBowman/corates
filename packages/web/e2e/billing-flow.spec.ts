@@ -12,8 +12,9 @@
  *   - Stripe test mode keys configured in .env (run pnpm stripe:setup)
  */
 
-import { test, expect, type Page } from '@playwright/test';
-import { getAuthUrl, cleanupByEmail } from './helpers';
+import { type Page } from '@playwright/test';
+import { test, expect } from './base';
+import { getAuthUrl } from './helpers';
 import { BASE_URL } from './constants';
 
 const TEST_PREFIX = `e2e-billing-${Date.now()}`;
@@ -98,15 +99,13 @@ async function clickPlanButton(page: Page, planName: string) {
 
   // Each plan card is a div.rounded-2xl containing the heading and a button.
   // Use xpath to find the closest card ancestor.
-  const card = page.locator(`xpath=//h3[text()="${planName}"]/ancestor::div[contains(@class,"rounded-2xl")][1]`);
+  const card = page.locator(
+    `xpath=//h3[text()="${planName}"]/ancestor::div[contains(@class,"rounded-2xl")][1]`,
+  );
   await card.getByRole('button', { name: /Get Started|Upgrade Now/i }).click();
 }
 
 test.describe('Billing flows', () => {
-  test.afterAll(async () => {
-    await cleanupByEmail(TEST_EMAIL);
-  });
-
   test('cancel checkout, complete checkout, then upgrade plan', async ({ page }) => {
     await signUpViaUI(page);
 

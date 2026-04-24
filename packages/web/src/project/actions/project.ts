@@ -2,10 +2,10 @@
  * Project-level actions -- rename, delete, update description
  */
 
-import { API_BASE } from '@/config/api';
 import { showToast } from '@/components/ui/toast';
 import { queryClient } from '@/lib/queryClient';
 import { queryKeys } from '@/lib/queryKeys';
+import { deleteProject } from '@/server/functions/org-projects.functions';
 import { connectionPool } from '../ConnectionPool';
 
 export const projectActions = {
@@ -35,14 +35,7 @@ export const projectActions = {
     const orgId = targetOrgId || connectionPool.getActiveOrgId();
     if (!orgId) throw new Error('No active org');
 
-    const res = await fetch(`${API_BASE}/api/orgs/${orgId}/projects/${targetProjectId}`, {
-      method: 'DELETE',
-      credentials: 'include',
-    });
-    if (!res.ok) {
-      const data = (await res.json().catch(() => ({}))) as { message?: string; code?: string };
-      throw new Error(data.message || data.code || `Delete failed: ${res.status}`);
-    }
+    await deleteProject({ data: { orgId, projectId: targetProjectId } });
 
     queryClient.invalidateQueries({ queryKey: queryKeys.projects.all });
     queryClient.invalidateQueries({ queryKey: queryKeys.projects.byOrg(orgId) });

@@ -1,7 +1,10 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { env } from 'cloudflare:workers';
-import { drizzle } from 'drizzle-orm/d1';
-import { projectMembers } from '@corates/db/schema';
+import { eq } from 'drizzle-orm';
+import { createDb } from '@corates/db/client';
+import { user } from '@corates/db/schema';
+import { addMember } from '@corates/workers/commands/members';
+import type { OrgId, ProjectId, UserId } from '@corates/shared/ids';
 import { devModeGate } from '@/server/devModeGate';
 
 export const handler = async ({ request }: { request: Request }) => {
@@ -9,22 +12,36 @@ export const handler = async ({ request }: { request: Request }) => {
   if (gated) return gated;
 
   try {
-    const db = drizzle(env.DB);
     const body = (await request.json()) as {
       projectId: string;
+      orgId: string;
       userId: string;
       role?: string;
     };
 
-    await db.insert(projectMembers).values({
-      id: crypto.randomUUID(),
-      projectId: body.projectId,
-      userId: body.userId,
-      role: body.role || 'collaborator',
-      joinedAt: new Date(),
-    });
+    const db = createDb(env.DB);
+    const userToAdd = await db
+      .select({ id: user.id, name: user.name, email: user.email, image: user.image })
+      .from(user)
+      .where(eq(user.id, body.userId))
+      .get();
 
-    return Response.json({ success: true });
+    if (!userToAdd) {
+      return Response.json({ error: 'User not found' }, { status: 404 });
+    }
+
+    const result = await addMember(
+      env,
+      { id: body.userId as UserId },
+      {
+        orgId: body.orgId as OrgId,
+        projectId: body.projectId as ProjectId,
+        userToAdd: userToAdd as typeof userToAdd & { id: UserId },
+        role: (body.role || 'member') as 'owner' | 'member',
+      },
+    );
+
+    return Response.json({ success: true, ...result });
   } catch (err) {
     console.error('[test-seed] Add project member error:', err);
     return Response.json({ error: (err as Error).message }, { status: 500 });

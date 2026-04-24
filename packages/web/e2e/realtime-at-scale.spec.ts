@@ -23,8 +23,8 @@ import {
   type DualReviewerScenario,
 } from './helpers';
 import { createProject } from './shared-steps';
+import { BASE_URL } from './constants';
 
-const BASE = 'http://localhost:3010';
 const STUDY_COUNT = 50;
 
 // Thresholds in milliseconds -- what a user would tolerate
@@ -54,7 +54,7 @@ test(`Realtime reconciliation with ${STUDY_COUNT} ROB2 studies`, async ({ browse
   const page = await setupCtx.newPage();
 
   await loginAs(setupCtx, scenario.cookiesA);
-  await page.goto(`${BASE}/dashboard`);
+  await page.goto(`${BASE_URL}/dashboard`);
   await expect(page.getByText('Welcome back,')).toBeVisible({ timeout: 15_000 });
 
   const projectId = await createProject(page, `Scale Test (${STUDY_COUNT} studies)`);
@@ -76,7 +76,7 @@ test(`Realtime reconciliation with ${STUDY_COUNT} ROB2 studies`, async ({ browse
   // MEASURE: Project page load (Y.Doc sync + render)
   // ================================================================
   const projectLoadStart = Date.now();
-  await page.goto(`${BASE}/projects/${projectId}`);
+  await page.goto(`${BASE_URL}/projects/${projectId}`);
   await expect(page.getByRole('tab', { name: /Reconcile/i })).toBeVisible({ timeout: 30_000 });
   timings.projectPageLoad = Date.now() - projectLoadStart;
 
@@ -107,11 +107,11 @@ test(`Realtime reconciliation with ${STUDY_COUNT} ROB2 studies`, async ({ browse
   await loginAs(contextB, scenario.cookiesB);
 
   try {
-    await pageB.goto(`${BASE}/dashboard`);
+    await pageB.goto(`${BASE_URL}/dashboard`);
     await expect(pageB.getByText('Welcome back,')).toBeVisible({ timeout: 15_000 });
 
-    await pageA.goto(`${BASE}${reconcilePath}`);
-    await pageB.goto(`${BASE}${reconcilePath}`);
+    await pageA.goto(`${BASE_URL}${reconcilePath}`);
+    await pageB.goto(`${BASE_URL}${reconcilePath}`);
 
     await expect(pageA.getByText(/Item 1 of/i)).toBeVisible({ timeout: 30_000 });
     await expect(pageB.getByText(/Item 1 of/i)).toBeVisible({ timeout: 30_000 });

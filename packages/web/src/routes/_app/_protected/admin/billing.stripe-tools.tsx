@@ -6,6 +6,13 @@
 import { useState, useCallback } from 'react';
 import { createFileRoute, Link } from '@tanstack/react-router';
 import {
+  lookupAdminStripeCustomerAction,
+  createAdminStripePortalLinkAction,
+  getAdminStripeCustomerInvoicesAction,
+  getAdminStripeCustomerPaymentMethodsAction,
+  getAdminStripeCustomerSubscriptionsAction,
+} from '@/server/functions/admin-stripe.functions';
+import {
   SearchIcon,
   LoaderIcon,
   ExternalLinkIcon,
@@ -175,14 +182,7 @@ function StripeToolsPage() {
       const query =
         searchType === 'email' ? { email: searchInput.trim() } : { customerId: searchInput.trim() };
 
-      const params = new URLSearchParams();
-      if ('email' in query && query.email) params.set('email', query.email);
-      if ('customerId' in query && query.customerId) params.set('customerId', query.customerId);
-      const res = await fetch(`/api/admin/stripe/customer?${params.toString()}`, {
-        credentials: 'include',
-      });
-      const data = (await res.json()) as CustomerData;
-      if (!res.ok) throw data;
+      const data = (await lookupAdminStripeCustomerAction({ data: query })) as CustomerData;
       setCustomerData(data);
 
       if (!data.found) {
@@ -202,13 +202,10 @@ function StripeToolsPage() {
 
     setLoadingInvoices(true);
     try {
-      const res = await fetch(
-        `/api/admin/stripe/customer/${encodeURIComponent(customerData.customer.id)}/invoices`,
-        { credentials: 'include' },
-      );
-      const data = (await res.json()) as { invoices: StripeInvoice[] };
-      if (!res.ok) throw data;
-      setInvoices(data.invoices);
+      const data = await getAdminStripeCustomerInvoicesAction({
+        data: { customerId: customerData.customer.id },
+      });
+      setInvoices(data.invoices as StripeInvoice[]);
     } catch (error) {
       showToast.error('Failed to load invoices', (error as Error).message);
     } finally {
@@ -221,15 +218,10 @@ function StripeToolsPage() {
 
     setLoadingPaymentMethods(true);
     try {
-      const res = await fetch(
-        `/api/admin/stripe/customer/${encodeURIComponent(
-          customerData.customer.id,
-        )}/payment-methods`,
-        { credentials: 'include' },
-      );
-      const data = (await res.json()) as { paymentMethods: StripePaymentMethod[] };
-      if (!res.ok) throw data;
-      setPaymentMethods(data.paymentMethods);
+      const data = await getAdminStripeCustomerPaymentMethodsAction({
+        data: { customerId: customerData.customer.id },
+      });
+      setPaymentMethods(data.paymentMethods as StripePaymentMethod[]);
     } catch (error) {
       showToast.error('Failed to load payment methods', (error as Error).message);
     } finally {
@@ -242,13 +234,10 @@ function StripeToolsPage() {
 
     setLoadingSubscriptions(true);
     try {
-      const res = await fetch(
-        `/api/admin/stripe/customer/${encodeURIComponent(customerData.customer.id)}/subscriptions`,
-        { credentials: 'include' },
-      );
-      const data = (await res.json()) as { subscriptions: StripeSubscription[] };
-      if (!res.ok) throw data;
-      setSubscriptions(data.subscriptions);
+      const data = await getAdminStripeCustomerSubscriptionsAction({
+        data: { customerId: customerData.customer.id },
+      });
+      setSubscriptions(data.subscriptions as StripeSubscription[]);
     } catch (error) {
       showToast.error('Failed to load subscriptions', (error as Error).message);
     } finally {
@@ -261,14 +250,9 @@ function StripeToolsPage() {
 
     setGeneratingPortal(true);
     try {
-      const res = await fetch('/api/admin/stripe/portal-link', {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ customerId: customerData.customer.id }),
+      const data = await createAdminStripePortalLinkAction({
+        data: { customerId: customerData.customer.id },
       });
-      const data = (await res.json()) as { url: string };
-      if (!res.ok) throw data;
       setPortalUrl(data.url);
       showToast.success('Success', 'Portal link generated');
     } catch (error) {

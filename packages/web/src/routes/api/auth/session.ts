@@ -11,7 +11,10 @@ import { env } from 'cloudflare:workers';
 import { createAuth } from '@corates/workers/auth-config';
 import { checkRateLimit, SESSION_RATE_LIMIT } from '@/server/rateLimit';
 
-type HandlerArgs = { request: Request; context: { log: RequestLogger; cloudflareCtx?: ExecutionContext } };
+type HandlerArgs = {
+  request: Request;
+  context: { log: RequestLogger; cloudflareCtx?: ExecutionContext };
+};
 
 export const handleGet = async ({ request, context }: HandlerArgs) => {
   const rate = checkRateLimit(request, env, SESSION_RATE_LIMIT);

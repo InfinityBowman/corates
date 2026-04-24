@@ -3,11 +3,11 @@
  */
 
 import * as Y from 'yjs';
-import { API_BASE } from '@/config/api';
 import { useProjectStore } from '@/stores/projectStore';
 import { connectionPool } from '@/project/ConnectionPool';
 import { queryClient } from '@/lib/queryClient';
 import { queryKeys } from '@/lib/queryKeys';
+import { updateProject } from '@/server/functions/org-projects.functions';
 
 export interface StudyMetadata {
   originalTitle?: string;
@@ -165,24 +165,7 @@ export function createStudyOperations(
       throw new Error('No active organization');
     }
 
-    const response = await fetch(`${API_BASE}/api/orgs/${orgId}/projects/${projectId}`, {
-      method: 'PUT',
-      credentials: 'include',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: trimmed }),
-    });
-
-    if (!response.ok) {
-      let message = 'Failed to rename project';
-      try {
-        const errorBody = (await response.json()) as { error?: string };
-        message = errorBody?.error || message;
-      } catch (err) {
-        // JSON parsing failed - use default message
-        console.debug('Could not parse error response:', (err as Error).message);
-      }
-      throw new Error(message);
-    }
+    await updateProject({ data: { orgId, projectId, name: trimmed } });
 
     const now = Date.now();
     const ydoc = getYDoc();
@@ -211,24 +194,7 @@ export function createStudyOperations(
       throw new Error('No active organization');
     }
 
-    const response = await fetch(`${API_BASE}/api/orgs/${orgId}/projects/${projectId}`, {
-      method: 'PUT',
-      credentials: 'include',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ description: trimmed || null }),
-    });
-
-    if (!response.ok) {
-      let message = 'Failed to update description';
-      try {
-        const errorBody = (await response.json()) as { error?: string };
-        message = errorBody?.error || message;
-      } catch (err) {
-        // JSON parsing failed - use default message
-        console.debug('Could not parse error response:', (err as Error).message);
-      }
-      throw new Error(message);
-    }
+    await updateProject({ data: { orgId, projectId, description: trimmed || undefined } });
 
     const now = Date.now();
     const ydoc = getYDoc();

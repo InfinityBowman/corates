@@ -4,7 +4,7 @@
 
 import { useState } from 'react';
 import { Trash2Icon, RefreshCwIcon, CheckIcon, AlertCircleIcon } from 'lucide-react';
-import { API_BASE } from '@/config/api';
+import { resetState } from '@/server/functions/dev-tools.functions';
 
 interface ActionResult {
   success: boolean;
@@ -28,20 +28,7 @@ export function DevQuickActions({ projectId, orgId }: DevQuickActionsProps) {
     setResult(null);
 
     try {
-      const url = `${API_BASE}/api/orgs/${orgId}/projects/${projectId}/dev/reset`;
-      console.log('[DevPanel] Resetting project state:', url);
-      const res = await fetch(url, {
-        method: 'POST',
-        credentials: 'include',
-      });
-
-      if (!res.ok) {
-        const err = await res.json();
-        console.error('[DevPanel] Reset failed:', err);
-        throw new Error(err.error || 'Failed to reset');
-      }
-
-      console.log('[DevPanel] Reset success');
+      await resetState({ data: { orgId, projectId } });
       setResult({ success: true, message: 'Project state cleared' });
     } catch (err) {
       console.error('[DevPanel] Reset error:', err);

@@ -7,15 +7,13 @@ import { DownloadIcon, FileTextIcon, ExternalLinkIcon } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { API_BASE } from '@/config/api';
 import { queryKeys } from '@/lib/queryKeys';
-import type { Invoice, InvoicesResponse } from '@/routes/api/billing/invoices';
+import { getInvoices } from '@/server/functions/billing.functions';
+import type { Invoice, InvoicesResponse } from '@/server/functions/billing.server';
 
 async function fetchInvoices(): Promise<InvoicesResponse> {
   try {
-    const res = await fetch(`${API_BASE}/api/billing/invoices`, { credentials: 'include' });
-    if (!res.ok) return { invoices: [] };
-    return (await res.json()) as InvoicesResponse;
+    return await getInvoices();
   } catch (err) {
     console.warn('Failed to fetch invoices:', (err as Error).message);
     return { invoices: [] };

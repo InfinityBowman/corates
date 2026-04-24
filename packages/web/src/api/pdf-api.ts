@@ -6,6 +6,7 @@
 
 import { API_BASE } from '@/config/api';
 import { apiFetch } from '@/lib/apiFetch';
+import { proxyPdfFetchAction } from '@/server/functions/pdf-proxy.functions';
 
 interface PdfUploadResponse {
   success: boolean;
@@ -15,13 +16,13 @@ interface PdfUploadResponse {
 }
 
 export async function fetchPdfViaProxy(url: string): Promise<ArrayBuffer> {
-  const response = await apiFetch<Response>('/api/pdf-proxy', {
-    method: 'POST',
-    body: { url },
-    raw: true,
-  });
-
-  return response.arrayBuffer();
+  const { data } = await proxyPdfFetchAction({ data: { url } });
+  const binary = atob(data);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) {
+    bytes[i] = binary.charCodeAt(i);
+  }
+  return bytes.buffer as ArrayBuffer;
 }
 
 function buildPdfBasePath(orgId: string, projectId: string, studyId: string): string {

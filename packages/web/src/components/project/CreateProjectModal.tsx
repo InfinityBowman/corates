@@ -25,12 +25,12 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { showToast } from '@/components/ui/toast';
-import { API_BASE } from '@/config/api';
 import { useOrgs } from '@/hooks/useOrgs';
 import { queryKeys } from '@/lib/queryKeys';
 import { handleError, isErrorCode, getDomainError } from '@/lib/error-utils';
 import { AUTH_ERRORS } from '@corates/shared';
 import { isUnlimitedQuota } from '@corates/shared/plans';
+import { createProject } from '@/server/functions/org-projects.functions';
 
 interface CreateProjectModalProps {
   open: boolean;
@@ -86,26 +86,13 @@ export function CreateProjectModal({ open, onOpenChange }: CreateProjectModalPro
 
       setIsSubmitting(true);
       try {
-        const res = await fetch(`${API_BASE}/api/orgs/${orgId}/projects`, {
-          method: 'POST',
-          credentials: 'include',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
+        const newProject = (await createProject({
+          data: {
+            orgId,
             name: projectName.trim(),
             description: projectDescription.trim() || undefined,
-          }),
-        });
-        const data = (await res.json()) as {
-          id?: string;
-          message?: string;
-          code?: string;
-          details?: Record<string, unknown>;
-          statusCode?: number;
-        };
-        if (!res.ok) {
-          throw data;
-        }
-        const newProject = data as { id: string };
+          },
+        })) as { id: string };
 
         queryClient.invalidateQueries({ queryKey: queryKeys.projects.all });
         onOpenChange(false);

@@ -76,12 +76,12 @@ export const Route = createRootRoute({
     'Permissions-Policy': 'camera=(), microphone=(), geolocation=()',
     'Content-Security-Policy': [
       "default-src 'self'",
-      "script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval'",
+      "script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://plausible.jacobmaynard.dev",
       "style-src 'self' 'unsafe-inline'",
       `img-src 'self' data: blob:${import.meta.env.DEV ? ' http://localhost:*' : ''}`,
       import.meta.env.DEV ?
-        "connect-src 'self' http://localhost:* ws://localhost:* https://api.crossref.org https://eutils.ncbi.nlm.nih.gov"
-      : "connect-src 'self' wss://corates.org https://api.crossref.org https://eutils.ncbi.nlm.nih.gov",
+        "connect-src 'self' http://localhost:* ws://localhost:* https://api.crossref.org https://eutils.ncbi.nlm.nih.gov https://plausible.jacobmaynard.dev"
+      : "connect-src 'self' wss://corates.org https://api.crossref.org https://eutils.ncbi.nlm.nih.gov https://plausible.jacobmaynard.dev",
       "worker-src 'self' blob:",
       "font-src 'self'",
       "frame-ancestors 'none'",
@@ -140,6 +140,10 @@ export const Route = createRootRoute({
       {
         type: 'application/ld+json',
         children: structuredData,
+      },
+      {
+        src: 'https://plausible.jacobmaynard.dev/js/pa-FwZkTF3ReuZ7O5WTRKBr_.js',
+        async: true,
       },
     ],
   }),

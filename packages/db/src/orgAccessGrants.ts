@@ -94,33 +94,25 @@ export async function updateGrantExpiresAt(
   db: Database,
   grantId: OrgAccessGrantId,
   newExpiresAt: Date,
-): Promise<OrgAccessGrant | null> {
-  const result = await db
+): Promise<OrgAccessGrant> {
+  return db
     .update(orgAccessGrants)
-    .set({
-      expiresAt: newExpiresAt,
-    })
+    .set({ expiresAt: newExpiresAt })
     .where(eq(orgAccessGrants.id, grantId))
     .returning()
-    .get();
-
-  return result ?? null;
+    .get() as Promise<OrgAccessGrant>;
 }
 
 export async function revokeGrant(
   db: Database,
   grantId: OrgAccessGrantId,
-): Promise<OrgAccessGrant | null> {
-  const result = await db
+): Promise<OrgAccessGrant> {
+  return db
     .update(orgAccessGrants)
-    .set({
-      revokedAt: new Date(),
-    })
+    .set({ revokedAt: new Date() })
     .where(eq(orgAccessGrants.id, grantId))
     .returning()
-    .get();
-
-  return result ?? null;
+    .get() as Promise<OrgAccessGrant>;
 }
 
 export async function getGrantByOrgIdAndType(

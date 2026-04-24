@@ -33,8 +33,7 @@ import {
   addOutcome,
   fillROB2Preliminary,
 } from './shared-steps';
-
-const BASE = 'http://localhost:3010';
+import { BASE_URL } from './constants';
 
 // ================================================================
 // Helpers
@@ -152,13 +151,13 @@ async function runConcurrentEditCycle(
   await loginAs(contextB, scenario.cookiesB);
 
   try {
-    await pageA.goto(`${BASE}/dashboard`);
-    await pageB.goto(`${BASE}/dashboard`);
+    await pageA.goto(`${BASE_URL}/dashboard`);
+    await pageB.goto(`${BASE_URL}/dashboard`);
     await expect(pageA.getByText('Welcome back,')).toBeVisible({ timeout: 15_000 });
     await expect(pageB.getByText('Welcome back,')).toBeVisible({ timeout: 15_000 });
 
-    await pageA.goto(`${BASE}${checklistUrlA}`);
-    await pageB.goto(`${BASE}${checklistUrlB}`);
+    await pageA.goto(`${BASE_URL}${checklistUrlA}`);
+    await pageB.goto(`${BASE_URL}${checklistUrlB}`);
 
     await expect(pageA.getByText(opts.loadedSelector)).toBeVisible({ timeout: 15_000 });
     await expect(pageB.getByText(opts.loadedSelector)).toBeVisible({ timeout: 15_000 });
@@ -217,7 +216,7 @@ async function runConcurrentEditCycle(
     expect(await opts.countB(pageB)).toBe(countB2);
 
     // ---- Cross-check: project page still shows the study ----
-    await pageA.goto(`${BASE}/projects/${projectId}`);
+    await pageA.goto(`${BASE_URL}/projects/${projectId}`);
     await pageA.waitForTimeout(2000);
     await pageA.getByRole('tab', { name: /To Do/i }).click();
     await pageA.waitForTimeout(1000);
@@ -248,7 +247,7 @@ test.describe('Concurrent CRDT: AMSTAR2', () => {
     const setupPage = await setupCtx.newPage();
 
     await loginAs(setupCtx, scenario.cookiesA);
-    await setupPage.goto(`${BASE}/dashboard`);
+    await setupPage.goto(`${BASE_URL}/dashboard`);
     await expect(setupPage.getByText('Welcome back,')).toBeVisible({ timeout: 15_000 });
 
     const projectId = await createProject(setupPage, 'AMSTAR2 CRDT Test');
@@ -267,13 +266,13 @@ test.describe('Concurrent CRDT: AMSTAR2', () => {
     await setupPage.getByRole('button', { name: 'Open', exact: true }).click();
     await expect(setupPage).toHaveURL(/\/checklists\//, { timeout: 10_000 });
     const checklistUrlA = new URL(setupPage.url()).pathname;
-    await setupPage.goto(`${BASE}/projects/${projectId}`);
+    await setupPage.goto(`${BASE_URL}/projects/${projectId}`);
     await setupPage.waitForTimeout(2000);
 
     // Switch to User B
     await setupCtx.clearCookies();
     await loginAs(setupCtx, scenario.cookiesB);
-    await setupPage.goto(`${BASE}/projects/${projectId}`);
+    await setupPage.goto(`${BASE_URL}/projects/${projectId}`);
     await expect(setupPage.getByText('AMSTAR2 CRDT Test').first()).toBeVisible({ timeout: 15_000 });
 
     await setupPage.getByRole('tab', { name: /To Do/i }).click();
@@ -317,7 +316,7 @@ test.describe('Concurrent CRDT: ROB2', () => {
     const setupPage = await setupCtx.newPage();
 
     await loginAs(setupCtx, scenario.cookiesA);
-    await setupPage.goto(`${BASE}/dashboard`);
+    await setupPage.goto(`${BASE_URL}/dashboard`);
     await expect(setupPage.getByText('Welcome back,')).toBeVisible({ timeout: 15_000 });
 
     const projectId = await createProject(setupPage, 'ROB2 CRDT Test');
@@ -349,13 +348,13 @@ test.describe('Concurrent CRDT: ROB2', () => {
     await setupPage.waitForTimeout(1000);
 
     const checklistUrlA = new URL(setupPage.url()).pathname;
-    await setupPage.goto(`${BASE}/projects/${projectId}`);
+    await setupPage.goto(`${BASE_URL}/projects/${projectId}`);
     await setupPage.waitForTimeout(2000);
 
     // Switch to User B
     await setupCtx.clearCookies();
     await loginAs(setupCtx, scenario.cookiesB);
-    await setupPage.goto(`${BASE}/projects/${projectId}`);
+    await setupPage.goto(`${BASE_URL}/projects/${projectId}`);
     await expect(setupPage.getByText('ROB2 CRDT Test').first()).toBeVisible({ timeout: 15_000 });
 
     await setupPage.getByRole('tab', { name: /To Do/i }).click();

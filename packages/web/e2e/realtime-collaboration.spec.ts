@@ -35,8 +35,7 @@ import {
   assignReviewers,
   markChecklistComplete,
 } from './shared-steps';
-
-const BASE = 'http://localhost:3010';
+import { BASE_URL } from './constants';
 
 let scenario: DualReviewerScenario;
 
@@ -100,7 +99,7 @@ test('Presence avatars, cursor sync, and text editing sync during reconciliation
   const page = await setupCtx.newPage();
 
   await loginAs(setupCtx, scenario.cookiesA);
-  await page.goto(`${BASE}/dashboard`);
+  await page.goto(`${BASE_URL}/dashboard`);
   await expect(page.getByText('Welcome back,')).toBeVisible({ timeout: 15_000 });
 
   const projectId = await createProject(page, 'Realtime Reconcile Test');
@@ -122,12 +121,12 @@ test('Presence avatars, cursor sync, and text editing sync during reconciliation
   await answerAllAMSTAR2Yes(page);
   await page.waitForTimeout(500);
   await markChecklistComplete(page);
-  await page.goto(`${BASE}/projects/${projectId}`);
+  await page.goto(`${BASE_URL}/projects/${projectId}`);
   await page.waitForTimeout(2000);
 
   // User B: add AMSTAR2 checklist, answer No to everything, mark complete
   await switchUser(setupCtx, scenario.cookiesB);
-  await page.goto(`${BASE}/projects/${projectId}`);
+  await page.goto(`${BASE_URL}/projects/${projectId}`);
   await expect(page.getByText('Realtime Reconcile Test').first()).toBeVisible({ timeout: 15_000 });
 
   await page.getByRole('tab', { name: /To Do/i }).click();
@@ -156,7 +155,7 @@ test('Presence avatars, cursor sync, and text editing sync during reconciliation
   await answerAllAMSTAR2No(page);
   await page.waitForTimeout(500);
   await markChecklistComplete(page);
-  await page.goto(`${BASE}/projects/${projectId}`);
+  await page.goto(`${BASE_URL}/projects/${projectId}`);
   await page.waitForTimeout(2000);
 
   // Navigate to reconciliation and grab the URL
@@ -182,12 +181,12 @@ test('Presence avatars, cursor sync, and text editing sync during reconciliation
 
   try {
     // User B establishes auth by visiting dashboard first
-    await pageB.goto(`${BASE}/dashboard`);
+    await pageB.goto(`${BASE_URL}/dashboard`);
     await expect(pageB.getByText('Welcome back,')).toBeVisible({ timeout: 15_000 });
 
     // Both users navigate to the reconciliation page
-    await pageA.goto(`${BASE}${reconcilePath}`);
-    await pageB.goto(`${BASE}${reconcilePath}`);
+    await pageA.goto(`${BASE_URL}${reconcilePath}`);
+    await pageB.goto(`${BASE_URL}${reconcilePath}`);
 
     // Wait for reconciliation UI and Yjs WebSocket connections
     await expect(pageA.getByText(/Question 1 of/i)).toBeVisible({ timeout: 30_000 });

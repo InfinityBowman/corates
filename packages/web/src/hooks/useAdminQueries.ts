@@ -5,14 +5,32 @@
 
 import { useQuery, queryOptions } from '@tanstack/react-query';
 import { queryKeys } from '@/lib/queryKeys';
+import { fetchOrgBillingReconcile } from '@/stores/adminStore';
 import {
-  fetchOrgs,
-  fetchOrgDetails,
-  fetchOrgBilling,
-  fetchBillingLedger,
-  fetchBillingStuckStates,
-  fetchOrgBillingReconcile,
-} from '@/stores/adminStore';
+  getAdminUsersAction,
+  getAdminUserDetailsAction,
+} from '@/server/functions/admin-users.functions';
+import {
+  getAdminOrgsAction,
+  getAdminOrgDetailsAction,
+  getAdminOrgBillingAction,
+} from '@/server/functions/admin-orgs.functions';
+import {
+  getAdminProjectsAction,
+  getAdminProjectDetailsAction,
+  getAdminProjectDocStatsAction,
+} from '@/server/functions/admin-projects.functions';
+import { getAdminStatsAction } from '@/server/functions/admin-stats.functions';
+import {
+  getAdminBillingLedgerAction,
+  getAdminBillingStuckStatesAction,
+} from '@/server/functions/admin-billing.functions';
+import { listAdminStorageDocumentsAction } from '@/server/functions/admin-storage.functions';
+import {
+  listAdminDatabaseTablesAction,
+  getAdminTableSchemaAction,
+  getAdminTableRowsAction,
+} from '@/server/functions/admin-database.functions';
 
 const ADMIN_QUERY_CONFIG = {
   staleTime: 0,
@@ -23,12 +41,7 @@ const ADMIN_QUERY_CONFIG = {
 export function useAdminStats() {
   return useQuery({
     queryKey: queryKeys.admin.stats,
-    queryFn: async () => {
-      const res = await fetch('/api/admin/stats', { credentials: 'include' });
-      const data = (await res.json()) as Record<string, unknown>;
-      if (!res.ok) throw data;
-      return data;
-    },
+    queryFn: () => getAdminStatsAction(),
     ...ADMIN_QUERY_CONFIG,
   });
 }
@@ -39,14 +52,10 @@ export function useAdminUsers(params: { page?: number; limit?: number; search?: 
   const search = params.search ?? '';
   return useQuery({
     queryKey: queryKeys.admin.users(page, limit, search),
-    queryFn: async () => {
-      const qs = new URLSearchParams({ page: page.toString(), limit: limit.toString() });
-      if (search) qs.set('search', search);
-      const res = await fetch(`/api/admin/users?${qs.toString()}`, { credentials: 'include' });
-      const data = (await res.json()) as Record<string, unknown>;
-      if (!res.ok) throw data;
-      return data;
-    },
+    queryFn: () =>
+      getAdminUsersAction({
+        data: { page, limit, ...(search ? { search } : {}) },
+      }),
     ...ADMIN_QUERY_CONFIG,
   });
 }
@@ -54,14 +63,7 @@ export function useAdminUsers(params: { page?: number; limit?: number; search?: 
 export function adminUserDetailsQueryOptions(userId: string) {
   return queryOptions({
     queryKey: queryKeys.admin.userDetails(userId),
-    queryFn: async () => {
-      const res = await fetch(`/api/admin/users/${encodeURIComponent(userId)}`, {
-        credentials: 'include',
-      });
-      const data = (await res.json()) as Record<string, unknown>;
-      if (!res.ok) throw data;
-      return data;
-    },
+    queryFn: () => getAdminUserDetailsAction({ data: { userId } }),
     ...ADMIN_QUERY_CONFIG,
   });
 }
@@ -75,17 +77,10 @@ export function useAdminProjects(
   const orgId = params.orgId ?? '';
   return useQuery({
     queryKey: queryKeys.admin.projects(page, limit, search, orgId),
-    queryFn: async () => {
-      const qs = new URLSearchParams({ page: page.toString(), limit: limit.toString() });
-      if (search) qs.set('search', search);
-      if (orgId) qs.set('orgId', orgId);
-      const res = await fetch(`/api/admin/projects?${qs.toString()}`, {
-        credentials: 'include',
-      });
-      const data = (await res.json()) as Record<string, unknown>;
-      if (!res.ok) throw data;
-      return data;
-    },
+    queryFn: () =>
+      getAdminProjectsAction({
+        data: { page, limit, ...(search ? { search } : {}), ...(orgId ? { orgId } : {}) },
+      }),
     ...ADMIN_QUERY_CONFIG,
   });
 }
@@ -93,14 +88,7 @@ export function useAdminProjects(
 export function useAdminProjectDetails(projectId: string | null | undefined) {
   return useQuery({
     queryKey: queryKeys.admin.projectDetails(projectId),
-    queryFn: async () => {
-      const res = await fetch(`/api/admin/projects/${encodeURIComponent(projectId!)}`, {
-        credentials: 'include',
-      });
-      const data = (await res.json()) as Record<string, unknown>;
-      if (!res.ok) throw data;
-      return data;
-    },
+    queryFn: () => getAdminProjectDetailsAction({ data: { projectId: projectId! } }),
     enabled: !!projectId,
     ...ADMIN_QUERY_CONFIG,
   });
@@ -109,14 +97,7 @@ export function useAdminProjectDetails(projectId: string | null | undefined) {
 export function useAdminProjectDocStats(projectId: string | null | undefined) {
   return useQuery({
     queryKey: queryKeys.admin.projectDocStats(projectId),
-    queryFn: async () => {
-      const res = await fetch(`/api/admin/projects/${encodeURIComponent(projectId!)}/doc-stats`, {
-        credentials: 'include',
-      });
-      const data = (await res.json()) as Record<string, unknown>;
-      if (!res.ok) throw data;
-      return data;
-    },
+    queryFn: () => getAdminProjectDocStatsAction({ data: { projectId: projectId! } }),
     enabled: !!projectId,
     ...ADMIN_QUERY_CONFIG,
   });
@@ -131,18 +112,15 @@ export function useStorageDocuments(
   const search = params.search ?? '';
   return useQuery({
     queryKey: queryKeys.admin.storageDocuments(cursor, limit, prefix, search),
-    queryFn: async () => {
-      const params = new URLSearchParams({ limit: limit.toString() });
-      if (cursor) params.set('cursor', cursor);
-      if (prefix) params.set('prefix', prefix);
-      if (search) params.set('search', search);
-      const res = await fetch(`/api/admin/storage/documents?${params.toString()}`, {
-        credentials: 'include',
-      });
-      const data = (await res.json()) as Record<string, unknown>;
-      if (!res.ok) throw data;
-      return data;
-    },
+    queryFn: () =>
+      listAdminStorageDocumentsAction({
+        data: {
+          ...(cursor ? { cursor } : {}),
+          limit,
+          ...(prefix ? { prefix } : {}),
+          ...(search ? { search } : {}),
+        },
+      }),
     ...ADMIN_QUERY_CONFIG,
   });
 }
@@ -153,7 +131,7 @@ export function useAdminOrgs(params: { page?: number; limit?: number; search?: s
   const search = params.search ?? '';
   return useQuery({
     queryKey: queryKeys.admin.orgs(page, limit, search),
-    queryFn: () => fetchOrgs({ page, limit, search }),
+    queryFn: () => getAdminOrgsAction({ data: { page, limit, ...(search ? { search } : {}) } }),
     ...ADMIN_QUERY_CONFIG,
   });
 }
@@ -161,7 +139,7 @@ export function useAdminOrgs(params: { page?: number; limit?: number; search?: s
 export function useAdminOrgDetails(orgId: string | null | undefined) {
   return useQuery({
     queryKey: queryKeys.admin.orgDetails(orgId),
-    queryFn: () => fetchOrgDetails(orgId!),
+    queryFn: () => getAdminOrgDetailsAction({ data: { orgId: orgId! } }),
     enabled: !!orgId,
     ...ADMIN_QUERY_CONFIG,
   });
@@ -170,7 +148,7 @@ export function useAdminOrgDetails(orgId: string | null | undefined) {
 export function useAdminOrgBilling(orgId: string | null | undefined) {
   return useQuery({
     queryKey: queryKeys.admin.orgBilling(orgId),
-    queryFn: () => fetchOrgBilling(orgId!),
+    queryFn: () => getAdminOrgBillingAction({ data: { orgId: orgId! } }),
     enabled: !!orgId,
     ...ADMIN_QUERY_CONFIG,
   });
@@ -186,7 +164,7 @@ export function useAdminBillingLedger(
   };
   return useQuery({
     queryKey: queryKeys.admin.billingLedger(queryParams),
-    queryFn: () => fetchBillingLedger(queryParams),
+    queryFn: () => getAdminBillingLedgerAction({ data: queryParams }),
     ...ADMIN_QUERY_CONFIG,
   });
 }
@@ -200,7 +178,7 @@ export function useAdminBillingStuckStates(
   };
   return useQuery({
     queryKey: queryKeys.admin.billingStuckStates(queryParams),
-    queryFn: () => fetchBillingStuckStates(queryParams),
+    queryFn: () => getAdminBillingStuckStatesAction({ data: queryParams }),
     ...ADMIN_QUERY_CONFIG,
   });
 }
@@ -231,12 +209,7 @@ export function useAdminOrgBillingReconcile(
 export function useAdminDatabaseTables() {
   return useQuery({
     queryKey: queryKeys.admin.databaseTables,
-    queryFn: async () => {
-      const res = await fetch('/api/admin/database/tables', { credentials: 'include' });
-      const data = (await res.json()) as Record<string, unknown>;
-      if (!res.ok) throw data;
-      return data;
-    },
+    queryFn: () => listAdminDatabaseTablesAction(),
     ...ADMIN_QUERY_CONFIG,
   });
 }
@@ -244,15 +217,7 @@ export function useAdminDatabaseTables() {
 export function useAdminTableSchema(tableName: string | null | undefined) {
   return useQuery({
     queryKey: queryKeys.admin.tableSchema(tableName),
-    queryFn: async () => {
-      const res = await fetch(
-        `/api/admin/database/tables/${encodeURIComponent(tableName!)}/schema`,
-        { credentials: 'include' },
-      );
-      const data = (await res.json()) as Record<string, unknown>;
-      if (!res.ok) throw data;
-      return data;
-    },
+    queryFn: () => getAdminTableSchemaAction({ data: { tableName: tableName! } }),
     enabled: !!tableName,
     staleTime: 1000 * 60 * 10,
     gcTime: 1000 * 60 * 30,
@@ -288,25 +253,17 @@ export function useAdminTableRows(
       filterBy,
       filterValue,
     ),
-    queryFn: async () => {
-      const qs = new URLSearchParams({
-        page: page.toString(),
-        limit: limit.toString(),
-        orderBy,
-        order,
-      });
-      if (filterBy && filterValue) {
-        qs.set('filterBy', filterBy);
-        qs.set('filterValue', filterValue);
-      }
-      const res = await fetch(
-        `/api/admin/database/tables/${encodeURIComponent(tableName!)}/rows?${qs.toString()}`,
-        { credentials: 'include' },
-      );
-      const data = (await res.json()) as Record<string, unknown>;
-      if (!res.ok) throw data;
-      return data;
-    },
+    queryFn: () =>
+      getAdminTableRowsAction({
+        data: {
+          tableName: tableName!,
+          page,
+          limit,
+          orderBy,
+          order,
+          ...(filterBy && filterValue ? { filterBy, filterValue } : {}),
+        },
+      }),
     enabled: !!tableName,
     ...ADMIN_QUERY_CONFIG,
   });

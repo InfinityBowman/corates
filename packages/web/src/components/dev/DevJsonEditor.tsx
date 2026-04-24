@@ -14,7 +14,7 @@ import {
   AlertCircleIcon,
   ArrowLeftIcon,
 } from 'lucide-react';
-import { API_BASE } from '@/config/api';
+import { importState, exportState as exportStateAction } from '@/server/functions/dev-tools.functions';
 import { DevUserMapping, extractUserIds } from './DevUserMapping';
 
 interface ActionResult {
@@ -48,32 +48,18 @@ export function DevJsonEditor({ projectId, orgId, data }: DevJsonEditorProps) {
     return JSON.stringify(data, null, 2);
   }, [data]);
 
-  const exportState = async () => {
+  const handleExport = async () => {
     if (!projectId || !orgId) return;
 
     setIsExporting(true);
     setResult(null);
 
     try {
-      const url = `${API_BASE}/api/orgs/${orgId}/projects/${projectId}/dev/export`;
-      console.log('[DevPanel] Exporting state from:', url);
-      const res = await fetch(url, {
-        credentials: 'include',
-      });
-
-      if (!res.ok) {
-        const err = await res.json();
-        console.error('[DevPanel] Export failed:', err);
-        throw new Error(err.error || 'Failed to export');
-      }
-
-      const fetchedData = await res.json();
-      console.log('[DevPanel] Export success:', fetchedData);
+      const fetchedData = await exportStateAction({ data: { orgId, projectId } });
       setJsonText(JSON.stringify(fetchedData, null, 2));
       setHasUserEdited(true);
       setResult({ success: true, message: 'State exported' });
     } catch (err) {
-      console.error('[DevPanel] Export error:', err);
       setResult({ success: false, message: (err as Error).message });
     } finally {
       setIsExporting(false);
@@ -88,33 +74,19 @@ export function DevJsonEditor({ projectId, orgId, data }: DevJsonEditorProps) {
       setResult(null);
 
       try {
-        const url = `${API_BASE}/api/orgs/${orgId}/projects/${projectId}/dev/import`;
-        console.log('[DevPanel] Importing state to:', url);
-
-        const body: Record<string, unknown> = { data: parsed, mode: 'replace' };
-        if (userMapping && Object.keys(userMapping).length > 0) {
-          body.userMapping = userMapping;
-        }
-
-        const res = await fetch(url, {
-          method: 'POST',
-          credentials: 'include',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(body),
+        await importState({
+          data: {
+            orgId,
+            projectId,
+            data: parsed,
+            mode: 'replace',
+            ...(userMapping && Object.keys(userMapping).length > 0 ? { userMapping } : {}),
+          },
         });
-
-        if (!res.ok) {
-          const err = await res.json();
-          console.error('[DevPanel] Import failed:', err);
-          throw new Error(err.error || 'Failed to import');
-        }
-
-        console.log('[DevPanel] Import success');
         setResult({ success: true, message: 'State imported' });
         setStep('editor');
         setParsedImport(null);
       } catch (err) {
-        console.error('[DevPanel] Import error:', err);
         setResult({ success: false, message: (err as Error).message });
       } finally {
         setIsImporting(false);
@@ -201,7 +173,7 @@ export function DevJsonEditor({ projectId, orgId, data }: DevJsonEditorProps) {
       <div className='border-border bg-muted flex items-center gap-2 border-b px-3 py-2'>
         <button
           className='bg-muted text-foreground hover:bg-muted/80 flex items-center gap-1 rounded px-2 py-1 text-xs disabled:opacity-50'
-          onClick={exportState}
+          onClick={handleExport}
           disabled={isExporting}
           title='Fetch current state from server'
         >

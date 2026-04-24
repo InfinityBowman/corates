@@ -11,6 +11,7 @@ import {
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import { config } from '../lib/config';
+import { submitContactForm } from '@/server/functions/contact.functions';
 
 const pageUrl = `${config.appUrl}/contact`;
 const title = 'Contact Us - CoRATES';
@@ -56,16 +57,14 @@ function ContactPage() {
     };
 
     try {
-      const response = await fetch(`${config.apiUrl}/api/contact`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
+      await submitContactForm({
+        data: {
+          name: data.name as string,
+          email: data.email as string,
+          subject: (data.subject as string) || undefined,
+          message: data.message as string,
+        },
       });
-
-      if (!response.ok) {
-        const result = await response.json().catch(() => ({}));
-        throw new Error((result as { error?: string }).error || 'Failed to send message');
-      }
 
       setFormState('sent');
       e.currentTarget.reset();

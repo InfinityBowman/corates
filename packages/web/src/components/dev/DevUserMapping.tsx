@@ -7,14 +7,14 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { SearchIcon, XIcon, UserIcon } from 'lucide-react';
-import { API_BASE } from '@/config/api';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { useAuthStore, selectUser } from '@/stores/authStore';
+import { searchUsersQuery } from '@/server/functions/users.functions';
 
 interface SearchResult {
   id: string;
   name: string | null;
-  email: string;
+  email: string | null;
   image: string | null;
 }
 
@@ -128,14 +128,10 @@ function MappingRow({ originalId, mappedTo, currentUser, projectId, onSelect }: 
     (async () => {
       setSearching(true);
       try {
-        const qs = new URLSearchParams({ q: debouncedQuery });
-        if (projectId) qs.set('projectId', projectId);
-        const res = await fetch(`${API_BASE}/api/users/search?${qs}`, {
-          credentials: 'include',
+        const data = await searchUsersQuery({
+          data: { q: debouncedQuery, projectId: projectId || undefined },
         });
-        if (!res.ok) throw new Error(`search failed: ${res.status}`);
-        const data = (await res.json()) as SearchResult[];
-        if (!cancelled) setResults(data);
+        if (!cancelled) setResults(data as SearchResult[]);
       } catch {
         if (!cancelled) setResults([]);
       } finally {

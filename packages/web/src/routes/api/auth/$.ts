@@ -23,7 +23,10 @@ const AUTH_RATE_LIMITED_PREFIXES = [
   '/api/auth/magic-link/',
 ];
 
-type HandlerArgs = { request: Request; context: { log: RequestLogger; cloudflareCtx?: ExecutionContext } };
+type HandlerArgs = {
+  request: Request;
+  context: { log: RequestLogger; cloudflareCtx?: ExecutionContext };
+};
 
 export const handle = async ({ request, context }: HandlerArgs) => {
   const url = new URL(request.url);

@@ -10,9 +10,8 @@ import { Alert, AlertAction, AlertTitle, AlertDescription } from '@/components/u
 import { useSubscription } from '@/hooks/useSubscription';
 import { useMembers } from '@/hooks/useMembers';
 import { redirectToPortal } from '@/api/billing';
-import { API_BASE } from '@/config/api';
 import { queryKeys } from '@/lib/queryKeys';
-import { getUsage } from '@/server/functions/billing.functions';
+import { getUsage, syncAfterSuccess } from '@/server/functions/billing.functions';
 import { Skeleton } from '@/components/ui/skeleton';
 import { SubscriptionCard } from '@/components/billing/SubscriptionCard';
 import { UsageCard } from '@/components/billing/UsageCard';
@@ -76,10 +75,7 @@ export function BillingSettings() {
       // Beat the webhook race: pull canonical subscription state from Stripe
       // before reading it from the DB. Failure is non-fatal — the webhook will
       // reconcile eventually.
-      fetch(`${API_BASE}/api/billing/sync-after-success`, {
-        method: 'POST',
-        credentials: 'include',
-      })
+      syncAfterSuccess()
         .catch(() => {})
         .finally(() => {
           refetch();

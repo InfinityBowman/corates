@@ -11,7 +11,8 @@ import { useState, useEffect, useCallback, type ChangeEvent } from 'react';
 import { UploadIcon, CheckIcon, AlertCircleIcon, ArrowLeftIcon } from 'lucide-react';
 import { useNavigate } from '@tanstack/react-router';
 import { useQueryClient } from '@tanstack/react-query';
-import { API_BASE } from '@/config/api';
+import { createProject } from '@/server/functions/org-projects.functions';
+import { importState } from '@/server/functions/dev-tools.functions';
 import { useOrgs } from '@/hooks/useOrgs';
 import { queryKeys } from '@/lib/queryKeys';
 import { DevUserMapping, extractUserIds } from './DevUserMapping';
@@ -87,46 +88,25 @@ export function DevImportProject() {
       const projectName = (data.meta as Record<string, unknown>)?.name || 'Imported Project';
 
       // Step 1: Create the project
-      const createRes = await fetch(`${API_BASE}/api/orgs/${resolvedOrgId}/projects`, {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: projectName,
-          description: (data.meta as Record<string, unknown>)?.description || '',
-        }),
-      });
-
-      if (!createRes.ok) {
-        const err = await createRes.json().catch(() => ({}));
-        throw new Error(err.error || 'Failed to create project');
-      }
-
-      const newProject = await createRes.json();
+      const newProject = (await createProject({
+        data: {
+          orgId: resolvedOrgId,
+          name: projectName as string,
+          description: ((data.meta as Record<string, unknown>)?.description as string) || undefined,
+        },
+      })) as { id: string };
       console.log('[DevPanel] Created project:', newProject.id);
 
       // Step 2: Import data to the new project
-      const importBody: Record<string, unknown> = { data, mode: 'replace' };
-      if (userMapping && Object.keys(userMapping).length > 0) {
-        importBody.userMapping = userMapping;
-      }
-
-      const importRes = await fetch(
-        `${API_BASE}/api/orgs/${resolvedOrgId}/projects/${newProject.id}/dev/import`,
-        {
-          method: 'POST',
-          credentials: 'include',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(importBody),
+      await importState({
+        data: {
+          orgId: resolvedOrgId,
+          projectId: newProject.id,
+          data,
+          mode: 'replace',
+          ...(userMapping && Object.keys(userMapping).length > 0 ? { userMapping } : {}),
         },
-      );
-
-      if (!importRes.ok) {
-        const err = await importRes.json().catch(() => ({}));
-        throw new Error(err.error || 'Failed to import data');
-      }
-
-      console.log('[DevPanel] Import complete');
+      });
       setResult({ success: true, message: 'Project imported successfully' });
       setStep('input');
       setParsedData(null);

@@ -124,24 +124,20 @@ export async function switchUser(context: BrowserContext, cookies: SessionCookie
 }
 
 /**
- * Add a project member via the real API (handles both DB + Yjs sync).
- * Requires the session cookie of an authenticated project owner.
+ * Add a project member via the test seeding route (uses addMember command).
+ * Requires DEV_MODE=true on the workers backend.
  */
 export async function addProjectMember(
   orgId: string,
   projectId: string,
   userId: string,
-  sessionCookies: SessionCookie[],
+  _sessionCookies: SessionCookie[],
   role = 'member',
 ) {
-  const cookieHeader = sessionCookies.map(c => `${c.name}=${c.value}`).join('; ');
-  const res = await fetch(`${API_BASE}/api/orgs/${orgId}/projects/${projectId}/members`, {
+  const res = await fetch(`${API_BASE}/api/test/add-project-member`, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Cookie: cookieHeader,
-    },
-    body: JSON.stringify({ userId, role }),
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ orgId, projectId, userId, role }),
   });
   if (!res.ok) {
     throw new Error(`Add project member failed: ${res.status} ${await res.text()}`);

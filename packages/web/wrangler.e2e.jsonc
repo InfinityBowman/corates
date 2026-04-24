@@ -1,0 +1,57 @@
+// E2E test wrangler config.
+// Identical to wrangler.jsonc except APP_URL and AUTH_BASE_URL
+// point at the test server (corates-test.localhost via portless).
+// The Cloudflare Vite plugin's persistState in vite.config.e2e.ts
+// isolates D1/DO state to .wrangler/e2e-state.
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "corates-web-e2e",
+  "main": "src/server.ts",
+  "compatibility_date": "2025-12-01",
+  "compatibility_flags": ["nodejs_compat"],
+
+  "migrations": [
+    { "tag": "v1", "new_sqlite_classes": ["UserSession", "ProjectDoc"] },
+    { "tag": "v2", "new_sqlite_classes": ["EmailQueue"] },
+    { "tag": "v3", "deleted_classes": ["EmailQueue"] }
+  ],
+
+  "durable_objects": {
+    "bindings": [
+      { "name": "USER_SESSION", "class_name": "UserSession" },
+      { "name": "PROJECT_DOC", "class_name": "ProjectDoc" }
+    ]
+  },
+
+  "queues": {
+    "producers": [{ "queue": "corates-emails", "binding": "EMAIL_QUEUE" }]
+  },
+
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "corates-db",
+      "database_id": "7ac6d425-2a7c-4087-9f42-0cd1a2ab367b"
+    }
+  ],
+
+  "r2_buckets": [{ "binding": "PDF_BUCKET", "bucket_name": "corates-pdfs" }],
+
+  "vars": {
+    "ENVIRONMENT": "development",
+    "DEV_MODE": true,
+    "APP_URL": "http://corates-test.localhost:1355",
+    "AUTH_BASE_URL": "http://corates-test.localhost:1355"
+  },
+
+  "observability": {
+    "enabled": true,
+    "head_sampling_rate": 1,
+    "logs": {
+      "enabled": true,
+      "head_sampling_rate": 1,
+      "persist": true,
+      "invocation_logs": true
+    }
+  }
+}

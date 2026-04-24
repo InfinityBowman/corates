@@ -24,10 +24,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { API_BASE } from '@/config/api';
 import { isUnlimitedQuota } from '@corates/shared/plans';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
-import type { UserSearchResult } from '@/routes/api/users/search';
+import { searchUsersQuery } from '@/server/functions/users.functions';
+import { addMemberToProject } from '@/server/functions/org-projects.functions';
+import type { UserSearchResult } from '@/server/functions/users.server';
 
 interface AddMemberModalProps {
   isOpen: boolean;
@@ -76,16 +77,9 @@ export function AddMemberModal({
       if (cancelled) return;
       setSearching(true);
       try {
-        const qs = new URLSearchParams({ q: debouncedQuery });
-        if (projectId) qs.set('projectId', projectId);
-        const res = await fetch(`${API_BASE}/api/users/search?${qs}`, {
-          credentials: 'include',
+        const results = await searchUsersQuery({
+          data: { q: debouncedQuery, projectId: projectId || undefined },
         });
-        if (!res.ok) {
-          const data = (await res.json().catch(() => ({}))) as { message?: string };
-          throw new Error(data.message || `Search failed: ${res.status}`);
-        }
-        const results = (await res.json()) as UserSearchResult[];
         if (!cancelled) setSearchResults(results);
       } catch (err: any) {
         if (!cancelled) setError(err.message || 'Search failed');
@@ -126,25 +120,15 @@ export function AddMemberModal({
     setAdding(true);
     setError(null);
     try {
-      const res = await fetch(`${API_BASE}/api/orgs/${orgId}/projects/${projectId}/members`, {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(
-          selectedUser ?
+      const result = (await addMemberToProject({
+        data: {
+          orgId,
+          projectId,
+          ...(selectedUser ?
             { userId: selectedUser.id, role: selectedRole }
-          : { email: searchQuery.trim(), role: selectedRole },
-        ),
-      });
-      const result = (await res.json()) as {
-        invitation?: boolean;
-        email?: string;
-        message?: string;
-        code?: string;
-      };
-      if (!res.ok) {
-        throw new Error(result.message || result.code || `Add failed: ${res.status}`);
-      }
+          : { email: searchQuery.trim(), role: selectedRole }),
+        },
+      })) as { invitation?: boolean; email?: string };
       if (result.invitation) {
         showToast.success('Invitation Sent', `Invitation sent to ${result.email || searchQuery}`);
       }
@@ -213,7 +197,10 @@ export function AddMemberModal({
                     className='flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-blue-50'
                   >
                     <Avatar className='size-8 shrink-0'>
-                      <AvatarImage src={user.image ?? undefined} alt={user.name || user.email || undefined} />
+                      <AvatarImage
+                        src={user.image ?? undefined}
+                        alt={user.name || user.email || undefined}
+                      />
                       <AvatarFallback className='bg-primary text-sm text-white'>
                         {getInitials(user.name || user.email || undefined)}
                       </AvatarFallback>
