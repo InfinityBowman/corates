@@ -16,10 +16,9 @@ import type { Session } from '@/server/middleware/auth';
 
 function assertAdmin(session: Session) {
   if (!isAdminUser(session.user as { role?: string | null })) {
-    throw Response.json(
-      createDomainError(AUTH_ERRORS.FORBIDDEN, { reason: 'admin_required' }),
-      { status: 403 },
-    );
+    throw Response.json(createDomainError(AUTH_ERRORS.FORBIDDEN, { reason: 'admin_required' }), {
+      status: 403,
+    });
   }
 }
 
@@ -125,11 +124,7 @@ export async function listAdminProjects(
   };
 }
 
-export async function getAdminProjectDetails(
-  session: Session,
-  db: Database,
-  projectId: string,
-) {
+export async function getAdminProjectDetails(session: Session, db: Database, projectId: string) {
   assertAdmin(session);
 
   const [project] = await db
@@ -230,11 +225,7 @@ export async function getAdminProjectDetails(
   };
 }
 
-export async function getAdminProjectDocStats(
-  session: Session,
-  db: Database,
-  projectId: string,
-) {
+export async function getAdminProjectDocStats(session: Session, db: Database, projectId: string) {
   assertAdmin(session);
 
   const [project] = await db
@@ -277,11 +268,7 @@ export async function removeAdminProjectMember(
   return { success: true, message: 'Member removed from project' };
 }
 
-export async function deleteAdminProject(
-  session: Session,
-  db: Database,
-  projectId: string,
-) {
+export async function deleteAdminProject(session: Session, db: Database, projectId: string) {
   assertAdmin(session);
 
   const [existingProject] = await db
