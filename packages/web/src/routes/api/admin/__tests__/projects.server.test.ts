@@ -10,99 +10,91 @@ import {
   buildProjectMember,
   resetCounter,
 } from '@/__tests__/server/factories';
-import { handleGet as listProjects } from '../projects';
-import { handleGet as projectDetails, handleDelete as deleteProject } from '../projects/$projectId';
-import { handleGet as docStats } from '../projects/$projectId/doc-stats';
-import { handleDelete as removeMember } from '../projects/$projectId/members/$memberId';
-
-let sessionResult: {
-  user: { id: string; email: string; name: string; role?: string };
-  session: { id: string; userId: string; activeOrganizationId: string | null };
-} | null = null;
-
-vi.mock('@corates/workers/auth', () => ({
-  getSession: async () => sessionResult,
-}));
+import type { Session } from '@/server/middleware/auth';
+import {
+  listAdminProjects,
+  getAdminProjectDetails,
+  getAdminProjectDocStats,
+  removeAdminProjectMember,
+  deleteAdminProject,
+} from '@/server/functions/admin-projects.server';
 
 beforeEach(async () => {
   await resetTestDatabase();
   await clearProjectDOs(['admin-doc-stats-project']);
   vi.clearAllMocks();
   resetCounter();
-  sessionResult = null;
 });
 
-async function asAdmin() {
-  const admin = await buildAdminUser();
-  sessionResult = {
-    user: { id: admin.id, email: admin.email, name: admin.name, role: 'admin' },
-    session: { id: 'admin-sess', userId: admin.id, activeOrganizationId: null },
-  };
-  return admin;
+function mockAdminSession(): Session {
+  return {
+    user: { id: 'admin-id', email: 'admin@example.com', name: 'Admin', role: 'admin' },
+    session: { id: 'admin-sess', userId: 'admin-id' },
+  } as Session;
 }
 
-function listReq(path = '/api/admin/projects'): Request {
-  return new Request(`http://localhost${path}`);
-}
+describe('assertAdmin', () => {
+  it('throws 403 for non-admin session', async () => {
+    const nonAdmin = {
+      user: { id: 'u', email: 'u@example.com', name: 'User', role: 'user' },
+      session: { id: 's', userId: 'u' },
+    } as Session;
+    try {
+      await listAdminProjects(nonAdmin, createDb(env.DB), {});
+      expect.unreachable('should have thrown');
+    } catch (err) {
+      expect((err as Response).status).toBe(403);
+    }
+  });
+});
 
-describe('GET /api/admin/projects', () => {
+describe('listAdminProjects', () => {
   it('returns paginated projects with org/creator info', async () => {
-    await asAdmin();
+    await buildAdminUser();
     await buildProject();
     await buildProject();
     await buildProject();
 
-    const res = await listProjects({
-      request: listReq('/api/admin/projects?page=1&limit=2'),
-      context: { db: createDb(env.DB) },
+    const result = await listAdminProjects(mockAdminSession(), createDb(env.DB), {
+      page: 1,
+      limit: 2,
     });
-    expect(res.status).toBe(200);
-    const body = (await res.json()) as {
-      projects: { id: string; orgName: string | null; creatorEmail: string | null }[];
-      pagination: { total: number; totalPages: number };
-    };
-    expect(body.projects.length).toBe(2);
-    expect(body.pagination.total).toBe(3);
-    expect(body.pagination.totalPages).toBe(2);
-    expect(body.projects[0].orgName).toBeDefined();
-    expect(body.projects[0].creatorEmail).toBeDefined();
+    expect(result.projects.length).toBe(2);
+    expect(result.pagination.total).toBe(3);
+    expect(result.pagination.totalPages).toBe(2);
+    expect(result.projects[0].orgName).toBeDefined();
+    expect(result.projects[0].creatorEmail).toBeDefined();
   });
 
   it('searches projects by name (case-insensitive)', async () => {
-    await asAdmin();
+    await buildAdminUser();
     const { org, owner } = await buildOrg();
     await buildProject({ org, owner, project: { id: 'p-amphi', name: 'Amphibian Census' } });
     await buildProject({ org, owner, project: { id: 'p-other', name: 'Other Topic' } });
 
-    const res = await listProjects({
-      request: listReq('/api/admin/projects?search=amphi'),
-      context: { db: createDb(env.DB) },
+    const result = await listAdminProjects(mockAdminSession(), createDb(env.DB), {
+      search: 'amphi',
     });
-    expect(res.status).toBe(200);
-    const body = (await res.json()) as { projects: { name: string }[] };
-    expect(body.projects.length).toBe(1);
-    expect(body.projects[0].name).toBe('Amphibian Census');
+    expect(result.projects.length).toBe(1);
+    expect(result.projects[0].name).toBe('Amphibian Census');
   });
 
   it('filters by orgId', async () => {
-    await asAdmin();
+    await buildAdminUser();
     const { org: org1 } = await buildOrg();
     const { org: org2 } = await buildOrg();
     await buildProject({ org: org1 });
     await buildProject({ org: org2 });
 
-    const res = await listProjects({
-      request: listReq(`/api/admin/projects?orgId=${encodeURIComponent(org1.id)}`),
-      context: { db: createDb(env.DB) },
+    const result = await listAdminProjects(mockAdminSession(), createDb(env.DB), {
+      orgId: org1.id,
     });
-    expect(res.status).toBe(200);
-    const body = (await res.json()) as { projects: { orgId: string }[] };
-    expect(body.projects.length).toBe(1);
-    expect(body.projects[0].orgId).toBe(org1.id);
+    expect(result.projects.length).toBe(1);
+    expect(result.projects[0].orgId).toBe(org1.id);
   });
 
   it('includes member and file counts', async () => {
-    const admin = await asAdmin();
+    const admin = await buildAdminUser();
     const { project, org } = await buildProject();
     const { user: extra } = await buildOrgMember({ orgId: org.id });
     await buildProjectMember({ projectId: project.id, orgId: org.id, user: extra });
@@ -117,34 +109,25 @@ describe('GET /api/admin/projects', () => {
       createdAt: Math.floor(Date.now() / 1000),
     });
 
-    const res = await listProjects({ request: listReq(), context: { db: createDb(env.DB) } });
-    const body = (await res.json()) as {
-      projects: { id: string; memberCount: number; fileCount: number }[];
-    };
-    const found = body.projects.find(p => p.id === project.id)!;
+    const result = await listAdminProjects(mockAdminSession(), createDb(env.DB), {});
+    const found = result.projects.find(p => p.id === project.id)!;
     expect(found.memberCount).toBeGreaterThanOrEqual(1);
     expect(found.fileCount).toBe(1);
   });
 });
 
-describe('GET /api/admin/projects/:projectId', () => {
-  // Auth-bypass cases (no session, wrong role, CSRF) are covered by the
-  // SELF.fetch tests in projects-self.server.test.ts. Those exercise the
-  // adminMiddleware that this route now relies on; calling the handler
-  // directly would skip the middleware and silently false-pass.
-
-  it('returns 404 when project not found', async () => {
-    await asAdmin();
-    const res = await projectDetails({
-      request: new Request('http://localhost/api/admin/projects/nope'),
-      params: { projectId: 'nope' },
-      context: { db: createDb(env.DB) },
-    });
-    expect(res.status).toBe(404);
+describe('getAdminProjectDetails', () => {
+  it('throws 404 when project not found', async () => {
+    try {
+      await getAdminProjectDetails(mockAdminSession(), createDb(env.DB), 'nope');
+      expect.unreachable('should have thrown');
+    } catch (err) {
+      expect((err as Response).status).toBe(404);
+    }
   });
 
   it('returns project with members, files, invitations, stats', async () => {
-    const admin = await asAdmin();
+    await buildAdminUser();
     const { project, org, owner } = await buildProject();
     const { user: extra } = await buildOrgMember({ orgId: org.id });
     await buildProjectMember({ projectId: project.id, orgId: org.id, user: extra });
@@ -160,40 +143,26 @@ describe('GET /api/admin/projects/:projectId', () => {
       createdAt: Math.floor(Date.now() / 1000),
     });
 
-    const res = await projectDetails({
-      request: new Request(`http://localhost/api/admin/projects/${project.id}`),
-      params: { projectId: project.id },
-      context: { db: createDb(env.DB) },
-    });
-    expect(res.status).toBe(200);
-    const body = (await res.json()) as {
-      project: { id: string };
-      members: unknown[];
-      files: { fileSize: number | null }[];
-      invitations: unknown[];
-      stats: { memberCount: number; fileCount: number; totalStorageBytes: number };
-    };
-    expect(body.project.id).toBe(project.id);
-    expect(body.stats.memberCount).toBe(body.members.length);
-    expect(body.stats.fileCount).toBe(1);
-    expect(body.stats.totalStorageBytes).toBe(4096);
-    void admin;
+    const result = await getAdminProjectDetails(mockAdminSession(), createDb(env.DB), project.id);
+    expect(result.project.id).toBe(project.id);
+    expect(result.stats.memberCount).toBe(result.members.length);
+    expect(result.stats.fileCount).toBe(1);
+    expect(result.stats.totalStorageBytes).toBe(4096);
   });
 });
 
-describe('GET /api/admin/projects/:projectId/doc-stats', () => {
-  it('returns 404 without waking the DO when project missing in D1', async () => {
-    await asAdmin();
-    const res = await docStats({
-      request: new Request('http://localhost/api/admin/projects/no-such/doc-stats'),
-      params: { projectId: 'no-such' },
-      context: { db: createDb(env.DB) },
-    });
-    expect(res.status).toBe(404);
+describe('getAdminProjectDocStats', () => {
+  it('throws 404 without waking the DO when project missing in D1', async () => {
+    try {
+      await getAdminProjectDocStats(mockAdminSession(), createDb(env.DB), 'no-such');
+      expect.unreachable('should have thrown');
+    } catch (err) {
+      expect((err as Response).status).toBe(404);
+    }
   });
 
   it('returns stat shape for an existing empty project', async () => {
-    await asAdmin();
+    await buildAdminUser();
     const { org, owner } = await buildOrg();
     const { project } = await buildProject({
       org,
@@ -201,40 +170,34 @@ describe('GET /api/admin/projects/:projectId/doc-stats', () => {
       project: { id: 'admin-doc-stats-project', name: 'Stats' },
     });
 
-    const res = await docStats({
-      request: new Request(`http://localhost/api/admin/projects/${project.id}/doc-stats`),
-      params: { projectId: project.id },
-      context: { db: createDb(env.DB) },
-    });
-    expect(res.status).toBe(200);
-    const body = (await res.json()) as {
+    const result = (await getAdminProjectDocStats(
+      mockAdminSession(),
+      createDb(env.DB),
+      project.id,
+    )) as {
       rows: { total: number; totalBytes: number; snapshotBytes: number; updateBytes: number };
       content: { members: number; studies: number; checklists: number; pdfs: number };
       memoryUsagePercent: number;
     };
-    expect(typeof body.rows.total).toBe('number');
-    expect(body.content.studies).toBe(0);
-    expect(body.memoryUsagePercent).toBeLessThan(0.01);
-    expect(body.rows.totalBytes).toBe(body.rows.snapshotBytes + body.rows.updateBytes);
+    expect(typeof result.rows.total).toBe('number');
+    expect(result.content.studies).toBe(0);
+    expect(result.memoryUsagePercent).toBeLessThan(0.01);
+    expect(result.rows.totalBytes).toBe(result.rows.snapshotBytes + result.rows.updateBytes);
   });
 });
 
-describe('DELETE /api/admin/projects/:projectId/members/:memberId', () => {
-  it('returns 404 when member not found', async () => {
-    await asAdmin();
-    const res = await removeMember({
-      request: new Request('http://localhost/api/admin/projects/p1/members/m1', {
-        method: 'DELETE',
-        headers: { origin: 'http://localhost:3010' },
-      }),
-      params: { projectId: 'p1', memberId: 'm1' },
-      context: { db: createDb(env.DB) },
-    });
-    expect(res.status).toBe(404);
+describe('removeAdminProjectMember', () => {
+  it('throws 404 when member not found', async () => {
+    try {
+      await removeAdminProjectMember(mockAdminSession(), createDb(env.DB), 'p1', 'm1');
+      expect.unreachable('should have thrown');
+    } catch (err) {
+      expect((err as Response).status).toBe(404);
+    }
   });
 
   it('removes a member that belongs to the project', async () => {
-    await asAdmin();
+    await buildAdminUser();
     const { project, org } = await buildProject();
     const { user: u, membership } = await buildOrgMember({ orgId: org.id });
     const { membership: pm } = await buildProjectMember({
@@ -243,15 +206,13 @@ describe('DELETE /api/admin/projects/:projectId/members/:memberId', () => {
       user: u,
     });
 
-    const res = await removeMember({
-      request: new Request(`http://localhost/api/admin/projects/${project.id}/members/${pm.id}`, {
-        method: 'DELETE',
-        headers: { origin: 'http://localhost:3010' },
-      }),
-      params: { projectId: project.id, memberId: pm.id },
-      context: { db: createDb(env.DB) },
-    });
-    expect(res.status).toBe(200);
+    const result = await removeAdminProjectMember(
+      mockAdminSession(),
+      createDb(env.DB),
+      project.id,
+      pm.id,
+    );
+    expect(result.success).toBe(true);
 
     const { projectMembers } = await import('@corates/db/schema');
     const { eq } = await import('drizzle-orm');
@@ -265,32 +226,21 @@ describe('DELETE /api/admin/projects/:projectId/members/:memberId', () => {
   });
 });
 
-describe('DELETE /api/admin/projects/:projectId', () => {
-  it('returns 404 when project missing', async () => {
-    await asAdmin();
-    const res = await deleteProject({
-      request: new Request('http://localhost/api/admin/projects/nope', {
-        method: 'DELETE',
-        headers: { origin: 'http://localhost:3010' },
-      }),
-      params: { projectId: 'nope' },
-      context: { db: createDb(env.DB) },
-    });
-    expect(res.status).toBe(404);
+describe('deleteAdminProject', () => {
+  it('throws 404 when project missing', async () => {
+    try {
+      await deleteAdminProject(mockAdminSession(), createDb(env.DB), 'nope');
+      expect.unreachable('should have thrown');
+    } catch (err) {
+      expect((err as Response).status).toBe(404);
+    }
   });
 
   it('deletes existing project', async () => {
-    await asAdmin();
+    await buildAdminUser();
     const { project } = await buildProject();
-    const res = await deleteProject({
-      request: new Request(`http://localhost/api/admin/projects/${project.id}`, {
-        method: 'DELETE',
-        headers: { origin: 'http://localhost:3010' },
-      }),
-      params: { projectId: project.id },
-      context: { db: createDb(env.DB) },
-    });
-    expect(res.status).toBe(200);
+    const result = await deleteAdminProject(mockAdminSession(), createDb(env.DB), project.id);
+    expect(result.success).toBe(true);
 
     const { projects } = await import('@corates/db/schema');
     const { eq } = await import('drizzle-orm');

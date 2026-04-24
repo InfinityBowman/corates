@@ -29,6 +29,10 @@ import {
   updateSubscriptionAction,
   cancelSubscriptionAction,
 } from '@/server/functions/admin-orgs.functions';
+import {
+  removeAdminProjectMemberAction,
+  deleteAdminProjectAction,
+} from '@/server/functions/admin-projects.functions';
 
 interface SessionResponse {
   user?: { role?: string; [key: string]: unknown };
@@ -252,23 +256,13 @@ export async function fetchOrgBillingReconcile(
 }
 
 export async function removeProjectMember(projectId: string, memberId: string) {
-  const res = await fetch(
-    `/api/admin/projects/${encodeURIComponent(projectId)}/members/${encodeURIComponent(memberId)}`,
-    { method: 'DELETE', credentials: 'include' },
-  );
-  const data = (await res.json()) as Record<string, unknown>;
-  if (!res.ok) throw data;
+  await removeAdminProjectMemberAction({ data: { projectId, memberId } });
   queryClient.invalidateQueries({ queryKey: queryKeys.admin.projectDetails(projectId) });
   queryClient.invalidateQueries({ queryKey: ['adminProjects'], exact: false });
 }
 
 export async function deleteProject(projectId: string) {
-  const res = await fetch(`/api/admin/projects/${encodeURIComponent(projectId)}`, {
-    method: 'DELETE',
-    credentials: 'include',
-  });
-  const data = (await res.json()) as Record<string, unknown>;
-  if (!res.ok) throw data;
+  await deleteAdminProjectAction({ data: { projectId } });
   queryClient.invalidateQueries({ queryKey: queryKeys.admin.projectDetails(projectId) });
   queryClient.invalidateQueries({ queryKey: ['adminProjects'], exact: false });
 }

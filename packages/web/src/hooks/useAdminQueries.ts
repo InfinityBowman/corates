@@ -19,6 +19,12 @@ import {
   getAdminOrgDetailsAction,
   getAdminOrgBillingAction,
 } from '@/server/functions/admin-orgs.functions';
+import {
+  getAdminProjectsAction,
+  getAdminProjectDetailsAction,
+  getAdminProjectDocStatsAction,
+} from '@/server/functions/admin-projects.functions';
+import { getAdminStatsAction } from '@/server/functions/admin-stats.functions';
 
 const ADMIN_QUERY_CONFIG = {
   staleTime: 0,
@@ -29,12 +35,7 @@ const ADMIN_QUERY_CONFIG = {
 export function useAdminStats() {
   return useQuery({
     queryKey: queryKeys.admin.stats,
-    queryFn: async () => {
-      const res = await fetch('/api/admin/stats', { credentials: 'include' });
-      const data = (await res.json()) as Record<string, unknown>;
-      if (!res.ok) throw data;
-      return data;
-    },
+    queryFn: () => getAdminStatsAction(),
     ...ADMIN_QUERY_CONFIG,
   });
 }
@@ -70,17 +71,10 @@ export function useAdminProjects(
   const orgId = params.orgId ?? '';
   return useQuery({
     queryKey: queryKeys.admin.projects(page, limit, search, orgId),
-    queryFn: async () => {
-      const qs = new URLSearchParams({ page: page.toString(), limit: limit.toString() });
-      if (search) qs.set('search', search);
-      if (orgId) qs.set('orgId', orgId);
-      const res = await fetch(`/api/admin/projects?${qs.toString()}`, {
-        credentials: 'include',
-      });
-      const data = (await res.json()) as Record<string, unknown>;
-      if (!res.ok) throw data;
-      return data;
-    },
+    queryFn: () =>
+      getAdminProjectsAction({
+        data: { page, limit, ...(search ? { search } : {}), ...(orgId ? { orgId } : {}) },
+      }),
     ...ADMIN_QUERY_CONFIG,
   });
 }
@@ -88,14 +82,7 @@ export function useAdminProjects(
 export function useAdminProjectDetails(projectId: string | null | undefined) {
   return useQuery({
     queryKey: queryKeys.admin.projectDetails(projectId),
-    queryFn: async () => {
-      const res = await fetch(`/api/admin/projects/${encodeURIComponent(projectId!)}`, {
-        credentials: 'include',
-      });
-      const data = (await res.json()) as Record<string, unknown>;
-      if (!res.ok) throw data;
-      return data;
-    },
+    queryFn: () => getAdminProjectDetailsAction({ data: { projectId: projectId! } }),
     enabled: !!projectId,
     ...ADMIN_QUERY_CONFIG,
   });
@@ -104,14 +91,7 @@ export function useAdminProjectDetails(projectId: string | null | undefined) {
 export function useAdminProjectDocStats(projectId: string | null | undefined) {
   return useQuery({
     queryKey: queryKeys.admin.projectDocStats(projectId),
-    queryFn: async () => {
-      const res = await fetch(`/api/admin/projects/${encodeURIComponent(projectId!)}/doc-stats`, {
-        credentials: 'include',
-      });
-      const data = (await res.json()) as Record<string, unknown>;
-      if (!res.ok) throw data;
-      return data;
-    },
+    queryFn: () => getAdminProjectDocStatsAction({ data: { projectId: projectId! } }),
     enabled: !!projectId,
     ...ADMIN_QUERY_CONFIG,
   });

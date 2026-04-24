@@ -168,23 +168,25 @@ Tests: `orgs.server.test.ts`, `billing.server.test.ts`, `billing-observability.s
 
 Note: Fixed `updateGrantExpiresAt` and `revokeGrant` return types in `@corates/db` to be non-nullable. Branded types (`OrgId`, `OrgAccessGrantId`) used in function signatures, cast at the `functions.ts` boundary.
 
-## Batch 11: Admin Projects + Stats (10 routes)
+## Batch 11: Admin Projects + Stats (11 routes) -- DONE
 
-New files: `admin/projects.server.ts`, `admin/projects.functions.ts`, `admin/stats.server.ts`, `admin/stats.functions.ts`
+New files: `admin-projects.server.ts`, `admin-projects.functions.ts`, `admin-stats.server.ts`, `admin-stats.functions.ts`
 
-- [ ] `admin/projects.ts` (GET - list projects)
-- [ ] `admin/projects/$projectId.ts` (GET - project details)
-- [ ] `admin/projects/$projectId/doc-stats.ts` (GET - document stats)
-- [ ] `admin/projects/$projectId/members/$memberId.ts` (DELETE - remove member)
-- [ ] `admin/stats.ts` (GET - overall stats)
-- [ ] `admin/stats/signups.ts` (GET - signup analytics)
-- [ ] `admin/stats/revenue.ts` (GET - revenue analytics)
-- [ ] `admin/stats/projects.ts` (GET - project analytics)
-- [ ] `admin/stats/organizations.ts` (GET - org analytics)
-- [ ] `admin/stats/subscriptions.ts` (GET - subscription analytics)
-- [ ] `admin/stats/webhooks.ts` (GET - webhook analytics)
+- [x] `admin/projects.ts` (GET - list projects)
+- [x] `admin/projects/$projectId.ts` (GET/DELETE - project details + delete)
+- [x] `admin/projects/$projectId/doc-stats.ts` (GET - document stats)
+- [x] `admin/projects/$projectId/members/$memberId.ts` (DELETE - remove member)
+- [x] `admin/stats.ts` (GET - overall stats)
+- [x] `admin/stats/signups.ts` (GET - signup analytics)
+- [x] `admin/stats/revenue.ts` (GET - revenue analytics)
+- [x] `admin/stats/projects.ts` (GET - project analytics)
+- [x] `admin/stats/organizations.ts` (GET - org analytics)
+- [x] `admin/stats/subscriptions.ts` (GET - subscription analytics)
+- [x] `admin/stats/webhooks.ts` (GET - webhook analytics)
 
-Tests: `projects.server.test.ts`, `projects-self.server.test.ts`, `stats.server.test.ts`
+Tests: `projects.server.test.ts`, `stats.server.test.ts` (rewritten). `projects-self.server.test.ts` deleted (tested middleware chain on deleted routes). Stats dashboard test moved from `users.server.test.ts` route import to server function call.
+
+Note: `AnalyticsSection.tsx` updated -- 6 inline fetch queries replaced with server function actions. `session` schema table aliased as `sessionTable` in admin-stats.server.ts to avoid naming conflict with Session parameter.
 
 ## Batch 12: Admin Billing + Stripe + Database + Storage (16 routes)
 
@@ -226,6 +228,6 @@ Tests: `billing-observability.server.test.ts`, `stripe-tools.server.test.ts`, `d
 | Batch 8: Orgs Dev + Studies            | 5 migrated, 1 kept (e2e), 1 stays HTTP | Done         |
 | Batch 9: Admin Users                   | 8                                      | Done         |
 | Batch 10: Admin Orgs                   | 10                                     | Done         |
-| Batch 11: Admin Projects + Stats       | 10-11                                  | Pending      |
+| Batch 11: Admin Projects + Stats       | 11                                     | Done         |
 | Batch 12: Admin Billing + DB + Storage | 16                                     | Pending      |
 | **Total migratable**                   | **~85**                                |              |

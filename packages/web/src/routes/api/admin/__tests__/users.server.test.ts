@@ -1,9 +1,9 @@
 /**
  * Admin /users handler-logic tests.
  *
- * Tests invoke the pure business logic functions in admin-users.server.ts.
- * Auth/CSRF/admin-role enforcement is validated once in `projects-self.server.test.ts`.
- * Impersonation tests call the server function directly since it returns a Response.
+ * Tests invoke the pure business logic functions in admin-users.server.ts and
+ * admin-stats.server.ts. Impersonation tests call the server function directly
+ * since it returns a Response.
  */
 import { beforeEach, describe, expect, it, vi, type Mock } from 'vitest';
 import { env } from 'cloudflare:test';
@@ -19,7 +19,7 @@ import { createDb } from '@corates/db/client';
 import { account, session, user } from '@corates/db/schema';
 import { eq } from 'drizzle-orm';
 import type { Session } from '@/server/middleware/auth';
-import { handleGet as statsHandler } from '../stats';
+import { getAdminStats } from '@/server/functions/admin-stats.server';
 import {
   listAdminUsers,
   getAdminUserDetails,
@@ -100,25 +100,18 @@ async function seedAccountRow(
   });
 }
 
-describe('GET /api/admin/stats', () => {
+describe('getAdminStats', () => {
   it('returns dashboard counts', async () => {
     const admin = await buildAdminUser();
     const u = await buildUser();
     await buildProject({ owner: u });
     await seedSessionRow('s-1', u.id);
 
-    const res = await statsHandler({ context: { db: createDb(env.DB) } });
-    expect(res.status).toBe(200);
-    const body = (await res.json()) as {
-      users: number;
-      projects: number;
-      activeSessions: number;
-      recentSignups: number;
-    };
-    expect(body.users).toBeGreaterThanOrEqual(2);
-    expect(body.projects).toBeGreaterThanOrEqual(1);
-    expect(body.activeSessions).toBeGreaterThanOrEqual(1);
-    expect(body.recentSignups).toBeGreaterThanOrEqual(2);
+    const result = await getAdminStats(mockAdminSession(), createDb(env.DB));
+    expect(result.users).toBeGreaterThanOrEqual(2);
+    expect(result.projects).toBeGreaterThanOrEqual(1);
+    expect(result.activeSessions).toBeGreaterThanOrEqual(1);
+    expect(result.recentSignups).toBeGreaterThanOrEqual(2);
     void admin;
   });
 });
