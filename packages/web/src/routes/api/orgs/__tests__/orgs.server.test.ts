@@ -107,9 +107,7 @@ describe('createOrganization', () => {
   });
 
   it('throws 403 when slug is taken', async () => {
-    mockCreateOrganization.mockRejectedValueOnce(
-      new Error('Organization slug is already taken'),
-    );
+    mockCreateOrganization.mockRejectedValueOnce(new Error('Organization slug is already taken'));
 
     try {
       await createOrganization(dummyRequest, { name: 'Test Org', slug: 'taken-slug' });
@@ -170,13 +168,10 @@ describe('updateOrganization', () => {
       organization: { id: org.id, name: 'Updated Org', slug: 'test-org' },
     });
 
-    const result = await updateOrganization(
-      mockSession(),
-      createDb(env.DB),
-      dummyRequest,
-      org.id,
-      { name: 'Updated Org', slug: 'test-org' },
-    );
+    const result = await updateOrganization(mockSession(), createDb(env.DB), dummyRequest, org.id, {
+      name: 'Updated Org',
+      slug: 'test-org',
+    });
 
     expect(result.success).toBe(true);
     expect(mockUpdateOrganization).toHaveBeenCalledWith({
@@ -193,9 +188,7 @@ describe('updateOrganization', () => {
     const { user: admin } = await buildOrgMember({ orgId: org.id, role: 'admin' });
     currentUser = { id: admin.id, email: admin.email };
 
-    mockUpdateOrganization.mockRejectedValueOnce(
-      new Error('Organization slug is already taken'),
-    );
+    mockUpdateOrganization.mockRejectedValueOnce(new Error('Organization slug is already taken'));
 
     try {
       await updateOrganization(mockSession(), createDb(env.DB), dummyRequest, org.id, {
@@ -402,9 +395,7 @@ describe('updateMemberRole', () => {
     const { user: admin } = await buildOrgMember({ orgId: org.id, role: 'admin' });
     currentUser = { id: admin.id, email: admin.email };
 
-    mockUpdateMemberRole.mockRejectedValueOnce(
-      new Error('Only owners can change owner role'),
-    );
+    mockUpdateMemberRole.mockRejectedValueOnce(new Error('Only owners can change owner role'));
 
     try {
       await updateMemberRole(

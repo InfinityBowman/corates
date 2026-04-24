@@ -155,13 +155,7 @@ export const createInvitationAction = createServerFn({ method: 'POST' })
   )
   .handler(async ({ data, context: { session, db } }) => {
     const { orgId, projectId, ...inviteData } = data;
-    return createProjectInvitation(
-      session,
-      db,
-      orgId as OrgId,
-      projectId as ProjectId,
-      inviteData,
-    );
+    return createProjectInvitation(session, db, orgId as OrgId, projectId as ProjectId, inviteData);
   });
 
 export const cancelInvitation = createServerFn({ method: 'POST' })

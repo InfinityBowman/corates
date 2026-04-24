@@ -88,13 +88,13 @@ export function DevImportProject() {
       const projectName = (data.meta as Record<string, unknown>)?.name || 'Imported Project';
 
       // Step 1: Create the project
-      const newProject = await createProject({
+      const newProject = (await createProject({
         data: {
           orgId: resolvedOrgId,
           name: projectName as string,
           description: ((data.meta as Record<string, unknown>)?.description as string) || undefined,
         },
-      }) as { id: string };
+      })) as { id: string };
       console.log('[DevPanel] Created project:', newProject.id);
 
       // Step 2: Import data to the new project

@@ -30,13 +30,7 @@ export const applyTemplate = createServerFn({ method: 'POST' })
   )
   .handler(async ({ data, context: { session, db } }) => {
     const { orgId, projectId, ...templateData } = data;
-    return applyDevTemplate(
-      session,
-      db,
-      orgId as OrgId,
-      projectId as ProjectId,
-      templateData,
-    );
+    return applyDevTemplate(session, db, orgId as OrgId, projectId as ProjectId, templateData);
   });
 
 export const importState = createServerFn({ method: 'POST' })

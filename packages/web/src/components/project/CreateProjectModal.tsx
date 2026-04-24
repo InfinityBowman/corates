@@ -86,13 +86,13 @@ export function CreateProjectModal({ open, onOpenChange }: CreateProjectModalPro
 
       setIsSubmitting(true);
       try {
-        const newProject = await createProject({
+        const newProject = (await createProject({
           data: {
             orgId,
             name: projectName.trim(),
             description: projectDescription.trim() || undefined,
           },
-        }) as { id: string };
+        })) as { id: string };
 
         queryClient.invalidateQueries({ queryKey: queryKeys.projects.all });
         onOpenChange(false);

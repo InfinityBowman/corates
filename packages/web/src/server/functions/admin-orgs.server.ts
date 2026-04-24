@@ -29,10 +29,9 @@ import type { Session } from '@/server/middleware/auth';
 
 function assertAdmin(session: Session) {
   if (!isAdminUser(session.user as { role?: string | null })) {
-    throw Response.json(
-      createDomainError(AUTH_ERRORS.FORBIDDEN, { reason: 'admin_required' }),
-      { status: 403 },
-    );
+    throw Response.json(createDomainError(AUTH_ERRORS.FORBIDDEN, { reason: 'admin_required' }), {
+      status: 403,
+    });
   }
 }
 
@@ -50,7 +49,13 @@ interface StuckState {
   stripeCheckoutSessionId?: string | null;
   stripeCustomerId?: string | null;
   failedCount?: number;
-  recentFailures?: { ledgerId: string; stripeEventId: string | null; type: string | null; error: string | null; receivedAt: Date }[];
+  recentFailures?: {
+    ledgerId: string;
+    stripeEventId: string | null;
+    type: string | null;
+    error: string | null;
+    receivedAt: Date;
+  }[];
   lagMinutes?: number;
   payloadHash?: string;
   periodEnd?: number;
@@ -311,9 +316,7 @@ export async function reconcileAdminOrgBilling(
     if (sub.status === 'incomplete' || sub.status === 'incomplete_expired') {
       if (!sub.createdAt) continue;
       const createdAtTimestamp =
-        sub.createdAt instanceof Date ?
-          Math.floor(sub.createdAt.getTime() / 1000)
-        : sub.createdAt;
+        sub.createdAt instanceof Date ? Math.floor(sub.createdAt.getTime() / 1000) : sub.createdAt;
       const ageMinutes = (nowTimestamp - createdAtTimestamp) / 60;
 
       if (ageMinutes > incompleteThresholdMinutes) {
@@ -352,8 +355,7 @@ export async function reconcileAdminOrgBilling(
   const ledgerEntries = await getLedgerEntriesByOrgId(db, orgId, { limit: 100 });
 
   const checkoutCompletedEvents = ledgerEntries.filter(
-    entry =>
-      entry.type === 'checkout.session.completed' && entry.status === LedgerStatus.PROCESSED,
+    entry => entry.type === 'checkout.session.completed' && entry.status === LedgerStatus.PROCESSED,
   );
 
   for (const event of checkoutCompletedEvents) {

@@ -1,11 +1,6 @@
 import { env } from 'cloudflare:workers';
 import { acceptInvitation } from '@corates/workers/commands/invitations';
-import {
-  createDomainError,
-  isDomainError,
-  SYSTEM_ERRORS,
-  type DomainError,
-} from '@corates/shared';
+import { createDomainError, isDomainError, SYSTEM_ERRORS, type DomainError } from '@corates/shared';
 import type { Session } from '@/server/middleware/auth';
 
 export interface AcceptResult {

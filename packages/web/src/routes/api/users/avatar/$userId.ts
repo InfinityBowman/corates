@@ -3,12 +3,7 @@ import { env } from 'cloudflare:workers';
 import { createDomainError, FILE_ERRORS, SYSTEM_ERRORS } from '@corates/shared';
 import { authMiddleware } from '@/server/middleware/auth';
 
-export const handler = async ({
-  params,
-}: {
-  request: Request;
-  params: { userId: string };
-}) => {
+export const handler = async ({ params }: { request: Request; params: { userId: string } }) => {
   const { userId } = params;
 
   try {

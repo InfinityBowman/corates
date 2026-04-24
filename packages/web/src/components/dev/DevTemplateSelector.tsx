@@ -50,7 +50,7 @@ export function DevTemplateSelector({ projectId, orgId }: DevTemplateSelectorPro
     setTemplatesError(null);
 
     getDevTemplates({ data: { orgId, projectId } })
-      .then((data) => {
+      .then(data => {
         if (!cancelled) {
           setTemplates(data as TemplatesData);
         }

@@ -99,7 +99,9 @@ async function clickPlanButton(page: Page, planName: string) {
 
   // Each plan card is a div.rounded-2xl containing the heading and a button.
   // Use xpath to find the closest card ancestor.
-  const card = page.locator(`xpath=//h3[text()="${planName}"]/ancestor::div[contains(@class,"rounded-2xl")][1]`);
+  const card = page.locator(
+    `xpath=//h3[text()="${planName}"]/ancestor::div[contains(@class,"rounded-2xl")][1]`,
+  );
   await card.getByRole('button', { name: /Get Started|Upgrade Now/i }).click();
 }
 

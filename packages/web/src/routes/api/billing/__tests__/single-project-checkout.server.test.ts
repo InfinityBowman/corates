@@ -92,8 +92,8 @@ describe('createSPCheckout', () => {
     });
     createSingleProjectCheckoutMock.mockRejectedValueOnce(new Error('stripe down'));
 
-    await expect(
-      createSPCheckout(createDb(env.DB), session, dummyRequest),
-    ).rejects.toThrow('stripe down');
+    await expect(createSPCheckout(createDb(env.DB), session, dummyRequest)).rejects.toThrow(
+      'stripe down',
+    );
   });
 });

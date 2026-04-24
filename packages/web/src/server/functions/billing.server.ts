@@ -196,10 +196,9 @@ export async function fetchPlanValidation(db: Database, session: Session, target
 
 function requireOwnerOrg(orgId: OrgId | null, role: string | null): asserts orgId is OrgId {
   if (!orgId) {
-    throw Response.json(
-      createDomainError(AUTH_ERRORS.FORBIDDEN, { reason: 'no_org_found' }),
-      { status: 403 },
-    );
+    throw Response.json(createDomainError(AUTH_ERRORS.FORBIDDEN, { reason: 'no_org_found' }), {
+      status: 403,
+    });
   }
   if (role !== 'owner') {
     throw Response.json(
@@ -313,10 +312,9 @@ export async function fetchInvoices(db: Database, session: Session): Promise<Inv
   });
 
   if (!orgId) {
-    throw Response.json(
-      createDomainError(AUTH_ERRORS.FORBIDDEN, { reason: 'no_org_found' }),
-      { status: 403 },
-    );
+    throw Response.json(createDomainError(AUTH_ERRORS.FORBIDDEN, { reason: 'no_org_found' }), {
+      status: 403,
+    });
   }
 
   const [orgSubscription] = await db
@@ -467,8 +465,10 @@ export async function beginTrial(db: Database, session: Session) {
 // --- Sync after checkout ---
 
 export async function syncAfterCheckout(db: Database, session: Session) {
-  const stripeCustomerId = (session.user as Record<string, unknown>)
-    .stripeCustomerId as string | null | undefined;
+  const stripeCustomerId = (session.user as Record<string, unknown>).stripeCustomerId as
+    | string
+    | null
+    | undefined;
   if (!stripeCustomerId) {
     return { status: 'none', stripeSubscriptionId: null };
   }

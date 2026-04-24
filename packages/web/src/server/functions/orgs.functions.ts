@@ -92,14 +92,9 @@ export const updateOrgMemberRole = createServerFn({ method: 'POST' })
     }),
   )
   .handler(async ({ data, context: { session, db, request } }) =>
-    updateMemberRole(
-      session,
-      db,
-      request,
-      data.orgId as OrgId,
-      data.memberId as UserId,
-      { role: data.role },
-    ),
+    updateMemberRole(session, db, request, data.orgId as OrgId, data.memberId as UserId, {
+      role: data.role,
+    }),
   );
 
 export const removeOrgMember = createServerFn({ method: 'POST' })

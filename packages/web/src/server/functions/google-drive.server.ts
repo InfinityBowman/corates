@@ -70,12 +70,13 @@ export async function getPickerToken(db: Database, session: Session) {
       (typeof err?.message === 'string' && err.message.includes('reconnect')) ||
       (typeof err?.code === 'string' && err.code.includes('GOOGLE'))
     ) {
-      const authError = isDomainError(error)
-        ? error
-        : createDomainError(AUTH_ERRORS.INVALID, {
+      const authError =
+        isDomainError(error) ? error : (
+          createDomainError(AUTH_ERRORS.INVALID, {
             context: 'google_token_expired',
             originalError: typeof err?.message === 'string' ? err.message : String(error),
-          });
+          })
+        );
       throw Response.json(authError, { status: 401 });
     }
     const systemError = createDomainError(SYSTEM_ERRORS.INTERNAL_ERROR, {

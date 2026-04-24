@@ -131,10 +131,10 @@ Modern TanStack/Vite projects set this `true`. Forces explicit `import type { ..
 
 ## Suggested order of attack
 
-| #   | Change                                         |                    Cost | Why now                                                                            |
-| --- | ---------------------------------------------- | ----------------------: | ---------------------------------------------------------------------------------- |
-| 1   | Incremental loader adoption, page by page (G4) |                 ongoing | Biggest user-visible win. Pilot on `admin/users.$userId.tsx` needs verification.   |
-| 2   | Path-param Zod via param middleware (G3)        |                1-2 days | Rides on the existing middleware system.                                           |
-| 3   | Router context for auth (G5)                   |                  1-2 hr | Separate refactor; don't bundle.                                                   |
-| 4   | `.server.ts` audit (G7)                        |                  1-2 hr | One-time cleanup.                                                                  |
-| 5   | `verbatimModuleSyntax: true` (G8)              | 1-2 hr (mostly autofix) | One-time cleanup.                                                                  |
+| #   | Change                                         |                    Cost | Why now                                                                          |
+| --- | ---------------------------------------------- | ----------------------: | -------------------------------------------------------------------------------- |
+| 1   | Incremental loader adoption, page by page (G4) |                 ongoing | Biggest user-visible win. Pilot on `admin/users.$userId.tsx` needs verification. |
+| 2   | Path-param Zod via param middleware (G3)       |                1-2 days | Rides on the existing middleware system.                                         |
+| 3   | Router context for auth (G5)                   |                  1-2 hr | Separate refactor; don't bundle.                                                 |
+| 4   | `.server.ts` audit (G7)                        |                  1-2 hr | One-time cleanup.                                                                |
+| 5   | `verbatimModuleSyntax: true` (G8)              | 1-2 hr (mostly autofix) | One-time cleanup.                                                                |

@@ -13,9 +13,15 @@ import {
 } from '@corates/shared';
 import type { OrgId, ProjectId, UserId, ProjectInvitationId } from '@corates/shared/ids';
 import { createProject } from '@corates/workers/commands/projects';
-import { updateProject as updateProjectCmd, deleteProject as deleteProjectCmd } from '@corates/workers/commands/projects';
+import {
+  updateProject as updateProjectCmd,
+  deleteProject as deleteProjectCmd,
+} from '@corates/workers/commands/projects';
 import { addMember } from '@corates/workers/commands/members';
-import { updateMemberRole as updateMemberRoleCmd, removeMember as removeMemberCmd } from '@corates/workers/commands/members';
+import {
+  updateMemberRole as updateMemberRoleCmd,
+  removeMember as removeMemberCmd,
+} from '@corates/workers/commands/members';
 import { createInvitation } from '@corates/workers/commands/invitations';
 import { requireMemberRemoval } from '@corates/workers/policies';
 import { requireOrgMembership } from '@/server/guards/requireOrgMembership';
@@ -45,9 +51,7 @@ export async function listOrgProjects(session: Session, db: Database, orgId: Org
       })
       .from(projects)
       .innerJoin(projectMembers, eq(projects.id, projectMembers.projectId))
-      .where(
-        and(eq(projects.orgId, orgId), eq(projectMembers.userId, membership.context.userId)),
-      )
+      .where(and(eq(projects.orgId, orgId), eq(projectMembers.userId, membership.context.userId)))
       .orderBy(desc(projects.updatedAt));
 
     return results;
@@ -147,10 +151,9 @@ export async function getProject(
       .get();
 
     if (!result) {
-      throw Response.json(
-        createDomainError(PROJECT_ERRORS.NOT_FOUND, { projectId }),
-        { status: 404 },
-      );
+      throw Response.json(createDomainError(PROJECT_ERRORS.NOT_FOUND, { projectId }), {
+        status: 404,
+      });
     }
 
     return { ...result, role: access.context.projectRole };
@@ -534,10 +537,7 @@ export async function listProjectInvitations(
       })
       .from(projectInvitations)
       .where(
-        and(
-          eq(projectInvitations.projectId, projectId),
-          isNull(projectInvitations.acceptedAt),
-        ),
+        and(eq(projectInvitations.projectId, projectId), isNull(projectInvitations.acceptedAt)),
       )
       .orderBy(desc(projectInvitations.createdAt));
 
@@ -624,10 +624,7 @@ export async function cancelProjectInvitation(
       .select({ acceptedAt: projectInvitations.acceptedAt })
       .from(projectInvitations)
       .where(
-        and(
-          eq(projectInvitations.id, invitationId),
-          eq(projectInvitations.projectId, projectId),
-        ),
+        and(eq(projectInvitations.id, invitationId), eq(projectInvitations.projectId, projectId)),
       )
       .get();
 

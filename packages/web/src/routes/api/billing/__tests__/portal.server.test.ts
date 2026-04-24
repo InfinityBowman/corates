@@ -127,8 +127,8 @@ describe('createPortalSession', () => {
     });
     createBillingPortalMock.mockRejectedValueOnce(new Error('stripe down'));
 
-    await expect(
-      createPortalSession(createDb(env.DB), session, dummyRequest),
-    ).rejects.toThrow('stripe down');
+    await expect(createPortalSession(createDb(env.DB), session, dummyRequest)).rejects.toThrow(
+      'stripe down',
+    );
   });
 });

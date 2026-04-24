@@ -4,12 +4,7 @@ import type { Database } from '@corates/db/client';
 import { projects } from '@corates/db/schema';
 import { count, eq } from 'drizzle-orm';
 import { requireOrgMemberRemoval } from '@corates/workers/policies';
-import {
-  createDomainError,
-  isDomainError,
-  AUTH_ERRORS,
-  SYSTEM_ERRORS,
-} from '@corates/shared';
+import { createDomainError, isDomainError, AUTH_ERRORS, SYSTEM_ERRORS } from '@corates/shared';
 import type { OrgId, UserId } from '@corates/shared/ids';
 import { requireOrgMembership } from '@/server/guards/requireOrgMembership';
 import { requireOrgWriteAccess } from '@/server/guards/requireOrgWriteAccess';
@@ -104,10 +99,9 @@ export async function createOrganization(
     const error = err as Error;
     console.error('Error creating organization:', error);
     if (error.message?.includes('slug')) {
-      throw Response.json(
-        createDomainError(AUTH_ERRORS.FORBIDDEN, { reason: 'slug_taken' }),
-        { status: 403 },
-      );
+      throw Response.json(createDomainError(AUTH_ERRORS.FORBIDDEN, { reason: 'slug_taken' }), {
+        status: 403,
+      });
     }
     throw Response.json(
       createDomainError(SYSTEM_ERRORS.DB_ERROR, {
@@ -204,10 +198,9 @@ export async function updateOrganization(
     const error = err as Error;
     console.error('Error updating organization:', error);
     if (error.message?.includes('slug')) {
-      throw Response.json(
-        createDomainError(AUTH_ERRORS.FORBIDDEN, { reason: 'slug_taken' }),
-        { status: 403 },
-      );
+      throw Response.json(createDomainError(AUTH_ERRORS.FORBIDDEN, { reason: 'slug_taken' }), {
+        status: 403,
+      });
     }
     throw Response.json(
       createDomainError(SYSTEM_ERRORS.DB_ERROR, {
@@ -311,10 +304,9 @@ export async function addOrgMember(
     const error = err as Error;
     console.error('Error adding org member:', error);
     if (error.message?.includes('already') || error.message?.includes('member')) {
-      throw Response.json(
-        createDomainError(AUTH_ERRORS.FORBIDDEN, { reason: 'already_member' }),
-        { status: 403 },
-      );
+      throw Response.json(createDomainError(AUTH_ERRORS.FORBIDDEN, { reason: 'already_member' }), {
+        status: 403,
+      });
     }
     throw Response.json(
       createDomainError(SYSTEM_ERRORS.DB_ERROR, {
@@ -436,12 +428,7 @@ export async function removeMember(
   }
 }
 
-export async function setActiveOrg(
-  session: Session,
-  db: Database,
-  request: Request,
-  orgId: OrgId,
-) {
+export async function setActiveOrg(session: Session, db: Database, request: Request, orgId: OrgId) {
   const guard = await requireOrgMembership(session, db, orgId);
   if (!guard.ok) throw guard.response;
 

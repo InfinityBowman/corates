@@ -99,10 +99,10 @@ describe('addProjectMember', () => {
     const { user: newMember } = await buildOrgMember({ orgId: org.id, role: 'member' });
     currentUser = { id: owner.id, email: owner.email };
 
-    const result = await addProjectMember(mockSession(), createDb(env.DB), org.id, project.id, {
+    const result = (await addProjectMember(mockSession(), createDb(env.DB), org.id, project.id, {
       userId: newMember.id,
       role: 'member',
-    }) as { userId: string; role: string };
+    })) as { userId: string; role: string };
     expect(result.userId).toBe(newMember.id);
     expect(result.role).toBe('member');
   });
@@ -112,10 +112,10 @@ describe('addProjectMember', () => {
     const { user: newMember } = await buildOrgMember({ orgId: org.id, role: 'member' });
     currentUser = { id: owner.id, email: owner.email };
 
-    const result = await addProjectMember(mockSession(), createDb(env.DB), org.id, project.id, {
+    const result = (await addProjectMember(mockSession(), createDb(env.DB), org.id, project.id, {
       email: newMember.email,
       role: 'member',
-    }) as { userId: string; email: string };
+    })) as { userId: string; email: string };
     expect(result.userId).toBe(newMember.id);
     expect(result.email).toBe(newMember.email);
   });
@@ -125,10 +125,10 @@ describe('addProjectMember', () => {
     const { user: newMember } = await buildOrgMember({ orgId: org.id, role: 'member' });
     currentUser = { id: owner.id, email: owner.email };
 
-    const result = await addProjectMember(mockSession(), createDb(env.DB), org.id, project.id, {
+    const result = (await addProjectMember(mockSession(), createDb(env.DB), org.id, project.id, {
       email: newMember.email.toUpperCase(),
       role: 'member',
-    }) as { email: string };
+    })) as { email: string };
     expect(result.email).toBe(newMember.email);
   });
 
@@ -136,10 +136,10 @@ describe('addProjectMember', () => {
     const { project, org, owner } = await buildProject();
     currentUser = { id: owner.id, email: owner.email };
 
-    const result = await addProjectMember(mockSession(), createDb(env.DB), org.id, project.id, {
+    const result = (await addProjectMember(mockSession(), createDb(env.DB), org.id, project.id, {
       email: 'nonexistent@example.com',
       role: 'member',
-    }) as { success: boolean; invitation: boolean };
+    })) as { success: boolean; invitation: boolean };
     expect(result.success).toBe(true);
     expect(result.invitation).toBe(true);
   });
@@ -190,9 +190,9 @@ describe('addProjectMember', () => {
     const { user: newMember } = await buildOrgMember({ orgId: org.id, role: 'member' });
     currentUser = { id: owner.id, email: owner.email };
 
-    const result = await addProjectMember(mockSession(), createDb(env.DB), org.id, project.id, {
+    const result = (await addProjectMember(mockSession(), createDb(env.DB), org.id, project.id, {
       userId: newMember.id,
-    }) as { role: string };
+    })) as { role: string };
     expect(result.role).toBe('member');
   });
 });
@@ -220,14 +220,9 @@ describe('updateProjectMemberRole', () => {
     currentUser = { id: owner.id, email: owner.email };
 
     try {
-      await updateProjectMemberRole(
-        mockSession(),
-        createDb(env.DB),
-        org.id,
-        project.id,
-        owner.id,
-        { role: 'member' },
-      );
+      await updateProjectMemberRole(mockSession(), createDb(env.DB), org.id, project.id, owner.id, {
+        role: 'member',
+      });
       expect.unreachable('should have thrown');
     } catch (err) {
       expect(err).toBeInstanceOf(Response);
@@ -370,10 +365,10 @@ describe('Collaborator Quota Enforcement', () => {
     const { user: existingOrgMember } = await buildOrgMember({ orgId: org.id, role: 'member' });
     currentUser = { id: owner.id, email: owner.email };
 
-    const result = await addProjectMember(mockSession(), createDb(env.DB), org.id, project.id, {
+    const result = (await addProjectMember(mockSession(), createDb(env.DB), org.id, project.id, {
       userId: existingOrgMember.id,
       role: 'member',
-    }) as { userId: string };
+    })) as { userId: string };
     expect(result.userId).toBe(existingOrgMember.id);
   });
 });

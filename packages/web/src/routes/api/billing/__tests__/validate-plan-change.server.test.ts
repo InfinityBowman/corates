@@ -40,7 +40,10 @@ describe('fetchPlanValidation', () => {
       expect.fail('should have thrown');
     } catch (res) {
       expect((res as Response).status).toBe(403);
-      const body = (await (res as Response).json()) as { code: string; details?: { reason?: string } };
+      const body = (await (res as Response).json()) as {
+        code: string;
+        details?: { reason?: string };
+      };
       expect(body.code).toBe('AUTH_FORBIDDEN');
       expect(body.details?.reason).toBe('no_org_found');
     }

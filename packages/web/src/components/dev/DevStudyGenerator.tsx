@@ -84,9 +84,7 @@ export function DevStudyGenerator({ projectId, orgId }: DevStudyGeneratorProps) 
           reviewer1,
           reviewer2,
           reconcile,
-          ...(requiresOutcome
-            ? { outcomeId: outcomeId === '__auto__' ? null : outcomeId }
-            : {}),
+          ...(requiresOutcome ? { outcomeId: outcomeId === '__auto__' ? null : outcomeId } : {}),
         },
       })) as { checklistIds?: string[]; outcomeId?: string };
       const checklistCount = data.checklistIds?.length || 0;

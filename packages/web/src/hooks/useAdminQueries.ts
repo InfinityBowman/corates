@@ -148,8 +148,7 @@ export function useAdminOrgs(params: { page?: number; limit?: number; search?: s
   const search = params.search ?? '';
   return useQuery({
     queryKey: queryKeys.admin.orgs(page, limit, search),
-    queryFn: () =>
-      getAdminOrgsAction({ data: { page, limit, ...(search ? { search } : {}) } }),
+    queryFn: () => getAdminOrgsAction({ data: { page, limit, ...(search ? { search } : {}) } }),
     ...ADMIN_QUERY_CONFIG,
   });
 }

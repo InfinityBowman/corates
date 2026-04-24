@@ -16,7 +16,10 @@ import {
   getEmailVerificationErrorPage,
 } from '@/server/lib/authHtmlPages';
 
-type HandlerArgs = { request: Request; context: { log: RequestLogger; cloudflareCtx?: ExecutionContext } };
+type HandlerArgs = {
+  request: Request;
+  context: { log: RequestLogger; cloudflareCtx?: ExecutionContext };
+};
 
 export const handleGet = async ({ request, context }: HandlerArgs) => {
   try {

@@ -105,11 +105,16 @@ describe('POST /api/admin/orgs/:orgId/subscriptions', () => {
 
   it('creates subscription and dispatches notify', async () => {
     const { org } = await buildOrg();
-    const result = await createAdminSubscription(mockAdminSession(), createDb(env.DB), org.id as OrgId, {
-      plan: 'team',
-      status: 'active',
-      stripeCustomerId: 'cus_1',
-    });
+    const result = await createAdminSubscription(
+      mockAdminSession(),
+      createDb(env.DB),
+      org.id as OrgId,
+      {
+        plan: 'team',
+        status: 'active',
+        stripeCustomerId: 'cus_1',
+      },
+    );
     expect(result.success).toBe(true);
     expect(result.subscription.plan).toBe('team');
     expect(result.subscription.referenceId).toBe(org.id);
@@ -290,7 +295,13 @@ describe('PUT /api/admin/orgs/:orgId/grants/:grantId', () => {
     });
 
     try {
-      await updateAdminGrant(mockAdminSession(), createDb(env.DB), org.id as OrgId, 'gr-empty' as OrgAccessGrantId, {});
+      await updateAdminGrant(
+        mockAdminSession(),
+        createDb(env.DB),
+        org.id as OrgId,
+        'gr-empty' as OrgAccessGrantId,
+        {},
+      );
       expect.unreachable('should have thrown');
     } catch (err) {
       expect((err as Response).status).toBe(400);
@@ -312,9 +323,15 @@ describe('PUT /api/admin/orgs/:orgId/grants/:grantId', () => {
       metadata: null,
     });
     const newExpires = new Date(Date.now() + 60 * 86400000);
-    const result = await updateAdminGrant(mockAdminSession(), createDb(env.DB), org.id as OrgId, 'gr-ext' as OrgAccessGrantId, {
-      expiresAt: newExpires,
-    });
+    const result = await updateAdminGrant(
+      mockAdminSession(),
+      createDb(env.DB),
+      org.id as OrgId,
+      'gr-ext' as OrgAccessGrantId,
+      {
+        expiresAt: newExpires,
+      },
+    );
     expect(result.success).toBe(true);
   });
 
@@ -333,18 +350,30 @@ describe('PUT /api/admin/orgs/:orgId/grants/:grantId', () => {
       metadata: null,
     });
 
-    await updateAdminGrant(mockAdminSession(), createDb(env.DB), org.id as OrgId, 'gr-rev' as OrgAccessGrantId, {
-      revokedAt: new Date(),
-    });
+    await updateAdminGrant(
+      mockAdminSession(),
+      createDb(env.DB),
+      org.id as OrgId,
+      'gr-rev' as OrgAccessGrantId,
+      {
+        revokedAt: new Date(),
+      },
+    );
     const [revoked] = await db
       .select({ revokedAt: grantsTable.revokedAt })
       .from(grantsTable)
       .where(eq(grantsTable.id, 'gr-rev'));
     expect(revoked.revokedAt).toBeInstanceOf(Date);
 
-    await updateAdminGrant(mockAdminSession(), createDb(env.DB), org.id as OrgId, 'gr-rev' as OrgAccessGrantId, {
-      revokedAt: null,
-    });
+    await updateAdminGrant(
+      mockAdminSession(),
+      createDb(env.DB),
+      org.id as OrgId,
+      'gr-rev' as OrgAccessGrantId,
+      {
+        revokedAt: null,
+      },
+    );
     const [unrevoked] = await db
       .select({ revokedAt: grantsTable.revokedAt })
       .from(grantsTable)
@@ -357,7 +386,12 @@ describe('DELETE /api/admin/orgs/:orgId/grants/:grantId', () => {
   it('throws 400 for non-existent grant', async () => {
     const { org } = await buildOrg();
     try {
-      await revokeAdminGrant(mockAdminSession(), createDb(env.DB), org.id as OrgId, 'nope' as OrgAccessGrantId);
+      await revokeAdminGrant(
+        mockAdminSession(),
+        createDb(env.DB),
+        org.id as OrgId,
+        'nope' as OrgAccessGrantId,
+      );
       expect.unreachable('should have thrown');
     } catch (err) {
       expect((err as Response).status).toBe(400);
@@ -379,7 +413,12 @@ describe('DELETE /api/admin/orgs/:orgId/grants/:grantId', () => {
       metadata: null,
     });
 
-    await revokeAdminGrant(mockAdminSession(), createDb(env.DB), org.id as OrgId, 'gr-del' as OrgAccessGrantId);
+    await revokeAdminGrant(
+      mockAdminSession(),
+      createDb(env.DB),
+      org.id as OrgId,
+      'gr-del' as OrgAccessGrantId,
+    );
 
     const [row] = await db
       .select({ revokedAt: grantsTable.revokedAt })
@@ -432,7 +471,11 @@ describe('POST /api/admin/orgs/:orgId/grant-single-project', () => {
 
   it('creates a fresh grant when none exists', async () => {
     const { org } = await buildOrg();
-    const result = await grantAdminSingleProject(mockAdminSession(), createDb(env.DB), org.id as OrgId);
+    const result = await grantAdminSingleProject(
+      mockAdminSession(),
+      createDb(env.DB),
+      org.id as OrgId,
+    );
     expect(result.action).toBe('created');
     expect(result.grant.type).toBe('single_project');
   });
@@ -453,7 +496,11 @@ describe('POST /api/admin/orgs/:orgId/grant-single-project', () => {
       metadata: null,
     });
 
-    const result = await grantAdminSingleProject(mockAdminSession(), createDb(env.DB), org.id as OrgId);
+    const result = await grantAdminSingleProject(
+      mockAdminSession(),
+      createDb(env.DB),
+      org.id as OrgId,
+    );
     expect(result.action).toBe('extended');
     expect(result.grant.id).toBe('gr-spx');
 

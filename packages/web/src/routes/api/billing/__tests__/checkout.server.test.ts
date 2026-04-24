@@ -123,13 +123,7 @@ describe('createCheckout', () => {
     });
     upgradeSubscriptionMock.mockResolvedValueOnce({ url: 'https://checkout.stripe/test' });
 
-    const result = await createCheckout(
-      createDb(env.DB),
-      session,
-      dummyRequest,
-      'team',
-      'monthly',
-    );
+    const result = await createCheckout(createDb(env.DB), session, dummyRequest, 'team', 'monthly');
     expect((result as { url: string }).url).toBe('https://checkout.stripe/test');
 
     const callArg = upgradeSubscriptionMock.mock.calls[0][0] as {

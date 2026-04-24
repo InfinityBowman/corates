@@ -20,7 +20,11 @@ import {
   getAccountMergeEmailHtml,
   getAccountMergeEmailText,
 } from '@corates/workers/email-templates';
-import { checkRateLimit, MERGE_INITIATE_RATE_LIMIT, MERGE_VERIFY_RATE_LIMIT } from '@/server/rateLimit';
+import {
+  checkRateLimit,
+  MERGE_INITIATE_RATE_LIMIT,
+  MERGE_VERIFY_RATE_LIMIT,
+} from '@/server/rateLimit';
 import type { Session } from '@/server/middleware/auth';
 
 function generateCode(): string {
@@ -440,12 +444,7 @@ export async function completeMergeRequest(
   if (mergeRequest.expiresAt < new Date()) {
     await db.delete(verification).where(eq(verification.id, mergeRequest.id));
     throw Response.json(
-      createValidationError(
-        'mergeRequest',
-        VALIDATION_ERRORS.INVALID_INPUT.code,
-        null,
-        'expired',
-      ),
+      createValidationError('mergeRequest', VALIDATION_ERRORS.INVALID_INPUT.code, null, 'expired'),
       { status: 400 },
     );
   }

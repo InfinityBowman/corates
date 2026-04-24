@@ -69,7 +69,9 @@ describe('POST /api/admin/stop-impersonation - request forwarding', () => {
       }),
     );
 
-    const res = await stopImpersonation(req({ cookie: 'session=t', origin: 'http://localhost:3010' }));
+    const res = await stopImpersonation(
+      req({ cookie: 'session=t', origin: 'http://localhost:3010' }),
+    );
     expect(res.status).toBe(200);
     const body = await readJson(res);
     expect(body.success).toBe(true);

@@ -120,7 +120,7 @@ export function AddMemberModal({
     setAdding(true);
     setError(null);
     try {
-      const result = await addMemberToProject({
+      const result = (await addMemberToProject({
         data: {
           orgId,
           projectId,
@@ -128,7 +128,7 @@ export function AddMemberModal({
             { userId: selectedUser.id, role: selectedRole }
           : { email: searchQuery.trim(), role: selectedRole }),
         },
-      }) as { invitation?: boolean; email?: string };
+      })) as { invitation?: boolean; email?: string };
       if (result.invitation) {
         showToast.success('Invitation Sent', `Invitation sent to ${result.email || searchQuery}`);
       }
@@ -197,7 +197,10 @@ export function AddMemberModal({
                     className='flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-blue-50'
                   >
                     <Avatar className='size-8 shrink-0'>
-                      <AvatarImage src={user.image ?? undefined} alt={user.name || user.email || undefined} />
+                      <AvatarImage
+                        src={user.image ?? undefined}
+                        alt={user.name || user.email || undefined}
+                      />
                       <AvatarFallback className='bg-primary text-sm text-white'>
                         {getInitials(user.name || user.email || undefined)}
                       </AvatarFallback>

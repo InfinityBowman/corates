@@ -65,9 +65,7 @@ export const openBillingPortal = createServerFn({ method: 'POST' })
 
 export const checkoutSingleProject = createServerFn({ method: 'POST' })
   .middleware([authMiddleware])
-  .handler(async ({ context: { db, session, request } }) =>
-    createSPCheckout(db, session, request),
-  );
+  .handler(async ({ context: { db, session, request } }) => createSPCheckout(db, session, request));
 
 export const startTrialGrant = createServerFn({ method: 'POST' })
   .middleware([authMiddleware])

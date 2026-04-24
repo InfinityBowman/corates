@@ -10,12 +10,12 @@ Migrate all REST route handlers (`createFileRoute` + `fetch()`) to TanStack Star
 
 ## Already Migrated
 
-| Function | Source |
-|----------|--------|
-| `getUsage` | `billing.functions.ts` |
+| Function          | Source                 |
+| ----------------- | ---------------------- |
+| `getUsage`        | `billing.functions.ts` |
 | `getSubscription` | `billing.functions.ts` |
-| `getMembers` | `billing.functions.ts` |
-| `checkCoupon` | `billing.functions.ts` |
+| `getMembers`      | `billing.functions.ts` |
+| `checkCoupon`     | `billing.functions.ts` |
 | `checkPlanChange` | `billing.functions.ts` |
 
 ---
@@ -24,17 +24,17 @@ Migrate all REST route handlers (`createFileRoute` + `fetch()`) to TanStack Star
 
 These routes need stable URLs, serve binary/HTML content, or are called by external systems.
 
-| Route | Reason |
-|-------|--------|
-| `auth/$.ts` | better-auth catch-all proxy |
-| `auth/stripe/webhook.ts` | Stripe webhook endpoint |
-| `auth/verify-email.ts` | Email link target, returns HTML |
-| `auth/session.ts` | Called by WebSocket clients |
-| `$.ts` | 404 catch-all |
-| `test/*` (8 routes) | E2E test fixtures |
-| `users/avatar/$userId.ts` | Image URL for `<img>` tags |
-| `orgs/.../pdfs/$fileName.ts` | PDF viewer URLs |
-| `orgs/.../dev/export.ts` | Binary download |
+| Route                        | Reason                          |
+| ---------------------------- | ------------------------------- |
+| `auth/$.ts`                  | better-auth catch-all proxy     |
+| `auth/stripe/webhook.ts`     | Stripe webhook endpoint         |
+| `auth/verify-email.ts`       | Email link target, returns HTML |
+| `auth/session.ts`            | Called by WebSocket clients     |
+| `$.ts`                       | 404 catch-all                   |
+| `test/*` (8 routes)          | E2E test fixtures               |
+| `users/avatar/$userId.ts`    | Image URL for `<img>` tags      |
+| `orgs/.../pdfs/$fileName.ts` | PDF viewer URLs                 |
+| `orgs/.../dev/export.ts`     | Binary download                 |
 
 **Needs assessment:** `pdf-proxy.ts` -- depends on whether clients need a URL or use fetch().
 
@@ -213,19 +213,19 @@ Tests: `billing-observability.server.test.ts`, `stripe-tools.server.test.ts`, `d
 
 ## Summary
 
-| Category | Routes | Status |
-|----------|--------|--------|
-| Already migrated | 5 | Done |
-| Cannot migrate | ~13 | Stay as HTTP |
-| Batch 2: Users | 5 (1 stays HTTP) | Done |
-| Batch 3: Billing | 6 | Done |
-| Batch 4: Google Drive + Merge | 8 | Done |
-| Batch 5: Misc | 3 | Done |
-| Batch 6: Orgs Core | 5 | Done |
-| Batch 7: Orgs Projects | 6 | Done |
-| Batch 8: Orgs Dev + Studies | 5 migrated, 1 kept (e2e), 1 stays HTTP | Done |
-| Batch 9: Admin Users | 8 | Done |
-| Batch 10: Admin Orgs | 10 | Done |
-| Batch 11: Admin Projects + Stats | 10-11 | Pending |
-| Batch 12: Admin Billing + DB + Storage | 16 | Pending |
-| **Total migratable** | **~85** | |
+| Category                               | Routes                                 | Status       |
+| -------------------------------------- | -------------------------------------- | ------------ |
+| Already migrated                       | 5                                      | Done         |
+| Cannot migrate                         | ~13                                    | Stay as HTTP |
+| Batch 2: Users                         | 5 (1 stays HTTP)                       | Done         |
+| Batch 3: Billing                       | 6                                      | Done         |
+| Batch 4: Google Drive + Merge          | 8                                      | Done         |
+| Batch 5: Misc                          | 3                                      | Done         |
+| Batch 6: Orgs Core                     | 5                                      | Done         |
+| Batch 7: Orgs Projects                 | 6                                      | Done         |
+| Batch 8: Orgs Dev + Studies            | 5 migrated, 1 kept (e2e), 1 stays HTTP | Done         |
+| Batch 9: Admin Users                   | 8                                      | Done         |
+| Batch 10: Admin Orgs                   | 10                                     | Done         |
+| Batch 11: Admin Projects + Stats       | 10-11                                  | Pending      |
+| Batch 12: Admin Billing + DB + Storage | 16                                     | Pending      |
+| **Total migratable**                   | **~85**                                |              |

@@ -37,9 +37,7 @@ export const getAdminUsersAction = createServerFn({ method: 'GET' })
       search: z.string().optional(),
     }),
   )
-  .handler(async ({ data, context: { session, db } }) =>
-    listAdminUsers(session, db, data),
-  );
+  .handler(async ({ data, context: { session, db } }) => listAdminUsers(session, db, data));
 
 export const getAdminUserDetailsAction = createServerFn({ method: 'GET' })
   .middleware([authMiddleware])
@@ -51,9 +49,7 @@ export const getAdminUserDetailsAction = createServerFn({ method: 'GET' })
 export const deleteUserAction = createServerFn({ method: 'POST' })
   .middleware([authMiddleware])
   .inputValidator(z.object({ userId: z.string() }))
-  .handler(async ({ data, context: { session, db } }) =>
-    deleteAdminUser(session, db, data.userId),
-  );
+  .handler(async ({ data, context: { session, db } }) => deleteAdminUser(session, db, data.userId));
 
 export const banUserAction = createServerFn({ method: 'POST' })
   .middleware([authMiddleware])
@@ -72,9 +68,7 @@ export const banUserAction = createServerFn({ method: 'POST' })
 export const unbanUserAction = createServerFn({ method: 'POST' })
   .middleware([authMiddleware])
   .inputValidator(z.object({ userId: z.string() }))
-  .handler(async ({ data, context: { session, db } }) =>
-    unbanAdminUser(session, db, data.userId),
-  );
+  .handler(async ({ data, context: { session, db } }) => unbanAdminUser(session, db, data.userId));
 
 export const revokeAllSessionsAction = createServerFn({ method: 'POST' })
   .middleware([authMiddleware])

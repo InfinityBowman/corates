@@ -24,9 +24,7 @@
   },
 
   "queues": {
-    "producers": [
-      { "queue": "corates-emails", "binding": "EMAIL_QUEUE" }
-    ]
+    "producers": [{ "queue": "corates-emails", "binding": "EMAIL_QUEUE" }]
   },
 
   "d1_databases": [
@@ -37,9 +35,7 @@
     }
   ],
 
-  "r2_buckets": [
-    { "binding": "PDF_BUCKET", "bucket_name": "corates-pdfs" }
-  ],
+  "r2_buckets": [{ "binding": "PDF_BUCKET", "bucket_name": "corates-pdfs" }],
 
   "vars": {
     "ENVIRONMENT": "development",

@@ -160,7 +160,11 @@ describe('GET /api/admin/users/:userId', () => {
   it('returns 404 when user does not exist', async () => {
     const admin = await buildAdminUser();
     try {
-      await getAdminUserDetails(mockAdminSession({ userId: admin.id }), createDb(env.DB), 'missing');
+      await getAdminUserDetails(
+        mockAdminSession({ userId: admin.id }),
+        createDb(env.DB),
+        'missing',
+      );
       expect.unreachable('should have thrown');
     } catch (err) {
       expect((err as Response).status).toBe(404);

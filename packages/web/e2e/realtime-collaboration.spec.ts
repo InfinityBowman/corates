@@ -37,7 +37,6 @@ import {
 } from './shared-steps';
 import { BASE_URL } from './constants';
 
-
 let scenario: DualReviewerScenario;
 
 test.beforeAll(async () => {
