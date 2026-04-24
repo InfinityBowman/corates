@@ -149,22 +149,24 @@ Tests: `users.server.test.ts`, `stop-impersonation.server.test.ts` (CSRF tests r
 
 Note: Impersonate and stop-impersonation proxy to better-auth. Cookie forwarding handled via `getResponse().headers.append()` in the `.functions.ts` wrapper.
 
-## Batch 10: Admin Orgs (9 routes)
+## Batch 10: Admin Orgs (10 routes) -- DONE
 
-New files: `admin/orgs.server.ts`, `admin/orgs.functions.ts`
+New files: `admin-orgs.server.ts`, `admin-orgs.functions.ts`
 
-- [ ] `admin/orgs.ts` (GET - list organizations)
-- [ ] `admin/orgs/$orgId.ts` (GET - org details)
-- [ ] `admin/orgs/$orgId/billing.ts` (GET - org billing info)
-- [ ] `admin/orgs/$orgId/billing/reconcile.ts` (POST - reconcile billing)
-- [ ] `admin/orgs/$orgId/grants.ts` (GET - list grants)
-- [ ] `admin/orgs/$orgId/grants/$grantId.ts` (GET - grant details)
-- [ ] `admin/orgs/$orgId/grant-trial.ts` (POST - grant trial)
-- [ ] `admin/orgs/$orgId/grant-single-project.ts` (POST - grant single project)
-- [ ] `admin/orgs/$orgId/subscriptions.ts` (GET - list subscriptions)
-- [ ] `admin/orgs/$orgId/subscriptions/$subscriptionId.ts` (GET - subscription detail)
+- [x] `admin/orgs.ts` (GET - list organizations)
+- [x] `admin/orgs/$orgId.ts` (GET - org details)
+- [x] `admin/orgs/$orgId/billing.ts` (GET - org billing info)
+- [x] `admin/orgs/$orgId/billing/reconcile.ts` (GET - reconcile billing)
+- [x] `admin/orgs/$orgId/grants.ts` (POST - create grant)
+- [x] `admin/orgs/$orgId/grants/$grantId.ts` (PUT/DELETE - update/revoke grant)
+- [x] `admin/orgs/$orgId/grant-trial.ts` (POST - grant trial)
+- [x] `admin/orgs/$orgId/grant-single-project.ts` (POST - grant single project)
+- [x] `admin/orgs/$orgId/subscriptions.ts` (POST - create subscription)
+- [x] `admin/orgs/$orgId/subscriptions/$subscriptionId.ts` (PUT/DELETE - update/cancel subscription)
 
-Tests: `orgs.server.test.ts`, `billing.server.test.ts`
+Tests: `orgs.server.test.ts`, `billing.server.test.ts`, `billing-observability.server.test.ts` (reconcile tests migrated)
+
+Note: Fixed `updateGrantExpiresAt` and `revokeGrant` return types in `@corates/db` to be non-nullable. Branded types (`OrgId`, `OrgAccessGrantId`) used in function signatures, cast at the `functions.ts` boundary.
 
 ## Batch 11: Admin Projects + Stats (10 routes)
 
@@ -223,7 +225,7 @@ Tests: `billing-observability.server.test.ts`, `stripe-tools.server.test.ts`, `d
 | Batch 7: Orgs Projects | 6 | Done |
 | Batch 8: Orgs Dev + Studies | 5 migrated, 1 kept (e2e), 1 stays HTTP | Done |
 | Batch 9: Admin Users | 8 | Done |
-| Batch 10: Admin Orgs | 9-10 | Pending |
+| Batch 10: Admin Orgs | 10 | Done |
 | Batch 11: Admin Projects + Stats | 10-11 | Pending |
 | Batch 12: Admin Billing + DB + Storage | 16 | Pending |
 | **Total migratable** | **~85** | |

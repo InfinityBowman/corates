@@ -8,7 +8,9 @@ import {
 import { buildAdminUser, resetCounter, asOrgId } from '@/__tests__/server/factories';
 import { createDb } from '@corates/db/client';
 import { env } from 'cloudflare:test';
-import { handleGet as reconcile } from '../orgs/$orgId/billing/reconcile';
+import type { OrgId } from '@corates/shared/ids';
+import type { Session } from '@/server/middleware/auth';
+import { reconcileAdminOrgBilling } from '@/server/functions/admin-orgs.server';
 import { handleGet as stuckStates } from '../billing/stuck-states';
 import { handleGet as ledger } from '../billing/ledger';
 
@@ -44,8 +46,11 @@ async function asAdmin() {
   return admin;
 }
 
-function reconcileReq(orgId: string, qs = ''): Request {
-  return new Request(`http://localhost/api/admin/orgs/${orgId}/billing/reconcile${qs}`);
+function mockAdminSession(): Session {
+  return {
+    user: { id: 'admin-id', email: 'admin@example.com', name: 'Admin', role: 'admin' },
+    session: { id: 'admin-sess', userId: 'admin-id' },
+  } as Session;
 }
 
 function ledgerReq(qs = ''): Request {
@@ -57,18 +62,16 @@ function stuckReq(qs = ''): Request {
 }
 
 describe('GET /api/admin/orgs/:orgId/billing/reconcile', () => {
-  it('returns 400 for unknown org', async () => {
-    await asAdmin();
-    const res = await reconcile({
-      request: reconcileReq('nope'),
-      params: { orgId: asOrgId('nope') },
-      context: { db: createDb(env.DB) },
-    });
-    expect(res.status).toBe(400);
+  it('throws 400 for unknown org', async () => {
+    try {
+      await reconcileAdminOrgBilling(mockAdminSession(), createDb(env.DB), 'nope' as OrgId, {});
+      expect.unreachable('should have thrown');
+    } catch (err) {
+      expect((err as Response).status).toBe(400);
+    }
   });
 
   it('detects incomplete subscription older than threshold', async () => {
-    await asAdmin();
     const nowSec = Math.floor(Date.now() / 1000);
     const orgId = asOrgId('org-recon-1');
     await seedOrganization({ id: orgId, name: 'Recon', slug: 'recon', createdAt: nowSec });
@@ -83,21 +86,19 @@ describe('GET /api/admin/orgs/:orgId/billing/reconcile', () => {
       updatedAt: nowSec - (thresholdMinutes + 10) * 60,
     });
 
-    const res = await reconcile({
-      request: reconcileReq(orgId, `?incompleteThreshold=${thresholdMinutes}`),
-      params: { orgId },
-      context: { db: createDb(env.DB) },
-    });
-    expect(res.status).toBe(200);
-    const body = (await res.json()) as { stuckStates: Record<string, unknown>[] };
-    const incomplete = body.stuckStates.find(s => s.type === 'incomplete_subscription');
+    const result = await reconcileAdminOrgBilling(
+      mockAdminSession(),
+      createDb(env.DB),
+      orgId as OrgId,
+      { incompleteThreshold: thresholdMinutes },
+    );
+    const incomplete = result.stuckStates.find(s => s.type === 'incomplete_subscription');
     expect(incomplete).toBeDefined();
     expect(incomplete?.severity).toBe('high');
     expect(incomplete?.subscriptionId).toBe('sub-incomplete');
   });
 
   it('detects checkout completed without subscription', async () => {
-    await asAdmin();
     const nowSec = Math.floor(Date.now() / 1000);
     const orgId = asOrgId('org-recon-2');
     await seedOrganization({ id: orgId, name: 'Recon2', slug: 'recon2', createdAt: nowSec });
@@ -117,21 +118,19 @@ describe('GET /api/admin/orgs/:orgId/billing/reconcile', () => {
       processedAt: nowSec - (thresholdMinutes + 5) * 60,
     });
 
-    const res = await reconcile({
-      request: reconcileReq(orgId, `?checkoutNoSubThreshold=${thresholdMinutes}`),
-      params: { orgId },
-      context: { db: createDb(env.DB) },
-    });
-    expect(res.status).toBe(200);
-    const body = (await res.json()) as { stuckStates: Record<string, unknown>[] };
-    const checkout = body.stuckStates.find(s => s.type === 'checkout_no_subscription');
+    const result = await reconcileAdminOrgBilling(
+      mockAdminSession(),
+      createDb(env.DB),
+      orgId as OrgId,
+      { checkoutNoSubThreshold: thresholdMinutes },
+    );
+    const checkout = result.stuckStates.find(s => s.type === 'checkout_no_subscription');
     expect(checkout).toBeDefined();
     expect(checkout?.severity).toBe('critical');
     expect(checkout?.ledgerId).toBe('led-checkout');
   });
 
   it('detects repeated webhook failures', async () => {
-    await asAdmin();
     const nowSec = Math.floor(Date.now() / 1000);
     const orgId = asOrgId('org-recon-3');
     await seedOrganization({ id: orgId, name: 'Recon3', slug: 'recon3', createdAt: nowSec });
@@ -150,20 +149,18 @@ describe('GET /api/admin/orgs/:orgId/billing/reconcile', () => {
       });
     }
 
-    const res = await reconcile({
-      request: reconcileReq(orgId),
-      params: { orgId },
-      context: { db: createDb(env.DB) },
-    });
-    expect(res.status).toBe(200);
-    const body = (await res.json()) as { stuckStates: Record<string, unknown>[] };
-    const failure = body.stuckStates.find(s => s.type === 'repeated_webhook_failures');
+    const result = await reconcileAdminOrgBilling(
+      mockAdminSession(),
+      createDb(env.DB),
+      orgId as OrgId,
+      {},
+    );
+    const failure = result.stuckStates.find(s => s.type === 'repeated_webhook_failures');
     expect(failure).toBeDefined();
     expect(failure?.severity).toBe('medium');
   });
 
   it('compares with Stripe when checkStripe=true', async () => {
-    await asAdmin();
     const nowSec = Math.floor(Date.now() / 1000);
     const orgId = asOrgId('org-recon-4');
     await seedOrganization({ id: orgId, name: 'Recon4', slug: 'recon4', createdAt: nowSec });
@@ -178,22 +175,18 @@ describe('GET /api/admin/orgs/:orgId/billing/reconcile', () => {
     });
     stripeRetrieveMock.mockResolvedValueOnce({ id: 'sub_stripe_999', status: 'past_due' });
 
-    const res = await reconcile({
-      request: new Request(
-        `http://localhost/api/admin/orgs/${orgId}/billing/reconcile?checkStripe=true`,
-      ),
-      params: { orgId },
-      context: { db: createDb(env.DB) },
-    });
-    expect(res.status).toBe(200);
-    const body = (await res.json()) as {
-      stripeComparison: { localStatus: string; stripeStatus: string; match: boolean };
-      stuckStates: Record<string, unknown>[];
-    };
-    expect(body.stripeComparison.localStatus).toBe('active');
-    expect(body.stripeComparison.stripeStatus).toBe('past_due');
-    expect(body.stripeComparison.match).toBe(false);
-    const mismatch = body.stuckStates.find(s => s.type === 'stripe_status_mismatch');
+    const result = await reconcileAdminOrgBilling(
+      mockAdminSession(),
+      createDb(env.DB),
+      orgId as OrgId,
+      { checkStripe: true },
+    );
+    expect(result.stripeComparison).toBeDefined();
+    const comp = result.stripeComparison!;
+    expect(comp.localStatus).toBe('active');
+    expect(comp.stripeStatus).toBe('past_due');
+    expect(comp.match).toBe(false);
+    const mismatch = result.stuckStates.find(s => s.type === 'stripe_status_mismatch');
     expect(mismatch).toBeDefined();
     expect(stripeRetrieveMock).toHaveBeenCalledWith('sub_stripe_999');
   });

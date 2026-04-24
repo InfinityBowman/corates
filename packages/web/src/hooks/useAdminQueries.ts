@@ -6,9 +6,6 @@
 import { useQuery, queryOptions } from '@tanstack/react-query';
 import { queryKeys } from '@/lib/queryKeys';
 import {
-  fetchOrgs,
-  fetchOrgDetails,
-  fetchOrgBilling,
   fetchBillingLedger,
   fetchBillingStuckStates,
   fetchOrgBillingReconcile,
@@ -17,6 +14,11 @@ import {
   getAdminUsersAction,
   getAdminUserDetailsAction,
 } from '@/server/functions/admin-users.functions';
+import {
+  getAdminOrgsAction,
+  getAdminOrgDetailsAction,
+  getAdminOrgBillingAction,
+} from '@/server/functions/admin-orgs.functions';
 
 const ADMIN_QUERY_CONFIG = {
   staleTime: 0,
@@ -146,7 +148,8 @@ export function useAdminOrgs(params: { page?: number; limit?: number; search?: s
   const search = params.search ?? '';
   return useQuery({
     queryKey: queryKeys.admin.orgs(page, limit, search),
-    queryFn: () => fetchOrgs({ page, limit, search }),
+    queryFn: () =>
+      getAdminOrgsAction({ data: { page, limit, ...(search ? { search } : {}) } }),
     ...ADMIN_QUERY_CONFIG,
   });
 }
@@ -154,7 +157,7 @@ export function useAdminOrgs(params: { page?: number; limit?: number; search?: s
 export function useAdminOrgDetails(orgId: string | null | undefined) {
   return useQuery({
     queryKey: queryKeys.admin.orgDetails(orgId),
-    queryFn: () => fetchOrgDetails(orgId!),
+    queryFn: () => getAdminOrgDetailsAction({ data: { orgId: orgId! } }),
     enabled: !!orgId,
     ...ADMIN_QUERY_CONFIG,
   });
@@ -163,7 +166,7 @@ export function useAdminOrgDetails(orgId: string | null | undefined) {
 export function useAdminOrgBilling(orgId: string | null | undefined) {
   return useQuery({
     queryKey: queryKeys.admin.orgBilling(orgId),
-    queryFn: () => fetchOrgBilling(orgId!),
+    queryFn: () => getAdminOrgBillingAction({ data: { orgId: orgId! } }),
     enabled: !!orgId,
     ...ADMIN_QUERY_CONFIG,
   });

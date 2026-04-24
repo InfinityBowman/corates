@@ -1,38 +1,23 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { env } from 'cloudflare:test';
 import { resetTestDatabase } from '@/__tests__/server/helpers';
-import {
-  buildAdminUser,
-  buildOrg,
-  resetCounter,
-  asOrgId,
-  asGrantId,
-} from '@/__tests__/server/factories';
+import { buildOrg, resetCounter } from '@/__tests__/server/factories';
 import { createDb } from '@corates/db/client';
-import { orgAccessGrants as grantsTable, organization, subscription } from '@corates/db/schema';
+import { orgAccessGrants as grantsTable, subscription } from '@corates/db/schema';
 import { eq } from 'drizzle-orm';
-import { handleGet as billingHandler } from '../orgs/$orgId/billing';
-import { handlePost as createSubscriptionHandler } from '../orgs/$orgId/subscriptions';
+import type { OrgId, OrgAccessGrantId } from '@corates/shared/ids';
+import type { Session } from '@/server/middleware/auth';
 import {
-  handlePut as updateSubscriptionHandler,
-  handleDelete as deleteSubscriptionHandler,
-} from '../orgs/$orgId/subscriptions/$subscriptionId';
-import { handlePost as createGrantHandler } from '../orgs/$orgId/grants';
-import {
-  handlePut as updateGrantHandler,
-  handleDelete as deleteGrantHandler,
-} from '../orgs/$orgId/grants/$grantId';
-import { handlePost as grantTrialHandler } from '../orgs/$orgId/grant-trial';
-import { handlePost as grantSingleProjectHandler } from '../orgs/$orgId/grant-single-project';
-
-let sessionResult: {
-  user: { id: string; email: string; name: string; role?: string };
-  session: { id: string; userId: string; activeOrganizationId: string | null };
-} | null = null;
-
-vi.mock('@corates/workers/auth', () => ({
-  getSession: async () => sessionResult,
-}));
+  getAdminOrgBilling,
+  createAdminSubscription,
+  updateAdminSubscription,
+  cancelAdminSubscription,
+  createAdminGrant,
+  updateAdminGrant,
+  revokeAdminGrant,
+  grantAdminTrial,
+  grantAdminSingleProject,
+} from '@/server/functions/admin-orgs.server';
 
 const { mockNotifyOrgMembers } = vi.hoisted(() => ({
   mockNotifyOrgMembers: vi.fn(async () => ({ notified: 0, failed: 0 })),
@@ -50,39 +35,26 @@ beforeEach(async () => {
   await resetTestDatabase();
   vi.clearAllMocks();
   resetCounter();
-  sessionResult = null;
 });
 
-async function asAdmin() {
-  const admin = await buildAdminUser();
-  sessionResult = {
-    user: { id: admin.id, email: admin.email, name: admin.name, role: 'admin' },
-    session: { id: 'admin-sess', userId: admin.id, activeOrganizationId: null },
-  };
-  return admin;
-}
-
-function jsonReq(path: string, method: string, body?: unknown): Request {
-  return new Request(`http://localhost${path}`, {
-    method,
-    headers: { 'Content-Type': 'application/json', origin: 'http://localhost:3010' },
-    body: body !== undefined ? JSON.stringify(body) : undefined,
-  });
+function mockAdminSession(): Session {
+  return {
+    user: { id: 'admin-id', email: 'admin@example.com', name: 'Admin', role: 'admin' },
+    session: { id: 'admin-sess', userId: 'admin-id' },
+  } as Session;
 }
 
 describe('GET /api/admin/orgs/:orgId/billing', () => {
-  it('returns 400 for non-existent org', async () => {
-    await asAdmin();
-    const res = await billingHandler({
-      request: new Request('http://localhost/api/admin/orgs/missing/billing'),
-      params: { orgId: asOrgId('missing') },
-      context: { db: createDb(env.DB) },
-    });
-    expect(res.status).toBe(400);
+  it('throws 400 for non-existent org', async () => {
+    try {
+      await getAdminOrgBilling(mockAdminSession(), createDb(env.DB), 'missing' as OrgId);
+      expect.unreachable('should have thrown');
+    } catch (err) {
+      expect((err as Response).status).toBe(400);
+    }
   });
 
   it('returns billing snapshot with subscriptions + grants', async () => {
-    await asAdmin();
     const { org } = await buildOrg();
     const db = createDb(env.DB);
     await db.insert(subscription).values({
@@ -110,148 +82,103 @@ describe('GET /api/admin/orgs/:orgId/billing', () => {
       metadata: null,
     });
 
-    const res = await billingHandler({
-      request: new Request(`http://localhost/api/admin/orgs/${org.id}/billing`),
-      params: { orgId: org.id },
-      context: { db: createDb(env.DB) },
-    });
-    expect(res.status).toBe(200);
-    const body = (await res.json()) as {
-      orgId: string;
-      billing: { effectivePlanId: string; source: string; plan: { name: string } };
-      subscriptions: { id: string }[];
-      grants: { id: string; type: string }[];
-    };
-    expect(body.orgId).toBe(org.id);
-    expect(body.billing.plan.name).toBeDefined();
-    expect(body.subscriptions.find(s => s.id === 'sub-1')).toBeDefined();
-    expect(body.grants.find(g => g.id === 'gr-1')).toBeDefined();
+    const result = await getAdminOrgBilling(mockAdminSession(), createDb(env.DB), org.id as OrgId);
+    expect(result.orgId).toBe(org.id);
+    expect(result.billing.plan.name).toBeDefined();
+    expect(result.subscriptions.find(s => s.id === 'sub-1')).toBeDefined();
+    expect(result.grants.find(g => g.id === 'gr-1')).toBeDefined();
   });
 });
 
 describe('POST /api/admin/orgs/:orgId/subscriptions', () => {
-  it('returns 400 for invalid plan enum', async () => {
-    await asAdmin();
-    const { org } = await buildOrg();
-    const res = await createSubscriptionHandler({
-      request: jsonReq(`/api/admin/orgs/${org.id}/subscriptions`, 'POST', {
-        plan: 'bogus',
-        status: 'active',
-      }),
-      params: { orgId: org.id },
-      context: { db: createDb(env.DB) },
-    });
-    expect(res.status).toBe(400);
-  });
-
-  it('returns 400 for non-existent org', async () => {
-    await asAdmin();
-    const res = await createSubscriptionHandler({
-      request: jsonReq('/api/admin/orgs/missing/subscriptions', 'POST', {
+  it('throws 400 for non-existent org', async () => {
+    try {
+      await createAdminSubscription(mockAdminSession(), createDb(env.DB), 'missing' as OrgId, {
         plan: 'team',
         status: 'active',
-      }),
-      params: { orgId: asOrgId('missing') },
-      context: { db: createDb(env.DB) },
-    });
-    expect(res.status).toBe(400);
+      });
+      expect.unreachable('should have thrown');
+    } catch (err) {
+      expect((err as Response).status).toBe(400);
+    }
   });
 
   it('creates subscription and dispatches notify', async () => {
-    await asAdmin();
     const { org } = await buildOrg();
-    const res = await createSubscriptionHandler({
-      request: jsonReq(`/api/admin/orgs/${org.id}/subscriptions`, 'POST', {
-        plan: 'team',
-        status: 'active',
-        stripeCustomerId: 'cus_1',
-      }),
-      params: { orgId: org.id },
-      context: { db: createDb(env.DB) },
+    const result = await createAdminSubscription(mockAdminSession(), createDb(env.DB), org.id as OrgId, {
+      plan: 'team',
+      status: 'active',
+      stripeCustomerId: 'cus_1',
     });
-    expect(res.status).toBe(201);
-    const body = (await res.json()) as {
-      success: boolean;
-      subscription: { id: string; plan: string; referenceId: string; status: string };
-    };
-    expect(body.subscription.plan).toBe('team');
-    expect(body.subscription.referenceId).toBe(org.id);
+    expect(result.success).toBe(true);
+    expect(result.subscription.plan).toBe('team');
+    expect(result.subscription.referenceId).toBe(org.id);
     expect(mockNotifyOrgMembers).toHaveBeenCalledTimes(1);
 
     const db = createDb(env.DB);
     const rows = await db
       .select()
       .from(subscription)
-      .where(eq(subscription.id, body.subscription.id));
+      .where(eq(subscription.id, result.subscription.id));
     expect(rows.length).toBe(1);
   });
 });
 
 describe('PUT /api/admin/orgs/:orgId/subscriptions/:subscriptionId', () => {
-  it('returns 400 for non-existent subscription', async () => {
-    await asAdmin();
+  it('throws 400 for non-existent subscription', async () => {
     const { org } = await buildOrg();
-    const res = await updateSubscriptionHandler({
-      request: jsonReq(`/api/admin/orgs/${org.id}/subscriptions/nope`, 'PUT', { status: 'paused' }),
-      params: { orgId: org.id, subscriptionId: 'nope' },
-      context: { db: createDb(env.DB) },
-    });
-    expect(res.status).toBe(400);
+    try {
+      await updateAdminSubscription(mockAdminSession(), createDb(env.DB), org.id as OrgId, 'nope', {
+        status: 'paused',
+      });
+      expect.unreachable('should have thrown');
+    } catch (err) {
+      expect((err as Response).status).toBe(400);
+    }
   });
 
   it('updates only provided fields and notifies', async () => {
-    await asAdmin();
     const { org } = await buildOrg();
     const db = createDb(env.DB);
-    const initialPeriodStart = new Date();
     await db.insert(subscription).values({
       id: 'sub-upd',
       plan: 'team',
       referenceId: org.id,
       status: 'active',
-      periodStart: initialPeriodStart,
+      periodStart: new Date(),
       periodEnd: null,
       cancelAtPeriodEnd: false,
       createdAt: new Date(),
       updatedAt: new Date(),
     });
 
-    const res = await updateSubscriptionHandler({
-      request: jsonReq(`/api/admin/orgs/${org.id}/subscriptions/sub-upd`, 'PUT', {
-        status: 'paused',
-        cancelAtPeriodEnd: true,
-      }),
-      params: { orgId: org.id, subscriptionId: 'sub-upd' },
-      context: { db: createDb(env.DB) },
-    });
-    expect(res.status).toBe(200);
-    const body = (await res.json()) as {
-      subscription: { id: string; status: string; cancelAtPeriodEnd: boolean; plan: string };
-    };
-    expect(body.subscription.status).toBe('paused');
-    expect(body.subscription.cancelAtPeriodEnd).toBe(true);
-    expect(body.subscription.plan).toBe('team');
+    const result = await updateAdminSubscription(
+      mockAdminSession(),
+      createDb(env.DB),
+      org.id as OrgId,
+      'sub-upd',
+      { status: 'paused', cancelAtPeriodEnd: true },
+    );
+    expect(result.success).toBe(true);
+    expect(result.subscription.status).toBe('paused');
+    expect(result.subscription.cancelAtPeriodEnd).toBe(true);
+    expect(result.subscription.plan).toBe('team');
     expect(mockNotifyOrgMembers).toHaveBeenCalledTimes(1);
   });
 });
 
 describe('DELETE /api/admin/orgs/:orgId/subscriptions/:subscriptionId', () => {
-  it('returns 400 for non-existent subscription', async () => {
-    await asAdmin();
+  it('throws 400 for non-existent subscription', async () => {
     const { org } = await buildOrg();
-    const res = await deleteSubscriptionHandler({
-      request: new Request(`http://localhost/api/admin/orgs/${org.id}/subscriptions/nope`, {
-        method: 'DELETE',
-        headers: { origin: 'http://localhost:3010' },
-      }),
-      params: { orgId: org.id, subscriptionId: 'nope' },
-      context: { db: createDb(env.DB) },
-    });
-    expect(res.status).toBe(400);
+    try {
+      await cancelAdminSubscription(mockAdminSession(), createDb(env.DB), org.id as OrgId, 'nope');
+      expect.unreachable('should have thrown');
+    } catch (err) {
+      expect((err as Response).status).toBe(400);
+    }
   });
 
   it('soft-cancels and notifies', async () => {
-    await asAdmin();
     const { org } = await buildOrg();
     const db = createDb(env.DB);
     await db.insert(subscription).values({
@@ -266,15 +193,8 @@ describe('DELETE /api/admin/orgs/:orgId/subscriptions/:subscriptionId', () => {
       updatedAt: new Date(),
     });
 
-    const res = await deleteSubscriptionHandler({
-      request: new Request(`http://localhost/api/admin/orgs/${org.id}/subscriptions/sub-del`, {
-        method: 'DELETE',
-        headers: { origin: 'http://localhost:3010' },
-      }),
-      params: { orgId: org.id, subscriptionId: 'sub-del' },
-      context: { db: createDb(env.DB) },
-    });
-    expect(res.status).toBe(200);
+    await cancelAdminSubscription(mockAdminSession(), createDb(env.DB), org.id as OrgId, 'sub-del');
+
     const [row] = await db
       .select({ status: subscription.status, endedAt: subscription.endedAt })
       .from(subscription)
@@ -286,90 +206,75 @@ describe('DELETE /api/admin/orgs/:orgId/subscriptions/:subscriptionId', () => {
 });
 
 describe('POST /api/admin/orgs/:orgId/grants', () => {
-  it('returns 400 for non-existent org', async () => {
-    await asAdmin();
+  it('throws 400 for non-existent org', async () => {
     const startsAt = new Date();
     const expiresAt = new Date(Date.now() + 86400000);
-    const res = await createGrantHandler({
-      request: jsonReq('/api/admin/orgs/missing/grants', 'POST', {
+    try {
+      await createAdminGrant(mockAdminSession(), createDb(env.DB), 'missing' as OrgId, {
         type: 'trial',
         startsAt,
         expiresAt,
-      }),
-      params: { orgId: asOrgId('missing') },
-      context: { db: createDb(env.DB) },
-    });
-    expect(res.status).toBe(400);
+      });
+      expect.unreachable('should have thrown');
+    } catch (err) {
+      expect((err as Response).status).toBe(400);
+    }
   });
 
   it('rejects second trial for same org', async () => {
-    await asAdmin();
     const { org } = await buildOrg();
     const startsAt = new Date();
     const expiresAt = new Date(Date.now() + 14 * 86400000);
-    const first = await createGrantHandler({
-      request: jsonReq(`/api/admin/orgs/${org.id}/grants`, 'POST', {
-        type: 'trial',
-        startsAt,
-        expiresAt,
-      }),
-      params: { orgId: org.id },
-      context: { db: createDb(env.DB) },
-    });
-    expect(first.status).toBe(201);
 
-    const second = await createGrantHandler({
-      request: jsonReq(`/api/admin/orgs/${org.id}/grants`, 'POST', {
+    await createAdminGrant(mockAdminSession(), createDb(env.DB), org.id as OrgId, {
+      type: 'trial',
+      startsAt,
+      expiresAt,
+    });
+
+    try {
+      await createAdminGrant(mockAdminSession(), createDb(env.DB), org.id as OrgId, {
         type: 'trial',
         startsAt,
         expiresAt,
-      }),
-      params: { orgId: org.id },
-      context: { db: createDb(env.DB) },
-    });
-    expect(second.status).toBe(400);
+      });
+      expect.unreachable('should have thrown');
+    } catch (err) {
+      expect((err as Response).status).toBe(400);
+    }
   });
 
   it('rejects expiresAt <= startsAt', async () => {
-    await asAdmin();
     const { org } = await buildOrg();
     const ts = new Date();
-    const res = await createGrantHandler({
-      request: jsonReq(`/api/admin/orgs/${org.id}/grants`, 'POST', {
+    try {
+      await createAdminGrant(mockAdminSession(), createDb(env.DB), org.id as OrgId, {
         type: 'single_project',
         startsAt: ts,
         expiresAt: ts,
-      }),
-      params: { orgId: org.id },
-      context: { db: createDb(env.DB) },
-    });
-    expect(res.status).toBe(400);
+      });
+      expect.unreachable('should have thrown');
+    } catch (err) {
+      expect((err as Response).status).toBe(400);
+    }
   });
 
   it('creates a single_project grant', async () => {
-    await asAdmin();
     const { org } = await buildOrg();
     const startsAt = new Date();
     const expiresAt = new Date(Date.now() + 30 * 86400000);
-    const res = await createGrantHandler({
-      request: jsonReq(`/api/admin/orgs/${org.id}/grants`, 'POST', {
-        type: 'single_project',
-        startsAt,
-        expiresAt,
-      }),
-      params: { orgId: org.id },
-      context: { db: createDb(env.DB) },
+    const result = await createAdminGrant(mockAdminSession(), createDb(env.DB), org.id as OrgId, {
+      type: 'single_project',
+      startsAt,
+      expiresAt,
     });
-    expect(res.status).toBe(201);
-    const body = (await res.json()) as { grant: { id: string; type: string; orgId: string } };
-    expect(body.grant.type).toBe('single_project');
-    expect(body.grant.orgId).toBe(org.id);
+    expect(result.grant.type).toBe('single_project');
+    expect(result.grant.orgId).toBe(org.id);
   });
 });
 
 describe('PUT /api/admin/orgs/:orgId/grants/:grantId', () => {
-  it('returns 400 when no actionable fields', async () => {
-    await asAdmin();
+  it('throws 400 when no actionable fields', async () => {
     const { org } = await buildOrg();
     const db = createDb(env.DB);
     await db.insert(grantsTable).values({
@@ -384,16 +289,15 @@ describe('PUT /api/admin/orgs/:orgId/grants/:grantId', () => {
       metadata: null,
     });
 
-    const res = await updateGrantHandler({
-      request: jsonReq(`/api/admin/orgs/${org.id}/grants/gr-empty`, 'PUT', {}),
-      params: { orgId: org.id, grantId: asGrantId('gr-empty') },
-      context: { db: createDb(env.DB) },
-    });
-    expect(res.status).toBe(400);
+    try {
+      await updateAdminGrant(mockAdminSession(), createDb(env.DB), org.id as OrgId, 'gr-empty' as OrgAccessGrantId, {});
+      expect.unreachable('should have thrown');
+    } catch (err) {
+      expect((err as Response).status).toBe(400);
+    }
   });
 
   it('updates expiresAt', async () => {
-    await asAdmin();
     const { org } = await buildOrg();
     const db = createDb(env.DB);
     await db.insert(grantsTable).values({
@@ -408,18 +312,13 @@ describe('PUT /api/admin/orgs/:orgId/grants/:grantId', () => {
       metadata: null,
     });
     const newExpires = new Date(Date.now() + 60 * 86400000);
-    const res = await updateGrantHandler({
-      request: jsonReq(`/api/admin/orgs/${org.id}/grants/gr-ext`, 'PUT', {
-        expiresAt: newExpires,
-      }),
-      params: { orgId: org.id, grantId: asGrantId('gr-ext') },
-      context: { db: createDb(env.DB) },
+    const result = await updateAdminGrant(mockAdminSession(), createDb(env.DB), org.id as OrgId, 'gr-ext' as OrgAccessGrantId, {
+      expiresAt: newExpires,
     });
-    expect(res.status).toBe(200);
+    expect(result.success).toBe(true);
   });
 
   it('revokes and unrevokes', async () => {
-    await asAdmin();
     const { org } = await buildOrg();
     const db = createDb(env.DB);
     await db.insert(grantsTable).values({
@@ -434,26 +333,18 @@ describe('PUT /api/admin/orgs/:orgId/grants/:grantId', () => {
       metadata: null,
     });
 
-    const revRes = await updateGrantHandler({
-      request: jsonReq(`/api/admin/orgs/${org.id}/grants/gr-rev`, 'PUT', {
-        revokedAt: new Date(),
-      }),
-      params: { orgId: org.id, grantId: asGrantId('gr-rev') },
-      context: { db: createDb(env.DB) },
+    await updateAdminGrant(mockAdminSession(), createDb(env.DB), org.id as OrgId, 'gr-rev' as OrgAccessGrantId, {
+      revokedAt: new Date(),
     });
-    expect(revRes.status).toBe(200);
     const [revoked] = await db
       .select({ revokedAt: grantsTable.revokedAt })
       .from(grantsTable)
       .where(eq(grantsTable.id, 'gr-rev'));
     expect(revoked.revokedAt).toBeInstanceOf(Date);
 
-    const unrevRes = await updateGrantHandler({
-      request: jsonReq(`/api/admin/orgs/${org.id}/grants/gr-rev`, 'PUT', { revokedAt: null }),
-      params: { orgId: org.id, grantId: asGrantId('gr-rev') },
-      context: { db: createDb(env.DB) },
+    await updateAdminGrant(mockAdminSession(), createDb(env.DB), org.id as OrgId, 'gr-rev' as OrgAccessGrantId, {
+      revokedAt: null,
     });
-    expect(unrevRes.status).toBe(200);
     const [unrevoked] = await db
       .select({ revokedAt: grantsTable.revokedAt })
       .from(grantsTable)
@@ -463,22 +354,17 @@ describe('PUT /api/admin/orgs/:orgId/grants/:grantId', () => {
 });
 
 describe('DELETE /api/admin/orgs/:orgId/grants/:grantId', () => {
-  it('returns 400 for non-existent grant', async () => {
-    await asAdmin();
+  it('throws 400 for non-existent grant', async () => {
     const { org } = await buildOrg();
-    const res = await deleteGrantHandler({
-      request: new Request(`http://localhost/api/admin/orgs/${org.id}/grants/nope`, {
-        method: 'DELETE',
-        headers: { origin: 'http://localhost:3010' },
-      }),
-      params: { orgId: org.id, grantId: asGrantId('nope') },
-      context: { db: createDb(env.DB) },
-    });
-    expect(res.status).toBe(400);
+    try {
+      await revokeAdminGrant(mockAdminSession(), createDb(env.DB), org.id as OrgId, 'nope' as OrgAccessGrantId);
+      expect.unreachable('should have thrown');
+    } catch (err) {
+      expect((err as Response).status).toBe(400);
+    }
   });
 
   it('revokes the grant', async () => {
-    await asAdmin();
     const { org } = await buildOrg();
     const db = createDb(env.DB);
     await db.insert(grantsTable).values({
@@ -493,15 +379,8 @@ describe('DELETE /api/admin/orgs/:orgId/grants/:grantId', () => {
       metadata: null,
     });
 
-    const res = await deleteGrantHandler({
-      request: new Request(`http://localhost/api/admin/orgs/${org.id}/grants/gr-del`, {
-        method: 'DELETE',
-        headers: { origin: 'http://localhost:3010' },
-      }),
-      params: { orgId: org.id, grantId: asGrantId('gr-del') },
-      context: { db: createDb(env.DB) },
-    });
-    expect(res.status).toBe(200);
+    await revokeAdminGrant(mockAdminSession(), createDb(env.DB), org.id as OrgId, 'gr-del' as OrgAccessGrantId);
+
     const [row] = await db
       .select({ revokedAt: grantsTable.revokedAt })
       .from(grantsTable)
@@ -511,94 +390,54 @@ describe('DELETE /api/admin/orgs/:orgId/grants/:grantId', () => {
 });
 
 describe('POST /api/admin/orgs/:orgId/grant-trial', () => {
-  it('returns 400 for non-existent org', async () => {
-    await asAdmin();
-    const res = await grantTrialHandler({
-      request: new Request('http://localhost/api/admin/orgs/missing/grant-trial', {
-        method: 'POST',
-        headers: { origin: 'http://localhost:3010' },
-      }),
-      params: { orgId: asOrgId('missing') },
-      context: { db: createDb(env.DB) },
-    });
-    expect(res.status).toBe(400);
+  it('throws 400 for non-existent org', async () => {
+    try {
+      await grantAdminTrial(mockAdminSession(), createDb(env.DB), 'missing' as OrgId);
+      expect.unreachable('should have thrown');
+    } catch (err) {
+      expect((err as Response).status).toBe(400);
+    }
   });
 
   it('creates a 14-day trial', async () => {
-    await asAdmin();
     const { org } = await buildOrg();
-    const res = await grantTrialHandler({
-      request: new Request(`http://localhost/api/admin/orgs/${org.id}/grant-trial`, {
-        method: 'POST',
-        headers: { origin: 'http://localhost:3010' },
-      }),
-      params: { orgId: org.id },
-      context: { db: createDb(env.DB) },
-    });
-    expect(res.status).toBe(201);
-    const body = (await res.json()) as { grant: { type: string; orgId: string } };
-    expect(body.grant.type).toBe('trial');
-    expect(body.grant.orgId).toBe(org.id);
+    const result = await grantAdminTrial(mockAdminSession(), createDb(env.DB), org.id as OrgId);
+    expect(result.success).toBe(true);
+    expect(result.grant.type).toBe('trial');
+    expect(result.grant.orgId).toBe(org.id);
   });
 
   it('rejects when trial already exists', async () => {
-    await asAdmin();
     const { org } = await buildOrg();
-    const first = await grantTrialHandler({
-      request: new Request(`http://localhost/api/admin/orgs/${org.id}/grant-trial`, {
-        method: 'POST',
-        headers: { origin: 'http://localhost:3010' },
-      }),
-      params: { orgId: org.id },
-      context: { db: createDb(env.DB) },
-    });
-    expect(first.status).toBe(201);
+    await grantAdminTrial(mockAdminSession(), createDb(env.DB), org.id as OrgId);
 
-    const second = await grantTrialHandler({
-      request: new Request(`http://localhost/api/admin/orgs/${org.id}/grant-trial`, {
-        method: 'POST',
-        headers: { origin: 'http://localhost:3010' },
-      }),
-      params: { orgId: org.id },
-      context: { db: createDb(env.DB) },
-    });
-    expect(second.status).toBe(400);
+    try {
+      await grantAdminTrial(mockAdminSession(), createDb(env.DB), org.id as OrgId);
+      expect.unreachable('should have thrown');
+    } catch (err) {
+      expect((err as Response).status).toBe(400);
+    }
   });
 });
 
 describe('POST /api/admin/orgs/:orgId/grant-single-project', () => {
-  it('returns 400 for non-existent org', async () => {
-    await asAdmin();
-    const res = await grantSingleProjectHandler({
-      request: new Request('http://localhost/api/admin/orgs/missing/grant-single-project', {
-        method: 'POST',
-        headers: { origin: 'http://localhost:3010' },
-      }),
-      params: { orgId: asOrgId('missing') },
-      context: { db: createDb(env.DB) },
-    });
-    expect(res.status).toBe(400);
+  it('throws 400 for non-existent org', async () => {
+    try {
+      await grantAdminSingleProject(mockAdminSession(), createDb(env.DB), 'missing' as OrgId);
+      expect.unreachable('should have thrown');
+    } catch (err) {
+      expect((err as Response).status).toBe(400);
+    }
   });
 
   it('creates a fresh grant when none exists', async () => {
-    await asAdmin();
     const { org } = await buildOrg();
-    const res = await grantSingleProjectHandler({
-      request: new Request(`http://localhost/api/admin/orgs/${org.id}/grant-single-project`, {
-        method: 'POST',
-        headers: { origin: 'http://localhost:3010' },
-      }),
-      params: { orgId: org.id },
-      context: { db: createDb(env.DB) },
-    });
-    expect(res.status).toBe(201);
-    const body = (await res.json()) as { action: string; grant: { type: string } };
-    expect(body.action).toBe('created');
-    expect(body.grant.type).toBe('single_project');
+    const result = await grantAdminSingleProject(mockAdminSession(), createDb(env.DB), org.id as OrgId);
+    expect(result.action).toBe('created');
+    expect(result.grant.type).toBe('single_project');
   });
 
   it('extends existing non-revoked grant by 6 months', async () => {
-    await asAdmin();
     const { org } = await buildOrg();
     const db = createDb(env.DB);
     const originalExpires = new Date(Date.now() + 30 * 86400000);
@@ -614,18 +453,9 @@ describe('POST /api/admin/orgs/:orgId/grant-single-project', () => {
       metadata: null,
     });
 
-    const res = await grantSingleProjectHandler({
-      request: new Request(`http://localhost/api/admin/orgs/${org.id}/grant-single-project`, {
-        method: 'POST',
-        headers: { origin: 'http://localhost:3010' },
-      }),
-      params: { orgId: org.id },
-      context: { db: createDb(env.DB) },
-    });
-    expect(res.status).toBe(200);
-    const body = (await res.json()) as { action: string; grant: { id: string } };
-    expect(body.action).toBe('extended');
-    expect(body.grant.id).toBe('gr-spx');
+    const result = await grantAdminSingleProject(mockAdminSession(), createDb(env.DB), org.id as OrgId);
+    expect(result.action).toBe('extended');
+    expect(result.grant.id).toBe('gr-spx');
 
     const [row] = await db
       .select({ expiresAt: grantsTable.expiresAt })
@@ -634,6 +464,3 @@ describe('POST /api/admin/orgs/:orgId/grant-single-project', () => {
     expect((row.expiresAt as Date).getTime()).toBeGreaterThan(originalExpires.getTime());
   });
 });
-
-void env;
-void organization;

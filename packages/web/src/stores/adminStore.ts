@@ -19,6 +19,16 @@ import {
   impersonateUserAction,
   stopImpersonationAction,
 } from '@/server/functions/admin-users.functions';
+import {
+  getAdminOrgBillingReconcileAction,
+  createGrantAction,
+  revokeGrantAction,
+  grantTrialAction,
+  grantSingleProjectAction,
+  createSubscriptionAction,
+  updateSubscriptionAction,
+  cancelSubscriptionAction,
+} from '@/server/functions/admin-orgs.functions';
 
 interface SessionResponse {
   user?: { role?: string; [key: string]: unknown };
@@ -128,62 +138,16 @@ export async function deleteStorageDocuments(keys: string[]) {
   return data;
 }
 
-export async function fetchOrgs({ page = 1, limit = 20, search = '' } = {}) {
-  const params = new URLSearchParams({ page: page.toString(), limit: limit.toString() });
-  if (search) params.set('search', search);
-  const res = await fetch(`/api/admin/orgs?${params.toString()}`, { credentials: 'include' });
-  const data = (await res.json()) as Record<string, unknown>;
-  if (!res.ok) throw data;
-  return data;
-}
-
-export async function fetchOrgDetails(orgId: string) {
-  const res = await fetch(`/api/admin/orgs/${encodeURIComponent(orgId)}`, {
-    credentials: 'include',
-  });
-  const data = (await res.json()) as Record<string, unknown>;
-  if (!res.ok) throw data;
-  return data;
-}
-
-export async function fetchOrgBilling(orgId: string) {
-  const res = await fetch(`/api/admin/orgs/${encodeURIComponent(orgId)}/billing`, {
-    credentials: 'include',
-  });
-  const data = (await res.json()) as Record<string, unknown>;
-  if (!res.ok) throw data;
-  return data;
-}
-
-async function adminBillingMutate(
-  url: string,
-  method: 'POST' | 'PUT' | 'DELETE',
-  orgId: string,
-  body?: Record<string, unknown>,
-) {
-  const init: RequestInit = { method, credentials: 'include' };
-  if (body !== undefined) {
-    init.headers = { 'Content-Type': 'application/json' };
-    init.body = JSON.stringify(body);
-  }
-  const res = await fetch(url, init);
-  const data = (await res.json()) as Record<string, unknown>;
-  if (!res.ok) throw data;
-  queryClient.invalidateQueries({ queryKey: queryKeys.admin.orgDetails(orgId) });
-  queryClient.invalidateQueries({ queryKey: queryKeys.admin.orgBilling(orgId) });
-  return data;
-}
-
 export async function createOrgSubscription(
   orgId: string,
   subscriptionData: Record<string, unknown>,
 ) {
-  return adminBillingMutate(
-    `/api/admin/orgs/${encodeURIComponent(orgId)}/subscriptions`,
-    'POST',
-    orgId,
-    subscriptionData,
-  );
+  const result = await createSubscriptionAction({
+    data: { orgId, ...subscriptionData } as Parameters<typeof createSubscriptionAction>[0]['data'],
+  });
+  queryClient.invalidateQueries({ queryKey: queryKeys.admin.orgDetails(orgId) });
+  queryClient.invalidateQueries({ queryKey: queryKeys.admin.orgBilling(orgId) });
+  return result;
 }
 
 export async function updateOrgSubscription(
@@ -191,53 +155,53 @@ export async function updateOrgSubscription(
   subscriptionId: string,
   updateData: Record<string, unknown>,
 ) {
-  return adminBillingMutate(
-    `/api/admin/orgs/${encodeURIComponent(orgId)}/subscriptions/${encodeURIComponent(subscriptionId)}`,
-    'PUT',
-    orgId,
-    updateData,
-  );
+  const result = await updateSubscriptionAction({
+    data: {
+      orgId,
+      subscriptionId,
+      ...updateData,
+    } as Parameters<typeof updateSubscriptionAction>[0]['data'],
+  });
+  queryClient.invalidateQueries({ queryKey: queryKeys.admin.orgDetails(orgId) });
+  queryClient.invalidateQueries({ queryKey: queryKeys.admin.orgBilling(orgId) });
+  return result;
 }
 
 export async function cancelOrgSubscription(orgId: string, subscriptionId: string) {
-  return adminBillingMutate(
-    `/api/admin/orgs/${encodeURIComponent(orgId)}/subscriptions/${encodeURIComponent(subscriptionId)}`,
-    'DELETE',
-    orgId,
-  );
+  const result = await cancelSubscriptionAction({ data: { orgId, subscriptionId } });
+  queryClient.invalidateQueries({ queryKey: queryKeys.admin.orgDetails(orgId) });
+  queryClient.invalidateQueries({ queryKey: queryKeys.admin.orgBilling(orgId) });
+  return result;
 }
 
 export async function createOrgGrant(orgId: string, grantData: Record<string, unknown>) {
-  return adminBillingMutate(
-    `/api/admin/orgs/${encodeURIComponent(orgId)}/grants`,
-    'POST',
-    orgId,
-    grantData,
-  );
+  const result = await createGrantAction({
+    data: { orgId, ...grantData } as Parameters<typeof createGrantAction>[0]['data'],
+  });
+  queryClient.invalidateQueries({ queryKey: queryKeys.admin.orgDetails(orgId) });
+  queryClient.invalidateQueries({ queryKey: queryKeys.admin.orgBilling(orgId) });
+  return result;
 }
 
 export async function revokeOrgGrant(orgId: string, grantId: string) {
-  return adminBillingMutate(
-    `/api/admin/orgs/${encodeURIComponent(orgId)}/grants/${encodeURIComponent(grantId)}`,
-    'DELETE',
-    orgId,
-  );
+  const result = await revokeGrantAction({ data: { orgId, grantId } });
+  queryClient.invalidateQueries({ queryKey: queryKeys.admin.orgDetails(orgId) });
+  queryClient.invalidateQueries({ queryKey: queryKeys.admin.orgBilling(orgId) });
+  return result;
 }
 
 export async function grantOrgTrial(orgId: string) {
-  return adminBillingMutate(
-    `/api/admin/orgs/${encodeURIComponent(orgId)}/grant-trial`,
-    'POST',
-    orgId,
-  );
+  const result = await grantTrialAction({ data: { orgId } });
+  queryClient.invalidateQueries({ queryKey: queryKeys.admin.orgDetails(orgId) });
+  queryClient.invalidateQueries({ queryKey: queryKeys.admin.orgBilling(orgId) });
+  return result;
 }
 
 export async function grantOrgSingleProject(orgId: string) {
-  return adminBillingMutate(
-    `/api/admin/orgs/${encodeURIComponent(orgId)}/grant-single-project`,
-    'POST',
-    orgId,
-  );
+  const result = await grantSingleProjectAction({ data: { orgId } });
+  queryClient.invalidateQueries({ queryKey: queryKeys.admin.orgDetails(orgId) });
+  queryClient.invalidateQueries({ queryKey: queryKeys.admin.orgBilling(orgId) });
+  return result;
 }
 
 export async function fetchBillingLedger(
@@ -276,19 +240,15 @@ export async function fetchOrgBillingReconcile(
     processingLagThreshold = 5,
   } = {},
 ) {
-  const params = new URLSearchParams({
-    incompleteThreshold: incompleteThreshold.toString(),
-    checkoutNoSubThreshold: checkoutNoSubThreshold.toString(),
-    processingLagThreshold: processingLagThreshold.toString(),
+  return getAdminOrgBillingReconcileAction({
+    data: {
+      orgId,
+      checkStripe,
+      incompleteThreshold,
+      checkoutNoSubThreshold,
+      processingLagThreshold,
+    },
   });
-  if (checkStripe) params.set('checkStripe', 'true');
-  const res = await fetch(
-    `/api/admin/orgs/${encodeURIComponent(orgId)}/billing/reconcile?${params.toString()}`,
-    { credentials: 'include' },
-  );
-  const data = (await res.json()) as Record<string, unknown>;
-  if (!res.ok) throw data;
-  return data;
 }
 
 export async function removeProjectMember(projectId: string, memberId: string) {
