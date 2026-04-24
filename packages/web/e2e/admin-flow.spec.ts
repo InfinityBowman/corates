@@ -119,7 +119,7 @@ test('Admin dashboard, user detail (loader pilot), and access control', async ({
 
   // API layer also blocks non-admin requests
   const res = await page.evaluate(async () => {
-    const response = await fetch('/api/admin/users', { credentials: 'include' });
+    const response = await fetch('/api/admin/stats', { credentials: 'include' });
     return { status: response.status };
   });
   expect(res.status).toBe(403);
