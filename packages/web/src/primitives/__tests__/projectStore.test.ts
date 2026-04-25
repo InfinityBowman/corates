@@ -8,6 +8,7 @@
 
 import { describe, it, expect, beforeEach } from 'vitest';
 import { useProjectStore } from '@/stores/projectStore.ts';
+import type { StudyInfo, MemberEntry } from '@/stores/projectStore.ts';
 
 describe('projectStore - Project Data Management', () => {
   beforeEach(() => {
@@ -24,8 +25,8 @@ describe('projectStore - Project Data Management', () => {
     it('should store and retrieve project data', () => {
       const projectId = 'test-project-1';
       const data = {
-        studies: [{ id: 'study-1', name: 'Test Study' }],
-        members: [{ userId: 'user-1', role: 'owner' }],
+        studies: [{ id: 'study-1', name: 'Test Study' } as StudyInfo],
+        members: [{ userId: 'user-1', role: 'owner' } as MemberEntry],
         meta: { name: 'Test Project', description: 'A test project' },
       };
 
@@ -52,16 +53,16 @@ describe('projectStore - Project Data Management', () => {
       const projectId = 'test-project-3';
 
       useProjectStore.getState().setProjectData(projectId, {
-        studies: [{ id: 'study-1', name: 'Study 1' }],
-        members: [{ userId: 'user-1', role: 'owner' }],
+        studies: [{ id: 'study-1', name: 'Study 1' } as StudyInfo],
+        members: [{ userId: 'user-1', role: 'owner' } as MemberEntry],
         meta: { name: 'Original Name' },
       });
 
       // Update only studies
       useProjectStore.getState().setProjectData(projectId, {
         studies: [
-          { id: 'study-1', name: 'Study 1' },
-          { id: 'study-2', name: 'Study 2' },
+          { id: 'study-1', name: 'Study 1' } as StudyInfo,
+          { id: 'study-2', name: 'Study 2' } as StudyInfo,
         ],
       });
 

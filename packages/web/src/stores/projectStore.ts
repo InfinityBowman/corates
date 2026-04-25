@@ -24,35 +24,101 @@ interface ProjectStats {
   lastUpdated: number;
 }
 
-interface PdfInfo {
+export interface PdfEntry {
   id: string;
   fileName: string;
-  tag?: string;
-  [key: string]: unknown;
+  key: string;
+  size: number;
+  uploadedBy: string;
+  uploadedAt: number;
+  tag: string;
+  title: string | null;
+  firstAuthor: string | null;
+  publicationYear: string | null;
+  journal: string | null;
+  doi: string | null;
 }
 
-export interface ChecklistInfo {
+export interface ChecklistEntry {
   id: string;
   type: string;
-  status?: string;
-  assignedTo?: string;
-  score?: unknown;
+  title: string | null;
+  assignedTo: string | null;
+  outcomeId: string | null;
+  status: string;
+  createdAt: number;
+  updatedAt: number;
+  score: unknown;
+  answers: Record<string, unknown> | null;
   consolidatedAnswers?: unknown;
-  answers?: unknown;
-  [key: string]: unknown;
+}
+
+export interface ReconciliationEntry {
+  checklist1Id: string;
+  checklist2Id: string;
+  reconciledChecklistId: string | null;
+  currentPage: number;
+  viewMode: string;
+  updatedAt: number;
+}
+
+export interface AnnotationEntry {
+  id: string;
+  pdfId: string;
+  type: string;
+  pageIndex: number;
+  embedPdfData: Record<string, unknown>;
+  createdBy: string;
+  createdAt: number;
+  updatedAt: number;
+  mergedFrom: string | null;
+}
+
+export interface MemberEntry {
+  userId: string;
+  role: string;
+  joinedAt: number;
+  name: string;
+  email: string;
+  givenName: string;
+  familyName: string;
+  image: string | null;
 }
 
 export interface StudyInfo {
   id: string;
   name: string;
-  checklists?: ChecklistInfo[];
-  pdfs?: PdfInfo[];
-  [key: string]: unknown;
+  description: string;
+  originalTitle: string | null;
+  firstAuthor: string | null;
+  publicationYear: string | null;
+  authors: string | null;
+  journal: string | null;
+  doi: string | null;
+  abstract: string | null;
+  importSource: string | null;
+  pdfUrl: string | null;
+  pdfSource: string | null;
+  pdfAccessible: boolean;
+  pmid: string | null;
+  url: string | null;
+  volume: string | null;
+  issue: string | null;
+  pages: string | null;
+  type: string | null;
+  reviewer1: string | null;
+  reviewer2: string | null;
+  createdAt: number;
+  updatedAt: number;
+  checklists: ChecklistEntry[];
+  pdfs: PdfEntry[];
+  reconciliation?: ReconciliationEntry;
+  annotations: Record<string, AnnotationEntry[]>;
 }
 
 interface ProjectData {
   meta: Record<string, unknown>;
-  members: unknown[];
+  members: MemberEntry[];
   studies: StudyInfo[];
 }
 
@@ -89,17 +155,12 @@ function persistStats(stats: Record<string, ProjectStats>) {
 }
 
 function computeProjectStats(studies: StudyInfo[]): { studyCount: number; completedCount: number } {
-  const studyCount = studies?.length || 0;
+  const studyCount = studies.length;
   let completedCount = 0;
 
-  if (studies) {
-    for (const study of studies) {
-      const hasCompletedChecklist = study.checklists?.some(
-        c => c.status === CHECKLIST_STATUS.FINALIZED,
-      );
-      if (hasCompletedChecklist) {
-        completedCount++;
-      }
+  for (const study of studies) {
+    if (study.checklists?.some(c => c.status === CHECKLIST_STATUS.FINALIZED)) {
+      completedCount++;
     }
   }
 
@@ -167,7 +228,7 @@ export const useProjectStore = create<ProjectStoreState & ProjectStoreActions>()
 // across renders. Without these, selectors return new objects/arrays on every call
 // when a project doesn't exist in the store, causing infinite re-render loops.
 const EMPTY_STUDIES: StudyInfo[] = [];
-const EMPTY_MEMBERS: unknown[] = [];
+const EMPTY_MEMBERS: MemberEntry[] = [];
 const EMPTY_META: Record<string, unknown> = {};
 
 // Selectors (pure functions, not hooks -- can be used with useProjectStore(selector))
@@ -190,7 +251,7 @@ export function selectStudies(state: ProjectStoreState, projectId: string): Stud
   return state.projects[projectId]?.studies || EMPTY_STUDIES;
 }
 
-export function selectMembers(state: ProjectStoreState, projectId: string): unknown[] {
+export function selectMembers(state: ProjectStoreState, projectId: string): MemberEntry[] {
   return state.projects[projectId]?.members || EMPTY_MEMBERS;
 }
 

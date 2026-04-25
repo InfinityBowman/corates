@@ -5,103 +5,17 @@
 
 import * as Y from 'yjs';
 import { useProjectStore } from '@/stores/projectStore';
+import type {
+  StudyInfo,
+  ChecklistEntry,
+  AnnotationEntry,
+  MemberEntry,
+} from '@/stores/projectStore';
 import { scoreChecklistOfType } from '@/checklist-registry/index';
 import { amstar2 } from '@corates/shared';
 import { CHECKLIST_STATUS } from '@corates/shared/checklists';
 
 const getAMSTAR2Answers = amstar2.getAnswers;
-
-interface StudyInfo {
-  id: string;
-  name: string;
-  description: string;
-  originalTitle: string | null;
-  firstAuthor: string | null;
-  publicationYear: string | null;
-  authors: string | null;
-  journal: string | null;
-  doi: string | null;
-  abstract: string | null;
-  importSource: string | null;
-  pdfUrl: string | null;
-  pdfSource: string | null;
-  pdfAccessible: boolean;
-  pmid: string | null;
-  url: string | null;
-  volume: string | null;
-  issue: string | null;
-  pages: string | null;
-  type: string | null;
-  reviewer1: string | null;
-  reviewer2: string | null;
-  createdAt: number;
-  updatedAt: number;
-  checklists: ChecklistEntry[];
-  pdfs: PdfEntry[];
-  reconciliation?: ReconciliationEntry;
-  annotations: Record<string, AnnotationEntry[]>;
-}
-
-interface ChecklistEntry {
-  id: string;
-  type: string;
-  title: string | null;
-  assignedTo: string | null;
-  outcomeId: string | null;
-  status: string;
-  createdAt: number;
-  updatedAt: number;
-  score: unknown;
-  answers: Record<string, unknown> | null;
-  consolidatedAnswers?: unknown;
-}
-
-interface PdfEntry {
-  id: string;
-  fileName: string;
-  key: string;
-  size: number;
-  uploadedBy: string;
-  uploadedAt: number;
-  tag: string;
-  title: string | null;
-  firstAuthor: string | null;
-  publicationYear: string | null;
-  journal: string | null;
-  doi: string | null;
-}
-
-interface ReconciliationEntry {
-  checklist1Id: string;
-  checklist2Id: string;
-  reconciledChecklistId: string | null;
-  currentPage: number;
-  viewMode: string;
-  updatedAt: number;
-}
-
-interface AnnotationEntry {
-  id: string;
-  pdfId: string;
-  type: string;
-  pageIndex: number;
-  embedPdfData: Record<string, unknown>;
-  createdBy: string;
-  createdAt: number;
-  updatedAt: number;
-  mergedFrom: string | null;
-}
-
-interface MemberEntry {
-  userId: string;
-  role: string;
-  joinedAt: number;
-  name: string;
-  email: string;
-  givenName: string;
-  familyName: string;
-  image: string | null;
-}
 
 export interface SyncManager {
   syncFromYDocImmediate: () => void;
@@ -255,7 +169,7 @@ export function createSyncManager(projectId: string, getYDoc: () => Y.Doc | null
       updates.members !== undefined ||
       updates.meta !== undefined
     ) {
-      useProjectStore.getState().setProjectData(projectId, updates as any);
+      useProjectStore.getState().setProjectData(projectId, updates);
     }
   }
 

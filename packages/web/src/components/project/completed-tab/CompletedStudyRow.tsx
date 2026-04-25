@@ -16,13 +16,18 @@ import {
 } from '@corates/shared/checklists';
 import { PreviousReviewersView } from './PreviousReviewersView';
 import { CompletedOutcomeRow } from './CompletedOutcomeRow';
+import type { StudyInfo, PdfEntry } from '@/stores/projectStore';
+import type { ReconciliationProgressEntry } from '@/primitives/useProject/reconciliation';
 
 interface CompletedStudyRowProps {
-  study: any;
+  study: StudyInfo;
   onOpenChecklist: (checklistId: string) => void;
-  onViewPdf: (pdf: any) => void;
-  onDownloadPdf: (pdf: any) => void;
-  getReconciliationProgress: (outcomeId: string | null, type: string) => any;
+  onViewPdf: (pdf: PdfEntry) => void;
+  onDownloadPdf: (pdf: PdfEntry) => void;
+  getReconciliationProgress: (
+    outcomeId: string | null,
+    type: string,
+  ) => ReconciliationProgressEntry | null;
   getAssigneeName: (userId: string) => string;
   getOutcomeName: (outcomeId: string) => string | null;
 }
@@ -112,7 +117,7 @@ export function CompletedStudyRow({
                   className='bg-secondary text-secondary-foreground inline-flex shrink-0 rounded-full px-2 py-0.5 text-xs font-medium'
                   data-selectable
                 >
-                  {(getChecklistMetadata(firstGroup.type) as any)?.name || 'Checklist'}
+                  {getChecklistMetadata(firstGroup.type).name}
                 </span>
                 <span
                   className={`inline-flex shrink-0 rounded-full px-2.5 py-1 text-xs font-medium ${getStatusStyle(firstGroup.checklists[0]?.status ?? '')}`}
@@ -147,7 +152,7 @@ export function CompletedStudyRow({
           {/* Multi-outcome stacked */}
           {hasMultipleOutcomes && (
             <div className='divide-border divide-y'>
-              {completedOutcomeGroups.map((outcomeGroup: any, i: number) => (
+              {completedOutcomeGroups.map((outcomeGroup, i) => (
                 <CompletedOutcomeRow
                   key={outcomeGroup.outcomeId || i}
                   study={study}
@@ -165,7 +170,7 @@ export function CompletedStudyRow({
           <CollapsibleContent>
             {hasPdfs && (
               <div className='border-border flex flex-col gap-2 border-t px-4 py-3'>
-                {sortedPdfs.map((pdf: any) => (
+                {sortedPdfs.map(pdf => (
                   <PdfListItem
                     key={pdf.id}
                     pdf={pdf}

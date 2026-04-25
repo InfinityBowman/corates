@@ -6,12 +6,12 @@
  */
 
 import { CHECKLIST_STATUS } from './status.js';
-import type { Study, ChecklistMetadata } from './types.js';
+import type { Study, StudyChecklist } from './types.js';
 
 export interface ChecklistGroup {
   outcomeId: string | null;
   type: string;
-  checklists: ChecklistMetadata[];
+  checklists: StudyChecklist[];
 }
 
 /**
@@ -20,7 +20,7 @@ export interface ChecklistGroup {
  * @param checklist - The checklist object
  * @returns True if the checklist is a reconciled checklist
  */
-export function isReconciledChecklist(checklist: ChecklistMetadata | null | undefined): boolean {
+export function isReconciledChecklist(checklist: StudyChecklist | null | undefined): boolean {
   if (!checklist) return false;
   return checklist.assignedTo === null;
 }
@@ -34,7 +34,7 @@ export function isReconciledChecklist(checklist: ChecklistMetadata | null | unde
 export function getTodoChecklists(
   study: Study | null | undefined,
   userId: string | null | undefined,
-): ChecklistMetadata[] {
+): StudyChecklist[] {
   if (!study || !userId) return [];
   const checklists = study.checklists || [];
   return checklists.filter(
@@ -50,7 +50,7 @@ export function getTodoChecklists(
  * @param study - The study object
  * @returns Array of checklists for completed tab
  */
-export function getCompletedChecklists(study: Study | null | undefined): ChecklistMetadata[] {
+export function getCompletedChecklists(study: Study | null | undefined): StudyChecklist[] {
   if (!study) return [];
   const checklists = study.checklists || [];
   return checklists.filter(c => c.status === CHECKLIST_STATUS.FINALIZED);
@@ -61,7 +61,7 @@ export function getCompletedChecklists(study: Study | null | undefined): Checkli
  * @param study - The study object
  * @returns The finalized checklist or null if not found
  */
-export function getFinalizedChecklist(study: Study | null | undefined): ChecklistMetadata | null {
+export function getFinalizedChecklist(study: Study | null | undefined): StudyChecklist | null {
   if (!study || !study.checklists) return null;
   const checklists = study.checklists || [];
   // Prefer reconciled checklist if it's finalized
@@ -78,7 +78,7 @@ export function getFinalizedChecklist(study: Study | null | undefined): Checklis
  * @param study - The study object
  * @returns Array of checklists in reconciliation workflow
  */
-export function getReconciliationChecklists(study: Study | null | undefined): ChecklistMetadata[] {
+export function getReconciliationChecklists(study: Study | null | undefined): StudyChecklist[] {
   if (!study) return [];
   const checklists = study.checklists || [];
   return checklists.filter(
@@ -133,7 +133,7 @@ export function shouldShowInTab(
       // Group by outcomeId (for ROB2/ROBINS_I) or by type (for AMSTAR2)
       const groups = new Map<
         string,
-        { checklists: ChecklistMetadata[]; outcomeId: string | null; type: string }
+        { checklists: StudyChecklist[]; outcomeId: string | null; type: string }
       >();
       for (const checklist of awaitingReconcile) {
         const groupKey = checklist.outcomeId || `type:${checklist.type}`;
@@ -260,7 +260,7 @@ export function getNextStatusForCompletion(study: Study | null | undefined): str
 export function findReconciledChecklist(
   study: Study | null | undefined,
   excludeId: string | null = null,
-): ChecklistMetadata | null {
+): StudyChecklist | null {
   if (!study || !study.checklists) return null;
 
   const reconciled = study.checklists.find(
@@ -277,7 +277,7 @@ export function findReconciledChecklist(
  */
 export function getInProgressReconciledChecklists(
   study: Study | null | undefined,
-): ChecklistMetadata[] {
+): StudyChecklist[] {
   if (!study || !study.checklists) return [];
 
   return study.checklists.filter(
@@ -304,7 +304,7 @@ export function isDualReviewerStudy(study: Study | null | undefined): boolean {
 export function getOriginalReviewerChecklists(
   study: Study | null | undefined,
   reconciliationProgress: { checklist1Id?: string; checklist2Id?: string } | null | undefined,
-): ChecklistMetadata[] {
+): StudyChecklist[] {
   if (!study || !study.checklists || !reconciliationProgress) return [];
 
   const { checklist1Id, checklist2Id } = reconciliationProgress;
@@ -314,7 +314,7 @@ export function getOriginalReviewerChecklists(
   const checklist1 = checklists.find(c => c.id === checklist1Id);
   const checklist2 = checklists.find(c => c.id === checklist2Id);
 
-  const result: ChecklistMetadata[] = [];
+  const result: StudyChecklist[] = [];
   if (checklist1) result.push(checklist1);
   if (checklist2) result.push(checklist2);
 
@@ -370,7 +370,7 @@ export function findReconciledChecklistForOutcome(
   outcomeId: string | null,
   type: string,
   excludeId: string | null = null,
-): ChecklistMetadata | null {
+): StudyChecklist | null {
   if (!study || !study.checklists) return null;
 
   return (

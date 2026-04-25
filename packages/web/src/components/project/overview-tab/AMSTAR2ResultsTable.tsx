@@ -5,9 +5,10 @@
 import { useMemo } from 'react';
 import { CHECKLIST_STATUS } from '@corates/shared/checklists';
 import { ScoreTag, ScoreTooltip } from '@/components/checklist/ScoreTag';
+import type { StudyInfo } from '@/stores/projectStore';
 
 interface AMSTAR2ResultsTableProps {
-  studies: any[];
+  studies: StudyInfo[];
 }
 
 export function AMSTAR2ResultsTable({ studies }: AMSTAR2ResultsTableProps) {
@@ -17,14 +18,13 @@ export function AMSTAR2ResultsTable({ studies }: AMSTAR2ResultsTableProps) {
     const results: Array<{ studyId: string; studyName: string; score: string }> = [];
 
     for (const study of studies) {
-      const checklists = study.checklists || [];
-      if (checklists.length === 0) continue;
+      if (study.checklists.length === 0) continue;
 
       let checklistToScore = null;
 
       if (study.reconciliation?.reconciledChecklistId) {
-        const reconciled = checklists.find(
-          (c: any) => c.id === study.reconciliation.reconciledChecklistId && c.type === 'AMSTAR2',
+        const reconciled = study.checklists.find(
+          c => c.id === study.reconciliation!.reconciledChecklistId && c.type === 'AMSTAR2',
         );
         if (reconciled && reconciled.status === CHECKLIST_STATUS.FINALIZED) {
           checklistToScore = reconciled;
@@ -32,8 +32,8 @@ export function AMSTAR2ResultsTable({ studies }: AMSTAR2ResultsTableProps) {
       }
 
       if (!checklistToScore) {
-        checklistToScore = checklists.find(
-          (c: any) => c.type === 'AMSTAR2' && c.status === CHECKLIST_STATUS.FINALIZED,
+        checklistToScore = study.checklists.find(
+          c => c.type === 'AMSTAR2' && c.status === CHECKLIST_STATUS.FINALIZED,
         );
       }
 
@@ -42,7 +42,7 @@ export function AMSTAR2ResultsTable({ studies }: AMSTAR2ResultsTableProps) {
       results.push({
         studyId: study.id,
         studyName: study.name,
-        score: checklistToScore.score,
+        score: checklistToScore.score as string,
       });
     }
 

@@ -6,9 +6,10 @@ import { useNavigate } from '@tanstack/react-router';
 import { FileCheck2Icon } from 'lucide-react';
 import { getChecklistMetadata } from '@/checklist-registry';
 import { getStatusLabel, getStatusStyle } from '@corates/shared/checklists';
+import type { ChecklistEntry } from '@/stores/projectStore';
 
 interface ChecklistTreeItemProps {
-  checklist: { id: string; type: string; status?: string; [key: string]: unknown };
+  checklist: ChecklistEntry;
   projectId: string;
   studyId: string;
   currentPath: string;

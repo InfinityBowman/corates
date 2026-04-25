@@ -24,11 +24,12 @@ import { PdfListItem } from '@/components/pdf/PdfListItem';
 import { ChecklistForm } from './ChecklistForm';
 import { getStatusLabel, getStatusStyle } from '@corates/shared/checklists';
 import { useProjectStore } from '@/stores/projectStore';
+import type { StudyInfo, PdfEntry, MemberEntry } from '@/stores/projectStore';
 import { useProjectContext } from '../ProjectContext';
 
 interface TodoStudyRowProps {
-  study: any;
-  members: any[];
+  study: StudyInfo;
+  members: MemberEntry[];
   currentUserId: string;
   expanded: boolean;
   onToggleExpanded: () => void;
@@ -37,8 +38,8 @@ interface TodoStudyRowProps {
   onAddChecklist: (type: string, assigneeId: string, outcomeId: string | null) => void;
   onOpenChecklist: (checklistId: string) => void;
   onDeleteChecklist: (checklistId: string) => void;
-  onViewPdf: (pdf: any) => void;
-  onDownloadPdf: (pdf: any) => void;
+  onViewPdf: (pdf: PdfEntry) => void;
+  onDownloadPdf: (pdf: PdfEntry) => void;
   creatingChecklist: boolean;
 }
 
@@ -60,14 +61,17 @@ export function TodoStudyRow({
   const { projectId } = useProjectContext();
   const [deleteChecklistId, setDeleteChecklistId] = useState<string | null>(null);
 
-  const checklists = useMemo(() => study.checklists || [], [study.checklists]);
+  const checklists = study.checklists;
   const hasChecklists = checklists.length > 0;
 
-  const meta = useProjectStore(s => s.projects[projectId]?.meta) as any;
-  const outcomes: any[] = useMemo(() => meta?.outcomes || [], [meta?.outcomes]);
+  const meta = useProjectStore(s => s.projects[projectId]?.meta);
+  const outcomes = useMemo(
+    () => (meta?.outcomes ?? []) as Array<{ id: string; name: string }>,
+    [meta?.outcomes],
+  );
 
   const canAddMore = useMemo(() => {
-    const hasAmstar2 = checklists.some((c: any) => c.type === CHECKLIST_TYPES.AMSTAR2);
+    const hasAmstar2 = checklists.some(c => c.type === CHECKLIST_TYPES.AMSTAR2);
     if (!hasAmstar2) return true;
     if (outcomes.length === 0) return false;
 
@@ -87,7 +91,7 @@ export function TodoStudyRow({
   }, [checklists, outcomes]);
 
   const getOutcomeName = useCallback(
-    (outcomeId: string) => outcomes.find((o: any) => o.id === outcomeId)?.name || null,
+    (outcomeId: string) => outcomes.find(o => o.id === outcomeId)?.name || null,
     [outcomes],
   );
 
@@ -179,7 +183,7 @@ export function TodoStudyRow({
                     className='bg-secondary text-secondary-foreground inline-flex shrink-0 rounded-full px-2 py-0.5 text-xs font-medium'
                     data-selectable
                   >
-                    {(getChecklistMetadata(checklist.type) as any)?.name || 'Checklist'}
+                    {getChecklistMetadata(checklist.type).name}
                   </span>
                   {checklist.outcomeId && (
                     <span
@@ -238,11 +242,11 @@ export function TodoStudyRow({
         {/* Multi-checklist sub-rows */}
         {checklists.length > 1 && (
           <div className='divide-border divide-y'>
-            {checklists.map((checklist: any) => (
+            {checklists.map(checklist => (
               <div key={checklist.id} className='flex items-center gap-3 px-4 py-2.5'>
                 <div className='flex flex-1 flex-wrap items-center gap-1.5'>
                   <span className='bg-secondary text-secondary-foreground rounded-full px-2 py-0.5 text-xs font-medium'>
-                    {(getChecklistMetadata(checklist.type) as any)?.name || 'Checklist'}
+                    {getChecklistMetadata(checklist.type).name}
                   </span>
                   {checklist.outcomeId && (
                     <span className='bg-secondary text-secondary-foreground rounded-full px-2 py-0.5 text-xs font-medium'>
@@ -278,7 +282,7 @@ export function TodoStudyRow({
         <CollapsibleContent>
           {hasPdfs && (
             <div className='border-border flex flex-col gap-2 border-t px-4 py-3'>
-              {sortedPdfs.map((pdf: any) => (
+              {sortedPdfs.map(pdf => (
                 <PdfListItem
                   key={pdf.id}
                   pdf={pdf}

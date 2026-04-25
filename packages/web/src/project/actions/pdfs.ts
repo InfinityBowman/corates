@@ -8,6 +8,7 @@ import { bestEffort } from '@/lib/errorLogger.js';
 import { extractPdfDoi, extractPdfTitle } from '@/lib/pdfUtils.js';
 import { fetchFromDOI } from '@/lib/referenceLookup.js';
 import { useProjectStore } from '@/stores/projectStore';
+import type { PdfEntry } from '@/stores/projectStore';
 import { usePdfPreviewStore } from '@/stores/pdfPreviewStore';
 import { useAuthStore, selectUser } from '@/stores/authStore';
 import { connectionPool } from '../ConnectionPool';
@@ -21,8 +22,8 @@ async function extractPdfMetadata(
 
   try {
     const [extractedTitle, extractedDoi] = await Promise.all([
-      (extractPdfTitle as any)(arrayBuffer.slice(0)).catch(() => null),
-      (extractPdfDoi as any)(arrayBuffer.slice(0)).catch(() => null),
+      extractPdfTitle(arrayBuffer.slice(0)).catch(() => null),
+      extractPdfDoi(arrayBuffer.slice(0)).catch(() => null),
     ]);
 
     if (extractedTitle) metadata.title = extractedTitle;
@@ -30,7 +31,7 @@ async function extractPdfMetadata(
 
     if (extractedDoi) {
       try {
-        const refData = await (fetchFromDOI as any)(extractedDoi);
+        const refData = await fetchFromDOI(extractedDoi);
         if (refData) {
           if (refData.firstAuthor) metadata.firstAuthor = refData.firstAuthor;
           if (refData.publicationYear) metadata.publicationYear = refData.publicationYear;
@@ -49,20 +50,19 @@ async function extractPdfMetadata(
 }
 
 export const pdfActions = {
-  async view(studyId: string, pdf: Record<string, unknown>): Promise<void> {
-    if (!pdf?.fileName) return;
+  async view(studyId: string, pdf: PdfEntry): Promise<void> {
     const projectId = connectionPool.getActiveProjectId();
     const orgId = connectionPool.getActiveOrgId();
     if (!projectId || !orgId) throw new Error('No active project connection');
 
-    usePdfPreviewStore.getState().openPreview(projectId, studyId, pdf as any);
+    usePdfPreviewStore.getState().openPreview(projectId, studyId, pdf);
 
     try {
-      let data = await getCachedPdf(projectId, studyId, pdf.fileName as string);
+      let data = await getCachedPdf(projectId, studyId, pdf.fileName);
 
       if (!data) {
-        data = await downloadPdf(orgId, projectId, studyId, pdf.fileName as string);
-        await bestEffort(cachePdf(projectId, studyId, pdf.fileName as string, data), {
+        data = await downloadPdf(orgId, projectId, studyId, pdf.fileName);
+        await bestEffort(cachePdf(projectId, studyId, pdf.fileName, data), {
           operation: 'cachePdf (view)',
           projectId,
           studyId,
@@ -77,24 +77,23 @@ export const pdfActions = {
     }
   },
 
-  async download(studyId: string, pdf: Record<string, unknown>): Promise<void> {
-    if (!pdf?.fileName) return;
+  async download(studyId: string, pdf: PdfEntry): Promise<void> {
     const projectId = connectionPool.getActiveProjectId();
     const orgId = connectionPool.getActiveOrgId();
     if (!projectId || !orgId) throw new Error('No active project connection');
 
     try {
-      let data = await getCachedPdf(projectId, studyId, pdf.fileName as string);
+      let data = await getCachedPdf(projectId, studyId, pdf.fileName);
 
       if (!data) {
-        data = await downloadPdf(orgId, projectId, studyId, pdf.fileName as string);
+        data = await downloadPdf(orgId, projectId, studyId, pdf.fileName);
       }
 
       const blob = new Blob([data], { type: 'application/pdf' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = pdf.fileName as string;
+      a.download = pdf.fileName;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -117,17 +116,17 @@ export const pdfActions = {
     }
 
     const study =
-      useProjectStore.getState().projects[projectId]?.studies?.find((s: any) => s.id === studyId) ||
-      null;
-    const existingPdf = (study as any)?.pdfs?.find((pdf: any) => pdf.fileName === file.name);
+      useProjectStore.getState().projects[projectId]?.studies.find(s => s.id === studyId) ?? null;
+    const existingPdf = study?.pdfs.find(p => p.fileName === file.name);
     if (existingPdf) {
       throw new Error(`File "${file.name}" already exists. Rename or remove the existing copy.`);
     }
 
-    let uploadResult: any = null;
+    let uploadResult: { success: boolean; key: string; fileName: string; size: number } | null =
+      null;
 
     try {
-      const hasPdfs = (study as any)?.pdfs?.length > 0;
+      const hasPdfs = (study?.pdfs.length ?? 0) > 0;
       const effectiveTag = !hasPdfs ? 'primary' : tag;
 
       uploadResult = await uploadPdf(orgId, projectId, studyId, file, file.name);
@@ -181,12 +180,12 @@ export const pdfActions = {
     }
   },
 
-  async delete(studyId: string, pdf: Record<string, unknown>): Promise<void> {
+  async delete(studyId: string, pdf: PdfEntry): Promise<void> {
     const projectId = connectionPool.getActiveProjectId();
     const orgId = connectionPool.getActiveOrgId();
     const ops = connectionPool.getActiveOps();
 
-    if (!pdf?.fileName || !projectId || !orgId || !ops) {
+    if (!projectId || !orgId || !ops) {
       throw new Error('No active project connection');
     }
 
@@ -194,21 +193,21 @@ export const pdfActions = {
 
     try {
       try {
-        await deletePdf(orgId, projectId, studyId, pdf.fileName as string);
+        await deletePdf(orgId, projectId, studyId, pdf.fileName);
         r2Deleted = true;
       } catch (r2Err) {
         console.error('Failed to delete PDF from R2:', r2Err);
       }
 
       try {
-        await removeCachedPdf(projectId, studyId, pdf.fileName as string);
+        await removeCachedPdf(projectId, studyId, pdf.fileName);
       } catch (cacheErr) {
         console.warn('Failed to remove PDF from IndexedDB cache:', cacheErr);
       }
 
       if (r2Deleted) {
         try {
-          ops.pdf.removePdfFromStudy(studyId, (pdf as any).id);
+          ops.pdf.removePdfFromStudy(studyId, pdf.id);
         } catch (yjsErr) {
           console.error('Failed to remove PDF from Y.js:', yjsErr);
           throw new Error('PDF deleted from R2 but failed to remove from study');
@@ -236,7 +235,11 @@ export const pdfActions = {
     ops.pdf.updatePdfMetadata(studyId, pdfId, metadata);
   },
 
-  async handleGoogleDriveImport(studyId: string, file: any, tag = 'secondary'): Promise<void> {
+  async handleGoogleDriveImport(
+    studyId: string,
+    file: { key: string; fileName: string; size: number },
+    tag = 'secondary',
+  ): Promise<void> {
     const projectId = connectionPool.getActiveProjectId();
     const orgId = connectionPool.getActiveOrgId();
     const user = selectUser(useAuthStore.getState());
@@ -247,9 +250,8 @@ export const pdfActions = {
     if (!projectId || !orgId || !ops) throw new Error('No active project connection');
 
     const study =
-      useProjectStore.getState().projects[projectId]?.studies?.find((s: any) => s.id === studyId) ||
-      null;
-    const hasPdfs = (study as any)?.pdfs?.length > 0;
+      useProjectStore.getState().projects[projectId]?.studies.find(s => s.id === studyId) ?? null;
+    const hasPdfs = (study?.pdfs.length ?? 0) > 0;
     const effectiveTag = !hasPdfs ? 'primary' : tag;
 
     try {

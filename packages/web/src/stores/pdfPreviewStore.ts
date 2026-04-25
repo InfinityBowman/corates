@@ -6,26 +6,20 @@
  */
 
 import { create } from 'zustand';
-
-interface PdfInfo {
-  id: string;
-  fileName: string;
-  tag?: string;
-  [key: string]: unknown;
-}
+import type { PdfEntry } from './projectStore';
 
 interface PdfPreviewState {
   isOpen: boolean;
   projectId: string | null;
   studyId: string | null;
-  pdf: PdfInfo | null;
+  pdf: PdfEntry | null;
   pdfData: ArrayBuffer | null;
   loading: boolean;
   error: string | null;
 }
 
 interface PdfPreviewActions {
-  openPreview: (projectId: string, studyId: string, pdfInfo: PdfInfo) => void;
+  openPreview: (projectId: string, studyId: string, pdfInfo: PdfEntry) => void;
   closePreview: () => void;
   setData: (data: ArrayBuffer) => void;
   setError: (errorMsg: string) => void;

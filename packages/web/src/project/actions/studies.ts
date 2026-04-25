@@ -32,8 +32,8 @@ async function extractPdfMetadataFromBuffer(
   const updates: Record<string, unknown> = {};
 
   const [extractedTitle, extractedDoi] = await Promise.all([
-    (extractPdfTitle as any)(arrayBuffer.slice(0)).catch(() => null),
-    (extractPdfDoi as any)(arrayBuffer.slice(0)).catch(() => null),
+    extractPdfTitle(arrayBuffer.slice(0)).catch(() => null),
+    extractPdfDoi(arrayBuffer.slice(0)).catch(() => null),
   ]);
 
   const resolvedTitle = extractedTitle || existingTitle;
@@ -48,7 +48,7 @@ async function extractPdfMetadataFromBuffer(
 
   if (resolvedDoi) {
     try {
-      const refData = await (fetchFromDOI as any)(resolvedDoi);
+      const refData = await fetchFromDOI(resolvedDoi);
       if (refData) {
         if (!updates.doi) updates.doi = refData.doi || resolvedDoi;
         if (refData.firstAuthor) updates.firstAuthor = refData.firstAuthor;
@@ -113,7 +113,7 @@ async function handleGoogleDrivePdf(
       projectId,
       studyId,
     );
-    const importedFile = (result as any)?.file;
+    const importedFile = result.file;
     if (!importedFile?.fileName) return false;
 
     await addPdfMetadataToStudy(
@@ -284,14 +284,11 @@ export const studyActions = {
 
     try {
       const study =
-        useProjectStore
-          .getState()
-          .projects[projectId]?.studies?.find((s: any) => s.id === studyId) || null;
-      const pdfs = (study as any)?.pdfs || [];
+        useProjectStore.getState().projects[projectId]?.studies.find(s => s.id === studyId) ?? null;
+      const pdfs = study?.pdfs ?? [];
 
       if (pdfs.length > 0) {
-        const deletePromises = pdfs.map((pdf: any) => {
-          if (!pdf?.fileName) return Promise.resolve();
+        const deletePromises = pdfs.map(pdf => {
           return bestEffort(deletePdf(orgId, projectId, studyId, pdf.fileName), {
             operation: 'deletePdf (study cleanup)',
             projectId,

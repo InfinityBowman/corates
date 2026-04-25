@@ -37,7 +37,7 @@ interface ConnectionManagerOptions {
   onAccessDenied: (info: { reason: string }) => Promise<void> | void;
 }
 
-interface ConnectionManager {
+export interface ConnectionManager {
   connect: () => void;
   disconnect: () => void;
   destroy: () => void;

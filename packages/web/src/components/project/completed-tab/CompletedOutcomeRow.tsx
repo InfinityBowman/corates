@@ -6,14 +6,20 @@ import { useState, useMemo } from 'react';
 import { getChecklistMetadata } from '@/checklist-registry';
 import { getStatusLabel, getStatusStyle } from '@corates/shared/checklists';
 import { PreviousReviewersView } from './PreviousReviewersView';
+import type { StudyInfo } from '@/stores/projectStore';
+import type { ChecklistGroup } from '@corates/shared/checklists';
+import type { ReconciliationProgressEntry } from '@/primitives/useProject/reconciliation';
 
 interface CompletedOutcomeRowProps {
-  study: any;
-  outcomeGroup: { outcomeId: string | null; type: string; checklists: any[] };
+  study: StudyInfo;
+  outcomeGroup: ChecklistGroup;
   onOpenChecklist: (checklistId: string) => void;
   getAssigneeName: (userId: string) => string;
   getOutcomeName: (outcomeId: string) => string | null;
-  getReconciliationProgress: (outcomeId: string | null, type: string) => any;
+  getReconciliationProgress: (
+    outcomeId: string | null,
+    type: string,
+  ) => ReconciliationProgressEntry | null;
 }
 
 export function CompletedOutcomeRow({
@@ -49,7 +55,7 @@ export function CompletedOutcomeRow({
             </span>
           )}
           <span className='bg-secondary text-secondary-foreground rounded-full px-2 py-0.5 text-xs font-medium'>
-            {(getChecklistMetadata(outcomeGroup.type) as any)?.name || outcomeGroup.type}
+            {getChecklistMetadata(outcomeGroup.type).name}
           </span>
           <span
             className={`rounded-full px-2 py-0.5 text-xs font-medium ${getStatusStyle(finalizedChecklist?.status)}`}

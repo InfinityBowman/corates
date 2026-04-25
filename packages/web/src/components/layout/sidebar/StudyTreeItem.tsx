@@ -6,21 +6,10 @@ import { useMemo } from 'react';
 import { ChevronRightIcon, BookOpenIcon } from 'lucide-react';
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/components/ui/collapsible';
 import { ChecklistTreeItem } from './ChecklistTreeItem';
-
-interface StudyData {
-  id: string;
-  name: string;
-  checklists?: Array<{
-    id: string;
-    type: string;
-    status?: string;
-    assignedTo?: string;
-    [key: string]: unknown;
-  }>;
-}
+import type { StudyInfo } from '@/stores/projectStore';
 
 interface StudyTreeItemProps {
-  study: StudyData;
+  study: StudyInfo;
   projectId: string;
   userId?: string;
   currentPath: string;

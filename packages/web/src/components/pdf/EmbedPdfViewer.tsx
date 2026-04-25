@@ -5,20 +5,31 @@
  * Web Workers are preserved across re-renders by the viewer's internal state.
  */
 
+import type { PdfEntry } from '@/stores/projectStore';
 import { ViewerPage } from './embedpdf/react/src/viewer';
+
+interface AnnotationData {
+  id: string;
+  type: string;
+  pageIndex: number;
+  embedPdfData: Record<string, unknown>;
+  createdBy?: string;
+  createdAt?: number;
+  updatedAt?: number;
+}
 
 export interface EmbedPdfViewerProps {
   pdfData?: ArrayBuffer | null;
   pdfFileName?: string;
   readOnly?: boolean;
-  pdfs?: any[];
+  pdfs?: PdfEntry[];
   selectedPdfId?: string | null;
   onPdfSelect?: (_pdfId: string) => void;
-  onAnnotationAdd?: (..._args: any[]) => void;
-  onAnnotationUpdate?: (..._args: any[]) => void;
-  onAnnotationDelete?: (..._args: any[]) => void;
-  initialAnnotations?: any[];
-  onPdfChange?: (..._args: any[]) => void;
+  onAnnotationAdd?: (_annotation: AnnotationData) => void;
+  onAnnotationUpdate?: (_annotation: AnnotationData) => void;
+  onAnnotationDelete?: (_annotationId: string) => void;
+  initialAnnotations?: AnnotationData[];
+  onPdfChange?: (_data: ArrayBuffer, _fileName: string) => void;
   onPdfClear?: () => void;
   allowDelete?: boolean;
 }

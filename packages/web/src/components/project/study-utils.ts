@@ -3,34 +3,20 @@
  * Used by TodoStudyRow, CompletedStudyRow, and ReconcileStudyRow.
  */
 
-interface StudyPdf {
-  id: string;
-  tag?: string;
-  uploadedAt?: number;
-  firstAuthor?: string;
-  publicationYear?: string | number;
-  [key: string]: unknown;
-}
-
-interface StudyWithPdfs {
-  pdfs?: StudyPdf[];
-  firstAuthor?: string;
-  publicationYear?: string | number;
-  [key: string]: unknown;
-}
+import type { PdfEntry, StudyInfo } from '@/stores/projectStore';
 
 const TAG_ORDER: Record<string, number> = { primary: 0, protocol: 1, secondary: 2 };
 
-export function sortStudyPdfs(pdfs: StudyPdf[]): StudyPdf[] {
+export function sortStudyPdfs(pdfs: PdfEntry[]): PdfEntry[] {
   return [...pdfs].sort((a, b) => {
-    const aOrder = TAG_ORDER[a.tag || ''] ?? 2;
-    const bOrder = TAG_ORDER[b.tag || ''] ?? 2;
+    const aOrder = TAG_ORDER[a.tag] ?? 2;
+    const bOrder = TAG_ORDER[b.tag] ?? 2;
     if (aOrder !== bOrder) return aOrder - bOrder;
-    return (b.uploadedAt || 0) - (a.uploadedAt || 0);
+    return b.uploadedAt - a.uploadedAt;
   });
 }
 
-export function getCitationLine(sortedPdfs: StudyPdf[], study: StudyWithPdfs): string | null {
+export function getCitationLine(sortedPdfs: PdfEntry[], study: StudyInfo): string | null {
   const primaryPdf = sortedPdfs.find(p => p.tag === 'primary') || sortedPdfs[0];
   const author = primaryPdf?.firstAuthor || study.firstAuthor;
   const year = primaryPdf?.publicationYear || study.publicationYear;

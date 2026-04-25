@@ -166,6 +166,20 @@ export interface ROBINSIChecklist extends ChecklistMetadata {
 }
 
 /**
+ * Minimal checklist fields needed by domain logic functions.
+ * Both ChecklistMetadata and web ChecklistEntry satisfy this contract.
+ */
+export interface StudyChecklist {
+  id: string;
+  type: string;
+  status?: string;
+  assignedTo?: string | null;
+  outcomeId?: string | null;
+  createdAt?: number | string;
+  answers?: unknown;
+}
+
+/**
  * Study object structure (for domain logic)
  */
 export interface Study {
@@ -174,7 +188,7 @@ export interface Study {
   name?: string;
   reviewer1?: string | null;
   reviewer2?: string | null;
-  checklists?: Array<ChecklistMetadata & { answers?: unknown }>;
+  checklists?: StudyChecklist[];
   reconciliation?: {
     checklist1Id?: string;
     checklist2Id?: string;

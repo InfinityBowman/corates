@@ -19,10 +19,12 @@ import { connectionPool } from '@/project/ConnectionPool';
 import { getOriginalReviewerChecklists } from '@corates/shared/checklists';
 import { getChecklistMetadata } from '@/checklist-registry/index';
 import { GenericChecklist } from '@/components/checklist/GenericChecklist';
+import type { StudyInfo } from '@/stores/projectStore';
+import type { ReconciliationProgressEntry } from '@/primitives/useProject/reconciliation';
 
 interface PreviousReviewersViewProps {
-  study: any;
-  reconciliationProgress: any;
+  study: StudyInfo;
+  reconciliationProgress: ReconciliationProgressEntry | null;
   getAssigneeName: (_userId: string) => string;
   onClose: () => void;
 }
@@ -190,8 +192,7 @@ export function PreviousReviewersView({
                         </h3>
                         <span className='text-muted-foreground text-sm'>
                           {currentChecklistType ?
-                            (getChecklistMetadata as any)(currentChecklistType)?.name ||
-                            currentChecklistType
+                            getChecklistMetadata(currentChecklistType).name
                           : ''}
                         </span>
                       </div>

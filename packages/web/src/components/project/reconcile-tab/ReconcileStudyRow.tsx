@@ -12,15 +12,17 @@ import {
   isReconciledChecklist,
   getReconciliationChecklistsByOutcome,
 } from '@corates/shared/checklists';
+import type { ChecklistGroup } from '@corates/shared/checklists';
 import { getChecklistMetadata } from '@/checklist-registry';
 import { PdfListItem } from '@/components/pdf/PdfListItem';
 import { ReconcileStatusTag } from './ReconcileStatusTag';
+import type { StudyInfo, PdfEntry } from '@/stores/projectStore';
 
 interface ReconcileStudyRowProps {
-  study: any;
+  study: StudyInfo;
   onReconcile: (checklist1Id: string, checklist2Id: string) => void;
-  onViewPdf: (pdf: any) => void;
-  onDownloadPdf: (pdf: any) => void;
+  onViewPdf: (pdf: PdfEntry) => void;
+  onDownloadPdf: (pdf: PdfEntry) => void;
   getAssigneeName: (userId: string) => string;
   getOutcomeName: (outcomeId: string) => string | null;
 }
@@ -42,11 +44,10 @@ export function ReconcileStudyRow({
   const reconciliationGroups = useMemo(() => getReconciliationChecklistsByOutcome(study), [study]);
 
   const readyGroups = useMemo(() => {
-    const checklists = study.checklists || [];
-    return reconciliationGroups.filter((group: any) => {
+    return reconciliationGroups.filter(group => {
       if (group.checklists.length !== 2) return false;
-      const hasFinalized = checklists.some(
-        (c: any) =>
+      const hasFinalized = study.checklists.some(
+        c =>
           isReconciledChecklist(c) &&
           c.status === CHECKLIST_STATUS.FINALIZED &&
           c.type === group.type &&
@@ -57,7 +58,7 @@ export function ReconcileStudyRow({
   }, [reconciliationGroups, study.checklists]);
 
   const waitingGroups = useMemo(
-    () => reconciliationGroups.filter((g: any) => g.checklists.length === 1),
+    () => reconciliationGroups.filter(g => g.checklists.length === 1),
     [reconciliationGroups],
   );
 
@@ -65,14 +66,14 @@ export function ReconcileStudyRow({
   const firstReadyGroup = readyGroups[0] || null;
   const hasMultipleOutcomes = readyGroups.length + waitingGroups.length > 1;
 
-  const getReviewerName = (checklist: any) =>
+  const getReviewerName = (checklist: { assignedTo?: string | null }) =>
     checklist.assignedTo ? getAssigneeName(checklist.assignedTo) : 'Unknown';
 
-  const getGroupOutcomeName = (group: any) =>
+  const getGroupOutcomeName = (group: ChecklistGroup) =>
     group.outcomeId ? getOutcomeName(group.outcomeId) || 'Unknown Outcome' : null;
 
   const startReconciliation = useCallback(
-    (group: any) => {
+    (group: ChecklistGroup) => {
       if (group.checklists.length === 2) {
         onReconcile(group.checklists[0].id, group.checklists[1].id);
       }
@@ -191,14 +192,14 @@ export function ReconcileStudyRow({
                   <div className='h-px flex-1 bg-green-200' />
                 </div>
                 <div className='flex flex-col gap-1'>
-                  {readyGroups.map((group: any, i: number) => (
+                  {readyGroups.map((group, i) => (
                     <div
                       key={group.outcomeId || i}
                       className='flex items-center justify-between rounded-lg border border-green-200 bg-green-50/50 p-3'
                     >
                       <div className='flex flex-wrap items-center gap-2'>
                         <span className='bg-secondary text-secondary-foreground rounded-full px-2 py-0.5 text-xs font-medium'>
-                          {(getChecklistMetadata(group.type) as any)?.name || group.type}
+                          {getChecklistMetadata(group.type).name}
                         </span>
                         {group.outcomeId && (
                           <span className='bg-secondary text-secondary-foreground rounded-full px-2 py-0.5 text-xs font-medium'>
@@ -236,14 +237,14 @@ export function ReconcileStudyRow({
                   <div className='h-px flex-1 bg-yellow-200' />
                 </div>
                 <div className='flex flex-col gap-1'>
-                  {waitingGroups.map((group: any, i: number) => (
+                  {waitingGroups.map((group, i) => (
                     <div
                       key={group.outcomeId || i}
                       className='flex items-center justify-between rounded-lg border border-amber-200 bg-amber-50/30 p-3'
                     >
                       <div className='flex flex-wrap items-center gap-2'>
                         <span className='bg-secondary text-secondary-foreground rounded-full px-2 py-0.5 text-xs font-medium'>
-                          {(getChecklistMetadata(group.type) as any)?.name || group.type}
+                          {getChecklistMetadata(group.type).name}
                         </span>
                         {group.outcomeId && (
                           <span className='bg-secondary text-secondary-foreground rounded-full px-2 py-0.5 text-xs font-medium'>
@@ -269,7 +270,7 @@ export function ReconcileStudyRow({
         <CollapsibleContent>
           {hasPdfs && (
             <div className='border-border flex flex-col gap-2 border-t px-4 py-3'>
-              {sortedPdfs.map((pdf: any) => (
+              {sortedPdfs.map(pdf => (
                 <PdfListItem
                   key={pdf.id}
                   pdf={pdf}

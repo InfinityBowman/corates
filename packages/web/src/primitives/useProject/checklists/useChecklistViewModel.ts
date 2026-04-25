@@ -7,13 +7,13 @@
 
 import { useMemo } from 'react';
 import { useProjectStore, selectStudies } from '@/stores/projectStore';
-import type { StudyInfo, ChecklistInfo } from '@/stores/projectStore';
+import type { StudyInfo, ChecklistEntry } from '@/stores/projectStore';
 import { getChecklistTypeFromState, scoreChecklistOfType } from '@/checklist-registry/index';
 import { useChecklistAnswers } from './useChecklistAnswers';
 
 export interface ChecklistViewModel {
   currentStudy: StudyInfo | null;
-  currentChecklist: ChecklistInfo | null;
+  currentChecklist: ChecklistEntry | null;
   checklistForUI: Record<string, unknown> | null;
   checklistType: string | null;
   currentScore: string | null;

@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import type * as Y from 'yjs';
 import type { getUserColor } from '@/lib/userColors.js';
 import type { TextRef } from '@/primitives/useProject/checklists';
+import type { PdfEntry } from '@/stores/projectStore';
 
 // ---------------------------------------------------------------------------
 // Presence types (mirrored from useReconciliationPresence to avoid
@@ -286,7 +287,7 @@ export interface ReconciliationEngineProps {
   pdfFileName: string | null;
   pdfUrl: string | null;
   pdfLoading: boolean;
-  pdfs: unknown[];
+  pdfs: PdfEntry[];
   selectedPdfId: string | null;
   onPdfSelect: (pdfId: string) => void;
 

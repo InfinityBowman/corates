@@ -4,17 +4,18 @@
 
 import { useMemo } from 'react';
 import { CHECKLIST_STATUS, isReconciledChecklist } from '@corates/shared/checklists';
+import type { StudyInfo } from '@/stores/projectStore';
 
 interface ReconcileStatusTagProps {
-  study: any;
+  study: StudyInfo;
   getAssigneeName: (userId: string) => string;
 }
 
 export function ReconcileStatusTag({ study, getAssigneeName }: ReconcileStatusTagProps) {
   const awaitingChecklists = useMemo(
     () =>
-      (study.checklists || []).filter(
-        (c: any) => !isReconciledChecklist(c) && c.status === CHECKLIST_STATUS.REVIEWER_COMPLETED,
+      study.checklists.filter(
+        c => !isReconciledChecklist(c) && c.status === CHECKLIST_STATUS.REVIEWER_COMPLETED,
       ),
     [study.checklists],
   );
@@ -26,6 +27,7 @@ export function ReconcileStatusTag({ study, getAssigneeName }: ReconcileStatusTa
     const awaitingReviewerId = awaitingChecklists[0].assignedTo;
     const waitingReviewerId =
       awaitingReviewerId === study.reviewer1 ? study.reviewer2 : study.reviewer1;
+    if (!waitingReviewerId) return null;
     return getAssigneeName(waitingReviewerId);
   }, [isReady, awaitingChecklists, study.reviewer1, study.reviewer2, getAssigneeName]);
 

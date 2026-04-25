@@ -20,15 +20,16 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import type { PdfEntry } from '@/stores/projectStore';
 import { PdfTagBadge } from './PdfTagBadge';
 
 interface PdfListItemProps {
-  pdf: any;
-  onView?: (pdf: any) => void;
-  onDownload?: (pdf: any) => void;
-  onDelete?: (pdf: any) => void;
+  pdf: PdfEntry;
+  onView?: (pdf: PdfEntry) => void;
+  onDownload?: (pdf: PdfEntry) => void;
+  onDelete?: (pdf: PdfEntry) => void;
   onTagChange?: (pdfId: string, newTag: string) => void;
-  onEditMetadata?: (pdf: any) => void;
+  onEditMetadata?: (pdf: PdfEntry) => void;
   readOnly?: boolean;
   hasPrimary?: boolean;
   hasProtocol?: boolean;

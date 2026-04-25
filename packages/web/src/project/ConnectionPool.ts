@@ -9,7 +9,10 @@ import { DexieYProvider } from 'y-dexie';
 import { useProjectStore } from '@/stores/projectStore';
 import { queryClient } from '@/lib/queryClient';
 import { queryKeys } from '@/lib/queryKeys';
-import { createConnectionManager } from '@/primitives/useProject/connection';
+import {
+  createConnectionManager,
+  type ConnectionManager,
+} from '@/primitives/useProject/connection';
 import { createSyncManager, type SyncManager } from '@/primitives/useProject/sync';
 import { createStudyOperations, type StudyOperations } from '@/primitives/useProject/studies';
 import {
@@ -44,8 +47,8 @@ export interface TypedProjectOps {
 
 interface ConnectionEntry {
   ydoc: Y.Doc;
-  dexieProvider: any;
-  connectionManager: any;
+  dexieProvider: DexieYProvider | null;
+  connectionManager: ConnectionManager | null;
   syncManager: SyncManager | null;
   studyOps: StudyOperations | null;
   checklistOps: ChecklistOperations | null;
