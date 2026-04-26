@@ -16,18 +16,18 @@ export function ReconcileTab() {
   const navigate = useNavigate();
 
   const studies = useProjectStore(s => selectStudies(s, projectId));
-  const meta = useProjectStore(s => s.projects[projectId]?.meta) as any;
+  const meta = useProjectStore(s => s.projects[projectId]?.meta);
 
   const getOutcomeName = useCallback(
     (outcomeId: string) => {
-      const outcomes = meta?.outcomes || [];
-      return outcomes.find((o: any) => o.id === outcomeId)?.name || null;
+      const outcomes = meta?.outcomes ?? [];
+      return outcomes.find(o => o.id === outcomeId)?.name || null;
     },
     [meta],
   );
 
   const studiesInReconciliation = useMemo(
-    () => getStudiesForTab(studies, 'reconcile', null as any),
+    () => getStudiesForTab(studies, 'reconcile', null),
     [studies],
   );
 
@@ -41,7 +41,7 @@ export function ReconcileTab() {
   return (
     <div className='flex flex-col gap-2'>
       {studiesInReconciliation.length > 0 ?
-        studiesInReconciliation.map((study: any) => (
+        studiesInReconciliation.map(study => (
           <ReconcileStudyRow
             key={study.id}
             study={study}

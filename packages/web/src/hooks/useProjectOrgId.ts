@@ -16,7 +16,7 @@ export function useProjectOrgId(projectId: string | null | undefined): string | 
 
     // Try project meta (Y.js synced data)
     if (project?.meta?.orgId) {
-      return project.meta.orgId as string;
+      return project.meta.orgId;
     }
 
     // Try project list query cache

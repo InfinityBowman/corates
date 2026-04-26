@@ -27,7 +27,7 @@ describe('projectStore - Project Data Management', () => {
       const data = {
         studies: [{ id: 'study-1', name: 'Test Study' } as StudyInfo],
         members: [{ userId: 'user-1', role: 'owner' } as MemberEntry],
-        meta: { name: 'Test Project', description: 'A test project' },
+        meta: { name: 'Test Project', description: 'A test project', outcomes: [] },
       };
 
       useProjectStore.getState().setProjectData(projectId, data);
@@ -46,7 +46,7 @@ describe('projectStore - Project Data Management', () => {
       const project = useProjectStore.getState().projects[projectId];
       expect(project.studies).toEqual([]);
       expect(project.members).toEqual([]);
-      expect(project.meta).toEqual({});
+      expect(project.meta).toEqual({ outcomes: [] });
     });
 
     it('should update existing project data without overwriting unset fields', () => {
@@ -55,7 +55,7 @@ describe('projectStore - Project Data Management', () => {
       useProjectStore.getState().setProjectData(projectId, {
         studies: [{ id: 'study-1', name: 'Study 1' } as StudyInfo],
         members: [{ userId: 'user-1', role: 'owner' } as MemberEntry],
-        meta: { name: 'Original Name' },
+        meta: { name: 'Original Name', outcomes: [] },
       });
 
       // Update only studies
@@ -76,7 +76,7 @@ describe('projectStore - Project Data Management', () => {
   describe('clearProject', () => {
     it('should remove project from cache', () => {
       const projectId = 'to-clear';
-      useProjectStore.getState().setProjectData(projectId, { meta: { name: 'To Clear' } });
+      useProjectStore.getState().setProjectData(projectId, { meta: { name: 'To Clear', outcomes: [] } });
       expect(useProjectStore.getState().projects[projectId]).toBeDefined();
 
       useProjectStore.getState().clearProject(projectId);
@@ -85,7 +85,7 @@ describe('projectStore - Project Data Management', () => {
 
     it('should clear active project if it matches', () => {
       const projectId = 'active-to-clear';
-      useProjectStore.getState().setProjectData(projectId, { meta: {} });
+      useProjectStore.getState().setProjectData(projectId, { meta: { outcomes: [] } });
       useProjectStore.getState().setActiveProject(projectId);
 
       useProjectStore.getState().clearProject(projectId);
@@ -95,7 +95,7 @@ describe('projectStore - Project Data Management', () => {
 
     it('should also clear connection state', () => {
       const projectId = 'clear-with-connection';
-      useProjectStore.getState().setProjectData(projectId, { meta: {} });
+      useProjectStore.getState().setProjectData(projectId, { meta: { outcomes: [] } });
       useProjectStore.getState().dispatchConnectionEvent(projectId, { type: 'CONNECT_REQUESTED' });
 
       useProjectStore.getState().clearProject(projectId);
@@ -190,7 +190,7 @@ describe('projectStore - Active Project', () => {
     it('should return active project data when cached', () => {
       const projectId = 'active-test';
       useProjectStore.getState().setProjectData(projectId, {
-        meta: { name: 'Active Project' },
+        meta: { name: 'Active Project', outcomes: [] },
         studies: [],
         members: [],
       });

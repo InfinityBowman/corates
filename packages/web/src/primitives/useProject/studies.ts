@@ -176,7 +176,7 @@ export function createStudyOperations(
       metaMap.set('updatedAt', now);
     }
 
-    const existingMeta = useProjectStore.getState().projects[projectId]?.meta || {};
+    const existingMeta = useProjectStore.getState().projects[projectId]?.meta || { outcomes: [] };
     useProjectStore.getState().setProjectData(projectId, {
       meta: { ...existingMeta, name: trimmed, updatedAt: now },
     });
@@ -205,7 +205,7 @@ export function createStudyOperations(
       metaMap.set('updatedAt', now);
     }
 
-    const existingMeta = useProjectStore.getState().projects[projectId]?.meta || {};
+    const existingMeta = useProjectStore.getState().projects[projectId]?.meta || { outcomes: [] };
     useProjectStore.getState().setProjectData(projectId, {
       meta: { ...existingMeta, description: trimmed || null, updatedAt: now },
     });

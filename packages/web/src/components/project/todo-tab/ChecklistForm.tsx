@@ -42,8 +42,8 @@ export function ChecklistForm({
 
   const typeOptions = useMemo(() => getChecklistTypeOptions(), []);
 
-  const meta = useProjectStore(s => s.projects[projectId]?.meta) as any;
-  const outcomes: any[] = useMemo(() => meta?.outcomes || [], [meta?.outcomes]);
+  const meta = useProjectStore(s => s.projects[projectId]?.meta);
+  const outcomes = useMemo(() => meta?.outcomes ?? [], [meta?.outcomes]);
 
   const requiresOutcome = type === CHECKLIST_TYPES.ROB2 || type === CHECKLIST_TYPES.ROBINS_I;
 

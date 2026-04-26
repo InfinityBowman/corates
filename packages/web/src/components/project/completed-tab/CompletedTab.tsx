@@ -13,11 +13,6 @@ import { CompletedStudyRow } from './CompletedStudyRow';
 import { project } from '@/project';
 import type { ReconciliationProgressEntry } from '@/primitives/useProject/reconciliation';
 
-interface OutcomeEntry {
-  id: string;
-  name: string;
-}
-
 export function CompletedTab() {
   const { projectId, getAssigneeName, getChecklistPath } = useProjectContext();
   const navigate = useNavigate();
@@ -30,7 +25,7 @@ export function CompletedTab() {
 
   const getOutcomeName = useCallback(
     (outcomeId: string) => {
-      const outcomes = (meta?.outcomes as OutcomeEntry[] | undefined) || [];
+      const outcomes = meta?.outcomes ?? [];
       return outcomes.find(o => o.id === outcomeId)?.name || null;
     },
     [meta],

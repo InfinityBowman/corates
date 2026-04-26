@@ -10,6 +10,8 @@ import type {
   ChecklistEntry,
   AnnotationEntry,
   MemberEntry,
+  ProjectMeta,
+  OutcomeEntry,
 } from '@/stores/projectStore';
 import { scoreChecklistOfType } from '@/checklist-registry/index';
 import { amstar2 } from '@corates/shared';
@@ -112,19 +114,19 @@ export function createSyncManager(projectId: string, getYDoc: () => Y.Doc | null
     );
   }
 
-  function buildMetaData(ydoc: Y.Doc): Record<string, unknown> {
+  function buildMetaData(ydoc: Y.Doc): ProjectMeta {
     const metaMap = ydoc.getMap('meta');
-    const metaData = metaMap.toJSON ? metaMap.toJSON() : ({} as Record<string, unknown>);
+    const metaData = (metaMap.toJSON ? metaMap.toJSON() : {}) as ProjectMeta;
 
     const outcomesMap = metaMap.get('outcomes') as Y.Map<unknown> | undefined;
     if (outcomesMap && typeof outcomesMap.entries === 'function') {
-      const outcomesList: Record<string, unknown>[] = [];
+      const outcomesList: OutcomeEntry[] = [];
       for (const [outcomeId, outcomeYMap] of outcomesMap.entries()) {
         const ymap = outcomeYMap as { toJSON?: () => Record<string, unknown> };
         const outcomeData = ymap.toJSON ? ymap.toJSON() : (outcomeYMap as Record<string, unknown>);
-        outcomesList.push({ id: outcomeId, ...outcomeData });
+        outcomesList.push({ id: outcomeId, ...outcomeData } as OutcomeEntry);
       }
-      outcomesList.sort((a, b) => ((a.createdAt as number) || 0) - ((b.createdAt as number) || 0));
+      outcomesList.sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));
       metaData.outcomes = outcomesList;
     } else {
       metaData.outcomes = [];
@@ -139,7 +141,7 @@ export function createSyncManager(projectId: string, getYDoc: () => Y.Doc | null
 
     const updates: {
       studies?: StudyInfo[];
-      meta?: Record<string, unknown>;
+      meta?: ProjectMeta;
       members?: MemberEntry[];
     } = {};
 

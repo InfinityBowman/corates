@@ -14,11 +14,12 @@ import {
   selectStudies,
   selectMembers,
   selectMeta,
+  type ProjectMeta,
 } from '@/stores/projectStore';
 
 const EMPTY_STUDIES: never[] = [];
 const EMPTY_MEMBERS: never[] = [];
-const EMPTY_META = {};
+const EMPTY_META: ProjectMeta = { outcomes: [] };
 const IDLE_STATE = {
   studies: EMPTY_STUDIES,
   members: EMPTY_MEMBERS,

@@ -30,8 +30,8 @@ export function OutcomeManager() {
   const [isSaving, setIsSaving] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
 
-  const meta = useProjectStore(s => s.projects[projectId]?.meta) as any;
-  const outcomes: any[] = useMemo(() => meta?.outcomes || [], [meta]);
+  const meta = useProjectStore(s => s.projects[projectId]?.meta);
+  const outcomes = useMemo(() => meta?.outcomes ?? [], [meta]);
 
   const handleAdd = useCallback(async () => {
     const name = newName.trim();

@@ -65,10 +65,7 @@ export function TodoStudyRow({
   const hasChecklists = checklists.length > 0;
 
   const meta = useProjectStore(s => s.projects[projectId]?.meta);
-  const outcomes = useMemo(
-    () => (meta?.outcomes ?? []) as Array<{ id: string; name: string }>,
-    [meta?.outcomes],
-  );
+  const outcomes = useMemo(() => meta?.outcomes ?? [], [meta?.outcomes]);
 
   const canAddMore = useMemo(() => {
     const hasAmstar2 = checklists.some(c => c.type === CHECKLIST_TYPES.AMSTAR2);

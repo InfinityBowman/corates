@@ -48,7 +48,7 @@ export function DevStudyGenerator({ projectId, orgId }: DevStudyGeneratorProps) 
   const projectData = useProjectStore(s => (projectId ? s.projects[projectId] || null : null));
 
   const members: MemberEntry[] = (projectData?.members as MemberEntry[]) || [];
-  const outcomes: OutcomeEntry[] = (projectData?.meta?.outcomes as OutcomeEntry[]) || [];
+  const outcomes: OutcomeEntry[] = projectData?.meta?.outcomes ?? [];
 
   const [type, setType] = useState('AMSTAR2');
   const [fillMode, setFillMode] = useState('random');

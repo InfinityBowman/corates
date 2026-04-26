@@ -85,6 +85,22 @@ export interface MemberEntry {
   image: string | null;
 }
 
+export interface OutcomeEntry {
+  id: string;
+  name: string;
+  createdAt: number;
+  [key: string]: unknown;
+}
+
+export interface ProjectMeta {
+  name?: string;
+  description?: string | null;
+  orgId?: string;
+  outcomes: OutcomeEntry[];
+  updatedAt?: number;
+  [key: string]: unknown;
+}
+
 export interface StudyInfo {
   id: string;
   name: string;
@@ -117,7 +133,7 @@ export interface StudyInfo {
 }
 
 interface ProjectData {
-  meta: Record<string, unknown>;
+  meta: ProjectMeta;
   members: MemberEntry[];
   studies: StudyInfo[];
 }
@@ -183,7 +199,7 @@ export const useProjectStore = create<ProjectStoreState & ProjectStoreActions>()
       let studiesChanged = false;
       set(state => {
         if (!state.projects[projectId]) {
-          state.projects[projectId] = { meta: {}, members: [], studies: [] };
+          state.projects[projectId] = { meta: { outcomes: [] }, members: [], studies: [] };
         }
         const project = state.projects[projectId];
         if (data.meta !== undefined) {
@@ -229,7 +245,7 @@ export const useProjectStore = create<ProjectStoreState & ProjectStoreActions>()
 // when a project doesn't exist in the store, causing infinite re-render loops.
 const EMPTY_STUDIES: StudyInfo[] = [];
 const EMPTY_MEMBERS: MemberEntry[] = [];
-const EMPTY_META: Record<string, unknown> = {};
+const EMPTY_META: ProjectMeta = { outcomes: [] };
 
 // Selectors (pure functions, not hooks -- can be used with useProjectStore(selector))
 
@@ -255,7 +271,7 @@ export function selectMembers(state: ProjectStoreState, projectId: string): Memb
   return state.projects[projectId]?.members || EMPTY_MEMBERS;
 }
 
-export function selectMeta(state: ProjectStoreState, projectId: string): Record<string, unknown> {
+export function selectMeta(state: ProjectStoreState, projectId: string): ProjectMeta {
   return state.projects[projectId]?.meta || EMPTY_META;
 }
 
