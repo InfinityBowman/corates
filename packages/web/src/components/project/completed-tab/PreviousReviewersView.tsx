@@ -22,6 +22,15 @@ import { GenericChecklist } from '@/components/checklist/GenericChecklist';
 import type { StudyInfo } from '@/stores/projectStore';
 import type { ReconciliationProgressEntry } from '@/primitives/useProject/reconciliation';
 
+interface ReviewerChecklistData {
+  id: string;
+  name: string;
+  reviewerName: string;
+  createdAt?: number | string;
+  type: string;
+  [key: string]: unknown;
+}
+
 interface PreviousReviewersViewProps {
   study: StudyInfo;
   reconciliationProgress: ReconciliationProgressEntry | null;
@@ -41,8 +50,8 @@ export function PreviousReviewersView({
   const getChecklistData = ops.checklist.getChecklistData;
   const getTextRef = ops.checklist.getTextRef;
 
-  const [checklist1Data, setChecklist1Data] = useState<any>(null);
-  const [checklist2Data, setChecklist2Data] = useState<any>(null);
+  const [checklist1Data, setChecklist1Data] = useState<ReviewerChecklistData | null>(null);
+  const [checklist2Data, setChecklist2Data] = useState<ReviewerChecklistData | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('reviewer1');
 

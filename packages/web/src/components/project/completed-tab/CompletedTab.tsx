@@ -11,6 +11,12 @@ import { connectionPool } from '@/project/ConnectionPool';
 import { getStudiesForTab, isDualReviewerStudy, getOutcomeKey } from '@corates/shared/checklists';
 import { CompletedStudyRow } from './CompletedStudyRow';
 import { project } from '@/project';
+import type { ReconciliationProgressEntry } from '@/primitives/useProject/reconciliation';
+
+interface OutcomeEntry {
+  id: string;
+  name: string;
+}
 
 export function CompletedTab() {
   const { projectId, getAssigneeName, getChecklistPath } = useProjectContext();
@@ -20,12 +26,12 @@ export function CompletedTab() {
   const getAllReconciliationProgress = conn.reconciliation.getAllReconciliationProgress;
 
   const studies = useProjectStore(s => selectStudies(s, projectId));
-  const meta = useProjectStore(s => s.projects[projectId]?.meta) as any;
+  const meta = useProjectStore(s => s.projects[projectId]?.meta);
 
   const getOutcomeName = useCallback(
     (outcomeId: string) => {
-      const outcomes = meta?.outcomes || [];
-      return outcomes.find((o: any) => o.id === outcomeId)?.name || null;
+      const outcomes = (meta?.outcomes as OutcomeEntry[] | undefined) || [];
+      return outcomes.find(o => o.id === outcomeId)?.name || null;
     },
     [meta],
   );
@@ -40,13 +46,13 @@ export function CompletedTab() {
   );
 
   const getReconciliationProgress = useCallback(
-    (studyId: string, outcomeId: string | null, type: string) => {
-      const study = studies.find((s: any) => s.id === studyId);
+    (studyId: string, outcomeId: string | null, type: string): ReconciliationProgressEntry | null => {
+      const study = studies.find(s => s.id === studyId);
       if (!study || !isDualReviewerStudy(study)) return null;
 
-      const allProgress = getAllReconciliationProgress(studyId) || [];
+      const allProgress = getAllReconciliationProgress(studyId);
       const outcomeKey = getOutcomeKey(outcomeId, type);
-      return (allProgress as any[]).find((p: any) => p.outcomeKey === outcomeKey) || null;
+      return allProgress.find(p => p.outcomeKey === outcomeKey) || null;
     },
     [studies, getAllReconciliationProgress],
   );
@@ -54,7 +60,7 @@ export function CompletedTab() {
   return (
     <div className='flex flex-col gap-2'>
       {completedStudies.length > 0 ?
-        completedStudies.map((study: any) => (
+        completedStudies.map(study => (
           <CompletedStudyRow
             key={study.id}
             study={study}

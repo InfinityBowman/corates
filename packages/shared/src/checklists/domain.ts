@@ -189,11 +189,11 @@ export function shouldShowInTab(
  * @param userId - The current user ID (required for 'todo' tab)
  * @returns Filtered array of studies
  */
-export function getStudiesForTab(
-  studies: Study[] | null | undefined,
+export function getStudiesForTab<T extends Study>(
+  studies: T[] | null | undefined,
   tab: 'todo' | 'reconcile' | 'completed',
   userId?: string | null,
-): (Study & { _needsChecklist?: boolean })[] {
+): (T & { _needsChecklist?: boolean })[] {
   if (!studies || !Array.isArray(studies)) return [];
 
   if (tab === 'todo') {
