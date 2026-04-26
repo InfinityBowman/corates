@@ -19,11 +19,7 @@ import {
   isEditable,
   getNextStatusForCompletion,
 } from '@corates/shared/checklists';
-import type {
-  AMSTAR2Checklist,
-  ROBINSIChecklist,
-  ROB2Checklist,
-} from '@corates/shared/checklists';
+import type { AMSTAR2Checklist, ROBINSIChecklist, ROB2Checklist } from '@corates/shared/checklists';
 import { downloadPdf, uploadPdf, deletePdf, getPdfUrl } from '@/api/pdf-api';
 import type { PdfUploadResponse } from '@/api/pdf-api';
 import { getCachedPdf, cachePdf } from '@/primitives/pdfCache.js';

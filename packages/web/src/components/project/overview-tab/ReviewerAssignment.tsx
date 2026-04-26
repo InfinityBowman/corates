@@ -12,6 +12,7 @@ import {
   UsersIcon,
   SlidersHorizontalIcon,
 } from 'lucide-react';
+import type { StudyInfo, MemberEntry } from '@/stores/projectStore';
 
 const PRESETS = [0, 25, 33, 50, 100];
 
@@ -20,7 +21,7 @@ function MemberPercentRow({
   percent,
   onChange,
 }: {
-  member: any;
+  member: MemberEntry;
   percent: number;
   onChange: (_val: number) => void;
 }) {
@@ -79,9 +80,9 @@ function MemberPercentRow({
 }
 
 interface ReviewerAssignmentProps {
-  studies: any[];
-  members: any[];
-  onAssignReviewers: (studyId: string, updates: any) => void;
+  studies: StudyInfo[];
+  members: MemberEntry[];
+  onAssignReviewers: (studyId: string, updates: Record<string, unknown>) => void;
 }
 
 export function ReviewerAssignment({
@@ -92,19 +93,29 @@ export function ReviewerAssignment({
   const [isOpen, setIsOpen] = useState(false);
   const [showCustomize, setShowCustomize] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
-  const [previewAssignments, setPreviewAssignments] = useState<any[]>([]);
+  const [previewAssignments, setPreviewAssignments] = useState<
+    Array<{
+      studyId: string;
+      studyName: string;
+      reviewer1: string;
+      reviewer2: string;
+      reviewer1Name: string;
+      reviewer2Name: string;
+      sameReviewer: boolean;
+    }>
+  >([]);
   const [pool1Percents, setPool1Percents] = useState<Record<string, number>>({});
   const [pool2Percents, setPool2Percents] = useState<Record<string, number>>({});
 
   const unassignedStudies = useMemo(
-    () => studies.filter((s: any) => !s.reviewer1 && !s.reviewer2),
+    () => studies.filter(s => !s.reviewer1 && !s.reviewer2),
     [studies],
   );
 
   const getMemberName = useCallback(
     (userId: string) => {
       if (!userId) return 'Unknown';
-      const member = members.find((m: any) => m.userId === userId);
+      const member = members.find(m => m.userId === userId);
       return member?.name || member?.email || 'Unknown';
     },
     [members],
@@ -116,12 +127,12 @@ export function ReviewerAssignment({
   );
 
   const pool1Members = useMemo(
-    () => members.map((m: any) => ({ ...m, percent: pool1Percents[m.userId] ?? evenPercent })),
+    () => members.map(m => ({ ...m, percent: pool1Percents[m.userId] ?? evenPercent })),
     [members, pool1Percents, evenPercent],
   );
 
   const pool2Members = useMemo(
-    () => members.map((m: any) => ({ ...m, percent: pool2Percents[m.userId] ?? evenPercent })),
+    () => members.map(m => ({ ...m, percent: pool2Percents[m.userId] ?? evenPercent })),
     [members, pool2Percents, evenPercent],
   );
 
@@ -150,7 +161,7 @@ export function ReviewerAssignment({
   }, []);
 
   const resetToEven = useCallback(() => {
-    const memberIds = members.map((m: any) => m.userId);
+    const memberIds = members.map(m => m.userId);
     const count = memberIds.length;
     if (count === 0) {
       setPool1Percents({});
@@ -212,7 +223,7 @@ export function ReviewerAssignment({
     const shuffled2 = shuffleArray(pool2Assignments);
     const shuffledStudies = shuffleArray(unassignedStudies);
 
-    const assignments = shuffledStudies.map((study: any, index: number) => {
+    const assignments = shuffledStudies.map((study, index) => {
       const r1 = shuffled1[index];
       const r2 = shuffled2[index];
       return {

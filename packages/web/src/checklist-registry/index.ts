@@ -7,11 +7,7 @@
 
 import { CHECKLIST_TYPES, DEFAULT_CHECKLIST_TYPE } from './types';
 import { amstar2, robinsI, rob2 } from '@corates/shared';
-import type {
-  AMSTAR2Checklist,
-  ROBINSIChecklist,
-  ROB2Checklist,
-} from '@corates/shared/checklists';
+import type { AMSTAR2Checklist, ROBINSIChecklist, ROB2Checklist } from '@corates/shared/checklists';
 
 interface CreateChecklistOptions {
   name: string;
@@ -30,9 +26,8 @@ const CHECKLIST_REGISTRY: Record<string, ChecklistConfig> = {
   [CHECKLIST_TYPES.AMSTAR2]: {
     createChecklist: opts => amstar2.createAMSTAR2Checklist(opts),
     scoreChecklist: state => amstar2.scoreAMSTAR2Checklist(state as AMSTAR2Checklist),
-    getAnswers: amstar2.getAnswers ?
-      (state => amstar2.getAnswers(state as AMSTAR2Checklist))
-    : (state => state),
+    getAnswers:
+      amstar2.getAnswers ? state => amstar2.getAnswers(state as AMSTAR2Checklist) : state => state,
   },
 
   [CHECKLIST_TYPES.ROBINS_I]: {

@@ -26,8 +26,15 @@ export function SectionC({ sectionCState, onUpdate, disabled, getTextRef }: Sect
   const textFields = useMemo(
     () =>
       Object.entries(SECTION_C).filter(
-        ([, field]) => typeof field === 'object' && field !== null && 'type' in field && field.type === 'textarea',
-      ) as [string, { label: string; text: string; placeholder: string; stateKey: string; type: string }][],
+        ([, field]) =>
+          typeof field === 'object' &&
+          field !== null &&
+          'type' in field &&
+          field.type === 'textarea',
+      ) as [
+        string,
+        { label: string; text: string; placeholder: string; stateKey: string; type: string },
+      ][],
     [],
   );
 

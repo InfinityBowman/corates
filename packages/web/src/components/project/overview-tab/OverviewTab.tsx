@@ -40,6 +40,7 @@ import {
 import {
   calculateInterRaterReliability,
   getKappaInterpretation,
+  type InterRaterMetrics,
 } from '@/lib/inter-rater-reliability.js';
 import { CircularProgress } from './CircularProgress';
 import { ChartSection } from './ChartSection';
@@ -68,10 +69,10 @@ export function OverviewTab() {
   const { members: orgMembers } = useMembers();
 
   const studies = useProjectStore(s => selectStudies(s, projectId));
-  const members = useProjectStore(s => selectMembers(s, projectId)) as ProjectMember[];
+  const members = useProjectStore(s => selectMembers(s, projectId));
 
   const nonOwnerOrgMemberCount = useMemo(
-    () => orgMembers.filter((m: any) => m.role !== 'owner').length,
+    () => orgMembers.filter(m => m.role !== 'owner').length,
     [orgMembers],
   );
 
@@ -89,12 +90,12 @@ export function OverviewTab() {
   }, [isOwner, hasQuota, nonOwnerOrgMemberCount]);
 
   const readyToReconcile = useMemo(
-    () => studies.filter((s: any) => getReadyReconciliationPairs(s).length > 0).length,
+    () => studies.filter(s => getReadyReconciliationPairs(s).length > 0).length,
     [studies],
   );
 
   const completedStudies = useMemo(
-    () => studies.filter((s: any) => shouldShowInTab(s, 'completed', null)).length,
+    () => studies.filter(s => shouldShowInTab(s, 'completed', null)).length,
     [studies],
   );
 
@@ -107,7 +108,7 @@ export function OverviewTab() {
   const userProgressMap = useMemo(() => {
     const progressMap = new Map<string, { completed: number; total: number }>();
 
-    studies.forEach((study: any) => {
+    studies.forEach(study => {
       const assignedUserIds: string[] = [];
       if (study.reviewer1) assignedUserIds.push(study.reviewer1);
       if (study.reviewer2) assignedUserIds.push(study.reviewer2);
@@ -118,9 +119,9 @@ export function OverviewTab() {
         progress.total++;
         const checklists = study.checklists || [];
         const hasCompleted = checklists
-          .filter((c: any) => c.assignedTo === userId)
+          .filter(c => c.assignedTo === userId)
           .some(
-            (c: any) =>
+            c =>
               c.status === CHECKLIST_STATUS.FINALIZED ||
               c.status === CHECKLIST_STATUS.REVIEWER_COMPLETED,
           );
@@ -171,7 +172,7 @@ export function OverviewTab() {
     }
   }, [pendingRemoveMember, navigate]);
 
-  const interRaterMetrics: any = useMemo(() => {
+  const interRaterMetrics: InterRaterMetrics = useMemo(() => {
     const getChecklistData = (studyId: string, checklistId: string) =>
       project.checklist.getData(studyId, checklistId);
     return calculateInterRaterReliability(studies, getChecklistData);

@@ -76,7 +76,9 @@ describe('projectStore - Project Data Management', () => {
   describe('clearProject', () => {
     it('should remove project from cache', () => {
       const projectId = 'to-clear';
-      useProjectStore.getState().setProjectData(projectId, { meta: { name: 'To Clear', outcomes: [] } });
+      useProjectStore
+        .getState()
+        .setProjectData(projectId, { meta: { name: 'To Clear', outcomes: [] } });
       expect(useProjectStore.getState().projects[projectId]).toBeDefined();
 
       useProjectStore.getState().clearProject(projectId);

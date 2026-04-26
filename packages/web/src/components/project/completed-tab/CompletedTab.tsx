@@ -41,7 +41,11 @@ export function CompletedTab() {
   );
 
   const getReconciliationProgress = useCallback(
-    (studyId: string, outcomeId: string | null, type: string): ReconciliationProgressEntry | null => {
+    (
+      studyId: string,
+      outcomeId: string | null,
+      type: string,
+    ): ReconciliationProgressEntry | null => {
       const study = studies.find(s => s.id === studyId);
       if (!study || !isDualReviewerStudy(study)) return null;
 

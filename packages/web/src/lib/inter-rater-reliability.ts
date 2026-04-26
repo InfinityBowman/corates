@@ -22,7 +22,7 @@ interface Comparison {
   agree: boolean;
 }
 
-interface InterRaterMetrics {
+export interface InterRaterMetrics {
   percentAgreement: number | null;
   cohensKappa: number | null;
   studyCount: number;

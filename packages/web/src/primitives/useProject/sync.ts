@@ -322,7 +322,9 @@ function buildStudyFromYMap(
           }
 
           if (checklistType === 'AMSTAR2') {
-            checklistEntry.consolidatedAnswers = getAMSTAR2Answers(answers as unknown as AMSTAR2Checklist);
+            checklistEntry.consolidatedAnswers = getAMSTAR2Answers(
+              answers as unknown as AMSTAR2Checklist,
+            );
           }
         }
       }
