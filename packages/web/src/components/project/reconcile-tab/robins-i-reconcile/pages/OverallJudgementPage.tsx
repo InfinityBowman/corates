@@ -6,9 +6,9 @@ import { JudgementPanel } from '../panels/JudgementPanel';
 import { DirectionPanel } from '../panels/DirectionPanel';
 
 interface OverallJudgementPageProps {
-  reviewer1Data?: { judgement?: string; direction?: string } | null;
-  reviewer2Data?: { judgement?: string; direction?: string } | null;
-  finalData?: { judgement?: string; direction?: string } | null;
+  reviewer1Data?: { judgement?: string | null; direction?: string | null } | null;
+  reviewer2Data?: { judgement?: string | null; direction?: string | null } | null;
+  finalData?: { judgement?: string | null; direction?: string | null } | null;
   reviewer1Name: string;
   reviewer2Name: string;
   judgementMatch?: boolean;

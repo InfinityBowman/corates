@@ -23,23 +23,18 @@ import { useReconciliationPresence } from '@/hooks/useReconciliationPresence';
 import { PresenceAvatars } from '../PresenceAvatars';
 import { RemoteCursors } from '../RemoteCursors';
 import { useReconciliationEngine } from './useReconciliationEngine';
-import type { ReconciliationAdapter, ReconciliationEngineProps, EngineContext } from './types';
+import type { ErasedAdapter, ReconciliationEngineProps, EngineContext } from './types';
 
 const EmbedPdfViewer = lazy(() => import('@/components/pdf/EmbedPdfViewer'));
 
 // Adapter registry - adapters register themselves here via registerReconciliationAdapter
-const adapterRegistry = new Map<string, ReconciliationAdapter<any, any, any, any>>();
+const adapterRegistry = new Map<string, ErasedAdapter>();
 
-export function registerReconciliationAdapter(
-  checklistType: string,
-  adapter: ReconciliationAdapter<any, any, any, any>,
-) {
+export function registerReconciliationAdapter(checklistType: string, adapter: ErasedAdapter) {
   adapterRegistry.set(checklistType, adapter);
 }
 
-function getReconciliationAdapter(
-  checklistType: string,
-): ReconciliationAdapter<any, any, any, any> {
+function getReconciliationAdapter(checklistType: string): ErasedAdapter {
   const adapter = adapterRegistry.get(checklistType);
   if (!adapter) {
     throw new Error(
@@ -87,8 +82,10 @@ export function ReconciliationEngine({
     updateChecklistAnswer,
     setTextValue,
     onSaveReconciled,
-    checklist1Id: (checklist1 as any)?.id ?? null,
-    checklist2Id: (checklist2 as any)?.id ?? null,
+    checklist1Id:
+      (checklist1 as { id?: string } | null | undefined)?.id ?? null,
+    checklist2Id:
+      (checklist2 as { id?: string } | null | undefined)?.id ?? null,
   });
 
   // -----------------------------------------------------------------------

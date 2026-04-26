@@ -8,9 +8,9 @@ import { DirectionPanel } from '../panels/DirectionPanel';
 
 interface DomainJudgementPageProps {
   domainKey: string;
-  reviewer1Data?: { judgement?: string; direction?: string } | null;
-  reviewer2Data?: { judgement?: string; direction?: string } | null;
-  finalData?: { judgement?: string; direction?: string } | null;
+  reviewer1Data?: { judgement?: string | null; direction?: string | null } | null;
+  reviewer2Data?: { judgement?: string | null; direction?: string | null } | null;
+  finalData?: { judgement?: string | null; direction?: string | null } | null;
   reviewer1Name: string;
   reviewer2Name: string;
   judgementMatch?: boolean;

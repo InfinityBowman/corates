@@ -242,7 +242,10 @@ export function ReconciliationWrapper({
 
   // Extract outcomeId and type from checklist1 metadata
   const outcomeId = checklist1Meta?.outcomeId || null;
-  const checklistType = useMemo(() => checklist1Meta?.type || 'AMSTAR2', [checklist1Meta]);
+  const checklistType = useMemo(
+    () => (checklist1Meta?.type || 'AMSTAR2') as import('./engine/types').SupportedChecklistType,
+    [checklist1Meta],
+  );
 
   // Get or create reconciled checklist (with race condition prevention)
   useEffect(() => {

@@ -15,6 +15,11 @@ import type {
 } from '../engine/types';
 import type { TextRef } from '@/primitives/useProject/checklists';
 import { assertNever } from '@corates/shared';
+import type {
+  ROBINSIChecklist,
+  ROBINSIDomainState,
+  ROBINSIQuestionAnswer,
+} from '@corates/shared/checklists';
 import {
   compareChecklists,
   getSectionBKeys,
@@ -83,51 +88,22 @@ function updateOverallJudgement(
 }
 
 // ---------------------------------------------------------------------------
-// Comparison helper
-// ---------------------------------------------------------------------------
-
-function getCurrentItemComparison(
-  item: RobinsINavItem | null,
-  comparison: ComparisonResult | null,
-): any {
-  if (!item || !comparison) return null;
-
-  switch (item.type) {
-    case NAV_ITEM_TYPES.SECTION_B:
-      return [...comparison.sectionB.agreements, ...comparison.sectionB.disagreements].find(
-        c => c.key === item.key,
-      );
-    case NAV_ITEM_TYPES.DOMAIN_QUESTION: {
-      const domain = comparison.domains?.[item.domainKey];
-      if (!domain) return null;
-      return [...domain.questions.agreements, ...domain.questions.disagreements].find(
-        c => c.key === item.key,
-      );
-    }
-    case NAV_ITEM_TYPES.DOMAIN_JUDGEMENT:
-      return comparison.domains?.[item.domainKey];
-    case NAV_ITEM_TYPES.OVERALL_JUDGEMENT:
-      return comparison.overall;
-  }
-}
-
-// ---------------------------------------------------------------------------
 // Adapter: data derivation
 // ---------------------------------------------------------------------------
 
-function buildNavItems(reconciledChecklist: any): RobinsINavItem[] {
-  // ROBINS-I uses checklist1's sectionC to determine per-protocol, but
-  // reconciledChecklist may inherit it. For now use false as default.
-  // The engine passes reconciledChecklist; we check sectionC if available.
+function buildNavItems(reconciledChecklist: ROBINSIChecklist | null): RobinsINavItem[] {
   const isPerProtocol = reconciledChecklist?.sectionC?.isPerProtocol || false;
   return buildNavigationItems(isPerProtocol);
 }
 
-function deriveFinalAnswers(reconciledChecklist: any): any {
-  return reconciledChecklist || {};
+function deriveFinalAnswers(reconciledChecklist: ROBINSIChecklist | null): ROBINSIChecklist {
+  return (reconciledChecklist || {}) as ROBINSIChecklist;
 }
 
-function compare(checklist1: any, checklist2: any): ComparisonResult | null {
+function compare(
+  checklist1: ROBINSIChecklist | null,
+  checklist2: ROBINSIChecklist | null,
+): ComparisonResult | null {
   if (!checklist1 || !checklist2) return null;
   return compareChecklists(checklist1, checklist2);
 }
@@ -136,12 +112,12 @@ function compare(checklist1: any, checklist2: any): ComparisonResult | null {
 // Adapter: answer checking
 // ---------------------------------------------------------------------------
 
-function hasAnswer(item: RobinsINavItem, finalAnswers: any): boolean {
+function hasAnswer(item: RobinsINavItem, finalAnswers: ROBINSIChecklist): boolean {
   return robinsHasNavItemAnswer(item, finalAnswers);
 }
 
 function isAgreement(item: RobinsINavItem, comparison: ComparisonResult | null): boolean {
-  return robinsIsNavItemAgreement(item, comparison as any);
+  return robinsIsNavItemAgreement(item, comparison);
 }
 
 // ---------------------------------------------------------------------------
@@ -150,25 +126,28 @@ function isAgreement(item: RobinsINavItem, comparison: ComparisonResult | null):
 
 function autoFillFromReviewer1(
   item: RobinsINavItem,
-  checklist1: any,
+  checklist1: ROBINSIChecklist | null,
   updateChecklistAnswer: (sectionKey: string, data: unknown) => void,
   setTextValue: (ref: TextRef, text: string) => void,
 ): void {
   switch (item.type) {
     case NAV_ITEM_TYPES.SECTION_B: {
-      const answer = checklist1?.sectionB?.[item.key];
-      if (!answer) return;
-      updateSectionBAnswer(updateChecklistAnswer, item.key, answer.answer);
+      const sectionB = checklist1?.sectionB;
+      const answer = sectionB?.[item.key as keyof typeof sectionB];
+      if (!answer || typeof answer !== 'object' || !('answer' in answer)) return;
+      const qa = answer as ROBINSIQuestionAnswer;
+      updateSectionBAnswer(updateChecklistAnswer, item.key, qa.answer!);
       setTextValue(
         { type: 'ROBINS_I', sectionKey: 'sectionB', fieldKey: 'comment', questionKey: item.key },
-        answer.comment || '',
+        qa.comment || '',
       );
       return;
     }
     case NAV_ITEM_TYPES.DOMAIN_QUESTION: {
-      const answer = checklist1?.[item.domainKey]?.answers?.[item.key];
+      const domain = checklist1?.[item.domainKey] as ROBINSIDomainState | undefined;
+      const answer = domain?.answers?.[item.key];
       if (!answer) return;
-      updateDomainQuestionAnswer(updateChecklistAnswer, item.domainKey, item.key, answer.answer);
+      updateDomainQuestionAnswer(updateChecklistAnswer, item.domainKey, item.key, answer.answer!);
       setTextValue(
         {
           type: 'ROBINS_I',
@@ -181,7 +160,7 @@ function autoFillFromReviewer1(
       return;
     }
     case NAV_ITEM_TYPES.DOMAIN_JUDGEMENT: {
-      const domain = checklist1?.[item.domainKey];
+      const domain = checklist1?.[item.domainKey] as ROBINSIDomainState | undefined;
       if (domain?.judgement) {
         updateDomainJudgement(
           updateChecklistAnswer,
@@ -204,13 +183,12 @@ function autoFillFromReviewer1(
 
 function resetAllAnswers(updateChecklistAnswer: (sectionKey: string, data: unknown) => void): void {
   const sectionBKeys = getSectionBKeys();
-  const emptySectionB: Record<string, any> = {};
+  const emptySectionB: Record<string, ROBINSIQuestionAnswer> = {};
   sectionBKeys.forEach((key: string) => {
     emptySectionB[key] = { answer: null, comment: '' };
   });
   updateChecklistAnswer('sectionB', emptySectionB);
 
-  // Reset all possible domains (both per-protocol and ITT)
   const allDomains = getDomainKeysForComparison(true).concat(getDomainKeysForComparison(false));
   const uniqueDomains = [...new Set(allDomains)];
   for (const domainKey of uniqueDomains) {
@@ -231,7 +209,9 @@ function resetAllAnswers(updateChecklistAnswer: (sectionKey: string, data: unkno
 // Adapter: renderPage
 // ---------------------------------------------------------------------------
 
-function renderPage(context: EngineContext<any, any, ComparisonResult | null, RobinsINavItem>) {
+function renderPage(
+  context: EngineContext<ROBINSIChecklist, ROBINSIChecklist, ComparisonResult | null, RobinsINavItem>,
+) {
   const {
     currentItem,
     checklist1: c1,
@@ -240,15 +220,29 @@ function renderPage(context: EngineContext<any, any, ComparisonResult | null, Ro
     comparison,
     getTextRef,
   } = context;
-  const itemComparison = getCurrentItemComparison(currentItem, comparison);
 
   if (currentItem.type === NAV_ITEM_TYPES.SECTION_B) {
+    const c1SectionB = c1?.sectionB;
+    const c2SectionB = c2?.sectionB;
+    const faSectionB = fa.sectionB;
     return (
       <SectionBQuestionPage
         questionKey={currentItem.key}
-        reviewer1Data={c1?.sectionB?.[currentItem.key]}
-        reviewer2Data={c2?.sectionB?.[currentItem.key]}
-        finalData={fa.sectionB?.[currentItem.key]}
+        reviewer1Data={
+          c1SectionB?.[currentItem.key as keyof typeof c1SectionB] as
+            | ROBINSIQuestionAnswer
+            | undefined
+        }
+        reviewer2Data={
+          c2SectionB?.[currentItem.key as keyof typeof c2SectionB] as
+            | ROBINSIQuestionAnswer
+            | undefined
+        }
+        finalData={
+          faSectionB?.[currentItem.key as keyof typeof faSectionB] as
+            | ROBINSIQuestionAnswer
+            | undefined
+        }
         finalCommentYText={getTextRef({
           type: 'ROBINS_I',
           sectionKey: 'sectionB',
@@ -262,9 +256,11 @@ function renderPage(context: EngineContext<any, any, ComparisonResult | null, Ro
           updateSectionBAnswer(context.updateChecklistAnswer, currentItem.key, answer)
         }
         onUseReviewer1={() => {
-          const data = c1?.sectionB?.[currentItem.key];
+          const data = c1SectionB?.[currentItem.key as keyof typeof c1SectionB] as
+            | ROBINSIQuestionAnswer
+            | undefined;
           if (data) {
-            updateSectionBAnswer(context.updateChecklistAnswer, currentItem.key, data.answer);
+            updateSectionBAnswer(context.updateChecklistAnswer, currentItem.key, data.answer!);
             context.setTextValue(
               {
                 type: 'ROBINS_I',
@@ -277,9 +273,11 @@ function renderPage(context: EngineContext<any, any, ComparisonResult | null, Ro
           }
         }}
         onUseReviewer2={() => {
-          const data = c2?.sectionB?.[currentItem.key];
+          const data = c2SectionB?.[currentItem.key as keyof typeof c2SectionB] as
+            | ROBINSIQuestionAnswer
+            | undefined;
           if (data) {
-            updateSectionBAnswer(context.updateChecklistAnswer, currentItem.key, data.answer);
+            updateSectionBAnswer(context.updateChecklistAnswer, currentItem.key, data.answer!);
             context.setTextValue(
               {
                 type: 'ROBINS_I',
@@ -297,13 +295,16 @@ function renderPage(context: EngineContext<any, any, ComparisonResult | null, Ro
 
   if (currentItem.type === NAV_ITEM_TYPES.DOMAIN_QUESTION) {
     const { domainKey, key: questionKey } = currentItem;
+    const c1Domain = c1?.[domainKey] as ROBINSIDomainState | undefined;
+    const c2Domain = c2?.[domainKey] as ROBINSIDomainState | undefined;
+    const faDomain = fa[domainKey] as ROBINSIDomainState | undefined;
     return (
       <DomainQuestionPage
         domainKey={domainKey}
         questionKey={questionKey}
-        reviewer1Data={c1?.[domainKey]?.answers?.[questionKey]}
-        reviewer2Data={c2?.[domainKey]?.answers?.[questionKey]}
-        finalData={fa[domainKey]?.answers?.[questionKey]}
+        reviewer1Data={c1Domain?.answers?.[questionKey]}
+        reviewer2Data={c2Domain?.answers?.[questionKey]}
+        finalData={faDomain?.answers?.[questionKey]}
         finalCommentYText={getTextRef({
           type: 'ROBINS_I',
           sectionKey: domainKey,
@@ -317,13 +318,13 @@ function renderPage(context: EngineContext<any, any, ComparisonResult | null, Ro
           updateDomainQuestionAnswer(context.updateChecklistAnswer, domainKey, questionKey, answer)
         }
         onUseReviewer1={() => {
-          const data = c1?.[domainKey]?.answers?.[questionKey];
+          const data = c1Domain?.answers?.[questionKey];
           if (!data) return;
           updateDomainQuestionAnswer(
             context.updateChecklistAnswer,
             domainKey,
             questionKey,
-            data.answer,
+            data.answer!,
           );
           context.setTextValue(
             { type: 'ROBINS_I', sectionKey: domainKey, fieldKey: 'comment', questionKey },
@@ -331,13 +332,13 @@ function renderPage(context: EngineContext<any, any, ComparisonResult | null, Ro
           );
         }}
         onUseReviewer2={() => {
-          const data = c2?.[domainKey]?.answers?.[questionKey];
+          const data = c2Domain?.answers?.[questionKey];
           if (!data) return;
           updateDomainQuestionAnswer(
             context.updateChecklistAnswer,
             domainKey,
             questionKey,
-            data.answer,
+            data.answer!,
           );
           context.setTextValue(
             { type: 'ROBINS_I', sectionKey: domainKey, fieldKey: 'comment', questionKey },
@@ -350,70 +351,70 @@ function renderPage(context: EngineContext<any, any, ComparisonResult | null, Ro
 
   if (currentItem.type === NAV_ITEM_TYPES.DOMAIN_JUDGEMENT) {
     const { domainKey } = currentItem;
+    const c1Domain = c1?.[domainKey] as ROBINSIDomainState | undefined;
+    const c2Domain = c2?.[domainKey] as ROBINSIDomainState | undefined;
+    const faDomain = fa[domainKey] as ROBINSIDomainState | undefined;
+    const domainComp = comparison?.domains?.[domainKey];
     return (
       <DomainJudgementPage
         domainKey={domainKey}
-        reviewer1Data={c1?.[domainKey]}
-        reviewer2Data={c2?.[domainKey]}
-        finalData={fa[domainKey]}
+        reviewer1Data={c1Domain}
+        reviewer2Data={c2Domain}
+        finalData={faDomain}
         reviewer1Name={context.reviewer1Name}
         reviewer2Name={context.reviewer2Name}
-        judgementMatch={itemComparison?.judgementMatch}
-        directionMatch={itemComparison?.directionMatch}
+        judgementMatch={domainComp?.judgementMatch}
+        directionMatch={domainComp?.directionMatch}
         onFinalJudgementChange={judgement =>
           updateDomainJudgement(
             context.updateChecklistAnswer,
             domainKey,
             judgement,
-            fa[domainKey]?.direction,
+            faDomain?.direction,
           )
         }
         onFinalDirectionChange={direction =>
           updateDomainJudgement(
             context.updateChecklistAnswer,
             domainKey,
-            fa[domainKey]?.judgement,
+            faDomain?.judgement,
             direction,
           )
         }
         onUseReviewer1Judgement={() => {
-          const data = c1?.[domainKey];
-          if (data)
+          if (c1Domain)
             updateDomainJudgement(
               context.updateChecklistAnswer,
               domainKey,
-              data.judgement,
-              fa[domainKey]?.direction,
+              c1Domain.judgement,
+              faDomain?.direction,
             );
         }}
         onUseReviewer2Judgement={() => {
-          const data = c2?.[domainKey];
-          if (data)
+          if (c2Domain)
             updateDomainJudgement(
               context.updateChecklistAnswer,
               domainKey,
-              data.judgement,
-              fa[domainKey]?.direction,
+              c2Domain.judgement,
+              faDomain?.direction,
             );
         }}
         onUseReviewer1Direction={() => {
-          const data = c1?.[domainKey];
-          if (data)
+          if (c1Domain)
             updateDomainJudgement(
               context.updateChecklistAnswer,
               domainKey,
-              fa[domainKey]?.judgement,
-              data.direction,
+              faDomain?.judgement,
+              c1Domain.direction,
             );
         }}
         onUseReviewer2Direction={() => {
-          const data = c2?.[domainKey];
-          if (data)
+          if (c2Domain)
             updateDomainJudgement(
               context.updateChecklistAnswer,
               domainKey,
-              fa[domainKey]?.judgement,
-              data.direction,
+              faDomain?.judgement,
+              c2Domain.direction,
             );
         }}
       />
@@ -421,6 +422,7 @@ function renderPage(context: EngineContext<any, any, ComparisonResult | null, Ro
   }
 
   if (currentItem.type === NAV_ITEM_TYPES.OVERALL_JUDGEMENT) {
+    const overallComp = comparison?.overall;
     return (
       <OverallJudgementPage
         reviewer1Data={c1?.overall}
@@ -428,8 +430,8 @@ function renderPage(context: EngineContext<any, any, ComparisonResult | null, Ro
         finalData={fa.overall}
         reviewer1Name={context.reviewer1Name}
         reviewer2Name={context.reviewer2Name}
-        judgementMatch={itemComparison?.judgementMatch}
-        directionMatch={itemComparison?.directionMatch}
+        judgementMatch={overallComp?.judgementMatch}
+        directionMatch={overallComp?.directionMatch}
         onFinalJudgementChange={judgement =>
           updateOverallJudgement(context.updateChecklistAnswer, judgement, fa.overall?.direction)
         }
@@ -484,10 +486,11 @@ function renderPage(context: EngineContext<any, any, ComparisonResult | null, Ro
 // ---------------------------------------------------------------------------
 
 function RobinsINavbarAdapter(
-  navbarContext: NavbarContext<any, ComparisonResult | null, RobinsINavItem>,
+  navbarContext: NavbarContext<ROBINSIChecklist, ComparisonResult | null, RobinsINavItem>,
 ) {
-  // Recompute sectionBCritical from finalAnswers
-  const sectionBCrit = isSectionBCritical(navbarContext.finalAnswers?.sectionB);
+  const sectionBCrit = isSectionBCritical(
+    navbarContext.finalAnswers?.sectionB as unknown as Parameters<typeof isSectionBCritical>[0],
+  );
 
   const store = {
     navItems: navbarContext.navItems,
@@ -511,7 +514,7 @@ function RobinsINavbarAdapter(
 // ---------------------------------------------------------------------------
 
 function RobinsISummaryAdapter(
-  summaryContext: SummaryContext<any, ComparisonResult | null, RobinsINavItem>,
+  summaryContext: SummaryContext<ROBINSIChecklist, ComparisonResult | null, RobinsINavItem>,
 ) {
   return (
     <RobinsISummaryView
@@ -532,9 +535,16 @@ function RobinsISummaryAdapter(
 // Adapter: Warning banner
 // ---------------------------------------------------------------------------
 
-function renderWarningBanner(checklist1: any, checklist2: any) {
-  const critical1 = isSectionBCritical(checklist1?.sectionB);
-  const critical2 = isSectionBCritical(checklist2?.sectionB);
+function renderWarningBanner(
+  checklist1: ROBINSIChecklist | null,
+  checklist2: ROBINSIChecklist | null,
+) {
+  const critical1 = isSectionBCritical(
+    checklist1?.sectionB as Parameters<typeof isSectionBCritical>[0],
+  );
+  const critical2 = isSectionBCritical(
+    checklist2?.sectionB as Parameters<typeof isSectionBCritical>[0],
+  );
 
   if (!critical1 && !critical2) return null;
 
@@ -554,8 +564,8 @@ function renderWarningBanner(checklist1: any, checklist2: any) {
 // ---------------------------------------------------------------------------
 
 export const robinsIAdapter: ReconciliationAdapter<
-  any,
-  any,
+  ROBINSIChecklist,
+  ROBINSIChecklist,
   ComparisonResult | null,
   RobinsINavItem
 > = {

@@ -67,8 +67,8 @@ export interface EngineContext<
 > {
   currentItem: TNavItem;
   navItems: TNavItem[];
-  checklist1: TChecklist;
-  checklist2: TChecklist;
+  checklist1: TChecklist | null;
+  checklist2: TChecklist | null;
   /** Derived via adapter.deriveFinalAnswers */
   finalAnswers: TFinalAnswers;
   /** From adapter.compare */
@@ -143,6 +143,12 @@ export interface ReconciliationSummaryStats {
 }
 
 // ---------------------------------------------------------------------------
+// Supported checklist types
+// ---------------------------------------------------------------------------
+
+export type SupportedChecklistType = 'AMSTAR2' | 'ROB2' | 'ROBINS_I';
+
+// ---------------------------------------------------------------------------
 // Adapter interface
 // ---------------------------------------------------------------------------
 
@@ -175,14 +181,14 @@ export interface ReconciliationAdapter<
    * ROBINS-I: reads sectionC.isPerProtocol to determine domain 1A/1B.
    * AMSTAR2: static list from getQuestionKeys().
    */
-  buildNavItems: (reconciledChecklist: TChecklist) => TNavItem[];
+  buildNavItems: (reconciledChecklist: TChecklist | null) => TNavItem[];
 
   /**
    * Derive the finalAnswers object from reconciledChecklist.
    * AMSTAR2: filters by questionKeys, groups multi-part questions.
    * ROB2/ROBINS-I: returns reconciledChecklist || {} (direct pass-through).
    */
-  deriveFinalAnswers: (reconciledChecklist: TChecklist) => TFinalAnswers;
+  deriveFinalAnswers: (reconciledChecklist: TChecklist | null) => TFinalAnswers;
 
   /**
    * Run the type-specific comparison algorithm.
@@ -190,9 +196,9 @@ export interface ReconciliationAdapter<
    * NavbarComponent, and SummaryComponent.
    */
   compare: (
-    checklist1: TChecklist,
-    checklist2: TChecklist,
-    reconciledChecklist: TChecklist,
+    checklist1: TChecklist | null,
+    checklist2: TChecklist | null,
+    reconciledChecklist: TChecklist | null,
   ) => TComparison;
 
   // --- Answer checking (pure functions) ---
@@ -211,7 +217,7 @@ export interface ReconciliationAdapter<
    */
   autoFillFromReviewer1: (
     item: TNavItem,
-    checklist1: TChecklist,
+    checklist1: TChecklist | null,
     updateChecklistAnswer: (sectionKey: string, data: unknown) => void,
     setTextValue: (ref: TextRef, text: string) => void,
   ) => void;
@@ -258,18 +264,31 @@ export interface ReconciliationAdapter<
    * ROB2: aim mismatch warning. ROBINS-I: section B critical risk.
    */
   renderWarningBanner?: (
-    checklist1: TChecklist,
-    checklist2: TChecklist,
-    reconciledChecklist: TChecklist,
+    checklist1: TChecklist | null,
+    checklist2: TChecklist | null,
+    reconciledChecklist: TChecklist | null,
   ) => ReactNode | null;
 }
+
+// ---------------------------------------------------------------------------
+// Type-erased adapter
+// ---------------------------------------------------------------------------
+
+/**
+ * Type-erased adapter used by the engine core. Each adapter is fully typed
+ * internally (see amstar2/adapter.tsx, rob2/adapter.tsx, robins-i/adapter.tsx),
+ * but the engine needs to hold any of them without knowing which one.
+ * TypeScript lacks existential types, so this boundary uses type erasure.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type ErasedAdapter = ReconciliationAdapter<any, any, any, any>;
 
 // ---------------------------------------------------------------------------
 // Engine component props
 // ---------------------------------------------------------------------------
 
 export interface ReconciliationEngineProps {
-  checklistType: string;
+  checklistType: SupportedChecklistType;
   checklist1: unknown;
   checklist2: unknown;
   reconciledChecklist: unknown;

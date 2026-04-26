@@ -11,6 +11,7 @@ import type {
   NavbarContext,
   SummaryContext,
 } from '../engine/types';
+import type { AMSTAR2Checklist, AMSTAR2QuestionAnswer } from '@corates/shared/checklists';
 
 export interface Amstar2NavItem {
   key: string;
@@ -33,6 +34,15 @@ import { hasQuestionAnswer } from './navbar-utils.js';
 import { ReconciliationQuestionPage } from './ReconciliationQuestionPage';
 import { Navbar } from './Navbar';
 import { SummaryView } from './SummaryView';
+
+// ---------------------------------------------------------------------------
+// Type aliases
+// ---------------------------------------------------------------------------
+
+type AMSTAR2FinalAnswers = Record<
+  string,
+  AMSTAR2QuestionAnswer | Record<string, AMSTAR2QuestionAnswer>
+>;
 
 // ---------------------------------------------------------------------------
 // Navigation items
@@ -58,24 +68,26 @@ const AMSTAR2_NAV_ITEMS = buildNavItems();
 // Data derivation
 // ---------------------------------------------------------------------------
 
-function deriveFinalAnswers(reconciledChecklist: any): Record<string, any> {
+function deriveFinalAnswers(reconciledChecklist: AMSTAR2Checklist | null): AMSTAR2FinalAnswers {
   if (!reconciledChecklist) return {};
-  const answers: Record<string, any> = {};
+  const answers: AMSTAR2FinalAnswers = {};
 
   for (const key of questionKeys) {
     if (isMultiPartQuestion(key)) {
       const dataKeys = getDataKeysForQuestion(key);
-      const parts: Record<string, any> = {};
+      const parts: Record<string, AMSTAR2QuestionAnswer> = {};
       let hasAnyPart = false;
       for (const dk of dataKeys) {
-        if (reconciledChecklist[dk]) {
-          parts[dk] = reconciledChecklist[dk];
+        const val = reconciledChecklist[dk] as AMSTAR2QuestionAnswer | undefined;
+        if (val) {
+          parts[dk] = val;
           hasAnyPart = true;
         }
       }
       if (hasAnyPart) answers[key] = parts;
     } else {
-      if (reconciledChecklist[key]) answers[key] = reconciledChecklist[key];
+      const val = reconciledChecklist[key] as AMSTAR2QuestionAnswer | undefined;
+      if (val) answers[key] = val;
     }
   }
 
@@ -86,15 +98,20 @@ function deriveFinalAnswers(reconciledChecklist: any): Record<string, any> {
 // Comparison
 // ---------------------------------------------------------------------------
 
-function compare(checklist1: any, checklist2: any): ComparisonResult | null {
+function compare(
+  checklist1: AMSTAR2Checklist | null,
+  checklist2: AMSTAR2Checklist | null,
+): ComparisonResult | null {
   if (!checklist1 || !checklist2) return null;
   return compareChecklists(checklist1, checklist2);
 }
 
 // Build a lookup map for isAgreement checks
-function buildComparisonByQuestion(comparison: ComparisonResult | null): Record<string, any> {
+function buildComparisonByQuestion(
+  comparison: ComparisonResult | null,
+): Record<string, { key: string; isAgreement: boolean }> {
   if (!comparison) return {};
-  const map: Record<string, any> = {};
+  const map: Record<string, { key: string; isAgreement: boolean }> = {};
   for (const item of [...comparison.agreements, ...comparison.disagreements]) {
     map[item.key] = item;
   }
@@ -105,8 +122,8 @@ function buildComparisonByQuestion(comparison: ComparisonResult | null): Record<
 // Answer checking
 // ---------------------------------------------------------------------------
 
-function hasAnswer(item: Amstar2NavItem, finalAnswers: Record<string, any>): boolean {
-  return hasQuestionAnswer(item.key, finalAnswers);
+function hasAnswer(item: Amstar2NavItem, finalAnswers: AMSTAR2FinalAnswers): boolean {
+  return hasQuestionAnswer(item.key, finalAnswers as Record<string, Record<string, unknown>>);
 }
 
 function isAgreement(item: Amstar2NavItem, comparison: ComparisonResult | null): boolean {
@@ -118,28 +135,32 @@ function isAgreement(item: Amstar2NavItem, comparison: ComparisonResult | null):
 // Write operations
 // ---------------------------------------------------------------------------
 
-function getReviewerAnswers(checklist: any, questionKey: string): any {
+function getReviewerAnswers(
+  checklist: AMSTAR2Checklist | null,
+  questionKey: string,
+): AMSTAR2QuestionAnswer | Record<string, AMSTAR2QuestionAnswer> | null {
   if (!checklist) return null;
   if (isMultiPartQuestion(questionKey)) {
     const dataKeys = getDataKeysForQuestion(questionKey);
-    const parts: Record<string, any> = {};
+    const parts: Record<string, AMSTAR2QuestionAnswer> = {};
     for (const dk of dataKeys) {
-      parts[dk] = checklist[dk];
+      parts[dk] = checklist[dk] as AMSTAR2QuestionAnswer;
     }
     return parts;
   }
-  return checklist[questionKey];
+  return checklist[questionKey] as AMSTAR2QuestionAnswer;
 }
 
 function writeAnswer(
   questionKey: string,
-  answer: any,
+  answer: AMSTAR2QuestionAnswer | Record<string, AMSTAR2QuestionAnswer>,
   updateChecklistAnswer: (sectionKey: string, data: unknown) => void,
 ) {
   if (isMultiPartQuestion(questionKey)) {
     const dataKeys = getDataKeysForQuestion(questionKey);
+    const parts = answer as Record<string, AMSTAR2QuestionAnswer>;
     for (const dk of dataKeys) {
-      if (answer[dk]) updateChecklistAnswer(dk, answer[dk]);
+      if (parts[dk]) updateChecklistAnswer(dk, parts[dk]);
     }
   } else {
     updateChecklistAnswer(questionKey, answer);
@@ -148,7 +169,7 @@ function writeAnswer(
 
 function autoFillFromReviewer1(
   item: Amstar2NavItem,
-  checklist1: any,
+  checklist1: AMSTAR2Checklist | null,
   updateChecklistAnswer: (sectionKey: string, data: unknown) => void,
 ): void {
   const defaultAnswer = getReviewerAnswers(checklist1, item.key);
@@ -158,15 +179,17 @@ function autoFillFromReviewer1(
 }
 
 function resetAllAnswers(updateChecklistAnswer: (sectionKey: string, data: unknown) => void): void {
-  const defaultChecklist = createChecklist({ name: 'temp', id: 'temp' }) as Record<string, any>;
+  const defaultChecklist = createChecklist({ name: 'temp', id: 'temp' });
   for (const key of questionKeys) {
     if (isMultiPartQuestion(key)) {
       const dataKeys = getDataKeysForQuestion(key);
       for (const dk of dataKeys) {
-        if (defaultChecklist[dk]) updateChecklistAnswer(dk, defaultChecklist[dk]);
+        const val = (defaultChecklist as Record<string, unknown>)[dk];
+        if (val) updateChecklistAnswer(dk, val);
       }
     } else {
-      if (defaultChecklist[key]) updateChecklistAnswer(key, defaultChecklist[key]);
+      const val = (defaultChecklist as Record<string, unknown>)[key];
+      if (val) updateChecklistAnswer(key, val);
     }
   }
 }
@@ -175,17 +198,22 @@ function resetAllAnswers(updateChecklistAnswer: (sectionKey: string, data: unkno
 // Rendering: Page
 // ---------------------------------------------------------------------------
 
-function getReviewerNote(checklist: any, questionKey: string): string {
+function getReviewerNote(checklist: AMSTAR2Checklist | null, questionKey: string): string {
   if (!checklist) return '';
-  const noteData = checklist[questionKey];
+  const noteData = checklist[questionKey] as unknown as Record<string, unknown> | undefined;
   if (noteData?.note !== undefined) {
-    return typeof noteData.note === 'string' ? noteData.note : noteData.note?.toString?.() || '';
+    return typeof noteData.note === 'string' ? noteData.note : String(noteData.note ?? '');
   }
   return '';
 }
 
 function renderPage(
-  context: EngineContext<any, Record<string, any>, ComparisonResult | null, Amstar2NavItem>,
+  context: EngineContext<
+    AMSTAR2Checklist,
+    AMSTAR2FinalAnswers,
+    ComparisonResult | null,
+    Amstar2NavItem
+  >,
 ) {
   const {
     currentItem,
@@ -198,23 +226,27 @@ function renderPage(
   const key = currentItem.key;
 
   // Derive currentFinalAnswer from reconciledChecklist for current question
-  let currentFinalAnswer: any = null;
+  let currentFinalAnswer: AMSTAR2QuestionAnswer | Record<string, AMSTAR2QuestionAnswer> | null =
+    null;
   if (isMultiPartQuestion(key)) {
     const dataKeys = getDataKeysForQuestion(key);
-    const parts: Record<string, any> = {};
+    const parts: Record<string, AMSTAR2QuestionAnswer> = {};
     let hasAnyPart = false;
+    const multiParts = fa[key] as Record<string, AMSTAR2QuestionAnswer> | undefined;
     for (const dk of dataKeys) {
-      if (fa[key]?.[dk]) {
-        parts[dk] = fa[key][dk];
+      if (multiParts?.[dk]) {
+        parts[dk] = multiParts[dk];
         hasAnyPart = true;
       }
     }
     currentFinalAnswer = hasAnyPart ? parts : null;
   } else {
-    currentFinalAnswer = fa[key] || null;
+    currentFinalAnswer = (fa[key] as AMSTAR2QuestionAnswer) || null;
   }
 
-  function handleFinalChange(newAnswer: any) {
+  function handleFinalChange(
+    newAnswer: AMSTAR2QuestionAnswer | Record<string, AMSTAR2QuestionAnswer>,
+  ) {
     writeAnswer(key, newAnswer, context.updateChecklistAnswer);
   }
 
@@ -241,7 +273,7 @@ function renderPage(
 // ---------------------------------------------------------------------------
 
 function Amstar2NavbarAdapter(
-  navbarContext: NavbarContext<Record<string, any>, ComparisonResult | null, Amstar2NavItem>,
+  navbarContext: NavbarContext<AMSTAR2FinalAnswers, ComparisonResult | null, Amstar2NavItem>,
 ) {
   // Map NavbarContext to the shape the existing Navbar component expects
   const comparisonByQuestion = buildComparisonByQuestion(navbarContext.comparison);
@@ -265,7 +297,7 @@ function Amstar2NavbarAdapter(
 // ---------------------------------------------------------------------------
 
 function Amstar2SummaryAdapter(
-  summaryContext: SummaryContext<Record<string, any>, ComparisonResult | null, Amstar2NavItem>,
+  summaryContext: SummaryContext<AMSTAR2FinalAnswers, ComparisonResult | null, Amstar2NavItem>,
 ) {
   const comparison = summaryContext.comparison;
   const summary = comparison ? getReconciliationSummary(comparison) : null;
@@ -293,8 +325,8 @@ function Amstar2SummaryAdapter(
 // ---------------------------------------------------------------------------
 
 export const amstar2Adapter: ReconciliationAdapter<
-  any,
-  Record<string, any>,
+  AMSTAR2Checklist,
+  AMSTAR2FinalAnswers,
   ComparisonResult | null,
   Amstar2NavItem
 > = {

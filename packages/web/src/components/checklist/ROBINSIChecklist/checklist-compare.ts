@@ -4,50 +4,21 @@
  */
 
 import { ROBINS_I_CHECKLIST, getDomainQuestions, getActiveDomainKeys } from './checklist-map';
+import type {
+  ROBINSIChecklist,
+  ROBINSIDomainState,
+  ROBINSIQuestionAnswer,
+} from '@corates/shared/checklists';
 
 type ROBINSQuestion = ReturnType<typeof getDomainQuestions>[string];
 
-interface QuestionAnswer {
-  answer?: string | null;
-  comment?: string;
-}
-
-interface DomainData {
-  answers?: Record<string, QuestionAnswer>;
-  judgement?: string;
-  direction?: string;
-}
-
-interface OverallData {
-  judgement?: string;
-  direction?: string;
-}
-
-interface SectionBData {
-  [key: string]: QuestionAnswer;
-}
-
-interface ChecklistData {
-  id?: string;
-  name?: string;
-  reviewerName?: string;
-  createdAt?: string;
-  checklistType?: string;
-  sectionC?: { isPerProtocol?: boolean; [key: string]: unknown };
-  sectionA?: Record<string, unknown>;
-  sectionB?: SectionBData;
-  sectionD?: Record<string, unknown>;
-  planning?: Record<string, unknown>;
-  confoundingEvaluation?: Record<string, unknown>;
-  overall?: OverallData;
-  [key: string]: unknown;
-}
+type PartialChecklist = Partial<ROBINSIChecklist>;
 
 interface QuestionComparison {
   key: string;
   questionDef?: ROBINSQuestion;
-  reviewer1: QuestionAnswer;
-  reviewer2: QuestionAnswer;
+  reviewer1: { answer?: string | null; comment?: string };
+  reviewer2: { answer?: string | null; comment?: string };
   isAgreement: boolean;
 }
 
@@ -64,20 +35,20 @@ interface DomainComparison {
   judgementMatch: boolean;
   directionMatch: boolean;
   reviewer1: {
-    judgement?: string;
-    direction?: string;
+    judgement?: string | null;
+    direction?: string | null;
   };
   reviewer2: {
-    judgement?: string;
-    direction?: string;
+    judgement?: string | null;
+    direction?: string | null;
   };
 }
 
 interface OverallComparison {
   judgementMatch: boolean;
   directionMatch: boolean;
-  reviewer1?: OverallData;
-  reviewer2?: OverallData;
+  reviewer1?: { judgement?: string | null; direction?: string | null };
+  reviewer2?: { judgement?: string | null; direction?: string | null };
 }
 
 interface ComparisonStats {
@@ -112,8 +83,8 @@ export function getDomainKeysForComparison(isPerProtocol: boolean = false): stri
  * Compare the answers of two checklists and identify differences
  */
 export function compareChecklists(
-  checklist1: ChecklistData | null,
-  checklist2: ChecklistData | null,
+  checklist1: PartialChecklist | null,
+  checklist2: PartialChecklist | null,
 ): ComparisonResult {
   if (!checklist1 || !checklist2) {
     return {
@@ -129,10 +100,7 @@ export function compareChecklists(
   const result: ComparisonResult = {
     sectionB: compareSectionB(checklist1.sectionB, checklist2.sectionB),
     domains: {},
-    overall: compareOverall(
-      checklist1.overall as OverallData | undefined,
-      checklist2.overall as OverallData | undefined,
-    ),
+    overall: compareOverall(checklist1.overall, checklist2.overall),
     stats: { total: 0, agreed: 0, disagreed: 0 },
   };
 
@@ -142,8 +110,8 @@ export function compareChecklists(
   for (const domainKey of activeDomains) {
     result.domains[domainKey] = compareDomain(
       domainKey,
-      checklist1[domainKey] as DomainData | undefined,
-      checklist2[domainKey] as DomainData | undefined,
+      checklist1[domainKey],
+      checklist2[domainKey],
     );
   }
 
@@ -183,31 +151,33 @@ export function compareChecklists(
  * Compare Section B answers
  */
 function compareSectionB(
-  sectionB1: SectionBData | undefined,
-  sectionB2: SectionBData | undefined,
+  sectionB1: ROBINSIChecklist['sectionB'] | undefined,
+  sectionB2: ROBINSIChecklist['sectionB'] | undefined,
 ): SectionBComparison {
   const keys = getSectionBKeys();
-  const agreements: QuestionComparison[] = [];
-  const disagreements: QuestionComparison[] = [];
+  const agreementList: QuestionComparison[] = [];
+  const disagreementList: QuestionComparison[] = [];
 
   for (const key of keys) {
-    const ans1 = sectionB1?.[key]?.answer;
-    const ans2 = sectionB2?.[key]?.answer;
+    const qa1 = sectionB1?.[key as keyof typeof sectionB1] as ROBINSIQuestionAnswer | undefined;
+    const qa2 = sectionB2?.[key as keyof typeof sectionB2] as ROBINSIQuestionAnswer | undefined;
+    const ans1 = qa1?.answer;
+    const ans2 = qa2?.answer;
 
     const comparison: Omit<QuestionComparison, 'isAgreement'> = {
       key,
-      reviewer1: { answer: ans1, comment: sectionB1?.[key]?.comment || '' },
-      reviewer2: { answer: ans2, comment: sectionB2?.[key]?.comment || '' },
+      reviewer1: { answer: ans1, comment: qa1?.comment || '' },
+      reviewer2: { answer: ans2, comment: qa2?.comment || '' },
     };
 
     if (ans1 === ans2) {
-      agreements.push({ ...comparison, isAgreement: true });
+      agreementList.push({ ...comparison, isAgreement: true });
     } else {
-      disagreements.push({ ...comparison, isAgreement: false });
+      disagreementList.push({ ...comparison, isAgreement: false });
     }
   }
 
-  return { agreements, disagreements };
+  return { agreements: agreementList, disagreements: disagreementList };
 }
 
 /**
@@ -215,14 +185,14 @@ function compareSectionB(
  */
 function compareDomain(
   domainKey: string,
-  domain1: DomainData | undefined,
-  domain2: DomainData | undefined,
+  domain1: ROBINSIDomainState | undefined,
+  domain2: ROBINSIDomainState | undefined,
 ): DomainComparison {
   const questions = getDomainQuestions(domainKey);
   const questionKeys = Object.keys(questions);
 
-  const agreements: QuestionComparison[] = [];
-  const disagreements: QuestionComparison[] = [];
+  const agreementList: QuestionComparison[] = [];
+  const disagreementList: QuestionComparison[] = [];
 
   for (const qKey of questionKeys) {
     const ans1 = domain1?.answers?.[qKey]?.answer;
@@ -242,18 +212,17 @@ function compareDomain(
     };
 
     if (ans1 === ans2) {
-      agreements.push({ ...comparison, isAgreement: true });
+      agreementList.push({ ...comparison, isAgreement: true });
     } else {
-      disagreements.push({ ...comparison, isAgreement: false });
+      disagreementList.push({ ...comparison, isAgreement: false });
     }
   }
 
-  // Compare domain-level judgement
   const judgementMatch = domain1?.judgement === domain2?.judgement;
   const directionMatch = domain1?.direction === domain2?.direction;
 
   return {
-    questions: { agreements, disagreements },
+    questions: { agreements: agreementList, disagreements: disagreementList },
     judgementMatch,
     directionMatch,
     reviewer1: {
@@ -271,8 +240,8 @@ function compareDomain(
  * Compare overall judgements
  */
 function compareOverall(
-  overall1: OverallData | undefined,
-  overall2: OverallData | undefined,
+  overall1: ROBINSIChecklist['overall'] | undefined,
+  overall2: ROBINSIChecklist['overall'] | undefined,
 ): OverallComparison {
   return {
     judgementMatch: overall1?.judgement === overall2?.judgement,

@@ -8,9 +8,9 @@ import { RobinsAnswerPanel } from '../panels/RobinsAnswerPanel';
 interface DomainQuestionPageProps {
   domainKey: string;
   questionKey: string;
-  reviewer1Data?: { answer?: string; comment?: string } | null;
-  reviewer2Data?: { answer?: string; comment?: string } | null;
-  finalData?: { answer?: string } | null;
+  reviewer1Data?: { answer?: string | null; comment?: string } | null;
+  reviewer2Data?: { answer?: string | null; comment?: string } | null;
+  finalData?: { answer?: string | null } | null;
   finalCommentYText?: any;
   reviewer1Name: string;
   reviewer2Name: string;

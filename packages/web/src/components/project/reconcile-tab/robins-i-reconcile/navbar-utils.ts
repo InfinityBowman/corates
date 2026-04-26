@@ -71,8 +71,8 @@ interface ComparisonDomain {
   };
   judgementMatch?: boolean;
   directionMatch?: boolean;
-  reviewer1?: { judgement?: string; direction?: string };
-  reviewer2?: { judgement?: string; direction?: string };
+  reviewer1?: { judgement?: string | null; direction?: string | null };
+  reviewer2?: { judgement?: string | null; direction?: string | null };
 }
 
 interface Comparison {
@@ -294,7 +294,7 @@ export function getNavItemTooltip(
  * Check if Section B indicates critical risk (B2 or B3 = Y/PY)
  */
 export function isSectionBCritical(
-  sectionB: Record<string, { answer?: string }> | undefined,
+  sectionB: Record<string, { answer?: string | null }> | undefined,
 ): boolean {
   const b2Answer = sectionB?.b2?.answer;
   const b3Answer = sectionB?.b3?.answer;

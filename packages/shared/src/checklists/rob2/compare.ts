@@ -16,12 +16,13 @@ import {
   scoreRob2Domain,
   scoreAllDomains,
   type ChecklistState,
-  type DomainState,
 } from './scoring.js';
-import type { ROB2Checklist } from './create.js';
+import type { ROB2Checklist, ROB2DomainState } from '../types.js';
 
-// Re-export ROB2Checklist for convenience (it's defined in create.ts)
+// Re-export ROB2Checklist for convenience
 export type { ROB2Checklist };
+
+type PartialChecklist = Partial<ROB2Checklist>;
 
 // ============================================================================
 // Types
@@ -90,33 +91,6 @@ export interface ComparisonResult {
   stats: ComparisonStats;
 }
 
-// Use a looser checklist type for comparison since reconciled checklists may have partial data
-interface PartialROB2Checklist {
-  id?: string;
-  name?: string;
-  reviewerName?: string;
-  createdAt?: string;
-  preliminary?: {
-    studyDesign?: string | null;
-    experimental?: string;
-    comparator?: string;
-    numericalResult?: string;
-    aim?: string | null;
-    deviationsToAddress?: string[];
-    sources?: Record<string, boolean>;
-  };
-  domain1?: DomainState;
-  domain2a?: DomainState;
-  domain2b?: DomainState;
-  domain3?: DomainState;
-  domain4?: DomainState;
-  domain5?: DomainState;
-  overall?: {
-    judgement?: string | null;
-    direction?: string | null;
-  };
-  [key: string]: unknown;
-}
 
 // ============================================================================
 // Preliminary Section Comparison
@@ -136,8 +110,8 @@ const PRELIMINARY_FIELD_KEYS = [
  * Compare preliminary sections of two checklists
  */
 function comparePreliminary(
-  prelim1: PartialROB2Checklist['preliminary'],
-  prelim2: PartialROB2Checklist['preliminary'],
+  prelim1: PartialChecklist['preliminary'],
+  prelim2: PartialChecklist['preliminary'],
 ): PreliminaryComparison {
   const fields: PreliminaryFieldComparison[] = [];
 
@@ -193,8 +167,8 @@ function comparePreliminary(
  */
 function compareDomain(
   domainKey: DomainKey,
-  domain1: DomainState | undefined,
-  domain2: DomainState | undefined,
+  domain1: ROB2DomainState | undefined,
+  domain2: ROB2DomainState | undefined,
 ): DomainComparison {
   const domainDef = ROB2_CHECKLIST[domainKey] as ROB2Domain;
   const questionKeys = Object.keys(domainDef?.questions || {});
@@ -254,8 +228,8 @@ function compareDomain(
  * Compare overall judgement between two checklists
  */
 function compareOverall(
-  checklist1: PartialROB2Checklist,
-  checklist2: PartialROB2Checklist,
+  checklist1: PartialChecklist,
+  checklist2: PartialChecklist,
 ): OverallComparison {
   // Get auto-calculated overall judgements
   // Cast to ChecklistState since the structures are compatible for scoring purposes
@@ -286,8 +260,8 @@ function compareOverall(
  * Compare the answers of two ROB-2 checklists and identify differences
  */
 export function compareChecklists(
-  checklist1: PartialROB2Checklist | null | undefined,
-  checklist2: PartialROB2Checklist | null | undefined,
+  checklist1: PartialChecklist | null | undefined,
+  checklist2: PartialChecklist | null | undefined,
   aimOverride?: string | null,
 ): ComparisonResult {
   if (!checklist1 || !checklist2) {
@@ -324,8 +298,8 @@ export function compareChecklists(
   for (const domainKey of activeDomains) {
     domains[domainKey] = compareDomain(
       domainKey,
-      checklist1[domainKey] as DomainState,
-      checklist2[domainKey] as DomainState,
+      checklist1[domainKey],
+      checklist2[domainKey],
     );
   }
 
@@ -371,8 +345,8 @@ export function compareChecklists(
  * Check if there is an aim mismatch between two checklists
  */
 export function hasAimMismatch(
-  checklist1: PartialROB2Checklist | null | undefined,
-  checklist2: PartialROB2Checklist | null | undefined,
+  checklist1: PartialChecklist | null | undefined,
+  checklist2: PartialChecklist | null | undefined,
 ): boolean {
   const aim1 = checklist1?.preliminary?.aim;
   const aim2 = checklist2?.preliminary?.aim;

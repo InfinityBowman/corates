@@ -10,14 +10,14 @@
 import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import { showToast } from '@/components/ui/toast';
 import type {
-  ReconciliationAdapter,
+  ErasedAdapter,
   ReconciliationNavItem,
   ReconciliationSummaryStats,
 } from './types';
 import type { TextRef } from '@/primitives/useProject/checklists';
 
 interface UseReconciliationEngineOptions {
-  adapter: ReconciliationAdapter<any, any, any, any>;
+  adapter: ErasedAdapter;
   checklist1: unknown;
   checklist2: unknown;
   reconciledChecklist: unknown;
