@@ -26,9 +26,9 @@ export interface ReconciliationProgress {
   outcomeId: string | null;
   type: string;
   reconciledChecklistId: string | null;
-  currentPage: unknown;
-  viewMode: unknown;
-  updatedAt: unknown;
+  currentPage: number;
+  viewMode: string;
+  updatedAt: number;
 }
 
 export interface ReconciliationProgressEntry extends ReconciliationProgress {
@@ -130,9 +130,9 @@ export function createReconciliationOperations(
             type: (outcomeProgressMap.get('type') as string) || type,
             reconciledChecklistId:
               (outcomeProgressMap.get('reconciledChecklistId') as string | null) || null,
-            currentPage: outcomeProgressMap.get('currentPage'),
-            viewMode: outcomeProgressMap.get('viewMode'),
-            updatedAt: outcomeProgressMap.get('updatedAt'),
+            currentPage: (outcomeProgressMap.get('currentPage') as number) || 0,
+            viewMode: (outcomeProgressMap.get('viewMode') as string) || 'questions',
+            updatedAt: (outcomeProgressMap.get('updatedAt') as number) || 0,
           };
         }
       }
@@ -150,9 +150,9 @@ export function createReconciliationOperations(
           outcomeId: null,
           type: type || 'AMSTAR2',
           reconciledChecklistId: (legacyMap.get('reconciledChecklistId') as string | null) || null,
-          currentPage: legacyMap.get('currentPage'),
-          viewMode: legacyMap.get('viewMode'),
-          updatedAt: legacyMap.get('updatedAt'),
+          currentPage: (legacyMap.get('currentPage') as number) || 0,
+          viewMode: (legacyMap.get('viewMode') as string) || 'questions',
+          updatedAt: (legacyMap.get('updatedAt') as number) || 0,
         };
       }
     }
@@ -186,9 +186,9 @@ export function createReconciliationOperations(
             checklist2Id,
             reconciledChecklistId:
               (progressMap.get('reconciledChecklistId') as string | null) || null,
-            currentPage: progressMap.get('currentPage'),
-            viewMode: progressMap.get('viewMode'),
-            updatedAt: progressMap.get('updatedAt'),
+            currentPage: (progressMap.get('currentPage') as number) || 0,
+            viewMode: (progressMap.get('viewMode') as string) || 'questions',
+            updatedAt: (progressMap.get('updatedAt') as number) || 0,
           });
         }
       }
@@ -212,9 +212,9 @@ export function createReconciliationOperations(
             checklist2Id,
             reconciledChecklistId:
               (legacyMap.get('reconciledChecklistId') as string | null) || null,
-            currentPage: legacyMap.get('currentPage'),
-            viewMode: legacyMap.get('viewMode'),
-            updatedAt: legacyMap.get('updatedAt'),
+            currentPage: (legacyMap.get('currentPage') as number) || 0,
+            viewMode: (legacyMap.get('viewMode') as string) || 'questions',
+            updatedAt: (legacyMap.get('updatedAt') as number) || 0,
           });
         }
       }

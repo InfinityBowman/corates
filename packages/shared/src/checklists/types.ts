@@ -176,7 +176,7 @@ export interface StudyChecklist {
   assignedTo?: string | null;
   outcomeId?: string | null;
   createdAt?: number | string;
-  answers?: unknown;
+  answers?: Record<string, unknown> | null;
 }
 
 /**

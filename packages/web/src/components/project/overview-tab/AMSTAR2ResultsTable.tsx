@@ -42,7 +42,7 @@ export function AMSTAR2ResultsTable({ studies }: AMSTAR2ResultsTableProps) {
       results.push({
         studyId: study.id,
         studyName: study.name,
-        score: checklistToScore.score as string,
+        score: checklistToScore.score,
       });
     }
 

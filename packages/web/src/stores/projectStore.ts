@@ -48,7 +48,7 @@ export interface ChecklistEntry {
   status: string;
   createdAt: number;
   updatedAt: number;
-  score: unknown;
+  score: string | null;
   answers: Record<string, unknown> | null;
   consolidatedAnswers?: unknown;
 }
