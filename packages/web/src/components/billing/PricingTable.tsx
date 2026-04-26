@@ -33,7 +33,13 @@ import { redirectToCheckout, redirectToSingleProjectCheckout, startTrial } from 
 import { checkPlanChange } from '@/server/functions/billing.functions';
 import { useSubscription } from '@/hooks/useSubscription';
 import { getBillingPlanCatalog } from '@corates/shared/plans';
+import type { BillingCatalogPlan } from '@corates/shared/plans';
 import { formatUsd, getAnnualSavings } from './utils';
+
+interface PlanValidationResult {
+  valid: boolean;
+  violations?: { message: string; used: number; limit: number }[];
+}
 
 const TIER_ORDER: Record<string, number> = {
   free: 0,
@@ -60,20 +66,20 @@ export function PricingTable({
   getSignUpUrl,
 }: PricingTableProps) {
   const catalog = useMemo(() => getBillingPlanCatalog(), []);
-  const trialPlan = useMemo(() => catalog.plans.find((p: any) => p.tier === 'trial'), [catalog]);
+  const trialPlan = useMemo(() => catalog.plans.find(p => p.tier === 'trial'), [catalog]);
   const singleProjectPlan = useMemo(
-    () => catalog.plans.find((p: any) => p.tier === 'single_project'),
+    () => catalog.plans.find(p => p.tier === 'single_project'),
     [catalog],
   );
   const subscriptionPlans = useMemo(
-    () => catalog.plans.filter((p: any) => p.cta === 'subscribe'),
+    () => catalog.plans.filter(p => p.cta === 'subscribe'),
     [catalog],
   );
 
   const [billingInterval, setBillingInterval] = useState<'monthly' | 'yearly'>('monthly');
   const [loadingTier, setLoadingTier] = useState<string | null>(null);
-  const [validationError, setValidationError] = useState<any>(null);
-  const [pendingDowngrade, setPendingDowngrade] = useState<any>(null);
+  const [validationError, setValidationError] = useState<PlanValidationResult | null>(null);
+  const [pendingDowngrade, setPendingDowngrade] = useState<BillingCatalogPlan | null>(null);
 
   const isMarketing = mode === 'marketing';
 
@@ -85,7 +91,7 @@ export function PricingTable({
   const canStartTrial = currentTier === 'free';
 
   const buildSignUpUrl = useCallback(
-    (plan: any) => {
+    (plan: BillingCatalogPlan) => {
       if (getSignUpUrl) {
         return plan.cta === 'subscribe' ?
             getSignUpUrl(plan.tier, billingInterval)
@@ -97,12 +103,12 @@ export function PricingTable({
   );
 
   const proceedWithPlanChange = useCallback(
-    async (plan: any) => {
+    async (plan: BillingCatalogPlan) => {
       setLoadingTier(plan.tier);
       try {
         const validation = await checkPlanChange({ data: { targetPlan: plan.tier } });
         if (!validation.valid) {
-          setValidationError(validation);
+          setValidationError(validation as PlanValidationResult);
           setLoadingTier(null);
           return;
         }
@@ -117,7 +123,7 @@ export function PricingTable({
   );
 
   const handleAction = useCallback(
-    async (plan: any) => {
+    async (plan: BillingCatalogPlan) => {
       if (!plan || plan.tier === currentTier) return;
       setLoadingTier(plan.tier);
       try {
@@ -151,7 +157,7 @@ export function PricingTable({
   );
 
   const getButtonText = useCallback(
-    (plan: any) => {
+    (plan: BillingCatalogPlan) => {
       if (!isMarketing && plan.tier === currentTier) return 'Current Plan';
       if (plan.cta === 'start_trial') return 'Start Free Trial';
       if (plan.cta === 'buy_single_project') return 'Buy Now';
@@ -162,7 +168,7 @@ export function PricingTable({
   );
 
   const isButtonDisabled = useCallback(
-    (plan: any) => {
+    (plan: BillingCatalogPlan) => {
       if (isMarketing) return false;
       if (!plan || plan.tier === currentTier) return true;
       if (loadingTier !== null) return true;
@@ -271,7 +277,7 @@ export function PricingTable({
     </div>
   );
 
-  const renderPlanCard = (plan: any) => {
+  const renderPlanCard = (plan: BillingCatalogPlan) => {
     const isCurrent = !isMarketing && plan.tier === currentTier;
     const isPopular = plan.isPopular;
     const savings = getAnnualSavings(plan);
@@ -325,7 +331,7 @@ export function PricingTable({
               <div className='flex items-baseline gap-1'>
                 <FlipNumber
                   value={
-                    billingInterval === 'monthly' ? plan.price.monthly : plan.price.yearly / 12
+                    billingInterval === 'monthly' ? (plan.price.monthly ?? 0) : (plan.price.yearly ?? 0) / 12
                   }
                   prefix='$'
                   decimals={billingInterval === 'yearly' ? 2 : 0}
@@ -340,7 +346,7 @@ export function PricingTable({
                 }}
               >
                 <div className='overflow-hidden'>
-                  {plan.price.yearly > 0 && (
+                  {plan.price.yearly != null && plan.price.yearly > 0 && (
                     <p className='text-muted-foreground text-sm'>
                       {formatUsd(plan.price.yearly)} billed annually
                     </p>
@@ -485,7 +491,7 @@ export function PricingTable({
 
       {/* Plans grid */}
       <div className='grid grid-cols-1 gap-6 md:grid-cols-3'>
-        {subscriptionPlans.map((plan: any) => renderPlanCard(plan))}
+        {subscriptionPlans.map(plan => renderPlanCard(plan))}
       </div>
 
       {renderSingleProject()}
@@ -514,11 +520,11 @@ export function PricingTable({
               </DialogHeader>
               {validationError && (
                 <div className='mb-6 flex flex-col gap-3'>
-                  {validationError.violations?.map((v: any, i: number) => (
+                  {validationError.violations?.map((v, i) => (
                     <Alert key={i} variant='destructive'>
                       <AlertTitle>{v.message}</AlertTitle>
                       <AlertDescription>
-                        Current: {v.current} / Limit: {v.limit}
+                        Current: {v.used} / Limit: {v.limit}
                       </AlertDescription>
                     </Alert>
                   ))}

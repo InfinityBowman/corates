@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
+import type * as Y from 'yjs';
 
 /**
  * Subscribe to a Y.Text instance and return its current string value.
  * Handles null/undefined input (returns empty string) and cleans up observers on unmount.
  */
-export function useYText(yText: any): string {
+export function useYText(yText: Y.Text | null): string {
   const [value, setValue] = useState(() => yText?.toString() ?? '');
 
   useEffect(() => {
@@ -29,7 +30,7 @@ export function useYText(yText: any): string {
  * giving Yjs the positional information it needs to merge concurrent edits
  * in non-overlapping regions.
  */
-export function applyYTextDiff(yText: any, oldValue: string, newValue: string): void {
+export function applyYTextDiff(yText: Y.Text, oldValue: string, newValue: string): void {
   if (oldValue === newValue) return;
 
   let prefixLen = 0;
@@ -50,7 +51,7 @@ export function applyYTextDiff(yText: any, oldValue: string, newValue: string): 
   const deleteCount = oldValue.length - prefixLen - suffixLen;
   const insertText = newValue.slice(prefixLen, newValue.length - suffixLen || undefined);
 
-  yText.doc.transact(() => {
+  yText.doc!.transact(() => {
     if (deleteCount > 0) yText.delete(prefixLen, deleteCount);
     if (insertText.length > 0) yText.insert(prefixLen, insertText);
   });

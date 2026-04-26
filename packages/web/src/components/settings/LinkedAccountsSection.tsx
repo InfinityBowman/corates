@@ -8,6 +8,7 @@ import { LinkIcon, MailIcon, InfoIcon, AlertCircleIcon } from 'lucide-react';
 import { authClient, authFetch } from '@/api/auth-client';
 import { useAuthStore, selectUser } from '@/stores/authStore';
 import { useLinkedAccounts } from '@/hooks/useLinkedAccounts';
+import type { LinkedAccount } from '@/hooks/useLinkedAccounts';
 import { showToast } from '@/components/ui/toast';
 import { Alert } from '@/components/ui/alert';
 import {
@@ -38,7 +39,7 @@ export function LinkedAccountsSection() {
   const [unlinkingId, setUnlinkingId] = useState<string | null>(null);
   const [linkingProvider, setLinkingProvider] = useState<string | null>(null);
   const [unlinkDialogOpen, setUnlinkDialogOpen] = useState(false);
-  const [accountToUnlink, setAccountToUnlink] = useState<any>(null);
+  const [accountToUnlink, setAccountToUnlink] = useState<LinkedAccount | null>(null);
   const [unlinkError, setUnlinkError] = useState<string | null>(null);
 
   const [showMergeDialog, setShowMergeDialog] = useState(false);
@@ -96,15 +97,19 @@ export function LinkedAccountsSection() {
           errorCallbackURL: window.location.href,
         }),
       );
-    } catch (err: any) {
-      const message = getLinkErrorMessage(err.code) || err.message || 'Failed to link account';
+    } catch (err: unknown) {
+      const errObj = err as Record<string, unknown>;
+      const message =
+        getLinkErrorMessage(errObj.code as string) ||
+        (errObj.message as string) ||
+        'Failed to link account';
       showToast.error('Link Failed', message);
       setLinkingProvider(null);
       sessionStorage.removeItem('linkingProvider');
     }
   }, []);
 
-  const handleUnlink = useCallback((account: { providerId: string; accountId: string }) => {
+  const handleUnlink = useCallback((account: LinkedAccount) => {
     setAccountToUnlink(account);
     setUnlinkError(null);
     setUnlinkDialogOpen(true);
@@ -122,10 +127,11 @@ export function LinkedAccountsSection() {
         `${PROVIDERS[accountToUnlink.providerId]?.name || accountToUnlink.providerId} has been unlinked`,
       );
       refetch();
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const errObj = err as Record<string, unknown>;
       const message =
-        getLinkErrorMessage(err.code) ||
-        err.message ||
+        getLinkErrorMessage(errObj.code as string) ||
+        (errObj.message as string) ||
         'Failed to unlink account. Please try again.';
       setUnlinkError(message);
     } finally {
@@ -145,7 +151,7 @@ export function LinkedAccountsSection() {
   }, [accounts, user?.emailVerified]);
 
   const unlinkProviderName = useMemo(
-    () => PROVIDERS[accountToUnlink?.providerId]?.name || accountToUnlink?.providerId || '',
+    () => (accountToUnlink ? PROVIDERS[accountToUnlink.providerId]?.name || accountToUnlink.providerId : ''),
     [accountToUnlink],
   );
 

@@ -80,7 +80,7 @@ export default function FlipNumber({
     }
 
     if (decimals !== currentDecimalsRef.current) {
-      const currentVal = (countUpRef.current as any)?.endVal ?? value;
+      const currentVal = (countUpRef.current as unknown as { endVal?: number })?.endVal ?? value;
       createCountUp(currentVal, value, decimals);
     } else if (countUpRef.current && !countUpRef.current.error) {
       countUpRef.current.update(value);

@@ -81,8 +81,8 @@ export function AddMemberModal({
           data: { q: debouncedQuery, projectId: projectId || undefined },
         });
         if (!cancelled) setSearchResults(results);
-      } catch (err: any) {
-        if (!cancelled) setError(err.message || 'Search failed');
+      } catch (err: unknown) {
+        if (!cancelled) setError(err instanceof Error ? err.message : 'Search failed');
       } finally {
         if (!cancelled) setSearching(false);
       }
@@ -133,8 +133,8 @@ export function AddMemberModal({
         showToast.success('Invitation Sent', `Invitation sent to ${result.email || searchQuery}`);
       }
       handleClose();
-    } catch (err: any) {
-      setError(err?.message || 'Failed to add member. Please try again.');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to add member. Please try again.');
     } finally {
       setAdding(false);
     }

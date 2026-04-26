@@ -4,15 +4,16 @@
 
 import { Collapsible, CollapsibleContent } from '@/components/ui/collapsible';
 import { type ProjectMember } from '@/components/project/ProjectContext';
+import type { StudyInfo } from '@/stores/projectStore';
 import { StudyCardHeader } from './StudyCardHeader';
 import { StudyPdfSection } from './StudyPdfSection';
 
 interface StudyCardProps {
-  study: any;
+  study: StudyInfo;
   expanded: boolean;
   onToggleExpanded: () => void;
   getMember?: (userId: string) => ProjectMember | null;
-  onAssignReviewers?: (study: any) => void;
+  onAssignReviewers?: (study: StudyInfo) => void;
   onOpenGoogleDrive?: (studyId: string) => void;
   readOnly?: boolean;
 }

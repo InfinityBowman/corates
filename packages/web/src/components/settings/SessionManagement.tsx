@@ -284,7 +284,7 @@ export function SessionManagement() {
       {!isLoading && !sessionsError && (
         <>
           <div className='flex flex-col gap-3'>
-            {dedupedSessions.map((sessionItem: any) => (
+            {dedupedSessions.map(sessionItem => (
               <SessionCard
                 key={sessionItem.token}
                 session={sessionItem}

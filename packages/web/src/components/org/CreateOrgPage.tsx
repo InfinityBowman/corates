@@ -67,9 +67,9 @@ export function CreateOrgPage() {
         localStorage.setItem(LAST_ORG_KEY, orgSlug);
         showToast.success('Organization Created', `${orgName} is ready to use`);
         navigate({ to: '/dashboard', replace: true });
-      } catch (err: any) {
+      } catch (err: unknown) {
         console.error('Create org error:', err);
-        setError(err.message || 'Failed to create organization');
+        setError(err instanceof Error ? err.message : 'Failed to create organization');
       } finally {
         setIsSubmitting(false);
       }

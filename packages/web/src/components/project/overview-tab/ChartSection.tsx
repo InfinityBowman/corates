@@ -9,6 +9,7 @@ import { AMSTARRobvis } from '@/components/charts/AMSTARRobvis';
 import { AMSTARDistribution } from '@/components/charts/AMSTARDistribution';
 import { ChartSettingsModal } from '@/components/charts/ChartSettingsModal';
 import { CHECKLIST_STATUS } from '@corates/shared/checklists';
+import type { StudyInfo } from '@/stores/projectStore';
 
 /**
  * Export an SVG element as a file (framework-agnostic utility)
@@ -98,7 +99,7 @@ const QUESTION_ORDER = [
 ];
 
 interface ChartSectionProps {
-  studies: any[];
+  studies: StudyInfo[];
 }
 
 export function ChartSection({ studies }: ChartSectionProps) {

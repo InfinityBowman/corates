@@ -16,6 +16,7 @@ import {
   selectMembers,
   selectConnectionPhase,
 } from '@/stores/projectStore';
+import type { StudyInfo } from '@/stores/projectStore';
 import { project } from '@/project';
 import { useProjectContext } from '../ProjectContext';
 import {
@@ -31,10 +32,10 @@ export function AllStudiesTab() {
 
   const [showGoogleDriveModal, setShowGoogleDriveModal] = useState(false);
   const [googleDriveTargetStudyId, setGoogleDriveTargetStudyId] = useState<string | null>(null);
-  const [restoredState, setRestoredState] = useState<any>(null);
+  const [restoredState, setRestoredState] = useState<unknown>(null);
   const [expandedStudies, setExpandedStudies] = useState<Set<string>>(new Set());
   const [showReviewersModal, setShowReviewersModal] = useState(false);
-  const [editingStudy, setEditingStudy] = useState<any>(null);
+  const [editingStudy, setEditingStudy] = useState<StudyInfo | null>(null);
 
   const studies = useProjectStore(s => selectStudies(s, projectId));
   const members = useProjectStore(s => selectMembers(s, projectId));
@@ -67,25 +68,25 @@ export function AllStudiesTab() {
   }, [projectId]);
 
   const handleSaveState = useCallback(
-    async (state: any) => {
+    async (state: unknown) => {
       await saveFormState('addStudies', state, projectId);
     },
     [projectId],
   );
 
   const unassignedStudies = useMemo(
-    () => studies.filter((s: any) => !s.reviewer1 && !s.reviewer2),
+    () => studies.filter(s => !s.reviewer1 && !s.reviewer2),
     [studies],
   );
 
   const shouldShowReviewerAssignment =
     isOwner && studies.length > 0 && unassignedStudies.length > 0;
 
-  const handleAssignReviewers = useCallback((studyId: string, updates: any) => {
+  const handleAssignReviewers = useCallback((studyId: string, updates: Record<string, unknown>) => {
     project.study.update(studyId, updates);
   }, []);
 
-  const handleAddStudies = useCallback(async (studiesToAdd: any[]) => {
+  const handleAddStudies = useCallback(async (studiesToAdd: Record<string, unknown>[]) => {
     await project.study.addBatch(studiesToAdd);
   }, []);
 
@@ -95,7 +96,7 @@ export function AllStudiesTab() {
   }, []);
 
   const handleGoogleDriveImportSuccess = useCallback(
-    (file: any, studyId: string) => {
+    (file: { key: string; fileName: string; size: number }, studyId: string) => {
       const targetStudyId = studyId || googleDriveTargetStudyId;
       if (!targetStudyId) return;
       project.pdf.handleGoogleDriveImport(targetStudyId, file);
@@ -154,14 +155,14 @@ export function AllStudiesTab() {
 
       {studies.length > 0 ?
         <div className='flex flex-col gap-3'>
-          {studies.map((study: any) => (
+          {studies.map(study => (
             <StudyCard
               key={study.id}
               study={study}
               expanded={expandedStudies.has(study.id)}
               onToggleExpanded={() => toggleStudyExpanded(study.id)}
               getMember={getMember}
-              onAssignReviewers={(s: any) => {
+              onAssignReviewers={s => {
                 setEditingStudy(s);
                 setShowReviewersModal(true);
               }}
@@ -200,7 +201,7 @@ export function AllStudiesTab() {
         }}
         study={editingStudy}
         projectId={projectId}
-        onSave={(studyId: string, updates: any) => {
+        onSave={(studyId: string, updates: { reviewer1: string | null; reviewer2: string | null }) => {
           project.study.update(studyId, updates);
         }}
       />

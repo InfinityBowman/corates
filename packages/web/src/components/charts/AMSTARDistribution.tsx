@@ -12,6 +12,18 @@ interface DistributionDataItem {
   questions: string[];
 }
 
+interface ProcessedQuestion {
+  question: number;
+  label: string;
+  counts: Record<string, number>;
+  percentages: Record<string, number>;
+}
+
+interface LegendItem {
+  key: string;
+  label: string;
+}
+
 interface AMSTARDistributionProps {
   ref?: React.Ref<SVGSVGElement>;
   data: DistributionDataItem[];
@@ -101,14 +113,14 @@ export function AMSTARDistribution({
     // Process data to calculate percentages
     const nQuestions = Math.max(...data.map(d => d.questions?.length || 0));
     const totalStudies = data.length;
-    const processedData: any[] = [];
+    const processedData: ProcessedQuestion[] = [];
 
     for (let q = 0; q < nQuestions; q++) {
-      const qData: any = {
+      const qData: ProcessedQuestion = {
         question: q + 1,
         label: `Q${q + 1}`,
         counts: { yes: 0, 'partial yes': 0, no: 0, 'no ma': 0 },
-        percentages: {} as any,
+        percentages: {},
       };
       data.forEach(study => {
         const response = study.questions[q]?.toLowerCase?.() ?? 'no ma';
@@ -189,18 +201,18 @@ export function AMSTARDistribution({
       .enter()
       .append('text')
       .attr('x', -10)
-      .attr('y', (d: any) => (yScale(d.label) ?? 0) + yScale.bandwidth() / 2)
+      .attr('y', (d: ProcessedQuestion) => (yScale(d.label) ?? 0) + yScale.bandwidth() / 2)
       .attr('text-anchor', 'end')
       .attr('dominant-baseline', 'middle')
       .attr('font-size', '13px')
       .attr('font-weight', '500')
       .attr('fill', '#374151')
-      .text((d: any) => d.label);
+      .text((d: ProcessedQuestion) => d.label);
 
     // X-axis
     const xAxis = d3
       .axisBottom(xScale)
-      .tickFormat((d: any) => `${d}`)
+      .tickFormat((d: number) => `${d}`)
       .ticks(5);
     chartGroup
       .append('g')
@@ -248,14 +260,14 @@ export function AMSTARDistribution({
       .data(legendData)
       .enter()
       .append('g')
-      .attr('transform', (_d: any, i: number) => `translate(0, ${i * 25})`);
+      .attr('transform', (_d: LegendItem, i: number) => `translate(0, ${i * 25})`);
     items
       .append('rect')
       .attr('y', -8)
       .attr('width', 16)
       .attr('height', 16)
       .attr('rx', 2)
-      .attr('fill', (d: any) => colors[d.key])
+      .attr('fill', (d: LegendItem) => colors[d.key])
       .attr('stroke', '#ffffff')
       .attr('stroke-width', 1);
     items
@@ -265,7 +277,7 @@ export function AMSTARDistribution({
       .attr('font-size', '13px')
       .attr('font-weight', '500')
       .attr('fill', '#374151')
-      .text((d: any) => d.label);
+      .text((d: LegendItem) => d.label);
 
     return () => {
       svg.selectAll('*').remove();

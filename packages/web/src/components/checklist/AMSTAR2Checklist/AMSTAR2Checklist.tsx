@@ -17,10 +17,15 @@ import { createChecklist as createAMSTAR2Checklist } from './checklist.js';
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { NoteEditor } from '@/components/checklist/common/NoteEditor';
 import type { TextRef } from '@/primitives/useProject/checklists';
+import type {
+  AMSTAR2Checklist as AMSTAR2ChecklistType,
+  AMSTAR2QuestionAnswer,
+} from '@corates/shared/checklists';
+import type { AMSTAR2QuestionSchema, AMSTAR2Column } from '@corates/shared/checklists/amstar2';
 
 // -- Shared internal components --
 
-function QuestionInfo({ question }: { question: any }) {
+function QuestionInfo({ question }: { question: AMSTAR2QuestionSchema }) {
   return (
     <div className='absolute top-1.5 right-1.5'>
       <Tooltip>
@@ -38,7 +43,13 @@ function QuestionInfo({ question }: { question: any }) {
   );
 }
 
-function CriticalButton({ state, onUpdate }: { state: any; onUpdate: (_newState: any) => void }) {
+function CriticalButton({
+  state,
+  onUpdate,
+}: {
+  state: AMSTAR2QuestionAnswer;
+  onUpdate: (_newState: AMSTAR2QuestionAnswer) => void;
+}) {
   return (
     <div className='ml-auto'>
       <button
@@ -64,15 +75,15 @@ function StandardQuestionInternal({
   handleChange,
   width,
 }: {
-  state: any;
+  state: AMSTAR2QuestionAnswer;
   question: { text: string };
-  columns?: any[];
+  columns?: AMSTAR2Column[];
   handleChange: (_colIdx: number, _optIdx: number) => void;
   width?: string;
 }) {
   return (
     <div className='flex flex-col gap-4 sm:flex-row sm:gap-6'>
-      {(columns || []).map((col: any, colIdx: number) => {
+      {(columns || []).map((col, colIdx) => {
         const isLastCol = colIdx === (columns || []).length - 1;
         return (
           <div
@@ -136,17 +147,17 @@ function StandardQuestion({
   readOnly,
   width,
 }: {
-  state: any;
-  question: any;
+  state: AMSTAR2QuestionAnswer;
+  question: AMSTAR2QuestionSchema;
   handleChange: (_colIdx: number, _optIdx: number) => void;
-  onUpdate: (_newState: any) => void;
+  onUpdate: (_newState: AMSTAR2QuestionAnswer) => void;
   getTextRef: (_ref: TextRef) => Y.Text | null;
   readOnly?: boolean;
   width?: string;
 }) {
   const questionKey = useMemo(() => {
     const match = question.text.match(/^(\d+[a-z]?)\./);
-    return `q${match[1]}`;
+    return `q${match?.[1] ?? ''}`;
   }, [question]);
 
   const noteYText = useMemo(
@@ -183,13 +194,13 @@ function StandardQuestion({
 
 /** Helper: two-option radio mutual exclusivity (Yes/No) */
 function handleTwoColChange(
-  checklist: any,
+  checklist: AMSTAR2ChecklistType,
   qKey: string,
   colIdx: number,
   optIdx: number,
   deriveFn: 'any' | 'all',
 ) {
-  const state = checklist[qKey];
+  const state = checklist[qKey] as AMSTAR2QuestionAnswer;
   const newAnswers = state.answers.map((arr: boolean[]) => [...arr]);
   newAnswers[colIdx][optIdx] = !state.answers[colIdx][optIdx];
 
@@ -207,8 +218,8 @@ function handleTwoColChange(
 }
 
 /** Helper: three-column with Yes/Partial Yes/No radio */
-function handleThreeColChange(checklist: any, qKey: string, colIdx: number, optIdx: number) {
-  const state = checklist[qKey];
+function handleThreeColChange(checklist: AMSTAR2ChecklistType, qKey: string, colIdx: number, optIdx: number) {
+  const state = checklist[qKey] as AMSTAR2QuestionAnswer;
   const newAnswers = state.answers.map((arr: boolean[]) => [...arr]);
   newAnswers[colIdx][optIdx] = !state.answers[colIdx][optIdx];
 
@@ -230,13 +241,13 @@ function handleThreeColChange(checklist: any, qKey: string, colIdx: number, optI
 
 /** Helper: two-col with 3 radios (Yes/No/No meta-analysis) */
 function handleTwoColThreeRadioChange(
-  checklist: any,
+  checklist: AMSTAR2ChecklistType,
   qKey: string,
   colIdx: number,
   optIdx: number,
   deriveFn: 'any' | 'all',
 ) {
-  const state = checklist[qKey];
+  const state = checklist[qKey] as AMSTAR2QuestionAnswer;
   const newAnswers = state.answers.map((arr: boolean[]) => [...arr]);
   newAnswers[colIdx][optIdx] = !state.answers[colIdx][optIdx];
 
@@ -260,8 +271,8 @@ function handleTwoColThreeRadioChange(
 
 interface QuestionConfig {
   qKey: string;
-  schema: any;
-  handler: (_checklist: any, _colIdx: number, _optIdx: number) => any;
+  schema: AMSTAR2QuestionSchema;
+  handler: (_checklist: AMSTAR2ChecklistType, _colIdx: number, _optIdx: number) => AMSTAR2QuestionAnswer;
   width?: string;
 }
 
@@ -348,8 +359,8 @@ function Question9({
   getTextRef,
   readOnly,
 }: {
-  checklist: any;
-  onUpdate: (_patch: Record<string, any>) => void;
+  checklist: AMSTAR2ChecklistType;
+  onUpdate: (_patch: Record<string, AMSTAR2QuestionAnswer>) => void;
   getTextRef: (_ref: TextRef) => Y.Text | null;
   readOnly?: boolean;
 }) {
@@ -406,7 +417,7 @@ function Question9({
   );
 
   const handleCriticalUpdate = useCallback(
-    (newQ: any) => {
+    (newQ: AMSTAR2QuestionAnswer) => {
       const newCritical = newQ.critical;
       onUpdate({ q9a: { ...stateA, critical: newCritical } });
       // Delay second write to avoid Yjs conflict on rapid dual writes
@@ -452,8 +463,8 @@ function Question11({
   getTextRef,
   readOnly,
 }: {
-  checklist: any;
-  onUpdate: (_patch: Record<string, any>) => void;
+  checklist: AMSTAR2ChecklistType;
+  onUpdate: (_patch: Record<string, AMSTAR2QuestionAnswer>) => void;
   getTextRef: (_ref: TextRef) => Y.Text | null;
   readOnly?: boolean;
 }) {
@@ -506,7 +517,7 @@ function Question11({
   );
 
   const handleCriticalUpdate = useCallback(
-    (newQ: any) => {
+    (newQ: AMSTAR2QuestionAnswer) => {
       const newCritical = newQ.critical;
       onUpdate({ q11a: { ...stateA, critical: newCritical } });
       setTimeout(() => {
@@ -552,8 +563,8 @@ function Question11({
 // -- Main component --
 
 interface AMSTAR2ChecklistProps {
-  externalChecklist?: any;
-  onExternalUpdate?: (_patch: Record<string, any>) => void;
+  externalChecklist?: AMSTAR2ChecklistType;
+  onExternalUpdate?: (_patch: Record<string, unknown>) => void;
   readOnly?: boolean;
   getTextRef: (_ref: TextRef) => Y.Text | null;
 }
@@ -565,7 +576,7 @@ export function AMSTAR2Checklist({
   getTextRef,
 }: AMSTAR2ChecklistProps) {
   // Local fallback state for standalone mode (no Yjs)
-  const [localChecklist, setLocalChecklist] = useState<any>(() => {
+  const [localChecklist, setLocalChecklist] = useState<AMSTAR2ChecklistType | null>(() => {
     if (externalChecklist) return null;
     return createAMSTAR2Checklist({
       name: 'New Checklist',
@@ -578,13 +589,13 @@ export function AMSTAR2Checklist({
   const checklist = externalChecklist || localChecklist;
 
   const handleChecklistChange = useCallback(
-    (patch: Record<string, any>) => {
+    (patch: Record<string, AMSTAR2QuestionAnswer>) => {
       if (readOnly) return;
       if (onExternalUpdate) {
         onExternalUpdate(patch);
         return;
       }
-      setLocalChecklist((prev: any) => (prev ? { ...prev, ...patch } : prev));
+      setLocalChecklist(prev => (prev ? { ...prev, ...patch } : prev));
     },
     [readOnly, onExternalUpdate],
   );
@@ -618,7 +629,7 @@ export function AMSTAR2Checklist({
                 }
                 handleChecklistChange({ q1: { ...state, answers: newAnswers } });
               }}
-              onUpdate={(newQ: any) => handleChecklistChange({ q1: newQ })}
+              onUpdate={newQ => handleChecklistChange({ q1: newQ })}
               getTextRef={getTextRef}
               readOnly={readOnly}
             />
@@ -627,13 +638,13 @@ export function AMSTAR2Checklist({
             {QUESTION_CONFIGS.slice(0, 7).map(cfg => (
               <StandardQuestion
                 key={cfg.qKey}
-                state={checklist[cfg.qKey]}
+                state={checklist[cfg.qKey] as AMSTAR2QuestionAnswer}
                 question={cfg.schema}
                 handleChange={(colIdx, optIdx) => {
                   const newQ = cfg.handler(checklist, colIdx, optIdx);
                   handleChecklistChange({ [cfg.qKey]: newQ });
                 }}
-                onUpdate={(newQ: any) => handleChecklistChange({ [cfg.qKey]: newQ })}
+                onUpdate={newQ => handleChecklistChange({ [cfg.qKey]: newQ })}
                 getTextRef={getTextRef}
                 readOnly={readOnly}
                 width={cfg.width}
@@ -656,7 +667,7 @@ export function AMSTAR2Checklist({
                 const newQ = QUESTION_CONFIGS[7].handler(checklist, colIdx, optIdx);
                 handleChecklistChange({ q10: newQ });
               }}
-              onUpdate={(newQ: any) => handleChecklistChange({ q10: newQ })}
+              onUpdate={newQ => handleChecklistChange({ q10: newQ })}
               getTextRef={getTextRef}
               readOnly={readOnly}
             />
@@ -673,13 +684,13 @@ export function AMSTAR2Checklist({
             {QUESTION_CONFIGS.slice(8).map(cfg => (
               <StandardQuestion
                 key={cfg.qKey}
-                state={checklist[cfg.qKey]}
+                state={checklist[cfg.qKey] as AMSTAR2QuestionAnswer}
                 question={cfg.schema}
                 handleChange={(colIdx, optIdx) => {
                   const newQ = cfg.handler(checklist, colIdx, optIdx);
                   handleChecklistChange({ [cfg.qKey]: newQ });
                 }}
-                onUpdate={(newQ: any) => handleChecklistChange({ [cfg.qKey]: newQ })}
+                onUpdate={newQ => handleChecklistChange({ [cfg.qKey]: newQ })}
                 getTextRef={getTextRef}
                 readOnly={readOnly}
                 width={cfg.width}

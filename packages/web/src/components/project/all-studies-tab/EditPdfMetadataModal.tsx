@@ -5,13 +5,14 @@
 import { useState, useEffect, useCallback } from 'react';
 import { showToast } from '@/components/ui/toast';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import type { PdfEntry } from '@/stores/projectStore';
 
 interface EditPdfMetadataModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  pdf: any;
+  pdf: PdfEntry | null;
   studyId: string;
-  onSave: (studyId: string, pdfId: string, metadata: any) => Promise<void> | void;
+  onSave: (studyId: string, pdfId: string, metadata: Record<string, unknown>) => Promise<void> | void;
 }
 
 export function EditPdfMetadataModal({

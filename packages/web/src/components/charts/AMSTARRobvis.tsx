@@ -13,6 +13,11 @@ interface RobvisDataItem {
   questions: string[];
 }
 
+interface LegendItem {
+  key: string;
+  label: string;
+}
+
 interface AMSTARRobvisProps {
   ref?: React.Ref<SVGSVGElement>;
   data: RobvisDataItem[];
@@ -169,7 +174,7 @@ export function AMSTARRobvis({
       .enter()
       .append('text')
       .attr('x', m.left - 10)
-      .attr('y', (_: any, i: number) => m.top + i * cellSize + cellSize / 2)
+      .attr('y', (_: RobvisDataItem, i: number) => m.top + i * cellSize + cellSize / 2)
       .attr('text-anchor', 'end')
       .attr('font-size', '12px')
       .attr('font-weight', '500')
@@ -215,14 +220,14 @@ export function AMSTARRobvis({
       .data(legendData)
       .enter()
       .append('g')
-      .attr('transform', (_d: any, i: number) => `translate(0, ${i * 25})`);
+      .attr('transform', (_d: LegendItem, i: number) => `translate(0, ${i * 25})`);
     items
       .append('rect')
       .attr('y', -8)
       .attr('width', 16)
       .attr('height', 16)
       .attr('rx', 2)
-      .attr('fill', (d: any) => colors[d.key])
+      .attr('fill', (d: LegendItem) => colors[d.key])
       .attr('stroke', '#ffffff')
       .attr('stroke-width', 1);
     items
@@ -232,7 +237,7 @@ export function AMSTARRobvis({
       .attr('font-size', '13px')
       .attr('font-weight', '500')
       .attr('fill', '#374151')
-      .text((d: any) => d.label);
+      .text((d: LegendItem) => d.label);
 
     // Title
     svg

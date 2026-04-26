@@ -8,7 +8,7 @@ import { QUERY_STABLE } from '@/lib/queryPresets';
 import { authClient, authFetch } from '@/api/auth-client';
 import { useAuthStore, selectIsLoggedIn } from '@/stores/authStore';
 
-interface LinkedAccount {
+export interface LinkedAccount {
   id: string;
   providerId: string;
   accountId: string;

@@ -5,6 +5,7 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { UserIcon } from 'lucide-react';
 import { useProjectStore, selectMembers, selectStudies } from '@/stores/projectStore';
+import type { StudyInfo } from '@/stores/projectStore';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import {
   Select,
@@ -17,7 +18,7 @@ import {
 interface AssignReviewersModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  study: any;
+  study: StudyInfo | null;
   projectId: string;
   onSave: (
     studyId: string,
@@ -36,19 +37,19 @@ export function AssignReviewersModal({
   const [reviewer2, setReviewer2] = useState('');
   const [saving, setSaving] = useState(false);
 
-  const members: any[] = useProjectStore(s => selectMembers(s, projectId));
-  const studies: any[] = useProjectStore(s => selectStudies(s, projectId));
+  const members = useProjectStore(s => selectMembers(s, projectId));
+  const studies = useProjectStore(s => selectStudies(s, projectId));
 
   // Get latest study data from store
   const currentStudy = useMemo(
-    () => (study?.id ? studies.find((s: any) => s.id === study.id) : null),
+    () => (study?.id ? studies.find(s => s.id === study.id) : null),
     [study?.id, studies],
   );
 
   const memberItems = useMemo(
     () => [
       { label: 'Unassigned', value: '_unassigned' },
-      ...members.map((m: any) => ({
+      ...members.map(m => ({
         label: m.name || m.email || 'Unknown',
         value: m.userId,
       })),

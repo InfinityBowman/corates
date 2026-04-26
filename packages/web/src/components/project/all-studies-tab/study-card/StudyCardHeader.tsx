@@ -15,6 +15,7 @@ import {
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { Avatar, AvatarImage, AvatarFallback, getInitials } from '@/components/ui/avatar';
 import { type ProjectMember } from '@/components/project/ProjectContext';
+import type { StudyInfo } from '@/stores/projectStore';
 import { project } from '@/project';
 import { API_BASE } from '@/config/api';
 
@@ -32,7 +33,7 @@ function getAvatarColorClasses(name: string) {
 }
 
 interface StudyCardHeaderProps {
-  study: any;
+  study: StudyInfo;
   expanded: boolean;
   onToggle: () => void;
   onAssignReviewers?: () => void;
@@ -48,11 +49,11 @@ export function StudyCardHeader({
 }: StudyCardHeaderProps) {
   const primaryPdf = useMemo(() => {
     const pdfs = study.pdfs || [];
-    return pdfs.find((p: any) => p.tag === 'primary') || pdfs[0];
+    return pdfs.find(p => p.tag === 'primary') || pdfs[0];
   }, [study.pdfs]);
 
   const assignedReviewers = useMemo(() => {
-    const reviewers: any[] = [];
+    const reviewers: ProjectMember[] = [];
     if (study.reviewer1) {
       reviewers.push(getMember?.(study.reviewer1) || { userId: study.reviewer1 });
     }
@@ -129,7 +130,7 @@ export function StudyCardHeader({
 
       {hasReviewers ?
         <div className='flex shrink-0 -space-x-1.5' data-selectable>
-          {assignedReviewers.map((member: any) => {
+          {assignedReviewers.map(member => {
             const displayName = member?.name || member?.email || 'Unknown';
             const colorClasses = getAvatarColorClasses(displayName);
             const avatarSrc =

@@ -10,16 +10,17 @@ import { PdfListItem } from '@/components/pdf/PdfListItem';
 import { EditPdfMetadataModal } from '../EditPdfMetadataModal';
 import { project } from '@/project';
 import { validatePdfFile } from '@/lib/pdfValidation.js';
+import type { StudyInfo, PdfEntry } from '@/stores/projectStore';
 
 interface StudyPdfSectionProps {
-  study: any;
+  study: StudyInfo;
   onOpenGoogleDrive?: (studyId: string) => void;
   readOnly?: boolean;
 }
 
 export function StudyPdfSection({ study, onOpenGoogleDrive, readOnly }: StudyPdfSectionProps) {
   const [uploading, setUploading] = useState(false);
-  const [editingPdf, setEditingPdf] = useState<any>(null);
+  const [editingPdf, setEditingPdf] = useState<PdfEntry | null>(null);
   const [metadataModalOpen, setMetadataModalOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -27,7 +28,7 @@ export function StudyPdfSection({ study, onOpenGoogleDrive, readOnly }: StudyPdf
 
   const sortedPdfs = useMemo(() => {
     const list = study.pdfs || [];
-    return [...list].sort((a: any, b: any) => {
+    return [...list].sort((a, b) => {
       const tagOrder: Record<string, number> = { primary: 0, protocol: 1, secondary: 2 };
       const tagA = tagOrder[a.tag] ?? 2;
       const tagB = tagOrder[b.tag] ?? 2;
@@ -36,17 +37,17 @@ export function StudyPdfSection({ study, onOpenGoogleDrive, readOnly }: StudyPdf
     });
   }, [study.pdfs]);
 
-  const hasPrimary = pdfs.some((p: any) => p.tag === 'primary');
-  const hasProtocol = pdfs.some((p: any) => p.tag === 'protocol');
+  const hasPrimary = pdfs.some(p => p.tag === 'primary');
+  const hasProtocol = pdfs.some(p => p.tag === 'protocol');
 
   const handleFileSelect = useCallback(
     async (e: React.ChangeEvent<HTMLInputElement>) => {
       const file = e.target.files?.[0];
       if (!file) return;
 
-      const validation = (await validatePdfFile(file)) as any;
+      const validation = await validatePdfFile(file);
       if (!validation.valid) {
-        showToast.error('Invalid File', validation.details.message as string);
+        showToast.error('Invalid File', validation.details.message);
         if (fileInputRef.current) fileInputRef.current.value = '';
         return;
       }
@@ -102,7 +103,7 @@ export function StudyPdfSection({ study, onOpenGoogleDrive, readOnly }: StudyPdf
 
         {pdfs.length > 0 ?
           <div className='flex flex-col gap-2'>
-            {sortedPdfs.map((pdf: any) => (
+            {sortedPdfs.map(pdf => (
               <PdfListItem
                 key={pdf.id}
                 pdf={pdf}

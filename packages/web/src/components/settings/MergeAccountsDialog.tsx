@@ -160,8 +160,8 @@ export function MergeAccountsDialog({
         result.mergedProviders.length ? `Linked: ${result.mergedProviders.join(', ')}` : '';
       showToast.success('Accounts Merged', `Successfully merged accounts. ${linkedInfo}`);
       onSuccess();
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Merge failed');
       setStep(STEPS.CONFIRM);
     } finally {
       setLoading(false);
@@ -172,8 +172,8 @@ export function MergeAccountsDialog({
     if (mergeToken) {
       try {
         await cancelMerge(mergeToken);
-      } catch (err: any) {
-        console.warn('Failed to cancel merge:', err.message);
+      } catch (err: unknown) {
+        console.warn('Failed to cancel merge:', err);
       }
     }
     onOpenChange(false);

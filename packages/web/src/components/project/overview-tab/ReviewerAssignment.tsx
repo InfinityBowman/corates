@@ -392,7 +392,7 @@ export function ReviewerAssignment({
                           </span>
                         </div>
                         <div className='flex flex-col gap-2'>
-                          {pool1Members.map((member: any) => (
+                          {pool1Members.map(member => (
                             <MemberPercentRow
                               key={member.userId}
                               member={member}
@@ -416,7 +416,7 @@ export function ReviewerAssignment({
                           </span>
                         </div>
                         <div className='flex flex-col gap-2'>
-                          {pool2Members.map((member: any) => (
+                          {pool2Members.map(member => (
                             <MemberPercentRow
                               key={member.userId}
                               member={member}

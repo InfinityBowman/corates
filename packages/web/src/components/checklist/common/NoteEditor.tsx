@@ -9,12 +9,13 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { ChevronRightIcon, BookOpenIcon } from 'lucide-react';
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/components/ui/collapsible';
+import type * as Y from 'yjs';
 import { useYText, applyYTextDiff } from '@/hooks/useYText';
 
 const MAX_HEIGHT = 300;
 
 interface NoteEditorProps {
-  yText: any;
+  yText: Y.Text | null;
   placeholder?: string;
   readOnly?: boolean;
   collapsed?: boolean;

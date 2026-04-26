@@ -28,7 +28,7 @@ export function ProjectGate({ projectId, fallback, children }: ProjectGateProps)
   const orgId = useProjectOrgId(projectId);
   const isLocalProject = projectId ? projectId.startsWith('local-') : false;
   const isOnline = useOnlineStatus();
-  const connectionEntryRef = useRef<any>(null);
+  const connectionEntryRef = useRef<ReturnType<typeof connectionPool.acquire>>(null);
 
   const connectionState = useProjectStore(s => selectConnectionPhase(s, projectId));
 

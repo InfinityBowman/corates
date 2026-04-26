@@ -65,7 +65,7 @@ export function TwoFactorSetup() {
         setBackupCodes(result.backupCodes || []);
         setSetupStep(1);
         setPassword('');
-      } catch (err: any) {
+      } catch (err: unknown) {
         const { handleError } = await import('@/lib/error-utils');
         const parsedError = await handleError(err, {
           showToast: true,
@@ -132,7 +132,7 @@ export function TwoFactorSetup() {
         setDisableMode(false);
         setPassword('');
         showToast.success('Two-factor authentication has been disabled');
-      } catch (err: any) {
+      } catch (err: unknown) {
         const { handleError } = await import('@/lib/error-utils');
         const parsedError = await handleError(err, {
           showToast: true,
