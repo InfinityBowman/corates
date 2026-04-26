@@ -8,7 +8,7 @@ import { API_BASE } from '@/config/api';
 import { apiFetch } from '@/lib/apiFetch';
 import { proxyPdfFetch } from '@/server/functions/pdf-proxy.functions';
 
-interface PdfUploadResponse {
+export interface PdfUploadResponse {
   success: boolean;
   key: string;
   fileName: string;

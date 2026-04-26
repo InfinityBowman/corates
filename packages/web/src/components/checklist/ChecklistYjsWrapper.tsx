@@ -19,8 +19,15 @@ import {
   isEditable,
   getNextStatusForCompletion,
 } from '@corates/shared/checklists';
+import type {
+  AMSTAR2Checklist,
+  ROBINSIChecklist,
+  ROB2Checklist,
+} from '@corates/shared/checklists';
 import { downloadPdf, uploadPdf, deletePdf, getPdfUrl } from '@/api/pdf-api';
+import type { PdfUploadResponse } from '@/api/pdf-api';
 import { getCachedPdf, cachePdf } from '@/primitives/pdfCache.js';
+import type { AnnotationData } from '@/primitives/useProject/annotations';
 import { showToast } from '@/components/ui/toast';
 import {
   AlertDialog,
@@ -80,12 +87,12 @@ export function ChecklistYjsWrapper({ projectId, studyId, checklistId }: Checkli
 
   const defaultPdf = useMemo(() => {
     if (!studyPdfs.length) return null;
-    return studyPdfs.find((p: any) => p.tag === 'primary') || studyPdfs[0];
+    return studyPdfs.find(p => p.tag === 'primary') || studyPdfs[0];
   }, [studyPdfs]);
 
   const currentPdf = useMemo(() => {
     if (selectedPdfId) {
-      return studyPdfs.find((p: any) => p.id === selectedPdfId) || defaultPdf;
+      return studyPdfs.find(p => p.id === selectedPdfId) || defaultPdf;
     }
     return defaultPdf;
   }, [studyPdfs, selectedPdfId, defaultPdf]);
@@ -107,7 +114,7 @@ export function ChecklistYjsWrapper({ projectId, studyId, checklistId }: Checkli
     setPdfData(null);
 
     getCachedPdf(projectId, studyId, fileName)
-      .then((cachedData: any) => {
+      .then(cachedData => {
         if (cachedData) {
           setPdfData(cachedData);
           setPdfFileName(fileName);
@@ -116,14 +123,14 @@ export function ChecklistYjsWrapper({ projectId, studyId, checklistId }: Checkli
         }
         return downloadPdf(orgId, projectId, studyId, fileName);
       })
-      .then((cloudData: any) => {
+      .then(cloudData => {
         if (cloudData) {
           setPdfData(cloudData);
           setPdfFileName(fileName);
           cachePdf(projectId, studyId, fileName, cloudData);
         }
       })
-      .catch((err: any) => console.error('Failed to load PDF:', err))
+      .catch((err: unknown) => console.error('Failed to load PDF:', err))
       .finally(() => setPdfLoading(false));
   }, [
     currentPdf?.fileName,
@@ -147,7 +154,7 @@ export function ChecklistYjsWrapper({ projectId, studyId, checklistId }: Checkli
         return;
       }
 
-      let uploadResult: any = null;
+      let uploadResult: PdfUploadResponse | null = null;
       try {
         const tag = studyPdfs.length > 0 ? 'secondary' : 'primary';
         uploadResult = await uploadPdf(orgId, projectId, studyId, data, fileName);
@@ -170,7 +177,7 @@ export function ChecklistYjsWrapper({ projectId, studyId, checklistId }: Checkli
       } catch (err) {
         console.error('Failed to upload PDF:', err);
         if (uploadResult?.fileName) {
-          deletePdf(orgId, projectId, studyId, uploadResult.fileName).catch((e: any) =>
+          deletePdf(orgId, projectId, studyId, uploadResult.fileName).catch((e: unknown) =>
             console.warn('Failed to clean up orphaned PDF:', e),
           );
         }
@@ -183,14 +190,14 @@ export function ChecklistYjsWrapper({ projectId, studyId, checklistId }: Checkli
 
   const isChecklistValid = useMemo(() => {
     if (!checklistForUI) return false;
-    if (checklistType === 'AMSTAR2') return isAMSTAR2Complete(checklistForUI as any);
-    if (checklistType === 'ROBINS_I') return isROBINSIComplete(checklistForUI as any);
-    if (checklistType === 'ROB2') return isROB2Complete(checklistForUI as any);
+    if (checklistType === 'AMSTAR2') return isAMSTAR2Complete(checklistForUI as AMSTAR2Checklist);
+    if (checklistType === 'ROBINS_I') return isROBINSIComplete(checklistForUI as ROBINSIChecklist);
+    if (checklistType === 'ROB2') return isROB2Complete(checklistForUI as ROB2Checklist);
     return true;
   }, [checklistForUI, checklistType]);
 
   const handlePartialUpdate = useCallback(
-    (patch: Record<string, any>) => {
+    (patch: Record<string, unknown>) => {
       if (isReadOnly || !checklistType) return;
       Object.entries(patch).forEach(([key, value]) => {
         const input = buildChecklistAnswerInput(checklistType, key, value);
@@ -219,7 +226,7 @@ export function ChecklistYjsWrapper({ projectId, studyId, checklistId }: Checkli
   }, [isReadOnly, currentChecklist, isChecklistValid, checklistType]);
 
   const confirmMarkComplete = useCallback(() => {
-    const nextStatus = getNextStatusForCompletion(currentStudy as any);
+    const nextStatus = getNextStatusForCompletion(currentStudy);
     updateChecklist(studyId, checklistId, { status: nextStatus });
     const statusLabel =
       nextStatus === CHECKLIST_STATUS.FINALIZED ? 'completed' : 'awaiting reconciliation';
@@ -237,13 +244,12 @@ export function ChecklistYjsWrapper({ projectId, studyId, checklistId }: Checkli
 
   const initialAnnotations = useMemo(() => {
     if (!currentStudy?.annotations || !selectedPdfId || !checklistId) return [];
-    const checklistAnnotations =
-      (currentStudy.annotations as Record<string, any[]>)?.[checklistId] || [];
-    return checklistAnnotations.filter((a: any) => a.pdfId === selectedPdfId);
+    const checklistAnnotations = currentStudy.annotations[checklistId] || [];
+    return checklistAnnotations.filter(a => a.pdfId === selectedPdfId);
   }, [currentStudy, selectedPdfId, checklistId]);
 
   const handleAnnotationAdd = useCallback(
-    (annotation: any) => {
+    (annotation: AnnotationData) => {
       if (isReadOnly || !selectedPdfId) return;
       addAnnotation(studyId, selectedPdfId, checklistId, annotation, user?.id);
     },
@@ -251,7 +257,7 @@ export function ChecklistYjsWrapper({ projectId, studyId, checklistId }: Checkli
   );
 
   const handleAnnotationUpdate = useCallback(
-    (annotation: any) => {
+    (annotation: AnnotationData & { id: string }) => {
       if (isReadOnly) return;
       updateAnnotation(studyId, checklistId, annotation.id, annotation);
     },
