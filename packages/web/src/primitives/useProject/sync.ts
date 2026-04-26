@@ -16,6 +16,7 @@ import type {
 import { scoreChecklistOfType } from '@/checklist-registry/index';
 import { amstar2 } from '@corates/shared';
 import { CHECKLIST_STATUS } from '@corates/shared/checklists';
+import type { AMSTAR2Checklist } from '@corates/shared/checklists';
 
 const getAMSTAR2Answers = amstar2.getAnswers;
 
@@ -321,7 +322,7 @@ function buildStudyFromYMap(
           }
 
           if (checklistType === 'AMSTAR2') {
-            checklistEntry.consolidatedAnswers = getAMSTAR2Answers(answers as any);
+            checklistEntry.consolidatedAnswers = getAMSTAR2Answers(answers as unknown as AMSTAR2Checklist);
           }
         }
       }

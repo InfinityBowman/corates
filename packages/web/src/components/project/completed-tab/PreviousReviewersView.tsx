@@ -86,7 +86,7 @@ export function PreviousReviewersView({
             reviewerName: getAssigneeName(String(originalChecklists[0].assignedTo ?? '')),
             createdAt: originalChecklists[0].createdAt,
             type: originalChecklists[0].type,
-            ...((data1.answers as Record<string, unknown>) ?? {}),
+            ...(data1.answers ?? {}),
           }
         : null,
       );
@@ -99,7 +99,7 @@ export function PreviousReviewersView({
             reviewerName: getAssigneeName(String(originalChecklists[1].assignedTo ?? '')),
             createdAt: originalChecklists[1].createdAt,
             type: originalChecklists[1].type,
-            ...((data2.answers as Record<string, unknown>) ?? {}),
+            ...(data2.answers ?? {}),
           }
         : null,
       );

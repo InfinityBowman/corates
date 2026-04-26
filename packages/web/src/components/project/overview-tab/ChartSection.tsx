@@ -119,7 +119,7 @@ export function ChartSection({ studies }: ChartSectionProps) {
   const rawChecklistData = useMemo(() => {
     if (!studies.length) return [];
 
-    const data: any[] = [];
+    const data: Array<{ id: string; label: string; questions: string[] }> = [];
     for (const study of studies) {
       for (const checklist of study.checklists || []) {
         if (checklist.status !== CHECKLIST_STATUS.FINALIZED) continue;
@@ -131,7 +131,7 @@ export function ChartSection({ studies }: ChartSectionProps) {
         data.push({
           id: `${study.id}-${checklist.id}`,
           label: study.name.length > 20 ? study.name.slice(0, 20) + '...' : study.name,
-          questions: QUESTION_ORDER.map(q => answersObj[q]),
+          questions: QUESTION_ORDER.map(q => answersObj[q] ?? ''),
         });
       }
     }

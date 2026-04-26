@@ -65,6 +65,11 @@ export function buildChecklistAnswerInput(
   }
 }
 
+export interface ChecklistData {
+  answers: Record<string, unknown>;
+  [key: string]: unknown;
+}
+
 export interface ChecklistOperations {
   createChecklist: (
     studyId: string,
@@ -75,7 +80,7 @@ export interface ChecklistOperations {
   updateChecklist: (studyId: string, checklistId: string, updates: Record<string, unknown>) => void;
   deleteChecklist: (studyId: string, checklistId: string) => void;
   getChecklistAnswersMap: (studyId: string, checklistId: string) => Y.Map<unknown> | null;
-  getChecklistData: (studyId: string, checklistId: string) => Record<string, unknown> | null;
+  getChecklistData: (studyId: string, checklistId: string) => ChecklistData | null;
   updateChecklistAnswer: (
     studyId: string,
     checklistId: string,
@@ -248,7 +253,7 @@ export function createChecklistOperations(
     }
   }
 
-  function getChecklistData(studyId: string, checklistId: string): Record<string, unknown> | null {
+  function getChecklistData(studyId: string, checklistId: string): ChecklistData | null {
     const result = commonOps.getChecklistYMap(studyId, checklistId);
     if (!result) return null;
 

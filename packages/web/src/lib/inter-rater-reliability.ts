@@ -9,6 +9,7 @@ import { CHECKLIST_STATUS } from '@corates/shared/checklists';
 import type { Study } from '@corates/shared/checklists';
 import { getAnswers } from '@/components/checklist/AMSTAR2Checklist/checklist.js';
 import { getQuestionKeys } from '@/components/checklist/AMSTAR2Checklist/checklist-compare.js';
+import type { AMSTAR2Checklist } from '@corates/shared/checklists';
 
 interface ChecklistData {
   answers?: Record<string, unknown>;
@@ -87,13 +88,13 @@ export function calculateInterRaterReliability(
     if (!checklist1Data?.answers || !checklist2Data?.answers) continue;
 
     // Extract answers using getAnswers function
-    const answers1 = getAnswers(checklist1Data.answers as any) as Record<string, string> | null;
-    const answers2 = getAnswers(checklist2Data.answers as any) as Record<string, string> | null;
+    const answers1 = getAnswers(checklist1Data.answers as unknown as AMSTAR2Checklist);
+    const answers2 = getAnswers(checklist2Data.answers as unknown as AMSTAR2Checklist);
 
     if (!answers1 || !answers2) continue;
 
     // Get question keys (q1-q16, with q9 and q11 consolidated)
-    const questionKeys = getQuestionKeys() as string[];
+    const questionKeys = getQuestionKeys();
 
     // Compare each question
     for (const questionKey of questionKeys) {
