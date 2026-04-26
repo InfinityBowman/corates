@@ -15,9 +15,16 @@ import {
 import { NoteEditor } from '@/components/checklist/common/NoteEditor';
 import type { TextRef } from '@/primitives/useProject/checklists';
 
+interface PreliminaryState {
+  studyDesign?: string | null;
+  aim?: string | null;
+  deviationsToAddress?: string[];
+  sources?: Record<string, boolean>;
+}
+
 interface PreliminarySectionProps {
-  preliminaryState: any;
-  onUpdate: (_newState: any) => void;
+  preliminaryState: PreliminaryState | undefined;
+  onUpdate: (_patch: Partial<PreliminaryState>) => void;
   disabled?: boolean;
   getTextRef: (_ref: TextRef) => Y.Text | null;
 }
@@ -91,7 +98,7 @@ export function PreliminarySection({
         {/* Study Design */}
         <div>
           <label className='text-secondary-foreground mb-2 block text-sm font-medium'>
-            {(PRELIMINARY_SECTION as any).studyDesign.label}
+            {PRELIMINARY_SECTION.studyDesign.label}
           </label>
           <div className='flex flex-wrap gap-2'>
             {STUDY_DESIGNS.map(design => (
@@ -118,22 +125,22 @@ export function PreliminarySection({
         <div className='grid gap-4 md:grid-cols-2'>
           <div>
             <label className='text-secondary-foreground mb-2 block text-sm font-medium'>
-              {(PRELIMINARY_SECTION as any).experimental.label}
+              {PRELIMINARY_SECTION.experimental.label}
             </label>
             <NoteEditor
               yText={experimentalYText}
-              placeholder={(PRELIMINARY_SECTION as any).experimental.placeholder}
+              placeholder={PRELIMINARY_SECTION.experimental.placeholder}
               readOnly={disabled}
               inline={true}
             />
           </div>
           <div>
             <label className='text-secondary-foreground mb-2 block text-sm font-medium'>
-              {(PRELIMINARY_SECTION as any).comparator.label}
+              {PRELIMINARY_SECTION.comparator.label}
             </label>
             <NoteEditor
               yText={comparatorYText}
-              placeholder={(PRELIMINARY_SECTION as any).comparator.placeholder}
+              placeholder={PRELIMINARY_SECTION.comparator.placeholder}
               readOnly={disabled}
               inline={true}
             />
@@ -143,11 +150,11 @@ export function PreliminarySection({
         {/* Numerical Result */}
         <div>
           <label className='text-secondary-foreground mb-2 block text-sm font-medium'>
-            {(PRELIMINARY_SECTION as any).numericalResult.label}
+            {PRELIMINARY_SECTION.numericalResult.label}
           </label>
           <NoteEditor
             yText={numericalResultYText}
-            placeholder={(PRELIMINARY_SECTION as any).numericalResult.placeholder}
+            placeholder={PRELIMINARY_SECTION.numericalResult.placeholder}
             readOnly={disabled}
             inline={true}
           />
@@ -156,7 +163,7 @@ export function PreliminarySection({
         {/* Aim Selection */}
         <div>
           <label className='text-secondary-foreground mb-2 block text-sm font-medium'>
-            {(PRELIMINARY_SECTION as any).aim.label}
+            {PRELIMINARY_SECTION.aim.label}
           </label>
           <div className='flex flex-col gap-2'>
             {(['ASSIGNMENT', 'ADHERING'] as const).map(aim => (
@@ -186,7 +193,7 @@ export function PreliminarySection({
                     )}
                   </div>
                 </div>
-                <span className='text-secondary-foreground'>{(AIM_OPTIONS as any)[aim]}</span>
+                <span className='text-secondary-foreground'>{AIM_OPTIONS[aim]}</span>
               </button>
             ))}
           </div>
@@ -196,10 +203,10 @@ export function PreliminarySection({
         {preliminaryState?.aim === 'ADHERING' && (
           <div>
             <label className='text-secondary-foreground mb-2 block text-sm font-medium'>
-              {(PRELIMINARY_SECTION as any).deviationsToAddress.label}
+              {PRELIMINARY_SECTION.deviationsToAddress.label}
             </label>
             <p className='text-muted-foreground mb-3 text-xs'>
-              {(PRELIMINARY_SECTION as any).deviationsToAddress.info}
+              {PRELIMINARY_SECTION.deviationsToAddress.info}
             </p>
             <div className='flex flex-col gap-2'>
               {DEVIATION_OPTIONS.map(deviation => {
@@ -240,7 +247,7 @@ export function PreliminarySection({
         {/* Information Sources */}
         <div>
           <label className='text-secondary-foreground mb-2 block text-sm font-medium'>
-            {(PRELIMINARY_SECTION as any).sources.label}
+            {PRELIMINARY_SECTION.sources.label}
           </label>
           <div className='grid gap-2 sm:grid-cols-2'>
             {INFORMATION_SOURCES.map(source => {

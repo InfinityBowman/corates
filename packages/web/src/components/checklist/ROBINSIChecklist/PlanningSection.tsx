@@ -14,7 +14,7 @@ interface PlanningSectionProps {
 }
 
 export function PlanningSection({ disabled, getTextRef }: PlanningSectionProps) {
-  const p1Field = (PLANNING_SECTION as any).p1;
+  const p1Field = PLANNING_SECTION.p1;
 
   const yText = useMemo(
     () => getTextRef({ type: 'ROBINS_I', sectionKey: 'planning', fieldKey: 'confoundingFactors' }),
@@ -24,9 +24,9 @@ export function PlanningSection({ disabled, getTextRef }: PlanningSectionProps) 
   return (
     <div className='border-border bg-card overflow-hidden rounded-lg border shadow-sm'>
       <div className='border-warning-border bg-warning-bg border-b px-6 py-4'>
-        <h2 className='text-foreground text-lg font-bold'>{(PLANNING_SECTION as any).title}</h2>
+        <h2 className='text-foreground text-lg font-bold'>{PLANNING_SECTION.title}</h2>
         <p className='text-warning-foreground mt-1 text-sm font-medium'>
-          {(PLANNING_SECTION as any).subtitle}
+          {PLANNING_SECTION.subtitle}
         </p>
       </div>
 

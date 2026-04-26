@@ -8,9 +8,14 @@ import { INFORMATION_SOURCES, SECTION_D } from './checklist-map';
 import { NoteEditor } from '@/components/checklist/common/NoteEditor';
 import type { TextRef } from '@/primitives/useProject/checklists';
 
+interface SectionDState {
+  sources?: Record<string, boolean>;
+  [key: string]: unknown;
+}
+
 interface SectionDProps {
-  sectionDState: any;
-  onUpdate: (_newState: any) => void;
+  sectionDState: SectionDState | undefined;
+  onUpdate: (_newState: SectionDState) => void;
   disabled?: boolean;
   getTextRef: (_ref: TextRef) => Y.Text | null;
 }
@@ -35,8 +40,8 @@ export function SectionD({ sectionDState, onUpdate, disabled, getTextRef }: Sect
   return (
     <div className='border-border bg-card overflow-hidden rounded-lg border shadow-sm'>
       <div className='border-border bg-muted border-b px-6 py-4'>
-        <h3 className='text-foreground text-base font-semibold'>{(SECTION_D as any).title}</h3>
-        <p className='text-muted-foreground mt-1 text-xs'>{(SECTION_D as any).description}</p>
+        <h3 className='text-foreground text-base font-semibold'>{SECTION_D.title}</h3>
+        <p className='text-muted-foreground mt-1 text-xs'>{SECTION_D.description}</p>
       </div>
 
       <div className='flex flex-col gap-3 px-6 py-4'>
@@ -68,12 +73,12 @@ export function SectionD({ sectionDState, onUpdate, disabled, getTextRef }: Sect
         <div className='border-border border-t pt-3'>
           <label className='block'>
             <span className='text-secondary-foreground text-sm font-medium'>
-              {(SECTION_D as any).otherField.label}
+              {SECTION_D.otherField.label}
             </span>
             <div className='mt-2'>
               <NoteEditor
                 yText={otherSpecifyYText}
-                placeholder={(SECTION_D as any).otherField.placeholder}
+                placeholder={SECTION_D.otherField.placeholder}
                 readOnly={disabled}
                 inline={true}
               />

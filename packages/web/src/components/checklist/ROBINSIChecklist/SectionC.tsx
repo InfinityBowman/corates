@@ -9,9 +9,14 @@ import { SECTION_C } from './checklist-map';
 import { NoteEditor } from '@/components/checklist/common/NoteEditor';
 import type { TextRef } from '@/primitives/useProject/checklists';
 
+interface SectionCState {
+  isPerProtocol?: boolean;
+  [key: string]: unknown;
+}
+
 interface SectionCProps {
-  sectionCState: any;
-  onUpdate: (_newState: any) => void;
+  sectionCState: SectionCState | undefined;
+  onUpdate: (_newState: SectionCState) => void;
   disabled?: boolean;
   getTextRef: (_ref: TextRef) => Y.Text | null;
 }
@@ -20,13 +25,13 @@ export function SectionC({ sectionCState, onUpdate, disabled, getTextRef }: Sect
   const uniqueId = useId();
   const textFields = useMemo(
     () =>
-      Object.entries(SECTION_C as Record<string, any>).filter(
-        ([, field]) => field.type === 'textarea',
-      ),
+      Object.entries(SECTION_C).filter(
+        ([, field]) => typeof field === 'object' && field !== null && 'type' in field && field.type === 'textarea',
+      ) as [string, { label: string; text: string; placeholder: string; stateKey: string; type: string }][],
     [],
   );
 
-  const c4Field = (SECTION_C as any).c4;
+  const c4Field = SECTION_C.c4;
 
   const handleProtocolToggle = useCallback(
     (value: boolean) => {
@@ -41,7 +46,7 @@ export function SectionC({ sectionCState, onUpdate, disabled, getTextRef }: Sect
         <h3 className='text-foreground text-base font-semibold'>
           Part C: Specify the (Hypothetical) Target Randomized Trial
         </h3>
-        <p className='text-muted-foreground mt-1 text-xs'>{(SECTION_C as any).description}</p>
+        <p className='text-muted-foreground mt-1 text-xs'>{SECTION_C.description}</p>
       </div>
 
       <div className='flex flex-col gap-4 px-6 py-4'>
@@ -76,7 +81,7 @@ export function SectionC({ sectionCState, onUpdate, disabled, getTextRef }: Sect
             <span className='ml-1'>{c4Field.text}</span>
           </div>
           <div className='mt-2 flex flex-col gap-2'>
-            {(c4Field.options as any[]).map((option: any) => (
+            {c4Field.options.map(option => (
               <label
                 key={option.label}
                 className={`flex items-center gap-3 rounded-lg border-2 p-3 transition-all duration-200 ${
