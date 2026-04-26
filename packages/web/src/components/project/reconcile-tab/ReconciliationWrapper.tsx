@@ -78,15 +78,15 @@ export function ReconciliationWrapper({
     if (!user) return null;
     return {
       id: user.id,
-      name: (user as any).name || (user as any).email || 'Unknown',
-      image: (user as any).image,
+      name: user.name || user.email || 'Unknown',
+      image: user.image,
     };
   }, [user]);
 
   // Read data from store (use stable selectors to avoid infinite re-render loops)
   const connectionState = useProjectStore(s => selectConnectionPhase(s, projectId));
-  const currentStudy = useProjectStore(s => selectStudy(s, projectId, studyId)) as any;
-  const members = useProjectStore(s => selectMembers(s, projectId)) as any[];
+  const currentStudy = useProjectStore(s => selectStudy(s, projectId, studyId));
+  const members = useProjectStore(s => selectMembers(s, projectId));
 
   // Watch for access-denied errors and redirect
   useEffect(() => {
@@ -109,13 +109,13 @@ export function ReconciliationWrapper({
   // Get the primary PDF or first PDF as default selection
   const defaultPdf = useMemo(() => {
     if (!studyPdfs.length) return null;
-    return studyPdfs.find((p: any) => p.tag === 'primary') || studyPdfs[0];
+    return studyPdfs.find(p => p.tag === 'primary') || studyPdfs[0];
   }, [studyPdfs]);
 
   // The currently selected PDF (or default)
   const currentPdf = useMemo(() => {
     if (selectedPdfId) {
-      return studyPdfs.find((p: any) => p.id === selectedPdfId) || defaultPdf;
+      return studyPdfs.find(p => p.id === selectedPdfId) || defaultPdf;
     }
     return defaultPdf;
   }, [studyPdfs, selectedPdfId, defaultPdf]);
@@ -137,7 +137,7 @@ export function ReconciliationWrapper({
     setPdfData(null);
 
     getCachedPdf(projectId, studyId, fileName)
-      .then((cachedData: any) => {
+      .then(cachedData => {
         if (cachedData) {
           setPdfData(cachedData);
           setPdfFileName(fileName);
@@ -146,14 +146,14 @@ export function ReconciliationWrapper({
         }
         return downloadPdf(orgId, projectId, studyId, fileName);
       })
-      .then((cloudData: any) => {
+      .then(cloudData => {
         if (cloudData) {
           setPdfData(cloudData);
           setPdfFileName(fileName);
           cachePdf(projectId, studyId, fileName, cloudData);
         }
       })
-      .catch((err: any) => {
+      .catch((err: unknown) => {
         console.error('Failed to load PDF:', err);
       })
       .finally(() => {
@@ -176,19 +176,19 @@ export function ReconciliationWrapper({
   // Get checklist metadata from store
   const checklist1Meta = useMemo(() => {
     if (!currentStudy) return null;
-    return currentStudy.checklists?.find((c: any) => c.id === checklist1Id);
+    return currentStudy.checklists?.find(c => c.id === checklist1Id);
   }, [currentStudy, checklist1Id]);
 
   const checklist2Meta = useMemo(() => {
     if (!currentStudy) return null;
-    return currentStudy.checklists?.find((c: any) => c.id === checklist2Id);
+    return currentStudy.checklists?.find(c => c.id === checklist2Id);
   }, [currentStudy, checklist2Id]);
 
   // Get reviewer name from userId
   const getReviewerName = useCallback(
     (userId: string | null) => {
       if (!userId) return 'Unassigned';
-      const member = members.find((m: any) => m.userId === userId);
+      const member = members.find(m => m.userId === userId);
       return member?.name || member?.email || 'Unknown';
     },
     [members],
@@ -204,7 +204,7 @@ export function ReconciliationWrapper({
       name: currentStudy?.name || 'Checklist 1',
       reviewerName: getReviewerName(checklist1Meta.assignedTo),
       createdAt: checklist1Meta.createdAt,
-      ...((data.answers as Record<string, unknown>) ?? {}),
+      ...(data.answers ?? {}),
     };
   }, [
     checklist1Meta,
@@ -224,7 +224,7 @@ export function ReconciliationWrapper({
       name: currentStudy?.name || 'Checklist 2',
       reviewerName: getReviewerName(checklist2Meta.assignedTo),
       createdAt: checklist2Meta.createdAt,
-      ...((data.answers as Record<string, unknown>) ?? {}),
+      ...(data.answers ?? {}),
     };
   }, [
     checklist2Meta,
@@ -268,7 +268,7 @@ export function ReconciliationWrapper({
       progress.reconciledChecklistId
     ) {
       const existingChecklist = currentStudy.checklists?.find(
-        (c: any) =>
+        c =>
           c.id === progress.reconciledChecklistId &&
           c.status !== CHECKLIST_STATUS.FINALIZED &&
           c.outcomeId === outcomeId &&
@@ -286,7 +286,7 @@ export function ReconciliationWrapper({
       currentStudy,
       outcomeId,
       checklistType,
-    ) as Record<string, any> | null;
+    );
     if (existingReconciled && existingReconciled.status !== CHECKLIST_STATUS.FINALIZED) {
       saveReconciliationProgress(studyId, outcomeId, checklistType, {
         checklist1Id,
@@ -341,11 +341,11 @@ export function ReconciliationWrapper({
     if (!reconciledChecklistId || reconciledChecklistLoading || !currentStudy) return;
 
     const allReconciled = getInProgressReconciledChecklists(currentStudy).filter(
-      (c: any) => c.outcomeId === outcomeId && c.type === checklistType,
+      c => c.outcomeId === outcomeId && c.type === checklistType,
     );
 
     if (allReconciled.length > 1) {
-      allReconciled.sort((a: any, b: any) => (a.createdAt || 0) - (b.createdAt || 0));
+      allReconciled.sort((a, b) => (Number(a.createdAt) || 0) - (Number(b.createdAt) || 0));
       const firstCreated = allReconciled[0];
 
       if (firstCreated.id !== reconciledChecklistId) {
@@ -372,7 +372,7 @@ export function ReconciliationWrapper({
   // Get reconciled checklist metadata
   const reconciledChecklistMeta = useMemo(() => {
     if (!currentStudy || !reconciledChecklistId) return null;
-    return currentStudy.checklists?.find((c: any) => c.id === reconciledChecklistId);
+    return currentStudy.checklists?.find(c => c.id === reconciledChecklistId);
   }, [currentStudy, reconciledChecklistId]);
 
   // Get reconciled checklist data
@@ -385,7 +385,7 @@ export function ReconciliationWrapper({
       name: 'Reconciled Checklist',
       reviewerName: 'Consensus',
       createdAt: reconciledChecklistMeta?.createdAt || 0,
-      ...((data.answers as Record<string, unknown>) ?? {}),
+      ...(data.answers ?? {}),
     };
   }, [reconciledChecklistId, getChecklistData, studyId, reconciledChecklistMeta]);
 
@@ -404,9 +404,9 @@ export function ReconciliationWrapper({
           title: reconciledName || 'Reconciled Checklist',
         });
         navigate({ to: `${getProjectPath()}?tab=completed` as string });
-      } catch (err: any) {
+      } catch (err) {
         console.error('Error saving reconciled checklist:', err);
-        setError(err.message);
+        setError(err instanceof Error ? err.message : 'Failed to save');
       }
     },
     [reconciledChecklistId, studyId, updateChecklist, navigate, getProjectPath],
@@ -434,8 +434,8 @@ export function ReconciliationWrapper({
     checklist2: checklist2Data,
     reconciledChecklist: reconciledChecklistData,
     reconciledChecklistId,
-    reviewer1Name: getReviewerName(checklist1Meta?.assignedTo),
-    reviewer2Name: getReviewerName(checklist2Meta?.assignedTo),
+    reviewer1Name: getReviewerName(checklist1Meta?.assignedTo ?? null),
+    reviewer2Name: getReviewerName(checklist2Meta?.assignedTo ?? null),
     onSaveReconciled: handleSaveReconciled,
     onCancel: handleCancel,
     pdfData,

@@ -50,7 +50,7 @@ export interface ChecklistEntry {
   updatedAt: number;
   score: string | null;
   answers: Record<string, unknown> | null;
-  consolidatedAnswers?: unknown;
+  consolidatedAnswers?: Record<string, string | null> | null;
 }
 
 export interface ReconciliationEntry {

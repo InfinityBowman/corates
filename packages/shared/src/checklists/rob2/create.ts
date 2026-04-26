@@ -5,44 +5,9 @@
  */
 
 import { INFORMATION_SOURCES, getDomainQuestions, type DomainKey } from './schema.js';
+import type { ROB2Checklist, ROB2DomainState } from '../types.js';
 
-export interface ROB2Checklist {
-  id: string;
-  name: string;
-  reviewerName: string;
-  createdAt: string;
-  type: 'ROB2';
-  assignedTo?: string | null;
-  status?: string;
-
-  preliminary: {
-    studyDesign: string | null;
-    experimental: string;
-    comparator: string;
-    numericalResult: string;
-    aim: 'ASSIGNMENT' | 'ADHERING' | null;
-    deviationsToAddress: string[];
-    sources: Record<string, boolean>;
-  };
-
-  domain1: DomainState;
-  domain2a: DomainState;
-  domain2b: DomainState;
-  domain3: DomainState;
-  domain4: DomainState;
-  domain5: DomainState;
-
-  overall: {
-    judgement: string | null;
-    direction: string | null;
-  };
-}
-
-interface DomainState {
-  answers: Record<string, { answer: string | null; comment: string }>;
-  judgement: string | null;
-  direction: string | null;
-}
+export type { ROB2Checklist } from '../types.js';
 
 interface CreateChecklistOptions {
   name: string;
@@ -124,9 +89,9 @@ export function createROB2Checklist({
 /**
  * Creates the initial state for a domain
  */
-function createDomainState(domainKey: DomainKey): DomainState {
+function createDomainState(domainKey: DomainKey): ROB2DomainState {
   const questions = getDomainQuestions(domainKey);
-  const answers: Record<string, { answer: string | null; comment: string }> = {};
+  const answers: ROB2DomainState['answers'] = {};
 
   Object.keys(questions).forEach(qKey => {
     answers[qKey] = { answer: null, comment: '' };

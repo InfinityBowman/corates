@@ -7,42 +7,44 @@
 
 import { CHECKLIST_TYPES, DEFAULT_CHECKLIST_TYPE } from './types';
 import { amstar2, robinsI, rob2 } from '@corates/shared';
+import type {
+  AMSTAR2Checklist,
+  ROBINSIChecklist,
+  ROB2Checklist,
+} from '@corates/shared/checklists';
 
-const createAMSTAR2 = amstar2.createAMSTAR2Checklist;
-const scoreAMSTAR2 = amstar2.scoreAMSTAR2Checklist;
-const getAMSTAR2Answers = amstar2.getAnswers;
-
-const createROBINSI = robinsI.createROBINSIChecklist;
-const scoreROBINSI = robinsI.scoreROBINSIChecklist;
-const getROBINSIAnswers = robinsI.getAnswers;
-
-const createROB2 = rob2.createROB2Checklist;
-const scoreROB2 = rob2.scoreROB2Checklist;
-const getROB2Answers = rob2.getAnswers;
+interface CreateChecklistOptions {
+  name: string;
+  id: string;
+  createdAt?: number | Date;
+  reviewerName?: string;
+}
 
 interface ChecklistConfig {
-  createChecklist: (..._args: any[]) => any;
-  scoreChecklist: (_state: any) => string;
-  getAnswers: (_state: any) => any;
+  createChecklist: (options: CreateChecklistOptions) => Record<string, unknown>;
+  scoreChecklist: (state: Record<string, unknown>) => string;
+  getAnswers: (state: Record<string, unknown>) => Record<string, unknown> | null;
 }
 
 const CHECKLIST_REGISTRY: Record<string, ChecklistConfig> = {
   [CHECKLIST_TYPES.AMSTAR2]: {
-    createChecklist: createAMSTAR2,
-    scoreChecklist: scoreAMSTAR2,
-    getAnswers: getAMSTAR2Answers || ((state: any) => state),
+    createChecklist: opts => amstar2.createAMSTAR2Checklist(opts),
+    scoreChecklist: state => amstar2.scoreAMSTAR2Checklist(state as AMSTAR2Checklist),
+    getAnswers: amstar2.getAnswers ?
+      (state => amstar2.getAnswers(state as AMSTAR2Checklist))
+    : (state => state),
   },
 
   [CHECKLIST_TYPES.ROBINS_I]: {
-    createChecklist: createROBINSI,
-    scoreChecklist: scoreROBINSI,
-    getAnswers: getROBINSIAnswers,
+    createChecklist: opts => robinsI.createROBINSIChecklist(opts),
+    scoreChecklist: state => robinsI.scoreROBINSIChecklist(state as ROBINSIChecklist),
+    getAnswers: state => robinsI.getAnswers(state as ROBINSIChecklist),
   },
 
   [CHECKLIST_TYPES.ROB2]: {
-    createChecklist: createROB2,
-    scoreChecklist: scoreROB2,
-    getAnswers: getROB2Answers,
+    createChecklist: opts => rob2.createROB2Checklist(opts),
+    scoreChecklist: state => rob2.scoreROB2Checklist(state as ROB2Checklist),
+    getAnswers: state => rob2.getAnswers(state as ROB2Checklist),
   },
 };
 
@@ -55,19 +57,22 @@ function getChecklistConfig(type: string): ChecklistConfig {
   return config;
 }
 
-export function createChecklistOfType(type: string, options: Record<string, unknown>): any {
+export function createChecklistOfType(
+  type: string,
+  options: CreateChecklistOptions,
+): Record<string, unknown> {
   const config = getChecklistConfig(type);
   const checklist = config.createChecklist(options);
   return { ...checklist, type };
 }
 
-export function scoreChecklistOfType(type: string, state: any): string {
+export function scoreChecklistOfType(type: string, state: Record<string, unknown>): string {
   const config = getChecklistConfig(type);
   return config.scoreChecklist(state);
 }
 
-export function getChecklistTypeFromState(checklistState: any): string {
-  if (checklistState?.type) return checklistState.type;
+export function getChecklistTypeFromState(checklistState: Record<string, unknown>): string {
+  if (checklistState?.type) return checklistState.type as string;
   if (checklistState?.domain2a || checklistState?.domain2b) return CHECKLIST_TYPES.ROB2;
   if (checklistState?.sectionB || checklistState?.domain1a || checklistState?.domain1b)
     return CHECKLIST_TYPES.ROBINS_I;

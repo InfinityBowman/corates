@@ -26,6 +26,7 @@ export interface ChecklistMetadata {
   status?: ChecklistStatus;
   type: 'AMSTAR2' | 'ROBINS_I' | 'ROB2';
   outcomeId?: string | null;
+  [key: string]: unknown;
 }
 
 /**
@@ -243,7 +244,7 @@ export interface ROB2PreliminaryState {
 /**
  * ROB-2 checklist structure
  */
-export interface ROB2Checklist extends Omit<ChecklistMetadata, 'type'> {
+export interface ROB2Checklist extends ChecklistMetadata {
   type: 'ROB2';
   preliminary: ROB2PreliminaryState;
   domain1: ROB2DomainState;

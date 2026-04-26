@@ -7,10 +7,10 @@ import {
   scoreAllDomains,
   JUDGEMENTS,
 } from '../rob2/index.js';
+import type { ROB2Response, ROB2QuestionAnswer } from '../types.js';
 
-// Helper to create answers object
-function makeAnswers(answerMap: Record<string, string | null>) {
-  const result: Record<string, { answer: string | null; comment: string }> = {};
+function makeAnswers(answerMap: Record<string, ROB2Response>) {
+  const result: Record<string, ROB2QuestionAnswer> = {};
   for (const [key, value] of Object.entries(answerMap)) {
     result[key] = { answer: value, comment: '' };
   }

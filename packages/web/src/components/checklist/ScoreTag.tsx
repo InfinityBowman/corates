@@ -8,8 +8,8 @@ import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip
 import { getChecklistMetadata, DEFAULT_CHECKLIST_TYPE } from '@/checklist-registry';
 
 function getScoreStyle(score: string, checklistType: string) {
-  const metadata = getChecklistMetadata(checklistType) as any;
-  const colorConfig = metadata?.scoreColors?.[score];
+  const metadata = getChecklistMetadata(checklistType);
+  const colorConfig = metadata.scoreColors[score];
   if (colorConfig) return `${colorConfig.bg} ${colorConfig.text}`;
   return 'bg-secondary text-muted-foreground';
 }
@@ -49,9 +49,9 @@ interface ScoreTooltipProps {
 }
 
 export function ScoreTooltip({ checklistType }: ScoreTooltipProps) {
-  const metadata = getChecklistMetadata(checklistType) as any;
-  const infoUrl = metadata?.url;
-  const tooltipText = `See ${metadata?.shortName || metadata?.name} resources`;
+  const metadata = getChecklistMetadata(checklistType);
+  const infoUrl = metadata.url;
+  const tooltipText = `See ${metadata.shortName || metadata.name} resources`;
 
   if (!infoUrl) return <InfoIcon className='size-3 opacity-50' />;
 
