@@ -88,12 +88,6 @@ export function getUserFriendlyMessage(error: AppError): string {
   if (error.code && USER_FRIENDLY_MESSAGES[error.code]) {
     return USER_FRIENDLY_MESSAGES[error.code];
   }
-  if (error.message) {
-    if (/^[A-Z][A-Z0-9_]+$/.test(error.message)) {
-      return 'Something went wrong. Please try again.';
-    }
-    return error.message;
-  }
   return 'Something went wrong. Please try again.';
 }
 
@@ -205,6 +199,8 @@ export async function handleError(
   error: unknown,
   options: ErrorHandlingOptions = {},
 ): Promise<AppError> {
+  console.error(error);
+
   if (isDomainError(error)) {
     await handleDomainError(error, options);
     return error;
