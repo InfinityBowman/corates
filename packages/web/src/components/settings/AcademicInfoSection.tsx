@@ -71,8 +71,9 @@ export function AcademicInfoSection() {
       syncProfileToProjects();
       showToast.success('Profile Updated', 'Your academic information has been updated.');
       setIsEditing(false);
-    } catch {
-      showToast.error('Update Failed', 'Failed to update academic information. Please try again.');
+    } catch (err) {
+      const { handleError } = await import('@/lib/error-utils');
+      await handleError(err, { toastTitle: 'Update Failed' });
     } finally {
       setSaving(false);
     }

@@ -66,8 +66,9 @@ export function SubscriptionList({
       setCopiedId(`${type}-${id}`);
       showToast.success('Copied', `${type} ID copied to clipboard`);
       setTimeout(() => setCopiedId(null), 2000);
-    } catch (_error) {
-      showToast.error('Error', 'Failed to copy to clipboard');
+    } catch (err) {
+      const { handleError } = await import('@/lib/error-utils');
+      await handleError(err, { toastTitle: 'Copy Failed' });
     }
   };
 

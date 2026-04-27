@@ -57,7 +57,8 @@ export function AllStudiesTab() {
             setTimeout(() => setRestoredState(null), 0);
           }
         } catch (err) {
-          console.error('Failed to restore form state:', err);
+          const { handleError } = await import('@/lib/error-utils');
+          await handleError(err, { toastTitle: 'Restore Failed' });
         }
         if (!cancelled) clearRestoreParamsFromUrl();
       })();

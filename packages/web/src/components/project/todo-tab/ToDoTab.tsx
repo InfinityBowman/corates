@@ -51,7 +51,9 @@ export function ToDoTab() {
         const success = project.checklist.create(studyId, type, assigneeId, outcomeId ?? undefined);
         if (success) setShowChecklistForm(null);
       } catch (err) {
-        console.error('Failed to create checklist:', err);
+        import('@/lib/error-utils').then(({ handleError }) =>
+          handleError(err, { toastTitle: 'Create Failed' }),
+        );
       }
     },
     [],

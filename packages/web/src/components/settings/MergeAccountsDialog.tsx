@@ -161,7 +161,8 @@ export function MergeAccountsDialog({
       showToast.success('Accounts Merged', `Successfully merged accounts. ${linkedInfo}`);
       onSuccess();
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Merge failed');
+      const { handleError } = await import('@/lib/error-utils');
+      await handleError(err, { setError, showToast: false });
       setStep(STEPS.CONFIRM);
     } finally {
       setLoading(false);

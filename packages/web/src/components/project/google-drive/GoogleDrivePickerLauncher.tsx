@@ -77,10 +77,11 @@ export function GoogleDrivePickerLauncher({
       }
 
       await connectGoogleAccount(callbackUrl);
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const errObj = err as Record<string, unknown>;
       const isAccountConflict =
-        err?.message?.includes('already linked') ||
-        err?.code === 'ACCOUNT_ALREADY_LINKED_TO_DIFFERENT_USER';
+        (typeof errObj?.message === 'string' && errObj.message.includes('already linked')) ||
+        errObj?.code === 'ACCOUNT_ALREADY_LINKED_TO_DIFFERENT_USER';
 
       if (isAccountConflict) {
         setError(
@@ -134,8 +135,8 @@ export function GoogleDrivePickerLauncher({
   const handleConnectGoogle = useCallback(async () => {
     try {
       await connect();
-    } catch (err: any) {
-      console.warn('Google Drive connect failed:', err.message);
+    } catch (err: unknown) {
+      console.warn('Google Drive connect failed:', err);
     }
   }, [connect]);
 
@@ -149,8 +150,8 @@ export function GoogleDrivePickerLauncher({
       const picked = await openPicker({ multiselect });
       if (!picked || picked.length === 0) return;
       await onPick?.(picked, studyIdRef.current);
-    } catch (err: any) {
-      console.warn('Google Drive picker failed:', err.message);
+    } catch (err: unknown) {
+      console.warn('Google Drive picker failed:', err);
     }
   }, [disabled, busy, onBeforeOpenPicker, openPicker, multiselect, onPick]);
 

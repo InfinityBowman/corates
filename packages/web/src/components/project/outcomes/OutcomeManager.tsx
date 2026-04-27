@@ -46,8 +46,9 @@ export function OutcomeManager() {
       } else {
         showToast.error('Failed to add outcome');
       }
-    } catch (err: any) {
-      showToast.error('Failed to add outcome', err.message);
+    } catch (err: unknown) {
+      const { handleError } = await import('@/lib/error-utils');
+      await handleError(err, { toastTitle: 'Failed to Add Outcome' });
     } finally {
       setIsSaving(false);
     }
@@ -67,8 +68,9 @@ export function OutcomeManager() {
         } else {
           showToast.error('Failed to update outcome');
         }
-      } catch (err: any) {
-        showToast.error('Failed to update outcome', err.message);
+      } catch (err: unknown) {
+        const { handleError } = await import('@/lib/error-utils');
+        await handleError(err, { toastTitle: 'Failed to Update Outcome' });
       } finally {
         setIsSaving(false);
       }
@@ -76,7 +78,7 @@ export function OutcomeManager() {
     [newName],
   );
 
-  const confirmDelete = useCallback(() => {
+  const confirmDelete = useCallback(async () => {
     if (!deleteTarget) return;
     try {
       const result = project.outcome.delete(deleteTarget);
@@ -88,8 +90,9 @@ export function OutcomeManager() {
           result?.error || 'Outcome is in use by checklists',
         );
       }
-    } catch (err: any) {
-      showToast.error('Failed to delete outcome', err.message);
+    } catch (err: unknown) {
+      const { handleError } = await import('@/lib/error-utils');
+      await handleError(err, { toastTitle: 'Failed to Delete Outcome' });
     }
     setDeleteTarget(null);
   }, [deleteTarget]);

@@ -108,8 +108,9 @@ export function ProjectsSection({
       queryClient.invalidateQueries({ queryKey: queryKeys.projects.all });
       showToast.success('Project Deleted', 'The project has been deleted successfully');
       setDeleteDialogOpen(false);
-    } catch {
-      showToast.error('Delete Failed');
+    } catch (err) {
+      const { handleError } = await import('@/lib/error-utils');
+      await handleError(err, { toastTitle: 'Delete Failed' });
     } finally {
       setDeleteLoading(false);
       setPendingDeleteId(null);

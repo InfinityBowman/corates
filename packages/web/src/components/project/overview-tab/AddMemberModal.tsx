@@ -82,7 +82,10 @@ export function AddMemberModal({
         });
         if (!cancelled) setSearchResults(results);
       } catch (err: unknown) {
-        if (!cancelled) setError(err instanceof Error ? err.message : 'Search failed');
+        if (!cancelled) {
+          const { handleError } = await import('@/lib/error-utils');
+          await handleError(err, { setError, showToast: false });
+        }
       } finally {
         if (!cancelled) setSearching(false);
       }
@@ -134,7 +137,8 @@ export function AddMemberModal({
       }
       handleClose();
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Failed to add member. Please try again.');
+      const { handleError } = await import('@/lib/error-utils');
+      await handleError(err, { setError, showToast: false });
     } finally {
       setAdding(false);
     }

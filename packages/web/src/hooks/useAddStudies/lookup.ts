@@ -106,9 +106,9 @@ export function useLookupOperations(): LookupOperations {
       }
 
       if (errors.length > 0) setLookupErrors(errors);
-    } catch (error) {
-      console.error('Lookup error:', error);
-      showToast.error('Lookup Failed', 'An error occurred during lookup.');
+    } catch (err) {
+      const { handleError } = await import('@/lib/error-utils');
+      await handleError(err, { toastTitle: 'Lookup Failed' });
     } finally {
       setLookingUp(false);
     }

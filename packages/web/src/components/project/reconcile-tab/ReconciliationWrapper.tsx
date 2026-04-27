@@ -153,8 +153,9 @@ export function ReconciliationWrapper({
           cachePdf(projectId, studyId, fileName, cloudData);
         }
       })
-      .catch((err: unknown) => {
-        console.error('Failed to load PDF:', err);
+      .catch(async (err: unknown) => {
+        const { handleError } = await import('@/lib/error-utils');
+        await handleError(err, { toastTitle: 'PDF Load Failed' });
       })
       .finally(() => {
         setPdfLoading(false);
@@ -408,8 +409,8 @@ export function ReconciliationWrapper({
         });
         navigate({ to: `${getProjectPath()}?tab=completed` as string });
       } catch (err) {
-        console.error('Error saving reconciled checklist:', err);
-        setError(err instanceof Error ? err.message : 'Failed to save');
+        const { handleError } = await import('@/lib/error-utils');
+        await handleError(err, { setError, showToast: false });
       }
     },
     [reconciledChecklistId, studyId, updateChecklist, navigate, getProjectPath],

@@ -35,7 +35,8 @@ export function GoogleDriveSettings() {
         const status = await getGoogleDriveStatus();
         if (!cancelled) setConnected(status.connected);
       } catch (err) {
-        console.error('Error checking Google Drive status:', err);
+        const { handleError } = await import('@/lib/error-utils');
+        await handleError(err, { toastTitle: 'Google Drive Error' });
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -49,10 +50,11 @@ export function GoogleDriveSettings() {
     setConnecting(true);
     try {
       await connectGoogleAccount(window.location.href);
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const errObj = err as Record<string, unknown>;
       const isAccountConflict =
-        err?.message?.includes('already linked') ||
-        err?.code === 'ACCOUNT_ALREADY_LINKED_TO_DIFFERENT_USER';
+        (typeof errObj?.message === 'string' && errObj.message.includes('already linked')) ||
+        errObj?.code === 'ACCOUNT_ALREADY_LINKED_TO_DIFFERENT_USER';
 
       if (isAccountConflict) {
         showToast.error(

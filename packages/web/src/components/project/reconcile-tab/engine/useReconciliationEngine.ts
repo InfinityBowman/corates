@@ -333,8 +333,8 @@ export function useReconciliationEngine({
       await onSaveReconciled(reconciledName);
       setFinishDialogOpen(false);
     } catch (err) {
-      console.error('Error saving reconciled checklist:', err);
-      showToast.error('Save Failed', 'Failed to save reconciled checklist. Please try again.');
+      const { handleError } = await import('@/lib/error-utils');
+      await handleError(err, { toastTitle: 'Save Failed' });
     } finally {
       setSaving(false);
     }

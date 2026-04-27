@@ -68,8 +68,8 @@ export function CreateOrgPage() {
         showToast.success('Organization Created', `${orgName} is ready to use`);
         navigate({ to: '/dashboard', replace: true });
       } catch (err: unknown) {
-        console.error('Create org error:', err);
-        setError(err instanceof Error ? err.message : 'Failed to create organization');
+        const { handleError } = await import('@/lib/error-utils');
+        await handleError(err, { setError, showToast: false });
       } finally {
         setIsSubmitting(false);
       }

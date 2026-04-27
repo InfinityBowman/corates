@@ -25,7 +25,6 @@ import { connectionPool } from '@/project/ConnectionPool';
 import { LOCAL_PROJECT_ID } from '@/project/localProject';
 import { db } from '@/primitives/db';
 import { useMyProjectsList } from '@/hooks/useMyProjectsList';
-import { showToast } from '@/components/ui/toast';
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import {
   AlertDialog,
@@ -164,8 +163,8 @@ export function Sidebar({
       ops?.study.deleteStudy(pendingDeleteId);
       await db.localChecklistPdfs.delete(pendingDeleteId);
     } catch (err) {
-      console.error('Failed to delete checklist:', err);
-      showToast.error('Delete Failed', 'Could not delete the checklist. Please try again.');
+      const { handleError } = await import('@/lib/error-utils');
+      await handleError(err, { toastTitle: 'Delete Failed' });
     } finally {
       setDeleteDialogOpen(false);
       setPendingDeleteId(null);

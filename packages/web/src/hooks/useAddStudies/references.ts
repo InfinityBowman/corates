@@ -255,9 +255,9 @@ export function useReferenceOperations(): ReferenceOperations {
         );
 
         lookupPdfsForRefs(refsWithIds);
-      } catch (error) {
-        console.error('Error parsing reference file:', error);
-        showToast.error('Parse Error', 'Failed to parse the reference file.');
+      } catch (err) {
+        const { handleError } = await import('@/lib/error-utils');
+        await handleError(err, { toastTitle: 'Parse Error' });
         setImportedRefs([]);
         setSelectedRefIds(new Set());
         setRefPdfFiles([]);

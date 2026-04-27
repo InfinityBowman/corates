@@ -104,7 +104,9 @@ export function PreviousReviewersView({
         : null,
       );
     } catch (err) {
-      console.error('Failed to load checklist data:', err);
+      import('@/lib/error-utils').then(({ handleError }) =>
+        handleError(err, { toastTitle: 'Load Failed' }),
+      );
       setChecklist1Data(null);
       setChecklist2Data(null);
     } finally {

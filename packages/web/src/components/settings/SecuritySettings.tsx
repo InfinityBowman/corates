@@ -69,8 +69,9 @@ export function SecuritySettings() {
     try {
       await resetPassword(user?.email || '');
       setAddPasswordSent(true);
-    } catch {
-      setPasswordError('Failed to send password setup email. Please try again.');
+    } catch (err) {
+      const { handleError } = await import('@/lib/error-utils');
+      await handleError(err, { setError: setPasswordError, showToast: false });
     } finally {
       setAddPasswordLoading(false);
     }

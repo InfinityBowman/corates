@@ -59,8 +59,9 @@ export function AppNavbar({ mobileSidebarOpen, toggleMobileSidebar }: AppNavbarP
     try {
       await signout();
       navigate({ to: '/dashboard', replace: true });
-    } catch (error) {
-      console.error('Sign out failed:', error);
+    } catch (err) {
+      const { handleError } = await import('@/lib/error-utils');
+      await handleError(err, { toastTitle: 'Sign Out Failed' });
     }
   }
 

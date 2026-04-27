@@ -290,7 +290,9 @@ export function ReviewerAssignment({
         });
         successCount++;
       } catch (err) {
-        console.error('Error assigning reviewers:', assignment.studyId, err);
+        import('@/lib/error-utils').then(({ handleError }) =>
+          handleError(err, { toastTitle: 'Assignment Failed' }),
+        );
       }
     }
     if (successCount > 0) {

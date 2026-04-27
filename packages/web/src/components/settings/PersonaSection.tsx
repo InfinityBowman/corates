@@ -41,8 +41,9 @@ export function PersonaSection() {
       syncProfileToProjects();
       showToast.success('Profile Updated', 'Your persona has been updated successfully.');
       setIsEditing(false);
-    } catch {
-      showToast.error('Update Failed', 'Failed to update persona. Please try again.');
+    } catch (err) {
+      const { handleError } = await import('@/lib/error-utils');
+      await handleError(err, { toastTitle: 'Update Failed' });
     } finally {
       setSaving(false);
     }

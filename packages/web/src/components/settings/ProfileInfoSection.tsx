@@ -72,8 +72,9 @@ export function ProfileInfoSection() {
           familyName: familyName || null,
         });
         syncProfileToProjects();
-      } catch {
-        showToast.error('Update Failed', 'Failed to update name. Please try again.');
+      } catch (err) {
+        const { handleError } = await import('@/lib/error-utils');
+        await handleError(err, { toastTitle: 'Update Failed' });
       }
     },
     [firstName, lastName, updateProfile],
@@ -93,8 +94,9 @@ export function ProfileInfoSection() {
           familyName: familyName || null,
         });
         syncProfileToProjects();
-      } catch {
-        showToast.error('Update Failed', 'Failed to update name. Please try again.');
+      } catch (err) {
+        const { handleError } = await import('@/lib/error-utils');
+        await handleError(err, { toastTitle: 'Update Failed' });
       }
     },
     [firstName, lastName, updateProfile],

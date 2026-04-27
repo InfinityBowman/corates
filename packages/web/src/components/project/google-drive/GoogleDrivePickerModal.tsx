@@ -53,9 +53,9 @@ export function GoogleDrivePickerModal({
           `Successfully imported "${file.name}" from Google Drive.`,
         );
         onImportSuccessRef.current?.(result.file, targetStudyId);
-      } catch (err: any) {
-        console.error('Picker import error:', err);
-        showToast.error('Import Failed', err.message);
+      } catch (err: unknown) {
+        const { handleError } = await import('@/lib/error-utils');
+        await handleError(err, { toastTitle: 'Import Failed' });
       } finally {
         setImporting(false);
       }
