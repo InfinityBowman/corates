@@ -23,8 +23,8 @@ describe('proxyPdfFetch', () => {
       expect.unreachable('should have thrown');
     } catch (err) {
       expect((err as Response).status).toBe(400);
-      const body = (await (err as Response).json()) as { error: string };
-      expect(body.error).toBe('URL is required');
+      const body = (await (err as Response).json()) as { code: string };
+      expect(body.code).toBe('VALIDATION_FIELD_REQUIRED');
     }
   });
 
@@ -43,8 +43,8 @@ describe('proxyPdfFetch', () => {
         expect.unreachable('should have thrown for ' + url);
       } catch (err) {
         expect((err as Response).status).toBe(400);
-        const body = (await (err as Response).json()) as { code?: string };
-        expect(body.code).toBe('SSRF_BLOCKED');
+        const body = (await (err as Response).json()) as { code: string };
+        expect(body.code).toBe('VALIDATION_INVALID_INPUT');
       }
     }
   });
@@ -80,7 +80,7 @@ describe('proxyPdfFetch', () => {
       expect.unreachable('should have thrown');
     } catch (err) {
       expect((err as Response).status).toBe(403);
-      const body = (await (err as Response).json()) as { code?: string };
+      const body = (await (err as Response).json()) as { code: string };
       expect(body.code).toBe('AUTH_REQUIRED');
     }
   });
@@ -99,8 +99,8 @@ describe('proxyPdfFetch', () => {
       expect.unreachable('should have thrown');
     } catch (err) {
       expect((err as Response).status).toBe(400);
-      const body = (await (err as Response).json()) as { error: string };
-      expect(body.error).toBe('URL did not return a PDF');
+      const body = (await (err as Response).json()) as { code: string };
+      expect(body.code).toBe('FILE_INVALID_TYPE');
     }
   });
 
@@ -118,7 +118,7 @@ describe('proxyPdfFetch', () => {
       expect.unreachable('should have thrown');
     } catch (err) {
       expect((err as Response).status).toBe(403);
-      const body = (await (err as Response).json()) as { code?: string };
+      const body = (await (err as Response).json()) as { code: string };
       expect(body.code).toBe('AUTH_REQUIRED');
     }
   });

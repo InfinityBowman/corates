@@ -1,4 +1,11 @@
 import { validatePdfProxyUrl } from '@corates/workers/ssrf-protection';
+import {
+  createDomainError,
+  AUTH_ERRORS,
+  FILE_ERRORS,
+  SYSTEM_ERRORS,
+  VALIDATION_ERRORS,
+} from '@corates/shared';
 import type { Session } from '@/server/middleware/auth';
 
 export async function proxyPdfFetch(
@@ -8,12 +15,18 @@ export async function proxyPdfFetch(
   const { url } = params;
 
   if (!url) {
-    throw Response.json({ error: 'URL is required' }, { status: 400 });
+    throw Response.json(
+      createDomainError(VALIDATION_ERRORS.FIELD_REQUIRED, { field: 'url' }),
+      { status: 400 },
+    );
   }
 
   const validation = validatePdfProxyUrl(url);
   if (!validation.valid) {
-    throw Response.json({ error: validation.error, code: 'SSRF_BLOCKED' }, { status: 400 });
+    throw Response.json(
+      createDomainError(VALIDATION_ERRORS.INVALID_INPUT, { field: 'url', reason: validation.error }),
+      { status: 400 },
+    );
   }
 
   let response: Response | undefined;
@@ -36,7 +49,10 @@ export async function proxyPdfFetch(
 
     const location = response.headers.get('location');
     if (!location) {
-      throw Response.json({ error: 'Redirect without location header' }, { status: 502 });
+      throw Response.json(
+        createDomainError(SYSTEM_ERRORS.INTERNAL_ERROR, { reason: 'Redirect without location header' }),
+        { status: 502 },
+      );
     }
 
     if (
@@ -48,10 +64,9 @@ export async function proxyPdfFetch(
       location.includes('/sso/')
     ) {
       throw Response.json(
-        {
-          error: 'PDF requires authentication - this article may not be truly open access',
-          code: 'AUTH_REQUIRED',
-        },
+        createDomainError(AUTH_ERRORS.REQUIRED, {
+          reason: 'PDF requires authentication - this article may not be truly open access',
+        }),
         { status: 403 },
       );
     }
@@ -61,7 +76,10 @@ export async function proxyPdfFetch(
     const redirectValidation = validatePdfProxyUrl(redirectUrl.href);
     if (!redirectValidation.valid) {
       throw Response.json(
-        { error: `Redirect blocked: ${redirectValidation.error}`, code: 'SSRF_BLOCKED' },
+        createDomainError(VALIDATION_ERRORS.INVALID_INPUT, {
+          field: 'redirect_url',
+          reason: redirectValidation.error,
+        }),
         { status: 400 },
       );
     }
@@ -72,14 +90,18 @@ export async function proxyPdfFetch(
 
   if (redirectCount >= maxRedirects) {
     throw Response.json(
-      { error: 'Too many redirects - PDF may require authentication' },
+      createDomainError(SYSTEM_ERRORS.INTERNAL_ERROR, {
+        reason: 'Too many redirects - PDF may require authentication',
+      }),
       { status: 502 },
     );
   }
 
   if (!response || !response.ok) {
     throw Response.json(
-      { error: `Failed to fetch PDF: ${response?.status} ${response?.statusText}` },
+      createDomainError(SYSTEM_ERRORS.INTERNAL_ERROR, {
+        reason: `Failed to fetch PDF: ${response?.status} ${response?.statusText}`,
+      }),
       { status: response?.status || 500 },
     );
   }
@@ -88,14 +110,16 @@ export async function proxyPdfFetch(
   if (!contentType.includes('pdf') && !contentType.includes('octet-stream')) {
     if (contentType.includes('html')) {
       throw Response.json(
-        {
-          error: 'PDF requires authentication - received login page instead',
-          code: 'AUTH_REQUIRED',
-        },
+        createDomainError(AUTH_ERRORS.REQUIRED, {
+          reason: 'PDF requires authentication - received login page instead',
+        }),
         { status: 403 },
       );
     }
-    throw Response.json({ error: 'URL did not return a PDF' }, { status: 400 });
+    throw Response.json(
+      createDomainError(FILE_ERRORS.INVALID_TYPE, { expected: 'application/pdf', received: contentType }),
+      { status: 400 },
+    );
   }
 
   return response.arrayBuffer();

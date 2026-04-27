@@ -385,7 +385,7 @@ export async function removeMember(
     await requireOrgMemberRemoval(db, membership.context.userId, orgId, memberId);
   } catch (err) {
     if (isDomainError(err)) {
-      throw Response.json(err, { status: 403 });
+      throw Response.json(err, { status: err.statusCode });
     }
     throw err;
   }

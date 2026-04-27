@@ -110,7 +110,7 @@ export async function importFromDrive(
     await requireProjectEdit(db, session.user.id, projectId);
   } catch (err) {
     if (isDomainError(err)) {
-      throw Response.json(err, { status: 403 });
+      throw Response.json(err, { status: err.statusCode });
     }
     throw err;
   }

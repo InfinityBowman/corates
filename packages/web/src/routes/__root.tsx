@@ -1,4 +1,4 @@
-import { useSyncExternalStore, lazy, Suspense } from 'react';
+import { useSyncExternalStore, useEffect, lazy, Suspense } from 'react';
 import { HeadContent, Link, Outlet, Scripts, createRootRoute } from '@tanstack/react-router';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { queryClient } from '@/lib/queryClient';
@@ -7,6 +7,7 @@ import { Toaster } from '@/components/ui/sonner';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import appCss from '../styles.css?url';
 import type { ErrorComponentProps } from '@tanstack/react-router';
+import { captureException } from '@/config/sentry';
 
 const LazyDevPanel =
   import.meta.env.VITE_DEV_PANEL === 'true' ?
@@ -184,6 +185,10 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 }
 
 function RootError({ error, reset }: ErrorComponentProps) {
+  useEffect(() => {
+    captureException(error, { component: 'RootError', action: 'render' });
+  }, [error]);
+
   const message =
     import.meta.env.DEV ? error.message : 'An unexpected error occurred. Please try refreshing.';
 

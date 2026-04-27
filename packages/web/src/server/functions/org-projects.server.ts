@@ -109,7 +109,7 @@ export async function createOrgProject(
     return project;
   } catch (err) {
     if (isDomainError(err)) {
-      throw Response.json(err, { status: 403 });
+      throw Response.json(err, { status: err.statusCode });
     }
     const error = err as Error;
     console.error('Error creating project:', error);
@@ -196,7 +196,7 @@ export async function updateProjectById(
     return { success: true as const, projectId: result.projectId };
   } catch (err) {
     if (isDomainError(err)) {
-      throw Response.json(err, { status: 403 });
+      throw Response.json(err, { status: err.statusCode });
     }
     const error = err as Error;
     console.error('Error updating project:', error);
@@ -234,7 +234,7 @@ export async function deleteProjectById(
     return { success: true as const, deleted: result.deleted };
   } catch (err) {
     if (isDomainError(err)) {
-      throw Response.json(err, { status: 403 });
+      throw Response.json(err, { status: err.statusCode });
     }
     const error = err as Error;
     console.error('Error deleting project:', error);
@@ -372,7 +372,7 @@ export async function addProjectMember(
         };
       } catch (err) {
         if (isDomainError(err)) {
-          throw Response.json(err, { status: 409 });
+          throw Response.json(err, { status: err.statusCode });
         }
         throw err;
       }
@@ -440,7 +440,7 @@ export async function updateProjectMemberRole(
     return { success: true as const, userId: result.userId, role: result.role };
   } catch (err) {
     if (isDomainError(err)) {
-      throw Response.json(err, { status: 400 });
+      throw Response.json(err, { status: err.statusCode });
     }
     const error = err as Error;
     console.error('Error updating project member role:', error);
