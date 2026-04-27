@@ -1,11 +1,9 @@
 import { createServerFn } from '@tanstack/react-start';
 import { createMiddleware } from '@tanstack/react-start';
 import { z } from 'zod';
-import { logMiddleware } from '@/server/middleware/log';
 import { sendContactEmail } from './contact.server';
 
 const requestMiddleware = createMiddleware()
-  .middleware([logMiddleware])
   .server(async ({ next, request }) => {
     return next({ context: { request } });
   });

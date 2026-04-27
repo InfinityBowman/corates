@@ -2,10 +2,9 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { handleGet as sessionHandler } from '../session';
 import { handleGet as verifyEmailHandler } from '../verify-email';
 import { handle as catchAllHandler } from '../$';
-import type { RequestLogger } from '@/server/middleware/log';
 
 function mockCtx() {
-  return { log: {} as RequestLogger };
+  return {};
 }
 
 const { mockAuthHandler, mockGetSession } = vi.hoisted(() => ({

@@ -10,7 +10,6 @@
  * groups plus `/get-session`).
  */
 import { createFileRoute } from '@tanstack/react-router';
-import { logMiddleware, type RequestLogger } from '@/server/middleware/log';
 import { env } from 'cloudflare:workers';
 import { createAuth } from '@corates/workers/auth-config';
 import { checkRateLimit, AUTH_RATE_LIMIT, SESSION_RATE_LIMIT } from '@/server/rateLimit';
@@ -25,7 +24,7 @@ const AUTH_RATE_LIMITED_PREFIXES = [
 
 type HandlerArgs = {
   request: Request;
-  context: { log: RequestLogger; cloudflareCtx?: ExecutionContext };
+  context?: { cloudflareCtx?: ExecutionContext };
 };
 
 export const handle = async ({ request, context }: HandlerArgs) => {
@@ -59,7 +58,7 @@ export const handle = async ({ request, context }: HandlerArgs) => {
 
 export const Route = createFileRoute('/api/auth/$')({
   server: {
-    middleware: [logMiddleware],
+    middleware: [],
     handlers: {
       GET: handle,
       POST: handle,

@@ -22,7 +22,6 @@ import {
   LedgerStatus,
 } from '@corates/db/stripe-event-ledger';
 import type { OrgId } from '@corates/shared/ids';
-import { logMiddleware } from '@/server/middleware/log';
 import { dbMiddleware } from '@/server/middleware/db';
 
 interface StripeEvent {
@@ -277,5 +276,5 @@ export const handlePost = async ({ request, context }: HandlerArgs) => {
 };
 
 export const Route = createFileRoute('/api/auth/stripe/webhook')({
-  server: { middleware: [logMiddleware, dbMiddleware], handlers: { POST: handlePost } },
+  server: { middleware: [dbMiddleware], handlers: { POST: handlePost } },
 });
