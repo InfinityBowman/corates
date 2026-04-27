@@ -41,6 +41,7 @@ function createMockBatch(messages: ReturnType<typeof createMockMessage>[]) {
     queue: 'corates-emails',
     ackAll: vi.fn(),
     retryAll: vi.fn(),
+    metadata: { metrics: { backlogCount: 0, backlogBytes: 0 } },
   };
 }
 
