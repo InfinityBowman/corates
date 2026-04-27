@@ -60,6 +60,7 @@
     "@better-auth/stripe": "^1.6.0",
     "@corates/db": "workspace:*",
     "@corates/shared": "workspace:*",
+    "@sentry/cloudflare": "^10.50.0",
     "better-auth": "^1.6.0",
     "drizzle-orm": "^0.45.2",
     "evlog": "^2.14.0",

@@ -8,6 +8,7 @@
  * Only route served: POST /api/billing/purchases/webhook
  * Everything else returns 404.
  */
+import * as Sentry from '@sentry/cloudflare';
 import { Hono } from 'hono';
 import { webhookRoutes } from './routes/webhook';
 import type { Env } from './types';
@@ -16,4 +17,14 @@ const app = new Hono<{ Bindings: Env }>();
 
 app.route('/api/billing', webhookRoutes);
 
-export default app;
+export default Sentry.withSentry(
+  (env: Env) => ({
+    dsn: env.SENTRY_DSN ?? '',
+    release: env.CF_VERSION_METADATA?.id,
+    environment: env.ENVIRONMENT,
+    enabled: !!env.SENTRY_DSN,
+    tracesSampleRate: env.ENVIRONMENT === 'production' ? 0.1 : 1.0,
+    sendDefaultPii: true,
+  }),
+  app,
+);

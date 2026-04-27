@@ -4,6 +4,10 @@
   "compatibility_date": "2025-12-01",
   "compatibility_flags": ["nodejs_compat"],
 
+  "version_metadata": {
+    "binding": "CF_VERSION_METADATA"
+  },
+
   // Shares the same corates-db D1 as the main app worker.
   // DO NOT run migrations from this package — the main app owns schema migrations.
   "d1_databases": [
@@ -26,7 +30,8 @@
   },
 
   "vars": {
-    "ENVIRONMENT": "development"
+    "ENVIRONMENT": "development",
+    "SENTRY_DSN": "https://3ddf61abb06680bffc1ebc7f540f05de@o4510738063818752.ingest.us.sentry.io/4510738126274560"
   },
 
   "observability": {
@@ -68,8 +73,12 @@
           }
         ]
       },
+      "version_metadata": {
+        "binding": "CF_VERSION_METADATA"
+      },
       "vars": {
-        "ENVIRONMENT": "production"
+        "ENVIRONMENT": "production",
+        "SENTRY_DSN": "https://3ddf61abb06680bffc1ebc7f540f05de@o4510738063818752.ingest.us.sentry.io/4510738126274560"
       },
       // Production secrets — set via `wrangler secret put ... --env production`:
       //   wrangler secret put STRIPE_SECRET_KEY --env production

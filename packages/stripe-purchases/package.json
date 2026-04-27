@@ -16,6 +16,7 @@
   "dependencies": {
     "@corates/db": "workspace:*",
     "@corates/shared": "workspace:*",
+    "@sentry/cloudflare": "^10.50.0",
     "drizzle-orm": "^0.45.2",
     "hono": "^4.12.15",
     "stripe": "^20.4.1"

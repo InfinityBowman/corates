@@ -6,4 +6,6 @@ export interface Env {
   STRIPE_SECRET_KEY: string;
   STRIPE_WEBHOOK_SECRET_PURCHASES: string;
   EMAIL_QUEUE: Queue<EmailPayload>;
+  SENTRY_DSN?: string;
+  CF_VERSION_METADATA?: { id?: string };
 }

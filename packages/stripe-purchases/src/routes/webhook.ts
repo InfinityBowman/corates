@@ -26,6 +26,7 @@
 import { Hono } from 'hono';
 import type { ContentfulStatusCode } from 'hono/utils/http-status';
 import type Stripe from 'stripe';
+import * as Sentry from '@sentry/cloudflare';
 import { createDomainError, SYSTEM_ERRORS, AUTH_ERRORS, VALIDATION_ERRORS } from '@corates/shared';
 import { createDb } from '@corates/db/client';
 import { createStripeClient, isStripeConfigured } from '@corates/shared/stripe';
@@ -359,6 +360,10 @@ webhookRoutes.post('/purchases/webhook', async c => {
     return c.json(response);
   } catch (err) {
     const error = err as Error;
+    Sentry.captureException(error, {
+      tags: { component: 'stripe-purchases-webhook' },
+      extra: { ledgerId, payloadHash },
+    });
     logger.error('Purchase webhook handler error', {
       error: truncateError(error),
       ledgerId,
