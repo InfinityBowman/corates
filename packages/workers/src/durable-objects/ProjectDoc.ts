@@ -1,4 +1,5 @@
 import { DurableObject } from 'cloudflare:workers';
+import { instrumentDurableObjectWithSentry } from '@sentry/cloudflare';
 import * as Y from 'yjs';
 import * as syncProtocol from 'y-protocols/sync';
 import * as awarenessProtocol from 'y-protocols/awareness';
@@ -46,12 +47,6 @@ function uint8ArrayToBuffer(u8: Uint8Array): ArrayBuffer {
  * `console.*`. The default implementation delegates to `console.warn` /
  * `console.error` with a JSON-serialised context object so the output is
  * greppable in `wrangler tail` and persisted production logs.
- *
- * Note: Durable Objects in this project are not currently instrumented with
- * Sentry (`Sentry.withSentry` only wraps the fetch handler in index.ts).
- * When DO-wide Sentry instrumentation lands as a separate follow-up, these
- * log lines will start flowing to Sentry without any change at the call
- * sites.
  */
 export interface PersistenceLogger {
   warn(event: string, ctx: Record<string, unknown>): void;
@@ -255,7 +250,7 @@ const DO_ISOLATE_MEMORY_BYTES = 128 * 1024 * 1024;
  *       })
  *     })
  */
-export class ProjectDoc extends DurableObject<Env> {
+class ProjectDocBase extends DurableObject<Env> {
   private doc: Y.Doc | null = null;
   private awareness: awarenessProtocol.Awareness | null = null;
   private logger: PersistenceLogger = defaultLogger;
@@ -1299,3 +1294,16 @@ export class ProjectDoc extends DurableObject<Env> {
     }
   }
 }
+
+export const ProjectDoc = instrumentDurableObjectWithSentry(
+  (env: Env) => ({
+    dsn: env.SENTRY_DSN ?? '',
+    release: env.CF_VERSION_METADATA?.id,
+    environment: env.ENVIRONMENT,
+    enabled: !!env.SENTRY_DSN,
+    tracesSampleRate: env.ENVIRONMENT === 'production' ? 0.1 : 1.0,
+  }),
+  ProjectDocBase,
+);
+// eslint-disable-next-line no-redeclare
+export type ProjectDoc = ProjectDocBase;

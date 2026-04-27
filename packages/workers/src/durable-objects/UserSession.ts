@@ -1,4 +1,5 @@
 import { DurableObject } from 'cloudflare:workers';
+import { instrumentDurableObjectWithSentry } from '@sentry/cloudflare';
 import { verifyAuth } from '../auth/config';
 import { getAccessControlOrigin } from '../config/origins';
 import type { Env } from '../types';
@@ -13,7 +14,7 @@ interface WebSocketAttachment {
   user: { id: string; [key: string]: unknown };
 }
 
-export class UserSession extends DurableObject<Env> {
+class UserSessionBase extends DurableObject<Env> {
   async fetch(request: Request): Promise<Response> {
     const requestOrigin = request.headers.get('Origin');
     const corsHeaders: Record<string, string> = {
@@ -158,3 +159,16 @@ export class UserSession extends DurableObject<Env> {
     return match ? match[1] : null;
   }
 }
+
+export const UserSession = instrumentDurableObjectWithSentry(
+  (env: Env) => ({
+    dsn: env.SENTRY_DSN ?? '',
+    release: env.CF_VERSION_METADATA?.id,
+    environment: env.ENVIRONMENT,
+    enabled: !!env.SENTRY_DSN,
+    tracesSampleRate: env.ENVIRONMENT === 'production' ? 0.1 : 1.0,
+  }),
+  UserSessionBase,
+);
+// eslint-disable-next-line no-redeclare
+export type UserSession = UserSessionBase;
