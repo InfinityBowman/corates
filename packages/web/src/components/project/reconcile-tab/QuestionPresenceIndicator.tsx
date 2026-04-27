@@ -43,9 +43,9 @@ export function QuestionPresenceIndicator({
           className='absolute inset-0 animate-pulse rounded-full'
           style={{
             margin: `-${getOffset(index)}px`,
-            border: `${getRingWidth()}px solid ${(user.color as Record<string, any>).hex}`,
+            border: `${getRingWidth()}px solid ${user.color.hex}`,
             opacity: 0.85 - index * 0.15,
-            boxShadow: `0 0 8px ${(user.color as Record<string, any>).hex}50`,
+            boxShadow: `0 0 8px ${user.color.hex}50`,
           }}
         />
       ))}

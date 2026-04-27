@@ -53,14 +53,14 @@ export function PresenceAvatars({
                 onClick={() => onUserClick?.(user.userId, user.currentPage)}
                 className='focus:ring-primary relative rounded-full transition-transform hover:z-10 hover:scale-110 focus:z-10 focus:ring-2 focus:ring-offset-2 focus:outline-none'
                 style={{
-                  boxShadow: `0 0 0 2px ${(user.color as Record<string, any>).hex}`,
+                  boxShadow: `0 0 0 2px ${user.color.hex}`,
                 }}
               >
                 <Avatar className='size-7 border-2 border-white text-xs'>
                   <AvatarImage src={getAvatarUrl(user)} alt={user.name} />
                   <AvatarFallback
                     className='text-white'
-                    style={{ backgroundColor: (user.color as Record<string, any>).hex }}
+                    style={{ backgroundColor: user.color.hex }}
                   >
                     {getInitials(user.name)}
                   </AvatarFallback>

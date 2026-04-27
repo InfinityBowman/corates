@@ -3,16 +3,20 @@
  */
 
 import { ArrowRightIcon } from 'lucide-react';
+import type { AMSTAR2QuestionAnswer } from '@corates/shared/checklists';
 import {
   isMultiPartQuestion,
   getDataKeysForQuestion,
+  getReconciliationSummary,
 } from '@/components/checklist/AMSTAR2Checklist/checklist-compare.js';
 import { Footer } from './Footer';
 
+type ReconciliationSummary = ReturnType<typeof getReconciliationSummary>;
+
 interface SummaryViewProps {
   questionKeys: string[];
-  finalAnswers: any;
-  comparisonByQuestion: any;
+  finalAnswers: Record<string, AMSTAR2QuestionAnswer | Record<string, AMSTAR2QuestionAnswer>>;
+  comparisonByQuestion: Record<string, { key: string; isAgreement: boolean }>;
   reconciledName: string;
   onReconciledNameChange: (_name: string) => void;
   onGoToQuestion: (_index: number) => void;
@@ -20,7 +24,7 @@ interface SummaryViewProps {
   onBack: () => void;
   allAnswered: boolean;
   saving: boolean;
-  summary: any;
+  summary: ReconciliationSummary | null;
 }
 
 export function SummaryView({
@@ -74,20 +78,22 @@ export function SummaryView({
           const isCritical = (() => {
             if (!final) return false;
             if (isMultiPartQuestion(key)) {
+              const parts = final as Record<string, AMSTAR2QuestionAnswer>;
               const dks = getDataKeysForQuestion(key);
-              return dks.some((dk: string) => final[dk]?.critical);
+              return dks.some((dk: string) => parts[dk]?.critical);
             }
-            return final?.critical;
+            return (final as AMSTAR2QuestionAnswer)?.critical;
           })();
 
           const getFinalAnswerText = () => {
             if (!final) return 'Not set';
             if (isMultiPartQuestion(key)) {
+              const parts = final as Record<string, AMSTAR2QuestionAnswer>;
               const dks = getDataKeysForQuestion(key);
               const partAnswers: string[] = [];
               for (const dk of dks) {
-                if (!final[dk]) return 'Not set';
-                const lastCol = final[dk].answers?.[final[dk].answers.length - 1];
+                if (!parts[dk]) return 'Not set';
+                const lastCol = parts[dk].answers?.[parts[dk].answers.length - 1];
                 if (!lastCol) return 'Not set';
                 const idx = lastCol.findIndex((v: boolean) => v === true);
                 if (idx === -1) return 'Not set';
@@ -95,7 +101,8 @@ export function SummaryView({
               }
               return partAnswers.join(' / ');
             }
-            const lastCol = final.answers?.[final.answers.length - 1];
+            const single = final as AMSTAR2QuestionAnswer;
+            const lastCol = single.answers?.[single.answers.length - 1];
             if (!lastCol) return 'Not set';
             const idx = lastCol.findIndex((v: boolean) => v === true);
             if (idx === -1) return 'Not set';

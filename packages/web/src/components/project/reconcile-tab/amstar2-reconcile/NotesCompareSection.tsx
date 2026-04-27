@@ -6,6 +6,7 @@
  */
 
 import { useState } from 'react';
+import type * as Y from 'yjs';
 import { ChevronRightIcon, BookOpenIcon, ClipboardIcon } from 'lucide-react';
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/components/ui/collapsible';
 import { NoteEditor } from '@/components/checklist/common/NoteEditor';
@@ -16,7 +17,7 @@ const MAX_LENGTH = 2000;
 interface NotesCompareSectionProps {
   reviewer1Note: string;
   reviewer2Note: string;
-  finalNoteYText: any;
+  finalNoteYText: Y.Text | null;
   reviewer1Name: string;
   reviewer2Name: string;
   collapsed?: boolean;

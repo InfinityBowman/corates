@@ -61,13 +61,13 @@ export function RemoteCursors({ users, containerScrollY }: RemoteCursorsProps) {
               transition: 'transform 150ms ease-out',
             }}
           >
-            <CursorIcon color={(user.color as Record<string, any>).hex} />
+            <CursorIcon color={user.color.hex} />
 
             {/* Name label */}
             <div
               className='-mt-1 ml-3 px-1.5 py-0.5 text-xs font-medium whitespace-nowrap text-white shadow-sm'
               style={{
-                backgroundColor: (user.color as Record<string, any>).hex,
+                backgroundColor: user.color.hex,
                 borderRadius: '2px 6px 6px 6px',
               }}
             >

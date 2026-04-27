@@ -5,6 +5,8 @@
 
 import { useId } from 'react';
 import { AMSTAR_CHECKLIST } from '@/components/checklist/AMSTAR2Checklist/checklist-map.js';
+import type { AMSTAR2Column } from '@corates/shared/checklists/amstar2';
+import type { AMSTAR2QuestionAnswer } from '@corates/shared/checklists';
 
 function getAnswerBadgeStyle(answer: string | null) {
   switch (answer) {
@@ -21,8 +23,8 @@ function getAnswerBadgeStyle(answer: string | null) {
 
 interface AnswerPanelProps {
   questionKey: string;
-  columns?: any[];
-  answers: any;
+  columns?: AMSTAR2Column[];
+  answers: AMSTAR2QuestionAnswer | null | undefined;
   compact?: boolean;
   isFinal?: boolean;
   onCheckboxChange?: (_colIdx: number, _optIdx: number) => void;
@@ -56,14 +58,14 @@ export function AnswerPanel({
   onUseThis,
 }: AnswerPanelProps) {
   const uniqueId = useId();
-  const question = (AMSTAR_CHECKLIST as any)[questionKey];
+  const question = AMSTAR_CHECKLIST[questionKey as keyof typeof AMSTAR_CHECKLIST];
   const columns = columnsProp || question?.columns || [];
   const answersArray = answersProp?.answers || [];
 
   if (compact) {
     return (
       <div className='flex flex-col gap-3'>
-        {columns.map((col: any, colIdx: number) => {
+        {columns.map((col, colIdx) => {
           const isLastColumn = colIdx === columns.length - 1;
           const colAnswers = answersArray[colIdx] || [];
 
@@ -156,7 +158,7 @@ export function AnswerPanel({
 
       {/* Answer Columns */}
       <div className='flex flex-col gap-4'>
-        {columns.map((col: any, colIdx: number) => {
+        {columns.map((col, colIdx) => {
           const isLastColumn = colIdx === columns.length - 1;
           const colAnswers = answersArray[colIdx] || [];
 

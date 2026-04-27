@@ -14,8 +14,8 @@ interface NavbarStore {
   questionKeys: string[];
   viewMode: string;
   currentPage: number;
-  comparisonByQuestion: Record<string, any>;
-  finalAnswers: Record<string, any>;
+  comparisonByQuestion: Record<string, { key: string; isAgreement: boolean }>;
+  finalAnswers: Record<string, unknown>;
   setViewMode: ((_mode: string) => void) | null;
   goToQuestion: ((_index: number) => void) | null;
   onReset: (() => void) | null;
@@ -55,7 +55,10 @@ function QuestionPill({
   const key = store.questionKeys[questionIndex];
   const isCurrentPage = store.viewMode === 'questions' && store.currentPage === questionIndex;
   const isAgreement = store.comparisonByQuestion[key]?.isAgreement ?? true;
-  const hasAnswer = hasQuestionAnswer(key, store.finalAnswers);
+  const hasAnswer = hasQuestionAnswer(
+    key,
+    store.finalAnswers as Parameters<typeof hasQuestionAnswer>[1],
+  );
 
   const pillStyle = useMemo(
     () => getQuestionPillStyle(isCurrentPage, hasAnswer, isAgreement),

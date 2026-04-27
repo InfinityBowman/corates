@@ -5,36 +5,38 @@
  */
 
 import { useState, useEffect } from 'react';
+import type * as Y from 'yjs';
 import { AMSTAR_CHECKLIST } from '@/components/checklist/AMSTAR2Checklist/checklist-map.js';
+import type { AMSTAR2QuestionAnswer } from '@corates/shared/checklists';
 import { AnswerPanel } from './AnswerPanel';
 import { NotesCompareSection } from './NotesCompareSection';
 import { MultiPartQuestionPage } from './MultiPartQuestionPage';
 
-function getFinalAnswerFromAnswers(answers: any, questionKey: string): string | null {
+function getFinalAnswerFromAnswers(answers: boolean[][] | undefined, questionKey: string): string | null {
   if (!Array.isArray(answers) || answers.length === 0) return null;
   const lastCol = answers[answers.length - 1];
   if (!Array.isArray(lastCol)) return null;
   const idx = lastCol.findIndex((v: boolean) => v === true);
   if (idx === -1) return null;
 
-  const question = (AMSTAR_CHECKLIST as any)[questionKey];
+  const question = AMSTAR_CHECKLIST[questionKey as keyof typeof AMSTAR_CHECKLIST];
   const lastColumn = question?.columns?.[question.columns.length - 1];
   return lastColumn?.options?.[idx] || null;
 }
 
 interface ReconciliationQuestionPageProps {
   questionKey: string;
-  reviewer1Answers: any;
-  reviewer2Answers: any;
-  finalAnswers: any;
-  onFinalChange: (_answer: any) => void;
+  reviewer1Answers: AMSTAR2QuestionAnswer | Record<string, AMSTAR2QuestionAnswer> | null;
+  reviewer2Answers: AMSTAR2QuestionAnswer | Record<string, AMSTAR2QuestionAnswer> | null;
+  finalAnswers: AMSTAR2QuestionAnswer | Record<string, AMSTAR2QuestionAnswer> | null;
+  onFinalChange: (_answer: AMSTAR2QuestionAnswer | Record<string, AMSTAR2QuestionAnswer>) => void;
   reviewer1Name: string;
   reviewer2Name: string;
   isAgreement: boolean;
   isMultiPart: boolean;
   reviewer1Note: string;
   reviewer2Note: string;
-  finalNoteYText: any;
+  finalNoteYText: Y.Text | null;
 }
 
 export function ReconciliationQuestionPage(props: ReconciliationQuestionPageProps) {
@@ -44,7 +46,7 @@ export function ReconciliationQuestionPage(props: ReconciliationQuestionPageProp
   return <SingleQuestionPage {...props} />;
 }
 
-function answersEqual(a: any, b: any) {
+function answersEqual(a: AMSTAR2QuestionAnswer | null | undefined, b: AMSTAR2QuestionAnswer | null | undefined) {
   if (!a || !b) return false;
   if (a.critical !== b.critical) return false;
   if (!Array.isArray(a.answers) || !Array.isArray(b.answers)) return false;
@@ -60,9 +62,9 @@ function answersEqual(a: any, b: any) {
 
 function SingleQuestionPage({
   questionKey,
-  reviewer1Answers,
-  reviewer2Answers,
-  finalAnswers,
+  reviewer1Answers: rawR1,
+  reviewer2Answers: rawR2,
+  finalAnswers: rawFinal,
   onFinalChange,
   reviewer1Name,
   reviewer2Name,
@@ -71,9 +73,13 @@ function SingleQuestionPage({
   reviewer2Note,
   finalNoteYText,
 }: ReconciliationQuestionPageProps) {
-  const question = (AMSTAR_CHECKLIST as any)[questionKey];
+  const reviewer1Answers = rawR1 as AMSTAR2QuestionAnswer | null;
+  const reviewer2Answers = rawR2 as AMSTAR2QuestionAnswer | null;
+  const finalAnswers = rawFinal as AMSTAR2QuestionAnswer | null;
 
-  const [localFinal, setLocalFinal] = useState<any>(null);
+  const question = AMSTAR_CHECKLIST[questionKey as keyof typeof AMSTAR_CHECKLIST];
+
+  const [localFinal, setLocalFinal] = useState<AMSTAR2QuestionAnswer | null>(null);
   const [selectedSource, setSelectedSource] = useState<string | null>(null);
   const [hasAutoFilled, setHasAutoFilled] = useState(false);
 
