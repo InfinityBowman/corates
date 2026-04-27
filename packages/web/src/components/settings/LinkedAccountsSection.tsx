@@ -151,7 +151,10 @@ export function LinkedAccountsSection() {
   }, [accounts, user?.emailVerified]);
 
   const unlinkProviderName = useMemo(
-    () => (accountToUnlink ? PROVIDERS[accountToUnlink.providerId]?.name || accountToUnlink.providerId : ''),
+    () =>
+      accountToUnlink ?
+        PROVIDERS[accountToUnlink.providerId]?.name || accountToUnlink.providerId
+      : '',
     [accountToUnlink],
   );
 

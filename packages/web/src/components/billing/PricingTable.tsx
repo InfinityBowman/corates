@@ -331,7 +331,9 @@ export function PricingTable({
               <div className='flex items-baseline gap-1'>
                 <FlipNumber
                   value={
-                    billingInterval === 'monthly' ? (plan.price.monthly ?? 0) : (plan.price.yearly ?? 0) / 12
+                    billingInterval === 'monthly' ?
+                      (plan.price.monthly ?? 0)
+                    : (plan.price.yearly ?? 0) / 12
                   }
                   prefix='$'
                   decimals={billingInterval === 'yearly' ? 2 : 0}

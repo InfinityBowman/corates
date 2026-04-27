@@ -10,7 +10,7 @@
  */
 
 import { createDomainError, SYSTEM_ERRORS } from '@corates/shared';
-import { createStripeClient } from '../../lib/stripe.js';
+import { createStripeClient } from '@corates/shared/stripe';
 import type { Env } from '../../types';
 
 interface CreateSingleProjectCheckoutParams {
@@ -59,7 +59,7 @@ export async function createSingleProjectCheckout(
     );
   }
 
-  const stripe = createStripeClient(env);
+  const stripe = createStripeClient(env.STRIPE_SECRET_KEY);
 
   const baseUrl = env.APP_URL || 'https://corates.org';
 

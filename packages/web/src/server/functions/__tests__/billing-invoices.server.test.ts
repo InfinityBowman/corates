@@ -28,7 +28,7 @@ function mockSession(overrides?: {
 
 const invoicesListMock = vi.fn();
 
-vi.mock('@corates/workers/stripe', () => ({
+vi.mock('@corates/shared/stripe', () => ({
   createStripeClient: () => ({
     invoices: { list: (...args: unknown[]) => invoicesListMock(...args) },
   }),

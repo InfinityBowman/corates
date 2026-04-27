@@ -24,7 +24,7 @@ const invoicesListMock = vi.fn();
 const paymentMethodsListMock = vi.fn();
 const subscriptionsListMock = vi.fn();
 
-vi.mock('@corates/workers/stripe', () => ({
+vi.mock('@corates/shared/stripe', () => ({
   createStripeClient: () => ({
     customers: {
       retrieve: (...args: unknown[]) => customersRetrieveMock(...args),

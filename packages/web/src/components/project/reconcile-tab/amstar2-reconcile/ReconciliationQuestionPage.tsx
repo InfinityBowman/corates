@@ -12,7 +12,10 @@ import { AnswerPanel } from './AnswerPanel';
 import { NotesCompareSection } from './NotesCompareSection';
 import { MultiPartQuestionPage } from './MultiPartQuestionPage';
 
-function getFinalAnswerFromAnswers(answers: boolean[][] | undefined, questionKey: string): string | null {
+function getFinalAnswerFromAnswers(
+  answers: boolean[][] | undefined,
+  questionKey: string,
+): string | null {
   if (!Array.isArray(answers) || answers.length === 0) return null;
   const lastCol = answers[answers.length - 1];
   if (!Array.isArray(lastCol)) return null;
@@ -46,7 +49,10 @@ export function ReconciliationQuestionPage(props: ReconciliationQuestionPageProp
   return <SingleQuestionPage {...props} />;
 }
 
-function answersEqual(a: AMSTAR2QuestionAnswer | null | undefined, b: AMSTAR2QuestionAnswer | null | undefined) {
+function answersEqual(
+  a: AMSTAR2QuestionAnswer | null | undefined,
+  b: AMSTAR2QuestionAnswer | null | undefined,
+) {
   if (!a || !b) return false;
   if (a.critical !== b.critical) return false;
   if (!Array.isArray(a.answers) || !Array.isArray(b.answers)) return false;

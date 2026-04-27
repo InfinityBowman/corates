@@ -11,8 +11,7 @@ import {
 } from 'better-auth/plugins';
 import { oAuthRelay } from './oauth-relay';
 import { stripe } from '@better-auth/stripe';
-import Stripe from 'stripe';
-import { STRIPE_API_VERSION } from '../lib/stripe.js';
+import { createStripeClient } from '@corates/shared/stripe';
 import { drizzle } from 'drizzle-orm/d1';
 import { eq, and } from 'drizzle-orm';
 import * as schema from '@corates/db/schema';
@@ -27,7 +26,7 @@ import {
   getMagicLinkEmailHtml,
   getMagicLinkEmailText,
 } from './emailTemplates';
-import { queueEmail } from '../lib/email-queue';
+import { queueEmail } from '@corates/shared/email';
 import { notifyOrgMembers, EventTypes } from '../lib/notify';
 import { copyAvatarToR2, isExternalAvatarUrl, isInternalAvatarUrl } from '../lib/avatar-copy';
 import { createDomainError, SYSTEM_ERRORS } from '@corates/shared';
@@ -211,7 +210,7 @@ export function createAuth(env: Env, ctx?: ExecutionContext) {
         const html = getMagicLinkEmailHtml({ subject, magicLinkUrl: url });
         const text = getMagicLinkEmailText({ magicLinkUrl: url });
 
-        await queueEmail(env, { to: email, subject, html, text });
+        await queueEmail(env.EMAIL_QUEUE, { to: email, subject, html, text });
       },
       expiresIn: 60 * MAGIC_LINK_EXPIRY_MINUTES,
     }),
@@ -255,9 +254,7 @@ export function createAuth(env: Env, ctx?: ExecutionContext) {
   // - team: $29/month, $290/year
   // - unlimited_team: $59/month, $590/year
   if (env.STRIPE_SECRET_KEY && env.STRIPE_WEBHOOK_SECRET_AUTH) {
-    const stripeClient = new Stripe(env.STRIPE_SECRET_KEY, {
-      apiVersion: STRIPE_API_VERSION,
-    });
+    const stripeClient = createStripeClient(env.STRIPE_SECRET_KEY);
 
     plugins.push(
       stripe({
@@ -495,7 +492,7 @@ export function createAuth(env: Env, ctx?: ExecutionContext) {
         const html = getPasswordResetEmailHtml({ name, subject, resetUrl: url });
         const text = getPasswordResetEmailText({ name, resetUrl: url });
 
-        await queueEmail(env, { to: user.email, subject, html, text });
+        await queueEmail(env.EMAIL_QUEUE, { to: user.email, subject, html, text });
       },
     },
 
@@ -533,7 +530,7 @@ export function createAuth(env: Env, ctx?: ExecutionContext) {
         const html = getVerificationEmailHtml({ name, subject, verificationUrl: url });
         const text = getVerificationEmailText({ name, verificationUrl: url });
 
-        await queueEmail(env, { to: user.email, subject, html, text });
+        await queueEmail(env.EMAIL_QUEUE, { to: user.email, subject, html, text });
       },
     },
 

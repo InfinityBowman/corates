@@ -12,11 +12,7 @@ import {
   type DomainKey,
   type ROB2Domain,
 } from './schema.js';
-import {
-  scoreRob2Domain,
-  scoreAllDomains,
-  type ChecklistState,
-} from './scoring.js';
+import { scoreRob2Domain, scoreAllDomains, type ChecklistState } from './scoring.js';
 import type { ROB2Checklist, ROB2DomainState } from '../types.js';
 
 // Re-export ROB2Checklist for convenience
@@ -90,7 +86,6 @@ export interface ComparisonResult {
   overall: OverallComparison;
   stats: ComparisonStats;
 }
-
 
 // ============================================================================
 // Preliminary Section Comparison
@@ -296,11 +291,7 @@ export function compareChecklists(
   // Compare each active domain
   const domains: Record<string, DomainComparison> = {};
   for (const domainKey of activeDomains) {
-    domains[domainKey] = compareDomain(
-      domainKey,
-      checklist1[domainKey],
-      checklist2[domainKey],
-    );
+    domains[domainKey] = compareDomain(domainKey, checklist1[domainKey], checklist2[domainKey]);
   }
 
   // Compare overall

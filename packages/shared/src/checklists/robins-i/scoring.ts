@@ -23,7 +23,12 @@ export {
   scoreDomain6,
 } from './scoring-domains.js';
 
-import { type DomainAnswers, type Judgement, type ScoringResult, JUDGEMENTS } from './scoring-helpers.js';
+import {
+  type DomainAnswers,
+  type Judgement,
+  type ScoringResult,
+  JUDGEMENTS,
+} from './scoring-helpers.js';
 import {
   scoreDomain1A,
   scoreDomain1B,

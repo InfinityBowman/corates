@@ -9,11 +9,7 @@
 
 import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import { showToast } from '@/components/ui/toast';
-import type {
-  ErasedAdapter,
-  ReconciliationNavItem,
-  ReconciliationSummaryStats,
-} from './types';
+import type { ErasedAdapter, ReconciliationNavItem, ReconciliationSummaryStats } from './types';
 import type { TextRef } from '@/primitives/useProject/checklists';
 
 interface UseReconciliationEngineOptions {

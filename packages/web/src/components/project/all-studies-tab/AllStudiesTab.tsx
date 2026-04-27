@@ -202,7 +202,10 @@ export function AllStudiesTab() {
         }}
         study={editingStudy}
         projectId={projectId}
-        onSave={(studyId: string, updates: { reviewer1: string | null; reviewer2: string | null }) => {
+        onSave={(
+          studyId: string,
+          updates: { reviewer1: string | null; reviewer2: string | null },
+        ) => {
           project.study.update(studyId, updates);
         }}
       />

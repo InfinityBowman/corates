@@ -6,7 +6,7 @@
  */
 
 import { describe, expect, it, vi, beforeEach } from 'vitest';
-import type { EmailPayload } from '../email-queue.js';
+import type { EmailPayload } from '@corates/shared/email';
 
 vi.mock('postmark', () => ({
   Client: class {
@@ -140,22 +140,24 @@ describe('Email Queue Consumer', () => {
 
 describe('Email Queue Producer', () => {
   it('should reject payloads missing required fields', async () => {
-    const { queueEmail } = await import('../email-queue.js');
+    const { queueEmail } = await import('@corates/shared/email');
     const mockEnv = { EMAIL_QUEUE: { send: vi.fn() } } as any;
 
     await expect(
-      queueEmail(mockEnv, { to: '', subject: 'Hi', html: '<p>Hi</p>' }),
+      queueEmail(mockEnv.EMAIL_QUEUE, { to: '', subject: 'Hi', html: '<p>Hi</p>' }),
     ).rejects.toThrow();
     await expect(
-      queueEmail(mockEnv, { to: 'a@b.com', subject: '', html: '<p>Hi</p>' }),
+      queueEmail(mockEnv.EMAIL_QUEUE, { to: 'a@b.com', subject: '', html: '<p>Hi</p>' }),
     ).rejects.toThrow();
-    await expect(queueEmail(mockEnv, { to: 'a@b.com', subject: 'Hi' } as any)).rejects.toThrow();
+    await expect(
+      queueEmail(mockEnv.EMAIL_QUEUE, { to: 'a@b.com', subject: 'Hi' } as any),
+    ).rejects.toThrow();
   });
 
   it('should queue emails and process them all through the consumer', async () => {
     mockSendEmail.mockClear();
     mockSendEmail.mockResolvedValue({ success: true, id: 'mock-id' });
-    const { queueEmail } = await import('../email-queue.js');
+    const { queueEmail } = await import('@corates/shared/email');
 
     const queued: EmailPayload[] = [];
     const mockSend = vi.fn(async (payload: EmailPayload) => {
@@ -163,7 +165,9 @@ describe('Email Queue Producer', () => {
     });
     const mockEnv = { EMAIL_QUEUE: { send: mockSend } } as any;
 
-    await Promise.all(Array.from({ length: 50 }, (_, i) => queueEmail(mockEnv, makePayload(i))));
+    await Promise.all(
+      Array.from({ length: 50 }, (_, i) => queueEmail(mockEnv.EMAIL_QUEUE, makePayload(i))),
+    );
     expect(queued).toHaveLength(50);
 
     const mod = await import('../../queue.js');

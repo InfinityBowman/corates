@@ -12,7 +12,7 @@
  */
 import { eq } from 'drizzle-orm';
 import { subscription } from '@corates/db/schema';
-import { createStripeClient } from '../../lib/stripe.js';
+import { createStripeClient } from '@corates/shared/stripe';
 import type { createDb } from '@corates/db/client';
 import type { Env } from '../../types';
 
@@ -41,7 +41,7 @@ export async function syncStripeSubscription(
   db: Database,
   customerId: string,
 ): Promise<SyncStripeSubscriptionResult> {
-  const stripe = createStripeClient(env);
+  const stripe = createStripeClient(env.STRIPE_SECRET_KEY);
 
   const list = await stripe.subscriptions.list({
     customer: customerId,

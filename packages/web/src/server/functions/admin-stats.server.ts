@@ -11,7 +11,7 @@ import { count, gte, sql } from 'drizzle-orm';
 import { createDomainError, AUTH_ERRORS } from '@corates/shared';
 import { isAdminUser } from '@corates/workers/auth-admin';
 import { TIME_DURATIONS } from '@corates/workers/constants';
-import { createStripeClient } from '@corates/workers/stripe';
+import { createStripeClient } from '@corates/shared/stripe';
 import { fillMissingDays } from '@/server/lib/fillMissingDays';
 import type { Session } from '@/server/middleware/auth';
 
@@ -200,7 +200,7 @@ export async function getAdminWebhookStats(
 export async function getAdminSubscriptionStats(session: Session) {
   assertAdmin(session);
 
-  const stripe = createStripeClient(env);
+  const stripe = createStripeClient(env.STRIPE_SECRET_KEY);
   const statusCounts = await Promise.all([
     stripe.subscriptions.search({ query: 'status:"active"', limit: 100 }),
     stripe.subscriptions.search({ query: 'status:"trialing"', limit: 100 }),
@@ -221,7 +221,7 @@ export async function getAdminRevenueStats(session: Session, params: { months?: 
   assertAdmin(session);
   const months = Math.min(params.months ?? 6, 12);
 
-  const stripe = createStripeClient(env);
+  const stripe = createStripeClient(env.STRIPE_SECRET_KEY);
 
   const startDate = new Date();
   startDate.setMonth(startDate.getMonth() - months);

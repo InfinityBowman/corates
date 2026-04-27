@@ -218,7 +218,12 @@ function handleTwoColChange(
 }
 
 /** Helper: three-column with Yes/Partial Yes/No radio */
-function handleThreeColChange(checklist: AMSTAR2ChecklistType, qKey: string, colIdx: number, optIdx: number) {
+function handleThreeColChange(
+  checklist: AMSTAR2ChecklistType,
+  qKey: string,
+  colIdx: number,
+  optIdx: number,
+) {
   const state = checklist[qKey] as AMSTAR2QuestionAnswer;
   const newAnswers = state.answers.map((arr: boolean[]) => [...arr]);
   newAnswers[colIdx][optIdx] = !state.answers[colIdx][optIdx];
@@ -272,7 +277,11 @@ function handleTwoColThreeRadioChange(
 interface QuestionConfig {
   qKey: string;
   schema: AMSTAR2QuestionSchema;
-  handler: (_checklist: AMSTAR2ChecklistType, _colIdx: number, _optIdx: number) => AMSTAR2QuestionAnswer;
+  handler: (
+    _checklist: AMSTAR2ChecklistType,
+    _colIdx: number,
+    _optIdx: number,
+  ) => AMSTAR2QuestionAnswer;
   width?: string;
 }
 

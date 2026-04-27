@@ -15,7 +15,11 @@ import type {
 } from '../engine/types';
 import type { TextRef } from '@/primitives/useProject/checklists';
 import { assertNever } from '@corates/shared';
-import type { ROB2Checklist, ROB2DomainState, ROB2QuestionAnswer } from '@corates/shared/checklists';
+import type {
+  ROB2Checklist,
+  ROB2DomainState,
+  ROB2QuestionAnswer,
+} from '@corates/shared/checklists';
 import {
   compareChecklists,
   hasAimMismatch,
@@ -309,11 +313,7 @@ function renderPage(
         reviewer1Name={context.reviewer1Name}
         reviewer2Name={context.reviewer2Name}
         isAgreement={context.isAgreement}
-        isAimMismatch={
-          currentItem.key === 'aim' &&
-          hasAimMismatch(c1, c2) &&
-          !fa?.preliminary?.aim
-        }
+        isAimMismatch={currentItem.key === 'aim' && hasAimMismatch(c1, c2) && !fa?.preliminary?.aim}
         onFinalChange={(value: unknown) =>
           updatePreliminaryField(context.updateChecklistAnswer, currentItem.key, value)
         }

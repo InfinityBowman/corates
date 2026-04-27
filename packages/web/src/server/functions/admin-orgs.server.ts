@@ -23,7 +23,7 @@ import {
   updateGrantExpiresAt,
 } from '@corates/db/org-access-grants';
 import { getLedgerEntriesByOrgId, LedgerStatus } from '@corates/db/stripe-event-ledger';
-import { createStripeClient } from '@corates/workers/stripe';
+import { createStripeClient } from '@corates/shared/stripe';
 import { notifyOrgMembers, EventTypes } from '@corates/workers/notify';
 import type { Session } from '@/server/middleware/auth';
 
@@ -437,7 +437,7 @@ export async function reconcileAdminOrgBilling(
   let stripeComparison: Record<string, string | boolean | null> | null = null;
   if (checkStripe && env.STRIPE_SECRET_KEY) {
     try {
-      const stripe = createStripeClient(env);
+      const stripe = createStripeClient(env.STRIPE_SECRET_KEY);
       const activeSubscription = allSubscriptions.find(
         sub => sub.status === 'active' || sub.status === 'trialing',
       );

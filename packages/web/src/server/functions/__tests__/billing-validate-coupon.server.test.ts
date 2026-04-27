@@ -6,7 +6,7 @@ import { validateCoupon } from '@/server/functions/billing.server';
 const promoCodesListMock = vi.fn();
 let stripeConfigured = true;
 
-vi.mock('@corates/workers/stripe', () => ({
+vi.mock('@corates/shared/stripe', () => ({
   isStripeConfigured: () => stripeConfigured,
   createStripeClient: () => ({
     promotionCodes: { list: (...args: unknown[]) => promoCodesListMock(...args) },

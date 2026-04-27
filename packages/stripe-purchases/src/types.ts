@@ -1,4 +1,4 @@
-import type { EmailPayload } from './lib/email-queue';
+import type { EmailPayload } from '@corates/shared/email';
 
 export interface Env {
   ENVIRONMENT: 'development' | 'production';

@@ -82,10 +82,8 @@ export function ReconciliationEngine({
     updateChecklistAnswer,
     setTextValue,
     onSaveReconciled,
-    checklist1Id:
-      (checklist1 as { id?: string } | null | undefined)?.id ?? null,
-    checklist2Id:
-      (checklist2 as { id?: string } | null | undefined)?.id ?? null,
+    checklist1Id: (checklist1 as { id?: string } | null | undefined)?.id ?? null,
+    checklist2Id: (checklist2 as { id?: string } | null | undefined)?.id ?? null,
   });
 
   // -----------------------------------------------------------------------

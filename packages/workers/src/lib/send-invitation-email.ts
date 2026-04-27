@@ -8,7 +8,7 @@
 
 import { createDomainError, SYSTEM_ERRORS } from '@corates/shared';
 import type { Env } from '../types';
-import { queueEmail } from './email-queue';
+import { queueEmail } from '@corates/shared/email';
 
 interface SendInvitationEmailParams {
   env: Env;
@@ -131,7 +131,7 @@ export async function sendInvitationEmail(
   const safeProjectName = sanitizeEmailSubject(projectName);
 
   try {
-    await queueEmail(env, {
+    await queueEmail(env.EMAIL_QUEUE, {
       to: email,
       subject: `You're Invited to "${safeProjectName}" - CoRATES`,
       html: emailHtml,

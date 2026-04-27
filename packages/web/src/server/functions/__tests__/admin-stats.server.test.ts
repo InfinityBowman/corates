@@ -22,7 +22,7 @@ import {
 const subscriptionsSearchMock = vi.fn();
 const invoicesListMock = vi.fn();
 
-vi.mock('@corates/workers/stripe', () => ({
+vi.mock('@corates/shared/stripe', () => ({
   createStripeClient: () => ({
     subscriptions: { search: (...args: unknown[]) => subscriptionsSearchMock(...args) },
     invoices: { list: (...args: unknown[]) => invoicesListMock(...args) },

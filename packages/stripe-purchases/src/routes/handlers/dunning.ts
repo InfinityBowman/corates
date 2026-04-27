@@ -96,8 +96,8 @@ export async function queueDunningEmail(
   };
 
   try {
-    const { queueEmail } = await import('../../lib/email-queue');
-    await queueEmail(env, emailPayload);
+    const { queueEmail } = await import('@corates/shared/email');
+    await queueEmail(env.EMAIL_QUEUE, emailPayload);
 
     logger.stripe('dunning_email_queued', {
       subscriptionId,

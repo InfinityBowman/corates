@@ -69,6 +69,9 @@ importers:
 
   packages/shared:
     dependencies:
+      stripe:
+        specifier: ^20.4.1
+        version: 20.4.1(@types/node@25.6.0)
       zod:
         specifier: ^4.3.6
         version: 4.3.6
@@ -399,9 +402,6 @@ importers:
       postmark:
         specifier: ^4.0.7
         version: 4.0.7
-      stripe:
-        specifier: ^20.4.1
-        version: 20.4.1(@types/node@25.6.0)
       y-protocols:
         specifier: ^1.0.7
         version: 1.0.7(yjs@13.6.30)

@@ -12,7 +12,11 @@ interface EditPdfMetadataModalProps {
   onOpenChange: (open: boolean) => void;
   pdf: PdfEntry | null;
   studyId: string;
-  onSave: (studyId: string, pdfId: string, metadata: Record<string, unknown>) => Promise<void> | void;
+  onSave: (
+    studyId: string,
+    pdfId: string,
+    metadata: Record<string, unknown>,
+  ) => Promise<void> | void;
 }
 
 export function EditPdfMetadataModal({

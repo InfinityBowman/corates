@@ -39,6 +39,14 @@
     "./ids": {
       "types": "./dist/ids.d.ts",
       "import": "./dist/ids.js"
+    },
+    "./stripe": {
+      "types": "./dist/stripe.d.ts",
+      "import": "./dist/stripe.js"
+    },
+    "./email": {
+      "types": "./dist/email.d.ts",
+      "import": "./dist/email.js"
     }
   },
   "scripts": {
@@ -55,6 +63,7 @@
     "vitest": "^4.1.5"
   },
   "dependencies": {
+    "stripe": "^20.4.1",
     "zod": "^4.3.6"
   }
 }

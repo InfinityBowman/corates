@@ -7,7 +7,7 @@ import {
   getOrgResourceUsage,
   validatePlanChange,
 } from '@corates/workers/billing-resolver';
-import { createStripeClient, isStripeConfigured } from '@corates/workers/stripe';
+import { createStripeClient, isStripeConfigured } from '@corates/shared/stripe';
 import { createAuth } from '@corates/workers/auth-config';
 import {
   createSingleProjectCheckout as createSPCheckoutCmd,
@@ -142,7 +142,7 @@ export async function validateCoupon(code: string) {
   }
 
   try {
-    const stripe = createStripeClient(env);
+    const stripe = createStripeClient(env.STRIPE_SECRET_KEY);
     const promoCodes = await stripe.promotionCodes.list({ code, active: true, limit: 1 });
 
     if (promoCodes.data.length === 0) {
@@ -336,7 +336,7 @@ export async function fetchInvoices(db: Database, session: Session): Promise<Inv
     return { invoices: [] };
   }
 
-  const stripe = createStripeClient(env);
+  const stripe = createStripeClient(env.STRIPE_SECRET_KEY);
   const stripeInvoices = await stripe.invoices.list({
     customer: orgSubscription.stripeCustomerId,
     limit: 10,

@@ -6,7 +6,13 @@
  */
 
 import { JUDGEMENTS } from './schema.js';
-import { isYesPY, isNoPPN, isNoPPNNI, type ScoringResult, type DomainAnswers } from './scoring-helpers.js';
+import {
+  isYesPY,
+  isNoPPN,
+  isNoPPNNI,
+  type ScoringResult,
+  type DomainAnswers,
+} from './scoring-helpers.js';
 
 /**
  * Score Domain 1 (Bias arising from the randomization process)

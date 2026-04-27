@@ -210,7 +210,12 @@ function resetAllAnswers(updateChecklistAnswer: (sectionKey: string, data: unkno
 // ---------------------------------------------------------------------------
 
 function renderPage(
-  context: EngineContext<ROBINSIChecklist, ROBINSIChecklist, ComparisonResult | null, RobinsINavItem>,
+  context: EngineContext<
+    ROBINSIChecklist,
+    ROBINSIChecklist,
+    ComparisonResult | null,
+    RobinsINavItem
+  >,
 ) {
   const {
     currentItem,

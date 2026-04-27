@@ -4,7 +4,7 @@ import { organization, subscription, user } from '@corates/db/schema';
 import { eq } from 'drizzle-orm';
 import { createDomainError, AUTH_ERRORS, SYSTEM_ERRORS } from '@corates/shared';
 import { isAdminUser } from '@corates/workers/auth-admin';
-import { createStripeClient } from '@corates/workers/stripe';
+import { createStripeClient } from '@corates/shared/stripe';
 import type Stripe from 'stripe';
 import type { Session } from '@/server/middleware/auth';
 
@@ -23,7 +23,7 @@ function requireStripe() {
       { status: 500 },
     );
   }
-  return createStripeClient(env);
+  return createStripeClient(env.STRIPE_SECRET_KEY);
 }
 
 export async function lookupAdminStripeCustomer(

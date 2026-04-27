@@ -23,7 +23,7 @@ import {
 } from '@/server/functions/admin-billing.server';
 
 const stripeRetrieveMock = vi.fn();
-vi.mock('@corates/workers/stripe', () => ({
+vi.mock('@corates/shared/stripe', () => ({
   createStripeClient: () => ({
     subscriptions: { retrieve: (...args: unknown[]) => stripeRetrieveMock(...args) },
   }),

@@ -28,7 +28,7 @@ import type { ContentfulStatusCode } from 'hono/utils/http-status';
 import type Stripe from 'stripe';
 import { createDomainError, SYSTEM_ERRORS, AUTH_ERRORS, VALIDATION_ERRORS } from '@corates/shared';
 import { createDb } from '@corates/db/client';
-import { createStripeClient, isStripeConfigured } from '../lib/stripe';
+import { createStripeClient, isStripeConfigured } from '@corates/shared/stripe';
 import { createLogger, sha256, truncateError } from '../lib/observability/logger';
 import {
   insertLedgerEntry,
@@ -74,7 +74,7 @@ webhookRoutes.post('/purchases/webhook', async c => {
       return c.json(error, error.statusCode as ContentfulStatusCode);
     }
 
-    const stripe = createStripeClient(c.env);
+    const stripe = createStripeClient(c.env.STRIPE_SECRET_KEY);
 
     // Phase 1: Read request and store trust-minimal fields
     const signature = c.req.header('stripe-signature');

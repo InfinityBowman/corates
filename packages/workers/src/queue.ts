@@ -4,7 +4,7 @@
  * Workers `queue()` handler.
  */
 import { createEmailService } from './auth/email';
-import type { EmailPayload } from './lib/email-queue';
+import type { EmailPayload } from '@corates/shared/email';
 import type { Env } from './types';
 
 export async function handleEmailQueue(batch: MessageBatch<unknown>, env: Env): Promise<void> {
