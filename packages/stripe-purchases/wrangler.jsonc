@@ -30,8 +30,7 @@
   },
 
   "vars": {
-    "ENVIRONMENT": "development",
-    "SENTRY_DSN": "https://3ddf61abb06680bffc1ebc7f540f05de@o4510738063818752.ingest.us.sentry.io/4510738126274560"
+    "ENVIRONMENT": "development"
   },
 
   "observability": {
