@@ -113,7 +113,7 @@ export async function sendInvitationEmail(
 
   const { getProjectInvitationEmailHtml, getProjectInvitationEmailText } =
     await import('../auth/emailTemplates.js');
-  const { sanitizeEmailSubject } = await import('./escapeHtml.js');
+  const { sanitizeEmailSubject } = await import('@corates/shared/html');
 
   const emailHtml = getProjectInvitationEmailHtml({
     projectName,

@@ -12,6 +12,7 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { env } from 'cloudflare:workers';
 import { createAuth } from '@corates/workers/auth-config';
+import { sha256, truncateError } from '@corates/shared/crypto';
 import type { Database } from '@corates/db/client';
 import {
   insertLedgerEntry,
@@ -48,28 +49,6 @@ type HandlerArgs = {
 
 const ROUTE = '/api/auth/stripe/webhook';
 
-async function sha256(input: string): Promise<string> {
-  const buf = new TextEncoder().encode(input);
-  const hash = await crypto.subtle.digest('SHA-256', buf);
-  return Array.from(new Uint8Array(hash))
-    .map(b => b.toString(16).padStart(2, '0'))
-    .join('');
-}
-
-function truncate(value: unknown, max = 500): string | null {
-  if (value === null || value === undefined) return null;
-  let s: string;
-  if (value instanceof Error) s = value.message;
-  else if (typeof value === 'string') s = value;
-  else {
-    try {
-      s = JSON.stringify(value);
-    } catch {
-      s = String(value);
-    }
-  }
-  return s.length > max ? s.slice(0, max) + '...[truncated]' : s;
-}
 
 export const handlePost = async ({ request, context }: HandlerArgs) => {
   const { db } = context;
@@ -92,12 +71,12 @@ export const handlePost = async ({ request, context }: HandlerArgs) => {
         route: ROUTE,
         requestId,
         status: LedgerStatus.IGNORED_UNVERIFIED,
-        error: truncate(bodyError as Error),
+        error: truncateError(bodyError as Error),
         httpStatus: 400,
       });
       console.error('[stripe-webhook] body unreadable', {
         requestId,
-        error: truncate(bodyError as Error),
+        error: truncateError(bodyError as Error),
       });
       return Response.json({ error: 'Body unreadable' }, { status: 400 });
     }
@@ -259,7 +238,7 @@ export const handlePost = async ({ request, context }: HandlerArgs) => {
       let errorMessage = `HTTP ${httpStatus}`;
       try {
         const responseBody = await response.clone().text();
-        errorMessage = truncate(responseBody) ?? errorMessage;
+        errorMessage = truncateError(responseBody) ?? errorMessage;
       } catch {
         // ignore clone/read errors
       }
@@ -278,7 +257,7 @@ export const handlePost = async ({ request, context }: HandlerArgs) => {
 
     return response;
   } catch (error) {
-    const truncated = truncate(error as Error);
+    const truncated = truncateError(error as Error);
     console.error('[stripe-webhook] handler error', { requestId, ledgerId, error: truncated });
 
     if (ledgerId) {

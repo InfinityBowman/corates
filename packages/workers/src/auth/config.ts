@@ -256,6 +256,22 @@ export function createAuth(env: Env, ctx?: ExecutionContext) {
   if (env.STRIPE_SECRET_KEY && env.STRIPE_WEBHOOK_SECRET_AUTH) {
     const stripeClient = createStripeClient(env.STRIPE_SECRET_KEY);
 
+    const requiredPriceIds = {
+      STRIPE_PRICE_ID_STARTER_TEAM_MONTHLY: env.STRIPE_PRICE_ID_STARTER_TEAM_MONTHLY,
+      STRIPE_PRICE_ID_STARTER_TEAM_YEARLY: env.STRIPE_PRICE_ID_STARTER_TEAM_YEARLY,
+      STRIPE_PRICE_ID_TEAM_MONTHLY: env.STRIPE_PRICE_ID_TEAM_MONTHLY,
+      STRIPE_PRICE_ID_TEAM_YEARLY: env.STRIPE_PRICE_ID_TEAM_YEARLY,
+      STRIPE_PRICE_ID_UNLIMITED_TEAM_MONTHLY: env.STRIPE_PRICE_ID_UNLIMITED_TEAM_MONTHLY,
+      STRIPE_PRICE_ID_UNLIMITED_TEAM_YEARLY: env.STRIPE_PRICE_ID_UNLIMITED_TEAM_YEARLY,
+    } as const;
+
+    const missing = Object.entries(requiredPriceIds)
+      .filter(([, v]) => !v)
+      .map(([k]) => k);
+    if (missing.length > 0) {
+      throw new Error(`Stripe is configured but missing price IDs: ${missing.join(', ')}`);
+    }
+
     plugins.push(
       stripe({
         stripeClient,
@@ -266,20 +282,18 @@ export function createAuth(env: Env, ctx?: ExecutionContext) {
           plans: [
             {
               name: 'starter_team',
-              priceId: env.STRIPE_PRICE_ID_STARTER_TEAM_MONTHLY || 'price_starter_team_monthly',
-              annualDiscountPriceId:
-                env.STRIPE_PRICE_ID_STARTER_TEAM_YEARLY || 'price_starter_team_yearly',
+              priceId: requiredPriceIds.STRIPE_PRICE_ID_STARTER_TEAM_MONTHLY,
+              annualDiscountPriceId: requiredPriceIds.STRIPE_PRICE_ID_STARTER_TEAM_YEARLY,
             },
             {
               name: 'team',
-              priceId: env.STRIPE_PRICE_ID_TEAM_MONTHLY || 'price_team_monthly',
-              annualDiscountPriceId: env.STRIPE_PRICE_ID_TEAM_YEARLY || 'price_team_yearly',
+              priceId: requiredPriceIds.STRIPE_PRICE_ID_TEAM_MONTHLY,
+              annualDiscountPriceId: requiredPriceIds.STRIPE_PRICE_ID_TEAM_YEARLY,
             },
             {
               name: 'unlimited_team',
-              priceId: env.STRIPE_PRICE_ID_UNLIMITED_TEAM_MONTHLY || 'price_unlimited_team_monthly',
-              annualDiscountPriceId:
-                env.STRIPE_PRICE_ID_UNLIMITED_TEAM_YEARLY || 'price_unlimited_team_yearly',
+              priceId: requiredPriceIds.STRIPE_PRICE_ID_UNLIMITED_TEAM_MONTHLY,
+              annualDiscountPriceId: requiredPriceIds.STRIPE_PRICE_ID_UNLIMITED_TEAM_YEARLY,
             },
           ],
           // Real-time notifications for subscription changes

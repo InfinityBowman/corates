@@ -1,6 +1,6 @@
 import { env } from 'cloudflare:workers';
 import { createDomainError, SYSTEM_ERRORS } from '@corates/shared';
-import { escapeHtml } from '@/server/escapeHtml';
+import { escapeHtml } from '@corates/shared/html';
 import { checkRateLimit, CONTACT_RATE_LIMIT } from '@/server/rateLimit';
 
 interface ContactData {

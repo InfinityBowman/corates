@@ -47,6 +47,14 @@
     "./email": {
       "types": "./dist/email.d.ts",
       "import": "./dist/email.js"
+    },
+    "./html": {
+      "types": "./dist/html.d.ts",
+      "import": "./dist/html.js"
+    },
+    "./crypto": {
+      "types": "./dist/crypto.d.ts",
+      "import": "./dist/crypto.js"
     }
   },
   "scripts": {

@@ -1,5 +1,6 @@
 import type { Context } from 'hono';
 import type { Env } from '../../types';
+import { truncateError } from '@corates/shared/crypto';
 
 const LogLevel = {
   DEBUG: 'debug',
@@ -205,39 +206,6 @@ function getOrCreateRequestId(c?: Context): string {
   }
 
   return crypto.randomUUID();
-}
-
-export function truncateError(
-  error: Error | string | object | null | undefined,
-  maxLength: number = 500,
-): string | null {
-  if (!error) return null;
-
-  let errorStr: string;
-  if (error instanceof Error) {
-    errorStr = error.message;
-  } else if (typeof error === 'string') {
-    errorStr = error;
-  } else {
-    try {
-      errorStr = JSON.stringify(error);
-    } catch {
-      errorStr = String(error);
-    }
-  }
-
-  if (errorStr.length > maxLength) {
-    return errorStr.slice(0, maxLength) + '...[truncated]';
-  }
-  return errorStr;
-}
-
-export async function sha256(data: string): Promise<string> {
-  const encoder = new TextEncoder();
-  const dataBuffer = encoder.encode(data);
-  const hashBuffer = await crypto.subtle.digest('SHA-256', dataBuffer);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
 interface TimingResult<T> {
