@@ -9,11 +9,13 @@ import { loginAs, type DualReviewerScenario } from './helpers';
 /** Click every radio on the AMSTAR2 checklist editor matching the given answer (e.g. "Yes", "No"). */
 export async function answerAllAMSTAR2(page: Page, answer: 'Yes' | 'No' | 'Partial Yes') {
   const radios = page.getByRole('radio', { name: answer });
+  // Form renders async after the loading gate clears; wait for radios to appear.
+  await expect(radios.first()).toBeVisible({ timeout: 10_000 });
   const count = await radios.count();
   for (let i = 0; i < count; i++) {
     await radios.nth(i).click();
+    await expect(radios.nth(i)).toBeChecked({ timeout: 5_000 });
   }
-  await page.waitForTimeout(1000);
 }
 
 /** Fill the ROB2 preliminary section: study design, aim, interventions, numerical result. */

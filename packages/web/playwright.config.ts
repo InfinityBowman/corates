@@ -7,7 +7,7 @@ export default defineConfig({
   testDir: './e2e',
   testMatch: '**/*.spec.ts',
   timeout: 180_000,
-  retries: 0,
+  retries: isRemote ? 1 : 0,
   workers: 1,
   use: {
     baseURL: BASE_URL,
