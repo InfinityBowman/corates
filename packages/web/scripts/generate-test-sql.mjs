@@ -11,7 +11,7 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-const MIGRATIONS_DIR = join(__dirname, '..', '..', 'workers', 'migrations');
+const MIGRATIONS_DIR = join(__dirname, '..', 'migrations');
 const OUTPUT_DIR = join(__dirname, '..', 'src', '__tests__', 'server');
 const OUTPUT_FILE = join(OUTPUT_DIR, 'migration-sql.js');
 

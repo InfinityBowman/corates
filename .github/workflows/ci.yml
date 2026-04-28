@@ -93,13 +93,13 @@ jobs:
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: 2ab59c3eb44887bfa2bac00afd32290a
-        run: pnpm --filter @corates/workers db:migrate:staging
+        run: pnpm --filter web db:migrate:staging
 
       - name: Deploy web to staging
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
         working-directory: packages/web
-        run: wrangler deploy --env staging
+        run: wrangler deploy
 
       - name: Deploy stripe-purchases to staging
         env:
@@ -158,13 +158,13 @@ jobs:
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: 2ab59c3eb44887bfa2bac00afd32290a
-        run: pnpm --filter @corates/workers db:migrate:prod
+        run: pnpm --filter web db:migrate:prod
 
       - name: Deploy web to production
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
         working-directory: packages/web
-        run: wrangler deploy --env production
+        run: wrangler deploy
 
       - name: Deploy stripe-purchases to production
         env:

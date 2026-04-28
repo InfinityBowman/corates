@@ -35,16 +35,11 @@
     { "tag": "v3", "deleted_classes": ["EmailQueue"] }
   ],
 
-  // Shared with packages/workers during the Phase 2 "build alongside" window.
-  // Schema migrations still live in packages/workers/migrations; we point at
-  // them so `wrangler d1 migrations apply` from this package keeps web's local
-  // D1 state in sync for smoke testing.
   "d1_databases": [
     {
       "binding": "DB",
       "database_name": "corates-db",
-      "database_id": "7ac6d425-2a7c-4087-9f42-0cd1a2ab367b",
-      "migrations_dir": "../workers/migrations"
+      "database_id": "7ac6d425-2a7c-4087-9f42-0cd1a2ab367b"
     }
   ],
 

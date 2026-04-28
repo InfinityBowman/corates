@@ -1,4 +1,5 @@
 {
+  "account_id": "2ab59c3eb44887bfa2bac00afd32290a",
   "name": "corates-stripe-purchases",
   "main": "src/index.ts",
   "compatibility_date": "2025-12-01",
