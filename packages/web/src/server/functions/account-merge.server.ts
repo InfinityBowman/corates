@@ -20,11 +20,7 @@ import {
   getAccountMergeEmailHtml,
   getAccountMergeEmailText,
 } from '@corates/workers/email-templates';
-import {
-  checkRateLimit,
-  MERGE_INITIATE_RATE_LIMIT,
-  MERGE_VERIFY_RATE_LIMIT,
-} from '@/server/rateLimit';
+
 import type { Session } from '@/server/middleware/auth';
 
 function generateCode(): string {
@@ -60,7 +56,7 @@ export interface InitiateResult {
 export async function initiateMergeRequest(
   db: Database,
   session: Session,
-  request: Request,
+  _request: Request,
   data: { targetEmail?: string; targetOrcidId?: string },
 ): Promise<InitiateResult> {
   const currentUser = session.user;
@@ -95,7 +91,6 @@ export async function initiateMergeRequest(
   let targetUser: { id: string; email: string; name: string | null } | null = null;
   let targetOrcidAccount: { accountId: string; userId: string } | null = null;
   let lookupMethod = 'email';
-  let rateIdentifier: string;
 
   if (hasEmail) {
     const normalizedEmail = targetEmail!.trim().toLowerCase();
@@ -111,10 +106,6 @@ export async function initiateMergeRequest(
         { status: 400 },
       );
     }
-
-    rateIdentifier = `${currentUser.id}:${normalizedEmail}`;
-    const rate = checkRateLimit(request, env, MERGE_INITIATE_RATE_LIMIT, rateIdentifier);
-    if (rate.blocked) throw rate.blocked;
 
     targetUser =
       (await db
@@ -137,10 +128,6 @@ export async function initiateMergeRequest(
         { status: 400 },
       );
     }
-
-    rateIdentifier = `${currentUser.id}:${normalizedOrcid}`;
-    const rate = checkRateLimit(request, env, MERGE_INITIATE_RATE_LIMIT, rateIdentifier);
-    if (rate.blocked) throw rate.blocked;
 
     targetOrcidAccount =
       (await db
@@ -287,15 +274,14 @@ export interface VerifyResult {
 export async function verifyMerge(
   db: Database,
   session: Session,
-  request: Request,
+  _request: Request,
   data: { mergeToken: string; code: string },
 ): Promise<VerifyResult> {
   const currentUser = session.user;
   const { mergeToken, code } = data;
   const trimmedCode = code.trim();
 
-  const rate = checkRateLimit(request, env, MERGE_VERIFY_RATE_LIMIT, mergeToken);
-  if (rate.blocked) throw rate.blocked;
+
 
   const mergeRequests = await db
     .select()

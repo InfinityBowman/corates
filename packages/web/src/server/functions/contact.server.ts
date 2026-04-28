@@ -1,7 +1,6 @@
 import { env } from 'cloudflare:workers';
 import { createDomainError, SYSTEM_ERRORS } from '@corates/shared';
 import { escapeHtml } from '@corates/shared/html';
-import { checkRateLimit, CONTACT_RATE_LIMIT } from '@/server/rateLimit';
 
 interface ContactData {
   name: string;
@@ -11,12 +10,9 @@ interface ContactData {
 }
 
 export async function sendContactEmail(
-  request: Request,
+  _request: Request,
   data: ContactData,
 ): Promise<{ success: true; messageId: string }> {
-  const rate = checkRateLimit(request, env, CONTACT_RATE_LIMIT);
-  if (rate.blocked) throw rate.blocked;
-
   const { name, email, subject, message } = data;
   const contactEmail =
     (env as unknown as Record<string, string | undefined>).CONTACT_EMAIL ?? 'contact@corates.org';

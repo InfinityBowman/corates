@@ -20,11 +20,7 @@ import { and, count, desc, eq, or } from 'drizzle-orm';
 import { getPlan, getGrantPlan, DEFAULT_PLAN, type GrantType } from '@corates/shared/plans';
 import { createDomainError, AUTH_ERRORS, VALIDATION_ERRORS } from '@corates/shared';
 import { resolveOrgId, resolveOrgIdWithRole } from '@/server/billing-context';
-import {
-  BILLING_CHECKOUT_RATE_LIMIT,
-  BILLING_PORTAL_RATE_LIMIT,
-  checkRateLimit,
-} from '@/server/rateLimit';
+
 import type { Session } from '@/server/middleware/auth';
 
 export async function fetchUsage(db: Database, session: Session) {
@@ -224,8 +220,7 @@ export async function createCheckout(
   tier: string,
   interval: 'monthly' | 'yearly',
 ) {
-  const limit = checkRateLimit(request, env, BILLING_CHECKOUT_RATE_LIMIT);
-  if (limit.blocked) throw limit.blocked;
+
 
   const { orgId, role } = await resolveOrgIdWithRole({
     db,
@@ -368,9 +363,6 @@ interface PortalApi {
 }
 
 export async function createPortalSession(db: Database, session: Session, request: Request) {
-  const limit = checkRateLimit(request, env, BILLING_PORTAL_RATE_LIMIT);
-  if (limit.blocked) throw limit.blocked;
-
   const { orgId, role } = await resolveOrgIdWithRole({
     db,
     session: session.session,
@@ -391,9 +383,8 @@ export async function createPortalSession(db: Database, session: Session, reques
 
 // --- Single-project checkout ---
 
-export async function createSPCheckout(db: Database, session: Session, request: Request) {
-  const limit = checkRateLimit(request, env, BILLING_CHECKOUT_RATE_LIMIT);
-  if (limit.blocked) throw limit.blocked;
+export async function createSPCheckout(db: Database, session: Session, _request: Request) {
+
 
   const { orgId, role } = await resolveOrgIdWithRole({
     db,

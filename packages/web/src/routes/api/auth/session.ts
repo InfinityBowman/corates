@@ -8,7 +8,6 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { env } from 'cloudflare:workers';
 import { createAuth } from '@corates/workers/auth-config';
-import { checkRateLimit, SESSION_RATE_LIMIT } from '@/server/rateLimit';
 
 type HandlerArgs = {
   request: Request;
@@ -16,24 +15,18 @@ type HandlerArgs = {
 };
 
 export const handleGet = async ({ request, context }: HandlerArgs) => {
-  const rate = checkRateLimit(request, env, SESSION_RATE_LIMIT);
-  if (rate.blocked) return rate.blocked;
-
   try {
     const auth = createAuth(env, context?.cloudflareCtx);
     const session = await auth.api.getSession({ headers: request.headers });
 
-    return Response.json(
-      {
-        user: session?.user ?? null,
-        session: session?.session ?? null,
-        sessionToken: session?.session?.id ?? null,
-      },
-      { headers: rate.headers },
-    );
+    return Response.json({
+      user: session?.user ?? null,
+      session: session?.session ?? null,
+      sessionToken: session?.session?.id ?? null,
+    });
   } catch (error) {
     console.error('Session fetch error:', error);
-    return Response.json({ user: null, session: null }, { headers: rate.headers });
+    return Response.json({ user: null, session: null });
   }
 };
 

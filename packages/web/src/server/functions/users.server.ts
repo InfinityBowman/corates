@@ -20,7 +20,7 @@ import {
   USER_ERRORS,
   VALIDATION_ERRORS,
 } from '@corates/shared';
-import { checkRateLimit, SEARCH_RATE_LIMIT } from '@/server/rateLimit';
+
 import type { Session } from '@/server/middleware/auth';
 
 export interface UserProject {
@@ -128,11 +128,10 @@ export async function fetchUserProjects(db: Database, session: Session, userId: 
 export async function searchUsers(
   db: Database,
   session: Session,
-  request: Request,
+  _request: Request,
   params: { q: string; projectId?: string; limit?: number },
 ) {
-  const rate = checkRateLimit(request, env, SEARCH_RATE_LIMIT);
-  if (rate.blocked) throw rate.blocked;
+
 
   if (!params.q || params.q.length < 2) {
     const error = createValidationError('q', VALIDATION_ERRORS.FIELD_TOO_SHORT.code, params.q);
