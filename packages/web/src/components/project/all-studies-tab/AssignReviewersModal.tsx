@@ -41,10 +41,12 @@ export function AssignReviewersModal({
   const studies = useProjectStore(s => selectStudies(s, projectId));
 
   // Get latest study data from store
+  /* eslint-disable react-hooks/preserve-manual-memoization -- conditional lookup by nullable id */
   const currentStudy = useMemo(
     () => (study?.id ? studies.find(s => s.id === study.id) : null),
     [study?.id, studies],
   );
+  /* eslint-enable react-hooks/preserve-manual-memoization */
 
   const memberItems = useMemo(
     () => [
@@ -59,6 +61,7 @@ export function AssignReviewersModal({
 
   // Reset form when modal opens or study changes
   useEffect(() => {
+    /* eslint-disable react-hooks/set-state-in-effect -- syncing form state from modal open/close */
     if (open && currentStudy) {
       setReviewer1(currentStudy.reviewer1 || '_unassigned');
       setReviewer2(currentStudy.reviewer2 || '_unassigned');
@@ -66,6 +69,7 @@ export function AssignReviewersModal({
       setReviewer1('_unassigned');
       setReviewer2('_unassigned');
     }
+    /* eslint-enable react-hooks/set-state-in-effect */
   }, [open, currentStudy]);
 
   const handleSave = useCallback(async () => {

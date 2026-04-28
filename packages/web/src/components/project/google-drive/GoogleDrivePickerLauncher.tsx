@@ -129,7 +129,7 @@ export function GoogleDrivePickerLauncher({
   // Check connection status on mount
   useEffect(() => {
     if (!active) return;
-    checkConnectionStatus();
+    checkConnectionStatus(); // eslint-disable-line react-hooks/set-state-in-effect -- triggers async status check
   }, [active, checkConnectionStatus]);
 
   const handleConnectGoogle = useCallback(async () => {

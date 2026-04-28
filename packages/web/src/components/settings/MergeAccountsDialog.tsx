@@ -68,6 +68,7 @@ export function MergeAccountsDialog({
 
   // Reset on open/close
   useEffect(() => {
+    /* eslint-disable react-hooks/set-state-in-effect -- resetting form on dialog open */
     if (open) {
       setStep(STEPS.PROMPT);
       setTargetEmail('');
@@ -78,6 +79,7 @@ export function MergeAccountsDialog({
       setError(null);
       setLoading(false);
     }
+    /* eslint-enable react-hooks/set-state-in-effect */
   }, [open]);
 
   const isOrcidConflict = useMemo(() => conflictProvider === 'orcid', [conflictProvider]);

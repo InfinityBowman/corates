@@ -123,7 +123,7 @@ export function ReconciliationWrapper({
   // Auto-select primary PDF when study loads
   useEffect(() => {
     if (defaultPdf && !selectedPdfId) {
-      setSelectedPdfId(defaultPdf.id);
+      setSelectedPdfId(defaultPdf.id); // eslint-disable-line react-hooks/set-state-in-effect -- one-time sync from derived data
     }
   }, [defaultPdf, selectedPdfId]);
 
@@ -132,7 +132,7 @@ export function ReconciliationWrapper({
     const fileName = currentPdf?.fileName;
     if (!fileName || !orgId || attemptedPdfFile === fileName || pdfLoading) return;
 
-    setAttemptedPdfFile(fileName);
+    setAttemptedPdfFile(fileName); // eslint-disable-line react-hooks/set-state-in-effect -- guards duplicate fetches
     setPdfLoading(true);
     setPdfData(null);
 
@@ -260,6 +260,7 @@ export function ReconciliationWrapper({
       return;
     }
 
+    /* eslint-disable react-hooks/set-state-in-effect -- one-time reconciled checklist initialization */
     setHasCheckedForReconciled(true);
     setReconciledChecklistLoading(true);
 
@@ -323,6 +324,7 @@ export function ReconciliationWrapper({
 
     setReconciledChecklistId(newChecklistId);
     setReconciledChecklistLoading(false);
+    /* eslint-enable react-hooks/set-state-in-effect */
   }, [
     currentStudy,
     connectionState.phase,
@@ -358,7 +360,7 @@ export function ReconciliationWrapper({
           checklist2Id,
           reconciledChecklistId: firstCreated.id,
         });
-        setReconciledChecklistId(firstCreated.id);
+        setReconciledChecklistId(firstCreated.id); // eslint-disable-line react-hooks/set-state-in-effect -- resolving multi-client race
       }
     }
   }, [

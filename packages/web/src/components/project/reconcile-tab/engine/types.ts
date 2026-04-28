@@ -280,7 +280,6 @@ export interface ReconciliationAdapter<
  * but the engine needs to hold any of them without knowing which one.
  * TypeScript lacks existential types, so this boundary uses type erasure.
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type ErasedAdapter = ReconciliationAdapter<any, any, any, any>;
 
 // ---------------------------------------------------------------------------

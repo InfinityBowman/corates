@@ -269,6 +269,7 @@ export function createAuth(env: Env, ctx?: ExecutionContext) {
       .filter(([, v]) => !v)
       .map(([k]) => k);
     if (missing.length > 0) {
+      // eslint-disable-next-line corates/corates-error-helpers -- startup config validation, not a domain/transport error
       throw new Error(`Stripe is configured but missing price IDs: ${missing.join(', ')}`);
     }
 

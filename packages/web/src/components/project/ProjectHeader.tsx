@@ -39,11 +39,11 @@ export function ProjectHeader({
 
   // Sync local state when external data loads
   useEffect(() => {
-    if (name) setLocalName(name);
+    if (name) setLocalName(name); // eslint-disable-line react-hooks/set-state-in-effect -- syncing from prop
   }, [name]);
 
   useEffect(() => {
-    setLocalDescription(description || '');
+    setLocalDescription(description || ''); // eslint-disable-line react-hooks/set-state-in-effect -- syncing from prop
   }, [description]);
 
   const handleNameCommit = useCallback(

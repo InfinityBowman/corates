@@ -132,7 +132,6 @@ export function AMSTARRobvis({
     });
     tempSvg.remove();
 
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- two-pass layout: measure text then set margins before paint
     setDynamicMarginLeft(Math.max(150, Math.ceil(maxLabelWidth + 20)));
   }, [data]);
 

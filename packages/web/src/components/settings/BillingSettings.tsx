@@ -71,7 +71,7 @@ export function BillingSettings() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     if (params.get('success') === 'true') {
-      setCheckoutOutcome('success');
+      setCheckoutOutcome('success'); // eslint-disable-line react-hooks/set-state-in-effect -- one-time URL param consumption
       // Beat the webhook race: pull canonical subscription state from Stripe
       // before reading it from the DB. Failure is non-fatal — the webhook will
       // reconcile eventually.

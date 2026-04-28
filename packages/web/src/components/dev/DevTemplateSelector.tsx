@@ -46,7 +46,7 @@ export function DevTemplateSelector({ projectId, orgId }: DevTemplateSelectorPro
     if (!orgId || !projectId) return;
 
     let cancelled = false;
-    setTemplatesLoading(true);
+    setTemplatesLoading(true); // eslint-disable-line react-hooks/set-state-in-effect -- async fetch lifecycle
     setTemplatesError(null);
 
     getDevTemplates({ data: { orgId, projectId } })

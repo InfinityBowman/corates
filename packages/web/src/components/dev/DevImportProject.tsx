@@ -42,7 +42,7 @@ export function DevImportProject() {
   // Auto-select first org when loaded
   useEffect(() => {
     if (orgs.length > 0 && !selectedOrgId) {
-      setSelectedOrgId(orgs[0].id);
+      setSelectedOrgId(orgs[0].id); // eslint-disable-line react-hooks/set-state-in-effect -- one-time default
     }
   }, [orgs, selectedOrgId]);
 

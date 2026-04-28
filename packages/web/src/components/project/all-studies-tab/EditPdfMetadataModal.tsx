@@ -34,6 +34,7 @@ export function EditPdfMetadataModal({
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
+    /* eslint-disable react-hooks/set-state-in-effect -- syncing form state from prop on modal open */
     if (pdf && open) {
       setTitle(pdf.title || '');
       setFirstAuthor(pdf.firstAuthor || '');
@@ -41,6 +42,7 @@ export function EditPdfMetadataModal({
       setJournal(pdf.journal || '');
       setDoi(pdf.doi || '');
     }
+    /* eslint-enable react-hooks/set-state-in-effect */
   }, [pdf, open]);
 
   const handleSave = useCallback(async () => {

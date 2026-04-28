@@ -59,14 +59,32 @@ export function SearchSidebar({ documentId, onClose }: SearchSidebarProps) {
 
   // Sync inputValue with persisted state.query when state loads
   useEffect(() => {
-    setInputValue(state.query || '');
-  }, [state.query, documentId]); // Include documentId to reset on tab change
+    setInputValue(state.query || ''); // eslint-disable-line react-hooks/set-state-in-effect -- syncing from external search state
+  }, [state.query, documentId]);
 
   useEffect(() => {
     if (inputRef.current) {
       inputRef.current.focus();
     }
   }, [provides]);
+
+  const scrollToItem = (index: number) => {
+    const item = state.results[index];
+    if (!item) return;
+
+    const minCoordinates = item.rects.reduce(
+      (min, rect) => ({
+        x: Math.min(min.x, rect.origin.x),
+        y: Math.min(min.y, rect.origin.y),
+      }),
+      { x: Infinity, y: Infinity },
+    );
+
+    scroll?.forDocument(documentId).scrollToPage({
+      pageNumber: item.pageIndex + 1,
+      pageCoordinates: minCoordinates,
+    });
+  };
 
   useEffect(() => {
     if (state.activeResultIndex !== undefined && state.activeResultIndex >= 0 && !state.loading) {
@@ -79,7 +97,6 @@ export function SearchSidebar({ documentId, onClose }: SearchSidebarProps) {
     const value = (e.target as HTMLInputElement).value;
     setInputValue(value);
 
-    // Trigger search immediately on user input
     if (value === '') {
       provides?.stopSearch();
     } else {
@@ -101,25 +118,6 @@ export function SearchSidebar({ documentId, onClose }: SearchSidebarProps) {
     if (inputRef.current) {
       inputRef.current.focus();
     }
-  };
-
-  const scrollToItem = (index: number) => {
-    const item = state.results[index];
-    if (!item) return;
-
-    const minCoordinates = item.rects.reduce(
-      (min, rect) => ({
-        x: Math.min(min.x, rect.origin.x),
-        y: Math.min(min.y, rect.origin.y),
-      }),
-      { x: Infinity, y: Infinity },
-    );
-
-    scroll?.forDocument(documentId).scrollToPage({
-      pageNumber: item.pageIndex + 1,
-      pageCoordinates: minCoordinates,
-      // center: true,
-    });
   };
 
   const groupByPage = (results: SearchResult[]) => {
