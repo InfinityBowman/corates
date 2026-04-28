@@ -1,9 +1,3 @@
-/**
- * Admin User Detail route
- * Shows user profile, linked accounts, organizations, projects, sessions.
- * Provides ban/unban, impersonate, revoke sessions, and delete actions.
- */
-
 import { useState, useCallback, Suspense } from 'react';
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router';
 import type { ErrorComponentProps } from '@tanstack/react-router';

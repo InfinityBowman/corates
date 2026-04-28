@@ -1,8 +1,3 @@
-/**
- * Admin Billing Ledger route
- * Displays Stripe event ledger entries with filtering and search
- */
-
 import { useState, useMemo } from 'react';
 import { createFileRoute, Link } from '@tanstack/react-router';
 import { LoaderIcon, ExternalLinkIcon, FilterIcon } from 'lucide-react';
@@ -305,12 +300,12 @@ function AdminBillingLedgerPage() {
       {/* Stats Summary */}
       {stats && (
         <div className='grid grid-cols-2 gap-4 md:grid-cols-5'>
-          <AdminBox padding='compact'>
+          <AdminBox className='p-4'>
             <p className='text-muted-foreground text-sm'>Total</p>
             <p className='text-foreground text-2xl font-bold'>{stats.total || 0}</p>
           </AdminBox>
           {Object.entries(stats.byStatus || {}).map(([status, count]) => (
-            <AdminBox key={status} padding='compact'>
+            <AdminBox key={status} className='p-4'>
               <p className='text-muted-foreground text-sm capitalize'>
                 {status.replace(/_/g, ' ')}
               </p>
@@ -371,9 +366,8 @@ function AdminBillingLedgerPage() {
         columns={columns}
         data={entries}
         loading={ledgerQuery.isLoading}
-        emptyMessage='No ledger entries found'
+        emptyState='No ledger entries found'
         enableSorting
-        pageSize={limit}
       />
     </div>
   );

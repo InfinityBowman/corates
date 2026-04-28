@@ -1,8 +1,3 @@
-/**
- * Org Billing Summary component
- * Displays current billing state for an organization including plan, entitlements, and quotas
- */
-
 import { Badge } from '@/components/ui/badge';
 
 interface BillingPlan {

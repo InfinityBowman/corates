@@ -1,8 +1,3 @@
-/**
- * Admin Dashboard route - Main admin panel page
- * Displays system statistics and user management
- */
-
 import { useState } from 'react';
 import { createFileRoute } from '@tanstack/react-router';
 import {

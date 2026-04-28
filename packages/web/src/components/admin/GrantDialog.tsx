@@ -1,8 +1,3 @@
-/**
- * Grant Dialog component
- * Dialog for creating grants using shadcn Dialog
- */
-
 import {
   Dialog,
   DialogContent,

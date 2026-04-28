@@ -1,8 +1,3 @@
-/**
- * User Table component for admin dashboard
- * Lists users with search and pagination via AdminDataTable
- */
-
 import { useMemo } from 'react';
 import { Link, useNavigate } from '@tanstack/react-router';
 import { CheckCircleIcon, MailIcon } from 'lucide-react';
@@ -162,9 +157,8 @@ export function UserTable({ users, loading }: UserTableProps) {
       columns={columns}
       data={users || []}
       loading={loading}
-      emptyMessage='No users found'
+      emptyState='No users found'
       enableSorting
-      pageSize={20}
       onRowClick={(_row: UserRow) =>
         navigate({
           to: '/admin/users/$userId' as string,

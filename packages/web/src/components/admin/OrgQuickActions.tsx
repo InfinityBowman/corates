@@ -1,8 +1,3 @@
-/**
- * Org Quick Actions component
- * Provides quick action buttons for common billing operations
- */
-
 import { PlusIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 

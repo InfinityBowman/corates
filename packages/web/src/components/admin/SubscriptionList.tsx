@@ -1,8 +1,3 @@
-/**
- * Subscription List component
- * Displays and manages subscriptions for an organization
- */
-
 import { useState } from 'react';
 import { Trash2Icon, PencilIcon, CopyIcon, CheckIcon } from 'lucide-react';
 import { showToast } from '@/components/ui/toast';

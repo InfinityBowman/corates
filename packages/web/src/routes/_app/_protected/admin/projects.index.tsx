@@ -1,8 +1,3 @@
-/**
- * Admin Project List route
- * Lists all projects with search, org filtering, and pagination
- */
-
 import { useState, useMemo } from 'react';
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router';
 import {
@@ -11,7 +6,6 @@ import {
   UsersIcon,
   FileTextIcon,
   AlertCircleIcon,
-  XIcon,
   HomeIcon,
 } from 'lucide-react';
 import { useAdminProjects, useAdminOrgs } from '@/hooks/useAdminQueries';
@@ -49,7 +43,6 @@ export const Route = createFileRoute('/_app/_protected/admin/projects/')({
 function AdminProjectList() {
   const navigate = useNavigate();
   const [page, setPage] = useState(1);
-  const [searchInput, setSearchInput] = useState('');
   const [search, setSearch] = useState('');
   const [selectedOrgId, setSelectedOrgId] = useState('');
   const debouncedSearch = useDebouncedValue(search, 300);
@@ -75,15 +68,8 @@ function AdminProjectList() {
   const pagination = projectsData?.pagination || { page: 1, total: 0, totalPages: 1 };
   const orgs = orgsData?.orgs || [];
 
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    setSearch(searchInput);
-    setPage(1);
-  };
-
-  const clearSearch = () => {
-    setSearchInput('');
-    setSearch('');
+  const handleSearchInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearch(e.target.value);
     setPage(1);
   };
 
@@ -185,27 +171,16 @@ function AdminProjectList() {
 
       {/* Search and Filter Bar */}
       <div className='flex flex-col gap-4 sm:flex-row'>
-        <form onSubmit={handleSearch} className='flex-1'>
-          <div className='relative'>
-            <SearchIcon className='text-muted-foreground/70 pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2' />
-            <Input
-              type='text'
-              value={searchInput}
-              onChange={e => setSearchInput(e.target.value)}
-              placeholder='Search by project name...'
-              className='w-full pr-10 pl-10'
-            />
-            {searchInput && (
-              <button
-                type='button'
-                onClick={clearSearch}
-                className='text-muted-foreground/70 hover:text-muted-foreground absolute top-1/2 right-3 -translate-y-1/2'
-              >
-                <XIcon className='size-4' />
-              </button>
-            )}
-          </div>
-        </form>
+        <div className='relative flex-1'>
+          <SearchIcon className='text-muted-foreground/70 pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2' />
+          <Input
+            type='text'
+            value={search}
+            onChange={handleSearchInput}
+            placeholder='Search by project name...'
+            className='w-full pl-10'
+          />
+        </div>
 
         {/* Org Filter */}
         <div className='w-full sm:w-64'>
@@ -254,7 +229,7 @@ function AdminProjectList() {
                   <button
                     type='button'
                     onClick={() => {
-                      clearSearch();
+                      setSearch('');
                       setSelectedOrgId('');
                     }}
                     className='text-sm text-blue-600 hover:text-blue-700'
@@ -265,7 +240,6 @@ function AdminProjectList() {
               </div>
             }
             enableSorting
-            pageSize={20}
             onRowClick={(row: ProjectRow) =>
               navigate({
                 to: '/admin/projects/$projectId' as string,

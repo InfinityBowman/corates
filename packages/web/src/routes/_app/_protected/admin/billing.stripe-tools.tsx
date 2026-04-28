@@ -1,8 +1,3 @@
-/**
- * Admin Stripe Tools route
- * Customer lookup, portal link generation, and invoice/subscription viewing
- */
-
 import { useState } from 'react';
 import { createFileRoute, Link } from '@tanstack/react-router';
 import {

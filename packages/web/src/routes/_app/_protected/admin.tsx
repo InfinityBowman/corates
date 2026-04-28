@@ -84,7 +84,7 @@ function AdminLayout() {
   }
 
   return (
-    <div className='bg-muted min-h-screen'>
+    <div className='min-h-screen'>
       {/* Navbar */}
       <div className='border-border bg-card border-b'>
         <nav

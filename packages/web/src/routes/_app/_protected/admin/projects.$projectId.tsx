@@ -1,9 +1,3 @@
-/**
- * Admin Project Detail route
- * Shows project info, members, files, and invitations.
- * Provides delete project and remove member actions.
- */
-
 import { useState, useCallback } from 'react';
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router';
 import {

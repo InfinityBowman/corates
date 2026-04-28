@@ -1,8 +1,3 @@
-/**
- * Admin Org Detail route
- * Shows organization details, billing summary, subscriptions, grants, and reconciliation.
- */
-
 import { useState, useCallback } from 'react';
 import { createFileRoute, Link } from '@tanstack/react-router';
 import {
@@ -415,7 +410,7 @@ function OrgDetailPage() {
 
           {/* Stats */}
           <div className='mb-6 grid grid-cols-1 gap-4 md:grid-cols-3'>
-            <AdminBox padding='compact'>
+            <AdminBox className='p-4'>
               <div className='flex items-center gap-2'>
                 <UsersIcon className='text-muted-foreground/70 size-5' />
                 <div>
@@ -426,7 +421,7 @@ function OrgDetailPage() {
                 </div>
               </div>
             </AdminBox>
-            <AdminBox padding='compact'>
+            <AdminBox className='p-4'>
               <div className='flex items-center gap-2'>
                 <FolderIcon className='text-muted-foreground/70 size-5' />
                 <div>

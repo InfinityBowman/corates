@@ -1,9 +1,3 @@
-/**
- * Admin Database Viewer route
- * Read-only browser for D1 tables with schema annotations,
- * sortable columns, offset-based pagination, and FK navigation.
- */
-
 import { useState, useMemo } from 'react';
 import { createFileRoute } from '@tanstack/react-router';
 import {
@@ -175,7 +169,7 @@ function DatabaseViewerPage() {
       <div className='flex gap-6'>
         {/* Table List Sidebar */}
         <div className='w-64 shrink-0'>
-          <AdminBox padding='none'>
+          <AdminBox className='p-0'>
             <div className='border-border flex items-center justify-between border-b px-4 py-3'>
               <h2 className='text-foreground font-semibold'>Tables</h2>
               <button
@@ -221,7 +215,7 @@ function DatabaseViewerPage() {
         {/* Table Content */}
         <div className='min-w-0 flex-1'>
           {selectedTable ?
-            <AdminBox padding='none' className='overflow-hidden'>
+            <AdminBox className='overflow-hidden p-0'>
               {/* Table Header */}
               <div className='border-border flex items-center justify-between border-b px-4 py-3'>
                 <div className='flex items-center gap-3'>

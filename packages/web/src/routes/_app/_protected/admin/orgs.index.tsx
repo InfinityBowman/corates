@@ -1,8 +1,3 @@
-/**
- * Admin Org List route
- * Lists all organizations with search, pagination, and navigation to details
- */
-
 import { useState, useMemo } from 'react';
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router';
 import { SearchIcon, HomeIcon, UsersIcon, FolderIcon } from 'lucide-react';
@@ -163,9 +158,8 @@ function AdminOrgList() {
           columns={columns}
           data={orgsData?.orgs || []}
           loading={orgsDataQuery.isLoading}
-          emptyMessage='No organizations found'
+          emptyState='No organizations found'
           enableSorting
-          pageSize={20}
           onRowClick={(row: OrgRow) =>
             navigate({
               to: '/admin/orgs/$orgId' as string,

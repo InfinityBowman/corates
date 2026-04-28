@@ -1,7 +1,3 @@
-/**
- * BarChart - Categorical bar chart using Recharts
- */
-
 import { useMemo } from 'react';
 import {
   ResponsiveContainer,

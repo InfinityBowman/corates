@@ -1,8 +1,3 @@
-/**
- * Analytics Section for Admin Dashboard
- * Displays charts for signups, webhooks, subscriptions, and revenue
- */
-
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {

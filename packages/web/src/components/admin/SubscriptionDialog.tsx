@@ -1,8 +1,3 @@
-/**
- * Subscription Dialog component
- * Dialog for creating and editing subscriptions using shadcn Dialog
- */
-
 import {
   Dialog,
   DialogContent,

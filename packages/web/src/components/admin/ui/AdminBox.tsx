@@ -1,25 +1,13 @@
-/**
- * AdminBox - Consistent container component for admin UI
- */
+import { cn } from '@/lib/utils';
 
 interface AdminBoxProps {
-  padding?: 'none' | 'compact' | 'default' | 'spacious';
   className?: string;
   children: React.ReactNode;
 }
 
-const PADDING_CLASSES = {
-  none: 'p-0',
-  compact: 'p-4',
-  default: 'p-6',
-  spacious: 'p-8',
-} as const;
-
-export function AdminBox({ padding = 'default', className = '', children }: AdminBoxProps) {
+export function AdminBox({ className, children }: AdminBoxProps) {
   return (
-    <div
-      className={`border-border bg-card rounded-xl border shadow-xs ${PADDING_CLASSES[padding]} ${className}`}
-    >
+    <div className={cn('border-border bg-card rounded-xl border p-6 shadow-xs', className)}>
       {children}
     </div>
   );

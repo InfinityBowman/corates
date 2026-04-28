@@ -1,7 +1,3 @@
-/**
- * LineChart - Time series line chart using Recharts
- */
-
 import { useMemo } from 'react';
 import {
   ResponsiveContainer,

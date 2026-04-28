@@ -1,8 +1,3 @@
-/**
- * Org Billing Reconcile Panel
- * Shows billing reconciliation results and stuck states for an organization
- */
-
 import { useState } from 'react';
 import { Link } from '@tanstack/react-router';
 import { AlertTriangleIcon, CheckCircleIcon, RefreshCwIcon, AlertCircleIcon } from 'lucide-react';

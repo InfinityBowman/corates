@@ -1,7 +1,3 @@
-/**
- * DoughnutChart - Proportional doughnut chart using Recharts
- */
-
 import { useMemo } from 'react';
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip, Legend } from 'recharts';
 

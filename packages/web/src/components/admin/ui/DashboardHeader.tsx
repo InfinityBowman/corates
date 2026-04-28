@@ -1,7 +1,3 @@
-/**
- * DashboardHeader - Consistent page header for admin views
- */
-
 import type { LucideIcon } from 'lucide-react';
 
 type IconColor = 'blue' | 'green' | 'purple' | 'orange' | 'red' | 'gray';
@@ -12,7 +8,6 @@ interface DashboardHeaderProps {
   description?: string;
   actions?: React.ReactNode;
   iconColor?: IconColor;
-  className?: string;
 }
 
 const ICON_COLOR_CLASSES: Record<IconColor, string> = {
@@ -30,10 +25,9 @@ export function DashboardHeader({
   description,
   actions,
   iconColor = 'blue',
-  className = '',
 }: DashboardHeaderProps) {
   return (
-    <div className={`flex items-center justify-between ${className}`}>
+    <div className='flex items-center justify-between'>
       <div className='flex items-center gap-3'>
         {Icon && (
           <div className={`rounded-xl p-2.5 ${ICON_COLOR_CLASSES[iconColor]}`}>

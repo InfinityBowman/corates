@@ -1,8 +1,3 @@
-/**
- * Admin Billing Stuck States route
- * Displays orgs with stuck billing states for monitoring and alerting
- */
-
 import { useState, useMemo } from 'react';
 import { createFileRoute, Link } from '@tanstack/react-router';
 import {
@@ -179,7 +174,7 @@ function AdminBillingStuckStatesPage() {
             const Icon = getStuckStateSeverityIcon(type);
             const steps = getInvestigationSteps(type);
             return (
-              <AdminBox key={type} padding='compact' className='overflow-hidden p-0'>
+              <AdminBox key={type} className='overflow-hidden p-0'>
                 <div className='border-border border-b px-6 py-4'>
                   <div className='flex items-center gap-3'>
                     <Icon className='size-5 text-orange-600' />

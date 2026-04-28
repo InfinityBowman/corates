@@ -1,9 +1,3 @@
-/**
- * Admin Storage Management route
- * Manages R2 documents with search, prefix filtering, cursor-based pagination,
- * multi-select, and bulk/single delete operations.
- */
-
 import { useState, useCallback } from 'react';
 import { createFileRoute } from '@tanstack/react-router';
 import {
@@ -277,7 +271,7 @@ function StorageManagementPage() {
 
       {/* Documents Table */}
       <AdminSection title='Documents'>
-        <AdminBox padding='none' className='overflow-hidden'>
+        <AdminBox className='overflow-hidden p-0'>
           <Table>
             <TableHeader className='border-border bg-muted border-b'>
               <TableRow className='border-border border-b'>

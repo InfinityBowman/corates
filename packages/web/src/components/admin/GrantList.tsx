@@ -1,8 +1,3 @@
-/**
- * Grant List component
- * Displays and manages grants for an organization
- */
-
 import { Trash2Icon } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
