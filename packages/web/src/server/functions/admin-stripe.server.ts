@@ -57,7 +57,7 @@ export async function lookupAdminStripeCustomer(
       }
       customer = retrieved as Stripe.Customer;
     } catch (err) {
-      const stripeErr = err as Stripe.errors.StripeError;
+      const stripeErr = err as InstanceType<typeof Stripe.errors.StripeError>;
       if (stripeErr.code === 'resource_missing') {
         return { found: false as const, message: 'Customer not found in Stripe', customerId };
       }
@@ -278,7 +278,7 @@ export async function getAdminStripeCustomerSubscriptions(
       items: sub.items.data.map(item => ({
         id: item.id,
         priceId: item.price.id,
-        productId: item.price.product,
+        productId: typeof item.price.product === 'string' ? item.price.product : item.price.product.id,
         unitAmount: item.price.unit_amount,
         interval: item.price.recurring?.interval ?? null,
         currentPeriodStart: item.current_period_start,
