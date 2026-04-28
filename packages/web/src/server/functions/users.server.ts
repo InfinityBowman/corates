@@ -131,8 +131,6 @@ export async function searchUsers(
   _request: Request,
   params: { q: string; projectId?: string; limit?: number },
 ) {
-
-
   if (!params.q || params.q.length < 2) {
     const error = createValidationError('q', VALIDATION_ERRORS.FIELD_TOO_SHORT.code, params.q);
     error.message = 'Search query must be at least 2 characters';

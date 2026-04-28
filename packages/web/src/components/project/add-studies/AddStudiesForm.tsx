@@ -81,7 +81,7 @@ export function AddStudiesForm({
 
   const isExpanded = alwaysExpanded || expanded || studies.hasAnyStudies();
 
-  // Refs for drag-and-drop handlers to avoid stale closures
+  /* eslint-disable react-hooks/refs -- intentional ref-sync for event handler closures */
   const hasExistingStudiesRef = useRef(hasExistingStudies);
   hasExistingStudiesRef.current = hasExistingStudies;
   const isExpandedRef = useRef(isExpanded);
@@ -90,6 +90,7 @@ export function AddStudiesForm({
   isDraggingOverRef.current = isDraggingOver;
   const handlePdfSelectRef = useRef(studies.handlePdfSelect);
   handlePdfSelectRef.current = studies.handlePdfSelect;
+  /* eslint-enable react-hooks/refs */
 
   // Restore state from OAuth redirect.
   // Expand unconditionally since restoreState enqueues React state updates

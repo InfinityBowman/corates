@@ -220,8 +220,6 @@ export async function createCheckout(
   tier: string,
   interval: 'monthly' | 'yearly',
 ) {
-
-
   const { orgId, role } = await resolveOrgIdWithRole({
     db,
     session: session.session,
@@ -384,8 +382,6 @@ export async function createPortalSession(db: Database, session: Session, reques
 // --- Single-project checkout ---
 
 export async function createSPCheckout(db: Database, session: Session, _request: Request) {
-
-
   const { orgId, role } = await resolveOrgIdWithRole({
     db,
     session: session.session,

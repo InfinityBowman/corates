@@ -63,11 +63,15 @@ beforeEach(async () => {
   mockCheckCollaboratorQuota = quotaTransaction.checkCollaboratorQuota as unknown as Mock;
   mockCheckCollaboratorQuota.mockResolvedValue({ allowed: true, used: 0, limit: -1 });
   mockInsertWithQuotaCheck = quotaTransaction.insertWithQuotaCheck as unknown as Mock;
-  mockInsertWithQuotaCheck.mockImplementation(async (db: unknown, options: { insertStatements: unknown[] }) => {
-    const typedDb = db as { batch: (ops: unknown[]) => Promise<unknown> };
-    await typedDb.batch(options.insertStatements as unknown as Parameters<typeof typedDb.batch>[0]);
-    return { success: true };
-  });
+  mockInsertWithQuotaCheck.mockImplementation(
+    async (db: unknown, options: { insertStatements: unknown[] }) => {
+      const typedDb = db as { batch: (ops: unknown[]) => Promise<unknown> };
+      await typedDb.batch(
+        options.insertStatements as unknown as Parameters<typeof typedDb.batch>[0],
+      );
+      return { success: true };
+    },
+  );
 });
 
 describe('listProjectMembers', () => {

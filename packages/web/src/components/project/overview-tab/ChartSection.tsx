@@ -141,13 +141,14 @@ export function ChartSection({ studies }: ChartSectionProps) {
 
   // Sync custom labels when raw data changes
   useEffect(() => {
-    const currentIds = customLabels.map(l => l.id).join(',');
-    const newIds = rawChecklistData.map(d => d.id).join(',');
-    if (currentIds !== newIds) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- syncing labels from data
-      setCustomLabels(rawChecklistData.map(d => ({ id: d.id, label: d.label })));
-    }
-  }, [rawChecklistData, customLabels]);
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- syncing labels from data
+    setCustomLabels(prev => {
+      const currentIds = prev.map(l => l.id).join(',');
+      const newIds = rawChecklistData.map(d => d.id).join(',');
+      if (currentIds === newIds) return prev;
+      return rawChecklistData.map(d => ({ id: d.id, label: d.label }));
+    });
+  }, [rawChecklistData]);
 
   // Merge custom labels with raw data
   const checklistData = useMemo(() => {

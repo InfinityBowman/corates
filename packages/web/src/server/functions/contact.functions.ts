@@ -3,10 +3,9 @@ import { createMiddleware } from '@tanstack/react-start';
 import { z } from 'zod';
 import { sendContactEmail } from './contact.server';
 
-const requestMiddleware = createMiddleware()
-  .server(async ({ next, request }) => {
-    return next({ context: { request } });
-  });
+const requestMiddleware = createMiddleware().server(async ({ next, request }) => {
+  return next({ context: { request } });
+});
 
 export const submitContactForm = createServerFn({ method: 'POST' })
   .middleware([requestMiddleware])

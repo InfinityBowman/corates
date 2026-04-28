@@ -278,7 +278,8 @@ export async function getAdminStripeCustomerSubscriptions(
       items: sub.items.data.map(item => ({
         id: item.id,
         priceId: item.price.id,
-        productId: typeof item.price.product === 'string' ? item.price.product : item.price.product.id,
+        productId:
+          typeof item.price.product === 'string' ? item.price.product : item.price.product.id,
         unitAmount: item.price.unit_amount,
         interval: item.price.recurring?.interval ?? null,
         currentPeriodStart: item.current_period_start,

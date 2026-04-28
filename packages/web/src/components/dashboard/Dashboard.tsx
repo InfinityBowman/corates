@@ -33,28 +33,27 @@ export function Dashboard() {
 
   const [createModalOpen, setCreateModalOpen] = useState(false);
 
-  const canCreateProject = (() => {
-    if (!isOnline || !isLoggedIn) return false;
-    if (!hasEntitlement('project.create')) return false;
-    return hasQuota('projects.max', { used: projects?.length || 0, requested: 1 });
-  })();
+  const canCreateProject =
+    isOnline && isLoggedIn &&
+    hasEntitlement('project.create') &&
+    hasQuota('projects.max', { used: projects?.length || 0, requested: 1 });
 
-  const activities = (() => {
-    if (!projects?.length) return [];
-    return [...projects]
-      .sort(
-        (a: Project, b: Project) =>
-          new Date(b.updatedAt || b.createdAt || 0).getTime() -
-          new Date(a.updatedAt || a.createdAt || 0).getTime(),
-      )
-      .slice(0, 5)
-      .map((project: Project) => ({
-        type: 'project' as const,
-        title: project.name,
-        subtitle: 'was updated',
-        timestamp: project.updatedAt || project.createdAt || 0,
-      }));
-  })();
+  const activities =
+    projects?.length ?
+      [...projects]
+        .sort(
+          (a: Project, b: Project) =>
+            new Date(b.updatedAt || b.createdAt || 0).getTime() -
+            new Date(a.updatedAt || a.createdAt || 0).getTime(),
+        )
+        .slice(0, 5)
+        .map((project: Project) => ({
+          type: 'project' as const,
+          title: project.name,
+          subtitle: 'was updated',
+          timestamp: project.updatedAt || project.createdAt || 0,
+        }))
+    : [];
 
   function handleCreateProject() {
     setCreateModalOpen(true);

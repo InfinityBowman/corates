@@ -15,16 +15,18 @@ export async function proxyPdfFetch(
   const { url } = params;
 
   if (!url) {
-    throw Response.json(
-      createDomainError(VALIDATION_ERRORS.FIELD_REQUIRED, { field: 'url' }),
-      { status: 400 },
-    );
+    throw Response.json(createDomainError(VALIDATION_ERRORS.FIELD_REQUIRED, { field: 'url' }), {
+      status: 400,
+    });
   }
 
   const validation = validatePdfProxyUrl(url);
   if (!validation.valid) {
     throw Response.json(
-      createDomainError(VALIDATION_ERRORS.INVALID_INPUT, { field: 'url', reason: validation.error }),
+      createDomainError(VALIDATION_ERRORS.INVALID_INPUT, {
+        field: 'url',
+        reason: validation.error,
+      }),
       { status: 400 },
     );
   }
@@ -50,7 +52,9 @@ export async function proxyPdfFetch(
     const location = response.headers.get('location');
     if (!location) {
       throw Response.json(
-        createDomainError(SYSTEM_ERRORS.INTERNAL_ERROR, { reason: 'Redirect without location header' }),
+        createDomainError(SYSTEM_ERRORS.INTERNAL_ERROR, {
+          reason: 'Redirect without location header',
+        }),
         { status: 502 },
       );
     }
@@ -117,7 +121,10 @@ export async function proxyPdfFetch(
       );
     }
     throw Response.json(
-      createDomainError(FILE_ERRORS.INVALID_TYPE, { expected: 'application/pdf', received: contentType }),
+      createDomainError(FILE_ERRORS.INVALID_TYPE, {
+        expected: 'application/pdf',
+        received: contentType,
+      }),
       { status: 400 },
     );
   }

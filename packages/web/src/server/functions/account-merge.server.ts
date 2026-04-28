@@ -281,8 +281,6 @@ export async function verifyMerge(
   const { mergeToken, code } = data;
   const trimmedCode = code.trim();
 
-
-
   const mergeRequests = await db
     .select()
     .from(verification)

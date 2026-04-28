@@ -48,7 +48,6 @@ type HandlerArgs = {
 
 const ROUTE = '/api/auth/stripe/webhook';
 
-
 export const handlePost = async ({ request, context }: HandlerArgs) => {
   const { db } = context;
   const requestId = request.headers.get('x-request-id') ?? crypto.randomUUID();
