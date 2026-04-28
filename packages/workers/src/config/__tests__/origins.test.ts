@@ -42,12 +42,12 @@ describe('getAccessControlOrigin', () => {
     expect(getAccessControlOrigin('http://localhost:3010')).toBe('http://localhost:3010');
   });
 
-  it('falls back to the first static origin for unknown origins', () => {
-    expect(getAccessControlOrigin('https://evil.com')).toBe(STATIC_ORIGINS[0]);
+  it('falls back to the production origin for unknown origins', () => {
+    expect(getAccessControlOrigin('https://evil.com')).toBe('https://corates.org');
   });
 
   it('falls back for null/undefined origins', () => {
-    expect(getAccessControlOrigin(null)).toBe(STATIC_ORIGINS[0]);
-    expect(getAccessControlOrigin(undefined)).toBe(STATIC_ORIGINS[0]);
+    expect(getAccessControlOrigin(null)).toBe('https://corates.org');
+    expect(getAccessControlOrigin(undefined)).toBe('https://corates.org');
   });
 });

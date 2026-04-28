@@ -17,8 +17,7 @@ export function CompletedTab() {
   const { projectId, getAssigneeName, getChecklistPath } = useProjectContext();
   const navigate = useNavigate();
   const conn = connectionPool.getOps(projectId);
-  if (!conn) throw new Error(`No connection for project ${projectId}`);
-  const getAllReconciliationProgress = conn.reconciliation.getAllReconciliationProgress;
+  const getAllReconciliationProgress = conn?.reconciliation.getAllReconciliationProgress;
 
   const studies = useProjectStore(s => selectStudies(s, projectId));
   const meta = useProjectStore(s => s.projects[projectId]?.meta);
@@ -49,6 +48,7 @@ export function CompletedTab() {
       const study = studies.find(s => s.id === studyId);
       if (!study || !isDualReviewerStudy(study)) return null;
 
+      if (!getAllReconciliationProgress) return null;
       const allProgress = getAllReconciliationProgress(studyId);
       const outcomeKey = getOutcomeKey(outcomeId, type);
       return allProgress.find(p => p.outcomeKey === outcomeKey) || null;

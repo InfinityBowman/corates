@@ -13,5 +13,5 @@ export function getAccessControlOrigin(requestOrigin: string | null | undefined)
   if (requestOrigin && isOriginAllowed(requestOrigin)) {
     return requestOrigin;
   }
-  return STATIC_ORIGINS[0];
+  return 'https://corates.org';
 }

@@ -52,5 +52,5 @@ export function getPlanPricing(planId: PlanId | string): PlanPricing | null {
  * @returns Monthly equivalent (yearly / 12)
  */
 export function getMonthlyEquivalent(yearlyPrice: number): number {
-  return Math.round(yearlyPrice / 12);
+  return yearlyPrice / 12;
 }
