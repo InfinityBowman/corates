@@ -115,7 +115,7 @@ export function AppLayout() {
           />
         )}
 
-        <main className='text-foreground flex-1 overflow-auto'>
+        <main className='text-foreground flex flex-1 flex-col overflow-auto'>
           <Outlet />
         </main>
       </div>

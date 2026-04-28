@@ -50,7 +50,7 @@ function SettingsLayout() {
   }, []);
 
   return (
-    <div className='flex h-full'>
+    <div className='flex min-h-0 flex-1'>
       <SettingsSidebar
         desktopMode={desktopMode}
         mobileOpen={mobileOpen}
