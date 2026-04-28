@@ -16,8 +16,7 @@
     "types": ["@cloudflare/workers-types", "vitest/globals"],
     "paths": {
       "@/*": ["./src/*"]
-    },
-    "baseUrl": "."
+    }
   },
   "include": ["src/**/*", "worker-configuration.d.ts"],
   "exclude": ["node_modules", "migrations", ".wrangler"]

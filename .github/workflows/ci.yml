@@ -1,0 +1,173 @@
+name: CI - Deploy & Test
+
+on:
+  push:
+    branches: [main]
+
+# Cancel in-progress runs on the same branch
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+# ---------------------------------------------------------------
+# Prerequisites (one-time setup):
+#
+# 1. Cloudflare resources:
+#    wrangler d1 create corates-db-staging
+#    wrangler r2 bucket create corates-pdfs-staging
+#    wrangler queues create corates-emails-staging
+#    wrangler queues create corates-emails-staging-dlq
+#
+# 2. Update database_id in packages/web/wrangler.jsonc and
+#    packages/stripe-purchases/wrangler.jsonc staging envs
+#    with the ID from step 1.
+#
+# 3. DNS: Add CNAME record for staging.corates.org
+#    pointing to your workers custom domain.
+#
+# 4. Wrangler secrets for staging (run from packages/web):
+#    wrangler secret put AUTH_SECRET --env staging
+#    wrangler secret put STRIPE_SECRET_KEY --env staging
+#    wrangler secret put STRIPE_WEBHOOK_SECRET_AUTH --env staging
+#    wrangler secret put STRIPE_WEBHOOK_SECRET_PURCHASES --env staging
+#    wrangler secret put GOOGLE_CLIENT_SECRET --env staging
+#    wrangler secret put ORCID_CLIENT_SECRET --env staging
+#    wrangler secret put POSTMARK_SERVER_TOKEN --env staging
+#    wrangler secret put ADMIN_EMAIL --env staging
+#    wrangler secret put GOOGLE_CLIENT_ID --env staging
+#    wrangler secret put ORCID_CLIENT_ID --env staging
+#    wrangler secret put EMAIL_FROM --env staging
+#
+#    And for stripe-purchases (run from packages/stripe-purchases):
+#    wrangler secret put STRIPE_SECRET_KEY --env staging
+#    wrangler secret put STRIPE_WEBHOOK_SECRET_PURCHASES --env staging
+#
+# 5. GitHub repository secrets:
+#    CLOUDFLARE_API_TOKEN  - API token with Workers + D1 + R2 permissions
+#
+# 6. GitHub repository variables (Settings > Variables):
+#    VITE_GOOGLE_PICKER_API_KEY
+#    VITE_GOOGLE_PICKER_APP_ID
+#    VITE_SENTRY_DSN           (production client-side Sentry DSN)
+# ---------------------------------------------------------------
+
+jobs:
+  deploy-and-test:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # -- Staging deploy --
+
+      - name: Build workspace dependencies
+        run: pnpm --filter @corates/shared --filter @corates/db build
+
+      - name: Build web for staging
+        env:
+          CLOUDFLARE_ENV: staging
+          VITE_API_URL: 'https://staging.corates.org'
+          VITE_PUBLIC_APP_URL: 'https://staging.corates.org'
+          VITE_BASEPATH: '/'
+          VITE_DEV_PANEL: 'false'
+          VITE_GOOGLE_PICKER_API_KEY: ${{ vars.VITE_GOOGLE_PICKER_API_KEY }}
+          VITE_GOOGLE_PICKER_APP_ID: ${{ vars.VITE_GOOGLE_PICKER_APP_ID }}
+        run: pnpm --filter web build
+
+      - name: Migrate staging database
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: 2ab59c3eb44887bfa2bac00afd32290a
+        run: pnpm --filter @corates/workers db:migrate:staging
+
+      - name: Deploy web to staging
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        working-directory: packages/web
+        run: wrangler deploy --env staging
+
+      - name: Deploy stripe-purchases to staging
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        working-directory: packages/stripe-purchases
+        run: wrangler deploy --env staging
+
+      # -- E2E tests against staging --
+
+      - name: Install Playwright browsers
+        working-directory: packages/web
+        run: pnpm exec playwright install chromium --with-deps
+
+      - name: Wait for staging to be ready
+        run: |
+          for i in $(seq 1 30); do
+            if curl -sf https://staging.corates.org/api/test/health > /dev/null 2>&1; then
+              echo "Staging is ready"
+              exit 0
+            fi
+            echo "Waiting for staging... (attempt $i/30)"
+            sleep 5
+          done
+          echo "Staging did not become ready in time"
+          exit 1
+
+      - name: Run e2e tests
+        env:
+          PLAYWRIGHT_BASE_URL: 'https://staging.corates.org'
+        working-directory: packages/web
+        run: pnpm test:e2e
+
+      - name: Upload test artifacts
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: packages/web/test-results/
+          retention-days: 7
+
+      # -- Production deploy (only if e2e tests pass) --
+
+      - name: Build web for production
+        env:
+          CLOUDFLARE_ENV: production
+          VITE_API_URL: 'https://corates.org'
+          VITE_PUBLIC_APP_URL: 'https://corates.org'
+          VITE_BASEPATH: '/'
+          VITE_DEV_PANEL: 'false'
+          VITE_GOOGLE_PICKER_API_KEY: ${{ vars.VITE_GOOGLE_PICKER_API_KEY }}
+          VITE_GOOGLE_PICKER_APP_ID: ${{ vars.VITE_GOOGLE_PICKER_APP_ID }}
+          VITE_SENTRY_DSN: ${{ vars.VITE_SENTRY_DSN }}
+        run: pnpm --filter web build
+
+      - name: Migrate production database
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: 2ab59c3eb44887bfa2bac00afd32290a
+        run: pnpm --filter @corates/workers db:migrate:prod
+
+      - name: Deploy web to production
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        working-directory: packages/web
+        run: wrangler deploy --env production
+
+      - name: Deploy stripe-purchases to production
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        working-directory: packages/stripe-purchases
+        run: wrangler deploy --env production

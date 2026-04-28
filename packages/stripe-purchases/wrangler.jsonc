@@ -92,6 +92,49 @@
           "invocation_logs": true
         }
       }
+    },
+
+    "staging": {
+      "name": "corates-stripe-purchases-staging",
+      "workers_dev": false,
+      "preview_urls": false,
+      "routes": [
+        {
+          "pattern": "staging.corates.org/api/billing/purchases/webhook",
+          "zone_name": "corates.org"
+        }
+      ],
+      "d1_databases": [
+        {
+          "binding": "DB",
+          "database_name": "corates-db-staging",
+          "database_id": "4b765e4f-10a3-4682-95aa-db89841d2e9e"
+        }
+      ],
+      "queues": {
+        "producers": [
+          {
+            "queue": "corates-emails-staging",
+            "binding": "EMAIL_QUEUE"
+          }
+        ]
+      },
+      "version_metadata": {
+        "binding": "CF_VERSION_METADATA"
+      },
+      "vars": {
+        "ENVIRONMENT": "staging"
+      },
+      "observability": {
+        "enabled": true,
+        "head_sampling_rate": 1,
+        "logs": {
+          "enabled": true,
+          "head_sampling_rate": 1,
+          "persist": true,
+          "invocation_logs": true
+        }
+      }
     }
   }
 }

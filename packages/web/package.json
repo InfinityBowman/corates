@@ -8,8 +8,10 @@
     "dev": "portless corates vite dev",
     "build": "NODE_OPTIONS='--max-old-space-size=6144' vite build",
     "build:prod": "pnpm --filter @corates/shared --filter @corates/db build && CLOUDFLARE_ENV=production pnpm run build",
+    "build:staging": "pnpm --filter @corates/shared --filter @corates/db build && CLOUDFLARE_ENV=staging pnpm run build",
     "preview": "vite preview",
     "deploy": "CLOUDFLARE_ENV=production pnpm run build:prod && pnpm --filter @corates/workers db:migrate:prod && wrangler deploy",
+    "deploy:staging": "CLOUDFLARE_ENV=staging pnpm run build:staging && pnpm --filter @corates/workers db:migrate:staging && wrangler deploy --env staging",
     "lint": "eslint",
     "format": "prettier --write .",
     "check": "prettier --write . && eslint --fix",
@@ -88,8 +90,8 @@
     "zustand": "^5.0.12"
   },
   "devDependencies": {
-    "@cloudflare/vite-plugin": "^1.33.2",
-    "@cloudflare/vitest-pool-workers": "^0.14.9",
+    "@cloudflare/vite-plugin": "^1.34.0",
+    "@cloudflare/vitest-pool-workers": "^0.15.1",
     "@cloudflare/workers-types": "^4.20260426.1",
     "@playwright/test": "^1.59.1",
     "@tailwindcss/vite": "^4.2.4",
@@ -112,6 +114,6 @@
     "vite-tsconfig-paths": "^5.1.4",
     "vitest": "^4.1.5",
     "vitest-browser-react": "^2.2.0",
-    "wrangler": "^4.85.0"
+    "wrangler": "^4.86.0"
   }
 }

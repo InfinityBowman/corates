@@ -60,6 +60,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { handleError } from '@/lib/error-utils';
 import { AdminBox } from '@/components/admin/ui';
+import { formatDateTime } from '@/lib/formatDate';
 import {
   Table,
   TableHeader,
@@ -146,21 +147,6 @@ interface UserData {
   projects?: UserProject[];
   sessions?: UserSession[];
 }
-
-const formatDate = (timestamp: string | number | Date | null | undefined): string => {
-  if (!timestamp) return '-';
-  const date =
-    timestamp instanceof Date ? timestamp
-    : typeof timestamp === 'string' ? new Date(timestamp)
-    : new Date(timestamp * 1000);
-  return date.toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-    hour: 'numeric',
-    minute: '2-digit',
-  });
-};
 
 const formatShortDate = (timestamp: string | number | Date | null | undefined): string => {
   if (!timestamp) return '-';
@@ -466,11 +452,11 @@ function UserDetailContent() {
           </div>
           <div>
             <dt className='text-muted-foreground text-sm font-medium'>Created</dt>
-            <dd className='text-foreground mt-1 text-sm'>{formatDate(userData.user.createdAt)}</dd>
+            <dd className='text-foreground mt-1 text-sm'>{formatDateTime(userData.user.createdAt)}</dd>
           </div>
           <div>
             <dt className='text-muted-foreground text-sm font-medium'>Updated</dt>
-            <dd className='text-foreground mt-1 text-sm'>{formatDate(userData.user.updatedAt)}</dd>
+            <dd className='text-foreground mt-1 text-sm'>{formatDateTime(userData.user.updatedAt)}</dd>
           </div>
           <div>
             <dt className='text-muted-foreground text-sm font-medium'>Stripe Customer</dt>
@@ -497,7 +483,7 @@ function UserDetailContent() {
               <div>
                 <dt className='text-muted-foreground text-sm font-medium'>Ban Expires</dt>
                 <dd className='text-foreground mt-1 text-sm'>
-                  {userData.user.banExpires ? formatDate(userData.user.banExpires) : 'Never'}
+                  {userData.user.banExpires ? formatDateTime(userData.user.banExpires) : 'Never'}
                 </dd>
               </div>
             </>
@@ -700,12 +686,12 @@ function UserDetailContent() {
                       <div className='text-muted-foreground flex items-center gap-3 text-xs'>
                         <span className='flex items-center'>
                           <ClockIcon className='mr-1 size-3' />
-                          {formatDate(session.createdAt)}
+                          {formatDateTime(session.createdAt)}
                         </span>
                         {session.ipAddress && <span>IP: {session.ipAddress}</span>}
                       </div>
                       <p className='text-muted-foreground/70 mt-1 text-xs'>
-                        Expires: {formatDate(session.expiresAt)}
+                        Expires: {formatDateTime(session.expiresAt)}
                       </p>
                     </div>
                   </div>

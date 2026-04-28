@@ -10,6 +10,7 @@ import { UserAvatar } from '@/components/ui/avatar';
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { AdminDataTable } from '@/components/admin/ui';
 import { Badge } from '@/components/ui/badge';
+import { formatDate } from '@/lib/formatDate';
 import type { ColumnDef } from '@tanstack/react-table';
 
 interface UserRow {
@@ -35,16 +36,6 @@ const PROVIDER_INFO: Record<string, ProviderInfo> = {
   google: { name: 'Google', icon: '/logos/google.svg' },
   orcid: { name: 'ORCID', icon: '/logos/orcid.svg' },
   credential: { name: 'Email/Password', icon: null },
-};
-
-const formatDate = (timestamp: string | number | null | undefined): string => {
-  if (!timestamp) return '-';
-  const date = typeof timestamp === 'string' ? new Date(timestamp) : new Date(timestamp * 1000);
-  return date.toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-  });
 };
 
 interface UserTableProps {

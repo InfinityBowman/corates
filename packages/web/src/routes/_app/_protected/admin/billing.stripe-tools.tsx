@@ -3,7 +3,7 @@
  * Customer lookup, portal link generation, and invoice/subscription viewing
  */
 
-import { useState, useCallback } from 'react';
+import { useState } from 'react';
 import { createFileRoute, Link } from '@tanstack/react-router';
 import {
   lookupAdminStripeCustomerAction,
@@ -21,8 +21,6 @@ import {
   CreditCardIcon,
   FileTextIcon,
   DollarSignIcon,
-  CopyIcon,
-  CheckCircleIcon,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -34,8 +32,9 @@ import {
   TableCell,
 } from '@/components/ui/table';
 import { showToast } from '@/components/ui/toast';
-import { DashboardHeader, AdminBox } from '@/components/admin/ui';
+import { DashboardHeader, AdminBox, CopyButton } from '@/components/admin/ui';
 import { Input } from '@/components/ui/input';
+import { formatDateTime } from '@/lib/formatDate';
 
 interface StripeCustomer {
   id: string;
@@ -90,18 +89,6 @@ interface StripePaymentMethod {
   };
 }
 
-const formatDate = (timestamp: number | null | undefined): string => {
-  if (!timestamp) return '-';
-  const date = new Date(timestamp * 1000);
-  return date.toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-    hour: 'numeric',
-    minute: '2-digit',
-  });
-};
-
 const formatCurrency = (amount: number | null | undefined, currency = 'usd'): string => {
   if (amount === null || amount === undefined) return '-';
   return new Intl.NumberFormat('en-US', {
@@ -151,20 +138,6 @@ function StripeToolsPage() {
 
   const [generatingPortal, setGeneratingPortal] = useState(false);
   const [portalUrl, setPortalUrl] = useState<string | null>(null);
-
-  const [copiedId, setCopiedId] = useState<string | null>(null);
-
-  const handleCopy = useCallback(async (text: string, label: string) => {
-    try {
-      await navigator.clipboard.writeText(text);
-      setCopiedId(`${label}-${text}`);
-      showToast.success('Copied', `${label} copied to clipboard`);
-      setTimeout(() => setCopiedId(null), 2000);
-    } catch (err) {
-      console.warn('Clipboard copy failed:', (err as Error).message);
-      showToast.error('Error', 'Failed to copy to clipboard');
-    }
-  }, []);
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -263,7 +236,7 @@ function StripeToolsPage() {
   };
 
   return (
-    <>
+    <div className='flex flex-col gap-8'>
       <DashboardHeader
         icon={CreditCardIcon}
         title='Stripe Tools'
@@ -272,13 +245,13 @@ function StripeToolsPage() {
       />
 
       {/* Search Section */}
-      <AdminBox className='mb-6'>
+      <AdminBox>
         <h2 className='text-foreground mb-4 text-lg font-semibold'>Customer Lookup</h2>
         <form onSubmit={handleSearch} className='flex flex-col gap-4 sm:flex-row'>
           <select
             value={searchType}
             onChange={e => setSearchType(e.target.value as 'email' | 'customerId')}
-            className='border-input h-8 rounded-lg border bg-transparent px-2.5 py-2 text-sm'
+            className='border-input h-8 rounded-lg border bg-transparent px-2.5 text-sm transition-colors outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-3'
           >
             <option value='email'>Search by Email</option>
             <option value='customerId'>Search by Customer ID</option>
@@ -317,7 +290,7 @@ function StripeToolsPage() {
       {customerData?.found && (
         <>
           {/* Customer Info Card */}
-          <AdminBox className='mb-6'>
+          <AdminBox>
             <div className='mb-4 flex items-start justify-between'>
               <h2 className='text-foreground text-lg font-semibold'>Customer Details</h2>
               <a
@@ -336,15 +309,12 @@ function StripeToolsPage() {
                 <dt className='text-muted-foreground text-sm font-medium'>Customer ID</dt>
                 <dd className='text-foreground mt-1 flex items-center text-sm'>
                   <span className='font-mono'>{customerData.customer.id}</span>
-                  <button
-                    type='button'
-                    onClick={() => handleCopy(customerData.customer.id, 'Customer ID')}
+                  <CopyButton
+                    text={customerData.customer.id}
+                    label='Customer ID'
                     className='text-muted-foreground/70 hover:text-muted-foreground ml-2'
-                  >
-                    {copiedId === `Customer ID-${customerData.customer.id}` ?
-                      <CheckCircleIcon className='text-success size-4' />
-                    : <CopyIcon className='size-4' />}
-                  </button>
+                    iconSize='size-4'
+                  />
                 </dd>
               </div>
               <div>
@@ -362,7 +332,7 @@ function StripeToolsPage() {
               <div>
                 <dt className='text-muted-foreground text-sm font-medium'>Created</dt>
                 <dd className='text-foreground mt-1 text-sm'>
-                  {formatDate(customerData.customer.created)}
+                  {formatDateTime(customerData.customer.created)}
                 </dd>
               </div>
               <div>
@@ -426,7 +396,7 @@ function StripeToolsPage() {
           </AdminBox>
 
           {/* Quick Actions */}
-          <AdminBox className='mb-6'>
+          <AdminBox>
             <h2 className='text-foreground mb-4 text-lg font-semibold'>Quick Actions</h2>
             <div className='flex flex-wrap gap-3'>
               <button
@@ -488,7 +458,7 @@ function StripeToolsPage() {
                   />
                   <button
                     type='button'
-                    onClick={() => handleCopy(portalUrl, 'Portal URL')}
+                    onClick={() => navigator.clipboard.writeText(portalUrl)}
                     className='bg-success hover:bg-success/80 rounded px-3 py-1 text-sm text-white'
                   >
                     Copy
@@ -509,7 +479,7 @@ function StripeToolsPage() {
 
           {/* Subscriptions Section */}
           {subscriptions && (
-            <AdminBox className='mb-6'>
+            <AdminBox>
               <h2 className='text-foreground mb-4 flex items-center text-lg font-semibold'>
                 <DollarSignIcon className='mr-2 size-5' />
                 Subscriptions ({subscriptions.length})
@@ -541,7 +511,7 @@ function StripeToolsPage() {
                       <div className='mt-3 grid grid-cols-2 gap-2 text-sm'>
                         <div>
                           <span className='text-muted-foreground'>Period:</span>{' '}
-                          {formatDate(sub.currentPeriodStart)} - {formatDate(sub.currentPeriodEnd)}
+                          {formatDateTime(sub.currentPeriodStart)} - {formatDateTime(sub.currentPeriodEnd)}
                         </div>
                         {sub.cancelAtPeriodEnd && (
                           <div className='text-destructive'>Cancels at period end</div>
@@ -549,7 +519,7 @@ function StripeToolsPage() {
                         {sub.trialEnd && sub.status === 'trialing' && (
                           <div>
                             <span className='text-muted-foreground'>Trial ends:</span>{' '}
-                            {formatDate(sub.trialEnd)}
+                            {formatDateTime(sub.trialEnd)}
                           </div>
                         )}
                       </div>
@@ -571,7 +541,7 @@ function StripeToolsPage() {
 
           {/* Invoices Section */}
           {invoices && (
-            <AdminBox className='mb-6'>
+            <AdminBox>
               <h2 className='text-foreground mb-4 flex items-center text-lg font-semibold'>
                 <FileTextIcon className='mr-2 size-5' />
                 Recent Invoices ({invoices.length})
@@ -611,7 +581,7 @@ function StripeToolsPage() {
                           {formatCurrency(invoice.total, invoice.currency)}
                         </TableCell>
                         <TableCell className='text-muted-foreground px-4 py-3 text-sm'>
-                          {formatDate(invoice.created)}
+                          {formatDateTime(invoice.created)}
                         </TableCell>
                         <TableCell className='px-4 py-3 text-right'>
                           <div className='flex justify-end gap-2'>
@@ -649,7 +619,7 @@ function StripeToolsPage() {
 
           {/* Payment Methods Section */}
           {paymentMethods && (
-            <AdminBox className='mb-6'>
+            <AdminBox>
               <h2 className='text-foreground mb-4 flex items-center text-lg font-semibold'>
                 <CreditCardIcon className='mr-2 size-5' />
                 Payment Methods ({paymentMethods.length})
@@ -684,6 +654,6 @@ function StripeToolsPage() {
           )}
         </>
       )}
-    </>
+    </div>
   );
 }

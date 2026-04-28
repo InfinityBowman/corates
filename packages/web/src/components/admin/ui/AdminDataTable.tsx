@@ -73,8 +73,8 @@ export function AdminDataTable<T>({
 
   return (
     <div className={`flex flex-col gap-4 ${className}`}>
-      <div className='border-border rounded-xl border'>
-        <Table className='min-w-max'>
+      <div className='border-border overflow-hidden rounded-xl border'>
+        <Table>
           <TableHeader className='border-border bg-muted'>
             {table.getHeaderGroups().map(headerGroup => (
               <TableRow key={headerGroup.id}>

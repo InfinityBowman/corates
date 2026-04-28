@@ -12,8 +12,6 @@ import {
   UserPlusIcon,
   SearchIcon,
   ShieldIcon,
-  ChevronLeftIcon,
-  ChevronRightIcon,
   LoaderIcon,
 } from 'lucide-react';
 import { useAdminStats, useAdminUsers } from '@/hooks/useAdminQueries';
@@ -21,7 +19,7 @@ import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { StatsCard } from '@/components/admin/StatsCard';
 import { UserTable } from '@/components/admin/UserTable';
 import { AnalyticsSection } from '@/components/admin/AnalyticsSection';
-import { AdminSection, AdminBox, DashboardHeader } from '@/components/admin/ui';
+import { AdminSection, DashboardHeader, ServerPagination } from '@/components/admin/ui';
 import { Input } from '@/components/ui/input';
 
 export const Route = createFileRoute('/_app/_protected/admin/')({
@@ -54,7 +52,7 @@ function AdminDashboard() {
   };
 
   return (
-    <>
+    <div className='flex flex-col gap-8'>
       <DashboardHeader
         icon={ShieldIcon}
         title='Admin Dashboard'
@@ -62,7 +60,7 @@ function AdminDashboard() {
       />
 
       {/* Stats Grid */}
-      <AdminSection title='Overview' className='mb-8'>
+      <AdminSection title='Overview'>
         <div className='grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4'>
           <StatsCard
             title='Total Users'
@@ -99,7 +97,6 @@ function AdminDashboard() {
       <AdminSection
         title='Analytics'
         description='Track signups, projects, and revenue over time'
-        className='mb-8'
       >
         <AnalyticsSection />
       </AdminSection>
@@ -121,51 +118,23 @@ function AdminDashboard() {
           </div>
         }
       >
-        <AdminBox padding='compact' className='overflow-hidden p-0'>
-          {usersDataQuery.isLoading ?
-            <div className='flex items-center justify-center py-12'>
-              <LoaderIcon className='size-8 animate-spin text-blue-600' />
-            </div>
-          : <UserTable users={usersData?.users || []} />}
+        {usersDataQuery.isLoading ?
+          <div className='flex items-center justify-center py-12'>
+            <LoaderIcon className='size-8 animate-spin text-blue-600' />
+          </div>
+        : <UserTable users={usersData?.users || []} />}
 
-          {/* Pagination */}
-          {usersData?.pagination && (
-            <div className='border-border flex items-center justify-between border-t px-6 py-4'>
-              <p className='text-muted-foreground text-sm'>
-                {(usersData.pagination.total || 0) > 0 ?
-                  `Showing ${(page - 1) * (usersData.pagination.limit || 20) + 1} to ${Math.min(
-                    page * (usersData.pagination.limit || 20),
-                    usersData.pagination.total || 0,
-                  )} of ${usersData.pagination.total || 0} users`
-                : 'No users found'}
-              </p>
-              <div className='flex items-center gap-2'>
-                <button
-                  type='button'
-                  onClick={() => setPage(p => Math.max(1, p - 1))}
-                  disabled={page === 1}
-                  className='border-border hover:bg-muted rounded-lg border p-2 transition-colors disabled:cursor-not-allowed disabled:opacity-50'
-                >
-                  <ChevronLeftIcon className='size-4' />
-                </button>
-                <span className='text-muted-foreground text-sm'>
-                  Page {page} of {usersData.pagination.totalPages || 1}
-                </span>
-                <button
-                  type='button'
-                  onClick={() =>
-                    setPage(p => Math.min(usersData.pagination.totalPages || 1, p + 1))
-                  }
-                  disabled={page >= (usersData.pagination.totalPages || 1)}
-                  className='border-border hover:bg-muted rounded-lg border p-2 transition-colors disabled:cursor-not-allowed disabled:opacity-50'
-                >
-                  <ChevronRightIcon className='size-4' />
-                </button>
-              </div>
-            </div>
-          )}
-        </AdminBox>
+        {usersData?.pagination && (
+          <ServerPagination
+            page={page}
+            totalPages={usersData.pagination.totalPages || 1}
+            total={usersData.pagination.total || 0}
+            limit={usersData.pagination.limit || 20}
+            onPageChange={setPage}
+            label='users'
+          />
+        )}
       </AdminSection>
-    </>
+    </div>
   );
 }

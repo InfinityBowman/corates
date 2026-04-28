@@ -10,15 +10,14 @@ import {
   FolderIcon,
   UsersIcon,
   FileTextIcon,
-  ChevronLeftIcon,
-  ChevronRightIcon,
   AlertCircleIcon,
   XIcon,
   HomeIcon,
 } from 'lucide-react';
 import { useAdminProjects, useAdminOrgs } from '@/hooks/useAdminQueries';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
-import { DashboardHeader, AdminSection, AdminDataTable } from '@/components/admin/ui';
+import { formatDate } from '@/lib/formatDate';
+import { DashboardHeader, AdminSection, AdminDataTable, ServerPagination } from '@/components/admin/ui';
 import { Input } from '@/components/ui/input';
 import type { ColumnDef } from '@tanstack/react-table';
 
@@ -42,19 +41,6 @@ interface OrgOption {
   id: string;
   name: string;
 }
-
-const formatDate = (timestamp: string | number | Date | null | undefined): string => {
-  if (!timestamp) return '-';
-  const date =
-    timestamp instanceof Date ? timestamp
-    : typeof timestamp === 'string' ? new Date(timestamp)
-    : new Date(timestamp * 1000);
-  return date.toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-  });
-};
 
 export const Route = createFileRoute('/_app/_protected/admin/projects/')({
   component: AdminProjectList,
@@ -189,7 +175,7 @@ function AdminProjectList() {
   );
 
   return (
-    <>
+    <div className='flex flex-col gap-8'>
       <DashboardHeader
         icon={FolderIcon}
         title='Projects'
@@ -198,7 +184,7 @@ function AdminProjectList() {
       />
 
       {/* Search and Filter Bar */}
-      <div className='mb-6 flex flex-col gap-4 sm:flex-row'>
+      <div className='flex flex-col gap-4 sm:flex-row'>
         <form onSubmit={handleSearch} className='flex-1'>
           <div className='relative'>
             <SearchIcon className='text-muted-foreground/70 pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2' />
@@ -226,7 +212,7 @@ function AdminProjectList() {
           <select
             value={selectedOrgId}
             onChange={e => handleOrgFilter(e.target.value)}
-            className='border-input h-8 rounded-lg border bg-transparent px-2.5 py-2 text-sm'
+            className='border-input h-8 w-full rounded-lg border bg-transparent px-2.5 text-sm transition-colors outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-3'
           >
             <option value=''>All Organizations</option>
             {orgs.map(org => (
@@ -288,38 +274,16 @@ function AdminProjectList() {
             }
           />
 
-          {/* Server-side Pagination */}
-          {pagination.totalPages > 1 && (
-            <div className='mt-4 flex items-center justify-between'>
-              <div className='text-muted-foreground text-sm'>
-                Showing {(pagination.page - 1) * limit + 1} to{' '}
-                {Math.min(pagination.page * limit, pagination.total)} of {pagination.total} projects
-              </div>
-              <div className='flex items-center gap-2'>
-                <button
-                  type='button'
-                  onClick={() => setPage(p => Math.max(1, p - 1))}
-                  disabled={page === 1}
-                  className='border-border bg-card text-muted-foreground hover:bg-muted rounded-xl border p-2 shadow-xs disabled:cursor-not-allowed disabled:opacity-50'
-                >
-                  <ChevronLeftIcon className='size-4' />
-                </button>
-                <span className='text-muted-foreground text-sm'>
-                  Page {pagination.page} of {pagination.totalPages}
-                </span>
-                <button
-                  type='button'
-                  onClick={() => setPage(p => Math.min(pagination.totalPages, p + 1))}
-                  disabled={page === pagination.totalPages}
-                  className='border-border bg-card text-muted-foreground hover:bg-muted rounded-xl border p-2 shadow-xs disabled:cursor-not-allowed disabled:opacity-50'
-                >
-                  <ChevronRightIcon className='size-4' />
-                </button>
-              </div>
-            </div>
-          )}
+          <ServerPagination
+            page={page}
+            totalPages={pagination.totalPages}
+            total={pagination.total}
+            limit={limit}
+            onPageChange={setPage}
+            label='projects'
+          />
         </AdminSection>
       )}
-    </>
+    </div>
   );
 }

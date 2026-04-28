@@ -7,6 +7,7 @@ import { Trash2Icon } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
+import { formatDateTime } from '@/lib/formatDate';
 
 interface Grant {
   id: string;
@@ -23,21 +24,6 @@ interface GrantListProps {
   isLoading: boolean;
   onRevoke: (_grantId: string) => void;
 }
-
-const formatDate = (timestamp: string | number | Date | null | undefined): string => {
-  if (!timestamp) return '-';
-  const date =
-    timestamp instanceof Date ? timestamp
-    : typeof timestamp === 'string' ? new Date(timestamp)
-    : new Date(timestamp * 1000);
-  return date.toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-    hour: 'numeric',
-    minute: '2-digit',
-  });
-};
 
 export function GrantList({ grants: grantsProp, loading, isLoading, onRevoke }: GrantListProps) {
   const grants = grantsProp || [];
@@ -66,12 +52,12 @@ export function GrantList({ grants: grantsProp, loading, isLoading, onRevoke }: 
                       </div>
                       <div className='text-muted-foreground mt-2 grid grid-cols-2 gap-4 text-sm'>
                         <div>
-                          <p>Starts: {formatDate(grant.startsAt)}</p>
-                          <p>Expires: {formatDate(grant.expiresAt)}</p>
+                          <p>Starts: {formatDateTime(grant.startsAt)}</p>
+                          <p>Expires: {formatDateTime(grant.expiresAt)}</p>
                         </div>
                         <div>
-                          <p>Created: {formatDate(grant.createdAt)}</p>
-                          {grant.revokedAt && <p>Revoked: {formatDate(grant.revokedAt)}</p>}
+                          <p>Created: {formatDateTime(grant.createdAt)}</p>
+                          {grant.revokedAt && <p>Revoked: {formatDateTime(grant.revokedAt)}</p>}
                         </div>
                       </div>
                     </div>

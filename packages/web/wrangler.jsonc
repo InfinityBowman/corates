@@ -161,6 +161,70 @@
         "AUTH_BASE_URL": "https://corates.org",
         "SENTRY_DSN": "https://3ddf61abb06680bffc1ebc7f540f05de@o4510738063818752.ingest.us.sentry.io/4510738126274560"
       }
+    },
+
+    "staging": {
+      "name": "corates-workers-staging",
+      "workers_dev": false,
+      "preview_urls": false,
+      "version_metadata": {
+        "binding": "CF_VERSION_METADATA"
+      },
+      "routes": [{ "pattern": "staging.corates.org/*", "zone_name": "corates.org" }],
+      "durable_objects": {
+        "bindings": [
+          { "name": "USER_SESSION", "class_name": "UserSession" },
+          { "name": "PROJECT_DOC", "class_name": "ProjectDoc" }
+        ]
+      },
+      "migrations": [
+        { "tag": "v1", "new_sqlite_classes": ["UserSession", "ProjectDoc"] },
+        { "tag": "v2", "new_sqlite_classes": ["EmailQueue"] },
+        { "tag": "v3", "deleted_classes": ["EmailQueue"] }
+      ],
+      "d1_databases": [
+        {
+          "binding": "DB",
+          "database_name": "corates-db-staging",
+          "database_id": "4b765e4f-10a3-4682-95aa-db89841d2e9e"
+        }
+      ],
+      "r2_buckets": [
+        {
+          "binding": "PDF_BUCKET",
+          "bucket_name": "corates-pdfs-staging"
+        }
+      ],
+      "queues": {
+        "producers": [
+          {
+            "queue": "corates-emails-staging",
+            "binding": "EMAIL_QUEUE"
+          }
+        ],
+        "consumers": [
+          {
+            "queue": "corates-emails-staging",
+            "max_batch_size": 10,
+            "max_retries": 3,
+            "dead_letter_queue": "corates-emails-staging-dlq"
+          }
+        ]
+      },
+      "observability": {
+        "logs": {
+          "enabled": true,
+          "head_sampling_rate": 1,
+          "invocation_logs": true,
+          "persist": true
+        }
+      },
+      "vars": {
+        "ENVIRONMENT": "staging",
+        "DEV_MODE": true,
+        "APP_URL": "https://staging.corates.org",
+        "AUTH_BASE_URL": "https://staging.corates.org"
+      }
     }
   }
 }

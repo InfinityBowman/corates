@@ -3,15 +3,15 @@
  * Displays Stripe event ledger entries with filtering and search
  */
 
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { createFileRoute, Link } from '@tanstack/react-router';
-import { LoaderIcon, CopyIcon, CheckIcon, ExternalLinkIcon, FilterIcon } from 'lucide-react';
+import { LoaderIcon, ExternalLinkIcon, FilterIcon } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { useAdminBillingLedger } from '@/hooks/useAdminQueries';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
-import { showToast } from '@/components/ui/toast';
-import { DashboardHeader, AdminBox, AdminDataTable } from '@/components/admin/ui';
+import { DashboardHeader, AdminBox, AdminDataTable, CopyButton } from '@/components/admin/ui';
 import { Input } from '@/components/ui/input';
+import { formatDateTime } from '@/lib/formatDate';
 import type { ColumnDef } from '@tanstack/react-table';
 
 interface LedgerEntry {
@@ -44,22 +44,6 @@ const STATUS_OPTIONS = [
 ];
 
 const LIMIT_OPTIONS = [25, 50, 100, 200];
-
-const formatDate = (timestamp: string | number | Date | null | undefined): string => {
-  if (!timestamp) return '-';
-  const date =
-    timestamp instanceof Date ? timestamp
-    : typeof timestamp === 'string' ? new Date(timestamp)
-    : new Date(timestamp * 1000);
-  return date.toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-    hour: 'numeric',
-    minute: '2-digit',
-    second: '2-digit',
-  });
-};
 
 const getStatusVariant = (
   status: string,
@@ -103,7 +87,6 @@ function AdminBillingLedgerPage() {
   const [statusFilter, setStatusFilter] = useState('');
   const [typeFilter, setTypeFilter] = useState('');
   const [limit, setLimit] = useState(50);
-  const [copiedId, setCopiedId] = useState<string | null>(null);
   const debouncedTypeFilter = useDebouncedValue(typeFilter, 300);
 
   const ledgerQuery = useAdminBillingLedger({
@@ -116,18 +99,6 @@ function AdminBillingLedgerPage() {
   const entries = data?.entries || [];
   const stats = data?.stats || {};
 
-  const handleCopy = useCallback(async (text: string, label: string) => {
-    try {
-      await navigator.clipboard.writeText(text);
-      setCopiedId(`${label}-${text}`);
-      showToast.success('Copied', `${label} copied to clipboard`);
-      setTimeout(() => setCopiedId(null), 2000);
-    } catch (err) {
-      console.warn('Clipboard copy failed:', (err as Error).message);
-      showToast.error('Error', 'Failed to copy to clipboard');
-    }
-  }, []);
-
   const columns = useMemo<ColumnDef<LedgerEntry, unknown>[]>(
     () => [
       {
@@ -137,10 +108,10 @@ function AdminBillingLedgerPage() {
           const entry = info.row.original;
           return (
             <div className='text-muted-foreground whitespace-nowrap'>
-              <div>{formatDate(entry.receivedAt)}</div>
+              <div>{formatDateTime(entry.receivedAt)}</div>
               {entry.processedAt && (
                 <div className='text-muted-foreground/70 text-xs'>
-                  Processed: {formatDate(entry.processedAt)}
+                  Processed: {formatDateTime(entry.processedAt)}
                 </div>
               )}
             </div>
@@ -179,16 +150,7 @@ function AdminBillingLedgerPage() {
               <code className='text-foreground font-mono text-xs'>
                 {entry.stripeEventId.slice(0, 12)}...
               </code>
-              <button
-                type='button'
-                onClick={() => handleCopy(entry.stripeEventId!, 'Event ID')}
-                className='text-muted-foreground/70 hover:text-muted-foreground'
-                title='Copy event ID'
-              >
-                {copiedId === `Event ID-${entry.stripeEventId}` ?
-                  <CheckIcon className='text-success size-3' />
-                : <CopyIcon className='size-3' />}
-              </button>
+              <CopyButton text={entry.stripeEventId!} label='Event ID' />
               <a
                 href={getStripeUrl('event', entry.stripeEventId) || '#'}
                 target='_blank'
@@ -219,16 +181,7 @@ function AdminBillingLedgerPage() {
               >
                 <code className='font-mono text-xs'>{entry.orgId.slice(0, 8)}...</code>
               </Link>
-              <button
-                type='button'
-                onClick={() => handleCopy(entry.orgId!, 'Org ID')}
-                className='text-muted-foreground/70 hover:text-muted-foreground'
-                title='Copy org ID'
-              >
-                {copiedId === `Org ID-${entry.orgId}` ?
-                  <CheckIcon className='text-success size-3' />
-                : <CopyIcon className='size-3' />}
-              </button>
+              <CopyButton text={entry.orgId!} label='Org ID' />
             </div>
           );
         },
@@ -246,16 +199,7 @@ function AdminBillingLedgerPage() {
                   <code className='text-foreground font-mono text-xs'>
                     {entry.stripeCustomerId.slice(0, 12)}...
                   </code>
-                  <button
-                    type='button'
-                    onClick={() => handleCopy(entry.stripeCustomerId!, 'Customer ID')}
-                    className='text-muted-foreground/70 hover:text-muted-foreground'
-                    title='Copy customer ID'
-                  >
-                    {copiedId === `Customer ID-${entry.stripeCustomerId}` ?
-                      <CheckIcon className='text-success size-3' />
-                    : <CopyIcon className='size-3' />}
-                  </button>
+                  <CopyButton text={entry.stripeCustomerId!} label='Customer ID' />
                   <a
                     href={getStripeUrl('customer', entry.stripeCustomerId) || '#'}
                     target='_blank'
@@ -273,16 +217,7 @@ function AdminBillingLedgerPage() {
                   <code className='text-foreground font-mono text-xs'>
                     {entry.stripeSubscriptionId.slice(0, 12)}...
                   </code>
-                  <button
-                    type='button'
-                    onClick={() => handleCopy(entry.stripeSubscriptionId!, 'Subscription ID')}
-                    className='text-muted-foreground/70 hover:text-muted-foreground'
-                    title='Copy subscription ID'
-                  >
-                    {copiedId === `Subscription ID-${entry.stripeSubscriptionId}` ?
-                      <CheckIcon className='text-success size-3' />
-                    : <CopyIcon className='size-3' />}
-                  </button>
+                  <CopyButton text={entry.stripeSubscriptionId!} label='Subscription ID' />
                   <a
                     href={getStripeUrl('subscription', entry.stripeSubscriptionId) || '#'}
                     target='_blank'
@@ -300,18 +235,7 @@ function AdminBillingLedgerPage() {
                   <code className='text-foreground font-mono text-xs'>
                     {entry.stripeCheckoutSessionId.slice(0, 12)}...
                   </code>
-                  <button
-                    type='button'
-                    onClick={() =>
-                      handleCopy(entry.stripeCheckoutSessionId!, 'Checkout Session ID')
-                    }
-                    className='text-muted-foreground/70 hover:text-muted-foreground'
-                    title='Copy checkout session ID'
-                  >
-                    {copiedId === `Checkout Session ID-${entry.stripeCheckoutSessionId}` ?
-                      <CheckIcon className='text-success size-3' />
-                    : <CopyIcon className='size-3' />}
-                  </button>
+                  <CopyButton text={entry.stripeCheckoutSessionId!} label='Checkout Session ID' />
                 </div>
               )}
             </div>
@@ -331,16 +255,7 @@ function AdminBillingLedgerPage() {
               <code className='text-foreground font-mono text-xs'>
                 {entry.requestId.slice(0, 8)}...
               </code>
-              <button
-                type='button'
-                onClick={() => handleCopy(entry.requestId!, 'Request ID')}
-                className='text-muted-foreground/70 hover:text-muted-foreground'
-                title='Copy request ID'
-              >
-                {copiedId === `Request ID-${entry.requestId}` ?
-                  <CheckIcon className='text-success size-3' />
-                : <CopyIcon className='size-3' />}
-              </button>
+              <CopyButton text={entry.requestId!} label='Request ID' />
             </div>
           );
         },
@@ -364,11 +279,11 @@ function AdminBillingLedgerPage() {
         },
       },
     ],
-    [handleCopy, copiedId],
+    [],
   );
 
   return (
-    <>
+    <div className='flex flex-col gap-8'>
       <DashboardHeader
         icon={FilterIcon}
         title='Billing Ledger'
@@ -389,31 +304,31 @@ function AdminBillingLedgerPage() {
 
       {/* Stats Summary */}
       {stats && (
-        <div className='mb-6 grid grid-cols-2 gap-4 md:grid-cols-5'>
-          <div className='border-border bg-card rounded-xl border p-4 shadow-xs'>
+        <div className='grid grid-cols-2 gap-4 md:grid-cols-5'>
+          <AdminBox padding='compact'>
             <p className='text-muted-foreground text-sm'>Total</p>
             <p className='text-foreground text-2xl font-bold'>{stats.total || 0}</p>
-          </div>
+          </AdminBox>
           {Object.entries(stats.byStatus || {}).map(([status, count]) => (
-            <div key={status} className='border-border bg-card rounded-xl border p-4 shadow-xs'>
+            <AdminBox key={status} padding='compact'>
               <p className='text-muted-foreground text-sm capitalize'>
                 {status.replace(/_/g, ' ')}
               </p>
               <p className='text-foreground text-2xl font-bold'>{count as number}</p>
-            </div>
+            </AdminBox>
           ))}
         </div>
       )}
 
       {/* Filters */}
-      <AdminBox className='mb-6'>
+      <AdminBox>
         <div className='grid grid-cols-1 gap-4 md:grid-cols-3'>
           <div>
             <label className='text-secondary-foreground block text-sm font-medium'>Status</label>
             <select
               value={statusFilter}
               onChange={e => setStatusFilter(e.target.value)}
-              className='border-input mt-1 block h-8 w-full rounded-lg border bg-transparent px-2.5 py-2 text-sm'
+              className='border-input mt-1 block h-8 w-full rounded-lg border bg-transparent px-2.5 text-sm transition-colors outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-3'
             >
               {STATUS_OPTIONS.map(option => (
                 <option key={option.value} value={option.value}>
@@ -439,7 +354,7 @@ function AdminBillingLedgerPage() {
             <select
               value={limit}
               onChange={e => setLimit(parseInt(e.target.value, 10))}
-              className='border-input mt-1 block h-8 w-full rounded-lg border bg-transparent px-2.5 py-2 text-sm'
+              className='border-input mt-1 block h-8 w-full rounded-lg border bg-transparent px-2.5 text-sm transition-colors outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-3'
             >
               {LIMIT_OPTIONS.map(opt => (
                 <option key={opt} value={opt}>
@@ -460,6 +375,6 @@ function AdminBillingLedgerPage() {
         enableSorting
         pageSize={limit}
       />
-    </>
+    </div>
   );
 }

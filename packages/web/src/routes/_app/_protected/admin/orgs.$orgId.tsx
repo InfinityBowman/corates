@@ -39,6 +39,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { handleError } from '@/lib/error-utils';
 import { AdminBox } from '@/components/admin/ui';
+import { formatDateInput } from '@/lib/formatDate';
 import { OrgBillingSummary } from '@/components/admin/OrgBillingSummary';
 import { OrgQuickActions } from '@/components/admin/OrgQuickActions';
 import { SubscriptionList } from '@/components/admin/SubscriptionList';
@@ -93,20 +94,6 @@ interface BillingData {
     revokedAt?: string | number | Date | null;
   }>;
 }
-
-const formatDateInput = (timestamp: Date | string | number | null | undefined): string => {
-  if (!timestamp) return '';
-  const date =
-    timestamp instanceof Date ? timestamp
-    : typeof timestamp === 'string' ? new Date(timestamp)
-    : new Date(timestamp * 1000);
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  const hours = String(date.getHours()).padStart(2, '0');
-  const minutes = String(date.getMinutes()).padStart(2, '0');
-  return `${year}-${month}-${day}T${hours}:${minutes}`;
-};
 
 function OrgDetailPage() {
   const { orgId } = Route.useParams();

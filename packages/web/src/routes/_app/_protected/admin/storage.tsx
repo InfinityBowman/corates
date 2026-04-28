@@ -33,6 +33,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { DashboardHeader, AdminSection, AdminBox } from '@/components/admin/ui';
 import { Input } from '@/components/ui/input';
+import { formatDateTime } from '@/lib/formatDate';
 import {
   Table,
   TableHeader,
@@ -68,17 +69,6 @@ const formatFileSize = (bytes: number | null | undefined): string => {
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
   if (bytes < 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   return `${(bytes / (1024 * 1024 * 1024)).toFixed(1)} GB`;
-};
-
-const formatDate = (timestamp: string | null | undefined): string => {
-  if (!timestamp) return '-';
-  return new Date(timestamp).toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
 };
 
 function StorageManagementPage() {
@@ -221,7 +211,7 @@ function StorageManagementPage() {
   })();
 
   return (
-    <>
+    <div className='flex flex-col gap-8'>
       <DashboardHeader
         icon={DatabaseIcon}
         title='Storage Management'
@@ -229,7 +219,7 @@ function StorageManagementPage() {
       />
 
       {/* Info Banner */}
-      <div className='mb-4 rounded-lg border border-blue-200 bg-blue-50 p-4'>
+      <div className='rounded-lg border border-blue-200 bg-blue-50 p-4'>
         <p className='text-sm text-blue-800'>
           <strong>Note:</strong> This dashboard shows all PDFs in R2 storage. PDFs marked as
           &quot;Orphaned&quot; are files in R2 that are not tracked in the mediaFiles database table
@@ -238,7 +228,7 @@ function StorageManagementPage() {
       </div>
 
       {/* Filters and Search */}
-      <div className='mb-6 flex flex-col gap-4 sm:flex-row'>
+      <div className='flex flex-col gap-4 sm:flex-row'>
         <div className='relative flex-1'>
           <SearchIcon className='text-muted-foreground/70 absolute top-1/2 left-3 size-4 -translate-y-1/2' />
           <Input
@@ -262,7 +252,7 @@ function StorageManagementPage() {
 
       {/* Bulk Actions Bar */}
       {selectedKeys.size > 0 && (
-        <div className='mb-4 flex items-center justify-between rounded-lg border border-blue-200 bg-blue-50 p-4'>
+        <div className='flex items-center justify-between rounded-lg border border-blue-200 bg-blue-50 p-4'>
           <span className='text-sm font-medium text-blue-900'>
             {selectedKeys.size} document{selectedKeys.size === 1 ? '' : 's'} selected
           </span>
@@ -287,7 +277,7 @@ function StorageManagementPage() {
 
       {/* Documents Table */}
       <AdminSection title='Documents'>
-        <AdminBox padding='compact' className='overflow-hidden p-0'>
+        <AdminBox padding='none' className='overflow-hidden'>
           <Table>
             <TableHeader className='border-border bg-muted border-b'>
               <TableRow className='border-border border-b'>
@@ -378,7 +368,7 @@ function StorageManagementPage() {
                       <span className='text-muted-foreground font-mono text-xs'>{doc.studyId}</span>
                     </TableCell>
                     <TableCell className='text-muted-foreground px-6 py-4 text-sm'>
-                      {formatDate(doc.uploaded)}
+                      {formatDateTime(doc.uploaded)}
                     </TableCell>
                     <TableCell className='text-foreground px-6 py-4 text-right text-sm'>
                       <button
@@ -423,7 +413,7 @@ function StorageManagementPage() {
                   type='button'
                   onClick={handlePrevPage}
                   disabled={cursorHistory.length === 0}
-                  className='hover:bg-muted border-border bg-card rounded-xl border p-2 shadow-xs disabled:cursor-not-allowed disabled:opacity-50'
+                  className='border-border bg-card hover:bg-muted rounded-lg border p-2 transition-colors disabled:cursor-not-allowed disabled:opacity-50'
                 >
                   <ChevronLeftIcon className='size-4' />
                 </button>
@@ -435,7 +425,7 @@ function StorageManagementPage() {
                   type='button'
                   onClick={handleNextPage}
                   disabled={!documentsData.nextCursor}
-                  className='hover:bg-muted border-border bg-card rounded-xl border p-2 shadow-xs disabled:cursor-not-allowed disabled:opacity-50'
+                  className='border-border bg-card hover:bg-muted rounded-lg border p-2 transition-colors disabled:cursor-not-allowed disabled:opacity-50'
                 >
                   <ChevronRightIcon className='size-4' />
                 </button>
@@ -463,6 +453,6 @@ function StorageManagementPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </>
+    </div>
   );
 }

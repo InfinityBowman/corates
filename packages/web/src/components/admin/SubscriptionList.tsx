@@ -9,6 +9,7 @@ import { showToast } from '@/components/ui/toast';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
+import { formatDateTime } from '@/lib/formatDate';
 
 interface Subscription {
   id: string;
@@ -33,21 +34,6 @@ interface SubscriptionListProps {
   onCancel: (_subscriptionId: string) => void;
   onEdit: (_subscription: Subscription) => void;
 }
-
-const formatDate = (timestamp: string | number | Date | null | undefined): string => {
-  if (!timestamp) return '-';
-  const date =
-    timestamp instanceof Date ? timestamp
-    : typeof timestamp === 'string' ? new Date(timestamp)
-    : new Date(timestamp * 1000);
-  return date.toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-    hour: 'numeric',
-    minute: '2-digit',
-  });
-};
 
 export function SubscriptionList({
   subscriptions: subscriptionsProp,
@@ -114,25 +100,25 @@ export function SubscriptionList({
                       </div>
                       <div className='text-muted-foreground mt-2 grid grid-cols-1 gap-3 text-sm md:grid-cols-2'>
                         <div className='flex flex-col gap-1'>
-                          <p>Period Start: {formatDate(subscription.periodStart)}</p>
-                          <p>Period End: {formatDate(subscription.periodEnd)}</p>
+                          <p>Period Start: {formatDateTime(subscription.periodStart)}</p>
+                          <p>Period End: {formatDateTime(subscription.periodEnd)}</p>
                           {subscription.cancelAtPeriodEnd && (
                             <p className='text-warning'>Cancels at period end</p>
                           )}
                         </div>
                         <div className='flex flex-col gap-1'>
-                          <p>Created: {formatDate(subscription.createdAt)}</p>
+                          <p>Created: {formatDateTime(subscription.createdAt)}</p>
                           {subscription.updatedAt && (
-                            <p>Updated: {formatDate(subscription.updatedAt)}</p>
+                            <p>Updated: {formatDateTime(subscription.updatedAt)}</p>
                           )}
                           {subscription.canceledAt && (
                             <p className='text-destructive'>
-                              Canceled: {formatDate(subscription.canceledAt)}
+                              Canceled: {formatDateTime(subscription.canceledAt)}
                             </p>
                           )}
                           {subscription.endedAt && (
                             <p className='text-destructive'>
-                              Ended: {formatDate(subscription.endedAt)}
+                              Ended: {formatDateTime(subscription.endedAt)}
                             </p>
                           )}
                         </div>

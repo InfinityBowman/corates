@@ -12,7 +12,6 @@ import {
   ChevronRightIcon,
   ArrowUpIcon,
   ArrowDownIcon,
-  AlertCircleIcon,
   RefreshCwIcon,
   KeyRoundIcon,
   LinkIcon,
@@ -20,7 +19,6 @@ import {
   TableIcon,
   XIcon,
 } from 'lucide-react';
-import { useAdminStore } from '@/stores/adminStore';
 import {
   useAdminDatabaseTables,
   useAdminTableRows,
@@ -35,7 +33,7 @@ import {
   TableHead,
   TableCell,
 } from '@/components/ui/table';
-import { DashboardHeader } from '@/components/admin/ui';
+import { DashboardHeader, AdminBox } from '@/components/admin/ui';
 
 export const Route = createFileRoute('/_app/_protected/admin/database')({
   component: DatabaseViewerPage,
@@ -82,8 +80,6 @@ const formatCellValue = (value: unknown): string => {
 };
 
 function DatabaseViewerPage() {
-  const { isAdmin, isAdminChecked } = useAdminStore();
-
   const [selectedTable, setSelectedTable] = useState<string | null>(null);
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(50);
@@ -167,26 +163,8 @@ function DatabaseViewerPage() {
     setPage(1);
   };
 
-  if (!isAdminChecked) {
-    return (
-      <div className='flex min-h-100 items-center justify-center'>
-        <LoaderIcon className='size-8 animate-spin text-blue-600' />
-      </div>
-    );
-  }
-
-  if (!isAdmin) {
-    return (
-      <div className='text-muted-foreground flex min-h-100 flex-col items-center justify-center'>
-        <AlertCircleIcon className='mb-4 size-12' />
-        <p className='text-lg font-medium'>Access Denied</p>
-        <p className='text-sm'>You do not have admin privileges.</p>
-      </div>
-    );
-  }
-
   return (
-    <>
+    <div className='flex flex-col gap-8'>
       <DashboardHeader
         icon={DatabaseIcon}
         title='Database Viewer'
@@ -197,7 +175,7 @@ function DatabaseViewerPage() {
       <div className='flex gap-6'>
         {/* Table List Sidebar */}
         <div className='w-64 shrink-0'>
-          <div className='border-border bg-card rounded-lg border'>
+          <AdminBox padding='none'>
             <div className='border-border flex items-center justify-between border-b px-4 py-3'>
               <h2 className='text-foreground font-semibold'>Tables</h2>
               <button
@@ -237,13 +215,13 @@ function DatabaseViewerPage() {
                 ))}
               </div>
             }
-          </div>
+          </AdminBox>
         </div>
 
         {/* Table Content */}
         <div className='min-w-0 flex-1'>
           {selectedTable ?
-            <div className='border-border bg-card rounded-lg border'>
+            <AdminBox padding='none' className='overflow-hidden'>
               {/* Table Header */}
               <div className='border-border flex items-center justify-between border-b px-4 py-3'>
                 <div className='flex items-center gap-3'>
@@ -270,7 +248,7 @@ function DatabaseViewerPage() {
                       setLimit(parseInt(e.target.value, 10));
                       setPage(1);
                     }}
-                    className='border-border rounded border px-2 py-1 text-sm'
+                    className='border-input h-8 rounded-lg border bg-transparent px-2.5 text-sm transition-colors outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-3'
                   >
                     {LIMIT_OPTIONS.map(opt => (
                       <option key={opt} value={opt}>
@@ -394,7 +372,7 @@ function DatabaseViewerPage() {
                         type='button'
                         onClick={() => setPage(p => Math.max(1, p - 1))}
                         disabled={page <= 1}
-                        className='border-border hover:bg-secondary rounded border p-1 disabled:cursor-not-allowed disabled:opacity-50'
+                        className='border-border bg-card hover:bg-muted rounded-lg border p-2 transition-colors disabled:cursor-not-allowed disabled:opacity-50'
                       >
                         <ChevronLeftIcon className='size-5' />
                       </button>
@@ -405,7 +383,7 @@ function DatabaseViewerPage() {
                         type='button'
                         onClick={() => setPage(p => p + 1)}
                         disabled={page >= pagination.totalPages}
-                        className='border-border hover:bg-secondary rounded border p-1 disabled:cursor-not-allowed disabled:opacity-50'
+                        className='border-border bg-card hover:bg-muted rounded-lg border p-2 transition-colors disabled:cursor-not-allowed disabled:opacity-50'
                       >
                         <ChevronRightIcon className='size-5' />
                       </button>
@@ -416,13 +394,13 @@ function DatabaseViewerPage() {
                   <p>No rows in this table</p>
                 </div>
               }
-            </div>
-          : <div className='border-border bg-muted flex h-64 items-center justify-center rounded-lg border border-dashed'>
+            </AdminBox>
+          : <div className='border-border bg-muted flex h-64 items-center justify-center rounded-xl border border-dashed'>
               <p className='text-muted-foreground'>Select a table to view its contents</p>
             </div>
           }
         </div>
       </div>
-    </>
+    </div>
   );
 }

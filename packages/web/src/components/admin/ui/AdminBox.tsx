@@ -3,12 +3,13 @@
  */
 
 interface AdminBoxProps {
-  padding?: 'compact' | 'default' | 'spacious';
+  padding?: 'none' | 'compact' | 'default' | 'spacious';
   className?: string;
   children: React.ReactNode;
 }
 
 const PADDING_CLASSES = {
+  none: 'p-0',
   compact: 'p-4',
   default: 'p-6',
   spacious: 'p-8',

@@ -1,6 +1,8 @@
 import { defineConfig } from '@playwright/test';
 import { BASE_URL } from './e2e/constants';
 
+const isRemote = !!process.env.PLAYWRIGHT_BASE_URL;
+
 export default defineConfig({
   testDir: './e2e',
   testMatch: '**/*.spec.ts',
@@ -19,10 +21,12 @@ export default defineConfig({
       use: { browserName: 'chromium' },
     },
   ],
-  webServer: {
-    command: 'pnpm test:dev',
-    url: `${BASE_URL}/api/test/health`,
-    reuseExistingServer: true,
-    timeout: 30_000,
-  },
+  ...(!isRemote && {
+    webServer: {
+      command: 'pnpm test:dev',
+      url: `${BASE_URL}/api/test/health`,
+      reuseExistingServer: true,
+      timeout: 30_000,
+    },
+  }),
 });

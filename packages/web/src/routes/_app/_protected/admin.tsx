@@ -20,7 +20,6 @@ import {
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { useAdminStore } from '@/stores/adminStore';
-import { DashboardBody } from '@/components/admin/ui';
 import { SectionErrorBoundary } from '@/components/project/SectionErrorBoundary';
 
 interface NavItem {
@@ -85,39 +84,41 @@ function AdminLayout() {
   }
 
   return (
-    <div className='bg-muted mx-auto min-h-full'>
+    <div className='bg-muted min-h-screen'>
       {/* Navbar */}
       <div className='border-border bg-card border-b'>
-        <div className='px-6'>
-          <nav className='flex gap-1' role='navigation' aria-label='Admin navigation'>
-            {navItems.map(item => {
-              const Icon = item.icon;
-              const active = isActive(item.path);
-              return (
-                <Link
-                  key={item.path}
-                  to={item.path as string}
-                  className={`flex items-center gap-2 rounded-t-lg border-b-2 px-4 py-3 text-sm font-medium transition-colors ${
-                    active ?
-                      'border-blue-600 bg-blue-50 text-blue-700'
-                    : 'text-muted-foreground hover:border-border hover:bg-muted hover:text-foreground border-transparent'
-                  }`}
-                >
-                  <Icon className='size-4' />
-                  <span>{item.label}</span>
-                </Link>
-              );
-            })}
-          </nav>
-        </div>
+        <nav
+          className='mx-auto flex max-w-screen-2xl gap-1 px-4 md:px-6 lg:px-8'
+          role='navigation'
+          aria-label='Admin navigation'
+        >
+          {navItems.map(item => {
+            const Icon = item.icon;
+            const active = isActive(item.path);
+            return (
+              <Link
+                key={item.path}
+                to={item.path as string}
+                className={`flex items-center gap-2 rounded-t-lg border-b-2 px-4 py-3 text-sm font-medium transition-colors ${
+                  active ?
+                    'border-blue-600 bg-blue-50 text-blue-700'
+                  : 'text-muted-foreground hover:border-border hover:bg-muted hover:text-foreground border-transparent'
+                }`}
+              >
+                <Icon className='size-4' />
+                <span>{item.label}</span>
+              </Link>
+            );
+          })}
+        </nav>
       </div>
 
       {/* Page Content */}
-      <DashboardBody>
+      <div className='mx-auto max-w-screen-2xl px-4 pt-8 pb-16 md:px-6 lg:px-8'>
         <SectionErrorBoundary name='Admin'>
           <Outlet />
         </SectionErrorBoundary>
-      </DashboardBody>
+      </div>
     </div>
   );
 }

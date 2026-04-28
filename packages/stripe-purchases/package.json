@@ -9,6 +9,7 @@
   "scripts": {
     "dev": "wrangler dev --port 8788 --inspector-port 9230 --persist-to ../workers/.wrangler/state",
     "deploy": "pnpm --filter @corates/shared build && wrangler deploy --env production",
+    "deploy:staging": "pnpm --filter @corates/shared build && wrangler deploy --env staging",
     "tail": "wrangler tail corates-stripe-purchases-prod",
     "typecheck": "tsc --noEmit",
     "lint": "eslint ."
@@ -24,6 +25,6 @@
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20260426.1",
     "typescript": "^5.9.3",
-    "wrangler": "^4.85.0"
+    "wrangler": "^4.86.0"
   }
 }

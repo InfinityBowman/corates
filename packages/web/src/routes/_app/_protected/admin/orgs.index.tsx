@@ -5,17 +5,11 @@
 
 import { useState, useMemo } from 'react';
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router';
-import {
-  SearchIcon,
-  ChevronLeftIcon,
-  ChevronRightIcon,
-  HomeIcon,
-  UsersIcon,
-  FolderIcon,
-} from 'lucide-react';
+import { SearchIcon, HomeIcon, UsersIcon, FolderIcon } from 'lucide-react';
 import { useAdminOrgs } from '@/hooks/useAdminQueries';
+import { formatDate } from '@/lib/formatDate';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
-import { DashboardHeader, AdminSection, AdminDataTable } from '@/components/admin/ui';
+import { DashboardHeader, AdminSection, AdminDataTable, ServerPagination } from '@/components/admin/ui';
 import { Input } from '@/components/ui/input';
 import type { ColumnDef } from '@tanstack/react-table';
 
@@ -30,16 +24,6 @@ interface OrgRow {
   plan?: string;
   createdAt?: string | number;
 }
-
-const formatDate = (timestamp: string | number | null | undefined): string => {
-  if (!timestamp) return '-';
-  const date = typeof timestamp === 'string' ? new Date(timestamp) : new Date(timestamp * 1000);
-  return date.toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-  });
-};
 
 export const Route = createFileRoute('/_app/_protected/admin/orgs/')({
   component: AdminOrgList,
@@ -153,7 +137,7 @@ function AdminOrgList() {
   );
 
   return (
-    <>
+    <div className='flex flex-col gap-8'>
       <DashboardHeader
         icon={HomeIcon}
         title='Organizations'
@@ -190,41 +174,17 @@ function AdminOrgList() {
           }
         />
 
-        {/* Server-side Pagination */}
         {orgsData?.pagination && (
-          <div className='mt-4 flex items-center justify-between'>
-            <p className='text-muted-foreground text-sm'>
-              {(orgsData.pagination.total || 0) > 0 ?
-                `Showing ${(page - 1) * (orgsData.pagination.limit || 20) + 1} to ${Math.min(
-                  page * (orgsData.pagination.limit || 20),
-                  orgsData.pagination.total || 0,
-                )} of ${orgsData.pagination.total || 0} organizations`
-              : 'No organizations found'}
-            </p>
-            <div className='flex items-center gap-2'>
-              <button
-                type='button'
-                onClick={() => setPage(p => Math.max(1, p - 1))}
-                disabled={page === 1}
-                className='border-border bg-card text-muted-foreground hover:bg-muted rounded-xl border p-2 shadow-xs disabled:cursor-not-allowed disabled:opacity-50'
-              >
-                <ChevronLeftIcon className='size-4' />
-              </button>
-              <span className='text-muted-foreground text-sm'>
-                Page {page} of {orgsData.pagination.totalPages || 1}
-              </span>
-              <button
-                type='button'
-                onClick={() => setPage(p => Math.min(orgsData.pagination.totalPages || 1, p + 1))}
-                disabled={page >= (orgsData.pagination.totalPages || 1)}
-                className='border-border bg-card text-muted-foreground hover:bg-muted rounded-xl border p-2 shadow-xs disabled:cursor-not-allowed disabled:opacity-50'
-              >
-                <ChevronRightIcon className='size-4' />
-              </button>
-            </div>
-          </div>
+          <ServerPagination
+            page={page}
+            totalPages={orgsData.pagination.totalPages || 1}
+            total={orgsData.pagination.total || 0}
+            limit={orgsData.pagination.limit || 20}
+            onPageChange={setPage}
+            label='organizations'
+          />
         )}
       </AdminSection>
-    </>
+    </div>
   );
 }

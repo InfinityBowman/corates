@@ -42,6 +42,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { handleError } from '@/lib/error-utils';
 import { AdminBox } from '@/components/admin/ui';
+import { formatDateTime } from '@/lib/formatDate';
 import {
   Table,
   TableHeader,
@@ -116,21 +117,6 @@ interface ProjectData {
   files?: ProjectFile[];
   invitations?: ProjectInvitation[];
 }
-
-const formatDate = (timestamp: string | number | Date | null | undefined): string => {
-  if (!timestamp) return '-';
-  const date =
-    timestamp instanceof Date ? timestamp
-    : typeof timestamp === 'string' ? new Date(timestamp)
-    : new Date(timestamp * 1000);
-  return date.toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-    hour: 'numeric',
-    minute: '2-digit',
-  });
-};
 
 const formatShortDate = (timestamp: string | number | Date | null | undefined): string => {
   if (!timestamp) return '-';
@@ -394,13 +380,13 @@ function ProjectDetailPage() {
               <div>
                 <dt className='text-muted-foreground text-sm font-medium'>Created</dt>
                 <dd className='text-foreground mt-1 text-sm'>
-                  {formatDate(projectData.project.createdAt)}
+                  {formatDateTime(projectData.project.createdAt)}
                 </dd>
               </div>
               <div>
                 <dt className='text-muted-foreground text-sm font-medium'>Updated</dt>
                 <dd className='text-foreground mt-1 text-sm'>
-                  {formatDate(projectData.project.updatedAt)}
+                  {formatDateTime(projectData.project.updatedAt)}
                 </dd>
               </div>
               <div>
@@ -518,7 +504,7 @@ function ProjectDetailPage() {
                       <dt className='text-muted-foreground text-xs'>Oldest Row</dt>
                       <dd className='text-foreground mt-1 text-sm font-medium'>
                         {docStats.timestamps.oldestRowAt ?
-                          formatDate(new Date(docStats.timestamps.oldestRowAt))
+                          formatDateTime(new Date(docStats.timestamps.oldestRowAt))
                         : '-'}
                       </dd>
                     </div>
@@ -526,7 +512,7 @@ function ProjectDetailPage() {
                       <dt className='text-muted-foreground text-xs'>Newest Row</dt>
                       <dd className='text-foreground mt-1 text-sm font-medium'>
                         {docStats.timestamps.newestRowAt ?
-                          formatDate(new Date(docStats.timestamps.newestRowAt))
+                          formatDateTime(new Date(docStats.timestamps.newestRowAt))
                         : '-'}
                       </dd>
                     </div>

@@ -6,7 +6,6 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {
-  TrendingUpIcon,
   LoaderIcon,
   RefreshCwIcon,
   AlertTriangleIcon,
@@ -142,16 +141,6 @@ export function AnalyticsSection() {
 
   return (
     <div className='flex flex-col gap-6'>
-      {/* Section Header */}
-      <div className='flex items-center justify-between'>
-        <div className='flex items-center gap-3'>
-          <div className='rounded-xl bg-purple-100 p-2'>
-            <TrendingUpIcon className='size-5 text-purple-600' />
-          </div>
-          <h2 className='text-foreground text-lg font-semibold'>Analytics</h2>
-        </div>
-      </div>
-
       {/* Growth Charts Row */}
       <div className='grid grid-cols-1 gap-6 lg:grid-cols-2'>
         {/* Signups Chart */}
@@ -165,7 +154,7 @@ export function AnalyticsSection() {
               <select
                 value={signupDays}
                 onChange={e => setSignupDays(parseInt(e.target.value, 10))}
-                className='border-input h-8 rounded-lg border bg-transparent px-2.5 py-2 text-sm'
+                className='border-input h-8 rounded-lg border bg-transparent px-2.5 text-sm transition-colors outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-3'
               >
                 {PERIOD_OPTIONS.map(opt => (
                   <option key={opt.value} value={opt.value}>
@@ -351,7 +340,7 @@ export function AnalyticsSection() {
             <select
               value={webhookDays}
               onChange={e => setWebhookDays(parseInt(e.target.value, 10))}
-              className='border-input h-8 rounded-lg border bg-transparent px-2.5 py-2 text-sm'
+              className='border-input h-8 rounded-lg border bg-transparent px-2.5 text-sm transition-colors outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-3'
             >
               <option value={7}>7 days</option>
               <option value={14}>14 days</option>

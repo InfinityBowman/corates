@@ -16,6 +16,7 @@ import { Badge } from '@/components/ui/badge';
 import { useAdminBillingStuckStates } from '@/hooks/useAdminQueries';
 import { DashboardHeader, AdminBox } from '@/components/admin/ui';
 import { Input } from '@/components/ui/input';
+import { formatDateTime } from '@/lib/formatDate';
 
 interface StuckOrg {
   type: string;
@@ -27,18 +28,6 @@ interface StuckOrg {
   stripeEventId?: string;
   failedCount?: number;
 }
-
-const formatDate = (timestamp: string | number | null | undefined): string => {
-  if (!timestamp) return '-';
-  const date = typeof timestamp === 'string' ? new Date(timestamp) : new Date(timestamp * 1000);
-  return date.toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-    hour: 'numeric',
-    minute: '2-digit',
-  });
-};
 
 const getStuckStateTypeLabel = (type: string): string => {
   switch (type) {
@@ -119,7 +108,7 @@ function AdminBillingStuckStatesPage() {
   }, [stuckOrgs]);
 
   return (
-    <div>
+    <div className='flex flex-col gap-8'>
       <DashboardHeader
         icon={AlertTriangleIcon}
         title='Stuck Billing States'
@@ -155,11 +144,11 @@ function AdminBillingStuckStatesPage() {
       />
 
       {checkedAt && (
-        <p className='text-muted-foreground mb-6 text-sm'>Last checked: {formatDate(checkedAt)}</p>
+        <p className='text-muted-foreground text-sm'>Last checked: {formatDateTime(checkedAt)}</p>
       )}
 
       {/* Summary */}
-      <AdminBox className='mb-6'>
+      <AdminBox>
         <div className='flex items-center justify-between'>
           <div>
             <p className='text-foreground text-lg font-semibold'>
