@@ -99,13 +99,13 @@ jobs:
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
         working-directory: packages/web
-        run: wrangler deploy
+        run: pnpm exec wrangler deploy
 
       - name: Deploy stripe-purchases to staging
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
         working-directory: packages/stripe-purchases
-        run: wrangler deploy --env staging
+        run: pnpm exec wrangler deploy --env staging
 
       # -- E2E tests against staging --
 
@@ -164,10 +164,10 @@ jobs:
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
         working-directory: packages/web
-        run: wrangler deploy
+        run: pnpm exec wrangler deploy
 
       - name: Deploy stripe-purchases to production
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
         working-directory: packages/stripe-purchases
-        run: wrangler deploy --env production
+        run: pnpm exec wrangler deploy --env production
