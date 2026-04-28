@@ -24,6 +24,8 @@ import { Tabs, TabsList, TabsTrigger, TabsIndicator, TabsContent } from '@/compo
 import { showToast } from '@/components/ui/toast';
 import { useProjectStore } from '@/stores/projectStore';
 import { useAddStudies } from '@/hooks/useAddStudies';
+import type { CollectedStudies } from '@/hooks/useAddStudies';
+import type { MergedStudy } from '@/hooks/useAddStudies/deduplication';
 
 import { PdfUploadSection } from './PdfUploadSection';
 import { ReferenceImportSection } from './ReferenceImportSection';
@@ -31,16 +33,21 @@ import { DoiLookupSection } from './DoiLookupSection';
 import { GoogleDriveSection } from './GoogleDriveSection';
 import { StagedStudiesSection } from './StagedStudiesSection';
 
+export interface AddStudiesFormState {
+  studiesState: Record<string, unknown>;
+  [key: string]: unknown;
+}
+
 interface AddStudiesFormProps {
   projectId?: string;
-  onAddStudies?: (studies: any[]) => Promise<void>;
+  onAddStudies?: (studies: MergedStudy[]) => Promise<void>;
   alwaysExpanded?: boolean;
   collectMode?: boolean;
-  onStudiesChange?: (data: { pdfs: any[]; refs: any[]; lookups: any[]; driveFiles: any[] }) => void;
+  onStudiesChange?: (data: CollectedStudies) => void;
   formType?: 'createProject' | 'addStudies';
-  initialState?: any;
+  initialState?: AddStudiesFormState | null;
   getExternalState?: () => Record<string, unknown>;
-  onSaveState?: (state: any) => Promise<void>;
+  onSaveState?: (state: AddStudiesFormState) => Promise<void>;
 }
 
 export function AddStudiesForm({
@@ -75,7 +82,6 @@ export function AddStudiesForm({
   const isExpanded = alwaysExpanded || expanded || studies.hasAnyStudies();
 
   // Refs for drag-and-drop handlers to avoid stale closures
-  /* eslint-disable react-hooks/refs -- intentional ref-sync pattern for event handler closures */
   const hasExistingStudiesRef = useRef(hasExistingStudies);
   hasExistingStudiesRef.current = hasExistingStudies;
   const isExpandedRef = useRef(isExpanded);
@@ -84,7 +90,6 @@ export function AddStudiesForm({
   isDraggingOverRef.current = isDraggingOver;
   const handlePdfSelectRef = useRef(studies.handlePdfSelect);
   handlePdfSelectRef.current = studies.handlePdfSelect;
-  /* eslint-enable react-hooks/refs */
 
   // Restore state from OAuth redirect.
   // Expand unconditionally since restoreState enqueues React state updates
@@ -355,7 +360,7 @@ const TABS = [
   { value: 'drive', label: 'Google Drive', icon: FolderIcon },
 ] as const;
 
-function getTabCount(tabValue: string, studies: any): number {
+function getTabCount(tabValue: string, studies: ReturnType<typeof useAddStudies>): number {
   switch (tabValue) {
     case 'pdfs':
       return studies.pdfCount;

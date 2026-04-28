@@ -4,7 +4,8 @@
 
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { BookOpenIcon } from 'lucide-react';
-import { AddStudiesForm } from '../add-studies/AddStudiesForm';
+import { AddStudiesForm, type AddStudiesFormState } from '../add-studies/AddStudiesForm';
+import type { MergedStudy } from '@/hooks/useAddStudies/deduplication';
 import { GoogleDrivePickerModal } from '../google-drive/GoogleDrivePickerModal';
 import { StudyCard } from './study-card/StudyCard';
 import { AssignReviewersModal } from './AssignReviewersModal';
@@ -32,7 +33,7 @@ export function AllStudiesTab() {
 
   const [showGoogleDriveModal, setShowGoogleDriveModal] = useState(false);
   const [googleDriveTargetStudyId, setGoogleDriveTargetStudyId] = useState<string | null>(null);
-  const [restoredState, setRestoredState] = useState<unknown>(null);
+  const [restoredState, setRestoredState] = useState<AddStudiesFormState | null>(null);
   const [expandedStudies, setExpandedStudies] = useState<Set<string>>(new Set());
   const [showReviewersModal, setShowReviewersModal] = useState(false);
   const [editingStudy, setEditingStudy] = useState<StudyInfo | null>(null);
@@ -51,7 +52,7 @@ export function AllStudiesTab() {
         try {
           const savedState = await getFormState('addStudies', projectId);
           if (!cancelled && savedState) {
-            setRestoredState(savedState);
+            setRestoredState(savedState as AddStudiesFormState);
             await clearFormState('addStudies', projectId);
             // Clear after next render so AddStudiesForm can consume it once
             setTimeout(() => setRestoredState(null), 0);
@@ -69,7 +70,7 @@ export function AllStudiesTab() {
   }, [projectId]);
 
   const handleSaveState = useCallback(
-    async (state: unknown) => {
+    async (state: AddStudiesFormState) => {
       await saveFormState('addStudies', state, projectId);
     },
     [projectId],
@@ -87,8 +88,8 @@ export function AllStudiesTab() {
     project.study.update(studyId, updates);
   }, []);
 
-  const handleAddStudies = useCallback(async (studiesToAdd: Record<string, unknown>[]) => {
-    await project.study.addBatch(studiesToAdd);
+  const handleAddStudies = useCallback(async (studiesToAdd: MergedStudy[]) => {
+    await project.study.addBatch(studiesToAdd as unknown as Record<string, unknown>[]);
   }, []);
 
   const handleOpenGoogleDrive = useCallback((studyId: string) => {
