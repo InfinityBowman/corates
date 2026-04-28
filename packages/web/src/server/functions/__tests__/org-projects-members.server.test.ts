@@ -46,8 +46,10 @@ vi.mock('@corates/workers/billing-resolver', () => ({
 }));
 
 let mockCheckCollaboratorQuota: Mock;
+let mockInsertWithQuotaCheck: Mock;
 vi.mock('@corates/workers/quota-transaction', () => ({
   checkCollaboratorQuota: vi.fn(),
+  insertWithQuotaCheck: vi.fn(),
 }));
 
 beforeEach(async () => {
@@ -60,6 +62,12 @@ beforeEach(async () => {
   const quotaTransaction = await import('@corates/workers/quota-transaction');
   mockCheckCollaboratorQuota = quotaTransaction.checkCollaboratorQuota as unknown as Mock;
   mockCheckCollaboratorQuota.mockResolvedValue({ allowed: true, used: 0, limit: -1 });
+  mockInsertWithQuotaCheck = quotaTransaction.insertWithQuotaCheck as unknown as Mock;
+  mockInsertWithQuotaCheck.mockImplementation(async (db: unknown, options: { insertStatements: unknown[] }) => {
+    const typedDb = db as { batch: (ops: unknown[]) => Promise<unknown> };
+    await typedDb.batch(options.insertStatements as unknown as Parameters<typeof typedDb.batch>[0]);
+    return { success: true };
+  });
 });
 
 describe('listProjectMembers', () => {
@@ -323,10 +331,8 @@ describe('Collaborator Quota Enforcement', () => {
     currentUser = { id: owner.id, email: owner.email };
 
     const { createDomainError, AUTH_ERRORS } = await import('@corates/shared');
-    mockCheckCollaboratorQuota.mockResolvedValueOnce({
-      allowed: false,
-      used: 1,
-      limit: 0,
+    mockInsertWithQuotaCheck.mockResolvedValueOnce({
+      success: false,
       error: createDomainError(
         AUTH_ERRORS.FORBIDDEN,
         {

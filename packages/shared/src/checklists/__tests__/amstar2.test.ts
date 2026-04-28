@@ -113,6 +113,54 @@ describe('AMSTAR2', () => {
       expect(consolidated.q11a).toBeUndefined();
       expect(consolidated.q11b).toBeUndefined();
     });
+
+    it('should consolidate when only q9a is present', () => {
+      const checklist = createAMSTAR2Checklist({
+        name: 'Test',
+        id: 'test-123',
+      });
+
+      checklist.q9a.answers[2][0] = true; // Yes
+      delete (checklist as Record<string, unknown>).q9b;
+
+      const consolidated = consolidateAnswers(checklist);
+
+      expect(consolidated.q9).toBeDefined();
+      expect(consolidated.q9a).toBeUndefined();
+      expect(consolidated.q9b).toBeUndefined();
+    });
+
+    it('should consolidate when only q9b is present', () => {
+      const checklist = createAMSTAR2Checklist({
+        name: 'Test',
+        id: 'test-123',
+      });
+
+      delete (checklist as Record<string, unknown>).q9a;
+      checklist.q9b.answers[2][0] = true; // Yes
+
+      const consolidated = consolidateAnswers(checklist);
+
+      expect(consolidated.q9).toBeDefined();
+      expect(consolidated.q9a).toBeUndefined();
+      expect(consolidated.q9b).toBeUndefined();
+    });
+
+    it('should consolidate when only q11a is present', () => {
+      const checklist = createAMSTAR2Checklist({
+        name: 'Test',
+        id: 'test-123',
+      });
+
+      checklist.q11a.answers[1][0] = true; // Yes
+      delete (checklist as Record<string, unknown>).q11b;
+
+      const consolidated = consolidateAnswers(checklist);
+
+      expect(consolidated.q11).toBeDefined();
+      expect(consolidated.q11a).toBeUndefined();
+      expect(consolidated.q11b).toBeUndefined();
+    });
   });
 
   describe('getAnswers', () => {

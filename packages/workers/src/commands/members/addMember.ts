@@ -12,7 +12,7 @@ import { createDomainError, PROJECT_ERRORS } from '@corates/shared';
 import type { OrgId, ProjectId, UserId } from '@corates/shared/ids';
 import { syncMemberWithRetry } from '../../lib/syncWithRetry';
 import { notifyUser, NotificationTypes } from '../lib/notifications';
-import { checkCollaboratorQuota } from '../../lib/quotaTransaction';
+import { insertWithQuotaCheck, type InsertRollbackMeta } from '../../lib/quotaTransaction';
 import type { Env } from '../../types';
 import type { ProjectRole } from '../../policies/lib/roles';
 
@@ -79,44 +79,52 @@ export async function addMember(
     .where(and(eq(member.organizationId, orgId), eq(member.userId, userToAdd.id)))
     .get();
 
-  // Enforce collaborator quota if adding a new org member
-  if (!existingOrgMembership) {
-    const quotaResult = await checkCollaboratorQuota(db, orgId);
-    if (!quotaResult.allowed) {
-      throw quotaResult.error;
-    }
-  }
-
-  // Build insert operations for atomic batch execution
   const now = new Date();
   const insertOperations: unknown[] = [];
+  const rollbackMeta: InsertRollbackMeta[] = [];
 
-  // Add org membership insert if user is not already an org member
+  const memberId = crypto.randomUUID();
+  const projectMemberId = crypto.randomUUID();
+
   if (!existingOrgMembership) {
     insertOperations.push(
       db.insert(member).values({
-        id: crypto.randomUUID(),
+        id: memberId,
         userId: userToAdd.id,
         organizationId: orgId,
         role: 'member',
         createdAt: now,
       }),
     );
+    rollbackMeta.push({ table: member, idColumn: member.id, id: memberId });
   }
 
-  // Add project membership insert
   insertOperations.push(
     db.insert(projectMembers).values({
-      id: crypto.randomUUID(),
+      id: projectMemberId,
       projectId,
       userId: userToAdd.id,
       role,
       joinedAt: now,
     }),
   );
+  rollbackMeta.push({ table: projectMembers, idColumn: projectMembers.id, id: projectMemberId });
 
-  // Execute all inserts atomically - both succeed or both fail
-  await db.batch(insertOperations as unknown as Parameters<typeof db.batch>[0]);
+  if (!existingOrgMembership) {
+    const result = await insertWithQuotaCheck(db, {
+      orgId,
+      quotaKey: 'collaborators.org.max',
+      countTable: member,
+      countColumn: member.organizationId,
+      insertStatements: insertOperations,
+      rollbackMeta,
+    });
+    if (!result.success) {
+      throw result.error;
+    }
+  } else {
+    await db.batch(insertOperations as unknown as Parameters<typeof db.batch>[0]);
+  }
 
   // Get project name for notification
   const project = await db

@@ -21,7 +21,7 @@ import {
 import { eq, and } from 'drizzle-orm';
 import { createDomainError, PROJECT_ERRORS, AUTH_ERRORS, VALIDATION_ERRORS } from '@corates/shared';
 import { syncMemberToDO } from '../../lib/project-sync';
-import { checkCollaboratorQuota } from '../../lib/quotaTransaction';
+import { insertWithQuotaCheck, type InsertRollbackMeta } from '../../lib/quotaTransaction';
 import type { Env } from '../../types';
 
 interface AcceptInvitationActor {
@@ -147,59 +147,49 @@ export async function acceptInvitation(
     };
   }
 
-  // Quota enforcement
+  // Check existing org membership (single lookup used for both quota and insert)
+  let existingOrgMembership: { id: string } | undefined;
   if (invitation.orgId) {
-    const existingOrgMembership = await db
+    existingOrgMembership = await db
       .select({ id: member.id })
       .from(member)
       .where(and(eq(member.organizationId, invitation.orgId), eq(member.userId, actor.id)))
       .get();
-
-    if (!existingOrgMembership) {
-      const quotaResult = await checkCollaboratorQuota(db, invitation.orgId);
-      if (!quotaResult.allowed && quotaResult.error) {
-        throw quotaResult.error;
-      }
-    }
   }
 
-  // Build atomic batch operations
   const nowDate = new Date();
-  const batchOps: Promise<unknown>[] = [];
+  const needsOrgMembership = !!invitation.orgId && !existingOrgMembership;
 
-  // Grant org membership if not already a member
-  if (invitation.orgId) {
-    const existingOrgMembership = await db
-      .select({ id: member.id })
-      .from(member)
-      .where(and(eq(member.organizationId, invitation.orgId), eq(member.userId, actor.id)))
-      .get();
+  const batchOps: unknown[] = [];
+  const rollbackMeta: InsertRollbackMeta[] = [];
 
-    if (!existingOrgMembership) {
-      batchOps.push(
-        db.insert(member).values({
-          id: crypto.randomUUID(),
-          userId: actor.id,
-          organizationId: invitation.orgId,
-          role: invitation.orgRole || 'member',
-          createdAt: nowDate,
-        }),
-      );
-    }
+  const memberId = crypto.randomUUID();
+  const projectMemberId = crypto.randomUUID();
+
+  if (needsOrgMembership) {
+    batchOps.push(
+      db.insert(member).values({
+        id: memberId,
+        userId: actor.id,
+        organizationId: invitation.orgId!,
+        role: invitation.orgRole || 'member',
+        createdAt: nowDate,
+      }),
+    );
+    rollbackMeta.push({ table: member, idColumn: member.id, id: memberId });
   }
 
-  // Add project membership
   batchOps.push(
     db.insert(projectMembers).values({
-      id: crypto.randomUUID(),
+      id: projectMemberId,
       projectId: invitation.projectId,
       userId: actor.id,
       role: invitation.role,
       joinedAt: nowDate,
     }),
   );
+  rollbackMeta.push({ table: projectMembers, idColumn: projectMembers.id, id: projectMemberId });
 
-  // Mark invitation accepted
   batchOps.push(
     db
       .update(projectInvitations)
@@ -207,21 +197,20 @@ export async function acceptInvitation(
       .where(eq(projectInvitations.id, invitation.id)),
   );
 
-  await db.batch(batchOps as unknown as Parameters<typeof db.batch>[0]);
-
-  // Post-insert quota race condition detection
-  if (invitation.orgId) {
-    const postInsertQuotaResult = await checkCollaboratorQuota(db, invitation.orgId);
-    if (
-      !postInsertQuotaResult.allowed &&
-      postInsertQuotaResult.used > postInsertQuotaResult.limit
-    ) {
-      console.warn(
-        `[Invitation] Race condition detected: collaborator quota exceeded for org ${invitation.orgId}. ` +
-          `Count: ${postInsertQuotaResult.used}, Limit: ${postInsertQuotaResult.limit}. ` +
-          `User ${actor.id} was still added. Consider manual intervention.`,
-      );
+  if (needsOrgMembership) {
+    const result = await insertWithQuotaCheck(db, {
+      orgId: invitation.orgId!,
+      quotaKey: 'collaborators.org.max',
+      countTable: member,
+      countColumn: member.organizationId,
+      insertStatements: batchOps,
+      rollbackMeta,
+    });
+    if (!result.success) {
+      throw result.error;
     }
+  } else {
+    await db.batch(batchOps as unknown as Parameters<typeof db.batch>[0]);
   }
 
   // Get project name and org slug for response

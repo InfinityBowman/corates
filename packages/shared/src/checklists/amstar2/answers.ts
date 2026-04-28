@@ -71,37 +71,48 @@ export function getAnswers(checklist: AMSTAR2Checklist): Record<string, AnswerLa
 export function consolidateAnswers(checklist: AMSTAR2Checklist): Record<string, unknown> {
   const result: Record<string, unknown> = { ...checklist };
 
-  // Consolidate q9a and q9b into q9 by taking the lower score
-  if (result.q9a && result.q9b) {
-    const q9a = getSelectedAnswer((result.q9a as AMSTAR2Question).answers, 'q9a');
-    const q9b = getSelectedAnswer((result.q9b as AMSTAR2Question).answers, 'q9b');
+  // Consolidate q9a and q9b into q9 by taking the lower score.
+  // When only one sub-question is present, treat it as the consolidated answer
+  // so it doesn't get scored as a standalone question.
+  if (result.q9a || result.q9b) {
+    if (result.q9a && result.q9b) {
+      const q9a = getSelectedAnswer((result.q9a as AMSTAR2Question).answers, 'q9a');
+      const q9b = getSelectedAnswer((result.q9b as AMSTAR2Question).answers, 'q9b');
 
-    if (q9a === null || q9b === null) {
-      result.q9 = result.q9a;
-    } else if (q9a === 'No' || q9b === 'No') {
-      result.q9 = q9a === 'No' ? result.q9a : result.q9b;
-    } else if (q9a === 'No MA' && q9b === 'No MA') {
-      result.q9 = result.q9a;
+      if (q9a === null || q9b === null) {
+        result.q9 = result.q9a;
+      } else if (q9a === 'No' || q9b === 'No') {
+        result.q9 = q9a === 'No' ? result.q9a : result.q9b;
+      } else if (q9a === 'No MA' && q9b === 'No MA') {
+        result.q9 = result.q9a;
+      } else {
+        result.q9 = result.q9a;
+      }
     } else {
-      result.q9 = result.q9a;
+      result.q9 = result.q9a || result.q9b;
     }
     delete result.q9a;
     delete result.q9b;
   }
 
-  // Consolidate q11a and q11b into q11 by taking the lower score
-  if (result.q11a && result.q11b) {
-    const q11a = getSelectedAnswer((result.q11a as AMSTAR2Question).answers, 'q11a');
-    const q11b = getSelectedAnswer((result.q11b as AMSTAR2Question).answers, 'q11b');
+  // Consolidate q11a and q11b into q11 by taking the lower score.
+  // When only one sub-question is present, treat it as the consolidated answer.
+  if (result.q11a || result.q11b) {
+    if (result.q11a && result.q11b) {
+      const q11a = getSelectedAnswer((result.q11a as AMSTAR2Question).answers, 'q11a');
+      const q11b = getSelectedAnswer((result.q11b as AMSTAR2Question).answers, 'q11b');
 
-    if (q11a === null || q11b === null) {
-      result.q11 = result.q11a;
-    } else if (q11a === 'No' || q11b === 'No') {
-      result.q11 = q11a === 'No' ? result.q11a : result.q11b;
-    } else if (q11a === 'No MA' && q11b === 'No MA') {
-      result.q11 = result.q11a;
+      if (q11a === null || q11b === null) {
+        result.q11 = result.q11a;
+      } else if (q11a === 'No' || q11b === 'No') {
+        result.q11 = q11a === 'No' ? result.q11a : result.q11b;
+      } else if (q11a === 'No MA' && q11b === 'No MA') {
+        result.q11 = result.q11a;
+      } else {
+        result.q11 = result.q11a;
+      }
     } else {
-      result.q11 = result.q11a;
+      result.q11 = result.q11a || result.q11b;
     }
     delete result.q11a;
     delete result.q11b;
