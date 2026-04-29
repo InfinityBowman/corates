@@ -99,7 +99,11 @@ async function clickPlanButton(page: Page, planName: string) {
   const card = page.locator(
     `xpath=//h3[text()="${planName}"]/ancestor::div[contains(@class,"rounded-2xl")][1]`,
   );
-  await card.getByRole('button', { name: /Get Started|Upgrade Now/i }).click({ timeout: 15_000 });
+  const btn = card.getByRole('button', { name: /Get Started|Upgrade Now/i });
+  await btn.waitFor({ timeout: 15_000 });
+  // The settings layout has a nested scroll container that prevents
+  // Playwright's built-in scroll from reaching the button. Use JS click.
+  await btn.dispatchEvent('click');
 }
 
 test.describe('Billing flows', () => {

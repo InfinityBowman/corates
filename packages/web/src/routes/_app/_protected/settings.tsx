@@ -59,9 +59,9 @@ function SettingsLayout() {
         width={width}
         onWidthChange={handleWidthChange}
       />
-      <main className='flex-1 overflow-auto'>
+      <div className='flex-1 overflow-auto'>
         <Outlet />
-      </main>
+      </div>
     </div>
   );
 }
