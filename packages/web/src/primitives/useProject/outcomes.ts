@@ -30,7 +30,6 @@ export interface OutcomeOperations {
 export function createOutcomeOperations(
   _projectId: string,
   getYDoc: () => Y.Doc | null,
-  _isSynced: () => boolean,
 ): OutcomeOperations {
   function getOutcomes(): Outcome[] {
     const ydoc = getYDoc();

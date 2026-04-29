@@ -76,7 +76,6 @@ export interface AnnotationOperations {
 export function createAnnotationOperations(
   _projectId: string,
   getYDoc: () => Y.Doc | null,
-  _isSynced: () => boolean,
 ): AnnotationOperations {
   function getAnnotationsMap(studyId: string, create = false): Y.Map<unknown> | null {
     const ydoc = getYDoc();

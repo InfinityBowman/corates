@@ -125,11 +125,11 @@ class ConnectionPool {
     // Initialize domain operations
     entry.syncManager = createSyncManager(projectId, getYDoc);
     entry.studyOps = createStudyOperations(projectId, getYDoc, isSynced);
-    entry.checklistOps = createChecklistOperations(projectId, getYDoc, isSynced);
-    entry.pdfOps = createPdfOperations(projectId, getYDoc, isSynced);
-    entry.reconciliationOps = createReconciliationOperations(projectId, getYDoc, isSynced);
-    entry.annotationOps = createAnnotationOperations(projectId, getYDoc, isSynced);
-    entry.outcomeOps = createOutcomeOperations(projectId, getYDoc, isSynced);
+    entry.checklistOps = createChecklistOperations(projectId, getYDoc);
+    entry.pdfOps = createPdfOperations(projectId, getYDoc);
+    entry.reconciliationOps = createReconciliationOperations(projectId, getYDoc);
+    entry.annotationOps = createAnnotationOperations(projectId, getYDoc);
+    entry.outcomeOps = createOutcomeOperations(projectId, getYDoc);
 
     // Scoped Y.Map observers (reviews, members, meta) for incremental sync
     entry.syncManager.attach(ydoc);
@@ -173,6 +173,12 @@ class ConnectionPool {
         entry._cleanupHandlers.push(() => ydoc.off('update', dexieUpdateHandler));
 
         entry.syncManager!.syncFromYDocImmediate();
+
+        if (!isLocal && ydoc.getMap('reviews').size > 0) {
+          useProjectStore
+            .getState()
+            .dispatchConnectionEvent(projectId, { type: 'PERSISTENCE_LOADED' });
+        }
 
         if (isLocal) {
           // Run the one-shot import from legacy `localChecklists` Dexie rows

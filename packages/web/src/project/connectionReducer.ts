@@ -4,9 +4,9 @@
 
 export type ConnectionPhase =
   | 'idle'
-  | 'loading'
   | 'connecting'
   | 'connected'
+  | 'cached'
   | 'synced'
   | 'error'
   | 'offline';
@@ -43,14 +43,16 @@ export function connectionReducer(
       return { phase: 'connecting', error: null };
 
     case 'PERSISTENCE_LOADED':
-      // Dexie loaded -- no phase change needed, WebSocket handles progression
+      if (state.phase === 'connecting' || state.phase === 'connected') {
+        return { phase: 'cached', error: null };
+      }
       return state;
 
     case 'LOCAL_READY':
       return { phase: 'synced', error: null };
 
     case 'REMOTE_CONNECTED':
-      if (state.phase !== 'error' && state.phase !== 'synced') {
+      if (state.phase !== 'error' && state.phase !== 'synced' && state.phase !== 'cached') {
         return { phase: 'connected', error: null };
       }
       return state;
@@ -62,7 +64,10 @@ export function connectionReducer(
       return state;
 
     case 'REMOTE_DISCONNECTED':
-      if (state.phase === 'connected' || state.phase === 'synced') {
+      if (state.phase === 'synced' || state.phase === 'cached') {
+        return { phase: 'cached', error: null };
+      }
+      if (state.phase === 'connected') {
         return { phase: 'connecting', error: null };
       }
       return state;

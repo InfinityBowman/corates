@@ -81,8 +81,12 @@ export function ProjectGate({ projectId, fallback, children }: ProjectGateProps)
     }
   }, [connectionState.error, navigate]);
 
-  // Show fallback while connecting
-  if (connectionState.phase !== 'synced' && !connectionState.error) {
+  // Show fallback while connecting (cached = Dexie data available, render immediately)
+  if (
+    connectionState.phase !== 'synced' &&
+    connectionState.phase !== 'cached' &&
+    !connectionState.error
+  ) {
     return <>{fallback || null}</>;
   }
 

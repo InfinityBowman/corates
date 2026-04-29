@@ -99,7 +99,6 @@ export interface ChecklistOperations {
 export function createChecklistOperations(
   _projectId: string,
   getYDoc: () => Y.Doc | null,
-  _isSynced: () => boolean,
 ): ChecklistOperations {
   const commonOps = createCommonOperations(getYDoc);
 

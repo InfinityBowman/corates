@@ -48,7 +48,6 @@ export interface PdfOperations {
 export function createPdfOperations(
   _projectId: string,
   getYDoc: () => Y.Doc | null,
-  _isSynced: () => boolean,
 ): PdfOperations {
   /**
    * Get the pdfs Y.Map for a study, creating it if needed

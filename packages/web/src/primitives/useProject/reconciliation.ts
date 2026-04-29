@@ -54,7 +54,6 @@ export interface ReconciliationOperations {
 export function createReconciliationOperations(
   _projectId: string,
   getYDoc: () => Y.Doc | null,
-  _isSynced: () => boolean,
 ): ReconciliationOperations {
   function saveReconciliationProgress(
     studyId: string,
