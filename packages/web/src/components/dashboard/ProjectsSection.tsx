@@ -6,6 +6,7 @@ import { useState, useCallback } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { useQueryClient } from '@tanstack/react-query';
 import { PlusIcon, FolderIcon, TriangleAlertIcon } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { useMyProjectsList } from '@/hooks/useMyProjectsList';
 import { useSubscription } from '@/hooks/useSubscription';
 import { useOnlineStatus } from '@/hooks/useOnlineStatus';
@@ -138,16 +139,11 @@ export function ProjectsSection({
           <h2 className='text-muted-foreground text-sm font-semibold tracking-wide uppercase'>
             Your Projects
           </h2>
-          {canCreateProject && hasProjects && (
-            <button
-              type='button'
-              onClick={handleCreateClick}
-              disabled={!isOnline}
-              className='text-primary hover:bg-primary/5 flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition-all hover:scale-105 hover:shadow-sm active:scale-100 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:scale-100'
-            >
-              <PlusIcon className='size-4' />
+          {canCreateProject && (
+            <Button onClick={handleCreateClick} disabled={!isOnline}>
+              <PlusIcon data-icon='inline-start' />
               New Project
-            </button>
+            </Button>
           )}
         </div>
       )}
@@ -165,17 +161,6 @@ export function ProjectsSection({
             <p className='text-muted-foreground mb-6 max-w-sm text-center text-sm'>
               Create your first project to start collaborating on evidence synthesis with your team.
             </p>
-            {canCreateProject && (
-              <button
-                type='button'
-                onClick={handleCreateClick}
-                disabled={!isOnline}
-                className='bg-primary text-primary-foreground hover:bg-primary/90 flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-medium shadow-lg transition-all hover:shadow-xl disabled:cursor-not-allowed disabled:opacity-50'
-              >
-                <PlusIcon className='size-4' />
-                Create First Project
-              </button>
-            )}
           </div>
         )}
 

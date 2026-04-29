@@ -6,75 +6,27 @@
  */
 
 import { useState } from 'react';
-import { useNavigate } from '@tanstack/react-router';
 import { useAuthStore, selectUser, selectIsLoggedIn } from '@/stores/authStore';
-import { useOnlineStatus } from '@/hooks/useOnlineStatus';
 import { useSubscription } from '@/hooks/useSubscription';
-import { useMyProjectsList, type Project } from '@/hooks/useMyProjectsList';
 import { Alert } from '@/components/ui/alert';
 
 import { DashboardHeader } from './DashboardHeader';
-import { QuickActions } from './QuickActions';
-import { ActivityFeed } from './ActivityFeed';
 import { ProjectsSection } from './ProjectsSection';
 import { LocalAppraisalsSection } from './LocalAppraisalsSection';
 import { useInitialAnimation, AnimationContext } from './useInitialAnimation';
 
 export function Dashboard() {
   const animation = useInitialAnimation();
-  const navigate = useNavigate();
 
   const user = useAuthStore(selectUser);
   const isLoggedIn = useAuthStore(selectIsLoggedIn);
-  const isOnline = useOnlineStatus();
-  const { subscriptionFetchFailed, hasEntitlement, hasQuota } = useSubscription();
-  const { projects } = useMyProjectsList();
-  // checklists and projectStats available via child components directly
+  const { subscriptionFetchFailed } = useSubscription();
 
   const [createModalOpen, setCreateModalOpen] = useState(false);
 
-  const canCreateProject =
-    isOnline && isLoggedIn &&
-    hasEntitlement('project.create') &&
-    hasQuota('projects.max', { used: projects?.length || 0, requested: 1 });
-
-  const activities =
-    projects?.length ?
-      [...projects]
-        .sort(
-          (a: Project, b: Project) =>
-            new Date(b.updatedAt || b.createdAt || 0).getTime() -
-            new Date(a.updatedAt || a.createdAt || 0).getTime(),
-        )
-        .slice(0, 5)
-        .map((project: Project) => ({
-          type: 'project' as const,
-          title: project.name,
-          subtitle: 'was updated',
-          timestamp: project.updatedAt || project.createdAt || 0,
-        }))
-    : [];
-
-  function handleCreateProject() {
-    setCreateModalOpen(true);
-  }
-
-  function handleStartROBINSI() {
-    navigate({ to: '/checklist', search: () => ({ type: 'ROBINS_I' }) });
-  }
-
-  function handleStartAMSTAR2() {
-    navigate({ to: '/checklist', search: () => ({ type: 'AMSTAR2' }) });
-  }
-
-  function handleLearnMore() {
-    navigate({ to: '/resources' });
-  }
-
   return (
     <AnimationContext.Provider value={animation}>
-      <div className='mx-auto px-4 py-8 sm:px-6 lg:px-8'>
-        {/* Subscription error banner */}
+      <div className='px-4 py-8 sm:px-6 lg:px-8'>
         {isLoggedIn && subscriptionFetchFailed && (
           <Alert variant='warning' className='mb-6'>
             Could not load subscription details. Some features may be limited.
@@ -85,35 +37,17 @@ export function Dashboard() {
           user={
             user as { name?: string; givenName?: string; persona?: string; email?: string } | null
           }
-          canCreateProject={canCreateProject}
-          isOnline={isOnline}
-          onCreateProject={handleCreateProject}
         />
 
-        {/* Main content grid */}
-        <div className='grid gap-6 lg:grid-cols-3'>
-          {/* Left column */}
-          <div id='projects-section' className='flex flex-col gap-6 lg:col-span-2'>
-            {isLoggedIn && (
-              <ProjectsSection
-                createModalOpen={createModalOpen}
-                setCreateModalOpen={setCreateModalOpen}
-              />
-            )}
-
-            <LocalAppraisalsSection showHeader showSignInPrompt={!isLoggedIn} />
-          </div>
-
-          {/* Right sidebar */}
-          <div className='flex flex-col gap-6'>
-            <QuickActions
-              onStartROBINSI={handleStartROBINSI}
-              onStartAMSTAR2={handleStartAMSTAR2}
-              onLearnMore={handleLearnMore}
+        <div id='projects-section' className='flex flex-col gap-8'>
+          {isLoggedIn && (
+            <ProjectsSection
+              createModalOpen={createModalOpen}
+              setCreateModalOpen={setCreateModalOpen}
             />
+          )}
 
-            {isLoggedIn && <ActivityFeed activities={activities} limit={5} />}
-          </div>
+          <LocalAppraisalsSection showHeader showSignInPrompt={!isLoggedIn} />
         </div>
       </div>
     </AnimationContext.Provider>

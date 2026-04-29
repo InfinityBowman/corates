@@ -6,6 +6,13 @@
 import { useState, useCallback } from 'react';
 import { useNavigate, useSearch, Link } from '@tanstack/react-router';
 import { FileTextIcon, XIcon, CloudUploadIcon } from 'lucide-react';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { connectionPool } from '@/project/ConnectionPool';
 import { LOCAL_PROJECT_ID, createLocalAppraisal } from '@/project/localProject';
 import { db } from '@/primitives/db';
@@ -115,18 +122,18 @@ export function CreateLocalChecklist({ type: typeParam }: { type?: string }) {
               >
                 Assessment Type
               </label>
-              <select
-                id='checklist-type'
-                value={checklistType}
-                onChange={e => setChecklistType(e.target.value)}
-                className='border-border bg-card focus:border-primary focus:ring-primary w-full rounded-lg border px-4 py-3 transition-colors outline-none focus:ring-2'
-              >
-                {typeOptions.map(option => (
-                  <option key={option.value} value={option.value}>
-                    {option.label} - {option.description}
-                  </option>
-                ))}
-              </select>
+              <Select value={checklistType} onValueChange={setChecklistType}>
+                <SelectTrigger id='checklist-type' className='w-full'>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {typeOptions.map(option => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label} - {option.description}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             {/* Checklist Name */}

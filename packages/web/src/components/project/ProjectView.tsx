@@ -276,7 +276,7 @@ function ProjectViewInner({ projectId }: ProjectViewProps) {
 
       {/* Main project view */}
       {!isChildRoute && (
-        <div className='bg-background min-h-screen'>
+        <div className='bg-background min-h-full'>
           <Tabs value={tabFromUrl} onValueChange={handleTabChange}>
             {/* Sticky header */}
             <header className='border-border bg-card sticky top-0 z-20 border-b'>

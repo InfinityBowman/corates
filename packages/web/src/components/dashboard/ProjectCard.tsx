@@ -37,11 +37,6 @@ export function ProjectCard({ project, onOpen, onDelete, style }: ProjectCardPro
       style={style}
     >
       <CardContent className='p-0'>
-        {/* Decorative accent blob */}
-        <div
-          className={`absolute -top-10 -right-10 size-24 rounded-full opacity-20 blur-2xl transition-opacity duration-300 group-hover:opacity-40 ${colors.fill}`}
-        />
-
         {/* Header */}
         <div className='relative mb-4 flex items-start justify-between'>
           <div className='min-w-0 flex-1 pr-4'>
