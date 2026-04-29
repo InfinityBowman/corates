@@ -3,8 +3,8 @@
  *
  * Only rendered when DEV mode is enabled (VITE_DEV_PANEL=true).
  * Context-aware: shows different tools based on current route.
- * - Dashboard: Import Project from JSON
- * - Project view: State tree, templates, JSON export/import
+ * - Dashboard: Create dev projects (from template or JSON)
+ * - Project view: State tree, study generator, JSON export
  */
 
 import { useState, useEffect, useRef } from 'react';
@@ -13,14 +13,13 @@ import { XIcon, ChevronDownIcon, ChevronUpIcon, BugIcon, BracesIcon } from 'luci
 import { useProjectStore, selectConnectionPhase } from '@/stores/projectStore';
 import { useProjectOrgId } from '@/hooks/useProjectOrgId';
 import { DevStateTree } from './DevStateTree';
-import { DevTemplateSelector } from './DevTemplateSelector';
 import { DevQuickActions } from './DevQuickActions';
 import { DevJsonEditor } from './DevJsonEditor';
 import { DevImportProject } from './DevImportProject';
 import { DevToastTester } from './DevToastTester';
 import { DevStudyGenerator } from './DevStudyGenerator';
 
-type TabId = 'import' | 'toasts' | 'tree' | 'templates' | 'json';
+type TabId = 'create' | 'toasts' | 'tree' | 'generate' | 'json';
 
 function getProjectIdFromUrl(): string | null {
   const match = window.location.pathname.match(/\/projects\/([^/]+)/);
@@ -30,12 +29,9 @@ function getProjectIdFromUrl(): string | null {
 export function DevPanel() {
   const [projectId, setProjectId] = useState<string | null>(getProjectIdFromUrl);
 
-  // Re-detect projectId on URL changes
   useEffect(() => {
     const handlePopState = () => setProjectId(getProjectIdFromUrl());
 
-    // Also observe pushState/replaceState via a periodic check since
-    // there is no native event for programmatic navigation
     const interval = setInterval(() => {
       const currentId = getProjectIdFromUrl();
       setProjectId(prev => (prev !== currentId ? currentId : prev));
@@ -62,19 +58,15 @@ export function DevPanel() {
   const [userSelectedTab, setUserSelectedTab] = useState<TabId | null>(null);
   const [isMinimized, setIsMinimized] = useState(false);
 
-  // Derive the active tab from user selection and context, no useEffect needed
   const activeTab: TabId = (() => {
     const tab = userSelectedTab;
-    // If no tab selected yet, default based on context
     if (tab === null) {
-      return isProjectContext ? 'tree' : 'import';
+      return isProjectContext ? 'tree' : 'create';
     }
-    // If we left project context but are on a project-only tab, switch to import
-    if (!isProjectContext && (tab === 'tree' || tab === 'templates' || tab === 'json')) {
-      return 'import';
+    if (!isProjectContext && (tab === 'tree' || tab === 'generate' || tab === 'json')) {
+      return 'create';
     }
-    // If we entered project context and are on import tab, switch to tree
-    if (isProjectContext && tab === 'import') {
+    if (isProjectContext && tab === 'create') {
       return 'tree';
     }
     return tab;
@@ -84,9 +76,8 @@ export function DevPanel() {
 
   // Panel geometry
   const [position, setPosition] = useState({ x: 20, y: 20 });
-  const [size, setSize] = useState({ width: 420, height: 500 });
+  const [size, setSize] = useState({ width: 520, height: 500 });
 
-  // Drag/resize state tracked via refs to avoid re-render overhead
   const dragStateRef = useRef({
     isDragging: false,
     isResizing: false,
@@ -94,14 +85,12 @@ export function DevPanel() {
     position: { x: 20, y: 20 },
   });
 
-  // Keep position ref in sync for resize calculations
   useEffect(() => {
     dragStateRef.current.position = position;
   }, [position]);
 
   const attachListenersRef = useRef<() => void>(() => {});
 
-  // Single effect to manage document-level mouse listeners for drag/resize
   useEffect(() => {
     const onMouseMove = (e: MouseEvent) => {
       const ds = dragStateRef.current;
@@ -249,12 +238,11 @@ export function DevPanel() {
             <>
               {/* Tabs */}
               <div className='border-border bg-muted flex border-b'>
-                {/* Always available tabs */}
                 <button
-                  className={tabClass(activeTab === 'import')}
-                  onClick={() => setActiveTab('import')}
+                  className={tabClass(activeTab === 'create')}
+                  onClick={() => setActiveTab('create')}
                 >
-                  Import
+                  Create
                 </button>
                 <button
                   className={tabClass(activeTab === 'toasts')}
@@ -262,7 +250,6 @@ export function DevPanel() {
                 >
                   Toasts
                 </button>
-                {/* Project-specific tabs */}
                 {isProjectContext && (
                   <>
                     <button
@@ -272,10 +259,10 @@ export function DevPanel() {
                       State Tree
                     </button>
                     <button
-                      className={tabClass(activeTab === 'templates')}
-                      onClick={() => setActiveTab('templates')}
+                      className={tabClass(activeTab === 'generate')}
+                      onClick={() => setActiveTab('generate')}
                     >
-                      Templates
+                      Generate
                     </button>
                     <button
                       className={tabClass(activeTab === 'json')}
@@ -290,15 +277,14 @@ export function DevPanel() {
 
               {/* Tab content */}
               <div className='flex-1 overflow-auto'>
-                {activeTab === 'import' && <DevImportProject />}
+                {activeTab === 'create' && <DevImportProject />}
 
                 {activeTab === 'toasts' && <DevToastTester />}
 
                 {activeTab === 'tree' && isProjectContext && <DevStateTree data={projectData} />}
 
-                {activeTab === 'templates' && isProjectContext && (
+                {activeTab === 'generate' && isProjectContext && (
                   <div className='flex flex-col gap-4 p-3'>
-                    <DevTemplateSelector projectId={projectId} orgId={orgId} />
                     <DevStudyGenerator projectId={projectId} orgId={orgId} />
                     <DevQuickActions projectId={projectId} orgId={orgId} />
                   </div>

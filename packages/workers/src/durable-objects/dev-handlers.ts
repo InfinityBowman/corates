@@ -95,7 +95,7 @@ interface ImportData {
     authors?: unknown;
     journal?: unknown;
     doi?: unknown;
-    abstract?: unknown;
+      abstract?: unknown;
     pdfUrl?: unknown;
     pdfSource?: unknown;
     pdfAccessible?: unknown;
@@ -364,7 +364,7 @@ export async function handleDevImport(ctx: DevContext, request: ImportRequest): 
 
       if (mode === 'replace') {
         metaMap.clear();
-        membersMap.clear();
+        if (data.members) membersMap.clear();
         reviewsMap.clear();
       }
 
@@ -987,6 +987,12 @@ export async function handleDevApplyTemplate(ctx: DevContext, request: Request):
     );
   }
 
+  // Extract study identifiers before applying so the client can fetch real metadata + PDFs
+  const studyIdentifiers = templateData.studies.map(s => ({
+    id: s.id,
+    doi: s.doi || null,
+  }));
+
   // Parse userMapping from request body if present
   let userMapping: Record<string, string> | undefined;
   try {
@@ -996,12 +1002,23 @@ export async function handleDevApplyTemplate(ctx: DevContext, request: Request):
     // No body or invalid JSON is fine -- just skip mapping
   }
 
-  // Re-use the import handler with the template data
-  // Cast through unknown because MockProjectData and ImportData have compatible structures
-  // but TypeScript can't verify all the nested types automatically
+  // Strip members from template data -- templates should not overwrite real project membership
+  const { members: _templateMembers, ...templateWithoutMembers } =
+    templateData as unknown as Record<string, unknown>;
+
   const fakeRequest: ImportRequest = {
-    json: async () => ({ data: templateData as unknown as ImportData, mode, userMapping }),
+    json: async () => ({
+      data: templateWithoutMembers as unknown as ImportData,
+      mode,
+      userMapping,
+    }),
   };
 
-  return handleDevImport(ctx, fakeRequest);
+  const importResponse = await handleDevImport(ctx, fakeRequest);
+  const importResult = (await importResponse.json()) as Record<string, unknown>;
+
+  return new Response(
+    JSON.stringify({ ...importResult, studies: studyIdentifiers }),
+    { headers: { 'Content-Type': 'application/json' } },
+  );
 }
