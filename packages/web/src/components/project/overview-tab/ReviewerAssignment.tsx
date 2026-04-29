@@ -237,9 +237,10 @@ export function ReviewerAssignment({
       };
     });
 
-    // Resolve conflicts by swapping
+    // Resolve conflicts by swapping between studies
     for (let i = 0; i < assignments.length; i++) {
       if (assignments[i].sameReviewer) {
+        let resolved = false;
         for (let j = 0; j < assignments.length; j++) {
           if (i !== j && !assignments[j].sameReviewer) {
             const canSwap =
@@ -253,8 +254,18 @@ export function ReviewerAssignment({
               assignments[j].reviewer2Name = getMemberName(temp);
               assignments[i].sameReviewer = false;
               assignments[j].sameReviewer = assignments[j].reviewer1 === assignments[j].reviewer2;
+              resolved = true;
               break;
             }
+          }
+        }
+        // If no swap partner found, directly pick a different member
+        if (!resolved) {
+          const alt = members.find(m => m.userId !== assignments[i].reviewer1);
+          if (alt) {
+            assignments[i].reviewer2 = alt.userId;
+            assignments[i].reviewer2Name = getMemberName(alt.userId);
+            assignments[i].sameReviewer = false;
           }
         }
       }
