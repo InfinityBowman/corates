@@ -344,7 +344,11 @@ export const studyActions = {
             pdfSource: (study.pdfSource as string) || undefined,
           };
 
-          const studyName = getStudyNameFromFilename(study.pdfFileName as string | null);
+          const studyName = getStudyNameFromFilename(
+            (study.pdfFileName as string) ||
+              (study.googleDriveFileName as string) ||
+              null,
+          );
           const studyId = ops.study.createStudy(
             studyName,
             (study.abstract as string) || '',

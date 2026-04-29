@@ -993,11 +993,16 @@ export async function handleDevApplyTemplate(ctx: DevContext, request: Request):
     doi: s.doi || null,
   }));
 
-  // Parse userMapping from request body if present
+  // Parse userMapping and targetOrgId from request body if present
   let userMapping: Record<string, string> | undefined;
+  let targetOrgId: string | undefined;
   try {
-    const body = (await request.json()) as { userMapping?: Record<string, string> };
+    const body = (await request.json()) as {
+      userMapping?: Record<string, string>;
+      targetOrgId?: string;
+    };
     userMapping = body?.userMapping;
+    targetOrgId = body?.targetOrgId;
   } catch {
     // No body or invalid JSON is fine -- just skip mapping
   }
@@ -1010,6 +1015,7 @@ export async function handleDevApplyTemplate(ctx: DevContext, request: Request):
     json: async () => ({
       data: templateWithoutMembers as unknown as ImportData,
       mode,
+      targetOrgId,
       userMapping,
     }),
   };

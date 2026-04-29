@@ -571,6 +571,7 @@ class ProjectDocBase extends DurableObject<Env> {
     template: string,
     mode: string = 'replace',
     userMapping?: Record<string, string>,
+    targetOrgId?: string,
   ): Promise<unknown> {
     await this.initializeDoc();
     const devHandlers = await import('./dev-handlers');
@@ -579,7 +580,7 @@ class ProjectDocBase extends DurableObject<Env> {
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userMapping }),
+        body: JSON.stringify({ userMapping, targetOrgId }),
       },
     );
     const response = await devHandlers.handleDevApplyTemplate(this.devCtx, fakeRequest);

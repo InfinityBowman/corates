@@ -250,6 +250,48 @@ test('Concurrent server-side change merges correctly on revisit', async ({
   await expect(page.getByText(/2 studies in this project/i)).toBeVisible({ timeout: 30_000 });
 });
 
+test('Project actions work after cold reload (no warm query cache)', async ({
+  context,
+  page,
+}) => {
+  await setupProjectWithStudy(
+    context,
+    page,
+    scenario,
+    'Cold Reload Actions E2E',
+  );
+
+  await page.getByRole('tab', { name: /All Studies/i }).click();
+  await expect(page.getByText(/1 study in this project/i)).toBeVisible({ timeout: 10_000 });
+
+  const pageErrors: Error[] = [];
+  page.on('pageerror', err => pageErrors.push(err));
+
+  // Hard reload clears React Query cache. orgId is not stored in the
+  // Y.Doc, so useProjectOrgId permanently returns null after refresh.
+  // setActiveProject is never called, and all actions through
+  // connectionPool.getActiveOps() fail with "No active project connection".
+  await page.reload();
+  await page.waitForLoadState('networkidle');
+
+  await page.getByRole('tab', { name: /All Studies/i }).click();
+  await expect(page.getByText(/1 study in this project/i)).toBeVisible({ timeout: 15_000 });
+
+  // Wait well past any sync window to prove this is not a race condition.
+  await page.waitForTimeout(10_000);
+
+  // Attempt a mutation: this calls project.study.delete() which
+  // requires connectionPool.getActiveOps() to be non-null.
+  await page.locator('button:has(svg.lucide-ellipsis-vertical)').first().click();
+  await page.getByRole('menuitem', { name: /Delete Study/i }).click();
+  await page.waitForTimeout(2000);
+
+  const connectionErrors = pageErrors.filter(e =>
+    e.message.includes('No active project connection'),
+  );
+  expect(connectionErrors).toHaveLength(0);
+});
+
 test('Rapid navigation does not corrupt state or crash', async ({
   context,
   page,

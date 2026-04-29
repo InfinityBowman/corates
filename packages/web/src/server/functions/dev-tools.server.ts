@@ -46,7 +46,7 @@ export async function applyDevTemplate(
   if (!access.ok) throw access.response;
 
   const projectDoc = getProjectDocStub(env, projectId);
-  return projectDoc.devApplyTemplate(data.template, data.mode, data.userMapping);
+  return projectDoc.devApplyTemplate(data.template, data.mode, data.userMapping, orgId);
 }
 
 export async function devImportState(

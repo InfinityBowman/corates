@@ -5,6 +5,7 @@ import { eq, and } from 'drizzle-orm';
 import {
   createDomainError,
   isDomainError,
+  isValidPdfFilename,
   isPdfSignature,
   PDF_MAGIC_BYTES,
   AUTH_ERRORS,
@@ -228,7 +229,19 @@ export async function importFromDrive(
     }
 
     const originalFileName = fileMeta.name;
-    const uniqueFileName = await generateUniqueFileName(fileMeta.name, projectId, studyId, db);
+
+    if (!isValidPdfFilename(originalFileName)) {
+      throw Response.json(
+        createDomainError(FILE_ERRORS.INVALID_TYPE, {
+          fileName: originalFileName,
+          source: 'google-drive',
+          reason: 'File name must end with .pdf and contain no special characters',
+        }),
+        { status: 400 },
+      );
+    }
+
+    const uniqueFileName = await generateUniqueFileName(originalFileName, projectId, studyId, db);
     const r2Key = `projects/${projectId}/studies/${studyId}/${uniqueFileName}`;
     const fileSize = fileContent.byteLength;
 

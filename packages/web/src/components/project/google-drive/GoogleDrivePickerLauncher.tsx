@@ -110,9 +110,14 @@ export function GoogleDrivePickerLauncher({
 
       setError(null);
       try {
-        const { accessToken } = await getGoogleDrivePickerToken();
+        const result = await getGoogleDrivePickerToken();
+        if (!result?.accessToken) {
+          setConnected(false);
+          setError('Google connection expired. Please reconnect your Google account.');
+          return null;
+        }
         return await pickGooglePdfFiles({
-          oauthToken: accessToken,
+          oauthToken: result.accessToken,
           developerKey: GOOGLE_PICKER_API_KEY,
           appId: GOOGLE_PICKER_APP_ID,
           multiselect: multi,
