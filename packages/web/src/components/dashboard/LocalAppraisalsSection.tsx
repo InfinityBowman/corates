@@ -5,6 +5,7 @@
 import { useState, useMemo, useCallback } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { PlusIcon, FileTextIcon, LogInIcon, TriangleAlertIcon } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { useProjectStore, selectStudies } from '@/stores/projectStore';
 import { connectionPool } from '@/project/ConnectionPool';
 import { LOCAL_PROJECT_ID } from '@/project/localProject';
@@ -112,14 +113,10 @@ export function LocalAppraisalsSection({
             Local Appraisals
           </h2>
           {hasChecklists && (
-            <button
-              type='button'
-              onClick={handleCreate}
-              className='text-primary hover:bg-primary/5 flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition-all hover:scale-105 hover:shadow-sm active:scale-100'
-            >
-              <PlusIcon className='size-4' />
-              New
-            </button>
+            <Button onClick={handleCreate}>
+              <PlusIcon data-icon='inline-start' />
+              New Appraisal
+            </Button>
           )}
         </div>
       )}
