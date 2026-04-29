@@ -16,13 +16,20 @@
  */
 
 import { test, expect } from '@playwright/test';
-import { seedDualReviewerScenario, cleanupScenario, type DualReviewerScenario } from './helpers';
+import {
+  seedDualReviewerScenario,
+  cleanupScenario,
+  seedStudies,
+  updateSubscription,
+  type DualReviewerScenario,
+} from './helpers';
 import { setupProjectWithStudy } from './shared-steps';
 
 let scenario: DualReviewerScenario;
 
 test.beforeAll(async () => {
   scenario = await seedDualReviewerScenario();
+  await updateSubscription(scenario.orgId, { plan: 'unlimited_team' });
 });
 
 test.afterAll(async () => {
@@ -168,4 +175,104 @@ test('Project state survives page refresh', async ({ context, page }) => {
   await expect(page.getByText(/1 study in this project/i)).toBeVisible({
     timeout: 10_000,
   });
+});
+
+test('Project data survives navigate-away and navigate-back (cached phase)', async ({
+  context,
+  page,
+}) => {
+  const projectId = await setupProjectWithStudy(
+    context,
+    page,
+    scenario,
+    'Cache Revisit E2E',
+  );
+
+  // Verify study is present after initial setup
+  await page.getByRole('tab', { name: /All Studies/i }).click();
+  await expect(page.getByText(/1 study in this project/i)).toBeVisible({ timeout: 10_000 });
+
+  // Navigate away to dashboard (releases the connection, destroys Y.Doc in memory)
+  await page.goto('/dashboard');
+  await expect(page.getByText('Welcome back,')).toBeVisible({ timeout: 15_000 });
+
+  // Navigate back -- Dexie cache should render the study via the cached phase
+  // before the WebSocket finishes syncing
+  await page.goto(`/projects/${projectId}`);
+  await page.getByRole('tab', { name: /All Studies/i }).click();
+  await expect(page.getByText(/1 study in this project/i)).toBeVisible({ timeout: 15_000 });
+
+  // Navigate away and back a second time to confirm the cache + sync pipeline
+  // leaves Dexie in a consistent state across multiple visits
+  await page.goto('/dashboard');
+  await expect(page.getByText('Welcome back,')).toBeVisible({ timeout: 15_000 });
+
+  await page.goto(`/projects/${projectId}`);
+  await page.getByRole('tab', { name: /All Studies/i }).click();
+  await expect(page.getByText(/1 study in this project/i)).toBeVisible({ timeout: 15_000 });
+});
+
+test('Concurrent server-side change merges correctly on revisit', async ({
+  context,
+  page,
+}) => {
+  const projectId = await setupProjectWithStudy(
+    context,
+    page,
+    scenario,
+    'Concurrent Modification E2E',
+  );
+
+  await page.getByRole('tab', { name: /All Studies/i }).click();
+  await expect(page.getByText(/1 study in this project/i)).toBeVisible({ timeout: 10_000 });
+
+  // Navigate away so the connection is released
+  await page.goto('/dashboard');
+  await expect(page.getByText('Welcome back,')).toBeVisible({ timeout: 15_000 });
+
+  // While User A is away, add a second study via the server-side API.
+  // This simulates another user (or a migration) modifying the project
+  // while the first user's Dexie cache has stale data.
+  await seedStudies(
+    scenario.orgId,
+    projectId,
+    scenario.cookiesA,
+    scenario.userA.id,
+    scenario.userB.id,
+    1,
+    { type: 'AMSTAR2', fillMode: 'random' },
+  );
+
+  // Navigate back -- Dexie cache may briefly show 1 study,
+  // but after WebSocket sync, both studies should appear
+  await page.goto(`/projects/${projectId}`);
+  await page.getByRole('tab', { name: /All Studies/i }).click();
+  await expect(page.getByText(/2 studies in this project/i)).toBeVisible({ timeout: 30_000 });
+});
+
+test('Rapid navigation does not corrupt state or crash', async ({
+  context,
+  page,
+}) => {
+  const projectId = await setupProjectWithStudy(
+    context,
+    page,
+    scenario,
+    'Rapid Nav E2E',
+  );
+
+  await page.getByRole('tab', { name: /All Studies/i }).click();
+  await expect(page.getByText(/1 study in this project/i)).toBeVisible({ timeout: 10_000 });
+
+  // Rapid-fire navigate: project -> dashboard -> project -> dashboard -> project
+  // Each transition acquires/releases the connection. Tests ref-counting cleanup
+  // and that Dexie cache stays consistent through multiple lifecycles.
+  for (let i = 0; i < 3; i++) {
+    await page.goto('/dashboard');
+    await expect(page.getByText('Welcome back,')).toBeVisible({ timeout: 15_000 });
+
+    await page.goto(`/projects/${projectId}`);
+    await page.getByRole('tab', { name: /All Studies/i }).click();
+    await expect(page.getByText(/1 study in this project/i)).toBeVisible({ timeout: 15_000 });
+  }
 });
