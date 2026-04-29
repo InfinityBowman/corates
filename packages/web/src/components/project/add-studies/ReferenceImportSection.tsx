@@ -182,7 +182,7 @@ export function ReferenceImportSection({ studies }: ReferenceImportSectionProps)
         onFileAccept={(details: any) => studies.handleRefFileSelect(details.files)}
       >
         <FileUploadDropzone className='min-h-24 p-4'>
-          <CloudUploadIcon className='text-muted-foreground/70 size-6' />
+          <CloudUploadIcon className='text-muted-foreground size-6 opacity-70' />
           <p className='text-secondary-foreground mt-2 text-center text-xs'>
             <span className='text-primary font-medium'>Click to upload</span> or drag and drop
           </p>

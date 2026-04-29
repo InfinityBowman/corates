@@ -22,6 +22,12 @@
 import { test, expect } from '@playwright/test';
 import { answerAllAMSTAR2, fillROB2Preliminary } from './shared-steps';
 
+const TYPE_LABELS: Record<string, string> = {
+  AMSTAR2: 'AMSTAR 2',
+  ROB2: 'RoB 2',
+  ROBINS_I: 'ROBINS-I V2',
+};
+
 async function createLocalChecklist(
   page: import('@playwright/test').Page,
   type: 'AMSTAR2' | 'ROB2' | 'ROBINS_I',
@@ -32,7 +38,8 @@ async function createLocalChecklist(
     timeout: 10_000,
   });
 
-  await page.locator('#checklist-type').selectOption(type);
+  await page.locator('#checklist-type').click();
+  await page.getByRole('option', { name: new RegExp(TYPE_LABELS[type]) }).click();
   await page.locator('#checklist-name').fill(name);
   await page.getByRole('button', { name: /^Start$/ }).click();
 

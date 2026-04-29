@@ -183,7 +183,7 @@ export function CreateLocalChecklist({ type: typeParam }: { type?: string }) {
                   onFileAccept={(details: any) => handleFilesChange(details.files)}
                 >
                   <FileUploadDropzone>
-                    <CloudUploadIcon className='text-muted-foreground/70 size-8' />
+                    <CloudUploadIcon className='text-muted-foreground size-8 opacity-70' />
                     <p className='text-muted-foreground mt-2 text-center text-sm'>
                       <span className='text-primary font-medium'>Click to upload</span> or drag and
                       drop

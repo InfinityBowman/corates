@@ -153,7 +153,7 @@ export function ProjectsSection({
         {!hasProjects && (
           <div className='border-border bg-muted/50 col-span-full flex flex-col items-center justify-center rounded-2xl border-2 border-dashed px-6 py-16'>
             <div className='bg-secondary mb-4 flex size-16 items-center justify-center rounded-2xl'>
-              <FolderIcon className='text-muted-foreground/70 size-8' />
+              <FolderIcon className='text-muted-foreground size-8 opacity-70' />
             </div>
             <h3 className='text-secondary-foreground mb-2 text-lg font-semibold'>
               No projects yet

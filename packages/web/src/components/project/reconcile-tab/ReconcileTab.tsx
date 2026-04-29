@@ -53,7 +53,7 @@ export function ReconcileTab() {
           />
         ))
       : <div className='py-16 text-center'>
-          <ArrowRightLeftIcon className='text-muted-foreground/50 mx-auto mb-4 size-12' />
+          <ArrowRightLeftIcon className='text-muted-foreground mx-auto mb-4 size-12 opacity-50' />
           <h3 className='text-foreground mb-2 text-lg font-medium'>Reconciliation</h3>
           <p className='text-muted-foreground mx-auto max-w-md'>
             Studies where reviewers have completed their checklists will appear here for

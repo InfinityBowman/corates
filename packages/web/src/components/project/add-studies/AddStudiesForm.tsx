@@ -13,7 +13,6 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import {
   PlusIcon,
   XIcon,
-  CloudUploadIcon,
   UploadIcon,
   FileTextIcon,
   LinkIcon,
@@ -330,25 +329,11 @@ export function AddStudiesForm({
         </div>
       )}
 
-      {/* Mode 3: Empty project - dashed dropzone or expanded form */}
+      {/* Mode 3: Empty project - show form directly */}
       {!hasExistingStudies && !alwaysExpanded && (
-        <>
-          {!isExpanded ?
-            <div
-              className='border-border cursor-pointer rounded-lg border-2 border-dashed p-8 text-center transition-colors hover:border-blue-500 hover:bg-blue-50/50'
-              onClick={() => setExpanded(true)}
-            >
-              <CloudUploadIcon className='text-muted-foreground/70 mx-auto mb-3 size-12' />
-              <p className='text-secondary-foreground font-medium'>Add Studies to Your Project</p>
-              <p className='text-muted-foreground mt-1 text-sm'>
-                Upload PDFs, import from reference managers, or look up by DOI/PMID
-              </p>
-            </div>
-          : <div className='border-border bg-card overflow-hidden rounded-lg border shadow-sm'>
-              <div className='p-6'>{tabContent}</div>
-            </div>
-          }
-        </>
+        <div className='border-border bg-card overflow-hidden rounded-lg border shadow-sm'>
+          <div className='p-6'>{tabContent}</div>
+        </div>
       )}
     </div>
   );

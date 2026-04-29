@@ -77,7 +77,7 @@ export const Route = createRootRoute({
     'Permissions-Policy': 'camera=(), microphone=(), geolocation=()',
     'Content-Security-Policy': [
       "default-src 'self'",
-      "script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://plausible.jacobmaynard.dev",
+      "script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://plausible.jacobmaynard.dev https://apis.google.com",
       "style-src 'self' 'unsafe-inline'",
       `img-src 'self' data: blob:${import.meta.env.DEV ? ' http://localhost:*' : ''}`,
       import.meta.env.DEV ?
@@ -85,6 +85,7 @@ export const Route = createRootRoute({
       : "connect-src 'self' wss://corates.org https://api.crossref.org https://eutils.ncbi.nlm.nih.gov https://plausible.jacobmaynard.dev",
       "worker-src 'self' blob:",
       "font-src 'self'",
+      "frame-src https://docs.google.com",
       "frame-ancestors 'none'",
       "form-action 'self'",
       "base-uri 'self'",

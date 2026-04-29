@@ -74,7 +74,7 @@ export function CompletedTab() {
           />
         ))
       : <div className='py-16 text-center'>
-          <CheckCircleIcon className='text-muted-foreground/50 mx-auto mb-4 size-12' />
+          <CheckCircleIcon className='text-muted-foreground mx-auto mb-4 size-12 opacity-50' />
           <h3 className='text-foreground mb-2 text-lg font-medium'>Completed</h3>
           <p className='text-muted-foreground mx-auto max-w-md'>
             Studies that have completed reconciliation will appear here.

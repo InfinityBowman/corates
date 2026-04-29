@@ -174,7 +174,7 @@ export function AllStudiesTab() {
         </div>
       : hasData && (
           <div className='bg-muted rounded-lg py-12 text-center'>
-            <BookOpenIcon className='text-muted-foreground/50 mx-auto mb-4 size-12' />
+            <BookOpenIcon className='text-muted-foreground mx-auto mb-4 size-12 opacity-50' />
             <p className='text-muted-foreground'>
               No studies added yet. Add your first study above.
             </p>

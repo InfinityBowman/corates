@@ -153,7 +153,7 @@ export function LocalAppraisalsSection({
         {!hasChecklists && (
           <div className='border-border bg-muted/50 flex flex-col items-center justify-center rounded-xl border-2 border-dashed px-6 py-10'>
             <div className='bg-secondary mb-3 flex size-12 items-center justify-center rounded-xl'>
-              <FileTextIcon className='text-muted-foreground/70 size-6' />
+              <FileTextIcon className='text-muted-foreground size-6 opacity-70' />
             </div>
             <h3 className='text-secondary-foreground mb-1 text-sm font-medium'>
               No local appraisals

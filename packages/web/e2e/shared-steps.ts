@@ -87,15 +87,8 @@ const FIXTURES_DIR = path.join(import.meta.dirname, 'fixtures');
  * Handles both first-project and subsequent-project scenarios.
  */
 export async function createProject(page: Page, name: string, description = ''): Promise<string> {
-  // Try "Create First Project" first, fall back to header "New Project"
-  const firstProjectBtn = page.getByRole('button', { name: /Create First Project/i });
-  const headerNewBtn = page.locator('header').getByRole('button', { name: /New Project/i });
-
-  if (await firstProjectBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
-    await firstProjectBtn.click();
-  } else {
-    await headerNewBtn.click();
-  }
+  const newProjectBtn = page.getByRole('button', { name: /New Project/i });
+  await newProjectBtn.click();
 
   await expect(page.getByText('Create a new project')).toBeVisible();
   await page.getByPlaceholder('My Systematic Review').fill(name);
