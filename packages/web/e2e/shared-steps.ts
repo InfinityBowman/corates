@@ -109,9 +109,7 @@ export async function createProject(page: Page, name: string, description = ''):
  */
 export async function addStudyViaPdf(page: Page, fixture = 'Petrie2019.pdf') {
   await page.getByRole('tab', { name: /All Studies/i }).click();
-  await page.getByText('Add Studies to Your Project').click();
 
-  // "Upload PDFs" tab is active by default
   const fileInput = page.locator('input[type="file"][accept*="pdf"]');
   await fileInput.setInputFiles(path.join(FIXTURES_DIR, fixture));
 
