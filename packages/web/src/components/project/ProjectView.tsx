@@ -316,7 +316,7 @@ function ProjectViewInner({ projectId }: ProjectViewProps) {
             </header>
 
             {/* Main content */}
-            <main className='mx-auto max-w-7xl px-6 py-6'>
+            <div className='mx-auto max-w-7xl px-6 py-6'>
               <TabsContent value='overview' className='mt-0'>
                 <SectionErrorBoundary name='Overview'>
                   <OverviewTab />
@@ -342,7 +342,7 @@ function ProjectViewInner({ projectId }: ProjectViewProps) {
                   <CompletedTab />
                 </SectionErrorBoundary>
               </TabsContent>
-            </main>
+            </div>
           </Tabs>
         </div>
       )}
