@@ -7,6 +7,7 @@ import {
   getAdminProjectDocStats,
   removeAdminProjectMember,
   deleteAdminProject,
+  wakeAllProjectDOs,
 } from './admin-projects.server';
 
 export const getAdminProjectsAction = createServerFn({ method: 'GET' })
@@ -48,3 +49,7 @@ export const deleteAdminProjectAction = createServerFn({ method: 'POST' })
   .handler(async ({ data, context: { session, db } }) =>
     deleteAdminProject(session, db, data.projectId),
   );
+
+export const wakeAllProjectDOsAction = createServerFn({ method: 'POST' })
+  .middleware([authMiddleware])
+  .handler(async ({ context: { session, db } }) => wakeAllProjectDOs(session, db));

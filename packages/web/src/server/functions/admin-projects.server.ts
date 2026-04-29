@@ -286,3 +286,53 @@ export async function deleteAdminProject(session: Session, db: Database, project
   await db.delete(projects).where(eq(projects.id, projectId));
   return { success: true, message: 'Project deleted' };
 }
+
+/**
+ * Wake all ProjectDoc DOs to trigger `initializeDoc()`, which runs any
+ * pending migrations (e.g. legacy KV -> SQL). Processes in batches of 10
+ * to avoid overwhelming DO infrastructure.
+ */
+export async function wakeAllProjectDOs(session: Session, db: Database) {
+  assertAdmin(session);
+
+  const allProjects = await db
+    .select({ id: projects.id })
+    .from(projects)
+    .all();
+
+  const batchSize = 10;
+  let succeeded = 0;
+  let failed = 0;
+  const errors: Array<{ projectId: string; error: string }> = [];
+
+  for (let i = 0; i < allProjects.length; i += batchSize) {
+    const batch = allProjects.slice(i, i + batchSize);
+    const results = await Promise.allSettled(
+      batch.map(async (p) => {
+        const stub = getProjectDocStub(env, p.id);
+        await stub.getProjectInfo();
+        return p.id;
+      }),
+    );
+
+    for (let j = 0; j < results.length; j++) {
+      const result = results[j];
+      if (result.status === 'fulfilled') {
+        succeeded++;
+      } else {
+        failed++;
+        errors.push({
+          projectId: batch[j].id,
+          error: result.reason?.message ?? String(result.reason),
+        });
+      }
+    }
+  }
+
+  return {
+    total: allProjects.length,
+    succeeded,
+    failed,
+    errors: errors.slice(0, 50),
+  };
+}
