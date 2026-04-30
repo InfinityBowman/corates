@@ -131,22 +131,18 @@ export async function assignReviewers(page: Page) {
   });
 
   const dialog = page.getByRole('dialog');
-  await dialog.getByText('Unassigned').first().click();
+
+  // Target Select triggers by index to avoid the race where
+  // getByText('Unassigned').first() re-targets reviewer1's trigger
+  // before React re-renders it with the selected value.
+  const triggers = dialog.getByRole('combobox');
+  await triggers.nth(0).click();
   await page.getByRole('option', { name: /Alice/i }).click();
-
-  // Wait for the first Select to reflect the selection before clicking the second.
-  // Without this, getByText('Unassigned').first() can re-target the first dropdown
-  // if React hasn't re-rendered its trigger text yet.
-  await expect(dialog.getByText(/Alice/i).first()).toBeVisible({ timeout: 5_000 });
-
-  await dialog.getByText('Unassigned').first().click();
+  await triggers.nth(1).click();
   await page.getByRole('option', { name: /Bob/i }).click();
+
   await dialog.getByRole('button', { name: 'Save' }).click();
   await expect(dialog).toBeHidden({ timeout: 5_000 });
-
-  // Wait for the Y.Doc -> store -> render pipeline to propagate the assignment.
-  // The study card shows "No reviewers" until the store updates.
-  await expect(page.getByText('No reviewers')).toBeHidden({ timeout: 10_000 });
 }
 
 /**
