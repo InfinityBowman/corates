@@ -91,7 +91,7 @@ function SingleQuestionPage({
 
   // Reset auto-fill tracking when question changes
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- reset on question change
+     
     setHasAutoFilled(false);
   }, [questionKey]);
 
@@ -100,7 +100,7 @@ function SingleQuestionPage({
   // Initialize local final from props or default to reviewer1
   useEffect(() => {
     if (finalAnswers) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- syncing from Yjs props
+       
       setLocalFinal(JSON.parse(JSON.stringify(finalAnswers)));
       if (answersEqual(finalAnswers, reviewer1Answers)) {
         setSelectedSource('reviewer1');
@@ -132,7 +132,7 @@ function SingleQuestionPage({
     ) {
       const newFinal = JSON.parse(JSON.stringify(reviewer1Answers));
       onFinalChange(newFinal);
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- auto-fill guard
+       
       setHasAutoFilled(true);
     }
   }, [isAgreement, finalAnswers, reviewer1Answers, hasAutoFilled, onFinalChange]);

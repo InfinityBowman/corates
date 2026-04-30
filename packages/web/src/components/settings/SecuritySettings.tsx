@@ -63,7 +63,7 @@ export function SecuritySettings() {
     [currentPassword, newPassword, confirmPassword, unmetRequirements, changePassword],
   );
 
-  // eslint-disable-next-line react-hooks/preserve-manual-memoization -- async callback with conditional deps
+   
   const handleSendPasswordSetup = useCallback(async () => {
     setAddPasswordLoading(true);
     setPasswordError('');

@@ -71,6 +71,8 @@
     "@tanstack/react-router": "^1.168.25",
     "@tanstack/react-start": "^1.167.50",
     "@tanstack/react-table": "^8.21.3",
+    "@tldraw/state": "4.5.10",
+    "@tldraw/state-react": "4.5.10",
     "better-auth": "^1.6.9",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",

@@ -14,10 +14,10 @@ import { OutcomeManager } from '../outcomes/OutcomeManager';
 import {
   useProjectStore,
   selectStudies,
-  selectMembers,
   selectConnectionPhase,
 } from '@/stores/projectStore';
 import type { StudyInfo } from '@/stores/projectStore';
+import { useStudyIds, useProjectMembers } from '@/stores/projectAtoms';
 import { project } from '@/project';
 import { useProjectContext } from '../ProjectContext';
 import {
@@ -38,10 +38,11 @@ export function AllStudiesTab() {
   const [showReviewersModal, setShowReviewersModal] = useState(false);
   const [editingStudy, setEditingStudy] = useState<StudyInfo | null>(null);
 
+  const studyIds = useStudyIds(projectId);
+  const members = useProjectMembers(projectId);
   const studies = useProjectStore(s => selectStudies(s, projectId));
-  const members = useProjectStore(s => selectMembers(s, projectId));
   const connectionState = useProjectStore(s => selectConnectionPhase(s, projectId));
-  const hasData = connectionState.phase === 'synced' || studies.length > 0;
+  const hasData = connectionState.phase === 'synced' || studyIds.length > 0;
 
   // Restore state after OAuth redirect
   useEffect(() => {
@@ -82,7 +83,7 @@ export function AllStudiesTab() {
   );
 
   const shouldShowReviewerAssignment =
-    isOwner && studies.length > 0 && unassignedStudies.length > 0;
+    isOwner && studyIds.length > 0 && unassignedStudies.length > 0;
 
   const handleAssignReviewers = useCallback((studyId: string, updates: Record<string, unknown>) => {
     project.study.update(studyId, updates);
@@ -151,18 +152,19 @@ export function AllStudiesTab() {
 
       <div className='mt-6 mb-3 flex items-center justify-between'>
         <p className='text-muted-foreground text-sm'>
-          {studies.length} {studies.length === 1 ? 'study' : 'studies'} in this project
+          {studyIds.length} {studyIds.length === 1 ? 'study' : 'studies'} in this project
         </p>
       </div>
 
-      {studies.length > 0 ?
+      {studyIds.length > 0 ?
         <div className='flex flex-col gap-3'>
-          {studies.map(study => (
+          {studyIds.map(studyId => (
             <StudyCard
-              key={study.id}
-              study={study}
-              expanded={expandedStudies.has(study.id)}
-              onToggleExpanded={() => toggleStudyExpanded(study.id)}
+              key={studyId}
+              projectId={projectId}
+              studyId={studyId}
+              expanded={expandedStudies.has(studyId)}
+              onToggleExpanded={() => toggleStudyExpanded(studyId)}
               getMember={getMember}
               onAssignReviewers={s => {
                 setEditingStudy(s);

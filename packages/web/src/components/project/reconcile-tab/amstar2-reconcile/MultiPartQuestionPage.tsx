@@ -70,7 +70,7 @@ export function MultiPartQuestionPage({
 
   // Reset auto-fill tracking when question changes
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- reset on question change
+     
     setHasAutoFilled(false);
   }, [questionKey]);
 
@@ -83,7 +83,7 @@ export function MultiPartQuestionPage({
     if (finalAnswers && typeof finalAnswers === 'object') {
       const hasParts = dataKeys.some((dk: string) => finalAnswers[dk]);
       if (hasParts) {
-        // eslint-disable-next-line react-hooks/set-state-in-effect -- syncing from Yjs props
+         
         setLocalFinal(JSON.parse(JSON.stringify(finalAnswers)));
         if (multiPartEqual(finalAnswers, reviewer1Answers, dataKeys)) {
           setSelectedSource('reviewer1');
@@ -126,7 +126,7 @@ export function MultiPartQuestionPage({
     ) {
       const newFinal = JSON.parse(JSON.stringify(reviewer1Answers));
       onFinalChange(newFinal);
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- auto-fill guard
+       
       setHasAutoFilled(true);
     }
   }, [isAgreement, finalAnswers, reviewer1Answers, dataKeys, hasAutoFilled, onFinalChange]);

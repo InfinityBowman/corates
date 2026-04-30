@@ -32,12 +32,12 @@ export function GoogleDrivePickerModal({
   const [importing, setImporting] = useState(false);
 
   // Use refs for values that may change between modal open and picker callback
-  /* eslint-disable react-hooks/refs -- intentional ref-sync for async callback closures */
+   
   const studyIdRef = useRef(studyId);
   studyIdRef.current = studyId;
   const onImportSuccessRef = useRef(onImportSuccess);
   onImportSuccessRef.current = onImportSuccess;
-  /* eslint-enable react-hooks/refs */
+   
 
   const handlePicked = useCallback(
     async (picked: Array<{ id: string; name: string }>, pickerStudyId?: string) => {

@@ -141,7 +141,7 @@ export function ChartSection({ studies }: ChartSectionProps) {
 
   // Sync custom labels when raw data changes
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- syncing labels from data
+     
     setCustomLabels(prev => {
       const currentIds = prev.map(l => l.id).join(',');
       const newIds = rawChecklistData.map(d => d.id).join(',');

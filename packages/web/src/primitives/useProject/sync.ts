@@ -13,6 +13,7 @@ import type {
   ProjectMeta,
   OutcomeEntry,
 } from '@/stores/projectStore';
+import { getProjectAtoms, cleanupProjectAtoms } from '@/stores/projectAtoms';
 import { scoreChecklistOfType } from '@/checklist-registry/index';
 import { amstar2 } from '@corates/shared';
 import { CHECKLIST_STATUS } from '@corates/shared/checklists';
@@ -167,6 +168,17 @@ export function createSyncManager(projectId: string, getYDoc: () => Y.Doc | null
     dirtySlices.members = false;
     dirtySlices.meta = false;
 
+    const projectAtoms = getProjectAtoms(projectId);
+    if (updates.studies !== undefined) {
+      projectAtoms.setStudies(updates.studies);
+    }
+    if (updates.members !== undefined) {
+      projectAtoms.members.set(updates.members);
+    }
+    if (updates.meta !== undefined) {
+      projectAtoms.meta.set(updates.meta);
+    }
+
     if (
       updates.studies !== undefined ||
       updates.members !== undefined ||
@@ -237,6 +249,7 @@ export function createSyncManager(projectId: string, getYDoc: () => Y.Doc | null
     cleanupHandlers.length = 0;
     studyCache.clear();
     sortedStudies = [];
+    cleanupProjectAtoms(projectId);
   }
 
   function pause(): void {

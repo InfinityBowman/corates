@@ -97,7 +97,7 @@ export function DevImportProject() {
 
   useEffect(() => {
     if (orgs.length > 0 && !selectedOrgId) {
-      setSelectedOrgId(orgs[0].id); // eslint-disable-line react-hooks/set-state-in-effect -- one-time default
+      setSelectedOrgId(orgs[0].id);  
     }
   }, [orgs, selectedOrgId]);
 
@@ -109,7 +109,7 @@ export function DevImportProject() {
   useEffect(() => {
     if (selectedTemplate) {
       const tmpl = TEMPLATES.find(t => t.name === selectedTemplate);
-      if (tmpl) setProjectName(tmpl.description); // eslint-disable-line react-hooks/set-state-in-effect -- derived default
+      if (tmpl) setProjectName(tmpl.description);  
     }
   }, [selectedTemplate]);
 
@@ -548,7 +548,7 @@ function UserSearchField({
 
   useEffect(() => {
     if (debouncedQuery.length < 2) {
-      setResults([]); // eslint-disable-line react-hooks/set-state-in-effect -- clearing results when query is too short
+      setResults([]);  
       return;
     }
     let cancelled = false;

@@ -4,8 +4,8 @@
 
 import { useState, useEffect, useEffectEvent, useMemo, useCallback } from 'react';
 import { UserIcon } from 'lucide-react';
-import { useProjectStore, selectMembers } from '@/stores/projectStore';
 import type { StudyInfo } from '@/stores/projectStore';
+import { useProjectMembers } from '@/stores/projectAtoms';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import {
   Select,
@@ -37,7 +37,7 @@ export function AssignReviewersModal({
   const [reviewer2, setReviewer2] = useState('_unassigned');
   const [saving, setSaving] = useState(false);
 
-  const members = useProjectStore(s => selectMembers(s, projectId));
+  const members = useProjectMembers(projectId);
 
   const memberItems = useMemo(
     () => [
@@ -60,14 +60,14 @@ export function AssignReviewersModal({
   });
 
   useEffect(() => {
-    /* eslint-disable react-hooks/set-state-in-effect -- one-time form init on modal open/close */
+     
     if (open) {
       initializeForm();
     } else {
       setReviewer1('_unassigned');
       setReviewer2('_unassigned');
     }
-    /* eslint-enable react-hooks/set-state-in-effect */
+     
   }, [open]);
 
   const handleSave = useCallback(async () => {

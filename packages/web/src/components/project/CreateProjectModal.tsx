@@ -51,7 +51,7 @@ export function CreateProjectModal({ open, onOpenChange }: CreateProjectModalPro
   // Auto-select first org when orgs load and user has multiple
   useEffect(() => {
     if (orgs.length > 1 && !selectedOrgId) {
-      setSelectedOrgId(orgs[0].id); // eslint-disable-line react-hooks/set-state-in-effect -- one-time default from loaded data
+      setSelectedOrgId(orgs[0].id);  
     }
   }, [orgs, selectedOrgId]);
 
@@ -64,7 +64,7 @@ export function CreateProjectModal({ open, onOpenChange }: CreateProjectModalPro
   // Reset form when dialog closes
   useEffect(() => {
     if (!open) {
-      setProjectName(''); // eslint-disable-line react-hooks/set-state-in-effect -- resetting form on dialog close
+      setProjectName('');  
       setProjectDescription('');
       setSelectedOrgId(null);
     }

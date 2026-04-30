@@ -10,7 +10,7 @@ export function useYText(yText: Y.Text | null): string {
 
   useEffect(() => {
     if (!yText) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- syncing external Y.Text CRDT state
+       
       setValue('');
       return;
     }

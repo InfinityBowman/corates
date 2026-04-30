@@ -68,7 +68,7 @@ export function LinkedAccountsSection() {
       sessionStorage.removeItem('linkingProvider');
 
       if (oauthError.code === 'ACCOUNT_ALREADY_LINKED_TO_DIFFERENT_USER') {
-        setMergeConflictProvider(provider); // eslint-disable-line react-hooks/set-state-in-effect -- one-time URL param consumption
+        setMergeConflictProvider(provider);  
         setTimeout(() => setShowMergeDialog(true), 100);
         return;
       }
