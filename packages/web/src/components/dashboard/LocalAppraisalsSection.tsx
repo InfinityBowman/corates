@@ -6,7 +6,7 @@ import { useState, useMemo, useCallback } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { PlusIcon, FileTextIcon, LogInIcon, TriangleAlertIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useProjectStore, selectStudies } from '@/stores/projectStore';
+import { useAllStudies } from '@/stores/projectAtoms';
 import { connectionPool } from '@/project/ConnectionPool';
 import { LOCAL_PROJECT_ID } from '@/project/localProject';
 import { db } from '@/primitives/db';
@@ -43,7 +43,7 @@ export function LocalAppraisalsSection({
 }: LocalAppraisalsSectionProps) {
   const navigate = useNavigate();
   const animation = useAnimation();
-  const studies = useProjectStore(s => selectStudies(s, LOCAL_PROJECT_ID));
+  const studies = useAllStudies(LOCAL_PROJECT_ID);
 
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);

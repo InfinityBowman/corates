@@ -20,7 +20,7 @@ import {
   TriangleAlertIcon,
 } from 'lucide-react';
 import { useAuthStore, selectUser, selectIsLoggedIn } from '@/stores/authStore';
-import { useProjectStore, selectStudies } from '@/stores/projectStore';
+import { useAllStudies } from '@/stores/projectAtoms';
 import { connectionPool } from '@/project/ConnectionPool';
 import { LOCAL_PROJECT_ID } from '@/project/localProject';
 import { db } from '@/primitives/db';
@@ -67,7 +67,7 @@ export function Sidebar({
     updatedAt?: number;
     createdAt?: number;
   }
-  const localStudies = useProjectStore(s => selectStudies(s, LOCAL_PROJECT_ID));
+  const localStudies = useAllStudies(LOCAL_PROJECT_ID);
   const checklists = useMemo<LocalChecklistSummary[]>(() => {
     const out: LocalChecklistSummary[] = [];
     for (const study of localStudies) {

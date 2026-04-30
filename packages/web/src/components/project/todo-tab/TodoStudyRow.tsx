@@ -23,7 +23,7 @@ import { getChecklistMetadata, CHECKLIST_TYPES } from '@/checklist-registry';
 import { PdfListItem } from '@/components/pdf/PdfListItem';
 import { ChecklistForm } from './ChecklistForm';
 import { getStatusLabel, getStatusStyle } from '@corates/shared/checklists';
-import { useProjectStore } from '@/stores/projectStore';
+import { useProjectMeta } from '@/stores/projectAtoms';
 import type { StudyInfo, PdfEntry, MemberEntry } from '@/stores/projectStore';
 import { useProjectContext } from '../ProjectContext';
 
@@ -64,7 +64,7 @@ export function TodoStudyRow({
   const checklists = study.checklists;
   const hasChecklists = checklists.length > 0;
 
-  const meta = useProjectStore(s => s.projects[projectId]?.meta);
+  const meta = useProjectMeta(projectId);
   const outcomes = useMemo(() => meta?.outcomes ?? [], [meta?.outcomes]);
 
   const canAddMore = useMemo(() => {

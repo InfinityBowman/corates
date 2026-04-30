@@ -11,6 +11,7 @@ import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { XIcon, ChevronDownIcon, ChevronUpIcon, BugIcon, BracesIcon } from 'lucide-react';
 import { useProjectStore, selectConnectionPhase } from '@/stores/projectStore';
+import { useAllStudies, useProjectMembers, useProjectMeta } from '@/stores/projectAtoms';
 import { useProjectOrgId } from '@/hooks/useProjectOrgId';
 import { DevStateTree } from './DevStateTree';
 import { DevQuickActions } from './DevQuickActions';
@@ -48,7 +49,10 @@ export function DevPanel() {
 
   const orgId = useProjectOrgId(projectId);
 
-  const projectData = useProjectStore(s => (projectId ? s.projects[projectId] || null : null));
+  const studies = useAllStudies(projectId || '');
+  const members = useProjectMembers(projectId || '');
+  const meta = useProjectMeta(projectId || '');
+  const projectData = projectId ? { studies, members, meta } : null;
 
   const connectionState = useProjectStore(s =>
     projectId ? selectConnectionPhase(s, projectId) : null,

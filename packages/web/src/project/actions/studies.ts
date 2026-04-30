@@ -9,7 +9,7 @@ import { showToast } from '@/components/ui/toast';
 import { importFromGoogleDrive } from '@/api/google-drive';
 import { extractPdfDoi, extractPdfTitle } from '@/lib/pdfUtils.js';
 import { fetchFromDOI } from '@/lib/referenceLookup.js';
-import { useProjectStore } from '@/stores/projectStore';
+import { getProjectAtoms } from '@/stores/projectAtoms';
 import { useAuthStore, selectUser } from '@/stores/authStore';
 import { connectionPool, type TypedProjectOps } from '../ConnectionPool';
 import type { PdfInfo, PdfTag } from '@/primitives/useProject/pdfs';
@@ -283,8 +283,7 @@ export const studyActions = {
     }
 
     try {
-      const study =
-        useProjectStore.getState().projects[projectId]?.studies.find(s => s.id === studyId) ?? null;
+      const study = getProjectAtoms(projectId).getOrCreateStudyAtom(studyId).get() ?? null;
       const pdfs = study?.pdfs ?? [];
 
       if (pdfs.length > 0) {

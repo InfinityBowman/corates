@@ -1,21 +1,12 @@
 /**
- * useProjectData - Lightweight hook for reading project data from Zustand store
+ * useProjectData - Lightweight hook for reading project data from atoms
  *
  * Use this hook when you only need to READ project data (studies, members, meta).
  * For write operations (createStudy, updateChecklist, etc.), use useProject instead.
- *
- * Note: This hook reads from the Zustand store. Data is populated by useProject
- * when it's mounted (typically in the projects.$projectId layout route).
  */
 
-import {
-  useProjectStore,
-  selectConnectionPhase,
-  selectStudies,
-  selectMembers,
-  selectMeta,
-  type ProjectMeta,
-} from '@/stores/projectStore';
+import { useProjectStore, selectConnectionPhase, type ProjectMeta } from '@/stores/projectStore';
+import { useAllStudies, useProjectMembers, useProjectMeta } from '@/stores/projectAtoms';
 
 const EMPTY_STUDIES: never[] = [];
 const EMPTY_MEMBERS: never[] = [];
@@ -32,17 +23,12 @@ const IDLE_STATE = {
 };
 
 export function useProjectData(projectId: string | undefined) {
-  const studies = useProjectStore(state =>
-    projectId ? selectStudies(state, projectId) : EMPTY_STUDIES,
-  );
-  const members = useProjectStore(state =>
-    projectId ? selectMembers(state, projectId) : EMPTY_MEMBERS,
-  );
-  const meta = useProjectStore(state => (projectId ? selectMeta(state, projectId) : EMPTY_META));
+  const studies = useAllStudies(projectId || '');
+  const members = useProjectMembers(projectId || '');
+  const meta = useProjectMeta(projectId || '');
   const connectionState = useProjectStore(state =>
     projectId ? selectConnectionPhase(state, projectId) : null,
   );
-  const hasData = useProjectStore(state => (projectId ? !!state.projects[projectId] : false));
 
   if (!projectId) return IDLE_STATE;
 
@@ -56,6 +42,6 @@ export function useProjectData(projectId: string | undefined) {
     connecting: phase === 'connecting',
     synced: phase === 'synced',
     error: connectionState?.error ?? null,
-    hasData,
+    hasData: phase !== 'idle',
   };
 }

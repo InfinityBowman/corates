@@ -4,7 +4,6 @@
  */
 
 import * as Y from 'yjs';
-import { useProjectStore } from '@/stores/projectStore';
 import type {
   StudyInfo,
   ChecklistEntry,
@@ -13,6 +12,7 @@ import type {
   ProjectMeta,
   OutcomeEntry,
 } from '@/stores/projectStore';
+import { useProjectStore } from '@/stores/projectStore';
 import { getProjectAtoms, cleanupProjectAtoms } from '@/stores/projectAtoms';
 import { scoreChecklistOfType } from '@/checklist-registry/index';
 import { amstar2 } from '@corates/shared';
@@ -171,20 +171,13 @@ export function createSyncManager(projectId: string, getYDoc: () => Y.Doc | null
     const projectAtoms = getProjectAtoms(projectId);
     if (updates.studies !== undefined) {
       projectAtoms.setStudies(updates.studies);
+      useProjectStore.getState().updateProjectStats(projectId, updates.studies);
     }
     if (updates.members !== undefined) {
       projectAtoms.members.set(updates.members);
     }
     if (updates.meta !== undefined) {
       projectAtoms.meta.set(updates.meta);
-    }
-
-    if (
-      updates.studies !== undefined ||
-      updates.members !== undefined ||
-      updates.meta !== undefined
-    ) {
-      useProjectStore.getState().setProjectData(projectId, updates);
     }
   }
 
