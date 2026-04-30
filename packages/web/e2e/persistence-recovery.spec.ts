@@ -15,7 +15,7 @@
  * See: packages/docs/audits/yjs-persistence-redesign.md
  */
 
-import { test, expect } from '@playwright/test';
+import { test, expect, type Page } from '@playwright/test';
 import {
   seedDualReviewerScenario,
   cleanupScenario,
@@ -24,6 +24,13 @@ import {
   type DualReviewerScenario,
 } from './helpers';
 import { setupProjectWithStudy } from './shared-steps';
+
+function forwardConnDebug(page: Page, label: string) {
+  page.on('console', msg => {
+    const text = msg.text();
+    if (text.includes('[conn-debug]')) console.log(`[${label}] ${text}`);
+  });
+}
 
 let scenario: DualReviewerScenario;
 
@@ -56,6 +63,7 @@ async function countCheckedYesRadios(page: import('@playwright/test').Page): Pro
 }
 
 test('Project state survives page refresh', async ({ context, page }) => {
+  forwardConnDebug(page, 'persistence');
   // Create a project with one study and assigned reviewers, then verify the
   // study is present after a hard reload.
   const projectId = await setupProjectWithStudy(

@@ -121,6 +121,7 @@ export function createConnectionManager(
     }
 
     provider.on('status', ({ status }: { status: string }) => {
+      console.log(`[conn-debug] ${projectId} ws status: ${status}`);
       if (status === 'connected') {
         useProjectStore.getState().dispatchConnectionEvent(projectId, { type: 'REMOTE_CONNECTED' });
         consecutiveErrors = 0;
@@ -132,10 +133,12 @@ export function createConnectionManager(
     });
 
     provider.on('sync', (isSynced: boolean) => {
+      console.log(`[conn-debug] ${projectId} ws sync event: isSynced=${isSynced}`);
       if (isSynced && onSync) onSync();
     });
 
     if (provider.synced && onSync) {
+      console.log(`[conn-debug] ${projectId} ws already synced on attach`);
       onSync();
     }
 
@@ -147,6 +150,7 @@ export function createConnectionManager(
         if (!event) return;
 
         const reason = event.reason || '';
+        console.log(`[conn-debug] ${projectId} ws connection-close: code=${event.code}, reason=${reason}`);
 
         if (reason === CLOSE_REASONS.PROJECT_DELETED) {
           useProjectStore.getState().dispatchConnectionEvent(projectId, {
@@ -198,6 +202,7 @@ export function createConnectionManager(
     );
 
     provider.on('connection-error', () => {
+      console.log(`[conn-debug] ${projectId} ws connection-error, online=${navigator.onLine}, errors=${consecutiveErrors + 1}`);
       if (!navigator.onLine) {
         return;
       }
