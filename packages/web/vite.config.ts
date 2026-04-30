@@ -5,8 +5,12 @@ import viteReact from '@vitejs/plugin-react';
 import viteTsConfigPaths from 'vite-tsconfig-paths';
 import tailwindcss from '@tailwindcss/vite';
 import { cloudflare } from '@cloudflare/vite-plugin';
+import { sentryVitePlugin } from '@sentry/vite-plugin';
 
 export default defineConfig({
+  build: {
+    sourcemap: true,
+  },
   resolve: {
     alias: {
       '@/': path.resolve(import.meta.dirname, 'src') + '/',
@@ -19,7 +23,6 @@ export default defineConfig({
     tailwindcss(),
     tanstackStart({
       router: {
-        // Exclude server test files + tests/helper dirs from route generation.
         routeFileIgnorePattern: '(__tests__/|\\.test\\.|\\.spec\\.|server/)',
       },
       prerender: {
@@ -46,5 +49,13 @@ export default defineConfig({
       },
     }),
     viteReact(),
+    sentryVitePlugin({
+      org: 'corates',
+      project: 'corates-web',
+      authToken: process.env.SENTRY_AUTH_TOKEN,
+      disable: !process.env.SENTRY_AUTH_TOKEN,
+      reactComponentAnnotation: { enabled: true },
+      sourcemaps: { filesToDeleteAfterUpload: ['./dist/**/*.map'] },
+    }),
   ],
 });

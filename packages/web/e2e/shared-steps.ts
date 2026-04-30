@@ -93,7 +93,9 @@ export async function createProject(page: Page, name: string, description = ''):
   if (description) {
     await page.getByPlaceholder('What is this review about?').fill(description);
   }
-  await page.getByRole('button', { name: 'Create Project' }).click();
+  const createBtn = page.getByRole('button', { name: 'Create Project' });
+  await expect(createBtn).toBeEnabled({ timeout: 10_000 });
+  await createBtn.click();
   await expect(page).toHaveURL(/\/projects\//, { timeout: 15_000 });
 
   const projectId = page.url().match(/\/projects\/([^/?]+)/)?.[1];

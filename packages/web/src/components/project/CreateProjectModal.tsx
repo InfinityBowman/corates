@@ -70,7 +70,7 @@ export function CreateProjectModal({ open, onOpenChange }: CreateProjectModalPro
     }
   }, [open]);
 
-  const canSubmit = projectName.trim().length > 0 && !isSubmitting;
+  const canSubmit = projectName.trim().length > 0 && !isSubmitting && !!resolvedOrgId;
 
   const handleSubmit = useCallback(
     async (e?: React.FormEvent) => {
