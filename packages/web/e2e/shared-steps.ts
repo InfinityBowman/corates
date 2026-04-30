@@ -133,6 +133,12 @@ export async function assignReviewers(page: Page) {
   const dialog = page.getByRole('dialog');
   await dialog.getByText('Unassigned').first().click();
   await page.getByRole('option', { name: /Alice/i }).click();
+
+  // Wait for the first Select to reflect the selection before clicking the second.
+  // Without this, getByText('Unassigned').first() can re-target the first dropdown
+  // if React hasn't re-rendered its trigger text yet.
+  await expect(dialog.getByText(/Alice/i).first()).toBeVisible({ timeout: 5_000 });
+
   await dialog.getByText('Unassigned').first().click();
   await page.getByRole('option', { name: /Bob/i }).click();
   await dialog.getByRole('button', { name: 'Save' }).click();
