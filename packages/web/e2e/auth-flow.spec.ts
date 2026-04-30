@@ -192,11 +192,11 @@ test.describe('Auth flows', () => {
       // Navigate to sign-in page and wait for effects to settle
       await page.goto('/signin');
       await expect(page.getByText('Welcome Back')).toBeVisible({ timeout: 10_000 });
-      await page.waitForTimeout(500);
 
       // Fill the password form (default active tab)
       // Scope to the password panel to avoid ambiguity with the magic link panel
       const passwordPanel = page.locator('#panel-password');
+      await expect(passwordPanel.locator('#email-input')).toBeVisible({ timeout: 5_000 });
       await passwordPanel.locator('#email-input').click();
       await passwordPanel.locator('#email-input').pressSequentially(email, { delay: 20 });
       await passwordPanel.locator('#password-input').click();
@@ -297,9 +297,8 @@ test.describe('Auth flows', () => {
       // Open user dropdown (button in nav with user name) and click sign out
       await page.locator('nav button', { hasText: scenario.userA.name.split(' ')[0] }).click();
       await page.getByRole('menuitem', { name: /Sign Out/i }).click();
-
-      // Should redirect away from authenticated area
-      await page.waitForTimeout(1000);
+      // Sign-out API call has no DOM signal; wait for it to invalidate the session
+      await page.waitForTimeout(2000);
 
       // Verify session is gone -- protected route should redirect to signin
       await page.goto('/settings/profile');

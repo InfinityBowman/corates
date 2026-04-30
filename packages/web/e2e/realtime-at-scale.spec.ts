@@ -82,7 +82,6 @@ test(`Realtime reconciliation with ${STUDY_COUNT} ROB2 studies`, async ({ browse
 
   // Navigate to Reconcile tab and grab the URL
   await page.getByRole('tab', { name: /Reconcile/i }).click();
-  await page.waitForTimeout(2000);
   await expect(page.getByText('Ready').first()).toBeVisible({ timeout: 15_000 });
 
   const reconcileNavStart = Date.now();
@@ -131,9 +130,7 @@ test(`Realtime reconciliation with ${STUDY_COUNT} ROB2 studies`, async ({ browse
     // ================================================================
     // Jump to Domain 1 where inline comment fields exist
     await pageA.getByRole('button', { name: /D1\s+\d+\// }).click();
-    await pageA.waitForTimeout(500);
     await pageB.getByRole('button', { name: /D1\s+\d+\// }).click();
-    await pageB.waitForTimeout(500);
 
     const commentA = pageA.locator('textarea[placeholder="Add the final reconciled comment..."]');
     await expect(commentA).toBeVisible({ timeout: 10_000 });

@@ -37,22 +37,20 @@ export async function fillROB2Preliminary(
   await page.getByPlaceholder(/experimental intervention/i).fill(intervention);
   await page.getByPlaceholder(/comparator intervention/i).fill(comparator);
   await page.getByPlaceholder(/e\.g\. RR/i).fill(numericalResult);
-  await page.waitForTimeout(500);
 }
 
 /** Answer every ROB2 domain signalling question with a given response (Y, N, PY, PN, NI). */
 export async function answerAllROB2Domains(page: Page, answer: string) {
   for (const domain of ['D1', 'D2', 'D3', 'D4', 'D5']) {
     await page.getByRole('button', { name: domain, exact: true }).click();
-    await page.waitForTimeout(500);
+    await expect(page.getByRole('button', { name: answer, exact: true }).first()).toBeVisible({ timeout: 5_000 });
 
     const buttons = page.getByRole('button', { name: answer, exact: true });
     const count = await buttons.count();
     for (let i = 0; i < count; i++) {
       await buttons.nth(i).click();
-      await page.waitForTimeout(100);
+      await page.waitForTimeout(50);
     }
-    await page.waitForTimeout(300);
   }
 }
 
@@ -145,11 +143,11 @@ export async function assignReviewers(page: Page) {
 export async function addOutcome(page: Page, name: string) {
   await page.getByRole('tab', { name: /All Studies/i }).click();
   await page.getByText('Outcomes').click();
-  await page.waitForTimeout(500);
+  await expect(page.getByRole('button', { name: /Add/i }).last()).toBeVisible({ timeout: 5_000 });
   await page.getByRole('button', { name: /Add/i }).last().click();
   await page.getByPlaceholder(/outcome/i).fill(name);
   await page.keyboard.press('Enter');
-  await page.waitForTimeout(1000);
+  await expect(page.getByText(name)).toBeVisible({ timeout: 5_000 });
 }
 
 /**
@@ -167,7 +165,7 @@ export async function markChecklistComplete(page: Page) {
   const dialog = page.getByRole('alertdialog');
   await dialog.getByRole('button', { name: /Mark Complete/i }).click();
 
-  await page.waitForTimeout(2000);
+  await expect(dialog).toBeHidden({ timeout: 10_000 });
 }
 
 /**
@@ -189,7 +187,6 @@ export async function setupProjectWithStudy(
 
   // Verify the member appears in the team list before continuing
   await expect(page.getByText(scenario.userB.name)).toBeVisible({ timeout: 5_000 });
-  await page.waitForTimeout(1000);
 
   await addStudyViaPdf(page);
   await assignReviewers(page);

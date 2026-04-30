@@ -79,14 +79,14 @@ test('Project state survives page refresh', async ({ context, page }) => {
   //         partial in-progress state survives the refresh.
   // ================================================================
   await page.getByRole('tab', { name: /To Do/i }).click();
-  await page.waitForTimeout(1000);
+  await expect(page.getByRole('button', { name: /Select Checklist/i })).toBeVisible({ timeout: 10_000 });
 
   await page.getByRole('button', { name: /Select Checklist/i }).click();
   await page.getByRole('button', { name: /Add Checklist/i }).click();
-  await page.waitForTimeout(1000);
+  await expect(page.getByRole('button', { name: 'Open', exact: true })).toBeVisible({ timeout: 10_000 });
   await page.getByRole('button', { name: 'Open', exact: true }).click();
   await expect(page).toHaveURL(/\/checklists\//, { timeout: 10_000 });
-  await page.waitForTimeout(2000);
+  await expect(page.getByRole('radio', { name: 'Yes' }).first()).toBeVisible({ timeout: 10_000 });
 
   // Click the first 5 Yes radios to generate observable persistence state.
   // We don't care which specific questions get answered -- just that some
@@ -99,7 +99,7 @@ test('Project state survives page refresh', async ({ context, page }) => {
     await page.waitForTimeout(100);
   }
   // Give the WebSocket time to flush updates to the server
-  await page.waitForTimeout(2000);
+  await page.waitForTimeout(1000);
 
   const checkedAfterRound1 = await countCheckedYesRadios(page);
   expect(checkedAfterRound1).toBeGreaterThan(0);
@@ -110,24 +110,23 @@ test('Project state survives page refresh', async ({ context, page }) => {
   //         work disappeared after refresh.
   // ================================================================
   await page.reload();
-  await page.waitForLoadState('networkidle');
-  // The checklist needs a moment to re-sync from IndexedDB and reattach
-  await page.waitForTimeout(3000);
+  // Wait for checklist to re-sync from IndexedDB
+  await expect(page.getByRole('radio', { name: 'Yes' }).first()).toBeVisible({ timeout: 10_000 });
 
+  await expect(async () => {
+    expect(await countCheckedYesRadios(page)).toBe(checkedAfterRound1);
+  }).toPass({ timeout: 10_000 });
   const checkedAfterReload1 = await countCheckedYesRadios(page);
-  expect(checkedAfterReload1).toBe(checkedAfterRound1);
 
   // ================================================================
   // Step 4: Navigate back to the project and verify the study is still
   //         in the list (catches the original bug where studies vanished)
   // ================================================================
   await page.goto(`/projects/${projectId}`);
-  await page.waitForLoadState('networkidle');
-  await page.waitForTimeout(2000);
 
   await page.getByRole('tab', { name: /All Studies/i }).click();
   await expect(page.getByText(/1 study in this project/i)).toBeVisible({
-    timeout: 10_000,
+    timeout: 15_000,
   });
 
   // ================================================================
@@ -137,12 +136,12 @@ test('Project state survives page refresh', async ({ context, page }) => {
   //         before the first reload.
   // ================================================================
   await page.getByRole('tab', { name: /To Do/i }).click();
-  await page.waitForTimeout(1000);
+  await expect(page.getByRole('button', { name: 'Open', exact: true })).toBeVisible({ timeout: 10_000 });
 
   // Reopen the same checklist via the "Open" button
   await page.getByRole('button', { name: 'Open', exact: true }).click();
   await expect(page).toHaveURL(/\/checklists\//, { timeout: 10_000 });
-  await page.waitForTimeout(2000);
+  await expect(page.getByRole('radio', { name: 'Yes' }).first()).toBeVisible({ timeout: 10_000 });
 
   // Click 3 more Yes radios. We use radios past the round-1 range to add
   // new answers rather than re-clicking already-set ones.
@@ -152,7 +151,7 @@ test('Project state survives page refresh', async ({ context, page }) => {
     await yesRadiosRound2.nth(i).click();
     await page.waitForTimeout(100);
   }
-  await page.waitForTimeout(2000);
+  await page.waitForTimeout(1000);
 
   const checkedAfterRound2 = await countCheckedYesRadios(page);
   expect(checkedAfterRound2).toBeGreaterThan(checkedAfterReload1);
@@ -161,16 +160,14 @@ test('Project state survives page refresh', async ({ context, page }) => {
   // Step 6: Final reload, verify the post-cold-load edits also survived
   // ================================================================
   await page.reload();
-  await page.waitForLoadState('networkidle');
-  await page.waitForTimeout(3000);
+  await expect(page.getByRole('radio', { name: 'Yes' }).first()).toBeVisible({ timeout: 10_000 });
 
-  const checkedAfterReload2 = await countCheckedYesRadios(page);
-  expect(checkedAfterReload2).toBe(checkedAfterRound2);
+  await expect(async () => {
+    expect(await countCheckedYesRadios(page)).toBe(checkedAfterRound2);
+  }).toPass({ timeout: 10_000 });
 
   // And the study should still be in the project list
   await page.goto(`/projects/${projectId}`);
-  await page.waitForLoadState('networkidle');
-  await page.waitForTimeout(2000);
   await page.getByRole('tab', { name: /All Studies/i }).click();
   await expect(page.getByText(/1 study in this project/i)).toBeVisible({
     timeout: 10_000,
@@ -272,19 +269,18 @@ test('Project actions work after cold reload (no warm query cache)', async ({
   // setActiveProject is never called, and all actions through
   // connectionPool.getActiveOps() fail with "No active project connection".
   await page.reload();
-  await page.waitForLoadState('networkidle');
 
   await page.getByRole('tab', { name: /All Studies/i }).click();
   await expect(page.getByText(/1 study in this project/i)).toBeVisible({ timeout: 15_000 });
 
   // Wait well past any sync window to prove this is not a race condition.
-  await page.waitForTimeout(10_000);
+  await page.waitForTimeout(5_000);
 
   // Attempt a mutation: this calls project.study.delete() which
   // requires connectionPool.getActiveOps() to be non-null.
   await page.locator('button:has(svg.lucide-ellipsis-vertical)').first().click();
   await page.getByRole('menuitem', { name: /Delete Study/i }).click();
-  await page.waitForTimeout(2000);
+  await page.waitForTimeout(1000);
 
   const connectionErrors = pageErrors.filter(e =>
     e.message.includes('No active project connection'),

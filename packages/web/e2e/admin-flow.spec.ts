@@ -36,7 +36,7 @@ async function loginAndGoto(
 ) {
   await loginAs(context, cookies);
   await page.goto('/dashboard');
-  await page.waitForTimeout(1500);
+  await expect(page.getByText('Welcome back,')).toBeVisible({ timeout: 15_000 });
   await page.goto(path);
 }
 

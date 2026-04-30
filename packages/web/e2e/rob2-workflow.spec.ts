@@ -44,7 +44,7 @@ test('Dual-Reviewer ROB2 Workflow', async ({ context, page }) => {
   // User A fills ROB2 checklist
   // ================================================================
   await page.getByRole('tab', { name: /To Do/i }).click();
-  await page.waitForTimeout(1000);
+  await expect(page.getByRole('button', { name: /Select Checklist/i })).toBeVisible({ timeout: 10_000 });
 
   await page.getByRole('button', { name: /Select Checklist/i }).click();
   await page.getByText(/AMSTAR 2/i).click();
@@ -52,18 +52,17 @@ test('Dual-Reviewer ROB2 Workflow', async ({ context, page }) => {
   await page.getByText(/Select outcome/i).click();
   await page.getByRole('option', { name: /Pain reduction/i }).click();
   await page.getByRole('button', { name: /Add Checklist/i }).click();
-  await page.waitForTimeout(1000);
+  await expect(page.getByRole('button', { name: 'Open', exact: true })).toBeVisible({ timeout: 10_000 });
 
   await page.getByRole('button', { name: 'Open', exact: true }).click();
   await expect(page).toHaveURL(/\/checklists\//, { timeout: 10_000 });
-  await page.waitForTimeout(2000);
+  await expect(page.getByText('Individually-randomized parallel-group trial')).toBeVisible({ timeout: 10_000 });
 
   await fillROB2Preliminary(page, 'Drug X', 'Placebo');
   await answerAllROB2Domains(page, 'Y');
-  await page.waitForTimeout(1000);
   await markChecklistComplete(page);
   await page.goto(`/projects/${projectId}`);
-  await page.waitForTimeout(2000);
+  await expect(page.getByRole('tab', { name: /To Do/i })).toBeVisible({ timeout: 15_000 });
 
   // ================================================================
   // User B fills ROB2 checklist
@@ -79,11 +78,10 @@ test('Dual-Reviewer ROB2 Workflow', async ({ context, page }) => {
   await page.getByText(/Select outcome/i).click();
   await page.getByRole('option', { name: /Pain reduction/i }).click();
   await page.getByRole('button', { name: /Add Checklist/i }).click();
-  await page.waitForTimeout(1000);
+  await expect(page.getByRole('button', { name: 'Open', exact: true })).toBeVisible({ timeout: 10_000 });
 
   await page.getByRole('button', { name: 'Open', exact: true }).last().click();
   await expect(page).toHaveURL(/\/checklists\//, { timeout: 10_000 });
-  await page.waitForTimeout(2000);
 
   if (
     await page
@@ -92,29 +90,26 @@ test('Dual-Reviewer ROB2 Workflow', async ({ context, page }) => {
       .catch(() => false)
   ) {
     await page.goBack();
-    await page.waitForTimeout(1000);
+    await expect(page.getByRole('button', { name: 'Open', exact: true }).first()).toBeVisible({ timeout: 10_000 });
     await page.getByRole('button', { name: 'Open', exact: true }).first().click();
     await expect(page).toHaveURL(/\/checklists\//, { timeout: 10_000 });
-    await page.waitForTimeout(2000);
   }
 
+  await expect(page.getByText('Individually-randomized parallel-group trial')).toBeVisible({ timeout: 10_000 });
   await fillROB2Preliminary(page, 'Drug Y', 'Standard care');
   await answerAllROB2Domains(page, 'N');
-  await page.waitForTimeout(1000);
   await markChecklistComplete(page);
   await page.goto(`/projects/${projectId}`);
-  await page.waitForTimeout(2000);
+  await expect(page.getByRole('tab', { name: /To Do/i })).toBeVisible({ timeout: 15_000 });
 
   // ================================================================
   // Reconciliation
   // ================================================================
   await page.getByRole('tab', { name: /Reconcile/i }).click();
-  await page.waitForTimeout(2000);
-  await expect(page.getByText('Ready')).toBeVisible({ timeout: 5_000 });
+  await expect(page.getByText('Ready')).toBeVisible({ timeout: 10_000 });
 
   await page.getByRole('button', { name: /Reconcile/i }).click();
   await expect(page).toHaveURL(/\/reconcile\//, { timeout: 10_000 });
-  await page.waitForTimeout(2000);
 
   // Verify ROB2 reconciliation loaded
   await expect(page.getByRole('heading', { name: /ROB-2 Reconciliation/i })).toBeVisible();
@@ -139,7 +134,6 @@ test('Dual-Reviewer ROB2 Workflow', async ({ context, page }) => {
 
     if (hasUseThis) {
       await useThisBtn.click();
-      await page.waitForTimeout(1000);
     }
 
     // For direction pages where reviewers didn't set a value, "Use This"
@@ -155,7 +149,6 @@ test('Dual-Reviewer ROB2 Workflow', async ({ context, page }) => {
           .catch(() => false)
       ) {
         await naLabel.first().click();
-        await page.waitForTimeout(300);
       }
     }
 
@@ -165,14 +158,12 @@ test('Dual-Reviewer ROB2 Workflow', async ({ context, page }) => {
       const finalAnswerHeading = page.getByText('Final Answer');
       if (await finalAnswerHeading.isVisible().catch(() => false)) {
         await sourceLabel.click();
-        await page.waitForTimeout(300);
       }
     }
 
     // Check if the Next button says "Review Summary" (last page)
     const btnText = await nextBtn.textContent();
     await nextBtn.click();
-    await page.waitForTimeout(500);
 
     if (btnText?.includes('Review Summary')) break;
   }
@@ -185,19 +176,16 @@ test('Dual-Reviewer ROB2 Workflow', async ({ context, page }) => {
   const saveBtn = page.getByRole('button', { name: /Save Reconciled Checklist/i });
   await expect(saveBtn).toBeEnabled({ timeout: 10_000 });
   await saveBtn.click();
-  await page.waitForTimeout(500);
 
   // Confirm save in the dialog
   const finishBtn = page.getByRole('button', { name: 'Finish' });
-  await expect(finishBtn).toBeVisible({ timeout: 3_000 });
+  await expect(finishBtn).toBeVisible({ timeout: 5_000 });
   await finishBtn.click();
 
   // Should navigate back to the project page
   await expect(page).toHaveURL(/\/projects\//, { timeout: 10_000 });
-  await page.waitForTimeout(1000);
 
   // Verify the completed tab shows the reconciled checklist
   await page.getByRole('tab', { name: /Completed/i }).click();
-  await page.waitForTimeout(1000);
-  await expect(page.getByText(/Finalized/i).first()).toBeVisible({ timeout: 5_000 });
+  await expect(page.getByText(/Finalized/i).first()).toBeVisible({ timeout: 10_000 });
 });

@@ -104,25 +104,23 @@ test('Presence avatars, cursor sync, and text editing sync during reconciliation
 
   const projectId = await createProject(page, 'Realtime Reconcile Test');
   await addProjectMember(scenario.orgId, projectId, scenario.userB.id, scenario.cookiesA);
-  await page.waitForTimeout(2000);
   await addStudyViaPdf(page);
   await assignReviewers(page);
 
   // User A: add AMSTAR2 checklist, answer Yes to everything, mark complete
   await page.getByRole('tab', { name: /To Do/i }).click();
-  await page.waitForTimeout(1000);
+  await expect(page.getByRole('button', { name: /Select Checklist/i })).toBeVisible({ timeout: 10_000 });
   await page.getByRole('button', { name: /Select Checklist/i }).click();
   await page.getByRole('button', { name: /Add Checklist/i }).click();
-  await page.waitForTimeout(1000);
+  await expect(page.getByRole('button', { name: 'Open', exact: true })).toBeVisible({ timeout: 10_000 });
   await page.getByRole('button', { name: 'Open', exact: true }).click();
   await expect(page).toHaveURL(/\/checklists\//, { timeout: 10_000 });
-  await page.waitForTimeout(2000);
+  await expect(page.locator('input[type="radio"]').first()).toBeVisible({ timeout: 10_000 });
 
   await answerAllAMSTAR2Yes(page);
-  await page.waitForTimeout(500);
   await markChecklistComplete(page);
   await page.goto(`${BASE_URL}/projects/${projectId}`);
-  await page.waitForTimeout(2000);
+  await expect(page.getByRole('tab', { name: /To Do/i })).toBeVisible({ timeout: 15_000 });
 
   // User B: add AMSTAR2 checklist, answer No to everything, mark complete
   await switchUser(setupCtx, scenario.cookiesB);
@@ -130,14 +128,13 @@ test('Presence avatars, cursor sync, and text editing sync during reconciliation
   await expect(page.getByText('Realtime Reconcile Test').first()).toBeVisible({ timeout: 15_000 });
 
   await page.getByRole('tab', { name: /To Do/i }).click();
-  await page.waitForTimeout(1000);
+  await expect(page.getByRole('button', { name: /Select Checklist/i })).toBeVisible({ timeout: 10_000 });
   await page.getByRole('button', { name: /Select Checklist/i }).click();
   await page.getByRole('button', { name: /Add Checklist/i }).click();
-  await page.waitForTimeout(1000);
+  await expect(page.getByRole('button', { name: 'Open', exact: true })).toBeVisible({ timeout: 10_000 });
 
   await page.getByRole('button', { name: 'Open', exact: true }).last().click();
   await expect(page).toHaveURL(/\/checklists\//, { timeout: 10_000 });
-  await page.waitForTimeout(2000);
 
   if (
     await page
@@ -146,25 +143,23 @@ test('Presence avatars, cursor sync, and text editing sync during reconciliation
       .catch(() => false)
   ) {
     await page.goBack();
-    await page.waitForTimeout(1000);
+    await expect(page.getByRole('button', { name: 'Open', exact: true }).first()).toBeVisible({ timeout: 10_000 });
     await page.getByRole('button', { name: 'Open', exact: true }).first().click();
     await expect(page).toHaveURL(/\/checklists\//, { timeout: 10_000 });
-    await page.waitForTimeout(2000);
   }
 
+  await expect(page.locator('input[type="radio"]').first()).toBeVisible({ timeout: 10_000 });
   await answerAllAMSTAR2No(page);
-  await page.waitForTimeout(500);
   await markChecklistComplete(page);
   await page.goto(`${BASE_URL}/projects/${projectId}`);
-  await page.waitForTimeout(2000);
+  await expect(page.getByRole('tab', { name: /To Do/i })).toBeVisible({ timeout: 15_000 });
 
   // Navigate to reconciliation and grab the URL
   await page.getByRole('tab', { name: /Reconcile/i }).click();
-  await page.waitForTimeout(2000);
   await expect(page.getByText('Ready')).toBeVisible({ timeout: 10_000 });
   await page.getByRole('button', { name: /Reconcile/i }).click();
   await expect(page).toHaveURL(/\/reconcile\//, { timeout: 10_000 });
-  await page.waitForTimeout(2000);
+  await expect(page.getByText(/Question 1 of/i)).toBeVisible({ timeout: 15_000 });
   const reconcilePath = new URL(page.url()).pathname;
 
   // ================================================================
@@ -191,8 +186,8 @@ test('Presence avatars, cursor sync, and text editing sync during reconciliation
     // Wait for reconciliation UI and Yjs WebSocket connections
     await expect(pageA.getByText(/Question 1 of/i)).toBeVisible({ timeout: 30_000 });
     await expect(pageB.getByText(/Question 1 of/i)).toBeVisible({ timeout: 30_000 });
-    await pageA.waitForTimeout(3000);
-    await pageB.waitForTimeout(3000);
+    // Awareness protocol needs both WebSocket connections fully established
+    await Promise.all([pageA.waitForTimeout(3000), pageB.waitForTimeout(3000)]);
 
     // ================================================================
     // TEST 1: Presence avatars
@@ -213,7 +208,6 @@ test('Presence avatars, cursor sync, and text editing sync during reconciliation
     // render a floating cursor with Alice's name on User B's screen.
     // ================================================================
     await pageA.mouse.move(400, 400);
-    await pageA.waitForTimeout(500);
 
     // RemoteCursors overlay is pointer-events-none and shows the name
     const remoteCursor = pageB.locator('.pointer-events-none').getByText('Alice Reviewer');
@@ -226,14 +220,11 @@ test('Presence avatars, cursor sync, and text editing sync during reconciliation
     // ================================================================
     // Expand the collapsed "Question Notes" section on both pages
     await pageA.getByText('Question Notes').click();
-    await pageA.waitForTimeout(500);
     await pageB.getByText('Question Notes').click();
-    await pageB.waitForTimeout(500);
 
     // User A fills the Final Note
     const finalNoteA = pageA.locator('textarea[placeholder="Add the final reconciled note..."]');
     await finalNoteA.fill('Agreed to use conservative estimate');
-    await pageA.waitForTimeout(1000);
 
     // User B should see the same text via Y.Text sync
     const finalNoteB = pageB.locator('textarea[placeholder="Add the final reconciled note..."]');

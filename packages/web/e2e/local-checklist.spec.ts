@@ -60,11 +60,10 @@ test.describe('Local-practice checklists', () => {
     await page.reload();
     await expect(page.getByText('Loading checklist...')).toBeHidden({ timeout: 15_000 });
 
-    // Give the Y.Doc a beat to hydrate from IndexedDB before reading state.
-    await page.waitForTimeout(1000);
-
-    const checkedAfter = await page.getByRole('radio', { name: 'Yes', checked: true }).count();
-    expect(checkedAfter).toBe(checkedBefore);
+    await expect(async () => {
+      const checkedAfter = await page.getByRole('radio', { name: 'Yes', checked: true }).count();
+      expect(checkedAfter).toBe(checkedBefore);
+    }).toPass({ timeout: 10_000 });
   });
 
   test('ROB2: preliminary fields persist across reload', async ({ page }) => {
@@ -74,7 +73,6 @@ test.describe('Local-practice checklists', () => {
 
     await page.reload();
     await expect(page.getByText('Loading checklist...')).toBeHidden({ timeout: 15_000 });
-    await page.waitForTimeout(1000);
 
     // Y.Text fields round-trip via getTextRef + DexieYProvider.
     await expect(page.getByPlaceholder(/experimental intervention/i)).toHaveValue('Drug X');
