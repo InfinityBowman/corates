@@ -152,6 +152,7 @@ jobs:
           VITE_GOOGLE_PICKER_API_KEY: ${{ vars.VITE_GOOGLE_PICKER_API_KEY }}
           VITE_GOOGLE_PICKER_APP_ID: ${{ vars.VITE_GOOGLE_PICKER_APP_ID }}
           VITE_SENTRY_DSN: ${{ vars.VITE_SENTRY_DSN }}
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
         run: pnpm --filter web build
 
       - name: Migrate production database
