@@ -627,13 +627,7 @@ class ProjectDocBase extends DurableObject<Env> {
       syncProtocol.writeSyncStep1(syncEncoder, this.doc);
       const syncMsg = encoding.toUint8Array(syncEncoder);
       for (const ws of existingWs) {
-        if (ws.readyState === WebSocket.OPEN) {
-          try {
-            ws.send(syncMsg);
-          } catch {
-            // connection already broken
-          }
-        }
+        this.safeSend(ws, syncMsg);
       }
     }
 
@@ -785,27 +779,22 @@ class ProjectDocBase extends DurableObject<Env> {
     // (send error, hibernation timing, message ordering) leaves the client
     // stuck forever with no retry. Sending proactively adds a redundant
     // sync path that resolves the client even if its own step 1 is delayed.
-    try {
-      const syncEncoder = encoding.createEncoder();
-      encoding.writeVarUint(syncEncoder, messageSync);
-      syncProtocol.writeSyncStep2(syncEncoder, this.doc!);
-      server.send(encoding.toUint8Array(syncEncoder));
+    const syncEncoder = encoding.createEncoder();
+    encoding.writeVarUint(syncEncoder, messageSync);
+    syncProtocol.writeSyncStep2(syncEncoder, this.doc!);
+    this.safeSend(server, encoding.toUint8Array(syncEncoder));
 
-      if (this.awareness && this.awareness.getStates().size > 0) {
-        const awarenessEncoder = encoding.createEncoder();
-        encoding.writeVarUint(awarenessEncoder, messageAwareness);
-        encoding.writeVarUint8Array(
-          awarenessEncoder,
-          awarenessProtocol.encodeAwarenessUpdate(
-            this.awareness,
-            Array.from(this.awareness.getStates().keys()),
-          ),
-        );
-        server.send(encoding.toUint8Array(awarenessEncoder));
-      }
-    } catch {
-      // WebSocket may have closed between accept and send; client will
-      // retry and get the full state on the next connection.
+    if (this.awareness && this.awareness.getStates().size > 0) {
+      const awarenessEncoder = encoding.createEncoder();
+      encoding.writeVarUint(awarenessEncoder, messageAwareness);
+      encoding.writeVarUint8Array(
+        awarenessEncoder,
+        awarenessProtocol.encodeAwarenessUpdate(
+          this.awareness,
+          Array.from(this.awareness.getStates().keys()),
+        ),
+      );
+      this.safeSend(server, encoding.toUint8Array(awarenessEncoder));
     }
 
     return new Response(null, { status: 101, webSocket: client });
@@ -922,17 +911,22 @@ class ProjectDocBase extends DurableObject<Env> {
     return yMap.toJSON();
   }
 
+  private safeSend(ws: WebSocket, message: Uint8Array): void {
+    if (ws.readyState !== WebSocket.OPEN) return;
+    try {
+      ws.send(message);
+    } catch {
+      // Connection already broken; skip silently.
+    }
+  }
+
   /**
    * Broadcast binary message to all connected clients
    */
   broadcastBinary(message: Uint8Array, exclude: WebSocket | null = null): void {
     for (const ws of this.ctx.getWebSockets()) {
-      if (ws !== exclude && ws.readyState === WebSocket.OPEN) {
-        try {
-          ws.send(message);
-        } catch {
-          // Connection broke mid-broadcast; skip so remaining clients still receive.
-        }
+      if (ws !== exclude) {
+        this.safeSend(ws, message);
       }
     }
   }

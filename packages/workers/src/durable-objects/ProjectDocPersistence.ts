@@ -53,6 +53,7 @@ interface StorageContext {
 export class ProjectDocPersistence {
   private logger: PersistenceLogger;
   private ctx: StorageContext;
+  private rowCount = 0;
 
   constructor(ctx: StorageContext, logger: PersistenceLogger = defaultLogger) {
     this.ctx = ctx;
@@ -174,6 +175,7 @@ export class ProjectDocPersistence {
     );
 
     let snapshotChunks: Uint8Array[] = [];
+    let count = 0;
 
     const flushSnapshot = (): void => {
       if (snapshotChunks.length === 0) return;
@@ -189,6 +191,7 @@ export class ProjectDocPersistence {
     };
 
     for (const row of cursor) {
+      count++;
       const bytes = new Uint8Array(row.payload);
       if (row.kind === 'snapshot') {
         snapshotChunks.push(bytes);
@@ -198,6 +201,7 @@ export class ProjectDocPersistence {
       }
     }
     flushSnapshot();
+    this.rowCount = count;
   }
 
   /**
@@ -211,6 +215,7 @@ export class ProjectDocPersistence {
         uint8ArrayToBuffer(update),
         Date.now(),
       );
+      this.rowCount++;
     } catch (err) {
       this.logger.error('persistence_insert_failed', {
         projectId: this.ctx.id.toString(),
@@ -220,10 +225,7 @@ export class ProjectDocPersistence {
       return false;
     }
 
-    const result = this.ctx.storage.sql
-      .exec<{ n: number }>('SELECT COUNT(*) AS n FROM yjs_updates')
-      .one();
-    return result.n >= COMPACTION_ROW_THRESHOLD;
+    return this.rowCount >= COMPACTION_ROW_THRESHOLD;
   }
 
   /**
@@ -233,16 +235,14 @@ export class ProjectDocPersistence {
    */
   compact(doc: Y.Doc): void {
     try {
-      const counts = this.ctx.storage.sql
-        .exec<{ total: number; updates: number }>(
-          `SELECT
-             COUNT(*) AS total,
-             SUM(CASE WHEN kind = 'update' THEN 1 ELSE 0 END) AS updates
-           FROM yjs_updates`,
+      if (this.rowCount < 2) return;
+
+      const hasUpdates = this.ctx.storage.sql
+        .exec<{ n: number }>(
+          `SELECT COUNT(*) AS n FROM yjs_updates WHERE kind = 'update' LIMIT 1`,
         )
         .one();
-      if (counts.total < 2) return;
-      if (counts.updates === 0) return;
+      if (hasUpdates.n === 0) return;
 
       const snapshot = Y.encodeStateAsUpdate(doc);
       this.writeSnapshotChunked(snapshot);
@@ -256,10 +256,7 @@ export class ProjectDocPersistence {
 
   maybeOpportunisticCompact(doc: Y.Doc): void {
     try {
-      const result = this.ctx.storage.sql
-        .exec<{ n: number }>('SELECT COUNT(*) AS n FROM yjs_updates')
-        .one();
-      if (result.n >= OPPORTUNISTIC_COMPACTION_MIN) {
+      if (this.rowCount >= OPPORTUNISTIC_COMPACTION_MIN) {
         this.compact(doc);
       }
     } catch (err) {
@@ -271,9 +268,7 @@ export class ProjectDocPersistence {
   }
 
   getRowCount(): number {
-    return this.ctx.storage.sql
-      .exec<{ n: number }>('SELECT COUNT(*) AS n FROM yjs_updates')
-      .one().n;
+    return this.rowCount;
   }
 
   getRowBreakdown(): { snapshot: number; update: number; snapshotBytes: number; updateBytes: number } {
@@ -340,5 +335,6 @@ export class ProjectDocPersistence {
         );
       }
     });
+    this.rowCount = chunks.length;
   }
 }
