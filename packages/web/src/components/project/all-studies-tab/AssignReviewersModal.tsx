@@ -2,7 +2,7 @@
  * AssignReviewersModal - Assign reviewer 1 and reviewer 2 to a study
  */
 
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { UserIcon } from 'lucide-react';
 import { useProjectStore, selectMembers, selectStudies } from '@/stores/projectStore';
 import type { StudyInfo } from '@/stores/projectStore';
@@ -59,15 +59,21 @@ export function AssignReviewersModal({
     [members],
   );
 
-  // Reset form when modal opens or study changes
+  // Sync form from store only when the modal first opens; a ref prevents
+  // background Y.Doc syncs from overwriting in-progress user selections.
+  const formInitialized = useRef(false);
   useEffect(() => {
     /* eslint-disable react-hooks/set-state-in-effect -- syncing form state from modal open/close */
-    if (open && currentStudy) {
-      setReviewer1(currentStudy.reviewer1 || '_unassigned');
-      setReviewer2(currentStudy.reviewer2 || '_unassigned');
-    } else if (!open) {
+    if (!open) {
       setReviewer1('_unassigned');
       setReviewer2('_unassigned');
+      formInitialized.current = false;
+      return;
+    }
+    if (currentStudy && !formInitialized.current) {
+      setReviewer1(currentStudy.reviewer1 || '_unassigned');
+      setReviewer2(currentStudy.reviewer2 || '_unassigned');
+      formInitialized.current = true;
     }
     /* eslint-enable react-hooks/set-state-in-effect */
   }, [open, currentStudy]);
