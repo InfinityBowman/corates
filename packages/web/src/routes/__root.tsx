@@ -147,6 +147,10 @@ export const Route = createRootRoute({
         src: 'https://plausible.jacobmaynard.dev/js/pa-FwZkTF3ReuZ7O5WTRKBr_.js',
         async: true,
       },
+      {
+        children:
+          'window.plausible=window.plausible||function(){(plausible.q=plausible.q||[]).push(arguments)},plausible.init=plausible.init||function(i){plausible.o=i||{}};plausible.init()',
+      },
     ],
   }),
 
