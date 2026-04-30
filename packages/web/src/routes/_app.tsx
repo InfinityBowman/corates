@@ -13,8 +13,10 @@
 
 import { createFileRoute } from '@tanstack/react-router';
 import { AppLayout } from '@/components/layout/AppLayout';
+import { RouteError } from '@/components/RouteError';
 
 export const Route = createFileRoute('/_app')({
   ssr: false,
   component: AppLayout,
+  errorComponent: RouteError,
 });

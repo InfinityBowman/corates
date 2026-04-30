@@ -12,6 +12,7 @@
 
 import { createFileRoute, Outlet, redirect } from '@tanstack/react-router';
 import { useAuthStore, selectIsLoggedIn } from '@/stores/authStore';
+import { RouteError } from '@/components/RouteError';
 
 export const Route = createFileRoute('/_auth')({
   ssr: false,
@@ -31,6 +32,7 @@ export const Route = createFileRoute('/_auth')({
     }
   },
   component: AuthLayout,
+  errorComponent: RouteError,
 });
 
 function AuthLayout() {

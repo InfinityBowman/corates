@@ -6,6 +6,7 @@
 import { useState, useCallback } from 'react';
 import { createFileRoute, Outlet } from '@tanstack/react-router';
 import { SettingsSidebar } from '@/components/layout/SettingsSidebar';
+import { RouteError } from '@/components/RouteError';
 
 const SIDEBAR_MODE_KEY = 'corates-sidebar-mode';
 const SIDEBAR_WIDTH_KEY = 'corates-sidebar-width';
@@ -15,6 +16,7 @@ const MAX_SIDEBAR_WIDTH = 480;
 
 export const Route = createFileRoute('/_app/_protected/settings')({
   component: SettingsLayout,
+  errorComponent: RouteError,
 });
 
 function SettingsLayout() {

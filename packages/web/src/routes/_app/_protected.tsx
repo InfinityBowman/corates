@@ -13,6 +13,7 @@ import { useEffect } from 'react';
 import { createFileRoute, Outlet, redirect, useNavigate } from '@tanstack/react-router';
 import { useAuthStore, selectIsLoggedIn, selectIsAuthLoading } from '@/stores/authStore';
 import { PageLoader } from '@/components/ui/spinner';
+import { RouteError } from '@/components/RouteError';
 
 export const Route = createFileRoute('/_app/_protected')({
   beforeLoad: () => {
@@ -26,6 +27,7 @@ export const Route = createFileRoute('/_app/_protected')({
     }
   },
   component: ProtectedLayout,
+  errorComponent: RouteError,
 });
 
 function ProtectedLayout() {
