@@ -55,7 +55,7 @@ export default defineConfig({
       authToken: process.env.SENTRY_AUTH_TOKEN,
       disable: !process.env.SENTRY_AUTH_TOKEN,
       reactComponentAnnotation: { enabled: true },
-      sourcemaps: { filesToDeleteAfterUpload: ['./dist/**/*.map'] },
+      sourcemaps: { filesToDeleteAfterUpload: ['./dist/client/**/*.map'] },
     }),
   ],
 });
