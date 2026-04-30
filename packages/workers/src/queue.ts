@@ -12,30 +12,32 @@ export async function handleEmailQueue(batch: MessageBatch<unknown>, env: Env): 
   const emailService = createEmailService(env);
   const messages = batch.messages as Message<EmailPayload>[];
 
-  for (const msg of messages) {
-    try {
-      const result = await emailService.sendEmail(
-        msg.body as Parameters<typeof emailService.sendEmail>[0],
-      );
+  await Promise.allSettled(
+    messages.map(async msg => {
+      try {
+        const result = await emailService.sendEmail(
+          msg.body as Parameters<typeof emailService.sendEmail>[0],
+        );
 
-      if (result.success) {
-        msg.ack();
-      } else {
-        const masked = msg.body.to?.replace(/^(..).*@/, '$1***@');
-        captureError(new Error(`Email send failed for ${masked}: ${result.error}`), {
+        if (result.success) {
+          msg.ack();
+        } else {
+          const masked = msg.body.to?.replace(/^(..).*@/, '$1***@');
+          captureError(new Error(`Email send failed for ${masked}: ${result.error}`), {
+            tags: { component: 'email-queue' },
+            extra: { attempt: msg.attempts },
+          });
+          const delay = Math.min(30 * 2 ** msg.attempts, 1800);
+          msg.retry({ delaySeconds: delay });
+        }
+      } catch (error) {
+        captureError(error, {
           tags: { component: 'email-queue' },
           extra: { attempt: msg.attempts },
         });
         const delay = Math.min(30 * 2 ** msg.attempts, 1800);
         msg.retry({ delaySeconds: delay });
       }
-    } catch (error) {
-      captureError(error, {
-        tags: { component: 'email-queue' },
-        extra: { attempt: msg.attempts },
-      });
-      const delay = Math.min(30 * 2 ** msg.attempts, 1800);
-      msg.retry({ delaySeconds: delay });
-    }
-  }
+    }),
+  );
 }
