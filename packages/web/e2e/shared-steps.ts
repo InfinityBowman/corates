@@ -137,6 +137,10 @@ export async function assignReviewers(page: Page) {
   await page.getByRole('option', { name: /Bob/i }).click();
   await dialog.getByRole('button', { name: 'Save' }).click();
   await expect(dialog).toBeHidden({ timeout: 5_000 });
+
+  // Wait for the Y.Doc -> store -> render pipeline to propagate the assignment.
+  // The study card shows "No reviewers" until the store updates.
+  await expect(page.getByText('No reviewers')).toBeHidden({ timeout: 10_000 });
 }
 
 /**
