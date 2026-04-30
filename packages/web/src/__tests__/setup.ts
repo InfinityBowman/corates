@@ -8,11 +8,11 @@ import { vi } from 'vitest';
 // Mock sentry module
 vi.mock('@/config/sentry', () => ({
   initSentry: vi.fn(),
+  initSentryRouterTracing: vi.fn(),
+  setSentryUser: vi.fn(),
   captureException: vi.fn(),
   captureMessage: vi.fn(),
-  setUser: vi.fn(),
   isSentryEnabled: vi.fn(() => false),
-  Sentry: {},
 }));
 
 // Mock window.matchMedia

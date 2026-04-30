@@ -16,6 +16,7 @@ import { useAuthStore, saveCachedAuth } from '@/stores/authStore';
 import { fetchAndCacheAvatar } from '@/primitives/avatarCache.js';
 import { queryClient } from '@/lib/queryClient';
 import { queryKeys } from '@/lib/queryKeys';
+import { setSentryUser } from '@/config/sentry';
 
 interface AuthProviderProps {
   children: React.ReactNode;
@@ -43,6 +44,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       : null;
 
     setSessionData(user, loading, refetch);
+    setSentryUser(user ? { id: user.id, email: user.email, name: user.name } : null);
   }, [session, setSessionData]);
 
   // Cache user data when session is fetched (only when online)

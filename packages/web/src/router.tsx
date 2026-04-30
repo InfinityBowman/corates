@@ -1,13 +1,16 @@
 import { createRouter } from '@tanstack/react-router';
 import { routeTree } from './routeTree.gen';
+import { initSentryRouterTracing } from '@/config/sentry';
 
 export const getRouter = () => {
-  return createRouter({
+  const router = createRouter({
     routeTree,
     scrollRestoration: true,
     defaultPreload: 'intent',
     defaultPreloadStaleTime: 30_000,
   });
+  initSentryRouterTracing(router as never);
+  return router;
 };
 
 declare module '@tanstack/react-router' {

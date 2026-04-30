@@ -81,8 +81,8 @@ export const Route = createRootRoute({
       "style-src 'self' 'unsafe-inline'",
       `img-src 'self' data: blob:${import.meta.env.DEV ? ' http://localhost:*' : ''}`,
       import.meta.env.DEV ?
-        "connect-src 'self' http://localhost:* ws://localhost:* https://api.crossref.org https://eutils.ncbi.nlm.nih.gov https://api.unpaywall.org https://plausible.jacobmaynard.dev"
-      : "connect-src 'self' wss://corates.org https://api.crossref.org https://eutils.ncbi.nlm.nih.gov https://api.unpaywall.org https://plausible.jacobmaynard.dev",
+        "connect-src 'self' http://localhost:* ws://localhost:* https://api.crossref.org https://eutils.ncbi.nlm.nih.gov https://api.unpaywall.org https://plausible.jacobmaynard.dev https://*.ingest.us.sentry.io"
+      : "connect-src 'self' wss://corates.org https://api.crossref.org https://eutils.ncbi.nlm.nih.gov https://api.unpaywall.org https://plausible.jacobmaynard.dev https://*.ingest.us.sentry.io",
       "worker-src 'self' blob:",
       "font-src 'self'",
       "frame-src https://docs.google.com",
