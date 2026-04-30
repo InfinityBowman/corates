@@ -138,6 +138,9 @@ export async function assignReviewers(page: Page) {
   const triggers = dialog.getByRole('combobox');
   await triggers.nth(0).click();
   await page.getByRole('option', { name: /Alice/i }).click();
+  // Wait for Radix Select dropdown to fully close before opening the next one;
+  // without this the first selection can be lost.
+  await expect(page.getByRole('listbox')).toBeHidden({ timeout: 5_000 });
   await triggers.nth(1).click();
   await page.getByRole('option', { name: /Bob/i }).click();
 
