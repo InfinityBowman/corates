@@ -208,10 +208,6 @@ class ProjectDocBase extends DurableObject<Env> {
   private compact(): void {
     if (this.doc) this.persistence.compact(this.doc);
   }
-  private async migrateLegacyState(): Promise<void> {
-    await this.persistence.migrateLegacyState();
-  }
-
   /**
    * fetch() is kept only for WebSocket upgrade and the GET / project info path
    */
@@ -614,7 +610,6 @@ class ProjectDocBase extends DurableObject<Env> {
     );
 
     this.persistence.ensureSchema();
-    await this.persistence.migrateLegacyState();
     this.persistence.loadUpdatesIntoDoc(this.doc);
 
     // After hibernation wake-up, existing WebSocket connections survive but
