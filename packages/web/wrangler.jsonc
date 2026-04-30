@@ -62,6 +62,7 @@
       {
         "queue": "corates-emails",
         "max_batch_size": 10,
+        "max_batch_timeout": 2,
         "max_retries": 3,
         "dead_letter_queue": "corates-emails-dlq"
       }
@@ -134,6 +135,7 @@
           {
             "queue": "corates-emails-prod",
             "max_batch_size": 10,
+            "max_batch_timeout": 2,
             "max_retries": 3,
             "dead_letter_queue": "corates-emails-prod-dlq"
           }
@@ -202,6 +204,7 @@
           {
             "queue": "corates-emails-staging",
             "max_batch_size": 10,
+            "max_batch_timeout": 2,
             "max_retries": 3,
             "dead_letter_queue": "corates-emails-staging-dlq"
           }
