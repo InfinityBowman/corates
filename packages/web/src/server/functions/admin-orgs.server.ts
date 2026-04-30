@@ -1,3 +1,4 @@
+import { captureError, info } from '@corates/workers/logger';
 import { env } from 'cloudflare:workers';
 import type { Database } from '@corates/db/client';
 import { organization, member, projects, subscription, orgAccessGrants } from '@corates/db/schema';
@@ -74,18 +75,14 @@ async function dispatchSubscriptionNotify(
       type: EventTypes.SUBSCRIPTION_UPDATED,
       data,
     });
-    console.log(`[Admin] Subscription ${action} notification sent:`, {
+    info(`[Admin] Subscription ${action} notification sent`, {
       orgId,
       subscriptionId: data.subscriptionId || data.tier,
       notified: result.notified,
       failed: result.failed,
     });
   } catch (err) {
-    const error = err as Error;
-    console.error(`[Admin] Subscription ${action} notification error:`, {
-      orgId,
-      error: error.message,
-    });
+    captureError(err, { tags: { component: 'admin-orgs', action: 'subscription-notify' }, extra: { orgId, subscriptionAction: action } });
   }
 }
 

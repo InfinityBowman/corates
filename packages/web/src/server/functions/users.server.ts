@@ -1,3 +1,4 @@
+import { captureError, info } from '@corates/workers/logger';
 import { env } from 'cloudflare:workers';
 import type { Database } from '@corates/db/client';
 import {
@@ -75,7 +76,7 @@ export async function deleteAccount(db: Database, session: Session) {
     db.delete(user).where(eq(user.id, userId)),
   ]);
 
-  console.log(`Account deleted successfully for user: ${userId}`);
+  info(`Account deleted successfully for user: ${userId}`);
 
   return { success: true as const, message: 'Account deleted successfully' };
 }
@@ -223,7 +224,7 @@ export async function syncProfile(db: Database, session: Session) {
         });
         return { projectId, success: true };
       } catch (err) {
-        console.error(`Failed to sync profile to project ${projectId}:`, err);
+        captureError(err, { tags: { component: 'users', action: 'sync-profile' }, extra: { projectId } });
         return { projectId, success: false };
       }
     }),

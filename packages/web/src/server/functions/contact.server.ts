@@ -1,6 +1,7 @@
 import { env } from 'cloudflare:workers';
 import { createDomainError, SYSTEM_ERRORS } from '@corates/shared';
 import { escapeHtml } from '@corates/shared/html';
+import { captureError } from '@corates/workers/logger';
 
 interface ContactData {
   name: string;
@@ -51,7 +52,7 @@ export async function sendContactEmail(
 
     return { success: true, messageId: crypto.randomUUID() };
   } catch (err) {
-    console.error('[Contact] Failed to queue email:', (err as Error).message);
+    captureError(err, { tags: { component: 'contact', action: 'queue-email' } });
     const domainError = createDomainError(SYSTEM_ERRORS.EMAIL_SEND_FAILED, {
       service: 'email',
       originalError: (err as Error).message,

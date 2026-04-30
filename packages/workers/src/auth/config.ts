@@ -1,3 +1,4 @@
+import { captureError, warn, info } from '../lib/logger';
 import { betterAuth } from 'better-auth';
 import { createAuthMiddleware } from 'better-auth/api';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
@@ -112,9 +113,7 @@ export function createAuth(env: Env, ctx?: ExecutionContext) {
       }),
     };
   } else {
-    console.error(
-      '[Auth] Google OAuth NOT configured - missing GOOGLE_CLIENT_ID or GOOGLE_CLIENT_SECRET',
-    );
+    warn('Google OAuth NOT configured - missing GOOGLE_CLIENT_ID or GOOGLE_CLIENT_SECRET');
   }
 
   // Build plugins array
@@ -176,9 +175,7 @@ export function createAuth(env: Env, ctx?: ExecutionContext) {
       }),
     );
   } else {
-    console.error(
-      '[Auth] ORCID OAuth NOT configured - missing ORCID_CLIENT_ID or ORCID_CLIENT_SECRET',
-    );
+    warn('ORCID OAuth NOT configured - missing ORCID_CLIENT_ID or ORCID_CLIENT_SECRET');
   }
 
   // Magic Link plugin for passwordless authentication
@@ -299,16 +296,11 @@ export function createAuth(env: Env, ctx?: ExecutionContext) {
           ],
           // Real-time notifications for subscription changes
           onSubscriptionComplete: async ({ subscription }: { subscription: SubscriptionData }) => {
-            // Notify all org members when subscription is created/upgraded
-            console.log(
-              '[Auth] Queuing subscription complete notification for org:',
-              subscription.referenceId,
-            );
             if (ctx && ctx.waitUntil) {
               ctx.waitUntil(
                 (async () => {
                   try {
-                    const result = await notifyOrgMembers(env, db, subscription.referenceId, {
+                    await notifyOrgMembers(env, db, subscription.referenceId, {
                       type: EventTypes.SUBSCRIPTION_UPDATED,
                       data: {
                         tier: subscription.plan,
@@ -316,16 +308,10 @@ export function createAuth(env: Env, ctx?: ExecutionContext) {
                         periodEnd: subscription.periodEnd,
                       },
                     });
-                    console.log('[Auth:waitUntil] Subscription complete notification sent:', {
-                      orgId: subscription.referenceId,
-                      notified: result.notified,
-                      failed: result.failed,
-                    });
                   } catch (err) {
-                    const error = err as Error;
-                    console.error('[Auth:waitUntil] Subscription complete notification error:', {
-                      orgId: subscription.referenceId,
-                      error: error.message,
+                    captureError(err, {
+                      tags: { component: 'auth', action: 'subscription-complete-notify' },
+                      extra: { orgId: subscription.referenceId },
                     });
                   }
                 })(),
@@ -333,16 +319,11 @@ export function createAuth(env: Env, ctx?: ExecutionContext) {
             }
           },
           onSubscriptionUpdate: async ({ subscription }: { subscription: SubscriptionData }) => {
-            // Notify all org members when subscription changes
-            console.log(
-              '[Auth] Queuing subscription update notification for org:',
-              subscription.referenceId,
-            );
             if (ctx && ctx.waitUntil) {
               ctx.waitUntil(
                 (async () => {
                   try {
-                    const result = await notifyOrgMembers(env, db, subscription.referenceId, {
+                    await notifyOrgMembers(env, db, subscription.referenceId, {
                       type: EventTypes.SUBSCRIPTION_UPDATED,
                       data: {
                         tier: subscription.plan,
@@ -351,16 +332,10 @@ export function createAuth(env: Env, ctx?: ExecutionContext) {
                         cancelAtPeriodEnd: subscription.cancelAtPeriodEnd,
                       },
                     });
-                    console.log('[Auth:waitUntil] Subscription update notification sent:', {
-                      orgId: subscription.referenceId,
-                      notified: result.notified,
-                      failed: result.failed,
-                    });
                   } catch (err) {
-                    const error = err as Error;
-                    console.error('[Auth:waitUntil] Subscription update notification error:', {
-                      orgId: subscription.referenceId,
-                      error: error.message,
+                    captureError(err, {
+                      tags: { component: 'auth', action: 'subscription-update-notify' },
+                      extra: { orgId: subscription.referenceId },
                     });
                   }
                 })(),
@@ -368,16 +343,11 @@ export function createAuth(env: Env, ctx?: ExecutionContext) {
             }
           },
           onSubscriptionCancel: async ({ subscription }: { subscription: SubscriptionData }) => {
-            // Notify all org members when subscription is canceled
-            console.log(
-              '[Auth] Queuing subscription cancel notification for org:',
-              subscription.referenceId,
-            );
             if (ctx && ctx.waitUntil) {
               ctx.waitUntil(
                 (async () => {
                   try {
-                    const result = await notifyOrgMembers(env, db, subscription.referenceId, {
+                    await notifyOrgMembers(env, db, subscription.referenceId, {
                       type: EventTypes.SUBSCRIPTION_CANCELED,
                       data: {
                         tier: subscription.plan,
@@ -385,16 +355,10 @@ export function createAuth(env: Env, ctx?: ExecutionContext) {
                         canceledAt: subscription.canceledAt,
                       },
                     });
-                    console.log('[Auth:waitUntil] Subscription cancel notification sent:', {
-                      orgId: subscription.referenceId,
-                      notified: result.notified,
-                      failed: result.failed,
-                    });
                   } catch (err) {
-                    const error = err as Error;
-                    console.error('[Auth:waitUntil] Subscription cancel notification error:', {
-                      orgId: subscription.referenceId,
-                      error: error.message,
+                    captureError(err, {
+                      tags: { component: 'auth', action: 'subscription-cancel-notify' },
+                      extra: { orgId: subscription.referenceId },
                     });
                   }
                 })(),
@@ -442,9 +406,7 @@ export function createAuth(env: Env, ctx?: ExecutionContext) {
       }),
     );
   } else {
-    console.error(
-      '[Auth] Stripe plugin NOT configured - missing STRIPE_SECRET_KEY or STRIPE_WEBHOOK_SECRET_AUTH',
-    );
+    warn('Stripe plugin NOT configured - missing STRIPE_SECRET_KEY or STRIPE_WEBHOOK_SECRET_AUTH');
   }
 
   return betterAuth({
@@ -661,27 +623,26 @@ export function createAuth(env: Env, ctx?: ExecutionContext) {
           isExternalAvatarUrl(userImage) &&
           !isInternalAvatarUrl(userImage)
         ) {
-          console.log(`[Auth] Queuing avatar copy for user ${userId} from ${userImage}`);
           ctx.waitUntil(
             (async () => {
               try {
                 const result = await copyAvatarToR2(env, userId, userImage);
                 if (result.success && result.url) {
-                  // Update user's image field with the R2 URL
                   await db
                     .update(schema.user)
                     .set({ image: result.url })
                     .where(eq(schema.user.id, userId));
-                  console.log(`[Auth:waitUntil] Avatar copied for user ${userId}: ${result.url}`);
                 } else if (result.error) {
-                  console.error(`[Auth:waitUntil] Avatar copy failed for user ${userId}:`, {
-                    code: result.error.code,
-                    message: result.error.message,
-                    details: result.error.details,
+                  captureError(new Error(`Avatar copy failed: ${result.error.code}`), {
+                    tags: { component: 'auth', action: 'avatar-copy' },
+                    extra: { userId, error: result.error },
                   });
                 }
               } catch (err) {
-                console.error('[Auth:waitUntil] Avatar copy error:', err);
+                captureError(err, {
+                  tags: { component: 'auth', action: 'avatar-copy' },
+                  extra: { userId },
+                });
               }
             })(),
           );
@@ -730,10 +691,12 @@ export function createAuth(env: Env, ctx?: ExecutionContext) {
             .set({ activeOrganizationId: orgId })
             .where(eq(schema.session.id, newSession.session.id));
 
-          console.log(`[Auth] Created personal org ${orgId} for user ${userId}`);
+          info('Created personal org %s for user %s', [orgId, userId]);
         } catch (err) {
-          // Log but don't fail the auth - user can create org later
-          console.error('[Auth] Failed to bootstrap personal org:', err);
+          captureError(err, {
+            tags: { component: 'auth', action: 'bootstrap-personal-org' },
+            extra: { userId },
+          });
         }
       }),
     },
@@ -773,7 +736,7 @@ export async function verifyAuth(
 
     return { user: session.user as BetterAuthUser, session: session.session as BetterAuthSession };
   } catch (error) {
-    console.error('Auth verification error:', error);
+    captureError(error, { tags: { component: 'auth', action: 'verify-session' } });
     return { user: null, session: null };
   }
 }

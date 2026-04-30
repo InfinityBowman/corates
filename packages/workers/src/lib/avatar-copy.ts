@@ -4,6 +4,7 @@
  * This ensures all avatars are served from our own storage, avoiding external URL issues
  */
 
+import { captureError, warn, info } from './logger';
 import type { Env } from '../types/env';
 import {
   createDomainError,
@@ -154,9 +155,8 @@ export async function copyAvatarToR2(
       for (const obj of oldAvatars.objects) {
         await env.PDF_BUCKET.delete(obj.key);
       }
-    } catch (e) {
-      // Log but don't fail - old avatar cleanup is non-critical
-      console.warn('[AvatarCopy] Failed to delete old avatars:', e);
+    } catch {
+      warn('AvatarCopy: failed to delete old avatars for user %s', [userId]);
     }
 
     // Upload to R2
@@ -175,7 +175,7 @@ export async function copyAvatarToR2(
 
     const avatarUrl = `/api/users/avatar/${userId}?t=${timestamp}`;
 
-    console.log(`[AvatarCopy] Successfully copied avatar for user ${userId} to ${key}`);
+    info('AvatarCopy: copied avatar for user %s to %s', [userId, key]);
 
     return {
       success: true,
@@ -184,7 +184,7 @@ export async function copyAvatarToR2(
     };
   } catch (error) {
     const err = error as Error;
-    console.error('[AvatarCopy] Error copying avatar:', err);
+    captureError(err, { tags: { component: 'avatar-copy' }, extra: { userId } });
     return {
       success: false,
       error: createDomainError(

@@ -9,6 +9,7 @@
  * @throws DomainError AUTH_FORBIDDEN if email mismatch or quota exceeded
  */
 
+import { captureError, warn } from '../../lib/logger';
 import { createDb } from '@corates/db/client';
 import {
   projectInvitations,
@@ -106,9 +107,7 @@ export async function acceptInvitation(
   const normalizedInvitationEmail = (invitation.email || '').trim().toLowerCase();
 
   if (normalizedUserEmail !== normalizedInvitationEmail) {
-    console.error(
-      `[Invitation] Email mismatch: user email="${currentUser.email}", invitation email="${invitation.email}"`,
-    );
+    warn('Invitation email mismatch: user=%s, invitation=%s', [currentUser.email || '', invitation.email || '']);
     throw createDomainError(AUTH_ERRORS.FORBIDDEN, {
       reason: 'email_mismatch',
       userEmail: currentUser.email,
@@ -242,7 +241,7 @@ export async function acceptInvitation(
       timestamp: Date.now(),
     });
   } catch (err) {
-    console.error('Failed to send project invite notification:', err);
+    captureError(err, { tags: { component: 'invitation', action: 'accept-notify' } });
   }
 
   // DO sync
@@ -258,7 +257,7 @@ export async function acceptInvitation(
       image: currentUser.image,
     });
   } catch (err) {
-    console.error('Failed to sync member to DO:', err);
+    captureError(err, { tags: { component: 'invitation', action: 'accept-do-sync' }, extra: { projectId: invitation.projectId } });
   }
 
   return {

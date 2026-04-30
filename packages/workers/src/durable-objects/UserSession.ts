@@ -1,4 +1,5 @@
 import { DurableObject } from 'cloudflare:workers';
+import { captureError } from '../lib/logger';
 import { instrumentDurableObjectWithSentry } from '@sentry/cloudflare';
 import { verifyAuth } from '../auth/config';
 import { getAccessControlOrigin } from '../config/origins';
@@ -48,7 +49,7 @@ class UserSessionBase extends DurableObject<Env> {
       const authResult = await verifyAuth(request, this.env);
       user = authResult.user as { id: string; [key: string]: unknown } | null;
     } catch (err) {
-      console.error('WebSocket auth error:', err);
+      captureError(err, { tags: { component: 'user-session', action: 'websocket-auth' } });
     }
 
     if (!user) {
@@ -122,7 +123,7 @@ class UserSessionBase extends DurableObject<Env> {
         ws.send(JSON.stringify({ type: 'pong' }));
       }
     } catch (err) {
-      console.error('WebSocket message error:', err);
+      captureError(err, { tags: { component: 'user-session', action: 'websocket-message' } });
     }
   }
 
@@ -142,7 +143,7 @@ class UserSessionBase extends DurableObject<Env> {
    * Hibernatable WebSocket API: handle errors
    */
   async webSocketError(ws: WebSocket, error: unknown): Promise<void> {
-    console.error('WebSocket error in UserSession:', error);
+    captureError(error, { tags: { component: 'user-session', action: 'websocket-error' } });
     try {
       ws.close(1011, 'Internal error');
     } catch {

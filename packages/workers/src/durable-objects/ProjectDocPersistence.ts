@@ -1,3 +1,4 @@
+import { captureError, warn } from '../lib/logger';
 import * as Y from 'yjs';
 
 const COMPACTION_ROW_THRESHOLD = 500;
@@ -25,10 +26,18 @@ function serializeCtx(ctx: Record<string, unknown>): string {
 
 export const defaultLogger: PersistenceLogger = {
   warn(event, ctx) {
-    console.warn(`[ProjectDoc] ${event}`, serializeCtx(ctx));
+    warn(`[ProjectDoc] ${event}: ${serializeCtx(ctx)}`);
   },
   error(event, ctx) {
-    console.error(`[ProjectDoc] ${event}`, serializeCtx(ctx));
+    const error = ctx.error;
+    if (error instanceof Error) {
+      captureError(error, { tags: { component: 'project-doc-persistence' }, extra: ctx });
+    } else {
+      captureError(new Error(`[ProjectDoc] ${event}`), {
+        tags: { component: 'project-doc-persistence' },
+        extra: ctx,
+      });
+    }
   },
 };
 

@@ -35,7 +35,8 @@
     "./policies/projects": "./src/policies/projects.ts",
     "./policies": "./src/policies/index.ts",
     "./notify": "./src/lib/notify.ts",
-    "./config/origins": "./src/config/origins.ts"
+    "./config/origins": "./src/config/origins.ts",
+    "./logger": "./src/lib/logger.ts"
   },
   "scripts": {
     "test": "pnpm db:generate:test && vitest run",

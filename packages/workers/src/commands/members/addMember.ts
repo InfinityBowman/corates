@@ -5,6 +5,7 @@
  * @throws DomainError AUTH_FORBIDDEN if quota exceeded
  */
 
+import { captureError } from '../../lib/logger';
 import { createDb } from '@corates/db/client';
 import { projectMembers, projects, member } from '@corates/db/schema';
 import { eq, and } from 'drizzle-orm';
@@ -143,7 +144,7 @@ export async function addMember(
       role,
     });
   } catch (err) {
-    console.error('Failed to send project membership notification:', err);
+    captureError(err, { tags: { component: 'member', action: 'add-notify' }, extra: { projectId } });
   }
 
   // Sync member to DO with automatic retry

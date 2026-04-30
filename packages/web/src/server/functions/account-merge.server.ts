@@ -1,3 +1,4 @@
+import { captureError } from '@corates/workers/logger';
 import { env } from 'cloudflare:workers';
 import type { Database } from '@corates/db/client';
 import {
@@ -219,7 +220,7 @@ export async function initiateMergeRequest(
       text: getAccountMergeEmailText({ code: verificationCode }),
     });
   } catch (err) {
-    console.error('[AccountMerge] Failed to queue verification email:', err);
+    captureError(err, { tags: { component: 'account-merge', action: 'send-verification-email' } });
 
     await db
       .delete(verification)
@@ -518,7 +519,7 @@ export async function completeMergeRequest(
     };
   } catch (err) {
     if (err instanceof Response) throw err;
-    console.error('[AccountMerge] Error during merge:', err);
+    captureError(err, { tags: { component: 'account-merge', action: 'complete-merge' } });
     throw Response.json(
       createDomainError(SYSTEM_ERRORS.DB_ERROR, {
         operation: 'merge_accounts',

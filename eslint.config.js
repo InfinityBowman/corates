@@ -223,6 +223,44 @@ export default [
       // Prevent accidental table-wide deletes/updates without a where clause
       'drizzle/enforce-delete-with-where': ['error', { drizzleObjectName: 'db' }],
       'drizzle/enforce-update-with-where': ['error', { drizzleObjectName: 'db' }],
+      // Use @corates/workers/logger instead of raw console calls
+      'no-console': ['error', { allow: ['log'] }],
+      // Use @corates/workers/logger instead of direct Sentry imports
+      'no-restricted-imports': [
+        'error',
+        {
+          paths: [
+            {
+              name: '@sentry/cloudflare',
+              message: 'Use @corates/workers/logger (captureError, warn, info) instead.',
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
+    // Allow direct Sentry imports in the logger wrapper and DO instrumentation
+    files: [
+      'packages/workers/src/lib/logger.ts',
+      'packages/workers/src/durable-objects/ProjectDoc.ts',
+      'packages/workers/src/durable-objects/UserSession.ts',
+    ],
+    rules: {
+      'no-restricted-imports': 'off',
+    },
+  },
+  {
+    // The logger, dev-only handlers, and test files need raw console access
+    files: [
+      'packages/workers/src/lib/logger.ts',
+      'packages/workers/src/durable-objects/dev-handlers.ts',
+      '**/__tests__/**/*.{js,jsx,ts,tsx}',
+      '**/*.test.{js,jsx,ts,tsx}',
+      '**/*.spec.{js,jsx,ts,tsx}',
+    ],
+    rules: {
+      'no-console': 'off',
     },
   },
   {
@@ -282,6 +320,24 @@ export default [
     },
     rules: {
       ...reactHooks.configs.recommended.rules,
+    },
+  },
+  {
+    // Web server functions must use @corates/workers/logger
+    files: ['packages/web/src/server/**/*.{js,ts}'],
+    rules: {
+      'no-console': ['error', { allow: ['log'] }],
+      'no-restricted-imports': [
+        'error',
+        {
+          paths: [
+            {
+              name: '@sentry/cloudflare',
+              message: 'Use @corates/workers/logger (captureError, warn, info) instead.',
+            },
+          ],
+        },
+      ],
     },
   },
   {

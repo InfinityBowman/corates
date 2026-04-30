@@ -1,3 +1,4 @@
+import { captureError } from '@corates/workers/logger';
 import { env } from 'cloudflare:workers';
 import type { Database } from '@corates/db/client';
 import { account, projects, mediaFiles } from '@corates/db/schema';
@@ -65,7 +66,7 @@ export async function getPickerToken(db: Database, session: Session) {
     };
   } catch (error) {
     if (error instanceof Response) throw error;
-    console.error('Google Drive picker-token error:', error);
+    captureError(error, { tags: { component: 'google-drive', action: 'picker-token' } });
     const err = error as { message?: string; code?: string };
     if (
       (typeof err?.message === 'string' && err.message.includes('reconnect')) ||
@@ -272,7 +273,7 @@ export async function importFromDrive(
         createdAt: new Date(),
       });
     } catch (dbError) {
-      console.error('Failed to insert mediaFiles record after Google Drive import:', dbError);
+      captureError(dbError, { tags: { component: 'google-drive', action: 'import-insert-media' } });
     }
 
     return {
@@ -288,7 +289,7 @@ export async function importFromDrive(
     };
   } catch (error) {
     if (error instanceof Response) throw error;
-    console.error('Google Drive import error:', error);
+    captureError(error, { tags: { component: 'google-drive', action: 'import' } });
     if (isDomainError(error)) {
       throw Response.json(error, { status: 400 });
     }

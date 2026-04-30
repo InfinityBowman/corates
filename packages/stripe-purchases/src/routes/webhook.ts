@@ -360,6 +360,7 @@ webhookRoutes.post('/purchases/webhook', async c => {
     return c.json(response);
   } catch (err) {
     const error = err as Error;
+    console.error(error);
     Sentry.captureException(error, {
       tags: { component: 'stripe-purchases-webhook' },
       extra: { ledgerId, payloadHash },

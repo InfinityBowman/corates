@@ -6,6 +6,7 @@
  * @throws DomainError DB_TRANSACTION_FAILED on database error
  */
 
+import { captureError } from '../../lib/logger';
 import { createDb } from '@corates/db/client';
 import { projects, projectMembers, user } from '@corates/db/schema';
 import { eq } from 'drizzle-orm';
@@ -133,7 +134,7 @@ export async function createProject(
       ],
     );
   } catch (err) {
-    console.error('Failed to sync project to DO:', err);
+    captureError(err, { tags: { component: 'project', action: 'create-do-sync' }, extra: { projectId } });
   }
 
   return {

@@ -4,6 +4,7 @@
  * @throws DomainError DB_ERROR on database error
  */
 
+import { captureError } from '../../lib/logger';
 import { createDb } from '@corates/db/client';
 import { projects } from '@corates/db/schema';
 import { eq } from 'drizzle-orm';
@@ -62,7 +63,7 @@ export async function updateProject(
   try {
     await syncProjectToDO(env, projectId, metaUpdate, null);
   } catch (err) {
-    console.error('Failed to sync project update to DO:', err);
+    captureError(err, { tags: { component: 'project', action: 'update-do-sync' }, extra: { projectId } });
   }
 
   return { projectId, updated: true };

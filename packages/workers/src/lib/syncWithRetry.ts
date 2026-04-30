@@ -4,6 +4,7 @@
  * D1 is the source of truth; if every retry fails the error is logged and
  * swallowed — the DO will resync on the next client connection.
  */
+import { captureError } from './logger';
 import { syncMemberToDO } from './project-sync';
 import { withRetry } from './retry';
 import type { Env } from '../types';
@@ -44,10 +45,9 @@ export async function syncMemberWithRetry(
   });
 
   if (!result.success) {
-    console.error('[sync-member] DO member sync exhausted all retries', {
-      ...logContext,
-      attempts: result.attempts,
-      finalError: result.error instanceof Error ? result.error.message : String(result.error),
+    captureError(result.error instanceof Error ? result.error : new Error('DO member sync exhausted all retries'), {
+      tags: { component: 'sync-member' },
+      extra: { ...logContext, attempts: result.attempts },
     });
   }
 }

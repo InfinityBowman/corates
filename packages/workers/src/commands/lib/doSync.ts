@@ -5,6 +5,7 @@
  * Re-exports from project-sync.ts and adds additional helpers.
  */
 
+import { info } from '../../lib/logger';
 import { getProjectDocStub } from '../../lib/project-doc-id';
 import type { Env } from '../../types';
 
@@ -43,7 +44,7 @@ export async function cleanupProjectStorage(env: Env, projectId: string): Promis
   } while (cursor);
 
   if (deletedCount > 0) {
-    console.log(`Deleted ${deletedCount} R2 objects for project ${projectId}`);
+    info('Deleted %s R2 objects for project %s', [String(deletedCount), projectId]);
   }
 
   return deletedCount;

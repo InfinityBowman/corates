@@ -1,3 +1,4 @@
+import { captureError } from '@corates/workers/logger';
 import { env } from 'cloudflare:workers';
 import { createAuth } from '@corates/workers/auth-config';
 import type { Database } from '@corates/db/client';
@@ -64,7 +65,7 @@ export async function listOrganizations(request: Request): Promise<object> {
     return await orgApi.listOrganizations({ headers: request.headers });
   } catch (err) {
     const error = err as Error;
-    console.error('Error listing organizations:', error);
+    captureError(err, { tags: { component: 'orgs', action: 'list' } });
     throw Response.json(
       createDomainError(SYSTEM_ERRORS.DB_ERROR, {
         operation: 'list_organizations',
@@ -97,7 +98,7 @@ export async function createOrganization(
     });
   } catch (err) {
     const error = err as Error;
-    console.error('Error creating organization:', error);
+    captureError(err, { tags: { component: 'orgs', action: 'create' } });
     if (error.message?.includes('slug')) {
       throw Response.json(createDomainError(AUTH_ERRORS.FORBIDDEN, { reason: 'slug_taken' }), {
         status: 403,
@@ -148,7 +149,7 @@ export async function getOrganization(
   } catch (err) {
     if (err instanceof Response) throw err;
     const error = err as Error;
-    console.error('Error fetching organization:', error);
+    captureError(err, { tags: { component: 'orgs', action: 'fetch' } });
     throw Response.json(
       createDomainError(SYSTEM_ERRORS.DB_ERROR, {
         operation: 'fetch_organization',
@@ -196,7 +197,7 @@ export async function updateOrganization(
   } catch (err) {
     if (err instanceof Response) throw err;
     const error = err as Error;
-    console.error('Error updating organization:', error);
+    captureError(err, { tags: { component: 'orgs', action: 'update' } });
     if (error.message?.includes('slug')) {
       throw Response.json(createDomainError(AUTH_ERRORS.FORBIDDEN, { reason: 'slug_taken' }), {
         status: 403,
@@ -235,7 +236,7 @@ export async function deleteOrganization(
   } catch (err) {
     if (err instanceof Response) throw err;
     const error = err as Error;
-    console.error('Error deleting organization:', error);
+    captureError(err, { tags: { component: 'orgs', action: 'delete' } });
     throw Response.json(
       createDomainError(SYSTEM_ERRORS.DB_ERROR, {
         operation: 'delete_organization',
@@ -263,7 +264,7 @@ export async function listOrgMembers(
     });
   } catch (err) {
     const error = err as Error;
-    console.error('Error listing org members:', error);
+    captureError(err, { tags: { component: 'orgs', action: 'list-members' } });
     throw Response.json(
       createDomainError(SYSTEM_ERRORS.DB_ERROR, {
         operation: 'list_org_members',
@@ -302,7 +303,7 @@ export async function addOrgMember(
   } catch (err) {
     if (err instanceof Response) throw err;
     const error = err as Error;
-    console.error('Error adding org member:', error);
+    captureError(err, { tags: { component: 'orgs', action: 'add-member' } });
     if (error.message?.includes('already') || error.message?.includes('member')) {
       throw Response.json(createDomainError(AUTH_ERRORS.FORBIDDEN, { reason: 'already_member' }), {
         status: 403,
@@ -347,7 +348,7 @@ export async function updateMemberRole(
   } catch (err) {
     if (err instanceof Response) throw err;
     const error = err as Error;
-    console.error('Error updating org member:', error);
+    captureError(err, { tags: { component: 'orgs', action: 'update-member' } });
     if (error.message?.includes('owner') || error.message?.includes('permission')) {
       throw Response.json(
         createDomainError(AUTH_ERRORS.FORBIDDEN, {
@@ -411,7 +412,7 @@ export async function removeMember(
   } catch (err) {
     if (err instanceof Response) throw err;
     const error = err as Error;
-    console.error('Error removing org member:', error);
+    captureError(err, { tags: { component: 'orgs', action: 'remove-member' } });
     if (error.message?.includes('owner') || error.message?.includes('last')) {
       throw Response.json(
         createDomainError(AUTH_ERRORS.FORBIDDEN, { reason: 'cannot_remove_last_owner' }),
@@ -442,7 +443,7 @@ export async function setActiveOrg(session: Session, db: Database, request: Requ
     return { success: true as const, activeOrganizationId: orgId };
   } catch (err) {
     const error = err as Error;
-    console.error('Error setting active organization:', error);
+    captureError(err, { tags: { component: 'orgs', action: 'set-active' } });
     throw Response.json(
       createDomainError(SYSTEM_ERRORS.DB_ERROR, {
         operation: 'set_active_organization',

@@ -4,6 +4,7 @@
  * @throws DomainError DB_ERROR on database error
  */
 
+import { captureError } from '../../lib/logger';
 import { createDb } from '@corates/db/client';
 import { projects, projectMembers } from '@corates/db/schema';
 import { eq } from 'drizzle-orm';
@@ -50,14 +51,14 @@ export async function deleteProject(
   try {
     await disconnectAllFromProject(env, projectId);
   } catch (err) {
-    console.error('Failed to disconnect users from DO:', err);
+    captureError(err, { tags: { component: 'project', action: 'delete-disconnect' }, extra: { projectId } });
   }
 
   // Clean up all PDFs from R2 storage
   try {
     await cleanupProjectStorage(env, projectId);
   } catch (err) {
-    console.error('Failed to clean up R2 files for project:', projectId, err);
+    captureError(err, { tags: { component: 'project', action: 'delete-r2-cleanup' }, extra: { projectId } });
   }
 
   try {

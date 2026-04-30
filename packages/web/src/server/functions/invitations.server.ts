@@ -1,3 +1,4 @@
+import { captureError } from '@corates/workers/logger';
 import { env } from 'cloudflare:workers';
 import { acceptInvitation } from '@corates/workers/commands/invitations';
 import { createDomainError, isDomainError, SYSTEM_ERRORS, type DomainError } from '@corates/shared';
@@ -33,7 +34,7 @@ export async function handleAcceptInvitation(
       const de = err as DomainError;
       throw Response.json(de, { status: de.statusCode });
     }
-    console.error('Error accepting invitation:', err);
+    captureError(err, { tags: { component: 'invitations', action: 'accept' } });
     const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
       operation: 'accept_invitation',
       originalError: (err as Error).message,

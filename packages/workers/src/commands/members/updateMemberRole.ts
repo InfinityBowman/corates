@@ -4,6 +4,7 @@
  * @throws DomainError LAST_OWNER if demoting the last owner
  */
 
+import { captureError } from '../../lib/logger';
 import { createDb } from '@corates/db/client';
 import { projectMembers } from '@corates/db/schema';
 import { eq, and } from 'drizzle-orm';
@@ -64,7 +65,7 @@ export async function updateMemberRole(
       role,
     });
   } catch (err) {
-    console.error('Failed to send role update notification:', err);
+    captureError(err, { tags: { component: 'member', action: 'role-update-notify' }, extra: { projectId, userId } });
   }
 
   return { userId, role };

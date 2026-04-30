@@ -1,3 +1,4 @@
+import { captureError, info } from '@corates/workers/logger';
 import { env } from 'cloudflare:workers';
 import type Stripe from 'stripe';
 import type { Database } from '@corates/db/client';
@@ -133,7 +134,7 @@ export async function validateCoupon(code: string) {
   }
 
   if (!isStripeConfigured(env)) {
-    console.error('validate_coupon_failed: Stripe not configured');
+    captureError(new Error('validate_coupon_failed: Stripe not configured'), { tags: { component: 'billing', action: 'validate-coupon' } });
     return { valid: false as const, error: 'Payment system not available' };
   }
 
@@ -167,7 +168,7 @@ export async function validateCoupon(code: string) {
       name: coupon.name,
     };
   } catch (err) {
-    console.error('validate_coupon_error:', err);
+    captureError(err, { tags: { component: 'billing', action: 'validate-coupon' } });
     return { valid: false as const, error: 'Failed to validate promo code' };
   }
 }
@@ -263,7 +264,7 @@ export async function createCheckout(
     );
   }
 
-  console.info('checkout_initiated', { orgId, userId: session.user.id, plan: tier, interval });
+  info('checkout_initiated', { orgId, userId: session.user.id, plan: tier, interval });
 
   const auth = createAuth(env);
   const api = auth.api as unknown as UpgradeApi;
@@ -389,7 +390,7 @@ export async function createSPCheckout(db: Database, session: Session, _request:
   });
   requireOwnerOrg(orgId, role);
 
-  console.info('single_project_checkout_initiated', { orgId, userId: session.user.id });
+  info('single_project_checkout_initiated', { orgId, userId: session.user.id });
 
   const userRecord = await db
     .select({ stripeCustomerId: userTable.stripeCustomerId })

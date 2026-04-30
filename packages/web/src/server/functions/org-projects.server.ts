@@ -1,3 +1,4 @@
+import { captureError } from '@corates/workers/logger';
 import { env } from 'cloudflare:workers';
 import type { Database } from '@corates/db/client';
 import { projects, projectMembers, projectInvitations, user } from '@corates/db/schema';
@@ -57,7 +58,7 @@ export async function listOrgProjects(session: Session, db: Database, orgId: Org
     return results;
   } catch (err) {
     const error = err as Error;
-    console.error('Error listing org projects:', error);
+    captureError(error, { tags: { component: 'org-projects', action: 'list' } });
     throw Response.json(
       createDomainError(SYSTEM_ERRORS.DB_ERROR, {
         operation: 'list_org_projects',
@@ -112,7 +113,7 @@ export async function createOrgProject(
       throw Response.json(err, { status: err.statusCode });
     }
     const error = err as Error;
-    console.error('Error creating project:', error);
+    captureError(error, { tags: { component: 'org-projects', action: 'create' } });
     throw Response.json(
       createDomainError(SYSTEM_ERRORS.DB_TRANSACTION_FAILED, {
         operation: 'create_project',
@@ -160,7 +161,7 @@ export async function getProject(
   } catch (err) {
     if (err instanceof Response) throw err;
     const error = err as Error;
-    console.error('Error fetching project:', error);
+    captureError(error, { tags: { component: 'org-projects', action: 'get' } });
     throw Response.json(
       createDomainError(SYSTEM_ERRORS.DB_ERROR, {
         operation: 'fetch_project',
@@ -199,7 +200,7 @@ export async function updateProjectById(
       throw Response.json(err, { status: err.statusCode });
     }
     const error = err as Error;
-    console.error('Error updating project:', error);
+    captureError(error, { tags: { component: 'org-projects', action: 'update' } });
     throw Response.json(
       createDomainError(SYSTEM_ERRORS.DB_ERROR, {
         operation: 'update_project',
@@ -237,7 +238,7 @@ export async function deleteProjectById(
       throw Response.json(err, { status: err.statusCode });
     }
     const error = err as Error;
-    console.error('Error deleting project:', error);
+    captureError(error, { tags: { component: 'org-projects', action: 'delete' } });
     throw Response.json(
       createDomainError(SYSTEM_ERRORS.DB_ERROR, {
         operation: 'delete_project',
@@ -283,7 +284,7 @@ export async function listProjectMembers(
     return results;
   } catch (err) {
     const error = err as Error;
-    console.error('Error listing project members:', error);
+    captureError(error, { tags: { component: 'org-projects', action: 'list-members' } });
     throw Response.json(
       createDomainError(SYSTEM_ERRORS.DB_ERROR, {
         operation: 'list_project_members',
@@ -398,7 +399,7 @@ export async function addProjectMember(
       throw Response.json(err, { status: (err as DomainError).statusCode });
     }
     const error = err as Error;
-    console.error('Error adding project member:', error);
+    captureError(error, { tags: { component: 'org-projects', action: 'add-member' } });
     throw Response.json(
       createDomainError(SYSTEM_ERRORS.DB_ERROR, {
         operation: 'add_project_member',
@@ -443,7 +444,7 @@ export async function updateProjectMemberRole(
       throw Response.json(err, { status: err.statusCode });
     }
     const error = err as Error;
-    console.error('Error updating project member role:', error);
+    captureError(error, { tags: { component: 'org-projects', action: 'update-member-role' } });
     throw Response.json(
       createDomainError(SYSTEM_ERRORS.DB_ERROR, {
         operation: 'update_project_member_role',
@@ -498,7 +499,7 @@ export async function removeProjectMember(
       throw Response.json(err, { status: (err as DomainError).statusCode });
     }
     const error = err as Error;
-    console.error('Error removing project member:', error);
+    captureError(error, { tags: { component: 'org-projects', action: 'remove-member' } });
     throw Response.json(
       createDomainError(SYSTEM_ERRORS.DB_ERROR, {
         operation: 'remove_project_member',
@@ -544,7 +545,7 @@ export async function listProjectInvitations(
     return invitations;
   } catch (err) {
     const error = err as Error;
-    console.error('Error listing invitations:', error);
+    captureError(error, { tags: { component: 'org-projects', action: 'list-invitations' } });
     throw Response.json(
       createDomainError(SYSTEM_ERRORS.DB_ERROR, {
         operation: 'list_invitations',
@@ -592,7 +593,7 @@ export async function createProjectInvitation(
       throw Response.json(err, { status: (err as DomainError).statusCode });
     }
     const error = err as Error;
-    console.error('Error creating invitation:', error);
+    captureError(error, { tags: { component: 'org-projects', action: 'create-invitation' } });
     throw Response.json(
       createDomainError(SYSTEM_ERRORS.DB_ERROR, {
         operation: 'create_invitation',
@@ -653,7 +654,7 @@ export async function cancelProjectInvitation(
   } catch (err) {
     if (err instanceof Response) throw err;
     const error = err as Error;
-    console.error('Error cancelling invitation:', error);
+    captureError(error, { tags: { component: 'org-projects', action: 'cancel-invitation' } });
     throw Response.json(
       createDomainError(SYSTEM_ERRORS.DB_ERROR, {
         operation: 'cancel_invitation',

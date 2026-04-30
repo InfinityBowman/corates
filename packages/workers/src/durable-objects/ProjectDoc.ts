@@ -1,4 +1,5 @@
 import { DurableObject } from 'cloudflare:workers';
+import { captureError, warn } from '../lib/logger';
 import { instrumentDurableObjectWithSentry } from '@sentry/cloudflare';
 import * as Y from 'yjs';
 import * as syncProtocol from 'y-protocols/sync';
@@ -239,7 +240,7 @@ class ProjectDocBase extends DurableObject<Env> {
         headers: { 'Content-Type': 'application/json' },
       });
     } catch (error) {
-      console.error('ProjectDoc error:', error);
+      captureError(error, { tags: { component: 'project-doc' } });
       return new Response(JSON.stringify({ error: 'Internal Server Error' }), {
         status: 500,
         headers: { 'Content-Type': 'application/json' },
@@ -672,7 +673,7 @@ class ProjectDocBase extends DurableObject<Env> {
       const authResult = await verifyAuth(request, this.env);
       user = authResult.user as { id: string; [key: string]: unknown } | null;
     } catch (err) {
-      console.error('WebSocket auth error:', err);
+      captureError(err, { tags: { component: 'project-doc', action: 'websocket-auth' } });
     }
 
     if (!user) {
@@ -691,7 +692,9 @@ class ProjectDocBase extends DurableObject<Env> {
     }
 
     if (!this.env.DB) {
-      console.error('No DB binding available for WebSocket auth check');
+      captureError(new Error('No DB binding available for WebSocket auth check'), {
+        tags: { component: 'project-doc' },
+      });
       return new Response('Server configuration error', { status: 500 });
     }
 
@@ -807,7 +810,7 @@ class ProjectDocBase extends DurableObject<Env> {
       if (message instanceof ArrayBuffer) {
         data = new Uint8Array(message);
       } else {
-        console.warn('Received unexpected string WebSocket message');
+        warn('Received unexpected string WebSocket message in ProjectDoc');
         return;
       }
 
@@ -852,10 +855,10 @@ class ProjectDocBase extends DurableObject<Env> {
           break;
         }
         default:
-          console.warn('Unknown message type:', messageType);
+          warn('Unknown WebSocket message type: %s', [String(messageType)]);
       }
     } catch (error) {
-      console.error('WebSocket message error (ProjectDoc):', error);
+      captureError(error, { tags: { component: 'project-doc', action: 'websocket-message' } });
     }
   }
 
@@ -884,7 +887,7 @@ class ProjectDocBase extends DurableObject<Env> {
    * Hibernatable WebSocket API: handle errors
    */
   async webSocketError(ws: WebSocket, error: unknown): Promise<void> {
-    console.error('WebSocket error in ProjectDoc:', error);
+    captureError(error, { tags: { component: 'project-doc', action: 'websocket-error' } });
     await this.initializeDoc();
     const attachment = ws.deserializeAttachment() as WebSocketAttachment | null;
     if (attachment && attachment.awarenessClientId != null && this.awareness) {

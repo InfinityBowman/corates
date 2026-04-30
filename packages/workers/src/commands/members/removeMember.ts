@@ -5,6 +5,7 @@
  * @throws DomainError LAST_OWNER if removing the last owner
  */
 
+import { captureError } from '../../lib/logger';
 import { createDb } from '@corates/db/client';
 import { projectMembers, projects } from '@corates/db/schema';
 import { eq, and } from 'drizzle-orm';
@@ -72,7 +73,7 @@ export async function removeMember(
         removedBy: actor.name || actor.email || 'Unknown',
       });
     } catch (err) {
-      console.error('Failed to send removal notification:', err);
+      captureError(err, { tags: { component: 'member', action: 'remove-notify' }, extra: { projectId, userId } });
     }
   }
 

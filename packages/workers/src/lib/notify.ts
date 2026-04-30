@@ -1,3 +1,4 @@
+import { captureError, warn } from './logger';
 import type { Env } from '../types';
 import type { Database } from '@corates/db/client';
 
@@ -23,12 +24,12 @@ interface NotifyOrgOptions {
 
 async function notifyUser(env: Env, userId: string, event: NotifyEvent): Promise<NotifyResult> {
   if (!env.USER_SESSION) {
-    console.warn('[notify] USER_SESSION binding not available');
+    warn('USER_SESSION binding not available');
     return { success: false, delivered: false };
   }
 
   if (!userId) {
-    console.warn('[notify] No userId provided');
+    warn('notifyUser called with no userId');
     return { success: false, delivered: false };
   }
 
@@ -43,7 +44,7 @@ async function notifyUser(env: Env, userId: string, event: NotifyEvent): Promise
 
     return result;
   } catch (error) {
-    console.error('[notify] Error sending notification:', error);
+    captureError(error, { tags: { component: 'notify' }, extra: { userId } });
     return { success: false, delivered: false };
   }
 }
@@ -83,7 +84,7 @@ export async function notifyOrgMembers(
 
     return { notified, failed };
   } catch (error) {
-    console.error('[notify] Error notifying org members:', error);
+    captureError(error, { tags: { component: 'notify' }, extra: { orgId } });
     return { notified: 0, failed: 0 };
   }
 }

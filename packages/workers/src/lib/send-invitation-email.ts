@@ -6,6 +6,7 @@
  * and orgs/members.ts.
  */
 
+import { captureError } from './logger';
 import { createDomainError, SYSTEM_ERRORS } from '@corates/shared';
 import type { Env } from '../types';
 import { queueEmail } from '@corates/shared/email';
@@ -139,7 +140,7 @@ export async function sendInvitationEmail(
     });
     return { emailQueued: true };
   } catch (err) {
-    console.error('[Invitation] Failed to queue invitation email:', err);
+    captureError(err, { tags: { component: 'invitation', action: 'queue-email' } });
     return { emailQueued: false };
   }
 }

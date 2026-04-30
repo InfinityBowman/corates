@@ -6,6 +6,7 @@
  * @throws DomainError INVITATION_ALREADY_ACCEPTED if invitation was already accepted
  */
 
+import { captureError } from '../../lib/logger';
 import { createDb } from '@corates/db/client';
 import { projectInvitations, projects, user } from '@corates/db/schema';
 import { eq, and } from 'drizzle-orm';
@@ -125,7 +126,7 @@ export async function createInvitation(
     });
     emailQueued = result.emailQueued;
   } catch (err) {
-    console.error('[Invitation] Magic link generation failed:', err);
+    captureError(err, { tags: { component: 'invitation', action: 'magic-link-generation' }, extra: { projectId } });
   }
 
   return { invitationId, emailQueued };

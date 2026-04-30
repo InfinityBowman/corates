@@ -4,6 +4,7 @@
  * Consolidates user notification operations used across commands.
  */
 
+import { captureError } from '../../lib/logger';
 import type { Env } from '../../types';
 
 /**
@@ -62,7 +63,7 @@ export async function notifyUsers(
       await notifyUser(env, userId, notification);
       notifiedCount++;
     } catch (err) {
-      console.error(`Failed to send notification to user ${userId}:`, err);
+      captureError(err, { tags: { component: 'notifications' }, extra: { userId } });
     }
   }
 

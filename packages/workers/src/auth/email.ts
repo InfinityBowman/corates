@@ -7,6 +7,7 @@
  * This service only handles the generic send operation for the queue consumer.
  */
 
+import { captureError, warn } from '../lib/logger';
 import { Client as PostmarkClient } from 'postmark';
 import type { Env } from '../types';
 
@@ -57,7 +58,7 @@ export function createEmailService(env: Env): EmailService {
     }
 
     if (!postmark) {
-      console.log('[Email] No POSTMARK_SERVER_TOKEN configured, skipping email');
+      warn('No POSTMARK_SERVER_TOKEN configured, skipping email');
       return { success: false, error: 'No email provider configured' };
     }
 
@@ -73,14 +74,17 @@ export function createEmailService(env: Env): EmailService {
       });
 
       if (response.ErrorCode !== 0) {
-        console.error('[Email] Postmark API error:', JSON.stringify(response));
+        captureError(new Error(`Postmark API error: ${response.ErrorCode}`), {
+          tags: { component: 'email' },
+          extra: { errorCode: response.ErrorCode, message: response.Message },
+        });
         return { success: false, error: response.Message };
       }
 
       return { success: true, id: response.MessageID };
     } catch (err) {
       const error = err as Error;
-      console.error('[Email] Exception during send:', error.message, error.stack);
+      captureError(err, { tags: { component: 'email' } });
       return { success: false, error: error.message };
     }
   }

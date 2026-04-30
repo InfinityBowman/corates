@@ -1,9 +1,4 @@
-/**
- * Generic retry utility with exponential backoff.
- *
- * Use this utility to wrap operations that may fail transiently (network errors,
- * temporary unavailability, etc.) and should be retried automatically.
- */
+import { captureError, warn, info } from './logger';
 
 interface RetryOptions<T> {
   operation: () => Promise<T>;
@@ -48,27 +43,19 @@ export async function withRetry<T>(options: RetryOptions<T>): Promise<RetryResul
       const value = await operation();
 
       if (attempt > 1) {
-        console.info(`[retry] ${operationName} succeeded after retries`, {
-          ...logContext,
-          attempt,
-          totalAttempts: attempt,
-        });
+        info(`[retry] ${operationName} succeeded after ${attempt} attempts`);
       }
 
       return { success: true, value, attempts: attempt };
     } catch (error) {
       lastError = error;
 
-      const errorMessage = error instanceof Error ? error.message : String(error);
       const willRetry = attempt < maxAttempts && shouldRetry(error, attempt);
 
       if (!willRetry) {
-        console.error(`[retry] ${operationName} failed after ${attempt} attempt(s)`, {
-          ...logContext,
-          attempts: attempt,
-          maxAttempts,
-          error: errorMessage,
-          willRetry: false,
+        captureError(error, {
+          tags: { component: 'retry', operation: operationName },
+          extra: { ...logContext, attempts: attempt, maxAttempts },
         });
         return { success: false, error: lastError, attempts: attempt };
       }
@@ -79,13 +66,7 @@ export async function withRetry<T>(options: RetryOptions<T>): Promise<RetryResul
         backoffMultiplier,
       });
 
-      console.warn(`[retry] ${operationName} failed, retrying`, {
-        ...logContext,
-        attempt,
-        maxAttempts,
-        nextDelayMs: delayMs,
-        error: errorMessage,
-      });
+      warn(`[retry] ${operationName} failed (attempt ${attempt}/${maxAttempts}), retrying in ${delayMs}ms`);
 
       await sleep(delayMs);
     }

@@ -1,3 +1,4 @@
+import { info } from '@corates/workers/logger';
 import { env } from 'cloudflare:workers';
 import type { Database } from '@corates/db/client';
 import {
@@ -400,7 +401,7 @@ export async function impersonateAdminUser(
   if (response.status === 403 && env.ENVIRONMENT !== 'production') {
     try {
       const respBody = await response.clone().text();
-      console.log('[Admin] Impersonation forbidden:', respBody);
+      info('[Admin] Impersonation forbidden', { respBody });
     } catch {
       // ignore
     }

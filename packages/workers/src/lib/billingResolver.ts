@@ -1,3 +1,4 @@
+import { warn } from './logger';
 import { eq, and, desc, isNull, ne, count } from 'drizzle-orm';
 import type { OrgId } from '@corates/shared/ids';
 import { subscription, orgAccessGrants, projects, member } from '@corates/db/schema';
@@ -79,9 +80,7 @@ async function getActiveSubscription(
   }
 
   if (activeSubscriptions.length > 1) {
-    console.warn(
-      `[BillingResolver] Multiple active subscriptions found for org ${orgId}. Using latest periodEnd.`,
-    );
+    warn('Multiple active subscriptions found for org %s', [orgId]);
     return activeSubscriptions[0] as SubscriptionRecord;
   }
 

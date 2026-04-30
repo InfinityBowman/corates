@@ -1,3 +1,4 @@
+import { captureError, warn } from './logger';
 import { count, eq } from 'drizzle-orm';
 import { resolveOrgAccess } from './billingResolver';
 import { isUnlimitedQuota } from '@corates/shared/plans';
@@ -236,10 +237,10 @@ export async function insertWithQuotaCheck(
 
   if (newCount > limit) {
     // Race condition detected - quota exceeded after insert
-    console.error(
-      `[QuotaTransaction] Race condition detected: ${quotaKey} exceeded for org ${orgId}. ` +
-        `Count: ${newCount}, Limit: ${limit}. Attempting rollback.`,
-    );
+    captureError(new Error(`Quota race condition: ${quotaKey} exceeded for org ${orgId}`), {
+      tags: { component: 'quota-transaction' },
+      extra: { quotaKey, orgId, count: newCount, limit },
+    });
 
     // If rollback metadata provided, delete the inserted records
     if (rollbackMeta && rollbackMeta.length > 0) {
@@ -249,11 +250,10 @@ export async function insertWithQuotaCheck(
         try {
           await db.delete(table).where(eq(idColumn, id));
         } catch (deleteErr) {
-          // Log but continue - best effort rollback
-          console.error(
-            `[QuotaTransaction] Failed to rollback record during race condition cleanup:`,
-            { table: table._.name, id, error: deleteErr },
-          );
+          captureError(deleteErr, {
+            tags: { component: 'quota-transaction', action: 'rollback' },
+            extra: { table: table._.name, id },
+          });
         }
       }
 
@@ -275,11 +275,7 @@ export async function insertWithQuotaCheck(
       };
     }
 
-    // No rollback metadata - log warning but allow (legacy behavior for backward compatibility)
-    console.warn(
-      `[QuotaTransaction] No rollback metadata provided. ` +
-        `Over-quota records will remain. Consider providing rollbackMeta.`,
-    );
+    warn('QuotaTransaction: no rollback metadata provided, over-quota records will remain');
   }
 
   return { success: true };
