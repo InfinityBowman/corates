@@ -604,10 +604,38 @@ class ProjectDocBase extends DurableObject<Env> {
 
     this.doc = new Y.Doc();
     this.awareness = new awarenessProtocol.Awareness(this.doc);
+    this.awareness.setLocalState(null);
+    // The awareness protocol starts a setInterval (every ~3s) that renews
+    // the local clock and removes stale peers. This prevents the DO from
+    // ever hibernating. We handle peer cleanup in webSocketClose instead.
+    clearInterval(
+      (this.awareness as unknown as { _checkInterval: ReturnType<typeof setInterval> })
+        ._checkInterval,
+    );
 
     this.persistence.ensureSchema();
     await this.persistence.migrateLegacyState();
     this.persistence.loadUpdatesIntoDoc(this.doc);
+
+    // After hibernation wake-up, existing WebSocket connections survive but
+    // the in-memory Y.Doc was lost. Send sync step 1 to all existing
+    // connections so they respond with any state the server might be missing.
+    const existingWs = this.ctx.getWebSockets();
+    if (existingWs.length > 0) {
+      const syncEncoder = encoding.createEncoder();
+      encoding.writeVarUint(syncEncoder, messageSync);
+      syncProtocol.writeSyncStep1(syncEncoder, this.doc);
+      const syncMsg = encoding.toUint8Array(syncEncoder);
+      for (const ws of existingWs) {
+        if (ws.readyState === WebSocket.OPEN) {
+          try {
+            ws.send(syncMsg);
+          } catch {
+            // connection already broken
+          }
+        }
+      }
+    }
 
     // On doc update: broadcast to connected clients, then persist synchronously.
     // persistUpdate swallows SQL errors -- the update was already broadcast and
@@ -757,22 +785,27 @@ class ProjectDocBase extends DurableObject<Env> {
     // (send error, hibernation timing, message ordering) leaves the client
     // stuck forever with no retry. Sending proactively adds a redundant
     // sync path that resolves the client even if its own step 1 is delayed.
-    const syncEncoder = encoding.createEncoder();
-    encoding.writeVarUint(syncEncoder, messageSync);
-    syncProtocol.writeSyncStep2(syncEncoder, this.doc!);
-    server.send(encoding.toUint8Array(syncEncoder));
+    try {
+      const syncEncoder = encoding.createEncoder();
+      encoding.writeVarUint(syncEncoder, messageSync);
+      syncProtocol.writeSyncStep2(syncEncoder, this.doc!);
+      server.send(encoding.toUint8Array(syncEncoder));
 
-    if (this.awareness && this.awareness.getStates().size > 0) {
-      const awarenessEncoder = encoding.createEncoder();
-      encoding.writeVarUint(awarenessEncoder, messageAwareness);
-      encoding.writeVarUint8Array(
-        awarenessEncoder,
-        awarenessProtocol.encodeAwarenessUpdate(
-          this.awareness,
-          Array.from(this.awareness.getStates().keys()),
-        ),
-      );
-      server.send(encoding.toUint8Array(awarenessEncoder));
+      if (this.awareness && this.awareness.getStates().size > 0) {
+        const awarenessEncoder = encoding.createEncoder();
+        encoding.writeVarUint(awarenessEncoder, messageAwareness);
+        encoding.writeVarUint8Array(
+          awarenessEncoder,
+          awarenessProtocol.encodeAwarenessUpdate(
+            this.awareness,
+            Array.from(this.awareness.getStates().keys()),
+          ),
+        );
+        server.send(encoding.toUint8Array(awarenessEncoder));
+      }
+    } catch {
+      // WebSocket may have closed between accept and send; client will
+      // retry and get the full state on the next connection.
     }
 
     return new Response(null, { status: 101, webSocket: client });
@@ -895,7 +928,11 @@ class ProjectDocBase extends DurableObject<Env> {
   broadcastBinary(message: Uint8Array, exclude: WebSocket | null = null): void {
     for (const ws of this.ctx.getWebSockets()) {
       if (ws !== exclude && ws.readyState === WebSocket.OPEN) {
-        ws.send(message);
+        try {
+          ws.send(message);
+        } catch {
+          // Connection broke mid-broadcast; skip so remaining clients still receive.
+        }
       }
     }
   }
