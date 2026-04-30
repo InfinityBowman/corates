@@ -750,6 +750,31 @@ class ProjectDocBase extends DurableObject<Env> {
       awarenessClientId: null,
     } satisfies WebSocketAttachment);
 
+    // Proactively send the full doc state and awareness to the new client.
+    // The reference y-websocket server does this on every connection; our
+    // original code relied solely on the client's sync step 1 round-trip.
+    // That single-path dependency means any failure in the round-trip
+    // (send error, hibernation timing, message ordering) leaves the client
+    // stuck forever with no retry. Sending proactively adds a redundant
+    // sync path that resolves the client even if its own step 1 is delayed.
+    const syncEncoder = encoding.createEncoder();
+    encoding.writeVarUint(syncEncoder, messageSync);
+    syncProtocol.writeSyncStep2(syncEncoder, this.doc!);
+    server.send(encoding.toUint8Array(syncEncoder));
+
+    if (this.awareness && this.awareness.getStates().size > 0) {
+      const awarenessEncoder = encoding.createEncoder();
+      encoding.writeVarUint(awarenessEncoder, messageAwareness);
+      encoding.writeVarUint8Array(
+        awarenessEncoder,
+        awarenessProtocol.encodeAwarenessUpdate(
+          this.awareness,
+          Array.from(this.awareness.getStates().keys()),
+        ),
+      );
+      server.send(encoding.toUint8Array(awarenessEncoder));
+    }
+
     return new Response(null, { status: 101, webSocket: client });
   }
 

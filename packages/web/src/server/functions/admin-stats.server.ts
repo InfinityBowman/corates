@@ -245,6 +245,7 @@ export async function getAdminRevenueStats(session: Session, params: { months?: 
   const data: Array<{ month: string; label: string; revenue: number }> = [];
   for (let i = months - 1; i >= 0; i--) {
     const d = new Date();
+    d.setDate(1);
     d.setMonth(d.getMonth() - i);
     const monthKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
     const monthName = d.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
