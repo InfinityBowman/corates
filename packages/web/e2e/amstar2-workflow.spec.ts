@@ -8,7 +8,7 @@
  *   pnpm --filter web dev  (localhost:3010, DEV_MODE=true)
  */
 
-import { test, expect, type Page } from '@playwright/test';
+import { test, expect } from '@playwright/test';
 import {
   seedDualReviewerScenario,
   cleanupScenario,
@@ -16,13 +16,6 @@ import {
   type DualReviewerScenario,
 } from './helpers';
 import { setupProjectWithStudy, markChecklistComplete, answerAllAMSTAR2 } from './shared-steps';
-
-function forwardConnDebug(page: Page, label: string) {
-  page.on('console', msg => {
-    const text = msg.text();
-    if (text.includes('[conn-debug]')) console.log(`[${label}] ${text}`);
-  });
-}
 
 let scenario: DualReviewerScenario;
 
@@ -35,7 +28,6 @@ test.afterAll(async () => {
 });
 
 test('Dual-Reviewer AMSTAR2 Workflow', async ({ context, page }) => {
-  forwardConnDebug(page, 'amstar2');
   const projectId = await setupProjectWithStudy(context, page, scenario, 'AMSTAR2 E2E Test');
 
   // ================================================================

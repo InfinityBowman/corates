@@ -25,13 +25,6 @@ import {
 } from './helpers';
 import { setupProjectWithStudy } from './shared-steps';
 
-function forwardConnDebug(page: Page, label: string) {
-  page.on('console', msg => {
-    const text = msg.text();
-    if (text.includes('[conn-debug]')) console.log(`[${label}] ${text}`);
-  });
-}
-
 let scenario: DualReviewerScenario;
 
 test.beforeAll(async () => {
@@ -50,7 +43,7 @@ test.afterAll(async () => {
  * Counting the total checked-state lets us assert that the same number of
  * answers are present after a reload as before, regardless of DOM order.
  */
-async function countCheckedYesRadios(page: import('@playwright/test').Page): Promise<number> {
+async function countCheckedYesRadios(page: Page): Promise<number> {
   const radios = page.getByRole('radio', { name: 'Yes' });
   const count = await radios.count();
   let checked = 0;
@@ -63,7 +56,6 @@ async function countCheckedYesRadios(page: import('@playwright/test').Page): Pro
 }
 
 test('Project state survives page refresh', async ({ context, page }) => {
-  forwardConnDebug(page, 'persistence');
   // Create a project with one study and assigned reviewers, then verify the
   // study is present after a hard reload.
   const projectId = await setupProjectWithStudy(

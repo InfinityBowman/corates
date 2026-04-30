@@ -31,7 +31,6 @@ export function ProjectGate({ projectId, fallback, children }: ProjectGateProps)
   const connectionEntryRef = useRef<ReturnType<typeof connectionPool.acquire>>(null);
 
   const connectionState = useProjectStore(s => selectConnectionPhase(s, projectId));
-  console.log(`[conn-debug] ${projectId} ProjectGate render, phase=${connectionState.phase}, error=${connectionState.error}`);
 
   // Connection lifecycle -- acquire on mount, release on unmount
   useLayoutEffect(() => {

@@ -35,13 +35,6 @@ import {
 } from './shared-steps';
 import { BASE_URL } from './constants';
 
-function forwardConnDebug(page: Page, label: string) {
-  page.on('console', msg => {
-    const text = msg.text();
-    if (text.includes('[conn-debug]')) console.log(`[${label}] ${text}`);
-  });
-}
-
 // ================================================================
 // Helpers
 // ================================================================
@@ -153,8 +146,6 @@ async function runConcurrentEditCycle(
   const contextB = await browser.newContext();
   const pageA = await contextA.newPage();
   const pageB = await contextB.newPage();
-  forwardConnDebug(pageA, 'pageA');
-  forwardConnDebug(pageB, 'pageB');
 
   await loginAs(contextA, scenario.cookiesA);
   await loginAs(contextB, scenario.cookiesB);
@@ -249,7 +240,6 @@ test.describe('Concurrent CRDT: AMSTAR2', () => {
   test('Concurrent AMSTAR2 edits from two reviewers converge and persist', async ({ browser }) => {
     const setupCtx = await browser.newContext();
     const setupPage = await setupCtx.newPage();
-    forwardConnDebug(setupPage, 'setup');
 
     await loginAs(setupCtx, scenario.cookiesA);
     await setupPage.goto(`${BASE_URL}/dashboard`);
@@ -318,7 +308,6 @@ test.describe('Concurrent CRDT: ROB2', () => {
   test('Concurrent ROB2 edits from two reviewers converge and persist', async ({ browser }) => {
     const setupCtx = await browser.newContext();
     const setupPage = await setupCtx.newPage();
-    forwardConnDebug(setupPage, 'setup');
 
     await loginAs(setupCtx, scenario.cookiesA);
     await setupPage.goto(`${BASE_URL}/dashboard`);

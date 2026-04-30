@@ -42,9 +42,7 @@ export function ToDoTab() {
 
   const myStudies = useMemo(() => {
     if (!currentUserId) return [];
-    const result = getStudiesForTab(studies, 'todo', currentUserId);
-    console.log(`[conn-debug] ToDoTab userId=${currentUserId}, studies=${studies.length}, r1/r2=${JSON.stringify(studies.map(s => ({ id: s.id.slice(0, 8), r1: s.reviewer1, r2: s.reviewer2 })))}, todoCount=${result.length}`);
-    return result;
+    return getStudiesForTab(studies, 'todo', currentUserId);
   }, [studies, currentUserId]);
 
   const handleCreateChecklist = useCallback(

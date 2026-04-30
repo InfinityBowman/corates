@@ -172,9 +172,6 @@ export function createSyncManager(projectId: string, getYDoc: () => Y.Doc | null
       updates.members !== undefined ||
       updates.meta !== undefined
     ) {
-      if (updates.studies) {
-        console.log(`[conn-debug] ${projectId} sync -> store: ${updates.studies.length} studies, reviewers=${JSON.stringify(updates.studies.map(s => ({ id: s.id.slice(0, 8), r1: s.reviewer1, r2: s.reviewer2 })))}`);
-      }
       useProjectStore.getState().setProjectData(projectId, updates);
     }
   }

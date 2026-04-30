@@ -212,15 +212,8 @@ function ProjectViewInner({ projectId }: ProjectViewProps) {
   // Tab helpers
   const userId = user?.id;
   const getToDoCount = useCallback(() => {
-    if (!userId) {
-      console.log(`[conn-debug] getToDoCount: userId is null/undefined`);
-      return 0;
-    }
-    const count = getChecklistCount(studies, 'todo', userId);
-    if (studies.length > 0) {
-      console.log(`[conn-debug] getToDoCount: userId=${userId}, studies=${studies.length}, todoCount=${count}, r1/r2=${JSON.stringify(studies.map(s => ({ r1: s.reviewer1, r2: s.reviewer2 })))}`);
-    }
-    return count;
+    if (!userId) return 0;
+    return getChecklistCount(studies, 'todo', userId);
   }, [studies, userId]);
 
   const getReconcileCount = useCallback(

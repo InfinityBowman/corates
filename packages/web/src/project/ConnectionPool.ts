@@ -117,7 +117,6 @@ class ConnectionPool {
     // active real project when the local bootstrap runs.
     if (!isLocal) store.setActiveProject(projectId);
     store.dispatchConnectionEvent(projectId, { type: 'CONNECT_REQUESTED' });
-    console.log(`[conn-debug] ${projectId} init started, isLocal=${isLocal}`);
 
     const { ydoc } = entry;
     const getYDoc = () => entry.ydoc;
@@ -149,11 +148,9 @@ class ConnectionPool {
       if (cancelled() || !project) return;
 
       entry.dexieProvider = DexieYProvider.load(project.ydoc);
-      console.log(`[conn-debug] ${projectId} dexie provider loading`);
 
       entry.dexieProvider.whenLoaded.then(() => {
         if (cancelled()) return;
-        console.log(`[conn-debug] ${projectId} dexie loaded`);
 
         entry.syncManager?.pause();
         try {
@@ -178,9 +175,7 @@ class ConnectionPool {
         entry.syncManager!.syncFromYDocImmediate();
 
         const reviewsSize = ydoc.getMap('reviews').size;
-        console.log(`[conn-debug] ${projectId} dexie reviews.size=${reviewsSize}`);
         if (!isLocal && reviewsSize > 0) {
-          console.log(`[conn-debug] ${projectId} dispatching PERSISTENCE_LOADED`);
           useProjectStore
             .getState()
             .dispatchConnectionEvent(projectId, { type: 'PERSISTENCE_LOADED' });
@@ -204,11 +199,8 @@ class ConnectionPool {
 
     // WebSocket connection (for online projects)
     if (!isLocal) {
-      console.log(`[conn-debug] ${projectId} starting WebSocket connection`);
       entry.connectionManager = createConnectionManager(projectId, ydoc, {
         onSync: () => {
-          const reviews = ydoc.getMap('reviews');
-          console.log(`[conn-debug] ${projectId} SYNC_COMPLETE, reviews.size=${reviews.size}, keys=${JSON.stringify([...reviews.keys()].slice(0, 5))}`);
           useProjectStore.getState().dispatchConnectionEvent(projectId, { type: 'SYNC_COMPLETE' });
           entry.syncManager?.syncFromYDocImmediate();
         },
