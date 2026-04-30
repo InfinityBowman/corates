@@ -6,12 +6,8 @@
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate, useLocation, Outlet } from '@tanstack/react-router';
-import {
-  useProjectStore,
-  selectStudies,
-  selectMeta,
-  selectConnectionPhase,
-} from '@/stores/projectStore';
+import { useProjectStore, selectConnectionPhase } from '@/stores/projectStore';
+import { useAllStudies, useProjectMeta } from '@/stores/projectAtoms';
 import { useProjectOrgId } from '@/hooks/useProjectOrgId';
 import { useAuthStore, selectUser } from '@/stores/authStore';
 import { ProjectGate } from '@/project';
@@ -72,8 +68,8 @@ function ProjectViewInner({ projectId }: ProjectViewProps) {
     return path.includes('/checklists/') || path.includes('/reconcile/');
   }, [location.pathname]);
 
-  const studies = useProjectStore(s => selectStudies(s, projectId));
-  const meta = useProjectStore(s => selectMeta(s, projectId));
+  const studies = useAllStudies(projectId);
+  const meta = useProjectMeta(projectId);
   const connectionState = useProjectStore(s => selectConnectionPhase(s, projectId));
 
   // Read pending data exactly once via lazy initializer (safe for StrictMode)

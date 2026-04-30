@@ -11,13 +11,9 @@ import { StudyCard } from './study-card/StudyCard';
 import { AssignReviewersModal } from './AssignReviewersModal';
 import { ReviewerAssignment } from '../overview-tab/ReviewerAssignment';
 import { OutcomeManager } from '../outcomes/OutcomeManager';
-import {
-  useProjectStore,
-  selectStudies,
-  selectConnectionPhase,
-} from '@/stores/projectStore';
+import { useProjectStore, selectConnectionPhase } from '@/stores/projectStore';
 import type { StudyInfo } from '@/stores/projectStore';
-import { useStudyIds, useProjectMembers } from '@/stores/projectAtoms';
+import { useStudyIds, useAllStudies, useProjectMembers } from '@/stores/projectAtoms';
 import { project } from '@/project';
 import { useProjectContext } from '../ProjectContext';
 import {
@@ -40,7 +36,7 @@ export function AllStudiesTab() {
 
   const studyIds = useStudyIds(projectId);
   const members = useProjectMembers(projectId);
-  const studies = useProjectStore(s => selectStudies(s, projectId));
+  const studies = useAllStudies(projectId);
   const connectionState = useProjectStore(s => selectConnectionPhase(s, projectId));
   const hasData = connectionState.phase === 'synced' || studyIds.length > 0;
 

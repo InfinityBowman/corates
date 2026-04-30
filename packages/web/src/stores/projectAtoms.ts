@@ -104,3 +104,13 @@ export function useProjectMembers(projectId: string): MemberEntry[] {
   return useValue(atoms.members);
 }
 
+export function useAllStudies(projectId: string): StudyInfo[] {
+  const atoms = getProjectAtoms(projectId);
+  return useValue('allStudies:' + projectId, () => {
+    return atoms.studyOrder.get().flatMap(id => {
+      const study = atoms.getOrCreateStudyAtom(id).get();
+      return study ? [study] : [];
+    });
+  }, [atoms]);
+}
+
