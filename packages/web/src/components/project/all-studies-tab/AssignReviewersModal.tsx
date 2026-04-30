@@ -2,9 +2,9 @@
  * AssignReviewersModal - Assign reviewer 1 and reviewer 2 to a study
  */
 
-import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import { useState, useEffect, useEffectEvent, useMemo, useCallback } from 'react';
 import { UserIcon } from 'lucide-react';
-import { useProjectStore, selectMembers, selectStudies } from '@/stores/projectStore';
+import { useProjectStore, selectMembers } from '@/stores/projectStore';
 import type { StudyInfo } from '@/stores/projectStore';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import {
@@ -33,20 +33,11 @@ export function AssignReviewersModal({
   projectId,
   onSave,
 }: AssignReviewersModalProps) {
-  const [reviewer1, setReviewer1] = useState('');
-  const [reviewer2, setReviewer2] = useState('');
+  const [reviewer1, setReviewer1] = useState('_unassigned');
+  const [reviewer2, setReviewer2] = useState('_unassigned');
   const [saving, setSaving] = useState(false);
 
   const members = useProjectStore(s => selectMembers(s, projectId));
-  const studies = useProjectStore(s => selectStudies(s, projectId));
-
-  // Get latest study data from store
-  /* eslint-disable react-hooks/preserve-manual-memoization -- conditional lookup by nullable id */
-  const currentStudy = useMemo(
-    () => (study?.id ? studies.find(s => s.id === study.id) : null),
-    [study?.id, studies],
-  );
-  /* eslint-enable react-hooks/preserve-manual-memoization */
 
   const memberItems = useMemo(
     () => [
@@ -59,27 +50,28 @@ export function AssignReviewersModal({
     [members],
   );
 
-  // Sync form from store only when the modal first opens; a ref prevents
-  // background Y.Doc syncs from overwriting in-progress user selections.
-  const formInitialized = useRef(false);
+  // Reads the latest `study` without making it an effect dependency,
+  // so background Y.Doc syncs can never re-trigger initialization.
+  const initializeForm = useEffectEvent(() => {
+    if (study) {
+      setReviewer1(study.reviewer1 || '_unassigned');
+      setReviewer2(study.reviewer2 || '_unassigned');
+    }
+  });
+
   useEffect(() => {
-    /* eslint-disable react-hooks/set-state-in-effect -- syncing form state from modal open/close */
-    if (!open) {
+    /* eslint-disable react-hooks/set-state-in-effect -- one-time form init on modal open/close */
+    if (open) {
+      initializeForm();
+    } else {
       setReviewer1('_unassigned');
       setReviewer2('_unassigned');
-      formInitialized.current = false;
-      return;
-    }
-    if (currentStudy && !formInitialized.current) {
-      setReviewer1(currentStudy.reviewer1 || '_unassigned');
-      setReviewer2(currentStudy.reviewer2 || '_unassigned');
-      formInitialized.current = true;
     }
     /* eslint-enable react-hooks/set-state-in-effect */
-  }, [open, currentStudy]);
+  }, [open]);
 
   const handleSave = useCallback(async () => {
-    if (!currentStudy) return;
+    if (!study) return;
     if (reviewer1 !== '_unassigned' && reviewer1 === reviewer2) {
       const { showToast } = await import('@/components/ui/toast');
       showToast.error('Invalid Assignment', 'Reviewer 1 and Reviewer 2 must be different.');
@@ -87,7 +79,7 @@ export function AssignReviewersModal({
     }
     setSaving(true);
     try {
-      onSave(currentStudy.id, {
+      onSave(study.id, {
         reviewer1: reviewer1 === '_unassigned' ? null : reviewer1,
         reviewer2: reviewer2 === '_unassigned' ? null : reviewer2,
       });
@@ -98,7 +90,7 @@ export function AssignReviewersModal({
     } finally {
       setSaving(false);
     }
-  }, [currentStudy, reviewer1, reviewer2, onSave, onOpenChange]);
+  }, [study, reviewer1, reviewer2, onSave, onOpenChange]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

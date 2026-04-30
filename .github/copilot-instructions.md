@@ -124,7 +124,6 @@ Two files in `packages/web/public/` are consumed by Cloudflare Workers Static As
 - **TanStack Router**: File-based routing (`createFileRoute`)
 - **TanStack Query**: Server state management (`useQuery`, `useMutation`)
 - **Zustand**: Client state management (stores in `@/stores/`)
-- **Recharts**: Data visualization (admin charts)
 
 ### Code Comments
 
@@ -158,9 +157,12 @@ retries += 1;
 
 - **Import stores directly** - Use Zustand stores from `@/stores/` instead of prop-drilling shared state
 - Shared state lives in Zustand stores under `packages/web/src/stores/`
-- Use `useMemo` for derived values, `useCallback` for stable callbacks
-- Use `useEffect` with explicit dependency arrays (never omit deps)
+- Avoid `useMemo` or `useCallback` - let the React Compiler handle memoization
+- Prefer newer React primitives where possible, we are always on the latest version
+- Use `useEffectEvent` for stable event handler references inside effects
 - Use `useLayoutEffect` for DOM measurements before paint
+- Use `startTransition` / `useTransition` for non-urgent state updates
+- Use `useDeferredValue` for deferring expensive re-renders
 - Use `useSyncExternalStore` for external store subscriptions (e.g., Yjs awareness)
 - Use `useId()` for unique IDs on form elements (radio buttons, checkboxes)
 - Move business logic to stores, hooks, or utilities (not components)
