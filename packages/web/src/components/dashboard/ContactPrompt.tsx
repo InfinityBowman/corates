@@ -10,12 +10,12 @@ interface ContactPromptProps {
 
 export function ContactPrompt({ restrictionType, projectCount, quotaLimit }: ContactPromptProps) {
   const title =
-    restrictionType === 'entitlement' ? 'Early Access Testing' : 'Project Limit Reached';
+    restrictionType === 'entitlement' ? 'Ready to Collaborate?' : 'Project Limit Reached';
 
   const message =
     restrictionType === 'entitlement' ?
-      "CoRATES is currently in early access testing as we test and refine project-based features in collaboration with early users. If you're interested in creating a project and sharing feedback, please contact us to request access. Individual appraisals are always available and free to use."
-    : `You've reached your project limit (${projectCount}/${quotaLimit === null || quotaLimit === -1 ? 'unlimited' : quotaLimit}). Request early access for more projects.`;
+      'Projects let your team appraise studies independently and resolve disagreements together. Start a 14-day free trial to create your first project -- no credit card required.'
+    : `You've reached your project limit (${projectCount}/${quotaLimit === null || quotaLimit === -1 ? 'unlimited' : quotaLimit}). Upgrade your plan to create more projects.`;
 
   return (
     <div className='bg-info-bg border-info-border flex items-center justify-between rounded-lg border p-4'>
@@ -24,12 +24,10 @@ export function ContactPrompt({ restrictionType, projectCount, quotaLimit }: Con
         <p className='text-muted-foreground text-sm'>{message}</p>
       </div>
       <a
-        href='/contact'
-        target='_blank'
-        rel='noopener noreferrer'
+        href='/pricing'
         className='bg-primary hover:bg-primary/90 ml-4 rounded-lg px-4 py-2 font-medium whitespace-nowrap text-white transition-colors focus:ring-2 focus:ring-blue-500 focus:outline-none'
       >
-        Contact Us
+        View Plans
       </a>
     </div>
   );

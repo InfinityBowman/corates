@@ -4,6 +4,7 @@ import { useAuthStore } from '@/stores/authStore';
 import { handleError } from '@/lib/error-utils';
 import { useOAuthError } from '@/hooks/useOAuthError';
 import { useBfcacheReset } from '@/hooks/useBfcacheReset';
+import { getLastLoginMethod } from '@/lib/lastLoginMethod';
 import {
   PasswordInput,
   PasswordInputControl,
@@ -35,7 +36,10 @@ function SignInPage() {
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [orcidLoading, setOrcidLoading] = useState(false);
-  const [useMagicLink, setUseMagicLink] = useState(false);
+  const [useMagicLink, setUseMagicLink] = useState(() => {
+    const lastMethod = getLastLoginMethod();
+    return !lastMethod || lastMethod === 'magic_link';
+  });
   const [showTwoFactor, setShowTwoFactor] = useState(false);
   const [formHeight, setFormHeight] = useState<string>('auto');
 

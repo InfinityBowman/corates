@@ -1,77 +1,60 @@
 /**
- * QuickActions - Quick start cards for creating new appraisals
+ * QuickActions - Quick start cards for creating new appraisals by type
  */
 
-import { PlayCircleIcon, BookOpenIcon } from 'lucide-react';
-import { useAnimation } from './useInitialAnimation';
-
-interface QuickActionsProps {
-  onStartROBINSI: () => void;
-  onStartAMSTAR2: () => void;
-  onLearnMore: () => void;
-}
+import { useNavigate } from '@tanstack/react-router';
+import { PlayCircleIcon } from 'lucide-react';
 
 const ACTIONS = [
   {
-    id: 'robins-i',
-    title: 'Start ROBINS-I',
-    description: 'Risk of bias for non-randomized studies',
-    icon: <PlayCircleIcon className='size-6 text-blue-600' />,
+    type: 'AMSTAR2',
+    title: 'AMSTAR 2',
+    description: 'Quality assessment of systematic reviews',
+    iconColor: 'text-blue-600',
     iconBg: 'bg-blue-50',
     border: 'border-blue-100 hover:border-blue-200',
   },
   {
-    id: 'amstar-2',
-    title: 'Start AMSTAR 2',
-    description: 'Quality assessment for systematic reviews',
-    icon: <PlayCircleIcon className='text-success size-6' />,
-    iconBg: 'bg-success-bg',
-    border: 'border-success-border/50 hover:border-success-border',
+    type: 'ROBINS_I',
+    title: 'ROBINS-I',
+    description: 'Risk of bias in non-randomized studies',
+    iconColor: 'text-emerald-600',
+    iconBg: 'bg-emerald-50',
+    border: 'border-emerald-100 hover:border-emerald-200',
   },
   {
-    id: 'learn-more',
-    title: 'Learn More',
-    description: 'View documentation and guides',
-    icon: <BookOpenIcon className='size-6 text-violet-600' />,
+    type: 'ROB2',
+    title: 'RoB 2',
+    description: 'Risk of bias in randomized trials',
+    iconColor: 'text-violet-600',
     iconBg: 'bg-violet-50',
     border: 'border-violet-100 hover:border-violet-200',
   },
 ];
 
-export function QuickActions({ onStartROBINSI, onStartAMSTAR2, onLearnMore }: QuickActionsProps) {
-  const animation = useAnimation();
-
-  const handlers: Record<string, () => void> = {
-    'robins-i': onStartROBINSI,
-    'amstar-2': onStartAMSTAR2,
-    'learn-more': onLearnMore,
-  };
+export function QuickActions() {
+  const navigate = useNavigate();
 
   return (
-    <section className='mb-6' style={animation.fadeUp(400)}>
-      <h3 className='text-muted-foreground mb-4 text-sm font-semibold tracking-wide uppercase'>
-        Quick Start
-      </h3>
-      <div className='grid gap-3'>
-        {ACTIONS.map(action => (
-          <button
-            key={action.id}
-            type='button'
-            onClick={handlers[action.id]}
-            className={`group bg-card flex items-center gap-4 rounded-xl border p-4 text-left transition-all duration-200 hover:shadow-md ${action.border}`}
+    <div className='grid gap-3 sm:grid-cols-3'>
+      {ACTIONS.map(action => (
+        <button
+          key={action.type}
+          type='button'
+          onClick={() => navigate({ to: '/checklist' as string, search: { type: action.type } })}
+          className={`group bg-card flex items-center gap-3 rounded-xl border p-4 text-left transition-all duration-200 hover:shadow-md ${action.border}`}
+        >
+          <div
+            className={`flex size-10 shrink-0 items-center justify-center rounded-xl ${action.iconBg} transition-transform duration-200 group-hover:scale-105`}
           >
-            <div
-              className={`flex size-12 shrink-0 items-center justify-center rounded-xl ${action.iconBg} transition-transform duration-200 group-hover:scale-105`}
-            >
-              {action.icon}
-            </div>
-            <div>
-              <h4 className='text-foreground font-medium'>{action.title}</h4>
-              <p className='text-muted-foreground text-sm'>{action.description}</p>
-            </div>
-          </button>
-        ))}
-      </div>
-    </section>
+            <PlayCircleIcon className={`size-5 ${action.iconColor}`} />
+          </div>
+          <div className='min-w-0'>
+            <h4 className='text-foreground text-sm font-medium'>{action.title}</h4>
+            <p className='text-muted-foreground text-xs leading-tight'>{action.description}</p>
+          </div>
+        </button>
+      ))}
+    </div>
   );
 }
