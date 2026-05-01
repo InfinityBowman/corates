@@ -53,7 +53,7 @@ interface AMSTAR2Options {
 
 interface AMSTAR2Answers {
   [questionKey: string]: {
-    answers: boolean[][][];
+    answers: boolean[][];
     critical: boolean;
   };
 }
@@ -64,24 +64,23 @@ export function generateAMSTAR2Answers(options: AMSTAR2Options = {}): AMSTAR2Ans
   const answers: AMSTAR2Answers = {};
 
   for (const [questionKey, structure] of Object.entries(AMSTAR2_STRUCTURE)) {
-    const questionAnswers = structure.parts.map(partSizes =>
-      partSizes.map(size => {
-        const row = new Array<boolean>(size).fill(false);
-        if (fill === 'random') {
-          for (let i = 0; i < size; i++) {
-            row[i] = rng() > 0.5;
-          }
-        } else if (fill === 'all-yes') {
-          row[0] = true;
-        } else if (fill === 'all-no') {
-          row[row.length - 1] = true;
-        } else if (fill === 'mixed') {
-          const idx = Math.floor(rng() * size);
-          row[idx] = true;
+    const questionAnswers = structure.parts.map(partSizes => {
+      const size = partSizes[0];
+      const row = new Array<boolean>(size).fill(false);
+      if (fill === 'random') {
+        for (let i = 0; i < size; i++) {
+          row[i] = rng() > 0.5;
         }
-        return row;
-      }),
-    );
+      } else if (fill === 'all-yes') {
+        row[0] = true;
+      } else if (fill === 'all-no') {
+        row[row.length - 1] = true;
+      } else if (fill === 'mixed') {
+        const idx = Math.floor(rng() * size);
+        row[idx] = true;
+      }
+      return row;
+    });
 
     answers[questionKey] = {
       answers: questionAnswers,
