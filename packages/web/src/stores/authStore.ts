@@ -30,10 +30,12 @@ const AUTH_CACHE_KEY = 'corates-auth-cache';
 const AUTH_CACHE_TIMESTAMP_KEY = 'corates-auth-cache-timestamp';
 const AUTH_CACHE_MAX_AGE = 7 * 24 * 60 * 60 * 1000; // 7 days
 
-interface AuthUser {
+export interface AuthUser {
   id: string;
   email: string;
   name?: string;
+  givenName?: string;
+  persona?: string;
   image?: string | null;
   role?: string | null;
   twoFactorEnabled?: boolean | null;

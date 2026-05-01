@@ -3,10 +3,11 @@
  */
 
 import { getRoleLabel } from '@/components/auth/RoleSelector';
+import type { AuthUser } from '@/stores/authStore';
 import { useAnimation } from './useInitialAnimation';
 
 interface DashboardHeaderProps {
-  user: { name?: string; givenName?: string; persona?: string; email?: string } | null;
+  user: AuthUser | null;
 }
 
 export function DashboardHeader({ user }: DashboardHeaderProps) {
