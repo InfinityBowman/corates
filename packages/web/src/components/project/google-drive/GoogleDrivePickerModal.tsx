@@ -31,10 +31,7 @@ export function GoogleDrivePickerModal({
 }: GoogleDrivePickerModalProps) {
   const [importing, setImporting] = useState(false);
 
-  async function handlePicked(
-    picked: Array<{ id: string; name: string }>,
-    pickerStudyId?: string,
-  ) {
+  async function handlePicked(picked: Array<{ id: string; name: string }>, pickerStudyId?: string) {
     const file = picked?.[0];
     if (!file) return;
 
@@ -44,10 +41,7 @@ export function GoogleDrivePickerModal({
     try {
       setImporting(true);
       const result = await importFromGoogleDrive(file.id, projectId, targetStudyId);
-      showToast.success(
-        'PDF Imported',
-        `Successfully imported "${file.name}" from Google Drive.`,
-      );
+      showToast.success('PDF Imported', `Successfully imported "${file.name}" from Google Drive.`);
       onImportSuccess?.(result.file, targetStudyId);
     } catch (err: unknown) {
       const { handleError } = await import('@/lib/error-utils');
