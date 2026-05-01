@@ -2,7 +2,7 @@
  * GoogleDrivePickerModal - Modal for selecting PDFs from Google Drive (single-study import)
  */
 
-import { useState, useCallback, useRef } from 'react';
+import { useState } from 'react';
 import { showToast } from '@/components/ui/toast';
 import {
   Dialog,
@@ -31,38 +31,31 @@ export function GoogleDrivePickerModal({
 }: GoogleDrivePickerModalProps) {
   const [importing, setImporting] = useState(false);
 
-  // Use refs for values that may change between modal open and picker callback
+  async function handlePicked(
+    picked: Array<{ id: string; name: string }>,
+    pickerStudyId?: string,
+  ) {
+    const file = picked?.[0];
+    if (!file) return;
 
-  const studyIdRef = useRef(studyId);
-  studyIdRef.current = studyId;
-  const onImportSuccessRef = useRef(onImportSuccess);
-  onImportSuccessRef.current = onImportSuccess;
+    const targetStudyId = pickerStudyId || studyId;
+    if (!targetStudyId) return;
 
-  const handlePicked = useCallback(
-    async (picked: Array<{ id: string; name: string }>, pickerStudyId?: string) => {
-      const file = picked?.[0];
-      if (!file) return;
-
-      const targetStudyId = pickerStudyId || studyIdRef.current;
-      if (!targetStudyId) return;
-
-      try {
-        setImporting(true);
-        const result = await importFromGoogleDrive(file.id, projectId, targetStudyId);
-        showToast.success(
-          'PDF Imported',
-          `Successfully imported "${file.name}" from Google Drive.`,
-        );
-        onImportSuccessRef.current?.(result.file, targetStudyId);
-      } catch (err: unknown) {
-        const { handleError } = await import('@/lib/error-utils');
-        await handleError(err, { toastTitle: 'Import Failed' });
-      } finally {
-        setImporting(false);
-      }
-    },
-    [projectId],
-  );
+    try {
+      setImporting(true);
+      const result = await importFromGoogleDrive(file.id, projectId, targetStudyId);
+      showToast.success(
+        'PDF Imported',
+        `Successfully imported "${file.name}" from Google Drive.`,
+      );
+      onImportSuccess?.(result.file, targetStudyId);
+    } catch (err: unknown) {
+      const { handleError } = await import('@/lib/error-utils');
+      await handleError(err, { toastTitle: 'Import Failed' });
+    } finally {
+      setImporting(false);
+    }
+  }
 
   return (
     <Dialog open={open} onOpenChange={openState => !openState && onClose()}>
