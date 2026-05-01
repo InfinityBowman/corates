@@ -1,3 +1,5 @@
+import { CHECKLIST_STATUS } from '@corates/shared';
+
 interface QuestionStructure {
   parts: number[][];
   critical: boolean;
@@ -434,14 +436,14 @@ function generateId(prefix: string = ''): string {
   return prefix ? `${prefix}_${id}` : id;
 }
 
-function nowISO(): string {
-  return new Date().toISOString();
+function timestamp(): number {
+  return Date.now();
 }
 
 interface MockMember {
   userId: string;
   role: string;
-  joinedAt: string;
+  joinedAt: number;
   name: string;
   email: string;
   givenName: string;
@@ -454,8 +456,8 @@ interface MockChecklist {
   title: string;
   assignedTo: string;
   status: string;
-  createdAt: string;
-  updatedAt: string;
+  createdAt: number;
+  updatedAt: number;
   answers: AMSTAR2Answers | ROBINSIAnswers;
 }
 
@@ -464,12 +466,12 @@ interface MockPdf {
   key: string;
   size: number;
   uploadedBy: string;
-  uploadedAt: string;
+  uploadedAt: number;
 }
 
 interface MockReconciliation {
   status: string;
-  completedAt: string;
+  completedAt: number;
   completedBy: string;
   notes: string;
 }
@@ -478,8 +480,8 @@ interface MockStudy {
   id: string;
   name: string;
   description: string;
-  createdAt: string;
-  updatedAt: string;
+  createdAt: number;
+  updatedAt: number;
   originalTitle: string;
   firstAuthor: string;
   publicationYear: number;
@@ -502,8 +504,8 @@ interface MockProjectData {
   meta: {
     name: string;
     description: string;
-    createdAt: string;
-    updatedAt: string;
+    createdAt: number;
+    updatedAt: number;
   };
   members: MockMember[];
   studies: MockStudy[];
@@ -517,15 +519,15 @@ const MOCK_TEMPLATES: Record<string, TemplateFunction> = {
     meta: {
       name: 'Empty Test Project',
       description: 'A project with no studies or members',
-      createdAt: nowISO(),
-      updatedAt: nowISO(),
+      createdAt: timestamp(),
+      updatedAt: timestamp(),
     },
     members: [],
     studies: [],
   }),
 
   'studies-only': () => {
-    const now = nowISO();
+    const now = timestamp();
     return {
       version: 1,
       meta: {
@@ -596,7 +598,7 @@ const MOCK_TEMPLATES: Record<string, TemplateFunction> = {
   },
 
   'amstar2-complete': () => {
-    const now = nowISO();
+    const now = timestamp();
     const studyId = generateId('study');
     const checklistId = generateId('checklist');
 
@@ -645,7 +647,7 @@ const MOCK_TEMPLATES: Record<string, TemplateFunction> = {
               type: 'AMSTAR2',
               title: 'AMSTAR2 Assessment',
               assignedTo: 'user_reviewer1',
-              status: 'completed',
+              status: CHECKLIST_STATUS.FINALIZED,
               createdAt: now,
               updatedAt: now,
               answers: generateAMSTAR2Answers({ fill: 'mixed', seed: 12345 }),
@@ -659,7 +661,7 @@ const MOCK_TEMPLATES: Record<string, TemplateFunction> = {
   },
 
   'robins-i-progress': () => {
-    const now = nowISO();
+    const now = timestamp();
     const studyId = generateId('study');
     const checklistId = generateId('checklist');
 
@@ -707,7 +709,7 @@ const MOCK_TEMPLATES: Record<string, TemplateFunction> = {
               type: 'ROBINS_I',
               title: 'ROBINS-I Assessment',
               assignedTo: 'user_reviewer1',
-              status: 'in_progress',
+              status: CHECKLIST_STATUS.IN_PROGRESS,
               createdAt: now,
               updatedAt: now,
               answers: generateROBINSIAnswers({ fill: 'partial', seed: 54321 }),
@@ -721,7 +723,7 @@ const MOCK_TEMPLATES: Record<string, TemplateFunction> = {
   },
 
   'reconciliation-ready': () => {
-    const now = nowISO();
+    const now = timestamp();
     const studyId = generateId('study');
     const checklist1Id = generateId('checklist');
     const checklist2Id = generateId('checklist');
@@ -780,7 +782,7 @@ const MOCK_TEMPLATES: Record<string, TemplateFunction> = {
               type: 'AMSTAR2',
               title: 'Reviewer 1 Assessment',
               assignedTo: 'user_reviewer1',
-              status: 'completed',
+              status: CHECKLIST_STATUS.REVIEWER_COMPLETED,
               createdAt: now,
               updatedAt: now,
               answers: generateAMSTAR2Answers({ fill: 'mixed', seed: 11111 }),
@@ -790,7 +792,7 @@ const MOCK_TEMPLATES: Record<string, TemplateFunction> = {
               type: 'AMSTAR2',
               title: 'Reviewer 2 Assessment',
               assignedTo: 'user_reviewer2',
-              status: 'completed',
+              status: CHECKLIST_STATUS.REVIEWER_COMPLETED,
               createdAt: now,
               updatedAt: now,
               answers: generateAMSTAR2Answers({ fill: 'mixed', seed: 22222 }),
@@ -804,7 +806,7 @@ const MOCK_TEMPLATES: Record<string, TemplateFunction> = {
   },
 
   'full-workflow': () => {
-    const now = nowISO();
+    const now = timestamp();
     const study1Id = generateId('study');
     const study2Id = generateId('study');
     const study3Id = generateId('study');
@@ -894,7 +896,7 @@ const MOCK_TEMPLATES: Record<string, TemplateFunction> = {
               type: 'AMSTAR2',
               title: 'AMSTAR2 - Reviewer 1',
               assignedTo: 'user_reviewer1',
-              status: 'in_progress',
+              status: CHECKLIST_STATUS.IN_PROGRESS,
               createdAt: now,
               updatedAt: now,
               answers: generateAMSTAR2Answers({ fill: 'random', seed: 33333 }),
@@ -904,7 +906,7 @@ const MOCK_TEMPLATES: Record<string, TemplateFunction> = {
               type: 'ROBINS_I',
               title: 'ROBINS-I - Reviewer 2',
               assignedTo: 'user_reviewer2',
-              status: 'in_progress',
+              status: CHECKLIST_STATUS.IN_PROGRESS,
               createdAt: now,
               updatedAt: now,
               answers: generateROBINSIAnswers({ fill: 'partial', seed: 44444 }),
@@ -938,7 +940,7 @@ const MOCK_TEMPLATES: Record<string, TemplateFunction> = {
               type: 'AMSTAR2',
               title: 'AMSTAR2 - Reviewer 1 (Final)',
               assignedTo: 'user_reviewer1',
-              status: 'completed',
+              status: CHECKLIST_STATUS.FINALIZED,
               createdAt: now,
               updatedAt: now,
               answers: generateAMSTAR2Answers({ fill: 'all-yes', seed: 55555 }),
@@ -948,7 +950,7 @@ const MOCK_TEMPLATES: Record<string, TemplateFunction> = {
               type: 'AMSTAR2',
               title: 'AMSTAR2 - Reviewer 2 (Final)',
               assignedTo: 'user_reviewer2',
-              status: 'completed',
+              status: CHECKLIST_STATUS.FINALIZED,
               createdAt: now,
               updatedAt: now,
               answers: generateAMSTAR2Answers({ fill: 'all-yes', seed: 66666 }),
