@@ -3,9 +3,15 @@
  */
 
 import { useMemo } from 'react';
-import { FileTextIcon, ChevronRightIcon, Trash2Icon, DownloadIcon } from 'lucide-react';
+import { FileTextIcon, ChevronRightIcon, Trash2Icon, DownloadIcon, FileSpreadsheetIcon, FileIcon } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { SimpleEditable } from '@/components/ui/editable';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { getChecklistMetadata } from '@/checklist-registry';
 import { formatRelativeTime } from './utils';
 
@@ -21,7 +27,8 @@ interface LocalAppraisalCardProps {
   onOpen: (id: string) => void;
   onDelete?: (id: string) => void;
   onRename?: (name: string) => void;
-  onExport?: (id: string) => void;
+  onExportCsv?: (id: string) => void;
+  onExportPdf?: (id: string) => void;
   style?: React.CSSProperties;
 }
 
@@ -30,7 +37,8 @@ export function LocalAppraisalCard({
   onOpen,
   onDelete,
   onRename,
-  onExport,
+  onExportCsv,
+  onExportPdf,
   style,
 }: LocalAppraisalCardProps) {
   const typeLabel = useMemo(() => {
@@ -73,18 +81,33 @@ export function LocalAppraisalCard({
 
         {/* Actions */}
         <div className='flex shrink-0 items-center gap-1'>
-          {onExport && (
-            <button
-              type='button'
-              onClick={e => {
-                e.stopPropagation();
-                onExport(checklist.id);
-              }}
-              className='text-muted-foreground hover:text-foreground rounded-lg p-2 transition-colors hover:bg-gray-50'
-              title='Export CSV'
-            >
-              <DownloadIcon className='size-4' />
-            </button>
+          {(onExportCsv || onExportPdf) && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  type='button'
+                  onClick={e => e.stopPropagation()}
+                  className='text-muted-foreground hover:text-foreground rounded-lg p-2 transition-colors hover:bg-gray-50'
+                  title='Export'
+                >
+                  <DownloadIcon className='size-4' />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align='end' className='w-auto'>
+                {onExportCsv && (
+                  <DropdownMenuItem onClick={() => onExportCsv(checklist.id)}>
+                    <FileSpreadsheetIcon />
+                    Export as CSV
+                  </DropdownMenuItem>
+                )}
+                {onExportPdf && (
+                  <DropdownMenuItem onClick={() => onExportPdf(checklist.id)}>
+                    <FileIcon />
+                    Export as PDF
+                  </DropdownMenuItem>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
           )}
           {onDelete && (
             <button

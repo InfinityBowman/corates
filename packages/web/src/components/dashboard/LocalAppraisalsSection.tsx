@@ -5,9 +5,16 @@
 import { useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import type * as Y from 'yjs';
-import { PlusIcon, FileTextIcon, LogInIcon, TriangleAlertIcon, DownloadIcon } from 'lucide-react';
+import { PlusIcon, FileTextIcon, LogInIcon, TriangleAlertIcon, DownloadIcon, FileSpreadsheetIcon, FileIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { buildProjectCsv, downloadCsv } from '@/lib/export-csv';
+import { buildProjectPdf, downloadPdf } from '@/lib/export-pdf';
 import { useAllStudies } from '@/stores/projectAtoms';
 import type { StudyInfo } from '@/stores/projectStore';
 import { scoreChecklistOfType } from '@/checklist-registry';
@@ -143,18 +150,35 @@ export function LocalAppraisalsSection({
     });
   };
 
-  const handleExportAll = () => {
+  const handleExportAllCsv = () => {
     const csv = buildProjectCsv({ studies: enrichStudiesForExport(studies) });
     const date = new Date().toISOString().slice(0, 10);
     downloadCsv(csv, `corates-local-appraisals-${date}.csv`);
   };
 
-  const handleExportOne = (studyId: string) => {
+  const handleExportAllPdf = () => {
+    const enriched = enrichStudiesForExport(studies);
+    const doc = buildProjectPdf({ studies: enriched });
+    const date = new Date().toISOString().slice(0, 10);
+    downloadPdf(doc, `corates-local-appraisals-${date}.pdf`);
+  };
+
+  const handleExportOneCsv = (studyId: string) => {
     const study = studies.find(s => s.id === studyId);
     if (!study) return;
     const csv = buildProjectCsv({ studies: enrichStudiesForExport([study]) });
     const safeName = (study.name || 'appraisal').replace(/[^a-zA-Z0-9-_ ]/g, '').trim();
     downloadCsv(csv, `${safeName}.csv`);
+  };
+
+  const handleExportOnePdf = (studyId: string) => {
+    const study = studies.find(s => s.id === studyId);
+    if (!study) return;
+    const enriched = enrichStudiesForExport([study]);
+    const name = study.name || 'appraisal';
+    const doc = buildProjectPdf({ studies: enriched, projectName: name });
+    const safeName = name.replace(/[^a-zA-Z0-9-_ ]/g, '').trim();
+    downloadPdf(doc, `${safeName}.pdf`);
   };
 
   const hasChecklists = appraisals.length > 0;
@@ -168,10 +192,24 @@ export function LocalAppraisalsSection({
           </h2>
           {hasChecklists && (
             <div className='flex items-center gap-2'>
-              <Button variant='outline' onClick={handleExportAll}>
-                <DownloadIcon data-icon='inline-start' />
-                Export CSV
-              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant='outline'>
+                    <DownloadIcon data-icon='inline-start' />
+                    Export All
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align='end' className='w-auto'>
+                  <DropdownMenuItem onClick={handleExportAllCsv}>
+                    <FileSpreadsheetIcon />
+                    Export as CSV
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={handleExportAllPdf}>
+                    <FileIcon />
+                    Export as PDF
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
               <Button onClick={handleCreate}>
                 <PlusIcon data-icon='inline-start' />
                 New Appraisal
@@ -236,7 +274,8 @@ export function LocalAppraisalsSection({
             onOpen={handleOpen}
             onDelete={handleDelete}
             onRename={newName => handleRename(appraisal.id, newName)}
-            onExport={handleExportOne}
+            onExportCsv={handleExportOneCsv}
+            onExportPdf={handleExportOnePdf}
             style={animation.statRise(index * 50)}
           />
         ))}
