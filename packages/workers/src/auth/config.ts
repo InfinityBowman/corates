@@ -410,6 +410,7 @@ export function createAuth(env: Env, ctx?: ExecutionContext) {
   }
 
   return betterAuth({
+    rateLimit: { enabled: false },
     database: drizzleAdapter(db, {
       provider: 'sqlite',
       schema: {
