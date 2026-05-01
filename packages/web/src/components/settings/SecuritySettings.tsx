@@ -63,7 +63,6 @@ export function SecuritySettings() {
     [currentPassword, newPassword, confirmPassword, unmetRequirements, changePassword],
   );
 
-   
   const handleSendPasswordSetup = useCallback(async () => {
     setAddPasswordLoading(true);
     setPasswordError('');

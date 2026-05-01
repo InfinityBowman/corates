@@ -95,7 +95,7 @@ function ProjectViewInner({ projectId }: ProjectViewProps) {
     )
       return;
     const pdfs = pendingPdfs;
-    setPendingPdfs(null);  
+    setPendingPdfs(null);
 
     for (const pdf of pdfs) {
       const studyName = pdf.fileName ? pdf.fileName.replace(/\.pdf$/i, '') : 'Untitled Study';
@@ -154,7 +154,7 @@ function ProjectViewInner({ projectId }: ProjectViewProps) {
     )
       return;
     const refs = pendingRefs;
-    setPendingRefs(null);  
+    setPendingRefs(null);
     for (const ref of refs) {
       project.study.create(ref.title, ref.metadata?.abstract || '', ref.metadata || {});
     }
@@ -170,7 +170,7 @@ function ProjectViewInner({ projectId }: ProjectViewProps) {
     )
       return;
     const driveFiles = pendingDriveFiles;
-    setPendingDriveFiles(null);  
+    setPendingDriveFiles(null);
     for (const file of driveFiles) {
       const title = file.title || file.name.replace(/\.pdf$/i, '');
       const metadata = {

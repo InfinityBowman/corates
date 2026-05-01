@@ -34,7 +34,6 @@ export function EditPdfMetadataModal({
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-     
     if (pdf && open) {
       setTitle(pdf.title || '');
       setFirstAuthor(pdf.firstAuthor || '');
@@ -42,7 +41,6 @@ export function EditPdfMetadataModal({
       setJournal(pdf.journal || '');
       setDoi(pdf.doi || '');
     }
-     
   }, [pdf, open]);
 
   const handleSave = useCallback(async () => {

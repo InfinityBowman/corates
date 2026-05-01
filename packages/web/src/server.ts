@@ -13,9 +13,8 @@ let startFetch: ((req: Request, opts?: never) => Response | Promise<Response>) |
 
 async function getStartFetch() {
   if (!startFetch) {
-    const { createStartHandler, defaultStreamHandler } = await import(
-      '@tanstack/react-start/server'
-    );
+    const { createStartHandler, defaultStreamHandler } =
+      await import('@tanstack/react-start/server');
     startFetch = createStartHandler(defaultStreamHandler);
   }
   return startFetch!;

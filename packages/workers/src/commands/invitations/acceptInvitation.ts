@@ -107,7 +107,10 @@ export async function acceptInvitation(
   const normalizedInvitationEmail = (invitation.email || '').trim().toLowerCase();
 
   if (normalizedUserEmail !== normalizedInvitationEmail) {
-    warn('Invitation email mismatch: user=%s, invitation=%s', [currentUser.email || '', invitation.email || '']);
+    warn('Invitation email mismatch: user=%s, invitation=%s', [
+      currentUser.email || '',
+      invitation.email || '',
+    ]);
     throw createDomainError(AUTH_ERRORS.FORBIDDEN, {
       reason: 'email_mismatch',
       userEmail: currentUser.email,
@@ -257,7 +260,10 @@ export async function acceptInvitation(
       image: currentUser.image,
     });
   } catch (err) {
-    captureError(err, { tags: { component: 'invitation', action: 'accept-do-sync' }, extra: { projectId: invitation.projectId } });
+    captureError(err, {
+      tags: { component: 'invitation', action: 'accept-do-sync' },
+      extra: { projectId: invitation.projectId },
+    });
   }
 
   return {

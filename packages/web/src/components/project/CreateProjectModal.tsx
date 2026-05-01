@@ -51,7 +51,7 @@ export function CreateProjectModal({ open, onOpenChange }: CreateProjectModalPro
   // Auto-select first org when orgs load and user has multiple
   useEffect(() => {
     if (orgs.length > 1 && !selectedOrgId) {
-      setSelectedOrgId(orgs[0].id);  
+      setSelectedOrgId(orgs[0].id);
     }
   }, [orgs, selectedOrgId]);
 
@@ -64,7 +64,7 @@ export function CreateProjectModal({ open, onOpenChange }: CreateProjectModalPro
   // Reset form when dialog closes
   useEffect(() => {
     if (!open) {
-      setProjectName('');  
+      setProjectName('');
       setProjectDescription('');
       setSelectedOrgId(null);
     }

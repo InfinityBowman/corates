@@ -19,7 +19,7 @@ export function PageControls({ documentId }: PageControlsProps) {
   const [inputValue, setInputValue] = useState<string>(currentPage.toString());
 
   useEffect(() => {
-    setInputValue(currentPage.toString());  
+    setInputValue(currentPage.toString());
   }, [currentPage]);
 
   const startHideTimer = useCallback(() => {

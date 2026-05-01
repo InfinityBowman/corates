@@ -32,12 +32,11 @@ export function GoogleDrivePickerModal({
   const [importing, setImporting] = useState(false);
 
   // Use refs for values that may change between modal open and picker callback
-   
+
   const studyIdRef = useRef(studyId);
   studyIdRef.current = studyId;
   const onImportSuccessRef = useRef(onImportSuccess);
   onImportSuccessRef.current = onImportSuccess;
-   
 
   const handlePicked = useCallback(
     async (picked: Array<{ id: string; name: string }>, pickerStudyId?: string) => {

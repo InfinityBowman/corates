@@ -37,7 +37,7 @@ export function SlidingPanel({
   // Mount/animate lifecycle
   useEffect(() => {
     if (open) {
-      setMounted(true);  
+      setMounted(true);
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
           setVisible(true);

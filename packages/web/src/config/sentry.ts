@@ -36,9 +36,7 @@ export function initSentry(): void {
 // Called from router.tsx where the instance is available.
 export function initSentryRouterTracing(router: Router<never, never>): void {
   if (!SENTRY_DSN || !Sentry.getClient()) return;
-  Sentry.addIntegration(
-    Sentry.tanstackRouterBrowserTracingIntegration(router as never),
-  );
+  Sentry.addIntegration(Sentry.tanstackRouterBrowserTracingIntegration(router as never));
 }
 
 export function setSentryUser(user: { id: string; email?: string; name?: string } | null): void {

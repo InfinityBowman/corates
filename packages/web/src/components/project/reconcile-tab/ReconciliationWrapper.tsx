@@ -118,7 +118,7 @@ export function ReconciliationWrapper({
   // Auto-select primary PDF when study loads
   useEffect(() => {
     if (defaultPdf && !selectedPdfId) {
-      setSelectedPdfId(defaultPdf.id);  
+      setSelectedPdfId(defaultPdf.id);
     }
   }, [defaultPdf, selectedPdfId]);
 
@@ -127,7 +127,7 @@ export function ReconciliationWrapper({
     const fileName = currentPdf?.fileName;
     if (!fileName || !orgId || attemptedPdfFile === fileName || pdfLoading) return;
 
-    setAttemptedPdfFile(fileName);  
+    setAttemptedPdfFile(fileName);
     setPdfLoading(true);
     setPdfData(null);
 
@@ -255,7 +255,6 @@ export function ReconciliationWrapper({
       return;
     }
 
-     
     setHasCheckedForReconciled(true);
     setReconciledChecklistLoading(true);
 
@@ -319,7 +318,6 @@ export function ReconciliationWrapper({
 
     setReconciledChecklistId(newChecklistId);
     setReconciledChecklistLoading(false);
-     
   }, [
     currentStudy,
     connectionState.phase,
@@ -355,7 +353,7 @@ export function ReconciliationWrapper({
           checklist2Id,
           reconciledChecklistId: firstCreated.id,
         });
-        setReconciledChecklistId(firstCreated.id);  
+        setReconciledChecklistId(firstCreated.id);
       }
     }
   }, [

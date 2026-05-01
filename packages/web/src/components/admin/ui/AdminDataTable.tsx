@@ -37,7 +37,6 @@ export function AdminDataTable<T>({
 }: AdminDataTableProps<T>) {
   const [sorting, setSorting] = useState<SortingState>([]);
 
-   
   const table = useReactTable({
     data: data || [],
     columns: columns || [],

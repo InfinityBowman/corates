@@ -105,7 +105,7 @@ function CompleteProfilePage() {
       if (!user && !hasEditedName && !hasAutofilledName) {
         const pendingName = localStorage.getItem('pendingName');
         if (!firstName.trim() && !lastName.trim() && pendingName) {
-          setFirstName(pendingName);  
+          setFirstName(pendingName);
           setHasAutofilledName(true);
         }
       }
@@ -149,7 +149,7 @@ function CompleteProfilePage() {
   useEffect(() => {
     const pendingPersona = localStorage.getItem('pendingPersona');
     if (pendingPersona) {
-      setPersona(pendingPersona);  
+      setPersona(pendingPersona);
       localStorage.removeItem('pendingPersona');
     }
   }, []);

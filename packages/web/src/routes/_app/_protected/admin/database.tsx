@@ -242,7 +242,7 @@ function DatabaseViewerPage() {
                       setLimit(parseInt(e.target.value, 10));
                       setPage(1);
                     }}
-                    className='border-input h-8 rounded-lg border bg-transparent px-2.5 text-sm transition-colors outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-3'
+                    className='border-input focus-visible:border-ring focus-visible:ring-ring/50 h-8 rounded-lg border bg-transparent px-2.5 text-sm transition-colors outline-none focus-visible:ring-3'
                   >
                     {LIMIT_OPTIONS.map(opt => (
                       <option key={opt} value={opt}>

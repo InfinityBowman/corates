@@ -69,7 +69,7 @@ export function AddMemberModal({
   // Search users on debounced query change
   useEffect(() => {
     if (debouncedQuery.length < 2) {
-      setSearchResults([]);  
+      setSearchResults([]);
       return;
     }
     let cancelled = false;

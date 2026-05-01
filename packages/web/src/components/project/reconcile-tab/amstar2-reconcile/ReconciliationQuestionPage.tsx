@@ -91,7 +91,6 @@ function SingleQuestionPage({
 
   // Reset auto-fill tracking when question changes
   useEffect(() => {
-     
     setHasAutoFilled(false);
   }, [questionKey]);
 
@@ -100,7 +99,6 @@ function SingleQuestionPage({
   // Initialize local final from props or default to reviewer1
   useEffect(() => {
     if (finalAnswers) {
-       
       setLocalFinal(JSON.parse(JSON.stringify(finalAnswers)));
       if (answersEqual(finalAnswers, reviewer1Answers)) {
         setSelectedSource('reviewer1');
@@ -132,7 +130,7 @@ function SingleQuestionPage({
     ) {
       const newFinal = JSON.parse(JSON.stringify(reviewer1Answers));
       onFinalChange(newFinal);
-       
+
       setHasAutoFilled(true);
     }
   }, [isAgreement, finalAnswers, reviewer1Answers, hasAutoFilled, onFinalChange]);

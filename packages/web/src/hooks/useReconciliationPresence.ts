@@ -132,14 +132,13 @@ export function useReconciliationPresence({
   const [refreshTick, setRefreshTick] = useState(0);
 
   // Refs to avoid stale closures in event handlers
-   
+
   const currentPageRef = useRef(getCurrentPage);
   currentPageRef.current = getCurrentPage;
   const checklistTypeRef = useRef(checklistType);
   checklistTypeRef.current = checklistType;
   const currentUserRef = useRef(currentUser);
   currentUserRef.current = currentUser;
-   
 
   // Periodic refresh for stale cursor detection
   useEffect(() => {
@@ -193,7 +192,7 @@ export function useReconciliationPresence({
             x,
             y,
             scrollY,
-             
+
             timestamp: Date.now(),
           },
         });

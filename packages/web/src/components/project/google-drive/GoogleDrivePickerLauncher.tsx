@@ -134,7 +134,7 @@ export function GoogleDrivePickerLauncher({
   // Check connection status on mount
   useEffect(() => {
     if (!active) return;
-    checkConnectionStatus();  
+    checkConnectionStatus();
   }, [active, checkConnectionStatus]);
 
   const handleConnectGoogle = useCallback(async () => {

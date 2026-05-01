@@ -134,7 +134,9 @@ export async function validateCoupon(code: string) {
   }
 
   if (!isStripeConfigured(env)) {
-    captureError(new Error('validate_coupon_failed: Stripe not configured'), { tags: { component: 'billing', action: 'validate-coupon' } });
+    captureError(new Error('validate_coupon_failed: Stripe not configured'), {
+      tags: { component: 'billing', action: 'validate-coupon' },
+    });
     return { valid: false as const, error: 'Payment system not available' };
   }
 

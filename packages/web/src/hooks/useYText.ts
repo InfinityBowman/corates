@@ -10,7 +10,6 @@ export function useYText(yText: Y.Text | null): string {
 
   useEffect(() => {
     if (!yText) {
-       
       setValue('');
       return;
     }

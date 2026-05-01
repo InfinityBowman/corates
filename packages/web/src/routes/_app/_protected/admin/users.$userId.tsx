@@ -446,11 +446,15 @@ function UserDetailContent() {
           </div>
           <div>
             <dt className='text-muted-foreground text-sm font-medium'>Created</dt>
-            <dd className='text-foreground mt-1 text-sm'>{formatDateTime(userData.user.createdAt)}</dd>
+            <dd className='text-foreground mt-1 text-sm'>
+              {formatDateTime(userData.user.createdAt)}
+            </dd>
           </div>
           <div>
             <dt className='text-muted-foreground text-sm font-medium'>Updated</dt>
-            <dd className='text-foreground mt-1 text-sm'>{formatDateTime(userData.user.updatedAt)}</dd>
+            <dd className='text-foreground mt-1 text-sm'>
+              {formatDateTime(userData.user.updatedAt)}
+            </dd>
           </div>
           <div>
             <dt className='text-muted-foreground text-sm font-medium'>Stripe Customer</dt>

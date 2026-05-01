@@ -4,7 +4,12 @@ import { SearchIcon, HomeIcon, UsersIcon, FolderIcon } from 'lucide-react';
 import { useAdminOrgs } from '@/hooks/useAdminQueries';
 import { formatDate } from '@/lib/formatDate';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
-import { DashboardHeader, AdminSection, AdminDataTable, ServerPagination } from '@/components/admin/ui';
+import {
+  DashboardHeader,
+  AdminSection,
+  AdminDataTable,
+  ServerPagination,
+} from '@/components/admin/ui';
 import { Input } from '@/components/ui/input';
 import type { ColumnDef } from '@tanstack/react-table';
 

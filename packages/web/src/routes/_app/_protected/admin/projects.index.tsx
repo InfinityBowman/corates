@@ -13,7 +13,12 @@ import {
 import { useAdminProjects, useAdminOrgs } from '@/hooks/useAdminQueries';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { formatDate } from '@/lib/formatDate';
-import { DashboardHeader, AdminSection, AdminDataTable, ServerPagination } from '@/components/admin/ui';
+import {
+  DashboardHeader,
+  AdminSection,
+  AdminDataTable,
+  ServerPagination,
+} from '@/components/admin/ui';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { wakeAllProjectDOsAction } from '@/server/functions/admin-projects.functions';
@@ -67,7 +72,12 @@ function AdminProjectList() {
       const result = await wakeAllProjectDOsAction();
       setWakeResult(result as WakeResult);
     } catch {
-      setWakeResult({ total: 0, succeeded: 0, failed: 1, errors: [{ projectId: '-', error: 'Request failed' }] });
+      setWakeResult({
+        total: 0,
+        succeeded: 0,
+        failed: 1,
+        errors: [{ projectId: '-', error: 'Request failed' }],
+      });
     } finally {
       setWaking(false);
     }
@@ -205,7 +215,7 @@ function AdminProjectList() {
             {waking ? 'Waking DOs...' : 'Wake All DOs'}
           </Button>
           {wakeResult && (
-            <span className='text-sm text-muted-foreground'>
+            <span className='text-muted-foreground text-sm'>
               {wakeResult.succeeded}/{wakeResult.total} succeeded
               {wakeResult.failed > 0 && (
                 <span className='text-destructive ml-1'>({wakeResult.failed} failed)</span>
@@ -214,7 +224,7 @@ function AdminProjectList() {
           )}
         </div>
         {wakeResult && wakeResult.errors.length > 0 && (
-          <div className='mt-2 rounded border border-destructive/20 bg-destructive/5 p-3 text-sm'>
+          <div className='border-destructive/20 bg-destructive/5 mt-2 rounded border p-3 text-sm'>
             {wakeResult.errors.map((e, i) => (
               <div key={i} className='text-destructive'>
                 {e.projectId}: {e.error}
@@ -242,7 +252,7 @@ function AdminProjectList() {
           <select
             value={selectedOrgId}
             onChange={e => handleOrgFilter(e.target.value)}
-            className='border-input h-8 w-full rounded-lg border bg-transparent px-2.5 text-sm transition-colors outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-3'
+            className='border-input focus-visible:border-ring focus-visible:ring-ring/50 h-8 w-full rounded-lg border bg-transparent px-2.5 text-sm transition-colors outline-none focus-visible:ring-3'
           >
             <option value=''>All Organizations</option>
             {orgs.map(org => (

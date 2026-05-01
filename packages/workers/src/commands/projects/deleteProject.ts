@@ -51,14 +51,20 @@ export async function deleteProject(
   try {
     await disconnectAllFromProject(env, projectId);
   } catch (err) {
-    captureError(err, { tags: { component: 'project', action: 'delete-disconnect' }, extra: { projectId } });
+    captureError(err, {
+      tags: { component: 'project', action: 'delete-disconnect' },
+      extra: { projectId },
+    });
   }
 
   // Clean up all PDFs from R2 storage
   try {
     await cleanupProjectStorage(env, projectId);
   } catch (err) {
-    captureError(err, { tags: { component: 'project', action: 'delete-r2-cleanup' }, extra: { projectId } });
+    captureError(err, {
+      tags: { component: 'project', action: 'delete-r2-cleanup' },
+      extra: { projectId },
+    });
   }
 
   try {

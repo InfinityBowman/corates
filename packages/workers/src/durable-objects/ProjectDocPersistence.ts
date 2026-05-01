@@ -177,9 +177,7 @@ export class ProjectDocPersistence {
       if (this.rowCount < 2) return;
 
       const hasUpdates = this.ctx.storage.sql
-        .exec<{ n: number }>(
-          `SELECT COUNT(*) AS n FROM yjs_updates WHERE kind = 'update' LIMIT 1`,
-        )
+        .exec<{ n: number }>(`SELECT COUNT(*) AS n FROM yjs_updates WHERE kind = 'update' LIMIT 1`)
         .one();
       if (hasUpdates.n === 0) return;
 
@@ -210,7 +208,12 @@ export class ProjectDocPersistence {
     return this.rowCount;
   }
 
-  getRowBreakdown(): { snapshot: number; update: number; snapshotBytes: number; updateBytes: number } {
+  getRowBreakdown(): {
+    snapshot: number;
+    update: number;
+    snapshotBytes: number;
+    updateBytes: number;
+  } {
     const breakdown = this.ctx.storage.sql
       .exec<{ kind: string; n: number; bytes: number }>(
         `SELECT kind, COUNT(*) AS n, COALESCE(SUM(LENGTH(payload)), 0) AS bytes

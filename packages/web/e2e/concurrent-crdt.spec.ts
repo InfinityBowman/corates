@@ -113,7 +113,9 @@ async function openEditableChecklist(page: Page): Promise<string> {
       .catch(() => false)
   ) {
     await page.goBack();
-    await expect(page.getByRole('button', { name: 'Open', exact: true }).first()).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByRole('button', { name: 'Open', exact: true }).first()).toBeVisible({
+      timeout: 10_000,
+    });
     await page.getByRole('button', { name: 'Open', exact: true }).first().click();
     await expect(page).toHaveURL(/\/checklists\//, { timeout: 10_000 });
   }
@@ -252,10 +254,14 @@ test.describe('Concurrent CRDT: AMSTAR2', () => {
 
     // User A adds checklist
     await setupPage.getByRole('tab', { name: /To Do/i }).click();
-    await expect(setupPage.getByRole('button', { name: /Select Checklist/i })).toBeVisible({ timeout: 10_000 });
+    await expect(setupPage.getByRole('button', { name: /Select Checklist/i })).toBeVisible({
+      timeout: 10_000,
+    });
     await setupPage.getByRole('button', { name: /Select Checklist/i }).click();
     await setupPage.getByRole('button', { name: /Add Checklist/i }).click();
-    await expect(setupPage.getByRole('button', { name: 'Open', exact: true })).toBeVisible({ timeout: 10_000 });
+    await expect(setupPage.getByRole('button', { name: 'Open', exact: true })).toBeVisible({
+      timeout: 10_000,
+    });
 
     await setupPage.getByRole('button', { name: 'Open', exact: true }).click();
     await expect(setupPage).toHaveURL(/\/checklists\//, { timeout: 10_000 });
@@ -270,10 +276,14 @@ test.describe('Concurrent CRDT: AMSTAR2', () => {
     await expect(setupPage.getByText('AMSTAR2 CRDT Test').first()).toBeVisible({ timeout: 15_000 });
 
     await setupPage.getByRole('tab', { name: /To Do/i }).click();
-    await expect(setupPage.getByRole('button', { name: /Select Checklist/i })).toBeVisible({ timeout: 10_000 });
+    await expect(setupPage.getByRole('button', { name: /Select Checklist/i })).toBeVisible({
+      timeout: 10_000,
+    });
     await setupPage.getByRole('button', { name: /Select Checklist/i }).click();
     await setupPage.getByRole('button', { name: /Add Checklist/i }).click();
-    await expect(setupPage.getByRole('button', { name: 'Open', exact: true })).toBeVisible({ timeout: 10_000 });
+    await expect(setupPage.getByRole('button', { name: 'Open', exact: true })).toBeVisible({
+      timeout: 10_000,
+    });
 
     const checklistUrlB = await openEditableChecklist(setupPage);
     await setupCtx.close();
@@ -323,18 +333,24 @@ test.describe('Concurrent CRDT: ROB2', () => {
 
     // User A adds ROB2 checklist
     await setupPage.getByRole('tab', { name: /To Do/i }).click();
-    await expect(setupPage.getByRole('button', { name: /Select Checklist/i })).toBeVisible({ timeout: 10_000 });
+    await expect(setupPage.getByRole('button', { name: /Select Checklist/i })).toBeVisible({
+      timeout: 10_000,
+    });
     await setupPage.getByRole('button', { name: /Select Checklist/i }).click();
     await setupPage.getByText(/AMSTAR 2/i).click();
     await setupPage.getByRole('option', { name: /RoB 2/i }).click();
     await setupPage.getByText(/Select outcome/i).click();
     await setupPage.getByRole('option', { name: /Primary outcome/i }).click();
     await setupPage.getByRole('button', { name: /Add Checklist/i }).click();
-    await expect(setupPage.getByRole('button', { name: 'Open', exact: true })).toBeVisible({ timeout: 10_000 });
+    await expect(setupPage.getByRole('button', { name: 'Open', exact: true })).toBeVisible({
+      timeout: 10_000,
+    });
 
     await setupPage.getByRole('button', { name: 'Open', exact: true }).click();
     await expect(setupPage).toHaveURL(/\/checklists\//, { timeout: 10_000 });
-    await expect(setupPage.getByText('Individually-randomized parallel-group trial')).toBeVisible({ timeout: 10_000 });
+    await expect(setupPage.getByText('Individually-randomized parallel-group trial')).toBeVisible({
+      timeout: 10_000,
+    });
 
     // Fill preliminary so domain questions are visible
     await fillROB2Preliminary(setupPage, 'Drug A', 'Placebo');
@@ -350,19 +366,25 @@ test.describe('Concurrent CRDT: ROB2', () => {
     await expect(setupPage.getByText('ROB2 CRDT Test').first()).toBeVisible({ timeout: 15_000 });
 
     await setupPage.getByRole('tab', { name: /To Do/i }).click();
-    await expect(setupPage.getByRole('button', { name: /Select Checklist/i })).toBeVisible({ timeout: 10_000 });
+    await expect(setupPage.getByRole('button', { name: /Select Checklist/i })).toBeVisible({
+      timeout: 10_000,
+    });
     await setupPage.getByRole('button', { name: /Select Checklist/i }).click();
     await setupPage.getByText(/AMSTAR 2/i).click();
     await setupPage.getByRole('option', { name: /RoB 2/i }).click();
     await setupPage.getByText(/Select outcome/i).click();
     await setupPage.getByRole('option', { name: /Primary outcome/i }).click();
     await setupPage.getByRole('button', { name: /Add Checklist/i }).click();
-    await expect(setupPage.getByRole('button', { name: 'Open', exact: true })).toBeVisible({ timeout: 10_000 });
+    await expect(setupPage.getByRole('button', { name: 'Open', exact: true })).toBeVisible({
+      timeout: 10_000,
+    });
 
     const checklistUrlB = await openEditableChecklist(setupPage);
 
     // Fill preliminary for User B too
-    await expect(setupPage.getByText('Individually-randomized parallel-group trial')).toBeVisible({ timeout: 10_000 });
+    await expect(setupPage.getByText('Individually-randomized parallel-group trial')).toBeVisible({
+      timeout: 10_000,
+    });
     await fillROB2Preliminary(setupPage, 'Drug B', 'Standard care');
 
     await setupCtx.close();
@@ -375,12 +397,16 @@ test.describe('Concurrent CRDT: ROB2', () => {
       loadedSelector: 'D1',
       clickA: async (page, count) => {
         await page.getByRole('button', { name: 'D1', exact: true }).click();
-        await expect(page.getByRole('button', { name: 'Y', exact: true }).first()).toBeVisible({ timeout: 5_000 });
+        await expect(page.getByRole('button', { name: 'Y', exact: true }).first()).toBeVisible({
+          timeout: 5_000,
+        });
         return clickROB2Buttons(page, 'Y', count);
       },
       clickB: async (page, count) => {
         await page.getByRole('button', { name: 'D1', exact: true }).click();
-        await expect(page.getByRole('button', { name: 'N', exact: true }).first()).toBeVisible({ timeout: 5_000 });
+        await expect(page.getByRole('button', { name: 'N', exact: true }).first()).toBeVisible({
+          timeout: 5_000,
+        });
         return clickROB2Buttons(page, 'N', count);
       },
       countA: page => countSelectedROB2Buttons(page, 'Y'),

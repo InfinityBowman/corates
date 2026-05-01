@@ -36,7 +36,7 @@ export function SplitScreenLayout({
 
   // Sync showSecondPanel with prop changes
   useEffect(() => {
-    setShowSecondPanel(showSecondPanelProp ?? false);  
+    setShowSecondPanel(showSecondPanelProp ?? false);
   }, [showSecondPanelProp]);
 
   // Extract exactly two panels from children

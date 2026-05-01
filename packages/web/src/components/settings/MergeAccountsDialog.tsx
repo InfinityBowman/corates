@@ -68,7 +68,6 @@ export function MergeAccountsDialog({
 
   // Reset on open/close
   useEffect(() => {
-     
     if (open) {
       setStep(STEPS.PROMPT);
       setTargetEmail('');
@@ -79,7 +78,6 @@ export function MergeAccountsDialog({
       setError(null);
       setLoading(false);
     }
-     
   }, [open]);
 
   const isOrcidConflict = useMemo(() => conflictProvider === 'orcid', [conflictProvider]);

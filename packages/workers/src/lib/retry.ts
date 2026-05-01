@@ -66,7 +66,9 @@ export async function withRetry<T>(options: RetryOptions<T>): Promise<RetryResul
         backoffMultiplier,
       });
 
-      warn(`[retry] ${operationName} failed (attempt ${attempt}/${maxAttempts}), retrying in ${delayMs}ms`);
+      warn(
+        `[retry] ${operationName} failed (attempt ${attempt}/${maxAttempts}), retrying in ${delayMs}ms`,
+      );
 
       await sleep(delayMs);
     }

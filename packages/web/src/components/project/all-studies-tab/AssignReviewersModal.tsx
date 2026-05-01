@@ -60,14 +60,12 @@ export function AssignReviewersModal({
   });
 
   useEffect(() => {
-     
     if (open) {
       initializeForm();
     } else {
       setReviewer1('_unassigned');
       setReviewer2('_unassigned');
     }
-     
   }, [open]);
 
   const handleSave = useCallback(async () => {

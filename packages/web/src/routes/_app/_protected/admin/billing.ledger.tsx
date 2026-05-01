@@ -323,7 +323,7 @@ function AdminBillingLedgerPage() {
             <select
               value={statusFilter}
               onChange={e => setStatusFilter(e.target.value)}
-              className='border-input mt-1 block h-8 w-full rounded-lg border bg-transparent px-2.5 text-sm transition-colors outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-3'
+              className='border-input focus-visible:border-ring focus-visible:ring-ring/50 mt-1 block h-8 w-full rounded-lg border bg-transparent px-2.5 text-sm transition-colors outline-none focus-visible:ring-3'
             >
               {STATUS_OPTIONS.map(option => (
                 <option key={option.value} value={option.value}>
@@ -349,7 +349,7 @@ function AdminBillingLedgerPage() {
             <select
               value={limit}
               onChange={e => setLimit(parseInt(e.target.value, 10))}
-              className='border-input mt-1 block h-8 w-full rounded-lg border bg-transparent px-2.5 text-sm transition-colors outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-3'
+              className='border-input focus-visible:border-ring focus-visible:ring-ring/50 mt-1 block h-8 w-full rounded-lg border bg-transparent px-2.5 text-sm transition-colors outline-none focus-visible:ring-3'
             >
               {LIMIT_OPTIONS.map(opt => (
                 <option key={opt} value={opt}>

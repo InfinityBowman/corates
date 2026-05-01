@@ -224,7 +224,10 @@ export async function syncProfile(db: Database, session: Session) {
         });
         return { projectId, success: true };
       } catch (err) {
-        captureError(err, { tags: { component: 'users', action: 'sync-profile' }, extra: { projectId } });
+        captureError(err, {
+          tags: { component: 'users', action: 'sync-profile' },
+          extra: { projectId },
+        });
         return { projectId, success: false };
       }
     }),

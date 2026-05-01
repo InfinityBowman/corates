@@ -63,7 +63,10 @@ export async function updateProject(
   try {
     await syncProjectToDO(env, projectId, metaUpdate, null);
   } catch (err) {
-    captureError(err, { tags: { component: 'project', action: 'update-do-sync' }, extra: { projectId } });
+    captureError(err, {
+      tags: { component: 'project', action: 'update-do-sync' },
+      extra: { projectId },
+    });
   }
 
   return { projectId, updated: true };

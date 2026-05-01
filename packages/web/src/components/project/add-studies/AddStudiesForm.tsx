@@ -10,14 +10,7 @@
  */
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import {
-  PlusIcon,
-  XIcon,
-  UploadIcon,
-  FileTextIcon,
-  LinkIcon,
-  FolderIcon,
-} from 'lucide-react';
+import { PlusIcon, XIcon, UploadIcon, FileTextIcon, LinkIcon, FolderIcon } from 'lucide-react';
 import { Collapsible, CollapsibleContent } from '@/components/ui/collapsible';
 import { Tabs, TabsList, TabsTrigger, TabsIndicator, TabsContent } from '@/components/ui/tabs';
 import { showToast } from '@/components/ui/toast';
@@ -78,7 +71,6 @@ export function AddStudiesForm({
 
   const isExpanded = alwaysExpanded || expanded || studies.hasAnyStudies();
 
-   
   const hasExistingStudiesRef = useRef(hasExistingStudies);
   hasExistingStudiesRef.current = hasExistingStudies;
   const isExpandedRef = useRef(isExpanded);
@@ -87,7 +79,6 @@ export function AddStudiesForm({
   isDraggingOverRef.current = isDraggingOver;
   const handlePdfSelectRef = useRef(studies.handlePdfSelect);
   handlePdfSelectRef.current = studies.handlePdfSelect;
-   
 
   // Restore state from OAuth redirect.
   // Expand unconditionally since restoreState enqueues React state updates

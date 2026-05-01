@@ -134,7 +134,10 @@ export async function createProject(
       ],
     );
   } catch (err) {
-    captureError(err, { tags: { component: 'project', action: 'create-do-sync' }, extra: { projectId } });
+    captureError(err, {
+      tags: { component: 'project', action: 'create-do-sync' },
+      extra: { projectId },
+    });
   }
 
   return {

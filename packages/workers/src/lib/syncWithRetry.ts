@@ -45,10 +45,15 @@ export async function syncMemberWithRetry(
   });
 
   if (!result.success) {
-    captureError(result.error instanceof Error ? result.error : new Error('DO member sync exhausted all retries'), {
-      tags: { component: 'sync-member' },
-      extra: { ...logContext, attempts: result.attempts },
-    });
+    captureError(
+      result.error instanceof Error ?
+        result.error
+      : new Error('DO member sync exhausted all retries'),
+      {
+        tags: { component: 'sync-member' },
+        extra: { ...logContext, attempts: result.attempts },
+      },
+    );
   }
 }
 

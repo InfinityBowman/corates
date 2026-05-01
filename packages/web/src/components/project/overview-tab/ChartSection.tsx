@@ -141,7 +141,6 @@ export function ChartSection({ studies }: ChartSectionProps) {
 
   // Sync custom labels when raw data changes
   useEffect(() => {
-     
     setCustomLabels(prev => {
       const currentIds = prev.map(l => l.id).join(',');
       const newIds = rawChecklistData.map(d => d.id).join(',');

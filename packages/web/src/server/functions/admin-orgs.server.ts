@@ -82,7 +82,10 @@ async function dispatchSubscriptionNotify(
       failed: result.failed,
     });
   } catch (err) {
-    captureError(err, { tags: { component: 'admin-orgs', action: 'subscription-notify' }, extra: { orgId, subscriptionAction: action } });
+    captureError(err, {
+      tags: { component: 'admin-orgs', action: 'subscription-notify' },
+      extra: { orgId, subscriptionAction: action },
+    });
   }
 }
 

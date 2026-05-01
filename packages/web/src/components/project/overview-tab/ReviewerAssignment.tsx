@@ -272,7 +272,15 @@ export function ReviewerAssignment({
     }
 
     return assignments;
-  }, [unassignedStudies, showCustomize, isCustomValid, pool1Members, pool2Members, getMemberName, members]);
+  }, [
+    unassignedStudies,
+    showCustomize,
+    isCustomValid,
+    pool1Members,
+    pool2Members,
+    getMemberName,
+    members,
+  ]);
 
   const handleGenerate = useCallback(() => {
     const assignments = generateAssignments();

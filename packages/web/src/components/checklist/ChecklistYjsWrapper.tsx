@@ -96,7 +96,7 @@ export function ChecklistYjsWrapper({ projectId, studyId, checklistId }: Checkli
   // Auto-select primary PDF
   useEffect(() => {
     if (defaultPdf && !selectedPdfId) {
-      setSelectedPdfId(defaultPdf.id);  
+      setSelectedPdfId(defaultPdf.id);
     }
   }, [defaultPdf, selectedPdfId]);
 
@@ -105,7 +105,7 @@ export function ChecklistYjsWrapper({ projectId, studyId, checklistId }: Checkli
     const fileName = currentPdf?.fileName;
     if (!fileName || !orgId || attemptedPdfFile === fileName || pdfLoading) return;
 
-    setAttemptedPdfFile(fileName);  
+    setAttemptedPdfFile(fileName);
     setPdfLoading(true);
     setPdfData(null);
 
@@ -143,7 +143,6 @@ export function ChecklistYjsWrapper({ projectId, studyId, checklistId }: Checkli
     setAttemptedPdfFile(null);
   }, []);
 
-   
   const handlePdfChange = useCallback(
     async (data: ArrayBuffer, fileName: string) => {
       if (!orgId) {
@@ -184,7 +183,6 @@ export function ChecklistYjsWrapper({ projectId, studyId, checklistId }: Checkli
     },
     [orgId, projectId, studyId, studyPdfs, user?.id, addPdfToStudy],
   );
-   
 
   const isChecklistValid = useMemo(() => {
     if (!checklistForUI) return false;

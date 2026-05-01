@@ -97,7 +97,7 @@ export function DevImportProject() {
 
   useEffect(() => {
     if (orgs.length > 0 && !selectedOrgId) {
-      setSelectedOrgId(orgs[0].id);  
+      setSelectedOrgId(orgs[0].id);
     }
   }, [orgs, selectedOrgId]);
 
@@ -109,7 +109,7 @@ export function DevImportProject() {
   useEffect(() => {
     if (selectedTemplate) {
       const tmpl = TEMPLATES.find(t => t.name === selectedTemplate);
-      if (tmpl) setProjectName(tmpl.description);  
+      if (tmpl) setProjectName(tmpl.description);
     }
   }, [selectedTemplate]);
 
@@ -144,8 +144,7 @@ export function DevImportProject() {
         data: { orgId: resolvedOrgId, name: projectName.trim() },
       })) as { id: string };
 
-      const userMapping =
-        Object.keys(roleAssignments).length > 0 ? roleAssignments : undefined;
+      const userMapping = Object.keys(roleAssignments).length > 0 ? roleAssignments : undefined;
 
       const templateResult = (await applyTemplate({
         data: {
@@ -175,7 +174,10 @@ export function DevImportProject() {
       const studiesWithIds = studies.filter(s => s.doi);
 
       if (studiesWithIds.length > 0) {
-        setResult({ success: true, message: `Fetching references (0/${studiesWithIds.length})...` });
+        setResult({
+          success: true,
+          message: `Fetching references (0/${studiesWithIds.length})...`,
+        });
 
         let fetched = 0;
         let pdfCount = 0;
@@ -297,8 +299,7 @@ export function DevImportProject() {
     setResult(null);
 
     try {
-      const name =
-        (parsed.meta as Record<string, unknown>)?.name || 'Imported Project';
+      const name = (parsed.meta as Record<string, unknown>)?.name || 'Imported Project';
       const description =
         ((parsed.meta as Record<string, unknown>)?.description as string) || undefined;
 
@@ -341,9 +342,9 @@ export function DevImportProject() {
 
   const tabClass = (active: boolean) =>
     `flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded transition-colors ${
-      active
-        ? 'bg-purple-600 text-white'
-        : 'text-muted-foreground hover:text-foreground hover:bg-muted'
+      active ?
+        'bg-purple-600 text-white'
+      : 'text-muted-foreground hover:text-foreground hover:bg-muted'
     }`;
 
   return (
@@ -548,7 +549,7 @@ function UserSearchField({
 
   useEffect(() => {
     if (debouncedQuery.length < 2) {
-      setResults([]);  
+      setResults([]);
       return;
     }
     let cancelled = false;
@@ -669,9 +670,7 @@ function UserSearchField({
               onClick={() => handleSelect(user)}
             >
               <UserIcon size={10} className='text-muted-foreground shrink-0' />
-              <span className='text-foreground truncate font-medium'>
-                {user.name || 'Unknown'}
-              </span>
+              <span className='text-foreground truncate font-medium'>{user.name || 'Unknown'}</span>
               <span className='text-muted-foreground truncate'>{user.email}</span>
               {currentUser && user.id === currentUser.id && (
                 <span className='text-2xs rounded bg-purple-100 px-1 text-purple-600'>(me)</span>

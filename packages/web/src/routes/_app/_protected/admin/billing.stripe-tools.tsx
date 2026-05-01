@@ -246,7 +246,7 @@ function StripeToolsPage() {
           <select
             value={searchType}
             onChange={e => setSearchType(e.target.value as 'email' | 'customerId')}
-            className='border-input h-8 rounded-lg border bg-transparent px-2.5 text-sm transition-colors outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-3'
+            className='border-input focus-visible:border-ring focus-visible:ring-ring/50 h-8 rounded-lg border bg-transparent px-2.5 text-sm transition-colors outline-none focus-visible:ring-3'
           >
             <option value='email'>Search by Email</option>
             <option value='customerId'>Search by Customer ID</option>
@@ -506,7 +506,8 @@ function StripeToolsPage() {
                       <div className='mt-3 grid grid-cols-2 gap-2 text-sm'>
                         <div>
                           <span className='text-muted-foreground'>Period:</span>{' '}
-                          {formatDateTime(sub.currentPeriodStart)} - {formatDateTime(sub.currentPeriodEnd)}
+                          {formatDateTime(sub.currentPeriodStart)} -{' '}
+                          {formatDateTime(sub.currentPeriodEnd)}
                         </div>
                         {sub.cancelAtPeriodEnd && (
                           <div className='text-destructive'>Cancels at period end</div>

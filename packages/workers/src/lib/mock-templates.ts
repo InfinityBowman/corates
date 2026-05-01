@@ -552,7 +552,8 @@ const MOCK_TEMPLATES: Record<string, TemplateFunction> = {
           description: '',
           createdAt: now,
           updatedAt: now,
-          originalTitle: 'The PRISMA 2020 statement: an updated guideline for reporting systematic reviews',
+          originalTitle:
+            'The PRISMA 2020 statement: an updated guideline for reporting systematic reviews',
           firstAuthor: 'Page',
           publicationYear: 2021,
           authors: 'Page MJ, McKenzie JE, Bossuyt PM, Boutron I, Hoffmann TC, Mulrow CD, et al.',
@@ -625,7 +626,8 @@ const MOCK_TEMPLATES: Record<string, TemplateFunction> = {
           description: '',
           createdAt: now,
           updatedAt: now,
-          originalTitle: 'The PRISMA 2020 statement: an updated guideline for reporting systematic reviews',
+          originalTitle:
+            'The PRISMA 2020 statement: an updated guideline for reporting systematic reviews',
           firstAuthor: 'Page',
           publicationYear: 2021,
           authors: 'Page MJ, McKenzie JE, Bossuyt PM, Boutron I, Hoffmann TC, Mulrow CD, et al.',
@@ -759,7 +761,8 @@ const MOCK_TEMPLATES: Record<string, TemplateFunction> = {
           description: '',
           createdAt: now,
           updatedAt: now,
-          originalTitle: 'The PRISMA 2020 statement: an updated guideline for reporting systematic reviews',
+          originalTitle:
+            'The PRISMA 2020 statement: an updated guideline for reporting systematic reviews',
           firstAuthor: 'Page',
           publicationYear: 2021,
           authors: 'Page MJ, McKenzie JE, Bossuyt PM, Boutron I, Hoffmann TC, Mulrow CD, et al.',
@@ -850,7 +853,8 @@ const MOCK_TEMPLATES: Record<string, TemplateFunction> = {
           description: '',
           createdAt: now,
           updatedAt: now,
-          originalTitle: 'The PRISMA 2020 statement: an updated guideline for reporting systematic reviews',
+          originalTitle:
+            'The PRISMA 2020 statement: an updated guideline for reporting systematic reviews',
           firstAuthor: 'Page',
           publicationYear: 2021,
           authors: 'Page MJ, McKenzie JE, Bossuyt PM, Boutron I, Hoffmann TC, Mulrow CD, et al.',
@@ -915,7 +919,8 @@ const MOCK_TEMPLATES: Record<string, TemplateFunction> = {
           description: '',
           createdAt: now,
           updatedAt: now,
-          originalTitle: 'The Cochrane Collaboration\'s tool for assessing risk of bias in randomised trials',
+          originalTitle:
+            "The Cochrane Collaboration's tool for assessing risk of bias in randomised trials",
           firstAuthor: 'Higgins',
           publicationYear: 2011,
           authors: 'Higgins JPT, Altman DG, Gotzsche PC, Juni P, Moher D, Oxman AD, et al.',

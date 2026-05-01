@@ -115,8 +115,7 @@ export const pdfActions = {
       throw new Error('No active project connection');
     }
 
-    const study =
-      getProjectAtoms(projectId).getOrCreateStudyAtom(studyId).get() ?? null;
+    const study = getProjectAtoms(projectId).getOrCreateStudyAtom(studyId).get() ?? null;
     const existingPdf = study?.pdfs.find(p => p.fileName === file.name);
     if (existingPdf) {
       throw new Error(`File "${file.name}" already exists. Rename or remove the existing copy.`);
@@ -249,8 +248,7 @@ export const pdfActions = {
     if (!studyId || !file) return;
     if (!projectId || !orgId || !ops) throw new Error('No active project connection');
 
-    const study =
-      getProjectAtoms(projectId).getOrCreateStudyAtom(studyId).get() ?? null;
+    const study = getProjectAtoms(projectId).getOrCreateStudyAtom(studyId).get() ?? null;
     const hasPdfs = (study?.pdfs.length ?? 0) > 0;
     const effectiveTag = !hasPdfs ? 'primary' : tag;
 

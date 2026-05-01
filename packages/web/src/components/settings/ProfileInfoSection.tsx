@@ -36,7 +36,6 @@ export function ProfileInfoSection() {
     return name.split(' ')[0] || '';
   }, [user?.givenName, user?.name]);
 
-   
   const lastName = useMemo(() => {
     if (user?.familyName) return user.familyName as string;
     const name = (user?.name as string) || '';
