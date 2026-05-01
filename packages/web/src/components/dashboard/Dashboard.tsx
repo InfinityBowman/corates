@@ -33,11 +33,7 @@ export function Dashboard() {
           </Alert>
         )}
 
-        <DashboardHeader
-          user={
-            user as { name?: string; givenName?: string; persona?: string; email?: string } | null
-          }
-        />
+        <DashboardHeader user={user} />
 
         <div id='projects-section' className='flex flex-col gap-8'>
           {isLoggedIn && (

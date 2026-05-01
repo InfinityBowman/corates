@@ -25,7 +25,7 @@ export function PersonaSection() {
   const [saving, setSaving] = useState(false);
 
   const startEditing = useCallback(() => {
-    setEditSelection((user?.persona as string) || '');
+    setEditSelection(user?.persona || '');
     setIsEditing(true);
   }, [user?.persona]);
 
@@ -91,7 +91,7 @@ export function PersonaSection() {
           : <div className='mt-1'>
               <span className='text-foreground text-sm'>
                 {user?.persona ?
-                  getRoleLabel(user.persona as string)
+                  getRoleLabel(user.persona)
                 : <span className='text-muted-foreground'>Not set</span>}
               </span>
             </div>

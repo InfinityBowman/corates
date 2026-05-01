@@ -2,11 +2,33 @@
  * LocalAppraisalsSection - Device-local appraisals with delete/rename
  */
 
-import { useState, useMemo, useCallback } from 'react';
+import { useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
-import { PlusIcon, FileTextIcon, LogInIcon, TriangleAlertIcon } from 'lucide-react';
+import type * as Y from 'yjs';
+import {
+  PlusIcon,
+  FileTextIcon,
+  LogInIcon,
+  TriangleAlertIcon,
+  DownloadIcon,
+  FileSpreadsheetIcon,
+  FileIcon,
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { buildProjectCsv, downloadCsv } from '@/lib/export-csv';
+import { buildProjectPdf, downloadPdf } from '@/lib/export-pdf';
 import { useAllStudies } from '@/stores/projectAtoms';
+import type { StudyInfo } from '@/stores/projectStore';
+import { scoreChecklistOfType } from '@/checklist-registry';
+import { extractAnswersFromYMap } from '@/primitives/useProject/sync';
+import { amstar2 } from '@corates/shared';
+import type { AMSTAR2Checklist } from '@corates/shared/checklists';
 import { connectionPool } from '@/project/ConnectionPool';
 import { LOCAL_PROJECT_ID } from '@/project/localProject';
 import { db } from '@/primitives/db';
@@ -48,36 +70,30 @@ export function LocalAppraisalsSection({
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
 
-  const appraisals = useMemo<AppraisalCardData[]>(() => {
-    const out: AppraisalCardData[] = [];
-    for (const study of studies) {
-      const checklist = (study.checklists || [])[0];
-      if (!checklist) continue;
-      out.push({
-        id: study.id,
-        name: study.name || 'Untitled Checklist',
-        type: checklist.type,
-        updatedAt: (checklist.updatedAt ?? study.updatedAt) as number | undefined,
-        createdAt: (checklist.createdAt ?? study.createdAt) as number | undefined,
-      });
-    }
-    out.sort((a, b) => (b.updatedAt ?? 0) - (a.updatedAt ?? 0));
-    return out;
-  }, [studies]);
+  const appraisals: AppraisalCardData[] = [];
+  for (const study of studies) {
+    const checklist = (study.checklists || [])[0];
+    if (!checklist) continue;
+    appraisals.push({
+      id: study.id,
+      name: study.name || 'Untitled Checklist',
+      type: checklist.type,
+      updatedAt: (checklist.updatedAt ?? study.updatedAt) as number | undefined,
+      createdAt: (checklist.createdAt ?? study.createdAt) as number | undefined,
+    });
+  }
+  appraisals.sort((a, b) => (b.updatedAt ?? 0) - (a.updatedAt ?? 0));
 
-  const handleOpen = useCallback(
-    (checklistId: string) => {
-      navigate({ to: `/checklist/${checklistId}` as string });
-    },
-    [navigate],
-  );
+  const handleOpen = (checklistId: string) => {
+    navigate({ to: `/checklist/${checklistId}` as string });
+  };
 
-  const handleDelete = useCallback((checklistId: string) => {
+  const handleDelete = (checklistId: string) => {
     setPendingDeleteId(checklistId);
     setDeleteDialogOpen(true);
-  }, []);
+  };
 
-  const confirmDelete = useCallback(async () => {
+  const confirmDelete = async () => {
     if (!pendingDeleteId) {
       setDeleteDialogOpen(false);
       return;
@@ -85,23 +101,91 @@ export function LocalAppraisalsSection({
     try {
       const ops = connectionPool.getOps(LOCAL_PROJECT_ID);
       ops?.study.deleteStudy(pendingDeleteId);
-      // PDFs live outside the Y.Doc; clean up the side table.
       await db.localChecklistPdfs.delete(pendingDeleteId);
     } finally {
       setDeleteDialogOpen(false);
       setPendingDeleteId(null);
     }
-  }, [pendingDeleteId]);
+  };
 
-  const handleRename = useCallback(async (studyId: string, newName: string) => {
+  const handleRename = async (studyId: string, newName: string) => {
     const ops = connectionPool.getOps(LOCAL_PROJECT_ID);
     ops?.study.updateStudy(studyId, { name: newName });
     ops?.checklist.updateChecklist(studyId, studyId, { title: newName });
-  }, []);
+  };
 
-  const handleCreate = useCallback(() => {
+  const handleCreate = () => {
     navigate({ to: '/checklist' as string });
-  }, [navigate]);
+  };
+
+  const enrichStudiesForExport = (toExport: StudyInfo[]): StudyInfo[] => {
+    const entry = connectionPool.getEntry(LOCAL_PROJECT_ID);
+    if (!entry) return toExport;
+
+    const reviewsMap = entry.ydoc.getMap('reviews');
+    return toExport.map(study => {
+      const studyYMap = reviewsMap.get(study.id) as Y.Map<unknown> | undefined;
+      if (!studyYMap) return study;
+
+      const checklistsMap = (studyYMap as Y.Map<unknown>).get('checklists') as
+        | Y.Map<unknown>
+        | undefined;
+      if (!checklistsMap) return study;
+
+      const enrichedChecklists = study.checklists.map(cl => {
+        if (cl.answers) return cl;
+
+        const clYMap = checklistsMap.get(cl.id) as Y.Map<unknown> | undefined;
+        if (!clYMap) return cl;
+
+        const answersYMap = (clYMap as Y.Map<unknown>).get('answers') as Y.Map<unknown> | undefined;
+        if (!answersYMap) return cl;
+
+        const answers = extractAnswersFromYMap(answersYMap, cl.type);
+        const score = scoreChecklistOfType(cl.type, answers);
+        const enriched = { ...cl, answers, score: score !== 'Error' ? score : null };
+
+        if (cl.type === 'AMSTAR2') {
+          enriched.consolidatedAnswers = amstar2.getAnswers(answers as unknown as AMSTAR2Checklist);
+        }
+
+        return enriched;
+      });
+
+      return { ...study, checklists: enrichedChecklists };
+    });
+  };
+
+  const handleExportAllCsv = () => {
+    const csv = buildProjectCsv({ studies: enrichStudiesForExport(studies) });
+    const date = new Date().toISOString().slice(0, 10);
+    downloadCsv(csv, `corates-local-appraisals-${date}.csv`);
+  };
+
+  const handleExportAllPdf = () => {
+    const enriched = enrichStudiesForExport(studies);
+    const doc = buildProjectPdf({ studies: enriched });
+    const date = new Date().toISOString().slice(0, 10);
+    downloadPdf(doc, `corates-local-appraisals-${date}.pdf`);
+  };
+
+  const handleExportOneCsv = (studyId: string) => {
+    const study = studies.find(s => s.id === studyId);
+    if (!study) return;
+    const csv = buildProjectCsv({ studies: enrichStudiesForExport([study]) });
+    const safeName = (study.name || 'appraisal').replace(/[^a-zA-Z0-9-_ ]/g, '').trim();
+    downloadCsv(csv, `${safeName}.csv`);
+  };
+
+  const handleExportOnePdf = (studyId: string) => {
+    const study = studies.find(s => s.id === studyId);
+    if (!study) return;
+    const enriched = enrichStudiesForExport([study]);
+    const name = study.name || 'appraisal';
+    const doc = buildProjectPdf({ studies: enriched, projectName: name });
+    const safeName = name.replace(/[^a-zA-Z0-9-_ ]/g, '').trim();
+    downloadPdf(doc, `${safeName}.pdf`);
+  };
 
   const hasChecklists = appraisals.length > 0;
 
@@ -113,10 +197,30 @@ export function LocalAppraisalsSection({
             Local Appraisals
           </h2>
           {hasChecklists && (
-            <Button onClick={handleCreate}>
-              <PlusIcon data-icon='inline-start' />
-              New Appraisal
-            </Button>
+            <div className='flex items-center gap-2'>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant='outline'>
+                    <DownloadIcon data-icon='inline-start' />
+                    Export All
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align='end' className='w-auto'>
+                  <DropdownMenuItem onClick={handleExportAllCsv}>
+                    <FileSpreadsheetIcon />
+                    Export as CSV
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={handleExportAllPdf}>
+                    <FileIcon />
+                    Export as PDF
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+              <Button onClick={handleCreate}>
+                <PlusIcon data-icon='inline-start' />
+                New Appraisal
+              </Button>
+            </div>
           )}
         </div>
       )}
@@ -176,6 +280,8 @@ export function LocalAppraisalsSection({
             onOpen={handleOpen}
             onDelete={handleDelete}
             onRename={newName => handleRename(appraisal.id, newName)}
+            onExportCsv={handleExportOneCsv}
+            onExportPdf={handleExportOnePdf}
             style={animation.statRise(index * 50)}
           />
         ))}
