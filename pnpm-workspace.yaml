@@ -4,6 +4,7 @@ packages:
 onlyBuiltDependencies:
   - '@parcel/watcher'
   - '@prisma/engines'
+  - '@sentry/cli'
   - agent-browser
   - better-sqlite3
   - esbuild
