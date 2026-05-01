@@ -40,6 +40,9 @@
     "ENVIRONMENT": "test",
     "AUTH_BASE_URL": "http://localhost:3010",
     "APP_URL": "http://localhost:3010",
-    "DEV_MODE": true
+    "DEV_MODE": true,
+    "STRIPE_SECRET_KEY": "sk_test_dummy",
+    "GOOGLE_CLIENT_ID": "test-google-client-id",
+    "GOOGLE_CLIENT_SECRET": "test-google-client-secret"
   }
 }
