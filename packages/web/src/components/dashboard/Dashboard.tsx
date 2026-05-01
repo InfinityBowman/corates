@@ -11,9 +11,12 @@ import { useSubscription } from '@/hooks/useSubscription';
 import { Alert } from '@/components/ui/alert';
 
 import { DashboardHeader } from './DashboardHeader';
+import { WelcomeCard } from './WelcomeCard';
 import { ProjectsSection } from './ProjectsSection';
 import { LocalAppraisalsSection } from './LocalAppraisalsSection';
 import { useInitialAnimation, AnimationContext } from './useInitialAnimation';
+
+const WELCOME_DISMISSED_KEY = 'corates-welcome-dismissed';
 
 export function Dashboard() {
   const animation = useInitialAnimation();
@@ -23,6 +26,24 @@ export function Dashboard() {
   const { subscriptionFetchFailed } = useSubscription();
 
   const [createModalOpen, setCreateModalOpen] = useState(false);
+  const [welcomeDismissed, setWelcomeDismissed] = useState(() => {
+    try {
+      return localStorage.getItem(WELCOME_DISMISSED_KEY) === 'true';
+    } catch {
+      return false;
+    }
+  });
+
+  const dismissWelcome = () => {
+    try {
+      localStorage.setItem(WELCOME_DISMISSED_KEY, 'true');
+    } catch {
+      // localStorage unavailable
+    }
+    setWelcomeDismissed(true);
+  };
+
+  const showWelcomeCard = isLoggedIn && !welcomeDismissed;
 
   return (
     <AnimationContext.Provider value={animation}>
@@ -33,7 +54,9 @@ export function Dashboard() {
           </Alert>
         )}
 
-        <DashboardHeader user={user} />
+        {showWelcomeCard ?
+          <WelcomeCard user={user!} onDismiss={dismissWelcome} />
+        : <DashboardHeader user={user} />}
 
         <div id='projects-section' className='flex flex-col gap-8'>
           {isLoggedIn && (

@@ -259,8 +259,9 @@ export function LocalAppraisalsSection({
             <h3 className='text-secondary-foreground mb-1 text-sm font-medium'>
               No local appraisals
             </h3>
-            <p className='text-muted-foreground mb-4 text-center text-xs'>
-              Create appraisals that stay on this device
+            <p className='text-muted-foreground mb-4 max-w-sm text-center text-xs'>
+              Use AMSTAR 2, ROBINS-I, or RoB 2 to appraise studies on this device with optional PDF
+              annotation
             </p>
             <button
               type='button'

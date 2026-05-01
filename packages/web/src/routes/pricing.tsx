@@ -64,7 +64,9 @@ function PricingPage() {
             Explore our plans for researchers and evidence synthesis teams.
           </h1>
           <p className='text-muted-foreground mt-4 text-lg'>
-            Start with a free trial, then choose the plan that fits your team's needs.
+            Individual appraisals with PDF annotation and export are always free.
+            <br />
+            Choose a plan when you're ready to collaborate with your team.
           </p>
         </div>
 
