@@ -3,7 +3,7 @@
  */
 
 import { useMemo } from 'react';
-import { FileTextIcon, ChevronRightIcon, Trash2Icon } from 'lucide-react';
+import { FileTextIcon, ChevronRightIcon, Trash2Icon, DownloadIcon } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { SimpleEditable } from '@/components/ui/editable';
 import { getChecklistMetadata } from '@/checklist-registry';
@@ -21,6 +21,7 @@ interface LocalAppraisalCardProps {
   onOpen: (id: string) => void;
   onDelete?: (id: string) => void;
   onRename?: (name: string) => void;
+  onExport?: (id: string) => void;
   style?: React.CSSProperties;
 }
 
@@ -29,6 +30,7 @@ export function LocalAppraisalCard({
   onOpen,
   onDelete,
   onRename,
+  onExport,
   style,
 }: LocalAppraisalCardProps) {
   const typeLabel = useMemo(() => {
@@ -71,6 +73,19 @@ export function LocalAppraisalCard({
 
         {/* Actions */}
         <div className='flex shrink-0 items-center gap-1'>
+          {onExport && (
+            <button
+              type='button'
+              onClick={e => {
+                e.stopPropagation();
+                onExport(checklist.id);
+              }}
+              className='text-muted-foreground hover:text-foreground rounded-lg p-2 transition-colors hover:bg-gray-50'
+              title='Export CSV'
+            >
+              <DownloadIcon className='size-4' />
+            </button>
+          )}
           {onDelete && (
             <button
               type='button'

@@ -476,7 +476,7 @@ function yTextToStr(value: unknown): string {
   return isYText(value) ? value.toString() : ((value as string) ?? '');
 }
 
-function extractAnswersFromYMap(
+export function extractAnswersFromYMap(
   answersMap: Y.Map<unknown>,
   checklistType: string,
 ): Record<string, unknown> {
