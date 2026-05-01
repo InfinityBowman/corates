@@ -193,8 +193,9 @@ test.describe('Auth flows', () => {
       await page.goto('/signin');
       await expect(page.getByText('Welcome Back')).toBeVisible({ timeout: 10_000 });
 
-      // Fill the password form (default active tab)
-      // Scope to the password panel to avoid ambiguity with the magic link panel
+      // Switch to the password tab (magic link is now the default)
+      await page.getByRole('tab', { name: 'Password' }).click();
+
       const passwordPanel = page.locator('#panel-password');
       await expect(passwordPanel.locator('#email-input')).toBeVisible({ timeout: 5_000 });
       await passwordPanel.locator('#email-input').click();
@@ -261,6 +262,9 @@ test.describe('Auth flows', () => {
 
       // Wait for auto-redirect to signin, then sign in with new password
       await expect(page).toHaveURL(/\/signin/, { timeout: 10_000 });
+
+      // Switch to the password tab (magic link is now the default)
+      await page.getByRole('tab', { name: 'Password' }).click();
 
       const signinEmail = page.locator('#email-input');
       await signinEmail.click();
