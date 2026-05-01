@@ -550,6 +550,7 @@ function UserSearchField({
   useEffect(() => {
     if (debouncedQuery.length < 2) {
       setResults([]);
+      setSearching(false);
       return;
     }
     let cancelled = false;
