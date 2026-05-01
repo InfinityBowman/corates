@@ -31,6 +31,8 @@ export interface SyncManager {
 
 export function createSyncManager(projectId: string, getYDoc: () => Y.Doc | null): SyncManager {
   let pendingSync = false;
+  let rafId: number | null = null;
+  let detached = false;
   let paused = false;
   const cleanupHandlers: (() => void)[] = [];
 
@@ -184,9 +186,10 @@ export function createSyncManager(projectId: string, getYDoc: () => Y.Doc | null
   function scheduleSync(): void {
     if (pendingSync) return;
     pendingSync = true;
-    requestAnimationFrame(() => {
+    rafId = requestAnimationFrame(() => {
+      rafId = null;
       pendingSync = false;
-      doSync();
+      if (!detached) doSync();
     });
   }
 
@@ -232,6 +235,12 @@ export function createSyncManager(projectId: string, getYDoc: () => Y.Doc | null
   }
 
   function detach(): void {
+    detached = true;
+    if (rafId !== null) {
+      cancelAnimationFrame(rafId);
+      rafId = null;
+      pendingSync = false;
+    }
     for (const cleanup of cleanupHandlers) {
       try {
         cleanup();
