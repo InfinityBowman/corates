@@ -79,11 +79,15 @@ test('Project state survives page refresh', async ({ context, page }) => {
   //         partial in-progress state survives the refresh.
   // ================================================================
   await page.getByRole('tab', { name: /To Do/i }).click();
-  await expect(page.getByRole('button', { name: /Select Checklist/i })).toBeVisible({ timeout: 10_000 });
+  await expect(page.getByRole('button', { name: /Select Checklist/i })).toBeVisible({
+    timeout: 10_000,
+  });
 
   await page.getByRole('button', { name: /Select Checklist/i }).click();
   await page.getByRole('button', { name: /Add Checklist/i }).click();
-  await expect(page.getByRole('button', { name: 'Open', exact: true })).toBeVisible({ timeout: 10_000 });
+  await expect(page.getByRole('button', { name: 'Open', exact: true })).toBeVisible({
+    timeout: 10_000,
+  });
   await page.getByRole('button', { name: 'Open', exact: true }).click();
   await expect(page).toHaveURL(/\/checklists\//, { timeout: 10_000 });
   await expect(page.getByRole('radio', { name: 'Yes' }).first()).toBeVisible({ timeout: 10_000 });
@@ -136,7 +140,9 @@ test('Project state survives page refresh', async ({ context, page }) => {
   //         before the first reload.
   // ================================================================
   await page.getByRole('tab', { name: /To Do/i }).click();
-  await expect(page.getByRole('button', { name: 'Open', exact: true })).toBeVisible({ timeout: 10_000 });
+  await expect(page.getByRole('button', { name: 'Open', exact: true })).toBeVisible({
+    timeout: 10_000,
+  });
 
   // Reopen the same checklist via the "Open" button
   await page.getByRole('button', { name: 'Open', exact: true }).click();
@@ -178,12 +184,7 @@ test('Project data survives navigate-away and navigate-back (cached phase)', asy
   context,
   page,
 }) => {
-  const projectId = await setupProjectWithStudy(
-    context,
-    page,
-    scenario,
-    'Cache Revisit E2E',
-  );
+  const projectId = await setupProjectWithStudy(context, page, scenario, 'Cache Revisit E2E');
 
   // Verify study is present after initial setup
   await page.getByRole('tab', { name: /All Studies/i }).click();
@@ -209,10 +210,7 @@ test('Project data survives navigate-away and navigate-back (cached phase)', asy
   await expect(page.getByText(/1 study in this project/i)).toBeVisible({ timeout: 15_000 });
 });
 
-test('Concurrent server-side change merges correctly on revisit', async ({
-  context,
-  page,
-}) => {
+test('Concurrent server-side change merges correctly on revisit', async ({ context, page }) => {
   const projectId = await setupProjectWithStudy(
     context,
     page,
@@ -247,16 +245,8 @@ test('Concurrent server-side change merges correctly on revisit', async ({
   await expect(page.getByText(/2 studies in this project/i)).toBeVisible({ timeout: 30_000 });
 });
 
-test('Project actions work after cold reload (no warm query cache)', async ({
-  context,
-  page,
-}) => {
-  await setupProjectWithStudy(
-    context,
-    page,
-    scenario,
-    'Cold Reload Actions E2E',
-  );
+test('Project actions work after cold reload (no warm query cache)', async ({ context, page }) => {
+  await setupProjectWithStudy(context, page, scenario, 'Cold Reload Actions E2E');
 
   await page.getByRole('tab', { name: /All Studies/i }).click();
   await expect(page.getByText(/1 study in this project/i)).toBeVisible({ timeout: 10_000 });
@@ -288,16 +278,8 @@ test('Project actions work after cold reload (no warm query cache)', async ({
   expect(connectionErrors).toHaveLength(0);
 });
 
-test('Rapid navigation does not corrupt state or crash', async ({
-  context,
-  page,
-}) => {
-  const projectId = await setupProjectWithStudy(
-    context,
-    page,
-    scenario,
-    'Rapid Nav E2E',
-  );
+test('Rapid navigation does not corrupt state or crash', async ({ context, page }) => {
+  const projectId = await setupProjectWithStudy(context, page, scenario, 'Rapid Nav E2E');
 
   await page.getByRole('tab', { name: /All Studies/i }).click();
   await expect(page.getByText(/1 study in this project/i)).toBeVisible({ timeout: 10_000 });

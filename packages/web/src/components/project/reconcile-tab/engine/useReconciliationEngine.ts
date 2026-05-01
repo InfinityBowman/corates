@@ -103,11 +103,10 @@ export function useReconciliationEngine({
       const stored = localStorage.getItem(storageKey);
       if (stored) {
         const parsed = JSON.parse(stored);
-        /* eslint-disable react-hooks/set-state-in-effect -- restoring persisted nav state on mount */
+
         if (typeof parsed.currentPage === 'number') setCurrentPage(parsed.currentPage);
         if (parsed.viewMode === 'questions' || parsed.viewMode === 'summary')
           setViewModeRaw(parsed.viewMode);
-        /* eslint-enable react-hooks/set-state-in-effect */
       }
     } catch {
       // Silently ignore corrupted storage
@@ -198,7 +197,7 @@ export function useReconciliationEngine({
     if (totalPages === 0) return;
     const clamped = Math.max(0, Math.min(currentPage, totalPages - 1));
     if (clamped !== currentPage) {
-      setCurrentPage(clamped); // eslint-disable-line react-hooks/set-state-in-effect -- clamping to valid range after navItems change
+      setCurrentPage(clamped);
     }
   }, [totalPages, currentPage]);
 
@@ -213,7 +212,7 @@ export function useReconciliationEngine({
     if (navItems.length > 0) {
       const item = navItems[currentPage];
       if (item?.sectionKey) {
-        setExpandedDomain(item.sectionKey); // eslint-disable-line react-hooks/set-state-in-effect -- one-time auto-expand on mount
+        setExpandedDomain(item.sectionKey);
         hasAutoExpandedRef.current = true;
       }
     }

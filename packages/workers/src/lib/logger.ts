@@ -13,12 +13,22 @@ export function captureError(error: unknown, context?: ErrorContext): void {
 }
 
 export function warn(message: string, params?: LogParams): void {
-  console.warn(message, ...(Array.isArray(params) ? params : params ? [params] : []));
+  console.warn(
+    message,
+    ...(Array.isArray(params) ? params
+    : params ? [params]
+    : []),
+  );
   Sentry.logger.warn(message, toAttributes(params));
 }
 
 export function info(message: string, params?: LogParams): void {
-  console.info(message, ...(Array.isArray(params) ? params : params ? [params] : []));
+  console.info(
+    message,
+    ...(Array.isArray(params) ? params
+    : params ? [params]
+    : []),
+  );
   Sentry.logger.info(message, toAttributes(params));
 }
 

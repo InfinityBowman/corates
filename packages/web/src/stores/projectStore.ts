@@ -132,14 +132,7 @@ export interface StudyInfo {
   annotations: Record<string, AnnotationEntry[]>;
 }
 
-interface ProjectData {
-  meta: ProjectMeta;
-  members: MemberEntry[];
-  studies: StudyInfo[];
-}
-
 interface ProjectStoreState {
-  projects: Record<string, ProjectData>;
   activeProjectId: string | null;
   connections: Record<string, ConnectionMachineState>;
   projectStats: Record<string, ProjectStats>;
@@ -147,7 +140,7 @@ interface ProjectStoreState {
 
 interface ProjectStoreActions {
   setActiveProject: (projectId: string | null) => void;
-  setProjectData: (projectId: string, data: Partial<ProjectData>) => void;
+  updateProjectStats: (projectId: string, studies: StudyInfo[]) => void;
   dispatchConnectionEvent: (projectId: string, event: ConnectionEvent) => void;
   clearProject: (projectId: string) => void;
 }
@@ -185,7 +178,6 @@ function computeProjectStats(studies: StudyInfo[]): { studyCount: number; comple
 
 export const useProjectStore = create<ProjectStoreState & ProjectStoreActions>()(
   immer(set => ({
-    projects: {},
     activeProjectId: null,
     connections: {},
     projectStats: loadPersistedStats(),
@@ -195,32 +187,12 @@ export const useProjectStore = create<ProjectStoreState & ProjectStoreActions>()
         state.activeProjectId = projectId;
       }),
 
-    setProjectData: (projectId, data) => {
-      let studiesChanged = false;
+    updateProjectStats: (projectId, studies) => {
       set(state => {
-        if (!state.projects[projectId]) {
-          state.projects[projectId] = { meta: { outcomes: [] }, members: [], studies: [] };
-        }
-        const project = state.projects[projectId];
-        if (data.meta !== undefined) {
-          project.meta = data.meta;
-        }
-        if (data.members !== undefined) {
-          project.members = data.members;
-        }
-        if (data.studies !== undefined) {
-          project.studies = data.studies;
-          const stats = computeProjectStats(data.studies);
-          state.projectStats[projectId] = {
-            ...stats,
-            lastUpdated: Date.now(),
-          };
-          studiesChanged = true;
-        }
+        const stats = computeProjectStats(studies);
+        state.projectStats[projectId] = { ...stats, lastUpdated: Date.now() };
       });
-      if (studiesChanged) {
-        persistStats(useProjectStore.getState().projectStats);
-      }
+      persistStats(useProjectStore.getState().projectStats);
     },
 
     dispatchConnectionEvent: (projectId, event) =>
@@ -231,7 +203,6 @@ export const useProjectStore = create<ProjectStoreState & ProjectStoreActions>()
 
     clearProject: projectId =>
       set(state => {
-        delete state.projects[projectId];
         delete state.connections[projectId];
         if (state.activeProjectId === projectId) {
           state.activeProjectId = null;
@@ -239,13 +210,6 @@ export const useProjectStore = create<ProjectStoreState & ProjectStoreActions>()
       }),
   })),
 );
-
-// Stable fallback constants -- must be module-level so they're referentially equal
-// across renders. Without these, selectors return new objects/arrays on every call
-// when a project doesn't exist in the store, causing infinite re-render loops.
-const EMPTY_STUDIES: StudyInfo[] = [];
-const EMPTY_MEMBERS: MemberEntry[] = [];
-const EMPTY_META: ProjectMeta = { outcomes: [] };
 
 // Selectors (pure functions, not hooks -- can be used with useProjectStore(selector))
 
@@ -261,26 +225,4 @@ export function selectProjectStats(
   projectId: string,
 ): ProjectStats | null {
   return state.projectStats[projectId] || null;
-}
-
-export function selectStudies(state: ProjectStoreState, projectId: string): StudyInfo[] {
-  return state.projects[projectId]?.studies || EMPTY_STUDIES;
-}
-
-export function selectMembers(state: ProjectStoreState, projectId: string): MemberEntry[] {
-  return state.projects[projectId]?.members || EMPTY_MEMBERS;
-}
-
-export function selectMeta(state: ProjectStoreState, projectId: string): ProjectMeta {
-  return state.projects[projectId]?.meta || EMPTY_META;
-}
-
-export function selectStudy(
-  state: ProjectStoreState,
-  projectId: string,
-  studyId: string,
-): StudyInfo | null {
-  const studies = state.projects[projectId]?.studies;
-  if (!studies) return null;
-  return studies.find(s => s.id === studyId) || null;
 }

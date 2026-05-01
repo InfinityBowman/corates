@@ -35,7 +35,7 @@ export function PlansSettings() {
   }, [navigate, refetch]);
 
   useEffect(() => {
-    if (hasPendingPlan()) processPendingPlan(); // eslint-disable-line react-hooks/set-state-in-effect
+    if (hasPendingPlan()) processPendingPlan();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (pageState === 'error') {

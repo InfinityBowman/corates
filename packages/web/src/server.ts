@@ -1,4 +1,3 @@
-import { createStartHandler, defaultStreamHandler } from '@tanstack/react-start/server';
 import * as Sentry from '@sentry/cloudflare';
 import { handleEmailQueue } from '@corates/workers/queue';
 import { getProjectDocStub } from '@corates/workers/project-doc-id';
@@ -7,7 +6,25 @@ import { getProjectDocStub } from '@corates/workers/project-doc-id';
 // worker's main module. The class implementations live in @corates/workers.
 export { UserSession, ProjectDoc } from '@corates/workers/durable-objects';
 
-const startFetch = createStartHandler(defaultStreamHandler);
+// Workaround for Vite ModuleRunner bug (vitejs/vite#22293): static top-level
+// imports of `createStartHandler` break after HMR due to stale cycle detection
+// in `export *` re-export chains. Dynamic import avoids the issue.
+let startFetch: ((req: Request, opts?: never) => Response | Promise<Response>) | null = null;
+
+async function getStartFetch() {
+  if (!startFetch) {
+    const { createStartHandler, defaultStreamHandler } =
+      await import('@tanstack/react-start/server');
+    startFetch = createStartHandler(defaultStreamHandler);
+  }
+  return startFetch!;
+}
+
+if (import.meta.hot) {
+  import.meta.hot.accept(() => {
+    startFetch = null;
+  });
+}
 
 // `/api/project-doc/<projectId>(/<...>)?` — y-websocket appends the room as
 // the trailing segment; we route by path prefix and forward the original
@@ -59,7 +76,8 @@ const workerHandler = {
     // work like Stripe webhook ledger updates and notification fan-out).
     // Cast: createStartHandler's RequestOptions.context defaults to a narrow
     // BaseContext until we register a project-wide requestContext type.
-    return startFetch(request, { context: { cloudflareCtx: ctx } } as never);
+    const handler = await getStartFetch();
+    return handler(request, { context: { cloudflareCtx: ctx } } as never);
   },
 
   async queue(batch: MessageBatch<unknown>, env: unknown): Promise<void> {

@@ -68,7 +68,7 @@ function CheckEmailPage() {
   // Set up polling and visibility change listener
   useEffect(() => {
     intervalRef.current = setInterval(() => checkVerificationStatus(true), POLL_INTERVAL_MS);
-    checkVerificationStatus(true); // eslint-disable-line react-hooks/set-state-in-effect -- initial check on mount
+    checkVerificationStatus(true);
 
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') {

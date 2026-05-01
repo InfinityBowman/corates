@@ -59,7 +59,7 @@ export function SearchSidebar({ documentId, onClose }: SearchSidebarProps) {
 
   // Sync inputValue with persisted state.query when state loads
   useEffect(() => {
-    setInputValue(state.query || ''); // eslint-disable-line react-hooks/set-state-in-effect -- syncing from external search state
+    setInputValue(state.query || '');
   }, [state.query, documentId]);
 
   useEffect(() => {

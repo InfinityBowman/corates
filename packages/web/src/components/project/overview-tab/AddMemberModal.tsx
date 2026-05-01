@@ -69,7 +69,7 @@ export function AddMemberModal({
   // Search users on debounced query change
   useEffect(() => {
     if (debouncedQuery.length < 2) {
-      setSearchResults([]); // eslint-disable-line react-hooks/set-state-in-effect -- clearing results when query is too short
+      setSearchResults([]);
       return;
     }
     let cancelled = false;

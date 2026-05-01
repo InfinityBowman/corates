@@ -73,7 +73,10 @@ export async function removeMember(
         removedBy: actor.name || actor.email || 'Unknown',
       });
     } catch (err) {
-      captureError(err, { tags: { component: 'member', action: 'remove-notify' }, extra: { projectId, userId } });
+      captureError(err, {
+        tags: { component: 'member', action: 'remove-notify' },
+        extra: { projectId, userId },
+      });
     }
   }
 

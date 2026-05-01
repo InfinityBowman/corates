@@ -95,7 +95,7 @@ interface ImportData {
     authors?: unknown;
     journal?: unknown;
     doi?: unknown;
-      abstract?: unknown;
+    abstract?: unknown;
     pdfUrl?: unknown;
     pdfSource?: unknown;
     pdfAccessible?: unknown;
@@ -1023,8 +1023,7 @@ export async function handleDevApplyTemplate(ctx: DevContext, request: Request):
   const importResponse = await handleDevImport(ctx, fakeRequest);
   const importResult = (await importResponse.json()) as Record<string, unknown>;
 
-  return new Response(
-    JSON.stringify({ ...importResult, studies: studyIdentifiers }),
-    { headers: { 'Content-Type': 'application/json' } },
-  );
+  return new Response(JSON.stringify({ ...importResult, studies: studyIdentifiers }), {
+    headers: { 'Content-Type': 'application/json' },
+  });
 }

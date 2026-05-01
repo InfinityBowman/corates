@@ -5,8 +5,8 @@
 import { useMemo, useCallback } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { CheckCircleIcon } from 'lucide-react';
-import { useProjectStore, selectStudies } from '@/stores/projectStore';
 import { useProjectContext } from '../ProjectContext';
+import { useAllStudies, useProjectMeta } from '@/stores/projectAtoms';
 import { connectionPool } from '@/project/ConnectionPool';
 import { getStudiesForTab, isDualReviewerStudy, getOutcomeKey } from '@corates/shared/checklists';
 import { CompletedStudyRow } from './CompletedStudyRow';
@@ -19,8 +19,8 @@ export function CompletedTab() {
   const conn = connectionPool.getOps(projectId);
   const getAllReconciliationProgress = conn?.reconciliation.getAllReconciliationProgress;
 
-  const studies = useProjectStore(s => selectStudies(s, projectId));
-  const meta = useProjectStore(s => s.projects[projectId]?.meta);
+  const studies = useAllStudies(projectId);
+  const meta = useProjectMeta(projectId);
 
   const getOutcomeName = useCallback(
     (outcomeId: string) => {

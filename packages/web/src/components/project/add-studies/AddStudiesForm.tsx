@@ -10,18 +10,11 @@
  */
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import {
-  PlusIcon,
-  XIcon,
-  UploadIcon,
-  FileTextIcon,
-  LinkIcon,
-  FolderIcon,
-} from 'lucide-react';
+import { PlusIcon, XIcon, UploadIcon, FileTextIcon, LinkIcon, FolderIcon } from 'lucide-react';
 import { Collapsible, CollapsibleContent } from '@/components/ui/collapsible';
 import { Tabs, TabsList, TabsTrigger, TabsIndicator, TabsContent } from '@/components/ui/tabs';
 import { showToast } from '@/components/ui/toast';
-import { useProjectStore } from '@/stores/projectStore';
+import { useStudyIds } from '@/stores/projectAtoms';
 import { useAddStudies } from '@/hooks/useAddStudies';
 import type { CollectedStudies } from '@/hooks/useAddStudies';
 import type { MergedStudy } from '@/hooks/useAddStudies/deduplication';
@@ -72,15 +65,12 @@ export function AddStudiesForm({
     onStudiesChange,
   });
 
-  // Check if project has existing studies via store
-  const existingStudyCount = useProjectStore(s =>
-    projectId ? (s.projects[projectId]?.studies?.length ?? 0) : 0,
-  );
+  const studyIds = useStudyIds(projectId || '');
+  const existingStudyCount = projectId ? studyIds.length : 0;
   const hasExistingStudies = !collectMode && !!projectId && existingStudyCount > 0;
 
   const isExpanded = alwaysExpanded || expanded || studies.hasAnyStudies();
 
-  /* eslint-disable react-hooks/refs -- intentional ref-sync for event handler closures */
   const hasExistingStudiesRef = useRef(hasExistingStudies);
   hasExistingStudiesRef.current = hasExistingStudies;
   const isExpandedRef = useRef(isExpanded);
@@ -89,7 +79,6 @@ export function AddStudiesForm({
   isDraggingOverRef.current = isDraggingOver;
   const handlePdfSelectRef = useRef(studies.handlePdfSelect);
   handlePdfSelectRef.current = studies.handlePdfSelect;
-  /* eslint-enable react-hooks/refs */
 
   // Restore state from OAuth redirect.
   // Expand unconditionally since restoreState enqueues React state updates

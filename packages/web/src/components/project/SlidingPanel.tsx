@@ -37,7 +37,7 @@ export function SlidingPanel({
   // Mount/animate lifecycle
   useEffect(() => {
     if (open) {
-      setMounted(true); // eslint-disable-line react-hooks/set-state-in-effect -- intentional mount-then-animate pattern
+      setMounted(true);
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
           setVisible(true);

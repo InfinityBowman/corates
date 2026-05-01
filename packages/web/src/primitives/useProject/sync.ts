@@ -4,7 +4,6 @@
  */
 
 import * as Y from 'yjs';
-import { useProjectStore } from '@/stores/projectStore';
 import type {
   StudyInfo,
   ChecklistEntry,
@@ -13,6 +12,8 @@ import type {
   ProjectMeta,
   OutcomeEntry,
 } from '@/stores/projectStore';
+import { useProjectStore } from '@/stores/projectStore';
+import { getProjectAtoms, cleanupProjectAtoms } from '@/stores/projectAtoms';
 import { scoreChecklistOfType } from '@/checklist-registry/index';
 import { amstar2 } from '@corates/shared';
 import { CHECKLIST_STATUS } from '@corates/shared/checklists';
@@ -30,6 +31,8 @@ export interface SyncManager {
 
 export function createSyncManager(projectId: string, getYDoc: () => Y.Doc | null): SyncManager {
   let pendingSync = false;
+  let rafId: number | null = null;
+  let detached = false;
   let paused = false;
   const cleanupHandlers: (() => void)[] = [];
 
@@ -167,21 +170,26 @@ export function createSyncManager(projectId: string, getYDoc: () => Y.Doc | null
     dirtySlices.members = false;
     dirtySlices.meta = false;
 
-    if (
-      updates.studies !== undefined ||
-      updates.members !== undefined ||
-      updates.meta !== undefined
-    ) {
-      useProjectStore.getState().setProjectData(projectId, updates);
+    const projectAtoms = getProjectAtoms(projectId);
+    if (updates.studies !== undefined) {
+      projectAtoms.setStudies(updates.studies);
+      useProjectStore.getState().updateProjectStats(projectId, updates.studies);
+    }
+    if (updates.members !== undefined) {
+      projectAtoms.members.set(updates.members);
+    }
+    if (updates.meta !== undefined) {
+      projectAtoms.meta.set(updates.meta);
     }
   }
 
   function scheduleSync(): void {
     if (pendingSync) return;
     pendingSync = true;
-    requestAnimationFrame(() => {
+    rafId = requestAnimationFrame(() => {
+      rafId = null;
       pendingSync = false;
-      doSync();
+      if (!detached) doSync();
     });
   }
 
@@ -227,6 +235,12 @@ export function createSyncManager(projectId: string, getYDoc: () => Y.Doc | null
   }
 
   function detach(): void {
+    detached = true;
+    if (rafId !== null) {
+      cancelAnimationFrame(rafId);
+      rafId = null;
+      pendingSync = false;
+    }
     for (const cleanup of cleanupHandlers) {
       try {
         cleanup();
@@ -237,6 +251,7 @@ export function createSyncManager(projectId: string, getYDoc: () => Y.Doc | null
     cleanupHandlers.length = 0;
     studyCache.clear();
     sortedStudies = [];
+    cleanupProjectAtoms(projectId);
   }
 
   function pause(): void {

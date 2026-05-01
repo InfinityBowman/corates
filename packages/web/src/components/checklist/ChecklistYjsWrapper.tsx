@@ -96,7 +96,7 @@ export function ChecklistYjsWrapper({ projectId, studyId, checklistId }: Checkli
   // Auto-select primary PDF
   useEffect(() => {
     if (defaultPdf && !selectedPdfId) {
-      setSelectedPdfId(defaultPdf.id); // eslint-disable-line react-hooks/set-state-in-effect -- one-time sync from derived data
+      setSelectedPdfId(defaultPdf.id);
     }
   }, [defaultPdf, selectedPdfId]);
 
@@ -105,7 +105,7 @@ export function ChecklistYjsWrapper({ projectId, studyId, checklistId }: Checkli
     const fileName = currentPdf?.fileName;
     if (!fileName || !orgId || attemptedPdfFile === fileName || pdfLoading) return;
 
-    setAttemptedPdfFile(fileName); // eslint-disable-line react-hooks/set-state-in-effect -- guards duplicate fetches
+    setAttemptedPdfFile(fileName);
     setPdfLoading(true);
     setPdfData(null);
 
@@ -143,7 +143,6 @@ export function ChecklistYjsWrapper({ projectId, studyId, checklistId }: Checkli
     setAttemptedPdfFile(null);
   }, []);
 
-  /* eslint-disable react-hooks/preserve-manual-memoization -- async callback with complex closure */
   const handlePdfChange = useCallback(
     async (data: ArrayBuffer, fileName: string) => {
       if (!orgId) {
@@ -184,7 +183,6 @@ export function ChecklistYjsWrapper({ projectId, studyId, checklistId }: Checkli
     },
     [orgId, projectId, studyId, studyPdfs, user?.id, addPdfToStudy],
   );
-  /* eslint-enable react-hooks/preserve-manual-memoization */
 
   const isChecklistValid = useMemo(() => {
     if (!checklistForUI) return false;

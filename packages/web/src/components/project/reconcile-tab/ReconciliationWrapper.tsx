@@ -8,12 +8,8 @@ import { useNavigate } from '@tanstack/react-router';
 import { useProjectContext } from '@/components/project/ProjectContext';
 import { connectionPool } from '@/project/ConnectionPool';
 import { buildChecklistAnswerInput, type TextRef } from '@/primitives/useProject/checklists';
-import {
-  useProjectStore,
-  selectMembers,
-  selectConnectionPhase,
-  selectStudy,
-} from '@/stores/projectStore';
+import { useProjectStore, selectConnectionPhase } from '@/stores/projectStore';
+import { useStudy, useProjectMembers } from '@/stores/projectAtoms';
 import { useAuthStore, selectUser } from '@/stores/authStore';
 import { ACCESS_DENIED_ERRORS } from '@/constants/errors.js';
 import {
@@ -83,10 +79,9 @@ export function ReconciliationWrapper({
     };
   }, [user]);
 
-  // Read data from store (use stable selectors to avoid infinite re-render loops)
   const connectionState = useProjectStore(s => selectConnectionPhase(s, projectId));
-  const currentStudy = useProjectStore(s => selectStudy(s, projectId, studyId));
-  const members = useProjectStore(s => selectMembers(s, projectId));
+  const currentStudy = useStudy(projectId, studyId);
+  const members = useProjectMembers(projectId);
 
   // Watch for access-denied errors and redirect
   useEffect(() => {
@@ -123,7 +118,7 @@ export function ReconciliationWrapper({
   // Auto-select primary PDF when study loads
   useEffect(() => {
     if (defaultPdf && !selectedPdfId) {
-      setSelectedPdfId(defaultPdf.id); // eslint-disable-line react-hooks/set-state-in-effect -- one-time sync from derived data
+      setSelectedPdfId(defaultPdf.id);
     }
   }, [defaultPdf, selectedPdfId]);
 
@@ -132,7 +127,7 @@ export function ReconciliationWrapper({
     const fileName = currentPdf?.fileName;
     if (!fileName || !orgId || attemptedPdfFile === fileName || pdfLoading) return;
 
-    setAttemptedPdfFile(fileName); // eslint-disable-line react-hooks/set-state-in-effect -- guards duplicate fetches
+    setAttemptedPdfFile(fileName);
     setPdfLoading(true);
     setPdfData(null);
 
@@ -260,7 +255,6 @@ export function ReconciliationWrapper({
       return;
     }
 
-    /* eslint-disable react-hooks/set-state-in-effect -- one-time reconciled checklist initialization */
     setHasCheckedForReconciled(true);
     setReconciledChecklistLoading(true);
 
@@ -324,7 +318,6 @@ export function ReconciliationWrapper({
 
     setReconciledChecklistId(newChecklistId);
     setReconciledChecklistLoading(false);
-    /* eslint-enable react-hooks/set-state-in-effect */
   }, [
     currentStudy,
     connectionState.phase,
@@ -360,7 +353,7 @@ export function ReconciliationWrapper({
           checklist2Id,
           reconciledChecklistId: firstCreated.id,
         });
-        setReconciledChecklistId(firstCreated.id); // eslint-disable-line react-hooks/set-state-in-effect -- resolving multi-client race
+        setReconciledChecklistId(firstCreated.id);
       }
     }
   }, [

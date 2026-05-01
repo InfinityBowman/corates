@@ -132,14 +132,13 @@ export function useReconciliationPresence({
   const [refreshTick, setRefreshTick] = useState(0);
 
   // Refs to avoid stale closures in event handlers
-  /* eslint-disable react-hooks/refs -- intentional ref-sync for useSyncExternalStore callbacks */
+
   const currentPageRef = useRef(getCurrentPage);
   currentPageRef.current = getCurrentPage;
   const checklistTypeRef = useRef(checklistType);
   checklistTypeRef.current = checklistType;
   const currentUserRef = useRef(currentUser);
   currentUserRef.current = currentUser;
-  /* eslint-enable react-hooks/refs */
 
   // Periodic refresh for stale cursor detection
   useEffect(() => {
@@ -193,7 +192,7 @@ export function useReconciliationPresence({
             x,
             y,
             scrollY,
-            // eslint-disable-next-line react-hooks/purity -- called in throttled callback, not during render
+
             timestamp: Date.now(),
           },
         });

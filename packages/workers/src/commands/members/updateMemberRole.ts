@@ -65,7 +65,10 @@ export async function updateMemberRole(
       role,
     });
   } catch (err) {
-    captureError(err, { tags: { component: 'member', action: 'role-update-notify' }, extra: { projectId, userId } });
+    captureError(err, {
+      tags: { component: 'member', action: 'role-update-notify' },
+      extra: { projectId, userId },
+    });
   }
 
   return { userId, role };

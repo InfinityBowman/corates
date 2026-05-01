@@ -85,7 +85,7 @@ export const Route = createRootRoute({
       : "connect-src 'self' wss://corates.org https://api.crossref.org https://eutils.ncbi.nlm.nih.gov https://api.unpaywall.org https://plausible.jacobmaynard.dev https://*.ingest.us.sentry.io",
       "worker-src 'self' blob:",
       "font-src 'self'",
-      "frame-src https://docs.google.com",
+      'frame-src https://docs.google.com',
       "frame-ancestors 'none'",
       "form-action 'self'",
       "base-uri 'self'",

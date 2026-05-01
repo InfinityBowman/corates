@@ -43,7 +43,9 @@ export async function fillROB2Preliminary(
 export async function answerAllROB2Domains(page: Page, answer: string) {
   for (const domain of ['D1', 'D2', 'D3', 'D4', 'D5']) {
     await page.getByRole('button', { name: domain, exact: true }).click();
-    await expect(page.getByRole('button', { name: answer, exact: true }).first()).toBeVisible({ timeout: 5_000 });
+    await expect(page.getByRole('button', { name: answer, exact: true }).first()).toBeVisible({
+      timeout: 5_000,
+    });
 
     const buttons = page.getByRole('button', { name: answer, exact: true });
     const count = await buttons.count();

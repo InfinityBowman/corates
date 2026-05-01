@@ -4,19 +4,18 @@
 
 import { useMemo } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { useProjectStore } from '@/stores/projectStore';
+import { useProjectMeta } from '@/stores/projectAtoms';
 import { queryKeys } from '@/lib/queryKeys';
 
 export function useProjectOrgId(projectId: string | null | undefined): string | null {
   const queryClient = useQueryClient();
-  const project = useProjectStore(state => (projectId ? state.projects[projectId] : undefined));
+  const meta = useProjectMeta(projectId || '');
 
   return useMemo(() => {
     if (!projectId) return null;
 
-    // Try project meta (Y.js synced data)
-    if (project?.meta?.orgId) {
-      return project.meta.orgId;
+    if (meta?.orgId) {
+      return meta.orgId;
     }
 
     // Try project list query cache
@@ -29,5 +28,5 @@ export function useProjectOrgId(projectId: string | null | undefined): string | 
     }
 
     return null;
-  }, [projectId, project, queryClient]);
+  }, [projectId, meta, queryClient]);
 }

@@ -109,10 +109,14 @@ test('Presence avatars, cursor sync, and text editing sync during reconciliation
 
   // User A: add AMSTAR2 checklist, answer Yes to everything, mark complete
   await page.getByRole('tab', { name: /To Do/i }).click();
-  await expect(page.getByRole('button', { name: /Select Checklist/i })).toBeVisible({ timeout: 10_000 });
+  await expect(page.getByRole('button', { name: /Select Checklist/i })).toBeVisible({
+    timeout: 10_000,
+  });
   await page.getByRole('button', { name: /Select Checklist/i }).click();
   await page.getByRole('button', { name: /Add Checklist/i }).click();
-  await expect(page.getByRole('button', { name: 'Open', exact: true })).toBeVisible({ timeout: 10_000 });
+  await expect(page.getByRole('button', { name: 'Open', exact: true })).toBeVisible({
+    timeout: 10_000,
+  });
   await page.getByRole('button', { name: 'Open', exact: true }).click();
   await expect(page).toHaveURL(/\/checklists\//, { timeout: 10_000 });
   await expect(page.locator('input[type="radio"]').first()).toBeVisible({ timeout: 10_000 });
@@ -128,10 +132,14 @@ test('Presence avatars, cursor sync, and text editing sync during reconciliation
   await expect(page.getByText('Realtime Reconcile Test').first()).toBeVisible({ timeout: 15_000 });
 
   await page.getByRole('tab', { name: /To Do/i }).click();
-  await expect(page.getByRole('button', { name: /Select Checklist/i })).toBeVisible({ timeout: 10_000 });
+  await expect(page.getByRole('button', { name: /Select Checklist/i })).toBeVisible({
+    timeout: 10_000,
+  });
   await page.getByRole('button', { name: /Select Checklist/i }).click();
   await page.getByRole('button', { name: /Add Checklist/i }).click();
-  await expect(page.getByRole('button', { name: 'Open', exact: true })).toBeVisible({ timeout: 10_000 });
+  await expect(page.getByRole('button', { name: 'Open', exact: true })).toBeVisible({
+    timeout: 10_000,
+  });
 
   await page.getByRole('button', { name: 'Open', exact: true }).last().click();
   await expect(page).toHaveURL(/\/checklists\//, { timeout: 10_000 });
@@ -143,7 +151,9 @@ test('Presence avatars, cursor sync, and text editing sync during reconciliation
       .catch(() => false)
   ) {
     await page.goBack();
-    await expect(page.getByRole('button', { name: 'Open', exact: true }).first()).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByRole('button', { name: 'Open', exact: true }).first()).toBeVisible({
+      timeout: 10_000,
+    });
     await page.getByRole('button', { name: 'Open', exact: true }).first().click();
     await expect(page).toHaveURL(/\/checklists\//, { timeout: 10_000 });
   }

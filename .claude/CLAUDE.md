@@ -157,7 +157,7 @@ retries += 1;
 
 - **Import stores directly** - Use Zustand stores from `@/stores/` instead of prop-drilling shared state
 - Shared state lives in Zustand stores under `packages/web/src/stores/`
-- Avoid `useMemo` or `useCallback` - let the React Compiler handle memoization
+- Avoid `useMemo` or `useCallback` when not necessary
 - Prefer newer React primitives where possible, we are always on the latest version
 - Use `useEffectEvent` for stable event handler references inside effects
 - Use `useLayoutEffect` for DOM measurements before paint

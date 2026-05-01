@@ -28,7 +28,12 @@ vi.mock('@/api/google-drive', () => ({
   importFromGoogleDrive: vi.fn().mockResolvedValue({
     success: true,
     id: 'media-1',
-    file: { key: 'projects/proj-1/studies/study-1/Witt2019.pdf', fileName: 'Witt2019.pdf', size: 1024, source: 'google-drive' },
+    file: {
+      key: 'projects/proj-1/studies/study-1/Witt2019.pdf',
+      fileName: 'Witt2019.pdf',
+      size: 1024,
+      source: 'google-drive',
+    },
   }),
 }));
 
@@ -42,7 +47,11 @@ vi.mock('@/api/pdf-api', () => ({
 vi.mock('@/lib/pdfUtils.js', () => ({
   extractPdfTitle: vi.fn().mockResolvedValue(null),
   extractPdfDoi: vi.fn().mockResolvedValue(null),
-  normalizeTitle: (t: string) => t?.toLowerCase().replace(/[^\w\s]/g, '').trim() ?? '',
+  normalizeTitle: (t: string) =>
+    t
+      ?.toLowerCase()
+      .replace(/[^\w\s]/g, '')
+      .trim() ?? '',
 }));
 
 vi.mock('@/lib/referenceLookup.js', () => ({
@@ -164,7 +173,9 @@ describe('studyActions.addBatch', () => {
     ]);
 
     expect(uploadPdf).toHaveBeenCalledWith(
-      'org-1', 'proj-1', 'study-1',
+      'org-1',
+      'proj-1',
+      'study-1',
       expect.any(ArrayBuffer),
       'Local.pdf',
     );
@@ -175,7 +186,9 @@ describe('studyActions.addBatch', () => {
     mockCreateStudy
       .mockReturnValueOnce('s1')
       .mockReturnValueOnce('s2')
-      .mockImplementationOnce(() => { throw new Error('boom'); })
+      .mockImplementationOnce(() => {
+        throw new Error('boom');
+      })
       .mockReturnValueOnce('s4');
 
     const result = await studyActions.addBatch([

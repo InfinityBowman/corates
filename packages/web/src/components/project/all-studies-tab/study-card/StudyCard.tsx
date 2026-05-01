@@ -5,11 +5,13 @@
 import { Collapsible, CollapsibleContent } from '@/components/ui/collapsible';
 import { type ProjectMember } from '@/components/project/ProjectContext';
 import type { StudyInfo } from '@/stores/projectStore';
+import { useStudy } from '@/stores/projectAtoms';
 import { StudyCardHeader } from './StudyCardHeader';
 import { StudyPdfSection } from './StudyPdfSection';
 
 interface StudyCardProps {
-  study: StudyInfo;
+  projectId: string;
+  studyId: string;
   expanded: boolean;
   onToggleExpanded: () => void;
   getMember?: (userId: string) => ProjectMember | null;
@@ -19,7 +21,8 @@ interface StudyCardProps {
 }
 
 export function StudyCard({
-  study,
+  projectId,
+  studyId,
   expanded,
   onToggleExpanded,
   getMember,
@@ -27,6 +30,9 @@ export function StudyCard({
   onOpenGoogleDrive,
   readOnly,
 }: StudyCardProps) {
+  const study = useStudy(projectId, studyId);
+  if (!study) return null;
+
   return (
     <div className='border-border bg-card hover:border-border rounded-lg border transition-colors'>
       <Collapsible open={expanded} onOpenChange={onToggleExpanded}>

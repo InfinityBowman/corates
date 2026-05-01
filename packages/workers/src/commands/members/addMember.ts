@@ -144,7 +144,10 @@ export async function addMember(
       role,
     });
   } catch (err) {
-    captureError(err, { tags: { component: 'member', action: 'add-notify' }, extra: { projectId } });
+    captureError(err, {
+      tags: { component: 'member', action: 'add-notify' },
+      extra: { projectId },
+    });
   }
 
   // Sync member to DO with automatic retry

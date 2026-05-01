@@ -295,10 +295,7 @@ export async function deleteAdminProject(session: Session, db: Database, project
 export async function wakeAllProjectDOs(session: Session, db: Database) {
   assertAdmin(session);
 
-  const allProjects = await db
-    .select({ id: projects.id })
-    .from(projects)
-    .all();
+  const allProjects = await db.select({ id: projects.id }).from(projects).all();
 
   const batchSize = 10;
   let succeeded = 0;
@@ -308,7 +305,7 @@ export async function wakeAllProjectDOs(session: Session, db: Database) {
   for (let i = 0; i < allProjects.length; i += batchSize) {
     const batch = allProjects.slice(i, i + batchSize);
     const results = await Promise.allSettled(
-      batch.map(async (p) => {
+      batch.map(async p => {
         const stub = getProjectDocStub(env, p.id);
         await stub.getProjectInfo();
         return p.id;

@@ -6,8 +6,8 @@
  */
 
 import { useMemo } from 'react';
-import { useProjectStore, selectStudies } from '@/stores/projectStore';
 import type { StudyInfo, ChecklistEntry } from '@/stores/projectStore';
+import { useStudy } from '@/stores/projectAtoms';
 import { getChecklistTypeFromState, scoreChecklistOfType } from '@/checklist-registry/index';
 import { useChecklistAnswers } from './useChecklistAnswers';
 
@@ -24,12 +24,7 @@ export function useChecklistViewModel(
   studyId: string,
   checklistId: string,
 ): ChecklistViewModel {
-  const studies = useProjectStore(s => selectStudies(s, projectId));
-
-  const currentStudy = useMemo(
-    () => studies.find(st => st.id === studyId) ?? null,
-    [studies, studyId],
-  );
+  const currentStudy = useStudy(projectId, studyId) ?? null;
 
   const currentChecklist = useMemo(
     () => (currentStudy?.checklists ?? []).find(c => c.id === checklistId) ?? null,

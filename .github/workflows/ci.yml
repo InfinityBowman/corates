@@ -3,6 +3,8 @@ name: CI - Deploy & Test
 on:
   push:
     branches: [main]
+  pull_request:
+    branches: [main]
 
 # Cancel in-progress runs on the same branch
 concurrency:
@@ -52,7 +54,42 @@ concurrency:
 # ---------------------------------------------------------------
 
 jobs:
+  checks:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build workspace dependencies
+        run: pnpm --filter @corates/shared --filter @corates/db build
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Unit tests
+        run: pnpm test
+
   deploy-and-test:
+    if: github.event_name == 'push'
+    needs: checks
     runs-on: ubuntu-latest
     permissions:
       contents: read

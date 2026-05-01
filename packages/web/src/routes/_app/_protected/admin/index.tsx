@@ -89,10 +89,7 @@ function AdminDashboard() {
       </AdminSection>
 
       {/* Analytics Charts */}
-      <AdminSection
-        title='Analytics'
-        description='Track signups, projects, and revenue over time'
-      >
+      <AdminSection title='Analytics' description='Track signups, projects, and revenue over time'>
         <AnalyticsSection />
       </AdminSection>
 

@@ -126,7 +126,10 @@ export async function createInvitation(
     });
     emailQueued = result.emailQueued;
   } catch (err) {
-    captureError(err, { tags: { component: 'invitation', action: 'magic-link-generation' }, extra: { projectId } });
+    captureError(err, {
+      tags: { component: 'invitation', action: 'magic-link-generation' },
+      extra: { projectId },
+    });
   }
 
   return { invitationId, emailQueued };

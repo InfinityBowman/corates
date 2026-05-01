@@ -459,8 +459,12 @@ class ProjectDocBase extends DurableObject<Env> {
   async getStorageStats(): Promise<ProjectDocStorageStats> {
     await this.initializeDoc();
 
-    const { snapshot: snapshotRows, update: updateRows, snapshotBytes, updateBytes } =
-      this.persistence.getRowBreakdown();
+    const {
+      snapshot: snapshotRows,
+      update: updateRows,
+      snapshotBytes,
+      updateBytes,
+    } = this.persistence.getRowBreakdown();
     const { oldestRowAt, newestRowAt } = this.persistence.getTimestamps();
 
     const encodedSnapshotBytes = Y.encodeStateAsUpdate(this.doc!).byteLength;

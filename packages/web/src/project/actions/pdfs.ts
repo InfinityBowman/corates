@@ -7,8 +7,8 @@ import { cachePdf, removeCachedPdf, getCachedPdf } from '@/primitives/pdfCache.j
 import { bestEffort } from '@/lib/errorLogger.js';
 import { extractPdfDoi, extractPdfTitle } from '@/lib/pdfUtils.js';
 import { fetchFromDOI } from '@/lib/referenceLookup.js';
-import { useProjectStore } from '@/stores/projectStore';
 import type { PdfEntry } from '@/stores/projectStore';
+import { getProjectAtoms } from '@/stores/projectAtoms';
 import { usePdfPreviewStore } from '@/stores/pdfPreviewStore';
 import { useAuthStore, selectUser } from '@/stores/authStore';
 import { connectionPool } from '../ConnectionPool';
@@ -115,8 +115,7 @@ export const pdfActions = {
       throw new Error('No active project connection');
     }
 
-    const study =
-      useProjectStore.getState().projects[projectId]?.studies.find(s => s.id === studyId) ?? null;
+    const study = getProjectAtoms(projectId).getOrCreateStudyAtom(studyId).get() ?? null;
     const existingPdf = study?.pdfs.find(p => p.fileName === file.name);
     if (existingPdf) {
       throw new Error(`File "${file.name}" already exists. Rename or remove the existing copy.`);
@@ -249,8 +248,7 @@ export const pdfActions = {
     if (!studyId || !file) return;
     if (!projectId || !orgId || !ops) throw new Error('No active project connection');
 
-    const study =
-      useProjectStore.getState().projects[projectId]?.studies.find(s => s.id === studyId) ?? null;
+    const study = getProjectAtoms(projectId).getOrCreateStudyAtom(studyId).get() ?? null;
     const hasPdfs = (study?.pdfs.length ?? 0) > 0;
     const effectiveTag = !hasPdfs ? 'primary' : tag;
 

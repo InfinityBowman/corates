@@ -36,7 +36,7 @@ export function SplitScreenLayout({
 
   // Sync showSecondPanel with prop changes
   useEffect(() => {
-    setShowSecondPanel(showSecondPanelProp ?? false); // eslint-disable-line react-hooks/set-state-in-effect -- syncing from prop
+    setShowSecondPanel(showSecondPanelProp ?? false);
   }, [showSecondPanelProp]);
 
   // Extract exactly two panels from children
