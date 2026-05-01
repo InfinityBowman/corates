@@ -13,6 +13,7 @@ import { useChecklistViewModel } from '@/primitives/useProject/checklists/useChe
 import { buildChecklistAnswerInput } from '@/primitives/useProject/checklists';
 import { useProjectStore, selectConnectionPhase } from '@/stores/projectStore';
 import { useAuthStore, selectUser } from '@/stores/authStore';
+import { useStudyAnnotations } from '@/primitives/useProject/useStudyAnnotations';
 import { ACCESS_DENIED_ERRORS } from '@/constants/errors.js';
 import {
   CHECKLIST_STATUS,
@@ -238,11 +239,7 @@ export function ChecklistYjsWrapper({ projectId, studyId, checklistId }: Checkli
     return getPdfUrl(orgId, projectId, studyId, pdfFileName);
   }, [pdfFileName, orgId, projectId, studyId]);
 
-  const initialAnnotations = useMemo(() => {
-    if (!currentStudy?.annotations || !selectedPdfId || !checklistId) return [];
-    const checklistAnnotations = currentStudy.annotations[checklistId] || [];
-    return checklistAnnotations.filter(a => a.pdfId === selectedPdfId);
-  }, [currentStudy, selectedPdfId, checklistId]);
+  const initialAnnotations = useStudyAnnotations(projectId, studyId, checklistId, selectedPdfId);
 
   const handleAnnotationAdd = useCallback(
     (annotation: AnnotationData) => {

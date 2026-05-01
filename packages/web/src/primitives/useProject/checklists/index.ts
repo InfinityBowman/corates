@@ -292,39 +292,41 @@ export function createChecklistOperations(
       );
     }
 
-    let answersMap = checklistYMap.get('answers') as Y.Map<unknown> | undefined;
-    if (!answersMap) {
-      answersMap = new Y.Map();
-      checklistYMap.set('answers', answersMap);
-    }
+    const ydoc = checklistYMap.doc;
+    if (!ydoc) return;
 
-    // The discriminated input pins (key, data) to the checklist type at the
-    // type level, but we still parse with Zod to catch external callers that
-    // bypass the type system with `as` casts.
-    switch (input.type) {
-      case CHECKLIST_TYPES.AMSTAR2: {
-        const parsed = AMSTAR2_KEY_SCHEMAS[input.key].parse(input.data);
-        amstar2Handler.updateAnswer(answersMap, input.key, parsed);
-        break;
+    ydoc.transact(() => {
+      let answersMap = checklistYMap.get('answers') as Y.Map<unknown> | undefined;
+      if (!answersMap) {
+        answersMap = new Y.Map();
+        checklistYMap.set('answers', answersMap);
       }
-      case CHECKLIST_TYPES.ROBINS_I: {
-        const parsed = ROBINS_I_KEY_SCHEMAS[input.key].parse(input.data);
-        robinsIHandler.updateAnswer(answersMap, input.key, parsed as RobinsIAnswers[RobinsIKey]);
-        break;
-      }
-      case CHECKLIST_TYPES.ROB2: {
-        const parsed = ROB2_KEY_SCHEMAS[input.key].parse(input.data);
-        rob2Handler.updateAnswer(answersMap, input.key, parsed as Rob2Answers[Rob2Key]);
-        break;
-      }
-    }
 
-    const currentStatus = checklistYMap.get('status');
-    if (currentStatus === CHECKLIST_STATUS.PENDING) {
-      checklistYMap.set('status', CHECKLIST_STATUS.IN_PROGRESS);
-    }
+      switch (input.type) {
+        case CHECKLIST_TYPES.AMSTAR2: {
+          const parsed = AMSTAR2_KEY_SCHEMAS[input.key].parse(input.data);
+          amstar2Handler.updateAnswer(answersMap, input.key, parsed);
+          break;
+        }
+        case CHECKLIST_TYPES.ROBINS_I: {
+          const parsed = ROBINS_I_KEY_SCHEMAS[input.key].parse(input.data);
+          robinsIHandler.updateAnswer(answersMap, input.key, parsed as RobinsIAnswers[RobinsIKey]);
+          break;
+        }
+        case CHECKLIST_TYPES.ROB2: {
+          const parsed = ROB2_KEY_SCHEMAS[input.key].parse(input.data);
+          rob2Handler.updateAnswer(answersMap, input.key, parsed as Rob2Answers[Rob2Key]);
+          break;
+        }
+      }
 
-    checklistYMap.set('updatedAt', Date.now());
+      const currentStatus = checklistYMap.get('status');
+      if (currentStatus === CHECKLIST_STATUS.PENDING) {
+        checklistYMap.set('status', CHECKLIST_STATUS.IN_PROGRESS);
+      }
+
+      checklistYMap.set('updatedAt', Date.now());
+    });
   }
 
   function getTextRef(studyId: string, checklistId: string, ref: TextRef): Y.Text | null {
