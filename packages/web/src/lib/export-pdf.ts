@@ -148,7 +148,7 @@ function renderAmstar2(doc: jsPDF, cl: ChecklistEntry, studyName: string, y: num
     const isCritical = criticalSet.has(dataKey);
     const headerText = `${qLabel}${isCritical ? ' [Critical]' : ''}`;
 
-    const columns = useColumns2 ? (question.columns2 || question.columns) : question.columns;
+    const columns = useColumns2 ? question.columns2 || question.columns : question.columns;
     const answerGrid = raw?.[dataKey]?.answers;
 
     const verdict = amstar2.getSelectedAnswer(answerGrid ?? [], dataKey)?.trim() || '--';
@@ -222,9 +222,12 @@ function renderRob2Preliminary(doc: jsPDF, answers: ROB2Answers, y: number): num
     ['Experimental intervention:', String(prelim.experimental || '--')],
     ['Comparator:', String(prelim.comparator || '--')],
     ['Numerical result:', String(prelim.numericalResult || '--')],
-    ['Aim:', prelim.aim === 'ADHERING'
-      ? 'Effect of adhering to intervention (per-protocol effect)'
-      : 'Effect of assignment to intervention (intention-to-treat effect)'],
+    [
+      'Aim:',
+      prelim.aim === 'ADHERING' ?
+        'Effect of adhering to intervention (per-protocol effect)'
+      : 'Effect of assignment to intervention (intention-to-treat effect)',
+    ],
   ];
 
   for (const [label, value] of fields) {
@@ -262,7 +265,7 @@ function renderSignallingQuestions(
   const rows: string[][] = [];
   for (const q of Object.values(questions)) {
     const answer = domainAnswers?.[q.id];
-    const responseLabel = answer?.answer ? (responseLabels[answer.answer] || answer.answer) : '--';
+    const responseLabel = answer?.answer ? responseLabels[answer.answer] || answer.answer : '--';
     rows.push([q.number || '', q.text, responseLabel]);
   }
 
@@ -295,9 +298,21 @@ function renderRob2Domain(
   const title = domain.subtitle ? `${domain.name} | ${domain.subtitle}` : domain.name;
   y = drawSubsectionHeader(doc, title, y);
 
-  const domainState = answers[domainKey] as { answers?: Record<string, { answer?: string | null; comment?: string }>; judgement?: string | null; direction?: string | null } | undefined;
+  const domainState = answers[domainKey] as
+    | {
+        answers?: Record<string, { answer?: string | null; comment?: string }>;
+        judgement?: string | null;
+        direction?: string | null;
+      }
+    | undefined;
 
-  y = renderSignallingQuestions(doc, domain.questions, domainState?.answers, rob2.RESPONSE_LABELS, y);
+  y = renderSignallingQuestions(
+    doc,
+    domain.questions,
+    domainState?.answers,
+    rob2.RESPONSE_LABELS,
+    y,
+  );
 
   if (domainState?.judgement) {
     y = drawJudgmentBadge(doc, 'Judgment:', domainState.judgement, y);
@@ -329,7 +344,9 @@ function renderRob2(doc: jsPDF, cl: ChecklistEntry, studyName: string, y: number
     y = renderRob2Domain(doc, domain, answers, domainKey, y);
   }
 
-  const overall = answers.overall as { judgement?: string | null; direction?: string | null } | undefined;
+  const overall = answers.overall as
+    | { judgement?: string | null; direction?: string | null }
+    | undefined;
   y = drawSubsectionHeader(doc, 'Overall Risk of Bias', y);
   if (overall?.judgement) {
     y = drawJudgmentBadge(doc, 'Judgment:', overall.judgement, y);
@@ -367,14 +384,21 @@ function renderRobinsiSections(doc: jsPDF, answers: ROBINSIAnswers, y: number): 
     y = drawTextField(doc, 'A3 - Outcome:', sectionA.outcome || '', y);
   }
 
-  const sectionB = answers.sectionB as { b1?: { answer?: string }; b2?: { answer?: string }; b3?: { answer?: string }; stopAssessment?: boolean } | undefined;
+  const sectionB = answers.sectionB as
+    | {
+        b1?: { answer?: string };
+        b2?: { answer?: string };
+        b3?: { answer?: string };
+        stopAssessment?: boolean;
+      }
+    | undefined;
   if (sectionB) {
     y = drawSubsectionHeader(doc, 'Section B: Decide whether to proceed', y);
     const bQuestions = robinsI.SECTION_B;
     const bRows: string[][] = [];
     for (const [key, q] of Object.entries(bQuestions)) {
       const ans = (sectionB as Record<string, { answer?: string }>)[key];
-      const label = ans?.answer ? (robinsI.RESPONSE_LABELS[ans.answer] || ans.answer) : '--';
+      const label = ans?.answer ? robinsI.RESPONSE_LABELS[ans.answer] || ans.answer : '--';
       bRows.push([key.toUpperCase(), q.text, label]);
     }
 
@@ -399,11 +423,25 @@ function renderRobinsiSections(doc: jsPDF, answers: ROBINSIAnswers, y: number): 
   if (sectionC) {
     y = drawSubsectionHeader(doc, 'Section C: Target trial specification', y);
     y = drawTextField(doc, 'C1 - Participants:', String(sectionC.participants || ''), y);
-    y = drawTextField(doc, 'C2 - Intervention strategy:', String(sectionC.interventionStrategy || ''), y);
-    y = drawTextField(doc, 'C3 - Comparator strategy:', String(sectionC.comparatorStrategy || ''), y);
+    y = drawTextField(
+      doc,
+      'C2 - Intervention strategy:',
+      String(sectionC.interventionStrategy || ''),
+      y,
+    );
+    y = drawTextField(
+      doc,
+      'C3 - Comparator strategy:',
+      String(sectionC.comparatorStrategy || ''),
+      y,
+    );
     const isPerProtocol = sectionC.isPerProtocol as boolean;
-    y = drawTextField(doc, 'C4 - Analysis type:',
-      isPerProtocol ? 'Per-protocol effect' : 'Intention-to-treat effect', y);
+    y = drawTextField(
+      doc,
+      'C4 - Analysis type:',
+      isPerProtocol ? 'Per-protocol effect' : 'Intention-to-treat effect',
+      y,
+    );
   }
 
   return y;
@@ -419,11 +457,13 @@ function renderRobinsiDomain(
   const title = domain.subtitle ? `${domain.name} | ${domain.subtitle}` : domain.name;
   y = drawSubsectionHeader(doc, title, y);
 
-  const domainState = answers[domainKey] as {
-    answers?: Record<string, { answer?: string | null; comment?: string }>;
-    judgement?: string | null;
-    direction?: string | null;
-  } | undefined;
+  const domainState = answers[domainKey] as
+    | {
+        answers?: Record<string, { answer?: string | null; comment?: string }>;
+        judgement?: string | null;
+        direction?: string | null;
+      }
+    | undefined;
 
   if (domain.subsections) {
     for (const sub of Object.values(domain.subsections)) {
@@ -434,10 +474,22 @@ function renderRobinsiDomain(
       doc.text(subsection.name, MARGIN + 3, y + 4);
       doc.setTextColor(0);
       y += 6;
-      y = renderSignallingQuestions(doc, subsection.questions, domainState?.answers, robinsI.RESPONSE_LABELS, y);
+      y = renderSignallingQuestions(
+        doc,
+        subsection.questions,
+        domainState?.answers,
+        robinsI.RESPONSE_LABELS,
+        y,
+      );
     }
   } else if (domain.questions) {
-    y = renderSignallingQuestions(doc, domain.questions, domainState?.answers, robinsI.RESPONSE_LABELS, y);
+    y = renderSignallingQuestions(
+      doc,
+      domain.questions,
+      domainState?.answers,
+      robinsI.RESPONSE_LABELS,
+      y,
+    );
   }
 
   if (domainState?.judgement) {
@@ -467,12 +519,16 @@ function renderRobinsI(doc: jsPDF, cl: ChecklistEntry, studyName: string, y: num
 
   const activeDomains = robinsI.getActiveDomainKeys(isPerProtocol);
   for (const domainKey of activeDomains) {
-    const domain = robinsI.ROBINS_I_CHECKLIST[domainKey as keyof typeof robinsI.ROBINS_I_CHECKLIST] as ROBINSDomain;
+    const domain = robinsI.ROBINS_I_CHECKLIST[
+      domainKey as keyof typeof robinsI.ROBINS_I_CHECKLIST
+    ] as ROBINSDomain;
     y = renderRobinsiDomain(doc, domain, answers, domainKey, y);
   }
 
   y = drawSubsectionHeader(doc, 'Section D: Information sources', y);
-  const sectionD = answers.sectionD as { sources?: Record<string, boolean>; otherSpecify?: string } | undefined;
+  const sectionD = answers.sectionD as
+    | { sources?: Record<string, boolean>; otherSpecify?: string }
+    | undefined;
   if (sectionD?.sources) {
     for (const source of robinsI.INFORMATION_SOURCES) {
       const checked = sectionD.sources[source] ? '[x]' : '[ ]';
@@ -487,7 +543,9 @@ function renderRobinsI(doc: jsPDF, cl: ChecklistEntry, studyName: string, y: num
     y += 2;
   }
 
-  const overall = answers.overall as { judgement?: string | null; direction?: string | null } | undefined;
+  const overall = answers.overall as
+    | { judgement?: string | null; direction?: string | null }
+    | undefined;
   y = drawSubsectionHeader(doc, 'Overall Risk of Bias', y);
   if (overall?.judgement) {
     y = drawJudgmentBadge(doc, 'Judgment:', overall.judgement, y);

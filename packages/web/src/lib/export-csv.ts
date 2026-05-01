@@ -90,8 +90,7 @@ function getAmstar2ColumnMappings(): ColumnMapping[] {
     }
 
     const question = schema[schemaKey];
-    const columns =
-      useColumns2 ? (question.columns2 || question.columns) : question.columns;
+    const columns = useColumns2 ? question.columns2 || question.columns : question.columns;
 
     return { dataKey, columns };
   });
@@ -142,7 +141,7 @@ function getAmstar2Values(cl: ChecklistEntry): string[] {
     } else {
       const selectedIdx = lastCol.findIndex(v => v === true);
       const answerOptions = columns[columns.length - 1].options;
-      values.push(selectedIdx >= 0 ? (answerOptions[selectedIdx]?.trim() || '') : '');
+      values.push(selectedIdx >= 0 ? answerOptions[selectedIdx]?.trim() || '' : '');
     }
   }
 

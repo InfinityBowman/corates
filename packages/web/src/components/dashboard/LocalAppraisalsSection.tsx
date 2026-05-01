@@ -5,7 +5,15 @@
 import { useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import type * as Y from 'yjs';
-import { PlusIcon, FileTextIcon, LogInIcon, TriangleAlertIcon, DownloadIcon, FileSpreadsheetIcon, FileIcon } from 'lucide-react';
+import {
+  PlusIcon,
+  FileTextIcon,
+  LogInIcon,
+  TriangleAlertIcon,
+  DownloadIcon,
+  FileSpreadsheetIcon,
+  FileIcon,
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -130,9 +138,7 @@ export function LocalAppraisalsSection({
         const clYMap = checklistsMap.get(cl.id) as Y.Map<unknown> | undefined;
         if (!clYMap) return cl;
 
-        const answersYMap = (clYMap as Y.Map<unknown>).get('answers') as
-          | Y.Map<unknown>
-          | undefined;
+        const answersYMap = (clYMap as Y.Map<unknown>).get('answers') as Y.Map<unknown> | undefined;
         if (!answersYMap) return cl;
 
         const answers = extractAnswersFromYMap(answersYMap, cl.type);

@@ -3,7 +3,14 @@
  */
 
 import { useMemo } from 'react';
-import { FileTextIcon, ChevronRightIcon, Trash2Icon, DownloadIcon, FileSpreadsheetIcon, FileIcon } from 'lucide-react';
+import {
+  FileTextIcon,
+  ChevronRightIcon,
+  Trash2Icon,
+  DownloadIcon,
+  FileSpreadsheetIcon,
+  FileIcon,
+} from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { SimpleEditable } from '@/components/ui/editable';
 import {
