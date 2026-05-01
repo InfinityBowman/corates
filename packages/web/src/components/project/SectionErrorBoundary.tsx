@@ -4,6 +4,7 @@
 
 import { Component, ErrorInfo, ReactNode } from 'react';
 import { captureException } from '@/config/sentry';
+import { TriangleAlertIcon, RefreshCwIcon } from 'lucide-react';
 
 interface Props {
   name: string;
@@ -38,15 +39,21 @@ export class SectionErrorBoundary extends Component<Props, State> {
   render() {
     if (this.state.hasError) {
       return (
-        <div className='border-border bg-card rounded-lg border p-6 text-center'>
-          <p className='text-foreground font-medium'>Something went wrong in {this.props.name}</p>
-          <p className='text-muted-foreground mt-1 text-sm'>
+        <div className='border-border bg-card rounded-xl border p-8 text-center shadow-sm'>
+          <div className='bg-destructive/10 mx-auto mb-4 flex size-12 items-center justify-center rounded-full'>
+            <TriangleAlertIcon className='text-destructive size-6' />
+          </div>
+          <h3 className='text-foreground mb-1 text-base font-semibold'>
+            Something went wrong in {this.props.name}
+          </h3>
+          <p className='text-muted-foreground mb-5 text-sm'>
             {this.state.error?.message || 'An unexpected error occurred'}
           </p>
           <button
             onClick={() => this.setState({ hasError: false, error: null })}
-            className='text-primary hover:text-primary/80 mt-3 text-sm font-medium'
+            className='bg-primary text-primary-foreground hover:bg-primary/90 inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors'
           >
+            <RefreshCwIcon className='size-3.5' />
             Try again
           </button>
         </div>

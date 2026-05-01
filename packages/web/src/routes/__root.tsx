@@ -8,6 +8,7 @@ import { TooltipProvider } from '@/components/ui/tooltip';
 import appCss from '../styles.css?url';
 import type { ErrorComponentProps } from '@tanstack/react-router';
 import { captureException } from '@/config/sentry';
+import { TriangleAlertIcon, RefreshCwIcon } from 'lucide-react';
 
 const LazyDevPanel =
   import.meta.env.VITE_DEV_PANEL === 'true' ?
@@ -198,15 +199,21 @@ function RootError({ error, reset }: ErrorComponentProps) {
     import.meta.env.DEV ? error.message : 'An unexpected error occurred. Please try refreshing.';
 
   return (
-    <div className='flex flex-col items-center justify-center gap-4 py-32 text-center'>
-      <h1 className='text-4xl font-bold'>Something went wrong</h1>
-      <p className='max-w-md text-gray-600'>{message}</p>
-      <button
-        onClick={reset}
-        className='text-sm text-blue-600 underline underline-offset-4 hover:text-blue-700'
-      >
-        Try again
-      </button>
+    <div className='flex min-h-[50vh] items-center justify-center p-8'>
+      <div className='border-border bg-card w-full max-w-sm rounded-xl border p-6 text-center shadow-sm'>
+        <div className='bg-destructive/10 mx-auto mb-4 flex size-12 items-center justify-center rounded-full'>
+          <TriangleAlertIcon className='text-destructive size-6' />
+        </div>
+        <h3 className='text-foreground mb-1 text-base font-semibold'>Something went wrong</h3>
+        <p className='text-muted-foreground mb-5 text-sm'>{message}</p>
+        <button
+          onClick={reset}
+          className='bg-primary text-primary-foreground hover:bg-primary/90 inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors'
+        >
+          <RefreshCwIcon className='size-3.5' />
+          Try again
+        </button>
+      </div>
     </div>
   );
 }
