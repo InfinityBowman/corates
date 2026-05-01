@@ -104,6 +104,9 @@ async function getSessionCookies(userId: string): Promise<SessionCookie[]> {
 
 export async function loginAs(context: BrowserContext, cookies: SessionCookie[]) {
   await context.addCookies(cookies);
+  await context.addInitScript(() => {
+    localStorage.setItem('corates-welcome-dismissed', 'true');
+  });
 }
 
 /**
