@@ -78,6 +78,13 @@ jobs:
       - name: Build workspace dependencies
         run: pnpm --filter @corates/shared --filter @corates/db build
 
+      - name: Generate workers types
+        working-directory: packages/workers
+        run: pnpm exec wrangler types -c wrangler.test.jsonc
+
+      - name: Generate test migration SQL
+        run: pnpm --filter workers db:generate:test
+
       - name: Lint
         run: pnpm lint
 
