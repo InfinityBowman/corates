@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link } from '@tanstack/react-router';
 import { MenuIcon, XIcon } from 'lucide-react';
 
-import { useAuth } from '@/lib/auth';
+import { useAuthStore, selectIsLoggedIn, selectUser } from '@/stores/authStore';
 import EarlyAccessBanner from './EarlyAccessBanner';
 
 const navLinks = [
@@ -12,7 +12,7 @@ const navLinks = [
 ];
 
 function MobileMenu({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
-  const { isLoggedIn } = useAuth();
+  const isLoggedIn = useAuthStore(selectIsLoggedIn);
 
   const getDelay = (index: number) => `${50 + index * 50}ms`;
 
@@ -78,7 +78,8 @@ function MobileMenu({ isOpen, onClose }: { isOpen: boolean; onClose: () => void 
 }
 
 export default function Navbar() {
-  const { isLoggedIn, user } = useAuth();
+  const isLoggedIn = useAuthStore(selectIsLoggedIn);
+  const user = useAuthStore(selectUser);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const toggleMobileMenu = () => setMobileMenuOpen(prev => !prev);
