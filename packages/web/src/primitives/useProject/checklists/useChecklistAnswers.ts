@@ -94,7 +94,11 @@ export function useChecklistAnswers(
         return () => checklistYMap.unobserve(observer);
       }
 
-      return () => {};
+      // Data not available yet (e.g. DexieYProvider still loading).
+      // Watch the reviews map so we detect when the checklist arrives.
+      const reviewsMap = ydoc.getMap('reviews');
+      reviewsMap.observeDeep(observer);
+      return () => reviewsMap.unobserveDeep(observer);
     },
     [ydoc, studyId, checklistId],
   );
