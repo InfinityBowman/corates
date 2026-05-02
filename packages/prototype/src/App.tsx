@@ -6,6 +6,7 @@ import { useChecklistIds, useChecklistField } from './reactor/hooks';
 import { StudyList } from './components/StudyList';
 import { AMSTAR2Form } from './components/AMSTAR2Form';
 import { ROB2Form } from './components/ROB2Form';
+import { ROBINSIForm } from './components/ROBINSIForm';
 import { MutationConsole } from './components/MutationConsole';
 import { StatsPanel } from './components/StatsPanel';
 import { seedYDoc } from './seed';
@@ -16,6 +17,7 @@ const PROJECT_ID = 'prototype-1';
 function ChecklistForm({ studyId, checklistId }: { studyId: string; checklistId: string }) {
   const type = useChecklistField(studyId, checklistId, 'type');
   if (type === 'ROB2') return <ROB2Form studyId={studyId} checklistId={checklistId} />;
+  if (type === 'ROBINS_I') return <ROBINSIForm studyId={studyId} checklistId={checklistId} />;
   return <AMSTAR2Form studyId={studyId} checklistId={checklistId} />;
 }
 

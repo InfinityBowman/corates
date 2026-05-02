@@ -8,6 +8,11 @@ import {
 } from './amstar2';
 import type { Verdict } from './amstar2';
 import { ROB2_DOMAINS, getActiveDomainKeys } from './rob2';
+import {
+  ROBINSI_DOMAINS,
+  getActiveDomainKeys as getROBINSIActiveDomainKeys,
+  getDomainQuestions,
+} from './robins-i';
 
 function seedAMSTAR2Checkboxes(
   answers: Y.Map<unknown>,
@@ -136,6 +141,24 @@ export function seedYDoc(ydoc: Y.Doc): void {
 
     study2.set('checklists', checklists2);
     reviewsMap.set('study-2', study2);
+
+    // -- Study 2b: ROBINS-I checklist --
+    const clRobinsI = new Y.Map();
+    clRobinsI.set('type', 'ROBINS_I');
+    clRobinsI.set('status', 'in_progress');
+    clRobinsI.set('assignedTo', 'bob');
+    clRobinsI.set('createdAt', Date.now() + 2);
+    const answersRobinsI = new Y.Map();
+    answersRobinsI.set('preliminary.isPerProtocol', false);
+    const robinsiActive = getROBINSIActiveDomainKeys(false);
+    for (const dk of robinsiActive) {
+      const domain = ROBINSI_DOMAINS[dk];
+      for (const q of getDomainQuestions(domain)) {
+        answersRobinsI.set(q.id, q.responses[0]);
+      }
+    }
+    clRobinsI.set('answers', answersRobinsI);
+    checklists2.set('cl-2', clRobinsI);
 
     // -- Study 3: many critical flaws (Critically Low) --
     const study3 = new Y.Map();

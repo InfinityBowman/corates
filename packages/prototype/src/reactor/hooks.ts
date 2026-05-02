@@ -17,6 +17,11 @@ import {
   scoreROB2Domain,
 } from '../rob2';
 import type { ROB2Score } from '../rob2';
+import {
+  scoreROBINSI,
+  scoreROBINSIDomain,
+} from '../robins-i';
+import type { ROBINSIScore } from '../robins-i';
 
 export function useProjectReactor() {
   return useContext(ProjectReactorContext);
@@ -258,6 +263,58 @@ export function useROB2DomainScore(
       if (!cl) return { judgement: null, isComplete: false };
 
       return scoreROB2Domain(
+        domainKey,
+        (qKey) => cl.answers.field<string | null>(qKey).get(),
+      );
+    },
+    [reactor, studyId, checklistId, domainKey],
+  );
+}
+
+// --- ROBINS-I-specific hooks ---
+
+export function useROBINSIScore(
+  studyId: string,
+  checklistId: string,
+): ROBINSIScore {
+  const reactor = useContext(ProjectReactorContext);
+  return useValue(
+    `robinsiScore:${studyId}:${checklistId}`,
+    () => {
+      reactor.studies.ids.get();
+      const study = reactor.studies.get(studyId);
+      if (!study) return 'Incomplete';
+      study.checklists.ids.get();
+      const cl = study.checklists.get(checklistId);
+      if (!cl) return 'Incomplete';
+
+      const isPerProtocol = cl.answers.field<boolean | null>('preliminary.isPerProtocol').get();
+      return scoreROBINSI(
+        (qKey) => cl.answers.field<string | null>(qKey).get(),
+        isPerProtocol === true,
+      );
+    },
+    [reactor, studyId, checklistId],
+  );
+}
+
+export function useROBINSIDomainScore(
+  studyId: string,
+  checklistId: string,
+  domainKey: string,
+): { judgement: string | null; isComplete: boolean } {
+  const reactor = useContext(ProjectReactorContext);
+  return useValue(
+    `robinsiD:${studyId}:${checklistId}:${domainKey}`,
+    () => {
+      reactor.studies.ids.get();
+      const study = reactor.studies.get(studyId);
+      if (!study) return { judgement: null, isComplete: false };
+      study.checklists.ids.get();
+      const cl = study.checklists.get(checklistId);
+      if (!cl) return { judgement: null, isComplete: false };
+
+      return scoreROBINSIDomain(
         domainKey,
         (qKey) => cl.answers.field<string | null>(qKey).get(),
       );
