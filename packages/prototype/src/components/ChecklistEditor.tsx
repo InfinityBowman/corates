@@ -37,7 +37,7 @@ function AnswerRow({
   const { ydoc } = useProjectReactor();
 
   const yText = useMemo(
-    () => resolveYText(ydoc, studyId, checklistId, questionKey, 'note'),
+    () => resolveYText(ydoc, studyId, checklistId, `${questionKey}.note`),
     [ydoc, studyId, checklistId, questionKey],
   );
   const [note, setNote] = useYText(yText);

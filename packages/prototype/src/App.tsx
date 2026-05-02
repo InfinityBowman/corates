@@ -2,15 +2,22 @@ import { useState, useEffect } from 'react';
 import { DexieYProvider } from 'y-dexie';
 import { ProjectReactor } from './reactor/core';
 import { ProjectReactorContext } from './reactor/context';
-import { useChecklistIds } from './reactor/hooks';
+import { useChecklistIds, useChecklistField } from './reactor/hooks';
 import { StudyList } from './components/StudyList';
 import { AMSTAR2Form } from './components/AMSTAR2Form';
+import { ROB2Form } from './components/ROB2Form';
 import { MutationConsole } from './components/MutationConsole';
 import { StatsPanel } from './components/StatsPanel';
 import { seedYDoc } from './seed';
 import { db } from './db';
 
 const PROJECT_ID = 'prototype-1';
+
+function ChecklistForm({ studyId, checklistId }: { studyId: string; checklistId: string }) {
+  const type = useChecklistField(studyId, checklistId, 'type');
+  if (type === 'ROB2') return <ROB2Form studyId={studyId} checklistId={checklistId} />;
+  return <AMSTAR2Form studyId={studyId} checklistId={checklistId} />;
+}
 
 function EditorPanel({
   studyId,
@@ -28,7 +35,7 @@ function EditorPanel({
         <div style={{ fontSize: 13, color: '#888' }}>No checklists on this study.</div>
       )}
       {checklistIds.map((clId) => (
-        <AMSTAR2Form key={clId} studyId={studyId} checklistId={clId} />
+        <ChecklistForm key={clId} studyId={studyId} checklistId={clId} />
       ))}
     </div>
   );

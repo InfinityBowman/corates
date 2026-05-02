@@ -213,13 +213,18 @@ export function getScoreColor(score: AMSTAR2Score): string {
   return SCORE_COLORS[score];
 }
 
-export function cbKey(colIdx: number, optIdx: number, section?: string): string {
-  const prefix = section ? `${section}_` : '';
-  return `${prefix}c${colIdx}_${optIdx}`;
+export function cbKey(questionKey: string, colIdx: number, optIdx: number, section?: string): string {
+  const sectionPart = section ? `.${section}` : '';
+  return `${questionKey}${sectionPart}.c${colIdx}_${optIdx}`;
 }
 
-export function verdictKey(section?: string): string {
-  return section ? `${section}_verdict` : 'verdict';
+export function verdictKey(questionKey: string, section?: string): string {
+  const sectionPart = section ? `.${section}` : '';
+  return `${questionKey}${sectionPart}.verdict`;
+}
+
+export function noteKey(questionKey: string): string {
+  return `${questionKey}.note`;
 }
 
 export function consolidateSectionVerdicts(

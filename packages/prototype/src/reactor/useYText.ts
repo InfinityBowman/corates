@@ -33,8 +33,7 @@ export function resolveYText(
   ydoc: Y.Doc,
   studyId: string,
   checklistId: string,
-  questionKey: string,
-  fieldKey: string,
+  flatKey: string,
 ): Y.Text | null {
   const reviews = ydoc.getMap('reviews');
   const study = reviews.get(studyId) as Y.Map<unknown> | undefined;
@@ -43,8 +42,7 @@ export function resolveYText(
   const cl = checklists?.get(checklistId) as Y.Map<unknown> | undefined;
   if (!cl) return null;
   const answers = cl.get('answers') as Y.Map<unknown> | undefined;
-  const question = answers?.get(questionKey) as Y.Map<unknown> | undefined;
-  if (!question) return null;
-  const val = question.get(fieldKey);
+  if (!answers) return null;
+  const val = answers.get(flatKey);
   return val instanceof Y.Text ? val : null;
 }

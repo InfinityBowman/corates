@@ -1,3 +1,4 @@
+import { type ReactNode } from 'react';
 import { useProjectReactor, useSortedStudyIds } from '../reactor/hooks';
 import * as Y from 'yjs';
 
@@ -23,7 +24,7 @@ function Section({
   children,
 }: {
   title: string;
-  children: React.ReactNode;
+  children: ReactNode;
 }) {
   return (
     <div style={{ marginBottom: 12 }}>
@@ -41,7 +42,7 @@ function Btn({
   variant,
 }: {
   onClick: () => void;
-  children: React.ReactNode;
+  children: ReactNode;
   variant?: 'muted';
 }) {
   return (
@@ -134,11 +135,11 @@ export function MutationConsole() {
                       const cl = getChecklistMap(ydoc, studyId, clId);
                       if (!cl) return;
                       const answers = cl.get('answers') as Y.Map<unknown> | undefined;
-                      const q1 = answers?.get('q1') as Y.Map<unknown> | undefined;
-                      if (!q1) return;
-                      q1.set('verdict', q1.get('verdict') === 'Yes' ? 'No' : 'Yes');
+                      if (!answers) return;
+                      const key = 'q1.verdict';
+                      answers.set(key, answers.get(key) === 'Yes' ? 'No' : 'Yes');
                     }}>
-                      {clId} verdict (deep)
+                      {clId} verdict (flat)
                     </Btn>
                   </span>
                 ))}

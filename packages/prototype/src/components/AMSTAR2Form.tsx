@@ -5,6 +5,7 @@ import {
   getScoreColor,
   cbKey,
   verdictKey,
+  noteKey,
   deriveVerdict,
 } from '../amstar2';
 import type { AMSTAR2Column, AMSTAR2Section } from '../amstar2';
@@ -13,7 +14,7 @@ import {
   useChecklistScore,
   useQuestionCheckboxes,
   useSectionVerdict,
-  useQuestionYMap,
+  useAnswersYMap,
   useProjectReactor,
 } from '../reactor/hooks';
 import { useYText, resolveYText } from '../reactor/useYText';
@@ -62,7 +63,7 @@ function QuestionNote({
 }) {
   const { ydoc } = useProjectReactor();
   const yText = useMemo(
-    () => resolveYText(ydoc, studyId, checklistId, questionKey, 'note'),
+    () => resolveYText(ydoc, studyId, checklistId, noteKey(questionKey)),
     [ydoc, studyId, checklistId, questionKey],
   );
   const [note, setNote] = useYText(yText);
@@ -179,30 +180,30 @@ function SectionBlock({
 }) {
   const checkboxes = useQuestionCheckboxes(studyId, checklistId, questionKey, section.key);
   const verdict = useSectionVerdict(studyId, checklistId, questionKey, section.key);
-  const qYMap = useQuestionYMap(studyId, checklistId, questionKey);
+  const answersYMap = useAnswersYMap(studyId, checklistId);
   const { columns } = section;
   const verdictOptions = columns[columns.length - 1].options;
 
   const handleCheckboxToggle = useCallback((colIdx: number, optIdx: number) => {
-    if (!qYMap) return;
-    const key = cbKey(colIdx, optIdx, section.key);
-    const cur = qYMap.get(key) as boolean | undefined;
-    qYMap.set(key, !cur);
+    if (!answersYMap) return;
+    const key = cbKey(questionKey, colIdx, optIdx, section.key);
+    const cur = answersYMap.get(key) as boolean | undefined;
+    answersYMap.set(key, !cur);
 
     const getCheckbox = (c: number, o: number) => {
       if (c === colIdx && o === optIdx) return !cur;
-      return (qYMap.get(cbKey(c, o, section.key)) as boolean | undefined) ?? false;
+      return (answersYMap.get(cbKey(questionKey, c, o, section.key)) as boolean | undefined) ?? false;
     };
     const suggested = deriveVerdict(columns, getCheckbox);
     if (suggested !== null) {
-      qYMap.set(verdictKey(section.key), suggested);
+      answersYMap.set(verdictKey(questionKey, section.key), suggested);
     }
-  }, [qYMap, columns, section.key]);
+  }, [answersYMap, questionKey, columns, section.key]);
 
   const handleVerdictSelect = useCallback((opt: string) => {
-    if (!qYMap) return;
-    qYMap.set(verdictKey(section.key), opt);
-  }, [qYMap, section.key]);
+    if (!answersYMap) return;
+    answersYMap.set(verdictKey(questionKey, section.key), opt);
+  }, [answersYMap, questionKey, section.key]);
 
   const verdictColor = verdict === 'Yes' || verdict === 'Partial Yes'
     ? '#16a34a'
@@ -253,29 +254,29 @@ function SimpleQuestionBody({
 }) {
   const checkboxes = useQuestionCheckboxes(studyId, checklistId, questionKey);
   const verdict = useSectionVerdict(studyId, checklistId, questionKey);
-  const qYMap = useQuestionYMap(studyId, checklistId, questionKey);
+  const answersYMap = useAnswersYMap(studyId, checklistId);
   const verdictOptions = columns[columns.length - 1].options;
 
   const handleCheckboxToggle = useCallback((colIdx: number, optIdx: number) => {
-    if (!qYMap) return;
-    const key = cbKey(colIdx, optIdx);
-    const cur = qYMap.get(key) as boolean | undefined;
-    qYMap.set(key, !cur);
+    if (!answersYMap) return;
+    const key = cbKey(questionKey, colIdx, optIdx);
+    const cur = answersYMap.get(key) as boolean | undefined;
+    answersYMap.set(key, !cur);
 
     const getCheckbox = (c: number, o: number) => {
       if (c === colIdx && o === optIdx) return !cur;
-      return (qYMap.get(cbKey(c, o)) as boolean | undefined) ?? false;
+      return (answersYMap.get(cbKey(questionKey, c, o)) as boolean | undefined) ?? false;
     };
     const suggested = deriveVerdict(columns, getCheckbox);
     if (suggested !== null) {
-      qYMap.set(verdictKey(), suggested);
+      answersYMap.set(verdictKey(questionKey), suggested);
     }
-  }, [qYMap, columns]);
+  }, [answersYMap, questionKey, columns]);
 
   const handleVerdictSelect = useCallback((opt: string) => {
-    if (!qYMap) return;
-    qYMap.set(verdictKey(), opt);
-  }, [qYMap]);
+    if (!answersYMap) return;
+    answersYMap.set(verdictKey(questionKey), opt);
+  }, [answersYMap, questionKey]);
 
   const verdictColor = verdict === 'Yes' || verdict === 'Partial Yes'
     ? '#16a34a'
@@ -421,8 +422,8 @@ export function AMSTAR2Form({
       <ScoreBadge studyId={studyId} checklistId={checklistId} />
 
       <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 2 }}>
-        Each checkbox is an independent Y.Map key. Q9/Q11 have RCT + NRSI sub-sections
-        with separate verdicts consolidated for scoring. Notes use Y.Text.
+        Each checkbox is a flat key on the answers Y.Map. Q9/Q11 have RCT + NRSI sub-sections.
+        Notes use Y.Text. Scoring is a computed atom.
       </div>
 
       <div

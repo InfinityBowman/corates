@@ -4,11 +4,14 @@ import {
   AMSTAR2_SCHEMA,
   cbKey,
   verdictKey,
+  noteKey,
 } from './amstar2';
 import type { Verdict } from './amstar2';
+import { ROB2_DOMAINS, getActiveDomainKeys } from './rob2';
 
-function seedCheckboxes(
-  q: Y.Map<unknown>,
+function seedAMSTAR2Checkboxes(
+  answers: Y.Map<unknown>,
+  questionKey: string,
   columns: { options: string[] }[],
   allChecked: boolean,
   section?: string,
@@ -16,35 +19,46 @@ function seedCheckboxes(
   const cbCols = columns.slice(0, -1);
   for (let c = 0; c < cbCols.length; c++) {
     for (let o = 0; o < cbCols[c].options.length; o++) {
-      q.set(cbKey(c, o, section), allChecked);
+      answers.set(cbKey(questionKey, c, o, section), allChecked);
     }
   }
 }
 
-function makeSimpleQuestion(
+function seedAMSTAR2Question(
+  answers: Y.Map<unknown>,
   key: string,
   verdict: Verdict,
   allChecked: boolean,
   note?: string,
-): Y.Map<unknown> {
+) {
   const schema = AMSTAR2_SCHEMA[key];
-  const q = new Y.Map();
-  q.set('critical', schema.critical);
 
   if (schema.sections) {
     for (const sec of schema.sections) {
-      seedCheckboxes(q, sec.columns, allChecked, sec.key);
-      q.set(verdictKey(sec.key), verdict);
+      seedAMSTAR2Checkboxes(answers, key, sec.columns, allChecked, sec.key);
+      answers.set(verdictKey(key, sec.key), verdict);
     }
   } else {
-    seedCheckboxes(q, schema.columns!, allChecked);
-    q.set(verdictKey(), verdict);
+    seedAMSTAR2Checkboxes(answers, key, schema.columns!, allChecked);
+    answers.set(verdictKey(key), verdict);
   }
 
   const noteText = new Y.Text();
   if (note) noteText.insert(0, note);
-  q.set('note', noteText);
-  return q;
+  answers.set(noteKey(key), noteText);
+}
+
+function seedROB2Answers(answers: Y.Map<unknown>) {
+  answers.set('preliminary.aim', 'ASSIGNMENT');
+  answers.set('preliminary.studyDesign', 'Individually-randomized parallel-group trial');
+
+  const active = getActiveDomainKeys('ASSIGNMENT');
+  for (const dk of active) {
+    const domain = ROB2_DOMAINS[dk];
+    for (const q of domain.questions) {
+      answers.set(q.id, 'Y');
+    }
+  }
 }
 
 export function seedYDoc(ydoc: Y.Doc): void {
@@ -69,16 +83,15 @@ export function seedYDoc(ydoc: Y.Doc): void {
     cl1.set('createdAt', Date.now());
     const answers1 = new Y.Map();
     for (const key of AMSTAR2_QUESTION_KEYS) {
-      answers1.set(key, makeSimpleQuestion(key, 'Yes', true,
+      seedAMSTAR2Question(answers1, key, 'Yes', true,
         key === 'q1' ? 'Protocol was registered on PROSPERO.' :
         key === 'q4' ? 'Searched PubMed, Cochrane, EMBASE, PsycINFO.' :
         undefined,
-      ));
+      );
     }
     cl1.set('answers', answers1);
     checklists1.set('cl-1', cl1);
 
-    // Study 1 second checklist: non-critical flaws (Moderate)
     const cl2 = new Y.Map();
     cl2.set('type', 'AMSTAR2');
     cl2.set('status', 'finalized');
@@ -88,11 +101,11 @@ export function seedYDoc(ydoc: Y.Doc): void {
     const noKeys = new Set(['q6', 'q10', 'q14']);
     for (const key of AMSTAR2_QUESTION_KEYS) {
       if (noKeys.has(key)) {
-        answers2.set(key, makeSimpleQuestion(key, 'No', false,
+        seedAMSTAR2Question(answers2, key, 'No', false,
           key === 'q6' ? 'Only one author extracted data.' : undefined,
-        ));
+        );
       } else {
-        answers2.set(key, makeSimpleQuestion(key, 'Yes', true));
+        seedAMSTAR2Question(answers2, key, 'Yes', true);
       }
     }
     cl2.set('answers', answers2);
@@ -101,15 +114,27 @@ export function seedYDoc(ydoc: Y.Doc): void {
     study1.set('checklists', checklists1);
     reviewsMap.set('study-1', study1);
 
-    // -- Study 2: no reviewers, no checklists --
+    // -- Study 2: ROB2 checklist --
     const study2 = new Y.Map();
     study2.set('name', 'Meta-analysis of Exercise Interventions');
     study2.set('firstAuthor', 'Johnson');
     study2.set('publicationYear', '2023');
-    study2.set('reviewer1', null);
+    study2.set('reviewer1', 'alice');
     study2.set('reviewer2', null);
     study2.set('createdAt', 2000);
-    study2.set('checklists', new Y.Map());
+
+    const checklists2 = new Y.Map();
+    const clRob2 = new Y.Map();
+    clRob2.set('type', 'ROB2');
+    clRob2.set('status', 'in_progress');
+    clRob2.set('assignedTo', 'alice');
+    clRob2.set('createdAt', Date.now());
+    const answersRob2 = new Y.Map();
+    seedROB2Answers(answersRob2);
+    clRob2.set('answers', answersRob2);
+    checklists2.set('cl-1', clRob2);
+
+    study2.set('checklists', checklists2);
     reviewsMap.set('study-2', study2);
 
     // -- Study 3: many critical flaws (Critically Low) --
@@ -131,11 +156,11 @@ export function seedYDoc(ydoc: Y.Doc): void {
     const yesKeys = new Set(['q1', 'q16']);
     for (const key of AMSTAR2_QUESTION_KEYS) {
       if (yesKeys.has(key)) {
-        answers3.set(key, makeSimpleQuestion(key, 'Yes', true));
+        seedAMSTAR2Question(answers3, key, 'Yes', true);
       } else {
-        answers3.set(key, makeSimpleQuestion(key, 'No', false,
+        seedAMSTAR2Question(answers3, key, 'No', false,
           key === 'q2' ? 'No protocol registered.' : undefined,
-        ));
+        );
       }
     }
     cl3.set('answers', answers3);
