@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 import {
   ROB2_DOMAINS,
   ROB2_RESPONSES,
@@ -6,6 +6,7 @@ import {
   AIM_OPTIONS,
   getActiveDomainKeys,
   getROB2ScoreColor,
+  domainDirectionKey,
 } from '../rob2';
 import type { ROB2Question } from '../rob2';
 import {
@@ -14,8 +15,24 @@ import {
   useAnswersYMap,
   useROB2Score,
   useROB2DomainScore,
+  useProjectReactor,
 } from '../reactor/hooks';
+import { useYText, resolveYText } from '../reactor/useYText';
 import { RenderTracker } from './RenderTracker';
+
+const BIAS_DIRECTIONS = [
+  'NA',
+  'Favours experimental',
+  'Favours comparator',
+  'Towards null',
+  'Away from null',
+] as const;
+
+const STUDY_DESIGNS = [
+  'Individually-randomized parallel-group trial',
+  'Cluster-randomized parallel-group trial',
+  'Individually randomized cross-over (or other matched) trial',
+] as const;
 
 function ROB2ScoreBadge({
   studyId,
@@ -95,6 +112,122 @@ function AimSelector({
   );
 }
 
+function StudyDesignSelector({
+  studyId,
+  checklistId,
+}: {
+  studyId: string;
+  checklistId: string;
+}) {
+  const design = useAnswer<string>(studyId, checklistId, 'preliminary.studyDesign');
+  const answersYMap = useAnswersYMap(studyId, checklistId);
+
+  return (
+    <RenderTracker label="Study Design (reactor)">
+      <div style={{ fontSize: 12 }}>
+        <div style={{ fontWeight: 600, color: '#475569', marginBottom: 4 }}>
+          Study design:
+        </div>
+        <select
+          value={design ?? ''}
+          onChange={(e) => answersYMap?.set('preliminary.studyDesign', e.target.value || null)}
+          style={{
+            fontSize: 12,
+            padding: '4px 8px',
+            border: '1px solid #d1d5db',
+            borderRadius: 4,
+            width: '100%',
+          }}
+        >
+          <option value="">Select...</option>
+          {STUDY_DESIGNS.map((d) => (
+            <option key={d} value={d}>{d}</option>
+          ))}
+        </select>
+      </div>
+    </RenderTracker>
+  );
+}
+
+function QuestionComment({
+  studyId,
+  checklistId,
+  questionId,
+}: {
+  studyId: string;
+  checklistId: string;
+  questionId: string;
+}) {
+  const { ydoc } = useProjectReactor();
+  const yText = useMemo(
+    () => resolveYText(ydoc, studyId, checklistId, `${questionId}.comment`),
+    [ydoc, studyId, checklistId, questionId],
+  );
+  const [comment, setComment] = useYText(yText);
+
+  return (
+    <RenderTracker label={`Comment ${questionId} (Y.Text)`}>
+      <textarea
+        value={comment}
+        onChange={(e) => setComment(e.target.value)}
+        rows={1}
+        placeholder="Add comment..."
+        style={{
+          width: '100%',
+          fontSize: 12,
+          padding: '3px 6px',
+          border: '1px solid #e2e8f0',
+          borderRadius: 3,
+          resize: 'vertical',
+          fontFamily: 'inherit',
+          color: '#475569',
+        }}
+      />
+    </RenderTracker>
+  );
+}
+
+function DirectionSelector({
+  studyId,
+  checklistId,
+  domainKey,
+  options,
+}: {
+  studyId: string;
+  checklistId: string;
+  domainKey: string;
+  options: readonly string[];
+}) {
+  const dirKey = domainDirectionKey(domainKey);
+  const direction = useAnswer<string>(studyId, checklistId, dirKey);
+  const answersYMap = useAnswersYMap(studyId, checklistId);
+
+  return (
+    <RenderTracker label={`${domainKey} direction (reactor)`}>
+      <div style={{ fontSize: 12, marginTop: 4 }}>
+        <span style={{ fontWeight: 600, color: '#475569', marginRight: 8 }}>
+          Direction:
+        </span>
+        <select
+          value={direction ?? ''}
+          onChange={(e) => answersYMap?.set(dirKey, e.target.value || null)}
+          style={{
+            fontSize: 11,
+            padding: '2px 6px',
+            border: '1px solid #d1d5db',
+            borderRadius: 4,
+          }}
+        >
+          <option value="">Select...</option>
+          {options.map((d) => (
+            <option key={d} value={d}>{d}</option>
+          ))}
+        </select>
+      </div>
+    </RenderTracker>
+  );
+}
+
 function QuestionRow({
   studyId,
   checklistId,
@@ -144,6 +277,11 @@ function QuestionRow({
             </button>
           ))}
         </div>
+        <QuestionComment
+          studyId={studyId}
+          checklistId={checklistId}
+          questionId={question.id}
+        />
       </div>
     </RenderTracker>
   );
@@ -198,6 +336,49 @@ function DomainBlock({
             question={q}
           />
         ))}
+
+        <DirectionSelector
+          studyId={studyId}
+          checklistId={checklistId}
+          domainKey={domainKey}
+          options={BIAS_DIRECTIONS}
+        />
+      </div>
+    </RenderTracker>
+  );
+}
+
+function OverallDirection({
+  studyId,
+  checklistId,
+}: {
+  studyId: string;
+  checklistId: string;
+}) {
+  const direction = useAnswer<string>(studyId, checklistId, 'overall.direction');
+  const answersYMap = useAnswersYMap(studyId, checklistId);
+
+  return (
+    <RenderTracker label="Overall direction (reactor)">
+      <div style={{ fontSize: 12 }}>
+        <span style={{ fontWeight: 600, color: '#475569', marginRight: 8 }}>
+          Overall direction of bias:
+        </span>
+        <select
+          value={direction ?? ''}
+          onChange={(e) => answersYMap?.set('overall.direction', e.target.value || null)}
+          style={{
+            fontSize: 11,
+            padding: '2px 6px',
+            border: '1px solid #d1d5db',
+            borderRadius: 4,
+          }}
+        >
+          <option value="">Select...</option>
+          {BIAS_DIRECTIONS.map((d) => (
+            <option key={d} value={d}>{d}</option>
+          ))}
+        </select>
       </div>
     </RenderTracker>
   );
@@ -240,12 +421,12 @@ export function ROB2Form({
       <ROB2ScoreBadge studyId={studyId} checklistId={checklistId} />
 
       <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 2 }}>
-        Each question answer is a flat key on the answers Y.Map.
-        Domain judgements are computed atoms derived from question atoms.
-        Same reactor, different schema.
+        Each question answer is a flat key on the answers Y.Map. Comments use Y.Text.
+        Domain judgements are computed atoms. Direction is a stored flat key.
       </div>
 
       <AimSelector studyId={studyId} checklistId={checklistId} />
+      <StudyDesignSelector studyId={studyId} checklistId={checklistId} />
 
       <div
         style={{
@@ -265,6 +446,8 @@ export function ROB2Form({
           />
         ))}
       </div>
+
+      <OverallDirection studyId={studyId} checklistId={checklistId} />
     </div>
   );
 }
