@@ -4,6 +4,7 @@ let cycleStart = 0;
 const counts: Record<string, number> = {
   handleReviewsEvents: 0,
   buildStudy: 0,
+  buildStudySkipped: 0,
   serialize: 0,
   serializeCacheHit: 0,
   doSync: 0,
@@ -18,7 +19,7 @@ function flush(): void {
   const elapsed = performance.now() - cycleStart;
   const parts = [
     `handleReviewsEvents=${counts.handleReviewsEvents}`,
-    `buildStudy=${counts.buildStudy}(${buildStudyMs.toFixed(1)}ms)`,
+    `buildStudy=${counts.buildStudy}(${buildStudyMs.toFixed(1)}ms) skipped=${counts.buildStudySkipped}`,
     `serialize=${counts.serialize}(hit=${counts.serializeCacheHit})`,
     `doSync=${counts.doSync}`,
     `atomFired=${counts.atomFired}`,

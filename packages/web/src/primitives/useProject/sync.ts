@@ -18,6 +18,7 @@ import { amstar2 } from '@corates/shared';
 import { CHECKLIST_STATUS } from '@corates/shared/checklists';
 import type { AMSTAR2Checklist } from '@corates/shared/checklists';
 import { markCycleStart, countProbe, addBuildStudyTime } from './sync-perf';
+import { getHandler } from './checklists/handlers/registry';
 
 const getAMSTAR2Answers = amstar2.getAnswers;
 
@@ -51,36 +52,42 @@ export function createSyncManager(projectId: string, getYDoc: () => Y.Doc | null
     const reviewsMap = getYDoc()?.getMap('reviews');
     if (!reviewsMap) return;
 
-    const dirtyStudyIds = new Set<string>();
+    const studyNeedsRebuild = new Map<string, boolean>();
     let structuralChange = false;
 
     for (const event of events) {
       if (event.path.length === 0 && 'keys' in event) {
-        // Top-level: studies added or removed from the reviews map
         structuralChange = true;
         for (const [key] of (event as Y.YMapEvent<unknown>).keys) {
-          dirtyStudyIds.add(key);
+          studyNeedsRebuild.set(key, true);
         }
       } else if (event.path.length > 0) {
-        // Nested: something inside a specific study changed
-        dirtyStudyIds.add(String(event.path[0]));
+        const studyId = String(event.path[0]);
+        if (!studyNeedsRebuild.get(studyId)) {
+          studyNeedsRebuild.set(studyId, needsStudyRebuild(event));
+        }
       }
     }
 
-    // Rebuild only dirty studies
-    for (const studyId of dirtyStudyIds) {
+    let anyRebuilt = false;
+    for (const [studyId, rebuild] of studyNeedsRebuild) {
+      if (!rebuild) {
+        countProbe('buildStudySkipped');
+        continue;
+      }
       const studyYMap = reviewsMap.get(studyId) as Y.Map<unknown> | undefined;
       if (studyYMap) {
         countProbe('buildStudy');
         const t0 = performance.now();
         studyCache.set(studyId, buildStudyFromYMap(studyId, studyYMap));
         addBuildStudyTime(performance.now() - t0);
+        anyRebuilt = true;
       } else {
         studyCache.delete(studyId);
+        anyRebuilt = true;
       }
     }
 
-    // Clean up entries for studies that no longer exist in the Y.Map
     if (structuralChange) {
       for (const cachedId of studyCache.keys()) {
         if (!reviewsMap.has(cachedId)) {
@@ -89,7 +96,7 @@ export function createSyncManager(projectId: string, getYDoc: () => Y.Doc | null
       }
     }
 
-    if (dirtyStudyIds.size > 0 || structuralChange) {
+    if (anyRebuilt || structuralChange) {
       sortedStudies = [...studyCache.values()].sort(
         (a, b) => (a.createdAt || 0) - (b.createdAt || 0),
       );
@@ -263,6 +270,24 @@ export function createSyncManager(projectId: string, getYDoc: () => Y.Doc | null
   return { syncFromYDocImmediate, attach, detach, pause, resume };
 }
 
+const CHECKLIST_REBUILD_KEYS = new Set(['status', 'type', 'assignedTo', 'outcomeId', 'title']);
+
+function needsStudyRebuild(event: Y.YEvent<any>): boolean {
+  const path = event.path;
+  // path[0] is studyId (already extracted by caller)
+  // path[1] is the sub-map key (checklists, pdfs, reconciliation)
+  if (path.length <= 2) return true;
+
+  if (path.length === 3 && path[1] === 'checklists' && 'keys' in event) {
+    for (const [key] of (event as Y.YMapEvent<unknown>).keys) {
+      if (CHECKLIST_REBUILD_KEYS.has(key)) return true;
+    }
+    return false;
+  }
+
+  return false;
+}
+
 function getStr(m: Y.Map<unknown>, key: string): string | null {
   return (m.get(key) as string) || null;
 }
@@ -402,138 +427,17 @@ function buildMembersList(membersMap: Y.Map<unknown>): MemberEntry[] {
   return membersList;
 }
 
-function isYText(value: unknown): value is Y.Text {
-  return (
-    value !== null &&
-    value !== undefined &&
-    typeof (value as Y.Text).toString === 'function' &&
-    typeof (value as Y.Text).insert === 'function'
-  );
-}
-
-function yTextToStr(value: unknown): string {
-  return isYText(value) ? value.toString() : ((value as string) ?? '');
-}
-
 export function extractAnswersFromYMap(
   answersMap: Y.Map<unknown>,
   checklistType: string,
 ): Record<string, unknown> {
+  const handler = getHandler(checklistType);
+  if (handler) return handler.serializeAnswers(answersMap);
+
   const answers: Record<string, unknown> = {};
-
   for (const [key, sectionYMap] of answersMap.entries()) {
-    const section = sectionYMap as Y.Map<unknown>;
-
-    if (checklistType === 'ROBINS_I' && section && typeof section.get === 'function') {
-      if (key.startsWith('domain')) {
-        const sectionData: Record<string, unknown> = {
-          judgement: section.get('judgement') ?? null,
-          answers: {} as Record<string, { answer: string | null; comment: string }>,
-        };
-        const direction = section.get('direction');
-        if (direction !== undefined) sectionData.direction = direction;
-
-        const answersNestedYMap = section.get('answers') as Y.Map<unknown> | undefined;
-        if (answersNestedYMap && typeof answersNestedYMap.entries === 'function') {
-          const answersObj = sectionData.answers as Record<
-            string,
-            { answer: string | null; comment: string }
-          >;
-          for (const [qKey, questionYMap] of answersNestedYMap.entries()) {
-            const q = questionYMap as Y.Map<unknown>;
-            if (q && typeof q.get === 'function') {
-              answersObj[qKey] = {
-                answer: (q.get('answer') as string) ?? null,
-                comment: (q.get('comment') as string) ?? '',
-              };
-            } else {
-              answersObj[qKey] = questionYMap as { answer: string | null; comment: string };
-            }
-          }
-        }
-        answers[key] = sectionData;
-      } else if (key === 'overall') {
-        const sectionData: Record<string, unknown> = {
-          judgement: section.get('judgement') ?? null,
-        };
-        const direction = section.get('direction');
-        if (direction !== undefined) sectionData.direction = direction;
-        answers[key] = sectionData;
-      } else if (key === 'sectionB') {
-        const sectionData: Record<string, unknown> = {};
-        for (const [subKey, subValue] of section.entries()) {
-          const sv = subValue as Y.Map<unknown>;
-          if (sv && typeof sv.get === 'function') {
-            sectionData[subKey] = {
-              answer: (sv.get('answer') as string) ?? null,
-              comment: (sv.get('comment') as string) ?? '',
-            };
-          } else {
-            sectionData[subKey] = subValue;
-          }
-        }
-        answers[key] = sectionData;
-      } else {
-        const s = sectionYMap as { toJSON?: () => unknown };
-        answers[key] = s.toJSON ? s.toJSON() : sectionYMap;
-      }
-    } else if (checklistType === 'ROB2' && section && typeof section.get === 'function') {
-      if (key.startsWith('domain')) {
-        const sectionData: Record<string, unknown> = {
-          judgement: section.get('judgement') ?? null,
-          answers: {} as Record<string, { answer: string | null; comment: string }>,
-        };
-        const direction = section.get('direction');
-        if (direction !== undefined) sectionData.direction = direction;
-
-        const answersNestedYMap = section.get('answers') as Y.Map<unknown> | undefined;
-        if (answersNestedYMap && typeof answersNestedYMap.entries === 'function') {
-          const answersObj = sectionData.answers as Record<
-            string,
-            { answer: string | null; comment: string }
-          >;
-          for (const [qKey, questionYMap] of answersNestedYMap.entries()) {
-            const q = questionYMap as Y.Map<unknown>;
-            if (q && typeof q.get === 'function') {
-              answersObj[qKey] = {
-                answer: (q.get('answer') as string) ?? null,
-                comment: yTextToStr(q.get('comment')),
-              };
-            } else {
-              answersObj[qKey] = questionYMap as { answer: string | null; comment: string };
-            }
-          }
-        }
-        answers[key] = sectionData;
-      } else if (key === 'overall') {
-        const sectionData: Record<string, unknown> = {
-          judgement: section.get('judgement') ?? null,
-        };
-        const direction = section.get('direction');
-        if (direction !== undefined) sectionData.direction = direction;
-        answers[key] = sectionData;
-      } else if (key === 'preliminary') {
-        answers[key] = {
-          studyDesign: section.get('studyDesign') ?? null,
-          experimental: yTextToStr(section.get('experimental')),
-          comparator: yTextToStr(section.get('comparator')),
-          numericalResult: yTextToStr(section.get('numericalResult')),
-          aim: section.get('aim') ?? null,
-          deviationsToAddress: section.get('deviationsToAddress') ?? [],
-          sources: section.get('sources') ?? {},
-        };
-      } else {
-        const sectionData: Record<string, unknown> = {};
-        for (const [fieldKey, fieldValue] of section.entries()) {
-          sectionData[fieldKey] = isYText(fieldValue) ? fieldValue.toString() : fieldValue;
-        }
-        answers[key] = sectionData;
-      }
-    } else {
-      const s = sectionYMap as { toJSON?: () => unknown };
-      answers[key] = s.toJSON ? s.toJSON() : sectionYMap;
-    }
+    const s = sectionYMap as { toJSON?: () => unknown };
+    answers[key] = s.toJSON ? s.toJSON() : sectionYMap;
   }
-
   return answers;
 }

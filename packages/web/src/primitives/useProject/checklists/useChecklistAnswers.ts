@@ -10,18 +10,8 @@
 import { useCallback, useRef, useSyncExternalStore } from 'react';
 import * as Y from 'yjs';
 import { connectionPool } from '@/project/ConnectionPool';
-import { CHECKLIST_TYPES } from '@/checklist-registry';
-import type { ChecklistHandler } from './handlers/base';
-import { AMSTAR2Handler } from './handlers/amstar2';
 import { countProbe } from '../sync-perf';
-import { ROBINSIHandler } from './handlers/robins-i';
-import { ROB2Handler } from './handlers/rob2';
-
-const handlers: Record<string, ChecklistHandler> = {
-  [CHECKLIST_TYPES.AMSTAR2]: new AMSTAR2Handler(),
-  [CHECKLIST_TYPES.ROBINS_I]: new ROBINSIHandler(),
-  [CHECKLIST_TYPES.ROB2]: new ROB2Handler(),
-};
+import { getHandler } from './handlers/registry';
 
 interface ResolvedAnswers {
   answersYMap: Y.Map<unknown>;
@@ -127,7 +117,7 @@ export function useChecklistAnswers(
       return null;
     }
 
-    const handler = handlers[resolved.checklistType];
+    const handler = getHandler(resolved.checklistType);
     const fresh = handler
       ? handler.serializeAnswers(resolved.answersYMap)
       : fallbackSerialize(resolved.answersYMap);
