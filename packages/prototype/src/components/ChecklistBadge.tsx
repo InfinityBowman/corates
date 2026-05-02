@@ -14,8 +14,8 @@ export function ChecklistBadge({
   studyId: string;
   checklistId: string;
 }) {
-  const status = useChecklistField<string>(studyId, checklistId, 'status');
-  const type = useChecklistField<string>(studyId, checklistId, 'type');
+  const status = useChecklistField(studyId, checklistId, 'status');
+  const type = useChecklistField(studyId, checklistId, 'type');
 
   return (
     <RenderTracker label={`ChecklistBadge [${checklistId}]`}>

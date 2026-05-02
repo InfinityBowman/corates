@@ -104,13 +104,34 @@ export class CollectionReactor<T extends { dispose(): void }> {
 
 export class ChecklistReactor {
   readonly fields: YMapReactor;
+  private _answers: CollectionReactor<YMapReactor> | null = null;
 
-  constructor(id: string, ymap: Y.Map<unknown>) {
+  constructor(
+    readonly id: string,
+    ymap: Y.Map<unknown>,
+  ) {
     this.fields = new YMapReactor(`cl:${id}`, ymap);
+  }
+
+  get answers(): CollectionReactor<YMapReactor> {
+    if (!this._answers) {
+      let answersYMap = this.fields.ymap.get('answers') as Y.Map<unknown> | undefined;
+      if (!answersYMap) {
+        answersYMap = new Y.Map();
+        this.fields.ymap.set('answers', answersYMap);
+      }
+      this._answers = new CollectionReactor(
+        `cl:${this.id}:q`,
+        answersYMap,
+        (qId, qYMap) => new YMapReactor(`q:${this.id}:${qId}`, qYMap),
+      );
+    }
+    return this._answers;
   }
 
   dispose(): void {
     this.fields.dispose();
+    this._answers?.dispose();
   }
 }
 

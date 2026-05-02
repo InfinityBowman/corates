@@ -1,10 +1,48 @@
 import * as Y from 'yjs';
+import {
+  AMSTAR2_QUESTION_KEYS,
+  AMSTAR2_SCHEMA,
+  cbKey,
+  verdictKey,
+} from './amstar2';
+import type { Verdict } from './amstar2';
 
-function makeQuestion(answer: string, note: string): Y.Map<unknown> {
+function seedCheckboxes(
+  q: Y.Map<unknown>,
+  columns: { options: string[] }[],
+  allChecked: boolean,
+  section?: string,
+) {
+  const cbCols = columns.slice(0, -1);
+  for (let c = 0; c < cbCols.length; c++) {
+    for (let o = 0; o < cbCols[c].options.length; o++) {
+      q.set(cbKey(c, o, section), allChecked);
+    }
+  }
+}
+
+function makeSimpleQuestion(
+  key: string,
+  verdict: Verdict,
+  allChecked: boolean,
+  note?: string,
+): Y.Map<unknown> {
+  const schema = AMSTAR2_SCHEMA[key];
   const q = new Y.Map();
-  q.set('answer', answer);
+  q.set('critical', schema.critical);
+
+  if (schema.sections) {
+    for (const sec of schema.sections) {
+      seedCheckboxes(q, sec.columns, allChecked, sec.key);
+      q.set(verdictKey(sec.key), verdict);
+    }
+  } else {
+    seedCheckboxes(q, schema.columns!, allChecked);
+    q.set(verdictKey(), verdict);
+  }
+
   const noteText = new Y.Text();
-  noteText.insert(0, note);
+  if (note) noteText.insert(0, note);
   q.set('note', noteText);
   return q;
 }
@@ -13,7 +51,7 @@ export function seedYDoc(ydoc: Y.Doc): void {
   ydoc.transact(() => {
     const reviewsMap = ydoc.getMap('reviews');
 
-    // -- Study 1: has two checklists (one in-progress, one finalized) --
+    // -- Study 1: all Yes (High confidence) --
     const study1 = new Y.Map();
     study1.set('name', 'Effectiveness of CBT for Depression');
     study1.set('firstAuthor', 'Smith');
@@ -30,21 +68,33 @@ export function seedYDoc(ydoc: Y.Doc): void {
     cl1.set('assignedTo', 'alice');
     cl1.set('createdAt', Date.now());
     const answers1 = new Y.Map();
-    answers1.set('q1', makeQuestion('yes', 'Protocol was registered on PROSPERO.'));
-    answers1.set('q2', makeQuestion('no', ''));
-    answers1.set('q3', makeQuestion('partially_yes', 'Only PubMed and Cochrane searched.'));
+    for (const key of AMSTAR2_QUESTION_KEYS) {
+      answers1.set(key, makeSimpleQuestion(key, 'Yes', true,
+        key === 'q1' ? 'Protocol was registered on PROSPERO.' :
+        key === 'q4' ? 'Searched PubMed, Cochrane, EMBASE, PsycINFO.' :
+        undefined,
+      ));
+    }
     cl1.set('answers', answers1);
     checklists1.set('cl-1', cl1);
 
+    // Study 1 second checklist: non-critical flaws (Moderate)
     const cl2 = new Y.Map();
     cl2.set('type', 'AMSTAR2');
     cl2.set('status', 'finalized');
     cl2.set('assignedTo', 'bob');
     cl2.set('createdAt', Date.now() + 1);
     const answers2 = new Y.Map();
-    answers2.set('q1', makeQuestion('yes', 'Confirmed registration.'));
-    answers2.set('q2', makeQuestion('yes', ''));
-    answers2.set('q3', makeQuestion('yes', 'Comprehensive search strategy.'));
+    const noKeys = new Set(['q6', 'q10', 'q14']);
+    for (const key of AMSTAR2_QUESTION_KEYS) {
+      if (noKeys.has(key)) {
+        answers2.set(key, makeSimpleQuestion(key, 'No', false,
+          key === 'q6' ? 'Only one author extracted data.' : undefined,
+        ));
+      } else {
+        answers2.set(key, makeSimpleQuestion(key, 'Yes', true));
+      }
+    }
     cl2.set('answers', answers2);
     checklists1.set('cl-2', cl2);
 
@@ -59,12 +109,10 @@ export function seedYDoc(ydoc: Y.Doc): void {
     study2.set('reviewer1', null);
     study2.set('reviewer2', null);
     study2.set('createdAt', 2000);
-
-    const checklists2 = new Y.Map();
-    study2.set('checklists', checklists2);
+    study2.set('checklists', new Y.Map());
     reviewsMap.set('study-2', study2);
 
-    // -- Study 3: one reviewer, one pending checklist --
+    // -- Study 3: many critical flaws (Critically Low) --
     const study3 = new Y.Map();
     study3.set('name', 'Systematic Review of Sleep Hygiene');
     study3.set('firstAuthor', 'Park');
@@ -75,12 +123,21 @@ export function seedYDoc(ydoc: Y.Doc): void {
 
     const checklists3 = new Y.Map();
     const cl3 = new Y.Map();
-    cl3.set('type', 'ROB2');
-    cl3.set('status', 'pending');
+    cl3.set('type', 'AMSTAR2');
+    cl3.set('status', 'in_progress');
     cl3.set('assignedTo', 'carol');
     cl3.set('createdAt', Date.now());
     const answers3 = new Y.Map();
-    answers3.set('q1', makeQuestion('', ''));
+    const yesKeys = new Set(['q1', 'q16']);
+    for (const key of AMSTAR2_QUESTION_KEYS) {
+      if (yesKeys.has(key)) {
+        answers3.set(key, makeSimpleQuestion(key, 'Yes', true));
+      } else {
+        answers3.set(key, makeSimpleQuestion(key, 'No', false,
+          key === 'q2' ? 'No protocol registered.' : undefined,
+        ));
+      }
+    }
     cl3.set('answers', answers3);
     checklists3.set('cl-1', cl3);
 

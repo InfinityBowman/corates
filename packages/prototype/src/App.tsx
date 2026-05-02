@@ -4,7 +4,7 @@ import { ProjectReactor } from './reactor/core';
 import { ProjectReactorContext } from './reactor/context';
 import { useChecklistIds } from './reactor/hooks';
 import { StudyList } from './components/StudyList';
-import { ChecklistEditor } from './components/ChecklistEditor';
+import { AMSTAR2Form } from './components/AMSTAR2Form';
 import { MutationConsole } from './components/MutationConsole';
 import { StatsPanel } from './components/StatsPanel';
 import { seedYDoc } from './seed';
@@ -25,7 +25,7 @@ function EditorPanel({
         <div style={{ fontSize: 13, color: '#888' }}>No checklists on this study.</div>
       )}
       {checklistIds.map((clId) => (
-        <ChecklistEditor key={clId} studyId={studyId} checklistId={clId} />
+        <AMSTAR2Form key={clId} studyId={studyId} checklistId={clId} />
       ))}
     </div>
   );

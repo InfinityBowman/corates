@@ -10,9 +10,9 @@ function ChecklistMeta({
   studyId: string;
   checklistId: string;
 }) {
-  const status = useChecklistField<string>(studyId, checklistId, 'status');
-  const type = useChecklistField<string>(studyId, checklistId, 'type');
-  const assignedTo = useChecklistField<string>(studyId, checklistId, 'assignedTo');
+  const status = useChecklistField(studyId, checklistId, 'status');
+  const type = useChecklistField(studyId, checklistId, 'type');
+  const assignedTo = useChecklistField(studyId, checklistId, 'assignedTo');
 
   return (
     <RenderTracker label="ChecklistMeta (reactor)">

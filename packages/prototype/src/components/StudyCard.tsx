@@ -1,16 +1,14 @@
-import { useChecklistIds, useStudyComputed } from '../reactor/hooks';
+import { useChecklistIds, useStudyField } from '../reactor/hooks';
 import { RenderTracker } from './RenderTracker';
 import { StudyName } from './StudyName';
 import { StudyReviewer } from './StudyReviewer';
 import { ChecklistBadge } from './ChecklistBadge';
 
 function UnassignedBadge({ studyId }: { studyId: string }) {
-  const isUnassigned = useStudyComputed(studyId, 'unassigned', (fields) => {
-    return !fields.field<string | null>('reviewer1').get()
-      && !fields.field<string | null>('reviewer2').get();
-  });
+  const reviewer1 = useStudyField(studyId, 'reviewer1');
+  const reviewer2 = useStudyField(studyId, 'reviewer2');
 
-  if (!isUnassigned) return null;
+  if (reviewer1 || reviewer2) return null;
 
   return (
     <RenderTracker label="UnassignedBadge (computed)">

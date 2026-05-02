@@ -135,9 +135,10 @@ export function MutationConsole() {
                       if (!cl) return;
                       const answers = cl.get('answers') as Y.Map<unknown> | undefined;
                       const q1 = answers?.get('q1') as Y.Map<unknown> | undefined;
-                      if (q1) q1.set('answer', q1.get('answer') === 'yes' ? 'no' : 'yes');
+                      if (!q1) return;
+                      q1.set('verdict', q1.get('verdict') === 'Yes' ? 'No' : 'Yes');
                     }}>
-                      {clId} answer (deep)
+                      {clId} verdict (deep)
                     </Btn>
                   </span>
                 ))}
