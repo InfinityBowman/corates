@@ -1,61 +1,42 @@
-/**
- * SignallingQuestion - A single signalling question with response button options
- * Used by ROB2 DomainSection for each question within a domain.
- */
-
-import { useEffect, useMemo, useCallback } from 'react';
-import type * as Y from 'yjs';
+import { useMemo } from 'react';
 import { RESPONSE_LABELS, getResponseOptions } from './checklist-map';
 import { NoteEditor } from '@/components/checklist/common/NoteEditor';
-import type { TextRef } from '@/primitives/useProject/checklists';
+import { useAnswer, useAnswersYMap } from '@/primitives/useProject/reactor/hooks';
+import { resolveYText } from '@/primitives/useProject/reactor/ytext';
+import { useProjectReactor } from '@/primitives/useProject/reactor/hooks';
 
 interface SignallingQuestionProps {
-  question: any;
-  answer: any;
-  onUpdate: (_newAnswer: any) => void;
+  studyId: string;
+  checklistId: string;
+  questionKey: string;
+  question: { number?: string; text: string; responseType: any };
   disabled?: boolean;
   showComment?: boolean;
-  domainKey: string;
-  questionKey: string;
-  getTextRef: (_ref: TextRef) => Y.Text | null;
   isSkippable?: boolean;
 }
 
 export function SignallingQuestion({
+  studyId,
+  checklistId,
+  questionKey,
   question,
-  answer,
-  onUpdate,
   disabled,
   showComment,
-  domainKey,
-  questionKey,
-  getTextRef,
   isSkippable,
 }: SignallingQuestionProps) {
   const options = useMemo(() => getResponseOptions(question.responseType), [question.responseType]);
+  const answer = useAnswer<string>(studyId, checklistId, questionKey);
+  const answersYMap = useAnswersYMap(studyId, checklistId);
+  const { ydoc } = useProjectReactor();
 
-  // Coerce NA to NI if NA is not valid for this question type.
-  // Only answer?.answer is in deps to avoid re-triggering on comment changes.
-  useEffect(() => {
-    if (answer?.answer === 'NA' && !options.includes('NA')) {
-      onUpdate({ ...answer, answer: 'NI' });
-    }
-  }, [answer?.answer, options]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  const handleAnswerChange = useCallback(
-    (value: string) => {
-      const newValue = answer?.answer === value ? null : value;
-      onUpdate({ ...answer, answer: newValue });
-    },
-    [answer, onUpdate],
-  );
+  const handleAnswerChange = (value: string) => {
+    if (!answersYMap) return;
+    answersYMap.set(questionKey, answer === value ? null : value);
+  };
 
   const commentYText = useMemo(
-    () =>
-      showComment ?
-        getTextRef({ type: 'ROB2', sectionKey: domainKey, fieldKey: 'comment', questionKey })
-      : null,
-    [showComment, getTextRef, domainKey, questionKey],
+    () => (showComment ? resolveYText(ydoc, studyId, checklistId, `${questionKey}.comment`) : null),
+    [showComment, ydoc, studyId, checklistId, questionKey],
   );
 
   return (
@@ -79,7 +60,7 @@ export function SignallingQuestion({
               onClick={() => !disabled && handleAnswerChange(option)}
               disabled={disabled}
               className={`relative inline-flex cursor-pointer items-center justify-center rounded border px-2 py-1 text-xs font-medium transition-colors ${disabled ? 'cursor-not-allowed opacity-50' : ''} ${
-                answer?.answer === option ?
+                answer === option ?
                   'border-blue-400 bg-blue-100 text-blue-800'
                 : 'border-border bg-muted text-muted-foreground hover:bg-secondary'
               }`}
@@ -105,9 +86,6 @@ export function SignallingQuestion({
   );
 }
 
-/**
- * Response legend showing what each abbreviation means
- */
 export function ResponseLegend() {
   const commonResponses = ['Y', 'PY', 'PN', 'N', 'NI'];
 

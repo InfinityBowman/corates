@@ -1,36 +1,26 @@
-/**
- * ROB2Checklist - Main ROB-2 Checklist Component
- *
- * Renders preliminary considerations, domain sections with auto-scoring,
- * and overall risk of bias assessment.
- */
-
 import { useState, useMemo, useCallback, useRef, useEffect } from 'react';
-import type * as Y from 'yjs';
 import { getActiveDomainKeys } from './checklist-map';
 import { PreliminarySection } from './PreliminarySection';
 import { DomainSection } from './DomainSection';
 import { OverallSection } from './OverallSection';
 import { ResponseLegend } from './SignallingQuestion';
 import { ScoringSummary } from './ScoringSummary';
-import type { TextRef } from '@/primitives/useProject/checklists';
+import { useAnswer, useChecklistField } from '@/primitives/useProject/reactor/hooks';
 
 interface ROB2ChecklistProps {
-  checklistState: any;
-  onUpdate: (_patch: Record<string, any>) => void;
+  studyId: string;
+  checklistId: string;
   showComments?: boolean;
   showLegend?: boolean;
   readOnly?: boolean;
-  getTextRef: (_ref: TextRef) => Y.Text | null;
 }
 
 export function ROB2Checklist({
-  checklistState,
-  onUpdate,
+  studyId,
+  checklistId,
   showComments,
   showLegend,
   readOnly,
-  getTextRef,
 }: ROB2ChecklistProps) {
   const isReadOnly = !!readOnly;
   const [collapsedDomains, setCollapsedDomains] = useState<Record<string, boolean>>({});
@@ -44,27 +34,11 @@ export function ROB2Checklist({
     };
   }, []);
 
-  const isAdhering = useMemo(
-    () => checklistState?.preliminary?.aim === 'ADHERING',
-    [checklistState?.preliminary?.aim],
-  );
+  const aim = useAnswer<string>(studyId, checklistId, 'preliminary.aim');
+  const checklistName = useChecklistField<string>(studyId, checklistId, 'name');
+  const isAdhering = aim === 'ADHERING';
   const activeDomains = useMemo(() => getActiveDomainKeys(isAdhering), [isAdhering]);
-  const hasAimSelected = !!checklistState?.preliminary?.aim;
-
-  const handlePreliminaryUpdate = useCallback(
-    (newPreliminary: any) => onUpdate({ preliminary: newPreliminary }),
-    [onUpdate],
-  );
-
-  const handleDomainUpdate = useCallback(
-    (domainKey: string, newDomainState: any) => onUpdate({ [domainKey]: newDomainState }),
-    [onUpdate],
-  );
-
-  const handleOverallUpdate = useCallback(
-    (newOverall: any) => onUpdate({ overall: newOverall }),
-    [onUpdate],
-  );
+  const hasAimSelected = !!aim;
 
   const toggleDomainCollapse = useCallback((domainKey: string) => {
     setCollapsedDomains(prev => ({ ...prev, [domainKey]: !prev[domainKey] }));
@@ -88,13 +62,17 @@ export function ROB2Checklist({
     <div className='bg-blue-50'>
       <div className='container mx-auto flex max-w-5xl flex-col gap-4 px-4 py-6'>
         <div className='text-foreground mb-6 text-left text-lg font-semibold sm:text-center'>
-          {checklistState?.name || 'RoB 2 Checklist'}
+          {checklistName || 'RoB 2 Checklist'}
         </div>
 
         {/* Scoring Summary Strip */}
         {hasAimSelected && (
           <div className='sticky z-40' style={{ top: '8px' }}>
-            <ScoringSummary checklistState={checklistState} onDomainClick={handleDomainClick} />
+            <ScoringSummary
+              studyId={studyId}
+              checklistId={checklistId}
+              onDomainClick={handleDomainClick}
+            />
           </div>
         )}
 
@@ -103,10 +81,9 @@ export function ROB2Checklist({
 
         {/* Preliminary Considerations */}
         <PreliminarySection
-          preliminaryState={checklistState?.preliminary}
-          onUpdate={handlePreliminaryUpdate}
+          studyId={studyId}
+          checklistId={checklistId}
           disabled={isReadOnly}
-          getTextRef={getTextRef}
         />
 
         {/* Message when aim not selected */}
@@ -136,23 +113,21 @@ export function ROB2Checklist({
                   }}
                 >
                   <DomainSection
+                    studyId={studyId}
+                    checklistId={checklistId}
                     domainKey={domainKey}
-                    domainState={checklistState?.[domainKey]}
-                    onUpdate={newState => handleDomainUpdate(domainKey, newState)}
                     disabled={isReadOnly}
                     showComments={showComments}
                     collapsed={collapsedDomains[domainKey]}
                     onToggleCollapse={() => toggleDomainCollapse(domainKey)}
-                    getTextRef={getTextRef}
                   />
                 </div>
               ))}
             </div>
 
             <OverallSection
-              overallState={checklistState?.overall}
-              checklistState={checklistState}
-              onUpdate={handleOverallUpdate}
+              studyId={studyId}
+              checklistId={checklistId}
               disabled={isReadOnly}
             />
           </>

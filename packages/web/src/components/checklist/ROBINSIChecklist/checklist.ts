@@ -8,7 +8,6 @@
 import { robinsI } from '@corates/shared';
 
 // Re-export functions with original names for backward compatibility
-export const isROBINSIComplete = robinsI.isROBINSIComplete;
 export const shouldStopAssessment = robinsI.shouldStopAssessment;
 
 // Re-export smart scoring functions

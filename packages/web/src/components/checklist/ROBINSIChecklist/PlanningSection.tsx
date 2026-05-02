@@ -1,24 +1,22 @@
-/**
- * PlanningSection - ROBINS-I planning stage for confounding factors
- */
-
 import { useMemo } from 'react';
-import type * as Y from 'yjs';
 import { PLANNING_SECTION } from './checklist-map';
 import { NoteEditor } from '@/components/checklist/common/NoteEditor';
-import type { TextRef } from '@/primitives/useProject/checklists';
+import { useProjectReactor } from '@/primitives/useProject/reactor/hooks';
+import { resolveYText } from '@/primitives/useProject/reactor/ytext';
 
 interface PlanningSectionProps {
+  studyId: string;
+  checklistId: string;
   disabled?: boolean;
-  getTextRef: (_ref: TextRef) => Y.Text | null;
 }
 
-export function PlanningSection({ disabled, getTextRef }: PlanningSectionProps) {
+export function PlanningSection({ studyId, checklistId, disabled }: PlanningSectionProps) {
   const p1Field = PLANNING_SECTION.p1;
+  const { ydoc } = useProjectReactor();
 
   const yText = useMemo(
-    () => getTextRef({ type: 'ROBINS_I', sectionKey: 'planning', fieldKey: 'confoundingFactors' }),
-    [getTextRef],
+    () => resolveYText(ydoc, studyId, checklistId, 'planning.confoundingFactors'),
+    [ydoc, studyId, checklistId],
   );
 
   return (

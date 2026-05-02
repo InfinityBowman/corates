@@ -1,52 +1,29 @@
-/**
- * OverallSection - Overall risk of bias section for ROB2
- * Uses auto-scoring from all domains. Auto-persists calculated judgement.
- */
-
-import { useMemo, useEffect, useCallback } from 'react';
 import { BIAS_DIRECTIONS } from './checklist-map';
-import { getSmartScoring, mapOverallJudgementToDisplay } from './checklist.js';
+import { mapOverallJudgementToDisplay } from './checklist.js';
+import { useAnswer, useAnswersYMap, useROB2Score } from '@/primitives/useProject/reactor/hooks';
 
 interface OverallSectionProps {
-  overallState: any;
-  checklistState: any;
-  onUpdate: (_newState: any) => void;
+  studyId: string;
+  checklistId: string;
   disabled?: boolean;
 }
 
 export function OverallSection({
-  overallState,
-  checklistState,
-  onUpdate,
+  studyId,
+  checklistId,
   disabled,
 }: OverallSectionProps) {
-  const smartScoring = useMemo(() => getSmartScoring(checklistState), [checklistState]);
-  const calculatedScore = smartScoring.overall;
-  const calculatedDisplayJudgement = useMemo(
-    () => mapOverallJudgementToDisplay(calculatedScore),
-    [calculatedScore],
-  );
+  const calculatedScore = useROB2Score(studyId, checklistId);
+  const isIncomplete = calculatedScore === 'Incomplete';
+  const calculatedDisplayJudgement = isIncomplete ? null : mapOverallJudgementToDisplay(calculatedScore);
   const effectiveJudgement = calculatedDisplayJudgement;
 
-  // Auto-persist calculated judgement when it differs from stored.
-  // Deps track only overallState?.judgement (not the full object) to avoid
-  // re-triggering on unrelated changes like direction.
-  useEffect(() => {
-    if (
-      calculatedDisplayJudgement &&
-      calculatedDisplayJudgement !== overallState?.judgement &&
-      !disabled
-    ) {
-      onUpdate({ ...(overallState || {}), judgement: calculatedDisplayJudgement });
-    }
-  }, [calculatedDisplayJudgement, overallState?.judgement, disabled]); // eslint-disable-line react-hooks/exhaustive-deps
+  const direction = useAnswer<string>(studyId, checklistId, 'overall.direction');
+  const answersYMap = useAnswersYMap(studyId, checklistId);
 
-  const handleDirectionChange = useCallback(
-    (direction: string | null) => {
-      onUpdate({ ...overallState, direction });
-    },
-    [overallState, onUpdate],
-  );
+  const handleDirectionChange = (dir: string | null) => {
+    answersYMap?.set('overall.direction', dir);
+  };
 
   const getJudgementColor = (j: string, isSelected: boolean) => {
     if (!isSelected) return 'border-border bg-muted text-muted-foreground/70';
@@ -89,17 +66,15 @@ export function OverallSection({
               Final assessment based on all domain judgements
             </p>
           </div>
-          {calculatedScore && (calculatedScore as string) !== 'Incomplete' ?
+          {!isIncomplete ?
             <span
               className={`rounded-md px-3 py-1 text-sm font-semibold ${getScoreBadgeColor(calculatedScore)}`}
             >
               {calculatedScore}
             </span>
-          : (calculatedScore === null || !smartScoring.isComplete) && (
-              <span className='bg-muted-foreground/50 text-muted rounded-md px-3 py-1 text-sm'>
-                Incomplete
-              </span>
-            )
+          : <span className='bg-muted-foreground/50 text-muted rounded-md px-3 py-1 text-sm'>
+              Incomplete
+            </span>
           }
         </div>
       </div>
@@ -149,7 +124,7 @@ export function OverallSection({
           </div>
           <div className='flex flex-wrap gap-2'>
             {BIAS_DIRECTIONS.map(d => {
-              const isSelected = overallState?.direction === d;
+              const isSelected = direction === d;
               return (
                 <button
                   key={d}

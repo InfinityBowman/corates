@@ -1,22 +1,13 @@
-/**
- * ChecklistWithPdf - Wrapper that combines any checklist type with a PDF viewer
- * in a split-screen layout. Used by both local and project checklists.
- *
- * Supports multiple checklist types via the GenericChecklist component.
- */
-
 import { lazy, Suspense } from 'react';
-import type * as Y from 'yjs';
 import { GenericChecklist } from '@/components/checklist/GenericChecklist';
 import { SplitScreenLayout } from '@/components/checklist/SplitScreenLayout';
-import type { TextRef } from '@/primitives/useProject/checklists';
 
 const EmbedPdfViewer = lazy(() => import('@/components/pdf/EmbedPdfViewer'));
 
 interface ChecklistWithPdfProps {
-  checklistType?: string;
-  checklist: any;
-  onUpdate: (_patch: Record<string, any>) => void;
+  studyId: string;
+  checklistId: string;
+  checklistType: string;
   headerContent?: React.ReactNode;
   pdfData?: ArrayBuffer | null;
   pdfFileName?: string | null;
@@ -24,7 +15,6 @@ interface ChecklistWithPdfProps {
   pdfs?: any[];
   selectedPdfId?: string | null;
   onPdfSelect?: (_pdfId: string) => void;
-  getTextRef: (_ref: TextRef) => Y.Text | null;
   pdfUrl?: string | null;
   onAnnotationAdd?: (_annotation: any) => void;
   onAnnotationUpdate?: (_annotation: any) => void;
@@ -36,9 +26,9 @@ interface ChecklistWithPdfProps {
 }
 
 export function ChecklistWithPdf({
+  studyId,
+  checklistId,
   checklistType,
-  checklist,
-  onUpdate,
   headerContent,
   pdfData,
   pdfFileName,
@@ -46,7 +36,6 @@ export function ChecklistWithPdf({
   pdfs,
   selectedPdfId,
   onPdfSelect,
-  getTextRef,
   pdfUrl,
   onAnnotationAdd,
   onAnnotationUpdate,
@@ -68,11 +57,10 @@ export function ChecklistWithPdf({
       >
         {/* First panel: Checklist */}
         <GenericChecklist
+          studyId={studyId}
+          checklistId={checklistId}
           checklistType={checklistType}
-          checklist={checklist}
-          onUpdate={onUpdate}
           readOnly={readOnly}
-          getTextRef={getTextRef}
         />
 
         {/* Second panel: PDF Viewer */}

@@ -16,6 +16,7 @@ import { showToast } from '@/components/ui/toast';
 import { connectionPool } from './ConnectionPool';
 
 import { ProjectProvider } from '@/components/project/ProjectContext';
+import { ProjectReactorContext } from '@/primitives/useProject/reactor/context';
 
 interface ProjectGateProps {
   projectId: string;
@@ -95,5 +96,11 @@ export function ProjectGate({ projectId, fallback, children }: ProjectGateProps)
     return null;
   }
 
-  return <ProjectProvider projectId={projectId}>{children}</ProjectProvider>;
+  const reactor = connectionPool.getReactor(projectId);
+
+  return (
+    <ProjectReactorContext.Provider value={reactor}>
+      <ProjectProvider projectId={projectId}>{children}</ProjectProvider>
+    </ProjectReactorContext.Provider>
+  );
 }

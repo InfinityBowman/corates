@@ -1,40 +1,28 @@
-/**
- * SectionD - ROBINS-I: Information sources
- */
-
-import { useCallback, useMemo } from 'react';
-import type * as Y from 'yjs';
+import { useMemo } from 'react';
 import { INFORMATION_SOURCES, SECTION_D } from './checklist-map';
 import { NoteEditor } from '@/components/checklist/common/NoteEditor';
-import type { TextRef } from '@/primitives/useProject/checklists';
-
-interface SectionDState {
-  sources?: Record<string, boolean>;
-  [key: string]: unknown;
-}
+import { useAnswer, useAnswersYMap, useProjectReactor } from '@/primitives/useProject/reactor/hooks';
+import { resolveYText } from '@/primitives/useProject/reactor/ytext';
 
 interface SectionDProps {
-  sectionDState: SectionDState | undefined;
-  onUpdate: (_newState: SectionDState) => void;
+  studyId: string;
+  checklistId: string;
   disabled?: boolean;
-  getTextRef: (_ref: TextRef) => Y.Text | null;
 }
 
-export function SectionD({ sectionDState, onUpdate, disabled, getTextRef }: SectionDProps) {
-  const handleSourceToggle = useCallback(
-    (sourceName: string) => {
-      const newSources = {
-        ...sectionDState?.sources,
-        [sourceName]: !sectionDState?.sources?.[sourceName],
-      };
-      onUpdate({ ...sectionDState, sources: newSources });
-    },
-    [sectionDState, onUpdate],
-  );
+export function SectionD({ studyId, checklistId, disabled }: SectionDProps) {
+  const { ydoc } = useProjectReactor();
+  const answersYMap = useAnswersYMap(studyId, checklistId);
+  const sources = useAnswer<Record<string, boolean>>(studyId, checklistId, 'sectionD.sources');
+
+  const handleSourceToggle = (sourceName: string) => {
+    const current = sources || {};
+    answersYMap?.set('sectionD.sources', { ...current, [sourceName]: !current[sourceName] });
+  };
 
   const otherSpecifyYText = useMemo(
-    () => getTextRef({ type: 'ROBINS_I', sectionKey: 'sectionD', fieldKey: 'otherSpecify' }),
-    [getTextRef],
+    () => resolveYText(ydoc, studyId, checklistId, 'sectionD.otherSpecify'),
+    [ydoc, studyId, checklistId],
   );
 
   return (
@@ -47,7 +35,7 @@ export function SectionD({ sectionDState, onUpdate, disabled, getTextRef }: Sect
       <div className='flex flex-col gap-3 px-6 py-4'>
         <div className='grid grid-cols-1 gap-2 md:grid-cols-2'>
           {INFORMATION_SOURCES.map(source => {
-            const isChecked = sectionDState?.sources?.[source] || false;
+            const isChecked = sources?.[source] || false;
             return (
               <label
                 key={source}

@@ -34,6 +34,8 @@ import {
 } from '@/primitives/useProject/outcomes.js';
 import { db, deleteProjectData } from '@/primitives/db.js';
 import { migrateLocalChecklistsToYDoc } from './localProject';
+import { ProjectReactor } from '@/primitives/useProject/reactor/core';
+import { migrateYDocToFlatKeys } from '@/primitives/useProject/reactor/migrate';
 
 export interface TypedProjectOps {
   study: StudyOperations;
@@ -56,6 +58,7 @@ interface ConnectionEntry {
   reconciliationOps: ReconciliationOperations | null;
   annotationOps: AnnotationOperations | null;
   outcomeOps: OutcomeOperations | null;
+  reactor: ProjectReactor | null;
   refCount: number;
   initialized: boolean;
   _cleanupHandlers: (() => void)[];
@@ -90,6 +93,7 @@ class ConnectionPool {
       reconciliationOps: null,
       annotationOps: null,
       outcomeOps: null,
+      reactor: null,
       refCount: 1,
       initialized: false,
       _cleanupHandlers: [],
@@ -130,6 +134,7 @@ class ConnectionPool {
     entry.reconciliationOps = createReconciliationOperations(projectId, getYDoc);
     entry.annotationOps = createAnnotationOperations(projectId, getYDoc);
     entry.outcomeOps = createOutcomeOperations(projectId, getYDoc);
+    entry.reactor = new ProjectReactor(ydoc);
 
     // Scoped Y.Map observers (reviews, members, meta) for incremental sync
     entry.syncManager.attach(ydoc);
@@ -172,6 +177,7 @@ class ConnectionPool {
         ydoc.on('update', dexieUpdateHandler);
         entry._cleanupHandlers.push(() => ydoc.off('update', dexieUpdateHandler));
 
+        migrateYDocToFlatKeys(ydoc);
         entry.syncManager!.syncFromYDocImmediate();
 
         const reviewsSize = ydoc.getMap('reviews').size;
@@ -201,6 +207,7 @@ class ConnectionPool {
     if (!isLocal) {
       entry.connectionManager = createConnectionManager(projectId, ydoc, {
         onSync: () => {
+          migrateYDocToFlatKeys(ydoc);
           useProjectStore.getState().dispatchConnectionEvent(projectId, { type: 'SYNC_COMPLETE' });
           entry.syncManager?.syncFromYDocImmediate();
         },
@@ -259,6 +266,10 @@ class ConnectionPool {
    */
   getEntry(projectId: string): ConnectionEntry | null {
     return this.registry.get(projectId) || null;
+  }
+
+  getReactor(projectId: string): ProjectReactor | null {
+    return this.registry.get(projectId)?.reactor || null;
   }
 
   /**
@@ -346,6 +357,7 @@ class ConnectionPool {
     }
     entry._cleanupHandlers = [];
 
+    if (entry.reactor) entry.reactor.dispose();
     if (entry.connectionManager) entry.connectionManager.destroy();
     if (entry.dexieProvider) DexieYProvider.release(entry.ydoc);
     if (entry.ydoc) entry.ydoc.destroy();

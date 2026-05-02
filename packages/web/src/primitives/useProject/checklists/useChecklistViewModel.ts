@@ -14,7 +14,6 @@ import { useChecklistAnswers } from './useChecklistAnswers';
 export interface ChecklistViewModel {
   currentStudy: StudyInfo | null;
   currentChecklist: ChecklistEntry | null;
-  checklistForUI: Record<string, unknown> | null;
   checklistType: string | null;
   currentScore: string | null;
 }
@@ -55,5 +54,5 @@ export function useChecklistViewModel(
     return scoreChecklistOfType(checklistType, checklistForUI);
   }, [checklistForUI, checklistType]);
 
-  return { currentStudy, currentChecklist, checklistForUI, checklistType, currentScore };
+  return { currentStudy, currentChecklist, checklistType, currentScore };
 }

@@ -1,84 +1,53 @@
-/**
- * OverallSection - ROBINS-I overall risk of bias section
- * Auto-first scoring with manual override support.
- */
-
-import { useMemo, useEffect, useCallback } from 'react';
 import { OVERALL_ROB_JUDGEMENTS, BIAS_DIRECTIONS } from './checklist-map';
-import { getSmartScoring, mapOverallJudgementToDisplay } from './checklist.js';
+import { mapOverallJudgementToDisplay } from './checklist.js';
+import {
+  useAnswer,
+  useAnswersYMap,
+  useROBINSIScore,
+} from '@/primitives/useProject/reactor/hooks';
 
 interface OverallSectionProps {
-  overallState: any;
-  checklistState: any;
-  onUpdate: (_newState: any) => void;
+  studyId: string;
+  checklistId: string;
   disabled?: boolean;
 }
 
 export function OverallSection({
-  overallState,
-  checklistState,
-  onUpdate,
+  studyId,
+  checklistId,
   disabled,
 }: OverallSectionProps) {
-  const smartScoring = useMemo(() => getSmartScoring(checklistState), [checklistState]);
-  const calculatedScore = smartScoring.overall;
-  const calculatedDisplayJudgement = useMemo(
-    () => mapOverallJudgementToDisplay(calculatedScore),
-    [calculatedScore],
-  );
+  const calculatedScore = useROBINSIScore(studyId, checklistId);
+  const isIncomplete = calculatedScore === 'Incomplete';
+  const calculatedDisplayJudgement = isIncomplete ? null : mapOverallJudgementToDisplay(calculatedScore as any);
 
-  const isManualMode = overallState?.judgementSource === 'manual';
+  const judgementSource = useAnswer<string>(studyId, checklistId, 'overall.judgementSource');
+  const manualJudgement = useAnswer<string>(studyId, checklistId, 'overall.judgement');
+  const direction = useAnswer<string>(studyId, checklistId, 'overall.direction');
+  const answersYMap = useAnswersYMap(studyId, checklistId);
+
+  const isManualMode = judgementSource === 'manual';
   const effectiveJudgement =
-    isManualMode && overallState?.judgement ? overallState.judgement : calculatedDisplayJudgement;
+    isManualMode && manualJudgement ? manualJudgement : calculatedDisplayJudgement;
 
-  // Auto-persist calculated judgement in auto mode.
-  // overallState is read inside the effect but only overallState?.judgement is in deps
-  // to avoid re-triggering on direction changes.
-  useEffect(() => {
-    if (
-      !isManualMode &&
-      calculatedDisplayJudgement &&
-      calculatedDisplayJudgement !== overallState?.judgement &&
-      !disabled
-    ) {
-      onUpdate({
-        ...(overallState || {}),
-        judgement: calculatedDisplayJudgement,
-        judgementSource: 'auto',
-      });
-    }
-  }, [calculatedDisplayJudgement, isManualMode, overallState?.judgement, disabled]); // eslint-disable-line react-hooks/exhaustive-deps
+  const handleJudgementChange = (judgement: string | null) => {
+    answersYMap?.set('overall.judgement', judgement);
+    answersYMap?.set('overall.judgementSource', 'manual');
+  };
 
-  const handleJudgementChange = useCallback(
-    (judgement: string | null) => {
-      onUpdate({ ...overallState, judgement, judgementSource: 'manual' });
-    },
-    [overallState, onUpdate],
-  );
+  const handleDirectionChange = (dir: string | null) => {
+    answersYMap?.set('overall.direction', dir);
+  };
 
-  const handleDirectionChange = useCallback(
-    (direction: string | null) => {
-      onUpdate({ ...overallState, direction });
-    },
-    [overallState, onUpdate],
-  );
+  const handleRevertToAuto = () => {
+    answersYMap?.set('overall.judgement', calculatedDisplayJudgement);
+    answersYMap?.set('overall.judgementSource', 'auto');
+  };
 
-  const handleRevertToAuto = useCallback(() => {
-    onUpdate({
-      ...(overallState || {}),
-      judgement: calculatedDisplayJudgement,
-      judgementSource: 'auto',
-    });
-  }, [overallState, calculatedDisplayJudgement, onUpdate]);
-
-  const handleSwitchToManual = useCallback(() => {
-    const currentState = overallState || {};
-    onUpdate({
-      ...currentState,
-      judgement: currentState.judgement || calculatedDisplayJudgement,
-      judgementSource: 'manual',
-    });
-  }, [overallState, calculatedDisplayJudgement, onUpdate]);
+  const handleSwitchToManual = () => {
+    answersYMap?.set('overall.judgement', manualJudgement || calculatedDisplayJudgement);
+    answersYMap?.set('overall.judgementSource', 'manual');
+  };
 
   const getJudgementColor = (j: string, isSelected: boolean) => {
     if (!isSelected) {
@@ -127,7 +96,7 @@ export function OverallSection({
             </p>
           </div>
 
-          {calculatedScore && (calculatedScore as string) !== 'Incomplete' ?
+          {!isIncomplete ?
             <div className='flex flex-col items-end gap-1'>
               <span
                 className={`rounded-md px-3 py-1 text-sm font-semibold ${getScoreBadgeColor(calculatedScore)}`}
@@ -136,11 +105,10 @@ export function OverallSection({
               </span>
               {isManualMode && <span className='text-warning text-xs'>Manual override</span>}
             </div>
-          : (calculatedScore as string) === 'Incomplete' ?
-            <span className='bg-muted-foreground/50 text-muted rounded-md px-3 py-1 text-sm'>
+          : <span className='bg-muted-foreground/50 text-muted rounded-md px-3 py-1 text-sm'>
               Incomplete
             </span>
-          : null}
+          }
         </div>
       </div>
 
@@ -226,7 +194,7 @@ export function OverallSection({
           </div>
           <div className='flex flex-wrap gap-2'>
             {BIAS_DIRECTIONS.map(d => {
-              const isSelected = overallState?.direction === d;
+              const isSelected = direction === d;
               return (
                 <button
                   key={d}

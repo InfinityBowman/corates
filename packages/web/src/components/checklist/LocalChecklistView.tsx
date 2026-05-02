@@ -9,14 +9,11 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { ChevronLeftIcon } from 'lucide-react';
-import * as Y from 'yjs';
 import { ChecklistWithPdf } from '@/components/checklist/ChecklistWithPdf';
 import { CreateLocalChecklist } from '@/components/checklist/CreateLocalChecklist';
-import { connectionPool } from '@/project/ConnectionPool';
 import { LOCAL_PROJECT_ID } from '@/project/localProject';
 import { useProjectStore, selectConnectionPhase } from '@/stores/projectStore';
 import { useChecklistViewModel } from '@/primitives/useProject/checklists/useChecklistViewModel';
-import { buildChecklistAnswerInput, type TextRef } from '@/primitives/useProject/checklists';
 import { db } from '@/primitives/db';
 import { ScoreTag } from '@/components/checklist/ScoreTag';
 
@@ -36,7 +33,7 @@ function LocalChecklistEditor({ checklistId }: { checklistId: string }) {
   const navigate = useNavigate();
 
   const phase = useProjectStore(s => selectConnectionPhase(s, LOCAL_PROJECT_ID));
-  const { currentChecklist, checklistForUI, checklistType, currentScore } = useChecklistViewModel(
+  const { currentChecklist, checklistType, currentScore } = useChecklistViewModel(
     LOCAL_PROJECT_ID,
     checklistId,
     checklistId,
@@ -111,27 +108,6 @@ function LocalChecklistEditor({ checklistId }: { checklistId: string }) {
     }
   }, [checklistId]);
 
-  const handlePartialUpdate = useCallback(
-    (patch: Record<string, any>) => {
-      const ops = connectionPool.getOps(LOCAL_PROJECT_ID);
-      if (!ops || !checklistType) return;
-      Object.entries(patch).forEach(([key, value]) => {
-        const input = buildChecklistAnswerInput(checklistType, key, value);
-        if (!input) return;
-        ops.checklist.updateChecklistAnswer(checklistId, checklistId, input);
-      });
-    },
-    [checklistId, checklistType],
-  );
-
-  const getTextRef = useCallback(
-    (ref: TextRef): Y.Text | null => {
-      const ops = connectionPool.getOps(LOCAL_PROJECT_ID);
-      return ops?.checklist.getTextRef(checklistId, checklistId, ref) ?? null;
-    },
-    [checklistId],
-  );
-
   const handleBack = useCallback(() => {
     navigate({ to: '/dashboard' });
   }, [navigate]);
@@ -161,7 +137,7 @@ function LocalChecklistEditor({ checklistId }: { checklistId: string }) {
     );
   }
 
-  if (!currentChecklist || !checklistForUI) {
+  if (!currentChecklist || !checklistType) {
     return (
       <div className='flex min-h-screen flex-col items-center justify-center gap-4 bg-blue-50'>
         <div className='text-destructive'>Checklist not found</div>
@@ -177,16 +153,15 @@ function LocalChecklistEditor({ checklistId }: { checklistId: string }) {
 
   return (
     <ChecklistWithPdf
-      checklistType={checklistType || undefined}
-      checklist={checklistForUI}
-      onUpdate={handlePartialUpdate}
+      studyId={checklistId}
+      checklistId={checklistId}
+      checklistType={checklistType}
       headerContent={headerContent}
       pdfData={pdfData}
       pdfFileName={pdfFileName}
       onPdfChange={handlePdfChange}
       onPdfClear={handlePdfClear}
       allowDelete={true}
-      getTextRef={getTextRef}
     />
   );
 }

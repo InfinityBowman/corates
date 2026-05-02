@@ -1,29 +1,16 @@
-/**
- * AMSTAR2Checklist - Full AMSTAR2 appraisal form with 16 questions
- *
- * Each question has a unique column structure with checkboxes (evidence criteria)
- * and a final radio column (verdict: Yes/Partial Yes/No). Checking criteria in
- * earlier columns automatically derives the verdict in the last column.
- *
- * Supports both controlled mode (externalChecklist + onExternalUpdate from Yjs)
- * and uncontrolled mode (standalone with local state).
- */
-
-import { useState, useCallback, useMemo } from 'react';
-import type * as Y from 'yjs';
+import { useMemo } from 'react';
 import { InfoIcon } from 'lucide-react';
 import { AMSTAR_CHECKLIST } from './checklist-map';
-import { createChecklist as createAMSTAR2Checklist } from './checklist.js';
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { NoteEditor } from '@/components/checklist/common/NoteEditor';
-import type { TextRef } from '@/primitives/useProject/checklists';
-import type {
-  AMSTAR2Checklist as AMSTAR2ChecklistType,
-  AMSTAR2QuestionAnswer,
-} from '@corates/shared/checklists';
+import {
+  useAnswer,
+  useAnswersYMap,
+  useChecklistField,
+  useProjectReactor,
+} from '@/primitives/useProject/reactor/hooks';
+import { resolveYText } from '@/primitives/useProject/reactor/ytext';
 import type { AMSTAR2QuestionSchema, AMSTAR2Column } from '@corates/shared/checklists/amstar2';
-
-// -- Shared internal components --
 
 function QuestionInfo({ question }: { question: AMSTAR2QuestionSchema }) {
   return (
@@ -44,38 +31,43 @@ function QuestionInfo({ question }: { question: AMSTAR2QuestionSchema }) {
 }
 
 function CriticalButton({
-  state,
-  onUpdate,
+  studyId,
+  checklistId,
+  qKey,
 }: {
-  state: AMSTAR2QuestionAnswer;
-  onUpdate: (_newState: AMSTAR2QuestionAnswer) => void;
+  studyId: string;
+  checklistId: string;
+  qKey: string;
 }) {
+  const critical = useAnswer<boolean>(studyId, checklistId, `${qKey}.critical`) ?? false;
+  const answersYMap = useAnswersYMap(studyId, checklistId);
+
   return (
     <div className='ml-auto'>
       <button
         type='button'
         className={`ml-2 h-6 rounded-full px-3 text-xs font-medium text-nowrap transition-colors ${
-          state.critical ?
+          critical ?
             'border border-red-300 bg-red-100 text-red-700 hover:bg-red-200'
           : 'border-border bg-secondary text-secondary-foreground hover:bg-muted border'
         }`}
-        onClick={() => onUpdate({ ...state, critical: !state.critical })}
-        aria-pressed={state.critical}
+        onClick={() => answersYMap?.set(`${qKey}.critical`, !critical)}
+        aria-pressed={critical}
       >
-        {state.critical ? 'Critical' : 'Not Critical'}
+        {critical ? 'Critical' : 'Not Critical'}
       </button>
     </div>
   );
 }
 
-function StandardQuestionInternal({
-  state,
+function ColumnsGrid({
+  answers,
   question,
   columns,
   handleChange,
   width,
 }: {
-  state: AMSTAR2QuestionAnswer;
+  answers: boolean[][];
   question: { text: string };
   columns?: AMSTAR2Column[];
   handleChange: (_colIdx: number, _optIdx: number) => void;
@@ -109,7 +101,7 @@ function StandardQuestionInternal({
                     <input
                       type='radio'
                       name={`col-${colIdx}-${question?.text ?? ''}`}
-                      checked={state.answers[colIdx]?.[optIdx] ?? false}
+                      checked={answers[colIdx]?.[optIdx] ?? false}
                       onChange={() => handleChange(colIdx, optIdx)}
                       className='border-border focus:ring-primary size-3.5 cursor-pointer text-blue-600'
                     />
@@ -122,7 +114,7 @@ function StandardQuestionInternal({
                   <label key={optIdx} className='flex items-center gap-2 text-xs'>
                     <input
                       type='checkbox'
-                      checked={state.answers[colIdx]?.[optIdx] ?? false}
+                      checked={answers[colIdx]?.[optIdx] ?? false}
                       onChange={() => handleChange(colIdx, optIdx)}
                       className='border-border focus:ring-primary size-3 shrink-0 text-blue-600'
                     />
@@ -138,71 +130,16 @@ function StandardQuestionInternal({
   );
 }
 
-function StandardQuestion({
-  state,
-  question,
-  handleChange,
-  onUpdate,
-  getTextRef,
-  readOnly,
-  width,
-}: {
-  state: AMSTAR2QuestionAnswer;
-  question: AMSTAR2QuestionSchema;
-  handleChange: (_colIdx: number, _optIdx: number) => void;
-  onUpdate: (_newState: AMSTAR2QuestionAnswer) => void;
-  getTextRef: (_ref: TextRef) => Y.Text | null;
-  readOnly?: boolean;
-  width?: string;
-}) {
-  const questionKey = useMemo(() => {
-    const match = question.text.match(/^(\d+[a-z]?)\./);
-    return `q${match?.[1] ?? ''}`;
-  }, [question]);
+// -- Answer derivation helpers --
 
-  const noteYText = useMemo(
-    () => getTextRef({ type: 'AMSTAR2', questionKey }),
-    [questionKey, getTextRef],
-  );
-
-  return (
-    <div className='bg-card relative rounded-lg p-7 pb-3 shadow-md'>
-      <QuestionInfo question={question} />
-      <div className='flex'>
-        <h3 className='text-foreground mb-1 text-sm font-semibold'>{question.text}</h3>
-        <CriticalButton state={state} onUpdate={onUpdate} />
-      </div>
-      <StandardQuestionInternal
-        state={state}
-        question={question}
-        columns={question.columns}
-        handleChange={handleChange}
-        width={width}
-      />
-      <NoteEditor yText={noteYText} readOnly={readOnly} collapsed={true} />
-    </div>
-  );
-}
-
-// -- Question components --
-// Each question has unique column/verdict logic.
-// Patterns:
-//   - 2-col (checkboxes + Yes/No radio): Q1, Q3, Q5, Q6, Q10, Q13, Q14, Q16
-//   - 3-col (2 checkbox cols + Yes/Partial Yes/No radio): Q2, Q4, Q7, Q8
-//   - 2-col with 3 radios (Yes/No/No meta-analysis): Q12, Q15
-//   - Split (Q9a+Q9b, Q11a+Q11b): Q9, Q11
-
-/** Helper: two-option radio mutual exclusivity (Yes/No) */
-function handleTwoColChange(
-  checklist: AMSTAR2ChecklistType,
-  qKey: string,
+function deriveTwoCol(
+  currentAnswers: boolean[][],
   colIdx: number,
   optIdx: number,
   deriveFn: 'any' | 'all',
-) {
-  const state = checklist[qKey] as AMSTAR2QuestionAnswer;
-  const newAnswers = state.answers.map((arr: boolean[]) => [...arr]);
-  newAnswers[colIdx][optIdx] = !state.answers[colIdx][optIdx];
+): boolean[][] {
+  const newAnswers = currentAnswers.map((arr: boolean[]) => [...arr]);
+  newAnswers[colIdx][optIdx] = !currentAnswers[colIdx][optIdx];
 
   if (colIdx === 0) {
     const check = deriveFn === 'all' ? newAnswers[0].every(Boolean) : newAnswers[0].some(Boolean);
@@ -214,19 +151,16 @@ function handleTwoColChange(
     if (optIdx === 1 && newAnswers[1][1]) newAnswers[1][0] = false;
   }
 
-  return { ...state, answers: newAnswers };
+  return newAnswers;
 }
 
-/** Helper: three-column with Yes/Partial Yes/No radio */
-function handleThreeColChange(
-  checklist: AMSTAR2ChecklistType,
-  qKey: string,
+function deriveThreeCol(
+  currentAnswers: boolean[][],
   colIdx: number,
   optIdx: number,
-) {
-  const state = checklist[qKey] as AMSTAR2QuestionAnswer;
-  const newAnswers = state.answers.map((arr: boolean[]) => [...arr]);
-  newAnswers[colIdx][optIdx] = !state.answers[colIdx][optIdx];
+): boolean[][] {
+  const newAnswers = currentAnswers.map((arr: boolean[]) => [...arr]);
+  newAnswers[colIdx][optIdx] = !currentAnswers[colIdx][optIdx];
 
   if (colIdx === 0 || colIdx === 1) {
     const allPartialYes = newAnswers[0].every(Boolean);
@@ -237,24 +171,21 @@ function handleThreeColChange(
   }
   if (colIdx === 2) {
     newAnswers[2] = newAnswers[2].map((_v: boolean, i: number) =>
-      i === optIdx ? !state.answers[2][optIdx] : false,
+      i === optIdx ? !currentAnswers[2][optIdx] : false,
     );
   }
 
-  return { ...state, answers: newAnswers };
+  return newAnswers;
 }
 
-/** Helper: two-col with 3 radios (Yes/No/No meta-analysis) */
-function handleTwoColThreeRadioChange(
-  checklist: AMSTAR2ChecklistType,
-  qKey: string,
+function deriveTwoColThreeRadio(
+  currentAnswers: boolean[][],
   colIdx: number,
   optIdx: number,
   deriveFn: 'any' | 'all',
-) {
-  const state = checklist[qKey] as AMSTAR2QuestionAnswer;
-  const newAnswers = state.answers.map((arr: boolean[]) => [...arr]);
-  newAnswers[colIdx][optIdx] = !state.answers[colIdx][optIdx];
+): boolean[][] {
+  const newAnswers = currentAnswers.map((arr: boolean[]) => [...arr]);
+  newAnswers[colIdx][optIdx] = !currentAnswers[colIdx][optIdx];
 
   if (colIdx === 0) {
     const check = deriveFn === 'all' ? newAnswers[0].every(Boolean) : newAnswers[0].some(Boolean);
@@ -264,198 +195,231 @@ function handleTwoColThreeRadioChange(
   }
   if (colIdx === 1) {
     newAnswers[1] = newAnswers[1].map((_v: boolean, i: number) =>
-      i === optIdx ? !state.answers[1][optIdx] : false,
+      i === optIdx ? !currentAnswers[1][optIdx] : false,
     );
   }
 
-  return { ...state, answers: newAnswers };
+  return newAnswers;
 }
 
-// -- Individual question configs --
-// Maps each question key to its schema entry, handler pattern, and any extra props
+// -- StandardQuestion: self-contained question with reactor hooks --
 
 interface QuestionConfig {
   qKey: string;
   schema: AMSTAR2QuestionSchema;
-  handler: (
-    _checklist: AMSTAR2ChecklistType,
-    _colIdx: number,
-    _optIdx: number,
-  ) => AMSTAR2QuestionAnswer;
+  derive: (_answers: boolean[][], _colIdx: number, _optIdx: number) => boolean[][];
   width?: string;
 }
 
-// Q1 is a special case: 3 columns where col0 -> col2 (skipping col1), so it uses an
-// inline handler instead of the generic helpers. Q9 and Q11 are split questions with
-// dedicated components. All other questions use these configs.
-const QUESTION_CONFIGS: QuestionConfig[] = [
-  // Q2-Q8 (indices 0-6)
-  {
-    qKey: 'q2',
-    schema: AMSTAR_CHECKLIST.q2,
-    handler: (cl, c, o) => handleThreeColChange(cl, 'q2', c, o),
-  },
-  {
-    qKey: 'q3',
-    schema: AMSTAR_CHECKLIST.q3,
-    handler: (cl, c, o) => handleTwoColChange(cl, 'q3', c, o, 'any'),
-  },
-  {
-    qKey: 'q4',
-    schema: AMSTAR_CHECKLIST.q4,
-    handler: (cl, c, o) => handleThreeColChange(cl, 'q4', c, o),
-  },
-  {
-    qKey: 'q5',
-    schema: AMSTAR_CHECKLIST.q5,
-    handler: (cl, c, o) => handleTwoColChange(cl, 'q5', c, o, 'any'),
-  },
-  {
-    qKey: 'q6',
-    schema: AMSTAR_CHECKLIST.q6,
-    handler: (cl, c, o) => handleTwoColChange(cl, 'q6', c, o, 'any'),
-  },
-  {
-    qKey: 'q7',
-    schema: AMSTAR_CHECKLIST.q7,
-    handler: (cl, c, o) => handleThreeColChange(cl, 'q7', c, o),
-  },
-  {
-    qKey: 'q8',
-    schema: AMSTAR_CHECKLIST.q8,
-    handler: (cl, c, o) => handleThreeColChange(cl, 'q8', c, o),
-  },
-  // Q10 (index 7)
-  {
-    qKey: 'q10',
-    schema: AMSTAR_CHECKLIST.q10,
-    handler: (cl, c, o) => handleTwoColChange(cl, 'q10', c, o, 'any'),
-  },
-  // Q12-Q16 (indices 8-12)
-  {
-    qKey: 'q12',
-    schema: AMSTAR_CHECKLIST.q12,
-    handler: (cl, c, o) => handleTwoColThreeRadioChange(cl, 'q12', c, o, 'any'),
-    width: 'w-48',
-  },
-  {
-    qKey: 'q13',
-    schema: AMSTAR_CHECKLIST.q13,
-    handler: (cl, c, o) => handleTwoColChange(cl, 'q13', c, o, 'any'),
-  },
-  {
-    qKey: 'q14',
-    schema: AMSTAR_CHECKLIST.q14,
-    handler: (cl, c, o) => handleTwoColChange(cl, 'q14', c, o, 'any'),
-  },
-  {
-    qKey: 'q15',
-    schema: AMSTAR_CHECKLIST.q15,
-    handler: (cl, c, o) => handleTwoColThreeRadioChange(cl, 'q15', c, o, 'any'),
-    width: 'w-48',
-  },
-  {
-    qKey: 'q16',
-    schema: AMSTAR_CHECKLIST.q16,
-    handler: (cl, c, o) => handleTwoColChange(cl, 'q16', c, o, 'any'),
-  },
-];
-
-/** Q9 split question - custom rendering */
-function Question9({
-  checklist,
-  onUpdate,
-  getTextRef,
+function StandardQuestion({
+  studyId,
+  checklistId,
+  config,
   readOnly,
 }: {
-  checklist: AMSTAR2ChecklistType;
-  onUpdate: (_patch: Record<string, AMSTAR2QuestionAnswer>) => void;
-  getTextRef: (_ref: TextRef) => Y.Text | null;
+  studyId: string;
+  checklistId: string;
+  config: QuestionConfig;
   readOnly?: boolean;
 }) {
-  const stateA = checklist.q9a;
-  const stateB = checklist.q9b;
+  const { qKey, schema, derive, width } = config;
+  const answers = useAnswer<boolean[][]>(studyId, checklistId, `${qKey}.answers`);
+  const answersYMap = useAnswersYMap(studyId, checklistId);
+  const { ydoc } = useProjectReactor();
+
+  const currentAnswers = answers || schema.columns.map(c => c.options.map(() => false));
+
+  const handleChange = (colIdx: number, optIdx: number) => {
+    const newAnswers = derive(currentAnswers, colIdx, optIdx);
+    answersYMap?.set(`${qKey}.answers`, newAnswers);
+  };
+
+  const noteYText = useMemo(
+    () => resolveYText(ydoc, studyId, checklistId, `${qKey}.note`),
+    [ydoc, studyId, checklistId, qKey],
+  );
+
+  return (
+    <div className='bg-card relative rounded-lg p-7 pb-3 shadow-md'>
+      <QuestionInfo question={schema} />
+      <div className='flex'>
+        <h3 className='text-foreground mb-1 text-sm font-semibold'>{schema.text}</h3>
+        <CriticalButton studyId={studyId} checklistId={checklistId} qKey={qKey} />
+      </div>
+      <ColumnsGrid
+        answers={currentAnswers}
+        question={{ text: qKey }}
+        columns={schema.columns}
+        handleChange={handleChange}
+        width={width}
+      />
+      <NoteEditor yText={noteYText} readOnly={readOnly} collapsed={true} />
+    </div>
+  );
+}
+
+// -- Q1: special 3-col handler (col0 all -> col2, skipping col1) --
+
+function Question1({
+  studyId,
+  checklistId,
+  readOnly,
+}: {
+  studyId: string;
+  checklistId: string;
+  readOnly?: boolean;
+}) {
+  const question = AMSTAR_CHECKLIST.q1;
+  const answers = useAnswer<boolean[][]>(studyId, checklistId, 'q1.answers');
+  const answersYMap = useAnswersYMap(studyId, checklistId);
+  const { ydoc } = useProjectReactor();
+
+  const currentAnswers = answers || question.columns.map(c => c.options.map(() => false));
+
+  const handleChange = (colIdx: number, optIdx: number) => {
+    const newAnswers = currentAnswers.map((arr: boolean[]) => [...arr]);
+    newAnswers[colIdx][optIdx] = !currentAnswers[colIdx][optIdx];
+    if (colIdx === 0) {
+      const allChecked = newAnswers[0].every(Boolean);
+      newAnswers[2][0] = allChecked;
+      newAnswers[2][1] = !allChecked;
+    }
+    if (colIdx === 2) {
+      if (optIdx === 0 && newAnswers[2][0]) newAnswers[2][1] = false;
+      if (optIdx === 1 && newAnswers[2][1]) newAnswers[2][0] = false;
+    }
+    answersYMap?.set('q1.answers', newAnswers);
+  };
+
+  const noteYText = useMemo(
+    () => resolveYText(ydoc, studyId, checklistId, 'q1.note'),
+    [ydoc, studyId, checklistId],
+  );
+
+  return (
+    <div className='bg-card relative rounded-lg p-7 pb-3 shadow-md'>
+      <QuestionInfo question={question} />
+      <div className='flex'>
+        <h3 className='text-foreground mb-1 text-sm font-semibold'>{question.text}</h3>
+        <CriticalButton studyId={studyId} checklistId={checklistId} qKey='q1' />
+      </div>
+      <ColumnsGrid
+        answers={currentAnswers}
+        question={{ text: 'q1' }}
+        columns={question.columns}
+        handleChange={handleChange}
+      />
+      <NoteEditor yText={noteYText} readOnly={readOnly} collapsed={true} />
+    </div>
+  );
+}
+
+// -- Q9: split question --
+
+function Question9({
+  studyId,
+  checklistId,
+  readOnly,
+}: {
+  studyId: string;
+  checklistId: string;
+  readOnly?: boolean;
+}) {
   const question = AMSTAR_CHECKLIST.q9;
+  const answersA = useAnswer<boolean[][]>(studyId, checklistId, 'q9a.answers');
+  const answersB = useAnswer<boolean[][]>(studyId, checklistId, 'q9b.answers');
+  const answersYMap = useAnswersYMap(studyId, checklistId);
+  const { ydoc } = useProjectReactor();
 
-  const handleChangeA = useCallback(
-    (colIdx: number, optIdx: number) => {
-      const newAnswers = stateA.answers.map((arr: boolean[]) => [...arr]);
-      newAnswers[colIdx][optIdx] = !stateA.answers[colIdx][optIdx];
+  const currentA = answersA || question.columns.map(c => c.options.map(() => false));
+  const currentB = answersB || (question.columns2 || []).map(c => c.options.map(() => false));
 
-      if (colIdx === 0 || colIdx === 1) {
-        const allPartialYes = newAnswers[0].every(Boolean);
-        const allYes = allPartialYes && newAnswers[1].every(Boolean);
-        newAnswers[2][0] = allYes;
-        newAnswers[2][1] = !allYes && allPartialYes;
-        newAnswers[2][2] = !allYes && !allPartialYes;
-        newAnswers[2][3] = false;
-      }
-      if (colIdx === 2) {
-        newAnswers[2] = newAnswers[2].map((_v: boolean, i: number) =>
-          i === optIdx ? !stateA.answers[2][optIdx] : false,
-        );
-      }
+  const handleChangeA = (colIdx: number, optIdx: number) => {
+    const newAnswers = currentA.map((arr: boolean[]) => [...arr]);
+    newAnswers[colIdx][optIdx] = !currentA[colIdx][optIdx];
 
-      onUpdate({ q9a: { ...stateA, answers: newAnswers } });
-    },
-    [stateA, onUpdate],
+    if (colIdx === 0 || colIdx === 1) {
+      const allPartialYes = newAnswers[0].every(Boolean);
+      const allYes = allPartialYes && newAnswers[1].every(Boolean);
+      newAnswers[2][0] = allYes;
+      newAnswers[2][1] = !allYes && allPartialYes;
+      newAnswers[2][2] = !allYes && !allPartialYes;
+      newAnswers[2][3] = false;
+    }
+    if (colIdx === 2) {
+      newAnswers[2] = newAnswers[2].map((_v: boolean, i: number) =>
+        i === optIdx ? !currentA[2][optIdx] : false,
+      );
+    }
+
+    answersYMap?.set('q9a.answers', newAnswers);
+  };
+
+  const handleChangeB = (colIdx: number, optIdx: number) => {
+    const newAnswers = currentB.map((arr: boolean[]) => [...arr]);
+    newAnswers[colIdx][optIdx] = !currentB[colIdx][optIdx];
+
+    if (colIdx === 0 || colIdx === 1) {
+      const allPartialYes = newAnswers[0].every(Boolean);
+      const allYes = allPartialYes && newAnswers[1].every(Boolean);
+      newAnswers[2][0] = allYes;
+      newAnswers[2][1] = !allYes && allPartialYes;
+      newAnswers[2][2] = !allYes && !allPartialYes;
+      newAnswers[2][3] = false;
+    }
+    if (colIdx === 2) {
+      newAnswers[2] = newAnswers[2].map((_v: boolean, i: number) =>
+        i === optIdx ? !currentB[2][optIdx] : false,
+      );
+    }
+
+    answersYMap?.set('q9b.answers', newAnswers);
+  };
+
+  const handleCriticalToggle = () => {
+    const currentCritical = (answersYMap?.get('q9a.critical') as boolean) ?? false;
+    const newCritical = !currentCritical;
+    answersYMap?.set('q9a.critical', newCritical);
+    answersYMap?.set('q9b.critical', newCritical);
+  };
+
+  const critical = useAnswer<boolean>(studyId, checklistId, 'q9a.critical') ?? false;
+
+  const noteYText = useMemo(
+    () => resolveYText(ydoc, studyId, checklistId, 'q9.note'),
+    [ydoc, studyId, checklistId],
   );
-
-  const handleChangeB = useCallback(
-    (colIdx: number, optIdx: number) => {
-      const newAnswers = stateB.answers.map((arr: boolean[]) => [...arr]);
-      newAnswers[colIdx][optIdx] = !stateB.answers[colIdx][optIdx];
-
-      if (colIdx === 0 || colIdx === 1) {
-        const allPartialYes = newAnswers[0].every(Boolean);
-        const allYes = allPartialYes && newAnswers[1].every(Boolean);
-        newAnswers[2][0] = allYes;
-        newAnswers[2][1] = !allYes && allPartialYes;
-        newAnswers[2][2] = !allYes && !allPartialYes;
-        newAnswers[2][3] = false;
-      }
-      if (colIdx === 2) {
-        newAnswers[2] = newAnswers[2].map((_v: boolean, i: number) =>
-          i === optIdx ? !stateB.answers[2][optIdx] : false,
-        );
-      }
-
-      onUpdate({ q9b: { ...stateB, answers: newAnswers } });
-    },
-    [stateB, onUpdate],
-  );
-
-  const handleCriticalUpdate = useCallback(
-    (newQ: AMSTAR2QuestionAnswer) => {
-      const newCritical = newQ.critical;
-      onUpdate({ q9a: { ...stateA, critical: newCritical } });
-      // Delay second write to avoid Yjs conflict on rapid dual writes
-      setTimeout(() => {
-        onUpdate({ q9b: { ...stateB, critical: newCritical } });
-      }, 10);
-    },
-    [stateA, stateB, onUpdate],
-  );
-
-  const noteYText = useMemo(() => getTextRef({ type: 'AMSTAR2', questionKey: 'q9' }), [getTextRef]);
 
   return (
     <div className='bg-card relative rounded-lg p-7 pb-3 text-sm shadow-md'>
       <QuestionInfo question={question} />
       <div className='flex'>
         <h3 className='text-foreground font-semibold'>{question.text}</h3>
-        <CriticalButton state={stateA} onUpdate={handleCriticalUpdate} />
+        <div className='ml-auto'>
+          <button
+            type='button'
+            className={`ml-2 h-6 rounded-full px-3 text-xs font-medium text-nowrap transition-colors ${
+              critical ?
+                'border border-red-300 bg-red-100 text-red-700 hover:bg-red-200'
+              : 'border-border bg-secondary text-secondary-foreground hover:bg-muted border'
+            }`}
+            onClick={handleCriticalToggle}
+            aria-pressed={critical}
+          >
+            {critical ? 'Critical' : 'Not Critical'}
+          </button>
+        </div>
       </div>
       <div className='text-foreground mt-2 mb-1 h-4 font-semibold'>{question.subtitle}</div>
-      <StandardQuestionInternal
-        state={stateA}
+      <ColumnsGrid
+        answers={currentA}
         question={{ text: 'q9a' }}
         columns={question.columns}
         handleChange={handleChangeA}
       />
       <div className='text-foreground mt-2 h-4 font-semibold'>{question.subtitle2}</div>
-      <StandardQuestionInternal
-        state={stateB}
+      <ColumnsGrid
+        answers={currentB}
         question={{ text: 'q9b' }}
         columns={question.columns2}
         handleChange={handleChangeB}
@@ -465,80 +429,76 @@ function Question9({
   );
 }
 
-/** Q11 split question - custom rendering */
+// -- Q11: split question --
+
 function Question11({
-  checklist,
-  onUpdate,
-  getTextRef,
+  studyId,
+  checklistId,
   readOnly,
 }: {
-  checklist: AMSTAR2ChecklistType;
-  onUpdate: (_patch: Record<string, AMSTAR2QuestionAnswer>) => void;
-  getTextRef: (_ref: TextRef) => Y.Text | null;
+  studyId: string;
+  checklistId: string;
   readOnly?: boolean;
 }) {
-  const stateA = checklist.q11a;
-  const stateB = checklist.q11b;
   const question = AMSTAR_CHECKLIST.q11;
+  const answersA = useAnswer<boolean[][]>(studyId, checklistId, 'q11a.answers');
+  const answersB = useAnswer<boolean[][]>(studyId, checklistId, 'q11b.answers');
+  const answersYMap = useAnswersYMap(studyId, checklistId);
+  const { ydoc } = useProjectReactor();
 
-  const handleChangeA = useCallback(
-    (colIdx: number, optIdx: number) => {
-      const newAnswers = stateA.answers.map((arr: boolean[]) => [...arr]);
-      newAnswers[colIdx][optIdx] = !stateA.answers[colIdx][optIdx];
+  const currentA = answersA || question.columns.map(c => c.options.map(() => false));
+  const currentB = answersB || (question.columns2 || []).map(c => c.options.map(() => false));
 
-      if (colIdx === 0) {
-        const allChecked = newAnswers[0].every(Boolean);
-        newAnswers[1][0] = allChecked;
-        newAnswers[1][1] = !allChecked;
-        newAnswers[1][2] = false;
-      }
-      if (colIdx === 1) {
-        newAnswers[1] = newAnswers[1].map((_v: boolean, i: number) =>
-          i === optIdx ? !stateA.answers[1][optIdx] : false,
-        );
-      }
+  const handleChangeA = (colIdx: number, optIdx: number) => {
+    const newAnswers = currentA.map((arr: boolean[]) => [...arr]);
+    newAnswers[colIdx][optIdx] = !currentA[colIdx][optIdx];
 
-      onUpdate({ q11a: { ...stateA, answers: newAnswers } });
-    },
-    [stateA, onUpdate],
-  );
+    if (colIdx === 0) {
+      const allChecked = newAnswers[0].every(Boolean);
+      newAnswers[1][0] = allChecked;
+      newAnswers[1][1] = !allChecked;
+      newAnswers[1][2] = false;
+    }
+    if (colIdx === 1) {
+      newAnswers[1] = newAnswers[1].map((_v: boolean, i: number) =>
+        i === optIdx ? !currentA[1][optIdx] : false,
+      );
+    }
 
-  const handleChangeB = useCallback(
-    (colIdx: number, optIdx: number) => {
-      const newAnswers = stateB.answers.map((arr: boolean[]) => [...arr]);
-      newAnswers[colIdx][optIdx] = !stateB.answers[colIdx][optIdx];
+    answersYMap?.set('q11a.answers', newAnswers);
+  };
 
-      if (colIdx === 0) {
-        const allChecked = newAnswers[0].every(Boolean);
-        newAnswers[1][0] = allChecked;
-        newAnswers[1][1] = false;
-        newAnswers[1][2] = false;
-      }
-      if (colIdx === 1) {
-        newAnswers[1] = newAnswers[1].map((_v: boolean, i: number) =>
-          i === optIdx ? !stateB.answers[1][optIdx] : false,
-        );
-      }
+  const handleChangeB = (colIdx: number, optIdx: number) => {
+    const newAnswers = currentB.map((arr: boolean[]) => [...arr]);
+    newAnswers[colIdx][optIdx] = !currentB[colIdx][optIdx];
 
-      onUpdate({ q11b: { ...stateB, answers: newAnswers } });
-    },
-    [stateB, onUpdate],
-  );
+    if (colIdx === 0) {
+      const allChecked = newAnswers[0].every(Boolean);
+      newAnswers[1][0] = allChecked;
+      newAnswers[1][1] = false;
+      newAnswers[1][2] = false;
+    }
+    if (colIdx === 1) {
+      newAnswers[1] = newAnswers[1].map((_v: boolean, i: number) =>
+        i === optIdx ? !currentB[1][optIdx] : false,
+      );
+    }
 
-  const handleCriticalUpdate = useCallback(
-    (newQ: AMSTAR2QuestionAnswer) => {
-      const newCritical = newQ.critical;
-      onUpdate({ q11a: { ...stateA, critical: newCritical } });
-      setTimeout(() => {
-        onUpdate({ q11b: { ...stateB, critical: newCritical } });
-      }, 10);
-    },
-    [stateA, stateB, onUpdate],
-  );
+    answersYMap?.set('q11b.answers', newAnswers);
+  };
+
+  const handleCriticalToggle = () => {
+    const currentCritical = (answersYMap?.get('q11a.critical') as boolean) ?? false;
+    const newCritical = !currentCritical;
+    answersYMap?.set('q11a.critical', newCritical);
+    answersYMap?.set('q11b.critical', newCritical);
+  };
+
+  const critical = useAnswer<boolean>(studyId, checklistId, 'q11a.critical') ?? false;
 
   const noteYText = useMemo(
-    () => getTextRef({ type: 'AMSTAR2', questionKey: 'q11' }),
-    [getTextRef],
+    () => resolveYText(ydoc, studyId, checklistId, 'q11.note'),
+    [ydoc, studyId, checklistId],
   );
 
   return (
@@ -546,19 +506,32 @@ function Question11({
       <QuestionInfo question={question} />
       <div className='flex'>
         <h3 className='text-foreground font-semibold'>{question.text}</h3>
-        <CriticalButton state={stateA} onUpdate={handleCriticalUpdate} />
+        <div className='ml-auto'>
+          <button
+            type='button'
+            className={`ml-2 h-6 rounded-full px-3 text-xs font-medium text-nowrap transition-colors ${
+              critical ?
+                'border border-red-300 bg-red-100 text-red-700 hover:bg-red-200'
+              : 'border-border bg-secondary text-secondary-foreground hover:bg-muted border'
+            }`}
+            onClick={handleCriticalToggle}
+            aria-pressed={critical}
+          >
+            {critical ? 'Critical' : 'Not Critical'}
+          </button>
+        </div>
       </div>
       <div className='text-foreground mt-2 h-4 font-semibold'>{question.subtitle}</div>
-      <StandardQuestionInternal
-        state={stateA}
+      <ColumnsGrid
+        answers={currentA}
         question={{ text: 'q11a' }}
         columns={question.columns}
         handleChange={handleChangeA}
         width='w-48'
       />
       <div className='text-foreground mt-4 h-4 font-semibold'>{question.subtitle2}</div>
-      <StandardQuestionInternal
-        state={stateB}
+      <ColumnsGrid
+        answers={currentB}
         question={{ text: 'q11b' }}
         columns={question.columns2}
         handleChange={handleChangeB}
@@ -569,140 +542,77 @@ function Question11({
   );
 }
 
+// -- Question configs --
+
+const QUESTION_CONFIGS: QuestionConfig[] = [
+  { qKey: 'q2', schema: AMSTAR_CHECKLIST.q2, derive: (a, c, o) => deriveThreeCol(a, c, o) },
+  { qKey: 'q3', schema: AMSTAR_CHECKLIST.q3, derive: (a, c, o) => deriveTwoCol(a, c, o, 'any') },
+  { qKey: 'q4', schema: AMSTAR_CHECKLIST.q4, derive: (a, c, o) => deriveThreeCol(a, c, o) },
+  { qKey: 'q5', schema: AMSTAR_CHECKLIST.q5, derive: (a, c, o) => deriveTwoCol(a, c, o, 'any') },
+  { qKey: 'q6', schema: AMSTAR_CHECKLIST.q6, derive: (a, c, o) => deriveTwoCol(a, c, o, 'any') },
+  { qKey: 'q7', schema: AMSTAR_CHECKLIST.q7, derive: (a, c, o) => deriveThreeCol(a, c, o) },
+  { qKey: 'q8', schema: AMSTAR_CHECKLIST.q8, derive: (a, c, o) => deriveThreeCol(a, c, o) },
+  { qKey: 'q10', schema: AMSTAR_CHECKLIST.q10, derive: (a, c, o) => deriveTwoCol(a, c, o, 'any') },
+  { qKey: 'q12', schema: AMSTAR_CHECKLIST.q12, derive: (a, c, o) => deriveTwoColThreeRadio(a, c, o, 'any'), width: 'w-48' },
+  { qKey: 'q13', schema: AMSTAR_CHECKLIST.q13, derive: (a, c, o) => deriveTwoCol(a, c, o, 'any') },
+  { qKey: 'q14', schema: AMSTAR_CHECKLIST.q14, derive: (a, c, o) => deriveTwoCol(a, c, o, 'any') },
+  { qKey: 'q15', schema: AMSTAR_CHECKLIST.q15, derive: (a, c, o) => deriveTwoColThreeRadio(a, c, o, 'any'), width: 'w-48' },
+  { qKey: 'q16', schema: AMSTAR_CHECKLIST.q16, derive: (a, c, o) => deriveTwoCol(a, c, o, 'any') },
+];
+
 // -- Main component --
 
 interface AMSTAR2ChecklistProps {
-  externalChecklist?: AMSTAR2ChecklistType;
-  onExternalUpdate?: (_patch: Record<string, unknown>) => void;
+  studyId: string;
+  checklistId: string;
   readOnly?: boolean;
-  getTextRef: (_ref: TextRef) => Y.Text | null;
 }
 
 export function AMSTAR2Checklist({
-  externalChecklist,
-  onExternalUpdate,
+  studyId,
+  checklistId,
   readOnly,
-  getTextRef,
 }: AMSTAR2ChecklistProps) {
-  // Local fallback state for standalone mode (no Yjs)
-  const [localChecklist, setLocalChecklist] = useState<AMSTAR2ChecklistType | null>(() => {
-    if (externalChecklist) return null;
-    return createAMSTAR2Checklist({
-      name: 'New Checklist',
-      id: 'local-1234',
-      createdAt: Date.now(),
-      reviewerName: '',
-    });
-  });
-
-  const checklist = externalChecklist || localChecklist;
-
-  const handleChecklistChange = useCallback(
-    (patch: Record<string, AMSTAR2QuestionAnswer>) => {
-      if (readOnly) return;
-      if (onExternalUpdate) {
-        onExternalUpdate(patch);
-        return;
-      }
-      setLocalChecklist(prev => (prev ? { ...prev, ...patch } : prev));
-    },
-    [readOnly, onExternalUpdate],
-  );
-
-  if (!checklist) return <div>Loading...</div>;
+  const checklistName = useChecklistField<string>(studyId, checklistId, 'name');
 
   return (
     <div className='bg-blue-50'>
       <div className='container mx-auto max-w-5xl px-4 py-6'>
         <div className='text-foreground mb-6 text-left text-lg font-semibold sm:text-center'>
-          {checklist.name || 'AMSTAR 2 Checklist'}
+          {checklistName || 'AMSTAR 2 Checklist'}
         </div>
         <fieldset disabled={!!readOnly} className={readOnly ? 'opacity-90' : ''}>
           <div className='flex flex-col gap-6'>
-            {/* Q1: special 3-col handler (col0 all -> col2) */}
-            <StandardQuestion
-              state={checklist.q1}
-              question={AMSTAR_CHECKLIST.q1}
-              handleChange={(colIdx, optIdx) => {
-                const state = checklist.q1;
-                const newAnswers = state.answers.map((arr: boolean[]) => [...arr]);
-                newAnswers[colIdx][optIdx] = !state.answers[colIdx][optIdx];
-                if (colIdx === 0) {
-                  const allChecked = newAnswers[0].every(Boolean);
-                  newAnswers[2][0] = allChecked;
-                  newAnswers[2][1] = !allChecked;
-                }
-                if (colIdx === 2) {
-                  if (optIdx === 0 && newAnswers[2][0]) newAnswers[2][1] = false;
-                  if (optIdx === 1 && newAnswers[2][1]) newAnswers[2][0] = false;
-                }
-                handleChecklistChange({ q1: { ...state, answers: newAnswers } });
-              }}
-              onUpdate={newQ => handleChecklistChange({ q1: newQ })}
-              getTextRef={getTextRef}
-              readOnly={readOnly}
-            />
+            <Question1 studyId={studyId} checklistId={checklistId} readOnly={readOnly} />
 
-            {/* Q2-Q8 (standard patterns) */}
             {QUESTION_CONFIGS.slice(0, 7).map(cfg => (
               <StandardQuestion
                 key={cfg.qKey}
-                state={checklist[cfg.qKey] as AMSTAR2QuestionAnswer}
-                question={cfg.schema}
-                handleChange={(colIdx, optIdx) => {
-                  const newQ = cfg.handler(checklist, colIdx, optIdx);
-                  handleChecklistChange({ [cfg.qKey]: newQ });
-                }}
-                onUpdate={newQ => handleChecklistChange({ [cfg.qKey]: newQ })}
-                getTextRef={getTextRef}
+                studyId={studyId}
+                checklistId={checklistId}
+                config={cfg}
                 readOnly={readOnly}
-                width={cfg.width}
               />
             ))}
 
-            {/* Q9: split question */}
-            <Question9
-              checklist={checklist}
-              onUpdate={handleChecklistChange}
-              getTextRef={getTextRef}
-              readOnly={readOnly}
-            />
+            <Question9 studyId={studyId} checklistId={checklistId} readOnly={readOnly} />
 
-            {/* Q10 */}
             <StandardQuestion
-              state={checklist.q10}
-              question={AMSTAR_CHECKLIST.q10}
-              handleChange={(colIdx, optIdx) => {
-                const newQ = QUESTION_CONFIGS[7].handler(checklist, colIdx, optIdx);
-                handleChecklistChange({ q10: newQ });
-              }}
-              onUpdate={newQ => handleChecklistChange({ q10: newQ })}
-              getTextRef={getTextRef}
+              studyId={studyId}
+              checklistId={checklistId}
+              config={QUESTION_CONFIGS[7]}
               readOnly={readOnly}
             />
 
-            {/* Q11: split question */}
-            <Question11
-              checklist={checklist}
-              onUpdate={handleChecklistChange}
-              getTextRef={getTextRef}
-              readOnly={readOnly}
-            />
+            <Question11 studyId={studyId} checklistId={checklistId} readOnly={readOnly} />
 
-            {/* Q12-Q16 */}
             {QUESTION_CONFIGS.slice(8).map(cfg => (
               <StandardQuestion
                 key={cfg.qKey}
-                state={checklist[cfg.qKey] as AMSTAR2QuestionAnswer}
-                question={cfg.schema}
-                handleChange={(colIdx, optIdx) => {
-                  const newQ = cfg.handler(checklist, colIdx, optIdx);
-                  handleChecklistChange({ [cfg.qKey]: newQ });
-                }}
-                onUpdate={newQ => handleChecklistChange({ [cfg.qKey]: newQ })}
-                getTextRef={getTextRef}
+                studyId={studyId}
+                checklistId={checklistId}
+                config={cfg}
                 readOnly={readOnly}
-                width={cfg.width}
               />
             ))}
           </div>

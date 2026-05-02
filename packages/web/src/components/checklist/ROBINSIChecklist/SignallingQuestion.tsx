@@ -1,66 +1,41 @@
-/**
- * SignallingQuestion - A single signalling question with response button options
- * Used by ROBINS-I DomainSection. Shows question.note inline.
- */
-
-import { useEffect, useMemo, useCallback } from 'react';
-import type * as Y from 'yjs';
+import { useMemo } from 'react';
 import { RESPONSE_LABELS, getResponseOptions } from './checklist-map';
 import { NoteEditor } from '@/components/checklist/common/NoteEditor';
-import type { TextRef } from '@/primitives/useProject/checklists';
+import { useAnswer, useAnswersYMap, useProjectReactor } from '@/primitives/useProject/reactor/hooks';
+import { resolveYText } from '@/primitives/useProject/reactor/ytext';
 
 interface SignallingQuestionProps {
-  question: any;
-  answer: any;
-  onUpdate: (_newAnswer: any) => void;
+  studyId: string;
+  checklistId: string;
+  questionKey: string;
+  question: { number?: string; text: string; responseType: any; note?: string };
   disabled?: boolean;
   showComment?: boolean;
-  domainKey: string;
-  questionKey: string;
-  getTextRef: (_ref: TextRef) => Y.Text | null;
   isSkippable?: boolean;
 }
 
 export function SignallingQuestion({
+  studyId,
+  checklistId,
+  questionKey,
   question,
-  answer,
-  onUpdate,
   disabled,
   showComment,
-  domainKey,
-  questionKey,
-  getTextRef,
   isSkippable,
 }: SignallingQuestionProps) {
   const options = useMemo(() => getResponseOptions(question.responseType), [question.responseType]);
+  const answer = useAnswer<string>(studyId, checklistId, questionKey);
+  const answersYMap = useAnswersYMap(studyId, checklistId);
+  const { ydoc } = useProjectReactor();
 
-  // Coerce NA to NI if NA is not valid for this question type.
-  // Only answer?.answer is in deps to avoid re-triggering on comment changes.
-  useEffect(() => {
-    if (answer?.answer === 'NA' && !options.includes('NA')) {
-      onUpdate({ ...answer, answer: 'NI' });
-    }
-  }, [answer?.answer, options]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  const handleAnswerChange = useCallback(
-    (value: string) => {
-      const newValue = answer?.answer === value ? null : value;
-      onUpdate({ ...answer, answer: newValue });
-    },
-    [answer, onUpdate],
-  );
+  const handleAnswerChange = (value: string) => {
+    if (!answersYMap) return;
+    answersYMap.set(questionKey, answer === value ? null : value);
+  };
 
   const commentYText = useMemo(
-    () =>
-      showComment ?
-        getTextRef({
-          type: 'ROBINS_I',
-          sectionKey: domainKey,
-          fieldKey: 'comment',
-          questionKey,
-        })
-      : null,
-    [showComment, getTextRef, domainKey, questionKey],
+    () => (showComment ? resolveYText(ydoc, studyId, checklistId, `${questionKey}.comment`) : null),
+    [showComment, ydoc, studyId, checklistId, questionKey],
   );
 
   return (
@@ -69,7 +44,9 @@ export function SignallingQuestion({
     >
       <div className='flex flex-col gap-2 sm:flex-row sm:items-start sm:gap-4'>
         <div className='min-w-0 flex-1'>
-          <span className='text-secondary-foreground text-sm font-medium'>{question.number}</span>
+          {question.number && (
+            <span className='text-secondary-foreground text-sm font-medium'>{question.number}</span>
+          )}
           <span className='text-muted-foreground ml-2 text-sm'>{question.text}</span>
           {question.note && (
             <span className='text-muted-foreground/70 ml-2 text-xs'>({question.note})</span>
@@ -85,7 +62,7 @@ export function SignallingQuestion({
               onClick={() => !disabled && handleAnswerChange(option)}
               disabled={disabled}
               className={`relative inline-flex cursor-pointer items-center justify-center rounded border px-2 py-1 text-xs font-medium transition-colors ${disabled ? 'cursor-not-allowed opacity-50' : ''} ${
-                answer?.answer === option ?
+                answer === option ?
                   'border-blue-400 bg-blue-100 text-blue-800'
                 : 'border-border bg-muted text-muted-foreground hover:bg-secondary'
               }`}

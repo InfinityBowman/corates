@@ -1,90 +1,83 @@
-/**
- * DomainSection - A complete ROB2 domain section with questions and auto-scored judgement
- */
-
-import { useMemo, useCallback } from 'react';
-import type * as Y from 'yjs';
+import { useMemo } from 'react';
 import { ROB2_CHECKLIST, getDomainQuestions } from './checklist-map';
 import { SignallingQuestion } from './SignallingQuestion';
 import { DomainJudgement, JudgementBadge } from './DomainJudgement';
-import { scoreRob2Domain, getRequiredQuestions } from './checklist.js';
-import type { TextRef } from '@/primitives/useProject/checklists';
+import { getRequiredQuestions } from './checklist.js';
+import {
+  useAnswer,
+  useAnswersYMap,
+  useROB2DomainScore,
+} from '@/primitives/useProject/reactor/hooks';
+import type { DomainAnswers } from '@corates/shared/checklists/rob2';
 
 interface DomainSectionProps {
+  studyId: string;
+  checklistId: string;
   domainKey: string;
-  domainState: any;
-  onUpdate: (_newState: any) => void;
   disabled?: boolean;
   showComments?: boolean;
   collapsed?: boolean;
   onToggleCollapse?: () => void;
-  getTextRef: (_ref: TextRef) => Y.Text | null;
 }
 
 export function DomainSection({
+  studyId,
+  checklistId,
   domainKey,
-  domainState,
-  onUpdate,
   disabled,
   showComments,
   collapsed,
   onToggleCollapse,
-  getTextRef,
 }: DomainSectionProps) {
   const domain = (ROB2_CHECKLIST as any)[domainKey];
   const questions = useMemo(() => getDomainQuestions(domainKey), [domainKey]);
+  const questionKeys = useMemo(() => Object.keys(questions), [questions]);
 
-  const autoScore = useMemo(
-    () => scoreRob2Domain(domainKey, domainState?.answers),
-    [domainKey, domainState?.answers],
+  const { judgement: autoJudgement, isComplete: autoComplete } = useROB2DomainScore(
+    studyId,
+    checklistId,
+    domainKey,
   );
+  const direction = useAnswer<string>(studyId, checklistId, `${domainKey}.direction`);
+  const answersYMap = useAnswersYMap(studyId, checklistId);
+
+  const answersForRequired = useMemo(() => {
+    if (!answersYMap) return undefined;
+    const a: DomainAnswers = {};
+    for (const qKey of questionKeys) {
+      a[qKey] = { answer: (answersYMap.get(qKey) as string) ?? null };
+    }
+    return a;
+  }, [answersYMap, questionKeys]);
 
   const requiredQuestions = useMemo(
-    () => getRequiredQuestions(domainKey, domainState?.answers),
-    [domainKey, domainState?.answers],
+    () => getRequiredQuestions(domainKey, answersForRequired),
+    [domainKey, answersForRequired],
   );
 
-  // A question is skippable if it's not on the active scoring path
-  // and hasn't already been answered. Only applies once the user has
-  // started answering -- otherwise every conditional question looks optional.
-  const hasAnyAnswer = Object.values(domainState?.answers ?? {}).some(
-    (a: any) => a?.answer != null,
-  );
+  const hasAnyAnswer = useMemo(() => {
+    if (!answersYMap) return false;
+    return questionKeys.some(qKey => answersYMap.get(qKey) != null);
+  }, [answersYMap, questionKeys]);
 
   const isQuestionSkippable = (qKey: string) =>
     hasAnyAnswer &&
     requiredQuestions.size > 0 &&
     !requiredQuestions.has(qKey) &&
-    !domainState?.answers?.[qKey]?.answer;
-
-  const effectiveJudgement = autoScore.judgement;
-
-  const handleQuestionUpdate = useCallback(
-    (questionKey: string, newAnswer: any) => {
-      const newAnswers = { ...domainState?.answers, [questionKey]: newAnswer };
-      const newAutoScore = scoreRob2Domain(domainKey, newAnswers);
-      onUpdate({ ...domainState, answers: newAnswers, judgement: newAutoScore.judgement });
-    },
-    [domainKey, domainState, onUpdate],
-  );
-
-  const handleDirectionChange = useCallback(
-    (direction: string | null) => {
-      onUpdate({ ...domainState, direction });
-    },
-    [domainState, onUpdate],
-  );
+    answersYMap?.get(qKey) == null;
 
   const completionStatus = useMemo(() => {
-    const qs = questions;
-    const keys = Object.keys(qs);
-    const answered = keys.filter(k => domainState?.answers?.[k]?.answer != null).length;
-    return { answered, total: keys.length };
-  }, [questions, domainState?.answers]);
+    if (!answersYMap) return { answered: 0, total: questionKeys.length };
+    const answered = questionKeys.filter(k => answersYMap.get(k) != null).length;
+    return { answered, total: questionKeys.length };
+  }, [answersYMap, questionKeys]);
+
+  const handleDirectionChange = (dir: string | null) => {
+    answersYMap?.set(`${domainKey}.direction`, dir);
+  };
 
   return (
     <div className='bg-card overflow-hidden rounded-lg shadow-md'>
-      {/* Domain header */}
       <button
         type='button'
         onClick={() => onToggleCollapse?.()}
@@ -102,9 +95,9 @@ export function DomainSection({
             {completionStatus.answered}/{completionStatus.total}
           </span>
 
-          {effectiveJudgement ?
-            <JudgementBadge judgement={effectiveJudgement} />
-          : !autoScore.isComplete && (
+          {autoJudgement ?
+            <JudgementBadge judgement={autoJudgement} />
+          : !autoComplete && (
               <span className='text-muted-foreground/70 text-xs'>Incomplete</span>
             )
           }
@@ -120,38 +113,34 @@ export function DomainSection({
         </div>
       </button>
 
-      {/* Domain content */}
       {!collapsed && (
         <div className='px-6 py-4'>
           <div className='flex flex-col gap-1'>
             {Object.entries(questions).map(([qKey, qDef]: [string, any]) => (
               <SignallingQuestion
                 key={qKey}
+                studyId={studyId}
+                checklistId={checklistId}
+                questionKey={qKey}
                 question={qDef}
-                answer={domainState?.answers?.[qKey]}
-                onUpdate={newAnswer => handleQuestionUpdate(qKey, newAnswer)}
                 disabled={disabled}
                 showComment={showComments}
-                domainKey={domainKey}
-                questionKey={qKey}
-                getTextRef={getTextRef}
                 isSkippable={isQuestionSkippable(qKey)}
               />
             ))}
           </div>
 
-          {/* Auto judgement section */}
           <div className='bg-muted mt-4 rounded-lg p-4'>
             <div className='mb-3 flex items-center gap-3'>
               <span className='text-secondary-foreground text-sm font-medium'>
                 Risk of bias judgement
               </span>
-              {autoScore.judgement ?
+              {autoJudgement ?
                 <div className='bg-card flex items-center gap-2 rounded-md px-2.5 py-1 text-xs shadow-sm'>
                   <span className='text-muted-foreground'>Calculated:</span>
-                  <JudgementBadge judgement={autoScore.judgement} />
+                  <JudgementBadge judgement={autoJudgement} />
                 </div>
-              : !autoScore.isComplete && (
+              : !autoComplete && (
                   <span className='text-muted-foreground/70 text-xs'>(answer more questions)</span>
                 )
               }
@@ -160,8 +149,8 @@ export function DomainSection({
             {domain?.hasDirection && (
               <DomainJudgement
                 domainId={domainKey}
-                judgement={effectiveJudgement}
-                direction={domainState?.direction}
+                judgement={autoJudgement}
+                direction={direction}
                 onJudgementChange={() => {}}
                 onDirectionChange={handleDirectionChange}
                 showDirection={true}
