@@ -2,11 +2,37 @@ import { atom, transact } from '@tldraw/state';
 import type { Atom } from '@tldraw/state';
 import { useValue } from '@tldraw/state-react';
 import type { StudyInfo, MemberEntry, ProjectMeta } from './projectStore';
+import { countProbe } from '@/primitives/useProject/sync-perf';
 
 function arraysEqual(a: string[], b: string[]): boolean {
   if (a.length !== b.length) return false;
   for (let i = 0; i < a.length; i++) {
     if (a[i] !== b[i]) return false;
+  }
+  return true;
+}
+
+function studyEquals(a: StudyInfo | undefined, b: StudyInfo | undefined): boolean {
+  if (a === b) return true;
+  if (!a || !b) return false;
+  if (a.name !== b.name || a.description !== b.description) return false;
+  if (a.reviewer1 !== b.reviewer1 || a.reviewer2 !== b.reviewer2) return false;
+  if (a.firstAuthor !== b.firstAuthor || a.publicationYear !== b.publicationYear) return false;
+  if (a.doi !== b.doi || a.abstract !== b.abstract) return false;
+  if (a.pdfAccessible !== b.pdfAccessible) return false;
+  if (a.pdfs.length !== b.pdfs.length) return false;
+  if (a.checklists.length !== b.checklists.length) return false;
+  for (let i = 0; i < a.checklists.length; i++) {
+    const ca = a.checklists[i];
+    const cb = b.checklists[i];
+    if (
+      ca.id !== cb.id ||
+      ca.status !== cb.status ||
+      ca.score !== cb.score ||
+      ca.assignedTo !== cb.assignedTo ||
+      ca.outcomeId !== cb.outcomeId
+    )
+      return false;
   }
   return true;
 }
@@ -20,14 +46,23 @@ class ProjectAtoms {
   getOrCreateStudyAtom(studyId: string): Atom<StudyInfo | undefined> {
     let a = this.studyAtoms.get(studyId);
     if (!a) {
-      a = atom<StudyInfo | undefined>(`study:${studyId}`, undefined);
+      a = atom<StudyInfo | undefined>(`study:${studyId}`, undefined, {
+        isEqual: studyEquals,
+      });
       this.studyAtoms.set(studyId, a);
     }
     return a;
   }
 
   setStudy(studyId: string, study: StudyInfo): void {
-    this.getOrCreateStudyAtom(studyId).set(study);
+    const a = this.getOrCreateStudyAtom(studyId);
+    const prev = a.__unsafe__getWithoutCapture();
+    a.set(study);
+    if (a.__unsafe__getWithoutCapture() !== prev) {
+      countProbe('atomFired');
+    } else {
+      countProbe('atomSuppressed');
+    }
   }
 
   deleteStudy(studyId: string): void {

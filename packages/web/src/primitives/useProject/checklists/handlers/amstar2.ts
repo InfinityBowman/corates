@@ -49,15 +49,6 @@ export class AMSTAR2Handler extends ChecklistHandler {
     return answersYMap;
   }
 
-  serializeAnswers(answersMap: Y.Map<unknown>): Record<string, unknown> {
-    const answers: Record<string, unknown> = {};
-    for (const [key, sectionYMap] of answersMap.entries()) {
-      const section = sectionYMap as { toJSON?: () => unknown };
-      answers[key] = section.toJSON ? section.toJSON() : sectionYMap;
-    }
-    return answers;
-  }
-
   updateAnswer<K extends Amstar2Key>(
     answersMap: Y.Map<unknown>,
     key: K,

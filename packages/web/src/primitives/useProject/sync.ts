@@ -7,7 +7,6 @@ import * as Y from 'yjs';
 import type {
   StudyInfo,
   ChecklistEntry,
-  AnnotationEntry,
   MemberEntry,
   ProjectMeta,
   OutcomeEntry,
@@ -18,6 +17,7 @@ import { scoreChecklistOfType } from '@/checklist-registry/index';
 import { amstar2 } from '@corates/shared';
 import { CHECKLIST_STATUS } from '@corates/shared/checklists';
 import type { AMSTAR2Checklist } from '@corates/shared/checklists';
+import { markCycleStart, countProbe, addBuildStudyTime } from './sync-perf';
 
 const getAMSTAR2Answers = amstar2.getAnswers;
 
@@ -45,6 +45,8 @@ export function createSyncManager(projectId: string, getYDoc: () => Y.Doc | null
 
   function handleReviewsEvents(events: Y.YEvent<any>[]): void {
     if (paused) return;
+    markCycleStart();
+    countProbe('handleReviewsEvents');
 
     const reviewsMap = getYDoc()?.getMap('reviews');
     if (!reviewsMap) return;
@@ -69,11 +71,10 @@ export function createSyncManager(projectId: string, getYDoc: () => Y.Doc | null
     for (const studyId of dirtyStudyIds) {
       const studyYMap = reviewsMap.get(studyId) as Y.Map<unknown> | undefined;
       if (studyYMap) {
-        const studyData = studyYMap.toJSON ? studyYMap.toJSON() : {};
-        studyCache.set(
-          studyId,
-          buildStudyFromYMap(studyId, studyData as Record<string, unknown>, studyYMap),
-        );
+        countProbe('buildStudy');
+        const t0 = performance.now();
+        studyCache.set(studyId, buildStudyFromYMap(studyId, studyYMap));
+        addBuildStudyTime(performance.now() - t0);
       } else {
         studyCache.delete(studyId);
       }
@@ -106,11 +107,7 @@ export function createSyncManager(projectId: string, getYDoc: () => Y.Doc | null
 
     for (const [studyId, studyYMap] of reviewsMap.entries()) {
       const ymap = studyYMap as Y.Map<unknown>;
-      const studyData = ymap.toJSON ? ymap.toJSON() : {};
-      studyCache.set(
-        studyId,
-        buildStudyFromYMap(studyId, studyData as Record<string, unknown>, ymap),
-      );
+      studyCache.set(studyId, buildStudyFromYMap(studyId, ymap));
     }
 
     sortedStudies = [...studyCache.values()].sort(
@@ -140,6 +137,7 @@ export function createSyncManager(projectId: string, getYDoc: () => Y.Doc | null
   }
 
   function doSync(): void {
+    countProbe('doSync');
     const ydoc = getYDoc();
     if (!ydoc) return;
 
@@ -265,68 +263,63 @@ export function createSyncManager(projectId: string, getYDoc: () => Y.Doc | null
   return { syncFromYDocImmediate, attach, detach, pause, resume };
 }
 
-function buildStudyFromYMap(
-  studyId: string,
-  studyData: Record<string, unknown>,
-  studyYMap: Y.Map<unknown>,
-): StudyInfo {
+function getStr(m: Y.Map<unknown>, key: string): string | null {
+  return (m.get(key) as string) || null;
+}
+
+function buildStudyFromYMap(studyId: string, studyYMap: Y.Map<unknown>): StudyInfo {
   const study: StudyInfo = {
     id: studyId,
-    name: (studyData.name as string) || '',
-    description: (studyData.description as string) || '',
-    originalTitle: (studyData.originalTitle as string) || null,
-    firstAuthor: (studyData.firstAuthor as string) || null,
-    publicationYear: (studyData.publicationYear as string) || null,
-    authors: (studyData.authors as string) || null,
-    journal: (studyData.journal as string) || null,
-    doi: (studyData.doi as string) || null,
-    abstract: (studyData.abstract as string) || null,
-    importSource: (studyData.importSource as string) || null,
-    pdfUrl: (studyData.pdfUrl as string) || null,
-    pdfSource: (studyData.pdfSource as string) || null,
-    pdfAccessible: Boolean(studyData.pdfAccessible || false),
-    pmid: (studyData.pmid as string) || null,
-    url: (studyData.url as string) || null,
-    volume: (studyData.volume as string) || null,
-    issue: (studyData.issue as string) || null,
-    pages: (studyData.pages as string) || null,
-    type: (studyData.type as string) || null,
-    reviewer1: (studyData.reviewer1 as string) || null,
-    reviewer2: (studyData.reviewer2 as string) || null,
-    createdAt: studyData.createdAt as number,
-    updatedAt: studyData.updatedAt as number,
+    name: (studyYMap.get('name') as string) || '',
+    description: (studyYMap.get('description') as string) || '',
+    originalTitle: getStr(studyYMap, 'originalTitle'),
+    firstAuthor: getStr(studyYMap, 'firstAuthor'),
+    publicationYear: getStr(studyYMap, 'publicationYear'),
+    authors: getStr(studyYMap, 'authors'),
+    journal: getStr(studyYMap, 'journal'),
+    doi: getStr(studyYMap, 'doi'),
+    abstract: getStr(studyYMap, 'abstract'),
+    importSource: getStr(studyYMap, 'importSource'),
+    pdfUrl: getStr(studyYMap, 'pdfUrl'),
+    pdfSource: getStr(studyYMap, 'pdfSource'),
+    pdfAccessible: Boolean(studyYMap.get('pdfAccessible') || false),
+    pmid: getStr(studyYMap, 'pmid'),
+    url: getStr(studyYMap, 'url'),
+    volume: getStr(studyYMap, 'volume'),
+    issue: getStr(studyYMap, 'issue'),
+    pages: getStr(studyYMap, 'pages'),
+    type: getStr(studyYMap, 'type'),
+    reviewer1: getStr(studyYMap, 'reviewer1'),
+    reviewer2: getStr(studyYMap, 'reviewer2'),
+    createdAt: studyYMap.get('createdAt') as number,
+    updatedAt: studyYMap.get('updatedAt') as number,
     checklists: [],
     pdfs: [],
-    annotations: {},
   };
 
   // Checklists
   const checklistsMap = studyYMap.get('checklists') as Y.Map<unknown> | undefined;
   if (checklistsMap && typeof checklistsMap.entries === 'function') {
     for (const [checklistId, checklistYMap] of checklistsMap.entries()) {
-      const clYMap = checklistYMap as Y.Map<unknown> & { toJSON?: () => Record<string, unknown> };
-      const checklistData =
-        clYMap.toJSON ? clYMap.toJSON() : (checklistYMap as Record<string, unknown>);
-      const checklistType = (checklistData.type as string) || 'AMSTAR2';
-      const status = (checklistData.status as string) || 'pending';
+      const clYMap = checklistYMap as Y.Map<unknown>;
+      const checklistType = (clYMap.get('type') as string) || 'AMSTAR2';
+      const status = (clYMap.get('status') as string) || 'pending';
 
       const checklistEntry: ChecklistEntry = {
         id: checklistId,
         type: checklistType,
-        title: (checklistData.title as string) || null,
-        assignedTo: (checklistData.assignedTo as string) || null,
-        outcomeId: (checklistData.outcomeId as string) || null,
+        title: getStr(clYMap, 'title'),
+        assignedTo: getStr(clYMap, 'assignedTo'),
+        outcomeId: getStr(clYMap, 'outcomeId'),
         status,
-        createdAt: checklistData.createdAt as number,
-        updatedAt: checklistData.updatedAt as number,
+        createdAt: clYMap.get('createdAt') as number,
+        updatedAt: clYMap.get('updatedAt') as number,
         score: null,
         answers: null,
       };
 
       if (status === CHECKLIST_STATUS.FINALIZED) {
-        const answersMap = (checklistYMap as Y.Map<unknown>).get('answers') as
-          | Y.Map<unknown>
-          | undefined;
+        const answersMap = clYMap.get('answers') as Y.Map<unknown> | undefined;
         if (answersMap && typeof answersMap.entries === 'function') {
           const answers = extractAnswersFromYMap(answersMap, checklistType);
           checklistEntry.answers = answers;
@@ -352,96 +345,42 @@ function buildStudyFromYMap(
   const pdfsMap = studyYMap.get('pdfs') as Y.Map<unknown> | undefined;
   if (pdfsMap && typeof pdfsMap.entries === 'function') {
     for (const [pdfId, pdfYMap] of pdfsMap.entries()) {
-      const pYMap = pdfYMap as { toJSON?: () => Record<string, unknown> };
-      const pdfData = pYMap.toJSON ? pYMap.toJSON() : (pdfYMap as Record<string, unknown>);
+      const pYMap = pdfYMap as Y.Map<unknown>;
       study.pdfs.push({
-        id: (pdfData.id as string) || pdfId,
-        fileName: (pdfData.fileName as string) || pdfId,
-        key: pdfData.key as string,
-        size: pdfData.size as number,
-        uploadedBy: pdfData.uploadedBy as string,
-        uploadedAt: pdfData.uploadedAt as number,
-        tag: (pdfData.tag as string) || 'secondary',
-        title: (pdfData.title as string) || null,
-        firstAuthor: (pdfData.firstAuthor as string) || null,
-        publicationYear: (pdfData.publicationYear as string) || null,
-        journal: (pdfData.journal as string) || null,
-        doi: (pdfData.doi as string) || null,
+        id: (pYMap.get('id') as string) || pdfId,
+        fileName: (pYMap.get('fileName') as string) || pdfId,
+        key: pYMap.get('key') as string,
+        size: pYMap.get('size') as number,
+        uploadedBy: pYMap.get('uploadedBy') as string,
+        uploadedAt: pYMap.get('uploadedAt') as number,
+        tag: (pYMap.get('tag') as string) || 'secondary',
+        title: getStr(pYMap, 'title'),
+        firstAuthor: getStr(pYMap, 'firstAuthor'),
+        publicationYear: getStr(pYMap, 'publicationYear'),
+        journal: getStr(pYMap, 'journal'),
+        doi: getStr(pYMap, 'doi'),
       });
     }
   }
 
-  // Reconciliation (legacy format)
-  const reconciliationMap = studyYMap.get('reconciliation') as
-    | (Y.Map<unknown> & { toJSON?: () => Record<string, unknown> })
-    | undefined;
+  // Reconciliation
+  const reconciliationMap = studyYMap.get('reconciliation') as Y.Map<unknown> | undefined;
   if (reconciliationMap) {
-    const reconciliationData =
-      reconciliationMap.toJSON ?
-        reconciliationMap.toJSON()
-      : (reconciliationMap as unknown as Record<string, unknown>);
-    if (reconciliationData.checklist1Id && reconciliationData.checklist2Id) {
+    const c1 = reconciliationMap.get('checklist1Id') as string | undefined;
+    const c2 = reconciliationMap.get('checklist2Id') as string | undefined;
+    if (c1 && c2) {
       study.reconciliation = {
-        checklist1Id: reconciliationData.checklist1Id as string,
-        checklist2Id: reconciliationData.checklist2Id as string,
-        reconciledChecklistId: (reconciliationData.reconciledChecklistId as string) || null,
-        currentPage: (reconciliationData.currentPage as number) || 0,
-        viewMode: (reconciliationData.viewMode as string) || 'questions',
-        updatedAt: reconciliationData.updatedAt as number,
+        checklist1Id: c1,
+        checklist2Id: c2,
+        reconciledChecklistId: getStr(reconciliationMap, 'reconciledChecklistId'),
+        currentPage: (reconciliationMap.get('currentPage') as number) || 0,
+        viewMode: (reconciliationMap.get('viewMode') as string) || 'questions',
+        updatedAt: reconciliationMap.get('updatedAt') as number,
       };
     }
   }
 
-  // Annotations
-  const annotationsMap = studyYMap.get('annotations') as Y.Map<unknown> | undefined;
-  if (annotationsMap && typeof annotationsMap.entries === 'function') {
-    study.annotations = buildAnnotationsFromYMap(annotationsMap);
-  }
-
   return study;
-}
-
-function buildAnnotationsFromYMap(
-  annotationsMap: Y.Map<unknown>,
-): Record<string, AnnotationEntry[]> {
-  const annotations: Record<string, AnnotationEntry[]> = {};
-  for (const [checklistId, checklistAnnotationsMap] of annotationsMap.entries()) {
-    const clMap = checklistAnnotationsMap as Y.Map<unknown> | undefined;
-    if (!clMap || typeof clMap.entries !== 'function') continue;
-
-    const checklistAnnotations: AnnotationEntry[] = [];
-    for (const [annotationId, annotationYMap] of clMap.entries()) {
-      if (!annotationYMap) continue;
-
-      const aYMap = annotationYMap as { toJSON?: () => Record<string, unknown> };
-      const annotationData =
-        aYMap.toJSON ? aYMap.toJSON() : (annotationYMap as Record<string, unknown>);
-
-      let embedPdfData: Record<string, unknown> = {};
-      try {
-        embedPdfData = JSON.parse((annotationData.embedPdfData as string) || '{}');
-      } catch (err) {
-        console.warn('Failed to parse annotation embedPdfData:', annotationId, err);
-      }
-
-      checklistAnnotations.push({
-        id: (annotationData.id as string) || annotationId,
-        pdfId: annotationData.pdfId as string,
-        type: annotationData.type as string,
-        pageIndex: annotationData.pageIndex as number,
-        embedPdfData,
-        createdBy: annotationData.createdBy as string,
-        createdAt: annotationData.createdAt as number,
-        updatedAt: annotationData.updatedAt as number,
-        mergedFrom: (annotationData.mergedFrom as string) || null,
-      });
-    }
-
-    if (checklistAnnotations.length > 0) {
-      annotations[checklistId] = checklistAnnotations;
-    }
-  }
-  return annotations;
 }
 
 function buildMembersList(membersMap: Y.Map<unknown>): MemberEntry[] {

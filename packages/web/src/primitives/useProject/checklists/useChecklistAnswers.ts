@@ -1,10 +1,10 @@
 /**
  * Subscription-based read of a checklist's answers from the project Y.Doc.
  *
- * Replaces the useMemo+Zustand indirection in ChecklistYjsWrapper. The hook
- * observes the project's `reviews` map and serializes the requested checklist's
- * answers on demand. The returned reference is stable between Y.Doc updates, so
- * consumers only re-render when answers actually change.
+ * Observes the narrowest possible Yjs target: the checklist's answers Y.Map
+ * when it exists, or the checklist Y.Map (shallow) while waiting for answers
+ * to be created. This prevents unrelated Yjs mutations (annotations, other
+ * studies, PDF metadata) from triggering re-serialization.
  */
 
 import { useCallback, useRef, useSyncExternalStore } from 'react';
@@ -13,6 +13,7 @@ import { connectionPool } from '@/project/ConnectionPool';
 import { CHECKLIST_TYPES } from '@/checklist-registry';
 import type { ChecklistHandler } from './handlers/base';
 import { AMSTAR2Handler } from './handlers/amstar2';
+import { countProbe } from '../sync-perf';
 import { ROBINSIHandler } from './handlers/robins-i';
 import { ROB2Handler } from './handlers/rob2';
 
@@ -27,18 +28,26 @@ interface ResolvedAnswers {
   checklistType: string;
 }
 
-function resolveAnswers(
+function resolveChecklistYMap(
   ydoc: Y.Doc | null,
   studyId: string,
   checklistId: string,
-): ResolvedAnswers | null {
+): Y.Map<unknown> | null {
   if (!ydoc) return null;
   const studiesMap = ydoc.getMap('reviews');
   const studyYMap = studiesMap.get(studyId) as Y.Map<unknown> | undefined;
   if (!studyYMap) return null;
   const checklistsMap = studyYMap.get('checklists') as Y.Map<unknown> | undefined;
   if (!checklistsMap) return null;
-  const checklistYMap = checklistsMap.get(checklistId) as Y.Map<unknown> | undefined;
+  return (checklistsMap.get(checklistId) as Y.Map<unknown>) ?? null;
+}
+
+function resolveAnswers(
+  ydoc: Y.Doc | null,
+  studyId: string,
+  checklistId: string,
+): ResolvedAnswers | null {
+  const checklistYMap = resolveChecklistYMap(ydoc, studyId, checklistId);
   if (!checklistYMap) return null;
   const answersYMap = checklistYMap.get('answers') as Y.Map<unknown> | undefined;
   if (!answersYMap) return null;
@@ -46,15 +55,17 @@ function resolveAnswers(
   return { answersYMap, checklistType };
 }
 
-function serialize(resolved: ResolvedAnswers): Record<string, unknown> {
-  const handler = handlers[resolved.checklistType];
-  if (handler) return handler.serializeAnswers(resolved.answersYMap);
-  const fallback: Record<string, unknown> = {};
-  for (const [key, section] of resolved.answersYMap.entries()) {
-    const s = section as { toJSON?: () => unknown };
-    fallback[key] = s.toJSON ? s.toJSON() : section;
+function stabilizeRefs(
+  fresh: Record<string, unknown>,
+  prev: Record<string, unknown> | null,
+): Record<string, unknown> {
+  if (!prev) return fresh;
+  for (const key of Object.keys(fresh)) {
+    if (key in prev && JSON.stringify(fresh[key]) === JSON.stringify(prev[key])) {
+      fresh[key] = prev[key];
+    }
   }
-  return fallback;
+  return fresh;
 }
 
 export function useChecklistAnswers(
@@ -75,18 +86,27 @@ export function useChecklistAnswers(
   const subscribe = useCallback(
     (onStoreChange: () => void) => {
       if (!ydoc) return () => {};
-      // observeDeep on `reviews` catches both "checklist arrives via sync"
-      // and "answers inside this checklist change". Serialization happens in
-      // getSnapshot, so unrelated writes only bump a counter here.
-      const reviewsMap = ydoc.getMap('reviews');
+
       const observer = () => {
         versionRef.current += 1;
         onStoreChange();
       };
-      reviewsMap.observeDeep(observer);
-      return () => reviewsMap.unobserveDeep(observer);
+
+      const resolved = resolveAnswers(ydoc, studyId, checklistId);
+      if (resolved) {
+        resolved.answersYMap.observeDeep(observer);
+        return () => resolved.answersYMap.unobserveDeep(observer);
+      }
+
+      const checklistYMap = resolveChecklistYMap(ydoc, studyId, checklistId);
+      if (checklistYMap) {
+        checklistYMap.observe(observer);
+        return () => checklistYMap.unobserve(observer);
+      }
+
+      return () => {};
     },
-    [ydoc],
+    [ydoc, studyId, checklistId],
   );
 
   const getSnapshot = useCallback((): Record<string, unknown> | null => {
@@ -96,14 +116,35 @@ export function useChecklistAnswers(
       cached.studyId === studyId &&
       cached.checklistId === checklistId
     ) {
+      countProbe('serializeCacheHit');
       return cached.value;
     }
 
+    countProbe('serialize');
     const resolved = resolveAnswers(ydoc, studyId, checklistId);
-    const value = resolved ? serialize(resolved) : null;
+    if (!resolved) {
+      cacheRef.current = { version: versionRef.current, studyId, checklistId, value: null };
+      return null;
+    }
+
+    const handler = handlers[resolved.checklistType];
+    const fresh = handler
+      ? handler.serializeAnswers(resolved.answersYMap)
+      : fallbackSerialize(resolved.answersYMap);
+
+    const value = stabilizeRefs(fresh, cached.value);
     cacheRef.current = { version: versionRef.current, studyId, checklistId, value };
     return value;
   }, [ydoc, studyId, checklistId]);
 
   return useSyncExternalStore(subscribe, getSnapshot);
+}
+
+function fallbackSerialize(answersMap: Y.Map<unknown>): Record<string, unknown> {
+  const result: Record<string, unknown> = {};
+  for (const [key, section] of answersMap.entries()) {
+    const s = section as { toJSON?: () => unknown };
+    result[key] = s.toJSON ? s.toJSON() : section;
+  }
+  return result;
 }

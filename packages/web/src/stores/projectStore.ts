@@ -129,7 +129,6 @@ export interface StudyInfo {
   checklists: ChecklistEntry[];
   pdfs: PdfEntry[];
   reconciliation?: ReconciliationEntry;
-  annotations: Record<string, AnnotationEntry[]>;
 }
 
 interface ProjectStoreState {
@@ -188,8 +187,16 @@ export const useProjectStore = create<ProjectStoreState & ProjectStoreActions>()
       }),
 
     updateProjectStats: (projectId, studies) => {
+      const stats = computeProjectStats(studies);
+      const current = useProjectStore.getState().projectStats[projectId];
+      if (
+        current &&
+        current.studyCount === stats.studyCount &&
+        current.completedCount === stats.completedCount
+      ) {
+        return;
+      }
       set(state => {
-        const stats = computeProjectStats(studies);
         state.projectStats[projectId] = { ...stats, lastUpdated: Date.now() };
       });
       persistStats(useProjectStore.getState().projectStats);

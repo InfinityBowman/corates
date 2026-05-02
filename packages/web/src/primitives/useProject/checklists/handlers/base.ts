@@ -16,7 +16,19 @@ export type TextGetterFn = (
 export abstract class ChecklistHandler {
   abstract extractAnswersFromTemplate(template: Record<string, unknown>): Record<string, unknown>;
   abstract createAnswersYMap(answersData: Record<string, unknown>): Y.Map<unknown>;
-  abstract serializeAnswers(answersMap: Y.Map<unknown>): Record<string, unknown>;
+
+  serializeKey(_key: string, sectionYMap: unknown): unknown {
+    const section = sectionYMap as { toJSON?: () => unknown };
+    return section.toJSON ? section.toJSON() : sectionYMap;
+  }
+
+  serializeAnswers(answersMap: Y.Map<unknown>): Record<string, unknown> {
+    const answers: Record<string, unknown> = {};
+    for (const [key, sectionYMap] of answersMap.entries()) {
+      answers[key] = this.serializeKey(key, sectionYMap);
+    }
+    return answers;
+  }
 
   getTextGetter(_getYDoc: () => Y.Doc | null): TextGetterFn | null {
     return null;

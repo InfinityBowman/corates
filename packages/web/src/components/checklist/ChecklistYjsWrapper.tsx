@@ -196,13 +196,17 @@ export function ChecklistYjsWrapper({ projectId, studyId, checklistId }: Checkli
   const handlePartialUpdate = useCallback(
     (patch: Record<string, unknown>) => {
       if (isReadOnly || !checklistType) return;
-      Object.entries(patch).forEach(([key, value]) => {
-        const input = buildChecklistAnswerInput(checklistType, key, value);
-        if (!input) return;
-        updateChecklistAnswer(studyId, checklistId, input);
+      const ydoc = connectionPool.getEntry(projectId)?.ydoc;
+      if (!ydoc) return;
+      ydoc.transact(() => {
+        Object.entries(patch).forEach(([key, value]) => {
+          const input = buildChecklistAnswerInput(checklistType, key, value);
+          if (!input) return;
+          updateChecklistAnswer(studyId, checklistId, input);
+        });
       });
     },
-    [isReadOnly, checklistType, updateChecklistAnswer, studyId, checklistId],
+    [isReadOnly, checklistType, updateChecklistAnswer, studyId, checklistId, projectId],
   );
 
   const handleToggleComplete = useCallback(() => {

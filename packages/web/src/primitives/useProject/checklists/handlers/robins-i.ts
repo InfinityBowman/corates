@@ -109,81 +109,72 @@ export class ROBINSIHandler extends ChecklistHandler {
     return answersYMap;
   }
 
-  serializeAnswers(answersMap: Y.Map<unknown>): Record<string, unknown> {
-    const answers: Record<string, unknown> = {};
-    for (const [key, sectionYMap] of answersMap.entries()) {
-      if (!(sectionYMap instanceof Y.Map)) {
-        answers[key] = sectionYMap;
-        continue;
-      }
+  serializeKey(key: string, sectionYMap: unknown): unknown {
+    if (!(sectionYMap instanceof Y.Map)) return sectionYMap;
 
-      if (key.startsWith('domain')) {
-        const sectionData: Record<string, unknown> = {
-          judgement: sectionYMap.get('judgement') ?? null,
-          judgementSource: sectionYMap.get('judgementSource') ?? 'auto',
-          answers: {} as Record<string, { answer: string | null; comment: string }>,
-        };
-        const direction = sectionYMap.get('direction');
-        if (direction !== undefined) {
-          sectionData.direction = direction;
-        }
+    if (key.startsWith('domain')) {
+      const sectionData: Record<string, unknown> = {
+        judgement: sectionYMap.get('judgement') ?? null,
+        judgementSource: sectionYMap.get('judgementSource') ?? 'auto',
+        answers: {} as Record<string, { answer: string | null; comment: string }>,
+      };
+      const direction = sectionYMap.get('direction');
+      if (direction !== undefined) sectionData.direction = direction;
 
-        const answersNestedYMap = sectionYMap.get('answers');
-        if (answersNestedYMap instanceof Y.Map) {
-          const answersObj = sectionData.answers as Record<
-            string,
-            { answer: string | null; comment: string }
-          >;
-          for (const [qKey, questionYMap] of answersNestedYMap.entries()) {
-            if (questionYMap instanceof Y.Map) {
-              const commentValue = questionYMap.get('comment');
-              answersObj[qKey] = {
-                answer: (questionYMap.get('answer') as string) ?? null,
-                comment: yTextToString(commentValue),
-              };
-            } else {
-              answersObj[qKey] = questionYMap as { answer: string | null; comment: string };
-            }
-          }
-        }
-        answers[key] = sectionData;
-      } else if (key === 'overall') {
-        const sectionData: Record<string, unknown> = {
-          judgement: sectionYMap.get('judgement') ?? null,
-          judgementSource: sectionYMap.get('judgementSource') ?? 'auto',
-        };
-        const direction = sectionYMap.get('direction');
-        if (direction !== undefined) {
-          sectionData.direction = direction;
-        }
-        answers[key] = sectionData;
-      } else if (key === 'sectionB') {
-        const sectionData: Record<string, unknown> = {};
-        for (const [subKey, subValue] of sectionYMap.entries()) {
-          if (subValue instanceof Y.Map) {
-            const commentValue = subValue.get('comment');
-            sectionData[subKey] = {
-              answer: subValue.get('answer') ?? null,
-              comment: yTextToString(commentValue),
+      const answersNestedYMap = sectionYMap.get('answers');
+      if (answersNestedYMap instanceof Y.Map) {
+        const answersObj = sectionData.answers as Record<
+          string,
+          { answer: string | null; comment: string }
+        >;
+        for (const [qKey, questionYMap] of answersNestedYMap.entries()) {
+          if (questionYMap instanceof Y.Map) {
+            answersObj[qKey] = {
+              answer: (questionYMap.get('answer') as string) ?? null,
+              comment: yTextToString(questionYMap.get('comment')),
             };
           } else {
-            sectionData[subKey] = subValue;
+            answersObj[qKey] = questionYMap as { answer: string | null; comment: string };
           }
         }
-        answers[key] = sectionData;
+      }
+      return sectionData;
+    }
+
+    if (key === 'overall') {
+      const sectionData: Record<string, unknown> = {
+        judgement: sectionYMap.get('judgement') ?? null,
+        judgementSource: sectionYMap.get('judgementSource') ?? 'auto',
+      };
+      const direction = sectionYMap.get('direction');
+      if (direction !== undefined) sectionData.direction = direction;
+      return sectionData;
+    }
+
+    if (key === 'sectionB') {
+      const sectionData: Record<string, unknown> = {};
+      for (const [subKey, subValue] of sectionYMap.entries()) {
+        if (subValue instanceof Y.Map) {
+          sectionData[subKey] = {
+            answer: subValue.get('answer') ?? null,
+            comment: yTextToString(subValue.get('comment')),
+          };
+        } else {
+          sectionData[subKey] = subValue;
+        }
+      }
+      return sectionData;
+    }
+
+    const sectionData: Record<string, unknown> = {};
+    for (const [fieldKey, fieldValue] of sectionYMap.entries()) {
+      if (fieldValue instanceof Y.Text) {
+        sectionData[fieldKey] = fieldValue.toString();
       } else {
-        const sectionData: Record<string, unknown> = {};
-        for (const [fieldKey, fieldValue] of sectionYMap.entries()) {
-          if (fieldValue instanceof Y.Text) {
-            sectionData[fieldKey] = fieldValue.toString();
-          } else {
-            sectionData[fieldKey] = fieldValue;
-          }
-        }
-        answers[key] = sectionData;
+        sectionData[fieldKey] = fieldValue;
       }
     }
-    return answers;
+    return sectionData;
   }
 
   updateAnswer<K extends RobinsIKey>(
