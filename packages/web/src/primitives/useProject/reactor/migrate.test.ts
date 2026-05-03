@@ -377,9 +377,7 @@ describe('migrateYDocToFlatKeys', () => {
       expect((answers.get('planning.confoundingFactors') as Y.Text).toString()).toBe(
         'Age, sex, smoking status',
       );
-      expect((answers.get('sectionA.outcome') as Y.Text).toString()).toBe(
-        'Mortality at 12 months',
-      );
+      expect((answers.get('sectionA.outcome') as Y.Text).toString()).toBe('Mortality at 12 months');
       expect(answers.get('sectionA.numericalResult')).toBeInstanceOf(Y.Text);
       expect(answers.get('sectionA.furtherDetails')).toBeInstanceOf(Y.Text);
 
