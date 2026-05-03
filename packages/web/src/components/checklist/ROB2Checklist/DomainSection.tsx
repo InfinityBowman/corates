@@ -41,24 +41,18 @@ export function DomainSection({
   const direction = useAnswer<string>(studyId, checklistId, `${domainKey}.direction`);
   const answersYMap = useAnswersYMap(studyId, checklistId);
 
-  const answersForRequired = useMemo(() => {
+  const answersForRequired = (() => {
     if (!answersYMap) return undefined;
     const a: DomainAnswers = {};
     for (const qKey of questionKeys) {
       a[qKey] = { answer: (answersYMap.get(qKey) as string) ?? null };
     }
     return a;
-  }, [answersYMap, questionKeys]);
+  })();
 
-  const requiredQuestions = useMemo(
-    () => getRequiredQuestions(domainKey, answersForRequired),
-    [domainKey, answersForRequired],
-  );
+  const requiredQuestions = getRequiredQuestions(domainKey, answersForRequired);
 
-  const hasAnyAnswer = useMemo(() => {
-    if (!answersYMap) return false;
-    return questionKeys.some(qKey => answersYMap.get(qKey) != null);
-  }, [answersYMap, questionKeys]);
+  const hasAnyAnswer = answersYMap ? questionKeys.some(qKey => answersYMap.get(qKey) != null) : false;
 
   const isQuestionSkippable = (qKey: string) =>
     hasAnyAnswer &&
@@ -66,11 +60,10 @@ export function DomainSection({
     !requiredQuestions.has(qKey) &&
     answersYMap?.get(qKey) == null;
 
-  const completionStatus = useMemo(() => {
-    if (!answersYMap) return { answered: 0, total: questionKeys.length };
-    const answered = questionKeys.filter(k => answersYMap.get(k) != null).length;
-    return { answered, total: questionKeys.length };
-  }, [answersYMap, questionKeys]);
+  const completionStatus = {
+    answered: answersYMap ? questionKeys.filter(k => answersYMap.get(k) != null).length : 0,
+    total: questionKeys.length,
+  };
 
   const handleDirectionChange = (dir: string | null) => {
     answersYMap?.set(`${domainKey}.direction`, dir);

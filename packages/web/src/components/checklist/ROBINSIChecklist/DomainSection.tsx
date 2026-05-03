@@ -49,11 +49,10 @@ export function DomainSection({
   const isEarlyComplete = autoComplete && autoJudgement !== null;
   const isQuestionSkippable = (qKey: string) => isEarlyComplete && answersYMap?.get(qKey) == null;
 
-  const completionStatus = useMemo(() => {
-    if (!answersYMap) return { answered: 0, total: questionKeys.length };
-    const answered = questionKeys.filter(k => answersYMap.get(k) != null).length;
-    return { answered, total: questionKeys.length };
-  }, [answersYMap, questionKeys]);
+  const completionStatus = {
+    answered: answersYMap ? questionKeys.filter(k => answersYMap.get(k) != null).length : 0,
+    total: questionKeys.length,
+  };
 
   const handleJudgementChange = (judgement: string | null) => {
     answersYMap?.set(`${domainKey}.judgement`, judgement);
