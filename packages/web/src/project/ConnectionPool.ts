@@ -34,6 +34,7 @@ import {
 import { db, deleteProjectData } from '@/primitives/db.js';
 import { migrateLocalChecklistsToYDoc } from './localProject';
 import { ProjectReactor } from '@/primitives/useProject/reactor/core';
+import { migrateYDocToFlatKeys } from '@/primitives/useProject/reactor/migrate';
 
 export interface TypedProjectOps {
   study: StudyOperations;
@@ -158,6 +159,7 @@ class ConnectionPool {
           entry.reactor = new ProjectReactor(project.ydoc);
           oldYdoc.destroy();
 
+          migrateYDocToFlatKeys(project.ydoc);
           migrateLocalChecklistsToYDoc(project.ydoc)
             .catch(err => console.error('Local checklists migration failed:', err))
             .finally(() => {
@@ -172,6 +174,7 @@ class ConnectionPool {
         try {
           const persistedState = Y.encodeStateAsUpdate(project.ydoc);
           Y.applyUpdate(ydoc, persistedState);
+          migrateYDocToFlatKeys(ydoc);
         } catch (err) {
           console.error('Corrupted persisted state, clearing local data:', err);
           deleteProjectData(projectId).catch(() => {});
@@ -198,6 +201,7 @@ class ConnectionPool {
     if (!isLocal) {
       entry.connectionManager = createConnectionManager(projectId, ydoc, {
         onSync: () => {
+          migrateYDocToFlatKeys(ydoc);
           useProjectStore.getState().dispatchConnectionEvent(projectId, { type: 'SYNC_COMPLETE' });
         },
         isLocalProject: () => isLocal,
@@ -357,3 +361,8 @@ class ConnectionPool {
 }
 
 export const connectionPool = new ConnectionPool();
+
+if (import.meta.env.DEV && typeof window !== 'undefined') {
+  (window as any).__connectionPool = connectionPool;
+  (window as any).__Y = Y;
+}
