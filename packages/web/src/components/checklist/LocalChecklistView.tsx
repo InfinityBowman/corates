@@ -1,8 +1,8 @@
 /**
  * LocalChecklistView - Viewer/editor for a local (offline) appraisal.
  *
- * Answers live in the local-practice Y.Doc and are read via useChecklistAnswers
- * for reactive updates. PDFs stay in the `localChecklistPdfs` Dexie table —
+ * Answers live in the local-practice Y.Doc and are read via the reactor
+ * for reactive updates. PDFs stay in the `localChecklistPdfs` Dexie table --
  * they don't benefit from CRDT storage and would bloat the Y.Doc.
  */
 
@@ -12,8 +12,11 @@ import { ChevronLeftIcon } from 'lucide-react';
 import { ChecklistWithPdf } from '@/components/checklist/ChecklistWithPdf';
 import { CreateLocalChecklist } from '@/components/checklist/CreateLocalChecklist';
 import { LOCAL_PROJECT_ID } from '@/project/localProject';
+import { connectionPool } from '@/project/ConnectionPool';
 import { useProjectStore, selectConnectionPhase } from '@/stores/projectStore';
 import { useChecklistViewModel } from '@/primitives/useProject/checklists/useChecklistViewModel';
+import { useChecklistScore } from '@/primitives/useProject/reactor/hooks';
+import { ProjectReactorContext } from '@/primitives/useProject/reactor/context';
 import { db } from '@/primitives/db';
 import { ScoreTag } from '@/components/checklist/ScoreTag';
 
@@ -23,21 +26,37 @@ interface LocalChecklistViewProps {
 }
 
 export function LocalChecklistView({ checklistId, searchType }: LocalChecklistViewProps) {
+  const phase = useProjectStore(s => selectConnectionPhase(s, LOCAL_PROJECT_ID));
+
   if (!checklistId) {
     return <CreateLocalChecklist type={searchType} />;
   }
-  return <LocalChecklistEditor checklistId={checklistId} />;
+
+  if (phase.phase !== 'synced') {
+    return (
+      <div className='flex min-h-screen items-center justify-center bg-blue-50'>
+        <div className='text-muted-foreground'>Loading checklist...</div>
+      </div>
+    );
+  }
+
+  const reactor = connectionPool.getReactor(LOCAL_PROJECT_ID);
+  return (
+    <ProjectReactorContext.Provider value={reactor}>
+      <LocalChecklistEditor checklistId={checklistId} />
+    </ProjectReactorContext.Provider>
+  );
 }
 
 function LocalChecklistEditor({ checklistId }: { checklistId: string }) {
   const navigate = useNavigate();
 
-  const phase = useProjectStore(s => selectConnectionPhase(s, LOCAL_PROJECT_ID));
-  const { currentChecklist, checklistType, currentScore } = useChecklistViewModel(
+  const { currentChecklist, checklistType } = useChecklistViewModel(
     LOCAL_PROJECT_ID,
     checklistId,
     checklistId,
   );
+  const currentScore = useChecklistScore(checklistId, checklistId, checklistType);
 
   const [pdfState, setPdfState] = useState<{
     loading: boolean;
@@ -46,10 +65,6 @@ function LocalChecklistEditor({ checklistId }: { checklistId: string }) {
     forChecklistId: string | null;
   }>({ loading: true, data: null, fileName: null, forChecklistId: null });
 
-  // When checklistId changes we'd prefer to flip `loading` synchronously here,
-  // but that violates react-hooks/set-state-in-effect. Instead the load effect
-  // keys off checklistId and we render "Loading..." while forChecklistId !==
-  // current checklistId OR the record hasn't resolved yet.
   useEffect(() => {
     let cancelled = false;
     db.localChecklistPdfs
@@ -129,7 +144,7 @@ function LocalChecklistEditor({ checklistId }: { checklistId: string }) {
     </>
   );
 
-  if (phase.phase !== 'synced' || pdfLoading) {
+  if (pdfLoading) {
     return (
       <div className='flex min-h-screen items-center justify-center bg-blue-50'>
         <div className='text-muted-foreground'>Loading checklist...</div>

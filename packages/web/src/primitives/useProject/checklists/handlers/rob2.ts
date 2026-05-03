@@ -44,46 +44,32 @@ export class ROB2Handler extends ChecklistHandler {
     const answersYMap = new Y.Map();
 
     Object.entries(answersData).forEach(([key, value]) => {
-      const sectionYMap = new Y.Map();
       const val = value as Record<string, unknown>;
 
-      if (key.startsWith('domain')) {
+      if (key === 'preliminary') {
+        const prelim = val as ROB2PreliminaryTemplate;
+        answersYMap.set('preliminary.aim', prelim.aim ?? null);
+        answersYMap.set('preliminary.studyDesign', prelim.studyDesign ?? null);
+        answersYMap.set('preliminary.deviationsToAddress', prelim.deviationsToAddress ?? []);
+        answersYMap.set('preliminary.sources', prelim.sources ?? {});
+        answersYMap.set('preliminary.experimental', new Y.Text());
+        answersYMap.set('preliminary.comparator', new Y.Text());
+        answersYMap.set('preliminary.numericalResult', new Y.Text());
+      } else if (key.startsWith('domain')) {
         const domain = val as ROB2DomainTemplate;
-        sectionYMap.set('judgement', domain.judgement ?? null);
         if (domain.direction !== undefined) {
-          sectionYMap.set('direction', domain.direction ?? null);
+          answersYMap.set(`${key}.direction`, domain.direction ?? null);
         }
-
         if (domain.answers) {
-          const answersNestedYMap = new Y.Map();
           Object.entries(domain.answers).forEach(([qKey, qValue]) => {
-            const questionYMap = new Y.Map();
-            questionYMap.set('answer', qValue.answer ?? null);
-            questionYMap.set('comment', new Y.Text());
-            answersNestedYMap.set(qKey, questionYMap);
+            answersYMap.set(qKey, qValue.answer ?? null);
+            answersYMap.set(`${qKey}.comment`, new Y.Text());
           });
-          sectionYMap.set('answers', answersNestedYMap);
         }
       } else if (key === 'overall') {
         const overall = val as ROB2DomainTemplate;
-        sectionYMap.set('judgement', overall.judgement ?? null);
-        sectionYMap.set('direction', overall.direction ?? null);
-      } else if (key === 'preliminary') {
-        const prelim = val as ROB2PreliminaryTemplate;
-        sectionYMap.set('studyDesign', prelim.studyDesign ?? null);
-        sectionYMap.set('experimental', new Y.Text());
-        sectionYMap.set('comparator', new Y.Text());
-        sectionYMap.set('numericalResult', new Y.Text());
-        sectionYMap.set('aim', prelim.aim ?? null);
-        sectionYMap.set('deviationsToAddress', prelim.deviationsToAddress ?? []);
-        sectionYMap.set('sources', prelim.sources ?? {});
-      } else {
-        Object.entries(val).forEach(([fieldKey, fieldValue]) => {
-          sectionYMap.set(fieldKey, fieldValue);
-        });
+        answersYMap.set('overall.direction', overall.direction ?? null);
       }
-
-      answersYMap.set(key, sectionYMap);
     });
 
     return answersYMap;

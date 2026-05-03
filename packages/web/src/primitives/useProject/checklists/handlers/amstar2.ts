@@ -19,30 +19,23 @@ export class AMSTAR2Handler extends ChecklistHandler {
 
   createAnswersYMap(answersData: Record<string, unknown>): Y.Map<unknown> {
     const answersYMap = new Y.Map();
-
     const multiPartParents = ['q9', 'q11'];
     const subQuestionPattern = /^(q9|q11)[a-z]$/;
     const addedKeys = new Set<string>();
 
     Object.entries(answersData).forEach(([questionKey, questionData]) => {
       const qd = questionData as Amstar2Answers[Amstar2Key];
-      const questionYMap = new Y.Map();
-      questionYMap.set('answers', qd.answers);
-      questionYMap.set('critical', qd.critical ?? false);
-
+      answersYMap.set(`${questionKey}.answers`, qd.answers);
+      answersYMap.set(`${questionKey}.critical`, qd.critical ?? false);
       if (!subQuestionPattern.test(questionKey)) {
-        questionYMap.set('note', new Y.Text());
+        answersYMap.set(`${questionKey}.note`, new Y.Text());
       }
-
-      answersYMap.set(questionKey, questionYMap);
       addedKeys.add(questionKey);
     });
 
     multiPartParents.forEach(parentKey => {
       if (!addedKeys.has(parentKey)) {
-        const parentYMap = new Y.Map();
-        parentYMap.set('note', new Y.Text());
-        answersYMap.set(parentKey, parentYMap);
+        answersYMap.set(`${parentKey}.note`, new Y.Text());
       }
     });
 

@@ -44,66 +44,52 @@ export class ROBINSIHandler extends ChecklistHandler {
     const answersYMap = new Y.Map();
 
     Object.entries(answersData).forEach(([key, value]) => {
-      const sectionYMap = new Y.Map();
       const val = value as Record<string, unknown>;
 
-      if (key.startsWith('domain') || key === 'overall') {
-        const domain = val as ROBINSDomainTemplate;
-        sectionYMap.set('judgement', domain.judgement ?? null);
-        sectionYMap.set('judgementSource', domain.judgementSource ?? 'auto');
-        if (domain.direction !== undefined) {
-          sectionYMap.set('direction', domain.direction ?? null);
-        }
-
-        if (domain.answers) {
-          const answersNestedYMap = new Y.Map();
-          Object.entries(domain.answers).forEach(([qKey, qValue]) => {
-            const questionYMap = new Y.Map();
-            questionYMap.set('answer', qValue.answer ?? null);
-            questionYMap.set('comment', new Y.Text());
-            answersNestedYMap.set(qKey, questionYMap);
-          });
-          sectionYMap.set('answers', answersNestedYMap);
-        }
+      if (key === 'planning') {
+        answersYMap.set('planning.confoundingFactors', new Y.Text());
+      } else if (key === 'sectionA') {
+        answersYMap.set('sectionA.numericalResult', new Y.Text());
+        answersYMap.set('sectionA.furtherDetails', new Y.Text());
+        answersYMap.set('sectionA.outcome', new Y.Text());
       } else if (key === 'sectionB') {
         Object.entries(val).forEach(([subKey, subValue]) => {
           if (typeof subValue === 'object' && subValue !== null) {
-            const questionYMap = new Y.Map();
             const q = subValue as { answer?: string | null };
-            questionYMap.set('answer', q.answer ?? null);
-            questionYMap.set('comment', new Y.Text());
-            sectionYMap.set(subKey, questionYMap);
+            answersYMap.set(`sectionB.${subKey}`, q.answer ?? null);
+            answersYMap.set(`sectionB.${subKey}.comment`, new Y.Text());
           } else {
-            sectionYMap.set(subKey, subValue);
+            answersYMap.set(`sectionB.${subKey}`, subValue);
           }
         });
-      } else if (key === 'confoundingEvaluation') {
-        const ce = val as { predefined?: unknown[]; additional?: unknown[] };
-        sectionYMap.set('predefined', ce.predefined ?? []);
-        sectionYMap.set('additional', ce.additional ?? []);
-      } else if (key === 'sectionD') {
-        const sd = val as { sources?: Record<string, boolean> };
-        sectionYMap.set('sources', sd.sources ?? {});
-        sectionYMap.set('otherSpecify', new Y.Text());
-      } else if (key === 'planning') {
-        sectionYMap.set('confoundingFactors', new Y.Text());
-      } else if (key === 'sectionA') {
-        sectionYMap.set('numericalResult', new Y.Text());
-        sectionYMap.set('furtherDetails', new Y.Text());
-        sectionYMap.set('outcome', new Y.Text());
       } else if (key === 'sectionC') {
         const sc = val as { isPerProtocol?: boolean };
-        sectionYMap.set('participants', new Y.Text());
-        sectionYMap.set('interventionStrategy', new Y.Text());
-        sectionYMap.set('comparatorStrategy', new Y.Text());
-        sectionYMap.set('isPerProtocol', sc.isPerProtocol ?? false);
-      } else {
-        Object.entries(val).forEach(([fieldKey, fieldValue]) => {
-          sectionYMap.set(fieldKey, fieldValue);
-        });
+        answersYMap.set('sectionC.isPerProtocol', sc.isPerProtocol ?? false);
+        answersYMap.set('sectionC.participants', new Y.Text());
+        answersYMap.set('sectionC.interventionStrategy', new Y.Text());
+        answersYMap.set('sectionC.comparatorStrategy', new Y.Text());
+      } else if (key === 'sectionD') {
+        const sd = val as { sources?: Record<string, boolean> };
+        answersYMap.set('sectionD.sources', sd.sources ?? {});
+        answersYMap.set('sectionD.otherSpecify', new Y.Text());
+      } else if (key === 'confoundingEvaluation') {
+        const ce = val as { predefined?: unknown[]; additional?: unknown[] };
+        answersYMap.set('confoundingEvaluation.predefined', ce.predefined ?? []);
+        answersYMap.set('confoundingEvaluation.additional', ce.additional ?? []);
+      } else if (key.startsWith('domain') || key === 'overall') {
+        const domain = val as ROBINSDomainTemplate;
+        if (domain.direction !== undefined) {
+          answersYMap.set(`${key}.direction`, domain.direction ?? null);
+        }
+        answersYMap.set(`${key}.judgement`, domain.judgement ?? null);
+        answersYMap.set(`${key}.judgementSource`, domain.judgementSource ?? 'auto');
+        if (domain.answers) {
+          Object.entries(domain.answers).forEach(([qKey, qValue]) => {
+            answersYMap.set(qKey, qValue.answer ?? null);
+            answersYMap.set(`${qKey}.comment`, new Y.Text());
+          });
+        }
       }
-
-      answersYMap.set(key, sectionYMap);
     });
 
     return answersYMap;

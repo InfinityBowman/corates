@@ -157,6 +157,31 @@ class ConnectionPool {
       entry.dexieProvider.whenLoaded.then(() => {
         if (cancelled()) return;
 
+        if (isLocal) {
+          // Local projects use project.ydoc directly -- same pattern as the
+          // prototype. DexieYProvider persists mutations without the two-Y.Doc
+          // write-back indirection that online projects need for WebSocket sync.
+          const oldYdoc = entry.ydoc;
+          entry.ydoc = project.ydoc;
+          entry.reactor?.dispose();
+          entry.reactor = new ProjectReactor(project.ydoc);
+          entry.syncManager!.attach(project.ydoc);
+          oldYdoc.destroy();
+
+          migrateYDocToFlatKeys(project.ydoc);
+          entry.syncManager!.syncFromYDocImmediate();
+
+          migrateLocalChecklistsToYDoc(project.ydoc)
+            .catch(err => console.error('Local checklists migration failed:', err))
+            .finally(() => {
+              if (cancelled()) return;
+              useProjectStore
+                .getState()
+                .dispatchConnectionEvent(projectId, { type: 'LOCAL_READY' });
+            });
+          return;
+        }
+
         entry.syncManager?.pause();
         try {
           const persistedState = Y.encodeStateAsUpdate(project.ydoc);
@@ -168,7 +193,6 @@ class ConnectionPool {
           entry.syncManager?.resume();
         }
 
-        // Dexie write-back handler
         const dexieUpdateHandler = (update: Uint8Array, origin: string) => {
           if (origin !== 'dexie-sync') {
             Y.applyUpdate(project.ydoc, update, 'dexie-sync');
@@ -181,24 +205,10 @@ class ConnectionPool {
         entry.syncManager!.syncFromYDocImmediate();
 
         const reviewsSize = ydoc.getMap('reviews').size;
-        if (!isLocal && reviewsSize > 0) {
+        if (reviewsSize > 0) {
           useProjectStore
             .getState()
             .dispatchConnectionEvent(projectId, { type: 'PERSISTENCE_LOADED' });
-        }
-
-        if (isLocal) {
-          // Run the one-shot import from legacy `localChecklists` Dexie rows
-          // after the Y.Doc's persisted state has been applied, so the
-          // migration flag is already visible and we don't re-import.
-          migrateLocalChecklistsToYDoc(ydoc)
-            .catch(err => console.error('Local checklists migration failed:', err))
-            .finally(() => {
-              if (cancelled()) return;
-              useProjectStore
-                .getState()
-                .dispatchConnectionEvent(projectId, { type: 'LOCAL_READY' });
-            });
         }
       });
     });

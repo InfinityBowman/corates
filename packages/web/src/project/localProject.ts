@@ -19,6 +19,7 @@ import { ROB2Handler } from '@/primitives/useProject/checklists/handlers/rob2';
 import type { ChecklistHandler } from '@/primitives/useProject/checklists/handlers/base';
 import { db } from '@/primitives/db';
 
+
 export const LOCAL_PROJECT_ID = 'local-practice';
 // Set once in the Y.Doc's meta map after the first successful import from the
 // legacy `localChecklists` Dexie table. The migration itself is idempotent

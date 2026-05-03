@@ -140,7 +140,7 @@ function flattenROBINSI(answersMap: Y.Map<unknown>, flat: Y.Map<unknown>): void 
   }
 }
 
-function migrateChecklist(checklistYMap: Y.Map<unknown>): void {
+export function migrateChecklist(checklistYMap: Y.Map<unknown>): void {
   const answersMap = checklistYMap.get('answers') as Y.Map<unknown> | undefined;
   if (!answersMap || !isNestedFormat(answersMap)) return;
 
