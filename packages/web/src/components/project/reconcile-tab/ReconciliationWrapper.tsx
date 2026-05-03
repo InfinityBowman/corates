@@ -8,7 +8,6 @@ import { useNavigate } from '@tanstack/react-router';
 import { useProjectContext } from '@/components/project/ProjectContext';
 import { connectionPool } from '@/project/ConnectionPool';
 import { buildChecklistAnswerInput, type TextRef } from '@/primitives/useProject/checklists';
-import { useChecklistAnswers } from '@/primitives/useProject/checklists/useChecklistAnswers';
 import { useProjectStore, selectConnectionPhase } from '@/stores/projectStore';
 import { useStudyById, useProjectMembersById } from '@/primitives/useProject/reactor';
 import { useAuthStore, selectUser } from '@/stores/authStore';
@@ -375,24 +374,16 @@ export function ReconciliationWrapper({
     return currentStudy.checklists?.find(c => c.id === reconciledChecklistId);
   }, [currentStudy, reconciledChecklistId]);
 
-  // Reactive answers for the reconciled checklist so "Use This" updates
-  // propagate without relying on study-level atom rebuilds.
-  const reconciledAnswers = useChecklistAnswers(
-    projectId,
-    studyId,
-    reconciledChecklistId ?? '',
-  );
-
   const reconciledChecklistData = useMemo(() => {
-    if (!reconciledChecklistId || !reconciledAnswers) return null;
+    if (!reconciledChecklistId || !reconciledChecklistMeta?.answers) return null;
     return {
       id: reconciledChecklistId,
       name: 'Reconciled Checklist',
       reviewerName: 'Consensus',
-      createdAt: reconciledChecklistMeta?.createdAt || 0,
-      ...reconciledAnswers,
+      createdAt: reconciledChecklistMeta.createdAt || 0,
+      ...reconciledChecklistMeta.answers,
     };
-  }, [reconciledChecklistId, reconciledAnswers, reconciledChecklistMeta?.createdAt]);
+  }, [reconciledChecklistId, reconciledChecklistMeta]);
 
   // Build project path
   const getProjectPath = useCallback(() => `/projects/${projectId}`, [projectId]);
