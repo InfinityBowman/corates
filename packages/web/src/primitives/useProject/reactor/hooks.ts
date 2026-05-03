@@ -237,7 +237,7 @@ export function useROBINSIScore(studyId: string, checklistId: string): string {
       if (!cl) return 'Incomplete';
 
       const isPerProtocol =
-        cl.answers.field<boolean | null>('preliminary.isPerProtocol').get() === true;
+        cl.answers.field<boolean | null>('sectionC.isPerProtocol').get() === true;
       const activeDomains = getROBINSIActiveDomainKeys(isPerProtocol);
 
       const judgements: string[] = [];
@@ -330,7 +330,7 @@ function computeROBINSIScore(cl: {
   answers: { field: <T>(key: string) => { get: () => T | null } };
 }): string {
   const isPerProtocol =
-    cl.answers.field<boolean | null>('preliminary.isPerProtocol').get() === true;
+    cl.answers.field<boolean | null>('sectionC.isPerProtocol').get() === true;
   const activeDomains = getROBINSIActiveDomainKeys(isPerProtocol);
 
   const judgements: string[] = [];

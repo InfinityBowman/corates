@@ -161,13 +161,13 @@ class ConnectionPool {
 
           migrateYDocToFlatKeys(project.ydoc);
           migrateLocalChecklistsToYDoc(project.ydoc)
-            .catch(err => console.error('Local checklists migration failed:', err))
-            .finally(() => {
+            .then(() => {
               if (cancelled()) return;
               useProjectStore
                 .getState()
                 .dispatchConnectionEvent(projectId, { type: 'LOCAL_READY' });
-            });
+            })
+            .catch(err => console.error('Local checklists migration failed:', err));
           return;
         }
 
