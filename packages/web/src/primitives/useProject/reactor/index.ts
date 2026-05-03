@@ -1,4 +1,10 @@
-export { ProjectReactor, YMapReactor, CollectionReactor, ChecklistReactor, StudyReactor } from './core';
+export {
+  ProjectReactor,
+  YMapReactor,
+  CollectionReactor,
+  ChecklistReactor,
+  StudyReactor,
+} from './core';
 export { ProjectReactorContext } from './context';
 export {
   useProjectReactor,

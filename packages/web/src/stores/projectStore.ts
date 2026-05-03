@@ -163,4 +163,3 @@ export function selectConnectionPhase(
 ): ConnectionMachineState {
   return state.connections[projectId] || INITIAL_CONNECTION;
 }
-

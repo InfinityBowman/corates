@@ -97,10 +97,7 @@ export function DomainSection({
 
           {autoJudgement ?
             <JudgementBadge judgement={autoJudgement} />
-          : !autoComplete && (
-              <span className='text-muted-foreground/70 text-xs'>Incomplete</span>
-            )
-          }
+          : !autoComplete && <span className='text-muted-foreground/70 text-xs'>Incomplete</span>}
 
           <svg
             className={`text-muted-foreground/70 size-5 transition-transform ${collapsed ? '' : 'rotate-180'}`}

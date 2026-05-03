@@ -5,12 +5,7 @@ import { ProjectReactorContext } from './context';
 import type { ProjectReactor, ChecklistReactor } from './core';
 import { connectionPool } from '@/project/ConnectionPool';
 import { useProjectStore } from '@/stores/projectStore';
-import type {
-  StudyInfo,
-  ChecklistEntry,
-  MemberEntry,
-  ProjectMeta,
-} from '@/stores/projectStore';
+import type { StudyInfo, ChecklistEntry, MemberEntry, ProjectMeta } from '@/stores/projectStore';
 import { CHECKLIST_STATUS } from '@corates/shared/checklists';
 import {
   scoreRob2Domain,
@@ -24,10 +19,7 @@ import {
   getDomainQuestions as getROBINSIDomainQuestions,
 } from '@corates/shared/checklists/robins-i';
 import type { DomainAnswers as ROBINSIDomainAnswers } from '@corates/shared/checklists/robins-i';
-import {
-  AMSTAR2_DATA_KEYS,
-  scoreAMSTAR2Checklist,
-} from '@corates/shared/checklists/amstar2';
+import { AMSTAR2_DATA_KEYS, scoreAMSTAR2Checklist } from '@corates/shared/checklists/amstar2';
 import type { AMSTAR2Checklist } from '@corates/shared/checklists';
 import { CHECKLIST_TYPES } from '@/checklist-registry/types';
 
@@ -117,10 +109,7 @@ export function useAnswer<T = string | null>(
   );
 }
 
-export function useAnswersYMap(
-  studyId: string,
-  checklistId: string,
-): Y.Map<unknown> | null {
+export function useAnswersYMap(studyId: string, checklistId: string): Y.Map<unknown> | null {
   const reactor = useProjectReactor();
   const study = reactor.studies.get(studyId);
   if (!study) return null;
@@ -162,10 +151,7 @@ export function useROB2DomainScore(
   );
 }
 
-export function useROB2Score(
-  studyId: string,
-  checklistId: string,
-): string {
+export function useROB2Score(studyId: string, checklistId: string): string {
   const reactor = useProjectReactor();
   return useValue(
     `rob2score:${studyId}:${checklistId}`,
@@ -238,10 +224,7 @@ export function useROBINSIDomainScore(
   );
 }
 
-export function useROBINSIScore(
-  studyId: string,
-  checklistId: string,
-): string {
+export function useROBINSIScore(studyId: string, checklistId: string): string {
   const reactor = useProjectReactor();
   return useValue(
     `robinsiScore:${studyId}:${checklistId}`,
@@ -276,9 +259,7 @@ export function useROBINSIScore(
       if (judgements.includes('Critical')) return 'Critical';
       if (judgements.includes('Serious')) return 'Serious';
       if (judgements.includes('Moderate')) return 'Moderate';
-      if (
-        judgements.includes('Low (except for concerns about uncontrolled confounding)')
-      ) {
+      if (judgements.includes('Low (except for concerns about uncontrolled confounding)')) {
         return 'Low (except for concerns about uncontrolled confounding)';
       }
       return 'Low';
@@ -321,7 +302,9 @@ export function useChecklistScore(
   );
 }
 
-function computeROB2Score(cl: { answers: { field: <T>(key: string) => { get: () => T | null } } }): string {
+function computeROB2Score(cl: {
+  answers: { field: <T>(key: string) => { get: () => T | null } };
+}): string {
   const aim = cl.answers.field<string | null>('preliminary.aim').get();
   const isAdhering = aim === 'ADHERING';
   const activeDomains = getROB2ActiveDomainKeys(isAdhering);
@@ -343,8 +326,11 @@ function computeROB2Score(cl: { answers: { field: <T>(key: string) => { get: () 
   return 'Low';
 }
 
-function computeROBINSIScore(cl: { answers: { field: <T>(key: string) => { get: () => T | null } } }): string {
-  const isPerProtocol = cl.answers.field<boolean | null>('preliminary.isPerProtocol').get() === true;
+function computeROBINSIScore(cl: {
+  answers: { field: <T>(key: string) => { get: () => T | null } };
+}): string {
+  const isPerProtocol =
+    cl.answers.field<boolean | null>('preliminary.isPerProtocol').get() === true;
   const activeDomains = getROBINSIActiveDomainKeys(isPerProtocol);
 
   const judgements: string[] = [];
@@ -368,7 +354,9 @@ function computeROBINSIScore(cl: { answers: { field: <T>(key: string) => { get: 
   return 'Low';
 }
 
-function computeAMSTAR2Score(cl: { answers: { field: <T>(key: string) => { get: () => T | null } } }): string {
+function computeAMSTAR2Score(cl: {
+  answers: { field: <T>(key: string) => { get: () => T | null } };
+}): string {
   const checklist: Record<string, unknown> = {};
   for (const qKey of AMSTAR2_DATA_KEYS) {
     const answers = cl.answers.field<boolean[][]>(`${qKey}.answers`).get();
@@ -403,26 +391,38 @@ function useReactorByProjectId(projectId: string): ProjectReactor | null {
 
 export function useProjectMetaById(projectId: string): ProjectMeta {
   const reactor = useReactorByProjectId(projectId);
-  return useValue(`meta:${projectId}`, () => {
-    if (!reactor) return EMPTY_META;
-    return reactor.meta.get();
-  }, [reactor]);
+  return useValue(
+    `meta:${projectId}`,
+    () => {
+      if (!reactor) return EMPTY_META;
+      return reactor.meta.get();
+    },
+    [reactor],
+  );
 }
 
 export function useProjectMembersById(projectId: string): MemberEntry[] {
   const reactor = useReactorByProjectId(projectId);
-  return useValue(`members:${projectId}`, () => {
-    if (!reactor) return EMPTY_MEMBERS;
-    return reactor.members.get();
-  }, [reactor]);
+  return useValue(
+    `members:${projectId}`,
+    () => {
+      if (!reactor) return EMPTY_MEMBERS;
+      return reactor.members.get();
+    },
+    [reactor],
+  );
 }
 
 export function useSortedStudyIdsById(projectId: string): string[] {
   const reactor = useReactorByProjectId(projectId);
-  return useValue(`studyIds:${projectId}`, () => {
-    if (!reactor) return [];
-    return reactor.sortedStudyIds.get();
-  }, [reactor]);
+  return useValue(
+    `studyIds:${projectId}`,
+    () => {
+      if (!reactor) return [];
+      return reactor.sortedStudyIds.get();
+    },
+    [reactor],
+  );
 }
 
 function buildChecklistEntry(clId: string, cl: ChecklistReactor): ChecklistEntry {
@@ -494,27 +494,32 @@ function buildStudyInfoFromReactor(studyId: string, reactor: ProjectReactor): St
   };
 }
 
-export function useStudyById(
-  projectId: string,
-  studyId: string,
-): StudyInfo | undefined {
+export function useStudyById(projectId: string, studyId: string): StudyInfo | undefined {
   const reactor = useReactorByProjectId(projectId);
-  return useValue(`studyInfo:${projectId}:${studyId}`, () => {
-    if (!reactor) return undefined;
-    return buildStudyInfoFromReactor(studyId, reactor) ?? undefined;
-  }, [reactor, studyId]);
+  return useValue(
+    `studyInfo:${projectId}:${studyId}`,
+    () => {
+      if (!reactor) return undefined;
+      return buildStudyInfoFromReactor(studyId, reactor) ?? undefined;
+    },
+    [reactor, studyId],
+  );
 }
 
 export function useAllStudiesById(projectId: string): StudyInfo[] {
   const reactor = useReactorByProjectId(projectId);
-  return useValue(`allStudies:${projectId}`, () => {
-    if (!reactor) return EMPTY_STUDIES;
-    const ids = reactor.sortedStudyIds.get();
-    const result: StudyInfo[] = [];
-    for (const id of ids) {
-      const info = buildStudyInfoFromReactor(id, reactor);
-      if (info) result.push(info);
-    }
-    return result;
-  }, [reactor]);
+  return useValue(
+    `allStudies:${projectId}`,
+    () => {
+      if (!reactor) return EMPTY_STUDIES;
+      const ids = reactor.sortedStudyIds.get();
+      const result: StudyInfo[] = [];
+      for (const id of ids) {
+        const info = buildStudyInfoFromReactor(id, reactor);
+        if (info) result.push(info);
+      }
+      return result;
+    },
+    [reactor],
+  );
 }

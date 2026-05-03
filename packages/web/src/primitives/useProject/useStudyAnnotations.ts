@@ -3,10 +3,7 @@ import * as Y from 'yjs';
 import { connectionPool } from '@/project/ConnectionPool';
 import type { AnnotationEntry } from '@/stores/projectStore';
 
-function resolveAnnotationsMap(
-  ydoc: Y.Doc | null,
-  studyId: string,
-): Y.Map<unknown> | null {
+function resolveAnnotationsMap(ydoc: Y.Doc | null, studyId: string): Y.Map<unknown> | null {
   if (!ydoc) return null;
   const studiesMap = ydoc.getMap('reviews');
   const studyYMap = studiesMap.get(studyId) as Y.Map<unknown> | undefined;

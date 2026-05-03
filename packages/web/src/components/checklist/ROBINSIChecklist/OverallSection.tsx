@@ -1,10 +1,6 @@
 import { OVERALL_ROB_JUDGEMENTS, BIAS_DIRECTIONS } from './checklist-map';
 import { mapOverallJudgementToDisplay } from './checklist.js';
-import {
-  useAnswer,
-  useAnswersYMap,
-  useROBINSIScore,
-} from '@/primitives/useProject/reactor/hooks';
+import { useAnswer, useAnswersYMap, useROBINSIScore } from '@/primitives/useProject/reactor/hooks';
 
 interface OverallSectionProps {
   studyId: string;
@@ -12,14 +8,11 @@ interface OverallSectionProps {
   disabled?: boolean;
 }
 
-export function OverallSection({
-  studyId,
-  checklistId,
-  disabled,
-}: OverallSectionProps) {
+export function OverallSection({ studyId, checklistId, disabled }: OverallSectionProps) {
   const calculatedScore = useROBINSIScore(studyId, checklistId);
   const isIncomplete = calculatedScore === 'Incomplete';
-  const calculatedDisplayJudgement = isIncomplete ? null : mapOverallJudgementToDisplay(calculatedScore as any);
+  const calculatedDisplayJudgement =
+    isIncomplete ? null : mapOverallJudgementToDisplay(calculatedScore as any);
 
   const judgementSource = useAnswer<string>(studyId, checklistId, 'overall.judgementSource');
   const manualJudgement = useAnswer<string>(studyId, checklistId, 'overall.judgement');

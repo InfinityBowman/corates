@@ -66,8 +66,11 @@ export function ChecklistYjsWrapper({ projectId, studyId, checklistId }: Checkli
     }
   }, [connectionState.error, navigate]);
 
-  const { currentStudy, currentChecklist, checklistType } =
-    useChecklistViewModel(projectId, studyId, checklistId);
+  const { currentStudy, currentChecklist, checklistType } = useChecklistViewModel(
+    projectId,
+    studyId,
+    checklistId,
+  );
   const currentScore = useChecklistScore(studyId, checklistId, checklistType);
 
   const isReadOnly = currentChecklist?.status ? !isEditable(currentChecklist.status) : false;

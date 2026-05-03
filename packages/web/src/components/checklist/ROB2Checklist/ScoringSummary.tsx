@@ -8,11 +8,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from '@/components/ui/dialog';
-import {
-  useAnswer,
-  useROB2Score,
-  useROB2DomainScore,
-} from '@/primitives/useProject/reactor/hooks';
+import { useAnswer, useROB2Score, useROB2DomainScore } from '@/primitives/useProject/reactor/hooks';
 
 interface ScoringSummaryProps {
   studyId: string;

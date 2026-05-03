@@ -131,11 +131,7 @@ export function ROBINSIChecklist({
               ))}
             </div>
 
-            <OverallSection
-              studyId={studyId}
-              checklistId={checklistId}
-              disabled={isReadOnly}
-            />
+            <OverallSection studyId={studyId} checklistId={checklistId} disabled={isReadOnly} />
           </>
         )}
 

@@ -97,13 +97,13 @@ This isn't a bug in `useAllStudies` itself -- it's a consequence of P3. If study
 
 All fixes must be validated with before/after numbers. Add a dev-only performance monitor (gated behind `import.meta.env.DEV`) that logs per-edit-cycle stats to the console. Instrument these hot paths:
 
-| Probe | Location | What it measures |
-|-------|----------|------------------|
-| `handleReviewsEvents` | sync.ts | Fires per Yjs observer event. Count + time. |
-| `buildStudyFromYMap` | sync.ts | Full study rebuilds. Count + time per call. |
-| `serialize` | useChecklistAnswers.ts `getSnapshot` | Answer re-serializations. Count + cache hit/miss. |
-| `doSync` | sync.ts | Store pushes. Count + time. |
-| `studyAtom.set` | projectAtoms.ts `setStudy` | Atom notifications. Count + suppressed-by-isEqual count (after P3). |
+| Probe                 | Location                             | What it measures                                                    |
+| --------------------- | ------------------------------------ | ------------------------------------------------------------------- |
+| `handleReviewsEvents` | sync.ts                              | Fires per Yjs observer event. Count + time.                         |
+| `buildStudyFromYMap`  | sync.ts                              | Full study rebuilds. Count + time per call.                         |
+| `serialize`           | useChecklistAnswers.ts `getSnapshot` | Answer re-serializations. Count + cache hit/miss.                   |
+| `doSync`              | sync.ts                              | Store pushes. Count + time.                                         |
+| `studyAtom.set`       | projectAtoms.ts `setStudy`           | Atom notifications. Count + suppressed-by-isEqual count (after P3). |
 
 Use `performance.mark()` / `performance.measure()` for timing. Aggregate per edit cycle (reset on each `handleReviewsEvents` entry) and log a single summary line:
 
@@ -121,6 +121,7 @@ Use `performance.mark()` / `performance.measure()` for timing. Aggregate per edi
 6. Remove instrumentation before merging.
 
 Expected baseline (pre-fix, per radio button click):
+
 - `handleReviewsEvents`: 2-3 calls (no transaction batching)
 - `buildStudyFromYMap`: 2-3 calls
 - `serialize`: 2-3 calls
@@ -128,6 +129,7 @@ Expected baseline (pre-fix, per radio button click):
 - `atomFired`: 1+ (always, no isEqual)
 
 Expected post-fix (per radio button click):
+
 - `handleReviewsEvents`: 1 call (transaction batching already done)
 - `buildStudyFromYMap`: 1 call
 - `serialize`: 1 call, or 0 cache hits if observer is narrowed (P1)
@@ -138,16 +140,16 @@ Expected post-fix (per radio button click):
 
 The fixes are listed below in order of impact-to-effort ratio. P3 and P1 together eliminate most of the unnecessary work. P2a and P2b are low-effort cleanup. P4-P7 are refinements.
 
-| Fix | Impact | Effort | Notes |
-|-----|--------|--------|-------|
-| P1: Narrow `useChecklistAnswers` observer | High | Small | Biggest single win for editor performance |
-| P3: Add `isEqual` to study atoms | High | Small | Stops cascading re-renders to list views |
-| P2b: Stop building annotations in sync | Medium | Small | Dead code removal |
-| P2a: Drop `toJSON()` in handleReviewsEvents | Medium | Small | Avoids redundant deep serialization |
-| P4: Batch `handlePartialUpdate` | Low | Tiny | Single `transact()` wrapper |
-| P6: Gate `updateProjectStats` | Low | Small | Avoids localStorage writes during editing |
-| P7: Cache finalized scores | Low | Small | Minor optimization, mostly for studies with many finalized checklists |
-| P5: N/A (solved by P3) | - | - | Not a separate fix, just context |
+| Fix                                         | Impact | Effort | Notes                                                                 |
+| ------------------------------------------- | ------ | ------ | --------------------------------------------------------------------- |
+| P1: Narrow `useChecklistAnswers` observer   | High   | Small  | Biggest single win for editor performance                             |
+| P3: Add `isEqual` to study atoms            | High   | Small  | Stops cascading re-renders to list views                              |
+| P2b: Stop building annotations in sync      | Medium | Small  | Dead code removal                                                     |
+| P2a: Drop `toJSON()` in handleReviewsEvents | Medium | Small  | Avoids redundant deep serialization                                   |
+| P4: Batch `handlePartialUpdate`             | Low    | Tiny   | Single `transact()` wrapper                                           |
+| P6: Gate `updateProjectStats`               | Low    | Small  | Avoids localStorage writes during editing                             |
+| P7: Cache finalized scores                  | Low    | Small  | Minor optimization, mostly for studies with many finalized checklists |
+| P5: N/A (solved by P3)                      | -      | -      | Not a separate fix, just context                                      |
 
 ## Implementation Notes
 
@@ -164,11 +166,17 @@ const subscribe = useCallback(
       // to catch when answers are first created
       const checklistYMap = resolveChecklistYMap(ydoc, studyId, checklistId);
       if (!checklistYMap) return () => {};
-      const observer = () => { versionRef.current += 1; onStoreChange(); };
+      const observer = () => {
+        versionRef.current += 1;
+        onStoreChange();
+      };
       checklistYMap.observe(observer);
       return () => checklistYMap.unobserve(observer);
     }
-    const observer = () => { versionRef.current += 1; onStoreChange(); };
+    const observer = () => {
+      versionRef.current += 1;
+      onStoreChange();
+    };
     resolved.answersYMap.observeDeep(observer);
     return () => resolved.answersYMap.unobserveDeep(observer);
   },

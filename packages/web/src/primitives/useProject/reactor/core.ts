@@ -1,12 +1,7 @@
 import { atom, transact, computed } from '@tldraw/state';
 import type { Atom, Computed } from '@tldraw/state';
 import * as Y from 'yjs';
-import type {
-  ProjectMeta,
-  OutcomeEntry,
-  MemberEntry,
-  PdfEntry,
-} from '@/stores/projectStore';
+import type { ProjectMeta, OutcomeEntry, MemberEntry, PdfEntry } from '@/stores/projectStore';
 
 export class YMapReactor {
   private atoms = new Map<string, Atom<unknown>>();

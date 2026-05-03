@@ -64,9 +64,7 @@ function SectionAField({
         <span className='text-secondary-foreground text-sm'>
           <span className='font-medium'>{field.label}.</span>
           <span className='ml-1'>{field.text}</span>
-          {field.optional && (
-            <span className='text-muted-foreground/70 ml-1'>[optional]</span>
-          )}
+          {field.optional && <span className='text-muted-foreground/70 ml-1'>[optional]</span>}
         </span>
         <div className='mt-2'>
           <NoteEditor

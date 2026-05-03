@@ -196,7 +196,8 @@ export class ROBINSIHandler extends ChecklistHandler {
         const sb = data as RobinsIAnswers['sectionB'];
         Object.entries(sb).forEach(([subKey, subValue]) => {
           if (typeof subValue === 'object' && subValue !== null) {
-            if (subValue.answer !== undefined) answersMap.set(`sectionB.${subKey}`, subValue.answer);
+            if (subValue.answer !== undefined)
+              answersMap.set(`sectionB.${subKey}`, subValue.answer);
           } else {
             answersMap.set(`sectionB.${subKey}`, subValue);
           }

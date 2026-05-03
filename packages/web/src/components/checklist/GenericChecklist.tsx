@@ -19,11 +19,7 @@ export function GenericChecklist({
   return (
     <div className='h-full'>
       {checklistType === CHECKLIST_TYPES.AMSTAR2 && (
-        <AMSTAR2Checklist
-          studyId={studyId}
-          checklistId={checklistId}
-          readOnly={readOnly}
-        />
+        <AMSTAR2Checklist studyId={studyId} checklistId={checklistId} readOnly={readOnly} />
       )}
       {checklistType === CHECKLIST_TYPES.ROBINS_I && (
         <ROBINSIChecklist

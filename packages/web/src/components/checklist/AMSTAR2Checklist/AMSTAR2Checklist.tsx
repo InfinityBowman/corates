@@ -154,11 +154,7 @@ function deriveTwoCol(
   return newAnswers;
 }
 
-function deriveThreeCol(
-  currentAnswers: boolean[][],
-  colIdx: number,
-  optIdx: number,
-): boolean[][] {
+function deriveThreeCol(currentAnswers: boolean[][], colIdx: number, optIdx: number): boolean[][] {
   const newAnswers = currentAnswers.map((arr: boolean[]) => [...arr]);
   newAnswers[colIdx][optIdx] = !currentAnswers[colIdx][optIdx];
 
@@ -553,10 +549,20 @@ const QUESTION_CONFIGS: QuestionConfig[] = [
   { qKey: 'q7', schema: AMSTAR_CHECKLIST.q7, derive: (a, c, o) => deriveThreeCol(a, c, o) },
   { qKey: 'q8', schema: AMSTAR_CHECKLIST.q8, derive: (a, c, o) => deriveThreeCol(a, c, o) },
   { qKey: 'q10', schema: AMSTAR_CHECKLIST.q10, derive: (a, c, o) => deriveTwoCol(a, c, o, 'any') },
-  { qKey: 'q12', schema: AMSTAR_CHECKLIST.q12, derive: (a, c, o) => deriveTwoColThreeRadio(a, c, o, 'any'), width: 'w-48' },
+  {
+    qKey: 'q12',
+    schema: AMSTAR_CHECKLIST.q12,
+    derive: (a, c, o) => deriveTwoColThreeRadio(a, c, o, 'any'),
+    width: 'w-48',
+  },
   { qKey: 'q13', schema: AMSTAR_CHECKLIST.q13, derive: (a, c, o) => deriveTwoCol(a, c, o, 'any') },
   { qKey: 'q14', schema: AMSTAR_CHECKLIST.q14, derive: (a, c, o) => deriveTwoCol(a, c, o, 'any') },
-  { qKey: 'q15', schema: AMSTAR_CHECKLIST.q15, derive: (a, c, o) => deriveTwoColThreeRadio(a, c, o, 'any'), width: 'w-48' },
+  {
+    qKey: 'q15',
+    schema: AMSTAR_CHECKLIST.q15,
+    derive: (a, c, o) => deriveTwoColThreeRadio(a, c, o, 'any'),
+    width: 'w-48',
+  },
   { qKey: 'q16', schema: AMSTAR_CHECKLIST.q16, derive: (a, c, o) => deriveTwoCol(a, c, o, 'any') },
 ];
 
@@ -568,11 +574,7 @@ interface AMSTAR2ChecklistProps {
   readOnly?: boolean;
 }
 
-export function AMSTAR2Checklist({
-  studyId,
-  checklistId,
-  readOnly,
-}: AMSTAR2ChecklistProps) {
+export function AMSTAR2Checklist({ studyId, checklistId, readOnly }: AMSTAR2ChecklistProps) {
   const checklistName = useChecklistField<string>(studyId, checklistId, 'name');
 
   return (

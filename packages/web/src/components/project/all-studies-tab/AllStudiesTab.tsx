@@ -13,7 +13,11 @@ import { ReviewerAssignment } from '../overview-tab/ReviewerAssignment';
 import { OutcomeManager } from '../outcomes/OutcomeManager';
 import { useProjectStore, selectConnectionPhase } from '@/stores/projectStore';
 import type { StudyInfo } from '@/stores/projectStore';
-import { useSortedStudyIdsById, useAllStudiesById, useProjectMembersById } from '@/primitives/useProject/reactor';
+import {
+  useSortedStudyIdsById,
+  useAllStudiesById,
+  useProjectMembersById,
+} from '@/primitives/useProject/reactor';
 import { project } from '@/project';
 import { useProjectContext } from '../ProjectContext';
 import {

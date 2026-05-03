@@ -47,8 +47,7 @@ export function DomainSection({
   const effectiveJudgement = isManualMode && manualJudgement ? manualJudgement : autoJudgement;
 
   const isEarlyComplete = autoComplete && autoJudgement !== null;
-  const isQuestionSkippable = (qKey: string) =>
-    isEarlyComplete && answersYMap?.get(qKey) == null;
+  const isQuestionSkippable = (qKey: string) => isEarlyComplete && answersYMap?.get(qKey) == null;
 
   const completionStatus = useMemo(() => {
     if (!answersYMap) return { answered: 0, total: questionKeys.length };
@@ -114,10 +113,7 @@ export function DomainSection({
               {isManualMode && <span className='text-warning text-xs'>Manual</span>}
               <JudgementBadge judgement={effectiveJudgement} />
             </div>
-          : !autoComplete && (
-              <span className='text-muted-foreground/70 text-xs'>Incomplete</span>
-            )
-          }
+          : !autoComplete && <span className='text-muted-foreground/70 text-xs'>Incomplete</span>}
 
           <svg
             className={`text-muted-foreground/70 size-5 transition-transform ${collapsed ? '' : 'rotate-180'}`}

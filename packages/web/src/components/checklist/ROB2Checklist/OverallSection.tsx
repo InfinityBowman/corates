@@ -8,14 +8,11 @@ interface OverallSectionProps {
   disabled?: boolean;
 }
 
-export function OverallSection({
-  studyId,
-  checklistId,
-  disabled,
-}: OverallSectionProps) {
+export function OverallSection({ studyId, checklistId, disabled }: OverallSectionProps) {
   const calculatedScore = useROB2Score(studyId, checklistId);
   const isIncomplete = calculatedScore === 'Incomplete';
-  const calculatedDisplayJudgement = isIncomplete ? null : mapOverallJudgementToDisplay(calculatedScore);
+  const calculatedDisplayJudgement =
+    isIncomplete ? null : mapOverallJudgementToDisplay(calculatedScore);
   const effectiveJudgement = calculatedDisplayJudgement;
 
   const direction = useAnswer<string>(studyId, checklistId, 'overall.direction');

@@ -2,7 +2,11 @@ import { useMemo, useId } from 'react';
 import { AlertCircleIcon } from 'lucide-react';
 import { SECTION_B, RESPONSE_LABELS } from './checklist-map';
 import { NoteEditor } from '@/components/checklist/common/NoteEditor';
-import { useAnswer, useAnswersYMap, useProjectReactor } from '@/primitives/useProject/reactor/hooks';
+import {
+  useAnswer,
+  useAnswersYMap,
+  useProjectReactor,
+} from '@/primitives/useProject/reactor/hooks';
 import { resolveYText } from '@/primitives/useProject/reactor/ytext';
 import type * as Y from 'yjs';
 

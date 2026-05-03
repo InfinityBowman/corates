@@ -11,7 +11,11 @@ import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { XIcon, ChevronDownIcon, ChevronUpIcon, BugIcon, BracesIcon } from 'lucide-react';
 import { useProjectStore, selectConnectionPhase } from '@/stores/projectStore';
-import { useAllStudiesById, useProjectMembersById, useProjectMetaById } from '@/primitives/useProject/reactor';
+import {
+  useAllStudiesById,
+  useProjectMembersById,
+  useProjectMetaById,
+} from '@/primitives/useProject/reactor';
 import { useProjectOrgId } from '@/hooks/useProjectOrgId';
 import { DevStateTree } from './DevStateTree';
 import { DevQuickActions } from './DevQuickActions';

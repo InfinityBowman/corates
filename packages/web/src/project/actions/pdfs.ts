@@ -123,7 +123,9 @@ export const pdfActions = {
       for (const [, pdfYMap] of pdfsYMap.entries()) {
         const p = pdfYMap as Y.Map<unknown>;
         if (p.get('fileName') === file.name) {
-          throw new Error(`File "${file.name}" already exists. Rename or remove the existing copy.`);
+          throw new Error(
+            `File "${file.name}" already exists. Rename or remove the existing copy.`,
+          );
         }
       }
     }

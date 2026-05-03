@@ -35,7 +35,6 @@ import { db, deleteProjectData } from '@/primitives/db.js';
 import { migrateLocalChecklistsToYDoc } from './localProject';
 import { ProjectReactor } from '@/primitives/useProject/reactor/core';
 
-
 export interface TypedProjectOps {
   study: StudyOperations;
   checklist: ChecklistOperations;

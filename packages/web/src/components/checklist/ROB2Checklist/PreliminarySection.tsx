@@ -7,7 +7,11 @@ import {
   INFORMATION_SOURCES,
 } from './checklist-map';
 import { NoteEditor } from '@/components/checklist/common/NoteEditor';
-import { useAnswer, useAnswersYMap, useProjectReactor } from '@/primitives/useProject/reactor/hooks';
+import {
+  useAnswer,
+  useAnswersYMap,
+  useProjectReactor,
+} from '@/primitives/useProject/reactor/hooks';
 import { resolveYText } from '@/primitives/useProject/reactor/ytext';
 
 interface PreliminarySectionProps {
@@ -16,14 +20,14 @@ interface PreliminarySectionProps {
   disabled?: boolean;
 }
 
-export function PreliminarySection({
-  studyId,
-  checklistId,
-  disabled,
-}: PreliminarySectionProps) {
+export function PreliminarySection({ studyId, checklistId, disabled }: PreliminarySectionProps) {
   const aim = useAnswer<string>(studyId, checklistId, 'preliminary.aim');
   const studyDesign = useAnswer<string>(studyId, checklistId, 'preliminary.studyDesign');
-  const deviationsToAddress = useAnswer<string[]>(studyId, checklistId, 'preliminary.deviationsToAddress');
+  const deviationsToAddress = useAnswer<string[]>(
+    studyId,
+    checklistId,
+    'preliminary.deviationsToAddress',
+  );
   const sources = useAnswer<Record<string, boolean>>(studyId, checklistId, 'preliminary.sources');
   const answersYMap = useAnswersYMap(studyId, checklistId);
   const { ydoc } = useProjectReactor();
@@ -161,14 +165,10 @@ export function PreliminarySection({
                 <div className='mt-0.5 mr-3'>
                   <div
                     className={`flex size-4 items-center justify-center rounded-full border-2 ${
-                      aim === aimOption ?
-                        'border-blue-500 bg-blue-500'
-                      : 'border-border'
+                      aim === aimOption ? 'border-blue-500 bg-blue-500' : 'border-border'
                     }`}
                   >
-                    {aim === aimOption && (
-                      <div className='size-2 rounded-full bg-white' />
-                    )}
+                    {aim === aimOption && <div className='size-2 rounded-full bg-white' />}
                   </div>
                 </div>
                 <span className='text-secondary-foreground'>{AIM_OPTIONS[aimOption]}</span>

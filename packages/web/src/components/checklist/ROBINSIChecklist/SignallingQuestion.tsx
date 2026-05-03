@@ -1,7 +1,11 @@
 import { useMemo } from 'react';
 import { RESPONSE_LABELS, getResponseOptions } from './checklist-map';
 import { NoteEditor } from '@/components/checklist/common/NoteEditor';
-import { useAnswer, useAnswersYMap, useProjectReactor } from '@/primitives/useProject/reactor/hooks';
+import {
+  useAnswer,
+  useAnswersYMap,
+  useProjectReactor,
+} from '@/primitives/useProject/reactor/hooks';
 import { resolveYText } from '@/primitives/useProject/reactor/ytext';
 
 interface SignallingQuestionProps {

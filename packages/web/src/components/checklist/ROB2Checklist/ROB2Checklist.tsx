@@ -80,11 +80,7 @@ export function ROB2Checklist({
         {showLegend !== false && <ResponseLegend />}
 
         {/* Preliminary Considerations */}
-        <PreliminarySection
-          studyId={studyId}
-          checklistId={checklistId}
-          disabled={isReadOnly}
-        />
+        <PreliminarySection studyId={studyId} checklistId={checklistId} disabled={isReadOnly} />
 
         {/* Message when aim not selected */}
         {!hasAimSelected && (
@@ -125,11 +121,7 @@ export function ROB2Checklist({
               ))}
             </div>
 
-            <OverallSection
-              studyId={studyId}
-              checklistId={checklistId}
-              disabled={isReadOnly}
-            />
+            <OverallSection studyId={studyId} checklistId={checklistId} disabled={isReadOnly} />
           </>
         )}
       </div>
