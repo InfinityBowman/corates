@@ -211,7 +211,15 @@ export class ROBINSIHandler extends ChecklistHandler {
       } else if (key === 'sectionD') {
         const sd = data as RobinsIAnswers['sectionD'];
         if (sd.sources !== undefined) answersMap.set('sectionD.sources', sd.sources);
-        if (sd.otherSpecify !== undefined) answersMap.set('sectionD.otherSpecify', sd.otherSpecify);
+        if (sd.otherSpecify !== undefined) {
+          let ytext = answersMap.get('sectionD.otherSpecify');
+          if (!(ytext instanceof Y.Text)) {
+            ytext = new Y.Text();
+            answersMap.set('sectionD.otherSpecify', ytext);
+          }
+          (ytext as Y.Text).delete(0, (ytext as Y.Text).length);
+          if (sd.otherSpecify) (ytext as Y.Text).insert(0, sd.otherSpecify as string);
+        }
       } else if (key === 'sectionC') {
         const sc = data as RobinsIAnswers['sectionC'];
         if (sc.isPerProtocol !== undefined)

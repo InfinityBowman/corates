@@ -19,7 +19,11 @@ import {
   getDomainQuestions as getROBINSIDomainQuestions,
 } from '@corates/shared/checklists/robins-i';
 import type { DomainAnswers as ROBINSIDomainAnswers } from '@corates/shared/checklists/robins-i';
-import { AMSTAR2_DATA_KEYS, scoreAMSTAR2Checklist } from '@corates/shared/checklists/amstar2';
+import {
+  AMSTAR2_DATA_KEYS,
+  scoreAMSTAR2Checklist,
+  getAnswers as getAMSTAR2Answers,
+} from '@corates/shared/checklists/amstar2';
 import type { AMSTAR2Checklist } from '@corates/shared/checklists';
 import { CHECKLIST_TYPES } from '@/checklist-registry/types';
 
@@ -329,8 +333,7 @@ function computeROB2Score(cl: {
 function computeROBINSIScore(cl: {
   answers: { field: <T>(key: string) => { get: () => T | null } };
 }): string {
-  const isPerProtocol =
-    cl.answers.field<boolean | null>('sectionC.isPerProtocol').get() === true;
+  const isPerProtocol = cl.answers.field<boolean | null>('sectionC.isPerProtocol').get() === true;
   const activeDomains = getROBINSIActiveDomainKeys(isPerProtocol);
 
   const judgements: string[] = [];
@@ -430,10 +433,21 @@ function buildChecklistEntry(clId: string, cl: ChecklistReactor): ChecklistEntry
   const type = cl.fields.field<string>('type').get() ?? 'AMSTAR2';
 
   let score: string | null = null;
+  let consolidatedAnswers: Record<string, string | null> | null = null;
   if (status === CHECKLIST_STATUS.FINALIZED) {
     if (type === 'ROB2') score = computeROB2Score(cl);
     else if (type === 'ROBINS_I') score = computeROBINSIScore(cl);
-    else if (type === 'AMSTAR2') score = computeAMSTAR2Score(cl);
+    else if (type === 'AMSTAR2') {
+      score = computeAMSTAR2Score(cl);
+      const checklist: Record<string, unknown> = {};
+      for (const qKey of AMSTAR2_DATA_KEYS) {
+        const answers = cl.answers.field<boolean[][]>(`${qKey}.answers`).get();
+        const critical = cl.answers.field<boolean>(`${qKey}.critical`).get();
+        if (!answers) continue;
+        checklist[qKey] = { answers, critical: critical ?? false };
+      }
+      consolidatedAnswers = getAMSTAR2Answers(checklist as unknown as AMSTAR2Checklist) ?? null;
+    }
     if (score === 'Incomplete' || score === 'Error') score = null;
   }
 
@@ -448,6 +462,7 @@ function buildChecklistEntry(clId: string, cl: ChecklistReactor): ChecklistEntry
     updatedAt: cl.fields.field<number>('updatedAt').get() ?? 0,
     score,
     answers: null,
+    consolidatedAnswers,
   };
 }
 

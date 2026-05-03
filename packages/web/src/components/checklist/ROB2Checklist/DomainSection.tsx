@@ -52,7 +52,8 @@ export function DomainSection({
 
   const requiredQuestions = getRequiredQuestions(domainKey, answersForRequired);
 
-  const hasAnyAnswer = answersYMap ? questionKeys.some(qKey => answersYMap.get(qKey) != null) : false;
+  const hasAnyAnswer =
+    answersYMap ? questionKeys.some(qKey => answersYMap.get(qKey) != null) : false;
 
   const isQuestionSkippable = (qKey: string) =>
     hasAnyAnswer &&
