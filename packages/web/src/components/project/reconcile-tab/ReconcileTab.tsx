@@ -7,7 +7,7 @@ import { useNavigate } from '@tanstack/react-router';
 import { ArrowRightLeftIcon } from 'lucide-react';
 import { ReconcileStudyRow } from './ReconcileStudyRow';
 import { useProjectContext } from '../ProjectContext';
-import { useAllStudies, useProjectMeta } from '@/stores/projectAtoms';
+import { useAllStudiesById, useProjectMetaById } from '@/primitives/useProject/reactor';
 import { getStudiesForTab } from '@corates/shared/checklists';
 import { project } from '@/project';
 
@@ -15,8 +15,8 @@ export function ReconcileTab() {
   const { projectId, getAssigneeName, getReconcilePath } = useProjectContext();
   const navigate = useNavigate();
 
-  const studies = useAllStudies(projectId);
-  const meta = useProjectMeta(projectId);
+  const studies = useAllStudiesById(projectId);
+  const meta = useProjectMetaById(projectId);
 
   const getOutcomeName = useCallback(
     (outcomeId: string) => {

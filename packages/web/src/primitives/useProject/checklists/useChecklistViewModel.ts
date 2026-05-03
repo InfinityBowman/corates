@@ -7,7 +7,7 @@
 
 import { useMemo } from 'react';
 import type { StudyInfo, ChecklistEntry } from '@/stores/projectStore';
-import { useStudy } from '@/stores/projectAtoms';
+import { useStudyById } from '@/primitives/useProject/reactor';
 
 export interface ChecklistViewModel {
   currentStudy: StudyInfo | null;
@@ -20,7 +20,7 @@ export function useChecklistViewModel(
   studyId: string,
   checklistId: string,
 ): ChecklistViewModel {
-  const currentStudy = useStudy(projectId, studyId) ?? null;
+  const currentStudy = useStudyById(projectId, studyId) ?? null;
 
   const currentChecklist = useMemo(
     () => (currentStudy?.checklists ?? []).find(c => c.id === checklistId) ?? null,

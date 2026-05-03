@@ -14,7 +14,7 @@ import { PlusIcon, XIcon, UploadIcon, FileTextIcon, LinkIcon, FolderIcon } from 
 import { Collapsible, CollapsibleContent } from '@/components/ui/collapsible';
 import { Tabs, TabsList, TabsTrigger, TabsIndicator, TabsContent } from '@/components/ui/tabs';
 import { showToast } from '@/components/ui/toast';
-import { useStudyIds } from '@/stores/projectAtoms';
+import { useSortedStudyIdsById } from '@/primitives/useProject/reactor';
 import { useAddStudies } from '@/hooks/useAddStudies';
 import type { CollectedStudies } from '@/hooks/useAddStudies';
 import type { MergedStudy } from '@/hooks/useAddStudies/deduplication';
@@ -65,7 +65,7 @@ export function AddStudiesForm({
     onStudiesChange,
   });
 
-  const studyIds = useStudyIds(projectId || '');
+  const studyIds = useSortedStudyIdsById(projectId || '');
   const existingStudyCount = projectId ? studyIds.length : 0;
   const hasExistingStudies = !collectMode && !!projectId && existingStudyCount > 0;
 

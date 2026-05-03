@@ -10,7 +10,6 @@
 import { useCallback, useRef, useSyncExternalStore } from 'react';
 import * as Y from 'yjs';
 import { connectionPool } from '@/project/ConnectionPool';
-import { countProbe } from '../sync-perf';
 import { getHandler } from './handlers/registry';
 
 interface ResolvedAnswers {
@@ -110,11 +109,9 @@ export function useChecklistAnswers(
       cached.studyId === studyId &&
       cached.checklistId === checklistId
     ) {
-      countProbe('serializeCacheHit');
       return cached.value;
     }
 
-    countProbe('serialize');
     const resolved = resolveAnswers(ydoc, studyId, checklistId);
     if (!resolved) {
       cacheRef.current = { version: versionRef.current, studyId, checklistId, value: null };

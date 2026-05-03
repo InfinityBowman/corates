@@ -13,7 +13,6 @@ import {
   createConnectionManager,
   type ConnectionManager,
 } from '@/primitives/useProject/connection';
-import { createSyncManager, type SyncManager } from '@/primitives/useProject/sync';
 import { createStudyOperations, type StudyOperations } from '@/primitives/useProject/studies';
 import {
   createChecklistOperations,
@@ -51,7 +50,6 @@ interface ConnectionEntry {
   ydoc: Y.Doc;
   dexieProvider: DexieYProvider | null;
   connectionManager: ConnectionManager | null;
-  syncManager: SyncManager | null;
   studyOps: StudyOperations | null;
   checklistOps: ChecklistOperations | null;
   pdfOps: PdfOperations | null;
@@ -86,7 +84,6 @@ class ConnectionPool {
       ydoc: new Y.Doc(),
       dexieProvider: null,
       connectionManager: null,
-      syncManager: null,
       studyOps: null,
       checklistOps: null,
       pdfOps: null,
@@ -127,7 +124,6 @@ class ConnectionPool {
     const isSynced = () => useProjectStore.getState().connections[projectId]?.phase === 'synced';
 
     // Initialize domain operations
-    entry.syncManager = createSyncManager(projectId, getYDoc);
     entry.studyOps = createStudyOperations(projectId, getYDoc, isSynced);
     entry.checklistOps = createChecklistOperations(projectId, getYDoc);
     entry.pdfOps = createPdfOperations(projectId, getYDoc);
@@ -135,10 +131,6 @@ class ConnectionPool {
     entry.annotationOps = createAnnotationOperations(projectId, getYDoc);
     entry.outcomeOps = createOutcomeOperations(projectId, getYDoc);
     entry.reactor = new ProjectReactor(ydoc);
-
-    // Scoped Y.Map observers (reviews, members, meta) for incremental sync
-    entry.syncManager.attach(ydoc);
-    entry._cleanupHandlers.push(() => entry.syncManager?.detach());
 
     // Dexie persistence (async)
     (db.projects as any).get(projectId).then(async (existingProject: any) => {
@@ -165,10 +157,7 @@ class ConnectionPool {
           entry.ydoc = project.ydoc;
           entry.reactor?.dispose();
           entry.reactor = new ProjectReactor(project.ydoc);
-          entry.syncManager!.attach(project.ydoc);
           oldYdoc.destroy();
-
-          entry.syncManager!.syncFromYDocImmediate();
 
           migrateLocalChecklistsToYDoc(project.ydoc)
             .catch(err => console.error('Local checklists migration failed:', err))
@@ -181,15 +170,12 @@ class ConnectionPool {
           return;
         }
 
-        entry.syncManager?.pause();
         try {
           const persistedState = Y.encodeStateAsUpdate(project.ydoc);
           Y.applyUpdate(ydoc, persistedState);
         } catch (err) {
           console.error('Corrupted persisted state, clearing local data:', err);
           deleteProjectData(projectId).catch(() => {});
-        } finally {
-          entry.syncManager?.resume();
         }
 
         const dexieUpdateHandler = (update: Uint8Array, origin: string) => {
@@ -199,8 +185,6 @@ class ConnectionPool {
         };
         ydoc.on('update', dexieUpdateHandler);
         entry._cleanupHandlers.push(() => ydoc.off('update', dexieUpdateHandler));
-
-        entry.syncManager!.syncFromYDocImmediate();
 
         const reviewsSize = ydoc.getMap('reviews').size;
         if (reviewsSize > 0) {
@@ -216,7 +200,6 @@ class ConnectionPool {
       entry.connectionManager = createConnectionManager(projectId, ydoc, {
         onSync: () => {
           useProjectStore.getState().dispatchConnectionEvent(projectId, { type: 'SYNC_COMPLETE' });
-          entry.syncManager?.syncFromYDocImmediate();
         },
         isLocalProject: () => isLocal,
         onAccessDenied: async () => {

@@ -10,7 +10,7 @@ import { connectionPool } from '@/project/ConnectionPool';
 import { buildChecklistAnswerInput, type TextRef } from '@/primitives/useProject/checklists';
 import { useChecklistAnswers } from '@/primitives/useProject/checklists/useChecklistAnswers';
 import { useProjectStore, selectConnectionPhase } from '@/stores/projectStore';
-import { useStudy, useProjectMembers } from '@/stores/projectAtoms';
+import { useStudyById, useProjectMembersById } from '@/primitives/useProject/reactor';
 import { useAuthStore, selectUser } from '@/stores/authStore';
 import { ACCESS_DENIED_ERRORS } from '@/constants/errors.js';
 import {
@@ -81,8 +81,8 @@ export function ReconciliationWrapper({
   }, [user]);
 
   const connectionState = useProjectStore(s => selectConnectionPhase(s, projectId));
-  const currentStudy = useStudy(projectId, studyId);
-  const members = useProjectMembers(projectId);
+  const currentStudy = useStudyById(projectId, studyId);
+  const members = useProjectMembersById(projectId);
 
   // Watch for access-denied errors and redirect
   useEffect(() => {

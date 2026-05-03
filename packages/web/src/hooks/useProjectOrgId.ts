@@ -4,12 +4,12 @@
 
 import { useMemo } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { useProjectMeta } from '@/stores/projectAtoms';
+import { useProjectMetaById } from '@/primitives/useProject/reactor';
 import { queryKeys } from '@/lib/queryKeys';
 
 export function useProjectOrgId(projectId: string | null | undefined): string | null {
   const queryClient = useQueryClient();
-  const meta = useProjectMeta(projectId || '');
+  const meta = useProjectMetaById(projectId || '');
 
   return useMemo(() => {
     if (!projectId) return null;

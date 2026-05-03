@@ -9,7 +9,7 @@ import { showToast } from '@/components/ui/toast';
 import { importFromGoogleDrive } from '@/api/google-drive';
 import { extractPdfDoi, extractPdfTitle } from '@/lib/pdfUtils.js';
 import { fetchFromDOI } from '@/lib/referenceLookup.js';
-import { getProjectAtoms } from '@/stores/projectAtoms';
+import * as Y from 'yjs';
 import { useAuthStore, selectUser } from '@/stores/authStore';
 import { connectionPool, type TypedProjectOps } from '../ConnectionPool';
 import type { PdfInfo, PdfTag } from '@/primitives/useProject/pdfs';
@@ -283,16 +283,25 @@ export const studyActions = {
     }
 
     try {
-      const study = getProjectAtoms(projectId).getOrCreateStudyAtom(studyId).get() ?? null;
-      const pdfs = study?.pdfs ?? [];
+      const entry = connectionPool.getEntry(projectId);
+      const studyYMap = entry?.ydoc.getMap('reviews').get(studyId) as Y.Map<unknown> | undefined;
+      const pdfsYMap = studyYMap?.get('pdfs') as Y.Map<unknown> | undefined;
+      const pdfFileNames: string[] = [];
+      if (pdfsYMap) {
+        for (const [, pdfYMap] of pdfsYMap.entries()) {
+          const p = pdfYMap as Y.Map<unknown>;
+          const fileName = p.get('fileName') as string;
+          if (fileName) pdfFileNames.push(fileName);
+        }
+      }
 
-      if (pdfs.length > 0) {
-        const deletePromises = pdfs.map(pdf => {
-          return bestEffort(deletePdf(orgId, projectId, studyId, pdf.fileName), {
+      if (pdfFileNames.length > 0) {
+        const deletePromises = pdfFileNames.map(fileName => {
+          return bestEffort(deletePdf(orgId, projectId, studyId, fileName), {
             operation: 'deletePdf (study cleanup)',
             projectId,
             studyId,
-            fileName: pdf.fileName,
+            fileName,
           });
         });
         await Promise.all(deletePromises);

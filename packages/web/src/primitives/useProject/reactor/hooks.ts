@@ -2,6 +2,16 @@ import { useContext } from 'react';
 import { useValue } from '@tldraw/state-react';
 import * as Y from 'yjs';
 import { ProjectReactorContext } from './context';
+import type { ProjectReactor, ChecklistReactor } from './core';
+import { connectionPool } from '@/project/ConnectionPool';
+import { useProjectStore } from '@/stores/projectStore';
+import type {
+  StudyInfo,
+  ChecklistEntry,
+  MemberEntry,
+  ProjectMeta,
+} from '@/stores/projectStore';
+import { CHECKLIST_STATUS } from '@corates/shared/checklists';
 import {
   scoreRob2Domain,
   getActiveDomainKeys as getROB2ActiveDomainKeys,
@@ -376,4 +386,135 @@ function computeAMSTAR2Score(cl: { answers: { field: <T>(key: string) => { get: 
 
   if (!hasAllAnswers) return 'Incomplete';
   return scoreAMSTAR2Checklist(checklist as unknown as AMSTAR2Checklist);
+}
+
+// ---------------------------------------------------------------------------
+// ProjectId-based hooks (work outside ProjectReactorContext)
+// ---------------------------------------------------------------------------
+
+const EMPTY_META: ProjectMeta = { outcomes: [] };
+const EMPTY_MEMBERS: MemberEntry[] = [];
+const EMPTY_STUDIES: StudyInfo[] = [];
+
+function useReactorByProjectId(projectId: string): ProjectReactor | null {
+  useProjectStore(state => state.connections[projectId]?.phase);
+  return connectionPool.getReactor(projectId);
+}
+
+export function useProjectMetaById(projectId: string): ProjectMeta {
+  const reactor = useReactorByProjectId(projectId);
+  return useValue(`meta:${projectId}`, () => {
+    if (!reactor) return EMPTY_META;
+    return reactor.meta.get();
+  }, [reactor]);
+}
+
+export function useProjectMembersById(projectId: string): MemberEntry[] {
+  const reactor = useReactorByProjectId(projectId);
+  return useValue(`members:${projectId}`, () => {
+    if (!reactor) return EMPTY_MEMBERS;
+    return reactor.members.get();
+  }, [reactor]);
+}
+
+export function useSortedStudyIdsById(projectId: string): string[] {
+  const reactor = useReactorByProjectId(projectId);
+  return useValue(`studyIds:${projectId}`, () => {
+    if (!reactor) return [];
+    return reactor.sortedStudyIds.get();
+  }, [reactor]);
+}
+
+function buildChecklistEntry(clId: string, cl: ChecklistReactor): ChecklistEntry {
+  const status = cl.fields.field<string>('status').get() ?? 'pending';
+  const type = cl.fields.field<string>('type').get() ?? 'AMSTAR2';
+
+  let score: string | null = null;
+  if (status === CHECKLIST_STATUS.FINALIZED) {
+    if (type === 'ROB2') score = computeROB2Score(cl);
+    else if (type === 'ROBINS_I') score = computeROBINSIScore(cl);
+    else if (type === 'AMSTAR2') score = computeAMSTAR2Score(cl);
+    if (score === 'Incomplete' || score === 'Error') score = null;
+  }
+
+  return {
+    id: clId,
+    type,
+    title: cl.fields.field<string | null>('title').get() ?? null,
+    assignedTo: cl.fields.field<string | null>('assignedTo').get() ?? null,
+    outcomeId: cl.fields.field<string | null>('outcomeId').get() ?? null,
+    status,
+    createdAt: cl.fields.field<number>('createdAt').get() ?? 0,
+    updatedAt: cl.fields.field<number>('updatedAt').get() ?? 0,
+    score,
+    answers: null,
+  };
+}
+
+function buildStudyInfoFromReactor(studyId: string, reactor: ProjectReactor): StudyInfo | null {
+  reactor.studies.ids.get();
+  const study = reactor.studies.get(studyId);
+  if (!study) return null;
+
+  const f = study.fields;
+  const checklistIds = study.checklists.ids.get();
+  const checklists: ChecklistEntry[] = [];
+  for (const clId of checklistIds) {
+    const cl = study.checklists.get(clId);
+    if (cl) checklists.push(buildChecklistEntry(clId, cl));
+  }
+
+  return {
+    id: studyId,
+    name: f.field<string>('name').get() ?? '',
+    description: f.field<string>('description').get() ?? '',
+    originalTitle: f.field<string | null>('originalTitle').get() ?? null,
+    firstAuthor: f.field<string | null>('firstAuthor').get() ?? null,
+    publicationYear: f.field<string | null>('publicationYear').get() ?? null,
+    authors: f.field<string | null>('authors').get() ?? null,
+    journal: f.field<string | null>('journal').get() ?? null,
+    doi: f.field<string | null>('doi').get() ?? null,
+    abstract: f.field<string | null>('abstract').get() ?? null,
+    importSource: f.field<string | null>('importSource').get() ?? null,
+    pdfUrl: f.field<string | null>('pdfUrl').get() ?? null,
+    pdfSource: f.field<string | null>('pdfSource').get() ?? null,
+    pdfAccessible: Boolean(f.field<boolean>('pdfAccessible').get()),
+    pmid: f.field<string | null>('pmid').get() ?? null,
+    url: f.field<string | null>('url').get() ?? null,
+    volume: f.field<string | null>('volume').get() ?? null,
+    issue: f.field<string | null>('issue').get() ?? null,
+    pages: f.field<string | null>('pages').get() ?? null,
+    type: f.field<string | null>('type').get() ?? null,
+    reviewer1: f.field<string | null>('reviewer1').get() ?? null,
+    reviewer2: f.field<string | null>('reviewer2').get() ?? null,
+    createdAt: f.field<number>('createdAt').get() ?? 0,
+    updatedAt: f.field<number>('updatedAt').get() ?? 0,
+    checklists,
+    pdfs: study.pdfs.get(),
+  };
+}
+
+export function useStudyById(
+  projectId: string,
+  studyId: string,
+): StudyInfo | undefined {
+  const reactor = useReactorByProjectId(projectId);
+  return useValue(`studyInfo:${projectId}:${studyId}`, () => {
+    if (!reactor) return undefined;
+    return buildStudyInfoFromReactor(studyId, reactor) ?? undefined;
+  }, [reactor, studyId]);
+}
+
+export function useAllStudiesById(projectId: string): StudyInfo[] {
+  const reactor = useReactorByProjectId(projectId);
+  return useValue(`allStudies:${projectId}`, () => {
+    if (!reactor) return EMPTY_STUDIES;
+    const ids = reactor.sortedStudyIds.get();
+    const result: StudyInfo[] = [];
+    for (const id of ids) {
+      const info = buildStudyInfoFromReactor(id, reactor);
+      if (info) result.push(info);
+    }
+    return result;
+  }, [reactor]);
 }

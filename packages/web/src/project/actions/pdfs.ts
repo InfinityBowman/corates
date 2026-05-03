@@ -7,8 +7,8 @@ import { cachePdf, removeCachedPdf, getCachedPdf } from '@/primitives/pdfCache.j
 import { bestEffort } from '@/lib/errorLogger.js';
 import { extractPdfDoi, extractPdfTitle } from '@/lib/pdfUtils.js';
 import { fetchFromDOI } from '@/lib/referenceLookup.js';
+import * as Y from 'yjs';
 import type { PdfEntry } from '@/stores/projectStore';
-import { getProjectAtoms } from '@/stores/projectAtoms';
 import { usePdfPreviewStore } from '@/stores/pdfPreviewStore';
 import { useAuthStore, selectUser } from '@/stores/authStore';
 import { connectionPool } from '../ConnectionPool';
@@ -115,17 +115,24 @@ export const pdfActions = {
       throw new Error('No active project connection');
     }
 
-    const study = getProjectAtoms(projectId).getOrCreateStudyAtom(studyId).get() ?? null;
-    const existingPdf = study?.pdfs.find(p => p.fileName === file.name);
-    if (existingPdf) {
-      throw new Error(`File "${file.name}" already exists. Rename or remove the existing copy.`);
+    const entry = connectionPool.getEntry(projectId);
+    const studyYMap = entry?.ydoc.getMap('reviews').get(studyId) as Y.Map<unknown> | undefined;
+    const pdfsYMap = studyYMap?.get('pdfs') as Y.Map<unknown> | undefined;
+
+    if (pdfsYMap) {
+      for (const [, pdfYMap] of pdfsYMap.entries()) {
+        const p = pdfYMap as Y.Map<unknown>;
+        if (p.get('fileName') === file.name) {
+          throw new Error(`File "${file.name}" already exists. Rename or remove the existing copy.`);
+        }
+      }
     }
 
     let uploadResult: { success: boolean; key: string; fileName: string; size: number } | null =
       null;
 
     try {
-      const hasPdfs = (study?.pdfs.length ?? 0) > 0;
+      const hasPdfs = (pdfsYMap?.size ?? 0) > 0;
       const effectiveTag = !hasPdfs ? 'primary' : tag;
 
       uploadResult = await uploadPdf(orgId, projectId, studyId, file, file.name);
@@ -248,8 +255,10 @@ export const pdfActions = {
     if (!studyId || !file) return;
     if (!projectId || !orgId || !ops) throw new Error('No active project connection');
 
-    const study = getProjectAtoms(projectId).getOrCreateStudyAtom(studyId).get() ?? null;
-    const hasPdfs = (study?.pdfs.length ?? 0) > 0;
+    const entry = connectionPool.getEntry(projectId);
+    const studyYMap = entry?.ydoc.getMap('reviews').get(studyId) as Y.Map<unknown> | undefined;
+    const pdfsYMap = studyYMap?.get('pdfs') as Y.Map<unknown> | undefined;
+    const hasPdfs = (pdfsYMap?.size ?? 0) > 0;
     const effectiveTag = !hasPdfs ? 'primary' : tag;
 
     try {

@@ -12,7 +12,7 @@ import {
   ArrowRightLeftIcon,
   CheckCircleIcon,
 } from 'lucide-react';
-import { useAllStudies, useProjectMembers } from '@/stores/projectAtoms';
+import { useAllStudiesById, useProjectMembersById } from '@/primitives/useProject/reactor';
 import { project } from '@/project';
 import { useAuthStore, selectUser } from '@/stores/authStore';
 import { useProjectContext, type ProjectMember } from '../ProjectContext';
@@ -68,8 +68,8 @@ export function OverviewTab() {
   const { hasQuota, quotas } = useSubscription();
   const { members: orgMembers } = useMembers();
 
-  const studies = useAllStudies(projectId);
-  const members = useProjectMembers(projectId);
+  const studies = useAllStudiesById(projectId);
+  const members = useProjectMembersById(projectId);
 
   const nonOwnerOrgMemberCount = useMemo(
     () => orgMembers.filter(m => m.role !== 'owner').length,

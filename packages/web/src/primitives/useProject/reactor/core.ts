@@ -1,6 +1,12 @@
 import { atom, transact, computed } from '@tldraw/state';
 import type { Atom, Computed } from '@tldraw/state';
 import * as Y from 'yjs';
+import type {
+  ProjectMeta,
+  OutcomeEntry,
+  MemberEntry,
+  PdfEntry,
+} from '@/stores/projectStore';
 
 export class YMapReactor {
   private atoms = new Map<string, Atom<unknown>>();
@@ -119,6 +125,8 @@ export class ChecklistReactor {
 export class StudyReactor {
   readonly fields: YMapReactor;
   readonly checklists: CollectionReactor<ChecklistReactor>;
+  readonly pdfs: Atom<PdfEntry[]>;
+  private _cleanups: (() => void)[] = [];
 
   constructor(
     readonly id: string,
@@ -136,17 +144,111 @@ export class StudyReactor {
       checklistsYMap,
       (clId, ymap) => new ChecklistReactor(clId, ymap),
     );
+
+    this.pdfs = atom(`study:${id}:pdfs`, []);
+    this._observePdfs(studyYMap);
+  }
+
+  private _observePdfs(studyYMap: Y.Map<unknown>): void {
+    const rebuild = () => {
+      const pdfsYMap = studyYMap.get('pdfs') as Y.Map<unknown> | undefined;
+      this.pdfs.set(pdfsYMap ? buildPdfEntries(pdfsYMap) : []);
+    };
+    rebuild();
+
+    const pdfsYMap = studyYMap.get('pdfs') as Y.Map<unknown> | undefined;
+    if (pdfsYMap) {
+      pdfsYMap.observeDeep(rebuild);
+      this._cleanups.push(() => pdfsYMap.unobserveDeep(rebuild));
+    }
+
+    const onStudy = (event: Y.YMapEvent<unknown>) => {
+      if (event.keys.has('pdfs')) {
+        const newPdfsYMap = studyYMap.get('pdfs') as Y.Map<unknown> | undefined;
+        if (newPdfsYMap) {
+          newPdfsYMap.observeDeep(rebuild);
+          this._cleanups.push(() => newPdfsYMap.unobserveDeep(rebuild));
+        }
+        rebuild();
+      }
+    };
+    studyYMap.observe(onStudy);
+    this._cleanups.push(() => studyYMap.unobserve(onStudy));
   }
 
   dispose(): void {
     this.fields.dispose();
     this.checklists.dispose();
+    for (const fn of this._cleanups) fn();
+    this._cleanups = [];
   }
+}
+
+function buildPdfEntries(pdfsYMap: Y.Map<unknown>): PdfEntry[] {
+  const entries: PdfEntry[] = [];
+  for (const [pdfId, pdfYMap] of pdfsYMap.entries()) {
+    const p = pdfYMap as Y.Map<unknown>;
+    entries.push({
+      id: (p.get('id') as string) || pdfId,
+      fileName: (p.get('fileName') as string) || pdfId,
+      key: p.get('key') as string,
+      size: p.get('size') as number,
+      uploadedBy: p.get('uploadedBy') as string,
+      uploadedAt: p.get('uploadedAt') as number,
+      tag: (p.get('tag') as string) || 'secondary',
+      title: (p.get('title') as string) || null,
+      firstAuthor: (p.get('firstAuthor') as string) || null,
+      publicationYear: (p.get('publicationYear') as string) || null,
+      journal: (p.get('journal') as string) || null,
+      doi: (p.get('doi') as string) || null,
+    });
+  }
+  return entries;
+}
+
+function buildMeta(metaMap: Y.Map<unknown>): ProjectMeta {
+  const raw = (metaMap.toJSON ? metaMap.toJSON() : {}) as ProjectMeta;
+  const outcomesMap = metaMap.get('outcomes') as Y.Map<unknown> | undefined;
+  if (outcomesMap && typeof outcomesMap.entries === 'function') {
+    const list: OutcomeEntry[] = [];
+    for (const [id, val] of outcomesMap.entries()) {
+      const m = val as { toJSON?: () => Record<string, unknown> };
+      const data = m.toJSON ? m.toJSON() : (val as Record<string, unknown>);
+      list.push({ id, ...data } as OutcomeEntry);
+    }
+    list.sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));
+    raw.outcomes = list;
+  } else {
+    raw.outcomes = [];
+  }
+  return raw;
+}
+
+function buildMembers(membersMap: Y.Map<unknown>): MemberEntry[] {
+  const list: MemberEntry[] = [];
+  for (const [userId, val] of membersMap.entries()) {
+    const m = val as { toJSON?: () => Record<string, unknown> };
+    const data = m.toJSON ? m.toJSON() : (val as Record<string, unknown>);
+    list.push({
+      userId,
+      role: data.role as string,
+      joinedAt: data.joinedAt as number,
+      name: data.name as string,
+      email: data.email as string,
+      givenName: data.givenName as string,
+      familyName: data.familyName as string,
+      image: (data.image as string) || null,
+    });
+  }
+  return list;
 }
 
 export class ProjectReactor {
   readonly studies: CollectionReactor<StudyReactor>;
   readonly sortedStudyIds: Computed<string[]>;
+  readonly meta: Atom<ProjectMeta>;
+  readonly members: Atom<MemberEntry[]>;
+  private _cleanups: (() => void)[] = [];
 
   constructor(readonly ydoc: Y.Doc) {
     const reviewsMap = ydoc.getMap('reviews');
@@ -170,9 +272,23 @@ export class ProjectReactor {
       },
       { isEqual: arraysEqual },
     );
+
+    const metaMap = ydoc.getMap('meta');
+    this.meta = atom('projectMeta', buildMeta(metaMap));
+    const onMeta = () => this.meta.set(buildMeta(metaMap));
+    metaMap.observeDeep(onMeta);
+    this._cleanups.push(() => metaMap.unobserveDeep(onMeta));
+
+    const membersMap = ydoc.getMap('members');
+    this.members = atom('members', buildMembers(membersMap));
+    const onMembers = () => this.members.set(buildMembers(membersMap));
+    membersMap.observeDeep(onMembers);
+    this._cleanups.push(() => membersMap.unobserveDeep(onMembers));
   }
 
   dispose(): void {
     this.studies.dispose();
+    for (const fn of this._cleanups) fn();
+    this._cleanups = [];
   }
 }
