@@ -232,12 +232,9 @@ export function createChecklistOperations(
           if (outcomeYMap) {
             const outcomeName = outcomeYMap.get('name') as string | undefined;
             if (outcomeName) {
-              const sectionAYMap = answersYMap.get('sectionA') as Y.Map<unknown> | undefined;
-              if (sectionAYMap) {
-                const outcomeYText = sectionAYMap.get('outcome');
-                if (outcomeYText instanceof Y.Text) {
-                  outcomeYText.insert(0, outcomeName);
-                }
+              const outcomeYText = answersYMap.get('sectionA.outcome');
+              if (outcomeYText instanceof Y.Text) {
+                outcomeYText.insert(0, outcomeName);
               }
             }
           }

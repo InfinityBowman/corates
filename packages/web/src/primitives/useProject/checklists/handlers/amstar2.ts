@@ -55,11 +55,7 @@ export class AMSTAR2Handler extends ChecklistHandler {
     const grouped: Record<string, Record<string, unknown>> = {};
     for (const [key, value] of answersMap.entries()) {
       const dotIdx = key.indexOf('.');
-      if (dotIdx === -1) {
-        // Legacy nested Y.Map entry
-        grouped[key] = this.serializeKey(key, value);
-        continue;
-      }
+      if (dotIdx === -1) continue;
       const prefix = key.substring(0, dotIdx);
       const field = key.substring(dotIdx + 1);
       if (!grouped[prefix]) grouped[prefix] = {};

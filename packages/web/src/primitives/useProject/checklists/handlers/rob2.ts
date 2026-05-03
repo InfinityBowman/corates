@@ -85,11 +85,6 @@ export class ROB2Handler extends ChecklistHandler {
     const result: Record<string, Record<string, unknown>> = {};
 
     for (const [key, value] of answersMap.entries()) {
-      if (value instanceof Y.Map) {
-        result[key] = this.serializeKey(key, value);
-        continue;
-      }
-
       const dotIdx = key.indexOf('.');
       if (dotIdx === -1) {
         const domain = questionKeyToDomain(key);

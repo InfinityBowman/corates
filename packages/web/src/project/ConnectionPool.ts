@@ -35,7 +35,7 @@ import {
 import { db, deleteProjectData } from '@/primitives/db.js';
 import { migrateLocalChecklistsToYDoc } from './localProject';
 import { ProjectReactor } from '@/primitives/useProject/reactor/core';
-import { migrateYDocToFlatKeys } from '@/primitives/useProject/reactor/migrate';
+
 
 export interface TypedProjectOps {
   study: StudyOperations;
@@ -168,7 +168,6 @@ class ConnectionPool {
           entry.syncManager!.attach(project.ydoc);
           oldYdoc.destroy();
 
-          migrateYDocToFlatKeys(project.ydoc);
           entry.syncManager!.syncFromYDocImmediate();
 
           migrateLocalChecklistsToYDoc(project.ydoc)
@@ -201,7 +200,6 @@ class ConnectionPool {
         ydoc.on('update', dexieUpdateHandler);
         entry._cleanupHandlers.push(() => ydoc.off('update', dexieUpdateHandler));
 
-        migrateYDocToFlatKeys(ydoc);
         entry.syncManager!.syncFromYDocImmediate();
 
         const reviewsSize = ydoc.getMap('reviews').size;
@@ -217,7 +215,6 @@ class ConnectionPool {
     if (!isLocal) {
       entry.connectionManager = createConnectionManager(projectId, ydoc, {
         onSync: () => {
-          migrateYDocToFlatKeys(ydoc);
           useProjectStore.getState().dispatchConnectionEvent(projectId, { type: 'SYNC_COMPLETE' });
           entry.syncManager?.syncFromYDocImmediate();
         },

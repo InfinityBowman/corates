@@ -109,11 +109,6 @@ export class ROBINSIHandler extends ChecklistHandler {
     const result: Record<string, Record<string, unknown>> = {};
 
     for (const [key, value] of answersMap.entries()) {
-      if (value instanceof Y.Map) {
-        result[key] = this.serializeKey(key, value);
-        continue;
-      }
-
       const dotIdx = key.indexOf('.');
       if (dotIdx === -1) {
         // Bare question key like "d1a_1" → domain1a.answers.d1a_1
