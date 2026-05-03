@@ -7,44 +7,39 @@ function isNestedFormat(answersMap: Y.Map<unknown>): boolean {
   return false;
 }
 
-function cloneYText(src: Y.Text): Y.Text {
-  const dest = new Y.Text();
-  const content = src.toString();
-  if (content) dest.insert(0, content);
-  return dest;
-}
-
-function getYText(ymap: Y.Map<unknown>, key: string): Y.Text {
+function getYTextContent(ymap: Y.Map<unknown>, key: string): string {
   const val = ymap.get(key);
-  if (val instanceof Y.Text) return cloneYText(val);
-  return new Y.Text();
+  if (val instanceof Y.Text) return val.toString();
+  return '';
 }
 
-function flattenAMSTAR2(answersMap: Y.Map<unknown>, flat: Y.Map<unknown>): void {
+type TextEntry = { key: string; content: string };
+
+function flattenAMSTAR2(
+  answersMap: Y.Map<unknown>,
+  flat: Y.Map<unknown>,
+  texts: TextEntry[],
+): void {
   for (const [key, val] of answersMap.entries()) {
     if (!(val instanceof Y.Map)) continue;
     const qMap = val as Y.Map<unknown>;
 
     const answers = qMap.get('answers');
-    if (answers !== undefined) {
-      flat.set(`${key}.answers`, answers);
-    }
+    if (answers !== undefined) flat.set(`${key}.answers`, answers);
 
     const critical = qMap.get('critical');
-    if (critical !== undefined) {
-      flat.set(`${key}.critical`, critical);
-    }
+    if (critical !== undefined) flat.set(`${key}.critical`, critical);
 
-    const note = qMap.get('note');
-    if (note instanceof Y.Text) {
-      flat.set(`${key}.note`, cloneYText(note));
-    } else {
-      flat.set(`${key}.note`, new Y.Text());
-    }
+    flat.set(`${key}.note`, new Y.Text());
+    texts.push({ key: `${key}.note`, content: getYTextContent(qMap, 'note') });
   }
 }
 
-function flattenROB2(answersMap: Y.Map<unknown>, flat: Y.Map<unknown>): void {
+function flattenROB2(
+  answersMap: Y.Map<unknown>,
+  flat: Y.Map<unknown>,
+  texts: TextEntry[],
+): void {
   for (const [key, val] of answersMap.entries()) {
     if (!(val instanceof Y.Map)) {
       flat.set(key, val);
@@ -58,7 +53,8 @@ function flattenROB2(answersMap: Y.Map<unknown>, flat: Y.Map<unknown>): void {
         if (v !== undefined) flat.set(`preliminary.${field}`, v);
       }
       for (const field of ['experimental', 'comparator', 'numericalResult']) {
-        flat.set(`preliminary.${field}`, getYText(section, field));
+        flat.set(`preliminary.${field}`, new Y.Text());
+        texts.push({ key: `preliminary.${field}`, content: getYTextContent(section, field) });
       }
     } else if (key.startsWith('domain')) {
       const direction = section.get('direction');
@@ -69,7 +65,8 @@ function flattenROB2(answersMap: Y.Map<unknown>, flat: Y.Map<unknown>): void {
         for (const [qKey, qVal] of answersNested.entries()) {
           if (qVal instanceof Y.Map) {
             flat.set(qKey, qVal.get('answer') ?? null);
-            flat.set(`${qKey}.comment`, getYText(qVal, 'comment'));
+            flat.set(`${qKey}.comment`, new Y.Text());
+            texts.push({ key: `${qKey}.comment`, content: getYTextContent(qVal, 'comment') });
           }
         }
       }
@@ -80,7 +77,11 @@ function flattenROB2(answersMap: Y.Map<unknown>, flat: Y.Map<unknown>): void {
   }
 }
 
-function flattenROBINSI(answersMap: Y.Map<unknown>, flat: Y.Map<unknown>): void {
+function flattenROBINSI(
+  answersMap: Y.Map<unknown>,
+  flat: Y.Map<unknown>,
+  texts: TextEntry[],
+): void {
   for (const [key, val] of answersMap.entries()) {
     if (!(val instanceof Y.Map)) {
       flat.set(key, val);
@@ -89,16 +90,25 @@ function flattenROBINSI(answersMap: Y.Map<unknown>, flat: Y.Map<unknown>): void 
     const section = val as Y.Map<unknown>;
 
     if (key === 'planning') {
-      flat.set('planning.confoundingFactors', getYText(section, 'confoundingFactors'));
+      flat.set('planning.confoundingFactors', new Y.Text());
+      texts.push({
+        key: 'planning.confoundingFactors',
+        content: getYTextContent(section, 'confoundingFactors'),
+      });
     } else if (key === 'sectionA') {
       for (const field of ['numericalResult', 'furtherDetails', 'outcome']) {
-        flat.set(`sectionA.${field}`, getYText(section, field));
+        flat.set(`sectionA.${field}`, new Y.Text());
+        texts.push({ key: `sectionA.${field}`, content: getYTextContent(section, field) });
       }
     } else if (key === 'sectionB') {
       for (const [subKey, subVal] of section.entries()) {
         if (subVal instanceof Y.Map) {
           flat.set(`sectionB.${subKey}`, subVal.get('answer') ?? null);
-          flat.set(`sectionB.${subKey}.comment`, getYText(subVal, 'comment'));
+          flat.set(`sectionB.${subKey}.comment`, new Y.Text());
+          texts.push({
+            key: `sectionB.${subKey}.comment`,
+            content: getYTextContent(subVal, 'comment'),
+          });
         } else {
           flat.set(`sectionB.${subKey}`, subVal);
         }
@@ -106,12 +116,14 @@ function flattenROBINSI(answersMap: Y.Map<unknown>, flat: Y.Map<unknown>): void 
     } else if (key === 'sectionC') {
       flat.set('sectionC.isPerProtocol', section.get('isPerProtocol') ?? false);
       for (const field of ['participants', 'interventionStrategy', 'comparatorStrategy']) {
-        flat.set(`sectionC.${field}`, getYText(section, field));
+        flat.set(`sectionC.${field}`, new Y.Text());
+        texts.push({ key: `sectionC.${field}`, content: getYTextContent(section, field) });
       }
     } else if (key === 'sectionD') {
       const sources = section.get('sources');
       if (sources !== undefined) flat.set('sectionD.sources', sources);
-      flat.set('sectionD.otherSpecify', getYText(section, 'otherSpecify'));
+      flat.set('sectionD.otherSpecify', new Y.Text());
+      texts.push({ key: 'sectionD.otherSpecify', content: getYTextContent(section, 'otherSpecify') });
     } else if (key === 'confoundingEvaluation') {
       const predefined = section.get('predefined');
       if (predefined !== undefined) flat.set('confoundingEvaluation.predefined', predefined);
@@ -131,7 +143,8 @@ function flattenROBINSI(answersMap: Y.Map<unknown>, flat: Y.Map<unknown>): void 
           for (const [qKey, qVal] of answersNested.entries()) {
             if (qVal instanceof Y.Map) {
               flat.set(qKey, qVal.get('answer') ?? null);
-              flat.set(`${qKey}.comment`, getYText(qVal, 'comment'));
+              flat.set(`${qKey}.comment`, new Y.Text());
+              texts.push({ key: `${qKey}.comment`, content: getYTextContent(qVal, 'comment') });
             }
           }
         }
@@ -145,17 +158,45 @@ export function migrateChecklist(checklistYMap: Y.Map<unknown>): void {
   if (!answersMap || !isNestedFormat(answersMap)) return;
 
   const type = (checklistYMap.get('type') as string) || 'AMSTAR2';
+
+  // Collect flat entries from nested format
   const flat = new Y.Map<unknown>();
+  const texts: TextEntry[] = [];
 
   if (type === 'AMSTAR2') {
-    flattenAMSTAR2(answersMap, flat);
+    flattenAMSTAR2(answersMap, flat, texts);
   } else if (type === 'ROB2') {
-    flattenROB2(answersMap, flat);
+    flattenROB2(answersMap, flat, texts);
   } else if (type === 'ROBINS_I') {
-    flattenROBINSI(answersMap, flat);
+    flattenROBINSI(answersMap, flat, texts);
   }
 
-  checklistYMap.set('answers', flat);
+  // Delete nested keys, then write flat keys in-place on the attached map
+  const nestedKeys: string[] = [];
+  for (const [key, val] of answersMap.entries()) {
+    if (val instanceof Y.Map) nestedKeys.push(key);
+  }
+  for (const key of nestedKeys) {
+    answersMap.delete(key);
+  }
+
+  // Write non-text flat entries
+  for (const [key, val] of flat.entries()) {
+    if (val instanceof Y.Text) {
+      answersMap.set(key, new Y.Text());
+    } else {
+      answersMap.set(key, val);
+    }
+  }
+
+  // Fill text content after Y.Text objects are attached
+  for (const { key, content } of texts) {
+    if (!content) continue;
+    const ytext = answersMap.get(key);
+    if (ytext instanceof Y.Text) {
+      ytext.insert(0, content);
+    }
+  }
 }
 
 export function migrateYDocToFlatKeys(ydoc: Y.Doc): void {

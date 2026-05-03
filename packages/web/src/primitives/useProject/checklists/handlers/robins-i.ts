@@ -4,13 +4,23 @@
 
 import * as Y from 'yjs';
 import type { RobinsIAnswers, RobinsIKey } from '@corates/shared/checklists/robins-i';
-import { ChecklistHandler, yTextToString, type TextGetterFn } from './base';
+import { ChecklistHandler, type TextGetterFn } from './base';
 
 interface ROBINSDomainTemplate {
   judgement?: string | null;
   judgementSource?: string | null;
   direction?: string | null;
   answers?: Record<string, { answer: string | null }>;
+}
+
+function questionKeyToDomain(qKey: string): string | null {
+  const match = qKey.match(/^d(\d+[a-z]?)_/);
+  if (!match) return null;
+  return `domain${match[1]}`;
+}
+
+function isSectionBKey(key: string): boolean {
+  return /^b\d+$/.test(key);
 }
 
 export class ROBINSIHandler extends ChecklistHandler {
@@ -95,72 +105,73 @@ export class ROBINSIHandler extends ChecklistHandler {
     return answersYMap;
   }
 
-  serializeKey(key: string, sectionYMap: unknown): unknown {
-    if (!(sectionYMap instanceof Y.Map)) return sectionYMap;
+  serializeAnswers(answersMap: Y.Map<unknown>): Record<string, unknown> {
+    const result: Record<string, Record<string, unknown>> = {};
 
-    if (key.startsWith('domain')) {
-      const sectionData: Record<string, unknown> = {
-        judgement: sectionYMap.get('judgement') ?? null,
-        judgementSource: sectionYMap.get('judgementSource') ?? 'auto',
-        answers: {} as Record<string, { answer: string | null; comment: string }>,
-      };
-      const direction = sectionYMap.get('direction');
-      if (direction !== undefined) sectionData.direction = direction;
+    for (const [key, value] of answersMap.entries()) {
+      if (value instanceof Y.Map) {
+        result[key] = this.serializeKey(key, value);
+        continue;
+      }
 
-      const answersNestedYMap = sectionYMap.get('answers');
-      if (answersNestedYMap instanceof Y.Map) {
-        const answersObj = sectionData.answers as Record<
-          string,
-          { answer: string | null; comment: string }
-        >;
-        for (const [qKey, questionYMap] of answersNestedYMap.entries()) {
-          if (questionYMap instanceof Y.Map) {
-            answersObj[qKey] = {
-              answer: (questionYMap.get('answer') as string) ?? null,
-              comment: yTextToString(questionYMap.get('comment')),
-            };
+      const dotIdx = key.indexOf('.');
+      if (dotIdx === -1) {
+        // Bare question key like "d1a_1" → domain1a.answers.d1a_1
+        const domain = questionKeyToDomain(key);
+        if (domain) {
+          if (!result[domain]) result[domain] = {};
+          if (!result[domain].answers) result[domain].answers = {};
+          const answers = result[domain].answers as Record<string, Record<string, unknown>>;
+          if (!answers[key]) answers[key] = {};
+          answers[key].answer = value;
+          continue;
+        }
+        // Bare sectionB key like "b1" → handled via sectionB.b1 flat keys instead
+        continue;
+      }
+
+      const prefix = key.substring(0, dotIdx);
+      const field = key.substring(dotIdx + 1);
+
+      // Question comment keys like "d1a_1.comment" → domain1a.answers.d1a_1.comment
+      const domain = questionKeyToDomain(prefix);
+      if (domain) {
+        if (!result[domain]) result[domain] = {};
+        if (!result[domain].answers) result[domain].answers = {};
+        const answers = result[domain].answers as Record<string, Record<string, unknown>>;
+        if (!answers[prefix]) answers[prefix] = {};
+        answers[prefix][field] = value instanceof Y.Text ? value.toString() : value;
+        continue;
+      }
+
+      // sectionB sub-keys: "sectionB.b1" → sectionB.b1.answer, "sectionB.b1.comment"
+      if (prefix === 'sectionB') {
+        if (!result.sectionB) result.sectionB = {};
+        const secondDot = field.indexOf('.');
+        if (secondDot === -1) {
+          if (isSectionBKey(field)) {
+            // "sectionB.b1" stores the answer value
+            if (!result.sectionB[field]) result.sectionB[field] = {};
+            (result.sectionB[field] as Record<string, unknown>).answer = value;
           } else {
-            answersObj[qKey] = questionYMap as { answer: string | null; comment: string };
+            result.sectionB[field] = value;
           }
-        }
-      }
-      return sectionData;
-    }
-
-    if (key === 'overall') {
-      const sectionData: Record<string, unknown> = {
-        judgement: sectionYMap.get('judgement') ?? null,
-        judgementSource: sectionYMap.get('judgementSource') ?? 'auto',
-      };
-      const direction = sectionYMap.get('direction');
-      if (direction !== undefined) sectionData.direction = direction;
-      return sectionData;
-    }
-
-    if (key === 'sectionB') {
-      const sectionData: Record<string, unknown> = {};
-      for (const [subKey, subValue] of sectionYMap.entries()) {
-        if (subValue instanceof Y.Map) {
-          sectionData[subKey] = {
-            answer: subValue.get('answer') ?? null,
-            comment: yTextToString(subValue.get('comment')),
-          };
         } else {
-          sectionData[subKey] = subValue;
+          const subKey = field.substring(0, secondDot);
+          const subField = field.substring(secondDot + 1);
+          if (!result.sectionB[subKey]) result.sectionB[subKey] = {};
+          (result.sectionB[subKey] as Record<string, unknown>)[subField] =
+            value instanceof Y.Text ? value.toString() : value;
         }
+        continue;
       }
-      return sectionData;
+
+      // Everything else: "planning.confoundingFactors", "sectionA.outcome", "domain1a.judgement", etc.
+      if (!result[prefix]) result[prefix] = {};
+      result[prefix][field] = value instanceof Y.Text ? value.toString() : value;
     }
 
-    const sectionData: Record<string, unknown> = {};
-    for (const [fieldKey, fieldValue] of sectionYMap.entries()) {
-      if (fieldValue instanceof Y.Text) {
-        sectionData[fieldKey] = fieldValue.toString();
-      } else {
-        sectionData[fieldKey] = fieldValue;
-      }
-    }
-    return sectionData;
+    return result;
   }
 
   updateAnswer<K extends RobinsIKey>(
@@ -170,71 +181,49 @@ export class ROBINSIHandler extends ChecklistHandler {
   ): void {
     const doc = answersMap.doc!;
     doc.transact(() => {
-      let sectionYMap = answersMap.get(key) as Y.Map<unknown> | undefined;
-
-      if (!sectionYMap || !(sectionYMap instanceof Y.Map)) {
-        sectionYMap = new Y.Map();
-        answersMap.set(key, sectionYMap);
-      }
-
       if (key.startsWith('domain') || key === 'overall') {
         const domainData = data as RobinsIAnswers['domain1a'];
         if (domainData.judgement !== undefined) {
-          sectionYMap.set('judgement', domainData.judgement);
+          answersMap.set(`${key}.judgement`, domainData.judgement);
         }
         if (domainData.judgementSource !== undefined) {
-          sectionYMap.set('judgementSource', domainData.judgementSource);
+          answersMap.set(`${key}.judgementSource`, domainData.judgementSource);
         }
         if (domainData.direction !== undefined) {
-          sectionYMap.set('direction', domainData.direction);
+          answersMap.set(`${key}.direction`, domainData.direction);
         }
-
         if (domainData.answers) {
-          let answersNestedYMap = sectionYMap.get('answers') as Y.Map<unknown> | undefined;
-          if (!answersNestedYMap || !(answersNestedYMap instanceof Y.Map)) {
-            answersNestedYMap = new Y.Map();
-            sectionYMap.set('answers', answersNestedYMap);
-          }
-
           Object.entries(domainData.answers).forEach(([qKey, qValue]) => {
-            let questionYMap = answersNestedYMap!.get(qKey) as Y.Map<unknown> | undefined;
-            if (!questionYMap || !(questionYMap instanceof Y.Map)) {
-              questionYMap = new Y.Map();
-              answersNestedYMap!.set(qKey, questionYMap);
-            }
-            if (qValue.answer !== undefined) questionYMap.set('answer', qValue.answer);
-            if (qValue.comment !== undefined)
-              this.setYTextField(questionYMap, 'comment', qValue.comment);
+            if (qValue.answer !== undefined) answersMap.set(qKey, qValue.answer);
           });
         }
       } else if (key === 'sectionB') {
         const sb = data as RobinsIAnswers['sectionB'];
         Object.entries(sb).forEach(([subKey, subValue]) => {
           if (typeof subValue === 'object' && subValue !== null) {
-            let questionYMap = sectionYMap!.get(subKey) as Y.Map<unknown> | undefined;
-            if (!questionYMap || !(questionYMap instanceof Y.Map)) {
-              questionYMap = new Y.Map();
-              sectionYMap!.set(subKey, questionYMap);
-            }
-            if (subValue.answer !== undefined) questionYMap.set('answer', subValue.answer);
-            if (subValue.comment !== undefined)
-              this.setYTextField(questionYMap, 'comment', subValue.comment);
+            if (subValue.answer !== undefined) answersMap.set(`sectionB.${subKey}`, subValue.answer);
           } else {
-            sectionYMap!.set(subKey, subValue);
+            answersMap.set(`sectionB.${subKey}`, subValue);
           }
         });
       } else if (key === 'confoundingEvaluation') {
         const ce = data as RobinsIAnswers['confoundingEvaluation'];
-        if (ce.predefined !== undefined) sectionYMap.set('predefined', ce.predefined);
-        if (ce.additional !== undefined) sectionYMap.set('additional', ce.additional);
+        if (ce.predefined !== undefined)
+          answersMap.set('confoundingEvaluation.predefined', ce.predefined);
+        if (ce.additional !== undefined)
+          answersMap.set('confoundingEvaluation.additional', ce.additional);
       } else if (key === 'sectionD') {
         const sd = data as RobinsIAnswers['sectionD'];
-        if (sd.sources !== undefined) sectionYMap.set('sources', sd.sources);
-        if (sd.otherSpecify !== undefined) sectionYMap.set('otherSpecify', sd.otherSpecify);
-      } else {
-        Object.entries(data as Record<string, unknown>).forEach(([fieldKey, fieldValue]) => {
-          sectionYMap!.set(fieldKey, fieldValue);
-        });
+        if (sd.sources !== undefined) answersMap.set('sectionD.sources', sd.sources);
+        if (sd.otherSpecify !== undefined) answersMap.set('sectionD.otherSpecify', sd.otherSpecify);
+      } else if (key === 'sectionC') {
+        const sc = data as RobinsIAnswers['sectionC'];
+        if (sc.isPerProtocol !== undefined)
+          answersMap.set('sectionC.isPerProtocol', sc.isPerProtocol);
+      } else if (key === 'planning') {
+        // Planning text fields are handled via getTextGetter, nothing to set here
+      } else if (key === 'sectionA') {
+        // SectionA text fields are handled via getTextGetter, nothing to set here
       }
     });
   }
@@ -266,44 +255,12 @@ export class ROBINSIHandler extends ChecklistHandler {
       const answersMap = checklistYMap.get('answers') as Y.Map<unknown> | undefined;
       if (!answersMap) return null;
 
-      const sectionYMap = answersMap.get(sectionKey);
-      if (!sectionYMap || !(sectionYMap instanceof Y.Map)) return null;
-
-      // Handle domain questions
-      if (sectionKey.startsWith('domain') && questionKey) {
-        const answersNestedYMap = sectionYMap.get('answers');
-        if (!answersNestedYMap || !(answersNestedYMap instanceof Y.Map)) return null;
-
-        const questionYMap = answersNestedYMap.get(questionKey);
-        if (!questionYMap || !(questionYMap instanceof Y.Map)) return null;
-
-        const text = questionYMap.get(fieldKey);
-        if (text instanceof Y.Text) return text;
-
-        const newText = new Y.Text();
-        questionYMap.set(fieldKey, newText);
-        return newText;
-      }
-
-      // Handle sectionB questions
-      if (sectionKey === 'sectionB' && questionKey) {
-        const questionYMap = sectionYMap.get(questionKey);
-        if (!questionYMap || !(questionYMap instanceof Y.Map)) return null;
-
-        const text = questionYMap.get(fieldKey);
-        if (text instanceof Y.Text) return text;
-
-        const newText = new Y.Text();
-        questionYMap.set(fieldKey, newText);
-        return newText;
-      }
-
-      // Handle section-level fields
-      const text = sectionYMap.get(fieldKey);
+      const flatKey = questionKey ? `${questionKey}.${fieldKey}` : `${sectionKey}.${fieldKey}`;
+      const text = answersMap.get(flatKey);
       if (text instanceof Y.Text) return text;
 
       const newText = new Y.Text();
-      sectionYMap.set(fieldKey, newText);
+      answersMap.set(flatKey, newText);
       return newText;
     };
   }

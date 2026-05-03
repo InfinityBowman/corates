@@ -47,16 +47,25 @@ export class AMSTAR2Handler extends ChecklistHandler {
     key: K,
     data: Amstar2Answers[K],
   ): void {
-    let questionYMap = answersMap.get(key) as Y.Map<unknown> | undefined;
-    if (!questionYMap || !(questionYMap instanceof Y.Map)) {
-      questionYMap = new Y.Map();
-      answersMap.set(key, questionYMap);
+    answersMap.set(`${key}.answers`, data.answers);
+    answersMap.set(`${key}.critical`, data.critical ?? false);
+  }
+
+  serializeAnswers(answersMap: Y.Map<unknown>): Record<string, unknown> {
+    const grouped: Record<string, Record<string, unknown>> = {};
+    for (const [key, value] of answersMap.entries()) {
+      const dotIdx = key.indexOf('.');
+      if (dotIdx === -1) {
+        // Legacy nested Y.Map entry
+        grouped[key] = this.serializeKey(key, value);
+        continue;
+      }
+      const prefix = key.substring(0, dotIdx);
+      const field = key.substring(dotIdx + 1);
+      if (!grouped[prefix]) grouped[prefix] = {};
+      grouped[prefix][field] = value instanceof Y.Text ? value.toString() : value;
     }
-    questionYMap.set('answers', data.answers);
-    questionYMap.set('critical', data.critical ?? false);
-    if (!questionYMap.get('note')) {
-      questionYMap.set('note', new Y.Text());
-    }
+    return grouped;
   }
 
   getTextGetter(getYDoc: () => Y.Doc | null): TextGetterFn {
@@ -77,14 +86,12 @@ export class AMSTAR2Handler extends ChecklistHandler {
       const answersMap = checklistYMap.get('answers') as Y.Map<unknown> | undefined;
       if (!answersMap) return null;
 
-      const questionYMap = answersMap.get(questionKey);
-      if (!questionYMap || !(questionYMap instanceof Y.Map)) return null;
-
-      const note = questionYMap.get('note');
+      const flatKey = `${questionKey}.note`;
+      const note = answersMap.get(flatKey);
       if (note instanceof Y.Text) return note;
 
       const newNote = new Y.Text();
-      questionYMap.set('note', newNote);
+      answersMap.set(flatKey, newNote);
       return newNote;
     };
   }

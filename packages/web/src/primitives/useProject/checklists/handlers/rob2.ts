@@ -4,7 +4,7 @@
 
 import * as Y from 'yjs';
 import type { Rob2Answers, Rob2Key } from '@corates/shared/checklists/rob2';
-import { ChecklistHandler, yTextToString, type TextGetterFn } from './base';
+import { ChecklistHandler, type TextGetterFn } from './base';
 
 interface ROB2DomainTemplate {
   judgement?: string | null;
@@ -17,6 +17,12 @@ interface ROB2PreliminaryTemplate {
   aim?: string | null;
   deviationsToAddress?: string[];
   sources?: Record<string, boolean>;
+}
+
+function questionKeyToDomain(qKey: string): string | null {
+  const match = qKey.match(/^d(\d+[a-z]?)_/);
+  if (!match) return null;
+  return `domain${match[1]}`;
 }
 
 export class ROB2Handler extends ChecklistHandler {
@@ -75,113 +81,70 @@ export class ROB2Handler extends ChecklistHandler {
     return answersYMap;
   }
 
-  serializeKey(key: string, sectionYMap: unknown): unknown {
-    if (!(sectionYMap instanceof Y.Map)) return sectionYMap;
+  serializeAnswers(answersMap: Y.Map<unknown>): Record<string, unknown> {
+    const result: Record<string, Record<string, unknown>> = {};
 
-    if (key.startsWith('domain')) {
-      const sectionData: Record<string, unknown> = {
-        judgement: sectionYMap.get('judgement') ?? null,
-        answers: {} as Record<string, { answer: string | null; comment: string }>,
-      };
-      const direction = sectionYMap.get('direction');
-      if (direction !== undefined) sectionData.direction = direction;
+    for (const [key, value] of answersMap.entries()) {
+      if (value instanceof Y.Map) {
+        result[key] = this.serializeKey(key, value);
+        continue;
+      }
 
-      const answersNestedYMap = sectionYMap.get('answers');
-      if (answersNestedYMap instanceof Y.Map) {
-        const answersObj = sectionData.answers as Record<
-          string,
-          { answer: string | null; comment: string }
-        >;
-        for (const [qKey, questionYMap] of answersNestedYMap.entries()) {
-          if (questionYMap instanceof Y.Map) {
-            answersObj[qKey] = {
-              answer: (questionYMap.get('answer') as string) ?? null,
-              comment: yTextToString(questionYMap.get('comment')),
-            };
-          } else {
-            answersObj[qKey] = questionYMap as { answer: string | null; comment: string };
-          }
+      const dotIdx = key.indexOf('.');
+      if (dotIdx === -1) {
+        const domain = questionKeyToDomain(key);
+        if (domain) {
+          if (!result[domain]) result[domain] = {};
+          if (!result[domain].answers) result[domain].answers = {};
+          const answers = result[domain].answers as Record<string, Record<string, unknown>>;
+          if (!answers[key]) answers[key] = {};
+          answers[key].answer = value;
         }
+        continue;
       }
-      return sectionData;
-    }
 
-    if (key === 'overall') {
-      const sectionData: Record<string, unknown> = {
-        judgement: sectionYMap.get('judgement') ?? null,
-      };
-      const direction = sectionYMap.get('direction');
-      if (direction !== undefined) sectionData.direction = direction;
-      return sectionData;
-    }
+      const prefix = key.substring(0, dotIdx);
+      const field = key.substring(dotIdx + 1);
 
-    if (key === 'preliminary') {
-      return {
-        studyDesign: sectionYMap.get('studyDesign') ?? null,
-        experimental: yTextToString(sectionYMap.get('experimental')),
-        comparator: yTextToString(sectionYMap.get('comparator')),
-        numericalResult: yTextToString(sectionYMap.get('numericalResult')),
-        aim: sectionYMap.get('aim') ?? null,
-        deviationsToAddress: sectionYMap.get('deviationsToAddress') ?? [],
-        sources: sectionYMap.get('sources') ?? {},
-      };
-    }
-
-    const sectionData: Record<string, unknown> = {};
-    for (const [fieldKey, fieldValue] of sectionYMap.entries()) {
-      if (fieldValue instanceof Y.Text) {
-        sectionData[fieldKey] = fieldValue.toString();
-      } else {
-        sectionData[fieldKey] = fieldValue;
+      const domain = questionKeyToDomain(prefix);
+      if (domain) {
+        if (!result[domain]) result[domain] = {};
+        if (!result[domain].answers) result[domain].answers = {};
+        const answers = result[domain].answers as Record<string, Record<string, unknown>>;
+        if (!answers[prefix]) answers[prefix] = {};
+        answers[prefix][field] = value instanceof Y.Text ? value.toString() : value;
+        continue;
       }
+
+      if (!result[prefix]) result[prefix] = {};
+      result[prefix][field] = value instanceof Y.Text ? value.toString() : value;
     }
-    return sectionData;
+
+    return result;
   }
 
   updateAnswer<K extends Rob2Key>(answersMap: Y.Map<unknown>, key: K, data: Rob2Answers[K]): void {
     const doc = answersMap.doc!;
     doc.transact(() => {
-      let sectionYMap = answersMap.get(key) as Y.Map<unknown> | undefined;
-
-      if (!sectionYMap || !(sectionYMap instanceof Y.Map)) {
-        sectionYMap = new Y.Map();
-        answersMap.set(key, sectionYMap);
-      }
-
       if (key.startsWith('domain') || key === 'overall') {
         const domainData = data as Rob2Answers['domain1'];
-        if (domainData.judgement !== undefined) {
-          sectionYMap.set('judgement', domainData.judgement);
-        }
         if (domainData.direction !== undefined) {
-          sectionYMap.set('direction', domainData.direction);
+          answersMap.set(`${key}.direction`, domainData.direction);
         }
-
         if (domainData.answers) {
-          let answersNestedYMap = sectionYMap.get('answers') as Y.Map<unknown> | undefined;
-          if (!answersNestedYMap || !(answersNestedYMap instanceof Y.Map)) {
-            answersNestedYMap = new Y.Map();
-            sectionYMap.set('answers', answersNestedYMap);
-          }
-
           Object.entries(domainData.answers).forEach(([qKey, qValue]) => {
-            let questionYMap = answersNestedYMap!.get(qKey) as Y.Map<unknown> | undefined;
-            if (!questionYMap || !(questionYMap instanceof Y.Map)) {
-              questionYMap = new Y.Map();
-              answersNestedYMap!.set(qKey, questionYMap);
-            }
-            if (qValue.answer !== undefined) questionYMap.set('answer', qValue.answer);
+            if (qValue.answer !== undefined) answersMap.set(qKey, qValue.answer);
           });
         }
       } else if (key === 'preliminary') {
         const prelimData = data as Rob2Answers['preliminary'];
         if (prelimData.studyDesign !== undefined)
-          sectionYMap.set('studyDesign', prelimData.studyDesign);
-        if (prelimData.aim !== undefined) sectionYMap.set('aim', prelimData.aim);
+          answersMap.set('preliminary.studyDesign', prelimData.studyDesign);
+        if (prelimData.aim !== undefined) answersMap.set('preliminary.aim', prelimData.aim);
         if (prelimData.deviationsToAddress !== undefined)
-          sectionYMap.set('deviationsToAddress', prelimData.deviationsToAddress);
-        if (prelimData.sources !== undefined) sectionYMap.set('sources', prelimData.sources);
-        // NoteEditor manages Y.Text fields (experimental, comparator, numericalResult)
+          answersMap.set('preliminary.deviationsToAddress', prelimData.deviationsToAddress);
+        if (prelimData.sources !== undefined)
+          answersMap.set('preliminary.sources', prelimData.sources);
       }
     });
   }
@@ -213,31 +176,13 @@ export class ROB2Handler extends ChecklistHandler {
       const answersMap = checklistYMap.get('answers') as Y.Map<unknown> | undefined;
       if (!answersMap) return null;
 
-      const sectionYMap = answersMap.get(sectionKey);
-      if (!sectionYMap || !(sectionYMap instanceof Y.Map)) return null;
-
-      // Handle domain questions
-      if (sectionKey.startsWith('domain') && questionKey) {
-        const answersNestedYMap = sectionYMap.get('answers');
-        if (!answersNestedYMap || !(answersNestedYMap instanceof Y.Map)) return null;
-
-        const questionYMap = answersNestedYMap.get(questionKey);
-        if (!questionYMap || !(questionYMap instanceof Y.Map)) return null;
-
-        const text = questionYMap.get(fieldKey);
-        if (text instanceof Y.Text) return text;
-
-        const newText = new Y.Text();
-        questionYMap.set(fieldKey, newText);
-        return newText;
-      }
-
-      // Handle section-level fields (preliminary, overall)
-      const text = sectionYMap.get(fieldKey);
+      // Flat key lookup
+      const flatKey = questionKey ? `${questionKey}.${fieldKey}` : `${sectionKey}.${fieldKey}`;
+      const text = answersMap.get(flatKey);
       if (text instanceof Y.Text) return text;
 
       const newText = new Y.Text();
-      sectionYMap.set(fieldKey, newText);
+      answersMap.set(flatKey, newText);
       return newText;
     };
   }
