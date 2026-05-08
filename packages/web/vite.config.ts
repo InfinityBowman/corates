@@ -6,6 +6,7 @@ import viteTsConfigPaths from 'vite-tsconfig-paths';
 import tailwindcss from '@tailwindcss/vite';
 import { cloudflare } from '@cloudflare/vite-plugin';
 import { sentryVitePlugin } from '@sentry/vite-plugin';
+import type { PluginOption } from 'vite';
 
 export default defineConfig({
   build: {
@@ -56,6 +57,6 @@ export default defineConfig({
       disable: !process.env.SENTRY_AUTH_TOKEN,
       reactComponentAnnotation: { enabled: true },
       sourcemaps: { filesToDeleteAfterUpload: ['./dist/client/**/*.map'] },
-    }),
+    }) as unknown as PluginOption,
   ],
 });

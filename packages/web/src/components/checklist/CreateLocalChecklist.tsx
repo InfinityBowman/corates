@@ -3,6 +3,12 @@
  * Allows setting a name, selecting checklist type, and optionally uploading a PDF
  */
 
+declare global {
+  interface Window {
+    plausible?: (event: string, options?: { props?: Record<string, string> }) => void;
+  }
+}
+
 import { useState, useCallback } from 'react';
 import { useNavigate, useSearch, Link } from '@tanstack/react-router';
 import { FileTextIcon, XIcon, CloudUploadIcon } from 'lucide-react';
@@ -75,6 +81,8 @@ export function CreateLocalChecklist({ type: typeParam }: { type?: string }) {
         if (!id) {
           throw new Error(`Unsupported checklist type: ${checklistType}`);
         }
+
+        window.plausible?.('LocalAppraisal', { props: { type: checklistType } });
 
         if (pdfFile) {
           const arrayBuffer = await pdfFile.arrayBuffer();
