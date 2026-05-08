@@ -247,7 +247,7 @@ export function ReconciliationWrapper({
   useEffect(() => {
     if (
       !currentStudy ||
-      connectionState.phase !== 'synced' ||
+      (connectionState.phase !== 'synced' && connectionState.phase !== 'cached') ||
       reconciledChecklistId ||
       hasCheckedForReconciled ||
       !createProjectChecklist
@@ -375,15 +375,17 @@ export function ReconciliationWrapper({
   }, [currentStudy, reconciledChecklistId]);
 
   const reconciledChecklistData = useMemo(() => {
-    if (!reconciledChecklistId || !reconciledChecklistMeta?.answers) return null;
+    if (!reconciledChecklistId || !reconciledChecklistMeta || !getChecklistData) return null;
+    const data = getChecklistData(studyId, reconciledChecklistId);
+    if (!data) return null;
     return {
       id: reconciledChecklistId,
       name: 'Reconciled Checklist',
       reviewerName: 'Consensus',
       createdAt: reconciledChecklistMeta.createdAt || 0,
-      ...reconciledChecklistMeta.answers,
+      ...(data.answers ?? {}),
     };
-  }, [reconciledChecklistId, reconciledChecklistMeta]);
+  }, [reconciledChecklistId, reconciledChecklistMeta, getChecklistData, studyId]);
 
   // Build project path
   const getProjectPath = useCallback(() => `/projects/${projectId}`, [projectId]);

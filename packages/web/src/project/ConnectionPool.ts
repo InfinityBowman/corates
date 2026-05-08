@@ -201,7 +201,11 @@ class ConnectionPool {
     if (!isLocal) {
       entry.connectionManager = createConnectionManager(projectId, ydoc, {
         onSync: () => {
-          migrateYDocToFlatKeys(ydoc);
+          try {
+            migrateYDocToFlatKeys(ydoc);
+          } catch (err) {
+            console.error('Flat-key migration failed during sync:', err);
+          }
           useProjectStore.getState().dispatchConnectionEvent(projectId, { type: 'SYNC_COMPLETE' });
         },
         isLocalProject: () => isLocal,
