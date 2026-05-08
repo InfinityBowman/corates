@@ -188,7 +188,10 @@ async function rewriteROB2ToNested(page: import('@playwright/test').Page) {
   });
 }
 
+const isRemote = !!process.env.PLAYWRIGHT_BASE_URL;
+
 test.describe('Flat-key migration', () => {
+  test.skip(isRemote, 'Requires dev-mode browser globals only available in local dev server');
   test('AMSTAR2: nested answers are migrated and display correctly after reload', async ({
     page,
   }) => {
