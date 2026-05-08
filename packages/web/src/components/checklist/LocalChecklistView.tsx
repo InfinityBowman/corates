@@ -58,6 +58,7 @@ function LocalChecklistEditor({ checklistId }: { checklistId: string }) {
   );
   const currentScore = useChecklistScore(checklistId, checklistId, checklistType);
 
+
   const [pdfState, setPdfState] = useState<{
     loading: boolean;
     data: ArrayBuffer | null;
@@ -100,6 +101,7 @@ function LocalChecklistEditor({ checklistId }: { checklistId: string }) {
   const handlePdfChange = useCallback(
     async (data: ArrayBuffer, fileName: string) => {
       setPdfState({ loading: false, data, fileName, forChecklistId: checklistId });
+      window.plausible?.('LocalAppraisal:PDF', { props: { type: checklistType || 'unknown' } });
       try {
         await db.localChecklistPdfs.put({
           checklistId,
@@ -111,7 +113,7 @@ function LocalChecklistEditor({ checklistId }: { checklistId: string }) {
         console.error('Error saving PDF:', err);
       }
     },
-    [checklistId],
+    [checklistId, checklistType],
   );
 
   const handlePdfClear = useCallback(async () => {

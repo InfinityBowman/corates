@@ -85,6 +85,7 @@ export function CreateLocalChecklist({ type: typeParam }: { type?: string }) {
         window.plausible?.('LocalAppraisal', { props: { type: checklistType } });
 
         if (pdfFile) {
+          window.plausible?.('LocalAppraisal:PDF', { props: { type: checklistType } });
           const arrayBuffer = await pdfFile.arrayBuffer();
           await db.localChecklistPdfs.put({
             checklistId: id,
