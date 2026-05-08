@@ -17,7 +17,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { project } from '@/project';
 import { useProjectContext } from '../ProjectContext';
-import { useProjectMeta } from '@/stores/projectAtoms';
+import { useProjectMetaById } from '@/primitives/useProject/reactor';
 import { showToast } from '@/components/ui/toast';
 
 export function OutcomeManager() {
@@ -30,7 +30,7 @@ export function OutcomeManager() {
   const [isSaving, setIsSaving] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
 
-  const meta = useProjectMeta(projectId);
+  const meta = useProjectMetaById(projectId);
   const outcomes = useMemo(() => meta?.outcomes ?? [], [meta]);
 
   const handleAdd = useCallback(async () => {

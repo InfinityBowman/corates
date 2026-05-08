@@ -66,11 +66,8 @@ describe('ROB2Handler - answer changes should preserve Y.Text comments', () => {
   });
 
   /** Get the Y.Text for a question's comment field */
-  function getCommentYText(domainKey: string, questionKey: string) {
-    const domainMap = answersYMap.get(domainKey);
-    const answersMap = domainMap.get('answers');
-    const questionMap = answersMap.get(questionKey);
-    return questionMap.get('comment');
+  function getCommentYText(_domainKey: string, questionKey: string) {
+    return answersYMap.get(`${questionKey}.comment`);
   }
 
   it('changing a different question answer should not wipe comments', () => {
@@ -125,8 +122,7 @@ describe('ROB2Handler - answer changes should preserve Y.Text comments', () => {
     const serialized = handler.serializeAnswers(answersYMap) as SerializedAnswers;
 
     // Step 2: User types into the experimental field via NoteEditor
-    const prelimMap = answersYMap.get('preliminary');
-    const experimentalYText = prelimMap.get('experimental');
+    const experimentalYText = answersYMap.get('preliminary.experimental');
     experimentalYText.insert(0, 'Drug A 10mg daily');
     expect(experimentalYText.toString()).toBe('Drug A 10mg daily');
 

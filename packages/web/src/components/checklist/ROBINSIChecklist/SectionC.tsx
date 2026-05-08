@@ -1,28 +1,25 @@
-/**
- * SectionC - ROBINS-I Part C: Specify the (hypothetical) target randomized trial
- * Includes the isPerProtocol toggle that controls which Domain 1 variant is shown.
- */
-
-import { useMemo, useCallback, useId } from 'react';
-import type * as Y from 'yjs';
+import { useMemo, useId } from 'react';
 import { SECTION_C } from './checklist-map';
 import { NoteEditor } from '@/components/checklist/common/NoteEditor';
-import type { TextRef } from '@/primitives/useProject/checklists';
-
-interface SectionCState {
-  isPerProtocol?: boolean;
-  [key: string]: unknown;
-}
+import {
+  useAnswer,
+  useAnswersYMap,
+  useProjectReactor,
+} from '@/primitives/useProject/reactor/hooks';
+import { resolveYText } from '@/primitives/useProject/reactor/ytext';
 
 interface SectionCProps {
-  sectionCState: SectionCState | undefined;
-  onUpdate: (_newState: SectionCState) => void;
+  studyId: string;
+  checklistId: string;
   disabled?: boolean;
-  getTextRef: (_ref: TextRef) => Y.Text | null;
 }
 
-export function SectionC({ sectionCState, onUpdate, disabled, getTextRef }: SectionCProps) {
+export function SectionC({ studyId, checklistId, disabled }: SectionCProps) {
   const uniqueId = useId();
+  const { ydoc } = useProjectReactor();
+  const answersYMap = useAnswersYMap(studyId, checklistId);
+  const isPerProtocol = useAnswer<boolean>(studyId, checklistId, 'sectionC.isPerProtocol');
+
   const textFields = useMemo(
     () =>
       Object.entries(SECTION_C).filter(
@@ -40,12 +37,9 @@ export function SectionC({ sectionCState, onUpdate, disabled, getTextRef }: Sect
 
   const c4Field = SECTION_C.c4;
 
-  const handleProtocolToggle = useCallback(
-    (value: boolean) => {
-      onUpdate({ ...sectionCState, isPerProtocol: value });
-    },
-    [sectionCState, onUpdate],
-  );
+  const handleProtocolToggle = (value: boolean) => {
+    answersYMap?.set('sectionC.isPerProtocol', value);
+  };
 
   return (
     <div className='border-border bg-card overflow-hidden rounded-lg border shadow-sm'>
@@ -57,28 +51,15 @@ export function SectionC({ sectionCState, onUpdate, disabled, getTextRef }: Sect
       </div>
 
       <div className='flex flex-col gap-4 px-6 py-4'>
-        {/* Text fields: C1, C2, C3 */}
         {textFields.map(([key, field]) => (
-          <div key={key} className='flex flex-col gap-2'>
-            <label className='block'>
-              <span className='text-secondary-foreground text-sm'>
-                <span className='font-medium'>{field.label}.</span>
-                <span className='ml-1'>{field.text}</span>
-              </span>
-              <div className='mt-2'>
-                <NoteEditor
-                  yText={getTextRef({
-                    type: 'ROBINS_I',
-                    sectionKey: 'sectionC',
-                    fieldKey: field.stateKey,
-                  })}
-                  placeholder={field.placeholder}
-                  readOnly={disabled}
-                  inline={true}
-                />
-              </div>
-            </label>
-          </div>
+          <SectionCTextField
+            key={key}
+            ydoc={ydoc}
+            studyId={studyId}
+            checklistId={checklistId}
+            field={field}
+            disabled={disabled}
+          />
         ))}
 
         {/* C4: Protocol type radio */}
@@ -92,7 +73,7 @@ export function SectionC({ sectionCState, onUpdate, disabled, getTextRef }: Sect
               <label
                 key={option.label}
                 className={`flex items-center gap-3 rounded-lg border-2 p-3 transition-all duration-200 ${
-                  sectionCState?.isPerProtocol === option.value ?
+                  isPerProtocol === option.value ?
                     'border-blue-500 bg-blue-50'
                   : 'border-border bg-card hover:border-border'
                 } ${disabled ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'}`}
@@ -100,7 +81,7 @@ export function SectionC({ sectionCState, onUpdate, disabled, getTextRef }: Sect
                 <input
                   type='radio'
                   name={`protocol-type-c4-${uniqueId}`}
-                  checked={sectionCState?.isPerProtocol === option.value}
+                  checked={isPerProtocol === option.value}
                   disabled={disabled}
                   onChange={() => !disabled && handleProtocolToggle(option.value)}
                   className='size-4 text-blue-600'
@@ -111,6 +92,44 @@ export function SectionC({ sectionCState, onUpdate, disabled, getTextRef }: Sect
           </div>
         </div>
       </div>
+    </div>
+  );
+}
+
+function SectionCTextField({
+  ydoc,
+  studyId,
+  checklistId,
+  field,
+  disabled,
+}: {
+  ydoc: any;
+  studyId: string;
+  checklistId: string;
+  field: { label: string; text: string; placeholder: string; stateKey: string };
+  disabled?: boolean;
+}) {
+  const yText = useMemo(
+    () => resolveYText(ydoc, studyId, checklistId, `sectionC.${field.stateKey}`),
+    [ydoc, studyId, checklistId, field.stateKey],
+  );
+
+  return (
+    <div className='flex flex-col gap-2'>
+      <label className='block'>
+        <span className='text-secondary-foreground text-sm'>
+          <span className='font-medium'>{field.label}.</span>
+          <span className='ml-1'>{field.text}</span>
+        </span>
+        <div className='mt-2'>
+          <NoteEditor
+            yText={yText}
+            placeholder={field.placeholder}
+            readOnly={disabled}
+            inline={true}
+          />
+        </div>
+      </label>
     </div>
   );
 }

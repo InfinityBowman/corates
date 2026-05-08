@@ -145,7 +145,7 @@ describe('buildStudyForLocalRow — round-trip', () => {
         if (!key.startsWith('domain')) continue;
         const before = row[key] as AnyRecord;
         const after = serialized[key] as AnyRecord;
-        expect(after.judgement).toEqual(before.judgement ?? null);
+        // ROB2 computes judgement dynamically — it's not stored in the flat-key Y.Map
         const beforeAnswers = (before.answers ?? {}) as Record<string, { answer?: unknown }>;
         const afterAnswers = (after.answers ?? {}) as Record<string, { answer: unknown }>;
         for (const qKey of Object.keys(beforeAnswers)) {
@@ -318,8 +318,7 @@ describe('buildStudyForLocalRow — round-trip', () => {
       const checklistsMap = studyYMap.get('checklists') as Y.Map<unknown>;
       const checklistYMap = checklistsMap.get(row.id) as Y.Map<unknown>;
       const answersYMap = checklistYMap.get('answers') as Y.Map<unknown>;
-      const q1YMap = answersYMap.get('q1') as Y.Map<unknown>;
-      const q1Note = q1YMap.get('note') as Y.Text;
+      const q1Note = answersYMap.get('q1.note') as Y.Text;
       expect(q1Note.toString()).toBe('');
 
       // Now run the V2 recovery step: find existing study, seed.
@@ -426,8 +425,7 @@ describe('buildStudyForLocalRow — round-trip', () => {
       ).get('answers') as Y.Map<unknown>;
 
       // Simulate: the user then edits the Y.Text after migration.
-      const q1YMap = answersYMap.get('q1') as Y.Map<unknown>;
-      const noteYText = q1YMap.get('note') as Y.Text;
+      const noteYText = answersYMap.get('q1.note') as Y.Text;
       noteYText.delete(0, noteYText.length);
       noteYText.insert(0, 'User edited this after migration');
 

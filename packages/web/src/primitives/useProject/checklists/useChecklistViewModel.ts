@@ -1,22 +1,18 @@
 /**
- * Derives the view-model a checklist editor needs from the project Y.Doc:
- * the study/checklist records, the flat answer object UI components consume,
- * the checklist type, and the current score. Shared by both the collab view
- * (`ChecklistYjsWrapper`) and the local-practice view (`LocalChecklistView`).
+ * Derives the view-model a checklist editor needs from the project store:
+ * the study/checklist records and the checklist type. Shared by both the
+ * collab view (`ChecklistYjsWrapper`) and the local-practice view
+ * (`LocalChecklistView`). Scoring is handled separately via `useChecklistScore`.
  */
 
 import { useMemo } from 'react';
 import type { StudyInfo, ChecklistEntry } from '@/stores/projectStore';
-import { useStudy } from '@/stores/projectAtoms';
-import { getChecklistTypeFromState, scoreChecklistOfType } from '@/checklist-registry/index';
-import { useChecklistAnswers } from './useChecklistAnswers';
+import { useStudyById } from '@/primitives/useProject/reactor';
 
 export interface ChecklistViewModel {
   currentStudy: StudyInfo | null;
   currentChecklist: ChecklistEntry | null;
-  checklistForUI: Record<string, unknown> | null;
   checklistType: string | null;
-  currentScore: string | null;
 }
 
 export function useChecklistViewModel(
@@ -24,36 +20,14 @@ export function useChecklistViewModel(
   studyId: string,
   checklistId: string,
 ): ChecklistViewModel {
-  const currentStudy = useStudy(projectId, studyId) ?? null;
+  const currentStudy = useStudyById(projectId, studyId) ?? null;
 
   const currentChecklist = useMemo(
     () => (currentStudy?.checklists ?? []).find(c => c.id === checklistId) ?? null,
     [currentStudy, checklistId],
   );
 
-  const answers = useChecklistAnswers(projectId, studyId, checklistId);
+  const checklistType = currentChecklist?.type ?? null;
 
-  const checklistForUI = useMemo(() => {
-    if (!currentChecklist || !answers) return null;
-    return {
-      id: currentChecklist.id,
-      name: currentStudy?.name ?? 'Checklist',
-      reviewerName: '',
-      createdAt: currentChecklist.createdAt as number | undefined,
-      ...answers,
-    };
-  }, [currentChecklist, currentStudy?.name, answers]);
-
-  const checklistType = useMemo(() => {
-    if (currentChecklist?.type) return currentChecklist.type;
-    if (checklistForUI) return getChecklistTypeFromState(checklistForUI);
-    return null;
-  }, [currentChecklist, checklistForUI]);
-
-  const currentScore = useMemo(() => {
-    if (!checklistForUI || !checklistType) return null;
-    return scoreChecklistOfType(checklistType, checklistForUI);
-  }, [checklistForUI, checklistType]);
-
-  return { currentStudy, currentChecklist, checklistForUI, checklistType, currentScore };
+  return { currentStudy, currentChecklist, checklistType };
 }

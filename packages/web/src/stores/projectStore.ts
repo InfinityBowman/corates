@@ -1,8 +1,5 @@
 /**
- * Project Store - Central store for project data (Zustand + immer)
- *
- * This store holds cached project data that persists across navigation.
- * The Y.js sync engine updates this store, and UI components read from it.
+ * Project Store - Connection state management and shared type definitions (Zustand + immer)
  */
 
 import { create } from 'zustand';
@@ -13,16 +10,6 @@ import {
   type ConnectionEvent,
   type ConnectionMachineState,
 } from '@/project/connectionReducer';
-import { CHECKLIST_STATUS } from '@corates/shared/checklists';
-
-// localStorage key for persisted project stats
-const PROJECT_STATS_KEY = 'corates:projectStats';
-
-interface ProjectStats {
-  studyCount: number;
-  completedCount: number;
-  lastUpdated: number;
-}
 
 export interface PdfEntry {
   id: string;
@@ -129,71 +116,28 @@ export interface StudyInfo {
   checklists: ChecklistEntry[];
   pdfs: PdfEntry[];
   reconciliation?: ReconciliationEntry;
-  annotations: Record<string, AnnotationEntry[]>;
 }
 
 interface ProjectStoreState {
   activeProjectId: string | null;
   connections: Record<string, ConnectionMachineState>;
-  projectStats: Record<string, ProjectStats>;
 }
 
 interface ProjectStoreActions {
   setActiveProject: (projectId: string | null) => void;
-  updateProjectStats: (projectId: string, studies: StudyInfo[]) => void;
   dispatchConnectionEvent: (projectId: string, event: ConnectionEvent) => void;
   clearProject: (projectId: string) => void;
-}
-
-function loadPersistedStats(): Record<string, ProjectStats> {
-  try {
-    const stored = localStorage.getItem(PROJECT_STATS_KEY);
-    return stored ? JSON.parse(stored) : {};
-  } catch (err) {
-    console.warn('Failed to load project stats from localStorage:', (err as Error).message);
-    return {};
-  }
-}
-
-function persistStats(stats: Record<string, ProjectStats>) {
-  try {
-    localStorage.setItem(PROJECT_STATS_KEY, JSON.stringify(stats));
-  } catch (err) {
-    console.warn('Failed to persist project stats to localStorage:', (err as Error).message);
-  }
-}
-
-function computeProjectStats(studies: StudyInfo[]): { studyCount: number; completedCount: number } {
-  const studyCount = studies.length;
-  let completedCount = 0;
-
-  for (const study of studies) {
-    if (study.checklists?.some(c => c.status === CHECKLIST_STATUS.FINALIZED)) {
-      completedCount++;
-    }
-  }
-
-  return { studyCount, completedCount };
 }
 
 export const useProjectStore = create<ProjectStoreState & ProjectStoreActions>()(
   immer(set => ({
     activeProjectId: null,
     connections: {},
-    projectStats: loadPersistedStats(),
 
     setActiveProject: projectId =>
       set(state => {
         state.activeProjectId = projectId;
       }),
-
-    updateProjectStats: (projectId, studies) => {
-      set(state => {
-        const stats = computeProjectStats(studies);
-        state.projectStats[projectId] = { ...stats, lastUpdated: Date.now() };
-      });
-      persistStats(useProjectStore.getState().projectStats);
-    },
 
     dispatchConnectionEvent: (projectId, event) =>
       set(state => {
@@ -218,11 +162,4 @@ export function selectConnectionPhase(
   projectId: string,
 ): ConnectionMachineState {
   return state.connections[projectId] || INITIAL_CONNECTION;
-}
-
-export function selectProjectStats(
-  state: ProjectStoreState,
-  projectId: string,
-): ProjectStats | null {
-  return state.projectStats[projectId] || null;
 }

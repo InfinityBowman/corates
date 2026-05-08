@@ -19,43 +19,27 @@ export class AMSTAR2Handler extends ChecklistHandler {
 
   createAnswersYMap(answersData: Record<string, unknown>): Y.Map<unknown> {
     const answersYMap = new Y.Map();
-
     const multiPartParents = ['q9', 'q11'];
     const subQuestionPattern = /^(q9|q11)[a-z]$/;
     const addedKeys = new Set<string>();
 
     Object.entries(answersData).forEach(([questionKey, questionData]) => {
       const qd = questionData as Amstar2Answers[Amstar2Key];
-      const questionYMap = new Y.Map();
-      questionYMap.set('answers', qd.answers);
-      questionYMap.set('critical', qd.critical ?? false);
-
+      answersYMap.set(`${questionKey}.answers`, qd.answers);
+      answersYMap.set(`${questionKey}.critical`, qd.critical ?? false);
       if (!subQuestionPattern.test(questionKey)) {
-        questionYMap.set('note', new Y.Text());
+        answersYMap.set(`${questionKey}.note`, new Y.Text());
       }
-
-      answersYMap.set(questionKey, questionYMap);
       addedKeys.add(questionKey);
     });
 
     multiPartParents.forEach(parentKey => {
       if (!addedKeys.has(parentKey)) {
-        const parentYMap = new Y.Map();
-        parentYMap.set('note', new Y.Text());
-        answersYMap.set(parentKey, parentYMap);
+        answersYMap.set(`${parentKey}.note`, new Y.Text());
       }
     });
 
     return answersYMap;
-  }
-
-  serializeAnswers(answersMap: Y.Map<unknown>): Record<string, unknown> {
-    const answers: Record<string, unknown> = {};
-    for (const [key, sectionYMap] of answersMap.entries()) {
-      const section = sectionYMap as { toJSON?: () => unknown };
-      answers[key] = section.toJSON ? section.toJSON() : sectionYMap;
-    }
-    return answers;
   }
 
   updateAnswer<K extends Amstar2Key>(
@@ -63,16 +47,21 @@ export class AMSTAR2Handler extends ChecklistHandler {
     key: K,
     data: Amstar2Answers[K],
   ): void {
-    let questionYMap = answersMap.get(key) as Y.Map<unknown> | undefined;
-    if (!questionYMap || !(questionYMap instanceof Y.Map)) {
-      questionYMap = new Y.Map();
-      answersMap.set(key, questionYMap);
+    answersMap.set(`${key}.answers`, data.answers);
+    answersMap.set(`${key}.critical`, data.critical ?? false);
+  }
+
+  serializeAnswers(answersMap: Y.Map<unknown>): Record<string, unknown> {
+    const grouped: Record<string, Record<string, unknown>> = {};
+    for (const [key, value] of answersMap.entries()) {
+      const dotIdx = key.indexOf('.');
+      if (dotIdx === -1) continue;
+      const prefix = key.substring(0, dotIdx);
+      const field = key.substring(dotIdx + 1);
+      if (!grouped[prefix]) grouped[prefix] = {};
+      grouped[prefix][field] = value instanceof Y.Text ? value.toString() : value;
     }
-    questionYMap.set('answers', data.answers);
-    questionYMap.set('critical', data.critical ?? false);
-    if (!questionYMap.get('note')) {
-      questionYMap.set('note', new Y.Text());
-    }
+    return grouped;
   }
 
   getTextGetter(getYDoc: () => Y.Doc | null): TextGetterFn {
@@ -93,14 +82,12 @@ export class AMSTAR2Handler extends ChecklistHandler {
       const answersMap = checklistYMap.get('answers') as Y.Map<unknown> | undefined;
       if (!answersMap) return null;
 
-      const questionYMap = answersMap.get(questionKey);
-      if (!questionYMap || !(questionYMap instanceof Y.Map)) return null;
-
-      const note = questionYMap.get('note');
+      const flatKey = `${questionKey}.note`;
+      const note = answersMap.get(flatKey);
       if (note instanceof Y.Text) return note;
 
       const newNote = new Y.Text();
-      questionYMap.set('note', newNote);
+      answersMap.set(flatKey, newNote);
       return newNote;
     };
   }

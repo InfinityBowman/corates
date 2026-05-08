@@ -7,7 +7,7 @@
 
 import { useState } from 'react';
 import { PlusIcon, CheckIcon, AlertCircleIcon } from 'lucide-react';
-import { useProjectMembers, useProjectMeta } from '@/stores/projectAtoms';
+import { useProjectMembersById, useProjectMetaById } from '@/primitives/useProject/reactor';
 import { addStudy } from '@/server/functions/dev-tools.functions';
 
 interface ActionResult {
@@ -45,8 +45,8 @@ interface DevStudyGeneratorProps {
 }
 
 export function DevStudyGenerator({ projectId, orgId }: DevStudyGeneratorProps) {
-  const atomMembers = useProjectMembers(projectId || '');
-  const meta = useProjectMeta(projectId || '');
+  const atomMembers = useProjectMembersById(projectId || '');
+  const meta = useProjectMetaById(projectId || '');
 
   const members: MemberEntry[] = (atomMembers as MemberEntry[]) || [];
   const outcomes: OutcomeEntry[] = meta?.outcomes ?? [];

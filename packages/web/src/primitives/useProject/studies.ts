@@ -4,7 +4,6 @@
 
 import * as Y from 'yjs';
 import { connectionPool } from '@/project/ConnectionPool';
-import { getProjectAtoms } from '@/stores/projectAtoms';
 import { queryClient } from '@/lib/queryClient';
 import { queryKeys } from '@/lib/queryKeys';
 import { updateProject } from '@/server/functions/org-projects.functions';
@@ -176,10 +175,6 @@ export function createStudyOperations(
       metaMap.set('updatedAt', now);
     }
 
-    const atoms = getProjectAtoms(projectId);
-    const existingMeta = atoms.meta.get();
-    atoms.meta.set({ ...existingMeta, name: trimmed, updatedAt: now });
-    // Invalidate project list query to refetch with updated name
     queryClient.invalidateQueries({ queryKey: queryKeys.projects.all });
 
     return trimmed;
@@ -204,10 +199,6 @@ export function createStudyOperations(
       metaMap.set('updatedAt', now);
     }
 
-    const atoms = getProjectAtoms(projectId);
-    const existingMeta = atoms.meta.get();
-    atoms.meta.set({ ...existingMeta, description: trimmed || null, updatedAt: now });
-    // Invalidate project list query to refetch with updated description
     queryClient.invalidateQueries({ queryKey: queryKeys.projects.all });
 
     return trimmed;

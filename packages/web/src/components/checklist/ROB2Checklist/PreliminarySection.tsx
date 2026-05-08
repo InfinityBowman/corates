@@ -1,10 +1,4 @@
-/**
- * PreliminarySection - Preliminary considerations for ROB-2
- * Study design, interventions, numerical result, aim selection, deviations, information sources
- */
-
-import { useMemo, useCallback } from 'react';
-import type * as Y from 'yjs';
+import { useMemo } from 'react';
 import {
   PRELIMINARY_SECTION,
   STUDY_DESIGNS,
@@ -13,77 +7,65 @@ import {
   INFORMATION_SOURCES,
 } from './checklist-map';
 import { NoteEditor } from '@/components/checklist/common/NoteEditor';
-import type { TextRef } from '@/primitives/useProject/checklists';
-
-interface PreliminaryState {
-  studyDesign?: string | null;
-  aim?: string | null;
-  deviationsToAddress?: string[];
-  sources?: Record<string, boolean>;
-}
+import {
+  useAnswer,
+  useAnswersYMap,
+  useProjectReactor,
+} from '@/primitives/useProject/reactor/hooks';
+import { resolveYText } from '@/primitives/useProject/reactor/ytext';
 
 interface PreliminarySectionProps {
-  preliminaryState: PreliminaryState | undefined;
-  onUpdate: (_patch: Partial<PreliminaryState>) => void;
+  studyId: string;
+  checklistId: string;
   disabled?: boolean;
-  getTextRef: (_ref: TextRef) => Y.Text | null;
 }
 
-export function PreliminarySection({
-  preliminaryState,
-  onUpdate,
-  disabled,
-  getTextRef,
-}: PreliminarySectionProps) {
-  // Only send the changed field to onUpdate. The ROB2 handler's updateAnswer
-  // does field-level merging, so we don't need to spread the entire state.
-  // Spreading would overwrite Y.Text fields with stale/empty values.
-  const handleStudyDesignChange = useCallback(
-    (value: string) => {
-      onUpdate({ studyDesign: value });
-    },
-    [onUpdate],
+export function PreliminarySection({ studyId, checklistId, disabled }: PreliminarySectionProps) {
+  const aim = useAnswer<string>(studyId, checklistId, 'preliminary.aim');
+  const studyDesign = useAnswer<string>(studyId, checklistId, 'preliminary.studyDesign');
+  const deviationsToAddress = useAnswer<string[]>(
+    studyId,
+    checklistId,
+    'preliminary.deviationsToAddress',
   );
-
-  const handleAimChange = useCallback(
-    (aim: string) => {
-      onUpdate({ aim: preliminaryState?.aim === aim ? null : aim });
-    },
-    [preliminaryState?.aim, onUpdate],
-  );
-
-  const handleDeviationToggle = useCallback(
-    (deviation: string) => {
-      const current = preliminaryState?.deviationsToAddress || [];
-      const updated =
-        current.includes(deviation) ?
-          current.filter((d: string) => d !== deviation)
-        : [...current, deviation];
-      onUpdate({ deviationsToAddress: updated });
-    },
-    [preliminaryState?.deviationsToAddress, onUpdate],
-  );
-
-  const handleSourceToggle = useCallback(
-    (source: string) => {
-      const current = preliminaryState?.sources || {};
-      onUpdate({ sources: { ...current, [source]: !current[source] } });
-    },
-    [preliminaryState?.sources, onUpdate],
-  );
+  const sources = useAnswer<Record<string, boolean>>(studyId, checklistId, 'preliminary.sources');
+  const answersYMap = useAnswersYMap(studyId, checklistId);
+  const { ydoc } = useProjectReactor();
 
   const experimentalYText = useMemo(
-    () => getTextRef({ type: 'ROB2', sectionKey: 'preliminary', fieldKey: 'experimental' }),
-    [getTextRef],
+    () => resolveYText(ydoc, studyId, checklistId, 'preliminary.experimental'),
+    [ydoc, studyId, checklistId],
   );
   const comparatorYText = useMemo(
-    () => getTextRef({ type: 'ROB2', sectionKey: 'preliminary', fieldKey: 'comparator' }),
-    [getTextRef],
+    () => resolveYText(ydoc, studyId, checklistId, 'preliminary.comparator'),
+    [ydoc, studyId, checklistId],
   );
   const numericalResultYText = useMemo(
-    () => getTextRef({ type: 'ROB2', sectionKey: 'preliminary', fieldKey: 'numericalResult' }),
-    [getTextRef],
+    () => resolveYText(ydoc, studyId, checklistId, 'preliminary.numericalResult'),
+    [ydoc, studyId, checklistId],
   );
+
+  const handleStudyDesignChange = (value: string) => {
+    answersYMap?.set('preliminary.studyDesign', value);
+  };
+
+  const handleAimChange = (newAim: string) => {
+    answersYMap?.set('preliminary.aim', aim === newAim ? null : newAim);
+  };
+
+  const handleDeviationToggle = (deviation: string) => {
+    const current = deviationsToAddress || [];
+    const updated =
+      current.includes(deviation) ?
+        current.filter((d: string) => d !== deviation)
+      : [...current, deviation];
+    answersYMap?.set('preliminary.deviationsToAddress', updated);
+  };
+
+  const handleSourceToggle = (source: string) => {
+    const current = sources || {};
+    answersYMap?.set('preliminary.sources', { ...current, [source]: !current[source] });
+  };
 
   return (
     <div className='bg-card overflow-hidden rounded-lg shadow-md'>
@@ -110,7 +92,7 @@ export function PreliminarySection({
                 className={`rounded-lg border-2 px-3 py-2 text-sm transition-colors ${
                   disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'
                 } ${
-                  preliminaryState?.studyDesign === design ?
+                  studyDesign === design ?
                     'border-blue-400 bg-blue-50 text-blue-800'
                   : 'border-border bg-card text-muted-foreground hover:border-border'
                 }`}
@@ -166,16 +148,16 @@ export function PreliminarySection({
             {PRELIMINARY_SECTION.aim.label}
           </label>
           <div className='flex flex-col gap-2'>
-            {(['ASSIGNMENT', 'ADHERING'] as const).map(aim => (
+            {(['ASSIGNMENT', 'ADHERING'] as const).map(aimOption => (
               <button
-                key={aim}
+                key={aimOption}
                 type='button'
-                onClick={() => !disabled && handleAimChange(aim)}
+                onClick={() => !disabled && handleAimChange(aimOption)}
                 disabled={disabled}
                 className={`flex w-full items-start rounded-lg border-2 p-3 text-left text-sm transition-colors ${
                   disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'
                 } ${
-                  preliminaryState?.aim === aim ?
+                  aim === aimOption ?
                     'border-blue-400 bg-blue-50'
                   : 'border-border bg-card hover:border-border'
                 }`}
@@ -183,24 +165,20 @@ export function PreliminarySection({
                 <div className='mt-0.5 mr-3'>
                   <div
                     className={`flex size-4 items-center justify-center rounded-full border-2 ${
-                      preliminaryState?.aim === aim ?
-                        'border-blue-500 bg-blue-500'
-                      : 'border-border'
+                      aim === aimOption ? 'border-blue-500 bg-blue-500' : 'border-border'
                     }`}
                   >
-                    {preliminaryState?.aim === aim && (
-                      <div className='size-2 rounded-full bg-white' />
-                    )}
+                    {aim === aimOption && <div className='size-2 rounded-full bg-white' />}
                   </div>
                 </div>
-                <span className='text-secondary-foreground'>{AIM_OPTIONS[aim]}</span>
+                <span className='text-secondary-foreground'>{AIM_OPTIONS[aimOption]}</span>
               </button>
             ))}
           </div>
         </div>
 
         {/* Deviations to Address (only for ADHERING) */}
-        {preliminaryState?.aim === 'ADHERING' && (
+        {aim === 'ADHERING' && (
           <div>
             <label className='text-secondary-foreground mb-2 block text-sm font-medium'>
               {PRELIMINARY_SECTION.deviationsToAddress.label}
@@ -210,7 +188,7 @@ export function PreliminarySection({
             </p>
             <div className='flex flex-col gap-2'>
               {DEVIATION_OPTIONS.map(deviation => {
-                const isChecked = (preliminaryState?.deviationsToAddress || []).includes(deviation);
+                const isChecked = (deviationsToAddress || []).includes(deviation);
                 return (
                   <button
                     key={deviation}
@@ -251,7 +229,7 @@ export function PreliminarySection({
           </label>
           <div className='grid gap-2 sm:grid-cols-2'>
             {INFORMATION_SOURCES.map(source => {
-              const isChecked = preliminaryState?.sources?.[source] || false;
+              const isChecked = sources?.[source] || false;
               return (
                 <button
                   key={source}

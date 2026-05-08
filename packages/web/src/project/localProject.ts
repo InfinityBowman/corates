@@ -231,87 +231,61 @@ function seedIfEmpty(map: Y.Map<unknown>, key: string, value: unknown): void {
 function seedAmstar2(answersYMap: Y.Map<unknown>, source: Record<string, unknown>): void {
   const notes = source.notes as Record<string, unknown> | undefined;
   if (!notes) return;
-  for (const [qKey, questionYMap] of answersYMap.entries()) {
-    if (!(questionYMap instanceof Y.Map)) continue;
-    seedIfEmpty(questionYMap, 'note', notes[qKey]);
+  for (const key of Object.keys(notes)) {
+    seedIfEmpty(answersYMap, `${key}.note`, notes[key]);
   }
 }
 
 function seedRobinsI(answersYMap: Y.Map<unknown>, source: Record<string, unknown>): void {
-  const planning = answersYMap.get('planning');
-  if (planning instanceof Y.Map) {
-    const src = source.planning as Record<string, unknown> | undefined;
-    seedIfEmpty(planning, 'confoundingFactors', src?.confoundingFactors);
-  }
+  const planningSrc = source.planning as Record<string, unknown> | undefined;
+  seedIfEmpty(answersYMap, 'planning.confoundingFactors', planningSrc?.confoundingFactors);
 
-  const sectionA = answersYMap.get('sectionA');
-  if (sectionA instanceof Y.Map) {
-    const src = source.sectionA as Record<string, unknown> | undefined;
-    seedIfEmpty(sectionA, 'numericalResult', src?.numericalResult);
-    seedIfEmpty(sectionA, 'furtherDetails', src?.furtherDetails);
-    seedIfEmpty(sectionA, 'outcome', src?.outcome);
-  }
+  const sectionASrc = source.sectionA as Record<string, unknown> | undefined;
+  seedIfEmpty(answersYMap, 'sectionA.numericalResult', sectionASrc?.numericalResult);
+  seedIfEmpty(answersYMap, 'sectionA.furtherDetails', sectionASrc?.furtherDetails);
+  seedIfEmpty(answersYMap, 'sectionA.outcome', sectionASrc?.outcome);
 
-  const sectionB = answersYMap.get('sectionB');
-  if (sectionB instanceof Y.Map) {
-    const src = source.sectionB as Record<string, Record<string, unknown>> | undefined;
-    if (src) {
-      for (const [subKey, subYMap] of sectionB.entries()) {
-        if (!(subYMap instanceof Y.Map)) continue;
-        seedIfEmpty(subYMap, 'comment', src[subKey]?.comment);
+  const sectionBSrc = source.sectionB as Record<string, Record<string, unknown>> | undefined;
+  if (sectionBSrc) {
+    for (const [subKey, subVal] of Object.entries(sectionBSrc)) {
+      if (typeof subVal === 'object' && subVal !== null) {
+        seedIfEmpty(answersYMap, `sectionB.${subKey}.comment`, subVal.comment);
       }
     }
   }
 
-  const sectionC = answersYMap.get('sectionC');
-  if (sectionC instanceof Y.Map) {
-    const src = source.sectionC as Record<string, unknown> | undefined;
-    seedIfEmpty(sectionC, 'participants', src?.participants);
-    seedIfEmpty(sectionC, 'interventionStrategy', src?.interventionStrategy);
-    seedIfEmpty(sectionC, 'comparatorStrategy', src?.comparatorStrategy);
-  }
+  const sectionCSrc = source.sectionC as Record<string, unknown> | undefined;
+  seedIfEmpty(answersYMap, 'sectionC.participants', sectionCSrc?.participants);
+  seedIfEmpty(answersYMap, 'sectionC.interventionStrategy', sectionCSrc?.interventionStrategy);
+  seedIfEmpty(answersYMap, 'sectionC.comparatorStrategy', sectionCSrc?.comparatorStrategy);
 
-  const sectionD = answersYMap.get('sectionD');
-  if (sectionD instanceof Y.Map) {
-    const src = source.sectionD as Record<string, unknown> | undefined;
-    seedIfEmpty(sectionD, 'otherSpecify', src?.otherSpecify);
-  }
+  const sectionDSrc = source.sectionD as Record<string, unknown> | undefined;
+  seedIfEmpty(answersYMap, 'sectionD.otherSpecify', sectionDSrc?.otherSpecify);
 
-  for (const [key, sectionYMap] of answersYMap.entries()) {
-    if (!key.startsWith('domain')) continue;
-    if (!(sectionYMap instanceof Y.Map)) continue;
+  const domainKeys = Object.keys(source).filter(k => k.startsWith('domain'));
+  for (const key of domainKeys) {
     const srcDomain = source[key] as Record<string, unknown> | undefined;
     const srcAnswers = srcDomain?.answers as Record<string, Record<string, unknown>> | undefined;
     if (!srcAnswers) continue;
-    const answersNested = sectionYMap.get('answers');
-    if (!(answersNested instanceof Y.Map)) continue;
-    for (const [qKey, qYMap] of answersNested.entries()) {
-      if (!(qYMap instanceof Y.Map)) continue;
-      seedIfEmpty(qYMap, 'comment', srcAnswers[qKey]?.comment);
+    for (const [qKey, qVal] of Object.entries(srcAnswers)) {
+      seedIfEmpty(answersYMap, `${qKey}.comment`, qVal?.comment);
     }
   }
 }
 
 function seedRob2(answersYMap: Y.Map<unknown>, source: Record<string, unknown>): void {
-  const prelim = answersYMap.get('preliminary');
-  if (prelim instanceof Y.Map) {
-    const src = source.preliminary as Record<string, unknown> | undefined;
-    seedIfEmpty(prelim, 'experimental', src?.experimental);
-    seedIfEmpty(prelim, 'comparator', src?.comparator);
-    seedIfEmpty(prelim, 'numericalResult', src?.numericalResult);
-  }
+  const prelimSrc = source.preliminary as Record<string, unknown> | undefined;
+  seedIfEmpty(answersYMap, 'preliminary.experimental', prelimSrc?.experimental);
+  seedIfEmpty(answersYMap, 'preliminary.comparator', prelimSrc?.comparator);
+  seedIfEmpty(answersYMap, 'preliminary.numericalResult', prelimSrc?.numericalResult);
 
-  for (const [key, sectionYMap] of answersYMap.entries()) {
-    if (!key.startsWith('domain')) continue;
-    if (!(sectionYMap instanceof Y.Map)) continue;
+  const domainKeys = Object.keys(source).filter(k => k.startsWith('domain'));
+  for (const key of domainKeys) {
     const srcDomain = source[key] as Record<string, unknown> | undefined;
     const srcAnswers = srcDomain?.answers as Record<string, Record<string, unknown>> | undefined;
     if (!srcAnswers) continue;
-    const answersNested = sectionYMap.get('answers');
-    if (!(answersNested instanceof Y.Map)) continue;
-    for (const [qKey, qYMap] of answersNested.entries()) {
-      if (!(qYMap instanceof Y.Map)) continue;
-      seedIfEmpty(qYMap, 'comment', srcAnswers[qKey]?.comment);
+    for (const [qKey, qVal] of Object.entries(srcAnswers)) {
+      seedIfEmpty(answersYMap, `${qKey}.comment`, qVal?.comment);
     }
   }
 }

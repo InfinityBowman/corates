@@ -6,7 +6,11 @@
  */
 
 import { useProjectStore, selectConnectionPhase, type ProjectMeta } from '@/stores/projectStore';
-import { useAllStudies, useProjectMembers, useProjectMeta } from '@/stores/projectAtoms';
+import {
+  useAllStudiesById,
+  useProjectMembersById,
+  useProjectMetaById,
+} from '@/primitives/useProject/reactor';
 
 const EMPTY_STUDIES: never[] = [];
 const EMPTY_MEMBERS: never[] = [];
@@ -23,9 +27,9 @@ const IDLE_STATE = {
 };
 
 export function useProjectData(projectId: string | undefined) {
-  const studies = useAllStudies(projectId || '');
-  const members = useProjectMembers(projectId || '');
-  const meta = useProjectMeta(projectId || '');
+  const studies = useAllStudiesById(projectId || '');
+  const members = useProjectMembersById(projectId || '');
+  const meta = useProjectMetaById(projectId || '');
   const connectionState = useProjectStore(state =>
     projectId ? selectConnectionPhase(state, projectId) : null,
   );

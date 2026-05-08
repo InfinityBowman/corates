@@ -5,7 +5,6 @@
 import { useMemo } from 'react';
 import { UsersIcon, ChevronRightIcon, Trash2Icon } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
-import { useProjectStore, selectProjectStats } from '@/stores/projectStore';
 import { type Project } from '@/hooks/useMyProjectsList';
 import { formatRelativeTime, getAccentColors } from './utils';
 
@@ -17,15 +16,14 @@ interface ProjectCardProps {
 }
 
 export function ProjectCard({ project, onOpen, onDelete, style }: ProjectCardProps) {
-  const cachedStats = useProjectStore(state => selectProjectStats(state, project.id));
   const colors = useMemo(() => getAccentColors(project.id), [project.id]);
 
   const progress = useMemo(() => {
-    const completed = cachedStats?.completedCount ?? project.completedCount ?? 0;
-    const total = cachedStats?.studyCount ?? project.studyCount ?? 0;
+    const completed = project.completedCount ?? 0;
+    const total = project.studyCount ?? 0;
     if (total === 0) return { completed: 0, total: 0, percentage: 0 };
     return { completed, total, percentage: Math.round((completed / total) * 100) };
-  }, [cachedStats, project.completedCount, project.studyCount]);
+  }, [project.completedCount, project.studyCount]);
 
   const relativeTime = formatRelativeTime(project.updatedAt || project.createdAt);
   const memberCount = project.memberCount || project.members?.length || 1;

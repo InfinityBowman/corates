@@ -9,7 +9,7 @@ import { useProjectContext } from '@/components/project/ProjectContext';
 import { connectionPool } from '@/project/ConnectionPool';
 import { buildChecklistAnswerInput, type TextRef } from '@/primitives/useProject/checklists';
 import { useProjectStore, selectConnectionPhase } from '@/stores/projectStore';
-import { useStudy, useProjectMembers } from '@/stores/projectAtoms';
+import { useStudyById, useProjectMembersById } from '@/primitives/useProject/reactor';
 import { useAuthStore, selectUser } from '@/stores/authStore';
 import { ACCESS_DENIED_ERRORS } from '@/constants/errors.js';
 import {
@@ -80,8 +80,8 @@ export function ReconciliationWrapper({
   }, [user]);
 
   const connectionState = useProjectStore(s => selectConnectionPhase(s, projectId));
-  const currentStudy = useStudy(projectId, studyId);
-  const members = useProjectMembers(projectId);
+  const currentStudy = useStudyById(projectId, studyId);
+  const members = useProjectMembersById(projectId);
 
   // Watch for access-denied errors and redirect
   useEffect(() => {
@@ -374,19 +374,16 @@ export function ReconciliationWrapper({
     return currentStudy.checklists?.find(c => c.id === reconciledChecklistId);
   }, [currentStudy, reconciledChecklistId]);
 
-  // Get reconciled checklist data
   const reconciledChecklistData = useMemo(() => {
-    if (!reconciledChecklistId || !getChecklistData) return null;
-    const data = getChecklistData(studyId, reconciledChecklistId);
-    if (!data) return null;
+    if (!reconciledChecklistId || !reconciledChecklistMeta?.answers) return null;
     return {
       id: reconciledChecklistId,
       name: 'Reconciled Checklist',
       reviewerName: 'Consensus',
-      createdAt: reconciledChecklistMeta?.createdAt || 0,
-      ...(data.answers ?? {}),
+      createdAt: reconciledChecklistMeta.createdAt || 0,
+      ...reconciledChecklistMeta.answers,
     };
-  }, [reconciledChecklistId, getChecklistData, studyId, reconciledChecklistMeta]);
+  }, [reconciledChecklistId, reconciledChecklistMeta]);
 
   // Build project path
   const getProjectPath = useCallback(() => `/projects/${projectId}`, [projectId]);

@@ -1,16 +1,5 @@
-/**
- * ROBINSIChecklist - Main ROBINS-I V2 Checklist Component
- *
- * Renders planning, preliminary sections (A-D), domain sections with auto-first
- * scoring and manual override, and overall risk of bias assessment.
- * Assessment stops if Section B indicates Critical risk.
- */
-
 import { useState, useMemo, useCallback, useRef, useEffect } from 'react';
-import type * as Y from 'yjs';
 import { getActiveDomainKeys } from './checklist-map';
-import type { TextRef } from '@/primitives/useProject/checklists';
-import { shouldStopAssessment } from './checklist.js';
 import { PlanningSection } from './PlanningSection';
 import { SectionA } from './SectionA';
 import { SectionB } from './SectionB';
@@ -20,23 +9,22 @@ import { DomainSection } from './DomainSection';
 import { OverallSection } from './OverallSection';
 import { ResponseLegend } from './SignallingQuestion';
 import { ScoringSummary } from './ScoringSummary';
+import { useAnswer, useChecklistField } from '@/primitives/useProject/reactor/hooks';
 
 interface ROBINSIChecklistProps {
-  checklistState: any;
-  onUpdate: (_patch: Record<string, any>) => void;
+  studyId: string;
+  checklistId: string;
   showComments?: boolean;
   showLegend?: boolean;
   readOnly?: boolean;
-  getTextRef: (_ref: TextRef) => Y.Text | null;
 }
 
 export function ROBINSIChecklist({
-  checklistState,
-  onUpdate,
+  studyId,
+  checklistId,
   showComments,
   showLegend,
   readOnly,
-  getTextRef,
 }: ROBINSIChecklistProps) {
   const isReadOnly = !!readOnly;
   const [collapsedDomains, setCollapsedDomains] = useState<Record<string, boolean>>({});
@@ -50,26 +38,16 @@ export function ROBINSIChecklist({
     };
   }, []);
 
-  const stopAssessment = useMemo(
-    () => shouldStopAssessment(checklistState?.sectionB),
-    [checklistState?.sectionB],
-  );
+  const checklistName = useChecklistField<string>(studyId, checklistId, 'name');
+  const b2Answer = useAnswer<string>(studyId, checklistId, 'sectionB.b2');
+  const b3Answer = useAnswer<string>(studyId, checklistId, 'sectionB.b3');
+  const stopAssessment = useMemo(() => {
+    const isYesOrPY = (v: string | null) => v === 'Y' || v === 'PY';
+    return isYesOrPY(b2Answer) || isYesOrPY(b3Answer);
+  }, [b2Answer, b3Answer]);
 
-  const isPerProtocol = useMemo(
-    () => checklistState?.sectionC?.isPerProtocol || false,
-    [checklistState?.sectionC?.isPerProtocol],
-  );
-
+  const isPerProtocol = useAnswer<boolean>(studyId, checklistId, 'sectionC.isPerProtocol') === true;
   const activeDomains = useMemo(() => getActiveDomainKeys(isPerProtocol), [isPerProtocol]);
-
-  const handleSectionBUpdate = useCallback((v: any) => onUpdate({ sectionB: v }), [onUpdate]);
-  const handleSectionCUpdate = useCallback((v: any) => onUpdate({ sectionC: v }), [onUpdate]);
-  const handleSectionDUpdate = useCallback((v: any) => onUpdate({ sectionD: v }), [onUpdate]);
-  const handleDomainUpdate = useCallback(
-    (domainKey: string, newState: any) => onUpdate({ [domainKey]: newState }),
-    [onUpdate],
-  );
-  const handleOverallUpdate = useCallback((v: any) => onUpdate({ overall: v }), [onUpdate]);
 
   const toggleDomainCollapse = useCallback((domainKey: string) => {
     setCollapsedDomains(prev => ({ ...prev, [domainKey]: !prev[domainKey] }));
@@ -92,13 +70,17 @@ export function ROBINSIChecklist({
     <div className='bg-blue-50'>
       <div className='container mx-auto flex max-w-5xl flex-col gap-4 px-4 py-6'>
         <div className='text-foreground mb-6 text-left text-lg font-semibold sm:text-center'>
-          {checklistState?.name || 'ROBINS-I Checklist'}
+          {checklistName || 'ROBINS-I Checklist'}
         </div>
 
         {/* Scoring Summary Strip */}
         {!stopAssessment && (
           <div className='sticky z-40' style={{ top: '8px' }}>
-            <ScoringSummary checklistState={checklistState} onDomainClick={handleDomainClick} />
+            <ScoringSummary
+              studyId={studyId}
+              checklistId={checklistId}
+              onDomainClick={handleDomainClick}
+            />
           </div>
         )}
 
@@ -106,7 +88,7 @@ export function ROBINSIChecklist({
         {showLegend !== false && <ResponseLegend />}
 
         {/* Planning Stage */}
-        <PlanningSection disabled={isReadOnly} getTextRef={getTextRef} />
+        <PlanningSection studyId={studyId} checklistId={checklistId} disabled={isReadOnly} />
 
         {/* Preliminary Considerations Header */}
         <div className='rounded-lg border border-blue-200 bg-blue-100 px-6 py-4'>
@@ -115,28 +97,13 @@ export function ROBINSIChecklist({
           </h2>
         </div>
 
-        <SectionA disabled={isReadOnly} getTextRef={getTextRef} />
+        <SectionA studyId={studyId} checklistId={checklistId} disabled={isReadOnly} />
 
-        <SectionB
-          sectionBState={checklistState?.sectionB}
-          onUpdate={handleSectionBUpdate}
-          disabled={isReadOnly}
-          getTextRef={getTextRef}
-        />
+        <SectionB studyId={studyId} checklistId={checklistId} disabled={isReadOnly} />
 
-        <SectionC
-          sectionCState={checklistState?.sectionC}
-          onUpdate={handleSectionCUpdate}
-          disabled={isReadOnly}
-          getTextRef={getTextRef}
-        />
+        <SectionC studyId={studyId} checklistId={checklistId} disabled={isReadOnly} />
 
-        <SectionD
-          sectionDState={checklistState?.sectionD}
-          onUpdate={handleSectionDUpdate}
-          disabled={isReadOnly}
-          getTextRef={getTextRef}
-        />
+        <SectionD studyId={studyId} checklistId={checklistId} disabled={isReadOnly} />
 
         {/* Domain sections - hidden if assessment stopped */}
         {!stopAssessment && (
@@ -152,25 +119,19 @@ export function ROBINSIChecklist({
                   }}
                 >
                   <DomainSection
+                    studyId={studyId}
+                    checklistId={checklistId}
                     domainKey={domainKey}
-                    domainState={checklistState?.[domainKey]}
-                    onUpdate={newState => handleDomainUpdate(domainKey, newState)}
                     disabled={isReadOnly}
                     showComments={showComments}
                     collapsed={collapsedDomains[domainKey]}
                     onToggleCollapse={() => toggleDomainCollapse(domainKey)}
-                    getTextRef={getTextRef}
                   />
                 </div>
               ))}
             </div>
 
-            <OverallSection
-              overallState={checklistState?.overall}
-              checklistState={checklistState}
-              onUpdate={handleOverallUpdate}
-              disabled={isReadOnly}
-            />
+            <OverallSection studyId={studyId} checklistId={checklistId} disabled={isReadOnly} />
           </>
         )}
 

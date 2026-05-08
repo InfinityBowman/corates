@@ -1,8 +1,3 @@
-/**
- * ChecklistYjsWrapper - Project-scoped checklist editing view
- * Rendered as a child route of ProjectView, shares its YDoc connection.
- */
-
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate, useLocation } from '@tanstack/react-router';
 import { ChevronLeftIcon } from 'lucide-react';
@@ -10,7 +5,7 @@ import { ChecklistWithPdf } from '@/components/checklist/ChecklistWithPdf';
 import { useProjectContext } from '@/components/project/ProjectContext';
 import { connectionPool } from '@/project/ConnectionPool';
 import { useChecklistViewModel } from '@/primitives/useProject/checklists/useChecklistViewModel';
-import { buildChecklistAnswerInput } from '@/primitives/useProject/checklists';
+import { useChecklistScore } from '@/primitives/useProject/reactor/hooks';
 import { useProjectStore, selectConnectionPhase } from '@/stores/projectStore';
 import { useAuthStore, selectUser } from '@/stores/authStore';
 import { useStudyAnnotations } from '@/primitives/useProject/useStudyAnnotations';
@@ -20,7 +15,6 @@ import {
   isEditable,
   getNextStatusForCompletion,
 } from '@corates/shared/checklists';
-import type { AMSTAR2Checklist, ROBINSIChecklist, ROB2Checklist } from '@corates/shared/checklists';
 import { downloadPdf, uploadPdf, deletePdf, getPdfUrl } from '@/api/pdf-api';
 import type { PdfUploadResponse } from '@/api/pdf-api';
 import { getCachedPdf, cachePdf } from '@/primitives/pdfCache.js';
@@ -36,9 +30,6 @@ import {
   AlertDialogAction,
 } from '@/components/ui/alert-dialog';
 import { ScoreTag } from '@/components/checklist/ScoreTag';
-import { isAMSTAR2Complete } from '@/components/checklist/AMSTAR2Checklist/checklist.js';
-import { isROBINSIComplete } from '@/components/checklist/ROBINSIChecklist/checklist';
-import { isROB2Complete } from '@/components/checklist/ROB2Checklist/checklist';
 
 interface ChecklistYjsWrapperProps {
   projectId: string;
@@ -61,7 +52,7 @@ export function ChecklistYjsWrapper({ projectId, studyId, checklistId }: Checkli
 
   const ops = connectionPool.getOps(projectId);
   if (!ops) throw new Error(`No connection for project ${projectId}`);
-  const { updateChecklistAnswer, updateChecklist, getTextRef } = ops.checklist;
+  const { updateChecklist } = ops.checklist;
   const { addPdfToStudy } = ops.pdf;
   const { addAnnotation, updateAnnotation, deleteAnnotation } = ops.annotation;
 
@@ -75,8 +66,12 @@ export function ChecklistYjsWrapper({ projectId, studyId, checklistId }: Checkli
     }
   }, [connectionState.error, navigate]);
 
-  const { currentStudy, currentChecklist, checklistForUI, checklistType, currentScore } =
-    useChecklistViewModel(projectId, studyId, checklistId);
+  const { currentStudy, currentChecklist, checklistType } = useChecklistViewModel(
+    projectId,
+    studyId,
+    checklistId,
+  );
+  const currentScore = useChecklistScore(studyId, checklistId, checklistType);
 
   const isReadOnly = currentChecklist?.status ? !isEditable(currentChecklist.status) : false;
 
@@ -185,25 +180,7 @@ export function ChecklistYjsWrapper({ projectId, studyId, checklistId }: Checkli
     [orgId, projectId, studyId, studyPdfs, user?.id, addPdfToStudy],
   );
 
-  const isChecklistValid = useMemo(() => {
-    if (!checklistForUI) return false;
-    if (checklistType === 'AMSTAR2') return isAMSTAR2Complete(checklistForUI as AMSTAR2Checklist);
-    if (checklistType === 'ROBINS_I') return isROBINSIComplete(checklistForUI as ROBINSIChecklist);
-    if (checklistType === 'ROB2') return isROB2Complete(checklistForUI as ROB2Checklist);
-    return true;
-  }, [checklistForUI, checklistType]);
-
-  const handlePartialUpdate = useCallback(
-    (patch: Record<string, unknown>) => {
-      if (isReadOnly || !checklistType) return;
-      Object.entries(patch).forEach(([key, value]) => {
-        const input = buildChecklistAnswerInput(checklistType, key, value);
-        if (!input) return;
-        updateChecklistAnswer(studyId, checklistId, input);
-      });
-    },
-    [isReadOnly, checklistType, updateChecklistAnswer, studyId, checklistId],
-  );
+  const isChecklistValid = currentScore !== null && currentScore !== 'Incomplete';
 
   const handleToggleComplete = useCallback(() => {
     if (isReadOnly) return;
@@ -349,7 +326,7 @@ export function ChecklistYjsWrapper({ projectId, studyId, checklistId }: Checkli
     </>
   );
 
-  if (!checklistForUI) {
+  if (!checklistType) {
     return (
       <div className='flex min-h-screen items-center justify-center bg-blue-50'>
         <div className='text-muted-foreground'>
@@ -363,9 +340,9 @@ export function ChecklistYjsWrapper({ projectId, studyId, checklistId }: Checkli
 
   return (
     <ChecklistWithPdf
-      checklistType={checklistType ?? undefined}
-      checklist={checklistForUI}
-      onUpdate={handlePartialUpdate}
+      studyId={studyId}
+      checklistId={checklistId}
+      checklistType={checklistType}
       headerContent={headerContent}
       pdfData={pdfData}
       pdfFileName={pdfFileName}
@@ -376,7 +353,6 @@ export function ChecklistYjsWrapper({ projectId, studyId, checklistId }: Checkli
       pdfs={studyPdfs}
       selectedPdfId={selectedPdfId}
       onPdfSelect={handlePdfSelect}
-      getTextRef={ref => getTextRef(studyId, checklistId, ref)}
       onAnnotationAdd={handleAnnotationAdd}
       onAnnotationUpdate={handleAnnotationUpdate}
       onAnnotationDelete={handleAnnotationDelete}

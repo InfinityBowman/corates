@@ -147,7 +147,6 @@ async function performSignoutCleanup() {
 
   await clearAllData();
   queryClient.clear();
-  localStorage.removeItem('corates:projectStats');
 
   // Refetch session to clear it
   await state.sessionRefetch?.();

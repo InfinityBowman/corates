@@ -23,10 +23,10 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { buildProjectCsv, downloadCsv } from '@/lib/export-csv';
 import { buildProjectPdf, downloadPdf } from '@/lib/export-pdf';
-import { useAllStudies } from '@/stores/projectAtoms';
+import { useAllStudiesById } from '@/primitives/useProject/reactor';
 import type { StudyInfo } from '@/stores/projectStore';
 import { scoreChecklistOfType } from '@/checklist-registry';
-import { extractAnswersFromYMap } from '@/primitives/useProject/sync';
+import { getHandler } from '@/primitives/useProject/checklists/handlers/registry';
 import { amstar2 } from '@corates/shared';
 import type { AMSTAR2Checklist } from '@corates/shared/checklists';
 import { connectionPool } from '@/project/ConnectionPool';
@@ -65,7 +65,7 @@ export function LocalAppraisalsSection({
 }: LocalAppraisalsSectionProps) {
   const navigate = useNavigate();
   const animation = useAnimation();
-  const studies = useAllStudies(LOCAL_PROJECT_ID);
+  const studies = useAllStudiesById(LOCAL_PROJECT_ID);
 
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
@@ -141,7 +141,8 @@ export function LocalAppraisalsSection({
         const answersYMap = (clYMap as Y.Map<unknown>).get('answers') as Y.Map<unknown> | undefined;
         if (!answersYMap) return cl;
 
-        const answers = extractAnswersFromYMap(answersYMap, cl.type);
+        const handler = getHandler(cl.type);
+        const answers = handler ? handler.serializeAnswers(answersYMap) : {};
         const score = scoreChecklistOfType(cl.type, answers);
         const enriched = { ...cl, answers, score: score !== 'Error' ? score : null };
 

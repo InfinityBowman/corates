@@ -13,7 +13,6 @@ import {
   createConnectionManager,
   type ConnectionManager,
 } from '@/primitives/useProject/connection';
-import { createSyncManager, type SyncManager } from '@/primitives/useProject/sync';
 import { createStudyOperations, type StudyOperations } from '@/primitives/useProject/studies';
 import {
   createChecklistOperations,
@@ -34,6 +33,8 @@ import {
 } from '@/primitives/useProject/outcomes.js';
 import { db, deleteProjectData } from '@/primitives/db.js';
 import { migrateLocalChecklistsToYDoc } from './localProject';
+import { ProjectReactor } from '@/primitives/useProject/reactor/core';
+import { migrateYDocToFlatKeys } from '@/primitives/useProject/reactor/migrate';
 
 export interface TypedProjectOps {
   study: StudyOperations;
@@ -49,13 +50,13 @@ interface ConnectionEntry {
   ydoc: Y.Doc;
   dexieProvider: DexieYProvider | null;
   connectionManager: ConnectionManager | null;
-  syncManager: SyncManager | null;
   studyOps: StudyOperations | null;
   checklistOps: ChecklistOperations | null;
   pdfOps: PdfOperations | null;
   reconciliationOps: ReconciliationOperations | null;
   annotationOps: AnnotationOperations | null;
   outcomeOps: OutcomeOperations | null;
+  reactor: ProjectReactor | null;
   refCount: number;
   initialized: boolean;
   _cleanupHandlers: (() => void)[];
@@ -83,13 +84,13 @@ class ConnectionPool {
       ydoc: new Y.Doc(),
       dexieProvider: null,
       connectionManager: null,
-      syncManager: null,
       studyOps: null,
       checklistOps: null,
       pdfOps: null,
       reconciliationOps: null,
       annotationOps: null,
       outcomeOps: null,
+      reactor: null,
       refCount: 1,
       initialized: false,
       _cleanupHandlers: [],
@@ -123,17 +124,13 @@ class ConnectionPool {
     const isSynced = () => useProjectStore.getState().connections[projectId]?.phase === 'synced';
 
     // Initialize domain operations
-    entry.syncManager = createSyncManager(projectId, getYDoc);
     entry.studyOps = createStudyOperations(projectId, getYDoc, isSynced);
     entry.checklistOps = createChecklistOperations(projectId, getYDoc);
     entry.pdfOps = createPdfOperations(projectId, getYDoc);
     entry.reconciliationOps = createReconciliationOperations(projectId, getYDoc);
     entry.annotationOps = createAnnotationOperations(projectId, getYDoc);
     entry.outcomeOps = createOutcomeOperations(projectId, getYDoc);
-
-    // Scoped Y.Map observers (reviews, members, meta) for incremental sync
-    entry.syncManager.attach(ydoc);
-    entry._cleanupHandlers.push(() => entry.syncManager?.detach());
+    entry.reactor = new ProjectReactor(ydoc);
 
     // Dexie persistence (async)
     (db.projects as any).get(projectId).then(async (existingProject: any) => {
@@ -152,18 +149,37 @@ class ConnectionPool {
       entry.dexieProvider.whenLoaded.then(() => {
         if (cancelled()) return;
 
-        entry.syncManager?.pause();
+        if (isLocal) {
+          // Local projects use project.ydoc directly -- same pattern as the
+          // prototype. DexieYProvider persists mutations without the two-Y.Doc
+          // write-back indirection that online projects need for WebSocket sync.
+          const oldYdoc = entry.ydoc;
+          entry.ydoc = project.ydoc;
+          entry.reactor?.dispose();
+          entry.reactor = new ProjectReactor(project.ydoc);
+          oldYdoc.destroy();
+
+          migrateYDocToFlatKeys(project.ydoc);
+          migrateLocalChecklistsToYDoc(project.ydoc)
+            .then(() => {
+              if (cancelled()) return;
+              useProjectStore
+                .getState()
+                .dispatchConnectionEvent(projectId, { type: 'LOCAL_READY' });
+            })
+            .catch(err => console.error('Local checklists migration failed:', err));
+          return;
+        }
+
         try {
           const persistedState = Y.encodeStateAsUpdate(project.ydoc);
           Y.applyUpdate(ydoc, persistedState);
+          migrateYDocToFlatKeys(ydoc);
         } catch (err) {
           console.error('Corrupted persisted state, clearing local data:', err);
           deleteProjectData(projectId).catch(() => {});
-        } finally {
-          entry.syncManager?.resume();
         }
 
-        // Dexie write-back handler
         const dexieUpdateHandler = (update: Uint8Array, origin: string) => {
           if (origin !== 'dexie-sync') {
             Y.applyUpdate(project.ydoc, update, 'dexie-sync');
@@ -172,27 +188,11 @@ class ConnectionPool {
         ydoc.on('update', dexieUpdateHandler);
         entry._cleanupHandlers.push(() => ydoc.off('update', dexieUpdateHandler));
 
-        entry.syncManager!.syncFromYDocImmediate();
-
         const reviewsSize = ydoc.getMap('reviews').size;
-        if (!isLocal && reviewsSize > 0) {
+        if (reviewsSize > 0) {
           useProjectStore
             .getState()
             .dispatchConnectionEvent(projectId, { type: 'PERSISTENCE_LOADED' });
-        }
-
-        if (isLocal) {
-          // Run the one-shot import from legacy `localChecklists` Dexie rows
-          // after the Y.Doc's persisted state has been applied, so the
-          // migration flag is already visible and we don't re-import.
-          migrateLocalChecklistsToYDoc(ydoc)
-            .catch(err => console.error('Local checklists migration failed:', err))
-            .finally(() => {
-              if (cancelled()) return;
-              useProjectStore
-                .getState()
-                .dispatchConnectionEvent(projectId, { type: 'LOCAL_READY' });
-            });
         }
       });
     });
@@ -201,8 +201,8 @@ class ConnectionPool {
     if (!isLocal) {
       entry.connectionManager = createConnectionManager(projectId, ydoc, {
         onSync: () => {
+          migrateYDocToFlatKeys(ydoc);
           useProjectStore.getState().dispatchConnectionEvent(projectId, { type: 'SYNC_COMPLETE' });
-          entry.syncManager?.syncFromYDocImmediate();
         },
         isLocalProject: () => isLocal,
         onAccessDenied: async () => {
@@ -259,6 +259,10 @@ class ConnectionPool {
    */
   getEntry(projectId: string): ConnectionEntry | null {
     return this.registry.get(projectId) || null;
+  }
+
+  getReactor(projectId: string): ProjectReactor | null {
+    return this.registry.get(projectId)?.reactor || null;
   }
 
   /**
@@ -346,6 +350,7 @@ class ConnectionPool {
     }
     entry._cleanupHandlers = [];
 
+    if (entry.reactor) entry.reactor.dispose();
     if (entry.connectionManager) entry.connectionManager.destroy();
     if (entry.dexieProvider) DexieYProvider.release(entry.ydoc);
     if (entry.ydoc) entry.ydoc.destroy();
@@ -356,3 +361,8 @@ class ConnectionPool {
 }
 
 export const connectionPool = new ConnectionPool();
+
+if (import.meta.env.DEV && typeof window !== 'undefined') {
+  (window as any).__connectionPool = connectionPool;
+  (window as any).__Y = Y;
+}

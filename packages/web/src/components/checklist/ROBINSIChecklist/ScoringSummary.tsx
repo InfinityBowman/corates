@@ -1,11 +1,6 @@
-/**
- * ScoringSummary - ROBINS-I scoring strip with domain chips and manual override indicators
- */
-
 import { useState, useMemo } from 'react';
 import { InfoIcon, ExternalLinkIcon } from 'lucide-react';
 import { ROBINS_I_CHECKLIST, getActiveDomainKeys } from './checklist-map';
-import { getSmartScoring } from './checklist.js';
 import {
   Dialog,
   DialogContent,
@@ -13,31 +8,27 @@ import {
   DialogTitle,
   DialogDescription,
 } from '@/components/ui/dialog';
+import {
+  useAnswer,
+  useROBINSIScore,
+  useROBINSIDomainScore,
+} from '@/primitives/useProject/reactor/hooks';
 
 interface ScoringSummaryProps {
-  checklistState: any;
+  studyId: string;
+  checklistId: string;
   onDomainClick?: (_domainKey: string) => void;
 }
 
-export function ScoringSummary({ checklistState, onDomainClick }: ScoringSummaryProps) {
+export function ScoringSummary({ studyId, checklistId, onDomainClick }: ScoringSummaryProps) {
   const [resourcesOpen, setResourcesOpen] = useState(false);
 
-  const smartScoring = useMemo(() => getSmartScoring(checklistState), [checklistState]);
-  const isPerProtocol = checklistState?.sectionC?.isPerProtocol || false;
+  const overallScore = useROBINSIScore(studyId, checklistId);
+  const isPerProtocol = useAnswer<boolean>(studyId, checklistId, 'sectionC.isPerProtocol') === true;
   const activeDomains = useMemo(() => getActiveDomainKeys(isPerProtocol), [isPerProtocol]);
 
-  const domainStats = useMemo(() => {
-    let complete = 0;
-    const total = activeDomains.length;
-    activeDomains.forEach((domainKey: string) => {
-      if (smartScoring.domains[domainKey]?.effective) complete++;
-    });
-    return { complete, total };
-  }, [smartScoring, activeDomains]);
-
   const getOverallColor = () => {
-    const overall = smartScoring.overall;
-    switch (overall) {
+    switch (overallScore) {
       case 'Low':
       case 'Low (except for concerns about uncontrolled confounding)':
         return 'bg-green-500';
@@ -50,38 +41,6 @@ export function ScoringSummary({ checklistState, onDomainClick }: ScoringSummary
       default:
         return 'bg-muted-foreground/70';
     }
-  };
-
-  const getDomainChipColor = (domainKey: string) => {
-    const domainInfo = smartScoring.domains[domainKey];
-    if (!domainInfo?.effective) return 'bg-secondary text-muted-foreground border-border';
-
-    const judgement = domainInfo.effective;
-    const isManual = domainInfo.source === 'manual';
-    let baseColor: string;
-
-    switch (judgement) {
-      case 'Low':
-      case 'Low (except for concerns about uncontrolled confounding)':
-        baseColor = 'bg-green-100 text-green-800 border-green-300';
-        break;
-      case 'Moderate':
-        baseColor = 'bg-yellow-100 text-yellow-800 border-yellow-300';
-        break;
-      case 'Serious':
-        baseColor = 'bg-orange-100 text-orange-800 border-orange-300';
-        break;
-      case 'Critical':
-        baseColor = 'bg-red-100 text-red-800 border-red-300';
-        break;
-      default:
-        baseColor = 'bg-secondary text-muted-foreground border-border';
-    }
-
-    if (isManual && domainInfo.isOverridden) {
-      return `${baseColor} ring-2 ring-amber-400 ring-offset-1`;
-    }
-    return baseColor;
   };
 
   const getDomainShortName = (dk: string) => {
@@ -97,15 +56,6 @@ export function ScoringSummary({ checklistState, onDomainClick }: ScoringSummary
     return map[dk] || dk;
   };
 
-  const getDomainStatusText = (dk: string) => {
-    const domainInfo = smartScoring.domains[dk];
-    if (!domainInfo?.effective) return 'Incomplete';
-    const j = domainInfo.effective;
-    const short = j === 'Low (except for concerns about uncontrolled confounding)' ? 'Low*' : j;
-    if (domainInfo.source === 'manual' && domainInfo.isOverridden) return `${short} (manual)`;
-    return short;
-  };
-
   return (
     <div className='border-border bg-card rounded-lg border p-4 shadow-sm'>
       <div className='flex flex-wrap items-center justify-between gap-4'>
@@ -114,29 +64,21 @@ export function ScoringSummary({ checklistState, onDomainClick }: ScoringSummary
             <div className={`size-3 rounded-full ${getOverallColor()}`} />
             <span className='text-secondary-foreground text-sm font-medium'>Overall:</span>
             <span className='text-foreground text-sm font-semibold'>
-              {smartScoring.overall || 'Incomplete'}
+              {overallScore === 'Incomplete' ? 'Incomplete' : overallScore}
             </span>
           </div>
-          <span className='text-muted-foreground/70 text-xs'>|</span>
-          <span className='text-muted-foreground text-xs'>
-            {domainStats.complete}/{domainStats.total} domains
-          </span>
         </div>
 
         <div className='flex flex-wrap items-center gap-2'>
           {activeDomains.map((dk: string) => (
-            <button
+            <DomainChip
               key={dk}
-              type='button'
+              studyId={studyId}
+              checklistId={checklistId}
+              domainKey={dk}
+              shortName={getDomainShortName(dk)}
               onClick={() => onDomainClick?.(dk)}
-              title={`${(ROBINS_I_CHECKLIST as any)[dk]?.name}: ${getDomainStatusText(dk)}`}
-              className={`inline-flex items-center gap-1 rounded border px-2 py-0.5 text-xs font-medium transition-colors hover:opacity-80 ${getDomainChipColor(dk)}`}
-            >
-              <span>{getDomainShortName(dk)}</span>
-              {smartScoring.domains[dk]?.source === 'manual' && (
-                <span className='text-warning'>*</span>
-              )}
-            </button>
+            />
           ))}
 
           <button
@@ -152,6 +94,55 @@ export function ScoringSummary({ checklistState, onDomainClick }: ScoringSummary
 
       <ResourcesDialog open={resourcesOpen} onClose={() => setResourcesOpen(false)} />
     </div>
+  );
+}
+
+function DomainChip({
+  studyId,
+  checklistId,
+  domainKey,
+  shortName,
+  onClick,
+}: {
+  studyId: string;
+  checklistId: string;
+  domainKey: string;
+  shortName: string;
+  onClick: () => void;
+}) {
+  const { judgement } = useROBINSIDomainScore(studyId, checklistId, domainKey);
+  const judgementSource = useAnswer<string>(studyId, checklistId, `${domainKey}.judgementSource`);
+  const manualJudgement = useAnswer<string>(studyId, checklistId, `${domainKey}.judgement`);
+  const isManual = judgementSource === 'manual';
+  const effective = isManual && manualJudgement ? manualJudgement : judgement;
+
+  const chipColor = (() => {
+    if (!effective) return 'bg-secondary text-muted-foreground border-border';
+    switch (effective) {
+      case 'Low':
+      case 'Low (except for concerns about uncontrolled confounding)':
+        return 'bg-green-100 text-green-800 border-green-300';
+      case 'Moderate':
+        return 'bg-yellow-100 text-yellow-800 border-yellow-300';
+      case 'Serious':
+        return 'bg-orange-100 text-orange-800 border-orange-300';
+      case 'Critical':
+        return 'bg-red-100 text-red-800 border-red-300';
+      default:
+        return 'bg-secondary text-muted-foreground border-border';
+    }
+  })();
+
+  return (
+    <button
+      type='button'
+      onClick={onClick}
+      title={`${(ROBINS_I_CHECKLIST as any)[domainKey]?.name}: ${effective || 'Incomplete'}`}
+      className={`inline-flex items-center gap-1 rounded border px-2 py-0.5 text-xs font-medium transition-colors hover:opacity-80 ${chipColor}`}
+    >
+      <span>{shortName}</span>
+      {isManual && <span className='text-warning'>*</span>}
+    </button>
   );
 }
 

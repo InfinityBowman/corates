@@ -4,13 +4,23 @@
 
 import * as Y from 'yjs';
 import type { RobinsIAnswers, RobinsIKey } from '@corates/shared/checklists/robins-i';
-import { ChecklistHandler, yTextToString, type TextGetterFn } from './base';
+import { ChecklistHandler, type TextGetterFn } from './base';
 
 interface ROBINSDomainTemplate {
   judgement?: string | null;
   judgementSource?: string | null;
   direction?: string | null;
   answers?: Record<string, { answer: string | null }>;
+}
+
+function questionKeyToDomain(qKey: string): string | null {
+  const match = qKey.match(/^d(\d+[a-z]?)_/);
+  if (!match) return null;
+  return `domain${match[1]}`;
+}
+
+function isSectionBKey(key: string): boolean {
+  return /^b\d+$/.test(key);
 }
 
 export class ROBINSIHandler extends ChecklistHandler {
@@ -44,146 +54,119 @@ export class ROBINSIHandler extends ChecklistHandler {
     const answersYMap = new Y.Map();
 
     Object.entries(answersData).forEach(([key, value]) => {
-      const sectionYMap = new Y.Map();
       const val = value as Record<string, unknown>;
 
-      if (key.startsWith('domain') || key === 'overall') {
-        const domain = val as ROBINSDomainTemplate;
-        sectionYMap.set('judgement', domain.judgement ?? null);
-        sectionYMap.set('judgementSource', domain.judgementSource ?? 'auto');
-        if (domain.direction !== undefined) {
-          sectionYMap.set('direction', domain.direction ?? null);
-        }
-
-        if (domain.answers) {
-          const answersNestedYMap = new Y.Map();
-          Object.entries(domain.answers).forEach(([qKey, qValue]) => {
-            const questionYMap = new Y.Map();
-            questionYMap.set('answer', qValue.answer ?? null);
-            questionYMap.set('comment', new Y.Text());
-            answersNestedYMap.set(qKey, questionYMap);
-          });
-          sectionYMap.set('answers', answersNestedYMap);
-        }
+      if (key === 'planning') {
+        answersYMap.set('planning.confoundingFactors', new Y.Text());
+      } else if (key === 'sectionA') {
+        answersYMap.set('sectionA.numericalResult', new Y.Text());
+        answersYMap.set('sectionA.furtherDetails', new Y.Text());
+        answersYMap.set('sectionA.outcome', new Y.Text());
       } else if (key === 'sectionB') {
         Object.entries(val).forEach(([subKey, subValue]) => {
           if (typeof subValue === 'object' && subValue !== null) {
-            const questionYMap = new Y.Map();
             const q = subValue as { answer?: string | null };
-            questionYMap.set('answer', q.answer ?? null);
-            questionYMap.set('comment', new Y.Text());
-            sectionYMap.set(subKey, questionYMap);
+            answersYMap.set(`sectionB.${subKey}`, q.answer ?? null);
+            answersYMap.set(`sectionB.${subKey}.comment`, new Y.Text());
           } else {
-            sectionYMap.set(subKey, subValue);
+            answersYMap.set(`sectionB.${subKey}`, subValue);
           }
         });
-      } else if (key === 'confoundingEvaluation') {
-        const ce = val as { predefined?: unknown[]; additional?: unknown[] };
-        sectionYMap.set('predefined', ce.predefined ?? []);
-        sectionYMap.set('additional', ce.additional ?? []);
-      } else if (key === 'sectionD') {
-        const sd = val as { sources?: Record<string, boolean> };
-        sectionYMap.set('sources', sd.sources ?? {});
-        sectionYMap.set('otherSpecify', new Y.Text());
-      } else if (key === 'planning') {
-        sectionYMap.set('confoundingFactors', new Y.Text());
-      } else if (key === 'sectionA') {
-        sectionYMap.set('numericalResult', new Y.Text());
-        sectionYMap.set('furtherDetails', new Y.Text());
-        sectionYMap.set('outcome', new Y.Text());
       } else if (key === 'sectionC') {
         const sc = val as { isPerProtocol?: boolean };
-        sectionYMap.set('participants', new Y.Text());
-        sectionYMap.set('interventionStrategy', new Y.Text());
-        sectionYMap.set('comparatorStrategy', new Y.Text());
-        sectionYMap.set('isPerProtocol', sc.isPerProtocol ?? false);
-      } else {
-        Object.entries(val).forEach(([fieldKey, fieldValue]) => {
-          sectionYMap.set(fieldKey, fieldValue);
-        });
+        answersYMap.set('sectionC.isPerProtocol', sc.isPerProtocol ?? false);
+        answersYMap.set('sectionC.participants', new Y.Text());
+        answersYMap.set('sectionC.interventionStrategy', new Y.Text());
+        answersYMap.set('sectionC.comparatorStrategy', new Y.Text());
+      } else if (key === 'sectionD') {
+        const sd = val as { sources?: Record<string, boolean> };
+        answersYMap.set('sectionD.sources', sd.sources ?? {});
+        answersYMap.set('sectionD.otherSpecify', new Y.Text());
+      } else if (key === 'confoundingEvaluation') {
+        const ce = val as { predefined?: unknown[]; additional?: unknown[] };
+        answersYMap.set('confoundingEvaluation.predefined', ce.predefined ?? []);
+        answersYMap.set('confoundingEvaluation.additional', ce.additional ?? []);
+      } else if (key.startsWith('domain') || key === 'overall') {
+        const domain = val as ROBINSDomainTemplate;
+        if (domain.direction !== undefined) {
+          answersYMap.set(`${key}.direction`, domain.direction ?? null);
+        }
+        answersYMap.set(`${key}.judgement`, domain.judgement ?? null);
+        answersYMap.set(`${key}.judgementSource`, domain.judgementSource ?? 'auto');
+        if (domain.answers) {
+          Object.entries(domain.answers).forEach(([qKey, qValue]) => {
+            answersYMap.set(qKey, qValue.answer ?? null);
+            answersYMap.set(`${qKey}.comment`, new Y.Text());
+          });
+        }
       }
-
-      answersYMap.set(key, sectionYMap);
     });
 
     return answersYMap;
   }
 
   serializeAnswers(answersMap: Y.Map<unknown>): Record<string, unknown> {
-    const answers: Record<string, unknown> = {};
-    for (const [key, sectionYMap] of answersMap.entries()) {
-      if (!(sectionYMap instanceof Y.Map)) {
-        answers[key] = sectionYMap;
+    const result: Record<string, Record<string, unknown>> = {};
+
+    for (const [key, value] of answersMap.entries()) {
+      const dotIdx = key.indexOf('.');
+      if (dotIdx === -1) {
+        // Bare question key like "d1a_1" → domain1a.answers.d1a_1
+        const domain = questionKeyToDomain(key);
+        if (domain) {
+          if (!result[domain]) result[domain] = {};
+          if (!result[domain].answers) result[domain].answers = {};
+          const answers = result[domain].answers as Record<string, Record<string, unknown>>;
+          if (!answers[key]) answers[key] = {};
+          answers[key].answer = value;
+          continue;
+        }
+        // Bare sectionB key like "b1" → handled via sectionB.b1 flat keys instead
         continue;
       }
 
-      if (key.startsWith('domain')) {
-        const sectionData: Record<string, unknown> = {
-          judgement: sectionYMap.get('judgement') ?? null,
-          judgementSource: sectionYMap.get('judgementSource') ?? 'auto',
-          answers: {} as Record<string, { answer: string | null; comment: string }>,
-        };
-        const direction = sectionYMap.get('direction');
-        if (direction !== undefined) {
-          sectionData.direction = direction;
-        }
+      const prefix = key.substring(0, dotIdx);
+      const field = key.substring(dotIdx + 1);
 
-        const answersNestedYMap = sectionYMap.get('answers');
-        if (answersNestedYMap instanceof Y.Map) {
-          const answersObj = sectionData.answers as Record<
-            string,
-            { answer: string | null; comment: string }
-          >;
-          for (const [qKey, questionYMap] of answersNestedYMap.entries()) {
-            if (questionYMap instanceof Y.Map) {
-              const commentValue = questionYMap.get('comment');
-              answersObj[qKey] = {
-                answer: (questionYMap.get('answer') as string) ?? null,
-                comment: yTextToString(commentValue),
-              };
-            } else {
-              answersObj[qKey] = questionYMap as { answer: string | null; comment: string };
-            }
-          }
-        }
-        answers[key] = sectionData;
-      } else if (key === 'overall') {
-        const sectionData: Record<string, unknown> = {
-          judgement: sectionYMap.get('judgement') ?? null,
-          judgementSource: sectionYMap.get('judgementSource') ?? 'auto',
-        };
-        const direction = sectionYMap.get('direction');
-        if (direction !== undefined) {
-          sectionData.direction = direction;
-        }
-        answers[key] = sectionData;
-      } else if (key === 'sectionB') {
-        const sectionData: Record<string, unknown> = {};
-        for (const [subKey, subValue] of sectionYMap.entries()) {
-          if (subValue instanceof Y.Map) {
-            const commentValue = subValue.get('comment');
-            sectionData[subKey] = {
-              answer: subValue.get('answer') ?? null,
-              comment: yTextToString(commentValue),
-            };
-          } else {
-            sectionData[subKey] = subValue;
-          }
-        }
-        answers[key] = sectionData;
-      } else {
-        const sectionData: Record<string, unknown> = {};
-        for (const [fieldKey, fieldValue] of sectionYMap.entries()) {
-          if (fieldValue instanceof Y.Text) {
-            sectionData[fieldKey] = fieldValue.toString();
-          } else {
-            sectionData[fieldKey] = fieldValue;
-          }
-        }
-        answers[key] = sectionData;
+      // Question comment keys like "d1a_1.comment" → domain1a.answers.d1a_1.comment
+      const domain = questionKeyToDomain(prefix);
+      if (domain) {
+        if (!result[domain]) result[domain] = {};
+        if (!result[domain].answers) result[domain].answers = {};
+        const answers = result[domain].answers as Record<string, Record<string, unknown>>;
+        if (!answers[prefix]) answers[prefix] = {};
+        answers[prefix][field] = value instanceof Y.Text ? value.toString() : value;
+        continue;
       }
+
+      // sectionB sub-keys: "sectionB.b1" → sectionB.b1.answer, "sectionB.b1.comment"
+      if (prefix === 'sectionB') {
+        if (!result.sectionB) result.sectionB = {};
+        const secondDot = field.indexOf('.');
+        if (secondDot === -1) {
+          if (isSectionBKey(field)) {
+            // "sectionB.b1" stores the answer value
+            if (!result.sectionB[field]) result.sectionB[field] = {};
+            (result.sectionB[field] as Record<string, unknown>).answer = value;
+          } else {
+            result.sectionB[field] = value;
+          }
+        } else {
+          const subKey = field.substring(0, secondDot);
+          const subField = field.substring(secondDot + 1);
+          if (!result.sectionB[subKey]) result.sectionB[subKey] = {};
+          (result.sectionB[subKey] as Record<string, unknown>)[subField] =
+            value instanceof Y.Text ? value.toString() : value;
+        }
+        continue;
+      }
+
+      // Everything else: "planning.confoundingFactors", "sectionA.outcome", "domain1a.judgement", etc.
+      if (!result[prefix]) result[prefix] = {};
+      result[prefix][field] = value instanceof Y.Text ? value.toString() : value;
     }
-    return answers;
+
+    return result;
   }
 
   updateAnswer<K extends RobinsIKey>(
@@ -193,71 +176,58 @@ export class ROBINSIHandler extends ChecklistHandler {
   ): void {
     const doc = answersMap.doc!;
     doc.transact(() => {
-      let sectionYMap = answersMap.get(key) as Y.Map<unknown> | undefined;
-
-      if (!sectionYMap || !(sectionYMap instanceof Y.Map)) {
-        sectionYMap = new Y.Map();
-        answersMap.set(key, sectionYMap);
-      }
-
       if (key.startsWith('domain') || key === 'overall') {
         const domainData = data as RobinsIAnswers['domain1a'];
         if (domainData.judgement !== undefined) {
-          sectionYMap.set('judgement', domainData.judgement);
+          answersMap.set(`${key}.judgement`, domainData.judgement);
         }
         if (domainData.judgementSource !== undefined) {
-          sectionYMap.set('judgementSource', domainData.judgementSource);
+          answersMap.set(`${key}.judgementSource`, domainData.judgementSource);
         }
         if (domainData.direction !== undefined) {
-          sectionYMap.set('direction', domainData.direction);
+          answersMap.set(`${key}.direction`, domainData.direction);
         }
-
         if (domainData.answers) {
-          let answersNestedYMap = sectionYMap.get('answers') as Y.Map<unknown> | undefined;
-          if (!answersNestedYMap || !(answersNestedYMap instanceof Y.Map)) {
-            answersNestedYMap = new Y.Map();
-            sectionYMap.set('answers', answersNestedYMap);
-          }
-
           Object.entries(domainData.answers).forEach(([qKey, qValue]) => {
-            let questionYMap = answersNestedYMap!.get(qKey) as Y.Map<unknown> | undefined;
-            if (!questionYMap || !(questionYMap instanceof Y.Map)) {
-              questionYMap = new Y.Map();
-              answersNestedYMap!.set(qKey, questionYMap);
-            }
-            if (qValue.answer !== undefined) questionYMap.set('answer', qValue.answer);
-            if (qValue.comment !== undefined)
-              this.setYTextField(questionYMap, 'comment', qValue.comment);
+            if (qValue.answer !== undefined) answersMap.set(qKey, qValue.answer);
           });
         }
       } else if (key === 'sectionB') {
         const sb = data as RobinsIAnswers['sectionB'];
         Object.entries(sb).forEach(([subKey, subValue]) => {
           if (typeof subValue === 'object' && subValue !== null) {
-            let questionYMap = sectionYMap!.get(subKey) as Y.Map<unknown> | undefined;
-            if (!questionYMap || !(questionYMap instanceof Y.Map)) {
-              questionYMap = new Y.Map();
-              sectionYMap!.set(subKey, questionYMap);
-            }
-            if (subValue.answer !== undefined) questionYMap.set('answer', subValue.answer);
-            if (subValue.comment !== undefined)
-              this.setYTextField(questionYMap, 'comment', subValue.comment);
+            if (subValue.answer !== undefined)
+              answersMap.set(`sectionB.${subKey}`, subValue.answer);
           } else {
-            sectionYMap!.set(subKey, subValue);
+            answersMap.set(`sectionB.${subKey}`, subValue);
           }
         });
       } else if (key === 'confoundingEvaluation') {
         const ce = data as RobinsIAnswers['confoundingEvaluation'];
-        if (ce.predefined !== undefined) sectionYMap.set('predefined', ce.predefined);
-        if (ce.additional !== undefined) sectionYMap.set('additional', ce.additional);
+        if (ce.predefined !== undefined)
+          answersMap.set('confoundingEvaluation.predefined', ce.predefined);
+        if (ce.additional !== undefined)
+          answersMap.set('confoundingEvaluation.additional', ce.additional);
       } else if (key === 'sectionD') {
         const sd = data as RobinsIAnswers['sectionD'];
-        if (sd.sources !== undefined) sectionYMap.set('sources', sd.sources);
-        if (sd.otherSpecify !== undefined) sectionYMap.set('otherSpecify', sd.otherSpecify);
-      } else {
-        Object.entries(data as Record<string, unknown>).forEach(([fieldKey, fieldValue]) => {
-          sectionYMap!.set(fieldKey, fieldValue);
-        });
+        if (sd.sources !== undefined) answersMap.set('sectionD.sources', sd.sources);
+        if (sd.otherSpecify !== undefined) {
+          let ytext = answersMap.get('sectionD.otherSpecify');
+          if (!(ytext instanceof Y.Text)) {
+            ytext = new Y.Text();
+            answersMap.set('sectionD.otherSpecify', ytext);
+          }
+          (ytext as Y.Text).delete(0, (ytext as Y.Text).length);
+          if (sd.otherSpecify) (ytext as Y.Text).insert(0, sd.otherSpecify as string);
+        }
+      } else if (key === 'sectionC') {
+        const sc = data as RobinsIAnswers['sectionC'];
+        if (sc.isPerProtocol !== undefined)
+          answersMap.set('sectionC.isPerProtocol', sc.isPerProtocol);
+      } else if (key === 'planning') {
+        // Planning text fields are handled via getTextGetter, nothing to set here
+      } else if (key === 'sectionA') {
+        // SectionA text fields are handled via getTextGetter, nothing to set here
       }
     });
   }
@@ -289,44 +259,12 @@ export class ROBINSIHandler extends ChecklistHandler {
       const answersMap = checklistYMap.get('answers') as Y.Map<unknown> | undefined;
       if (!answersMap) return null;
 
-      const sectionYMap = answersMap.get(sectionKey);
-      if (!sectionYMap || !(sectionYMap instanceof Y.Map)) return null;
-
-      // Handle domain questions
-      if (sectionKey.startsWith('domain') && questionKey) {
-        const answersNestedYMap = sectionYMap.get('answers');
-        if (!answersNestedYMap || !(answersNestedYMap instanceof Y.Map)) return null;
-
-        const questionYMap = answersNestedYMap.get(questionKey);
-        if (!questionYMap || !(questionYMap instanceof Y.Map)) return null;
-
-        const text = questionYMap.get(fieldKey);
-        if (text instanceof Y.Text) return text;
-
-        const newText = new Y.Text();
-        questionYMap.set(fieldKey, newText);
-        return newText;
-      }
-
-      // Handle sectionB questions
-      if (sectionKey === 'sectionB' && questionKey) {
-        const questionYMap = sectionYMap.get(questionKey);
-        if (!questionYMap || !(questionYMap instanceof Y.Map)) return null;
-
-        const text = questionYMap.get(fieldKey);
-        if (text instanceof Y.Text) return text;
-
-        const newText = new Y.Text();
-        questionYMap.set(fieldKey, newText);
-        return newText;
-      }
-
-      // Handle section-level fields
-      const text = sectionYMap.get(fieldKey);
+      const flatKey = questionKey ? `${questionKey}.${fieldKey}` : `${sectionKey}.${fieldKey}`;
+      const text = answersMap.get(flatKey);
       if (text instanceof Y.Text) return text;
 
       const newText = new Y.Text();
-      sectionYMap.set(fieldKey, newText);
+      answersMap.set(flatKey, newText);
       return newText;
     };
   }

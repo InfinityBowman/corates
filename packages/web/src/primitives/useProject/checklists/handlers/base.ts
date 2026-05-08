@@ -16,6 +16,7 @@ export type TextGetterFn = (
 export abstract class ChecklistHandler {
   abstract extractAnswersFromTemplate(template: Record<string, unknown>): Record<string, unknown>;
   abstract createAnswersYMap(answersData: Record<string, unknown>): Y.Map<unknown>;
+
   abstract serializeAnswers(answersMap: Y.Map<unknown>): Record<string, unknown>;
 
   getTextGetter(_getYDoc: () => Y.Doc | null): TextGetterFn | null {
@@ -34,11 +35,4 @@ export abstract class ChecklistHandler {
       map.set(fieldKey, newText);
     }
   }
-}
-
-export function yTextToString(value: unknown): string {
-  if (value instanceof Y.Text) {
-    return value.toString();
-  }
-  return (value as string) ?? '';
 }

@@ -1,8 +1,5 @@
 /**
  * Tests for projectStore - Connection state and active project tracking (Zustand)
- *
- * Collaborative data (studies, members, meta) is managed by @tldraw/state atoms
- * in projectAtoms.ts, not in this Zustand store.
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
@@ -13,7 +10,6 @@ describe('projectStore - Connection State Management', () => {
     useProjectStore.setState({
       activeProjectId: null,
       connections: {},
-      projectStats: {},
     });
   });
 
@@ -72,7 +68,6 @@ describe('projectStore - Active Project', () => {
     useProjectStore.setState({
       activeProjectId: null,
       connections: {},
-      projectStats: {},
     });
   });
 
