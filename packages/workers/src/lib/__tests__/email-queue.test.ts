@@ -35,6 +35,16 @@ function createMockMessage(payload: EmailPayload, attempts = 0) {
   };
 }
 
+function createMockDb() {
+  return {
+    prepare: () => ({
+      bind: () => ({
+        run: () => Promise.resolve({ meta: { changes: 1 } }),
+      }),
+    }),
+  };
+}
+
 function createMockBatch(messages: ReturnType<typeof createMockMessage>[]) {
   return {
     messages,
@@ -60,6 +70,7 @@ describe('Email Queue Consumer', () => {
     ENVIRONMENT: 'test',
     POSTMARK_SERVER_TOKEN: 'test-token',
     EMAIL_FROM: 'noreply@test.com',
+    DB: createMockDb(),
   } as never;
 
   beforeEach(async () => {
@@ -176,6 +187,7 @@ describe('Email Queue Producer', () => {
       ENVIRONMENT: 'test',
       POSTMARK_SERVER_TOKEN: 'test-token',
       EMAIL_FROM: 'noreply@test.com',
+      DB: createMockDb(),
     } as never;
 
     const messages = queued.map(payload => createMockMessage(payload));
