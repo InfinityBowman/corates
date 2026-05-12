@@ -8,6 +8,16 @@ import { createEmailService } from './auth/email';
 import type { EmailPayload } from '@corates/shared/email';
 import type { Env } from './types';
 
+async function isAlreadyProcessed(db: D1Database, messageId: string): Promise<boolean> {
+  const result = await db
+    .prepare(
+      `INSERT INTO processed_emails (queueMessageId, processedAt) VALUES (?, unixepoch()) ON CONFLICT (queueMessageId) DO NOTHING`,
+    )
+    .bind(messageId)
+    .run();
+  return result.meta.changes === 0;
+}
+
 export async function handleEmailQueue(batch: MessageBatch<unknown>, env: Env): Promise<void> {
   const emailService = createEmailService(env);
   const messages = batch.messages as Message<EmailPayload>[];
@@ -15,6 +25,11 @@ export async function handleEmailQueue(batch: MessageBatch<unknown>, env: Env): 
   await Promise.allSettled(
     messages.map(async msg => {
       try {
+        if (await isAlreadyProcessed(env.DB, msg.id)) {
+          msg.ack();
+          return;
+        }
+
         const result = await emailService.sendEmail(
           msg.body as Parameters<typeof emailService.sendEmail>[0],
         );

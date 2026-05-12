@@ -354,6 +354,12 @@ export const projectInvitations = sqliteTable(
   t => [index('project_invitations_projectId_idx').on(t.projectId)],
 );
 
+// Idempotency table for email queue deduplication (Cloudflare Queues is at-least-once)
+export const processedEmails = sqliteTable('processed_emails', {
+  queueMessageId: text('queueMessageId').primaryKey(),
+  processedAt: integer('processedAt', { mode: 'timestamp' }).default(sql`(unixepoch())`),
+});
+
 // Export all tables
 export const dbSchema = {
   user,
@@ -371,6 +377,7 @@ export const dbSchema = {
   orgAccessGrants,
   stripeEventLedger,
   projectInvitations,
+  processedEmails,
 };
 
 // Inferred row + insert types per table. Prefer these over hand-written
@@ -419,3 +426,6 @@ export type NewStripeEventLedgerEntry = typeof stripeEventLedger.$inferInsert;
 
 export type ProjectInvitation = typeof projectInvitations.$inferSelect;
 export type NewProjectInvitation = typeof projectInvitations.$inferInsert;
+
+export type ProcessedEmail = typeof processedEmails.$inferSelect;
+export type NewProcessedEmail = typeof processedEmails.$inferInsert;
