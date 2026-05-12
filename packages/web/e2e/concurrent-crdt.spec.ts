@@ -286,6 +286,14 @@ test.describe('Concurrent CRDT: AMSTAR2', () => {
     });
 
     const checklistUrlB = await openEditableChecklist(setupPage);
+
+    // Wait for the checklist to fully load before closing the setup context.
+    // Without this, setupCtx.close() can kill the WebSocket before the Y.Doc
+    // update (Bob's checklist creation) reaches the Durable Object.
+    await expect(setupPage.getByText('AMSTAR2 Checklist')).toBeVisible({ timeout: 15_000 });
+    await setupPage.goto(`${BASE_URL}/projects/${projectId}`);
+    await expect(setupPage.getByRole('tab', { name: /To Do/i })).toBeVisible({ timeout: 15_000 });
+
     await setupCtx.close();
 
     await runConcurrentEditCycle(browser, scenario, projectId, checklistUrlA, checklistUrlB, {
