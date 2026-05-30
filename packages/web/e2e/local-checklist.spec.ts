@@ -19,8 +19,11 @@
  *   pnpm --filter web dev  (localhost:3010)
  */
 
+import path from 'node:path';
 import { test, expect } from '@playwright/test';
 import { answerAllAMSTAR2, fillROB2Preliminary } from './shared-steps';
+
+const FIXTURES_DIR = path.join(import.meta.dirname, 'fixtures');
 
 const TYPE_LABELS: Record<string, string> = {
   AMSTAR2: 'AMSTAR 2',
@@ -78,5 +81,18 @@ test.describe('Local-practice checklists', () => {
     await expect(page.getByPlaceholder(/experimental intervention/i)).toHaveValue('Drug X');
     await expect(page.getByPlaceholder(/comparator intervention/i)).toHaveValue('Placebo');
     await expect(page.getByPlaceholder(/e\.g\. RR/i)).toHaveValue('RR 1.5');
+  });
+
+  test('upload PDF dropzone appears when no PDF attached', async ({ page }) => {
+    await createLocalChecklist(page, 'AMSTAR2', 'No-PDF Upload Test');
+
+    const dropzone = page.getByText('Click to upload');
+    await expect(dropzone).toBeVisible({ timeout: 10_000 });
+
+    const fileInput = page.locator('input[type="file"][accept*="pdf"]');
+    await fileInput.setInputFiles(path.join(FIXTURES_DIR, 'Petrie2019.pdf'));
+
+    // Dropzone should disappear once the PDF loads
+    await expect(dropzone).toBeHidden({ timeout: 15_000 });
   });
 });
