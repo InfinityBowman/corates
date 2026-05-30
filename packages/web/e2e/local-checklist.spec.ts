@@ -92,7 +92,6 @@ test.describe('Local-practice checklists', () => {
     const fileInput = page.locator('input[type="file"][accept*="pdf"]');
     await fileInput.setInputFiles(path.join(FIXTURES_DIR, 'Petrie2019.pdf'));
 
-    // Dropzone should disappear once the PDF loads
     await expect(dropzone).toBeHidden({ timeout: 15_000 });
   });
 });

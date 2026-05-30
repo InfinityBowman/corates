@@ -1,4 +1,4 @@
-import { lazy, Suspense, useState, useCallback } from 'react';
+import { lazy, Suspense, useState } from 'react';
 import { CloudUploadIcon } from 'lucide-react';
 import { GenericChecklist } from '@/components/checklist/GenericChecklist';
 import { SplitScreenLayout } from '@/components/checklist/SplitScreenLayout';
@@ -106,21 +106,18 @@ function PdfUploadPanel({
 }) {
   const [error, setError] = useState<string | null>(null);
 
-  const handleFilesChange = useCallback(
-    async (files: File[]) => {
-      const file = files[0];
-      if (!file) return;
-      setError(null);
-      const result = await validatePdfFile(file);
-      if (!result.valid) {
-        setError((result as any).details?.message || (result as any).error);
-        return;
-      }
-      const data = await file.arrayBuffer();
-      onPdfChange(data, file.name);
-    },
-    [onPdfChange],
-  );
+  async function handleFilesChange(files: File[]) {
+    const file = files[0];
+    if (!file) return;
+    setError(null);
+    const result = await validatePdfFile(file);
+    if (!result.valid) {
+      setError((result as any).details?.message || (result as any).error);
+      return;
+    }
+    const data = await file.arrayBuffer();
+    onPdfChange(data, file.name);
+  }
 
   return (
     <div className='flex h-full flex-col items-center justify-center p-8'>
