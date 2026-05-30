@@ -58,7 +58,6 @@ function LocalChecklistEditor({ checklistId }: { checklistId: string }) {
   );
   const currentScore = useChecklistScore(checklistId, checklistId, checklistType);
 
-
   const [pdfState, setPdfState] = useState<{
     loading: boolean;
     data: ArrayBuffer | null;
