@@ -99,6 +99,10 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+    outputs:
+      # Resolved Playwright version, consumed by the e2e job's container tag so
+      # the image can never drift out of sync with @playwright/test.
+      playwright-version: ${{ steps.pw-version.outputs.version }}
 
     steps:
       - name: Checkout
@@ -115,6 +119,10 @@ jobs:
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+
+      - name: Resolve Playwright version
+        id: pw-version
+        run: echo "version=$(pnpm --filter web exec playwright --version | cut -d' ' -f2)" >> "$GITHUB_OUTPUT"
 
       - name: Build workspace dependencies
         run: pnpm --filter @corates/shared --filter @corates/db build
@@ -164,13 +172,14 @@ jobs:
           exit 1
 
   # E2E against staging in the official Playwright container: browsers and their
-  # system deps are prebaked, so there is no install step. The image tag MUST
-  # match @playwright/test in the lockfile (1.59.1) or the browsers won't match.
+  # system deps are prebaked, so there is no install step. The image tag is
+  # derived from the version deploy-staging resolved, so it always matches
+  # @playwright/test and cannot drift.
   e2e:
     needs: deploy-staging
     runs-on: ubuntu-latest
     container:
-      image: mcr.microsoft.com/playwright:v1.59.1-noble
+      image: mcr.microsoft.com/playwright:v${{ needs.deploy-staging.outputs.playwright-version }}-noble
     permissions:
       contents: read
 
