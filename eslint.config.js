@@ -39,6 +39,7 @@ export default [
         cancelIdleCallback: 'readonly',
         performance: 'readonly',
         ReadableStream: 'readonly',
+        HTMLCanvasElement: 'readonly',
         HTMLDivElement: 'readonly',
         HTMLInputElement: 'readonly',
         HTMLTextAreaElement: 'readonly',
