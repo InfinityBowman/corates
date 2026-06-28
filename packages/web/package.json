@@ -26,6 +26,7 @@
     "test:unit": "vitest run --config vitest.config.ts --reporter=verbose",
     "test:watch": "vitest --config vitest.config.ts",
     "test:server": "pnpm run db:generate:test && vitest run --config vitest.server.config.ts",
+    "pretest:dev": "lsof -ti:3010 | xargs kill -9 2>/dev/null || true",
     "test:dev": "concurrently -k -n web,stripe -c blue,yellow \"APP_URL=http://localhost:3010 AUTH_BASE_URL=http://localhost:3010 vite dev --mode e2e --config vite.config.e2e.ts\" \"stripe listen --forward-to http://localhost:3010/api/auth/stripe/webhook\"",
     "test:e2e": "playwright test",
     "db:generate:test": "node ./scripts/generate-test-sql.mjs",
