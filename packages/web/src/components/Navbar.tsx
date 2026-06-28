@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link } from '@tanstack/react-router';
+import { Link, useHydrated } from '@tanstack/react-router';
 import { MenuIcon, XIcon } from 'lucide-react';
 
 import { useAuthStore, selectIsLoggedIn, selectUser } from '@/stores/authStore';
@@ -78,7 +78,10 @@ function MobileMenu({ isOpen, onClose }: { isOpen: boolean; onClose: () => void 
 }
 
 export default function Navbar() {
-  const isLoggedIn = useAuthStore(selectIsLoggedIn);
+  // Gate auth-dependent rendering until hydration. cachedUser is read
+  // synchronously by the store.
+  const isHydrated = useHydrated();
+  const isLoggedIn = useAuthStore(selectIsLoggedIn) && isHydrated;
   const user = useAuthStore(selectUser);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 

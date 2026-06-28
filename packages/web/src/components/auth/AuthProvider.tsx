@@ -12,7 +12,7 @@
 
 import { useEffect, useRef } from 'react';
 import { useSession } from '@/api/auth-client';
-import { useAuthStore, saveCachedAuth, loadCachedAuth } from '@/stores/authStore';
+import { useAuthStore, saveCachedAuth } from '@/stores/authStore';
 import { fetchAndCacheAvatar } from '@/primitives/avatarCache.js';
 import { queryClient } from '@/lib/queryClient';
 import { queryKeys } from '@/lib/queryKeys';
@@ -30,12 +30,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const setSessionData = useAuthStore(state => state.setSessionData);
   const setCachedUser = useAuthStore(state => state.setCachedUser);
   const setCachedAvatarUrl = useAuthStore(state => state.setCachedAvatarUrl);
-
-  // Restore the persisted user after mount to prevent hydration mismatch.
-  useEffect(() => {
-    const cached = loadCachedAuth();
-    if (cached) setCachedUser(cached);
-  }, [setCachedUser]);
 
   // Sync Better Auth session into Zustand store
   useEffect(() => {

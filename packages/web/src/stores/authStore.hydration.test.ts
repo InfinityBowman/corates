@@ -1,22 +1,21 @@
 /**
- * Regression test for CORATES-WEB-C (Sentry): "Hydration failed - the server
- * rendered HTML didn't match the client" on resource pages.
+ * Guards the auth-store invariant that the protected-route guard depends on.
  *
- * Root cause: the store seeds `cachedUser` from localStorage at module-init
- * time (`cachedUser: loadCachedAuth()`). On the server there is no localStorage
- * so it is null; on the client a returning user's cached session makes it
- * non-null. With `sessionLoading: true`, `selectIsLoggedIn` then returns a
- * different value on the first client render than on the server render, which
- * is exactly a hydration mismatch.
+ * `routes/_app/_protected.tsx` runs `selectIsLoggedIn(useAuthStore.getState())`
+ * SYNCHRONOUSLY in `beforeLoad` and redirects to /signin when it returns false.
+ * On a hard navigation / refresh this runs before any session fetch resolves,
+ * so it relies on `cachedUser` being loaded from localStorage at store-init
+ * time. If that load is deferred (e.g. to a post-mount effect), the guard sees
+ * no user and bounces logged-in users to /signin on every refresh of a
+ * protected page. This test pins the synchronous load.
  *
- * The first client render MUST equal the server render. This test pins that.
+ * (The hydration mismatch this once tried to fix, Sentry CORATES-WEB-C, is now
+ * handled in the Navbar via useHydrated(), NOT by nulling cachedUser here.)
  */
 
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-// Heavy / IO dependencies pulled in transitively by the store. Stubbed so the
-// module can be imported in isolation without touching IndexedDB, the network,
-// or the query client.
+// Heavy / IO dependencies pulled in transitively by the store.
 vi.mock('@/api/auth-client', () => ({
   authClient: {},
   authFetch: vi.fn(),
@@ -42,41 +41,29 @@ async function loadStoreFresh() {
   return import('./authStore');
 }
 
-describe('authStore SSR hydration consistency (CORATES-WEB-C)', () => {
+describe('authStore protected-route guard invariant (CORATES-WEB-C follow-up)', () => {
   afterEach(() => {
     localStorage.clear();
     vi.resetModules();
   });
 
-  it('first client render of selectIsLoggedIn must match the logged-out server render', async () => {
-    // Server render: no persisted cache available.
-    localStorage.clear();
-    const server = await loadStoreFresh();
-    const serverLoggedIn = server.selectIsLoggedIn(server.useAuthStore.getState());
-
-    // Client render for a returning user: a valid cached session is present.
+  it('loads cachedUser synchronously at init so the guard sees a logged-in user before the session resolves', async () => {
     localStorage.setItem(AUTH_CACHE_KEY, JSON.stringify({ id: 'u1', email: 'a@b.com' }));
     localStorage.setItem(AUTH_CACHE_TIMESTAMP_KEY, Date.now().toString());
-    const client = await loadStoreFresh();
-    const clientLoggedIn = client.selectIsLoggedIn(client.useAuthStore.getState());
 
-    expect(serverLoggedIn).toBe(false);
-    // The bug: the first client render diverges from the server -> hydration mismatch.
-    expect(clientLoggedIn).toBe(serverLoggedIn);
+    const mod = await loadStoreFresh();
+    const state = mod.useAuthStore.getState();
+
+    // Synchronous load is what beforeLoad relies on.
+    expect(state.cachedUser).toMatchObject({ id: 'u1' });
+    expect(state.sessionLoading).toBe(true);
+    // The guard must treat a returning user as logged in while the session loads.
+    expect(mod.selectIsLoggedIn(state)).toBe(true);
   });
 
-  it('restores the cached user after mount so returning users still appear logged in', async () => {
-    localStorage.setItem(AUTH_CACHE_KEY, JSON.stringify({ id: 'u1', email: 'a@b.com' }));
-    localStorage.setItem(AUTH_CACHE_TIMESTAMP_KEY, Date.now().toString());
+  it('reports logged-out at init when there is no cached user', async () => {
+    localStorage.clear();
     const mod = await loadStoreFresh();
-
-    // First render is logged-out (matches the server).
     expect(mod.selectIsLoggedIn(mod.useAuthStore.getState())).toBe(false);
-
-    // AuthProvider's post-mount effect restores the persisted user.
-    mod.useAuthStore.getState().setCachedUser(mod.loadCachedAuth());
-
-    // While the session is still loading, the cached user keeps them logged in.
-    expect(mod.selectIsLoggedIn(mod.useAuthStore.getState())).toBe(true);
   });
 });

@@ -155,7 +155,7 @@ async function performSignoutCleanup() {
 
 export const useAuthStore = create<AuthState & AuthActions>()((set, get) => ({
   isOnline: typeof navigator !== 'undefined' ? navigator.onLine : true,
-  cachedUser: null, // Must start null to match the server render.
+  cachedUser: loadCachedAuth(),
   cachedAvatarUrl: null,
   authError: null,
   sessionUser: null,
