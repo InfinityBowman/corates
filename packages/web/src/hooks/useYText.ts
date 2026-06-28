@@ -48,7 +48,9 @@ export function applyYTextDiff(yText: Y.Text, oldValue: string, newValue: string
   }
 
   const deleteCount = oldValue.length - prefixLen - suffixLen;
-  const insertText = newValue.slice(prefixLen, newValue.length - suffixLen || undefined);
+  // NOTE: end index can legitimately be 0 (when newValue is entirely a suffix
+  // of oldValue, i.e. leading text was deleted).
+  const insertText = newValue.slice(prefixLen, newValue.length - suffixLen);
 
   yText.doc!.transact(() => {
     if (deleteCount > 0) yText.delete(prefixLen, deleteCount);

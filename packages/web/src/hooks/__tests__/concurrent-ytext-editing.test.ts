@@ -60,6 +60,32 @@ describe('concurrent Y.Text editing', () => {
     expect(textA.toString()).toBe('the dog ran');
   });
 
+  it('deleting leading text does not duplicate the remainder', () => {
+    // Regression: deleting the first word leaves newValue as a pure suffix of
+    // oldValue, so prefixLen=0 and suffixLen=newValue.length. The end index
+    // (newValue.length - suffixLen) is then 0, which must yield an empty insert
+    // - not the whole string. A `|| undefined` here previously re-inserted the
+    // entire remaining text, duplicating the field.
+    const doc = new Y.Doc();
+    const text = doc.getText('note');
+    const pasted = 'Allocation was concealed and the risk of bias is low overall.';
+    text.insert(0, pasted);
+
+    const corrected = pasted.replace('Allocation ', '');
+    applyYTextDiff(text, text.toString(), corrected);
+
+    expect(text.toString()).toBe(corrected);
+    expect(text.toString().length).toBe(corrected.length);
+  });
+
+  it('deleting all leading chars down to a shared suffix is not duplicated', () => {
+    const doc = new Y.Doc();
+    const text = doc.getText('note');
+    text.insert(0, 'XYZ tail content here');
+    applyYTextDiff(text, text.toString(), 'tail content here');
+    expect(text.toString()).toBe('tail content here');
+  });
+
   it('concurrent appends at the end both survive', () => {
     const docA = new Y.Doc();
     const docB = new Y.Doc();

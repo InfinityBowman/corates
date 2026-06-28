@@ -252,4 +252,10 @@ CREATE INDEX \`project_members_projectId_idx\` ON \`project_members\` (\`project
 CREATE INDEX \`project_members_userId_idx\` ON \`project_members\` (\`userId\`);--> statement-breakpoint
 CREATE INDEX \`projects_orgId_idx\` ON \`projects\` (\`orgId\`);--> statement-breakpoint
 CREATE INDEX \`session_userId_idx\` ON \`session\` (\`userId\`);--> statement-breakpoint
-CREATE INDEX \`subscription_referenceId_idx\` ON \`subscription\` (\`referenceId\`);`;
+CREATE INDEX \`subscription_referenceId_idx\` ON \`subscription\` (\`referenceId\`);
+
+CREATE TABLE \`processed_emails\` (
+	\`queueMessageId\` text PRIMARY KEY NOT NULL,
+	\`processedAt\` integer DEFAULT (unixepoch())
+);
+`;
