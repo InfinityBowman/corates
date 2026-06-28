@@ -90,7 +90,7 @@ function hexToRgb(hex: string): RGB {
   if (h.length === 3) {
     h = h
       .split('')
-      .map((c) => c + c)
+      .map(c => c + c)
       .join('');
   }
   return [
@@ -134,11 +134,7 @@ interface RibbonColor {
   full: string;
 }
 
-export default function HeroWavesCanvas({
-  settings,
-}: {
-  settings?: Partial<RibbonSettings>;
-}) {
+export default function HeroWavesCanvas({ settings }: { settings?: Partial<RibbonSettings> }) {
   const merged = useMemo(() => ({ ...DEFAULTS, ...settings }), [settings]);
   const settingsRef = useRef(merged);
   settingsRef.current = merged;
@@ -199,8 +195,7 @@ export default function HeroWavesCanvas({
       }
       return {
         yOffset: (f + s.twist * h + s.morph * p) * 0.5 * bulge * breathe,
-        lineOffset:
-          ((n <= 1 ? 0.5 : ribbon / (n - 1)) - 0.5) * s.count * s.spacing,
+        lineOffset: ((n <= 1 ? 0.5 : ribbon / (n - 1)) - 0.5) * s.count * s.spacing,
       };
     };
 
@@ -281,7 +276,10 @@ export default function HeroWavesCanvas({
       const c = o / active;
       return {
         u: c * s.particleCoverage,
-        fade: c < 0.18 ? c / 0.18 : c > 0.68 ? (1 - c) / 0.32 : 1,
+        fade:
+          c < 0.18 ? c / 0.18
+          : c > 0.68 ? (1 - c) / 0.32
+          : 1,
       };
     };
 
@@ -426,9 +424,7 @@ export default function HeroWavesCanvas({
       render(time, intro);
     };
 
-    const prefersReducedMotion = window.matchMedia(
-      '(prefers-reduced-motion: reduce)',
-    ).matches;
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
     const resize = () => {
       const dpr = Math.min(window.devicePixelRatio || 1, maxDpr);
