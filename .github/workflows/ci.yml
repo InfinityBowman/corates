@@ -90,7 +90,10 @@ jobs:
       - name: Unit tests
         run: pnpm test
 
-  deploy-and-test:
+  # Build and deploy to staging. Gated on `checks` and push-only; this gate
+  # cascades to `e2e` and `deploy-production` via `needs` (a skipped dependency
+  # skips its dependents), so the whole deploy chain stays off pull requests.
+  deploy-staging:
     if: github.event_name == 'push'
     needs: checks
     runs-on: ubuntu-latest
@@ -112,8 +115,6 @@ jobs:
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
-
-      # -- Staging deploy --
 
       - name: Build workspace dependencies
         run: pnpm --filter @corates/shared --filter @corates/db build
@@ -147,12 +148,8 @@ jobs:
         working-directory: packages/stripe-purchases
         run: pnpm exec wrangler deploy --env staging
 
-      # -- E2E tests against staging --
-
-      - name: Install Playwright browsers
-        working-directory: packages/web
-        run: pnpm exec playwright install chromium --with-deps
-
+      # Confirm the deploy is live before handing off to the e2e job. Runs here
+      # (not in the e2e container) so we can rely on curl being present.
       - name: Wait for staging to be ready
         run: |
           for i in $(seq 1 30); do
@@ -165,6 +162,33 @@ jobs:
           done
           echo "Staging did not become ready in time"
           exit 1
+
+  # E2E against staging in the official Playwright container: browsers and their
+  # system deps are prebaked, so there is no install step. The image tag MUST
+  # match @playwright/test in the lockfile (1.59.1) or the browsers won't match.
+  e2e:
+    needs: deploy-staging
+    runs-on: ubuntu-latest
+    container:
+      image: mcr.microsoft.com/playwright:v1.59.1-noble
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
 
       - name: Run e2e tests
         env:
@@ -180,7 +204,31 @@ jobs:
           path: packages/web/test-results/
           retention-days: 7
 
-      # -- Production deploy (only if e2e tests pass) --
+  # Production deploy, gated on e2e passing (default success() on `needs`).
+  deploy-production:
+    needs: e2e
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build workspace dependencies
+        run: pnpm --filter @corates/shared --filter @corates/db build
 
       - name: Build web for production
         env:
