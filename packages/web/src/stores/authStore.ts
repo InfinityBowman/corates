@@ -95,7 +95,7 @@ interface AuthActions {
 
 // Pure functions for localStorage cache
 
-function loadCachedAuth(): AuthUser | null {
+export function loadCachedAuth(): AuthUser | null {
   if (typeof window === 'undefined') return null;
   try {
     const cached = localStorage.getItem(AUTH_CACHE_KEY);
@@ -155,7 +155,7 @@ async function performSignoutCleanup() {
 
 export const useAuthStore = create<AuthState & AuthActions>()((set, get) => ({
   isOnline: typeof navigator !== 'undefined' ? navigator.onLine : true,
-  cachedUser: loadCachedAuth(),
+  cachedUser: null, // Must start null to match the server render.
   cachedAvatarUrl: null,
   authError: null,
   sessionUser: null,
