@@ -7,6 +7,9 @@ import tailwindcss from '@tailwindcss/vite';
 import { cloudflare } from '@cloudflare/vite-plugin';
 
 export default defineConfig({
+  // E2E runs over plain HTTP on a fixed port (no portless/TLS). 3010 is already
+  // a trusted auth origin (see workers origins config), so cookies/CORS work.
+  server: { port: 3010, strictPort: true },
   resolve: {
     alias: {
       '@/': path.resolve(import.meta.dirname, 'src') + '/',

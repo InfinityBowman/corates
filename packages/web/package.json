@@ -26,8 +26,8 @@
     "test:unit": "vitest run --config vitest.config.ts --reporter=verbose",
     "test:watch": "vitest --config vitest.config.ts",
     "test:server": "pnpm run db:generate:test && vitest run --config vitest.server.config.ts",
-    "test:dev": "concurrently -k -n web,stripe -c blue,yellow \"APP_URL=https://corates-test.localhost AUTH_BASE_URL=https://corates-test.localhost portless corates-test vite dev --mode e2e --config vite.config.e2e.ts\" \"stripe listen --skip-verify --forward-to https://corates-test.localhost/api/auth/stripe/webhook\"",
-    "test:e2e": "if [ -z \"$NODE_EXTRA_CA_CERTS\" ] && [ -f \"$HOME/.portless/ca.pem\" ]; then export NODE_EXTRA_CA_CERTS=\"$HOME/.portless/ca.pem\"; fi; playwright test",
+    "test:dev": "concurrently -k -n web,stripe -c blue,yellow \"APP_URL=http://localhost:3010 AUTH_BASE_URL=http://localhost:3010 vite dev --mode e2e --config vite.config.e2e.ts\" \"stripe listen --forward-to http://localhost:3010/api/auth/stripe/webhook\"",
+    "test:e2e": "playwright test",
     "db:generate:test": "node ./scripts/generate-test-sql.mjs",
     "user:make-admin:local": "node ./scripts/make-admin-local.mjs",
     "user:make-admin:prod": "node ./scripts/make-admin-prod.mjs"

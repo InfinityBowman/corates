@@ -1,6 +1,6 @@
 // E2E test wrangler config.
 // Identical to wrangler.jsonc except APP_URL and AUTH_BASE_URL
-// point at the test server (corates-test.localhost via portless).
+// point at the test server (http://localhost:3010, plain HTTP, no portless).
 // The Cloudflare Vite plugin's persistState in vite.config.e2e.ts
 // isolates D1/DO state to .wrangler/e2e-state.
 {
@@ -40,8 +40,8 @@
   "vars": {
     "ENVIRONMENT": "development",
     "DEV_MODE": true,
-    "APP_URL": "https://corates-test.localhost",
-    "AUTH_BASE_URL": "https://corates-test.localhost"
+    "APP_URL": "http://localhost:3010",
+    "AUTH_BASE_URL": "http://localhost:3010"
   },
 
   "observability": {
