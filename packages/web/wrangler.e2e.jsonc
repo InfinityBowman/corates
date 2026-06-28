@@ -40,8 +40,8 @@
   "vars": {
     "ENVIRONMENT": "development",
     "DEV_MODE": true,
-    "APP_URL": "http://corates-test.localhost:1355",
-    "AUTH_BASE_URL": "http://corates-test.localhost:1355"
+    "APP_URL": "https://corates-test.localhost",
+    "AUTH_BASE_URL": "https://corates-test.localhost"
   },
 
   "observability": {

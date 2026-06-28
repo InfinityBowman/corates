@@ -5,7 +5,7 @@
 
 function getApiBase(): string {
   // Post-consolidation: same-origin as the TanStack Start worker.
-  return import.meta.env.VITE_API_URL || 'http://corates.localhost:1355';
+  return import.meta.env.VITE_API_URL || 'https://corates.localhost';
 }
 
 export const API_BASE = getApiBase();
