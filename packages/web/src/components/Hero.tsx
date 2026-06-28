@@ -1,8 +1,11 @@
 import { Link } from '@tanstack/react-router';
+import { ArrowRight } from 'lucide-react';
+
+import HeroWavesCanvas from './HeroWavesCanvas';
 
 export default function Hero() {
   return (
-    <section className='relative max-h-screen min-h-screen overflow-hidden'>
+    <section className='relative isolate max-h-screen min-h-screen overflow-hidden'>
       <div className='mx-auto flex max-w-7xl flex-col items-center px-4 pt-8 pb-0 sm:px-6 md:pt-14'>
         <div className='mb-2 w-full max-w-4xl'>
           <div className='mb-6 flex items-center justify-center gap-4'>
@@ -23,13 +26,14 @@ export default function Hero() {
           <div className='mb-2 flex flex-col justify-center gap-4 sm:flex-row sm:gap-6'>
             <Link
               to='/checklist'
-              className='inline-flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 px-5 py-2.5 text-base font-semibold text-white shadow-md shadow-blue-600/20 transition-colors hover:bg-blue-500 sm:w-auto'
+              className='group inline-flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 px-6 py-3 text-base font-semibold text-white shadow-md transition-all duration-200 hover:bg-blue-700 hover:shadow-lg focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2 focus-visible:outline-none sm:w-auto'
             >
               Start an Appraisal
+              <ArrowRight className='size-4 transition-transform duration-200 group-hover:translate-x-0.5' />
             </Link>
             <Link
               to='/signup'
-              className='inline-flex w-full items-center justify-center gap-2 rounded-lg border-2 border-blue-600 px-5 py-2.5 text-base font-semibold text-blue-600 transition-colors hover:bg-blue-50 sm:w-auto'
+              className='inline-flex w-full items-center justify-center gap-2 rounded-lg border border-gray-200 bg-white px-6 py-3 text-base font-semibold text-gray-800 shadow-sm transition-all duration-200 hover:border-gray-300 hover:bg-gray-50 hover:shadow-md focus-visible:ring-2 focus-visible:ring-gray-300 focus-visible:ring-offset-2 focus-visible:outline-none sm:w-auto'
             >
               Start a Review Project
             </Link>
@@ -38,7 +42,7 @@ export default function Hero() {
       </div>
       {/* Product Screenshot: full width, bottom, angled */}
       <div className='flex w-full justify-center px-4 sm:px-6 md:translate-x-10'>
-        <div className='relative w-full max-w-5xl opacity-80'>
+        <div className='relative w-full max-w-5xl'>
           <div className='mt-0 mb-0 transform-[perspective(900px)_rotateX(10deg)_rotateZ(-6deg)_rotateY(6deg)] overflow-hidden rounded-2xl border border-gray-200 bg-linear-to-br from-gray-100 to-gray-50 shadow-2xl md:transform-[perspective(1200px)_rotateX(14deg)_rotateZ(-10deg)_rotateY(8deg)]'>
             <div className='flex aspect-16/7 items-center justify-center p-1 sm:p-2'>
               <div className='text-center'>
@@ -83,6 +87,7 @@ export default function Hero() {
       {/* Background decoration */}
       <div className='absolute top-0 left-1/2 -z-10 size-250 -translate-x-1/2 rounded-full bg-linear-to-b from-blue-700/5 to-transparent blur-3xl' />
       <div className='absolute top-1/2 right-0 -z-10 size-125 rounded-full bg-linear-to-l from-blue-700/5 to-transparent blur-3xl' />
+      <HeroWavesCanvas settings={{ rotate: -15, edgeFade: 0.22 }} />
     </section>
   );
 }
