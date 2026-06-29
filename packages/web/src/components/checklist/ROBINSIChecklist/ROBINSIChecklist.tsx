@@ -1,4 +1,5 @@
 import { useState, useMemo, useCallback, useRef, useEffect } from 'react';
+import { InfoIcon } from 'lucide-react';
 import { getActiveDomainKeys } from './checklist-map';
 import { PlanningSection } from './PlanningSection';
 import { SectionA } from './SectionA';
@@ -135,14 +136,17 @@ export function ROBINSIChecklist({
           </>
         )}
 
-        {/* Critical risk message when stopped */}
+        {/* Domain assessment skipped when Section B triggers critical risk */}
         {stopAssessment && (
-          <div className='border-destructive/20 bg-destructive/10 rounded-lg border-2 p-6 text-center'>
-            <div className='text-destructive mb-2 text-lg font-semibold'>Critical Risk of Bias</div>
-            <p className='text-destructive text-sm'>
-              Based on Section B responses, this result has been classified as Critical risk of
-              bias. Domain assessment is not required.
-            </p>
+          <div className='border-info-border bg-info-bg flex gap-3 rounded-lg border p-6'>
+            <InfoIcon className='text-info mt-0.5 size-5 shrink-0' />
+            <div>
+              <p className='text-foreground font-medium'>Domain assessment not required</p>
+              <p className='text-muted-foreground mt-1 text-sm'>
+                Section B (B2 or B3 = Yes/Probably Yes) rates this result as Critical risk of bias
+                under ROBINS-I V2, so the domain sections are skipped.
+              </p>
+            </div>
           </div>
         )}
       </div>

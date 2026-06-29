@@ -1,5 +1,5 @@
 import { useMemo, useId } from 'react';
-import { AlertCircleIcon } from 'lucide-react';
+import { InfoIcon } from 'lucide-react';
 import { SECTION_B, RESPONSE_LABELS } from './checklist-map';
 import { NoteEditor } from '@/components/checklist/common/NoteEditor';
 import {
@@ -64,16 +64,15 @@ export function SectionB({ studyId, checklistId, disabled }: SectionBProps) {
         ))}
 
         {stopAssessment && (
-          <div className='border-destructive/20 bg-destructive/10 mt-5 rounded-lg border-2 p-4'>
-            <div className='flex items-center gap-2'>
-              <AlertCircleIcon className='text-destructive size-5' />
-              <span className='text-destructive font-semibold'>Assessment Stopped</span>
+          <div className='border-info-border bg-info-bg mt-5 flex gap-3 rounded-lg border p-4'>
+            <InfoIcon className='text-info mt-0.5 size-5 shrink-0' />
+            <div className='text-sm'>
+              <p className='text-foreground font-medium'>Domain assessment not required</p>
+              <p className='text-muted-foreground mt-1'>
+                Because B2 or B3 is Yes/Probably Yes, ROBINS-I V2 rates this result as Critical risk
+                of bias and the domain questions are skipped.
+              </p>
             </div>
-            <p className='text-destructive mt-2 text-sm'>
-              Based on the responses to B2 or B3, this result should be classified as
-              <span className='font-semibold'> Critical risk of bias</span>. Further domain
-              assessment is not required.
-            </p>
           </div>
         )}
       </div>
