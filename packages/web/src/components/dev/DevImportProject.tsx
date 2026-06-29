@@ -28,6 +28,18 @@ import { useOrgs } from '@/hooks/useOrgs';
 import { useAuthStore, selectUser } from '@/stores/authStore';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { queryKeys } from '@/lib/queryKeys';
+import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Spinner } from '@/components/ui/spinner';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 interface ActionResult {
   success: boolean;
@@ -356,12 +368,8 @@ export function DevImportProject() {
     }
   };
 
-  const tabClass = (active: boolean) =>
-    `flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded transition-colors ${
-      active ?
-        'bg-purple-600 text-white'
-      : 'text-muted-foreground hover:text-foreground hover:bg-muted'
-    }`;
+  const modeButtonClass = (active: boolean) =>
+    cn('flex-1', active && 'bg-purple-600 text-white hover:bg-purple-700');
 
   return (
     <div className='flex h-full flex-col gap-3 p-3'>
@@ -369,14 +377,24 @@ export function DevImportProject() {
 
       {/* Mode toggle */}
       <div className='bg-muted flex gap-1 rounded-lg p-1'>
-        <button className={tabClass(mode === 'template')} onClick={() => setMode('template')}>
-          <LayoutTemplateIcon size={12} />
+        <Button
+          variant={mode === 'template' ? 'default' : 'ghost'}
+          size='sm'
+          className={modeButtonClass(mode === 'template')}
+          onClick={() => setMode('template')}
+        >
+          <LayoutTemplateIcon />
           From Template
-        </button>
-        <button className={tabClass(mode === 'json')} onClick={() => setMode('json')}>
-          <BracesIcon size={12} />
+        </Button>
+        <Button
+          variant={mode === 'json' ? 'default' : 'ghost'}
+          size='sm'
+          className={modeButtonClass(mode === 'json')}
+          onClick={() => setMode('json')}
+        >
+          <BracesIcon />
           From JSON
-        </button>
+        </Button>
       </div>
 
       {/* Org selector */}
@@ -385,18 +403,21 @@ export function DevImportProject() {
           <label className='text-2xs text-muted-foreground mb-1 block font-medium tracking-wide uppercase'>
             Organization
           </label>
-          <select
-            className='border-border bg-card text-foreground w-full rounded border px-2 py-1.5 text-xs focus:border-purple-500 focus:outline-none'
-            value={selectedOrgId || ''}
-            onChange={e => setSelectedOrgId(e.target.value || null)}
+          <Select
+            value={selectedOrgId || undefined}
+            onValueChange={value => setSelectedOrgId(value || null)}
           >
-            <option value=''>Select organization</option>
-            {orgs.map(org => (
-              <option key={org.id} value={org.id}>
-                {org.name}
-              </option>
-            ))}
-          </select>
+            <SelectTrigger size='sm' className='w-full text-xs'>
+              <SelectValue placeholder='Select organization' />
+            </SelectTrigger>
+            <SelectContent className='z-10000'>
+              {orgs.map(org => (
+                <SelectItem key={org.id} value={org.id}>
+                  {org.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       )}
 
@@ -407,22 +428,25 @@ export function DevImportProject() {
             <label className='text-2xs text-muted-foreground mb-1 block font-medium tracking-wide uppercase'>
               Template
             </label>
-            <select
-              className='border-border bg-card text-foreground w-full rounded border px-2 py-1.5 text-xs focus:border-purple-500 focus:outline-none'
-              value={selectedTemplate}
-              onChange={e => {
-                setSelectedTemplate(e.target.value);
+            <Select
+              value={selectedTemplate || undefined}
+              onValueChange={value => {
+                setSelectedTemplate(value);
                 setRoleAssignments({});
               }}
               disabled={isCreating}
             >
-              <option value=''>Select a template...</option>
-              {TEMPLATES.map(t => (
-                <option key={t.name} value={t.name}>
-                  {t.name} - {t.description}
-                </option>
-              ))}
-            </select>
+              <SelectTrigger size='sm' className='w-full text-xs'>
+                <SelectValue placeholder='Select a template...' />
+              </SelectTrigger>
+              <SelectContent className='z-10000'>
+                {TEMPLATES.map(t => (
+                  <SelectItem key={t.name} value={t.name}>
+                    {t.name} - {t.description}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           {selectedTemplate && (
@@ -431,9 +455,9 @@ export function DevImportProject() {
                 <label className='text-2xs text-muted-foreground mb-1 block font-medium tracking-wide uppercase'>
                   Project Name
                 </label>
-                <input
+                <Input
                   type='text'
-                  className='border-border bg-card text-foreground w-full rounded border px-2 py-1.5 text-xs focus:border-purple-500 focus:outline-none'
+                  className='h-7 text-xs'
                   value={projectName}
                   onChange={e => setProjectName(e.target.value)}
                   disabled={isCreating}
@@ -464,16 +488,17 @@ export function DevImportProject() {
             </>
           )}
 
-          <button
-            className='mt-auto flex items-center justify-center gap-2 rounded bg-purple-600 px-3 py-2 text-xs font-medium text-white hover:bg-purple-700 disabled:opacity-50'
+          <Button
+            size='sm'
+            className='mt-auto bg-purple-600 text-white hover:bg-purple-700'
             onClick={handleCreateFromTemplate}
             disabled={!canCreateFromTemplate || isCreating}
           >
             {isCreating ?
-              <span className='size-3 animate-spin rounded-full border-2 border-current border-t-transparent' />
-            : <LayoutTemplateIcon size={14} />}
+              <Spinner size='sm' variant='white' />
+            : <LayoutTemplateIcon />}
             {isCreating ? 'Creating...' : 'Create Project'}
-          </button>
+          </Button>
         </>
       )}
 
@@ -504,30 +529,30 @@ export function DevImportProject() {
             />
           </div>
 
-          <button
-            className='flex items-center justify-center gap-2 rounded bg-purple-600 px-3 py-2 text-xs font-medium text-white hover:bg-purple-700 disabled:opacity-50'
+          <Button
+            size='sm'
+            className='bg-purple-600 text-white hover:bg-purple-700'
             onClick={handleCreateFromJson}
             disabled={!canCreateFromJson || isCreating}
           >
             {isCreating ?
-              <span className='size-3 animate-spin rounded-full border-2 border-current border-t-transparent' />
-            : <UploadIcon size={14} />}
+              <Spinner size='sm' variant='white' />
+            : <UploadIcon />}
             {isCreating ? 'Creating...' : 'Create & Import Project'}
-          </button>
+          </Button>
         </>
       )}
 
       {result && (
-        <div
-          className={`flex items-center gap-2 rounded p-2 text-xs ${
-            result.success ? 'bg-success-bg text-success' : 'bg-destructive/10 text-destructive'
-          }`}
+        <Alert
+          variant={result.success ? 'success' : 'destructive'}
+          className='items-center gap-2 px-2 py-2'
         >
           {result.success ?
-            <CheckIcon size={14} />
-          : <AlertCircleIcon size={14} />}
-          {result.message}
-        </div>
+            <CheckIcon />
+          : <AlertCircleIcon />}
+          <AlertDescription className='text-xs'>{result.message}</AlertDescription>
+        </Alert>
       )}
     </div>
   );
@@ -638,12 +663,9 @@ function UserSearchField({
             {getUserLabel(selectedUser)}
           </span>
           {!disabled && (
-            <button
-              className='text-muted-foreground hover:text-foreground ml-auto shrink-0 rounded p-0.5'
-              onClick={handleClear}
-            >
-              <XIcon size={10} />
-            </button>
+            <Button variant='ghost' size='icon-xs' className='ml-auto size-5' onClick={handleClear}>
+              <XIcon className='size-2.5' />
+            </Button>
           )}
         </div>
       </div>
@@ -660,9 +682,9 @@ function UserSearchField({
           size={10}
           className='text-muted-foreground absolute top-1/2 left-1.5 -translate-y-1/2'
         />
-        <input
+        <Input
           type='text'
-          className='border-border bg-card w-full rounded border py-1 pr-2 pl-5 text-xs focus:border-purple-500 focus:outline-none'
+          className='h-7 pr-2 pl-5 text-xs'
           placeholder='Search user...'
           value={query}
           onChange={e => {
@@ -673,7 +695,11 @@ function UserSearchField({
           disabled={disabled}
         />
         {searching && (
-          <span className='border-muted-foreground absolute top-1/2 right-1.5 size-3 -translate-y-1/2 animate-spin rounded-full border border-t-transparent' />
+          <Spinner
+            size='sm'
+            variant='gray'
+            className='absolute top-1/2 right-1.5 size-3 -translate-y-1/2 border'
+          />
         )}
       </div>
 

@@ -17,6 +17,9 @@ import {
   useProjectMetaById,
 } from '@/primitives/useProject/reactor';
 import { useProjectOrgId } from '@/hooks/useProjectOrgId';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsList, TabsTrigger, TabsIndicator } from '@/components/ui/tabs';
 import { DevStateTree } from './DevStateTree';
 import { DevQuickActions } from './DevQuickActions';
 import { DevJsonEditor } from './DevJsonEditor';
@@ -153,12 +156,8 @@ export function DevPanel() {
     attachListenersRef.current();
   };
 
-  const tabClass = (isActive: boolean) =>
-    `flex-1 px-3 py-2 text-xs font-medium flex items-center justify-center gap-1 transition-colors ${
-      isActive ?
-        'text-purple-600 bg-card border-b-2 border-purple-600'
-      : 'text-muted-foreground hover:text-foreground hover:bg-muted'
-    }`;
+  const tabTriggerClass =
+    'flex-1 justify-center gap-1 px-3 py-2 text-xs text-muted-foreground hover:bg-muted hover:text-foreground data-[state=active]:bg-card data-[state=active]:text-purple-600';
 
   return createPortal(
     <>
@@ -194,114 +193,93 @@ export function DevPanel() {
               <BugIcon size={16} className='text-purple-600' />
               <span className='text-foreground font-semibold'>Dev Panel</span>
               {isProjectContext ?
-                <span className='text-2xs bg-muted text-muted-foreground rounded px-1.5 py-0.5'>
+                <Badge variant='secondary' className='font-mono'>
                   {projectId?.slice(0, 8)}...
-                </span>
-              : <span className='text-2xs rounded bg-blue-100 px-1.5 py-0.5 text-blue-600'>
-                  Dashboard
-                </span>
-              }
+                </Badge>
+              : <Badge variant='info'>Dashboard</Badge>}
             </div>
             <div className='flex items-center gap-1'>
               {isProjectContext && connectionState?.phase === 'connecting' && (
-                <span className='text-2xs bg-warning-bg text-warning-foreground rounded px-2 py-0.5'>
-                  Connecting...
-                </span>
+                <Badge variant='warning'>Connecting...</Badge>
               )}
               {isProjectContext &&
                 (connectionState?.phase === 'connected' || connectionState?.phase === 'synced') && (
-                  <span className='text-2xs bg-success-bg text-success rounded px-2 py-0.5'>
-                    Connected
-                  </span>
+                  <Badge variant='success'>Connected</Badge>
                 )}
               {isProjectContext &&
                 connectionState?.phase !== 'connected' &&
                 connectionState?.phase !== 'synced' &&
                 connectionState?.phase !== 'connecting' && (
-                  <span className='text-2xs rounded bg-red-100 px-2 py-0.5 text-red-700'>
-                    Disconnected
-                  </span>
+                  <Badge variant='destructive'>Disconnected</Badge>
                 )}
-              <button
-                className='text-muted-foreground hover:bg-muted hover:text-muted-foreground rounded p-1'
+              <Button
+                variant='ghost'
+                size='icon-xs'
                 onClick={() => setIsMinimized(!isMinimized)}
                 title={isMinimized ? 'Expand' : 'Minimize'}
               >
                 {isMinimized ?
-                  <ChevronDownIcon size={16} />
-                : <ChevronUpIcon size={16} />}
-              </button>
-              <button
-                className='text-muted-foreground hover:bg-muted hover:text-muted-foreground rounded p-1'
-                onClick={() => setIsOpen(false)}
-                title='Close'
-              >
-                <XIcon size={16} />
-              </button>
+                  <ChevronDownIcon />
+                : <ChevronUpIcon />}
+              </Button>
+              <Button variant='ghost' size='icon-xs' onClick={() => setIsOpen(false)} title='Close'>
+                <XIcon />
+              </Button>
             </div>
           </div>
 
           {/* Content */}
           {!isMinimized && (
             <>
-              {/* Tabs */}
-              <div className='border-border bg-muted flex border-b'>
-                <button
-                  className={tabClass(activeTab === 'create')}
-                  onClick={() => setActiveTab('create')}
-                >
-                  Create
-                </button>
-                <button
-                  className={tabClass(activeTab === 'toasts')}
-                  onClick={() => setActiveTab('toasts')}
-                >
-                  Toasts
-                </button>
-                {isProjectContext && (
-                  <>
-                    <button
-                      className={tabClass(activeTab === 'tree')}
-                      onClick={() => setActiveTab('tree')}
-                    >
-                      State Tree
-                    </button>
-                    <button
-                      className={tabClass(activeTab === 'generate')}
-                      onClick={() => setActiveTab('generate')}
-                    >
-                      Generate
-                    </button>
-                    <button
-                      className={tabClass(activeTab === 'json')}
-                      onClick={() => setActiveTab('json')}
-                    >
-                      <BracesIcon size={14} />
-                      JSON
-                    </button>
-                  </>
-                )}
-              </div>
+              <Tabs
+                value={activeTab}
+                onValueChange={value => setActiveTab(value as TabId)}
+                className='flex min-h-0 flex-1 flex-col'
+              >
+                <TabsList className='border-border bg-muted relative border-b'>
+                  <TabsTrigger value='create' className={tabTriggerClass}>
+                    Create
+                  </TabsTrigger>
+                  <TabsTrigger value='toasts' className={tabTriggerClass}>
+                    Toasts
+                  </TabsTrigger>
+                  {isProjectContext && (
+                    <>
+                      <TabsTrigger value='tree' className={tabTriggerClass}>
+                        State Tree
+                      </TabsTrigger>
+                      <TabsTrigger value='generate' className={tabTriggerClass}>
+                        Generate
+                      </TabsTrigger>
+                      <TabsTrigger value='json' className={tabTriggerClass}>
+                        <BracesIcon size={14} />
+                        JSON
+                      </TabsTrigger>
+                    </>
+                  )}
+                  <TabsIndicator className='h-0.5 bg-purple-600' />
+                </TabsList>
 
-              {/* Tab content */}
-              <div className='flex-1 overflow-auto'>
-                {activeTab === 'create' && <DevImportProject />}
+                {/* Tab content */}
+                <div className='flex-1 overflow-auto'>
+                  {activeTab === 'create' && <DevImportProject />}
 
-                {activeTab === 'toasts' && <DevToastTester />}
+                  {activeTab === 'toasts' && <DevToastTester />}
 
-                {activeTab === 'tree' && isProjectContext && <DevStateTree data={projectData} />}
+                  {activeTab === 'tree' && isProjectContext && <DevStateTree data={projectData} />}
 
-                {activeTab === 'generate' && isProjectContext && (
-                  <div className='flex flex-col gap-4 p-3'>
-                    <DevStudyGenerator projectId={projectId} orgId={orgId} />
-                    <DevQuickActions projectId={projectId} orgId={orgId} />
-                  </div>
-                )}
+                  {activeTab === 'generate' && isProjectContext && (
+                    <div className='flex flex-col gap-4 p-3'>
+                      <DevStudyGenerator projectId={projectId} orgId={orgId} />
+                      <DevQuickActions projectId={projectId} orgId={orgId} />
+                    </div>
+                  )}
 
-                {activeTab === 'json' && isProjectContext && (
-                  <DevJsonEditor projectId={projectId} orgId={orgId} data={projectData} />
-                )}
-              </div>
+                  {activeTab === 'json' && isProjectContext && (
+                    <DevJsonEditor projectId={projectId} orgId={orgId} data={projectData} />
+                  )}
+                </div>
+              </Tabs>
 
               {/* Resize handle */}
               <div

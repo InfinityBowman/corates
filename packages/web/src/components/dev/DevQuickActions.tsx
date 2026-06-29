@@ -5,6 +5,20 @@
 import { useState } from 'react';
 import { Trash2Icon, RefreshCwIcon, CheckIcon, AlertCircleIcon } from 'lucide-react';
 import { resetState } from '@/server/functions/dev-tools.functions';
+import { Button } from '@/components/ui/button';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Spinner } from '@/components/ui/spinner';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 
 interface ActionResult {
   success: boolean;
@@ -22,7 +36,6 @@ export function DevQuickActions({ projectId, orgId }: DevQuickActionsProps) {
 
   const resetProject = async () => {
     if (!projectId || !orgId) return;
-    if (!confirm('This will clear ALL project data. Are you sure?')) return;
 
     setIsResetting(true);
     setResult(null);
@@ -47,39 +60,52 @@ export function DevQuickActions({ projectId, orgId }: DevQuickActionsProps) {
       <h4 className='text-foreground text-xs font-semibold'>Quick Actions</h4>
 
       <div className='flex gap-2'>
-        <button
-          className='flex items-center gap-1.5 rounded border border-red-200 px-3 py-1.5 text-xs text-red-600 transition-colors hover:border-red-400 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50'
-          onClick={resetProject}
-          disabled={isResetting}
-          title='Clear all project data'
-        >
-          {isResetting ?
-            <span className='size-3.5 animate-spin rounded-full border-2 border-current border-t-transparent' />
-          : <Trash2Icon size={14} />}
-          Reset State
-        </button>
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button
+              variant='destructive'
+              size='sm'
+              disabled={isResetting}
+              title='Clear all project data'
+            >
+              {isResetting ?
+                <Spinner size='sm' variant='white' />
+              : <Trash2Icon />}
+              Reset State
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent className='z-10000'>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Reset project state?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This will clear ALL project data. This action cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction variant='destructive' onClick={resetProject}>
+                Reset State
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
 
-        <button
-          className='border-border text-muted-foreground hover:border-border hover:bg-muted flex items-center gap-1.5 rounded border px-3 py-1.5 text-xs transition-colors'
-          onClick={forceRefresh}
-          title='Reload the page'
-        >
-          <RefreshCwIcon size={14} />
+        <Button variant='outline' size='sm' onClick={forceRefresh} title='Reload the page'>
+          <RefreshCwIcon />
           Force Refresh
-        </button>
+        </Button>
       </div>
 
       {result && (
-        <div
-          className={`flex items-center gap-1.5 rounded p-2 text-xs ${
-            result.success ? 'bg-success-bg text-success' : 'bg-destructive/10 text-destructive'
-          }`}
+        <Alert
+          variant={result.success ? 'success' : 'destructive'}
+          className='items-center gap-2 px-3 py-2'
         >
           {result.success ?
-            <CheckIcon size={14} />
-          : <AlertCircleIcon size={14} />}
-          {result.message}
-        </div>
+            <CheckIcon />
+          : <AlertCircleIcon />}
+          <AlertDescription className='text-xs'>{result.message}</AlertDescription>
+        </Alert>
       )}
     </div>
   );

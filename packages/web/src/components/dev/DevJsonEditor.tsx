@@ -5,6 +5,9 @@
 import { useState, useMemo } from 'react';
 import { DownloadIcon, CopyIcon, CheckIcon, AlertCircleIcon } from 'lucide-react';
 import { exportState as exportStateAction } from '@/server/functions/dev-tools.functions';
+import { Button } from '@/components/ui/button';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Spinner } from '@/components/ui/spinner';
 
 interface ActionResult {
   success: boolean;
@@ -58,42 +61,38 @@ export function DevJsonEditor({ projectId, orgId, data }: DevJsonEditorProps) {
     <div className='flex h-full flex-col'>
       {/* Toolbar */}
       <div className='border-border bg-muted flex items-center gap-2 border-b px-3 py-2'>
-        <button
-          className='bg-muted text-foreground hover:bg-muted/80 flex items-center gap-1 rounded px-2 py-1 text-xs disabled:opacity-50'
+        <Button
+          variant='secondary'
+          size='xs'
           onClick={handleExport}
           disabled={isExporting}
           title='Fetch current state from server'
         >
           {isExporting ?
-            <span className='size-3 animate-spin rounded-full border-2 border-current border-t-transparent' />
-          : <DownloadIcon size={12} />}
+            <Spinner size='sm' variant='gray' />
+          : <DownloadIcon />}
           Export
-        </button>
+        </Button>
 
-        <button
-          className='bg-muted text-foreground hover:bg-muted/80 flex items-center gap-1 rounded px-2 py-1 text-xs'
-          onClick={copyToClipboard}
-          title='Copy to clipboard'
-        >
+        <Button variant='secondary' size='xs' onClick={copyToClipboard} title='Copy to clipboard'>
           {copied ?
-            <CheckIcon size={12} className='text-success' />
-          : <CopyIcon size={12} />}
+            <CheckIcon className='text-success' />
+          : <CopyIcon />}
           {copied ? 'Copied' : 'Copy'}
-        </button>
+        </Button>
       </div>
 
       {/* Result message */}
       {result && (
-        <div
-          className={`flex items-center gap-1.5 px-3 py-1.5 text-xs ${
-            result.success ? 'bg-success-bg text-success' : 'bg-destructive/10 text-destructive'
-          }`}
+        <Alert
+          variant={result.success ? 'success' : 'destructive'}
+          className='items-center gap-1.5 rounded-none border-x-0 border-t-0 px-3 py-1.5'
         >
           {result.success ?
-            <CheckIcon size={12} />
-          : <AlertCircleIcon size={12} />}
-          {result.message}
-        </div>
+            <CheckIcon />
+          : <AlertCircleIcon />}
+          <AlertDescription className='text-xs'>{result.message}</AlertDescription>
+        </Alert>
       )}
 
       {/* Read-only viewer */}

@@ -5,10 +5,21 @@
  * Calls POST /dev/add-study on the backend to generate the study directly in the Y.Doc.
  */
 
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import { PlusIcon, CheckIcon, AlertCircleIcon } from 'lucide-react';
 import { useProjectMembersById, useProjectMetaById } from '@/primitives/useProject/reactor';
 import { addStudy } from '@/server/functions/dev-tools.functions';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Button } from '@/components/ui/button';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Spinner } from '@/components/ui/spinner';
 
 interface ActionResult {
   success: boolean;
@@ -60,6 +71,8 @@ export function DevStudyGenerator({ projectId, orgId }: DevStudyGeneratorProps) 
   const [isAdding, setIsAdding] = useState(false);
   const [result, setResult] = useState<ActionResult | null>(null);
 
+  const reconcileId = useId();
+
   const requiresOutcome = type === 'ROB2' || type === 'ROBINS_I';
   const canSubmit = reviewer1 && reviewer2 && reviewer1 !== reviewer2 && !isAdding;
 
@@ -100,146 +113,149 @@ export function DevStudyGenerator({ projectId, orgId }: DevStudyGeneratorProps) 
     }
   };
 
-  const selectClass =
-    'border-border bg-card text-foreground w-full rounded border px-2 py-1.5 text-xs focus:border-purple-500 focus:outline-none';
+  const triggerClass = 'w-full text-xs';
   const labelClass = 'text-2xs text-muted-foreground font-medium tracking-wide uppercase';
+  // The dev panel floats at z-9999; portaled dropdowns must sit above it.
+  const contentClass = 'z-10000';
 
   return (
     <div className='border-border flex flex-col gap-3 border-t pt-3'>
       <h4 className='text-foreground text-xs font-semibold'>Study Generator</h4>
 
       {members.length < 2 && (
-        <div className='bg-warning-bg text-warning-foreground rounded p-2 text-xs'>
-          Project needs at least 2 members to assign reviewers.
-        </div>
+        <Alert variant='warning' className='px-2 py-2'>
+          <AlertDescription className='text-xs'>
+            Project needs at least 2 members to assign reviewers.
+          </AlertDescription>
+        </Alert>
       )}
 
       <div className='flex gap-2'>
         <div className='flex flex-1 flex-col gap-1'>
           <label className={labelClass}>Type</label>
-          <select
-            className={selectClass}
-            value={type}
-            onChange={e => setType(e.target.value)}
-            disabled={isAdding}
-          >
-            {CHECKLIST_TYPES.map(t => (
-              <option key={t.value} value={t.value}>
-                {t.label}
-              </option>
-            ))}
-          </select>
+          <Select value={type} onValueChange={setType} disabled={isAdding}>
+            <SelectTrigger size='sm' className={triggerClass}>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent className={contentClass}>
+              {CHECKLIST_TYPES.map(t => (
+                <SelectItem key={t.value} value={t.value}>
+                  {t.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
         <div className='flex flex-1 flex-col gap-1'>
           <label className={labelClass}>Fill Mode</label>
-          <select
-            className={selectClass}
-            value={fillMode}
-            onChange={e => setFillMode(e.target.value)}
-            disabled={isAdding}
-          >
-            {FILL_MODES.map(f => (
-              <option key={f.value} value={f.value}>
-                {f.label}
-              </option>
-            ))}
-          </select>
+          <Select value={fillMode} onValueChange={setFillMode} disabled={isAdding}>
+            <SelectTrigger size='sm' className={triggerClass}>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent className={contentClass}>
+              {FILL_MODES.map(f => (
+                <SelectItem key={f.value} value={f.value}>
+                  {f.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       </div>
 
       <div className='flex gap-2'>
-        <div className='flex flex-1 flex-col gap-1'>
+        <div className='flex min-w-0 flex-1 flex-col gap-1'>
           <label className={labelClass}>Reviewer 1</label>
-          <select
-            className={selectClass}
-            value={reviewer1}
-            onChange={e => setReviewer1(e.target.value)}
-            disabled={isAdding}
-          >
-            <option value=''>Select...</option>
-            {members
-              .filter(m => m.userId !== reviewer2)
-              .map(m => (
-                <option key={m.userId} value={m.userId}>
-                  {getMemberLabel(m)}
-                </option>
-              ))}
-          </select>
+          <Select value={reviewer1 || undefined} onValueChange={setReviewer1} disabled={isAdding}>
+            <SelectTrigger size='sm' className={triggerClass}>
+              <SelectValue placeholder='Select...' />
+            </SelectTrigger>
+            <SelectContent className={contentClass}>
+              {members
+                .filter(m => m.userId !== reviewer2)
+                .map(m => (
+                  <SelectItem key={m.userId} value={m.userId}>
+                    {getMemberLabel(m)}
+                  </SelectItem>
+                ))}
+            </SelectContent>
+          </Select>
         </div>
-        <div className='flex flex-1 flex-col gap-1'>
+        <div className='flex min-w-0 flex-1 flex-col gap-1'>
           <label className={labelClass}>Reviewer 2</label>
-          <select
-            className={selectClass}
-            value={reviewer2}
-            onChange={e => setReviewer2(e.target.value)}
-            disabled={isAdding}
-          >
-            <option value=''>Select...</option>
-            {members
-              .filter(m => m.userId !== reviewer1)
-              .map(m => (
-                <option key={m.userId} value={m.userId}>
-                  {getMemberLabel(m)}
-                </option>
-              ))}
-          </select>
+          <Select value={reviewer2 || undefined} onValueChange={setReviewer2} disabled={isAdding}>
+            <SelectTrigger size='sm' className={triggerClass}>
+              <SelectValue placeholder='Select...' />
+            </SelectTrigger>
+            <SelectContent className={contentClass}>
+              {members
+                .filter(m => m.userId !== reviewer1)
+                .map(m => (
+                  <SelectItem key={m.userId} value={m.userId}>
+                    {getMemberLabel(m)}
+                  </SelectItem>
+                ))}
+            </SelectContent>
+          </Select>
         </div>
       </div>
 
       {requiresOutcome && (
         <div className='flex flex-col gap-1'>
           <label className={labelClass}>Outcome</label>
-          <select
-            className={selectClass}
-            value={outcomeId}
-            onChange={e => setOutcomeId(e.target.value)}
-            disabled={isAdding}
-          >
-            <option value='__auto__'>Auto-create new outcome</option>
-            {outcomes.map(o => (
-              <option key={o.id} value={o.id}>
-                {o.name || o.id.slice(0, 16)}
-              </option>
-            ))}
-          </select>
+          <Select value={outcomeId} onValueChange={setOutcomeId} disabled={isAdding}>
+            <SelectTrigger size='sm' className={triggerClass}>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent className={contentClass}>
+              <SelectItem value='__auto__'>Auto-create new outcome</SelectItem>
+              {outcomes.map(o => (
+                <SelectItem key={o.id} value={o.id}>
+                  {o.name || o.id.slice(0, 16)}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       )}
 
       <div className='flex items-center gap-3'>
-        <label className='text-muted-foreground flex cursor-pointer items-center gap-1.5 text-xs'>
-          <input
-            type='checkbox'
+        <label
+          htmlFor={reconcileId}
+          className='text-muted-foreground flex cursor-pointer items-center gap-1.5 text-xs'
+        >
+          <Checkbox
+            id={reconcileId}
             checked={reconcile}
-            onChange={e => setReconcile(e.target.checked)}
+            onCheckedChange={checked => setReconcile(checked === true)}
             disabled={isAdding}
-            className='accent-purple-600'
           />
           Auto-reconcile
         </label>
 
-        <button
-          className='ml-auto flex items-center gap-1.5 rounded bg-purple-600 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-purple-700 disabled:cursor-not-allowed disabled:opacity-50'
+        <Button
+          size='sm'
+          className='ml-auto bg-purple-600 text-white hover:bg-purple-700'
           onClick={handleAdd}
           disabled={!canSubmit}
         >
           {isAdding ?
-            <span className='size-3.5 animate-spin rounded-full border-2 border-current border-t-transparent' />
-          : <PlusIcon size={14} />}
+            <Spinner size='sm' variant='white' />
+          : <PlusIcon />}
           {isAdding ? 'Adding...' : 'Add Study'}
-        </button>
+        </Button>
       </div>
 
       {result && (
-        <div
-          className={`flex items-center gap-1.5 rounded p-2 text-xs ${
-            result.success ? 'bg-success-bg text-success' : 'bg-destructive/10 text-destructive'
-          }`}
+        <Alert
+          variant={result.success ? 'success' : 'destructive'}
+          className='items-center gap-1.5 px-2 py-2'
         >
           {result.success ?
-            <CheckIcon size={14} />
-          : <AlertCircleIcon size={14} />}
-          {result.message}
-        </div>
+            <CheckIcon />
+          : <AlertCircleIcon />}
+          <AlertDescription className='text-xs'>{result.message}</AlertDescription>
+        </Alert>
       )}
     </div>
   );
