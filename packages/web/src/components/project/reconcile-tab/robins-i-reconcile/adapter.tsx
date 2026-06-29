@@ -7,7 +7,6 @@
  * reconciled answers (no manual override), so only direction is reconciled.
  */
 
-import { AlertTriangleIcon } from 'lucide-react';
 import type {
   ReconciliationAdapter,
   EngineContext,
@@ -453,34 +452,6 @@ function RobinsISummaryAdapter(
 }
 
 // ---------------------------------------------------------------------------
-// Adapter: Warning banner
-// ---------------------------------------------------------------------------
-
-function renderWarningBanner(
-  checklist1: ROBINSIChecklist | null,
-  checklist2: ROBINSIChecklist | null,
-) {
-  const critical1 = isSectionBCritical(
-    checklist1?.sectionB as Parameters<typeof isSectionBCritical>[0],
-  );
-  const critical2 = isSectionBCritical(
-    checklist2?.sectionB as Parameters<typeof isSectionBCritical>[0],
-  );
-
-  if (!critical1 && !critical2) return null;
-
-  return (
-    <div className='border-destructive/20 bg-destructive/10 text-destructive mb-4 flex items-center gap-2 rounded-lg border p-3 text-sm'>
-      <AlertTriangleIcon className='size-5 shrink-0' />
-      <div>
-        <span className='font-medium'>Critical Risk Detected:</span> Section B indicates this study
-        may be at critical risk of bias. Consider whether to proceed with full domain assessment.
-      </div>
-    </div>
-  );
-}
-
-// ---------------------------------------------------------------------------
 // Export adapter
 // ---------------------------------------------------------------------------
 
@@ -508,5 +479,4 @@ export const robinsIAdapter: ReconciliationAdapter<
   renderPage,
   NavbarComponent: RobinsINavbarAdapter,
   SummaryComponent: RobinsISummaryAdapter,
-  renderWarningBanner,
 };

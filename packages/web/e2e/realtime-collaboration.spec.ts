@@ -167,7 +167,9 @@ test('Presence avatars, cursor sync, and text editing sync during reconciliation
   // Navigate to reconciliation and grab the URL
   await page.getByRole('tab', { name: /Reconcile/i }).click();
   await expect(page.getByText('Ready')).toBeVisible({ timeout: 10_000 });
-  await page.getByRole('button', { name: /Reconcile/i }).click();
+  // Exact match: the project name ("Realtime Reconcile Test") also renders as a
+  // button, so a loose /Reconcile/i regex matches two elements.
+  await page.getByRole('button', { name: 'Reconcile', exact: true }).click();
   await expect(page).toHaveURL(/\/reconcile\//, { timeout: 10_000 });
   await expect(page.getByText(/Question 1 of/i)).toBeVisible({ timeout: 15_000 });
   const reconcilePath = new URL(page.url()).pathname;
