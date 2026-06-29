@@ -295,6 +295,14 @@ export function getNavItemTooltip(
   if (hasAnswer) {
     return `${label} - Reconciled`;
   }
+  if (
+    navItem.type === NAV_ITEM_TYPES.DOMAIN_DIRECTION ||
+    navItem.type === NAV_ITEM_TYPES.OVERALL_DIRECTION
+  ) {
+    // Direction is optional and never blocks save, so an unset one reads as
+    // optional rather than as outstanding reconciliation work.
+    return `${label} - Optional (not set)`;
+  }
   if (isAgreement) {
     return `${label} - Reviewers agreed`;
   }

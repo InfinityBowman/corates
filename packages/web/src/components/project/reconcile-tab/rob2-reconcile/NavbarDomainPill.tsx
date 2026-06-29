@@ -178,6 +178,9 @@ function QuestionPill({
   const agreement = isNavItemAgreement(item, comparison);
   const hasValue = hasNavItemValue(item, finalAnswers);
 
+  const isDirection =
+    item.type === NAV_ITEM_TYPES.DOMAIN_DIRECTION || item.type === NAV_ITEM_TYPES.OVERALL_DIRECTION;
+
   const pillStyle = useMemo(() => {
     if (isSkipped && !isCurrentPage) {
       return 'bg-slate-100 text-slate-400';
@@ -191,18 +194,19 @@ function QuestionPill({
       status = 'Skipped (auto-set to NA)';
     } else if (hasValue) {
       status = 'Reconciled';
+    } else if (isDirection) {
+      // Direction is optional and never blocks save, so an unset one reads as
+      // optional rather than as outstanding reconciliation work.
+      status = 'Optional (not set)';
     } else if (agreement) {
       status = 'Agreement (not yet confirmed)';
     } else {
       status = 'Needs reconciliation';
     }
     return `${item.label}: ${status}`;
-  }, [isSkipped, hasValue, agreement, item.label]);
+  }, [isSkipped, hasValue, isDirection, agreement, item.label]);
 
   const displayLabel = getDisplayLabel(item);
-
-  const isDirection =
-    item.type === NAV_ITEM_TYPES.DOMAIN_DIRECTION || item.type === NAV_ITEM_TYPES.OVERALL_DIRECTION;
 
   const pillSizeClass = isDirection ? 'h-6 px-2 text-2xs' : 'size-6 text-2xs';
 
