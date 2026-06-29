@@ -63,24 +63,29 @@ class UserSessionBase extends DurableObject<Env> {
       return new Response('Access denied', { status: 403 });
     }
 
-    const webSocketPair = new WebSocketPair();
-    const client = webSocketPair[0];
-    const server = webSocketPair[1];
+    try {
+      const webSocketPair = new WebSocketPair();
+      const client = webSocketPair[0];
+      const server = webSocketPair[1];
 
-    // Accept with hibernation support and tag with user ID for targeted lookups
-    this.ctx.acceptWebSocket(server, ['user:' + user.id]);
-    server.serializeAttachment({ user } satisfies WebSocketAttachment);
+      // Accept with hibernation support and tag with user ID for targeted lookups
+      this.ctx.acceptWebSocket(server, ['user:' + user.id]);
+      server.serializeAttachment({ user } satisfies WebSocketAttachment);
 
-    // Send any pending notifications
-    const pending = (await this.ctx.storage.get<Notification[]>('pendingNotifications')) || [];
-    if (pending.length > 0) {
-      for (const notification of pending) {
-        server.send(JSON.stringify(notification));
+      // Send any pending notifications
+      const pending = (await this.ctx.storage.get<Notification[]>('pendingNotifications')) || [];
+      if (pending.length > 0) {
+        for (const notification of pending) {
+          server.send(JSON.stringify(notification));
+        }
+        await this.ctx.storage.put('pendingNotifications', []);
       }
-      await this.ctx.storage.put('pendingNotifications', []);
-    }
 
-    return new Response(null, { status: 101, webSocket: client });
+      return new Response(null, { status: 101, webSocket: client });
+    } catch (err) {
+      captureError(err, { tags: { component: 'user-session', action: 'websocket-upgrade' } });
+      return new Response('WebSocket upgrade failed', { status: 500 });
+    }
   }
 
   /**

@@ -813,27 +813,27 @@ class ProjectDocBase extends DurableObject<Env> {
     // Doc may not exist after hibernation wake
     await this.initializeDoc();
 
-    // On the first message from a connection, send our own sync step 1 so the
-    // client answers with a sync step 2 carrying any state we lack. Without this
-    // pull the server only ever learns client state from live `update`
-    // broadcasts, so any change a client made while not actively connected
-    // (offline edits, a reconnect window before the socket was live) is never
-    // synced and is silently lost (#520). The reference y-websocket server sends
-    // sync step 1 on connect; we send it here, on the first inbound message, so
-    // the socket is guaranteed OPEN (the post-acceptWebSocket / pre-101 window
-    // can drop sends -- which is why the proactive sync step 2 alone is not
-    // enough).
-    const firstMsgAttachment = ws.deserializeAttachment() as WebSocketAttachment | null;
-    if (firstMsgAttachment && !firstMsgAttachment.serverSyncStep1Sent) {
-      const syncStep1Encoder = encoding.createEncoder();
-      encoding.writeVarUint(syncStep1Encoder, messageSync);
-      syncProtocol.writeSyncStep1(syncStep1Encoder, this.doc!);
-      this.safeSend(ws, encoding.toUint8Array(syncStep1Encoder));
-      firstMsgAttachment.serverSyncStep1Sent = true;
-      ws.serializeAttachment(firstMsgAttachment);
-    }
-
     try {
+      // On the first message from a connection, send our own sync step 1 so the
+      // client answers with a sync step 2 carrying any state we lack. Without this
+      // pull the server only ever learns client state from live `update`
+      // broadcasts, so any change a client made while not actively connected
+      // (offline edits, a reconnect window before the socket was live) is never
+      // synced and is silently lost (#520). The reference y-websocket server sends
+      // sync step 1 on connect; we send it here, on the first inbound message, so
+      // the socket is guaranteed OPEN (the post-acceptWebSocket / pre-101 window
+      // can drop sends -- which is why the proactive sync step 2 alone is not
+      // enough).
+      const firstMsgAttachment = ws.deserializeAttachment() as WebSocketAttachment | null;
+      if (firstMsgAttachment && !firstMsgAttachment.serverSyncStep1Sent) {
+        const syncStep1Encoder = encoding.createEncoder();
+        encoding.writeVarUint(syncStep1Encoder, messageSync);
+        syncProtocol.writeSyncStep1(syncStep1Encoder, this.doc!);
+        this.safeSend(ws, encoding.toUint8Array(syncStep1Encoder));
+        firstMsgAttachment.serverSyncStep1Sent = true;
+        ws.serializeAttachment(firstMsgAttachment);
+      }
+
       let data: Uint8Array;
       if (message instanceof ArrayBuffer) {
         data = new Uint8Array(message);
