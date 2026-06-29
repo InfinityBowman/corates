@@ -18,13 +18,6 @@ interface ProjectCardProps {
 export function ProjectCard({ project, onOpen, onDelete, style }: ProjectCardProps) {
   const colors = useMemo(() => getAccentColors(project.id), [project.id]);
 
-  const progress = useMemo(() => {
-    const completed = project.completedCount ?? 0;
-    const total = project.studyCount ?? 0;
-    if (total === 0) return { completed: 0, total: 0, percentage: 0 };
-    return { completed, total, percentage: Math.round((completed / total) * 100) };
-  }, [project.completedCount, project.studyCount]);
-
   const relativeTime = formatRelativeTime(project.updatedAt || project.createdAt);
   const memberCount = project.memberCount || project.members?.length || 1;
   const isOwner = project.role === 'owner';
@@ -70,22 +63,6 @@ export function ProjectCard({ project, onOpen, onDelete, style }: ProjectCardPro
         <p className='text-muted-foreground mb-5 line-clamp-2 text-sm leading-relaxed'>
           {project.description || 'No description'}
         </p>
-
-        {/* Progress bar */}
-        <div className='mb-4'>
-          <div className='mb-1.5 flex items-center justify-between text-xs'>
-            <span className='text-secondary-foreground font-medium'>Progress</span>
-            <span className='text-muted-foreground tabular-nums'>
-              {progress.completed}/{progress.total} studies
-            </span>
-          </div>
-          <div className='bg-secondary h-1.5 overflow-hidden rounded-full'>
-            <div
-              className={`h-full rounded-full bg-linear-to-r ${colors.gradient} transition-all duration-500`}
-              style={{ width: `${progress.percentage}%` }}
-            />
-          </div>
-        </div>
 
         {/* Footer */}
         <div className='flex items-center justify-between'>
