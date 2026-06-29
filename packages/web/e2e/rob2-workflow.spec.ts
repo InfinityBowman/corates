@@ -148,21 +148,8 @@ test('Dual-Reviewer ROB2 Workflow', async ({ context, page }) => {
       await useThisBtn.click();
     }
 
-    // For direction pages where reviewers didn't set a value, "Use This"
-    // copies null which doesn't count as answered. Pick "NA" in the Final
-    // Direction panel if visible.
-    const finalDirectionHeading = page.getByText('Final Direction');
-    if (await finalDirectionHeading.isVisible().catch(() => false)) {
-      const naLabel = page.locator('label').filter({ hasText: /^NA$/ });
-      if (
-        await naLabel
-          .first()
-          .isVisible()
-          .catch(() => false)
-      ) {
-        await naLabel.first().click();
-      }
-    }
+    // Predicted direction of bias is optional and does not block save, so no
+    // final direction needs to be picked when reviewers left it unset.
 
     // For sources page: neither reviewer selected sources, so check one
     const sourceLabel = page.locator('label').filter({ hasText: 'Journal article(s)' });

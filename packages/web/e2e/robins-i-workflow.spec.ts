@@ -23,6 +23,7 @@ import {
   markChecklistComplete,
   answerROBINSISectionB,
   answerAllROBINSIDomains,
+  setROBINSIDomainDirection,
 } from './shared-steps';
 
 let scenario: DualReviewerScenario;
@@ -72,6 +73,14 @@ test('Dual-Reviewer ROBINS-I Workflow', async ({ context, page }) => {
 
   await answerROBINSISectionB(page, 'N');
   await answerAllROBINSIDomains(page, 'A');
+  // Set a domain direction so reconciliation has a real direction to resolve.
+  await setROBINSIDomainDirection(page, 'D2', 'domain2', 'Favours intervention');
+  // Capture the editor: judgement is read-only ("Calculated"), direction is editable.
+  await page
+    .locator('#domain-section-domain2')
+    .scrollIntoViewIfNeeded()
+    .catch(() => {});
+  await page.screenshot({ path: 'test-results/robins-editor-domain2.png' });
   await markChecklistComplete(page);
   await page.goto(`/projects/${projectId}`);
   await expect(page.getByRole('tab', { name: /To Do/i })).toBeVisible({ timeout: 15_000 });
@@ -115,6 +124,8 @@ test('Dual-Reviewer ROBINS-I Workflow', async ({ context, page }) => {
 
   await answerROBINSISectionB(page, 'N');
   await answerAllROBINSIDomains(page, 'B');
+  // Different direction than Reviewer A -> a direction conflict to reconcile.
+  await setROBINSIDomainDirection(page, 'D2', 'domain2', 'Favours comparator');
   await markChecklistComplete(page);
   await page.goto(`/projects/${projectId}`);
   await expect(page.getByRole('tab', { name: /To Do/i })).toBeVisible({ timeout: 15_000 });
@@ -139,8 +150,22 @@ test('Dual-Reviewer ROBINS-I Workflow', async ({ context, page }) => {
   const nextBtn = page.getByRole('button', { name: /Next|Review Summary/i });
 
   let safety = 0;
+  let capturedDirectionPage = false;
   while (safety < 100) {
     safety++;
+
+    // Capture a direction page (derived judgement read-only + direction panels).
+    if (
+      !capturedDirectionPage &&
+      (await page
+        .getByText('Auto-calculated Judgement')
+        .first()
+        .isVisible()
+        .catch(() => false))
+    ) {
+      await page.screenshot({ path: 'test-results/robins-direction-page.png' });
+      capturedDirectionPage = true;
+    }
 
     const useThisBtn = page.getByRole('button', { name: 'Use This' }).first();
     if (await useThisBtn.isVisible().catch(() => false)) {
@@ -157,6 +182,10 @@ test('Dual-Reviewer ROBINS-I Workflow', async ({ context, page }) => {
   // Summary view - verify and save
   // ================================================================
   await expect(page.getByText('Review Summary')).toBeVisible({ timeout: 5_000 });
+  // The reconciled domain-2 direction resolves to one reviewer's value (not "Not set").
+  await expect(page.getByText(/Favours (intervention|comparator)/).first()).toBeVisible({
+    timeout: 5_000,
+  });
   const saveBtn = page.getByRole('button', { name: /Save Reconciled Checklist/i });
   await expect(saveBtn).toBeEnabled({ timeout: 10_000 });
   await saveBtn.click();

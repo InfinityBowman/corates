@@ -136,6 +136,24 @@ export async function answerAllROBINSIDomains(page: Page, reviewer: 'A' | 'B') {
 }
 
 /**
+ * Set the predicted direction of bias for a ROBINS-I domain in the checklist editor.
+ * Scoped to the domain's container; the direction buttons render the full option text.
+ */
+export async function setROBINSIDomainDirection(
+  page: Page,
+  pill: string,
+  domainKey: string,
+  directionText: string,
+) {
+  await page.getByRole('button', { name: pill, exact: true }).first().click();
+  const button = page
+    .locator(`#domain-section-${domainKey}`)
+    .getByRole('button', { name: directionText, exact: true });
+  await expect(button).toBeVisible({ timeout: 5_000 });
+  await button.click();
+}
+
+/**
  * Adds a member to the current project via the Invite UI on the Overview tab.
  * Assumes the page is already on the project page as an owner.
  */
