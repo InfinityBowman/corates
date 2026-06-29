@@ -298,9 +298,7 @@ export async function handleDevExport(ctx: DevContext): Promise<Response> {
  */
 function importAnswers(answers: Record<string, unknown>, checklistType: string): Y.Map<unknown> {
   const isAlreadyFlat = Object.keys(answers).some(k => k.includes('.'));
-  return isAlreadyFlat ?
-      buildFlatAnswersYMap(answers)
-    : buildAnswersYMap(answers, checklistType);
+  return isAlreadyFlat ? buildFlatAnswersYMap(answers) : buildAnswersYMap(answers, checklistType);
 }
 
 // Free-text fields are stored as Y.Text; everything else is a plain value.

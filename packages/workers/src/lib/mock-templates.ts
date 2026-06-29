@@ -967,7 +967,11 @@ const MOCK_TEMPLATES: Record<string, TemplateFunction> = {
               // Both reviewers must share the same analysis (intention-to-treat vs
               // per-protocol), else they fill different domains (1a vs 1b) and the
               // comparison misaligns.
-              answers: generateROBINSIAnswers({ fill: 'complete', seed: 11111, isPerProtocol: false }),
+              answers: generateROBINSIAnswers({
+                fill: 'complete',
+                seed: 11111,
+                isPerProtocol: false,
+              }),
             },
             {
               id: checklist2Id,
@@ -978,7 +982,11 @@ const MOCK_TEMPLATES: Record<string, TemplateFunction> = {
               createdAt: now,
               updatedAt: now,
               outcomeId,
-              answers: generateROBINSIAnswers({ fill: 'complete', seed: 22222, isPerProtocol: false }),
+              answers: generateROBINSIAnswers({
+                fill: 'complete',
+                seed: 22222,
+                isPerProtocol: false,
+              }),
             },
           ],
           pdfs: [],
