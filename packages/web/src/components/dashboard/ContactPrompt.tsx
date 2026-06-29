@@ -14,7 +14,7 @@ export function ContactPrompt({ restrictionType, projectCount, quotaLimit }: Con
 
   const message =
     restrictionType === 'entitlement' ?
-      'Projects let your team appraise studies independently and resolve disagreements together. Start a 14-day free trial to create your first project -- no credit card required.'
+      'Projects let your team appraise studies independently and resolve disagreements together. Start a 14-day free trial to create your first project, no credit card required.'
     : `You've reached your project limit (${projectCount}/${quotaLimit === null || quotaLimit === -1 ? 'unlimited' : quotaLimit}). Upgrade your plan to create more projects.`;
 
   return (

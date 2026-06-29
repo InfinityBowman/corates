@@ -110,6 +110,7 @@ interface ImportData {
       status?: string;
       createdAt?: string;
       updatedAt?: string;
+      outcomeId?: string | null;
       answers?: Record<string, unknown>;
     }>;
     pdfs?: Array<{
@@ -282,48 +283,154 @@ export async function handleDevExport(ctx: DevContext): Promise<Response> {
 }
 
 /**
- * Helper to import checklist answers as Y.Maps
+ * Build the checklist `answers` Y.Map.
+ *
+ * IMPORTANT: the web checklist handlers (packages/web/.../checklists/handlers/
+ * {amstar2,rob2,robins-i}.ts) store answers as a FLAT, dotted-key Y.Map -- e.g.
+ * `preliminary.aim`, `d1_1`, `d1_1.comment`, `domain1.direction`, `q1.answers`,
+ * with Y.Text for every free-text field. Their `serializeAnswers` only reads
+ * dotted keys, so a nested structure deserializes to `{}` (empty answers and a
+ * null score). This builder mirrors each handler's `createAnswersYMap` exactly.
+ *
+ * Two input shapes are supported:
+ *  - generator/nested (mock templates): { preliminary: { aim, ... }, domain1: { answers, direction }, ... }
+ *  - already-flat (exported project JSON): { 'preliminary.aim': ..., 'd1_1': ..., ... }
  */
 function importAnswers(answers: Record<string, unknown>, checklistType: string): Y.Map<unknown> {
-  const answersYMap = new Y.Map<unknown>();
+  const isAlreadyFlat = Object.keys(answers).some(k => k.includes('.'));
+  return isAlreadyFlat ?
+      buildFlatAnswersYMap(answers)
+    : buildAnswersYMap(answers, checklistType);
+}
 
-  for (const [questionKey, questionData] of Object.entries(answers)) {
-    const questionYMap = new Y.Map<unknown>();
-    const qData = questionData as Record<string, unknown>;
+// Free-text fields are stored as Y.Text; everything else is a plain value.
+function mkText(value: unknown): Y.Text {
+  const text = new Y.Text();
+  if (typeof value === 'string' && value.length > 0) text.insert(0, value);
+  return text;
+}
 
-    if (checklistType === 'AMSTAR2') {
-      // AMSTAR2: answers is boolean[][], critical is boolean
-      if (qData.answers) {
-        questionYMap.set('answers', qData.answers);
-      }
-      if (qData.critical !== undefined) {
-        questionYMap.set('critical', qData.critical);
-      }
-    } else if (checklistType === 'ROBINS_I') {
-      // ROBINS-I has nested structure with judgement, answers map, etc.
-      for (const [key, value] of Object.entries(qData)) {
-        if (key === 'answers' && typeof value === 'object' && value !== null) {
-          // Nested answers map for ROBINS-I questions
-          const nestedAnswersMap = new Y.Map<unknown>();
-          for (const [ansKey, ansValue] of Object.entries(value as Record<string, unknown>)) {
-            const ansYMap = new Y.Map<unknown>();
-            const ans = ansValue as Record<string, unknown>;
-            if (ans.answer !== undefined) {
-              ansYMap.set('answer', ans.answer);
-            }
-            nestedAnswersMap.set(ansKey, ansYMap);
-          }
-          questionYMap.set('answers', nestedAnswersMap);
+// Keys (or key suffixes) whose values are Y.Text across all checklist handlers.
+const FLAT_TEXT_FIELD_KEYS = new Set([
+  'preliminary.experimental',
+  'preliminary.comparator',
+  'preliminary.numericalResult',
+  'planning.confoundingFactors',
+  'sectionA.numericalResult',
+  'sectionA.furtherDetails',
+  'sectionA.outcome',
+  'sectionC.participants',
+  'sectionC.interventionStrategy',
+  'sectionC.comparatorStrategy',
+  'sectionD.otherSpecify',
+]);
+
+function isFlatTextKey(key: string): boolean {
+  return key.endsWith('.note') || key.endsWith('.comment') || FLAT_TEXT_FIELD_KEYS.has(key);
+}
+
+// Re-import already-flat (exported) answers, restoring Y.Text for text fields.
+function buildFlatAnswersYMap(answers: Record<string, unknown>): Y.Map<unknown> {
+  const map = new Y.Map<unknown>();
+  for (const [key, value] of Object.entries(answers)) {
+    map.set(key, isFlatTextKey(key) ? mkText(value) : value);
+  }
+  return map;
+}
+
+// Convert the generator's nested answer object into the flat Y.Map the handlers read.
+function buildAnswersYMap(answers: Record<string, unknown>, checklistType: string): Y.Map<unknown> {
+  const map = new Y.Map<unknown>();
+  if (checklistType === 'AMSTAR2') {
+    buildAmstar2Answers(map, answers);
+  } else if (checklistType === 'ROB2') {
+    buildRob2Answers(map, answers);
+  } else if (checklistType === 'ROBINS_I') {
+    buildRobinsIAnswers(map, answers);
+  }
+  return map;
+}
+
+function buildAmstar2Answers(map: Y.Map<unknown>, answers: Record<string, unknown>): void {
+  const subQuestionPattern = /^(q9|q11)[a-z]$/;
+  const added = new Set<string>();
+  for (const [q, qdRaw] of Object.entries(answers)) {
+    const qd = qdRaw as { answers?: unknown; critical?: boolean };
+    map.set(`${q}.answers`, qd.answers);
+    map.set(`${q}.critical`, qd.critical ?? false);
+    if (!subQuestionPattern.test(q)) map.set(`${q}.note`, new Y.Text());
+    added.add(q);
+  }
+  for (const parent of ['q9', 'q11']) {
+    if (!added.has(parent)) map.set(`${parent}.note`, new Y.Text());
+  }
+}
+
+function buildRob2Answers(map: Y.Map<unknown>, answers: Record<string, unknown>): void {
+  for (const [key, valRaw] of Object.entries(answers)) {
+    const val = valRaw as Record<string, unknown>;
+    if (key === 'preliminary') {
+      map.set('preliminary.aim', val.aim ?? null);
+      map.set('preliminary.studyDesign', val.studyDesign ?? null);
+      map.set('preliminary.deviationsToAddress', val.deviationsToAddress ?? []);
+      map.set('preliminary.sources', val.sources ?? {});
+      map.set('preliminary.experimental', mkText(val.experimental));
+      map.set('preliminary.comparator', mkText(val.comparator));
+      map.set('preliminary.numericalResult', mkText(val.numericalResult));
+    } else if (key === 'overall') {
+      map.set('overall.direction', val.direction ?? null);
+    } else if (key.startsWith('domain')) {
+      // ROB2 judgements are computed from answers, so only the direction is stored.
+      if (val.direction !== undefined) map.set(`${key}.direction`, val.direction ?? null);
+      setDomainQuestions(map, val.answers);
+    }
+  }
+}
+
+function buildRobinsIAnswers(map: Y.Map<unknown>, answers: Record<string, unknown>): void {
+  for (const [key, valRaw] of Object.entries(answers)) {
+    const val = valRaw as Record<string, unknown>;
+    if (key === 'planning') {
+      map.set('planning.confoundingFactors', mkText(val.confoundingFactors));
+    } else if (key === 'sectionA') {
+      map.set('sectionA.numericalResult', mkText(val.numericalResult));
+      map.set('sectionA.furtherDetails', mkText(val.furtherDetails));
+      map.set('sectionA.outcome', mkText(val.outcome));
+    } else if (key === 'sectionB') {
+      for (const [subKey, subValRaw] of Object.entries(val)) {
+        if (typeof subValRaw === 'object' && subValRaw !== null) {
+          map.set(`sectionB.${subKey}`, (subValRaw as { answer?: unknown }).answer ?? null);
+          map.set(`sectionB.${subKey}.comment`, new Y.Text());
         } else {
-          questionYMap.set(key, value);
+          map.set(`sectionB.${subKey}`, subValRaw);
         }
       }
+    } else if (key === 'sectionC') {
+      map.set('sectionC.isPerProtocol', val.isPerProtocol ?? false);
+      map.set('sectionC.participants', mkText(val.participants));
+      map.set('sectionC.interventionStrategy', mkText(val.interventionStrategy));
+      map.set('sectionC.comparatorStrategy', mkText(val.comparatorStrategy));
+    } else if (key === 'sectionD') {
+      map.set('sectionD.sources', val.sources ?? {});
+      map.set('sectionD.otherSpecify', mkText(val.otherSpecify));
+    } else if (key === 'confoundingEvaluation') {
+      map.set('confoundingEvaluation.predefined', val.predefined ?? []);
+      map.set('confoundingEvaluation.additional', val.additional ?? []);
+    } else if (key.startsWith('domain') || key === 'overall') {
+      if (val.direction !== undefined) map.set(`${key}.direction`, val.direction ?? null);
+      map.set(`${key}.judgement`, val.judgement ?? null);
+      setDomainQuestions(map, val.answers);
     }
-
-    answersYMap.set(questionKey, questionYMap);
   }
+}
 
-  return answersYMap;
+// Domain question answers are stored as bare keys (e.g. `d1_1`) plus a Y.Text comment.
+function setDomainQuestions(map: Y.Map<unknown>, domainAnswers: unknown): void {
+  if (!domainAnswers || typeof domainAnswers !== 'object') return;
+  for (const [qKey, qVal] of Object.entries(domainAnswers as Record<string, unknown>)) {
+    map.set(qKey, (qVal as { answer?: unknown }).answer ?? null);
+    map.set(`${qKey}.comment`, new Y.Text());
+  }
 }
 
 /**
@@ -373,6 +480,20 @@ export async function handleDevImport(ctx: DevContext, request: ImportRequest): 
         for (const [key, value] of Object.entries(data.meta)) {
           if (key === 'orgId' && targetOrgId) {
             metaMap.set('orgId', targetOrgId);
+          } else if (key === 'outcomes' && value && typeof value === 'object') {
+            // Outcomes must be a nested Y.Map so the client can read them via
+            // metaMap.get('outcomes').get(outcomeId).
+            const outcomesMap = new Y.Map<unknown>();
+            for (const [outcomeId, outcomeData] of Object.entries(
+              value as Record<string, unknown>,
+            )) {
+              const outcomeYMap = new Y.Map<unknown>();
+              for (const [ok, ov] of Object.entries(outcomeData as Record<string, unknown>)) {
+                outcomeYMap.set(ok, ov);
+              }
+              outcomesMap.set(outcomeId, outcomeYMap);
+            }
+            metaMap.set('outcomes', outcomesMap);
           } else {
             metaMap.set(key, value);
           }
@@ -476,6 +597,11 @@ export async function handleDevImport(ctx: DevContext, request: ImportRequest): 
               checklistYMap.set('status', checklist.status || 'pending');
               checklistYMap.set('createdAt', checklist.createdAt);
               checklistYMap.set('updatedAt', checklist.updatedAt);
+              // ROB2/ROBINS-I checklists are keyed to an outcome; without it the
+              // reconciliation flow cannot pair the two reviewer checklists.
+              if (checklist.outcomeId) {
+                checklistYMap.set('outcomeId', checklist.outcomeId);
+              }
 
               // Import answers
               if (checklist.answers) {
@@ -876,69 +1002,7 @@ function buildChecklistYMap(opts: {
     yMap.set('outcomeId', opts.outcomeId);
   }
 
-  const answersYMap = new Y.Map<unknown>();
-  const sectionKeys = new Set([
-    'overall',
-    'preliminary',
-    'planning',
-    'sectionA',
-    'sectionB',
-    'sectionC',
-    'sectionD',
-    'confoundingEvaluation',
-  ]);
-  for (const [key, value] of Object.entries(opts.answers)) {
-    if (sectionKeys.has(key)) {
-      // Top-level sections - store as nested Y.Map
-      if (typeof value === 'object' && value !== null) {
-        const sectionMap = new Y.Map<unknown>();
-        for (const [sk, sv] of Object.entries(value as Record<string, unknown>)) {
-          if (typeof sv === 'object' && sv !== null && !Array.isArray(sv)) {
-            const nested = new Y.Map<unknown>();
-            for (const [nk, nv] of Object.entries(sv as Record<string, unknown>)) {
-              nested.set(nk, nv);
-            }
-            sectionMap.set(sk, nested);
-          } else {
-            sectionMap.set(sk, sv);
-          }
-        }
-        answersYMap.set(key, sectionMap);
-      }
-    } else if (opts.type === 'AMSTAR2') {
-      // AMSTAR2 questions have { answers: boolean[][][], critical: boolean }
-      const qData = value as { answers: boolean[][][]; critical: boolean };
-      const questionYMap = new Y.Map<unknown>();
-      questionYMap.set('answers', qData.answers);
-      questionYMap.set('critical', qData.critical);
-      answersYMap.set(key, questionYMap);
-    } else {
-      // ROB2/ROBINS-I domains have { answers: Record<string, {answer, comment}>, judgement, direction }
-      if (typeof value === 'object' && value !== null) {
-        const domainData = value as Record<string, unknown>;
-        const domainMap = new Y.Map<unknown>();
-        if (domainData.answers && typeof domainData.answers === 'object') {
-          const domainAnswersMap = new Y.Map<unknown>();
-          for (const [qKey, qVal] of Object.entries(
-            domainData.answers as Record<string, unknown>,
-          )) {
-            const qMap = new Y.Map<unknown>();
-            const q = qVal as Record<string, unknown>;
-            if (q.answer !== undefined) qMap.set('answer', q.answer);
-            if (q.comment !== undefined) qMap.set('comment', q.comment);
-            domainAnswersMap.set(qKey, qMap);
-          }
-          domainMap.set('answers', domainAnswersMap);
-        }
-        if (domainData.judgement !== undefined) domainMap.set('judgement', domainData.judgement);
-        if (domainData.direction !== undefined) domainMap.set('direction', domainData.direction);
-        if (domainData.judgementSource !== undefined)
-          domainMap.set('judgementSource', domainData.judgementSource);
-        answersYMap.set(key, domainMap);
-      }
-    }
-  }
-  yMap.set('answers', answersYMap);
+  yMap.set('answers', buildAnswersYMap(opts.answers, opts.type));
 
   return yMap;
 }
