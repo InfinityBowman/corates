@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { CheckIcon, XIcon, ChevronRightIcon, ArrowLeftIcon } from 'lucide-react';
 import {
-  hasNavItemAnswer,
+  hasNavItemValue,
   isNavItemAgreement,
   getGroupedNavigationItems,
   NAV_ITEM_TYPES,
@@ -150,7 +150,7 @@ export function ROB2SummaryView({
             {/* Section Items */}
             <div className='divide-border-subtle divide-y'>
               {group.items.map((item: any) => {
-                const hasAnswer = hasNavItemAnswer(item, finalAnswers);
+                const hasAnswer = hasNavItemValue(item, finalAnswers);
                 const agreement = isNavItemAgreement(item, comparison);
                 const displayVal = getDisplayValue(item, finalAnswers);
 

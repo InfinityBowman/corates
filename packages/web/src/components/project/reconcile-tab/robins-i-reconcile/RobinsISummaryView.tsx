@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { CheckIcon, ArrowLeftIcon, ArrowRightIcon } from 'lucide-react';
 import { RESPONSE_LABELS } from '@/components/checklist/ROBINSIChecklist/checklist-map';
 import {
-  hasNavItemAnswer,
+  hasNavItemValue,
   isNavItemAgreement,
   getGroupedNavigationItems,
   NAV_ITEM_TYPES,
@@ -181,7 +181,7 @@ export function RobinsISummaryView({
               {group.items.map((item: any) => {
                 const itemIndex = navItems?.indexOf(item) ?? -1;
                 const agreement = isNavItemAgreement(item, comparison);
-                const answered = hasNavItemAnswer(item, finalAnswers);
+                const answered = hasNavItemValue(item, finalAnswers);
                 const value = getItemValue(item, finalAnswers);
 
                 return (

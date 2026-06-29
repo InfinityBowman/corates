@@ -40,20 +40,17 @@ export function OverallDirectionPage({
   const reviewer2Scoring = useMemo(() => scoreAllDomains(checklist2), [checklist2]);
   const finalScoring = useMemo(() => scoreAllDomains(finalChecklist), [finalChecklist]);
 
-  const judgementMatch = reviewer1Scoring.overall === reviewer2Scoring.overall;
-
   return (
     <div className='bg-card rounded-xl shadow-lg'>
-      {/* Header */}
+      {/* Header reflects direction agreement only; the derived overall judgement is
+          shown read-only below and follows from the domain judgements. */}
       <div
         className={`rounded-t-xl border-b p-4 ${
-          directionMatch && judgementMatch ?
-            'border-green-200 bg-green-50'
-          : 'border-amber-200 bg-amber-50'
+          directionMatch ? 'border-green-200 bg-green-50' : 'border-amber-200 bg-amber-50'
         }`}
       >
         <div className='flex items-start gap-3'>
-          {directionMatch && judgementMatch ?
+          {directionMatch ?
             <div className='flex size-6 shrink-0 items-center justify-center rounded-full bg-green-500'>
               <CheckIcon className='size-4 text-white' />
             </div>

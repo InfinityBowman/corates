@@ -42,7 +42,8 @@ async function addROBINSIChecklist(page: import('@playwright/test').Page, outcom
   await page.getByText(/AMSTAR 2/i).click();
   await page.getByRole('option', { name: /ROBINS-I/i }).click();
   await page.getByText(/Select outcome/i).click();
-  await page.getByRole('option', { name: new RegExp(outcome, 'i') }).click();
+  const escapedOutcome = outcome.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  await page.getByRole('option', { name: new RegExp(escapedOutcome, 'i') }).click();
   await page.getByRole('button', { name: /Add Checklist/i }).click();
 }
 

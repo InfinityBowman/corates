@@ -3,7 +3,7 @@ import { ChevronDownIcon, ChevronRightIcon, CheckIcon } from 'lucide-react';
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import {
   getSectionLabel,
-  hasNavItemAnswer,
+  hasNavItemValue,
   isNavItemAgreement,
   getNavItemPillStyle,
   NAV_ITEM_TYPES,
@@ -176,20 +176,20 @@ function QuestionPill({
 }: QuestionPillProps) {
   const isCurrentPage = currentPage === globalIndex;
   const agreement = isNavItemAgreement(item, comparison);
-  const hasAnswer = hasNavItemAnswer(item, finalAnswers);
+  const hasValue = hasNavItemValue(item, finalAnswers);
 
   const pillStyle = useMemo(() => {
     if (isSkipped && !isCurrentPage) {
       return 'bg-slate-100 text-slate-400';
     }
-    return getNavItemPillStyle(isCurrentPage, hasAnswer, agreement);
-  }, [isSkipped, isCurrentPage, hasAnswer, agreement]);
+    return getNavItemPillStyle(isCurrentPage, hasValue, agreement);
+  }, [isSkipped, isCurrentPage, hasValue, agreement]);
 
   const tooltip = useMemo(() => {
     let status = '';
     if (isSkipped) {
       status = 'Skipped (auto-set to NA)';
-    } else if (hasAnswer) {
+    } else if (hasValue) {
       status = 'Reconciled';
     } else if (agreement) {
       status = 'Agreement (not yet confirmed)';
@@ -197,7 +197,7 @@ function QuestionPill({
       status = 'Needs reconciliation';
     }
     return `${item.label}: ${status}`;
-  }, [isSkipped, hasAnswer, agreement, item.label]);
+  }, [isSkipped, hasValue, agreement, item.label]);
 
   const displayLabel = getDisplayLabel(item);
 
@@ -227,7 +227,7 @@ function QuestionPill({
           aria-current={isCurrentPage ? 'page' : undefined}
         >
           {displayLabel}
-          {hasAnswer && (
+          {hasValue && (
             <span
               className='bg-card absolute -top-0.5 -right-0.5 flex size-2.5 items-center justify-center rounded-full border-[0.5px] shadow-sm'
               aria-hidden='true'

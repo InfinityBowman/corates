@@ -72,16 +72,16 @@ function updateDomainQuestionAnswer(
 function updateDomainDirection(
   updateChecklistAnswer: (s: string, d: unknown) => void,
   domainKey: string,
-  direction: string,
+  direction: string | null | undefined,
 ) {
-  updateChecklistAnswer(domainKey, { direction });
+  updateChecklistAnswer(domainKey, { direction: direction || null });
 }
 
 function updateOverallDirection(
   updateChecklistAnswer: (s: string, d: unknown) => void,
-  direction: string,
+  direction: string | null | undefined,
 ) {
-  updateChecklistAnswer('overall', { direction });
+  updateChecklistAnswer('overall', { direction: direction || null });
 }
 
 // ---------------------------------------------------------------------------
@@ -210,13 +210,14 @@ function autoFillFromReviewer1(
     }
     case NAV_ITEM_TYPES.DOMAIN_DIRECTION: {
       const domain = checklist1?.[item.domainKey] as ROB2DomainState | undefined;
-      const direction = domain?.direction;
-      if (direction) updateDomainDirection(updateChecklistAnswer, item.domainKey, direction);
+      // Copy the reviewer's direction even when unset, so adopting a "Not set"
+      // reviewer clears any stale final direction instead of leaving it behind.
+      if (domain) updateDomainDirection(updateChecklistAnswer, item.domainKey, domain.direction);
       return;
     }
     case NAV_ITEM_TYPES.OVERALL_DIRECTION: {
-      const direction = checklist1?.overall?.direction;
-      if (direction) updateOverallDirection(updateChecklistAnswer, direction);
+      if (checklist1?.overall)
+        updateOverallDirection(updateChecklistAnswer, checklist1.overall.direction);
       return;
     }
   }
@@ -425,12 +426,12 @@ function renderPage(
           updateDomainDirection(context.updateChecklistAnswer, domainKey, direction)
         }
         onUseReviewer1={() => {
-          const direction = c1Domain?.direction;
-          if (direction) updateDomainDirection(context.updateChecklistAnswer, domainKey, direction);
+          if (c1Domain)
+            updateDomainDirection(context.updateChecklistAnswer, domainKey, c1Domain.direction);
         }}
         onUseReviewer2={() => {
-          const direction = c2Domain?.direction;
-          if (direction) updateDomainDirection(context.updateChecklistAnswer, domainKey, direction);
+          if (c2Domain)
+            updateDomainDirection(context.updateChecklistAnswer, domainKey, c2Domain.direction);
         }}
       />
     );
@@ -453,16 +454,12 @@ function renderPage(
           updateOverallDirection(context.updateChecklistAnswer, direction)
         }
         onUseReviewer1={() => {
-          const direction = c1?.overall?.direction;
-          if (direction) {
-            updateOverallDirection(context.updateChecklistAnswer, direction);
-          }
+          if (c1?.overall)
+            updateOverallDirection(context.updateChecklistAnswer, c1.overall.direction);
         }}
         onUseReviewer2={() => {
-          const direction = c2?.overall?.direction;
-          if (direction) {
-            updateOverallDirection(context.updateChecklistAnswer, direction);
-          }
+          if (c2?.overall)
+            updateOverallDirection(context.updateChecklistAnswer, c2.overall.direction);
         }}
       />
     );

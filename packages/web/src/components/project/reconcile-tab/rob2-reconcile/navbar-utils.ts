@@ -242,6 +242,30 @@ export function hasNavItemAnswer(navItem: NavItem, finalAnswers: FinalAnswers): 
 }
 
 /**
+ * Check if a navigation item actually has a stored value.
+ *
+ * Unlike hasNavItemAnswer (which treats optional direction as always satisfied so
+ * it never blocks completion), this reflects real value presence. Use it for the
+ * "answered" check indicators so an unset direction is not rendered as filled.
+ */
+export function hasNavItemValue(navItem: NavItem, finalAnswers: FinalAnswers): boolean {
+  switch (navItem.type) {
+    case NAV_ITEM_TYPES.PRELIMINARY:
+      return hasPreliminaryAnswer(navItem.key, finalAnswers);
+    case NAV_ITEM_TYPES.DOMAIN_QUESTION:
+      return hasDomainQuestionAnswer(navItem.domainKey, navItem.key, finalAnswers);
+    case NAV_ITEM_TYPES.DOMAIN_DIRECTION: {
+      const domain = finalAnswers?.[navItem.domainKey] as Record<string, unknown> | undefined;
+      return domain?.direction != null && domain.direction !== '';
+    }
+    case NAV_ITEM_TYPES.OVERALL_DIRECTION: {
+      const overall = finalAnswers?.overall as Record<string, unknown> | undefined;
+      return overall?.direction != null && overall.direction !== '';
+    }
+  }
+}
+
+/**
  * Check if reviewers agreed on a navigation item
  */
 export function isNavItemAgreement(navItem: NavItem, comparison: Comparison | null): boolean {

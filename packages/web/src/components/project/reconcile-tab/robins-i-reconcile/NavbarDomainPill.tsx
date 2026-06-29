@@ -3,7 +3,7 @@ import { CheckIcon, ChevronRightIcon } from 'lucide-react';
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import {
   getSectionLabel,
-  hasNavItemAnswer,
+  hasNavItemValue,
   isNavItemAgreement,
   getNavItemPillStyle,
   getNavItemTooltip,
@@ -152,10 +152,10 @@ function QuestionPill({
 }: QuestionPillProps) {
   const isCurrentPage = currentPage === globalIndex;
   const isAgreement = isNavItemAgreement(item, comparison);
-  const hasAnswer = hasNavItemAnswer(item, finalAnswers);
+  const hasValue = hasNavItemValue(item, finalAnswers);
 
-  const pillStyle = getNavItemPillStyle(isCurrentPage, hasAnswer, isAgreement);
-  const tooltip = getNavItemTooltip(item, hasAnswer, isAgreement);
+  const pillStyle = getNavItemPillStyle(isCurrentPage, hasValue, isAgreement);
+  const tooltip = getNavItemTooltip(item, hasValue, isAgreement);
 
   const displayLabel = (() => {
     switch (item.type) {
@@ -194,7 +194,7 @@ function QuestionPill({
           aria-current={isCurrentPage ? 'page' : undefined}
         >
           {displayLabel}
-          {hasAnswer && (
+          {hasValue && (
             <span
               className='bg-card absolute -top-0.5 -right-0.5 flex size-2.5 items-center justify-center rounded-full border-[0.5px] shadow-sm'
               aria-hidden='true'

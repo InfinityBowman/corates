@@ -37,7 +37,7 @@ export function DomainJudgement({
   const getJudgementColor = (j: string, isSelected: boolean) => {
     if (!isSelected) {
       return isAutoMode ?
-          'border-border bg-muted text-muted-foreground hover:border-border hover:bg-card'
+          'border-border bg-muted text-muted-foreground/70 cursor-not-allowed'
         : 'border-border bg-card text-muted-foreground hover:border-border';
     }
     switch (j) {
@@ -72,12 +72,14 @@ export function DomainJudgement({
               key={j}
               type='button'
               onClick={() => {
-                if (disabled) return;
+                if (disabled || isAutoMode) return;
                 onJudgementChange(isSelected ? null : j);
               }}
-              disabled={disabled}
+              disabled={disabled || isAutoMode}
               className={`inline-flex items-center justify-center rounded-md border-2 px-3 py-1.5 text-sm font-medium transition-colors ${
-                disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'
+                disabled ? 'cursor-not-allowed opacity-50'
+                : isAutoMode ? ''
+                : 'cursor-pointer'
               } ${getJudgementColor(j, isSelected)}`}
             >
               {getShortLabel(j)}

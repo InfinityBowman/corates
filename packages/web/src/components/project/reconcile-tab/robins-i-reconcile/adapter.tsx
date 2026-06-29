@@ -154,15 +154,16 @@ function autoFillFromReviewer1(
     }
     case NAV_ITEM_TYPES.DOMAIN_DIRECTION: {
       const domain = checklist1?.[item.domainKey] as ROBINSIDomainState | undefined;
-      if (domain?.direction) {
+      // Copy the reviewer's direction even when unset, so adopting a "Not set"
+      // reviewer clears any stale final direction instead of leaving it behind.
+      if (domain) {
         updateDomainDirection(updateChecklistAnswer, item.domainKey, domain.direction);
       }
       return;
     }
     case NAV_ITEM_TYPES.OVERALL_DIRECTION: {
-      const direction = checklist1?.overall?.direction;
-      if (direction) {
-        updateOverallDirection(updateChecklistAnswer, direction);
+      if (checklist1?.overall) {
+        updateOverallDirection(updateChecklistAnswer, checklist1.overall.direction);
       }
       return;
     }
@@ -359,11 +360,11 @@ function renderPage(
           updateDomainDirection(context.updateChecklistAnswer, domainKey, direction)
         }
         onUseReviewer1={() => {
-          if (c1Domain?.direction)
+          if (c1Domain)
             updateDomainDirection(context.updateChecklistAnswer, domainKey, c1Domain.direction);
         }}
         onUseReviewer2={() => {
-          if (c2Domain?.direction)
+          if (c2Domain)
             updateDomainDirection(context.updateChecklistAnswer, domainKey, c2Domain.direction);
         }}
       />
@@ -387,11 +388,11 @@ function renderPage(
           updateOverallDirection(context.updateChecklistAnswer, direction)
         }
         onUseReviewer1={() => {
-          if (c1?.overall?.direction)
+          if (c1?.overall)
             updateOverallDirection(context.updateChecklistAnswer, c1.overall.direction);
         }}
         onUseReviewer2={() => {
-          if (c2?.overall?.direction)
+          if (c2?.overall)
             updateOverallDirection(context.updateChecklistAnswer, c2.overall.direction);
         }}
       />
