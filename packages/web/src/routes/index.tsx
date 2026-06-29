@@ -35,7 +35,7 @@ export const Route = createFileRoute('/')({
 
 function HomePage() {
   return (
-    <div className='min-h-screen bg-linear-to-b from-blue-50 to-white'>
+    <div className='min-h-screen bg-linear-to-b from-blue-50/30 to-white'>
       <Navbar />
       <main>
         <Hero />

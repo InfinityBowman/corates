@@ -52,7 +52,7 @@ export const Route = createFileRoute('/pricing')({
 
 function PricingPage() {
   return (
-    <div className='min-h-screen bg-linear-to-b from-blue-50 to-white'>
+    <div className='min-h-screen bg-linear-to-b from-blue-50/30 to-white'>
       <Navbar />
 
       <script type='application/ld+json' dangerouslySetInnerHTML={{ __html: faqSchema }} />

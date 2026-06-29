@@ -5,7 +5,7 @@ import HeroWavesCanvas from './HeroWavesCanvas';
 
 export default function Hero() {
   return (
-    <section className='relative isolate max-h-screen min-h-screen overflow-hidden'>
+    <section className='relative isolate max-h-screen min-h-screen overflow-hidden border-b border-gray-200/80'>
       <div className='mx-auto flex max-w-7xl flex-col items-center px-4 pt-8 pb-0 sm:px-6 md:pt-14'>
         <div className='mb-2 w-full max-w-4xl'>
           <div className='mb-6 flex items-center justify-center gap-4'>
@@ -41,21 +41,21 @@ export default function Hero() {
         </div>
       </div>
       {/* Product Screenshot: full width, bottom, angled */}
-      <div className='flex w-full justify-center px-4 sm:px-6 md:translate-x-10'>
-        <div className='relative w-full max-w-5xl'>
+      <div className='flex w-full justify-start px-4 sm:justify-center sm:px-6 md:translate-x-10'>
+        <div className='relative w-[150%] max-w-none shrink-0 sm:w-full sm:max-w-5xl sm:shrink'>
           <div className='mt-0 mb-0 transform-[perspective(900px)_rotateX(10deg)_rotateZ(-6deg)_rotateY(6deg)] overflow-hidden rounded-2xl border border-gray-200 bg-linear-to-br from-gray-100 to-gray-50 shadow-2xl md:transform-[perspective(1200px)_rotateX(14deg)_rotateZ(-10deg)_rotateY(8deg)]'>
-            <div className='flex aspect-16/7 items-center justify-center p-1 sm:p-2'>
+            <div className='flex aspect-16/7 items-center justify-center p-0.5 sm:p-1'>
               <div className='text-center'>
                 <div
                   className='flex h-full w-full flex-col rounded-xl border border-gray-200 bg-gray-50 shadow-lg'
                   style={{ boxShadow: '0 6px 32px 0 rgba(0,0,0,0.10)' }}
                 >
                   {/* Browser top bar */}
-                  <div className='flex items-center rounded-t-xl border-b border-gray-200 bg-gray-100 px-2 py-1 sm:px-4 sm:py-2'>
-                    <div className='flex items-center gap-2'>
-                      <span className='inline-block size-2.5 rounded-full bg-red-400 sm:h-3 sm:w-3' />
-                      <span className='inline-block size-2.5 rounded-full bg-yellow-400 sm:h-3 sm:w-3' />
-                      <span className='inline-block size-2.5 rounded-full bg-green-400 sm:h-3 sm:w-3' />
+                  <div className='flex items-center rounded-t-xl border-b border-gray-200 bg-gray-100 px-1.5 py-0.5 sm:px-3 sm:py-1'>
+                    <div className='flex items-center gap-1.5 sm:gap-2'>
+                      <span className='inline-block size-2 rounded-full bg-red-400 sm:size-2.5' />
+                      <span className='inline-block size-2 rounded-full bg-yellow-400 sm:size-2.5' />
+                      <span className='inline-block size-2 rounded-full bg-green-400 sm:size-2.5' />
                     </div>
                     <div className='mx-4 flex-1'>
                       <div className='text-2xs mx-auto max-w-50 truncate rounded-md border border-gray-300 bg-white px-1.5 py-0.5 text-gray-500 sm:max-w-[320px] sm:px-3 sm:py-1 sm:text-xs'>
@@ -84,6 +84,10 @@ export default function Hero() {
           </div>
         </div>
       </div>
+      {/* Bottom fade: dissolve the ribbon canvas and angled screenshot into the
+          page background so the section boundary reads as a soft fade into the
+          divider line rather than a hard clip. */}
+      <div className='pointer-events-none absolute inset-x-0 bottom-0 z-10 h-56 bg-linear-to-b from-transparent to-white' />
       {/* Background decoration */}
       <div className='absolute top-0 left-1/2 -z-10 size-250 -translate-x-1/2 rounded-full bg-linear-to-b from-blue-700/5 to-transparent blur-3xl' />
       <div className='absolute top-1/2 right-0 -z-10 size-125 rounded-full bg-linear-to-l from-blue-700/5 to-transparent blur-3xl' />

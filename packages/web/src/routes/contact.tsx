@@ -78,7 +78,7 @@ function ContactPage() {
   };
 
   return (
-    <div className='min-h-screen bg-linear-to-b from-blue-50 to-white'>
+    <div className='min-h-screen bg-linear-to-b from-blue-50/30 to-white'>
       <Navbar />
       <main className='flex-1 py-12'>
         <div className='mx-auto max-w-6xl px-6'>
