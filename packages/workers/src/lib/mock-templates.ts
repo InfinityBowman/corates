@@ -1,30 +1,4 @@
-import { CHECKLIST_STATUS } from '@corates/shared';
-
-interface QuestionStructure {
-  parts: number[][];
-  critical: boolean;
-}
-
-const AMSTAR2_STRUCTURE: Record<string, QuestionStructure> = {
-  q1: { parts: [[4], [1], [2]], critical: false },
-  q2: { parts: [[4], [3], [3]], critical: true },
-  q3: { parts: [[3], [1]], critical: false },
-  q4: { parts: [[4], [2], [4], [3], [3], [3]], critical: true },
-  q5: { parts: [[5], [5]], critical: false },
-  q6: { parts: [[5], [5]], critical: false },
-  q7: { parts: [[3], [3]], critical: true },
-  q8: { parts: [[8], [3], [3], [3]], critical: false },
-  q9a: { parts: [[2], [2], [4]], critical: true },
-  q9b: { parts: [[2], [2], [4]], critical: true },
-  q10: { parts: [[3], [2]], critical: false },
-  q11a: { parts: [[3], [3]], critical: true },
-  q11b: { parts: [[4], [3]], critical: true },
-  q12: { parts: [[4], [2]], critical: false },
-  q13: { parts: [[5]], critical: true },
-  q14: { parts: [[5]], critical: false },
-  q15: { parts: [[3]], critical: true },
-  q16: { parts: [[2], [2]], critical: false },
-};
+import { CHECKLIST_STATUS, createAMSTAR2Checklist } from '@corates/shared';
 
 const ROBINS_I_DOMAINS: Record<string, string[]> = {
   domain1a: ['d1a_1', 'd1a_2', 'd1a_3', 'd1a_4'],
@@ -63,9 +37,22 @@ export function generateAMSTAR2Answers(options: AMSTAR2Options = {}): AMSTAR2Ans
   const rng = seededRandom(seed);
   const answers: AMSTAR2Answers = {};
 
-  for (const [questionKey, structure] of Object.entries(AMSTAR2_STRUCTURE)) {
-    const questionAnswers = structure.parts.map(partSizes => {
-      const size = partSizes[0];
+  // Derive the answer structure (row count and per-row size) from the shared
+  // source of truth. The figures parse the LAST row of each question by its
+  // length, so a hand-maintained structure that drifts produces unparseable
+  // (null) ratings. Always match createAMSTAR2Checklist instead.
+  const skeleton = createAMSTAR2Checklist({ name: 'mock', id: 'mock' }) as unknown as Record<
+    string,
+    unknown
+  >;
+
+  for (const [questionKey, value] of Object.entries(skeleton)) {
+    if (!/^q\d+[a-z]*$/i.test(questionKey)) continue;
+    const question = value as { answers: boolean[][]; critical: boolean };
+    if (!Array.isArray(question.answers)) continue;
+
+    const questionAnswers = question.answers.map(templateRow => {
+      const size = templateRow.length;
       const row = new Array<boolean>(size).fill(false);
       if (fill === 'random') {
         for (let i = 0; i < size; i++) {
@@ -74,17 +61,16 @@ export function generateAMSTAR2Answers(options: AMSTAR2Options = {}): AMSTAR2Ans
       } else if (fill === 'all-yes') {
         row[0] = true;
       } else if (fill === 'all-no') {
-        row[row.length - 1] = true;
+        row[size - 1] = true;
       } else if (fill === 'mixed') {
-        const idx = Math.floor(rng() * size);
-        row[idx] = true;
+        row[Math.floor(rng() * size)] = true;
       }
       return row;
     });
 
     answers[questionKey] = {
       answers: questionAnswers,
-      critical: structure.critical,
+      critical: question.critical,
     };
   }
 

@@ -12,4 +12,13 @@
  */
 import wasmUrl from '@embedpdf/pdfium/pdfium.wasm?url';
 
-export const PDFIUM_WASM_URL: string = wasmUrl;
+/**
+ * The PDFium engine runs in a Worker created from a `blob:` URL, and the worker
+ * fetches this binary itself. Root-relative URLs (what Vite emits for `?url`
+ * assets, e.g. `/assets/pdfium-<hash>.wasm`) cannot be resolved against a `blob:`
+ * base -- the fetch throws and the engine hangs in a perpetual loading state. So
+ * resolve to an absolute URL against the page origin on the client. (During SSR /
+ * prerender there is no `window`; the value is never used server-side.)
+ */
+export const PDFIUM_WASM_URL: string =
+  typeof window !== 'undefined' ? new URL(wasmUrl, window.location.origin).href : wasmUrl;

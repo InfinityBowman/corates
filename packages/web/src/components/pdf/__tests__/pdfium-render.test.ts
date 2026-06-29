@@ -17,6 +17,7 @@ import { describe, it, expect, beforeAll, afterEach } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { createPdfiumDirectEngine } from '@embedpdf/engines';
+import { PDFIUM_WASM_URL } from '@/lib/pdfiumWasmUrl';
 
 const PACKAGE_WASM = createRequire(import.meta.url).resolve('@embedpdf/pdfium/pdfium.wasm');
 
@@ -46,6 +47,16 @@ function makeMinimalPdf(): ArrayBuffer {
 
   return enc.encode(pdf).buffer;
 }
+
+describe('pdfium wasm url', () => {
+  it('is absolute so it resolves inside the blob: worker that fetches it', () => {
+    // usePdfiumEngine defaults to worker:true; the worker is created from a blob:
+    // URL and fetches the wasm itself. Root-relative URLs cannot be resolved
+    // against a blob: base, which leaves the engine stuck loading forever.
+    expect(PDFIUM_WASM_URL).toMatch(/^https?:\/\//);
+    expect(() => new URL(PDFIUM_WASM_URL, 'blob:https://corates.org/uuid-1234')).not.toThrow();
+  });
+});
 
 describe('pdfium engine renders a PDF', () => {
   const realFetch = globalThis.fetch;
