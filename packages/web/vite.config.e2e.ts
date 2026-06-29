@@ -2,7 +2,6 @@ import path from 'node:path';
 import { defineConfig } from 'vite';
 import { tanstackStart } from '@tanstack/react-start/plugin/vite';
 import viteReact from '@vitejs/plugin-react';
-import viteTsConfigPaths from 'vite-tsconfig-paths';
 import tailwindcss from '@tailwindcss/vite';
 import { cloudflare } from '@cloudflare/vite-plugin';
 
@@ -11,6 +10,7 @@ export default defineConfig({
   // a trusted auth origin (see workers origins config), so cookies/CORS work.
   server: { port: 3010, strictPort: true },
   resolve: {
+    tsconfigPaths: true,
     alias: {
       '@/': path.resolve(import.meta.dirname, 'src') + '/',
     },
@@ -22,7 +22,6 @@ export default defineConfig({
       viteEnvironment: { name: 'ssr' },
       persistState: { path: '.wrangler/e2e-state' },
     }),
-    viteTsConfigPaths({ projects: ['./tsconfig.json'] }),
     tailwindcss(),
     tanstackStart({
       router: {
